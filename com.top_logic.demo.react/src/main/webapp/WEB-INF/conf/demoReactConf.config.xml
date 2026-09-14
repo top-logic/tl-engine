@@ -167,7 +167,16 @@
 		<config config:interface="com.top_logic.base.accesscontrol.ApplicationPages$Config">
 			<startPage>/view/</startPage>
 		</config>
-		<config config:interface="com.top_logic.layout.view.ViewConfig">
+		<!--
+			What a session that belongs to no account sees in place of the application: the
+			framework's login page, whatever the URL asks for. This demo shows its objects to
+			accounts only, like a business application, and the requested URL is held while the
+			login page is displayed, so a deep link leads to the page it names as soon as the
+			visitor is logged in.
+		-->
+		<config config:interface="com.top_logic.layout.view.ViewConfig"
+			login-view="login-page.view.xml"
+		>
 			<!--
 				A second view a URL may load top-level, besides the default view: the PDF demo is
 				self-contained, so it shows the same thing in a browser tab of its own as it does

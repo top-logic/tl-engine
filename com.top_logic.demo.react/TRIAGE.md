@@ -17,7 +17,7 @@ implemented in the current deliverable.
 |------|---------|-------|
 | `DemoTypes` attribute kinds | **Migrate now** | Folded into one flat, non-polymorphic, non-structured `demo.react:Demo` class. Shown in two presentation forms (wide table + detail dialog; selector table + form) under the **Attributes** entry, with real persistent CRUD. |
 | Account / group / role administration | **Migrate now** | Reuses the shipped `admin/admin.view.xml` from `com.top_logic.layout.view`, gated by the `administration` security scope. |
-| React login / logout | **Migrate now** | Reuses the shipped `login.view.xml` + `tl.login:Credentials`. |
+| React login / logout | **Migrate now** | Reuses the shipped `login-page.view.xml` + `tl.login:Credentials`: the app configures it as the `login-view` of its `ViewConfig`, so a visitor sees the login page in place of the application and reaches the URL they asked for once logged in. |
 | WYSIWYG HTML attribute (`tl.model.wysiwyg:Html`) | **Migrate now** | `html` attribute on `Demo`, edited by the React WYSIWYG control. Depends on `tl-model-wysiwyg` (the type) + `tl-layout-react-wysiwyg` (the control, which registers a `FieldControlService` provider for the type). |
 | Charts | **Migrated** | `demo/chart-demo.view.xml` (bar/doughnut/line/combined, click-to-drill dialog). Depends on `tl-layout-react-chartjs`; `demo.charts` model + seed data. |
 | Flow diagram + Gantt | **Migrated** | `demo/flow-diagram-demo.view.xml` (build-plan tree) and `demo/gantt-demo.view.xml` (axis LOD, spans/edges/decorations). Depend on `tl-react-flow-server`; flow uses the `test.flowchart` model + seed data. |

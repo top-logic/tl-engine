@@ -89,6 +89,21 @@
 		</config>
 
 		<!--
+			The application's security.xml grants roles on view security scopes. A scope is
+			available as a security object only after the SecurityScopeService has materialized
+			it, therefore the access configuration import runs after that service.
+		-->
+		<config service-class="com.top_logic.tool.boundsec.config.AccessConfigurationSetupService">
+			<instance class="com.top_logic.tool.boundsec.config.AccessConfigurationSetupService">
+				<dependencies>
+					<dependency key="com.top_logic.layout.view.security.SecurityScopeService$Module"
+						value="true"
+					/>
+				</dependencies>
+			</instance>
+		</config>
+
+		<!--
 			Where the application displays its business objects: per model type, the views to
 			show and the values their channels receive. An application declares its own targets
 			by extending this service's <targets> list; a type without a target is not offered

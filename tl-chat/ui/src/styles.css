@@ -851,7 +851,9 @@
 
 .md-plain {
   white-space: pre-wrap;
-  overflow-wrap: anywhere;
+  /* `anywhere` breaks inside words, which in German means inside a compound. Only a word too long
+     for the column is broken now, and a reference token never is - it is `nowrap`. */
+  overflow-wrap: break-word;
 }
 
 /* --- Code blocks -------------------------------------------------------- */
@@ -1214,10 +1216,15 @@
   background: var(--color-drop-zone, var(--layer-hover));
 }
 
+/* The controls under the text: the "+" menu on the left, model and send on the right. */
 .composer-row {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: 0.375rem;
+}
+
+.composer-row .composer-actions {
+  margin-inline-start: auto;
 }
 
 .composer-surface textarea {
@@ -1260,7 +1267,20 @@
   display: flex;
   align-items: center;
   gap: 0.375rem;
-  flex: 0 0 auto;
+  /* Shrinkable: in a document-mode column the model's name gives way before the send button does. */
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+/* The model's name is the part that gives way in a narrow column; the send button never does. */
+.composer-actions .model-menu {
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+.composer-actions .model-trigger {
+  max-width: 100%;
+  min-width: 2rem;
 }
 
 .composer-foot {
@@ -2728,8 +2748,8 @@
 
 .side-pane-title {
   margin: 0;
-  flex: 1;
-  min-width: 0;
+  flex: 1 1 auto;
+  min-width: 6rem;
   font-size: 0.875rem;
   font-weight: 600;
   overflow: hidden;
@@ -2785,7 +2805,6 @@
  */
 .cite-marker {
   display: inline;
-  margin-inline-start: 0.2rem;
   padding: 0 0.1rem;
   border: 0;
   background: transparent;
@@ -2828,6 +2847,15 @@
 }
 
 /*
+ * In a document-mode column the footer has about 210 px. The switch keeps its place and its meaning
+ * - it stays a labelled control for a screen reader and carries a tooltip - but gives up its
+ * written label, so that it and the Enter hint stay on the one line the reader expects them on.
+ */
+.tl-cockpit.has-document .approve-switch-label {
+  display: none;
+}
+
+/*
  * The composer's Enter hint is switched to its short form by a viewport media query. That reads the
  * wrong width once the pane has taken a column of the stage: the window is still wide while the
  * composer is not. The pane's own state therefore switches it too.
@@ -2842,8 +2870,18 @@
 
 /* Below 1280, not at it: 1280 itself still fits a column beside the thread. */
 @media (max-width: 1279.98px) {
+  /*
+   * A sheet spans the whole grid, not its own column.
+   *
+   * An absolutely positioned grid item with a definite grid position takes that *track* as its
+   * containing block. The pane's column holds nothing else once the pane is out of flow, so the
+   * track was 0 px wide, `min(100%, 28rem)` resolved to 0, and the artefact the user clicked was a
+   * 1 px sliver. Spanning every column gives the sheet the workspace as its containing block again.
+   */
   .side-column,
   .side-pane.is-sheet {
+    grid-column: 1 / -1;
+    grid-row: 1;
     position: absolute;
     inset: 0 0 0 auto;
     z-index: 4;
@@ -2851,7 +2889,8 @@
     box-shadow: var(--chat-shadow);
   }
 
-  .side-pane.is-sheet {
+  .side-pane.is-sheet,
+  .side-column {
     min-width: 0;
   }
 
@@ -2868,7 +2907,6 @@
  */
 .composer-input {
   position: relative;
-  flex: 1;
   min-width: 0;
 }
 
@@ -3275,7 +3313,12 @@
 
 /* --- Side pane: document mode (Issue #408) ------------------------------ */
 
+/* The name is the half worth reading; when the header is tight the metadata gives way first. */
 .side-pane-version {
+  min-width: 0;
+  flex: 0 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
   color: var(--text-secondary);
   font-size: var(--chat-small);
   white-space: nowrap;

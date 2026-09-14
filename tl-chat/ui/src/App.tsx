@@ -13,7 +13,6 @@ import {
   loadSubagentTranscript,
   openEventStream,
   regenerate,
-  renameSession,
   respond,
   sendFeedback,
   sendMessage,
@@ -21,7 +20,7 @@ import {
   truncate,
   turnsJsonToMessages,
 } from './api'
-import { bundle, toLanguage, type Language } from './i18n'
+import { bundle, providerErrorText, toLanguage, type Language } from './i18n'
 import { effortLevelsOf } from './models'
 import { SessionRail } from './chrome'
 import { Composer } from './composer'
@@ -59,6 +58,13 @@ const { useCallback, useEffect, useMemo, useReducer, useRef, useState } = React
  */
 const STALE_AFTER_MS = 40_000
 
+/**
+ * How long a fresh connection may stay silent before the user is told it is not answering.
+ *
+ * The server sends `connected` as its first frame, so a live stream clears this well inside it.
+ */
+const CONNECT_TIMEOUT_MS = 5_000
+
 function parseJson<T>(raw: string, fallback: T): T {
   try {
     return JSON.parse(raw) as T
@@ -94,6 +100,8 @@ function mergeSubagent(
 export function App({ controlId }: TLCellProps) {
   const state = useTLState()
   const windowId = (state.windowId as string) || ''
+  /** False in a session that is not signed in; the servlet refuses every call such a session makes. */
+  const authenticated = state.authenticated !== false
   const userName = (state.userName as string) || 'User'
   const welcomeName = (state.welcomeName as string) || ''
   const configuredTraceMode = parseTraceMode(state.traceMode)
@@ -124,6 +132,19 @@ export function App({ controlId }: TLCellProps) {
   const [autoApprove, setAutoApprove] = useState(false)
   const [connection, setConnection] = useState<ConnectionState>('connecting')
   const [notice, setNotice] = useState('')
+  /** What the provider itself said, kept out of the strip but reachable as its tooltip. */
+  const [noticeDetail, setNoticeDetail] = useState('')
+
+  /**
+   * Shows one line above the composer, and what stands behind it.
+   *
+   * Text and detail are set together so a later notice never inherits the tooltip of an earlier
+   * one.
+   */
+  const showNotice = (text: string, detail = '') => {
+    setNotice(text)
+    setNoticeDetail(detail)
+  }
   const [messages, dispatch] = useReducer(chatReducer, [])
   const assistantId = useRef<string | null>(null)
   const sessionIdRef = useRef<string | null>(null)
@@ -135,6 +156,8 @@ export function App({ controlId }: TLCellProps) {
   const effortRef = useRef(effort)
   const autoApproveRef = useRef(false)
   const runIdRef = useRef<string | null>(null)
+  /** Set when the run ended because the user stopped it, so the provider error it causes is muted. */
+  const cancelledRef = useRef(false)
   sessionIdRef.current = sessionId
   messagesRef.current = messages
   agentRef.current = agent
@@ -171,6 +194,8 @@ export function App({ controlId }: TLCellProps) {
   }, [])
 
   useEffect(() => {
+    // Nothing to ask for in a session the servlet answers with 401.
+    if (!authenticated) return
     let cancelled = false
     ;(async () => {
       try {
@@ -198,7 +223,7 @@ export function App({ controlId }: TLCellProps) {
     return () => {
       cancelled = true
     }
-  }, [windowId, applyAgent])
+  }, [authenticated, windowId, applyAgent])
 
   // The ring must be readable before the first run, and must follow a model change at once, so the
   // window comes from the model catalogue until a run reports the one it really used.
@@ -228,12 +253,16 @@ export function App({ controlId }: TLCellProps) {
   }, [])
 
   useEffect(() => {
+    // An EventSource against a 401 reconnects for as long as the page is open; a session that is
+    // not signed in opens none.
+    if (!authenticated) return
     let closed = false
     let source: EventSource | null = null
     let staleTimer = 0
     let reopenTimer = 0
+    let connectTimer = 0
 
-    const finish = (error?: string) => {
+    const finish = (error?: string, detail?: string) => {
       if (assistantId.current) {
         dispatch({ type: 'FINALIZE_TEXT', id: assistantId.current })
         assistantId.current = null
@@ -242,14 +271,22 @@ export function App({ controlId }: TLCellProps) {
         dispatch({ type: 'END_RUN', runId: runIdRef.current })
         runIdRef.current = null
       }
-      if (error) setNotice(error)
+      if (error) showNotice(error, detail ?? '')
       setBusy(false)
       runStore.set((s) => ({ ...s, busy: false }))
     }
 
-    /** Restarts the stale timer; every frame from the server counts, heartbeats included. */
+    /**
+     * A frame arrived: the stream is alive, and the stale clock starts again.
+     *
+     * Only ever called from the `open` handler and from real frames. Calling it because a
+     * connection was *attempted* is what made the reconnect state lie: the chip appeared when the
+     * stale timer fired and vanished a second later when the next attempt was made, whether or not
+     * anything answered.
+     */
     const markAlive = () => {
       setConnection('live')
+      window.clearTimeout(connectTimer)
       window.clearTimeout(staleTimer)
       staleTimer = window.setTimeout(() => {
         setConnection('reconnecting')
@@ -294,7 +331,8 @@ export function App({ controlId }: TLCellProps) {
           {},
         )
         setBusy(true)
-        setNotice('')
+        showNotice('')
+        cancelledRef.current = false
         runIdRef.current = data.runId ?? crypto.randomUUID()
         dispatch({ type: 'START_RUN', runId: runIdRef.current })
         runStore.set((s) => ({
@@ -324,6 +362,7 @@ export function App({ controlId }: TLCellProps) {
             systemPromptTokens: data.systemPromptTokens ?? 0,
             toolDefinitionTokens: data.toolDefinitionTokens ?? 0,
             messageTokens: data.messageTokens ?? 0,
+            toolResultTokens: data.toolResultTokens ?? 0,
             toolCount: data.toolCount ?? 0,
           },
         }))
@@ -386,6 +425,7 @@ export function App({ controlId }: TLCellProps) {
           toolName?: string
           argsJson?: string
           displayReason?: string
+          toolMode?: string
           remainingMs?: number
         }>(e.data, {})
         if (!data.approvalRequestId) return
@@ -405,6 +445,7 @@ export function App({ controlId }: TLCellProps) {
           toolName: data.toolName ?? 'tool',
           argsJson: data.argsJson ?? '',
           displayReason: data.displayReason ?? '',
+          toolMode: data.toolMode,
           remainingMs: data.remainingMs,
         })
       })
@@ -451,6 +492,7 @@ export function App({ controlId }: TLCellProps) {
           reason?: string
           approvalRequestId?: string
           displayReason?: string
+          toolMode?: string
           remainingMs?: number
         }>(wrap.eventData ?? '', {})
         switch (wrap.eventType) {
@@ -508,6 +550,7 @@ export function App({ controlId }: TLCellProps) {
               toolName: data.toolName ?? 'tool',
               argsJson: data.argsJson ?? '',
               displayReason: data.displayReason ?? '',
+              toolMode: data.toolMode,
               remainingMs: data.remainingMs,
             })
             break
@@ -541,11 +584,35 @@ export function App({ controlId }: TLCellProps) {
         const data = parseJson<{ turnUsage?: TokenUsage; contextWindow?: number }>(e.data, {})
         if (data.turnUsage) setTokens(data.contextWindow, undefined, data.turnUsage)
       })
-      on('run_completed', () => finish())
-      on('message_complete', () => finish())
+      on('run_completed', (e) => {
+        const data = parseJson<{ reason?: string }>(e.data, {})
+        // A run the user stopped is not a failure: it ends quietly, in their language, and the
+        // provider's own "Stream cancelled." that follows is swallowed below.
+        if (data.reason === 'ABORTED') {
+          cancelledRef.current = true
+          finish(bundle(languageRef.current).cancelled)
+        } else {
+          finish()
+        }
+      })
+      on('message_complete', (e) => {
+        // The authoritative answer. The deltas were a live preview of it; applying it here is what
+        // keeps the last fragment from being lost when it arrives after this event.
+        const data = parseJson<{ contentText?: string }>(e.data, {})
+        if (assistantId.current && data.contentText) {
+          dispatch({ type: 'SET_TEXT', id: assistantId.current, text: data.contentText })
+        }
+        finish()
+      })
       on('provider_error', (e) => {
+        if (cancelledRef.current) {
+          // The cancel already said what happened; the provider's report of the closed stream adds
+          // nothing and would say it as an error.
+          cancelledRef.current = false
+          return
+        }
         const data = parseJson<{ errorMessage?: string; kind?: string }>(e.data, {})
-        finish(data.errorMessage ?? bundle(languageRef.current).providerError)
+        finish(providerErrorText(data.kind, languageRef.current), data.errorMessage ?? '')
       })
 
       es.onerror = () => {
@@ -554,7 +621,11 @@ export function App({ controlId }: TLCellProps) {
           reopen()
         }
       }
-      markAlive()
+
+      // Not alive until something answers: if no frame arrives within this, say so and keep saying
+      // it until one does.
+      window.clearTimeout(connectTimer)
+      connectTimer = window.setTimeout(() => setConnection('reconnecting'), CONNECT_TIMEOUT_MS)
     }
 
     connect()
@@ -562,9 +633,10 @@ export function App({ controlId }: TLCellProps) {
       closed = true
       window.clearTimeout(staleTimer)
       window.clearTimeout(reopenTimer)
+      window.clearTimeout(connectTimer)
       source?.close()
     }
-  }, [windowId])
+  }, [authenticated, windowId])
 
   const languageRef = useRef(language)
   languageRef.current = language
@@ -593,7 +665,7 @@ export function App({ controlId }: TLCellProps) {
       setBusy(false)
       setRailOpen(false)
       setSubagents([])
-      setNotice('')
+      showNotice('')
       setFeedback([])
       // The model does not change when the chat does, so its window survives the reset; only what
       // the previous conversation measured is dropped.
@@ -608,6 +680,7 @@ export function App({ controlId }: TLCellProps) {
         contextWindow: detail.contextWindow || snapshot.contextWindow,
         lastUsage: detail.lastPromptUsage ?? snapshot.lastUsage,
         measuredTokens: promptTokens(detail.lastPromptUsage),
+        composition: detail.lastComposition ?? undefined,
       }))
       setFeedback(detail.feedback ?? [])
       if (detail.lastEffort) setEffortState(detail.lastEffort)
@@ -616,21 +689,26 @@ export function App({ controlId }: TLCellProps) {
     [windowId, refreshSubagents],
   )
 
-  const onNew = useCallback(async () => {
-    const created = await createSession(windowId, 'New chat')
-    await loadSession(windowId, created.id)
-    setSessionId(created.id)
+  /**
+   * Starts a new chat.
+   *
+   * Nothing is created here. A chat with no message in it has no title anyone could give it and
+   * nothing to show in the rail, so the session is created by the first send, which is also the
+   * first moment a title is knowable. That makes "new chat" while an empty one is already open a
+   * no-op for free, and leaves no empty rows behind.
+   */
+  const onNew = useCallback(() => {
+    setSessionId(null)
     setRailOpen(false)
     setSubagents([])
-    setNotice('')
+    showNotice('')
     setFeedback([])
     dispatch({ type: 'RESET' })
     assistantId.current = null
     runIdRef.current = null
     setBusy(false)
     runStore.set((s) => ({ ...EMPTY_RUN, model: s.model, contextWindow: s.contextWindow }))
-    await refreshSessions()
-  }, [windowId, refreshSessions])
+  }, [])
 
   const onDelete = useCallback(
     async (id: string) => {
@@ -653,29 +731,23 @@ export function App({ controlId }: TLCellProps) {
    *          still see and re-send it, which is why this is not fire-and-forget.
    */
   const onSend = useCallback(
-    async (text: string, attachments: Attachment[]): Promise<boolean> => {
+    async (text: string, attachments: Attachment[], edited?: boolean): Promise<boolean> => {
       let active = sessionIdRef.current
       if (!active) {
-        const created = await createSession(windowId, autoTitle(text))
+        // The first send is what brings a chat into being, titled after what was said.
+        const created = await createSession(windowId, autoTitle(text || '(attachment)'))
         await loadSession(windowId, created.id)
         active = created.id
         setSessionId(active)
         await refreshSessions()
-      } else if (messagesRef.current.length === 0 && text) {
-        try {
-          await renameSession(windowId, active, autoTitle(text))
-          await refreshSessions()
-        } catch {
-          /* title is best-effort */
-        }
       }
-      setNotice('')
+      showNotice('')
       // Appended before the request, not after it: the server starts streaming the answer the
       // moment it accepts the message, and an await here would let the first assistant event
       // reach the reducer first - on a new chat the answer then appeared above the question.
       // A refused send takes the message back out again.
       const messageId = crypto.randomUUID()
-      dispatch({ type: 'ADD_USER', id: messageId, text: text || '(attachment)' })
+      dispatch({ type: 'ADD_USER', id: messageId, text: text || '(attachment)', edited })
       setBusy(true)
       runStore.set((s) => ({ ...s, busy: true }))
       try {
@@ -693,7 +765,7 @@ export function App({ controlId }: TLCellProps) {
         dispatch({ type: 'REMOVE_MESSAGE', id: messageId })
         setBusy(false)
         runStore.set((s) => ({ ...s, busy: false }))
-        setNotice(err instanceof Error && err.message === 'busy' ? labels.busyHint : labels.sendFailed)
+        showNotice(err instanceof Error && err.message === 'busy' ? labels.busyHint : labels.sendFailed)
         return false
       }
       return true
@@ -769,8 +841,8 @@ export function App({ controlId }: TLCellProps) {
   )
 
   const sessionTitle = useMemo(
-    () => sessions.find((session) => session.id === sessionId)?.title || 'New chat',
-    [sessionId, sessions],
+    () => sessions.find((session) => session.id === sessionId)?.title || labels.newChat,
+    [labels, sessionId, sessions],
   )
 
   const pendingApprovals = useMemo(
@@ -790,41 +862,40 @@ export function App({ controlId }: TLCellProps) {
     [messages],
   )
 
-  const [resendDraft, setResendDraft] = useState<{ text: string; nonce: number } | null>(null)
-
   /**
-   * Edits an earlier message.
+   * Sends an edited message in place of the one the user changed.
    *
-   * Editing a message means the conversation continues differently from that point, so the turn and
-   * everything after it is dropped - here and on the server - and the text comes back into the
-   * composer for the user to change. Nothing is sent until they send it.
+   * Nothing happens until this point: the bubble is edited in the thread, and only a send drops the
+   * turn and everything after it - here and on the server - and starts the conversation again from
+   * the new wording. A cancelled edit leaves the conversation exactly as it was.
    */
-  const onEdit = useCallback(
-    async (messageId: string, turnIndex: number, draft: string) => {
+  const onEditSend = useCallback(
+    async (messageId: string, turnIndex: number, text: string): Promise<boolean> => {
       const active = sessionIdRef.current
-      if (!active) return
-      setNotice('')
+      if (!active) return false
+      showNotice('')
       let removed = 0
       try {
         const result = await truncate(windowId, active, turnIndex)
         if (result.status === 'busy') {
-          setNotice(labels.busyHint)
-          return
+          showNotice(labels.busyHint)
+          return false
         }
         removed = result.removedTurns ?? 0
       } catch {
-        setNotice(labels.sendFailed)
-        return
+        showNotice(labels.sendFailed)
+        return false
       }
       dispatch({ type: 'REMOVE_FROM_USER', id: messageId })
       setFeedback((current) => current.filter((entry) => entry.turnIndex < turnIndex))
-      // Removing the last turn is what editing always does; saying so only helps when it took
-      // answers the user could still see.
-      if (removed > 1) setNotice(labels.laterTurnsRemoved(removed - 1))
-      setResendDraft({ text: draft, nonce: Date.now() })
       runStore.set((snapshot) => ({ ...snapshot, measuredTokens: 0 }))
+      const sent = await onSend(text, [], true)
+      // Dropping the edited turn is what editing always does; saying so only helps when answers the
+      // user could still see went with it.
+      if (sent && removed > 1) showNotice(labels.laterTurnsRemoved(removed - 1))
+      return sent
     },
-    [labels, windowId],
+    [labels, onSend, windowId],
   )
 
   /**
@@ -837,7 +908,7 @@ export function App({ controlId }: TLCellProps) {
     async (messageId: string, turnIndex: number) => {
       const active = sessionIdRef.current
       if (!active || regenerating) return
-      setNotice('')
+      showNotice('')
       setRegenerating(true)
       try {
         const result = await regenerate(windowId, {
@@ -849,11 +920,11 @@ export function App({ controlId }: TLCellProps) {
           effort: effortRef.current || undefined,
         })
         if (result.status === 'busy') {
-          setNotice(labels.busyHint)
+          showNotice(labels.busyHint)
           return
         }
         if (result.status !== 'ok') {
-          setNotice(labels.sendFailed)
+          showNotice(labels.sendFailed)
           return
         }
         // The turn is gone server side; drop it here too and let the run rebuild it.
@@ -863,7 +934,7 @@ export function App({ controlId }: TLCellProps) {
         setBusy(true)
         runStore.set((snapshot) => ({ ...snapshot, busy: true, measuredTokens: 0 }))
       } catch {
-        setNotice(labels.sendFailed)
+        showNotice(labels.sendFailed)
       } finally {
         setRegenerating(false)
       }
@@ -891,6 +962,17 @@ export function App({ controlId }: TLCellProps) {
     [windowId],
   )
 
+  if (!authenticated) {
+    return (
+      <div id={controlId} className="tl-cockpit is-signed-out">
+        <div className="signed-out">
+          <h2>{labels.signInHeading}</h2>
+          <p>{labels.signInBody}</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div id={controlId} className={`tl-cockpit${railCollapsed ? ' is-rail-collapsed' : ''}`}>
       <SessionRail
@@ -907,7 +989,7 @@ export function App({ controlId }: TLCellProps) {
         onClose={() => setRailOpen(false)}
         onToggleCollapsed={() => setRailCollapsed((value) => !value)}
       />
-      <div className="stage">
+      <div className={`stage${messages.length === 0 ? ' is-empty' : ''}`}>
         <Thread
           messages={messages}
           traceMode={traceMode}
@@ -918,7 +1000,7 @@ export function App({ controlId }: TLCellProps) {
           labels={labels}
           language={language}
           effort={effort}
-          onEdit={onEdit}
+          onEditSend={onEditSend}
           onRegenerate={onRegenerate}
           onRate={onRate}
           onOpenRail={() => setRailOpen(true)}
@@ -956,8 +1038,8 @@ export function App({ controlId }: TLCellProps) {
           busy={busy}
           connection={connection}
           notice={notice}
-          onDismissNotice={() => setNotice('')}
-          resendDraft={resendDraft}
+          noticeDetail={noticeDetail}
+          onDismissNotice={() => showNotice('')}
           onSend={onSend}
           onStop={onStop}
         />

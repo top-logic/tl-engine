@@ -2,8 +2,11 @@ import { React } from 'tl-react-bridge'
 import DOMPurify from 'dompurify'
 import { marked } from 'marked'
 import { highlight, languageLabel } from './highlight'
+import type { bundle } from './i18n'
 
 const { useEffect, useMemo, useRef } = React
+
+type Labels = ReturnType<typeof bundle>
 
 /**
  * Above this many characters the answer is shown as plain text while it streams.
@@ -21,6 +24,19 @@ const renderer = new marked.Renderer()
  * Built here rather than by walking the DOM afterwards: the markup is produced once per parse and
  * sanitized with everything else, so nothing re-decorates a node React may have replaced.
  */
+/**
+ * The words the code-block header needs, read at render time.
+ *
+ * `marked`'s renderer is a plain function with no access to the component's props, so the current
+ * bundle is parked here by the component before it parses. A module-level value is safe because
+ * one language is in force for the whole page.
+ */
+let codeLabels: Pick<Labels, 'copyShort' | 'copied' | 'copyCode'> = {
+  copyShort: 'Copy',
+  copied: 'Copied',
+  copyCode: 'Copy code',
+}
+
 renderer.code = ({ text, lang }) => {
   const language = (lang ?? '').trim().split(/\s+/)[0]
   const { html, used } = highlight(text, language)
@@ -29,7 +45,8 @@ renderer.code = ({ text, lang }) => {
     '<figure class="code-block">' +
     '<figcaption class="code-head">' +
     `<span class="code-lang">${escapeHtml(label)}</span>` +
-    '<button class="code-copy" type="button" data-copy aria-label="Copy code">Copy</button>' +
+    `<button class="code-copy" type="button" data-copy aria-label="${escapeHtml(codeLabels.copyCode)}">` +
+    `${escapeHtml(codeLabels.copyShort)}</button>` +
     '</figcaption>' +
     `<pre><code class="hljs${used ? ` language-${escapeHtml(used)}` : ''}">${html}</code></pre>` +
     '</figure>'
@@ -53,15 +70,24 @@ marked.setOptions({ gfm: true, breaks: true, renderer })
  * and the parser handles it, so the same rendering path is used and the reader sees formatted text
  * as it arrives rather than raw markup that reflows once at the end.
  */
-export function Markdown({ text, streaming }: { text: string; streaming?: boolean }) {
+export function Markdown({
+  text,
+  streaming,
+  labels,
+}: {
+  text: string
+  streaming?: boolean
+  labels: Labels
+}) {
   const container = useRef<HTMLDivElement>(null)
   const plain = streaming === true && text.length > LIVE_MARKDOWN_LIMIT
+  codeLabels = labels
 
   const html = useMemo(() => {
     if (plain) return ''
     const raw = marked.parse(text || '') as string
     return DOMPurify.sanitize(raw)
-  }, [plain, text])
+  }, [plain, text, labels])
 
   // One delegated listener rather than one per block: the blocks are replaced on every parse.
   useEffect(() => {
@@ -74,10 +100,10 @@ export function Markdown({ text, streaming }: { text: string; streaming?: boolea
       void navigator.clipboard
         .writeText(code)
         .then(() => {
-          button.textContent = 'Copied'
+          button.textContent = codeLabels.copied
           button.classList.add('is-done')
           window.setTimeout(() => {
-            button.textContent = 'Copy'
+            button.textContent = codeLabels.copyShort
             button.classList.remove('is-done')
           }, 1500)
         })

@@ -1,6 +1,7 @@
 import { React } from 'tl-react-bridge'
 import { respond } from './api'
 import type { bundle } from './i18n'
+import { toolLabel } from './models'
 import type { ChatAction } from './reducer'
 import type { ApprovalRequest, InteractionRequest } from './types'
 
@@ -87,6 +88,7 @@ function Countdown({
 function OverlayCard({
   kind,
   title,
+  titleTooltip,
   countdown,
   labels,
   children,
@@ -94,6 +96,7 @@ function OverlayCard({
 }: {
   kind: string
   title: string
+  titleTooltip?: string
   countdown: React.ReactNode
   labels: Labels
   children: React.ReactNode
@@ -119,7 +122,9 @@ function OverlayCard({
       </header>
       {open ? (
         <>
-          <h3 className="prompt-card-title">{title}</h3>
+          <h3 className="prompt-card-title" title={titleTooltip}>
+            {title}
+          </h3>
           {children}
           <footer className="prompt-card-footer">{footer}</footer>
         </>
@@ -130,6 +135,29 @@ function OverlayCard({
       )}
     </section>
   )
+}
+
+/**
+ * Why the approval is being asked, in the reader's language.
+ *
+ * Phrased from the tool's mode rather than from the server's `displayReason`: the reason is written
+ * once, in English, by the security context, and this is the one moment the user is asked to take
+ * responsibility for something. An event from before the mode was carried falls back to the wording
+ * it does have.
+ */
+function approvalReason(item: ApprovalRequest, labels: Labels): string {
+  switch (item.toolMode) {
+    case 'USER_SCOPED':
+      return labels.approvalUserScoped
+    case 'DATA_WRITE':
+      return labels.approvalDataWrite
+    case 'STRUCTURAL':
+      return labels.approvalStructural
+    case 'EXTERNAL':
+      return labels.approvalExternal
+    default:
+      return item.displayReason || labels.approvalGeneric
+  }
 }
 
 function ApprovalCard({
@@ -155,7 +183,8 @@ function ApprovalCard({
   return (
     <OverlayCard
       kind={labels.approval}
-      title={item.toolName}
+      title={toolLabel(item.toolName)}
+      titleTooltip={item.toolName}
       labels={labels}
       countdown={<Countdown remainingMs={item.remainingMs} receivedAt={item.receivedAt} labels={labels} />}
       footer={
@@ -172,7 +201,7 @@ function ApprovalCard({
         </>
       }
     >
-      {item.displayReason ? <p className="prompt-card-body">{item.displayReason}</p> : null}
+      <p className="prompt-card-body">{approvalReason(item, labels)}</p>
     </OverlayCard>
   )
 }

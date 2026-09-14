@@ -1,7 +1,7 @@
 import { React } from 'tl-react-bridge'
 import { cancelPromptImprovement, improvePrompt } from './api'
 import { ACCEPT_ATTRIBUTE, collectAttachments, dragHasFiles } from './attachments'
-import { ContextUsage } from './context-usage'
+import { ContextUsage, formatTokens } from './context-usage'
 import type { bundle } from './i18n'
 import { effortLabel, modelLabel } from './models'
 import { PromptStack } from './prompts'
@@ -225,8 +225,8 @@ export const Composer = React.memo(function Composer({
   busy,
   connection,
   notice,
+  noticeDetail,
   onDismissNotice,
-  resendDraft,
   onSend,
   onStop,
 }: {
@@ -261,8 +261,9 @@ export const Composer = React.memo(function Composer({
   busy: boolean
   connection: ConnectionState
   notice: string
+  /** What stands behind the notice technically, shown as its tooltip; empty when there is none. */
+  noticeDetail: string
   onDismissNotice: () => void
-  resendDraft: { text: string; nonce: number } | null
   onSend: (text: string, attachments: Attachment[]) => Promise<boolean>
   onStop: () => void
 }) {
@@ -296,18 +297,6 @@ export const Composer = React.memo(function Composer({
     el.style.height = `${Math.min(el.scrollHeight, 180)}px`
   }, [text])
 
-  // "Edit and send again" on a user message refills the composer; the nonce lets the same text be
-  // sent back more than once.
-  useEffect(() => {
-    if (!resendDraft) return
-    setText(resendDraft.text)
-    setUndoDraft(null)
-    const el = area.current
-    if (!el) return
-    el.focus()
-    el.setSelectionRange(resendDraft.text.length, resendDraft.text.length)
-  }, [resendDraft])
-
   useEffect(() => {
     if (!promptImprovementEnabled || improving || !text.trim()) {
       setImproveVisible(false)
@@ -331,15 +320,25 @@ export const Composer = React.memo(function Composer({
         setModelPane('root')
       }
     }
+    // Escape closes one level at a time, and closing the menu hands the focus back to the button
+    // that opened it - otherwise the focus falls to the document and the next Tab starts over.
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return
       if (modelMenuOpen) {
-        if (modelPane !== 'root') setModelPane('root')
-        else setModelMenuOpen(false)
+        if (modelPane !== 'root') {
+          setModelPane('root')
+        } else {
+          setModelMenuOpen(false)
+          modelMenu.current?.querySelector<HTMLButtonElement>('.model-trigger')?.focus()
+        }
         return
       }
-      if (pane !== 'root') setPane('root')
-      else setMenuOpen(false)
+      if (pane !== 'root') {
+        setPane('root')
+      } else {
+        setMenuOpen(false)
+        menu.current?.querySelector<HTMLButtonElement>('.plus-trigger')?.focus()
+      }
     }
     document.addEventListener('mousedown', onDoc)
     document.addEventListener('keydown', onKey)
@@ -350,7 +349,7 @@ export const Composer = React.memo(function Composer({
   }, [menuOpen, modelMenuOpen, modelPane, pane])
 
   const addFiles = async (incoming: File[]) => {
-    const result = await collectAttachments(incoming, files)
+    const result = await collectAttachments(incoming, files, labels)
     if (result.attachments.length) {
       setFiles((prev) => [...prev, ...result.attachments])
     }
@@ -498,7 +497,7 @@ export const Composer = React.memo(function Composer({
 
   // The composer says what a turn will actually run with: the model, and the effort when one is set.
   const modelName = model ? modelLabel(model) : labels.model
-  const triggerLabel = effort ? `${modelName} · ${effortLabel(effort)}` : modelName
+  const triggerLabel = effort ? `${modelName} · ${effortLabel(effort, labels)}` : modelName
   const defaultEffort = models.find((item) => item.id === model)?.defaultEffort ?? ''
 
   return (
@@ -559,7 +558,9 @@ export const Composer = React.memo(function Composer({
 
       {notice || attachError ? (
         <div className="composer-notice" role="status">
-          <span>{notice || attachError}</span>
+          <span title={notice && noticeDetail ? `${labels.errorDetails}: ${noticeDetail}` : undefined}>
+            {notice || attachError}
+          </span>
           <button
             type="button"
             className="icon-button tiny"
@@ -674,7 +675,7 @@ export const Composer = React.memo(function Composer({
                           icon={Icon.effort}
                           label={labels.effort}
                           description={labels.effortHint}
-                          value={effort ? effortLabel(effort) : labels.defaultValue}
+                          value={effort ? effortLabel(effort, labels) : labels.defaultValue}
                           more
                           onClick={() => setPane('effort')}
                         />
@@ -727,7 +728,7 @@ export const Composer = React.memo(function Composer({
                         key={item.id}
                         label={modelLabel(item.id)}
                         description={item.id}
-                        value={item.contextWindow ? `${Math.round(item.contextWindow / 1000)}K` : undefined}
+                        value={item.contextWindow ? formatTokens(item.contextWindow) : undefined}
                         selected={item.id === model}
                         onClick={() => {
                           onModel(item.id)
@@ -744,7 +745,7 @@ export const Composer = React.memo(function Composer({
                     {effortHits.map((level) => (
                       <MenuRow
                         key={level}
-                        label={effortLabel(level)}
+                        label={effortLabel(level, labels)}
                         description={level === defaultEffort ? labels.defaultValue : undefined}
                         selected={level === effort}
                         onClick={() => {
@@ -837,6 +838,7 @@ export const Composer = React.memo(function Composer({
                 className={`model-trigger${modelMenuOpen ? ' is-open' : ''}`}
                 aria-haspopup="menu"
                 aria-expanded={modelMenuOpen}
+                aria-label={`${labels.model}: ${triggerLabel}`}
                 title={`${labels.model}: ${triggerLabel}`}
                 onClick={() => {
                   setModelMenuOpen((value) => !value)
@@ -854,7 +856,7 @@ export const Composer = React.memo(function Composer({
                       {effortLevels.length ? (
                         <MenuRow
                           label={labels.effort}
-                          value={effort ? effortLabel(effort) : labels.defaultValue}
+                          value={effort ? effortLabel(effort, labels) : labels.defaultValue}
                           more
                           onClick={() => setModelPane('effort')}
                         />
@@ -878,7 +880,7 @@ export const Composer = React.memo(function Composer({
                       {effortLevels.map((level) => (
                         <MenuRow
                           key={level}
-                          label={effortLabel(level)}
+                          label={effortLabel(level, labels)}
                           description={level === defaultEffort ? labels.defaultValue : undefined}
                           selected={level === effort}
                           onClick={() => {
@@ -897,7 +899,7 @@ export const Composer = React.memo(function Composer({
                           key={item.id}
                           label={modelLabel(item.id)}
                           description={item.id}
-                          value={item.contextWindow ? `${Math.round(item.contextWindow / 1000)}K` : undefined}
+                          value={item.contextWindow ? formatTokens(item.contextWindow) : undefined}
                           selected={item.id === model}
                           onClick={() => {
                             onModel(item.id)
@@ -935,7 +937,10 @@ export const Composer = React.memo(function Composer({
           </span>
           {labels.autoApprove}
         </button>
-        <span className="composer-hint">{labels.enterSends}</span>
+        <span className="composer-hint" title={labels.enterSends}>
+          <span className="composer-hint-long">{labels.enterSends}</span>
+          <span className="composer-hint-short">{labels.enterSendsShort}</span>
+        </span>
       </div>
 
       {dropping ? (

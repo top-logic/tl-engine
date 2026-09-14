@@ -14,6 +14,8 @@ export interface UserMessage {
   id: string
   text: string
   timestamp: number
+  /** Whether this message replaced an earlier wording of itself, shown as a marker on the bubble. */
+  edited?: boolean
 }
 
 export interface AssistantText {
@@ -22,6 +24,12 @@ export interface AssistantText {
   text: string
   isStreaming: boolean
   timestamp: number
+  /**
+   * Set once the server has sent the finished answer. The deltas are a live preview of that text,
+   * so one that arrives afterwards - the stream and the completion travel the same queue but a
+   * consumer may still be behind - must not be appended to it.
+   */
+  authoritative?: boolean
 }
 
 export interface ToolCall {
@@ -68,6 +76,12 @@ export interface ApprovalRequest {
   toolName: string
   argsJson: string
   displayReason: string
+  /**
+   * What kind of change the tool makes (`DATA_WRITE`, `STRUCTURAL`, …). Why approval is being
+   * asked, in a form the UI can phrase in the user's language; `displayReason` is the server's
+   * English wording of the same thing.
+   */
+  toolMode?: string
   outcome: ApprovalOutcome
   timestamp: number
   /**
@@ -255,7 +269,10 @@ export function answerTokens(usage: TokenUsage | undefined): number {
 export interface ContextComposition {
   systemPromptTokens: number
   toolDefinitionTokens: number
+  /** The whole conversation, tool results included. */
   messageTokens: number
+  /** The part of `messageTokens` the agent read back from the tools it ran. */
+  toolResultTokens: number
   toolCount: number
 }
 

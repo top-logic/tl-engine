@@ -1,5 +1,8 @@
 import { fileToAttachment } from './api'
+import type { bundle } from './i18n'
 import type { Attachment } from './types'
+
+type Labels = ReturnType<typeof bundle>
 
 /**
  * What the server accepts, restated here so a file is refused before it is read and uploaded.
@@ -35,23 +38,29 @@ export interface AttachResult {
  *
  * @param current
  *        attachments already on the composer, so the count limit covers both
+ * @param labels
+ *        the reader's language, for the refusal a rejected file gets
  */
-export async function collectAttachments(files: File[], current: Attachment[]): Promise<AttachResult> {
+export async function collectAttachments(
+  files: File[],
+  current: Attachment[],
+  labels: Labels,
+): Promise<AttachResult> {
   const problems: string[] = []
   const usable: File[] = []
   let free = MAX_FILES - current.length
 
   for (const file of files) {
     if (!ACCEPTED_TYPES.includes(normalizeType(file.type))) {
-      problems.push(`${file.name}: only images and PDF can be attached`)
+      problems.push(`${file.name}: ${labels.onlyImagesAndPdf}`)
       continue
     }
     if (file.size > MAX_FILE_BYTES) {
-      problems.push(`${file.name}: larger than 10 MB`)
+      problems.push(`${file.name}: ${labels.largerThan10Mb}`)
       continue
     }
     if (free <= 0) {
-      problems.push(`${file.name}: at most ${MAX_FILES} files`)
+      problems.push(`${file.name}: ${labels.atMostFiles(MAX_FILES)}`)
       continue
     }
     free--

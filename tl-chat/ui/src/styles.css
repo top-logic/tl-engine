@@ -53,6 +53,31 @@
   line-height: var(--body-02-line-height, 1.25rem);
 }
 
+/* The chat in a session that is not signed in: one sentence instead of an unusable chat. */
+.tl-cockpit.is-signed-out {
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+}
+
+.signed-out {
+  max-width: 26rem;
+  text-align: center;
+}
+
+.signed-out h2 {
+  margin: 0;
+  font-size: var(--chat-heading);
+  line-height: var(--chat-heading-line);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.signed-out p {
+  margin: 0.5rem 0 0;
+  color: var(--text-secondary);
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -383,12 +408,50 @@
 /* --- Stage -------------------------------------------------------------- */
 
 .stage {
+  position: relative;
   flex: 1;
   min-width: 0;
   min-height: 0;
   display: flex;
   flex-direction: column;
   background: var(--background);
+}
+
+/*
+ * A chat with nothing in it yet puts its greeting and its composer together in the middle of the
+ * page - the first screen of every new chat, and the one place where a headline in the top third
+ * and an input welded to the bottom edge leaves the window empty between them. The title row stays
+ * where it belongs, at the top, so the rail toggle does not travel with the greeting.
+ */
+.stage.is-empty {
+  display: grid;
+  grid-template-rows: 1fr auto auto 1.2fr;
+}
+
+.stage.is-empty .thread-shell {
+  position: static;
+  grid-row: 2;
+  min-height: 0;
+}
+
+.stage.is-empty .composer {
+  grid-row: 3;
+}
+
+.stage.is-empty .thread-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+.stage.is-empty .thread {
+  overflow: hidden;
+}
+
+.stage.is-empty .welcome {
+  margin: 0;
+  padding: 0 0 1.75rem;
 }
 
 .thread-shell {
@@ -501,6 +564,45 @@
   opacity: 1;
 }
 
+.bubble-user-edited {
+  flex: 0 0 auto;
+  align-self: flex-end;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  font-style: italic;
+}
+
+/* Editing happens in the bubble, so the bubble becomes the field rather than opening one. */
+.bubble-user.is-editing {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  border-color: var(--border-interactive, var(--button-primary));
+}
+
+.bubble-user-edit {
+  width: 100%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: 1.5;
+  resize: none;
+  overflow: hidden;
+}
+
+.bubble-user-edit:focus {
+  outline: none;
+}
+
+.bubble-user-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
 .run-meta {
   display: flex;
   align-items: center;
@@ -607,20 +709,28 @@
 
 /* --- Delete confirmation in the rail ------------------------------------ */
 
+/*
+ * The question stands on its own line above its answers: on one line with them it was the part
+ * that got the ellipsis, and a confirmation that cannot be read is not one.
+ */
 .rail-item.is-confirming {
-  gap: 0.125rem;
-  padding: 0.25rem 0.25rem 0.25rem 0.5rem;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.25rem;
+  padding: 0.375rem 0.5rem;
   border: 1px solid var(--chat-danger);
   background: var(--chat-danger-soft);
 }
 
 .rail-confirm-text {
-  flex: 1;
   min-width: 0;
   font-size: var(--chat-small);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+}
+
+.rail-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.25rem;
 }
 
 /* --- Effort in the trace header ----------------------------------------- */
@@ -1135,10 +1245,19 @@
   padding: 0.4375rem 0.25rem 0;
 }
 
+/*
+ * How to send is worth saying at every width; only how much of it fits changes. The short form is
+ * shown where the long one would push the row into a second line.
+ */
 .composer-hint {
   margin-left: auto;
   color: var(--text-secondary);
   font-size: var(--chat-small);
+  white-space: nowrap;
+}
+
+.composer-hint-short {
+  display: none;
 }
 
 .attach-row {
@@ -1893,6 +2012,11 @@
   background: var(--button-primary);
 }
 
+/* Part of the conversation, so a lighter shade of the same colour rather than a fourth hue. */
+.slice-toolResults {
+  background: color-mix(in srgb, var(--button-primary) 55%, transparent);
+}
+
 .context-rows {
   margin: 0.625rem 0 0;
   display: flex;
@@ -2191,8 +2315,12 @@
     display: none;
   }
 
-  .composer-hint {
+  .composer-hint-long {
     display: none;
+  }
+
+  .composer-hint-short {
+    display: inline;
   }
 
   .plus-popover,

@@ -3,6 +3,7 @@ import type {
   Attachment,
   Capabilities,
   ChatMessage,
+  ContextComposition,
   ImprovePromptResponse,
   InteractionOption,
   SendPayload,
@@ -84,6 +85,8 @@ export interface SessionDetail {
   /** Answer ratings recorded in this session, so a reopened chat shows them again. */
   feedback?: MessageFeedback[]
   lastEffort?: string
+  /** What the last request's prompt was made of, so the popover keeps its breakdown after a reload. */
+  lastComposition?: ContextComposition
 }
 
 export async function loadSession(windowId: string, id: string): Promise<SessionDetail> {
@@ -92,16 +95,6 @@ export async function loadSession(windowId: string, id: string): Promise<Session
       credentials: 'include',
     }),
   )
-}
-
-export async function renameSession(windowId: string, id: string, title: string): Promise<void> {
-  const res = await fetch(withWindow(`/chat/sessions/${encodeURIComponent(id)}/title`, windowId), {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify({ title }),
-  })
-  if (!res.ok) throw new Error(`rename failed (${res.status})`)
 }
 
 export async function deleteSession(windowId: string, id: string): Promise<void> {
@@ -501,9 +494,10 @@ export function turnsJsonToMessages(turnsJson: string | undefined): ChatMessage[
  * The title a new chat gets from its first message.
  *
  * Long enough to be recognisable in the thread header, which shows it in full: the rail truncates
- * with an ellipsis of its own, so a title cut short here was cut short everywhere.
+ * with an ellipsis of its own, so a title cut short here was cut short everywhere. A chat is only
+ * created once something has been said in it, so there is always a message to name it after.
  */
 export function autoTitle(text: string): string {
   const trimmed = text.trim().replace(/\s+/g, ' ')
-  return trimmed.length > 72 ? `${trimmed.slice(0, 72)}…` : trimmed || 'New chat'
+  return trimmed.length > 72 ? `${trimmed.slice(0, 72)}…` : trimmed
 }

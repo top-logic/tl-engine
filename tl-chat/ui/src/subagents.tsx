@@ -1,4 +1,5 @@
 import { React } from 'tl-react-bridge'
+import { formatTokens } from './context-usage'
 import type { bundle } from './i18n'
 import type { ChatMessage, SubagentActivity } from './types'
 
@@ -11,11 +12,6 @@ function formatDuration(ms: number): string {
   if (ms < 1000) return `${ms}ms`
   if (ms < 60_000) return `${(ms / 1000).toFixed(1)}s`
   return `${Math.floor(ms / 60_000)}m ${Math.round((ms % 60_000) / 1000)}s`
-}
-
-function formatTokens(tokens: number): string {
-  if (tokens < 1000) return tokens ? String(tokens) : ''
-  return `${(tokens / 1000).toFixed(tokens < 10_000 ? 1 : 0)}k tokens`
 }
 
 function transcriptLine(message: ChatMessage, labels: Labels): string | null {
@@ -161,7 +157,7 @@ export const SubagentActivityPanel = React.memo(function SubagentActivityPanel({
                       <span>
                         {item.targetAgentName}
                         {item.durationMs ? ` · ${formatDuration(item.durationMs)}` : ''}
-                        {item.totalTokens ? ` · ${formatTokens(item.totalTokens)}` : ''}
+                        {item.totalTokens ? ` · ${formatTokens(item.totalTokens)} ${labels.tokens}` : ''}
                       </span>
                     </button>
                     {isActive ? (

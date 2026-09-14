@@ -167,19 +167,21 @@ export const SessionRail = React.memo(function SessionRail({
                   return (
                     <div className="rail-item is-confirming" key={session.id} ref={confirmRef}>
                       <span className="rail-confirm-text">{labels.deleteChatQuestion}</span>
-                      <button
-                        type="button"
-                        className="text-button is-danger"
-                        onClick={() => {
-                          setConfirming(null)
-                          onDelete(session.id)
-                        }}
-                      >
-                        {labels.delete}
-                      </button>
-                      <button type="button" className="text-button" onClick={() => setConfirming(null)}>
-                        {labels.cancel}
-                      </button>
+                      <span className="rail-confirm-actions">
+                        <button type="button" className="text-button" onClick={() => setConfirming(null)}>
+                          {labels.cancel}
+                        </button>
+                        <button
+                          type="button"
+                          className="text-button is-danger"
+                          onClick={() => {
+                            setConfirming(null)
+                            onDelete(session.id)
+                          }}
+                        >
+                          {labels.delete}
+                        </button>
+                      </span>
                     </div>
                   )
                 }

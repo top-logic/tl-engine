@@ -219,22 +219,98 @@ const EditIcon = (
   </svg>
 )
 
+/**
+ * A message the user sent, editable in place.
+ *
+ * Editing happens in the bubble itself and changes nothing until it is sent: the text is the
+ * user's to try out, and a cancelled edit leaves the conversation - including every answer that
+ * came after it - exactly as it was. Only a send truncates the conversation and asks again.
+ */
 function UserTurn({
   text,
+  edited,
   labels,
-  onEdit,
+  editing,
+  onStartEdit,
+  onCancelEdit,
+  onSubmitEdit,
 }: {
   text: string
+  edited?: boolean
   labels: Labels
-  onEdit?: () => void
+  editing: boolean
+  onStartEdit?: () => void
+  onCancelEdit: () => void
+  onSubmitEdit: (text: string) => void
 }) {
+  const [draft, setDraft] = useState(text)
+  const area = useRef<HTMLTextAreaElement>(null)
+
+  // The bubble grows with the text rather than scrolling inside itself: the user is reading their
+  // own message, and a two-line window onto it would hide what they are about to change.
+  useEffect(() => {
+    const el = area.current
+    if (!editing || !el) return
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
+  }, [draft, editing])
+
+  useEffect(() => {
+    if (!editing) return
+    setDraft(text)
+    const el = area.current
+    if (!el) return
+    el.focus()
+    el.setSelectionRange(text.length, text.length)
+  }, [editing, text])
+
+  if (editing) {
+    const submit = () => {
+      const next = draft.trim()
+      if (!next) return
+      onSubmitEdit(next)
+    }
+    return (
+      <div className="turn turn-user">
+        <div className="bubble-user is-editing">
+          <textarea
+            ref={area}
+            className="bubble-user-edit"
+            value={draft}
+            aria-label={labels.editAndSendAgain}
+            rows={1}
+            onChange={(event) => setDraft(event.currentTarget.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') {
+                event.preventDefault()
+                onCancelEdit()
+              } else if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+                event.preventDefault()
+                submit()
+              }
+            }}
+          />
+          <div className="bubble-user-edit-actions">
+            <button type="button" className="text-button" onClick={onCancelEdit}>
+              {labels.cancel}
+            </button>
+            <button type="button" className="prompt-continue" disabled={!draft.trim()} onClick={submit}>
+              {labels.send}
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="turn turn-user">
       <div className="bubble-user">
         <div className="bubble-user-text">{text}</div>
-        {onEdit ? (
+        {edited ? <span className="bubble-user-edited">{labels.editedMarker}</span> : null}
+        {onStartEdit ? (
           <span className="bubble-user-actions">
-            <IconButton label={labels.editAndSendAgain} hint={labels.editAndSendAgain} onClick={onEdit}>
+            <IconButton label={labels.editAndSendAgain} hint={labels.editAndSendAgain} onClick={onStartEdit}>
               {EditIcon}
             </IconButton>
           </span>
@@ -393,7 +469,7 @@ function AssistantAnswer({
   return (
     <div className="turn turn-agent">
       <div className={`answer${streaming ? ' is-streaming' : ''}`}>
-        <Markdown text={text} streaming={streaming} />
+        <Markdown text={text} streaming={streaming} labels={labels} />
       </div>
       {streaming ? null : (
         <AnswerFooter
@@ -520,7 +596,7 @@ function TraceEvent({
           <div className="trace-block">
             <div className="trace-block-label">{labels.output}</div>
             <div className="trace-block-md">
-              <Markdown text={item.text} />
+              <Markdown text={item.text} labels={labels} />
             </div>
           </div>
         </TraceEntry>
@@ -580,7 +656,7 @@ function DetailedTrace({
         <span>{labels.trace}</span>
         <span className="trace-panel-summary">{label}</span>
         {/* What the turn was actually run with, so a trace can be read without guessing. */}
-        {effort ? <span className="trace-effort">{`${labels.effort}: ${effortLabel(effort)}`}</span> : null}
+        {effort ? <span className="trace-effort">{`${labels.effort}: ${effortLabel(effort, labels)}`}</span> : null}
         {model ? <span className="trace-effort">{model}</span> : null}
         <span className={`trace-chevron${open ? ' is-open' : ''}`} aria-hidden="true" />
       </button>
@@ -702,7 +778,7 @@ export const Thread = React.memo(function Thread({
   labels,
   language,
   effort,
-  onEdit,
+  onEditSend,
   onRegenerate,
   onRate,
   onOpenRail,
@@ -719,7 +795,7 @@ export const Thread = React.memo(function Thread({
   labels: Labels
   language: Language
   effort: string
-  onEdit: (messageId: string, turnIndex: number, draft: string) => void
+  onEditSend: (messageId: string, turnIndex: number, text: string) => Promise<boolean>
   onRegenerate: (messageId: string, turnIndex: number) => void
   onRate: (turnIndex: number, rating: Rating, note?: string) => void
   onOpenRail: () => void
@@ -744,6 +820,8 @@ export const Thread = React.memo(function Thread({
     return map
   }, [feedback])
   const lastIndex = turns.length - 1
+  /** The message being edited in place, if any; editing one closes an edit open on another. */
+  const [editingId, setEditingId] = useState<string | null>(null)
 
   useEffect(() => {
     const el = scroller.current
@@ -803,8 +881,15 @@ export const Thread = React.memo(function Thread({
                   {user ? (
                     <UserTurn
                       text={user.text}
+                      edited={user.edited}
                       labels={labels}
-                      onEdit={busy ? undefined : () => onEdit(user.id, turn.index, user.text)}
+                      editing={editingId === user.id}
+                      onStartEdit={busy ? undefined : () => setEditingId(user.id)}
+                      onCancelEdit={() => setEditingId(null)}
+                      onSubmitEdit={(text) => {
+                        setEditingId(null)
+                        void onEditSend(user.id, turn.index, text)
+                      }}
                     />
                   ) : null}
                   <AgentRun

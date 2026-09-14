@@ -37,6 +37,7 @@ const EN = {
   askAnything: 'Ask anything…',
   typeNext: 'Type your next message…',
   enterSends: 'Enter sends · Shift+Enter adds a line',
+  enterSendsShort: 'Enter sends',
   autoApprove: 'Auto-approve',
   send: 'Send',
   stopRun: 'Stop the run',
@@ -48,11 +49,16 @@ const EN = {
   toolCalls: (count: number) => `${count} tool call${count === 1 ? '' : 's'}`,
   skillLabel: 'skill',
   editAndSendAgain: 'Edit and send again',
+  editedMarker: 'edited',
+  signInHeading: 'Sign in to use the chat',
+  signInBody: 'The agent works with your data and with your permissions, so it needs to know who you are.',
   edited: 'edited',
   laterTurnsRemoved: (count: number) =>
     `${count} later turn${count === 1 ? '' : 's'} removed. Change the message and send it again.`,
   copyAnswer: 'Copy answer',
   copied: 'Copied',
+  copyCode: 'Copy code',
+  copyShort: 'Copy',
   goodAnswer: 'Good answer',
   badAnswer: 'Bad answer',
   regenerate: 'Answer again',
@@ -69,6 +75,10 @@ const EN = {
   modelHint: 'The model this chat runs on',
   effort: 'Effort',
   effortHint: 'How long the model may think before answering',
+  effortLow: 'Low',
+  effortMedium: 'Medium',
+  effortHigh: 'High',
+  effortMax: 'Maximum',
   mcpServers: 'MCP servers',
   mcpHint: 'External tool servers for this turn',
   traceLevel: 'Trace level',
@@ -113,17 +123,23 @@ const EN = {
   systemPrompt: 'System prompt',
   toolDefinitions: 'Tool definitions',
   conversation: 'Conversation',
+  toolResults: 'Tool results',
   toolsCount: (count: number) => `${count} tools`,
   lastAnswer: 'Last answer',
   tokensWritten: (tokens: string) => `${tokens} tokens written`,
   contextMeasured:
-    'Measured by the provider for the last request. Rows marked ~ are estimates of how that total splits.',
+    'Measured by the provider for the last request - everything the model read, tool results included. Rows marked ~ are estimates of how that total splits.',
   contextEstimated:
     'Estimated until the first answer of this chat; the next turn reports the measured size.',
   tokens: 'tokens',
 
   approval: 'Approval',
   question: 'Question',
+  approvalUserScoped: 'Changes your personal settings.',
+  approvalDataWrite: 'Changes shared application data.',
+  approvalStructural: 'Changes the structure of the application.',
+  approvalExternal: 'Sends data to a system outside this application.',
+  approvalGeneric: 'Needs your approval before it runs.',
   deny: 'Deny',
   allowThisChat: 'Allow this chat',
   allowOnce: 'Allow once',
@@ -164,8 +180,16 @@ const EN = {
   subagentsStopFailed: 'The subagents could not be stopped.',
   you: 'You',
   agentLabel: 'Agent',
-  providerError: 'The model returned an error.',
+  providerError: 'The model returned an error. The attempt was discarded; you can send again.',
+  providerErrorRateLimited: 'The model is being asked too often just now. Try again in a moment.',
+  providerErrorBilling: 'The model account cannot be billed. Please tell your administrator.',
+  providerErrorOverloaded: 'The model is overloaded just now. Try again in a moment.',
+  providerErrorContext: 'The conversation has grown past what this model can read. Start a new chat, or switch to a model with a larger context.',
+  providerErrorAuth: 'The model rejected the access key. Please tell your administrator.',
+  providerErrorInvalid: 'The model refused the request. The attempt was discarded; you can send again.',
+  errorDetails: 'Technical details',
   streamLost: 'Lost the event stream.',
+  cancelled: 'Stopped.',
 }
 
 type Bundle = typeof EN
@@ -199,6 +223,7 @@ const DE: Bundle = {
   askAnything: 'Frag mich etwas …',
   typeNext: 'Nächste Nachricht schreiben …',
   enterSends: 'Enter sendet · Umschalt+Enter macht einen Zeilenumbruch',
+  enterSendsShort: 'Enter sendet',
   autoApprove: 'Automatisch freigeben',
   send: 'Senden',
   stopRun: 'Lauf abbrechen',
@@ -210,11 +235,16 @@ const DE: Bundle = {
   toolCalls: (count: number) => `${count} Werkzeugaufruf${count === 1 ? '' : 'e'}`,
   skillLabel: 'Skill',
   editAndSendAgain: 'Bearbeiten und erneut senden',
+  editedMarker: 'bearbeitet',
+  signInHeading: 'Melde dich an, um den Chat zu nutzen',
+  signInBody: 'Der Agent arbeitet mit deinen Daten und mit deinen Rechten - dafür muss er wissen, wer du bist.',
   edited: 'bearbeitet',
   laterTurnsRemoved: (count: number) =>
     `${count} spätere ${count === 1 ? 'Antwort wurde' : 'Antworten wurden'} entfernt. Ändere die Nachricht und sende sie erneut.`,
   copyAnswer: 'Antwort kopieren',
   copied: 'Kopiert',
+  copyCode: 'Code kopieren',
+  copyShort: 'Kopieren',
   goodAnswer: 'Gute Antwort',
   badAnswer: 'Schlechte Antwort',
   regenerate: 'Neu beantworten',
@@ -231,6 +261,10 @@ const DE: Bundle = {
   modelHint: 'Das Modell, mit dem dieser Chat läuft',
   effort: 'Nachdenken',
   effortHint: 'Wie lange das Modell vor der Antwort nachdenken darf',
+  effortLow: 'Kurz',
+  effortMedium: 'Mittel',
+  effortHigh: 'Lang',
+  effortMax: 'Maximal',
   mcpServers: 'MCP-Server',
   mcpHint: 'Externe Werkzeug-Server für diesen Zug',
   traceLevel: 'Detailgrad',
@@ -275,17 +309,23 @@ const DE: Bundle = {
   systemPrompt: 'System-Prompt',
   toolDefinitions: 'Werkzeugdefinitionen',
   conversation: 'Konversation',
+  toolResults: 'Werkzeugergebnisse',
   toolsCount: (count: number) => `${count} Werkzeuge`,
   lastAnswer: 'Letzte Antwort',
   tokensWritten: (tokens: string) => `${tokens} Token geschrieben`,
   contextMeasured:
-    'Vom Anbieter für die letzte Anfrage gemessen. Mit ~ markierte Zeilen schätzen die Aufteilung.',
+    'Vom Anbieter für die letzte Anfrage gemessen - alles, was das Modell gelesen hat, Werkzeugergebnisse eingeschlossen. Mit ~ markierte Zeilen schätzen die Aufteilung.',
   contextEstimated:
     'Geschätzt bis zur ersten Antwort dieses Chats; der nächste Zug meldet die gemessene Größe.',
   tokens: 'Token',
 
   approval: 'Freigabe',
   question: 'Rückfrage',
+  approvalUserScoped: 'Ändert deine persönlichen Einstellungen.',
+  approvalDataWrite: 'Ändert gemeinsame Anwendungsdaten.',
+  approvalStructural: 'Ändert die Struktur der Anwendung.',
+  approvalExternal: 'Sendet Daten an ein System außerhalb dieser Anwendung.',
+  approvalGeneric: 'Braucht deine Freigabe, bevor es ausgeführt wird.',
   deny: 'Ablehnen',
   allowThisChat: 'In diesem Chat erlauben',
   allowOnce: 'Einmal erlauben',
@@ -326,8 +366,16 @@ const DE: Bundle = {
   subagentsStopFailed: 'Die Subagenten konnten nicht abgebrochen werden.',
   you: 'Du',
   agentLabel: 'Agent',
-  providerError: 'Das Modell hat einen Fehler gemeldet.',
+  providerError: 'Das Modell hat einen Fehler gemeldet. Der Versuch wurde verworfen, du kannst erneut senden.',
+  providerErrorRateLimited: 'Das Modell wird gerade zu oft angefragt. Versuche es gleich noch einmal.',
+  providerErrorBilling: 'Das Modellkonto kann nicht abgerechnet werden. Bitte wende dich an deine Administration.',
+  providerErrorOverloaded: 'Das Modell ist gerade überlastet. Versuche es gleich noch einmal.',
+  providerErrorContext: 'Das Gespräch ist länger, als dieses Modell lesen kann. Beginne einen neuen Chat oder wechsle zu einem Modell mit größerem Kontext.',
+  providerErrorAuth: 'Das Modell hat den Zugangsschlüssel abgelehnt. Bitte wende dich an deine Administration.',
+  providerErrorInvalid: 'Das Modell hat die Anfrage abgelehnt. Der Versuch wurde verworfen, du kannst erneut senden.',
+  errorDetails: 'Technische Details',
   streamLost: 'Die Ereignisverbindung ist abgerissen.',
+  cancelled: 'Abgebrochen.',
 }
 
 const BUNDLES: Record<Language, Bundle> = { en: EN, de: DE }
@@ -365,4 +413,32 @@ export function formatTimestamp(timestamp: number, language: Language): string {
     hour: '2-digit',
     minute: '2-digit',
   })
+}
+
+/**
+ * What a failed run says to the reader, in their language.
+ *
+ * The provider's own message names a field of a JSON request and is written for whoever wrote that
+ * request, not for whoever was typing. The `kind` is the part that means something to a reader -
+ * that the model was busy, that the conversation outgrew it, that a key is wrong - so the strip
+ * says that, and the provider's wording is kept for the tooltip.
+ */
+export function providerErrorText(kind: string | undefined, language: Language): string {
+  const labels = bundle(language)
+  switch ((kind ?? '').toUpperCase()) {
+    case 'RATE_LIMITED':
+      return labels.providerErrorRateLimited
+    case 'BILLING':
+      return labels.providerErrorBilling
+    case 'OVERLOADED':
+      return labels.providerErrorOverloaded
+    case 'CONTEXT_WINDOW_EXCEEDED':
+      return labels.providerErrorContext
+    case 'AUTHENTICATION':
+      return labels.providerErrorAuth
+    case 'INVALID_REQUEST':
+      return labels.providerErrorInvalid
+    default:
+      return labels.providerError
+  }
 }

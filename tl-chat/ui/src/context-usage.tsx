@@ -86,11 +86,22 @@ export function readContext(snapshot: RunSnapshot): ContextReading {
   }
 }
 
+/**
+ * How the measured total splits.
+ *
+ * The system prompt and the tool definitions are the loop's estimates, subtracted from the measured
+ * total; what is left is the conversation. Of that remainder, the tool results are shown on their
+ * own line - they are inside the prompt like everything else, and they are the part that grows
+ * without the user writing anything - and are marked as an estimate because their figure, unlike
+ * the remainder they come out of, is one.
+ */
 function slicesOf(used: number, composition: ContextComposition | undefined, estimated: boolean): Slice[] {
   if (!composition || used <= 0) return []
   const system = Math.min(composition.systemPromptTokens, used)
   const tools = Math.min(composition.toolDefinitionTokens, Math.max(0, used - system))
-  const conversation = Math.max(0, used - system - tools)
+  const rest = Math.max(0, used - system - tools)
+  const toolResults = Math.min(composition.toolResultTokens, rest)
+  const conversation = rest - toolResults
   const slices: Slice[] = []
   if (system > 0) {
     slices.push({ key: 'system', tokens: system, estimated: true })
@@ -106,6 +117,9 @@ function slicesOf(used: number, composition: ContextComposition | undefined, est
   if (conversation > 0) {
     slices.push({ key: 'conversation', tokens: conversation, estimated })
   }
+  if (toolResults > 0) {
+    slices.push({ key: 'toolResults', tokens: toolResults, estimated: true })
+  }
   return slices
 }
 
@@ -116,6 +130,8 @@ function sliceLabel(slice: Slice, labels: Labels): string {
       return labels.systemPrompt
     case 'tools':
       return labels.toolDefinitions
+    case 'toolResults':
+      return labels.toolResults
     default:
       return labels.conversation
   }
@@ -160,7 +176,10 @@ export const ContextUsage = React.memo(function ContextUsage({ labels }: { label
     }
   }, [open])
 
-  if (!reading.window) return null
+  // Nothing measured, nothing estimated: an empty ring beside the send button reads as a spinner
+  // that never finishes. The gauge appears with the first turn, which is when it has something to
+  // say; until then the window is visible in the model menu.
+  if (!reading.window || reading.used <= 0) return null
 
   const label = `${prefix}${formatTokens(reading.used)} / ${formatTokens(reading.window)} ${labels.tokens}`
 
@@ -207,9 +226,9 @@ function ContextPopover({
 }) {
   const prefix = reading.estimated ? '~' : ''
   // What the turn actually ran with: the model, and the effort when one is in force.
-  const modelLine = model ? (effort ? `${modelLabel(model)} · ${effortLabel(effort)}` : modelLabel(model)) : ''
+  const modelLine = model ? (effort ? `${modelLabel(model)} · ${effortLabel(effort, labels)}` : modelLabel(model)) : ''
   return (
-    <div className="context-popover" role="dialog" aria-label="Context usage">
+    <div className="context-popover" role="dialog" aria-label={labels.contextUsage}>
       <div className="context-popover-head">
         <strong>{labels.contextUsage}</strong>
         <span>

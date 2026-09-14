@@ -1,4 +1,7 @@
+import type { bundle } from './i18n'
 import type { ModelOption } from './types'
+
+type Labels = ReturnType<typeof bundle>
 
 /**
  * A model id written the way a person would say it.
@@ -10,7 +13,9 @@ import type { ModelOption } from './types'
  */
 export function modelLabel(id: string): string {
   if (!id) return ''
-  const parts = id.split('-')
+  // A trailing eight-digit segment is the catalogue's release date, not part of the name:
+  // "claude-haiku-4-5-20251001" is Haiku 4.5, not Haiku 4.5.20251001.
+  const parts = id.replace(/-\d{8}$/, '').split('-')
   const words: string[] = []
   const version: string[] = []
   for (const part of parts) {
@@ -36,12 +41,47 @@ function capitalize(word: string): string {
   return word.charAt(0).toUpperCase() + word.slice(1)
 }
 
+/**
+ * A tool id written the way a person would say it.
+ *
+ * Tools have no display name of their own - the registry records an id and an English description
+ * written for the model - so the id is read out instead: the factory prefix is dropped and the
+ * camel case is broken up, turning `model-modification.createModule` into "Create module". The id
+ * stays available as a tooltip, the same way a model id does.
+ */
+export function toolLabel(id: string): string {
+  if (!id) return ''
+  const bare = id.includes('.') ? id.slice(id.lastIndexOf('.') + 1) : id
+  const words = bare
+    .replace(/[_-]+/g, ' ')
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .trim()
+  if (!words) return id
+  return words.charAt(0).toUpperCase() + words.slice(1).toLowerCase()
+}
+
 /** The effort levels the given model offers, empty when it offers none. */
 export function effortLevelsOf(models: ModelOption[], modelId: string): string[] {
   return models.find((item) => item.id === modelId)?.effortLevels ?? []
 }
 
-/** An effort level written for a reader: "high" becomes "High". */
-export function effortLabel(level: string): string {
-  return level ? level.charAt(0).toUpperCase() + level.slice(1) : ''
+/**
+ * An effort level in the reader's language.
+ *
+ * The levels themselves are the providers' own words and never reach the user: they are keys into
+ * the bundle, so "high" reads as "Lang" in a German UI rather than as "High".
+ */
+export function effortLabel(level: string, labels: Labels): string {
+  switch (level) {
+    case 'low':
+      return labels.effortLow
+    case 'medium':
+      return labels.effortMedium
+    case 'high':
+      return labels.effortHigh
+    case 'max':
+      return labels.effortMax
+    default:
+      return level
+  }
 }

@@ -18,11 +18,12 @@ function genId(): string {
 }
 
 export type ChatAction =
-  | { type: 'ADD_USER'; id: string; text: string }
+  | { type: 'ADD_USER'; id: string; text: string; edited?: boolean }
   | { type: 'REMOVE_MESSAGE'; id: string }
   | { type: 'REMOVE_FROM_USER'; id: string }
   | { type: 'ADD_ASSISTANT'; id: string; text: string; isStreaming: boolean }
   | { type: 'APPEND_TEXT'; id: string; delta: string }
+  | { type: 'SET_TEXT'; id: string; text: string }
   | { type: 'FINALIZE_TEXT'; id: string }
   | { type: 'ADD_TOOL'; toolUseId: string; name: string; input: unknown; depth?: number }
   | { type: 'UPDATE_TOOL'; toolUseId: string; status: ToolCallStatus; durationMs?: number }
@@ -36,6 +37,7 @@ export type ChatAction =
       toolName: string
       argsJson: string
       displayReason: string
+      toolMode?: string
       remainingMs?: number
     }
   | { type: 'RESOLVE_APPROVAL'; approvalRequestId: string; outcome: ApprovalOutcome }
@@ -58,7 +60,13 @@ export type ChatAction =
 export function chatReducer(messages: ChatMessage[], action: ChatAction): ChatMessage[] {
   switch (action.type) {
     case 'ADD_USER': {
-      const msg: UserMessage = { type: 'user', id: action.id, text: action.text, timestamp: Date.now() }
+      const msg: UserMessage = {
+        type: 'user',
+        id: action.id,
+        text: action.text,
+        timestamp: Date.now(),
+        edited: action.edited,
+      }
       return [...messages, msg]
     }
     case 'REMOVE_MESSAGE':
@@ -80,7 +88,18 @@ export function chatReducer(messages: ChatMessage[], action: ChatAction): ChatMe
     }
     case 'APPEND_TEXT':
       return messages.map((m) =>
-        m.type === 'assistant_text' && m.id === action.id ? { ...m, text: m.text + action.delta } : m,
+        m.type === 'assistant_text' && m.id === action.id && !m.authoritative
+          ? { ...m, text: m.text + action.delta }
+          : m,
+      )
+    case 'SET_TEXT':
+      // The authoritative answer, from message_complete. It replaces whatever the deltas built -
+      // they are a preview of it - and closes the message to further deltas, so a fragment that
+      // arrives late cannot append itself to the finished text.
+      return messages.map((m) =>
+        m.type === 'assistant_text' && m.id === action.id
+          ? { ...m, text: action.text, authoritative: true }
+          : m,
       )
     case 'FINALIZE_TEXT':
       return messages.map((m) =>
@@ -150,6 +169,7 @@ export function chatReducer(messages: ChatMessage[], action: ChatAction): ChatMe
           toolName: action.toolName,
           argsJson: action.argsJson,
           displayReason: action.displayReason,
+          toolMode: action.toolMode,
           outcome: 'pending',
           timestamp: Date.now(),
           remainingMs: action.remainingMs,

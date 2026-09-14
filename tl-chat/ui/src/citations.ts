@@ -1,8 +1,9 @@
 /**
  * Citation markers of the form {@code [n]} in assistant markdown.
  *
- * The markdown renderer turns each of these into a chip. The server has already
- * dropped invented ids and rewritten the numbers; this only finds what to chip.
+ * Which of them become chips is decided by the message's own citation list: the server has already
+ * dropped invented ids and rewritten the numbers, and a bracketed number it left alone is the
+ * author's text - an array index, a footnote - not a citation.
  */
 export function citationMarkerIndexes(text: string): number[] {
   const seen: number[] = []

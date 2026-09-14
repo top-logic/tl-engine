@@ -63,6 +63,14 @@ function escapeHtml(text: string): string {
     .replace(/"/g, '&quot;')
 }
 
+/**
+ * What the citation renderer needs while `marked` parses, parked here for the length of one parse.
+ *
+ * `marked`'s renderer is a plain function with no access to the component's props. The value is
+ * therefore set immediately before `marked.parse()` and read by the renderer during that same
+ * synchronous call, so two `Markdown` instances can never see each other's map - which they could
+ * when it was set during render and read later from inside a `useMemo`.
+ */
 let citationLabels: Pick<Labels, 'citationChip'> = { citationChip: (n) => `Citation ${n}` }
 let citationIds = new Map<number, string>()
 
@@ -78,6 +86,9 @@ marked.use({
       tokenizer(src: string) {
         const match = /^\[(\d+)\]/.exec(src)
         if (!match) return undefined
+        // Only a number this message actually cites becomes a chip. Everything else in brackets is
+        // the author's own text - an array index, a footnote marker - and stays as written.
+        if (!citationIds.has(Number(match[1]))) return undefined
         return { type: 'citation', raw: match[0], index: match[1] }
       },
       renderer(token) {
@@ -121,13 +132,17 @@ export function Markdown({
 }) {
   const container = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState<number | null>(null)
+  /** Where the clicked chip sits inside the answer, so the popover opens at it and not below. */
+  const [anchor, setAnchor] = useState<{ top: number; left: number } | null>(null)
   const plain = streaming === true && text.length > LIVE_MARKDOWN_LIMIT
-  codeLabels = labels
-  citationLabels = labels
-  citationIds = new Map((citations ?? []).map((item) => [item.index, item.id]))
 
   const html = useMemo(() => {
     if (plain) return ''
+    // Set here rather than during render: the parse below is the only reader, and it runs
+    // synchronously on the next line.
+    codeLabels = labels
+    citationLabels = labels
+    citationIds = new Map((citations ?? []).map((item) => [item.index, item.id]))
     const raw = marked.parse(text || '') as string
     return DOMPurify.sanitize(raw, {
       ADD_TAGS: ['button'],
@@ -145,8 +160,21 @@ export function Markdown({
       if (cite) {
         event.preventDefault()
         const marker = Number(cite.dataset.citationIndex)
+        const wrap = el.parentElement
+        if (wrap) {
+          const box = wrap.getBoundingClientRect()
+          const chip = cite.getBoundingClientRect()
+          setAnchor({
+            top: chip.bottom - box.top + 4,
+            // Clamped, so a chip at the right edge does not push the popover out of the answer.
+            left: Math.max(0, Math.min(chip.left - box.left, box.width - 320)),
+          })
+        }
         setOpen((current) => (current === marker ? null : marker))
         return
+      }
+      if (!target?.closest('.cite-popover')) {
+        setOpen(null)
       }
       const button = target?.closest<HTMLButtonElement>('[data-copy]')
       if (!button) return
@@ -169,6 +197,16 @@ export function Markdown({
     return () => el.removeEventListener('click', onClick)
   }, [])
 
+  // Escape closes the popover, like every other overlay in the chat.
+  useEffect(() => {
+    if (open == null) return undefined
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open])
+
   const citation = open == null ? undefined : (citations ?? []).find((item) => item.index === open)
   const noopOpen = (_content: React.ReactNode, _options: PaneOpenOptions) => undefined
   const annotation =
@@ -188,7 +226,14 @@ export function Markdown({
   return (
     <div className="md-wrap">
       <div className="md" ref={container} dangerouslySetInnerHTML={{ __html: html }} />
-      {annotation}
+      {annotation ? (
+        <div
+          className="cite-anchor"
+          style={anchor ? { top: anchor.top, left: anchor.left } : undefined}
+        >
+          {annotation}
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -204,6 +249,9 @@ export function DefaultCitationPopover({
   if (!citation) {
     return <p className="cite-popover-empty">{labels.railEmpty}</p>
   }
+  // The cite tool's `url` is optional and a model that passed the URL as the `id` did not repeat it
+  // there. A web source stays clickable either way.
+  const href = citation.url || (/^https?:\/\//i.test(citation.id) ? citation.id : '')
   return (
     <div className="cite-popover" role="dialog">
       <div className="cite-popover-body">
@@ -211,9 +259,9 @@ export function DefaultCitationPopover({
           <strong>{labels.citationKind}:</strong> {citation.kind || 'web'}
         </p>
         <p>{citation.label || citation.id}</p>
-        {citation.url ? (
+        {href ? (
           <p>
-            <a href={citation.url} target="_blank" rel="noreferrer">
+            <a href={href} target="_blank" rel="noreferrer" title={href}>
               {labels.citationSource}
             </a>
           </p>

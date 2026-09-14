@@ -16,7 +16,6 @@ import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.event.CompositeAgentEventListener;
 import com.top_logic.tl.ai.core.citation.CitationValidator;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
-import com.top_logic.tl.ai.core.tools.interaction.CiteTool;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.message.Conversation;
@@ -127,14 +126,14 @@ public final class AgentRunner {
 			? log.turns().size() - (log.currentTurn() != null ? 1 : 0)
 			: 0;
 
-		CiteTool.reset();
+		// The run numbers its citation markers from 1; the context may have served an earlier run.
+		context.citationMarkers().reset();
 		AgentFactory.RunResult runResult;
 		try {
 			runResult = AgentFactory.getInstance().runAgent(agentName, conversation, memory,
 				context, effectiveListener, sessionRegistry,
 				overrides != null ? overrides : AgentFactory.RunOverrides.NONE);
 		} catch (RuntimeException ex) {
-			CiteTool.reset();
 			if (recorder != null) {
 				recorder.complete(transcriptOf(log, turnsBefore), ex);
 			}
@@ -145,7 +144,6 @@ public final class AgentRunner {
 		if (log != null) {
 			response = CitationValidator.apply(log, response).text();
 		}
-		CiteTool.reset();
 		if (recorder != null) {
 			recorder.complete(transcriptOf(log, turnsBefore), response, null);
 		}
@@ -215,12 +213,12 @@ public final class AgentRunner {
 			? log.turns().size() - (log.currentTurn() != null ? 1 : 0)
 			: 0;
 
-		CiteTool.reset();
+		// The run numbers its citation markers from 1; the context may have served an earlier run.
+		context.citationMarkers().reset();
 		AgentResult result;
 		try {
 			result = loop.run(conversation, context, effectiveListener);
 		} catch (RuntimeException ex) {
-			CiteTool.reset();
 			if (recorder != null) {
 				recorder.complete(transcriptOf(log, turnsBefore), ex);
 			}
@@ -230,7 +228,6 @@ public final class AgentRunner {
 		if (log != null) {
 			CitationValidator.apply(log, lastAssistantText(log));
 		}
-		CiteTool.reset();
 		if (recorder != null) {
 			recorder.complete(transcriptOf(log, turnsBefore), null);
 		}

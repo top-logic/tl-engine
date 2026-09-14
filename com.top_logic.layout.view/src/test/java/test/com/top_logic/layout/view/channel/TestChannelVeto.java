@@ -5,6 +5,8 @@
  */
 package test.com.top_logic.layout.view.channel;
 
+import java.util.List;
+
 import junit.framework.TestCase;
 
 import com.top_logic.layout.view.channel.ChannelVetoException;
@@ -68,7 +70,7 @@ public class TestChannelVeto extends TestCase {
 		channel.set("initial");
 
 		StateHandler handler = stubHandler(true, false, "Form A");
-		channel.addVetoListener((sender, oldValue, newValue) -> handler);
+		channel.addVetoListener((sender, oldValue, newValue) -> List.of(handler));
 
 		try {
 			channel.set("new");
@@ -92,7 +94,7 @@ public class TestChannelVeto extends TestCase {
 		channel.addListener((sender, oldVal, newVal) -> callCount[0]++);
 
 		StateHandler handler = stubHandler(true, false, "Form A");
-		channel.addVetoListener((sender, oldValue, newValue) -> handler);
+		channel.addVetoListener((sender, oldValue, newValue) -> List.of(handler));
 
 		try {
 			channel.set("new");
@@ -111,7 +113,7 @@ public class TestChannelVeto extends TestCase {
 		DefaultViewChannel channel = new DefaultViewChannel("test");
 		channel.set("initial");
 
-		channel.addVetoListener((sender, oldValue, newValue) -> null);
+		channel.addVetoListener((sender, oldValue, newValue) -> List.of());
 
 		assertTrue("Set should return true", channel.set("new"));
 		assertEquals("new", channel.get());
@@ -126,8 +128,8 @@ public class TestChannelVeto extends TestCase {
 		StateHandler handlerA = stubHandler(true, false, "Form A");
 		StateHandler handlerB = stubHandler(true, true, "Form B");
 
-		channel.addVetoListener((sender, oldValue, newValue) -> handlerA);
-		channel.addVetoListener((sender, oldValue, newValue) -> handlerB);
+		channel.addVetoListener((sender, oldValue, newValue) -> List.of(handlerA));
+		channel.addVetoListener((sender, oldValue, newValue) -> List.of(handlerB));
 
 		try {
 			channel.set("new");
@@ -148,7 +150,8 @@ public class TestChannelVeto extends TestCase {
 		channel.set("initial");
 
 		StateHandler handler = stubHandler(true, false, "Form A");
-		VetoListener vetoListener = (sender, oldValue, newValue) -> handler.isDirty() ? handler : null;
+		VetoListener vetoListener =
+			(sender, oldValue, newValue) -> handler.isDirty() ? List.of(handler) : List.<StateHandler> of();
 		channel.addVetoListener(vetoListener);
 
 		ChannelVetoException caught = null;
@@ -176,7 +179,7 @@ public class TestChannelVeto extends TestCase {
 		channel.set("initial");
 
 		StateHandler handler = stubHandler(true, false, "Form A");
-		VetoListener vetoListener = (sender, oldValue, newValue) -> handler;
+		VetoListener vetoListener = (sender, oldValue, newValue) -> List.of(handler);
 		channel.addVetoListener(vetoListener);
 
 		// Verify it blocks first

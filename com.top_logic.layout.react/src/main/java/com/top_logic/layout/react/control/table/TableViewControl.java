@@ -58,6 +58,7 @@ import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DialogResult;
 import com.top_logic.layout.react.control.overlay.ReactWindowControl;
+import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.ColumnOption;
@@ -128,6 +129,15 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		/**
 		 * Called after the selection changed, with the current selected {@link Row#key()
 		 * keys}.
+		 *
+		 * <p>
+		 * A listener refuses the change by throwing a {@link ChannelVetoException} - the unsaved
+		 * changes of a form the selection would replace block it. The table then restores the
+		 * selection it displayed before the refused change, both in its own state and in the
+		 * {@link TableView}, and rethrows, so whoever resolves the unsaved changes retries the
+		 * whole selection change. A listener notified before the refusing one keeps what it was
+		 * told; the retry tells it the same value again.
+		 * </p>
 		 */
 		void selectionChanged(Set<Object> selectedKeys);
 	}
@@ -406,6 +416,18 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	private int _cursorIndex = -1;
 
 	private final List<SelectionListener> _selectionListeners = new CopyOnWriteArrayList<>();
+
+	/**
+	 * The selected keys the {@link #addSelectionListener(SelectionListener) selection listeners}
+	 * have accepted, restored when one of them refuses a change.
+	 */
+	private Set<Object> _committedKeys = new LinkedHashSet<>();
+
+	/** The {@link #_cursorIndex} belonging to {@link #_committedKeys}. */
+	private int _committedCursor = -1;
+
+	/** The {@link #_selectionAnchor} belonging to {@link #_committedKeys}. */
+	private int _committedAnchor = -1;
 
 	/** What a row activation runs, {@code null} for a table whose rows cannot be opened. */
 	private ActivationHandler<R> _activationHandler;
@@ -1069,6 +1091,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	 */
 	public void refreshData() {
 		_selectedKeys.retainAll(currentRowKeys());
+		commitSelection();
 		rebuildAfterRowChange();
 	}
 
@@ -1185,6 +1208,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		if (_selectedKeys.isEmpty()) {
 			_cursorIndex = -1;
 			_selectionAnchor = -1;
+			commitSelection();
 			return;
 		}
 		Set<Object> displayed = new LinkedHashSet<>();
@@ -1202,6 +1226,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		_selectedKeys.retainAll(displayed);
 		_cursorIndex = cursor;
 		_selectionAnchor = cursor;
+		commitSelection();
 	}
 
 	/** The name of the column the rows are grouped by, {@code null} when they are not grouped. */
@@ -1242,6 +1267,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 			// A group header stands for no object: the gesture that would select it collapses or
 			// expands the group instead, and the selection stays what it was.
 			_cursorIndex = rowIndex;
+			commitSelection();
 			toggleExpansion(clicked);
 			return;
 		}
@@ -1343,6 +1369,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		if (row.kind() != RowKind.DATA) {
 			// A group header has nothing to open: activating it collapses or expands the group.
 			_cursorIndex = rowIndex;
+			commitSelection();
 			toggleExpansion(row);
 			return HandlerResult.DEFAULT_RESULT;
 		}
@@ -1982,13 +2009,55 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		return null;
 	}
 
+	/**
+	 * Publishes the current selection to the {@link TableView} and the
+	 * {@link #addSelectionListener(SelectionListener) selection listeners}, as one change the
+	 * listeners can refuse.
+	 *
+	 * <p>
+	 * A {@link ChannelVetoException} from a listener restores the selection state of the last
+	 * accepted change - the keys, the cursor, the range anchor and the {@link TableView}'s
+	 * selection - and is rethrown, so the table holds what it displays until the refused change is
+	 * retried.
+	 * </p>
+	 */
 	private void pushSelection() {
+		selectInView(_selectedKeys);
+		try {
+			for (SelectionListener listener : _selectionListeners) {
+				listener.selectionChanged(new LinkedHashSet<>(_selectedKeys));
+			}
+		} catch (ChannelVetoException ex) {
+			_selectedKeys.clear();
+			_selectedKeys.addAll(_committedKeys);
+			_cursorIndex = _committedCursor;
+			_selectionAnchor = _committedAnchor;
+			selectInView(_selectedKeys);
+			throw ex;
+		}
+		commitSelection();
+	}
+
+	/** Writes the given keys as the {@link TableView}'s selection. */
+	private void selectInView(Set<Object> keys) {
 		_view.select(new Selection(
 			MODE_MULTI.equals(_selectionMode) ? SelectionMode.MULTI : SelectionMode.SINGLE,
-			new LinkedHashSet<>(_selectedKeys)));
-		for (SelectionListener listener : _selectionListeners) {
-			listener.selectionChanged(new LinkedHashSet<>(_selectedKeys));
-		}
+			new LinkedHashSet<>(keys)));
+	}
+
+	/**
+	 * Makes the current selection state the one a refused change is restored to.
+	 *
+	 * <p>
+	 * Called when the selection listeners have accepted a change, and wherever the table changes
+	 * what it displays without asking them: it drops a key it has no row for any more, or it moves
+	 * the cursor onto a group header. What the table gave up must not come back through a restore.
+	 * </p>
+	 */
+	private void commitSelection() {
+		_committedKeys = new LinkedHashSet<>(_selectedKeys);
+		_committedCursor = _cursorIndex;
+		_committedAnchor = _selectionAnchor;
 	}
 
 }

@@ -21,8 +21,10 @@ import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.view.channel.ChannelVetoException;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.form.StateHandler;
 import com.top_logic.layout.view.model.TableSelectionBinding;
 import com.top_logic.table.Column;
 import com.top_logic.table.impl.DefaultColumn;
@@ -184,6 +186,99 @@ public class TestTableSelectionBinding extends TestCase {
 		assertEquals(Set.of(), _tableA.getSelectedKeys());
 		assertEquals("The remaining binding still works.", A1, _channel.get());
 		assertEquals(Set.of(), _tableB.getSelectedKeys());
+	}
+
+	/**
+	 * Tests that the unsaved changes blocking the channel write also block the selection in the
+	 * table: the refused change leaves table and channel on the row they showed, and the
+	 * continuation of the veto makes both follow once the changes are discarded.
+	 */
+	public void testRefusedSelectionKeepsTableAndValueOnTheOldRow() {
+		_channel.set(A1);
+		StubHandler handler = vetoWhileDirty(_channel);
+
+		ChannelVetoException caught = null;
+		try {
+			_tableA.selectRow(A2);
+			fail("Expected ChannelVetoException");
+		} catch (ChannelVetoException ex) {
+			caught = ex;
+		}
+
+		assertEquals("The unsaved changes that refused the selection are reported.",
+			List.<StateHandler> of(handler), caught.getDirtyHandlers());
+		assertEquals("The table shows the row it showed before.", Set.of(A1), _tableA.getSelectedKeys());
+		assertEquals("The value is the one the table shows.", A1, _channel.get());
+
+		handler.executeDiscard();
+		caught.getContinuation().run();
+
+		assertEquals("The discarded changes let the value through.", A2, _channel.get());
+		assertEquals("The table follows the value it could not write before.",
+			Set.of(A2), _tableA.getSelectedKeys());
+	}
+
+	/**
+	 * Tests that a refused selection that is never retried - the user cancels the dialog the veto
+	 * opens - leaves table and channel on the same row.
+	 */
+	public void testCancelledSelectionLeavesTableAndValueConsistent() {
+		_channel.set(A1);
+		StubHandler handler = vetoWhileDirty(_channel);
+
+		try {
+			_tableA.selectRow(A2);
+			fail("Expected ChannelVetoException");
+		} catch (ChannelVetoException ex) {
+			// The user cancels: nothing of the change runs.
+		}
+
+		assertTrue("Nothing was discarded.", handler.isDirty());
+		assertEquals(Set.of(A1), _tableA.getSelectedKeys());
+		assertEquals(A1, _channel.get());
+	}
+
+	/**
+	 * Registers a veto listener on the given channel answering with a dirty stub handler.
+	 */
+	private static StubHandler vetoWhileDirty(ViewChannel channel) {
+		StubHandler handler = new StubHandler();
+		channel.addVetoListener((sender, oldValue, newValue) -> handler.isDirty()
+			? List.<StateHandler> of(handler) : List.<StateHandler> of());
+		return handler;
+	}
+
+	/**
+	 * A {@link StateHandler} stub standing for a form with unsaved changes.
+	 */
+	private static class StubHandler implements StateHandler {
+
+		private boolean _dirty = true;
+
+		@Override
+		public boolean isDirty() {
+			return _dirty;
+		}
+
+		@Override
+		public boolean hasErrors() {
+			return false;
+		}
+
+		@Override
+		public void executeSave() {
+			_dirty = false;
+		}
+
+		@Override
+		public void executeDiscard() {
+			_dirty = false;
+		}
+
+		@Override
+		public String getDescription() {
+			return "detailForm";
+		}
 	}
 
 	@Override

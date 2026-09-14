@@ -38,7 +38,7 @@
 		<log4j.version>2.26.1</log4j.version>
 		<fasterxml.version>2.22.2</fasterxml.version>
 		<msgbuf.version>1.2.2</msgbuf.version>
-		<bouncycastle.version>1.85</bouncycastle.version>
+		<bouncycastle.version>1.86</bouncycastle.version>
 		<batik.version>1.19</batik.version>
 		<tl.license.version>7.8.2</tl.license.version>
 		
@@ -306,6 +306,13 @@
 			<dependency>
 				<groupId>com.top-logic</groupId>
 				<artifactId>tl-model-search</artifactId>
+				<version>${tl.version}</version>
+				<type>test-jar</type>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-layout-react</artifactId>
 				<version>${tl.version}</version>
 				<type>test-jar</type>
 				<scope>test</scope>
@@ -2042,7 +2049,7 @@
 				<plugin>
 					<groupId>org.codehaus.mojo</groupId>
 					<artifactId>exec-maven-plugin</artifactId>
-					<version>3.6.3</version>
+					<version>3.6.4</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>

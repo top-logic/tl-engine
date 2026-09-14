@@ -7,7 +7,7 @@ import { connect, subscribe, unsubscribe } from './sse-client';
 import { setI18NApiBase, setI18NWindowName } from './i18n';
 import { createScope, registerScope, addBinding, type GestureHandler, type KeyboardScope } from './keyboard-dispatcher';
 import { pushTrap, firstFocusable } from './focus-trap';
-import { CMD_VALUE_CHANGED, enqueueCommand, registerPendingFlush, unregisterPendingFlush } from './command-channel';
+import { CMD_SUBMIT, CMD_VALUE_CHANGED, enqueueCommand, registerPendingFlush, unregisterPendingFlush } from './command-channel';
 
 /**
  * Per-control state store compatible with React's useSyncExternalStore.
@@ -461,6 +461,37 @@ export function useTLFieldValue(
   useEffect(() => () => { void flushRef.current(); }, []);
 
   return [state.value, setValue, flush];
+}
+
+/**
+ * Returns the `onKeyDown` handler that reports the value of a single-line input as finished when
+ * the user presses Enter, or `undefined` while the enclosing control does not ask for it
+ * (`state.submitOnEnter`).
+ *
+ * <p>Attach it to the input the user types in - never to a text area, where Enter is part of the
+ * text. The command carries the value as typed, so one step both stores and submits it; a value
+ * still within the debounce window is flushed first by the command chain (see
+ * {@link enqueueCommand}), and the duplicate reaching the server is the value it already has.</p>
+ */
+export function useTLSubmitOnEnter():
+    ((e: React.KeyboardEvent<HTMLInputElement>) => void) | undefined {
+  const state = useTLState();
+  const sendCommand = useTLCommand();
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key !== 'Enter' || e.shiftKey || e.altKey || e.ctrlKey || e.metaKey) {
+        return;
+      }
+      // Read the value before dispatching: the event is no longer available afterwards.
+      const value = e.currentTarget.value;
+      e.preventDefault();
+      void sendCommand(CMD_SUBMIT, { value });
+    },
+    [sendCommand]
+  );
+
+  return state.submitOnEnter === true ? handleKeyDown : undefined;
 }
 
 // --- Keyboard scopes & gesture bindings ---

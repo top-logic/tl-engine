@@ -9,8 +9,8 @@
 	display: flex;
 	flex-direction: column;
 	border: 1px solid var(--border-subtle);
-	border-radius: var(--border-radius, 2px);
-	background: var(--field, #fff);
+	border-radius: var(--corner-radius);
+	background: var(--field);
 }
 
 .tlScriptEditor .cm-editor {
@@ -20,8 +20,8 @@
 }
 
 .tlScriptEditor:focus-within {
-	border-color: var(--focus, #0f62fe);
-	box-shadow: 0 0 0 1px var(--focus, #0f62fe);
+	border-color: var(--focus);
+	box-shadow: 0 0 0 1px var(--focus);
 }
 
 .tlScriptEditor .cm-editor.cm-focused {
@@ -33,37 +33,37 @@
 }
 
 .tlScriptEditor .cm-content {
-	font-family: var(--font-family-mono, monospace);
+	font-family: var(--font-family-mono);
 }
 
 .tlScriptEditor .cm-gutters {
-	background: var(--layer, #f4f4f4);
+	background: var(--layer);
 	border-right: 1px solid var(--border-subtle);
 	color: var(--text-secondary);
 }
 
 .tlScriptEditor .cm-activeLineGutter {
-	background: var(--layer-accent, #e0e0e0);
+	background: var(--layer-accent);
 	color: var(--layer-accent-text);
 }
 
 .tlScriptEditor .cm-activeLine {
-	background: var(--background-selected, rgba(0, 0, 0, 0.04));
+	background: var(--background-selected);
 }
 
 .tlScriptEditor .cm-selectionBackground {
-	background: var(--script-editor-text-highlight, #d7d4f0) !important;
+	background: var(--script-editor-text-highlight) !important;
 }
 
 .tlScriptEditor .cm-tooltip-autocomplete {
-	font-family: var(--font-family-mono, monospace);
+	font-family: var(--font-family-mono);
 	font-size: var(--body-02-font-size);
 }
 
 .tlScriptEditor .cm-diagnostic-error {
-	border-left-color: var(--support-error, #da1e28);
+	border-left-color: var(--support-error);
 }
 
 .tlScriptEditor .cm-diagnostic-warning {
-	border-left-color: var(--support-warning, #f1c21b);
+	border-left-color: var(--support-warning);
 }

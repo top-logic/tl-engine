@@ -181,7 +181,10 @@
 							</preset>
 						</presets>
 						<columns>
-							<column attribute="name">
+							<column
+								attribute="name"
+								width="220"
+							>
 								<!-- Application-defined filter: predefined regexp facets as checkboxes. -->
 								<filter class="com.top_logic.table.filter.RegexpOptionsFilter">
 									<pattern regexp="^Part">
@@ -204,7 +207,10 @@
 									</pattern>
 								</filter>
 							</column>
-							<column attribute="string"/>
+							<column
+								attribute="string"
+								width="200"
+							/>
 							<column attribute="priority"/>
 							<column attribute="active"/>
 							<column attribute="count">

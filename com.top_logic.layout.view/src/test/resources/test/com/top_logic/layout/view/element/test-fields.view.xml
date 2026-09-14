@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="term"/>
+		<channel name="status"/>
+	</channels>
+
+	<panel>
+		<children>
+			<!-- The inputs a view owns, laid out as the fields of a form. -->
+			<fields>
+				<value-input value="term"/>
+				<value-input
+					type="test.fields:Status"
+					value="status"
+				/>
+			</fields>
+
+			<!-- A grid of the default width, whose contents say where they stand. -->
+			<fields>
+				<text>
+					<label>
+						<en>First</en>
+					</label>
+				</text>
+				<text>
+					<label>
+						<en>Second</en>
+					</label>
+				</text>
+			</fields>
+
+			<!-- A grid of a stated width, with every label above its input. -->
+			<fields
+				label-position="top"
+				max-columns="2"
+			>
+				<text>
+					<label>
+						<en>Stated</en>
+					</label>
+				</text>
+			</fields>
+
+			<!-- A label position only a single field can take. -->
+			<fields label-position="hidden">
+				<text>
+					<label>
+						<en>Rejected</en>
+					</label>
+				</text>
+			</fields>
+		</children>
+	</panel>
+</view>

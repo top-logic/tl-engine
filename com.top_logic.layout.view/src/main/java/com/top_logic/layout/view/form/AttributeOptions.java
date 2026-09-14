@@ -13,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.top_logic.basic.col.Sink;
 import com.top_logic.element.meta.AttributeOperations;
+import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.element.meta.SimpleEditContext;
 import com.top_logic.element.meta.kbbased.filtergen.Generator;
 import com.top_logic.element.meta.kbbased.storage.mappings.JavaEnumMapping;
@@ -34,7 +35,7 @@ import com.top_logic.model.util.Pointer;
 
 /**
  * Resolves the selectable options for a model attribute from the attribute itself (its type or
- * options annotation), for the React view form layer.
+ * options annotation), or for a value from its type alone, for the React view form layer.
  *
  * <p>
  * Option resolution is decoupled from the legacy form framework
@@ -147,6 +148,33 @@ public class AttributeOptions {
 		}
 		// Enumeration (classifiers) or reference (all instances).
 		return toList(AttributeOperations.allOptions(SimpleEditContext.createContext(self, part)));
+	}
+
+	/**
+	 * The options a value of the given type is chosen from, or {@code null} where such a value is
+	 * entered rather than selected.
+	 *
+	 * <p>
+	 * The counterpart of {@link #optionsFor(TLObject, TLStructuredTypePart, OverlayLookup, Sink)}
+	 * for a value that no attribute holds: the classifiers of an enumeration, the constants of an
+	 * enum datatype, and the instances of a class. A primitive value - a text, a number, a point in
+	 * time - is entered, so it has no options at all.
+	 * </p>
+	 *
+	 * @param type
+	 *        The model type of the value.
+	 */
+	public static List<?> optionsFor(TLType type) {
+		if (type instanceof TLEnumeration enumeration) {
+			return enumeration.getClassifiers();
+		}
+		if (type instanceof TLClass classType) {
+			return MetaElementUtil.getAllInstancesOf(classType, TLObject.class);
+		}
+		if (type instanceof TLPrimitive primitive && isEnumDatatype(primitive)) {
+			return enumOptions(primitive);
+		}
+		return null;
 	}
 
 	private static boolean isComposition(TLStructuredTypePart part) {

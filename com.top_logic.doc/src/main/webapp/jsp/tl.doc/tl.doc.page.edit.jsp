@@ -6,7 +6,7 @@
 %><layout:html>
 	<layout:head>
 		<style>
-			div.fptBodyContent {
+			div.tl-form-page__body-content {
 				padding: 0px;
 			}
 		</style>

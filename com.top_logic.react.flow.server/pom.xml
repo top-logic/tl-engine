@@ -30,6 +30,19 @@
             <artifactId>tl-layout-react</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.top-logic</groupId>
+            <artifactId>tl-basic</artifactId>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.top-logic</groupId>
+            <artifactId>tl-layout-react</artifactId>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+
         <!-- The GWT client-code: WAR overlay for Maven packaging. -->
         <dependency>
             <groupId>com.top-logic</groupId>

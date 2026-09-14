@@ -77,7 +77,7 @@ public class BlockTextInputControl extends ExpandableTextInputControl {
     
 	@Override
 	protected String getTypeCssClass() {
-		return "cBlockTextInput";
+		return "tl-block-text-input";
 	}
 
     @Override

@@ -25,10 +25,10 @@ import com.top_logic.layout.react.control.ReactControl;
  * State:
  * </p>
  * <ul>
- * <li>{@code maxColumns} - maximum number of columns</li>
- * <li>{@code labelPosition} - {@link LabelPosition#SIDE}, {@link LabelPosition#TOP}, or
+ * <li>{@link #MAX_COLUMNS} - maximum number of columns</li>
+ * <li>{@link #LABEL_POSITION} - {@link LabelPosition#SIDE}, {@link LabelPosition#TOP}, or
  * {@link LabelPosition#AUTO}</li>
- * <li>{@code readOnly} - whether the form is read-only</li>
+ * <li>{@link #READ_ONLY} - whether the form is read-only</li>
  * <li>{@code children} - child controls (TLFormGroup or TLFormField)</li>
  * </ul>
  */
@@ -36,11 +36,17 @@ public class ReactFormLayoutControl extends ReactCompositeControl {
 
 	private static final String REACT_MODULE = "TLFormLayout";
 
-	private static final String MAX_COLUMNS = "maxColumns";
+	/** State key holding the maximum number of columns the fields are laid out in. */
+	public static final String MAX_COLUMNS = "maxColumns";
 
-	private static final String LABEL_POSITION = "labelPosition";
+	/**
+	 * State key holding the {@link LabelPosition#getExternalName() name} of the
+	 * {@link LabelPosition} the fields take.
+	 */
+	public static final String LABEL_POSITION = "labelPosition";
 
-	private static final String READ_ONLY = "readOnly";
+	/** State key telling whether the fields are displayed but cannot be changed. */
+	public static final String READ_ONLY = "readOnly";
 
 	/**
 	 * Creates a form layout with full configuration.
@@ -58,7 +64,7 @@ public class ReactFormLayoutControl extends ReactCompositeControl {
 			List<? extends ReactControl> children) {
 		super(context, null, REACT_MODULE, children);
 		putState(MAX_COLUMNS, Integer.valueOf(maxColumns));
-		putState(LABEL_POSITION, labelPosition.protocolName());
+		putState(LABEL_POSITION, labelPosition.getExternalName());
 		putState(READ_ONLY, readOnly);
 	}
 

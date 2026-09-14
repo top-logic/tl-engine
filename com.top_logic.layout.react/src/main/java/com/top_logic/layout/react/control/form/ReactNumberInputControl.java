@@ -143,6 +143,14 @@ public class ReactNumberInputControl extends ReactFormFieldControl {
 		putState(VALUE, format(newValue));
 	}
 
+	/**
+	 * A typed number is complete when the user presses Enter.
+	 */
+	@Override
+	public boolean hasSubmitGesture() {
+		return true;
+	}
+
 	private String format(Object value) {
 		return value instanceof Number ? _format.format(value) : null;
 	}

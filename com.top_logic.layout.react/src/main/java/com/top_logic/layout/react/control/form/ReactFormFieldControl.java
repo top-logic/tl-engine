@@ -7,6 +7,7 @@ package com.top_logic.layout.react.control.form;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
@@ -38,6 +39,17 @@ public class ReactFormFieldControl extends ReactControl {
 
 	/** Command sent by the client when an edited field is committed (loses focus). */
 	protected static final String COMMIT_COMMAND = "commit";
+
+	/** Command sent by the client when the user has finished entering a value. */
+	public static final String SUBMIT_COMMAND = "submit";
+
+	/**
+	 * State key telling the client to send {@link #SUBMIT_COMMAND} when the user presses Enter in
+	 * the field.
+	 *
+	 * @see #setSubmitListener(Consumer)
+	 */
+	protected static final String SUBMIT_ON_ENTER = "submitOnEnter";
 
 	/** State key telling the client to send {@link #COMMIT_COMMAND} when the field loses focus. */
 	protected static final String COMMIT_ON_BLUR = "commitOnBlur";
@@ -94,6 +106,10 @@ public class ReactFormFieldControl extends ReactControl {
 	private FieldModelListener _modelListener;
 
 	private ReactControl _editModeAdornment;
+
+	private Consumer<Object> _submitListener;
+
+	private boolean _multiline;
 
 	/**
 	 * While handling a client {@code valueChanged}, the value the client sent — so the model
@@ -260,8 +276,51 @@ public class ReactFormFieldControl extends ReactControl {
 	 *        The number of visible text rows.
 	 */
 	public void setMultiline(int rows) {
+		_multiline = true;
 		putState(MULTILINE, Boolean.TRUE);
 		putState(ROWS, Integer.valueOf(rows));
+	}
+
+	/**
+	 * Whether the field is rendered as a multi-line text area.
+	 *
+	 * @see #setMultiline(int)
+	 */
+	protected final boolean isMultiline() {
+		return _multiline;
+	}
+
+	/**
+	 * Whether the user says when the value entered in this field is complete, instead of every
+	 * change of the value being complete in itself.
+	 *
+	 * <p>
+	 * True for a field the user types in: what is typed is complete when Enter is pressed, not
+	 * while it is still being written. A field that is clicked or picked from - a checkbox, a
+	 * dropdown, a date picker - has no such gesture, and there every value the user produces is
+	 * already the finished one.
+	 * </p>
+	 */
+	public boolean hasSubmitGesture() {
+		return false;
+	}
+
+	/**
+	 * Registers the listener reporting the value the user has finished entering.
+	 *
+	 * <p>
+	 * The value has reached the {@link #getFieldModel() field model} before the listener runs, so
+	 * everything bound to the field sees it. Only a field that
+	 * {@link #hasSubmitGesture() has a submit gesture} reports here; for any other field the value
+	 * itself is what to follow.
+	 * </p>
+	 *
+	 * @param listener
+	 *        Receives the submitted value, or {@code null} to stop reporting submits.
+	 */
+	public void setSubmitListener(Consumer<Object> listener) {
+		_submitListener = listener;
+		putState(SUBMIT_ON_ENTER, Boolean.valueOf(listener != null && hasSubmitGesture()));
 	}
 
 	/**
@@ -343,6 +402,23 @@ public class ReactFormFieldControl extends ReactControl {
 			return;
 		}
 		onCommit();
+	}
+
+	/**
+	 * Handles the submit the client sends when the user has finished entering a value: stores the
+	 * value like a {@link #CMD_VALUE_CHANGED}, then reports it to the
+	 * {@link #setSubmitListener(Consumer) submit listener}.
+	 */
+	@ReactCommandHandler(SUBMIT_COMMAND)
+	final void handleSubmit(FieldSubmitArguments args) {
+		if (!acceptsClientValue()) {
+			return;
+		}
+		applyRawClientValue(args.getValue());
+		Consumer<Object> listener = _submitListener;
+		if (listener != null) {
+			listener.accept(_fieldModel.getValue());
+		}
 	}
 
 	/**

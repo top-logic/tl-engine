@@ -30,4 +30,16 @@ public class ReactTextInputControl extends ReactFormFieldControl {
 		return rawValue != null ? rawValue.toString() : null;
 	}
 
+	/**
+	 * A single-line text is complete when the user presses Enter.
+	 *
+	 * <p>
+	 * In a text area Enter is part of the text, so a multi-line field has no submit gesture.
+	 * </p>
+	 */
+	@Override
+	public boolean hasSubmitGesture() {
+		return !isMultiline();
+	}
+
 }

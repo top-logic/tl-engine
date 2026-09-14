@@ -16,6 +16,7 @@ import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.message.ThinkingContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
@@ -485,6 +486,44 @@ public class TestConversationLogListener extends TestCase {
 			recorded.id(), backfilled.id());
 		assertEquals(recorded.timestamp(), backfilled.timestamp());
 		assertEquals("Let me think...", backfilled.text());
+	}
+
+	/**
+	 * A turn that answers without calling a tool still gets its signature.
+	 *
+	 * <p>
+	 * The second review's finding: the thinking buffer used to be flushed into a part only by a
+	 * tool call or by {@code RunCompleted}, and {@code RunCompleted} arrives <em>after</em>
+	 * {@code TurnCompleted}. So for every turn that reasoned and then simply answered, the backfill
+	 * found no part to write the signature into, and the block was persisted unsigned - stripped by
+	 * {@code MessageHistorySanitizer} on the next reload. That is the majority of turns, and it is
+	 * exactly the case the signatures exist for.
+	 * </p>
+	 */
+	public void testThinkingOfAToolFreeTurnKeepsItsSignature() {
+		Instant now = Instant.now();
+		_log.startTurn();
+		_listener.onEvent(new AgentEvent.RunStarted("r1", 0, now, "model"));
+		_listener.onEvent(new AgentEvent.TurnStarted("r1", 1, now));
+		_listener.onEvent(new AgentEvent.ThinkingDelta("r1", 1, now, "Lissabon "));
+		_listener.onEvent(new AgentEvent.ThinkingDelta("r1", 1, now, "ist es."));
+		_listener.onEvent(new AgentEvent.TextDelta("r1", 1, now, "Die Hauptstadt ist Lissabon."));
+		// No tool call: nothing has flushed the buffers when the turn completes.
+		_listener.onEvent(new AgentEvent.TurnCompleted("r1", 1, now, TokenUsage.EMPTY,
+			List.of(new ThinkingContent("Lissabon ist es.", "sig-1", "anthropic"))));
+		_listener.onEvent(new AgentEvent.RunCompleted("r1", 1, now, StopReason.COMPLETE, TokenUsage.EMPTY));
+
+		Part.ThinkingPart thinking = onlyThinkingPart(_log.turns().get(0));
+		assertEquals("Lissabon ist es.", thinking.text());
+		assertEquals("A turn without a tool call must carry its signature like any other.",
+			"sig-1", thinking.continuityToken());
+		assertEquals("The token means nothing without the provider that minted it.",
+			"anthropic", thinking.provider());
+
+		String json = ConversationLogSerializer.toJson(_log);
+		assertTrue("The signature has to survive into the persisted transcript: " + json,
+			json.contains("sig-1"));
+		assertTrue("So does the provider that minted it: " + json, json.contains("anthropic"));
 	}
 
 	/** A turn whose thinking carries no token leaves the recorded part untouched. */

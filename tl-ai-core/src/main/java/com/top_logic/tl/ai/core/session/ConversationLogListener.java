@@ -198,9 +198,22 @@ public class ConversationLogListener implements AgentEventListener {
 		}
 	}
 
+	/**
+	 * Closes what the turn streamed and writes the completed message's continuity tokens into it.
+	 *
+	 * <p>
+	 * The buffers are flushed here first, and not left to the tool call or the run end: a turn that
+	 * answers without calling a tool has its thinking flushed only by {@code RunCompleted}, which
+	 * arrives after this event. The backfill would then find no thinking part to write the
+	 * signature into, and the block would be persisted unsigned - stripped on the next reload,
+	 * exactly for the turns that reason without acting.
+	 * </p>
+	 */
 	private void handleTurnCompleted(AgentEvent.TurnCompleted e) {
 		Turn turn = _log.currentTurn();
 		if (turn != null) {
+			flushTextBuffer(turn);
+			flushThinkingBuffer(turn);
 			turn.addUsage(e.turnUsage());
 			backfillContinuityTokens(turn, e.contentParts());
 		}

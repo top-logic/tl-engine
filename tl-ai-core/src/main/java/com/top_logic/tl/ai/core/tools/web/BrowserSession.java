@@ -221,8 +221,8 @@ final class BrowserSession {
 
 	/**
 	 * How long a {@link #click} waits, after the click itself landed, to find out whether it started
-	 * a top-level navigation - the window in which {@link #_navigationStarted} may still be raised by
-	 * the browser.
+	 * a top-level navigation - the <em>first</em> of the two windows in which
+	 * {@link #_navigationStarted} may still be raised by the browser.
 	 *
 	 * <p>
 	 * A click that navigates does so by issuing the main-frame request essentially with the click
@@ -232,6 +232,42 @@ final class BrowserSession {
 	 * knob: it does not bound any work, it only decides how long the session listens before it
 	 * concludes that the click stayed on the page - and that conclusion is what saves the click from
 	 * the page-load-sized waits.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>The combined window.</b> A navigation a handler starts <em>later</em> -
+	 * {@code setTimeout(() => location.href = …)}, or
+	 * {@code fetch('/api/login').then(() => location.href = …)} against a backend that takes about a
+	 * second - misses this window and is caught by the second look {@link #settleAfterClick()} takes
+	 * after the DOM-quiet wait. The window is therefore this constant plus however long that wait
+	 * runs: about a second on a page whose DOM goes still at once, and up to this constant plus the
+	 * settle cap (so about two seconds at the default 1500 ms) on a page that keeps mutating - which
+	 * is the page class this whole settle exists for. Inside the window the click's URL, its captured
+	 * content and its page generation all describe the same page, because
+	 * {@link #settleAfterNavigatingClick()} waits for the new document to commit first.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>What falls outside it.</b> A navigation that starts after that is not waited for: the click
+	 * reports the page it was on, and the model's next {@code browserSnapshot} shows the new one. That
+	 * is a deliberate residual - the alternative is to keep every same-page click waiting for a
+	 * navigation that will never come, which is the defect this replaced. What it costs is that the
+	 * page generation is not advanced either, so a ref the model kept from before that click is still
+	 * accepted although the page has since moved on. That exposure is not particular to a click: a
+	 * page that hops on a timer does the same to a {@code browserSnapshot} or a {@code browserType}
+	 * that returned a moment earlier, and always has. It is why a ref is documented as valid only
+	 * against the most recent page text.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>Known limitations of the flag, all cost-only.</b> A {@code target="_blank"} popup's own
+	 * main-frame request satisfies the observer's test too ({@link #installNavigationObserver} is
+	 * installed on the context, and a popup has no parent frame), so such a click pays a page-load
+	 * settle for a page that did not load. And {@link #beginNavigationAttempt()} clears the flag
+	 * without draining the transport queue, so a navigation event left over from the previous
+	 * operation can be attributed to this one - the same one-message seam
+	 * {@link #_offPolicyNavigation} has always had. Both cost a bounded settle and neither can make a
+	 * capture wrong.
 	 * </p>
 	 */
 	private static final int CLICK_NAVIGATION_DETECTION_MILLIS = 500;
@@ -626,7 +662,7 @@ final class BrowserSession {
 	 * Raised from two sources, because neither alone sees every navigation: the main-frame
 	 * <em>request</em> going out ({@link #installNavigationObserver}), which fires the moment the
 	 * browser commits to fetching a new document and therefore does not depend on how slow the server
-	 * is; and the main frame <em>having navigated</em> ({@link #installSameDocumentNavigationObserver}),
+	 * is; and the main frame <em>having navigated</em> ({@link #installNavigationCommitObserver}),
 	 * which additionally covers a same-document hop - a fragment or a {@code history.pushState} - that
 	 * issues no request at all. Comparing URLs is deliberately not one of the sources: a reload or a
 	 * form post to the same address navigates without changing the URL, so a URL comparison would
@@ -641,6 +677,33 @@ final class BrowserSession {
 	 * </p>
 	 */
 	private volatile boolean _navigationStarted;
+
+	/**
+	 * How many times a <b>top-level navigation has committed</b> - a new document has actually
+	 * replaced the old one - in this session's page, counted by
+	 * {@link #installNavigationCommitObserver}.
+	 *
+	 * <p>
+	 * {@link #_navigationStarted} says a navigation was <em>begun</em>, which is what a click has to
+	 * know and all it can know in time. This says it has <em>landed</em>, which is what everything
+	 * after the click needs: until the new document commits, the page's URL is still the old one and
+	 * its lifecycle events - {@code load}, {@code networkidle} - are the old document's, so waiting for
+	 * them would be satisfied by the page being left rather than by the page being entered. Waiting for
+	 * this to move first (see {@link #awaitNavigationCommit()}) is what stops a click from reporting
+	 * the old URL beside the new page's HTML.
+	 * </p>
+	 *
+	 * <p>
+	 * Monotonic rather than a flag, and compared against the value taken at the start of the operation
+	 * ({@link #_navigationsAtAttemptStart}), so an earlier operation's commit cannot be mistaken for
+	 * this one's. Confined to the session thread like {@link #_navigationStarted}; {@code volatile}
+	 * documents the publication.
+	 * </p>
+	 */
+	private volatile long _mainFrameNavigations;
+
+	/** {@link #_mainFrameNavigations} as it stood when the current operation began. */
+	private long _navigationsAtAttemptStart;
 
 	private BrowserSession(Object key, int navigationTimeoutMillis, int actionTimeoutMillis,
 			int navigationSettleMillis, DomainPolicy policy, String initialStorageState, boolean headed,
@@ -922,7 +985,7 @@ final class BrowserSession {
 				_context.addInitScript(STEALTH_INIT_SCRIPT);
 			}
 			_page = _context.newPage();
-			installSameDocumentNavigationObserver(_page);
+			installNavigationCommitObserver(_page);
 			Logger.info("Opened isolated " + (_headed ? "headed" : "headless") + " browser session " + _key
 				+ (_evadeBotDetection ? " (bot-detection evasion on)" : "")
 				+ (_proxyServer == null ? " (UNPROXIED - no outbound filtering)"
@@ -1033,7 +1096,12 @@ final class BrowserSession {
 			settleAfterClick();
 			String finalUrl = _page.url();
 			verifyNavigationPolicy(finalUrl);
-			boolean navigated = !finalUrl.equals(urlBefore);
+			// What the browser reported, not what the URL happens to say: a reload and a form post to
+			// the same address navigate without changing the URL, so the comparison alone would leave
+			// the page generation behind and keep accepting refs minted on the previous document. The
+			// comparison is kept only as a fallback that can never under-report - a changed top-level
+			// URL is a navigation whether or not the listeners saw it.
+			boolean navigated = _navigationStarted || !finalUrl.equals(urlBefore);
 			if (navigated) {
 				// The click navigated to a different page: refs from the old page are now stale.
 				_pageGeneration++;
@@ -1142,16 +1210,83 @@ final class BrowserSession {
 	 *
 	 * <p>
 	 * Whether a navigation started is decided from what the browser reported
-	 * ({@link #_navigationStarted}), listened for over a short window, rather than from the URL after
-	 * the fact: a reload or a form post to the same address changes no URL, and a click whose
-	 * navigation is still in flight has not changed it yet either.
+	 * ({@link #_navigationStarted}) rather than from the URL after the fact: a reload or a form post
+	 * to the same address changes no URL, and a click whose navigation is still in flight has not
+	 * changed it yet either.
+	 * </p>
+	 *
+	 * <p>
+	 * The flag is consulted <b>twice</b>, and the second look is what makes the deferred navigation
+	 * safe: a handler that starts the hop itself - {@code setTimeout(() => location.href = …)}, or
+	 * the very common {@code fetch(…).then(() => location.href = …)} - can miss
+	 * {@link #CLICK_NAVIGATION_DETECTION_MILLIS the first window} and still arrive while the DOM-quiet
+	 * wait is running, and the browser dispatches its events into that wait. Capturing then would hand
+	 * the model a page view that is <em>torn</em> - the URL of the page the click started on, with the
+	 * HTML of the one it ended on, and (because {@link #click} would see no navigation) refs minted on
+	 * the new document under the old page generation, so a ref the model still held from before would
+	 * be accepted against a different element on a different page. Running the page-load settle
+	 * instead lets the new document finish, so URL, content and generation describe the same page.
+	 * See {@link #CLICK_NAVIGATION_DETECTION_MILLIS} for what the combined window is and what still
+	 * falls outside it.
 	 * </p>
 	 */
 	private void settleAfterClick() {
 		if (awaitNavigationStart()) {
-			settleAfterLoad();
-		} else {
-			waitForDomQuiet();
+			settleAfterNavigatingClick();
+			return;
+		}
+		waitForDomQuiet();
+		if (_navigationStarted) {
+			// A handler started the navigation while the DOM-quiet wait was running: it is a page
+			// load after all, so wait it out rather than capture across it.
+			settleAfterNavigatingClick();
+		}
+	}
+
+	/**
+	 * The page-load settle as a <em>click</em> needs it: wait for the new document to commit, then
+	 * settle it.
+	 *
+	 * <p>
+	 * The commit wait is what {@link #navigate} and {@link #back} get for free - their Playwright call
+	 * returns only once the new document has committed - and what a click does not: a click is known
+	 * to have started a navigation while that navigation is still in flight. Settling straight away
+	 * would ask the <em>old</em> document's lifecycle whether it had loaded and gone quiet, which it
+	 * long since had, so every wait would return at once and the capture would run right across the
+	 * commit - the old URL beside the new page's HTML.
+	 * </p>
+	 */
+	private void settleAfterNavigatingClick() {
+		awaitNavigationCommit();
+		settleAfterLoad();
+	}
+
+	/**
+	 * Waits, best-effort, for the top-level navigation this operation started to <b>commit</b> - for
+	 * {@link #_mainFrameNavigations} to move past {@link #_navigationsAtAttemptStart}.
+	 *
+	 * <p>
+	 * Bounded by the settle cap rather than by the page-load timeout, and for the same reason the
+	 * network-quiet stage is: a navigation that was begun does not always land. A {@code 204}, a
+	 * download, a {@code mailto:} link or a handler that changes its mind all start a main-frame
+	 * request that no new document ever follows, and spending a page load on each of those would
+	 * re-create the toll this whole change removes. On expiry the page is captured as it stands, which
+	 * is the behaviour of every other stage here. A no-op when the cap is {@code 0}, where the operator
+	 * has asked for the loaded page to be captured immediately and there is no settle to protect.
+	 * </p>
+	 */
+	private void awaitNavigationCommit() {
+		long before = _navigationsAtAttemptStart;
+		if (_mainFrameNavigations > before || _navigationSettleMillis <= 0) {
+			// Already landed - the ordinary link or form-submit click, where Playwright's own click
+			// call did not return until the new document committed.
+			return;
+		}
+		try {
+			_page.waitForCondition(() -> _mainFrameNavigations > before,
+				new Page.WaitForConditionOptions().setTimeout(_navigationSettleMillis));
+		} catch (RuntimeException neverCommitted) {
+			// The navigation was begun but no document followed; capture what is there.
 		}
 	}
 
@@ -1165,6 +1300,14 @@ final class BrowserSession {
 	 * navigating click pays nothing; and it is a Playwright call, which is the only state in which the
 	 * session's confined thread dispatches the very browser events that raise the flag - a plain sleep
 	 * would sit there deaf and always time out.
+	 * </p>
+	 *
+	 * <p>
+	 * The cost of that, for a click that starts no navigation, is the full window spent inside
+	 * Playwright's {@code while (!done) connection.processOneMessage()} loop with its 10 ms transport
+	 * poll - a busy wait on this session's confined thread, not a parked one. It is bounded and it is
+	 * one thread per live session, so it is affordable at the default four concurrent sessions; it is
+	 * named here because the alternative reading, "this is a cheap sleep", is wrong.
 	 * </p>
 	 *
 	 * @return Whether a top-level navigation was observed.
@@ -1260,6 +1403,7 @@ final class BrowserSession {
 	private void beginNavigationAttempt() {
 		_offPolicyNavigation = null;
 		_navigationStarted = false;
+		_navigationsAtAttemptStart = _mainFrameNavigations;
 	}
 
 	/**
@@ -1645,8 +1789,7 @@ final class BrowserSession {
 				route.resume();
 				return;
 			}
-			boolean mainFrameNavigation =
-				request.isNavigationRequest() && request.frame().parentFrame() == null;
+			boolean mainFrameNavigation = isMainFrameNavigation(request);
 			if (!mainFrameNavigation && _proxyIsAuthoritative) {
 				// Sub-resource: the proxy has already decided this one, and asking here as well means a
 				// blocking DNS lookup on the session's single confined thread for every asset host -
@@ -1708,7 +1851,7 @@ final class BrowserSession {
 				// Not a redirect hop: the route above already governed (and could abort) this one.
 				return;
 			}
-			if (!request.isNavigationRequest() || request.frame().parentFrame() != null) {
+			if (!isMainFrameNavigation(request)) {
 				return;
 			}
 			URI uri;
@@ -1761,7 +1904,7 @@ final class BrowserSession {
 				return;
 			}
 			Request request = response.request();
-			if (!request.isNavigationRequest() || request.frame().parentFrame() != null) {
+			if (!isMainFrameNavigation(request)) {
 				return;
 			}
 			if (_offPolicyNavigation == null) {
@@ -1791,17 +1934,54 @@ final class BrowserSession {
 	 */
 	private void installNavigationObserver(BrowserContext context) {
 		context.onRequest(request -> {
-			if (request.isNavigationRequest() && request.frame().parentFrame() == null) {
+			if (isMainFrameNavigation(request)) {
 				_navigationStarted = true;
 			}
 		});
 	}
 
 	/**
-	 * Completes {@link #installNavigationObserver} for the navigations that issue <b>no request at
-	 * all</b>: a same-document hop - a fragment link, or the {@code history.pushState}/{@code replaceState}
-	 * that a router-driven application navigates with. Those still replace what the page shows, so they
-	 * deserve the page-load settle, and only {@code framenavigated} reports them.
+	 * Whether {@code request} is a navigation of a <b>top-level</b> frame, as every listener and the
+	 * security route here needs to know.
+	 *
+	 * <p>
+	 * Extracted because asking is not as simple as it reads: {@link Request#frame()} <em>throws</em>
+	 * for a request whose frame does not exist yet - the {@code target="_blank"} popup, whose
+	 * navigation request is issued before the browser has created the frame it belongs to - and an
+	 * exception thrown out of a Playwright listener propagates through the dispatch loop and fails
+	 * whatever Playwright call this session's thread happens to be inside. The answer in that case is
+	 * "yes": a request with no frame of its own is opening a new top-level document, never a
+	 * sub-resource of an existing frame, so it is the answer that keeps the security route checking
+	 * rather than waving it through.
+	 * </p>
+	 */
+	private static boolean isMainFrameNavigation(Request request) {
+		if (!request.isNavigationRequest()) {
+			return false;
+		}
+		try {
+			return request.frame().parentFrame() == null;
+		} catch (PlaywrightException noFrameYet) {
+			// The frame does not exist yet (a popup being opened): a top-level document either way.
+			return true;
+		}
+	}
+
+	/**
+	 * Watches the main frame <b>having navigated</b>, which answers two different questions.
+	 *
+	 * <p>
+	 * It completes {@link #installNavigationObserver} for the navigations that issue <b>no request at
+	 * all</b>: a same-document hop - a fragment link, or the
+	 * {@code history.pushState}/{@code replaceState} that a router-driven application navigates with.
+	 * Those still replace what the page shows, so they deserve the page-load settle, and only
+	 * {@code framenavigated} reports them.
+	 * </p>
+	 *
+	 * <p>
+	 * And it counts commits into {@link #_mainFrameNavigations}, which is what
+	 * {@link #awaitNavigationCommit()} waits on.
+	 * </p>
 	 *
 	 * <p>
 	 * Installed on the page rather than the context because {@code framenavigated} is a page-level
@@ -1809,10 +1989,11 @@ final class BrowserSession {
 	 * Sub-frames are ignored: an advert or a widget in an iframe navigating is not this page loading.
 	 * </p>
 	 */
-	private void installSameDocumentNavigationObserver(Page page) {
+	private void installNavigationCommitObserver(Page page) {
 		page.onFrameNavigated(frame -> {
 			if (frame.parentFrame() == null) {
 				_navigationStarted = true;
+				_mainFrameNavigations++;
 			}
 		});
 	}

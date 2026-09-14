@@ -227,14 +227,16 @@ Layout preferences (`railOpen`, `paneWidth`, `badgeSeen`) are bootstrapped from 
 via `AgentChatControl.putState` and written through `PUT /chat/preferences`.
 
 The Leiste badge is the sum of each section's `badge()` minus the total last stored when the rail was
-opened.
+opened - "N new since you last looked", so a section whose rows simply exist contributes none and
+uses `count()` for the number beside its own title instead.
 
 ### Stability
 
 Exported types and `App` / `extensions` are the contract. File splits inside `ui/src` are not.
 
-Citations: see `doc/citation-contract.md`. Albert records them with `cite.cite`; the server drops any
-id or URL that did not appear in this turn's other tool results.
+Citations: see `doc/citation-contract.md`. Albert records them by calling `cite`; the server drops
+any id or URL that did not appear in this turn's other tool results, and leaves every other bracketed
+number in the answer alone.
 
 ## Notes
 

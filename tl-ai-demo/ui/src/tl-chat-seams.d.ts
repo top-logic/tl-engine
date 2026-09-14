@@ -45,6 +45,7 @@ declare module 'tl-chat-seams' {
       contributor?: string
       icon?: ReactNode
       badge?: () => number
+      count?: () => number
       accent?: boolean
       render: (ctx: RailRenderContext) => ReactNode
     }[]

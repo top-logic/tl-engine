@@ -23,7 +23,7 @@ export function SideRail({
     <div className="side-rail">
       {sections.map((section) => {
         const collapsed = collapsedIds.has(section.id)
-        const count = section.badge?.() ?? 0
+        const count = section.count?.() ?? section.badge?.() ?? 0
         return (
           <section
             key={section.id}

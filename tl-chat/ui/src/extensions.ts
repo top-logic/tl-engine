@@ -41,13 +41,21 @@ export interface RailSection {
   /** Small caption on the right of the header, naming the contributor. */
   contributor?: string
   /**
-   * Count that feeds the Leiste badge.
+   * Count that feeds the Leiste badge: how much of this section is *new*.
    *
-   * The toggle shows the sum of every section's current count minus the count last seen when
-   * the rail was opened. Fortschritt counts tasks that are still pending or in progress; a host
-   * section counts whatever it considers new.
+   * The toggle shows the sum over all sections minus the total last seen when the rail was opened,
+   * so a section that has no notion of news - a list of rows that simply exist - contributes none
+   * and leaves the badge to the sections that do. Fortschritt counts the steps that still want
+   * something: pending, running, or waiting for an approval.
    */
   badge?: () => number
+  /**
+   * Count shown next to the section's own title. Defaults to {@link badge}.
+   *
+   * Separate from the badge because the two answer different questions: this one is "how many are
+   * there", the badge is "how many are new since you last looked".
+   */
+  count?: () => number
   /** Host sections are accent-tinted; the framework's Fortschritt is not. */
   accent?: boolean
   render: (ctx: RailRenderContext) => ReactNode

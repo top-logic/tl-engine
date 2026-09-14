@@ -42,7 +42,9 @@ export function DemoChat(props: TLCellProps) {
               <path d="M6 5.5h4M6 8.2h4" />
             </svg>
           ),
-          badge: () => invoices.length,
+          // A count, not news: the invoices of this application simply exist, so they say nothing
+          // about what changed since the rail was last opened and contribute no Leiste badge.
+          count: () => invoices.length,
           render: (ctx) => (
             <>
               <InvoiceList

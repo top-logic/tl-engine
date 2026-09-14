@@ -1168,6 +1168,7 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
       contributor: labels.progressContributor,
       icon: ProgressIcon,
       badge: () => progressBadge(tasks, awaitingApproval),
+      count: () => progressBadge(tasks, awaitingApproval),
       render: () => <ProgressSection tasks={tasks} approvals={awaitingApproval} labels={labels} />,
     }),
     [labels, tasks, awaitingApproval],

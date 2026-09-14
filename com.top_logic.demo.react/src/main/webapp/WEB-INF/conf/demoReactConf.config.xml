@@ -39,6 +39,17 @@
 			</instance>
 		</config>
 		<!--
+			Every newly created account joins the "users" group. The administration hub shows the
+			default-group flag on that group.
+		-->
+		<config service-class="com.top_logic.base.services.InitialGroupManager">
+			<instance default-group="users">
+				<groups>
+					<group name="users"/>
+				</groups>
+			</instance>
+		</config>
+		<!--
 			Where this application displays its business objects. A read-only value whose type is
 			listed here is offered as a link; following it reveals the views below in order and
 			hands each of them the values its bindings compute.

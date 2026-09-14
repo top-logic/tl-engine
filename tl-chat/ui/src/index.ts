@@ -5,10 +5,10 @@ export { ComposerNotice } from './notice'
 export { PromptStack } from './prompts'
 export { Markdown, DefaultCitationPopover } from './markdown'
 export { Thread } from './thread'
-export { ProgressSection } from './progress'
+export { ContextIcon, ContextSection, ProgressIcon, ProgressSection } from './progress'
 export { progressSteps, progressBadge, unseenBadge, parseTasksJson } from './progress-model'
 export { SideRail, SideStrip, RailToggle } from './rail'
-export { SidePane } from './side-pane'
+export { SidePane, PANE_CONTENT_FLOOR } from './side-pane'
 export { chatReducer } from './reducer'
 export { runStore, EMPTY_RUN } from './store'
 export * as api from './api'
@@ -26,7 +26,13 @@ export type {
   MessageAction,
   ContextHook,
   PaneOpenOptions,
+  PaneTab,
+  PendingApproval,
+  ContextFact,
+  ContextHookArg,
   SidePaneState,
 } from './extensions'
 export type { ChatMessage, Citation, SendPayload } from './types'
 export type { AgentTask, ProgressStep, ProgressStatus } from './progress-model'
+export { composeOutboundText } from './send-prefix'
+export { citationMarkerIndexes } from './citations'

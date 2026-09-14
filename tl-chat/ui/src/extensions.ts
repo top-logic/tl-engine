@@ -19,6 +19,11 @@ export interface ChatExtensions {
   messageActions?: MessageAction[]
   /** Header caption and the `<context/>` prefix prepended to a send. */
   contextHook?: ContextHook
+  /**
+   * Extra lines in the Kontext section, after the ones the framework contributes
+   * (language, agent, model, session).
+   */
+  contextFacts?: (ctx: ContextHookArg) => ContextFact[]
 }
 
 /** One collapsible block in the right rail. */
@@ -26,6 +31,13 @@ export interface RailSection {
   id: string
   /** Title shown in the section header, already localised. */
   title: string
+  /**
+   * Icon shown on the 56 px strip while an artefact is open.
+   *
+   * A 16x16 `<svg viewBox="0 0 16 16">` fits the strip button. Without one the strip shows a
+   * generic section glyph, never a letter.
+   */
+  icon?: ReactNode
   /** Small caption on the right of the header, naming the contributor. */
   contributor?: string
   /**
@@ -41,13 +53,30 @@ export interface RailSection {
   render: (ctx: RailRenderContext) => ReactNode
 }
 
-/** What a rail section may read and the two actions it may take. */
+/** What a rail section may read and the actions it may take. */
 export interface RailRenderContext {
+  /** Id of the open chat session, or `null` before the first send. */
+  sessionId: string | null
+  /**
+   * The current run's trace: every message of the open session, user turns and agent runs alike,
+   * in the order the thread shows them.
+   */
   messages: ChatMessage[]
   /** True while the agent is working on the current run. */
   busy: boolean
+  /** Tool calls the running turn has approvals open for; empty when nothing waits. */
+  pendingApprovals: PendingApproval[]
+  /** Replaces the rail with the host's own content, in the same place. */
   openInPane: (content: ReactNode, options: PaneOpenOptions) => void
+  /** Closes the pane and shows the rail again. */
+  closePane: () => void
   addComposerChip: (chip: ComposerChip) => void
+}
+
+/** One tool call of the running turn that is waiting for the user's approval. */
+export interface PendingApproval {
+  id: string
+  toolName: string
 }
 
 /** Header of the side pane when an artefact is open. */
@@ -126,6 +155,14 @@ export interface ContextHook {
 
 export interface ContextHookArg {
   messages: ChatMessage[]
+}
+
+/** One line of the Kontext section: what the agent receives with every turn. */
+export interface ContextFact {
+  id: string
+  /** Already localised. */
+  label: string
+  value: string
 }
 
 /** Empty extensions: {@link App} behaves as {@code TLAgentChat} does today. */

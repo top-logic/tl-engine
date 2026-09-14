@@ -73,12 +73,20 @@ export function SideStrip({
           aria-label={section.title}
           onClick={() => onSelect(section.id)}
         >
-          <span aria-hidden="true">{section.title.slice(0, 1)}</span>
+          {section.icon ?? DefaultSectionIcon}
         </button>
       ))}
     </nav>
   )
 }
+
+/** Shown for a section that brought no icon of its own: a panel, not a letter. */
+const DefaultSectionIcon = (
+  <svg viewBox="0 0 16 16" aria-hidden="true">
+    <rect x="2.5" y="3" width="11" height="10" rx="1.4" />
+    <path d="M2.5 6.4h11" />
+  </svg>
+)
 
 export function RailToggle({
   open,
@@ -104,7 +112,11 @@ export function RailToggle({
         <rect x="2" y="3" width="12" height="10" rx="1.6" />
         <path d="M10.2 3v10" />
       </svg>
-      {badge > 0 ? (
+      {/*
+        Only while the rail is closed: "N new since you last looked" says nothing next to an open
+        rail that is showing exactly those N things.
+      */}
+      {!open && badge > 0 ? (
         <span className="side-toggle-badge" aria-label={labels.sideRailBadge(badge)}>
           {badge}
         </span>

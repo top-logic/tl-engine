@@ -22,13 +22,19 @@ import {
   turnsJsonToMessages,
 } from './api'
 import { bundle, providerErrorText, toLanguage, type Language } from './i18n'
-import { effortLevelsOf, modelsFor } from './models'
+import { agentLabel, effortLevelsOf, modelLabel, modelsFor } from './models'
 import { SessionRail } from './chrome'
 import { Composer } from './composer'
-import type { ChatExtensions, ComposerChip, PaneOpenOptions, RailSection } from './extensions'
+import type {
+  ChatExtensions,
+  ComposerChip,
+  PaneOpenOptions,
+  RailRenderContext,
+  RailSection,
+} from './extensions'
 import { hostRailSections } from './extensions'
 import { parsePreferences, savePreferences } from './preferences'
-import { ProgressSection } from './progress'
+import { ContextIcon, ContextSection, ProgressIcon, ProgressSection } from './progress'
 import { parseTasksJson, progressBadge, unseenBadge, type AgentTask } from './progress-model'
 import { RailToggle, SideRail, SideStrip, useCollapsedSections } from './rail'
 import { chatReducer } from './reducer'
@@ -943,6 +949,9 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
         })
         return false
       }
+      // The chips travelled with this send; leaving them would attach the same passage to the next
+      // message too. What the host declared up front (`composerAddons.chips`) stays where it is.
+      setHostChips([])
       return true
     },
     [labels, windowId, refreshSessions, extensions],
@@ -1145,20 +1154,50 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
     [windowId],
   )
 
+  // The approval cards the composer shows are also what Fortschritt reports: the run is not merely
+  // "running", it is waiting for this user.
+  const awaitingApproval = useMemo(
+    () => pendingApprovals.map((request) => ({ id: request.id, toolName: request.toolName })),
+    [pendingApprovals],
+  )
+
   const progressSection: RailSection = useMemo(
     () => ({
       id: 'progress',
       title: labels.progressTitle,
       contributor: labels.progressContributor,
-      badge: () => progressBadge(tasks),
-      render: () => <ProgressSection tasks={tasks} labels={labels} />,
+      icon: ProgressIcon,
+      badge: () => progressBadge(tasks, awaitingApproval),
+      render: () => <ProgressSection tasks={tasks} approvals={awaitingApproval} labels={labels} />,
     }),
-    [labels, tasks],
+    [labels, tasks, awaitingApproval],
+  )
+
+  /** What the agent receives every turn, plus whatever the host adds. */
+  const contextFacts = useMemo(() => {
+    const own = [
+      { id: 'language', label: labels.contextLanguage, value: labels.languageName },
+      { id: 'agent', label: labels.contextAgent, value: agentLabel(agent, caps.agents) },
+      { id: 'model', label: labels.contextModel, value: modelLabel(model) },
+      { id: 'session', label: labels.contextSession, value: sessionTitle },
+    ]
+    return [...own, ...(extensions?.contextFacts?.({ messages }) ?? [])]
+  }, [labels, caps.agents, agent, model, sessionTitle, extensions, messages])
+
+  const contextSection: RailSection = useMemo(
+    () => ({
+      id: 'context',
+      title: labels.contextTitle,
+      contributor: labels.progressContributor,
+      icon: ContextIcon,
+      render: () => <ContextSection facts={contextFacts} labels={labels} />,
+    }),
+    [labels, contextFacts],
   )
 
   const railSections = useMemo(
-    () => [progressSection, ...hostRailSections(extensions)],
-    [progressSection, extensions],
+    () => [progressSection, ...hostRailSections(extensions), contextSection],
+    [progressSection, contextSection, extensions],
   )
 
   const badgeTotal = useMemo(
@@ -1173,31 +1212,38 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
     setSideOpen(true)
   }, [])
 
+  const closePane = useCallback(() => {
+    setPaneContent(null)
+    setPaneOptions(null)
+  }, [])
+
   const addComposerChip = useCallback((chip: ComposerChip) => {
     setHostChips((current) => (current.some((item) => item.id === chip.id) ? current : [...current, chip]))
   }, [])
 
-  const railCtx = useMemo(
+  const railCtx: RailRenderContext = useMemo(
     () => ({
+      sessionId,
       messages,
       busy,
+      pendingApprovals: awaitingApproval,
       openInPane,
+      closePane,
       addComposerChip,
     }),
-    [messages, busy, openInPane, addComposerChip],
+    [sessionId, messages, busy, awaitingApproval, openInPane, closePane, addComposerChip],
   )
 
   const toggleSide = useCallback(() => {
     setSideOpen((open) => {
       if (open) {
-        setPaneContent(null)
-        setPaneOptions(null)
+        closePane()
         return false
       }
       setBadgeSeen(badgeTotal)
       return true
     })
-  }, [badgeTotal])
+  }, [badgeTotal, closePane])
 
   if (!authenticated) {
     return (
@@ -1298,10 +1344,7 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
           <SideStrip
             sections={railSections}
             activeId={paneOptions?.sectionId}
-            onSelect={() => {
-              setPaneContent(null)
-              setPaneOptions(null)
-            }}
+            onSelect={closePane}
             labels={labels}
           />
         ) : null}
@@ -1323,10 +1366,7 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
             tabs={paneOptions?.tabs}
             width={paneWidth}
             onWidth={setPaneWidth}
-            onBack={() => {
-              setPaneContent(null)
-              setPaneOptions(null)
-            }}
+            onBack={closePane}
             labels={labels}
           >
             {paneContent}

@@ -51,6 +51,21 @@ describe('progressSteps', () => {
       ]),
     ).toBe(2)
   })
+
+  it('marks the running step as waiting for approval while one is open', () => {
+    const steps = progressSteps(
+      [task('1', 'completed', 'Read'), task('2', 'in_progress', 'Write', 'Writing')],
+      [{ id: 'a1', toolName: 'createTask' }],
+    )
+    expect(steps.map((s) => s.status)).toEqual(['done', 'approval'])
+    expect(steps[1].note).toBe('createTask')
+  })
+
+  it('reports an approval that arrived before the agent wrote any task', () => {
+    const steps = progressSteps([], [{ id: 'a1', toolName: 'createTask' }])
+    expect(steps).toEqual([{ id: 'approval', label: 'createTask', status: 'approval' }])
+    expect(progressBadge([], [{ id: 'a1', toolName: 'createTask' }])).toBe(1)
+  })
 })
 
 describe('unseenBadge', () => {

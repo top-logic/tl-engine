@@ -1,11 +1,19 @@
-/** How far one agent task has got. */
-export type ProgressStatus = 'done' | 'running' | 'waiting' | 'error'
+/**
+ * How far one agent task has got.
+ *
+ * `waiting` is "not started yet"; `approval` is "started and now waiting for the user to allow a
+ * tool call". The two look different in the rail because they mean different things to the reader:
+ * the second one is waiting for *them*.
+ */
+export type ProgressStatus = 'done' | 'running' | 'approval' | 'waiting' | 'error'
 
 /** One row of the Fortschritt checklist. */
 export interface ProgressStep {
   id: string
   label: string
   status: ProgressStatus
+  /** Caption on the right of the row, e.g. the tool an approval is open for. */
+  note?: string
 }
 
 /**
@@ -36,18 +44,36 @@ export function parseTasksJson(raw: string | undefined): AgentTask[] {
   }
 }
 
+/** A tool call the run is waiting for the user to approve. */
+export interface PendingApproval {
+  id: string
+  toolName: string
+}
+
 /**
  * The steps of the current (or last) agent run, derived from the task store.
  *
  * Subjects are the labels. While a task is in progress, {@code activeForm} is preferred when the
  * agent set one.
+ *
+ * An open approval belongs to whatever the agent is doing right now, so it is shown on the running
+ * step. A run that opened an approval before it wrote any task still has something to report, so
+ * that case becomes a step of its own rather than "no tasks yet".
  */
-export function progressSteps(tasks: AgentTask[]): ProgressStep[] {
-  return tasks.map((task) => ({
+export function progressSteps(tasks: AgentTask[], approvals: PendingApproval[] = []): ProgressStep[] {
+  const waitingFor = approvals.map((approval) => approval.toolName).filter(Boolean).join(', ')
+  const steps: ProgressStep[] = tasks.map((task) => ({
     id: task.id,
     label: stepLabel(task),
     status: stepStatus(task.status),
   }))
+  if (approvals.length === 0) return steps
+  const running = steps.findIndex((step) => step.status === 'running')
+  if (running >= 0) {
+    steps[running] = { ...steps[running], status: 'approval', note: waitingFor }
+    return steps
+  }
+  return [...steps, { id: 'approval', label: waitingFor, status: 'approval' }]
 }
 
 function stepLabel(task: AgentTask): string {
@@ -63,9 +89,11 @@ function stepStatus(status: string | undefined): ProgressStatus {
   return 'running'
 }
 
-/** Count that feeds the Leiste badge: tasks still pending or in progress. */
-export function progressBadge(tasks: AgentTask[]): number {
-  return progressSteps(tasks).filter((step) => step.status === 'running' || step.status === 'waiting').length
+/** Count that feeds the Leiste badge: steps still pending, in progress or awaiting approval. */
+export function progressBadge(tasks: AgentTask[], approvals: PendingApproval[] = []): number {
+  return progressSteps(tasks, approvals).filter(
+    (step) => step.status === 'running' || step.status === 'waiting' || step.status === 'approval',
+  ).length
 }
 
 /**

@@ -139,6 +139,30 @@ public class TestPromptImprovementProcessor extends TestCase {
 		assertEquals("Zeige alle Belege.", improved("Belege", "Zeige alle Belege."));
 	}
 
+	/**
+	 * A faithful one-sentence rewrite is kept, however few words the draft had.
+	 *
+	 * <p>
+	 * The second review's finding: the per-word allowance also suppressed {@code "belege
+	 * auswerten"}, whose rewrite the first review had recorded as good. Two words buying sixty
+	 * characters is an accident of counting, so a rewrite that keeps every content word of the
+	 * draft and says it in one sentence is judged on that instead.
+	 * </p>
+	 */
+	public void testFaithfulSentenceSurvivesTheWordCount() {
+		String rewrite = "Werte die vorhandenen Belege aus und fasse die Ergebnisse zusammen.";
+		assertEquals(rewrite, improved("belege auswerten", rewrite));
+		// The same rewrite, and the same exception, still cannot rescue the one-word draft: there
+		// is no instruction in "Belege" for it to be faithful to.
+		assertEquals("Belege", improved("Belege", rewrite));
+	}
+
+	/** The exception is one sentence only; two are a briefing whatever they contain. */
+	public void testFaithfulExceptionStopsAtOneSentence() {
+		assertEquals("belege auswerten", improved("belege auswerten",
+			"Werte die vorhandenen Belege aus. Fasse anschliessend die Ergebnisse zusammen."));
+	}
+
 	/** Two words buy more room than one, and still not a briefing. */
 	public void testTheAllowanceGrowsWithTheDraft() {
 		String sentence = "Liste alle offenen Rechnungen mit Betrag und Datum auf.";

@@ -12,6 +12,7 @@ import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 import com.top_logic.ai.chat.layout.TaskProgressTracker.PromptImprovementState;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
@@ -84,6 +85,53 @@ public final class PromptImprovementProcessor {
 	 * </p>
 	 */
 	private static final int WORDS_FOR_FULL_CEILING = 4;
+
+	/**
+	 * How many words a draft needs before a faithful rewrite may outgrow its share of the ceiling.
+	 *
+	 * <p>
+	 * One word names a subject and asks nothing, so there is no instruction in it that a rewrite
+	 * could be faithful to: "everything the draft said survives" is true of any sentence built
+	 * around that word, which is exactly how {@code "Belege"} became "evaluate the receipts and
+	 * summarize the results". From two words on the draft says something, and a rewrite can be held
+	 * to it.
+	 * </p>
+	 */
+	private static final int MIN_WORDS_TO_CLARIFY = 2;
+
+	/**
+	 * How much of a word has to reappear for it to count as still being there.
+	 *
+	 * <p>
+	 * A word is matched by stem, not literally: German inflects and splits, so {@code "auswerten"}
+	 * comes back as "Werte ... aus" with nothing of it left whole. Either form may be the longer
+	 * one, so containment is tested both ways - with this floor on the shorter side, so that a
+	 * particle cannot vouch for a word it has nothing to do with.
+	 * </p>
+	 */
+	private static final int STEM_CHARS = 4;
+
+	/** A sentence end followed by more text. */
+	private static final Pattern SENTENCE_BREAK = Pattern.compile("[.!?]\\s");
+
+	/** Runs of anything that is not part of a word. */
+	private static final Pattern NON_WORD = Pattern.compile("[^\\p{L}\\p{N}]+");
+
+	/** Shortest token still carrying meaning of its own; below this a word is grammar. */
+	private static final int CONTENT_WORD_CHARS = 3;
+
+	/**
+	 * Longest a faithful rewrite of a very short draft may be.
+	 *
+	 * <p>
+	 * Tighter than {@link #SHORT_REWRITE_CEILING}, which is the bound for drafts that already say a
+	 * lot. A clarification of two or three words is one short sentence; past this the rewrite is
+	 * carrying requirements the draft never gave, however carefully it repeats the words it was
+	 * given - {@code "offene rechnungen"} came back with a supplier column and an overdue filter,
+	 * with both of its own words intact, in a single sentence of 119 characters.
+	 * </p>
+	 */
+	private static final int FAITHFUL_REWRITE_CEILING = 90;
 
 	/**
 	 * Phrases that only occur when the reply is about the prompt instead of being one.
@@ -219,10 +267,67 @@ public final class PromptImprovementProcessor {
 			return draft;
 		}
 		if (draft.length() <= SHORT_DRAFT_CHARS
-			&& improved.length() > Math.max(draft.length() * MAX_SHORT_GROWTH, shortRewriteCeiling(draft))) {
+			&& improved.length() > Math.max(draft.length() * MAX_SHORT_GROWTH, shortRewriteCeiling(draft))
+			&& !saysTheSameThing(draft, improved)) {
 			return draft;
 		}
 		return improved;
+	}
+
+	/**
+	 * Whether the rewrite is one sentence in which everything the draft said is still there.
+	 *
+	 * <p>
+	 * The per-word allowance is what keeps a single word from becoming an instruction, but it also
+	 * suppressed {@code "belege auswerten"} - a real request, whose rewrite "Werte die vorhandenen
+	 * Belege aus und fasse die Ergebnisse zusammen." the first review recorded as good. Two words
+	 * buying a 60-character ceiling is an accident of counting words, not a judgement about the
+	 * rewrite. So a rewrite that keeps every content word of the draft and says it in a single
+	 * sentence is let through on its own terms, no matter how many words the draft had - bounded
+	 * only by {@link #FAITHFUL_REWRITE_CEILING}, which is what separates a clarifying sentence from
+	 * a briefing.
+	 * </p>
+	 */
+	private static boolean saysTheSameThing(String draft, String improved) {
+		if (wordCount(draft) < MIN_WORDS_TO_CLARIFY) {
+			return false;
+		}
+		if (improved.length() > FAITHFUL_REWRITE_CEILING) {
+			return false;
+		}
+		if (SENTENCE_BREAK.matcher(improved.trim().replaceAll("[.!?\\s]+$", "")).find()) {
+			return false;
+		}
+		List<String> rewritten = words(improved);
+		for (String word : words(draft)) {
+			if (word.length() < CONTENT_WORD_CHARS) {
+				continue;
+			}
+			if (!survives(word, rewritten)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/** Whether a word of the draft is still recognisable somewhere in the rewrite. */
+	private static boolean survives(String word, List<String> rewritten) {
+		for (String other : rewritten) {
+			if (other.length() >= STEM_CHARS && word.contains(other)) {
+				return true;
+			}
+			if (word.length() >= STEM_CHARS && other.contains(word)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** The words of a text, lower cased, with the punctuation between them dropped. */
+	private static List<String> words(String text) {
+		return NON_WORD.splitAsStream(text.toLowerCase(Locale.ROOT))
+			.filter(word -> !word.isEmpty())
+			.toList();
 	}
 
 	/**

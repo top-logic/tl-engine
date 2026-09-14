@@ -58,6 +58,23 @@ export const TokenInput = React.forwardRef(function TokenInput(
   ref: React.Ref<TokenInputHandle>,
 ) {
   const host = useRef<HTMLDivElement>(null)
+  /**
+   * Where the caret was when the editor last had it.
+   *
+   * A host inserts a reference from its own pane, so by then the editor has lost the selection, and
+   * focusing a contenteditable that has none puts the caret at offset 0 - which is why the marked
+   * passage used to land in front of everything the user had typed. The last place the user really
+   * stood is remembered here and restored before the insert.
+   */
+  const lastRange = useRef<Range | null>(null)
+
+  const rememberCaret = useCallback(() => {
+    const el = host.current
+    const selection = window.getSelection()
+    if (!el || !selection || selection.rangeCount === 0) return
+    const range = selection.getRangeAt(0)
+    if (el.contains(range.startContainer)) lastRange.current = range.cloneRange()
+  }, [])
 
   const read = useCallback((): string => {
     const el = host.current
@@ -84,8 +101,11 @@ export const TokenInput = React.forwardRef(function TokenInput(
       insertReference: (token: ReferenceToken) => {
         const el = host.current
         if (!el) return
+        const remembered = restore(el, lastRange.current)
         el.focus()
-        const range = caretIn(el)
+        // With nothing remembered the documented fallback applies: the end of the draft, never its
+        // start.
+        const range = remembered ? caretIn(el) : atEnd(el)
         const fragment = document.createDocumentFragment()
         fragment.append(tokenElement(token))
         // A space after the token, so the next word is not glued to it.
@@ -94,6 +114,7 @@ export const TokenInput = React.forwardRef(function TokenInput(
         range.insertNode(fragment)
         placeCaretAfterLast(el, range)
         ensureTail(el)
+        rememberCaret()
         emit()
       },
       replaceBefore: (length: number, text: string) => {
@@ -192,7 +213,13 @@ export const TokenInput = React.forwardRef(function TokenInput(
       aria-label={ariaLabel}
       data-placeholder={placeholder}
       spellCheck
-      onInput={emit}
+      onInput={() => {
+        rememberCaret()
+        emit()
+      }}
+      onKeyUp={rememberCaret}
+      onMouseUp={rememberCaret}
+      onBlur={rememberCaret}
       onKeyDown={onKey}
       onPaste={onPaste}
     />
@@ -292,6 +319,24 @@ function ensureTail(el: HTMLElement) {
   if (!last || last.nodeType !== Node.TEXT_NODE) {
     el.append(document.createTextNode(TAIL))
   }
+}
+
+/** Puts a remembered range back, if it still points into the editor. */
+function restore(el: HTMLElement, range: Range | null): boolean {
+  if (!range || !el.contains(range.startContainer) || !el.isConnected) return false
+  const selection = window.getSelection()
+  if (!selection) return false
+  selection.removeAllRanges()
+  selection.addRange(range)
+  return true
+}
+
+function atEnd(el: HTMLElement): Range {
+  const range = document.createRange()
+  range.selectNodeContents(el)
+  range.collapse(false)
+  select(range)
+  return range
 }
 
 function caretIn(el: HTMLElement): Range {

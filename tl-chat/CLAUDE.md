@@ -241,9 +241,17 @@ quoted text</quote>`, so the model reads the reference inside the sentence that 
 through the same parser, so the reference reads back as the token the user inserted, and the inline
 editor edits it as one.
 
-Two ways in: `ctx.insertReference(token)` from a host pane, and typing **@** in the composer, which
-offers what `composerAddons.referenceCandidates(query)` returns. **/** on an empty draft opens the
-agent picker. There is no prefix form and no chip list.
+Two ways in: `ctx.insertReference(token)` from a host pane - which inserts at the caret, restoring
+where the user last stood, because by then the editor has lost the selection - and typing **@** in
+the composer, which offers what `composerAddons.referenceCandidates(query)` returns. **/** on an
+empty draft opens the agent picker. There is no prefix form and no chip list.
+
+**Is `ref` resolvable? No - not by the framework.** It is the host application's own id, carried so
+that a host tool can recognise it; tl-ai ships no tool that takes one, and the agent is told so by
+the `<reference>` prompt fragment (`tl-ai-core.conf.config.xml`). **A host must therefore put
+everything the model needs into the element's text**, which is the quoted passage. A host that wants
+the id to mean more gives its agent a tool that accepts it; then the same fragment's "unless a tool
+you have takes such an id" applies.
 
 ### What an answer's citations look like
 

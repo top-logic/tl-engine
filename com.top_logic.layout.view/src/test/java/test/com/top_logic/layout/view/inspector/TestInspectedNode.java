@@ -11,13 +11,15 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 
+import com.top_logic.layout.react.scripting.AssertCommand;
 import com.top_logic.layout.react.scripting.ScriptingNodeView;
 import com.top_logic.layout.view.inspector.InspectedNode;
 import com.top_logic.layout.view.inspector.InspectedNode.StateEntry;
 
 /**
- * Tests the value the UI inspector shows: the flattening of a projected state to addressable leaves
- * and the ascent to the enclosing element.
+ * Tests the value the UI inspector shows: the flattening of a projected state to addressable leaves,
+ * the subset of the state a selection of those leaves stands for, and the ascent to the enclosing
+ * element.
  */
 public class TestInspectedNode extends TestCase {
 
@@ -92,6 +94,104 @@ public class TestInspectedNode extends TestCase {
 	 */
 	public void testEmptyState() {
 		assertEquals(List.of(), node("/table", Map.of()).stateEntries());
+	}
+
+	/**
+	 * A scalar path yields exactly that entry.
+	 */
+	public void testSubsetOfScalarPath() {
+		InspectedNode node = node("/table", map("totalRowCount", Integer.valueOf(7), "title", "Demo"));
+
+		assertEquals(map("totalRowCount", Integer.valueOf(7)), node.stateSubset(List.of("totalRowCount")));
+	}
+
+	/**
+	 * A nested path yields the leaf under the keys leading to it, not the whole group holding it.
+	 */
+	public void testSubsetOfNestedPath() {
+		InspectedNode node = node("/table", map(
+			"totalRowCount", Integer.valueOf(3),
+			"diagnostics", map("hiddenByAccess", map("count", Integer.valueOf(2), "byType",
+				map("tl.accounts:Person", Integer.valueOf(2))))));
+
+		assertEquals(map("diagnostics", map("hiddenByAccess", map("count", Integer.valueOf(2)))),
+			node.stateSubset(List.of("diagnostics.hiddenByAccess.count")));
+	}
+
+	/**
+	 * A path whose keys hold the separator themselves is resolved as well.
+	 */
+	public void testSubsetOfPathWithDottedKey() {
+		InspectedNode node = node("/table", map("diagnostics",
+			map("hiddenByAccess", map("byType", map("tl.accounts:Person", Integer.valueOf(2))))));
+
+		assertEquals(
+			map("diagnostics", map("hiddenByAccess", map("byType", map("tl.accounts:Person", Integer.valueOf(2))))),
+			node.stateSubset(List.of("diagnostics.hiddenByAccess.byType.tl.accounts:Person")));
+	}
+
+	/**
+	 * Paths sharing a prefix contribute to the same nested object.
+	 */
+	public void testSubsetOfPathsSharingAPrefix() {
+		InspectedNode node = node("/table", map("diagnostics",
+			map("hiddenByAccess", map("count", Integer.valueOf(2), "byType",
+				map("tl.accounts:Person", Integer.valueOf(2))))));
+
+		Map<String, Object> subset = node.stateSubset(
+			List.of("diagnostics.hiddenByAccess.count", "diagnostics.hiddenByAccess.byType.tl.accounts:Person"));
+
+		assertEquals(map("diagnostics", map("hiddenByAccess", map(
+			"count", Integer.valueOf(2),
+			"byType", map("tl.accounts:Person", Integer.valueOf(2))))), subset);
+	}
+
+	/**
+	 * A path the state does not have is skipped instead of contributing an empty entry.
+	 */
+	public void testSubsetSkipsUnknownPath() {
+		InspectedNode node = node("/table", map("totalRowCount", Integer.valueOf(7),
+			"diagnostics", map("hiddenByAccess", map("count", Integer.valueOf(2)))));
+
+		assertEquals(map("totalRowCount", Integer.valueOf(7)),
+			node.stateSubset(List.of("totalRowCount", "selectedRow", "diagnostics.hiddenByAccess.gone")));
+		assertEquals(map(), node.stateSubset(List.of("nothing.here")));
+	}
+
+	/**
+	 * Taking a subset leaves the state it was taken from untouched.
+	 */
+	public void testSubsetDoesNotModifyState() {
+		Map<String, Object> state = map("diagnostics", map("hiddenByAccess", map("count", Integer.valueOf(2))));
+		InspectedNode node = node("/table", state);
+
+		node.stateSubset(List.of("diagnostics.hiddenByAccess.count"));
+
+		assertEquals(map("diagnostics", map("hiddenByAccess", map("count", Integer.valueOf(2)))), state);
+	}
+
+	/**
+	 * A subset is what the node's state satisfies: the assertion holds against the full state and
+	 * reports a changed nested value by its path.
+	 */
+	public void testSubsetIsAnAssertionTheStateSatisfies() {
+		Map<String, Object> state = map(
+			"totalRowCount", Integer.valueOf(3),
+			"diagnostics", map("hiddenByAccess", map("count", Integer.valueOf(2), "byType",
+				map("tl.accounts:Person", Integer.valueOf(2)))));
+		InspectedNode node = node("/table", state);
+
+		Map<String, Object> subset =
+			node.stateSubset(List.of("totalRowCount", "diagnostics.hiddenByAccess.count"));
+
+		assertEquals(List.of(), AssertCommand.mismatchingKeys(subset, state));
+
+		Map<String, Object> changed = map(
+			"totalRowCount", Integer.valueOf(3),
+			"diagnostics", map("hiddenByAccess", map("count", Integer.valueOf(1), "byType",
+				map("tl.accounts:Person", Integer.valueOf(1)))));
+		assertEquals(List.of("diagnostics.hiddenByAccess.count"),
+			AssertCommand.mismatchingKeys(subset, changed));
 	}
 
 	/**

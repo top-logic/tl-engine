@@ -546,7 +546,7 @@ public class AgentServlet extends TopLogicServlet {
 			if (expected == null) {
 				expected = ScriptingTreeProjector.nodeState(scriptingSession.resolve(address));
 			}
-			queue.getRecorder().record(AssertCommand.create(address, expected));
+			queue.getRecorder().recordAssertion(address, expected);
 			writeRecorderState(response, queue.getRecorder());
 		} finally {
 			requestLock.unlock();

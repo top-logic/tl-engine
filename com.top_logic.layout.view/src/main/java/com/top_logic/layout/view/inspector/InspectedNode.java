@@ -6,6 +6,8 @@
 package com.top_logic.layout.view.inspector;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -61,8 +63,20 @@ public record InspectedNode(String windowName, String address, ScriptingNodeView
 	 * @return The leaves of the state, never {@code null}.
 	 */
 	public List<StateEntry> stateEntries() {
+		return stateEntries(view() == null ? Map.of() : view().state());
+	}
+
+	/**
+	 * The given state flattened to one entry per leaf value.
+	 *
+	 * @param state
+	 *        The state to flatten, may be {@code null}.
+	 * @return The leaves of the state, never {@code null}.
+	 * @see #stateEntries()
+	 */
+	public static List<StateEntry> stateEntries(Map<String, Object> state) {
 		List<StateEntry> result = new ArrayList<>();
-		collectEntries("", view() == null ? Map.of() : view().state(), result);
+		collectEntries("", state, result);
 		return result;
 	}
 
@@ -81,6 +95,91 @@ public record InspectedNode(String windowName, String address, ScriptingNodeView
 				result.add(new StateEntry(path, JSON.toString(value)));
 			}
 		}
+	}
+
+	/**
+	 * The part of the inspected control's {@link ScriptingNodeView#state() state} that the given
+	 * paths address - the expected state of an assertion about exactly those entries.
+	 *
+	 * @param paths
+	 *        The paths of the wanted leaves, as {@link #stateEntries()} reports them.
+	 * @return The state reduced to the addressed leaves, see
+	 *         {@link #stateSubset(Map, Collection)}.
+	 */
+	public Map<String, Object> stateSubset(Collection<String> paths) {
+		return stateSubset(view() == null ? Map.of() : view().state(), paths);
+	}
+
+	/**
+	 * The part of a state that the given paths address.
+	 *
+	 * <p>
+	 * The result keeps the shape of the state: a leaf appears under the keys leading to it, so that
+	 * it is compared against the live state of a node by the very key it was taken from (the subset
+	 * semantics of {@link AssertCommand#mismatchingKeys(Map, Map)}). Paths sharing a prefix
+	 * contribute to the same nested object. A path the state does not have is skipped: what is gone
+	 * is not asserted about, so a selection taken from an outdated projection still yields an
+	 * assertion about the entries that remain.
+	 * </p>
+	 *
+	 * @param state
+	 *        The full state to take the leaves from.
+	 * @param paths
+	 *        The paths of the wanted leaves, as {@link #stateEntries()} reports them.
+	 * @return The state reduced to the addressed leaves; empty if none of them exists.
+	 */
+	public static Map<String, Object> stateSubset(Map<String, Object> state, Collection<String> paths) {
+		Map<String, Object> result = new LinkedHashMap<>();
+		if (state == null) {
+			return result;
+		}
+		for (String path : paths) {
+			if (path != null) {
+				copyPath(state, path, result);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Copies the leaf the path addresses in the given state into the same place of the given target.
+	 *
+	 * <p>
+	 * A key holding the {@link AssertCommand#PATH_SEPARATOR} is resolved as well: the path is not
+	 * split up front but matched key by key, an exact key first and a key followed by the separator
+	 * afterwards, so that an entry keyed with a qualified name (a type name, say) is found at the
+	 * path {@link #stateEntries()} reports for it.
+	 * </p>
+	 *
+	 * @return Whether the path addresses a leaf of the state.
+	 */
+	private static boolean copyPath(Map<String, Object> state, String path, Map<String, Object> target) {
+		if (state.containsKey(path)) {
+			target.put(path, state.get(path));
+			return true;
+		}
+		for (Map.Entry<String, Object> entry : state.entrySet()) {
+			String key = entry.getKey();
+			String prefix = key + AssertCommand.PATH_SEPARATOR;
+			if (!path.startsWith(prefix) || !(entry.getValue() instanceof Map<?, ?> nested)) {
+				continue;
+			}
+			@SuppressWarnings("unchecked")
+			Map<String, Object> typed = (Map<String, Object>) nested;
+			// A copy of what a path with the same prefix already contributed, so that the entries
+			// collected under one key accumulate without the state itself being written to.
+			Map<String, Object> nestedTarget = new LinkedHashMap<>();
+			if (target.get(key) instanceof Map<?, ?> collected) {
+				for (Map.Entry<?, ?> collectedEntry : collected.entrySet()) {
+					nestedTarget.put(String.valueOf(collectedEntry.getKey()), collectedEntry.getValue());
+				}
+			}
+			if (copyPath(typed, path.substring(prefix.length()), nestedTarget)) {
+				target.put(key, nestedTarget);
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

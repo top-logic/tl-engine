@@ -6,6 +6,7 @@
 package com.top_logic.layout.view.inspector;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -42,6 +43,26 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en The inspected element is no longer displayed.
 	 */
 	public static ResKey ERROR_NODE_GONE;
+
+	/**
+	 * @en Select the state entries to assert on first.
+	 */
+	public static ResKey ERROR_NO_STATE_SELECTED;
+
+	/**
+	 * @en Start the script recorder first, an assertion is a step of a recording.
+	 */
+	public static ResKey ERROR_NOT_RECORDING;
+
+	/**
+	 * @en The selected state entries are no longer part of the element's state.
+	 */
+	public static ResKey ERROR_STATE_GONE;
+
+	/**
+	 * @en Assertion recorded for {0} ({1} entries).
+	 */
+	public static ResKey2 ASSERTION_RECORDED__ADDRESS_ENTRIES;
 
 	/**
 	 * @en Path

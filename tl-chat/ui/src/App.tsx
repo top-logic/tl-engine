@@ -7,6 +7,7 @@ import {
   createSession,
   deleteSession,
   fetchCapabilities,
+  ForbiddenError,
   listSubagents,
   listSessions,
   loadSession,
@@ -851,6 +852,12 @@ export function App({ controlId }: TLCellProps) {
         dispatch({ type: 'REMOVE_MESSAGE', id: messageId })
         setBusy(false)
         runStore.set((s) => ({ ...s, busy: false }))
+        // A refusal is not a failure: the server wrote a sentence for this user saying what they may
+        // not use, and it reads as information rather than as something that went wrong.
+        if (err instanceof ForbiddenError) {
+          showNotice(err.reason || labels.notAllowed, '', { tone: 'info', sticky: true })
+          return false
+        }
         const busyRefusal = err instanceof Error && err.message === 'busy'
         showNotice(busyRefusal ? labels.busyHint : labels.sendFailed, '', {
           tone: busyRefusal ? 'info' : 'warn',
@@ -1026,8 +1033,12 @@ export function App({ controlId }: TLCellProps) {
         dispatch({ type: 'ADD_USER', id: crypto.randomUUID(), text: result.text ?? '' })
         setBusy(true)
         runStore.set((snapshot) => ({ ...snapshot, busy: true, measuredTokens: 0 }))
-      } catch {
-        showNotice(labels.sendFailed)
+      } catch (err) {
+        if (err instanceof ForbiddenError) {
+          showNotice(err.reason || labels.notAllowed, '', { tone: 'info', sticky: true })
+        } else {
+          showNotice(labels.sendFailed)
+        }
       } finally {
         setRegenerating(false)
       }

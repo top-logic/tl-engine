@@ -307,19 +307,69 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 */
 	private static void authorizeRun(SecurityContext security, AgentDefinition agentDef,
 			String assignedModel, RunOverrides overrides) {
-		RunAuthorization authorization = security.runAuthorization();
-		refuse(authorization.agentRefusal(agentDef.name()));
-		if (overrides == null) {
-			return;
+		refuse(refusalFor(security.runAuthorization(), agentDef, assignedModel, overrides));
+	}
+
+	/**
+	 * Why the given principal may not start this run, without starting anything.
+	 *
+	 * <p>
+	 * The same three questions {@link #authorizeRun} asks, for a caller that wants to answer them
+	 * before the run rather than through the exception it throws: {@code /chat/send} pre-checks here
+	 * so that a refused request comes back as a sentence the user can read instead of as a failed
+	 * turn. The run is checked again where it starts, because this one is a courtesy and not the
+	 * gate.
+	 * </p>
+	 *
+	 * @param authorization
+	 *        What the acting principal may run, from
+	 *        {@code AiToolAccessService.effectiveRunAccessFor(Person)}.
+	 * @param agentName
+	 *        The agent the request names, or the entry point it would fall back to.
+	 * @param overrides
+	 *        What the request asks for beyond the agent, may be <code>null</code>.
+	 * @return The refusal, or <code>null</code> if the run is permitted. A name no agent has is not
+	 *         refused here - that is not a denial, and it fails where it always did.
+	 */
+	public static Decision.Denied runRefusal(RunAuthorization authorization, String agentName,
+			RunOverrides overrides) {
+		AgentDefinition agentDef = AgentDefinitionQuery.getInstance().findAgentByName(agentName);
+		if (agentDef == null) {
+			return authorization.agentRefusal(agentName);
+		}
+		String assignedModel;
+		try {
+			assignedModel = LLMService.getInstance().resolveModelAssignment(agentDef.name()).model();
+		} catch (RuntimeException ex) {
+			Logger.debug("No model assignment to check '" + agentName + "' against.", AgentFactory.class);
+			assignedModel = null;
+		}
+		return refusalFor(authorization, agentDef, assignedModel, overrides);
+	}
+
+	/** The refusal of one run, or <code>null</code>; the one place the three questions are asked. */
+	private static Decision.Denied refusalFor(RunAuthorization authorization, AgentDefinition agentDef,
+			String assignedModel, RunOverrides overrides) {
+		Decision.Denied agentRefusal = authorization.agentRefusal(agentDef.name());
+		if (agentRefusal != null || overrides == null) {
+			return agentRefusal;
 		}
 		if (overrides.hasModel()) {
-			refuse(authorization.modelRefusal(overrides.model(), assignedModel));
+			Decision.Denied modelRefusal = authorization.modelRefusal(overrides.model(), assignedModel);
+			if (modelRefusal != null) {
+				return modelRefusal;
+			}
 		}
 		if (overrides.mcpServers() != null) {
 			for (String serverName : overrides.mcpServers()) {
-				refuse(authorization.mcpServerRefusal(serverName, agentDef.mcpServers()));
+				Decision.Denied serverRefusal =
+					authorization.mcpServerRefusal(serverName, agentDef.mcpServers());
+				if (serverRefusal != null) {
+					return serverRefusal;
+				}
 			}
 		}
+		return null;
 	}
 
 	/** Turns a refusal into the exception every entry point reports, or does nothing. */

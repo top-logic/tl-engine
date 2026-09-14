@@ -140,7 +140,14 @@ export type ChatMessage =
   | RunMeta
 
 export interface AgentOption {
+  /** The identifier: what a request names and what a persisted session holds. */
   name: string
+  /**
+   * What to call this agent in front of the user, in their language.
+   *
+   * Absent for an agent that has no display name; it is then shown by its identifier.
+   */
+  label?: string
   /**
    * One localised line saying what this agent is for.
    *

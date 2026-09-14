@@ -96,3 +96,14 @@ export function effortLabel(level: string, labels: Labels): string {
       return level
   }
 }
+
+/**
+ * What to call an agent in front of the user.
+ *
+ * Its display name when its definition carries one, and its identifier otherwise - which is the name
+ * whoever defined the agent chose, and the only thing there is to show.
+ */
+export function agentLabel(name: string, agents: { name: string; label?: string }[]): string {
+  if (!name) return ''
+  return agents.find((item) => item.name === name)?.label || name
+}

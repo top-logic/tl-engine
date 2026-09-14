@@ -14,6 +14,9 @@ describe('the name a tool is shown under', () => {
   it('leaves a run of capitals alone', () => {
     expect(toolLabel('script.executeTLScript')).toBe('Execute TLScript')
     expect(toolLabel('fetchURL')).toBe('Fetch URL')
+    // Intended, and asserted so that nobody "fixes" it: an id that opens with a run of capitals has
+    // no boundary to split on that is not a guess - "MCP Connect" and "M C P Connect" are the same
+    // guess with different luck - so the id is shown as it is written.
     expect(toolLabel('MCPConnect')).toBe('MCPConnect')
   })
 

@@ -86,6 +86,10 @@ public class TestChatServletOwnership extends BasicTestCase {
 			doPost(req, resp);
 		}
 
+		void get(HttpServletRequest req, HttpServletResponse resp) throws Exception {
+			doGet(req, resp);
+		}
+
 		void delete(HttpServletRequest req, HttpServletResponse resp) throws Exception {
 			doDelete(req, resp);
 		}

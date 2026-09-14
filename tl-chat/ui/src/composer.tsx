@@ -3,7 +3,7 @@ import { cancelPromptImprovement, improvePrompt } from './api'
 import { ACCEPT_ATTRIBUTE, collectAttachments, dragHasFiles } from './attachments'
 import { ContextUsage, formatTokens } from './context-usage'
 import type { bundle } from './i18n'
-import { effortLabel, modelLabel } from './models'
+import { agentLabel, effortLabel, modelLabel } from './models'
 import { PromptStack } from './prompts'
 import { SubagentActivityPanel } from './subagents'
 import type { ChatAction } from './reducer'
@@ -411,8 +411,14 @@ export const Composer = React.memo(function Composer({
   })
 
   const q = query.trim().toLocaleLowerCase()
+  // Searched by what is on screen and by the identifier, because both are things a user types: the
+  // one they read in the row, and the one they know from the configuration.
   const agentHits = agents.filter(
-    (item) => !q || item.name.toLocaleLowerCase().includes(q) || (item.summary ?? '').toLocaleLowerCase().includes(q),
+    (item) =>
+      !q ||
+      item.name.toLocaleLowerCase().includes(q) ||
+      (item.label ?? '').toLocaleLowerCase().includes(q) ||
+      (item.summary ?? '').toLocaleLowerCase().includes(q),
   )
   const modelHits = models.filter(
     (item) => !q || item.id.toLocaleLowerCase().includes(q) || (item.provider ?? '').toLocaleLowerCase().includes(q),
@@ -665,7 +671,7 @@ export const Composer = React.memo(function Composer({
                         icon={Icon.agent}
                         label={labels.agent}
                         description={labels.agentHint}
-                        value={agent || labels.defaultValue}
+                        value={agent ? agentLabel(agent, agents) : labels.defaultValue}
                         more
                         onClick={() => setPane('agent')}
                       />
@@ -715,7 +721,7 @@ export const Composer = React.memo(function Composer({
                     {agentHits.map((item) => (
                       <MenuRow
                         key={item.name}
-                        label={item.name}
+                        label={agentLabel(item.name, agents)}
                         description={item.summary || undefined}
                         selected={item.name === agent}
                         onClick={() => {

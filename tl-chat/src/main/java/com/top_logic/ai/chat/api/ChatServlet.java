@@ -60,6 +60,10 @@ import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
+import com.top_logic.tl.ai.core.agent.AgentFactory;
+import com.top_logic.tl.ai.core.security.AiToolAccessService;
+import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Decision;
+import com.top_logic.util.Resources;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -131,6 +135,16 @@ public class ChatServlet extends TopLogicServlet {
 	private static final String PATH_FEEDBACK = "/feedback";
 	private static final String TRANSCRIPT_SUFFIX = "/transcript";
 	private static final String CONTENT_TYPE_JSON = "application/json; charset=UTF-8";
+
+	/**
+	 * The status of a request the acting account may not make.
+	 *
+	 * <p>
+	 * A status of its own rather than the generic "error": the client shows the reason that comes with
+	 * it, and the two are not the same event - one is a failure, the other is an answer.
+	 * </p>
+	 */
+	private static final String FORBIDDEN = "forbidden";
 	private static final String CONTENT_TYPE_SSE = "text/event-stream";
 
 	/** The {@link #interactionTypeName(TLClassifier)} of a tool approval. */
@@ -227,7 +241,7 @@ public class ChatServlet extends TopLogicServlet {
 			return;
 		}
 		if (pathInfo.equals(PATH_CAPABILITIES) || pathInfo.equals(PATH_CAPABILITIES + "/")) {
-			handleCapabilities(resp);
+			handleCapabilities(req, resp);
 			return;
 		}
 		if (pathInfo.startsWith(PATH_SESSIONS)) {
@@ -342,6 +356,11 @@ public class ChatServlet extends TopLogicServlet {
 			body.isMcpOverride(),
 			body.getMcpServers(),
 			effort);
+		String refusal = runRefusal(person, options);
+		if (refusal != null) {
+			writeForbidden(resp, ChatSendResponse.create().setStatus(FORBIDDEN).setReason(refusal));
+			return;
+		}
 		ChatProcessor.SendResult result =
 			ChatProcessor.sendMessage(tracker, subSession, userName, messageText, attachments, options);
 
@@ -390,6 +409,17 @@ public class ChatServlet extends TopLogicServlet {
 			return;
 		}
 
+		ChatProcessor.ChatRunOptions options = new ChatProcessor.ChatRunOptions(
+			blankToNull(body.getAgent()), blankToNull(body.getModel()),
+			body.isMcpOverride(), body.getMcpServers(), blankToNull(body.getEffort()));
+		// Before the turn is removed, not after: a regenerate that is refused must leave the answer it
+		// was going to replace where it is.
+		String refusal = runRefusal(resolveCurrentPerson(req), options);
+		if (refusal != null) {
+			writeForbidden(resp, TruncateResponse.create().setStatus(FORBIDDEN).setReason(refusal));
+			return;
+		}
+
 		ConversationLog log = tracker.getSessionManager().getOrCreateConversationLog();
 		int turnCount = log.turnCount();
 		if (turnCount == 0) {
@@ -402,9 +432,6 @@ public class ChatServlet extends TopLogicServlet {
 			return;
 		}
 
-		ChatProcessor.ChatRunOptions options = new ChatProcessor.ChatRunOptions(
-			blankToNull(body.getAgent()), blankToNull(body.getModel()),
-			body.isMcpOverride(), body.getMcpServers(), blankToNull(body.getEffort()));
 		tracker.setEffort(blankToNull(body.getEffort()));
 		String userName = resolveUserName(req, tracker);
 		ChatProcessor.SendResult result = ChatProcessor.sendMessage(tracker,
@@ -578,6 +605,66 @@ public class ChatServlet extends TopLogicServlet {
 		resp.setContentType(CONTENT_TYPE_JSON);
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
 		resp.getWriter().write("{\"status\":\"ok\"}");
+	}
+
+	/**
+	 * Why the acting account may not make this request, in their language.
+	 *
+	 * <p>
+	 * The friendly half of the agent security policy: {@code AgentFactory} refuses the run whatever
+	 * this says, and this exists so that the refusal reaches the user as a sentence rather than as a
+	 * turn that failed. Answers <code>null</code> while nothing can be asked - no account behind the
+	 * request, or the policy service not running - and the run is then refused where it starts.
+	 * </p>
+	 */
+	private static String runRefusal(Person person, ChatProcessor.ChatRunOptions options) {
+		if (person == null || !AiToolAccessService.Module.INSTANCE.isActive()) {
+			return null;
+		}
+		String agentName = options.agent() != null && !options.agent().isBlank()
+			? options.agent().trim()
+			: AgentFactory.getInstance().getEntryPointAgentName();
+		List<String> mcpOverride = options.mcpOverride() ? options.mcpServers() : null;
+		AgentFactory.RunOverrides overrides =
+			new AgentFactory.RunOverrides(options.model(), mcpOverride, options.effort());
+		Decision.Denied denied;
+		try {
+			denied = AgentFactory.runRefusal(
+				AiToolAccessService.effectiveRunAccessFor(person), agentName, overrides);
+		} catch (RuntimeException ex) {
+			// A pre-check is a courtesy; a failure in it must not stop a request the run would accept.
+			Logger.warn("Could not pre-check what '" + agentName + "' may run.", ex, ChatServlet.class);
+			return null;
+		}
+		return denied == null ? null : Resources.getInstance().getString(denied.reason());
+	}
+
+	/** Answers a send the acting account may not make, with the reason the client shows. */
+	private static void writeForbidden(HttpServletResponse resp, ChatSendResponse response)
+			throws IOException {
+		forbidden(resp);
+		resp.getWriter().write(DtoMapper.toJson(response));
+	}
+
+	/** Answers a regenerate the acting account may not make, with the reason the client shows. */
+	private static void writeForbidden(HttpServletResponse resp, TruncateResponse response)
+			throws IOException {
+		forbidden(resp);
+		resp.getWriter().write(DtoMapper.toJson(response));
+	}
+
+	/**
+	 * Sets up a refusal the client can read.
+	 *
+	 * <p>
+	 * A JSON body rather than {@code sendError}, whose HTML page the client cannot parse and would
+	 * report as a generic failure - which is the opposite of what a refusal with a reason is for.
+	 * </p>
+	 */
+	private static void forbidden(HttpServletResponse resp) {
+		resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+		resp.setContentType(CONTENT_TYPE_JSON);
+		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
 	}
 
 	private static void writeTruncateResponse(HttpServletResponse resp, TruncateResponse response)
@@ -1542,13 +1629,22 @@ public class ChatServlet extends TopLogicServlet {
 		}
 	}
 
-	private void handleCapabilities(HttpServletResponse resp) throws IOException {
+	/**
+	 * The agents, models and MCP servers the caller may use.
+	 *
+	 * <p>
+	 * Takes the request because the answer depends on who asks: the policy of {@code #392} filters
+	 * this list to what a run of that account would actually accept.
+	 * </p>
+	 */
+	private void handleCapabilities(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		TaskProgressTracker tracker = currentTracker();
 		String improver = tracker == null ? null : tracker.getPromptImproverAgentName();
 		resp.setStatus(HttpServletResponse.SC_OK);
 		resp.setContentType(CONTENT_TYPE_JSON);
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
-		resp.getWriter().write(DtoMapper.toJson(ChatCapabilities.build(improver)));
+		resp.getWriter().write(
+			DtoMapper.toJson(ChatCapabilities.build(resolveCurrentPerson(req), improver)));
 	}
 
 	private static String blankToNull(String value) {

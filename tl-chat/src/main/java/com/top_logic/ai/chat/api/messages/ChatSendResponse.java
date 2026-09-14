@@ -21,9 +21,14 @@ public class ChatSendResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 	/** @see #getStatus() */
 	public static final String STATUS__PROP = "status";
 
+	/** @see #getReason() */
+	public static final String REASON__PROP = "reason";
+
 	private String _taskId = "";
 
 	private String _status = "";
+
+	private String _reason = "";
 
 	/**
 	 * Creates a {@link ChatSendResponse} instance.
@@ -55,7 +60,7 @@ public class ChatSendResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 	}
 
 	/**
-	 * e.g. "processing".
+	 * e.g. "processing", or "forbidden" for a request the acting account may not make.
 	 */
 	public final String getStatus() {
 		return _status;
@@ -74,6 +79,26 @@ public class ChatSendResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 		_status = value;
 	}
 
+	/**
+	 * Why the request was refused, in the acting user's language; empty unless it was.
+	 */
+	public final String getReason() {
+		return _reason;
+	}
+
+	/**
+	 * @see #getReason()
+	 */
+	public com.top_logic.ai.chat.api.messages.ChatSendResponse setReason(String value) {
+		internalSetReason(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getReason()} without chain call utility. */
+	protected final void internalSetReason(String value) {
+		_reason = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return CHAT_SEND_RESPONSE__TYPE;
@@ -83,7 +108,8 @@ public class ChatSendResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
 			TASK_ID__PROP, 
-			STATUS__PROP);
+			STATUS__PROP, 
+			REASON__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -110,6 +136,7 @@ public class ChatSendResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 		switch (field) {
 			case TASK_ID__PROP: return getTaskId();
 			case STATUS__PROP: return getStatus();
+			case REASON__PROP: return getReason();
 			default: return null;
 		}
 	}
@@ -119,6 +146,7 @@ public class ChatSendResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 		switch (field) {
 			case TASK_ID__PROP: internalSetTaskId((String) value); break;
 			case STATUS__PROP: internalSetStatus((String) value); break;
+			case REASON__PROP: internalSetReason((String) value); break;
 		}
 	}
 
@@ -141,6 +169,8 @@ public class ChatSendResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 		out.value(getTaskId());
 		out.name(STATUS__PROP);
 		out.value(getStatus());
+		out.name(REASON__PROP);
+		out.value(getReason());
 	}
 
 	@Override
@@ -148,6 +178,7 @@ public class ChatSendResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 		switch (field) {
 			case TASK_ID__PROP: setTaskId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case STATUS__PROP: setStatus(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case REASON__PROP: setReason(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

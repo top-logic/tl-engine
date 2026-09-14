@@ -25,6 +25,7 @@ import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.LabelPositioning;
@@ -78,6 +79,12 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		/** Configuration property name for {@link #getDescription()}. */
 		String DESCRIPTION = "description";
 
+		/** Configuration property name for {@link #getDisplayName()}. */
+		String DISPLAY_NAME = "display-name";
+
+		/** Configuration property name for {@link #getSummary()}. */
+		String SUMMARY = "summary";
+
 		/** Configuration property name for {@link #getSystemPrompt()}. */
 		String SYSTEM_PROMPT = "system-prompt";
 
@@ -110,6 +117,33 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		@LabelPositioning(LabelPosition.ABOVE)
 		@ControlProvider(MultiLineText.class)
 		String getDescription();
+
+		/**
+		 * What to call this agent in front of a user, in their language.
+		 *
+		 * <p>
+		 * Leave it out and the agent is called by the name above, which is its identifier. That name is
+		 * referenced by other configuration, by skills and by every conversation already held with this
+		 * agent, so it is worth leaving alone even when it reads badly - this is the setting to change
+		 * instead.
+		 * </p>
+		 */
+		@Name(DISPLAY_NAME)
+		@Nullable
+		ResKey getDisplayName();
+
+		/**
+		 * One line saying what this agent is for, in the language of whoever reads it.
+		 *
+		 * <p>
+		 * This is what a user picking an agent is shown. Leave it out and the agent is offered by its
+		 * name alone - which is better than showing the description above, because that one is written
+		 * for a model rather than for a person.
+		 * </p>
+		 */
+		@Name(SUMMARY)
+		@Nullable
+		ResKey getSummary();
 
 		/**
 		 * The agent's system prompt text.
@@ -322,7 +356,9 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 			AgentConfig cfg = entry.getValue();
 			agents.put(name, new AgentDefinition(
 				name,
+				cfg.getDisplayName(),
 				cfg.getDescription(),
+				cfg.getSummary(),
 				cfg.getSystemPrompt(),
 				effectiveNames(cfg.getTools(), cfg.getRemovedTools()),
 				toNames(cfg.getMcpServers()),

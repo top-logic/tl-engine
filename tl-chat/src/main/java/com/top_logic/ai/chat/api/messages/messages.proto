@@ -145,9 +145,14 @@ message ChatSendResponse {
 	string taskId;
 
 	/**
-	 * e.g. "processing".
+	 * e.g. "processing", or "forbidden" for a request the acting account may not make.
 	 */
 	string status;
+
+	/**
+	 * Why the request was refused, in the acting user's language; empty unless it was.
+	 */
+	string reason;
 }
 
 /**
@@ -237,8 +242,11 @@ message TruncateRequest {
  * Response body for POST /chat/truncate and POST /chat/regenerate.
  */
 message TruncateResponse {
-	/** "ok", "busy" or "error". */
+	/** "ok", "busy", "error", or "forbidden" for a request the acting account may not make. */
 	string status;
+
+	/** Why the request was refused, in the acting user's language; empty unless it was. */
+	string reason;
 
 	/** Number of turns removed. */
 	int removedTurns;
@@ -928,8 +936,19 @@ message ChatCapabilitiesResponse {
 
 /** One selectable agent. */
 message AgentOptionDto {
-	/** Unique agent name. */
+	/**
+	 * Unique agent name - the identifier, not a label.
+	 *
+	 * What a request names, what a persisted session holds, and what other configuration references.
+	 */
 	string name;
+
+	/**
+	 * What to call this agent in front of the user, in their language.
+	 *
+	 * Empty when the agent has no display name; the client then shows the identifier above.
+	 */
+	string label;
 
 	/**
 	 * One localised line saying what this agent is for, written for the person choosing it.

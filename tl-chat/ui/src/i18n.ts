@@ -116,6 +116,8 @@ const EN = {
   busyHint:
     'The agent is still working on the previous message. Your text is kept — send it again when the run has finished.',
   sendFailed: 'The message could not be sent.',
+  /** Shown when the server refused a request but sent no reason of its own. */
+  notAllowed: 'This agent, model or MCP server is not available to you.',
   onlyImagesAndPdf: 'only images and PDF can be attached',
   largerThan10Mb: 'larger than 10 MB',
   atMostFiles: (max: number) => `at most ${max} files`,
@@ -304,6 +306,7 @@ const DE: Bundle = {
   busyHint:
     'Der Agent arbeitet noch an der vorherigen Nachricht. Dein Text bleibt erhalten — sende ihn erneut, wenn der Lauf fertig ist.',
   sendFailed: 'Die Nachricht konnte nicht gesendet werden.',
+  notAllowed: 'Dieser Agent, dieses Modell oder dieser MCP-Server steht Ihnen nicht zur Verfügung.',
   onlyImagesAndPdf: 'nur Bilder und PDF können angehängt werden',
   largerThan10Mb: 'größer als 10 MB',
   atMostFiles: (max: number) => `höchstens ${max} Dateien`,

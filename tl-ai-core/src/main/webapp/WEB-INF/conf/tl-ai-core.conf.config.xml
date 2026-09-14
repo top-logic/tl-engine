@@ -1509,6 +1509,14 @@ When a subagent finishes, its result is delivered to you automatically at the st
 					<agent name="TL_SingleAgent"
 						description="Delegate to the all-round TopLogic assistant carrying the full tool and skill set: model exploration and editing, TLScript, task management, and page authoring. Default chat entry point; as a background subagent it runs read-only. Prefer a specialist when the sub-task is purely exploration, TLScript, or model editing. Provide goal (short intent), task (concrete instructions), context (module/type names if relevant)."
 					>
+						<display-name>
+							<en>Albert</en>
+							<de>Albert</de>
+						</display-name>
+						<summary>
+							<en>Knows its way around the whole application: explores and explains the model, changes it, runs TL-Script, and writes pages.</en>
+							<de>Kennt sich in der ganzen Anwendung aus: erkundet und erklärt das Modell, ändert es, führt TL-Script aus und erstellt Seiten.</de>
+						</summary>
 						<system-prompt><![CDATA[You are Albert — an expert consultant who helps users explore, understand, and modify their TopLogic application.
 
 You are an autonomous agent. Keep working until the user's request is fully resolved. Do not stop after partial progress. Only yield when the work is done or you are genuinely blocked.
@@ -1586,6 +1594,14 @@ If you loaded a skill but forgot to use its tools — use them now instead of lo
 					<agent name="TL_Orchestrator"
 						description="Delegate to the strategic coordinator that routes work to the specialist agents (model exploration, TLScript, model editing) and synthesizes their results. It has no domain tools of its own, so it only pays off for multi-step requests spanning several specialists; for a single concrete sub-task, pick the matching specialist directly."
 					>
+						<display-name>
+							<en>Orchestrator</en>
+							<de>Orchestrator</de>
+						</display-name>
+						<summary>
+							<en>Splits a larger request between the specialists and puts their results back together.</en>
+							<de>Verteilt eine größere Anfrage auf die Spezialisten und führt deren Ergebnisse wieder zusammen.</de>
+						</summary>
 						<system-prompt><![CDATA[# Preamble
 
 You are Albert — a strategic coordinator that routes user requests to specialist sub-agents and synthesizes their results.
@@ -1742,6 +1758,14 @@ Route by the nature of the request:
 					<agent name="TL_ModelExplorer"
 						description="Delegate to the Model Explorer for read-only model inspection. Call to explore, inspect, or verify the TopLogic application model: modules, types, parts, annotations, search. Provide goal (short intent), task (concrete question), context (module/type/part names if known). Do NOT paste the full user message; distill a clear exploration request."
 					>
+						<display-name>
+							<en>Model Explorer</en>
+							<de>Modell-Explorer</de>
+						</display-name>
+						<summary>
+							<en>Answers questions about the application's model and data without changing anything.</en>
+							<de>Beantwortet Fragen zum Modell und zu den Daten der Anwendung, ohne etwas zu ändern.</de>
+						</summary>
 						<system-prompt><![CDATA[# Preamble
 
 You are a **TopLogic Model Explorer** agent. Your job is to answer user questions by **thoroughly navigating and exploring a TopLogic application model** (modules → types → parts/relationships → usages → optional instances). You are an **exploration specialist**: you do not guess. You locate evidence in the model using your available tools, then show it clearly and concisely.
@@ -1861,6 +1885,14 @@ If you cannot fill the Evidence section → you have not called enough tools →
 					<agent name="TL_TLScriptAgent"
 						description="Delegate to the TLScript specialist for TLScript syntax, function documentation, script validation, or code generation. Provide goal (short intent), task (concrete question or code snippet), context (type/part names, code snippets, model literals if relevant). Do NOT paste the full user message; distill the TLScript question."
 					>
+						<display-name>
+							<en>TL-Script Agent</en>
+							<de>TL-Script-Agent</de>
+						</display-name>
+						<summary>
+							<en>Writes and runs TL-Script to query or compute over the application's data.</en>
+							<de>Schreibt und führt TL-Script aus, um die Daten der Anwendung abzufragen oder auszuwerten.</de>
+						</summary>
 						<system-prompt><![CDATA[# Preamble
 You are a **TLScript Specialist Agent** for the TopLogic platform. Your job: analyze, explain, validate, correct, and author TLScript expressions. Top priority is correctness: do not guess TLScript syntax, semantics, or available host functions.
 
@@ -1985,6 +2017,14 @@ B) Choosing `.` vs `..`:
 					<agent name="TL_ModelEditor"
 						description="Delegate to the Model Editor for model modification. Call when the user wants to create, modify, or delete elements in the TopLogic model: add/remove types, properties, references, enumerations, or set/remove annotations. Provide goal (short intent), task (concrete instructions or requirements), context (module/type names if relevant). Do NOT paste the full user message; distill the request."
 					>
+						<display-name>
+							<en>Model Editor</en>
+							<de>Modell-Editor</de>
+						</display-name>
+						<summary>
+							<en>Changes the application's model: types, attributes and the views built on them.</en>
+							<de>Ändert das Modell der Anwendung: Typen, Attribute und die darauf aufbauenden Ansichten.</de>
+						</summary>
 						<system-prompt><![CDATA[# Preamble
 
 You are a **specialist agent** for creating, modifying, and deleting application model elements (modules, classes, properties, references, enumerations). You receive work orders from a coordinator, plan the concrete changes using your domain expertise, confirm with the user, and execute.
@@ -2189,6 +2229,14 @@ Do NOT include long explanations. Be concise and factual.]]></system-prompt>
 					<agent name="TL_PromptImprover"
 						description="Rewrite a draft user prompt so it is clearer and ready to send. Returns only the improved prompt text."
 					>
+						<display-name>
+							<en>Prompt Improver</en>
+							<de>Prompt-Verbesserung</de>
+						</display-name>
+						<summary>
+							<en>Rewrites a draft message so it says more clearly what is wanted. The chat runs it for the "improve prompt" button rather than offering it as a conversation partner.</en>
+							<de>Schreibt einen Entwurf so um, dass klarer wird, was gewünscht ist. Der Chat führt ihn für die Schaltfläche "Prompt verbessern" aus und bietet ihn nicht als Gesprächspartner an.</de>
+						</summary>
 						<system-prompt><![CDATA[You rewrite a draft prompt that a user is about to send to an AI assistant.
 
 # Output contract

@@ -18,6 +18,9 @@ public class TruncateResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 	/** @see #getStatus() */
 	public static final String STATUS__PROP = "status";
 
+	/** @see #getReason() */
+	public static final String REASON__PROP = "reason";
+
 	/** @see #getRemovedTurns() */
 	public static final String REMOVED_TURNS__PROP = "removedTurns";
 
@@ -28,6 +31,8 @@ public class TruncateResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 	public static final String TASK_ID__PROP = "taskId";
 
 	private String _status = "";
+
+	private String _reason = "";
 
 	private int _removedTurns = 0;
 
@@ -45,7 +50,7 @@ public class TruncateResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 	}
 
 	/**
-	 * "ok", "busy" or "error".
+	 * "ok", "busy", "error", or "forbidden" for a request the acting account may not make.
 	 */
 	public final String getStatus() {
 		return _status;
@@ -62,6 +67,26 @@ public class TruncateResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 	/** Internal setter for {@link #getStatus()} without chain call utility. */
 	protected final void internalSetStatus(String value) {
 		_status = value;
+	}
+
+	/**
+	 * Why the request was refused, in the acting user's language; empty unless it was.
+	 */
+	public final String getReason() {
+		return _reason;
+	}
+
+	/**
+	 * @see #getReason()
+	 */
+	public com.top_logic.ai.chat.api.messages.TruncateResponse setReason(String value) {
+		internalSetReason(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getReason()} without chain call utility. */
+	protected final void internalSetReason(String value) {
+		_reason = value;
 	}
 
 	/**
@@ -133,6 +158,7 @@ public class TruncateResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
 			STATUS__PROP, 
+			REASON__PROP, 
 			REMOVED_TURNS__PROP, 
 			TEXT__PROP, 
 			TASK_ID__PROP);
@@ -161,6 +187,7 @@ public class TruncateResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 	public Object get(String field) {
 		switch (field) {
 			case STATUS__PROP: return getStatus();
+			case REASON__PROP: return getReason();
 			case REMOVED_TURNS__PROP: return getRemovedTurns();
 			case TEXT__PROP: return getText();
 			case TASK_ID__PROP: return getTaskId();
@@ -172,6 +199,7 @@ public class TruncateResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 	public void set(String field, Object value) {
 		switch (field) {
 			case STATUS__PROP: internalSetStatus((String) value); break;
+			case REASON__PROP: internalSetReason((String) value); break;
 			case REMOVED_TURNS__PROP: internalSetRemovedTurns((int) value); break;
 			case TEXT__PROP: internalSetText((String) value); break;
 			case TASK_ID__PROP: internalSetTaskId((String) value); break;
@@ -195,6 +223,8 @@ public class TruncateResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 		super.writeFields(out);
 		out.name(STATUS__PROP);
 		out.value(getStatus());
+		out.name(REASON__PROP);
+		out.value(getReason());
 		out.name(REMOVED_TURNS__PROP);
 		out.value(getRemovedTurns());
 		out.name(TEXT__PROP);
@@ -207,6 +237,7 @@ public class TruncateResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
 			case STATUS__PROP: setStatus(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case REASON__PROP: setReason(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case REMOVED_TURNS__PROP: setRemovedTurns(in.nextInt()); break;
 			case TEXT__PROP: setText(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case TASK_ID__PROP: setTaskId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;

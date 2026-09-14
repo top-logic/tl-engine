@@ -30,10 +30,36 @@ function withWindow(path: string, windowId: string): string {
 }
 
 async function readJson<T>(res: Response): Promise<T> {
+  if (res.status === 403) {
+    throw await forbidden(res)
+  }
   if (!res.ok) {
     throw new Error(`${res.status} ${res.statusText}`)
   }
   return (await res.json()) as T
+}
+
+/**
+ * A request the account may not make, with the reason the server wrote for this user.
+ *
+ * An error of its own, because the caller has something to show rather than something to report: the
+ * reason is a finished sentence in the user's language, not a status to translate.
+ */
+export class ForbiddenError extends Error {
+  constructor(public readonly reason: string) {
+    super(reason || 'forbidden')
+    this.name = 'ForbiddenError'
+  }
+}
+
+/** Reads the reason out of a 403, falling back to nothing rather than to the status line. */
+async function forbidden(res: Response): Promise<ForbiddenError> {
+  try {
+    const data = (await res.json()) as { reason?: string }
+    return new ForbiddenError(data.reason ?? '')
+  } catch {
+    return new ForbiddenError('')
+  }
 }
 
 export async function fetchCapabilities(windowId: string): Promise<Capabilities> {
@@ -112,6 +138,9 @@ export async function sendMessage(windowId: string, payload: SendPayload): Promi
     credentials: 'include',
     body: JSON.stringify(payload),
   })
+  if (res.status === 403) {
+    throw await forbidden(res)
+  }
   const data = (await res.json()) as { taskId?: string; status?: string }
   if (res.status === 409 || data.status === 'busy') {
     throw new Error('busy')

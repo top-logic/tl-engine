@@ -4,6 +4,24 @@
 	Configuration options for testing tlchat with JUnit.
  -->
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<!--
+			An agent with no <summary>, which the picker must then offer by its name alone. The agents
+			tl-ai ships all carry one, so without this there would be nothing to test the empty case
+			against.
+		-->
+		<config service-class="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions">
+			<instance>
+				<agents>
+					<agent name="TestAgentWithoutSummary"
+						description="Delegate here to test that an agent without a user-facing line is offered by its name alone."
+					>
+						<system-prompt>You are a test agent.</system-prompt>
+					</agent>
+				</agents>
+			</instance>
+		</config>
+	</services>
 	<configs>
 		<config config:interface="test.com.top_logic.basic.util.AbstractBasicTestAll$GlobalConfig"
 			test-comment="false"

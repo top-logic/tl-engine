@@ -1769,6 +1769,14 @@
   white-space: nowrap;
 }
 
+/*
+ * One line, cut off with an ellipsis where it does not fit.
+ *
+ * Deliberately not wrapped: what a row says about an agent is the text its definition carries, shown
+ * as it was written, and a menu whose rows change height with the length of a sentence is harder to
+ * scan than one whose long lines end in an ellipsis. A summary that has to fit is shortened where it
+ * is authored.
+ */
 .plus-text em {
   font-style: normal;
   color: var(--text-secondary);

@@ -18,6 +18,9 @@ public class AgentOptionDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 	/** @see #getName() */
 	public static final String NAME__PROP = "name";
 
+	/** @see #getLabel() */
+	public static final String LABEL__PROP = "label";
+
 	/** @see #getSummary() */
 	public static final String SUMMARY__PROP = "summary";
 
@@ -28,6 +31,8 @@ public class AgentOptionDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 	public static final String MODEL__PROP = "model";
 
 	private String _name = "";
+
+	private String _label = "";
 
 	private String _summary = "";
 
@@ -45,7 +50,9 @@ public class AgentOptionDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 	}
 
 	/**
-	 * Unique agent name.
+	 * Unique agent name - the identifier, not a label.
+	 *
+	 * What a request names, what a persisted session holds, and what other configuration references.
 	 */
 	public final String getName() {
 		return _name;
@@ -62,6 +69,28 @@ public class AgentOptionDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 	/** Internal setter for {@link #getName()} without chain call utility. */
 	protected final void internalSetName(String value) {
 		_name = value;
+	}
+
+	/**
+	 * What to call this agent in front of the user, in their language.
+	 *
+	 * Empty when the agent has no display name; the client then shows the identifier above.
+	 */
+	public final String getLabel() {
+		return _label;
+	}
+
+	/**
+	 * @see #getLabel()
+	 */
+	public com.top_logic.ai.chat.api.messages.AgentOptionDto setLabel(String value) {
+		internalSetLabel(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getLabel()} without chain call utility. */
+	protected final void internalSetLabel(String value) {
+		_label = value;
 	}
 
 	/**
@@ -157,6 +186,7 @@ public class AgentOptionDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
 			NAME__PROP, 
+			LABEL__PROP, 
 			SUMMARY__PROP, 
 			MCP_SERVERS__PROP, 
 			MODEL__PROP);
@@ -185,6 +215,7 @@ public class AgentOptionDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 	public Object get(String field) {
 		switch (field) {
 			case NAME__PROP: return getName();
+			case LABEL__PROP: return getLabel();
 			case SUMMARY__PROP: return getSummary();
 			case MCP_SERVERS__PROP: return getMcpServers();
 			case MODEL__PROP: return getModel();
@@ -196,6 +227,7 @@ public class AgentOptionDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 	public void set(String field, Object value) {
 		switch (field) {
 			case NAME__PROP: internalSetName((String) value); break;
+			case LABEL__PROP: internalSetLabel((String) value); break;
 			case SUMMARY__PROP: internalSetSummary((String) value); break;
 			case MCP_SERVERS__PROP: internalSetMcpServers(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
 			case MODEL__PROP: internalSetModel((String) value); break;
@@ -219,6 +251,8 @@ public class AgentOptionDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 		super.writeFields(out);
 		out.name(NAME__PROP);
 		out.value(getName());
+		out.name(LABEL__PROP);
+		out.value(getLabel());
 		out.name(SUMMARY__PROP);
 		out.value(getSummary());
 		out.name(MCP_SERVERS__PROP);
@@ -235,6 +269,7 @@ public class AgentOptionDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
 			case NAME__PROP: setName(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case LABEL__PROP: setLabel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case SUMMARY__PROP: setSummary(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case MCP_SERVERS__PROP: {
 				java.util.List<String> newValue = new java.util.ArrayList<>();

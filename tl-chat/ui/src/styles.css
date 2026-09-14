@@ -425,6 +425,12 @@
  */
 .stage.is-empty {
   display: grid;
+  /*
+   * An explicit, shrinkable column. Without it the single implicit column is auto-sized, which
+   * floors it at the composer's min-content width - so an empty chat beside an open side pane
+   * pushed its own composer out under the pane instead of narrowing with the stage.
+   */
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: 1fr auto auto 1.2fr;
 }
 
@@ -1231,6 +1237,16 @@
   outline: none;
 }
 
+/*
+ * One line, cut with an ellipsis: in a narrow column the placeholder otherwise wraps and the second
+ * line is clipped by the textarea's own height, which reads as a broken field.
+ */
+.composer-surface textarea::placeholder {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .composer-surface textarea:focus-visible {
   /* The surface already shows focus with its border; a second outline inside it reads as an error. */
   outline: none;
@@ -1249,8 +1265,10 @@
 
 .composer-foot {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.75rem 0.5rem;
+  min-width: 0;
   padding: 0.4375rem 0.25rem 0;
 }
 
@@ -1260,6 +1278,7 @@
  */
 .composer-hint {
   margin-left: auto;
+  min-width: 0;
   color: var(--text-secondary);
   font-size: var(--chat-small);
   white-space: nowrap;
@@ -2389,18 +2408,30 @@
 
 /* --- Right rail / side pane (Issue #401) -------------------------------- */
 
+/*
+ * Grid, not flex: the thread and the pane are columns of one track list, so opening the pane
+ * NARROWS the thread instead of being laid over it. `minmax(0, 1fr)` is what lets the thread column
+ * give way - a plain `1fr` refuses to shrink below its content's minimum, which is how the composer
+ * ended up under the icon strip with its send button and Enter hint covered.
+ */
 .workspace {
   flex: 1;
   min-width: 0;
   min-height: 0;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   position: relative;
   overflow: hidden;
 }
 
 .workspace .stage {
-  flex: 1;
-  min-width: 20rem;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Never wider than its column, whatever the column has shrunk to. */
+.workspace .composer {
+  max-width: 100%;
 }
 
 .thread-bar-end {
@@ -2423,14 +2454,23 @@
   position: relative;
 }
 
+/*
+ * A badge, not a second label: absolutely positioned over the toggle's top-right corner, so it
+ * cannot grow the button or spill across the header's bottom border.
+ */
 .side-toggle-badge {
-  min-width: 1.15rem;
-  height: 1.15rem;
-  padding: 0 0.25rem;
+  position: absolute;
+  top: -0.2rem;
+  inset-inline-end: -0.2rem;
+  pointer-events: none;
+  min-width: 1.05rem;
+  height: 1.05rem;
+  padding: 0 0.22rem;
   border-radius: var(--r-pill);
   background: var(--button-primary);
   color: var(--text-on-color, #fff);
-  font-size: 0.6875rem;
+  font-size: 0.625rem;
+  line-height: 1;
   font-weight: 700;
   display: inline-flex;
   align-items: center;
@@ -2438,6 +2478,7 @@
 }
 
 .side-column {
+  grid-column: 2 / span 2;
   width: 18.75rem;
   min-width: 18.75rem;
   border-inline-start: 1px solid var(--border-subtle);
@@ -2557,13 +2598,51 @@
   stroke: none;
 }
 
+.progress-step.is-approval .progress-marker {
+  color: var(--chat-warn);
+}
+
+.progress-step.is-approval .progress-label {
+  font-weight: 600;
+}
+
+.progress-step.is-approval .progress-caption {
+  color: var(--chat-warn);
+  white-space: nowrap;
+}
+
 .progress-caption {
   margin-inline-start: auto;
   color: var(--text-secondary);
   font-size: var(--chat-small);
 }
 
+.context-list {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.15rem 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.context-row {
+  display: contents;
+}
+
+.context-list dt {
+  color: var(--text-secondary);
+}
+
+.context-list dd {
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .side-strip {
+  grid-column: 2;
   width: 3.5rem;
   min-width: 3.5rem;
   display: flex;
@@ -2584,13 +2663,30 @@
   cursor: pointer;
 }
 
+.side-strip-item {
+  display: inline-grid;
+  place-items: center;
+}
+
+.side-strip-item svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .side-strip-item.is-active {
   border-color: var(--button-primary);
   background: color-mix(in srgb, var(--button-primary) 12%, var(--background));
+  color: var(--button-primary);
 }
 
 .side-pane {
   position: relative;
+  grid-column: 3;
   display: flex;
   flex-direction: column;
   min-width: 360px;
@@ -2606,6 +2702,11 @@
   width: 6px;
   cursor: col-resize;
   z-index: 2;
+}
+
+.side-splitter:focus-visible {
+  background: var(--button-primary);
+  outline: none;
 }
 
 .side-pane-bar {
@@ -2695,21 +2796,46 @@
   vertical-align: super;
 }
 
+/*
+ * Anchored under the chip that was clicked rather than parked at the end of the answer, which in a
+ * long answer is off screen.
+ */
+.cite-anchor {
+  position: absolute;
+  z-index: 3;
+  max-width: 100%;
+}
+
 .cite-popover {
-  margin-top: 0.35rem;
+  margin-top: 0;
   padding: 0.6rem 0.75rem;
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-1);
   background: var(--layer);
   box-shadow: var(--chat-shadow);
-  max-width: 22rem;
+  width: max-content;
+  max-width: min(22rem, 100%);
 }
 
 .md-wrap {
   position: relative;
 }
 
-@media (max-width: 1280px) {
+/*
+ * The composer's Enter hint is switched to its short form by a viewport media query. That reads the
+ * wrong width once the pane has taken a column of the stage: the window is still wide while the
+ * composer is not. The pane's own state therefore switches it too.
+ */
+.tl-cockpit.has-pane .composer-hint-long {
+  display: none;
+}
+
+.tl-cockpit.has-pane .composer-hint-short {
+  display: inline;
+}
+
+/* Below 1280, not at it: 1280 itself still fits a column beside the thread. */
+@media (max-width: 1279.98px) {
   .side-column,
   .side-pane.is-sheet {
     position: absolute;

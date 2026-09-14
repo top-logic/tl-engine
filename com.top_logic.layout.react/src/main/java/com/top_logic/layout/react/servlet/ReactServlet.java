@@ -200,12 +200,12 @@ public class ReactServlet extends TopLogicServlet {
 			return;
 		}
 
-		SSEUpdateQueue queue = getWindowQueue(session, windowName);
-		if (queue == null) {
+		WindowContext window = resolveWindow(request, session, windowName);
+		if (window.queue() == null) {
 			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
 			return;
 		}
-		ReactCommandTarget control = queue.getControl(controlId);
+		ReactCommandTarget control = window.queue().getControl(controlId);
 		if (!(control instanceof DataProvider)) {
 			sendError(response, HttpServletResponse.SC_NOT_FOUND,
 				"Control does not provide data: " + controlId);
@@ -239,12 +239,12 @@ public class ReactServlet extends TopLogicServlet {
 			return;
 		}
 
-		SSEUpdateQueue queue = getWindowQueue(session, windowName);
-		if (queue == null) {
+		WindowContext window = resolveWindow(request, session, windowName);
+		if (window.queue() == null) {
 			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
 			return;
 		}
-		ReactCommandTarget control = queue.getControl(controlId);
+		ReactCommandTarget control = window.queue().getControl(controlId);
 		if (!(control instanceof TooltipProvider)) {
 			// A control without tooltips (e.g. a table whose cells probe for an optional tooltip) is
 			// a normal case, not an error: answer "no tooltip" rather than a 404 (which the browser
@@ -401,6 +401,48 @@ public class ReactServlet extends TopLogicServlet {
 		return registry.getQueue(windowName);
 	}
 
+	/**
+	 * The window a request addresses, resolved by {@link #resolveWindow(HttpServletRequest, HttpSession, String)}.
+	 *
+	 * @param displayContext
+	 *        The {@link DisplayContext} of the request, carrying the window's
+	 *        {@link TLSubSessionContext}.
+	 * @param queue
+	 *        The window's update queue, or {@code null} if the session does not know the window.
+	 * @param rootHandler
+	 *        The window's {@link SubsessionHandler}, or {@code null} for a window that does not use
+	 *        the traditional layout engine.
+	 */
+	private record WindowContext(DisplayContext displayContext, SSEUpdateQueue queue, SubsessionHandler rootHandler) {
+		// Pure value.
+	}
+
+	/**
+	 * Resolves the window a request addresses: looks up the window's {@link SSEUpdateQueue} and
+	 * installs the window's {@link TLSubSessionContext} on the request's {@link DisplayContext}.
+	 *
+	 * <p>
+	 * Everything a request evaluates against a window - a command, a control's state, the content of
+	 * a cell tooltip - runs in the context the window's controls belong to. Without it, resolving a
+	 * label or a value of a model object has no user, no locale and no session-bound caches to work
+	 * with.
+	 * </p>
+	 *
+	 * @param request
+	 *        The request naming the window.
+	 * @param session
+	 *        The session holding the window.
+	 * @param windowName
+	 *        The name of the addressed window.
+	 * @return The resolved window. Its {@link WindowContext#queue()} is {@code null} if the session
+	 *         does not know a window of that name.
+	 */
+	private WindowContext resolveWindow(HttpServletRequest request, HttpSession session, String windowName) {
+		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
+		SubsessionHandler rootHandler = installSubSession(displayContext, windowName);
+		return new WindowContext(displayContext, getWindowQueue(session, windowName), rootHandler);
+	}
+
 	@SuppressWarnings("unchecked")
 	private void handleCommand(HttpServletRequest request, HttpServletResponse response, HttpSession session)
 			throws IOException {
@@ -467,7 +509,8 @@ public class ReactServlet extends TopLogicServlet {
 			arguments = Map.of();
 		}
 
-		SSEUpdateQueue queue = getWindowQueue(session, windowName);
+		WindowContext window = resolveWindow(request, session, windowName);
+		SSEUpdateQueue queue = window.queue();
 		if (queue == null) {
 			// Diagnostic for "controls don't react": the client posts a command for a window that
 			// has no queue in this session (e.g. a stale tab after the window was discarded, or a
@@ -504,11 +547,8 @@ public class ReactServlet extends TopLogicServlet {
 			return;
 		}
 
-		// Obtain the real DisplayContext set up by TopLogicServlet.
-		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
-
-		// Install subsession context and enable command phase.
-		SubsessionHandler rootHandler = installSubSession(displayContext, windowName);
+		DisplayContext displayContext = window.displayContext();
+		SubsessionHandler rootHandler = window.rootHandler();
 
 		ReentrantLock requestLock = ReactWindowRegistry.forSession(session).getRequestLock();
 		requestLock.lock();
@@ -586,7 +626,8 @@ public class ReactServlet extends TopLogicServlet {
 	 */
 	private void handleNavigateToRoute(HttpServletRequest request, HttpServletResponse response,
 			HttpSession session, String windowName, Map<String, Object> arguments) throws IOException {
-		SSEUpdateQueue queue = getWindowQueue(session, windowName);
+		WindowContext window = resolveWindow(request, session, windowName);
+		SSEUpdateQueue queue = window.queue();
 		if (queue == null) {
 			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
 			return;
@@ -605,11 +646,11 @@ public class ReactServlet extends TopLogicServlet {
 		}
 
 		// Adopting a URL changes the display like any other command does, and needs the same context
-		// for it: the subsession the controls belong to - without it a channel bound to a route
-		// parameter cannot look up the object the URL names - the update phase that lets the controls
-		// write their state, and the lock that keeps a second request out of the tree meanwhile.
-		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
-		SubsessionHandler rootHandler = installSubSession(displayContext, windowName);
+		// for it: the subsession the controls belong to, which the window resolution above installs -
+		// without it a channel bound to a route parameter cannot look up the object the URL names -
+		// the update phase that lets the controls write their state, and the lock that keeps a second
+		// request out of the tree meanwhile.
+		SubsessionHandler rootHandler = window.rootHandler();
 
 		ReentrantLock requestLock = ReactWindowRegistry.forSession(session).getRequestLock();
 		requestLock.lock();
@@ -683,8 +724,7 @@ public class ReactServlet extends TopLogicServlet {
 		}
 
 		String designerWindowId = pending.designerWindowId();
-		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
-		SubsessionHandler rootHandler = installSubSession(displayContext, designerWindowId);
+		SubsessionHandler rootHandler = resolveWindow(request, session, designerWindowId).rootHandler();
 
 		ReentrantLock requestLock = registry.getRequestLock();
 		requestLock.lock();
@@ -714,12 +754,12 @@ public class ReactServlet extends TopLogicServlet {
 			return;
 		}
 
-		SSEUpdateQueue queue = getWindowQueue(session, windowName);
-		if (queue == null) {
+		WindowContext window = resolveWindow(request, session, windowName);
+		if (window.queue() == null) {
 			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
 			return;
 		}
-		ReactCommandTarget control = queue.getControl(controlId);
+		ReactCommandTarget control = window.queue().getControl(controlId);
 		if (control instanceof ReactControl) {
 			ReactControl reactControl = (ReactControl) control;
 			PrintWriter writer = response.getWriter();
@@ -740,7 +780,8 @@ public class ReactServlet extends TopLogicServlet {
 			return;
 		}
 
-		SSEUpdateQueue queue = getWindowQueue(session, windowName);
+		WindowContext window = resolveWindow(request, session, windowName);
+		SSEUpdateQueue queue = window.queue();
 		if (queue == null) {
 			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
 			return;
@@ -752,10 +793,8 @@ public class ReactServlet extends TopLogicServlet {
 			return;
 		}
 
-		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
-
-		// Install subsession context and enable command phase.
-		SubsessionHandler rootHandler = installSubSession(displayContext, windowName);
+		DisplayContext displayContext = window.displayContext();
+		SubsessionHandler rootHandler = window.rootHandler();
 
 		ReentrantLock requestLock = ReactWindowRegistry.forSession(session).getRequestLock();
 		requestLock.lock();
@@ -796,7 +835,16 @@ public class ReactServlet extends TopLogicServlet {
 	 * The {@link TLSubSessionContext} is created by the <code>ViewServlet</code> when the React
 	 * page is first rendered and is stored in the {@link TLSessionContext} under the window name.
 	 * This method looks it up and installs it on the {@link DisplayContext} so that
-	 * {@link com.top_logic.util.TLContext#getContext()} is available during command execution.
+	 * {@link com.top_logic.util.TLContext#getContext()} is available while the request evaluates
+	 * anything against the window's controls.
+	 * </p>
+	 *
+	 * <p>
+	 * A handler addressing a window reaches this through
+	 * {@link #resolveWindow(HttpServletRequest, HttpSession, String)}, which pairs the subsession
+	 * with the window's {@link SSEUpdateQueue}. {@link #handleI18N(HttpServletRequest, HttpServletResponse)}
+	 * calls it directly, since it resolves resources of the window's locale without addressing any
+	 * of its controls.
 	 * </p>
 	 *
 	 * @return The {@link SubsessionHandler} if found, or {@code null}. The handler is only present

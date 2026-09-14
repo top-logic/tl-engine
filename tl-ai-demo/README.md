@@ -1,13 +1,13 @@
 # tl-ai-demo
 
 The demonstration application for this repository: one TopLogic app that bundles `tl-ai-core`,
-`tl-chat`, `tl-ai-mcp-server` and `tl-ai-vector-index`, with a small domain model (an invoice read
-out of its scan by a model) to have something for the agent to work on.
+`tl-chat`, `tl-chat-classic`, `tl-ai-mcp-server` and `tl-ai-vector-index`, with a small domain
+model (an invoice read out of its scan by a model) to have something for the agent to work on.
 
 ## Running it
 
 ```bash
-mvn -pl tl-chat -am -DskipTests install      # the chat bundle must exist before the app starts
+mvn -pl tl-chat,tl-chat-classic -am -DskipTests install   # the chat bundle must exist before the app starts
 cd tl-ai-demo
 tl_anthropic_api_key="unencrypted:$ANTHROPIC_API_KEY" mvn tl:resolve compile exec:java
 ```
@@ -44,8 +44,9 @@ and `ChatServlet` answers every request from such a session with 401, so the cha
 note instead of a composer - the agent works with the user's data and the user's permissions.
 
 **The classic UI is unchanged.** `WEB-INF/layouts/mainTabbar.layout.xml` still serves the same
-invoices and administration through the LayoutServlet, and the legacy chat control still works.
-Reach it at <http://localhost:8080/tl-ai-demo/servlet/LayoutServlet>.
+invoices and administration through the LayoutServlet, and the classic chat control still works.
+Reach it at <http://localhost:8080/tl-ai-demo/servlet/LayoutServlet>. Its "Albert" tab comes from
+`tl-chat-classic`, which this application depends on for exactly that reason (#398).
 
 ## Layout of the module
 

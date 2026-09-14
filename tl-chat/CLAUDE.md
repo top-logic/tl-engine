@@ -49,7 +49,7 @@ browser component, which shows a sign-in note rather than a composer.
 - **`ChatSessionManager`** – Manages per-session in-memory state (Chat + ConversationMemory + ConversationLog) with LRU caching (max 5 sessions). Handles session switching with persist/load/rebuild cycle.
 - **`ChatHistoryService`** – Static access to persistent `AgentSession` objects (kind CHAT) via `AgentExecutionStore` (tl-ai-core). Conversations are stored as one transcript per `AgentExecution` (written by `AgentRunner` at run end) and merged in run order on load.
 - **`LegacyChatSessionMigration`** – Startup service migrating legacy `tl.ai.chat:ChatSession` blobs to `AgentSession`s eagerly. The legacy model has been removed (tl-ai-core migration `Issue_230_remove_module_tl_ai_chat`), so the service is a no-op now; it is kept until every deployment is known to have run it.
-- **`ChatSessionRegistry`** – Bridges `WindowScope` (ChatControl) and `HttpSession` (ChatServlet)
+- **`ChatSessionRegistry`** – Bridges `WindowScope` (a chat control) and `HttpSession` (`ChatServlet`). Published API: the classic control in `tl-chat-classic` and `Consulting`'s own control register here from outside this module.
 
 ## Thread Safety
 
@@ -71,6 +71,12 @@ browser component, which shows a sign-in note rather than a composer.
 The chat UI is a React application in `ui/`. It talks to the servlet above and to nothing else - no
 TopLogic command handlers, no AJAX framework - so the same bundle would run against any host that
 serves `/chat/*`.
+
+The classic `chat-client.js` control for LayoutServlet applications is **not** in this module any
+more: it is the separate, frozen `tl-chat-classic` (#398), which depends on this one. A host gets
+the "Albert" tab by depending on `tl-chat-classic`; depending on `tl-chat` alone gives the API and
+the React chat. Session state the classic control reads - `Chat`, `ChatProcessor`,
+`TaskProgressTracker`, `ChatSessionRegistry`, `PromptImprovementProcessor` - stays here.
 
 ### Toolchain and build output
 
@@ -148,7 +154,7 @@ it lists what the account may choose with *some* agent it may run and marks each
 `grantedToRole`; `modelsFor()` in `models.ts` narrows that to `granted ∪ {selected agent's model}`
 before the picker sees it. A request that names something the account may not use is answered **403**
 with a sentence in the user's language, which the composer shows in the notice strip in the neutral
-tone; the legacy control renders it as a system bubble.
+tone; the classic control in `tl-chat-classic` renders it as a system bubble.
 
 `entryPointAgent` is resolved for the caller, not read from the configuration: a client that names no
 agent runs the agent the payload reports. The prompt improver is exempt from the agent allowlist -

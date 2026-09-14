@@ -48,6 +48,10 @@ export interface Citation {
   id: string
   label: string
   url: string
+  /** The sentence of the source the fact rests on; empty when the model named none. */
+  passage?: string
+  /** A window of the source around {@link passage}, shown in the marker's popover. */
+  excerpt?: string
 }
 
 export interface ToolCall {

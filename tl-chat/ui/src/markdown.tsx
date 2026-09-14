@@ -6,7 +6,7 @@ import type { bundle } from './i18n'
 import type { CitationRender, PaneOpenOptions } from './extensions'
 import type { ChatMessage, Citation } from './types'
 
-const { useEffect, useMemo, useRef, useState } = React
+const { useCallback, useEffect, useMemo, useRef, useState } = React
 
 type Labels = ReturnType<typeof bundle>
 
@@ -71,7 +71,7 @@ function escapeHtml(text: string): string {
  * synchronous call, so two `Markdown` instances can never see each other's map - which they could
  * when it was set during render and read later from inside a `useMemo`.
  */
-let citationLabels: Pick<Labels, 'citationChip'> = { citationChip: (n) => `Citation ${n}` }
+let citationLabels: Pick<Labels, 'citationMarker'> = { citationMarker: (n) => `Source ${n}` }
 let citationIds = new Map<number, string>()
 
 marked.use({
@@ -94,9 +94,11 @@ marked.use({
       renderer(token) {
         const n = Number((token as { index?: string }).index)
         const id = citationIds.get(n) ?? ''
+        // A small grey number after the sentence, not a coloured chip: it must say where the fact
+        // comes from without pulling the eye away from the text.
         return (
-          `<button type="button" class="cite-chip" data-citation-index="${n}"` +
-          ` data-citation-id="${escapeHtml(id)}" aria-label="${escapeHtml(citationLabels.citationChip(n))}">` +
+          `<button type="button" class="cite-marker" data-citation-index="${n}"` +
+          ` data-citation-id="${escapeHtml(id)}" aria-label="${escapeHtml(citationLabels.citationMarker(n))}">` +
           `${n}</button>`
         )
       },
@@ -121,6 +123,7 @@ export function Markdown({
   message,
   renderAnnotation,
   openInPane,
+  onOpenSource,
 }: {
   text: string
   streaming?: boolean
@@ -129,10 +132,15 @@ export function Markdown({
   message?: ChatMessage
   renderAnnotation?: CitationRender
   openInPane?: (content: React.ReactNode, options: PaneOpenOptions) => void
+  /** Overrides what a click on a marker does; the default asks the host, then the web. */
+  onOpenSource?: (citation: Citation) => void
 }) {
   const container = useRef<HTMLDivElement>(null)
+  /** The marker the pointer or the focus is on: what the popover describes. */
   const [open, setOpen] = useState<number | null>(null)
-  /** Where the clicked chip sits inside the answer, so the popover opens at it and not below. */
+  /** The marker whose source was actually opened - the host's node is mounted for it. */
+  const [activated, setActivated] = useState<number | null>(null)
+  /** Where the marker sits inside the answer, so the popover opens at it and not below. */
   const [anchor, setAnchor] = useState<{ top: number; left: number } | null>(null)
   const plain = streaming === true && text.length > LIVE_MARKDOWN_LIMIT
 
@@ -150,31 +158,78 @@ export function Markdown({
     })
   }, [plain, text, labels, citations])
 
-  // One delegated listener rather than one per block: the blocks are replaced on every parse.
+  const noop = useCallback((_content: React.ReactNode, _options: PaneOpenOptions) => undefined, [])
+
+  const find = useCallback(
+    (marker: number | null) =>
+      marker == null ? undefined : (citations ?? []).find((item) => item.index === marker),
+    [citations],
+  )
+
+  const show = useCallback((marker: number, el: HTMLElement) => {
+    const wrap = container.current?.parentElement
+    if (wrap) {
+      const box = wrap.getBoundingClientRect()
+      const at = el.getBoundingClientRect()
+      setAnchor({
+        top: at.bottom - box.top + 4,
+        // Clamped, so a marker at the right edge does not push the popover out of the answer.
+        left: Math.max(0, Math.min(at.left - box.left, box.width - 320)),
+      })
+    }
+    setOpen(marker)
+  }, [])
+
+  /** What a click on a marker does: hand the source to the host, or open the web page. */
+  const openSource = useCallback(
+    (marker: number) => {
+      const source = find(marker)
+      if (!source) return
+      if (onOpenSource) {
+        onOpenSource(source)
+        return
+      }
+      // The host decides what "open" means for its own kinds. When it has nothing for this one it
+      // returns nothing, and a web source falls back to its page.
+      if (renderAnnotation && message && renderAnnotation(marker, source, message, openInPane ?? noop)) {
+        setActivated(marker)
+        return
+      }
+      const href = source.url || (/^https?:\/\//i.test(source.id) ? source.id : '')
+      if (href) window.open(href, '_blank', 'noopener,noreferrer')
+    },
+    [find, message, onOpenSource, openInPane, renderAnnotation],
+  )
+
+  // One delegated set of listeners rather than one per marker: the blocks are replaced on every
+  // parse, so nothing may be bound to a node React will throw away.
   useEffect(() => {
     const el = container.current
     if (!el) return
+    const marker = (event: Event) =>
+      (event.target as HTMLElement | null)?.closest<HTMLButtonElement>('[data-citation-index]') ?? null
+
+    const onOver = (event: MouseEvent) => {
+      const hit = marker(event)
+      if (hit) show(Number(hit.dataset.citationIndex), hit)
+    }
+    const onOut = (event: MouseEvent) => {
+      const to = event.relatedTarget as HTMLElement | null
+      // The popover is a sibling of the answer, so leaving the marker for it must not close it.
+      if (to?.closest('.cite-anchor')) return
+      if (marker(event)) setOpen(null)
+    }
+    const onFocus = (event: FocusEvent) => {
+      const hit = marker(event)
+      if (hit) show(Number(hit.dataset.citationIndex), hit)
+    }
     const onClick = (event: MouseEvent) => {
       const target = event.target as HTMLElement | null
-      const cite = target?.closest<HTMLButtonElement>('[data-citation-index]')
-      if (cite) {
+      const hit = marker(event)
+      if (hit) {
         event.preventDefault()
-        const marker = Number(cite.dataset.citationIndex)
-        const wrap = el.parentElement
-        if (wrap) {
-          const box = wrap.getBoundingClientRect()
-          const chip = cite.getBoundingClientRect()
-          setAnchor({
-            top: chip.bottom - box.top + 4,
-            // Clamped, so a chip at the right edge does not push the popover out of the answer.
-            left: Math.max(0, Math.min(chip.left - box.left, box.width - 320)),
-          })
-        }
-        setOpen((current) => (current === marker ? null : marker))
+        openSource(Number(hit.dataset.citationIndex))
         return
-      }
-      if (!target?.closest('.cite-popover')) {
-        setOpen(null)
       }
       const button = target?.closest<HTMLButtonElement>('[data-copy]')
       if (!button) return
@@ -193,9 +248,19 @@ export function Markdown({
           /* the clipboard may be blocked; the code stays selectable */
         })
     }
+    el.addEventListener('mouseover', onOver)
+    el.addEventListener('mouseout', onOut)
+    el.addEventListener('focusin', onFocus)
+    el.addEventListener('focusout', onOut as EventListener)
     el.addEventListener('click', onClick)
-    return () => el.removeEventListener('click', onClick)
-  }, [])
+    return () => {
+      el.removeEventListener('mouseover', onOver)
+      el.removeEventListener('mouseout', onOut)
+      el.removeEventListener('focusin', onFocus)
+      el.removeEventListener('focusout', onOut as EventListener)
+      el.removeEventListener('click', onClick)
+    }
+  }, [openSource, show])
 
   // Escape closes the popover, like every other overlay in the chat.
   useEffect(() => {
@@ -207,13 +272,11 @@ export function Markdown({
     return () => window.removeEventListener('keydown', onKey)
   }, [open])
 
-  const citation = open == null ? undefined : (citations ?? []).find((item) => item.index === open)
-  const noopOpen = (_content: React.ReactNode, _options: PaneOpenOptions) => undefined
-  const annotation =
-    open != null && message
-      ? (renderAnnotation
-          ? renderAnnotation(open, citation, message, openInPane ?? noopOpen)
-          : <DefaultCitationPopover citation={citation} labels={labels} />)
+  const hovered = find(open)
+  const opened = find(activated)
+  const hostNode =
+    opened && message && renderAnnotation
+      ? renderAnnotation(opened.index, opened, message, openInPane ?? noop)
       : null
 
   if (plain) {
@@ -226,47 +289,71 @@ export function Markdown({
   return (
     <div className="md-wrap">
       <div className="md" ref={container} dangerouslySetInnerHTML={{ __html: html }} />
-      {annotation ? (
+      {hovered ? (
         <div
           className="cite-anchor"
           style={anchor ? { top: anchor.top, left: anchor.left } : undefined}
+          onMouseLeave={() => setOpen(null)}
         >
-          {annotation}
+          <SourcePopover citation={hovered} labels={labels} onOpen={() => openSource(hovered.index)} />
         </div>
       ) : null}
+      {hostNode}
     </div>
   )
 }
 
-/** Kind, label, and a link when the citation is a web source. */
-export function DefaultCitationPopover({
+/**
+ * What a marker says when the reader looks at it: the source, where it comes from, and the sentence
+ * the fact rests on - inside the window of the source it was read in.
+ */
+export function SourcePopover({
   citation,
   labels,
+  onOpen,
 }: {
-  citation: Citation | undefined
+  citation: Citation
   labels: Labels
+  onOpen: () => void
 }) {
-  if (!citation) {
-    return <p className="cite-popover-empty">{labels.railEmpty}</p>
-  }
-  // The cite tool's `url` is optional and a model that passed the URL as the `id` did not repeat it
-  // there. A web source stays clickable either way.
-  const href = citation.url || (/^https?:\/\//i.test(citation.id) ? citation.id : '')
   return (
-    <div className="cite-popover" role="dialog">
-      <div className="cite-popover-body">
-        <p>
-          <strong>{labels.citationKind}:</strong> {citation.kind || 'web'}
+    <div className="cite-popover" role="dialog" aria-label={citation.label || citation.id}>
+      <p className="cite-popover-title">{citation.label || citation.id}</p>
+      <p className="cite-popover-origin">{sourceOrigin(citation)}</p>
+      {citation.excerpt ? (
+        <p className="cite-popover-excerpt">
+          <Excerpt excerpt={citation.excerpt} passage={citation.passage ?? ''} />
         </p>
-        <p>{citation.label || citation.id}</p>
-        {href ? (
-          <p>
-            <a href={href} target="_blank" rel="noreferrer" title={href}>
-              {labels.citationSource}
-            </a>
-          </p>
-        ) : null}
-      </div>
+      ) : null}
+      <button type="button" className="cite-popover-open" onClick={onOpen}>
+        {labels.openSource}
+      </button>
     </div>
   )
+}
+
+/** The excerpt with the cited sentence marked inside it. */
+function Excerpt({ excerpt, passage }: { excerpt: string; passage: string }) {
+  const at = passage ? excerpt.indexOf(passage) : -1
+  if (at < 0) return <>{excerpt}</>
+  return (
+    <>
+      {excerpt.slice(0, at)}
+      <mark className="cite-passage">{passage}</mark>
+      {excerpt.slice(at + passage.length)}
+    </>
+  )
+}
+
+/** Where a source comes from: the web host for a URL, the host kind otherwise. */
+export function sourceOrigin(citation: { kind: string; url: string; id: string }): string {
+  const href = citation.url || (/^https?:\/\//i.test(citation.id) ? citation.id : '')
+  if (href) {
+    try {
+      return new URL(href).hostname
+    } catch {
+      return href
+    }
+  }
+  return citation.kind || ''
 }

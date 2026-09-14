@@ -1,5 +1,5 @@
 import { React } from 'tl-react-bridge'
-import type { PaneTab } from './extensions'
+import type { PaneAction, PaneMode, PaneTab } from './extensions'
 import type { bundle } from './i18n'
 
 const { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } = React
@@ -10,6 +10,8 @@ const CONTENT_FLOOR = 360
 const DEFAULT_PANE = 420
 /** The thread column never goes below this, so the composer always has its own room. */
 const STAGE_FLOOR = 320
+/** A document takes about two thirds of the workspace, the thread the rest. */
+const DOCUMENT_SHARE = 2 / 3
 /** Width of the icon strip between thread and pane, i.e. `.side-strip`'s 3.5rem. */
 const STRIP_WIDTH = 56
 /** Below 1280, not at it: 1280 itself is still wide enough for a column beside the thread. */
@@ -26,6 +28,9 @@ export function SidePane({
   onWidth,
   onBack,
   labels,
+  mode,
+  version,
+  actions,
   children,
 }: {
   title: string
@@ -35,6 +40,9 @@ export function SidePane({
   onWidth: (width: number) => void
   onBack: () => void
   labels: Labels
+  mode?: PaneMode
+  version?: string
+  actions?: PaneAction[]
   children: React.ReactNode
 }) {
   const pane = useRef<HTMLDivElement>(null)
@@ -68,7 +76,31 @@ export function SidePane({
         : Number.MAX_SAFE_INTEGER,
     [workspaceWidth],
   )
-  const paneWidth = Math.min(width > 0 ? width : DEFAULT_PANE, maxWidth)
+  /**
+   * Which mode the remembered width belongs to.
+   *
+   * One stored number serves both modes, and a card's 420 px is the wrong size for a document. The
+   * width therefore counts only for the mode it was dragged in - starting as a card's, which is
+   * what every stored value from before document mode is - and the other mode falls back to its own
+   * default until the user drags it there too.
+   */
+  const draggedIn = useRef<PaneMode>('card')
+  const own = (mode ?? 'card') === draggedIn.current
+  const wanted =
+    width > 0 && own
+      ? width
+      : mode === 'document' && workspaceWidth > 0
+        ? Math.round(workspaceWidth * DOCUMENT_SHARE)
+        : DEFAULT_PANE
+  const paneWidth = Math.min(wanted, maxWidth)
+
+  const setWidth = useCallback(
+    (next: number) => {
+      draggedIn.current = mode ?? 'card'
+      onWidth(next)
+    },
+    [mode, onWidth],
+  )
 
   useEffect(() => {
     const mq = window.matchMedia(SHEET_MQ)
@@ -93,9 +125,9 @@ export function SidePane({
       if (!workspace) return
       const box = workspace.getBoundingClientRect()
       const next = Math.max(CONTENT_FLOOR, box.right - event.clientX)
-      onWidth(Math.min(next, maxWidth))
+      setWidth(Math.min(next, maxWidth))
     },
-    [maxWidth, onWidth, sheet],
+    [maxWidth, setWidth, sheet],
   )
 
   const onPointerUp = useCallback(() => {
@@ -105,9 +137,9 @@ export function SidePane({
   const resize = useCallback(
     (by: number) => {
       const current = pane.current?.getBoundingClientRect().width ?? paneWidth
-      onWidth(Math.min(maxWidth, Math.max(CONTENT_FLOOR, current + by)))
+      setWidth(Math.min(maxWidth, Math.max(CONTENT_FLOOR, current + by)))
     },
-    [maxWidth, onWidth, paneWidth],
+    [maxWidth, paneWidth, setWidth],
   )
 
   // A splitter that only answers the mouse is a splitter half the users cannot move.
@@ -131,19 +163,19 @@ export function SidePane({
       }
       if (event.key === 'Home') {
         event.preventDefault()
-        onWidth(maxWidth)
+        setWidth(maxWidth)
       } else if (event.key === 'End') {
         event.preventDefault()
-        onWidth(CONTENT_FLOOR)
+        setWidth(CONTENT_FLOOR)
       }
     },
-    [maxWidth, onWidth, resize, sheet],
+    [maxWidth, resize, setWidth, sheet],
   )
 
   return (
     <div
       ref={pane}
-      className={`side-pane${sheet ? ' is-sheet' : ''}`}
+      className={`side-pane${sheet ? ' is-sheet' : ''}${mode === 'document' ? ' is-document' : ''}`}
       style={sheet ? undefined : { width: paneWidth, minWidth: CONTENT_FLOOR }}
     >
       {sheet ? null : (
@@ -162,13 +194,18 @@ export function SidePane({
           onPointerUp={onPointerUp}
         />
       )}
-      <header className="side-pane-bar">
+      {/*
+        One slim row the host fills: where it came from, what it is called, which version, what can
+        be done with it, and the way out. Everything below it belongs to the host.
+      */}
+      <header className={`side-pane-bar${mode === 'document' ? ' is-document' : ''}`}>
         <button type="button" className="side-back" onClick={onBack}>
           ‹ {backLabel || labels.sideBack}
         </button>
         <h2 className="side-pane-title" title={title}>
           {title}
         </h2>
+        {version ? <span className="side-pane-version">{version}</span> : null}
         {tabs && tabs.length > 0 ? (
           <div className="side-pane-tabs">
             {tabs.map((tab) => (
@@ -183,6 +220,27 @@ export function SidePane({
             ))}
           </div>
         ) : null}
+        {actions && actions.length > 0 ? (
+          <div className="side-pane-actions">
+            {actions.map((action) => (
+              <button
+                key={action.id}
+                type="button"
+                className="side-pane-action"
+                onClick={action.onSelect}
+                title={action.label}
+              >
+                {action.icon ?? null}
+                <span>{action.label}</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
+        <button type="button" className="side-pane-close" aria-label={labels.paneClose} onClick={onBack}>
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <path d="m4 4 8 8M12 4l-8 8" />
+          </svg>
+        </button>
       </header>
       <div className="side-pane-body">{children}</div>
     </div>

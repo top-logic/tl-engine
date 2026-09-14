@@ -129,6 +129,7 @@ export function useCollapsedSections(initial: string[]): {
   collapsedIds: Set<string>
   onToggleSection: (id: string) => void
   collapse: (id: string) => void
+  expand: (id: string) => void
 } {
   const [collapsed, setCollapsed] = useState<string[]>(initial)
   return {
@@ -138,6 +139,9 @@ export function useCollapsedSections(initial: string[]): {
     },
     collapse: (id: string) => {
       setCollapsed((current) => (current.includes(id) ? current : [...current, id]))
+    },
+    expand: (id: string) => {
+      setCollapsed((current) => current.filter((item) => item !== id))
     },
   }
 }

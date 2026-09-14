@@ -5,6 +5,9 @@
  */
 package test.com.top_logic.element.model.instance.importer;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+
 import junit.framework.Test;
 
 import test.com.top_logic.basic.module.ServiceTestSetup;
@@ -15,16 +18,24 @@ import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.basic.io.Content;
+import com.top_logic.basic.io.StreamUtilities;
+import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.basic.io.binary.BinaryDataURI;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.util.ResourcesModule;
+import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.factory.TLFactory;
+import com.top_logic.model.instance.exporter.XMLInstanceExporter;
 import com.top_logic.model.instance.importer.XMLInstanceImporter;
 import com.top_logic.model.instance.importer.resolver.AccountResolver;
 import com.top_logic.model.instance.importer.resolver.PersistentObjectResolver;
@@ -120,6 +131,66 @@ public class TestXMLInstanceImporter extends TLModelTest {
 
 		TLObject x4 = importer.getObject("x4");
 		assertEquals(list(PersonManager.getManager().getRoot()), get(x4, "any"));
+	}
+
+	/**
+	 * Tests that content type and file name of a binary value survive the export/import round trip.
+	 */
+	public void testBinaryRoundTrip() {
+		TLPrimitive binaryType = binaryType();
+		String name = "Mein Bild; mit Ümläuten.svg";
+		byte[] contents = "<svg xmlns=\"http://www.w3.org/2000/svg\"/>".getBytes(StandardCharsets.UTF_8);
+		BinaryData data = BinaryDataFactory.createBinaryData(contents, "image/svg+xml", name);
+
+		String serialized = XMLInstanceExporter.serialize(binaryType, data);
+		assertTrue(serialized, BinaryDataURI.isDataURI(serialized));
+
+		BufferingProtocol testLog = new BufferingProtocol();
+		BinaryData parsed = (BinaryData) XMLInstanceImporter.parse(log(testLog), binaryType, serialized);
+		assertFalse(testLog.getErrors().toString(), testLog.hasErrors());
+
+		assertEquals("image/svg+xml", parsed.getContentType());
+		assertEquals(name, parsed.getName());
+		assertEquals(new String(contents, StandardCharsets.UTF_8), readContents(parsed));
+	}
+
+	/**
+	 * Tests that a binary value given as bare base64 string is imported as octet stream without
+	 * name.
+	 */
+	public void testBinaryFromBase64() {
+		BufferingProtocol testLog = new BufferingProtocol();
+		BinaryData parsed = (BinaryData) XMLInstanceImporter.parse(log(testLog), binaryType(), "QUJD");
+		assertFalse(testLog.getErrors().toString(), testLog.hasErrors());
+
+		assertEquals(BinaryData.CONTENT_TYPE_OCTET_STREAM, parsed.getContentType());
+		assertEquals(BinaryData.NO_NAME, parsed.getName());
+		assertEquals("ABC", readContents(parsed));
+	}
+
+	/**
+	 * Tests that a malformed data URI is reported as error.
+	 */
+	public void testInvalidBinary() {
+		BufferingProtocol testLog = new BufferingProtocol();
+		assertNull(XMLInstanceImporter.parse(log(testLog), binaryType(), "data:image/png,QUJD"));
+		assertTrue("Expected an error for a malformed data URI.", testLog.hasErrors());
+	}
+
+	private TLPrimitive binaryType() {
+		return (TLPrimitive) TLModelUtil.findType(getModel(), TypeSpec.BINARY_TYPE);
+	}
+
+	private static I18NLog log(Log testLog) {
+		return testLog.asI18NLog(ResourcesModule.getInstance().getBundle(ResourcesModule.getLogLocale()));
+	}
+
+	private static String readContents(BinaryData data) {
+		try {
+			return new String(StreamUtilities.readStreamContents(data), StandardCharsets.UTF_8);
+		} catch (IOException ex) {
+			throw new AssertionError(ex);
+		}
 	}
 
 	private Object get(TLObject a1, String attr) {

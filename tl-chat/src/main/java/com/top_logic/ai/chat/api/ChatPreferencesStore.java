@@ -16,10 +16,15 @@ import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
  * Per-user chat layout preferences stored on {@link PersonalConfiguration}.
  *
  * <p>
- * The React chat cannot call {@link PersonalConfiguration} itself, so {@code GET}/{@code PUT}
- * {@code /chat/preferences} wrap it. {@link PersonalConfiguration#setJSONValue(String, Object)}
+ * The React chat cannot call {@link PersonalConfiguration} itself, so {@code PUT}
+ * {@code /chat/preferences} wraps it. {@link PersonalConfiguration#setJSONValue(String, Object)}
  * without {@link PersonalConfiguration#storePersonalConfiguration()} is lost when the session
  * unbinds, which is why every write stores.
+ * </p>
+ *
+ * <p>
+ * Reading is not an endpoint: {@code AgentChatControl} puts the stored values into the control state
+ * with everything else the chat boots from, so the first render already has them.
  * </p>
  */
 public final class ChatPreferencesStore {

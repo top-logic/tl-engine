@@ -250,10 +250,6 @@ public class ChatServlet extends TopLogicServlet {
 			handleCapabilities(req, resp);
 			return;
 		}
-		if (pathInfo.equals(PATH_PREFERENCES) || pathInfo.equals(PATH_PREFERENCES + "/")) {
-			handleGetPreferences(req, resp);
-			return;
-		}
 		if (pathInfo.startsWith(PATH_SESSIONS)) {
 			handleSessionGet(req, resp, pathInfo);
 			return;
@@ -1742,13 +1738,6 @@ public class ChatServlet extends TopLogicServlet {
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
 		resp.getWriter().write(
 			DtoMapper.toJson(ChatCapabilities.build(resolveCurrentPerson(req), improver)));
-	}
-
-	private void handleGetPreferences(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		resp.setStatus(HttpServletResponse.SC_OK);
-		resp.setContentType(CONTENT_TYPE_JSON);
-		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
-		resp.getWriter().write(DtoMapper.toJson(ChatPreferencesStore.load()));
 	}
 
 	private void handlePutPreferences(HttpServletRequest req, HttpServletResponse resp) throws IOException {

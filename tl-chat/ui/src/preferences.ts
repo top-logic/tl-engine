@@ -16,7 +16,12 @@ function path(windowId: string): string {
   return `${apiBase()}${sep}?windowId=${encodeURIComponent(windowId)}`
 }
 
-/** Reads the per-user chat layout preferences; missing keys fall back to the defaults. */
+/**
+ * Reads the per-user chat layout preferences out of the control state.
+ *
+ * The bootstrap comes with the control (`AgentChatControl.putState`), so there is no `GET` to make:
+ * the values are already in the first render.
+ */
 export function parsePreferences(state: Record<string, unknown>): ChatPreferences {
   return {
     railOpen: state.railOpen === true,

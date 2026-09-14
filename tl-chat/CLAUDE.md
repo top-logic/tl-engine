@@ -18,7 +18,7 @@ Both served by `ChatServlet` at `/chat/*`:
    - `GET /chat/sessions/{id}` – Load session and activate server-side.
    - `PUT /chat/sessions/{id}/title` – Update session title.
    - `DELETE /chat/sessions/{id}` – Delete session (cascades over recorded executions, tasks, interactions).
-   - `GET /chat/preferences` / `PUT /chat/preferences` – Per-user rail/pane layout. The React UI cannot call `PersonalConfiguration` itself, so these wrap `setJSONValue` **and** `storePersonalConfiguration()` (transient otherwise). Key `tl-chat.layout`.
+   - `PUT /chat/preferences` – Per-user rail/pane layout. The React UI cannot call `PersonalConfiguration` itself, so this wraps `setJSONValue` **and** `storePersonalConfiguration()` (transient otherwise). Key `tl-chat.layout`. There is no `GET`: the bootstrap travels with the control state (`AgentChatControl.putState`), so a second round trip would only repeat it.
 
 2. **SSE API** (real-time push):
    - `GET /chat/events` – SSE connection. `ChatSSEHandler` receives `AgentEvent`s and emits structured SSE frames: `connected`, `run_started`, `turn_started`, `text_delta`, `tool_started`, `tool_completed`, `approval_required`, `message_complete`, `heartbeat`, etc.
@@ -191,9 +191,10 @@ register('MyChat', (props) => <App {...props} extensions={myExtensions} />)
 ```
 
 `App` with no `extensions` is today's UI: session rail, thread, composer, send/stream/stop, inline
-edit, regenerate, attachments, approval, pickers, and the Fortschritt section as the only right-rail
-contribution. Fortschritt lists the agent's tasks (`createTask` / `updateTask`). The rail never opens
-by itself.
+edit, regenerate, attachments, approval, pickers, and the framework's own two right-rail sections.
+Fortschritt lists the agent's tasks (`createTask` / `updateTask`) and marks the running step as
+waiting while an approval is open; Kontext names what the agent receives every turn. The rail never
+opens by itself.
 
 ### Seams
 
@@ -201,12 +202,26 @@ Every field of `ChatExtensions` is optional.
 
 | Seam | Default | Host |
 |--|--|--|
-| `railSections` | Fortschritt from this session's `createTask` / `updateTask` store | Extra sections below it, in array order. `accent` tints with `--button-primary` / `--layer-selected`. |
-| `sidePane` | closed; user opens **Leiste**; `openInPane` from a section | Host owns pane body/footer. Content floor 360px; below 1280px the pane is a sheet. |
+| `railSections` | Fortschritt (this session's `createTask` / `updateTask` store, plus an open approval) and Kontext (language, agent, model, chat) | Extra sections between them, in array order. `accent` tints with `--button-primary` / `--layer-selected`; `icon` is what the 56 px strip shows. |
+| `contextFacts` | language, agent, model, chat | Extra lines in the Kontext section. |
 | `composerAddons` | none | Chips before the textarea and extra `+` menu items. On send, chips travel as `<quote>` prefixes on `ChatSendRequest.text`. |
 | `messageAnnotations.render` | web-link popover | May call `openInPane` (invoice kind in the demo). |
 | `messageActions` | copy / rate / regenerate | Extra buttons under an answer. |
 | `contextHook` | none | `header` in the thread bar; `contextTag` prepended as `<context>…</context>` on send and regenerate. |
+
+The side pane is **not** a field of `ChatExtensions`: it is state the chat owns, and a host drives it
+through the `RailRenderContext` every section's `render(ctx)` receives -
+
+| `ctx` | |
+|--|--|
+| `sessionId` / `messages` / `busy` / `pendingApprovals` | The open chat, its trace, whether the agent is working, and what waits for this user. |
+| `openInPane(node, options)` | Replaces the rail with the host's node in the same place; `options` carries the title, the back label, the host's tabs and the section whose strip icon is active. |
+| `closePane()` | Back to the rail. |
+| `addComposerChip(chip)` | Puts a chip into the composer, e.g. from a passage the user marked in the pane. |
+
+Pane geometry: content floor 360 px, thread column never narrower than the composer (the workspace
+is a grid, so opening the pane narrows the thread rather than covering it), splitter draggable and
+arrow-key operable, and **below** 1280 px the pane is a sheet over the thread.
 
 Layout preferences (`railOpen`, `paneWidth`, `badgeSeen`) are bootstrapped from PersonalConfiguration
 via `AgentChatControl.putState` and written through `PUT /chat/preferences`.

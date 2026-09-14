@@ -143,6 +143,9 @@ public class ToolAccessPolicyComponent extends FormComponent {
 	/** Name of the field holding what a section admits from a role it does not name. */
 	public static final String FIELD_SECTION_DEFAULT = "sectionDefault";
 
+	/** Prefix of the field saying whether one section names one role at all. */
+	public static final String FIELD_RESTRICTED_PREFIX = "restricted_";
+
 	/** Prefix of the field holding what one role may use in one section. */
 	public static final String FIELD_ALLOWED_PREFIX = "allowed_";
 
@@ -1166,12 +1169,41 @@ public class ToolAccessPolicyComponent extends FormComponent {
 		}
 		for (int r = 0; r < roleNames.size(); r++) {
 			String roleName = roleNames.get(r);
+			content.add(restrictedField(group, prefix, dimension, roleName, r));
 			content.add(namesField(group, prefix, dimension, roleName, r, false));
 			content.add(namesField(group, prefix, dimension, roleName, r, true));
 		}
 		sections.add(contentBox(
 			section(group, content, "runAccess." + dimension.name(), false,
 				() -> sectionSummary(dimension))));
+	}
+
+	/**
+	 * Whether one section names one role at all.
+	 *
+	 * <p>
+	 * The switch that makes "this role may use none of them" writable: an entry with no names is what
+	 * says it, and picking nothing in the two lists below cannot say it - there is nothing to pick.
+	 * Switching it off returns the role's holders to the default of the section.
+	 * </p>
+	 */
+	private HTMLTemplateFragment restrictedField(FormGroup group, String prefix, Dimension dimension,
+			String roleName, int index) {
+		String fieldName = FIELD_RESTRICTED_PREFIX + index;
+		BooleanField field = FormFactory.newBooleanField(fieldName);
+		field.initializeField(Boolean.valueOf(_draft.isRunRestricted(dimension, roleName)));
+		field.setLabel(resources().getString(I18NConstants.FIELD_ROLE_RESTRICTED__ROLE.fill(roleName)));
+		field.setTooltip(resources()
+			.getString(I18NConstants.FIELD_ROLE_RESTRICTED__ROLE.fill(roleName).tooltip()));
+		field.addValueListener((changed, oldValue, newValue) -> {
+			if (_syncing) {
+				return;
+			}
+			_draft.setRunRestricted(dimension, roleName, Boolean.TRUE.equals(newValue));
+			refreshNotes();
+		});
+		group.addMember(field);
+		return fieldBox(path(prefix, fieldName));
 	}
 
 	/** One role's list of permitted - or forbidden - names in one section. */
@@ -1218,12 +1250,19 @@ public class ToolAccessPolicyComponent extends FormComponent {
 		return String.join(" · ", parts);
 	}
 
-	/** What a collapsed section says: its default, and how many roles it restricts. */
+	/**
+	 * What a collapsed section says: its default, and how many roles it restricts.
+	 *
+	 * <p>
+	 * Counts the roles the section <em>names</em>, which is what restricts them - a role entry with
+	 * no names restricts its holders to nothing at all, and counting names would report that role as
+	 * unrestricted while the boot log counts it.
+	 * </p>
+	 */
 	private String sectionSummary(Dimension dimension) {
 		int roles = 0;
 		for (String roleName : _draft.runRoleNames()) {
-			if (!_draft.runNames(dimension, roleName, false).isEmpty()
-				|| !_draft.runNames(dimension, roleName, true).isEmpty()) {
+			if (_draft.isRunRestricted(dimension, roleName)) {
 				roles++;
 			}
 		}

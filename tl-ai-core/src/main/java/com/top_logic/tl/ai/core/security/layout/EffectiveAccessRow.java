@@ -100,6 +100,16 @@ public sealed interface EffectiveAccessRow {
 	record RunSection(Dimension dimension, int allowedCount, int totalCount)
 			implements EffectiveAccessRow {
 
+		/**
+		 * A heading, not a decision.
+		 *
+		 * <p>
+		 * Its rows carry the verdicts; the section itself would have to read "granted" for one agent
+		 * out of six, which is the wrong headline for a dimension that is five sixths denied. The
+		 * accessor leaves the verdict cell of a section empty - see
+		 * {@link EffectiveAccessAccessor}.
+		 * </p>
+		 */
 		@Override
 		public boolean allowed() {
 			return allowedCount() > 0;

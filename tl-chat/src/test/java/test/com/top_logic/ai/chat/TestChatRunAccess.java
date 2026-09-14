@@ -215,6 +215,40 @@ public class TestChatRunAccess extends BasicTestCase {
 		assertNotNull("The chat must still be there.", ChatHistoryService.findOwnedSessionById(id(), anna));
 	}
 
+	/**
+	 * The entry point the payload reports is one this account may run.
+	 *
+	 * <p>
+	 * The configured one is infrastructure: a client that names no agent is not asking for it, and a
+	 * payload that reported it unfiltered would name an agent a restricted account may not have - and
+	 * every client that sends no agent would then be refused by that name. The shipped legacy chat
+	 * control is exactly such a client.
+	 * </p>
+	 */
+	public void testEntryPointIsAnAgentThisAccountMayRun() throws Exception {
+		String body = capabilities();
+		String entryPoint = valueOf(body, "entryPointAgent");
+
+		assertFalse("An account with agents to run must be told one: " + body, entryPoint.isEmpty());
+		assertTrue("The entry point has to be one of the agents offered: " + body,
+			body.contains("\"name\":\"" + entryPoint + "\""));
+	}
+
+	/**
+	 * A send that names no agent is not refused for an agent nobody named.
+	 *
+	 * <p>
+	 * The regression of the review's B1: the fallback used to be the configured entry point, so the
+	 * legacy control - which never sends an agent - was answered 403 and showed nothing at all.
+	 * </p>
+	 */
+	public void testSendWithoutAnAgentIsNotRefused() throws Exception {
+		Recording response = send(anna, "{\"text\":\"hallo\"}");
+
+		assertFalse("A send that names no agent must not be refused: " + response._body,
+			HttpServletResponse.SC_FORBIDDEN == response._status);
+	}
+
 	/** The capabilities payload of the acting account, as JSON. */
 	private String capabilities() throws Exception {
 		Recording response = new Recording();
@@ -224,6 +258,17 @@ public class TestChatRunAccess extends BasicTestCase {
 		login(request, anna, response);
 		_servlet.get(request, response.asResponse());
 		return response._body.toString();
+	}
+
+	/** The value of a top-level string field of a JSON object. */
+	private static String valueOf(String json, String field) {
+		String key = "\"" + field + "\":\"";
+		int start = json.indexOf(key);
+		if (start < 0) {
+			return "";
+		}
+		int from = start + key.length();
+		return json.substring(from, json.indexOf('"', from));
 	}
 
 	/** The JSON object of one agent in a capabilities payload. */

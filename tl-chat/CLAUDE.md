@@ -141,10 +141,18 @@ instruction addressed to a model and never reaches the browser.
 The summary is rendered **as authored**, on one line, cut off with an ellipsis where it does not fit.
 A summary that has to fit is shortened where it is written, not here.
 
-`GET /chat/capabilities` is filtered by the acting account (#392): it lists the agents that account
-may run, the models it may choose and the MCP servers it may attach, so the menu cannot offer a turn
-that `/chat/send` would refuse. A request that names something else anyway is answered **403** with a
-sentence in the user's language, which the composer shows in the notice strip in the neutral tone.
+`GET /chat/capabilities` is filtered by the acting account (#392): the agents and the MCP servers it
+lists are exactly what a run of that account accepts. The **models** are the one thing a single
+payload cannot make exact - it is fetched once and the agent changes without another round trip - so
+it lists what the account may choose with *some* agent it may run and marks each with
+`grantedToRole`; `modelsFor()` in `models.ts` narrows that to `granted ∪ {selected agent's model}`
+before the picker sees it. A request that names something the account may not use is answered **403**
+with a sentence in the user's language, which the composer shows in the notice strip in the neutral
+tone; the legacy control renders it as a system bubble.
+
+`entryPointAgent` is resolved for the caller, not read from the configuration: a client that names no
+agent runs the agent the payload reports. The prompt improver is exempt from the agent allowlist -
+it rewrites a draft and never answers as a persona.
 
 ### Module map
 

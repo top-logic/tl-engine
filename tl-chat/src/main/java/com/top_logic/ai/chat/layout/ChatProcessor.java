@@ -115,6 +115,20 @@ public class ChatProcessor {
 		}
 	}
 
+	/**
+	 * The agent a request that names none runs as.
+	 *
+	 * @see AgentFactory#defaultAgentFor(com.top_logic.tl.ai.core.security.RunAuthorization,
+	 *      java.util.Collection)
+	 */
+	private static String defaultAgent(ToolContext context, TaskProgressTracker tracker,
+			AgentFactory agentFactory) {
+		String improver = tracker == null ? null : tracker.getPromptImproverAgentName();
+		String resolved = AgentFactory.defaultAgentFor(context.security().runAuthorization(),
+			improver == null || improver.isBlank() ? Set.of() : Set.of(improver));
+		return resolved != null ? resolved : agentFactory.getEntryPointAgentName();
+	}
+
 	/** Background thread pool for AI operations. */
 	private static final ExecutorService BACKGROUND_EXECUTOR =
 		Executors.newCachedThreadPool(new ThreadFactory() {
@@ -206,14 +220,18 @@ public class ChatProcessor {
 			// listeners in addition to interrupting the agent thread.
 			state.setCancellationToken(cancellationToken);
 
-			// Run the agent chosen in the chat UI, or the configured entry-point.
+			// Run the agent chosen in the chat UI, or - when the request names none - the one this
+			// account may run. Resolved exactly as /chat/capabilities reports it and as the pre-check
+			// of /chat/send asks about it: a client that is told one entry point and runs another is
+			// refused for an agent nobody chose. Falls back to the configured entry point when this
+			// account may run nothing, so that the refusal below is the ordinary one.
 			ChatRunOptions options = state.getRunOptions();
 			if (options == null) {
 				options = ChatRunOptions.DEFAULT;
 			}
 			String entryPointAgent = options.agent() != null && !options.agent().isBlank()
 				? options.agent().trim()
-				: agentFactory.getEntryPointAgentName();
+				: defaultAgent(toolContext, taskTracker, agentFactory);
 			List<String> mcpOverride = options.mcpOverride() ? options.mcpServers() : null;
 			AgentFactory.RunOverrides runOverrides =
 				new AgentFactory.RunOverrides(options.model(), mcpOverride, options.effort());

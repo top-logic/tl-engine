@@ -107,3 +107,19 @@ export function agentLabel(name: string, agents: { name: string; label?: string 
   if (!name) return ''
   return agents.find((item) => item.name === name)?.label || name
 }
+
+/**
+ * The models worth offering for the agent that is selected.
+ *
+ * The payload lists every model the account may choose with *some* agent it may run, because the
+ * menu is fetched once and the agent changes without another round trip. Two agents with different
+ * assigned models therefore put a model in the list that is refused for the other one - so the list
+ * is narrowed here: what the account's roles grant, plus the selected agent's own model, which is
+ * never a choice and always accepted.
+ */
+export function modelsFor(
+  models: ModelOption[],
+  agentModel: string | undefined,
+): ModelOption[] {
+  return models.filter((item) => item.grantedToRole !== false || item.id === agentModel)
+}

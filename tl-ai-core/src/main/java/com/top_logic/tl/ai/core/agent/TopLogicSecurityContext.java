@@ -224,6 +224,20 @@ public class TopLogicSecurityContext implements SecurityContext {
 		return _runAuthorization;
 	}
 
+	/**
+	 * The same context with the agent dimension left undecided; everything else is carried over.
+	 *
+	 * @see RunAuthorization#withoutAgentCheck()
+	 */
+	@Override
+	public SecurityContext withoutAgentChoice() {
+		RunAuthorization widened = _runAuthorization.withoutAgentCheck();
+		if (widened == _runAuthorization) {
+			return this;
+		}
+		return new TopLogicSecurityContext(_modelSecurity, _toolAuthorization, widened);
+	}
+
 	@Override
 	public ModelSecurity modelSecurity() {
 		return _modelSecurity;

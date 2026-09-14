@@ -24,11 +24,16 @@ public class ImprovePromptResponse extends de.haumacher.msgbuf.data.AbstractData
 	/** @see #getStatus() */
 	public static final String STATUS__PROP = "status";
 
+	/** @see #getReason() */
+	public static final String REASON__PROP = "reason";
+
 	private String _requestId = "";
 
 	private String _improvedText = "";
 
 	private String _status = "";
+
+	private String _reason = "";
 
 	/**
 	 * Creates a {@link ImprovePromptResponse} instance.
@@ -80,7 +85,8 @@ public class ImprovePromptResponse extends de.haumacher.msgbuf.data.AbstractData
 	}
 
 	/**
-	 * Result status: "completed", "cancelled", or "stale".
+	 * Result status: "completed", "cancelled", "stale", or "forbidden" for a request the acting
+	 * account may not make.
 	 */
 	public final String getStatus() {
 		return _status;
@@ -99,6 +105,26 @@ public class ImprovePromptResponse extends de.haumacher.msgbuf.data.AbstractData
 		_status = value;
 	}
 
+	/**
+	 * Why the request was refused, in the acting user's language; empty unless it was.
+	 */
+	public final String getReason() {
+		return _reason;
+	}
+
+	/**
+	 * @see #getReason()
+	 */
+	public com.top_logic.ai.chat.api.messages.ImprovePromptResponse setReason(String value) {
+		internalSetReason(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getReason()} without chain call utility. */
+	protected final void internalSetReason(String value) {
+		_reason = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return IMPROVE_PROMPT_RESPONSE__TYPE;
@@ -109,7 +135,8 @@ public class ImprovePromptResponse extends de.haumacher.msgbuf.data.AbstractData
 		java.util.List<String> local = java.util.Arrays.asList(
 			REQUEST_ID__PROP, 
 			IMPROVED_TEXT__PROP, 
-			STATUS__PROP);
+			STATUS__PROP, 
+			REASON__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -137,6 +164,7 @@ public class ImprovePromptResponse extends de.haumacher.msgbuf.data.AbstractData
 			case REQUEST_ID__PROP: return getRequestId();
 			case IMPROVED_TEXT__PROP: return getImprovedText();
 			case STATUS__PROP: return getStatus();
+			case REASON__PROP: return getReason();
 			default: return null;
 		}
 	}
@@ -147,6 +175,7 @@ public class ImprovePromptResponse extends de.haumacher.msgbuf.data.AbstractData
 			case REQUEST_ID__PROP: internalSetRequestId((String) value); break;
 			case IMPROVED_TEXT__PROP: internalSetImprovedText((String) value); break;
 			case STATUS__PROP: internalSetStatus((String) value); break;
+			case REASON__PROP: internalSetReason((String) value); break;
 		}
 	}
 
@@ -171,6 +200,8 @@ public class ImprovePromptResponse extends de.haumacher.msgbuf.data.AbstractData
 		out.value(getImprovedText());
 		out.name(STATUS__PROP);
 		out.value(getStatus());
+		out.name(REASON__PROP);
+		out.value(getReason());
 	}
 
 	@Override
@@ -179,6 +210,7 @@ public class ImprovePromptResponse extends de.haumacher.msgbuf.data.AbstractData
 			case REQUEST_ID__PROP: setRequestId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case IMPROVED_TEXT__PROP: setImprovedText(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case STATUS__PROP: setStatus(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case REASON__PROP: setReason(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

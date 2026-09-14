@@ -6,6 +6,7 @@
 package com.top_logic.tl.ai.core.agent;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -308,6 +309,62 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	private static void authorizeRun(SecurityContext security, AgentDefinition agentDef,
 			String assignedModel, RunOverrides overrides) {
 		refuse(refusalFor(security.runAuthorization(), agentDef, assignedModel, overrides));
+	}
+
+	/**
+	 * The agent a request that names none runs as, for the given principal.
+	 *
+	 * <p>
+	 * The configured chat entry point when that principal may run it, and otherwise the first agent
+	 * they may run. The entry point is <em>infrastructure</em>: nobody chose it, a client that names
+	 * no agent is not asking for it, and refusing such a request by its name tells the user about an
+	 * agent they cannot have and cannot avoid. A restricted role gets the agent it does have instead.
+	 * </p>
+	 *
+	 * <p>
+	 * Resolved in one place because two callers have to agree: the menu reports this as its entry
+	 * point, and the run has to be this agent. A client that is told one name and runs another is
+	 * the defect this method exists to prevent.
+	 * </p>
+	 *
+	 * @param authorization
+	 *        What the acting principal may run.
+	 * @param excluded
+	 *        Agents the caller does not offer as a conversation partner - the chat's prompt improver
+	 *        is one. May be <code>null</code>.
+	 * @return The agent name, or <code>null</code> if the principal may run none at all - which is a
+	 *         refusal of its own and a different sentence from "you may not run this one".
+	 */
+	public static String defaultAgentFor(RunAuthorization authorization, Collection<String> excluded) {
+		String configured = LLMService.Module.INSTANCE.isActive()
+			? LLMService.getInstance().getEntryPointAgentName()
+			: null;
+		if (isOffered(configured, excluded) && authorization.allowsAgent(configured)) {
+			return configured;
+		}
+		for (AgentDefinition agent : agents()) {
+			if (isOffered(agent.name(), excluded) && authorization.allowsAgent(agent.name())) {
+				return agent.name();
+			}
+		}
+		return null;
+	}
+
+	/** Whether the given name is one a client would be offered. */
+	private static boolean isOffered(String agentName, Collection<String> excluded) {
+		return agentName != null && !agentName.isBlank()
+			&& (excluded == null || !excluded.contains(agentName));
+	}
+
+	/** The agents of this application, in the order a client lists them; empty when none can answer. */
+	private static Collection<AgentDefinition> agents() {
+		try {
+			return AgentDefinitionQuery.getInstance().getAllAgents();
+		} catch (RuntimeException ex) {
+			Logger.warn("Listing the agents of this application failed; no default agent can be"
+				+ " resolved.", ex, AgentFactory.class);
+			return List.of();
+		}
 	}
 
 	/**

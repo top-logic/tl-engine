@@ -20,6 +20,26 @@
       return d.innerHTML;
     },
 
+    /**
+     * What to tell the user about a request the server did not accept, or "" when it did.
+     *
+     * A refused send used to leave the bubble on screen and nothing else ever happen: the response
+     * was not looked at. A 403 carries a sentence written for this user - which agent, model or MCP
+     * server is not theirs - and that sentence is what belongs on screen.
+     */
+    async refusalOf(res) {
+      if (!res || res.ok) return "";
+      try {
+        const data = await res.json();
+        if (data && data.reason) return data.reason;
+      } catch (ignored) {
+        // Not a JSON body - an error page, a proxy. Fall through to the generic sentence.
+      }
+      // English like every other literal in this file; the reason itself, which is the
+      // sentence that matters, is localized by the server.
+      return "The message could not be sent.";
+    },
+
     formatDuration(ms) {
       if (ms == null) return "";
       if (ms < 1000) return ms + "ms";
@@ -1387,7 +1407,7 @@
         // Ensure session exists before appending message (createNew clears the DOM)
         const sessionId = await Session._ensureSession();
         this.appendUserMessage(text, attachments);
-        await fetch(withWindow(URLS.send), {
+        const res = await fetch(withWindow(URLS.send), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -1396,6 +1416,11 @@
             attachments: attachments,
           }),
         });
+        const refusal = await Utils.refusalOf(res);
+        if (refusal) {
+          this.appendSystemMessage(refusal);
+          this._inputEl.value = text;
+        }
       } catch (err) {
         console.error("[tl-chat] Send failed:", err);
         this._inputEl.value = text;
@@ -1429,6 +1454,16 @@
       if (this._shouldAutoScroll && this._messagesEl) {
         this._messagesEl.scrollTop = this._messagesEl.scrollHeight;
       }
+    },
+
+    /** A line from the application itself - a refusal, a note - in its own bubble. */
+    appendSystemMessage(text) {
+      const div = document.createElement("div");
+      div.className = "chat-message chat-message-system";
+      div.innerHTML =
+        '<div class="chat-bubble chat-bubble-system">' + Utils.escapeHtml(text) + "</div>";
+      this._appendTarget().appendChild(div);
+      if (!this._renderTarget) this._scrollToBottom();
     },
 
     appendUserMessage(text, attachments) {
@@ -4052,7 +4087,7 @@
         const sessionId = await Session._ensureSession();
         this.hide();
         Render.appendUserMessage(text, attachments);
-        await fetch(withWindow(URLS.send), {
+        const res = await fetch(withWindow(URLS.send), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -4061,6 +4096,8 @@
             attachments: attachments,
           }),
         });
+        const refusal = await Utils.refusalOf(res);
+        if (refusal) Render.appendSystemMessage(refusal);
       } catch (err) {
         console.error("[tl-chat] Send failed:", err);
       }

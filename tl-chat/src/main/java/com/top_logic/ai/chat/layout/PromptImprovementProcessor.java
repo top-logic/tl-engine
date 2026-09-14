@@ -519,8 +519,13 @@ public final class PromptImprovementProcessor {
 		try (TransactionScope transaction = new TransactionScope(cancellationToken);
 				AgentEnvironment environment = AgentEnvironment.open(logListener, taskStore,
 					interactionStore, ConcurrentHashMap.newKeySet(), cancellationToken)) {
+			// withoutAgentChoice: the user did not pick this agent and cannot pick another. The agent
+			// allowlist decides which persona answers them, and the improver never answers - it
+			// rewrites the draft they are about to send. Gating it would make an administrator grant
+			// an agent the picker deliberately hides, and the button would break for every restricted
+			// role with nothing on screen to say why. Everything else about this run stays decided.
 			ToolContext context = new ToolContext(
-				TopLogicSecurityContext.forRun(TLContext.currentUser(), false),
+				TopLogicSecurityContext.forRun(TLContext.currentUser(), false).withoutAgentChoice(),
 				ApprovalCallback.AUTO_APPROVE, transaction, cancellationToken);
 			return AgentRunner.run(agentName, conversation, null, context, environment.logListener(),
 				null, ephemeralLog, null, null).response();

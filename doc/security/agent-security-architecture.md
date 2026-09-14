@@ -1347,7 +1347,9 @@ Asked about one name the request asked for, against the roles the account holds 
 
 Rule 3 is what keeps the rule set usable: every client of `/chat/send` sends the model it is showing,
 which is the agent's own until the user picks another, and a rule that called that a *choice* would
-refuse every request of a restricted role. Rule 4 is the allowlist reading of a role entry, and it is
+refuse every request of a restricted role. Its consequence is that **a `<grant>` is a floor and never
+a ceiling**: it adds to what the role's agents already use and cannot take anything away, so bounding
+a role downwards is a `<deny>` or a different agent assignment, never a narrower grant. Rule 4 is the allowlist reading of a role entry, and it is
 why `default="all"` and a role entry do not contradict each other: naming a role restricts its holders
 and leaves everybody else where they were, which is what adding one restricted role to a running
 application means. A role entry with no `<grants>` is therefore how "this role may use none of them"
@@ -1368,6 +1370,20 @@ what a client is *offered*: under `none` the menu is empty, so the choice is not
 Administrators bypass all three, as they bypass the tool layer and the engine's model rights. There is
 no background ceiling here: which agent a run is and what it runs on is settled before it starts, and
 the `<background-allowlist>` is about tool calls nobody is there to approve.
+
+#### What the sections do not decide
+
+Two agents the chat runs *for* the user rather than *as* a choice are outside `<agent-access>`,
+because it decides which persona **answers** and neither of them answers:
+
+- **The chat entry point.** A request that names no agent runs the configured entry point when the
+  account may run it and otherwise the first agent it may run - `AgentFactory.defaultAgentFor`, which
+  `/chat/capabilities` reports and `ChatProcessor` runs, so the menu and the run cannot name different
+  agents. An account that may run none at all is refused with a sentence of its own.
+- **The prompt improver**, and every agent a client hides from its picker. Its run is built with
+  `SecurityContext.withoutAgentChoice()`, which drops the agent dimension and nothing else - the
+  model, the MCP servers and every tool it calls stay decided. Gating it would make an administrator
+  grant an agent the picker deliberately hides.
 
 #### Where it is enforced
 

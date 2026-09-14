@@ -264,7 +264,11 @@ public class PolicyDraft {
 	 */
 	public void setRunNames(Dimension dimension, String roleName, boolean denies, List<String> names) {
 		Set<String> wanted = new LinkedHashSet<>(names);
-		if (wanted.equals(entryNames(dimension, roleName, denies))) {
+		if (wanted.equals(entryNames(dimension, roleName, denies))
+			&& (!wanted.isEmpty() || isRunRestricted(dimension, roleName))) {
+			// Writing what is already stored is a no-op, so that opening the editor on a hand-written
+			// policy and saving it again leaves its entries alone. The exception is an empty write to
+			// a role the section does not name yet: there the entry itself is the decision.
 			return;
 		}
 		switch (dimension) {
@@ -304,6 +308,77 @@ public class PolicyDraft {
 				}
 				break;
 			}
+		}
+	}
+
+	/**
+	 * Whether the given section names the given role at all.
+	 *
+	 * <p>
+	 * Not the same as "grants or denies something": a role entry with no names is how "this role may
+	 * use none of them" is said, and a view that counted names would report such a role as
+	 * unrestricted - the opposite of what the policy does with it.
+	 * </p>
+	 *
+	 * @param dimension
+	 *        Which section to read.
+	 * @param roleName
+	 *        The role to ask about.
+	 */
+	public boolean isRunRestricted(Dimension dimension, String roleName) {
+		switch (dimension) {
+			case MODEL:
+				return _config.getModelAccess().getRoles().containsKey(roleName);
+			case MCP_SERVER:
+				return _config.getMcpAccess().getRoles().containsKey(roleName);
+			default:
+				return _config.getAgentAccess().getRoles().containsKey(roleName);
+		}
+	}
+
+	/**
+	 * Takes the given role into the given section, or out of it.
+	 *
+	 * <p>
+	 * Taking it in with nothing named is a decision and not an omission - it is the shape that says
+	 * "this role may use none of them" - so it has to be reachable from an editor and not only from a
+	 * hand-written file. Taking it out returns its holders to the section default and drops whatever
+	 * the entry named.
+	 * </p>
+	 *
+	 * @param dimension
+	 *        Which section to change.
+	 * @param roleName
+	 *        The role to take in or out.
+	 * @param restricted
+	 *        Whether the section is to name the role.
+	 */
+	public void setRunRestricted(Dimension dimension, String roleName, boolean restricted) {
+		if (restricted == isRunRestricted(dimension, roleName)) {
+			return;
+		}
+		switch (dimension) {
+			case MODEL:
+				if (restricted) {
+					_config.getModelAccess().getRoles().put(roleName, newModelRole(roleName));
+				} else {
+					_config.getModelAccess().getRoles().remove(roleName);
+				}
+				break;
+			case MCP_SERVER:
+				if (restricted) {
+					_config.getMcpAccess().getRoles().put(roleName, newMcpRole(roleName));
+				} else {
+					_config.getMcpAccess().getRoles().remove(roleName);
+				}
+				break;
+			default:
+				if (restricted) {
+					_config.getAgentAccess().getRoles().put(roleName, newAgentRole(roleName));
+				} else {
+					_config.getAgentAccess().getRoles().remove(roleName);
+				}
+				break;
 		}
 	}
 

@@ -82,6 +82,31 @@ public class RunAuthorization {
 		_heldRoleNames = heldRoleNames == null ? Set.of() : Set.copyOf(heldRoleNames);
 	}
 
+	/**
+	 * The same authorization with the agent dimension left undecided.
+	 *
+	 * <p>
+	 * For a run whose agent the <em>product</em> chose rather than the user: the chat's prompt
+	 * improver is one, and every agent the chat hides from its picker is another. {@code
+	 * <agent-access>} decides which persona <em>answers</em> the user, and such an agent never
+	 * answers - it rewrites a draft, or does some other piece of work on the user's behalf. Gating it
+	 * would make an administrator grant an agent nobody can discover, and the feature would break for
+	 * every restricted role with no way to find out why.
+	 * </p>
+	 *
+	 * <p>
+	 * The model and the MCP servers stay decided, and so does every tool the run then calls - this
+	 * widens exactly one dimension and nothing else. It is the only widening this class has, which is
+	 * why it is a method with a name rather than a flag on a constructor.
+	 * </p>
+	 */
+	public RunAuthorization withoutAgentCheck() {
+		if (_agents == null) {
+			return this;
+		}
+		return new RunAuthorization(null, _models, _mcpServers, _principal, _heldRoleNames);
+	}
+
 	/** The roles the run's principal holds on the security root. */
 	public Set<String> heldRoleNames() {
 		return _heldRoleNames;

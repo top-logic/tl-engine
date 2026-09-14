@@ -18,6 +18,9 @@ public class ModelOptionDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 	/** @see #getId() */
 	public static final String ID__PROP = "id";
 
+	/** @see #isGrantedToRole() */
+	public static final String GRANTED_TO_ROLE__PROP = "grantedToRole";
+
 	/** @see #getProvider() */
 	public static final String PROVIDER__PROP = "provider";
 
@@ -34,6 +37,8 @@ public class ModelOptionDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 	public static final String DEFAULT_EFFORT__PROP = "defaultEffort";
 
 	private String _id = "";
+
+	private boolean _grantedToRole = false;
 
 	private String _provider = "";
 
@@ -72,6 +77,31 @@ public class ModelOptionDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 	/** Internal setter for {@link #getId()} without chain call utility. */
 	protected final void internalSetId(String value) {
 		_id = value;
+	}
+
+	/**
+	 * Whether the caller may choose this model whatever agent they run.
+	 *
+	 * False for a model that is listed only because an agent the caller may run is assigned it: that
+	 * one is usable with *that* agent and refused with another. A client offering a model list has to
+	 * narrow it to this flag plus the selected agent's own model, or it offers a turn that comes back
+	 * refused.
+	 */
+	public final boolean isGrantedToRole() {
+		return _grantedToRole;
+	}
+
+	/**
+	 * @see #isGrantedToRole()
+	 */
+	public com.top_logic.ai.chat.api.messages.ModelOptionDto setGrantedToRole(boolean value) {
+		internalSetGrantedToRole(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #isGrantedToRole()} without chain call utility. */
+	protected final void internalSetGrantedToRole(boolean value) {
+		_grantedToRole = value;
 	}
 
 	/**
@@ -209,6 +239,7 @@ public class ModelOptionDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
 			ID__PROP, 
+			GRANTED_TO_ROLE__PROP, 
 			PROVIDER__PROP, 
 			CONTEXT_WINDOW__PROP, 
 			MAX_OUTPUT__PROP, 
@@ -239,6 +270,7 @@ public class ModelOptionDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 	public Object get(String field) {
 		switch (field) {
 			case ID__PROP: return getId();
+			case GRANTED_TO_ROLE__PROP: return isGrantedToRole();
 			case PROVIDER__PROP: return getProvider();
 			case CONTEXT_WINDOW__PROP: return getContextWindow();
 			case MAX_OUTPUT__PROP: return getMaxOutput();
@@ -252,6 +284,7 @@ public class ModelOptionDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 	public void set(String field, Object value) {
 		switch (field) {
 			case ID__PROP: internalSetId((String) value); break;
+			case GRANTED_TO_ROLE__PROP: internalSetGrantedToRole((boolean) value); break;
 			case PROVIDER__PROP: internalSetProvider((String) value); break;
 			case CONTEXT_WINDOW__PROP: internalSetContextWindow((int) value); break;
 			case MAX_OUTPUT__PROP: internalSetMaxOutput((int) value); break;
@@ -277,6 +310,8 @@ public class ModelOptionDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 		super.writeFields(out);
 		out.name(ID__PROP);
 		out.value(getId());
+		out.name(GRANTED_TO_ROLE__PROP);
+		out.value(isGrantedToRole());
 		out.name(PROVIDER__PROP);
 		out.value(getProvider());
 		out.name(CONTEXT_WINDOW__PROP);
@@ -297,6 +332,7 @@ public class ModelOptionDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
 			case ID__PROP: setId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case GRANTED_TO_ROLE__PROP: setGrantedToRole(in.nextBoolean()); break;
 			case PROVIDER__PROP: setProvider(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case CONTEXT_WINDOW__PROP: setContextWindow(in.nextInt()); break;
 			case MAX_OUTPUT__PROP: setMaxOutput(in.nextInt()); break;

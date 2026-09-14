@@ -1514,8 +1514,8 @@ When a subagent finishes, its result is delivered to you automatically at the st
 							<de>Albert</de>
 						</display-name>
 						<summary>
-							<en>Knows its way around the whole application: explores and explains the model, changes it, runs TL-Script, and writes pages.</en>
-							<de>Kennt sich in der ganzen Anwendung aus: erkundet und erklärt das Modell, ändert es, führt TL-Script aus und erstellt Seiten.</de>
+							<en>Knows the whole application.</en>
+							<de>Kennt die ganze Anwendung.</de>
 						</summary>
 						<system-prompt><![CDATA[You are Albert — an expert consultant who helps users explore, understand, and modify their TopLogic application.
 
@@ -1599,8 +1599,8 @@ If you loaded a skill but forgot to use its tools — use them now instead of lo
 							<de>Orchestrator</de>
 						</display-name>
 						<summary>
-							<en>Splits a larger request between the specialists and puts their results back together.</en>
-							<de>Verteilt eine größere Anfrage auf die Spezialisten und führt deren Ergebnisse wieder zusammen.</de>
+							<en>Splits work between the specialists.</en>
+							<de>Verteilt Arbeit auf die Spezialisten.</de>
 						</summary>
 						<system-prompt><![CDATA[# Preamble
 
@@ -1763,8 +1763,8 @@ Route by the nature of the request:
 							<de>Modell-Explorer</de>
 						</display-name>
 						<summary>
-							<en>Answers questions about the application's model and data without changing anything.</en>
-							<de>Beantwortet Fragen zum Modell und zu den Daten der Anwendung, ohne etwas zu ändern.</de>
+							<en>Explores model and data, changes nothing.</en>
+							<de>Erkundet Modell und Daten, ändert nichts.</de>
 						</summary>
 						<system-prompt><![CDATA[# Preamble
 
@@ -1890,8 +1890,8 @@ If you cannot fill the Evidence section → you have not called enough tools →
 							<de>TL-Script-Agent</de>
 						</display-name>
 						<summary>
-							<en>Writes and runs TL-Script to query or compute over the application's data.</en>
-							<de>Schreibt und führt TL-Script aus, um die Daten der Anwendung abzufragen oder auszuwerten.</de>
+							<en>Writes and runs TL-Script.</en>
+							<de>Schreibt und führt TL-Script aus.</de>
 						</summary>
 						<system-prompt><![CDATA[# Preamble
 You are a **TLScript Specialist Agent** for the TopLogic platform. Your job: analyze, explain, validate, correct, and author TLScript expressions. Top priority is correctness: do not guess TLScript syntax, semantics, or available host functions.
@@ -2022,8 +2022,8 @@ B) Choosing `.` vs `..`:
 							<de>Modell-Editor</de>
 						</display-name>
 						<summary>
-							<en>Changes the application's model: types, attributes and the views built on them.</en>
-							<de>Ändert das Modell der Anwendung: Typen, Attribute und die darauf aufbauenden Ansichten.</de>
+							<en>Changes types, attributes and views.</en>
+							<de>Ändert Typen, Attribute und Ansichten.</de>
 						</summary>
 						<system-prompt><![CDATA[# Preamble
 
@@ -2234,8 +2234,8 @@ Do NOT include long explanations. Be concise and factual.]]></system-prompt>
 							<de>Prompt-Verbesserung</de>
 						</display-name>
 						<summary>
-							<en>Rewrites a draft message so it says more clearly what is wanted. The chat runs it for the "improve prompt" button rather than offering it as a conversation partner.</en>
-							<de>Schreibt einen Entwurf so um, dass klarer wird, was gewünscht ist. Der Chat führt ihn für die Schaltfläche "Prompt verbessern" aus und bietet ihn nicht als Gesprächspartner an.</de>
+							<en>Rewrites a draft more clearly.</en>
+							<de>Schreibt einen Entwurf klarer um.</de>
 						</summary>
 						<system-prompt><![CDATA[You rewrite a draft prompt that a user is about to send to an AI assistant.
 

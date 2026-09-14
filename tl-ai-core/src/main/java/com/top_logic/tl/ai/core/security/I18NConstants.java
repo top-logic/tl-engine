@@ -93,6 +93,20 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 MCP_NOT_THE_AGENTS__SERVER;
 
 	/**
+	 * Refusal shown when a request names no agent and the account may run none at all.
+	 *
+	 * <p>
+	 * Its own sentence rather than the name of the agent the request would have fallen back to: that
+	 * name is one nobody chose and nobody can act on.
+	 * </p>
+	 *
+	 * @en No agent is available to you. Ask an administrator to permit one for your role.
+	 * @de Ihnen steht kein Agent zur Verfügung. Bitten Sie einen Administrator, Ihrer Rolle einen zu
+	 *     erlauben.
+	 */
+	public static ResKey NO_AGENT_AVAILABLE;
+
+	/**
 	 * The refusal of one decision, in the acting user's language.
 	 *
 	 * @param dimension

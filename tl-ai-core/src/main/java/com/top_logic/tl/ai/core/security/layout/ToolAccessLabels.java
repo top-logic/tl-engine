@@ -175,6 +175,11 @@ public class ToolAccessLabels {
 	 *        The heading row. Never <code>null</code>.
 	 */
 	public static String sectionSummary(EffectiveAccessRow.RunSection section) {
+		if (section.totalCount() == 0) {
+			// Nothing was refused: the application configures none of them. "0 of 0 reachable" over a
+			// "denied" verdict reads as a restriction that nobody wrote.
+			return resources().getString(I18NConstants.SECTION_SUMMARY_NONE_CONFIGURED);
+		}
 		return resources().getString(I18NConstants.SECTION_SUMMARY__ALLOWED_TOTAL
 			.fill(Integer.valueOf(section.allowedCount()), Integer.valueOf(section.totalCount())));
 	}

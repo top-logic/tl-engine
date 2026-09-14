@@ -356,6 +356,11 @@ else. That is what lets you restrict one role in a running application without t
 - What the agent itself uses - the model it is assigned, a server it declares - is always permitted
   unless a `<deny>` names it. A request that echoes the agent's own model back is not choosing a model,
   and every chat client does exactly that on every turn.
+- **A `<grant>` is a floor, not a ceiling.** It adds to what the agents of that role already use; it
+  cannot take anything away. A role granted only the small model may still run on the large one when
+  that is what its agent is assigned, and the only ways to stop that are a `<deny>` naming the large
+  model or a different assignment for the agent. If you are restricting rather than widening, write
+  the `<deny>`.
 - `none` refuses the same requests as `assigned` and `agent` do. What it changes is what a client is
   *offered*: under `none` the menu is empty, so the choice is not shown at all.
 - Administrators bypass all three.
@@ -384,12 +389,31 @@ A holder of `ticketReader` is offered `TL_ModelExplorer` and nothing else, may p
 well as the one its agent is assigned, and cannot attach `internal-docs` even to an agent that declares
 it. Everybody else keeps every agent.
 
+### Which agents a restricted role needs
+
+Only the agents a user is meant to **talk to**. Two agents the chat runs for the user rather than as
+a choice need no grant and cannot be granted meaningfully:
+
+- **The chat entry point.** A client that names no agent runs the entry point if the account may run
+  it, and otherwise the first agent that account may run. A restricted role therefore gets its own
+  agent, not a refusal naming one it was never offered.
+- **The prompt improver.** It rewrites a draft and never answers as a persona, so `<agent-access>`
+  does not decide it. The chat hides it from the picker, and an allowlist that had to name it would
+  be an allowlist naming something nobody can discover.
+
+Everything else an account may run has to be granted.
+
 ### What happens when a request asks for something else
 
-`/chat/capabilities` never offers it, so the menu cannot produce it. A request that names it anyway -
-a script, an older browser tab - is answered **403** with the sentence the user reads in the notice
-strip above the composer, in their language. The run is refused before the provider is called, so a
-refusal costs nothing.
+A request that names an agent, a model or an MCP server the account may not use is answered **403**
+with the sentence the user reads in the notice strip above the composer, in their language. The run
+is refused before the provider is called, so a refusal costs nothing.
+
+The menu is filtered to match: `/chat/capabilities` lists the agents and MCP servers a run of that
+account accepts. The model list is the one thing a single payload cannot make exact - it is fetched
+once and the agent can change without another round trip - so it lists the models the account may
+choose with *some* agent it may run, and marks each with whether the account's roles grant it. A
+client narrows that to the agent the user has selected; the shipped chat does.
 
 ### Names are checked at boot
 

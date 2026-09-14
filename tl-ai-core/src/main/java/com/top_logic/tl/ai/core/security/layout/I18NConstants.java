@@ -685,8 +685,10 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * What the policy tab is for, above everything else.
 	 *
-	 * @en Who may use which capability. Every change is checked when you apply it.
-	 * @de Wer welche Tool-Gruppe benutzen darf. Jede Änderung wird beim Übernehmen geprüft.
+	 * @en Who may use which capability, and which agents, models and MCP servers. Every change is
+	 *     checked when you apply it.
+	 * @de Wer welche Tool-Gruppe benutzen darf und welche Agenten, Modelle und MCP-Server. Jede
+	 *     Änderung wird beim Übernehmen geprüft.
 	 */
 	public static ResKey POLICY_INTRO;
 
@@ -1063,6 +1065,16 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey FIELD_SECTION_DEFAULT;
 
 	/**
+	 * Label of the switch that takes one role into a section, or out of it.
+	 *
+	 * @en Restrict {0}
+	 * @de {0} einschränken
+	 * @tooltip Switch this on and the role may use only what is named below - naming nothing means it
+	 *          may use none of them. Switch it off and its holders get what everybody else gets.
+	 */
+	public static ResKey1 FIELD_ROLE_RESTRICTED__ROLE;
+
+	/**
 	 * Label of the field holding what one role may use.
 	 *
 	 * @en {0} may use
@@ -1108,6 +1120,14 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @tooltip Which MCP servers this account may attach to a single request.
 	 */
 	public static ResKey SECTION_MCP_ACCESS;
+
+	/**
+	 * What a section says when the application has none of what it decides about.
+	 *
+	 * @en None configured
+	 * @de Keine konfiguriert
+	 */
+	public static ResKey SECTION_SUMMARY_NONE_CONFIGURED;
 
 	/**
 	 * How much of one section an account reaches.

@@ -254,6 +254,25 @@ public interface SecurityContext {
 	}
 
 	/**
+	 * This context for a run whose agent the product chose rather than the user.
+	 *
+	 * <p>
+	 * The chat's prompt improver is such a run, and so is every agent the chat keeps out of its
+	 * picker: they do a piece of work on the user's behalf and never answer as a persona, which is
+	 * what the agent allowlist decides. Everything else about the run stays decided - the model, the
+	 * MCP servers, and every tool it calls.
+	 * </p>
+	 *
+	 * <p>
+	 * The default returns {@code this}, which is correct for every context that decides no agent
+	 * anyway.
+	 * </p>
+	 */
+	default SecurityContext withoutAgentChoice() {
+		return this;
+	}
+
+	/**
 	 * Per-object model access checks for the run's principal.
 	 *
 	 * <p>

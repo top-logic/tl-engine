@@ -164,6 +164,14 @@ export type NoticeTone = 'warn' | 'info'
 
 export interface ModelOption {
   id: string
+  /**
+   * Whether the account may choose this model whatever agent it runs.
+   *
+   * False for a model that is listed only because an agent the account may run is assigned it - that
+   * one is accepted with *that* agent and refused with another, so a menu has to narrow by the agent
+   * the user has selected.
+   */
+  grantedToRole?: boolean
   provider?: string
   contextWindow?: number
   maxOutput?: number

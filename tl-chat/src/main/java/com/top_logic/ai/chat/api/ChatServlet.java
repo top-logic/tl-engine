@@ -63,6 +63,8 @@ import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Decision;
+import com.top_logic.tl.ai.core.security.RunAuthorization;
+import com.top_logic.tl.ai.core.security.ToolSecurityException;
 import com.top_logic.util.Resources;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.service.HistoryUtils;
@@ -617,26 +619,46 @@ public class ChatServlet extends TopLogicServlet {
 	 * request, or the policy service not running - and the run is then refused where it starts.
 	 * </p>
 	 */
-	private static String runRefusal(Person person, ChatProcessor.ChatRunOptions options) {
+	private String runRefusal(Person person, ChatProcessor.ChatRunOptions options) {
 		if (person == null || !AiToolAccessService.Module.INSTANCE.isActive()) {
 			return null;
 		}
-		String agentName = options.agent() != null && !options.agent().isBlank()
-			? options.agent().trim()
-			: AgentFactory.getInstance().getEntryPointAgentName();
+		RunAuthorization access;
+		String agentName;
+		try {
+			access = AiToolAccessService.effectiveRunAccessFor(person);
+			agentName = options.agent() != null && !options.agent().isBlank()
+				? options.agent().trim()
+				: AgentFactory.defaultAgentFor(access, hiddenAgents());
+		} catch (RuntimeException ex) {
+			// A pre-check is a courtesy; a failure in it must not stop a request the run would accept.
+			Logger.warn("Could not pre-check what this account may run.", ex, ChatServlet.class);
+			return null;
+		}
+		if (agentName == null) {
+			// A request that names no agent, from an account that may run none. Its own sentence: the
+			// name of the agent they may not have says nothing they can act on.
+			return Resources.getInstance().getString(
+				com.top_logic.tl.ai.core.security.I18NConstants.NO_AGENT_AVAILABLE);
+		}
 		List<String> mcpOverride = options.mcpOverride() ? options.mcpServers() : null;
 		AgentFactory.RunOverrides overrides =
 			new AgentFactory.RunOverrides(options.model(), mcpOverride, options.effort());
 		Decision.Denied denied;
 		try {
-			denied = AgentFactory.runRefusal(
-				AiToolAccessService.effectiveRunAccessFor(person), agentName, overrides);
+			denied = AgentFactory.runRefusal(access, agentName, overrides);
 		} catch (RuntimeException ex) {
-			// A pre-check is a courtesy; a failure in it must not stop a request the run would accept.
 			Logger.warn("Could not pre-check what '" + agentName + "' may run.", ex, ChatServlet.class);
 			return null;
 		}
 		return denied == null ? null : Resources.getInstance().getString(denied.reason());
+	}
+
+	/** The agents this chat runs for itself and never offers as a conversation partner. */
+	private Set<String> hiddenAgents() {
+		TaskProgressTracker tracker = currentTracker();
+		String improver = tracker == null ? null : tracker.getPromptImproverAgentName();
+		return improver == null || improver.isBlank() ? Set.of() : Set.of(improver);
 	}
 
 	/** Answers a send the acting account may not make, with the reason the client shows. */
@@ -718,6 +740,19 @@ public class ChatServlet extends TopLogicServlet {
 				case MISSING_AGENT -> HttpServletResponse.SC_SERVICE_UNAVAILABLE;
 			};
 			resp.sendError(status, ex.getMessage());
+		} catch (ToolSecurityException ex) {
+			// A refusal, not a failure: it gets the answer /chat/send gets and no ERROR line. The
+			// improver itself is exempt from the agent allowlist - see PromptImprovementProcessor -
+			// so reaching this means the model or an MCP server was refused, which is a decision an
+			// administrator made and the user can read.
+			Logger.info("Prompt improvement refused: " + ex.getMessage(), ChatServlet.class);
+			forbidden(resp);
+			resp.getWriter().write(DtoMapper.toJson(ImprovePromptResponse.create()
+				.setRequestId(body.getRequestId())
+				.setStatus(FORBIDDEN)
+				.setReason(ex.reason() == null
+					? ex.getMessage()
+					: Resources.getInstance().getString(ex.reason()))));
 		} catch (RuntimeException ex) {
 			Logger.error("Prompt improvement failed: " + ex.getMessage(), ex, ChatServlet.class);
 			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Prompt improvement failed.");

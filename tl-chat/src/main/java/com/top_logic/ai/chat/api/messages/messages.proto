@@ -185,9 +185,15 @@ message ImprovePromptResponse {
 	string improvedText;
 
 	/**
-	 * Result status: "completed", "cancelled", or "stale".
+	 * Result status: "completed", "cancelled", "stale", or "forbidden" for a request the acting
+	 * account may not make.
 	 */
 	string status;
+
+	/**
+	 * Why the request was refused, in the acting user's language; empty unless it was.
+	 */
+	string reason;
 }
 
 /**
@@ -969,6 +975,16 @@ message AgentOptionDto {
 message ModelOptionDto {
 	/** Model identifier. */
 	string id;
+
+	/**
+	 * Whether the caller may choose this model whatever agent they run.
+	 *
+	 * False for a model that is listed only because an agent the caller may run is assigned it: that
+	 * one is usable with *that* agent and refused with another. A client offering a model list has to
+	 * narrow it to this flag plus the selected agent's own model, or it offers a turn that comes back
+	 * refused.
+	 */
+	boolean grantedToRole;
 
 	/** Provider key (anthropic, openai, ...). */
 	string provider;

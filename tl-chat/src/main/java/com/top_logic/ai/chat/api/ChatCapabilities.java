@@ -20,6 +20,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.agent.AgentDefinition;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
+import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
 import com.top_logic.tl.ai.core.mcp.McpServerRegistry;
 import com.top_logic.tl.ai.core.provider.AgentModelAssignment;
@@ -43,9 +44,11 @@ final class ChatCapabilities {
 	 * Snapshot of the agents, models and MCP servers the given user may use.
 	 *
 	 * <p>
-	 * Filtered by the agent security policy, so that a client is never offered something a run would
-	 * refuse. The refusal itself stays where it belongs - {@code AgentFactory} decides, and this list
-	 * only keeps the menu honest.
+	 * Filtered by the agent security policy. The agents and the MCP servers listed are exactly the
+	 * ones a run of this account would accept; the models are the ones it may choose with <em>some</em>
+	 * agent it may run, and each carries {@link ModelOptionDto#isGrantedToRole()} so that a client can
+	 * narrow the list to the agent the user has actually selected. The refusal itself stays where it
+	 * belongs - {@code AgentFactory} decides, and this list only keeps the menu honest.
 	 * </p>
 	 *
 	 * @param person
@@ -58,9 +61,6 @@ final class ChatCapabilities {
 	static ChatCapabilitiesResponse build(Person person, String hiddenAgent) {
 		ChatCapabilitiesResponse response = ChatCapabilitiesResponse.create();
 		LLMService llm = LLMService.Module.INSTANCE.isActive() ? LLMService.getInstance() : null;
-		if (llm != null) {
-			response.setEntryPointAgent(llm.getEntryPointAgentName());
-		}
 		RunAuthorization access = runAccess(person);
 
 		// The models and servers the visible agents use themselves are not a choice, so they stay
@@ -81,10 +81,17 @@ final class ChatCapabilities {
 			declaredServers.addAll(dto.getMcpServers());
 			response.addAgent(dto);
 		}
+		response.setEntryPointAgent(
+			entryPointOf(response.getAgents(), llm == null ? "" : llm.getEntryPointAgentName()));
 
 		if (llm != null) {
-			for (String modelId : allowed(access, llm.getConfiguredModelNames(), assignedModels, true)) {
-				ModelOptionDto dto = ModelOptionDto.create().setId(modelId);
+			List<String> configured = llm.getConfiguredModelNames();
+			// Granted to the role, as opposed to reachable only through the agent that is assigned it:
+			// asked with no agent's own model, which is exactly the difference.
+			Set<String> granted = new LinkedHashSet<>(allowed(access, configured, Set.of(), true));
+			for (String modelId : allowed(access, configured, assignedModels, true)) {
+				ModelOptionDto dto = ModelOptionDto.create().setId(modelId)
+					.setGrantedToRole(granted.contains(modelId));
 				String provider = llm.getProviderId(modelId);
 				dto.setProvider(provider != null ? provider : "");
 				ModelInfo info = llm.getModel(modelId);
@@ -117,6 +124,32 @@ final class ChatCapabilities {
 			}
 		}
 		return response;
+	}
+
+	/**
+	 * The agent a client runs when it names none.
+	 *
+	 * <p>
+	 * The configured entry point when it is one of the agents offered, and otherwise the first that
+	 * is - {@link AgentFactory#defaultAgentFor} applies the same rule to the run itself, so the two
+	 * cannot answer differently. Reporting the configured one unfiltered would name an agent a
+	 * restricted account may not have, and every client that does not send an agent - the legacy chat
+	 * control, a script - would then be refused by that name.
+	 * </p>
+	 *
+	 * @param offered
+	 *        The agents this account is offered, in the order it is offered them.
+	 * @param configured
+	 *        The application's chat entry point.
+	 * @return The agent name, or the empty string when this account is offered none at all.
+	 */
+	private static String entryPointOf(List<AgentOptionDto> offered, String configured) {
+		for (AgentOptionDto agent : offered) {
+			if (agent.getName().equals(configured)) {
+				return configured;
+			}
+		}
+		return offered.isEmpty() ? "" : offered.get(0).getName();
 	}
 
 	/**

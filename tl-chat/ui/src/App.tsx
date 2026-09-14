@@ -22,7 +22,7 @@ import {
   turnsJsonToMessages,
 } from './api'
 import { bundle, providerErrorText, toLanguage, type Language } from './i18n'
-import { effortLevelsOf } from './models'
+import { effortLevelsOf, modelsFor } from './models'
 import { SessionRail } from './chrome'
 import { Composer } from './composer'
 import { chatReducer } from './reducer'
@@ -282,6 +282,13 @@ export function App({ controlId }: TLCellProps) {
       contextWindow: known.contextWindow ?? snapshot.contextWindow,
     }))
   }, [caps.models, model])
+
+  // Narrowed to the agent the user has selected: the payload lists what any agent they may run
+  // accepts, and offering a model that only another agent accepts is offering a refused turn.
+  const offeredModels = useMemo(
+    () => modelsFor(caps.models, caps.agents.find((item) => item.name === agent)?.model),
+    [caps.models, caps.agents, agent],
+  )
 
   // A model that cannot be asked to think harder must not carry a level: the provider would reject
   // it. Switching to such a model drops the choice; switching back leaves the user to pick again.
@@ -702,6 +709,32 @@ export function App({ controlId }: TLCellProps) {
   }, [labels, windowId])
 
   /**
+   * Takes back a chat this send had just created, when the send produced nothing to keep.
+   *
+   * <p>
+   * The chat comes into being before the request, because it is what the turn is written into. A
+   * refused send leaves it empty, and an empty chat in the rail is a row the user has to notice and
+   * tidy away - for a refusal they did not cause and cannot act on. Only a chat this very send
+   * created is taken back: an existing conversation is never touched.
+   * </p>
+   */
+  const discardEmptyChat = useCallback(
+    async (createdHere: boolean, id: string) => {
+      if (!createdHere || !id) return
+      try {
+        await deleteSession(windowId, id)
+      } catch {
+        // Best effort: an undeleted empty chat is untidy, not broken.
+      }
+      setSessionId('')
+      sessionIdRef.current = ''
+      dispatch({ type: 'RESET' })
+      await refreshSessions()
+    },
+    [refreshSessions, windowId],
+  )
+
+  /**
    * The chat this window had open before it was reloaded, read once, before anything can overwrite
    * it.
    *
@@ -820,11 +853,15 @@ export function App({ controlId }: TLCellProps) {
   const onSend = useCallback(
     async (text: string, attachments: Attachment[], edited?: boolean): Promise<boolean> => {
       let active = sessionIdRef.current
+      // Whether this send is what created the chat. A send that is then refused has produced nothing
+      // to keep, and an empty chat left in the rail is a row the user has to tidy away themselves.
+      let createdHere = false
       if (!active) {
         // The first send is what brings a chat into being, titled after what was said.
         const created = await createSession(windowId, autoTitle(text || labels.attachmentOnly))
         await loadSession(windowId, created.id)
         active = created.id
+        createdHere = true
         setSessionId(active)
         await refreshSessions()
       }
@@ -855,10 +892,12 @@ export function App({ controlId }: TLCellProps) {
         // A refusal is not a failure: the server wrote a sentence for this user saying what they may
         // not use, and it reads as information rather than as something that went wrong.
         if (err instanceof ForbiddenError) {
+          await discardEmptyChat(createdHere, active)
           showNotice(err.reason || labels.notAllowed, '', { tone: 'info', sticky: true })
           return false
         }
         const busyRefusal = err instanceof Error && err.message === 'busy'
+        await discardEmptyChat(createdHere && !busyRefusal, active)
         showNotice(busyRefusal ? labels.busyHint : labels.sendFailed, '', {
           tone: busyRefusal ? 'info' : 'warn',
         })
@@ -1115,7 +1154,7 @@ export function App({ controlId }: TLCellProps) {
         <Composer
           windowId={windowId}
           agents={caps.agents}
-          models={caps.models}
+          models={offeredModels}
           agent={agent}
           model={model}
           onAgent={onAgent}

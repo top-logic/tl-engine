@@ -46,7 +46,10 @@ public class EffectiveAccessAccessor extends ReadOnlyAccessor<Object> {
 			case SUBJECT:
 				return subject(accessRow);
 			case VERDICT:
-				return ToolAccessLabels.verdict(ToolAccessVerdict.of(accessRow.allowed()));
+				// A section is a heading over rows that each carry their own verdict; one word for
+				// "one of six" would be wrong whichever word it was.
+				return accessRow instanceof EffectiveAccessRow.RunSection ? null
+					: ToolAccessLabels.verdict(ToolAccessVerdict.of(accessRow.allowed()));
 			case RISK:
 				return accessRow instanceof EffectiveAccessRow.Capability capability
 					? ToolAccessLabels.risk(capability.group()) : null;

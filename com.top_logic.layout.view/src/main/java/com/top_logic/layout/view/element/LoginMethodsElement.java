@@ -22,6 +22,7 @@ import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackAlign;
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackDirection;
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackGap;
+import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewServlet;
@@ -34,9 +35,9 @@ import com.top_logic.util.Resources;
  *
  * <p>
  * Each button is a full-page browser redirect to the method's
- * {@link LoginMethod#getInitiationUrl(String) initiation URL}, returning to the React view after
- * authentication. Renders nothing when no login method is configured, so it can be placed in any
- * login view unconditionally.
+ * {@link LoginMethod#getInitiationUrl(String) initiation URL}, returning to the page the visitor
+ * asked for. Renders nothing when no login method is configured, so it can be placed in any login
+ * view unconditionally.
  * </p>
  */
 public class LoginMethodsElement implements UIElement {
@@ -62,9 +63,7 @@ public class LoginMethodsElement implements UIElement {
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		// Context-relative return path: the authentication servlet's redirect-to-start-page prepends
-		// the context path itself, so this must NOT include it (otherwise it would be doubled).
-		String returnTo = ViewServlet.ROOT_PATH;
+		String returnTo = returnPath(context);
 
 		List<LoginMethod> methods = LoginMethods.all();
 		List<ReactControl> buttons = new ArrayList<>(methods.size());
@@ -81,6 +80,26 @@ public class LoginMethodsElement implements UIElement {
 		}
 		return new ReactStackControl(context, StackDirection.COLUMN, StackGap.COMPACT, StackAlign.STRETCH, false,
 			buttons);
+	}
+
+	/**
+	 * The page the external login returns to: the one the visitor asked for.
+	 *
+	 * <p>
+	 * The requested route is the URL the {@link RouteManager} carries - the login view takes none of
+	 * it up, so it is still the one the visitor entered - and is prefixed with
+	 * {@link ViewServlet#ROOT_PATH} to name a page of the view application. Context-relative: the
+	 * authentication servlet's redirect prepends the context path itself, so including it here would
+	 * double it. A window that routes nothing returns to the application's root.
+	 * </p>
+	 */
+	private static String returnPath(ViewContext context) {
+		RouteManager routeManager = context.getRouteManager();
+		String route = routeManager == null ? null : routeManager.currentUrl();
+		if (route == null || route.isEmpty()) {
+			return ViewServlet.ROOT_PATH;
+		}
+		return ViewServlet.ROOT_PATH + route;
 	}
 
 }

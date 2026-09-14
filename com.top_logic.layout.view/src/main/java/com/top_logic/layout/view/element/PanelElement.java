@@ -71,6 +71,9 @@ public class PanelElement extends CommandScopeElement {
 		/** Configuration name for {@link #getAppearance()}. */
 		String APPEARANCE = "appearance";
 
+		/** Configuration name for {@link #getWidth()}. */
+		String WIDTH = "width";
+
 		/**
 		 * The panel title displayed in the toolbar header.
 		 */
@@ -131,6 +134,24 @@ public class PanelElement extends CommandScopeElement {
 		 */
 		@Name(FILL)
 		boolean getFill();
+
+		/**
+		 * A width of the panel's own, as a CSS length, e.g. {@code 380px}.
+		 *
+		 * <p>
+		 * A panel of its own width does not stretch across its container, so the container's
+		 * alignment places it: inside a {@code <stack align="center">} it is centered, which is how
+		 * a form of fixed width is placed on an otherwise empty page. The width is a preference, not
+		 * a minimum - the panel never grows beyond the space there is.
+		 * </p>
+		 *
+		 * <p>
+		 * Unset, the panel takes the width its container offers.
+		 * </p>
+		 */
+		@Name(WIDTH)
+		@Nullable
+		String getWidth();
 	}
 
 	private final ResKey _title;
@@ -142,6 +163,8 @@ public class PanelElement extends CommandScopeElement {
 	private final boolean _hoverActions;
 
 	private final PanelAppearance _appearance;
+
+	private final String _width;
 
 	/**
 	 * Creates a new {@link PanelElement} from configuration.
@@ -156,6 +179,7 @@ public class PanelElement extends CommandScopeElement {
 		_fill = config.getFill();
 		_hoverActions = config.getHoverActions();
 		_appearance = config.getAppearance();
+		_width = config.getWidth();
 	}
 
 	@Override
@@ -173,6 +197,7 @@ public class PanelElement extends CommandScopeElement {
 		panel.setFill(_fill);
 		panel.setHoverActions(_hoverActions);
 		panel.setAppearance(_appearance);
+		panel.setWidth(_width);
 		panel.setTitleContent(createTitleContentControl(context));
 		return panel;
 	}

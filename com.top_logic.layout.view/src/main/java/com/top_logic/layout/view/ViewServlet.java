@@ -54,6 +54,7 @@ import com.top_logic.layout.react.window.WindowEntry;
 import com.top_logic.layout.view.login.PendingSessionAction;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.util.Resources;
+import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.TopLogicServlet;
 
@@ -77,6 +78,14 @@ import com.top_logic.util.TopLogicServlet;
  * can be named here; any other view file is answered with
  * {@link HttpServletResponse#SC_NOT_FOUND}.</li>
  * </ul>
+ *
+ * <p>
+ * <b>Login view:</b> An application that configures a {@link ViewConfig#getLoginView() login
+ * view} shows it to every session that belongs to no account, in place of whatever the URL names.
+ * The display it renders is not the application, so it takes up no URL: the route manager
+ * {@link RouteManager#holdUrl(String) holds} the requested route instead of adopting it, which
+ * keeps the address the visitor asked for until the page is reloaded under a session of their own.
+ * </p>
  *
  * <p>
  * <b>Tab identity:</b> Each browser tab is identified by a unique window name. The browser's
@@ -167,13 +176,13 @@ public class ViewServlet extends TopLogicServlet {
 			// The provider and the model of a window never change, so a tree it already has always
 			// fits - unlike a view, which has to be the same one.
 			if (displayed != null) {
-				renderAgain(request, response, displayed, sseQueue, routePath);
+				renderAgain(request, response, displayed, sseQueue, routePath, false);
 				return;
 			}
 
 			ReactContext baseContext = new DefaultReactContext(
 				request.getContextPath(), windowName, sseQueue, windowRegistry);
-			wireRouteManager(baseContext, sseQueue, routePath);
+			wireRouteManager(baseContext, sseQueue, routePath, false);
 			ReactSnackbarControl snackbar = createWindowSnackbar(baseContext);
 			ReactMenuControl menu = createWindowMenu(baseContext);
 			ReactDialogManagerControl dialogs = new ReactDialogManagerControl(baseContext);
@@ -190,7 +199,11 @@ public class ViewServlet extends TopLogicServlet {
 		}
 
 		ViewConfig viewConfig = ApplicationConfig.getInstance().getConfig(ViewConfig.class);
-		String viewPath = resolveViewPath(viewConfig, pathInfo);
+		// Which account the session belongs to decides what is displayed, so it is read where the
+		// session context is installed and handed to the decision as a value.
+		boolean anonymous = TLContext.isAnonymous();
+		boolean loginView = showsLoginView(viewConfig, anonymous);
+		String viewPath = resolveViewPath(viewConfig, pathInfo, anonymous);
 		if (viewPath == null) {
 			response.sendError(HttpServletResponse.SC_NOT_FOUND, "No such entry point.");
 			return;
@@ -210,7 +223,7 @@ public class ViewServlet extends TopLogicServlet {
 		Locale locale = Resources.getCurrentLocale();
 		RenderedView rendered = RenderedView.lookup(subSession);
 		if (displayed != null && rendered != null && rendered.matches(viewPath, view, locale)) {
-			renderAgain(request, response, displayed, sseQueue, routePath);
+			renderAgain(request, response, displayed, sseQueue, routePath, loginView);
 			return;
 		}
 		if (displayed != null) {
@@ -223,7 +236,7 @@ public class ViewServlet extends TopLogicServlet {
 
 		ReactContext baseContext = new DefaultReactContext(
 			request.getContextPath(), windowName, sseQueue, windowRegistry);
-		wireRouteManager(baseContext, sseQueue, routePath);
+		wireRouteManager(baseContext, sseQueue, routePath, loginView);
 		ReactSnackbarControl snackbar = createWindowSnackbar(baseContext);
 		ReactMenuControl menu = createWindowMenu(baseContext);
 		ReactDialogManagerControl dialogs = new ReactDialogManagerControl(baseContext);
@@ -255,14 +268,19 @@ public class ViewServlet extends TopLogicServlet {
 	 * @param routePath
 	 *        The route requested by the URL, adopted by the tree while it is rendered (a deep link
 	 *        entered in an existing tab).
+	 * @param loginView
+	 *        Whether the tree is the application's login view, which keeps the requested route
+	 *        instead of taking it up - see
+	 *        {@link #wireRouteManager(ReactContext, SSEUpdateQueue, String, boolean)}.
 	 */
 	private void renderAgain(HttpServletRequest request, HttpServletResponse response,
-			ReactControl rootControl, SSEUpdateQueue sseQueue, String routePath) throws IOException {
+			ReactControl rootControl, SSEUpdateQueue sseQueue, String routePath, boolean loginView)
+			throws IOException {
 		ReactContext context = rootControl.getReactContext();
 
 		sseQueue.discardPendingEvents();
 		sseQueue.setRootControl(rootControl);
-		wireRouteManager(context, sseQueue, routePath);
+		wireRouteManager(context, sseQueue, routePath, loginView);
 
 		renderPage(request, response, rootControl, context);
 	}
@@ -530,17 +548,29 @@ public class ViewServlet extends TopLogicServlet {
 	 * route manager on the SSE queue so that {@link com.top_logic.layout.react.servlet.ReactServlet}
 	 * can look it up for handling {@code navigateToRoute} commands.
 	 * </p>
+	 *
+	 * @param loginView
+	 *        Whether the page displays the application's login view. Such a page is not the
+	 *        application the URL addresses, so it takes the URL up not at all: the route is
+	 *        {@link RouteManager#holdUrl(String) held}, which keeps the address the visitor asked
+	 *        for while they log in.
 	 */
-	private void wireRouteManager(ReactContext context, SSEUpdateQueue sseQueue, String routePath) {
+	private void wireRouteManager(ReactContext context, SSEUpdateQueue sseQueue, String routePath,
+			boolean loginView) {
 		RouteManager routeManager = context.getRouteManager();
 		if (routeManager == null) {
 			return;
 		}
 
-		// Unconditionally, an empty route included: a freshly loaded page displays what its URL says,
-		// which for a bare view is nothing - and the address bar has to be completed from the display
-		// rather than left describing less than it shows.
-		routeManager.adoptUrl(routePath == null ? "" : routePath);
+		String requestedRoute = routePath == null ? "" : routePath;
+		if (loginView) {
+			routeManager.holdUrl(requestedRoute);
+		} else {
+			// Unconditionally, an empty route included: a freshly loaded page displays what its URL
+			// says, which for a bare view is nothing - and the address bar has to be completed from
+			// the display rather than left describing less than it shows.
+			routeManager.adoptUrl(requestedRoute);
+		}
 
 		routeManager.setUrlChangeHandler((url, replace) -> {
 			RouteChangeEvent event = RouteChangeEvent.create()
@@ -568,14 +598,27 @@ public class ViewServlet extends TopLogicServlet {
 	 * channels it reads, and naming it here is refused.
 	 * </p>
 	 *
+	 * <p>
+	 * A session that belongs to no account sees the {@link ViewConfig#getLoginView() login view} of
+	 * an application that has one, whatever the URL names: a route, the default view, an entry
+	 * point, or a view that is none - the visitor is shown the login and nothing else. What the URL
+	 * names is not lost with it, because the route is held while the login view is displayed.
+	 * </p>
+	 *
 	 * @param config
 	 *        The application's view configuration, naming the views a URL may load.
 	 * @param pathInfo
 	 *        The path below the servlet, its first segment the window name.
+	 * @param anonymous
+	 *        Whether the session belongs to no account.
 	 * @return The path of the view file to load, below {@link ViewLoader#VIEW_BASE_PATH}, or
 	 *         {@code null} if the path names a view that is no entry point.
 	 */
-	public static String resolveViewPath(ViewConfig config, String pathInfo) {
+	public static String resolveViewPath(ViewConfig config, String pathInfo, boolean anonymous) {
+		if (showsLoginView(config, anonymous)) {
+			return ViewLoader.VIEW_BASE_PATH + config.getLoginView();
+		}
+
 		// pathInfo is like /v1a2b3c/ or /v1a2b3c/app.view.xml or /v1a2b3c/config-editor
 		String path = pathInfo.substring(1);
 		int slashIdx = path.indexOf('/');
@@ -592,6 +635,15 @@ public class ViewServlet extends TopLogicServlet {
 			}
 		}
 		return ViewLoader.VIEW_BASE_PATH + defaultView;
+	}
+
+	/**
+	 * Whether the application answers the given session with its
+	 * {@link ViewConfig#getLoginView() login view} instead of showing itself.
+	 */
+	private static boolean showsLoginView(ViewConfig config, boolean anonymous) {
+		String loginView = config.getLoginView();
+		return anonymous && loginView != null && !loginView.isEmpty();
 	}
 
 	/**

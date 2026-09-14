@@ -5,7 +5,7 @@ import type { TLCellProps } from './types';
 import { getComponent } from './registry';
 import { connect, subscribe, unsubscribe } from './sse-client';
 import { setI18NApiBase, setI18NWindowName } from './i18n';
-import { createScope, registerScope, addBinding, type GestureHandler, type KeyboardScope } from './keyboard-dispatcher';
+import { createScope, registerScope, addBinding, pageScope, type GestureHandler, type KeyboardScope } from './keyboard-dispatcher';
 import { pushTrap, firstFocusable } from './focus-trap';
 import { CMD_SUBMIT, CMD_VALUE_CHANGED, enqueueCommand, registerPendingFlush, unregisterPendingFlush } from './command-channel';
 
@@ -498,7 +498,8 @@ export function useTLSubmitOnEnter():
 
 /**
  * The nearest enclosing keyboard scope. Provided by {@link KeyboardScopeProvider}
- * (a dialog/window/table/app-root) and consumed by {@link useKeyboardBinding}.
+ * (a dialog, window or table) and consumed by {@link useKeyboardBinding}. Outside any
+ * such surface the context is empty and bindings go to the dispatcher's page scope.
  */
 const KeyboardScopeContext = createContext<KeyboardScope | null>(null);
 
@@ -534,7 +535,9 @@ const KeyboardScopeProvider: React.FC<{ active?: () => boolean; modal?: boolean;
   };
 
 /**
- * Registers a gesture-&gt;handler binding into the nearest enclosing keyboard scope.
+ * Registers a gesture-&gt;handler binding into the nearest enclosing keyboard scope, or
+ * into the dispatcher's page scope for a control that no {@link KeyboardScopeProvider}
+ * encloses (a page toolbar's button, a form on a page).
  *
  * <p>The handler runs when the gesture is pressed and this scope is the innermost
  * active scope binding it. Returning {@code false} from the handler declines, letting
@@ -549,13 +552,13 @@ const KeyboardScopeProvider: React.FC<{ active?: () => boolean; modal?: boolean;
  *        Invoked on the gesture. Need not be stable; the latest closure is always used.
  */
 function useKeyboardBinding(gesture: string | string[] | null | undefined, handler: GestureHandler): void {
-  const scope = useContext(KeyboardScopeContext);
+  const scope = useContext(KeyboardScopeContext) ?? pageScope();
   const handlerRef = React.useRef(handler);
   handlerRef.current = handler;
   const gestures = gesture == null ? [] : (Array.isArray(gesture) ? gesture : [gesture]);
   const key = gestures.join('|');
   React.useEffect(() => {
-    if (!scope || gestures.length === 0) {
+    if (gestures.length === 0) {
       return;
     }
     const stable: GestureHandler = () => handlerRef.current();

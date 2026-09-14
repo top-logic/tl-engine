@@ -37,13 +37,6 @@ public sealed interface Part {
 	 * @param id part identifier
 	 * @param timestamp when the text was produced
 	 * @param text the text content
-	 */
-	/**
-	 * LLM text output (final, accumulated — not streaming deltas).
-	 *
-	 * @param id part identifier
-	 * @param timestamp when the text was produced
-	 * @param text the text content
 	 * @param citations citations the validator kept for this text; empty when none
 	 */
 	record TextPart(String id, Instant timestamp, String text, List<Citation> citations) implements Part {

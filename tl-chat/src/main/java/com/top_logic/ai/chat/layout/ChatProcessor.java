@@ -22,7 +22,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.top_logic.ai.chat.api.ChatEventHandler;
 import com.top_logic.ai.chat.api.ChatEventHandlerRegistry;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.chat.api.messages.CitationDto;
@@ -763,18 +765,29 @@ public class ChatProcessor {
 		}
 	}
 
+	/**
+	 * The citations the validator kept for the turn, in marker order.
+	 *
+	 * <p>
+	 * Collected over every {@link Part.TextPart} of the turn rather than the last one alone: a turn
+	 * that wrote text, called a tool and wrote more text carries markers in more than one part, and
+	 * the answer the chat renders is all of them.
+	 * </p>
+	 */
 	private static List<Citation> lastCitations(ConversationLog log) {
 		Turn turn = lastTurn(log);
 		if (turn == null) {
 			return List.of();
 		}
-		Part.TextPart last = null;
+		Map<Integer, Citation> byIndex = new TreeMap<>();
 		for (Part part : turn.assistantParts()) {
 			if (part instanceof Part.TextPart text) {
-				last = text;
+				for (Citation citation : text.citations()) {
+					byIndex.putIfAbsent(Integer.valueOf(citation.index()), citation);
+				}
 			}
 		}
-		return last == null ? List.of() : last.citations();
+		return List.copyOf(byIndex.values());
 	}
 
 	private static Turn lastTurn(ConversationLog log) {

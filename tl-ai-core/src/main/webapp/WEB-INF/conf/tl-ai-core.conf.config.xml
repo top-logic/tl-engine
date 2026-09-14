@@ -1560,9 +1560,10 @@ Before calling any tool, briefly tell the user what you're about to do. Never le
 </core_rules>
 
 <cite>
-- Cite what you read with cite.cite, using the id or URL the producing tool returned
+- Cite what you read with the cite tool, using the id or URL the producing tool returned
 - Cite only sources from this turn; never invent an id or URL
-- One marker per fact: write [n] immediately after the sentence, using the number cite.cite returned
+- One marker per fact: write [n] immediately after the sentence, using the number cite returned
+- Write [n] only for a citation; leave array indices, footnotes and code samples alone
 </cite>
 
 <error_handling>

@@ -1,8 +1,13 @@
 # Citation contract
 
 Assistant answers cite sources with markers of the form `[n]`. The markers are **not** parsed out of
-a fence in the answer. The model records each source by calling the `cite.cite` tool, then writes
-the number that tool returned immediately after the sentence it supports.
+a fence in the answer. The model records each source by calling the `cite` tool, then writes the
+number that tool returned immediately after the sentence it supports.
+
+The tool has three names and all three occur: `cite` is what the model calls and what a recorded
+tool call carries, `cite.cite` is what an agent definition and the access policy write, and
+`cite__cite` is the provider-safe registry key. The validator matches all three, because matching
+only the configured one made every declaration invisible.
 
 ## Wire
 
@@ -18,6 +23,11 @@ The compact `Part.TextPart` constructor is still `(id, timestamp, text)`.
 `cite.cite` (`ToolMode.READ`) records `kind`, `id`, `label`, and optional `url` / `toolCallId`. It
 returns the next 1-based marker for this run.
 
+The numbering belongs to the **run**, not to the calling thread: the tool is parallel-safe, so two
+cite calls of one turn run on two pool threads, and a per-thread counter gave both of them `1`. The
+counter is `CitationMarkers` on the run's `ToolContext`, shared by every copy of that context and
+reset by `AgentRunner` when a run begins. A delegated sub-agent gets its own.
+
 Albert (`TL_SingleAgent`) has the tool on its catalog and a `<cite>` fragment in the system prompt:
 cite what you read, using the id or URL the producing tool returned; this turn only; one marker per
 fact. That fragment is a product rule, not a host prompt. A host agent that should cite needs the
@@ -27,15 +37,20 @@ same tool on its catalog (and, if it has its own prompt, the same instruction).
 
 `CitationValidator` runs at the end of an `AgentRunner` run, **before** the transcript is completed:
 
-1. Collect this turn's `cite.cite` declarations.
-2. Allowed set = every `id` or `url` that appears as a substring in this turn's **other** tool
-   results.
+1. Collect this turn's cite declarations. **No declaration means no rewrite**: the answer is passed
+   through untouched, brackets and all.
+2. Allowed set = every `id` or `url` that appears as a **whole token** in this turn's other tool
+   results - `7` is not evidenced by `700`, and `…/page/1/` is not evidenced by `…/page/12/`.
 3. Drop declarations whose `id`/`url` is missing (DEBUG: invented dropped, valid kept, renumbering,
-   none at all).
-4. Parse `[n]` from the answer; keep markers whose declared citation survived; **renumber in order
-   of first appearance**; strip orphan markers.
-5. Rewrite the last assistant `TextPart` and put the cleaned text plus citations on
-   `message_complete`.
+   none at all). Kept declarations are keyed by tool call id, so two that claim the same number are
+   both seen instead of one overwriting the other.
+4. Parse `[n]` from **every** `TextPart` of the turn, skipping inline code spans and fenced blocks.
+   Markers whose declared citation survived are renumbered in order of first appearance; markers
+   claimed by a dropped declaration are deleted together with the space in front of them; **every
+   other `[n]` stays exactly as the model wrote it** - an array index, a footnote and a code sample
+   are prose, not citations.
+5. Rewrite the turn's `TextPart`s, attach the kept citations to the parts their markers occur in,
+   and put text plus citations on `message_complete`.
 
 ## Rendering
 

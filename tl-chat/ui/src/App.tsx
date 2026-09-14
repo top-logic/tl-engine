@@ -22,7 +22,7 @@ import {
   turnsJsonToMessages,
 } from './api'
 import { bundle, providerErrorText, toLanguage, type Language } from './i18n'
-import { agentLabel, effortLevelsOf, modelLabel, modelsFor } from './models'
+import { agentLabel, effortLevelsOf, modelLabel, modelsFor, toolLabel } from './models'
 import { SessionRail } from './chrome'
 import { Composer } from './composer'
 import type {
@@ -1146,7 +1146,12 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
   // The approval cards the composer shows are also what Fortschritt reports: the run is not merely
   // "running", it is waiting for this user.
   const awaitingApproval = useMemo(
-    () => pendingApprovals.map((request) => ({ id: request.id, toolName: request.toolName })),
+    () =>
+      pendingApprovals.map((request) => ({
+        id: request.id,
+        // The same wording the approval card uses, not the raw tool name.
+        toolName: toolLabel(request.toolName),
+      })),
     [pendingApprovals],
   )
 
@@ -1154,7 +1159,6 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
     () => ({
       id: 'progress',
       title: labels.progressTitle,
-      contributor: labels.progressContributor,
       icon: ProgressIcon,
       badge: () => progressBadge(tasks, awaitingApproval),
       count: () => progressBadge(tasks, awaitingApproval),
@@ -1178,7 +1182,6 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
     () => ({
       id: 'context',
       title: labels.contextTitle,
-      contributor: labels.progressContributor,
       icon: ContextIcon,
       render: () => <ContextSection facts={contextFacts} labels={labels} />,
     }),
@@ -1238,7 +1241,6 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
     () => ({
       id: 'sources',
       title: labels.sourcesTitle,
-      contributor: labels.sourcesContributor,
       icon: SourcesIcon,
       count: () => sources.length,
       render: (ctx) => (

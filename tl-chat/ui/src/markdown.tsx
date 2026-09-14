@@ -96,8 +96,10 @@ marked.use({
         const id = citationIds.get(n) ?? ''
         // A small grey number after the sentence, not a coloured chip: it must say where the fact
         // comes from without pulling the eye away from the text.
+        // A non-breaking space binds the marker to the word it belongs to, so it can never be
+        // wrapped onto a line of its own when the preceding line happens to be full.
         return (
-          `<button type="button" class="cite-marker" data-citation-index="${n}"` +
+          `&nbsp;<button type="button" class="cite-marker" data-citation-index="${n}"` +
           ` data-citation-id="${escapeHtml(id)}" aria-label="${escapeHtml(citationLabels.citationMarker(n))}">` +
           `${n}</button>`
         )

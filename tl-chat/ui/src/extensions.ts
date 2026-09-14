@@ -51,7 +51,12 @@ export interface RailSection {
    * generic section glyph, never a letter.
    */
   icon?: ReactNode
-  /** Small caption on the right of the header, naming the contributor. */
+  /**
+   * Small caption on the right of the header.
+   *
+   * Empty by default, including on the framework's own sections: the accent tint already says whose
+   * a card is, and a caption on every one of them is noise. A host may name itself on its own.
+   */
   contributor?: string
   /**
    * Count that feeds the Leiste badge: how much of this section is *new*.

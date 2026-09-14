@@ -28,8 +28,8 @@ export function DemoChat(props: TLCellProps) {
     // thread. The header is the host's: name, version, actions, close.
     const paneOptions = (invoice: Invoice): PaneOpenOptions => ({
       title: invoice.name,
-      backLabel: 'Rechnungen',
-      sectionId: 'invoices',
+      backLabel: 'Belege',
+      sectionId: 'sources',
       mode: 'document',
       version: invoice.meta ? `Beleg vom ${invoice.meta}` : undefined,
       actions: [
@@ -41,21 +41,11 @@ export function DemoChat(props: TLCellProps) {
       ],
     })
     return {
-      railSections: [
+      // The host's own list beside the framework's Quellen: what this application holds.
+      sourceTabs: [
         {
           id: 'invoices',
-          title: 'Rechnungen',
-          contributor: 'Demo',
-          accent: true,
-          icon: (
-            <svg viewBox="0 0 16 16" aria-hidden="true">
-              <path d="M3.5 2h9v12l-2-1.2-2 1.2-2-1.2-2 1.2z" />
-              <path d="M6 5.5h4M6 8.2h4" />
-            </svg>
-          ),
-          // A count, not news: the invoices of this application simply exist, so they say nothing
-          // about what changed since the rail was last opened and contribute no Leiste badge.
-          count: () => invoices.length,
+          label: 'Belege',
           render: (ctx) => (
             <>
               <InvoiceList
@@ -65,14 +55,9 @@ export function DemoChat(props: TLCellProps) {
                   ctx.openInPane(
                     <InvoicePane
                       invoice={invoice}
+                      // Marking a passage puts it into the composer where the caret stands.
                       onQuote={(invoiceId, label, location, passage) =>
-                        ctx.insertReference({
-                          kind: 'invoice',
-                          id: invoiceId,
-                          label,
-                          location,
-                          text: passage,
-                        })
+                        ctx.insertReference({ kind: 'invoice', id: invoiceId, label, location, text: passage })
                       }
                     />,
                     paneOptions(invoice),
@@ -82,44 +67,6 @@ export function DemoChat(props: TLCellProps) {
               />
               {createNote ? <p className="demo-invoice-note">{createNote}</p> : null}
             </>
-          ),
-        },
-      ],
-      composerAddons: {
-        // What "@" offers in this application: its own invoices, as inline references.
-        referenceCandidates: (query: string) => {
-          const wanted = query.trim().toLowerCase()
-          return invoices
-            .filter((invoice) => !wanted || invoice.name.toLowerCase().includes(wanted))
-            .map((invoice) => ({
-              id: invoice.id,
-              label: invoice.name,
-              hint: invoice.state || invoice.meta,
-              token: {
-                kind: 'invoice',
-                id: invoice.id,
-                label: invoice.name,
-                location: '',
-                text: `${invoice.name}, ${invoice.meta || 'ohne Datum'}, ${invoice.state || 'ohne Betrag'}`,
-              },
-            }))
-        },
-      },
-      contextFacts: () => [
-        { id: 'invoices', label: 'Belege', value: String(invoices.length) },
-      ],
-      // The host's own list beside the framework's Quellen: what this application holds.
-      sourceTabs: [
-        {
-          id: 'invoices',
-          label: 'Belege',
-          render: (ctx) => (
-            <InvoiceList
-              invoices={invoices}
-              emptyText="Diese Anwendung hat noch keine Belege."
-              onOpen={(invoice) => ctx.openInPane(<InvoicePane invoice={invoice} onQuote={() => undefined} />, paneOptions(invoice))}
-              onCreate={onCreate}
-            />
           ),
         },
       ],

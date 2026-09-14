@@ -46,9 +46,47 @@
 				<property name="description"
 					type="tl.core:String"
 				/>
+				<!--
+					An invoice amount is money, so it is written as money: two decimal places, a
+					thousands separator and the euro sign. The demo's invoices are euro invoices, so
+					the sign is literal rather than the locale's currency symbol.
+				-->
 				<property name="amount"
 					type="tl.core:Double"
-				/>
+				>
+					<annotations>
+						<format>
+							<decimal
+								normalize="true"
+								pattern="#,##0.00 €"
+								result-type="double"
+							/>
+						</format>
+					</annotations>
+				</property>
+				<!--
+					The amount as text, for the table.
+
+					The React view layer renders a number cell from the raw value and does not yet
+					consult the attribute's format annotation, so a table column bound to `amount`
+					reads "84.9". This derived attribute does the formatting itself and is what the
+					invoice table shows; `amount` stays the number everything else works with - the
+					form edits it, and the create handler writes what the model read off the scan.
+				-->
+				<property name="amountLabel"
+					type="tl.core:String"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr>invoice -> {
+									value = $invoice.get(`tl.ai.demo.imageclassification:Invoice#amount`);
+									if ($value == null, null, numberFormat("#,##0.00 €").format($value));
+								}</expr>
+							</query>
+						</storage-algorithm>
+					</annotations>
+				</property>
 			</attributes>
 		</class>
 	</module>

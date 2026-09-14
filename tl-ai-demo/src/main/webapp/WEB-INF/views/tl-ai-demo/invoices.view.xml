@@ -98,7 +98,11 @@
 								sort="DESC"
 							/>
 							<column attribute="description"/>
-							<column attribute="amount"/>
+							<!--
+								The formatted amount rather than the raw number: see the model's
+								`amountLabel`. The form beside the table edits `amount` itself.
+							-->
+							<column attribute="amountLabel"/>
 						</columns>
 						<rows>all(`tl.ai.demo.imageclassification:Invoice`)</rows>
 					</table>

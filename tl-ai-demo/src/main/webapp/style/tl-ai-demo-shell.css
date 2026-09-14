@@ -1,0 +1,116 @@
+/*
+ * The application shell of the tl-ai demo: what the React view layer draws around the chat.
+ *
+ * Everything here is written in the TopLogic design tokens, so the shell follows whichever theme
+ * the app bar's theme button selects - which is the point of the file. The shipped themes leave
+ * --layer-accent undefined in dark mode, so the framework's accent app bar stays the same grey
+ * whatever theme is active, and the bar ends up looking like a different product from the chat
+ * below it. These rules are the demo's own skin on the framework's markup; the framework is
+ * untouched.
+ */
+
+/* --- The app bar belongs to the page, not on top of it --------------------- */
+
+.tlAppBar--primary {
+	background: var(--layer-01);
+	color: var(--text-primary);
+	border-bottom: 1px solid var(--border-subtle);
+	height: 3rem;
+}
+
+.tlAppBar--primary .tlAppBar__title {
+	font-size: var(--heading-compact-01-font-size, 0.875rem);
+	line-height: var(--heading-compact-01-line-height, 1.25rem);
+	font-weight: 600;
+	letter-spacing: -0.01em;
+	color: var(--text-primary);
+}
+
+.tlAppBar--primary .tlAppBarUser {
+	color: var(--text-secondary);
+	font-size: var(--body-01-font-size, 0.75rem);
+}
+
+/*
+ * Bar buttons are icons, not outlined pills: the ring only existed to hold them apart from the
+ * accent background they no longer sit on.
+ */
+.tlAppBar--primary .tlReactButton {
+	color: var(--icon-primary);
+	box-shadow: none;
+	border-radius: var(--corner-radius, 0.25rem);
+}
+
+.tlAppBar--primary button.tlReactButton:not(:disabled):hover {
+	background: var(--layer-hover);
+	color: var(--icon-primary);
+}
+
+.tlAppBar--primary button.tlReactButton:not(:disabled):active {
+	background: var(--layer-active);
+	color: var(--icon-primary);
+	box-shadow: none;
+}
+
+.tlAppBar--primary button.tlReactButton:disabled {
+	background: none;
+	color: var(--icon-disabled);
+	box-shadow: none;
+}
+
+.tlAppBar--primary .tlReactButton--icon,
+.tlAppBar--primary .tlReactButton--link {
+	color: var(--icon-primary);
+}
+
+/* --- One theme button, not two --------------------------------------------- */
+
+/*
+ * A ViewCommand's theme id is static configuration, so each theme needs its own command; but the
+ * user needs one control that switches to the other theme. The command that would set the theme
+ * already in force is hidden, which leaves exactly one visible button - a toggle. The two are told
+ * apart by the icon each declares in app.view.xml (bi-sun sets the light theme, bi-moon-stars the
+ * dark one); a ViewCommand's css-classes never reaches the rendered button, so the icon is the
+ * hook. SetThemeCommand flips data-theme on the document element without a reload, so the pair
+ * swaps in the same instant the theme changes.
+ */
+html[data-theme="dark"] .tlAppBar__actions button:has(.bi-moon-stars),
+html:not([data-theme="dark"]) .tlAppBar__actions button:has(.bi-sun) {
+	display: none;
+}
+
+/*
+ * What is left is a toggle, and a toggle wears its icon: sun or moon says at a glance what a click
+ * does. The label stays in the accessible tree - hidden, not removed - so the button keeps its name
+ * for screen readers and for tests.
+ */
+.tlAppBar__actions button:has(.bi-sun) > .tlReactButton__image,
+.tlAppBar__actions button:has(.bi-moon-stars) > .tlReactButton__image {
+	display: inline-block;
+}
+
+.tlAppBar__actions button:has(.bi-sun) > .tlReactButton__label,
+.tlAppBar__actions button:has(.bi-moon-stars) > .tlReactButton__label {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+/* --- Invoice table: one line per cell --------------------------------------- */
+
+/*
+ * Table rows have a fixed height, so a description long enough to wrap was drawn across three
+ * lines inside a one-line row and visually cut in half. One line with an ellipsis says the same
+ * thing honestly; the full text is one click away in the form beside the table.
+ */
+.tlTableView__cell[data-col="description"],
+.tlTableView__cell[data-col="description"] span,
+.tlTableView__cell[data-col="description"] div {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}

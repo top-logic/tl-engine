@@ -35,12 +35,15 @@
 				</children>
 				<commands>
 					<!--
-						Two buttons rather than one toggle: a ViewCommand's theme id is static
-						configuration, not a runtime read of the current theme, so there is nothing
-						a single button could switch to. SetThemeCommand persists the pick as the
-						user's PersonalConfiguration and flips the client's data-theme attribute
-						without a reload; the chat's stylesheet is written entirely in the design
-						tokens those themes define, so it follows along.
+						Two commands, one visible button: a ViewCommand's theme id is static
+						configuration, not a runtime read of the current theme, so each theme needs
+						its own command. The demo's stylesheet (style/tl-ai-demo-shell.css) hides
+						whichever of the two would set the theme already in force - keyed on the
+						icons below - so what the user sees is a single toggle onto the other theme.
+						SetThemeCommand persists the pick as the user's PersonalConfiguration and
+						flips the client's data-theme attribute without a reload; the chat's
+						stylesheet is written entirely in the design tokens those themes define, so
+						it follows along.
 					-->
 					<set-theme theme="default"
 						image="css:bi bi-sun"

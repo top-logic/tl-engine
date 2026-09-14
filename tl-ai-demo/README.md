@@ -32,11 +32,16 @@ The start page is `/view/` - the React view layer, declared in `WEB-INF/views/ap
 | | |
 |--|--|
 | **Chat** (start item) | The agent chat (`tl-chat`), with its own history rail, the agent/model/MCP/trace menu, attachments, human-in-the-loop approvals and the context-usage ring. |
-| **Belege** | The invoices: a table on the left, the selected invoice's form on the right. "Neuer Beleg" asks only for the scan and has the model read the description, the date and the amount out of it. |
+| **Belege** | The invoices: a table on the left, the selected invoice's form on the right. "Neuer Beleg" asks only for the scan and has the model read the description, the date and the amount out of it. The table's amount column shows the derived `amountLabel` (`84,90 €`); the form edits the number itself. |
 | **Administration** | The framework's own administration view; visible to accounts holding the `administration` scope. |
 
-The app bar carries a light and a dark theme button (`<set-theme>`); everything above, the chat
-included, follows the choice without a reload.
+The app bar carries one theme toggle: two `<set-theme>` commands of which the stylesheet shows only
+the one that switches to the other theme (`style/tl-ai-demo-shell.css`). Everything below it, the
+chat included, follows the choice without a reload.
+
+The chat needs a signed-in user. A visitor who has not logged in gets an anonymous TopLogic session,
+and `ChatServlet` answers every request from such a session with 401, so the chat shows a sign-in
+note instead of a composer - the agent works with the user's data and the user's permissions.
 
 **The classic UI is unchanged.** `WEB-INF/layouts/mainTabbar.layout.xml` still serves the same
 invoices and administration through the LayoutServlet, and the legacy chat control still works.

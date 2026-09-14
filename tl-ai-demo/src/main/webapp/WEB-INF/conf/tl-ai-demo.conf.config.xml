@@ -74,6 +74,14 @@
 						resource="/script/tl-chat-ui.css"
 						requires="tl-react-controls-css"
 					/>
+					<!--
+						The demo's own skin on the shell around the chat: an app bar that follows
+						the theme, and one theme button instead of two. See the file's header.
+					-->
+					<stylesheet name="tl-ai-demo-shell-css"
+						resource="/style/tl-ai-demo-shell.css"
+						requires="tl-react-controls-css"
+					/>
 				</resources>
 			</instance>
 		</config>

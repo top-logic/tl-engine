@@ -634,6 +634,97 @@ export const Composer = React.memo(
           </div>
         ) : null}
 
+        {/*
+          Two rows, as the layout reference has them: the sentence on its own full width, the
+          controls beneath. One row made the text column collapse to 45 px beside a document
+          pane, which broke German compounds over twenty lines.
+        */}
+        <div className="composer-input">
+          <TokenInput
+            ref={area}
+            value={text}
+            onChange={(next) => {
+              setText(next)
+              // Reading the word under the caret after the change, so "@" opens the picker on the
+              // keystroke that typed it and closes it again when the "@" is deleted.
+              const word = area.current?.wordBeforeCaret() ?? ''
+              if (word.startsWith('@') && referenceCandidates) {
+                setMention(word)
+                setMentionIndex(0)
+              } else {
+                setMention(null)
+              }
+            }}
+            onPasteFiles={(pasted) => void addFiles(pasted)}
+            ariaLabel={labels.askAnything}
+            placeholder={busy ? labels.typeNext : referenceCandidates ? labels.askAnythingWithAt : labels.askAnything}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape' && improving) {
+                event.preventDefault()
+                cancelImprove()
+                return
+              }
+              if (mention != null && candidates.length > 0) {
+                if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                  event.preventDefault()
+                  setMentionIndex((current) => {
+                    const next = current + (event.key === 'ArrowDown' ? 1 : -1)
+                    return (next + candidates.length) % candidates.length
+                  })
+                  return
+                }
+                if (event.key === 'Enter' || event.key === 'Tab') {
+                  event.preventDefault()
+                  takeCandidate(candidates[mentionIndex] ?? candidates[0])
+                  return
+                }
+              }
+              if (event.key === 'Escape' && mention != null) {
+                event.preventDefault()
+                setMention(null)
+                return
+              }
+              // "/" on an empty draft is the agent picker, which the "+" menu already is.
+              if (event.key === '/' && draftIsEmpty(text)) {
+                event.preventDefault()
+                setMenuOpen(true)
+                setPane('agent')
+                setQuery('')
+                return
+              }
+              if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault()
+                submit()
+              }
+            }}
+          />
+          {mention != null && candidates.length > 0 ? (
+            <div className="mention-popover" role="listbox" aria-label={labels.addSource}>
+              {candidates.map((candidate, index) => (
+                <button
+                  type="button"
+                  key={candidate.id}
+                  role="option"
+                  aria-selected={index === mentionIndex}
+                  className={`mention-row${index === mentionIndex ? ' is-active' : ''}`}
+                  onMouseEnter={() => setMentionIndex(index)}
+                  onMouseDown={(event) => {
+                    // mousedown, not click: the editor must not lose its caret before the insert.
+                    event.preventDefault()
+                    takeCandidate(candidate)
+                  }}
+                >
+                  <span className="mention-icon" aria-hidden="true">
+                    {candidate.icon ?? DefaultSourceIcon}
+                  </span>
+                  <span className="mention-label">{candidate.label}</span>
+                  {candidate.hint ? <span className="mention-hint">{candidate.hint}</span> : null}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
+
         <div className="composer-row">
           <input
             ref={file}
@@ -862,92 +953,6 @@ export const Composer = React.memo(
             ) : null}
           </div>
 
-          <div className="composer-input">
-            <TokenInput
-              ref={area}
-              value={text}
-              onChange={(next) => {
-                setText(next)
-                // Reading the word under the caret after the change, so "@" opens the picker on the
-                // keystroke that typed it and closes it again when the "@" is deleted.
-                const word = area.current?.wordBeforeCaret() ?? ''
-                if (word.startsWith('@') && referenceCandidates) {
-                  setMention(word)
-                  setMentionIndex(0)
-                } else {
-                  setMention(null)
-                }
-              }}
-              onPasteFiles={(pasted) => void addFiles(pasted)}
-              ariaLabel={labels.askAnything}
-              placeholder={busy ? labels.typeNext : referenceCandidates ? labels.askAnythingWithAt : labels.askAnything}
-              onKeyDown={(event) => {
-                if (event.key === 'Escape' && improving) {
-                  event.preventDefault()
-                  cancelImprove()
-                  return
-                }
-                if (mention != null && candidates.length > 0) {
-                  if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-                    event.preventDefault()
-                    setMentionIndex((current) => {
-                      const next = current + (event.key === 'ArrowDown' ? 1 : -1)
-                      return (next + candidates.length) % candidates.length
-                    })
-                    return
-                  }
-                  if (event.key === 'Enter' || event.key === 'Tab') {
-                    event.preventDefault()
-                    takeCandidate(candidates[mentionIndex] ?? candidates[0])
-                    return
-                  }
-                }
-                if (event.key === 'Escape' && mention != null) {
-                  event.preventDefault()
-                  setMention(null)
-                  return
-                }
-                // "/" on an empty draft is the agent picker, which the "+" menu already is.
-                if (event.key === '/' && draftIsEmpty(text)) {
-                  event.preventDefault()
-                  setMenuOpen(true)
-                  setPane('agent')
-                  setQuery('')
-                  return
-                }
-                if (event.key === 'Enter' && !event.shiftKey) {
-                  event.preventDefault()
-                  submit()
-                }
-              }}
-            />
-            {mention != null && candidates.length > 0 ? (
-              <div className="mention-popover" role="listbox" aria-label={labels.addSource}>
-                {candidates.map((candidate, index) => (
-                  <button
-                    type="button"
-                    key={candidate.id}
-                    role="option"
-                    aria-selected={index === mentionIndex}
-                    className={`mention-row${index === mentionIndex ? ' is-active' : ''}`}
-                    onMouseEnter={() => setMentionIndex(index)}
-                    onMouseDown={(event) => {
-                      // mousedown, not click: the editor must not lose its caret before the insert.
-                      event.preventDefault()
-                      takeCandidate(candidate)
-                    }}
-                  >
-                    <span className="mention-icon" aria-hidden="true">
-                      {candidate.icon ?? DefaultSourceIcon}
-                    </span>
-                    <span className="mention-label">{candidate.label}</span>
-                    {candidate.hint ? <span className="mention-hint">{candidate.hint}</span> : null}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-          </div>
-
           <div className="composer-actions">
             <div className="model-menu" ref={modelMenu}>
               <button
@@ -1047,12 +1052,14 @@ export const Composer = React.memo(
           className={`approve-switch${autoApprove ? ' is-on' : ''}`}
           role="switch"
           aria-checked={autoApprove}
+          aria-label={labels.autoApprove}
+          title={labels.autoApprove}
           onClick={onToggleAutoApprove}
         >
           <span className="approve-switch-track" aria-hidden="true">
             <span className="approve-switch-knob" />
           </span>
-          {labels.autoApprove}
+          <span className="approve-switch-label">{labels.autoApprove}</span>
         </button>
         <span className="composer-hint" title={labels.enterSends}>
           <span className="composer-hint-long">{labels.enterSends}</span>

@@ -8,8 +8,14 @@ type Labels = ReturnType<typeof bundle>
 
 const CONTENT_FLOOR = 360
 const DEFAULT_PANE = 420
-/** The thread column never goes below this, so the composer always has its own room. */
-const STAGE_FLOOR = 320
+/**
+ * The thread column never goes below this, so the composer always has its own room.
+ *
+ * 240 rather than 320 since the composer became two rows: the text has a whole row to itself, and
+ * the controls beneath it need `+`, the model name and the send button, which fit in this. The
+ * floor used to be set by a single row that spent 275 px on chrome before the first letter.
+ */
+const STAGE_FLOOR = 240
 /** A document takes about two thirds of the workspace, the thread the rest. */
 const DOCUMENT_SHARE = 2 / 3
 /** Width of the icon strip between thread and pane, i.e. `.side-strip`'s 3.5rem. */

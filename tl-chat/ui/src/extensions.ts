@@ -32,8 +32,8 @@ export interface RailSection {
    * Count that feeds the Leiste badge.
    *
    * The toggle shows the sum of every section's current count minus the count last seen when
-   * the rail was opened. Fortschritt counts steps waiting for approval; a host section counts
-   * whatever it considers new.
+   * the rail was opened. Fortschritt counts tasks that are still pending or in progress; a host
+   * section counts whatever it considers new.
    */
   badge?: () => number
   /** Host sections are accent-tinted; the framework's Fortschritt is not. */

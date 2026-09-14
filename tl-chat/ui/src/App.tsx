@@ -29,7 +29,7 @@ import type { ChatExtensions, ComposerChip, PaneOpenOptions, RailSection } from 
 import { hostRailSections } from './extensions'
 import { parsePreferences, savePreferences } from './preferences'
 import { ProgressSection } from './progress'
-import { progressBadge, unseenBadge } from './progress-model'
+import { parseTasksJson, progressBadge, unseenBadge, type AgentTask } from './progress-model'
 import { RailToggle, SideRail, SideStrip, useCollapsedSections } from './rail'
 import { chatReducer } from './reducer'
 import { composeOutboundText } from './send-prefix'
@@ -157,6 +157,7 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
   const [hostChips, setHostChips] = useState<ComposerChip[]>(() => extensions?.composerAddons?.chips ?? [])
   const collapsedSections = useCollapsedSections(['context'])
   const [subagents, setSubagents] = useState<SubagentActivity[]>([])
+  const [tasks, setTasks] = useState<AgentTask[]>([])
   const [autoApprove, setAutoApprove] = useState(false)
   const [connection, setConnection] = useState<ConnectionState>('connecting')
   const [notice, setNotice] = useState('')
@@ -498,6 +499,10 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
           isError: true,
         })
       })
+      on('task_update', (e) => {
+        const data = parseJson<{ tasksJson?: string }>(e.data, {})
+        setTasks(parseTasksJson(data.tasksJson))
+      })
       on('approval_mode', (e) => {
         const data = parseJson<{ mode?: string }>(e.data, {})
         setAutoApprove(data.mode === 'AUTO_APPROVE')
@@ -792,6 +797,7 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
       setBusy(false)
       setRailOpen(false)
       setSubagents([])
+      setTasks([])
       showNotice('')
       setFeedback([])
       // The model does not change when the chat does, so its window survives the reset; only what
@@ -848,6 +854,7 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
     setSessionId(null)
     setRailOpen(false)
     setSubagents([])
+    setTasks([])
     showNotice('')
     setFeedback([])
     dispatch({ type: 'RESET' })
@@ -863,6 +870,7 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
       if (sessionIdRef.current === id) {
         setSessionId(null)
         setSubagents([])
+        setTasks([])
         dispatch({ type: 'RESET' })
         runStore.set((s) => ({ ...EMPTY_RUN, model: s.model, contextWindow: s.contextWindow }))
       }
@@ -1142,10 +1150,10 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
       id: 'progress',
       title: labels.progressTitle,
       contributor: labels.progressContributor,
-      badge: () => progressBadge(messages),
-      render: () => <ProgressSection messages={messages} labels={labels} />,
+      badge: () => progressBadge(tasks),
+      render: () => <ProgressSection tasks={tasks} labels={labels} />,
     }),
-    [labels, messages],
+    [labels, tasks],
   )
 
   const railSections = useMemo(

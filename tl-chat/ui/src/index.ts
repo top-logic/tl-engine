@@ -6,7 +6,7 @@ export { PromptStack } from './prompts'
 export { Markdown, DefaultCitationPopover } from './markdown'
 export { Thread } from './thread'
 export { ProgressSection } from './progress'
-export { progressSteps, progressBadge, unseenBadge } from './progress-model'
+export { progressSteps, progressBadge, unseenBadge, parseTasksJson } from './progress-model'
 export { SideRail, SideStrip, RailToggle } from './rail'
 export { SidePane } from './side-pane'
 export { chatReducer } from './reducer'
@@ -29,3 +29,4 @@ export type {
   SidePaneState,
 } from './extensions'
 export type { ChatMessage, Citation, SendPayload } from './types'
+export type { AgentTask, ProgressStep, ProgressStatus } from './progress-model'

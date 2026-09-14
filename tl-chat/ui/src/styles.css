@@ -2421,13 +2421,6 @@
 
 .side-toggle {
   position: relative;
-  gap: 0.35rem;
-  padding-inline: 0.5rem;
-}
-
-.side-toggle-label {
-  font-size: var(--chat-small);
-  font-weight: 600;
 }
 
 .side-toggle-badge {

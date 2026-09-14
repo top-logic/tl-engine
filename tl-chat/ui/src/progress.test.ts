@@ -1,54 +1,55 @@
 import { describe, expect, it } from 'vitest'
-import { progressBadge, progressSteps, unseenBadge } from './progress-model'
+import { parseTasksJson, progressBadge, progressSteps, unseenBadge, type AgentTask } from './progress-model'
 import { composeOutboundText } from './send-prefix'
-import type { ChatMessage } from './types'
 
-function tool(id: string, status: 'running' | 'done' | 'error', name = 'web-search.webSearch'): ChatMessage {
-  return {
-    type: 'tool_call',
-    id,
-    toolUseId: id,
-    name,
-    input: {},
-    status,
-    depth: 0,
-    timestamp: 1,
-  }
+function task(id: string, status: string, subject = 'Discover model', activeForm?: string): AgentTask {
+  return { id, status, subject, activeForm }
 }
 
-describe('progressSteps', () => {
-  it('reads tools after the last user message', () => {
-    const messages: ChatMessage[] = [
-      { type: 'user', id: 'u0', text: 'old', timestamp: 1 },
-      tool('old', 'done'),
-      { type: 'user', id: 'u1', text: 'now', timestamp: 2 },
-      tool('a', 'done'),
-      tool('b', 'running'),
-    ]
-    const steps = progressSteps(messages)
-    expect(steps.map((s) => s.toolUseId)).toEqual(['a', 'b'])
-    expect(steps[0].status).toBe('done')
-    expect(steps[1].status).toBe('running')
+describe('parseTasksJson', () => {
+  it('reads the tasks array and drops deleted rows', () => {
+    const json = JSON.stringify({
+      highWaterMark: 3,
+      tasks: [
+        task('1', 'completed', 'Discover'),
+        task('2', 'deleted', 'Gone'),
+        task('3', 'in_progress', 'Build', 'Creating elements'),
+      ],
+    })
+    expect(parseTasksJson(json).map((item) => item.id)).toEqual(['1', '3'])
   })
 
-  it('marks a pending approval as waiting', () => {
-    const messages: ChatMessage[] = [
-      { type: 'user', id: 'u1', text: 'go', timestamp: 1 },
-      tool('t1', 'running', 'model-modification.createModule'),
-      {
-        type: 'approval_request',
-        id: 'a1',
-        approvalRequestId: 'a1',
-        toolCallId: 't1',
-        toolName: 'model-modification.createModule',
-        argsJson: '{}',
-        displayReason: 'write',
-        outcome: 'pending',
-        timestamp: 2,
-      },
-    ]
-    expect(progressSteps(messages)[0].status).toBe('waiting')
-    expect(progressBadge(messages)).toBe(1)
+  it('is empty when the payload is missing or not JSON', () => {
+    expect(parseTasksJson(undefined)).toEqual([])
+    expect(parseTasksJson('')).toEqual([])
+    expect(parseTasksJson('{')).toEqual([])
+    expect(parseTasksJson('{"tasks":null}')).toEqual([])
+  })
+})
+
+describe('progressSteps', () => {
+  it('uses subjects, and activeForm while a task is in progress', () => {
+    const steps = progressSteps([
+      task('1', 'completed', 'Discover existing model'),
+      task('2', 'in_progress', 'Create fleet management model', 'Creating model elements'),
+      task('3', 'pending', 'Verify created model'),
+    ])
+    expect(steps.map((s) => s.label)).toEqual([
+      'Discover existing model',
+      'Creating model elements',
+      'Verify created model',
+    ])
+    expect(steps.map((s) => s.status)).toEqual(['done', 'running', 'waiting'])
+  })
+
+  it('counts pending and in-progress rows on the badge', () => {
+    expect(
+      progressBadge([
+        task('1', 'completed'),
+        task('2', 'in_progress'),
+        task('3', 'pending'),
+      ]),
+    ).toBe(2)
   })
 })
 

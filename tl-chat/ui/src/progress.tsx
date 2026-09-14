@@ -1,20 +1,19 @@
 import { React } from 'tl-react-bridge'
 import type { bundle } from './i18n'
-import { progressSteps, type ProgressStatus } from './progress-model'
-import type { ChatMessage } from './types'
+import { progressSteps, type AgentTask, type ProgressStatus } from './progress-model'
 
 const { useMemo } = React
 
 type Labels = ReturnType<typeof bundle>
 
 export function ProgressSection({
-  messages,
+  tasks,
   labels,
 }: {
-  messages: ChatMessage[]
+  tasks: AgentTask[]
   labels: Labels
 }) {
-  const steps = useMemo(() => progressSteps(messages), [messages])
+  const steps = useMemo(() => progressSteps(tasks), [tasks])
   if (steps.length === 0) {
     return <p className="side-empty">{labels.progressEmpty}</p>
   }
@@ -25,12 +24,9 @@ export function ProgressSection({
           <span className="progress-marker" aria-hidden="true">
             {marker(step.status)}
           </span>
-          <span className="progress-label" title={step.name}>
+          <span className="progress-label" title={step.label}>
             {step.label}
           </span>
-          {step.status === 'waiting' ? (
-            <span className="progress-caption">{labels.progressWaiting}</span>
-          ) : null}
         </li>
       ))}
     </ol>

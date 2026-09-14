@@ -104,7 +104,6 @@ export function RailToggle({
         <rect x="2" y="3" width="12" height="10" rx="1.6" />
         <path d="M10.2 3v10" />
       </svg>
-      <span className="side-toggle-label">{labels.sideRail}</span>
       {badge > 0 ? (
         <span className="side-toggle-badge" aria-label={labels.sideRailBadge(badge)}>
           {badge}

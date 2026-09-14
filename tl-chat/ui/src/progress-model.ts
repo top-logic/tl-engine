@@ -1,58 +1,71 @@
-import { toolLabel } from './models'
-import type { ChatMessage, ToolCall, ToolCallStatus } from './types'
-
-/** How far one step of the current run has got. */
+/** How far one agent task has got. */
 export type ProgressStatus = 'done' | 'running' | 'waiting' | 'error'
 
 /** One row of the Fortschritt checklist. */
 export interface ProgressStep {
   id: string
-  toolUseId: string
-  name: string
   label: string
   status: ProgressStatus
 }
 
 /**
- * The steps of the current (or last) agent run, derived from tool and approval events.
- *
- * The list is the tools that ran after the last user message. A pending approval for the same
- * tool call is "waiting"; a completed call is "done"; a running call is "running".
+ * A row from the agent's task store (`createTask` / `updateTask`), as serialized in
+ * {@code tasksJson}.
  */
-export function progressSteps(messages: ChatMessage[]): ProgressStep[] {
-  let from = 0
-  for (let i = messages.length - 1; i >= 0; i--) {
-    if (messages[i].type === 'user') {
-      from = i + 1
-      break
-    }
+export interface AgentTask {
+  id: string
+  subject?: string
+  description?: string
+  activeForm?: string
+  status?: string
+}
+
+/**
+ * Reads the task list out of a {@code task_update} payload.
+ *
+ * The server sends the whole store; deleted rows are dropped here so they never reach the list.
+ */
+export function parseTasksJson(raw: string | undefined): AgentTask[] {
+  if (!raw) return []
+  try {
+    const data = JSON.parse(raw) as { tasks?: AgentTask[] }
+    if (!Array.isArray(data.tasks)) return []
+    return data.tasks.filter((task) => (task.status ?? '') !== 'deleted')
+  } catch {
+    return []
   }
-  const slice = messages.slice(from)
-  const waiting = new Set(
-    slice
-      .filter((item) => item.type === 'approval_request' && item.outcome === 'pending')
-      .map((item) => (item.type === 'approval_request' ? item.toolCallId : '')),
-  )
-  const tools = slice.filter((item): item is ToolCall => item.type === 'tool_call')
-  return tools.map((tool) => ({
-    id: tool.id,
-    toolUseId: tool.toolUseId,
-    name: tool.name,
-    label: toolLabel(tool.name),
-    status: stepStatus(tool.status, waiting.has(tool.toolUseId)),
+}
+
+/**
+ * The steps of the current (or last) agent run, derived from the task store.
+ *
+ * Subjects are the labels. While a task is in progress, {@code activeForm} is preferred when the
+ * agent set one.
+ */
+export function progressSteps(tasks: AgentTask[]): ProgressStep[] {
+  return tasks.map((task) => ({
+    id: task.id,
+    label: stepLabel(task),
+    status: stepStatus(task.status),
   }))
 }
 
-function stepStatus(status: ToolCallStatus, waitingForApproval: boolean): ProgressStatus {
-  if (waitingForApproval) return 'waiting'
-  if (status === 'done') return 'done'
-  if (status === 'error') return 'error'
+function stepLabel(task: AgentTask): string {
+  const active = task.activeForm?.trim() ?? ''
+  if (task.status === 'in_progress' && active) return active
+  const subject = task.subject?.trim() ?? ''
+  return subject || task.id
+}
+
+function stepStatus(status: string | undefined): ProgressStatus {
+  if (status === 'completed') return 'done'
+  if (status === 'pending') return 'waiting'
   return 'running'
 }
 
-/** Count that feeds the Leiste badge: steps still running or waiting for approval. */
-export function progressBadge(messages: ChatMessage[]): number {
-  return progressSteps(messages).filter((step) => step.status === 'running' || step.status === 'waiting').length
+/** Count that feeds the Leiste badge: tasks still pending or in progress. */
+export function progressBadge(tasks: AgentTask[]): number {
+  return progressSteps(tasks).filter((step) => step.status === 'running' || step.status === 'waiting').length
 }
 
 /**

@@ -72,6 +72,7 @@
 					/>
 					<module-script name="tl-chat-seams"
 						resource="/script/tl-chat-seams.js"
+						specifier="tl-chat-seams"
 						requires="tl-react-bridge"
 					/>
 					<module-script name="tl-ai-demo-chat"

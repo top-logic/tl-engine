@@ -124,7 +124,7 @@ An application makes the bundle loadable by declaring it on `ClientResources` - 
 
 ```xml
 <module-script name="tl-react-agent-chat" resource="/script/tl-chat-ui.js" requires="tl-react-bridge"/>
-<module-script name="tl-chat-seams" resource="/script/tl-chat-seams.js" requires="tl-react-bridge"/>
+<module-script name="tl-chat-seams" resource="/script/tl-chat-seams.js" specifier="tl-chat-seams" requires="tl-react-bridge"/>
 <stylesheet name="tl-react-agent-chat-css" resource="/script/tl-chat-ui.css" requires="tl-react-controls-css"/>
 ```
 
@@ -192,7 +192,8 @@ register('MyChat', (props) => <App {...props} extensions={myExtensions} />)
 
 `App` with no `extensions` is today's UI: session rail, thread, composer, send/stream/stop, inline
 edit, regenerate, attachments, approval, pickers, and the Fortschritt section as the only right-rail
-contribution. The rail never opens by itself.
+contribution. Fortschritt lists the agent's tasks (`createTask` / `updateTask`). The rail never opens
+by itself.
 
 ### Seams
 
@@ -200,7 +201,7 @@ Every field of `ChatExtensions` is optional.
 
 | Seam | Default | Host |
 |--|--|--|
-| `railSections` | Fortschritt from this turn's tool/approval events | Extra sections below it, in array order. `accent` tints with `--button-primary` / `--layer-selected`. |
+| `railSections` | Fortschritt from this session's `createTask` / `updateTask` store | Extra sections below it, in array order. `accent` tints with `--button-primary` / `--layer-selected`. |
 | `sidePane` | closed; user opens **Leiste**; `openInPane` from a section | Host owns pane body/footer. Content floor 360px; below 1280px the pane is a sheet. |
 | `composerAddons` | none | Chips before the textarea and extra `+` menu items. On send, chips travel as `<quote>` prefixes on `ChatSendRequest.text`. |
 | `messageAnnotations.render` | web-link popover | May call `openInPane` (invoice kind in the demo). |

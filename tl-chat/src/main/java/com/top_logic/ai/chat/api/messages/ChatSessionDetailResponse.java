@@ -42,6 +42,9 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 	/** @see #getLastEffort() */
 	public static final String LAST_EFFORT__PROP = "lastEffort";
 
+	/** @see #getLastComposition() */
+	public static final String LAST_COMPOSITION__PROP = "lastComposition";
+
 	private String _id = "";
 
 	private String _title = "";
@@ -59,6 +62,8 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 	private final java.util.List<com.top_logic.ai.chat.api.messages.MessageFeedbackDto> _feedback = new java.util.ArrayList<>();
 
 	private String _lastEffort = "";
+
+	private com.top_logic.ai.chat.api.messages.ContextCompositionEvent _lastComposition = null;
 
 	/**
 	 * Creates a {@link ChatSessionDetailResponse} instance.
@@ -288,6 +293,34 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 		_lastEffort = value;
 	}
 
+	/**
+	 * What the prompt of the session's last request was made of, so a re-opened chat shows the same
+	 * breakdown a live one does. Absent for a session whose transcript predates the field.
+	 */
+	public final com.top_logic.ai.chat.api.messages.ContextCompositionEvent getLastComposition() {
+		return _lastComposition;
+	}
+
+	/**
+	 * @see #getLastComposition()
+	 */
+	public com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse setLastComposition(com.top_logic.ai.chat.api.messages.ContextCompositionEvent value) {
+		internalSetLastComposition(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getLastComposition()} without chain call utility. */
+	protected final void internalSetLastComposition(com.top_logic.ai.chat.api.messages.ContextCompositionEvent value) {
+		_lastComposition = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getLastComposition()} has a value.
+	 */
+	public final boolean hasLastComposition() {
+		return _lastComposition != null;
+	}
+
 	@Override
 	public String jsonType() {
 		return CHAT_SESSION_DETAIL_RESPONSE__TYPE;
@@ -304,7 +337,8 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			CONTEXT_WINDOW__PROP, 
 			LAST_MODEL__PROP, 
 			FEEDBACK__PROP, 
-			LAST_EFFORT__PROP);
+			LAST_EFFORT__PROP, 
+			LAST_COMPOSITION__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -338,6 +372,7 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			case LAST_MODEL__PROP: return getLastModel();
 			case FEEDBACK__PROP: return getFeedback();
 			case LAST_EFFORT__PROP: return getLastEffort();
+			case LAST_COMPOSITION__PROP: return getLastComposition();
 			default: return null;
 		}
 	}
@@ -354,6 +389,7 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			case LAST_MODEL__PROP: internalSetLastModel((String) value); break;
 			case FEEDBACK__PROP: internalSetFeedback(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.MessageFeedbackDto.class, value)); break;
 			case LAST_EFFORT__PROP: internalSetLastEffort((String) value); break;
+			case LAST_COMPOSITION__PROP: internalSetLastComposition((com.top_logic.ai.chat.api.messages.ContextCompositionEvent) value); break;
 		}
 	}
 
@@ -396,6 +432,10 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 		out.endArray();
 		out.name(LAST_EFFORT__PROP);
 		out.value(getLastEffort());
+		if (hasLastComposition()) {
+			out.name(LAST_COMPOSITION__PROP);
+			getLastComposition().writeTo(out);
+		}
 	}
 
 	@Override
@@ -419,6 +459,7 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			}
 			break;
 			case LAST_EFFORT__PROP: setLastEffort(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case LAST_COMPOSITION__PROP: setLastComposition(com.top_logic.ai.chat.api.messages.ContextCompositionEvent.readContextCompositionEvent(in)); break;
 			default: super.readField(in, field);
 		}
 	}

@@ -37,6 +37,10 @@ public class AgentChatControl extends ReactControl {
 		String configuredImprover = blankToNull(promptImproverAgent);
 		tracker.setPromptImproverAgentName(configuredImprover);
 
+		// The chat has no anonymous mode: ChatServlet refuses every request from a session that is
+		// not signed in, so the component says that rather than opening a chat nothing can be sent
+		// to. The refusal itself is the servlet's; this only keeps the UI honest about it.
+		putState("authenticated", !TLContext.isAnonymous());
 		putState("windowId", context.getWindowName());
 		putState("contextPath", context.getContextPath());
 		putState("userName", valueOr(tracker.getUserName(), "User"));

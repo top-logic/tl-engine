@@ -107,6 +107,16 @@
 						</configuration>
 					</execution>
 					<execution>
+						<id>npm-test</id>
+						<phase>generate-resources</phase>
+						<goals>
+							<goal>npm</goal>
+						</goals>
+						<configuration>
+							<arguments>test</arguments>
+						</configuration>
+					</execution>
+					<execution>
 						<id>npm-build</id>
 						<phase>generate-resources</phase>
 						<goals>

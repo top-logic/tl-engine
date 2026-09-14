@@ -22,7 +22,10 @@ Both served by `ChatServlet` at `/chat/*`:
 2. **SSE API** (real-time push):
    - `GET /chat/events` – SSE connection. `ChatSSEHandler` receives `AgentEvent`s and emits structured SSE frames: `connected`, `run_started`, `turn_started`, `text_delta`, `tool_started`, `tool_completed`, `approval_required`, `message_complete`, `heartbeat`, etc.
 
-Authentication enforced by TopLogic's `ChatSessionFilter` mapped to `/chat/*`.
+`ChatSessionFilter` (mapped to `/chat/*`) requires a TopLogic session; `ChatServlet.doService`
+additionally refuses anonymous ones with 401, because an application may hand a visitor a session
+without a login. The chat has no anonymous mode: `AgentChatControl` passes `authenticated` to the
+browser component, which shows a sign-in note rather than a composer.
 
 ### Processing Flow
 
@@ -77,7 +80,7 @@ serves `/chat/*`.
 | Bundler | Vite library build, entry `ui/src/main.tsx` |
 | Output | `src/main/webapp/script/tl-chat-ui.js` and `tl-chat-ui.css` - **git-ignored build output, never commit it** |
 | Node | installed by `frontend-maven-plugin` into `ui/node/` (v20.10.0); a local Node 20 works too |
-| Dependencies | `marked` + `dompurify` (markdown), `highlight.js` (code blocks, core plus 13 registered grammars) |
+| Dependencies | `marked` (MIT) + `dompurify` (Apache-2.0 or MPL-2.0) for markdown, `highlight.js` (BSD-3-Clause) for code blocks - core plus 13 registered grammars. All three are bundled into `tl-chat-ui.js`, so their licences travel with the WAR. |
 
 `mvn -pl tl-chat install` runs, in `generate-resources`: `npm install`, then `npm run typecheck`
 (`tsc --noEmit`), then `npm run build`. The type check is a build step of its own because the Vite

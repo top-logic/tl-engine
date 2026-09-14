@@ -122,6 +122,32 @@ public class TestPromptImprovementProcessor extends TestCase {
 			improved("fix the build", "Find out why the build fails and fix it."));
 	}
 
+	/**
+	 * A one-word draft is not turned into an instruction it never gave.
+	 *
+	 * <p>
+	 * The review's finding: {@code "Belege"} came back as {@code "Werte die vorhandenen Belege aus
+	 * und fasse die Ergebnisse zusammen."} - evaluating and summarizing is not what the word says.
+	 * The allowance a rewrite gets now grows with the number of words in the draft, so one word buys
+	 * a quarter of the ceiling rather than all of it.
+	 * </p>
+	 */
+	public void testOneWordDraftKeepsItsOwnMeaning() {
+		assertEquals("Belege",
+			improved("Belege", "Werte die vorhandenen Belege aus und fasse die Ergebnisse zusammen."));
+		// A rewrite that stays as small as the word it rewrites is still allowed through.
+		assertEquals("Zeige alle Belege.", improved("Belege", "Zeige alle Belege."));
+	}
+
+	/** Two words buy more room than one, and still not a briefing. */
+	public void testTheAllowanceGrowsWithTheDraft() {
+		String sentence = "Liste alle offenen Rechnungen mit Betrag und Datum auf.";
+		assertEquals(sentence, improved("offene rechnungen", sentence));
+		assertEquals("offene rechnungen", improved("offene rechnungen",
+			"Liste alle offenen Rechnungen mit Betrag, Datum und Lieferant auf und markiere die, "
+				+ "deren Fälligkeit überschritten ist."));
+	}
+
 	/** A genuine rewrite of a long draft passes untouched. */
 	public void testLongDraftIsNotGuarded() {
 		String draft = "so i was thinking that maybe we could look into the invoice thing, "

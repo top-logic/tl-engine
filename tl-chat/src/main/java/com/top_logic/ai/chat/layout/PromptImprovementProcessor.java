@@ -74,6 +74,18 @@ public final class PromptImprovementProcessor {
 	private static final int SHORT_REWRITE_CEILING = 120;
 
 	/**
+	 * How many words a draft needs before the whole {@link #SHORT_REWRITE_CEILING} is granted.
+	 *
+	 * <p>
+	 * The ceiling exists so a handful of words may become one clear sentence. A single word cannot
+	 * be clarified, only replaced: there is nothing in it to make precise, so anything the improver
+	 * adds it invented. The allowance therefore grows with the draft - a word at a time - and only a
+	 * draft of this many words gets the full ceiling.
+	 * </p>
+	 */
+	private static final int WORDS_FOR_FULL_CEILING = 4;
+
+	/**
 	 * Phrases that only occur when the reply is about the prompt instead of being one.
 	 *
 	 * <p>
@@ -184,7 +196,8 @@ public final class PromptImprovementProcessor {
 	 * prompt", "could you", "I can";</li>
 	 * <li>a question the draft did not ask, which is what a request for clarification looks like;</li>
 	 * <li>a reply several times longer than a very short draft, which is an essay grown from three
-	 * words rather than a rewrite of them.</li>
+	 * words rather than a rewrite of them - and the shorter the draft, the less room its rewrite
+	 * gets, because a one-word draft has nothing in it to clarify.</li>
 	 * </ul>
 	 *
 	 * <p>
@@ -206,10 +219,34 @@ public final class PromptImprovementProcessor {
 			return draft;
 		}
 		if (draft.length() <= SHORT_DRAFT_CHARS
-			&& improved.length() > Math.max(draft.length() * MAX_SHORT_GROWTH, SHORT_REWRITE_CEILING)) {
+			&& improved.length() > Math.max(draft.length() * MAX_SHORT_GROWTH, shortRewriteCeiling(draft))) {
 			return draft;
 		}
 		return improved;
+	}
+
+	/**
+	 * The absolute length a rewrite of this draft may reach, whatever the ratio allows.
+	 *
+	 * <p>
+	 * Proportional to how much the draft actually says: a quarter of the ceiling per word, up to
+	 * the full {@link #SHORT_REWRITE_CEILING} from {@link #WORDS_FOR_FULL_CEILING} words on. This is
+	 * what keeps {@code "Belege"} from coming back as {@code "Werte die vorhandenen Belege aus und
+	 * fasse die Ergebnisse zusammen."} - an instruction the user never gave.
+	 * </p>
+	 */
+	private static int shortRewriteCeiling(String draft) {
+		int words = wordCount(draft);
+		if (words >= WORDS_FOR_FULL_CEILING) {
+			return SHORT_REWRITE_CEILING;
+		}
+		return Math.max(1, words) * SHORT_REWRITE_CEILING / WORDS_FOR_FULL_CEILING;
+	}
+
+	/** How many words the draft is made of; anything between whitespace counts as one. */
+	private static int wordCount(String draft) {
+		String trimmed = draft.trim();
+		return trimmed.isEmpty() ? 0 : trimmed.split("\\s+").length;
 	}
 
 	/**

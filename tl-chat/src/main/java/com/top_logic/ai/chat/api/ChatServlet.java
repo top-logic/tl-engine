@@ -27,6 +27,7 @@ import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.chat.api.messages.CancelPromptImprovementRequest;
 import com.top_logic.ai.chat.api.messages.ChatSendRequest;
 import com.top_logic.ai.chat.api.messages.ChatSendResponse;
+import com.top_logic.ai.chat.api.messages.ContextCompositionEvent;
 import com.top_logic.ai.chat.api.messages.MessageFeedbackDto;
 import com.top_logic.ai.chat.api.messages.MessageFeedbackRequest;
 import com.top_logic.ai.chat.api.messages.RegenerateRequest;
@@ -84,6 +85,7 @@ import com.top_logic.tl.ai.core.session.Turn;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedConversationV2;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedPart;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedTurn;
+import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.TopLogicServlet;
 
@@ -369,10 +371,11 @@ public class ChatServlet extends TopLogicServlet {
 			return;
 		}
 		TaskProgressTracker tracker = currentTracker();
-		String sessionId = blankToNull(body.getSessionId());
-		if (sessionId != null) {
-			tracker.setActiveSessionId(sessionId);
+		String sessionId = ownedSessionId(req, resp, body.getSessionId());
+		if (sessionId == null) {
+			return;
 		}
+		tracker.setActiveSessionId(sessionId);
 		if (tracker.hasActiveProcessingState()) {
 			writeTruncateResponse(resp, TruncateResponse.create().setStatus("busy"));
 			return;
@@ -384,7 +387,7 @@ public class ChatServlet extends TopLogicServlet {
 			writeTruncateResponse(resp, TruncateResponse.create().setStatus("error"));
 			return;
 		}
-		Removed removed = removeTurnsFrom(tracker, sessionId, turnCount - 1);
+		Removed removed = removeTurnsFrom(tracker, resolveCurrentPerson(req), sessionId, turnCount - 1);
 		if (removed.text().isEmpty()) {
 			writeTruncateResponse(resp, TruncateResponse.create().setStatus("error"));
 			return;
@@ -426,19 +429,52 @@ public class ChatServlet extends TopLogicServlet {
 			return;
 		}
 		TaskProgressTracker tracker = currentTracker();
-		String sessionId = blankToNull(body.getSessionId());
-		if (sessionId != null) {
-			tracker.setActiveSessionId(sessionId);
+		String sessionId = ownedSessionId(req, resp, body.getSessionId());
+		if (sessionId == null) {
+			return;
 		}
+		tracker.setActiveSessionId(sessionId);
 		if (tracker.hasActiveProcessingState()) {
 			writeTruncateResponse(resp, TruncateResponse.create().setStatus("busy"));
 			return;
 		}
-		Removed removed = removeTurnsFrom(tracker, sessionId, body.getFromTurn());
+		Removed removed = removeTurnsFrom(tracker, resolveCurrentPerson(req), sessionId, body.getFromTurn());
 		writeTruncateResponse(resp, TruncateResponse.create()
 			.setStatus("ok")
 			.setRemovedTurns(removed.turns())
 			.setText(removed.text()));
+	}
+
+	/**
+	 * The session named in a request body, once it is established that it belongs to the caller.
+	 *
+	 * <p>
+	 * Session IDs are small sequential integers taken straight from the request, so a handler that
+	 * acts on one without asking acts on whichever chat the caller names. Answers 404 for a session
+	 * that does not exist and for one that is not theirs alike: which of the two it is, is not the
+	 * caller's business.
+	 * </p>
+	 *
+	 * @return the session ID to work with, or {@code null} when the response has already been
+	 *         answered and the handler must return
+	 */
+	private static String ownedSessionId(HttpServletRequest req, HttpServletResponse resp, String requested)
+			throws IOException {
+		Person person = resolveCurrentPerson(req);
+		if (person == null) {
+			resp.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+			return null;
+		}
+		String sessionId = blankToNull(requested);
+		if (sessionId == null) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing 'sessionId'.");
+			return null;
+		}
+		if (ChatHistoryService.findOwnedSessionById(sessionId, person) == null) {
+			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+			return null;
+		}
+		return sessionId;
 	}
 
 	/** What a truncation took away. */
@@ -459,7 +495,8 @@ public class ChatServlet extends TopLogicServlet {
 	 *
 	 * @return how many turns went, and the user text of the first of them
 	 */
-	private static Removed removeTurnsFrom(TaskProgressTracker tracker, String sessionId, int fromTurn) {
+	private static Removed removeTurnsFrom(TaskProgressTracker tracker, Person person, String sessionId,
+			int fromTurn) {
 		ConversationLog log = tracker.getSessionManager().getOrCreateConversationLog();
 		List<Turn> turns = log.turns();
 		if (fromTurn < 0 || fromTurn >= turns.size()) {
@@ -475,7 +512,9 @@ public class ChatServlet extends TopLogicServlet {
 		tracker.dropFeedbackFrom(fromTurn);
 
 		if (sessionId != null) {
-			TLObject session = ChatHistoryService.findSessionById(sessionId);
+			// Guarded again here, not only in the handler: this is the call that deletes, and it must
+			// be impossible to reach it through a path that forgot to ask whose session it is.
+			TLObject session = ChatHistoryService.findOwnedSessionById(sessionId, person);
 			if (session != null) {
 				ChatHistoryService.truncateConversation(session, fromTurn);
 			}
@@ -518,10 +557,11 @@ public class ChatServlet extends TopLogicServlet {
 			return;
 		}
 		TaskProgressTracker tracker = currentTracker();
-		String sessionId = blankToNull(body.getSessionId());
-		if (sessionId != null) {
-			tracker.setActiveSessionId(sessionId);
+		String sessionId = ownedSessionId(req, resp, body.getSessionId());
+		if (sessionId == null) {
+			return;
 		}
+		tracker.setActiveSessionId(sessionId);
 		tracker.setFeedback(body.getTurnIndex(), blankToNull(body.getRating()), body.getNote());
 		tracker.getSessionManager().persistActiveSession();
 
@@ -1221,6 +1261,15 @@ public class ChatServlet extends TopLogicServlet {
 				.setThinkingTokens(usage.getThinkingTokens())
 				.setCacheReadTokens(usage.getCacheReadTokens())
 				.setCacheWriteTokens(usage.getCacheWriteTokens()));
+			if (turn.hasContextComposition()) {
+				var composition = turn.getContextComposition();
+				response.setLastComposition(ContextCompositionEvent.create()
+					.setSystemPromptTokens(composition.getSystemPromptTokens())
+					.setToolDefinitionTokens(composition.getToolDefinitionTokens())
+					.setMessageTokens(composition.getMessageTokens())
+					.setToolResultTokens(composition.getToolResultTokens())
+					.setToolCount(composition.getToolCount()));
+			}
 			String model = turn.getModel();
 			if (model != null && !model.isEmpty()) {
 				response.setLastModel(model);
@@ -1302,6 +1351,16 @@ public class ChatServlet extends TopLogicServlet {
 	 * resolved (unknown id, closed window, server restart) the request is rejected so the client
 	 * reloads its application window.
 	 * </p>
+	 *
+	 * <p>
+	 * A request that does not come from a signed-in user is refused here as well. The servlet
+	 * filter in front of this one requires a TopLogic session, not an authenticated one, and an
+	 * application that lets visitors in - as the demo does - gives every visitor a session as the
+	 * anonymous account. Without this check a visitor could open the chat, run the agent and spend
+	 * the installation's API budget, and every such conversation would be stored against the
+	 * anonymous account where the next visitor reads it. The chat has no anonymous mode, so
+	 * authentication is demanded once, centrally, rather than in each of the handlers below.
+	 * </p>
 	 */
 	@Override
 	protected void doService(HttpServletRequest req, HttpServletResponse resp)
@@ -1318,6 +1377,12 @@ public class ChatServlet extends TopLogicServlet {
 		// so no explicit restore is needed. Going through ThreadContextManager.inContext(...) would
 		// instead log an "Overriding subsession" info on every request.
 		TLContextManager.getInteraction().installSubSessionContext(subSession);
+		// Only now is there a user to ask about: the interaction this request started with carries
+		// no sub-session, and therefore no person.
+		if (TLContext.isAnonymous()) {
+			resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Sign in to use the chat.");
+			return;
+		}
 		super.doService(req, resp);
 	}
 
@@ -1469,10 +1534,12 @@ public class ChatServlet extends TopLogicServlet {
 	}
 
 	private void handleCapabilities(HttpServletResponse resp) throws IOException {
+		TaskProgressTracker tracker = currentTracker();
+		String improver = tracker == null ? null : tracker.getPromptImproverAgentName();
 		resp.setStatus(HttpServletResponse.SC_OK);
 		resp.setContentType(CONTENT_TYPE_JSON);
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
-		resp.getWriter().write(DtoMapper.toJson(ChatCapabilities.build()));
+		resp.getWriter().write(DtoMapper.toJson(ChatCapabilities.build(improver)));
 	}
 
 	private static String blankToNull(String value) {

@@ -32,8 +32,15 @@ final class ChatCapabilities {
 		// Static helper.
 	}
 
-	/** Snapshot of agents, models and MCP servers visible to the current user. */
-	static ChatCapabilitiesResponse build() {
+	/**
+	 * Snapshot of agents, models and MCP servers visible to the current user.
+	 *
+	 * @param hiddenAgent
+	 *        An agent the chat runs for itself rather than on the user's behalf - the prompt
+	 *        improver - which therefore must not be offered as a conversation partner; may be
+	 *        <code>null</code>.
+	 */
+	static ChatCapabilitiesResponse build(String hiddenAgent) {
 		ChatCapabilitiesResponse response = ChatCapabilitiesResponse.create();
 		LLMService llm = LLMService.Module.INSTANCE.isActive() ? LLMService.getInstance() : null;
 		if (llm != null) {
@@ -41,6 +48,9 @@ final class ChatCapabilities {
 		}
 
 		for (AgentDefinition agent : listAgents()) {
+			if (hiddenAgent != null && hiddenAgent.equals(agent.name())) {
+				continue;
+			}
 			response.addAgent(toAgentDto(agent, llm));
 		}
 

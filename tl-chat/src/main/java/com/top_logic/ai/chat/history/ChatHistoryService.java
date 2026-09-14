@@ -241,7 +241,38 @@ public class ChatHistoryService {
 	}
 
 	/**
-	 * Finds an {@link AgentSession} by its {@link KnowledgeObject} ID.
+	 * Finds a session of the given owner by its {@link KnowledgeObject} ID.
+	 *
+	 * <p>
+	 * The lookup every request-handling path must use. Session IDs are small sequential integers, so
+	 * an ID taken from a request body names someone else's chat as easily as the caller's own;
+	 * anything that acts on it - and the three that remove turns above all - has to establish first
+	 * that it is theirs.
+	 * </p>
+	 *
+	 * @param objectId
+	 *        the string representation of the object ID
+	 * @param owner
+	 *        the person the session must belong to; {@code null} owns nothing
+	 * @return the session, or {@code null} when it does not exist or is not this person's
+	 * @see #findSessionById(String)
+	 */
+	public static TLObject findOwnedSessionById(String objectId, Person owner) {
+		if (owner == null) {
+			return null;
+		}
+		TLObject session = findSessionById(objectId);
+		return session != null && isOwnedBy(session, owner) ? session : null;
+	}
+
+	/**
+	 * Finds an {@link AgentSession} by its {@link KnowledgeObject} ID, without asking whose it is.
+	 *
+	 * <p>
+	 * Only for callers that check ownership themselves or have no requester to check against (a
+	 * background task, a migration). A request handler wants
+	 * {@link #findOwnedSessionById(String, Person)}.
+	 * </p>
 	 *
 	 * @param objectId
 	 *        the string representation of the object ID.

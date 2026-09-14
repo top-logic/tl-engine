@@ -33,6 +33,9 @@ public class ApprovalRequiredEvent extends de.haumacher.msgbuf.data.AbstractData
 	/** @see #getRemainingMs() */
 	public static final String REMAINING_MS__PROP = "remainingMs";
 
+	/** @see #getToolMode() */
+	public static final String TOOL_MODE__PROP = "toolMode";
+
 	private String _toolCallId = "";
 
 	private String _approvalRequestId = "";
@@ -44,6 +47,8 @@ public class ApprovalRequiredEvent extends de.haumacher.msgbuf.data.AbstractData
 	private String _displayReason = "";
 
 	private long _remainingMs = 0L;
+
+	private String _toolMode = "";
 
 	/**
 	 * Creates a {@link ApprovalRequiredEvent} instance.
@@ -176,6 +181,32 @@ public class ApprovalRequiredEvent extends de.haumacher.msgbuf.data.AbstractData
 		_remainingMs = value;
 	}
 
+	/**
+	 * What kind of change the tool makes: READ, USER_SCOPED, DATA_WRITE, STRUCTURAL or EXTERNAL.
+	 *
+	 * <p>
+	 * Why approval is being asked, in a form a UI can phrase in the user's own language;
+	 * {@link #getDisplayReason()} is the same thing written once, in English. Empty for an event from
+	 * before the mode was carried.
+	 * </p>
+	 */
+	public final String getToolMode() {
+		return _toolMode;
+	}
+
+	/**
+	 * @see #getToolMode()
+	 */
+	public com.top_logic.ai.chat.api.messages.ApprovalRequiredEvent setToolMode(String value) {
+		internalSetToolMode(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getToolMode()} without chain call utility. */
+	protected final void internalSetToolMode(String value) {
+		_toolMode = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return APPROVAL_REQUIRED_EVENT__TYPE;
@@ -189,7 +220,8 @@ public class ApprovalRequiredEvent extends de.haumacher.msgbuf.data.AbstractData
 			TOOL_NAME__PROP, 
 			ARGS_JSON__PROP, 
 			DISPLAY_REASON__PROP, 
-			REMAINING_MS__PROP);
+			REMAINING_MS__PROP, 
+			TOOL_MODE__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -220,6 +252,7 @@ public class ApprovalRequiredEvent extends de.haumacher.msgbuf.data.AbstractData
 			case ARGS_JSON__PROP: return getArgsJson();
 			case DISPLAY_REASON__PROP: return getDisplayReason();
 			case REMAINING_MS__PROP: return getRemainingMs();
+			case TOOL_MODE__PROP: return getToolMode();
 			default: return null;
 		}
 	}
@@ -233,6 +266,7 @@ public class ApprovalRequiredEvent extends de.haumacher.msgbuf.data.AbstractData
 			case ARGS_JSON__PROP: internalSetArgsJson((String) value); break;
 			case DISPLAY_REASON__PROP: internalSetDisplayReason((String) value); break;
 			case REMAINING_MS__PROP: internalSetRemainingMs((long) value); break;
+			case TOOL_MODE__PROP: internalSetToolMode((String) value); break;
 		}
 	}
 
@@ -263,6 +297,8 @@ public class ApprovalRequiredEvent extends de.haumacher.msgbuf.data.AbstractData
 		out.value(getDisplayReason());
 		out.name(REMAINING_MS__PROP);
 		out.value(getRemainingMs());
+		out.name(TOOL_MODE__PROP);
+		out.value(getToolMode());
 	}
 
 	@Override
@@ -274,6 +310,7 @@ public class ApprovalRequiredEvent extends de.haumacher.msgbuf.data.AbstractData
 			case ARGS_JSON__PROP: setArgsJson(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case DISPLAY_REASON__PROP: setDisplayReason(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case REMAINING_MS__PROP: setRemainingMs(in.nextLong()); break;
+			case TOOL_MODE__PROP: setToolMode(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

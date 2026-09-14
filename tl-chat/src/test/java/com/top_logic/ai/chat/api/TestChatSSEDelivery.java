@@ -17,6 +17,7 @@ import jakarta.servlet.AsyncContext;
 import junit.framework.TestCase;
 
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
+import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
@@ -98,23 +99,55 @@ public class TestChatSSEDelivery extends TestCase {
 		assertTrue("The tool name must reach the wire.", wire.contains("search"));
 	}
 
-	/** The end-of-run notification is written directly, bypassing the flush queue. */
-	public void testMessageCompleteReachesTheWire() {
+	/** The end-of-run notification reaches the wire. */
+	public void testMessageCompleteReachesTheWire() throws InterruptedException {
 		ChatEventHandlerRegistry.find(_tracker).sendMessageComplete(MessageCompleteEvent.create()
 			.setContentHtml("<p>done</p>")
 			.setContentText("done"));
 
-		assertFrames(_wire.toString(), "event: message_complete");
+		assertFrames(awaitFrame("event: message_complete"), "event: message_complete");
+	}
+
+	/**
+	 * The end-of-run notification must not overtake the text it completes.
+	 *
+	 * <p>
+	 * It used to be written straight to the stream while the deltas waited in the flush queue, so it
+	 * arrived first and the browser - having closed the message on it - dropped every delta that
+	 * followed. Every answer was rendered with its last fragment missing.
+	 * </p>
+	 */
+	public void testMessageCompleteDoesNotOvertakeTheDeltas() throws InterruptedException {
+		ChatEventHandler resolved = ChatEventHandlerRegistry.find(_tracker);
+		resolved.onEvent(new AgentEvent.TextDelta("run1", 1, Instant.now(), "Die Hauptstadt ist"));
+		resolved.onEvent(new AgentEvent.TextDelta("run1", 1, Instant.now(), " L"));
+		resolved.sendMessageComplete(MessageCompleteEvent.create()
+			.setContentText("Die Hauptstadt ist Lissabon."));
+
+		String wire = awaitFrame("event: message_complete");
+		assertFrames(wire, "event: text_delta", "event: text_delta", "event: message_complete");
+	}
+
+	/** A provider error keeps its place in the stream too. */
+	public void testProviderErrorKeepsItsPlace() throws InterruptedException {
+		ChatEventHandler resolved = ChatEventHandlerRegistry.find(_tracker);
+		resolved.onEvent(new AgentEvent.TextDelta("run1", 1, Instant.now(), "Teil"));
+		resolved.sendProviderError(ProviderErrorEvent.create()
+			.setKind("OVERLOADED")
+			.setErrorMessage("busy"));
+
+		assertFrames(awaitFrame("event: provider_error"), "event: text_delta", "event: provider_error");
 	}
 
 	/** A stopped handler writes nothing further and is no longer resolvable. */
-	public void testStoppedHandlerIsSilent() {
+	public void testStoppedHandlerIsSilent() throws InterruptedException {
 		_handler.stop();
 		int written = _wire.toString().length();
 
 		assertNull("A stopped handler must not be resolved for its tracker.",
 			ChatEventHandlerRegistry.find(_tracker));
 		_handler.sendMessageComplete(MessageCompleteEvent.create().setContentText("late"));
+		Thread.sleep(3 * 50);
 		assertEquals("A stopped handler must not write to a closed connection.",
 			written, _wire.toString().length());
 	}

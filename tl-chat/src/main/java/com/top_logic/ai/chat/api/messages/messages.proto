@@ -489,6 +489,12 @@ message ChatSessionDetailResponse {
 
 	/** Effort level last used in this session; empty when none was chosen. */
 	string lastEffort;
+
+	/**
+	 * What the prompt of the session's last request was made of, so a re-opened chat shows the same
+	 * breakdown a live one does. Absent for a session whose transcript predates the field.
+	 */
+	ContextCompositionEvent lastComposition;
 }
 
 /**
@@ -645,8 +651,11 @@ message ContextCompositionEvent {
 	/** Estimated tokens of the tool schemas sent with the request. */
 	int toolDefinitionTokens;
 
-	/** Estimated tokens of the conversation messages. */
+	/** Estimated tokens of the conversation messages, tool results included. */
 	int messageTokens;
+
+	/** Estimated tokens of the tool results within {@link #messageTokens}. */
+	int toolResultTokens;
 
 	/** Number of tool schemas sent with the request. */
 	int toolCount;
@@ -729,6 +738,17 @@ message ApprovalRequiredEvent {
 	 * knows there is a clock.
 	 */
 	long remainingMs;
+
+	/**
+	 * What kind of change the tool makes: READ, USER_SCOPED, DATA_WRITE, STRUCTURAL or EXTERNAL.
+	 *
+	 * <p>
+	 * Why approval is being asked, in a form a UI can phrase in the user's own language;
+	 * {@link #displayReason} is the same thing written once, in English. Empty for an event from
+	 * before the mode was carried.
+	 * </p>
+	 */
+	string toolMode;
 }
 
 /** SSE event for approval resolved. */

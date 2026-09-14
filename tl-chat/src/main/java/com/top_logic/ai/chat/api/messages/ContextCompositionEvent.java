@@ -30,6 +30,9 @@ public class ContextCompositionEvent extends de.haumacher.msgbuf.data.AbstractDa
 	/** @see #getMessageTokens() */
 	public static final String MESSAGE_TOKENS__PROP = "messageTokens";
 
+	/** @see #getToolResultTokens() */
+	public static final String TOOL_RESULT_TOKENS__PROP = "toolResultTokens";
+
 	/** @see #getToolCount() */
 	public static final String TOOL_COUNT__PROP = "toolCount";
 
@@ -38,6 +41,8 @@ public class ContextCompositionEvent extends de.haumacher.msgbuf.data.AbstractDa
 	private int _toolDefinitionTokens = 0;
 
 	private int _messageTokens = 0;
+
+	private int _toolResultTokens = 0;
 
 	private int _toolCount = 0;
 
@@ -91,7 +96,7 @@ public class ContextCompositionEvent extends de.haumacher.msgbuf.data.AbstractDa
 	}
 
 	/**
-	 * Estimated tokens of the conversation messages.
+	 * Estimated tokens of the conversation messages, tool results included.
 	 */
 	public final int getMessageTokens() {
 		return _messageTokens;
@@ -108,6 +113,26 @@ public class ContextCompositionEvent extends de.haumacher.msgbuf.data.AbstractDa
 	/** Internal setter for {@link #getMessageTokens()} without chain call utility. */
 	protected final void internalSetMessageTokens(int value) {
 		_messageTokens = value;
+	}
+
+	/**
+	 * Estimated tokens of the tool results within {@link #getMessageTokens()}.
+	 */
+	public final int getToolResultTokens() {
+		return _toolResultTokens;
+	}
+
+	/**
+	 * @see #getToolResultTokens()
+	 */
+	public com.top_logic.ai.chat.api.messages.ContextCompositionEvent setToolResultTokens(int value) {
+		internalSetToolResultTokens(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getToolResultTokens()} without chain call utility. */
+	protected final void internalSetToolResultTokens(int value) {
+		_toolResultTokens = value;
 	}
 
 	/**
@@ -141,6 +166,7 @@ public class ContextCompositionEvent extends de.haumacher.msgbuf.data.AbstractDa
 			SYSTEM_PROMPT_TOKENS__PROP, 
 			TOOL_DEFINITION_TOKENS__PROP, 
 			MESSAGE_TOKENS__PROP, 
+			TOOL_RESULT_TOKENS__PROP, 
 			TOOL_COUNT__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
@@ -169,6 +195,7 @@ public class ContextCompositionEvent extends de.haumacher.msgbuf.data.AbstractDa
 			case SYSTEM_PROMPT_TOKENS__PROP: return getSystemPromptTokens();
 			case TOOL_DEFINITION_TOKENS__PROP: return getToolDefinitionTokens();
 			case MESSAGE_TOKENS__PROP: return getMessageTokens();
+			case TOOL_RESULT_TOKENS__PROP: return getToolResultTokens();
 			case TOOL_COUNT__PROP: return getToolCount();
 			default: return null;
 		}
@@ -180,6 +207,7 @@ public class ContextCompositionEvent extends de.haumacher.msgbuf.data.AbstractDa
 			case SYSTEM_PROMPT_TOKENS__PROP: internalSetSystemPromptTokens((int) value); break;
 			case TOOL_DEFINITION_TOKENS__PROP: internalSetToolDefinitionTokens((int) value); break;
 			case MESSAGE_TOKENS__PROP: internalSetMessageTokens((int) value); break;
+			case TOOL_RESULT_TOKENS__PROP: internalSetToolResultTokens((int) value); break;
 			case TOOL_COUNT__PROP: internalSetToolCount((int) value); break;
 		}
 	}
@@ -205,6 +233,8 @@ public class ContextCompositionEvent extends de.haumacher.msgbuf.data.AbstractDa
 		out.value(getToolDefinitionTokens());
 		out.name(MESSAGE_TOKENS__PROP);
 		out.value(getMessageTokens());
+		out.name(TOOL_RESULT_TOKENS__PROP);
+		out.value(getToolResultTokens());
 		out.name(TOOL_COUNT__PROP);
 		out.value(getToolCount());
 	}
@@ -215,6 +245,7 @@ public class ContextCompositionEvent extends de.haumacher.msgbuf.data.AbstractDa
 			case SYSTEM_PROMPT_TOKENS__PROP: setSystemPromptTokens(in.nextInt()); break;
 			case TOOL_DEFINITION_TOKENS__PROP: setToolDefinitionTokens(in.nextInt()); break;
 			case MESSAGE_TOKENS__PROP: setMessageTokens(in.nextInt()); break;
+			case TOOL_RESULT_TOKENS__PROP: setToolResultTokens(in.nextInt()); break;
 			case TOOL_COUNT__PROP: setToolCount(in.nextInt()); break;
 			default: super.readField(in, field);
 		}

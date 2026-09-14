@@ -2962,8 +2962,10 @@
   inset-inline-start: 0;
   bottom: calc(100% + 0.35rem);
   z-index: 5;
-  min-width: min(22rem, 100%);
-  max-width: 100%;
+  /* Wide enough to read a source's name in, whatever the composer's column has shrunk to. */
+  width: max-content;
+  min-width: min(18rem, 90vw);
+  max-width: min(26rem, 90vw);
   max-height: 14rem;
   overflow: auto;
   padding: 0.25rem;
@@ -3003,7 +3005,7 @@
 }
 
 .mention-label {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;

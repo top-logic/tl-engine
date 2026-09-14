@@ -28,7 +28,7 @@ public class BinaryFunctions extends TLScriptFunctions {
 	 * The content type is the MIME type of the contents, such as <code>image/png</code> or
 	 * <code>application/pdf</code>. It may carry additional parameters, such as
 	 * <code>text/plain; charset=utf-8</code>, so a check for a certain kind of contents is best
-	 * written as <code>$data.binaryContentType().startsWith("image/")</code>.
+	 * written as <code>$data.binaryContentType().stringStartsWith("image/")</code>.
 	 * </p>
 	 *
 	 * @param data

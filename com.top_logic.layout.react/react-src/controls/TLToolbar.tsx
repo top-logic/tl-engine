@@ -1,6 +1,5 @@
-import { React, useTLState, TLChild, useStandaloneKeyboardScope, useFocusTrap } from 'tl-react-bridge';
+import { React, useTLState, TLChild, useStandaloneKeyboardScope, useFocusTrap, createPortal } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { createPortal } from 'react-dom';
 import { ThemeIcon } from './icon/ThemeIcon';
 
 const { useCallback, useRef, useState, useEffect, useLayoutEffect } = React;

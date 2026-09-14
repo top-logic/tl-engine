@@ -1,5 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, CMD_VALUE_CHANGED } from 'tl-react-bridge';
-import { createPortal } from 'react-dom';
+import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, CMD_VALUE_CHANGED, createPortal } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { ThemeIcon } from './icon/ThemeIcon';
 import { TLPill } from './pill/TLPill';

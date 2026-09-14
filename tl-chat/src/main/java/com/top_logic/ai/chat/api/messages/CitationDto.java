@@ -39,6 +39,12 @@ public class CitationDto extends de.haumacher.msgbuf.data.AbstractDataObject imp
 	/** @see #getUrl() */
 	public static final String URL__PROP = "url";
 
+	/** @see #getPassage() */
+	public static final String PASSAGE__PROP = "passage";
+
+	/** @see #getExcerpt() */
+	public static final String EXCERPT__PROP = "excerpt";
+
 	private int _index = 0;
 
 	private String _toolName = "";
@@ -52,6 +58,10 @@ public class CitationDto extends de.haumacher.msgbuf.data.AbstractDataObject imp
 	private String _label = "";
 
 	private String _url = "";
+
+	private String _passage = "";
+
+	private String _excerpt = "";
 
 	/**
 	 * Creates a {@link CitationDto} instance.
@@ -202,6 +212,46 @@ public class CitationDto extends de.haumacher.msgbuf.data.AbstractDataObject imp
 		_url = value;
 	}
 
+	/**
+	 * The sentence of the source the fact rests on, as the model read it; empty when none.
+	 */
+	public final String getPassage() {
+		return _passage;
+	}
+
+	/**
+	 * @see #getPassage()
+	 */
+	public com.top_logic.ai.chat.api.messages.CitationDto setPassage(String value) {
+		internalSetPassage(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getPassage()} without chain call utility. */
+	protected final void internalSetPassage(String value) {
+		_passage = value;
+	}
+
+	/**
+	 * A window of the source around {@link #getPassage()}, for the marker's popover.
+	 */
+	public final String getExcerpt() {
+		return _excerpt;
+	}
+
+	/**
+	 * @see #getExcerpt()
+	 */
+	public com.top_logic.ai.chat.api.messages.CitationDto setExcerpt(String value) {
+		internalSetExcerpt(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getExcerpt()} without chain call utility. */
+	protected final void internalSetExcerpt(String value) {
+		_excerpt = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return CITATION_DTO__TYPE;
@@ -216,7 +266,9 @@ public class CitationDto extends de.haumacher.msgbuf.data.AbstractDataObject imp
 			KIND__PROP, 
 			ID__PROP, 
 			LABEL__PROP, 
-			URL__PROP);
+			URL__PROP, 
+			PASSAGE__PROP, 
+			EXCERPT__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -248,6 +300,8 @@ public class CitationDto extends de.haumacher.msgbuf.data.AbstractDataObject imp
 			case ID__PROP: return getId();
 			case LABEL__PROP: return getLabel();
 			case URL__PROP: return getUrl();
+			case PASSAGE__PROP: return getPassage();
+			case EXCERPT__PROP: return getExcerpt();
 			default: return null;
 		}
 	}
@@ -262,6 +316,8 @@ public class CitationDto extends de.haumacher.msgbuf.data.AbstractDataObject imp
 			case ID__PROP: internalSetId((String) value); break;
 			case LABEL__PROP: internalSetLabel((String) value); break;
 			case URL__PROP: internalSetUrl((String) value); break;
+			case PASSAGE__PROP: internalSetPassage((String) value); break;
+			case EXCERPT__PROP: internalSetExcerpt((String) value); break;
 		}
 	}
 
@@ -294,6 +350,10 @@ public class CitationDto extends de.haumacher.msgbuf.data.AbstractDataObject imp
 		out.value(getLabel());
 		out.name(URL__PROP);
 		out.value(getUrl());
+		out.name(PASSAGE__PROP);
+		out.value(getPassage());
+		out.name(EXCERPT__PROP);
+		out.value(getExcerpt());
 	}
 
 	@Override
@@ -306,6 +366,8 @@ public class CitationDto extends de.haumacher.msgbuf.data.AbstractDataObject imp
 			case ID__PROP: setId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case LABEL__PROP: setLabel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case URL__PROP: setUrl(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case PASSAGE__PROP: setPassage(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case EXCERPT__PROP: setExcerpt(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

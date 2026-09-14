@@ -238,6 +238,46 @@ public class TestCitationValidator extends TestCase {
 		}
 	}
 
+	/**
+	 * The passage a citation carries is the source's wording, and the excerpt is the window it was
+	 * read in - both taken from the turn's own tool result, never from the model's claim alone.
+	 */
+	public void testPassageAndExcerptComeFromTheEvidence() {
+		String page = "Rechnung 2026-0142. Berlin Hosting GmbH. "
+			+ "Zahlbar innerhalb von 14 Tagen netto ab Rechnungsdatum, Fälligkeit 28.09.2026. "
+			+ "Bei Zahlungsverzug werden Zinsen berechnet.";
+		String passage = "Zahlbar innerhalb von 14 Tagen netto ab Rechnungsdatum";
+		Result result = CitationValidator.validate("Zahlungsziel sind 14 Tage [1].",
+			List.of(new Declaration(1, "cite", "c1", "invoice", "2026-0142", "Berlin Hosting", "", passage)),
+			List.of(page));
+
+		Citation kept = result.citations().get(0);
+		assertEquals(passage, kept.passage());
+		assertTrue("The excerpt must show the passage in its context.", kept.excerpt().contains(passage));
+		assertTrue("The excerpt must carry the words around it.",
+			kept.excerpt().contains("Berlin Hosting GmbH"));
+	}
+
+	/** A passage the turn never read is dropped, while the citation itself survives on its id. */
+	public void testInventedPassageIsDropped() {
+		Result result = CitationValidator.validate("Fakt [1].",
+			List.of(new Declaration(1, "cite", "c1", "invoice", "INV-12", "Beleg", "",
+				"Diesen Satz hat das Modell erfunden.")),
+			List.of("invoice INV-12 amount 12.00"));
+
+		assertEquals(1, result.citations().size());
+		assertEquals("", result.citations().get(0).passage());
+		assertEquals("", result.citations().get(0).excerpt());
+	}
+
+	/** Too short to be a sentence, so not shown as one. */
+	public void testTinyPassageIsIgnored() {
+		Result result = CitationValidator.validate("Fakt [1].",
+			List.of(new Declaration(1, "cite", "c1", "invoice", "INV-12", "Beleg", "", "12.00")),
+			List.of("invoice INV-12 amount 12.00"));
+		assertEquals("", result.citations().get(0).passage());
+	}
+
 	private static int citeCalls(Turn turn) {
 		return (int) turn.assistantParts().stream()
 			.filter(Part.ToolCallPart.class::isInstance)

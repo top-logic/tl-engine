@@ -176,6 +176,11 @@ message CitationDto {
 
 	/** Link for a web source; empty otherwise. */
 	string url;
+	/** The sentence of the source the fact rests on, as the model read it; empty when none. */
+	string passage;
+
+	/** A window of the source around {@link #passage}, for the marker's popover. */
+	string excerpt;
 }
 
 /** Text content part. */

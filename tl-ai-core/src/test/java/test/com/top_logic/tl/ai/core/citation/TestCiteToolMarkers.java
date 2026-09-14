@@ -50,7 +50,7 @@ public class TestCiteToolMarkers extends TestCase {
 				String url = "https://example.test/page/" + i;
 				work.add(() -> {
 					together.await(10, TimeUnit.SECONDS);
-					return tool.cite("web", url, "Page", url, null, context.withToolCallId("call-" + url));
+					return tool.cite("web", url, "Page", url, null, null, context.withToolCallId("call-" + url));
 				});
 			}
 			Set<String> markers = Collections.synchronizedSet(new HashSet<>());
@@ -68,14 +68,14 @@ public class TestCiteToolMarkers extends TestCase {
 		CiteTool tool = new CiteTool();
 		ToolContext context = runContext();
 
-		assertEquals("1", tool.cite("web", "a", "A", "", null, context.withToolCallId("one")));
-		assertEquals("2", tool.cite("web", "b", "B", "", null, context.withToolCallId("two")));
-		assertEquals("3", tool.cite("web", "c", "C", "", null, context.withProgressReporter(
+		assertEquals("1", tool.cite("web", "a", "A", "", null, null, context.withToolCallId("one")));
+		assertEquals("2", tool.cite("web", "b", "B", "", null, null, context.withToolCallId("two")));
+		assertEquals("3", tool.cite("web", "c", "C", "", null, null, context.withProgressReporter(
 			context.progressReporter())));
 
 		ToolContext child = context.forDelegation(TransactionScope.NOOP);
 		assertEquals("A delegated run writes its own answer and numbers from 1.",
-			"1", tool.cite("web", "d", "D", "", null, child));
+			"1", tool.cite("web", "d", "D", "", null, null, child));
 	}
 
 	/** The run's counter restarts when the next run begins on the same context. */
@@ -90,7 +90,8 @@ public class TestCiteToolMarkers extends TestCase {
 	/** An empty id is refused rather than numbered. */
 	public void testEmptyIdIsRefused() {
 		ToolContext context = runContext();
-		assertEquals("Error: id is required.", new CiteTool().cite("web", " ", "A", "", null, context));
+		assertEquals("Error: id is required.",
+			new CiteTool().cite("web", " ", "A", "", null, null, context));
 		assertEquals("The refused call must not consume a marker.", 1, context.citationMarkers().next());
 	}
 

@@ -55,6 +55,12 @@ public final class CitationValidator {
 
 	private static final Pattern MARKER = Pattern.compile("\\[(\\d+)\\]");
 
+	/** Shorter than this a "passage" says nothing and is more likely a stray word. */
+	private static final int MIN_PASSAGE = 12;
+
+	/** How much of the source to keep on either side of the cited passage. */
+	private static final int EXCERPT_MARGIN = 220;
+
 	private CitationValidator() {
 		// Utility
 	}
@@ -77,9 +83,17 @@ public final class CitationValidator {
 	 * @param id cited id
 	 * @param label human label
 	 * @param url web URL, or empty
+	 * @param passage the sentence of the source the model says the fact rests on, or empty
 	 */
 	public record Declaration(int claimedIndex, String toolName, String toolCallId, String kind, String id,
-			String label, String url) {}
+			String label, String url, String passage) {
+
+		/** A declaration that named no passage. */
+		public Declaration(int claimedIndex, String toolName, String toolCallId, String kind, String id,
+				String label, String url) {
+			this(claimedIndex, toolName, toolCallId, kind, id, label, url, "");
+		}
+	}
 
 	/**
 	 * What to do with the markers of one turn: the numbers that survive, the numbers to delete, and
@@ -220,8 +234,9 @@ public final class CitationValidator {
 		for (Integer claimedIndex : appearance) {
 			Declaration item = byIndex.get(claimedIndex);
 			remap.put(claimedIndex, Integer.valueOf(next));
+			String passage = verifiedPassage(item, evidence);
 			citations.add(new Citation(next, item.toolName(), item.toolCallId(), item.kind(), item.id(),
-				item.label(), item.url()));
+				item.label(), item.url(), passage, excerptAround(passage, evidence)));
 			next++;
 		}
 		// Only a number a cite call claimed and lost is deleted from the text. Everything else the
@@ -286,7 +301,7 @@ public final class CitationValidator {
 		}
 		Map<String, Object> args = parseArgs(tool.argsJson());
 		return new Declaration(claimed, tool.toolName(), tool.id(), str(args.get("kind")),
-			str(args.get("id")), str(args.get("label")), str(args.get("url")));
+			str(args.get("id")), str(args.get("label")), str(args.get("url")), str(args.get("passage")));
 	}
 
 	private static Map<String, Object> parseArgs(String argsJson) {
@@ -319,6 +334,65 @@ public final class CitationValidator {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * The passage the model claims to have read, but only when the turn's evidence really contains
+	 * it.
+	 *
+	 * <p>
+	 * The marker's popover shows this sentence as what the fact rests on, so it has to be the
+	 * source's wording rather than the model's memory of it.
+	 * </p>
+	 */
+	private static String verifiedPassage(Declaration item, List<String> evidence) {
+		String passage = item.passage() == null ? "" : item.passage().trim();
+		if (passage.length() < MIN_PASSAGE) {
+			return "";
+		}
+		for (String blob : evidence) {
+			if (blob != null && blob.contains(passage)) {
+				return passage;
+			}
+		}
+		Logger.debug("Citation passage not found in this turn's tool results; dropped: "
+			+ passage.substring(0, Math.min(60, passage.length())), CitationValidator.class);
+		return "";
+	}
+
+	/** A window of the source around {@code passage}, so the popover shows it in its context. */
+	private static String excerptAround(String passage, List<String> evidence) {
+		if (passage.isEmpty()) {
+			return "";
+		}
+		for (String blob : evidence) {
+			int at = blob == null ? -1 : blob.indexOf(passage);
+			if (at < 0) {
+				continue;
+			}
+			int from = Math.max(0, at - EXCERPT_MARGIN);
+			int to = Math.min(blob.length(), at + passage.length() + EXCERPT_MARGIN);
+			String window = readable(blob.substring(from, to));
+			return (from > 0 ? "… " : "") + window + (to < blob.length() ? " …" : "");
+		}
+		return passage;
+	}
+
+	/**
+	 * The excerpt as a reader sees it rather than as the tool wrote it.
+	 *
+	 * <p>
+	 * A tool result carries the envelope the run wraps untrusted content in and the markdown a page
+	 * was converted to. Neither is the source; both would be noise in a popover two lines high.
+	 * </p>
+	 */
+	private static String readable(String window) {
+		return window
+			.replaceAll("</?untrusted_page_content[^>]*>", " ")
+			.replaceAll("\\[([^\\]]*)\\]\\([^)]*\\)", "$1")
+			.replaceAll("^#+\\s*", " ")
+			.replaceAll("\\s+", " ")
+			.trim();
 	}
 
 	private static boolean containsToken(String blob, String token) {

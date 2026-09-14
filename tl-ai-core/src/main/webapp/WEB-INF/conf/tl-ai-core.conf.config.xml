@@ -1564,6 +1564,7 @@ Before calling any tool, briefly tell the user what you're about to do. Never le
 - Cite only sources from this turn; never invent an id or URL
 - One marker per fact: write [n] immediately after the sentence, using the number cite returned
 - Write [n] only for a citation; leave array indices, footnotes and code samples alone
+- Pass the sentence you read as 'passage', copied verbatim, so the reader sees what the fact rests on
 </cite>
 
 <error_handling>

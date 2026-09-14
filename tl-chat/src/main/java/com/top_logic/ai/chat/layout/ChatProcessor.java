@@ -810,7 +810,9 @@ public class ChatProcessor {
 			.setKind(citation.kind())
 			.setId(citation.id())
 			.setLabel(citation.label())
-			.setUrl(citation.url());
+			.setUrl(citation.url())
+			.setPassage(citation.passage())
+			.setExcerpt(citation.excerpt());
 	}
 
 	/**

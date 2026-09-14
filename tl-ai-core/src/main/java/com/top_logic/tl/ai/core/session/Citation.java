@@ -15,9 +15,17 @@ package com.top_logic.tl.ai.core.session;
  * @param id id the tool returned
  * @param label human label for the chip popover
  * @param url link for a web source, or empty
+ * @param passage the sentence of the source the fact rests on, or empty
+ * @param excerpt a window of the source around {@code passage}, for the marker's popover
  */
 public record Citation(int index, String toolName, String toolCallId, String kind, String id, String label,
-		String url) {
+		String url, String passage, String excerpt) {
+
+	/** A citation without the passage the popover shows. */
+	public Citation(int index, String toolName, String toolCallId, String kind, String id, String label,
+			String url) {
+		this(index, toolName, toolCallId, kind, id, label, url, "", "");
+	}
 
 	/** Empty strings rather than {@code null} for optional fields. */
 	public Citation {
@@ -27,5 +35,7 @@ public record Citation(int index, String toolName, String toolCallId, String kin
 		id = id == null ? "" : id;
 		label = label == null ? "" : label;
 		url = url == null ? "" : url;
+		passage = passage == null ? "" : passage;
+		excerpt = excerpt == null ? "" : excerpt;
 	}
 }

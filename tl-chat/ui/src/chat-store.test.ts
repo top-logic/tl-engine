@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { chatIdOf, chatStore, liveChatCount, readBootstrap, type ChatBootstrap } from './chat-store'
+import type { ChatMessage } from './types'
 
 /**
  * The store's world, without a browser.
@@ -16,6 +17,9 @@ let streams: FakeEventSource[] = []
 
 /** The `PUT /chat/preferences` bodies the store wrote, in order. */
 let preferenceWrites: unknown[] = []
+
+/** The `text` of every `POST /chat/send`, in order - what the model would actually receive. */
+let sentTexts: string[] = []
 
 class FakeEventSource {
   static readonly CLOSED = 2
@@ -76,6 +80,7 @@ async function settle(): Promise<void> {
 beforeEach(() => {
   streams = []
   preferenceWrites = []
+  sentTexts = []
   const globals = globalThis as unknown as Record<string, unknown>
   globals.window = {
     location: { pathname: '/app/view/chat' },
@@ -91,8 +96,17 @@ beforeEach(() => {
     if (url.includes('/chat/capabilities')) {
       return { ok: true, status: 200, json: async () => ({ agents: [], models: [], mcpServers: [] }) }
     }
+    if (url.includes('/chat/send')) {
+      sentTexts.push(JSON.parse(init?.body ?? '{}').text)
+      return { ok: true, status: 200, json: async () => ({ status: 'processing' }) }
+    }
+    // A created session, then the load that activates it. The order matters: the id-bearing path
+    // is a prefix match of the list path.
+    if (/\/chat\/sessions\/[^/?]/.test(url)) {
+      return { ok: true, status: 200, json: async () => ({ id: 's1', turnsJson: '' }) }
+    }
     if (url.includes('/chat/sessions')) {
-      return { ok: true, status: 200, json: async () => ({ sessions: [] }) }
+      return { ok: true, status: 200, json: async () => ({ sessions: [], id: 's1', title: 'Ein Chat' }) }
     }
     return { ok: true, status: 200, json: async () => ({}) }
   })
@@ -246,6 +260,73 @@ describe('the transcript', () => {
     store.actions.dispatch({ type: 'START_RUN', runId: 'r1' })
     store.actions.dispatch({ type: 'START_RUN', runId: 'r1' })
     expect(seen).toHaveBeenCalledTimes(2)
+
+    await settle()
+    release()
+  })
+})
+
+/**
+ * Pietro's own turn counter, copied from
+ * `Consulting@crew/pietro-adopt-chat:ui-modules/src/modules/consulting-chat.tsx`.
+ *
+ * It is the reason this matters: the host does not read the transcript for display, it counts it,
+ * and an extra message shifts every number it writes into the prompt.
+ */
+function turnCounter(seen: number[]) {
+  return (ctx: { messages: ChatMessage[] }) => {
+    const turn = ctx.messages.filter((message) => message.type === 'user').length + 1
+    seen.push(turn)
+    return `turn: ${turn}`
+  }
+}
+
+describe('the host\'s context prefix', () => {
+  /**
+   * The prefix describes the conversation the message is being added to, not the one it is already
+   * in.
+   *
+   * `App` got this for free: it handed `contextTag` a ref assigned during render, and a `useReducer`
+   * dispatch in the same handler cannot have updated it. The store's dispatch *does* update its
+   * state at once, so composing the outbound text after it handed the host the outgoing message -
+   * and Pietro, which counts user messages, wrote turn 2 into the first message of a fresh chat.
+   */
+  it('contextTag sees the transcript without the outgoing message', async () => {
+    const fresh = chatStore('alpha', BOOT)
+    const releaseFresh = fresh.subscribe(() => undefined)
+    const firstTurn: number[] = []
+
+    await fresh.actions.send('allererste Frage', [], { contextTag: turnCounter(firstTurn) })
+
+    expect(firstTurn).toEqual([1])
+    expect(sentTexts[0]).toBe('<context>turn: 1</context>\nallererste Frage')
+
+    await settle()
+    releaseFresh()
+
+    const ongoing = chatStore('beta', BOOT)
+    const releaseOngoing = ongoing.subscribe(() => undefined)
+    // One completed exchange already in the transcript.
+    ongoing.actions.dispatch({ type: 'ADD_USER', id: 'u1', text: 'erste Frage' })
+    ongoing.actions.dispatch({ type: 'ADD_ASSISTANT', id: 'a1', text: 'Antwort', isStreaming: false })
+    const secondTurn: number[] = []
+
+    await ongoing.actions.send('zweite Frage', [], { contextTag: turnCounter(secondTurn) })
+
+    expect(secondTurn).toEqual([2])
+    expect(sentTexts[1]).toBe('<context>turn: 2</context>\nzweite Frage')
+
+    await settle()
+    releaseOngoing()
+  })
+
+  it('sends the draft unchanged when the host contributes no prefix', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+
+    await store.actions.send('ohne Prefix', [])
+
+    expect(sentTexts).toEqual(['ohne Prefix'])
 
     await settle()
     release()

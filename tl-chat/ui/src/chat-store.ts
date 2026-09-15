@@ -1254,6 +1254,16 @@ export class ChatStore {
           await this.refreshSessions()
         }
         this.showNotice('')
+        // Composed before the dispatch below, because the host's prefix describes the conversation
+        // this message is being added to, not the one it is already in. `App` got that for free: it
+        // read a ref assigned during render, which a `useReducer` dispatch in the same handler
+        // cannot have updated. This store's dispatch does update its state at once, so reading it
+        // afterwards would hand the host the outgoing message - and a host that counts turns would
+        // put the wrong number into every prompt.
+        const outbound = composeOutboundText(
+          text,
+          options.contextTag?.({ messages: this.state.messages }),
+        )
         // Appended before the request, not after it: the server starts streaming the answer the
         // moment it accepts the message, and an await here would let the first assistant event
         // reach the reducer first - on a new chat the answer then appeared above the question.
@@ -1267,10 +1277,6 @@ export class ChatStore {
         })
         this.patch({ busy: true })
         runStore.set((s) => ({ ...s, busy: true }))
-        const outbound = composeOutboundText(
-          text,
-          options.contextTag?.({ messages: this.state.messages }),
-        )
         try {
           await sendMessage(windowId, {
             text: outbound,

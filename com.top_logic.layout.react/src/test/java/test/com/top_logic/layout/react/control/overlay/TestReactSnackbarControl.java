@@ -16,6 +16,7 @@ import com.top_logic.layout.react.control.overlay.DismissArguments;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl.Variant;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 
 /**
  * Tests that a {@link ReactSnackbarControl} shows every message it is given: one at a time, in
@@ -147,7 +148,7 @@ public class TestReactSnackbarControl extends TestCase {
 	}
 
 	private ReactSnackbarControl snackbar() {
-		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue());
+		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
 		return new ReactSnackbarControl(context, "", Variant.SUCCESS, () -> _dismissed++);
 	}
 

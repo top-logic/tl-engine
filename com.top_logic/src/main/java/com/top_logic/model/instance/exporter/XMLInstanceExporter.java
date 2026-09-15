@@ -5,7 +5,6 @@
  */
 package com.top_logic.model.instance.exporter;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOError;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -30,6 +29,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.XmlDateTimeFormat;
 import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.basic.io.binary.BinaryDataSource;
+import com.top_logic.basic.io.binary.BinaryDataURI;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
@@ -41,6 +41,7 @@ import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.instance.importer.XMLInstanceImporter;
 import com.top_logic.model.instance.importer.resolver.InstanceResolver;
 import com.top_logic.model.instance.importer.resolver.NoValueResolver;
 import com.top_logic.model.instance.importer.resolver.ValueResolver;
@@ -415,6 +416,14 @@ public class XMLInstanceExporter {
 
 	/**
 	 * Serializes a primitive value in a format that can be stored in an XML configuration.
+	 *
+	 * <p>
+	 * A binary value that is a {@link BinaryDataSource} is serialized as data URI, see
+	 * {@link BinaryDataURI#encode(BinaryDataSource)}, keeping its content type and file name. A
+	 * binary value given as plain <code>byte[]</code> is serialized as bare base64 string.
+	 * </p>
+	 *
+	 * @see XMLInstanceImporter#parse(I18NLog, TLPrimitive, String)
 	 */
 	public static String serialize(TLPrimitive type, Object value) {
 		if (value == null) {
@@ -426,7 +435,7 @@ public class XMLInstanceExporter {
 	private static String serializeStorageValue(DBType dbType, Object value) {
 		switch (dbType) {
 			case BLOB: {
-				return Base64.encodeBase64String(binary(value));
+				return serializeBinary(value);
 			}
 			case BOOLEAN:
 				return Boolean.toString(((Boolean) value).booleanValue());
@@ -458,19 +467,21 @@ public class XMLInstanceExporter {
 		throw new UnreachableAssertion("Unsupported DB type: " + dbType);
 	}
 
-	private static byte[] binary(Object value) {
+	/**
+	 * Serializes a binary storage value, keeping content type and file name if the value knows
+	 * them.
+	 */
+	private static String serializeBinary(Object value) {
 		if (value instanceof BinaryDataSource data) {
-			ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 			try {
-				data.deliverTo(buffer);
+				return BinaryDataURI.encode(data);
 			} catch (IOException ex) {
 				// Extremely unlikely, since writing to a buffer.
 				throw new IOError(ex);
 			}
-			return buffer.toByteArray();
 		}
 		if (value instanceof byte[] data) {
-			return data;
+			return Base64.encodeBase64String(data);
 		}
 		throw new IllegalArgumentException("Not expected for binary data: " + value.getClass());
 	}

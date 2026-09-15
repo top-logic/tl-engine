@@ -15,6 +15,7 @@ import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ReactValueColor;
 import com.top_logic.layout.react.navigation.ObjectNavigator;
+import com.top_logic.model.listen.ObservedObjects;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -98,6 +99,17 @@ public class ReactResourceCellControl extends ReactControl implements TooltipPro
 	private GotoListener _gotoListener;
 
 	/**
+	 * The displayed value, observed while the cell is displayed.
+	 *
+	 * <p>
+	 * Label, icon, tooltip, css class and link of the cell are all read from that object, so editing
+	 * it elsewhere must reach the cell: the observation follows the displayed value and resolves the
+	 * state again.
+	 * </p>
+	 */
+	private final ObservedObjects _displayedObjects = new ObservedObjects(event -> refreshDisplay());
+
+	/**
 	 * Creates a new {@link ReactResourceCellControl}.
 	 *
 	 * @param value
@@ -121,6 +133,18 @@ public class ReactResourceCellControl extends ReactControl implements TooltipPro
 		_useLink = useLink;
 		_rowObject = value;
 		resolveState(value);
+		_displayedObjects.observeValue(value);
+		addAttachListener(() -> _displayedObjects.attach(modelScope()));
+		addDetachListener(_displayedObjects::detach);
+	}
+
+	/**
+	 * Resolves the display of the value again after the object it names has changed.
+	 */
+	private void refreshDisplay() {
+		Object tx = beginUpdate();
+		resolveState(_rowObject);
+		commitUpdate(tx);
 	}
 
 	/**
@@ -146,6 +170,7 @@ public class ReactResourceCellControl extends ReactControl implements TooltipPro
 	 */
 	public void update(Object value) {
 		_rowObject = value;
+		_displayedObjects.observeValue(value);
 		resolveState(value);
 	}
 

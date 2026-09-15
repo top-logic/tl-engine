@@ -14,7 +14,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.Set;
 
 import jakarta.servlet.MultipartConfigElement;
 import jakarta.servlet.ServletException;
@@ -72,6 +72,7 @@ import com.top_logic.layout.react.protocol.Property;
 import com.top_logic.layout.react.protocol.RouteVetoEvent;
 import com.top_logic.layout.react.protocol.SSEEvent;
 import com.top_logic.layout.react.routing.RouteManager;
+import com.top_logic.layout.react.window.Interaction;
 import com.top_logic.layout.react.window.PendingViewPick;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.mig.html.layout.MainLayout;
@@ -461,14 +462,11 @@ public class ReactServlet extends TopLogicServlet {
 				sendSuccess(response);
 				return;
 			}
-			// Acquire the request lock so the close callback (which may patch the opener's
-			// snackbar state and flush SSE events) does not race with concurrent commands.
-			ReentrantLock requestLock = registry.getRequestLock();
-			requestLock.lock();
-			try {
+			// Closing a window changes the display of the session: the close callback may patch the
+			// opener's snackbar state, which must not race with concurrent commands and is delivered
+			// when the interaction completes.
+			try (Interaction interaction = registry.beginInteraction()) {
 				registry.windowClosed(closedWindowId);
-			} finally {
-				requestLock.unlock();
 			}
 			sendSuccess(response);
 			return;
@@ -540,10 +538,8 @@ public class ReactServlet extends TopLogicServlet {
 		// Install subsession context and enable command phase.
 		SubsessionHandler rootHandler = installSubSession(displayContext, windowName);
 
-		ReentrantLock requestLock = ReactWindowRegistry.forSession(session).getRequestLock();
-		requestLock.lock();
-		try {
-			// Capture the interaction for the script recorder before it runs: the address is computed
+		try (Interaction interaction = ReactWindowRegistry.forSession(session).beginInteraction()) {
+			// Capture the step for the script recorder before the command runs: the address is computed
 			// against the current (pre-command) tree — exactly the state a replay resolves it against.
 			recordCommand(queue, control, commandName, arguments);
 
@@ -561,7 +557,7 @@ public class ReactServlet extends TopLogicServlet {
 			forwardPendingUpdates(displayContext, rootHandler, queue, control);
 
 			// Synthesize model events so that observable models receive changes
-			// from this command before the SSE queue is flushed.
+			// from this command before the interaction delivers its updates.
 			ReactWindowRegistry.forSession(session).synthesizeModelEvents(windowName);
 
 			if (result.isSuccess()) {
@@ -571,8 +567,6 @@ public class ReactServlet extends TopLogicServlet {
 				CommandErrors.show(errorSink(control), result);
 				sendSuccess(response);
 			}
-		} finally {
-			requestLock.unlock();
 		}
 	}
 
@@ -637,41 +631,40 @@ public class ReactServlet extends TopLogicServlet {
 		// Adopting a URL changes the display like any other command does, and needs the same context
 		// for it: the subsession the controls belong to - without it a channel bound to a route
 		// parameter cannot look up the object the URL names - the update phase that lets the controls
-		// write their state, and the lock that keeps a second request out of the tree meanwhile.
+		// write their state, and the interaction that keeps a second request out of the tree meanwhile
+		// and delivers what the navigation changed.
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 		SubsessionHandler rootHandler = installSubSession(displayContext, windowName);
 
-		ReentrantLock requestLock = ReactWindowRegistry.forSession(session).getRequestLock();
-		requestLock.lock();
-		try {
-			boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
+		try (Interaction interaction = ReactWindowRegistry.forSession(session).beginInteraction()) {
 			try {
-				routeManager.navigateToRoute(url);
+				boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
+				try {
+					routeManager.navigateToRoute(url);
 
-				// The display has taken the URL as far as it can: a segment it cannot reproduce is
-				// dropped, and what the display adds from here on is a navigation again.
-				routeManager.finishAdoption();
-				sendSuccess(response);
-			} finally {
-				if (rootHandler != null) {
-					rootHandler.enableUpdate(updateBefore);
+					// The display has taken the URL as far as it can: a segment it cannot reproduce is
+					// dropped, and what the display adds from here on is a navigation again.
+					routeManager.finishAdoption();
+					sendSuccess(response);
+				} finally {
+					if (rootHandler != null) {
+						rootHandler.enableUpdate(updateBefore);
+					}
 				}
+			} catch (Exception ex) {
+				Logger.info("Route navigation vetoed for url '" + url + "': " + ex.getMessage(),
+					ReactServlet.class);
+
+				// The URL is not reached, so its adoption ends here: the display stays as the veto keeps
+				// it, and the address the client is restored to below is the one it shows from now on -
+				// without which the user's next navigation would be reported as a replacement of it.
+				routeManager.cancelAdoption();
+
+				RouteVetoEvent veto = RouteVetoEvent.create()
+					.setCurrentUrl(routeManager.currentUrl());
+				queue.enqueue(veto);
+				sendSuccess(response);
 			}
-		} catch (Exception ex) {
-			Logger.info("Route navigation vetoed for url '" + url + "': " + ex.getMessage(),
-				ReactServlet.class);
-
-			// The URL is not reached, so its adoption ends here: the display stays as the veto keeps
-			// it, and the address the client is restored to below is the one it shows from now on -
-			// without which the user's next navigation would be reported as a replacement of it.
-			routeManager.cancelAdoption();
-
-			RouteVetoEvent veto = RouteVetoEvent.create()
-				.setCurrentUrl(routeManager.currentUrl());
-			queue.enqueue(veto);
-			sendSuccess(response);
-		} finally {
-			requestLock.unlock();
 		}
 	}
 
@@ -716,9 +709,7 @@ public class ReactServlet extends TopLogicServlet {
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 		SubsessionHandler rootHandler = installSubSession(displayContext, designerWindowId);
 
-		ReentrantLock requestLock = registry.getRequestLock();
-		requestLock.lock();
-		try {
+		try (Interaction interaction = registry.beginInteraction()) {
 			boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
 			try {
 				pending.onPicked().accept(path);
@@ -728,8 +719,6 @@ public class ReactServlet extends TopLogicServlet {
 				}
 			}
 			registry.synthesizeModelEvents(designerWindowId);
-		} finally {
-			requestLock.unlock();
 		}
 		sendSuccess(response);
 	}
@@ -795,9 +784,7 @@ public class ReactServlet extends TopLogicServlet {
 		// Install subsession context and enable command phase.
 		SubsessionHandler rootHandler = installSubSession(displayContext, windowName);
 
-		ReentrantLock requestLock = ReactWindowRegistry.forSession(session).getRequestLock();
-		requestLock.lock();
-		try {
+		try (Interaction interaction = ReactWindowRegistry.forSession(session).beginInteraction()) {
 			if (limit > 0 && request.getContentLengthLong() > limit) {
 				rejectTooLarge(response, control, limit,
 					"request of " + request.getContentLengthLong() + " bytes");
@@ -843,8 +830,8 @@ public class ReactServlet extends TopLogicServlet {
 			forwardPendingUpdates(displayContext, rootHandler, queue, control);
 
 			// Synthesize model events so that observable models (e.g. tables observing the uploaded
-			// objects' type) receive the changes made during upload handling before the SSE queue is
-			// flushed - otherwise the upload's effect only shows after a later rebuild.
+			// objects' type) receive the changes made during upload handling before the interaction
+			// delivers its updates - otherwise the upload's effect only shows after a later rebuild.
 			ReactWindowRegistry.forSession(session).synthesizeModelEvents(windowName);
 
 			if (!result.isSuccess()) {
@@ -852,8 +839,6 @@ public class ReactServlet extends TopLogicServlet {
 				CommandErrors.show(errorSink(control), result);
 			}
 			sendSuccess(response);
-		} finally {
-			requestLock.unlock();
 		}
 	}
 
@@ -935,12 +920,8 @@ public class ReactServlet extends TopLogicServlet {
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 		installSubSession(displayContext, windowName);
 
-		ReentrantLock requestLock = ReactWindowRegistry.forSession(session).getRequestLock();
-		requestLock.lock();
-		try {
+		try (Interaction interaction = ReactWindowRegistry.forSession(session).beginInteraction()) {
 			showUploadTooLarge(control, UploadSupport.maxUploadSize());
-		} finally {
-			requestLock.unlock();
 		}
 		sendSuccess(response);
 	}

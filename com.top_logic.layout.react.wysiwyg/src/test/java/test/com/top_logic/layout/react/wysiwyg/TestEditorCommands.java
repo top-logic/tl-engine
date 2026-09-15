@@ -29,6 +29,7 @@ import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.wysiwyg.ReactWysiwygControl;
 import com.top_logic.layout.react.wysiwyg.WysiwygControlProvider;
 import com.top_logic.layout.view.DefaultViewContext;
@@ -85,7 +86,8 @@ public class TestEditorCommands extends TestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 
-		ReactContext reactContext = new DefaultReactContext("", "test", new SSEUpdateQueue());
+		ReactContext reactContext = new DefaultReactContext("", "test", new SSEUpdateQueue(),
+				new ReactWindowRegistry("test"));
 		_context = new DefaultViewContext(reactContext);
 		_context.registerChannel(VIEW_CHANNEL, new DefaultViewChannel(VIEW_CHANNEL));
 	}

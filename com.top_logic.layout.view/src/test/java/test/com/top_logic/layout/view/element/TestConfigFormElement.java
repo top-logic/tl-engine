@@ -26,6 +26,7 @@ import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
@@ -61,7 +62,8 @@ public class TestConfigFormElement extends TestCase {
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		_context = new DefaultViewContext(new DefaultReactContext("", "test", new SSEUpdateQueue()));
+		_context = new DefaultViewContext(new DefaultReactContext("", "test", new SSEUpdateQueue(),
+				new ReactWindowRegistry("test")));
 	}
 
 	/** Builds the element from a configuration with the given property values. */

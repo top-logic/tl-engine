@@ -32,6 +32,7 @@ import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.control.tabbar.ReactTabBarControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
@@ -117,7 +118,8 @@ public class TestObjectNavigation extends TestCase {
 		_mounts = () -> mounts;
 
 		ViewElement rootView = ViewLoader.getOrLoadView(ViewLoader.fullPath(ROOT_VIEW));
-		_root = new DefaultViewContext(new DefaultReactContext("", "test", new SSEUpdateQueue()));
+		_root = new DefaultViewContext(new DefaultReactContext("", "test", new SSEUpdateQueue(),
+				new ReactWindowRegistry("test")));
 		rootView.createControl(_root);
 		_tabBar = (TabBarElement) ((ChildGroup.Elements) rootView.getChildGroups().get(0)).children().get(0);
 	}

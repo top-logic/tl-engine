@@ -30,6 +30,7 @@ import com.top_logic.layout.react.ForwardingReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.command.UploadCommand;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
@@ -165,7 +166,7 @@ public class TestViewUploadCommandModel extends TestCase {
 
 	/** A context reporting to the given sink, <code>null</code> for a context without one. */
 	private static ReactContext context(ErrorSink sink) {
-		return new ForwardingReactContext(new DefaultReactContext("", "test", new SSEUpdateQueue())) {
+		return new ForwardingReactContext(new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"))) {
 			@Override
 			public ErrorSink getErrorSink() {
 				return sink;

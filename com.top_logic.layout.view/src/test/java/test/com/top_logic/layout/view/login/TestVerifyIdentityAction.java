@@ -353,7 +353,7 @@ public class TestVerifyIdentityAction extends TestCase {
 
 		@Override
 		protected Runnable openWaitingPrompt(ReactContext context, DialogManager dialogManager, ResKey title,
-				ResKey message, String reauthenticationUrl, Runnable onCancel) {
+				ResKey message, ResKey buttonLabel, String reauthenticationUrl, Runnable onCancel) {
 			_waiting = new WaitingPrompt(reauthenticationUrl, onCancel);
 			return _waiting::close;
 		}

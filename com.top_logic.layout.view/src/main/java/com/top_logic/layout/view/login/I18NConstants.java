@@ -85,15 +85,10 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey REAUTHENTICATION_TITLE;
 
 	/**
-	 * @en Confirm your identity by signing in again at {0}. Use the button below; the sign-in opens
-	 *     in a new window and this dialog closes by itself once you are confirmed.
+	 * @en Confirm your identity by signing in again. The button below opens the sign-in in a new
+	 *     window, and this dialog closes by itself once you are confirmed.
 	 */
-	public static ResKey1 REAUTHENTICATION_MESSAGE__PROVIDER;
-
-	/**
-	 * @en Sign in
-	 */
-	public static ResKey REAUTHENTICATION_BUTTON_LABEL;
+	public static ResKey REAUTHENTICATION_MESSAGE;
 
 	/**
 	 * @en Your password cannot be verified. The change was not applied.

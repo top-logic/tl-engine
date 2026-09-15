@@ -197,8 +197,9 @@ public class VerifyIdentityAction extends InterruptibleViewAction {
 			}
 			prompt.set(openWaitingPrompt(context, dialogManager,
 				title(I18NConstants.REAUTHENTICATION_TITLE),
-				// The provider's own label, resolved with the message it is placed in.
-				I18NConstants.REAUTHENTICATION_MESSAGE__PROVIDER.fill(method.getLabel()),
+				I18NConstants.REAUTHENTICATION_MESSAGE,
+				// The provider's own label is the button: it names where the user signs in.
+				method.getLabel(),
 				url,
 				() -> {
 					cancelVerification(token);
@@ -327,7 +328,9 @@ public class VerifyIdentityAction extends InterruptibleViewAction {
 	 * @param title
 	 *        The dialog title, the configured one or this action's own.
 	 * @param message
-	 *        The explanation naming the provider the user signs in at.
+	 *        The explanation of what the sign-in confirms and how the dialog ends.
+	 * @param buttonLabel
+	 *        The label of the button opening the sign-in, the login method's own.
 	 * @param reauthenticationUrl
 	 *        Where the provider authenticates the user again, from
 	 *        {@link LoginMethod#getReauthenticationUrl(String)}.
@@ -337,11 +340,10 @@ public class VerifyIdentityAction extends InterruptibleViewAction {
 	 *         {@link ReauthenticationPromptDialogControl#openDialog}.
 	 */
 	protected Runnable openWaitingPrompt(ReactContext context, DialogManager dialogManager, ResKey title,
-			ResKey message, String reauthenticationUrl, Runnable onCancel) {
+			ResKey message, ResKey buttonLabel, String reauthenticationUrl, Runnable onCancel) {
 		Resources resources = Resources.getInstance();
 		return ReauthenticationPromptDialogControl.openDialog(context, dialogManager,
-			resources.getString(title), resources.getString(message),
-			resources.getString(I18NConstants.REAUTHENTICATION_BUTTON_LABEL),
+			resources.getString(title), resources.getString(message), resources.getString(buttonLabel),
 			reauthenticationUrl, onCancel);
 	}
 

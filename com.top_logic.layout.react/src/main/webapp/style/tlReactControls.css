@@ -3092,6 +3092,15 @@ button.tlMenu__item--disabled:hover {
 	outline: none;
 }
 
+/* The link beside a cell input keeps the cell's own padding, which the input gave up */
+.tlTableView__cell .tlReactTextInput__row {
+	height: 100%;
+}
+
+.tlTableView__cell .tlReactTextInput__open {
+	padding-right: var(--spacing-03);
+}
+
 /* Excel-style focus: highlight the entire cell only when an input is focused */
 .tlTableView__cell:has(.tlReactTextInput:focus, .tlReactNumberInput:focus, .tlReactDatePicker:focus, .tlReactSelect:focus) {
 	outline: 2px solid var(--focus);
@@ -4237,6 +4246,43 @@ button.tlMenu__item--disabled:hover {
 	color: var(--text-primary);
 	font-family: var(--font-family);
 	font-size: var(--body-compact-01-font-size);
+}
+
+/* Input plus the link that opens what it holds (url, e-mail, phone) */
+.tlReactTextInput__row {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	width: 100%;
+	min-width: 0;
+}
+
+.tlReactTextInput__row > .tlReactTextInput {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.tlReactTextInput__open {
+	flex: 0 0 auto;
+	color: var(--link-primary);
+	text-decoration: none;
+	line-height: 1;
+}
+
+.tlReactTextInput__open:hover,
+.tlReactTextInput__open:focus {
+	color: var(--link-primary-hover);
+}
+
+/* The value itself is the link while the field is only displayed */
+.tlReactTextInput--link {
+	color: var(--link-primary);
+	text-decoration: underline;
+}
+
+.tlReactTextInput--link:hover,
+.tlReactTextInput--link:focus {
+	color: var(--link-primary-hover);
 }
 
 /* Native select arrow spacing */

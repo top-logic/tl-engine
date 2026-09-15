@@ -23,7 +23,6 @@ import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
-import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.react.control.layout.ToolbarGroupDisplay;
 import com.top_logic.layout.react.control.overlay.DialogManager;
@@ -40,7 +39,9 @@ import com.top_logic.layout.view.element.CompositionTableElement;
 import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.layout.view.model.TableSelectionBinding;
 import com.top_logic.layout.view.table.ColumnBinding;
+import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.layout.view.table.ColumnSetup;
+import com.top_logic.layout.view.table.ColumnType;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -629,17 +630,18 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			String attribute = column.attribute();
 			TLStructuredTypePart part = rowType == null ? null : rowType.getPart(attribute);
 			ResKey label = part != null ? TLModelNamingConvention.resourceKey(part) : ResKey.text(attribute);
-			ColumnSetup setup =
-				new ColumnSetup(attribute, label, part, _context, column.binding(), column.width());
+			ColumnSetup setup = new ColumnSetup(attribute, label, ColumnType.of(part),
+				row -> ColumnProviderService.attributeValue(row, attribute), _context, column.binding(),
+				column.width());
 			setups.add(setup);
 			Column<Object, ?> inner = setup.buildColumn();
-			columns.add(adapt(inner, part, editMode && !column.readonly()));
+			columns.add(adapt(inner, setup, editMode && !column.readonly()));
 		}
 		return columns;
 	}
 
-	private <V> Column<TLObject, V> adapt(Column<Object, V> inner, TLStructuredTypePart part, boolean editable) {
-		return new EditAwareColumn<>(inner, part, editable);
+	private <V> Column<TLObject, V> adapt(Column<Object, V> inner, ColumnSetup setup, boolean editable) {
+		return new EditAwareColumn<>(inner, setup, editable);
 	}
 
 	@Override
@@ -840,20 +842,20 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	/**
 	 * Adapts a type-derived {@link Column} (rows typed {@code Object}) to the {@link TLObject} row
 	 * type of this table, rendering cells editable when the enclosing form edits and the
-	 * {@link RowEditPolicy} covers the row, and read-only cells through the attribute's view-mode
-	 * field display (so value types keep their interactive display, e.g. a download link).
+	 * {@link RowEditPolicy} covers the row, and read-only cells through the view-mode field display
+	 * of the column's values (so value types keep their interactive display, e.g. a download link).
 	 */
 	private final class EditAwareColumn<V> implements Column<TLObject, V> {
 
 		private final Column<Object, V> _inner;
 
-		private final TLStructuredTypePart _part;
+		private final ColumnSetup _setup;
 
 		private final boolean _editable;
 
-		EditAwareColumn(Column<Object, V> inner, TLStructuredTypePart part, boolean editable) {
+		EditAwareColumn(Column<Object, V> inner, ColumnSetup setup, boolean editable) {
 			_inner = inner;
-			_part = part;
+			_setup = setup;
 			_editable = editable;
 		}
 
@@ -879,7 +881,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 		@Override
 		public CellContent renderCell(TLObject row) {
-			if (_editable && row != null && isRowEditable(row)) {
+			if (_editable && _setup.type().part() != null && row != null && isRowEditable(row)) {
 				return new CellContent.Raw((CellControlFactory) context -> {
 					ReactControl editControl = buildEditCellControl(context, row, name());
 					return editControl != null
@@ -887,21 +889,23 @@ public class RowSetTableControl extends AbstractCompositionControl {
 						: readOnlyControl(context, row);
 				});
 			}
-			if (_part != null && row != null) {
+			if (_setup.type().resolved() && row != null) {
 				return new CellContent.Raw((CellControlFactory) context -> readOnlyControl(context, row));
 			}
 			return _inner.renderCell(row);
 		}
 
 		/**
-		 * The read-only cell control: the attribute's view-mode field display, or a text fallback.
+		 * The read-only cell control: the view-mode field display of the column's values.
+		 *
+		 * <p>
+		 * The value is read through the column's own value function, so a column showing something
+		 * else than an attribute of the row displays that.
+		 * </p>
 		 */
 		private ReactControl readOnlyControl(ReactContext context, TLObject row) {
-			if (_part != null) {
-				return FieldControlService.getInstance()
-					.createDisplayControl(context, _part, row.tValueByName(name()));
-			}
-			return new ReactTextControl(context, MetaLabelProvider.INSTANCE.getLabel(row.tValueByName(name())));
+			return FieldControlService.getInstance()
+				.createDisplayControl(context, _setup.type(), _setup.value().apply(row));
 		}
 
 		@Override

@@ -5,9 +5,10 @@
  */
 package com.top_logic.layout.view.table;
 
+import java.util.function.Function;
+
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.table.Column;
 import com.top_logic.table.impl.DelegatingColumn;
 
@@ -15,12 +16,20 @@ import com.top_logic.table.impl.DelegatingColumn;
  * The resolved descriptor of one table column, passed to its {@link ColumnBinding} to build the
  * runtime column and contribute any per-session UI.
  *
- * @param attribute
- *        The column (attribute) name.
+ * <p>
+ * What the column shows is described twice over: {@link #type()} says what kind of value a cell
+ * holds, {@link #value()} reads that value from a row. Neither assumes a model attribute, so a
+ * column over a computed value is described the same way as one over an attribute.
+ * </p>
+ *
+ * @param name
+ *        The column name, which for a column over a model attribute is the attribute name.
  * @param label
  *        The resolved column header label.
- * @param part
- *        The model attribute, or {@code null} if the row type could not be resolved.
+ * @param type
+ *        What the column's values are, deciding its display, sort, filter and search.
+ * @param value
+ *        Reads the cell value from a row.
  * @param viewContext
  *        The per-session context, e.g. for resolving channel references.
  * @param binding
@@ -30,9 +39,10 @@ import com.top_logic.table.impl.DelegatingColumn;
  *        brings itself.
  */
 public record ColumnSetup(
-		String attribute,
+		String name,
 		ResKey label,
-		TLStructuredTypePart part,
+		ColumnType type,
+		Function<Object, Object> value,
 		ViewContext viewContext,
 		ColumnBinding binding,
 		int width) {

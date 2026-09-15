@@ -15,6 +15,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.table.ColumnBinding;
 import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.layout.view.table.ColumnSetup;
+import com.top_logic.layout.view.table.ColumnType;
 import com.top_logic.table.Column;
 
 /**
@@ -51,11 +52,12 @@ public class TestColumnSetup extends TestCase {
 	}
 
 	/**
-	 * A type-derived setup for the given width, over an unresolved attribute - which yields the
-	 * label column every attribute falls back to.
+	 * A type-derived setup for the given width, over values nothing is known about - which yields
+	 * the label column every column falls back to.
 	 */
 	private static ColumnSetup setup(int width) {
-		return new ColumnSetup(ATTRIBUTE, LABEL, null, null, ColumnBinding.TYPE_DERIVED, width);
+		return new ColumnSetup(ATTRIBUTE, LABEL, ColumnType.UNRESOLVED,
+			row -> ColumnProviderService.attributeValue(row, ATTRIBUTE), null, ColumnBinding.TYPE_DERIVED, width);
 	}
 
 	/**

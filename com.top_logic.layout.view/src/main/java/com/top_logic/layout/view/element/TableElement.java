@@ -65,7 +65,9 @@ import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.layout.view.model.TableSelectionBinding;
 import com.top_logic.layout.view.table.ColumnBinding;
+import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.layout.view.table.ColumnSetup;
+import com.top_logic.layout.view.table.ColumnType;
 import com.top_logic.layout.view.table.DeclaredFilters;
 import com.top_logic.layout.view.table.DropTargetMode;
 import com.top_logic.layout.view.table.FilterStateConfig;
@@ -1119,7 +1121,7 @@ public class TableElement implements UIElement {
 		}
 		columns.addAll(this.<Object> rowCommandColumns(context, activation));
 		ListRowSource<Object> source = new ListRowSource<>(new ArrayList<>(rows), columns);
-		Set<String> hiddenByDefault = hiddenByDefault(setups.stream().map(ColumnSetup::attribute).toList());
+		Set<String> hiddenByDefault = hiddenByDefault(setups.stream().map(ColumnSetup::name).toList());
 		TableViewState initialState = DefaultTableView.initialState(columns, defaultSort(), hiddenByDefault);
 		initialState.setFrozenCount(_config.getFixedColumns());
 		initialState.setGrouping(initialGrouping());
@@ -1414,13 +1416,11 @@ public class TableElement implements UIElement {
 			for (ColumnConfig columnConfig : columnsConfig.getColumns()) {
 				String attribute = columnConfig.getAttribute();
 				TLStructuredTypePart part = rowType == null ? null : rowType.getPart(attribute);
-				setups.add(new ColumnSetup(attribute, columnLabel(part, attribute), part, context,
-					_bindings.get(attribute), columnConfig.getWidth()));
+				setups.add(attributeSetup(attribute, part, context, _bindings.get(attribute),
+					columnConfig.getWidth()));
 			}
 			for (TLStructuredTypePart part : offeredParts(configuredAttributes())) {
-				String attribute = part.getName();
-				setups.add(new ColumnSetup(attribute, columnLabel(part, attribute), part, context,
-					ColumnBinding.TYPE_DERIVED, 0));
+				setups.add(attributeSetup(part.getName(), part, context, ColumnBinding.TYPE_DERIVED, 0));
 			}
 		} else if (rowType != null) {
 			// No explicit columns configured: derive a default set from the row type's
@@ -1429,9 +1429,7 @@ public class TableElement implements UIElement {
 				if (DisplayAnnotations.isHidden(part)) {
 					continue;
 				}
-				String attribute = part.getName();
-				setups.add(new ColumnSetup(attribute, columnLabel(part, attribute), part, context,
-					ColumnBinding.TYPE_DERIVED, 0));
+				setups.add(attributeSetup(part.getName(), part, context, ColumnBinding.TYPE_DERIVED, 0));
 			}
 		}
 		if (setups.isEmpty()) {
@@ -1439,6 +1437,27 @@ public class TableElement implements UIElement {
 				"A <table> requires either explicit <column>s or a resolvable row type to derive them from.");
 		}
 		return setups;
+	}
+
+	/**
+	 * The descriptor of a column over a model attribute: the attribute says what the column's
+	 * values are, and the cell value is read from the row object under the attribute name.
+	 *
+	 * @param attribute
+	 *        The attribute (column) name.
+	 * @param part
+	 *        The model attribute, or {@code null} when the row type could not be resolved.
+	 * @param context
+	 *        The per-session context.
+	 * @param binding
+	 *        The strategy building the runtime column.
+	 * @param width
+	 *        The width configured at the column, or {@code 0} for the type-derived one.
+	 */
+	private static ColumnSetup attributeSetup(String attribute, TLStructuredTypePart part, ViewContext context,
+			ColumnBinding binding, int width) {
+		return new ColumnSetup(attribute, columnLabel(part, attribute), ColumnType.of(part),
+			row -> ColumnProviderService.attributeValue(row, attribute), context, binding, width);
 	}
 
 	/**

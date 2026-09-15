@@ -21,7 +21,8 @@ import {
   truncate,
   turnsJsonToMessages,
 } from './api'
-import type { PaneOpenOptions } from './extensions'
+import type { ComposerApi, PaneOpenOptions } from './extensions'
+import type { ReferenceToken } from './reference'
 import { bundle, providerErrorText, toLanguage, type Language } from './i18n'
 import { effortLevelsOf, modelsFor } from './models'
 import { parsePreferences, savePreferences } from './preferences'
@@ -138,6 +139,11 @@ export interface ChatBootstrap {
   railOpen: boolean
   paneWidth: number
   badgeSeen: number
+  /**
+   * Section ids that start collapsed. Omitted keeps today's App default ({@code context} closed).
+   * Set by {@code <chat-rail/>} from each section's {@code open} flag (D3).
+   */
+  collapsedSections?: string[]
 }
 
 /** Reads the bootstrap a chat element pushed into its control state. */
@@ -154,6 +160,9 @@ export function readBootstrap(state: Record<string, unknown>): ChatBootstrap {
     railOpen: prefs.railOpen,
     paneWidth: prefs.paneWidth,
     badgeSeen: prefs.badgeSeen,
+    collapsedSections: Array.isArray(state.collapsedSections)
+      ? state.collapsedSections.map((id) => String(id))
+      : undefined,
   }
 }
 
@@ -283,6 +292,13 @@ export interface ChatActions {
   showSection(id: string, badgeTotal: number): void
   setPaneWidth(width: number): void
   toggleSection(id: string): void
+  /**
+   * Applies the rail element's configured default once. Later mounts, and {@code App}, leave the
+   * user's toggles alone.
+   */
+  seedCollapsedOnce(ids: string[]): void
+  bindComposer(api: ComposerApi | null): void
+  insertReference(token: ReferenceToken): void
 }
 
 /**
@@ -374,6 +390,11 @@ export class ChatStore {
   /** Whether the remembered chat has been dealt with; restoring happens once per store. */
   private restored = false
 
+  /** Whether {@code <chat-rail/>} has already applied its configured collapsed default (D3). */
+  private collapsedFromRail = false
+
+  private composerApi: ComposerApi | null = null
+
   private readonly offeredModelsOf = memo(
     (models: ModelOption[], agents: AgentOption[], agent: string): ModelOption[] =>
       modelsFor(models, agents.find((item) => item.name === agent)?.model),
@@ -431,7 +452,7 @@ export class ChatStore {
       badgeSeen: boot.badgeSeen,
       paneContent: null,
       paneOptions: null,
-      collapsedSections: ['context'],
+      collapsedSections: boot.collapsedSections ?? ['context'],
     })
     this.effects = this.declareEffects()
     this.actions = this.declareActions()
@@ -543,6 +564,7 @@ export class ChatStore {
   private quiesce(): void {
     if (!this.live) return
     this.live = false
+    this.composerApi = null
     if (CHATS.get(this.chatId) === this) CHATS.delete(this.chatId)
     for (const effect of this.effects) {
       effect.cleanup?.()
@@ -1527,6 +1549,20 @@ export class ChatStore {
             ? collapsed.filter((item) => item !== id)
             : [...collapsed, id],
         })
+      },
+
+      seedCollapsedOnce: (ids: string[]) => {
+        if (this.collapsedFromRail) return
+        this.collapsedFromRail = true
+        this.patch({ collapsedSections: ids })
+      },
+
+      bindComposer: (api) => {
+        this.composerApi = api
+      },
+
+      insertReference: (token) => {
+        this.composerApi?.insertReference(token)
       },
     }
   }

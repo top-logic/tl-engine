@@ -47,6 +47,8 @@ public class ChatThreadControl extends ReactControl {
 		putState("runSummary", config.getRunSummary().getExternalName());
 		putState("citationMarkers", Boolean.valueOf(config.getCitationMarkers()));
 		putState("railToggle", Boolean.valueOf(config.getRailToggle()));
+		String annotations = config.getAnnotations();
+		putState("annotations", annotations == null ? "" : annotations.trim());
 		Actions actions = config.getActions();
 		putState("copy", Boolean.valueOf(actions.getCopy()));
 		putState("rate", Boolean.valueOf(actions.getRate()));

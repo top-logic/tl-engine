@@ -31,6 +31,7 @@ public class TestChatThreadConfig extends TestCase {
 		assertEquals(RunSummary.COLLAPSED, config.getRunSummary());
 		assertTrue(config.getCitationMarkers());
 		assertTrue(config.getRailToggle());
+		assertNull(config.getAnnotations());
 		assertTrue(config.getActions().getCopy());
 		assertTrue(config.getActions().getRate());
 		assertTrue(config.getActions().getRegenerate());

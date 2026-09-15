@@ -2,6 +2,14 @@ export { App } from './App'
 export { TLChatSessions } from './chat-sessions'
 export { TLChatThread } from './chat-thread'
 export { TLChatComposer } from './chat-composer'
+export { TLChatRail } from './chat-rail'
+export {
+  registerRailSection,
+  registerReferenceSource,
+  registerMenuItem,
+  registerAnnotationRenderer,
+  registerMessageAction,
+} from './registry'
 export { SessionRail, SessionRail as Chrome } from './chrome'
 export { Composer } from './composer'
 export { ComposerNotice } from './notice'

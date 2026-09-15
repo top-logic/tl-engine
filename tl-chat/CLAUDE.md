@@ -325,6 +325,13 @@ conversation.
 existing `Thread` and `Composer` props. An optional `input` channel selects the session; without
 one the store is the source. `<chat-thread>` writes an optional `busy` channel.
 
+`<chat-rail>` is the right rail and its pane. An empty `<sections>` list is Fortschritt, then
+registered host sections, then Kontext and Quellen. Named host sections, `@` sources, `+` menu
+items, citation renderers and message actions are registered from TypeScript
+(`registerRailSection` and the four neighbours) and referenced by name from XML. The store still
+issues the one `PUT /chat/preferences`; layout fields are mutated by the rail (and by `App`, which
+contains one).
+
 ### Stability
 
 Exported types and `App` / `extensions` are the contract. File splits inside `ui/src` are not.

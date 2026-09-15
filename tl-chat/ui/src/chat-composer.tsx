@@ -3,6 +3,8 @@ import type { TLCellProps } from 'tl-react-bridge'
 import type { ApprovalRequest, Attachment, InteractionRequest } from './types'
 import { chatIdOf, readBootstrap, useChat } from './chat-store'
 import { Composer, plusMenuVisible } from './composer'
+import type { ComposerApi } from './extensions'
+import { registeredReferenceSource, resolveMenuItems } from './registry'
 import { bundle } from './i18n'
 
 const { useCallback, useEffect, useMemo } = React
@@ -50,6 +52,15 @@ export function TLChatComposer({ controlId }: TLCellProps) {
   const selected = typeof state.selected === 'string' ? state.selected : ''
   const placeholder = typeof state.placeholder === 'string' ? state.placeholder : ''
   const promptImprovementEnabled = state.promptImprovementEnabled === true
+  const extraMenuItems = useMemo(
+    () =>
+      resolveMenuItems(Array.isArray(state.menuItems) ? state.menuItems.map(String) : []),
+    [state.menuItems],
+  )
+  const referenceCandidates = useMemo(
+    () => registeredReferenceSource(typeof state.referenceSource === 'string' ? state.referenceSource : ''),
+    [state.referenceSource],
+  )
 
   useEffect(() => {
     if (!selected || selected === chat.sessionId) return
@@ -127,6 +138,9 @@ export function TLChatComposer({ controlId }: TLCellProps) {
         onSend={onSend}
         onStop={actions.stop}
         placeholder={placeholder || undefined}
+        extraMenuItems={extraMenuItems}
+        referenceCandidates={referenceCandidates}
+        ref={(api: ComposerApi | null) => actions.bindComposer(api)}
         {...controls}
       />
     </div>

@@ -3,6 +3,7 @@ import type { TLCellProps } from 'tl-react-bridge'
 import { chatIdOf, readBootstrap, useChat } from './chat-store'
 import { bundle } from './i18n'
 import { RailToggle } from './rail'
+import { registeredAnnotationRenderer, resolveMessageActions } from './registry'
 import { Thread } from './thread'
 
 const { useCallback, useEffect, useMemo } = React
@@ -113,6 +114,13 @@ export function TLChatThread({ controlId }: TLCellProps) {
         canRate={config.rate}
         canRegenerate={config.regenerate}
         citationMarkers={config.citationMarkers}
+        extraActions={resolveMessageActions(
+          Array.isArray(state.hostActions) ? state.hostActions.map(String) : [],
+        )}
+        renderAnnotation={registeredAnnotationRenderer(
+          typeof state.annotations === 'string' ? state.annotations : '',
+        )}
+        openInPane={actions.openPane}
         headerEnd={
           config.railToggle ? (
             <RailToggle

@@ -272,8 +272,23 @@
   flex: 0 0 auto;
 }
 
+.tl-chat-rail {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.tl-chat-rail .side-column,
+.tl-chat-rail .side-pane,
+.tl-chat-rail .side-strip {
+  position: relative;
+}
+
 .tl-chat-thread.is-signed-out,
-.tl-chat-composer.is-signed-out {
+.tl-chat-composer.is-signed-out,
+.tl-chat-rail.is-signed-out {
   display: grid;
   place-items: center;
   padding: 2rem;

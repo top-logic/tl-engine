@@ -121,6 +121,13 @@ public class ChatThreadElement implements UIElement {
 		String RAIL_TOGGLE = "rail-toggle";
 
 		/**
+		 * Configuration property name for {@link #getAnnotations()}.
+		 *
+		 * @see #getAnnotations()
+		 */
+		String ANNOTATIONS = "annotations";
+
+		/**
 		 * Configuration property name for {@link #getActions()}.
 		 *
 		 * @see #getActions()
@@ -200,6 +207,14 @@ public class ChatThreadElement implements UIElement {
 		@Label("Rail toggle")
 		@BooleanDefault(true)
 		boolean getRailToggle();
+
+		/**
+		 * Registered annotation-renderer name. Empty keeps the built-in citation popover.
+		 */
+		@Name(ANNOTATIONS)
+		@Label("Annotations")
+		@Nullable
+		String getAnnotations();
 
 		/**
 		 * Which commands sit under a finished answer.
@@ -306,8 +321,8 @@ public class ChatThreadElement implements UIElement {
 	 * view.
 	 *
 	 * <p>
-	 * The registered set is empty until {@code registerMessageAction} exists. Names still travel
-	 * to the browser in the control state so a later registry can pick them up; this method is
+	 * The registered set is the names {@code registerMessageAction} has published. Names still
+	 * travel to the browser in the control state so the registry can pick them up; this method is
 	 * what the tests pin.
 	 * </p>
 	 */

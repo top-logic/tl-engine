@@ -7,6 +7,7 @@ package test.com.top_logic.element.model.instance.importer;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 
 import junit.framework.Test;
 
@@ -25,6 +26,9 @@ import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.binary.BinaryDataURI;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
+import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKeyUtil;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -56,17 +60,11 @@ public class TestXMLInstanceImporter extends TLModelTest {
 
 	public void testImport() throws ConfigurationException {
 		Content instanceSource = ClassRelativeBinaryContent.withSuffix(TestXMLInstanceImporter.class, "scenario.xml");
-		TLFactory factory = ModelService.getInstance().getFactory();
 		TLModel model = getModel();
 
 		Log testLog = new BufferingProtocol();
 
-		XMLInstanceImporter importer = new XMLInstanceImporter(model, factory);
-		importer.setLog(testLog.asI18NLog(ResourcesModule.getInstance().getBundle(ResourcesModule.getLogLocale())));
-		importer.addResolver(AccountResolver.KIND,
-			new AccountResolver());
-		importer.addResolver(PersistentObjectResolver.KIND,
-			new PersistentObjectResolver(PersistencyLayer.getKnowledgeBase()));
+		XMLInstanceImporter importer = importer(testLog);
 		ObjectsConf configs = XMLInstanceImporter.loadConfig(instanceSource);
 
 		importer.importInstances(configs);
@@ -131,6 +129,41 @@ public class TestXMLInstanceImporter extends TLModelTest {
 
 		TLObject x4 = importer.getObject("x4");
 		assertEquals(list(PersonManager.getManager().getRoot()), get(x4, "any"));
+	}
+
+	/**
+	 * Tests that an internationalized attribute given as plain <code>value</code> attribute is
+	 * imported as literal text instead of being silently dropped (Ticket #29558).
+	 */
+	public void testImportI18NPlainValue() throws ConfigurationException {
+		BufferingProtocol testLog = new BufferingProtocol();
+		XMLInstanceImporter importer = importer(testLog);
+
+		ObjectsConf configs = XMLInstanceImporter.loadConfig(CharacterContents.newContent(
+			"<objects>"
+				+ "<object id=\"c1\" type=\"TestXMLInstanceImporter:A\">"
+				+ "<attribute name=\"label\" value=\"Travel\"/>"
+				+ "</object>"
+				+ "</objects>",
+			"i18n-plain-value.xml"));
+		importer.importInstances(configs);
+		assertFalse(testLog.getErrors().toString(), testLog.hasErrors());
+
+		ResKey label = (ResKey) get(importer.getObject("c1"), "label");
+		assertNotNull("Internationalized attribute imported as empty value.", label);
+		assertEquals("Travel", ResKeyUtil.getTranslation(label, Locale.ENGLISH));
+		assertEquals("Travel", ResKeyUtil.getTranslation(label, Locale.GERMAN));
+	}
+
+	private XMLInstanceImporter importer(Log testLog) {
+		TLFactory factory = ModelService.getInstance().getFactory();
+		XMLInstanceImporter importer = new XMLInstanceImporter(getModel(), factory);
+		importer.setLog(log(testLog));
+		importer.addResolver(AccountResolver.KIND,
+			new AccountResolver());
+		importer.addResolver(PersistentObjectResolver.KIND,
+			new PersistentObjectResolver(PersistencyLayer.getKnowledgeBase()));
+		return importer;
 	}
 
 	/**

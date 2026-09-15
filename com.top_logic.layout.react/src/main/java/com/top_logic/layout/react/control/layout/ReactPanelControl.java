@@ -30,6 +30,8 @@ import com.top_logic.layout.react.control.ToolbarControl;
  * <li>{@code showPopOut} - whether the pop-out button is shown</li>
  * <li>{@code fill} - whether the panel fills its container's bounded height instead of growing
  * with its content</li>
+ * <li>{@code width} - a width of the panel's own (optional), instead of the width its container
+ * offers</li>
  * <li>{@code toolbar} - child control descriptor for the toolbar (optional)</li>
  * <li>{@code buttonBar} - child control descriptor for the button bar (optional)</li>
  * <li>{@code child} - the content child control descriptor</li>
@@ -65,6 +67,9 @@ public class ReactPanelControl extends ToolbarControl {
 
 	/** @see #setFill(boolean) */
 	private static final String FILL = "fill";
+
+	/** @see #setWidth(String) */
+	private static final String WIDTH = "width";
 
 	/** @see #setTitleContent(ReactControl) */
 	private static final String TITLE_CONTENT = "titleContent";
@@ -214,6 +219,23 @@ public class ReactPanelControl extends ToolbarControl {
 	 */
 	public void setFill(boolean fill) {
 		putState(FILL, Boolean.valueOf(fill));
+	}
+
+	/**
+	 * Gives the panel a width of its own, instead of the width its container offers.
+	 *
+	 * <p>
+	 * A panel of its own width no longer stretches across its container, so the alignment of the
+	 * container places it - a stack aligning its children to the center, for instance, centers it.
+	 * The width is a preference, not a minimum: the panel never grows beyond the space there is.
+	 * </p>
+	 *
+	 * @param width
+	 *        The width as a CSS length, e.g. {@code 380px}, or {@code null} to take the width the
+	 *        container offers.
+	 */
+	public void setWidth(String width) {
+		putState(WIDTH, width);
 	}
 
 	/**

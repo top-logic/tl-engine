@@ -23,6 +23,7 @@ import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.element.TreeElement;
+import com.top_logic.table.SelectionMode;
 
 /**
  * Tests parsing and instantiation of {@link TreeElement}.
@@ -33,25 +34,7 @@ public class TestTreeElement extends TestCase {
 	 * Tests that a view XML with a {@code <tree>} element can be parsed into configuration.
 	 */
 	public void testParseTreeConfig() throws Exception {
-		DefaultInstantiationContext context = new DefaultInstantiationContext(TestTreeElement.class);
-
-		Map<String, ConfigurationDescriptor> descriptors = Collections.singletonMap(
-			"view", TypedConfiguration.getConfigurationDescriptor(ViewElement.Config.class));
-
-		BinaryContent source = new ClassRelativeBinaryContent(TestTreeElement.class, "test-tree.view.xml");
-
-		ConfigurationReader reader = new ConfigurationReader(context, descriptors);
-		reader.setSource(source);
-		ViewElement.Config config = (ViewElement.Config) reader.read();
-
-		context.checkErrors();
-		assertNotNull("Config should be parsed", config);
-
-		// The content should be a TreeElement config.
-		assertTrue("Content should be TreeElement config",
-			config.getContent() instanceof TreeElement.Config);
-
-		TreeElement.Config treeConfig = (TreeElement.Config) config.getContent();
+		TreeElement.Config treeConfig = readTreeConfig();
 
 		// Verify inputs.
 		assertEquals("Should have one input", 1, treeConfig.getInputs().size());
@@ -83,6 +66,47 @@ public class TestTreeElement extends TestCase {
 	public void testInstantiateTreeElement() throws Exception {
 		DefaultInstantiationContext context = new DefaultInstantiationContext(TestTreeElement.class);
 
+		UIElement element = context.getInstance(readViewConfig(context));
+		context.checkErrors();
+		assertNotNull("UIElement should be instantiated", element);
+		assertTrue("Should be a ViewElement", element instanceof ViewElement);
+	}
+
+	/**
+	 * Tests that a tree selects one node at a time unless it configures the selection of any number
+	 * of them.
+	 */
+	public void testSelectionMode() throws Exception {
+		assertEquals("A tree selects one node at a time unless it says otherwise.",
+			SelectionMode.SINGLE,
+			TypedConfiguration.newConfigItem(TreeElement.Config.class).getSelectionMode());
+
+		assertEquals("The tree configures the selection of any number of nodes.",
+			SelectionMode.MULTI, readTreeConfig().getSelectionMode());
+	}
+
+	/**
+	 * The {@link TreeElement.Config} of the test view.
+	 */
+	private TreeElement.Config readTreeConfig() throws Exception {
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestTreeElement.class);
+
+		ViewElement.Config config = readViewConfig(context);
+
+		context.checkErrors();
+		assertNotNull("Config should be parsed", config);
+
+		// The content should be a TreeElement config.
+		assertTrue("Content should be TreeElement config",
+			config.getContent() instanceof TreeElement.Config);
+
+		return (TreeElement.Config) config.getContent();
+	}
+
+	/**
+	 * Reads the test view.
+	 */
+	private ViewElement.Config readViewConfig(DefaultInstantiationContext context) throws Exception {
 		Map<String, ConfigurationDescriptor> descriptors = Collections.singletonMap(
 			"view", TypedConfiguration.getConfigurationDescriptor(ViewElement.Config.class));
 
@@ -90,12 +114,7 @@ public class TestTreeElement extends TestCase {
 
 		ConfigurationReader reader = new ConfigurationReader(context, descriptors);
 		reader.setSource(source);
-		ViewElement.Config config = (ViewElement.Config) reader.read();
-
-		UIElement element = context.getInstance(config);
-		context.checkErrors();
-		assertNotNull("UIElement should be instantiated", element);
-		assertTrue("Should be a ViewElement", element instanceof ViewElement);
+		return (ViewElement.Config) reader.read();
 	}
 
 	/**

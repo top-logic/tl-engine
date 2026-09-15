@@ -25,15 +25,25 @@ public class TestViewEntryPoints extends TestCase {
 
 	private static final String DEFAULT_VIEW_PATH = "/WEB-INF/views/app.view.xml";
 
+	private static final String LOGIN_VIEW = "login-page.view.xml";
+
+	private static final String LOGIN_VIEW_PATH = "/WEB-INF/views/login-page.view.xml";
+
+	/** A session that belongs to an account. */
+	private static final boolean NAMED = false;
+
+	/** A session that belongs to no account. */
+	private static final boolean ANONYMOUS = true;
+
 	/**
 	 * A URL that names no view file is a route and displays the default view.
 	 */
 	public void testRouteDisplaysDefaultView() {
 		ViewConfig config = newConfig();
 
-		assertEquals(DEFAULT_VIEW_PATH, ViewServlet.resolveViewPath(config, "/w1/"));
-		assertEquals(DEFAULT_VIEW_PATH, ViewServlet.resolveViewPath(config, "/w1"));
-		assertEquals(DEFAULT_VIEW_PATH, ViewServlet.resolveViewPath(config, "/w1/some/route"));
+		assertEquals(DEFAULT_VIEW_PATH, ViewServlet.resolveViewPath(config, "/w1/", NAMED));
+		assertEquals(DEFAULT_VIEW_PATH, ViewServlet.resolveViewPath(config, "/w1", NAMED));
+		assertEquals(DEFAULT_VIEW_PATH, ViewServlet.resolveViewPath(config, "/w1/some/route", NAMED));
 	}
 
 	/**
@@ -42,7 +52,7 @@ public class TestViewEntryPoints extends TestCase {
 	public void testDefaultViewIsEntryPoint() {
 		ViewConfig config = newConfig();
 
-		assertEquals(DEFAULT_VIEW_PATH, ViewServlet.resolveViewPath(config, "/w1/app.view.xml"));
+		assertEquals(DEFAULT_VIEW_PATH, ViewServlet.resolveViewPath(config, "/w1/app.view.xml", NAMED));
 	}
 
 	/**
@@ -52,7 +62,7 @@ public class TestViewEntryPoints extends TestCase {
 		ViewConfig config = newConfig("demo/x.view.xml");
 
 		assertEquals("/WEB-INF/views/demo/x.view.xml",
-			ViewServlet.resolveViewPath(config, "/w1/demo/x.view.xml"));
+			ViewServlet.resolveViewPath(config, "/w1/demo/x.view.xml", NAMED));
 	}
 
 	/**
@@ -61,7 +71,7 @@ public class TestViewEntryPoints extends TestCase {
 	public void testUnregisteredViewRefused() {
 		ViewConfig config = newConfig("demo/x.view.xml");
 
-		assertNull(ViewServlet.resolveViewPath(config, "/w1/login.view.xml"));
+		assertNull(ViewServlet.resolveViewPath(config, "/w1/login.view.xml", NAMED));
 	}
 
 	/**
@@ -70,7 +80,59 @@ public class TestViewEntryPoints extends TestCase {
 	public void testNoEntryPointsRegistered() {
 		ViewConfig config = newConfig();
 
-		assertNull(ViewServlet.resolveViewPath(config, "/w1/demo/x.view.xml"));
+		assertNull(ViewServlet.resolveViewPath(config, "/w1/demo/x.view.xml", NAMED));
+	}
+
+	/**
+	 * A visitor sees the login view, whatever the URL names.
+	 */
+	public void testAnonymousSeesLoginView() {
+		ViewConfig config = withLoginView(newConfig("demo/x.view.xml"));
+
+		assertEquals(LOGIN_VIEW_PATH, ViewServlet.resolveViewPath(config, "/w1/some/route", ANONYMOUS));
+		assertEquals(LOGIN_VIEW_PATH, ViewServlet.resolveViewPath(config, "/w1/", ANONYMOUS));
+		assertEquals(LOGIN_VIEW_PATH, ViewServlet.resolveViewPath(config, "/w1/app.view.xml", ANONYMOUS));
+		assertEquals(LOGIN_VIEW_PATH, ViewServlet.resolveViewPath(config, "/w1/demo/x.view.xml", ANONYMOUS));
+	}
+
+	/**
+	 * A view that is no entry point is answered with the login view rather than with "not found":
+	 * what a visitor may see is decided once they are logged in.
+	 */
+	public void testAnonymousSeesLoginViewForUnregisteredView() {
+		ViewConfig config = withLoginView(newConfig());
+
+		assertEquals(LOGIN_VIEW_PATH, ViewServlet.resolveViewPath(config, "/w1/demo/x.view.xml", ANONYMOUS));
+	}
+
+	/**
+	 * An account of their own gets the application, not the login view.
+	 */
+	public void testLoggedInSkipsLoginView() {
+		ViewConfig config = withLoginView(newConfig("demo/x.view.xml"));
+
+		assertEquals(DEFAULT_VIEW_PATH, ViewServlet.resolveViewPath(config, "/w1/some/route", NAMED));
+		assertEquals("/WEB-INF/views/demo/x.view.xml",
+			ViewServlet.resolveViewPath(config, "/w1/demo/x.view.xml", NAMED));
+	}
+
+	/**
+	 * An application that shows itself to visitors displays what the URL names to a visitor, too.
+	 */
+	public void testAnonymousWithoutLoginView() {
+		ViewConfig config = newConfig("demo/x.view.xml");
+
+		assertEquals(DEFAULT_VIEW_PATH, ViewServlet.resolveViewPath(config, "/w1/some/route", ANONYMOUS));
+		assertEquals("/WEB-INF/views/demo/x.view.xml",
+			ViewServlet.resolveViewPath(config, "/w1/demo/x.view.xml", ANONYMOUS));
+		assertNull(ViewServlet.resolveViewPath(config, "/w1/other.view.xml", ANONYMOUS));
+	}
+
+	private ViewConfig withLoginView(ViewConfig config) {
+		config.update(
+			TypedConfiguration.getConfigurationDescriptor(ViewConfig.class).getProperty(ViewConfig.LOGIN_VIEW),
+			LOGIN_VIEW);
+		return config;
 	}
 
 	private ViewConfig newConfig(String... entryPoints) {

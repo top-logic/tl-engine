@@ -67,12 +67,22 @@ public class ReactTextInputControl extends ReactFormFieldControl {
 	/**
 	 * Sets the {@link #getInputType() kind of value} the field edits.
 	 *
+	 * <p>
+	 * A {@link InputType#URL} field {@link #setSendValueOnBlur(boolean) holds a typed value back}
+	 * until it is left: an address is only an address once it is written out, so every prefix of
+	 * one on the way there is a text this field rejects. What reaches the server is the address the
+	 * client completed when the field was left, judged once.
+	 * </p>
+	 *
 	 * @param inputType
 	 *        The kind of value, never {@code null}.
 	 */
 	public void setInputType(InputType inputType) {
 		_inputType = inputType;
 		putState(INPUT_TYPE, inputType.htmlType());
+		if (inputType == InputType.URL) {
+			setSendValueOnBlur(true);
+		}
 	}
 
 	/**

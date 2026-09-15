@@ -69,9 +69,14 @@ const normalizeUrl = (value: string): string => {
  * at the address itself, 'email' at a `mailto:` address, 'tel' at a `tel:` number without its
  * spaces - is offered as a link: as the displayed text while the field is read-only, and as an
  * icon beside the input while it is edited, so that what is being typed can be opened. There is no
- * link while the field is empty or holds a value the server rejected. A 'url' is completed to an
- * `https` address when the field is left, so that a typed bare host is stored as an address a
- * browser can follow; a value naming its own scheme ('mailto:', 'ftp:') is left as typed.
+ * link while the field is empty or holds a value the server rejected; the icon comes and goes
+ * inside a wrapper the single-line input always has, so that gaining or losing the link leaves the
+ * input itself in place and typing keeps the focus.
+ *
+ * A 'url' is completed to an `https` address when the field is left and when it is submitted with
+ * Enter, so that a typed bare host is stored as an address a browser can follow; a value naming its
+ * own scheme ('mailto:', 'ftp:') is left as typed. The server holds such a field back until it is
+ * left (state.sendValueOnBlur), so that the half-typed address in between is never judged.
  */
 const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
   const [value, setValue, flushValue] = useTLFieldValue({
@@ -112,7 +117,25 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
     }
   }, [flushValue, commitOnBlur, sendCommand, inputType, text, setValue]);
 
-  const handleSubmitKey = useTLSubmitOnEnter();
+  const submitKey = useTLSubmitOnEnter();
+  const handleSubmitKey = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (submitKey === undefined) {
+        return;
+      }
+      if (inputType === 'url' && e.key === 'Enter') {
+        // What is submitted is the address as it is stored, so complete the scheme before the
+        // handler reads the input.
+        const normalized = normalizeUrl(e.currentTarget.value);
+        if (normalized !== e.currentTarget.value) {
+          e.currentTarget.value = normalized;
+          setValue(normalized);
+        }
+      }
+      submitKey(e);
+    },
+    [submitKey, inputType, setValue]
+  );
 
   const multiline = state.multiline === true;
   const hasError = state.hasError === true;
@@ -180,7 +203,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
       placeholder={(state.placeholder as string) ?? undefined}
       onChange={handleChange}
       onBlur={handleBlur}
-      onKeyDown={handleSubmitKey}
+      onKeyDown={submitKey === undefined ? undefined : handleSubmitKey}
       disabled={state.disabled === true}
       className={cls}
       aria-invalid={hasError || undefined}
@@ -190,11 +213,9 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
 
   return (
     <span id={controlId}>
-      {href === null ? (
-        input
-      ) : (
-        <span className="tlReactTextInput__row">
-          {input}
+      <span className="tlReactTextInput__row">
+        {input}
+        {href !== null && (
           <a
             className="tlReactTextInput__open"
             href={href}
@@ -205,8 +226,8 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
           >
             <FontIcon image={OPEN_ICON} />
           </a>
-        </span>
-      )}
+        )}
+      </span>
     </span>
   );
 };

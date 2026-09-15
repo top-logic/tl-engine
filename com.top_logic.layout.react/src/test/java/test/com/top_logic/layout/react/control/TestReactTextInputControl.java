@@ -57,6 +57,20 @@ public class TestReactTextInputControl extends TestCase {
 	}
 
 	/**
+	 * A web address is judged once, when the field is left, so the client holds a typed value back
+	 * until then. A text the server does not read is sent while it is being typed.
+	 */
+	public void testUrlValueIsSentOnBlur() {
+		assertEquals(Boolean.TRUE, control(null, InputType.URL).sendValueOnBlur());
+
+		assertNull(control(null).sendValueOnBlur());
+		assertNull(control(null, InputType.TEXT).sendValueOnBlur());
+		assertNull(control(null, InputType.EMAIL).sendValueOnBlur());
+		assertNull(control(null, InputType.TEL).sendValueOnBlur());
+		assertNull(control(null, InputType.SEARCH).sendValueOnBlur());
+	}
+
+	/**
 	 * An absolute address is stored as typed, without the white space around it.
 	 */
 	public void testValidUrl() {
@@ -173,6 +187,10 @@ public class TestReactTextInputControl extends TestCase {
 
 		Object inputType() {
 			return getState(INPUT_TYPE);
+		}
+
+		Object sendValueOnBlur() {
+			return getState(SEND_VALUE_ON_BLUR);
 		}
 
 		void type(String text) {

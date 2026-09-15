@@ -633,13 +633,17 @@ Note: The configuration is currently **static application configuration**; it is
 
 #### 2.4.1 The `SecurityConfigurationService` configuration
 
-The `SecurityConfigurationService` is configured with a `<security-config>` section. It contains one element per target element -- `<class>`, `<part>`, `<module>`, or `<singleton>` -- identified by its qualified `name`. Each target element carries one `<grant>` per command group:
+The `SecurityConfigurationService` is configured with a `<security-config>` section. It contains one element per target element -- `<class>`, `<part>`, `<module>`, or `<singleton>` -- identified by its qualified `name`. Each target element carries an ordered sequence of access rules, `<grant>` and `<revoke>`, that is applied in the order of declaration. Both rule kinds share the same attributes:
 
-| `<grant>` attribute | Meaning |
+| Rule attribute | Meaning |
 |---------------------|---------|
 | `operation` | The command group (Read, Write, Delete, Create, or a custom command group) |
-| `roles` | Comma-separated list of roles permitted to perform this operation on the target element |
-| `inherit` | Whether the grant is propagated to sub-types (relevant for `<class>`/`<module>` targets; see the semantics note below) |
+| `roles` | Comma-separated list of roles the rule adds (`<grant>`) or takes away (`<revoke>`) for this operation on the target element |
+| `inherit` | Whether the rule is propagated to sub-types (relevant for `<class>`/`<module>` targets; see the semantics note below) |
+
+A `<grant>` adds its roles to the roles permitted for its operation. Several grants for the same operation therefore accumulate; the last one does not replace the earlier ones.
+
+A `<revoke>` withdraws permission again: with `roles`, it removes exactly those roles from the operation's role set (the -- possibly empty -- entry stays, so the operation remains restricted to the remaining roles); without `roles`, it drops the operation's entry entirely, removing every role that a preceding rule contributed. For a `<part>`, the operation is then no longer restricted on the attribute and the type-level decision applies unchanged. For a `<class>` or `<module>`, the operation is denied for every role -- the rules of the module and of the generalizations have already been merged into that entry when the target's own rules are applied. A rule following a `<revoke>` may grant the operation again.
 
 The four target-element kinds map to the security targets as follows:
 
@@ -660,8 +664,9 @@ The four target-element kinds map to the security targets as follows:
         <grant operation="Delete" roles="Manager"                 inherit="false"/>
     </class>
     <part name="myapp:Customer#salary">
-        <grant operation="Read"  roles="Manager"/>
-        <grant operation="Write" roles="Manager"/>
+        <grant  operation="Read"  roles="Manager, Controller"/>
+        <revoke operation="Read"  roles="Controller"/>   <!-- Controllers must not see the salary -->
+        <grant  operation="Write" roles="Manager"/>
     </part>
     <singleton name="tl.admin:AdminPanel">
         <grant operation="Read"  roles="Admin"/>
@@ -686,6 +691,8 @@ Rules at different levels combine as follows:
 - **Attribute-level entries restrict.** An attribute-level grant does not add to the type-level permission; it narrows it: the user must have the type-level permission for the command group *and* hold one of the roles listed for the attribute (see section 2.3.3). If no attribute-level grant exists for an attribute, the type-level permission applies unchanged.
 
 - **Singleton-level entries are standalone.** A singleton's grants define its own `(command group → roles)` mapping and are used in place of any type-level rules for that instance (see section 2.3.9).
+
+- **Rules for the same operation are applied in sequence and accumulate across configuration layers.** The rules of a target element form one ordered list to which every configuration layer appends: an application's rules follow the rules declared by the framework and adjust them instead of replacing them. For a type, the rules are applied generalization-first -- a type starts with the rights its generalizations pass on (entries with `inherit="true"`), then the rules of its module are applied as an additive baseline, then the type's own rules. A `<grant>` adds roles, a `<revoke>` removes roles or, without `roles`, the whole operation entry -- including the roles the module and the generalizations contributed, so that the operation is denied until a later rule grants it again.
 
 #### 2.4.3 Administration UI (future extension)
 

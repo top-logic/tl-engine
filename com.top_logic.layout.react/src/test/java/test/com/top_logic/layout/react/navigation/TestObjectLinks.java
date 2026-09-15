@@ -26,6 +26,7 @@ import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
 import com.top_logic.layout.react.control.table.ReactResourceCellControl;
 import com.top_logic.layout.react.navigation.ObjectNavigator;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -89,7 +90,8 @@ public class TestObjectLinks extends TestCase {
 		super.setUp();
 
 		_navigator = new Targets();
-		_context = new ForwardingReactContext(new DefaultReactContext("", "test", new SSEUpdateQueue())) {
+		_context = new ForwardingReactContext(new DefaultReactContext("", "test", new SSEUpdateQueue(),
+				new ReactWindowRegistry("test"))) {
 			@Override
 			public ObjectNavigator getObjectNavigator() {
 				return _navigator;
@@ -99,7 +101,7 @@ public class TestObjectLinks extends TestCase {
 
 	/** A context with nothing to display objects offers no links. */
 	public void testNothingLinksWithoutANavigator() {
-		ReactContext plain = new DefaultReactContext("", "test", new SSEUpdateQueue());
+		ReactContext plain = new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
 
 		assertNull(plain.getObjectNavigator());
 		assertFalse(cell(plain, SHOWN, true).stateAsJSON().contains(HAS_LINK));

@@ -40,6 +40,7 @@ import com.top_logic.layout.scripting.recorder.ref.ContextDependent;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
 import com.top_logic.layout.scripting.runtime.ActionContext;
+import com.top_logic.model.listen.ObservedObjects;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
@@ -131,6 +132,16 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	private boolean _updatingFromClient;
 
 	/**
+	 * The objects the field displays as its value, observed while the field is displayed.
+	 *
+	 * <p>
+	 * A selected object is displayed by its label, so editing that object elsewhere must reach the
+	 * field: the observation follows the value and refreshes the descriptors the client shows.
+	 * </p>
+	 */
+	private final ObservedObjects _displayedObjects = new ObservedObjects(event -> refreshDisplay());
+
+	/**
 	 * Creates a new {@link ReactDropdownSelectControl}.
 	 *
 	 * @param context
@@ -153,6 +164,24 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		_optionComparator = optionComparator;
 		_customOrder = customOrder;
 		initSelectState();
+		_displayedObjects.observeValue(model.getValue());
+		addAttachListener(() -> _displayedObjects.attach(modelScope()));
+		addDetachListener(_displayedObjects::detach);
+	}
+
+	/**
+	 * Re-describes the displayed value after one of the objects it consists of has changed.
+	 *
+	 * <p>
+	 * The option list carries the labels of those objects as well, so it is dropped: the client
+	 * loads it again the next time the dropdown is opened.
+	 * </p>
+	 */
+	private void refreshDisplay() {
+		Object tx = beginUpdate();
+		updateValueState();
+		setOptionsLoaded(false);
+		commitUpdate(tx);
 	}
 
 	/**
@@ -213,6 +242,8 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 */
 	@Override
 	protected void handleModelValueChanged(FieldModel source, Object oldValue, Object newValue) {
+		// The objects displayed are the ones the value now names, whoever set it.
+		_displayedObjects.observeValue(newValue);
 		if (!_updatingFromClient) {
 			updateValueState();
 			// Invalidate cached options so the client reloads them on next open.

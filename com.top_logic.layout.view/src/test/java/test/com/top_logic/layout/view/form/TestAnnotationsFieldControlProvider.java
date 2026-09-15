@@ -34,6 +34,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.layout.view.form.AnnotationsFieldControlProvider;
 import com.top_logic.element.layout.meta.TLEnumerationFormBuilder;
@@ -66,7 +67,7 @@ public class TestAnnotationsFieldControlProvider extends TestCase {
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		_context = new DefaultReactContext("", "test", new SSEUpdateQueue());
+		_context = new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
 	}
 
 	/** One concrete module annotation to edit - the base interface cannot be instantiated. */

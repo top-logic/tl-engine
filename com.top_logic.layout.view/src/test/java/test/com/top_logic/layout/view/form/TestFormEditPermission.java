@@ -12,6 +12,7 @@ import junit.framework.TestCase;
 import com.top_logic.base.locking.handler.NoTokenHandling;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.model.TransientObject;
@@ -62,7 +63,8 @@ public class TestFormEditPermission extends TestCase {
 	}
 
 	private static FormControl newForm() {
-		return new FormControl(new DefaultReactContext("", "test", new SSEUpdateQueue()), new MockTLObject(),
+		return new FormControl(new DefaultReactContext("", "test", new SSEUpdateQueue(),
+				new ReactWindowRegistry("test")), new MockTLObject(),
 			"no model", NoTokenHandling.INSTANCE);
 	}
 

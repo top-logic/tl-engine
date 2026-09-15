@@ -47,6 +47,7 @@ import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
@@ -376,7 +377,7 @@ public class TestConfigFormControl extends TestCase {
 	}
 
 	private ReactContext createTestContext() {
-		return new DefaultReactContext("", "test", new SSEUpdateQueue());
+		return new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
 	}
 
 	/**

@@ -684,14 +684,6 @@ export const Composer = React.memo(
                 setMention(null)
                 return
               }
-              // "/" on an empty draft is the agent picker, which the "+" menu already is.
-              if (event.key === '/' && draftIsEmpty(text)) {
-                event.preventDefault()
-                setMenuOpen(true)
-                setPane('agent')
-                setQuery('')
-                return
-              }
               if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault()
                 submit()

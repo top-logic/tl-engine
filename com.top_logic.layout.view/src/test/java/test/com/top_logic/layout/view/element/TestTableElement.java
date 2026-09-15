@@ -35,10 +35,13 @@ import com.top_logic.layout.view.element.TableElement.PresetsConfig;
 import com.top_logic.layout.view.form.RowEditPolicy;
 import com.top_logic.layout.view.table.AttributeColumn;
 import com.top_logic.layout.view.table.ColumnDeclaration;
+import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.ComputedColumn;
 import com.top_logic.layout.view.table.DropTargetMode;
+import com.top_logic.layout.view.table.EmbeddedColumns;
 import com.top_logic.layout.view.table.FilterStateConfig;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.SelectionMode;
 import com.top_logic.table.SortDirection;
@@ -287,6 +290,70 @@ public class TestTableElement extends TestCase {
 	}
 
 	/**
+	 * Tests that an {@code <embedded-columns>} is parsed with the path leading to the embedded
+	 * object - or the function computing it and the type it is of - and the columns embedded from
+	 * it.
+	 */
+	public void testParseEmbeddedColumns() throws Exception {
+		List<PolymorphicConfiguration<? extends ColumnDeclaration>> columns =
+			readTableConfig().getColumns().getColumns();
+
+		EmbeddedColumns.Config owner = (EmbeddedColumns.Config) columns.get(4);
+		assertEquals("owner.contact", owner.getReference());
+		assertNull("An embedding over a reference takes the type from that reference.",
+			owner.getType());
+		assertNull("An embedding over a reference is named after it.", owner.getName());
+		assertEquals("Declarations of any kind are embedded.", 2, owner.getColumns().size());
+		assertEquals("name", ((AttributeColumn.Config) owner.getColumns().get(0)).getAttribute());
+		assertEquals("mail", ((ComputedColumn.Config) owner.getColumns().get(1)).getName());
+
+		EmbeddedColumns.Config accounts = (EmbeddedColumns.Config) columns.get(5);
+		assertEquals("accounts", accounts.getName());
+		assertEquals("demo.test:Account", accounts.getType().qualifiedName());
+		assertNotNull("The embedded object is computed.", accounts.getObject());
+		assertTrue("The function yields a collection of objects.", accounts.getMultiple());
+		assertFalse("An embedding reaches one object unless it says otherwise.",
+			TypedConfiguration.newConfigItem(EmbeddedColumns.Config.class).getMultiple());
+		assertEquals("Account",
+			((ResKey.LiteralKey) accounts.getLabel()).getTranslationWithoutFallbacks(Locale.ENGLISH));
+	}
+
+	/**
+	 * Tests that the columns of an embedding are named after the path leading to them, so that a
+	 * column of the embedded object and one of the row itself stay apart.
+	 */
+	public void testEmbeddedColumnsAreNamedAfterTheirPath() throws Exception {
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestTableElement.class);
+		List<ColumnDeclaration> declarations =
+			ColumnDeclarations.instantiate(context, readTableConfig().getColumns());
+		context.checkErrors();
+
+		assertEquals(List.of("name", "active", "owner", "total", "owner.contact.name",
+			"owner.contact.mail", "accounts.number"),
+			ColumnDeclarations.declaredNames(declarations));
+	}
+
+	/**
+	 * Tests that an embedding saying which object it shows in more than one way - or in no way at
+	 * all - is reported.
+	 */
+	public void testEmbeddedTargetIsDeclaredOnce() throws Exception {
+		TableElement.Config both = TypedConfiguration.copy(readTableConfig());
+		EmbeddedColumns.Config referenced = (EmbeddedColumns.Config) both.getColumns().getColumns().get(4);
+		referenced.update(referenced.descriptor().getProperty(EmbeddedColumns.Config.TYPE),
+			TLModelPartRef.ref("demo.test:Contact"));
+
+		assertContains("not both", errors(both));
+
+		TableElement.Config neither = TypedConfiguration.copy(readTableConfig());
+		EmbeddedColumns.Config computed = (EmbeddedColumns.Config) neither.getColumns().getColumns().get(5);
+		computed.update(computed.descriptor().getProperty(EmbeddedColumns.Config.OBJECT), null);
+		computed.update(computed.descriptor().getProperty(EmbeddedColumns.Config.TYPE), null);
+
+		assertContains("must say which object", errors(neither));
+	}
+
+	/**
 	 * The {@code <computed-column>} of the given table.
 	 */
 	private static ComputedColumn.Config computedColumn(TableElement.Config tableConfig) {
@@ -342,7 +409,8 @@ public class TestTableElement extends TestCase {
 		TableElement element = (TableElement) context.getInstance(tableConfig);
 		context.checkErrors();
 
-		assertEquals("demo.test:Row,|name,active,owner,total,", element.tableId().value());
+		assertEquals("demo.test:Row,|name,active,owner,total,owner.contact.name,owner.contact.mail,"
+			+ "accounts.number,", element.tableId().value());
 	}
 
 	/**

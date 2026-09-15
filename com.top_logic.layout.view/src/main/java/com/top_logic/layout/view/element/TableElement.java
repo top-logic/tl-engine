@@ -8,7 +8,7 @@ package com.top_logic.layout.view.element;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -58,7 +58,6 @@ import com.top_logic.layout.view.form.RowSetTableControl;
 import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.layout.view.model.TableSelectionBinding;
-import com.top_logic.layout.view.table.AttributeColumn;
 import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.ColumnResolution;
@@ -74,9 +73,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLModel;
-import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
-import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
@@ -100,8 +97,9 @@ import com.top_logic.table.impl.PersonalConfigViewStateStore;
  *
  * <p>
  * Input data comes from {@link ViewChannel}s, rows are computed by a TL-Script expression, and each
- * column is declared by an entry of the {@code <columns>} - over a model attribute of the rows, or
- * over a value computed from them. Columns are sortable and (per-column) filterable.
+ * column is declared by an entry of the {@code <columns>} - over a model attribute of the rows, over
+ * a value computed from them, or over an object they point to. Columns are sortable and (per-column)
+ * filterable.
  * </p>
  *
  * <p>
@@ -1007,15 +1005,15 @@ public class TableElement implements UIElement {
 		ViewCommandModel activation = activationModel(context);
 
 		TLStructuredType rowType = resolveRowType(rows);
-		ColumnDeclarations declarations = columns(rowType);
-		List<ColumnSetup> setups = declarations.resolve(new ColumnResolution(rowType, context));
+		List<ColumnSetup> setups =
+			ColumnDeclarations.resolve(columns(rowType), new ColumnResolution(rowType, context));
 		List<Column<Object, ?>> columns = new ArrayList<>(setups.size());
 		for (ColumnSetup setup : setups) {
 			columns.add(setup.buildColumn());
 		}
 		columns.addAll(this.<Object> rowCommandColumns(context, activation));
 		ListRowSource<Object> source = new ListRowSource<>(new ArrayList<>(rows), columns);
-		Set<String> hiddenByDefault = declarations.hiddenByDefault();
+		Set<String> hiddenByDefault = ColumnDeclarations.hiddenByDefault(setups);
 		TableViewState initialState = DefaultTableView.initialState(columns, defaultSort(), hiddenByDefault);
 		initialState.setFrozenCount(_config.getFixedColumns());
 		initialState.setGrouping(initialGrouping());
@@ -1146,15 +1144,13 @@ public class TableElement implements UIElement {
 
 		ViewCommandModel activation = activationModel(context);
 
-		ColumnDeclarations declarations = columns(rowType);
 		RowSetTableControl control =
-			new RowSetTableControl(context, formControl, binding, declarations.all(), _config.getRowEdit());
+			new RowSetTableControl(context, formControl, binding, columns(rowType), _config.getRowEdit());
 		control.setFramed(false);
 		control.setPersonalization(PersonalConfigViewStateStore.INSTANCE, tableId());
 		control.setNamedFilters(columns -> declaredFilters(columns, readChannelValues(inputChannels)),
 			filterStore());
 		control.setFilterBar(filterBar());
-		control.setHiddenByDefault(declarations.hiddenByDefault());
 		control.setDefaultSort(defaultSort());
 		control.setGrouping(initialGrouping());
 		control.setFixedColumns(_config.getFixedColumns());
@@ -1257,8 +1253,8 @@ public class TableElement implements UIElement {
 	}
 
 	/**
-	 * The columns of this table for rows of the given type: the ones it shows, and the ones it only
-	 * offers in its column selection.
+	 * The columns of this table for rows of the given type: the ones it shows, followed by the ones
+	 * it only offers in its column selection.
 	 *
 	 * <p>
 	 * A table showing what it declares offers the rest of what its rows hold in addition. A table
@@ -1271,73 +1267,32 @@ public class TableElement implements UIElement {
 	 * @param rowType
 	 *        The model type of the rows, or {@code null} when it is unknown.
 	 */
-	public ColumnDeclarations columns(TLStructuredType rowType) {
+	public List<ColumnDeclaration> columns(TLStructuredType rowType) {
 		List<ColumnDeclaration> displayed =
-			_declarations.isEmpty() ? derivedColumns(rowType) : _declarations;
+			_declarations.isEmpty() ? ColumnDeclarations.mainColumns(rowType) : _declarations;
 		List<String> displayedNames =
 			_declarations.isEmpty() ? ColumnDeclarations.declaredNames(displayed) : _declaredNames;
-		List<ColumnDeclaration> offered = new ArrayList<>();
-		for (TLStructuredTypePart part : offeredParts(displayedNames, rowType)) {
-			offered.add(AttributeColumn.derived(part));
-		}
-		if (displayed.isEmpty() && offered.isEmpty()) {
+		List<ColumnDeclaration> result = new ArrayList<>(displayed);
+		result.addAll(offeredColumns(displayedNames, rowType));
+		if (result.isEmpty()) {
 			throw new IllegalStateException(
 				"A <table> requires either explicit <column>s or a resolvable row type to derive them from.");
-		}
-		return new ColumnDeclarations(displayed, offered);
-	}
-
-	/**
-	 * The columns a table declaring none of its own shows: those the row type names as its main
-	 * properties, and all of its non-hidden attributes when it names none the type holds.
-	 *
-	 * @param rowType
-	 *        The model type of the rows, or {@code null} when it is unknown - such a table has
-	 *        nothing to derive its columns from and shows none.
-	 */
-	private static List<ColumnDeclaration> derivedColumns(TLStructuredType rowType) {
-		if (rowType == null) {
-			return List.of();
-		}
-		List<ColumnDeclaration> result = new ArrayList<>();
-		List<String> mainProperties = DisplayAnnotations.getMainProperties(rowType);
-		if (!mainProperties.isEmpty()) {
-			for (String name : mainProperties) {
-				TLStructuredTypePart part = rowType.getPart(name);
-				if (part != null) {
-					result.add(AttributeColumn.derived(part));
-				}
-			}
-			if (!result.isEmpty()) {
-				return result;
-			}
-		}
-		for (TLStructuredTypePart part : rowType.getAllParts()) {
-			if (DisplayAnnotations.isHidden(part)) {
-				continue;
-			}
-			result.add(AttributeColumn.derived(part));
 		}
 		return result;
 	}
 
 	/**
-	 * The attributes this table <em>offers</em> in addition to the columns it shows: those of its
+	 * The columns this table <em>offers</em> in addition to the ones it shows: those of its
 	 * {@link Config#getTypes() configured types} that no displayed column covers and that a form
 	 * would display, too - so a user can add any attribute of the row type to the table through the
 	 * column selection, without the table having to enumerate them all.
-	 *
-	 * <p>
-	 * Their columns start out hidden; a table shows the columns it - or the model - considers worth
-	 * showing, and the rest is a choice, not a default.
-	 * </p>
 	 *
 	 * @param covered
 	 *        The names of the displayed columns, which are not offered a second time.
 	 * @param rowType
 	 *        The model type of the rows, which the configured types are resolved in.
 	 */
-	private List<TLStructuredTypePart> offeredParts(Collection<String> covered, TLStructuredType rowType) {
+	private List<ColumnDeclaration> offeredColumns(Collection<String> covered, TLStructuredType rowType) {
 		// Only an explicitly configured type gives a stable set of columns; a type guessed from the
 		// first row would offer different columns depending on the data at hand.
 		List<TLModelPartRef> typeRefs = _config.getTypes();
@@ -1345,8 +1300,8 @@ public class TableElement implements UIElement {
 			return List.of();
 		}
 		TLModel model = ColumnResolution.model(rowType);
-		Set<String> seen = new HashSet<>(covered);
-		List<TLStructuredTypePart> result = new ArrayList<>();
+		Set<String> seen = new LinkedHashSet<>(covered);
+		List<ColumnDeclaration> result = new ArrayList<>();
 		for (TLModelPartRef typeRef : typeRefs) {
 			TLStructuredType type;
 			try {
@@ -1354,12 +1309,9 @@ public class TableElement implements UIElement {
 			} catch (ConfigurationException ex) {
 				throw new RuntimeException("Failed to resolve type: " + typeRef.qualifiedName(), ex);
 			}
-			for (TLStructuredTypePart part : type.getAllParts()) {
-				if (DisplayAnnotations.isHidden(part) || !seen.add(part.getName())) {
-					continue;
-				}
-				result.add(part);
-			}
+			List<ColumnDeclaration> offered = ColumnDeclarations.offeredColumns(seen, type);
+			seen.addAll(ColumnDeclarations.declaredNames(offered));
+			result.addAll(offered);
 		}
 		return result;
 	}

@@ -84,4 +84,17 @@ public record ColumnType(TLType type, boolean multiple, AnnotationLookup annotat
 		return type != null;
 	}
 
+	/**
+	 * The descriptor of a column whose cells hold a collection of the values described here.
+	 *
+	 * <p>
+	 * A column reaching its values over a multi-valued step - the values of an attribute of every
+	 * object a reference points to - shows all of them in one cell, and is otherwise the column
+	 * this descriptor says it is.
+	 * </p>
+	 */
+	public ColumnType collected() {
+		return multiple ? this : new ColumnType(type, true, annotations, part);
+	}
+
 }

@@ -46,6 +46,8 @@ import com.top_logic.table.impl.DelegatingColumn;
  * @param aggregate
  *        What the column shows for a group of rows, computed from the group's member rows, or
  *        {@code null} for a column that leaves its group cell empty.
+ * @param hiddenByDefault
+ *        Whether the column is displayed only once the user selects it in the column selection.
  */
 public record ColumnSetup(
 		String name,
@@ -56,16 +58,18 @@ public record ColumnSetup(
 		ColumnBinding binding,
 		int width,
 		CellEditing editing,
-		Function<List<Object>, Object> aggregate) {
+		Function<List<Object>, Object> aggregate,
+		boolean hiddenByDefault) {
 
 	/**
-	 * Creates a {@link ColumnSetup} of a column that is not edited and aggregates nothing.
+	 * Creates a {@link ColumnSetup} of a column that is displayed from the start, is not edited and
+	 * aggregates nothing.
 	 *
 	 * @see ColumnSetup The full descriptor.
 	 */
 	public ColumnSetup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
 			ViewContext viewContext, ColumnBinding binding, int width) {
-		this(name, label, type, value, viewContext, binding, width, null, null);
+		this(name, label, type, value, viewContext, binding, width, null, null, false);
 	}
 
 	/**

@@ -94,6 +94,25 @@
 				<can-update>factor -&gt; row -&gt; $row.get(`demo.test:Row#amount`) != null</can-update>
 				<aggregate>rows -&gt; $rows.size()</aggregate>
 			</computed-column>
+			<embedded-columns reference="owner.contact">
+				<column attribute="name"/>
+				<computed-column name="mail"
+					type="tl.core:String"
+				>
+					<value>contact -&gt; $contact.get(`demo.test:Contact#email`).toLowerCase()</value>
+				</computed-column>
+			</embedded-columns>
+			<embedded-columns name="accounts"
+				multiple="true"
+				type="demo.test:Account"
+			>
+				<label>
+					<en>Account</en>
+					<de>Konto</de>
+				</label>
+				<object>row -&gt; $row.get(`demo.test:Row#accounts`)</object>
+				<column attribute="number"/>
+			</embedded-columns>
 		</columns>
 		<rows>input -&gt; list($input)</rows>
 	</table>

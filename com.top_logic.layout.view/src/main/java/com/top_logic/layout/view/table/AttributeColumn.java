@@ -68,8 +68,8 @@ public class AttributeColumn extends AbstractColumnDeclaration {
 		_attribute = config.getAttribute();
 	}
 
-	private AttributeColumn(String attribute, boolean readonly) {
-		super(readonly);
+	private AttributeColumn(String attribute, boolean readonly, boolean hiddenByDefault) {
+		super(readonly, hiddenByDefault);
 		_attribute = attribute;
 	}
 
@@ -85,7 +85,19 @@ public class AttributeColumn extends AbstractColumnDeclaration {
 	 *        The attribute the column shows.
 	 */
 	public static AttributeColumn derived(TLStructuredTypePart part) {
-		return new AttributeColumn(part.getName(), !DisplayAnnotations.isEditable(part));
+		return new AttributeColumn(part.getName(), !DisplayAnnotations.isEditable(part), false);
+	}
+
+	/**
+	 * The plain column for an attribute that is only <em>offered</em>: displayed once the user
+	 * selects it in the column selection, and not before.
+	 *
+	 * @param part
+	 *        The attribute the column shows.
+	 * @see #derived(TLStructuredTypePart) The column a table shows from the start.
+	 */
+	public static AttributeColumn offered(TLStructuredTypePart part) {
+		return new AttributeColumn(part.getName(), !DisplayAnnotations.isEditable(part), true);
 	}
 
 	@Override

@@ -8,7 +8,6 @@ package com.top_logic.layout.view.form;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -144,7 +143,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 	private SortSpec _defaultSort = SortSpec.NONE;
 
-	/** @see #setHiddenByDefault(Collection) */
+	/** The columns displayed only once the user selects them, taken from the resolved columns. */
 	private Set<String> _hiddenByDefault = Set.of();
 
 	/** @see #setFixedColumns(int) */
@@ -315,16 +314,6 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 */
 	public void setDefaultSort(SortSpec defaultSort) {
 		_defaultSort = defaultSort;
-	}
-
-	/**
-	 * The columns offered but not displayed until the user selects them in the column selection.
-	 *
-	 * @param columns
-	 *        Names among the table's own columns; unknown names are ignored.
-	 */
-	public void setHiddenByDefault(Collection<String> columns) {
-		_hiddenByDefault = new LinkedHashSet<>(columns);
 	}
 
 	/**
@@ -509,6 +498,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 		List<ColumnSetup> setups = new ArrayList<>(_columns.size());
 		columns.addAll(createDataColumns(editMode, setups));
+		_hiddenByDefault = ColumnDeclarations.hiddenByDefault(setups);
 
 		// Removal action column (edit mode only, when the binding supports removal, last, no header
 		// label - see detail column).

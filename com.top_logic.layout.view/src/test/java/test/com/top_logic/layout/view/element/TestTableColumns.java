@@ -18,7 +18,10 @@ import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.layout.view.element.TableElement;
+import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
+import com.top_logic.layout.view.table.ColumnResolution;
+import com.top_logic.layout.view.table.ColumnSetup;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.annotate.DisplayAnnotations;
@@ -67,28 +70,24 @@ public class TestTableColumns extends TestCase {
 		set(mainProperties, MainProperties.PROPERTIES, List.of("name"));
 		_rowType.setAnnotation(mainProperties);
 
-		ColumnDeclarations columns = tableWithoutColumns().columns(_rowType);
+		List<ColumnSetup> columns = resolve(tableWithoutColumns());
 
-		assertEquals("The main properties are what the table shows.", List.of("name"),
-			ColumnDeclarations.declaredNames(columns.displayed()));
-		assertEquals("Everything else the type holds is offered, the hidden attributes aside.",
-			List.of("description"), ColumnDeclarations.declaredNames(columns.offered()));
-		assertEquals("Exactly the offered columns start out hidden.", List.of("description"),
-			List.copyOf(columns.hiddenByDefault()));
+		assertEquals("The table shows the main properties and offers the rest.",
+			List.of("name", "description"), names(columns));
+		assertEquals("Everything the type holds beyond its main properties starts out hidden.",
+			List.of("description"), List.copyOf(ColumnDeclarations.hiddenByDefault(columns)));
 	}
 
 	/**
 	 * A table whose row type names no main properties shows all of its non-hidden attributes.
 	 */
 	public void testWithoutMainPropertiesEverythingIsDisplayed() {
-		ColumnDeclarations columns = tableWithoutColumns().columns(_rowType);
+		List<ColumnSetup> columns = resolve(tableWithoutColumns());
 
 		assertEquals("All non-hidden attributes are shown.", List.of("name", "description"),
-			ColumnDeclarations.declaredNames(columns.displayed()));
-		assertEquals("Nothing is left to offer.", List.of(),
-			ColumnDeclarations.declaredNames(columns.offered()));
+			names(columns));
 		assertEquals("No column starts out hidden.", List.of(),
-			List.copyOf(columns.hiddenByDefault()));
+			List.copyOf(ColumnDeclarations.hiddenByDefault(columns)));
 	}
 
 	/**
@@ -100,12 +99,23 @@ public class TestTableColumns extends TestCase {
 		set(mainProperties, MainProperties.PROPERTIES, List.of("name"));
 		_rowType.setAnnotation(mainProperties);
 
-		ColumnDeclarations columns = tableWithColumns("description").columns(_rowType);
+		List<ColumnSetup> columns = resolve(tableWithColumns("description"));
 
-		assertEquals("The table shows what it declares.", List.of("description"),
-			ColumnDeclarations.declaredNames(columns.displayed()));
-		assertEquals("The rest of the type is offered.", List.of("name"),
-			ColumnDeclarations.declaredNames(columns.offered()));
+		assertEquals("The table shows what it declares and offers the rest of the type.",
+			List.of("description", "name"), names(columns));
+		assertEquals("Only what the table does not declare starts out hidden.", List.of("name"),
+			List.copyOf(ColumnDeclarations.hiddenByDefault(columns)));
+	}
+
+	/** The columns of the given table over the row type, in display order. */
+	private List<ColumnSetup> resolve(TableElement table) {
+		List<ColumnDeclaration> declarations = table.columns(_rowType);
+		return ColumnDeclarations.resolve(declarations, new ColumnResolution(_rowType, null));
+	}
+
+	/** The names of the given columns, in display order. */
+	private static List<String> names(List<ColumnSetup> columns) {
+		return columns.stream().map(ColumnSetup::name).toList();
 	}
 
 	/** A {@code <table>} over the row type that declares no columns of its own. */

@@ -5,7 +5,6 @@
  */
 package com.top_logic.layout.view.table;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -217,12 +216,9 @@ public class ComputedColumn extends AbstractColumnDeclaration {
 
 	@Override
 	public List<ColumnSetup> resolve(ColumnResolution scope) {
-		List<ViewChannel> inputs = new ArrayList<>(_inputs.size());
-		for (ChannelRef ref : _inputs) {
-			inputs.add(scope.context().resolveChannel(ref));
-		}
+		List<ViewChannel> inputs = ColumnInputs.resolve(scope, _inputs);
 		QueryExecutor value = _value;
-		Function<Object, Object> cellValue = row -> value.execute(arguments(inputs, row));
+		Function<Object, Object> cellValue = row -> value.execute(ColumnInputs.arguments(inputs, row));
 		ColumnType type = columnType(scope);
 		return List.of(setup(_name, ResKey.text(_name), type, cellValue, editing(type, cellValue, inputs), scope));
 	}
@@ -244,11 +240,12 @@ public class ComputedColumn extends AbstractColumnDeclaration {
 			return null;
 		}
 		QueryExecutor update = _update;
-		BiConsumer<Object, Object> write = (row, edited) -> update.execute(arguments(inputs, row, edited));
+		BiConsumer<Object, Object> write =
+			(row, edited) -> update.execute(ColumnInputs.arguments(inputs, row, edited));
 
 		QueryExecutor canUpdate = _canUpdate;
 		Predicate<Object> editable = canUpdate == null ? row -> true
-			: row -> SearchExpression.isTrue(canUpdate.execute(arguments(inputs, row)));
+			: row -> SearchExpression.isTrue(canUpdate.execute(ColumnInputs.arguments(inputs, row)));
 
 		return new ValueCellEditing(type, value, write, editable);
 	}
@@ -263,30 +260,6 @@ public class ComputedColumn extends AbstractColumnDeclaration {
 		}
 		TLType type = _typeRef.resolveType(scope.model());
 		return ColumnType.of(type, _multiple);
-	}
-
-	/**
-	 * The arguments of one of the column's functions: the current values of the declared inputs, in
-	 * declaration order, and what the function is called with behind them - the row, and for the
-	 * update the edited value after it.
-	 *
-	 * <p>
-	 * The inputs are read here, every time a cell is computed, so a column over an input shows what
-	 * that input holds now.
-	 * </p>
-	 *
-	 * @param inputs
-	 *        The channels leading the argument list.
-	 * @param trailing
-	 *        The arguments behind the inputs, in the order the function takes them.
-	 */
-	private static Object[] arguments(List<ViewChannel> inputs, Object... trailing) {
-		Object[] arguments = new Object[inputs.size() + trailing.length];
-		for (int n = 0; n < inputs.size(); n++) {
-			arguments[n] = inputs.get(n).get();
-		}
-		System.arraycopy(trailing, 0, arguments, inputs.size(), trailing.length);
-		return arguments;
 	}
 
 }

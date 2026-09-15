@@ -19,8 +19,9 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
  *
  * <p>
  * An entry declares a column - {@code <column attribute="..."/>} for one over a model attribute,
- * {@code <computed-column .../>} for one over a computed value - or a whole set of them. Every
- * table describing its columns uses this one configuration, so a kind of column added here is
+ * {@code <computed-column .../>} for one over a computed value - or a whole set of them, as
+ * {@code <embedded-columns reference="..."/>} does for the columns of an object the row points to.
+ * Every table describing its columns uses this one configuration, so a kind of column added here is
  * offered by all of them.
  * </p>
  */

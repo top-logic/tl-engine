@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.layout.view.table;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import junit.framework.Test;
@@ -43,6 +44,7 @@ import com.top_logic.table.SortDirection;
 import com.top_logic.table.SortSpec;
 import com.top_logic.table.filter.ComparableColumnFilter;
 import com.top_logic.table.filter.TextColumnFilter;
+import com.top_logic.util.model.CompatibilityService;
 
 /**
  * Test for the columns a {@link ColumnDeclaration} contributes: what an
@@ -66,6 +68,7 @@ public class TestColumnDeclarations extends TestCase {
 		_rowType = TLModelUtil.addClass(module, "Row");
 		TLModelUtil.addProperty(_rowType, "count",
 			TLModelUtil.addDatatype(module, module, "Integer", Kind.INT, IntMapping.INSTANCE));
+		TLModelUtil.addProperty(_rowType, "name", TLModelUtil.addClass(module, "Value"));
 	}
 
 	/**
@@ -233,18 +236,20 @@ public class TestColumnDeclarations extends TestCase {
 	}
 
 	/**
-	 * The columns a table shows come before the ones it only offers, and exactly the offered ones
-	 * start out hidden.
+	 * A column that is only offered says so itself, so a table starts out hiding exactly the
+	 * columns nobody chose to show.
 	 */
 	public void testOfferedColumnsStartOutHidden() {
-		ColumnDeclarations columns = new ColumnDeclarations(
-			instantiate(attributeColumn("count", null)),
-			instantiate(attributeColumn("name", null)));
+		List<ColumnDeclaration> declarations = new ArrayList<>(instantiate(attributeColumn("count", null)));
+		declarations.add(AttributeColumn.offered(_rowType.getPart("name")));
 
-		assertEquals(List.of("count", "name"),
-			columns.resolve(scope()).stream().map(ColumnSetup::name).toList());
+		List<ColumnSetup> columns = ColumnDeclarations.resolve(declarations, scope());
+
+		assertFalse("A declared column is shown from the start.", columns.get(0).hiddenByDefault());
+		assertTrue("An offered column is shown once the user selects it.",
+			columns.get(1).hiddenByDefault());
 		assertEquals("Only the offered column is hidden.", List.of("name"),
-			List.copyOf(columns.hiddenByDefault()));
+			List.copyOf(ColumnDeclarations.hiddenByDefault(columns)));
 	}
 
 	/** The single column the given declaration contributes. */
@@ -301,13 +306,15 @@ public class TestColumnDeclarations extends TestCase {
 
 	/**
 	 * Test suite requiring the {@link ColumnProviderService}, which every declared column is built
-	 * through, and the {@link AttributeSettings} its display of an attribute value consults.
+	 * through, the {@link AttributeSettings} its display of an attribute value consults, and the
+	 * {@link CompatibilityService} an attribute is asked about its storage through.
 	 */
 	public static Test suite() {
 		return ModuleTestSetup.setupModule(
 			ServiceTestSetup.createSetup(TestColumnDeclarations.class,
 				ColumnProviderService.Module.INSTANCE,
-				AttributeSettings.Module.INSTANCE));
+				AttributeSettings.Module.INSTANCE,
+				CompatibilityService.Module.INSTANCE));
 	}
 
 }

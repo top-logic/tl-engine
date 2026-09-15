@@ -6,32 +6,40 @@
 package com.top_logic.layout.view.table;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortSpec;
 
 /**
- * The columns of a table: the ones it shows, and the ones it only offers in its column selection.
+ * What a list of {@link ColumnDeclaration}s amounts to: the columns it contributes, their names,
+ * and the order they sort the table in.
  *
  * <p>
  * A table shows what it declares and offers the rest of what its rows hold, so that a user can put
  * any attribute of the row type on display without the table having to enumerate them all. Both
- * halves are described the same way - by {@link ColumnDeclaration}s - and differ only in whether
- * the table starts out showing them.
+ * halves are described the same way - by {@link ColumnDeclaration}s - and a column that is only
+ * offered says so through its resolved {@link ColumnSetup#hiddenByDefault()}, wherever it comes
+ * from.
  * </p>
- *
- * @param displayed
- *        The declarations of the columns the table shows, in display order.
- * @param offered
- *        The declarations of the columns the table offers without showing them, in the order they
- *        are offered in.
  */
-public record ColumnDeclarations(List<ColumnDeclaration> displayed, List<ColumnDeclaration> offered) {
+public class ColumnDeclarations {
+
+	/**
+	 * This class holds what a list of {@link ColumnDeclaration}s amounts to; it has no state of its
+	 * own.
+	 */
+	private ColumnDeclarations() {
+		// Static utilities only.
+	}
 
 	/**
 	 * The instantiated declarations of a {@code <columns>} configuration, in declaration order.
@@ -108,35 +116,84 @@ public record ColumnDeclarations(List<ColumnDeclaration> displayed, List<ColumnD
 	}
 
 	/**
-	 * Every declaration of the table, the displayed ones first.
+	 * The names of the given columns that are displayed only once the user selects them, in the
+	 * order they are offered in.
+	 *
+	 * <p>
+	 * Whether a column starts out hidden is what its own setup says, so a column offered by a table
+	 * and one offered from inside a declaration reach the display the same way.
+	 * </p>
 	 */
-	public List<ColumnDeclaration> all() {
-		List<ColumnDeclaration> result = new ArrayList<>(displayed.size() + offered.size());
-		result.addAll(displayed);
-		result.addAll(offered);
+	public static Set<String> hiddenByDefault(List<ColumnSetup> setups) {
+		Set<String> result = new LinkedHashSet<>();
+		for (ColumnSetup setup : setups) {
+			if (setup.hiddenByDefault()) {
+				result.add(setup.name());
+			}
+		}
 		return result;
 	}
 
 	/**
-	 * The columns of the table, the displayed ones first.
+	 * The columns to show for objects of the given type where nothing else says which: those the
+	 * type names as its main properties, and all of its non-hidden attributes when it names none it
+	 * holds.
+	 *
+	 * @param type
+	 *        The type of the objects the columns show, or {@code null} when it is unknown - there
+	 *        is then nothing to derive columns from.
 	 */
-	public List<ColumnSetup> resolve(ColumnResolution scope) {
-		return resolve(all(), scope);
+	public static List<ColumnDeclaration> mainColumns(TLStructuredType type) {
+		if (type == null) {
+			return List.of();
+		}
+		List<ColumnDeclaration> result = new ArrayList<>();
+		for (String name : DisplayAnnotations.getMainProperties(type)) {
+			TLStructuredTypePart part = type.getPart(name);
+			if (part != null) {
+				result.add(AttributeColumn.derived(part));
+			}
+		}
+		if (!result.isEmpty()) {
+			return result;
+		}
+		for (TLStructuredTypePart part : type.getAllParts()) {
+			if (DisplayAnnotations.isHidden(part)) {
+				continue;
+			}
+			result.add(AttributeColumn.derived(part));
+		}
+		return result;
 	}
 
 	/**
-	 * The order the table is displayed in until the user sorts it themselves, taken from the
-	 * columns it shows.
+	 * The columns to <em>offer</em> for objects of the given type in addition to the ones already
+	 * covered: those of its attributes a form would display, too.
+	 *
+	 * <p>
+	 * They start out hidden; what is shown is what someone chose to show, and the rest is a choice
+	 * the user makes in the column selection.
+	 * </p>
+	 *
+	 * @param covered
+	 *        The names of the columns already accounted for, which are not offered a second time.
+	 * @param type
+	 *        The type of the objects the columns show, or {@code null} when it is unknown - nothing
+	 *        is then offered.
 	 */
-	public SortSpec defaultSort() {
-		return defaultSort(displayed);
-	}
-
-	/**
-	 * The names of the columns the table does not show until the user selects them.
-	 */
-	public Set<String> hiddenByDefault() {
-		return new LinkedHashSet<>(declaredNames(offered));
+	public static List<ColumnDeclaration> offeredColumns(Collection<String> covered, TLStructuredType type) {
+		if (type == null) {
+			return List.of();
+		}
+		Set<String> seen = new LinkedHashSet<>(covered);
+		List<ColumnDeclaration> result = new ArrayList<>();
+		for (TLStructuredTypePart part : type.getAllParts()) {
+			if (DisplayAnnotations.isHidden(part) || !seen.add(part.getName())) {
+				continue;
+			}
+			result.add(AttributeColumn.offered(part));
+		}
+		return result;
 	}
 
 }

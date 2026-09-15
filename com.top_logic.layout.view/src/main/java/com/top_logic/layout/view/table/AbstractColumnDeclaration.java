@@ -137,6 +137,8 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 
 	private final Function<List<Object>, Object> _aggregate;
 
+	private final boolean _hiddenByDefault;
+
 	/**
 	 * Creates an {@link AbstractColumnDeclaration} from configuration.
 	 *
@@ -152,6 +154,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_sort = config.getSort();
 		_width = config.getWidth();
 		_aggregate = aggregate(config.getAggregate());
+		_hiddenByDefault = false;
 	}
 
 	/**
@@ -161,14 +164,17 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	 *
 	 * @param readonly
 	 *        Whether the column stays read-only while the rows of the table are edited.
+	 * @param hiddenByDefault
+	 *        Whether the column is displayed only once the user selects it in the column selection.
 	 */
-	protected AbstractColumnDeclaration(boolean readonly) {
+	protected AbstractColumnDeclaration(boolean readonly, boolean hiddenByDefault) {
 		_label = null;
 		_binding = ColumnBinding.TYPE_DERIVED;
 		_readonly = readonly;
 		_sort = null;
 		_width = 0;
 		_aggregate = null;
+		_hiddenByDefault = hiddenByDefault;
 	}
 
 	/**
@@ -212,7 +218,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	protected final ColumnSetup setup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
 			CellEditing editing, ColumnResolution scope) {
 		return new ColumnSetup(name, _label != null ? _label : label, type, value, scope.context(), _binding,
-			_width, _readonly ? null : editing, _aggregate);
+			_width, _readonly ? null : editing, _aggregate, _hiddenByDefault);
 	}
 
 	/**

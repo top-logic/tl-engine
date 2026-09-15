@@ -23,6 +23,7 @@ import com.top_logic.layout.react.ForwardingReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.table.ReactResourceCellControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.mig.html.layout.AssociationEndRelevance;
 import com.top_logic.mig.html.layout.GlobalModelEventForwarder;
 import com.top_logic.mig.html.layout.MapBasedAssociationEndRelevance;
@@ -65,7 +66,7 @@ public class TestResourceCellObservation extends AbstractDBKnowledgeBaseTest {
 			Collections.emptyMap(), kb().getMORepository());
 		log.checkErrors();
 		_scope = new GlobalModelEventForwarder(kb(), updates, relevance);
-		_context = new ForwardingReactContext(new DefaultReactContext("", "test", new SSEUpdateQueue())) {
+		_context = new ForwardingReactContext(new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"))) {
 			@Override
 			public ModelScope getModelScope() {
 				return _scope;

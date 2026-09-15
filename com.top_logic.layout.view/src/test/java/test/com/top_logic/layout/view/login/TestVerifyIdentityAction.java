@@ -22,7 +22,9 @@ import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.base.accesscontrol.loginmethod.LoginMethod;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
@@ -38,21 +40,22 @@ import com.top_logic.layout.view.command.GenericViewCommand;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewActionChain;
 import com.top_logic.layout.view.element.PanelElement;
-import com.top_logic.layout.view.login.VerifyPasswordAction;
+import com.top_logic.layout.view.login.VerifyIdentityAction;
 
 /**
- * Tests {@link VerifyPasswordAction}, the guard that lets a command chain continue only after the
- * user has re-entered their password.
+ * Tests {@link VerifyIdentityAction}, the guard that lets a command chain continue only after the
+ * user has proven again that they are the account holder.
  *
  * <p>
- * What is exercised here is the guard's control over the chain: where it may not ask it aborts,
- * where it asks it waits, and the answer it gets decides whether the chain continues or unwinds.
- * The prompt itself is replaced by a {@link Prompt} standing in for the user, so that the dialog's
- * own behaviour - the wrong password drawn under the emptied input, Enter confirming - stays where
- * only a browser can judge it.
+ * What is exercised here is the guard's control over the chain: which way it asks, where it may not
+ * ask it aborts, where it asks it waits, and the answer it gets decides whether the chain continues
+ * or unwinds. The prompts themselves are replaced by a {@link Prompt} and a {@link WaitingPrompt}
+ * standing in for the user, so that the dialogs' own behaviour - the wrong password drawn under the
+ * emptied input, the sign-in window opening from the click - stays where only a browser can judge
+ * it.
  * </p>
  */
-public class TestVerifyPasswordAction extends TestCase {
+public class TestVerifyIdentityAction extends TestCase {
 
 	/** What an action after the guard saw, one entry per run. */
 	private final List<Object> _downstream = new ArrayList<>();
@@ -80,7 +83,7 @@ public class TestVerifyPasswordAction extends TestCase {
 	 */
 	public void testUnverifiableAccountAborts() {
 		// The production verifier, over a context that has no session account.
-		VerifyPasswordAction guard = newAction();
+		VerifyIdentityAction guard = newAction();
 
 		run(guard, "in");
 
@@ -138,6 +141,70 @@ public class TestVerifyPasswordAction extends TestCase {
 	}
 
 	/**
+	 * Tests that a session an identity provider can authenticate again is sent there: the guard
+	 * announces the awaited confirmation, opens the waiting prompt on the URL that provider
+	 * answered, and holds the chain until the confirmation arrives.
+	 */
+	public void testExternalConfirmationResumesChain() {
+		Fixture guard = new Fixture(password -> {
+			throw new AssertionError("The password path is not taken.");
+		});
+		guard.offer(new FakeLoginMethod("keycloak", "https://provider.example/auth?verification="));
+
+		run(guard, "in");
+
+		assertFalse("A session confirmed elsewhere is not asked for its password.", guard.asked());
+		assertEquals("The provider is sent the token of the awaited confirmation.",
+			"https://provider.example/auth?verification=" + Fixture.TOKEN, guard.waiting().url());
+		assertTrue("The chain waits for the confirmation.", _downstream.isEmpty());
+		assertEquals(List.of(), _completions);
+
+		// What the authentication servlet does once the provider has confirmed the account.
+		guard.confirm();
+
+		assertTrue("The prompt closes itself once the confirmation has arrived.", guard.waiting().closed());
+		assertEquals("The guard hands its input on unchanged.", List.of("in"), _downstream);
+		assertEquals(List.of("in"), _completions);
+		assertEquals("A confirmation that arrived withdraws nothing.", List.of(), guard.withdrawn());
+	}
+
+	/**
+	 * Tests that leaving the waiting prompt aborts the chain and withdraws the confirmation the
+	 * guard no longer waits for.
+	 */
+	public void testExternalCancelAborts() {
+		Fixture guard = new Fixture(password -> {
+			throw new AssertionError("The password path is not taken.");
+		});
+		guard.offer(new FakeLoginMethod("keycloak", "https://provider.example/auth?verification="));
+
+		run(guard, "in");
+		guard.waiting().cancel();
+
+		assertEquals("The announcement is withdrawn.", List.of(Fixture.TOKEN), guard.withdrawn());
+		assertTrue("Nothing downstream of a cancelled guard runs.", _downstream.isEmpty());
+		assertEquals(Collections.singletonList(null), _completions);
+	}
+
+	/**
+	 * Tests that a session no identity provider answers for is asked for its password, and that the
+	 * announcement made while asking around is withdrawn again.
+	 */
+	public void testWithoutProviderAsksForPassword() {
+		Fixture guard = new Fixture(password -> "secret".equals(new String(password)));
+		guard.offer(new FakeLoginMethod("keycloak", null));
+
+		run(guard, "in");
+
+		assertNull("No provider answers, so no window is waited for.", guard.waitingOrNull());
+		assertEquals("The announcement nobody answers is withdrawn.", List.of(Fixture.TOKEN), guard.withdrawn());
+		assertTrue("The password is asked for.", guard.asked());
+
+		assertTrue(guard.enter("secret"));
+		assertEquals(List.of("in"), _downstream);
+	}
+
+	/**
 	 * Tests that the guard's tag is what a command chain writes it as, and that the chain it is
 	 * written into instantiates.
 	 */
@@ -152,21 +219,21 @@ public class TestVerifyPasswordAction extends TestCase {
 						</commands>
 					</panel>
 				</view>
-				""".formatted(VerifyPasswordAction.Config.TAG_NAME);
+				""".formatted(VerifyIdentityAction.Config.TAG_NAME);
 
-		DefaultInstantiationContext context = new DefaultInstantiationContext(TestVerifyPasswordAction.class);
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestVerifyIdentityAction.class);
 		Map<String, ConfigurationDescriptor> descriptors = Collections.singletonMap(
 			"view", TypedConfiguration.getConfigurationDescriptor(ViewElement.Config.class));
 		ConfigurationReader reader = new ConfigurationReader(context, descriptors);
-		reader.setSource(CharacterContents.newContent(view, "test-verify-password.view.xml"));
+		reader.setSource(CharacterContents.newContent(view, "test-verify-identity.view.xml"));
 		ViewElement.Config config = (ViewElement.Config) reader.read();
 		context.checkErrors();
 
 		PanelElement.Config panel = (PanelElement.Config) config.getContent();
 		GenericViewCommand.Config command = (GenericViewCommand.Config) panel.getCommands().get(0);
-		assertTrue("The tag names the guard.", command.getActions().get(0) instanceof VerifyPasswordAction.Config);
+		assertTrue("The tag names the guard.", command.getActions().get(0) instanceof VerifyIdentityAction.Config);
 		assertNull("Without a configured title the guard falls back to its own.",
-			((VerifyPasswordAction.Config) command.getActions().get(0)).getTitle());
+			((VerifyIdentityAction.Config) command.getActions().get(0)).getTitle());
 
 		assertTrue("The chain instantiates.", context.getInstance(command) instanceof GenericViewCommand);
 		context.checkErrors();
@@ -218,26 +285,59 @@ public class TestVerifyPasswordAction extends TestCase {
 	}
 
 	/** The production action, with nothing replaced. */
-	private static VerifyPasswordAction newAction() {
-		DefaultInstantiationContext context = new DefaultInstantiationContext(TestVerifyPasswordAction.class);
-		return new VerifyPasswordAction(context,
-			TypedConfiguration.newConfigItem(VerifyPasswordAction.Config.class));
+	private static VerifyIdentityAction newAction() {
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestVerifyIdentityAction.class);
+		return new VerifyIdentityAction(context,
+			TypedConfiguration.newConfigItem(VerifyIdentityAction.Config.class));
 	}
 
 	/**
-	 * A {@link VerifyPasswordAction} with a verifier of the test's choosing and a {@link Prompt}
-	 * in place of the dialog, so that the test can answer as the user would.
+	 * A {@link VerifyIdentityAction} answering for the session's surroundings - which login methods
+	 * there are, what the session's account may be confirmed with - and with a {@link Prompt} and a
+	 * {@link WaitingPrompt} in place of the dialogs, so that the test can answer as the user would.
 	 */
-	private static class Fixture extends VerifyPasswordAction {
+	private static class Fixture extends VerifyIdentityAction {
+
+		/** The token the fixture issues for the confirmation it is asked to await. */
+		static final String TOKEN = "verification-token";
 
 		private final Predicate<char[]> _verifier;
 
+		private final List<LoginMethod> _loginMethods = new ArrayList<>();
+
+		private final List<String> _withdrawn = new ArrayList<>();
+
+		private Runnable _onVerified;
+
 		private Prompt _prompt;
 
+		private WaitingPrompt _waiting;
+
 		Fixture(Predicate<char[]> verifier) {
-			super(new DefaultInstantiationContext(TestVerifyPasswordAction.class),
-				TypedConfiguration.newConfigItem(VerifyPasswordAction.Config.class));
+			super(new DefaultInstantiationContext(TestVerifyIdentityAction.class),
+				TypedConfiguration.newConfigItem(VerifyIdentityAction.Config.class));
 			_verifier = verifier;
+		}
+
+		/** Adds a login method the guard finds when it asks around. */
+		void offer(LoginMethod method) {
+			_loginMethods.add(method);
+		}
+
+		@Override
+		protected List<? extends LoginMethod> loginMethods() {
+			return _loginMethods;
+		}
+
+		@Override
+		protected String registerVerification(Runnable onVerified) {
+			_onVerified = onVerified;
+			return TOKEN;
+		}
+
+		@Override
+		protected void cancelVerification(String token) {
+			_withdrawn.add(token);
 		}
 
 		@Override
@@ -249,6 +349,19 @@ public class TestVerifyPasswordAction extends TestCase {
 		protected void openPrompt(ReactContext context, DialogManager dialogManager, ResKey title, ResKey message,
 				Predicate<char[]> verifier, Runnable onVerified, Runnable onCancel) {
 			_prompt = new Prompt(verifier, onVerified, onCancel);
+		}
+
+		@Override
+		protected Runnable openWaitingPrompt(ReactContext context, DialogManager dialogManager, ResKey title,
+				ResKey message, String reauthenticationUrl, Runnable onCancel) {
+			_waiting = new WaitingPrompt(reauthenticationUrl, onCancel);
+			return _waiting::close;
+		}
+
+		@Override
+		protected void runInWindow(ReactContext context, Runnable action) {
+			// The window this would be carried into is the one only a browser has.
+			action.run();
 		}
 
 		/** Whether the guard got as far as asking for a password. */
@@ -264,6 +377,120 @@ public class TestVerifyPasswordAction extends TestCase {
 		/** Leaves the prompt without an accepted password. */
 		void cancel() {
 			_prompt.cancel();
+		}
+
+		/** The prompt waiting for the external confirmation. */
+		WaitingPrompt waiting() {
+			assertNotNull("The guard waits for an external confirmation.", _waiting);
+			return _waiting;
+		}
+
+		/** The prompt waiting for the external confirmation, or {@code null} if there is none. */
+		WaitingPrompt waitingOrNull() {
+			return _waiting;
+		}
+
+		/** The tokens whose announcements the guard has withdrawn. */
+		List<String> withdrawn() {
+			return _withdrawn;
+		}
+
+		/**
+		 * Reports the awaited confirmation, as the authentication servlet does once the identity
+		 * provider has confirmed the expected account.
+		 */
+		void confirm() {
+			assertNotNull("The guard awaits a confirmation.", _onVerified);
+			_onVerified.run();
+		}
+	}
+
+	/**
+	 * Stands in for the dialog waiting for an external confirmation: it holds the URL the user is
+	 * sent to and reports a cancel exactly as the dialog does, until the arriving confirmation
+	 * closes it.
+	 */
+	private static class WaitingPrompt {
+
+		private final String _url;
+
+		private final Runnable _onCancel;
+
+		private boolean _closed;
+
+		WaitingPrompt(String url, Runnable onCancel) {
+			_url = url;
+			_onCancel = onCancel;
+		}
+
+		/** Where the user signs in again. */
+		String url() {
+			return _url;
+		}
+
+		/** Whether the prompt has been closed by an arriving confirmation. */
+		boolean closed() {
+			return _closed;
+		}
+
+		/** Closes the prompt, as the arriving confirmation does. */
+		void close() {
+			_closed = true;
+		}
+
+		/** Leaves the prompt before the confirmation has arrived. */
+		void cancel() {
+			if (_closed) {
+				fail("A closed prompt reports no cancel.");
+			}
+			_onCancel.run();
+		}
+	}
+
+	/**
+	 * A login method answering a re-authentication URL of the test's choosing.
+	 */
+	private static class FakeLoginMethod implements LoginMethod {
+
+		private final String _id;
+
+		private final String _urlPrefix;
+
+		/**
+		 * Creates a {@link FakeLoginMethod}.
+		 *
+		 * @param urlPrefix
+		 *        What the token is appended to, or {@code null} for a method that cannot
+		 *        authenticate the user of an established session again.
+		 */
+		FakeLoginMethod(String id, String urlPrefix) {
+			_id = id;
+			_urlPrefix = urlPrefix;
+		}
+
+		@Override
+		public String getId() {
+			return _id;
+		}
+
+		@Override
+		public ResKey getLabel() {
+			return ResKey.text(_id);
+		}
+
+		@Override
+		public ThemeImage getIcon() {
+			return null;
+		}
+
+		@Override
+		public String getInitiationUrl(String returnToUrl) {
+			return "https://provider.example/login";
+		}
+
+		@Override
+		public String getReauthenticationUrl(String token) {
+			return _urlPrefix == null ? null : _urlPrefix + token;
 		}
 	}
 
@@ -302,6 +529,6 @@ public class TestVerifyPasswordAction extends TestCase {
 	 * Test suite requiring the {@link TypeIndex} module.
 	 */
 	public static Test suite() {
-		return ServiceTestSetup.createSetup(TestVerifyPasswordAction.class, TypeIndex.Module.INSTANCE);
+		return ServiceTestSetup.createSetup(TestVerifyIdentityAction.class, TypeIndex.Module.INSTANCE);
 	}
 }

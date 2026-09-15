@@ -80,6 +80,22 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_WRONG_PASSWORD;
 
 	/**
+	 * @en Confirm your identity
+	 */
+	public static ResKey REAUTHENTICATION_TITLE;
+
+	/**
+	 * @en Confirm your identity by signing in again at {0}. Use the button below; the sign-in opens
+	 *     in a new window and this dialog closes by itself once you are confirmed.
+	 */
+	public static ResKey1 REAUTHENTICATION_MESSAGE__PROVIDER;
+
+	/**
+	 * @en Sign in
+	 */
+	public static ResKey REAUTHENTICATION_BUTTON_LABEL;
+
+	/**
 	 * @en Your password cannot be verified. The change was not applied.
 	 */
 	public static ResKey ERROR_PASSWORD_NOT_VERIFIABLE;

@@ -49,6 +49,34 @@ public class TestExecutableState extends TestCase {
         assertNotNull(es.getReason());
     }
     
+	/**
+	 * Tests that {@link ExecutableState} compares by visibility and reason key.
+	 */
+	public void testEquals() {
+		ResKey reasonA = ResKey.text("reason.a");
+		ResKey reasonB = ResKey.text("reason.b");
+
+		ExecutableState disabledA = ExecutableState.createDisabledState(reasonA);
+		ExecutableState sameDisabledA = ExecutableState.createDisabledState(reasonA);
+
+		assertEquals(disabledA, sameDisabledA);
+		assertEquals(disabledA.hashCode(), sameDisabledA.hashCode());
+
+		assertFalse("Different reason, different state.",
+			disabledA.equals(ExecutableState.createDisabledState(reasonB)));
+		assertFalse("Different visibility, different state.",
+			disabledA.equals(new ExecutableState(ExecutableState.CommandVisibility.HIDDEN, reasonA)));
+		assertFalse("Only an ExecutableState can be equal.", disabledA.equals(reasonA));
+
+		assertEquals(ExecutableState.EXECUTABLE,
+			new ExecutableState(ExecutableState.CommandVisibility.VISIBLE, ResKey.NONE));
+		assertEquals(ExecutableState.EXECUTABLE.hashCode(),
+			new ExecutableState(ExecutableState.CommandVisibility.VISIBLE, ResKey.NONE).hashCode());
+
+		assertFalse("A missing reason is not the same as ResKey.NONE.",
+			ExecutableState.EXECUTABLE.equals(new ExecutableState(ExecutableState.CommandVisibility.VISIBLE, REASON)));
+	}
+
     /**
      * the suite of Tests to execute.
      */

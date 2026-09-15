@@ -249,6 +249,36 @@
   display: none;
 }
 
+.tl-chat-thread,
+.tl-chat-composer {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.tl-chat-thread {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
+.tl-chat-thread .thread-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
+.tl-chat-composer {
+  flex: 0 0 auto;
+}
+
+.tl-chat-thread.is-signed-out,
+.tl-chat-composer.is-signed-out {
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+}
+
 .rail-new {
   display: flex;
   align-items: center;

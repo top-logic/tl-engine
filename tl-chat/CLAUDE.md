@@ -318,7 +318,12 @@ conversation.
 `chat-id` is how elements find each other. `<agent-chat>` leaves it empty and `App` falls back to
 `props.controlId`, so two chats in one window stay two chats - Consulting's `CopilotRegistry` keeps a
 *list* of live panels, and a fixed key would silently merge their transcripts
-(`chat-store.test.ts`, `testTwoAppsInOneWindowDoNotShareATranscript`).
+(`chat-store.test.ts`, `testTwoAppsInOneWindowDoNotShareATranscript`). The four pieces
+(`<chat-sessions>`, `<chat-thread>`, `<chat-composer>`, `<chat-rail>`) default to `default`.
+
+`<chat-thread>` and `<chat-composer>` honour their configuration flags as render guards on the
+existing `Thread` and `Composer` props. An optional `input` channel selects the session; without
+one the store is the source. `<chat-thread>` writes an optional `busy` channel.
 
 ### Stability
 

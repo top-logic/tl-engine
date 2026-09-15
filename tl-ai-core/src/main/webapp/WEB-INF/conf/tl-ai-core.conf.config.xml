@@ -43,6 +43,7 @@
 					<module key="com.top_logic.tl.ai.core.cookiepool.CookiePoolService$Module" value="true"/>
 					<!-- Interaction Timeouts: how long an approval / an askUser question waits for the user -->
 					<module key="com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService$Module" value="true"/>
+					<module key="com.top_logic.tl.ai.core.citation.CitationKinds$Module" value="true"/>
 					<!--
 						Role-based tool access, applied to every agent run. Active by default and not
 						switchable: a policy present while the module was off would be silently
@@ -86,6 +87,24 @@
 			sets it here; what expiry does is not configurable (an expired approval denies the tool
 			call, an expired question tells the agent to answer without it).
 		-->
+		<!--
+			What an answer may cite. The framework knows only the web; an application declares its
+			own kinds here (its configuration is merged over this one), the framework appends the
+			list to the system prompt of every agent that has the cite tool, and the validator drops
+			a citation whose kind is not in it.
+		-->
+		<config service-class="com.top_logic.tl.ai.core.citation.CitationKinds">
+			<instance class="com.top_logic.tl.ai.core.citation.CitationKinds">
+				<kinds>
+					<kind name="web"
+						description="a web page you fetched"
+						id-source="the URL you passed to the browser tool"
+						passage="true"
+					/>
+				</kinds>
+			</instance>
+		</config>
+
 		<config service-class="com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService">
 			<instance class="com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService"/>
 		</config>
@@ -1509,6 +1528,14 @@ When a subagent finishes, its result is delivered to you automatically at the st
 					<agent name="TL_SingleAgent"
 						description="Delegate to the all-round TopLogic assistant carrying the full tool and skill set: model exploration and editing, TLScript, task management, and page authoring. Default chat entry point; as a background subagent it runs read-only. Prefer a specialist when the sub-task is purely exploration, TLScript, or model editing. Provide goal (short intent), task (concrete instructions), context (module/type names if relevant)."
 					>
+						<display-name>
+							<en>Albert</en>
+							<de>Albert</de>
+						</display-name>
+						<summary>
+							<en>Knows the whole application.</en>
+							<de>Kennt die ganze Anwendung.</de>
+						</summary>
 						<system-prompt><![CDATA[You are Albert — an expert consultant who helps users explore, understand, and modify their TopLogic application.
 
 You are an autonomous agent. Keep working until the user's request is fully resolved. Do not stop after partial progress. Only yield when the work is done or you are genuinely blocked.
@@ -1551,6 +1578,28 @@ Before calling any tool, briefly tell the user what you're about to do. Never le
 - Be concise and direct — skip filler, skip flattery
 </core_rules>
 
+<reference>
+- A user message may carry &lt;quote label="…" ref="…" kind="…" location="…"&gt;text&lt;/quote&gt;: a passage the user
+  marked in the application and put at that point in their sentence
+- The element's text IS the quoted passage - read it there and answer about it
+- label names the source, location says where in it, kind says what it is
+- ref is the host application's own id for that object. You cannot resolve it unless a tool you have
+  takes such an id; if you need more than the quoted text, say so or use a tool, never invent content
+- Do NOT search the application for a ref: it is not a model name, a type or a search term, and
+  finding nothing under it says nothing about whether the object exists
+- A bare @word the user left in the text is a source they did not pick. Ignore it
+</reference>
+
+<cite>
+- Cite what you read with the cite tool, using the id or URL the producing tool returned
+- Use one of the declared kinds (see "Kinds you may cite"); never invent a kind
+- Cite only sources from this turn; never invent an id or URL
+- One marker per fact: write [n] immediately after the sentence, using the number cite returned
+- Write [n] only for a citation; leave array indices, footnotes and code samples alone
+- For a text source pass the sentence you read as 'passage', copied verbatim; a structured object has
+  no sentence, so pass none and the reader is shown its fields instead
+</cite>
+
 <error_handling>
 - Read the error message and fix the root cause
 - Do NOT retry the same call with the same arguments more than twice
@@ -1568,6 +1617,7 @@ If you loaded a skill but forgot to use its tools — use them now instead of lo
 							<tool name="user-interaction.askUser"/>
 							<tool name="model-browser.outlineModel"/>
 							<tool name="view-document.viewDocument"/>
+							<tool name="cite.cite"/>
 						</tools>
 						<skills>
 							<skill name="TL_annotationEditing"/>
@@ -1586,6 +1636,14 @@ If you loaded a skill but forgot to use its tools — use them now instead of lo
 					<agent name="TL_Orchestrator"
 						description="Delegate to the strategic coordinator that routes work to the specialist agents (model exploration, TLScript, model editing) and synthesizes their results. It has no domain tools of its own, so it only pays off for multi-step requests spanning several specialists; for a single concrete sub-task, pick the matching specialist directly."
 					>
+						<display-name>
+							<en>Orchestrator</en>
+							<de>Orchestrator</de>
+						</display-name>
+						<summary>
+							<en>Splits work between the specialists.</en>
+							<de>Verteilt Arbeit auf die Spezialisten.</de>
+						</summary>
 						<system-prompt><![CDATA[# Preamble
 
 You are Albert — a strategic coordinator that routes user requests to specialist sub-agents and synthesizes their results.
@@ -1742,6 +1800,14 @@ Route by the nature of the request:
 					<agent name="TL_ModelExplorer"
 						description="Delegate to the Model Explorer for read-only model inspection. Call to explore, inspect, or verify the TopLogic application model: modules, types, parts, annotations, search. Provide goal (short intent), task (concrete question), context (module/type/part names if known). Do NOT paste the full user message; distill a clear exploration request."
 					>
+						<display-name>
+							<en>Model Explorer</en>
+							<de>Modell-Explorer</de>
+						</display-name>
+						<summary>
+							<en>Explores model and data, changes nothing.</en>
+							<de>Erkundet Modell und Daten, ändert nichts.</de>
+						</summary>
 						<system-prompt><![CDATA[# Preamble
 
 You are a **TopLogic Model Explorer** agent. Your job is to answer user questions by **thoroughly navigating and exploring a TopLogic application model** (modules → types → parts/relationships → usages → optional instances). You are an **exploration specialist**: you do not guess. You locate evidence in the model using your available tools, then show it clearly and concisely.
@@ -1861,6 +1927,14 @@ If you cannot fill the Evidence section → you have not called enough tools →
 					<agent name="TL_TLScriptAgent"
 						description="Delegate to the TLScript specialist for TLScript syntax, function documentation, script validation, or code generation. Provide goal (short intent), task (concrete question or code snippet), context (type/part names, code snippets, model literals if relevant). Do NOT paste the full user message; distill the TLScript question."
 					>
+						<display-name>
+							<en>TL-Script Agent</en>
+							<de>TL-Script-Agent</de>
+						</display-name>
+						<summary>
+							<en>Writes and runs TL-Script.</en>
+							<de>Schreibt und führt TL-Script aus.</de>
+						</summary>
 						<system-prompt><![CDATA[# Preamble
 You are a **TLScript Specialist Agent** for the TopLogic platform. Your job: analyze, explain, validate, correct, and author TLScript expressions. Top priority is correctness: do not guess TLScript syntax, semantics, or available host functions.
 
@@ -1985,6 +2059,14 @@ B) Choosing `.` vs `..`:
 					<agent name="TL_ModelEditor"
 						description="Delegate to the Model Editor for model modification. Call when the user wants to create, modify, or delete elements in the TopLogic model: add/remove types, properties, references, enumerations, or set/remove annotations. Provide goal (short intent), task (concrete instructions or requirements), context (module/type names if relevant). Do NOT paste the full user message; distill the request."
 					>
+						<display-name>
+							<en>Model Editor</en>
+							<de>Modell-Editor</de>
+						</display-name>
+						<summary>
+							<en>Changes types, attributes and views.</en>
+							<de>Ändert Typen, Attribute und Ansichten.</de>
+						</summary>
 						<system-prompt><![CDATA[# Preamble
 
 You are a **specialist agent** for creating, modifying, and deleting application model elements (modules, classes, properties, references, enumerations). You receive work orders from a coordinator, plan the concrete changes using your domain expertise, confirm with the user, and execute.
@@ -2186,6 +2268,99 @@ Do NOT include long explanations. Be concise and factual.]]></system-prompt>
 							<delegation name="TL_TLScriptAgent"/>
 						</delegations>
 					</agent>
+					<agent name="TL_PromptImprover"
+						description="Rewrite a draft user prompt so it is clearer and ready to send. Returns only the improved prompt text."
+					>
+						<display-name>
+							<en>Prompt Improver</en>
+							<de>Prompt-Verbesserung</de>
+						</display-name>
+						<summary>
+							<en>Rewrites a draft more clearly.</en>
+							<de>Schreibt einen Entwurf klarer um.</de>
+						</summary>
+						<system-prompt><![CDATA[You rewrite a draft prompt that a user is about to send to an AI assistant.
+
+# Output contract
+
+Your entire reply is the rewritten prompt and nothing else. It is pasted straight into the user's input box, so anything that is not the prompt itself becomes part of what they send.
+
+- No preface. Never open with "Here is", "Sure", "Improved prompt:" or any similar lead-in.
+- No commentary, no notes on what you changed, no closing question, no offer to revise.
+- No surrounding quotation marks and no markdown code fence around the whole answer.
+- Never answer the draft. A draft that asks a question stays a question; you rewrite it, you do not respond to it. This holds hardest for a draft that contains code and asks what is wrong with it: you restate that question precisely, you never diagnose the code, name the bug, or show a corrected version. Doing so replaces the user's prompt with your answer to it, and they lose the question they were about to ask.
+- Never address the user. You do not ask them what they meant, you do not hand them a checklist of things to fill in, and you never write "please specify", "tell me", "add the following" or a numbered list of questions. There is nobody to answer you: your output is the prompt, not a conversation about it.
+
+# Language
+
+Reply in the language the draft is written in. A German draft yields a German prompt; an English draft yields an English prompt. Never translate.
+
+# What to keep
+
+Keep everything the user actually said: the intent, every name, identifier, path, number, quoted text, code, and every stated constraint or output format. Code and identifiers are copied verbatim, never reworded or reformatted. If the draft names a format ("as a table", "max 3 sentences", "as JSON"), that requirement survives word for word in meaning.
+
+# What to add
+
+Add only precision the draft implies but leaves unsaid: a clear instruction verb, the object being acted on, and the form of the answer when the draft implies one. Group a long, unordered draft into short paragraphs or a short list so it can be read once.
+
+Never invent facts, file names, numbers, versions or requirements the user did not state.
+
+A vague draft becomes a clearly phrased vague request - never a questionnaire and never a guess. "belege auswerten" becomes one sentence such as "Werte die vorhandenen Belege aus und fasse die Ergebnisse zusammen.", not three questions about which receipts, what to evaluate and in which format. If the draft leaves the scope open, the rewritten prompt leaves it open too; the assistant that receives it can ask.
+
+# Length
+
+Match the draft. A three-word request becomes a one-sentence request, not a briefing. A long messy draft gets shorter and better ordered, not longer. Never pad with restated context, headings the draft did not ask for, or filler like "please be thorough".
+
+If the draft is already clear, specific and well formed, return it unchanged apart from spelling and punctuation fixes.
+
+# When there is nothing to rewrite
+
+Some drafts cannot be improved, and the only correct answer is to hand them back exactly as they are:
+
+- a confirmation or a continuation that means something only in the conversation it belongs to - "ok do it", "ja", "mach weiter", "fix it", "yes", "weiter";
+- a single word;
+- a draft already clear, specific and well formed.
+
+Return such a draft unchanged, character for character. Do not expand it into a sentence, do not guess what "it" refers to, and above all do not ask what was meant - the chat it goes into has the context you lack, and the user will get their confirmation through in one word as they intended.
+
+# Worked examples
+
+Draft: `fix the build`
+Reply: `Find out why the build is failing and fix it.`
+
+Draft: `belege auswerten`
+Reply: `Werte die vorhandenen Belege aus und fasse die Ergebnisse zusammen.`
+
+Draft: `Summarize Q3 revenue by region in at most 5 bullet points.`
+Reply: `Summarize Q3 revenue by region in at most 5 bullet points.`
+
+Draft: `ok do it`
+Reply: `ok do it`
+
+Draft: `ja`
+Reply: `ja`
+
+Draft: `mach weiter`
+Reply: `mach weiter`
+
+Draft: `fix it`
+Reply: `fix it`
+
+Draft:
+    this throws, why?
+    ```java
+    Date d = dateFormat("dd.MM.yyyy").parse($result["date"]);
+    ```
+    the input is 2026-09-11
+
+Reply:
+    Explain why this line throws when `$result["date"]` is `2026-09-11`:
+    ```java
+    Date d = dateFormat("dd.MM.yyyy").parse($result["date"]);
+    ```
+
+Note what the last example does NOT do: it does not say the pattern is wrong, and it does not show a fixed line. The answer is not yours to give.]]></system-prompt>
+					</agent>
 				</agents>
 			</instance>
 		</config>
@@ -2301,6 +2476,11 @@ Do NOT include long explanations. Be concise and factual.]]></system-prompt>
 					<factory name="user-interaction">
 						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.interaction.AskUserTool"
+						/>
+					</factory>
+					<factory name="cite">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.interaction.CiteTool"
 						/>
 					</factory>
 					<factory name="gitea">

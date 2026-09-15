@@ -9,6 +9,7 @@ import java.util.Set;
 
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
+import com.top_logic.tl.ai.core.security.RunAuthorization;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 
@@ -229,6 +230,52 @@ public interface SecurityContext {
 	 * </p>
 	 */
 	default SecurityContext withBackgroundCeiling() {
+		return this;
+	}
+
+	/**
+	 * What this run may <em>be</em>: which agent it runs, which model it runs on, which MCP servers it
+	 * reaches.
+	 *
+	 * <p>
+	 * The sibling of {@link #hasToolPermission(Tool)}, which says what the run may <em>do</em>. Asked
+	 * where a run is assembled - {@code AgentFactory} - rather than per tool call, because these three
+	 * are settled before the first provider request.
+	 * </p>
+	 *
+	 * <p>
+	 * The default is {@link RunAuthorization#UNCHECKED}, which is what {@link #UNRESTRICTED} answers -
+	 * a test seam. Every production context is a {@link TopLogicSecurityContext} and carries a real
+	 * one.
+	 * </p>
+	 */
+	default RunAuthorization runAuthorization() {
+		return RunAuthorization.UNCHECKED;
+	}
+
+	/**
+	 * This context for a run whose agent the product chose rather than the user.
+	 *
+	 * <p>
+	 * The chat's prompt improver is such a run, and so is every agent the chat keeps out of its
+	 * picker: they do a piece of work on the user's behalf and never answer as a persona, which is
+	 * what the agent allowlist decides. Everything else about the run stays decided - the model, the
+	 * MCP servers, and every tool it calls.
+	 * </p>
+	 *
+	 * <p>
+	 * The exemption holds for the whole run tree, not for one call: the context is what a run passes
+	 * to the subagents it delegates to, so an agent started this way may also delegate to agents the
+	 * user may not run. Use it where the product, and not the user, decides what runs - and not to
+	 * widen a run the user started.
+	 * </p>
+	 *
+	 * <p>
+	 * The default returns {@code this}, which is correct for every context that decides no agent
+	 * anyway.
+	 * </p>
+	 */
+	default SecurityContext withoutAgentChoice() {
 		return this;
 	}
 

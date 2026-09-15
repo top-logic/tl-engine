@@ -14,12 +14,14 @@ import com.top_logic.tl.ai.core.agent.AgentResult;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.event.CompositeAgentEventListener;
+import com.top_logic.tl.ai.core.citation.CitationValidator;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
+import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
 import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
@@ -90,6 +92,17 @@ public final class AgentRunner {
 			ConversationMemory memory, ToolContext context, AgentEventListener listener,
 			ToolRegistry sessionRegistry, ConversationLog log, AgentSession session,
 			AgentExecution parentExecution) {
+		return run(agentName, conversation, memory, context, listener, sessionRegistry, log, session,
+			parentExecution, AgentFactory.RunOverrides.NONE);
+	}
+
+	/**
+	 * Runs the named agent with optional per-run model and MCP overrides.
+	 */
+	public static RecordedRun run(String agentName, Conversation conversation,
+			ConversationMemory memory, ToolContext context, AgentEventListener listener,
+			ToolRegistry sessionRegistry, ConversationLog log, AgentSession session,
+			AgentExecution parentExecution, AgentFactory.RunOverrides overrides) {
 		// Ensure the run's turns land in the log that becomes the transcript. Callers that wire a
 		// ConversationLogListener over this log themselves (e.g. the chat UI) already record into
 		// it; entry points that don't (e.g. the TL-Script functions, which pass a no-op listener)
@@ -113,10 +126,13 @@ public final class AgentRunner {
 			? log.turns().size() - (log.currentTurn() != null ? 1 : 0)
 			: 0;
 
+		// The run numbers its citation markers from 1; the context may have served an earlier run.
+		context.citationMarkers().reset();
 		AgentFactory.RunResult runResult;
 		try {
 			runResult = AgentFactory.getInstance().runAgent(agentName, conversation, memory,
-				context, effectiveListener, sessionRegistry);
+				context, effectiveListener, sessionRegistry,
+				overrides != null ? overrides : AgentFactory.RunOverrides.NONE);
 		} catch (RuntimeException ex) {
 			if (recorder != null) {
 				recorder.complete(transcriptOf(log, turnsBefore), ex);
@@ -124,10 +140,14 @@ public final class AgentRunner {
 			throw ex;
 		}
 
-		if (recorder != null) {
-			recorder.complete(transcriptOf(log, turnsBefore), runResult.response(), null);
+		String response = runResult.response();
+		if (log != null) {
+			response = CitationValidator.apply(log, response).text();
 		}
-		return new RecordedRun(runResult.response(), runResult.registry(),
+		if (recorder != null) {
+			recorder.complete(transcriptOf(log, turnsBefore), response, null);
+		}
+		return new RecordedRun(response, runResult.registry(),
 			recorder != null ? recorder.result() : null,
 			recorder != null ? recorder.execution() : null);
 	}
@@ -193,6 +213,8 @@ public final class AgentRunner {
 			? log.turns().size() - (log.currentTurn() != null ? 1 : 0)
 			: 0;
 
+		// The run numbers its citation markers from 1; the context may have served an earlier run.
+		context.citationMarkers().reset();
 		AgentResult result;
 		try {
 			result = loop.run(conversation, context, effectiveListener);
@@ -203,6 +225,9 @@ public final class AgentRunner {
 			throw ex;
 		}
 
+		if (log != null) {
+			CitationValidator.apply(log, lastAssistantText(log));
+		}
 		if (recorder != null) {
 			recorder.complete(transcriptOf(log, turnsBefore), null);
 		}
@@ -253,5 +278,23 @@ public final class AgentRunner {
 			Logger.warn("Failed to serialize run transcript: " + ex.getMessage(), ex, AgentRunner.class);
 			return null;
 		}
+	}
+
+	private static String lastAssistantText(ConversationLog log) {
+		Turn turn = log.currentTurn();
+		if (turn == null) {
+			List<Turn> turns = log.turns();
+			turn = turns.isEmpty() ? null : turns.get(turns.size() - 1);
+		}
+		if (turn == null) {
+			return "";
+		}
+		Part.TextPart last = null;
+		for (Part part : turn.assistantParts()) {
+			if (part instanceof Part.TextPart text) {
+				last = text;
+			}
+		}
+		return last == null ? "" : last.text();
 	}
 }

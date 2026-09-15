@@ -5,16 +5,24 @@
  */
 package com.top_logic.tl.ai.core.execution;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
+
+import de.haumacher.msgbuf.io.StringR;
+import de.haumacher.msgbuf.io.StringW;
+import de.haumacher.msgbuf.json.JsonReader;
+import de.haumacher.msgbuf.json.JsonWriter;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
@@ -38,6 +46,8 @@ import com.top_logic.tl.ai.core.execution.model.AgentTask;
 import com.top_logic.tl.ai.core.execution.model.InteractionRequest;
 import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
 import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.tl.ai.core.session.persist.messages.PersistedConversationV2;
+import com.top_logic.tl.ai.core.session.persist.messages.PersistedTurn;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -652,6 +662,109 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 		result.sort(Comparator.comparing(AgentExecution::getStartedAt,
 			Comparator.nullsLast(Comparator.naturalOrder())));
 		return result;
+	}
+
+	/**
+	 * Drops the tail of a session's recorded conversation.
+	 *
+	 * <p>
+	 * Used when the user regenerates an answer or edits an earlier message: what followed was said
+	 * in reply to a turn that is going away, so it cannot stay. Runs are walked in start order and
+	 * their transcripts rewritten to the turns that still fit within {@code keepTurns}; a run left
+	 * with nothing is deleted outright, together with the interaction requests recorded under it,
+	 * so nothing dangles.
+	 * </p>
+	 *
+	 * @param session
+	 *        the session to truncate; {@code null} is a no-op
+	 * @param keepTurns
+	 *        how many turns to keep, counted from the start of the session
+	 * @return how many turns were removed
+	 */
+	public int truncateConversation(AgentSession session, int keepTurns) {
+		if (session == null || keepTurns < 0) {
+			return 0;
+		}
+		return write(() -> {
+		try (Transaction tx = beginTx("Truncate agent session")) {
+			int seen = 0;
+			int removed = 0;
+			List<AgentExecution> doomed = new ArrayList<>();
+			for (AgentExecution execution : executionsOf(session)) {
+				if (execution.getParentExecution() != null) {
+					// A sub-agent run is not part of the chat stream; it goes with its parent.
+					continue;
+				}
+				String transcript = execution.getTranscript();
+				if (transcript == null || transcript.isEmpty()) {
+					continue;
+				}
+				PersistedConversationV2 conversation;
+				try {
+					conversation = PersistedConversationV2
+						.readPersistedConversationV2(new JsonReader(new StringR(transcript)));
+				} catch (IOException | RuntimeException ex) {
+					Logger.warn("Skipping unreadable transcript of run " + execution.getRunId()
+						+ " while truncating: " + ex.getMessage(), AgentExecutionStore.class);
+					continue;
+				}
+				List<PersistedTurn> turns = conversation.getTurns();
+				int keepHere = Math.max(0, Math.min(turns.size(), keepTurns - seen));
+				seen += turns.size();
+				if (keepHere == turns.size()) {
+					continue;
+				}
+				removed += turns.size() - keepHere;
+				if (keepHere == 0) {
+					doomed.add(execution);
+					continue;
+				}
+				execution.setTranscript(writeTurns(turns.subList(0, keepHere)));
+			}
+			if (!doomed.isEmpty()) {
+				deleteExecutions(doomed);
+			}
+			if (removed > 0) {
+				session.setLastUpdated(new Date());
+			}
+			tx.commit();
+			return Integer.valueOf(removed);
+		}
+		}).intValue();
+	}
+
+	/** Deletes runs together with everything recorded under them. */
+	private void deleteExecutions(List<AgentExecution> executions) {
+		Set<AgentExecution> family = new LinkedHashSet<>(executions);
+		for (TLObject obj : allInstances(TlAiExecutionFactory.getAgentExecutionType())) {
+			AgentExecution child = (AgentExecution) obj;
+			if (family.contains(child.getParentExecution())) {
+				family.add(child);
+			}
+		}
+		for (TLObject obj : allInstances(TlAiExecutionFactory.getInteractionRequestType())) {
+			InteractionRequest request = (InteractionRequest) obj;
+			if (family.contains(request.getExecution())) {
+				request.tDelete();
+			}
+		}
+		for (AgentExecution execution : family) {
+			execution.tDelete();
+		}
+	}
+
+	private static String writeTurns(List<PersistedTurn> turns) {
+		PersistedConversationV2 kept = PersistedConversationV2.create();
+		for (PersistedTurn turn : turns) {
+			kept.addTurn(turn);
+		}
+		StringW buffer = new StringW();
+		try (JsonWriter json = new JsonWriter(buffer)) {
+			kept.writeTo(json);
+		} catch (IOException ex) {
+			throw new RuntimeException("Cannot serialize the kept turns.", ex);
+		}
+		return buffer.toString();
 	}
 
 	/**

@@ -41,6 +41,16 @@ import de.haumacher.msgbuf.json.JsonReader;
  * <p>Thread-safe: a single instance handles concurrent streams.</p>
  */
 public class BedrockConverseProvider extends AbstractStreamingProvider {
+	/**
+	 * Catalog ID stamped onto the thinking blocks this provider produces.
+	 *
+	 * <p>
+	 * Their continuity tokens only mean something here, so the origin has to travel with them:
+	 * it is what lets a later request to another provider drop them instead of being rejected.
+	 * </p>
+	 */
+	private static final String PROVIDER_ID = "bedrock";
+
 
 	/**
 	 * Creates a {@link BedrockConverseProvider} with a shared default {@link HttpClient}.
@@ -214,7 +224,7 @@ public class BedrockConverseProvider extends AbstractStreamingProvider {
 								finishReason,
 								new TokenUsage(inputTokens, outputTokens, 0, cacheReadTokens,
 									cacheWriteTokens),
-								accumulator.buildContentParts()));
+								accumulator.buildContentParts(PROVIDER_ID)));
 						}
 					}
 
@@ -229,7 +239,7 @@ public class BedrockConverseProvider extends AbstractStreamingProvider {
 				"", "",
 				finishReason,
 				new TokenUsage(inputTokens, outputTokens, 0, cacheReadTokens, cacheWriteTokens),
-				accumulator.buildContentParts()));
+				accumulator.buildContentParts(PROVIDER_ID)));
 		}
 	}
 

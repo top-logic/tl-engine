@@ -25,6 +25,7 @@ import jakarta.servlet.AsyncListener;
 import com.top_logic.ai.chat.api.messages.ApprovalRequiredEvent;
 import com.top_logic.ai.chat.api.messages.ApprovalResolvedEvent;
 import com.top_logic.ai.chat.api.messages.CompactionStartedEvent;
+import com.top_logic.ai.chat.api.messages.ContextCompositionEvent;
 import com.top_logic.ai.chat.api.messages.ConnectedEvent;
 import com.top_logic.ai.chat.api.messages.DelegationEventWrapper;
 import com.top_logic.ai.chat.api.messages.HeartbeatEvent;
@@ -107,7 +108,23 @@ public class ChatSSEHandler implements ChatEventHandler {
 	private final AtomicBoolean _closed = new AtomicBoolean(false);
 
 	/** Thread-safe event buffer between agent thread and SSE flush thread. */
-	private final ConcurrentLinkedQueue<AgentEvent> _eventQueue = new ConcurrentLinkedQueue<>();
+	/**
+	 * Everything still to be written, in the order it was produced.
+	 *
+	 * <p>
+	 * Holds two kinds: an {@link AgentEvent}, rendered at flush time because it reads state that is
+	 * only settled then, and a {@link Frame} that is already rendered. One queue rather than two,
+	 * because the ordering between the kinds is the point: a message-complete written straight to
+	 * the stream overtook the text deltas still waiting here, and the browser dropped the tail of
+	 * every answer.
+	 * </p>
+	 */
+	private final ConcurrentLinkedQueue<Object> _eventQueue = new ConcurrentLinkedQueue<>();
+
+	/** An SSE frame whose payload is already known, queued to keep its place. */
+	private record Frame(String type, String data) {
+		// Pure data.
+	}
 
 	/** Tracks already-emitted user interaction request IDs to avoid duplicates. */
 	private final Set<String> _emittedInteractionIds = new HashSet<>();
@@ -215,18 +232,41 @@ public class ChatSSEHandler implements ChatEventHandler {
 	}
 
 	/**
-	 * Sends a {@link MessageCompleteEvent} directly to the SSE stream. Called from
-	 * {@link ChatProcessor} after the run completes, not via {@link #onEvent(AgentEvent)}.
+	 * Queues the final answer. Called from {@link ChatProcessor} after the run completes, not via
+	 * {@link #onEvent(AgentEvent)}.
+	 *
+	 * <p>
+	 * Queued rather than written straight out: it carries the authoritative text, and a client that
+	 * applies it must not receive it before the deltas it supersedes.
+	 * </p>
 	 */
 	@Override
 	public void sendMessageComplete(MessageCompleteEvent event) {
-		sendEvent("message_complete", DtoMapper.toJson(event));
+		enqueue("message_complete", DtoMapper.toJson(event));
 	}
 
-	/** Sends a provider error event to the client. */
+	/** Queues a provider error event for the client. */
 	@Override
 	public void sendProviderError(ProviderErrorEvent event) {
-		sendEvent("provider_error", DtoMapper.toJson(event));
+		enqueue("provider_error", DtoMapper.toJson(event));
+	}
+
+	/**
+	 * Adds an already-rendered frame to the queue, or hands it to the handler that replaced this
+	 * one when the browser has reconnected in the meantime.
+	 */
+	private void enqueue(String type, String data) {
+		if (_closed.get()) {
+			ChatEventHandler current = ChatEventHandlerRegistry.find(_tracker);
+			if (current instanceof ChatSSEHandler handler && handler != this) {
+				handler.enqueue(type, data);
+			} else {
+				Logger.warn("SSE handler closed, no replacement found - dropping " + type,
+					ChatSSEHandler.class);
+			}
+			return;
+		}
+		_eventQueue.add(new Frame(type, data));
 	}
 
 	/**
@@ -300,10 +340,14 @@ public class ChatSSEHandler implements ChatEventHandler {
 		}
 
 		try {
-			// Drain agent events
-			AgentEvent event;
-			while ((event = _eventQueue.poll()) != null) {
-				emitAgentEvent(event);
+			// Drain everything produced since the last flush, in the order it was produced.
+			Object queued;
+			while ((queued = _eventQueue.poll()) != null) {
+				if (queued instanceof Frame frame) {
+					sendEvent(frame.type(), frame.data());
+				} else {
+					emitAgentEvent((AgentEvent) queued);
+				}
 			}
 
 			// Poll for user interactions (from AskUserTool, not part of AgentEvent)
@@ -327,7 +371,9 @@ public class ChatSSEHandler implements ChatEventHandler {
 		if (event instanceof AgentEvent.RunStarted e) {
 			sendEvent("run_started", DtoMapper.toJson(RunStartedEvent.create()
 				.setRunId(e.runId())
-				.setModel(e.model())));
+				.setModel(e.model())
+				.setUsedTokens(usedTokens())
+				.setContextWindow(contextWindow())));
 		} else if (event instanceof AgentEvent.RunCompleted e) {
 			_tracker.addTokenUsage(e.totalUsage());
 			sendEvent("run_completed", DtoMapper.toJson(RunCompletedEvent.create()
@@ -336,11 +382,21 @@ public class ChatSSEHandler implements ChatEventHandler {
 				.setTotalUsage(mapTokenUsage(e.totalUsage()))));
 		} else if (event instanceof AgentEvent.TurnStarted e) {
 			sendEvent("turn_started", DtoMapper.toJson(TurnStartedEvent.create()
-				.setTurnNumber(e.turnNumber())));
+				.setTurnNumber(e.turnNumber())
+				.setUsedTokens(usedTokens())
+				.setContextWindow(contextWindow())));
 		} else if (event instanceof AgentEvent.TurnCompleted e) {
 			sendEvent("turn_completed", DtoMapper.toJson(TurnCompletedEvent.create()
 				.setTurnNumber(e.turnNumber())
-				.setTurnUsage(mapTokenUsage(e.turnUsage()))));
+				.setTurnUsage(mapTokenUsage(e.turnUsage()))
+				.setContextWindow(contextWindow())));
+		} else if (event instanceof AgentEvent.ContextComposition e) {
+			sendEvent("context_composition", DtoMapper.toJson(ContextCompositionEvent.create()
+				.setSystemPromptTokens(e.systemPromptTokens())
+				.setToolDefinitionTokens(e.toolDefinitionTokens())
+				.setMessageTokens(e.messageTokens())
+				.setToolResultTokens(e.toolResultTokens())
+				.setToolCount(e.toolCount())));
 		} else if (event instanceof AgentEvent.TextDelta e) {
 			sendEvent("text_delta", DtoMapper.toJson(TextDeltaEvent.create()
 				.setText(e.text())));
@@ -384,6 +440,7 @@ public class ChatSSEHandler implements ChatEventHandler {
 				.setToolName(e.toolName())
 				.setArgsJson(e.argsJson())
 				.setDisplayReason(e.displayReason())
+				.setToolMode(e.toolMode() == null ? "" : e.toolMode().name())
 				.setRemainingMs(remainingMs(e))));
 		} else if (event instanceof AgentEvent.ApprovalResolved e) {
 			sendEvent("approval_resolved", DtoMapper.toJson(ApprovalResolvedEvent.create()
@@ -401,7 +458,8 @@ public class ChatSSEHandler implements ChatEventHandler {
 		} else if (event instanceof AgentEvent.CompactionStarted e) {
 			sendEvent("compaction_started", DtoMapper.toJson(CompactionStartedEvent.create()
 				.setTokensBefore(e.tokensBefore())
-				.setTrigger(e.trigger())));
+				.setTrigger(e.trigger())
+				.setContextWindow(contextWindow())));
 		} else if (event instanceof AgentEvent.CompactionCompleted) {
 			// Not surfaced to UI
 		} else if (event instanceof AgentEvent.TaskUpdated e) {
@@ -467,7 +525,9 @@ public class ChatSSEHandler implements ChatEventHandler {
 			innerData = DtoMapper.toJson(ApprovalRequiredEvent.create()
 				.setToolCallId(e.toolCallId()).setApprovalRequestId(e.approvalRequestId())
 				.setToolName(e.toolName()).setArgsJson(e.argsJson())
-				.setDisplayReason(e.displayReason()).setRemainingMs(remainingMs(e)));
+				.setDisplayReason(e.displayReason())
+				.setToolMode(e.toolMode() == null ? "" : e.toolMode().name())
+				.setRemainingMs(remainingMs(e)));
 		} else if (child instanceof AgentEvent.ApprovalResolved e) {
 			innerType = "approval_resolved";
 			innerData = DtoMapper.toJson(ApprovalResolvedEvent.create()
@@ -476,7 +536,8 @@ public class ChatSSEHandler implements ChatEventHandler {
 		} else if (child instanceof AgentEvent.RunStarted e) {
 			innerType = "run_started";
 			innerData = DtoMapper.toJson(RunStartedEvent.create()
-				.setRunId(e.runId()).setModel(e.model()));
+				.setRunId(e.runId()).setModel(e.model())
+				.setUsedTokens(usedTokens()).setContextWindow(contextWindow()));
 		} else if (child instanceof AgentEvent.RunCompleted e) {
 			innerType = "run_completed";
 			innerData = DtoMapper.toJson(RunCompletedEvent.create()
@@ -485,11 +546,13 @@ public class ChatSSEHandler implements ChatEventHandler {
 		} else if (child instanceof AgentEvent.TurnStarted e) {
 			innerType = "turn_started";
 			innerData = DtoMapper.toJson(TurnStartedEvent.create()
-				.setTurnNumber(e.turnNumber()));
+				.setTurnNumber(e.turnNumber())
+				.setUsedTokens(usedTokens()).setContextWindow(contextWindow()));
 		} else if (child instanceof AgentEvent.TurnCompleted e) {
 			innerType = "turn_completed";
 			innerData = DtoMapper.toJson(TurnCompletedEvent.create()
-				.setTurnNumber(e.turnNumber()).setTurnUsage(mapTokenUsage(e.turnUsage())));
+				.setTurnNumber(e.turnNumber()).setTurnUsage(mapTokenUsage(e.turnUsage()))
+				.setContextWindow(contextWindow()));
 		} else if (child instanceof AgentEvent.ToolCallDenied e) {
 			innerType = "tool_denied";
 			innerData = DtoMapper.toJson(ToolDeniedEvent.create()
@@ -586,6 +649,16 @@ public class ChatSSEHandler implements ChatEventHandler {
 			Logger.error("Failed to write SSE event", e, ChatSSEHandler.class);
 			stop();
 		}
+	}
+
+	private int usedTokens() {
+		com.top_logic.tl.ai.core.memory.ConversationMemory memory = _tracker.getConversationMemory();
+		return memory == null ? 0 : memory.estimateTokens();
+	}
+
+	private int contextWindow() {
+		com.top_logic.tl.ai.core.memory.ConversationMemory memory = _tracker.getConversationMemory();
+		return memory == null ? 0 : memory.contextWindowTokens();
 	}
 
 	private static TokenUsageDto mapTokenUsage(TokenUsage usage) {

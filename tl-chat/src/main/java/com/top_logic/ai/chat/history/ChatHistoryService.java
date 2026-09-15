@@ -139,6 +139,25 @@ public class ChatHistoryService {
 	}
 
 	/**
+	 * Drops the recorded tail of a session's conversation.
+	 *
+	 * @param session
+	 *        the session to truncate
+	 * @param keepTurns
+	 *        how many turns to keep, counted from the start
+	 * @return how many turns were removed
+	 * @see com.top_logic.tl.ai.core.execution.AgentExecutionStore#truncateConversation
+	 */
+	public static int truncateConversation(TLObject session, int keepTurns) {
+		try {
+			return store().truncateConversation((AgentSession) session, keepTurns);
+		} catch (RuntimeException ex) {
+			Logger.error("Failed to truncate chat session: " + ex.getMessage(), ex, ChatHistoryService.class);
+			return 0;
+		}
+	}
+
+	/**
 	 * Loads the session's full conversation as a single {@code PersistedConversationV2} JSON
 	 * blob, merged from the per-execution transcripts in run order.
 	 *
@@ -222,13 +241,47 @@ public class ChatHistoryService {
 	}
 
 	/**
-	 * Finds an {@link AgentSession} by its {@link KnowledgeObject} ID.
+	 * Finds a session of the given owner by its {@link KnowledgeObject} ID.
+	 *
+	 * <p>
+	 * The lookup every request-handling path must use. Session IDs are small sequential integers, so
+	 * an ID taken from a request body names someone else's chat as easily as the caller's own;
+	 * anything that acts on it - and the three that remove turns above all - has to establish first
+	 * that it is theirs.
+	 * </p>
+	 *
+	 * @param objectId
+	 *        the string representation of the object ID
+	 * @param owner
+	 *        the person the session must belong to; {@code null} owns nothing
+	 * @return the session, or {@code null} when it does not exist or is not this person's
+	 * @see #findAnySessionById(String)
+	 */
+	public static TLObject findOwnedSessionById(String objectId, Person owner) {
+		if (owner == null) {
+			return null;
+		}
+		TLObject session = findAnySessionById(objectId);
+		return session != null && isOwnedBy(session, owner) ? session : null;
+	}
+
+	/**
+	 * Finds an {@link AgentSession} by its {@link KnowledgeObject} ID, no matter whose it is.
+	 *
+	 * <p>
+	 * Named for what it does, because what it does is dangerous: it hands out any user's chat to
+	 * whoever knows its number, and the numbers are small sequential integers. Twice already a
+	 * request-handling path reached for the short name and got the unguarded lookup; nothing that
+	 * acts on an ID a request supplied may call this. It is left for callers that have no requester
+	 * to check against at all - a migration, a background job started by the system.
+	 * </p>
 	 *
 	 * @param objectId
 	 *        the string representation of the object ID.
 	 * @return the session object, or null if not found.
+	 * @see #findOwnedSessionById(String, Person)
 	 */
-	public static TLObject findSessionById(String objectId) {
+	public static TLObject findAnySessionById(String objectId) {
 		if (objectId == null || objectId.isEmpty()) {
 			return null;
 		}

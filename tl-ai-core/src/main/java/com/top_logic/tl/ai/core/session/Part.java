@@ -37,18 +37,44 @@ public sealed interface Part {
 	 * @param id part identifier
 	 * @param timestamp when the text was produced
 	 * @param text the text content
+	 * @param citations citations the validator kept for this text; empty when none
 	 */
-	record TextPart(String id, Instant timestamp, String text) implements Part {}
+	record TextPart(String id, Instant timestamp, String text, List<Citation> citations) implements Part {
+
+		/** Text with no citations. */
+		public TextPart(String id, Instant timestamp, String text) {
+			this(id, timestamp, text, List.of());
+		}
+
+		public TextPart {
+			citations = citations == null ? List.of() : List.copyOf(citations);
+		}
+	}
 
 	/**
-	 * A thinking / reasoning block produced by the LLM.
+	 * One thinking block of an assistant turn.
 	 *
-	 * @param id part identifier
-	 * @param timestamp when the thinking block was produced
-	 * @param text the reasoning content
-	 * @param continuityToken opaque provider token for multi-turn continuity; may be {@code null}
+	 * @param id
+	 *        part identifier
+	 * @param timestamp
+	 *        when the thinking block was produced
+	 * @param text
+	 *        the reasoning the model wrote
+	 * @param continuityToken
+	 *        the provider's own token for the block (Anthropic's signature, {@code OpenAI}'s
+	 *        encrypted content), or {@code null} when none arrived
+	 * @param provider
+	 *        catalog ID of the provider that produced it, or {@code null} when unrecorded. A token
+	 *        means nothing to any other provider, so replaying a block needs both.
 	 */
-	record ThinkingPart(String id, Instant timestamp, String text, String continuityToken) implements Part {}
+	record ThinkingPart(String id, Instant timestamp, String text, String continuityToken, String provider)
+			implements Part {
+
+		/** A thinking part whose origin is not recorded. */
+		public ThinkingPart(String id, Instant timestamp, String text, String continuityToken) {
+			this(id, timestamp, text, continuityToken, null);
+		}
+	}
 
 	// ---- Tool call with state machine ----
 

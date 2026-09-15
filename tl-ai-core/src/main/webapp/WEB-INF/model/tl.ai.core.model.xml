@@ -22,8 +22,23 @@
 							type="tl.core:String"
 						/>
 						<field
+							attribute="displayName"
+							fullQualifiedName="tl.ai.core:Agent#displayName"
+							type="tl.core:String"
+						/>
+						<field
 							attribute="description"
 							fullQualifiedName="tl.ai.core:Agent#description"
+							type="tl.core:String"
+						>
+							<annotations>
+								<label-position value="above-value"/>
+								<render-whole-line/>
+							</annotations>
+						</field>
+						<field
+							attribute="summary"
+							fullQualifiedName="tl.ai.core:Agent#summary"
 							type="tl.core:String"
 						>
 							<annotations>
@@ -76,7 +91,18 @@
 						</constraints>
 					</annotations>
 				</property>
+				<property name="displayName"
+					type="tl.core:String"
+				/>
 				<property name="description"
+					type="tl.core:String"
+				>
+					<annotations>
+						<multi-line/>
+						<size-constraint/>
+					</annotations>
+				</property>
+				<property name="summary"
 					type="tl.core:String"
 				>
 					<annotations>

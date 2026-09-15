@@ -24,13 +24,24 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
+import com.top_logic.ai.chat.api.messages.CancelPromptImprovementRequest;
 import com.top_logic.ai.chat.api.messages.ChatSendRequest;
 import com.top_logic.ai.chat.api.messages.ChatSendResponse;
+import com.top_logic.ai.chat.api.messages.ChatPreferencesDto;
+import com.top_logic.ai.chat.api.messages.ContextCompositionEvent;
+import com.top_logic.ai.chat.api.messages.MessageFeedbackDto;
+import com.top_logic.ai.chat.api.messages.MessageFeedbackRequest;
+import com.top_logic.ai.chat.api.messages.RegenerateRequest;
+import com.top_logic.ai.chat.api.messages.TruncateRequest;
+import com.top_logic.ai.chat.api.messages.TruncateResponse;
 import com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse;
+import com.top_logic.ai.chat.api.messages.TokenUsageDto;
 import com.top_logic.ai.chat.api.messages.ChatSessionDto;
 import com.top_logic.ai.chat.api.messages.ChatSessionListResponse;
 import com.top_logic.ai.chat.api.messages.ChatUpdatesResponse;
 import com.top_logic.ai.chat.api.messages.CreateSessionRequest;
+import com.top_logic.ai.chat.api.messages.ImprovePromptRequest;
+import com.top_logic.ai.chat.api.messages.ImprovePromptResponse;
 import com.top_logic.ai.chat.api.messages.PendingInteractionDto;
 import com.top_logic.ai.chat.api.messages.PendingInteractionsResponse;
 import com.top_logic.ai.chat.api.messages.UpdateTitleRequest;
@@ -38,6 +49,9 @@ import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.Chat;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
+import com.top_logic.ai.chat.layout.PromptImprovementProcessor;
+import com.top_logic.ai.chat.layout.PromptImprovementProcessor.PromptImprovementException;
+import com.top_logic.ai.chat.layout.PromptImprovementProcessor.Result;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
@@ -47,6 +61,13 @@ import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
+import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
+import com.top_logic.tl.ai.core.agent.AgentFactory;
+import com.top_logic.tl.ai.core.security.AiToolAccessService;
+import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Decision;
+import com.top_logic.tl.ai.core.security.RunAuthorization;
+import com.top_logic.tl.ai.core.security.ToolSecurityException;
+import com.top_logic.util.Resources;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -64,9 +85,15 @@ import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
+import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
+import com.top_logic.tl.ai.core.memory.ConversationMemory;
+import com.top_logic.tl.ai.core.session.ConversationLogReplay;
+import com.top_logic.tl.ai.core.session.Turn;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedConversationV2;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedPart;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedTurn;
+import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.TopLogicServlet;
 
@@ -95,14 +122,35 @@ public class ChatServlet extends TopLogicServlet {
 	private static final String PATH_SEND = "/send";
 	private static final String PATH_RESPOND = "/respond";
 	private static final String PATH_CANCEL = "/cancel";
+	private static final String PATH_IMPROVE_PROMPT = "/improve-prompt";
+	private static final String PATH_CANCEL_PROMPT_IMPROVEMENT = "/improve-prompt/cancel";
 	private static final String PATH_APPROVAL_MODE = "/approval-mode";
 	private static final String PATH_UPDATES = "/updates";
 	private static final String PATH_EVENTS = "/events";
 	private static final String PATH_SESSIONS = "/sessions";
 	private static final String PATH_INTERACTIONS = "/interactions";
 	private static final String PATH_SUBAGENTS = "/subagents";
+	private static final String PATH_CAPABILITIES = "/capabilities";
+
+	private static final String PATH_REGENERATE = "/regenerate";
+
+	private static final String PATH_TRUNCATE = "/truncate";
+
+	private static final String PATH_FEEDBACK = "/feedback";
+
+	private static final String PATH_PREFERENCES = "/preferences";
 	private static final String TRANSCRIPT_SUFFIX = "/transcript";
 	private static final String CONTENT_TYPE_JSON = "application/json; charset=UTF-8";
+
+	/**
+	 * The status of a request the acting account may not make.
+	 *
+	 * <p>
+	 * A status of its own rather than the generic "error": the client shows the reason that comes with
+	 * it, and the two are not the same event - one is a failure, the other is an answer.
+	 * </p>
+	 */
+	private static final String FORBIDDEN = "forbidden";
 	private static final String CONTENT_TYPE_SSE = "text/event-stream";
 
 	/** The {@link #interactionTypeName(TLClassifier)} of a tool approval. */
@@ -136,8 +184,29 @@ public class ChatServlet extends TopLogicServlet {
 			handleCancel(req, resp);
 			return;
 		}
+		if (pathInfo.equals(PATH_IMPROVE_PROMPT) || pathInfo.equals(PATH_IMPROVE_PROMPT + "/")) {
+			handleImprovePrompt(req, resp);
+			return;
+		}
+		if (pathInfo.equals(PATH_CANCEL_PROMPT_IMPROVEMENT)
+				|| pathInfo.equals(PATH_CANCEL_PROMPT_IMPROVEMENT + "/")) {
+			handleCancelPromptImprovement(req, resp);
+			return;
+		}
 		if (pathInfo.equals(PATH_APPROVAL_MODE) || pathInfo.equals(PATH_APPROVAL_MODE + "/")) {
 			handleApprovalMode(req, resp);
+			return;
+		}
+		if (pathInfo.equals(PATH_REGENERATE) || pathInfo.equals(PATH_REGENERATE + "/")) {
+			handleRegenerate(req, resp);
+			return;
+		}
+		if (pathInfo.equals(PATH_TRUNCATE) || pathInfo.equals(PATH_TRUNCATE + "/")) {
+			handleTruncate(req, resp);
+			return;
+		}
+		if (pathInfo.equals(PATH_FEEDBACK) || pathInfo.equals(PATH_FEEDBACK + "/")) {
+			handleFeedback(req, resp);
 			return;
 		}
 		if (pathInfo.equals(PATH_SESSIONS) || pathInfo.equals(PATH_SESSIONS + "/")) {
@@ -177,6 +246,10 @@ public class ChatServlet extends TopLogicServlet {
 			handleListSubagents(req, resp);
 			return;
 		}
+		if (pathInfo.equals(PATH_CAPABILITIES) || pathInfo.equals(PATH_CAPABILITIES + "/")) {
+			handleCapabilities(req, resp);
+			return;
+		}
 		if (pathInfo.startsWith(PATH_SESSIONS)) {
 			handleSessionGet(req, resp, pathInfo);
 			return;
@@ -190,6 +263,10 @@ public class ChatServlet extends TopLogicServlet {
 		String pathInfo = req.getPathInfo();
 		if (pathInfo == null) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+			return;
+		}
+		if (pathInfo.equals(PATH_PREFERENCES) || pathInfo.equals(PATH_PREFERENCES + "/")) {
+			handlePutPreferences(req, resp);
 			return;
 		}
 		if (pathInfo.startsWith(PATH_SESSIONS)) {
@@ -252,14 +329,23 @@ public class ChatServlet extends TopLogicServlet {
 
 		TaskProgressTracker tracker = currentTracker();
 		TLSubSessionContext subSession = TLContextManager.getSubSession();
+		Person person = resolveCurrentPerson(req);
 
 		if (activeSessionId != null) {
-			tracker.setActiveSessionId(activeSessionId);
+			// The same gate the three turn-removing endpoints use, for the endpoint that spends the
+			// API budget and writes into a transcript: the id arrives in the request body, so
+			// without this it names whichever chat the caller cares to type.
+			if (ownedSessionId(req, resp, activeSessionId) == null) {
+				return;
+			}
+			if (!tracker.setActiveSessionId(activeSessionId, person)) {
+				resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+				return;
+			}
 		}
 
 		String storedName = tracker.getUserName();
 		if (storedName == null) {
-			Person person = resolveCurrentPerson(req);
 			if (person != null) {
 				try {
 					storedName = person.getName();
@@ -272,8 +358,22 @@ public class ChatServlet extends TopLogicServlet {
 			}
 		}
 		final String userName = storedName != null ? storedName : "Anonymous";
+		String effort = blankToNull(body.getEffort());
+		tracker.setEffort(effort);
+		ChatProcessor.ChatRunOptions options = new ChatProcessor.ChatRunOptions(
+			blankToNull(body.getAgent()),
+			blankToNull(body.getModel()),
+			body.isMcpOverride(),
+			body.getMcpServers(),
+			effort);
+		Refusal refusal = runRefusal(person, options);
+		if (refusal != null) {
+			writeRefused(resp, refusal,
+				ChatSendResponse.create().setStatus(FORBIDDEN).setReason(refusal.reason()));
+			return;
+		}
 		ChatProcessor.SendResult result =
-			ChatProcessor.sendMessage(tracker, subSession, userName, messageText, attachments);
+			ChatProcessor.sendMessage(tracker, subSession, userName, messageText, attachments, options);
 
 		resp.setStatus(HttpServletResponse.SC_OK);
 		resp.setContentType(CONTENT_TYPE_JSON);
@@ -288,6 +388,468 @@ public class ChatServlet extends TopLogicServlet {
 			.setTaskId(result.getTaskId())
 			.setStatus("processing");
 		resp.getWriter().write(DtoMapper.toJson(sendResponse));
+	}
+
+	/**
+	 * Answers the last message again.
+	 *
+	 * <p>
+	 * The previous answer is not kept beside the new one: the user asked for that turn to be done
+	 * differently, so the turn is removed - from the session's memory and from its recorded
+	 * transcript - and the same user message is sent once more. What the client then streams is the
+	 * replacement, in the place the old answer occupied.
+	 * </p>
+	 */
+	private void handleRegenerate(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		RegenerateRequest body;
+		try {
+			String jsonBody = new String(req.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+			body = RegenerateRequest.readRegenerateRequest(new JsonReader(new StringR(jsonBody)));
+		} catch (Exception ex) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON body: " + ex.getMessage());
+			return;
+		}
+		TaskProgressTracker tracker = currentTracker();
+		String sessionId = ownedSessionId(req, resp, body.getSessionId());
+		if (sessionId == null) {
+			return;
+		}
+		tracker.setActiveSessionId(sessionId, resolveCurrentPerson(req));
+		if (tracker.hasActiveProcessingState()) {
+			writeTruncateResponse(resp, TruncateResponse.create().setStatus("busy"));
+			return;
+		}
+
+		ChatProcessor.ChatRunOptions options = new ChatProcessor.ChatRunOptions(
+			blankToNull(body.getAgent()), blankToNull(body.getModel()),
+			body.isMcpOverride(), body.getMcpServers(), blankToNull(body.getEffort()));
+		// Before the turn is removed, not after: a regenerate that is refused must leave the answer it
+		// was going to replace where it is.
+		Refusal refusal = runRefusal(resolveCurrentPerson(req), options);
+		if (refusal != null) {
+			writeRefused(resp, refusal,
+				TruncateResponse.create().setStatus(FORBIDDEN).setReason(refusal.reason()));
+			return;
+		}
+
+		ConversationLog log = tracker.getSessionManager().getOrCreateConversationLog();
+		int turnCount = log.turnCount();
+		if (turnCount == 0) {
+			writeTruncateResponse(resp, TruncateResponse.create().setStatus("error"));
+			return;
+		}
+		Removed removed = removeTurnsFrom(tracker, resolveCurrentPerson(req), sessionId, turnCount - 1);
+		if (removed.text().isEmpty()) {
+			writeTruncateResponse(resp, TruncateResponse.create().setStatus("error"));
+			return;
+		}
+
+		tracker.setEffort(blankToNull(body.getEffort()));
+		String userName = resolveUserName(req, tracker);
+		ChatProcessor.SendResult result = ChatProcessor.sendMessage(tracker,
+			TLContextManager.getSubSession(), userName, removed.text(), List.of(), options);
+
+		TruncateResponse response = TruncateResponse.create()
+			.setRemovedTurns(removed.turns())
+			.setText(removed.text());
+		if (result.getTaskId() == null) {
+			writeTruncateResponse(resp, response.setStatus(result.isBusy() ? "busy" : "error"));
+			return;
+		}
+		writeTruncateResponse(resp, response.setStatus("ok").setTaskId(result.getTaskId()));
+	}
+
+	/**
+	 * Drops a turn and everything after it, so the user can say it differently.
+	 *
+	 * <p>
+	 * The removed message comes back in the response rather than being re-sent: editing means the
+	 * user wants to change it before it goes again, which only they can do.
+	 * </p>
+	 */
+	private void handleTruncate(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		TruncateRequest body;
+		try {
+			String jsonBody = new String(req.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+			body = TruncateRequest.readTruncateRequest(new JsonReader(new StringR(jsonBody)));
+		} catch (Exception ex) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON body: " + ex.getMessage());
+			return;
+		}
+		TaskProgressTracker tracker = currentTracker();
+		String sessionId = ownedSessionId(req, resp, body.getSessionId());
+		if (sessionId == null) {
+			return;
+		}
+		tracker.setActiveSessionId(sessionId, resolveCurrentPerson(req));
+		if (tracker.hasActiveProcessingState()) {
+			writeTruncateResponse(resp, TruncateResponse.create().setStatus("busy"));
+			return;
+		}
+		Removed removed = removeTurnsFrom(tracker, resolveCurrentPerson(req), sessionId, body.getFromTurn());
+		writeTruncateResponse(resp, TruncateResponse.create()
+			.setStatus("ok")
+			.setRemovedTurns(removed.turns())
+			.setText(removed.text()));
+	}
+
+	/**
+	 * The session named in a request body, once it is established that it belongs to the caller.
+	 *
+	 * <p>
+	 * Session IDs are small sequential integers taken straight from the request, so a handler that
+	 * acts on one without asking acts on whichever chat the caller names. Answers 404 for a session
+	 * that does not exist and for one that is not theirs alike: which of the two it is, is not the
+	 * caller's business.
+	 * </p>
+	 *
+	 * @return the session ID to work with, or {@code null} when the response has already been
+	 *         answered and the handler must return
+	 */
+	private static String ownedSessionId(HttpServletRequest req, HttpServletResponse resp, String requested)
+			throws IOException {
+		Person person = resolveCurrentPerson(req);
+		if (person == null) {
+			resp.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+			return null;
+		}
+		String sessionId = blankToNull(requested);
+		if (sessionId == null) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing 'sessionId'.");
+			return null;
+		}
+		if (ChatHistoryService.findOwnedSessionById(sessionId, person) == null) {
+			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+			return null;
+		}
+		return sessionId;
+	}
+
+	/** What a truncation took away. */
+	private record Removed(int turns, String text) {
+		// Pure data.
+	}
+
+	/**
+	 * Removes turn {@code fromTurn} and everything after it from the live session and from what is
+	 * recorded for it.
+	 *
+	 * <p>
+	 * Three things hold a copy of a conversation and all three have to forget it: the conversation
+	 * memory the model is given, the conversation log the UI is rebuilt from, and the per-run
+	 * transcripts in the knowledge base. Ratings of removed turns go too - they describe answers
+	 * that no longer exist.
+	 * </p>
+	 *
+	 * @return how many turns went, and the user text of the first of them
+	 */
+	private static Removed removeTurnsFrom(TaskProgressTracker tracker, Person person, String sessionId,
+			int fromTurn) {
+		ConversationLog log = tracker.getSessionManager().getOrCreateConversationLog();
+		List<Turn> turns = log.turns();
+		if (fromTurn < 0 || fromTurn >= turns.size()) {
+			return new Removed(0, "");
+		}
+		String text = userTextOf(turns.get(fromTurn));
+		int removed = log.removeFrom(fromTurn);
+
+		ConversationMemory memory = tracker.getConversationMemory();
+		if (memory != null) {
+			ConversationLogReplay.rebuildMemory(log, memory.conversation());
+		}
+		tracker.dropFeedbackFrom(fromTurn);
+
+		if (sessionId != null) {
+			// Guarded again here, not only in the handler: this is the call that deletes, and it must
+			// be impossible to reach it through a path that forgot to ask whose session it is.
+			TLObject session = ChatHistoryService.findOwnedSessionById(sessionId, person);
+			if (session != null) {
+				ChatHistoryService.truncateConversation(session, fromTurn);
+			}
+		}
+		tracker.getSessionManager().persistActiveSession();
+		return new Removed(removed, text);
+	}
+
+	/** The text the user contributed to a turn, joined over its parts. */
+	private static String userTextOf(Turn turn) {
+		StringBuilder text = new StringBuilder();
+		for (Part part : turn.userParts()) {
+			if (part instanceof Part.TextPart textPart) {
+				if (text.length() > 0) {
+					text.append('\n');
+				}
+				text.append(textPart.text());
+			}
+		}
+		return text.toString();
+	}
+
+	/**
+	 * Records what the user thought of one answer.
+	 *
+	 * <p>
+	 * The rating lands in the session's metadata bag (see {@code SessionMetadata.feedback}) rather
+	 * than in the transcript: a transcript is written per run and a rating arrives after it, while
+	 * the metadata is the session's own and is rewritten whole on every persist. That is also where
+	 * an evaluation reads the ratings back from, keyed by the turn they belong to.
+	 * </p>
+	 */
+	private void handleFeedback(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		MessageFeedbackRequest body;
+		try {
+			String jsonBody = new String(req.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+			body = MessageFeedbackRequest.readMessageFeedbackRequest(new JsonReader(new StringR(jsonBody)));
+		} catch (Exception ex) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON body: " + ex.getMessage());
+			return;
+		}
+		TaskProgressTracker tracker = currentTracker();
+		String sessionId = ownedSessionId(req, resp, body.getSessionId());
+		if (sessionId == null) {
+			return;
+		}
+		tracker.setActiveSessionId(sessionId, resolveCurrentPerson(req));
+		tracker.setFeedback(body.getTurnIndex(), blankToNull(body.getRating()), body.getNote());
+		tracker.getSessionManager().persistActiveSession();
+
+		resp.setStatus(HttpServletResponse.SC_OK);
+		resp.setContentType(CONTENT_TYPE_JSON);
+		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+		resp.getWriter().write("{\"status\":\"ok\"}");
+	}
+
+	/**
+	 * Why the acting account may not make this request, in their language.
+	 *
+	 * <p>
+	 * The friendly half of the agent security policy: {@code AgentFactory} refuses the run whatever
+	 * this says, and this exists so that the refusal reaches the user as a sentence rather than as a
+	 * turn that failed. Answers <code>null</code> while nothing can be asked - no account behind the
+	 * request, or the policy service not running - and the run is then refused where it starts.
+	 * </p>
+	 */
+	private Refusal runRefusal(Person person, ChatProcessor.ChatRunOptions options) {
+		String named = blankToNull(options.agent());
+		Refusal denial = policyRefusal(person, options);
+		if (denial != null) {
+			return denial;
+		}
+		if (named != null && !agentExists(named.trim())) {
+			// A name no agent has. Answered here rather than accepted and left to fail in the
+			// background thread, where it reached the user as a turn that stopped and the
+			// administrator as an ERROR with a stack trace. Not a refusal: the request is wrong,
+			// not forbidden, so it is 404 and not 403.
+			return new Refusal(HttpServletResponse.SC_NOT_FOUND, Resources.getInstance()
+				.getString(com.top_logic.tl.ai.core.security.I18NConstants.UNKNOWN_AGENT__AGENT
+					.fill(named.trim())));
+		}
+		return null;
+	}
+
+	/** Whether this application has an agent of that name, assuming it has while it cannot say. */
+	private static boolean agentExists(String agentName) {
+		try {
+			return AgentDefinitionQuery.getInstance().findAgentByName(agentName) != null;
+		} catch (RuntimeException ex) {
+			// Cannot enumerate, so cannot judge: leave the request to the run, as before.
+			Logger.warn("Could not check whether an agent '" + agentName + "' exists.", ex,
+				ChatServlet.class);
+			return true;
+		}
+	}
+
+	/** Why the agent security policy refuses this request, or <code>null</code> if it does not. */
+	private Refusal policyRefusal(Person person, ChatProcessor.ChatRunOptions options) {
+		if (person == null || !AiToolAccessService.Module.INSTANCE.isActive()) {
+			return null;
+		}
+		RunAuthorization access;
+		String agentName;
+		try {
+			access = AiToolAccessService.effectiveRunAccessFor(person);
+			agentName = options.agent() != null && !options.agent().isBlank()
+				? options.agent().trim()
+				: AgentFactory.defaultAgentFor(access, hiddenAgents());
+		} catch (RuntimeException ex) {
+			// A pre-check is a courtesy; a failure in it must not stop a request the run would accept.
+			Logger.warn("Could not pre-check what this account may run.", ex, ChatServlet.class);
+			return null;
+		}
+		if (agentName == null) {
+			// A request that names no agent, from an account that may run none. Its own sentence: the
+			// name of the agent they may not have says nothing they can act on.
+			return forbidden(Resources.getInstance().getString(
+				com.top_logic.tl.ai.core.security.I18NConstants.NO_AGENT_AVAILABLE));
+		}
+		List<String> mcpOverride = options.mcpOverride() ? options.mcpServers() : null;
+		AgentFactory.RunOverrides overrides =
+			new AgentFactory.RunOverrides(options.model(), mcpOverride, options.effort());
+		Decision.Denied denied;
+		try {
+			denied = AgentFactory.runRefusal(access, agentName, overrides);
+		} catch (RuntimeException ex) {
+			Logger.warn("Could not pre-check what '" + agentName + "' may run.", ex, ChatServlet.class);
+			return null;
+		}
+		return denied == null ? null : forbidden(Resources.getInstance().getString(denied.reason()));
+	}
+
+	/**
+	 * Why a request cannot be carried out, and the status that says which kind of "cannot" it is.
+	 *
+	 * @param status
+	 *        The HTTP status to answer with.
+	 * @param reason
+	 *        The sentence the client shows, in the user's language.
+	 */
+	private record Refusal(int status, String reason) {
+		// Nothing.
+	}
+
+	/** A refusal by the agent security policy. */
+	private static Refusal forbidden(String reason) {
+		return new Refusal(HttpServletResponse.SC_FORBIDDEN, reason);
+	}
+
+	/** The agents this chat runs for itself and never offers as a conversation partner. */
+	private Set<String> hiddenAgents() {
+		TaskProgressTracker tracker = currentTracker();
+		String improver = tracker == null ? null : tracker.getPromptImproverAgentName();
+		return improver == null || improver.isBlank() ? Set.of() : Set.of(improver);
+	}
+
+	/** Answers a send that is refused, with the reason the client shows. */
+	private static void writeRefused(HttpServletResponse resp, Refusal refusal, ChatSendResponse response)
+			throws IOException {
+		refused(resp, refusal.status());
+		resp.getWriter().write(DtoMapper.toJson(response));
+	}
+
+	/** Answers a regenerate that is refused, with the reason the client shows. */
+	private static void writeRefused(HttpServletResponse resp, Refusal refusal, TruncateResponse response)
+			throws IOException {
+		refused(resp, refusal.status());
+		resp.getWriter().write(DtoMapper.toJson(response));
+	}
+
+	/**
+	 * Sets up a refusal the client can read.
+	 *
+	 * <p>
+	 * A JSON body rather than {@code sendError}, whose HTML page the client cannot parse and would
+	 * report as a generic failure - which is the opposite of what a refusal with a reason is for.
+	 * </p>
+	 */
+	private static void refused(HttpServletResponse resp, int status) {
+		resp.setStatus(status);
+		resp.setContentType(CONTENT_TYPE_JSON);
+		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+	}
+
+	private static void writeTruncateResponse(HttpServletResponse resp, TruncateResponse response)
+			throws IOException {
+		resp.setStatus(HttpServletResponse.SC_OK);
+		resp.setContentType(CONTENT_TYPE_JSON);
+		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+		resp.getWriter().write(DtoMapper.toJson(response));
+	}
+
+	/** The display name of the requesting user, resolved once and remembered on the tracker. */
+	private static String resolveUserName(HttpServletRequest req, TaskProgressTracker tracker) {
+		String stored = tracker.getUserName();
+		if (stored != null) {
+			return stored;
+		}
+		Person person = resolveCurrentPerson(req);
+		if (person == null) {
+			return "Anonymous";
+		}
+		try {
+			String name = person.getName();
+			if (name != null) {
+				tracker.setUserName(name);
+				return name;
+			}
+		} catch (RuntimeException ex) {
+			Logger.error("Failed to resolve person name", ex, ChatServlet.class);
+		}
+		return "Anonymous";
+	}
+
+	private void handleImprovePrompt(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		ImprovePromptRequest body;
+		try {
+			String jsonBody = new String(req.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+			body = ImprovePromptRequest.readImprovePromptRequest(new JsonReader(new StringR(jsonBody)));
+		} catch (Exception ex) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON body: " + ex.getMessage());
+			return;
+		}
+
+		try {
+			Result result = PromptImprovementProcessor.improve(
+				currentTracker(), body.getRequestId(), body.getDraft());
+			writePromptImprovementResponse(resp, result);
+		} catch (PromptImprovementException ex) {
+			int status = switch (ex.getFailure()) {
+				case INVALID_REQUEST -> HttpServletResponse.SC_BAD_REQUEST;
+				case DISABLED -> HttpServletResponse.SC_FORBIDDEN;
+				case MISSING_AGENT -> HttpServletResponse.SC_SERVICE_UNAVAILABLE;
+			};
+			resp.sendError(status, ex.getMessage());
+		} catch (ToolSecurityException ex) {
+			// A refusal, not a failure: it gets the answer /chat/send gets and no ERROR line. The
+			// improver itself is exempt from the agent allowlist - see PromptImprovementProcessor -
+			// so reaching this means the model or an MCP server was refused, which is a decision an
+			// administrator made and the user can read.
+			Logger.info("Prompt improvement refused: " + ex.getMessage(), ChatServlet.class);
+			refused(resp, HttpServletResponse.SC_FORBIDDEN);
+			resp.getWriter().write(DtoMapper.toJson(ImprovePromptResponse.create()
+				.setRequestId(body.getRequestId())
+				.setStatus(FORBIDDEN)
+				.setReason(ex.reason() == null
+					? ex.getMessage()
+					: Resources.getInstance().getString(ex.reason()))));
+		} catch (RuntimeException ex) {
+			Logger.error("Prompt improvement failed: " + ex.getMessage(), ex, ChatServlet.class);
+			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Prompt improvement failed.");
+		}
+	}
+
+	private void handleCancelPromptImprovement(HttpServletRequest req, HttpServletResponse resp)
+			throws IOException {
+		CancelPromptImprovementRequest body;
+		try {
+			String jsonBody = new String(req.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+			body = CancelPromptImprovementRequest.readCancelPromptImprovementRequest(
+				new JsonReader(new StringR(jsonBody)));
+		} catch (Exception ex) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON body: " + ex.getMessage());
+			return;
+		}
+
+		String requestId = body.getRequestId();
+		if (requestId == null || requestId.isBlank()) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing or empty 'requestId'.");
+			return;
+		}
+		boolean cancelled = currentTracker().cancelPromptImprovement(requestId.trim());
+		writePromptImprovementResponse(resp, new Result(requestId.trim(), "",
+			cancelled ? PromptImprovementProcessor.STATUS_CANCELLED
+				: PromptImprovementProcessor.STATUS_STALE));
+	}
+
+	private static void writePromptImprovementResponse(HttpServletResponse resp, Result result)
+			throws IOException {
+		ImprovePromptResponse response = ImprovePromptResponse.create()
+			.setRequestId(result.requestId())
+			.setImprovedText(result.improvedText())
+			.setStatus(result.status());
+		resp.setStatus(HttpServletResponse.SC_OK);
+		resp.setContentType(CONTENT_TYPE_JSON);
+		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+		resp.getWriter().write(DtoMapper.toJson(response));
 	}
 
 	private void handleRespond(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -586,8 +1148,8 @@ public class ChatServlet extends TopLogicServlet {
 		// GET /chat/sessions/{id} — load single session + activate server-side
 		String sessionId = extractSessionId(pathInfo);
 		if (sessionId != null && !sessionId.contains("/")) {
-			TLObject session = ChatHistoryService.findSessionById(sessionId);
-			if (session == null || !ChatHistoryService.isOwnedBy(session, person)) {
+			TLObject session = ChatHistoryService.findOwnedSessionById(sessionId, person);
+			if (session == null) {
 				resp.sendError(HttpServletResponse.SC_NOT_FOUND);
 				return;
 			}
@@ -596,7 +1158,7 @@ public class ChatServlet extends TopLogicServlet {
 
 			// Activate session on the tracker (switches Chat + ChatMemory)
 			if (tracker != null) {
-				tracker.getSessionManager().switchSession(sessionId);
+				tracker.getSessionManager().switchSession(sessionId, person);
 			}
 
 			// Build response with structured entries
@@ -626,6 +1188,19 @@ public class ChatServlet extends TopLogicServlet {
 					computeContentHtml(turn);
 				}
 				response.setTurnsJson(serializeTurns(conv.getTurns()));
+				describeLastPrompt(response, conv.getTurns());
+			}
+
+			// The ratings and the effort come from the session's metadata bag, which the switch
+			// above has just loaded onto the tracker.
+			if (tracker != null) {
+				for (MessageFeedbackDto entry : tracker.getFeedback()) {
+					response.addFeedback(entry);
+				}
+				String effort = tracker.getEffort();
+				if (effort != null) {
+					response.setLastEffort(effort);
+				}
 			}
 
 			resp.getWriter().write(DtoMapper.toJson(response));
@@ -693,8 +1268,8 @@ public class ChatServlet extends TopLogicServlet {
 				return;
 			}
 			final String newTitle = body.getTitle();
-			TLObject session = ChatHistoryService.findSessionById(sessionId);
-			if (session != null && ChatHistoryService.isOwnedBy(session, person)) {
+			TLObject session = ChatHistoryService.findOwnedSessionById(sessionId, person);
+			if (session != null) {
 				ChatHistoryService.updateTitle(session, newTitle);
 				resp.setStatus(HttpServletResponse.SC_OK);
 			} else {
@@ -822,8 +1397,8 @@ public class ChatServlet extends TopLogicServlet {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
 			return;
 		}
-		TLObject session = ChatHistoryService.findSessionById(sessionId);
-		if (session != null && ChatHistoryService.isOwnedBy(session, person)) {
+		TLObject session = ChatHistoryService.findOwnedSessionById(sessionId, person);
+		if (session != null) {
 			ChatHistoryService.deleteSession(session);
 			resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
 		} else {
@@ -846,6 +1421,65 @@ public class ChatServlet extends TopLogicServlet {
 		Set<String> allowed = new LinkedHashSet<>(ImageContent.ACCEPTED_MEDIA_TYPES);
 		allowed.add("application/pdf");
 		return Collections.unmodifiableSet(allowed);
+	}
+
+	/**
+	 * Restores the context-usage figures of a re-opened session from its transcript.
+	 *
+	 * <p>
+	 * Only the last turn that actually reached the model contributes: its last agent-loop
+	 * iteration's prompt size is the exact context that model saw, and the window is looked up from
+	 * the model that ran it. Turns written before the transcript carried a per-iteration usage
+	 * leave the figures unset, so the client falls back to its own estimate rather than showing a
+	 * summed prompt size as if it were one.
+	 * </p>
+	 */
+	private static void describeLastPrompt(ChatSessionDetailResponse response, List<PersistedTurn> turns) {
+		for (int i = turns.size() - 1; i >= 0; i--) {
+			PersistedTurn turn = turns.get(i);
+			if (!turn.hasLastIterationUsage()) {
+				continue;
+			}
+			com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto usage = turn.getLastIterationUsage();
+			if (promptTokens(usage) <= 0) {
+				continue;
+			}
+			response.setLastPromptUsage(TokenUsageDto.create()
+				.setInputTokens(usage.getInputTokens())
+				.setOutputTokens(usage.getOutputTokens())
+				.setThinkingTokens(usage.getThinkingTokens())
+				.setCacheReadTokens(usage.getCacheReadTokens())
+				.setCacheWriteTokens(usage.getCacheWriteTokens()));
+			if (turn.hasContextComposition()) {
+				var composition = turn.getContextComposition();
+				response.setLastComposition(ContextCompositionEvent.create()
+					.setSystemPromptTokens(composition.getSystemPromptTokens())
+					.setToolDefinitionTokens(composition.getToolDefinitionTokens())
+					.setMessageTokens(composition.getMessageTokens())
+					.setToolResultTokens(composition.getToolResultTokens())
+					.setToolCount(composition.getToolCount()));
+			}
+			String model = turn.getModel();
+			if (model != null && !model.isEmpty()) {
+				response.setLastModel(model);
+				response.setContextWindow(contextWindowOf(model));
+			}
+			return;
+		}
+	}
+
+	private static int promptTokens(
+			com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto usage) {
+		return usage.getInputTokens() + usage.getCacheReadTokens() + usage.getCacheWriteTokens();
+	}
+
+	/** Context window of a configured model, or zero when the model is unknown to this deployment. */
+	private static int contextWindowOf(String model) {
+		if (!LLMService.Module.INSTANCE.isActive()) {
+			return 0;
+		}
+		ModelInfo info = LLMService.getInstance().getModel(model);
+		return info == null || info.limits() == null ? 0 : info.limits().contextWindow();
 	}
 
 	private static String validateAttachments(List<AttachmentDto> attachments) {
@@ -906,6 +1540,16 @@ public class ChatServlet extends TopLogicServlet {
 	 * resolved (unknown id, closed window, server restart) the request is rejected so the client
 	 * reloads its application window.
 	 * </p>
+	 *
+	 * <p>
+	 * A request that does not come from a signed-in user is refused here as well. The servlet
+	 * filter in front of this one requires a TopLogic session, not an authenticated one, and an
+	 * application that lets visitors in - as the demo does - gives every visitor a session as the
+	 * anonymous account. Without this check a visitor could open the chat, run the agent and spend
+	 * the installation's API budget, and every such conversation would be stored against the
+	 * anonymous account where the next visitor reads it. The chat has no anonymous mode, so
+	 * authentication is demanded once, centrally, rather than in each of the handlers below.
+	 * </p>
 	 */
 	@Override
 	protected void doService(HttpServletRequest req, HttpServletResponse resp)
@@ -922,6 +1566,12 @@ public class ChatServlet extends TopLogicServlet {
 		// so no explicit restore is needed. Going through ThreadContextManager.inContext(...) would
 		// instead log an "Overriding subsession" info on every request.
 		TLContextManager.getInteraction().installSubSessionContext(subSession);
+		// Only now is there a user to ask about: the interaction this request started with carries
+		// no sub-session, and therefore no person.
+		if (TLContext.isAnonymous()) {
+			resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Sign in to use the chat.");
+			return;
+		}
 		super.doService(req, resp);
 	}
 
@@ -1070,6 +1720,48 @@ public class ChatServlet extends TopLogicServlet {
 		if (text.length() > 0) {
 			turn.setContentHtml(Converters.markdownToHtmlString(text.toString()));
 		}
+	}
+
+	/**
+	 * The agents, models and MCP servers the caller may use.
+	 *
+	 * <p>
+	 * Takes the request because the answer depends on who asks: the policy of {@code #392} filters
+	 * this list to what a run of that account would actually accept.
+	 * </p>
+	 */
+	private void handleCapabilities(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		TaskProgressTracker tracker = currentTracker();
+		String improver = tracker == null ? null : tracker.getPromptImproverAgentName();
+		resp.setStatus(HttpServletResponse.SC_OK);
+		resp.setContentType(CONTENT_TYPE_JSON);
+		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+		resp.getWriter().write(
+			DtoMapper.toJson(ChatCapabilities.build(resolveCurrentPerson(req), improver)));
+	}
+
+	private void handlePutPreferences(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		ChatPreferencesDto body;
+		try {
+			String jsonBody = new String(req.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+			body = ChatPreferencesDto.readChatPreferencesDto(new JsonReader(new StringR(jsonBody)));
+		} catch (Exception ex) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON body: " + ex.getMessage());
+			return;
+		}
+		ChatPreferencesStore.save(body);
+		resp.setStatus(HttpServletResponse.SC_OK);
+		resp.setContentType(CONTENT_TYPE_JSON);
+		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+		resp.getWriter().write(DtoMapper.toJson(ChatPreferencesStore.load()));
+	}
+
+	private static String blankToNull(String value) {
+		if (value == null) {
+			return null;
+		}
+		String trimmed = value.trim();
+		return trimmed.isEmpty() ? null : trimmed;
 	}
 
 }

@@ -21,9 +21,14 @@ public class ThinkingPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 	/** @see #getContinuityToken() */
 	public static final String CONTINUITY_TOKEN__PROP = "continuityToken";
 
+	/** @see #getProvider() */
+	public static final String PROVIDER__PROP = "provider";
+
 	private String _text = "";
 
 	private String _continuityToken = "";
+
+	private String _provider = "";
 
 	/**
 	 * Creates a {@link ThinkingPartDto} instance.
@@ -74,6 +79,32 @@ public class ThinkingPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 		_continuityToken = value;
 	}
 
+	/**
+	 * Catalog ID of the provider that produced the block, e.g. "anthropic".
+	 *
+	 * <p>
+	 * A continuity token only means something to the provider that minted it, so the origin has to
+	 * survive persistence: without it a reloaded conversation cannot tell whether a thinking block
+	 * may be replayed to the model now in force. Absent in transcripts written before this field.
+	 * </p>
+	 */
+	public final String getProvider() {
+		return _provider;
+	}
+
+	/**
+	 * @see #getProvider()
+	 */
+	public com.top_logic.tl.ai.core.session.persist.messages.ThinkingPartDto setProvider(String value) {
+		internalSetProvider(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getProvider()} without chain call utility. */
+	protected final void internalSetProvider(String value) {
+		_provider = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return THINKING_PART_DTO__TYPE;
@@ -83,7 +114,8 @@ public class ThinkingPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
 			TEXT__PROP, 
-			CONTINUITY_TOKEN__PROP);
+			CONTINUITY_TOKEN__PROP, 
+			PROVIDER__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -110,6 +142,7 @@ public class ThinkingPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 		switch (field) {
 			case TEXT__PROP: return getText();
 			case CONTINUITY_TOKEN__PROP: return getContinuityToken();
+			case PROVIDER__PROP: return getProvider();
 			default: return null;
 		}
 	}
@@ -119,6 +152,7 @@ public class ThinkingPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 		switch (field) {
 			case TEXT__PROP: internalSetText((String) value); break;
 			case CONTINUITY_TOKEN__PROP: internalSetContinuityToken((String) value); break;
+			case PROVIDER__PROP: internalSetProvider((String) value); break;
 		}
 	}
 
@@ -141,6 +175,8 @@ public class ThinkingPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 		out.value(getText());
 		out.name(CONTINUITY_TOKEN__PROP);
 		out.value(getContinuityToken());
+		out.name(PROVIDER__PROP);
+		out.value(getProvider());
 	}
 
 	@Override
@@ -148,6 +184,7 @@ public class ThinkingPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 		switch (field) {
 			case TEXT__PROP: setText(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case CONTINUITY_TOKEN__PROP: setContinuityToken(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case PROVIDER__PROP: setProvider(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

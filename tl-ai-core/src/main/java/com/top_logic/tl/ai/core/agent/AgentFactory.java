@@ -6,9 +6,11 @@
 package com.top_logic.tl.ai.core.agent;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -28,7 +30,11 @@ import com.top_logic.tl.ai.core.provider.AgentModelAssignment;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMService;
 import com.top_logic.tl.ai.core.provider.ToolChoice;
+import com.top_logic.tl.ai.core.provider.EffortLevels;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
+import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Decision;
+import com.top_logic.tl.ai.core.security.RunAuthorization;
+import com.top_logic.tl.ai.core.security.ToolSecurityException;
 import com.top_logic.tl.ai.core.tools.DynamicToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
@@ -160,6 +166,16 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	public RunResult runAgent(String name, Conversation conversation,
 			ConversationMemory conversationMemory, ToolContext context,
 			AgentEventListener listener, ToolRegistry sessionRegistry) {
+		return runAgent(name, conversation, conversationMemory, context, listener, sessionRegistry,
+			RunOverrides.NONE);
+	}
+
+	/**
+	 * Runs the named agent, applying optional per-run model and MCP overrides from the chat UI.
+	 */
+	public RunResult runAgent(String name, Conversation conversation,
+			ConversationMemory conversationMemory, ToolContext context,
+			AgentEventListener listener, ToolRegistry sessionRegistry, RunOverrides overrides) {
 		AgentDefinition agentDef = AgentDefinitionQuery.getInstance().findAgentByName(name);
 		if (agentDef == null) {
 			throw new RuntimeException(
@@ -168,6 +184,22 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 
 		AgentModelAssignment assignment =
 			LLMService.getInstance().resolveModelAssignment(agentDef.name());
+
+		// Before anything of the request is applied: what a client asked for is not yet what this run
+		// is. The agent's own assignment and its own servers are not a choice and are not checked.
+		authorizeRun(context.security(), agentDef, assignment.model(), overrides);
+
+		if (overrides != null && overrides.mcpServers() != null) {
+			agentDef = agentDef.withMcpServers(overrides.mcpServers());
+		}
+		if (overrides != null && overrides.hasModel()) {
+			assignment = assignment.withModel(overrides.model());
+		}
+		if (overrides != null && overrides.hasEffort()) {
+			// The effort travels with the model: it is a property of the model the turn runs on, and a
+			// model the principal may not choose was already refused above.
+			assignment = applyEffort(assignment, overrides.effort());
+		}
 
 		AgentCapabilities capabilities = AgentCapabilities.forRun(context.security());
 
@@ -208,6 +240,301 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 * @param registry The tool registry used during the run.
 	 */
 	public record RunResult(String response, ToolRegistry registry) {}
+
+	/**
+	 * Optional per-run overrides supplied by the chat UI.
+	 *
+	 * <p>
+	 * {@code mcpServers == null} keeps the agent's configured servers; a non-null list (including
+	 * empty) replaces them for this run only.
+	 * </p>
+	 *
+	 * @param model
+	 *        Model override, or {@code null} to keep the agent's assignment
+	 * @param mcpServers
+	 *        MCP server names for this run, or {@code null} to keep the agent's configured list
+	 * @param effort
+	 *        How hard the model may think, one of the levels the model offers, or {@code null} to
+	 *        keep the agent's assignment
+	 */
+	public record RunOverrides(String model, List<String> mcpServers, String effort) {
+
+		/** No overrides — use the agent definition as stored. */
+		public static final RunOverrides NONE = new RunOverrides(null, null, null);
+
+		/** Overrides without an effort level, for callers that do not offer the setting. */
+		public RunOverrides(String model, List<String> mcpServers) {
+			this(model, mcpServers, null);
+		}
+
+		/** Whether a model override is present. */
+		public boolean hasModel() {
+			return model != null && !model.isBlank();
+		}
+
+		/** Whether an effort override is present. */
+		public boolean hasEffort() {
+			return effort != null && !effort.isBlank();
+		}
+	}
+
+	/**
+	 * Refuses a run that is not the acting principal's to start this way.
+	 *
+	 * <p>
+	 * Three questions, all of them about what a <em>client</em> asked for rather than about what an
+	 * administrator configured: may this principal run this agent, choose this model, attach these MCP
+	 * servers. The agent's own assignment and its own server list are passed in and therefore permitted
+	 * - a request that echoes back what the agent already uses is not choosing anything, and every
+	 * client of {@code /chat/send} does exactly that.
+	 * </p>
+	 *
+	 * <p>
+	 * The choke point for every entry point: the chat, {@code AgentRunner}, the scheduler and
+	 * TL-Script all arrive here. Refusing before the provider is built means no round trip is spent on
+	 * a run that may not happen.
+	 * </p>
+	 *
+	 * @param security
+	 *        The security context of the run, carrying the principal's authorization.
+	 * @param agentDef
+	 *        The agent as stored, before any override is applied.
+	 * @param assignedModel
+	 *        The model that agent is assigned.
+	 * @param overrides
+	 *        What the client asked for, may be <code>null</code>.
+	 * @throws ToolSecurityException
+	 *         If the principal may not run the agent, choose the model or attach one of the servers.
+	 */
+	private static void authorizeRun(SecurityContext security, AgentDefinition agentDef,
+			String assignedModel, RunOverrides overrides) {
+		refuse(refusalFor(security.runAuthorization(), agentDef, assignedModel, overrides));
+	}
+
+	/**
+	 * The agent a request that names none runs as, for the given principal.
+	 *
+	 * <p>
+	 * The configured chat entry point when that principal may run it, and otherwise the first agent
+	 * they may run. The entry point is <em>infrastructure</em>: nobody chose it, a client that names
+	 * no agent is not asking for it, and refusing such a request by its name tells the user about an
+	 * agent they cannot have and cannot avoid. A restricted role gets the agent it does have instead.
+	 * </p>
+	 *
+	 * <p>
+	 * Resolved in one place because two callers have to agree: the menu reports this as its entry
+	 * point, and the run has to be this agent. A client that is told one name and runs another is
+	 * the defect this method exists to prevent.
+	 * </p>
+	 *
+	 * @param authorization
+	 *        What the acting principal may run.
+	 * @param excluded
+	 *        Agents the caller does not offer as a conversation partner - the chat's prompt improver
+	 *        is one. May be <code>null</code>.
+	 * @return The agent name, or <code>null</code> if the principal may run none at all - which is a
+	 *         refusal of its own and a different sentence from "you may not run this one".
+	 */
+	public static String defaultAgentFor(RunAuthorization authorization, Collection<String> excluded) {
+		String configured = LLMService.Module.INSTANCE.isActive()
+			? LLMService.getInstance().getEntryPointAgentName()
+			: null;
+		if (canRun(authorization, configured, excluded)) {
+			return configured;
+		}
+		for (AgentDefinition agent : agents()) {
+			if (canRun(authorization, agent.name(), excluded)) {
+				return agent.name();
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Whether a run of this agent would start at all for the given principal.
+	 *
+	 * <p>
+	 * More than the allowlist: an agent whose own model or whose own server a role denies cannot run
+	 * for that account either, and falling back to one would answer a client that named no agent with
+	 * a refusal it can do nothing about.
+	 * </p>
+	 */
+	private static boolean canRun(RunAuthorization authorization, String agentName,
+			Collection<String> excluded) {
+		if (!isOffered(agentName, excluded) || !authorization.allowsAgent(agentName)) {
+			return false;
+		}
+		AgentDefinition agentDef;
+		try {
+			agentDef = AgentDefinitionQuery.getInstance().findAgentByName(agentName);
+		} catch (RuntimeException ex) {
+			// Cannot look it up, so cannot rule it out - the run itself decides, as it always does.
+			Logger.debug("Cannot read '" + agentName + "' to check what it uses.", AgentFactory.class);
+			return true;
+		}
+		return agentDef == null
+			|| authorization.allowsAgentsOwn(assignedModelOf(agentDef.name()), agentDef.mcpServers());
+	}
+
+	/**
+	 * Why this run may not use what its agent itself uses, or <code>null</code>.
+	 *
+	 * <p>
+	 * Asked for every run and not only for one that names a model or a server: what an agent is
+	 * assigned is not a choice and is therefore permitted - but a {@code <deny>} still forbids it, and
+	 * while this went unasked the refusal could be escaped by staying silent. A client that named the
+	 * agent's own model was refused, and the identical request without the field ran on exactly that
+	 * model.
+	 * </p>
+	 *
+	 * <p>
+	 * Audited, unlike {@link RunAuthorization#agentsOwnRefusal}: this is the gate, and a run that is
+	 * stopped here belongs in the log.
+	 * </p>
+	 */
+	private static Decision.Denied agentsOwnRefusal(RunAuthorization authorization, String assignedModel,
+			Collection<String> declaredServers) {
+		Decision.Denied ownModel = authorization.assignedModelRefusal(assignedModel);
+		if (ownModel != null) {
+			return ownModel;
+		}
+		if (declaredServers != null) {
+			for (String declared : declaredServers) {
+				Decision.Denied ownServer = authorization.declaredServerRefusal(declared, declaredServers);
+				if (ownServer != null) {
+					return ownServer;
+				}
+			}
+		}
+		return null;
+	}
+
+	/** The model the given agent is assigned, or <code>null</code> while that cannot be resolved. */
+	static String assignedModelOf(String agentName) {
+		try {
+			return LLMService.getInstance().resolveModelAssignment(agentName).model();
+		} catch (RuntimeException ex) {
+			Logger.debug("No model assignment to check '" + agentName + "' against.", AgentFactory.class);
+			return null;
+		}
+	}
+
+	/** Whether the given name is one a client would be offered. */
+	private static boolean isOffered(String agentName, Collection<String> excluded) {
+		return agentName != null && !agentName.isBlank()
+			&& (excluded == null || !excluded.contains(agentName));
+	}
+
+	/** The agents of this application, in the order a client lists them; empty when none can answer. */
+	private static Collection<AgentDefinition> agents() {
+		try {
+			return AgentDefinitionQuery.getInstance().getAllAgents();
+		} catch (RuntimeException ex) {
+			Logger.warn("Listing the agents of this application failed; no default agent can be"
+				+ " resolved.", ex, AgentFactory.class);
+			return List.of();
+		}
+	}
+
+	/**
+	 * Why the given principal may not start this run, without starting anything.
+	 *
+	 * <p>
+	 * The same three questions {@link #authorizeRun} asks, for a caller that wants to answer them
+	 * before the run rather than through the exception it throws: {@code /chat/send} pre-checks here
+	 * so that a refused request comes back as a sentence the user can read instead of as a failed
+	 * turn. The run is checked again where it starts, because this one is a courtesy and not the
+	 * gate.
+	 * </p>
+	 *
+	 * @param authorization
+	 *        What the acting principal may run, from
+	 *        {@code AiToolAccessService.effectiveRunAccessFor(Person)}.
+	 * @param agentName
+	 *        The agent the request names, or the entry point it would fall back to.
+	 * @param overrides
+	 *        What the request asks for beyond the agent, may be <code>null</code>.
+	 * @return The refusal, or <code>null</code> if the run is permitted. A name no agent has is not
+	 *         refused here - that is not a denial, and it fails where it always did.
+	 */
+	public static Decision.Denied runRefusal(RunAuthorization authorization, String agentName,
+			RunOverrides overrides) {
+		AgentDefinition agentDef = AgentDefinitionQuery.getInstance().findAgentByName(agentName);
+		if (agentDef == null) {
+			return authorization.agentRefusal(agentName);
+		}
+		return refusalFor(authorization, agentDef, assignedModelOf(agentDef.name()), overrides);
+	}
+
+	/** The refusal of one run, or <code>null</code>; the one place the three questions are asked. */
+	private static Decision.Denied refusalFor(RunAuthorization authorization, AgentDefinition agentDef,
+			String assignedModel, RunOverrides overrides) {
+		Decision.Denied agentRefusal = authorization.agentRefusal(agentDef.name());
+		if (agentRefusal != null) {
+			return agentRefusal;
+		}
+
+		Decision.Denied ownRefusal =
+			agentsOwnRefusal(authorization, assignedModel, agentDef.mcpServers());
+		if (ownRefusal != null) {
+			return ownRefusal;
+		}
+
+		if (overrides == null) {
+			return null;
+		}
+		if (overrides.hasModel()) {
+			Decision.Denied modelRefusal = authorization.modelRefusal(overrides.model(), assignedModel);
+			if (modelRefusal != null) {
+				return modelRefusal;
+			}
+		}
+		if (overrides.mcpServers() != null) {
+			for (String serverName : overrides.mcpServers()) {
+				Decision.Denied serverRefusal =
+					authorization.mcpServerRefusal(serverName, agentDef.mcpServers());
+				if (serverRefusal != null) {
+					return serverRefusal;
+				}
+			}
+		}
+		return null;
+	}
+
+	/** Turns a refusal into the exception every entry point reports, or does nothing. */
+	private static void refuse(Decision.Denied denied) {
+		if (denied != null) {
+			throw new ToolSecurityException(denied.reason(), denied.message());
+		}
+	}
+
+	/**
+	 * Puts an effort level into whichever field the model's provider reads it from.
+	 *
+	 * <p>
+	 * A level the model does not offer is dropped with a warning rather than passed on: the two
+	 * providers reject an unknown value, and failing the whole run over a UI setting the user can
+	 * see but the model cannot use would be the worse answer.
+	 * </p>
+	 */
+	private static AgentModelAssignment applyEffort(AgentModelAssignment assignment, String effort) {
+		String model = assignment.model();
+		LLMService llm = LLMService.getInstance();
+		String providerId = llm.getProviderId(model, assignment.provider());
+		ModelInfo info = llm.getModel(model);
+		String level = effort.trim().toLowerCase(Locale.ROOT);
+
+		if (!EffortLevels.isValid(providerId, info, level)) {
+			Logger.warn("Ignoring effort '" + effort + "' for model '" + model
+				+ "': it offers " + EffortLevels.forModel(providerId, info) + ".", AgentFactory.class);
+			return assignment;
+		}
+		return switch (EffortLevels.kindOf(providerId, info)) {
+			case THINKING_EFFORT -> assignment.withThinkingEffort(level);
+			case REASONING_EFFORT -> assignment.withReasoningEffort(level);
+			case NONE -> assignment;
+		};
+	}
 
 	/**
 	 * Extracts the response text from the last {@link AssistantMessage} appended at or after
@@ -289,9 +616,17 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		if (agentDef == null) {
 			throw new IllegalArgumentException("No agent found with name: " + name);
 		}
+		// Delegation is bounded by the acting principal too, not only by the parent agent's delegation
+		// list: a child runs on the user's behalf, so an agent the user may not run is not reachable by
+		// asking another agent for it. AgentCapabilities drops such an agent from the delegate catalog
+		// and from list_agents, so the model normally never asks; this is the gate behind that filter.
+		refuse(security.runAuthorization().agentRefusal(name));
 
 		AgentModelAssignment assignment =
 			LLMService.getInstance().resolveModelAssignment(agentDef.name());
+		// And what that agent itself uses, for the same reason: a child of an agent whose own model a
+		// role denies must not start either, and the catalog filter in front of this is a filter.
+		refuse(agentsOwnRefusal(security.runAuthorization(), assignment.model(), agentDef.mcpServers()));
 
 		AgentCapabilities capabilities = AgentCapabilities.forRun(security);
 		AgentParams config = buildConfig(agentDef, assignment, capabilities);
@@ -324,8 +659,12 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		if (agentDef == null) {
 			throw new IllegalArgumentException("No agent found with name: " + name);
 		}
+		// See buildAgentLoop: a subagent is the same run under another name.
+		refuse(security.runAuthorization().agentRefusal(name));
+
 		AgentModelAssignment assignment =
 			LLMService.getInstance().resolveModelAssignment(agentDef.name());
+		refuse(agentsOwnRefusal(security.runAuthorization(), assignment.model(), agentDef.mcpServers()));
 		AgentCapabilities capabilities = AgentCapabilities.forRun(security);
 		AgentParams config = buildConfig(agentDef, assignment, capabilities);
 		LLMProvider provider = buildProvider(config.model(), assignment.provider());

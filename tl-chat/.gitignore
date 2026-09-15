@@ -4,7 +4,12 @@
 /tmp
 /war
 /src/main/webapp/script/top-logic.js
-/src/main/webapp/style/_*.css
 /.settings/com.gwtplugins.gwt.eclipse.core.prefs
 /**/*~
-/src/main/webapp/style/_*
+/ui/node
+/ui/node_modules
+/src/main/webapp/script/tl-chat-ui.js
+/src/main/webapp/script/tl-chat-ui.css
+/src/main/webapp/script/tl-chat-seams.js
+/src/main/webapp/script/tl-chat-shared.js
+/src/main/webapp/script/assets/

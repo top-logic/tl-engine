@@ -10,6 +10,7 @@ import java.util.Set;
 
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
+import com.top_logic.tl.ai.core.citation.CitationMarkers;
 import com.top_logic.tl.ai.core.execution.ExecutionHandle;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.util.TLContext;
@@ -128,6 +129,8 @@ public class ToolContext implements ToolExecutionContext {
 
 	private final ExecutionHandle _executionHandle;
 
+	private final CitationMarkers _citationMarkers;
+
 	private final String _model;
 
 	/**
@@ -214,13 +217,14 @@ public class ToolContext implements ToolExecutionContext {
 			int delegationDepth, String toolCallId, CancellationToken cancellationToken,
 			ProgressReporter progressReporter) {
 		this(security, approval, transaction, sessionApprovedTools, delegationDepth, toolCallId,
-			cancellationToken, progressReporter, new ExecutionHandle(), null);
+			cancellationToken, progressReporter, new ExecutionHandle(), new CitationMarkers(), null);
 	}
 
 	private ToolContext(SecurityContext security, ApprovalCallback approval,
 			TransactionScope transaction, Set<String> sessionApprovedTools,
 			int delegationDepth, String toolCallId, CancellationToken cancellationToken,
-			ProgressReporter progressReporter, ExecutionHandle executionHandle, String model) {
+			ProgressReporter progressReporter, ExecutionHandle executionHandle,
+			CitationMarkers citationMarkers, String model) {
 		_security = Objects.requireNonNull(security, "Security context must not be null.");
 		_approval = Objects.requireNonNull(approval, "Approval callback must not be null.");
 		_transaction = Objects.requireNonNull(transaction, "Transaction scope must not be null.");
@@ -230,6 +234,7 @@ public class ToolContext implements ToolExecutionContext {
 		_cancellationToken = Objects.requireNonNull(cancellationToken, "Cancellation token must not be null.");
 		_progressReporter = Objects.requireNonNull(progressReporter, "Progress reporter must not be null.");
 		_executionHandle = Objects.requireNonNull(executionHandle, "Execution handle must not be null.");
+		_citationMarkers = Objects.requireNonNull(citationMarkers, "Citation markers must not be null.");
 		_model = model;
 	}
 
@@ -347,6 +352,20 @@ public class ToolContext implements ToolExecutionContext {
 	}
 
 	/**
+	 * The {@code [n]} marker numbers this run hands out to the cite tool.
+	 *
+	 * <p>
+	 * One counter per run, shared by every copy of this context, so two cite calls dispatched in
+	 * parallel get two different markers. A
+	 * {@link #forDelegation(TransactionScope) delegation context} gets a fresh one, since a child
+	 * run writes its own answer and numbers from 1 again.
+	 * </p>
+	 */
+	public CitationMarkers citationMarkers() {
+		return _citationMarkers;
+	}
+
+	/**
 	 * The model of the run this tool executes in, or {@code null} outside an agent loop.
 	 *
 	 * <p>
@@ -365,7 +384,7 @@ public class ToolContext implements ToolExecutionContext {
 	public ToolContext withModel(String model) {
 		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
 			_delegationDepth, _toolCallId, _cancellationToken, _progressReporter, _executionHandle,
-			model);
+			_citationMarkers, model);
 	}
 
 	/**
@@ -374,7 +393,7 @@ public class ToolContext implements ToolExecutionContext {
 	public ToolContext withToolCallId(String toolCallId) {
 		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
 			_delegationDepth, toolCallId, _cancellationToken, _progressReporter, _executionHandle,
-			_model);
+			_citationMarkers, _model);
 	}
 
 	/**
@@ -383,7 +402,7 @@ public class ToolContext implements ToolExecutionContext {
 	public ToolContext withProgressReporter(ProgressReporter progressReporter) {
 		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
 			_delegationDepth, _toolCallId, _cancellationToken, progressReporter, _executionHandle,
-			_model);
+			_citationMarkers, _model);
 	}
 
 	/**
@@ -408,7 +427,7 @@ public class ToolContext implements ToolExecutionContext {
 	public ToolContext forDelegation(TransactionScope childTransaction) {
 		return new ToolContext(_security, _approval, childTransaction, _sessionApprovedTools,
 			_delegationDepth + 1, null, _cancellationToken, ProgressReporter.NOOP,
-			new ExecutionHandle(), _model);
+			new ExecutionHandle(), new CitationMarkers(), _model);
 	}
 
 	/**
@@ -445,6 +464,6 @@ public class ToolContext implements ToolExecutionContext {
 	public ToolContext forDetachedSubagent(TransactionScope childTransaction, CancellationToken childToken) {
 		return new ToolContext(_security.withBackgroundCeiling(), _approval, childTransaction,
 			_sessionApprovedTools, _delegationDepth + 1, null, childToken, ProgressReporter.NOOP,
-			new ExecutionHandle(), _model);
+			new ExecutionHandle(), new CitationMarkers(), _model);
 	}
 }

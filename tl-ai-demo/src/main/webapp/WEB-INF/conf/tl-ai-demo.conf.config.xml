@@ -2,6 +2,23 @@
 
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<services>
+		<!--
+			What this application may cite, on top of the framework's `web`. Declared once: the
+			framework tells the model about it and refuses a citation of any other kind, which is
+			what kept an agent from inventing one (#409).
+		-->
+		<config service-class="com.top_logic.tl.ai.core.citation.CitationKinds">
+			<instance>
+				<kinds>
+					<kind name="invoice"
+						description="a Beleg of this application"
+						id-source="the id of that object as a tool reported it, e.g. its TID GenericObject:5371"
+						passage="false"
+					/>
+				</kinds>
+			</instance>
+		</config>
+
 		<config service-class="com.top_logic.basic.util.ResourcesModule">
 			<instance>
 				<bundles>
@@ -61,9 +78,49 @@
 		<config service-class="com.top_logic.tl.ai.core.tools.web.BrowserToolsService">
 			<instance allowed-domains="quotes.toscrape.com" />
 		</config>
+
+		<!-- Native React-view implementation of the agentic chat. -->
+		<config service-class="com.top_logic.layout.react.resource.ClientResources">
+			<instance class="com.top_logic.layout.react.resource.ClientResources">
+				<resources>
+					<module-script name="tl-react-agent-chat"
+						resource="/script/tl-chat-ui.js"
+						requires="tl-react-bridge"
+					/>
+					<module-script name="tl-chat-seams"
+						resource="/script/tl-chat-seams.js"
+						specifier="tl-chat-seams"
+						requires="tl-react-bridge"
+					/>
+					<module-script name="tl-ai-demo-chat"
+						resource="/script/tl-ai-demo-chat.js"
+						requires="tl-chat-seams"
+					/>
+					<stylesheet name="tl-react-agent-chat-css"
+						resource="/script/tl-chat-ui.css"
+						requires="tl-react-controls-css"
+					/>
+					<stylesheet name="tl-ai-demo-chat-css"
+						resource="/style/tl-ai-demo-chat.css"
+						requires="tl-react-agent-chat-css"
+					/>
+					<!--
+						The demo's own skin on the shell around the chat: an app bar that follows
+						the theme, and one theme button instead of two. See the file's header.
+					-->
+					<stylesheet name="tl-ai-demo-shell-css"
+						resource="/style/tl-ai-demo-shell.css"
+						requires="tl-react-controls-css"
+					/>
+				</resources>
+			</instance>
+		</config>
 	</services>
 
 	<configs>
+		<config config:interface="com.top_logic.base.accesscontrol.ApplicationPages$Config">
+			<startPage>/view/</startPage>
+		</config>
 		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
 			<type-systems>
 				<type-system name="Default">

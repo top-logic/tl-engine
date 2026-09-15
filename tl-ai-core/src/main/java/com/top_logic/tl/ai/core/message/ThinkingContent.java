@@ -18,15 +18,26 @@ import java.util.Objects;
  * @param text the thinking/summary text
  * @param continuityToken opaque provider token for multi-turn thinking continuity
  *        (Anthropic's signature, <code>OpenAI</code>'s encrypted_content); may be {@code null}
+ * @param provider catalog ID of the provider that produced this block (e.g. {@code "anthropic"}),
+ *        or {@code null} when it is not known. A continuity token only means something to the
+ *        provider that minted it: replaying an Anthropic signature to <code>OpenAI</code>, or a
+ *        block whose origin is unknown to anyone, is what makes a conversation unusable after a
+ *        model switch. Read by
+ *        {@link com.top_logic.tl.ai.core.provider.MessageHistorySanitizer}.
  *
  * @see ContentPart
  */
-public record ThinkingContent(String text, String continuityToken) implements ContentPart {
+public record ThinkingContent(String text, String continuityToken, String provider) implements ContentPart {
 
 	/**
 	 * Creates a {@link ThinkingContent}.
 	 */
 	public ThinkingContent {
 		Objects.requireNonNull(text, "Text must not be null.");
+	}
+
+	/** A thinking block whose origin is not recorded. */
+	public ThinkingContent(String text, String continuityToken) {
+		this(text, continuityToken, null);
 	}
 }

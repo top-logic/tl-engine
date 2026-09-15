@@ -1,0 +1,351 @@
+export type TraceMode = 'none' | 'overview' | 'detailed'
+
+export type ToolCallStatus = 'pending' | 'running' | 'done' | 'error'
+
+export type ApprovalOutcome =
+  | 'pending'
+  | 'APPROVED'
+  | 'APPROVED_FOR_SESSION'
+  | 'REJECTED'
+  | 'TIMED_OUT'
+
+export interface UserMessage {
+  type: 'user'
+  id: string
+  text: string
+  timestamp: number
+  /** Whether this message replaced an earlier wording of itself, shown as a marker on the bubble. */
+  edited?: boolean
+}
+
+export interface AssistantText {
+  type: 'assistant_text'
+  id: string
+  text: string
+  isStreaming: boolean
+  timestamp: number
+  /**
+   * Set once the server has sent the finished answer. The deltas are a live preview of that text,
+   * so one that arrives afterwards - the stream and the completion travel the same queue but a
+   * consumer may still be behind - must not be appended to it.
+   */
+  authoritative?: boolean
+  /** Structured citations the server kept for this answer; absent when the turn cited nothing. */
+  citations?: Citation[]
+}
+
+/**
+ * One source a `[n]` marker in an answer points to.
+ *
+ * Mirrors {@code CitationDto} on the wire. The server drops any citation whose {@link id} or
+ * {@link url} did not appear in this turn's tool results.
+ */
+export interface Citation {
+  index: number
+  toolName: string
+  toolCallId: string
+  kind: string
+  id: string
+  label: string
+  url: string
+  /** The sentence of the source the fact rests on; empty when the model named none. */
+  passage?: string
+  /** A window of the source around {@link passage}, shown in the marker's popover. */
+  excerpt?: string
+}
+
+export interface ToolCall {
+  type: 'tool_call'
+  id: string
+  toolUseId: string
+  name: string
+  input: unknown
+  status: ToolCallStatus
+  durationMs?: number
+  depth: number
+  timestamp: number
+}
+
+export interface ToolResult {
+  type: 'tool_result'
+  id: string
+  toolUseId: string
+  output: string
+  isError: boolean
+  timestamp: number
+}
+
+export interface ThinkingBlock {
+  type: 'thinking'
+  id: string
+  content: string
+  timestamp: number
+}
+
+export interface ErrorMessage {
+  type: 'error'
+  id: string
+  code?: string
+  message: string
+  timestamp: number
+}
+
+export interface ApprovalRequest {
+  type: 'approval_request'
+  id: string
+  approvalRequestId: string
+  toolCallId: string
+  toolName: string
+  argsJson: string
+  displayReason: string
+  /**
+   * What kind of change the tool makes (`DATA_WRITE`, `STRUCTURAL`, …). Why approval is being
+   * asked, in a form the UI can phrase in the user's language; `displayReason` is the server's
+   * English wording of the same thing.
+   */
+  toolMode?: string
+  outcome: ApprovalOutcome
+  timestamp: number
+  /**
+   * Milliseconds the user had left when the event arrived, and the local clock reading at that
+   * moment. Both are needed: the deadline is the server's, the countdown is the browser's.
+   */
+  remainingMs?: number
+  receivedAt?: number
+}
+
+export interface InteractionOption {
+  label: string
+  description?: string
+}
+
+export interface InteractionRequest {
+  type: 'interaction_request'
+  id: string
+  requestId: string
+  question: string
+  header?: string
+  answered: boolean
+  timestamp: number
+  interactionType?: 'text' | 'choice'
+  options?: InteractionOption[]
+  multiSelect?: boolean
+  /** @see ApprovalRequest.remainingMs */
+  remainingMs?: number
+  receivedAt?: number
+}
+
+/**
+ * How long one run took, carried in the transcript so the meta line above an answer can say it.
+ *
+ * A marker rather than a field on the answer: a run can produce several answers, or none, and it
+ * has a start before it has any.
+ */
+export interface RunMeta {
+  type: 'run_meta'
+  id: string
+  runId: string
+  startedAt: number
+  durationMs?: number
+  timestamp: number
+}
+
+export type ChatMessage =
+  | UserMessage
+  | AssistantText
+  | ToolCall
+  | ToolResult
+  | ThinkingBlock
+  | ErrorMessage
+  | ApprovalRequest
+  | InteractionRequest
+  | RunMeta
+
+export interface AgentOption {
+  /** The identifier: what a request names and what a persisted session holds. */
+  name: string
+  /**
+   * What to call this agent in front of the user, in their language.
+   *
+   * Absent for an agent that has no display name; it is then shown by its identifier.
+   */
+  label?: string
+  /**
+   * One localised line saying what this agent is for.
+   *
+   * Absent for an agent that has none - its delegation description is written for a model and is
+   * never shown to a person, so the picker then offers the name alone.
+   */
+  summary?: string
+  mcpServers?: string[]
+  model?: string
+}
+
+/** Whether a notice above the composer reports a failure or merely says what happened. */
+export type NoticeTone = 'warn' | 'info'
+
+export interface ModelOption {
+  id: string
+  /**
+   * Whether the account may choose this model whatever agent it runs.
+   *
+   * False for a model that is listed only because an agent the account may run is assigned it - that
+   * one is accepted with *that* agent and refused with another, so a menu has to narrow by the agent
+   * the user has selected.
+   */
+  grantedToRole?: boolean
+  provider?: string
+  contextWindow?: number
+  maxOutput?: number
+  /**
+   * How hard this model may be asked to think, in increasing order; empty when it offers no such
+   * setting. A UI must check this before offering the choice: the providers reject a level their
+   * model does not know.
+   */
+  effortLevels?: string[]
+  /** The level in force when none is chosen. */
+  defaultEffort?: string
+}
+
+/** What the user thought of an answer; `null` means they said nothing. */
+export type Rating = 'up' | 'down' | null
+
+/** One rating, addressed by the turn whose answer it belongs to. */
+export interface MessageFeedback {
+  turnIndex: number
+  rating: 'up' | 'down'
+  note?: string
+  recordedAt?: string
+}
+
+export interface McpServerOption {
+  name: string
+  status?: string
+}
+
+export interface Capabilities {
+  entryPointAgent?: string
+  agents: AgentOption[]
+  models: ModelOption[]
+  mcpServers: McpServerOption[]
+  /**
+   * Whether the prompt improver would run for this account.
+   *
+   * False when a role forbids the model it runs on: it is outside the agent allowlist, but what it
+   * runs on is still decided, so its button would offer a refusal. Absent means yes, so a host that
+   * does not send the field keeps the button.
+   */
+  promptImproverAvailable?: boolean
+}
+
+export type SubagentStatus = 'QUEUED' | 'RUNNING' | 'DONE' | 'FAILED' | 'CANCELLED'
+
+export interface SubagentActivity {
+  subagentId: string
+  targetAgentName: string
+  status: SubagentStatus
+  detail: string
+  totalTokens: number
+  durationMs: number
+  hasTranscript: boolean
+}
+
+export interface SubagentStatusEvent {
+  subagentId: string
+  targetAgentName?: string
+  detail?: string
+  totalTokens?: number
+  durationMs?: number
+}
+
+export interface ImprovePromptResponse {
+  requestId: string
+  status: string
+  improvedText?: string
+  text?: string
+}
+
+export interface SessionSummary {
+  id: string
+  title: string
+  lastUpdated?: string
+}
+
+export interface Attachment {
+  fileName: string
+  mimeType: string
+  base64Data: string
+  size: number
+}
+
+export interface SendPayload {
+  text: string
+  sessionId: string
+  agent?: string
+  model?: string
+  mcpOverride: boolean
+  mcpServers: string[]
+  attachments?: Attachment[]
+  /** How hard the model may think for this turn; omitted keeps the agent's assignment. */
+  effort?: string
+}
+
+export interface TokenUsage {
+  inputTokens?: number
+  outputTokens?: number
+  thinkingTokens?: number
+  cacheReadTokens?: number
+  cacheWriteTokens?: number
+}
+
+/**
+ * The prompt size the provider actually billed: everything the model read.
+ *
+ * Cached input is still input - a cache hit changes the price, not the context - so it counts here.
+ */
+export function promptTokens(usage: TokenUsage | undefined): number {
+  if (!usage) return 0
+  return (usage.inputTokens ?? 0) + (usage.cacheReadTokens ?? 0) + (usage.cacheWriteTokens ?? 0)
+}
+
+/** Tokens the model wrote in the turn: the answer plus any thinking. */
+export function answerTokens(usage: TokenUsage | undefined): number {
+  if (!usage) return 0
+  return (usage.outputTokens ?? 0) + (usage.thinkingTokens ?? 0)
+}
+
+/**
+ * Estimated split of the prompt, from the agent loop's `context_composition` event.
+ *
+ * These are the loop's own estimates - the provider reports a single prompt total and never breaks
+ * it down - so they are labelled as estimates and never replace the measured total.
+ */
+export interface ContextComposition {
+  systemPromptTokens: number
+  toolDefinitionTokens: number
+  /** The whole conversation, tool results included. */
+  messageTokens: number
+  /** The part of `messageTokens` the agent read back from the tools it ran. */
+  toolResultTokens: number
+  toolCount: number
+}
+
+export interface RunSnapshot {
+  busy: boolean
+  /**
+   * Provider-reported prompt size of the most recent request; zero until a turn has completed.
+   * This is the exact context the model saw, and takes precedence over `estimatedTokens`.
+   */
+  measuredTokens: number
+  /** The agent loop's estimate, used only until the session has a measurement. */
+  estimatedTokens: number
+  contextWindow: number
+  model: string
+  /** Effort level in force for this chat, empty when the model offers none or none was chosen. */
+  effort: string
+  lastUsage?: TokenUsage
+  composition?: ContextComposition
+}
+
+/** Health of the SSE connection, derived from heartbeats and stream errors. */
+export type ConnectionState = 'connecting' | 'live' | 'reconnecting'

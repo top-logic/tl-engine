@@ -312,6 +312,136 @@ see [What this does not decide](#what-this-does-not-decide).
 
 ---
 
+## Which agents, models and MCP servers a role may use
+
+The sections above decide what a run may **do**. Three more decide what a run may **be** - which agent
+answers, which model it runs on, which MCP servers it reaches. They sit in the same policy and are
+written in the same idiom, and until you name a role in one of them nothing changes for anybody.
+
+```xml
+<agent-access default="all">            <!-- all | none -->
+    <role name="SalesUser">
+        <grants><grant agents="sales-assistant, pietro"/></grants>
+        <denies><deny agents="framework-wiring-agent"/></denies>
+    </role>
+</agent-access>
+<model-access default="assigned">       <!-- assigned | all | none -->
+    <role name="SalesUser"><grants><grant models="claude-haiku-4-5"/></grants></role>
+</model-access>
+<mcp-access default="agent">            <!-- agent | all | none -->
+    <role name="SalesUser"><grants><grant servers="internal-docs"/></grants></role>
+</mcp-access>
+```
+
+### What each section decides when you have written nothing
+
+| Section | Without any entry | What that means for the chat |
+|---------|-------------------|------------------------------|
+| `agent-access` | Everybody may run every agent | The `+` menu offers every agent, as it always has |
+| `model-access` | A request runs on the model its agent is assigned | The model menu offers that model and nothing else |
+| `mcp-access` | A request reaches the servers its agent declares | The MCP list offers those servers and nothing else |
+
+The last two are a tightening: before this, any user could pick any configured model and attach any
+configured MCP server. Write `<model-access default="all"/>` to hand the model choice back to
+everybody, and `<mcp-access default="all"/>` for the servers.
+
+### What naming a role does
+
+As soon as **one of a user's roles** is named in a section, that user may use exactly what their named
+roles permit there - the section's default no longer applies to them, and it still applies to everybody
+else. That is what lets you restrict one role in a running application without touching anyone.
+
+- A role entry with **no** `<grants>` lets its holders use none of them.
+- A `<deny>` wins over everything, including over what the agent itself uses. Denying a model an
+  agent is assigned, or a server it declares, therefore takes that **agent** away from the role: a run
+  of it is refused whatever the user picks afterwards, and the chat drops it from the picker rather
+  than offering a turn that comes back refused. Deny what a role's own agents use only when you mean
+  that.
+- What the agent itself uses - the model it is assigned, a server it declares - is always permitted
+  unless a `<deny>` names it. A request that echoes the agent's own model back is not choosing a model,
+  and every chat client does exactly that on every turn.
+- **A `<grant>` is a floor, not a ceiling.** It adds to what the agents of that role already use; it
+  cannot take anything away. A role granted only the small model may still run on the large one when
+  that is what its agent is assigned, and the only ways to stop that are a `<deny>` naming the large
+  model - which takes that agent away from the role, see above - or a different assignment for the
+  agent. If you are restricting rather than widening, write the `<deny>`.
+- `none` refuses the same requests as `assigned` and `agent` do. What it changes is what a client is
+  *offered*: under `none` the menu is empty, so the choice is not shown at all.
+- Administrators bypass all three.
+
+### Recipe: one role, one agent, one model, no MCP server
+
+```xml
+<agent-access default="all">
+    <role name="ticketReader">
+        <grants><grant agents="TL_ModelExplorer"/></grants>
+    </role>
+</agent-access>
+<model-access default="assigned">
+    <role name="ticketReader">
+        <grants><grant models="claude-haiku-4-5"/></grants>
+    </role>
+</model-access>
+<mcp-access default="agent">
+    <role name="ticketReader">
+        <denies><deny servers="internal-docs"/></denies>
+    </role>
+</mcp-access>
+```
+
+A holder of `ticketReader` is offered `TL_ModelExplorer` and nothing else, and may pick the Haiku model
+as well as the one its agent is assigned. `internal-docs` is out of reach: an agent that does not
+declare it cannot attach it, and an agent that *does* declare it is not offered to this role at all,
+because every run of it would reach the denied server. Everybody else keeps every agent.
+
+### Which agents a restricted role needs
+
+Only the agents a user is meant to **talk to**. Two agents the chat runs for the user rather than as
+a choice need no grant and cannot be granted meaningfully:
+
+- **The chat entry point.** A client that names no agent runs the entry point if the account may run
+  it, and otherwise the first agent that account may run. A restricted role therefore gets its own
+  agent, not a refusal naming one it was never offered.
+- **The prompt improver.** It rewrites a draft and never answers as a persona, so `<agent-access>`
+  does not decide it. The chat hides it from the picker, and an allowlist that had to name it would
+  be an allowlist naming something nobody can discover.
+
+Only `<agent-access>` is waived for those two. `<model-access>` and `<mcp-access>` still decide what
+they run on, so a `<deny>` on the model the improver is assigned switches the improver off for that
+role - the chat then stops offering the "improve prompt" button rather than offering a refusal. If you
+want a role to keep it, do not deny the model it runs on.
+
+Everything else an account may run has to be granted.
+
+### What happens when a request asks for something else
+
+A request that names an agent, a model or an MCP server the account may not use is answered **403**
+with the sentence the user reads in the notice strip above the composer, in their language. The run
+is refused before the provider is called, so a refusal costs nothing.
+
+The menu is filtered to match: `/chat/capabilities` lists the agents and MCP servers a run of that
+account accepts. The model list is the one thing a single payload cannot make exact - it is fetched
+once and the agent can change without another round trip - so it lists the models the account may
+choose with *some* agent it may run, and marks each with whether the account's roles grant it. A
+client narrows that to the agent the user has selected; the shipped chat does.
+
+### Names are checked at boot
+
+An agent, a model or an MCP server this application does not have **refuses the start**, with the name
+in the log - unlike an unknown capability group, which is only a warning. These three are closed sets
+the application can enumerate, so a name outside one of them is a typo, and a misspelled `<deny>`
+refuses nothing while reading like a prohibition.
+
+### Delegation
+
+An agent the account may not run is not reachable by asking another agent for it either: it is dropped
+from the delegate catalogue and from `list_agents`, and a `spawn_subagent` naming it is refused. The
+same holds for an agent this account may run but whose own model or own server a role denies - it is
+dropped from the catalogue and refused when named, because a child run is the acting user's run. If
+you want an orchestrator to delegate to a specialist, grant the specialist to the same role.
+
+---
+
 ## Recipes
 
 ### Give one role read-only access, another role the write tools
@@ -621,10 +751,11 @@ is not read-filtered (**issue #291**), and the control for it is withholding `sc
 Approval is a third, separate thing: a tool classified as changing shared data asks the user to confirm
 regardless of which role they hold. There is no way to pre-approve a role, on purpose.
 
-**An agent definition decides nothing about security.** It briefly could name a security mode of its
-own; that setting is gone. What an agent definition decides is which tools it *carries*, and the check
-above then decides which of those the acting account may call. There is no per-agent way to be laxer or
-stricter.
+**An agent definition decides nothing about who may use it.** It briefly could name a security mode of
+its own; that setting is gone. What an agent definition decides is which tools it *carries*, which
+model it is assigned and which MCP servers it declares - and the checks above then decide which of
+those the acting account may reach. Who may run the agent at all is `<agent-access>`, which is keyed by
+role and lives here, because an agent definition is editable by whoever may author agents.
 
 ---
 

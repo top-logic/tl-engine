@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.knowledge.objects.KnowledgeObject;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.WrapperFactory;
@@ -216,13 +217,40 @@ public class AgentDefinitionQuery {
 
 		return new AgentDefinition(
 			agent.getName(),
+			literal(agent.getDisplayName()),
 			agent.getDescription(),
+			summaryOf(agent),
 			agent.getSystemPrompt(),
 			new ArrayList<>(agent.getTools()),
 			new ArrayList<>(agent.getMcpServers()),
 			skillNames,
 			delegationNames,
 			source);
+	}
+
+	/**
+	 * The one line an agent record says about itself to the person choosing it.
+	 *
+	 * <p>
+	 * Whoever wrote the record wrote it in their own language, so it is carried as literal text rather
+	 * than as a key into a bundle nobody maintains for it. An empty attribute says nothing, which is a
+	 * different thing from saying an empty sentence.
+	 * </p>
+	 */
+	private static ResKey summaryOf(Agent agent) {
+		return literal(agent.getSummary());
+	}
+
+	/**
+	 * The given attribute value as a resource, or <code>null</code> if it says nothing.
+	 *
+	 * <p>
+	 * Literal text rather than a key into a bundle: whoever typed it into the record typed it in their
+	 * own language, and there is no bundle anybody maintains for a record.
+	 * </p>
+	 */
+	private static ResKey literal(String value) {
+		return value == null || value.isBlank() ? null : ResKey.text(value);
 	}
 
 	private SkillDefinition toSkillDefinition(

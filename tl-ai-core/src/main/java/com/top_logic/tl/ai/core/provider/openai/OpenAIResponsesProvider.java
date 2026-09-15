@@ -43,6 +43,16 @@ import de.haumacher.msgbuf.json.JsonReader;
  */
 @Label("OpenAI Responses provider")
 public class OpenAIResponsesProvider extends AbstractStreamingProvider {
+	/**
+	 * Catalog ID stamped onto the thinking blocks this provider produces.
+	 *
+	 * <p>
+	 * Their continuity tokens only mean something here, so the origin has to travel with them:
+	 * it is what lets a later request to another provider drop them instead of being rejected.
+	 * </p>
+	 */
+	private static final String PROVIDER_ID = "openai";
+
 
 	private static final String DEFAULT_BASE_URL = "https://api.openai.com";
 
@@ -206,7 +216,7 @@ public class OpenAIResponsesProvider extends AbstractStreamingProvider {
 						? "max_tokens"
 						: mapFinishReason(r != null ? r.getStatus() : "completed");
 					TokenUsage usage = extractUsage(r != null ? r.getUsage() : null);
-					List<ContentPart> content = accumulator.buildContentParts();
+					List<ContentPart> content = accumulator.buildContentParts(PROVIDER_ID);
 					handler.onEvent(new StreamEvent.MessageComplete(
 						responseId, model, finishReason, usage, content));
 				}

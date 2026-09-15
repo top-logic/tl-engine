@@ -15,7 +15,9 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.security.ModelAccessRightsSecurity;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
+import com.top_logic.tl.ai.core.security.RoleAccessPolicy;
 import com.top_logic.tl.ai.core.security.RoleToolAccess;
+import com.top_logic.tl.ai.core.security.RunAuthorization;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy;
 import com.top_logic.tl.ai.core.security.ToolAuthorization;
 import com.top_logic.tl.ai.tool.api.Tool;
@@ -42,10 +44,15 @@ public class TopLogicSecurityContext implements SecurityContext {
 
 	private final ToolAuthorization _toolAuthorization;
 
-	private TopLogicSecurityContext(ModelSecurity modelSecurity, ToolAuthorization toolAuthorization) {
+	private final RunAuthorization _runAuthorization;
+
+	private TopLogicSecurityContext(ModelSecurity modelSecurity, ToolAuthorization toolAuthorization,
+			RunAuthorization runAuthorization) {
 		_modelSecurity = Objects.requireNonNull(modelSecurity, "Model security must not be null.");
 		_toolAuthorization =
 			Objects.requireNonNull(toolAuthorization, "Tool authorization must not be null.");
+		_runAuthorization =
+			Objects.requireNonNull(runAuthorization, "Run authorization must not be null.");
 	}
 
 	/**
@@ -82,7 +89,8 @@ public class TopLogicSecurityContext implements SecurityContext {
 				+ " unattended run - as a configured service account.");
 		}
 		return new TopLogicSecurityContext(new ModelAccessRightsSecurity(principal),
-			AiToolAccessService.authorizationFor(principal, background));
+			AiToolAccessService.authorizationFor(principal, background),
+			AiToolAccessService.runAuthorizationFor(principal));
 	}
 
 	/**
@@ -110,7 +118,9 @@ public class TopLogicSecurityContext implements SecurityContext {
 			Set<String> heldRoleNames) {
 		RoleToolAccess access = new RoleToolAccess(deployment, name -> null);
 		return new TopLogicSecurityContext(ModelSecurity.UNCHECKED,
-			new ToolAuthorization(access, principal, heldRoleNames, false));
+			new ToolAuthorization(access, principal, heldRoleNames, false),
+			new RunAuthorization(RoleAccessPolicy.agents(deployment), RoleAccessPolicy.models(deployment),
+				RoleAccessPolicy.mcpServers(deployment), principal, heldRoleNames));
 	}
 
 	/**
@@ -128,7 +138,23 @@ public class TopLogicSecurityContext implements SecurityContext {
 	 *        The resolved tool authorization of the run.
 	 */
 	static TopLogicSecurityContext enforcedRun(ToolAuthorization authorization) {
-		return new TopLogicSecurityContext(ModelSecurity.UNCHECKED, authorization);
+		return new TopLogicSecurityContext(ModelSecurity.UNCHECKED, authorization,
+			RunAuthorization.UNCHECKED);
+	}
+
+	/**
+	 * The context of a run whose agent, model and MCP authorization is already resolved.
+	 *
+	 * <p>
+	 * <b>A test seam</b>, for the same reason {@link #enforcedRun(ToolAuthorization)} is one.
+	 * </p>
+	 *
+	 * @param authorization
+	 *        The resolved run authorization.
+	 */
+	static TopLogicSecurityContext enforcedRun(RunAuthorization authorization) {
+		return new TopLogicSecurityContext(ModelSecurity.UNCHECKED, ToolAuthorization.UNCHECKED,
+			authorization);
 	}
 
 	@Override
@@ -190,7 +216,26 @@ public class TopLogicSecurityContext implements SecurityContext {
 		if (bounded == _toolAuthorization) {
 			return this;
 		}
-		return new TopLogicSecurityContext(_modelSecurity, bounded);
+		return new TopLogicSecurityContext(_modelSecurity, bounded, _runAuthorization);
+	}
+
+	@Override
+	public RunAuthorization runAuthorization() {
+		return _runAuthorization;
+	}
+
+	/**
+	 * The same context with the agent dimension left undecided; everything else is carried over.
+	 *
+	 * @see RunAuthorization#withoutAgentCheck()
+	 */
+	@Override
+	public SecurityContext withoutAgentChoice() {
+		RunAuthorization widened = _runAuthorization.withoutAgentCheck();
+		if (widened == _runAuthorization) {
+			return this;
+		}
+		return new TopLogicSecurityContext(_modelSecurity, _toolAuthorization, widened);
 	}
 
 	@Override

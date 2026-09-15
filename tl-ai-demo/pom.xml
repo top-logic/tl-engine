@@ -37,6 +37,16 @@
 			<artifactId>tl-chat</artifactId>
 			<version>2.0.3-SNAPSHOT</version>
 		</dependency>
+		<!-- The classic chat-client.js tab for the LayoutServlet UI; opt-in since #398. -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-chat-classic</artifactId>
+			<version>2.0.3-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-view</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-ai-core</artifactId>
@@ -119,6 +129,65 @@
 
 	<build>
 		<plugins>
+			<plugin>
+				<groupId>com.github.eirslett</groupId>
+				<artifactId>frontend-maven-plugin</artifactId>
+				<version>1.15.4</version>
+				<configuration>
+					<workingDirectory>ui</workingDirectory>
+					<installDirectory>ui</installDirectory>
+				</configuration>
+				<executions>
+					<execution>
+						<id>install-node</id>
+						<goals>
+							<goal>install-node-and-npm</goal>
+						</goals>
+						<configuration>
+							<nodeVersion>v20.10.0</nodeVersion>
+						</configuration>
+					</execution>
+					<execution>
+						<id>npm-install</id>
+						<goals>
+							<goal>npm</goal>
+						</goals>
+						<configuration>
+							<arguments>install</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<id>npm-typecheck</id>
+						<phase>generate-resources</phase>
+						<goals>
+							<goal>npm</goal>
+						</goals>
+						<configuration>
+							<arguments>run typecheck</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<id>npm-test</id>
+						<phase>generate-resources</phase>
+						<goals>
+							<goal>npm</goal>
+						</goals>
+						<configuration>
+							<arguments>test</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<id>npm-build</id>
+						<phase>generate-resources</phase>
+						<goals>
+							<goal>npm</goal>
+						</goals>
+						<configuration>
+							<arguments>run build</arguments>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 			<plugin>
 				<groupId>de.haumacher.msgbuf</groupId>
 				<artifactId>msgbuf-generator-maven-plugin</artifactId>

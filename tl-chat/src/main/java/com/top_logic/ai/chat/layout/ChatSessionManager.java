@@ -12,6 +12,7 @@ import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
 import com.top_logic.ai.chat.api.DtoMapper;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.basic.Logger;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.memory.CompactionStrategy;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
@@ -72,6 +73,18 @@ public class ChatSessionManager {
 
 	/** The currently active session ID, or null if none. */
 	private volatile String _activeSessionId;
+
+	/**
+	 * The person the active session was established to belong to, or {@code null} when none is
+	 * active.
+	 *
+	 * <p>
+	 * Kept so that the writes this manager performs later - and on another thread - are aimed at
+	 * the same owner the activation was granted for, rather than at whatever ID happens to be in
+	 * {@link #_activeSessionId}.
+	 * </p>
+	 */
+	private volatile Person _activeOwner;
 
 	/**
 	 * Per-session in-memory state: the chat messages and the AI's conversation memory.
@@ -227,20 +240,52 @@ public class ChatSessionManager {
 	}
 
 	/**
+	 * The person the active session belongs to, or {@code null} when no session is active.
+	 *
+	 * <p>
+	 * Established by {@link #switchSession(String, Person)} and not by the caller asking, so a
+	 * later write can be aimed at the owner the activation was granted for.
+	 * </p>
+	 */
+	public Person getActiveOwner() {
+		return _activeOwner;
+	}
+
+	/**
 	 * Switches the active session. Persists the current session first, then loads the target session
 	 * from the database (or LRU cache) and rebuilds the AI's conversation memory.
 	 *
+	 * <p>
+	 * Loading a conversation into this manager is what puts it in front of a user - it becomes the
+	 * context the model is given and the transcript the next turn is written into - so the session
+	 * has to be established as this person's here, not only in whichever handler called. A handler
+	 * that forgets to ask gets a refused switch and keeps the session it had, instead of the
+	 * caller's chat quietly becoming someone else's.
+	 * </p>
+	 *
 	 * @param sessionId
 	 *        The session ID to switch to.
+	 * @param owner
+	 *        The person acting; the session must be theirs. {@code null} owns nothing.
+	 * @return whether the session is now the active one.
 	 */
-	public void switchSession(String sessionId) {
+	public boolean switchSession(String sessionId, Person owner) {
 		if (sessionId == null) {
-			return;
+			return false;
+		}
+		if (sessionId.equals(_activeSessionId) && owner != null && owner.equals(_activeOwner)) {
+			return true;
+		}
+		if (ChatHistoryService.findOwnedSessionById(sessionId, owner) == null) {
+			Logger.warn("Refused to activate chat session " + sessionId + ": not "
+				+ (owner == null ? "anybody's" : "this user's") + ".", ChatSessionManager.class);
+			return false;
 		}
 		PersistJob outgoing;
 		synchronized (_lock) {
 			if (sessionId.equals(_activeSessionId)) {
-				return;
+				_activeOwner = owner;
+				return true;
 			}
 
 			// Snapshot the outgoing session's metadata under the lock; the actual KB write
@@ -257,7 +302,8 @@ public class ChatSessionManager {
 			SessionState cached = _sessions.get(sessionId);
 			if (cached != null) {
 				_activeSessionId = sessionId;
-				return;
+				_activeOwner = owner;
+				return true;
 			}
 
 			// Load from database
@@ -267,7 +313,7 @@ public class ChatSessionManager {
 			TaskStore loadedTaskStore = new TaskStore();
 
 			try {
-				TLObject session = ChatHistoryService.findSessionById(sessionId);
+				TLObject session = ChatHistoryService.findOwnedSessionById(sessionId, owner);
 				if (session != null) {
 					String json = ChatHistoryService.loadConversationJson(session);
 					if (json != null && !json.isEmpty()) {
@@ -291,8 +337,10 @@ public class ChatSessionManager {
 			newState._taskStore = loadedTaskStore;
 			_sessions.put(sessionId, newState);
 			_activeSessionId = sessionId;
+			_activeOwner = owner;
 		}
 		persistOutsideLock(outgoing);
+		return true;
 	}
 
 	/**
@@ -312,8 +360,16 @@ public class ChatSessionManager {
 		persistOutsideLock(job);
 	}
 
-	/** Snapshot of what to persist, taken under {@link #_lock}. */
-	private record PersistJob(String sessionId, String metadataJson) {}
+	/**
+	 * Snapshot of what to persist, taken under {@link #_lock}.
+	 *
+	 * <p>
+	 * Carries the owner the session was activated for, so the write that happens later - outside
+	 * the lock, possibly on a background thread - resolves the session the same guarded way the
+	 * activation did.
+	 * </p>
+	 */
+	private record PersistJob(String sessionId, String metadataJson, Person owner) {}
 
 	/**
 	 * Computes the active session's persistable metadata. Must be called under {@link #_lock}.
@@ -327,7 +383,7 @@ public class ChatSessionManager {
 			return null;
 		}
 		String metadataJson = _tracker != null ? DtoMapper.serializeMetadata(_tracker) : null;
-		return new PersistJob(sessionId, metadataJson);
+		return new PersistJob(sessionId, metadataJson, _activeOwner);
 	}
 
 	/**
@@ -341,7 +397,7 @@ public class ChatSessionManager {
 			return;
 		}
 		try {
-			TLObject session = ChatHistoryService.findSessionById(job.sessionId());
+			TLObject session = ChatHistoryService.findOwnedSessionById(job.sessionId(), job.owner());
 			if (session != null) {
 				ChatHistoryService.saveMetadata(session, job.metadataJson());
 			}

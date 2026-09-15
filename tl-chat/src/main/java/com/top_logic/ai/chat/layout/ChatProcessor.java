@@ -22,9 +22,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.top_logic.ai.chat.api.ChatEventHandler;
 import com.top_logic.ai.chat.api.ChatEventHandlerRegistry;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
+import com.top_logic.ai.chat.api.messages.CitationDto;
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
 import com.top_logic.base.context.TLSubSessionContext;
@@ -32,6 +35,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.ai.chat.history.ChatHistoryService;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
@@ -60,6 +64,7 @@ import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.scripting.Converters;
+import com.top_logic.tl.ai.core.session.Citation;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.Part;
@@ -73,11 +78,60 @@ import com.top_logic.tl.ai.core.tools.task.TaskStore;
  *
  * <p>
  * Manages AI task execution, polling, and state synchronization between background threads
- * and the UI / SSE handlers. Extracted from {@link ChatControl} to separate processing
- * concerns from rendering.
+ * and the UI / SSE handlers. Extracted from the classic {@code ChatControl} (which lives in
+ * <code>tl-chat-classic</code> since #398) to separate processing concerns from rendering.
  * </p>
  */
 public class ChatProcessor {
+
+	/**
+	 * Per-turn chat UI choices: which agent to run, which model to use, and which MCP servers to
+	 * attach.
+	 *
+	 * @param agent
+	 *        Agent name, or {@code null}/{@code blank} for the configured entry-point.
+	 * @param model
+	 *        Model override, or {@code null}/{@code blank} to keep the agent's assignment.
+	 * @param mcpOverride
+	 *        When {@code true}, {@code mcpServers} replaces the agent's configured MCP list.
+	 * @param mcpServers
+	 *        MCP server names used when {@code mcpOverride} is {@code true}; never {@code null}.
+	 * @param effort
+	 *        Thinking / reasoning effort chosen for this turn, or {@code null} to leave the model's
+	 *        own setting alone.
+	 */
+	public record ChatRunOptions(String agent, String model, boolean mcpOverride, List<String> mcpServers,
+			String effort) {
+
+		/** No UI overrides. */
+		public static final ChatRunOptions DEFAULT = new ChatRunOptions(null, null, false, List.of(), null);
+
+		/**
+		 * Canonicalizes null lists so callers never have to null-check {@link #mcpServers()}.
+		 */
+		public ChatRunOptions {
+			mcpServers = mcpServers != null ? List.copyOf(mcpServers) : List.of();
+		}
+
+		/** Options without an effort level, for callers that do not offer the setting. */
+		public ChatRunOptions(String agent, String model, boolean mcpOverride, List<String> mcpServers) {
+			this(agent, model, mcpOverride, mcpServers, null);
+		}
+	}
+
+	/**
+	 * The agent a request that names none runs as.
+	 *
+	 * @see AgentFactory#defaultAgentFor(com.top_logic.tl.ai.core.security.RunAuthorization,
+	 *      java.util.Collection)
+	 */
+	private static String defaultAgent(ToolContext context, TaskProgressTracker tracker,
+			AgentFactory agentFactory) {
+		String improver = tracker == null ? null : tracker.getPromptImproverAgentName();
+		String resolved = AgentFactory.defaultAgentFor(context.security().runAuthorization(),
+			improver == null || improver.isBlank() ? Set.of() : Set.of(improver));
+		return resolved != null ? resolved : agentFactory.getEntryPointAgentName();
+	}
 
 	/** Background thread pool for AI operations. */
 	private static final ExecutorService BACKGROUND_EXECUTOR =
@@ -170,8 +224,21 @@ public class ChatProcessor {
 			// listeners in addition to interrupting the agent thread.
 			state.setCancellationToken(cancellationToken);
 
-			// Run the entry point agent via AgentLoop
-			String entryPointAgent = agentFactory.getEntryPointAgentName();
+			// Run the agent chosen in the chat UI, or - when the request names none - the one this
+			// account may run. Resolved exactly as /chat/capabilities reports it and as the pre-check
+			// of /chat/send asks about it: a client that is told one entry point and runs another is
+			// refused for an agent nobody chose. Falls back to the configured entry point when this
+			// account may run nothing, so that the refusal below is the ordinary one.
+			ChatRunOptions options = state.getRunOptions();
+			if (options == null) {
+				options = ChatRunOptions.DEFAULT;
+			}
+			String entryPointAgent = options.agent() != null && !options.agent().isBlank()
+				? options.agent().trim()
+				: defaultAgent(toolContext, taskTracker, agentFactory);
+			List<String> mcpOverride = options.mcpOverride() ? options.mcpServers() : null;
+			AgentFactory.RunOverrides runOverrides =
+				new AgentFactory.RunOverrides(options.model(), mcpOverride, options.effort());
 
 			// Look up SSE handler here (deferred from sendMessage) to avoid race condition:
 			// the JS client reconnects SSE during session creation, and the new connection
@@ -218,10 +285,11 @@ public class ChatProcessor {
 
 			// Record the run against the session captured at send time (not the currently
 			// active one), so a completed run is never written under the wrong session.
-			AgentSession agentSession = resolveAgentSession(state.getSessionId());
+			AgentSession agentSession = resolveAgentSession(state.getSessionId(), taskTracker.getSessionOwner());
 			try (SubagentRegistryBinding.Binding saBind = SubagentRegistryBinding.bind(subagentRegistry)) {
 				AgentRunner.RecordedRun runResult = AgentRunner.run(entryPointAgent, conversation,
-					conversationMemory, toolContext, listener, sessionRegistry, convLog, agentSession, null);
+					conversationMemory, toolContext, listener, sessionRegistry, convLog, agentSession, null,
+					runOverrides);
 				if (ToolRegistryReloadFlag.consume()) {
 					// A tool modified a service that affects the tool catalog (e.g. FrameworkWiringTool
 					// or ScriptToolAuthoringTool). Discard the cached registry so the next turn
@@ -235,6 +303,7 @@ public class ChatProcessor {
 				}
 				String result = runResult.response();
 				state.setLastAgentResponse(result);
+				state.setLastCitations(lastCitations(convLog));
 
 				state.addPendingMessage(new ChatMessage("Agent", result));
 
@@ -331,6 +400,14 @@ public class ChatProcessor {
 	 */
 	public static SendResult sendMessage(TaskProgressTracker tracker, TLSubSessionContext userSession,
 			String userName, String userMessage, List<AttachmentDto> attachments) {
+		return sendMessage(tracker, userSession, userName, userMessage, attachments, ChatRunOptions.DEFAULT);
+	}
+
+	/**
+	 * Sends a user message with optional agent / model / MCP overrides from the chat UI.
+	 */
+	public static SendResult sendMessage(TaskProgressTracker tracker, TLSubSessionContext userSession,
+			String userName, String userMessage, List<AttachmentDto> attachments, ChatRunOptions options) {
 		// Busy is per chat session: a run in another session must not block this one.
 		if (tracker.hasActiveProcessingStateFor(tracker.getActiveSessionId())) {
 			tracker.getChat().addMessage(new ChatMessage("System", "Please wait for the current response to complete."));
@@ -370,6 +447,7 @@ public class ChatProcessor {
 		String capturedSessionId = tracker.getActiveSessionId();
 		state.setChat(capturedChat);
 		state.setSessionId(capturedSessionId);
+		state.setRunOptions(options != null ? options : ChatRunOptions.DEFAULT);
 
 		// Create ConversationLog Turn before submitting background task
 		String messageText = userMessage != null ? userMessage.trim() : "";
@@ -408,22 +486,29 @@ public class ChatProcessor {
 	}
 
 	/**
-	 * Resolves the {@link AgentSession} for the given session id, or <code>null</code> if the id
-	 * is unknown (recording is then skipped for the run).
+	 * Resolves the {@link AgentSession} a run is recorded against, or <code>null</code> if it
+	 * cannot be established as this person's (recording is then skipped for the run).
+	 *
+	 * <p>
+	 * This is where a turn is written into a transcript, so the owner is asked again here rather
+	 * than trusted from the session id the run carries: a run must never append to a conversation
+	 * that is not the acting user's.
+	 * </p>
 	 */
-	private static AgentSession resolveAgentSession(String sessionId) {
+	public static AgentSession resolveAgentSession(String sessionId, Person owner) {
 		if (sessionId == null) {
 			Logger.info("Run will not be recorded: no active session id at send time.",
 				ChatProcessor.class);
 			return null;
 		}
 		try {
-			TLObject session = ChatHistoryService.findSessionById(sessionId);
+			TLObject session = ChatHistoryService.findOwnedSessionById(sessionId, owner);
 			if (session instanceof AgentSession agentSession) {
 				return agentSession;
 			}
 			Logger.warn("Run will not be recorded: session " + sessionId
-				+ (session == null ? " not found." : " is not an AgentSession."), ChatProcessor.class);
+				+ (session == null ? " not found for this user." : " is not an AgentSession."),
+				ChatProcessor.class);
 			return null;
 		} catch (RuntimeException ex) {
 			Logger.warn("Failed to resolve agent session " + sessionId + ": " + ex.getMessage(),
@@ -619,6 +704,9 @@ public class ChatProcessor {
 								MessageCompleteEvent event = MessageCompleteEvent.create()
 									.setContentHtml(html)
 									.setContentText(responseText);
+								for (Citation citation : state.getLastCitations()) {
+									event.addCitation(toCitationDto(citation));
+								}
 								handler.sendMessageComplete(event);
 							}
 						}
@@ -678,6 +766,56 @@ public class ChatProcessor {
 	}
 
 	/**
+	 * The citations the validator kept for the turn, in marker order.
+	 *
+	 * <p>
+	 * Collected over every {@link Part.TextPart} of the turn rather than the last one alone: a turn
+	 * that wrote text, called a tool and wrote more text carries markers in more than one part, and
+	 * the answer the chat renders is all of them.
+	 * </p>
+	 */
+	private static List<Citation> lastCitations(ConversationLog log) {
+		Turn turn = lastTurn(log);
+		if (turn == null) {
+			return List.of();
+		}
+		Map<Integer, Citation> byIndex = new TreeMap<>();
+		for (Part part : turn.assistantParts()) {
+			if (part instanceof Part.TextPart text) {
+				for (Citation citation : text.citations()) {
+					byIndex.putIfAbsent(Integer.valueOf(citation.index()), citation);
+				}
+			}
+		}
+		return List.copyOf(byIndex.values());
+	}
+
+	private static Turn lastTurn(ConversationLog log) {
+		if (log == null) {
+			return null;
+		}
+		Turn open = log.currentTurn();
+		if (open != null) {
+			return open;
+		}
+		List<Turn> turns = log.turns();
+		return turns.isEmpty() ? null : turns.get(turns.size() - 1);
+	}
+
+	private static CitationDto toCitationDto(Citation citation) {
+		return CitationDto.create()
+			.setIndex(citation.index())
+			.setToolName(citation.toolName())
+			.setToolCallId(citation.toolCallId())
+			.setKind(citation.kind())
+			.setId(citation.id())
+			.setLabel(citation.label())
+			.setUrl(citation.url())
+			.setPassage(citation.passage())
+			.setExcerpt(citation.excerpt());
+	}
+
+	/**
 	 * Thread-safe container for AI processing state shared between background and UI threads.
 	 */
 	public static class AIProcessingState {
@@ -711,6 +849,9 @@ public class ChatProcessor {
 		private volatile Thread _agentThread;
 		private volatile CancellationToken _cancellationToken;
 		private volatile String _lastAgentResponse;
+		private volatile List<Citation> _lastCitations = List.of();
+
+		private volatile ChatRunOptions _runOptions = ChatRunOptions.DEFAULT;
 
 		// Lifecycle management
 		volatile Future<?> _backgroundTask = null;
@@ -879,6 +1020,16 @@ public class ChatProcessor {
 			_sseHandler = handler;
 		}
 
+		/** Per-turn agent / model / MCP choices captured at send time. */
+		public ChatRunOptions getRunOptions() {
+			return _runOptions;
+		}
+
+		/** Captures UI run options before the background task starts. */
+		public void setRunOptions(ChatRunOptions options) {
+			_runOptions = options != null ? options : ChatRunOptions.DEFAULT;
+		}
+
 		/** The thread running the agent; may be null when not executing. */
 		public Thread getAgentThread() {
 			return _agentThread;
@@ -923,6 +1074,21 @@ public class ChatProcessor {
 		 */
 		public void setLastAgentResponse(String response) {
 			_lastAgentResponse = response;
+		}
+
+		/** Citations the validator kept for {@link #getLastAgentResponse()}; empty when none. */
+		public List<Citation> getLastCitations() {
+			return _lastCitations;
+		}
+
+		/**
+		 * Stores the citations that belong with the last agent response.
+		 *
+		 * @param citations
+		 *        kept citations; {@code null} becomes empty
+		 */
+		public void setLastCitations(List<Citation> citations) {
+			_lastCitations = citations == null ? List.of() : List.copyOf(citations);
 		}
 	}
 

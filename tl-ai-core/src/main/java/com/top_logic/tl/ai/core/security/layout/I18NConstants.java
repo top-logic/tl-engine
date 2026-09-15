@@ -685,8 +685,10 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * What the policy tab is for, above everything else.
 	 *
-	 * @en Who may use which capability. Every change is checked when you apply it.
-	 * @de Wer welche Tool-Gruppe benutzen darf. Jede Änderung wird beim Übernehmen geprüft.
+	 * @en Who may use which capability, and which agents, models and MCP servers. Every change is
+	 *     checked when you apply it.
+	 * @de Wer welche Tool-Gruppe benutzen darf und welche Agenten, Modelle und MCP-Server. Jede
+	 *     Änderung wird beim Übernehmen geprüft.
 	 */
 	public static ResKey POLICY_INTRO;
 
@@ -1025,6 +1027,165 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @tooltip Permissions and prohibitions for named tools instead of a whole capability.
 	 */
 	public static ResKey SECTION_TOOL_ENTRIES;
+
+	/**
+	 * Refusal of a policy naming an agent, a model or an MCP server the application does not have.
+	 *
+	 * @en {0} does not exist. The next start would be refused over it.
+	 * @de {0} gibt es nicht. Der nächste Start würde deswegen abgelehnt.
+	 */
+	public static ResKey1 REFUSE_UNKNOWN_NAME__NAME;
+
+	/**
+	 * Heading of the section holding which agents, models and MCP servers a role may use.
+	 *
+	 * @en Agents, models and MCP servers
+	 * @de Agenten, Modelle und MCP-Server
+	 * @tooltip Which agents each role may run, which models it may choose for a single request, and
+	 *          which MCP servers it may attach. What a run may then do is the section above.
+	 */
+	public static ResKey SECTION_RUN_ACCESS;
+
+	/**
+	 * What a collapsed section of one dimension says.
+	 *
+	 * @en {0}, {1} roles restricted
+	 * @de {0}, {1} Rollen eingeschränkt
+	 */
+	public static ResKey2 SECTION_RUN_SUMMARY__DEFAULT_ROLES;
+
+	/**
+	 * Label of the field holding what a section admits from a role it does not name.
+	 *
+	 * @en Everybody else
+	 * @de Alle anderen
+	 * @tooltip What a user may use who holds none of the roles named below. Naming a role takes its
+	 *          holders out of this and leaves everybody else where they were.
+	 */
+	public static ResKey FIELD_SECTION_DEFAULT;
+
+	/**
+	 * Label of the switch that takes one role into a section, or out of it.
+	 *
+	 * @en Restrict {0}
+	 * @de {0} einschränken
+	 * @tooltip Switch this on and the role may use only what is named below - naming nothing means it
+	 *          may use none of them. Switch it off and its holders get what everybody else gets.
+	 */
+	public static ResKey1 FIELD_ROLE_RESTRICTED__ROLE;
+
+	/**
+	 * Label of the field holding what one role may use.
+	 *
+	 * @en {0} may use
+	 * @de {0} darf verwenden
+	 * @tooltip Leave this empty and the role may use none of them. Naming any of them restricts the
+	 *          role to what is named here.
+	 */
+	public static ResKey1 FIELD_ROLE_ALLOWED__ROLE;
+
+	/**
+	 * Label of the field holding what one role may never use.
+	 *
+	 * @en {0} may never use
+	 * @de {0} darf niemals verwenden
+	 * @tooltip A refusal here wins over every permission - of this role, of every other role the same
+	 *          user holds, and of the agent itself.
+	 */
+	public static ResKey1 FIELD_ROLE_FORBIDDEN__ROLE;
+
+	/**
+	 * Why an agent this account is permitted still cannot run for it.
+	 *
+	 * <p>
+	 * The row of an agent whose <em>own</em> model, or one of whose own MCP servers, a role of this
+	 * account forbids. The agent section permits it and another section stops it, so its row says
+	 * which name and which role rather than repeating the agent rule that did let it through.
+	 * </p>
+	 *
+	 * @en The agent {0} cannot run for this account: it uses {1} itself, which the role {2} forbids.
+	 * @de Der Agent {0} kann für dieses Konto nicht laufen: Er verwendet selbst {1}, und das ist für
+	 *     die Rolle {2} ausgeschlossen.
+	 */
+	public static ResKey3 AGENT_USES_DENIED__AGENT_NAME_ROLE;
+
+	/**
+	 * Heading of the agent rows of the effective-access table, and of the agent section of the editor.
+	 *
+	 * @en Agents
+	 * @de Agenten
+	 * @tooltip Which agents this account may run.
+	 */
+	public static ResKey SECTION_AGENT_ACCESS;
+
+	/**
+	 * Heading of the model rows of the effective-access table, and of the model section of the editor.
+	 *
+	 * @en Models
+	 * @de Modelle
+	 * @tooltip Which language models this account may choose for a single request.
+	 */
+	public static ResKey SECTION_MODEL_ACCESS;
+
+	/**
+	 * Heading of the MCP rows of the effective-access table, and of the MCP section of the editor.
+	 *
+	 * @en MCP servers
+	 * @de MCP-Server
+	 * @tooltip Which MCP servers this account may attach to a single request.
+	 */
+	public static ResKey SECTION_MCP_ACCESS;
+
+	/**
+	 * What a section says when the application has none of what it decides about.
+	 *
+	 * @en None configured
+	 * @de Keine konfiguriert
+	 */
+	public static ResKey SECTION_SUMMARY_NONE_CONFIGURED;
+
+	/**
+	 * How much of one section an account reaches.
+	 *
+	 * @en {0} of {1} reachable
+	 * @de {0} von {1} erreichbar
+	 */
+	public static ResKey2 SECTION_SUMMARY__ALLOWED_TOTAL;
+
+	/**
+	 * Why an agent, a model or a server is reachable: a role of this account permits it.
+	 *
+	 * @en Permitted by the role {0}.
+	 * @de Durch die Rolle {0} erlaubt.
+	 */
+	public static ResKey1 ALLOWED_BY_ROLE__ROLE;
+
+	/**
+	 * Why an agent, a model or a server is reachable: nothing restricts it.
+	 *
+	 * @en Permitted by the default of this section.
+	 * @de Durch die Voreinstellung dieses Abschnitts erlaubt.
+	 */
+	public static ResKey ALLOWED_BY_SECTION_DEFAULT;
+
+	/**
+	 * Why a model or a server is reachable: it is what the agent itself uses, which is not a choice.
+	 *
+	 * @en The agent uses this itself, so choosing it takes no permission.
+	 * @de Der Agent verwendet dies selbst; es zu wählen erfordert daher keine Erlaubnis.
+	 */
+	public static ResKey ALLOWED_BY_THE_AGENT;
+
+	/**
+	 * The note under the effective-access table about what the three run sections do not say.
+	 *
+	 * @en Which agent, model and MCP server a request may name is decided before the run starts;
+	 *     these rows say nothing about what the run may then do, which is the table above.
+	 * @de Welchen Agenten, welches Modell und welchen MCP-Server eine Anfrage nennen darf, wird vor
+	 *     dem Lauf entschieden; diese Zeilen sagen nichts darüber, was der Lauf danach tun darf - das
+	 *     steht in der Tabelle darüber.
+	 */
+	public static ResKey RUN_SECTIONS_NOTE;
 
 	/**
 	 * Heading of the section holding every configured role.

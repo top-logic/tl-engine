@@ -148,6 +148,23 @@ public class ContentBlockAccumulator {
 	 * @return an ordered list of content parts; never {@code null}.
 	 */
 	public List<ContentPart> buildContentParts() {
+		return buildContentParts(null);
+	}
+
+	/**
+	 * The accumulated blocks as content parts, recording which provider produced the thinking.
+	 *
+	 * <p>
+	 * A thinking block's continuity token only means something to the provider that minted it, so
+	 * replaying it anywhere else breaks the request. Recording the origin here is what lets
+	 * {@link com.top_logic.tl.ai.core.provider.MessageHistorySanitizer} drop a block a later model
+	 * cannot accept instead of failing the conversation.
+	 * </p>
+	 *
+	 * @param providerId
+	 *        catalog ID of the provider being read, or {@code null} when it is not known
+	 */
+	public List<ContentPart> buildContentParts(String providerId) {
 		List<ContentPart> parts = new ArrayList<>(_blocks.size());
 		for (Block block : _blocks.values()) {
 			switch (block._type) {
@@ -162,7 +179,8 @@ public class ContentBlockAccumulator {
 					if (!text.isEmpty() || block._continuityToken != null) {
 						parts.add(new ThinkingContent(
 							text.isEmpty() ? "" : text,
-							block._continuityToken));
+							block._continuityToken,
+							providerId));
 					}
 				}
 				case "tool_use", "function_call" -> {

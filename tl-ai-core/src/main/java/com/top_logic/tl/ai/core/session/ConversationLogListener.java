@@ -119,6 +119,8 @@ public class ConversationLogListener implements AgentEventListener {
 			handleRunCompleted();
 		} else if (event instanceof AgentEvent.TurnStarted) {
 			// AgentLoop internal turn — do NOT create a new ConversationLog Turn
+		} else if (event instanceof AgentEvent.ContextComposition e) {
+			handleContextComposition(e);
 		} else if (event instanceof AgentEvent.TurnCompleted e) {
 			handleTurnCompleted(e);
 		} else if (event instanceof AgentEvent.TextDelta e) {
@@ -189,9 +191,29 @@ public class ConversationLogListener implements AgentEventListener {
 		_log.completeTurn();
 	}
 
+	private void handleContextComposition(AgentEvent.ContextComposition e) {
+		Turn turn = _log.currentTurn();
+		if (turn != null) {
+			turn.setContextComposition(e);
+		}
+	}
+
+	/**
+	 * Closes what the turn streamed and writes the completed message's continuity tokens into it.
+	 *
+	 * <p>
+	 * The buffers are flushed here first, and not left to the tool call or the run end: a turn that
+	 * answers without calling a tool has its thinking flushed only by {@code RunCompleted}, which
+	 * arrives after this event. The backfill would then find no thinking part to write the
+	 * signature into, and the block would be persisted unsigned - stripped on the next reload,
+	 * exactly for the turns that reason without acting.
+	 * </p>
+	 */
 	private void handleTurnCompleted(AgentEvent.TurnCompleted e) {
 		Turn turn = _log.currentTurn();
 		if (turn != null) {
+			flushTextBuffer(turn);
+			flushThinkingBuffer(turn);
 			turn.addUsage(e.turnUsage());
 			backfillContinuityTokens(turn, e.contentParts());
 		}
@@ -227,11 +249,14 @@ public class ConversationLogListener implements AgentEventListener {
 			.toList();
 		int count = Math.min(thinkingParts.size(), thinkingContents.size());
 		for (int i = 0; i < count; i++) {
-			String token = thinkingContents.get(i).continuityToken();
+			ThinkingContent content = thinkingContents.get(i);
+			String token = content.continuityToken();
 			if (token != null) {
 				Part.ThinkingPart old = thinkingParts.get(i);
+				// The origin travels with the token: a signature says nothing about which provider
+				// will accept it back unless it is recorded next to it.
 				turn.updatePart(old.id(), new Part.ThinkingPart(
-					old.id(), old.timestamp(), old.text(), token));
+					old.id(), old.timestamp(), old.text(), token, content.provider()));
 			}
 		}
 	}

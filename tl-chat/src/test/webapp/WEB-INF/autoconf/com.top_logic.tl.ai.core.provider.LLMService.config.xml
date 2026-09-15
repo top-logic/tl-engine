@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Two models, for TestChatRunAccess.
+
+	No request ever leaves the test - the key is a placeholder and nothing calls a provider. What the
+	models are there for is that "which models may this account choose" is answered against the
+	configured list, and a list of none cannot tell a filtered answer from an empty one. The agents
+	are assigned "test-assigned-model", which makes "test-other-model" exactly the model a request may
+	not choose while no role grants it: the shipped default of the model section, asserted rather than
+	assumed.
+
+	In autoconf rather than in WEB-INF/conf, because that is the layer an application overrides a
+	framework default in - tl-ai-core declares its own default model here, and a conf file cannot beat
+	it.
+-->
+<application config:interface="com.top_logic.basic.config.ApplicationConfig$Config"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<services>
+		<config service-class="com.top_logic.tl.ai.core.provider.LLMService"
+			config:override="true"
+		>
+			<instance class="com.top_logic.tl.ai.core.provider.LLMService">
+				<providers>
+					<provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig"
+						api-key="unencrypted:test-key-never-used"
+						models="test-assigned-model, test-other-model"
+						name="anthropic"
+					/>
+				</providers>
+				<agent-execution default-model="test-assigned-model"/>
+				<model-catalog/>
+			</instance>
+		</config>
+	</services>
+</application>

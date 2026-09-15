@@ -1,0 +1,362 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: LicenseRef-BOS-TopLogic-1.0
+ */
+package test.com.top_logic.ai.chat;
+
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import junit.framework.Test;
+import junit.framework.TestSuite;
+
+import test.com.top_logic.PersonManagerSetup;
+import test.com.top_logic.ai.chat.TestChatServletOwnership.Recording;
+import test.com.top_logic.basic.BasicTestCase;
+import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.knowledge.wrap.person.TestPerson;
+
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.servletunit.InvocationContext;
+import com.meterware.servletunit.ServletRunner;
+import com.meterware.servletunit.ServletUnitClient;
+
+import com.top_logic.ai.chat.api.ChatServlet;
+import com.top_logic.ai.chat.history.ChatHistoryService;
+import com.top_logic.ai.chat.layout.ChatSessionRegistry;
+import com.top_logic.ai.chat.layout.TaskProgressTracker;
+import com.top_logic.base.accesscontrol.Login;
+import com.top_logic.base.accesscontrol.SessionService;
+import com.top_logic.base.context.TLSubSessionContext;
+import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.model.TLObject;
+import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.security.AiToolAccessService;
+import com.top_logic.util.TLContextManager;
+import com.top_logic.util.model.ModelService;
+
+/**
+ * That a chat request may only name an agent, a model and an MCP server the acting account may use.
+ *
+ * <p>
+ * The policy of {@code #392} decides in {@code AgentFactory}, where every entry point passes; these
+ * are the two halves tl-chat adds on top - the menu, which must not offer what a run would refuse,
+ * and the refusal itself, which must reach the user as a sentence rather than as a turn that failed.
+ * </p>
+ *
+ * <p>
+ * Asserted against the <em>shipped defaults</em> rather than against a policy written for the test:
+ * the test application configures two models and grants nobody anything, so "a request may not choose
+ * a model other than its agent's" is the behaviour of an application that configured no policy at all
+ * - which is the claim most worth pinning. The role-keyed half is unit-tested in
+ * {@code TestAgentAccess}, {@code TestModelAccess} and {@code TestMcpAccess}, and driven end to end
+ * against the {@code secdemo} fixture.
+ * </p>
+ *
+ * <p>
+ * The servlet is driven directly, exactly as {@link TestChatServletOwnership} drives it, and for the
+ * same reason.
+ * </p>
+ */
+public class TestChatRunAccess extends BasicTestCase {
+
+	/** The model the test application assigns to every agent. */
+	private static final String ASSIGNED_MODEL = "test-assigned-model";
+
+	/** A second configured model, which is therefore a choice rather than the agent's own. */
+	private static final String OTHER_MODEL = "test-other-model";
+
+	/** An agent of the test application that carries no user-facing line. */
+	private static final String AGENT_WITHOUT_SUMMARY = "TestAgentWithoutSummary";
+
+	/** An agent this product ships, which carries both a display name and a summary. */
+	private static final String FRAMEWORK_AGENT = "TL_ModelExplorer";
+
+	private static Person anna;
+
+	private static TLObject annasChat;
+
+	private static ServletRunner runner;
+
+	private TestChatServletOwnership.Probe _servlet;
+
+	@Override
+	protected void setUp() throws Exception {
+		super.setUp();
+		if (anna == null) {
+			anna = TestPerson.createPerson("anna-who-runs-agents");
+			annasChat = ChatHistoryService.createSession("Annas Chat", anna);
+			runner = new ServletRunner();
+			runner.registerServlet("chat/*", ChatServlet.class.getName());
+		}
+		_servlet = new TestChatServletOwnership.Probe();
+
+		TLSubSessionContext subSession = TLContextManager.getSubSession();
+		assertNotNull("The test needs a sub-session to hang the tracker on.", subSession);
+		ChatSessionRegistry.register(subSession, new TaskProgressTracker());
+	}
+
+	/** Precondition: the fixture this test reasons about actually reached the application. */
+	public void testFixture() {
+		assertTrue("The security service decides here; without it nothing is checked.",
+			AiToolAccessService.Module.INSTANCE.isActive());
+		assertTrue("Two models must be configured for 'the other one' to mean anything: "
+			+ LLMService.getInstance().getConfiguredModelNames(),
+			LLMService.getInstance().getConfiguredModelNames().containsAll(
+				java.util.List.of(ASSIGNED_MODEL, OTHER_MODEL)));
+	}
+
+	/**
+	 * The menu offers the model the agent is assigned, and not the second one.
+	 *
+	 * <p>
+	 * The shipped default of the model section: a request runs on what its agent is assigned until an
+	 * administrator hands the choice out. A client that was offered the other model would be offered a
+	 * turn that comes back refused.
+	 * </p>
+	 */
+	public void testCapabilitiesOffersOnlyTheAgentsOwnModel() throws Exception {
+		String body = capabilities();
+
+		assertTrue(body, body.contains(ASSIGNED_MODEL));
+		assertFalse("The model no role grants must not be offered: " + body, body.contains(OTHER_MODEL));
+	}
+
+	/** An agent that carries a display name is offered under it, with its identifier beside it. */
+	public void testCapabilitiesCarriesTheDisplayNameAndTheSummary() throws Exception {
+		String agent = agentEntry(capabilities(), FRAMEWORK_AGENT);
+
+		assertTrue("The identifier stays what a request names: " + agent,
+			agent.contains("\"name\":\"" + FRAMEWORK_AGENT + "\""));
+		assertFalse("A framework agent has a display name: " + agent, agent.contains("\"label\":\"\""));
+		assertFalse("A framework agent has a summary: " + agent, agent.contains("\"summary\":\"\""));
+	}
+
+	/**
+	 * An agent with no user-facing line is offered by its name alone.
+	 *
+	 * <p>
+	 * Empty rather than filled with the agent's {@code description}: that one is a delegation
+	 * instruction addressed to a model, and showing it to a person is what once filled the picker with
+	 * English model instructions.
+	 * </p>
+	 */
+	public void testAgentWithoutASummaryIsOfferedByNameAlone() throws Exception {
+		String agent = agentEntry(capabilities(), AGENT_WITHOUT_SUMMARY);
+
+		assertTrue("An agent without a summary says nothing: " + agent,
+			agent.contains("\"summary\":\"\"") || !agent.contains("\"summary\""));
+		assertFalse("The model-facing description must not reach the client: " + agent,
+			agent.contains("Delegate here"));
+	}
+
+	/** Choosing a model the account may not choose is refused, with the reason it is refused for. */
+	public void testSendWithAForeignModelIsRefused() throws Exception {
+		Recording response = send(anna, "{\"text\":\"hallo\",\"agent\":\"" + FRAMEWORK_AGENT
+			+ "\",\"model\":\"" + OTHER_MODEL + "\"}");
+
+		assertEquals(HttpServletResponse.SC_FORBIDDEN, response._status);
+		String body = response._body.toString();
+		assertTrue(body, body.contains("\"status\":\"forbidden\""));
+		assertTrue("The client shows this to the user, so it cannot be empty: " + body,
+			body.contains(OTHER_MODEL));
+	}
+
+	/** Attaching an MCP server the agent does not declare is refused too. */
+	public void testSendAttachingAForeignServerIsRefused() throws Exception {
+		Recording response = send(anna, "{\"text\":\"hallo\",\"agent\":\"" + FRAMEWORK_AGENT
+			+ "\",\"mcpOverride\":true,\"mcpServers\":[\"some-server\"]}");
+
+		assertEquals(HttpServletResponse.SC_FORBIDDEN, response._status);
+		assertTrue(response._body.toString(), response._body.toString().contains("some-server"));
+	}
+
+	/**
+	 * Naming the model the agent is already assigned is not choosing one.
+	 *
+	 * <p>
+	 * The load-bearing case: the browser client sends the model it is showing on every turn, which is
+	 * the agent's own until the user picks another. A rule that called that a choice would refuse every
+	 * request.
+	 * </p>
+	 */
+	public void testRegenerateWithTheAgentsOwnModelIsNotRefused() throws Exception {
+		Recording response = post("/regenerate", anna, "{\"sessionId\":\"" + id() + "\",\"agent\":\""
+			+ FRAMEWORK_AGENT + "\",\"model\":\"" + ASSIGNED_MODEL + "\"}");
+
+		assertEquals("The gate must say no to the wrong request, not to every request.",
+			HttpServletResponse.SC_OK, response._status);
+		// The chat has no turn to answer again, which is how this request gets that far and starts
+		// nothing: what is asserted is that it was not refused.
+		assertTrue(response._body.toString(), response._body.toString().contains("\"status\":\"error\""));
+	}
+
+	/**
+	 * A regenerate that is refused leaves the answer it was going to replace where it is.
+	 *
+	 * <p>
+	 * The check has to run before the turn is removed. It used to be written after it, which would
+	 * have deleted the last answer and then refused to produce a new one.
+	 * </p>
+	 */
+	public void testRefusedRegenerateRemovesNothing() throws Exception {
+		Recording response = post("/regenerate", anna, "{\"sessionId\":\"" + id() + "\",\"agent\":\""
+			+ FRAMEWORK_AGENT + "\",\"model\":\"" + OTHER_MODEL + "\"}");
+
+		assertEquals(HttpServletResponse.SC_FORBIDDEN, response._status);
+		assertTrue(response._body.toString(), response._body.toString().contains("\"status\":\"forbidden\""));
+		assertNotNull("The chat must still be there.", ChatHistoryService.findOwnedSessionById(id(), anna));
+	}
+
+	/**
+	 * The entry point the payload reports is one this account may run.
+	 *
+	 * <p>
+	 * The configured one is infrastructure: a client that names no agent is not asking for it, and a
+	 * payload that reported it unfiltered would name an agent a restricted account may not have - and
+	 * every client that sends no agent would then be refused by that name. The shipped legacy chat
+	 * control is exactly such a client.
+	 * </p>
+	 */
+	public void testEntryPointIsAnAgentThisAccountMayRun() throws Exception {
+		String body = capabilities();
+		String entryPoint = valueOf(body, "entryPointAgent");
+
+		assertFalse("An account with agents to run must be told one: " + body, entryPoint.isEmpty());
+		assertTrue("The entry point has to be one of the agents offered: " + body,
+			body.contains("\"name\":\"" + entryPoint + "\""));
+	}
+
+	/**
+	 * A send that names no agent is not refused for an agent nobody named.
+	 *
+	 * <p>
+	 * The regression of the review's B1: the fallback used to be the configured entry point, so the
+	 * legacy control - which never sends an agent - was answered 403 and showed nothing at all.
+	 * </p>
+	 */
+	public void testSendWithoutAnAgentIsNotRefused() throws Exception {
+		Recording response = send(anna, "{\"text\":\"hallo\"}");
+
+		assertFalse("A send that names no agent must not be refused: " + response._body,
+			HttpServletResponse.SC_FORBIDDEN == response._status);
+	}
+
+	/**
+	 * A send that names no model at all is not refused for the model it is silently given.
+	 *
+	 * <p>
+	 * Since the second round of #392 the run asks about its agent's <em>own</em> model as well, so
+	 * that a {@code <deny>} on it cannot be escaped by saying nothing. This is the other side of that
+	 * question: under the shipped default the assigned model is permitted, and a request that chooses
+	 * nothing has to go through - which is every request of the legacy chat control.
+	 * </p>
+	 */
+	public void testSendWithoutAModelIsNotRefused() throws Exception {
+		Recording response = send(anna, "{\"text\":\"hallo\",\"agent\":\"" + FRAMEWORK_AGENT + "\"}");
+
+		assertFalse("A send that chooses nothing must not be refused: " + response._body,
+			HttpServletResponse.SC_FORBIDDEN == response._status);
+	}
+
+	/**
+	 * A send that names an agent this application does not have is answered, not accepted.
+	 *
+	 * <p>
+	 * It used to be answered 200 and to die in the background thread with an ERROR and a stack trace,
+	 * leaving the user with a turn that stopped. Not a refusal: nothing forbids it, the name is simply
+	 * wrong, which is why it is 404 and says so rather than quoting the policy.
+	 * </p>
+	 */
+	public void testSendWithAnUnknownAgentIsNotFound() throws Exception {
+		Recording response = send(anna, "{\"text\":\"hallo\",\"agent\":\"NoSuchAgent\"}");
+
+		assertEquals(HttpServletResponse.SC_NOT_FOUND, response._status);
+		assertTrue("The client shows this to the user: " + response._body,
+			response._body.toString().contains("NoSuchAgent"));
+	}
+
+	/** The capabilities payload of the acting account, as JSON. */
+	private String capabilities() throws Exception {
+		Recording response = new Recording();
+		InvocationContext invocation = client().newInvocation(
+			new GetMethodWebRequest("http://localhost/chat/capabilities"));
+		HttpServletRequest request = invocation.getRequest();
+		login(request, anna, response);
+		_servlet.get(request, response.asResponse());
+		return response._body.toString();
+	}
+
+	/** The value of a top-level string field of a JSON object. */
+	private static String valueOf(String json, String field) {
+		String key = "\"" + field + "\":\"";
+		int start = json.indexOf(key);
+		if (start < 0) {
+			return "";
+		}
+		int from = start + key.length();
+		return json.substring(from, json.indexOf('"', from));
+	}
+
+	/** The JSON object of one agent in a capabilities payload. */
+	private static String agentEntry(String capabilities, String agentName) {
+		int start = capabilities.indexOf("\"name\":\"" + agentName + "\"");
+		assertTrue("No agent '" + agentName + "' in " + capabilities, start >= 0);
+		int open = capabilities.lastIndexOf('{', start);
+		int close = capabilities.indexOf('}', start);
+		return capabilities.substring(open, close + 1);
+	}
+
+	private Recording send(Person caller, String body) throws Exception {
+		return post("/send", caller, body);
+	}
+
+	private Recording post(String path, Person caller, String body) throws Exception {
+		Recording response = new Recording();
+		InvocationContext invocation = client().newInvocation(new PostMethodWebRequest(
+			"http://localhost/chat" + path,
+			new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8)),
+			"application/json"));
+		HttpServletRequest request = invocation.getRequest();
+		login(request, caller, response);
+		_servlet.post(request, response.asResponse());
+		return response;
+	}
+
+	private static void login(HttpServletRequest request, Person caller, Recording response)
+			throws Exception {
+		ThreadContext.pushSuperUser();
+		try {
+			SessionService.getInstance().loginUser(request, response.asResponse(), caller);
+		} finally {
+			ThreadContext.popSuperUser();
+		}
+	}
+
+	private static ServletUnitClient client() {
+		return runner.newClient();
+	}
+
+	private static String id() {
+		return annasChat.tHandle().getObjectName().toExternalForm();
+	}
+
+	public static Test suite() {
+		return PersonManagerSetup.createPersonManagerSetup(
+			ServiceTestSetup.createSetup(
+				new TestSuite(TestChatRunAccess.class),
+				ModelService.Module.INSTANCE,
+				AgentExecutionStore.Module.INSTANCE,
+				AiToolAccessService.Module.INSTANCE,
+				LLMService.Module.INSTANCE,
+				SessionService.Module.INSTANCE,
+				Login.Module.INSTANCE));
+	}
+}

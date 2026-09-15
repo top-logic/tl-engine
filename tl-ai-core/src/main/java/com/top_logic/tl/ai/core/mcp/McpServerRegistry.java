@@ -141,10 +141,25 @@ public class McpServerRegistry extends ConfiguredManagedClass<McpServerRegistry.
 	}
 
 	/**
-	 * Returns the names of all configured MCP servers.
+	 * Returns the names of all MCP servers that connected successfully.
 	 */
 	public Set<String> getServerNames() {
 		return Collections.unmodifiableSet(_connections.keySet());
+	}
+
+	/**
+	 * Returns the names of all MCP servers declared in configuration, whether connected or not.
+	 */
+	public Set<String> getConfiguredServerNames() {
+		return Collections.unmodifiableSet(getConfig().getMcpServers().keySet());
+	}
+
+	/**
+	 * Whether the named server currently has an open connection.
+	 */
+	public boolean isConnected(String serverName) {
+		McpClientConnection connection = _connections.get(serverName);
+		return connection != null && connection.isConnected();
 	}
 
 	/**

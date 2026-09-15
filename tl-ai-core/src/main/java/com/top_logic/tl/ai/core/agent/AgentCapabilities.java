@@ -369,6 +369,17 @@ public class AgentCapabilities {
 		if (delegate == null) {
 			return null;
 		}
+		if (!_security.runAuthorization().allowsAgent(delegate.name())) {
+			// Asked quietly, like every other filter here: a run that never calls this agent must not
+			// write a denial line per turn. AgentFactory audits the one that is actually attempted.
+			return "the acting account may not run this agent";
+		}
+		if (!_security.runAuthorization().allowsAgentsOwn(AgentFactory.assignedModelOf(delegate.name()),
+			delegate.mcpServers())) {
+			// Its own model or one of its own servers is denied to this account, so the gate refuses
+			// every run of it - see AgentFactory.refusalFor. Offering it would offer a dead end.
+			return "the acting account may not use what this agent runs on";
+		}
 		return unusableReason(reachableTools(delegate), "reachable tools");
 	}
 

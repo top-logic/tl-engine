@@ -105,6 +105,34 @@ message ChatSendRequest {
 	 * File attachments (images, PDFs). Max 5, each max 10 MB.
 	 */
 	repeated AttachmentDto attachments;
+
+	/**
+	 * Agent to run for this turn. Empty uses the configured chat entry-point agent.
+	 */
+	string agent;
+
+	/**
+	 * Model override for this turn. Empty keeps the agent's assigned model.
+	 */
+	string model;
+
+	/**
+	 * When true, {@link #mcpServers} replaces the agent's configured MCP servers for this turn
+	 * (an empty list means no MCP tools). When false, the agent's defaults are used.
+	 */
+	boolean mcpOverride;
+
+	/**
+	 * MCP servers to attach when {@link #mcpOverride} is true.
+	 */
+	repeated string mcpServers;
+
+	/**
+	 * How hard the model may think for this turn, one of the selected model's
+	 * <code>effortLevels</code>. Empty keeps the agent's assignment; a level the model does not
+	 * offer is ignored with a logged warning rather than failing the run.
+	 */
+	string effort;
 }
 
 /**
@@ -117,9 +145,157 @@ message ChatSendResponse {
 	string taskId;
 
 	/**
-	 * e.g. "processing".
+	 * e.g. "processing", or "forbidden" for a request the acting account may not make.
 	 */
 	string status;
+
+	/**
+	 * Why the request was refused, in the acting user's language; empty unless it was.
+	 */
+	string reason;
+}
+
+/**
+ * Request body for POST /chat/improve-prompt.
+ */
+message ImprovePromptRequest {
+	/**
+	 * Draft text to improve.
+	 */
+	string draft;
+
+	/**
+	 * Browser-generated correlation ID.
+	 */
+	string requestId;
+}
+
+/**
+ * Response body for POST /chat/improve-prompt.
+ */
+message ImprovePromptResponse {
+	/**
+	 * Correlation ID from the request.
+	 */
+	string requestId;
+
+	/**
+	 * Improved draft text. Empty unless {@link #status} is "completed".
+	 */
+	string improvedText;
+
+	/**
+	 * Result status: "completed", "cancelled", "stale", or "forbidden" for a request the acting
+	 * account may not make.
+	 */
+	string status;
+
+	/**
+	 * Why the request was refused, in the acting user's language; empty unless it was.
+	 */
+	string reason;
+}
+
+/**
+ * Request body for POST /chat/improve-prompt/cancel.
+ */
+message CancelPromptImprovementRequest {
+	/**
+	 * Correlation ID of the request to cancel.
+	 */
+	string requestId;
+}
+
+/**
+ * Request body for POST /chat/regenerate: answer the same message again.
+ */
+message RegenerateRequest {
+	/** Session whose last turn is to be answered again. */
+	string sessionId;
+
+	/** Agent for the new run; empty keeps the chat entry point. */
+	string agent;
+
+	/** Model for the new run; empty keeps the agent's assignment. */
+	string model;
+
+	/** Whether the named MCP servers replace the agent's configured ones. */
+	boolean mcpOverride;
+
+	/** MCP servers for the new run. */
+	repeated string mcpServers;
+
+	/** How hard the model may think for the new run. */
+	string effort;
+}
+
+/**
+ * Request body for POST /chat/truncate: drop a turn and everything after it.
+ */
+message TruncateRequest {
+	/** Session to truncate. */
+	string sessionId;
+
+	/**
+	 * Zero-based index of the first turn to remove. Everything from it to the end goes with it,
+	 * because a conversation is a sequence: what followed was said in reply to what is being
+	 * removed and cannot stand without it.
+	 */
+	int fromTurn;
+}
+
+/**
+ * Response body for POST /chat/truncate and POST /chat/regenerate.
+ */
+message TruncateResponse {
+	/** "ok", "busy", "error", or "forbidden" for a request the acting account may not make. */
+	string status;
+
+	/** Why the request was refused, in the acting user's language; empty unless it was. */
+	string reason;
+
+	/** Number of turns removed. */
+	int removedTurns;
+
+	/** The user text of the first removed turn, so the client can offer it for editing. */
+	string text;
+
+	/** Task ID of the run started by a regenerate; empty for a plain truncate. */
+	string taskId;
+}
+
+/**
+ * One answer the user rated.
+ */
+message MessageFeedbackDto {
+	/** Zero-based index of the turn whose answer was rated. */
+	int turnIndex;
+
+	/** "up" or "down". */
+	string rating;
+
+	/** Free text the user added; empty when they added none. */
+	string note;
+
+	/** ISO-8601 timestamp of when the rating was given. */
+	string recordedAt;
+}
+
+/**
+ * Request body for POST /chat/feedback.
+ */
+message MessageFeedbackRequest {
+	/** Session the rated answer belongs to. */
+	string sessionId;
+
+	/** Zero-based index of the turn whose answer was rated. */
+	int turnIndex;
+
+	/** "up", "down", or empty to withdraw an earlier rating. */
+	string rating;
+
+	/** Free text the user added; optional. */
+	string note;
 }
 
 /**
@@ -298,6 +474,41 @@ message ChatSessionDetailResponse {
 	 * precedence over entries.
 	 */
 	string turnsJson;
+
+	/**
+	 * Token usage of the last agent-loop iteration of the session's last turn.
+	 *
+	 * <p>
+	 * Its prompt size (input + cache read + cache write) is the exact context the model saw when
+	 * the session was last active, so re-opening a session restores the context ring to a measured
+	 * number rather than an estimate. Absent for a session whose transcript predates the field, and
+	 * for a session that has not run a turn yet.
+	 * </p>
+	 */
+	TokenUsageDto lastPromptUsage;
+
+	/**
+	 * Context window in tokens of the model that ran the session's last turn, or zero when that
+	 * model is no longer configured.
+	 */
+	int contextWindow;
+
+	/**
+	 * Model that ran the session's last turn, empty when the session has not run one.
+	 */
+	string lastModel;
+
+	/** Answer ratings recorded in this session, so a reopened chat shows them again. */
+	repeated MessageFeedbackDto feedback;
+
+	/** Effort level last used in this session; empty when none was chosen. */
+	string lastEffort;
+
+	/**
+	 * What the prompt of the session's last request was made of, so a re-opened chat shows the same
+	 * breakdown a live one does. Absent for a session whose transcript predates the field.
+	 */
+	ContextCompositionEvent lastComposition;
 }
 
 /**
@@ -391,6 +602,12 @@ message RunStartedEvent {
 
 	/** The model being used. */
 	string model;
+
+	/** Estimated tokens already in the conversation. */
+	int usedTokens;
+
+	/** Model context window in tokens. */
+	int contextWindow;
 }
 
 /** SSE event for run completed. */
@@ -409,6 +626,12 @@ message RunCompletedEvent {
 message TurnStartedEvent {
 	/** 1-based turn number. */
 	int turnNumber;
+
+	/** Estimated tokens already in the conversation. */
+	int usedTokens;
+
+	/** Model context window in tokens. */
+	int contextWindow;
 }
 
 /** SSE event for turn completed. */
@@ -418,6 +641,38 @@ message TurnCompletedEvent {
 
 	/** Token usage for this turn. */
 	TokenUsageDto turnUsage;
+
+	/**
+	 * Model context window in tokens, repeated here so the client can size the context ring from
+	 * the same event that carries the provider-reported prompt size.
+	 */
+	int contextWindow;
+}
+
+/**
+ * SSE event describing what the prompt of the request just sent is made of.
+ *
+ * <p>
+ * Every figure is an estimate produced by the agent loop's token estimator, not a provider count:
+ * the provider reports one prompt total and never splits it. A client showing these next to the
+ * measured total must mark them as estimated.
+ * </p>
+ */
+message ContextCompositionEvent {
+	/** Estimated tokens of the system prompt. */
+	int systemPromptTokens;
+
+	/** Estimated tokens of the tool schemas sent with the request. */
+	int toolDefinitionTokens;
+
+	/** Estimated tokens of the conversation messages, tool results included. */
+	int messageTokens;
+
+	/** Estimated tokens of the tool results within {@link #messageTokens}. */
+	int toolResultTokens;
+
+	/** Number of tool schemas sent with the request. */
+	int toolCount;
 }
 
 /** SSE event for tool call started. */
@@ -497,6 +752,17 @@ message ApprovalRequiredEvent {
 	 * knows there is a clock.
 	 */
 	long remainingMs;
+
+	/**
+	 * What kind of change the tool makes: READ, USER_SCOPED, DATA_WRITE, STRUCTURAL or EXTERNAL.
+	 *
+	 * <p>
+	 * Why approval is being asked, in a form a UI can phrase in the user's own language;
+	 * {@link #displayReason} is the same thing written once, in English. Empty for an event from
+	 * before the mode was carried.
+	 * </p>
+	 */
+	string toolMode;
 }
 
 /** SSE event for approval resolved. */
@@ -586,12 +852,49 @@ message CompactionStartedEvent {
 
 	/** Trigger: reactive or proactive. */
 	string trigger;
+
+	/** Model context window in tokens. */
+	int contextWindow;
 }
 
 /** SSE event for task list update. Carries the full task list snapshot. */
 message TaskUpdateEvent {
 	/** Full task list as JSON (<code>PersistedTaskStore</code> format from <code>TaskStore.toJson()</code>). */
 	string tasksJson;
+}
+
+/**
+ * One source a {@code [n]} marker in an answer points to.
+ *
+ * Mirrors the persist {@code CitationDto}. The server drops any citation whose id or url did not
+ * appear in this turn's tool results.
+ */
+message CitationDto {
+	/** 1-based marker index shown in the answer. */
+	int index;
+
+	/** Tool that produced the cited id or URL. */
+	string toolName;
+
+	/** Tool call id of that tool, when known. */
+	string toolCallId;
+
+	/** Host kind, e.g. {@code web} or {@code invoice}. */
+	string kind;
+
+	/** Id the tool returned (a URL, a TID, …). */
+	string id;
+
+	/** Human label for the chip popover. */
+	string label;
+
+	/** Link for a web source; empty otherwise. */
+	string url;
+	/** The sentence of the source the fact rests on, as the model read it; empty when none. */
+	string passage;
+
+	/** A window of the source around {@link #passage}, for the marker's popover. */
+	string excerpt;
 }
 
 /** SSE event for completed assistant message with server-rendered HTML. */
@@ -601,6 +904,21 @@ message MessageCompleteEvent {
 
 	/** Raw markdown text for persistence. */
 	string contentText;
+
+	/** Citations the validator kept, in marker order. */
+	repeated CitationDto citations;
+}
+
+/** Per-user layout of the right rail and artefact pane. */
+message ChatPreferencesDto {
+	/** Whether the right rail is open. */
+	bool railOpen;
+
+	/** Width of the artefact pane in pixels; 0 means the default. */
+	int paneWidth;
+
+	/** Sum of section badges last stored when the rail was opened. */
+	int badgeSeen;
 }
 
 /** Token usage breakdown. */
@@ -640,4 +958,123 @@ message SessionMetadata {
 
 	/** Skill IDs loaded in this session, for replay on restore. */
 	repeated string loadedSkills;
+
+	/**
+	 * Answer ratings the user gave in this session.
+	 *
+	 * <p>
+	 * Kept here rather than in the transcript because a transcript is written per run and a rating
+	 * arrives after it: this bag is the session's own, is rewritten whole, and is therefore also
+	 * where an evaluation reads the ratings back from.
+	 * </p>
+	 */
+	repeated MessageFeedbackDto feedback;
+
+	/** Effort level last chosen in this session. */
+	string lastEffort;
+}
+
+/** Catalog of agents, models and MCP servers the chat UI can offer. */
+message ChatCapabilitiesResponse {
+	/** Configured chat entry-point agent name. */
+	string entryPointAgent;
+
+	/** Agents the current user may start a chat with. */
+	repeated AgentOptionDto agents;
+
+	/** Models configured on LLM providers. */
+	repeated ModelOptionDto models;
+
+	/** MCP servers known to the registry. */
+	repeated McpServerOptionDto mcpServers;
+
+	/**
+	 * Whether the prompt improver would run for this account.
+	 *
+	 * <p>
+	 * False when the model it runs on, or a server it declares, is forbidden to a role of this
+	 * account: the improver is outside the agent allowlist - the product chose it, not the user - but
+	 * the other two sections still decide, so its run would be refused. A client that offers the
+	 * button anyway offers a refusal.
+	 * </p>
+	 */
+	bool promptImproverAvailable;
+}
+
+/** One selectable agent. */
+message AgentOptionDto {
+	/**
+	 * Unique agent name - the identifier, not a label.
+	 *
+	 * What a request names, what a persisted session holds, and what other configuration references.
+	 */
+	string name;
+
+	/**
+	 * What to call this agent in front of the user, in their language.
+	 *
+	 * Empty when the agent has no display name; the client then shows the identifier above.
+	 */
+	string label;
+
+	/**
+	 * One localised line saying what this agent is for, written for the person choosing it.
+	 *
+	 * Empty when the agent has none; the picker then offers it by name alone. The agent's own
+	 * description is a delegation instruction addressed to a model and is never sent here.
+	 */
+	string summary;
+
+	/** MCP servers bound on the agent definition. */
+	repeated string mcpServers;
+
+	/** Resolved default model for this agent. */
+	string model;
+}
+
+/** One selectable model. */
+message ModelOptionDto {
+	/** Model identifier. */
+	string id;
+
+	/**
+	 * Whether the caller may choose this model whatever agent they run.
+	 *
+	 * False for a model that is listed only because an agent the caller may run is assigned it: that
+	 * one is usable with *that* agent and refused with another. A client offering a model list has to
+	 * narrow it to this flag plus the selected agent's own model, or it offers a turn that comes back
+	 * refused.
+	 */
+	boolean grantedToRole;
+
+	/** Provider key (anthropic, openai, ...). */
+	string provider;
+
+	/** Context window in tokens. */
+	int contextWindow;
+
+	/** Maximum output tokens. */
+	int maxOutput;
+
+	/**
+	 * How hard this model may be asked to think, in increasing order.
+	 *
+	 * <p>
+	 * Empty when the model offers no such setting, which is what a UI must check before offering
+	 * one: the providers reject a level their model does not know.
+	 * </p>
+	 */
+	repeated string effortLevels;
+
+	/** The level in force when the caller names none; empty when the model has no levels. */
+	string defaultEffort;
+}
+
+/** One selectable MCP server. */
+message McpServerOptionDto {
+	/** Configured server name. */
+	string name;
+
+	/** "connected" or "disconnected". */
+	string status;
 }

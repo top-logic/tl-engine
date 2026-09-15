@@ -9,6 +9,8 @@ import static com.top_logic.layout.basic.fragments.Fragments.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -17,6 +19,7 @@ import java.util.function.Supplier;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
@@ -41,9 +44,16 @@ import com.top_logic.layout.tree.model.DefaultTreeTableModel;
 import com.top_logic.layout.tree.model.DefaultTreeTableModel.DefaultTreeTableBuilder;
 import com.top_logic.layout.tree.model.DefaultTreeTableModel.DefaultTreeTableNode;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.tl.ai.core.agent.AgentDefinition;
+import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
+import com.top_logic.tl.ai.core.provider.LLMService;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.security.EffectiveToolAccess;
 import com.top_logic.tl.ai.core.security.EffectiveToolAccess.CapabilityAccess;
+import com.top_logic.tl.ai.core.security.RoleAccessPolicy;
+import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Decision;
+import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Dimension;
+import com.top_logic.tl.ai.core.security.RunAuthorization;
 import com.top_logic.tl.ai.core.security.ToolAccessExplanation;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy;
 import com.top_logic.tl.ai.tool.api.Tool;
@@ -251,6 +261,7 @@ public class EffectiveToolAccessComponent extends FormComponent implements Contr
 				message(I18NConstants.ADMIN_BANNER__ACCOUNT.fill(_account.getName()))));
 		}
 		notes.add(div("aiSecurityNote", message(I18NConstants.LAYER_ONE_ONLY_NOTE)));
+		notes.add(div("aiSecurityNote", message(I18NConstants.RUN_SECTIONS_NOTE)));
 		if (_background) {
 			notes.add(div("aiSecurityNote", message(I18NConstants.BACKGROUND_MODE_NOTE)));
 		}
@@ -368,6 +379,7 @@ public class EffectiveToolAccessComponent extends FormComponent implements Contr
 	}
 
 	private void fill(DefaultTreeTableNode root, EffectiveToolAccess access) {
+		fillRunSections(root);
 		for (CapabilityAccess capability : access.capabilities()) {
 			DefaultTreeTableNode node = root.createChild(new EffectiveAccessRow.Capability(
 				capability.group(), capability.explanation(), capability.tools().size(),
@@ -382,6 +394,125 @@ public class EffectiveToolAccessComponent extends FormComponent implements Contr
 		for (Tool tool : access.unclassifiedTools()) {
 			root.createChild(new EffectiveAccessRow.ToolRow(access.qualifiedName(tool),
 				access.explain(tool)));
+		}
+	}
+
+	/**
+	 * The three sections that decide what a run may <em>be</em>, above the capabilities that decide
+	 * what it may do.
+	 *
+	 * <p>
+	 * Asked with the same two inputs the chat's menu is filtered with: the candidates the application
+	 * has, and what the agents this account may run use themselves. A model an agent is assigned is
+	 * not a choice, and a row that called it one would report a restriction that does not exist.
+	 * </p>
+	 */
+	private void fillRunSections(DefaultTreeTableNode root) {
+		RunAuthorization access = _account != null
+			? AiToolAccessService.effectiveRunAccessFor(_account)
+			: AiToolAccessService.effectiveRunAccessForRoles(_role == null ? Set.of() : Set.of(_role));
+
+		List<String> agents = names(Dimension.AGENT);
+		// The agent section is not the only one that can stop an agent: one whose own model, or one of
+		// whose own servers, a role forbids cannot run at all - the chat's menu, the fallback agent and
+		// the delegate catalog all drop it, and a view that counted it as reachable would be the one
+		// place in the product that disagrees with the gate. Its row says why instead of vanishing.
+		Map<String, Decision.Denied> stoppedByItsOwn = new LinkedHashMap<>();
+		List<String> allowedAgents = new ArrayList<>();
+		for (String agentName : access.allowedAgents(agents)) {
+			Decision.Denied own =
+				access.agentsOwnRefusal(assignedModel(agentName), declaredServers(agentName));
+			if (own == null) {
+				allowedAgents.add(agentName);
+			} else {
+				stoppedByItsOwn.put(agentName, own);
+			}
+		}
+		addSection(root, Dimension.AGENT, agents, allowedAgents, Set.of(), stoppedByItsOwn);
+
+		Set<String> assignedModels = new TreeSet<>();
+		Set<String> declaredServers = new TreeSet<>();
+		for (String agentName : allowedAgents) {
+			declaredServers.addAll(declaredServers(agentName));
+			String model = assignedModel(agentName);
+			if (model != null) {
+				assignedModels.add(model);
+			}
+		}
+		List<String> models = names(Dimension.MODEL);
+		addSection(root, Dimension.MODEL, models, access.allowedModels(models, assignedModels),
+			assignedModels, Map.of());
+		List<String> servers = names(Dimension.MCP_SERVER);
+		addSection(root, Dimension.MCP_SERVER, servers,
+			access.allowedMcpServers(servers, declaredServers), declaredServers, Map.of());
+	}
+
+	/**
+	 * One heading row and one row per candidate, with the rule that decided each.
+	 *
+	 * @param stoppedByItsOwn
+	 *        The candidates its own section permits and another one stops, with the refusal that
+	 *        stops them; empty for every dimension but {@link Dimension#AGENT}.
+	 */
+	private void addSection(DefaultTreeTableNode root, Dimension dimension, List<String> candidates,
+			List<String> allowed, Set<String> agentsOwn, Map<String, Decision.Denied> stoppedByItsOwn) {
+		DefaultTreeTableNode node = root.createChild(
+			new EffectiveAccessRow.RunSection(dimension, allowed.size(), candidates.size()));
+		RoleAccessPolicy policy = sectionOf(dimension);
+		Set<String> roleNames = _account != null
+			? AiToolAccessService.heldRoleNames(_account)
+			: (_role == null ? Set.of() : Set.of(_role));
+		for (String candidate : candidates) {
+			Decision.Denied own = stoppedByItsOwn.get(candidate);
+			node.createChild(own == null
+				? new EffectiveAccessRow.RunName(dimension, candidate,
+					policy.check(roleNames, candidate, agentsOwn))
+				: new EffectiveAccessRow.RunName(dimension, candidate, own, usesDenied(candidate, own)));
+		}
+	}
+
+	/** What the row of an agent says that its own model or its own server stops. */
+	private static String usesDenied(String agentName, Decision.Denied own) {
+		return Resources.getInstance().getString(I18NConstants.AGENT_USES_DENIED__AGENT_NAME_ROLE
+			.fill(agentName, own.name(), own.byRole()));
+	}
+
+	/** The MCP servers the named agent declares, empty if there is no such agent. */
+	private static Collection<String> declaredServers(String agentName) {
+		AgentDefinition agent = AgentDefinitionQuery.getInstance().findAgentByName(agentName);
+		return agent == null ? List.of() : agent.mcpServers();
+	}
+
+	/** The evaluation of one of the three sections of the running policy. */
+	private static RoleAccessPolicy sectionOf(Dimension dimension) {
+		AiToolAccessService service = AiToolAccessService.getInstance();
+		switch (dimension) {
+			case MODEL:
+				return service.getModelAccess();
+			case MCP_SERVER:
+				return service.getMcpAccess();
+			default:
+				return service.getAgentAccess();
+		}
+	}
+
+	/** The names of one dimension the application has, in a stable order. */
+	private static List<String> names(Dimension dimension) {
+		Set<String> known = AiToolAccessService.knownNames(dimension);
+		return known == null ? List.of() : new ArrayList<>(known);
+	}
+
+	/** The model the named agent is assigned, or <code>null</code> if nothing can say. */
+	private static String assignedModel(String agentName) {
+		if (!LLMService.Module.INSTANCE.isActive()) {
+			return null;
+		}
+		try {
+			return LLMService.getInstance().resolveModelAssignment(agentName).model();
+		} catch (RuntimeException ex) {
+			Logger.debug("No model assignment for '" + agentName + "'.",
+				EffectiveToolAccessComponent.class);
+			return null;
 		}
 	}
 

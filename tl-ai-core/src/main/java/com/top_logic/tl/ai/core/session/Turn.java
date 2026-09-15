@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 
 /**
@@ -52,6 +53,10 @@ public class Turn {
 	private volatile String _provider;
 
 	private volatile TokenUsage _cumulativeUsage = TokenUsage.EMPTY;
+
+	private volatile TokenUsage _lastIterationUsage = TokenUsage.EMPTY;
+
+	private volatile AgentEvent.ContextComposition _contextComposition;
 
 	/**
 	 * Creates a new turn.
@@ -175,9 +180,50 @@ public class Turn {
 	}
 
 	/**
+	 * Token usage of the <em>last</em> {@link com.top_logic.tl.ai.core.agent.AgentLoop} iteration of
+	 * this turn.
+	 *
+	 * <p>
+	 * Its {@link TokenUsage#promptTokens() prompt size} is the exact context the model saw last, and
+	 * therefore the only number from which a UI may state how full the context window is.
+	 * {@link #cumulativeUsage()} cannot be used for that: every iteration resends the whole
+	 * conversation, so summing the iterations' prompt sizes counts the conversation once per
+	 * iteration.
+	 * </p>
+	 */
+	public TokenUsage lastIterationUsage() {
+		return _lastIterationUsage;
+	}
+
+	/** Sets the usage of the last iteration; used when a persisted turn is read back. */
+	public void setLastIterationUsage(TokenUsage usage) {
+		_lastIterationUsage = usage == null ? TokenUsage.EMPTY : usage;
+	}
+
+	/**
+	 * What the prompt of this turn's last request was made of, or {@code null} when unrecorded.
+	 *
+	 * <p>
+	 * Kept so a re-opened chat can show the same breakdown a live one does; the figures are the
+	 * agent loop's estimates, not provider counts.
+	 * </p>
+	 */
+	public AgentEvent.ContextComposition contextComposition() {
+		return _contextComposition;
+	}
+
+	/** Records what the prompt of this turn's latest request was made of. */
+	public void setContextComposition(AgentEvent.ContextComposition composition) {
+		_contextComposition = composition;
+	}
+
+	/**
 	 * Add token usage from one {@link com.top_logic.tl.ai.core.agent.AgentLoop} iteration.
 	 */
 	public void addUsage(TokenUsage turnUsage) {
 		_cumulativeUsage = _cumulativeUsage.add(turnUsage);
+		if (turnUsage != null && turnUsage.promptTokens() > 0) {
+			_lastIterationUsage = turnUsage;
+		}
 	}
 }

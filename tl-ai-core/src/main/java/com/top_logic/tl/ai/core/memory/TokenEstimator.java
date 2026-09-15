@@ -29,4 +29,25 @@ public interface TokenEstimator {
 	 * Estimate the total token cost of a list of messages.
 	 */
 	int estimateTokens(List<Message> messages);
+
+	/**
+	 * Estimate the token cost of a block of prose, such as a system prompt.
+	 *
+	 * <p>
+	 * Prose and JSON are charged at different rates, so a caller that knows which it holds must say
+	 * so rather than pass both through one method.
+	 * </p>
+	 *
+	 * @param text
+	 *        the text to estimate; {@code null} counts as nothing
+	 */
+	int estimateText(String text);
+
+	/**
+	 * Estimate the token cost of a JSON document, such as a tool schema.
+	 *
+	 * @param json
+	 *        the JSON to estimate; {@code null} counts as nothing
+	 */
+	int estimateJson(String json);
 }

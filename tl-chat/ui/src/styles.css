@@ -1,0 +1,3432 @@
+/*
+ * Agent chat.
+ *
+ * Every colour, radius and length comes from the TopLogic React design tokens
+ * (com.top_logic.layout.react, tl-react-theme.config.xml), so the chat follows whichever theme the
+ * app-bar's theme switch selects. The aliases below exist for two reasons: a handful of tokens the
+ * shipped themes do not define yet (--support-danger, --background-danger--lighter, --text-danger,
+ * --text-warning, --link, --body-01-font-size, --heading-04-*) need a fallback that is correct in
+ * both light and dark, and the chat's own geometry (column width, radius scale) needs a name.
+ *
+ * Spacing is a 4 px grid throughout; radii use one scale (--r-1 .. --r-3 plus the pill).
+ */
+
+.tl-cockpit,
+.tl-cockpit * {
+  box-sizing: border-box;
+}
+
+.tl-cockpit {
+  /* Geometry of the chat itself. */
+  --chat-column: 49rem;
+  --chat-sidebar: 16.5rem;
+  --chat-rail-narrow: 3.25rem;
+  --r-1: calc(var(--corner-radius, 0.25rem) * 1.5);
+  --r-2: calc(var(--corner-radius, 0.25rem) * 2.5);
+  --r-3: calc(var(--corner-radius, 0.25rem) * 4);
+  --r-pill: 999px;
+
+  /* Tokens the shipped themes do not define, resolved to ones they do. */
+  --chat-danger: var(--support-danger, var(--support-error, #d3181b));
+  --chat-danger-soft: var(
+    --background-danger--lighter,
+    color-mix(in srgb, var(--support-error, #d3181b) 12%, transparent)
+  );
+  --chat-warn: var(--text-warning, var(--support-warning, #d3a118));
+  --chat-link: var(--link, var(--link-primary, var(--button-primary, #2968c8)));
+  --chat-small: var(--body-01-font-size, 0.75rem);
+  --chat-heading: var(--heading-04-font-size, 1.5rem);
+  --chat-heading-line: var(--heading-04-line-height, 2rem);
+  --chat-shadow: var(--shadow-menu, 0 2px 6px 0 rgba(0, 0, 0, 0.32));
+  --chat-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+  color: var(--text-primary);
+  background: var(--background);
+  font-family: var(--font-family, Inter, "Segoe UI", system-ui, sans-serif);
+  font-size: var(--body-02-font-size, 0.875rem);
+  line-height: var(--body-02-line-height, 1.25rem);
+}
+
+/* The chat in a session that is not signed in: one sentence instead of an unusable chat. */
+.tl-cockpit.is-signed-out {
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+}
+
+.signed-out {
+  max-width: 26rem;
+  text-align: center;
+}
+
+.signed-out h2 {
+  margin: 0;
+  font-size: var(--chat-heading);
+  line-height: var(--chat-heading-line);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.signed-out p {
+  margin: 0.5rem 0 0;
+  color: var(--text-secondary);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* --- Buttons ------------------------------------------------------------ */
+
+/*
+ * Zero specificity on purpose: this only strips the browser's button chrome, and every rule that
+ * gives a button back a background or a border is a plain class selector. Written as
+ * `.tl-cockpit button` it would out-rank all of them and flatten the send button, the primary
+ * actions and the plus trigger.
+ */
+:where(.tl-cockpit button) {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+:where(.tl-cockpit button:disabled) {
+  cursor: default;
+}
+
+.tl-cockpit :focus-visible {
+  outline: 2px solid var(--focus, var(--button-primary));
+  outline-offset: 2px;
+  border-radius: var(--r-1);
+}
+
+.icon-button {
+  width: 2rem;
+  height: 2rem;
+  display: inline-grid;
+  place-items: center;
+  border-radius: var(--r-1);
+  color: var(--text-secondary);
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.icon-button.tiny {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.icon-button svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon-button.tiny svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.icon-button:hover {
+  background: var(--layer-hover);
+  color: var(--text-primary);
+}
+
+.icon-button.is-on {
+  color: var(--button-primary);
+  background: var(--layer-selected);
+}
+
+.text-button {
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--r-1);
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+}
+
+.text-button:hover {
+  background: var(--layer-hover);
+  color: var(--text-primary);
+}
+
+.text-button.is-danger:hover {
+  color: var(--chat-danger);
+  background: var(--chat-danger-soft);
+}
+
+/* --- Session rail ------------------------------------------------------- */
+
+.rail-scrim {
+  display: none;
+}
+
+.rail {
+  width: var(--chat-sidebar);
+  flex: 0 0 var(--chat-sidebar);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--layer);
+  border-right: 1px solid var(--border-subtle);
+  transition: width 160ms ease, flex-basis 160ms ease;
+}
+
+.rail-header {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.75rem 0.75rem 0.25rem;
+}
+
+.rail-header strong {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--heading-compact-02-font-size, 0.875rem);
+  font-weight: 600;
+}
+
+.rail-close {
+  display: none;
+}
+
+.rail-new {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.25rem 0.75rem 0;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  background: var(--layer-01);
+  color: var(--text-primary);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.rail-new svg {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.rail-new:hover {
+  background: var(--layer-hover);
+}
+
+.rail-search {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0.5rem 0.75rem;
+  padding: 0.375rem 0.5rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  background: var(--layer-01);
+  color: var(--text-secondary);
+}
+
+.rail-search svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex: 0 0 0.875rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.rail-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  outline: none;
+}
+
+.rail-search input::placeholder {
+  color: var(--text-placeholder, var(--text-secondary));
+}
+
+.rail-list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 0 0.5rem 1rem;
+}
+
+.rail-group {
+  margin-top: 0.75rem;
+}
+
+.rail-group h2 {
+  margin: 0 0.5rem 0.25rem;
+  font-size: var(--chat-small);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.rail-item {
+  display: flex;
+  align-items: center;
+  border-radius: var(--r-2);
+}
+
+.rail-item:hover {
+  background: var(--layer-hover);
+}
+
+.rail-item.is-active {
+  background: var(--layer-selected);
+}
+
+.rail-item.is-active .rail-item-mark {
+  background: var(--button-primary);
+}
+
+.rail-open {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4375rem 0.375rem;
+  text-align: left;
+  color: var(--text-primary);
+}
+
+.rail-open span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rail-item-mark {
+  width: 0.1875rem;
+  height: 1rem;
+  border-radius: var(--r-pill);
+  background: transparent;
+  flex: 0 0 auto;
+}
+
+.rail-delete {
+  margin-right: 0.25rem;
+  opacity: 0;
+}
+
+.rail-item:hover .rail-delete,
+.rail-item:focus-within .rail-delete {
+  opacity: 1;
+}
+
+.rail-delete:hover {
+  color: var(--chat-danger);
+  background: var(--chat-danger-soft);
+}
+
+.rail-message {
+  margin: 0.75rem 0.5rem;
+  color: var(--text-secondary);
+}
+
+.rail-message.is-error {
+  color: var(--chat-danger);
+}
+
+.rail-loading {
+  display: flex;
+  gap: 0.375rem;
+  padding: 0.75rem 0.625rem;
+}
+
+.rail-loading span {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  background: var(--text-secondary);
+  animation: chat-pulse 1s ease-in-out infinite;
+}
+
+.rail-loading span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.rail-loading span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.rail.is-collapsed {
+  width: var(--chat-rail-narrow);
+  flex-basis: var(--chat-rail-narrow);
+  overflow: hidden;
+}
+
+.rail.is-collapsed .rail-header strong,
+.rail.is-collapsed .rail-close,
+.rail.is-collapsed .rail-new span,
+.rail.is-collapsed .rail-search,
+.rail.is-collapsed .rail-list {
+  display: none;
+}
+
+.rail.is-collapsed .rail-header {
+  justify-content: center;
+  padding-inline: 0.25rem;
+}
+
+.rail.is-collapsed .rail-new {
+  justify-content: center;
+  margin-inline: 0.5rem;
+  padding-inline: 0;
+}
+
+/* --- Stage -------------------------------------------------------------- */
+
+.stage {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--background);
+}
+
+/*
+ * A chat with nothing in it yet puts its greeting and its composer together in the middle of the
+ * page - the first screen of every new chat, and the one place where a headline in the top third
+ * and an input welded to the bottom edge leaves the window empty between them. The title row stays
+ * where it belongs, at the top, so the rail toggle does not travel with the greeting.
+ */
+.stage.is-empty {
+  display: grid;
+  /*
+   * An explicit, shrinkable column. Without it the single implicit column is auto-sized, which
+   * floors it at the composer's min-content width - so an empty chat beside an open side pane
+   * pushed its own composer out under the pane instead of narrowing with the stage.
+   */
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 1fr auto auto 1.2fr;
+}
+
+.stage.is-empty .thread-shell {
+  position: static;
+  grid-row: 2;
+  min-height: 0;
+}
+
+.stage.is-empty .composer {
+  grid-row: 3;
+}
+
+.stage.is-empty .thread-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+.stage.is-empty .thread {
+  overflow: hidden;
+}
+
+.stage.is-empty .welcome {
+  margin: 0;
+  padding: 0 0 1.75rem;
+}
+
+.thread-shell {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.thread-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0.25rem 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.thread-bar h1 {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: var(--heading-compact-02-font-size, 0.875rem);
+  font-weight: 600;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.thread {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.thread-column {
+  width: min(100%, var(--chat-column));
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.welcome {
+  margin: auto;
+  padding: 4rem 0;
+  text-align: center;
+}
+
+.welcome h2 {
+  margin: 0;
+  font-size: var(--chat-heading);
+  line-height: var(--chat-heading-line);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.welcome p {
+  margin: 0.5rem 0 0;
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+/* --- Turns -------------------------------------------------------------- */
+
+.run-block,
+.agent-run {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.turn-user {
+  display: block;
+}
+
+.bubble-user {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.625rem 0.5rem 0.625rem 0.875rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-3);
+  background: var(--layer-01);
+  line-height: 1.5;
+}
+
+.bubble-user-text {
+  flex: 1;
+  min-width: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding-top: 0.0625rem;
+}
+
+.bubble-user-actions {
+  flex: 0 0 auto;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.bubble-user:hover .bubble-user-actions,
+.bubble-user:focus-within .bubble-user-actions {
+  opacity: 1;
+}
+
+.bubble-user-edited {
+  flex: 0 0 auto;
+  align-self: flex-end;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  font-style: italic;
+}
+
+/* Editing happens in the bubble, so the bubble becomes the field rather than opening one. */
+.bubble-user.is-editing {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  border-color: var(--border-interactive, var(--button-primary));
+}
+
+.bubble-user-edit {
+  width: 100%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: 1.5;
+  resize: none;
+  overflow: hidden;
+}
+
+.bubble-user-edit:focus {
+  outline: none;
+}
+
+.bubble-user-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.run-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  min-height: 1rem;
+}
+
+.run-meta-dot {
+  width: 0.1875rem;
+  height: 0.1875rem;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.6;
+  flex: 0 0 auto;
+}
+
+.run-meta-summary {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.run-meta .is-live {
+  animation: chat-pulse 1.4s ease-in-out infinite;
+}
+
+.turn-agent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.answer {
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  line-height: 1.65;
+}
+
+.answer.is-streaming .md > *:last-child::after {
+  content: "";
+  display: inline-block;
+  width: 0.45em;
+  height: 0.95em;
+  margin-left: 0.1em;
+  background: var(--button-primary);
+  animation: chat-blink 1s steps(1) infinite;
+  vertical-align: text-bottom;
+}
+
+.answer-footer-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.answer-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  margin-left: -0.25rem;
+  opacity: 0.55;
+  transition: opacity 120ms ease;
+}
+
+.turn-agent:hover .answer-footer,
+.answer-footer:focus-within {
+  opacity: 1;
+}
+
+.answer-time {
+  margin-left: 0.375rem;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.feedback-note {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.5rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  background: var(--layer);
+}
+
+.feedback-note input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--chat-small);
+  outline: none;
+}
+
+.feedback-note input::placeholder {
+  color: var(--text-placeholder, var(--text-secondary));
+}
+
+/* --- Delete confirmation in the rail ------------------------------------ */
+
+/*
+ * The question stands on its own line above its answers: on one line with them it was the part
+ * that got the ellipsis, and a confirmation that cannot be read is not one.
+ */
+.rail-item.is-confirming {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.25rem;
+  padding: 0.375rem 0.5rem;
+  border: 1px solid var(--chat-danger);
+  background: var(--chat-danger-soft);
+}
+
+.rail-confirm-text {
+  min-width: 0;
+  font-size: var(--chat-small);
+}
+
+.rail-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.25rem;
+}
+
+/* --- Effort in the trace header ----------------------------------------- */
+
+.trace-effort {
+  flex: 0 0 auto;
+  padding: 0.0625rem 0.375rem;
+  border-radius: var(--r-pill);
+  background: var(--layer-selected);
+  color: var(--text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* --- Markdown ----------------------------------------------------------- */
+
+.md > *:first-child {
+  margin-top: 0;
+}
+
+.md > *:last-child {
+  margin-bottom: 0;
+}
+
+.md p {
+  margin: 0 0 0.85em;
+}
+
+.md h1,
+.md h2,
+.md h3,
+.md h4 {
+  margin: 1.4em 0 0.5em;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.md h1 {
+  font-size: 1.25rem;
+}
+
+.md h2 {
+  font-size: 1.125rem;
+}
+
+.md h3,
+.md h4 {
+  font-size: 1rem;
+}
+
+.md ul,
+.md ol {
+  margin: 0 0 0.85em;
+  padding-left: 1.35em;
+}
+
+.md li {
+  margin: 0.2em 0;
+}
+
+.md li::marker {
+  color: var(--text-secondary);
+}
+
+.md blockquote {
+  margin: 0 0 0.85em;
+  padding: 0.1em 0 0.1em 0.9em;
+  border-left: 2px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+
+.md a {
+  color: var(--chat-link);
+  text-underline-offset: 2px;
+}
+
+.md hr {
+  margin: 1.5em 0;
+  border: 0;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.md table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  margin: 0 0 0.85em;
+  font-size: var(--body-02-font-size, 0.875rem);
+}
+
+.md th,
+.md td {
+  border: 1px solid var(--border-subtle);
+  padding: 0.35rem 0.6rem;
+  text-align: left;
+}
+
+.md th {
+  background: var(--layer);
+  font-weight: 600;
+}
+
+.md :not(pre) > code {
+  font-family: var(--chat-mono);
+  font-size: 0.85em;
+  padding: 0.1em 0.32em;
+  border-radius: var(--r-1);
+  background: var(--layer);
+  color: var(--text-primary);
+}
+
+.md-plain {
+  white-space: pre-wrap;
+  /* `anywhere` breaks inside words, which in German means inside a compound. Only a word too long
+     for the column is broken now, and a reference token never is - it is `nowrap`. */
+  overflow-wrap: break-word;
+}
+
+/* --- Code blocks -------------------------------------------------------- */
+
+.code-block {
+  margin: 0 0 0.85em;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  overflow: hidden;
+  background: var(--layer);
+}
+
+.code-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.25rem 0.375rem 0.25rem 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+}
+
+.code-lang {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.code-copy {
+  padding: 0.1875rem 0.5rem;
+  border-radius: var(--r-1);
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+}
+
+.code-copy:hover {
+  background: var(--layer-hover);
+  color: var(--text-primary);
+}
+
+.code-copy.is-done {
+  color: var(--support-success, #04a38d);
+}
+
+.code-block pre {
+  margin: 0;
+  padding: 0.75rem;
+  overflow-x: auto;
+  background: var(--layer-01);
+}
+
+.code-block code {
+  font-family: var(--chat-mono);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+
+/*
+ * Syntax colours, expressed in theme tokens rather than taken from a highlight.js stylesheet: the
+ * shipped themes are fixed palettes that would look wrong against one of the two app themes.
+ */
+.hljs-comment,
+.hljs-quote {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-section,
+.hljs-doctag,
+.hljs-type,
+.hljs-name,
+.hljs-strong {
+  color: var(--chat-link);
+}
+
+.hljs-string,
+.hljs-regexp,
+.hljs-addition,
+.hljs-attribute,
+.hljs-meta .hljs-string {
+  color: var(--support-success, #04a38d);
+}
+
+.hljs-number,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-link,
+.hljs-meta,
+.hljs-selector-id,
+.hljs-title {
+  color: var(--chat-warn);
+}
+
+.hljs-attr,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-selector-class,
+.hljs-selector-attr,
+.hljs-selector-pseudo {
+  color: var(--text-primary);
+}
+
+.hljs-built_in,
+.hljs-class .hljs-title,
+.hljs-title.class_ {
+  color: var(--chat-link);
+  font-weight: 600;
+}
+
+.hljs-deletion {
+  color: var(--chat-danger);
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+/* --- Trace -------------------------------------------------------------- */
+
+.trace-panel-head,
+.trace-entry-head {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  width: 100%;
+  text-align: left;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+}
+
+.trace-panel-head {
+  font-weight: 600;
+}
+
+.trace-panel-summary,
+.trace-preview {
+  flex: 1;
+  min-width: 0;
+  color: var(--text-secondary);
+  font-weight: 400;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trace-name {
+  font-weight: 500;
+  color: var(--text-primary);
+  font-family: var(--chat-mono);
+}
+
+.trace-meta {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.trace-chevron {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg) translate(-0.1rem, -0.1rem);
+  transition: transform 120ms ease;
+}
+
+.trace-chevron.is-open {
+  transform: rotate(-135deg) translate(-0.15rem, -0.15rem);
+}
+
+.trace-panel-body {
+  margin-top: 0.375rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.trace-entry {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  overflow: hidden;
+  background: var(--layer);
+}
+
+.trace-entry.is-error {
+  border-color: var(--chat-danger);
+}
+
+.trace-entry-head {
+  padding: 0.375rem 0.625rem;
+}
+
+.trace-entry-head:hover {
+  background: var(--layer-hover);
+}
+
+.trace-entry-body {
+  border-top: 1px solid var(--border-subtle);
+  padding: 0.5rem 0.625rem 0.625rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: var(--layer-01);
+}
+
+.trace-block-label {
+  color: var(--text-secondary);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+
+.trace-block pre,
+.trace-block-md {
+  margin: 0;
+  max-height: 14rem;
+  overflow: auto;
+  padding: 0.5rem 0.625rem;
+  border-radius: var(--r-1);
+  background: var(--field, var(--layer));
+  font-family: var(--chat-mono);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.trace-block.is-error .trace-block-label,
+.trace-block.is-error pre {
+  color: var(--chat-danger);
+}
+
+.trace-more {
+  margin-top: 0.25rem;
+  color: var(--chat-link);
+  font-size: 0.6875rem;
+}
+
+.trace-more:hover {
+  text-decoration: underline;
+}
+
+.error-card {
+  color: var(--chat-danger);
+  background: var(--chat-danger-soft);
+  border-left: 2px solid var(--chat-danger);
+  padding: 0.5rem 0.75rem;
+  border-radius: 0 var(--r-1) var(--r-1) 0;
+}
+
+.jump-latest {
+  position: absolute;
+  left: 50%;
+  bottom: 0.75rem;
+  transform: translateX(-50%);
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border-subtle);
+  border-radius: 50%;
+  background: var(--layer-01);
+  box-shadow: var(--chat-shadow);
+  color: var(--text-primary);
+}
+
+.jump-latest svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.jump-latest:hover {
+  background: var(--layer-hover);
+}
+
+/* --- Composer ----------------------------------------------------------- */
+
+.composer {
+  position: relative;
+  width: min(100%, var(--chat-column));
+  margin: 0 auto;
+  padding: 0 1.25rem 0.75rem;
+}
+
+.composer-overlays {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.composer-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.composer-chips:empty {
+  display: none;
+}
+
+.composer-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding: 0.4375rem 0.4375rem 0.4375rem 0.75rem;
+  border: 1px solid var(--border-subtle);
+  border-left: 2px solid var(--chat-warn);
+  border-radius: var(--r-2);
+  background: var(--layer);
+  color: var(--text-primary);
+  font-size: var(--chat-small);
+}
+
+/*
+ * A notice that only says what happened - "Abgebrochen.", "der Chat ist beschäftigt", "N spätere
+ * Antworten entfernt" - keeps the strip but drops the warning accent, so the amber marker is left
+ * to mean that something actually went wrong.
+ */
+.composer-notice.is-neutral {
+  border-left-color: var(--border-subtle);
+}
+
+.composer-notice span {
+  flex: 1;
+  min-width: 0;
+}
+
+.composer-surface {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.375rem 0.5rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-3);
+  background: var(--layer-01);
+  box-shadow: var(--chat-shadow);
+  transition: border-color 120ms ease;
+}
+
+.composer-surface:focus-within {
+  border-color: var(--border-interactive, var(--button-primary));
+}
+
+.composer-surface.is-dropping {
+  border-color: var(--button-primary);
+  background: var(--color-drop-zone, var(--layer-hover));
+}
+
+/* The controls under the text: the "+" menu on the left, model and send on the right. */
+.composer-row {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.composer-row .composer-actions {
+  margin-inline-start: auto;
+}
+
+.composer-surface textarea {
+  flex: 1;
+  min-width: 0;
+  display: block;
+  resize: none;
+  min-height: 2.25rem;
+  max-height: 11.25rem;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  padding: 0.4375rem 0.25rem;
+  outline: none;
+}
+
+/*
+ * One line, cut with an ellipsis: in a narrow column the placeholder otherwise wraps and the second
+ * line is clipped by the textarea's own height, which reads as a broken field.
+ */
+.composer-surface textarea::placeholder {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.composer-surface textarea:focus-visible {
+  /* The surface already shows focus with its border; a second outline inside it reads as an error. */
+  outline: none;
+}
+
+.composer-surface textarea::placeholder {
+  color: var(--text-placeholder, var(--text-secondary));
+}
+
+.composer-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  /* Shrinkable: in a document-mode column the model's name gives way before the send button does. */
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+/* The model's name is the part that gives way in a narrow column; the send button never does. */
+.composer-actions .model-menu {
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+.composer-actions .model-trigger {
+  max-width: 100%;
+  min-width: 2rem;
+}
+
+.composer-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 0.5rem;
+  min-width: 0;
+  padding: 0.4375rem 0.25rem 0;
+}
+
+/*
+ * How to send is worth saying at every width; only how much of it fits changes. The short form is
+ * shown where the long one would push the row into a second line.
+ */
+.composer-hint {
+  margin-left: auto;
+  min-width: 0;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  white-space: nowrap;
+}
+
+.composer-hint-short {
+  display: none;
+}
+
+.attach-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  padding: 0.125rem 0.25rem 0;
+}
+
+.attach-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  max-width: 14rem;
+  padding: 0.1875rem 0.1875rem 0.1875rem 0.4375rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-pill);
+  background: var(--layer);
+  color: var(--text-primary);
+  font-size: var(--chat-small);
+}
+
+.attach-chip svg {
+  width: 0.8125rem;
+  height: 0.8125rem;
+  flex: 0 0 0.8125rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  color: var(--text-secondary);
+}
+
+.attach-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attach-chip button {
+  display: inline-grid;
+  place-items: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 50%;
+  color: var(--text-secondary);
+  flex: 0 0 auto;
+}
+
+.attach-chip button:hover {
+  background: var(--layer-hover);
+  color: var(--text-primary);
+}
+
+.drop-veil {
+  position: absolute;
+  inset: -0.5rem 0.75rem 0.25rem;
+  display: grid;
+  place-items: center;
+  border: 2px dashed var(--button-primary);
+  border-radius: var(--r-3);
+  /* Nearly opaque: the composer sits underneath, and its placeholder must not read through the
+     invitation to drop. */
+  background: color-mix(in srgb, var(--layer-01) 94%, var(--button-primary));
+  color: var(--button-primary);
+  font-weight: 600;
+  pointer-events: none;
+  z-index: 6;
+}
+
+/* --- Chips -------------------------------------------------------------- */
+
+.overlay-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.3125rem 0.625rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-pill);
+  background: var(--layer-01);
+  box-shadow: var(--chat-shadow);
+  color: var(--text-primary);
+  font-size: var(--chat-small);
+  font-weight: 600;
+}
+
+.overlay-chip svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.overlay-chip span {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.overlay-chip:hover {
+  background: var(--layer-hover);
+}
+
+.overlay-chip.is-accent {
+  color: var(--button-primary);
+  border-color: color-mix(in srgb, var(--button-primary) 45%, transparent);
+}
+
+.overlay-chip.is-accent svg {
+  fill: currentColor;
+  stroke: none;
+}
+
+.overlay-chip.is-error {
+  color: var(--chat-danger);
+  border-color: var(--chat-danger);
+}
+
+.overlay-chip.is-muted {
+  color: var(--text-secondary);
+  font-weight: 500;
+  cursor: default;
+}
+
+.chip-spinner {
+  width: 0.75rem;
+  height: 0.75rem;
+  flex: 0 0 0.75rem;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-subtle);
+  border-top-color: var(--button-primary);
+  animation: chat-spin 0.8s linear infinite;
+}
+
+/* --- Prompt cards ------------------------------------------------------- */
+
+.prompt-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.prompt-card {
+  width: 100%;
+  background: var(--layer-01);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-3);
+  box-shadow: var(--chat-shadow);
+  padding: 0.625rem 0.75rem 0.75rem;
+}
+
+.prompt-card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+}
+
+.prompt-card-head strong {
+  flex: 1;
+  min-width: 0;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  font-size: 0.6875rem;
+}
+
+.prompt-countdown {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.prompt-countdown.is-urgent {
+  color: var(--chat-warn);
+}
+
+.prompt-countdown.is-over {
+  color: var(--chat-danger);
+}
+
+.prompt-clock {
+  width: 0.625rem;
+  height: 0.625rem;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  position: relative;
+}
+
+.prompt-clock::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 1px;
+  width: 1.5px;
+  height: 3px;
+  background: currentColor;
+  transform-origin: bottom center;
+  animation: chat-sweep 4s linear infinite;
+}
+
+.prompt-card-title {
+  margin: 0.375rem 0 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.prompt-card-body {
+  margin: 0 0 0.5rem;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.prompt-card-bar {
+  display: block;
+  width: 100%;
+  margin-top: 0.25rem;
+  text-align: left;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prompt-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.prompt-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.4375rem 0.5rem;
+  border-radius: var(--r-2);
+  text-align: left;
+}
+
+.prompt-option:hover {
+  background: var(--layer-hover);
+}
+
+.prompt-option.is-on {
+  background: var(--layer-selected);
+}
+
+.prompt-letter {
+  width: 1.125rem;
+  flex: 0 0 1.125rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.prompt-option em {
+  display: block;
+  font-style: normal;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+}
+
+.prompt-input {
+  width: 100%;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  background: var(--field, var(--layer));
+  color: var(--text-primary);
+  padding: 0.4375rem 0.625rem;
+  font: inherit;
+  outline: none;
+}
+
+.prompt-input:focus-visible {
+  border-color: var(--border-interactive, var(--button-primary));
+}
+
+.prompt-card-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.625rem;
+}
+
+.prompt-continue {
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--r-pill);
+  background: var(--button-primary);
+  color: var(--text-on-color, #fff);
+  font-weight: 600;
+}
+
+.prompt-continue:hover:not(:disabled) {
+  background: var(--button-primary-hover, var(--button-primary));
+}
+
+.prompt-continue:disabled {
+  background: var(--button-disabled);
+  color: var(--text-on-color-disabled, var(--text-disabled));
+}
+
+/* --- Menus -------------------------------------------------------------- */
+
+.plus-menu,
+.model-menu {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.plus-trigger {
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.plus-trigger svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  transition: transform 140ms ease;
+}
+
+.plus-trigger:hover,
+.plus-trigger.is-open {
+  background: var(--layer-hover);
+}
+
+.plus-trigger.is-open svg {
+  transform: rotate(45deg);
+}
+
+.plus-popover,
+.model-popover {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  width: min(23rem, calc(100vw - 2.5rem));
+  max-height: min(24rem, 60vh);
+  overflow: auto;
+  background: var(--layer-01);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-3);
+  box-shadow: var(--chat-shadow);
+  padding: 0.375rem;
+  z-index: 5;
+}
+
+.plus-popover {
+  left: 0;
+}
+
+.model-popover {
+  right: 0;
+  width: min(20rem, calc(100vw - 2.5rem));
+}
+
+.plus-search {
+  display: block;
+  padding: 0.125rem 0.125rem 0.375rem;
+}
+
+.plus-search input {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid var(--border-subtle);
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-primary);
+  padding: 0.375rem 0.375rem 0.5rem;
+  font: inherit;
+  outline: none;
+}
+
+.plus-search input:focus-visible {
+  /* An underline field: the outline of the shared focus rule would box a borderless input. */
+  outline: none;
+  border-bottom-color: var(--border-interactive, var(--button-primary));
+  border-bottom-width: 2px;
+  padding-bottom: calc(0.5rem - 1px);
+}
+
+.plus-search input::placeholder {
+  color: var(--text-placeholder, var(--text-secondary));
+}
+
+.plus-back {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  width: 100%;
+  padding: 0.375rem 0.5rem;
+  border-radius: var(--r-2);
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-align: left;
+}
+
+.plus-back svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.plus-back:hover {
+  background: var(--layer-hover);
+  color: var(--text-primary);
+}
+
+.plus-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.plus-section + .plus-section {
+  margin-top: 0.25rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.plus-heading {
+  padding: 0.5rem 0.5rem 0.25rem;
+  color: var(--text-secondary);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.plus-list + .plus-list {
+  margin-top: 0.25rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.plus-row {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  padding: 0.4375rem 0.5rem;
+  border-radius: var(--r-2);
+  text-align: left;
+}
+
+.plus-row:hover {
+  background: var(--layer-hover);
+}
+
+.plus-row.is-selected {
+  background: var(--layer-selected);
+}
+
+.plus-ico {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: 0 0 1.125rem;
+  display: grid;
+  place-items: center;
+  color: var(--text-secondary);
+}
+
+.plus-ico svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.plus-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.plus-text strong {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * One line, cut off with an ellipsis where it does not fit.
+ *
+ * Deliberately not wrapped: what a row says about an agent is the text its definition carries, shown
+ * as it was written, and a menu whose rows change height with the length of a sentence is harder to
+ * scan than one whose long lines end in an ellipsis. A summary that has to fit is shortened where it
+ * is authored.
+ */
+.plus-text em {
+  font-style: normal;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plus-value {
+  flex: 0 0 auto;
+  max-width: 9rem;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plus-more {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  color: var(--text-secondary);
+}
+
+.plus-more svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.plus-empty {
+  padding: 0.75rem 0.5rem;
+  color: var(--text-secondary);
+}
+
+.model-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1875rem;
+  max-width: 13rem;
+  height: 2rem;
+  padding: 0 0.375rem 0 0.5rem;
+  border-radius: var(--r-2);
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  font-weight: 500;
+}
+
+.model-trigger span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.model-trigger svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex: 0 0 0.875rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.model-trigger:hover,
+.model-trigger.is-open {
+  background: var(--layer-hover);
+  color: var(--text-primary);
+}
+
+/* --- Auto-approve switch ------------------------------------------------ */
+
+.approve-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.approve-switch:hover {
+  color: var(--text-primary);
+}
+
+.approve-switch.is-on {
+  color: var(--text-primary);
+}
+
+.approve-switch-track {
+  position: relative;
+  width: 1.75rem;
+  height: 1rem;
+  border-radius: var(--r-pill);
+  background: var(--border-subtle);
+  flex: 0 0 auto;
+  transition: background-color 120ms ease;
+}
+
+.approve-switch.is-on .approve-switch-track {
+  background: var(--button-primary);
+}
+
+.approve-switch-knob {
+  position: absolute;
+  top: 0.125rem;
+  left: 0.125rem;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  background: var(--layer-01);
+  transition: transform 120ms ease;
+}
+
+.approve-switch.is-on .approve-switch-knob {
+  transform: translateX(0.75rem);
+}
+
+/* --- Context usage ------------------------------------------------------ */
+
+.context-wrap {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.context-gauge {
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--button-primary);
+}
+
+.context-gauge svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.gauge-track,
+.gauge-arc {
+  fill: none;
+  stroke-width: 3;
+}
+
+.gauge-track {
+  stroke: var(--border-subtle);
+}
+
+.gauge-arc {
+  stroke: var(--button-primary);
+  stroke-linecap: round;
+  transition: stroke-dasharray 240ms ease;
+}
+
+.context-gauge.tone-warn .gauge-arc {
+  stroke: var(--chat-warn);
+}
+
+.context-gauge.tone-ember .gauge-arc {
+  stroke: var(--chat-danger);
+}
+
+.context-gauge:hover,
+.context-gauge.is-open {
+  background: var(--layer-hover);
+}
+
+.context-popover {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 0.5rem);
+  width: min(23rem, calc(100vw - 2.5rem));
+  background: var(--layer-01);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-3);
+  box-shadow: var(--chat-shadow);
+  padding: 0.75rem 0.875rem 0.625rem;
+  z-index: 5;
+}
+
+.context-popover-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.context-popover-head strong {
+  font-size: 0.9375rem;
+}
+
+.context-popover-head span {
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.context-popover-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0.375rem 0 0.375rem;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+}
+
+.context-model {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--chat-mono);
+}
+
+.context-bar {
+  display: flex;
+  height: 0.375rem;
+  border-radius: var(--r-pill);
+  background: var(--border-subtle);
+  overflow: hidden;
+}
+
+.context-bar i {
+  display: block;
+  height: 100%;
+  /* A share that rounds to nothing still shows its colour, so the legend can be read against it. */
+  min-width: 3px;
+}
+
+.slice-system {
+  background: var(--text-secondary);
+}
+
+.slice-tools {
+  background: var(--chat-warn);
+}
+
+.slice-conversation {
+  background: var(--button-primary);
+}
+
+/* Part of the conversation, so a lighter shade of the same colour rather than a fourth hue. */
+.slice-toolResults {
+  background: color-mix(in srgb, var(--button-primary) 55%, transparent);
+}
+
+.context-rows {
+  margin: 0.625rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3125rem;
+}
+
+.context-rows div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  font-size: var(--chat-small);
+}
+
+.context-rows dt {
+  display: flex;
+  align-items: center;
+  gap: 0.4375rem;
+  min-width: 0;
+  color: var(--text-primary);
+}
+
+.context-rows dt em {
+  font-style: normal;
+  color: var(--text-secondary);
+}
+
+.context-key {
+  width: 0.5rem;
+  height: 0.5rem;
+  flex: 0 0 0.5rem;
+  border-radius: 2px;
+}
+
+.context-rows dd {
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+.context-aside {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.context-note {
+  margin: 0.5rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.6875rem;
+  line-height: 1.4;
+}
+
+/* --- Send button -------------------------------------------------------- */
+
+.send-button {
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 2rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--button-primary);
+  color: var(--text-on-color, #fff);
+  transition: background-color 120ms ease;
+}
+
+.send-button:hover:not(:disabled) {
+  background: var(--button-primary-hover, var(--button-primary));
+}
+
+.send-button:disabled {
+  background: var(--button-disabled);
+  color: var(--text-on-color-disabled, var(--text-disabled));
+}
+
+.send-arrow {
+  width: 1.125rem;
+  height: 1.125rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.send-stop {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 2px;
+  background: currentColor;
+}
+
+/* --- Subagent activity -------------------------------------------------- */
+
+.subagent-activity {
+  position: relative;
+}
+
+.working-chip .status-spinner,
+.activity-status {
+  width: 0.5rem;
+  height: 0.5rem;
+  flex: 0 0 0.5rem;
+  border-radius: 50%;
+  background: var(--text-secondary);
+}
+
+.working-chip .status-spinner.is-active,
+.activity-status.is-active {
+  background: var(--button-primary);
+  animation: chat-pulse 1.2s ease-in-out infinite;
+}
+
+.activity-panel {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 0.5rem);
+  width: min(24rem, calc(100vw - 2.5rem));
+  max-height: min(20rem, 50vh);
+  overflow: auto;
+  background: var(--layer-01);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-3);
+  box-shadow: var(--chat-shadow);
+  z-index: 5;
+}
+
+.activity-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.5rem 0.25rem 0.75rem;
+}
+
+.activity-header div {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  padding: 0.25rem 0.375rem 0.5rem;
+}
+
+.activity-item {
+  padding: 0.3125rem 0.25rem;
+  border-radius: var(--r-2);
+}
+
+.activity-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.activity-status {
+  margin-top: 0.4375rem;
+}
+
+.activity-disclosure {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.activity-disclosure strong,
+.activity-disclosure span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activity-disclosure span {
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+}
+
+.activity-detail {
+  margin: 0.375rem 0 0 1rem;
+  color: var(--text-secondary);
+}
+
+.activity-detail p {
+  margin: 0 0 0.375rem;
+}
+
+.activity-transcript {
+  margin-top: 0.375rem;
+  padding: 0.4375rem;
+  background: var(--layer);
+  border-radius: var(--r-2);
+  font-size: var(--chat-small);
+}
+
+.activity-transcript p {
+  margin: 0 0 0.25rem;
+}
+
+.activity-error {
+  margin: 0 0.75rem 0.5rem;
+  color: var(--chat-danger);
+}
+
+.activity-item.status-failed .activity-status,
+.activity-item.status-cancelled .activity-status {
+  background: var(--chat-danger);
+}
+
+.activity-item.status-done .activity-status {
+  background: var(--support-success, #04a38d);
+}
+
+/* --- Responsive --------------------------------------------------------- */
+
+@media (max-width: 1080px) {
+  .thread-column,
+  .composer {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+@media (max-width: 1100px) {
+  .rail-scrim {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    border: 0;
+    background: color-mix(in srgb, var(--background-inverse, #000) 35%, transparent);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 160ms ease;
+  }
+
+  .rail-scrim.is-open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .rail {
+    position: absolute;
+    inset: 0 auto 0 0;
+    z-index: 21;
+    width: min(20rem, 88vw);
+    flex-basis: auto;
+    transform: translateX(-105%);
+    transition: transform 180ms ease;
+    box-shadow: var(--chat-shadow);
+  }
+
+  .rail.is-open {
+    transform: none;
+  }
+
+  .rail.is-collapsed {
+    width: min(20rem, 88vw);
+    flex-basis: auto;
+    overflow: visible;
+  }
+
+  .rail.is-collapsed .rail-header strong,
+  .rail.is-collapsed .rail-new span,
+  .rail.is-collapsed .rail-search,
+  .rail.is-collapsed .rail-list {
+    display: revert;
+  }
+
+  .rail.is-collapsed .rail-list {
+    display: block;
+  }
+
+  .rail.is-collapsed .rail-header,
+  .rail.is-collapsed .rail-new {
+    justify-content: flex-start;
+    padding-inline: 0.75rem;
+  }
+
+  .rail-close {
+    display: inline-grid;
+  }
+
+  .rail-collapse {
+    display: none;
+  }
+
+  .composer-hint-long {
+    display: none;
+  }
+
+  .composer-hint-short {
+    display: inline;
+  }
+
+  .plus-popover,
+  .model-popover,
+  .context-popover,
+  .activity-panel {
+    position: fixed;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    width: auto;
+    max-height: 70vh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tl-cockpit *,
+  .tl-cockpit *::before,
+  .tl-cockpit *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@keyframes chat-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes chat-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes chat-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes chat-sweep {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- Right rail / side pane (Issue #401) -------------------------------- */
+
+/*
+ * Grid, not flex: the thread and the pane are columns of one track list, so opening the pane
+ * NARROWS the thread instead of being laid over it. `minmax(0, 1fr)` is what lets the thread column
+ * give way - a plain `1fr` refuses to shrink below its content's minimum, which is how the composer
+ * ended up under the icon strip with its send button and Enter hint covered.
+ */
+.workspace {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  position: relative;
+  overflow: hidden;
+}
+
+.workspace .stage {
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Never wider than its column, whatever the column has shrunk to. */
+.workspace .composer {
+  max-width: 100%;
+}
+
+.thread-bar-end {
+  margin-inline-start: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.thread-bar-caption {
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  max-width: 16rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.side-toggle {
+  position: relative;
+}
+
+/*
+ * A badge, not a second label: absolutely positioned over the toggle's top-right corner, so it
+ * cannot grow the button or spill across the header's bottom border.
+ */
+.side-toggle-badge {
+  position: absolute;
+  top: -0.2rem;
+  inset-inline-end: -0.2rem;
+  pointer-events: none;
+  min-width: 1.05rem;
+  height: 1.05rem;
+  padding: 0 0.22rem;
+  border-radius: var(--r-pill);
+  background: var(--button-primary);
+  color: var(--text-on-color, #fff);
+  font-size: 0.625rem;
+  line-height: 1;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.side-column {
+  grid-column: 3;
+  width: 18.75rem;
+  min-width: 18.75rem;
+  border-inline-start: 1px solid var(--border-subtle);
+  background: var(--layer);
+  overflow: auto;
+}
+
+.side-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+}
+
+.side-section {
+  border-radius: var(--r-1);
+  overflow: hidden;
+}
+
+.side-section.is-framework {
+  border: 1px dashed var(--border-subtle);
+}
+
+.side-section.is-accent {
+  border: 1px solid var(--button-primary);
+  background: color-mix(in srgb, var(--button-primary) 10%, var(--layer));
+}
+
+.side-section-head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: start;
+}
+
+.side-caret {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-inline-end: 2px solid var(--text-secondary);
+  border-bottom: 2px solid var(--text-secondary);
+  transform: rotate(-45deg);
+}
+
+.side-caret.is-open {
+  transform: rotate(45deg);
+}
+
+.side-section-title {
+  font-weight: 600;
+}
+
+.side-section-badge {
+  font-size: var(--chat-small);
+  color: var(--text-secondary);
+}
+
+.side-section-by {
+  margin-inline-start: auto;
+  font-size: var(--chat-small);
+  color: var(--text-secondary);
+}
+
+.side-section-body {
+  padding: 0 0.6rem 0.6rem;
+}
+
+.side-empty {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+}
+
+.progress-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.progress-step {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+}
+
+.progress-step.is-done .progress-label {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+}
+
+.progress-marker {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+}
+
+.progress-marker svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+}
+
+.progress-step.is-running .progress-marker svg circle:last-child {
+  fill: var(--button-primary);
+  stroke: none;
+}
+
+.progress-step.is-approval .progress-marker {
+  color: var(--chat-warn);
+}
+
+.progress-step.is-approval .progress-label {
+  font-weight: 600;
+}
+
+.progress-step.is-approval .progress-caption {
+  color: var(--chat-warn);
+  white-space: nowrap;
+}
+
+.progress-caption {
+  margin-inline-start: auto;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+}
+
+.context-list {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.15rem 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.context-row {
+  display: contents;
+}
+
+.context-list dt {
+  color: var(--text-secondary);
+}
+
+.context-list dd {
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.side-strip {
+  grid-column: 2;
+  width: 3.5rem;
+  min-width: 3.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.5rem;
+  border-inline-start: 1px solid var(--border-subtle);
+  background: var(--layer);
+}
+
+.side-strip-item {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-1);
+  background: var(--background);
+  color: inherit;
+  cursor: pointer;
+}
+
+.side-strip-item {
+  display: inline-grid;
+  place-items: center;
+}
+
+.side-strip-item svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.side-strip-item.is-active {
+  border-color: var(--button-primary);
+  background: color-mix(in srgb, var(--button-primary) 12%, var(--background));
+  color: var(--button-primary);
+}
+
+.side-pane {
+  position: relative;
+  grid-column: 3;
+  display: flex;
+  flex-direction: column;
+  min-width: 360px;
+  min-height: 0;
+  border-inline-start: 1px solid var(--border-subtle);
+  background: var(--layer);
+}
+
+.side-splitter {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: -3px;
+  width: 6px;
+  cursor: col-resize;
+  z-index: 2;
+}
+
+.side-splitter:focus-visible {
+  background: var(--button-primary);
+  outline: none;
+}
+
+.side-pane-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0.25rem 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.side-back {
+  border: 0;
+  background: transparent;
+  color: var(--button-primary);
+  cursor: pointer;
+  font: inherit;
+}
+
+.side-pane-title {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 6rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.side-pane-tabs {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.side-pane-tab {
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--chat-small);
+  padding: 0.2rem 0.4rem;
+}
+
+.side-pane-tab.is-active {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.side-pane-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 0.75rem;
+}
+
+.composer-host-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0.5rem 0.75rem 0;
+}
+
+.chip-remove {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  padding: 0 0.15rem;
+}
+
+/*
+ * A citation marker: a small grey number after the sentence. Not a chip - it says where the fact
+ * comes from without taking the eye off the text that carries it.
+ */
+.cite-marker {
+  display: inline;
+  /* The space in front of the marker, which the tokenizer removed so it cannot become a line break. */
+  margin-inline-start: 0.2rem;
+  padding: 0 0.1rem;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.72em;
+  line-height: 1;
+  vertical-align: super;
+  cursor: pointer;
+}
+
+.cite-marker:hover,
+.cite-marker:focus-visible {
+  color: var(--chat-link);
+  text-decoration: underline;
+}
+
+/*
+ * Anchored under the chip that was clicked rather than parked at the end of the answer, which in a
+ * long answer is off screen.
+ */
+.cite-anchor {
+  position: absolute;
+  z-index: 3;
+  max-width: 100%;
+}
+
+.cite-popover {
+  margin-top: 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-1);
+  background: var(--layer);
+  box-shadow: var(--chat-shadow);
+  width: max-content;
+  max-width: min(22rem, 100%);
+}
+
+.md-wrap {
+  position: relative;
+}
+
+/*
+ * In a document-mode column the footer has about 210 px. The switch keeps its place and its meaning
+ * - it stays a labelled control for a screen reader and carries a tooltip - but gives up its
+ * written label, so that it and the Enter hint stay on the one line the reader expects them on.
+ */
+.tl-cockpit.has-document .approve-switch-label {
+  display: none;
+}
+
+/*
+ * The composer's Enter hint is switched to its short form by a viewport media query. That reads the
+ * wrong width once the pane has taken a column of the stage: the window is still wide while the
+ * composer is not. The pane's own state therefore switches it too.
+ */
+.tl-cockpit.has-pane .composer-hint-long {
+  display: none;
+}
+
+.tl-cockpit.has-pane .composer-hint-short {
+  display: inline;
+}
+
+/* Below 1280, not at it: 1280 itself still fits a column beside the thread. */
+@media (max-width: 1279.98px) {
+  /*
+   * A sheet spans the whole grid, not its own column.
+   *
+   * An absolutely positioned grid item with a definite grid position takes that *track* as its
+   * containing block. The pane's column holds nothing else once the pane is out of flow, so the
+   * track was 0 px wide, `min(100%, 28rem)` resolved to 0, and the artefact the user clicked was a
+   * 1 px sliver. Spanning every column gives the sheet the workspace as its containing block again.
+   */
+  /*
+   * A sheet covers the thread and stops at the composer: the model picker, the send button and the
+   * Enter hint stay where they are and stay usable while an artefact is open.
+   */
+  .side-column,
+  .side-pane.is-sheet {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    position: absolute;
+    inset: 0 0 var(--composer-height, 0px) auto;
+    z-index: 4;
+    width: min(100%, 28rem);
+    box-shadow: var(--chat-shadow);
+  }
+
+  .side-pane.is-sheet,
+  .side-column {
+    min-width: 0;
+  }
+
+  .side-strip {
+    display: none;
+  }
+
+  /*
+   * An empty chat centres its greeting and its composer in the page. With a sheet open that puts
+   * the composer in the middle of what the sheet covers, so for as long as one is open the stage
+   * falls back to the ordinary layout and the composer sits at the bottom, below the sheet's edge.
+   */
+  .tl-cockpit.has-side .stage.is-empty {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+
+  .tl-cockpit.has-side .stage.is-empty .thread-shell {
+    flex: 1;
+  }
+
+  /* What a sheet covers is dimmed and clickable: that is how it says it is an overlay. */
+  .side-scrim {
+    position: absolute;
+    inset: 0 0 var(--composer-height, 0px) 0;
+    z-index: 3;
+    background: color-mix(in srgb, var(--text-primary) 28%, transparent);
+  }
+}
+
+/* Above the breakpoint the side is a column, so there is nothing to dim. */
+.side-scrim {
+  display: none;
+}
+
+@media (max-width: 1279.98px) {
+  .side-scrim {
+    display: block;
+  }
+}
+
+/* --- Composer: inline reference tokens (Issue #407) ---------------------- */
+
+/*
+ * The field is a contenteditable rather than a textarea, because a reference has to sit *in* the
+ * sentence. Everything below keeps it looking and behaving like the textarea it replaced.
+ */
+.composer-input {
+  position: relative;
+  min-width: 0;
+}
+
+.token-input {
+  display: block;
+  min-height: 2.25rem;
+  max-height: 11.25rem;
+  overflow-y: auto;
+  padding: 0.4375rem 0.25rem;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  outline: none;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* The surface already shows the focus with its border; a second ring inside it reads as an error. */
+.token-input:focus,
+.token-input:focus-visible {
+  outline: none;
+}
+
+.token-input.is-empty::before {
+  content: attr(data-placeholder);
+  display: block;
+  color: var(--text-placeholder, var(--text-secondary));
+  pointer-events: none;
+  /* One line: in a narrow column the invitation may be cut, but it must not grow the field. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/*
+ * One atomic thing: the caret steps over it, Backspace takes it whole, and it reads as a single
+ * name. Quiet enough to sit inside a sentence without becoming the sentence.
+ */
+.ref-token {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  margin-inline-end: 0.1rem;
+  padding: 0.05rem 0.3rem;
+  border-radius: var(--r-1);
+  background: color-mix(in srgb, var(--button-primary) 10%, transparent);
+  color: var(--chat-link);
+  font-size: 0.9em;
+  white-space: nowrap;
+  vertical-align: baseline;
+  user-select: none;
+}
+
+.ref-token.is-static {
+  user-select: text;
+}
+
+.ref-token-icon {
+  width: 0.8em;
+  height: 0.8em;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.3;
+  stroke-linejoin: round;
+  align-self: center;
+}
+
+.ref-token-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 18rem;
+}
+
+.ref-token-location {
+  color: var(--text-secondary);
+  font-size: 0.85em;
+}
+
+.bubble-user-edit.token-input {
+  width: 100%;
+  max-height: none;
+}
+
+/* The "@" picker: what the host offers, under the caret's line. */
+.mention-popover {
+  position: absolute;
+  inset-inline-start: 0;
+  bottom: calc(100% + 0.35rem);
+  z-index: 5;
+  /* Wide enough to read a source's name in, whatever the composer's column has shrunk to. */
+  width: max-content;
+  min-width: min(18rem, 90vw);
+  max-width: min(26rem, 90vw);
+  max-height: 14rem;
+  overflow: auto;
+  padding: 0.25rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  background: var(--layer-01);
+  box-shadow: var(--chat-shadow);
+}
+
+.mention-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  border: 0;
+  border-radius: var(--r-1);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: start;
+}
+
+.mention-row.is-active {
+  background: var(--layer-hover, color-mix(in srgb, var(--button-primary) 10%, transparent));
+}
+
+.mention-icon svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.3;
+  display: block;
+  color: var(--text-secondary);
+}
+
+.mention-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mention-hint {
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  white-space: nowrap;
+}
+
+/* --- Citation presentation: popover, sources, run summary (Issue #408) --- */
+
+.cite-popover-title {
+  margin: 0;
+  font-weight: 600;
+}
+
+.cite-popover-origin {
+  margin: 0.1rem 0 0;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+}
+
+/* The window of the source the fact was read in, with the cited sentence marked inside it. */
+.cite-popover-excerpt {
+  margin: 0.45rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  max-height: 6.5rem;
+  overflow: hidden;
+}
+
+.cite-passage {
+  background: color-mix(in srgb, var(--button-primary) 16%, transparent);
+  color: var(--text-primary);
+  border-radius: 2px;
+  padding: 0 0.1rem;
+}
+
+.cite-popover-open {
+  margin-top: 0.5rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--chat-link);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8125rem;
+}
+
+/* The collapsed pill under an answer: how much of it rests on sources. */
+.answer-sources {
+  margin: 0.5rem 0 0.25rem;
+}
+
+.answer-sources-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  background: var(--layer);
+  color: var(--text-primary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8125rem;
+}
+
+.answer-sources-caret,
+.run-summary-caret {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-inline-end: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  opacity: 0.7;
+}
+
+.answer-sources-caret.is-open,
+.run-summary-caret.is-open {
+  transform: rotate(45deg);
+}
+
+.sources {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.sources-tabs {
+  display: flex;
+  gap: 0.15rem;
+  padding: 0.15rem;
+  border-radius: var(--r-1);
+  background: var(--layer-hover, color-mix(in srgb, var(--text-primary) 5%, transparent));
+}
+
+.sources-tab {
+  flex: 1;
+  padding: 0.25rem 0.5rem;
+  border: 0;
+  border-radius: calc(var(--r-1) - 1px);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--chat-small);
+}
+
+.sources-tab.is-active {
+  background: var(--layer-01, var(--background));
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.sources-filter {
+  width: 100%;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-1);
+  background: var(--background);
+  color: inherit;
+  font: inherit;
+  font-size: var(--chat-small);
+}
+
+.sources-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.source-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.source-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  width: 100%;
+  padding: 0.25rem 0.3rem;
+  border: 0;
+  border-radius: var(--r-1);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: start;
+}
+
+.source-head:hover,
+.source-head:focus-visible {
+  background: var(--layer-hover, color-mix(in srgb, var(--button-primary) 8%, transparent));
+}
+
+.source-icon svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  display: block;
+  margin-top: 0.1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.3;
+  stroke-linejoin: round;
+  color: var(--text-secondary);
+}
+
+.source-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.source-label {
+  font-size: 0.8125rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.source-origin {
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The markers that point at this source; clicking one goes to the answer it stands in. */
+.source-markers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem;
+  padding-inline-start: 1.4rem;
+}
+
+.source-marker {
+  min-width: 1.1rem;
+  padding: 0 0.2rem;
+  border: 0;
+  border-radius: var(--r-1);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.6875rem;
+}
+
+.source-marker:hover,
+.source-marker:focus-visible {
+  background: color-mix(in srgb, var(--button-primary) 14%, transparent);
+  color: var(--chat-link);
+}
+
+/* The answer a marker pointed at, briefly marked so the eye finds it after the scroll. */
+.turn-agent.is-pointed {
+  animation: pointed 1.6s ease-out;
+  border-radius: var(--r-2);
+}
+
+@keyframes pointed {
+  from {
+    background: color-mix(in srgb, var(--button-primary) 14%, transparent);
+  }
+  to {
+    background: transparent;
+  }
+}
+
+/* The run's activity, collapsed to one quiet line above the answer. */
+.run-summary {
+  margin-bottom: 0.25rem;
+}
+
+.run-summary-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--chat-small);
+}
+
+.run-summary-head:hover {
+  color: var(--text-primary);
+}
+
+.run-summary-body {
+  margin-top: 0.35rem;
+  padding-inline-start: 0.5rem;
+  border-inline-start: 1px solid var(--border-subtle);
+}
+
+/* --- Side pane: document mode (Issue #408) ------------------------------ */
+
+/* The name is the half worth reading; when the header is tight the metadata gives way first. */
+.side-pane-version {
+  min-width: 0;
+  flex: 0 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  white-space: nowrap;
+}
+
+.side-pane-actions {
+  display: flex;
+  gap: 0.25rem;
+  margin-inline-start: auto;
+}
+
+.side-pane-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-1);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--chat-small);
+}
+
+.side-pane-action svg {
+  width: 0.9rem;
+  height: 0.9rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+}
+
+.side-pane-close {
+  display: inline-grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  flex: none;
+  border: 0;
+  border-radius: var(--r-1);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.side-pane-close svg {
+  width: 0.85rem;
+  height: 0.85rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+
+.side-pane-close:hover {
+  color: var(--text-primary);
+}
+
+/* A document is read, not skimmed: its own body gets the room, the header stays one slim row. */
+.side-pane.is-document .side-pane-body {
+  padding: 1rem 1.25rem;
+}
+
+.side-pane-bar.is-document {
+  min-height: 2.5rem;
+}
+
+/* The title row of a document names it; the session chip beside "Albert" would only crowd it. */
+.tl-cockpit.has-document .thread-bar-caption {
+  display: none;
+}

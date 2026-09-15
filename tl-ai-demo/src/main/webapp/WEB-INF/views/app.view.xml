@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Root view of the tl-ai demo, served under /view/ and resolved through ViewConfig#getDefaultView.
+
+	The shell holds everything the legacy tab bar (WEB-INF/layouts/mainTabbar.layout.xml) offers -
+	the invoices and the framework's administration - plus the agent chat, which is what the demo is
+	about and therefore the start item. The classic LayoutServlet UI keeps working unchanged; this is
+	a second front end onto the same model, not a replacement.
+
+	Everything except the chat is built from the standard view elements, so the demo shows what an
+	application gets for free rather than what this module wrote itself.
+-->
+<view>
+	<channels>
+		<!-- Feeds the app bar; read-only, recomputed per session. -->
+		<derived-channel name="currentPerson"
+			expr="currentUser()"
+		/>
+	</channels>
+
+	<app-shell>
+		<header>
+			<app-bar variant="flat">
+				<title>
+					<en>Albert</en>
+					<de>Albert</de>
+				</title>
+				<children>
+					<text
+						css-class="tlAppBarUser"
+						input="currentPerson"
+						overflow="ellipsis"
+					/>
+				</children>
+				<commands>
+					<!--
+						Two commands, one visible button: a ViewCommand's theme id is static
+						configuration, not a runtime read of the current theme, so each theme needs
+						its own command. The demo's stylesheet (style/tl-ai-demo-shell.css) hides
+						whichever of the two would set the theme already in force - keyed on the
+						icons below - so what the user sees is a single toggle onto the other theme.
+						SetThemeCommand persists the pick as the user's PersonalConfiguration and
+						flips the client's data-theme attribute without a reload; the chat's
+						stylesheet is written entirely in the design tokens those themes define, so
+						it follows along.
+					-->
+					<set-theme theme="default"
+						image="css:bi bi-sun"
+						placement="TOOLBAR"
+					>
+						<label>
+							<en>Light theme</en>
+							<de>Helles Design</de>
+						</label>
+					</set-theme>
+					<set-theme theme="dark"
+						image="css:bi bi-moon-stars"
+						placement="TOOLBAR"
+					>
+						<label>
+							<en>Dark theme</en>
+							<de>Dunkles Design</de>
+						</label>
+					</set-theme>
+					<generic-command
+						image="css:bi bi-box-arrow-in-right"
+						placement="TOOLBAR"
+					>
+						<label>
+							<en>Login</en>
+							<de>Anmeldung</de>
+						</label>
+						<executability>
+							<anonymous-only/>
+						</executability>
+						<execute-script function="x -> new(`tl.login:Credentials`, transient: true)"/>
+						<open-dialog
+							bind-input-to="model"
+							close-on-backdrop="false"
+							dialog-view="login.view.xml"
+						/>
+					</generic-command>
+					<logout-command
+						image="css:bi bi-box-arrow-right"
+						placement="TOOLBAR"
+					>
+						<label>
+							<en>Logout</en>
+							<de>Abmeldung</de>
+						</label>
+						<executability>
+							<authenticated-only/>
+						</executability>
+					</logout-command>
+				</commands>
+			</app-bar>
+		</header>
+		<content>
+			<sidebar active-item="chat">
+				<!--
+					The chat first and active on entry: this application exists to demonstrate the
+					agent, and the invoices are the data it works on rather than the point.
+				-->
+				<nav-item id="chat"
+					icon="css:bi bi-chat-dots"
+				>
+					<label>
+						<en>Chat</en>
+						<de>Chat</de>
+					</label>
+					<agent-chat
+						prompt-improver-agent="TL_PromptImprover"
+						trace-mode="overview"
+					/>
+				</nav-item>
+
+				<nav-item id="chat-seams"
+					icon="css:bi bi-layout-sidebar-reverse"
+				>
+					<label>
+						<en>Chat with invoices</en>
+						<de>Chat mit Rechnungen</de>
+					</label>
+					<!--
+						The demo's own element, not <agent-chat react-element="…"/>: the composition
+						needs data the framework does not have (this application's invoices), and
+						the Java side of the seam is where a host adds it.
+					-->
+					<demo-agent-chat
+						prompt-improver-agent="TL_PromptImprover"
+						trace-mode="overview"
+					/>
+				</nav-item>
+
+				<nav-item id="invoices"
+					icon="css:bi bi-receipt"
+				>
+					<label>
+						<en>Invoices</en>
+						<de>Belege</de>
+					</label>
+					<view-ref view="tl-ai-demo/invoices.view.xml"/>
+				</nav-item>
+
+				<!--
+					Administration is the framework's own view (WEB-INF/views/admin/admin.view.xml),
+					extended by depending modules through overlay merge. The scope is declared by
+					tl-layout-view, so with no roles assigned the entry is visible to root only.
+				-->
+				<nav-item id="administration"
+					icon="css:bi bi-sliders"
+				>
+					<label>
+						<en>Administration</en>
+						<de>Administration</de>
+					</label>
+					<access-control scope="administration"/>
+					<view-ref view="admin/admin.view.xml"/>
+				</nav-item>
+			</sidebar>
+		</content>
+	</app-shell>
+</view>

@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Invoices: the list on the left, the selected invoice on the right.
+
+	The same content the legacy tab shows (WEB-INF/layouts/tl-ai-demo/invoices/*.layout.xml), built
+	from the standard view elements instead of layout templates - a table bound straight to
+	tl.ai.demo.imageclassification:Invoice and a form on the table's selection.
+
+	"New invoice" is what the demo is about: the dialog collects nothing but the scan, and the create
+	handler has the model read the description, the date and the amount out of the image. The prompt
+	and the schema are the legacy create dialog's
+	(WEB-INF/layouts/tl-ai-demo/invoices/createObject/dialog.layout.xml), so both front ends classify
+	the same way - but this one also copes with the two answers that script does not: a JSON reply
+	inside a markdown fence, and the values wrapped in the schema's own "properties" key.
+-->
+<view>
+	<channels>
+		<channel name="selectedInvoice"/>
+	</channels>
+
+	<split-panel orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane min-size="320"
+				size="55"
+				unit="%"
+			>
+				<panel fill="true">
+					<title>
+						<en>Invoices</en>
+						<de>Belege</de>
+					</title>
+					<commands>
+						<generic-command
+							image="css:bi bi-plus-lg"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>New invoice</en>
+								<de>Neuer Beleg</de>
+							</label>
+							<!--
+								A transient object, copied in by the dialog: an abandoned dialog
+								leaves nothing behind.
+							-->
+							<execute-script function="x -> new(`tl.ai.demo.imageclassification:Invoice`, transient: true)"/>
+							<open-dialog close-on-backdrop="false"
+								bind-input-to="model"
+								dialog-view="tl-ai-demo/create-invoice.view.xml"
+							>
+								<bind channel="selection"
+									to="selectedInvoice"
+								/>
+							</open-dialog>
+						</generic-command>
+						<generic-command
+							clique="more"
+							image="css:bi bi-trash"
+							input="selectedInvoice"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Delete invoice</en>
+								<de>Beleg löschen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<confirm>
+								<confirm-label>
+									<en>Delete</en>
+									<de>Löschen</de>
+								</confirm-label>
+								<cancel-label>
+									<en>Cancel</en>
+									<de>Abbrechen</de>
+								</cancel-label>
+								<expr>obj -> {
+									"en": "Delete this invoice?",
+									"de": "Diesen Beleg löschen?"
+								}.internationalize()</expr>
+							</confirm>
+							<with-transaction>
+								<execute-script function="obj -> $obj.delete()"/>
+							</with-transaction>
+							<write-channel name="selectedInvoice"/>
+						</generic-command>
+					</commands>
+					<table
+						observed-types="tl.ai.demo.imageclassification:Invoice"
+						selection="selectedInvoice"
+						types="tl.ai.demo.imageclassification:Invoice"
+					>
+						<columns>
+							<column attribute="date"
+								sort="DESC"
+							/>
+							<column attribute="description"/>
+							<!--
+								The formatted amount rather than the raw number: see the model's
+								`amountLabel`. The form beside the table edits `amount` itself.
+							-->
+							<column attribute="amountLabel"/>
+						</columns>
+						<rows>all(`tl.ai.demo.imageclassification:Invoice`)</rows>
+					</table>
+				</panel>
+			</pane>
+			<pane size="45"
+				unit="%"
+			>
+				<panel fill="true">
+					<title>
+						<en>Invoice</en>
+						<de>Beleg</de>
+					</title>
+					<form input="selectedInvoice">
+						<field attribute="date"/>
+						<field attribute="description"/>
+						<field attribute="amount"/>
+						<field attribute="data"/>
+					</form>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

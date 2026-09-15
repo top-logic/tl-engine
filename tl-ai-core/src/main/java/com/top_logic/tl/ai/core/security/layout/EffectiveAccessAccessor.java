@@ -46,16 +46,21 @@ public class EffectiveAccessAccessor extends ReadOnlyAccessor<Object> {
 			case SUBJECT:
 				return subject(accessRow);
 			case VERDICT:
-				return ToolAccessLabels
-					.verdict(ToolAccessVerdict.of(accessRow.explanation().allowed()));
+				// A section is a heading over rows that each carry their own verdict; one word for
+				// "one of six" would be wrong whichever word it was.
+				return accessRow instanceof EffectiveAccessRow.RunSection ? null
+					: ToolAccessLabels.verdict(ToolAccessVerdict.of(accessRow.allowed()));
 			case RISK:
 				return accessRow instanceof EffectiveAccessRow.Capability capability
 					? ToolAccessLabels.risk(capability.group()) : null;
 			case TOOL_COUNT:
-				return accessRow instanceof EffectiveAccessRow.Capability capability
-					? Integer.valueOf(capability.toolCount()) : null;
+				if (accessRow instanceof EffectiveAccessRow.Capability capability) {
+					return Integer.valueOf(capability.toolCount());
+				}
+				return accessRow instanceof EffectiveAccessRow.RunSection section
+					? Integer.valueOf(section.totalCount()) : null;
 			case PROVENANCE:
-				return provenance(accessRow);
+				return accessRow.provenance();
 			default:
 				return null;
 		}
@@ -65,19 +70,13 @@ public class EffectiveAccessAccessor extends ReadOnlyAccessor<Object> {
 		if (row instanceof EffectiveAccessRow.Capability capability) {
 			return ToolAccessLabels.groupLabel(capability.group());
 		}
-		return ((EffectiveAccessRow.ToolRow) row).qualifiedName();
-	}
-
-	/**
-	 * The provenance sentence, plus the note the {@code script} group carries wherever it appears.
-	 */
-	private static String provenance(EffectiveAccessRow row) {
-		String sentence = ToolAccessLabels.sentence(row.explanation());
-		if (row instanceof EffectiveAccessRow.Capability capability
-			&& capability.scriptCommitNote() != null) {
-			return sentence + " · " + capability.scriptCommitNote();
+		if (row instanceof EffectiveAccessRow.RunSection section) {
+			return ToolAccessLabels.dimensionLabel(section.dimension());
 		}
-		return sentence;
+		if (row instanceof EffectiveAccessRow.RunName name) {
+			return name.name();
+		}
+		return ((EffectiveAccessRow.ToolRow) row).qualifiedName();
 	}
 
 }

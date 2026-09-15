@@ -121,6 +121,42 @@ public sealed interface AgentEvent {
 	record TurnCompleted(String runId, int turnNumber, Instant timestamp,
 			TokenUsage turnUsage, List<ContentPart> contentParts) implements AgentEvent {}
 
+	/**
+	 * What the prompt of the request about to be sent is made of.
+	 *
+	 * <p>
+	 * Emitted immediately before every provider call, so a UI can say where the context window
+	 * went. The three figures are estimates from the same {@code TokenEstimator} the compaction
+	 * budget uses, not provider-reported counts: the provider reports one prompt total and never
+	 * breaks it down. Their sum is therefore close to, but not equal to, the
+	 * {@link TurnCompleted#turnUsage()} prompt size that follows - a consumer that shows both must
+	 * mark these as estimated.
+	 * </p>
+	 *
+	 * @param runId agent run identifier
+	 * @param turnNumber 1-based loop iteration
+	 * @param timestamp when the event occurred
+	 * @param systemPromptTokens estimated tokens of the system prompt
+	 * @param toolDefinitionTokens estimated tokens of the tool schemas sent with the request
+	 * @param messageTokens estimated tokens of the conversation messages, tool results included
+	 * @param toolResultTokens estimated tokens of the tool results within {@code messageTokens} -
+	 *        what the agent read back from the tools it ran, which is usually the part of a
+	 *        conversation that grows fastest and the part a user least expects
+	 * @param toolCount number of tool schemas sent with the request
+	 */
+	record ContextComposition(String runId, int turnNumber, Instant timestamp,
+			int systemPromptTokens, int toolDefinitionTokens, int messageTokens, int toolResultTokens,
+			int toolCount)
+			implements AgentEvent {
+
+		/** Legacy shape of a composition recorded before tool results were counted apart. */
+		public ContextComposition(String runId, int turnNumber, Instant timestamp,
+				int systemPromptTokens, int toolDefinitionTokens, int messageTokens, int toolCount) {
+			this(runId, turnNumber, timestamp, systemPromptTokens, toolDefinitionTokens, messageTokens, 0,
+				toolCount);
+		}
+	}
+
 	// ---------- LLM streaming ----------
 
 	/**
@@ -250,13 +286,26 @@ public sealed interface AgentEvent {
 	 * @param toolName name of the tool
 	 * @param argsJson the tool call's raw argument JSON, exactly as the model emitted it
 	 * @param displayReason human-readable reason shown to user
+	 * @param toolMode what kind of change the tool makes, which is why approval is being asked. A UI
+	 *        that speaks the user's language phrases the question from this rather than from
+	 *        {@link #displayReason()}, which is written once, in English, by the security context
 	 * @param timeout how long the request waits for the user's decision, counted from
 	 *        {@link #timestamp()}; a UI shows the remaining time and the request resolves as
 	 *        {@link ApprovalOutcome#TIMED_OUT} when it elapses
 	 */
 	record ApprovalRequired(String runId, int turnNumber, Instant timestamp,
 			String toolCallId, String approvalRequestId, String toolName,
-			String argsJson, String displayReason, Duration timeout) implements AgentEvent {}
+			String argsJson, String displayReason, ToolMode toolMode, Duration timeout)
+			implements AgentEvent {
+
+		/** Approval events from before the mode was carried; the reason then has to speak for itself. */
+		public ApprovalRequired(String runId, int turnNumber, Instant timestamp, String toolCallId,
+				String approvalRequestId, String toolName, String argsJson, String displayReason,
+				Duration timeout) {
+			this(runId, turnNumber, timestamp, toolCallId, approvalRequestId, toolName, argsJson,
+				displayReason, null, timeout);
+		}
+	}
 
 	/**
 	 * Emitted after the approval channel returns with a decision.

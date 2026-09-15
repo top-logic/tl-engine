@@ -21,9 +21,14 @@ public class TurnCompletedEvent extends de.haumacher.msgbuf.data.AbstractDataObj
 	/** @see #getTurnUsage() */
 	public static final String TURN_USAGE__PROP = "turnUsage";
 
+	/** @see #getContextWindow() */
+	public static final String CONTEXT_WINDOW__PROP = "contextWindow";
+
 	private int _turnNumber = 0;
 
 	private com.top_logic.ai.chat.api.messages.TokenUsageDto _turnUsage = null;
+
+	private int _contextWindow = 0;
 
 	/**
 	 * Creates a {@link TurnCompletedEvent} instance.
@@ -81,6 +86,27 @@ public class TurnCompletedEvent extends de.haumacher.msgbuf.data.AbstractDataObj
 		return _turnUsage != null;
 	}
 
+	/**
+	 * Model context window in tokens, repeated here so the client can size the context ring from
+	 * the same event that carries the provider-reported prompt size.
+	 */
+	public final int getContextWindow() {
+		return _contextWindow;
+	}
+
+	/**
+	 * @see #getContextWindow()
+	 */
+	public com.top_logic.ai.chat.api.messages.TurnCompletedEvent setContextWindow(int value) {
+		internalSetContextWindow(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getContextWindow()} without chain call utility. */
+	protected final void internalSetContextWindow(int value) {
+		_contextWindow = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return TURN_COMPLETED_EVENT__TYPE;
@@ -90,7 +116,8 @@ public class TurnCompletedEvent extends de.haumacher.msgbuf.data.AbstractDataObj
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
 			TURN_NUMBER__PROP, 
-			TURN_USAGE__PROP);
+			TURN_USAGE__PROP, 
+			CONTEXT_WINDOW__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -117,6 +144,7 @@ public class TurnCompletedEvent extends de.haumacher.msgbuf.data.AbstractDataObj
 		switch (field) {
 			case TURN_NUMBER__PROP: return getTurnNumber();
 			case TURN_USAGE__PROP: return getTurnUsage();
+			case CONTEXT_WINDOW__PROP: return getContextWindow();
 			default: return null;
 		}
 	}
@@ -126,6 +154,7 @@ public class TurnCompletedEvent extends de.haumacher.msgbuf.data.AbstractDataObj
 		switch (field) {
 			case TURN_NUMBER__PROP: internalSetTurnNumber((int) value); break;
 			case TURN_USAGE__PROP: internalSetTurnUsage((com.top_logic.ai.chat.api.messages.TokenUsageDto) value); break;
+			case CONTEXT_WINDOW__PROP: internalSetContextWindow((int) value); break;
 		}
 	}
 
@@ -150,6 +179,8 @@ public class TurnCompletedEvent extends de.haumacher.msgbuf.data.AbstractDataObj
 			out.name(TURN_USAGE__PROP);
 			getTurnUsage().writeTo(out);
 		}
+		out.name(CONTEXT_WINDOW__PROP);
+		out.value(getContextWindow());
 	}
 
 	@Override
@@ -157,6 +188,7 @@ public class TurnCompletedEvent extends de.haumacher.msgbuf.data.AbstractDataObj
 		switch (field) {
 			case TURN_NUMBER__PROP: setTurnNumber(in.nextInt()); break;
 			case TURN_USAGE__PROP: setTurnUsage(com.top_logic.ai.chat.api.messages.TokenUsageDto.readTokenUsageDto(in)); break;
+			case CONTEXT_WINDOW__PROP: setContextWindow(in.nextInt()); break;
 			default: super.readField(in, field);
 		}
 	}

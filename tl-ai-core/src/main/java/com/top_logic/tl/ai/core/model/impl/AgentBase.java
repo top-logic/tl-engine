@@ -36,6 +36,15 @@ public interface AgentBase extends com.top_logic.model.TLNamed {
 	String DESCRIPTION_ATTR = "description";
 
 	/**
+	 * Part <code>displayName</code> of <code>Agent</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:String</code> in configuration.
+	 * </p>
+	 */
+	String DISPLAY_NAME_ATTR = "displayName";
+
+	/**
 	 * Part <code>mcpServers</code> of <code>Agent</code>
 	 * 
 	 * <p>
@@ -61,6 +70,15 @@ public interface AgentBase extends com.top_logic.model.TLNamed {
 	 * </p>
 	 */
 	String SKILLS_ATTR = "skills";
+
+	/**
+	 * Part <code>summary</code> of <code>Agent</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:String</code> in configuration.
+	 * </p>
+	 */
+	String SUMMARY_ATTR = "summary";
 
 	/**
 	 * Part <code>systemPrompt</code> of <code>Agent</code>
@@ -124,6 +142,20 @@ public interface AgentBase extends com.top_logic.model.TLNamed {
 	}
 
 	/**
+	 * Getter for part {@link #DISPLAY_NAME_ATTR}.
+	 */
+	default String getDisplayName() {
+		return (String) tValueByName(DISPLAY_NAME_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #DISPLAY_NAME_ATTR}.
+	 */
+	default void setDisplayName(String newValue) {
+		tUpdateByName(DISPLAY_NAME_ATTR, newValue);
+	}
+
+	/**
 	 * Getter for part {@link #MCP_SERVERS_ATTR}.
 	 */
 	@SuppressWarnings("unchecked")
@@ -179,6 +211,20 @@ public interface AgentBase extends com.top_logic.model.TLNamed {
 	 */
 	default void removeSkill(String oldValue) {
 		tRemoveByName(SKILLS_ATTR, oldValue);
+	}
+
+	/**
+	 * Getter for part {@link #SUMMARY_ATTR}.
+	 */
+	default String getSummary() {
+		return (String) tValueByName(SUMMARY_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #SUMMARY_ATTR}.
+	 */
+	default void setSummary(String newValue) {
+		tUpdateByName(SUMMARY_ATTR, newValue);
 	}
 
 	/**

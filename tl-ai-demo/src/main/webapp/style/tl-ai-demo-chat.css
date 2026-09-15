@@ -1,0 +1,128 @@
+/* Host chrome for DemoChat: invoice rows in the right rail, using chat tokens. */
+
+.demo-invoices {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.demo-invoice-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.demo-invoice-row {
+	align-items: flex-start;
+	background: transparent;
+	border: 1px solid transparent;
+	border-radius: var(--corner-radius, 0.375rem);
+	color: inherit;
+	cursor: pointer;
+	display: grid;
+	font: inherit;
+	gap: 0.1rem 0.5rem;
+	grid-template-columns: 1fr auto;
+	padding: 0.4rem 0.5rem;
+	text-align: start;
+	width: 100%;
+}
+
+.demo-invoice-row:hover,
+.demo-invoice-row:focus-visible {
+	border-color: var(--button-primary, var(--border-subtle));
+	outline: 1px solid var(--button-primary, var(--border-subtle));
+}
+
+.demo-invoice-name {
+	font-weight: 600;
+	grid-column: 1;
+}
+
+.demo-invoice-meta {
+	color: var(--text-secondary);
+	font-size: 0.8em;
+	grid-column: 1;
+}
+
+.demo-invoice-state {
+	color: var(--text-secondary);
+	font-size: 0.8em;
+	grid-column: 2;
+	grid-row: 1 / span 2;
+	align-self: center;
+}
+
+.demo-invoice-create {
+	align-self: start;
+	background: transparent;
+	border: 1px dashed var(--border-subtle);
+	border-radius: var(--corner-radius, 0.375rem);
+	color: var(--text-primary);
+	cursor: pointer;
+	font: inherit;
+	padding: 0.35rem 0.6rem;
+}
+
+.demo-invoice-facts {
+	display: grid;
+	gap: 0.2rem 0.75rem;
+	grid-template-columns: auto minmax(0, 1fr);
+	margin: 0;
+}
+
+.demo-invoice-facts dt {
+	color: var(--text-secondary);
+}
+
+.demo-invoice-facts dd {
+	margin: 0;
+	min-width: 0;
+}
+
+.demo-invoice-note {
+	color: var(--text-secondary);
+	font-size: 0.85em;
+	margin: 0.5rem 0 0;
+}
+
+.demo-invoice-empty {
+	color: var(--text-secondary);
+	font-size: 0.85em;
+	margin: 0;
+}
+
+/*
+ * The "mark a passage" offer: it appears under the invoice only while a selection stands inside
+ * the pane, so nothing permanent sits in the composer that the user never asked for.
+ */
+.demo-invoice-quote {
+	align-items: flex-start;
+	background: var(--layer-selected, var(--layer));
+	border: 1px solid var(--button-primary, var(--border-subtle));
+	border-radius: var(--corner-radius, 0.375rem);
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+	margin-top: 0.75rem;
+	padding: 0.5rem 0.6rem;
+}
+
+.demo-invoice-quote-text {
+	color: var(--text-secondary);
+	font-size: 0.85em;
+}
+
+.demo-invoice-quote-action {
+	background: var(--button-primary);
+	border: 0;
+	border-radius: var(--corner-radius, 0.375rem);
+	color: var(--text-on-color, #fff);
+	cursor: pointer;
+	font: inherit;
+	font-size: 0.85em;
+	padding: 0.3rem 0.6rem;
+}

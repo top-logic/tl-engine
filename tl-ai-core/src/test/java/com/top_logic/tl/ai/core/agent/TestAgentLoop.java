@@ -406,6 +406,61 @@ public class TestAgentLoop extends TestCase {
 	}
 
 	/**
+	 * What a failed run leaves behind: the history it started from, and nothing of its own.
+	 *
+	 * <p>
+	 * The regression: a run that died in the provider halfway through left an assistant turn
+	 * whose tool calls had no results. The next send replayed it, the provider refused it for the
+	 * same reason, and the chat was dead for good. Only the message that started the failed run
+	 * stays, so the user does not have to type it again.
+	 * </p>
+	 */
+	public void testAFailedRunLeavesNothingBehind() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Erzähl mir was."))));
+		conv.add(new AssistantMessage("a1", T0, List.of(new TextContent("Gerne.")), USAGE, "end_turn"));
+		conv.add(new UserMessage("u2", T0, List.of(new TextContent("Und jetzt das Modell erkunden."))));
+		List<Message> beforeTheRun = conv.messages();
+
+		ToolSchema schema = new ToolSchema("echo_tool", "Echoes", "{}");
+		AtomicInteger calls = new AtomicInteger();
+		LLMProvider diesOnTheSecondCall = (request, handler) -> {
+			if (calls.getAndIncrement() > 0) {
+				throw new ProviderException(ProviderException.Kind.INVALID_REQUEST, 400,
+					"messages.1.content.1.thinking.signature: Field required");
+			}
+			ToolCall call = new ToolCall("tc1", "echo_tool", "{\"message\":\"hi\"}");
+			handler.onEvent(new StreamEvent.MessageComplete("msg-0", MODEL, "tool_use", USAGE, List.of(call)));
+		};
+
+		AgentLoop loop = new AgentLoop(config(), diesOnTheSecondCall, echoRegistry("echo_tool", schema));
+		AgentResult result = loop.run(conv, (AgentEventListener) e -> {
+			/** empty listener */
+		});
+
+		assertEquals(StopReason.ERROR, result.stopReason());
+		assertEquals("The assistant turn and its tool result are gone with the failed run.",
+			beforeTheRun, conv.messages());
+	}
+
+	/** A run that fails on its first call has added nothing yet, and takes nothing away. */
+	public void testAFailedFirstCallKeepsTheQuestion() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Hallo"))));
+		List<Message> beforeTheRun = conv.messages();
+
+		LLMProvider failing = (request, handler) -> {
+			throw new ProviderException(ProviderException.Kind.OVERLOADED, 529, "Overloaded");
+		};
+
+		new AgentLoop(config(), failing, emptyRegistry()).run(conv, (AgentEventListener) e -> {
+			/** empty listener */
+		});
+
+		assertEquals(beforeTheRun, conv.messages());
+	}
+
+	/**
 	 * Tool executor returns a Failed state. Error is fed back to LLM which then completes.
 	 */
 	public void testToolError() {

@@ -38,6 +38,7 @@ import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.ComputedColumn;
 import com.top_logic.layout.view.table.DropTargetMode;
+import com.top_logic.layout.view.table.DynamicColumns;
 import com.top_logic.layout.view.table.EmbeddedColumns;
 import com.top_logic.layout.view.table.FilterStateConfig;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -316,6 +317,88 @@ public class TestTableElement extends TestCase {
 			TypedConfiguration.newConfigItem(EmbeddedColumns.Config.class).getMultiple());
 		assertEquals("Account",
 			((ResKey.LiteralKey) accounts.getLabel()).getTranslationWithoutFallbacks(Locale.ENGLISH));
+	}
+
+	/**
+	 * Tests that a {@code <dynamic-columns>} is parsed with everything it says about the columns it
+	 * computes: the objects standing for them, their names, labels, values, edits, aggregate and
+	 * the display all of them share.
+	 */
+	public void testParseDynamicColumns() throws Exception {
+		DynamicColumns.Config milestones = dynamicColumns(readTableConfig());
+
+		assertEquals("milestones", milestones.getName());
+		assertEquals("tl.core:Double", milestones.getType().qualifiedName());
+		assertFalse("A cell holds a single value unless the columns say otherwise.",
+			milestones.getMultiple());
+		assertNull("The columns share the named type, so none of them computes one.",
+			milestones.getColumnType());
+		assertEquals("The configured width of every computed column, in pixels.", 90,
+			milestones.getWidth());
+		assertTrue("The columns stay read-only while the rows are edited.", milestones.getReadonly());
+		assertNotNull("The objects standing for the columns are computed.", milestones.getColumns());
+		assertNotNull("The columns are named after their objects.", milestones.getColumnName());
+		assertNotNull("The columns are labelled after their objects.", milestones.getColumnLabel());
+		assertNotNull("The cell value is computed.", milestones.getValue());
+		assertNotNull("An edited value is written back.", milestones.getUpdate());
+		assertNotNull("The columns say which of their rows are edited.", milestones.getCanUpdate());
+		assertNotNull("The columns aggregate over a group.", milestones.getAggregate());
+		assertEquals("Should declare one input", 1, milestones.getInputs().size());
+		assertEquals("testInput", milestones.getInputs().get(0).getChannelName());
+
+		DynamicColumns.Config plain = TypedConfiguration.newConfigItem(DynamicColumns.Config.class);
+		assertNull("A declaration that names no type computes none either.", plain.getColumnType());
+		assertEquals("The columns keep the width their type derives.", 0, plain.getWidth());
+		assertFalse("The columns are edited like any other unless they say otherwise.",
+			plain.getReadonly());
+	}
+
+	/**
+	 * Tests that computed columns contribute no column name before the table has been built - what
+	 * columns there are is decided by data - and that the rest of the table is named as before.
+	 */
+	public void testDynamicColumnsContributeNoNames() throws Exception {
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestTableElement.class);
+		List<ColumnDeclaration> declarations =
+			ColumnDeclarations.instantiate(context, readTableConfig().getColumns());
+		context.checkErrors();
+
+		ColumnDeclaration milestones = declarations.get(declarations.size() - 1);
+		assertEquals("Only the data at hand says which columns there are.",
+			List.of(), milestones.declaredNames());
+		assertEquals("Columns nothing is known about yet do not sort the table.",
+			List.of(), milestones.defaultSort());
+	}
+
+	/**
+	 * Tests that computed columns say what their values are in exactly one way, and that columns
+	 * that are edited say it at all.
+	 */
+	public void testDynamicColumnsDeclareTheirValueType() throws Exception {
+		TableElement.Config both = TypedConfiguration.copy(readTableConfig());
+		DynamicColumns.Config computedType = dynamicColumns(both);
+		computedType.update(computedType.descriptor().getProperty(DynamicColumns.Config.COLUMN_TYPE),
+			TypedConfiguration.newConfigItem(Expr.Null.class));
+
+		assertContains("not both", errors(both));
+
+		TableElement.Config untyped = TypedConfiguration.copy(readTableConfig());
+		DynamicColumns.Config edited = dynamicColumns(untyped);
+		edited.update(edited.descriptor().getProperty(DynamicColumns.Config.TYPE), null);
+
+		assertContains("must declare the type", errors(untyped));
+	}
+
+	/**
+	 * The {@code <dynamic-columns>} of the given table.
+	 */
+	private static DynamicColumns.Config dynamicColumns(TableElement.Config tableConfig) {
+		for (PolymorphicConfiguration<? extends ColumnDeclaration> column : tableConfig.getColumns().getColumns()) {
+			if (column instanceof DynamicColumns.Config dynamic) {
+				return dynamic;
+			}
+		}
+		throw new AssertionError("The table declares computed columns.");
 	}
 
 	/**

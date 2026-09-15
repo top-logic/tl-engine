@@ -63,6 +63,34 @@ public class ValueCellEditing implements CellEditing {
 		_canUpdate = canUpdate;
 	}
 
+	/**
+	 * How a cell written back by the given update is edited: not at all for a column writing
+	 * nothing back, and not at all for one whose values are of an unknown type - which control
+	 * enters a value follows from that type.
+	 *
+	 * <p>
+	 * This is the one place deciding whether a column over a computed value offers an edit, so that
+	 * a single column and a whole set of them answer it alike.
+	 * </p>
+	 *
+	 * @param type
+	 *        What the column's values are, deciding which control edits them.
+	 * @param value
+	 *        Reads the cell value from a row, as the column displays it.
+	 * @param update
+	 *        Writes an edited value, receiving the row and the new value, or {@code null} for a
+	 *        column that is displayed but not edited.
+	 * @param canUpdate
+	 *        Which rows offer the edit, or {@code null} where every row of the column does.
+	 */
+	public static CellEditing forUpdate(ColumnType type, Function<Object, Object> value,
+			BiConsumer<Object, Object> update, Predicate<Object> canUpdate) {
+		if (update == null || !type.resolved()) {
+			return null;
+		}
+		return new ValueCellEditing(type, value, update, canUpdate == null ? row -> true : canUpdate);
+	}
+
 	@Override
 	public boolean canEdit(Object row) {
 		return _canUpdate.test(row);

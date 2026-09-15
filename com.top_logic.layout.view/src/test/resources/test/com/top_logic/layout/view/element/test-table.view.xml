@@ -113,6 +113,22 @@
 				<object>row -&gt; $row.get(`demo.test:Row#accounts`)</object>
 				<column attribute="number"/>
 			</embedded-columns>
+			<dynamic-columns name="milestones"
+				readonly="true"
+				type="tl.core:Double"
+				width="90"
+			>
+				<aggregate>factor -&gt; rows -&gt; col -&gt; $rows.size()</aggregate>
+				<can-update>factor -&gt; row -&gt; col -&gt; $row.get(`demo.test:Row#amount`) != null</can-update>
+				<column-label>factor -&gt; col -&gt; $col.get(`demo.test:Milestone#name`)</column-label>
+				<column-name>factor -&gt; col -&gt; $col.get(`demo.test:Milestone#name`)</column-name>
+				<columns>factor -&gt; all(`demo.test:Milestone`)</columns>
+				<inputs>
+					<input channel="testInput"/>
+				</inputs>
+				<update>factor -&gt; row -&gt; col -&gt; value -&gt; $row.set(`demo.test:Row#amount`, $value)</update>
+				<value>factor -&gt; row -&gt; col -&gt; $factor * $row.get(`demo.test:Row#amount`)</value>
+			</dynamic-columns>
 		</columns>
 		<rows>input -&gt; list($input)</rows>
 	</table>

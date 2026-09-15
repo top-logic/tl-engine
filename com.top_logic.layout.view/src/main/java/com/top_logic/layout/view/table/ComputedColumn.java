@@ -6,9 +6,7 @@
 package com.top_logic.layout.view.table;
 
 import java.util.List;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
@@ -23,11 +21,8 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
-import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.TLType;
-import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
 
 /**
@@ -181,13 +176,7 @@ public class ComputedColumn extends AbstractColumnDeclaration {
 
 	private final boolean _multiple;
 
-	private final QueryExecutor _value;
-
-	private final QueryExecutor _update;
-
-	private final QueryExecutor _canUpdate;
-
-	private final List<ChannelRef> _inputs;
+	private final ColumnFunctions _functions;
 
 	/**
 	 * Creates a {@link ComputedColumn} from configuration.
@@ -198,12 +187,10 @@ public class ComputedColumn extends AbstractColumnDeclaration {
 		_name = config.getName();
 		_typeRef = config.getType();
 		_multiple = config.getMultiple();
-		_value = QueryExecutor.compile(config.getValue());
-		_update = QueryExecutor.compileOptional(config.getUpdate());
-		_canUpdate = QueryExecutor.compileOptional(config.getCanUpdate());
-		_inputs = config.getInputs();
+		_functions =
+			ColumnFunctions.compile(config.getValue(), config.getUpdate(), config.getCanUpdate(), config.getInputs());
 
-		if (_update != null && _typeRef == null) {
+		if (_functions.updates() && _typeRef == null) {
 			context.error("An edited column must declare the type of its values, so that it is known"
 				+ " which control enters them: column '" + _name + "'.");
 		}
@@ -216,38 +203,10 @@ public class ComputedColumn extends AbstractColumnDeclaration {
 
 	@Override
 	public List<ColumnSetup> resolve(ColumnResolution scope) {
-		List<ViewChannel> inputs = ColumnInputs.resolve(scope, _inputs);
-		QueryExecutor value = _value;
-		Function<Object, Object> cellValue = row -> value.execute(ColumnInputs.arguments(inputs, row));
+		ColumnFunctions.Resolved functions = _functions.resolve(scope);
+		Function<Object, Object> value = functions.value();
 		ColumnType type = columnType(scope);
-		return List.of(setup(_name, ResKey.text(_name), type, cellValue, editing(type, cellValue, inputs), scope));
-	}
-
-	/**
-	 * How a cell of the column is edited: through the declared update function, on the rows the
-	 * declared predicate accepts - and not at all for a column declaring no update, or one whose
-	 * values are of an unknown type.
-	 *
-	 * @param type
-	 *        What the column's values are, deciding which control enters them.
-	 * @param value
-	 *        Reads the cell value from a row, so that the edited field shows what the column does.
-	 * @param inputs
-	 *        The channels whose values lead the arguments of both functions.
-	 */
-	private CellEditing editing(ColumnType type, Function<Object, Object> value, List<ViewChannel> inputs) {
-		if (_update == null || !type.resolved()) {
-			return null;
-		}
-		QueryExecutor update = _update;
-		BiConsumer<Object, Object> write =
-			(row, edited) -> update.execute(ColumnInputs.arguments(inputs, row, edited));
-
-		QueryExecutor canUpdate = _canUpdate;
-		Predicate<Object> editable = canUpdate == null ? row -> true
-			: row -> SearchExpression.isTrue(canUpdate.execute(ColumnInputs.arguments(inputs, row)));
-
-		return new ValueCellEditing(type, value, write, editable);
+		return List.of(setup(_name, ResKey.text(_name), type, value, functions.editing(type, value), scope));
 	}
 
 	/**

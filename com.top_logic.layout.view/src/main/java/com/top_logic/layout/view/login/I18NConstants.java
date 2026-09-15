@@ -60,6 +60,31 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 EXPIRE_PASSWORD_DONE__USER;
 
 	/**
+	 * @en Confirm with your password
+	 */
+	public static ResKey VERIFY_PASSWORD_TITLE;
+
+	/**
+	 * @en Please enter your password to confirm this change.
+	 */
+	public static ResKey VERIFY_PASSWORD_MESSAGE;
+
+	/**
+	 * @en Password
+	 */
+	public static ResKey VERIFY_PASSWORD_FIELD_LABEL;
+
+	/**
+	 * @en The password is not correct. Please try again.
+	 */
+	public static ResKey ERROR_WRONG_PASSWORD;
+
+	/**
+	 * @en Your password cannot be verified. The change was not applied.
+	 */
+	public static ResKey ERROR_PASSWORD_NOT_VERIFIABLE;
+
+	/**
 	 * @en The entered code is not valid. Please try again.
 	 */
 	public static ResKey MFA_INVALID_CODE;

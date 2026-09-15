@@ -36,7 +36,7 @@ const EN = {
   howCanIHelp: 'What can I help you with?',
   askAnything: 'Ask anything…',
   /** Shown when the host offers sources, so the "@" is worth mentioning. */
-  askAnythingWithAt: 'Ask anything. Type @ for a source, / for an agent',
+  askAnythingWithAt: 'Ask anything. Type @ for a source',
   typeNext: 'Type your next message…',
   enterSends: 'Enter sends · Shift+Enter adds a line',
   enterSendsShort: 'Enter sends',
@@ -261,7 +261,7 @@ const DE: Bundle = {
   greeting: (name: string) => (name ? `Hallo ${name}.` : 'Hallo.'),
   howCanIHelp: 'Womit kann ich helfen?',
   askAnything: 'Frag mich etwas …',
-  askAnythingWithAt: 'Frag mich etwas. @ für eine Quelle, / für einen Agenten',
+  askAnythingWithAt: 'Frag mich etwas. @ für eine Quelle',
   typeNext: 'Nächste Nachricht schreiben …',
   enterSends: 'Enter sendet · Umschalt+Enter macht einen Zeilenumbruch',
   enterSendsShort: 'Enter sendet',

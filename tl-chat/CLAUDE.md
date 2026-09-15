@@ -250,8 +250,12 @@ editor edits it as one.
 
 Two ways in: `ctx.insertReference(token)` from a host pane - which inserts at the caret, restoring
 where the user last stood, because by then the editor has lost the selection - and typing **@** in
-the composer, which offers what `composerAddons.referenceCandidates(query)` returns. **/** on an
-empty draft opens the agent picker. There is no prefix form and no chip list.
+the composer, which offers what `composerAddons.referenceCandidates(query)` returns. There is no
+prefix form and no chip list.
+
+**/** types a slash and opens nothing. It is reserved for skills, the way it is in every chat
+product; the agent picker lives in the **+** menu, which is where it was reachable all along
+(#416). The skill picker itself comes with the skills work.
 
 **Is `ref` resolvable? No - not by the framework.** It is the host application's own id, carried so
 that a host tool can recognise it; tl-ai ships no tool that takes one, and the agent is told so by

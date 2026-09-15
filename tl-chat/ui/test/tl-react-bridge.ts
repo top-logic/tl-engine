@@ -27,6 +27,7 @@ export const React = {
   createElement,
   Fragment: Symbol('Fragment'),
   forwardRef: <T>(render: T): T => render,
+  memo: <T>(render: T): T => render,
   useCallback: absent('useCallback'),
   useEffect: absent('useEffect'),
   useImperativeHandle: absent('useImperativeHandle'),
@@ -44,4 +45,8 @@ export function register(): void {
 
 export function useTLState(): Record<string, unknown> {
   return {}
+}
+
+export function useTLCommand(): (command: string, args?: Record<string, unknown>) => Promise<unknown> {
+  return absent('useTLCommand')
 }

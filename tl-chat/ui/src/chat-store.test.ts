@@ -119,10 +119,10 @@ afterEach(() => {
 describe('one store per chat id', () => {
   it('gives two elements on one id the same store and one stream', async () => {
     const first = chatStore('alpha', BOOT)
+    const releaseFirst = first.subscribe(() => undefined)
     const second = chatStore('alpha', BOOT)
     expect(second).toBe(first)
 
-    const releaseFirst = first.subscribe(() => undefined)
     const releaseSecond = second.subscribe(() => undefined)
     first.attach(BOOT)
     second.attach(BOOT)
@@ -133,6 +133,11 @@ describe('one store per chat id', () => {
 
     releaseFirst()
     releaseSecond()
+  })
+
+  it('does not register a store that was never subscribed', () => {
+    chatStore('ghost', BOOT)
+    expect(liveChatCount()).toBe(0)
   })
 
   it('gives two ids two stores and two streams', async () => {
@@ -227,6 +232,27 @@ describe('one store per chat id', () => {
     expect(chatIdOf({ chatId: 'beratung' }, 'control-7')).toBe('beratung')
     expect(chatIdOf({ chatId: '  ' }, 'control-7')).toBe('control-7')
     expect(chatIdOf({}, 'control-7')).toBe('control-7')
+  })
+
+  /**
+   * {@code TLChatSessions} and {@code App} both call {@code useChat(chatId, boot)}. Two subscribers
+   * on one id are those two elements: one session list, one transcript, one stream.
+   */
+  it('TLChatSessions and App on one chat-id see the same session list', async () => {
+    const sessions = chatStore('main', BOOT)
+    const releaseSessions = sessions.subscribe(() => undefined)
+    const app = chatStore('main', BOOT)
+    expect(app).toBe(sessions)
+
+    const releaseApp = app.subscribe(() => undefined)
+    sessions.attach(BOOT)
+    await settle()
+
+    expect(app.getState().sessions).toBe(sessions.getState().sessions)
+    expect(streams).toHaveLength(1)
+
+    releaseSessions()
+    releaseApp()
   })
 })
 

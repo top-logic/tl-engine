@@ -209,6 +209,46 @@
   display: none;
 }
 
+/* --- Composed session list --------------------------------------------- */
+
+/*
+ * <chat-sessions/> lives in a host pane, not in .tl-cockpit. The App rail's overlay drawer
+ * below 1100 px is geometry that composition gives up: the host's split-panel sizes the
+ * column, and the list fills it at every width.
+ */
+.tl-chat-sessions {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+
+.tl-chat-sessions.is-signed-out {
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+}
+
+.tl-chat-sessions .rail-scrim {
+  display: none;
+}
+
+.tl-chat-sessions .rail {
+  position: relative;
+  inset: auto;
+  z-index: auto;
+  width: auto;
+  flex: 1 1 auto;
+  height: 100%;
+  transform: none;
+  box-shadow: none;
+}
+
+.tl-chat-sessions .rail-close {
+  display: none;
+}
+
 .rail-new {
   display: flex;
   align-items: center;

@@ -51,6 +51,7 @@ browser component, which shows a sign-in note rather than a composer.
 - **`ChatHistoryService`** – Static access to persistent `AgentSession` objects (kind CHAT) via `AgentExecutionStore` (tl-ai-core). Conversations are stored as one transcript per `AgentExecution` (written by `AgentRunner` at run end) and merged in run order on load.
 - **`LegacyChatSessionMigration`** – Startup service migrating legacy `tl.ai.chat:ChatSession` blobs to `AgentSession`s eagerly. The legacy model has been removed (tl-ai-core migration `Issue_230_remove_module_tl_ai_chat`), so the service is a no-op now; it is kept until every deployment is known to have run it.
 - **`ChatSessionRegistry`** – Bridges `WindowScope` (a chat control) and `HttpSession` (`ChatServlet`). Published API: the classic control in `tl-chat-classic` and `Consulting`'s own control register here from outside this module.
+- **`ChatViewBinding`** – Once per (sub-session, `chat-id`): tracker, user and layout preferences. `AgentChatControl` and `<chat-sessions>` (later the other three elements) delegate to it so four controls do not load `PersonalConfiguration` four times. The tracker stays one per window.
 
 ## Thread Safety
 
@@ -121,9 +122,15 @@ only after `mvn -pl tl-chat -am -DskipTests install` and a restart of the applic
 
 `view/AgentChatElement` is the `<agent-chat/>` view element (`trace-mode`, `prompt-improver-agent`);
 `view/AgentChatControl` is the `ReactControl` behind it. It registers the per-window
-`TaskProgressTracker` and pushes the bootstrap state (`windowId`, `userName`, `welcomeName`,
-`traceMode`, `promptImprovementEnabled`) the browser component reads. The component itself is
-registered as `TLAgentChat` in `ui/src/main.tsx`.
+`TaskProgressTracker` through `ChatViewBinding` and pushes the bootstrap state (`windowId`,
+`userName`, `welcomeName`, `traceMode`, `promptImprovementEnabled`) the browser component reads.
+The component itself is registered as `TLAgentChat` in `ui/src/main.tsx`.
+
+`<chat-sessions/>` (`ChatSessionsElement` / `ChatSessionsControl` / `TLChatSessions`) is the
+session list as its own element. It joins the chat by `chat-id` (default `default`) and may
+publish the open `AgentSession` on an optional two-way `selection` channel. `useChat` is **not**
+exported from `index.ts`: the store is internal to the bundle, so a host cannot write its own
+element against it. New chat pieces live in `ui/src` and are registered next to `TLAgentChat`.
 
 An application makes the bundle loadable by declaring it on `ClientResources` - see
 `tl-ai-demo/src/main/webapp/WEB-INF/conf/tl-ai-demo.conf.config.xml`:
@@ -173,6 +180,7 @@ it rewrites a draft and never answers as a persona.
 | File | What it owns |
 |--|--|
 | `App.tsx` | The shipped chat as a composition over one `useChat` store, plus this element's own geometry |
+| `chat-sessions.tsx` | `<chat-sessions/>` as `TLChatSessions`: the session list over the same store |
 | `chat-store.ts` | The chat's state, one store per `chat-id`: bootstrap, capabilities, sessions, turn settings, transcript, run, layout preferences and the one `EventSource` |
 | `composer.tsx` | Input, plus menu, model picker, attachments, drag and drop, improve-prompt |
 | `thread.tsx` | Transcript: user bubbles, answers, run meta line, trace panels |

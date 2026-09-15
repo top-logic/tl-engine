@@ -15,4 +15,9 @@ declare module 'tl-react-bridge' {
   ): void
 
   export function useTLState(): Record<string, unknown>
+
+  export function useTLCommand(): (
+    command: string,
+    args?: Record<string, unknown>,
+  ) => Promise<unknown>
 }

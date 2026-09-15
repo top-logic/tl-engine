@@ -444,7 +444,10 @@ export class ChatStore {
     this.refs += 1
     if (this.refs === 1) {
       this.live = true
-      CHATS.set(this.chatId, this)
+      // Register here, not in the factory: a render React throws away never subscribed, and
+      // must not occupy the map. Do not displace a newer store that already owns this id.
+      const owner = CHATS.get(this.chatId)
+      if (owner == null || owner === this) CHATS.set(this.chatId, this)
     }
     let released = false
     return () => {
@@ -1550,11 +1553,9 @@ const CHATS = new Map<string, ChatStore>()
 export function chatStore(chatId: string, boot: ChatBootstrap): ChatStore {
   const existing = CHATS.get(chatId)
   if (existing) return existing
-  // The store lives exactly as long as the elements showing it: the last one to leave closes the
-  // stream, and the chat starts as fresh on the next mount as it does today.
-  const created = new ChatStore(chatId, boot)
-  CHATS.set(chatId, created)
-  return created
+  // Not written into CHATS until subscribe: a render that never commits must not leave a
+  // live===false entry that quiesce will never see.
+  return new ChatStore(chatId, boot)
 }
 
 /** How many chats are currently held. Exported for tests. */

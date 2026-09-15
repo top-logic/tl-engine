@@ -11,7 +11,14 @@ interface SessionGroup {
   sessions: SessionSummary[]
 }
 
-function groupSessions(sessions: SessionSummary[], labels: Labels): SessionGroup[] {
+function groupSessions(
+  sessions: SessionSummary[],
+  labels: Labels,
+  grouping: 'by-date' | 'flat' = 'by-date',
+): SessionGroup[] {
+  if (grouping === 'flat') {
+    return sessions.length === 0 ? [] : [{ label: '', sessions }]
+  }
   const now = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
   const day = 24 * 60 * 60 * 1000
@@ -49,6 +56,11 @@ export const SessionRail = React.memo(function SessionRail({
   onDelete,
   onClose,
   onToggleCollapsed,
+  search = true,
+  newChat = true,
+  canDelete = true,
+  grouping = 'by-date',
+  collapsible = true,
 }: {
   labels: Labels
   sessions: SessionSummary[]
@@ -62,18 +74,23 @@ export const SessionRail = React.memo(function SessionRail({
   onDelete: (id: string) => void
   onClose: () => void
   onToggleCollapsed: () => void
+  search?: boolean
+  newChat?: boolean
+  canDelete?: boolean
+  grouping?: 'by-date' | 'flat'
+  collapsible?: boolean
 }) {
   const [query, setQuery] = useState('')
   // Which chat is asking to be deleted; deleting is not undoable, so it is never one click.
   const [confirming, setConfirming] = useState<string | null>(null)
   const confirmRef = useRef<HTMLDivElement>(null)
   const groups = useMemo(() => {
-    const normalized = query.trim().toLocaleLowerCase()
+    const normalized = search ? query.trim().toLocaleLowerCase() : ''
     const visible = normalized
       ? sessions.filter((session) => (session.title || labels.untitled).toLocaleLowerCase().includes(normalized))
       : sessions
-    return groupSessions(visible, labels)
-  }, [labels, query, sessions])
+    return groupSessions(visible, labels, grouping)
+  }, [grouping, labels, query, search, sessions])
 
   useEffect(() => {
     if (!confirming) return
@@ -102,7 +119,7 @@ export const SessionRail = React.memo(function SessionRail({
       />
       <aside
         id="chat-session-rail"
-        className={`rail${open ? ' is-open' : ''}${collapsed ? ' is-collapsed' : ''}`}
+        className={`rail${open ? ' is-open' : ''}${collapsible && collapsed ? ' is-collapsed' : ''}`}
         aria-label={labels.chats}
       >
         <div className="rail-header">
@@ -112,39 +129,45 @@ export const SessionRail = React.memo(function SessionRail({
               <path d="m4 4 8 8M12 4l-8 8" />
             </svg>
           </button>
-          <button
-            type="button"
-            className="icon-button rail-collapse"
-            aria-label={collapsed ? labels.expandChatHistory : labels.collapseChatHistory}
-            aria-expanded={!collapsed}
-            onClick={onToggleCollapsed}
-          >
-            <svg viewBox="0 0 16 16" aria-hidden="true">
-              <path d={collapsed ? 'm6.5 3.5 4.5 4.5-4.5 4.5' : 'M9.5 3.5 5 8l4.5 4.5'} />
-            </svg>
-          </button>
+          {collapsible ? (
+            <button
+              type="button"
+              className="icon-button rail-collapse"
+              aria-label={collapsed ? labels.expandChatHistory : labels.collapseChatHistory}
+              aria-expanded={!collapsed}
+              onClick={onToggleCollapsed}
+            >
+              <svg viewBox="0 0 16 16" aria-hidden="true">
+                <path d={collapsed ? 'm6.5 3.5 4.5 4.5-4.5 4.5' : 'M9.5 3.5 5 8l4.5 4.5'} />
+              </svg>
+            </button>
+          ) : null}
         </div>
 
-        <button type="button" className="rail-new" onClick={onNew}>
-          <svg viewBox="0 0 16 16" aria-hidden="true">
-            <path d="M8 3.5v9M3.5 8h9" />
-          </svg>
-          <span>{labels.newChat}</span>
-        </button>
+        {newChat ? (
+          <button type="button" className="rail-new" onClick={onNew}>
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M8 3.5v9M3.5 8h9" />
+            </svg>
+            <span>{labels.newChat}</span>
+          </button>
+        ) : null}
 
-        <label className="rail-search">
-          <span className="sr-only">{labels.searchChats}</span>
-          <svg viewBox="0 0 16 16" aria-hidden="true">
-            <circle cx="7.2" cy="7.2" r="4" />
-            <path d="m10.3 10.3 3 3" />
-          </svg>
-          <input
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={labels.searchChats}
-          />
-        </label>
+        {search ? (
+          <label className="rail-search">
+            <span className="sr-only">{labels.searchChats}</span>
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <circle cx="7.2" cy="7.2" r="4" />
+              <path d="m10.3 10.3 3 3" />
+            </svg>
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={labels.searchChats}
+            />
+          </label>
+        ) : null}
 
         <div className="rail-list" aria-live="polite">
           {loading ? (
@@ -159,11 +182,16 @@ export const SessionRail = React.memo(function SessionRail({
             <div className="rail-message">{query ? labels.noMatchingChats : labels.noChats}</div>
           ) : null}
           {groups.map((group) => (
-            <section className="rail-group" key={group.label} aria-labelledby={`chat-group-${group.label}`}>
-              <h2 id={`chat-group-${group.label}`}>{group.label}</h2>
+            <section
+              className="rail-group"
+              key={group.label || 'all'}
+              aria-labelledby={group.label ? `chat-group-${group.label}` : undefined}
+              aria-label={group.label ? undefined : labels.chats}
+            >
+              {group.label ? <h2 id={`chat-group-${group.label}`}>{group.label}</h2> : null}
               {group.sessions.map((session) => {
                 const title = session.title || labels.untitled
-                if (confirming === session.id) {
+                if (canDelete && confirming === session.id) {
                   return (
                     <div className="rail-item is-confirming" key={session.id} ref={confirmRef}>
                       <span className="rail-confirm-text">{labels.deleteChatQuestion}</span>
@@ -197,17 +225,19 @@ export const SessionRail = React.memo(function SessionRail({
                       <span className="rail-item-mark" aria-hidden="true" />
                       <span>{title}</span>
                     </button>
-                    <button
-                      type="button"
-                      className="icon-button tiny rail-delete"
-                      aria-label={`${labels.deleteChat}: ${title}`}
-                      title={labels.deleteChat}
-                      onClick={() => setConfirming(session.id)}
-                    >
-                      <svg viewBox="0 0 16 16" aria-hidden="true">
-                        <path d="M3.5 4.5h9M6.5 4.5V3h3v1.5M5 4.5l.6 8h4.8l.6-8" />
-                      </svg>
-                    </button>
+                    {canDelete ? (
+                      <button
+                        type="button"
+                        className="icon-button tiny rail-delete"
+                        aria-label={`${labels.deleteChat}: ${title}`}
+                        title={labels.deleteChat}
+                        onClick={() => setConfirming(session.id)}
+                      >
+                        <svg viewBox="0 0 16 16" aria-hidden="true">
+                          <path d="M3.5 4.5h9M6.5 4.5V3h3v1.5M5 4.5l.6 8h4.8l.6-8" />
+                        </svg>
+                      </button>
+                    ) : null}
                   </div>
                 )
               })}

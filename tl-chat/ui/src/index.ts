@@ -1,4 +1,5 @@
 export { App } from './App'
+export { TLChatSessions } from './chat-sessions'
 export { SessionRail, SessionRail as Chrome } from './chrome'
 export { Composer } from './composer'
 export { ComposerNotice } from './notice'

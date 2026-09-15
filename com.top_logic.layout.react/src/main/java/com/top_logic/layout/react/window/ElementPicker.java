@@ -32,8 +32,8 @@ import com.top_logic.layout.react.servlet.SSEUpdateQueue;
  * Typically the picking window is not the picked one: a tool window (the view designer, the UI
  * inspector) starts a pick in the main application window and shows what came back. The callback
  * therefore runs on the thread of the request that reports the click - the picked window's request,
- * not the tool window's - while holding the session's
- * {@link ReactWindowRegistry#getRequestLock() request lock} and with the sub-session of the
+ * not the tool window's - inside the session's
+ * {@link ReactWindowRegistry#beginInteraction() interaction} and with the sub-session of the
  * {@link PendingPick#requesterWindowId() requesting window} installed. Channels and controls of the
  * requesting window may therefore be updated directly from the callback: the updates flush to that
  * window's SSE queue like those of any of its own commands.

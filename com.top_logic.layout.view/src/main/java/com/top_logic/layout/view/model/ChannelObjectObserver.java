@@ -7,19 +7,17 @@ package com.top_logic.layout.view.model;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.listen.ModelChangeEvent;
 import com.top_logic.model.listen.ModelListener;
 import com.top_logic.model.listen.ModelScope;
+import com.top_logic.model.listen.ObservedObjects;
 
 /**
  * Observes the objects held by {@link ViewChannel}s: reports a change of one of those objects
@@ -59,10 +57,9 @@ public class ChannelObjectObserver implements ModelListener, ViewChannel.Channel
 	private final Consumer<ModelChangeEvent> _onChange;
 
 	/**
-	 * The observed objects by their identity, so that a value listing the same object twice
-	 * registers (and removes) a single listener.
+	 * The objects the channels currently hold, observed for this listener.
 	 */
-	private final Map<ObjectKey, TLObject> _observedObjects = new LinkedHashMap<>();
+	private final ObservedObjects _observedObjects = new ObservedObjects(this);
 
 	private ModelScope _scope;
 
@@ -121,7 +118,8 @@ public class ChannelObjectObserver implements ModelListener, ViewChannel.Channel
 		_attached = true;
 		_scope = scope;
 		registerTypeListeners();
-		registerObjectListeners();
+		_observedObjects.attach(scope);
+		updateObservedObjects();
 		for (ViewChannel channel : _channels) {
 			channel.addListener(this);
 		}
@@ -142,7 +140,7 @@ public class ChannelObjectObserver implements ModelListener, ViewChannel.Channel
 		for (ViewChannel channel : _channels) {
 			channel.removeListener(this);
 		}
-		deregisterObjectListeners();
+		_observedObjects.detach();
 		deregisterTypeListeners();
 		_scope = null;
 	}
@@ -152,8 +150,7 @@ public class ChannelObjectObserver implements ModelListener, ViewChannel.Channel
 	 */
 	@Override
 	public void handleNewValue(ViewChannel sender, Object oldValue, Object newValue) {
-		deregisterObjectListeners();
-		registerObjectListeners();
+		updateObservedObjects();
 	}
 
 	@Override
@@ -161,32 +158,15 @@ public class ChannelObjectObserver implements ModelListener, ViewChannel.Channel
 		_onChange.accept(event);
 	}
 
-	private void registerObjectListeners() {
-		if (_scope == null) {
-			return;
-		}
+	/**
+	 * Points the observation at the objects the channels now hold.
+	 */
+	private void updateObservedObjects() {
+		List<TLObject> objects = new ArrayList<>();
 		for (ViewChannel channel : _channels) {
-			for (TLObject object : objects(channel.get())) {
-				ObjectKey key = object.tId();
-				if (key == null) {
-					// An object without an identity is named by no change event, and the scope
-					// registers no listener for it.
-					continue;
-				}
-				if (_observedObjects.put(key, object) == null) {
-					_scope.addModelListener(object, this);
-				}
-			}
+			objects.addAll(objects(channel.get()));
 		}
-	}
-
-	private void deregisterObjectListeners() {
-		if (_scope != null) {
-			for (TLObject object : _observedObjects.values()) {
-				_scope.removeModelListener(object, this);
-			}
-		}
-		_observedObjects.clear();
+		_observedObjects.observe(objects);
 	}
 
 	private void registerTypeListeners() {
@@ -217,19 +197,7 @@ public class ChannelObjectObserver implements ModelListener, ViewChannel.Channel
 	 * @return The objects the given value holds, in the order the value lists them.
 	 */
 	public static Collection<TLObject> objects(Object value) {
-		if (value instanceof TLObject object) {
-			return List.of(object);
-		}
-		if (value instanceof Collection<?> values) {
-			List<TLObject> result = new ArrayList<>(values.size());
-			for (Object element : values) {
-				if (element instanceof TLObject object) {
-					result.add(object);
-				}
-			}
-			return result;
-		}
-		return List.of();
+		return ObservedObjects.objects(value);
 	}
 
 }

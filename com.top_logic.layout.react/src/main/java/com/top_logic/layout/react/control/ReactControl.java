@@ -35,6 +35,8 @@ import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.routing.RoutingParticipant;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.model.listen.ModelScope;
+import com.top_logic.model.listen.ObservedObjects;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 import de.haumacher.msgbuf.io.StringW;
@@ -190,6 +192,21 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 */
 	public ReactContext getReactContext() {
 		return _reactContext;
+	}
+
+	/**
+	 * The {@link ModelScope} the objects this control displays are observed on.
+	 *
+	 * <p>
+	 * {@code null} where the control is displayed outside a browser window - a control built in
+	 * a test, say - which observes no object changes. A control registering
+	 * {@link ObservedObjects} hands this over as it is: an observation without a scope stays
+	 * consistent and simply reports nothing.
+	 * </p>
+	 */
+	protected final ModelScope modelScope() {
+		ReactContext context = getReactContext();
+		return context == null ? null : context.getModelScope();
 	}
 
 	/**

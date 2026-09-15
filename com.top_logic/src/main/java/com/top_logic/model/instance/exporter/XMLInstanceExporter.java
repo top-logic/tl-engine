@@ -19,14 +19,18 @@ import java.util.function.Function;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.math3.util.Pair;
 
+import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.LogProtocol;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.UnreachableAssertion;
+import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.ConfigurationValueProvider;
 import com.top_logic.basic.config.InstanceAccess;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.XmlDateTimeFormat;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.io.binary.BinaryDataURI;
@@ -41,6 +45,7 @@ import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.access.StorageMapping;
 import com.top_logic.model.instance.importer.XMLInstanceImporter;
 import com.top_logic.model.instance.importer.resolver.InstanceResolver;
 import com.top_logic.model.instance.importer.resolver.NoValueResolver;
@@ -418,6 +423,12 @@ public class XMLInstanceExporter {
 	 * Serializes a primitive value in a format that can be stored in an XML configuration.
 	 *
 	 * <p>
+	 * If the application type of the given type's {@link StorageMapping} declares a {@link Format}
+	 * that accepts the given value, the value is written with that format. Otherwise, the storage
+	 * value delivered by the {@link StorageMapping} is serialized.
+	 * </p>
+	 *
+	 * <p>
 	 * A binary value that is a {@link BinaryDataSource} is serialized as data URI, see
 	 * {@link BinaryDataURI#encode(BinaryDataSource)}, keeping its content type and file name. A
 	 * binary value given as plain <code>byte[]</code> is serialized as bare base64 string.
@@ -429,7 +440,21 @@ public class XMLInstanceExporter {
 		if (value == null) {
 			return "";
 		}
+		ConfigurationValueProvider<Object> format = format(type);
+		if (format != null && format.isLegalValue(value)) {
+			return format.getSpecification(value);
+		}
 		return serializeStorageValue(type.getDBType(), type.getStorageMapping().getStorageObject(value));
+	}
+
+	private static ConfigurationValueProvider<Object> format(TLPrimitive type) {
+		try {
+			@SuppressWarnings("unchecked")
+			ConfigurationValueProvider<Object> result = (ConfigurationValueProvider<Object>) Resolvers.format(type);
+			return result;
+		} catch (ConfigurationException ex) {
+			throw new ConfigurationError(ex);
+		}
 	}
 
 	private static String serializeStorageValue(DBType dbType, Object value) {

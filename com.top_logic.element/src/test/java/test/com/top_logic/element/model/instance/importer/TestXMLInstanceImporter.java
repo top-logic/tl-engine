@@ -133,26 +133,66 @@ public class TestXMLInstanceImporter extends TLModelTest {
 
 	/**
 	 * Tests that an internationalized attribute given as plain <code>value</code> attribute is
-	 * imported as literal text instead of being silently dropped (Ticket #29558).
+	 * imported with the format of its application type.
 	 */
-	public void testImportI18NPlainValue() throws ConfigurationException {
+	public void testImportI18NLiteral() throws ConfigurationException {
 		BufferingProtocol testLog = new BufferingProtocol();
 		XMLInstanceImporter importer = importer(testLog);
 
-		ObjectsConf configs = XMLInstanceImporter.loadConfig(CharacterContents.newContent(
-			"<objects>"
-				+ "<object id=\"c1\" type=\"TestXMLInstanceImporter:A\">"
-				+ "<attribute name=\"label\" value=\"Travel\"/>"
-				+ "</object>"
-				+ "</objects>",
-			"i18n-plain-value.xml"));
-		importer.importInstances(configs);
+		importer.importInstances(i18nImport("c1", "#(\"Travel\"@en, \"Reise\"@de)"));
 		assertFalse(testLog.getErrors().toString(), testLog.hasErrors());
 
 		ResKey label = (ResKey) get(importer.getObject("c1"), "label");
 		assertNotNull("Internationalized attribute imported as empty value.", label);
 		assertEquals("Travel", ResKeyUtil.getTranslation(label, Locale.ENGLISH));
-		assertEquals("Travel", ResKeyUtil.getTranslation(label, Locale.GERMAN));
+		assertEquals("Reise", ResKeyUtil.getTranslation(label, Locale.GERMAN));
+	}
+
+	/**
+	 * Tests that a plain <code>value</code> of an internationalized attribute that is no literal
+	 * text is read as resource key.
+	 * 
+	 * <p>
+	 * The resource key itself is not persisted, since the storage of an internationalized attribute
+	 * keeps the translations of the resolved key. Therefore, the parsed value is inspected directly.
+	 * </p>
+	 */
+	public void testImportI18NResourceKey() {
+		BufferingProtocol testLog = new BufferingProtocol();
+
+		String key = "test.label.key";
+		Object value = XMLInstanceImporter.parse(log(testLog), i18nType(), key);
+		assertFalse(testLog.getErrors().toString(), testLog.hasErrors());
+
+		assertEquals(ResKey.decode(key), value);
+	}
+
+	/**
+	 * Tests that a malformed value of an internationalized attribute is reported as error instead
+	 * of failing the import.
+	 */
+	public void testImportI18NInvalidValue() throws ConfigurationException {
+		BufferingProtocol testLog = new BufferingProtocol();
+		XMLInstanceImporter importer = importer(testLog);
+
+		importer.importInstances(i18nImport("c2", "#("));
+		assertTrue("Expected an error for a malformed internationalized value.", testLog.hasErrors());
+
+		assertNull(get(importer.getObject("c2"), "label"));
+	}
+
+	private ObjectsConf i18nImport(String id, String label) throws ConfigurationException {
+		return XMLInstanceImporter.loadConfig(CharacterContents.newContent(
+			"<objects>"
+				+ "<object id=\"" + id + "\" type=\"TestXMLInstanceImporter:A\">"
+				+ "<attribute name=\"label\" value='" + label + "'/>"
+				+ "</object>"
+				+ "</objects>",
+			"i18n-plain-value.xml"));
+	}
+
+	private TLPrimitive i18nType() {
+		return (TLPrimitive) TLModelUtil.findPart(getModel(), "TestXMLInstanceImporter:A#label").getType();
 	}
 
 	private XMLInstanceImporter importer(Log testLog) {

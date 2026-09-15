@@ -1,8 +1,14 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react({ jsxRuntime: 'classic' })],
+  test: {
+    // The host supplies `tl-react-bridge` in the browser and the build keeps it external, so a test
+    // run has nothing to resolve it to. See `test/tl-react-bridge.ts` for what the stub covers.
+    alias: { 'tl-react-bridge': new URL('./test/tl-react-bridge.ts', import.meta.url).pathname },
+  },
   define: {
     'process.env.NODE_ENV': JSON.stringify('production'),
   },

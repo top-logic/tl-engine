@@ -93,6 +93,12 @@ the React chat. Session state the classic control reads - `Chat`, `ChatProcessor
 (`tsc --noEmit`), then `vitest run`, then `npm run build`. The type check is a build step of its own
 because the Vite library build strips types without checking them.
 
+`tl-react-bridge` is the host's module: the build keeps it external and the browser resolves it
+through a `<module-script specifier=…>`, so there is nothing in `node_modules` for a test run to
+import. `vite.config.ts` therefore aliases it, for the vitest run only, to `ui/test/tl-react-bridge.ts`
+- a stub of just what importing the chat's modules touches. A test that needs a *rendered* component
+needs a real React, which this is not.
+
 All four sit in `generate-resources` on purpose, so `-DskipTests` still runs the JS tests: that flag
 is for the Java suites, whose KB setup is what makes a build slow, while the whole vitest run is a
 second or two. Keeping it there means the bundle that goes into the WAR was never built from code
@@ -166,14 +172,15 @@ it rewrites a draft and never answers as a persona.
 
 | File | What it owns |
 |--|--|
-| `App.tsx` | SSE wiring, session lifecycle, run state, connection health |
+| `App.tsx` | The shipped chat as a composition over one `useChat` store, plus this element's own geometry |
+| `chat-store.ts` | The chat's state, one store per `chat-id`: bootstrap, capabilities, sessions, turn settings, transcript, run, layout preferences and the one `EventSource` |
 | `composer.tsx` | Input, plus menu, model picker, attachments, drag and drop, improve-prompt |
 | `thread.tsx` | Transcript: user bubbles, answers, run meta line, trace panels |
 | `context-usage.tsx` | The context ring and its popover, plus how each number is derived |
 | `prompts.tsx` | Approval and question cards above the composer, with their countdowns |
 | `markdown.tsx` / `highlight.ts` | Markdown rendering, sanitizing, code blocks |
 | `api.ts` | Every call to `/chat/*`, plus the persisted-transcript to message mapping |
-| `reducer.ts` / `store.ts` / `types.ts` | Transcript reducer, run snapshot store, shared types |
+| `reducer.ts` / `store.ts` / `types.ts` | Transcript reducer, the `runStore` snapshot a host may subscribe to, shared types |
 | `extensions.ts` | Host composition contract (`ChatExtensions`) |
 | `rail.tsx` / `side-pane.tsx` / `progress.tsx` | Right rail, artefact pane, Fortschritt |
 | `token-input.tsx` / `reference.ts` | The composer's inline reference tokens and how they travel |
@@ -279,6 +286,27 @@ via `AgentChatControl.putState` and written through `PUT /chat/preferences`.
 The Leiste badge is the sum of each section's `badge()` minus the total last stored when the rail was
 opened - "N new since you last looked", so a section whose rows simply exist contributes none and
 uses `count()` for the number beside its own title instead.
+
+### Where the chat's state lives
+
+Everything the conversation *is* lives in `chat-store.ts`, not in a component: one `ChatStore` per
+`chat-id`, held in a module-scoped map and subscribed with `useSyncExternalStore` through
+`useChat(chatId, boot)`. The whole chat bundle is a single ES module instance in the browser
+(`tl-chat-ui.js` and `tl-chat-seams.js` are shims over one `tl-chat-shared.js`), so that map is one
+object for every chat element on the page - which is what lets several view elements show one
+conversation.
+
+| | |
+|--|--|
+| What the store owns | The bootstrap, the capabilities, the session list and the open session, the turn settings, the transcript (through `chatReducer`), the run, the layout preferences, and the chat's one `EventSource` |
+| What a chat element keeps | Its own geometry and its host composition: for `App` the session drawer, the collapsed rail, the sheet breakpoint, the published `--composer-height`, and `ChatExtensions` |
+| Lifetime | The first element to subscribe opens the stream, the last to leave closes it and drops the chat - a fresh mount starts as fresh as it did when `App` owned the state |
+| `PUT /chat/preferences` | Written by the store and by nothing else, so several elements on one chat cannot race on the `tl-chat.layout` key |
+
+`chat-id` is how elements find each other. `<agent-chat>` leaves it empty and `App` falls back to
+`props.controlId`, so two chats in one window stay two chats - Consulting's `CopilotRegistry` keeps a
+*list* of live panels, and a fixed key would silently merge their transcripts
+(`chat-store.test.ts`, `testTwoAppsInOneWindowDoNotShareATranscript`).
 
 ### Stability
 

@@ -24,10 +24,9 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.layout.component.model.SelectionEvent;
+import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
-import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.tree.ReactTreeControl;
 import com.top_logic.layout.react.controlprovider.MetaResourceControlProvider;
@@ -45,6 +44,8 @@ import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.model.ObservableTreeModel;
 import com.top_logic.layout.view.model.ObservedTypes;
+import com.top_logic.layout.view.model.TreeSelectionBinding;
+import com.top_logic.mig.html.DefaultMultiSelectionModel;
 import com.top_logic.mig.html.DefaultSingleSelectionModel;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.SelectionModelOwner;
@@ -52,6 +53,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
+import com.top_logic.table.SelectionMode;
 
 /**
  * Declarative {@link UIElement} that wraps a {@link ReactTreeControl}.
@@ -112,6 +114,9 @@ public class TreeElement implements UIElement {
 
 		/** Configuration name for {@link #getSelection()}. */
 		String SELECTION = "selection";
+
+		/** Configuration name for {@link #getSelectionMode()}. */
+		String SELECTION_MODE = "selection-mode";
 
 		/** Configuration name for {@link #getNodeContent()}. */
 		String NODE_CONTENT = "nodeContent";
@@ -242,6 +247,34 @@ public class TreeElement implements UIElement {
 		ChannelRef getSelection();
 
 		/**
+		 * Whether the user may select one node at a time, or any number of them.
+		 *
+		 * <p>
+		 * {@link SelectionMode#SINGLE} (the default) replaces the selection with every click, and
+		 * the arrow keys move the selection from node to node.
+		 * </p>
+		 *
+		 * <p>
+		 * {@link SelectionMode#MULTI} keeps a plain click replacing the selection, but a click with
+		 * {@code Ctrl} adds a node to it or takes it out again, and a click with {@code Shift}
+		 * selects the range from the node the selection started at. The arrow keys then move the
+		 * keyboard cursor alone, leaving the selection where it is; {@code Space} adds the node the
+		 * cursor is on to the selection or takes it out again, and an arrow with {@code Shift} grows
+		 * the range from the node the selection started at.
+		 * </p>
+		 *
+		 * <p>
+		 * The {@link #getSelection() selection channel} holds the business object of the selected
+		 * node while exactly one node is selected, the set of those objects while there are several,
+		 * and nothing while there is none - so a display bound to the channel works with either
+		 * mode, and only one that is to show several objects at once has to expect a set.
+		 * </p>
+		 */
+		@Name(SELECTION_MODE)
+		@ComplexDefault(SelectionMode.SingleDefault.class)
+		SelectionMode getSelectionMode();
+
+		/**
 		 * The command a node activation runs - a double-click on the node, or {@code Enter} while
 		 * the node carries the keyboard focus.
 		 *
@@ -324,30 +357,21 @@ public class TreeElement implements UIElement {
 		TreeBuilder<DefaultTreeUINode> builder = createTreeBuilder(inputChannels);
 		DefaultTreeUINodeModel treeModel = new DefaultTreeUINodeModel(builder, rootObject);
 
-		// 4. Create selection model.
-		DefaultSingleSelectionModel<Object> selectionModel =
-			new DefaultSingleSelectionModel<>(SelectionModelOwner.NO_OWNER);
+		// 4. Create the selection model for the configured selection mode.
+		SelectionMode selectionMode = _config.getSelectionMode();
+		SelectionModel<Object> selectionModel = selectionMode == SelectionMode.MULTI
+			? new DefaultMultiSelectionModel<>(SelectionModelOwner.NO_OWNER)
+			: new DefaultSingleSelectionModel<>(SelectionModelOwner.NO_OWNER);
 
 		// 5. Create ReactTreeControl.
 		ReactTreeControl treeControl = new ReactTreeControl(context, treeModel, selectionModel, _nodeContentProvider);
+		treeControl.setSelectionMode(selectionMode);
 
 		// 6. Wire selection channel.
 		ChannelRef selectionRef = _config.getSelection();
 		if (selectionRef != null) {
 			ViewChannel selectionChannel = context.resolveChannel(selectionRef);
-			selectionModel.addSelectionListener(new SelectionListener<>() {
-				@Override
-				public void notifySelectionChanged(SelectionModel<Object> model, SelectionEvent<Object> event) {
-					Set<?> newSelection = event.getNewSelection();
-					if (newSelection.size() == 1) {
-						selectionChannel.set(businessObject(newSelection.iterator().next()));
-					} else if (newSelection.isEmpty()) {
-						selectionChannel.set(null);
-					} else {
-						selectionChannel.set(newSelection);
-					}
-				}
-			});
+			selectionModel.addSelectionListener(new TreeSelectionBinding<>(selectionChannel));
 		}
 
 		// 7. Wire the activation command, which runs with the activated node's business object.

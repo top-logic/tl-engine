@@ -386,11 +386,6 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	private static final String DIR_PAGE_DOWN = "pageDown";
 
-	// Selection mode values.
-	private static final String MODE_MULTI = "multi";
-
-	private static final String MODE_SINGLE = "single";
-
 	// Sort direction/accumulation argument values.
 	private static final String SORT_ASC = "asc";
 
@@ -406,7 +401,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	private int _viewportCount = 50;
 
-	private final String _selectionMode;
+	private final SelectionMode _selectionMode;
 
 	private final Set<Object> _selectedKeys = new LinkedHashSet<>();
 
@@ -465,10 +460,10 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		super(context, null, "TLTableView");
 		_view = view;
 		_treeMode = treeMode;
-		_selectionMode = view.state().getSelection().mode() == SelectionMode.MULTI ? MODE_MULTI : MODE_SINGLE;
+		_selectionMode = view.state().getSelection().mode();
 
 		putState(ROW_HEIGHT, Integer.valueOf(36));
-		putState(SELECTION_MODE, _selectionMode);
+		putState(SELECTION_MODE, _selectionMode.getExternalName());
 		putState(COLUMN_SELECT, Boolean.valueOf(_columnSelect));
 		putState(FILTER_BAR, Boolean.valueOf(_filterBar));
 		pushGrouping();
@@ -598,6 +593,25 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	}
 
 	/**
+	 * Whether this table lets the user select one row at a time, or any number of them.
+	 *
+	 * <p>
+	 * The mode is what the {@link TableView#state() view state} was seeded with when this control
+	 * was created; it does not change over the life of the control.
+	 * </p>
+	 */
+	public SelectionMode getSelectionMode() {
+		return _selectionMode;
+	}
+
+	/**
+	 * Whether more than one row may be selected at a time.
+	 */
+	private boolean multiSelection() {
+		return _selectionMode == SelectionMode.MULTI;
+	}
+
+	/**
 	 * Drops the cached cell controls of the given rows and re-renders the current viewport, so
 	 * those rows' cells are rebuilt on the next write (e.g. after a row's editability changed).
 	 *
@@ -628,17 +642,40 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	 *        The row key to select, or {@code null} to clear.
 	 */
 	public void selectRow(Object key) {
+		selectRows(key == null ? Set.of() : Collections.singleton(key));
+	}
+
+	/**
+	 * Selects exactly the rows whose {@link Row#key() row key} is among the given ones (clearing any
+	 * other selection), leaving out the keys no current row has. Pushes the change to the client,
+	 * scrolls the first selected row into view and notifies the
+	 * {@link #addSelectionListener(SelectionListener) selection listeners}.
+	 *
+	 * <p>
+	 * A selection of more than one row is what {@link SelectionMode#MULTI} allows; in
+	 * {@link SelectionMode#SINGLE} the caller is responsible for passing at most one key.
+	 * </p>
+	 *
+	 * @param keys
+	 *        The row keys to select, empty to clear the selection.
+	 */
+	public void selectRows(Collection<?> keys) {
 		_selectedKeys.clear();
 		_cursorIndex = -1;
 		_selectionAnchor = -1;
-		if (key != null) {
+		if (!keys.isEmpty()) {
+			Set<?> requested = keys instanceof Set<?> set ? set : new HashSet<Object>(keys);
 			List<Row<R>> rows = _view.rows(0, _view.rowCount());
 			for (int i = 0; i < rows.size(); i++) {
-				if (rows.get(i).key().equals(key)) {
-					_selectedKeys.add(rows.get(i).key());
-					_cursorIndex = i;
-					_selectionAnchor = i;
-					break;
+				Row<R> row = rows.get(i);
+				if (row.kind() == RowKind.DATA && requested.contains(row.key())) {
+					_selectedKeys.add(row.key());
+					if (_cursorIndex < 0) {
+						// The first selected row carries the cursor and is the range anchor, so a
+						// keyboard range extension continues from where the selection starts.
+						_cursorIndex = i;
+						_selectionAnchor = i;
+					}
 				}
 			}
 		}
@@ -1274,7 +1311,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		Object key = keyAt(rowIndex);
 		_cursorIndex = rowIndex;
 
-		if (MODE_MULTI.equals(_selectionMode)) {
+		if (multiSelection()) {
 			if (shiftKey && _selectionAnchor >= 0) {
 				int from = Math.min(_selectionAnchor, rowIndex);
 				int to = Math.max(_selectionAnchor, rowIndex);
@@ -1539,9 +1576,9 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		_cursorIndex = target;
 		Object key = keyAt(target);
 
-		if (MODE_MULTI.equals(_selectionMode) && move) {
+		if (multiSelection() && move) {
 			// Ctrl: move the focus cursor only; leave the selection untouched.
-		} else if (MODE_MULTI.equals(_selectionMode) && extend) {
+		} else if (multiSelection() && extend) {
 			if (_selectionAnchor < 0) {
 				_selectionAnchor = from < 0 ? target : from;
 			}
@@ -2040,9 +2077,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	/** Writes the given keys as the {@link TableView}'s selection. */
 	private void selectInView(Set<Object> keys) {
-		_view.select(new Selection(
-			MODE_MULTI.equals(_selectionMode) ? SelectionMode.MULTI : SelectionMode.SINGLE,
-			new LinkedHashSet<>(keys)));
+		_view.select(new Selection(_selectionMode, new LinkedHashSet<>(keys)));
 	}
 
 	/**

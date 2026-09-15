@@ -155,10 +155,32 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 		return _config.getImage();
 	}
 
+	/**
+	 * The text explaining the button, re-read by its control whenever the model's state changes.
+	 *
+	 * <p>
+	 * While the command is visible but not executable, this is the reason its rules gave for
+	 * disabling it ({@link ExecutableState#getI18NReasonKey()}) - the button then says why it cannot
+	 * be used. Otherwise, and whenever the state carries no reason to show, it is the configured
+	 * {@link ViewCommand.Config#getTooltip() tooltip}.
+	 * </p>
+	 */
 	@Override
 	public String getTooltip() {
-		ResKey key = _config.getTooltip();
-		if (key == null) {
+		if (_executableState.isVisible() && !_executableState.isExecutable()) {
+			String reason = resolve(_executableState.getI18NReasonKey());
+			if (reason != null && !reason.isEmpty()) {
+				return reason;
+			}
+		}
+		return resolve(_config.getTooltip());
+	}
+
+	/**
+	 * The text of the given key, {@code null} if there is no key to resolve.
+	 */
+	private static String resolve(ResKey key) {
+		if (key == null || key == ResKey.NONE) {
 			return null;
 		}
 		return Resources.getInstance().getString(key);
@@ -320,7 +342,7 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 	private void updateExecutableState() {
 		Object input = resolveInput();
 		ExecutableState newState = executability(input);
-		if (newState.visibility() != _executableState.visibility()) {
+		if (!newState.equals(_executableState)) {
 			_executableState = newState;
 			fireStateChanged();
 		}

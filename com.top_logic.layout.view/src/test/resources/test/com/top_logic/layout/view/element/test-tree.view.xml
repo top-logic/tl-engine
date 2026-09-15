@@ -5,7 +5,10 @@
     <channel name="selectedNode" />
   </channels>
 
-  <tree selection="selectedNode">
+  <tree
+    selection="selectedNode"
+    selection-mode="multi"
+  >
     <inputs>
       <input channel="rootInput" />
     </inputs>

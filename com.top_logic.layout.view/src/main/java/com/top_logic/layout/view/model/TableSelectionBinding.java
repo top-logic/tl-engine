@@ -13,6 +13,7 @@ import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.react.control.table.TableViewControl.SelectionListener;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.table.Row;
+import com.top_logic.table.SelectionMode;
 
 /**
  * Two-way binding between the selection of a {@link TableViewControl} and a {@link ViewChannel}.
@@ -29,15 +30,24 @@ import com.top_logic.table.Row;
  * <code>null</code>.</li>
  * <li>A row this table displayed as selected is gone after a refresh of its rows - deleted,
  * filtered away by a changed input, no longer matching the row criterion. The value names
- * something nobody can see any more, so the channel is cleared.</li>
+ * something nobody can see any more, so the surviving selection is written in its place: the one
+ * row that is left as that object, several as the {@link Set} of their keys, none as
+ * <code>null</code>.</li>
  * </ul>
  *
  * <p>
  * A value the table merely does not contain means no more than "no row selected here": the table
  * shows no selection and leaves the channel alone. Clearing it would destroy what another writer
  * put there - the row a second table over a different row set selected, or the object a create
- * command wrote before this table's rows caught up with it. A value that is a {@link Collection} is
- * applied as "no selection" as well, and is left alone for the same reason.
+ * command wrote before this table's rows caught up with it.
+ * </p>
+ *
+ * <p>
+ * A value that is a {@link Collection} is the selection of several rows. A
+ * {@link SelectionMode#MULTI} table displays the rows it has for those keys and ignores the rest -
+ * a collection none of whose keys it has is "no row selected here" like any other foreign value,
+ * and leaves the channel alone. A {@link SelectionMode#SINGLE} table cannot display such a value at
+ * all: it shows no selection and leaves the channel alone for the same reason.
  * </p>
  *
  * <p>
@@ -93,8 +103,9 @@ public class TableSelectionBinding {
 	 * <p>
 	 * To be called by the owner of the table directly after {@link TableViewControl#refreshData()}:
 	 * the channel value is applied again, so a row that appears only now (the just-created object
-	 * the channel already names) is selected and scrolled into view; and a row this table displayed
-	 * as selected before the refresh that is no longer among the rows clears the channel.
+	 * the channel already names) is selected and scrolled into view; and when a row this table
+	 * displayed as selected is no longer among the rows, the surviving selection is written to the
+	 * channel - <code>null</code> when nothing of it is left.
 	 * </p>
 	 */
 	public void rowsRefreshed() {
@@ -102,13 +113,16 @@ public class TableSelectionBinding {
 		// table still holds tells which of the displayed rows survived. The refresh itself does not
 		// notify the selection listener, hence the last notified selection is the one displayed
 		// before it.
-		boolean displayedRowGone = !_displayedKeys.isEmpty()
-			&& !_table.getSelectedKeys().containsAll(_displayedKeys);
+		Set<Object> survivors = new LinkedHashSet<>(_table.getSelectedKeys());
+		boolean displayedRowGone = !_displayedKeys.isEmpty() && !survivors.containsAll(_displayedKeys);
+		_displayedKeys = survivors;
 
 		applyChannelValue();
 
-		if (displayedRowGone && _table.getSelectedKeys().isEmpty()) {
-			_channel.set(null);
+		if (displayedRowGone) {
+			// The value names rows nobody can see any more, so it is replaced by what is left of
+			// the selection - which is no selection at all when every displayed row vanished.
+			writeSelection(survivors);
 		}
 	}
 
@@ -136,15 +150,23 @@ public class TableSelectionBinding {
 	 */
 	private void handleSelectionChanged(Set<Object> selectedKeys) {
 		if (!_applyingFromChannel) {
-			if (selectedKeys.size() == 1) {
-				_channel.set(selectedKeys.iterator().next());
-			} else if (selectedKeys.isEmpty()) {
-				_channel.set(null);
-			} else {
-				_channel.set(selectedKeys);
-			}
+			writeSelection(selectedKeys);
 		}
 		_displayedKeys = new LinkedHashSet<>(selectedKeys);
+	}
+
+	/**
+	 * Writes the given {@link Row#key() row keys} to the channel: one as that object, several as
+	 * their {@link Set}, none as <code>null</code>.
+	 */
+	private void writeSelection(Set<Object> selectedKeys) {
+		if (selectedKeys.size() == 1) {
+			_channel.set(selectedKeys.iterator().next());
+		} else if (selectedKeys.isEmpty()) {
+			_channel.set(null);
+		} else {
+			_channel.set(new LinkedHashSet<>(selectedKeys));
+		}
 	}
 
 	/**
@@ -161,7 +183,13 @@ public class TableSelectionBinding {
 		}
 		_applyingFromChannel = true;
 		try {
-			_table.selectRow(value instanceof Collection ? null : value);
+			if (value instanceof Collection<?> keys) {
+				// A table selecting one row at a time has no way of showing a selection of several;
+				// one selecting any number shows the rows it has for those keys.
+				_table.selectRows(_table.getSelectionMode() == SelectionMode.MULTI ? keys : Set.of());
+			} else {
+				_table.selectRow(value);
+			}
 		} finally {
 			_applyingFromChannel = false;
 		}

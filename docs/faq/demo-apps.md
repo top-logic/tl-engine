@@ -5,7 +5,7 @@ Two demo applications exist (see the "Repository Structure" section of the root 
 - **`tl-demo`** (`com.top_logic.demo`) — the classic layout UI (Strukturen / Tabellen / … tabs, classic tree / table / grid components) is at **`/tl-demo/servlet/LayoutServlet`**. Its React `app.view.xml` demo is at `/view/` (`tl-layout-view` overrides `startPage` to it).
 - **`tl-demo-react`** (`com.top_logic.demo.react`) — the React-only demo, served at `/view/`. This is the successor test bed for React UI features.
 
-Each needs its own `root` / `root1234` login.
+Each needs its own `root` / `root1234` login. `tl-demo-react` requires it before anything is shown: it configures `login-view="login-page.view.xml"` in its `ViewConfig`, so an anonymous session sees the login page whatever URL it asks for, and the requested URL is the one it lands on after the login. The React view of `tl-demo` configures no login view, so it is browsed anonymously and the login is reached through the account area of its app bar.
 
 ## Scripted-test notes (classic UI)
 

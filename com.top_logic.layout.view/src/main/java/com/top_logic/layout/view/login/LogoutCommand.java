@@ -10,10 +10,12 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.protocol.JSSnipplet;
+import com.top_logic.layout.view.ViewServlet;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -21,8 +23,10 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * {@link ViewCommand} that switches the session back to the anonymous user.
  *
  * <p>
- * The actual session swap is deferred to the reload handled by {@code ViewServlet} via
- * {@link PendingSessionAction}.
+ * The session swap is deferred to the next request of the view servlet via
+ * {@link PendingSessionAction}. The browser is sent to the root of the view application: the page
+ * the departing user was on is theirs, not the landing page of whoever sits down at the browser
+ * next.
  * </p>
  */
 @InApp
@@ -51,7 +55,15 @@ public class LogoutCommand implements ViewCommand {
 	public HandlerResult execute(ReactContext context, Object input) {
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
 		PendingSessionAction.requestLogout(displayContext.asRequest().getSession());
-		context.getSSEQueue().enqueue(JSSnipplet.create().setCode("window.location.reload();"));
+		context.getSSEQueue().enqueue(JSSnipplet.create().setCode(navigateToRootCode(context)));
 		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	private static String navigateToRootCode(ReactContext context) {
+		StringBuilder code = new StringBuilder();
+		code.append("window.location.href = ");
+		TagUtil.writeJsString(code, context.getContextPath() + ViewServlet.ROOT_PATH);
+		code.append(";");
+		return code.toString();
 	}
 }

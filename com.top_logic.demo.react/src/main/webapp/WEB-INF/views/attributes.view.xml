@@ -238,6 +238,9 @@
 							<column attribute="amount"/>
 							<column attribute="date"/>
 							<column attribute="owner"/>
+							<column attribute="url"/>
+							<column attribute="email"/>
+							<column attribute="phone"/>
 						</columns>
 						<rows>all(`demo.react:Demo`)</rows>
 						<on-activate class="com.top_logic.layout.view.command.GenericViewCommand"
@@ -372,6 +375,8 @@
 									<field attribute="language"/>
 									<field attribute="timeZone"/>
 									<field attribute="url"/>
+									<field attribute="email"/>
+									<field attribute="phone"/>
 									<field attribute="json"/>
 									<field attribute="image"/>
 									<field attribute="priority"/>

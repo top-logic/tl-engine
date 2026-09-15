@@ -7,11 +7,12 @@ import { InvoiceCite, InvoiceList, InvoicePane, invoiceOf, parseInvoices, type I
 const { useCallback, useMemo, useState } = React
 
 /**
- * Host composition of the chat: a Rechnungen rail on this application's own invoices, a read-only
- * invoice pane, and the chip the pane's "mark a passage" gesture produces.
+ * Host composition of the chat: this application's own Belege beside the framework's Quellen, a
+ * read-only invoice pane that opens as a document, the invoices as "@" candidates, and the inline
+ * reference a marked passage in that pane produces.
  *
- * The control still binds the session; this component only registers as {@code DemoChat} and
- * passes an {@code extensions} object to the exported {@code App}.
+ * The control still binds the session; this component only registers as {@code DemoChat} and passes
+ * an {@code extensions} object to the exported {@code App}.
  */
 export function DemoChat(props: TLCellProps) {
   const state = useTLState()
@@ -70,6 +71,29 @@ export function DemoChat(props: TLCellProps) {
           ),
         },
       ],
+      // What this application adds to the framework's Kontext section.
+      contextFacts: () => [{ id: 'invoices', label: 'Belege', value: String(invoices.length) }],
+      composerAddons: {
+        // What "@" offers in this application: its own invoices, as inline references. Deleting
+        // this is what takes the "@" picker away, so `extensions.test.ts` asserts it is declared.
+        referenceCandidates: (query: string) => {
+          const wanted = query.trim().toLowerCase()
+          return invoices
+            .filter((invoice) => !wanted || invoice.name.toLowerCase().includes(wanted))
+            .map((invoice) => ({
+              id: invoice.id,
+              label: invoice.name,
+              hint: invoice.state || invoice.meta,
+              token: {
+                kind: 'invoice',
+                id: invoice.id,
+                label: invoice.name,
+                location: '',
+                text: `${invoice.name}, ${invoice.meta || 'ohne Datum'}, ${invoice.state || 'ohne Betrag'}`,
+              },
+            }))
+        },
+      },
       // The seam is enough for a host action beside copy / rate / regenerate.
       messageActions: [
         {

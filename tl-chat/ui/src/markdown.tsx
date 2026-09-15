@@ -80,11 +80,13 @@ marked.use({
       name: 'citation',
       level: 'inline',
       start(src: string) {
-        const at = src.indexOf('[')
-        return at < 0 ? undefined : at
+        // The space before a marker belongs to the marker: cut the text token in front of it, so
+        // the tokenizer below can swallow it and leave no line-break opportunity behind.
+        const found = /[ \t]*\[\d+\]/.exec(src)
+        return found ? found.index : undefined
       },
       tokenizer(src: string) {
-        const match = /^\[(\d+)\]/.exec(src)
+        const match = /^[ \t]*\[(\d+)\]/.exec(src)
         if (!match) return undefined
         // Only a number this message actually cites becomes a chip. Everything else in brackets is
         // the author's own text - an array index, a footnote marker - and stays as written.
@@ -96,10 +98,10 @@ marked.use({
         const id = citationIds.get(n) ?? ''
         // A small grey number after the sentence, not a coloured chip: it must say where the fact
         // comes from without pulling the eye away from the text.
-        // A non-breaking space binds the marker to the word it belongs to, so it can never be
-        // wrapped onto a line of its own when the preceding line happens to be full.
+        // No whitespace in front of it - the tokenizer ate it - so there is no break opportunity
+        // between the word and its marker, and the gap is the button's own margin.
         return (
-          `&nbsp;<button type="button" class="cite-marker" data-citation-index="${n}"` +
+          `<button type="button" class="cite-marker" data-citation-index="${n}"` +
           ` data-citation-id="${escapeHtml(id)}" aria-label="${escapeHtml(citationLabels.citationMarker(n))}">` +
           `${n}</button>`
         )
@@ -274,6 +276,16 @@ export function Markdown({
     return () => window.removeEventListener('keydown', onKey)
   }, [open])
 
+  /** Whether anything can actually open this source: a host node, or a web address. */
+  const canOpen = useCallback(
+    (source: Citation) => {
+      if (onOpenSource) return true
+      if (renderAnnotation && message && renderAnnotation(source.index, source, message, noop)) return true
+      return Boolean(source.url || /^https?:\/\//i.test(source.id))
+    },
+    [message, noop, onOpenSource, renderAnnotation],
+  )
+
   const hovered = find(open)
   const opened = find(activated)
   const hostNode =
@@ -297,7 +309,12 @@ export function Markdown({
           style={anchor ? { top: anchor.top, left: anchor.left } : undefined}
           onMouseLeave={() => setOpen(null)}
         >
-          <SourcePopover citation={hovered} labels={labels} onOpen={() => openSource(hovered.index)} />
+          <SourcePopover
+            citation={hovered}
+            labels={labels}
+            canOpen={canOpen(hovered)}
+            onOpen={() => openSource(hovered.index)}
+          />
         </div>
       ) : null}
       {hostNode}
@@ -313,10 +330,13 @@ export function SourcePopover({
   citation,
   labels,
   onOpen,
+  canOpen = true,
 }: {
   citation: Citation
   labels: Labels
   onOpen: () => void
+  /** False when nothing in this application can open the source; the action is then not offered. */
+  canOpen?: boolean
 }) {
   return (
     <div className="cite-popover" role="dialog" aria-label={citation.label || citation.id}>
@@ -327,9 +347,11 @@ export function SourcePopover({
           <Excerpt excerpt={citation.excerpt} passage={citation.passage ?? ''} />
         </p>
       ) : null}
-      <button type="button" className="cite-popover-open" onClick={onOpen}>
-        {labels.openSource}
-      </button>
+      {canOpen ? (
+        <button type="button" className="cite-popover-open" onClick={onOpen}>
+          {labels.openSource}
+        </button>
+      ) : null}
     </div>
   )
 }

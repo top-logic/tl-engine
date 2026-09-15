@@ -2805,6 +2805,8 @@
  */
 .cite-marker {
   display: inline;
+  /* The space in front of the marker, which the tokenizer removed so it cannot become a line break. */
+  margin-inline-start: 0.2rem;
   padding: 0 0.1rem;
   border: 0;
   background: transparent;
@@ -2878,12 +2880,16 @@
    * track was 0 px wide, `min(100%, 28rem)` resolved to 0, and the artefact the user clicked was a
    * 1 px sliver. Spanning every column gives the sheet the workspace as its containing block again.
    */
+  /*
+   * A sheet covers the thread and stops at the composer: the model picker, the send button and the
+   * Enter hint stay where they are and stay usable while an artefact is open.
+   */
   .side-column,
   .side-pane.is-sheet {
     grid-column: 1 / -1;
     grid-row: 1;
     position: absolute;
-    inset: 0 0 0 auto;
+    inset: 0 0 var(--composer-height, 0px) auto;
     z-index: 4;
     width: min(100%, 28rem);
     box-shadow: var(--chat-shadow);
@@ -2896,6 +2902,40 @@
 
   .side-strip {
     display: none;
+  }
+
+  /*
+   * An empty chat centres its greeting and its composer in the page. With a sheet open that puts
+   * the composer in the middle of what the sheet covers, so for as long as one is open the stage
+   * falls back to the ordinary layout and the composer sits at the bottom, below the sheet's edge.
+   */
+  .tl-cockpit.has-side .stage.is-empty {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+
+  .tl-cockpit.has-side .stage.is-empty .thread-shell {
+    flex: 1;
+  }
+
+  /* What a sheet covers is dimmed and clickable: that is how it says it is an overlay. */
+  .side-scrim {
+    position: absolute;
+    inset: 0 0 var(--composer-height, 0px) 0;
+    z-index: 3;
+    background: color-mix(in srgb, var(--text-primary) 28%, transparent);
+  }
+}
+
+/* Above the breakpoint the side is a column, so there is nothing to dim. */
+.side-scrim {
+  display: none;
+}
+
+@media (max-width: 1279.98px) {
+  .side-scrim {
+    display: block;
   }
 }
 

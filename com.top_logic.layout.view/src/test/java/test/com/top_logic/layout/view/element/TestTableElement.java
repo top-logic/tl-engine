@@ -266,6 +266,39 @@ public class TestTableElement extends TestCase {
 	}
 
 	/**
+	 * Tests that the {@code <update>} and {@code <can-update>} of a {@code <computed-column>} are
+	 * parsed, and that a column that is edited without saying what its values are is reported.
+	 */
+	public void testParseEditableComputedColumn() throws Exception {
+		TableElement.Config tableConfig = readTableConfig();
+		ComputedColumn.Config total = computedColumn(tableConfig);
+
+		assertEquals("total", total.getName());
+		assertNotNull("The column writes an edited value back.", total.getUpdate());
+		assertNotNull("The column says which of its rows are edited.", total.getCanUpdate());
+		assertNull("A column that is not edited declares neither.",
+			TypedConfiguration.newConfigItem(ComputedColumn.Config.class).getUpdate());
+
+		TableElement.Config untyped = TypedConfiguration.copy(tableConfig);
+		ComputedColumn.Config edited = computedColumn(untyped);
+		edited.update(edited.descriptor().getProperty(ComputedColumn.Config.TYPE), null);
+
+		assertContains("must declare the type", errors(untyped));
+	}
+
+	/**
+	 * The {@code <computed-column>} of the given table.
+	 */
+	private static ComputedColumn.Config computedColumn(TableElement.Config tableConfig) {
+		for (PolymorphicConfiguration<? extends ColumnDeclaration> column : tableConfig.getColumns().getColumns()) {
+			if (column instanceof ComputedColumn.Config computed) {
+				return computed;
+			}
+		}
+		throw new AssertionError("The table declares a computed column.");
+	}
+
+	/**
 	 * The problems reported while instantiating the given configuration.
 	 */
 	private static List<String> errors(TableElement.Config tableConfig) {

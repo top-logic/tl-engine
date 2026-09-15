@@ -25,7 +25,8 @@ import com.top_logic.model.util.TLModelNamingConvention;
  * <p>
  * The attribute says everything about the column - what its cells hold, how they are displayed,
  * sorted, filtered and searched, how wide the column is and what its header says - so declaring the
- * attribute is all such a column needs.
+ * attribute is all such a column needs. Where the rows of the table are edited, an edited cell
+ * writes its value to that attribute.
  * </p>
  */
 @InApp
@@ -97,7 +98,8 @@ public class AttributeColumn extends AbstractColumnDeclaration {
 		String attribute = _attribute;
 		TLStructuredTypePart part = scope.part(attribute);
 		return List.of(setup(attribute, derivedLabel(part), ColumnType.of(part),
-			row -> ColumnProviderService.attributeValue(row, attribute), scope));
+			row -> ColumnProviderService.attributeValue(row, attribute), new AttributeCellEditing(attribute),
+			scope));
 	}
 
 	/**

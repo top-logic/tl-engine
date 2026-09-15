@@ -38,6 +38,7 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.CompositionTableElement;
 import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.layout.view.model.TableSelectionBinding;
+import com.top_logic.layout.view.table.CellEditing;
 import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.ColumnResolution;
@@ -80,9 +81,10 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
- * Data columns are derived from the model per attribute (sortable, filterable, cells displayed
- * through the attribute's view-mode field display). While the form is in edit mode, the cells of
- * rows covered by the {@link RowEditPolicy} render the attribute's editable field control instead.
+ * Data columns come from the declarations the table is built with (sortable, filterable, cells
+ * displayed through the view-mode field display of the column's values). While the form is in edit
+ * mode, the cells of rows covered by the {@link RowEditPolicy} render the input the column's
+ * {@link CellEditing} builds, where it offers one.
  * An action column for row removal is appended in edit mode when the binding supports removal; a
  * detail-open column is prepended when a {@link #setDetailDialog detail dialog} is configured.
  * </p>
@@ -609,7 +611,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		ColumnResolution scope = new ColumnResolution(binding().getRowType(), _context);
 		for (ColumnSetup setup : ColumnDeclarations.resolve(_columns, scope)) {
 			setups.add(setup);
-			columns.add(adapt(setup.buildColumn(), setup, editMode && !setup.readonly()));
+			columns.add(adapt(setup.buildColumn(), setup, editMode));
 		}
 		return columns;
 	}
@@ -825,6 +827,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 		private final ColumnSetup _setup;
 
+		/** Whether the enclosing form is editing, so that an editable cell renders its input. */
 		private final boolean _editable;
 
 		EditAwareColumn(Column<Object, V> inner, ColumnSetup setup, boolean editable) {
@@ -855,9 +858,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 		@Override
 		public CellContent renderCell(TLObject row) {
-			if (_editable && _setup.type().part() != null && row != null && isRowEditable(row)) {
+			if (_editable && row != null && isRowEditable(row) && offersEdit(row)) {
 				return new CellContent.Raw((CellControlFactory) context -> {
-					ReactControl editControl = buildEditCellControl(context, row, name());
+					ReactControl editControl = buildEditCellControl(context, row, _setup);
 					return editControl != null
 						? editControl
 						: readOnlyControl(context, row);
@@ -867,6 +870,14 @@ public class RowSetTableControl extends AbstractCompositionControl {
 				return new CellContent.Raw((CellControlFactory) context -> readOnlyControl(context, row));
 			}
 			return _inner.renderCell(row);
+		}
+
+		/**
+		 * Whether the column offers an edit of the given row's cell.
+		 */
+		private boolean offersEdit(TLObject row) {
+			CellEditing editing = _setup.editing();
+			return editing != null && editing.canEdit(row);
 		}
 
 		/**

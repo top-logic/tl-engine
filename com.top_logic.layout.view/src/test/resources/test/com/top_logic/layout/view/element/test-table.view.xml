@@ -90,6 +90,8 @@
 					<input channel="testInput"/>
 				</inputs>
 				<value>factor -&gt; row -&gt; $factor * $row.get(`demo.test:Row#amount`)</value>
+				<update>factor -&gt; row -&gt; value -&gt; $row.set(`demo.test:Row#amount`, $value / $factor)</update>
+				<can-update>factor -&gt; row -&gt; $row.get(`demo.test:Row#amount`) != null</can-update>
 				<aggregate>rows -&gt; $rows.size()</aggregate>
 			</computed-column>
 		</columns>

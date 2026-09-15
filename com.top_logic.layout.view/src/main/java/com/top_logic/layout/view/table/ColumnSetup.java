@@ -40,8 +40,9 @@ import com.top_logic.table.impl.DelegatingColumn;
  * @param width
  *        The configured default display width in pixels, or {@code 0} to keep the width the column
  *        brings itself.
- * @param readonly
- *        Whether the column stays read-only while the rows of the table are edited.
+ * @param editing
+ *        How a cell of this column is edited, or {@code null} for a column that is displayed but
+ *        not edited.
  * @param aggregate
  *        What the column shows for a group of rows, computed from the group's member rows, or
  *        {@code null} for a column that leaves its group cell empty.
@@ -54,17 +55,17 @@ public record ColumnSetup(
 		ViewContext viewContext,
 		ColumnBinding binding,
 		int width,
-		boolean readonly,
+		CellEditing editing,
 		Function<List<Object>, Object> aggregate) {
 
 	/**
-	 * Creates a {@link ColumnSetup} of an editable column that aggregates nothing.
+	 * Creates a {@link ColumnSetup} of a column that is not edited and aggregates nothing.
 	 *
 	 * @see ColumnSetup The full descriptor.
 	 */
 	public ColumnSetup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
 			ViewContext viewContext, ColumnBinding binding, int width) {
-		this(name, label, type, value, viewContext, binding, width, false, null);
+		this(name, label, type, value, viewContext, binding, width, null, null);
 	}
 
 	/**

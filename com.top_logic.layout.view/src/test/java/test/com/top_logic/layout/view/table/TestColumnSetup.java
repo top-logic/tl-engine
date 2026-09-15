@@ -94,7 +94,7 @@ public class TestColumnSetup extends TestCase {
 	 */
 	private static ColumnSetup computed(Function<List<Object>, Object> aggregate) {
 		return new ColumnSetup(ATTRIBUTE, LABEL, ColumnType.UNRESOLVED,
-			row -> ((Map<?, ?>) row).get(ATTRIBUTE), null, ColumnBinding.TYPE_DERIVED, 0, false, aggregate);
+			row -> ((Map<?, ?>) row).get(ATTRIBUTE), null, ColumnBinding.TYPE_DERIVED, 0, null, aggregate);
 	}
 
 	/** A group holding the given rows. */

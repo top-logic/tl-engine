@@ -80,7 +80,7 @@ public class TestColumnDeclarations extends TestCase {
 			TLModelNamingConvention.resourceKey(_rowType.getPart("count")), setup.label());
 		assertEquals("The column shows the attribute's values.", _rowType.getPart("count"),
 			setup.type().part());
-		assertFalse("A column is editable unless it says otherwise.", setup.readonly());
+		assertNotNull("A column over an attribute is edited by writing that attribute.", setup.editing());
 		assertNull("A column aggregates nothing unless it says so.", setup.aggregate());
 
 		Column<Object, ?> column = setup.buildColumn();
@@ -106,7 +106,7 @@ public class TestColumnDeclarations extends TestCase {
 
 		assertEquals(ResKey.text("Amount"), setup.label());
 		assertEquals(220, setup.width());
-		assertTrue(setup.readonly());
+		assertNull("A column declared read-only is not edited.", setup.editing());
 		assertEquals("The column is displayed in the width it declares.", 220,
 			setup.buildColumn().defaultWidth());
 	}
@@ -154,6 +154,46 @@ public class TestColumnDeclarations extends TestCase {
 		assertFalse("Nothing is known about the values.", setup.type().resolved());
 		assertEquals("Such a column text-filters by the display label.", TextColumnFilter.class,
 			setup.buildColumn().filter().get().getClass());
+	}
+
+	/**
+	 * A {@code <computed-column>} is edited exactly when it declares how an edited value is written
+	 * back.
+	 */
+	public void testComputedColumnIsEditedWhenItUpdates() {
+		assertNull("A computed column that cannot write its value back is not edited.",
+			single(computedColumn("total", MODULE + ":Integer")).editing());
+
+		ComputedColumn.Config updating = computedColumn("total", MODULE + ":Integer");
+		set(updating, ComputedColumn.Config.UPDATE, TypedConfiguration.newConfigItem(Expr.Null.class));
+
+		assertNotNull("The column writes an edited value through its update function.",
+			single(updating).editing());
+
+		ComputedColumn.Config readonly = TypedConfiguration.copy(updating);
+		set(readonly, ComputedColumn.Config.READONLY, Boolean.TRUE);
+
+		assertNull("A column declared read-only is not edited, whatever it could write.",
+			single(readonly).editing());
+	}
+
+	/**
+	 * A {@code <computed-column>} that is edited must say what its values are - nothing else could
+	 * say which control enters them.
+	 */
+	public void testEditedComputedColumnWithoutATypeIsReported() {
+		ComputedColumn.Config config = computedColumn("total", null);
+		set(config, ComputedColumn.Config.UPDATE, TypedConfiguration.newConfigItem(Expr.Null.class));
+
+		ColumnsConfig columns = TypedConfiguration.newConfigItem(ColumnsConfig.class);
+		columns.getColumns().add(config);
+
+		BufferingProtocol log = new BufferingProtocol();
+		ColumnDeclarations.instantiate(new DefaultInstantiationContext(log), columns);
+
+		assertFalse("The column is reported.", log.getErrors().isEmpty());
+		assertTrue("The column is reported by name: " + log.getErrors(),
+			log.getErrors().get(0).contains("total"));
 	}
 
 	/**

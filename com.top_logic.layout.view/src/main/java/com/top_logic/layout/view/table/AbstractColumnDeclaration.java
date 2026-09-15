@@ -203,13 +203,16 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	 *        What the column's values are.
 	 * @param value
 	 *        Reads the cell value from a row.
+	 * @param editing
+	 *        How a cell of the column is edited, or {@code null} for a column offering no edit. A
+	 *        column declared read-only is not edited, whatever its kind could offer.
 	 * @param scope
 	 *        What the column is resolved against.
 	 */
 	protected final ColumnSetup setup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
-			ColumnResolution scope) {
+			CellEditing editing, ColumnResolution scope) {
 		return new ColumnSetup(name, _label != null ? _label : label, type, value, scope.context(), _binding,
-			_width, _readonly, _aggregate);
+			_width, _readonly ? null : editing, _aggregate);
 	}
 
 	/**

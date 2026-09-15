@@ -7,7 +7,9 @@ package com.top_logic.layout.view.table;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
@@ -24,6 +26,7 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.TLType;
+import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
@@ -40,8 +43,14 @@ import com.top_logic.model.util.TLModelPartRef;
  *
  * <p>
  * Such a column shows what the row does not hold: a total over the values of an attribute, a
- * difference between two dates, a value read through a chain of references. It is not edited - what
- * a computed value would mean when written back is nothing the computation says.
+ * difference between two dates, a value read through a chain of references.
+ * </p>
+ *
+ * <p>
+ * A column declaring an update function is edited where the rows of the table are: what an edited
+ * value means for the row is what that function does with it, and which rows offer the edit is what
+ * the predicate says. The control the value is entered with follows from the declared type, so a
+ * column that is edited declares one.
  * </p>
  */
 @InApp
@@ -67,6 +76,12 @@ public class ComputedColumn extends AbstractColumnDeclaration {
 
 		/** Configuration name for {@link #getValue()}. */
 		String VALUE = "value";
+
+		/** Configuration name for {@link #getUpdate()}. */
+		String UPDATE = "update";
+
+		/** Configuration name for {@link #getCanUpdate()}. */
+		String CAN_UPDATE = "can-update";
 
 		/** Configuration name for {@link #getInputs()}. */
 		String INPUTS = "inputs";
@@ -121,6 +136,37 @@ public class ComputedColumn extends AbstractColumnDeclaration {
 		Expr getValue();
 
 		/**
+		 * The function writing an edited cell value, receiving the row and the entered value as its
+		 * last two arguments.
+		 *
+		 * <p>
+		 * The values of the declared inputs come first, in declaration order, exactly as they do
+		 * for the value function. What the update does with the value is up to it - assign an
+		 * attribute, create an object, distribute it over several attributes.
+		 * </p>
+		 *
+		 * <p>
+		 * Unset, the column is displayed but not edited.
+		 * </p>
+		 */
+		@Name(UPDATE)
+		@Nullable
+		Expr getUpdate();
+
+		/**
+		 * Whether the cell of a row can be edited: a function of the row yielding whether the edit
+		 * is offered there.
+		 *
+		 * <p>
+		 * The values of the declared inputs come first, in declaration order, exactly as they do
+		 * for the value function. Unset, every row of a column that declares an update is edited.
+		 * </p>
+		 */
+		@Name(CAN_UPDATE)
+		@Nullable
+		Expr getCanUpdate();
+
+		/**
 		 * References to channels whose values become the leading arguments of the value function,
 		 * ahead of the row.
 		 */
@@ -138,6 +184,10 @@ public class ComputedColumn extends AbstractColumnDeclaration {
 
 	private final QueryExecutor _value;
 
+	private final QueryExecutor _update;
+
+	private final QueryExecutor _canUpdate;
+
 	private final List<ChannelRef> _inputs;
 
 	/**
@@ -150,7 +200,14 @@ public class ComputedColumn extends AbstractColumnDeclaration {
 		_typeRef = config.getType();
 		_multiple = config.getMultiple();
 		_value = QueryExecutor.compile(config.getValue());
+		_update = QueryExecutor.compileOptional(config.getUpdate());
+		_canUpdate = QueryExecutor.compileOptional(config.getCanUpdate());
 		_inputs = config.getInputs();
+
+		if (_update != null && _typeRef == null) {
+			context.error("An edited column must declare the type of its values, so that it is known"
+				+ " which control enters them: column '" + _name + "'.");
+		}
 	}
 
 	@Override
@@ -166,7 +223,34 @@ public class ComputedColumn extends AbstractColumnDeclaration {
 		}
 		QueryExecutor value = _value;
 		Function<Object, Object> cellValue = row -> value.execute(arguments(inputs, row));
-		return List.of(setup(_name, ResKey.text(_name), columnType(scope), cellValue, scope));
+		ColumnType type = columnType(scope);
+		return List.of(setup(_name, ResKey.text(_name), type, cellValue, editing(type, cellValue, inputs), scope));
+	}
+
+	/**
+	 * How a cell of the column is edited: through the declared update function, on the rows the
+	 * declared predicate accepts - and not at all for a column declaring no update, or one whose
+	 * values are of an unknown type.
+	 *
+	 * @param type
+	 *        What the column's values are, deciding which control enters them.
+	 * @param value
+	 *        Reads the cell value from a row, so that the edited field shows what the column does.
+	 * @param inputs
+	 *        The channels whose values lead the arguments of both functions.
+	 */
+	private CellEditing editing(ColumnType type, Function<Object, Object> value, List<ViewChannel> inputs) {
+		if (_update == null || !type.resolved()) {
+			return null;
+		}
+		QueryExecutor update = _update;
+		BiConsumer<Object, Object> write = (row, edited) -> update.execute(arguments(inputs, row, edited));
+
+		QueryExecutor canUpdate = _canUpdate;
+		Predicate<Object> editable = canUpdate == null ? row -> true
+			: row -> SearchExpression.isTrue(canUpdate.execute(arguments(inputs, row)));
+
+		return new ValueCellEditing(type, value, write, editable);
 	}
 
 	/**
@@ -182,20 +266,26 @@ public class ComputedColumn extends AbstractColumnDeclaration {
 	}
 
 	/**
-	 * The arguments of the value function: the current values of the declared inputs, in
-	 * declaration order, and the row last.
+	 * The arguments of one of the column's functions: the current values of the declared inputs, in
+	 * declaration order, and what the function is called with behind them - the row, and for the
+	 * update the edited value after it.
 	 *
 	 * <p>
 	 * The inputs are read here, every time a cell is computed, so a column over an input shows what
 	 * that input holds now.
 	 * </p>
+	 *
+	 * @param inputs
+	 *        The channels leading the argument list.
+	 * @param trailing
+	 *        The arguments behind the inputs, in the order the function takes them.
 	 */
-	private static Object[] arguments(List<ViewChannel> inputs, Object row) {
-		Object[] arguments = new Object[inputs.size() + 1];
+	private static Object[] arguments(List<ViewChannel> inputs, Object... trailing) {
+		Object[] arguments = new Object[inputs.size() + trailing.length];
 		for (int n = 0; n < inputs.size(); n++) {
 			arguments[n] = inputs.get(n).get();
 		}
-		arguments[inputs.size()] = row;
+		System.arraycopy(trailing, 0, arguments, inputs.size(), trailing.length);
 		return arguments;
 	}
 

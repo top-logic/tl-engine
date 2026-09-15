@@ -21,7 +21,7 @@ const DOCUMENT_SHARE = 2 / 3
 /** Width of the icon strip between thread and pane, i.e. `.side-strip`'s 3.5rem. */
 const STRIP_WIDTH = 56
 /** Below 1280, not at it: 1280 itself is still wide enough for a column beside the thread. */
-const SHEET_MQ = '(max-width: 1279.98px)'
+export const SHEET_MQ = '(max-width: 1279.98px)'
 /** One arrow-key press; Page/Home/End move further. */
 const KEY_STEP = 16
 const KEY_PAGE = 64

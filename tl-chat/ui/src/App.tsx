@@ -41,7 +41,7 @@ import { parseTasksJson, progressBadge, unseenBadge, type AgentTask } from './pr
 import { RailToggle, SideRail, SideStrip, useCollapsedSections } from './rail'
 import { chatReducer } from './reducer'
 import { composeOutboundText } from './send-prefix'
-import { SidePane } from './side-pane'
+import { SHEET_MQ, SidePane } from './side-pane'
 import {
   EMPTY_RUN,
   readActiveSession,
@@ -161,6 +161,19 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
   const [paneWidth, setPaneWidth] = useState(() => prefs.paneWidth)
   const [badgeSeen, setBadgeSeen] = useState(() => prefs.badgeSeen)
   const [paneContent, setPaneContent] = useState<React.ReactNode>(null)
+  /**
+   * How tall the composer is, published to the stylesheet.
+   *
+   * A sheet covers the thread, not the controls: below 1280 it ends at the top of the composer, so
+   * the model picker, the send button and the Enter hint stay visible and usable while an artefact
+   * is open. Only JS knows that height - it grows with the draft.
+   */
+  const composerBox = useRef<HTMLDivElement | null>(null)
+
+  /** True below 1280, where the rail and the pane are sheets over the thread rather than columns. */
+  const [sheet, setSheet] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia(SHEET_MQ).matches : false,
+  )
   const [paneOptions, setPaneOptions] = useState<PaneOpenOptions | null>(null)
   const collapsedSections = useCollapsedSections(['context'])
   const [subagents, setSubagents] = useState<SubagentActivity[]>([])
@@ -237,6 +250,25 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
   mcpDirtyRef.current = mcpDirty
   effortRef.current = effort
   autoApproveRef.current = autoApprove
+
+  useEffect(() => {
+    const workspace = composerBox.current
+    const composer = workspace?.querySelector('.composer')
+    if (!workspace || !composer || typeof ResizeObserver === 'undefined') return undefined
+    const publish = (height: number) =>
+      workspace.style.setProperty('--composer-height', `${Math.round(height)}px`)
+    publish(composer.getBoundingClientRect().height)
+    const observer = new ResizeObserver(([entry]) => publish(entry.contentRect.height))
+    observer.observe(composer)
+    return () => observer.disconnect()
+  })
+
+  useEffect(() => {
+    const mq = window.matchMedia(SHEET_MQ)
+    const onChange = () => setSheet(mq.matches)
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
 
   useEffect(() => {
     if (!authenticated || !windowId) return
@@ -1290,6 +1322,12 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
     [sessionId, messages, busy, awaitingApproval, openInPane, closePane, insertReference],
   )
 
+  /** Closes whatever the side is showing - what a click beside a sheet means. */
+  const closeSide = useCallback(() => {
+    closePane()
+    setSideOpen(false)
+  }, [closePane])
+
   const toggleSide = useCallback(() => {
     setSideOpen((open) => {
       if (open) {
@@ -1339,7 +1377,7 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
         onClose={() => setRailOpen(false)}
         onToggleCollapsed={() => setRailCollapsed((value) => !value)}
       />
-      <div className="workspace">
+      <div className="workspace" ref={composerBox}>
         <div className={`stage${messages.length === 0 ? ' is-empty' : ''}`}>
           <Thread
             messages={messages}
@@ -1420,6 +1458,14 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
           }}
           labels={labels}
         />
+        {/*
+          A sheet is an overlay, and must read as one: it dims what it covers and a click beside it
+          closes it. Without the scrim the state read as a broken split - half a thread, half a
+          composer, no way out but the pane's own close.
+        */}
+        {(railVisible || paneOpen) && sheet ? (
+          <div className="side-scrim" onClick={closeSide} aria-hidden="true" />
+        ) : null}
         {railVisible ? (
           <aside className="side-column" aria-label={labels.sideRail}>
             <SideRail

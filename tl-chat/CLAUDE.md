@@ -222,7 +222,7 @@ through the `RailRenderContext` every section's `render(ctx)` receives -
 | `insertReference(token)` | Puts an atomic reference token at the composer's caret, e.g. from a passage the user marked in the pane. |
 
 Pane geometry: `mode: 'card'` (the default) opens at 420 px with a 360 px floor; `mode: 'document'`
-takes about two thirds of the workspace, as far as the thread's 320 px floor allows, under a slim
+takes about two thirds of the workspace, as far as the thread's 240 px floor allows, under a slim
 header the host fills (`title`, `version`, `actions`, close). The workspace is a grid, so opening the
 pane narrows the thread rather than covering it; the splitter is draggable and arrow-key operable,
 and a width dragged in one mode is not imposed on the other. **Below** 1280 px both modes are a
@@ -260,6 +260,13 @@ label, where it comes from, and the excerpt of the source with the cited passage
 `cite`'s `passage` argument, kept only when the turn's own tool results really contain it. Clicking
 opens the source: `messageAnnotations.render` decides that for a host kind (returning nothing leaves
 the web default, which opens the page).
+
+**Kinds are declared, not invented.** The framework knows `web`; a host declares its own kinds once
+through the `CitationKinds` service (name, one-line description, where the id comes from, whether a
+passage applies). The framework appends the vocabulary to the system prompt of every agent that has
+the cite tool, the validator drops a citation of an undeclared kind at DEBUG, and a kind marked
+`passage="false"` is a structured object whose popover shows the tool result's fields instead of a
+sentence. See `doc/citation-contract.md`.
 
 Under an answer sits a collapsed `Quellen · n zitiert` pill with that answer's sources. The rail's
 `Quellen` section is the session-wide list: every source cited in this chat, with the marker numbers

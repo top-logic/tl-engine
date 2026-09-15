@@ -6,14 +6,14 @@
 
 package com.top_logic.model.security;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import org.apache.commons.lang3.function.TriConsumer;
 
 import com.top_logic.base.services.InitialRolesManager;
 import com.top_logic.basic.config.InstantiationContext;
@@ -46,7 +46,8 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.AccessRightsConfig;
-import com.top_logic.model.annotate.security.AccessGrant;
+import com.top_logic.model.annotate.security.AccessRevoke;
+import com.top_logic.model.annotate.security.AccessRule;
 import com.top_logic.model.annotate.security.RoleConfig;
 import com.top_logic.model.config.SingletonMapping;
 import com.top_logic.model.config.TLModelPartMapping;
@@ -60,7 +61,6 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
-import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
@@ -141,7 +141,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		 */
 		@Override
 		@DynamicMode(fun = HideActiveIf.class, args = @Ref(WITHOUT_SECURITY))
-		Map<CommandGroupReference, AccessGrant> getGrants();
+		List<AccessRule> getGrants();
 
 	}
 
@@ -208,8 +208,6 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 
 	private Map<TLStructuredTypePart, Map<BoundCommandGroup, Set<BoundedRole>>> _typePartRights = new HashMap<>();
 
-	private Map<TLClass, Map<BoundCommandGroup, Set<BoundedRole>>> _classRights = new HashMap<>();
-
 	private Map<TLClass, Map<BoundCommandGroup, Set<BoundedRole>>> _expandedClassRights = new HashMap<>();
 
 	private Set<TLClass> _typesWithoutSecurity = new HashSet<>();
@@ -231,49 +229,43 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		_commandGroups = CommandGroupRegistry.getInstance();
 		_applicationModel = ModelService.getApplicationModel();
 
+		Map<TLClass, List<ResolvedRule>> classRules = new HashMap<>();
+		Map<TLModule, List<ResolvedRule>> moduleRules = new HashMap<>();
 		for (ModelAccessRights modelConf : config.getSecurityConfig().values()) {
 			TLObject modelPart = TLModelUtil.resolveQualifiedName(_applicationModel, modelConf.getName());
 			if (modelConf instanceof TLClassAccessRights conf) {
-				handleTLClass(context, modelPart, conf);
+				handleTLClass(context, modelPart, conf, classRules);
 			} else if (modelConf instanceof TLSingletonAccessRights conf) {
 				handleTLSingleton(context, modelPart, conf);
 			} else if (modelConf instanceof TLPartAccessRights conf) {
 				handleTLPart(context, modelPart, conf);
 			} else if (modelConf instanceof TLModuleAccessRights conf) {
-				handleTLModule(context, modelPart, conf);
+				handleTLModule(context, modelPart, conf, moduleRules);
 			}
 		}
 
+		computeClassRights(classRules, moduleRules);
 	}
 
-	private void handleTLModule(InstantiationContext context, TLObject part, TLModuleAccessRights config) {
-		if (!(part instanceof TLModule)) {
+	private void handleTLModule(InstantiationContext context, TLObject part, TLModuleAccessRights config,
+			Map<TLModule, List<ResolvedRule>> moduleRules) {
+		if (!(part instanceof TLModule module)) {
 			context.error("The configured part " + part + " is not a module.");
 			return;
 		}
-		TLModule module = (TLModule) part;
-		Collection<TLClass> classes = module.getClasses();
 		if (config.isWithoutSecurity()) {
-			classes.forEach(this::markWithoutSecurity);
+			module.getClasses().forEach(this::markWithoutSecurity);
 		}
-		processRights(context, config, (group, roles, inherit) -> {
-			for (TLClass clazz : classes) {
-				storeClassRights(clazz, group, roles, inherit);
-			}
-		});
+		moduleRules.computeIfAbsent(module, unused -> new ArrayList<>()).addAll(resolveRules(context, config));
 	}
 
 	private void handleTLPart(InstantiationContext context, TLObject part, TLPartAccessRights config) {
-		if (!(part instanceof TLStructuredTypePart)) {
+		if (!(part instanceof TLStructuredTypePart typePart)) {
 			context.error("The configured part " + part + " is not a structured type part.");
 			return;
 		}
-		TLStructuredTypePart typePart = ((TLStructuredTypePart) part).getDefinition();
-		processRights(context, config, (group, roles, inherit) -> {
-			_typePartRights
-				.computeIfAbsent(typePart, unused -> new HashMap<>())
-				.put(group, roles);
-		});
+		applyRules(resolveRules(context, config),
+			_typePartRights.computeIfAbsent(typePart.getDefinition(), unused -> new HashMap<>()));
 	}
 
 	private void handleTLSingleton(InstantiationContext context, TLObject singleton, TLSingletonAccessRights config) {
@@ -283,23 +275,20 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			context.error("The configured singleton " + singleton + " is not a singleton.");
 			return;
 		}
-		processRights(context, config, (group, roles, inherit) -> {
-			_singletonRights
-				.computeIfAbsent(singleton, unused -> new HashMap<>())
-				.put(group, roles);
-		});
+		applyRules(resolveRules(context, config),
+			_singletonRights.computeIfAbsent(singleton, unused -> new HashMap<>()));
 	}
 
-	private void handleTLClass(InstantiationContext context, TLObject part, TLClassAccessRights config) {
-		if (!(part instanceof TLClass)) {
+	private void handleTLClass(InstantiationContext context, TLObject part, TLClassAccessRights config,
+			Map<TLClass, List<ResolvedRule>> classRules) {
+		if (!(part instanceof TLClass clazz)) {
 			context.error("The configured part " + part + " is not a TLClass.");
 			return;
 		}
-		TLClass clazz = (TLClass) part;
 		if (config.isWithoutSecurity()) {
 			markWithoutSecurity(clazz);
 		}
-		processRights(context, config, (group, roles, inherit) -> storeClassRights(clazz, group, roles, inherit));
+		classRules.computeIfAbsent(clazz, unused -> new ArrayList<>()).addAll(resolveRules(context, config));
 	}
 
 	/**
@@ -336,18 +325,22 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		return _typesWithoutSecurity.contains(type);
 	}
 
-	private void processRights(InstantiationContext context, ModelAccessRights config,
-			TriConsumer<BoundCommandGroup, Set<BoundedRole>, Boolean> sink) {
+	/**
+	 * Resolves the operation and the roles of each configured rule against the application,
+	 * reporting a configuration error for an operation or role that does not exist.
+	 */
+	private List<ResolvedRule> resolveRules(InstantiationContext context, ModelAccessRights config) {
 		KnowledgeBase kb = _applicationModel.tKnowledgeBase();
-		for (AccessGrant grant : config.getGrants().values()) {
-			BoundCommandGroup operation = grant.getOperation().resolve(_commandGroups);
+		List<ResolvedRule> result = new ArrayList<>();
+		for (AccessRule rule : config.getGrants()) {
+			BoundCommandGroup operation = rule.getOperation().resolve(_commandGroups);
 			if (operation == null) {
-				context.error("The command group " + grant.getOperation().id() + " in configuration for "
+				context.error("The command group " + rule.getOperation().id() + " in configuration for "
 						+ config.getName() + " does not exist.");
 				continue;
 			}
 			Set<BoundedRole> roles = new HashSet<>();
-			for (RoleConfig roleConf : grant.getRoles()) {
+			for (RoleConfig roleConf : rule.getRoles()) {
 				BoundedRole role = BoundedRole.getRoleByName(kb, roleConf.getName());
 				if (role == null) {
 					context.error("The role " + roleConf.getName() + " in configuration for " + config.getName()
@@ -356,41 +349,130 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 				}
 				roles.add(role);
 			}
-			sink.accept(operation, roles, grant.isInherit());
+			result.add(new ResolvedRule(operation, roles, rule.isInherit(), rule instanceof AccessRevoke));
 		}
-
+		return result;
 	}
 
 	/**
-	 * Stores the given roles for the given type and operation in both the direct and expanded rights
-	 * maps, and optionally propagates them to all specializations when {@code inherit} is
-	 * {@code true}.
+	 * Applies the given rules in order to the given rights of a single model element.
 	 */
-	private void storeClassRights(TLClass type, BoundCommandGroup operation, Set<BoundedRole> roles, boolean inherit) {
-		_classRights
-			.computeIfAbsent(type, unused -> new HashMap<>())
-			.put(operation, roles);
-		_expandedClassRights
-			.computeIfAbsent(type, unused -> new HashMap<>())
-			.computeIfAbsent(operation, unused -> new HashSet<>())
-			.addAll(roles);
-		if (inherit) {
-			inheritToSpecializations(type, operation, roles);
+	private static void applyRules(List<ResolvedRule> rules, Map<BoundCommandGroup, Set<BoundedRole>> rights) {
+		for (ResolvedRule rule : rules) {
+			applyRule(rule, rights);
 		}
 	}
 
 	/**
-	 * Recursively adds the given roles for the given operation to all direct and indirect
-	 * specializations of the given type.
+	 * Applies the given rules in order to the rights of a type, where a rule declared to be
+	 * inherited also adjusts the rights that are passed on to the specializations of that type.
 	 */
-	private void inheritToSpecializations(TLClass type, BoundCommandGroup operation, Collection<BoundedRole> roles) {
-		for (TLClass specialization : type.getSpecializations()) {
-			_expandedClassRights
-				.computeIfAbsent(specialization, unused -> new HashMap<>())
-				.computeIfAbsent(operation, unused -> new HashSet<>())
-				.addAll(roles);
-			inheritToSpecializations(specialization, operation, roles);
+	private static void applyRules(List<ResolvedRule> rules, Map<BoundCommandGroup, Set<BoundedRole>> effective,
+			Map<BoundCommandGroup, Set<BoundedRole>> passedOn) {
+		for (ResolvedRule rule : rules) {
+			applyRule(rule, effective);
+			if (rule.inherit()) {
+				applyRule(rule, passedOn);
+			}
 		}
+	}
+
+	/**
+	 * Adds the roles of a grant to the operation's role set, or removes the roles of a revocation
+	 * from it. A revocation without roles drops the operation's entry.
+	 */
+	private static void applyRule(ResolvedRule rule, Map<BoundCommandGroup, Set<BoundedRole>> rights) {
+		BoundCommandGroup operation = rule.operation();
+		if (!rule.revoke()) {
+			rights.computeIfAbsent(operation, unused -> new HashSet<>()).addAll(rule.roles());
+			return;
+		}
+		if (rule.roles().isEmpty()) {
+			rights.remove(operation);
+			return;
+		}
+		Set<BoundedRole> allowed = rights.get(operation);
+		if (allowed != null) {
+			allowed.removeAll(rule.roles());
+		}
+	}
+
+	/**
+	 * Computes the rights of all types, processing each type after its generalizations, so that a
+	 * type sees the rights its generalizations pass on.
+	 */
+	private void computeClassRights(Map<TLClass, List<ResolvedRule>> classRules,
+			Map<TLModule, List<ResolvedRule>> moduleRules) {
+		Map<TLClass, Map<BoundCommandGroup, Set<BoundedRole>>> passedOn = new HashMap<>();
+		for (TLClass type : TLModelUtil.getAllGlobalClasses(_applicationModel)) {
+			computeClassRights(type, classRules, moduleRules, passedOn);
+		}
+		for (TLClass type : classRules.keySet()) {
+			computeClassRights(type, classRules, moduleRules, passedOn);
+		}
+	}
+
+	/**
+	 * Computes the rights of the given type and returns the rights it passes on to its
+	 * specializations.
+	 *
+	 * @implNote The rights a type requires start out as the union of the rights all its
+	 *           generalizations pass on. On top of that, the rules of the type's module are applied
+	 *           as an additive baseline, followed by the rules configured for the type itself. A
+	 *           rule marked as inherited adjusts the passed on rights as well.
+	 */
+	private Map<BoundCommandGroup, Set<BoundedRole>> computeClassRights(TLClass type,
+			Map<TLClass, List<ResolvedRule>> classRules, Map<TLModule, List<ResolvedRule>> moduleRules,
+			Map<TLClass, Map<BoundCommandGroup, Set<BoundedRole>>> passedOn) {
+		Map<BoundCommandGroup, Set<BoundedRole>> inheritable = passedOn.get(type);
+		if (inheritable != null) {
+			return inheritable;
+		}
+
+		Map<BoundCommandGroup, Set<BoundedRole>> effective = new HashMap<>();
+		inheritable = new HashMap<>();
+		for (TLClass generalization : type.getGeneralizations()) {
+			Map<BoundCommandGroup, Set<BoundedRole>> inherited =
+				computeClassRights(generalization, classRules, moduleRules, passedOn);
+			addRights(effective, inherited);
+			addRights(inheritable, inherited);
+		}
+		applyRules(moduleRules.getOrDefault(type.getModule(), Collections.emptyList()), effective, inheritable);
+		applyRules(classRules.getOrDefault(type, Collections.emptyList()), effective, inheritable);
+
+		if (!effective.isEmpty()) {
+			_expandedClassRights.put(type, effective);
+		}
+		passedOn.put(type, inheritable);
+		return inheritable;
+	}
+
+	/**
+	 * Adds the roles of the given rights to the roles required for the same operations.
+	 */
+	private static void addRights(Map<BoundCommandGroup, Set<BoundedRole>> rights,
+			Map<BoundCommandGroup, Set<BoundedRole>> added) {
+		for (Map.Entry<BoundCommandGroup, Set<BoundedRole>> entry : added.entrySet()) {
+			rights.computeIfAbsent(entry.getKey(), unused -> new HashSet<>()).addAll(entry.getValue());
+		}
+	}
+
+	/**
+	 * A configured {@link AccessRule} with its operation and roles resolved against the
+	 * application.
+	 *
+	 * @param operation
+	 *        The command group the rule applies to.
+	 * @param roles
+	 *        The roles the rule adds or removes.
+	 * @param inherit
+	 *        Whether the rule also applies to the specializations of the configured type.
+	 * @param revoke
+	 *        Whether the rule removes the {@link #roles()} instead of adding them.
+	 */
+	private record ResolvedRule(BoundCommandGroup operation, Set<BoundedRole> roles, boolean inherit,
+			boolean revoke) {
+		// Pure value type without additional behavior.
 	}
 
 	private static AccessManager accessManager() {

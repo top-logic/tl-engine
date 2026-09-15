@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The credentials form: the fields, the contributed login commands and the login action.
+	
+	Referenced by every display that asks a visitor to log in - the login dialog (login.view.xml)
+	and the login page an application shows an anonymous session (login-page.view.xml) - so that
+	both offer the same login, and a feature module contributing a command contributes it to both.
+	The enclosing display supplies the credentials object the form edits and renders the commands
+	the form places in the button bar.
+-->
+<view>
+	<channels>
+		<channel name="model"/>
+	</channels>
+	<form
+		initial-edit-mode="true"
+		input="model"
+		mode-switch="false"
+	>
+		<field attribute="name"/>
+		<field attribute="password"/>
+		<!--
+			Extra login commands contributed by optional feature modules (e.g. the self-service
+			"Forgot password?" button) via the LoginCommandsConfig application config. Renders
+			nothing when nothing is contributed.
+		-->
+		<login-commands/>
+		<!--
+			One redirect button per configured external login method (SSO providers, e.g. pac4j
+			clients), from LoginMethods. Renders nothing when none are configured.
+		-->
+		<login-methods/>
+		<commands>
+			<generic-command
+				image="css:bi bi-box-arrow-in-right"
+				placement="BUTTON_BAR"
+			>
+				<label>
+					<en>Login</en>
+					<de>Anmelden</de>
+				</label>
+				<store-form-state/>
+				<login/>
+			</generic-command>
+		</commands>
+	</form>
+</view>

@@ -8,10 +8,14 @@ package test.com.top_logic.layout.view.command;
 import junit.framework.Test;
 import junit.framework.TestCase;
 
+import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.NullInputDisabled;
@@ -19,11 +23,31 @@ import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.execution.ExecutableState;
+import com.top_logic.util.Resources;
 
 /**
  * Tests for {@link ViewCommandModel}.
  */
 public class TestViewCommandModel extends TestCase {
+
+	/** The tooltip configured for a command whose own tooltip a test inspects. */
+	private static final ResKey CONFIGURED_TOOLTIP = ResKey.text("The configured tooltip.");
+
+	/** Reason of {@link #SWITCHABLE_REASON} for any input but {@link #REASON_B_INPUT}. */
+	private static final ResKey REASON_A = ResKey.text("Disabled for reason A.");
+
+	/** Reason of {@link #SWITCHABLE_REASON} for the input {@link #REASON_B_INPUT}. */
+	private static final ResKey REASON_B = ResKey.text("Disabled for reason B.");
+
+	/** The input {@link #SWITCHABLE_REASON} answers with {@link #REASON_B}. */
+	private static final String REASON_B_INPUT = "reasonB";
+
+	/**
+	 * Rule that disables the command for every input, but with a reason depending on the input.
+	 */
+	private static final ViewExecutabilityRule SWITCHABLE_REASON =
+		input -> ExecutableState.createDisabledState(REASON_B_INPUT.equals(input) ? REASON_B : REASON_A);
 
 	/**
 	 * Tests that the model reactively updates executability when the input channel value changes.
@@ -162,14 +186,109 @@ public class TestViewCommandModel extends TestCase {
 		assertSame(HandlerResult.DEFAULT_RESULT, result);
 	}
 
+	/**
+	 * Tests that the tooltip explains why the command is disabled, and falls back to the configured
+	 * tooltip while it is executable.
+	 */
+	public void testDisabledReasonAsTooltip() {
+		ViewChannel channel = new DefaultViewChannel("test");
+
+		ViewCommand.Config config = createMinimalConfig();
+		config.update(config.descriptor().getProperty(ViewCommand.Config.TOOLTIP), CONFIGURED_TOOLTIP);
+
+		ViewCommandModel model = new ViewCommandModel(
+			(context, input) -> HandlerResult.DEFAULT_RESULT,
+			config, channel, NullInputDisabled.INSTANCE);
+		model.attach(null);
+
+		assertEquals("Disabled command explains its reason.",
+			Resources.getInstance().getString(ExecutableState.NO_EXEC_NO_MODEL.getI18NReasonKey()),
+			model.getTooltip());
+
+		channel.set("someValue");
+		assertEquals("Executable command shows its configured tooltip.",
+			Resources.getInstance().getString(CONFIGURED_TOOLTIP), model.getTooltip());
+
+		channel.set(null);
+		assertEquals("Disabled command explains its reason again.",
+			Resources.getInstance().getString(ExecutableState.NO_EXEC_NO_MODEL.getI18NReasonKey()),
+			model.getTooltip());
+	}
+
+	/**
+	 * Tests that a command without a configured tooltip has none while it is executable.
+	 */
+	public void testNoTooltipConfigured() {
+		ViewChannel channel = new DefaultViewChannel("test");
+		channel.set("someValue");
+
+		ViewCommandModel model = new ViewCommandModel(
+			(context, input) -> HandlerResult.DEFAULT_RESULT,
+			createMinimalConfig(), channel, NullInputDisabled.INSTANCE);
+		model.attach(null);
+
+		assertNull("No tooltip configured, none shown.", model.getTooltip());
+	}
+
+	/**
+	 * Tests that a switch between two disabled states with different reasons is reported.
+	 */
+	public void testChangedDisabledReason() {
+		ViewChannel channel = new DefaultViewChannel("test");
+		int[] callCount = { 0 };
+
+		ViewCommandModel model = new ViewCommandModel(
+			(context, input) -> HandlerResult.DEFAULT_RESULT,
+			createMinimalConfig(), channel, SWITCHABLE_REASON);
+		model.addStateChangeListener(() -> callCount[0]++);
+		model.attach(null);
+
+		assertEquals(REASON_A, model.getExecutableState().getI18NReasonKey());
+		int initialCalls = callCount[0];
+
+		channel.set(REASON_B_INPUT);
+		assertEquals("Changed reason must be reported.", initialCalls + 1, callCount[0]);
+		assertEquals(REASON_B, model.getExecutableState().getI18NReasonKey());
+		assertEquals(Resources.getInstance().getString(REASON_B), model.getTooltip());
+
+		channel.set("anythingElse");
+		assertEquals("Back to the first reason.", initialCalls + 2, callCount[0]);
+		assertEquals(REASON_A, model.getExecutableState().getI18NReasonKey());
+	}
+
+	/**
+	 * Tests that an unchanged state is not reported, even when the input changes.
+	 */
+	public void testUnchangedStateNotReported() {
+		ViewChannel channel = new DefaultViewChannel("test");
+		int[] callCount = { 0 };
+
+		ViewCommandModel model = new ViewCommandModel(
+			(context, input) -> HandlerResult.DEFAULT_RESULT,
+			createMinimalConfig(), channel, SWITCHABLE_REASON);
+		model.addStateChangeListener(() -> callCount[0]++);
+		model.attach(null);
+
+		int initialCalls = callCount[0];
+
+		channel.set("someInput");
+		assertEquals("Same reason as before, nothing to report.", initialCalls, callCount[0]);
+
+		model.revalidate();
+		assertEquals("Re-evaluating the same state reports nothing.", initialCalls, callCount[0]);
+	}
+
 	private ViewCommand.Config createMinimalConfig() {
 		return TypedConfiguration.newConfigItem(ViewCommand.Config.class);
 	}
 
 	/**
-	 * Test suite requiring the {@link TypeIndex} module.
+	 * Test suite requiring the {@link TypeIndex} module and the {@link ResourcesModule} the
+	 * resolved labels come from.
 	 */
 	public static Test suite() {
-		return ServiceTestSetup.createSetup(TestViewCommandModel.class, TypeIndex.Module.INSTANCE);
+		return ModuleTestSetup.setupModule(
+			ServiceTestSetup.createSetup(TestViewCommandModel.class, TypeIndex.Module.INSTANCE,
+				ThreadContextManager.Module.INSTANCE, ResourcesModule.Module.INSTANCE));
 	}
 }

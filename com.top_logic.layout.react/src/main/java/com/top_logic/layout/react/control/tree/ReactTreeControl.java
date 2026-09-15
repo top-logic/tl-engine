@@ -19,6 +19,7 @@ import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.tree.dnd.TreeDropTarget;
 import com.top_logic.layout.tree.model.TreeUIModel;
 import com.top_logic.mig.html.SelectionModel;
+import com.top_logic.table.SelectionMode;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -60,7 +61,7 @@ public class ReactTreeControl extends ReactControl {
 	/** @see #buildFullState() */
 	private static final String NODES = "nodes";
 
-	/** @see #setSelectionMode(String) */
+	/** @see #setSelectionMode(SelectionMode) */
 	private static final String SELECTION_MODE = "selectionMode";
 
 	/** @see #setDragEnabled(boolean) */
@@ -149,7 +150,7 @@ public class ReactTreeControl extends ReactControl {
 
 	private final ReactControlProvider _contentProvider;
 
-	private String _selectionMode = "single";
+	private SelectionMode _selectionMode = SelectionMode.SINGLE;
 
 	private boolean _dragEnabled;
 
@@ -202,14 +203,21 @@ public class ReactTreeControl extends ReactControl {
 	}
 
 	/**
-	 * Sets the selection mode.
+	 * Sets whether the user may select one node at a time, or any number of them.
 	 *
 	 * @param mode
-	 *        One of {@code "single"}, {@code "multi"}.
+	 *        The selection mode, {@link SelectionMode#SINGLE} by default.
 	 */
-	public void setSelectionMode(String mode) {
+	public void setSelectionMode(SelectionMode mode) {
 		_selectionMode = mode;
-		putState(SELECTION_MODE, mode);
+		putState(SELECTION_MODE, mode.getExternalName());
+	}
+
+	/**
+	 * Whether more than one node may be selected at a time.
+	 */
+	private boolean multiSelection() {
+		return _selectionMode == SelectionMode.MULTI;
 	}
 
 	/**
@@ -554,7 +562,7 @@ public class ReactTreeControl extends ReactControl {
 			return;
 		}
 
-		if ("multi".equals(_selectionMode)) {
+		if (multiSelection()) {
 			if (shiftKey && _selectionAnchor >= 0) {
 				// Range selection.
 				List<Object> visibleNodes = collectVisibleNodes();

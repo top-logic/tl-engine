@@ -32,10 +32,12 @@ import com.top_logic.layout.view.element.TableElement.CriterionConfig;
 import com.top_logic.layout.view.element.TableElement.DropConfig;
 import com.top_logic.layout.view.element.TableElement.PresetConfig;
 import com.top_logic.layout.view.element.TableElement.PresetsConfig;
+import com.top_logic.layout.view.form.RowEditPolicy;
 import com.top_logic.layout.view.table.DropTargetMode;
 import com.top_logic.layout.view.table.FilterStateConfig;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.table.GroupSpec;
+import com.top_logic.table.SelectionMode;
 
 /**
  * Tests parsing and instantiation of {@link TableElement}.
@@ -91,6 +93,27 @@ public class TestTableElement extends TestCase {
 			TypedConfiguration.newConfigItem(TableElement.Config.class).getActivationButton());
 
 		assertFalse("The table opts out of the button.", readTableConfig().getActivationButton());
+	}
+
+	/**
+	 * Tests that a table selects one row at a time unless it configures the selection of any number
+	 * of them, and that an editable table states its mode through the same property - both table
+	 * variants are built from the one configured mode.
+	 */
+	public void testSelectionMode() throws Exception {
+		assertEquals("A table selects one row at a time unless it says otherwise.",
+			SelectionMode.SINGLE,
+			TypedConfiguration.newConfigItem(TableElement.Config.class).getSelectionMode());
+
+		assertEquals("The table configures the selection of any number of rows.",
+			SelectionMode.MULTI, readTableConfig().getSelectionMode());
+
+		TableElement.Config editable = TypedConfiguration.copy(readTableConfig());
+		editable.update(editable.descriptor().getProperty(TableElement.Config.ROW_EDIT),
+			RowEditPolicy.ALL);
+
+		assertEquals("An editable table states its selection mode through the same property.",
+			SelectionMode.MULTI, editable.getSelectionMode());
 	}
 
 	/**

@@ -306,10 +306,12 @@
 				</children>
 				<trailing>
 					<!--
-						The account area: who is logged in, plus login, logout and the theme
-						entries. Provided by tl-layout-view, which also declares the channel
-						feeding it, so nothing here wires it. It closes the bar, right of the
-						command buttons, where an application's account area is looked for.
+						The account area: who is logged in, plus logout and the theme entries.
+						Provided by tl-layout-view, which also declares the channel feeding it, so
+						nothing here wires it. It closes the bar, right of the command buttons,
+						where an application's account area is looked for. Its login button belongs
+						to an anonymous session, which this application never displays - a visitor
+						sees the login page instead (see the login-view of demoReactConf.config.xml).
 					-->
 					<view-ref view="user-menu.view.xml"/>
 				</trailing>

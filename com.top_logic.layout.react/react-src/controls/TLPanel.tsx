@@ -61,6 +61,9 @@ const IconPopOut = () => (
  * - fill: boolean (fill the container's bounded height instead of growing with content; a filling
  *     panel takes part in the fill contract, so its container grows with it, while its own body
  *     bounds and scrolls what it contains)
+ * - width: string (a CSS width of the panel's own, e.g. "380px", instead of the width its
+ *     container offers; capped at the available width, so the panel stays visible on a narrow
+ *     screen)
  * - hoverActions: boolean (hide toolbar buttons until the panel is hovered or a button is focused)
  * - appearance: "default" | "card" (card renders a bordered, rounded panel with compact insets)
  * - toolbar: ChildDescriptor (a TLToolbar control, may be absent)
@@ -88,6 +91,7 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
   const fill = state.fill === true;
   const hoverActions = state.hoverActions === true;
   const card = state.appearance === 'card';
+  const width = (state.width as string | undefined) ?? undefined;
   const errorMessage = state.errorMessage as string | undefined;
 
   const isMinimized = expansionState === 'MINIMIZED';
@@ -115,7 +119,13 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
 
   const panelStyle: React.CSSProperties = isMaximized
     ? { position: 'absolute', inset: 0, zIndex: 10, display: 'flex', flexDirection: 'column' }
-    : { display: 'flex', flexDirection: 'column', width: '100%', height: '100%' };
+    : {
+        display: 'flex',
+        flexDirection: 'column',
+        width: width ?? '100%',
+        ...(width ? { maxWidth: '100%' } : {}),
+        height: '100%',
+      };
 
   // Render the header only when it carries something: a title, a toolbar, or an action button.
   // A chrome-less panel (e.g. a fill panel whose tab already labels it) then shows just its

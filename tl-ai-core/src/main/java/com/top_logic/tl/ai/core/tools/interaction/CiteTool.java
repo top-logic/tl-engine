@@ -50,13 +50,14 @@ public class CiteTool {
 	 */
 	@ToolMethod(
 		description = "Record a citation for a fact you just read. Pass the id or URL the producing "
-			+ "tool returned, a short label, and a kind (web, invoice, …). Returns the marker "
-			+ "number to write as [n] immediately after the sentence it supports. Cite only ids "
-			+ "from this turn; never invent one. Pass the sentence you read as 'passage', copied "
-			+ "verbatim from the tool result, so the reader can see what the fact rests on.",
+			+ "tool returned, a short label, and one of the declared kinds (see \"Kinds you may "
+			+ "cite\"). Returns the marker number to write as [n] immediately after the sentence "
+			+ "it supports. Cite only ids from this turn; never invent one. For a text source pass "
+			+ "the sentence you read as 'passage', copied verbatim from the tool result; a "
+			+ "structured object has no sentence, so pass none.",
 		mode = ToolMode.READ, group = ToolGroups.INTERACTION)
 	public String cite(
-			@P("Kind of source, e.g. web or invoice.") String kind,
+			@P("One of the declared kinds, exactly as written there.") String kind,
 			@P("Id the producing tool returned (URL, TID, invoice id, …).") String id,
 			@P("Short label shown to the reader.") String label,
 			@P(value = "URL for a web source. Omit for other kinds.", required = false) String url,

@@ -70,6 +70,8 @@ import com.top_logic.tl.ai.core.provider.StreamHandler;
 import com.top_logic.tl.ai.core.security.PreCommitGuard;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
+import com.top_logic.tl.ai.core.citation.CitationKinds;
+import com.top_logic.tl.ai.core.citation.CitationValidator;
 import com.top_logic.tl.ai.core.tools.util.UntrustedEnvelope;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.ProgressReporter;
@@ -1483,7 +1485,29 @@ public class AgentLoop {
 	 * </p>
 	 */
 	private String systemPrompt() {
-		return UntrustedEnvelope.withStandingRule(_config.systemPrompt());
+		return withCitationKinds(UntrustedEnvelope.withStandingRule(_config.systemPrompt()));
+	}
+
+	/**
+	 * Appends what this application may cite, for a run whose agent actually has the cite tool.
+	 *
+	 * <p>
+	 * The kinds are the application's vocabulary, not the agent definition's: a host declares them
+	 * once and every agent that cites is told the same list. Without it {@code kind} is a free
+	 * string and the model invents one.
+	 * </p>
+	 */
+	private String withCitationKinds(String prompt) {
+		if (!CitationKinds.isActive() || !hasCiteTool()) {
+			return prompt;
+		}
+		String vocabulary = CitationKinds.getInstance().vocabulary();
+		return vocabulary.isEmpty() ? prompt : prompt + "\n\n---\n\n" + vocabulary;
+	}
+
+	private boolean hasCiteTool() {
+		return _registry.getTool(CitationValidator.CITE_TOOL_NAME) != null
+			|| _registry.getTool(CitationValidator.CITE_TOOL) != null;
 	}
 
 	/**

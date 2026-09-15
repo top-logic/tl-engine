@@ -43,6 +43,7 @@
 					<module key="com.top_logic.tl.ai.core.cookiepool.CookiePoolService$Module" value="true"/>
 					<!-- Interaction Timeouts: how long an approval / an askUser question waits for the user -->
 					<module key="com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService$Module" value="true"/>
+					<module key="com.top_logic.tl.ai.core.citation.CitationKinds$Module" value="true"/>
 					<!--
 						Role-based tool access, applied to every agent run. Active by default and not
 						switchable: a policy present while the module was off would be silently
@@ -86,6 +87,24 @@
 			sets it here; what expiry does is not configurable (an expired approval denies the tool
 			call, an expired question tells the agent to answer without it).
 		-->
+		<!--
+			What an answer may cite. The framework knows only the web; an application declares its
+			own kinds here (its configuration is merged over this one), the framework appends the
+			list to the system prompt of every agent that has the cite tool, and the validator drops
+			a citation whose kind is not in it.
+		-->
+		<config service-class="com.top_logic.tl.ai.core.citation.CitationKinds">
+			<instance class="com.top_logic.tl.ai.core.citation.CitationKinds">
+				<kinds>
+					<kind name="web"
+						description="a web page you fetched"
+						id-source="the URL you passed to the browser tool"
+						passage="true"
+					/>
+				</kinds>
+			</instance>
+		</config>
+
 		<config service-class="com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService">
 			<instance class="com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService"/>
 		</config>
@@ -1566,15 +1585,19 @@ Before calling any tool, briefly tell the user what you're about to do. Never le
 - label names the source, location says where in it, kind says what it is
 - ref is the host application's own id for that object. You cannot resolve it unless a tool you have
   takes such an id; if you need more than the quoted text, say so or use a tool, never invent content
+- Do NOT search the application for a ref: it is not a model name, a type or a search term, and
+  finding nothing under it says nothing about whether the object exists
 - A bare @word the user left in the text is a source they did not pick. Ignore it
 </reference>
 
 <cite>
 - Cite what you read with the cite tool, using the id or URL the producing tool returned
+- Use one of the declared kinds (see "Kinds you may cite"); never invent a kind
 - Cite only sources from this turn; never invent an id or URL
 - One marker per fact: write [n] immediately after the sentence, using the number cite returned
 - Write [n] only for a citation; leave array indices, footnotes and code samples alone
-- Pass the sentence you read as 'passage', copied verbatim, so the reader sees what the fact rests on
+- For a text source pass the sentence you read as 'passage', copied verbatim; a structured object has
+  no sentence, so pass none and the reader is shown its fields instead
 </cite>
 
 <error_handling>

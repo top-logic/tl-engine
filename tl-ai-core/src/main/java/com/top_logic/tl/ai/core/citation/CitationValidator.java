@@ -57,6 +57,10 @@ public final class CitationValidator {
 
 	private static final Pattern MARKER = Pattern.compile("\\[(\\d+)\\]");
 
+	/** One {@code "name": value} pair of a tool result that returned an object. */
+	private static final Pattern FIELD =
+		Pattern.compile("\"([A-Za-z_][A-Za-z0-9_]*)\"\\s*[:=]\\s*\"?([^\",}\\n]{1,120})\"?");
+
 	/** Shorter than this a "passage" says nothing and is more likely a stray word. */
 	private static final int MIN_PASSAGE = 12;
 
@@ -200,6 +204,13 @@ public final class CitationValidator {
 		int anonymous = 0;
 		for (Declaration item : declared) {
 			claimed.add(Integer.valueOf(item.claimedIndex()));
+			if (!declaredKind(item.kind())) {
+				dropped++;
+				Logger.debug("Citation of an undeclared kind dropped: kind=" + item.kind() + " id="
+					+ item.id() + ". Declare it with <citation-kind> or the model cannot be told about"
+					+ " it, and nothing can resolve it.", CitationValidator.class);
+				continue;
+			}
 			if (supportedBy(item, evidence)) {
 				String key = item.toolCallId() == null || item.toolCallId().isBlank()
 					? "#" + (anonymous++)
@@ -237,8 +248,11 @@ public final class CitationValidator {
 			Declaration item = byIndex.get(claimedIndex);
 			remap.put(claimedIndex, Integer.valueOf(next));
 			String passage = verifiedPassage(item, evidence);
+			String excerpt = passage.isEmpty()
+				? fieldsOf(item, evidence)
+				: excerptAround(passage, evidence);
 			citations.add(new Citation(next, item.toolName(), item.toolCallId(), item.kind(), item.id(),
-				item.label(), item.url(), passage, excerptAround(passage, evidence)));
+				item.label(), item.url(), passage, excerpt));
 			next++;
 		}
 		// In a turn that cited, [n] is the turn's own numbering: a number that points at no surviving
@@ -295,7 +309,7 @@ public final class CitationValidator {
 	 * what made every declaration invisible before.
 	 * </p>
 	 */
-	private static boolean isCite(String name) {
+	public static boolean isCite(String name) {
 		return CITE_TOOL_NAME.equals(name) || CITE_TOOL.equals(name) || CITE_TOOL_PROVIDER.equals(name);
 	}
 
@@ -355,7 +369,29 @@ public final class CitationValidator {
 	 * source's wording rather than the model's memory of it.
 	 * </p>
 	 */
+	/**
+	 * Whether the application declared this kind.
+	 *
+	 * <p>
+	 * Unknown outside an application - a unit test validating a hand-built turn - and then nothing
+	 * is refused for being undeclared.
+	 * </p>
+	 */
+	private static boolean declaredKind(String kind) {
+		return !CitationKinds.isActive() || CitationKinds.getInstance().isDeclared(kind);
+	}
+
+	/** Whether a source of this kind has a sentence to quote at all. */
+	private static boolean kindHasPassage(String kind) {
+		return !CitationKinds.isActive() || CitationKinds.getInstance().hasPassage(kind);
+	}
+
 	private static String verifiedPassage(Declaration item, List<String> evidence) {
+		if (!kindHasPassage(item.kind())) {
+			// A structured object has fields, not prose. Asking for a verbatim sentence there is what
+			// made the model serialise the object as JSON that no tool result then matched.
+			return "";
+		}
 		String passage = item.passage() == null ? "" : item.passage().trim();
 		if (passage.length() < MIN_PASSAGE) {
 			return "";
@@ -368,6 +404,46 @@ public final class CitationValidator {
 		Logger.debug("Citation passage not found in this turn's tool results; dropped: "
 			+ passage.substring(0, Math.min(60, passage.length())), CitationValidator.class);
 		return "";
+	}
+
+	/**
+	 * What a structured source says, for a popover that has no sentence to show.
+	 *
+	 * <p>
+	 * The window around the cited id, rendered as {@code label: value} lines when the tool returned
+	 * an object and as plain text otherwise. It is the tool's own output either way - the reader
+	 * still sees what the fact rests on.
+	 * </p>
+	 */
+	private static String fieldsOf(Declaration item, List<String> evidence) {
+		for (String blob : evidence) {
+			int at = blob == null ? -1 : blob.indexOf(item.id());
+			if (at < 0) {
+				continue;
+			}
+			int from = Math.max(0, at - EXCERPT_MARGIN);
+			int to = Math.min(blob.length(), at + item.id().length() + EXCERPT_MARGIN);
+			String window = blob.substring(from, to);
+			String fields = asFieldLines(window);
+			if (!fields.isEmpty()) {
+				return fields;
+			}
+			return (from > 0 ? "… " : "") + readable(window) + (to < blob.length() ? " …" : "");
+		}
+		return "";
+	}
+
+	/** {@code "a":"b","c":1} rendered as {@code a: b} lines; empty when the window holds no pairs. */
+	private static String asFieldLines(String window) {
+		Matcher pair = FIELD.matcher(window);
+		StringBuilder out = new StringBuilder();
+		while (pair.find()) {
+			if (out.length() > 0) {
+				out.append('\n');
+			}
+			out.append(pair.group(1)).append(": ").append(pair.group(2).replace("\\\"", "\"").trim());
+		}
+		return out.toString();
 	}
 
 	/** A window of the source around {@code passage}, so the popover shows it in its context. */
@@ -467,11 +543,13 @@ public final class CitationValidator {
 				continue;
 			}
 			Integer marker = Integer.valueOf(Integer.parseInt(matcher.group(1)));
+			// Every marker outside code is either renumbered or removed: `plan` collected them all,
+			// and a turn that cited nothing never gets here - `isNoop()` returned above.
 			Integer renumbered = plan.remap().get(marker);
 			if (renumbered != null) {
 				out.append(text, last, matcher.start()).append('[').append(renumbered).append(']');
 				last = matcher.end();
-			} else if (plan.strip().contains(marker)) {
+			} else {
 				// "Alpha [1]." must become "Alpha.", not "Alpha ." - the marker took the space with
 				// it when the model wrote it.
 				int cut = matcher.start();
@@ -481,7 +559,6 @@ public final class CitationValidator {
 				out.append(text, last, cut);
 				last = matcher.end();
 			}
-			// Otherwise the number was never claimed by a cite call: leave it exactly as written.
 		}
 		out.append(text, last, text.length());
 		return out.toString();

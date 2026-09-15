@@ -39,6 +39,39 @@ cite what you read, using the id or URL the producing tool returned; this turn o
 fact. That fragment is a product rule, not a host prompt. A host agent that should cite needs the
 same tool on its catalog (and, if it has its own prompt, the same instruction).
 
+## Kinds are declared, not invented
+
+`kind` is a vocabulary the application owns. The framework knows one kind, `web`; every other one is
+a host's, and a host declares it **once**, in configuration:
+
+```xml
+<config service-class="com.top_logic.tl.ai.core.citation.CitationKinds">
+  <instance>
+    <kinds>
+      <kind name="invoice"
+        description="a Beleg of this application"
+        id-source="the id an invoice tool or a TL-Script read returned for that object"
+        passage="false"
+      />
+    </kinds>
+  </instance>
+</config>
+```
+
+That one declaration feeds three places:
+
+- **the model** - `AgentLoop` appends the list to the system prompt of every run whose agent has the
+  cite tool, the same way it appends the untrusted-content rule. The tool's own description no longer
+  names any host's kind;
+- **the validator** - a citation whose kind nobody declared is dropped and logged at DEBUG, exactly
+  like an invented id. Outside an application (a unit test) nothing is refused for being undeclared;
+- **the popover** - `passage="false"` says this kind is a structured object rather than prose. The
+  model is told to pass no `passage` for it, and the excerpt is built from the tool result's own
+  fields (`label: value` lines) instead.
+
+Without this, `kind` was a free string: asked to cite an invoice the model invented `model`, nothing
+could resolve it, and its popover stayed empty (#409).
+
 ## Validator
 
 `CitationValidator` runs at the end of an `AgentRunner` run, **before** the transcript is completed:

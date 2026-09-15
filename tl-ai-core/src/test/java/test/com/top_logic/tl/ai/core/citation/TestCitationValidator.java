@@ -278,7 +278,10 @@ public class TestCitationValidator extends TestCase {
 			kept.excerpt().contains("Berlin Hosting GmbH"));
 	}
 
-	/** A passage the turn never read is dropped, while the citation itself survives on its id. */
+	/**
+	 * A passage the turn never read is dropped, while the citation survives on its id - and the
+	 * popover falls back to what the tool result says around that id, so it is not left blank.
+	 */
 	public void testInventedPassageIsDropped() {
 		Result result = CitationValidator.validate("Fakt [1].",
 			List.of(new Declaration(1, "cite", "c1", "invoice", "INV-12", "Beleg", "",
@@ -287,7 +290,19 @@ public class TestCitationValidator extends TestCase {
 
 		assertEquals(1, result.citations().size());
 		assertEquals("", result.citations().get(0).passage());
-		assertEquals("", result.citations().get(0).excerpt());
+		assertEquals("invoice INV-12 amount 12.00", result.citations().get(0).excerpt());
+	}
+
+	/** A structured source cites without a passage; its popover shows the tool result's fields. */
+	public void testStructuredSourceShowsItsFields() {
+		Result result = CitationValidator.validate("Der teuerste Beleg [1].",
+			List.of(new Declaration(1, "cite", "c1", "invoice", "INV-12", "Reise Berlin", "", "")),
+			List.of("{\"id\":\"INV-12\",\"description\":\"Reise Berlin\",\"amount\":\"184.90\"}"));
+
+		Citation kept = result.citations().get(0);
+		assertEquals("", kept.passage());
+		assertTrue("Fields, one per line: " + kept.excerpt(), kept.excerpt().contains("description: Reise Berlin"));
+		assertTrue(kept.excerpt().contains("amount: 184.90"));
 	}
 
 	/** Too short to be a sentence, so not shown as one. */

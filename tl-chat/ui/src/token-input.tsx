@@ -68,6 +68,21 @@ export const TokenInput = React.forwardRef(function TokenInput(
    */
   const lastRange = useRef<Range | null>(null)
 
+  /**
+   * Puts the caret back when the editor is about to take input with no selection at all.
+   *
+   * A host may clear the selection after inserting - its own pane cleans up after the gesture - and
+   * Chromium then starts the next keystroke at offset 0. The editor owns its caret: whatever a host
+   * does outside it, the next character lands where the user last stood.
+   */
+  const ensureCaret = useCallback(() => {
+    const el = host.current
+    const selection = window.getSelection()
+    if (!el || !selection) return
+    if (selection.rangeCount > 0 && el.contains(selection.getRangeAt(0).startContainer)) return
+    if (!restore(el, lastRange.current)) atEnd(el)
+  }, [])
+
   const rememberCaret = useCallback(() => {
     const el = host.current
     const selection = window.getSelection()
@@ -213,6 +228,8 @@ export const TokenInput = React.forwardRef(function TokenInput(
       aria-label={ariaLabel}
       data-placeholder={placeholder}
       spellCheck
+      onBeforeInput={ensureCaret}
+      onFocus={ensureCaret}
       onInput={() => {
         rememberCaret()
         emit()
@@ -220,7 +237,10 @@ export const TokenInput = React.forwardRef(function TokenInput(
       onKeyUp={rememberCaret}
       onMouseUp={rememberCaret}
       onBlur={rememberCaret}
-      onKeyDown={onKey}
+      onKeyDown={(event) => {
+        ensureCaret()
+        onKey(event)
+      }}
       onPaste={onPaste}
     />
   )

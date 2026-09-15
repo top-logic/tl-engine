@@ -2,6 +2,23 @@
 
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<services>
+		<!--
+			What this application may cite, on top of the framework's `web`. Declared once: the
+			framework tells the model about it and refuses a citation of any other kind, which is
+			what kept an agent from inventing one (#409).
+		-->
+		<config service-class="com.top_logic.tl.ai.core.citation.CitationKinds">
+			<instance>
+				<kinds>
+					<kind name="invoice"
+						description="a Beleg of this application"
+						id-source="the id of that object as a tool reported it, e.g. its TID GenericObject:5371"
+						passage="false"
+					/>
+				</kinds>
+			</instance>
+		</config>
+
 		<config service-class="com.top_logic.basic.util.ResourcesModule">
 			<instance>
 				<bundles>

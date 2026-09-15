@@ -2,8 +2,6 @@ import { React } from 'tl-react-bridge'
 import type { RailRenderContext, RailSection, SidePaneState } from './extensions'
 import type { bundle } from './i18n'
 
-const { useState } = React
-
 type Labels = ReturnType<typeof bundle>
 
 export function SideRail({
@@ -123,27 +121,6 @@ export function RailToggle({
       ) : null}
     </button>
   )
-}
-
-export function useCollapsedSections(initial: string[]): {
-  collapsedIds: Set<string>
-  onToggleSection: (id: string) => void
-  collapse: (id: string) => void
-  expand: (id: string) => void
-} {
-  const [collapsed, setCollapsed] = useState<string[]>(initial)
-  return {
-    collapsedIds: new Set(collapsed),
-    onToggleSection: (id: string) => {
-      setCollapsed((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]))
-    },
-    collapse: (id: string) => {
-      setCollapsed((current) => (current.includes(id) ? current : [...current, id]))
-    },
-    expand: (id: string) => {
-      setCollapsed((current) => current.filter((item) => item !== id))
-    },
-  }
 }
 
 export type { SidePaneState }

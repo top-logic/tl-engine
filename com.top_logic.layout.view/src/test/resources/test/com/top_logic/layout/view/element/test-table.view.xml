@@ -70,10 +70,28 @@
 		<columns>
 			<column
 				attribute="name"
+				sort="ASC"
 				width="220"
-			/>
+			>
+				<label>
+					<en>Row name</en>
+					<de>Zeilenname</de>
+				</label>
+			</column>
 			<column attribute="active"/>
-			<column attribute="owner"/>
+			<column
+				attribute="owner"
+				readonly="true"
+			/>
+			<computed-column name="total"
+				type="tl.core:Double"
+			>
+				<inputs>
+					<input channel="testInput"/>
+				</inputs>
+				<value>factor -&gt; row -&gt; $factor * $row.get(`demo.test:Row#amount`)</value>
+				<aggregate>rows -&gt; $rows.size()</aggregate>
+			</computed-column>
 		</columns>
 		<rows>input -&gt; list($input)</rows>
 	</table>

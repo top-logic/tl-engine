@@ -5,10 +5,13 @@
  */
 package com.top_logic.layout.view.table;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.table.Aggregator;
 import com.top_logic.table.Column;
 import com.top_logic.table.impl.DelegatingColumn;
 
@@ -37,6 +40,11 @@ import com.top_logic.table.impl.DelegatingColumn;
  * @param width
  *        The configured default display width in pixels, or {@code 0} to keep the width the column
  *        brings itself.
+ * @param readonly
+ *        Whether the column stays read-only while the rows of the table are edited.
+ * @param aggregate
+ *        What the column shows for a group of rows, computed from the group's member rows, or
+ *        {@code null} for a column that leaves its group cell empty.
  */
 public record ColumnSetup(
 		String name,
@@ -45,15 +53,50 @@ public record ColumnSetup(
 		Function<Object, Object> value,
 		ViewContext viewContext,
 		ColumnBinding binding,
-		int width) {
+		int width,
+		boolean readonly,
+		Function<List<Object>, Object> aggregate) {
+
+	/**
+	 * Creates a {@link ColumnSetup} of an editable column that aggregates nothing.
+	 *
+	 * @see ColumnSetup The full descriptor.
+	 */
+	public ColumnSetup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
+			ViewContext viewContext, ColumnBinding binding, int width) {
+		this(name, label, type, value, viewContext, binding, width, false, null);
+	}
 
 	/**
 	 * The runtime column for this descriptor: the column its {@link #binding()} builds, displayed
-	 * in the {@link #width() configured width} when there is one.
+	 * in the {@link #width() configured width} when there is one, and showing the
+	 * {@link #aggregate()} in the header row of a group when it computes one.
 	 */
 	public Column<Object, ?> buildColumn() {
-		Column<Object, ?> column = binding().createColumn(this);
-		return width() > 0 ? DelegatingColumn.withDefaultWidth(column, width()) : column;
+		return decorate(binding().createColumn(this));
+	}
+
+	/**
+	 * The given column with what this descriptor decides over the column its binding built.
+	 */
+	private <V> Column<Object, V> decorate(Column<Object, V> column) {
+		Column<Object, V> result = column;
+		if (width > 0) {
+			result = DelegatingColumn.withDefaultWidth(result, width);
+		}
+		if (aggregate != null) {
+			ColumnType columnType = type;
+			Function<List<Object>, Object> function = aggregate;
+			Aggregator<Object, V> aggregator =
+				group -> ColumnProviderService.displayContent(columnType, function.apply(group.members()));
+			result = new DelegatingColumn<>(result) {
+				@Override
+				public Optional<Aggregator<Object, V>> aggregate() {
+					return Optional.of(aggregator);
+				}
+			};
+		}
+		return result;
 	}
 
 }

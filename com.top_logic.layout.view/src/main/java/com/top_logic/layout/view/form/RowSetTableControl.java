@@ -38,15 +38,13 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.CompositionTableElement;
 import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.layout.view.model.TableSelectionBinding;
-import com.top_logic.layout.view.table.ColumnBinding;
-import com.top_logic.layout.view.table.ColumnProviderService;
+import com.top_logic.layout.view.table.ColumnDeclaration;
+import com.top_logic.layout.view.table.ColumnDeclarations;
+import com.top_logic.layout.view.table.ColumnResolution;
 import com.top_logic.layout.view.table.ColumnSetup;
-import com.top_logic.layout.view.table.ColumnType;
-import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.table.Aggregator;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.CellExistence;
@@ -116,26 +114,10 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	/** Panel state: encoded theme icon displayed in front of the error message. */
 	private static final String ERROR_ICON = "errorIcon";
 
-	/**
-	 * A data column of a row-set table.
-	 *
-	 * @param attribute
-	 *        The model attribute name.
-	 * @param readonly
-	 *        Whether the column stays read-only in edit mode.
-	 * @param binding
-	 *        The strategy turning the attribute into a runtime column (sort, filter, display).
-	 * @param width
-	 *        The configured default display width in pixels, or {@code 0} to keep the width the
-	 *        column brings itself.
-	 */
-	public record TableColumn(String attribute, boolean readonly, ColumnBinding binding, int width) {
-		// Pure data carrier.
-	}
-
 	private final ViewContext _context;
 
-	private final List<TableColumn> _columns;
+	/** The declarations of the data columns, in display order. */
+	private final List<ColumnDeclaration> _columns;
 
 	private final RowEditPolicy _policy;
 
@@ -214,12 +196,12 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * @param binding
 	 *        The row-set semantics (row objects, add, remove, commit).
 	 * @param columns
-	 *        The data columns to display and edit.
+	 *        The declarations of the data columns to display and edit.
 	 * @param policy
 	 *        Which rows are editable while the form is in edit mode.
 	 */
 	public RowSetTableControl(ViewContext context, FormControl formControl, RowSetBinding binding,
-			List<TableColumn> columns, RowEditPolicy policy) {
+			List<ColumnDeclaration> columns, RowEditPolicy policy) {
 		super(context, formControl, binding, "TLPanel");
 		_context = context;
 		_columns = columns;
@@ -337,8 +319,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * The columns offered but not displayed until the user selects them in the column selection.
 	 *
 	 * @param columns
-	 *        Attribute names among the table's {@link TableColumn columns}; unknown names are
-	 *        ignored.
+	 *        Names among the table's own columns; unknown names are ignored.
 	 */
 	public void setHiddenByDefault(Collection<String> columns) {
 		_hiddenByDefault = new LinkedHashSet<>(columns);
@@ -617,7 +598,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	/**
-	 * Builds the data columns for the current mode, resolving each attribute against the binding's
+	 * Builds the data columns for the current mode, resolving the declarations against the binding's
 	 * current row type (the bound attribute may resolve only once the form has an object).
 	 *
 	 * @param setups
@@ -625,17 +606,10 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 */
 	private List<Column<TLObject, ?>> createDataColumns(boolean editMode, List<ColumnSetup> setups) {
 		List<Column<TLObject, ?>> columns = new ArrayList<>(_columns.size());
-		TLClass rowType = binding().getRowType();
-		for (TableColumn column : _columns) {
-			String attribute = column.attribute();
-			TLStructuredTypePart part = rowType == null ? null : rowType.getPart(attribute);
-			ResKey label = part != null ? TLModelNamingConvention.resourceKey(part) : ResKey.text(attribute);
-			ColumnSetup setup = new ColumnSetup(attribute, label, ColumnType.of(part),
-				row -> ColumnProviderService.attributeValue(row, attribute), _context, column.binding(),
-				column.width());
+		ColumnResolution scope = new ColumnResolution(binding().getRowType(), _context);
+		for (ColumnSetup setup : ColumnDeclarations.resolve(_columns, scope)) {
 			setups.add(setup);
-			Column<Object, ?> inner = setup.buildColumn();
-			columns.add(adapt(inner, setup, editMode && !column.readonly()));
+			columns.add(adapt(setup.buildColumn(), setup, editMode && !setup.readonly()));
 		}
 		return columns;
 	}

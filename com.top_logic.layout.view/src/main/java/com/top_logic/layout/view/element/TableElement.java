@@ -8,11 +8,8 @@ package com.top_logic.layout.view.element;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.annotation.InApp;
@@ -35,10 +32,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
-import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.config.annotation.DefaultContainer;
-import com.top_logic.basic.config.constraint.annotation.Constraint;
-import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
@@ -64,10 +58,12 @@ import com.top_logic.layout.view.form.RowSetTableControl;
 import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.layout.view.model.TableSelectionBinding;
-import com.top_logic.layout.view.table.ColumnBinding;
-import com.top_logic.layout.view.table.ColumnProviderService;
+import com.top_logic.layout.view.table.AttributeColumn;
+import com.top_logic.layout.view.table.ColumnDeclaration;
+import com.top_logic.layout.view.table.ColumnDeclarations;
+import com.top_logic.layout.view.table.ColumnResolution;
 import com.top_logic.layout.view.table.ColumnSetup;
-import com.top_logic.layout.view.table.ColumnType;
+import com.top_logic.layout.view.table.ColumnsConfig;
 import com.top_logic.layout.view.table.DeclaredFilters;
 import com.top_logic.layout.view.table.DropTargetMode;
 import com.top_logic.layout.view.table.FilterStateConfig;
@@ -77,20 +73,17 @@ import com.top_logic.layout.view.table.TableDropBinding;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.TLModel;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.table.Column;
-import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.Selection;
 import com.top_logic.table.SelectionMode;
-import com.top_logic.table.SortColumn;
-import com.top_logic.table.SortDirection;
 import com.top_logic.table.SortSpec;
 import com.top_logic.table.TableId;
 import com.top_logic.table.NamedFilter;
@@ -107,14 +100,15 @@ import com.top_logic.table.impl.PersonalConfigViewStateStore;
  *
  * <p>
  * Input data comes from {@link ViewChannel}s, rows are computed by a TL-Script expression, and each
- * configured column reads a model attribute. Columns are sortable and (per-column) filterable.
+ * column is declared by an entry of the {@code <columns>} - over a model attribute of the rows, or
+ * over a value computed from them. Columns are sortable and (per-column) filterable.
  * </p>
  *
  * <p>
  * What the user personalizes about a table - the column order, the column widths, which columns are
  * displayed, the sort order - and the filters the user saves under a name are stored under the
  * element's personalization key. Without a configured one, that key is the table's structural
- * signature: its row types plus the attributes of its columns. That signature changes whenever a
+ * signature: its row types plus the names of its declared columns. That signature changes whenever a
  * column is added or removed, and everything the users of the table personalized - their saved
  * filters included - is then left behind. Setting {@code personalization-key} gives the table an
  * identity of its own that survives such an edit of the view, so set it on every table whose
@@ -219,6 +213,11 @@ public class TableElement implements UIElement {
 
 		/**
 		 * The columns to display, in display order.
+		 *
+		 * <p>
+		 * Unset, the table shows the main properties of its row type, and all of its non-hidden
+		 * attributes when the type names none.
+		 * </p>
 		 */
 		@Name(COLUMNS)
 		ColumnsConfig getColumns();
@@ -651,105 +650,10 @@ public class TableElement implements UIElement {
 	}
 
 	/**
-	 * Container for the list of {@link ColumnConfig}s of a {@link TableElement}.
-	 */
-	public interface ColumnsConfig extends ConfigurationItem {
-
-		/**
-		 * The columns to display, in display order.
-		 */
-		@DefaultContainer
-		List<ColumnConfig> getColumns();
-	}
-
-	/**
-	 * Configuration for a single displayed column of a {@link TableElement}.
-	 */
-	@TagName("column")
-	public interface ColumnConfig extends ConfigurationItem {
-
-		/** Configuration name for {@link #getAttribute()}. */
-		String ATTRIBUTE = "attribute";
-
-		/** Configuration name for {@link #getFilter()}. */
-		String FILTER = "filter";
-
-		/** Configuration name for {@link #getReadonly()}. */
-		String READONLY = "readonly";
-
-		/** Configuration name for {@link #getSort()}. */
-		String SORT = "sort";
-
-		/** Configuration name for {@link #getWidth()}. */
-		String WIDTH = "width";
-
-		/**
-		 * The name of the attribute (column) to display.
-		 */
-		@Name(ATTRIBUTE)
-		@Mandatory
-		String getAttribute();
-
-		/**
-		 * An optional application-defined filter for this column, overriding the type-derived
-		 * default. The filter matches against the cell's display text.
-		 */
-		@Name(FILTER)
-		PolymorphicConfiguration<? extends ColumnFilter<?>> getFilter();
-
-		/**
-		 * Whether this column stays read-only while the table is {@link Config#getRowEdit()
-		 * edited}.
-		 */
-		@Name(READONLY)
-		boolean getReadonly();
-
-		/**
-		 * The direction this column is sorted in when the table is first shown, or unset to leave
-		 * it unsorted.
-		 *
-		 * <p>
-		 * Sorting by several columns is expressed by setting this on more than one column; the
-		 * declaration order decides which one sorts first. The default only applies until the user
-		 * sorts the table themselves, from then on their own order is remembered.
-		 * </p>
-		 */
-		@Name(SORT)
-		@Nullable
-		@NullDefault
-		SortDirection getSort();
-
-		/**
-		 * The column's default display width in pixels.
-		 *
-		 * <p>
-		 * This is the width the user sees until they resize the column themselves; from then on
-		 * their own width is remembered. {@code 0} - the default - keeps the width the column's
-		 * type derives.
-		 * </p>
-		 */
-		@Name(WIDTH)
-		@Constraint(NonNegative.class)
-		int getWidth();
-	}
-
-	/**
-	 * The order the table is displayed in before the user sorts it, taken from the
-	 * {@link ColumnConfig#getSort() sorted} columns in declaration order.
+	 * The order the table is displayed in before the user sorts it, as its declarations say.
 	 */
 	private SortSpec defaultSort() {
-		ColumnsConfig columnsConfig = _config.getColumns();
-		if (columnsConfig == null) {
-			return SortSpec.NONE;
-		}
-		List<SortColumn> sortColumns = new ArrayList<>();
-		for (ColumnConfig columnConfig : columnsConfig.getColumns()) {
-			SortDirection direction = columnConfig.getSort();
-			if (direction != null) {
-				sortColumns.add(new SortColumn(columnConfig.getAttribute(), direction == SortDirection.ASC));
-			}
-		}
-		return sortColumns.isEmpty() ? SortSpec.NONE : new SortSpec(sortColumns);
+		return ColumnDeclarations.defaultSort(_declarations);
 	}
 
 	/**
@@ -831,8 +735,18 @@ public class TableElement implements UIElement {
 
 	private final QueryExecutor _rowsExecutor;
 
-	/** The column-integration strategy per configured column, keyed by attribute name. */
-	private final Map<String, ColumnBinding> _bindings = new HashMap<>();
+	/** The declared {@link Config#getColumns() columns}, in display order. */
+	private final List<ColumnDeclaration> _declarations;
+
+	/**
+	 * The names of the declared columns, in declaration order.
+	 *
+	 * <p>
+	 * Known without rows, so that the table has an identity and knows which further columns to
+	 * offer before it is displayed for the first time.
+	 * </p>
+	 */
+	private final List<String> _declaredNames;
 
 	/** The compiled {@link Config#getPresets() presets}, in the order they are offered. */
 	private final List<CompiledPreset> _presets;
@@ -932,12 +846,8 @@ public class TableElement implements UIElement {
 				+ "> nor <drop>.");
 		}
 
-		ColumnsConfig columnsConfig = config.getColumns();
-		if (columnsConfig != null) {
-			for (ColumnConfig columnConfig : columnsConfig.getColumns()) {
-				_bindings.put(columnConfig.getAttribute(), resolveBinding(context, columnConfig));
-			}
-		}
+		_declarations = ColumnDeclarations.instantiate(context, config.getColumns());
+		_declaredNames = ColumnDeclarations.declaredNames(_declarations);
 
 		_presets = compilePresets(context, config.getPresets());
 
@@ -1081,24 +991,6 @@ public class TableElement implements UIElement {
 			+ presetConfig.getName() + "'";
 	}
 
-	/**
-	 * The column integration for a configured column: derived from the attribute's type when no
-	 * filter is configured, the filter's own integration when it provides one, or a value-text filter
-	 * otherwise. This single capability check ({@link ColumnBinding}) is the only place filter kinds
-	 * are distinguished.
-	 */
-	private static ColumnBinding resolveBinding(InstantiationContext context, ColumnConfig columnConfig) {
-		PolymorphicConfiguration<? extends ColumnFilter<?>> filterConfig = columnConfig.getFilter();
-		if (filterConfig == null) {
-			return ColumnBinding.TYPE_DERIVED;
-		}
-		ColumnFilter<?> filter = context.getInstance(filterConfig);
-		if (filter == null) {
-			return ColumnBinding.TYPE_DERIVED;
-		}
-		return filter instanceof ColumnBinding binding ? binding : ColumnBinding.forValueFilter(filter);
-	}
-
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		List<ViewChannel> inputChannels = new ArrayList<>();
@@ -1114,14 +1006,16 @@ public class TableElement implements UIElement {
 
 		ViewCommandModel activation = activationModel(context);
 
-		List<ColumnSetup> setups = columnSetups(resolveRowType(rows), context);
+		TLStructuredType rowType = resolveRowType(rows);
+		ColumnDeclarations declarations = columns(rowType);
+		List<ColumnSetup> setups = declarations.resolve(new ColumnResolution(rowType, context));
 		List<Column<Object, ?>> columns = new ArrayList<>(setups.size());
 		for (ColumnSetup setup : setups) {
 			columns.add(setup.buildColumn());
 		}
 		columns.addAll(this.<Object> rowCommandColumns(context, activation));
 		ListRowSource<Object> source = new ListRowSource<>(new ArrayList<>(rows), columns);
-		Set<String> hiddenByDefault = hiddenByDefault(setups.stream().map(ColumnSetup::name).toList());
+		Set<String> hiddenByDefault = declarations.hiddenByDefault();
 		TableViewState initialState = DefaultTableView.initialState(columns, defaultSort(), hiddenByDefault);
 		initialState.setFrozenCount(_config.getFixedColumns());
 		initialState.setGrouping(initialGrouping());
@@ -1252,16 +1146,15 @@ public class TableElement implements UIElement {
 
 		ViewCommandModel activation = activationModel(context);
 
-		List<RowSetTableControl.TableColumn> editColumns = editColumns(rowType);
+		ColumnDeclarations declarations = columns(rowType);
 		RowSetTableControl control =
-			new RowSetTableControl(context, formControl, binding, editColumns, _config.getRowEdit());
+			new RowSetTableControl(context, formControl, binding, declarations.all(), _config.getRowEdit());
 		control.setFramed(false);
 		control.setPersonalization(PersonalConfigViewStateStore.INSTANCE, tableId());
 		control.setNamedFilters(columns -> declaredFilters(columns, readChannelValues(inputChannels)),
 			filterStore());
 		control.setFilterBar(filterBar());
-		control.setHiddenByDefault(
-			hiddenByDefault(editColumns.stream().map(RowSetTableControl.TableColumn::attribute).toList()));
+		control.setHiddenByDefault(declarations.hiddenByDefault());
 		control.setDefaultSort(defaultSort());
 		control.setGrouping(initialGrouping());
 		control.setFixedColumns(_config.getFixedColumns());
@@ -1275,43 +1168,6 @@ public class TableElement implements UIElement {
 		contributeAddRowCommand(context, formControl, binding, control);
 
 		return control;
-	}
-
-	/**
-	 * The data columns of the editable variant: one per configured {@code <column>} (with its
-	 * read-only flag and resolved filter binding), followed by the {@link #offeredParts offered}
-	 * remainder of the row type - or, when no columns are configured, one per non-hidden attribute
-	 * of the row type.
-	 */
-	private List<RowSetTableControl.TableColumn> editColumns(TLStructuredType rowType) {
-		List<RowSetTableControl.TableColumn> columns = new ArrayList<>();
-		ColumnsConfig columnsConfig = _config.getColumns();
-		if (columnsConfig != null && !columnsConfig.getColumns().isEmpty()) {
-			for (ColumnConfig columnConfig : columnsConfig.getColumns()) {
-				String attribute = columnConfig.getAttribute();
-				columns.add(new RowSetTableControl.TableColumn(attribute, columnConfig.getReadonly(),
-					_bindings.get(attribute), columnConfig.getWidth()));
-			}
-			for (TLStructuredTypePart part : offeredParts(configuredAttributes())) {
-				// An offered column has no <column> to declare a read-only flag, so it is editable
-				// exactly as a form field for that attribute would be.
-				columns.add(new RowSetTableControl.TableColumn(part.getName(),
-					!DisplayAnnotations.isEditable(part), ColumnBinding.TYPE_DERIVED, 0));
-			}
-		} else if (rowType != null) {
-			for (TLStructuredTypePart part : rowType.getAllParts()) {
-				if (DisplayAnnotations.isHidden(part)) {
-					continue;
-				}
-				columns.add(
-					new RowSetTableControl.TableColumn(part.getName(), false, ColumnBinding.TYPE_DERIVED, 0));
-			}
-		}
-		if (columns.isEmpty()) {
-			throw new IllegalStateException(
-				"A <table> requires either explicit <column>s or a resolvable row type to derive them from.");
-		}
-		return columns;
 	}
 
 	/**
@@ -1375,8 +1231,8 @@ public class TableElement implements UIElement {
 	 * <p>
 	 * The configured {@link UIElement.Config#getPersonalizationKey() personalization key} when
 	 * there is one. Without it, the identity is the table's structural signature - its row types
-	 * plus its column attributes - which changes whenever a column is added or removed, so that a
-	 * configured key is what keeps a personalization across an edit of the view.
+	 * plus the names of its declared columns - which changes whenever a column is added or removed,
+	 * so that a configured key is what keeps a personalization across an edit of the view.
 	 * </p>
 	 */
 	public TableId tableId() {
@@ -1394,99 +1250,107 @@ public class TableElement implements UIElement {
 			}
 		}
 		key.append('|');
-		ColumnsConfig columnsConfig = _config.getColumns();
-		if (columnsConfig != null) {
-			for (ColumnConfig columnConfig : columnsConfig.getColumns()) {
-				key.append(columnConfig.getAttribute()).append(',');
-			}
+		for (String column : _declaredNames) {
+			key.append(column).append(',');
 		}
 		return new TableId(key.toString());
 	}
 
 	/**
-	 * The resolved column descriptors: one per configured {@code <column>} (using its
-	 * {@link #resolveBinding resolved binding}), followed by the {@link #offeredParts offered}
-	 * remainder of the row type - or, when no columns are configured, one per non-hidden attribute
-	 * of the row type, each type-derived.
+	 * The columns of this table for rows of the given type: the ones it shows, and the ones it only
+	 * offers in its column selection.
+	 *
+	 * <p>
+	 * A table showing what it declares offers the rest of what its rows hold in addition. A table
+	 * declaring nothing shows the main properties of its row type - the columns the model says
+	 * instances of that type are presented by - and everything else the type holds is offered, so
+	 * that a table without a column configuration of its own still starts with a set of columns
+	 * someone chose. A row type declaring no main properties shows all of its non-hidden attributes.
+	 * </p>
+	 *
+	 * @param rowType
+	 *        The model type of the rows, or {@code null} when it is unknown.
 	 */
-	private List<ColumnSetup> columnSetups(TLStructuredType rowType, ViewContext context) {
-		List<ColumnSetup> setups = new ArrayList<>();
-		ColumnsConfig columnsConfig = _config.getColumns();
-		if (columnsConfig != null && !columnsConfig.getColumns().isEmpty()) {
-			for (ColumnConfig columnConfig : columnsConfig.getColumns()) {
-				String attribute = columnConfig.getAttribute();
-				TLStructuredTypePart part = rowType == null ? null : rowType.getPart(attribute);
-				setups.add(attributeSetup(attribute, part, context, _bindings.get(attribute),
-					columnConfig.getWidth()));
-			}
-			for (TLStructuredTypePart part : offeredParts(configuredAttributes())) {
-				setups.add(attributeSetup(part.getName(), part, context, ColumnBinding.TYPE_DERIVED, 0));
-			}
-		} else if (rowType != null) {
-			// No explicit columns configured: derive a default set from the row type's
-			// non-hidden attributes, in declaration order.
-			for (TLStructuredTypePart part : rowType.getAllParts()) {
-				if (DisplayAnnotations.isHidden(part)) {
-					continue;
-				}
-				setups.add(attributeSetup(part.getName(), part, context, ColumnBinding.TYPE_DERIVED, 0));
-			}
+	public ColumnDeclarations columns(TLStructuredType rowType) {
+		List<ColumnDeclaration> displayed =
+			_declarations.isEmpty() ? derivedColumns(rowType) : _declarations;
+		List<String> displayedNames =
+			_declarations.isEmpty() ? ColumnDeclarations.declaredNames(displayed) : _declaredNames;
+		List<ColumnDeclaration> offered = new ArrayList<>();
+		for (TLStructuredTypePart part : offeredParts(displayedNames, rowType)) {
+			offered.add(AttributeColumn.derived(part));
 		}
-		if (setups.isEmpty()) {
+		if (displayed.isEmpty() && offered.isEmpty()) {
 			throw new IllegalStateException(
 				"A <table> requires either explicit <column>s or a resolvable row type to derive them from.");
 		}
-		return setups;
+		return new ColumnDeclarations(displayed, offered);
 	}
 
 	/**
-	 * The descriptor of a column over a model attribute: the attribute says what the column's
-	 * values are, and the cell value is read from the row object under the attribute name.
+	 * The columns a table declaring none of its own shows: those the row type names as its main
+	 * properties, and all of its non-hidden attributes when it names none the type holds.
 	 *
-	 * @param attribute
-	 *        The attribute (column) name.
-	 * @param part
-	 *        The model attribute, or {@code null} when the row type could not be resolved.
-	 * @param context
-	 *        The per-session context.
-	 * @param binding
-	 *        The strategy building the runtime column.
-	 * @param width
-	 *        The width configured at the column, or {@code 0} for the type-derived one.
+	 * @param rowType
+	 *        The model type of the rows, or {@code null} when it is unknown - such a table has
+	 *        nothing to derive its columns from and shows none.
 	 */
-	private static ColumnSetup attributeSetup(String attribute, TLStructuredTypePart part, ViewContext context,
-			ColumnBinding binding, int width) {
-		return new ColumnSetup(attribute, columnLabel(part, attribute), ColumnType.of(part),
-			row -> ColumnProviderService.attributeValue(row, attribute), context, binding, width);
+	private static List<ColumnDeclaration> derivedColumns(TLStructuredType rowType) {
+		if (rowType == null) {
+			return List.of();
+		}
+		List<ColumnDeclaration> result = new ArrayList<>();
+		List<String> mainProperties = DisplayAnnotations.getMainProperties(rowType);
+		if (!mainProperties.isEmpty()) {
+			for (String name : mainProperties) {
+				TLStructuredTypePart part = rowType.getPart(name);
+				if (part != null) {
+					result.add(AttributeColumn.derived(part));
+				}
+			}
+			if (!result.isEmpty()) {
+				return result;
+			}
+		}
+		for (TLStructuredTypePart part : rowType.getAllParts()) {
+			if (DisplayAnnotations.isHidden(part)) {
+				continue;
+			}
+			result.add(AttributeColumn.derived(part));
+		}
+		return result;
 	}
 
 	/**
-	 * The attributes a table with explicitly configured {@code <column>}s <em>offers</em> in
-	 * addition: those of its {@link Config#getTypes() configured types} that no column covers and
-	 * that a form would display, too - so a user can add any attribute of the row type to the table
-	 * through the column selection, without the table having to enumerate them all.
+	 * The attributes this table <em>offers</em> in addition to the columns it shows: those of its
+	 * {@link Config#getTypes() configured types} that no displayed column covers and that a form
+	 * would display, too - so a user can add any attribute of the row type to the table through the
+	 * column selection, without the table having to enumerate them all.
 	 *
 	 * <p>
-	 * Their columns start out hidden (see {@link #hiddenByDefault(Collection)}); a table configures
-	 * the columns it considers worth showing, and the rest is a choice, not a default.
+	 * Their columns start out hidden; a table shows the columns it - or the model - considers worth
+	 * showing, and the rest is a choice, not a default.
 	 * </p>
 	 *
 	 * @param covered
-	 *        The attributes of the configured columns, which are not offered a second time.
+	 *        The names of the displayed columns, which are not offered a second time.
+	 * @param rowType
+	 *        The model type of the rows, which the configured types are resolved in.
 	 */
-	private List<TLStructuredTypePart> offeredParts(Collection<String> covered) {
+	private List<TLStructuredTypePart> offeredParts(Collection<String> covered, TLStructuredType rowType) {
 		// Only an explicitly configured type gives a stable set of columns; a type guessed from the
 		// first row would offer different columns depending on the data at hand.
 		List<TLModelPartRef> typeRefs = _config.getTypes();
 		if (typeRefs == null || typeRefs.isEmpty()) {
 			return List.of();
 		}
+		TLModel model = ColumnResolution.model(rowType);
 		Set<String> seen = new HashSet<>(covered);
 		List<TLStructuredTypePart> result = new ArrayList<>();
 		for (TLModelPartRef typeRef : typeRefs) {
 			TLStructuredType type;
 			try {
-				type = typeRef.resolveClass();
+				type = typeRef.resolveClass(model);
 			} catch (ConfigurationException ex) {
 				throw new RuntimeException("Failed to resolve type: " + typeRef.qualifiedName(), ex);
 			}
@@ -1498,41 +1362,6 @@ public class TableElement implements UIElement {
 			}
 		}
 		return result;
-	}
-
-	/** The attributes of the configured {@code <column>}s, empty if none are configured. */
-	private Set<String> configuredAttributes() {
-		ColumnsConfig columnsConfig = _config.getColumns();
-		if (columnsConfig == null || columnsConfig.getColumns().isEmpty()) {
-			return Set.of();
-		}
-		Set<String> result = new LinkedHashSet<>();
-		for (ColumnConfig columnConfig : columnsConfig.getColumns()) {
-			result.add(columnConfig.getAttribute());
-		}
-		return result;
-	}
-
-	/**
-	 * Which of the given columns the table does not display until the user selects them: everything
-	 * beyond the configured {@code <column>}s, i.e. the {@link #offeredParts offered} attributes.
-	 */
-	private Set<String> hiddenByDefault(Collection<String> columns) {
-		Set<String> configured = configuredAttributes();
-		if (configured.isEmpty()) {
-			return Set.of();
-		}
-		Set<String> result = new LinkedHashSet<>(columns);
-		result.removeAll(configured);
-		return result;
-	}
-
-	/**
-	 * The display label for a column: the model attribute's label if the part can be resolved,
-	 * otherwise the attribute name.
-	 */
-	private static ResKey columnLabel(TLStructuredTypePart part, String attribute) {
-		return part != null ? TLModelNamingConvention.resourceKey(part) : ResKey.text(attribute);
 	}
 
 	/**

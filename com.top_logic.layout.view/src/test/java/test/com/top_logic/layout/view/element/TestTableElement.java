@@ -19,6 +19,7 @@ import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
@@ -27,17 +28,20 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.element.TableElement;
-import com.top_logic.layout.view.element.TableElement.ColumnConfig;
 import com.top_logic.layout.view.element.TableElement.CriterionConfig;
 import com.top_logic.layout.view.element.TableElement.DropConfig;
 import com.top_logic.layout.view.element.TableElement.PresetConfig;
 import com.top_logic.layout.view.element.TableElement.PresetsConfig;
 import com.top_logic.layout.view.form.RowEditPolicy;
+import com.top_logic.layout.view.table.AttributeColumn;
+import com.top_logic.layout.view.table.ColumnDeclaration;
+import com.top_logic.layout.view.table.ComputedColumn;
 import com.top_logic.layout.view.table.DropTargetMode;
 import com.top_logic.layout.view.table.FilterStateConfig;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.SelectionMode;
+import com.top_logic.table.SortDirection;
 
 /**
  * Tests parsing and instantiation of {@link TableElement}.
@@ -305,7 +309,7 @@ public class TestTableElement extends TestCase {
 		TableElement element = (TableElement) context.getInstance(tableConfig);
 		context.checkErrors();
 
-		assertEquals("demo.test:Row,|name,active,owner,", element.tableId().value());
+		assertEquals("demo.test:Row,|name,active,owner,total,", element.tableId().value());
 	}
 
 	/**
@@ -349,18 +353,63 @@ public class TestTableElement extends TestCase {
 	}
 
 	/**
-	 * Tests that a {@code <column>} carries the display width it configures, and that a column
-	 * configuring none keeps the width its type derives.
+	 * Tests that a {@code <column>} carries what it declares about its column: the display width,
+	 * the header label overriding the attribute's own, the sort direction and the read-only flag.
 	 */
-	public void testParseColumnWidth() throws Exception {
-		List<ColumnConfig> columns = readTableConfig().getColumns().getColumns();
+	public void testParseAttributeColumns() throws Exception {
+		List<PolymorphicConfiguration<? extends ColumnDeclaration>> columns =
+			readTableConfig().getColumns().getColumns();
 
-		assertEquals("name", columns.get(0).getAttribute());
-		assertEquals("The configured width in pixels.", 220, columns.get(0).getWidth());
+		AttributeColumn.Config name = (AttributeColumn.Config) columns.get(0);
+		assertEquals("name", name.getAttribute());
+		assertEquals("The configured width in pixels.", 220, name.getWidth());
+		assertEquals("The column overrides the attribute's label.", "Row name",
+			((ResKey.LiteralKey) name.getLabel()).getTranslationWithoutFallbacks(Locale.ENGLISH));
+		assertEquals(SortDirection.ASC, name.getSort());
+		assertFalse("A column is editable unless it says otherwise.", name.getReadonly());
 
-		assertEquals("active", columns.get(1).getAttribute());
-		assertEquals("A column without a width keeps the one its type derives.", 0,
-			columns.get(1).getWidth());
+		AttributeColumn.Config active = (AttributeColumn.Config) columns.get(1);
+		assertEquals("active", active.getAttribute());
+		assertEquals("A column without a width keeps the one its type derives.", 0, active.getWidth());
+		assertNull("A column without a label keeps the attribute's.", active.getLabel());
+		assertNull("A column that declares no direction starts unsorted.", active.getSort());
+
+		AttributeColumn.Config owner = (AttributeColumn.Config) columns.get(2);
+		assertEquals("owner", owner.getAttribute());
+		assertTrue("The column stays read-only while the rows are edited.", owner.getReadonly());
+	}
+
+	/**
+	 * Tests that a {@code <computed-column>} is parsed with the type of its values, the inputs its
+	 * value function receives and what it aggregates over a group.
+	 */
+	public void testParseComputedColumn() throws Exception {
+		List<PolymorphicConfiguration<? extends ColumnDeclaration>> columns =
+			readTableConfig().getColumns().getColumns();
+
+		ComputedColumn.Config total = (ComputedColumn.Config) columns.get(3);
+		assertEquals("total", total.getName());
+		assertEquals("tl.core:Double", total.getType().qualifiedName());
+		assertFalse("A cell holds a single value unless the column says otherwise.",
+			total.getMultiple());
+		assertNotNull("The value function is declared.", total.getValue());
+		assertEquals("Should declare one input", 1, total.getInputs().size());
+		assertEquals("testInput", total.getInputs().get(0).getChannelName());
+		assertNotNull("The column aggregates over a group.", total.getAggregate());
+		assertNull("A column without a label is named after itself.", total.getLabel());
+	}
+
+	/**
+	 * Tests that two declarations naming the same column are reported: a table refers to its
+	 * columns by name, so two of them sharing one could not be told apart.
+	 */
+	public void testDuplicateColumnNameReported() throws Exception {
+		TableElement.Config tableConfig = TypedConfiguration.copy(readTableConfig());
+		AttributeColumn.Config duplicate = TypedConfiguration.newConfigItem(AttributeColumn.Config.class);
+		duplicate.update(duplicate.descriptor().getProperty(AttributeColumn.Config.ATTRIBUTE), "active");
+		tableConfig.getColumns().getColumns().add(duplicate);
+
+		assertContains("more than once", errors(tableConfig));
 	}
 
 	/**

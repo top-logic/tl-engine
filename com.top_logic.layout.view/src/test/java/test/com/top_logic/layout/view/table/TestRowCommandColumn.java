@@ -26,6 +26,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.table.CellControlFactory;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
@@ -69,7 +70,7 @@ public class TestRowCommandColumn extends TestCase {
 		super.setUp();
 
 		_executed = new ArrayList<>();
-		_context = new DefaultReactContext("", "test", new SSEUpdateQueue());
+		_context = new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
 	}
 
 	/**

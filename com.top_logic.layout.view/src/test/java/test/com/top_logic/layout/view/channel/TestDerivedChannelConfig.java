@@ -23,6 +23,7 @@ import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
@@ -131,7 +132,7 @@ public class TestDerivedChannelConfig extends TestCase {
 	 */
 	public void testManualDerivedChannelInViewContext() {
 		ViewContext viewContext = new DefaultViewContext(
-			new DefaultReactContext("", "test", new SSEUpdateQueue()));
+			new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test")));
 
 		// Register a value channel.
 		DefaultViewChannel selectedItem = new DefaultViewChannel("selectedItem");

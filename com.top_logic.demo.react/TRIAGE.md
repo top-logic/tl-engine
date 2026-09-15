@@ -21,7 +21,7 @@ implemented in the current deliverable.
 | WYSIWYG HTML attribute (`tl.model.wysiwyg:Html`) | **Migrate now** | `html` attribute on `Demo`, edited by the React WYSIWYG control. Depends on `tl-model-wysiwyg` (the type) + `tl-layout-react-wysiwyg` (the control, which registers a `FieldControlService` provider for the type). |
 | Charts | **Migrated** | `demo/chart-demo.view.xml` (bar/doughnut/line/combined, click-to-drill dialog). Depends on `tl-layout-react-chartjs`; `demo.charts` model + seed data. |
 | Flow diagram + Gantt | **Migrated** | `demo/flow-diagram-demo.view.xml` (build-plan tree) and `demo/gantt-demo.view.xml` (axis LOD, spans/edges/decorations). Depend on `tl-react-flow-server`; flow uses the `test.flowchart` model + seed data. |
-| PDF viewer | **Migrated** | `demo/pdf-demo.view.xml` — inline PDF of server-rendered `pdfFile()` HTML via the `<pdf>` element (`tl-layout-view`). |
+| PDF viewer | **Migrated** | `demo/pdf-demo.view.xml` — document list with a preview pane that shows a picture in the `<image>` photo viewer and a PDF in the `<pdf>` viewer, chosen by a `<switch>` on the content type; documents are uploaded and deleted in the toolbar. |
 | Config editor | **Migrated** | `demo/config-editor-demo.view.xml` + `DemoConfigEditorElement`, over a self-contained `DemoEditorConfig` (not the legacy `TypeDemos`). Depends on `tl-layout-configedit`. |
 | TL-Script editor | **Migrated** | `demo/tlscript-editor-demo.view.xml` via the `<tlscript-editor>` element (`tl-model-search-react`). |
 | Constraint test + composition table | **Migrated** | `demo/constraint-test.view.xml` (+ create / edit-item dialogs) over the `test.constraints` model, exercising mandatory/size/range/warning/expression constraints and an in-form `<composition-table>`. |

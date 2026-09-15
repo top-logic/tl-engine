@@ -91,6 +91,11 @@ public interface ReactContext {
 
 	/**
 	 * The {@link ModelScope} for observing persistent object changes in this window.
+	 *
+	 * <p>
+	 * {@code null} for a context that belongs to no window - a display built outside a browser
+	 * session - which observes no object changes.
+	 * </p>
 	 */
 	ModelScope getModelScope();
 

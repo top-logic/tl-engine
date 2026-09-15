@@ -270,8 +270,9 @@ public interface TLObject extends IdentifiedObject, TableTyped, TLObjectBase {
 	 * Check if the object is valid.
 	 * 
 	 * <p>
-	 * An object is valid if it is {@link #tTransient()}, or its persistent item
-	 * {@link KnowledgeItem#isAlive() is alive}.
+	 * A {@link #tTransient() transient} object is valid while the {@link #tContainer() container}
+	 * it was created in is valid, or it has no container at all. A persistent object is valid
+	 * while its item {@link KnowledgeItem#isAlive() is alive}.
 	 * </p>
 	 * 
 	 * @return Whether the object can be legally accessed.

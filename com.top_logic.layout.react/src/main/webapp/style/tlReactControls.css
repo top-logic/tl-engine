@@ -3142,19 +3142,21 @@ button.tlMenu__item--disabled:hover {
 /* A value the model gives a color, drawn as a pill in that color. The color arrives from the
    server as the custom property --tlPill-color - a color value, or a var(--token) reference to a
    design token - so background, border and text are all composed from the one color and follow a
-   theme switch. There is no class per color. */
+   theme switch. There is no class per color; without a color from the server the pill draws in
+   the text color around it. */
 .tlPill {
+	--tlPill-color: currentColor;
 	display: inline-flex;
 	align-items: center;
-	gap: var(--spacing-01, 0.25rem);
+	gap: var(--spacing-01);
 	max-width: 100%;
 	overflow: hidden;
-	padding: 0 var(--spacing-02, 0.5rem);
+	padding: 0 var(--spacing-02);
 	border: 1px solid var(--tlPill-color);
 	border-radius: 999px;
 	background-color: transparent;
 	color: var(--tlPill-color);
-	font-size: var(--label-01-font-size, 0.75rem);
+	font-size: var(--label-01-font-size);
 	line-height: 1.5;
 	white-space: nowrap;
 	text-overflow: ellipsis;
@@ -3165,9 +3167,9 @@ button.tlMenu__item--disabled:hover {
    light theme and lightens it on a dark one, from the same declaration. */
 @supports (color: color-mix(in srgb, red 10%, white)) {
 	.tlPill {
-		border-color: color-mix(in srgb, var(--tlPill-color) 40%, var(--color-surface, #fff));
-		background-color: color-mix(in srgb, var(--tlPill-color) 16%, var(--color-surface, #fff));
-		color: color-mix(in srgb, var(--tlPill-color) 72%, var(--text-primary, #101113));
+		border-color: color-mix(in srgb, var(--tlPill-color) 40%, var(--color-surface));
+		background-color: color-mix(in srgb, var(--tlPill-color) 16%, var(--color-surface));
+		color: color-mix(in srgb, var(--tlPill-color) 72%, var(--text-primary));
 	}
 }
 
@@ -3177,7 +3179,7 @@ button.tlMenu__item--disabled:hover {
 .tlProgress {
 	display: flex;
 	align-items: center;
-	gap: var(--spacing-02, 0.5rem);
+	gap: var(--spacing-02);
 	min-width: 0;
 }
 
@@ -3187,21 +3189,21 @@ button.tlMenu__item--disabled:hover {
 	height: 0.5rem;
 	overflow: hidden;
 	border-radius: 999px;
-	background-color: var(--layer-active, #c4c7cc);
+	background-color: var(--layer-active);
 }
 
 .tlProgress__fill {
 	display: block;
 	height: 100%;
-	border-radius: inherit;
-	background-color: var(--interactive, #2968c8);
+	border-radius: 999px;
+	background-color: var(--interactive);
 	transition: width 0.2s ease-out;
 }
 
 .tlProgress__label {
 	flex: 0 0 auto;
-	color: var(--text-secondary, #676b72);
-	font-size: var(--label-01-font-size, 0.75rem);
+	color: var(--text-secondary);
+	font-size: var(--label-01-font-size);
 	font-variant-numeric: tabular-nums;
 	white-space: nowrap;
 }

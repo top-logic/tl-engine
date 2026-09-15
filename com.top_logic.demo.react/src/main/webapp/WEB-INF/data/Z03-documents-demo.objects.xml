@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<objects>
+	<!-- The documents the document viewer shows out of the box: a picture for the photo viewer and a PDF for the PDF viewer. -->
+	<object id="doc-sample-picture"
+		type="demo.documents:Document"
+	>
+		<attribute name="name"
+			value="Sample picture"
+		/>
+		<attribute name="data"
+			value="data:image/svg+xml;name=Sample%20picture.svg;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgNjQwIDQwMCI+PHJlY3Qgd2lkdGg9IjY0MCIgaGVpZ2h0PSI0MDAiIGZpbGw9IiMxZDRlZDgiLz48Y2lyY2xlIGN4PSIzMjAiIGN5PSIxNzAiIHI9IjExMCIgZmlsbD0iI2ZiYmYyNCIvPjx0ZXh0IHg9IjMyMCIgeT0iMzUwIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSI0MCIgZmlsbD0iI2ZmZmZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+U2FtcGxlIHBpY3R1cmU8L3RleHQ+PC9zdmc+"
+		/>
+	</object>
+	<object id="doc-document-viewer"
+		type="demo.documents:Document"
+	>
+		<attribute name="name"
+			value="Document Viewer"
+		/>
+		<attribute name="data"
+			value="data:application/pdf;name=Document%20Viewer.pdf;base64,JVBERi0xLjQKJeLjz9MKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0gL0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAvTWVkaWFCb3ggWzAgMCA1OTUgODQyXSAvQ29udGVudHMgNCAwIFIgL1Jlc291cmNlcyA8PCAvRm9udCA8PCAvRjEgNSAwIFIgPj4gPj4gPj4KZW5kb2JqCjQgMCBvYmoKPDwgL0xlbmd0aCAzMjYgPj4Kc3RyZWFtCkJUIC9GMSAyNCBUZiA3MiA3MjAgVGQgKFRvcExvZ2ljIERvY3VtZW50IFZpZXdlcikgVGogRVQKQlQgL0YxIDEyIFRmIDcyIDY4MCBUZCAoVGhpcyBQREYgaXMgb25lIG9mIHRoZSB0d28gZG9jdW1lbnRzIHNlZWRlZCBmb3IgdGhlIFJlYWN0IGRlbW8uKSBUaiBFVApCVCAvRjEgMTIgVGYgNzIgNjYwIFRkIChJdCBpcyBkaXNwbGF5ZWQgaW5saW5lIGJ5IHRoZSBQREYgdmlld2VyIG9mIHRoZSBSZWFjdCBVSS4pIFRqIEVUCkJUIC9GMSAxMiBUZiA3MiA2NDAgVGQgKFNlbGVjdCB0aGUgcGljdHVyZSBpbiB0aGUgdGFibGUgdG8gZXhjaGFuZ2UgdGhlIHZpZXdlci4pIFRqIEVUCmVuZHN0cmVhbQplbmRvYmoKNSAwIG9iago8PCAvVHlwZSAvRm9udCAvU3VidHlwZSAvVHlwZTEgL0Jhc2VGb250IC9IZWx2ZXRpY2EgPj4KZW5kb2JqCnhyZWYKMCA2CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAxNSAwMDAwMCBuIAowMDAwMDAwMDY0IDAwMDAwIG4gCjAwMDAwMDAxMjEgMDAwMDAgbiAKMDAwMDAwMDI0NyAwMDAwMCBuIAowMDAwMDAwNjI0IDAwMDAwIG4gCnRyYWlsZXIKPDwgL1NpemUgNiAvUm9vdCAxIDAgUiA+PgpzdGFydHhyZWYKNjk0CiUlRU9GCg=="
+		/>
+	</object>
+</objects>

@@ -27,7 +27,9 @@ import com.top_logic.basic.config.XmlDateTimeFormat;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.basic.io.Content;
+import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.basic.io.binary.BinaryDataURI;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.model.ModelKind;
@@ -43,6 +45,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.factory.TLFactory;
 import com.top_logic.model.instance.exporter.Resolvers;
+import com.top_logic.model.instance.exporter.XMLInstanceExporter;
 import com.top_logic.model.instance.importer.resolver.InstanceResolver;
 import com.top_logic.model.instance.importer.resolver.NoInstanceResolver;
 import com.top_logic.model.instance.importer.resolver.ValueResolver;
@@ -597,6 +600,14 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 
 	/**
 	 * Parses a serialized primitive type value.
+	 *
+	 * <p>
+	 * A binary value is either a data URI keeping content type and file name, see
+	 * {@link BinaryDataURI#decode(String)}, or a bare base64 string, which is read as
+	 * {@link BinaryData} with content type {@link BinaryData#CONTENT_TYPE_OCTET_STREAM} and no name.
+	 * </p>
+	 *
+	 * @see XMLInstanceExporter#serialize(TLPrimitive, Object)
 	 */
 	public static Object parse(I18NLog log, TLPrimitive type, String value) {
 		if (value == null || value.trim().isEmpty()) {
@@ -609,6 +620,9 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 		switch (dbType) {
 			case BLOB: {
 				try {
+					if (BinaryDataURI.isDataURI(value)) {
+						return BinaryDataURI.decode(value);
+					}
 					byte[] result = Base64.decodeBase64(value);
 					return BinaryDataFactory.createBinaryData(result);
 				} catch (Exception ex) {

@@ -21,11 +21,11 @@ import com.top_logic.layout.view.ReloadableControl;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
-import com.top_logic.layout.view.channel.ChannelNotificationScope;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
+import com.top_logic.layout.view.element.ContentControls;
 import com.top_logic.layout.view.navigation.RevealPath;
 import com.top_logic.layout.view.navigation.RevealRegistry;
 
@@ -246,10 +246,7 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 
 		publishFrames();
 
-		// A dropped frame may hold listeners of the very channel whose notification is running, so
-		// its disposal waits until that notification has unwound.
-		ChannelNotificationScope.current()
-			.afterNotification(() -> dropped.forEach(ReactControl::cleanupTree));
+		dropped.forEach(ContentControls::retire);
 	}
 
 	/**

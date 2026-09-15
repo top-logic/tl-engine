@@ -24,6 +24,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.navigation.ObjectNavigator;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.wysiwyg.ObjectLinks;
 import com.top_logic.layout.react.wysiwyg.ReactWysiwygControl;
 
@@ -173,7 +174,8 @@ public class TestObjectLinks extends TestCase {
 	 * A context reporting to {@link #_messages} and displaying objects through the given navigator.
 	 */
 	private ReactContext context(ObjectNavigator navigator) {
-		return new ForwardingReactContext(new DefaultReactContext("", "test", new SSEUpdateQueue())) {
+		return new ForwardingReactContext(new DefaultReactContext("", "test", new SSEUpdateQueue(),
+				new ReactWindowRegistry("test"))) {
 			@Override
 			public ObjectNavigator getObjectNavigator() {
 				return navigator;

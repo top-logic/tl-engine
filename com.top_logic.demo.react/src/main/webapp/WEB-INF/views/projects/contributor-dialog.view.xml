@@ -2,7 +2,9 @@
 
 <!--
 	Where the application displays a contributor: a dialog on top of whatever the user is looking
-	at, because a contributor has no place of its own in the drill-down.
+	at, because a contributor has no place of its own in the drill-down. The contributor is edited
+	right there, so a renamed contributor shows up under its new name wherever it is displayed
+	behind the dialog - in the assignee cells of the tickets table, for instance.
 -->
 <view>
 	<channels>
@@ -15,19 +17,32 @@
 			<de>Mitarbeiter</de>
 		</title>
 		<form
+			initial-edit-mode="true"
 			input="contributor"
 			mode-switch="false"
 		>
 			<field attribute="name"/>
 			<field attribute="email"/>
 			<field attribute="assignedTickets"/>
+			<commands>
+				<generic-command placement="BUTTON_BAR">
+					<label>
+						<en>Save</en>
+						<de>Speichern</de>
+					</label>
+					<with-transaction>
+						<store-form-state/>
+					</with-transaction>
+					<close-dialog/>
+				</generic-command>
+			</commands>
 		</form>
 		<actions>
 			<button>
 				<action class="com.top_logic.layout.view.command.CancelDialogCommand">
 					<label>
-						<en>Close</en>
-						<de>Schließen</de>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
 					</label>
 				</action>
 			</button>

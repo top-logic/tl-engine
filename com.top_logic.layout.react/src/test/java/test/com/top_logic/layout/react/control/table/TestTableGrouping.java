@@ -27,6 +27,7 @@ import com.top_logic.layout.react.control.table.SelectRowArguments;
 import com.top_logic.layout.react.control.table.SortArguments;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
 import com.top_logic.table.GroupSpec;
@@ -129,7 +130,8 @@ public class TestTableGrouping extends TestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 
-		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue());
+		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue(),
+				new ReactWindowRegistry("test"));
 		ListRowSource<Item> rows = new ListRowSource<>(new ArrayList<>(List.of(A, B, C)), columns());
 		_table = new TestTable(context, DefaultTableView.create(columns(), rows));
 		// Order the rows, so what a group holds is decided but the group order still follows the
@@ -309,7 +311,8 @@ public class TestTableGrouping extends TestCase {
 	 * shows its group rows from the start, without anyone having to group it.
 	 */
 	public void testInitialGroupingShowsGroupRows() {
-		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue());
+		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue(),
+				new ReactWindowRegistry("test"));
 		ListRowSource<Item> rows = new ListRowSource<>(new ArrayList<>(List.of(A, B, C)), columns());
 		TableViewState initialState =
 			DefaultTableView.initialState(columns(), SortSpec.NONE, List.of());

@@ -31,6 +31,7 @@ import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactValueColor;
 import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
@@ -421,7 +422,7 @@ public class TestTextElementObservation extends BasicTestCase {
 		private final ModelScope _scope;
 
 		ObservingReactContext(ModelScope scope) {
-			super("", "test", new SSEUpdateQueue());
+			super("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
 			_scope = scope;
 		}
 

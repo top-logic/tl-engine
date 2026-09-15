@@ -11,7 +11,6 @@ import java.util.Set;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.channel.ChannelNotificationScope;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.layout.view.element.SwitchElement.SwitchCase;
@@ -132,11 +131,7 @@ public class ReactSwitchControl extends ReactControl {
 			built.attach();
 		}
 		if (old != null && old != built) {
-			// The rebuild typically runs from inside the input channel's listener notification, where
-			// the old content's controls may still be pending in the listener snapshot. Disposing them
-			// synchronously would let those listeners run on a torn-down control, so disposal is
-			// deferred until the notification has unwound (mirrors ReactAdaptiveDetailControl).
-			ChannelNotificationScope.current().afterNotification(old::cleanupTree);
+			ContentControls.retire(old);
 		}
 	}
 

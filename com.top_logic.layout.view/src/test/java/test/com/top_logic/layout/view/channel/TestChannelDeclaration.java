@@ -22,6 +22,7 @@ import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
@@ -138,7 +139,7 @@ public class TestChannelDeclaration extends TestCase {
 		// A non-null ReactContext is needed because createControl() creates ReactControl instances
 		// that call allocateId() and register with the SSE queue.
 		ViewContext viewContext = new DefaultViewContext(
-			new DefaultReactContext("", "test", new SSEUpdateQueue()));
+			new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test")));
 		ViewChannel preBound = new DefaultViewChannel("selectedItem");
 		preBound.set("pre-bound-value");
 		viewContext.registerChannel("selectedItem", preBound);

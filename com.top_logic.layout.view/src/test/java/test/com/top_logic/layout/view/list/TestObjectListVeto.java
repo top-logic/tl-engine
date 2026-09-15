@@ -18,6 +18,7 @@ import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
@@ -83,7 +84,7 @@ public class TestObjectListVeto extends BasicTestCase {
 		_ticketA = TransientObjectFactory.INSTANCE.createObject(ticketType, null);
 		_ticketB = TransientObjectFactory.INSTANCE.createObject(ticketType, null);
 
-		_context = new DefaultViewContext(new DefaultReactContext("", "test", new SSEUpdateQueue()));
+		_context = new DefaultViewContext(new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test")));
 		_container = new DefaultViewChannel(CONTAINER_CHANNEL);
 		_context.registerChannel(CONTAINER_CHANNEL, _container);
 		_container.set(_ticketA);

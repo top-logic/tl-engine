@@ -16,7 +16,6 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
-import com.top_logic.basic.util.Utils;
 import com.top_logic.knowledge.service.KBBasedManagedClass;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.tool.boundsec.wrap.Group;
@@ -49,10 +48,19 @@ public class InitialGroupManager extends KBBasedManagedClass<InitialGroupManager
 		String DEFAULT_GROUP = "default-group";
 
 		/**
-		 * Name of the group all persons have.
+		 * Name of the group every newly created account is added to.
 		 * 
 		 * <p>
-		 * If the "default group" is empty, then there is no group which all persons have.
+		 * The anonymous account is excluded, it is never added to the default group.
+		 * </p>
+		 * 
+		 * <p>
+		 * Changing this setting affects only accounts created afterwards. Accounts that already
+		 * exist are neither added to nor removed from a group.
+		 * </p>
+		 * 
+		 * <p>
+		 * If empty, there is no default group and a new account is not added to any group.
 		 * </p>
 		 */
 		@Name(DEFAULT_GROUP)
@@ -118,7 +126,7 @@ public class InitialGroupManager extends KBBasedManagedClass<InitialGroupManager
 	private void mkGroups(Collection<Config.GroupConfig> groups, String defaultGroup) {
 		for (Config.GroupConfig groupConfig : groups) {
 			String groupName = groupConfig.getName();
-			Group group = mkGroup(groupName, defaultGroup);
+			Group group = mkGroup(groupName);
 			if (defaultGroup.equals(groupName)) {
 				_defaultGroup = group;
 			}
@@ -129,27 +137,28 @@ public class InitialGroupManager extends KBBasedManagedClass<InitialGroupManager
 		}
 	}
 
-	private Group mkGroup(String groupName, String defaultGroup) {
-		{
-			Group existingGroup = Group.getGroupByName(kb(), groupName);
-			if (existingGroup != null) {
-				return existingGroup;
-			}
-
-			Group newGroup = Group.createGroup(groupName);
-			if (Utils.equals(defaultGroup, groupName)) {
-				newGroup.setDefaultGroup(true);
-			}
-			newGroup.setIsSystem(true);
-			Logger.info("Created system wide group " + newGroup, this);
-			return newGroup;
+	private Group mkGroup(String groupName) {
+		Group existingGroup = Group.getGroupByName(kb(), groupName);
+		if (existingGroup != null) {
+			return existingGroup;
 		}
+
+		Group newGroup = Group.createGroup(groupName);
+		newGroup.setIsSystem(true);
+		Logger.info("Created system wide group " + newGroup, this);
+		return newGroup;
 	}
 
 	/**
-	 * Returns the {@link Group} which each person has.
+	 * The {@link Group} every newly created account is added to.
 	 * 
-	 * @return May be <code>null</code>.
+	 * <p>
+	 * The anonymous account is excluded, it is never added to the default group. Changing
+	 * {@link Config#getDefaultGroup()} affects only accounts created afterwards: accounts that
+	 * already exist are neither added to nor removed from a group.
+	 * </p>
+	 * 
+	 * @return May be <code>null</code>, if no default group is configured.
 	 * 
 	 * @see Config#getDefaultGroup()
 	 */

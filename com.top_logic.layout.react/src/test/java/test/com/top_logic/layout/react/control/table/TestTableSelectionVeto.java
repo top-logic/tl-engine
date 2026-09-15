@@ -24,6 +24,7 @@ import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.layout.react.dirty.StateHandler;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.table.Column;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
@@ -102,7 +103,7 @@ public class TestTableSelectionVeto extends TestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 
-		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue());
+		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
 		_rows = new ListRowSource<>(new ArrayList<>(List.of(A, B, C)), columns());
 		_view = DefaultTableView.create(columns(), _rows);
 		_table = new TableViewControl<>(context, _view, false);

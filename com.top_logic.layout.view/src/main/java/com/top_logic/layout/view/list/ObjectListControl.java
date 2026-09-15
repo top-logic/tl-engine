@@ -108,7 +108,7 @@ public class ObjectListControl extends ReactStackControl {
 		_newElementChannelName = newElementChannelName;
 		_elementType = elementType;
 		_emptyText = emptyText;
-		_lastContainer = container.get();
+		_lastContainer = ListContainer.aliveOrNull(container.get());
 
 		createNewElementControls(scope);
 	}
@@ -151,7 +151,7 @@ public class ObjectListControl extends ReactStackControl {
 	 * </p>
 	 */
 	private void resetNewElement() {
-		Object container = _container.get();
+		Object container = ListContainer.aliveOrNull(_container.get());
 		TLObject containerObject = container instanceof TLObject ? (TLObject) container : null;
 		_newElementChannel.set(TransientObjectFactory.INSTANCE.createObject(_elementType, containerObject));
 	}
@@ -163,7 +163,7 @@ public class ObjectListControl extends ReactStackControl {
 	 *        The current list elements, in display order.
 	 */
 	public void showElements(List<Object> elements) {
-		Object container = _container.get();
+		Object container = ListContainer.aliveOrNull(_container.get());
 		if (!Objects.equals(container, _lastContainer)) {
 			_lastContainer = container;
 			if (_newElementChannel != null) {

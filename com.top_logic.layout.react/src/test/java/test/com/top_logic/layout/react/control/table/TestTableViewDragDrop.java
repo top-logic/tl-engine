@@ -24,6 +24,7 @@ import com.top_logic.layout.react.control.dnd.DropPosition;
 import com.top_logic.layout.react.control.dnd.DropTarget;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.table.Column;
 import com.top_logic.table.TableView;
 import com.top_logic.table.impl.DefaultColumn;
@@ -99,7 +100,7 @@ public class TestTableViewDragDrop extends TestCase {
 		super.setUp();
 
 		// One context, hence one control registry: the drop resolves its source control out of it.
-		_context = new DefaultReactContext("", "test", new SSEUpdateQueue());
+		_context = new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
 		_source = newTable();
 		_source.setDragSource(PERSON);
 		_target = newTable();

@@ -25,6 +25,7 @@ import com.top_logic.layout.react.routing.RouteSegment;
 import com.top_logic.layout.react.routing.RoutingParticipant;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 
 /**
  * Tests that the URL a {@link ReactSidebarControl} composes names the page it displays, and never
@@ -114,7 +115,8 @@ public class TestSidebarRouting extends TestCase {
 	 * </p>
 	 */
 	public void testThePageLeftIsRetiredBeforeTheNewOneIsNamed() {
-		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue());
+		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue(),
+				new ReactWindowRegistry("test"));
 
 		ReactSidebarControl[] holder = new ReactSidebarControl[1];
 		Supplier<String> sidebarSegment = () -> {

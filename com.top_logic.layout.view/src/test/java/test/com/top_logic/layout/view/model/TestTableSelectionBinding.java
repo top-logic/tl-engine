@@ -21,6 +21,7 @@ import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.channel.ChannelVetoException;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
@@ -80,7 +81,7 @@ public class TestTableSelectionBinding extends TestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 
-		_context = new DefaultReactContext("", "test", new SSEUpdateQueue());
+		_context = new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
 		_channel = new DefaultViewChannel("selection");
 
 		_rowsA = rows(A1, A2);

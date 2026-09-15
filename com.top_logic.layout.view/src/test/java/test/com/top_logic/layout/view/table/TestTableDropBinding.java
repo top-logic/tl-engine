@@ -23,6 +23,7 @@ import com.top_logic.layout.react.control.dnd.DropArguments;
 import com.top_logic.layout.react.control.dnd.DropPosition;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ViewAction;
@@ -88,7 +89,7 @@ public class TestTableDropBinding extends TestCase {
 		super.setUp();
 
 		// One context, hence one control registry: the drop resolves its source control out of it.
-		_context = new DefaultReactContext("", "test", new SSEUpdateQueue());
+		_context = new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
 		_source = newTable(SOURCE_ROWS);
 		_source.setDragSource(ROW_TYPE);
 		_targetChannel = new DefaultViewChannel("dropTarget");

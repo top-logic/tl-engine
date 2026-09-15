@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.locks.ReentrantLock;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,6 +31,7 @@ import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactCommands;
 import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.Interaction;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
@@ -82,9 +82,10 @@ import com.top_logic.layout.react.scripting.AssertCommand;
  *
  * <p>
  * Acting dispatches through {@link com.top_logic.layout.react.control.ReactControl#executeCommand} —
- * the same path the browser command endpoint uses — under the same window
- * {@link ReactWindowRegistry#getRequestLock() request lock} and subsession context. After the command
- * runs, {@link ReactWindowRegistry#synthesizeModelEvents(String) model events are synthesized} so that
+ * the same path the browser command endpoint uses — as one
+ * {@link ReactWindowRegistry#beginInteraction() interaction} of the window, in its subsession
+ * context. After the command runs,
+ * {@link ReactWindowRegistry#synthesizeModelEvents(String) model events are synthesized} so that
  * all derived state has settled before the response is built. The reply therefore carries a
  * <em>quiesced</em> observation: a headless caller never has to poll or await asynchronous SSE
  * delivery — it reads the fresh server state directly.
@@ -293,13 +294,9 @@ public class AgentServlet extends TopLogicServlet {
 
 		boolean actionsMode = MODE_ACTIONS.equals(request.getParameter(FIELD_MODE));
 
-		ReentrantLock requestLock = ReactWindowRegistry.forSession(session).getRequestLock();
-		requestLock.lock();
-		try {
+		try (Interaction interaction = ReactWindowRegistry.forSession(session).beginInteraction()) {
 			ScriptingSession scriptingSession = scriptingSession(queue);
 			write(response, actionsMode ? scriptingSession.observeActionsJson() : scriptingSession.observeJson());
-		} finally {
-			requestLock.unlock();
 		}
 	}
 
@@ -331,9 +328,7 @@ public class AgentServlet extends TopLogicServlet {
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 		SubsessionHandler rootHandler = installSubSession(displayContext, windowName);
 
-		ReentrantLock requestLock = ReactWindowRegistry.forSession(session).getRequestLock();
-		requestLock.lock();
-		try {
+		try (Interaction interaction = ReactWindowRegistry.forSession(session).beginInteraction()) {
 			boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
 			HandlerResult result;
 			try {
@@ -350,8 +345,6 @@ public class AgentServlet extends TopLogicServlet {
 			String observation = scriptingSession.observeJson();
 			write(response, "{\"" + FIELD_SUCCESS + "\":" + result.isSuccess() + errorField(result)
 				+ ",\"" + FIELD_OBSERVATION + "\":" + observation + "}");
-		} finally {
-			requestLock.unlock();
 		}
 	}
 
@@ -417,9 +410,7 @@ public class AgentServlet extends TopLogicServlet {
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 		installSubSession(displayContext, windowName);
 
-		ReentrantLock requestLock = ReactWindowRegistry.forSession(session).getRequestLock();
-		requestLock.lock();
-		try {
+		try (Interaction interaction = ReactWindowRegistry.forSession(session).beginInteraction()) {
 			boolean ok = true;
 			String message = null;
 			try {
@@ -453,8 +444,6 @@ public class AgentServlet extends TopLogicServlet {
 				+ ",\"" + FIELD_URL + "\":" + JSON.toString(reachedUrl)
 				+ (message != null ? ",\"" + FIELD_MESSAGE + "\":" + JSON.toString(message) : "")
 				+ ",\"" + FIELD_OBSERVATION + "\":" + observation + "}");
-		} finally {
-			requestLock.unlock();
 		}
 	}
 
@@ -539,17 +528,13 @@ public class AgentServlet extends TopLogicServlet {
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 		installSubSession(displayContext, windowName);
 
-		ReentrantLock requestLock = ReactWindowRegistry.forSession(session).getRequestLock();
-		requestLock.lock();
-		try {
+		try (Interaction interaction = ReactWindowRegistry.forSession(session).beginInteraction()) {
 			Map<String, Object> expected = (Map<String, Object>) body.get(FIELD_EXPECT);
 			if (expected == null) {
 				expected = ScriptingTreeProjector.nodeState(scriptingSession.resolve(address));
 			}
 			queue.getRecorder().record(AssertCommand.create(address, expected));
 			writeRecorderState(response, queue.getRecorder());
-		} finally {
-			requestLock.unlock();
 		}
 	}
 
@@ -577,9 +562,7 @@ public class AgentServlet extends TopLogicServlet {
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 		SubsessionHandler rootHandler = installSubSession(displayContext, windowName);
 
-		ReentrantLock requestLock = ReactWindowRegistry.forSession(session).getRequestLock();
-		requestLock.lock();
-		try {
+		try (Interaction interaction = ReactWindowRegistry.forSession(session).beginInteraction()) {
 			boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
 			List<Map<String, Object>> results = new ArrayList<>();
 			boolean allOk = true;
@@ -605,8 +588,6 @@ public class AgentServlet extends TopLogicServlet {
 			write(response, "{\"" + FIELD_SUCCESS + "\":" + allOk
 				+ ",\"" + FIELD_RESULTS + "\":" + JSON.toString(results)
 				+ ",\"" + FIELD_OBSERVATION + "\":" + observation + "}");
-		} finally {
-			requestLock.unlock();
 		}
 	}
 

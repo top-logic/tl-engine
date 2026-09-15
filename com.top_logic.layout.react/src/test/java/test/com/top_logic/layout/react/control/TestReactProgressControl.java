@@ -10,6 +10,7 @@ import junit.framework.TestCase;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.common.ReactProgressControl;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 
 /**
@@ -65,7 +66,7 @@ public class TestReactProgressControl extends TestCase {
 	}
 
 	private static ReactProgressControl control(double fraction, String label) {
-		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue());
+		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
 		return new ReactProgressControl(context, fraction, label);
 	}
 

@@ -21,6 +21,7 @@
 					<bundle name="model.tl.demo.projectManagement.messages"/>
 					<bundle name="model.demo.filter.messages"/>
 					<bundle name="model.demo.calendar.messages"/>
+					<bundle name="model.demo.documents.messages"/>
 				</bundles>
 			</instance>
 		</config>
@@ -43,6 +44,7 @@
 					<declaration file="/WEB-INF/model/tl.demo.projectManagement.model.xml"/>
 					<declaration file="/WEB-INF/model/demo.filter.model.xml"/>
 					<declaration file="/WEB-INF/model/demo.calendar.model.xml"/>
+					<declaration file="/WEB-INF/model/demo.documents.model.xml"/>
 				</declarations>
 			</instance>
 		</config>
@@ -177,8 +179,8 @@
 		</config>
 		<config config:interface="com.top_logic.layout.view.ViewConfig">
 			<!--
-				A second view a URL may load top-level, besides the default view: the PDF demo is
-				self-contained, so it shows the same thing in a browser tab of its own as it does
+				A second view a URL may load top-level, besides the default view: the document viewer
+				is self-contained, so it shows the same thing in a browser tab of its own as it does
 				inside the application shell.
 			-->
 			<entry-points>

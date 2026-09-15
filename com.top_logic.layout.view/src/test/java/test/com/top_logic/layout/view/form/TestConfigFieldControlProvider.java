@@ -26,6 +26,7 @@ import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.form.ConfigFieldControlProvider;
 
 /**
@@ -57,7 +58,7 @@ public class TestConfigFieldControlProvider extends TestCase {
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		_context = new DefaultReactContext("", "test", new SSEUpdateQueue());
+		_context = new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
 	}
 
 	private static Edited item(String name) {

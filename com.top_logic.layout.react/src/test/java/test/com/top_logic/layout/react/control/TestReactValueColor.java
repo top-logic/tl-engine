@@ -24,6 +24,7 @@ import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactValueColor;
 import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
@@ -125,7 +126,7 @@ public class TestReactValueColor extends BasicTestCase {
 	}
 
 	private ReactDropdownSelectControl createSelect(Object value, List<?> options) {
-		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue());
+		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
 		return new ReactDropdownSelectControl(context,
 			new SimpleSelectFieldModel(value, options, false), LABELS, null, false);
 	}

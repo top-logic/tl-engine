@@ -305,10 +305,11 @@ public class ObjectListElement implements UIElement {
 	}
 
 	private static List<Object> computeElements(QueryExecutor itemsExecutor, Object container) {
-		if (container == null) {
+		Object aliveContainer = ListContainer.aliveOrNull(container);
+		if (aliveContainer == null) {
 			return Collections.emptyList();
 		}
-		Object result = itemsExecutor.execute(container);
+		Object result = itemsExecutor.execute(aliveContainer);
 		if (result instanceof Collection<?> collection) {
 			return new ArrayList<>(collection);
 		}

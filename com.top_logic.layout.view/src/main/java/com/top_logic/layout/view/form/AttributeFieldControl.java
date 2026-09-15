@@ -221,9 +221,9 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 		TLObject current = source.getCurrentObject();
 
 		if (current == null || !current.tValid()) {
-			// Object gone or deleted - hide field. A deleted object must not be dereferenced: this
-			// fires while the form still holds the old object during exit-edit-mode, e.g. right after the
-			// bound object was deleted and the input channel cleared.
+			// The form displays nothing, or an object that is deleted - hide the field. A deleted
+			// object must not be dereferenced: an input channel can deliver one, e.g. when the
+			// selection it carries is deleted elsewhere.
 			_chrome.setVisible(false);
 			clearModel();
 			return;

@@ -67,6 +67,7 @@ import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.control.form.ReactIconSelectControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 
 /**
  * Tests for {@link ConfigControlService}.
@@ -828,7 +829,7 @@ public class TestConfigControlService extends TestCase {
 	}
 
 	private ReactContext context() {
-		return new DefaultReactContext("", "test", new SSEUpdateQueue());
+		return new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
 	}
 
 	private ReactControl control(String propertyName) {

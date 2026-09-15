@@ -254,10 +254,24 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	}
 
 	/**
-	 * The session-wide request lock for serializing command execution.
+	 * Begins an {@link Interaction} with the control trees of this session.
+	 *
+	 * <p>
+	 * Everything that changes the display - a command, a navigation, a window lifecycle event -
+	 * happens within one, so that the trees are seen by one request at a time and the updates the
+	 * change produces are delivered together once it has completed. Use it as a resource:
+	 * </p>
+	 *
+	 * <pre>
+	 * try (Interaction interaction = registry.beginInteraction()) {
+	 * 	control.executeClientCommand(command, arguments);
+	 * }
+	 * </pre>
+	 *
+	 * @return The open interaction, to be closed when the change is complete.
 	 */
-	public ReentrantLock getRequestLock() {
-		return _requestLock;
+	public Interaction beginInteraction() {
+		return new Interaction(_requestLock);
 	}
 
 	/**
@@ -494,12 +508,10 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 			}
 			String windowId = entry.getWindowId();
 			// Mirrors ReactServlet's window-close handling: the callbacks run by windowClosed patch
-			// the opener's state and flush SSE events, and must not race with concurrent commands.
-			_requestLock.lock();
-			try {
+			// the opener's state and produce SSE events, so the teardown is an interaction like any
+			// other.
+			try (Interaction interaction = beginInteraction()) {
 				windowClosed(windowId);
-			} finally {
-				_requestLock.unlock();
 			}
 		}
 	}

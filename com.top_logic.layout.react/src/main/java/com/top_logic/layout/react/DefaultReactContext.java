@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.react;
 
+import java.util.Objects;
+
 import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
@@ -35,29 +37,17 @@ public class DefaultReactContext implements ReactContext {
 	 * @param sseQueue
 	 *        The SSE queue for the current session.
 	 * @param windowRegistry
-	 *        The window registry for the current session.
+	 *        The registry of the session the window named {@code windowName} belongs to. It
+	 *        supplies the {@link #getModelScope() model scope} the window's controls observe. Must
+	 *        not be {@code null}.
 	 */
 	public DefaultReactContext(String contextPath, String windowName, SSEUpdateQueue sseQueue,
 			ReactWindowRegistry windowRegistry) {
 		_contextPath = contextPath;
 		_windowName = windowName;
 		_sseQueue = sseQueue;
-		_windowRegistry = windowRegistry;
+		_windowRegistry = Objects.requireNonNull(windowRegistry, "A React context requires a window registry.");
 		_routeManager = new RouteManager();
-	}
-
-	/**
-	 * Creates a {@link DefaultReactContext} without a window registry.
-	 *
-	 * @param contextPath
-	 *        The webapp context path.
-	 * @param windowName
-	 *        The window name for command routing.
-	 * @param sseQueue
-	 *        The SSE queue for the current session.
-	 */
-	public DefaultReactContext(String contextPath, String windowName, SSEUpdateQueue sseQueue) {
-		this(contextPath, windowName, sseQueue, null);
 	}
 
 	@Override

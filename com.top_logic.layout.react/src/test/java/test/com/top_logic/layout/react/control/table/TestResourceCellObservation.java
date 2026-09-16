@@ -66,8 +66,7 @@ public class TestResourceCellObservation extends AbstractDBKnowledgeBaseTest {
 			Collections.emptyMap(), kb().getMORepository());
 		log.checkErrors();
 		_scope = new GlobalModelEventForwarder(kb(), updates, relevance);
-		_context = new ForwardingReactContext(new DefaultReactContext("", "test", new SSEUpdateQueue(),
-			new ReactWindowRegistry("test"))) {
+		_context = new ForwardingReactContext(new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"))) {
 			@Override
 			public ModelScope getModelScope() {
 				return _scope;

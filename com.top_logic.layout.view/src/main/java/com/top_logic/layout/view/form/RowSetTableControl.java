@@ -55,6 +55,8 @@ import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.Group;
 import com.top_logic.table.GroupKey;
 import com.top_logic.table.GroupSpec;
+import com.top_logic.table.Selection;
+import com.top_logic.table.SelectionMode;
 import com.top_logic.table.Sort;
 import com.top_logic.table.NamedFilter;
 import com.top_logic.table.NamedFilterStore;
@@ -182,6 +184,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 	/** The grouping the table starts with, until a personalization of its own exists. */
 	private GroupSpec _grouping = GroupSpec.NONE;
+
+	/** @see #setSelectionMode(SelectionMode) */
+	private SelectionMode _selectionMode = SelectionMode.SINGLE;
 
 	/** Columns appended behind the data and action columns, see {@link #setTrailingColumns(List)}. */
 	private List<? extends Column<TLObject, ?>> _trailingColumns = List.of();
@@ -364,6 +369,20 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	/**
+	 * Sets whether the user may select one row at a time, or any number of them.
+	 *
+	 * <p>
+	 * To be called before {@link #init()}: the mode is part of the initial state of each
+	 * {@link TableViewControl} this control builds, and it decides how the selection reaches the
+	 * {@link #setSelectionChannel(ViewChannel) selection channel} - one selected row as that row's
+	 * object, several as the set of them.
+	 * </p>
+	 */
+	public void setSelectionMode(SelectionMode selectionMode) {
+		_selectionMode = selectionMode;
+	}
+
+	/**
 	 * Enables automatic row refresh outside edit sessions: the row function is re-evaluated when an
 	 * observed object or input channel changes.
 	 *
@@ -528,6 +547,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		TableViewState initialState =
 			DefaultTableView.initialState(columns, _defaultSort, _hiddenByDefault);
 		initialState.setGrouping(_grouping);
+		initialState.setSelection(Selection.none(_selectionMode));
 		if (_fixedColumns > 0) {
 			// The configured number counts data columns; a leading action column has to be added on
 			// top of it, or freezing "the first two columns" would freeze the detail button and one

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29563_default_group_derived"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29492_enlarge_layout_key"
+			module="tl"
+		/>
+		<dependency name="Ticket_29540_mandatory_timezone"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<!-- The default group is the group named by the application configuration, therefore the attribute is recreated as a derived attribute and the stored values are dropped. -->
+		<delete-property name="tl.accounts:Group#defaultGroup"
+			type-tables="Group"
+		/>
+		<create-property name="tl.accounts:Group#defaultGroup"
+			type="tl.core:Boolean"
+		>
+			<annotations>
+				<storage-algorithm>
+					<derived-storage>
+						<expression-evaluation>
+							<method-call method="com.top_logic.tool.boundsec.wrap.Group#isDefaultGroup()"/>
+						</expression-evaluation>
+					</derived-storage>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+	</processors>
+	<post-processors/>
+</migration>

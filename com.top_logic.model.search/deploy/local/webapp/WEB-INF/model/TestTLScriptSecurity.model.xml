@@ -22,8 +22,8 @@
 							type="tl.core:Integer"
 						/>
 						<reference name="account"
-							type="tl.accounts:Person"
 							mandatory="true"
+							type="tl.accounts:Person"
 						/>
 					</attributes>
 				</class>
@@ -44,7 +44,6 @@
 						<generalization type="UnsecuredData"/>
 					</generalizations>
 				</class>
-
 
 				<class name="Project">
 					<annotations>
@@ -76,6 +75,22 @@
 							multiple="true"
 							type="Employee"
 						/>
+						<!--
+							The role rules of the application configuration layer assign the project
+							roles directly to the referenced account.
+						-->
+						<reference name="responsibleAccount"
+							type="tl.accounts:Person"
+						/>
+						<reference name="readerAccount"
+							type="tl.accounts:Person"
+						/>
+						<reference name="auditorAccount"
+							type="tl.accounts:Person"
+						/>
+						<reference name="viewerAccount"
+							type="tl.accounts:Person"
+						/>
 						<property name="runningCosts"
 							type="tl.core:Integer"
 						>
@@ -86,6 +101,12 @@
 							</annotations>
 						</property>
 					</attributes>
+				</class>
+
+				<class name="SpecialProject">
+					<generalizations>
+						<generalization type="Project"/>
+					</generalizations>
 				</class>
 			</types>
 		</module>

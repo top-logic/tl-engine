@@ -13,6 +13,7 @@ import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 
 /**
@@ -30,6 +31,9 @@ public interface ViewConfig extends ConfigurationItem {
 
 	/** Configuration name for {@link #getEntryPoints()}. */
 	String ENTRY_POINTS = "entry-points";
+
+	/** Configuration name for {@link #getLoginView()}. */
+	String LOGIN_VIEW = "login-view";
 
 	/**
 	 * The name of the default view file loaded when the {@link ViewServlet} is accessed without a
@@ -69,6 +73,31 @@ public interface ViewConfig extends ConfigurationItem {
 	@EntryTag("entry-point")
 	@Key(EntryPoint.VIEW)
 	List<EntryPoint> getEntryPoints();
+
+	/**
+	 * The view rendered for a session that belongs to no account, in place of whatever the URL
+	 * names.
+	 *
+	 * <p>
+	 * Every visitor reaches the application under an anonymous session. An application that has
+	 * nothing to show a visitor names a login view here: a visitor then sees that view and nothing
+	 * else, whether the URL names a route, the {@link #getDefaultView()} or one of the
+	 * {@link #getEntryPoints()}. The requested URL is kept while it is displayed, so the page the
+	 * visitor asked for is the one they reach once they are logged in.
+	 * </p>
+	 *
+	 * <p>
+	 * Unset for an application that shows itself to visitors, which then reaches its login through
+	 * the display it renders for them.
+	 * </p>
+	 *
+	 * <p>
+	 * The file is resolved relative to {@code /WEB-INF/views/} in the webapp.
+	 * </p>
+	 */
+	@Name(LOGIN_VIEW)
+	@Nullable
+	String getLoginView();
 
 	/**
 	 * A view that a URL may name as the contents of a browser tab.

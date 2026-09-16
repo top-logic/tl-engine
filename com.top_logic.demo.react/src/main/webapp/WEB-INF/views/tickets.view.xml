@@ -123,6 +123,7 @@
 							</label>
 							<executability>
 								<null-input-disabled/>
+								<disabled-if expr="t -> if($t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`, #('Closed tickets cannot be deleted.'@en, 'Geschlossene Tickets können nicht gelöscht werden.'@de), null)"/>
 							</executability>
 							<with-transaction>
 								<execute-script function="obj -> { if($obj != null, $obj.delete(), null); null; }"/>

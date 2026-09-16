@@ -11,7 +11,9 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.command.CombinedViewExecutabilityRule;
+import com.top_logic.layout.view.command.DisabledIf;
 import com.top_logic.layout.view.command.NullInputDisabled;
 import com.top_logic.layout.view.command.NullInputHidden;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
@@ -147,5 +149,46 @@ public class TestViewExecutabilityRules extends TestCase {
 		// NullInputHidden comes first, so NOT_EXEC_HIDDEN should win.
 		ExecutableState state = combined.isExecutable(null);
 		assertSame(ExecutableState.NOT_EXEC_HIDDEN, state);
+	}
+
+	/**
+	 * Tests that {@link DisabledIf#stateFor(Object)} keeps the command executable without a reason.
+	 */
+	public void testDisabledIfWithoutReason() {
+		assertSame(ExecutableState.EXECUTABLE, DisabledIf.stateFor(null));
+	}
+
+	/**
+	 * Tests that {@link DisabledIf#stateFor(Object)} keeps the command executable for
+	 * {@link Boolean#FALSE}.
+	 */
+	public void testDisabledIfWithFalse() {
+		assertSame(ExecutableState.EXECUTABLE, DisabledIf.stateFor(Boolean.FALSE));
+	}
+
+	/**
+	 * Tests that {@link DisabledIf#stateFor(Object)} disables with the generic reason for
+	 * {@link Boolean#TRUE}.
+	 */
+	public void testDisabledIfWithTrue() {
+		ExecutableState state = DisabledIf.stateFor(Boolean.TRUE);
+
+		assertEquals(ExecutableState.createDisabledState(ExecutableState.NOT_EXEC_DISABLED_REASON), state);
+	}
+
+	/**
+	 * Tests that {@link DisabledIf#stateFor(Object)} disables with a given {@link ResKey} reason.
+	 */
+	public void testDisabledIfWithResKey() {
+		ResKey reason = ResKey.text("Not yet.");
+
+		assertEquals(ExecutableState.createDisabledState(reason), DisabledIf.stateFor(reason));
+	}
+
+	/**
+	 * Tests that {@link DisabledIf#stateFor(Object)} disables with a given text as reason.
+	 */
+	public void testDisabledIfWithText() {
+		assertEquals(ExecutableState.createDisabledState(ResKey.text("Not yet.")), DisabledIf.stateFor("Not yet."));
 	}
 }

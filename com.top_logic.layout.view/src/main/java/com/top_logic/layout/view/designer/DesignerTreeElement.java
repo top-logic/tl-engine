@@ -20,8 +20,6 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.layout.component.model.SelectionEvent;
-import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.configedit.ConfigTypeChoice;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.button.CommandModel;
@@ -42,8 +40,8 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.model.TreeSelectionBinding;
 import com.top_logic.mig.html.DefaultSingleSelectionModel;
-import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.SelectionModelOwner;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
@@ -138,22 +136,7 @@ public class DesignerTreeElement implements UIElement {
 		ChannelRef selectionRef = _config.getSelection();
 		if (selectionRef != null) {
 			ViewChannel selectionChannel = context.resolveChannel(selectionRef);
-			selectionModel.addSelectionListener(new SelectionListener<>() {
-				@Override
-				public void notifySelectionChanged(SelectionModel<Object> model, SelectionEvent<Object> event) {
-					Set<?> newSelection = event.getNewSelection();
-					if (newSelection.size() == 1) {
-						Object selected = newSelection.iterator().next();
-						if (selected instanceof DefaultTreeUINode treeNode) {
-							selectionChannel.set(treeNode.getBusinessObject());
-						} else {
-							selectionChannel.set(selected);
-						}
-					} else if (newSelection.isEmpty()) {
-						selectionChannel.set(null);
-					}
-				}
-			});
+			selectionModel.addSelectionListener(new TreeSelectionBinding<>(selectionChannel));
 
 			// Reflect an externally set selection (e.g. from the "select view" picker) in the tree.
 			selectionChannel.addListener((sender, oldValue, newValue) -> {

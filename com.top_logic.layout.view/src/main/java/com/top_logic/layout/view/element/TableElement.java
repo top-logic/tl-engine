@@ -34,6 +34,7 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
@@ -84,6 +85,8 @@ import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.GroupSpec;
+import com.top_logic.table.Selection;
+import com.top_logic.table.SelectionMode;
 import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortDirection;
 import com.top_logic.table.SortSpec;
@@ -150,6 +153,9 @@ public class TableElement implements UIElement {
 
 		/** Configuration name for {@link #getSelection()}. */
 		String SELECTION = "selection";
+
+		/** Configuration name for {@link #getSelectionMode()}. */
+		String SELECTION_MODE = "selection-mode";
 
 		/** Configuration name for {@link #getObservedTypes()}. */
 		String OBSERVED_TYPES = "observed-types";
@@ -234,6 +240,32 @@ public class TableElement implements UIElement {
 		@Name(SELECTION)
 		@Format(ChannelRefFormat.class)
 		ChannelRef getSelection();
+
+		/**
+		 * Whether the user may select one row at a time, or any number of them.
+		 *
+		 * <p>
+		 * {@link SelectionMode#SINGLE} (the default) replaces the selection with every click, and
+		 * a click on the selected row with {@code Ctrl} gives it up again.
+		 * </p>
+		 *
+		 * <p>
+		 * {@link SelectionMode#MULTI} puts a checkbox in front of every row and one in the header
+		 * selecting and deselecting all of them; a click with {@code Ctrl} adds a row to the
+		 * selection or takes it out again, a click with {@code Shift} selects the range from the
+		 * row selected last, and {@code Ctrl+A} selects every row.
+		 * </p>
+		 *
+		 * <p>
+		 * The {@link #getSelection() selection channel} holds the selected row object while exactly
+		 * one row is selected, the set of the selected row objects while there are several, and
+		 * nothing while there is none - so a display bound to the channel works with either mode,
+		 * and only one that is to show several rows at once has to expect a set.
+		 * </p>
+		 */
+		@Name(SELECTION_MODE)
+		@ComplexDefault(SelectionMode.SingleDefault.class)
+		SelectionMode getSelectionMode();
 
 		/**
 		 * The command a row activation runs - a double-click on the row, or {@code Enter} while the
@@ -1091,6 +1123,7 @@ public class TableElement implements UIElement {
 		TableViewState initialState = DefaultTableView.initialState(columns, defaultSort(), hiddenByDefault);
 		initialState.setFrozenCount(_config.getFixedColumns());
 		initialState.setGrouping(initialGrouping());
+		initialState.setSelection(Selection.none(_config.getSelectionMode()));
 		DefaultTableView<Object> view = new DefaultTableView<>(columns, source, initialState,
 			PersonalConfigViewStateStore.INSTANCE, tableId(), hiddenByDefault,
 			declaredFilters(columns, inputValues), filterStore());
@@ -1231,6 +1264,7 @@ public class TableElement implements UIElement {
 		control.setGrouping(initialGrouping());
 		control.setFixedColumns(_config.getFixedColumns());
 		control.setSelectionChannel(selectionChannel);
+		control.setSelectionMode(_config.getSelectionMode());
 		control.setRowRefresh(args -> executeRowsQuery(rowsExecutor, args), ObservedTypes.resolve(_config.getObservedTypes()), inputChannels);
 		control.setActivationHandler(activationHandler(context, activation));
 		control.setTrailingColumns(this.<TLObject> rowCommandColumns(context, activation));

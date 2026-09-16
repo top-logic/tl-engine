@@ -43,6 +43,12 @@ import java.util.function.Supplier;
  * order, because its segments are consumed by the participants as they appear.
  * </p>
  *
+ * <p>
+ * A display that is not the application - a login page shown to a visitor in place of what the URL
+ * names - takes up no URL at all: it {@link #holdUrl(String) holds} the requested one, so that the
+ * address the user asked for survives a display that can neither reproduce nor describe it.
+ * </p>
+ *
  * @see RoutingParticipant
  * @see RoutePattern
  */
@@ -74,6 +80,10 @@ public final class RouteManager {
 	private Supplier<List<RoutingParticipant>> _displayedParticipants;
 
 	private boolean _adopting;
+
+	private boolean _holding;
+
+	private String _heldUrl = "";
 
 	private long _adoptionId;
 
@@ -107,6 +117,13 @@ public final class RouteManager {
 	public void register(RoutingParticipant participant) {
 		_participants.add(participant);
 		participant.addRouteChangeListener(_internalListener);
+
+		if (_holding) {
+			// The display is not the application, so what it contains describes nothing about the
+			// held URL: the participant is neither offered a segment of it nor asked to complete the
+			// address bar from what it shows.
+			return;
+		}
 
 		if (_activationDepth > 0) {
 			// Brought into the display by an activation of the URL being adopted: it is part of the
@@ -153,6 +170,11 @@ public final class RouteManager {
 		participant.removeRouteChangeListener(_internalListener);
 
 		_participants.remove(participant);
+
+		if (_holding) {
+			// A held URL stays the one the client shows, whatever leaves the display that holds it.
+			return;
+		}
 
 		if (_adopting) {
 			// A display being built up for the URL the client shows exchanges what it displays -
@@ -225,10 +247,48 @@ public final class RouteManager {
 		_pendingUrl = queryStart < 0 ? url : url.substring(0, queryStart);
 		_pendingQuery = queryStart < 0 ? Map.of() : parseQuery(url.substring(queryStart + 1));
 		_lastNotifiedUrl = url;
+		_holding = false;
+		_heldUrl = "";
 		_adopting = true;
 		_adoptionId++;
 		_activatedWhileAdopting.clear();
 		_registeredWhileAdopting.clear();
+	}
+
+	/**
+	 * Retains the given URL while the display takes up none of it.
+	 *
+	 * <p>
+	 * The display shown is not the application the URL addresses - a login page a visitor is given
+	 * in place of the page they asked for - so it can neither reproduce the URL nor describe one of
+	 * its own. Holding keeps the address the user asked for: the URL stays the one the client shows
+	 * and the one {@link #currentUrl()} answers, no segment of it is offered to a participant, and
+	 * nothing the held display contains or does reaches the address bar. What the user asked for is
+	 * therefore still there once the application itself is displayed, which is what a page reloaded
+	 * under a session of its own does.
+	 * </p>
+	 *
+	 * <p>
+	 * The hold lasts until a URL is {@link #adoptUrl(String) adopted}, which is the display becoming
+	 * the application again. A URL reaching the manager while the hold lasts - the client navigating
+	 * back and forth over the held page - is held in turn, because the display it would be resolved
+	 * against is still not the one it names.
+	 * </p>
+	 *
+	 * @param url
+	 *        The URL the client displays (without leading slash, with its query string), empty for
+	 *        none.
+	 */
+	public void holdUrl(String url) {
+		String held = url == null ? "" : url;
+		_pendingUrl = null;
+		_pendingQuery = Map.of();
+		_adopting = false;
+		_activatedWhileAdopting.clear();
+		_registeredWhileAdopting.clear();
+		_holding = true;
+		_heldUrl = held;
+		_lastNotifiedUrl = held;
 	}
 
 	/**
@@ -266,6 +326,12 @@ public final class RouteManager {
 	 * </p>
 	 */
 	public void resolvePending() {
+		if (_holding) {
+			// Nothing is resolved against a display that is not the application: the held URL
+			// describes a page this display is not.
+			return;
+		}
+
 		for (RoutingParticipant participant : new ArrayList<>(_participants)) {
 			offerPendingQuery(participant);
 		}
@@ -331,6 +397,12 @@ public final class RouteManager {
 		// navigation of its own. Recording it as the URL the client shows keeps every change the
 		// adoption causes - a participant selecting an item, a lazily rendered control registering
 		// afterwards - from pushing a history entry that would cancel the back navigation.
+		if (_holding) {
+			// Still the display that is not the application: the URL the client moved to is retained
+			// unresolved, exactly like the one the hold began with.
+			holdUrl(url);
+			return;
+		}
 		adoptUrl(url);
 		resolvePending();
 	}
@@ -390,6 +462,13 @@ public final class RouteManager {
 	 * </p>
 	 */
 	public void finishAdoption() {
+		if (_holding) {
+			// The display is complete, but it is not the application: it claims no segment of the
+			// held URL, and dropping what it leaves unclaimed would throw away the very address the
+			// hold keeps.
+			return;
+		}
+
 		_pendingUrl = null;
 		_pendingQuery = Map.of();
 		resetUnnamedRoutes();
@@ -469,12 +548,22 @@ public final class RouteManager {
 	 * contribute is carried by the last of them, because one URL has one value for a name.
 	 * </p>
 	 *
+	 * <p>
+	 * A {@link #holdUrl(String) held} URL is answered as it is: the display composing nothing of it
+	 * is not the application it addresses, and the address the user asked for is what the client
+	 * shows.
+	 * </p>
+	 *
 	 * @return The composed URL (without leading slash, with its query string), or empty string if no
 	 *         segments are active.
 	 *
 	 * @see #setDisplayedParticipants(Supplier)
 	 */
 	public String currentUrl() {
+		if (_holding) {
+			return _heldUrl;
+		}
+
 		StringBuilder sb = new StringBuilder();
 		Map<String, String> query = new LinkedHashMap<>();
 		for (RoutingParticipant participant : composingParticipants()) {
@@ -670,6 +759,11 @@ public final class RouteManager {
 
 	private void notifyUrlChange(boolean replace) {
 		if (_suppressNotifications) {
+			return;
+		}
+		if (_holding) {
+			// A display that is not the application has no address to report: correcting the address
+			// bar to what it shows is exactly the loss of the requested URL the hold prevents.
 			return;
 		}
 		String url = currentUrl();

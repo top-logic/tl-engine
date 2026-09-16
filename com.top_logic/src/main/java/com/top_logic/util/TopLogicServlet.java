@@ -665,7 +665,7 @@ public class TopLogicServlet extends AbstractTopLogicServlet {
 			HttpSession testSession = request.getSession(true);
 			testSession.setAttribute(TEST_SESSION, true);
 
-			URLPathBuilder url = createRedirectURL(ApplicationPages.getInstance().getStartPage(), request);
+			URLPathBuilder url = createRedirectURL(getEntryPage(request), request);
 			url.appendParameter(TopLogicServlet.SESSION_CHECK, "true");
 
 			response.sendRedirect(url.getURL());

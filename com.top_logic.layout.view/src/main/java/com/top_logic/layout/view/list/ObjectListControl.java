@@ -19,6 +19,7 @@ import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
+import com.top_logic.layout.view.channel.VetoForwarder;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
@@ -123,6 +124,10 @@ public class ObjectListControl extends ReactStackControl {
 		_newElementChannel = new DefaultViewChannel(_newElementChannelName);
 		resetNewElement();
 		scope.initNewElementReset(this::resetNewElement);
+
+		// A container switch discards the draft, so the unsaved changes of the new-element content
+		// are reported when the container channel is asked, before it is written.
+		addCleanupAction(VetoForwarder.forward(_container, _newElementChannel));
 
 		// Publish the pending new element on the shared template context, so that item content (e.g.
 		// a reply button) can reference the draft being composed via the new-element channel - not

@@ -62,6 +62,21 @@
 							<option-provider class="com.top_logic.element.meta.complex.TimeZoneOptionProvider"/>
 						</impl>
 					</provider>
+					<provider type="tl.util:URL">
+						<impl class="com.top_logic.layout.view.form.TextInputControlProvider"
+							input-type="URL"
+						/>
+					</provider>
+					<provider type="tl.util:EMail">
+						<impl class="com.top_logic.layout.view.form.TextInputControlProvider"
+							input-type="EMAIL"
+						/>
+					</provider>
+					<provider type="tl.util:Phone">
+						<impl class="com.top_logic.layout.view.form.TextInputControlProvider"
+							input-type="TEL"
+						/>
+					</provider>
 				</providers>
 			</instance>
 		</config>

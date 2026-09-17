@@ -24,6 +24,7 @@ import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.layout.structure.Scrolling;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.VetoForwarder;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.AdaptiveDetailElement.Config;
 import com.top_logic.layout.view.navigation.RevealPath;
@@ -149,6 +150,10 @@ public class ReactAdaptiveDetailControl extends ReactControl implements ChildRev
 		for (ViewChannel master : resetOn) {
 			master.addListener(resetListener);
 			addCleanupAction(() -> master.removeListener(resetListener));
+
+			// The reset discards the detail's selection, so the unsaved changes blocking it are
+			// reported when the master is asked, before the master is written.
+			addCleanupAction(VetoForwarder.forward(master, _selectionChannel));
 		}
 
 		// Keep the breadcrumb in sync when a deeper selection changes (the own selection is handled

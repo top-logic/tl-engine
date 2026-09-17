@@ -9,12 +9,12 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
+import com.top_logic.layout.react.control.layout.ReactLayoutControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
@@ -27,21 +27,36 @@ import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.util.Resources;
 
 /**
- * {@link ReactControl} of an {@link ObjectListElement}: a vertical stack holding one instance of
- * the item template per list element, followed by the new-element template.
+ * The children an {@link ObjectListElement} displays: one instance of the item content per list
+ * element, followed by the content for entering a new one.
  *
  * <p>
- * The displayed element set follows the model: the element function is re-evaluated whenever the
- * container channel or an observed object changes, and the children are updated with keyed reuse -
- * an unchanged element keeps its controls (including transient edit state), only added / removed
+ * The displayed element set follows the model: the element function is re-evaluated whenever an
+ * input channel or an observed object changes, and the children are updated with keyed reuse - an
+ * unchanged element keeps its controls (including transient edit state), only added / removed
  * elements are built / dropped.
  * </p>
+ *
+ * <p>
+ * The content for entering a new element is displayed while every input of the list holds a value:
+ * an element is composed to be attached somewhere, and an input that is unset - or that names an
+ * object which was deleted meanwhile - is no place to attach it to. A change of what the inputs hold
+ * discards the element being composed, because it was composed for what the list displayed before.
+ * </p>
+ *
+ * <p>
+ * This is the one implementation of that display for every {@link ObjectListElement.Layout layout}:
+ * the children are handed to a {@link ReactLayoutControl layout container}, which is what decides
+ * whether they are stacked or placed in a grid.
+ * </p>
  */
-public class ObjectListControl extends ReactStackControl {
+public class ObjectListItems {
+
+	private final ReactLayoutControl _container;
 
 	private ViewContext _templateContext;
 
-	private final ViewChannel _container;
+	private final List<ViewChannel> _inputs;
 
 	private final List<UIElement> _itemContent;
 
@@ -66,14 +81,14 @@ public class ObjectListControl extends ReactStackControl {
 
 	private ReactControl _emptyTextControl;
 
-	/** The container the children were last built for, to reset the new element on a switch. */
-	private Object _lastContainer;
+	/** The input values the children were last built for, to reset the new element on a change. */
+	private List<Object> _lastInputValues;
 
 	/** Allocates stable slot-path segments for dynamically created item controls. */
 	private int _itemCounter;
 
 	/**
-	 * Creates an {@link ObjectListControl}.
+	 * Creates the {@link ObjectListItems} of a list.
 	 *
 	 * @param templateContext
 	 *        The context to derive per-item contexts from; carries the list's
@@ -81,7 +96,9 @@ public class ObjectListControl extends ReactStackControl {
 	 * @param scope
 	 *        The list's runtime scope.
 	 * @param container
-	 *        The channel providing the container object.
+	 *        The layout container displaying the children built here.
+	 * @param inputs
+	 *        The channels the list's functions are applied to, in declaration order.
 	 * @param itemContent
 	 *        The content instantiated once per list element.
 	 * @param newElementContent
@@ -96,19 +113,19 @@ public class ObjectListControl extends ReactStackControl {
 	 * @param emptyText
 	 *        Text displayed instead of items when the list is empty, or {@code null} for none.
 	 */
-	public ObjectListControl(ViewContext templateContext, ObjectListScope scope, ViewChannel container,
-			List<UIElement> itemContent, List<UIElement> newElementContent,
+	public ObjectListItems(ViewContext templateContext, ObjectListScope scope, ReactLayoutControl container,
+			List<ViewChannel> inputs, List<UIElement> itemContent, List<UIElement> newElementContent,
 			String elementChannelName, String newElementChannelName, TLClass elementType, ResKey emptyText) {
-		super(templateContext, List.of());
 		_templateContext = templateContext;
 		_container = container;
+		_inputs = inputs;
 		_itemContent = itemContent;
 		_newElementContent = newElementContent;
 		_elementChannelName = elementChannelName;
 		_newElementChannelName = newElementChannelName;
 		_elementType = elementType;
 		_emptyText = emptyText;
-		_lastContainer = ListContainer.aliveOrNull(container.get());
+		_lastInputValues = InputValues.of(inputs);
 
 		createNewElementControls(scope);
 	}
@@ -125,9 +142,11 @@ public class ObjectListControl extends ReactStackControl {
 		resetNewElement();
 		scope.initNewElementReset(this::resetNewElement);
 
-		// A container switch discards the draft, so the unsaved changes of the new-element content
-		// are reported when the container channel is asked, before it is written.
-		addCleanupAction(VetoForwarder.forward(_container, _newElementChannel));
+		// A change of the inputs discards the draft, so the unsaved changes of the new-element
+		// content are reported when an input channel is asked, before it is written.
+		for (ViewChannel input : _inputs) {
+			_container.addCleanupAction(VetoForwarder.forward(input, _newElementChannel));
+		}
 
 		// Publish the pending new element on the shared template context, so that item content (e.g.
 		// a reply button) can reference the draft being composed via the new-element channel - not
@@ -136,7 +155,7 @@ public class ObjectListControl extends ReactStackControl {
 		for (int i = 0; i < _newElementContent.size(); i++) {
 			ViewContext childContext = _templateContext.withChildSlotPath("new-element-" + i);
 			ReactControl control = (ReactControl) _newElementContent.get(i).createControl(childContext);
-			registerChildControl(control);
+			_container.registerChildControl(control);
 			_newElementControls.add(control);
 		}
 	}
@@ -145,15 +164,26 @@ public class ObjectListControl extends ReactStackControl {
 	 * Fills the new-element channel with a fresh transient element.
 	 *
 	 * <p>
-	 * The element is created with the list's container as its {@link TLObject#tContainer() container},
-	 * so that option providers or default-value expressions of the new element can navigate to the
-	 * container (e.g. restrict a reference to siblings within the same container).
+	 * The element is created with the value of the first input as its {@link TLObject#tContainer()
+	 * container} where that value is an object, so that option providers or default-value
+	 * expressions of the new element can navigate to it (e.g. restrict a reference to siblings
+	 * within the same container).
 	 * </p>
 	 */
 	private void resetNewElement() {
-		Object container = ListContainer.aliveOrNull(_container.get());
-		TLObject containerObject = container instanceof TLObject ? (TLObject) container : null;
-		_newElementChannel.set(TransientObjectFactory.INSTANCE.createObject(_elementType, containerObject));
+		_newElementChannel.set(TransientObjectFactory.INSTANCE.createObject(_elementType, containerObject()));
+	}
+
+	/**
+	 * The object a composed element belongs to: the value of the first input where it is an object,
+	 * nobody otherwise.
+	 */
+	private TLObject containerObject() {
+		if (_inputs.isEmpty()) {
+			return null;
+		}
+		Object value = InputValues.aliveOrNull(_inputs.get(0).get());
+		return value instanceof TLObject object ? object : null;
 	}
 
 	/**
@@ -163,26 +193,24 @@ public class ObjectListControl extends ReactStackControl {
 	 *        The current list elements, in display order.
 	 */
 	public void showElements(List<Object> elements) {
-		Object container = ListContainer.aliveOrNull(_container.get());
-		if (!Objects.equals(container, _lastContainer)) {
-			_lastContainer = container;
+		List<Object> inputValues = InputValues.of(_inputs);
+		if (!inputValues.equals(_lastInputValues)) {
+			_lastInputValues = inputValues;
 			if (_newElementChannel != null) {
-				// Entered content belongs to the previous container - start fresh.
+				// Entered content was composed for what the list displayed before - start fresh.
 				resetNewElement();
 			}
 		}
 
 		Map<Object, ReactControl> retained = new LinkedHashMap<>();
 		List<ReactControl> children = new ArrayList<>();
-		if (container != null) {
-			for (Object element : elements) {
-				ReactControl control = _itemControls.remove(element);
-				if (control == null) {
-					control = createItemControl(element);
-				}
-				retained.put(element, control);
-				children.add(control);
+		for (Object element : elements) {
+			ReactControl control = _itemControls.remove(element);
+			if (control == null) {
+				control = createItemControl(element);
 			}
+			retained.put(element, control);
+			children.add(control);
 		}
 		for (ReactControl dropped : _itemControls.values()) {
 			dropped.cleanupTree();
@@ -194,7 +222,7 @@ public class ObjectListControl extends ReactStackControl {
 			if (_emptyTextControl == null) {
 				_emptyTextControl =
 					new ReactTextControl(_templateContext, Resources.getInstance().getString(_emptyText));
-				registerChildControl(_emptyTextControl);
+				_container.registerChildControl(_emptyTextControl);
 			}
 			children.add(_emptyTextControl);
 		} else if (_emptyTextControl != null) {
@@ -202,11 +230,11 @@ public class ObjectListControl extends ReactStackControl {
 			_emptyTextControl = null;
 		}
 
-		if (container != null) {
+		if (InputValues.complete(inputValues)) {
 			children.addAll(_newElementControls);
 		}
 
-		setChildren(children);
+		_container.setChildren(children);
 	}
 
 	/**
@@ -227,7 +255,7 @@ public class ObjectListControl extends ReactStackControl {
 
 		ReactControl itemControl =
 			controls.size() == 1 ? controls.get(0) : new ReactStackControl(itemContext, controls);
-		registerChildControl(itemControl);
+		_container.registerChildControl(itemControl);
 		return itemControl;
 	}
 

@@ -19,12 +19,12 @@ import com.top_logic.layout.view.form.FormModel;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * {@link ViewAction} that links the chain's current input value to the enclosing
- * {@link ObjectListElement &lt;object-list&gt;}'s container.
+ * {@link ViewAction} that attaches the chain's current input value through the enclosing
+ * {@link ObjectListElement &lt;object-list&gt;}.
  *
  * <p>
- * Runs the list's configured link function with the container and the input value in a
- * transaction, then resets the list's new-element channel to a fresh transient element. Typical
+ * Runs the list's configured link function with the values of the list's inputs and the element in
+ * a transaction, then resets the list's new-element channel to a fresh transient element. Typical
  * usage in a new-element template, after the entered field values have been written to the
  * transient element:
  * </p>

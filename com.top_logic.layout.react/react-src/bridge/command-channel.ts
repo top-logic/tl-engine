@@ -23,6 +23,12 @@ export const CMD_VALUE_CHANGED = 'valueChanged';
 export const CMD_SUBMIT = 'submit';
 
 /**
+ * Command name for reporting a file the client refused to upload because it exceeds the configured
+ * size limit. Must match {@code ReactServlet#CMD_UPLOAD_REJECTED}.
+ */
+export const CMD_UPLOAD_REJECTED = 'uploadRejected';
+
+/**
  * Machine-readable error code from the server: the server-side UI state for this page no longer
  * exists (the session was replaced underneath the open page by a login or logout, or the server
  * was restarted). Must match {@code ReactServlet#ERROR_CODE_STALE_UI}.

@@ -54,6 +54,13 @@ import com.top_logic.table.SelectionMode;
  * The table's own echo of an applied channel value (its selection listener fires from every
  * selection push, including a programmatic one) never writes the channel back.
  * </p>
+ *
+ * <p>
+ * A write the channel refuses - unsaved changes in a form the selection would replace - propagates
+ * out of the table's selection push, which restores the selection it displayed before. The binding
+ * therefore records the displayed {@link Row#key() row keys} only once the write has gone through,
+ * so what it remembers is what the table shows.
+ * </p>
  */
 public class TableSelectionBinding {
 
@@ -135,13 +142,17 @@ public class TableSelectionBinding {
 
 	/**
 	 * Writes a selection made in the table to the channel.
+	 *
+	 * <p>
+	 * A refused write leaves the method through the veto, so the keys stay the ones the table
+	 * displays after it has restored the refused change.
+	 * </p>
 	 */
 	private void handleSelectionChanged(Set<Object> selectedKeys) {
-		_displayedKeys = new LinkedHashSet<>(selectedKeys);
-		if (_applyingFromChannel) {
-			return;
+		if (!_applyingFromChannel) {
+			writeSelection(selectedKeys);
 		}
-		writeSelection(selectedKeys);
+		_displayedKeys = new LinkedHashSet<>(selectedKeys);
 	}
 
 	/**

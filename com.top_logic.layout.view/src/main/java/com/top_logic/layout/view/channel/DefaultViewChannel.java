@@ -5,7 +5,6 @@
  */
 package com.top_logic.layout.view.channel;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -19,6 +18,12 @@ import com.top_logic.layout.view.form.StateHandler;
  * Thread-safe for listener management via {@link CopyOnWriteArrayList}. The {@link #set(Object)}
  * method uses {@link Objects#equals(Object, Object)} to detect changes and only fires listeners
  * when the value actually changes.
+ * </p>
+ *
+ * <p>
+ * Before the value is written, all {@link VetoListener}s are asked, and the handlers they object
+ * with are collected into a single {@link ChannelVetoException}. A handler reachable over several
+ * {@link VetoForwarder forwarding} paths is reported once.
  * </p>
  */
 public class DefaultViewChannel implements ViewChannel {
@@ -54,15 +59,12 @@ public class DefaultViewChannel implements ViewChannel {
 		}
 
 		if (!_vetoListeners.isEmpty()) {
-			List<StateHandler> dirtyHandlers = new ArrayList<>();
+			VetoCollector dirtyHandlers = new VetoCollector();
 			for (VetoListener vl : _vetoListeners) {
-				StateHandler handler = vl.checkVeto(this, oldValue, newValue);
-				if (handler != null) {
-					dirtyHandlers.add(handler);
-				}
+				dirtyHandlers.addAll(vl.checkVeto(this, oldValue, newValue));
 			}
 			if (!dirtyHandlers.isEmpty()) {
-				throw new ChannelVetoException(dirtyHandlers, () -> this.set(newValue));
+				throw new ChannelVetoException(dirtyHandlers.toList(), () -> this.set(newValue));
 			}
 		}
 
@@ -86,14 +88,11 @@ public class DefaultViewChannel implements ViewChannel {
 		if (_vetoListeners.isEmpty()) {
 			return List.of();
 		}
-		List<StateHandler> dirtyHandlers = new ArrayList<>();
+		VetoCollector dirtyHandlers = new VetoCollector();
 		for (VetoListener vl : _vetoListeners) {
-			StateHandler handler = vl.checkDirty(this);
-			if (handler != null) {
-				dirtyHandlers.add(handler);
-			}
+			dirtyHandlers.addAll(vl.checkDirty(this));
 		}
-		return dirtyHandlers;
+		return dirtyHandlers.toList();
 	}
 
 	@Override

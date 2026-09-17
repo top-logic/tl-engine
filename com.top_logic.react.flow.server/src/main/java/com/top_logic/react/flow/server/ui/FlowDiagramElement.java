@@ -32,6 +32,7 @@ import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.VetoForwarder;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.SearchBuilder;
@@ -227,6 +228,12 @@ public class FlowDiagramElement implements UIElement {
 		if (selectionRef != null) {
 			ViewChannel selectionChannel = context.resolveChannel(selectionRef);
 			control.setSelectionChannel(selectionChannel);
+
+			// Rebuilding the diagram drops the selection, so the unsaved changes blocking the
+			// selection are reported when an input is asked, before the input is written.
+			for (ViewChannel channel : inputChannels) {
+				control.addCleanupAction(VetoForwarder.forward(channel, selectionChannel));
+			}
 		}
 
 		return control;

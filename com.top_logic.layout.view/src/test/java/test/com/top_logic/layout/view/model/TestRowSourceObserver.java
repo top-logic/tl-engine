@@ -14,13 +14,19 @@ import junit.framework.TestCase;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.model.RowSourceObserver;
+import com.top_logic.model.TLClass;
+import com.top_logic.model.TLModule;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.impl.TLModelImpl;
+import com.top_logic.model.impl.TransientObjectFactory;
+import com.top_logic.model.util.TLModelUtil;
 
 /**
  * Tests for {@link RowSourceObserver}.
  *
  * <p>
- * The elements are plain strings and no type is observed, so the observation needs no
- * {@link com.top_logic.model.listen.ModelScope} of a running model.
+ * The elements are plain strings or transient objects and no type is observed, so the observation
+ * needs no {@link com.top_logic.model.listen.ModelScope} of a running model.
  * </p>
  */
 public class TestRowSourceObserver extends TestCase {
@@ -92,6 +98,39 @@ public class TestRowSourceObserver extends TestCase {
 		observer.attach(null);
 
 		assertEquals(List.of(List.of("a", "ab")), _delivered);
+	}
+
+	/**
+	 * Tests that an element without a persistent identity is displayed and refreshed like any
+	 * other: a transient object has no changes anyone could be notified of, so the observation
+	 * passes it by instead of asking it for an identity it does not have.
+	 */
+	public void testTransientElementsAreNotObserved() {
+		TLObject transientElement = transientObject();
+		List<Object> elements = List.of(transientElement);
+		List<List<Object>> delivered = new ArrayList<>();
+		ViewChannel hide = new DefaultViewChannel("hide");
+		RowSourceObserver<Object> observer = new RowSourceObserver<>(elements,
+			args -> args[0] == null ? elements : List.of(), Set.of(), List.of(hide), delivered::add);
+
+		observer.attach(null);
+
+		assertEquals("The elements are the ones at hand, so nothing is delivered.", List.of(), delivered);
+
+		hide.set("all");
+
+		assertEquals("The channel change reaches the sink, the transient element notwithstanding.",
+			List.of(List.of()), delivered);
+	}
+
+	/**
+	 * An object that lives only in the display holding it.
+	 */
+	private static TLObject transientObject() {
+		TLModelImpl model = new TLModelImpl();
+		TLModule module = TLModelUtil.addModule(model, "test.rowSourceObserver");
+		TLClass type = TLModelUtil.addClass(module, "Row");
+		return TransientObjectFactory.INSTANCE.createObject(type, null);
 	}
 
 	/**

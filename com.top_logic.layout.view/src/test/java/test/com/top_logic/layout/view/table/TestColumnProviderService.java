@@ -6,6 +6,7 @@
 package test.com.top_logic.layout.view.table;
 
 import java.util.Date;
+import java.util.Map;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -26,6 +27,7 @@ import com.top_logic.element.meta.kbbased.storage.mappings.IntMapping;
 import com.top_logic.layout.view.table.ColumnBinding;
 import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.layout.view.table.ColumnSetup;
+import com.top_logic.layout.view.table.ColumnType;
 import com.top_logic.layout.view.table.ScriptedFilter;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLEnumeration;
@@ -41,13 +43,18 @@ import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.table.Column;
 import com.top_logic.table.impl.DefaultColumn;
+import com.top_logic.table.filter.ComparableColumnFilter;
 import com.top_logic.table.filter.TextColumnFilter;
 
 /**
- * Test for the width a {@link ColumnProviderService} column is displayed in: the one configured for
- * the kind of attribute the column shows.
+ * Test for the columns a {@link ColumnProviderService} builds from a {@link ColumnType} descriptor
+ * and a value function: the affordances of the values' type, and the width configured for the kind
+ * of value the column shows.
  */
 public class TestColumnProviderService extends TestCase {
+
+	/** The name of the column over values nothing is known about. */
+	private static final String UNRESOLVED_COLUMN = "unresolved";
 
 	/** The type the columns under test show attributes of. */
 	private TLClass _rowType;
@@ -121,12 +128,33 @@ public class TestColumnProviderService extends TestCase {
 			config().getLabelWidth(), "tags");
 	}
 
-	public void testUnresolvedAttributeHasTheLabelWidth() {
+	public void testUnresolvedDescriptorHasTheLabelColumn() {
 		Column<Object, ?> column = ColumnProviderService.getInstance()
-			.createColumn("unresolved", ResKey.text("Unresolved"), null);
+			.createColumn(UNRESOLVED_COLUMN, ResKey.text("Unresolved"), ColumnType.UNRESOLVED,
+				row -> ColumnProviderService.attributeValue(row, UNRESOLVED_COLUMN));
 
-		assertEquals("An attribute whose type is unresolved is shown by its display label, in the label width.",
+		assertEquals("A column whose type is unresolved is shown by its display label, in the label width.",
 			config().getLabelWidth(), column.defaultWidth());
+		assertTrue("The label column text-filters by the display label.",
+			column.filter().get() instanceof TextColumnFilter);
+	}
+
+	/**
+	 * A column whose values no attribute holds: the descriptor says what they are, the value
+	 * function says where they come from.
+	 */
+	public void testComputedColumnOverANonModelRow() {
+		String name = "count";
+		ColumnType type = ColumnType.of(part(name).getType(), false);
+		Column<Object, ?> column = ColumnProviderService.getInstance()
+			.createColumn(name, ResKey.text(name), type, row -> ((Map<?, ?>) row).get(name));
+
+		assertEquals("The value comes from the column's own value function.",
+			Long.valueOf(42), column.value(Map.of(name, Long.valueOf(42))));
+		assertEquals("A whole number is shown in the number width, attribute or not.",
+			config().getNumberWidth(), column.defaultWidth());
+		assertTrue("A whole number is filtered by a numeric range, attribute or not.",
+			column.filter().get() instanceof ComparableColumnFilter);
 	}
 
 	/**
@@ -150,9 +178,9 @@ public class TestColumnProviderService extends TestCase {
 		ColumnProviderService service = ColumnProviderService.getInstance();
 
 		assertEquals("A whole number gives the number width.",
-			config().getNumberWidth(), service.defaultWidth(part("count")));
-		assertEquals("An unresolved attribute gives the label width.",
-			config().getLabelWidth(), service.defaultWidth(null));
+			config().getNumberWidth(), service.defaultWidth(ColumnType.of(part("count"))));
+		assertEquals("An unresolved descriptor gives the label width.",
+			config().getLabelWidth(), service.defaultWidth(ColumnType.UNRESOLVED));
 
 		assertEquals("The column such a binding builds is displayed in that width.",
 			config().getNumberWidth(), ownColumn("count", 0).defaultWidth());
@@ -165,13 +193,17 @@ public class TestColumnProviderService extends TestCase {
 	 * which applies a width configured at the column.
 	 */
 	private Column<Object, ?> ownColumn(String attribute, int configuredWidth) {
-		ColumnBinding binding = setup -> DefaultColumn.builder(setup.attribute(),
-			row -> ColumnProviderService.attributeValue(row, setup.attribute()))
+		ColumnBinding binding = setup -> DefaultColumn.builder(setup.name(), setup.value())
 			.label(setup.label())
-			.width(ColumnProviderService.getInstance().defaultWidth(setup.part()))
+			.width(ColumnProviderService.getInstance().defaultWidth(setup.type()))
 			.build();
-		return new ColumnSetup(attribute, ResKey.text(attribute), part(attribute), null, binding, configuredWidth)
-			.buildColumn();
+		return setup(attribute, binding, configuredWidth).buildColumn();
+	}
+
+	/** The descriptor of a column over the given attribute of the row type. */
+	private ColumnSetup setup(String attribute, ColumnBinding binding, int configuredWidth) {
+		return new ColumnSetup(attribute, ResKey.text(attribute), ColumnType.of(part(attribute)),
+			row -> ColumnProviderService.attributeValue(row, attribute), null, binding, configuredWidth);
 	}
 
 	/** The widths an application starts out with, before it configures any of its own. */
@@ -192,12 +224,14 @@ public class TestColumnProviderService extends TestCase {
 
 	/** The type-derived column over the given attribute of the row type. */
 	private Column<Object, ?> column(String attribute) {
-		return ColumnProviderService.getInstance().createColumn(attribute, ResKey.text(attribute), part(attribute));
+		return ColumnProviderService.getInstance().createColumn(attribute, ResKey.text(attribute),
+			ColumnType.of(part(attribute)), row -> ColumnProviderService.attributeValue(row, attribute));
 	}
 
 	/** The column over the given attribute that matches a search term against the cell's text. */
 	private Column<Object, ?> customFilterColumn(String attribute) {
-		return ColumnProviderService.getInstance().createColumn(attribute, ResKey.text(attribute), part(attribute),
+		return ColumnProviderService.getInstance().createColumn(attribute, ResKey.text(attribute),
+			ColumnType.of(part(attribute)), row -> ColumnProviderService.attributeValue(row, attribute),
 			TextColumnFilter.forStrings());
 	}
 

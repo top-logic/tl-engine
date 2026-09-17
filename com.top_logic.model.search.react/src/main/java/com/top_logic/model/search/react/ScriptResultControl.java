@@ -22,6 +22,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.layout.view.table.ColumnProviderService;
+import com.top_logic.layout.view.table.ColumnType;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
@@ -153,7 +154,9 @@ public class ScriptResultControl extends ReactControl {
 		ColumnProviderService columnService = ColumnProviderService.getInstance();
 		List<Column<Object, ?>> columns = new ArrayList<>(parts.size());
 		for (TLStructuredTypePart part : parts.values()) {
-			columns.add(columnService.createColumn(part.getName(), TLModelNamingConvention.resourceKey(part), part));
+			String name = part.getName();
+			columns.add(columnService.createColumn(name, TLModelNamingConvention.resourceKey(part),
+				ColumnType.of(part), row -> ColumnProviderService.attributeValue(row, name)));
 		}
 		ListRowSource<Object> source = new ListRowSource<>(elements, columns);
 		DefaultTableView<Object> view = DefaultTableView.create(columns, source);
@@ -246,7 +249,7 @@ public class ScriptResultControl extends ReactControl {
 		return DefaultColumn
 			.<ScriptResultRow, Object> builder(name, row -> ColumnProviderService.attributeValue(row.value(), name))
 			.label(TLModelNamingConvention.resourceKey(part))
-			.renderer(value -> ColumnProviderService.displayContent(part, value))
+			.renderer(value -> ColumnProviderService.displayContent(ColumnType.of(part), value))
 			.sort(() -> Comparator.comparing(ColumnProviderService::label))
 			.filter(new TextColumnFilter<>(ColumnProviderService::label))
 			.build();

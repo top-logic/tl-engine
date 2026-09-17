@@ -10,6 +10,7 @@
 				<generalization type="tl.model:TLObject"/>
 			</generalizations>
 			<annotations>
+				<main-properties properties="name, dueDate"/>
 				<form-definition>
 					<form>
 						<field

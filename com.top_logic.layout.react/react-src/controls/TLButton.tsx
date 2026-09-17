@@ -63,14 +63,25 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
   // When set, clicking navigates the browser directly (e.g. an external SSO redirect) instead of
   // dispatching a server command - this avoids depending on the asynchronous SSE round-trip.
   const navigateUrl = state.navigateUrl as string | undefined;
+  // Whether that target gets a window of its own, for a destination the user comes back from while
+  // this page keeps running (e.g. a re-authentication at an external provider). The window is opened
+  // from the click handler, so it is a window the user asked for and not a blocked pop-up, and it is
+  // a window of this page, which is what lets the page it shows close it when it is done.
+  const navigateNewWindow = state.navigateNewWindow === true;
 
   const handleClick = useCallback(() => {
     if (navigateUrl) {
-      window.location.assign(navigateUrl);
+      if (navigateNewWindow) {
+        // A window of this page: a page can only close a window that was opened from a page, so
+        // the target closes itself once its work is done.
+        window.open(navigateUrl, '_blank');
+      } else {
+        window.location.assign(navigateUrl);
+      }
       return;
     }
     sendCommand(resolvedCommand);
-  }, [sendCommand, resolvedCommand, navigateUrl]);
+  }, [sendCommand, resolvedCommand, navigateUrl, navigateNewWindow]);
 
   // Trigger this button when its declared keyboard gesture fires within the enclosing scope.
   // A hidden or disabled button declines (returns false) so the gesture falls through.

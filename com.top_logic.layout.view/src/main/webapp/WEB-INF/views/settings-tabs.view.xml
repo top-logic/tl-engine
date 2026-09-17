@@ -21,6 +21,31 @@
 		<derived-channel name="account"
 			expr="currentUser()"
 		/>
+		<!--
+			The group whose members act in the account's name, on a channel of its own because a
+			channel observes the object it holds: adding a deputy changes the group, not the
+			account, so a display computed straight from the account would not follow it.
+		-->
+		<derived-channel name="representativeGroup"
+			expr="account -> $account.get(`tl.accounts:Person#representativeGroup`)"
+			inputs="account"
+		/>
+		<!-- The accounts that may act in the name of this account. -->
+		<derived-channel name="deputies"
+			expr="group -> $group.get(`tl.accounts:Group#members`)"
+			inputs="representativeGroup"
+		/>
+		<!--
+			The accounts this account may act for: those whose representative group it is a member
+			of. Asked of the accounts rather than of the groups, because a representative group
+			names its owner only through the back-reference of the owner's own attribute, and that
+			navigation answers with what the user may read - which for a group they are only a
+			member of is nothing.
+		-->
+		<derived-channel name="deputyFor"
+			expr="account -> all(`tl.accounts:Person`).filter(other -> $account.get(`tl.accounts:Person#groups`).containsElement($other.get(`tl.accounts:Person#representativeGroup`)))"
+			inputs="account"
+		/>
 	</channels>
 	<tab-bar active-tab="account">
 		<tabs>
@@ -106,18 +131,97 @@
 							</default>
 						</switch>
 
+						<!--
+							Offered only to an account whose password this application holds: a device
+							that keeps it elsewhere - a directory service, an identity provider - refuses
+							to change it, and a button leading to that refusal is one the user has no way
+							of knowing not to press. The action itself refuses the same accounts, so what
+							is hidden here is not what is guarded.
+						-->
 						<button>
 							<action class="com.top_logic.layout.view.command.GenericViewCommand"
 								image="css:bi bi-key"
+								input="account"
 							>
 								<label>
 									<en>Change password</en>
 									<de>Passwort ändern</de>
 								</label>
+								<executability>
+									<visible-if expr="account -> $account.accountPasswordChangeAllowed()"/>
+								</executability>
 								<execute-script function="x -> new(`tl.login:PasswordChange`, transient: true)"/>
 								<open-dialog
 									bind-input-to="model"
 									dialog-view="change-password.view.xml"
+								/>
+							</action>
+						</button>
+
+						<!--
+							Who acts in the account's name, and for whom the account acts. Naming a
+							deputy is an action of its own and not a field of the account form: it
+							hands the deputy every role the account holds, which is a decision taken
+							deliberately and confirmed with the password, not one saved along with a
+							time zone. The state is stated here for the same reason the second factor
+							is - what the button changes is what the line above it names.
+						-->
+						<switch input="deputies">
+							<case test="deputies -> !$deputies.isEmpty()">
+								<stack direction="row"
+									gap="compact"
+								>
+									<text>
+										<label>
+											<en>Deputies:</en>
+											<de>Stellvertreter:</de>
+										</label>
+									</text>
+									<text input="deputies"/>
+								</stack>
+							</case>
+							<default>
+								<text>
+									<label>
+										<en>Deputies: none</en>
+										<de>Stellvertreter: keine</de>
+									</label>
+								</text>
+							</default>
+						</switch>
+
+						<!--
+							Shown only where there is something to show: an account nobody named as
+							their deputy stands in for nobody, and a line saying so would be noise.
+						-->
+						<switch input="deputyFor">
+							<case test="accounts -> !$accounts.isEmpty()">
+								<stack direction="row"
+									gap="compact"
+								>
+									<text>
+										<label>
+											<en>You stand in for:</en>
+											<de>Sie vertreten:</de>
+										</label>
+									</text>
+									<text input="deputyFor"/>
+								</stack>
+							</case>
+						</switch>
+
+						<button>
+							<action class="com.top_logic.layout.view.command.GenericViewCommand"
+								image="css:bi bi-people"
+								input="representativeGroup"
+							>
+								<label>
+									<en>Name deputies</en>
+									<de>Stellvertreter benennen</de>
+								</label>
+								<open-dialog
+									bind-input-to="model"
+									dialog-view="deputies.view.xml"
 								/>
 							</action>
 						</button>

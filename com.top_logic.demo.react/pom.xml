@@ -33,6 +33,12 @@
       <artifactId>tl-layout-view-contact</artifactId>
     </dependency>
 
+    <!-- External login through an OpenID Connect provider; configured in conf/pac4j-keycloak-demo.xml. -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-security-auth-pac4j</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-model-wysiwyg</artifactId>

@@ -45,6 +45,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 CHANGED_PASSWORD__USER;
 
 	/**
+	 * @en Your password cannot be changed here. It is managed outside this application.
+	 */
+	public static ResKey ERROR_PASSWORD_CHANGE_NOT_ALLOWED;
+
+	/**
 	 * @en No account selected to expire the password for.
 	 */
 	public static ResKey EXPIRE_PASSWORD_NO_ACCOUNT;
@@ -58,6 +63,42 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en The password of "{0}" has been expired.
 	 */
 	public static ResKey1 EXPIRE_PASSWORD_DONE__USER;
+
+	/**
+	 * @en Confirm with your password
+	 */
+	public static ResKey VERIFY_PASSWORD_TITLE;
+
+	/**
+	 * @en Please enter your password to confirm this change.
+	 */
+	public static ResKey VERIFY_PASSWORD_MESSAGE;
+
+	/**
+	 * @en Password
+	 */
+	public static ResKey VERIFY_PASSWORD_FIELD_LABEL;
+
+	/**
+	 * @en The password is not correct. Please try again.
+	 */
+	public static ResKey ERROR_WRONG_PASSWORD;
+
+	/**
+	 * @en Confirm your identity
+	 */
+	public static ResKey REAUTHENTICATION_TITLE;
+
+	/**
+	 * @en Confirm your identity by signing in again. The button below opens the sign-in in a new
+	 *     window, and this dialog closes by itself once you are confirmed.
+	 */
+	public static ResKey REAUTHENTICATION_MESSAGE;
+
+	/**
+	 * @en Your password cannot be verified. The change was not applied.
+	 */
+	public static ResKey ERROR_PASSWORD_NOT_VERIFIABLE;
 
 	/**
 	 * @en The entered code is not valid. Please try again.

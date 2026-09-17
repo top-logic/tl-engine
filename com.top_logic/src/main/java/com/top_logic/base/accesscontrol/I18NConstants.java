@@ -171,6 +171,26 @@ public class I18NConstants extends I18NConstantsBase {
 	@CalledFromJSP
 	public static ResKey ERROR_SET_COOKIES;
 
+	/**
+	 * @en Identity confirmation
+	 */
+	public static ResKey IDENTITY_VERIFICATION_TITLE;
+
+	/**
+	 * @en Your identity is confirmed. You can close this window.
+	 */
+	public static ResKey IDENTITY_VERIFIED;
+
+	/**
+	 * @en You signed in as a different user; the identity was not confirmed.
+	 */
+	public static ResKey ERROR_IDENTITY_MISMATCH;
+
+	/**
+	 * @en This confirmation is no longer valid.
+	 */
+	public static ResKey ERROR_IDENTITY_VERIFICATION_UNKNOWN;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

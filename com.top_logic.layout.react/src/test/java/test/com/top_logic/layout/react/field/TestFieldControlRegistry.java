@@ -6,13 +6,28 @@
 package test.com.top_logic.layout.react.field;
 
 import java.util.Date;
+import java.util.List;
 
+import junit.framework.Test;
 import junit.framework.TestCase;
 
+import test.com.top_logic.basic.ModuleTestSetup;
+import test.com.top_logic.basic.module.ServiceTestSetup;
+
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResourcesModule;
+import com.top_logic.layout.form.model.AbstractFieldModel;
+import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.react.DefaultReactContext;
+import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.form.ReactTextInputControl;
+import com.top_logic.layout.react.control.form.ReactValueListControl;
 import com.top_logic.layout.react.field.FieldControlRegistry;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
+import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 
 /**
  * Tests looking up the control that edits a value of a given type.
@@ -98,5 +113,107 @@ public class TestFieldControlRegistry extends TestCase {
 		assertEquals(5, field.getMultilineRows());
 		assertTrue("A field is editable unless stated otherwise", field.isEditable());
 		assertNull("A value is entered freely unless options are stated", field.getOptions());
+	}
+
+	/**
+	 * A field holding one value is edited by the control of its type, directly.
+	 */
+	public void testSingleValueUsesTheElementControl() {
+		FieldSpec field = FieldSpec.of(String.class, "Name");
+
+		assertInstanceof(ReactTextInputControl.class, createControl(field, FieldControlRegistry.TEXT));
+	}
+
+	/**
+	 * A field holding several values whose control edits one value at a time is displayed as a list
+	 * of such controls.
+	 */
+	public void testMultipleValuesBecomeAList() {
+		FieldSpec field = FieldSpec.of(String.class, "Names").setMultiple(true);
+
+		assertInstanceof(ReactValueListControl.class, createControl(field, FieldControlRegistry.TEXT));
+	}
+
+	/**
+	 * A control that edits the whole collection itself is handed the field as it stands.
+	 */
+	public void testCollectionEditorKeepsTheField() {
+		FieldSpec field = FieldSpec.of(String.class, "Names").setMultiple(true);
+		CollectionEditor provider = new CollectionEditor();
+
+		ReactControl control = createControl(field, provider);
+
+		assertSame(provider.getLastControl(), control);
+		assertTrue("The provider sees the field as holding several values", provider.getLastField().isMultiple());
+	}
+
+	/**
+	 * The element of a multi-valued field is the same field, holding one value.
+	 */
+	public void testElementSpec() {
+		FieldSpec field = FieldSpec.of(String.class, "Names")
+			.setMultiple(true)
+			.setMultilineRows(4)
+			.setTooltip("What they are called");
+
+		FieldSpec element = field.elementSpec();
+
+		assertFalse("An element holds one value", element.isMultiple());
+		assertEquals(String.class, element.getValueType());
+		assertEquals("Names", element.getLabel());
+		assertEquals(4, element.getMultilineRows());
+		assertEquals("What they are called", element.getTooltip());
+		assertTrue("The field itself is untouched", field.isMultiple());
+	}
+
+	private static ReactControl createControl(FieldSpec field, ReactFieldControlProvider provider) {
+		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue(),
+			new ReactWindowRegistry("test"));
+		return FieldControlRegistry.getInstance().createControl(context, field,
+			new AbstractFieldModel(List.of("A")), provider);
+	}
+
+	private static void assertInstanceof(Class<?> expected, Object actual) {
+		assertTrue("Expected a " + expected.getSimpleName() + ", got: " + actual,
+			expected.isInstance(actual));
+	}
+
+	/**
+	 * A provider whose control edits the whole collection of values, recording what it was asked
+	 * for.
+	 */
+	private static final class CollectionEditor implements ReactFieldControlProvider {
+
+		private FieldSpec _lastField;
+
+		private ReactControl _lastControl;
+
+		@Override
+		public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
+			_lastField = field;
+			_lastControl = new ReactTextInputControl(context, model);
+			return _lastControl;
+		}
+
+		@Override
+		public boolean editsCollections() {
+			return true;
+		}
+
+		FieldSpec getLastField() {
+			return _lastField;
+		}
+
+		ReactControl getLastControl() {
+			return _lastControl;
+		}
+	}
+
+	/**
+	 * The test suite, started with the resource bundles a created field needs for its messages.
+	 */
+	public static Test suite() {
+		return ModuleTestSetup.setupModule(
+			ServiceTestSetup.createSetup(TestFieldControlRegistry.class, ResourcesModule.Module.INSTANCE));
 	}
 }

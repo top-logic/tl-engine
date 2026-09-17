@@ -317,6 +317,35 @@ public final class FieldSpec {
 		return this;
 	}
 
+	/**
+	 * This specification describing a single one of the values of a
+	 * {@link #isMultiple() multi-valued} field.
+	 *
+	 * <p>
+	 * The element is described like the field itself - same value type, same label, same display
+	 * hints - except that it holds one value. That is what a control editing a single value is
+	 * created with, while the collection around it is built from one such control per element.
+	 * </p>
+	 *
+	 * @return A specification of one element, independent of this one.
+	 */
+	public FieldSpec elementSpec() {
+		FieldSpec result = new FieldSpec(_valueType, _label);
+		result._tooltip = _tooltip;
+		result._mandatory = _mandatory;
+		result._editable = _editable;
+		result._multiple = false;
+		result._multilineRows = _multilineRows;
+		result._booleanPresentation = _booleanPresentation;
+		result._triState = _triState;
+		result._dateKind = _dateKind;
+		result._numberFormat = _numberFormat;
+		result._dateFormat = _dateFormat;
+		result._options = _options;
+		result._optionLabels = _optionLabels;
+		return result;
+	}
+
 	@Override
 	public String toString() {
 		return FieldSpec.class.getSimpleName() + "(" + _label + ": " + _valueType.getName() + ")";

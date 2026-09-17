@@ -1,4 +1,4 @@
-import { React, useTLState, TLChild } from 'tl-react-bridge';
+import { React, useTLState, TLChild, useFillHost, FillProvider } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 /**
@@ -6,14 +6,20 @@ import type { TLCellProps } from 'tl-react-bridge';
  *
  * State:
  * - child: ChildDescriptor
+ *
+ * Takes part in the fill contract as a container: an inset around a filling content fills its own
+ * container, so the inset content spans the available height minus the padding.
  */
 const TLInset: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
+  const [fillClass, fillHost] = useFillHost();
 
   return (
-    <div id={controlId} className="tlInset">
-      {state.child && <TLChild control={state.child} />}
-    </div>
+    <FillProvider host={fillHost}>
+      <div id={controlId} className={fillClass ? 'tlInset ' + fillClass : 'tlInset'}>
+        {state.child && <TLChild control={state.child} />}
+      </div>
+    </FillProvider>
   );
 };
 

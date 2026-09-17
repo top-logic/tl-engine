@@ -30,6 +30,11 @@
 
     <dependency>
       <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-view-contact</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.top-logic</groupId>
       <artifactId>tl-model-wysiwyg</artifactId>
     </dependency>
 

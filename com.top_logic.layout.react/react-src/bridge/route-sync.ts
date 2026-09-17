@@ -96,13 +96,13 @@ function hideWindowNameFromUrl(): void {
 
   const afterView = path.substring(viewIdx + 6); // everything after "/view/"
   const firstSlash = afterView.indexOf('/');
-  if (firstSlash > 0) {
-    const firstSegment = afterView.substring(0, firstSlash);
-    // Window names start with 'v' followed by hex characters.
-    if (firstSegment.match(/^v[0-9a-f]+$/i)) {
-      const cleanPath = path.substring(0, viewIdx + 6) + afterView.substring(firstSlash + 1);
-      history.replaceState(null, '', cleanPath + window.location.search);
-    }
+  // The window name is the whole remainder when no route follows it.
+  const firstSegment = firstSlash >= 0 ? afterView.substring(0, firstSlash) : afterView;
+  // Window names start with 'v' followed by hex characters.
+  if (firstSegment.match(/^v[0-9a-f]+$/i)) {
+    const route = firstSlash >= 0 ? afterView.substring(firstSlash + 1) : '';
+    const cleanPath = path.substring(0, viewIdx + 6) + route;
+    history.replaceState(null, '', cleanPath + window.location.search);
   }
 }
 

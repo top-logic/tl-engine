@@ -21,12 +21,14 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.common.AnchorControl;
+import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
+import java.util.List;
 
 /**
  * Declarative {@link UIElement} that wraps its content in a scroll anchor.
@@ -100,6 +102,11 @@ public class AnchorElement implements UIElement {
 	public AnchorElement(InstantiationContext context, Config config) {
 		_config = config;
 		_content = context.getInstance(config.getContent());
+	}
+
+	@Override
+	public List<ChildGroup> getChildGroups() {
+		return List.of(ChildGroup.elements(_content));
 	}
 
 	@Override

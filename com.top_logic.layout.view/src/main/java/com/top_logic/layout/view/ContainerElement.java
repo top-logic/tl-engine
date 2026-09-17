@@ -69,6 +69,11 @@ public abstract class ContainerElement implements UIElement {
 		return _children;
 	}
 
+	@Override
+	public List<ChildGroup> getChildGroups() {
+		return List.of(ChildGroup.elements(_children));
+	}
+
 	/**
 	 * Creates controls for all children.
 	 *

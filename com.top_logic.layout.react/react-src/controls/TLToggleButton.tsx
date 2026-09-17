@@ -48,7 +48,8 @@ const TLToggleButton: React.FC<TLCellProps & TLToggleButtonProps> = ({ controlId
       id={controlId}
       onClick={handleClick}
       disabled={resolvedDisabled}
-      className={'tlReactButton' + (resolvedActive ? ' tlReactButtonActive' : '')}
+      aria-pressed={resolvedActive ? true : undefined}
+      className={'tlReactButton' + (resolvedActive ? ' tlReactButton--active' : '')}
     >
       {resolvedLabel}
     </button>

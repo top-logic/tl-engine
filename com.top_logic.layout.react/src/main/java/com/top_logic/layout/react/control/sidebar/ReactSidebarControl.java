@@ -22,9 +22,11 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.layout.react.dirty.DirtyChannel;
 import com.top_logic.layout.react.routing.RouteChangeListener;
+import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.routing.RouteMatch;
 import com.top_logic.layout.react.routing.RoutePattern;
 import com.top_logic.layout.react.routing.RouteSegment;
+import com.top_logic.layout.react.reveal.ChildRevealer;
 import com.top_logic.layout.react.routing.RoutingParticipant;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -60,7 +62,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * name="appbar-leading"/>} (set via {@link #setDrawerToggleContribution(ReactControl)})</li>
  * </ul>
  */
-public class ReactSidebarControl extends ReactControl implements RoutingParticipant {
+public class ReactSidebarControl extends ReactControl implements RoutingParticipant, ChildRevealer {
 
 	private static final String REACT_MODULE = "TLSidebar";
 
@@ -266,13 +268,51 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 			return;
 		}
 		ReactControl previousContent = _contentCache.get(_activeItemId);
+
+		// The page being left goes first, before this sidebar reports the new item. Everything the
+		// old page contributed to its surroundings - a routing participant naming the tab it showed,
+		// above all - is contributed for the page it belongs to. Left in place while the sidebar
+		// already names the new one, it is read as belonging to that: the composed URL then carries a
+		// segment of a page no longer displayed, and the address bar is written with it.
+		if (previousContent != null) {
+			previousContent.detach();
+		}
+
 		_activeItemId = itemId;
 
 		if (!isSSEAttached()) {
 			putState(ACTIVE_ITEM_ID, _activeItemId);
+
+			// Nothing is rendered yet, so the selection is applied by dropping the content of the item
+			// left behind: onBeforeWrite() then mounts the content of the selected one, instead of
+			// writing the display of the item the highlight no longer names.
+			putState(ACTIVE_CONTENT, null);
+			if (previousContent != null) {
+				previousContent.detach();
+			}
 			return;
 		}
 
+		// Exchanging the display is how the navigation is carried out, so it is applied as one: the
+		// address bar gains a history entry for the item now selected, and not a correction for every
+		// participant that appears or disappears on the way there.
+		RouteManager routeManager = getReactContext().getRouteManager();
+		if (routeManager != null) {
+			routeManager.navigate(() -> displayItem(itemId, previousContent));
+		} else {
+			displayItem(itemId, previousContent);
+		}
+	}
+
+	/**
+	 * Exchanges the displayed content for the content of the given item.
+	 *
+	 * @param itemId
+	 *        The item to display.
+	 * @param previousContent
+	 *        The content displayed until now, or {@code null} if there was none.
+	 */
+	private void displayItem(String itemId, ReactControl previousContent) {
 		ReactControl content = getOrCreateContent(itemId);
 
 		Object tx = beginUpdate();
@@ -281,14 +321,17 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 		closeDrawerIfOpen();
 		commitUpdate(tx);
 
-		if (previousContent != null) {
-			previousContent.detach();
-		}
 		if (isAttached()) {
 			content.attach();
 		}
 
-		// After successful selection, notify route listeners.
+		notifyRouteListeners();
+	}
+
+	/**
+	 * Reports the route of the selected item to the {@link RouteChangeListener}s.
+	 */
+	private void notifyRouteListeners() {
 		NavigationItem newItem = findNavItem(_activeItemId, _items);
 		if (newItem != null && newItem.getRoute() != null) {
 			RoutePattern pattern = RoutePattern.compile(newItem.getRoute(), newItem.getId());
@@ -466,6 +509,23 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	// -- Commands --
 
 	/**
+	 * Selects the navigation item with the given id, letting the item being left veto the switch
+	 * while it holds unsaved changes.
+	 */
+	@Override
+	public void revealChild(String key) {
+		NavigationItem currentItem = findNavItem(_activeItemId, _items);
+		if (currentItem != null) {
+			DirtyChannel dirtyChannel = currentItem.getDirtyChannel();
+			if (dirtyChannel != null && dirtyChannel.hasDirtyHandlers()) {
+				throw new ChannelVetoException(dirtyChannel.getDirtyHandlers(), () -> selectItem(key));
+			}
+		}
+
+		selectItem(key);
+	}
+
+	/**
 	 * Handles navigation item selection from the client.
 	 *
 	 * <p>
@@ -483,16 +543,7 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 			return HandlerResult.error(I18NConstants.ERROR_NAVIGATION_NOT_AVAILABLE);
 		}
 
-		// Check for dirty forms in the current sidebar item before switching.
-		NavigationItem currentItem = findNavItem(_activeItemId, _items);
-		if (currentItem != null) {
-			DirtyChannel dirtyChannel = currentItem.getDirtyChannel();
-			if (dirtyChannel != null && dirtyChannel.hasDirtyHandlers()) {
-				throw new ChannelVetoException(dirtyChannel.getDirtyHandlers(), () -> selectItem(itemId));
-			}
-		}
-
-		selectItem(itemId);
+		revealChild(itemId);
 		return HandlerResult.DEFAULT_RESULT;
 	}
 

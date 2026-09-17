@@ -7,6 +7,7 @@ package com.top_logic.layout.react;
 
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.overlay.DialogManager;
+import com.top_logic.layout.react.navigation.ObjectNavigator;
 import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
@@ -69,6 +70,11 @@ public interface ReactContext {
 
 	/**
 	 * The {@link ModelScope} for observing persistent object changes in this window.
+	 *
+	 * <p>
+	 * {@code null} for a context that belongs to no window - a display built outside a browser
+	 * session - which observes no object changes.
+	 * </p>
 	 */
 	ModelScope getModelScope();
 
@@ -90,6 +96,14 @@ public interface ReactContext {
 	 * routing is not available.
 	 */
 	default RouteManager getRouteManager() {
+		return null;
+	}
+
+	/**
+	 * The {@link ObjectNavigator} leading the user to the place a business object is displayed at,
+	 * or {@code null} if nothing here displays business objects.
+	 */
+	default ObjectNavigator getObjectNavigator() {
 		return null;
 	}
 }

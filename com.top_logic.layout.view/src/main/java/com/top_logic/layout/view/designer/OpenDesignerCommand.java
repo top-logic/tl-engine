@@ -84,7 +84,7 @@ public class OpenDesignerCommand implements ViewCommand {
 			}
 
 			// Create isolated ViewContext for the designer window.
-			ViewContext designerContext = new DefaultViewContext(windowContext);
+			ViewContext designerContext = new DefaultViewContext(windowContext, DESIGNER_VIEW_PATH);
 
 			// Build the design tree from the application's default root view.
 			String rootViewPath = ViewLoader.VIEW_BASE_PATH

@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The kinds of column a <table> declares, each in a tab of its own, over the project-management
+	model.
+	
+	"Map rows" shows a table whose rows are dictionaries instead of model objects: every column is
+	computed, and the table needs no row type at all. "Transient rows" shows a table over objects
+	that were never persisted. "Embedded columns" shows the columns of the object a row points to
+	as columns of the row. "Dynamic columns" shows one column per milestone, decided by the data.
+	"Editable column" edits a computed column through its update function. "Default columns" shows
+	what a table displays when it declares no columns: the main properties of its row type.
+-->
+<view>
+	<channels>
+		<!-- Anchor object of the editable table's form: the edit session locks on it. -->
+		<derived-channel name="editAnchor"
+			expr="currentUser()"
+		/>
+	</channels>
+	<tab-bar active-tab="map-rows">
+		<tabs>
+			<tab id="map-rows"
+				icon="css:bi bi-braces"
+			>
+				<label>
+					<en>Map rows</en>
+					<de>Map-Zeilen</de>
+				</label>
+				<panel>
+					<title>
+						<en>Computed columns over map rows</en>
+						<de>Berechnete Spalten über Map-Zeilen</de>
+					</title>
+					<!--
+						The rows are dictionaries built per milestone, so no model type describes them and
+						every column computes its value from the row. The declared type of a computed column
+						decides how its values are displayed, sorted and filtered, and what a group row
+						aggregates.
+					-->
+					<table personalization-key="table-columns-map-rows">
+						<columns>
+							<computed-column name="name"
+								sort="ASC"
+								type="tl.core:String"
+							>
+								<label>
+									<en>Milestone</en>
+									<de>Meilenstein</de>
+								</label>
+								<value><![CDATA[row -> $row["name"]]]></value>
+							</computed-column>
+							<computed-column name="count"
+								type="tl.core:Integer"
+							>
+								<label>
+									<en>Tickets</en>
+									<de>Tickets</de>
+								</label>
+								<value><![CDATA[row -> $row["count"]]]></value>
+								<aggregate><![CDATA[rows -> $rows.map(r -> $r["count"]).sum()]]></aggregate>
+							</computed-column>
+						</columns>
+						<rows><![CDATA[all(`tl.demo.projectManagement:Milestone`)
+	.map(m -> {
+		"name": $m.get(`tl.demo.projectManagement:Milestone#name`),
+		"count": $m.get(`tl.demo.projectManagement:Milestone#tickets`).size()
+	})]]></rows>
+					</table>
+				</panel>
+			</tab>
+			<tab id="transient-rows"
+				icon="css:bi bi-cloud"
+			>
+				<label>
+					<en>Transient rows</en>
+					<de>Transiente Zeilen</de>
+				</label>
+				<panel>
+					<title>
+						<en>Attribute and computed columns over transient rows</en>
+						<de>Attribut- und berechnete Spalten über transienten Zeilen</de>
+					</title>
+					<!--
+						The rows are milestones that were never persisted. They are displayed by the same
+						columns a table of persistent milestones uses; the computed column reads a reference
+						that a transient object does not hold, which is empty rather than an error.
+					-->
+					<table
+						personalization-key="table-columns-transient"
+						types="tl.demo.projectManagement:Milestone"
+					>
+						<columns>
+							<column
+								attribute="name"
+								sort="ASC"
+							/>
+							<column attribute="dueDate"/>
+							<computed-column name="ticketCount"
+								type="tl.core:Integer"
+							>
+								<label>
+									<en>Tickets</en>
+									<de>Tickets</de>
+								</label>
+								<value><![CDATA[m -> $m.get(`tl.demo.projectManagement:Milestone#tickets`).size()]]></value>
+							</computed-column>
+						</columns>
+						<rows><![CDATA[count(4).map(i -> {
+	m = new(`tl.demo.projectManagement:Milestone`, transient: true);
+	$m.set(`tl.demo.projectManagement:Milestone#name`, "Draft " + ($i + 1));
+	$m.set(`tl.demo.projectManagement:Milestone#dueDate`, date(2026, ($i * 3) + 1, 15));
+	$m;
+})]]></rows>
+					</table>
+				</panel>
+			</tab>
+			<tab id="embedded-columns"
+				icon="css:bi bi-box-arrow-in-down-right"
+			>
+				<label>
+					<en>Embedded columns</en>
+					<de>Eingebettete Spalten</de>
+				</label>
+				<panel>
+					<title>
+						<en>Columns of a referenced object</en>
+						<de>Spalten eines referenzierten Objekts</de>
+					</title>
+					<!--
+						The assignee's name is shown as a column of the ticket: the embedding names the
+						reference, the nested declaration resolves against the contributor type, and the
+						header reads "Assignee / Name". The remaining attributes of the contributor are
+						offered in the column selection, hidden until the user picks one. The second
+						embedding walks two references, the last of them holding several objects, so its
+						cells collect the titles of all tickets of the ticket's milestone.
+					-->
+					<table
+						observed-types="tl.demo.projectManagement:Ticket"
+						personalization-key="table-columns-embedded"
+						types="tl.demo.projectManagement:Ticket"
+					>
+						<columns>
+							<column
+								attribute="title"
+								sort="ASC"
+							/>
+							<embedded-columns reference="assignee">
+								<column attribute="name"/>
+							</embedded-columns>
+							<embedded-columns reference="milestone.tickets">
+								<column attribute="title"/>
+							</embedded-columns>
+						</columns>
+						<rows><![CDATA[all(`tl.demo.projectManagement:Ticket`)]]></rows>
+					</table>
+				</panel>
+			</tab>
+			<tab id="dynamic-columns"
+				icon="css:bi bi-layout-three-columns"
+			>
+				<label>
+					<en>Dynamic columns</en>
+					<de>Dynamische Spalten</de>
+				</label>
+				<panel>
+					<title>
+						<en>One column per milestone</en>
+						<de>Eine Spalte je Meilenstein</de>
+					</title>
+					<!--
+						Which columns there are is decided by the data: one per milestone, each showing how
+						many tickets of the contributor belong to it. The table starts grouped by the
+						computed initial column, so the sum every milestone column aggregates over the rows
+						of a group is visible in its header row.
+					-->
+					<table
+						group-by="initial"
+						observed-types="tl.demo.projectManagement:Contributor"
+						personalization-key="table-columns-dynamic"
+						types="tl.demo.projectManagement:Contributor"
+					>
+						<columns>
+							<column
+								attribute="name"
+								sort="ASC"
+							/>
+							<computed-column name="initial"
+								type="tl.core:String"
+								width="120"
+							>
+								<label>
+									<en>Initial</en>
+									<de>Anfangsbuchstabe</de>
+								</label>
+								<value><![CDATA[c -> $c.get(`tl.demo.projectManagement:Contributor#name`).subString(0, 1)]]></value>
+							</computed-column>
+							<dynamic-columns name="milestones"
+								readonly="true"
+								type="tl.core:Integer"
+								width="120"
+							>
+								<columns><![CDATA[all(`tl.demo.projectManagement:Milestone`)]]></columns>
+								<column-name><![CDATA[m -> $m.get(`tl.demo.projectManagement:Milestone#name`)]]></column-name>
+								<column-label><![CDATA[m -> $m.get(`tl.demo.projectManagement:Milestone#name`)]]></column-label>
+								<value><![CDATA[c -> m -> $c.get(`tl.demo.projectManagement:Contributor#assignedTickets`)
+	.filter(t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`) == $m)
+	.size()]]></value>
+								<aggregate><![CDATA[rows -> m -> $rows
+	.map(c -> $c.get(`tl.demo.projectManagement:Contributor#assignedTickets`)
+		.filter(t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`) == $m)
+		.size())
+	.sum()]]></aggregate>
+							</dynamic-columns>
+						</columns>
+						<rows><![CDATA[all(`tl.demo.projectManagement:Contributor`)]]></rows>
+					</table>
+				</panel>
+			</tab>
+			<tab id="editable-column"
+				icon="css:bi bi-pencil-square"
+			>
+				<label>
+					<en>Editable column</en>
+					<de>Editierbare Spalte</de>
+				</label>
+				<panel>
+					<title>
+						<en>Editing a computed column</en>
+						<de>Bearbeiten einer berechneten Spalte</de>
+					</title>
+					<!--
+						The mail column computes its value from the contributor and writes an edited one back
+						through its update function. The control the value is entered with follows from the
+						declared type; the edit is buffered on the row and applied when the form is saved.
+					-->
+					<form input="editAnchor">
+						<table
+							observed-types="tl.demo.projectManagement:Contributor"
+							personalization-key="table-columns-editable"
+							row-edit="ALL"
+							types="tl.demo.projectManagement:Contributor"
+						>
+							<columns>
+								<column
+									attribute="name"
+									sort="ASC"
+								/>
+								<computed-column name="mail"
+									type="tl.core:String"
+								>
+									<label>
+										<en>Mail</en>
+										<de>Mail</de>
+									</label>
+									<value><![CDATA[c -> $c.get(`tl.demo.projectManagement:Contributor#email`)]]></value>
+									<update><![CDATA[c -> v -> $c.set(`tl.demo.projectManagement:Contributor#email`, $v)]]></update>
+									<can-update><![CDATA[c -> $c.get(`tl.demo.projectManagement:Contributor#name`) != null]]></can-update>
+								</computed-column>
+							</columns>
+							<rows><![CDATA[all(`tl.demo.projectManagement:Contributor`)]]></rows>
+						</table>
+					</form>
+				</panel>
+			</tab>
+			<tab id="default-columns"
+				icon="css:bi bi-card-checklist"
+			>
+				<label>
+					<en>Default columns</en>
+					<de>Standardspalten</de>
+				</label>
+				<panel>
+					<title>
+						<en>The columns a table derives from its row type</en>
+						<de>Die Spalten, die eine Tabelle aus ihrem Zeilentyp ableitet</de>
+					</title>
+					<!--
+						The table declares no columns, so it shows the main properties of the milestone type
+						and offers the rest of its attributes in the column selection.
+					-->
+					<table
+						observed-types="tl.demo.projectManagement:Milestone"
+						personalization-key="table-columns-default"
+						types="tl.demo.projectManagement:Milestone"
+					>
+						<rows><![CDATA[all(`tl.demo.projectManagement:Milestone`)]]></rows>
+					</table>
+				</panel>
+			</tab>
+		</tabs>
+	</tab-bar>
+</view>

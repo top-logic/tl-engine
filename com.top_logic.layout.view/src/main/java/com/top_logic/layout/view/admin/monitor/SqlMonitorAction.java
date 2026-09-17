@@ -23,8 +23,8 @@ import com.top_logic.basic.sql.LoggingDataSourceProxy;
 import com.top_logic.basic.sql.LoggingDataSourceProxy.AggregatingAnalyzer;
 import com.top_logic.basic.sql.LoggingDataSourceProxy.Statistics;
 import com.top_logic.basic.sql.LoggingDataSourceProxy.StatementAnalyzer;
-import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.view.ViewMessages;
 import com.top_logic.layout.view.command.ViewAction;
 
 /**
@@ -94,7 +94,7 @@ public class SqlMonitorAction implements ViewAction {
 		ConnectionPool pool = ConnectionPoolRegistry.getDefaultConnectionPool();
 		DataSource dataSource = pool.getDataSource();
 		if (!(dataSource instanceof LoggingDataSourceProxy proxy)) {
-			InfoService.showInfo(I18NConstants.SQL_MONITORING_UNAVAILABLE);
+			ViewMessages.info(context, I18NConstants.SQL_MONITORING_UNAVAILABLE);
 			return List.of();
 		}
 

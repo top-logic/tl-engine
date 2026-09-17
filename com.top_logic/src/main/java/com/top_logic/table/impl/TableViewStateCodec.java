@@ -16,6 +16,8 @@ import com.top_logic.table.FilterState;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.SortColumn;
 import com.top_logic.table.TableViewState;
+import com.top_logic.table.filter.TextColumnFilter;
+import com.top_logic.table.filter.TextFilterState;
 
 /**
  * Converts the fully-serializable subset of a {@link TableViewState} to and from a plain JSON
@@ -23,11 +25,12 @@ import com.top_logic.table.TableViewState;
  *
  * <p>
  * Persisted are the parts of the view state that are pure value data: column order, per-column
- * widths, the frozen column count, the multi-column sort, and the grouping. Column filters are
- * persisted too, but only through a caller-supplied {@link FilterCodec}: their state can carry
- * arbitrary business-object values ({@code TLObject} classifiers, row keys) whose stable
- * cross-session serialization is the owning column's responsibility. Without a codec
- * ({@link FilterCodec#NONE}) filters are skipped. Expansion and selection are not persisted.
+ * widths, the frozen column count, the multi-column sort, the grouping, and the term of the
+ * cross-column free-text search. Column filters are persisted too, but only through a
+ * caller-supplied {@link FilterCodec}: their state can carry arbitrary business-object values
+ * ({@code TLObject} classifiers, row keys) whose stable cross-session serialization is the owning
+ * column's responsibility. Without a codec ({@link FilterCodec#NONE}) filters are skipped.
+ * Expansion and selection are not persisted.
  * </p>
  *
  * <p>
@@ -54,6 +57,12 @@ public final class TableViewStateCodec {
 	private static final String GROUPING = "grouping";
 
 	private static final String FILTERS = "filters";
+
+	/**
+	 * Key of the {@link TableViewState#getSearch() search term}, serialized in the JSON shape of
+	 * a text pattern ({@link TextColumnFilter#textToJson(TextFilterState)}).
+	 */
+	private static final String SEARCH = "search";
 
 	private TableViewStateCodec() {
 		// Utility class.
@@ -105,6 +114,11 @@ public final class TableViewStateCodec {
 		}
 		if (!filterJson.isEmpty()) {
 			json.put(FILTERS, filterJson);
+		}
+
+		TextFilterState search = state.getSearch();
+		if (search != null && !search.isEmpty()) {
+			json.put(SEARCH, TextColumnFilter.textToJson(search));
 		}
 		return json;
 	}
@@ -178,6 +192,11 @@ public final class TableViewStateCodec {
 					target.getFilters().put(String.valueOf(entry.getKey()), state);
 				}
 			}
+		}
+
+		TextFilterState search = TextColumnFilter.textFromJson(json.get(SEARCH));
+		if (search != null && !search.isEmpty()) {
+			target.setSearch(search);
 		}
 	}
 

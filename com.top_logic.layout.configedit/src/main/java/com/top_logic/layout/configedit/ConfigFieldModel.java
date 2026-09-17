@@ -163,10 +163,10 @@ public class ConfigFieldModel extends AbstractFieldModel implements Configuratio
 	 * an integral type, or a value outside the target type's range.
 	 *
 	 * <p>
-	 * A control such as a number input hands back a plain {@link Double} regardless of the
-	 * property's own numeric type ({@link com.top_logic.layout.react.control.form.ReactNumberInputControl#parseClientValue(Object)}
-	 * only knows how many decimal places to display, not the target type), so the value must be
-	 * coerced here, where the exact {@link PropertyDescriptor#getType() property type} is known.
+	 * A control such as a number input hands back whichever {@link Number} its format produces - a
+	 * {@link Long} for a whole number, a {@link Double} for a fractional one - regardless of the
+	 * property's own numeric type, which the control does not know. The value is therefore coerced
+	 * here, where the exact {@link PropertyDescriptor#getType() property type} is known.
 	 * </p>
 	 *
 	 * <p>

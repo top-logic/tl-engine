@@ -1,4 +1,6 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, useStandaloneKeyboardScope } from 'tl-react-bridge';
+import {
+  React, useTLState, useTLCommand, TLChild, useI18N, useStandaloneKeyboardScope, FillBarrier,
+} from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { ThemeIcon } from './icon/ThemeIcon';
 
@@ -654,8 +656,12 @@ const TLSidebar: React.FC<TLCellProps> = ({ controlId }) => {
         </button>
       </nav>
 
+      {/* The region stretches the active view to its own bounded height either way, which ends
+          the fill chain here. */}
       <div className="tlSidebar__content">
-        {state.activeContent && <TLChild control={state.activeContent} />}
+        <FillBarrier>
+          {state.activeContent && <TLChild control={state.activeContent} />}
+        </FillBarrier>
       </div>
     </div>
   );

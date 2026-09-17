@@ -5,23 +5,16 @@
  */
 package com.top_logic.layout.view.command;
 
-import java.util.List;
-
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.channel.ChannelRef;
-import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.search.expr.query.QueryExecutor;
 
 /**
  * {@link ViewAction} that evaluates a configured TL-Script function.
@@ -63,10 +56,8 @@ public class ExecuteScriptAction implements ViewAction {
 	 * Configuration for {@link ExecuteScriptAction}.
 	 */
 	@TagName("execute-script")
-	public interface Config extends com.top_logic.basic.config.PolymorphicConfiguration<ExecuteScriptAction> {
-
-		/** Configuration name for {@link #getInputs()}. */
-		String INPUTS = "inputs";
+	public interface Config
+			extends com.top_logic.basic.config.PolymorphicConfiguration<ExecuteScriptAction>, ActionScript.Inputs {
 
 		@Override
 		@ClassDefault(ExecuteScriptAction.class)
@@ -84,43 +75,20 @@ public class ExecuteScriptAction implements ViewAction {
 		@Name("function")
 		@Mandatory
 		Expr getFunction();
-
-		/**
-		 * References to {@link ViewChannel}s whose current values become leading positional
-		 * arguments to {@link #getFunction()} (before the chain's current input value).
-		 */
-		@Name(INPUTS)
-		@ListBinding(format = ChannelRefFormat.class, tag = "input", attribute = "channel")
-		List<ChannelRef> getInputs();
 	}
 
-	private final QueryExecutor _executor;
-
-	private final List<ChannelRef> _inputRefs;
+	private final ActionScript _function;
 
 	/**
 	 * Creates a new {@link ExecuteScriptAction}.
 	 */
 	@CalledByReflection
 	public ExecuteScriptAction(InstantiationContext context, Config config) {
-		_executor = QueryExecutor.compile(config.getFunction());
-		_inputRefs = config.getInputs();
+		_function = ActionScript.compile(config.getFunction(), config.getInputs());
 	}
 
 	@Override
 	public Object execute(ReactContext context, Object input) {
-		if (_inputRefs.isEmpty()) {
-			return _executor.execute(input);
-		}
-
-		ViewContext viewContext = (ViewContext) context;
-		Object[] args = new Object[_inputRefs.size() + 1];
-		int i = 0;
-		for (ChannelRef ref : _inputRefs) {
-			ViewChannel channel = viewContext.resolveChannel(ref);
-			args[i++] = channel.get();
-		}
-		args[i] = input;
-		return _executor.execute(args);
+		return _function.execute(context, input);
 	}
 }

@@ -14,6 +14,7 @@ import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.util.TLModelPartRef;
 
 /**
  * Configuration for a derived (computed, read-only) channel.
@@ -39,6 +40,9 @@ public interface DerivedChannelConfig extends ChannelConfig {
 
 	/** Configuration name for {@link #getReverse()}. */
 	String REVERSE = "reverse";
+
+	/** Configuration name for {@link #getObservedTypes()}. */
+	String OBSERVED_TYPES = "observed-types";
 
 	/**
 	 * Comma-separated references to channels whose current values become positional arguments to the
@@ -79,4 +83,19 @@ public interface DerivedChannelConfig extends ChannelConfig {
 	 */
 	@Name(REVERSE)
 	Expr getReverse();
+
+	/**
+	 * Types whose object changes (create / update / delete) recompute the {@link #getExpr()
+	 * expression}, in addition to the objects the {@link #getInputs() inputs} hold, which are
+	 * always observed.
+	 *
+	 * <p>
+	 * Configure this only for an expression that navigates beyond the input objects, e.g. one
+	 * reading an attribute of the input's container: a change of that other object is invisible to
+	 * the inputs' own observation. Empty (default) observes just the input objects.
+	 * </p>
+	 */
+	@Name(OBSERVED_TYPES)
+	@Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
+	List<TLModelPartRef> getObservedTypes();
 }

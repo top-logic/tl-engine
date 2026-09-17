@@ -22,6 +22,7 @@ import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.slot.control.SlotContentControl;
@@ -91,6 +92,11 @@ public class SlotContentElement implements UIElement {
 		for (PolymorphicConfiguration<? extends UIElement> childConfig : config.getChildren()) {
 			_children.add(context.getInstance(childConfig));
 		}
+	}
+
+	@Override
+	public List<ChildGroup> getChildGroups() {
+		return List.of(ChildGroup.elements(_children));
 	}
 
 	@Override

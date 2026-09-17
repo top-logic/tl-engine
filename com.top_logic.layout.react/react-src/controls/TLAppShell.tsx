@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useFill, FillBarrier } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 /**
@@ -18,10 +18,15 @@ const COMPACT_MAX_WIDTH = 768;
  * - content:  ChildDescriptor         (required, flex:1)
  * - footer:   ChildDescriptor | null  (optional, fixed height)
  * - snackbar: ChildDescriptor         (built-in notification service)
+ *
+ * Always fills its container - the shell spans the viewport, so the app bar stays put and
+ * overflowing content scrolls inside the content region rather than moving the page. That region
+ * is bounded by it and ends the fill chain.
  */
 const TLAppShell: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
+  const fillClass = useFill(true);
 
   // Report the viewport "display class" to the server once on mount and whenever the
   // responsive breakpoint is crossed, so adaptive controls can switch presentation.
@@ -43,7 +48,7 @@ const TLAppShell: React.FC<TLCellProps> = ({ controlId }) => {
   const snackbar = state.snackbar as unknown;
 
   return (
-    <div id={controlId} className="tlAppShell">
+    <div id={controlId} className={'tlAppShell ' + fillClass}>
       {header && (
         <div className="tlAppShell__header">
           <TLChild control={header} />
@@ -55,7 +60,9 @@ const TLAppShell: React.FC<TLCellProps> = ({ controlId }) => {
         </div>
       )}
       <div className="tlAppShell__content">
-        <TLChild control={content} />
+        <FillBarrier>
+          <TLChild control={content} />
+        </FillBarrier>
       </div>
       {footer && (
         <div className="tlAppShell__footer">

@@ -1,5 +1,9 @@
 import { React, useTLState, useTLCommand } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { TLPill } from './pill/TLPill';
+
+/** Command sent when the user follows the link of the displayed value. */
+const CMD_GOTO = 'goto';
 
 /**
  * Displays a business object with optional icon, label, and goto link.
@@ -11,6 +15,7 @@ import type { TLCellProps } from 'tl-react-bridge';
  * - cssClass?: string   - type-specific CSS class
  * - hasTooltip: boolean - whether the server provides a rich tooltip (fetched lazily)
  * - hasLink: boolean    - whether clicking navigates to the object
+ * - color?: string      - CSS color the object carries in the model; shown as a pill
  */
 const TLResourceCell: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -22,6 +27,7 @@ const TLResourceCell: React.FC<TLCellProps> = ({ controlId }) => {
   const cssClass = state.cssClass as string | undefined;
   const hasTooltip = state.hasTooltip === true;
   const hasLink = state.hasLink as boolean;
+  const color = (state.color as string) || undefined;
 
   const icon = iconCss
     ? <i className={iconCss} />
@@ -29,16 +35,19 @@ const TLResourceCell: React.FC<TLCellProps> = ({ controlId }) => {
     ? <img src={iconSrc} className="tlTypeIcon" alt="" />
     : null;
 
-  const content = (
+  const presentation = (
     <>
       {icon}
       {label && <span className="tlResourceLabel">{label}</span>}
     </>
   );
 
+  // A colored object is drawn as a pill; one the model gives no color stays plain.
+  const content = color ? <TLPill color={color}>{presentation}</TLPill> : presentation;
+
   const handleClick = React.useCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    sendCommand('goto', {});
+    sendCommand(CMD_GOTO, {});
   }, [sendCommand]);
 
   const className = ['tlResourceCell', cssClass].filter(Boolean).join(' ');

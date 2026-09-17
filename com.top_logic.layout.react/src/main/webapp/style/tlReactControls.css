@@ -5,6 +5,36 @@
  * integrate visually with the rest of the TL UI.
  */
 
+/* ===========================================================================
+   Shape, elevation and overlay tokens
+   ---------------------------------------------------------------------------
+   Every rounding, every drop shadow and every backdrop of this sheet reads a
+   token of the UI theme (see tl-react-theme.config.xml), written without a
+   fallback: a token the theme is missing is a defect to fix in the theme, not
+   something a stylesheet quietly papers over.
+
+   Rounding comes in two tiers:
+
+     - --corner-radius, the control tier: buttons, input fields, toggles,
+       cells, small chips, handles, drop markers, scrollbar thumbs.
+     - --border-radius-02, the surface tier: panels, cards, windows, menus,
+       drop-down popups, flyouts, the snackbar, tooltips, form groups.
+
+   Shapes are not rounding: a circle stays 50% and a pill stays 999px, so both
+   keep their shape in a theme that squares every corner off.
+
+   Elevation comes in three steps, each a shadow token:
+
+     - --shadow-raised, a surface lifted off the page: an elevated app bar or
+       card, the edge of a frozen table column.
+     - --shadow-menu, a popup opened from a control: menus, drop-downs,
+       flyouts, colour and icon palettes, tooltips.
+     - --shadow-dialog, a layer covering the page: windows, drawers, the
+       snackbar, the sidebar drawer.
+
+   --overlay is the backdrop such a layer dims the page with.
+   =========================================================================== */
+
 /* --- Viewport-filling layout ------------------------------------------- */
 
 /* The view page is a full-viewport application: every scrollable region lives inside
@@ -24,6 +54,20 @@ html, body {
 
 .is-control > .tlStack {
 	height: 100%;
+}
+
+/* --- Fill contract ------------------------------------------------------ */
+
+/* A control that fills takes the height its flex container offers instead of growing with its
+   content, so a virtualized child (e.g. a TableViewControl) bounds its scroll viewport and
+   scrolls internally rather than overflowing an outer scroller. Which controls carry the class is
+   decided in the control tree (see useFill / useFillHost of the React bridge): a container
+   hosting a filling child fills in turn, so the request reaches up to the first box that is
+   bounded anyway - the viewport-high mount point above, a tab-content region, a scrolling panel
+   body. */
+.tlFill {
+	flex: 1;
+	min-height: 0;
 }
 
 /* --- React mount point ------------------------------------------------- */
@@ -88,7 +132,7 @@ button.tlReactButton--link {
 	box-shadow: none;
 	background: transparent;
 	font-weight: normal;
-	color: var(--link-primary, #0f62fe);
+	color: var(--link-primary);
 	text-decoration: underline;
 }
 
@@ -96,7 +140,7 @@ button.tlReactButton--link:not(:disabled):hover,
 button.tlReactButton--link:not(:disabled):active {
 	background: transparent;
 	box-shadow: none;
-	color: var(--link-primary-hover, #0043ce);
+	color: var(--link-primary-hover);
 }
 
 /* --- TLButton primary variant: emphasized (filled) dialog action -------- */
@@ -132,14 +176,14 @@ button.tlReactButton--primary:not(:disabled):active {
 button.tlReactButton--small {
 	height: 1.5rem;
 	padding: 0 var(--spacing-02);
-	font-size: var(--label-01-font-size, 0.75rem);
+	font-size: var(--label-01-font-size);
 }
 
 .tlReactButton--large,
 button.tlReactButton--large {
 	height: 2.5rem;
 	padding: 0 var(--spacing-05);
-	font-size: var(--heading-compact-03-font-size, 1rem);
+	font-size: var(--heading-compact-03-font-size);
 }
 
 /* A link keeps its inline layout regardless of size; only the font size differs. */
@@ -167,42 +211,42 @@ button.tlReactButton--icon:not(:disabled):hover {
 
 button.tlReactButton--icon:disabled {
 	box-shadow: none;
-	color: var(--icon-disabled, var(--text-disabled));
+	color: var(--icon-disabled);
 }
 
 /* The panel-toolbar buttons inherit the default (secondary) button styling:
    the panel header is now a light surface, so no on-accent inversion is needed. */
 
-/* --- TLToggleButton (active state) -------------------------------------- */
+/* --- Active button: a pressed toggle, or the chosen alternative --------- */
 
-.tlReactButton.tlReactButtonActive {
+.tlReactButton.tlReactButton--active {
 	background: var(--button-primary);
 	box-shadow: inset 0px 0px 0px 2px var(--button-primary);
 	color: var(--text-on-color);
 }
 
-button.tlReactButton.tlReactButtonActive:hover {
+button.tlReactButton.tlReactButton--active:hover {
 	background: var(--button-primary-hover);
 	box-shadow: inset 0px 0px 0px 2px var(--button-primary-hover);
 	color: var(--text-on-color);
 }
 
-button.tlReactButton.tlReactButtonActive:focus {
+button.tlReactButton.tlReactButton--active:focus {
 	color: var(--text-on-color);
 }
 
-button.tlReactButton.tlReactButtonActive:focus-visible {
+button.tlReactButton.tlReactButton--active:focus-visible {
 	box-shadow: inset 0px 0px 0px 2px var(--button-primary), 0 0 0 2px var(--focus-inset);
 	outline: 2px solid var(--focus);
 	outline-offset: 2px;
 }
 
-button.tlReactButton.tlReactButtonActive:active {
+button.tlReactButton.tlReactButton--active:active {
 	background: var(--button-primary-active);
 	color: var(--text-on-color);
 }
 
-button.tlReactButton.tlReactButtonActive:disabled {
+button.tlReactButton.tlReactButton--active:disabled {
 	background: var(--button-disabled);
 	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
 	color: var(--text-on-color-disabled);
@@ -266,15 +310,12 @@ button.tlCounter__button:focus {
 
 /* --- TLTabBar ---------------------------------------------------------- */
 
+/* A tab bar always fills its container, so the tab strip stays pinned and only the tab content
+   scrolls (see its fill declaration). */
 .tlReactTabBar {
 	display: flex;
 	flex-direction: column;
 	font-family: var(--font-family);
-	/* Fill the available slot instead of growing with the content, so the tab
-	   strip stays pinned and only the tab content scrolls (min-height: 0 lets
-	   this shrink below its content height inside a flex parent). */
-	flex: 1;
-	min-height: 0;
 }
 
 .tlReactTabBar__tabs {
@@ -336,6 +377,24 @@ button.tlCounter__button:focus {
    toolbar) flushes; a <card> (rounded border) must live inside a dashboard or a
    <padding> so its border has room. No enforcement - build views per the
    documented convention.
+   =========================================================================== */
+
+/* ===========================================================================
+   Overlay surfaces.
+
+   A popup floating above the page - a menu, a toolbar drop-down, a sidebar
+   group flyout, a field's option list - reads as elevated through three
+   themed tokens, never through literal colours:
+
+     - background: --layer-02, the elevated surface. It equals --layer-01 on a
+       light theme and is the lighter of the two on a dark one, where a popup
+       painted in the page's own colour disappears into it.
+     - border: --border-strong, so the edge stays visible where surface and
+       page are close in luminance.
+     - box-shadow: --shadow-menu, the theme's own popup shadow.
+
+   A field's option list keeps --field as its background instead, staying the
+   colour of the input it belongs to.
    =========================================================================== */
 :root {
 	--page-inset: var(--spacing-04);
@@ -718,7 +777,7 @@ button.tlFileUpload__button:disabled {
 
 .tlFileUpload__status--error {
 	font-size: var(--body-compact-01-font-size);
-	color: var(--text-error, #da1e28);
+	color: var(--text-error);
 	margin-left: var(--spacing-02);
 }
 
@@ -916,7 +975,7 @@ button.tlPhotoCapture__overlayCloseBtn:hover {
 
 button.tlPhotoCapture__mirrorBtn:focus-visible,
 button.tlPhotoCapture__overlayCloseBtn:focus-visible {
-	box-shadow: 0 0 0 2px var(--focus, #0f62fe);
+	box-shadow: 0 0 0 2px var(--focus);
 	outline: none;
 }
 
@@ -945,7 +1004,7 @@ button.tlPhotoCapture__overlayCaptureBtn:hover {
 }
 
 button.tlPhotoCapture__overlayCaptureBtn:focus-visible {
-	box-shadow: 0 0 0 2px var(--focus, #0f62fe);
+	box-shadow: 0 0 0 2px var(--focus);
 	outline: none;
 }
 
@@ -954,7 +1013,7 @@ button.tlPhotoCapture__overlayCaptureBtn:focus-visible {
 	width: 3rem;
 	height: 3rem;
 	border-radius: 50%;
-	background: var(--button-danger, #da1e28);
+	background: var(--button-danger);
 }
 
 button.tlPhotoCapture__overlayCaptureBtn:active .tlPhotoCapture__overlayCaptureIcon {
@@ -1053,7 +1112,7 @@ button.tlPhotoCapture__overlayCaptureBtn:active .tlPhotoCapture__overlayCaptureI
 	   content makes it read clearly as a header bar; it is applied uniformly to
 	   every panel header (standalone or split) so identical tables/panels look
 	   the same regardless of the surrounding layout. Delineated by a bottom border. */
-	background-color: var(--layer-02, #f4f4f4);
+	background-color: var(--layer-02);
 	color: var(--text-primary);
 	border-bottom: 1px solid var(--border-subtle);
 	gap: var(--spacing-02);
@@ -1084,8 +1143,8 @@ button.tlPhotoCapture__overlayCaptureBtn:active .tlPhotoCapture__overlayCaptureI
    (e.g. a comment). The tinted header visually binds byline and content together; compact
    insets keep the entry tight - forms inside pick up the reduced inset via --page-inset. */
 .tlPanel--card {
-	border: 1px solid var(--border-subtle, #d1d5db);
-	border-radius: var(--border-radius-02, 0.5rem);
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--border-radius-02);
 	overflow: hidden;
 	/* Same insets as the panel header, so header and content align on the token grid. */
 	--page-inset: var(--spacing-02) var(--spacing-03);
@@ -1120,7 +1179,7 @@ button.tlPhotoCapture__overlayCaptureBtn:active .tlPhotoCapture__overlayCaptureI
 	border: none;
 	border-radius: var(--corner-radius);
 	background: transparent;
-	color: var(--icon-primary, var(--text-primary));
+	color: var(--icon-primary);
 	cursor: pointer;
 	padding: 0;
 	flex-shrink: 0;
@@ -1153,27 +1212,6 @@ button.tlPanel__actionButton:focus-visible {
 
 .tlPanel--fullLine {
 	grid-column: 1 / -1;
-}
-
-/* A fill panel fills the bounded height of its container instead of growing with
-   its content, so a virtualized child (e.g. a TableViewControl) bounds its
-   viewport and scrolls internally rather than overflowing an outer scroller.
-   This is the opt-in counterpart to the flex-column tab content above: the panel
-   already lays itself out at height:100%, and the :has() rule lets the wrapping
-   view-content stack fill too, so the chain down to the table is height-bounded. */
-.tlPanel--fill {
-	flex: 1;
-	min-height: 0;
-}
-
-/* The view-content stack fills its container when it hosts a fill panel or a split
-   panel, so the panel/split-panel height:100% resolves against a definite height.
-   A split panel always fills (its panes are sized proportionally and its divider
-   must span the available height); a plain panel only fills when it opts in. */
-.tlStack:has(> .tlPanel--fill),
-.tlStack:has(> .tlSplitPanel) {
-	flex: 1;
-	min-height: 0;
 }
 
 .tlPanel--maximized {
@@ -1249,7 +1287,7 @@ button.tlPanel__actionButton:focus-visible {
 	width: 16rem;
 	flex-shrink: 0;
 	border-right: 1px solid var(--border-subtle);
-	background: var(--layer-01, #fff);
+	background: var(--layer-01);
 	overflow-y: auto;
 	overflow-x: hidden;
 	transition: width 0.2s ease;
@@ -1340,7 +1378,7 @@ button.tlSidebar__item:focus-visible {
 }
 
 button.tlSidebar__navItem--active:hover {
-	background: var(--layer-selected-hover, var(--layer-selected));
+	background: var(--layer-selected-hover);
 }
 
 /* Header item */
@@ -1402,7 +1440,7 @@ button.tlSidebar__navItem--active:hover {
 	min-width: 1.25rem;
 	height: 1.25rem;
 	padding: 0 var(--spacing-02);
-	border-radius: 0.625rem;
+	border-radius: 999px;
 	background: var(--button-primary);
 	color: var(--text-on-color);
 	font-size: 0.6875rem;
@@ -1480,10 +1518,10 @@ button.tlSidebar__collapseBtn:focus-visible {
 	position: fixed;
 	z-index: 1000;
 	min-width: 12rem;
-	background: var(--layer-01, #fff);
-	border: 1px solid var(--border-subtle);
-	border-radius: var(--border-radius-02, 4px);
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	background: var(--layer-02);
+	border: 1px solid var(--border-strong);
+	border-radius: var(--border-radius-02);
+	box-shadow: var(--shadow-menu);
 	padding: var(--spacing-02) 0;
 	overflow-y: auto;
 	max-height: 20rem;
@@ -1556,7 +1594,7 @@ button.tlSidebar__flyoutItem:focus-visible {
 	background: transparent;
 	color: inherit;
 	cursor: pointer;
-	border-radius: var(--corner-radius, 4px);
+	border-radius: var(--corner-radius);
 }
 
 button.tlDrawerToggle:hover {
@@ -1564,7 +1602,7 @@ button.tlDrawerToggle:hover {
 }
 
 button.tlDrawerToggle:focus-visible {
-	outline: 2px solid var(--focus, currentColor);
+	outline: 2px solid var(--focus);
 	outline-offset: -2px;
 }
 
@@ -1602,7 +1640,7 @@ button.tlDrawerToggle:focus-visible {
 	.tlSidebar.tlSidebar--drawerOpen .tlSidebar__nav {
 		transform: translateX(0);
 		width: 16rem; /* full drawer regardless of desktop collapsed preference */
-		box-shadow: 0 0 12px rgba(0, 0, 0, 0.2);
+		box-shadow: var(--shadow-dialog);
 	}
 
 	/* Backdrop only when drawer is open. Clicking closes the drawer (handled in TLSidebar.tsx). */
@@ -1613,7 +1651,7 @@ button.tlDrawerToggle:focus-visible {
 		left: 0;
 		right: 0;
 		bottom: 0;
-		background: rgba(0, 0, 0, 0.4);
+		background: var(--overlay);
 		z-index: 49;
 		cursor: pointer;
 	}
@@ -1654,6 +1692,33 @@ button.tlDrawerToggle:focus-visible {
 .tlStack--grow-first.tlStack--row > *:first-child { flex: 1 1 auto; min-width: 0; }
 .tlStack--grow-first.tlStack--column > *:first-child { flex: 1 1 auto; min-height: 0; }
 
+/* --- TLTileStack ----------------------------------------------------------- */
+
+/* Positioning context for the covered frames below. */
+.tlTileStack {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+}
+
+/* One frame of the drill-down stack, as a bounded flex column so that a filling frame content
+   resolves its height against it. */
+.tlTileStack__frame {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+}
+
+/* A frame that another frame covers keeps its layout box - taken out of the flow at the size of
+   the stack - so that it survives being covered as the user left it, scroll offsets of its tables
+   and forms included. Invisible and, being invisible, neither clickable nor focusable. */
+.tlTileStack__frame--covered {
+	position: absolute;
+	inset: 0;
+	visibility: hidden;
+}
+
 /* --- TLGrid ---------------------------------------------------------------- */
 
 .tlGrid {
@@ -1668,9 +1733,9 @@ button.tlDrawerToggle:focus-visible {
 /* --- TLCard ---------------------------------------------------------------- */
 
 .tlCard {
-	border-radius: var(--border-radius-02, 4px);
+	border-radius: var(--border-radius-02);
 	font-family: var(--font-family);
-	background: var(--layer-01, #fff);
+	background: var(--layer-01);
 	overflow: hidden;
 }
 
@@ -1679,7 +1744,7 @@ button.tlDrawerToggle:focus-visible {
 }
 
 .tlCard--elevated {
-	box-shadow: 0 0 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
+	box-shadow: var(--shadow-raised);
 }
 
 .tlCard__header {
@@ -1730,13 +1795,13 @@ button.tlDrawerToggle:focus-visible {
 }
 
 .tlAppBar--surface {
-	background: var(--layer-01, #fff);
+	background: var(--layer-01);
 	color: var(--text-primary);
 	border-bottom: 1px solid var(--border-subtle);
 }
 
 .tlAppBar--elevated {
-	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+	box-shadow: var(--shadow-raised);
 }
 
 .tlAppBar__leading {
@@ -1772,14 +1837,40 @@ button.tlDrawerToggle:focus-visible {
 	margin-left: auto;
 }
 
-/* --- Controls placed on the primary (accent) app bar -------------------- */
-/* The primary app bar has a dark accent background; its title and slot text
-   inherit the on-accent (white) color. Buttons and the user-name text bring
-   their own foreground (accent-blue / primary-text), which is nearly
-   unreadable on the accent background. Re-map them to on-accent colors. */
+.tlAppBar__trailing {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	flex-shrink: 0;
+	margin-left: auto;
+}
 
-.tlAppBar--primary .tlAppBarUser {
+/* An actions area ahead of the trailing one has already claimed the free space; a second automatic
+   margin would split it between the two and strand the actions mid-bar. */
+.tlAppBar__actions + .tlAppBar__trailing {
+	margin-left: 0;
+}
+
+/* --- Controls placed on the primary (accent) app bar -------------------- */
+/* The primary app bar has a dark accent background; its title inherits the
+   on-accent (white) color. Text elements and buttons bring their own
+   foreground (primary-text / accent-blue), which is nearly unreadable on the
+   accent background - the account name beside the avatar above all. Re-map
+   them to on-accent colors. */
+
+.tlAppBar--primary .tlText {
 	color: var(--layer-accent-text);
+}
+
+/* A click region hovers with the generic layer-hover, which is a light surface - under the
+   on-accent text above it that leaves nothing to read. On the accent bar it hovers and opens in the
+   accent's own darker shades instead. */
+.tlAppBar--primary .tlMenuRegion--click:hover {
+	background: var(--layer-accent-hover);
+}
+
+.tlAppBar--primary .tlMenuRegion--click[aria-expanded="true"] {
+	background: var(--layer-accent-active);
 }
 
 .tlAppBar--primary .tlReactButton {
@@ -1805,7 +1896,7 @@ button.tlDrawerToggle:focus-visible {
 
 .tlAppBar--primary .tlReactButton--icon {
 	box-shadow: none;
-	color: var(--icon-on-color, var(--layer-accent-text));
+	color: var(--icon-on-color);
 }
 
 .tlAppBar--primary .tlReactButton--link {
@@ -1868,7 +1959,7 @@ button.tlDrawerToggle:focus-visible {
 	border: none;
 	background: transparent;
 	padding: 0;
-	color: var(--link-primary, var(--button-primary));
+	color: var(--link-primary);
 	font-family: var(--font-family);
 	font-size: var(--body-compact-01-font-size);
 	cursor: pointer;
@@ -1894,7 +1985,7 @@ button.tlDrawerToggle:focus-visible {
 	align-items: stretch;
 	height: 3.5rem;
 	border-top: 1px solid var(--border-subtle);
-	background: var(--layer-01, #fff);
+	background: var(--layer-01);
 	font-family: var(--font-family);
 	flex-shrink: 0;
 }
@@ -1948,7 +2039,7 @@ button.tlBottomBar__item:hover {
 	min-width: 0.875rem;
 	height: 0.875rem;
 	padding: 0 0.1875rem;
-	border-radius: 0.4375rem;
+	border-radius: 999px;
 	background: var(--button-primary);
 	color: var(--text-on-color);
 	font-size: 0.5625rem;
@@ -1973,7 +2064,7 @@ button.tlBottomBar__item:hover {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: rgba(0, 0, 0, 0.5);
+	background: var(--overlay);
 	outline: none;
 }
 
@@ -1987,9 +2078,9 @@ button.tlBottomBar__item:hover {
 
 .tlWindow {
 	position: relative;
-	background: var(--layer-01, #fff);
-	border-radius: var(--border-radius-02, 4px);
-	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+	background: var(--layer-01);
+	border-radius: var(--border-radius-02);
+	box-shadow: var(--shadow-dialog);
 	display: flex;
 	flex-direction: column;
 	/* The configured width is a preference: the window never grows beyond the viewport
@@ -2047,7 +2138,7 @@ button.tlBottomBar__item:hover {
 }
 
 .tlWindow__toolbar button.tlReactButton:not(:disabled):active {
-	background: var(--layer-active, var(--layer-hover));
+	background: var(--layer-active);
 	box-shadow: none;
 	color: var(--text-primary);
 }
@@ -2175,8 +2266,8 @@ button.tlWindow__maximizeBtn:focus-visible {
 .tlDrawer {
 	position: fixed;
 	z-index: 9000;
-	background: var(--layer-01, #fff);
-	box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
+	background: var(--layer-01);
+	box-shadow: var(--shadow-dialog);
 	display: flex;
 	flex-direction: column;
 	transition: transform 0.25s ease;
@@ -2263,10 +2354,10 @@ button.tlDrawer__closeBtn:focus-visible {
 	align-items: center;
 	gap: var(--spacing-03);
 	padding: var(--spacing-03) var(--spacing-04);
-	border-radius: var(--border-radius-02, 4px);
+	border-radius: var(--border-radius-02);
 	font-family: var(--font-family);
 	font-size: var(--body-compact-01-font-size);
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+	box-shadow: var(--shadow-dialog);
 	animation: tlSnackbarSlideUp 0.2s ease;
 	max-width: min(40rem, calc(100vw - 2 * var(--spacing-04)));
 }
@@ -2275,10 +2366,10 @@ button.tlDrawer__closeBtn:focus-visible {
 	animation: tlSnackbarFadeOut 0.2s ease forwards;
 }
 
-.tlSnackbar--info    { background: var(--background-inverse, #393939); color: var(--text-inverse, #fff); }
-.tlSnackbar--success { background: var(--support-success, #198038); color: #fff; }
-.tlSnackbar--warning { background: var(--support-warning, #f1c21b); color: #000; }
-.tlSnackbar--error   { background: var(--support-error, #da1e28); color: #fff; }
+.tlSnackbar--info    { background: var(--background-inverse); color: var(--text-inverse); }
+.tlSnackbar--success { background: var(--support-success); color: #fff; }
+.tlSnackbar--warning { background: var(--support-warning); color: #000; }
+.tlSnackbar--error   { background: var(--support-error); color: #fff; }
 
 .tlSnackbar__message {
 	flex: 1;
@@ -2336,18 +2427,14 @@ button.tlDrawer__closeBtn:focus-visible {
 	height: 100%;
 }
 
-/* The view-content stack hosting the app shell fills its container, so the shell's
-   height:100% resolves against the viewport-high mount chain: the app bar stays put
-   and overflowing content scrolls inside the shell's content region, not the page. */
-.tlStack:has(> .tlAppShell) {
-	flex: 1;
-	min-height: 0;
-}
-
+/* Bounded flex column: the content control resolves its height against this region, so a filling
+   one spans it and scrolls internally while the app bar stays put. */
 .tlAppShell__content {
 	flex: 1;
 	min-height: 0;
 	overflow: hidden;
+	display: flex;
+	flex-direction: column;
 }
 
 /* Notice area between header and content. Carries neither padding nor border of its own, so it
@@ -2378,9 +2465,9 @@ button.tlDrawer__closeBtn:focus-visible {
 	text-align: center;
 }
 
-.tlNoticeBar--info    { background: var(--background-inverse, #393939); color: var(--text-inverse, #fff); }
-.tlNoticeBar--warning { background: var(--support-warning, #f1c21b); color: #000; }
-.tlNoticeBar--error   { background: var(--support-error, #da1e28); color: #fff; }
+.tlNoticeBar--info    { background: var(--background-inverse); color: var(--text-inverse); }
+.tlNoticeBar--warning { background: var(--support-warning); color: #000; }
+.tlNoticeBar--error   { background: var(--support-error); color: #fff; }
 
 /* A notice offering an action is a button spanning the whole bar, as its tooltip announces. */
 .tlNoticeBar--clickable {
@@ -2420,7 +2507,7 @@ button.tlDrawer__closeBtn:focus-visible {
 	flex-wrap: wrap;
 	gap: var(--spacing-02);
 	padding: var(--spacing-02) var(--spacing-04);
-	border-bottom: 1px solid var(--border-color, rgba(0, 0, 0, 0.12));
+	border-bottom: 1px solid var(--border-color);
 	flex: 0 0 auto;
 }
 
@@ -2430,7 +2517,7 @@ button.tlDrawer__closeBtn:focus-visible {
 	cursor: pointer;
 	padding: 0;
 	font: inherit;
-	color: var(--link-color, #0d6efd);
+	color: var(--link-color);
 }
 
 .tlAdaptiveDetail__crumb--current {
@@ -2440,36 +2527,36 @@ button.tlDrawer__closeBtn:focus-visible {
 }
 
 .tlAdaptiveDetail__sep {
-	color: var(--text-muted, rgba(0, 0, 0, 0.45));
+	color: var(--text-muted);
 }
 
 /* --- TLMenu ---------------------------------------------------------------- */
 
 /* Placeholder rendered in place of a view that could not be loaded. */
 .tlViewError {
-	margin: var(--spacing-05, 1rem);
-	padding: var(--spacing-05, 1rem);
-	border: 1px solid var(--support-error, #da1e28);
-	border-left-width: var(--spacing-03, 0.5rem);
-	border-radius: var(--border-radius-02, 4px);
-	background: var(--layer-01, #fff);
+	margin: var(--spacing-05);
+	padding: var(--spacing-05);
+	border: 1px solid var(--support-error);
+	border-left-width: var(--spacing-03);
+	border-radius: var(--border-radius-02);
+	background: var(--layer-01);
 	overflow: auto;
 }
 
 .tlViewError__title {
 	font-weight: 600;
-	color: var(--support-error, #da1e28);
+	color: var(--support-error);
 }
 
 .tlViewError__view {
-	font-family: var(--font-family-mono, monospace);
+	font-family: var(--font-family-mono);
 }
 
 .tlViewError__detail {
-	font-family: var(--font-family-mono, monospace);
+	font-family: var(--font-family-mono);
 	font-size: 0.875em;
 	white-space: pre-wrap;
-	color: var(--text-secondary, #525252);
+	color: var(--text-secondary);
 }
 
 .tlMenu {
@@ -2479,10 +2566,10 @@ button.tlDrawer__closeBtn:focus-visible {
 	   viewport and scrolls instead of being cut off. */
 	max-height: 70vh;
 	overflow-y: auto;
-	background: var(--layer-01, #fff);
-	border: 1px solid var(--border-subtle);
-	border-radius: var(--border-radius-02, 4px);
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	background: var(--layer-02);
+	border: 1px solid var(--border-strong);
+	border-radius: var(--border-radius-02);
+	box-shadow: var(--shadow-menu);
 	padding: var(--spacing-02) 0;
 	font-family: var(--font-family);
 	outline: none;
@@ -2524,10 +2611,27 @@ button.tlMenu__item--disabled:hover {
 	color: var(--text-disabled);
 }
 
+/* The entry whose command is in force, e.g. the current theme among the offered ones. */
+.tlMenu__item--active {
+	font-weight: 600;
+}
+
 .tlMenu__separator {
 	border: none;
 	border-top: 1px solid var(--border-subtle);
 	margin: var(--spacing-02) var(--spacing-04);
+}
+
+/* A caption above a group of entries: set in the secondary text colour and a smaller size so it
+   reads as a heading of the entries rather than as one of them. */
+.tlMenu__header {
+	padding: var(--spacing-02) var(--spacing-04) var(--spacing-01);
+	font-size: var(--label-01-font-size);
+	font-weight: 600;
+	color: var(--text-secondary);
+	white-space: nowrap;
+	cursor: default;
+	user-select: none;
 }
 
 .tlMenu__icon {
@@ -2543,6 +2647,52 @@ button.tlMenu__item--disabled:hover {
 	white-space: nowrap;
 }
 
+/* --- TLMenuRegion ---------------------------------------------------------- */
+
+/* A right-click region is pure pass-through: it adds no box of its own, so the content it wraps
+   lays out exactly as it would without the region. */
+.tlMenuRegion {
+	display: contents;
+}
+
+/* A click region is the visible trigger of a drop-down, so it does become a box: an inline row
+   carrying the affordances of a control. */
+.tlMenuRegion--click {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	padding: var(--spacing-02) var(--spacing-03);
+	border-radius: var(--border-radius-02);
+	cursor: pointer;
+	user-select: none;
+}
+
+.tlMenuRegion--click:hover {
+	background: var(--layer-hover);
+}
+
+.tlMenuRegion--click:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+/* --- User menu ------------------------------------------------------------- */
+
+/* The account name beside the avatar. It yields before the work area does: at narrow widths the
+   avatar alone identifies the session. */
+.tlUserMenu__name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	max-width: 12rem;
+}
+
+@media (max-width: 640px) {
+	.tlUserMenu__name {
+		display: none;
+	}
+}
+
 /* --- TLTableView ----------------------------------------------------------- */
 
 .tlTableView {
@@ -2556,11 +2706,166 @@ button.tlMenu__item--disabled:hover {
 	overflow: hidden;
 }
 
-/* The header row with the column selection button over its right edge, above the body's vertical
-   scrollbar. The button must not take width from the header: a header narrower than the body keeps
-   its last 2rem permanently out of view, so the last column's heading stays cut off however far the
-   user scrolls. Overlaying instead keeps every heading complete; only while the table is scrolled
-   fully right does the button cover the tail of the last column - which is why it is opaque. */
+/* The filter bar above the column headings: the criteria the table offers under a name as chips on
+   the left, the search over the displayed columns and saving the current criteria on the right. It
+   sits outside both scrollers, so it takes no part in the header/body column alignment; its own
+   height is fixed by its content, so the headings do not move when a chip is added or removed. */
+.tlTableView__filterBar {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--spacing-03);
+	padding: var(--spacing-03);
+	background: var(--layer-01);
+	border-bottom: 1px solid var(--border-subtle);
+	box-sizing: border-box;
+}
+
+.tlTableView__filterChips {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--spacing-02);
+	min-width: 0;
+}
+
+.tlTableView__chip {
+	display: inline-flex;
+	align-items: center;
+	max-width: 100%;
+	height: 1.75rem;
+	padding-right: var(--spacing-02);
+	border: 1px solid var(--border-subtle);
+	border-radius: 999px;
+	background: var(--layer-02);
+	color: var(--text-primary);
+	font-size: var(--body-compact-01-font-size);
+	box-sizing: border-box;
+}
+
+.tlTableView__chip:hover {
+	background: var(--layer-hover);
+}
+
+/* The criteria the table is filtered by right now. Clicking it again withdraws them. */
+.tlTableView__chip--active,
+.tlTableView__chip--active:hover {
+	border-color: var(--interactive);
+	background: var(--interactive);
+	color: var(--text-on-color);
+}
+
+.tlTableView__chipLabel {
+	height: 100%;
+	padding: 0 var(--spacing-03);
+	border: none;
+	background: none;
+	color: inherit;
+	font: inherit;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	cursor: pointer;
+}
+
+.tlTableView__chipRemove {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0 2px;
+	border: none;
+	background: none;
+	color: inherit;
+	font-size: 0.875rem;
+	line-height: 1;
+	opacity: 0.7;
+	cursor: pointer;
+}
+
+.tlTableView__chipRemove:hover {
+	opacity: 1;
+}
+
+/* Search and saving keep to the right end of the bar, whatever number of chips precedes them. */
+.tlTableView__search {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	flex: 0 1 16rem;
+	min-width: 8rem;
+	margin-left: auto;
+	padding: 0 var(--spacing-03);
+	border: 1px solid var(--border-strong);
+	background: var(--field);
+	color: var(--text-secondary);
+	box-sizing: border-box;
+}
+
+.tlTableView__searchInput,
+.tlTableView__saveInput {
+	flex: 1 1 auto;
+	min-width: 0;
+	height: 2rem;
+	border: none;
+	background: transparent;
+	color: var(--text-primary);
+	font-family: inherit;
+	font-size: var(--body-compact-01-font-size);
+}
+
+.tlTableView__searchInput:focus,
+.tlTableView__saveInput:focus {
+	outline: none;
+}
+
+/* Naming a filter to save happens in place of the save button, so the bar keeps its height. */
+.tlTableView__saveForm {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	flex-shrink: 0;
+}
+
+.tlTableView__saveInput {
+	width: 10rem;
+	padding: 0 var(--spacing-03);
+	border: 1px solid var(--border-strong);
+	background: var(--field);
+	box-sizing: border-box;
+}
+
+.tlTableView__barButton {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 2rem;
+	height: 2rem;
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: var(--text-secondary);
+	font-size: var(--body-compact-01-font-size);
+	cursor: pointer;
+}
+
+.tlTableView__barButton:hover:not(:disabled) {
+	background: var(--layer-hover);
+	color: var(--text-primary);
+}
+
+.tlTableView__barButton:disabled {
+	color: var(--text-disabled);
+	cursor: default;
+}
+
+/* The header row, with the column selection button over its right edge above the body's vertical
+   scrollbar wherever no pinned column offers it a heading of its own. The button must not take
+   width from the header: a header narrower than the body keeps its last 2rem permanently out of
+   view, so the last column's heading stays cut off however far the user scrolls. Overlaying instead
+   keeps every heading complete; only while the table is scrolled fully right does the button cover
+   the tail of the last column - which is why it is opaque. */
 .tlTableView__headerArea {
 	position: relative;
 	display: flex;
@@ -2572,7 +2877,7 @@ button.tlMenu__item--disabled:hover {
 	flex: 1 1 auto;
 	min-width: 0;
 	overflow: hidden;
-	border-bottom: 2px solid var(--border-subtle, #e0e0e0);
+	border-bottom: 2px solid var(--border-subtle);
 }
 
 .tlTableView__columnsButton {
@@ -2588,16 +2893,26 @@ button.tlMenu__item--disabled:hover {
 	padding: 0;
 	border: none;
 	/* Opaque: while the table is scrolled, a column label may pass underneath. */
-	background: var(--layer-01, #fff);
-	color: var(--text-secondary, #525252);
-	font-size: var(--body-compact-01-font-size, 0.875rem);
+	background: var(--layer-01);
+	color: var(--text-secondary);
+	font-size: var(--body-compact-01-font-size);
 	cursor: pointer;
 	box-sizing: border-box;
 }
 
 .tlTableView__columnsButton:hover {
-	background: var(--layer-hover, #e8e8e8);
-	color: var(--text-primary, #161616);
+	background: var(--layer-hover);
+	color: var(--text-primary);
+}
+
+/* In the heading of the rightmost pinned column the button is part of that cell: it takes the
+   cell's own background (which follows hover and selection) and centers in the column's width,
+   leaving the columns the full table width. */
+.tlTableView__columnsButton--inCell {
+	position: static;
+	margin: 0 auto;
+	height: 2rem;
+	background: transparent;
 }
 
 .tlTableView__headerRow {
@@ -2607,16 +2922,16 @@ button.tlMenu__item--disabled:hover {
 .tlTableView__headerCell {
 	display: flex;
 	align-items: center;
-	padding: 0 var(--spacing-03, 0.5rem);
+	padding: 0 var(--spacing-03);
 	height: 2.5rem;
-	font-size: var(--body-compact-01-font-size, 0.875rem);
+	font-size: var(--body-compact-01-font-size);
 	font-weight: 600;
-	color: var(--text-primary, #161616);
+	color: var(--text-primary);
 	user-select: none;
 	overflow: hidden;
 	min-width: 0;
 	box-sizing: border-box;
-	border-right: 1px solid var(--border-subtle, #e0e0e0);
+	border-right: 1px solid var(--border-subtle);
 }
 
 .tlTableView__headerCell:last-child {
@@ -2628,19 +2943,27 @@ button.tlMenu__item--disabled:hover {
 }
 
 .tlTableView__headerCell--sortable:hover {
-	background: var(--layer-hover, #e8e8e8);
+	background: var(--layer-hover);
 }
 
+/* The only part of a heading that gives way when the column is narrower than its content: the
+   label ends in an ellipsis, so the funnel, the sort mark and the resize handle stay reachable. */
 .tlTableView__headerLabel {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+	min-width: 0;
+}
+
+/* Opens the column's filter. Keeps its room next to a label that is running out of it. */
+.tlTableView__filterButton {
+	flex-shrink: 0;
 }
 
 .tlTableView__sortIndicator {
-	margin-left: var(--spacing-02, 0.25rem);
+	margin-left: var(--spacing-02);
 	font-size: 0.625rem;
-	color: var(--text-secondary, #525252);
+	color: var(--text-secondary);
 	flex-shrink: 0;
 }
 
@@ -2652,9 +2975,9 @@ button.tlMenu__item--disabled:hover {
 	height: 0.875rem;
 	margin-left: 2px;
 	padding: 0 2px;
-	border-radius: 0.4375rem;
-	background: var(--text-secondary, #525252);
-	color: var(--text-on-color, #fff);
+	border-radius: 999px;
+	background: var(--text-secondary);
+	color: var(--text-on-color);
 	font-size: 0.5625rem;
 	font-weight: 600;
 	line-height: 1;
@@ -2672,13 +2995,13 @@ button.tlMenu__item--disabled:hover {
    instead of sticking to the left edge. Each cell clips its own content anyway. */
 .tlTableView__row {
 	display: flex;
-	border-bottom: 1px solid var(--border-subtle, #e0e0e0);
+	border-bottom: 1px solid var(--border-subtle);
 	box-sizing: border-box;
 	cursor: pointer;
 }
 
 .tlTableView__row:hover {
-	background: var(--layer-hover, #e8e8e8);
+	background: var(--layer-hover);
 }
 
 .tlTableView__row--selected {
@@ -2689,14 +3012,50 @@ button.tlMenu__item--disabled:hover {
 	background: var(--layer-selected-hover);
 }
 
+/* The row the keyboard cursor is on. The ring is drawn on the cells rather than on the row itself:
+   the frozen and the pinned cells are sticky and opaque, so they would paint over a ring belonging
+   to the row, leaving it visible only in the part that scrolls. Every cell carries the top and the
+   bottom edge, the first and the last cell of the row close it at the sides. Inset shadows keep the
+   cells' size, so no row moves as the cursor passes. */
+.tlTableView__row--cursor .tlTableView__cell {
+	box-shadow: inset 0 2px 0 var(--focus), inset 0 -2px 0 var(--focus);
+}
+
+.tlTableView__row--cursor .tlTableView__cell:first-child {
+	box-shadow: inset 0 2px 0 var(--focus), inset 0 -2px 0 var(--focus), inset 2px 0 0 var(--focus);
+}
+
+.tlTableView__row--cursor .tlTableView__cell:last-child {
+	box-shadow: inset 0 2px 0 var(--focus), inset 0 -2px 0 var(--focus), inset -2px 0 0 var(--focus);
+}
+
+/* The cells marking the edge of the frozen and of the pinned area keep the shadow that marks it. */
+.tlTableView__row--cursor .tlTableView__cell--frozenLast {
+	box-shadow: inset 0 2px 0 var(--focus), inset 0 -2px 0 var(--focus), var(--shadow-raised);
+}
+
+.tlTableView__row--cursor .tlTableView__cell--frozenLast:first-child {
+	box-shadow: inset 0 2px 0 var(--focus), inset 0 -2px 0 var(--focus), inset 2px 0 0 var(--focus),
+		var(--shadow-raised);
+}
+
+.tlTableView__row--cursor .tlTableView__cell--pinnedEndFirst {
+	box-shadow: inset 0 2px 0 var(--focus), inset 0 -2px 0 var(--focus), var(--shadow-raised);
+}
+
+.tlTableView__row--cursor .tlTableView__cell--pinnedEndFirst:last-child {
+	box-shadow: inset 0 2px 0 var(--focus), inset 0 -2px 0 var(--focus), inset -2px 0 0 var(--focus),
+		var(--shadow-raised);
+}
+
 .tlTableView__cell {
 	display: flex;
 	align-items: center;
-	padding: 0 var(--spacing-03, 0.5rem);
+	padding: 0 var(--spacing-03);
 	overflow: hidden;
 	min-width: 0;
 	box-sizing: border-box;
-	border-right: 1px solid var(--border-subtle, #e0e0e0);
+	border-right: 1px solid var(--border-subtle);
 }
 
 /* Ensure control wrapper spans (generated by React bridge) fill the cell */
@@ -2727,10 +3086,20 @@ button.tlMenu__item--disabled:hover {
 	border: none;
 	border-radius: 0;
 	background: transparent;
-	padding: 0 var(--spacing-03, 0.5rem);
+	padding: 0 var(--spacing-03);
 	min-height: 0;
 	height: 100%;
 	outline: none;
+}
+
+/* The row of a cell input spans the cell, so the input inside it still fills the cell; the link
+   beside it keeps the horizontal padding the input gave up. */
+.tlTableView__cell .tlReactTextInput__row {
+	height: 100%;
+}
+
+.tlTableView__cell .tlReactTextInput__open {
+	padding-right: var(--spacing-03);
 }
 
 /* Excel-style focus: highlight the entire cell only when an input is focused */
@@ -2742,14 +3111,14 @@ button.tlMenu__item--disabled:hover {
 
 /* Error state: red cell border */
 .tlTableView__cell:has(.tlReactTextInput--error, .tlReactNumberInput--error, .tlReactDatePicker--error, .tlReactSelect--error) {
-	outline: 2px solid var(--support-error, #da1e28);
+	outline: 2px solid var(--support-error);
 	outline-offset: -1px;
 	z-index: 1;
 }
 
 /* Warning state: yellow cell border (only when no error) */
 .tlTableView__cell:has(.tlReactTextInput--warning, .tlReactNumberInput--warning, .tlReactDatePicker--warning, .tlReactSelect--warning) {
-	outline: 2px solid var(--support-warning, #f1c21b);
+	outline: 2px solid var(--support-warning);
 	outline-offset: -1px;
 	z-index: 1;
 }
@@ -2759,13 +3128,13 @@ button.tlMenu__item--disabled:hover {
 }
 
 .tlText {
-	font-size: var(--body-compact-01-font-size, 0.875rem);
-	color: var(--text-primary, #161616);
+	font-size: var(--body-compact-01-font-size);
+	color: var(--text-primary);
 }
 
 .tlText--placeholder {
 	font-style: italic;
-	color: var(--text-helper, #6f6f6f);
+	color: var(--text-helper);
 }
 
 /* Single-line truncation with an ellipsis (opt-in via the text element's overflow="ellipsis"). */
@@ -2780,6 +3149,75 @@ button.tlMenu__item--disabled:hover {
 	font-weight: 600;
 }
 
+/* A value the model gives a color, drawn as a pill in that color. The color arrives from the
+   server as the custom property --tlPill-color - a color value, or a var(--token) reference to a
+   design token - so background, border and text are all composed from the one color and follow a
+   theme switch. There is no class per color; without a color from the server the pill draws in
+   the text color around it. */
+.tlPill {
+	--tlPill-color: currentColor;
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-01);
+	max-width: 100%;
+	overflow: hidden;
+	padding: 0 var(--spacing-02);
+	border: 1px solid var(--tlPill-color);
+	border-radius: 999px;
+	background-color: transparent;
+	color: var(--tlPill-color);
+	font-size: var(--label-01-font-size);
+	line-height: 1.5;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+/* The tint that makes the pill legible: the color mixed into the surface behind it for the
+   background and the border, and mixed into the text color for the label - which darkens it on a
+   light theme and lightens it on a dark one, from the same declaration. */
+@supports (color: color-mix(in srgb, red 10%, white)) {
+	.tlPill {
+		border-color: color-mix(in srgb, var(--tlPill-color) 40%, var(--color-surface));
+		background-color: color-mix(in srgb, var(--tlPill-color) 16%, var(--color-surface));
+		color: color-mix(in srgb, var(--tlPill-color) 72%, var(--text-primary));
+	}
+}
+
+/* A fraction displayed as a bar with an optional label beside it. The track carries the theme's
+   layer color, the filled part the interactive color, so the bar reads on a light and a dark
+   theme from the same declaration. */
+.tlProgress {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	min-width: 0;
+}
+
+.tlProgress__track {
+	flex: 1 1 auto;
+	min-width: 2rem;
+	height: 0.5rem;
+	overflow: hidden;
+	border-radius: 999px;
+	background-color: var(--layer-active);
+}
+
+.tlProgress__fill {
+	display: block;
+	height: 100%;
+	border-radius: 999px;
+	background-color: var(--interactive);
+	transition: width 0.2s ease-out;
+}
+
+.tlProgress__label {
+	flex: 0 0 auto;
+	color: var(--text-secondary);
+	font-size: var(--label-01-font-size);
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
 .tlTableView__checkboxCell {
 	justify-content: center;
 	flex-shrink: 0;
@@ -2789,7 +3227,7 @@ button.tlMenu__item--disabled:hover {
 	cursor: pointer;
 	width: 1rem;
 	height: 1rem;
-	accent-color: var(--interactive, #0f62fe);
+	accent-color: var(--interactive);
 }
 
 .tlTableView__resizeHandle {
@@ -2802,9 +3240,15 @@ button.tlMenu__item--disabled:hover {
 	z-index: 1;
 }
 
+/* The heading in front of the first pinned one keeps its handle inside the cell: the pinned
+   heading sticks above it (z-index 2) and would swallow the 2px reaching across the border. */
+.tlTableView__headerCell:has(+ .tlTableView__headerCell--pinnedEndFirst) .tlTableView__resizeHandle {
+	right: 0;
+}
+
 .tlTableView__resizeHandle:hover,
 .tlTableView__resizeHandle:active {
-	background: var(--interactive, #0f62fe);
+	background: var(--interactive);
 	opacity: 0.3;
 }
 
@@ -2817,22 +3261,53 @@ button.tlMenu__item--disabled:hover {
 }
 
 .tlTableView__headerCell--dragOver-left {
-	border-left: 2px solid var(--interactive, #0f62fe);
+	border-left: 2px solid var(--interactive);
 }
 
 .tlTableView__headerCell--dragOver-right {
-	border-right: 2px solid var(--interactive, #0f62fe);
+	border-right: 2px solid var(--interactive);
+}
+
+/* -- Row drag and drop -- */
+
+.tlTableView__row[draggable="true"] {
+	cursor: grab;
+}
+
+.tlTableView__row[draggable="true"]:active {
+	cursor: grabbing;
+}
+
+/* The table accepts the running drag, which hovers no single row of it. */
+.tlTableView--dragover {
+	outline: 2px dashed var(--focus);
+	outline-offset: -2px;
+	border-radius: var(--corner-radius);
+}
+
+.tlTableView__row--dragOver-onto {
+	background: var(--layer-selected-hover);
+	outline: 2px solid var(--interactive);
+	outline-offset: -2px;
+}
+
+.tlTableView__row--dragOver-before {
+	box-shadow: inset 0 2px 0 0 var(--interactive);
+}
+
+.tlTableView__row--dragOver-after {
+	box-shadow: inset 0 -2px 0 0 var(--interactive);
 }
 
 /* -- Frozen columns -- */
 
 .tlTableView__headerCell--frozen,
 .tlTableView__cell--frozen {
-	background: var(--layer-01, #fff);
+	background: var(--layer-01);
 }
 
 .tlTableView__row:hover .tlTableView__cell--frozen {
-	background: var(--layer-hover, #e8e8e8);
+	background: var(--layer-hover);
 }
 
 .tlTableView__row--selected .tlTableView__cell--frozen {
@@ -2845,8 +3320,65 @@ button.tlMenu__item--disabled:hover {
 
 .tlTableView__headerCell--frozenLast,
 .tlTableView__cell--frozenLast {
-	box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
+	box-shadow: var(--shadow-raised);
 	clip-path: inset(0 -4px 0 0);
+}
+
+/* -- Columns pinned to the end of the table --
+   They stick to the right edge while the columns in front of them scroll past underneath, so their
+   background is opaque, exactly like a frozen column's. */
+
+.tlTableView__headerCell--pinnedEnd,
+.tlTableView__cell--pinnedEnd {
+	background: var(--layer-01);
+}
+
+.tlTableView__row:hover .tlTableView__cell--pinnedEnd {
+	background: var(--layer-hover);
+}
+
+.tlTableView__row--selected .tlTableView__cell--pinnedEnd {
+	background: var(--layer-selected);
+}
+
+.tlTableView__row--selected:hover .tlTableView__cell--pinnedEnd {
+	background: var(--layer-selected-hover);
+}
+
+/* The leftmost of the pinned cells carries the shadow marking the edge the columns pass under. */
+.tlTableView__headerCell--pinnedEndFirst,
+.tlTableView__cell--pinnedEndFirst {
+	box-shadow: var(--shadow-raised);
+	clip-path: inset(0 0 0 -4px);
+}
+
+/* -- A column offering a command on every row --
+   Its cells hold a button instead of text, so they drop the padding a text cell needs and center
+   the button in the column's width. The button goes without its frame - a column of framed buttons
+   would read as a second table beside the rows - and takes it up under the pointer and the keyboard
+   focus, where it marks what a click hits. */
+
+.tlTableView__cell.tlRowCommandCell,
+.tlTableView__headerCell.tlRowCommandCell {
+	padding: 0;
+	justify-content: center;
+}
+
+.tlTableView__cell.tlRowCommandCell .tlReactButton {
+	box-shadow: none;
+	background: transparent;
+	color: var(--icon-primary);
+}
+
+.tlTableView__cell.tlRowCommandCell button.tlReactButton:not(:disabled):hover {
+	background: var(--layer-hover);
+	box-shadow: inset 0 0 0 2px var(--button-secondary);
+}
+
+.tlTableView__cell.tlRowCommandCell button.tlReactButton:disabled {
+	background: transparent;
+	box-shadow: none;
+	color: var(--icon-disabled);
 }
 
 /* Grip to drag the boundary of the frozen area to another column. Sits above the sticky header cells
@@ -2870,7 +3402,7 @@ button.tlMenu__item--disabled:hover {
 	bottom: 0;
 	left: 3px;
 	width: 1px;
-	background: var(--interactive, #0f62fe);
+	background: var(--interactive);
 	opacity: 0;
 }
 
@@ -2887,7 +3419,7 @@ button.tlMenu__item--disabled:hover {
 	z-index: 4;
 	width: 2px;
 	margin-left: -1px;
-	background: var(--interactive, #0f62fe);
+	background: var(--interactive);
 	pointer-events: none;
 }
 
@@ -2911,13 +3443,13 @@ button.tlMenu__item--disabled:hover {
 	background: none;
 	padding: 0;
 	cursor: pointer;
-	color: var(--text-secondary, #525252);
+	color: var(--text-secondary);
 	font-size: 12px;
-	border-radius: 3px;
+	border-radius: var(--corner-radius);
 }
 
 .tlTableView__treeToggle:hover {
-	background-color: var(--layer-hover, rgba(0, 0, 0, 0.08));
+	background-color: var(--layer-hover);
 }
 
 .tlTableView__treeToggleSpacer {
@@ -2926,23 +3458,64 @@ button.tlMenu__item--disabled:hover {
 	flex-shrink: 0;
 }
 
+/* A group header row: the group value, its size, and the columns' aggregates. */
+.tlTableView__row--group {
+	background-color: var(--layer);
+	font-weight: 600;
+}
+
+.tlTableView__groupCount {
+	margin-left: var(--spacing-03);
+	font-weight: 400;
+	color: var(--text-secondary);
+}
+
+/* Marks the column header the rows are grouped by. */
+.tlTableView__groupMark {
+	margin-left: var(--spacing-02);
+	color: var(--text-secondary);
+	flex-shrink: 0;
+}
+
 /* --- TLColumnSelect ---------------------------------------------------- */
 
 .tlColumnSelect {
 	display: flex;
 	flex-direction: column;
-	padding: var(--spacing-03, 0.5rem) 0;
+	padding: var(--spacing-03) 0;
+}
+
+.tlColumnSelect__groupBy {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	flex-shrink: 0;
+	border: none;
+	border-radius: var(--corner-radius);
+	background: none;
+	cursor: pointer;
+	color: var(--text-secondary);
+}
+
+.tlColumnSelect__groupBy:hover {
+	background-color: var(--layer-hover);
+}
+
+.tlColumnSelect__groupBy--active {
+	color: var(--link-primary);
 }
 
 .tlColumnSelect__search {
 	display: flex;
 	align-items: center;
-	gap: var(--spacing-03, 0.5rem);
-	margin: 0 var(--spacing-05, 1rem) var(--spacing-03, 0.5rem);
-	padding: 0 var(--spacing-03, 0.5rem);
-	border: 1px solid var(--border-strong, #8d8d8d);
-	background: var(--field-01, #f4f4f4);
-	color: var(--text-secondary, #525252);
+	gap: var(--spacing-03);
+	margin: 0 var(--spacing-05) var(--spacing-03);
+	padding: 0 var(--spacing-03);
+	border: 1px solid var(--border-strong);
+	background: var(--field);
+	color: var(--text-secondary);
 }
 
 .tlColumnSelect__searchInput {
@@ -2951,9 +3524,9 @@ button.tlMenu__item--disabled:hover {
 	height: 2rem;
 	border: none;
 	background: transparent;
-	color: var(--text-primary, #161616);
+	color: var(--text-primary);
 	font-family: inherit;
-	font-size: var(--body-compact-01-font-size, 0.875rem);
+	font-size: var(--body-compact-01-font-size);
 }
 
 .tlColumnSelect__searchInput:focus {
@@ -2975,9 +3548,9 @@ button.tlMenu__item--disabled:hover {
 .tlColumnSelect__row {
 	display: flex;
 	align-items: center;
-	gap: var(--spacing-03, 0.5rem);
-	padding: var(--spacing-02, 0.25rem) var(--spacing-05, 1rem);
-	font-size: var(--body-compact-01-font-size, 0.875rem);
+	gap: var(--spacing-03);
+	padding: var(--spacing-02) var(--spacing-05);
+	font-size: var(--body-compact-01-font-size);
 	/* The drop indicator is drawn as a border, so reserve its space on both edges to keep the
 	   rows from jumping while dragging across them. */
 	border-top: 2px solid transparent;
@@ -2985,27 +3558,27 @@ button.tlMenu__item--disabled:hover {
 }
 
 .tlColumnSelect__row:hover {
-	background: var(--layer-hover, #e8e8e8);
+	background: var(--layer-hover);
 }
 
 .tlColumnSelect__row--dragOver-top {
-	border-top-color: var(--color-primary, #1a73e8);
+	border-top-color: var(--interactive);
 }
 
 .tlColumnSelect__row--dragOver-bottom {
-	border-bottom-color: var(--color-primary, #1a73e8);
+	border-bottom-color: var(--interactive);
 }
 
 .tlColumnSelect__handle {
 	flex-shrink: 0;
-	color: var(--text-secondary, #525252);
+	color: var(--text-secondary);
 	cursor: grab;
 }
 
 .tlColumnSelect__label {
 	display: flex;
 	align-items: center;
-	gap: var(--spacing-03, 0.5rem);
+	gap: var(--spacing-03);
 	flex: 1 1 auto;
 	min-width: 0;
 	cursor: pointer;
@@ -3021,7 +3594,7 @@ button.tlMenu__item--disabled:hover {
 
 .tlFormLayout {
 	display: grid;
-	gap: var(--spacing-03, 0.5rem);
+	gap: var(--spacing-03);
 	font-family: var(--font-family);
 	width: 100%;
 	box-sizing: border-box;
@@ -3045,7 +3618,7 @@ button.tlMenu__item--disabled:hover {
 }
 
 .tlFormLayout__noModel {
-	color: var(--text-secondary, #666);
+	color: var(--text-secondary);
 	font-style: italic;
 	margin: 0;
 }
@@ -3067,15 +3640,15 @@ button.tlMenu__item--disabled:hover {
 }
 
 .tlFormGroup--border-subtle {
-	border: 1px solid var(--border-subtle, #e0e0e0);
-	border-radius: var(--border-radius-02, 4px);
-	padding: var(--spacing-03, 0.5rem);
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--border-radius-02);
+	padding: var(--spacing-03);
 }
 
 .tlFormGroup--border-outlined {
-	border: 1px solid var(--border-strong, #8d8d8d);
-	border-radius: var(--border-radius-02, 4px);
-	padding: var(--spacing-03, 0.5rem);
+	border: 1px solid var(--border-strong);
+	border-radius: var(--border-radius-02);
+	padding: var(--spacing-03);
 }
 
 .tlFormGroup--border-none {
@@ -3087,10 +3660,10 @@ button.tlMenu__item--disabled:hover {
 	grid-column: 1 / -1;
 	display: flex;
 	align-items: center;
-	gap: var(--spacing-02, 0.25rem);
-	padding-bottom: var(--spacing-03, 0.5rem);
-	border-bottom: 1px solid var(--border-subtle, #e0e0e0);
-	margin-bottom: var(--spacing-03, 0.5rem);
+	gap: var(--spacing-02);
+	padding-bottom: var(--spacing-03);
+	border-bottom: 1px solid var(--border-subtle);
+	margin-bottom: var(--spacing-03);
 }
 
 .tlFormGroup--border-none > .tlFormGroup__header {
@@ -3105,9 +3678,9 @@ button.tlMenu__item--disabled:hover {
 
 .tlFormGroup__title {
 	font-weight: 600;
-	font-size: var(--heading-compact-02-font-size, 0.875rem);
-	line-height: var(--heading-compact-02-line-height, 1.125rem);
-	color: var(--text-primary, #161616);
+	font-size: var(--heading-compact-02-font-size);
+	line-height: var(--heading-compact-02-line-height);
+	color: var(--text-primary);
 	flex: 1;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -3124,13 +3697,13 @@ button.tlMenu__item--disabled:hover {
 	border: none;
 	background: none;
 	cursor: pointer;
-	color: var(--text-secondary, #525252);
-	border-radius: var(--border-radius-02, 4px);
+	color: var(--text-secondary);
+	border-radius: var(--border-radius-02);
 	flex-shrink: 0;
 }
 
 .tlFormGroup__collapseToggle:hover {
-	background: var(--layer-hover, rgba(0, 0, 0, 0.06));
+	background: var(--layer-hover);
 }
 
 .tlFormGroup__chevron {
@@ -3145,7 +3718,7 @@ button.tlMenu__item--disabled:hover {
 .tlFormGroup__actions {
 	display: flex;
 	align-items: center;
-	gap: var(--spacing-01, 0.125rem);
+	gap: var(--spacing-01);
 	flex-shrink: 0;
 	margin-left: auto;
 }
@@ -3154,7 +3727,7 @@ button.tlMenu__item--disabled:hover {
 	grid-column: 1 / -1;
 	display: grid;
 	grid-template-columns: subgrid;
-	gap: var(--spacing-03, 0.5rem);
+	gap: var(--spacing-03);
 }
 
 /* When fullLine, body defines its own responsive grid instead of subgrid */
@@ -3180,10 +3753,17 @@ button.tlMenu__item--disabled:hover {
 	user-select: none;
 }
 
+/* An avatar without a name - an anonymous session, or an empty channel. It keeps its circle and
+   fills it faintly, so that an avatar used as a menu trigger stays visible and clickable. */
+.tlAvatar--empty {
+	background: var(--layer-accent);
+	border: 1px solid var(--border-subtle);
+}
+
 /* --- TLRelativeTime ---------------------------------------------------- */
 
 .tlRelativeTime {
-	color: var(--text-secondary, #6b7280);
+	color: var(--text-secondary);
 	font-family: var(--font-family);
 	font-size: 0.8125rem;
 	white-space: nowrap;
@@ -3195,24 +3775,24 @@ button.tlMenu__item--disabled:hover {
 .tlFileChips {
 	display: flex;
 	flex-wrap: wrap;
-	gap: var(--spacing-03, 0.5rem);
+	gap: var(--spacing-03);
 	align-items: center;
 	min-height: 1.75rem;
-	border-radius: 6px;
+	border-radius: var(--corner-radius);
 	font-family: var(--font-family);
 }
 
 .tlFileChips--dragover {
-	outline: 2px dashed var(--interactive, #2563eb);
+	outline: 2px dashed var(--interactive);
 	outline-offset: 2px;
 }
 
 .tlFileChip {
 	display: inline-flex;
 	align-items: center;
-	border: 1px solid var(--border-subtle, #d1d5db);
+	border: 1px solid var(--border-subtle);
 	border-radius: 999px;
-	background: var(--layer-01, #fff);
+	background: var(--layer-01);
 	overflow: hidden;
 }
 
@@ -3238,17 +3818,17 @@ button.tlMenu__item--disabled:hover {
 .tlFileChip__main:focus-visible,
 .tlFileChip__remove:focus-visible,
 .tlFileChips__add:focus-visible {
-	outline: 2px solid var(--focus, #0f62fe);
+	outline: 2px solid var(--focus);
 	outline-offset: -2px;
 }
 
 .tlFileChip__main:not(:disabled):hover {
-	background: var(--layer-hover, rgba(0, 0, 0, 0.05));
+	background: var(--layer-hover);
 }
 
 .tlFileChip__icon {
 	flex: none;
-	color: var(--text-secondary, #6b7280);
+	color: var(--text-secondary);
 }
 
 .tlFileChip__name {
@@ -3259,7 +3839,7 @@ button.tlMenu__item--disabled:hover {
 }
 
 .tlFileChip__size {
-	color: var(--text-secondary, #6b7280);
+	color: var(--text-secondary);
 	font-size: 0.75rem;
 }
 
@@ -3269,15 +3849,15 @@ button.tlMenu__item--disabled:hover {
 	align-self: stretch;
 	padding: 0 0.5rem;
 	border: none;
-	border-left: 1px solid var(--border-subtle, #d1d5db);
+	border-left: 1px solid var(--border-subtle);
 	background: none;
-	color: var(--text-secondary, #6b7280);
+	color: var(--text-secondary);
 	cursor: pointer;
 }
 
 .tlFileChip__remove:hover {
-	background: var(--layer-hover, rgba(0, 0, 0, 0.05));
-	color: var(--support-error, #dc2626);
+	background: var(--layer-hover);
+	color: var(--support-error);
 }
 
 .tlFileChips__add {
@@ -3285,18 +3865,18 @@ button.tlMenu__item--disabled:hover {
 	align-items: center;
 	gap: 0.375rem;
 	padding: 0.25rem 0.625rem;
-	border: 1px dashed var(--border-subtle, #d1d5db);
+	border: 1px dashed var(--border-subtle);
 	border-radius: 999px;
 	background: none;
 	font: inherit;
 	font-size: 0.8125rem;
-	color: var(--text-secondary, #6b7280);
+	color: var(--text-secondary);
 	cursor: pointer;
 }
 
 .tlFileChips__add:not(:disabled):hover {
-	border-color: var(--interactive, #2563eb);
-	color: var(--interactive, #2563eb);
+	border-color: var(--interactive);
+	color: var(--interactive);
 }
 
 .tlFileChips__add--uploading {
@@ -3307,7 +3887,7 @@ button.tlMenu__item--disabled:hover {
 
 .tlFormField {
 	display: grid;
-	gap: var(--spacing-02, 0.25rem);
+	gap: var(--spacing-02);
 	align-self: start;
 	position: relative;
 	font-family: var(--font-family);
@@ -3322,7 +3902,7 @@ button.tlMenu__item--disabled:hover {
 .tlFormField--after {
 	grid-template-columns: auto 1fr;
 	align-items: center;
-	gap: var(--spacing-03, 0.5rem);
+	gap: var(--spacing-03);
 }
 
 .tlFormField--after > .tlFormField__input {
@@ -3390,7 +3970,7 @@ button.tlMenu__item--disabled:hover {
 	width: 6px;
 	height: 6px;
 	border-radius: 50%;
-	background: var(--layer-accent, #0f62fe);
+	background: var(--layer-accent);
 	margin-left: 2px;
 	vertical-align: middle;
 }
@@ -3399,10 +3979,10 @@ button.tlMenu__item--disabled:hover {
 .tlFormField__label {
 	display: flex;
 	align-items: center;
-	gap: var(--spacing-01, 0.125rem);
-	color: var(--text-secondary, #525252);
-	font-size: var(--body-compact-01-font-size, 0.875rem);
-	line-height: var(--body-compact-01-line-height, 1.125rem);
+	gap: var(--spacing-01);
+	color: var(--text-secondary);
+	font-size: var(--body-compact-01-font-size);
+	line-height: var(--body-compact-01-line-height);
 }
 
 .tlFormField__labelText {
@@ -3412,7 +3992,7 @@ button.tlMenu__item--disabled:hover {
 }
 
 .tlFormField__required {
-	color: var(--text-error, #da1e28);
+	color: var(--text-error);
 	font-weight: 600;
 	flex-shrink: 0;
 }
@@ -3427,12 +4007,12 @@ button.tlMenu__item--disabled:hover {
 	border: none;
 	background: none;
 	cursor: pointer;
-	color: var(--text-helper, #6f6f6f);
+	color: var(--text-helper);
 	flex-shrink: 0;
 }
 
 .tlFormField__helpIcon:hover {
-	color: var(--text-primary, #161616);
+	color: var(--text-primary);
 }
 
 /* Input wrapper */
@@ -3444,10 +4024,10 @@ button.tlMenu__item--disabled:hover {
 .tlFormField__error {
 	display: flex;
 	align-items: flex-start;
-	gap: var(--spacing-01, 0.125rem);
-	color: var(--text-error, #da1e28);
-	font-size: var(--body-compact-01-font-size, 0.875rem);
-	line-height: var(--body-compact-01-line-height, 1.125rem);
+	gap: var(--spacing-01);
+	color: var(--text-error);
+	font-size: var(--body-compact-01-font-size);
+	line-height: var(--body-compact-01-line-height);
 }
 
 .tlFormField__errorIcon {
@@ -3459,16 +4039,16 @@ button.tlMenu__item--disabled:hover {
 .tlFormField__warnings {
 	display: flex;
 	flex-direction: column;
-	gap: var(--spacing-01, 0.125rem);
+	gap: var(--spacing-01);
 }
 
 .tlFormField__warning {
 	display: flex;
 	align-items: flex-start;
-	gap: var(--spacing-01, 0.125rem);
-	color: var(--support-warning, #f1c21b);
-	font-size: var(--body-compact-01-font-size, 0.875rem);
-	line-height: var(--body-compact-01-line-height, 1.125rem);
+	gap: var(--spacing-01);
+	color: var(--support-warning);
+	font-size: var(--body-compact-01-font-size);
+	line-height: var(--body-compact-01-line-height);
 }
 
 .tlFormField__warningIcon {
@@ -3482,9 +4062,9 @@ button.tlMenu__item--disabled:hover {
 
 /* Help text */
 .tlFormField__helpText {
-	color: var(--text-helper, #6f6f6f);
-	font-size: var(--body-compact-01-font-size, 0.875rem);
-	line-height: var(--body-compact-01-line-height, 1.125rem);
+	color: var(--text-helper);
+	font-size: var(--body-compact-01-font-size);
+	line-height: var(--body-compact-01-line-height);
 }
 
 /* -- TLTreeView ----------------------------------------------------------- */
@@ -3617,9 +4197,9 @@ button.tlMenu__item--disabled:hover {
 .tlReactSelect {
 	display: block;
 	width: 100%;
-	border: 1px solid var(--border-subtle, #e0e0e0);
-	border-radius: var(--border-radius-02, 4px);
-	background-color: var(--field, #fff);
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--corner-radius);
+	background-color: var(--field);
 	padding: var(--spacing-02) var(--spacing-03);
 	min-height: 2rem;
 	box-sizing: border-box;
@@ -3644,7 +4224,7 @@ button.tlMenu__item--disabled:hover {
 .tlReactSelect:disabled {
 	opacity: 0.6;
 	cursor: default;
-	background-color: var(--field-disabled, #f0f0f0);
+	background-color: var(--field-disabled);
 }
 
 .tlReactTextInput::placeholder,
@@ -3669,6 +4249,49 @@ button.tlMenu__item--disabled:hover {
 	font-size: var(--body-compact-01-font-size);
 }
 
+/* A single-line input, with room beside it for the link that opens what it holds (url, e-mail,
+   phone). The row is there whether or not the link is, so that the input keeps its place - and
+   with it the focus - when a value starts or stops pointing somewhere. Without the link it adds
+   nothing: the input stretches over the full row, which takes the input's own height. */
+.tlReactTextInput__row {
+	display: flex;
+	align-items: stretch;
+	width: 100%;
+	min-width: 0;
+}
+
+.tlReactTextInput__row > .tlReactTextInput {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.tlReactTextInput__open {
+	display: flex;
+	flex: 0 0 auto;
+	align-self: center;
+	align-items: center;
+	margin-left: var(--spacing-02);
+	color: var(--link-primary);
+	text-decoration: none;
+	line-height: 1;
+}
+
+.tlReactTextInput__open:hover,
+.tlReactTextInput__open:focus {
+	color: var(--link-primary-hover);
+}
+
+/* The value itself is the link while the field is only displayed */
+.tlReactTextInput--link {
+	color: var(--link-primary);
+	text-decoration: underline;
+}
+
+.tlReactTextInput--link:hover,
+.tlReactTextInput--link:focus {
+	color: var(--link-primary-hover);
+}
+
 /* Native select arrow spacing */
 .tlReactSelect {
 	appearance: auto;
@@ -3680,7 +4303,7 @@ button.tlMenu__item--disabled:hover {
 .tlReactCheckbox {
 	width: 1rem;
 	height: 1rem;
-	accent-color: var(--interactive, #0f62fe);
+	accent-color: var(--interactive);
 	cursor: pointer;
 	margin: 0;
 	vertical-align: middle;
@@ -3707,9 +4330,9 @@ button.tlMenu__item--disabled:hover {
 .tlBooleanChoice__option {
 	display: inline-flex;
 	align-items: center;
-	gap: var(--spacing-02, 0.25rem);
+	gap: var(--spacing-02);
 	cursor: pointer;
-	font-size: var(--body-compact-01-font-size, 0.875rem);
+	font-size: var(--body-compact-01-font-size);
 }
 
 /* Enough distance to tell the options apart, little enough for two of them to fit a table cell. */
@@ -3721,7 +4344,7 @@ button.tlMenu__item--disabled:hover {
 	width: 1rem;
 	height: 1rem;
 	margin: 0;
-	accent-color: var(--interactive, #0f62fe);
+	accent-color: var(--interactive);
 	cursor: pointer;
 }
 
@@ -3732,7 +4355,7 @@ button.tlMenu__item--disabled:hover {
 
 .tlBooleanChoice--error .tlBooleanChoice__label,
 .tlBooleanChoice--error.tlReactSelect {
-	color: var(--support-error, #da1e28);
+	color: var(--support-error);
 }
 
 /* --- TLToolbar ------------------------------------------------------------- */
@@ -3806,7 +4429,7 @@ button.tlToolbar__menuTrigger:focus-visible {
 .tlToolbar__menuIcon {
 	display: inline-flex;
 	align-items: center;
-	font-size: var(--heading-compact-03-font-size, 1rem);
+	font-size: var(--heading-compact-03-font-size);
 	line-height: 1;
 }
 
@@ -3815,8 +4438,8 @@ button.tlToolbar__menuTrigger:focus-visible {
    otherwise its accent-blue text/outline is unreadable on the accent background.
    (Panel toolbars are now light surfaces and use the default secondary styling.) */
 .tlAppBar--primary .tlToolbar__menuTrigger {
-	color: var(--layer-accent-icon, var(--text-inverse));
-	box-shadow: inset 0px 0px 0px 2px var(--layer-accent-icon, var(--text-inverse));
+	color: var(--layer-accent-icon);
+	box-shadow: inset 0px 0px 0px 2px var(--layer-accent-icon);
 }
 
 .tlAppBar--primary button.tlToolbar__menuTrigger:not(:disabled):hover {
@@ -3824,7 +4447,7 @@ button.tlToolbar__menuTrigger:focus-visible {
 }
 
 .tlAppBar--primary button.tlToolbar__menuTrigger[aria-expanded="true"] {
-	background: var(--layer-accent-active, var(--layer-accent-hover));
+	background: var(--layer-accent-active);
 }
 
 /* The icon-only burger is a plain icon button: no outline box, on any surface. */
@@ -3846,15 +4469,15 @@ button.tlToolbar__menuTrigger:focus-visible {
 .tlReactNumberInput--error,
 .tlReactDatePicker--error,
 .tlReactSelect--error {
-	border-color: var(--support-error, #da1e28);
+	border-color: var(--support-error);
 }
 
 .tlReactTextInput--error:focus,
 .tlReactNumberInput--error:focus,
 .tlReactDatePicker--error:focus,
 .tlReactSelect--error:focus {
-	outline-color: var(--support-error, #da1e28);
-	border-color: var(--support-error, #da1e28);
+	outline-color: var(--support-error);
+	border-color: var(--support-error);
 }
 
 /* Warning — yellow border, only when no error */
@@ -3862,24 +4485,24 @@ button.tlToolbar__menuTrigger:focus-visible {
 .tlReactNumberInput--warning,
 .tlReactDatePicker--warning,
 .tlReactSelect--warning {
-	border-color: var(--support-warning, #f1c21b);
+	border-color: var(--support-warning);
 }
 
 .tlReactTextInput--warning:focus,
 .tlReactNumberInput--warning:focus,
 .tlReactDatePicker--warning:focus,
 .tlReactSelect--warning:focus {
-	outline-color: var(--support-warning, #f1c21b);
-	border-color: var(--support-warning, #f1c21b);
+	outline-color: var(--support-warning);
+	border-color: var(--support-warning);
 }
 
 /* Checkbox error/warning — best-effort via accent-color */
 .tlReactCheckbox--error {
-	accent-color: var(--support-error, #da1e28);
+	accent-color: var(--support-error);
 }
 
 .tlReactCheckbox--warning {
-	accent-color: var(--support-warning, #f1c21b);
+	accent-color: var(--support-warning);
 }
 
 /* --- TLDropdownSelect -------------------------------------------------- */
@@ -3887,15 +4510,15 @@ button.tlToolbar__menuTrigger:focus-visible {
 .tlDropdownSelect {
 	display: flex;
 	align-items: flex-start;
-	border: 1px solid var(--border-subtle, #e0e0e0);
-	border-radius: var(--border-radius-02, 4px);
-	background-color: var(--field, #fff);
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--corner-radius);
+	background-color: var(--field);
 	padding: var(--spacing-02) var(--spacing-03);
 	min-height: 2rem;
 	cursor: pointer;
 	box-sizing: border-box;
 	/* Same field typography as the text-like inputs, instead of the inherited body size. */
-	font-size: var(--body-compact-01-font-size, 0.875rem);
+	font-size: var(--body-compact-01-font-size);
 }
 
 .tlDropdownSelect:focus {
@@ -3910,7 +4533,7 @@ button.tlToolbar__menuTrigger:focus-visible {
 .tlDropdownSelect--disabled {
 	opacity: 0.6;
 	cursor: default;
-	background-color: var(--field-disabled, #f0f0f0);
+	background-color: var(--field-disabled);
 }
 
 .tlDropdownSelect--immutable {
@@ -3944,13 +4567,28 @@ button.tlToolbar__menuTrigger:focus-visible {
 	color: var(--text-secondary);
 }
 
-/* Individual chip */
+/* The value of a single select: shown plainly, the way the read-only display shows it. */
+.tlDropdownSelect__value {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	min-width: 0;
+	max-width: 100%;
+}
+
+.tlDropdownSelect__valueLabel {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* Individual chip of a multi-select */
 .tlDropdownSelect__chip {
 	display: inline-flex;
 	align-items: center;
 	gap: var(--spacing-02);
 	background-color: var(--layer-hover);
-	border-radius: 12px;
+	border-radius: 999px;
 	padding: 2px var(--spacing-03) 2px var(--spacing-02);
 	max-width: 100%;
 }
@@ -4019,10 +4657,10 @@ button.tlToolbar__menuTrigger:focus-visible {
 /* Dropdown (fixed position to escape overflow:hidden) */
 .tlDropdownSelect__dropdown {
 	position: fixed;
-	background-color: var(--field, #fff);
-	border: 1px solid var(--border-subtle, #e0e0e0);
-	border-radius: var(--border-radius-02, 4px);
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	background-color: var(--field);
+	border: 1px solid var(--border-strong);
+	border-radius: var(--border-radius-02);
+	box-shadow: var(--shadow-menu);
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
@@ -4034,7 +4672,7 @@ button.tlToolbar__menuTrigger:focus-visible {
 	display: flex;
 	align-items: center;
 	padding: var(--spacing-02) var(--spacing-03);
-	border-bottom: 1px solid var(--border-subtle, #e0e0e0);
+	border-bottom: 1px solid var(--border-subtle);
 }
 
 .tlDropdownSelect__searchIcon {
@@ -4112,7 +4750,7 @@ button.tlToolbar__menuTrigger:focus-visible {
 	display: inline-block;
 	width: 20px;
 	height: 20px;
-	border: 2px solid var(--border-subtle, #e0e0e0);
+	border: 2px solid var(--border-subtle);
 	border-top-color: var(--focus);
 	border-radius: 50%;
 	animation: tlDropdownSelectSpin 0.8s linear infinite;
@@ -4129,7 +4767,7 @@ button.tlToolbar__menuTrigger:focus-visible {
 }
 
 .tlDropdownSelect__error a {
-	color: var(--link-primary, var(--focus));
+	color: var(--link-primary);
 }
 
 .tlDropdownSelect__noResults {
@@ -4162,12 +4800,12 @@ button.tlToolbar__menuTrigger:focus-visible {
 
 /* Drop indicator: left border highlight */
 .tlDropdownSelect__chip--dropBefore {
-	box-shadow: -2px 0 0 0 var(--interactive, #0f62fe);
+	box-shadow: -2px 0 0 0 var(--interactive);
 }
 
 /* Drop indicator: right border highlight */
 .tlDropdownSelect__chip--dropAfter {
-	box-shadow: 2px 0 0 0 var(--interactive, #0f62fe);
+	box-shadow: 2px 0 0 0 var(--interactive);
 }
 
 /* --- TLColorInput ------------------------------------------------------ */
@@ -4236,7 +4874,7 @@ button.tlToolbar__menuTrigger:focus-visible {
   left: 50%;
   width: 2px;
   height: calc(100% + 4px);
-  background: var(--support-error, #da1e28);
+  background: var(--support-error);
   transform: rotate(45deg);
   transform-origin: center;
 }
@@ -4246,10 +4884,10 @@ button.tlToolbar__menuTrigger:focus-visible {
 .tlColorInput__popup {
   position: fixed;
   z-index: 9000;
-  background: var(--layer-02, #fff);
+  background: var(--layer-02);
   border: 1px solid var(--border-subtle);
-  border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: var(--border-radius-02);
+  box-shadow: var(--shadow-menu);
   width: 480px;
   overflow: hidden;
 }
@@ -4257,7 +4895,7 @@ button.tlToolbar__menuTrigger:focus-visible {
 .tlColorInput__tabs {
   display: flex;
   border-bottom: 1px solid var(--border-subtle);
-  background: var(--layer-01, #f4f4f4);
+  background: var(--layer-01);
 }
 
 .tlColorInput__tab {
@@ -4302,14 +4940,14 @@ button.tlToolbar__menuTrigger:focus-visible {
   width: 33px;
   height: 33px;
   border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 3px;
+  border-radius: var(--corner-radius);
   cursor: pointer;
   transition: transform 0.1s, box-shadow 0.1s;
 }
 
 .tlColorInput__paletteCell:hover {
   transform: scale(1.15);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-raised);
   z-index: 1;
   position: relative;
 }
@@ -4343,7 +4981,7 @@ button.tlToolbar__menuTrigger:focus-visible {
   width: 192px;
   height: 192px;
   position: relative;
-  border-radius: 4px;
+  border-radius: var(--corner-radius);
   cursor: crosshair;
   overflow: hidden;
 }
@@ -4378,7 +5016,7 @@ button.tlToolbar__menuTrigger:focus-visible {
   width: 24px;
   height: 192px;
   position: relative;
-  border-radius: 4px;
+  border-radius: var(--corner-radius);
   cursor: pointer;
   background: linear-gradient(to bottom,
     #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);
@@ -4390,7 +5028,7 @@ button.tlToolbar__menuTrigger:focus-visible {
   width: 30px;
   height: 8px;
   border: 2px solid #fff;
-  border-radius: 3px;
+  border-radius: var(--corner-radius);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
   transform: translateY(-50%);
   pointer-events: none;
@@ -4441,7 +5079,7 @@ button.tlToolbar__menuTrigger:focus-visible {
   background: transparent;
   font-family: var(--font-family);
   font-size: var(--label-01-font-size);
-  color: var(--link-primary, #0f62fe);
+  color: var(--link-primary);
   cursor: pointer;
   text-decoration: none;
 }
@@ -4473,13 +5111,13 @@ button.tlToolbar__menuTrigger:focus-visible {
   flex: 1;
   min-width: 0;
   height: 2rem;
-  padding: 0 var(--spacing-03, 0.5rem);
+  padding: 0 var(--spacing-03);
   border: 1px solid var(--border-subtle);
   border-radius: var(--corner-radius);
   font-family: var(--font-family);
   font-size: var(--body-compact-01-font-size);
   color: var(--text-primary);
-  background: var(--layer-02, #fff);
+  background: var(--layer-02);
   outline: none;
   transition: border-color 0.15s;
 }
@@ -4490,7 +5128,7 @@ button.tlToolbar__menuTrigger:focus-visible {
 }
 
 .tlColorInput__input--error {
-  border-color: var(--support-error, #da1e28);
+  border-color: var(--support-error);
 }
 
 .tlColorInput__actions {
@@ -4513,12 +5151,12 @@ button.tlToolbar__menuTrigger:focus-visible {
 }
 
 .tlColorInput__btn--ok {
-  background: var(--button-primary, #0f62fe);
-  color: var(--text-on-color, #fff);
+  background: var(--button-primary);
+  color: var(--text-on-color);
 }
 
 .tlColorInput__btn--ok:hover {
-  background: var(--button-primary-hover, #0353e9);
+  background: var(--button-primary-hover);
 }
 
 .tlColorInput__btn--cancel {
@@ -4561,7 +5199,7 @@ button.tlToolbar__menuTrigger:focus-visible {
   height: 32px;
   border: 1px solid var(--border-subtle);
   border-radius: var(--corner-radius);
-  background: var(--layer-02, #fff);
+  background: var(--layer-02);
   cursor: pointer;
   font-size: 18px;
   color: var(--text-primary);
@@ -4580,7 +5218,7 @@ button.tlToolbar__menuTrigger:focus-visible {
 }
 
 .tlIconSelect__swatch--empty {
-  color: var(--text-placeholder, #a8a8a8);
+  color: var(--text-placeholder);
   font-size: 14px;
 }
 
@@ -4609,10 +5247,10 @@ button.tlToolbar__menuTrigger:focus-visible {
 .tlIconSelect__popup {
   position: fixed;
   z-index: 9000;
-  background: var(--layer-02, #fff);
+  background: var(--layer-02);
   border: 1px solid var(--border-subtle);
-  border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  border-radius: var(--border-radius-02);
+  box-shadow: var(--shadow-menu);
   width: 420px;
   height: 400px;
   min-width: 280px;
@@ -4626,7 +5264,7 @@ button.tlToolbar__menuTrigger:focus-visible {
 .tlIconSelect__tabs {
   display: flex;
   border-bottom: 1px solid var(--border-subtle);
-  background: var(--layer-01, #f4f4f4);
+  background: var(--layer-01);
 }
 
 .tlIconSelect__tab {
@@ -4663,7 +5301,7 @@ button.tlToolbar__menuTrigger:focus-visible {
 }
 
 .tlIconSelect__searchIcon {
-  color: var(--text-placeholder, #a8a8a8);
+  color: var(--text-placeholder);
   font-size: 14px;
   flex-shrink: 0;
 }
@@ -4678,7 +5316,7 @@ button.tlToolbar__menuTrigger:focus-visible {
 }
 
 .tlIconSelect__search::placeholder {
-  color: var(--text-placeholder, #a8a8a8);
+  color: var(--text-placeholder);
 }
 
 .tlIconSelect__resetBtn {
@@ -4688,12 +5326,12 @@ button.tlToolbar__menuTrigger:focus-visible {
   color: var(--text-secondary);
   font-size: 16px;
   padding: 2px 4px;
-  border-radius: 3px;
+  border-radius: var(--corner-radius);
   line-height: 1;
 }
 
 .tlIconSelect__resetBtn:hover {
-  color: var(--support-error, #da1e28);
+  color: var(--support-error);
   background: var(--layer-hover);
 }
 
@@ -4709,7 +5347,7 @@ button.tlToolbar__menuTrigger:focus-visible {
   overflow-y: scroll;
   align-content: start;
   scrollbar-width: thin;
-  scrollbar-color: var(--border-strong, #8d8d8d) transparent;
+  scrollbar-color: var(--border-strong) transparent;
 }
 
 .tlIconSelect__grid::-webkit-scrollbar {
@@ -4721,12 +5359,12 @@ button.tlToolbar__menuTrigger:focus-visible {
 }
 
 .tlIconSelect__grid::-webkit-scrollbar-thumb {
-  background: var(--border-strong, #8d8d8d);
-  border-radius: 4px;
+  background: var(--border-strong);
+  border-radius: var(--corner-radius);
 }
 
 .tlIconSelect__grid::-webkit-scrollbar-thumb:hover {
-  background: var(--text-secondary, #525252);
+  background: var(--text-secondary);
 }
 
 .tlIconSelect__iconCell {
@@ -4797,7 +5435,7 @@ button.tlToolbar__menuTrigger:focus-visible {
 }
 
 .tlIconSelect__editLabel {
-  font-size: var(--label-01-font-size, 12px);
+  font-size: var(--label-01-font-size);
   color: var(--text-secondary);
   flex-shrink: 0;
   min-width: 50px;
@@ -4813,7 +5451,7 @@ button.tlToolbar__menuTrigger:focus-visible {
   font-size: 13px;
   font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
   color: var(--text-primary);
-  background: var(--layer-02, #fff);
+  background: var(--layer-02);
   transition: border-color 0.15s;
 }
 
@@ -4826,7 +5464,7 @@ button.tlToolbar__menuTrigger:focus-visible {
 .tlIconSelect__previewArea {
   display: flex;
   align-items: center;
-  gap: var(--spacing-04, 12px);
+  gap: var(--spacing-04);
 }
 
 .tlIconSelect__previewIcon {
@@ -4838,11 +5476,11 @@ button.tlToolbar__menuTrigger:focus-visible {
   border: 1px solid var(--border-subtle);
   border-radius: var(--corner-radius);
   font-size: 24px;
-  background: var(--layer-01, #f4f4f4);
+  background: var(--layer-01);
 }
 
 .tlIconSelect__previewLabel {
-  font-size: var(--label-01-font-size, 12px);
+  font-size: var(--label-01-font-size);
   color: var(--text-secondary);
 }
 
@@ -4852,13 +5490,13 @@ button.tlToolbar__menuTrigger:focus-visible {
   display: flex;
   gap: var(--spacing-03);
   justify-content: flex-end;
-  padding: var(--spacing-03) var(--spacing-04, 12px) var(--spacing-04, 12px);
+  padding: var(--spacing-03) var(--spacing-04) var(--spacing-04);
   border-top: 1px solid var(--border-subtle);
 }
 
 .tlIconSelect__btn {
   height: 28px;
-  padding: 0 var(--spacing-04, 12px);
+  padding: 0 var(--spacing-04);
   border: none;
   border-radius: var(--corner-radius);
   font-size: 13px;
@@ -4867,12 +5505,12 @@ button.tlToolbar__menuTrigger:focus-visible {
 }
 
 .tlIconSelect__btn--ok {
-  background: var(--button-primary, #0f62fe);
-  color: var(--text-on-color, #fff);
+  background: var(--button-primary);
+  color: var(--text-on-color);
 }
 
 .tlIconSelect__btn--ok:hover {
-  background: var(--button-primary-hover, #0353e9);
+  background: var(--button-primary-hover);
 }
 
 .tlIconSelect__btn--cancel {
@@ -4887,14 +5525,14 @@ button.tlToolbar__menuTrigger:focus-visible {
 
 .tlIconSelect__btn--clear {
   background: transparent;
-  color: var(--support-error, #da1e28);
-  border: 1px solid var(--support-error, #da1e28);
+  color: var(--support-error);
+  border: 1px solid var(--support-error);
   margin-right: auto;
 }
 
 .tlIconSelect__btn--clear:hover {
-  background: var(--support-error, #da1e28);
-  color: var(--text-on-color, #fff);
+  background: var(--support-error);
+  color: var(--text-on-color);
 }
 
 /*
@@ -4909,7 +5547,7 @@ button.tlToolbar__menuTrigger:focus-visible {
   --tl-tt-padding: var(--spacing-02);
   background-color: var(--background-inverse);
   color: var(--text-inverse);
-  border-radius: 6px;
+  border-radius: var(--border-radius-02);
   filter: drop-shadow(var(--shadow-menu));
   max-width: 500px;
   font-weight: 400;
@@ -4970,9 +5608,9 @@ button.tlToolbar__menuTrigger:focus-visible {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--color-border, #dde1e7);
-  border-radius: 6px;
-  background: var(--color-surface, #fff);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius-02);
+  background: var(--layer-01);
 }
 .tlDashboard__tile > *:not(.tlDashboard__overlay) {
   flex: 1 1 auto;
@@ -4995,10 +5633,10 @@ button.tlToolbar__menuTrigger:focus-visible {
   top: -6px;
   bottom: -6px;
   width: 8px;
-  background: var(--color-drop-zone, #3380ff);
-  border-radius: 4px;
-  box-shadow: 0 0 12px 2px var(--color-drop-zone, #3380ff),
-              0 0 24px 4px var(--color-drop-zone, #3380ff);
+  background: var(--color-drop-zone);
+  border-radius: var(--corner-radius);
+  box-shadow: 0 0 12px 2px var(--color-drop-zone),
+              0 0 24px 4px var(--color-drop-zone);
   pointer-events: none;
   z-index: 10;
 }
@@ -5006,7 +5644,7 @@ button.tlToolbar__menuTrigger:focus-visible {
 .tlDashboard__tile--dropAfter::after { right: -10px; }
 
 button.tlToolbar__menuTrigger[aria-expanded="true"] {
-	background: var(--layer-active, var(--layer-hover));
+	background: var(--layer-active);
 }
 
 .tlToolbar__chevron {
@@ -5030,10 +5668,10 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 	right: 0;
 	z-index: 10000;
 	min-width: 10rem;
-	background: var(--layer-01, #fff);
-	border: 1px solid var(--border-subtle);
-	border-radius: var(--border-radius-02, 4px);
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	background: var(--layer-02);
+	border: 1px solid var(--border-strong);
+	border-radius: var(--border-radius-02);
+	box-shadow: var(--shadow-menu);
 	padding: var(--spacing-02) 0;
 }
 
@@ -5134,7 +5772,7 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 	position: fixed;
 	pointer-events: none;
 	z-index: 10000;
-	border: 2px solid var(--border-interactive, #2680eb);
+	border: 2px solid var(--border-interactive);
 	background: rgba(38, 128, 235, 0.12);
 	box-sizing: border-box;
 }
@@ -5178,8 +5816,8 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 	height: 100%;
 	min-height: 0;
 	font-family: var(--font-family);
-	color: var(--text-primary, #161616);
-	background: var(--layer-01, #fff);
+	color: var(--text-primary);
+	background: var(--layer-01);
 }
 
 /* Category palette (event background colors). */
@@ -5197,15 +5835,15 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 .tlCalToolbar {
 	display: flex;
 	align-items: center;
-	gap: var(--spacing-04, 12px);
-	padding: var(--spacing-03, 8px) var(--spacing-04, 12px);
-	border-bottom: 1px solid var(--border-subtle-01, #e0e0e0);
+	gap: var(--spacing-04);
+	padding: var(--spacing-03) var(--spacing-04);
+	border-bottom: 1px solid var(--border-subtle-01);
 	flex: none;
 }
-.tlCalNav { display: flex; gap: var(--spacing-02, 4px); }
+.tlCalNav { display: flex; gap: var(--spacing-02); }
 .tlCalTitle {
 	flex: 1;
-	font-size: var(--heading-03-font-size, 1.25rem);
+	font-size: var(--heading-03-font-size);
 	font-weight: 600;
 	text-align: center;
 	white-space: nowrap;
@@ -5215,23 +5853,23 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 .tlCalGranularity { display: flex; gap: 2px; }
 .tlCalBtn {
 	appearance: none;
-	border: 1px solid var(--border-subtle-01, #e0e0e0);
-	background: var(--layer-01, #fff);
-	color: var(--text-primary, #161616);
+	border: 1px solid var(--border-subtle-01);
+	background: var(--layer-01);
+	color: var(--text-primary);
 	font-family: inherit;
 	font-size: .8125rem;
 	padding: 4px 10px;
-	border-radius: var(--corner-radius, 4px);
+	border-radius: var(--corner-radius);
 	cursor: pointer;
 	line-height: 1.4;
 }
-.tlCalBtn:hover { background: var(--layer-hover, #e8e8e8); }
-.tlCalBtn:focus-visible { outline: 2px solid var(--focus, #0f62fe); outline-offset: -1px; }
+.tlCalBtn:hover { background: var(--layer-hover); }
+.tlCalBtn:focus-visible { outline: 2px solid var(--focus); outline-offset: -1px; }
 .tlCalBtn--icon { width: 32px; display: inline-flex; align-items: center; justify-content: center; }
 .tlCalBtn--active {
-	background: var(--button-primary, #0f62fe);
-	border-color: var(--button-primary, #0f62fe);
-	color: var(--text-on-color, #fff);
+	background: var(--button-primary);
+	border-color: var(--button-primary);
+	color: var(--text-on-color);
 }
 
 .tlCalBody { flex: 1; min-height: 0; display: flex; overflow: hidden; }
@@ -5240,39 +5878,39 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 .tlCalTimeGrid { display: flex; flex-direction: column; flex: 1; min-height: 0; user-select: none; }
 .tlCalGutter { width: 56px; flex: none; box-sizing: border-box; }
 
-.tlCalTimeHeader { display: flex; border-bottom: 1px solid var(--border-subtle-01, #e0e0e0); flex: none; }
+.tlCalTimeHeader { display: flex; border-bottom: 1px solid var(--border-subtle-01); flex: none; }
 .tlCalDayHead {
 	flex: 1;
 	text-align: center;
 	padding: 4px 2px;
 	cursor: pointer;
-	border-left: 1px solid var(--border-subtle-00, #f4f4f4);
+	border-left: 1px solid var(--border-subtle);
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	gap: 2px;
 }
-.tlCalDayHead:hover { background: var(--layer-hover, #e8e8e8); }
-.tlCalDayName { font-size: .75rem; color: var(--text-secondary, #525252); text-transform: uppercase; }
+.tlCalDayHead:hover { background: var(--layer-hover); }
+.tlCalDayName { font-size: .75rem; color: var(--text-secondary); text-transform: uppercase; }
 .tlCalDayNum { font-size: 1.1rem; font-weight: 600; line-height: 1; }
-.tlCalDayHead--nonworking { background: var(--layer-accent-01, #f4f4f4); }
+.tlCalDayHead--nonworking { background: var(--layer); }
 .tlCalDayHead--today .tlCalDayNum {
-	background: var(--button-primary, #0f62fe);
-	color: var(--text-on-color, #fff);
+	background: var(--button-primary);
+	color: var(--text-on-color);
 	border-radius: 50%;
 	width: 1.6em; height: 1.6em;
 	display: inline-flex; align-items: center; justify-content: center;
 }
 
-.tlCalAllDayRow { display: flex; border-bottom: 1px solid var(--border-subtle-01, #e0e0e0); flex: none; min-height: 22px; max-height: 88px; overflow-y: auto; }
-.tlCalAllDayLabel { display: flex; align-items: center; justify-content: flex-end; padding-right: 4px; font-size: .7rem; color: var(--text-secondary, #525252); }
-.tlCalAllDayCell { flex: 1; border-left: 1px solid var(--border-subtle-00, #f4f4f4); padding: 2px; display: flex; flex-direction: column; gap: 2px; }
+.tlCalAllDayRow { display: flex; border-bottom: 1px solid var(--border-subtle-01); flex: none; min-height: 22px; max-height: 88px; overflow-y: auto; }
+.tlCalAllDayLabel { display: flex; align-items: center; justify-content: flex-end; padding-right: 4px; font-size: .7rem; color: var(--text-secondary); }
+.tlCalAllDayCell { flex: 1; border-left: 1px solid var(--border-subtle); padding: 2px; display: flex; flex-direction: column; gap: 2px; }
 .tlCalAllDayEvent {
 	background: var(--cal-ev-bg, #4589ff);
 	color: #fff;
 	font-size: .75rem;
 	padding: 1px 6px;
-	border-radius: 3px;
+	border-radius: var(--corner-radius);
 	cursor: pointer;
 	white-space: nowrap;
 	overflow: hidden;
@@ -5282,11 +5920,11 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 .tlCalScroll { flex: 1; min-height: 0; overflow-y: auto; }
 .tlCalTimeBody { position: relative; display: flex; }
 .tlCalHourAxis { width: 56px; flex: none; position: relative; }
-.tlCalHourLabel { position: absolute; right: 6px; transform: translateY(-50%); font-size: .7rem; color: var(--text-secondary, #525252); }
+.tlCalHourLabel { position: absolute; right: 6px; transform: translateY(-50%); font-size: .7rem; color: var(--text-secondary); }
 .tlCalColumns { flex: 1; display: grid; position: relative; }
-.tlCalCol { position: relative; border-left: 1px solid var(--border-subtle-00, #f4f4f4); }
-.tlCalCol--nonworking { background: var(--layer-accent-01, #fafafa); }
-.tlCalHourLine { position: absolute; left: 0; right: 0; border-top: 1px solid var(--border-subtle-00, #f4f4f4); pointer-events: none; }
+.tlCalCol { position: relative; border-left: 1px solid var(--border-subtle); }
+.tlCalCol--nonworking { background: var(--layer); }
+.tlCalHourLine { position: absolute; left: 0; right: 0; border-top: 1px solid var(--border-subtle); pointer-events: none; }
 .tlCalWorkBand { position: absolute; left: 0; right: 0; background: rgba(127, 127, 127, 0.09); pointer-events: none; }
 .tlCalNowLine { position: absolute; left: 0; right: 0; height: 2px; background: #da1e28; z-index: 5; pointer-events: none; }
 .tlCalNowLine::before { content: ''; position: absolute; left: -4px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: #da1e28; }
@@ -5296,7 +5934,7 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 	box-sizing: border-box;
 	background: var(--cal-ev-bg, #4589ff);
 	color: #fff;
-	border-radius: 4px;
+	border-radius: var(--corner-radius);
 	padding: 2px 5px;
 	font-size: .72rem;
 	overflow: hidden;
@@ -5309,9 +5947,9 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 }
 .tlCalEventTime { font-size: .68rem; opacity: .85; }
 .tlCalEventTitle { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tlCalEvent--selected { outline: 2px solid var(--focus, #0f62fe); outline-offset: 1px; z-index: 4; }
+.tlCalEvent--selected { outline: 2px solid var(--focus); outline-offset: 1px; z-index: 4; }
 .tlCalEvent--dragging { opacity: .7; }
-.tlCalEvent--preview { background: var(--button-primary, #0f62fe); opacity: .4; z-index: 6; }
+.tlCalEvent--preview { background: var(--button-primary); opacity: .4; z-index: 6; }
 .tlCalResizeHandle { position: absolute; left: 0; right: 0; bottom: 0; height: 6px; cursor: ns-resize; }
 .tlCalCreateInput {
 	width: 100%;
@@ -5328,18 +5966,18 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 
 /* ---- Month grid ---- */
 .tlCalMonth { display: flex; flex-direction: column; flex: 1; min-height: 0; user-select: none; }
-.tlCalMonthHead { display: grid; grid-template-columns: repeat(7, 1fr); border-bottom: 1px solid var(--border-subtle-01, #e0e0e0); flex: none; }
-.tlCalMonthWeekday { text-align: center; padding: 4px; font-size: .75rem; color: var(--text-secondary, #525252); text-transform: uppercase; }
+.tlCalMonthHead { display: grid; grid-template-columns: repeat(7, 1fr); border-bottom: 1px solid var(--border-subtle-01); flex: none; }
+.tlCalMonthWeekday { text-align: center; padding: 4px; font-size: .75rem; color: var(--text-secondary); text-transform: uppercase; }
 .tlCalMonthBody { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 .tlCalMonthWeek { flex: 1; position: relative; min-height: 0; overflow: hidden; }
 .tlCalMonthDays { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(7, 1fr); }
-.tlCalMonthCell { border-left: 1px solid var(--border-subtle-00, #f4f4f4); border-top: 1px solid var(--border-subtle-00, #f4f4f4); cursor: pointer; }
-.tlCalMonthCell--other { background: var(--layer-accent-01, #fafafa); color: var(--text-disabled, #a8a8a8); }
-.tlCalMonthCell--nonworking { background: var(--layer-accent-01, #f4f4f4); }
+.tlCalMonthCell { border-left: 1px solid var(--border-subtle); border-top: 1px solid var(--border-subtle); cursor: pointer; }
+.tlCalMonthCell--other { background: var(--layer); color: var(--text-disabled); }
+.tlCalMonthCell--nonworking { background: var(--layer); }
 .tlCalMonthDayNum { padding: 2px 6px; font-size: .8rem; display: inline-block; cursor: pointer; }
 .tlCalMonthDayNum--today {
-	background: var(--button-primary, #0f62fe);
-	color: var(--text-on-color, #fff);
+	background: var(--button-primary);
+	color: var(--text-on-color);
 	border-radius: 50%;
 	width: 1.6em; height: 1.6em; padding: 0;
 	display: inline-flex; align-items: center; justify-content: center;
@@ -5360,7 +5998,7 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 	color: #fff;
 	font-size: .72rem;
 	padding: 1px 6px;
-	border-radius: 3px;
+	border-radius: var(--corner-radius);
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -5374,16 +6012,16 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 	gap: 4px;
 	font-size: .72rem;
 	padding: 0 4px;
-	border-radius: 3px;
+	border-radius: var(--corner-radius);
 	cursor: pointer;
 	pointer-events: auto;
 	overflow: hidden;
 }
-.tlCalChip:hover { background: var(--layer-hover, #e8e8e8); }
+.tlCalChip:hover { background: var(--layer-hover); }
 .tlCalChipDot { width: 8px; height: 8px; border-radius: 50%; background: var(--cal-ev-bg, #4589ff); flex: none; }
-.tlCalChipTime { color: var(--text-secondary, #525252); flex: none; }
+.tlCalChipTime { color: var(--text-secondary); flex: none; }
 .tlCalChipTitle { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tlCalMore { font-size: .7rem; color: var(--link-primary, #0f62fe); cursor: pointer; pointer-events: auto; padding: 0 4px; }
+.tlCalMore { font-size: .7rem; color: var(--link-primary); cursor: pointer; pointer-events: auto; padding: 0 4px; }
 
 /* ---- Year grid ---- */
 .tlCalYear {
@@ -5392,26 +6030,26 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 	overflow-y: auto;
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-	gap: var(--spacing-05, 16px);
-	padding: var(--spacing-05, 16px);
+	gap: var(--spacing-05);
+	padding: var(--spacing-05);
 	align-content: start;
 }
-.tlCalMini { border: 1px solid var(--border-subtle-01, #e0e0e0); border-radius: var(--corner-radius, 4px); padding: 8px; }
+.tlCalMini { border: 1px solid var(--border-subtle-01); border-radius: var(--corner-radius); padding: 8px; }
 .tlCalMiniTitle { text-align: center; font-weight: 600; margin-bottom: 6px; cursor: pointer; }
-.tlCalMiniTitle:hover { color: var(--link-primary, #0f62fe); }
+.tlCalMiniTitle:hover { color: var(--link-primary); }
 .tlCalMiniGrid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; }
-.tlCalMiniWd { text-align: center; font-size: .65rem; color: var(--text-secondary, #525252); }
+.tlCalMiniWd { text-align: center; font-size: .65rem; color: var(--text-secondary); }
 .tlCalMiniDay {
 	text-align: center;
 	font-size: .72rem;
 	padding: 2px 0;
 	cursor: pointer;
-	border-radius: 3px;
+	border-radius: var(--corner-radius);
 	position: relative;
 }
-.tlCalMiniDay:hover { background: var(--layer-hover, #e8e8e8); }
-.tlCalMiniDay--other { color: var(--text-disabled, #a8a8a8); }
-.tlCalMiniDay--nonworking { color: var(--text-secondary, #6f6f6f); }
+.tlCalMiniDay:hover { background: var(--layer-hover); }
+.tlCalMiniDay--other { color: var(--text-disabled); }
+.tlCalMiniDay--nonworking { color: var(--text-secondary); }
 .tlCalMiniDay--event { font-weight: 700; }
 .tlCalMiniDay--event::after {
 	content: '';
@@ -5420,7 +6058,7 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 	transform: translateX(-50%);
 	width: 4px; height: 4px;
 	border-radius: 50%;
-	background: var(--button-primary, #0f62fe);
+	background: var(--button-primary);
 }
-.tlCalMiniDay--today { background: var(--button-primary, #0f62fe); color: var(--text-on-color, #fff); }
+.tlCalMiniDay--today { background: var(--button-primary); color: var(--text-on-color); }
 .tlCalMiniDay--today.tlCalMiniDay--event::after { background: #fff; }

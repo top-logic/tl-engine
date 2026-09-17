@@ -5,17 +5,28 @@
  */
 package com.top_logic.layout.view.channel;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
+
+import com.top_logic.layout.view.form.StateHandler;
+import com.top_logic.layout.view.model.ChannelObjectObserver;
+import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.listen.ModelScope;
 
 /**
  * A {@link ViewChannel} whose value is computed from other channels.
  *
  * <p>
- * The derived value is recomputed whenever any input channel changes. Listeners are only notified if
- * the recomputed value is different from the current value (using {@link Objects#equals}).
+ * The derived value is recomputed whenever an input channel takes a new value, and - while the
+ * channel is {@link #attach(ModelScope) attached} - whenever one of the objects the inputs hold is
+ * edited. An expression reading an attribute of the object on its input channel therefore follows
+ * that attribute being stored, although the channel keeps pointing to the same object. Listeners
+ * are only notified if the recomputed value is different from the current value (using
+ * {@link Objects#equals}).
  * </p>
  *
  * <p>
@@ -26,11 +37,19 @@ import java.util.function.Function;
  * </p>
  *
  * <p>
+ * A {@link VetoForwarder} from every input channel to this channel makes the unsaved changes of a
+ * form bound to the derived value block the write of the input the value is computed from: asking
+ * an input reaches the {@link VetoListener}s registered on this channel. A bidirectional
+ * {@link #set(Object)} writes the first input, and therefore passes the same forwarder - the
+ * handlers of this channel are asked once, before the input is written.
+ * </p>
+ *
+ * <p>
  * This is a per-session object. The evaluation function is typically compiled once at configuration
  * time (e.g. from a TL-Script expression) and passed in via {@link #bind(List, Function)}.
  * </p>
  */
-public class DerivedViewChannel implements ViewChannel {
+public class DerivedViewChannel implements ObservingChannel {
 
 	private final String _name;
 
@@ -41,6 +60,14 @@ public class DerivedViewChannel implements ViewChannel {
 	private Function<Object, Object> _reverseFunction;
 
 	private List<ViewChannel> _inputs;
+
+	private Function<Object[], Object> _evaluator;
+
+	private ChannelObjectObserver _inputObserver;
+
+	private final CopyOnWriteArrayList<VetoListener> _vetoListeners = new CopyOnWriteArrayList<>();
+
+	private final List<Runnable> _vetoForwarderRemovers = new ArrayList<>();
 
 	/**
 	 * Creates a {@link DerivedViewChannel}.
@@ -91,14 +118,69 @@ public class DerivedViewChannel implements ViewChannel {
 	 */
 	public void bind(List<ViewChannel> inputs, Function<Object[], Object> evaluator,
 			Function<Object, Object> reverse) {
+		bind(inputs, evaluator, reverse, Set.of());
+	}
+
+	/**
+	 * Wires this channel to its input channels, additionally observing the given types.
+	 *
+	 * @param inputs
+	 *        The resolved input channels whose values become positional arguments to the forward
+	 *        function.
+	 * @param evaluator
+	 *        A function that takes an array of input values and returns the derived value.
+	 * @param reverse
+	 *        A function that maps a derived value back to the value for the first input channel, or
+	 *        {@code null} for a read-only derived channel.
+	 * @param observedTypes
+	 *        Types whose object changes recompute the value in addition to the objects the inputs
+	 *        hold, which are always observed; empty for a function reading nothing but those
+	 *        objects.
+	 *
+	 * @implNote Registers a {@link VetoForwarder} from every input to this channel, replacing the
+	 *           forwarders of a previous binding.
+	 *
+	 * @see #attach(ModelScope)
+	 */
+	public void bind(List<ViewChannel> inputs, Function<Object[], Object> evaluator,
+			Function<Object, Object> reverse, Set<TLStructuredType> observedTypes) {
 		_inputs = inputs;
+		_evaluator = evaluator;
 		_reverseFunction = reverse;
 		_value = evaluate(evaluator, inputs);
+		_inputObserver = new ChannelObjectObserver(inputs, observedTypes, this::recompute);
 
-		ChannelListener refreshListener = (sender, oldVal, newVal) -> recompute(evaluator, inputs);
+		removeVetoForwarders();
+
+		ChannelListener refreshListener = (sender, oldVal, newVal) -> recompute();
 		for (ViewChannel input : inputs) {
 			input.addListener(refreshListener);
+			_vetoForwarderRemovers.add(VetoForwarder.forward(input, this));
 		}
+	}
+
+	private void removeVetoForwarders() {
+		for (Runnable remover : _vetoForwarderRemovers) {
+			remover.run();
+		}
+		_vetoForwarderRemovers.clear();
+	}
+
+	/**
+	 * Begins following the objects the inputs hold, and recomputes the value for what they are now.
+	 */
+	@Override
+	public void attach(ModelScope scope) {
+		_inputObserver.attach(scope);
+		recompute();
+	}
+
+	/**
+	 * Stops following the objects the inputs hold.
+	 */
+	@Override
+	public void detach() {
+		_inputObserver.detach();
 	}
 
 	@Override
@@ -126,17 +208,29 @@ public class DerivedViewChannel implements ViewChannel {
 	}
 
 	@Override
+	public List<StateHandler> dirtyHandlers() {
+		if (_vetoListeners.isEmpty()) {
+			return List.of();
+		}
+		VetoCollector dirtyHandlers = new VetoCollector();
+		for (VetoListener vetoListener : _vetoListeners) {
+			dirtyHandlers.addAll(vetoListener.checkDirty(this));
+		}
+		return dirtyHandlers.toList();
+	}
+
+	@Override
 	public void addVetoListener(VetoListener listener) {
-		// DerivedViewChannel is read-only; veto listeners are not applicable.
+		_vetoListeners.add(listener);
 	}
 
 	@Override
 	public void removeVetoListener(VetoListener listener) {
-		// DerivedViewChannel is read-only; veto listeners are not applicable.
+		_vetoListeners.remove(listener);
 	}
 
-	private void recompute(Function<Object[], Object> evaluator, List<ViewChannel> inputs) {
-		Object newValue = evaluate(evaluator, inputs);
+	private void recompute() {
+		Object newValue = evaluate(_evaluator, _inputs);
 		Object oldValue = _value;
 		if (!Objects.equals(oldValue, newValue)) {
 			_value = newValue;

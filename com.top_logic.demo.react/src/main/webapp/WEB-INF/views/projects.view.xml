@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Drill-down through the project management data: projects, their milestones, the tickets of a
+	milestone, and finally one ticket. Every frame pushes the next one with the object it is
+	opened for, so a display target reaching one of these frames pushes exactly the same frame
+	and lands in the drill-down the user already has.
+-->
+<view>
+	<channels>
+		<channel name="navPath"/>
+	</channels>
+
+	<stack>
+		<slot-content to="appbar-content">
+			<tile-breadcrumb path="navPath">
+				<home-label>
+					<en>Projects</en>
+					<de>Projekte</de>
+				</home-label>
+			</tile-breadcrumb>
+		</slot-content>
+
+		<tile-stack
+			initial="projects/overview.view.xml"
+			path="navPath"
+		/>
+	</stack>
+</view>

@@ -102,6 +102,11 @@ public class ReferenceElement implements UIElement {
 	}
 
 	@Override
+	public List<ChildGroup> getChildGroups() {
+		return List.of(ChildGroup.view(_viewPath));
+	}
+
+	@Override
 	public IReactControl createControl(ViewContext parentContext) {
 		String fullPath = ViewLoader.VIEW_BASE_PATH + _viewPath;
 

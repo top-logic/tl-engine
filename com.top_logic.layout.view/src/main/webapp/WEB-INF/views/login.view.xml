@@ -1,46 +1,34 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
+<!--
+	The login dialog: the credentials form in a window the user can dismiss.
+	
+	Opened over a display that is showing something already, so there is a Cancel action leading
+	back to it. An application that has nothing to show a visitor uses login-page.view.xml instead.
+-->
 <view>
 	<channels>
 		<channel name="model"/>
 	</channels>
-	<window resizable="false"
-			width="380px">
+	<window
+		resizable="false"
+		width="380px"
+	>
 		<title>
 			<en>Login</en>
 			<de>Anmeldung</de>
 		</title>
-		<form input="model"
-			initial-edit-mode="true"
-			mode-switch="false"
-		>
-			<field attribute="name"/>
-			<field attribute="password"/>
-			<!--
-				Extra login commands contributed by optional feature modules (e.g. the self-service
-				"Forgot password?" button) via the LoginCommandsConfig application config. Renders
-				nothing when nothing is contributed.
-			-->
-			<login-commands/>
-			<!--
-				One redirect button per configured external login method (SSO providers, e.g. pac4j
-				clients), from LoginMethods. Renders nothing when none are configured.
-			-->
-			<login-methods/>
-			<commands>
-				<generic-command placement="BUTTON_BAR" image="css:bi bi-box-arrow-in-right">
-					<label>
-						<en>Login</en>
-						<de>Anmeldung</de>
-					</label>
-					<store-form-state/>
-					<login/>
-				</generic-command>
-			</commands>
-		</form>
+		<view-ref view="login-form.view.xml">
+			<bind
+				channel="model"
+				to="model"
+			/>
+		</view-ref>
 		<actions>
 			<button>
-				<action class="com.top_logic.layout.view.command.CancelDialogCommand" image="css:bi bi-x-lg">
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
 					<label>
 						<en>Cancel</en>
 						<de>Abbrechen</de>

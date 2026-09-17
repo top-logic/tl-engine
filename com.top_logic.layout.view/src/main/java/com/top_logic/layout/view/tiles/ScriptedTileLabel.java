@@ -16,7 +16,6 @@ import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.CommaSeparatedChannelRefs;
@@ -35,9 +34,8 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * derived from business object names.
  * </p>
  *
- * @implNote A {@link ResKey} result (e.g. an {@code I18NString} attribute value) is returned as-is
- *           so it stays localizable; a {@link String} is wrapped via {@link ResKey#text(String)};
- *           any other object is labeled via {@link MetaLabelProvider}.
+ * @implNote The result is turned into a {@link ResKey} by
+ *           {@link TileLabelProvider#toLabel(Object)}.
  */
 public class ScriptedTileLabel implements TileLabelProvider {
 
@@ -93,19 +91,6 @@ public class ScriptedTileLabel implements TileLabelProvider {
 			.map(context::resolveChannel)
 			.map(ViewChannel::get)
 			.toArray();
-		Object result = _executor.execute(args);
-		if (result == null) {
-			return null;
-		}
-		if (result instanceof ResKey) {
-			// An I18NString attribute value (or an explicit ResKey) is already localizable - keep it
-			// so the breadcrumb renders the translation, not its debug toString().
-			return (ResKey) result;
-		}
-		if (result instanceof String) {
-			return ResKey.text((String) result);
-		}
-		// Any other business object: derive its display label rather than its toString().
-		return ResKey.text(MetaLabelProvider.INSTANCE.getLabel(result));
+		return TileLabelProvider.toLabel(_executor.execute(args));
 	}
 }

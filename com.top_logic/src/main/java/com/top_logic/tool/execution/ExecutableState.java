@@ -5,6 +5,8 @@
  */
 package com.top_logic.tool.execution;
 
+import java.util.Objects;
+
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
@@ -299,6 +301,34 @@ public final class ExecutableState implements Comparable<ExecutableState> {
 	 */
 	public final ResKey getI18NReasonKey() {
 		return _reasonKey;
+	}
+
+	/**
+	 * Two {@link ExecutableState}s are equal if they were created with the same
+	 * {@link CommandVisibility} and the same {@link #getI18NReasonKey() reason key}.
+	 *
+	 * <p>
+	 * The comparison is over the construction values, not over {@link #visibility()}, which the
+	 * session-wide {@link #allVisible()} setting can widen. Since the reason takes part, two states
+	 * that both {@link #isDisabled() disable} a command for different reasons are different - this
+	 * is what makes a changed reason observable to a command model tracking its state.
+	 * </p>
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == this) {
+			return true;
+		}
+		if (!(obj instanceof ExecutableState)) {
+			return false;
+		}
+		ExecutableState other = (ExecutableState) obj;
+		return _visibility == other._visibility && Objects.equals(_reasonKey, other._reasonKey);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(_visibility, _reasonKey);
 	}
 
 	/**

@@ -75,9 +75,7 @@ public class WithTransactionAction implements ViewAction {
 	 */
 	@CalledByReflection
 	public WithTransactionAction(InstantiationContext context, Config config) {
-		_actions = config.getActions().stream()
-			.<ViewAction> map(c -> context.getInstance(c))
-			.toList();
+		_actions = ViewActions.instantiate(context, config.getActions());
 	}
 
 	@Override

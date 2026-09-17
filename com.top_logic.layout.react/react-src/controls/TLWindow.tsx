@@ -1,4 +1,7 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, useFocusTrap } from 'tl-react-bridge';
+import {
+  React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding,
+  useFocusTrap, FillBarrier,
+} from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback, useRef, useState } = React;
@@ -332,7 +335,9 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
         </button>
       </div>
       <div className="tlWindow__body">
-        <TLChild control={child} />
+        <FillBarrier>
+          <TLChild control={child} />
+        </FillBarrier>
       </div>
       {(actions.length > 0 || buttonBar) && (
         <div className="tlWindow__footer">

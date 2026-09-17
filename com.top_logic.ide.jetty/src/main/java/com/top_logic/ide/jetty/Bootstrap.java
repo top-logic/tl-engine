@@ -30,8 +30,13 @@ import org.apache.jasper.servlet.TldScanner;
 import org.apache.tomcat.util.scan.StandardJarScanner;
 import org.eclipse.jetty.ee10.apache.jsp.JettyJasperInitializer;
 import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
+import org.eclipse.jetty.ee10.servlet.ServletHandler;
 import org.eclipse.jetty.ee10.servlet.ServletHolder;
 import org.eclipse.jetty.ee10.webapp.WebAppContext;
+import org.eclipse.jetty.http.UriCompliance;
+import org.eclipse.jetty.http.UriCompliance.Violation;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
@@ -54,6 +59,22 @@ import com.top_logic.basic.core.workspace.Workspace;
 public class Bootstrap {
 
 	private static final String OK_RESULT = "OK";
+
+	/**
+	 * URI handling of the server: the default one, extended by the ambiguous path separator.
+	 *
+	 * <p>
+	 * A URL of the application can carry a value in a path segment - the identifier of an object, a
+	 * business key - which is percent-encoded, so a value containing a slash travels as
+	 * {@code %2F}. Jetty calls such a path ambiguous, because the escape means one thing to the
+	 * application and another to a proxy comparing paths, and answers a request carrying one with
+	 * "400 Ambiguous URI path separator" unless the violation is allowed.
+	 * </p>
+	 *
+	 * @see ServletHandler#setDecodeAmbiguousURIs(boolean)
+	 */
+	private static final UriCompliance URI_COMPLIANCE =
+		UriCompliance.DEFAULT.with("TopLogic", Violation.AMBIGUOUS_PATH_SEPARATOR);
 
 	static final String HOSTNAME = "localhost";
 
@@ -119,7 +140,10 @@ public class Bootstrap {
 
 		final Server server = new Server();
 
-		ServerConnector connector = new ServerConnector(server);
+		HttpConfiguration httpConfig = new HttpConfiguration();
+		httpConfig.setUriCompliance(URI_COMPLIANCE);
+
+		ServerConnector connector = new ServerConnector(server, new HttpConnectionFactory(httpConfig));
 		connector.setPort(_port);
 		// open connector to bind port yet.
 		connector.open();
@@ -128,6 +152,10 @@ public class Bootstrap {
 		WebAppContext webapp = new WebAppContext();
 		webapp.setContextPath(_contextPath);
 		webapp.setDefaultsDescriptor("com/top_logic/ide/jetty/webdefault.xml");
+		// The connector accepts a path with an encoded slash; the servlet handler is what decodes it
+		// into the path the servlets are given, and answers "400 Ambiguous URI encoding" for one it
+		// refuses to decode.
+		webapp.getServletHandler().setDecodeAmbiguousURIs(true);
 
 		ResourceFactory resourceFactory = ResourceFactory.of(webapp);
 		List<URL> resourcePath = paths.getResourcePath();

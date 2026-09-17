@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The flag each language is labelled with.
+
+	A language is not a country, so an entry states a convention: the flag of the country the
+	language is most widely associated with, of the area it is spoken across where no single country
+	carries it (Arabic), and the fallback flag where neither applies (Esperanto). An application
+	that disagrees overrides the entry it disagrees with, and adds one for a language not listed.
+
+	A region appears as an entry of its own only to be available when an application supports that
+	region as a language in its own right; an application offering plain German never reaches the
+	de-AT entry, because the lookup prefers language and region over language alone.
+-->
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance class="com.top_logic.basic.module.ModuleSystem">
+				<modules>
+					<module key="com.top_logic.util.LanguageFlags$Module"
+						value="true"
+					/>
+				</modules>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.util.LanguageFlags">
+			<instance class="com.top_logic.util.LanguageFlags">
+				<flags>
+					<flag language="af" flag="za"/>
+					<flag language="am" flag="et"/>
+					<flag language="ar" flag="arab"/>
+					<flag language="az" flag="az"/>
+					<flag language="be" flag="by"/>
+					<flag language="bg" flag="bg"/>
+					<flag language="bn" flag="bd"/>
+					<flag language="bs" flag="ba"/>
+					<flag language="ca" flag="es-ct"/>
+					<flag language="cs" flag="cz"/>
+					<flag language="cy" flag="gb-wls"/>
+					<flag language="da" flag="dk"/>
+					<flag language="de" flag="de"/>
+					<flag language="el" flag="gr"/>
+					<flag language="en" flag="us"/>
+					<flag language="eo" flag="xx"/>
+					<flag language="es" flag="es"/>
+					<flag language="et" flag="ee"/>
+					<flag language="eu" flag="es-pv"/>
+					<flag language="fa" flag="ir"/>
+					<flag language="fi" flag="fi"/>
+					<flag language="fil" flag="ph"/>
+					<flag language="fo" flag="fo"/>
+					<flag language="fr" flag="fr"/>
+					<flag language="ga" flag="ie"/>
+					<flag language="gd" flag="gb-sct"/>
+					<flag language="gl" flag="es-ga"/>
+					<flag language="gu" flag="in"/>
+					<flag language="he" flag="il"/>
+					<flag language="hi" flag="in"/>
+					<flag language="hr" flag="hr"/>
+					<flag language="hu" flag="hu"/>
+					<flag language="hy" flag="am"/>
+					<flag language="id" flag="id"/>
+					<flag language="is" flag="is"/>
+					<flag language="it" flag="it"/>
+					<flag language="ja" flag="jp"/>
+					<flag language="ka" flag="ge"/>
+					<flag language="kk" flag="kz"/>
+					<flag language="km" flag="kh"/>
+					<flag language="kn" flag="in"/>
+					<flag language="ko" flag="kr"/>
+					<flag language="ky" flag="kg"/>
+					<flag language="lo" flag="la"/>
+					<flag language="lt" flag="lt"/>
+					<flag language="lv" flag="lv"/>
+					<flag language="mk" flag="mk"/>
+					<flag language="ml" flag="in"/>
+					<flag language="mn" flag="mn"/>
+					<flag language="mr" flag="in"/>
+					<flag language="ms" flag="my"/>
+					<flag language="mt" flag="mt"/>
+					<flag language="my" flag="mm"/>
+					<flag language="nb" flag="no"/>
+					<flag language="ne" flag="np"/>
+					<flag language="nl" flag="nl"/>
+					<flag language="nn" flag="no"/>
+					<flag language="no" flag="no"/>
+					<flag language="pa" flag="in"/>
+					<flag language="pl" flag="pl"/>
+					<flag language="ps" flag="af"/>
+					<flag language="pt" flag="pt"/>
+					<flag language="ro" flag="ro"/>
+					<flag language="ru" flag="ru"/>
+					<flag language="si" flag="lk"/>
+					<flag language="sk" flag="sk"/>
+					<flag language="sl" flag="si"/>
+					<flag language="sq" flag="al"/>
+					<flag language="sr" flag="rs"/>
+					<flag language="sv" flag="se"/>
+					<flag language="sw" flag="tz"/>
+					<flag language="ta" flag="in"/>
+					<flag language="te" flag="in"/>
+					<flag language="th" flag="th"/>
+					<flag language="ti" flag="er"/>
+					<flag language="tk" flag="tm"/>
+					<flag language="tr" flag="tr"/>
+					<flag language="uk" flag="ua"/>
+					<flag language="ur" flag="pk"/>
+					<flag language="uz" flag="uz"/>
+					<flag language="vi" flag="vn"/>
+					<flag language="zh" flag="cn"/>
+					<flag language="zu" flag="za"/>
+					<flag language="de-at" flag="at"/>
+					<flag language="de-ch" flag="ch"/>
+					<flag language="de-li" flag="li"/>
+					<flag language="de-lu" flag="lu"/>
+					<flag language="en-au" flag="au"/>
+					<flag language="en-ca" flag="ca"/>
+					<flag language="en-gb" flag="gb"/>
+					<flag language="en-ie" flag="ie"/>
+					<flag language="en-in" flag="in"/>
+					<flag language="en-nz" flag="nz"/>
+					<flag language="en-za" flag="za"/>
+					<flag language="es-ar" flag="ar"/>
+					<flag language="es-cl" flag="cl"/>
+					<flag language="es-co" flag="co"/>
+					<flag language="es-mx" flag="mx"/>
+					<flag language="es-pe" flag="pe"/>
+					<flag language="fr-be" flag="be"/>
+					<flag language="fr-ca" flag="ca"/>
+					<flag language="fr-ch" flag="ch"/>
+					<flag language="fr-lu" flag="lu"/>
+					<flag language="it-ch" flag="ch"/>
+					<flag language="nl-be" flag="be"/>
+					<flag language="pt-br" flag="br"/>
+					<flag language="sv-fi" flag="fi"/>
+					<flag language="zh-hk" flag="hk"/>
+					<flag language="zh-mo" flag="mo"/>
+					<flag language="zh-sg" flag="sg"/>
+					<flag language="zh-tw" flag="tw"/>
+				</flags>
+			</instance>
+		</config>
+	</services>
+</application>

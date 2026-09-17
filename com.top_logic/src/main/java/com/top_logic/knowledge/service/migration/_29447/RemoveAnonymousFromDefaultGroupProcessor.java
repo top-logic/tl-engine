@@ -11,11 +11,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import com.top_logic.base.services.InitialGroupManager;
 import com.top_logic.basic.Log;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.module.ManagedClass.ServiceConfiguration;
-import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
@@ -34,14 +35,16 @@ import com.top_logic.tool.boundsec.wrap.Group;
  *
  * <p>
  * The anonymous account represents a visitor that did not log in, while the default group is the
- * group that all accounts have and therefore typically carries the roles of an ordinary user. With
- * model-based access rights, an anonymous visitor would inherit whatever those roles grant. New
- * accounts stay out of the default group since {@link com.top_logic.knowledge.wrap.person.PersonGroupsInitializer}
- * skips it for the anonymous account; existing databases still hold the membership created before.
+ * group named by {@link InitialGroupManager.Config#getDefaultGroup()} and therefore typically
+ * carries the roles of an ordinary user. With model-based access rights, an anonymous visitor would
+ * inherit whatever those roles grant. New accounts stay out of the default group since
+ * {@link com.top_logic.knowledge.wrap.person.PersonGroupsInitializer} skips it for the anonymous
+ * account; databases hold the membership created before.
  * </p>
  *
  * @implNote Operates on the persistency layer only: the model service is not available in a
- *           {@link MigrationPostProcessor}. Besides the account itself, its
+ *           {@link MigrationPostProcessor}, so the configured group is looked up by its name in
+ *           table {@link Group#OBJECT_NAME}. Besides the account itself, its
  *           {@link Group#isRepresentativeGroup() representative group} was added to the default
  *           group as well (see {@link Group#addMember(com.top_logic.model.TLObject)}), so both
  *           memberships are removed.
@@ -63,21 +66,21 @@ public class RemoveAnonymousFromDefaultGroupProcessor implements MigrationPostPr
 			return;
 		}
 
+		KnowledgeObject defaultGroup = defaultGroup(log, kb);
+		if (defaultGroup == null) {
+			return;
+		}
+
 		Set<KnowledgeItem> anonymousMembers = new HashSet<>();
 		anonymousMembers.add(account);
 		anonymousMembers.addAll(representativeGroups(log, account));
 
 		int removed = 0;
-		for (KnowledgeObject group : kb.getAllKnowledgeObjects(Group.OBJECT_NAME)) {
-			if (!isDefaultGroup(log, group)) {
-				continue;
-			}
-			for (KnowledgeItem member : anonymousMembers) {
-				removed += removeMembership(group, member);
-			}
+		for (KnowledgeItem member : anonymousMembers) {
+			removed += removeMembership(defaultGroup, member);
 		}
 		if (removed == 0) {
-			log.info("The account '" + anonymousName + "' is not a member of a default group.");
+			log.info("The account '" + anonymousName + "' is not a member of the default group.");
 		} else {
 			log.info("Removed the account '" + anonymousName + "' from the default group ("
 				+ removed + " membership(s)).");
@@ -119,12 +122,39 @@ public class RemoveAnonymousFromDefaultGroupProcessor implements MigrationPostPr
 		return result;
 	}
 
-	private boolean isDefaultGroup(Log log, KnowledgeObject group) {
+	/**
+	 * The configured default group, or <code>null</code>, if there is none.
+	 */
+	private KnowledgeObject defaultGroup(Log log, KnowledgeBase kb) {
+		String groupName = defaultGroupName(log);
+		if (groupName == null) {
+			// The problem is already reported.
+			return null;
+		}
+		if (StringServices.isEmpty(groupName)) {
+			log.info("No default group is configured, no membership to remove.");
+			return null;
+		}
+
+		KnowledgeObject group =
+			(KnowledgeObject) kb.getObjectByAttribute(Group.OBJECT_NAME, Group.NAME_ATTRIBUTE, groupName);
+		if (group == null) {
+			log.info("No group '" + groupName + "' exists, no membership to remove.");
+		}
+		return group;
+	}
+
+	/**
+	 * The configured name of the default group, or <code>null</code>, if it cannot be determined.
+	 */
+	private String defaultGroupName(Log log) {
 		try {
-			return Boolean.TRUE.equals(group.getAttributeValue(Group.GROUP_DEFAULT));
-		} catch (NoSuchAttributeException ex) {
-			log.error("No '" + Group.GROUP_DEFAULT + "' attribute in table '" + Group.OBJECT_NAME + "'.", ex);
-			return false;
+			ServiceConfiguration<InitialGroupManager> serviceConfig =
+				ApplicationConfig.getInstance().getServiceConfiguration(InitialGroupManager.class);
+			return ((InitialGroupManager.Config) serviceConfig).getDefaultGroup();
+		} catch (ConfigurationException ex) {
+			log.error("Unable to determine the name of the default group.", ex);
+			return null;
 		}
 	}
 

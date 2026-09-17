@@ -44,6 +44,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey SESSION_TIMEOUT_EXTEND;
 
+	/**
+	 * @en Open
+	 */
+	public static ResKey TABLE_ACTIVATE_ROW;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

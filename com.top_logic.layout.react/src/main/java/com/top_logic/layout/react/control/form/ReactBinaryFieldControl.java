@@ -80,6 +80,7 @@ public class ReactBinaryFieldControl extends ReactFormFieldControl implements Up
 		// and emit the download/upload display state instead.
 		putState(VALUE, null);
 		putState(STATUS, "idle");
+		putState(UploadSupport.MAX_UPLOAD_SIZE, UploadSupport.maxUploadSize());
 		updateDataState(currentData());
 		initDataFieldState();
 	}

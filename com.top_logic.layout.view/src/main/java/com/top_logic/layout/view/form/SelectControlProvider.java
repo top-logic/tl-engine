@@ -18,7 +18,7 @@ import com.top_logic.layout.LabelComparator;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
-import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.field.FieldSpec;
@@ -31,8 +31,9 @@ import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
  *
  * <p>
  * Wraps a {@link SelectFieldModel} (an {@link AttributeSelectFieldModel}) in a
- * {@link ReactDropdownSelectControl}, using {@link MetaLabelProvider} so that options and the
- * current selection are rendered with their model labels in both edit and display mode.
+ * {@link ReactDropdownSelectControl}, using {@link MetaResourceProvider} so that options and the
+ * current selection are rendered with the label and the image their model registers, in both edit
+ * and display mode.
  * </p>
  *
  * <p>
@@ -97,7 +98,11 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 	@Override
 	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
 		SelectFieldModel selectModel = (SelectFieldModel) model;
-		LabelProvider labels = MetaLabelProvider.INSTANCE;
+		// A resource provider rather than a label provider: an option is presented by its label and
+		// its image, and the image is what a plain label provider cannot answer - the control drops
+		// it for want of one. The two registries of LabelProviderService fall back to each other,
+		// so a type registered only for its label is labelled exactly as before.
+		LabelProvider labels = MetaResourceProvider.INSTANCE;
 		Comparator<?> optionOrder = LabelComparator.newCachingInstance(labels);
 		return new ReactDropdownSelectControl(context, selectModel, labels, optionOrder, false);
 	}

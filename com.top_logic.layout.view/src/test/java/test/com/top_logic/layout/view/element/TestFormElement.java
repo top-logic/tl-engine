@@ -25,6 +25,8 @@ import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.element.FieldElement;
 import com.top_logic.layout.view.element.FormElement;
+import com.top_logic.layout.react.field.ReactFieldControlProvider;
+import com.top_logic.layout.view.form.PasswordInputControlProvider;
 
 /**
  * Tests parsing and instantiation of {@link FormElement} and {@link FieldElement}.
@@ -75,6 +77,46 @@ public class TestFormElement extends TestCase {
 
 		FieldElement.Config fieldConfig = (FieldElement.Config) childConfig;
 		assertEquals("Field attribute", "name", fieldConfig.getAttribute());
+	}
+
+	/**
+	 * Tests that a field names the control editing it, in the shape the model annotation of an
+	 * attribute names it.
+	 */
+	public void testParseFieldInputControl() throws Exception {
+		FieldElement.Config fieldConfig = readField("test-field-input-control.view.xml");
+
+		PolymorphicConfiguration<? extends ReactFieldControlProvider> inputControl =
+			fieldConfig.getInputControl();
+		assertNotNull("The field names no control.", inputControl);
+		assertEquals(PasswordInputControlProvider.class, inputControl.getImplementationClass());
+	}
+
+	/**
+	 * Tests that a field saying nothing about its control leaves the choice to the model.
+	 */
+	public void testAFieldNeedNotNameItsControl() throws Exception {
+		assertNull(readField("test-form.view.xml").getInputControl());
+	}
+
+	/**
+	 * The single field of the form the given view file declares.
+	 */
+	private static FieldElement.Config readField(String viewFile) throws Exception {
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestFormElement.class);
+
+		Map<String, ConfigurationDescriptor> descriptors = Collections.singletonMap(
+			"view", TypedConfiguration.getConfigurationDescriptor(ViewElement.Config.class));
+
+		BinaryContent source = new ClassRelativeBinaryContent(TestFormElement.class, viewFile);
+
+		ConfigurationReader reader = new ConfigurationReader(context, descriptors);
+		reader.setSource(source);
+		ViewElement.Config config = (ViewElement.Config) reader.read();
+		context.checkErrors();
+
+		FormElement.Config formConfig = (FormElement.Config) config.getContent();
+		return (FieldElement.Config) formConfig.getChildren().get(0);
 	}
 
 	/**

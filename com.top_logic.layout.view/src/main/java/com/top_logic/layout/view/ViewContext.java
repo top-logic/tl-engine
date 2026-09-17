@@ -14,6 +14,7 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.form.FormModel;
+import com.top_logic.layout.view.navigation.RevealRegistry;
 import com.top_logic.layout.view.slot.SlotPath;
 import com.top_logic.layout.view.slot.SlotRegistry;
 
@@ -193,6 +194,19 @@ public interface ViewContext extends ReactContext {
 	 * </p>
 	 */
 	SlotRegistry getSlotRegistry();
+
+	/**
+	 * What the window currently displays, and where.
+	 *
+	 * <p>
+	 * One registry per window. Every context of the window - a dialog's and a drilled-down frame's
+	 * included - answers the same registry, so a request to display an object finds the containers
+	 * to open and the view instance to write, wherever it is issued from.
+	 * </p>
+	 *
+	 * @see com.top_logic.layout.view.navigation.RevealPath
+	 */
+	RevealRegistry getRevealRegistry();
 
 	/**
 	 * Creates a child context with the {@link #getSlotPath() slot path} extended by one segment.

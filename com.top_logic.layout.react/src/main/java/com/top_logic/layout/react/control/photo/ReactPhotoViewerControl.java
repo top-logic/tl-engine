@@ -28,10 +28,13 @@ import com.top_logic.layout.react.control.ReactControl;
 public class ReactPhotoViewerControl extends ReactControl implements DataProvider {
 
 	/** State key indicating whether photo data is available. */
-	private static final String HAS_PHOTO = "hasPhoto";
+	public static final String HAS_PHOTO = "hasPhoto";
 
 	/** State key whose value increments each time photo data is replaced. */
-	private static final String DATA_REVISION = "dataRevision";
+	public static final String DATA_REVISION = "dataRevision";
+
+	/** State key for the image's alternative text. */
+	public static final String ALT = "alt";
 
 	private final BinaryDataValue _model;
 
@@ -52,6 +55,19 @@ public class ReactPhotoViewerControl extends ReactControl implements DataProvide
 		putState(HAS_PHOTO, data != null);
 		putState(DATA_REVISION, _dataRevision);
 		model.addListener(_modelListener);
+	}
+
+	/**
+	 * Sets what the image shows, for a reader who cannot see it.
+	 *
+	 * <p>
+	 * {@code null} or empty leaves the client its default, which describes a photograph the user
+	 * took - the case this control was written for. Anything else displayed through it says what it
+	 * is instead.
+	 * </p>
+	 */
+	public void setAlt(String alt) {
+		putState(ALT, (alt == null || alt.isEmpty()) ? null : alt);
 	}
 
 	@Override

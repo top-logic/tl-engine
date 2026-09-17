@@ -100,7 +100,7 @@ public class ThreadTable implements UIElement {
 
 		if (_selectionRef != null) {
 			ViewChannel selection = context.resolveChannel(_selectionRef);
-			control.setSelectionListener(keys -> selection.set(keys.size() == 1 ? keys.iterator().next() : null));
+			control.addSelectionListener(keys -> selection.set(keys.size() == 1 ? keys.iterator().next() : null));
 		}
 
 		return control;

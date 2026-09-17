@@ -20,6 +20,7 @@ import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackAlign;
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackDirection;
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackGap;
+import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.login.LoginCommandsConfig;
@@ -57,6 +58,11 @@ public class LoginCommandsElement implements UIElement {
 		_commands = ApplicationConfig.getInstance().getConfig(LoginCommandsConfig.class).getCommands().stream()
 			.map(context::getInstance)
 			.collect(Collectors.toList());
+	}
+
+	@Override
+	public List<ChildGroup> getChildGroups() {
+		return List.of(ChildGroup.elements(_commands));
 	}
 
 	@Override

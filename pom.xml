@@ -30,15 +30,15 @@
 
 	<properties>
 		<tl.version>8.0.0-SNAPSHOT</tl.version>
-		<jetty.version>12.1.12</jetty.version>
+		<jetty.version>12.1.13</jetty.version>
 		<poi.version>5.5.1</poi.version>
 		<kafka.version>3.9.2</kafka.version>
-		<zookeeper.version>3.9.5</zookeeper.version>
+		<zookeeper.version>3.9.6</zookeeper.version>
 		<slf4j.version>2.0.19</slf4j.version>
 		<log4j.version>2.26.1</log4j.version>
 		<fasterxml.version>2.22.2</fasterxml.version>
 		<msgbuf.version>1.2.2</msgbuf.version>
-		<bouncycastle.version>1.85</bouncycastle.version>
+		<bouncycastle.version>1.86</bouncycastle.version>
 		<batik.version>1.19</batik.version>
 		<tl.license.version>7.8.2</tl.license.version>
 		
@@ -306,6 +306,13 @@
 			<dependency>
 				<groupId>com.top-logic</groupId>
 				<artifactId>tl-model-search</artifactId>
+				<version>${tl.version}</version>
+				<type>test-jar</type>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-layout-react</artifactId>
 				<version>${tl.version}</version>
 				<type>test-jar</type>
 				<scope>test</scope>
@@ -640,6 +647,11 @@
 			<dependency>
 				<groupId>com.top-logic</groupId>
 				<artifactId>tl-layout-view-agent</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-layout-view-contact</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
 			<dependency>
@@ -1320,7 +1332,7 @@
 			<dependency>
 			    <groupId>org.pac4j</groupId>
 			    <artifactId>pac4j-oidc</artifactId>
-    			<version>6.5.7</version>
+    			<version>6.5.8</version>
 			</dependency>
 			<dependency>
 				<groupId>net.minidev</groupId>
@@ -1330,7 +1342,7 @@
 			<dependency>
 			    <groupId>org.pac4j</groupId>
 			    <artifactId>pac4j-jakartaee</artifactId>
-    			<version>6.5.7</version>
+    			<version>6.5.8</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.pac4j</groupId>
@@ -2020,7 +2032,7 @@
 				</plugin>
 				<plugin>
 					<artifactId>maven-plugin-plugin</artifactId>
-					<version>3.15.2</version>
+					<version>3.16.0</version>
 				</plugin>
 				<plugin>
 					<artifactId>maven-surefire-plugin</artifactId>
@@ -2032,12 +2044,12 @@
 				</plugin>
 				<plugin>
 					<artifactId>maven-install-plugin</artifactId>
-					<version>3.1.4</version>
+					<version>3.2.0</version>
 				</plugin>
 				<plugin>
 					<groupId>org.codehaus.mojo</groupId>
 					<artifactId>exec-maven-plugin</artifactId>
-					<version>3.6.3</version>
+					<version>3.6.4</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
@@ -2046,7 +2058,7 @@
 				</plugin>
 				<plugin>
 					<artifactId>maven-deploy-plugin</artifactId>
-					<version>3.1.4</version>
+					<version>3.2.0</version>
 				</plugin>
 				<plugin>
 					<artifactId>maven-invoker-plugin</artifactId>
@@ -2075,7 +2087,7 @@
 				<plugin>
 					<groupId>org.codehaus.mojo</groupId>
 					<artifactId>versions-maven-plugin</artifactId>
-					<version>2.21.0</version>
+					<version>2.22.0</version>
 				</plugin>
 				<plugin>
 					<groupId>org.vafer</groupId>

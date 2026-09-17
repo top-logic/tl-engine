@@ -21,12 +21,9 @@ import com.top_logic.layout.react.control.ToolbarControl;
 import com.top_logic.layout.view.ContainerElement;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.channel.ChannelRef;
-import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
-import com.top_logic.layout.view.command.ViewExecutabilityRule;
-import com.top_logic.layout.view.command.ViewExecutabilityRules;
+import com.top_logic.layout.view.command.ViewCommands;
 
 /**
  * Abstract base for {@link UIElement}s that carry {@link ViewCommand} configurations.
@@ -92,44 +89,40 @@ public abstract class CommandCarrierElement extends ContainerElement {
 	 * channels, executability rules and confirmations.
 	 */
 	protected List<ViewCommandModel> buildCommandModels(ViewContext context) {
-		List<ViewCommandModel> models = new ArrayList<>();
-		for (int i = 0; i < _commands.size() && i < _commandConfigs.size(); i++) {
-			ViewCommand cmd = _commands.get(i);
-			ViewCommand.Config cmdConfig = _commandConfigs.get(i);
-
-			ChannelRef inputRef = cmdConfig.getInput();
-			ViewChannel inputChannel = inputRef != null ? context.resolveChannel(inputRef) : null;
-
-			ViewExecutabilityRule rule = ViewExecutabilityRules.build(cmdConfig.getExecutability(), context);
-
-			ViewCommandModel model = ViewCommandModel.create(cmd, cmdConfig, inputChannel, rule);
-			models.add(model);
-		}
-		return models;
+		return buildCommandModels(context, _commands, _commandConfigs);
 	}
 
 	/**
-	 * Registers attach/detach hooks for the given command models so they re-evaluate executability
-	 * when input channels change.
+	 * Builds {@link ViewCommandModel}s for the given commands, resolving per-command input
+	 * channels, executability rules and confirmations.
+	 *
+	 * @param commands
+	 *        The instantiated commands.
+	 * @param commandConfigs
+	 *        Their configurations, in the same order.
 	 */
-	protected void registerLifecycle(List<ViewCommandModel> models, ReactControl host) {
-		host.addAttachListener(() -> {
-			for (ViewCommandModel model : models) {
-				model.attach();
-			}
-		});
-		host.addDetachListener(() -> {
-			for (ViewCommandModel model : models) {
-				model.detach();
-			}
-		});
+	protected static List<ViewCommandModel> buildCommandModels(ViewContext context,
+			List<ViewCommand> commands, List<ViewCommand.Config> commandConfigs) {
+		return ViewCommands.buildCommandModels(context, commands, commandConfigs);
+	}
+
+	/**
+	 * Registers attach/detach hooks for the given command models, so that they follow their input -
+	 * the channel value and the object it holds - while the host is displayed.
+	 *
+	 * @param context
+	 *        The context whose {@link ViewContext#getModelScope() model scope} carries the object
+	 *        observation; read when the host attaches.
+	 */
+	protected void registerLifecycle(ViewContext context, List<ViewCommandModel> models, ReactControl host) {
+		ViewCommands.registerLifecycle(context, models, host);
 	}
 
 	/**
 	 * Convenience overload for {@link ToolbarControl}s (which are {@link ReactControl}s).
 	 */
-	protected void registerLifecycle(List<ViewCommandModel> models, ToolbarControl host) {
-		registerLifecycle(models, (ReactControl) host);
+	protected void registerLifecycle(ViewContext context, List<ViewCommandModel> models, ToolbarControl host) {
+		registerLifecycle(context, models, (ReactControl) host);
 	}
 
 	/**

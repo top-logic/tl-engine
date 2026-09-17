@@ -7,6 +7,7 @@ package com.top_logic.layout.view.tiles;
 
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.view.ViewContext;
 
 /**
@@ -30,6 +31,32 @@ public interface TileLabelProvider {
 	 * @return The label, or {@code null} for an unlabeled frame.
 	 */
 	ResKey compute(ViewContext context);
+
+	/**
+	 * The label a computed value stands for.
+	 *
+	 * @param value
+	 *        The result of a label computation: a {@link ResKey}, a {@link String}, a business
+	 *        object, or nothing.
+	 * @return The label to announce a frame with, or {@code null} for an unlabeled frame.
+	 *
+	 * @implNote A {@link ResKey} (e.g. an {@code I18NString} attribute value) is answered as-is so
+	 *           that it stays localizable; a {@link String} is wrapped via
+	 *           {@link ResKey#text(String)}; any other object is labeled via
+	 *           {@link MetaLabelProvider}.
+	 */
+	static ResKey toLabel(Object value) {
+		if (value == null) {
+			return null;
+		}
+		if (value instanceof ResKey key) {
+			return key;
+		}
+		if (value instanceof String text) {
+			return ResKey.text(text);
+		}
+		return ResKey.text(MetaLabelProvider.INSTANCE.getLabel(value));
+	}
 
 	/**
 	 * Configuration for {@link TileLabelProvider}.

@@ -5,9 +5,9 @@ import type { TLCellProps } from './types';
 import { getComponent } from './registry';
 import { connect, subscribe, unsubscribe } from './sse-client';
 import { setI18NApiBase, setI18NWindowName } from './i18n';
-import { createScope, registerScope, addBinding, type GestureHandler, type KeyboardScope } from './keyboard-dispatcher';
+import { createScope, registerScope, addBinding, pageScope, type GestureHandler, type KeyboardScope } from './keyboard-dispatcher';
 import { pushTrap, firstFocusable } from './focus-trap';
-import { CMD_VALUE_CHANGED, enqueueCommand, registerPendingFlush, unregisterPendingFlush } from './command-channel';
+import { CMD_SUBMIT, CMD_UPLOAD_REJECTED, CMD_VALUE_CHANGED, enqueueCommand, registerPendingFlush, unregisterPendingFlush } from './command-channel';
 
 /**
  * Per-control state store compatible with React's useSyncExternalStore.
@@ -302,10 +302,47 @@ export function useTLCommand(): (command: string, args?: Record<string, unknown>
 }
 
 /**
+ * State key under which an upload control publishes the maximum upload size in bytes. Must match
+ * {@code UploadSupport#MAX_UPLOAD_SIZE}; a value of 0 means that there is no limit.
+ */
+const STATE_MAX_UPLOAD_SIZE = 'maxUploadSize';
+
+/**
+ * The first file in the given form data that is larger than the given limit, `null` if all of them
+ * stay within it.
+ */
+function oversizedFile(formData: FormData, limit: number): File | null {
+  for (const value of formData.values()) {
+    if (value instanceof File && value.size > limit) {
+      return value;
+    }
+  }
+  return null;
+}
+
+/**
+ * The total size of all files in the given form data.
+ */
+function totalFileSize(formData: FormData): number {
+  let total = 0;
+  for (const value of formData.values()) {
+    if (value instanceof File) {
+      total += value.size;
+    }
+  }
+  return total;
+}
+
+/**
  * Returns a function to upload a FormData to the server for the enclosing control.
  *
  * <p>The control ID and window name are appended automatically. The server dispatches
  * to controls implementing the {@code UploadHandler} interface.</p>
+ *
+ * <p>A selection larger than the control's {@link STATE_MAX_UPLOAD_SIZE} limit - either a single
+ * file or the selection as a whole - is not transmitted at all. Instead, the
+ * {@link CMD_UPLOAD_REJECTED} command tells the server about the refusal, which reports the limit
+ * to the user.</p>
  */
 export function useTLUpload(): (formData: FormData) => Promise<void> {
   const ctx = useContext(TLControlContext);
@@ -314,9 +351,27 @@ export function useTLUpload(): (formData: FormData) => Promise<void> {
   }
   const controlId = ctx.controlId;
   const windowName = ctx.windowName;
+  const store = ctx.store;
 
   return useCallback(
     async (formData: FormData) => {
+      const limit = Number(store.getSnapshot()[STATE_MAX_UPLOAD_SIZE] ?? 0);
+      if (limit > 0) {
+        const oversized = oversizedFile(formData, limit);
+        const total = totalFileSize(formData);
+        if (oversized !== null || total > limit) {
+          return enqueueCommand(getApiBase() + 'react-api/command', {
+            controlId,
+            command: CMD_UPLOAD_REJECTED,
+            windowName,
+            arguments: {
+              fileName: oversized !== null ? oversized.name : '',
+              size: oversized !== null ? oversized.size : total,
+            },
+          });
+        }
+      }
+
       formData.append('controlId', controlId);
       formData.append('windowName', windowName);
       try {
@@ -331,7 +386,7 @@ export function useTLUpload(): (formData: FormData) => Promise<void> {
         console.error('[TLReact] Upload error:', e);
       }
     },
-    [controlId, windowName]
+    [controlId, windowName, store]
   );
 }
 
@@ -463,11 +518,43 @@ export function useTLFieldValue(
   return [state.value, setValue, flush];
 }
 
+/**
+ * Returns the `onKeyDown` handler that reports the value of a single-line input as finished when
+ * the user presses Enter, or `undefined` while the enclosing control does not ask for it
+ * (`state.submitOnEnter`).
+ *
+ * <p>Attach it to the input the user types in - never to a text area, where Enter is part of the
+ * text. The command carries the value as typed, so one step both stores and submits it; a value
+ * still within the debounce window is flushed first by the command chain (see
+ * {@link enqueueCommand}), and the duplicate reaching the server is the value it already has.</p>
+ */
+export function useTLSubmitOnEnter():
+    ((e: React.KeyboardEvent<HTMLInputElement>) => void) | undefined {
+  const state = useTLState();
+  const sendCommand = useTLCommand();
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key !== 'Enter' || e.shiftKey || e.altKey || e.ctrlKey || e.metaKey) {
+        return;
+      }
+      // Read the value before dispatching: the event is no longer available afterwards.
+      const value = e.currentTarget.value;
+      e.preventDefault();
+      void sendCommand(CMD_SUBMIT, { value });
+    },
+    [sendCommand]
+  );
+
+  return state.submitOnEnter === true ? handleKeyDown : undefined;
+}
+
 // --- Keyboard scopes & gesture bindings ---
 
 /**
  * The nearest enclosing keyboard scope. Provided by {@link KeyboardScopeProvider}
- * (a dialog/window/table/app-root) and consumed by {@link useKeyboardBinding}.
+ * (a dialog, window or table) and consumed by {@link useKeyboardBinding}. Outside any
+ * such surface the context is empty and bindings go to the dispatcher's page scope.
  */
 const KeyboardScopeContext = createContext<KeyboardScope | null>(null);
 
@@ -503,7 +590,9 @@ const KeyboardScopeProvider: React.FC<{ active?: () => boolean; modal?: boolean;
   };
 
 /**
- * Registers a gesture-&gt;handler binding into the nearest enclosing keyboard scope.
+ * Registers a gesture-&gt;handler binding into the nearest enclosing keyboard scope, or
+ * into the dispatcher's page scope for a control that no {@link KeyboardScopeProvider}
+ * encloses (a page toolbar's button, a form on a page).
  *
  * <p>The handler runs when the gesture is pressed and this scope is the innermost
  * active scope binding it. Returning {@code false} from the handler declines, letting
@@ -518,13 +607,13 @@ const KeyboardScopeProvider: React.FC<{ active?: () => boolean; modal?: boolean;
  *        Invoked on the gesture. Need not be stable; the latest closure is always used.
  */
 function useKeyboardBinding(gesture: string | string[] | null | undefined, handler: GestureHandler): void {
-  const scope = useContext(KeyboardScopeContext);
+  const scope = useContext(KeyboardScopeContext) ?? pageScope();
   const handlerRef = React.useRef(handler);
   handlerRef.current = handler;
   const gestures = gesture == null ? [] : (Array.isArray(gesture) ? gesture : [gesture]);
   const key = gestures.join('|');
   React.useEffect(() => {
-    if (!scope || gestures.length === 0) {
+    if (gestures.length === 0) {
       return;
     }
     const stable: GestureHandler = () => handlerRef.current();

@@ -8,7 +8,6 @@ package com.top_logic.layout.view.list;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -28,11 +27,13 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLStructuredType;
@@ -269,6 +270,13 @@ public class ObjectListElement implements UIElement {
 	}
 
 	@Override
+	public List<ChildGroup> getChildGroups() {
+		return List.of(
+			ChildGroup.elements(_itemContent),
+			ChildGroup.elements(_newElementContent));
+	}
+
+	@Override
 	public IReactControl createControl(ViewContext context) {
 		ViewChannel container = context.resolveChannel(_config.getInput());
 
@@ -297,10 +305,11 @@ public class ObjectListElement implements UIElement {
 	}
 
 	private static List<Object> computeElements(QueryExecutor itemsExecutor, Object container) {
-		if (container == null) {
+		Object aliveContainer = ListContainer.aliveOrNull(container);
+		if (aliveContainer == null) {
 			return Collections.emptyList();
 		}
-		Object result = itemsExecutor.execute(container);
+		Object result = itemsExecutor.execute(aliveContainer);
 		if (result instanceof Collection<?> collection) {
 			return new ArrayList<>(collection);
 		}
@@ -315,24 +324,19 @@ public class ObjectListElement implements UIElement {
 		return (TLClass) ref.resolveType();
 	}
 
+	/**
+	 * The types whose object changes refresh the list: the configured
+	 * {@link Config#getObservedTypes() observed types}, or the
+	 * {@link Config#getElementType() element type} where none is configured, so that a created
+	 * element of that type reaches the list.
+	 */
 	private Set<TLStructuredType> resolveObservedTypes() {
 		List<TLModelPartRef> refs = _config.getObservedTypes();
-		Set<TLStructuredType> types = new HashSet<>();
-		if (refs == null || refs.isEmpty()) {
-			TLClass elementType = resolveElementType();
-			if (elementType != null) {
-				types.add(elementType);
-			}
-			return types;
+		if (refs != null && !refs.isEmpty()) {
+			return ObservedTypes.resolve(refs);
 		}
-		for (TLModelPartRef ref : refs) {
-			TLStructuredType type = (TLStructuredType) ref.resolveType();
-			if (type == null) {
-				throw new RuntimeException("Failed to resolve observed type: " + ref.qualifiedName());
-			}
-			types.add(type);
-		}
-		return types;
+		TLClass elementType = resolveElementType();
+		return elementType == null ? Set.of() : Set.of(elementType);
 	}
 
 }

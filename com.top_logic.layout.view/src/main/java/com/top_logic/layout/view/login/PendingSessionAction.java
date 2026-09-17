@@ -63,7 +63,9 @@ public class PendingSessionAction {
 	 * <p>
 	 * On a swap, the current session is invalidated, a new session is created for the target user
 	 * (the requested account, or the anonymous user on logout), and a redirect back to the current
-	 * URL is sent so the browser re-requests the view with the new session cookie.
+	 * URL is sent so the browser re-requests the view with the new session cookie. The new session
+	 * takes up the route that URL names like any other request, so the page a user asked for is the
+	 * one their login leads to.
 	 * </p>
 	 *
 	 * @return {@code true} if a swap was performed and a redirect was sent (the caller must stop

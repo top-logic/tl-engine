@@ -23,6 +23,7 @@ import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
@@ -35,6 +36,7 @@ import com.top_logic.layout.view.channel.DerivedChannelFactory;
 import com.top_logic.layout.view.channel.DerivedViewChannel;
 import com.top_logic.layout.view.channel.ValueChannelConfig;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.model.util.TLModelPartRef;
 
 /**
  * Tests configuration parsing and integration of derived channels.
@@ -67,6 +69,21 @@ public class TestDerivedChannelConfig extends TestCase {
 		assertEquals("Should have 1 input", 1, derived.getInputs().size());
 		assertEquals("selectedItem", derived.getInputs().get(0).getChannelName());
 		assertNotNull("Expression should be parsed", derived.getExpr());
+	}
+
+	/**
+	 * Tests that {@code observed-types} is parsed as the type references the channel observes in
+	 * addition to the objects its inputs hold.
+	 */
+	public void testParseObservedTypes() throws Exception {
+		ViewElement.Config config = parseTestView();
+
+		DerivedChannelConfig derived = (DerivedChannelConfig) config.getChannels().get(1);
+		List<TLModelPartRef> observedTypes = derived.getObservedTypes();
+
+		assertEquals("Should have 2 observed types", 2, observedTypes.size());
+		assertEquals("test.types:B", observedTypes.get(0).qualifiedName());
+		assertEquals("test.types:C", observedTypes.get(1).qualifiedName());
 	}
 
 	/**
@@ -115,7 +132,7 @@ public class TestDerivedChannelConfig extends TestCase {
 	 */
 	public void testManualDerivedChannelInViewContext() {
 		ViewContext viewContext = new DefaultViewContext(
-			new DefaultReactContext("", "test", new SSEUpdateQueue()));
+			new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test")));
 
 		// Register a value channel.
 		DefaultViewChannel selectedItem = new DefaultViewChannel("selectedItem");

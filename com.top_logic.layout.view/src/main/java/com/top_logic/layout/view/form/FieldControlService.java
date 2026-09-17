@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.form;
 
+import java.text.Format;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Collection;
@@ -14,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -22,9 +25,11 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.format.configured.Formatter;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.type.PrimitiveTypeUtil;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.OptionProvider;
 import com.top_logic.element.meta.SimpleEditContext;
@@ -35,14 +40,19 @@ import com.top_logic.layout.form.model.SimpleSelectFieldModel;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.field.FieldControlRegistry;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.view.form.AttributeSelectFieldModel.OptionSource;
+import com.top_logic.layout.view.table.ColumnType;
+import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.access.StorageMapping;
+import com.top_logic.model.annotate.AnnotationLookup;
+import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.ui.BooleanDisplay;
 import com.top_logic.model.annotate.ui.BooleanPresentation;
 import com.top_logic.model.annotate.ui.MultiLine;
@@ -220,7 +230,38 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * @return A React control for the field input widget.
 	 */
 	public ReactControl createFieldControl(ReactContext context, TLStructuredTypePart part, FieldModel model) {
+		return createFieldControl(context, part, model, null);
+	}
+
+	/**
+	 * Creates the input control for the given attribute, with the display deciding which control
+	 * that is.
+	 *
+	 * <p>
+	 * A display naming a control gets that control, whatever the model says: the attribute's own
+	 * {@link TLInputControl} annotation, the rule that options are selected from a list, and the
+	 * control configured for the attribute's type all step back. Where the display names none, the
+	 * control is resolved as it is for every other field.
+	 * </p>
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param part
+	 *        The model attribute.
+	 * @param model
+	 *        The field model providing value, editability, and change notifications.
+	 * @param control
+	 *        The control the display asks for, or {@code null} to let the model decide.
+	 * @return A React control for the field input widget.
+	 */
+	public ReactControl createFieldControl(ReactContext context, TLStructuredTypePart part, FieldModel model,
+			PolymorphicConfiguration<? extends ReactFieldControlProvider> control) {
 		FieldSpec field = fieldSpec(part, model);
+
+		// 0. The control the display asks for.
+		if (control != null) {
+			return _context.getInstance(control).createControl(context, field, model);
+		}
 
 		// 1. Annotation on attribute (includes type-level default via VALUE_TYPE strategy).
 		TLInputControl annotation = part.getAnnotation(TLInputControl.class);
@@ -229,18 +270,43 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 			return provider.createControl(context, field, model);
 		}
 
-		// 2. Option-based attributes use a select control.
+		return createFieldControl(context, part.getType(), field, model);
+	}
+
+	/**
+	 * Resolves and creates the input control for a value of the given model type.
+	 *
+	 * <p>
+	 * The entry point for a value that no attribute holds - a value belonging to the view itself.
+	 * The attribute-based resolution adds only the lookup of an attribute's own control annotation
+	 * and continues here, so both are edited by the same control.
+	 * </p>
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param type
+	 *        The model type of the edited value.
+	 * @param field
+	 *        The description of what is edited, see
+	 *        {@link #fieldSpec(TLType, AnnotationLookup, String, boolean, FieldModel)}.
+	 * @param model
+	 *        The field model providing value, editability, and change notifications. A
+	 *        {@link SelectFieldModel} makes the value one chosen from its options.
+	 * @return A React control for the field input widget.
+	 */
+	public ReactControl createFieldControl(ReactContext context, TLType type, FieldSpec field, FieldModel model) {
+		// 1. Option-based values use a select control.
 		if (model instanceof SelectFieldModel) {
 			return _selectProvider.createControl(context, field, model);
 		}
 
-		// 3. Configured control by type.
-		ReactFieldControlProvider mapped = byType(part.getType());
+		// 2. Configured control by type.
+		ReactFieldControlProvider mapped = byType(type);
 		if (mapped != null) {
 			return mapped.createControl(context, field, model);
 		}
 
-		// 4. The control registered for the kind of value the attribute holds. The same registry
+		// 3. The control registered for the kind of value the type holds. The same registry
 		// serves configuration properties, so both are edited alike.
 		return FieldControlRegistry.getInstance().createControl(context, field, model);
 	}
@@ -248,26 +314,118 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	/**
 	 * Describes the given attribute for the control that edits it.
 	 */
-	private FieldSpec fieldSpec(TLStructuredTypePart part, FieldModel model) {
-		return FieldSpec.of(valueType(part), MetaLabelProvider.INSTANCE.getLabel(part))
-			.setMultiple(part.isMultiple())
+	private static FieldSpec fieldSpec(TLStructuredTypePart part, FieldModel model) {
+		return fieldSpec(part.getType(), part, MetaLabelProvider.INSTANCE.getLabel(part), part.isMultiple(), model);
+	}
+
+	/**
+	 * Describes a value for the control that edits it.
+	 *
+	 * @param type
+	 *        The model type of the value, deciding which control edits it.
+	 * @param annotations
+	 *        Where the display annotations are read from: the attribute holding the value, or the
+	 *        type itself where no attribute holds it. An annotation missing there is looked up at
+	 *        the type.
+	 * @param label
+	 *        The label of the edited field, or {@code null} if it has none.
+	 * @param multiple
+	 *        Whether the value is a collection of values rather than a single one.
+	 * @param model
+	 *        The field model holding the value.
+	 * @return The description to pass to {@link ReactFieldControlProvider#createControl}.
+	 */
+	public static FieldSpec fieldSpec(TLType type, AnnotationLookup annotations, String label, boolean multiple,
+			FieldModel model) {
+		return FieldSpec.of(valueType(type), label)
+			.setMultiple(multiple)
 			.setMandatory(model.isMandatory())
 			.setEditable(model.isEditable())
-			.setMultilineRows(multilineRows(part))
-			.setBooleanPresentation(booleanPresentation(part))
-			.setTriState(isTriState(part))
-			.setDateKind(DatePickerControlProvider.kind(part));
+			.setMultilineRows(multilineRows(annotations))
+			.setBooleanPresentation(booleanPresentation(annotations, type))
+			.setTriState(isTriState(type))
+			.setDateKind(DatePickerControlProvider.kind(annotations, type))
+			.setNumberFormat(numberFormat(annotations, type, multiple));
 	}
 
 	/**
-	 * The Java type of the values the given attribute holds, which decides the control editing it.
+	 * The format a numeric attribute is displayed in and entered in, or {@code null} if the attribute
+	 * does not hold a single number.
+	 *
+	 * <p>
+	 * The attribute's {@code format} annotation where it has one, the user's default format for
+	 * whole respectively fractional numbers otherwise. One format serves every place the value
+	 * appears: the form field editing it, the table cell showing it, the text that cell is searched
+	 * by, and the bounds of that column's filter.
+	 * </p>
+	 *
+	 * <p>
+	 * The annotated format need not write digits: a duration is a number of milliseconds written as
+	 * {@code 1h 30min}, and the attribute is displayed, entered and filtered in that text.
+	 * </p>
+	 *
+	 * @param part
+	 *        The model attribute, or {@code null} for an unresolved one.
 	 */
-	private static Class<?> valueType(TLStructuredTypePart part) {
-		return valueType(part.getType());
+	public static Format numberFormat(TLStructuredTypePart part) {
+		if (part == null) {
+			return null;
+		}
+		return numberFormat(part, part.getType(), part.isMultiple());
 	}
 
 	/**
-	 * The Java type of the values of the given model type.
+	 * The format a numeric value is displayed in and entered in, or {@code null} if the value is no
+	 * single number.
+	 *
+	 * @param annotations
+	 *        Where the {@code format} annotation is read from.
+	 * @param type
+	 *        The model type of the value.
+	 * @param multiple
+	 *        Whether the value is a collection of numbers rather than a single one.
+	 */
+	public static Format numberFormat(AnnotationLookup annotations, TLType type, boolean multiple) {
+		if (multiple) {
+			return null;
+		}
+		Class<?> valueType = PrimitiveTypeUtil.asNonPrimitive(valueType(type));
+		if (!Number.class.isAssignableFrom(valueType)) {
+			return null;
+		}
+		boolean fractional = valueType == Double.class || valueType == Float.class
+			|| (type instanceof TLPrimitive primitive && primitive.getKind() == TLPrimitive.Kind.FLOAT);
+		return numberFormat(annotations, fractional);
+	}
+
+	/**
+	 * The annotated format of the given value, or the default format for its kind of number.
+	 *
+	 * <p>
+	 * A value whose format declaration cannot be resolved is displayed in the default format
+	 * instead, so that a misconfigured attribute still shows its value.
+	 * </p>
+	 */
+	private static Format numberFormat(AnnotationLookup annotations, boolean fractional) {
+		try {
+			return fractional ? DisplayAnnotations.getFloatFormat(annotations)
+				: DisplayAnnotations.getLongFormat(annotations);
+		} catch (ConfigurationException ex) {
+			Logger.error("Invalid format definition at '" + annotations + "'.", ex, FieldControlService.class);
+			return defaultNumberFormat(fractional);
+		}
+	}
+
+	/**
+	 * The user's default format for whole respectively fractional numbers.
+	 */
+	private static Format defaultNumberFormat(boolean fractional) {
+		Formatter formatter = HTMLFormatter.getInstance();
+		return fractional ? formatter.getDoubleFormat() : formatter.getLongFormat();
+	}
+
+	/**
+	 * The Java type of the values of the given model type, which decides the control editing them.
 	 */
 	private static Class<?> valueType(TLType type) {
 		if (type instanceof TLPrimitive primitive) {
@@ -293,19 +451,18 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	}
 
 	/**
-	 * How the given attribute asks to be displayed, {@link BooleanPresentation#CHECKBOX} when it
-	 * says nothing.
+	 * How a boolean value asks to be displayed, {@link BooleanPresentation#CHECKBOX} when it says
+	 * nothing.
 	 *
 	 * <p>
 	 * An annotation at the attribute wins over the one of its type, which is what lets a single
 	 * attribute deviate from how its type is displayed everywhere else.
 	 * </p>
 	 */
-	private static BooleanPresentation booleanPresentation(TLStructuredTypePart part) {
-		BooleanDisplay annotation = part.getAnnotation(BooleanDisplay.class);
-		if (annotation == null) {
-			TLType type = part.getType();
-			annotation = type == null ? null : type.getAnnotation(BooleanDisplay.class);
+	private static BooleanPresentation booleanPresentation(AnnotationLookup annotations, TLType type) {
+		BooleanDisplay annotation = annotations == null ? null : annotations.getAnnotation(BooleanDisplay.class);
+		if (annotation == null && type != null && type != annotations) {
+			annotation = type.getAnnotation(BooleanDisplay.class);
 		}
 		if (annotation == null || annotation.getPresentation() == null) {
 			return BooleanPresentation.CHECKBOX;
@@ -314,18 +471,17 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	}
 
 	/**
-	 * Whether the given attribute keeps a state of its own for "no value".
+	 * Whether a value of the given type keeps a state of its own for "no value".
 	 */
-	private static boolean isTriState(TLStructuredTypePart part) {
-		TLType type = part.getType();
+	private static boolean isTriState(TLType type) {
 		return type instanceof TLPrimitive primitive && primitive.getKind() == TLPrimitive.Kind.TRISTATE;
 	}
 
 	/**
-	 * The number of text rows the given attribute is displayed with, or {@code 0} for a single line.
+	 * The number of text rows the value is displayed with, or {@code 0} for a single line.
 	 */
-	private static int multilineRows(TLStructuredTypePart part) {
-		MultiLine annotation = part.getAnnotation(MultiLine.class);
+	private static int multilineRows(AnnotationLookup annotations) {
+		MultiLine annotation = annotations == null ? null : annotations.getAnnotation(MultiLine.class);
 		return annotation != null && annotation.getValue() ? annotation.getRows() : 0;
 	}
 
@@ -352,6 +508,44 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 		AbstractFieldModel model = displayModel(part, value);
 		model.setEditable(false);
 		return createFieldControl(context, part, model);
+	}
+
+	/**
+	 * Creates a read-only control displaying the given value exactly as a view-mode form field
+	 * shows it.
+	 *
+	 * <p>
+	 * The entry point for a value that no attribute holds: what the value is
+	 * ({@link ColumnType#type()}, {@link ColumnType#multiple()}) and where its display annotations
+	 * come from ({@link ColumnType#annotations()}) is all the display needs. Where an attribute
+	 * <em>does</em> hold the value ({@link ColumnType#part()}), that attribute decides the display,
+	 * so its options and its own annotations keep shaping the cell.
+	 * </p>
+	 *
+	 * <p>
+	 * A value of an unknown type is displayed by its label, the one thing every value has.
+	 * </p>
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param columnType
+	 *        What the displayed value is, see {@link ColumnType}.
+	 * @param value
+	 *        The value to display, may be {@code null}.
+	 */
+	public ReactControl createDisplayControl(ReactContext context, ColumnType columnType, Object value) {
+		TLStructuredTypePart part = columnType.part();
+		if (part != null) {
+			return createDisplayControl(context, part, value);
+		}
+		TLType type = columnType.type();
+		if (type == null) {
+			return new ReactTextControl(context, MetaLabelProvider.INSTANCE.getLabel(value));
+		}
+		AbstractFieldModel model = new AbstractFieldModel(value);
+		model.setEditable(false);
+		FieldSpec field = fieldSpec(type, columnType.annotations(), null, columnType.multiple(), model);
+		return createFieldControl(context, type, field, model);
 	}
 
 	private AbstractFieldModel displayModel(TLStructuredTypePart part, Object value) {

@@ -42,6 +42,8 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 
 	private final CellRenderer<V> _renderer;
 
+	private final Function<? super V, String> _searchText;
+
 	private final Sort<V> _sort;
 
 	private final ColumnFilter<V> _filter;
@@ -54,6 +56,10 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 
 	private final boolean _selectable;
 
+	private final boolean _pinnedEnd;
+
+	private final String _cssClass;
+
 	private final Function<? super R, String> _css;
 
 	private final CellExistence<R> _existence;
@@ -64,12 +70,17 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		_value = builder._value;
 		_renderer = builder._renderer != null ? builder._renderer
 			: value -> CellContent.text(String.valueOf(value));
+		_searchText = builder._searchText;
 		_sort = builder._sort;
 		_filter = builder._filter;
 		_aggregate = builder._aggregate;
 		_width = builder._width;
-		_frozenEligible = builder._frozenEligible;
-		_selectable = builder._selectable;
+		_pinnedEnd = builder._pinnedEnd;
+		// A pinned column is the table's own: it sits at the end whatever the user arranges, and it
+		// is visible there at every scroll position already.
+		_frozenEligible = builder._frozenEligible && !_pinnedEnd;
+		_selectable = builder._selectable && !_pinnedEnd;
+		_cssClass = builder._cssClass;
 		_css = builder._css;
 		_existence = builder._existence;
 	}
@@ -92,6 +103,15 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 	@Override
 	public CellRenderer<V> renderer() {
 		return _renderer;
+	}
+
+	/**
+	 * The text of the cell value as {@link Builder#searchText(Function) configured}, or the text of
+	 * the rendered cell content when this column configures none.
+	 */
+	@Override
+	public String searchText(R row) {
+		return _searchText != null ? _searchText.apply(value(row)) : Column.super.searchText(row);
 	}
 
 	@Override
@@ -122,6 +142,16 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 	@Override
 	public boolean selectable() {
 		return _selectable;
+	}
+
+	@Override
+	public boolean pinnedEnd() {
+		return _pinnedEnd;
+	}
+
+	@Override
+	public String cssClass() {
+		return _cssClass;
 	}
 
 	@Override
@@ -164,6 +194,8 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 
 		CellRenderer<V> _renderer;
 
+		Function<? super V, String> _searchText;
+
 		Sort<V> _sort;
 
 		ColumnFilter<V> _filter;
@@ -172,9 +204,13 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 
 		int _width = 150;
 
+		String _cssClass;
+
 		boolean _frozenEligible = true;
 
 		boolean _selectable = true;
+
+		boolean _pinnedEnd;
 
 		Function<? super R, String> _css;
 
@@ -198,6 +234,22 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		 */
 		public Builder<R, V> renderer(CellRenderer<V> renderer) {
 			_renderer = renderer;
+			return this;
+		}
+
+		/**
+		 * Sets the text of a cell value the free-text {@link com.top_logic.table.SearchSpec search}
+		 * examines.
+		 *
+		 * <p>
+		 * A column whose {@link #renderer(CellRenderer) renderer} produces a control instead of
+		 * text ({@link CellContent.Raw}) takes part in a search only through this text: the
+		 * rendered content carries none. Set it to the same text the column displays, so that the
+		 * search finds what the user reads.
+		 * </p>
+		 */
+		public Builder<R, V> searchText(Function<? super V, String> searchText) {
+			_searchText = searchText;
 			return this;
 		}
 
@@ -252,7 +304,34 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		}
 
 		/**
+		 * Sets whether the column keeps its place at the end of the table.
+		 *
+		 * <p>
+		 * A pinned column is neither {@link #frozenEligible(boolean) frozen} nor
+		 * {@link #selectable(boolean) selectable}, whatever those are set to.
+		 * </p>
+		 *
+		 * @see Column#pinnedEnd()
+		 */
+		public Builder<R, V> pinnedEnd(boolean pinnedEnd) {
+			_pinnedEnd = pinnedEnd;
+			return this;
+		}
+
+		/**
+		 * Sets the CSS class every cell of the column carries.
+		 *
+		 * @see Column#cssClass()
+		 */
+		public Builder<R, V> cssClass(String cssClass) {
+			_cssClass = cssClass;
+			return this;
+		}
+
+		/**
 		 * Sets a per-row CSS class provider.
+		 *
+		 * @see Column#cssClass(Object)
 		 */
 		public Builder<R, V> css(Function<? super R, String> css) {
 			_css = css;

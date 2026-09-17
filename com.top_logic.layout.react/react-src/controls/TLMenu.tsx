@@ -1,14 +1,21 @@
 import { React, useTLState, useTLCommand, useFocusTrap } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { ThemeIcon } from './icon/ThemeIcon';
 
 const { useCallback, useEffect, useRef, useState } = React;
 
 interface MenuItem {
   id: string;
   label: string;
+  /** Encoded theme image, rendered through {@link ThemeIcon}. */
   icon?: string;
   disabled?: boolean;
-  type: 'item' | 'separator';
+  /** Whether the effect of the command this entry renders is currently in force. */
+  active?: boolean;
+  /** Additional CSS classes declared on the command this entry renders. */
+  cssClasses?: string;
+  /** A header is a caption naming the entries beneath it; it is neither focusable nor selectable. */
+  type: 'item' | 'separator' | 'header';
 }
 
 /**
@@ -116,6 +123,14 @@ const TLMenu: React.FC<TLCellProps> = ({ controlId }) => {
   // Trap focus within the menu while open and restore it to the trigger when it closes.
   useFocusTrap(open, menuRef);
 
+  // Keep the focused entry in view: a menu taller than the viewport scrolls, and the roving focus
+  // must not leave its entry below or above the visible part.
+  useEffect(() => {
+    if (!open) return;
+    const focused = menuRef.current?.querySelector('.tlMenu__item--focused');
+    focused?.scrollIntoView({ block: 'nearest' });
+  }, [open, focusedIndex]);
+
   if (!open) return null;
 
   return (
@@ -132,6 +147,13 @@ const TLMenu: React.FC<TLCellProps> = ({ controlId }) => {
         if (item.type === 'separator') {
           return <hr key={index} className="tlMenu__separator" />;
         }
+        if (item.type === 'header') {
+          return (
+            <div key={index} className="tlMenu__header" role="presentation">
+              {item.label}
+            </div>
+          );
+        }
         const focusIdx = focusableItems.indexOf(item);
         const isFocused = focusIdx === focusedIndex;
         return (
@@ -139,13 +161,16 @@ const TLMenu: React.FC<TLCellProps> = ({ controlId }) => {
             key={item.id}
             type="button"
             className={'tlMenu__item' + (isFocused ? ' tlMenu__item--focused' : '') +
-              (item.disabled ? ' tlMenu__item--disabled' : '')}
+              (item.disabled ? ' tlMenu__item--disabled' : '') +
+              (item.active ? ' tlMenu__item--active' : '') +
+              (item.cssClasses ? ' ' + item.cssClasses : '')}
             role="menuitem"
+            aria-current={item.active ? 'true' : undefined}
             disabled={item.disabled}
             tabIndex={isFocused ? 0 : -1}
             onClick={() => handleSelect(item.id)}
           >
-            {item.icon && <i className={'tlMenu__icon ' + item.icon} aria-hidden="true" />}
+            {item.icon && <ThemeIcon encoded={item.icon} className="tlMenu__icon" />}
             <span className="tlMenu__label">{item.label}</span>
           </button>
         );

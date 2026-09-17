@@ -14,11 +14,11 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.MfaRequirement;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.view.ViewMessages;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.util.error.TopLogicException;
 
@@ -94,7 +94,7 @@ public class EnableMfaAction implements ViewAction {
 			tx.commit();
 		}
 
-		InfoService.showInfo(I18NConstants.MFA_REQUIRED_SET__USER.fill(account.getName()));
+		ViewMessages.info(context, I18NConstants.MFA_REQUIRED_SET__USER.fill(account.getName()));
 		return input;
 	}
 

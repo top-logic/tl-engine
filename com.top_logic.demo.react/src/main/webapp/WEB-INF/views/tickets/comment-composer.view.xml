@@ -3,6 +3,7 @@
 <view>
 	<channels>
 		<channel name="comment"/>
+		<channel name="ticket"/>
 	</channels>
 	<anchor name="composer">
 		<panel appearance="card">
@@ -19,7 +20,36 @@
 				<field
 					attribute="content"
 					label-position="hide-label"
-				/>
+				>
+					<input-control class="com.top_logic.layout.react.wysiwyg.WysiwygControlProvider"
+						insert-channel="insert"
+					>
+						<commands>
+							<generic-command
+								image="css:ri-links-line"
+								input="ticket"
+							>
+								<label>
+									<en>Reference ticket...</en>
+									<de>Ticket referenzieren...</de>
+								</label>
+								<executability>
+									<null-input-disabled/>
+								</executability>
+								<open-dialog dialog-view="tickets/reference-ticket.view.xml">
+									<bind
+										channel="context"
+										to="ticket"
+									/>
+									<bind
+										channel="result"
+										to="insert"
+									/>
+								</open-dialog>
+							</generic-command>
+						</commands>
+					</input-control>
+				</field>
 				<file-list attribute="attachments"/>
 				<commands>
 					<generic-command

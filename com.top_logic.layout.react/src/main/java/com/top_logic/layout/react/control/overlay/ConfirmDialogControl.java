@@ -61,6 +61,8 @@ public class ConfirmDialogControl {
 		Runnable closeHandler = () -> dialogManager.closeTopDialog(DialogResult.cancelled());
 
 		ReactWindowControl window = new ReactWindowControl(context, title, DisplayDimension.px(450), closeHandler);
+		// A question and two answers have one size; nothing here is worth resizing or maximizing.
+		window.setResizable(false);
 		// The window body is flush by design ("content owns its inset"), so a bare text would glue to
 		// the edges - wrap it in a padded inset to match the padded header/footer.
 		window.setChild(new ReactInsetControl(context, new ReactTextControl(context, message)));

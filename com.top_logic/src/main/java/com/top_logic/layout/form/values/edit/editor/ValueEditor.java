@@ -7,6 +7,7 @@ package com.top_logic.layout.form.values.edit.editor;
 
 import static com.top_logic.layout.form.values.Fields.*;
 
+import java.awt.Color;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -28,6 +29,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
+import com.top_logic.layout.form.control.ColorControlProvider;
 import com.top_logic.layout.form.control.PasswordInputControlProvider;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.values.DeclarativeFormOptions;
@@ -40,10 +42,19 @@ import com.top_logic.layout.form.values.edit.IdentityOptionMapping;
 import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.edit.OptionMapping;
 import com.top_logic.layout.form.values.edit.ValueModel;
+import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link Editor} creating the UI for a plain (atomic) property.
+ * 
+ * <p>
+ * The input element is chosen by the property type: a {@link String} property is edited in a text
+ * line, a {@link Boolean} property with a checkbox, a {@link Date} property with a calendar, an
+ * enumeration or a property with options with a select field, and a {@link Color} property with the
+ * color chooser of {@link ColorControlProvider}. A property with a {@link ControlProvider}
+ * annotation is displayed with the annotated control.
+ * </p>
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -158,7 +169,12 @@ public class ValueEditor extends AbstractEditor {
 					}
 				}
 			} else {
-				return PlainEditor.INSTANCE.addField(editorFactory, container, model, fieldName);
+				FormField plainField = PlainEditor.INSTANCE.addField(editorFactory, container, model, fieldName);
+				if (type == Color.class
+					&& editorFactory.getAnnotation(property, ControlProvider.class) == null) {
+					plainField.setControlProvider(ColorControlProvider.INSTANCE);
+				}
+				return plainField;
 			}
 		}
 

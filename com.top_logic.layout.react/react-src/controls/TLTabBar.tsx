@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useFill, FillBarrier } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { ThemeIcon } from './icon/ThemeIcon';
 
@@ -10,9 +10,17 @@ interface TabInfo {
 
 const { useCallback } = React;
 
+/**
+ * A tab strip above the content of the selected tab.
+ *
+ * Always fills its container, so the strip stays pinned and only the tab content scrolls. The
+ * content region is bounded by that and ends the fill chain: a filling control inside a tab
+ * resolves its height against the region and scrolls internally.
+ */
 const TLTabBar: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
+  const fillClass = useFill(true);
   const tabs = (state.tabs as TabInfo[]) ?? [];
   const activeTabId = state.activeTabId as string;
 
@@ -23,7 +31,7 @@ const TLTabBar: React.FC<TLCellProps> = ({ controlId }) => {
   }, [sendCommand, activeTabId]);
 
   return (
-    <div id={controlId} className="tlReactTabBar">
+    <div id={controlId} className={'tlReactTabBar ' + fillClass}>
       <div className="tlReactTabBar__tabs" role="tablist">
         {tabs.map(tab => (
           <button
@@ -39,7 +47,9 @@ const TLTabBar: React.FC<TLCellProps> = ({ controlId }) => {
         ))}
       </div>
       <div className="tlReactTabBar__content" role="tabpanel">
-        {state.activeContent && <TLChild control={state.activeContent} />}
+        <FillBarrier>
+          {state.activeContent && <TLChild control={state.activeContent} />}
+        </FillBarrier>
       </div>
     </div>
   );

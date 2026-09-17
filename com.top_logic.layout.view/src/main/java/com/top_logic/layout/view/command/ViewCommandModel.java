@@ -7,6 +7,7 @@ package com.top_logic.layout.view.command;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.util.Resources;
@@ -16,17 +17,31 @@ import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.button.KeyStroke;
+import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.model.ChannelObjectObserver;
+import com.top_logic.layout.view.model.ObservedTypes;
+import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.listen.ModelScope;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
- * Runtime bridge between a stateless {@link ViewCommand} and its UI button.
+ * Runtime bridge between a stateless {@link ViewCommand} and the UI running it - its button, or a
+ * gesture like a table row activation that supplies the input itself
+ * ({@link #execute(ReactContext, Object)}).
  *
  * <p>
- * Created by the panel at setup time, one per command. Subscribes to the input channel and
- * re-evaluates executability when the input changes.
+ * Created by the panel at setup time, one per command. While
+ * {@link #attach(ModelScope) attached}, the model follows its input in both directions a rule can
+ * decide by: the {@link ViewCommand.Config#getInput() input channel} taking a new value, and the
+ * object that value points to being edited. A rule testing an attribute of the input object -
+ * a workflow command offered only while a ticket is open, say - therefore re-evaluates when that
+ * attribute is stored, although the channel keeps pointing to the same object.
  * </p>
+ *
+ * @see ChannelObjectObserver
  */
 public class ViewCommandModel implements ViewChannel.ChannelListener, CommandModel {
 
@@ -37,6 +52,8 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 	private final ViewChannel _inputChannel;
 
 	private final ViewExecutabilityRule _rule;
+
+	private final ChannelObjectObserver _inputObserver;
 
 	private ExecutableState _executableState;
 
@@ -61,6 +78,10 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 		_inputChannel = inputChannel;
 		_rule = rule;
 		_executableState = ExecutableState.EXECUTABLE;
+
+		List<ViewChannel> observedChannels = inputChannel == null ? List.of() : List.of(inputChannel);
+		Set<TLStructuredType> observedTypes = ObservedTypes.resolve(config.getObservedTypes());
+		_inputObserver = new ChannelObjectObserver(observedChannels, observedTypes, this::updateExecutableState);
 	}
 
 	/**
@@ -75,6 +96,35 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 				rule);
 		}
 		return new ViewCommandModel(command, config, inputChannel, rule);
+	}
+
+	/**
+	 * Creates the {@link ViewCommandModel} for a command an element has instantiated from its
+	 * configuration: resolves the command's {@link ViewCommand.Config#getInput() input channel} in
+	 * the given context, builds its executability rule there, and picks the matching model.
+	 *
+	 * <p>
+	 * This is the one construction path for a configured command, shared by every element that
+	 * hosts commands. An element that has to interfere with the rule - the form, which additionally
+	 * disables the commands its validation would reject - builds the model from
+	 * {@link #create(ViewCommand, ViewCommand.Config, ViewChannel, ViewExecutabilityRule)} with the
+	 * rule it composed.
+	 * </p>
+	 *
+	 * @param context
+	 *        The build-time context of the hosting element, resolving the input channel and binding
+	 *        the rules.
+	 * @param command
+	 *        The instantiated command.
+	 * @param config
+	 *        The configuration the command was instantiated from.
+	 */
+	public static ViewCommandModel forCommand(ViewContext context, ViewCommand command,
+			ViewCommand.Config config) {
+		ChannelRef inputRef = config.getInput();
+		ViewChannel inputChannel = inputRef != null ? context.resolveChannel(inputRef) : null;
+		ViewExecutabilityRule rule = ViewExecutabilityRules.build(config.getExecutability(), context);
+		return create(command, config, inputChannel, rule);
 	}
 
 	/**
@@ -105,18 +155,38 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 		return _config.getImage();
 	}
 
+	/**
+	 * The text explaining the button, re-read by its control whenever the model's state changes.
+	 *
+	 * <p>
+	 * While the command is visible but not executable, this is the reason its rules gave for
+	 * disabling it ({@link ExecutableState#getI18NReasonKey()}) - the button then says why it cannot
+	 * be used. Otherwise, and whenever the state carries no reason to show, it is the configured
+	 * {@link ViewCommand.Config#getTooltip() tooltip}.
+	 * </p>
+	 */
 	@Override
 	public String getTooltip() {
-		ResKey key = _config.getTooltip();
-		if (key == null) {
+		if (_executableState.isVisible() && !_executableState.isExecutable()) {
+			String reason = resolve(_executableState.getI18NReasonKey());
+			if (reason != null && !reason.isEmpty()) {
+				return reason;
+			}
+		}
+		return resolve(_config.getTooltip());
+	}
+
+	/**
+	 * The text of the given key, {@code null} if there is no key to resolve.
+	 */
+	private static String resolve(ResKey key) {
+		if (key == null || key == ResKey.NONE) {
 			return null;
 		}
 		return Resources.getInstance().getString(key);
 	}
 
-	/**
-	 * The command's CSS classes.
-	 */
+	@Override
 	public String getCssClasses() {
 		return _config.getCssClasses();
 	}
@@ -169,9 +239,45 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 
 	@Override
 	public HandlerResult executeCommand(ReactContext context) {
-		Object input = resolveInput();
+		return execute(context, resolveInput());
+	}
 
-		ExecutableState state = _rule.isExecutable(input);
+	/**
+	 * The command's executability for an input the caller supplies instead of the
+	 * {@link #resolveInput() channel value} - a single row of a table, say.
+	 *
+	 * <p>
+	 * This is what {@link #execute(ReactContext, Object)} decides by, offered separately for a UI
+	 * that shows the state before the command runs: the button a table puts on every row reads it
+	 * per row, and is disabled or omitted accordingly.
+	 * </p>
+	 *
+	 * @param input
+	 *        The command's input value.
+	 * @return The state the command's rules assign to that input.
+	 */
+	public ExecutableState executability(Object input) {
+		return _rule.isExecutable(input);
+	}
+
+	/**
+	 * Executes the command with an input the caller supplies instead of the
+	 * {@link #resolveInput() channel value} - the row a table activation opens, say.
+	 *
+	 * <p>
+	 * The command's executability rules decide over that same input, so a rule that rejects it
+	 * makes the call a no-op.
+	 * </p>
+	 *
+	 * @param context
+	 *        The context the command executes in.
+	 * @param input
+	 *        The command's input value.
+	 * @return The command's result, {@link HandlerResult#DEFAULT_RESULT} when the rules reject the
+	 *         input.
+	 */
+	public HandlerResult execute(ReactContext context, Object input) {
+		ExecutableState state = executability(input);
 		if (!state.isExecutable()) {
 			return HandlerResult.DEFAULT_RESULT;
 		}
@@ -185,12 +291,18 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 	}
 
 	/**
-	 * Subscribe to input channel changes and update executability state.
+	 * Begins following the input - the channel's value and the object that value holds - and
+	 * evaluates the executability for what the input currently is.
+	 *
+	 * @param scope
+	 *        The scope the object observation registers on, {@code null} for a button built outside
+	 *        a browser window, which follows the channel value alone.
 	 */
-	public void attach() {
+	public void attach(ModelScope scope) {
 		if (_inputChannel != null) {
 			_inputChannel.addListener(this);
 		}
+		_inputObserver.attach(scope);
 		updateExecutableState();
 	}
 
@@ -203,12 +315,13 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 	}
 
 	/**
-	 * Unsubscribe from input channel changes.
+	 * Stops following the input.
 	 */
 	public void detach() {
 		if (_inputChannel != null) {
 			_inputChannel.removeListener(this);
 		}
+		_inputObserver.detach();
 	}
 
 	@Override
@@ -228,8 +341,8 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 
 	private void updateExecutableState() {
 		Object input = resolveInput();
-		ExecutableState newState = _rule.isExecutable(input);
-		if (newState.visibility() != _executableState.visibility()) {
+		ExecutableState newState = executability(input);
+		if (!newState.equals(_executableState)) {
 			_executableState = newState;
 			fireStateChanged();
 		}

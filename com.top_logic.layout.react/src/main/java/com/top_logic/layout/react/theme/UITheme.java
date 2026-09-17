@@ -12,7 +12,10 @@ import com.top_logic.basic.config.NamedConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.basic.ThemeImage;
 
 /**
  * A resolved UI theme: an identified, labeled set of design-token values.
@@ -20,6 +23,16 @@ import com.top_logic.basic.util.ResKey;
  * <p>
  * The token map is fully resolved, i.e. the values inherited from the {@link Config#getExtends()
  * parent} theme are already merged with this theme's own overrides.
+ * </p>
+ *
+ * <p>
+ * A token is named by what it is for, not by what it looks like, and a stylesheet consumes it as
+ * {@code var(--name)} without a fallback. Rounding comes in two tiers, {@code corner-radius} for
+ * controls and {@code border-radius-02} for surfaces; elevation comes in three steps,
+ * {@code shadow-raised} for a surface lifted off the page, {@code shadow-menu} for a popup and
+ * {@code shadow-dialog} for a layer covering it, which dims the page with {@code overlay}. A theme
+ * that squares every corner off and drops every shadow therefore overrides the two radius tokens
+ * and the three shadow tokens and inherits the rest.
  * </p>
  */
 public final class UITheme {
@@ -35,6 +48,15 @@ public final class UITheme {
 		/** Configuration name for {@link #getLabel()}. */
 		String LABEL = "label";
 
+		/** Configuration name for {@link #getIcon()}. */
+		String ICON = "icon";
+
+		/** Configuration name for {@link #getColorScheme()}. */
+		String COLOR_SCHEME = "color-scheme";
+
+		/** Configuration name for {@link #isSystemDefault()}. */
+		String SYSTEM_DEFAULT = "system-default";
+
 		/**
 		 * Id of the parent theme whose tokens this theme inherits, or empty for a root theme.
 		 */
@@ -46,6 +68,39 @@ public final class UITheme {
 		 */
 		@Name(LABEL)
 		ResKey getLabel();
+
+		/**
+		 * Icon representing the theme, e.g. for a theme picker offering this theme as an entry.
+		 */
+		@Name(ICON)
+		@Nullable
+		ThemeImage getIcon();
+
+		/**
+		 * Whether this theme looks light or dark.
+		 *
+		 * <p>
+		 * The scheme is announced to the browser, so that the parts of the page it renders itself -
+		 * scrollbars, form controls, the canvas behind the document - match the theme. Left empty,
+		 * the scheme of the extended theme applies; a theme extending nothing looks light.
+		 * </p>
+		 */
+		@Name(COLOR_SCHEME)
+		@Nullable
+		@NullDefault
+		ColorScheme getColorScheme();
+
+		/**
+		 * Whether this theme answers the operating system's preference for its color scheme.
+		 *
+		 * <p>
+		 * A user who has chosen no theme sees, of the themes marked here, the one whose scheme the
+		 * operating system asks for. At most one theme may be marked per scheme. A scheme no theme
+		 * is marked for is answered by the default theme.
+		 * </p>
+		 */
+		@Name(SYSTEM_DEFAULT)
+		boolean isSystemDefault();
 
 		/**
 		 * This theme's tokens, overriding the inherited ones, keyed by token name.
@@ -60,6 +115,12 @@ public final class UITheme {
 
 	private final ResKey _label;
 
+	private final ThemeImage _icon;
+
+	private final ColorScheme _colorScheme;
+
+	private final boolean _systemDefault;
+
 	private final Map<String, String> _tokens;
 
 	/**
@@ -69,17 +130,27 @@ public final class UITheme {
 	 *        The theme id.
 	 * @param label
 	 *        The display label.
+	 * @param icon
+	 *        The icon representing the theme, or {@code null}.
+	 * @param colorScheme
+	 *        The resolved color scheme of the theme's appearance.
+	 * @param systemDefault
+	 *        Whether this theme answers the operating system's preference for its color scheme.
 	 * @param tokens
 	 *        The fully resolved token values (name without {@code --} to CSS value).
 	 */
-	public UITheme(String id, ResKey label, Map<String, String> tokens) {
+	public UITheme(String id, ResKey label, ThemeImage icon, ColorScheme colorScheme, boolean systemDefault,
+			Map<String, String> tokens) {
 		_id = id;
 		_label = label;
+		_icon = icon;
+		_colorScheme = colorScheme;
+		_systemDefault = systemDefault;
 		_tokens = tokens;
 	}
 
 	/**
-	 * The theme id (the value of the {@code data-theme} attribute).
+	 * The theme id (the value of the {@link UIThemeService#THEME_ATTRIBUTE}).
 	 */
 	public String getId() {
 		return _id;
@@ -90,6 +161,33 @@ public final class UITheme {
 	 */
 	public ResKey getLabel() {
 		return _label;
+	}
+
+	/**
+	 * The icon representing this theme, or {@code null} if it declares none.
+	 */
+	public ThemeImage getIcon() {
+		return _icon;
+	}
+
+	/**
+	 * Whether this theme's appearance is a light or a dark one.
+	 *
+	 * <p>
+	 * The scheme inherited from the extended theme is already applied, a theme extending nothing
+	 * without a scheme of its own is {@link ColorScheme#LIGHT}.
+	 * </p>
+	 */
+	public ColorScheme getColorScheme() {
+		return _colorScheme;
+	}
+
+	/**
+	 * Whether this theme answers the operating system's preference for its
+	 * {@link #getColorScheme() color scheme}.
+	 */
+	public boolean isSystemDefault() {
+		return _systemDefault;
 	}
 
 	/**

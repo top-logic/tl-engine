@@ -88,7 +88,7 @@ private String quote(String string) {
 							<tr>
 								<td>
 									<p>
-										<button class="tlButton cButton cmdButton"
+										<button class="tlButton cButton tl-cmd-button"
 											name="SUBMIT"
 											type="submit"
 										>
@@ -122,7 +122,7 @@ private String quote(String string) {
 						<tr>
 							<td>
 								<p>
-									<button class="tlButton cButton cmdButton"
+									<button class="tlButton cButton tl-cmd-button"
 										name="SUBMIT"
 										type="submit"
 									>

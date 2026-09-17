@@ -6,6 +6,7 @@
 package com.top_logic.table.filter;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -60,6 +61,24 @@ public class OptionsColumnFilter<V> implements ColumnFilter<V> {
 	@Override
 	public boolean supportsInversion() {
 		return true;
+	}
+
+	/**
+	 * The selection of the option, or the options, the given value names.
+	 *
+	 * @see OptionsFilterState#select(Object, Collection)
+	 */
+	@Override
+	public FilterState stateFor(Object value) {
+		return OptionsFilterState.select(value, optionValues());
+	}
+
+	private Collection<Object> optionValues() {
+		List<Object> values = new ArrayList<>(_options.size());
+		for (Option option : _options) {
+			values.add(option.value());
+		}
+		return values;
 	}
 
 	/**

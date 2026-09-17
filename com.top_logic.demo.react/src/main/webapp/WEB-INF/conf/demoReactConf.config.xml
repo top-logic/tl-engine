@@ -21,7 +21,16 @@
 					<bundle name="model.tl.demo.projectManagement.messages"/>
 					<bundle name="model.demo.filter.messages"/>
 					<bundle name="model.demo.calendar.messages"/>
+					<bundle name="model.demo.documents.messages"/>
 				</bundles>
+			</instance>
+		</config>
+		<!-- The role that may open the administration area, granted in security.xml. -->
+		<config service-class="com.top_logic.base.services.InitialRolesManager">
+			<instance>
+				<roles>
+					<role name="demo.react.Administrator"/>
+				</roles>
 			</instance>
 		</config>
 		<config service-class="com.top_logic.util.model.ModelService">
@@ -35,7 +44,137 @@
 					<declaration file="/WEB-INF/model/tl.demo.projectManagement.model.xml"/>
 					<declaration file="/WEB-INF/model/demo.filter.model.xml"/>
 					<declaration file="/WEB-INF/model/demo.calendar.model.xml"/>
+					<declaration file="/WEB-INF/model/demo.documents.model.xml"/>
 				</declarations>
+			</instance>
+		</config>
+		<!--
+			Every newly created account joins the "users" group. The administration hub shows the
+			default-group flag on that group.
+		-->
+		<config service-class="com.top_logic.base.services.InitialGroupManager">
+			<instance default-group="users">
+				<groups>
+					<group name="users"/>
+				</groups>
+			</instance>
+		</config>
+		<!--
+			Where this application displays its business objects. A read-only value whose type is
+			listed here is offered as a link; following it reveals the views below in order and
+			hands each of them the values its bindings compute.
+			
+			The frames a target pushes carry the same channel values and the same labels as the
+			frames the user's own drill-down pushes, so a target leading into a drill-down the user
+			already has leaves it untouched.
+		-->
+		<config service-class="com.top_logic.layout.view.navigation.DisplayTargetService">
+			<instance>
+				<targets>
+					<target type="tl.demo.projectManagement:ProjectScope">
+						<show view="projects/overview.view.xml">
+							<bind channel="project"/>
+						</show>
+					</target>
+					<target type="tl.demo.projectManagement:Milestone">
+						<show view="projects/overview.view.xml">
+							<bind
+								channel="project"
+								expr="m -> $m.container()"
+							/>
+						</show>
+						<show
+							label-expr="m -> $m.container().get(`tl.demo.projectManagement:ProjectScope#name`)"
+							view="projects/milestones.view.xml"
+						>
+							<bind
+								channel="project"
+								expr="m -> $m.container()"
+							/>
+							<bind channel="milestone"/>
+						</show>
+					</target>
+					<target type="tl.demo.projectManagement:Ticket">
+						<show view="projects/overview.view.xml">
+							<bind
+								channel="project"
+								expr="t -> $t.container()"
+							/>
+						</show>
+						<show
+							label-expr="t -> $t.container().get(`tl.demo.projectManagement:ProjectScope#name`)"
+							view="projects/milestones.view.xml"
+						>
+							<bind
+								channel="project"
+								expr="t -> $t.container()"
+							/>
+						</show>
+						<show
+							label-expr="t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`).get(`tl.demo.projectManagement:Milestone#name`)"
+							view="projects/tickets.view.xml"
+						>
+							<bind
+								channel="milestone"
+								expr="t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`)"
+							/>
+						</show>
+						<show
+							label-expr="t -> $t.get(`tl.demo.projectManagement:Ticket#title`)"
+							view="projects/ticket-detail.view.xml"
+						>
+							<bind channel="ticket"/>
+						</show>
+					</target>
+					<target type="tl.demo.projectManagement:Contributor">
+						<show
+							dialog="true"
+							view="projects/contributor-dialog.view.xml"
+						>
+							<bind channel="contributor"/>
+						</show>
+					</target>
+					<target type="tl.accounts:Person">
+						<show view="demo/tiles-demo/overview.view.xml">
+							<bind channel="selectedPerson"/>
+						</show>
+						<show
+							label-expr="p -> $p.get(`tl.accounts:Person#name`)"
+							view="demo/tiles-demo/person-detail.view.xml"
+						>
+							<bind channel="person"/>
+						</show>
+					</target>
+					<target type="demo.tickets:Ticket">
+						<show view="tickets.view.xml">
+							<bind channel="ticket"/>
+						</show>
+					</target>
+				</targets>
+			</instance>
+		</config>
+		<!--
+			A theme without rounding and without elevation, demonstrating that the React controls take
+			their corners and their shadows from the theme alone.
+		-->
+		<config service-class="com.top_logic.layout.react.theme.UIThemeService">
+			<instance>
+				<themes>
+					<theme name="flat"
+						extends="default"
+						icon="css:bi bi-square"
+					>
+						<label>
+							<en>Flat</en>
+							<de>Flach</de>
+						</label>
+						<length name="border-radius-02" value="0"/>
+						<length name="corner-radius" value="0"/>
+						<text name="shadow-dialog" value="none"/>
+						<text name="shadow-menu" value="none"/>
+						<text name="shadow-raised" value="none"/>
+					</theme>
+				</themes>
 			</instance>
 		</config>
 	</services>
@@ -48,6 +187,32 @@
 		-->
 		<config config:interface="com.top_logic.base.accesscontrol.ApplicationPages$Config">
 			<startPage>/view/</startPage>
+		</config>
+		<!--
+			The demo lowers the upload limit below the framework default so that the refusal of an
+			oversized file can be tried out with a moderately sized file.
+		-->
+		<config config:interface="com.top_logic.layout.react.control.upload.UploadConfig"
+			max-upload-size="10m"
+		/>
+		<!--
+			What a session that belongs to no account sees in place of the application: the
+			framework's login page, whatever the URL asks for. This demo shows its objects to
+			accounts only, like a business application, and the requested URL is held while the
+			login page is displayed, so a deep link leads to the page it names as soon as the
+			visitor is logged in.
+		-->
+		<config config:interface="com.top_logic.layout.view.ViewConfig"
+			login-view="login-page.view.xml"
+		>
+			<!--
+				A second view a URL may load top-level, besides the default view: the document viewer
+				is self-contained, so it shows the same thing in a browser tab of its own as it does
+				inside the application shell.
+			-->
+			<entry-points>
+				<entry-point view="demo/pdf-demo.view.xml"/>
+			</entry-points>
 		</config>
 	</configs>
 </application>

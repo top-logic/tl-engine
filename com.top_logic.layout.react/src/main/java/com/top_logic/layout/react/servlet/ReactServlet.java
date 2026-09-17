@@ -9,16 +9,14 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.locks.ReentrantLock;
 
+import jakarta.servlet.MultipartConfigElement;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.http.HttpServletRequest;
@@ -39,7 +37,6 @@ import com.top_logic.base.services.simpleajax.JSFunctionCall;
 import com.top_logic.base.services.simpleajax.PropertyUpdate;
 import com.top_logic.base.services.simpleajax.RangeReplacement;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.exception.I18NFailure;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.util.ResKey;
@@ -59,11 +56,13 @@ import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.TooltipContent;
 import com.top_logic.layout.react.TooltipProvider;
 import com.top_logic.layout.react.UploadHandler;
+import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactCommandTarget;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
+import com.top_logic.layout.react.control.upload.UploadSupport;
 import com.top_logic.layout.react.scripting.ScriptingSession;
 import com.top_logic.layout.react.scripting.ReactWindowReplay;
 import com.top_logic.layout.react.scripting.ScriptRecorder;
@@ -73,6 +72,7 @@ import com.top_logic.layout.react.protocol.Property;
 import com.top_logic.layout.react.protocol.RouteVetoEvent;
 import com.top_logic.layout.react.protocol.SSEEvent;
 import com.top_logic.layout.react.routing.RouteManager;
+import com.top_logic.layout.react.window.Interaction;
 import com.top_logic.layout.react.window.PendingViewPick;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.mig.html.layout.MainLayout;
@@ -116,11 +116,44 @@ public class ReactServlet extends TopLogicServlet {
 	 */
 	public static final String ERROR_CODE_STALE_UI = "stale-ui";
 
+	/** Name of the global command the client sends when the browser navigated in its history. */
+	private static final String CMD_NAVIGATE_TO_ROUTE = "navigateToRoute";
+
+	/** Name of the {@link #CMD_NAVIGATE_TO_ROUTE} argument holding the URL to adopt. */
+	private static final String ARG_URL = "url";
+
 	/**
-	 * CSS class of the summary line of a command-error message, separating it from the detail
-	 * messages listed below it.
+	 * Name of the global command the client sends when it refused a selected file because it
+	 * exceeds {@link UploadSupport#maxUploadSize()}.
 	 */
-	private static final String CSS_SNACKBAR_TITLE = "tlSnackbar__title";
+	private static final String CMD_UPLOAD_REJECTED = "uploadRejected";
+
+	/** Name of the {@link #CMD_UPLOAD_REJECTED} argument holding the name of the refused file. */
+	private static final String ARG_FILE_NAME = "fileName";
+
+	/** Name of the {@link #CMD_UPLOAD_REJECTED} argument holding the size of the refused file. */
+	private static final String ARG_SIZE = "size";
+
+	/**
+	 * Request attribute through which Jetty takes the {@link MultipartConfigElement} to apply to
+	 * the body of the current request, mirroring {@code ServletContextRequest.MULTIPART_CONFIG_ELEMENT}
+	 * of Jetty's Servlet integration.
+	 *
+	 * <p>
+	 * Set before the parts are requested, it supersedes the {@code multipart-config} of the servlet
+	 * declaration, so the size limit is taken from the application configuration instead of the
+	 * deployment descriptor. Containers that do not know the attribute ignore it; there, the limit
+	 * is enforced by the explicit checks in {@link #handleUpload}.
+	 * </p>
+	 */
+	private static final String MULTIPART_CONFIG_ATTRIBUTE = "org.eclipse.jetty.multipartConfig";
+
+	/**
+	 * Size in bytes up to which an uploaded part is buffered in memory instead of being written to
+	 * a temporary file. Equals the {@code file-size-threshold} of the servlet's
+	 * {@code multipart-config} declaration.
+	 */
+	private static final int FILE_SIZE_THRESHOLD = 8192;
 
 	/**
 	 * This endpoint answers {@code XMLHttpRequest}s, for whose caller the check's redirect to an
@@ -429,14 +462,11 @@ public class ReactServlet extends TopLogicServlet {
 				sendSuccess(response);
 				return;
 			}
-			// Acquire the request lock so the close callback (which may patch the opener's
-			// snackbar state and flush SSE events) does not race with concurrent commands.
-			ReentrantLock requestLock = registry.getRequestLock();
-			requestLock.lock();
-			try {
+			// Closing a window changes the display of the session: the close callback may patch the
+			// opener's snackbar state, which must not race with concurrent commands and is delivered
+			// when the interaction completes.
+			try (Interaction interaction = registry.beginInteraction()) {
 				registry.windowClosed(closedWindowId);
-			} finally {
-				requestLock.unlock();
 			}
 			sendSuccess(response);
 			return;
@@ -447,8 +477,12 @@ public class ReactServlet extends TopLogicServlet {
 			sendSuccess(response);
 			return;
 		}
-		if ("navigateToRoute".equals(commandName)) {
+		if (CMD_NAVIGATE_TO_ROUTE.equals(commandName)) {
 			handleNavigateToRoute(request, response, session, windowName, arguments);
+			return;
+		}
+		if (CMD_UPLOAD_REJECTED.equals(commandName)) {
+			handleUploadRejected(request, response, session, windowName, controlId, arguments);
 			return;
 		}
 
@@ -504,10 +538,8 @@ public class ReactServlet extends TopLogicServlet {
 		// Install subsession context and enable command phase.
 		SubsessionHandler rootHandler = installSubSession(displayContext, windowName);
 
-		ReentrantLock requestLock = ReactWindowRegistry.forSession(session).getRequestLock();
-		requestLock.lock();
-		try {
-			// Capture the interaction for the script recorder before it runs: the address is computed
+		try (Interaction interaction = ReactWindowRegistry.forSession(session).beginInteraction()) {
+			// Capture the step for the script recorder before the command runs: the address is computed
 			// against the current (pre-command) tree — exactly the state a replay resolves it against.
 			recordCommand(queue, control, commandName, arguments);
 
@@ -525,18 +557,16 @@ public class ReactServlet extends TopLogicServlet {
 			forwardPendingUpdates(displayContext, rootHandler, queue, control);
 
 			// Synthesize model events so that observable models receive changes
-			// from this command before the SSE queue is flushed.
+			// from this command before the interaction delivers its updates.
 			ReactWindowRegistry.forSession(session).synthesizeModelEvents(windowName);
 
 			if (result.isSuccess()) {
 				sendSuccess(response);
 			} else {
 				// Show error in snackbar instead of returning HTTP 500.
-				showCommandError(result, queue, control);
+				CommandErrors.show(errorSink(control), result);
 				sendSuccess(response);
 			}
-		} finally {
-			requestLock.unlock();
 		}
 	}
 
@@ -593,21 +623,48 @@ public class ReactServlet extends TopLogicServlet {
 			return;
 		}
 
-		String url = arguments != null ? (String) arguments.get("url") : null;
+		String url = arguments != null ? (String) arguments.get(ARG_URL) : null;
 		if (url == null) {
 			url = "";
 		}
 
-		try {
-			routeManager.navigateToRoute(url);
-			sendSuccess(response);
-		} catch (Exception ex) {
-			Logger.info("Route navigation vetoed for url '" + url + "': " + ex.getMessage(),
-				ReactServlet.class);
-			RouteVetoEvent veto = RouteVetoEvent.create()
-				.setCurrentUrl(routeManager.currentUrl());
-			queue.enqueue(veto);
-			sendSuccess(response);
+		// Adopting a URL changes the display like any other command does, and needs the same context
+		// for it: the subsession the controls belong to - without it a channel bound to a route
+		// parameter cannot look up the object the URL names - the update phase that lets the controls
+		// write their state, and the interaction that keeps a second request out of the tree meanwhile
+		// and delivers what the navigation changed.
+		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
+		SubsessionHandler rootHandler = installSubSession(displayContext, windowName);
+
+		try (Interaction interaction = ReactWindowRegistry.forSession(session).beginInteraction()) {
+			try {
+				boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
+				try {
+					routeManager.navigateToRoute(url);
+
+					// The display has taken the URL as far as it can: a segment it cannot reproduce is
+					// dropped, and what the display adds from here on is a navigation again.
+					routeManager.finishAdoption();
+					sendSuccess(response);
+				} finally {
+					if (rootHandler != null) {
+						rootHandler.enableUpdate(updateBefore);
+					}
+				}
+			} catch (Exception ex) {
+				Logger.info("Route navigation vetoed for url '" + url + "': " + ex.getMessage(),
+					ReactServlet.class);
+
+				// The URL is not reached, so its adoption ends here: the display stays as the veto keeps
+				// it, and the address the client is restored to below is the one it shows from now on -
+				// without which the user's next navigation would be reported as a replacement of it.
+				routeManager.cancelAdoption();
+
+				RouteVetoEvent veto = RouteVetoEvent.create()
+					.setCurrentUrl(routeManager.currentUrl());
+				queue.enqueue(veto);
+				sendSuccess(response);
+			}
 		}
 	}
 
@@ -652,9 +709,7 @@ public class ReactServlet extends TopLogicServlet {
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 		SubsessionHandler rootHandler = installSubSession(displayContext, designerWindowId);
 
-		ReentrantLock requestLock = registry.getRequestLock();
-		requestLock.lock();
-		try {
+		try (Interaction interaction = registry.beginInteraction()) {
 			boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
 			try {
 				pending.onPicked().accept(path);
@@ -664,8 +719,6 @@ public class ReactServlet extends TopLogicServlet {
 				}
 			}
 			registry.synthesizeModelEvents(designerWindowId);
-		} finally {
-			requestLock.unlock();
 		}
 		sendSuccess(response);
 	}
@@ -718,19 +771,55 @@ public class ReactServlet extends TopLogicServlet {
 			return;
 		}
 
+		long limit = UploadSupport.maxUploadSize();
+		if (limit > 0) {
+			// Let the container apply the configured limit while it parses the body, instead of the
+			// fixed one from the deployment descriptor.
+			request.setAttribute(MULTIPART_CONFIG_ATTRIBUTE,
+				new MultipartConfigElement("", limit, limit, FILE_SIZE_THRESHOLD));
+		}
+
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 
 		// Install subsession context and enable command phase.
 		SubsessionHandler rootHandler = installSubSession(displayContext, windowName);
 
-		ReentrantLock requestLock = ReactWindowRegistry.forSession(session).getRequestLock();
-		requestLock.lock();
-		try {
+		try (Interaction interaction = ReactWindowRegistry.forSession(session).beginInteraction()) {
+			if (limit > 0 && request.getContentLengthLong() > limit) {
+				rejectTooLarge(response, control, limit,
+					"request of " + request.getContentLengthLong() + " bytes");
+				return;
+			}
+
 			HandlerResult result;
 			boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
 			try {
-				Collection<Part> parts = request.getParts();
+				Collection<Part> parts;
+				try {
+					parts = request.getParts();
+				} catch (IllegalStateException ex) {
+					if (limit <= 0) {
+						// Uploads are unlimited, so the container refused the body for another
+						// reason - report it like any other failure of the upload.
+						throw ex;
+					}
+					// The size check of the container tripped while it parsed the body.
+					rejectTooLarge(response, control, limit, ex.getMessage());
+					return;
+				}
+				if (limit > 0) {
+					// A request sent with chunked transfer encoding announces no content length; its
+					// size is only known from the parts the container has parsed.
+					Part oversized = oversizedPart(parts, limit);
+					if (oversized != null) {
+						rejectTooLarge(response, control, limit,
+							"file '" + oversized.getSubmittedFileName() + "' of " + oversized.getSize() + " bytes");
+						return;
+					}
+				}
 				result = ((UploadHandler) control).handleUpload(displayContext, parts);
+			} catch (Throwable ex) {
+				result = CommandErrors.failure(ex, "Upload on " + control.getClass().getName(), ReactServlet.class);
 			} finally {
 				if (rootHandler != null) {
 					rootHandler.enableUpdate(updateBefore);
@@ -741,18 +830,100 @@ public class ReactServlet extends TopLogicServlet {
 			forwardPendingUpdates(displayContext, rootHandler, queue, control);
 
 			// Synthesize model events so that observable models (e.g. tables observing the uploaded
-			// objects' type) receive the changes made during upload handling before the SSE queue is
-			// flushed - otherwise the upload's effect only shows after a later rebuild.
+			// objects' type) receive the changes made during upload handling before the interaction
+			// delivers its updates - otherwise the upload's effect only shows after a later rebuild.
 			ReactWindowRegistry.forSession(session).synthesizeModelEvents(windowName);
 
-			if (result.isSuccess()) {
-				sendSuccess(response);
-			} else {
-				sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Upload handling failed.");
+			if (!result.isSuccess()) {
+				// Show error in snackbar instead of returning HTTP 500.
+				CommandErrors.show(errorSink(control), result);
 			}
-		} finally {
-			requestLock.unlock();
+			sendSuccess(response);
 		}
+	}
+
+	/**
+	 * The first of the given parts whose size exceeds the given limit, <code>null</code> if all of
+	 * them stay within it.
+	 */
+	private static Part oversizedPart(Collection<Part> parts, long limit) {
+		for (Part part : parts) {
+			if (part.getSize() > limit) {
+				return part;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Refuses an upload that exceeds the configured limit: tells the user about the limit and
+	 * answers the request with {@link HttpServletResponse#SC_REQUEST_ENTITY_TOO_LARGE}.
+	 *
+	 * @param control
+	 *        The control the upload was sent for, whose window shows the notice.
+	 * @param limit
+	 *        The limit in bytes that was exceeded.
+	 * @param cause
+	 *        What exceeded the limit, for the log entry.
+	 */
+	private void rejectTooLarge(HttpServletResponse response, ReactCommandTarget control, long limit, String cause)
+			throws IOException {
+		Logger.info("Upload refused, larger than the configured limit of " + limit + " bytes: " + cause,
+			ReactServlet.class);
+		showUploadTooLarge(control, limit);
+		sendError(response, HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE,
+			"Upload exceeds the limit of " + limit + " bytes.");
+	}
+
+	/**
+	 * Shows the notice naming the upload size limit in the window of the given control.
+	 *
+	 * <p>
+	 * A refused upload is not a malfunction, so the notice is shown as the plain message it is,
+	 * rather than as the report of a failed command.
+	 * </p>
+	 *
+	 * @param control
+	 *        The control the refused upload was meant for.
+	 * @param limit
+	 *        The limit in bytes that was exceeded.
+	 */
+	private void showUploadTooLarge(ReactCommandTarget control, long limit) {
+		ResKey message = I18NConstants.ERROR_UPLOAD_TOO_LARGE__LIMIT.fill(UploadSupport.sizeLabel(limit));
+		ErrorSink sink = errorSink(control);
+		if (sink == null) {
+			Logger.warn("No ErrorSink available to show upload notice: " + message, ReactServlet.class);
+			return;
+		}
+		sink.showError(Fragments.message(message));
+	}
+
+	/**
+	 * Handles the {@link #CMD_UPLOAD_REJECTED} global command: the client refused a selected file
+	 * as larger than {@link UploadSupport#maxUploadSize()} and did not transmit it, so the notice
+	 * the user must see is produced here.
+	 */
+	private void handleUploadRejected(HttpServletRequest request, HttpServletResponse response,
+			HttpSession session, String windowName, String controlId, Map<String, Object> arguments)
+			throws IOException {
+		SSEUpdateQueue queue = getWindowQueue(session, windowName);
+		if (queue == null) {
+			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
+			return;
+		}
+		ReactCommandTarget control = controlId != null ? queue.getControl(controlId) : null;
+		Object fileName = arguments != null ? arguments.get(ARG_FILE_NAME) : null;
+		Object size = arguments != null ? arguments.get(ARG_SIZE) : null;
+		Logger.info("Upload of '" + fileName + "' (" + size + " bytes) refused by the client, larger than the "
+			+ "configured limit.", ReactServlet.class);
+
+		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
+		installSubSession(displayContext, windowName);
+
+		try (Interaction interaction = ReactWindowRegistry.forSession(session).beginInteraction()) {
+			showUploadTooLarge(control, UploadSupport.maxUploadSize());
+		}
+		sendSuccess(response);
 	}
 
 	/**
@@ -787,7 +958,7 @@ public class ReactServlet extends TopLogicServlet {
 		if (displayContext.isSet(InfoService.INFO_SERVICE_ENTRIES)) {
 			List<HTMLFragment> entries = displayContext.get(InfoService.INFO_SERVICE_ENTRIES);
 			if (!entries.isEmpty()) {
-				ErrorSink errorSink = control instanceof ReactControl rc ? rc.getReactContext().getErrorSink() : null;
+				ErrorSink errorSink = errorSink(control);
 				if (errorSink != null) {
 					forwardToErrorSink(entries, errorSink);
 				} else {
@@ -802,81 +973,11 @@ public class ReactServlet extends TopLogicServlet {
 	}
 
 	/**
-	 * Shows a command error in the snackbar via {@link ErrorSink}.
-	 *
-	 * <p>
-	 * Instead of returning HTTP 500, the error message from the {@link HandlerResult} is forwarded
-	 * to the snackbar so the user sees what went wrong. Detail messages chained as exception causes
-	 * (e.g. the individual constraint violations behind a vetoed commit) are listed below the
-	 * summary, so the user learns which value on which object was rejected and where one message
-	 * ends and the next begins.
-	 * </p>
+	 * The {@link ErrorSink} of the window the given command target lives in, or <code>null</code>
+	 * if the target is not a {@link ReactControl}.
 	 */
-	private void showCommandError(HandlerResult result, SSEUpdateQueue queue, ReactCommandTarget control) {
-		ErrorSink errorSink = control instanceof ReactControl rc ? rc.getReactContext().getErrorSink() : null;
-		if (errorSink != null) {
-			ResKey titleKey = result.getErrorTitle();
-			HTMLFragment title = Fragments.div(CSS_SNACKBAR_TITLE,
-				titleKey != null ? Fragments.message(titleKey) : Fragments.message(I18NConstants.ERROR_COMMAND_FAILED));
-
-			errorSink.showError(Fragments.concat(title, Fragments.messageList(errorDetails(result))));
-		} else {
-			Logger.warn("No ErrorSink available to show command error: " + result.getErrorTitle(),
-				ReactServlet.class);
-		}
-	}
-
-	/**
-	 * The detail messages of a failed command, each describing one aspect of the failure.
-	 *
-	 * <p>
-	 * The same message can arrive through several routes at once: title and message both fall back
-	 * to the exception's error key, and the original exception reappears as cause of the wrapper
-	 * created by {@link HandlerResult#error(ResKey, Throwable)}. Each distinct message is therefore
-	 * reported only once, and a message already shown as the summary is dropped.
-	 * </p>
-	 */
-	private static List<ResKey> errorDetails(HandlerResult result) {
-		Resources resources = Resources.getInstance();
-
-		Set<String> seen = new HashSet<>();
-		ResKey titleKey = result.getErrorTitle();
-		if (titleKey != null) {
-			seen.add(resources.getString(titleKey));
-		}
-
-		List<ResKey> details = new ArrayList<>();
-		addDetail(details, seen, resources, result.getErrorMessage());
-		// The list HandlerResult#error(ResKey) fills - the plainest way for a command to fail, and
-		// until this was read, its message reached nobody: the snackbar showed the generic
-		// "command failed" title and no detail at all.
-		for (ResKey error : result.getEncodedErrors()) {
-			addDetail(details, seen, resources, error);
-		}
-		if (result.getException() != null) {
-			for (Throwable cause = result.getException().getCause(); cause != null; cause = cause.getCause()) {
-				if (cause instanceof I18NFailure failure) {
-					addDetail(details, seen, resources, failure.getErrorKey());
-				}
-			}
-		}
-		return details;
-	}
-
-	/**
-	 * Appends the given message unless it is empty or was already reported.
-	 */
-	private static void addDetail(List<ResKey> details, Set<String> seen, Resources resources, ResKey messageKey) {
-		if (messageKey == null) {
-			return;
-		}
-		String message = resources.getString(messageKey);
-		if (message == null || message.isEmpty() || message.equals("null")) {
-			return;
-		}
-		if (seen.add(message)) {
-			details.add(messageKey);
-		}
+	private static ErrorSink errorSink(ReactCommandTarget control) {
+		return control instanceof ReactControl rc ? rc.getReactContext().getErrorSink() : null;
 	}
 
 	private void forwardToErrorSink(List<HTMLFragment> entries, ErrorSink errorSink) {

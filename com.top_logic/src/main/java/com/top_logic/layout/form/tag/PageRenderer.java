@@ -30,52 +30,52 @@ public abstract class PageRenderer {
 	/**
 	 * CSS class of the outermost div.
 	 */
-	protected static final String PAGE_CSS_CLASS = "fptPage";
+	protected static final String PAGE_CSS_CLASS = "tl-form-page";
 
 	/**
 	 * CSS class of the header div.
 	 */
-	protected static final String HEADER_CSS_CLASS = "fptHeader";
+	protected static final String HEADER_CSS_CLASS = "tl-form-page__header";
 
 	/**
 	 * CSS class of the title div.
 	 */
-	protected static final String TITLE_CSS_CLASS = "fptTitle";
+	protected static final String TITLE_CSS_CLASS = "tl-form-page__title";
 
 	/**
 	 * CSS class of the title content div.
 	 */
-	protected static final String TITLE_CONTENT_CSS_CLASS = "fptTitleContent";
+	protected static final String TITLE_CONTENT_CSS_CLASS = "tl-form-page__title-content";
 
 	/**
 	 * CSS class of the subtitle div.
 	 */
-	protected static final String SUBTITLE_CSS_CLASS = "fptSubtitle";
+	protected static final String SUBTITLE_CSS_CLASS = "tl-form-page__subtitle";
 
 	/**
 	 * CSS class of the subtitle content div.
 	 */
-	protected static final String SUBTITLE_CONTENT_CSS_CLASS = "fptSubtitleContent";
+	protected static final String SUBTITLE_CONTENT_CSS_CLASS = "tl-form-page__subtitle-content";
 
 	/**
 	 * CSS class for text in title and subtitle.
 	 */
-	protected static final String TITLE_TEXT_CSS_CLASS = "fptTitleText";
+	protected static final String TITLE_TEXT_CSS_CLASS = "tl-form-page__title-text";
 
 	/**
 	 * CSS class of the icon bar div.
 	 */
-	protected static final String ICONBAR_CSS_CLASS = "fptIconBar";
+	protected static final String ICONBAR_CSS_CLASS = "tl-form-page__icon-bar";
 
 	/**
 	 * CSS class of the body div.
 	 */
-	protected static final String BODY_CSS_CLASS = "fptBody";
+	protected static final String BODY_CSS_CLASS = "tl-form-page__body";
 
 	/**
 	 * CSS class of the body content div.
 	 */
-	protected static final String BODY_CONTENT_CSS_CLASS = "fptBodyContent";
+	protected static final String BODY_CONTENT_CSS_CLASS = "tl-form-page__body-content";
 
 	/**
 	 * Writes the complete page consisting of header and body.

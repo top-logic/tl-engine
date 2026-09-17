@@ -3,12 +3,16 @@ import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
   'js.table.columnSearch': 'Find column',
+  'js.table.groupBy': 'Group by this column',
+  'js.table.ungroup': 'Remove grouping',
 };
 
 interface ColumnEntry {
   name: string;
   label: string;
   visible: boolean;
+  /** Whether the rows are grouped by this column - at most one entry is. */
+  grouped: boolean;
 }
 
 /**
@@ -16,7 +20,8 @@ interface ColumnEntry {
  * row onto another one.
  *
  * Both the order and the checked state live on the server (see ReactColumnSelectControl), so a
- * gesture sends a command and the re-pushed list is what renders.
+ * gesture sends a command and the re-pushed list is what renders. Each row also offers to group
+ * the table's rows by that column; the choice applies with the columns.
  */
 const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -51,6 +56,12 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
 
   const handleToggle = React.useCallback((name: string, visible: boolean) => {
     sendCommand('columnVisible', { column: name, visible });
+  }, [sendCommand]);
+
+  // Choosing a column moves the grouping there, choosing the grouped one removes it - resolved on
+  // the server, which owns the edited working copy.
+  const handleGroupBy = React.useCallback((name: string) => {
+    sendCommand('groupBy', { column: name });
   }, [sendCommand]);
 
   const handleDragStart = React.useCallback((name: string, event: React.DragEvent) => {
@@ -139,6 +150,16 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
             onDragEnd={handleDragEnd}
           >
             <i className="tlColumnSelect__handle bi bi-grip-vertical" aria-hidden="true" />
+            <button
+              type="button"
+              className={'tlColumnSelect__groupBy'
+                + (entry.grouped ? ' tlColumnSelect__groupBy--active' : '')}
+              title={entry.grouped ? i18n['js.table.ungroup'] : i18n['js.table.groupBy']}
+              aria-pressed={entry.grouped}
+              onClick={() => handleGroupBy(entry.name)}
+            >
+              <i className={entry.grouped ? 'bi bi-collection-fill' : 'bi bi-collection'} aria-hidden="true" />
+            </button>
             <label className="tlColumnSelect__label">
               <input
                 type="checkbox"

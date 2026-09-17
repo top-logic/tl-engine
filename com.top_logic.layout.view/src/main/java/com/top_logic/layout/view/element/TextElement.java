@@ -5,8 +5,11 @@
  */
 package com.top_logic.layout.view.element;
 
-import com.top_logic.basic.annotation.InApp;
+import java.util.List;
+import java.util.Set;
+
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
@@ -16,6 +19,7 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.react.control.ReactValueColor;
 import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
@@ -23,6 +27,7 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
+import com.top_logic.layout.view.model.ChannelObjectObserver;
 import com.top_logic.util.Resources;
 
 /**
@@ -32,6 +37,17 @@ import com.top_logic.util.Resources;
  * Either a static {@link Config#getLabel() label} or the value of an {@link Config#getInput() input
  * channel} (rendered through {@link MetaLabelProvider}, updating reactively when the channel
  * changes).
+ * </p>
+ *
+ * <p>
+ * A channel value the model gives a color - an enumeration literal, an object whose type computes
+ * the color of its instances - is displayed as a pill in that color.
+ * </p>
+ *
+ * <p>
+ * The display follows a new value on the channel and a change of the object the channel holds: the
+ * label and the color are recomputed together, so the pill of an object whose state was edited
+ * follows that edit without the object being selected anew.
  * </p>
  */
 @InApp
@@ -119,10 +135,23 @@ public class TextElement implements UIElement {
 	public IReactControl createControl(ViewContext context) {
 		if (_inputRef != null) {
 			ViewChannel channel = context.resolveChannel(_inputRef);
-			ReactTextControl control = new ReactTextControl(context, label(channel.get()), _cssClass);
-			ChannelListener listener = (sender, oldValue, newValue) -> control.setText(label(newValue));
+			Object value = channel.get();
+			ReactTextControl control = new ReactTextControl(context, label(value), _cssClass);
+			control.setColor(ReactValueColor.cssColorOf(value));
+
+			Runnable update = () -> {
+				Object current = channel.get();
+				control.setText(label(current), ReactValueColor.cssColorOf(current));
+			};
+
+			ChannelListener listener = (sender, oldValue, newValue) -> update.run();
 			channel.addListener(listener);
 			control.addCleanupAction(() -> channel.removeListener(listener));
+
+			ChannelObjectObserver observer = new ChannelObjectObserver(List.of(channel), Set.of(), update);
+			control.addAttachListener(() -> observer.attach(context.getModelScope()));
+			control.addDetachListener(observer::detach);
+
 			return control;
 		}
 		String text = _label != null ? Resources.getInstance().getString(_label) : "";

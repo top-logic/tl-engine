@@ -38,6 +38,7 @@ import com.top_logic.layout.react.control.form.ReactNumberInputControl;
 import com.top_logic.layout.react.control.form.ReactPasswordInputControl;
 import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
+import com.top_logic.mig.html.HTMLFormatter;
 
 /**
  * Service resolving the input control for a configuration property.
@@ -467,10 +468,10 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 				return new ReactCheckboxControl(context, model);
 			}
 			if (type == int.class || type == Integer.class || type == long.class || type == Long.class) {
-				return new ReactNumberInputControl(context, model, 0);
+				return new ReactNumberInputControl(context, model, HTMLFormatter.getInstance().getLongFormat());
 			}
 			if (type == double.class || type == Double.class || type == float.class || type == Float.class) {
-				return new ReactNumberInputControl(context, model, 2);
+				return new ReactNumberInputControl(context, model, HTMLFormatter.getInstance().getDoubleFormat());
 			}
 			if (Date.class.isAssignableFrom(type)) {
 				return new ReactDatePickerControl(context, model, ReactDatePickerControl.Kind.DATE);

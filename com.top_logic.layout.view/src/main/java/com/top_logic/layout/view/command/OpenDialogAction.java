@@ -26,6 +26,7 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.overlay.DialogHandle;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DirtyConfirmDialogControl;
 import com.top_logic.layout.view.DefaultViewContext;
@@ -37,6 +38,9 @@ import com.top_logic.layout.view.channel.ChannelBindingConfig;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.form.StateHandler;
+import com.top_logic.layout.view.navigation.DialogRevealer;
+import com.top_logic.layout.view.navigation.RevealPath;
+import com.top_logic.layout.view.navigation.RevealRegistry;
 
 /**
  * {@link ViewAction} that opens a modal dialog.
@@ -79,11 +83,14 @@ public class OpenDialogAction extends InterruptibleViewAction {
 		@Mandatory
 		String getDialogView();
 
+		/** Default value of {@link #getCloseOnBackdrop()}. */
+		boolean CLOSE_ON_BACKDROP_DEFAULT = false;
+
 		/**
 		 * Whether clicking the backdrop closes the dialog.
 		 */
 		@Name("close-on-backdrop")
-		@BooleanDefault(false)
+		@BooleanDefault(CLOSE_ON_BACKDROP_DEFAULT)
 		boolean getCloseOnBackdrop();
 
 		/**
@@ -202,12 +209,13 @@ public class OpenDialogAction extends InterruptibleViewAction {
 	 *        context, carrying the given value.
 	 * @param bindings
 	 *        Live bindings inherited from the parent context (may be empty).
+	 * @return Handle closing the opened dialog, or {@code null} if no dialog could be opened.
 	 */
-	public static void openDialog(ReactContext context, String dialogViewPath, boolean closeOnBackdrop,
+	public static DialogHandle openDialog(ReactContext context, String dialogViewPath, boolean closeOnBackdrop,
 			Map<String, ?> channelValues, List<ChannelBindingConfig> bindings) {
 		DialogManager mgr = context.getDialogManager();
 		if (mgr == null) {
-			return;
+			return null;
 		}
 
 		ViewElement dialogView;
@@ -218,6 +226,12 @@ public class OpenDialogAction extends InterruptibleViewAction {
 		}
 
 		ViewContext dialogContext = new DefaultViewContext(context);
+
+		// A dialog is displayed on top of everything, so its content sits one step below whatever
+		// opened it - a step no configured container accounts for.
+		RevealPath opener = context instanceof ViewContext parent ? RevealPath.of(parent) : RevealPath.ROOT;
+		dialogContext = dialogContext.withScope(RevealPath.class,
+			opener.append(null, ViewLoader.viewRef(dialogViewPath)));
 
 		if (context instanceof ViewContext) {
 			ViewContext parentViewContext = (ViewContext) context;
@@ -248,8 +262,16 @@ public class OpenDialogAction extends InterruptibleViewAction {
 		ReactControl dialogControl = new ReloadableControl(dialogViewPath, dialogContext,
 			(ReactControl) dialogView.createControl(dialogContext));
 
-		mgr.openDialog(closeOnBackdrop, dialogControl, result -> {
+		DialogHandle handle = mgr.openDialog(closeOnBackdrop, dialogControl, result -> {
 			// Dialog closed.
 		});
+
+		RevealRegistry registry = dialogContext.getRevealRegistry();
+		if (registry != null) {
+			dialogControl.addCleanupAction(
+				registry.registerContainer(null, opener, new DialogRevealer(mgr, handle)));
+		}
+
+		return handle;
 	}
 }

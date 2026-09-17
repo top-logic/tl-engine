@@ -26,6 +26,9 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey1 MUST_ONLY_BE_SET_IF_OTHER_IS_UNSET__OTHER;
 
+	/** @en Must be set, if none of {0} is set. */
+	public static ResKey1 MUST_BE_SET_IF_OTHERS_ARE_UNSET__OTHERS;
+
 	/** @en The value {0} is not a valid URL: {1} */
 	public static ResKey2 NO_URL_FORMAT__VALUE__MESSAGE;
 

@@ -1,14 +1,18 @@
 /**
  * Global keyboard-gesture dispatcher.
  *
- * <p>A single capture-phase {@code keydown} listener walks a stack of registered
- * keyboard scopes from the innermost (deepest in the React tree / most recently
- * opened) outward; the first active scope that binds the pressed gesture handles it.
- * Scopes are contributed by dialogs/windows/tables (via {@code KeyboardScopeProvider}
- * in the React bridge) and the individual gesture-&gt;handler bindings by their
- * descendant controls (buttons, the table) via {@code useKeyboardBinding}. This
- * replaces the scattered per-control {@code document.addEventListener('keydown')}
- * handlers with one dispatcher that has well-defined precedence.</p>
+ * <p>A single {@code keydown} listener walks a stack of registered keyboard scopes
+ * from the innermost (deepest in the React tree / most recently opened) outward; the
+ * first active scope that binds the pressed gesture handles it. The individual
+ * gesture-&gt;handler bindings are contributed by the controls themselves (buttons,
+ * the table) via {@code useKeyboardBinding} in the React bridge.</p>
+ *
+ * <p>The outermost scope is the page scope ({@link pageScope}), created here before
+ * any other scope exists and therefore walked last. It gives controls that sit
+ * directly on the page — a page toolbar's buttons, the primary button of a login
+ * page — a scope to bind their gestures in. Dialogs, windows and tables stack above
+ * it with their own {@code KeyboardScopeProvider}: a modal window traps every
+ * gesture, so page bindings stay dormant while it is open.</p>
  */
 
 /** A gesture handler. Returning {@code false} declines so the dispatcher keeps looking. */
@@ -43,6 +47,22 @@ export function registerScope(scope: KeyboardScope): () => void {
       _scopes.splice(i, 1);
     }
   };
+}
+
+/**
+ * The page scope: the outermost scope, holding the bindings of controls that are not
+ * enclosed by a dialog, window or table scope.
+ *
+ * <p>Allocated while this module is evaluated — before any component renders and hence
+ * before any other scope is created — so its id is the smallest and the dispatcher
+ * walks it last. It is non-modal and always active. {@link initKeyboardDispatcher}
+ * puts it on the stack.</p>
+ */
+const _pageScope: KeyboardScope = createScope(() => true);
+
+/** The always-active outermost scope; see {@link _pageScope}. */
+export function pageScope(): KeyboardScope {
+  return _pageScope;
 }
 
 /** Adds a gesture binding to a scope; returns a remover. */
@@ -185,6 +205,11 @@ function handleKeydown(e: KeyboardEvent): void {
   if ((NAV_KEYS.has(e.key) || e.key === ' ') && isTextEntry(active)) {
     return;
   }
+  // Ctrl/Meta+A inside a caret editor selects that editor's text, whatever a scope binds it to
+  // (a table binds it to "select every row").
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'a' || e.key === 'A') && isTextEntry(active)) {
+    return;
+  }
 
   const gesture = eventToGesture(e);
   const ordered = _scopes.slice().sort((a, b) => b.id - a.id);
@@ -208,12 +233,16 @@ function handleKeydown(e: KeyboardEvent): void {
   }
 }
 
-/** Installs the single document-level keydown listener (idempotent). */
+/**
+ * Installs the single document-level keydown listener and registers the page scope
+ * (idempotent, so the page scope is registered exactly once).
+ */
 export function initKeyboardDispatcher(): void {
   if (_installed) {
     return;
   }
   _installed = true;
+  registerScope(_pageScope);
   // Bubble phase: focused widgets handle their own keys first; we are the fallback.
   document.addEventListener('keydown', handleKeydown, false);
 }

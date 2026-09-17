@@ -214,22 +214,37 @@ public class Resources extends DefaultBundle {
 	 */
 	public static Resources getInstance(SubSessionContext session) {
 		if (session != null) {
+			Locale locale = getLocale(session);
 			Resources cachedResources = session.get(RESOURCES);
-			if (cachedResources != null && cachedResources.isValid()) {
+			if (usable(cachedResources, locale)) {
 				return cachedResources;
 			}
 			synchronized (Resources.class) {
 				Resources concurrentlyCreatedResources = session.get(RESOURCES);
-				if (concurrentlyCreatedResources != null && concurrentlyCreatedResources.isValid()) {
+				if (usable(concurrentlyCreatedResources, locale)) {
 					return concurrentlyCreatedResources;
 				}
-				Resources newResources = Resources.getInstance(getLocale(session));
+				Resources newResources = Resources.getInstance(locale);
 				session.set(RESOURCES, newResources);
 				return newResources;
 			}
 		} else {
 			return Resources.getInstance(Resources.findBestLocale());
 		}
+	}
+
+	/**
+	 * Whether the given resources cached on a sub-session can still answer for it.
+	 *
+	 * <p>
+	 * Cached resources are the bundles of one {@link #getLocale() locale}, so they serve the
+	 * session only while that is the locale the session asks in. A session whose
+	 * {@link SubSessionContext#getCurrentLocale() locale} has changed - the user switched language
+	 * - needs the bundles of the new one, not the ones it was entered with.
+	 * </p>
+	 */
+	private static boolean usable(Resources cached, Locale locale) {
+		return cached != null && cached.isValid() && cached.getLocale().equals(locale);
 	}
 
 	/**

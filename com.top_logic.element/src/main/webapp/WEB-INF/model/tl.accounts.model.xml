@@ -191,7 +191,17 @@
 				</reference>
 				<property name="defaultGroup"
 					type="tl.core:Boolean"
-				/>
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<method-call method="com.top_logic.tool.boundsec.wrap.Group#isDefaultGroup()"/>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
 			</attributes>
 		</class>
 		<class name="RepresentativeGroup">
@@ -270,6 +280,7 @@
 					</annotations>
 				</property>
 				<property name="timezone"
+					mandatory="true"
 					type="tl.util:TimeZone"
 				>
 					<annotations>

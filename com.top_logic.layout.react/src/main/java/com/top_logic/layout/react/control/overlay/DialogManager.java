@@ -40,4 +40,18 @@ public interface DialogManager {
 	 */
 	void closeTopDialog(DialogResult<Void> result);
 
+	/**
+	 * Brings the given dialog to the front by closing every dialog stacked on top of it.
+	 *
+	 * <p>
+	 * The dialogs above are closed with {@link DialogResult#cancelled()}, the given dialog stays
+	 * open. Closing nothing when the dialog is already the topmost one, or when it is no longer
+	 * open.
+	 * </p>
+	 *
+	 * @param dialog
+	 *        Handle of the dialog to display.
+	 */
+	void closeDialogsAbove(DialogHandle dialog);
+
 }

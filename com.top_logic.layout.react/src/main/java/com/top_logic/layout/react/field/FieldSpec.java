@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.react.field;
 
+import java.text.Format;
+import java.text.NumberFormat;
 import java.util.List;
 
 import com.top_logic.layout.LabelProvider;
@@ -48,6 +50,8 @@ public final class FieldSpec {
 	private boolean _triState;
 
 	private ReactDatePickerControl.Kind _dateKind = ReactDatePickerControl.Kind.DATE;
+
+	private Format _numberFormat;
 
 	private List<?> _options;
 
@@ -228,6 +232,32 @@ public final class FieldSpec {
 	 */
 	public FieldSpec setDateKind(ReactDatePickerControl.Kind dateKind) {
 		_dateKind = dateKind;
+		return this;
+	}
+
+	/**
+	 * The format a numeric value is displayed in and entered in, or {@code null} to use the default
+	 * format for the value type.
+	 *
+	 * <p>
+	 * One format serves every place the value appears - a form field, a table cell, and the bounds
+	 * of that column's filter - so that the same number is always written the same way. A
+	 * {@link NumberFormat} carries the user's locale and the number of digits the value asks for;
+	 * a format of another kind writes its own text, a duration in milliseconds as {@code 1h 30min}
+	 * for instance.
+	 * </p>
+	 */
+	public Format getNumberFormat() {
+		return _numberFormat;
+	}
+
+	/**
+	 * Sets the {@link #getNumberFormat() number format}.
+	 *
+	 * @return This specification for call chaining.
+	 */
+	public FieldSpec setNumberFormat(Format numberFormat) {
+		_numberFormat = numberFormat;
 		return this;
 	}
 

@@ -10,7 +10,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.top_logic.basic.Logger;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
@@ -139,23 +138,13 @@ public class ToolbarBuilder {
 
 	private static ReactButtonControl createButton(ReactContext context, CommandModel model,
 			KeyStroke defaultGesture, ButtonDisplayMode defaultDisplay) {
-		// The CommandModel constructor wires label, executability, image, tooltip, the model's own
-		// key gesture and the state change listener.
+		// The CommandModel constructor wires label, executability, image, tooltip, display mode, CSS
+		// classes, the model's own key gesture and the state change listener.
 		ReactButtonControl button = model instanceof UploadCommandModel
 			? new ReactUploadButtonControl(context, (UploadCommandModel) model)
 			: new ReactButtonControl(context, model);
-		ButtonDisplayMode display = model.getDisplayMode() != null ? model.getDisplayMode() : defaultDisplay;
-		if (display == ButtonDisplayMode.ICON_ONLY && model.getImage() == null) {
-			// An icon-only button without an icon would be invisible - fall back to its label.
-			Logger.warn("Command '" + model.getLabel() + "' requests icon-only display but has no image.",
-				ToolbarBuilder.class);
-			display = null;
-		}
-		if (display != null) {
-			button.setDisplayMode(display);
-		} else if (model.getImage() != null) {
-			button.setDisplayMode(ButtonDisplayMode.ICON_LABEL);
-		}
+		// A toolbar contributes only its own default, for a command that requests no display mode.
+		button.setDefaultDisplayMode(defaultDisplay);
 		// The button's effective gesture is its own explicit one, else the conventional default.
 		KeyStroke gesture = model.getKeyGesture() != null ? model.getKeyGesture() : defaultGesture;
 		if (KeyStroke.ENTER.equals(gesture)) {

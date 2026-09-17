@@ -165,7 +165,7 @@ public class OpenViewWindowCommand implements ViewCommand {
 		} catch (ConfigurationException ex) {
 			throw new RuntimeException("Failed to load window view: " + _viewPath, ex);
 		}
-		ViewContext viewContext = new DefaultViewContext(windowContext);
+		ViewContext viewContext = new DefaultViewContext(windowContext, _viewPath);
 		return (ReactControl) view.createControl(viewContext);
 	}
 }

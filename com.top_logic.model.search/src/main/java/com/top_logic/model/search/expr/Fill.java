@@ -69,6 +69,15 @@ public class Fill extends GenericMethod {
 	}
 
 	/**
+	 * {@link Fill} formats its arguments in the locale of the current session, so it cannot be
+	 * evaluated at compile time.
+	 */
+	@Override
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
+		return false;
+	}
+
+	/**
 	 * Factory for {@link Fill} methods.
 	 */
 	public static class Builder extends AbstractSimpleMethodBuilder<Fill> {

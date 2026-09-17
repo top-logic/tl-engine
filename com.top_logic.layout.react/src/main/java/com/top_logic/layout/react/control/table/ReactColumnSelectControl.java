@@ -18,13 +18,15 @@ import com.top_logic.util.Resources;
 
 /**
  * The editor of a table's column selection: the columns as a list that can be reordered by dragging,
- * each with a checkbox deciding whether it is displayed.
+ * each with a checkbox deciding whether it is displayed and an icon choosing the one the rows are
+ * grouped by.
  *
  * <p>
- * The control edits a working copy - a table's columns change only when the surrounding dialog
- * applies {@link #visibleColumns()}, so cancelling discards the edits. Both the order and the
- * checkboxes live on the server: every gesture is a command, and the resulting list is pushed back,
- * exactly as dragging a column header is handled by the {@link TableViewControl}.
+ * The control edits a working copy - a table's columns and grouping change only when the surrounding
+ * dialog applies {@link #visibleColumns()} and {@link #groupedColumn()}, so cancelling discards the
+ * edits. The order, the checkboxes and the grouping all live on the server: every gesture is a
+ * command, and the resulting list is pushed back, exactly as dragging a column header is handled by
+ * the {@link TableViewControl}.
  * </p>
  */
 public class ReactColumnSelectControl extends ReactControl {
@@ -41,14 +43,23 @@ public class ReactColumnSelectControl extends ReactControl {
 	/** Per-entry state key of whether the column is displayed. */
 	private static final String ENTRY_VISIBLE = "visible";
 
+	/** Per-entry state key of whether the rows are grouped by the column. */
+	private static final String ENTRY_GROUPED = "grouped";
+
 	/** Command reordering the list (drag and drop). */
 	private static final String CMD_COLUMN_REORDER = "columnReorder";
 
 	/** Command showing or hiding one column. */
 	private static final String CMD_COLUMN_VISIBLE = "columnVisible";
 
+	/** Command choosing the column to group the rows by. */
+	private static final String CMD_GROUP_BY = "groupBy";
+
 	/** The edited columns, in the edited order. */
 	private final List<ColumnOption> _entries;
+
+	/** The edited grouping: the column to group the rows by, {@code null} for none. */
+	private String _groupedColumn;
 
 	/**
 	 * Creates a {@link ReactColumnSelectControl}.
@@ -58,10 +69,13 @@ public class ReactColumnSelectControl extends ReactControl {
 	 * @param options
 	 *        The columns to offer, in initial display order (see
 	 *        {@link com.top_logic.table.TableView#columnOptions()}).
+	 * @param groupedColumn
+	 *        The column the rows are grouped by when the dialog opens, {@code null} for none.
 	 */
-	public ReactColumnSelectControl(ReactContext context, List<ColumnOption> options) {
+	public ReactColumnSelectControl(ReactContext context, List<ColumnOption> options, String groupedColumn) {
 		super(context, null, "TLColumnSelect");
 		_entries = new ArrayList<>(options);
+		_groupedColumn = groupedColumn;
 		pushEntries();
 	}
 
@@ -78,6 +92,14 @@ public class ReactColumnSelectControl extends ReactControl {
 		return result;
 	}
 
+	/**
+	 * The column to group the rows by, {@code null} for none - the second half of the result to
+	 * apply to the table.
+	 */
+	public String groupedColumn() {
+		return _groupedColumn;
+	}
+
 	private void pushEntries() {
 		Resources resources = Resources.getInstance();
 		List<Map<String, Object>> entries = new ArrayList<>(_entries.size());
@@ -86,6 +108,7 @@ public class ReactColumnSelectControl extends ReactControl {
 			state.put(ENTRY_NAME, entry.name());
 			state.put(ENTRY_LABEL, resources.getString(entry.label()));
 			state.put(ENTRY_VISIBLE, Boolean.valueOf(entry.visible()));
+			state.put(ENTRY_GROUPED, Boolean.valueOf(entry.name().equals(_groupedColumn)));
 			entries.add(state);
 		}
 		putState(ENTRIES, entries);
@@ -120,6 +143,21 @@ public class ReactColumnSelectControl extends ReactControl {
 			_entries.set(index, new ColumnOption(entry.name(), entry.label(), args.isVisible()));
 			pushEntries();
 		}
+	}
+
+	/**
+	 * Handles the choice of the grouping column.
+	 *
+	 * <p>
+	 * The rows are grouped by one column at a time, so choosing a column moves the grouping there;
+	 * choosing the column that already groups them removes the grouping.
+	 * </p>
+	 */
+	@ReactCommandHandler(CMD_GROUP_BY)
+	void handleGroupBy(GroupByArguments args) {
+		String column = args.getColumn();
+		_groupedColumn = column != null && column.equals(_groupedColumn) ? null : column;
+		pushEntries();
 	}
 
 	private int indexOf(String column) {

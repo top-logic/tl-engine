@@ -30,10 +30,9 @@ import com.top_logic.table.impl.ListRowSource;
  * {@link ListRowSource}, but any consumer of the element list works).
  *
  * <p>
- * The green-field analog of the legacy observable {@code ObjectTableModel} wrapper. Listeners are
- * registered only for the observed types (to catch
- * creates), the currently displayed objects (to catch their updates / deletes) and the input
- * channels, so any received notification simply means "re-evaluate".
+ * Listeners are registered only for the observed types (to catch creates), the currently displayed
+ * persistent objects (to catch their updates / deletes) and the input channels, so any received
+ * notification simply means "re-evaluate".
  * </p>
  *
  * @param <R>
@@ -106,7 +105,20 @@ public class RowSourceObserver<R> implements ModelListener, ViewChannel.ChannelL
 	}
 
 	/**
-	 * Registers all listeners on the given {@link ModelScope} (called on first render).
+	 * Begins observing on the given {@link ModelScope}, and re-reads the elements.
+	 *
+	 * <p>
+	 * The elements are re-read because what happened before the observation began is unknown here: an
+	 * object created, an input channel written - a channel bound to the URL taking up the value a
+	 * deep link carries, for instance - between the construction of the observer and this call
+	 * reached no listener, so the elements at hand describe a state that may already be gone. The
+	 * same holds for an element list that was observed before and stopped being observed: a display
+	 * that is not looked at ignores every change, and the way back into the display is where it
+	 * catches up.
+	 * </p>
+	 *
+	 * @param scope
+	 *        The scope the model listeners are registered on.
 	 */
 	public void attach(ModelScope scope) {
 		if (_attached) {
@@ -117,6 +129,7 @@ public class RowSourceObserver<R> implements ModelListener, ViewChannel.ChannelL
 		registerObjectListeners();
 		registerTypeListeners();
 		registerChannelListeners();
+		catchUp();
 	}
 
 	/**
@@ -145,7 +158,32 @@ public class RowSourceObserver<R> implements ModelListener, ViewChannel.ChannelL
 	}
 
 	private void reEvaluate() {
-		deregisterObjectListeners();
+		List<R> elements = readElements();
+		replaceElements(elements);
+		_sink.accept(elements);
+	}
+
+	/**
+	 * Re-reads the elements and delivers them where they differ from the ones at hand.
+	 *
+	 * <p>
+	 * Silent where they do not: nothing was missed then, and a display that shows the elements
+	 * already has nothing to rebuild.
+	 * </p>
+	 */
+	private void catchUp() {
+		List<R> elements = readElements();
+		if (elements.equals(_elements)) {
+			return;
+		}
+		replaceElements(elements);
+		_sink.accept(elements);
+	}
+
+	/**
+	 * The elements the element function yields for the current input values.
+	 */
+	private List<R> readElements() {
 		Collection<?> rows = _rowFunction.apply(readChannelValues());
 		List<R> elements = new ArrayList<>(rows.size());
 		for (Object row : rows) {
@@ -153,15 +191,23 @@ public class RowSourceObserver<R> implements ModelListener, ViewChannel.ChannelL
 			R element = (R) row;
 			elements.add(element);
 		}
+		return elements;
+	}
+
+	/**
+	 * Makes the given elements the observed ones.
+	 */
+	private void replaceElements(List<R> elements) {
+		deregisterObjectListeners();
 		_elements = elements;
 		registerObjectListeners();
-		_sink.accept(elements);
 	}
 
 	private void registerObjectListeners() {
 		_observedKeys.clear();
 		for (Object row : _elements) {
-			if (row instanceof TLObject object) {
+			if (isObservable(row)) {
+				TLObject object = (TLObject) row;
 				ObjectKey key = key(object);
 				if (key != null && _observedKeys.add(key)) {
 					_scope.addModelListener(object, this);
@@ -172,11 +218,23 @@ public class RowSourceObserver<R> implements ModelListener, ViewChannel.ChannelL
 
 	private void deregisterObjectListeners() {
 		for (Object row : _elements) {
-			if (row instanceof TLObject object) {
-				_scope.removeModelListener(object, this);
+			if (isObservable(row)) {
+				_scope.removeModelListener((TLObject) row, this);
 			}
 		}
 		_observedKeys.clear();
+	}
+
+	/**
+	 * Whether changes of the given element can be observed: it is a persistent object.
+	 *
+	 * <p>
+	 * A transient object has no identity in the persistency layer and therefore no changes anyone
+	 * could be notified of - it changes only where the display that holds it changes it.
+	 * </p>
+	 */
+	private static boolean isObservable(Object row) {
+		return row instanceof TLObject object && !object.tTransient();
 	}
 
 	private void registerTypeListeners() {

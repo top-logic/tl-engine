@@ -120,7 +120,7 @@ public abstract class CommandScopeElement extends CommandCarrierElement {
 		});
 
 		// Phase 7: Lazy attach on render, cleanup on dispose.
-		registerLifecycle(commandModels, chrome);
+		registerLifecycle(context, commandModels, chrome);
 
 		return chrome;
 	}

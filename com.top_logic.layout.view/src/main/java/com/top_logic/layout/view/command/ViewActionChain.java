@@ -8,6 +8,7 @@ package com.top_logic.layout.view.command;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
+import java.util.function.Consumer;
 
 import com.top_logic.layout.react.ReactContext;
 
@@ -21,6 +22,12 @@ import com.top_logic.layout.react.ReactContext;
  * via {@link Continuation#onAbort(Runnable)}). A thrown {@link RuntimeException} runs the same
  * compensation unwind before propagating.
  * </p>
+ *
+ * <p>
+ * An action that is itself composed of actions - a branch such as {@link IfAction} or
+ * {@link SwitchAction} - runs the actions it contains as a nested chain of the chain it is part of,
+ * see {@link #nest(ReactContext, List, Object, Continuation)}.
+ * </p>
  */
 public class ViewActionChain {
 
@@ -28,20 +35,54 @@ public class ViewActionChain {
 	 * Runs {@code actions} starting with {@code input}.
 	 *
 	 * @param onComplete
-	 *        Invoked exactly once when the chain settles normally - either it ran past the last
-	 *        action or it was aborted. It is <em>not</em> invoked when an action throws (the
-	 *        exception propagates after compensations run). May be {@code null}.
+	 *        Invoked exactly once when the chain settles normally - with the result of the last
+	 *        action when the chain ran past it, or with {@code null} when it was aborted. It is
+	 *        <em>not</em> invoked when an action throws (the exception propagates after
+	 *        compensations run). May be {@code null}.
 	 */
-	public static void run(ReactContext context, List<ViewAction> actions, Object input, Runnable onComplete) {
-		runFrom(context, actions, 0, input, new ArrayDeque<>(), onComplete);
+	public static void run(ReactContext context, List<ViewAction> actions, Object input,
+			Consumer<Object> onComplete) {
+		Deque<Runnable> compensations = new ArrayDeque<>();
+		runFrom(context, actions, 0, input, compensations,
+			value -> settled(onComplete, value),
+			() -> {
+				runCompensations(compensations);
+				settled(onComplete, null);
+			});
+	}
+
+	/**
+	 * Runs {@code actions} as a nested chain of the action that is executing right now, handing the
+	 * result of the nested chain's last action to the enclosing chain.
+	 *
+	 * <p>
+	 * The nested chain starts with {@code input} and the enclosing chain continues with the result
+	 * of its last action - with {@code input} itself when there is no action to run, so an empty
+	 * branch passes the chain's value through. An abort inside the nested chain aborts the
+	 * enclosing chain, and the compensations registered inside the nested chain take their place in
+	 * the enclosing chain's unwind: whenever the enclosing chain is aborted or fails, they run -
+	 * newest first - before the compensations of the actions that precede the nesting one.
+	 * </p>
+	 *
+	 * @param continuation
+	 *        The continuation of the action that contains the nested chain.
+	 */
+	public static void nest(ReactContext context, List<ViewAction> actions, Object input,
+			Continuation continuation) {
+		Deque<Runnable> compensations = new ArrayDeque<>();
+		continuation.onAbort(() -> runCompensations(compensations));
+		runFrom(context, actions, 0, input, compensations,
+			continuation::resume,
+			() -> {
+				runCompensations(compensations);
+				continuation.abort();
+			});
 	}
 
 	private static void runFrom(ReactContext context, List<ViewAction> actions, int index, Object input,
-			Deque<Runnable> compensations, Runnable onComplete) {
+			Deque<Runnable> compensations, Consumer<Object> onComplete, Runnable onAbort) {
 		if (index >= actions.size()) {
-			if (onComplete != null) {
-				onComplete.run();
-			}
+			onComplete.accept(input);
 			return;
 		}
 		ViewAction action = actions.get(index);
@@ -51,16 +92,13 @@ public class ViewActionChain {
 			@Override
 			public void resume(Object value) {
 				spend();
-				runFrom(context, actions, index + 1, value, compensations, onComplete);
+				runFrom(context, actions, index + 1, value, compensations, onComplete, onAbort);
 			}
 
 			@Override
 			public void abort() {
 				spend();
-				runCompensations(compensations);
-				if (onComplete != null) {
-					onComplete.run();
-				}
+				onAbort.run();
 			}
 
 			@Override
@@ -83,6 +121,12 @@ public class ViewActionChain {
 		} catch (RuntimeException failure) {
 			runCompensations(compensations);
 			throw failure;
+		}
+	}
+
+	private static void settled(Consumer<Object> onComplete, Object value) {
+		if (onComplete != null) {
+			onComplete.accept(value);
 		}
 	}
 

@@ -84,6 +84,21 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 MFA_REQUIRED_SET__USER;
 
+	/**
+	 * @en Multi-factor authentication switched off for "{0}".
+	 */
+	public static ResKey1 MFA_DISABLED__USER;
+
+	/**
+	 * @en Multi-factor authentication is required for "{0}" and cannot be switched off.
+	 */
+	public static ResKey1 ERROR_MFA_REQUIRED__USER;
+
+	/**
+	 * @en Two-factor authentication is not allowed for "{0}".
+	 */
+	public static ResKey1 ERROR_MFA_NOT_ALLOWED__USER;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

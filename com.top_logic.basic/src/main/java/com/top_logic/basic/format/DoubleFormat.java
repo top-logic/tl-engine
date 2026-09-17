@@ -18,7 +18,7 @@ import java.text.ParsePosition;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public final class DoubleFormat extends NumberFormat {
+public final class DoubleFormat extends NumberFormatDecorator {
 
 	/**
 	 * Creates a {@link DoubleFormat} wrapped around the given implementation {@link Format}.
@@ -31,6 +31,11 @@ public final class DoubleFormat extends NumberFormat {
 
 	private DoubleFormat(NumberFormat impl) {
 		_impl = impl;
+	}
+
+	@Override
+	protected NumberFormat impl() {
+		return _impl;
 	}
 
 	@Override

@@ -67,15 +67,12 @@ public class GenericViewCommand implements ViewCommand {
 	 */
 	@CalledByReflection
 	public GenericViewCommand(InstantiationContext context, Config config) {
-		_actions = config.getActions().stream()
-			.<ViewAction> map(c -> context.getInstance(c))
-			.filter(a -> a != null)
-			.toList();
+		_actions = ViewActions.instantiate(context, config.getActions());
 	}
 
 	@Override
 	public boolean appliesFormState() {
-		return _actions.stream().anyMatch(ViewAction::appliesFormState);
+		return ViewActions.appliesFormState(_actions);
 	}
 
 	@Override

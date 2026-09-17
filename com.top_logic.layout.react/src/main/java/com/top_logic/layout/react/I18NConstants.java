@@ -37,6 +37,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_COMMAND_FAILED;
 
 	/**
+	 * @en Files up to {0} can be uploaded.
+	 */
+	public static ResKey1 ERROR_UPLOAD_TOO_LARGE__LIMIT;
+
+	/**
 	 * @en React button clicked.
 	 */
 	public static ResKey REACT_BUTTON_CLICK;
@@ -401,6 +406,19 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_INVALID_DATE__VALUE;
 
 	/**
+	 * @en Invalid web address: {0}
+	 */
+	public static ResKey1 ERROR_INVALID_URL__VALUE;
+
+	// -- Text input client-side i18n keys --
+
+	/**
+	 * @en Open in a new tab
+	 */
+	@CustomKey("js.textInput.open")
+	public static ResKey JS_TEXT_INPUT_OPEN;
+
+	/**
 	 * @en No value
 	 */
 	public static ResKey VALUE_NONE;
@@ -497,6 +515,72 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CustomKey("js.table.columnSearch")
 	public static ResKey JS_TABLE_COLUMN_SEARCH;
+
+	/**
+	 * @en Group by this column
+	 */
+	@CustomKey("js.table.groupBy")
+	public static ResKey JS_TABLE_GROUP_BY;
+
+	/**
+	 * @en Remove grouping
+	 */
+	@CustomKey("js.table.ungroup")
+	public static ResKey JS_TABLE_UNGROUP;
+
+	/**
+	 * @en The rows are grouped by this column
+	 */
+	@CustomKey("js.table.grouped")
+	public static ResKey JS_TABLE_GROUPED;
+
+	/**
+	 * @en Fit width to content
+	 */
+	@CustomKey("js.table.fitColumn")
+	public static ResKey JS_TABLE_FIT_COLUMN;
+
+	/**
+	 * @en Search
+	 */
+	@CustomKey("js.table.search")
+	public static ResKey JS_TABLE_SEARCH;
+
+	/**
+	 * @en Search the displayed columns
+	 */
+	@CustomKey("js.table.searchHint")
+	public static ResKey JS_TABLE_SEARCH_HINT;
+
+	/**
+	 * @en Show all rows again
+	 */
+	@CustomKey("js.table.clearFilter")
+	public static ResKey JS_TABLE_CLEAR_FILTER;
+
+	/**
+	 * @en Save this filter
+	 */
+	@CustomKey("js.table.saveFilter")
+	public static ResKey JS_TABLE_SAVE_FILTER;
+
+	/**
+	 * @en Filter name
+	 */
+	@CustomKey("js.table.filterName")
+	public static ResKey JS_TABLE_FILTER_NAME;
+
+	/**
+	 * @en Delete this filter
+	 */
+	@CustomKey("js.table.deleteFilter")
+	public static ResKey JS_TABLE_DELETE_FILTER;
+
+	/**
+	 * @en Do not save
+	 */
+	@CustomKey("js.table.cancelSave")
+	public static ResKey JS_TABLE_CANCEL_SAVE;
 
 	/**
 	 * @en Restore default
@@ -746,6 +830,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Cannot select row: the business key no longer resolves to a row in this table: {0}
 	 */
 	public static ResKey1 ERROR_ROW_KEY_UNRESOLVED__KEY;
+
+	/**
+	 * @en Cannot drop here: this table does not accept the dragged objects.
+	 */
+	public static ResKey ERROR_DROP_NOT_ACCEPTED;
+
+	/**
+	 * @en Cannot drop: the dragged objects or the target row are no longer present: {0}
+	 */
+	public static ResKey1 ERROR_DROP_UNRESOLVED__OBJECTS;
 
 	/**
 	 * @en Assertion at ''{0}'' failed: mismatching state keys {1}

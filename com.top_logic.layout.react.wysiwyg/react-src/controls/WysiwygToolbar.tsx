@@ -1,4 +1,4 @@
-import { React, useI18N } from 'tl-react-bridge';
+import { React, useI18N, TLChild } from 'tl-react-bridge';
 import type { Editor } from '@tiptap/react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import * as Popover from '@radix-ui/react-popover';
@@ -12,6 +12,12 @@ import * as Separator from '@radix-ui/react-separator';
 interface ToolbarProps {
   editor: Editor | null;
   onImageUpload: () => void;
+
+  /**
+   * The toolbar of the commands the editor is configured with, as the server describes it, or
+   * null where the editor carries none.
+   */
+  toolbar: unknown;
 }
 
 // ---------------------------------------------------------------------------
@@ -330,7 +336,7 @@ const LinkPopover: React.FC<{ editor: Editor; labels: Record<string, string> }> 
 // Main Toolbar
 // ---------------------------------------------------------------------------
 
-const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload }) => {
+const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload, toolbar }) => {
   const labels = useI18N(ALL_I18N_KEYS);
 
   if (!editor) return null;
@@ -402,6 +408,14 @@ const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload }) => {
           tooltip={t(labels, 'table')}
           onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
         />
+
+        {/* The commands the editor is configured with, in a toolbar of their own. */}
+        {toolbar != null && (
+          <>
+            <Separator.Root className="tlWysiwygToolbar__sep" orientation="vertical" decorative />
+            <TLChild control={toolbar} />
+          </>
+        )}
 
         <Separator.Root className="tlWysiwygToolbar__sep" orientation="vertical" decorative />
 

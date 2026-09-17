@@ -23,6 +23,7 @@ import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
@@ -185,6 +186,13 @@ public class AdaptiveDetailElement implements UIElement {
 	}
 
 	@Override
+	public List<ChildGroup> getChildGroups() {
+		return List.of(
+			ChildGroup.keyed(Config.SELECTOR, _selector),
+			ChildGroup.keyed(Config.DETAIL, _detail));
+	}
+
+	@Override
 	public IReactControl createControl(ViewContext context) {
 		ViewChannel selectionChannel = context.resolveChannel(_selectionRef);
 		List<ViewChannel> resetOn = _resetOnRefs.stream().map(context::resolveChannel).collect(Collectors.toList());
@@ -203,7 +211,7 @@ public class AdaptiveDetailElement implements UIElement {
 			homeLabel = null;
 		}
 
-		return new ReactAdaptiveDetailControl(context, _selector, _detail, selectionChannel, resetOn,
+		return new ReactAdaptiveDetailControl(context, this, _selector, _detail, selectionChannel, resetOn,
 			coordinator, chain, homeLabel);
 	}
 

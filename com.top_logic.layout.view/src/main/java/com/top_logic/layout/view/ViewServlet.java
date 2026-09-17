@@ -7,6 +7,7 @@ package com.top_logic.layout.view;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Consumer;
 
 import jakarta.servlet.ServletException;
@@ -52,6 +53,8 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.window.WindowEntry;
 import com.top_logic.layout.view.login.PendingSessionAction;
 import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.util.Resources;
+import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.TopLogicServlet;
 
@@ -70,8 +73,19 @@ import com.top_logic.util.TopLogicServlet;
  * <ul>
  * <li>{@code /view/} - Serves the window-name bootstrap page</li>
  * <li>{@code /view/<windowName>/} - Renders the default view for the given tab</li>
- * <li>{@code /view/<windowName>/some.view.xml} - Renders a specific view for the given tab</li>
+ * <li>{@code /view/<windowName>/some.view.xml} - Renders a specific view for the given tab. Only
+ * the default view and the views the application registers as {@link ViewConfig#getEntryPoints()}
+ * can be named here; any other view file is answered with
+ * {@link HttpServletResponse#SC_NOT_FOUND}.</li>
  * </ul>
+ *
+ * <p>
+ * <b>Login view:</b> An application that configures a {@link ViewConfig#getLoginView() login
+ * view} shows it to every session that belongs to no account, in place of whatever the URL names.
+ * The display it renders is not the application, so it takes up no URL: the route manager
+ * {@link RouteManager#holdUrl(String) holds} the requested route instead of adopting it, which
+ * keeps the address the visitor asked for until the page is reloaded under a session of their own.
+ * </p>
  *
  * <p>
  * <b>Tab identity:</b> Each browser tab is identified by a unique window name. The browser's
@@ -82,6 +96,12 @@ import com.top_logic.util.TopLogicServlet;
  * </p>
  */
 public class ViewServlet extends TopLogicServlet {
+
+	/**
+	 * The path of the view application, relative to the context: the URL a browser loads to enter
+	 * it.
+	 */
+	public static final String ROOT_PATH = "/view/";
 
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -116,7 +136,20 @@ public class ViewServlet extends TopLogicServlet {
 			return;
 		}
 
-		String routePath = extractRoutePath(pathInfo, windowName);
+		String routePath = extractRoutePath(rawPathInfo(request), windowName);
+		if (routePath == null) {
+			// Entered without naming a page, so the user's own choice of where to begin applies.
+			// A URL that does carry a route asks for that page and is never overridden.
+			routePath = StartPage.get();
+		} else {
+			String query = request.getQueryString();
+			if (query != null && !query.isEmpty()) {
+				// The query belongs to the route: it carries the values that refine what the named page
+				// shows - a filter term, a sorting - and the display takes them up together with the
+				// path. Raw, because a query travels percent-encoded and the routing decodes it.
+				routePath = routePath + '?' + query;
+			}
+		}
 
 		ReactWindowRegistry windowRegistry = ReactWindowRegistry.forSession(session);
 		// Rendering the page restarts the session's inactivity timeout. A reload renders the tree the
@@ -143,13 +176,13 @@ public class ViewServlet extends TopLogicServlet {
 			// The provider and the model of a window never change, so a tree it already has always
 			// fits - unlike a view, which has to be the same one.
 			if (displayed != null) {
-				renderAgain(request, response, displayed, sseQueue, routePath);
+				renderAgain(request, response, displayed, sseQueue, routePath, false);
 				return;
 			}
 
 			ReactContext baseContext = new DefaultReactContext(
 				request.getContextPath(), windowName, sseQueue, windowRegistry);
-			wireRouteManager(baseContext, sseQueue, routePath);
+			wireRouteManager(baseContext, sseQueue, routePath, false);
 			ReactSnackbarControl snackbar = createWindowSnackbar(baseContext);
 			ReactMenuControl menu = createWindowMenu(baseContext);
 			ReactDialogManagerControl dialogs = new ReactDialogManagerControl(baseContext);
@@ -165,7 +198,16 @@ public class ViewServlet extends TopLogicServlet {
 			return;
 		}
 
-		String viewPath = resolveViewPath(pathInfo);
+		ViewConfig viewConfig = ApplicationConfig.getInstance().getConfig(ViewConfig.class);
+		// Which account the session belongs to decides what is displayed, so it is read where the
+		// session context is installed and handed to the decision as a value.
+		boolean anonymous = TLContext.isAnonymous();
+		boolean loginView = showsLoginView(viewConfig, anonymous);
+		String viewPath = resolveViewPath(viewConfig, pathInfo, anonymous);
+		if (viewPath == null) {
+			response.sendError(HttpServletResponse.SC_NOT_FOUND, "No such entry point.");
+			return;
+		}
 
 		ViewElement view;
 		try {
@@ -177,28 +219,30 @@ public class ViewServlet extends TopLogicServlet {
 			return;
 		}
 
-		// Reuse is correct only for the same view.
+		// Reuse is correct only for the same view in the same language.
+		Locale locale = Resources.getCurrentLocale();
 		RenderedView rendered = RenderedView.lookup(subSession);
-		if (displayed != null && rendered != null && rendered.matches(viewPath, view)) {
-			renderAgain(request, response, displayed, sseQueue, routePath);
+		if (displayed != null && rendered != null && rendered.matches(viewPath, view, locale)) {
+			renderAgain(request, response, displayed, sseQueue, routePath, loginView);
 			return;
 		}
 		if (displayed != null) {
-			// Another view, or a view file edited in the meantime: the old tree is never rendered
-			// again, so release the model listeners its controls hold.
+			// Another view, a view file edited in the meantime, or a language the tree was not built
+			// in: the old tree is never rendered again, so release the model listeners its controls
+			// hold.
 			displayed.detach();
 			displayed.cleanupTree();
 		}
 
 		ReactContext baseContext = new DefaultReactContext(
 			request.getContextPath(), windowName, sseQueue, windowRegistry);
-		wireRouteManager(baseContext, sseQueue, routePath);
+		wireRouteManager(baseContext, sseQueue, routePath, loginView);
 		ReactSnackbarControl snackbar = createWindowSnackbar(baseContext);
 		ReactMenuControl menu = createWindowMenu(baseContext);
 		ReactDialogManagerControl dialogs = new ReactDialogManagerControl(baseContext);
 		ReactContext displayContext = withWindowContextMenu(
 			withWindowErrorSink(baseContext, snackbar), createWindowMenuOpener(menu));
-		ViewContext viewContext = new DefaultViewContext(displayContext);
+		ViewContext viewContext = new DefaultViewContext(displayContext, viewPath);
 
 		ReloadableControl content = new ReloadableControl(viewPath, viewContext,
 			(ReactControl) view.createControl(viewContext));
@@ -207,7 +251,7 @@ public class ViewServlet extends TopLogicServlet {
 			new ReactStackControl(displayContext, List.of(content, snackbar, menu, dialogs));
 		sseQueue.setRootControl(rootControl);
 		windowEntry.setRootControl(rootControl);
-		RenderedView.store(subSession, new RenderedView(viewPath, view));
+		RenderedView.store(subSession, new RenderedView(viewPath, view, locale));
 
 		renderPage(request, response, rootControl, displayContext);
 	}
@@ -222,22 +266,21 @@ public class ViewServlet extends TopLogicServlet {
 	 * </p>
 	 *
 	 * @param routePath
-	 *        The route requested by the URL, applied when it differs from the one the tree currently
-	 *        shows (a deep link entered in an existing tab).
+	 *        The route requested by the URL, adopted by the tree while it is rendered (a deep link
+	 *        entered in an existing tab).
+	 * @param loginView
+	 *        Whether the tree is the application's login view, which keeps the requested route
+	 *        instead of taking it up - see
+	 *        {@link #wireRouteManager(ReactContext, SSEUpdateQueue, String, boolean)}.
 	 */
 	private void renderAgain(HttpServletRequest request, HttpServletResponse response,
-			ReactControl rootControl, SSEUpdateQueue sseQueue, String routePath) throws IOException {
+			ReactControl rootControl, SSEUpdateQueue sseQueue, String routePath, boolean loginView)
+			throws IOException {
 		ReactContext context = rootControl.getReactContext();
 
 		sseQueue.discardPendingEvents();
 		sseQueue.setRootControl(rootControl);
-		wireRouteManager(context, sseQueue, routePath);
-
-		RouteManager routeManager = context.getRouteManager();
-		if (routeManager != null && routePath != null && !routePath.isEmpty()
-				&& !routePath.equals(routeManager.currentUrl())) {
-			routeManager.navigateToRoute(routePath);
-		}
+		wireRouteManager(context, sseQueue, routePath, loginView);
 
 		renderPage(request, response, rootControl, context);
 	}
@@ -401,6 +444,11 @@ public class ViewServlet extends TopLogicServlet {
 	 * (i.e. does not end with {@code .view.xml}).
 	 * </p>
 	 *
+	 * @param pathInfo
+	 *        The path below the servlet, with its segments percent-encoded - see
+	 *        {@link #rawPathInfo(HttpServletRequest)}.
+	 * @param windowName
+	 *        The window name occupying the first segment.
 	 * @return The route path without leading slash, or {@code null} if no route is present.
 	 */
 	private String extractRoutePath(String pathInfo, String windowName) {
@@ -426,23 +474,102 @@ public class ViewServlet extends TopLogicServlet {
 	}
 
 	/**
+	 * The path below the servlet in the form the browser requested it, with the percent-encoding of
+	 * its segments intact.
+	 *
+	 * <p>
+	 * A route carries values whose characters have a meaning in a URL, a slash above all, so the
+	 * route is read in encoded form: the segments of the request URI are the ones the route pattern
+	 * matches, and only the value a parameter captures is decoded.
+	 * {@link HttpServletRequest#getPathInfo()} delivers the path already decoded by the servlet
+	 * container, where such a value is indistinguishable from the segments around it - and where the
+	 * URL a back navigation sends as a {@code navigateToRoute} command, which is the encoded one,
+	 * would resolve differently than the same URL entered into the address bar.
+	 * </p>
+	 *
+	 * @param request
+	 *        The request being served.
+	 * @return The path below the context and servlet path, starting with a slash, or {@code null}
+	 *         for a request that names none.
+	 */
+	private static String rawPathInfo(HttpServletRequest request) {
+		String uri = request.getRequestURI();
+		String servletUrl = request.getContextPath() + request.getServletPath();
+		if (!uri.startsWith(servletUrl)) {
+			// The context or servlet path itself is encoded in the URI, so the path below it cannot
+			// be cut off by length. Such an application has no place to put an encoded route.
+			return request.getPathInfo();
+		}
+		String pathInfo = uri.substring(servletUrl.length());
+		return pathInfo.isEmpty() ? null : pathInfo;
+	}
+
+	@Override
+	protected String getEntryPage(HttpServletRequest request) {
+		return requestedPage(request.getRequestURI(), request.getContextPath());
+	}
+
+	/**
+	 * The page the given request URI names, relative to the context.
+	 *
+	 * <p>
+	 * A request that arrives without a session is answered with a redirect to this page once the
+	 * session exists, so that the URL a user asked for is the one they get. The segments keep the
+	 * percent-encoding the browser sent them with, for the reason
+	 * {@link #rawPathInfo(HttpServletRequest)} describes; the query string is not part of the page
+	 * and is appended by {@link #createRedirectURL(String, HttpServletRequest)}.
+	 * </p>
+	 *
+	 * @param requestURI
+	 *        The URI of the request, as {@link HttpServletRequest#getRequestURI()} reports it:
+	 *        beginning with the context path and encoded.
+	 * @param contextPath
+	 *        The context path of the application, as
+	 *        {@link HttpServletRequest#getContextPath()} reports it: empty for an application
+	 *        deployed at the root.
+	 * @return The requested page, starting with a slash and relative to the context.
+	 */
+	public static String requestedPage(String requestURI, String contextPath) {
+		if (!requestURI.startsWith(contextPath)) {
+			// The context path is encoded in the URI, so the path below it cannot be cut off by
+			// length. Such an application enters its view UI at the root of the servlet.
+			return ROOT_PATH;
+		}
+		String page = requestURI.substring(contextPath.length());
+		return page.isEmpty() ? ROOT_PATH : page;
+	}
+
+	/**
 	 * Wires the {@link RouteManager} from the given context to the SSE queue.
 	 *
 	 * <p>
-	 * Sets the pending URL on the route manager (for deep-link resolution) and installs a URL
-	 * change handler that pushes {@link RouteChangeEvent}s via SSE. Also stores the route manager
-	 * on the SSE queue so that {@link com.top_logic.layout.react.servlet.ReactServlet} can look it
-	 * up for handling {@code navigateToRoute} commands.
+	 * Hands the route manager the URL the loaded page displays (for deep-link resolution) and
+	 * installs a URL change handler that pushes {@link RouteChangeEvent}s via SSE. Also stores the
+	 * route manager on the SSE queue so that {@link com.top_logic.layout.react.servlet.ReactServlet}
+	 * can look it up for handling {@code navigateToRoute} commands.
 	 * </p>
+	 *
+	 * @param loginView
+	 *        Whether the page displays the application's login view. Such a page is not the
+	 *        application the URL addresses, so it takes the URL up not at all: the route is
+	 *        {@link RouteManager#holdUrl(String) held}, which keeps the address the visitor asked
+	 *        for while they log in.
 	 */
-	private void wireRouteManager(ReactContext context, SSEUpdateQueue sseQueue, String routePath) {
+	private void wireRouteManager(ReactContext context, SSEUpdateQueue sseQueue, String routePath,
+			boolean loginView) {
 		RouteManager routeManager = context.getRouteManager();
 		if (routeManager == null) {
 			return;
 		}
 
-		if (routePath != null && !routePath.isEmpty()) {
-			routeManager.setPendingUrl(routePath);
+		String requestedRoute = routePath == null ? "" : routePath;
+		if (loginView) {
+			routeManager.holdUrl(requestedRoute);
+		} else {
+			// Unconditionally, an empty route included: a freshly loaded page displays what its URL
+			// says, which for a bare view is nothing - and the address bar has to be completed from
+			// the display rather than left describing less than it shows.
+			routeManager.adoptUrl(requestedRoute);
 		}
 
 		routeManager.setUrlChangeHandler((url, replace) -> {
@@ -459,25 +586,76 @@ public class ViewServlet extends TopLogicServlet {
 	 * Resolves the view file path from the request's path info.
 	 *
 	 * <p>
-	 * Skips the first path segment (window name) and uses the rest as the view file name. When no
-	 * view file is specified, falls back to the default view configured in
-	 * {@link ViewConfig#getDefaultView()}.
+	 * Skips the first path segment (window name) and uses the rest as the view file name. A
+	 * remainder that does not name a view file is a route path handled by the
+	 * {@link RouteManager}, so the default view is loaded and the route resolved inside it.
 	 * </p>
+	 *
+	 * <p>
+	 * A named view is loaded only where the application declares it as an entry point: the
+	 * {@link ViewConfig#getDefaultView()} or one of the {@link ViewConfig#getEntryPoints()}. Every
+	 * other view file is a fragment of a display, which the view enclosing it supplies with the
+	 * channels it reads, and naming it here is refused.
+	 * </p>
+	 *
+	 * <p>
+	 * A session that belongs to no account sees the {@link ViewConfig#getLoginView() login view} of
+	 * an application that has one, whatever the URL names: a route, the default view, an entry
+	 * point, or a view that is none - the visitor is shown the login and nothing else. What the URL
+	 * names is not lost with it, because the route is held while the login view is displayed.
+	 * </p>
+	 *
+	 * @param config
+	 *        The application's view configuration, naming the views a URL may load.
+	 * @param pathInfo
+	 *        The path below the servlet, its first segment the window name.
+	 * @param anonymous
+	 *        Whether the session belongs to no account.
+	 * @return The path of the view file to load, below {@link ViewLoader#VIEW_BASE_PATH}, or
+	 *         {@code null} if the path names a view that is no entry point.
 	 */
-	private String resolveViewPath(String pathInfo) {
+	public static String resolveViewPath(ViewConfig config, String pathInfo, boolean anonymous) {
+		if (showsLoginView(config, anonymous)) {
+			return ViewLoader.VIEW_BASE_PATH + config.getLoginView();
+		}
+
 		// pathInfo is like /v1a2b3c/ or /v1a2b3c/app.view.xml or /v1a2b3c/config-editor
 		String path = pathInfo.substring(1);
 		int slashIdx = path.indexOf('/');
+		String defaultView = config.getDefaultView();
 		if (slashIdx >= 0 && slashIdx < path.length() - 1) {
 			String remainder = path.substring(slashIdx + 1);
 			// Only treat the remainder as a view file name if it ends with .view.xml.
 			// Everything else is a route path handled by the RouteManager.
-			if (!remainder.isEmpty() && remainder.endsWith(".view.xml")) {
+			if (remainder.endsWith(".view.xml")) {
+				if (!remainder.equals(defaultView) && !isEntryPoint(config, remainder)) {
+					return null;
+				}
 				return ViewLoader.VIEW_BASE_PATH + remainder;
 			}
 		}
-		String defaultView = ApplicationConfig.getInstance().getConfig(ViewConfig.class).getDefaultView();
 		return ViewLoader.VIEW_BASE_PATH + defaultView;
+	}
+
+	/**
+	 * Whether the application answers the given session with its
+	 * {@link ViewConfig#getLoginView() login view} instead of showing itself.
+	 */
+	private static boolean showsLoginView(ViewConfig config, boolean anonymous) {
+		String loginView = config.getLoginView();
+		return anonymous && loginView != null && !loginView.isEmpty();
+	}
+
+	/**
+	 * Whether the given view file is one of the application's registered entry points.
+	 */
+	private static boolean isEntryPoint(ViewConfig config, String view) {
+		for (ViewConfig.EntryPoint entryPoint : config.getEntryPoints()) {
+			if (view.equals(entryPoint.getView())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -563,6 +741,14 @@ public class ViewServlet extends TopLogicServlet {
 			ReactControl rootControl, ReactContext context) throws IOException {
 		rootControl.attach();
 
+		// The display exists now, so the URL the request carries can be adopted: a page rendered into
+		// a control tree it already has registers no participants while attaching, and nothing else
+		// would hand them the requested route.
+		RouteManager routeManager = context.getRouteManager();
+		if (routeManager != null) {
+			routeManager.resolvePending();
+		}
+
 		response.setContentType("text/html");
 		response.setCharacterEncoding("UTF-8");
 
@@ -574,8 +760,15 @@ public class ViewServlet extends TopLogicServlet {
 
 		out.writeContent(HTMLConstants.DOCTYPE_HTML);
 		out.beginBeginTag(HTMLConstants.HTML);
-		out.writeAttribute("lang", "en");
-		out.writeAttribute("data-theme", themes.getActiveThemeId());
+		// The language the page is actually rendered in, so that assistive technology and the
+		// browser's own text handling follow the user's choice.
+		out.writeAttribute("lang", Resources.getCurrentLocale().getLanguage());
+		// The theme the user has selected. Left out while there is no selection, which is what makes
+		// the page follow the operating system's appearance preference.
+		String selectedTheme = themes.getSelectedThemeId();
+		if (selectedTheme != null) {
+			out.writeAttribute(UIThemeService.THEME_ATTRIBUTE, selectedTheme);
+		}
 		out.endBeginTag();
 
 		out.beginBeginTag(HTMLConstants.HEAD);
@@ -583,6 +776,9 @@ public class ViewServlet extends TopLogicServlet {
 		out.beginBeginTag(HTMLConstants.META);
 		out.writeAttribute("charset", "UTF-8");
 		out.endEmptyTag();
+		// The theme switch, put into effect before the first paint: a page carrying no theme yet
+		// follows the operating system's appearance preference.
+		themes.writeThemeScript(out);
 		out.beginBeginTag(HTMLConstants.META);
 		out.writeAttribute("name", "viewport");
 		out.writeAttribute("content", "width=device-width, initial-scale=1.0");
@@ -594,8 +790,8 @@ public class ViewServlet extends TopLogicServlet {
 		ClientResources clientResources = ClientResources.getInstance();
 		// Emit the registered client scripts: classic scripts, the import map, then ES module scripts.
 		clientResources.writeScriptRefs(out, contextPath);
-		// Emit the design tokens of every registered theme as data-theme scoped CSS custom
-		// properties. The active theme is selected via the data-theme attribute on <html>.
+		// Emit the design tokens of every registered theme as CSS custom properties, each scoped by
+		// the theme attribute of <html> naming the theme in effect.
 		themes.writeThemeStyles(out);
 		// Append the React stylesheets (fonts, icons, component CSS).
 		clientResources.writeStyleRefs(out, contextPath);
@@ -615,6 +811,11 @@ public class ViewServlet extends TopLogicServlet {
 		out.endTag(HTMLConstants.HTML);
 
 		out.flushBuffer();
+
+		// The display is complete now: whatever the requested URL still names is not part of it.
+		if (routeManager != null) {
+			routeManager.finishAdoption();
+		}
 	}
 
 	@Override

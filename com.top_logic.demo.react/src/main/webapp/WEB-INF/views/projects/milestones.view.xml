@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Second frame of the project drill-down: the milestones of the project the frame was opened
+	for. Opening one pushes its tickets, announced with the milestone's name.
+-->
+<view>
+	<channels>
+		<channel name="project"/>
+		<channel name="milestone"/>
+	</channels>
+
+	<panel>
+		<title>
+			<en>Milestones</en>
+			<de>Meilensteine</de>
+		</title>
+		<commands>
+			<command class="com.top_logic.layout.view.tiles.NavigatePushCommand"
+				bind-input-to="milestone"
+				image="css:bi bi-box-arrow-in-right"
+				input="milestone"
+				placement="TOOLBAR"
+				view="projects/tickets.view.xml"
+			>
+				<label>
+					<en>Open</en>
+					<de>Öffnen</de>
+				</label>
+				<executability>
+					<null-input-disabled/>
+				</executability>
+				<frame-label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
+					expr="m -> $m.get(`tl.demo.projectManagement:Milestone#name`)"
+					inputs="milestone"
+				/>
+			</command>
+		</commands>
+		<table
+			observed-types="tl.demo.projectManagement:Milestone"
+			selection="milestone"
+			types="tl.demo.projectManagement:Milestone"
+		>
+			<columns>
+				<column attribute="name"/>
+				<column attribute="dueDate"/>
+			</columns>
+			<inputs>
+				<input channel="project"/>
+			</inputs>
+			<rows>p -&gt; if($p == null, list(), $p.get(`tl.demo.projectManagement:ProjectScope#milestones`))</rows>
+		</table>
+	</panel>
+</view>

@@ -9,6 +9,7 @@ import type { TLCellProps } from 'tl-react-bridge';
  * - leading: ChildDescriptor | null
  * - children: ChildDescriptor[]  (inline content between title and actions, e.g. a <slot>)
  * - actions: ChildDescriptor[]
+ * - trailing: ChildDescriptor | null  (closes the bar, right of the actions)
  * - variant: "flat" | "elevated"  (default: "flat")
  * - color: "primary" | "surface"  (default: "primary")
  */
@@ -17,6 +18,7 @@ const TLAppBar: React.FC<TLCellProps> = ({ controlId }) => {
 
   const title = (state.title as string) ?? '';
   const leading = state.leading;
+  const trailing = state.trailing;
   const children = (state.children as unknown[]) ?? [];
   const actions = (state.actions as unknown[]) ?? [];
   const variant = (state.variant as string) ?? 'flat';
@@ -48,6 +50,11 @@ const TLAppBar: React.FC<TLCellProps> = ({ controlId }) => {
           {actions.map((action, i) => (
             <TLChild key={i} control={action} />
           ))}
+        </div>
+      )}
+      {trailing && (
+        <div className="tlAppBar__trailing">
+          <TLChild control={trailing} />
         </div>
       )}
     </header>

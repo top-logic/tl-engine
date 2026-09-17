@@ -1,3 +1,4 @@
 top-logic.xml
 top-logic.cluster.xml
+languageFlags.config.xml
 devel-appdata.xml

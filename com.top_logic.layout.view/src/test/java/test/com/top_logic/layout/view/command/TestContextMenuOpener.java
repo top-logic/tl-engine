@@ -90,6 +90,46 @@ public class TestContextMenuOpener extends TestCase {
 		assertEquals(1, cmdB.invocations);
 	}
 
+	/**
+	 * The command whose effect is in force yields an entry marked as active, while the alternatives
+	 * it is chosen among do not - and being the active one leaves the entry selectable, so that
+	 * choosing it again still runs the command.
+	 */
+	public void testActiveCommandYieldsMarkedSelectableEntry() {
+		AtomicReference<Object> target = new AtomicReference<>();
+		CommandModel dark = FakeCommandModels.contextMenu("dark", "Dark", true, true, true);
+		CommandModel light = FakeCommandModels.contextMenu("light", "Light", true, true, false);
+
+		ContextMenuContribution themes =
+			new ContextMenuContribution(target::set, List.of(dark, light));
+
+		RecordingRenderer renderer = new RecordingRenderer();
+		ContextMenuOpener opener = new ContextMenuOpener(renderer);
+
+		opener.open(0, 0, List.of(new Targeted(themes, "anything")));
+
+		List<MenuEntry> items = renderer.lastItems;
+		assertEquals(2, items.size());
+		assertTrue("The command in force must be marked.", items.get(0).active());
+		assertFalse("An alternative not in force must not be marked.", items.get(1).active());
+		assertFalse("The active entry stays selectable.", items.get(0).disabled());
+	}
+
+	/** Selecting the active entry runs its command again. */
+	public void testActiveEntryIsStillDispatched() {
+		AtomicReference<Object> target = new AtomicReference<>();
+		CountingCommandModel active = new CountingCommandModel("dark", true);
+		ContextMenuContribution themes = new ContextMenuContribution(target::set, List.of(active));
+
+		RecordingRenderer renderer = new RecordingRenderer();
+		ContextMenuOpener opener = new ContextMenuOpener(renderer);
+
+		opener.open(0, 0, List.of(new Targeted(themes, "anything")));
+		renderer.selectHandler.accept("0:0");
+
+		assertEquals(1, active.invocations);
+	}
+
 	static final class RecordingRenderer implements MenuRenderer {
 		List<MenuEntry> lastItems;
 
@@ -122,8 +162,20 @@ public class TestContextMenuOpener extends TestCase {
 	static final class CountingCommandModel extends FakeCommandModelBase {
 		int invocations;
 
+		private final boolean _active;
+
 		CountingCommandModel(String name) {
+			this(name, false);
+		}
+
+		CountingCommandModel(String name, boolean active) {
 			super(name);
+			_active = active;
+		}
+
+		@Override
+		public boolean isActive() {
+			return _active;
 		}
 
 		@Override

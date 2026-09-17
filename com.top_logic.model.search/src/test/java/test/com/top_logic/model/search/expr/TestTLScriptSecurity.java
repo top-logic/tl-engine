@@ -8,7 +8,9 @@ package test.com.top_logic.model.search.expr;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import junit.framework.Test;
 
@@ -37,8 +39,12 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tool.boundsec.BoundCommandGroup;
+import com.top_logic.tool.boundsec.BoundObject;
+import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
+import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
@@ -61,6 +67,16 @@ import com.top_logic.util.error.TopLogicException;
  * accessible for everybody.
  * </p>
  *
+ * <p>
+ * The configuration is stacked: {@code TestTLScriptSecurity-test.config.xml} plays the role of the
+ * framework layer, {@code TestTLScriptSecurity-overlay.config.xml} the role of an application that
+ * appends its own rules. The application layer adds the roles {@code ProjectAuditor} and
+ * {@code ProjectViewer} with their own read grants, restricts the {@code Project} specialization
+ * {@code SpecialProject} through revocations, and drops the read denial of
+ * {@code Project#secret}. Both layers assign their roles through role rules navigating to a
+ * {@code tl.accounts:Person}.
+ * </p>
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @SuppressWarnings("javadoc")
@@ -80,6 +96,30 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 			+ ".get(`TestTLScriptSecurity:Employee#salary`) > 1000)";
 
 	private static final String ALL_EMPLOYEES = "all(`TestTLScriptSecurity:Employee`)";
+
+	/** Name of the test model module all test types belong to. */
+	private static final String MODULE = "TestTLScriptSecurity";
+
+	/** Name of the type the framework configuration layer declares its rules for. */
+	private static final String PROJECT = "Project";
+
+	/** Name of the {@link #PROJECT} specialization the application layer restricts. */
+	private static final String SPECIAL_PROJECT = "SpecialProject";
+
+	/** Name of the attribute both layers declare access rules for. */
+	private static final String SECRET = "secret";
+
+	/** Role of the framework layer granting read, write and delete on a project. */
+	private static final String ROLE_RESPONSIBLE = MODULE + ".ProjectResponsible";
+
+	/** Role of the framework layer granting read on a project. */
+	private static final String ROLE_READER = MODULE + ".ProjectReader";
+
+	/** Role of the application layer, granted read on a project and its specializations. */
+	private static final String ROLE_AUDITOR = MODULE + ".ProjectAuditor";
+
+	/** Role of the application layer, granted read on the exact type {@link #PROJECT} only. */
+	private static final String ROLE_VIEWER = MODULE + ".ProjectViewer";
 
 	/** Navigates to the responsible employee of the given project. */
 	private static final String RESPONSIBLE_OF = "p -> $p.get(`TestTLScriptSecurity:Project#responsible`)";
@@ -124,9 +164,24 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 
 	private TLObject _m1;
 
+	/**
+	 * Non-administrative user holding {@code ProjectResponsible} through the role rule of the
+	 * application layer, on both {@link #_p1} and {@link #_sp1}.
+	 */
+	private Person _specResponsible;
+
+	/** Non-administrative user holding {@code ProjectAuditor} on {@link #_p1} and {@link #_sp1}. */
+	private Person _auditor;
+
+	/** Non-administrative user holding {@code ProjectViewer} on {@link #_p1} and {@link #_sp1}. */
+	private Person _viewer;
+
 	private TLObject _p1;
 
 	private TLObject _p2;
+
+	/** A {@code SpecialProject}, the specialization of {@code Project} the application layer restricts. */
+	private TLObject _sp1;
 
 	@Override
 	protected void setUp() throws Exception {
@@ -140,6 +195,9 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 			_user = TestPerson.createPerson("tlScriptSecUser");
 			_reader = TestPerson.createPerson("tlScriptSecReader");
 			_other = TestPerson.createPerson("tlScriptSecOther");
+			_specResponsible = TestPerson.createPerson("tlScriptSecSpecResp");
+			_auditor = TestPerson.createPerson("tlScriptSecAuditor");
+			_viewer = TestPerson.createPerson("tlScriptSecViewer");
 
 			// Employee#name is derived from the account's name (see the model), so it is not set here.
 			// _e1/_e2 are the responsible employees; their account _user therefore holds
@@ -163,12 +221,30 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 			_p1.tUpdateByName("budget", Integer.valueOf(100));
 			_p1.tUpdateByName("responsible", _e1);
 			_p1.tUpdateByName("members", Collections.singletonList(_m1));
+			// The account references feed the role rules of the application layer.
+			_p1.tUpdateByName("responsibleAccount", _specResponsible);
+			_p1.tUpdateByName("auditorAccount", _auditor);
+			_p1.tUpdateByName("viewerAccount", _viewer);
 
 			_p2 = newObject("Project");
 			_p2.tUpdateByName("name", "p2");
 			_p2.tUpdateByName("budget", Integer.valueOf(200));
 			_p2.tUpdateByName("responsible", _e2);
 			_p2.tUpdateByName("members", Collections.emptyList());
+
+			// The role rules of the framework layer are not inherited, so the responsible employee
+			// and the members of a special project convey no role; its roles come from the account
+			// references of the application layer alone. _reader holds ProjectReader here, but the
+			// application layer revokes the read right of that role on SpecialProject.
+			_sp1 = newObject(SPECIAL_PROJECT);
+			_sp1.tUpdateByName("name", "sp1");
+			_sp1.tUpdateByName("budget", Integer.valueOf(100));
+			_sp1.tUpdateByName("responsible", _e2);
+			_sp1.tUpdateByName("members", Collections.emptyList());
+			_sp1.tUpdateByName("responsibleAccount", _specResponsible);
+			_sp1.tUpdateByName("readerAccount", _reader);
+			_sp1.tUpdateByName("auditorAccount", _auditor);
+			_sp1.tUpdateByName("viewerAccount", _viewer);
 
 			tx.commit();
 		}
@@ -346,7 +422,7 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 	}
 
 	private TLClass projectType() {
-		return (TLClass) TLModelUtil.findType("TestTLScriptSecurity:Project");
+		return type(PROJECT);
 	}
 
 	/**
@@ -850,30 +926,27 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 	 * role, overriding the (passed) class-level grant. Only a bypassing super-user is unaffected.
 	 *
 	 * <p>
-	 * {@code Project#secret} has empty {@code Read} and {@code Write} grants (see the test config).
-	 * The responsible ({@code _user}) holds the class-level read and write rights on {@code Project},
-	 * yet may neither read nor write {@code secret}; the reader may not read it either. Attributes
-	 * without such a deny ({@code budget}, {@code name}) stay governed by the class level.
+	 * {@code Project#secret} has an empty {@code Write} grant (see the test config). The responsible
+	 * ({@code _user}) holds the class-level read and write rights on {@code Project}, yet may not
+	 * write {@code secret}. Attributes without such a deny ({@code budget}, {@code name}) stay
+	 * governed by the class level.
 	 * </p>
 	 */
 	public void testAttributeDeniedForAllRoles() throws Exception {
 		ModelAccessRights accessRights = ModelAccessRights.getInstance();
-		TLClass projectType = (TLClass) TLModelUtil.findType("TestTLScriptSecurity:Project");
-		com.top_logic.model.TLStructuredTypePart secret = projectType.getPart("secret");
-		com.top_logic.model.TLStructuredTypePart budget = projectType.getPart("budget");
-		com.top_logic.model.TLStructuredTypePart name = projectType.getPart("name");
+		TLStructuredTypePart secret = part(PROJECT, SECRET);
+		TLStructuredTypePart budget = part(PROJECT, "budget");
+		TLStructuredTypePart name = part(PROJECT, "name");
 
 		becomeUser(_user);
-		// Denied for the responsible, although the class grants read and write.
-		assertFalse(accessRights.isAllowed(_user, _p1, secret, SimpleBoundCommandGroup.WRITE));
-		assertFalse(accessRights.isReadAllowed(_user, _p1, secret));
+		// Denied for the responsible, although the class grants write.
+		assertFalse("An empty grant denies the operation for every role.",
+			accessRights.isAllowed(_user, _p1, secret, SimpleBoundCommandGroup.WRITE));
 		// Attributes without a deny stay governed by the class level (responsible: read + write).
-		assertTrue(accessRights.isAllowed(_user, _p1, budget, SimpleBoundCommandGroup.WRITE));
-		assertTrue(accessRights.isReadAllowed(_user, _p1, name));
-
-		// The reader (class read only) may not read the denied attribute either.
-		becomeUser(_reader);
-		assertFalse(accessRights.isReadAllowed(_reader, _p1, secret));
+		assertTrue("An attribute without a grant follows the class decision.",
+			accessRights.isAllowed(_user, _p1, budget, SimpleBoundCommandGroup.WRITE));
+		assertTrue("An attribute without a grant follows the class decision.",
+			accessRights.isReadAllowed(_user, _p1, name));
 
 		// A bypassing super-user (system context) is unaffected by the attribute deny.
 		TLContext context = TLContext.getContext();
@@ -882,16 +955,215 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 		context.setContextId(ThreadContextManager.systemContextId(TestTLScriptSecurity.class));
 		try {
 			assertTrue(ThreadContext.isSystemContext());
-			assertTrue(accessRights.isAllowed(null, _p1, secret, SimpleBoundCommandGroup.WRITE));
-			assertTrue(accessRights.isReadAllowed(null, _p1, secret));
+			assertTrue("A system context bypasses the attribute deny.",
+				accessRights.isAllowed(null, _p1, secret, SimpleBoundCommandGroup.WRITE));
 		} finally {
 			context.setCurrentPerson(formerPerson);
 		}
 
 		// A bypassing super-user is unaffected by the attribute deny.
 		becomeUser(_root);
-		assertTrue(accessRights.isAllowed(_root, _p1, secret, SimpleBoundCommandGroup.WRITE));
-		assertTrue(accessRights.isReadAllowed(_root, _p1, secret));
+		assertTrue("A super-user bypasses the attribute deny.",
+			accessRights.isAllowed(_root, _p1, secret, SimpleBoundCommandGroup.WRITE));
+	}
+
+	/**
+	 * The application configuration layer appends a read grant for {@link #ROLE_AUDITOR} to the
+	 * rules the framework layer declares for {@code Project}, so a user holding that role may read
+	 * a project although the framework layer does not know the role at all.
+	 */
+	public void testAddedRoleMayRead() throws Exception {
+		assertTrue("The role added by the application layer must be allowed to read a project.",
+			allowedRoleNames(PROJECT, SimpleBoundCommandGroup.READ).contains(ROLE_AUDITOR));
+
+		becomeUser(_auditor);
+		assertTrue("The auditor holds the added role on the project and must therefore read it.",
+			ModelAccessRights.getInstance().isReadAllowed(_auditor, _p1));
+	}
+
+	/**
+	 * The scenario of the ticket: adding a role in the application configuration layer must not
+	 * drop the roles the framework layer granted. All roles of both layers keep the read right on
+	 * {@code Project}, and both users of the framework layer still read their project.
+	 */
+	public void testAddedRoleKeepsFrameworkRoles() throws Exception {
+		assertEquals("The application layer must add to the read roles of the framework layer, not replace them.",
+			set(ROLE_RESPONSIBLE, ROLE_READER, ROLE_AUDITOR, ROLE_VIEWER),
+			allowedRoleNames(PROJECT, SimpleBoundCommandGroup.READ));
+
+		ModelAccessRights accessRights = ModelAccessRights.getInstance();
+
+		becomeUser(_user);
+		assertTrue("The responsible of the framework layer must still read the project.",
+			accessRights.isReadAllowed(_user, _p1));
+
+		becomeUser(_reader);
+		assertTrue("The reader of the framework layer must still read the project.",
+			accessRights.isReadAllowed(_reader, _p1));
+	}
+
+	/**
+	 * The application layer grants the added role the read operation only, so it obtains neither
+	 * the write nor the delete right the framework layer reserves for {@link #ROLE_RESPONSIBLE}.
+	 */
+	public void testAddedRoleHasNoWrite() throws Exception {
+		assertEquals("The write right must stay with the role of the framework layer.",
+			set(ROLE_RESPONSIBLE), allowedRoleNames(PROJECT, SimpleBoundCommandGroup.WRITE));
+		assertEquals("The delete right must stay with the role of the framework layer.",
+			set(ROLE_RESPONSIBLE), allowedRoleNames(PROJECT, SimpleBoundCommandGroup.DELETE));
+
+		ModelAccessRights accessRights = ModelAccessRights.getInstance();
+
+		becomeUser(_auditor);
+		assertFalse("The auditor must not write the project it may read.",
+			accessRights.isAllowed(_auditor, _p1, SimpleBoundCommandGroup.WRITE));
+		assertFalse("The auditor must not delete the project it may read.",
+			accessRights.isAllowed(_auditor, _p1, SimpleBoundCommandGroup.DELETE));
+	}
+
+	/**
+	 * A revocation naming a single role removes exactly that role: {@code SpecialProject} receives
+	 * the read right of both framework roles from its generalization {@code Project}, and the
+	 * application layer revokes it for {@link #ROLE_READER} alone. The reader therefore reads a
+	 * project but not a special project, while the responsible reads both.
+	 */
+	public void testRevokeOfOneOfTwoRoles() throws Exception {
+		assertEquals("Exactly the revoked role must be missing on the specialization.",
+			set(ROLE_RESPONSIBLE, ROLE_AUDITOR), allowedRoleNames(SPECIAL_PROJECT, SimpleBoundCommandGroup.READ));
+		assertTrue("A revocation on the specialization must not affect the general type.",
+			allowedRoleNames(PROJECT, SimpleBoundCommandGroup.READ).contains(ROLE_READER));
+
+		ModelAccessRights accessRights = ModelAccessRights.getInstance();
+
+		becomeUser(_reader);
+		assertTrue("Test premise: the reader holds its role on the special project, too.",
+			heldRoleNames(_reader, _sp1).contains(ROLE_READER));
+		assertTrue("The reader holds its role on the project and may read it.",
+			accessRights.isReadAllowed(_reader, _p1));
+		assertFalse("The reader holds its role on the special project, but the read right was revoked.",
+			accessRights.isReadAllowed(_reader, _sp1));
+
+		becomeUser(_specResponsible);
+		assertTrue("The responsible keeps the read right on the special project.",
+			accessRights.isReadAllowed(_specResponsible, _sp1));
+	}
+
+	/**
+	 * A revocation without roles drops the whole operation entry of an attribute: the framework
+	 * layer denies reading and writing {@code Project#secret} for every role, the application layer
+	 * revokes the read entry. Reading the attribute is then decided by the class alone, while
+	 * writing stays denied for everybody.
+	 */
+	public void testRevokeWithoutRolesOnAttribute() throws Exception {
+		ModelAccessRights accessRights = ModelAccessRights.getInstance();
+		TLStructuredTypePart secret = part(PROJECT, SECRET);
+
+		becomeUser(_user);
+		assertTrue("Without an attribute entry, the class decision applies: the responsible may read.",
+			accessRights.isReadAllowed(_user, _p1, secret));
+		assertFalse("The write entry of the framework layer is untouched and denies for every role.",
+			accessRights.isAllowed(_user, _p1, secret, SimpleBoundCommandGroup.WRITE));
+
+		becomeUser(_reader);
+		assertTrue("The reader may read the project and therefore its attribute.",
+			accessRights.isReadAllowed(_reader, _p1, secret));
+
+		becomeUser(_other);
+		assertFalse("A user without a role on the project may not read the attribute either.",
+			accessRights.isReadAllowed(_other, _p1, secret));
+	}
+
+	/**
+	 * A grant following a revocation allows the operation again: the application layer revokes the
+	 * delete right of {@link #ROLE_RESPONSIBLE} on {@code SpecialProject} and grants it again later
+	 * in the same rule sequence, so the responsible may still delete a special project.
+	 */
+	public void testGrantAfterRevoke() throws Exception {
+		assertEquals("The grant following the revocation must restore the role.",
+			set(ROLE_RESPONSIBLE), allowedRoleNames(SPECIAL_PROJECT, SimpleBoundCommandGroup.DELETE));
+
+		becomeUser(_specResponsible);
+		assertTrue("A delete right revoked and granted again must be effective.",
+			ModelAccessRights.getInstance().isAllowed(_specResponsible, _sp1, SimpleBoundCommandGroup.DELETE));
+	}
+
+	/**
+	 * A revocation that no grant follows takes the operation away: the application layer revokes the
+	 * write right of {@link #ROLE_RESPONSIBLE} on {@code SpecialProject} only, so the responsible
+	 * writes a project but not a special project.
+	 */
+	public void testRevokeWithoutLaterGrant() throws Exception {
+		assertEquals("No role may write a special project.",
+			set(), allowedRoleNames(SPECIAL_PROJECT, SimpleBoundCommandGroup.WRITE));
+		assertEquals("The general type keeps its write role.",
+			set(ROLE_RESPONSIBLE), allowedRoleNames(PROJECT, SimpleBoundCommandGroup.WRITE));
+
+		ModelAccessRights accessRights = ModelAccessRights.getInstance();
+
+		becomeUser(_specResponsible);
+		assertTrue("Test premise: the responsible holds its role on the special project, too.",
+			heldRoleNames(_specResponsible, _sp1).contains(ROLE_RESPONSIBLE));
+		assertTrue("The responsible may write a project.",
+			accessRights.isAllowed(_specResponsible, _p1, SimpleBoundCommandGroup.WRITE));
+		assertFalse("The responsible must not write a special project.",
+			accessRights.isAllowed(_specResponsible, _sp1, SimpleBoundCommandGroup.WRITE));
+	}
+
+	/**
+	 * The inherit flag of a rule decides whether it reaches a specialization: the read grant of the
+	 * application layer for {@link #ROLE_AUDITOR} is inherited and therefore holds for
+	 * {@code SpecialProject}, while the read grant for {@link #ROLE_VIEWER} is not inherited and
+	 * applies to {@code Project} alone. Both users hold their role on both objects, so only the
+	 * flag makes the difference.
+	 */
+	public void testInheritedAndNonInheritedGrant() throws Exception {
+		Set<String> specialReadRoles = allowedRoleNames(SPECIAL_PROJECT, SimpleBoundCommandGroup.READ);
+		assertTrue("An inherited grant must reach the specialization.",
+			specialReadRoles.contains(ROLE_AUDITOR));
+		assertFalse("A grant that is not inherited must not reach the specialization.",
+			specialReadRoles.contains(ROLE_VIEWER));
+
+		ModelAccessRights accessRights = ModelAccessRights.getInstance();
+
+		becomeUser(_auditor);
+		assertTrue("The auditor may read a project.", accessRights.isReadAllowed(_auditor, _p1));
+		assertTrue("The inherited grant lets the auditor read a special project, too.",
+			accessRights.isReadAllowed(_auditor, _sp1));
+
+		becomeUser(_viewer);
+		assertTrue("Test premise: the viewer holds its role on the special project, too.",
+			heldRoleNames(_viewer, _sp1).contains(ROLE_VIEWER));
+		assertTrue("The viewer may read a project.", accessRights.isReadAllowed(_viewer, _p1));
+		assertFalse("The grant of the viewer must not reach the specialization.",
+			accessRights.isReadAllowed(_viewer, _sp1));
+	}
+
+	/**
+	 * The names of the roles the {@link SecurityConfigurationService} allows to perform the given
+	 * operation on the given type of the test model.
+	 */
+	private Set<String> allowedRoleNames(String typeName, BoundCommandGroup operation) {
+		Set<String> result = new HashSet<>();
+		for (BoundedRole role : ModelAccessRights.getInstance().getAllowedRoles(type(typeName), operation)) {
+			result.add(role.getName());
+		}
+		return result;
+	}
+
+	private TLClass type(String typeName) {
+		return (TLClass) TLModelUtil.findType(MODULE + ":" + typeName);
+	}
+
+	/**
+	 * The names of the roles the given person holds on the given object, as computed by the role
+	 * rules.
+	 */
+	private Set<String> heldRoleNames(Person person, TLObject object) {
+		Set<String> result = new HashSet<>();
+		for (BoundRole role : AccessManager.getInstance().getRoles(person, (BoundObject) object)) {
+			result.add(role.getName());
+		}
+		return result;
 	}
 
 	/**
@@ -969,8 +1241,7 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 	}
 
 	private TLStructuredTypePart part(String className, String partName) {
-		TLClass type = (TLClass) TLModelUtil.findType("TestTLScriptSecurity:" + className);
-		return type.getPart(partName);
+		return type(className).getPart(partName);
 	}
 
 	@SuppressWarnings("unchecked")

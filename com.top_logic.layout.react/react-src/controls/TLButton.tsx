@@ -47,6 +47,9 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
   const resolvedLabel = label ?? (state.label as string);
   const resolvedImage = image ?? (state.image as string | undefined);
   const resolvedDisabled = disabled ?? state.disabled === true;
+  // The button's command is the alternative currently in force (e.g. the active theme) or a
+  // pressed toggle; marked visually and reported to assistive technology as pressed.
+  const resolvedActive = state.active === true;
   const resolvedMode = displayMode ?? (state.displayMode as string | undefined) ?? 'label-only';
   const resolvedHidden = state.hidden === true;
   const tooltip = state.tooltip as string | undefined;
@@ -54,6 +57,9 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
   const appearance = state.appearance as string | undefined;
   // Optional size modifier ("small" / "large"); absent means the default size.
   const size = state.size as string | undefined;
+  // Additional CSS classes declared on the command this button renders, e.g. to mark a
+  // destructive action.
+  const cssClasses = state.cssClasses as string | undefined;
   // When set, clicking navigates the browser directly (e.g. an external SSO redirect) instead of
   // dispatching a server command - this avoids depending on the asynchronous SSE round-trip.
   const navigateUrl = state.navigateUrl as string | undefined;
@@ -105,8 +111,11 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
         + (appearance === 'link' ? ' tlReactButton--link' : '')
         + (appearance === 'primary' ? ' tlReactButton--primary' : '')
         + (size === 'small' ? ' tlReactButton--small' : '')
-        + (size === 'large' ? ' tlReactButton--large' : '')}
+        + (size === 'large' ? ' tlReactButton--large' : '')
+        + (resolvedActive ? ' tlReactButton--active' : '')
+        + (cssClasses ? ' ' + cssClasses : '')}
       data-tooltip={tooltipAttr}
+      aria-pressed={resolvedActive ? true : undefined}
       aria-label={resolvedImage || iconOnly ? resolvedLabel : undefined}
     >
       {resolvedImage && (

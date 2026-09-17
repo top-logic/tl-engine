@@ -249,7 +249,7 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 	 *        The new {@link LabelPosition}, or {@code null} to inherit from the enclosing layout.
 	 */
 	public void setLabelPosition(LabelPosition labelPosition) {
-		putState(LABEL_POSITION, labelPosition == null ? null : labelPosition.protocolName());
+		putState(LABEL_POSITION, labelPosition == null ? null : labelPosition.getExternalName());
 	}
 
 	/**

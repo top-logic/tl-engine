@@ -17,10 +17,15 @@ import com.top_logic.layout.react.control.ToolbarControl;
  * component.
  *
  * <p>
- * Extends {@link ToolbarControl} so that command scopes can add toolbar buttons to the trailing
- * actions area. The {@code TLAppBar} React component reads actions from the {@code actions}
- * state key — which is aliased to the same list that {@link ToolbarControl} populates via
+ * Extends {@link ToolbarControl} so that command scopes can add toolbar buttons to the actions
+ * area. The {@code TLAppBar} React component reads actions from the {@code actions} state key —
+ * which is aliased to the same list that {@link ToolbarControl} populates via
  * {@code toolbarButtons}.
+ * </p>
+ *
+ * <p>
+ * Either end of the bar takes content of its own: a leading control opens it, ahead of the title,
+ * and a trailing one closes it, right of the actions area.
  * </p>
  */
 public class ReactAppBarControl extends ToolbarControl {
@@ -36,6 +41,8 @@ public class ReactAppBarControl extends ToolbarControl {
 	private static final String VARIANT = "variant";
 
 	private static final String CHILDREN = "children";
+
+	private static final String TRAILING = "trailing";
 
 	/**
 	 * Visual variant of the app bar.
@@ -60,8 +67,6 @@ public class ReactAppBarControl extends ToolbarControl {
 		}
 	}
 
-	private ReactControl _leading;
-
 	private final List<ReactControl> _children;
 
 	/**
@@ -78,17 +83,21 @@ public class ReactAppBarControl extends ToolbarControl {
 	 * @param children
 	 *        Inline children rendered between the title and the actions area (e.g. a
 	 *        {@code <slot>} placeholder for content projected by descendant views).
+	 * @param trailing
+	 *        Optional control closing the bar, right of the actions area, or {@code null}.
 	 */
 	public ReactAppBarControl(ReactContext context, String title, AppBarVariant variant,
 			ReactControl leading, List<? extends ReactControl> actions,
-			List<? extends ReactControl> children) {
+			List<? extends ReactControl> children, ReactControl trailing) {
 		super(context, null, REACT_MODULE);
-		_leading = leading;
 		_children = new java.util.ArrayList<>(children);
 		setTitle(title);
 		putState(VARIANT, variant.getExternalName());
 		if (leading != null) {
 			putState(LEADING, leading);
+		}
+		if (trailing != null) {
+			putState(TRAILING, trailing);
 		}
 
 		// Alias the toolbarButtons list under "actions" so TLAppBar reads the same list.
@@ -99,6 +108,15 @@ public class ReactAppBarControl extends ToolbarControl {
 		for (ReactControl action : actions) {
 			addToolbarButton(action);
 		}
+	}
+
+	/**
+	 * Creates an app bar that closes with its actions area.
+	 */
+	public ReactAppBarControl(ReactContext context, String title, AppBarVariant variant,
+			ReactControl leading, List<? extends ReactControl> actions,
+			List<? extends ReactControl> children) {
+		this(context, title, variant, leading, actions, children, null);
 	}
 
 	/**

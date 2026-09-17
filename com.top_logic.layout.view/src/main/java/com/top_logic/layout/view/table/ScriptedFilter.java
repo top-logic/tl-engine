@@ -8,6 +8,7 @@ package com.top_logic.layout.view.table;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import com.top_logic.basic.CalledByReflection;
@@ -57,8 +58,8 @@ import com.top_logic.table.impl.DefaultColumn;
  *
  * <p>
  * The filter integrates its own column and dialog by implementing {@link ColumnBinding}: the column
- * cell carries a {@link ScriptedCell} (value + row), so the filter sees both without knowing the
- * column attribute, and the filter registers its own {@link ScriptedFilterUI} form.
+ * cell carries a {@link ScriptedCell} (value + row), so the filter sees both without knowing where
+ * the value comes from, and the filter registers its own {@link ScriptedFilterUI} form.
  * </p>
  *
  * @implNote The {@link ScriptedFilterUI} form is registered in {@link #installUI}.
@@ -149,10 +150,11 @@ public class ScriptedFilter implements ColumnFilter<ScriptedCell>, ColumnBinding
 
 	@Override
 	public Column<Object, ?> createColumn(ColumnSetup setup) {
-		String attribute = setup.attribute();
-		return DefaultColumn.<Object, ScriptedCell> builder(attribute,
-			row -> new ScriptedCell(ColumnProviderService.attributeValue(row, attribute), row))
+		Function<Object, Object> value = setup.value();
+		return DefaultColumn.<Object, ScriptedCell> builder(setup.name(),
+			row -> new ScriptedCell(value.apply(row), row))
 			.label(setup.label())
+			.width(ColumnProviderService.getInstance().defaultWidth(setup.type()))
 			.renderer(cell -> CellContent.text(ColumnProviderService.label(cell.value())))
 			.sort(() -> Comparator.comparing((ScriptedCell cell) -> ColumnProviderService.label(cell.value())))
 			.filter(this)
@@ -165,7 +167,7 @@ public class ScriptedFilter implements ColumnFilter<ScriptedCell>, ColumnBinding
 		for (ChannelRef ref : _inputs) {
 			inputChannels.add(setup.viewContext().resolveChannel(ref));
 		}
-		control.setFilterUI(setup.attribute(), new ScriptedFilterUI(this, inputChannels));
+		control.setFilterUI(setup.name(), new ScriptedFilterUI(this, inputChannels));
 	}
 
 	@Override

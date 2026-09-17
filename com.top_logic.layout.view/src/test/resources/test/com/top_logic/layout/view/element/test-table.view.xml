@@ -1,14 +1,135 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
-  <channels>
-    <channel name="testInput" />
-    <channel name="selectedRow" />
-  </channels>
 
-  <table selection="selectedRow">
-    <inputs>
-      <input channel="testInput" />
-    </inputs>
-    <rows>input -> list($input)</rows>
-  </table>
+<view>
+	<channels>
+		<channel name="testInput"/>
+		<channel name="selectedRow"/>
+		<channel name="dropTarget"/>
+	</channels>
+
+	<table
+		activation-button="false"
+		filter-bar="true"
+		group-by="owner"
+		personalization-key="test-table"
+		selection="selectedRow"
+		selection-mode="multi"
+		types="demo.test:Row"
+	>
+		<drag/>
+		<drop accept="demo.test:Row">
+			<execute-script function="rows -> $rows"/>
+		</drop>
+		<drop
+			accept="demo.test:Row, demo.test:Other"
+			target="row"
+			target-channel="dropTarget"
+		>
+			<execute-script function="rows -> $rows"/>
+		</drop>
+		<inputs>
+			<input channel="testInput"/>
+		</inputs>
+		<presets>
+			<preset name="mine">
+				<label>
+					<en>My rows</en>
+					<de>Meine Zeilen</de>
+				</label>
+				<criterion
+					column="owner"
+					expr="currentUser()"
+				/>
+				<criterion
+					column="active"
+					expr="true"
+				/>
+			</preset>
+			<preset name="all-active">
+				<criterion
+					column="active"
+					expr="true"
+				/>
+			</preset>
+			<preset name="typed">
+				<criterion column="name">
+					<text
+						case-sensitive="true"
+						pattern="'Alice'"
+						whole-field="true"
+					/>
+				</criterion>
+				<criterion
+					column="active"
+					inverted="true"
+				>
+					<boolean accept="true"/>
+				</criterion>
+			</preset>
+		</presets>
+		<columns>
+			<column
+				attribute="name"
+				sort="ASC"
+				width="220"
+			>
+				<label>
+					<en>Row name</en>
+					<de>Zeilenname</de>
+				</label>
+			</column>
+			<column attribute="active"/>
+			<column
+				attribute="owner"
+				readonly="true"
+			/>
+			<computed-column name="total"
+				type="tl.core:Double"
+			>
+				<inputs>
+					<input channel="testInput"/>
+				</inputs>
+				<value>factor -&gt; row -&gt; $factor * $row.get(`demo.test:Row#amount`)</value>
+				<update>factor -&gt; row -&gt; value -&gt; $row.set(`demo.test:Row#amount`, $value / $factor)</update>
+				<can-update>factor -&gt; row -&gt; $row.get(`demo.test:Row#amount`) != null</can-update>
+				<aggregate>rows -&gt; $rows.size()</aggregate>
+			</computed-column>
+			<embedded-columns reference="owner.contact">
+				<column attribute="name"/>
+				<computed-column name="mail"
+					type="tl.core:String"
+				>
+					<value>contact -&gt; $contact.get(`demo.test:Contact#email`).toLowerCase()</value>
+				</computed-column>
+			</embedded-columns>
+			<embedded-columns name="accounts"
+				multiple="true"
+				type="demo.test:Account"
+			>
+				<label>
+					<en>Account</en>
+					<de>Konto</de>
+				</label>
+				<object>row -&gt; $row.get(`demo.test:Row#accounts`)</object>
+				<column attribute="number"/>
+			</embedded-columns>
+			<dynamic-columns name="milestones"
+				readonly="true"
+				type="tl.core:Double"
+				width="90"
+			>
+				<aggregate>factor -&gt; rows -&gt; col -&gt; $rows.size()</aggregate>
+				<can-update>factor -&gt; row -&gt; col -&gt; $row.get(`demo.test:Row#amount`) != null</can-update>
+				<column-label>factor -&gt; col -&gt; $col.get(`demo.test:Milestone#name`)</column-label>
+				<column-name>factor -&gt; col -&gt; $col.get(`demo.test:Milestone#name`)</column-name>
+				<columns>factor -&gt; all(`demo.test:Milestone`)</columns>
+				<inputs>
+					<input channel="testInput"/>
+				</inputs>
+				<update>factor -&gt; row -&gt; col -&gt; value -&gt; $row.set(`demo.test:Row#amount`, $value)</update>
+				<value>factor -&gt; row -&gt; col -&gt; $factor * $row.get(`demo.test:Row#amount`)</value>
+			</dynamic-columns>
+		</columns>
+		<rows>input -&gt; list($input)</rows>
+	</table>
 </view>

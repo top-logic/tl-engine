@@ -7,6 +7,9 @@ package com.top_logic.layout.react.control.overlay;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.Set;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.Logger;
@@ -26,22 +29,36 @@ import com.top_logic.layout.react.control.ReactControl;
  * Auto-dismisses after a configurable duration. Supports four {@link Variant variants} (info,
  * success, warning, error).
  * </p>
+ *
+ * <p>
+ * One message is on screen at a time. A message arriving while one is shown waits until that one is
+ * dismissed; messages are shown in arrival order, so a burst of notifications is read one after the
+ * other instead of overwriting each other. Each message is shown with its own {@link #GENERATION},
+ * which restarts the client-side auto-dismiss timer and identifies the message a
+ * {@link #DISMISS_COMMAND} refers to.
+ * </p>
  */
 public class ReactSnackbarControl extends ReactControl {
 
 	private static final String REACT_MODULE = "TLSnackbar";
 
-	private static final String MESSAGE = "message";
+	/** State key holding the plain-text message, displayed when no {@link #CONTENT} is set. */
+	public static final String MESSAGE = "message";
 
-	private static final String CONTENT = "content";
+	/** State key holding the HTML content, taking precedence over the {@link #MESSAGE}. */
+	public static final String CONTENT = "content";
 
-	private static final String VARIANT = "variant";
+	/** State key holding the external name of the displayed {@link Variant}. */
+	public static final String VARIANT = "variant";
 
-	private static final String DURATION = "duration";
+	/** State key holding the auto-dismiss delay in milliseconds, zero for a sticky message. */
+	public static final String DURATION = "duration";
 
-	private static final String VISIBLE = "visible";
+	/** State key telling whether a message is currently on screen. */
+	public static final String VISIBLE = "visible";
 
-	private static final String GENERATION = "generation";
+	/** State key identifying the message currently on screen, see {@link #DISMISS_COMMAND}. */
+	public static final String GENERATION = "generation";
 
 	/** The {@link ReactCommandHandler} that dismisses a shown snackbar. */
 	public static final String DISMISS_COMMAND = "dismiss";
@@ -75,9 +92,26 @@ public class ReactSnackbarControl extends ReactControl {
 		}
 	}
 
+	/**
+	 * A message waiting for its turn on the snackbar.
+	 *
+	 * @param message
+	 *        The plain-text message, see {@link ReactSnackbarControl#MESSAGE}.
+	 * @param content
+	 *        The HTML content taking precedence over the message, or <code>null</code> to display
+	 *        the message, see {@link ReactSnackbarControl#CONTENT}.
+	 * @param variant
+	 *        The visual variant to display the message with.
+	 */
+	private record Message(String message, String content, Variant variant) {
+		// Pure value.
+	}
+
 	private Runnable _dismissHandler;
 
 	private int _generation;
+
+	private final Deque<Message> _pending = new ArrayDeque<>();
 
 	/**
 	 * Creates a snackbar control.
@@ -131,27 +165,25 @@ public class ReactSnackbarControl extends ReactControl {
 	}
 
 	/**
-	 * Shows the snackbar with the current message.
+	 * Shows the snackbar with the current message, or queues it behind the message on screen.
 	 */
 	public void show() {
-		Object tx = beginShow();
-		commitUpdate(tx);
+		enqueue(new Message(currentMessage(), currentContent(), currentVariant()));
 	}
 
 	/**
-	 * Shows the snackbar with a new message.
+	 * Shows the snackbar with a new message, or queues it behind the message on screen.
 	 *
 	 * @param message
 	 *        The new notification message.
 	 */
 	public void show(String message) {
-		Object tx = beginShow();
-		setMessage(message);
-		commitUpdate(tx);
+		enqueue(new Message(message, null, currentVariant()));
 	}
 
 	/**
-	 * Shows the snackbar with HTML content and a variant.
+	 * Shows the snackbar with HTML content and a variant, or queues it behind the message on
+	 * screen.
 	 *
 	 * @param htmlContent
 	 *        The HTML content to display.
@@ -159,18 +191,54 @@ public class ReactSnackbarControl extends ReactControl {
 	 *        The visual variant.
 	 */
 	public void showHtml(String htmlContent, Variant variant) {
-		Object tx = beginShow();
-		putState(CONTENT, htmlContent);
-		setVariant(variant);
+		enqueue(new Message(currentMessage(), htmlContent, variant));
+	}
+
+	/**
+	 * Displays the given message, or appends it to the queue while another one is on screen.
+	 */
+	private void enqueue(Message message) {
+		if (isVisible()) {
+			_pending.addLast(message);
+		} else {
+			display(message);
+		}
+	}
+
+	/**
+	 * Puts the given message on screen under a {@link #GENERATION} of its own.
+	 */
+	private void display(Message message) {
+		_generation++;
+		Object tx = beginUpdate();
+		putState(MESSAGE, message.message());
+		putState(CONTENT, message.content());
+		putState(VARIANT, message.variant().getExternalName());
+		setVisible(true);
+		putState(GENERATION, _generation);
 		commitUpdate(tx);
 	}
 
-	private Object beginShow() {
-		_generation++;
-		Object tx = beginUpdate();
-		setVisible(true);
-		putState(GENERATION, _generation);
-		return tx;
+	private String currentMessage() {
+		return (String) getState(MESSAGE);
+	}
+
+	private String currentContent() {
+		return (String) getState(CONTENT);
+	}
+
+	private Variant currentVariant() {
+		String externalName = (String) getState(VARIANT);
+		for (Variant variant : Variant.values()) {
+			if (variant.getExternalName().equals(externalName)) {
+				return variant;
+			}
+		}
+		return Variant.INFO;
+	}
+
+	private boolean isVisible() {
+		return Boolean.TRUE.equals(getState(VISIBLE));
 	}
 
 	private void setVisible(boolean visible) {
@@ -178,9 +246,16 @@ public class ReactSnackbarControl extends ReactControl {
 	}
 
 	/**
-	 * Hides the snackbar.
+	 * Hides the snackbar and drops the messages waiting for their turn.
+	 *
+	 * <p>
+	 * Taking the snackbar off the screen ends the current series of notifications: a queued message
+	 * only becomes visible when the message before it is dismissed, so a message kept in the queue
+	 * of a hidden snackbar would wait for a dismiss that never arrives.
+	 * </p>
 	 */
 	public void hide() {
+		_pending.clear();
 		setVisible(false);
 	}
 
@@ -188,8 +263,15 @@ public class ReactSnackbarControl extends ReactControl {
 	 * Handles the dismiss command sent when the snackbar is dismissed (by timer or user).
 	 *
 	 * <p>
-	 * The generation parameter prevents a stale dismiss (from a previous snackbar that timed out)
-	 * from hiding a newly shown snackbar.
+	 * The {@link DismissArguments#getGeneration() reported generation} prevents a stale dismiss
+	 * (from a previous message that timed out) from hiding the message currently on screen.
+	 * </p>
+	 *
+	 * <p>
+	 * The message waiting next takes the place of the dismissed one right away, under a
+	 * {@link #GENERATION} of its own. The dismiss handler runs only when no message is left: it is
+	 * told that the snackbar has gone off screen, which is not the case while the queue still feeds
+	 * it.
 	 * </p>
 	 */
 	@ReactCommandHandler(value = DISMISS_COMMAND, technical = true)
@@ -197,6 +279,11 @@ public class ReactSnackbarControl extends ReactControl {
 		Integer reported = args.getGeneration();
 		int dismissGeneration = reported != null ? reported.intValue() : -1;
 		if (dismissGeneration != _generation) {
+			return;
+		}
+		Message next = _pending.pollFirst();
+		if (next != null) {
+			display(next);
 			return;
 		}
 		hide();
@@ -208,8 +295,8 @@ public class ReactSnackbarControl extends ReactControl {
 	 * Rendering-only state keys, omitted from the headless projection.
 	 */
 	@Override
-	protected java.util.Set<String> scriptingPresentationKeys() {
-		return java.util.Set.of("duration", "generation", "variant");
+	protected Set<String> scriptingPresentationKeys() {
+		return Set.of(DURATION, GENERATION, VARIANT);
 	}
 
 	/**

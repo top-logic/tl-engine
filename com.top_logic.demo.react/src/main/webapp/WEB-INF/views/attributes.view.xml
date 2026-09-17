@@ -5,6 +5,16 @@
 		<channel name="model"/>
 		<channel name="selected"/>
 		<channel name="gridSelected"/>
+		<!--
+			The selection while it consists of exactly one object, and nothing while nothing or
+			several objects are selected: size() counts a missing value as zero, a single object as
+			one and a set as the number of its elements. A command or a form that works on one
+			object binds to this channel.
+		-->
+		<derived-channel name="selectedSingle"
+			expr="sel -> if($sel.size() == 1, $sel.singleElement(), null)"
+			inputs="selected"
+		/>
 		<!-- Anchor object for the editable-table form: the edit session locks on it. -->
 		<derived-channel name="gridAnchor"
 			expr="currentUser()"
@@ -34,7 +44,7 @@
 								<de>Beispiele erzeugen</de>
 							</label>
 							<with-transaction>
-								<execute-script function="x -> count(6).foreach(i -> { o = new(`demo.react:Demo`, transient: false); $o.set(`demo.react:Demo#name`, if($i % 3 == 0, 'Part ', if($i % 3 == 1, 'Tool ', 'Usage ')) + ($i + 1)); $o.set(`demo.react:Demo#string`, 'Value ' + ($i + 1)); $o.set(`demo.react:Demo#active`, $i % 2 == 0); $o.set(`demo.react:Demo#count`, ($i + 1) * 100); $o.set(`demo.react:Demo#amount`, ($i + 1) * 12.5); $o.set(`demo.react:Demo#date`, date(2026, ($i % 12) + 1, ($i % 28) + 1)); $o.set(`demo.react:Demo#priority`, if($i % 3 == 0, `demo.react:Priority#low`, if($i % 3 == 1, `demo.react:Priority#medium`, `demo.react:Priority#high`))); $o; })"/>
+								<execute-script function="x -> count(6).foreach(i -> { o = new(`demo.react:Demo`, transient: false); $o.set(`demo.react:Demo#name`, if($i % 3 == 0, 'Part ', if($i % 3 == 1, 'Tool ', 'Usage ')) + ($i + 1)); $o.set(`demo.react:Demo#string`, 'Value ' + ($i + 1)); $o.set(`demo.react:Demo#active`, $i % 2 == 0); $o.set(`demo.react:Demo#count`, ($i + 1) * 100); $o.set(`demo.react:Demo#amount`, ($i + 1) * 12.5); $o.set(`demo.react:Demo#date`, date(2026, ($i % 12) + 1, ($i % 28) + 1)); $o.set(`demo.react:Demo#priority`, if($i % 3 == 0, `demo.react:Priority#low`, if($i % 3 == 1, `demo.react:Priority#medium`, `demo.react:Priority#high`))); $o.set(`demo.react:Demo#owner`, if($i % 2 == 0, currentUser(), null)); $o; })"/>
 							</with-transaction>
 						</generic-command>
 						<generic-command
@@ -56,9 +66,13 @@
 								/>
 							</open-dialog>
 						</generic-command>
+						<!--
+							The detail dialog shows one object, so the command takes the selection only while
+							it consists of a single one and is disabled otherwise.
+						-->
 						<generic-command
 							image="css:bi bi-pencil"
-							input="selected"
+							input="selectedSingle"
 							placement="TOOLBAR"
 						>
 							<label>
@@ -74,6 +88,7 @@
 								dialog-view="attributes-detail.view.xml"
 							/>
 						</generic-command>
+						<!-- delete() accepts a single object as well as a set of them. -->
 						<generic-command
 							image="css:bi bi-trash"
 							input="selected"
@@ -87,19 +102,106 @@
 								<null-input-disabled/>
 							</executability>
 							<with-transaction>
-								<execute-script function="obj -> { if($obj != null, $obj.delete(), null); null; }"/>
+								<execute-script function="objs -> { $objs.delete(); null; }"/>
 							</with-transaction>
 							<write-channel name="selected"/>
 						</generic-command>
 					</commands>
 					<table
+						filter-bar="true"
 						fixed-columns="1"
 						observed-types="demo.react:Demo"
+						personalization-key="demo-attributes"
 						selection="selected"
+						selection-mode="multi"
 						types="demo.react:Demo"
 					>
+						<inputs>
+							<input channel="selected"/>
+						</inputs>
+						<presets>
+							<preset name="mine">
+								<label>
+									<en>My objects</en>
+									<de>Meine Objekte</de>
+								</label>
+								<criterion
+									column="owner"
+									expr="currentUser()"
+								/>
+							</preset>
+							<preset name="active">
+								<label>
+									<en>Active only</en>
+									<de>Nur aktive</de>
+								</label>
+								<criterion
+									column="active"
+									expr="true"
+								/>
+							</preset>
+							<preset name="small-amount">
+								<label>
+									<en>Amount up to 50</en>
+									<de>Betrag bis 50</de>
+								</label>
+								<criterion
+									column="amount"
+									expr="list(0, 50)"
+								/>
+							</preset>
+							<preset name="odd-values">
+								<label>
+									<en>Odd values (case-sensitive)</en>
+									<de>Ungerade Werte (Groß-/Kleinschreibung)</de>
+								</label>
+								<!-- Written in the form of the column's text filter, which a single value cannot say. -->
+								<criterion column="string">
+									<text
+										case-sensitive="true"
+										pattern="'^Value [135]$'"
+										regexp="true"
+										whole-field="true"
+									/>
+								</criterion>
+							</preset>
+							<preset name="large-amount">
+								<label>
+									<en>Amount over 50</en>
+									<de>Betrag über 50</de>
+								</label>
+								<!-- The inversion of the range the "small amount" preset selects. -->
+								<criterion
+									column="amount"
+									inverted="true"
+								>
+									<range
+										operator="BETWEEN"
+										primary="0"
+										secondary="50"
+									/>
+								</criterion>
+							</preset>
+							<preset name="same-priority">
+								<label>
+									<en>Same priority as the selection</en>
+									<de>Gleiche Priorität wie die Auswahl</de>
+								</label>
+								<!--
+									Selects by an input: the priorities of the selected rows. The preset is
+									offered while a row is selected and follows the selection; with several
+									rows selected it offers the priorities of all of them.
+								-->
+								<criterion column="priority">
+									<options selected="sel -> $sel.get(`demo.react:Demo#priority`)"/>
+								</criterion>
+							</preset>
+						</presets>
 						<columns>
-							<column attribute="name">
+							<column
+								attribute="name"
+								width="220"
+							>
 								<!-- Application-defined filter: predefined regexp facets as checkboxes. -->
 								<filter class="com.top_logic.table.filter.RegexpOptionsFilter">
 									<pattern regexp="^Part">
@@ -122,7 +224,10 @@
 									</pattern>
 								</filter>
 							</column>
-							<column attribute="string"/>
+							<column
+								attribute="string"
+								width="200"
+							/>
 							<column attribute="priority"/>
 							<column attribute="active"/>
 							<column attribute="count">
@@ -150,8 +255,24 @@
 							<column attribute="amount"/>
 							<column attribute="date"/>
 							<column attribute="owner"/>
+							<column attribute="url"/>
+							<column attribute="email"/>
+							<column attribute="phone"/>
 						</columns>
 						<rows>all(`demo.react:Demo`)</rows>
+						<on-activate class="com.top_logic.layout.view.command.GenericViewCommand"
+							image="css:bi bi-pencil"
+						>
+							<label>
+								<en>Edit</en>
+								<de>Bearbeiten</de>
+							</label>
+							<open-dialog
+								bind-input-to="model"
+								close-on-backdrop="true"
+								dialog-view="attributes-detail.view.xml"
+							/>
+						</on-activate>
 					</table>
 				</panel>
 			</tab>
@@ -199,7 +320,7 @@
 									</generic-command>
 									<generic-command
 										image="css:bi bi-trash"
-										input="selected"
+										input="selectedSingle"
 										placement="TOOLBAR"
 									>
 										<label>
@@ -236,7 +357,11 @@
 									<en>Details</en>
 									<de>Details</de>
 								</title>
-								<form input="selected">
+								<!--
+									The form shows one object and the table beside it selects one row at a time, so
+									both work on the single selection.
+								-->
+								<form input="selectedSingle">
 									<field attribute="name"/>
 									<field attribute="string"/>
 									<field attribute="multiLine"/>
@@ -271,6 +396,8 @@
 									<field attribute="language"/>
 									<field attribute="timeZone"/>
 									<field attribute="url"/>
+									<field attribute="email"/>
+									<field attribute="phone"/>
 									<field attribute="json"/>
 									<field attribute="image"/>
 									<field attribute="priority"/>

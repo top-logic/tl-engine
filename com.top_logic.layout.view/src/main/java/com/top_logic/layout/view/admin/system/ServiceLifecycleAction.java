@@ -18,8 +18,8 @@ import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.module.ModuleUtil;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.view.ViewMessages;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.command.ViewAction;
@@ -112,17 +112,17 @@ public class ServiceLifecycleAction implements ViewAction {
 		if (_mode != Mode.REFRESH) {
 			BasicRuntimeModule<?> module = selectedModule(context);
 			if (module != null) {
-				apply(module);
+				apply(context, module);
 			}
 		}
 		return new ArrayList<>(ModuleUtil.getAllModules());
 	}
 
 	/**
-	 * Performs the configured lifecycle operation on the given module, reporting any failure via the
-	 * {@link InfoService}.
+	 * Performs the configured lifecycle operation on the given module, reporting any failure to the
+	 * user.
 	 */
-	private void apply(BasicRuntimeModule<?> module) {
+	private void apply(ReactContext context, BasicRuntimeModule<?> module) {
 		try {
 			switch (_mode) {
 				case START:
@@ -138,7 +138,7 @@ public class ServiceLifecycleAction implements ViewAction {
 					break;
 			}
 		} catch (ModuleException | RuntimeException ex) {
-			InfoService.showError(
+			ViewMessages.error(context,
 				I18NConstants.ERROR_SERVICE_LIFECYCLE__NAME.fill(ModuleUtil.INSTANCE.getModuleName(module)),
 				ResKey.text(ex.getMessage()));
 		}

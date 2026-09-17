@@ -3,8 +3,23 @@
 <model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
 	<modules>
 		<module name="demo.tickets">
+			<enum name="TicketStatus">
+				<classifier name="open">
+					<annotations>
+						<color token="support-warning"/>
+					</annotations>
+				</classifier>
+				<classifier name="closed">
+					<annotations>
+						<color token="support-success"/>
+					</annotations>
+				</classifier>
+			</enum>
 			<class name="Ticket">
 				<annotations>
+					<dynamic-color>
+						<color-by-expression color="t -> $t.get(`demo.tickets:Ticket#status`)"/>
+					</dynamic-color>
 					<main-properties properties="name"/>
 				</annotations>
 				<attributes>
@@ -12,6 +27,16 @@
 						mandatory="true"
 						type="tl.core:String"
 					/>
+					<reference name="status"
+						kind="forwards"
+						type="TicketStatus"
+					>
+						<annotations>
+							<default-value>
+								<classifier value="open"/>
+							</default-value>
+						</annotations>
+					</reference>
 					<reference name="comments"
 						composite="true"
 						kind="forwards"

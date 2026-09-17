@@ -171,8 +171,9 @@ public class ListRowSource<R> implements RowSource<R> {
 		if (definition == null) {
 			return MatchCounts.NONE;
 		}
-		// Facet counts reflect every other active filter, but not this column's own filter, so an
-		// option's count tells how many rows it would yield given the rest of the current criteria.
+		// Facet counts reflect every other active criterion - the other columns' filters and the
+		// search - but not this column's own filter, so an option's count tells how many rows it
+		// would yield given the rest of the current criteria.
 		Predicate<R> others = ColumnLogic.predicate(_filter, _byName, column);
 		Map<Object, Integer> counts = new HashMap<>();
 		for (R element : _elements) {

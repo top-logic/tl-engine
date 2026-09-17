@@ -6,7 +6,9 @@ import { React } from 'tl-react-bridge';
  * The icon is decorative: it is hidden from assistive technology.
  */
 const FontIcon: React.FC<{ image?: string; className?: string }> = ({ image, className }) => {
-  if (!image) return null;
+  // The invisible image draws nothing, so it gets no element: one carrying an icon class that
+  // draws nothing still takes the width of an icon.
+  if (!image || image === 'none') return null;
   // Strip "css:" or "colored:" prefix from ThemeImage.toEncodedForm() output.
   const cssClass = image.startsWith('css:') ? image.substring(4)
     : image.startsWith('colored:') ? image.substring(8)

@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view;
 
+import java.util.Locale;
+
 import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
@@ -23,9 +25,13 @@ import com.top_logic.layout.react.window.WindowEntry;
  * </p>
  *
  * <p>
- * Reusing it is only correct for the same view, which is what this record establishes: a different
- * view path, or a view file that {@link ViewLoader} has re-read after an edit, yields a different
- * {@link ViewElement} instance and hence a rebuild. Kept in the browser tab's
+ * Reusing it is only correct for the same view rendered in the same language, which is what this
+ * record establishes: a different view path, or a view file that {@link ViewLoader} has re-read
+ * after an edit, yields a different {@link ViewElement} instance and hence a rebuild - and so does a
+ * language the tree was not built in, because a control resolves its labels when it is created. That
+ * a language change costs the tab its transient view state is the point at which the two interests
+ * part: the labels the user came for are worth more than a scroll position. Kept in the browser
+ * tab's
  * {@link SubSessionContext}, which dies together with the window registry when
  * {@link com.top_logic.layout.view.login.PendingSessionAction a login or logout} replaces the
  * session - so a tree is never reused for a different user.
@@ -36,8 +42,10 @@ import com.top_logic.layout.react.window.WindowEntry;
  * @param source
  *        The {@link ViewElement} the tree was built from, compared by identity to detect a view file
  *        that has been edited in the meantime.
+ * @param locale
+ *        The language the tree resolved its labels in.
  */
-public record RenderedView(String viewPath, ViewElement source) {
+public record RenderedView(String viewPath, ViewElement source, Locale locale) {
 
 	private static final Property<RenderedView> CURRENT =
 		TypedAnnotatable.property(RenderedView.class, "renderedView");
@@ -70,9 +78,11 @@ public record RenderedView(String viewPath, ViewElement source) {
 	 *        The requested view path.
 	 * @param loaded
 	 *        The {@link ViewElement} currently loaded for that path.
+	 * @param requestedLocale
+	 *        The language the request renders in.
 	 */
-	public boolean matches(String requestedPath, ViewElement loaded) {
-		return viewPath.equals(requestedPath) && source == loaded;
+	public boolean matches(String requestedPath, ViewElement loaded, Locale requestedLocale) {
+		return viewPath.equals(requestedPath) && source == loaded && locale.equals(requestedLocale);
 	}
 
 }

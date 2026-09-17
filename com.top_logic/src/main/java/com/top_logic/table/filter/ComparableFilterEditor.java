@@ -6,7 +6,6 @@
 package com.top_logic.table.filter;
 
 import java.util.List;
-import java.util.function.Function;
 
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.model.AbstractFieldModel;
@@ -47,7 +46,7 @@ public class ComparableFilterEditor<V> implements FilterEditor {
 		}
 	};
 
-	private final Function<String, ? extends V> _parser;
+	private final BoundCodec<V> _codec;
 
 	private final SimpleSelectFieldModel _operator;
 
@@ -59,7 +58,7 @@ public class ComparableFilterEditor<V> implements FilterEditor {
 	 * Creates a {@link ComparableFilterEditor} seeded from the current state.
 	 */
 	public ComparableFilterEditor(ComparableColumnFilter<V> filter, RangeFilterState<V> current) {
-		_parser = filter.parser();
+		_codec = filter.codec();
 		ComparisonOperator operator =
 			current != null && current.operator() != null ? current.operator() : ComparisonOperator.EQ;
 		_operator = new SimpleSelectFieldModel(operator, List.of(ComparisonOperator.values()), false);
@@ -67,8 +66,15 @@ public class ComparableFilterEditor<V> implements FilterEditor {
 		_secondary = new AbstractFieldModel(text(current != null ? current.secondary() : null));
 	}
 
-	private static String text(Object value) {
-		return value == null ? "" : String.valueOf(value);
+	/**
+	 * A bound as the text the user reads and edits, in the user's language.
+	 */
+	private String text(V value) {
+		if (value == null || _codec == null) {
+			return "";
+		}
+		String formatted = _codec.format(value);
+		return formatted == null ? "" : formatted;
 	}
 
 	@Override
@@ -89,18 +95,10 @@ public class ComparableFilterEditor<V> implements FilterEditor {
 	}
 
 	private V parse(AbstractFieldModel model) {
-		if (_parser == null) {
+		if (_codec == null) {
 			return null;
 		}
-		String text = TextFilterEditor.string(model).trim();
-		if (text.isEmpty()) {
-			return null;
-		}
-		try {
-			return _parser.apply(text);
-		} catch (RuntimeException ex) {
-			return null;
-		}
+		return _codec.parse(TextFilterEditor.string(model));
 	}
 
 }

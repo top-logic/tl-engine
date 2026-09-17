@@ -156,7 +156,7 @@ public class ServiceTable implements UIElement {
 		ViewChannel selection = _selectionRef != null ? context.resolveChannel(_selectionRef) : null;
 		ViewChannel state = _stateRef != null ? context.resolveChannel(_stateRef) : null;
 		if (selection != null || state != null) {
-			control.setSelectionListener(keys -> {
+			control.addSelectionListener(keys -> {
 				BasicRuntimeModule<?> module = keys.size() == 1 ? cast(keys.iterator().next()) : null;
 				if (selection != null) {
 					selection.set(module);

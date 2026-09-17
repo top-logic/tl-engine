@@ -32,6 +32,7 @@ import com.top_logic.layout.react.control.layout.ReactSplitPanelControl;
 import com.top_logic.layout.react.control.layout.ReactSplitPanelControl.ChildConstraint;
 import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.layout.structure.Scrolling;
+import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 
@@ -155,6 +156,13 @@ public class SplitPanelElement implements UIElement {
 				return new PaneEntry(paneConfig.getSize(), paneConfig.getUnit(),
 					paneConfig.getMinSize(), children);
 			})
+			.collect(Collectors.toList());
+	}
+
+	@Override
+	public List<ChildGroup> getChildGroups() {
+		return _panes.stream()
+			.map(pane -> ChildGroup.elements(pane._children()))
 			.collect(Collectors.toList());
 	}
 

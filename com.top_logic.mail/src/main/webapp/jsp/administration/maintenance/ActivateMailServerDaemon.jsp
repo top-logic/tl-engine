@@ -38,7 +38,7 @@
 					>
 						<tr>
 							<td>
-								<button class="tlButton cButton cmdButton"
+								<button class="tlButton cButton tl-cmd-button"
 									name="RELOAD"
 									type="submit">
 									<span class="tlButtonLabel">Start</span>

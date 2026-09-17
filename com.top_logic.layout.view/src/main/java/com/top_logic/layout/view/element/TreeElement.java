@@ -8,7 +8,6 @@ package com.top_logic.layout.view.element;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -21,11 +20,13 @@ import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.layout.component.model.SelectionEvent;
-import com.top_logic.layout.component.model.SelectionListener;
+import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.tree.ReactTreeControl;
 import com.top_logic.layout.react.controlprovider.MetaResourceControlProvider;
@@ -39,7 +40,12 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.command.ViewCommand;
+import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.model.ObservableTreeModel;
+import com.top_logic.layout.view.model.ObservedTypes;
+import com.top_logic.layout.view.model.TreeSelectionBinding;
+import com.top_logic.mig.html.DefaultMultiSelectionModel;
 import com.top_logic.mig.html.DefaultSingleSelectionModel;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.SelectionModelOwner;
@@ -47,6 +53,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
+import com.top_logic.table.SelectionMode;
 
 /**
  * Declarative {@link UIElement} that wraps a {@link ReactTreeControl}.
@@ -108,11 +115,17 @@ public class TreeElement implements UIElement {
 		/** Configuration name for {@link #getSelection()}. */
 		String SELECTION = "selection";
 
+		/** Configuration name for {@link #getSelectionMode()}. */
+		String SELECTION_MODE = "selection-mode";
+
 		/** Configuration name for {@link #getNodeContent()}. */
 		String NODE_CONTENT = "nodeContent";
 
 		/** Configuration name for {@link #getObservedTypes()}. */
 		String OBSERVED_TYPES = "observed-types";
+
+		/** Configuration name for {@link #getOnActivate()}. */
+		String ON_ACTIVATE = "on-activate";
 
 		/**
 		 * References to {@link ViewChannel}s whose current values become positional arguments to
@@ -234,6 +247,54 @@ public class TreeElement implements UIElement {
 		ChannelRef getSelection();
 
 		/**
+		 * Whether the user may select one node at a time, or any number of them.
+		 *
+		 * <p>
+		 * {@link SelectionMode#SINGLE} (the default) replaces the selection with every click, and
+		 * the arrow keys move the selection from node to node.
+		 * </p>
+		 *
+		 * <p>
+		 * {@link SelectionMode#MULTI} keeps a plain click replacing the selection, but a click with
+		 * {@code Ctrl} adds a node to it or takes it out again, and a click with {@code Shift}
+		 * selects the range from the node the selection started at. The arrow keys then move the
+		 * keyboard cursor alone, leaving the selection where it is; {@code Space} adds the node the
+		 * cursor is on to the selection or takes it out again, and an arrow with {@code Shift} grows
+		 * the range from the node the selection started at.
+		 * </p>
+		 *
+		 * <p>
+		 * The {@link #getSelection() selection channel} holds the business object of the selected
+		 * node while exactly one node is selected, the set of those objects while there are several,
+		 * and nothing while there is none - so a display bound to the channel works with either
+		 * mode, and only one that is to show several objects at once has to expect a set.
+		 * </p>
+		 */
+		@Name(SELECTION_MODE)
+		@ComplexDefault(SelectionMode.SingleDefault.class)
+		SelectionMode getSelectionMode();
+
+		/**
+		 * The command a node activation runs - a double-click on the node, or {@code Enter} while
+		 * the node carries the keyboard focus.
+		 *
+		 * <p>
+		 * The activated node becomes the tree's selection first, then the command runs with that
+		 * node's business object as its input. The command's own executability rules decide over
+		 * that object, so a node the rules reject activates nothing. Without a command, activating a
+		 * node only selects it.
+		 * </p>
+		 *
+		 * <p>
+		 * Configured as {@code <on-activate class="..." .../>} inside the {@code <tree>} element.
+		 * </p>
+		 */
+		@Name(ON_ACTIVATE)
+		@Nullable
+		@Options(fun = AllInAppImplementations.class)
+		PolymorphicConfiguration<? extends ViewCommand> getOnActivate();
+
+		/**
 		 * Optional provider for custom node content controls. If not set, nodes are rendered
 		 * using a simple text label.
 		 */
@@ -248,6 +309,12 @@ public class TreeElement implements UIElement {
 	private final QueryExecutor _childrenExecutor;
 
 	private final ReactControlProvider _nodeContentProvider;
+
+	/** The instantiated {@link Config#getOnActivate()} command, {@code null} without one. */
+	private final ViewCommand _onActivate;
+
+	/** The configuration {@link #_onActivate} was instantiated from, {@code null} without one. */
+	private final ViewCommand.Config _onActivateConfig;
 
 	/**
 	 * Creates a new {@link TreeElement} from configuration.
@@ -267,6 +334,10 @@ public class TreeElement implements UIElement {
 
 		ReactControlProvider configuredProvider = context.getInstance(config.getNodeContent());
 		_nodeContentProvider = configuredProvider != null ? configuredProvider : MetaResourceControlProvider.INSTANCE;
+
+		PolymorphicConfiguration<? extends ViewCommand> onActivate = config.getOnActivate();
+		_onActivateConfig = onActivate instanceof ViewCommand.Config activateConfig ? activateConfig : null;
+		_onActivate = context.getInstance(onActivate);
 	}
 
 	@Override
@@ -286,40 +357,31 @@ public class TreeElement implements UIElement {
 		TreeBuilder<DefaultTreeUINode> builder = createTreeBuilder(inputChannels);
 		DefaultTreeUINodeModel treeModel = new DefaultTreeUINodeModel(builder, rootObject);
 
-		// 4. Create selection model.
-		DefaultSingleSelectionModel<Object> selectionModel =
-			new DefaultSingleSelectionModel<>(SelectionModelOwner.NO_OWNER);
+		// 4. Create the selection model for the configured selection mode.
+		SelectionMode selectionMode = _config.getSelectionMode();
+		SelectionModel<Object> selectionModel = selectionMode == SelectionMode.MULTI
+			? new DefaultMultiSelectionModel<>(SelectionModelOwner.NO_OWNER)
+			: new DefaultSingleSelectionModel<>(SelectionModelOwner.NO_OWNER);
 
 		// 5. Create ReactTreeControl.
 		ReactTreeControl treeControl = new ReactTreeControl(context, treeModel, selectionModel, _nodeContentProvider);
+		treeControl.setSelectionMode(selectionMode);
 
 		// 6. Wire selection channel.
 		ChannelRef selectionRef = _config.getSelection();
 		if (selectionRef != null) {
 			ViewChannel selectionChannel = context.resolveChannel(selectionRef);
-			selectionModel.addSelectionListener(new SelectionListener<>() {
-				@Override
-				public void notifySelectionChanged(SelectionModel<Object> model, SelectionEvent<Object> event) {
-					Set<?> newSelection = event.getNewSelection();
-					if (newSelection.size() == 1) {
-						Object selectedNode = newSelection.iterator().next();
-						// Extract business object if the selected object is a tree node.
-						if (selectedNode instanceof DefaultTreeUINode) {
-							selectionChannel.set(((DefaultTreeUINode) selectedNode).getBusinessObject());
-						} else {
-							selectionChannel.set(selectedNode);
-						}
-					} else if (newSelection.isEmpty()) {
-						selectionChannel.set(null);
-					} else {
-						selectionChannel.set(newSelection);
-					}
-				}
-			});
+			selectionModel.addSelectionListener(new TreeSelectionBinding<>(selectionChannel));
 		}
 
-		// 7. Create ObservableTreeModel to forward model changes to the tree control.
-		Set<TLStructuredType> observedTypes = resolveObservedTypes();
+		// 7. Wire the activation command, which runs with the activated node's business object.
+		if (_onActivate != null && _onActivateConfig != null) {
+			ViewCommandModel activation = ViewCommandModel.forCommand(context, _onActivate, _onActivateConfig);
+			treeControl.setActivationHandler(node -> activation.execute(context, businessObject(node)));
+		}
+
+		// 8. Create ObservableTreeModel to forward model changes to the tree control.
+		Set<TLStructuredType> observedTypes = ObservedTypes.resolve(_config.getObservedTypes());
 		QueryExecutor rootExec = _rootExecutor;
 		ObservableTreeModel observableModel = new ObservableTreeModel(
 			treeControl,
@@ -330,7 +392,7 @@ public class TreeElement implements UIElement {
 			inputChannels
 		);
 
-		// 8. Observe the model only while the tree is displayed.
+		// 9. Observe the model only while the tree is displayed.
 		treeControl.addAttachListener(() -> {
 			observableModel.attach(context.getModelScope());
 		});
@@ -372,6 +434,14 @@ public class TreeElement implements UIElement {
 		};
 	}
 
+	/**
+	 * The business object a tree node stands for, the node itself when it is no
+	 * {@link DefaultTreeUINode}.
+	 */
+	private static Object businessObject(Object node) {
+		return node instanceof DefaultTreeUINode uiNode ? uiNode.getBusinessObject() : node;
+	}
+
 	private static Object[] readChannelValues(List<ViewChannel> channels) {
 		Object[] values = new Object[channels.size()];
 		for (int i = 0; i < channels.size(); i++) {
@@ -395,22 +465,6 @@ public class TreeElement implements UIElement {
 			return Collections.emptyList();
 		}
 		return Collections.singletonList(result);
-	}
-
-	private Set<TLStructuredType> resolveObservedTypes() {
-		List<TLModelPartRef> refs = _config.getObservedTypes();
-		if (refs == null || refs.isEmpty()) {
-			return Set.of();
-		}
-		Set<TLStructuredType> types = new HashSet<>();
-		for (TLModelPartRef ref : refs) {
-			TLStructuredType type = (TLStructuredType) ref.resolveType();
-			if (type == null) {
-				throw new RuntimeException("Failed to resolve observed type: " + ref.qualifiedName());
-			}
-			types.add(type);
-		}
-		return types;
 	}
 
 }

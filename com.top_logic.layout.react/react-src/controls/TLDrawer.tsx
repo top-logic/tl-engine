@@ -1,4 +1,6 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, useStandaloneKeyboardScope } from 'tl-react-bridge';
+import {
+  React, useTLState, useTLCommand, TLChild, useI18N, useStandaloneKeyboardScope, FillBarrier,
+} from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback } = React;
@@ -63,7 +65,9 @@ const TLDrawer: React.FC<TLCellProps> = ({ controlId }) => {
         </div>
       )}
       <div className="tlDrawer__body">
-        {child && <TLChild control={child} />}
+        <FillBarrier>
+          {child && <TLChild control={child} />}
+        </FillBarrier>
       </div>
     </aside>
   );

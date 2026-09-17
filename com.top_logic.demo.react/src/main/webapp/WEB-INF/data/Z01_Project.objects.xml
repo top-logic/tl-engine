@@ -10,8 +10,46 @@
 		<attribute name="description"
 			value="Projekt 2"
 		/>
-		<attribute name="milestones"/>
-		<attribute name="tickets"/>
+		<attribute name="milestones">
+			<object id="6"
+				type="tl.demo.projectManagement:Milestone"
+			>
+				<attribute name="name"
+					value="M3"
+				/>
+				<attribute name="dueDate"
+					value=""
+				/>
+			</object>
+		</attribute>
+		<attribute name="tickets">
+			<object id="7"
+				type="tl.demo.projectManagement:Ticket"
+			>
+				<attribute name="title"
+					value="T4"
+				/>
+				<attribute name="description"
+					value="Aufgabe in Projekt 2"
+				/>
+				<attribute name="milestone">
+					<ref id="6"/>
+				</attribute>
+			</object>
+			<object id="8"
+				type="tl.demo.projectManagement:Ticket"
+			>
+				<attribute name="title"
+					value="T5"
+				/>
+				<attribute name="description"
+					value="Nacharbeit in Projekt 2"
+				/>
+				<attribute name="milestone">
+					<ref id="6"/>
+				</attribute>
+			</object>
+		</attribute>
 		<attribute name="notes"/>
 	</object>
 	<object id="2"
@@ -34,6 +72,16 @@
 					value=""
 				/>
 			</object>
+			<object id="9"
+				type="tl.demo.projectManagement:Milestone"
+			>
+				<attribute name="name"
+					value="M2"
+				/>
+				<attribute name="dueDate"
+					value=""
+				/>
+			</object>
 		</attribute>
 		<attribute name="tickets">
 			<object id="4"
@@ -47,6 +95,32 @@
 				/>
 				<attribute name="milestone">
 					<ref id="3"/>
+				</attribute>
+			</object>
+			<object id="11"
+				type="tl.demo.projectManagement:Ticket"
+			>
+				<attribute name="title"
+					value="T2"
+				/>
+				<attribute name="description"
+					value="Folgearbeit in Projekt 1"
+				/>
+				<attribute name="milestone">
+					<ref id="3"/>
+				</attribute>
+			</object>
+			<object id="12"
+				type="tl.demo.projectManagement:Ticket"
+			>
+				<attribute name="title"
+					value="T3"
+				/>
+				<attribute name="description"
+					value="Abnahme in Projekt 1"
+				/>
+				<attribute name="milestone">
+					<ref id="9"/>
 				</attribute>
 			</object>
 		</attribute>
@@ -67,9 +141,12 @@
 			value="C2"
 		/>
 		<attribute name="email"
-			value=""
+			value="c2@example.com"
 		/>
-		<attribute name="assignedTickets"/>
+		<attribute name="assignedTickets">
+			<ref id="11"/>
+			<ref id="7"/>
+		</attribute>
 	</object>
 	<object id="20"
 		type="tl.demo.projectManagement:Contributor"
@@ -78,8 +155,12 @@
 			value="C1"
 		/>
 		<attribute name="email"
-			value=""
+			value="c1@example.com"
 		/>
-		<attribute name="assignedTickets"/>
+		<attribute name="assignedTickets">
+			<ref id="4"/>
+			<ref id="12"/>
+			<ref id="8"/>
+		</attribute>
 	</object>
 </objects>

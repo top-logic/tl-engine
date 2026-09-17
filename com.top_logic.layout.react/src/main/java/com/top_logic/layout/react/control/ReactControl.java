@@ -35,6 +35,8 @@ import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.routing.RoutingParticipant;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.model.listen.ModelScope;
+import com.top_logic.model.listen.ObservedObjects;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 import de.haumacher.msgbuf.io.StringW;
@@ -88,6 +90,14 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	private Set<String> _borrowedState;
 
 	private SSEUpdateQueue _sseQueue;
+
+	/**
+	 * The {@link RoutingParticipant}s contributing a URL segment for this control, beyond the control
+	 * itself, or {@code null} while there are none.
+	 *
+	 * @see #addRouteParticipant(RoutingParticipant)
+	 */
+	private List<RoutingParticipant> _routeParticipants;
 
 	/**
 	 * The source {@code .view.xml} path of the view whose root this control is, or {@code null}.
@@ -182,6 +192,21 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 */
 	public ReactContext getReactContext() {
 		return _reactContext;
+	}
+
+	/**
+	 * The {@link ModelScope} the objects this control displays are observed on.
+	 *
+	 * <p>
+	 * {@code null} where the control is displayed outside a browser window - a control built in
+	 * a test, say - which observes no object changes. A control registering
+	 * {@link ObservedObjects} hands this over as it is: an observation without a scope stays
+	 * consistent and simply reports nothing.
+	 * </p>
+	 */
+	protected final ModelScope modelScope() {
+		ReactContext context = getReactContext();
+		return context == null ? null : context.getModelScope();
 	}
 
 	/**
@@ -289,8 +314,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 */
 	private void sendCurrentState() {
 		_silentChanges = false;
-		if (_disposed) {
-			// The client has already unmounted this control; drop the trailing update.
+		if (!receivesUpdates()) {
 			return;
 		}
 		StateEvent event = StateEvent.create()
@@ -324,21 +348,48 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 		return null;
 	}
 
+	@Override
+	public List<ReactControl> scriptingChildren() {
+		return displayedChildren();
+	}
+
 	/**
-	 * {@inheritDoc}
+	 * The {@link #childControls() children this control renders}, in an order that is stable across
+	 * calls.
+	 *
+	 * <p>
+	 * Every projection of the display that has to be reproducible builds on this order: the
+	 * {@link #scriptingChildren() scripting projection} of a control tree, and the composition of the
+	 * URL from the {@link com.top_logic.layout.react.routing.RoutingParticipant participants} the
+	 * display contains.
+	 * </p>
 	 *
 	 * @implNote Walks the state map the same way {@link #writeJsonValue} serializes it, but stops at
 	 *           each embedded control rather than descending into it. Entries are visited in
-	 *           state-key order (the backing map is unordered) so the child order is stable across
-	 *           calls.
+	 *           state-key order, because the backing map is unordered.
 	 */
-	@Override
-	public List<ReactControl> scriptingChildren() {
+	public final List<ReactControl> displayedChildren() {
 		List<ReactControl> result = new ArrayList<>();
 		_reactState.entrySet().stream()
 			.sorted(Map.Entry.comparingByKey())
 			.forEach(entry -> collectChildControls(entry.getValue(), result));
 		return result;
+	}
+
+	/**
+	 * The {@link #displayedChildren() displayed children} the user sees.
+	 *
+	 * <p>
+	 * By default all of them: a control renders what it shows. A container that renders children it
+	 * hides - a tile stack keeping the frames the active one covers, so that they keep their state -
+	 * narrows this to the ones shown, because what the user does not see is not part of the address
+	 * of the page: the URL is composed from the
+	 * {@link com.top_logic.layout.react.routing.RoutingParticipant participants} below the visible
+	 * children only, and only those take up a route of a URL that is adopted.
+	 * </p>
+	 */
+	public List<ReactControl> visibleChildren() {
+		return displayedChildren();
 	}
 
 	/**
@@ -789,11 +840,18 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 * Sets a single value in the React state.
 	 *
 	 * <p>
-	 * If this control is already attached to an SSE queue (i.e. rendered), a {@link PatchEvent} is
-	 * sent to the client. Before rendering, the value simply becomes part of the initial render.
-	 * Within {@link #updateStateSilently(Runnable)} — and during state serialization, where the
-	 * written state reaches the client as part of the rendered output — the change is recorded
-	 * without an event.
+	 * If this control is rendered and displayed, a {@link PatchEvent} is sent to the client. Before
+	 * rendering, the value simply becomes part of the initial render. Within
+	 * {@link #updateStateSilently(Runnable)} — and during state serialization, where the written
+	 * state reaches the client as part of the rendered output — the change is recorded without an
+	 * event.
+	 * </p>
+	 *
+	 * <p>
+	 * A control that is not {@link #isAttached() displayed} records the value without an event as
+	 * well: the client shows no component the event could address, and the value reaches it with the
+	 * full state the control is serialized with when it becomes displayed again. See
+	 * {@link #receivesUpdates()}.
 	 * </p>
 	 *
 	 * @param key
@@ -902,14 +960,36 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	}
 
 	private void sendPatch(Map<String, Object> patch) {
-		if (_disposed) {
-			// The client has already unmounted this control; drop the trailing update.
+		if (!receivesUpdates()) {
 			return;
 		}
 		PatchEvent event = PatchEvent.create()
 			.setControlId(getID())
 			.setPatch(toJsonString(_reactContext, patch));
 		requireSSEQueue().enqueue(event);
+	}
+
+	/**
+	 * Whether a state update of this control reaches the client.
+	 *
+	 * <p>
+	 * Only an {@link #isAttached() attached} control is displayed, and only for a displayed control
+	 * does the client hold a mounted component that an update can address. A container renders its
+	 * active content and {@link #detach() detaches} what it replaces, and a control that becomes
+	 * displayed again is serialized with its full state (see {@link #writeAsChild(JsonWriter)}), so
+	 * an update produced while detached is carried by that serialization. Sending it separately
+	 * would address a control the client has unmounted.
+	 * </p>
+	 *
+	 * <p>
+	 * A {@link #cleanupTree() disposed} control is detached as well, which is what lets it tolerate
+	 * the trailing updates a stale reference produces within the running interaction: the very
+	 * handler that triggered the disposal can continue on its own control, and an observer
+	 * notification iterating a listener snapshot may still deliver an event afterwards.
+	 * </p>
+	 */
+	private boolean receivesUpdates() {
+		return _attached;
 	}
 
 	private SSEUpdateQueue requireSSEQueue() {
@@ -1066,6 +1146,45 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 		for (Runnable l : _detachListeners) {
 			l.run();
 		}
+	}
+
+	/**
+	 * Anchors a {@link RoutingParticipant} at this control, so that it contributes its URL segment
+	 * wherever this control is displayed.
+	 *
+	 * <p>
+	 * A control that is a {@link RoutingParticipant} itself needs no anchor. Anchoring is for a
+	 * participant that is not a control - a channel bound to a route parameter, for instance -
+	 * and names the control whose position in the display the participant's segment follows.
+	 * </p>
+	 *
+	 * @param participant
+	 *        The participant to anchor at this control.
+	 */
+	public final void addRouteParticipant(RoutingParticipant participant) {
+		if (_routeParticipants == null) {
+			_routeParticipants = new ArrayList<>();
+		}
+		_routeParticipants.add(participant);
+	}
+
+	/**
+	 * Removes a participant added by {@link #addRouteParticipant(RoutingParticipant)}.
+	 *
+	 * @param participant
+	 *        The participant to remove.
+	 */
+	public final void removeRouteParticipant(RoutingParticipant participant) {
+		if (_routeParticipants != null) {
+			_routeParticipants.remove(participant);
+		}
+	}
+
+	/**
+	 * The participants {@link #addRouteParticipant(RoutingParticipant) anchored} at this control.
+	 */
+	public final List<RoutingParticipant> routeParticipants() {
+		return _routeParticipants == null ? List.of() : _routeParticipants;
 	}
 
 	/**

@@ -17,6 +17,11 @@ import com.top_logic.tool.boundsec.HandlerResult;
 final class FakeCommandModels {
 
 	static CommandModel contextMenu(String name, String label, boolean visible, boolean executable) {
+		return contextMenu(name, label, visible, executable, false);
+	}
+
+	static CommandModel contextMenu(String name, String label, boolean visible, boolean executable,
+			boolean active) {
 		return new CommandModel() {
 			@Override
 			public String getName() {
@@ -41,6 +46,11 @@ final class FakeCommandModels {
 			@Override
 			public boolean isVisible() {
 				return visible;
+			}
+
+			@Override
+			public boolean isActive() {
+				return active;
 			}
 
 			@Override

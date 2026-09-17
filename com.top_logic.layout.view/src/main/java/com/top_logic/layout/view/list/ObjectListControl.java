@@ -19,6 +19,7 @@ import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
+import com.top_logic.layout.view.channel.VetoForwarder;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
@@ -107,7 +108,7 @@ public class ObjectListControl extends ReactStackControl {
 		_newElementChannelName = newElementChannelName;
 		_elementType = elementType;
 		_emptyText = emptyText;
-		_lastContainer = container.get();
+		_lastContainer = ListContainer.aliveOrNull(container.get());
 
 		createNewElementControls(scope);
 	}
@@ -123,6 +124,10 @@ public class ObjectListControl extends ReactStackControl {
 		_newElementChannel = new DefaultViewChannel(_newElementChannelName);
 		resetNewElement();
 		scope.initNewElementReset(this::resetNewElement);
+
+		// A container switch discards the draft, so the unsaved changes of the new-element content
+		// are reported when the container channel is asked, before it is written.
+		addCleanupAction(VetoForwarder.forward(_container, _newElementChannel));
 
 		// Publish the pending new element on the shared template context, so that item content (e.g.
 		// a reply button) can reference the draft being composed via the new-element channel - not
@@ -146,7 +151,7 @@ public class ObjectListControl extends ReactStackControl {
 	 * </p>
 	 */
 	private void resetNewElement() {
-		Object container = _container.get();
+		Object container = ListContainer.aliveOrNull(_container.get());
 		TLObject containerObject = container instanceof TLObject ? (TLObject) container : null;
 		_newElementChannel.set(TransientObjectFactory.INSTANCE.createObject(_elementType, containerObject));
 	}
@@ -158,7 +163,7 @@ public class ObjectListControl extends ReactStackControl {
 	 *        The current list elements, in display order.
 	 */
 	public void showElements(List<Object> elements) {
-		Object container = _container.get();
+		Object container = ListContainer.aliveOrNull(_container.get());
 		if (!Objects.equals(container, _lastContainer)) {
 			_lastContainer = container;
 			if (_newElementChannel != null) {

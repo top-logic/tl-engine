@@ -189,6 +189,13 @@
 			<startPage>/view/</startPage>
 		</config>
 		<!--
+			The demo lowers the upload limit below the framework default so that the refusal of an
+			oversized file can be tried out with a moderately sized file.
+		-->
+		<config config:interface="com.top_logic.layout.react.control.upload.UploadConfig"
+			max-upload-size="10m"
+		/>
+		<!--
 			What a session that belongs to no account sees in place of the application: the
 			framework's login page, whatever the URL asks for. This demo shows its objects to
 			accounts only, like a business application, and the requested URL is held while the

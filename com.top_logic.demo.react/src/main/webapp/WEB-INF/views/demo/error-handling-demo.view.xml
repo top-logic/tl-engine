@@ -6,6 +6,18 @@
 			<en>Error Handling Demo</en>
 			<de>Fehlerbehandlungs-Demo</de>
 		</title>
+		<commands>
+			<upload-command
+				multiple="true"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Upload (chain fails)</en>
+					<de>Upload (Kette schlägt fehl)</de>
+				</label>
+				<throw-error message="Uploads are refused in this demo."/>
+			</upload-command>
+		</commands>
 		<button>
 			<action class="com.top_logic.layout.view.command.GenericViewCommand">
 				<label>

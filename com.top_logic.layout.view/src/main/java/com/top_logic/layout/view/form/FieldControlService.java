@@ -40,10 +40,12 @@ import com.top_logic.layout.form.model.SimpleSelectFieldModel;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.field.FieldControlRegistry;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.view.form.AttributeSelectFieldModel.OptionSource;
+import com.top_logic.layout.view.table.ColumnType;
 import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
@@ -383,7 +385,7 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * @param multiple
 	 *        Whether the value is a collection of numbers rather than a single one.
 	 */
-	private static Format numberFormat(AnnotationLookup annotations, TLType type, boolean multiple) {
+	public static Format numberFormat(AnnotationLookup annotations, TLType type, boolean multiple) {
 		if (multiple) {
 			return null;
 		}
@@ -506,6 +508,44 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 		AbstractFieldModel model = displayModel(part, value);
 		model.setEditable(false);
 		return createFieldControl(context, part, model);
+	}
+
+	/**
+	 * Creates a read-only control displaying the given value exactly as a view-mode form field
+	 * shows it.
+	 *
+	 * <p>
+	 * The entry point for a value that no attribute holds: what the value is
+	 * ({@link ColumnType#type()}, {@link ColumnType#multiple()}) and where its display annotations
+	 * come from ({@link ColumnType#annotations()}) is all the display needs. Where an attribute
+	 * <em>does</em> hold the value ({@link ColumnType#part()}), that attribute decides the display,
+	 * so its options and its own annotations keep shaping the cell.
+	 * </p>
+	 *
+	 * <p>
+	 * A value of an unknown type is displayed by its label, the one thing every value has.
+	 * </p>
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param columnType
+	 *        What the displayed value is, see {@link ColumnType}.
+	 * @param value
+	 *        The value to display, may be {@code null}.
+	 */
+	public ReactControl createDisplayControl(ReactContext context, ColumnType columnType, Object value) {
+		TLStructuredTypePart part = columnType.part();
+		if (part != null) {
+			return createDisplayControl(context, part, value);
+		}
+		TLType type = columnType.type();
+		if (type == null) {
+			return new ReactTextControl(context, MetaLabelProvider.INSTANCE.getLabel(value));
+		}
+		AbstractFieldModel model = new AbstractFieldModel(value);
+		model.setEditable(false);
+		FieldSpec field = fieldSpec(type, columnType.annotations(), null, columnType.multiple(), model);
+		return createFieldControl(context, type, field, model);
 	}
 
 	private AbstractFieldModel displayModel(TLStructuredTypePart part, Object value) {

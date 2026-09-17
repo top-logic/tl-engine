@@ -30,10 +30,9 @@ import com.top_logic.table.impl.ListRowSource;
  * {@link ListRowSource}, but any consumer of the element list works).
  *
  * <p>
- * The green-field analog of the legacy observable {@code ObjectTableModel} wrapper. Listeners are
- * registered only for the observed types (to catch
- * creates), the currently displayed objects (to catch their updates / deletes) and the input
- * channels, so any received notification simply means "re-evaluate".
+ * Listeners are registered only for the observed types (to catch creates), the currently displayed
+ * persistent objects (to catch their updates / deletes) and the input channels, so any received
+ * notification simply means "re-evaluate".
  * </p>
  *
  * @param <R>
@@ -207,7 +206,8 @@ public class RowSourceObserver<R> implements ModelListener, ViewChannel.ChannelL
 	private void registerObjectListeners() {
 		_observedKeys.clear();
 		for (Object row : _elements) {
-			if (row instanceof TLObject object) {
+			if (isObservable(row)) {
+				TLObject object = (TLObject) row;
 				ObjectKey key = key(object);
 				if (key != null && _observedKeys.add(key)) {
 					_scope.addModelListener(object, this);
@@ -218,11 +218,23 @@ public class RowSourceObserver<R> implements ModelListener, ViewChannel.ChannelL
 
 	private void deregisterObjectListeners() {
 		for (Object row : _elements) {
-			if (row instanceof TLObject object) {
-				_scope.removeModelListener(object, this);
+			if (isObservable(row)) {
+				_scope.removeModelListener((TLObject) row, this);
 			}
 		}
 		_observedKeys.clear();
+	}
+
+	/**
+	 * Whether changes of the given element can be observed: it is a persistent object.
+	 *
+	 * <p>
+	 * A transient object has no identity in the persistency layer and therefore no changes anyone
+	 * could be notified of - it changes only where the display that holds it changes it.
+	 * </p>
+	 */
+	private static boolean isObservable(Object row) {
+		return row instanceof TLObject object && !object.tTransient();
 	}
 
 	private void registerTypeListeners() {

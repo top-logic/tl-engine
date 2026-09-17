@@ -37,6 +37,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_COMMAND_FAILED;
 
 	/**
+	 * @en Files up to {0} can be uploaded.
+	 */
+	public static ResKey1 ERROR_UPLOAD_TOO_LARGE__LIMIT;
+
+	/**
 	 * @en React button clicked.
 	 */
 	public static ResKey REACT_BUTTON_CLICK;
@@ -399,6 +404,19 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Invalid date: {0}
 	 */
 	public static ResKey1 ERROR_INVALID_DATE__VALUE;
+
+	/**
+	 * @en Invalid web address: {0}
+	 */
+	public static ResKey1 ERROR_INVALID_URL__VALUE;
+
+	// -- Text input client-side i18n keys --
+
+	/**
+	 * @en Open in a new tab
+	 */
+	@CustomKey("js.textInput.open")
+	public static ResKey JS_TEXT_INPUT_OPEN;
 
 	/**
 	 * @en No value

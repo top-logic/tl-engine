@@ -79,4 +79,12 @@
 			</instance>
 		</config>
 	</services>
+
+	<configs>
+		<!--
+			Declared with its default so that the upload size limit is discoverable and can be
+			overridden by an application.
+		-->
+		<config config:interface="com.top_logic.layout.react.control.upload.UploadConfig"/>
+	</configs>
 </application>

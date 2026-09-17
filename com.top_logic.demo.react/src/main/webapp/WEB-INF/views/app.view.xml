@@ -44,6 +44,15 @@
 							<de>Projekte</de>
 						</label>
 					</nav-item>
+					<nav-item id="table-columns"
+						icon="css:bi bi-layout-three-columns"
+					>
+						<view-ref view="demo/table-columns.view.xml"/>
+						<label>
+							<en>Table columns</en>
+							<de>Tabellenspalten</de>
+						</label>
+					</nav-item>
 					<nav-item id="tree-demo"
 						icon="css:bi bi-diagram-2"
 					>

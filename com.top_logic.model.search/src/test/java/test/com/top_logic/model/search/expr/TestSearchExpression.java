@@ -20,6 +20,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
@@ -75,6 +76,7 @@ import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.instance.importer.XMLInstanceImporter;
 import com.top_logic.model.search.expr.CalendarField;
 import com.top_logic.model.search.expr.CalendarUpdate;
+import com.top_logic.model.search.expr.Fill;
 import com.top_logic.model.search.expr.FormatExpr;
 import com.top_logic.model.search.expr.I18NConstants;
 import com.top_logic.model.search.expr.KBQuery;
@@ -86,13 +88,16 @@ import com.top_logic.model.search.expr.ToString;
 import com.top_logic.model.search.expr.ToSystemCalendar;
 import com.top_logic.model.search.expr.ToUserCalendar;
 import com.top_logic.model.search.expr.config.operations.Label;
+import com.top_logic.model.search.expr.config.operations.string.Localize;
 import com.top_logic.model.search.expr.parser.ParseException;
+import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.expr.supplier.SearchExpressionNow;
 import com.top_logic.model.search.expr.supplier.SearchExpressionToday;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
+import com.top_logic.util.TLContextManager;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
@@ -2886,6 +2891,39 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		SearchExpression labelExpression = search("label(" + object + ", \"" + locale + "\")");
 		Object label = execute(labelExpression);
 		assertEquals(expected, label);
+	}
+
+	/** Test that {@link Label} of a constant is resolved in the locale of the executing session. */
+	public void testLabelOfConstantUsesSessionLocale() throws ParseException {
+		QueryExecutor executor = compile(kb(), model(), search("label(#(\"Offen\"@de, \"Pending\"@en))"));
+
+		assertEquals("Offen", executeIn(Locale.GERMAN, executor));
+		assertEquals("Pending", executeIn(Locale.ENGLISH, executor));
+	}
+
+	/**
+	 * Test that {@link Localize} of a constant is resolved in the locale of the executing session.
+	 */
+	public void testLocalizeOfConstantUsesSessionLocale() throws ParseException {
+		QueryExecutor executor = compile(kb(), model(), search("localize(#(\"Offen\"@de, \"Pending\"@en))"));
+
+		assertEquals("Offen", executeIn(Locale.GERMAN, executor));
+		assertEquals("Pending", executeIn(Locale.ENGLISH, executor));
+	}
+
+	/**
+	 * Test that {@link Fill} of a constant pattern formats in the locale of the executing session.
+	 */
+	public void testFillOfConstantUsesSessionLocale() throws ParseException {
+		QueryExecutor executor = compile(kb(), model(), search("fill(\"{0,number,#.#}\", 1.5)"));
+
+		assertEquals("1,5", executeIn(Locale.GERMAN, executor));
+		assertEquals("1.5", executeIn(Locale.ENGLISH, executor));
+	}
+
+	private Object executeIn(Locale locale, QueryExecutor executor) {
+		return TLContextManager.getSubSession()
+			.withLocale(locale, () -> executor.executeWith(null, null, Args.none()));
 	}
 
 	private void with(String scenarioName, TestFun test) {

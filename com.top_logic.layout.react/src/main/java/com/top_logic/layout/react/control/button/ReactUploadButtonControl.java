@@ -56,6 +56,7 @@ public class ReactUploadButtonControl extends ReactButtonControl implements Uplo
 		_uploadModel = model;
 		putState(ACCEPT, model.getAccept());
 		putState(MULTIPLE, model.isMultiple());
+		putState(UploadSupport.MAX_UPLOAD_SIZE, UploadSupport.maxUploadSize());
 	}
 
 	@Override

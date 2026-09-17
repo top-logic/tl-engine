@@ -48,6 +48,8 @@
 			<field attribute="language"/>
 			<field attribute="timeZone"/>
 			<field attribute="url"/>
+			<field attribute="email"/>
+			<field attribute="phone"/>
 			<field attribute="json"/>
 			<field attribute="image"/>
 			<field attribute="priority"/>

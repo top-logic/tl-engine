@@ -192,6 +192,18 @@
 					<property name="dateTime"
 						type="tl.core:DateTime"
 					/>
+					<property name="dateTimeShort"
+						type="tl.core:DateTime"
+					>
+						<annotations>
+							<format>
+								<date-time
+									date-style="short"
+									time-style="short"
+								/>
+							</format>
+						</annotations>
+					</property>
 					<property name="time"
 						type="tl.core:Time"
 					/>

@@ -254,6 +254,7 @@
 							</column>
 							<column attribute="amount"/>
 							<column attribute="date"/>
+							<column attribute="dateTimeShort"/>
 							<column attribute="owner"/>
 							<column attribute="url"/>
 							<column attribute="email"/>
@@ -388,6 +389,7 @@
 									<field attribute="activeSelect"/>
 									<field attribute="date"/>
 									<field attribute="dateTime"/>
+									<field attribute="dateTimeShort"/>
 									<field attribute="time"/>
 									<field attribute="duration"/>
 									<field attribute="icon"/>

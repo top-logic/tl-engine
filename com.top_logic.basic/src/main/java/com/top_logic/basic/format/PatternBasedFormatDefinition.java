@@ -11,6 +11,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.Name;
 
 /**
  * {@link FormatDefinition} creating {@link Format} based on a given pattern
@@ -31,8 +32,14 @@ public abstract class PatternBasedFormatDefinition<C extends PatternBasedFormatD
 	public interface Config<I extends PatternBasedFormatDefinition<?>> extends FormatDefinition.Config<I> {
 
 		/**
+		 * @see #getPattern()
+		 */
+		String PATTERN = "pattern";
+
+		/**
 		 * The pattern to create {@link Format} from.
 		 */
+		@Name(PATTERN)
 		@Mandatory
 		String getPattern();
 

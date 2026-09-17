@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.react.field;
 
+import java.text.DateFormat;
 import java.text.Format;
 import java.text.NumberFormat;
 import java.util.List;
@@ -52,6 +53,8 @@ public final class FieldSpec {
 	private ReactDatePickerControl.Kind _dateKind = ReactDatePickerControl.Kind.DATE;
 
 	private Format _numberFormat;
+
+	private DateFormat _dateFormat;
 
 	private List<?> _options;
 
@@ -258,6 +261,30 @@ public final class FieldSpec {
 	 */
 	public FieldSpec setNumberFormat(Format numberFormat) {
 		_numberFormat = numberFormat;
+		return this;
+	}
+
+	/**
+	 * The format a point in time is displayed in when the field is read-only, or {@code null} to
+	 * use the default format of its {@link #getDateKind() kind}.
+	 *
+	 * <p>
+	 * The attribute's annotated format where it has one: an application chooses whether a point in
+	 * time reads as {@code 17.09.26, 10:23} or {@code 17.09.2026, 10:23:45}, and the same format
+	 * writes the value in a form field, in a table cell, and in the bounds of that column's filter.
+	 * </p>
+	 */
+	public DateFormat getDateFormat() {
+		return _dateFormat;
+	}
+
+	/**
+	 * Sets the {@link #getDateFormat() date format}.
+	 *
+	 * @return This specification for call chaining.
+	 */
+	public FieldSpec setDateFormat(DateFormat dateFormat) {
+		_dateFormat = dateFormat;
 		return this;
 	}
 

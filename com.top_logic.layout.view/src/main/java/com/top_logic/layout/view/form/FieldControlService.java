@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.form;
 
+import java.text.DateFormat;
 import java.text.Format;
 import java.util.ArrayList;
 import java.util.Date;
@@ -41,6 +42,7 @@ import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
+import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.layout.react.field.FieldControlRegistry;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
@@ -53,6 +55,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.access.StorageMapping;
 import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.DisplayAnnotations;
+import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.annotate.ui.BooleanDisplay;
 import com.top_logic.model.annotate.ui.BooleanPresentation;
 import com.top_logic.model.annotate.ui.MultiLine;
@@ -345,6 +348,7 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 			.setBooleanPresentation(booleanPresentation(annotations, type))
 			.setTriState(isTriState(type))
 			.setDateKind(DatePickerControlProvider.kind(annotations, type))
+			.setDateFormat(dateFormat(annotations, type, multiple))
 			.setNumberFormat(numberFormat(annotations, type, multiple));
 	}
 
@@ -425,6 +429,105 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	}
 
 	/**
+	 * The format a point in time held by the given attribute is displayed in, or {@code null} if
+	 * the attribute does not hold a single point in time.
+	 *
+	 * <p>
+	 * The attribute's {@code format} annotation where it has one, the one of its type otherwise,
+	 * and the user's default format for the
+	 * {@link DatePickerControlProvider#kind(TLStructuredTypePart) kind} of value where neither says
+	 * anything. One format serves every place the value appears: the form field showing it, the
+	 * table cell, the text that cell is searched by, and the bounds of that column's filter.
+	 * </p>
+	 *
+	 * @param part
+	 *        The model attribute, or {@code null} for an unresolved one.
+	 */
+	public static DateFormat dateFormat(TLStructuredTypePart part) {
+		if (part == null) {
+			return null;
+		}
+		return dateFormat(part, part.getType(), part.isMultiple());
+	}
+
+	/**
+	 * The format a point in time is displayed in, or {@code null} if the value is no single point
+	 * in time.
+	 *
+	 * @param annotations
+	 *        Where the {@code format} annotation is read from.
+	 * @param type
+	 *        The model type of the value.
+	 * @param multiple
+	 *        Whether the value is a collection of points in time rather than a single one.
+	 */
+	public static DateFormat dateFormat(AnnotationLookup annotations, TLType type, boolean multiple) {
+		if (multiple || !Date.class.isAssignableFrom(PrimitiveTypeUtil.asNonPrimitive(valueType(type)))) {
+			return null;
+		}
+		return dateFormat(annotations, type, DatePickerControlProvider.kind(annotations, type));
+	}
+
+	/**
+	 * The formats a point in time may be typed in, e.g. as the bound of a table filter, or
+	 * {@code null} if the value is no single point in time.
+	 *
+	 * <p>
+	 * The {@link #dateFormat(AnnotationLookup, TLType, boolean) display format} first, which also
+	 * writes the value, then the default formats of the kind of value: a value is accepted the way
+	 * it is shown and in the way a person is used to type it.
+	 * </p>
+	 *
+	 * @see #dateFormat(AnnotationLookup, TLType, boolean)
+	 */
+	public static List<DateFormat> dateInputFormats(AnnotationLookup annotations, TLType type, boolean multiple) {
+		DateFormat displayFormat = dateFormat(annotations, type, multiple);
+		if (displayFormat == null) {
+			return null;
+		}
+		List<DateFormat> result = new ArrayList<>();
+		result.add(displayFormat);
+		for (DateFormat defaultFormat : DatePickerControlProvider.kind(annotations, type).inputFormats()) {
+			if (!result.contains(defaultFormat)) {
+				result.add(defaultFormat);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * The annotated format of the given point in time, or the default format for its kind.
+	 *
+	 * <p>
+	 * A value whose format declaration cannot be resolved, or resolves to a format that does not
+	 * write dates, is displayed in the default format instead, so that a misconfigured attribute
+	 * still shows its value.
+	 * </p>
+	 */
+	private static DateFormat dateFormat(AnnotationLookup annotations, TLType type,
+			ReactDatePickerControl.Kind kind) {
+		com.top_logic.model.annotate.ui.Format annotation =
+			annotation(annotations, type, com.top_logic.model.annotate.ui.Format.class);
+		if (annotation == null) {
+			return kind.displayFormat();
+		}
+		try {
+			Format format = DisplayAnnotations.toFormat(annotation);
+			if (format == null) {
+				return kind.displayFormat();
+			}
+			if (format instanceof DateFormat dateFormat) {
+				return dateFormat;
+			}
+			Logger.error("Format definition at '" + annotations + "' does not write dates: " + format,
+				FieldControlService.class);
+		} catch (ConfigurationException ex) {
+			Logger.error("Invalid format definition at '" + annotations + "'.", ex, FieldControlService.class);
+		}
+		return kind.displayFormat();
+	}
+
+	/**
 	 * The Java type of the values of the given model type, which decides the control editing them.
 	 */
 	private static Class<?> valueType(TLType type) {
@@ -460,14 +563,38 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * </p>
 	 */
 	private static BooleanPresentation booleanPresentation(AnnotationLookup annotations, TLType type) {
-		BooleanDisplay annotation = annotations == null ? null : annotations.getAnnotation(BooleanDisplay.class);
-		if (annotation == null && type != null && type != annotations) {
-			annotation = type.getAnnotation(BooleanDisplay.class);
-		}
+		BooleanDisplay annotation = annotation(annotations, type, BooleanDisplay.class);
 		if (annotation == null || annotation.getPresentation() == null) {
 			return BooleanPresentation.CHECKBOX;
 		}
 		return annotation.getPresentation();
+	}
+
+	/**
+	 * The annotation of the given type at a value: the one at its attribute where it has one, the
+	 * one at its type otherwise.
+	 *
+	 * <p>
+	 * An annotation at the attribute wins over the one of its type, which is what lets a single
+	 * attribute deviate from how its type is displayed everywhere else.
+	 * </p>
+	 *
+	 * @param annotations
+	 *        Where the annotation is read from first: the attribute holding the value, or the type
+	 *        itself where no attribute holds it. May be {@code null}.
+	 * @param type
+	 *        The model type of the value, consulted when the attribute says nothing. May be
+	 *        {@code null}.
+	 * @param annotationType
+	 *        The requested annotation.
+	 * @return The annotation, or {@code null} if neither the attribute nor the type carries one.
+	 */
+	static <T extends TLAnnotation> T annotation(AnnotationLookup annotations, TLType type, Class<T> annotationType) {
+		T annotation = annotations == null ? null : annotations.getAnnotation(annotationType);
+		if (annotation == null && type != null && type != annotations) {
+			annotation = type.getAnnotation(annotationType);
+		}
+		return annotation;
 	}
 
 	/**

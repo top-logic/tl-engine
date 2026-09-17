@@ -38,7 +38,7 @@ public class DatePickerControlProvider implements ReactFieldControlProvider {
 
 	@Override
 	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
-		return new ReactDatePickerControl(context, model, field.getDateKind());
+		return new ReactDatePickerControl(context, model, field.getDateKind(), field.getDateFormat());
 	}
 
 	/**
@@ -83,10 +83,7 @@ public class DatePickerControlProvider implements ReactFieldControlProvider {
 	 * </p>
 	 */
 	private static String configType(AnnotationLookup annotations, TLType type) {
-		ConfigType annotation = annotations == null ? null : annotations.getAnnotation(ConfigType.class);
-		if (annotation == null && type != null && type != annotations) {
-			annotation = type.getAnnotation(ConfigType.class);
-		}
+		ConfigType annotation = FieldControlService.annotation(annotations, type, ConfigType.class);
 		return annotation == null || annotation.getValue() == null ? "" : annotation.getValue();
 	}
 

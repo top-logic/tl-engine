@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.table;
 
+import java.text.DateFormat;
 import java.text.Format;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -400,13 +401,12 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 					new ComparableColumnFilter<>(Comparator.comparingDouble(Number::doubleValue),
 						BoundCodec.numbers(numberFormat)));
 			case DATE:
-				// Which part of a point in time the column holds decides the format a filter bound
-				// is entered in.
-				ReactDatePickerControl.Kind temporalKind = temporalKind(type);
+				// A bound is typed the way the column writes its values: in the annotated format
+				// of the attribute, or the default one for the part of a point in time it holds.
 				return typedColumn(name, label, type, width, value, Date.class,
 					Comparator.<Date> naturalOrder(),
 					new ComparableColumnFilter<>(Comparator.<Date> naturalOrder(),
-						BoundCodec.dates(temporalKind.inputFormats(), temporalKind.parsePatterns())));
+						BoundCodec.dates(dateInputFormats(type), temporalKind(type).parsePatterns())));
 			case STRING:
 				return typedColumn(name, label, type, width, value, String.class,
 					Comparator.<String> naturalOrder(), TextColumnFilter.forStrings());
@@ -422,6 +422,22 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 */
 	private static Format numberFormat(ColumnType type) {
 		return FieldControlService.numberFormat(type.annotations(), type.type(), type.multiple());
+	}
+
+	/**
+	 * The format the column's points in time are written in, or {@code null} if it holds no single
+	 * point in time.
+	 */
+	private static DateFormat dateFormat(ColumnType type) {
+		return FieldControlService.dateFormat(type.annotations(), type.type(), type.multiple());
+	}
+
+	/**
+	 * The formats a bound of the column's filter may be typed in, see
+	 * {@link FieldControlService#dateInputFormats(AnnotationLookup, TLType, boolean)}.
+	 */
+	private static List<DateFormat> dateInputFormats(ColumnType type) {
+		return FieldControlService.dateInputFormats(type.annotations(), type.type(), type.multiple());
 	}
 
 	/**
@@ -652,17 +668,23 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 *
 	 * <p>
 	 * A number is written by its {@link FieldControlService#numberFormat(AnnotationLookup, TLType, boolean)
-	 * number format}, the same one the cell's display control writes it with - so a search matches
-	 * against the text the user reads, be that the digits and separators of a locale or the words of
-	 * a duration. Every other value is searched by its display label.
+	 * number format} and a point in time by its
+	 * {@link FieldControlService#dateFormat(AnnotationLookup, TLType, boolean) date format}, the same
+	 * ones the cell's display control writes them with - so a search matches against the text the
+	 * user reads, be that the digits and separators of a locale, the words of a duration, or the
+	 * time of day a date is shown with. Every other value is searched by its display label.
 	 * </p>
 	 */
 	private static Function<Object, String> searchText(ColumnType type) {
 		Format numberFormat = numberFormat(type);
-		if (numberFormat == null) {
-			return ColumnProviderService::label;
+		if (numberFormat != null) {
+			return value -> value instanceof Number ? numberFormat.format(value) : label(value);
 		}
-		return value -> value instanceof Number ? numberFormat.format(value) : label(value);
+		DateFormat dateFormat = dateFormat(type);
+		if (dateFormat != null) {
+			return value -> value instanceof Date ? dateFormat.format(value) : label(value);
+		}
+		return ColumnProviderService::label;
 	}
 
 	/**

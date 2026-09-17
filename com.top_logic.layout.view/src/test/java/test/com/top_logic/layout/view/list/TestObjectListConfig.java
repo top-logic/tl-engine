@@ -36,7 +36,7 @@ import com.top_logic.layout.view.list.ObjectListElement.Layout;
 
 /**
  * Tests the configuration of an {@link ObjectListElement}: the inputs its functions are applied to,
- * and the arrangement its elements are displayed in.
+ * and the container its elements are arranged in.
  */
 public class TestObjectListConfig extends TestCase {
 
@@ -82,14 +82,15 @@ public class TestObjectListConfig extends TestCase {
 	}
 
 	/**
-	 * Tests that a grid list displays its elements in a grid of the configured columns, each element
+	 * Tests that a grid list arranges its elements in a grid of the configured columns, each element
 	 * wrapped in an item of the list's CSS class.
 	 */
-	public void testGridDisplay() throws Exception {
+	public void testGridArrangement() throws Exception {
 		ObjectListElement.Config config = readConfig("test-object-list.view.xml");
 		ReactLayoutControl container = config.getLayout().createContainer(_context, config);
 
-		assertEquals("A grid is displayed by the grid component.", "TLGrid", container.getReactModule());
+		assertEquals("The elements are arranged by the grid component.", "TLGrid",
+			container.getReactModule());
 		String state = state(container);
 		assertContains("The configured column width reaches the client.", "\"minColumnWidth\":\"18rem\"", state);
 		assertContains("The configured column bound reaches the client.", "\"maxColumns\":3", state);
@@ -98,14 +99,15 @@ public class TestObjectListConfig extends TestCase {
 	}
 
 	/**
-	 * Tests that a list displays its elements in a column, each element wrapped in an item of the
+	 * Tests that a list arranges its elements in a column, each element wrapped in an item of the
 	 * same CSS class as in a grid.
 	 */
-	public void testListDisplay() throws IOException {
+	public void testListArrangement() throws IOException {
 		ObjectListElement.Config config = TypedConfiguration.newConfigItem(ObjectListElement.Config.class);
 		ReactLayoutControl container = config.getLayout().createContainer(_context, config);
 
-		assertEquals("A column is displayed by the stack component.", "TLStack", container.getReactModule());
+		assertEquals("The elements are arranged by the stack component.", "TLStack",
+			container.getReactModule());
 		String state = state(container);
 		assertContains("The elements are placed below each other.", "\"direction\":\"column\"", state);
 		assertContains("Every element is wrapped in an item of the list's class.",

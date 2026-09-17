@@ -83,7 +83,9 @@ import com.top_logic.model.util.TLModelPartRef;
  *
  * <p>
  * The elements are arranged as the {@link Config#getLayout() layout} says, a column by default and
- * a responsive grid where a card per element is wanted:
+ * a responsive grid where a card per element is wanted. The arrangement covers the elements alone:
+ * the {@link Config#getEmptyText() empty text} and the new-element content follow it as a whole,
+ * rather than taking a place among the elements.
  * </p>
  *
  * <pre>
@@ -149,8 +151,9 @@ public class ObjectListElement implements UIElement {
 		 * in an item of the class {@link ObjectListElement#ITEM_CSS_CLASS}.
 		 *
 		 * <p>
-		 * The container starts out empty: what it displays is built while the list follows its
-		 * model.
+		 * The container holds the repeated elements and nothing else, so that only they take a
+		 * place in the arrangement. It starts out empty: what it displays is built while the list
+		 * follows its model.
 		 * </p>
 		 *
 		 * @param context
@@ -383,9 +386,7 @@ public class ObjectListElement implements UIElement {
 		ObjectListScope scope = new ObjectListScope(inputs, _linkExecutor, _removeExecutor);
 		ViewContext templateContext = context.withScope(ObjectListScope.class, scope);
 
-		ReactLayoutControl container = _config.getLayout().createContainer(templateContext, _config);
-
-		ObjectListItems items = new ObjectListItems(templateContext, scope, container, inputs,
+		ObjectListItems items = new ObjectListItems(templateContext, scope, _config.getLayout(), _config, inputs,
 			_itemContent, _newElementContent,
 			_config.getElementChannel(), _config.getNewElementChannel(),
 			resolveElementType(), _config.getEmptyText());
@@ -400,10 +401,12 @@ public class ObjectListElement implements UIElement {
 			resolveObservedTypes(),
 			inputs,
 			items::showElements);
-		container.addAttachListener(() -> observer.attach(context.getModelScope()));
-		container.addDetachListener(observer::detach);
 
-		return container;
+		ReactLayoutControl display = items.display();
+		display.addAttachListener(() -> observer.attach(context.getModelScope()));
+		display.addDetachListener(observer::detach);
+
+		return display;
 	}
 
 	/**

@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.layout.view.list;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,13 +15,15 @@ import junit.framework.TestCase;
 import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.ReactLayoutControl;
-import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
@@ -29,6 +32,9 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.element.GridOptions;
+import com.top_logic.layout.view.list.ObjectListElement;
+import com.top_logic.layout.view.list.ObjectListElement.Layout;
 import com.top_logic.layout.view.list.ObjectListItems;
 import com.top_logic.layout.view.list.ObjectListScope;
 import com.top_logic.model.TLClass;
@@ -39,12 +45,18 @@ import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
- * Tests what an {@link ObjectListItems} displays for the values its inputs hold.
+ * Tests what an {@link ObjectListItems} displays for the values its inputs hold, and where it
+ * displays it.
  *
  * <p>
  * An element is composed to be attached somewhere, so the content for entering one is displayed
  * while every input holds a value, and what is entered is dropped as soon as the inputs hold
  * something else - a deleted object among them being no value at all.
+ * </p>
+ *
+ * <p>
+ * The arrangement holds the repeated elements alone: the empty text and the content for entering an
+ * element are displayed behind it, not as elements of it.
  * </p>
  */
 public class TestObjectListItems extends TestCase {
@@ -67,7 +79,7 @@ public class TestObjectListItems extends TestCase {
 
 	private ViewContext _context;
 
-	private ReactLayoutControl _display;
+	private ObjectListItems _list;
 
 	@Override
 	protected void setUp() throws Exception {
@@ -97,8 +109,10 @@ public class TestObjectListItems extends TestCase {
 		items.showElements(List.of("element"));
 
 		assertEquals("The item template was instantiated for the element.", 1, _itemTemplate.created().size());
-		assertEquals("The element is displayed, followed by the new-element template.",
-			List.of(_itemTemplate.created().get(0), _newElementTemplate.created().get(0)), displayed());
+		assertEquals("The element is placed in the arrangement.",
+			List.of(_itemTemplate.created().get(0)), arranged());
+		assertEquals("The arrangement is followed by the new-element template.",
+			List.of(elements(), _newElementTemplate.created().get(0)), displayed());
 		assertSame("The element being composed belongs to the object the input holds.", _container,
 			composedElement().tContainer());
 	}
@@ -115,7 +129,8 @@ public class TestObjectListItems extends TestCase {
 		_container.setValid(false);
 		items.showElements(List.of());
 
-		assertEquals("A deleted input is no place to add to.", List.of(), displayed());
+		assertEquals("A deleted input has no element to display.", List.of(), arranged());
+		assertEquals("A deleted input is no place to add to.", List.of(elements()), displayed());
 		assertEquals("No item template was instantiated for the deleted input.", 1,
 			_itemTemplate.created().size());
 		assertNotSame("The element composed for the deleted input is dropped.", composedBefore,
@@ -153,14 +168,14 @@ public class TestObjectListItems extends TestCase {
 		ObjectListItems items = list(List.of(_containerChannel, other));
 		items.showElements(List.of("element"));
 
-		assertEquals("An input without a value is no place to add to.",
-			List.of(_itemTemplate.created().get(0)), displayed());
+		assertEquals("The element is displayed.", List.of(_itemTemplate.created().get(0)), arranged());
+		assertEquals("An input without a value is no place to add to.", List.of(elements()), displayed());
 
 		other.set("value");
 		items.showElements(List.of("element"));
 
 		assertEquals("Every input holds a value now.",
-			List.of(_itemTemplate.created().get(0), _newElementTemplate.created().get(0)), displayed());
+			List.of(elements(), _newElementTemplate.created().get(0)), displayed());
 	}
 
 	/**
@@ -171,10 +186,68 @@ public class TestObjectListItems extends TestCase {
 		ObjectListItems items = list(List.of());
 		items.showElements(List.of("element"));
 
-		assertEquals("The elements are displayed, followed by the new-element template.",
-			List.of(_itemTemplate.created().get(0), _newElementTemplate.created().get(0)), displayed());
+		assertEquals("The element is placed in the arrangement.",
+			List.of(_itemTemplate.created().get(0)), arranged());
+		assertEquals("The arrangement is followed by the new-element template.",
+			List.of(elements(), _newElementTemplate.created().get(0)), displayed());
 		assertNull("Without an input, the element being composed belongs to nobody.",
 			composedElement().tContainer());
+	}
+
+	/**
+	 * The empty text takes the place of the elements, not a place among them.
+	 */
+	public void testEmptyTextBesideTheArrangement() {
+		ObjectListItems items = list(List.of(_containerChannel), Layout.LIST, ResKey.text("Nothing here."));
+		items.showElements(List.of());
+
+		assertEquals("Nothing is arranged while the list is empty.", List.of(), arranged());
+		assertEquals("The empty text and the new-element template follow the arrangement.", 3,
+			displayed().size());
+		assertSame("The arrangement leads the display.", elements(), displayed().get(0));
+		assertEquals("The new-element template is displayed last.", _newElementTemplate.created().get(0),
+			displayed().get(2));
+
+		items.showElements(List.of("element"));
+
+		assertEquals("The element replaces the empty text.",
+			List.of(elements(), _newElementTemplate.created().get(0)), displayed());
+		assertEquals("The element is placed in the arrangement.",
+			List.of(_itemTemplate.created().get(0)), arranged());
+	}
+
+	/**
+	 * A grid list arranges its elements in a grid, while the content displayed in addition to them
+	 * stays out of it.
+	 */
+	public void testGridArrangement() throws IOException {
+		ObjectListItems items = list(List.of(_containerChannel), Layout.GRID, ResKey.text("Nothing here."));
+		items.showElements(List.of("element"));
+
+		assertEquals("The list as a whole is displayed as a column.", "TLStack",
+			_list.display().getReactModule());
+		assertEquals("The elements are arranged in a grid.", "TLGrid", elements().getReactModule());
+		assertEquals("Only the element is placed in the grid.",
+			List.of(_itemTemplate.created().get(0)), arranged());
+		assertEquals("The new-element template is no cell of the grid.",
+			List.of(elements(), _newElementTemplate.created().get(0)), displayed());
+
+		items.showElements(List.of());
+
+		assertEquals("The empty text is no cell of the grid.", List.of(), arranged());
+		assertTrue("The children of the grid - and only they - are wrapped in items.",
+			state(elements()).contains("\"itemClass\":\"" + ObjectListElement.ITEM_CSS_CLASS + "\""));
+	}
+
+	/**
+	 * The state the given control hands to the client.
+	 */
+	private static String state(ReactControl control) throws IOException {
+		TagWriter out = new TagWriter();
+		control.write(out);
+
+		// The state is serialized into an HTML attribute.
+		return out.toString().replace("&quot;", "\"");
 	}
 
 	/**
@@ -182,18 +255,44 @@ public class TestObjectListItems extends TestCase {
 	 * the new-element template behind them.
 	 */
 	private ObjectListItems list(List<ViewChannel> inputs) {
-		ObjectListScope scope = new ObjectListScope(inputs, null, null);
-		_display = new ReactStackControl(_context, List.of());
-		return new ObjectListItems(_context.withScope(ObjectListScope.class, scope), scope, _display, inputs,
-			List.of(_itemTemplate), List.of(_newElementTemplate), ELEMENT_CHANNEL, NEW_ELEMENT_CHANNEL,
-			_elementType, null);
+		return list(inputs, Layout.LIST, null);
 	}
 
 	/**
-	 * The children the list currently displays, in display order.
+	 * An {@link ObjectListItems} over the given inputs, arranged as given.
+	 *
+	 * @param emptyText
+	 *        Text displayed while there are no elements, or {@code null} for none.
+	 */
+	private ObjectListItems list(List<ViewChannel> inputs, Layout layout, ResKey emptyText) {
+		ObjectListScope scope = new ObjectListScope(inputs, null, null);
+		GridOptions options = TypedConfiguration.newConfigItem(GridOptions.class);
+		_list = new ObjectListItems(_context.withScope(ObjectListScope.class, scope), scope, layout, options, inputs,
+			List.of(_itemTemplate), List.of(_newElementTemplate), ELEMENT_CHANNEL, NEW_ELEMENT_CHANNEL,
+			_elementType, emptyText);
+		return _list;
+	}
+
+	/**
+	 * The children of the control the list displays as a whole, in display order: the arrangement of
+	 * the elements, followed by what is shown in addition to them.
 	 */
 	private List<ReactControl> displayed() {
-		return _display.displayedChildren();
+		return _list.display().displayedChildren();
+	}
+
+	/**
+	 * The container arranging the elements: the first child of the displayed control.
+	 */
+	private ReactLayoutControl elements() {
+		return (ReactLayoutControl) displayed().get(0);
+	}
+
+	/**
+	 * The item controls placed in the arrangement, in display order.
+	 */
+	private List<ReactControl> arranged() {
+		return elements().displayedChildren();
 	}
 
 	/**

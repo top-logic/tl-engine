@@ -16,23 +16,36 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.layout.ReactLayoutControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
+import com.top_logic.layout.react.control.layout.ReactStackControl.StackAlign;
+import com.top_logic.layout.react.control.layout.ReactStackControl.StackDirection;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.VetoForwarder;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.element.GridOptions;
+import com.top_logic.layout.view.list.ObjectListElement.Layout;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.util.Resources;
 
 /**
- * The children an {@link ObjectListElement} displays: one instance of the item content per list
- * element, followed by the content for entering a new one.
+ * What an {@link ObjectListElement} displays: one instance of the item content per list element,
+ * followed by the content for entering a new one.
+ *
+ * <p>
+ * The display is built of two controls, because the arrangement belongs to the elements alone: a
+ * {@link ReactLayoutControl container} holding the elements - as a column or as a grid, with each
+ * element wrapped in an item - and, around it, a column carrying that container, the text shown
+ * instead of elements while there are none, and the content for entering a new element. The empty
+ * text and the entry content are therefore no elements of the arrangement: they are not placed in a
+ * column of a grid, and they carry no item position.
+ * </p>
  *
  * <p>
  * The displayed element set follows the model: the element function is re-evaluated whenever an
- * input channel or an observed object changes, and the children are updated with keyed reuse - an
+ * input channel or an observed object changes, and the elements are updated with keyed reuse - an
  * unchanged element keeps its controls (including transient edit state), only added / removed
  * elements are built / dropped.
  * </p>
@@ -46,13 +59,16 @@ import com.top_logic.util.Resources;
  *
  * <p>
  * This is the one implementation of that display for every {@link ObjectListElement.Layout layout}:
- * the children are handed to a {@link ReactLayoutControl layout container}, which is what decides
- * whether they are stacked or placed in a grid.
+ * what the layout decides is the container the elements are placed in, nothing else.
  * </p>
  */
 public class ObjectListItems {
 
-	private final ReactLayoutControl _container;
+	/** The column carrying the elements, the empty text and the content for entering an element. */
+	private final ReactLayoutControl _display;
+
+	/** The container arranging the elements, and nothing else. */
+	private final ReactLayoutControl _elements;
 
 	private ViewContext _templateContext;
 
@@ -95,8 +111,11 @@ public class ObjectListItems {
 	 *        {@link ObjectListScope}.
 	 * @param scope
 	 *        The list's runtime scope.
-	 * @param container
-	 *        The layout container displaying the children built here.
+	 * @param layout
+	 *        How the elements are arranged.
+	 * @param options
+	 *        The options of the arrangement; its gap also separates the elements from the content
+	 *        displayed behind them.
 	 * @param inputs
 	 *        The channels the list's functions are applied to, in declaration order.
 	 * @param itemContent
@@ -111,13 +130,16 @@ public class ObjectListItems {
 	 *        The type of transient elements created for the new-element template, or {@code null}
 	 *        when the list has no new-element template.
 	 * @param emptyText
-	 *        Text displayed instead of items when the list is empty, or {@code null} for none.
+	 *        Text displayed instead of the elements when the list is empty, or {@code null} for
+	 *        none.
 	 */
-	public ObjectListItems(ViewContext templateContext, ObjectListScope scope, ReactLayoutControl container,
+	public ObjectListItems(ViewContext templateContext, ObjectListScope scope, Layout layout, GridOptions options,
 			List<ViewChannel> inputs, List<UIElement> itemContent, List<UIElement> newElementContent,
 			String elementChannelName, String newElementChannelName, TLClass elementType, ResKey emptyText) {
 		_templateContext = templateContext;
-		_container = container;
+		_elements = layout.createContainer(templateContext, options);
+		_display = new ReactStackControl(templateContext, StackDirection.COLUMN, options.getGap(),
+			StackAlign.STRETCH, false, List.of(_elements));
 		_inputs = inputs;
 		_itemContent = itemContent;
 		_newElementContent = newElementContent;
@@ -128,6 +150,14 @@ public class ObjectListItems {
 		_lastInputValues = InputValues.of(inputs);
 
 		createNewElementControls(scope);
+	}
+
+	/**
+	 * The control displaying the list: the elements in their arrangement, and behind them whatever
+	 * the list shows in addition.
+	 */
+	public ReactLayoutControl display() {
+		return _display;
 	}
 
 	/**
@@ -145,7 +175,7 @@ public class ObjectListItems {
 		// A change of the inputs discards the draft, so the unsaved changes of the new-element
 		// content are reported when an input channel is asked, before it is written.
 		for (ViewChannel input : _inputs) {
-			_container.addCleanupAction(VetoForwarder.forward(input, _newElementChannel));
+			_display.addCleanupAction(VetoForwarder.forward(input, _newElementChannel));
 		}
 
 		// Publish the pending new element on the shared template context, so that item content (e.g.
@@ -155,7 +185,7 @@ public class ObjectListItems {
 		for (int i = 0; i < _newElementContent.size(); i++) {
 			ViewContext childContext = _templateContext.withChildSlotPath("new-element-" + i);
 			ReactControl control = (ReactControl) _newElementContent.get(i).createControl(childContext);
-			_container.registerChildControl(control);
+			_display.registerChildControl(control);
 			_newElementControls.add(control);
 		}
 	}
@@ -187,7 +217,7 @@ public class ObjectListItems {
 	}
 
 	/**
-	 * Rebuilds the children for the given list elements with keyed reuse.
+	 * Rebuilds the display for the given list elements with keyed reuse.
 	 *
 	 * @param elements
 	 *        The current list elements, in display order.
@@ -203,38 +233,44 @@ public class ObjectListItems {
 		}
 
 		Map<Object, ReactControl> retained = new LinkedHashMap<>();
-		List<ReactControl> children = new ArrayList<>();
+		List<ReactControl> items = new ArrayList<>();
 		for (Object element : elements) {
 			ReactControl control = _itemControls.remove(element);
 			if (control == null) {
 				control = createItemControl(element);
 			}
 			retained.put(element, control);
-			children.add(control);
+			items.add(control);
 		}
 		for (ReactControl dropped : _itemControls.values()) {
 			dropped.cleanupTree();
 		}
 		_itemControls.clear();
 		_itemControls.putAll(retained);
+		_elements.setChildren(items);
 
-		if (children.isEmpty() && _emptyText != null) {
+		// Only the elements are arranged; what is shown in addition to them follows the arrangement
+		// as a whole.
+		List<ReactControl> displayed = new ArrayList<>();
+		displayed.add(_elements);
+
+		if (items.isEmpty() && _emptyText != null) {
 			if (_emptyTextControl == null) {
 				_emptyTextControl =
 					new ReactTextControl(_templateContext, Resources.getInstance().getString(_emptyText));
-				_container.registerChildControl(_emptyTextControl);
+				_display.registerChildControl(_emptyTextControl);
 			}
-			children.add(_emptyTextControl);
+			displayed.add(_emptyTextControl);
 		} else if (_emptyTextControl != null) {
 			_emptyTextControl.cleanupTree();
 			_emptyTextControl = null;
 		}
 
 		if (InputValues.complete(inputValues)) {
-			children.addAll(_newElementControls);
+			displayed.addAll(_newElementControls);
 		}
 
-		_container.setChildren(children);
+		_display.setChildren(displayed);
 	}
 
 	/**
@@ -255,7 +291,7 @@ public class ObjectListItems {
 
 		ReactControl itemControl =
 			controls.size() == 1 ? controls.get(0) : new ReactStackControl(itemContext, controls);
-		_container.registerChildControl(itemControl);
+		_elements.registerChildControl(itemControl);
 		return itemControl;
 	}
 

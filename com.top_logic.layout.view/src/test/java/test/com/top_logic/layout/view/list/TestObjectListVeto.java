@@ -14,10 +14,10 @@ import test.com.top_logic.TLTestSetup;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
-import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
@@ -27,7 +27,9 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelVetoException;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.element.GridOptions;
 import com.top_logic.layout.view.form.StateHandler;
+import com.top_logic.layout.view.list.ObjectListElement.Layout;
 import com.top_logic.layout.view.list.ObjectListItems;
 import com.top_logic.layout.view.list.ObjectListScope;
 import com.top_logic.model.TLClass;
@@ -169,9 +171,8 @@ public class TestObjectListVeto extends BasicTestCase {
 	public void testReadOnlyListAsksNothing() {
 		List<ViewChannel> inputs = List.of(_container);
 		ObjectListScope scope = new ObjectListScope(inputs, null, null);
-		new ObjectListItems(_context.withScope(ObjectListScope.class, scope), scope,
-			new ReactStackControl(_context, List.of()), inputs,
-			List.of(), List.of(), ELEMENT_CHANNEL, NEW_ELEMENT_CHANNEL, null, null);
+		new ObjectListItems(_context.withScope(ObjectListScope.class, scope), scope, Layout.LIST, gridOptions(),
+			inputs, List.of(), List.of(), ELEMENT_CHANNEL, NEW_ELEMENT_CHANNEL, null, null);
 
 		assertEquals("A list without a draft has nothing to report.", List.of(), _container.dirtyHandlers());
 		assertTrue("The switch must happen.", _container.set(_ticketB));
@@ -212,14 +213,20 @@ public class TestObjectListVeto extends BasicTestCase {
 	private ObjectListItems list(DraftForm form, List<ViewChannel> inputs) {
 		ObjectListScope scope = new ObjectListScope(inputs, null, null);
 		ObjectListItems items =
-			new ObjectListItems(_context.withScope(ObjectListScope.class, scope), scope,
-				new ReactStackControl(_context, List.of()), inputs,
-				List.of(), List.of(form), ELEMENT_CHANNEL, NEW_ELEMENT_CHANNEL, _commentType, null);
+			new ObjectListItems(_context.withScope(ObjectListScope.class, scope), scope, Layout.LIST, gridOptions(),
+				inputs, List.of(), List.of(form), ELEMENT_CHANNEL, NEW_ELEMENT_CHANNEL, _commentType, null);
 		items.showElements(List.of());
 		for (ViewChannel input : inputs) {
 			input.addListener((sender, oldValue, newValue) -> items.showElements(List.of()));
 		}
 		return items;
+	}
+
+	/**
+	 * The arrangement options of a list that displays its elements as a plain column.
+	 */
+	private static GridOptions gridOptions() {
+		return TypedConfiguration.newConfigItem(GridOptions.class);
 	}
 
 	/**

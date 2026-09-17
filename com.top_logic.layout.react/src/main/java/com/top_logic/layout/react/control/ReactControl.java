@@ -7,6 +7,7 @@ package com.top_logic.layout.react.control;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -69,6 +70,12 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	/** State key for whether the control is hidden on the client. */
 	private static final String HIDDEN = "hidden";
 
+	/**
+	 * Key under which the {@link #diagnostics() diagnostic observations} appear in the
+	 * {@link #scriptingScalarState() headless projection}.
+	 */
+	public static final String DIAGNOSTICS = "diagnostics";
+
 	private static final ConcurrentHashMap<Class<?>, ReactCommandMap> COMMAND_MAPS = new ConcurrentHashMap<>();
 
 	private final String _id;
@@ -80,6 +87,14 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	private final String _reactModule;
 
 	private Map<String, Object> _reactState;
+
+	/**
+	 * The {@link #putDiagnostic(String, Object) diagnostic observations} about this control, or
+	 * {@code null} while none were recorded.
+	 *
+	 * @see #diagnostics()
+	 */
+	private Map<String, Object> _diagnostics;
 
 	/**
 	 * The state properties holding controls this control renders but does not own, or {@code null}
@@ -490,7 +505,53 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 				}
 				result.put(entry.getKey(), value);
 			});
+		if (_diagnostics != null && !_diagnostics.isEmpty()) {
+			result.put(DIAGNOSTICS, diagnostics());
+		}
 		return result;
+	}
+
+	/**
+	 * Records a diagnostic observation about this control, or drops the one recorded under the given
+	 * key.
+	 *
+	 * <p>
+	 * A diagnostic explains how the displayed state came about where the display itself cannot say
+	 * so - how many rows a table dropped because the user may not read them, for instance. It is
+	 * information for whoever inspects the UI, not for whoever uses it, and therefore stays on the
+	 * server: it enters the {@link #scriptingScalarState() headless projection} under
+	 * {@link #DIAGNOSTICS} (so the inspector shows it and an assertion can capture it) and never the
+	 * state sent to the browser.
+	 * </p>
+	 *
+	 * @param key
+	 *        The name of the observation, declared as a constant by whoever records it.
+	 * @param value
+	 *        The observation as plain data - a {@link String}, {@link Number}, {@link Boolean},
+	 *        {@link List} or {@link Map} of such values, so that it serializes as JSON like any
+	 *        projected state. {@code null} removes the entry recorded under {@code key}.
+	 */
+	public void putDiagnostic(String key, Object value) {
+		if (value == null) {
+			if (_diagnostics != null) {
+				_diagnostics.remove(key);
+			}
+			return;
+		}
+		if (_diagnostics == null) {
+			_diagnostics = new LinkedHashMap<>();
+		}
+		_diagnostics.put(key, value);
+	}
+
+	/**
+	 * The observations {@link #putDiagnostic(String, Object) recorded} about this control, in the
+	 * order they were first recorded.
+	 *
+	 * @return An unmodifiable view; empty when nothing was recorded.
+	 */
+	public Map<String, Object> diagnostics() {
+		return _diagnostics == null ? Map.of() : Collections.unmodifiableMap(_diagnostics);
 	}
 
 	/**

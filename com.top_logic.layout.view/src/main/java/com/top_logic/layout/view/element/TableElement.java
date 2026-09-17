@@ -8,8 +8,10 @@ package com.top_logic.layout.view.element;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.annotation.InApp;
@@ -37,6 +39,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.dnd.DropTarget;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.view.UIElement;
@@ -74,8 +77,12 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLType;
+import com.top_logic.model.search.expr.EvalContext;
+import com.top_logic.model.search.expr.SecurityFilterReport;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.table.Column;
 import com.top_logic.table.GroupSpec;
@@ -729,6 +736,30 @@ public class TableElement implements UIElement {
 	 */
 	private static final String KEY_PREFIX = "key:";
 
+	/**
+	 * Name of the {@link ReactControl#putDiagnostic(String, Object) diagnostic} reporting the rows
+	 * the current user's read rights removed from the table.
+	 *
+	 * <p>
+	 * Its value is a map of {@link #HIDDEN_COUNT} and {@link #HIDDEN_BY_TYPE}; a table from which
+	 * nothing was removed carries no such entry.
+	 * </p>
+	 *
+	 * @see #applyRowDiagnostics(ReactControl, SecurityFilterReport)
+	 */
+	public static final String DIAGNOSTIC_HIDDEN_BY_ACCESS = "hiddenByAccess";
+
+	/**
+	 * Entry of {@link #DIAGNOSTIC_HIDDEN_BY_ACCESS} holding the number of removed rows.
+	 */
+	public static final String HIDDEN_COUNT = "count";
+
+	/**
+	 * Entry of {@link #DIAGNOSTIC_HIDDEN_BY_ACCESS} holding the number of removed rows per type,
+	 * keyed by the qualified name of the type.
+	 */
+	public static final String HIDDEN_BY_TYPE = "byType";
+
 	private final Config _config;
 
 	private final QueryExecutor _rowsExecutor;
@@ -996,10 +1027,11 @@ public class TableElement implements UIElement {
 			inputChannels.add(context.resolveChannel(ref));
 		}
 		Object[] inputValues = readChannelValues(inputChannels);
-		Collection<?> rows = executeRowsQuery(_rowsExecutor, inputValues);
+		RowsResult initialRows = executeRows(_rowsExecutor, inputValues);
+		Collection<?> rows = initialRows.rows();
 
 		if (_config.getRowEdit() != RowEditPolicy.NONE) {
-			return createEditableControl(context, inputChannels, rows);
+			return createEditableControl(context, inputChannels, initialRows);
 		}
 
 		ViewCommandModel activation = activationModel(context);
@@ -1023,6 +1055,7 @@ public class TableElement implements UIElement {
 			declaredFilters(columns, inputValues), filterStore());
 
 		TableViewControl<Object> control = new TableViewControl<>(context, view, false);
+		applyRowDiagnostics(control, initialRows.securityReport());
 		control.setFilterBar(filterBar());
 		if (_dragType != null) {
 			control.setDragSource(_dragType);
@@ -1061,7 +1094,7 @@ public class TableElement implements UIElement {
 		};
 		RowSourceObserver<Object> observer = new RowSourceObserver<>(
 			source,
-			args -> new ArrayList<>(executeRowsQuery(rowsExecutor, args)),
+			args -> new ArrayList<>(refreshRows(rowsExecutor, args, control)),
 			ObservedTypes.resolve(_config.getObservedTypes()),
 			inputChannels,
 			refresh);
@@ -1123,7 +1156,7 @@ public class TableElement implements UIElement {
 	 * changes follow {@link Config#getCreateType()} / {@link Config#getOnRemove()}.
 	 */
 	private IReactControl createEditableControl(ViewContext context, List<ViewChannel> inputChannels,
-			Collection<?> rows) {
+			RowsResult initialRows) {
 		FormModel formModel = context.getFormModel();
 		if (!(formModel instanceof FormControl formControl)) {
 			throw new IllegalStateException(
@@ -1131,10 +1164,13 @@ public class TableElement implements UIElement {
 		}
 
 		TLClass createType = resolveCreateType();
-		TLStructuredType rowType = resolveRowType(rows);
+		TLStructuredType rowType = resolveRowType(initialRows.rows());
 		QueryExecutor rowsExecutor = _rowsExecutor;
+		// The row function is handed to the binding before the control it reports its diagnostics to
+		// exists, so the target is filled in below.
+		ReactControl[] diagnosticsTarget = new ReactControl[1];
 		QueryRowSetBinding binding = new QueryRowSetBinding(
-			() -> tlObjectRows(executeRowsQuery(rowsExecutor, readChannelValues(inputChannels))),
+			() -> tlObjectRows(refreshRows(rowsExecutor, readChannelValues(inputChannels), diagnosticsTarget[0])),
 			createType != null ? createType : (rowType instanceof TLClass rowClass ? rowClass : null),
 			createType == null ? List.of() : List.of(createType),
 			_config.getOnRemove());
@@ -1146,6 +1182,8 @@ public class TableElement implements UIElement {
 
 		RowSetTableControl control =
 			new RowSetTableControl(context, formControl, binding, columns(rowType), _config.getRowEdit());
+		diagnosticsTarget[0] = control;
+		applyRowDiagnostics(control, initialRows.securityReport());
 		control.setFramed(false);
 		control.setPersonalization(PersonalConfigViewStateStore.INSTANCE, tableId());
 		control.setNamedFilters(columns -> declaredFilters(columns, readChannelValues(inputChannels)),
@@ -1156,7 +1194,8 @@ public class TableElement implements UIElement {
 		control.setFixedColumns(_config.getFixedColumns());
 		control.setSelectionChannel(selectionChannel);
 		control.setSelectionMode(_config.getSelectionMode());
-		control.setRowRefresh(args -> executeRowsQuery(rowsExecutor, args), ObservedTypes.resolve(_config.getObservedTypes()), inputChannels);
+		control.setRowRefresh(args -> refreshRows(rowsExecutor, args, control),
+			ObservedTypes.resolve(_config.getObservedTypes()), inputChannels);
 		control.setActivationHandler(activationHandler(context, activation));
 		control.setTrailingColumns(this.<TLObject> rowCommandColumns(context, activation));
 		control.init();
@@ -1345,12 +1384,92 @@ public class TableElement implements UIElement {
 		return values;
 	}
 
-	private static Collection<?> executeRowsQuery(QueryExecutor rowsExecutor, Object[] channelValues) {
-		Object result = rowsExecutor.execute(channelValues);
+	/**
+	 * The outcome of a rows query: the rows it delivers, and what the security filter removed from
+	 * them.
+	 *
+	 * @param rows
+	 *        The rows to display.
+	 * @param securityReport
+	 *        The objects the current user must not read, which the query result therefore does not
+	 *        contain.
+	 */
+	private record RowsResult(Collection<?> rows, SecurityFilterReport securityReport) {
+		// Pure data.
+	}
+
+	/**
+	 * Executes the rows query, observing what the current user's read rights removed from its
+	 * result.
+	 *
+	 * @param rowsExecutor
+	 *        The compiled rows expression.
+	 * @param channelValues
+	 *        The values of the input channels, passed as the expression arguments.
+	 *
+	 * @see #applyRowDiagnostics(ReactControl, SecurityFilterReport)
+	 */
+	private static RowsResult executeRows(QueryExecutor rowsExecutor, Object[] channelValues) {
+		SecurityFilterReport securityReport = new SecurityFilterReport();
+		EvalContext definitions = rowsExecutor.context();
+		definitions.setSecurityReport(securityReport);
+		Object result = rowsExecutor.executeWith(definitions, Args.some(channelValues));
+		return new RowsResult(toRows(result), securityReport);
+	}
+
+	/**
+	 * Executes the rows query and reports its {@link SecurityFilterReport} to the given control.
+	 *
+	 * @param control
+	 *        The control displaying the rows, {@code null} while it is not built yet.
+	 *
+	 * @see #executeRows(QueryExecutor, Object[])
+	 */
+	private static Collection<?> refreshRows(QueryExecutor rowsExecutor, Object[] channelValues,
+			ReactControl control) {
+		RowsResult result = executeRows(rowsExecutor, channelValues);
+		if (control != null) {
+			applyRowDiagnostics(control, result.securityReport());
+		}
+		return result.rows();
+	}
+
+	private static Collection<?> toRows(Object result) {
 		if (result instanceof Collection<?> collection) {
 			return collection;
 		}
 		return result == null ? Collections.emptyList() : Collections.singletonList(result);
+	}
+
+	/**
+	 * Records on the given control how many rows the current user's read rights removed, so that the
+	 * UI inspector can explain a table that shows fewer rows than its query found.
+	 *
+	 * <p>
+	 * The count is not information the user is entitled to, therefore it is kept as a
+	 * {@link ReactControl#putDiagnostic(String, Object) diagnostic}, which reaches the headless
+	 * projection but never the browser. A table from which nothing was removed carries no
+	 * {@link #DIAGNOSTIC_HIDDEN_BY_ACCESS} entry at all.
+	 * </p>
+	 *
+	 * @param control
+	 *        The control displaying the rows.
+	 * @param securityReport
+	 *        What the security filter removed from the rows query result.
+	 */
+	private static void applyRowDiagnostics(ReactControl control, SecurityFilterReport securityReport) {
+		if (securityReport.isEmpty()) {
+			control.putDiagnostic(DIAGNOSTIC_HIDDEN_BY_ACCESS, null);
+			return;
+		}
+		Map<String, Object> byType = new LinkedHashMap<>();
+		for (Map.Entry<TLStructuredType, Integer> entry : securityReport.droppedByType().entrySet()) {
+			byType.put(TLModelUtil.qualifiedName(entry.getKey()), entry.getValue());
+		}
+		Map<String, Object> hidden = new LinkedHashMap<>();
+		hidden.put(HIDDEN_COUNT, Integer.valueOf(securityReport.droppedCount()));
+		hidden.put(HIDDEN_BY_TYPE, byType);
+		control.putDiagnostic(DIAGNOSTIC_HIDDEN_BY_ACCESS, hidden);
 	}
 
 }

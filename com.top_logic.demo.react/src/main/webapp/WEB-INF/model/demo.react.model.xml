@@ -218,6 +218,12 @@
 					<property name="url"
 						type="tl.util:URL"
 					/>
+					<property name="email"
+						type="tl.util:EMail"
+					/>
+					<property name="phone"
+						type="tl.util:Phone"
+					/>
 					<property name="json"
 						type="tl.util:JSON"
 					/>

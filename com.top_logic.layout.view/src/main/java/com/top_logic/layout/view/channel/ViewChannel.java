@@ -86,6 +86,16 @@ public interface ViewChannel {
 
 	/**
 	 * Observer of a {@link ViewChannel}.
+	 *
+	 * <p>
+	 * A listener that writes another channel in reaction to a change must forward that channel's
+	 * veto to the notifying channel with {@link VetoForwarder}, so that the veto is raised before
+	 * the notifying channel is written. A veto raised from within a notification unwinds through
+	 * that notification and leaves the notifying channel half-notified: its value is already set,
+	 * the listeners after the writing one are never told, and the
+	 * {@link ChannelVetoException#getContinuation() continuation} of the exception retries only the
+	 * nested write.
+	 * </p>
 	 */
 	interface ChannelListener {
 
@@ -107,9 +117,16 @@ public interface ViewChannel {
 	 *
 	 * <p>
 	 * Veto listeners are checked <em>before</em> the value is updated and before regular
-	 * {@link ChannelListener}s are notified. If any veto listener returns a non-{@code null}
-	 * {@link StateHandler}, the change is blocked and a {@link ChannelVetoException} is thrown
-	 * collecting all dirty handlers.
+	 * {@link ChannelListener}s are notified. If any veto listener answers with a non-empty list of
+	 * {@link StateHandler}s, the change is blocked and a {@link ChannelVetoException} is thrown
+	 * collecting the handlers of all veto listeners.
+	 * </p>
+	 *
+	 * <p>
+	 * A listener answers with everything that objects to the change, including the unsaved changes
+	 * of a channel that is written in reaction to this one changing: {@link VetoForwarder} answers
+	 * with the {@link ViewChannel#dirtyHandlers()} of such a channel, so that the question is asked
+	 * before the first channel is written.
 	 * </p>
 	 *
 	 * @see #addVetoListener(VetoListener)
@@ -125,10 +142,10 @@ public interface ViewChannel {
 		 *        The current value.
 		 * @param newValue
 		 *        The proposed new value.
-		 * @return A dirty {@link StateHandler} if this listener vetoes the change, or {@code null}
-		 *         to allow it.
+		 * @return The {@link StateHandler}s holding unsaved changes that this listener objects with,
+		 *         an empty list to allow the change.
 		 */
-		StateHandler checkVeto(ViewChannel sender, Object oldValue, Object newValue);
+		List<StateHandler> checkVeto(ViewChannel sender, Object oldValue, Object newValue);
 
 		/**
 		 * Checks whether <em>any</em> value change would currently be blocked.
@@ -142,10 +159,10 @@ public interface ViewChannel {
 		 *
 		 * @param sender
 		 *        The channel that is about to be changed.
-		 * @return A dirty {@link StateHandler} if this listener would veto, or {@code null} to
-		 *         allow the change.
+		 * @return The {@link StateHandler}s holding unsaved changes that this listener would object
+		 *         with, an empty list to allow the change.
 		 */
-		default StateHandler checkDirty(ViewChannel sender) {
+		default List<StateHandler> checkDirty(ViewChannel sender) {
 			return checkVeto(sender, sender.get(), null);
 		}
 	}
@@ -153,6 +170,13 @@ public interface ViewChannel {
 	/**
 	 * The handlers holding unsaved changes that would block a value change of this channel right
 	 * now, empty if the value can be changed without asking.
+	 *
+	 * <p>
+	 * The answer is transitive: it consists of the handlers of this channel's own
+	 * {@link VetoListener}s, which include the handlers forwarded from the channels that are
+	 * written when this one changes. A component writing another channel from a
+	 * {@link ChannelListener} of this one contributes the latter with a {@link VetoForwarder}.
+	 * </p>
 	 *
 	 * @see VetoListener#checkDirty(ViewChannel)
 	 */

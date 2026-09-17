@@ -16,12 +16,12 @@ import com.top_logic.table.ColumnFilter;
  * <p>
  * This is the single extension point for column integration:
  * {@link com.top_logic.layout.view.element.TableElement} treats every
- * column uniformly through this interface, with no knowledge of concrete filter kinds. The variation
- * that used to be a type switch lives in the bindings themselves:
+ * column uniformly through this interface, with no knowledge of concrete filter kinds. The
+ * variation lives in the bindings themselves:
  * </p>
  * <ul>
- * <li>A column without a custom filter uses {@link #TYPE_DERIVED} - the attribute's model type
- * decides accessor, renderer, comparator and filter.</li>
+ * <li>A column without a custom filter uses {@link #TYPE_DERIVED} - the model type of its values
+ * decides renderer, comparator and filter.</li>
  * <li>A plain {@link ColumnFilter} configured on a column uses {@link #forValueFilter} - the column
  * filters by the cell's display text.</li>
  * <li>A richer filter (e.g. {@link ScriptedFilter}) implements this interface itself, so it controls
@@ -56,16 +56,15 @@ public interface ColumnBinding {
 	}
 
 	/**
-	 * Binding deriving the column purely from the attribute's model type, used when a column
-	 * configures no custom filter.
+	 * Binding deriving the column purely from the {@link ColumnSetup#type() model type of its
+	 * values}, used when a column configures no custom filter.
 	 */
-	ColumnBinding TYPE_DERIVED =
-		setup -> ColumnProviderService.getInstance().createColumn(setup.attribute(), setup.label(), setup.part());
+	ColumnBinding TYPE_DERIVED = setup -> ColumnProviderService.getInstance()
+		.createColumn(setup.name(), setup.label(), setup.type(), setup.value());
 
 	/**
-	 * Binding for a value-based custom filter: the column shows the attribute's type-derived
-	 * display and sorts by the cell's display text, with the configured filter applied to that
-	 * text.
+	 * Binding for a value-based custom filter: the column shows the type-derived display of its
+	 * values and sorts by the cell's display text, with the configured filter applied to that text.
 	 *
 	 * @param filter
 	 *        The configured filter; value-based filters operate on the display text, so it is used
@@ -75,7 +74,7 @@ public interface ColumnBinding {
 		@SuppressWarnings("unchecked")
 		ColumnFilter<String> textFilter = (ColumnFilter<String>) filter;
 		return setup -> ColumnProviderService.getInstance()
-			.createColumn(setup.attribute(), setup.label(), setup.part(), textFilter);
+			.createColumn(setup.name(), setup.label(), setup.type(), setup.value(), textFilter);
 	}
 
 }

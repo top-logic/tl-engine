@@ -5,12 +5,14 @@
  */
 package com.top_logic.layout.view.channel;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 
+import com.top_logic.layout.view.form.StateHandler;
 import com.top_logic.layout.view.model.ChannelObjectObserver;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.listen.ModelScope;
@@ -35,6 +37,14 @@ import com.top_logic.model.listen.ModelScope;
  * </p>
  *
  * <p>
+ * A {@link VetoForwarder} from every input channel to this channel makes the unsaved changes of a
+ * form bound to the derived value block the write of the input the value is computed from: asking
+ * an input reaches the {@link VetoListener}s registered on this channel. A bidirectional
+ * {@link #set(Object)} writes the first input, and therefore passes the same forwarder - the
+ * handlers of this channel are asked once, before the input is written.
+ * </p>
+ *
+ * <p>
  * This is a per-session object. The evaluation function is typically compiled once at configuration
  * time (e.g. from a TL-Script expression) and passed in via {@link #bind(List, Function)}.
  * </p>
@@ -54,6 +64,10 @@ public class DerivedViewChannel implements ObservingChannel {
 	private Function<Object[], Object> _evaluator;
 
 	private ChannelObjectObserver _inputObserver;
+
+	private final CopyOnWriteArrayList<VetoListener> _vetoListeners = new CopyOnWriteArrayList<>();
+
+	private final List<Runnable> _vetoForwarderRemovers = new ArrayList<>();
 
 	/**
 	 * Creates a {@link DerivedViewChannel}.
@@ -123,6 +137,9 @@ public class DerivedViewChannel implements ObservingChannel {
 	 *        hold, which are always observed; empty for a function reading nothing but those
 	 *        objects.
 	 *
+	 * @implNote Registers a {@link VetoForwarder} from every input to this channel, replacing the
+	 *           forwarders of a previous binding.
+	 *
 	 * @see #attach(ModelScope)
 	 */
 	public void bind(List<ViewChannel> inputs, Function<Object[], Object> evaluator,
@@ -133,10 +150,20 @@ public class DerivedViewChannel implements ObservingChannel {
 		_value = evaluate(evaluator, inputs);
 		_inputObserver = new ChannelObjectObserver(inputs, observedTypes, this::recompute);
 
+		removeVetoForwarders();
+
 		ChannelListener refreshListener = (sender, oldVal, newVal) -> recompute();
 		for (ViewChannel input : inputs) {
 			input.addListener(refreshListener);
+			_vetoForwarderRemovers.add(VetoForwarder.forward(input, this));
 		}
+	}
+
+	private void removeVetoForwarders() {
+		for (Runnable remover : _vetoForwarderRemovers) {
+			remover.run();
+		}
+		_vetoForwarderRemovers.clear();
 	}
 
 	/**
@@ -181,13 +208,25 @@ public class DerivedViewChannel implements ObservingChannel {
 	}
 
 	@Override
+	public List<StateHandler> dirtyHandlers() {
+		if (_vetoListeners.isEmpty()) {
+			return List.of();
+		}
+		VetoCollector dirtyHandlers = new VetoCollector();
+		for (VetoListener vetoListener : _vetoListeners) {
+			dirtyHandlers.addAll(vetoListener.checkDirty(this));
+		}
+		return dirtyHandlers.toList();
+	}
+
+	@Override
 	public void addVetoListener(VetoListener listener) {
-		// DerivedViewChannel is read-only; veto listeners are not applicable.
+		_vetoListeners.add(listener);
 	}
 
 	@Override
 	public void removeVetoListener(VetoListener listener) {
-		// DerivedViewChannel is read-only; veto listeners are not applicable.
+		_vetoListeners.remove(listener);
 	}
 
 	private void recompute() {

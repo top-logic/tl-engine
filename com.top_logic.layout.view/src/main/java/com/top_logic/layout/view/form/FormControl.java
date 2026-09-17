@@ -475,13 +475,13 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			// which object would come next.
 			_inputVeto = new VetoListener() {
 				@Override
-				public StateHandler checkVeto(ViewChannel sender, Object oldValue, Object newValue) {
+				public List<StateHandler> checkVeto(ViewChannel sender, Object oldValue, Object newValue) {
 					return checkDirty(sender);
 				}
 
 				@Override
-				public StateHandler checkDirty(ViewChannel sender) {
-					return isDirty() ? FormControl.this : null;
+				public List<StateHandler> checkDirty(ViewChannel sender) {
+					return isDirty() ? List.of(FormControl.this) : List.of();
 				}
 			};
 			_inputChannel.addVetoListener(_inputVeto);

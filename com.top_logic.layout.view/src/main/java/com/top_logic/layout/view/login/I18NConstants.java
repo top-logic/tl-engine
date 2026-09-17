@@ -45,6 +45,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 CHANGED_PASSWORD__USER;
 
 	/**
+	 * @en Your password cannot be changed here. It is managed outside this application.
+	 */
+	public static ResKey ERROR_PASSWORD_CHANGE_NOT_ALLOWED;
+
+	/**
 	 * @en No account selected to expire the password for.
 	 */
 	public static ResKey EXPIRE_PASSWORD_NO_ACCOUNT;

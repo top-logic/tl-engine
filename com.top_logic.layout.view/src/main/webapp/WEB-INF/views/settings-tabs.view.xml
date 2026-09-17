@@ -131,14 +131,25 @@
 							</default>
 						</switch>
 
+						<!--
+							Offered only to an account whose password this application holds: a device
+							that keeps it elsewhere - a directory service, an identity provider - refuses
+							to change it, and a button leading to that refusal is one the user has no way
+							of knowing not to press. The action itself refuses the same accounts, so what
+							is hidden here is not what is guarded.
+						-->
 						<button>
 							<action class="com.top_logic.layout.view.command.GenericViewCommand"
 								image="css:bi bi-key"
+								input="account"
 							>
 								<label>
 									<en>Change password</en>
 									<de>Passwort ändern</de>
 								</label>
+								<executability>
+									<visible-if expr="account -> $account.accountPasswordChangeAllowed()"/>
+								</executability>
 								<execute-script function="x -> new(`tl.login:PasswordChange`, transient: true)"/>
 								<open-dialog
 									bind-input-to="model"

@@ -65,15 +65,16 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
   const navigateUrl = state.navigateUrl as string | undefined;
   // Whether that target gets a window of its own, for a destination the user comes back from while
   // this page keeps running (e.g. a re-authentication at an external provider). The window is opened
-  // from the click handler, so it is a window the user asked for and not a blocked pop-up.
+  // from the click handler, so it is a window the user asked for and not a blocked pop-up, and it is
+  // a window of this page, which is what lets the page it shows close it when it is done.
   const navigateNewWindow = state.navigateNewWindow === true;
 
   const handleClick = useCallback(() => {
     if (navigateUrl) {
       if (navigateNewWindow) {
-        // "noopener" is what "rel" would say on a link with target="_blank": the opened page gets no
-        // handle on this one.
-        window.open(navigateUrl, '_blank', 'noopener');
+        // A window of this page: a page can only close a window that was opened from a page, so
+        // the target closes itself once its work is done.
+        window.open(navigateUrl, '_blank');
       } else {
         window.location.assign(navigateUrl);
       }

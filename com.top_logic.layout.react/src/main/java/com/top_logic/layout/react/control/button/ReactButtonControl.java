@@ -306,7 +306,8 @@ public class ReactButtonControl extends ReactControl {
 	 * For a destination the user comes back from - an external authentication, a document to look at
 	 * - where the page that sent them there keeps running and is waiting for them to return. The
 	 * window is opened from the click itself, which is what lets a browser distinguish it from a
-	 * pop-up nobody asked for.
+	 * pop-up nobody asked for, and it is a window of the page that opened it, so the page shown in it
+	 * can close it once its work is done.
 	 * </p>
 	 */
 	public void setNavigateNewWindow(boolean newWindow) {

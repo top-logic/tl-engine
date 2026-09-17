@@ -88,7 +88,9 @@ public class ReauthenticationPromptDialogControl {
 
 		ReactButtonControl signIn = new ReactButtonControl(context, buttonLabel, ctx -> HandlerResult.DEFAULT_RESULT);
 		// The sign-in is a page of the identity provider, reached without a server round trip, and it
-		// gets a window of its own so that this one stays and can be closed from here.
+		// gets a window of its own so that this one stays and can be closed from here. The window
+		// belongs to this page, which is what lets the page the provider sends the user back to close
+		// it once the confirmation has been carried here.
 		signIn.setNavigateUrl(reauthenticationUrl);
 		signIn.setNavigateNewWindow(true);
 		signIn.setAppearance(ButtonAppearance.PRIMARY);

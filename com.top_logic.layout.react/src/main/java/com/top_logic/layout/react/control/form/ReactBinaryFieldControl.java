@@ -19,6 +19,7 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.DataProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.UploadHandler;
+import com.top_logic.layout.react.control.upload.UploadSupport;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -79,6 +80,7 @@ public class ReactBinaryFieldControl extends ReactFormFieldControl implements Up
 		// and emit the download/upload display state instead.
 		putState(VALUE, null);
 		putState(STATUS, "idle");
+		putState(UploadSupport.MAX_UPLOAD_SIZE, UploadSupport.maxUploadSize());
 		updateDataState(currentData());
 		initDataFieldState();
 	}

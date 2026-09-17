@@ -80,6 +80,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey ERROR_FORM_HAS_VALIDATION_ERRORS;
 
+	/**
+	 * @en Upload of "{0}" failed.
+	 */
+	public static ResKey1 ERROR_UPLOAD_FAILED__FILE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

@@ -25,7 +25,6 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
-import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
@@ -44,8 +43,10 @@ import com.top_logic.layout.react.control.dnd.DropTarget;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.ViewAction;
@@ -131,14 +132,11 @@ public class TableElement implements UIElement {
 	 * Configuration for {@link TableElement}.
 	 */
 	@TagName("table")
-	public interface Config extends UIElement.Config {
+	public interface Config extends UIElement.Config, Inputs {
 
 		@Override
 		@ClassDefault(TableElement.class)
 		Class<? extends UIElement> getImplementationClass();
-
-		/** Configuration name for {@link #getInputs()}. */
-		String INPUTS = "inputs";
 
 		/** Configuration name for {@link #getRows()}. */
 		String ROWS = "rows";
@@ -201,15 +199,11 @@ public class TableElement implements UIElement {
 		List<TLModelPartRef> getTypes();
 
 		/**
-		 * References to {@link ViewChannel}s whose values become positional arguments to
-		 * {@link #getRows()}.
-		 */
-		@Name(INPUTS)
-		@ListBinding(format = ChannelRefFormat.class, tag = "input", attribute = "channel")
-		List<ChannelRef> getInputs();
-
-		/**
 		 * TL-Script function computing the row objects (a {@link Collection}).
+		 *
+		 * <p>
+		 * The values of the declared inputs come first, in declaration order.
+		 * </p>
 		 */
 		@Name(ROWS)
 		@Mandatory
@@ -1022,11 +1016,8 @@ public class TableElement implements UIElement {
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		List<ViewChannel> inputChannels = new ArrayList<>();
-		for (ChannelRef ref : _config.getInputs()) {
-			inputChannels.add(context.resolveChannel(ref));
-		}
-		Object[] inputValues = readChannelValues(inputChannels);
+		List<ViewChannel> inputChannels = ChannelInputs.resolve(context, _config.getInputs());
+		Object[] inputValues = ChannelInputs.arguments(inputChannels);
 		RowsResult initialRows = executeRows(_rowsExecutor, inputValues);
 		Collection<?> rows = initialRows.rows();
 
@@ -1085,7 +1076,7 @@ public class TableElement implements UIElement {
 				// The criteria of the presets are computed from the inputs, so a changed input means
 				// other criteria: they are resolved again, and a chip the user has applied goes on
 				// filtering by what it now means.
-				view.setDeclaredFilters(declaredFilters(columns, readChannelValues(inputChannels)));
+				view.setDeclaredFilters(declaredFilters(columns, ChannelInputs.arguments(inputChannels)));
 			}
 			control.refreshData();
 			if (selectionBinding != null) {
@@ -1170,7 +1161,7 @@ public class TableElement implements UIElement {
 		// exists, so the target is filled in below.
 		ReactControl[] diagnosticsTarget = new ReactControl[1];
 		QueryRowSetBinding binding = new QueryRowSetBinding(
-			() -> tlObjectRows(refreshRows(rowsExecutor, readChannelValues(inputChannels), diagnosticsTarget[0])),
+			() -> tlObjectRows(refreshRows(rowsExecutor, ChannelInputs.arguments(inputChannels), diagnosticsTarget[0])),
 			createType != null ? createType : (rowType instanceof TLClass rowClass ? rowClass : null),
 			createType == null ? List.of() : List.of(createType),
 			_config.getOnRemove());
@@ -1186,7 +1177,7 @@ public class TableElement implements UIElement {
 		applyRowDiagnostics(control, initialRows.securityReport());
 		control.setFramed(false);
 		control.setPersonalization(PersonalConfigViewStateStore.INSTANCE, tableId());
-		control.setNamedFilters(columns -> declaredFilters(columns, readChannelValues(inputChannels)),
+		control.setNamedFilters(columns -> declaredFilters(columns, ChannelInputs.arguments(inputChannels)),
 			filterStore());
 		control.setFilterBar(filterBar());
 		control.setDefaultSort(defaultSort());
@@ -1374,14 +1365,6 @@ public class TableElement implements UIElement {
 			}
 		}
 		return null;
-	}
-
-	private static Object[] readChannelValues(List<ViewChannel> channels) {
-		Object[] values = new Object[channels.size()];
-		for (int n = 0; n < channels.size(); n++) {
-			values[n] = channels.get(n).get();
-		}
-		return values;
 	}
 
 	/**

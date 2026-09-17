@@ -21,7 +21,6 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
-import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.TagName;
@@ -30,8 +29,10 @@ import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.VetoForwarder;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.search.expr.SearchExpression;
@@ -61,14 +62,11 @@ public class FlowDiagramElement implements UIElement {
 	 * Configuration for {@link FlowDiagramElement}.
 	 */
 	@TagName("flow-diagram")
-	public interface Config extends UIElement.Config {
+	public interface Config extends UIElement.Config, Inputs {
 
 		@Override
 		@ClassDefault(FlowDiagramElement.class)
 		Class<? extends UIElement> getImplementationClass();
-
-		/** Configuration name for {@link #getInputs()}. */
-		String INPUTS = "inputs";
 
 		/** Configuration name for {@link #getCreateChart()}. */
 		String CREATE_CHART = "createChart";
@@ -81,14 +79,6 @@ public class FlowDiagramElement implements UIElement {
 
 		/** Configuration name for {@link #getSelection()}. */
 		String SELECTION = "selection";
-
-		/**
-		 * References to {@link ViewChannel}s whose current values become positional arguments to
-		 * the {@link #getCreateChart()} expression.
-		 */
-		@Name(INPUTS)
-		@ListBinding(format = ChannelRefFormat.class, tag = "input", attribute = "channel")
-		List<ChannelRef> getInputs();
 
 		/**
 		 * TL-Script expression that creates a {@link Diagram}.
@@ -202,11 +192,7 @@ public class FlowDiagramElement implements UIElement {
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		// 1. Resolve input channels.
-		List<ChannelRef> inputRefs = _config.getInputs();
-		List<ViewChannel> inputChannels = new ArrayList<>(inputRefs.size());
-		for (ChannelRef ref : inputRefs) {
-			inputChannels.add(context.resolveChannel(ref));
-		}
+		List<ViewChannel> inputChannels = ChannelInputs.resolve(context, _config.getInputs());
 
 		// 2. Build initial diagram from current channel values.
 		Diagram diagram = buildDiagram(inputChannels);
@@ -240,7 +226,7 @@ public class FlowDiagramElement implements UIElement {
 	}
 
 	private Diagram buildDiagram(List<ViewChannel> inputChannels) {
-		Object[] channelValues = readChannelValues(inputChannels);
+		Object[] channelValues = ChannelInputs.arguments(inputChannels);
 
 		Args args = Args.some(channelValues);
 		for (DiagramHandler handler : _handlers) {
@@ -255,14 +241,6 @@ public class FlowDiagramElement implements UIElement {
 			return Diagram.create().setRoot((Box) result);
 		}
 		return Diagram.create();
-	}
-
-	private static Object[] readChannelValues(List<ViewChannel> channels) {
-		Object[] values = new Object[channels.size()];
-		for (int i = 0; i < channels.size(); i++) {
-			values[i] = channels.get(i).get();
-		}
-		return values;
 	}
 
 }

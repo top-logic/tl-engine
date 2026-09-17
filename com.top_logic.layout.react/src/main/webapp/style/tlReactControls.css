@@ -5761,14 +5761,14 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 	flex-shrink: 0;
 }
 
-/* --- View Designer "select view" picker ------------------------------- */
+/* --- Element picker: click an element in this window to report it -------- */
 
-.tlViewPick--active,
-.tlViewPick--active * {
+.tlPick--active,
+.tlPick--active * {
 	cursor: crosshair !important;
 }
 
-#tl-view-pick-highlight {
+#tl-pick-highlight {
 	position: fixed;
 	pointer-events: none;
 	z-index: 10000;

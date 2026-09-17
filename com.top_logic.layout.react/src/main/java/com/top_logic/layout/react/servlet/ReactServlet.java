@@ -72,8 +72,8 @@ import com.top_logic.layout.react.protocol.Property;
 import com.top_logic.layout.react.protocol.RouteVetoEvent;
 import com.top_logic.layout.react.protocol.SSEEvent;
 import com.top_logic.layout.react.routing.RouteManager;
+import com.top_logic.layout.react.window.ElementPicker;
 import com.top_logic.layout.react.window.Interaction;
-import com.top_logic.layout.react.window.PendingViewPick;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.mig.html.layout.RevalidationVisitor;
@@ -406,8 +406,8 @@ public class ReactServlet extends TopLogicServlet {
 				case "/upload":
 					handleUpload(request, response, session);
 					break;
-				case "/view-pick":
-					handleViewPick(request, response, session);
+				case ElementPicker.PICK_PATH:
+					handlePick(request, response, session);
 					break;
 				default:
 					sendError(response, HttpServletResponse.SC_NOT_FOUND, "Unknown path: " + pathInfo);
@@ -709,13 +709,12 @@ public class ReactServlet extends TopLogicServlet {
 	}
 
 	/**
-	 * Handles a "select view" pick result posted by the main-window client: looks up the
-	 * {@link PendingViewPick} registered for the given token and runs its callback under the
-	 * designer window's sub-session, so the resulting channel/control updates flush to the
-	 * designer's SSE queue.
+	 * Handles the pick report posted by the picked window's client: resolves it through
+	 * {@link ElementPicker} and delivers it under the requesting window's sub-session, so that the
+	 * resulting channel and control updates flush to that window's SSE queue.
 	 */
 	@SuppressWarnings("unchecked")
-	private void handleViewPick(HttpServletRequest request, HttpServletResponse response, HttpSession session)
+	private void handlePick(HttpServletRequest request, HttpServletResponse response, HttpSession session)
 			throws IOException {
 		String body = new String(request.getInputStream().readAllBytes(), "UTF-8");
 		Object parsed;
@@ -729,35 +728,28 @@ public class ReactServlet extends TopLogicServlet {
 			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Expected JSON object.");
 			return;
 		}
-		Map<String, Object> data = (Map<String, Object>) parsed;
-		String token = (String) data.get("token");
-		String path = (String) data.get("path");
-		if (token == null || path == null) {
-			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Missing token or path.");
-			return;
-		}
 
 		ReactWindowRegistry registry = ReactWindowRegistry.forSession(session);
-		PendingViewPick pending = registry.consumePick(token);
-		if (pending == null) {
-			// Unknown or already-consumed token: acknowledge without action.
+		ElementPicker.Delivery delivery = ElementPicker.resolve(registry, (Map<String, Object>) parsed);
+		if (delivery == null) {
+			// Nothing to deliver, ElementPicker has logged why.
 			sendSuccess(response);
 			return;
 		}
 
-		String designerWindowId = pending.designerWindowId();
-		SubsessionHandler rootHandler = resolveWindow(request, session, designerWindowId).rootHandler();
+		String requesterWindowId = delivery.pick().requesterWindowId();
+		SubsessionHandler rootHandler = resolveWindow(request, session, requesterWindowId).rootHandler();
 
 		try (Interaction interaction = registry.beginInteraction()) {
 			boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
 			try {
-				pending.onPicked().accept(path);
+				delivery.deliver();
 			} finally {
 				if (rootHandler != null) {
 					rootHandler.enableUpdate(updateBefore);
 				}
 			}
-			registry.synthesizeModelEvents(designerWindowId);
+			registry.synthesizeModelEvents(requesterWindowId);
 		}
 		sendSuccess(response);
 	}

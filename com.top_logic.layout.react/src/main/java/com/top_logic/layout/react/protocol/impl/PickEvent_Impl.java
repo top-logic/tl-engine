@@ -1,26 +1,28 @@
 package com.top_logic.layout.react.protocol.impl;
 
 /**
- * Implementation of {@link com.top_logic.layout.react.protocol.ViewPickEvent}.
+ * Implementation of {@link com.top_logic.layout.react.protocol.PickEvent}.
  */
-public class ViewPickEvent_Impl extends com.top_logic.layout.react.protocol.impl.SSEEvent_Impl implements com.top_logic.layout.react.protocol.ViewPickEvent {
+public class PickEvent_Impl extends com.top_logic.layout.react.protocol.impl.SSEEvent_Impl implements com.top_logic.layout.react.protocol.PickEvent {
 
 	private String _token = "";
 
 	private String _targetWindowId = "";
 
+	private String _kind = "";
+
 	/**
-	 * Creates a {@link ViewPickEvent_Impl} instance.
+	 * Creates a {@link PickEvent_Impl} instance.
 	 *
-	 * @see com.top_logic.layout.react.protocol.ViewPickEvent#create()
+	 * @see com.top_logic.layout.react.protocol.PickEvent#create()
 	 */
-	public ViewPickEvent_Impl() {
+	public PickEvent_Impl() {
 		super();
 	}
 
 	@Override
 	public TypeKind kind() {
-		return TypeKind.VIEW_PICK_EVENT;
+		return TypeKind.PICK_EVENT;
 	}
 
 	@Override
@@ -29,7 +31,7 @@ public class ViewPickEvent_Impl extends com.top_logic.layout.react.protocol.impl
 	}
 
 	@Override
-	public com.top_logic.layout.react.protocol.ViewPickEvent setToken(String value) {
+	public com.top_logic.layout.react.protocol.PickEvent setToken(String value) {
 		internalSetToken(value);
 		return this;
 	}
@@ -45,7 +47,7 @@ public class ViewPickEvent_Impl extends com.top_logic.layout.react.protocol.impl
 	}
 
 	@Override
-	public com.top_logic.layout.react.protocol.ViewPickEvent setTargetWindowId(String value) {
+	public com.top_logic.layout.react.protocol.PickEvent setTargetWindowId(String value) {
 		internalSetTargetWindowId(value);
 		return this;
 	}
@@ -56,8 +58,24 @@ public class ViewPickEvent_Impl extends com.top_logic.layout.react.protocol.impl
 	}
 
 	@Override
+	public final String getKind() {
+		return _kind;
+	}
+
+	@Override
+	public com.top_logic.layout.react.protocol.PickEvent setKind(String value) {
+		internalSetKind(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getKind()} without chain call utility. */
+	protected final void internalSetKind(String value) {
+		_kind = value;
+	}
+
+	@Override
 	public String jsonType() {
-		return VIEW_PICK_EVENT__TYPE;
+		return PICK_EVENT__TYPE;
 	}
 
 	@Override
@@ -67,6 +85,8 @@ public class ViewPickEvent_Impl extends com.top_logic.layout.react.protocol.impl
 		out.value(getToken());
 		out.name(TARGET_WINDOW_ID__PROP);
 		out.value(getTargetWindowId());
+		out.name(KIND__PROP);
+		out.value(getKind());
 	}
 
 	@Override
@@ -74,6 +94,7 @@ public class ViewPickEvent_Impl extends com.top_logic.layout.react.protocol.impl
 		switch (field) {
 			case TOKEN__PROP: setToken(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case TARGET_WINDOW_ID__PROP: setTargetWindowId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case KIND__PROP: setKind(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

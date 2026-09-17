@@ -47,8 +47,8 @@ public interface SSEEvent extends de.haumacher.msgbuf.data.DataObject {
 		/** Type literal for {@link com.top_logic.layout.react.protocol.WindowCloseEvent}. */
 		WINDOW_CLOSE_EVENT,
 
-		/** Type literal for {@link com.top_logic.layout.react.protocol.ViewPickEvent}. */
-		VIEW_PICK_EVENT,
+		/** Type literal for {@link com.top_logic.layout.react.protocol.PickEvent}. */
+		PICK_EVENT,
 
 		/** Type literal for {@link com.top_logic.layout.react.protocol.WindowFocusEvent}. */
 		WINDOW_FOCUS_EVENT,
@@ -104,8 +104,8 @@ public interface SSEEvent extends de.haumacher.msgbuf.data.DataObject {
 		/** Visit case for {@link com.top_logic.layout.react.protocol.WindowCloseEvent}.*/
 		R visit(com.top_logic.layout.react.protocol.WindowCloseEvent self, A arg) throws E;
 
-		/** Visit case for {@link com.top_logic.layout.react.protocol.ViewPickEvent}.*/
-		R visit(com.top_logic.layout.react.protocol.ViewPickEvent self, A arg) throws E;
+		/** Visit case for {@link com.top_logic.layout.react.protocol.PickEvent}.*/
+		R visit(com.top_logic.layout.react.protocol.PickEvent self, A arg) throws E;
 
 		/** Visit case for {@link com.top_logic.layout.react.protocol.WindowFocusEvent}.*/
 		R visit(com.top_logic.layout.react.protocol.WindowFocusEvent self, A arg) throws E;
@@ -143,7 +143,7 @@ public interface SSEEvent extends de.haumacher.msgbuf.data.DataObject {
 			case FunctionCall.FUNCTION_CALL__TYPE: result = com.top_logic.layout.react.protocol.FunctionCall.readFunctionCall(in); break;
 			case WindowOpenEvent.WINDOW_OPEN_EVENT__TYPE: result = com.top_logic.layout.react.protocol.WindowOpenEvent.readWindowOpenEvent(in); break;
 			case WindowCloseEvent.WINDOW_CLOSE_EVENT__TYPE: result = com.top_logic.layout.react.protocol.WindowCloseEvent.readWindowCloseEvent(in); break;
-			case ViewPickEvent.VIEW_PICK_EVENT__TYPE: result = com.top_logic.layout.react.protocol.ViewPickEvent.readViewPickEvent(in); break;
+			case PickEvent.PICK_EVENT__TYPE: result = com.top_logic.layout.react.protocol.PickEvent.readPickEvent(in); break;
 			case WindowFocusEvent.WINDOW_FOCUS_EVENT__TYPE: result = com.top_logic.layout.react.protocol.WindowFocusEvent.readWindowFocusEvent(in); break;
 			case RouteChangeEvent.ROUTE_CHANGE_EVENT__TYPE: result = com.top_logic.layout.react.protocol.RouteChangeEvent.readRouteChangeEvent(in); break;
 			case RouteVetoEvent.ROUTE_VETO_EVENT__TYPE: result = com.top_logic.layout.react.protocol.RouteVetoEvent.readRouteVetoEvent(in); break;

@@ -16,6 +16,7 @@ import com.top_logic.base.accesscontrol.loginmethod.LoginMethod;
 import com.top_logic.base.accesscontrol.loginmethod.LoginMethods;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -25,12 +26,15 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.CommandErrors;
+import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.scripting.ReactWindowReplay;
 import com.top_logic.layout.view.ViewMessages;
 import com.top_logic.layout.view.command.Continuation;
 import com.top_logic.layout.view.command.InterruptibleViewAction;
 import com.top_logic.layout.view.command.ViewAction;
+import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 
@@ -75,7 +79,12 @@ import com.top_logic.util.TLContext;
  *           {@link LoginMethod#getReauthenticationUrl(String) the login method} that established the
  *           session, and the request coming back from the provider completes the entry, which runs
  *           {@link #confirmed(ReactContext, Runnable, Object, Continuation)} on that request's
- *           thread. The password is checked by
+ *           thread. That method carries the rest of the chain into the window waiting for it and
+ *           reports a failure of that chain there, through
+ *           {@link CommandErrors#failure(Throwable, String, Class)} and
+ *           {@link CommandErrors#show(ErrorSink, HandlerResult)}, exactly as a command failing in
+ *           that window is reported; the request that brought the confirmation sees none of it and
+ *           answers for the identity alone. The password is checked by
  *           {@link AuthenticationDevice#authentify(LoginCredentials)}, the same check a login makes,
  *           handed to {@link PasswordPromptDialogControl#openDialog} as a predicate, which keeps the
  *           dialog open on a rejected password and reports only the accepted one.
@@ -124,6 +133,12 @@ public class VerifyIdentityAction extends InterruptibleViewAction {
 		@Name(MESSAGE)
 		ResKey getMessage();
 	}
+
+	/**
+	 * Names the operation a failure is reported for: the command chain taken up again after the
+	 * identity was confirmed.
+	 */
+	private static final String RESUME_DESCRIPTION = "Continuing the command chain after the identity confirmation";
 
 	private final ResKey _title;
 
@@ -357,6 +372,12 @@ public class VerifyIdentityAction extends InterruptibleViewAction {
 	 * belong to a window this thread is not serving.
 	 * </p>
 	 *
+	 * <p>
+	 * What the resumed chain throws is shown in that window as the failure of a command is shown,
+	 * and nothing leaves this method: the identity was confirmed whatever the chain then makes of
+	 * it, and the request bringing the confirmation reports on the confirmation only.
+	 * </p>
+	 *
 	 * @param context
 	 *        The React context of the window the chain was suspended in.
 	 * @param closePrompt
@@ -367,12 +388,37 @@ public class VerifyIdentityAction extends InterruptibleViewAction {
 	 *        The suspended chain.
 	 */
 	protected void confirmed(ReactContext context, Runnable closePrompt, Object input, Continuation continuation) {
-		runInWindow(context, () -> {
-			if (closePrompt != null) {
-				closePrompt.run();
-			}
+		try {
+			runInWindow(context, () -> {
+				if (closePrompt != null) {
+					closePrompt.run();
+				}
+				resume(context, input, continuation);
+			});
+		} catch (Throwable ex) {
+			// The request running this answers for the identity, not for the chain: whatever could
+			// not be carried into the window is written to the log and left there.
+			Logger.error("The confirmed identity could not be carried into window '" + context.getWindowName()
+				+ "'.", ex, VerifyIdentityAction.class);
+		}
+	}
+
+	/**
+	 * Continues the chain, reporting what it throws in the window the chain belongs to.
+	 *
+	 * <p>
+	 * The failure travels the way a failed command travels: an internal error is logged as one and
+	 * shown generically, a user-level failure carries its own message into the window's snackbar,
+	 * see {@link CommandErrors#failure(Throwable, String, Class)}.
+	 * </p>
+	 */
+	private void resume(ReactContext context, Object input, Continuation continuation) {
+		try {
 			continuation.resume(input);
-		});
+		} catch (Throwable ex) {
+			HandlerResult failure = CommandErrors.failure(ex, RESUME_DESCRIPTION, VerifyIdentityAction.class);
+			CommandErrors.show(context.getErrorSink(), failure);
+		}
 	}
 
 	/**
@@ -384,7 +430,11 @@ public class VerifyIdentityAction extends InterruptibleViewAction {
 	 *           gone is not acted on.
 	 */
 	protected void runInWindow(ReactContext context, Runnable action) {
-		ReactWindowReplay.inWindow(context.getWindowRegistry(), context.getWindowName(), action);
+		String windowName = context.getWindowName();
+		if (!ReactWindowReplay.inWindow(context.getWindowRegistry(), windowName, action)) {
+			Logger.warn("Window '" + windowName + "' is gone, the command chain waiting in it does not continue.",
+				VerifyIdentityAction.class);
+		}
 	}
 
 	/**

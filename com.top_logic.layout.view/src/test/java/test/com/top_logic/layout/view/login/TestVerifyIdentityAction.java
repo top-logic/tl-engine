@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.layout.view.login;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -14,8 +15,10 @@ import java.util.function.Predicate;
 import junit.framework.Test;
 import junit.framework.TestCase;
 
+import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
@@ -23,10 +26,15 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.base.accesscontrol.loginmethod.LoginMethod;
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResourcesModule;
+import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.layout.basic.DummyDisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.overlay.DialogHandle;
 import com.top_logic.layout.react.control.overlay.DialogManager;
@@ -35,12 +43,14 @@ import com.top_logic.layout.react.control.overlay.DialogResultHandler;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
+import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.command.GenericViewCommand;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewActionChain;
 import com.top_logic.layout.view.element.PanelElement;
 import com.top_logic.layout.view.login.VerifyIdentityAction;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests {@link VerifyIdentityAction}, the guard that lets a command chain continue only after the
@@ -57,11 +67,17 @@ import com.top_logic.layout.view.login.VerifyIdentityAction;
  */
 public class TestVerifyIdentityAction extends TestCase {
 
+	/** What the action after the guard fails with. */
+	private static final String FAILURE_MESSAGE = "The password of this account is kept elsewhere.";
+
 	/** What an action after the guard saw, one entry per run. */
 	private final List<Object> _downstream = new ArrayList<>();
 
 	/** What the chain settled with, one entry per run. */
 	private final List<Object> _completions = new ArrayList<>();
+
+	/** What was shown to the user of the window the chain belongs to. */
+	private final List<HTMLFragment> _shown = new ArrayList<>();
 
 	/**
 	 * Tests that a context without a dialog manager - a chain running headless - aborts instead of
@@ -146,10 +162,7 @@ public class TestVerifyIdentityAction extends TestCase {
 	 * answered, and holds the chain until the confirmation arrives.
 	 */
 	public void testExternalConfirmationResumesChain() {
-		Fixture guard = new Fixture(password -> {
-			throw new AssertionError("The password path is not taken.");
-		});
-		guard.offer(new FakeLoginMethod("keycloak", "https://provider.example/auth?verification="));
+		Fixture guard = externalGuard();
 
 		run(guard, "in");
 
@@ -173,10 +186,7 @@ public class TestVerifyIdentityAction extends TestCase {
 	 * guard no longer waits for.
 	 */
 	public void testExternalCancelAborts() {
-		Fixture guard = new Fixture(password -> {
-			throw new AssertionError("The password path is not taken.");
-		});
-		guard.offer(new FakeLoginMethod("keycloak", "https://provider.example/auth?verification="));
+		Fixture guard = externalGuard();
 
 		run(guard, "in");
 		guard.waiting().cancel();
@@ -184,6 +194,54 @@ public class TestVerifyIdentityAction extends TestCase {
 		assertEquals("The announcement is withdrawn.", List.of(Fixture.TOKEN), guard.withdrawn());
 		assertTrue("Nothing downstream of a cancelled guard runs.", _downstream.isEmpty());
 		assertEquals(Collections.singletonList(null), _completions);
+	}
+
+	/**
+	 * Tests that a user-level failure of the resumed chain - a password the account's device refuses
+	 * to change - is shown in the window the chain belongs to, and that the request bringing the
+	 * confirmation is left with nothing to answer for.
+	 */
+	public void testFailingChainReportsUserError() throws IOException {
+		Fixture guard = externalGuard();
+		runFailing(guard, new TopLogicException(ResKey.text(FAILURE_MESSAGE)));
+
+		// Returns normally: what the chain does with the confirmed identity is not the outcome of
+		// the confirmation.
+		guard.confirm();
+
+		assertTrue("The prompt is closed before the chain is taken up again.", guard.waiting().closed());
+		assertEquals("The failure is reported to the window the chain belongs to.", 1, _shown.size());
+		assertEquals("The user reads what the chain refused.",
+			FAILURE_MESSAGE, message(_shown.get(0)));
+		assertEquals("A chain that failed settles with nothing.", List.of(), _completions);
+	}
+
+	/**
+	 * Tests that a failure nobody expected is reported the same way, rather than escaping into the
+	 * request that carried the confirmation.
+	 */
+	public void testFailingChainReportsUnexpectedError() throws IOException {
+		Fixture guard = externalGuard();
+		runFailing(guard, new IllegalStateException(FAILURE_MESSAGE));
+
+		guard.confirm();
+
+		assertEquals("The failure is reported to the window the chain belongs to.", 1, _shown.size());
+		assertEquals("The message of an unexpected failure is what the user is left with.",
+			FAILURE_MESSAGE, message(_shown.get(0)));
+	}
+
+	/**
+	 * Tests that a chain running through after the confirmation says nothing to the user.
+	 */
+	public void testSucceedingChainReportsNothing() {
+		Fixture guard = externalGuard();
+
+		run(guard, "in", dialogContext(sink()));
+		guard.confirm();
+
+		assertEquals("The guard hands its input on unchanged.", List.of("in"), _downstream);
+		assertTrue("A chain that ran through reports nothing.", _shown.isEmpty());
 	}
 
 	/**
@@ -251,6 +309,52 @@ public class TestVerifyIdentityAction extends TestCase {
 	}
 
 	/**
+	 * Runs a chain whose action after the guard throws the given failure, in a window that records
+	 * what is shown in it.
+	 */
+	private void runFailing(ViewAction guard, RuntimeException failure) {
+		ViewActionChain.run(dialogContext(sink()), List.of(guard, (ctx, value) -> {
+			throw failure;
+		}), "in", _completions::add);
+	}
+
+	/** A guard whose session an identity provider answers for. */
+	private static Fixture externalGuard() {
+		Fixture guard = new Fixture(password -> {
+			throw new AssertionError("The password path is not taken.");
+		});
+		guard.offer(new FakeLoginMethod("keycloak", "https://provider.example/auth?verification="));
+		return guard;
+	}
+
+	/** A sink collecting what is shown in the window. */
+	private ErrorSink sink() {
+		return new ErrorSink() {
+			@Override
+			public void showError(HTMLFragment content) {
+				_shown.add(content);
+			}
+
+			@Override
+			public void showWarning(HTMLFragment content) {
+				_shown.add(content);
+			}
+
+			@Override
+			public void showInfo(HTMLFragment content) {
+				_shown.add(content);
+			}
+		};
+	}
+
+	/** The text a message shown to the user reads, with the markup around it stripped. */
+	private static String message(HTMLFragment shown) throws IOException {
+		TagWriter out = new TagWriter();
+		shown.write(new DummyDisplayContext(), out);
+		return out.toString().replaceAll("<[^>]*>", " ").replaceAll("\\s+", " ").trim();
+	}
+
+	/**
 	 * A context of a display that reaches no browser: without an update queue it has no
 	 * {@link DialogManager}, which is what a chain running outside a session sees.
 	 */
@@ -262,7 +366,7 @@ public class TestVerifyIdentityAction extends TestCase {
 	 * A context that can open a dialog, so that what stops the chain is the guard's own verdict and
 	 * not the absence of a place to ask in.
 	 */
-	private static ReactContext dialogContext() {
+	private static ViewContext dialogContext() {
 		SSEUpdateQueue queue = new SSEUpdateQueue();
 		queue.setDialogManager(new DialogManager() {
 			@Override
@@ -282,6 +386,11 @@ public class TestVerifyIdentityAction extends TestCase {
 			}
 		});
 		return new DefaultViewContext(new DefaultReactContext("", "test", queue, new ReactWindowRegistry("test")));
+	}
+
+	/** A context reporting what it shows to the given sink. */
+	private static ReactContext dialogContext(ErrorSink sink) {
+		return dialogContext().withErrorSink(sink);
 	}
 
 	/** The production action, with nothing replaced. */
@@ -526,9 +635,12 @@ public class TestVerifyIdentityAction extends TestCase {
 	}
 
 	/**
-	 * Test suite requiring the {@link TypeIndex} module.
+	 * Test suite requiring the {@link TypeIndex} module and the resources the reported messages are
+	 * resolved from.
 	 */
 	public static Test suite() {
-		return ServiceTestSetup.createSetup(TestVerifyIdentityAction.class, TypeIndex.Module.INSTANCE);
+		return ModuleTestSetup.setupModule(
+			ServiceTestSetup.createSetup(TestVerifyIdentityAction.class, TypeIndex.Module.INSTANCE,
+				ThreadContextManager.Module.INSTANCE, ResourcesModule.Module.INSTANCE));
 	}
 }

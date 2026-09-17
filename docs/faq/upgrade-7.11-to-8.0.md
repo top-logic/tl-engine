@@ -684,28 +684,23 @@ case-insensitive.
 
 ## Appendix A: Trac coverage of the changes above
 
-Tickets on `TL_8.0.0` flagged `RequiresMigration` **with** a migration section: #28710, #29037, #29073,
-#29080, #29088, #29106, #29111, #29221, #29286, #29306, #29384, #29396, #29420, #29423, #29425, #29429,
-#29447, #29449, #29457, #29465, #29525, #29528, #29540, #29542, #29563, #29564. Flagged but not
-implemented (status `new`, no instructions): #26916, #27285, #28031, #28487, #28488. #28026
-(`AttributedObject` to `TLObject` in `*Meta.xml`) is flagged but has **not** landed on master, so it is
-not part of this upgrade.
+Every change in this guide is covered by a ticket flagged `RequiresMigration` with a `== Migration ==`
+section in its description: #28388, #28694, #28710, #28816, #29037, #29073, #29080, #29088, #29092,
+#29106, #29108, #29111, #29221, #29286, #29306, #29361, #29383, #29384, #29396, #29400, #29420,
+#29423, #29425, #29429, #29447, #29449, #29457, #29465, #29484, #29492, #29512, #29525, #29528,
+#29540, #29542, #29548, #29555, #29563, #29564.
 
-Breaking changes found in the diff whose ticket has **no** migration section (candidates for a
-`== Migration ==` addition plus the `RequiresMigration` keyword):
+The review of the diff found eleven of them incomplete; their sections were written on 2026-09-17
+and are the source of the corresponding items above: #29092 (login rewrite, MFA config, account
+API), #29400 (operation mode), #28710 (data side of the security rework, removed wrapper base
+classes), #29088 (removed legacy module system), #29108 (Font Awesome path, moved classes),
+#28816 (dangling references), #29361 (schema check, migration API), #29484 (login field label),
+#28388 (resource provider API), #29548 (new `tl.util` types), #29555 (`canEvaluateAtCompileTime`).
+#29400 still carries milestone `TL_8.1.0` although the change is on master before 8.0.
 
-| Ticket | Change without Trac migration notes |
-|---|---|
-| #29092 | login page/servlet removal, `ApplicationPages` properties, `TLPersonManager` removal, mandatory `mfa-requirement`, `AuthenticationDevice#getMFARequirement`, `Login`/`ExternalAuthenticationServlet` API, `LoginMessagesMainLayout` to `LoginMessagesHook`, `Person.create` signature, `FormMember#setLabel(null)` ambiguity |
-| #29400 | `tl_developerMode` replaced by `tl_operation_mode` (IDE runs become "deployed") |
-| #28710 (data part) | `hasGlobalRole` dropped without transfer; app-owned `tl.legacy.tabletypes`/`tl.tables` types must be deleted by the app; `LegacyFlexWrapper`/`StoredFlexWrapper`, `ExternalRoleProvider`, `SecurityStorageCommitObserver`, `FallbackAccessManager` removed |
-| #29088 (Java part) | `RuntimeModule`/`ConfiguredRuntimeModule`/`MultiRuntimeModule` family and `ManagedClass(Properties)` removed; `ModelBasedSearch` `disable-optimizations` removed |
-| #29108 | Font Awesome stylesheet path; `ExplicitGraph` package move; `ModeSelector#traceDependencies` signature |
-| #28816 | dangling multi-valued references now throw |
-| #29361 | monomorphic references to abstract tables rejected; `Util.update*` migration API gained a parameter |
-| #29484 | login form label `Login` renamed to `Benutzername` (scripted tests) |
-| #28388, #28694 | resource-provider label API pulled up; descriptions are `HtmlResKey` |
-| #29383, #29492, #29512, #29548, #29555 | have notes but no keyword (log receiver flag, automatic migrations, `canEvaluateAtCompileTime`) |
+Flagged but not implemented (status `new`, no instructions): #26916, #27285, #28031, #28487,
+#28488. #28026 (`AttributedObject` to `TLObject` in `*Meta.xml`) is flagged but has **not** landed
+on master, so it is not part of this upgrade.
 
 ## Appendix B: Evidence for the minimal path
 

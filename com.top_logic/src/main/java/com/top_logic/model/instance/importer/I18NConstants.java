@@ -115,6 +115,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey2 INVALID_ID_FORMAT__VAL_MSG;
 
+	/**
+	 * @en Invalid value "{0}" for type "{1}": {2}
+	 */
+	public static ResKey3 INVALID_VALUE_FORMAT__VAL_TYPE_MSG;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

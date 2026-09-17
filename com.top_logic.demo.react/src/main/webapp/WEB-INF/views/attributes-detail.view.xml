@@ -40,6 +40,7 @@
 			<field attribute="activeSelect"/>
 			<field attribute="date"/>
 			<field attribute="dateTime"/>
+			<field attribute="dateTimeShort"/>
 			<field attribute="time"/>
 			<field attribute="duration"/>
 			<field attribute="icon"/>

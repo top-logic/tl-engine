@@ -37,8 +37,9 @@ import com.top_logic.mig.html.HTMLFormatter;
  *
  * <p>
  * In addition to the ISO {@link #VALUE} (consumed by the edit-mode HTML input), the control emits a
- * {@link #DISPLAY_VALUE} holding the value formatted in the current user's locale and time zone (via
- * {@link HTMLFormatter}). The React component shows this localized string in view (read-only) mode,
+ * {@link #DISPLAY_VALUE} holding the value written by the display format - the attribute's annotated
+ * format, or the user's default format for the kind of value (via {@link HTMLFormatter}) - in the
+ * current user's time zone. The React component shows this localized string in view (read-only) mode,
  * so a date reads as e.g. {@code 01.06.2026} (German) rather than the locale-independent ISO form or
  * the raw Java {@link Date#toString()}. Both forms speak of the same moment: the ISO conversion uses
  * the user's time zone as well, so the value in the input is the one the view mode shows.
@@ -130,6 +131,8 @@ public class ReactDatePickerControl extends ReactFormFieldControl {
 
 	private final Kind _kind;
 
+	private final DateFormat _displayFormat;
+
 	/**
 	 * Creates a {@link ReactDatePickerControl} for a date without a time of day.
 	 *
@@ -150,8 +153,21 @@ public class ReactDatePickerControl extends ReactFormFieldControl {
 	 * @see #ReactDatePickerControl(ReactContext, FieldModel)
 	 */
 	public ReactDatePickerControl(ReactContext context, FieldModel model, Kind kind) {
+		this(context, model, kind, null);
+	}
+
+	/**
+	 * Creates a {@link ReactDatePickerControl} showing the value in the given format.
+	 *
+	 * @param displayFormat
+	 *        The format the value is shown in when the field is read-only, or {@code null} for the
+	 *        {@link Kind#displayFormat() default format} of the kind.
+	 * @see #ReactDatePickerControl(ReactContext, FieldModel, Kind)
+	 */
+	public ReactDatePickerControl(ReactContext context, FieldModel model, Kind kind, DateFormat displayFormat) {
 		super(context, model, "TLDatePicker");
 		_kind = kind;
+		_displayFormat = displayFormat == null ? kind.displayFormat() : displayFormat;
 		putState(INPUT_TYPE, kind.inputType());
 		// The base constructor seeded the raw Date into the value state; re-emit it as an ISO
 		// string so the input can display the initial value, plus a localized string for the
@@ -217,7 +233,7 @@ public class ReactDatePickerControl extends ReactFormFieldControl {
 
 	private String formatLocalized(Object value) {
 		if (value instanceof Date) {
-			return _kind.displayFormat().format((Date) value);
+			return _displayFormat.format((Date) value);
 		}
 		return null;
 	}

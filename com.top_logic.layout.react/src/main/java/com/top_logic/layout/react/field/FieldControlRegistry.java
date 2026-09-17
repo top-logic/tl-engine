@@ -71,7 +71,8 @@ public class FieldControlRegistry {
 		register(Number.class,
 			(context, field, model) -> new ReactNumberInputControl(context, model, numberFormat(field)));
 		register(Date.class,
-			(context, field, model) -> new ReactDatePickerControl(context, model, field.getDateKind()));
+			(context, field, model) -> new ReactDatePickerControl(context, model, field.getDateKind(),
+				field.getDateFormat()));
 		register(BinaryData.class, (context, field, model) -> new ReactBinaryFieldControl(context, model));
 		// An internationalized text is edited in the current language, with the other languages
 		// reachable through the editor's dialog.

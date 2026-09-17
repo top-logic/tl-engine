@@ -252,6 +252,7 @@
 							<columns>
 								<column attribute="name"/>
 								<column attribute="status"/>
+								<column attribute="statusLabel"/>
 							</columns>
 							<rows>term -&gt; state -&gt; { tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) != `demo.tickets:TicketStatus#closed`); named = if($term == null || $term == "", $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#name`).stringContains($term))); if($state == null, $named, $named.filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == $state)); }</rows>
 						</table>
@@ -279,6 +280,7 @@
 							<columns>
 								<column attribute="name"/>
 								<column attribute="status"/>
+								<column attribute="statusLabel"/>
 							</columns>
 							<rows>term -&gt; state -&gt; { tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`); named = if($term == null || $term == "", $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#name`).stringContains($term))); if($state == null, $named, $named.filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == $state)); }</rows>
 						</table>

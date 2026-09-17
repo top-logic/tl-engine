@@ -71,11 +71,24 @@ import com.top_logic.util.model.ModelService;
  * Resolution chain:
  * </p>
  * <ol>
+ * <li>The control the display asks for.</li>
  * <li>{@link TLInputControl} annotation on the attribute or its type (via
  * {@link com.top_logic.model.annotate.DefaultStrategy.Strategy#VALUE_TYPE}).</li>
  * <li>Global type-to-provider map configured in this service.</li>
  * <li>Built-in fallback based on {@link com.top_logic.model.TLPrimitive.Kind}.</li>
  * </ol>
+ *
+ * <p>
+ * Only <em>which</em> provider edits a value is decided here. How many values the field holds is
+ * realized by the {@link FieldControlRegistry}, whichever step of the chain found the provider: a
+ * field holding several values whose provider edits one value at a time is displayed as a list of
+ * element controls, one per value.
+ * </p>
+ *
+ * @implNote Every step ends in
+ *           {@link FieldControlRegistry#createControl(ReactContext, FieldSpec, FieldModel, ReactFieldControlProvider)},
+ *           never in {@link ReactFieldControlProvider#createControl(ReactContext, FieldSpec, FieldModel)}
+ *           itself, which is what keeps type and multiplicity decided in one place.
  */
 @Label("Form field controls")
 @ServiceDependencies({
@@ -159,7 +172,8 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 
 	private final InstantiationContext _context;
 
-	private Map<String, ReactFieldControlProvider> _providerByQualifiedType;
+	/** The controls configured for a model type, by the qualified name of that type. */
+	private final Map<String, ReactFieldControlProvider> _providerByQualifiedType = new HashMap<>();
 
 	private final ReactFieldControlProvider _selectProvider = new SelectControlProvider();
 
@@ -176,7 +190,6 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	protected void startUp() {
 		super.startUp();
 
-		_providerByQualifiedType = new HashMap<>();
 		for (ProviderMapping mapping : getConfig().getProviders().values()) {
 			TLModelPartRef typeRef = mapping.getType();
 			if (typeRef != null) {
@@ -263,14 +276,13 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 
 		// 0. The control the display asks for.
 		if (control != null) {
-			return _context.getInstance(control).createControl(context, field, model);
+			return createControl(context, field, model, _context.getInstance(control));
 		}
 
 		// 1. Annotation on attribute (includes type-level default via VALUE_TYPE strategy).
 		TLInputControl annotation = part.getAnnotation(TLInputControl.class);
 		if (annotation != null) {
-			ReactFieldControlProvider provider = _context.getInstance(annotation.getImpl());
-			return provider.createControl(context, field, model);
+			return createControl(context, field, model, _context.getInstance(annotation.getImpl()));
 		}
 
 		return createFieldControl(context, part.getType(), field, model);
@@ -300,18 +312,42 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	public ReactControl createFieldControl(ReactContext context, TLType type, FieldSpec field, FieldModel model) {
 		// 1. Option-based values use a select control.
 		if (model instanceof SelectFieldModel) {
-			return _selectProvider.createControl(context, field, model);
+			return createControl(context, field, model, _selectProvider);
 		}
 
 		// 2. Configured control by type.
 		ReactFieldControlProvider mapped = byType(type);
 		if (mapped != null) {
-			return mapped.createControl(context, field, model);
+			return createControl(context, field, model, mapped);
 		}
 
 		// 3. The control registered for the kind of value the type holds. The same registry
 		// serves configuration properties, so both are edited alike.
 		return FieldControlRegistry.getInstance().createControl(context, field, model);
+	}
+
+	/**
+	 * Creates the control the given provider builds for the given field.
+	 *
+	 * <p>
+	 * Where a resolution step ends: the registry decides how the
+	 * {@link FieldSpec#isMultiple() multiplicity} of the field is realized, so that a value list is
+	 * built around a provider that edits one value at a time no matter which step found that
+	 * provider.
+	 * </p>
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param field
+	 *        What is being edited.
+	 * @param model
+	 *        The field model providing value, editability, and change notifications.
+	 * @param provider
+	 *        The resolved control provider.
+	 */
+	private static ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model,
+			ReactFieldControlProvider provider) {
+		return FieldControlRegistry.getInstance().createControl(context, field, model, provider);
 	}
 
 	/**
@@ -348,13 +384,13 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 			.setBooleanPresentation(booleanPresentation(annotations, type))
 			.setTriState(isTriState(type))
 			.setDateKind(DatePickerControlProvider.kind(annotations, type))
-			.setDateFormat(dateFormat(annotations, type, multiple))
-			.setNumberFormat(numberFormat(annotations, type, multiple));
+			.setDateFormat(dateFormat(annotations, type))
+			.setNumberFormat(numberFormat(annotations, type));
 	}
 
 	/**
 	 * The format a numeric attribute is displayed in and entered in, or {@code null} if the attribute
-	 * does not hold a single number.
+	 * holds no numbers.
 	 *
 	 * <p>
 	 * The attribute's {@code format} annotation where it has one, the user's default format for
@@ -375,24 +411,24 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 		if (part == null) {
 			return null;
 		}
-		return numberFormat(part, part.getType(), part.isMultiple());
+		return numberFormat(part, part.getType());
 	}
 
 	/**
-	 * The format a numeric value is displayed in and entered in, or {@code null} if the value is no
-	 * single number.
+	 * The format a numeric value is displayed in and entered in, or {@code null} if the type holds
+	 * no numbers.
+	 *
+	 * <p>
+	 * The format of <em>one</em> number, which is also what a field holding several of them writes
+	 * each of its values in.
+	 * </p>
 	 *
 	 * @param annotations
 	 *        Where the {@code format} annotation is read from.
 	 * @param type
 	 *        The model type of the value.
-	 * @param multiple
-	 *        Whether the value is a collection of numbers rather than a single one.
 	 */
-	public static Format numberFormat(AnnotationLookup annotations, TLType type, boolean multiple) {
-		if (multiple) {
-			return null;
-		}
+	public static Format numberFormat(AnnotationLookup annotations, TLType type) {
 		Class<?> valueType = PrimitiveTypeUtil.asNonPrimitive(valueType(type));
 		if (!Number.class.isAssignableFrom(valueType)) {
 			return null;
@@ -430,7 +466,7 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 
 	/**
 	 * The format a point in time held by the given attribute is displayed in, or {@code null} if
-	 * the attribute does not hold a single point in time.
+	 * the attribute holds no points in time.
 	 *
 	 * <p>
 	 * The attribute's {@code format} annotation where it has one, the one of its type otherwise,
@@ -447,22 +483,25 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 		if (part == null) {
 			return null;
 		}
-		return dateFormat(part, part.getType(), part.isMultiple());
+		return dateFormat(part, part.getType());
 	}
 
 	/**
-	 * The format a point in time is displayed in, or {@code null} if the value is no single point
-	 * in time.
+	 * The format a point in time is displayed in, or {@code null} if the type holds no points in
+	 * time.
+	 *
+	 * <p>
+	 * The format of <em>one</em> point in time, which is also what a field holding several of them
+	 * writes each of its values in.
+	 * </p>
 	 *
 	 * @param annotations
 	 *        Where the {@code format} annotation is read from.
 	 * @param type
 	 *        The model type of the value.
-	 * @param multiple
-	 *        Whether the value is a collection of points in time rather than a single one.
 	 */
-	public static DateFormat dateFormat(AnnotationLookup annotations, TLType type, boolean multiple) {
-		if (multiple || !Date.class.isAssignableFrom(PrimitiveTypeUtil.asNonPrimitive(valueType(type)))) {
+	public static DateFormat dateFormat(AnnotationLookup annotations, TLType type) {
+		if (!Date.class.isAssignableFrom(PrimitiveTypeUtil.asNonPrimitive(valueType(type)))) {
 			return null;
 		}
 		return dateFormat(annotations, type, DatePickerControlProvider.kind(annotations, type));
@@ -470,18 +509,18 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 
 	/**
 	 * The formats a point in time may be typed in, e.g. as the bound of a table filter, or
-	 * {@code null} if the value is no single point in time.
+	 * {@code null} if the type holds no points in time.
 	 *
 	 * <p>
-	 * The {@link #dateFormat(AnnotationLookup, TLType, boolean) display format} first, which also
-	 * writes the value, then the default formats of the kind of value: a value is accepted the way
-	 * it is shown and in the way a person is used to type it.
+	 * The {@link #dateFormat(AnnotationLookup, TLType) display format} first, which also writes the
+	 * value, then the default formats of the kind of value: a value is accepted the way it is shown
+	 * and in the way a person is used to type it.
 	 * </p>
 	 *
-	 * @see #dateFormat(AnnotationLookup, TLType, boolean)
+	 * @see #dateFormat(AnnotationLookup, TLType)
 	 */
-	public static List<DateFormat> dateInputFormats(AnnotationLookup annotations, TLType type, boolean multiple) {
-		DateFormat displayFormat = dateFormat(annotations, type, multiple);
+	public static List<DateFormat> dateInputFormats(AnnotationLookup annotations, TLType type) {
+		DateFormat displayFormat = dateFormat(annotations, type);
 		if (displayFormat == null) {
 			return null;
 		}

@@ -97,6 +97,15 @@ import com.top_logic.util.error.TopLogicException;
  */
 public class AnnotationsFieldControlProvider implements ReactFieldControlProvider {
 
+	/**
+	 * The annotations of a model element are edited as a whole: the editor offers the kinds of
+	 * annotation the element accepts and writes the resulting list back in one go.
+	 */
+	@Override
+	public boolean editsCollections() {
+		return true;
+	}
+
 	@Override
 	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
 		// The identity is the edited element: two elements that both carry no annotations produce no

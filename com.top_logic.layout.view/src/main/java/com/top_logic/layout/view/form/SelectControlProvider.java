@@ -95,6 +95,20 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 		return _optionProvider;
 	}
 
+	/**
+	 * A selection is made on one control, however many options it accepts.
+	 *
+	 * <p>
+	 * The selected values are the value of the {@link SelectFieldModel} the control is bound to, so
+	 * a multi-valued field is picked from in one dropdown rather than through one dropdown per
+	 * value.
+	 * </p>
+	 */
+	@Override
+	public boolean editsCollections() {
+		return true;
+	}
+
 	@Override
 	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
 		SelectFieldModel selectModel = (SelectFieldModel) model;

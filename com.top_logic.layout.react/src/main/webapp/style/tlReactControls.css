@@ -3092,6 +3092,16 @@ button.tlMenu__item--disabled:hover {
 	outline: none;
 }
 
+/* The row of a cell input spans the cell, so the input inside it still fills the cell; the link
+   beside it keeps the horizontal padding the input gave up. */
+.tlTableView__cell .tlReactTextInput__row {
+	height: 100%;
+}
+
+.tlTableView__cell .tlReactTextInput__open {
+	padding-right: var(--spacing-03);
+}
+
 /* Excel-style focus: highlight the entire cell only when an input is focused */
 .tlTableView__cell:has(.tlReactTextInput:focus, .tlReactNumberInput:focus, .tlReactDatePicker:focus, .tlReactSelect:focus) {
 	outline: 2px solid var(--focus);
@@ -4237,6 +4247,49 @@ button.tlMenu__item--disabled:hover {
 	color: var(--text-primary);
 	font-family: var(--font-family);
 	font-size: var(--body-compact-01-font-size);
+}
+
+/* A single-line input, with room beside it for the link that opens what it holds (url, e-mail,
+   phone). The row is there whether or not the link is, so that the input keeps its place - and
+   with it the focus - when a value starts or stops pointing somewhere. Without the link it adds
+   nothing: the input stretches over the full row, which takes the input's own height. */
+.tlReactTextInput__row {
+	display: flex;
+	align-items: stretch;
+	width: 100%;
+	min-width: 0;
+}
+
+.tlReactTextInput__row > .tlReactTextInput {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.tlReactTextInput__open {
+	display: flex;
+	flex: 0 0 auto;
+	align-self: center;
+	align-items: center;
+	margin-left: var(--spacing-02);
+	color: var(--link-primary);
+	text-decoration: none;
+	line-height: 1;
+}
+
+.tlReactTextInput__open:hover,
+.tlReactTextInput__open:focus {
+	color: var(--link-primary-hover);
+}
+
+/* The value itself is the link while the field is only displayed */
+.tlReactTextInput--link {
+	color: var(--link-primary);
+	text-decoration: underline;
+}
+
+.tlReactTextInput--link:hover,
+.tlReactTextInput--link:focus {
+	color: var(--link-primary-hover);
 }
 
 /* Native select arrow spacing */

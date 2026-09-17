@@ -59,6 +59,20 @@
 					</annotations>
 				</datatype>
 				
+				<datatype name="EMail" db_type="varchar" db_size="1333" kind="String">
+					<storage-mapping 
+						class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping" 
+						application-type="java.lang.String"
+					/>
+				</datatype>
+				
+				<datatype name="Phone" db_type="varchar" db_size="1333" kind="String">
+					<storage-mapping 
+						class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping" 
+						application-type="java.lang.String"
+					/>
+				</datatype>
+				
 				<datatype name="JSON" db_type="varchar" db_size="1333" kind="Custom">
 					<storage-mapping 
 						class="com.top_logic.element.meta.kbbased.storage.mappings.JSONStorageMapping" 

@@ -7,7 +7,6 @@ package com.top_logic.layout.view.form;
 
 import java.util.Objects;
 
-import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
@@ -18,11 +17,11 @@ import com.top_logic.model.TLStructuredTypePart;
  *
  * <p>
  * The object may be a base persistent object (view mode) or a {@link TLObjectOverlay} (edit mode).
- * Dirty tracking is handled by the inherited {@link AbstractFieldModel} logic which compares the
+ * Dirty tracking is handled by the inherited {@link BoundFieldModel} logic which compares the
  * current value to the default value.
  * </p>
  */
-public class AttributeFieldModel extends AbstractFieldModel {
+public class AttributeFieldModel extends BoundFieldModel {
 
 	private TLObject _object;
 
@@ -44,19 +43,13 @@ public class AttributeFieldModel extends AbstractFieldModel {
 	}
 
 	@Override
-	public Object getValue() {
+	protected Object readValue() {
 		return _object.tValue(_part);
 	}
 
 	@Override
-	public void setValue(Object value) {
-		Object oldValue = getValue();
-		if (Objects.equals(oldValue, value)) {
-			return;
-		}
+	protected void writeValue(Object value) {
 		_object.tUpdate(_part, value);
-		setValueInternal(value);
-		fireValueChanged(oldValue, value);
 	}
 
 	/**
@@ -113,24 +106,6 @@ public class AttributeFieldModel extends AbstractFieldModel {
 	 */
 	public TLObject getObject() {
 		return _object;
-	}
-
-	/**
-	 * Re-reads the current value from the underlying object and fires a value change if the cached
-	 * value differs.
-	 *
-	 * <p>
-	 * Call this after external code has modified the object (e.g. a detail dialog applying its
-	 * overlay onto a row overlay) without going through {@link #setValue(Object)}.
-	 * </p>
-	 */
-	public void refreshFromObject() {
-		Object cachedValue = getCachedValue();
-		Object liveValue = _object.tValue(_part);
-		if (!Objects.equals(cachedValue, liveValue)) {
-			setValueInternal(liveValue);
-			fireValueChanged(cachedValue, liveValue);
-		}
 	}
 
 	private TLStructuredTypePart resolvePart(TLObject obj) {

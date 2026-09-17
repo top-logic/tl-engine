@@ -19,6 +19,7 @@ import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
@@ -27,17 +28,24 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.element.TableElement;
-import com.top_logic.layout.view.element.TableElement.ColumnConfig;
 import com.top_logic.layout.view.element.TableElement.CriterionConfig;
 import com.top_logic.layout.view.element.TableElement.DropConfig;
 import com.top_logic.layout.view.element.TableElement.PresetConfig;
 import com.top_logic.layout.view.element.TableElement.PresetsConfig;
 import com.top_logic.layout.view.form.RowEditPolicy;
+import com.top_logic.layout.view.table.AttributeColumn;
+import com.top_logic.layout.view.table.ColumnDeclaration;
+import com.top_logic.layout.view.table.ColumnDeclarations;
+import com.top_logic.layout.view.table.ComputedColumn;
 import com.top_logic.layout.view.table.DropTargetMode;
+import com.top_logic.layout.view.table.DynamicColumns;
+import com.top_logic.layout.view.table.EmbeddedColumns;
 import com.top_logic.layout.view.table.FilterStateConfig;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.SelectionMode;
+import com.top_logic.table.SortDirection;
 
 /**
  * Tests parsing and instantiation of {@link TableElement}.
@@ -262,6 +270,185 @@ public class TestTableElement extends TestCase {
 	}
 
 	/**
+	 * Tests that the {@code <update>} and {@code <can-update>} of a {@code <computed-column>} are
+	 * parsed, and that a column that is edited without saying what its values are is reported.
+	 */
+	public void testParseEditableComputedColumn() throws Exception {
+		TableElement.Config tableConfig = readTableConfig();
+		ComputedColumn.Config total = computedColumn(tableConfig);
+
+		assertEquals("total", total.getName());
+		assertNotNull("The column writes an edited value back.", total.getUpdate());
+		assertNotNull("The column says which of its rows are edited.", total.getCanUpdate());
+		assertNull("A column that is not edited declares neither.",
+			TypedConfiguration.newConfigItem(ComputedColumn.Config.class).getUpdate());
+
+		TableElement.Config untyped = TypedConfiguration.copy(tableConfig);
+		ComputedColumn.Config edited = computedColumn(untyped);
+		edited.update(edited.descriptor().getProperty(ComputedColumn.Config.TYPE), null);
+
+		assertContains("must declare the type", errors(untyped));
+	}
+
+	/**
+	 * Tests that an {@code <embedded-columns>} is parsed with the path leading to the embedded
+	 * object - or the function computing it and the type it is of - and the columns embedded from
+	 * it.
+	 */
+	public void testParseEmbeddedColumns() throws Exception {
+		List<PolymorphicConfiguration<? extends ColumnDeclaration>> columns =
+			readTableConfig().getColumns().getColumns();
+
+		EmbeddedColumns.Config owner = (EmbeddedColumns.Config) columns.get(4);
+		assertEquals("owner.contact", owner.getReference());
+		assertNull("An embedding over a reference takes the type from that reference.",
+			owner.getType());
+		assertNull("An embedding over a reference is named after it.", owner.getName());
+		assertEquals("Declarations of any kind are embedded.", 2, owner.getColumns().size());
+		assertEquals("name", ((AttributeColumn.Config) owner.getColumns().get(0)).getAttribute());
+		assertEquals("mail", ((ComputedColumn.Config) owner.getColumns().get(1)).getName());
+
+		EmbeddedColumns.Config accounts = (EmbeddedColumns.Config) columns.get(5);
+		assertEquals("accounts", accounts.getName());
+		assertEquals("demo.test:Account", accounts.getType().qualifiedName());
+		assertNotNull("The embedded object is computed.", accounts.getObject());
+		assertTrue("The function yields a collection of objects.", accounts.getMultiple());
+		assertFalse("An embedding reaches one object unless it says otherwise.",
+			TypedConfiguration.newConfigItem(EmbeddedColumns.Config.class).getMultiple());
+		assertEquals("Account",
+			((ResKey.LiteralKey) accounts.getLabel()).getTranslationWithoutFallbacks(Locale.ENGLISH));
+	}
+
+	/**
+	 * Tests that a {@code <dynamic-columns>} is parsed with everything it says about the columns it
+	 * computes: the objects standing for them, their names, labels, values, edits, aggregate and
+	 * the display all of them share.
+	 */
+	public void testParseDynamicColumns() throws Exception {
+		DynamicColumns.Config milestones = dynamicColumns(readTableConfig());
+
+		assertEquals("milestones", milestones.getName());
+		assertEquals("tl.core:Double", milestones.getType().qualifiedName());
+		assertFalse("A cell holds a single value unless the columns say otherwise.",
+			milestones.getMultiple());
+		assertNull("The columns share the named type, so none of them computes one.",
+			milestones.getColumnType());
+		assertEquals("The configured width of every computed column, in pixels.", 90,
+			milestones.getWidth());
+		assertTrue("The columns stay read-only while the rows are edited.", milestones.getReadonly());
+		assertNotNull("The objects standing for the columns are computed.", milestones.getColumns());
+		assertNotNull("The columns are named after their objects.", milestones.getColumnName());
+		assertNotNull("The columns are labelled after their objects.", milestones.getColumnLabel());
+		assertNotNull("The cell value is computed.", milestones.getValue());
+		assertNotNull("An edited value is written back.", milestones.getUpdate());
+		assertNotNull("The columns say which of their rows are edited.", milestones.getCanUpdate());
+		assertNotNull("The columns aggregate over a group.", milestones.getAggregate());
+		assertEquals("Should declare one input", 1, milestones.getInputs().size());
+		assertEquals("testInput", milestones.getInputs().get(0).getChannelName());
+
+		DynamicColumns.Config plain = TypedConfiguration.newConfigItem(DynamicColumns.Config.class);
+		assertNull("A declaration that names no type computes none either.", plain.getColumnType());
+		assertEquals("The columns keep the width their type derives.", 0, plain.getWidth());
+		assertFalse("The columns are edited like any other unless they say otherwise.",
+			plain.getReadonly());
+	}
+
+	/**
+	 * Tests that computed columns contribute no column name before the table has been built - what
+	 * columns there are is decided by data - and that the rest of the table is named as before.
+	 */
+	public void testDynamicColumnsContributeNoNames() throws Exception {
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestTableElement.class);
+		List<ColumnDeclaration> declarations =
+			ColumnDeclarations.instantiate(context, readTableConfig().getColumns());
+		context.checkErrors();
+
+		ColumnDeclaration milestones = declarations.get(declarations.size() - 1);
+		assertEquals("Only the data at hand says which columns there are.",
+			List.of(), milestones.declaredNames());
+		assertEquals("Columns nothing is known about yet do not sort the table.",
+			List.of(), milestones.defaultSort());
+	}
+
+	/**
+	 * Tests that computed columns say what their values are in exactly one way, and that columns
+	 * that are edited say it at all.
+	 */
+	public void testDynamicColumnsDeclareTheirValueType() throws Exception {
+		TableElement.Config both = TypedConfiguration.copy(readTableConfig());
+		DynamicColumns.Config computedType = dynamicColumns(both);
+		computedType.update(computedType.descriptor().getProperty(DynamicColumns.Config.COLUMN_TYPE),
+			TypedConfiguration.newConfigItem(Expr.Null.class));
+
+		assertContains("not both", errors(both));
+
+		TableElement.Config untyped = TypedConfiguration.copy(readTableConfig());
+		DynamicColumns.Config edited = dynamicColumns(untyped);
+		edited.update(edited.descriptor().getProperty(DynamicColumns.Config.TYPE), null);
+
+		assertContains("must declare the type", errors(untyped));
+	}
+
+	/**
+	 * The {@code <dynamic-columns>} of the given table.
+	 */
+	private static DynamicColumns.Config dynamicColumns(TableElement.Config tableConfig) {
+		for (PolymorphicConfiguration<? extends ColumnDeclaration> column : tableConfig.getColumns().getColumns()) {
+			if (column instanceof DynamicColumns.Config dynamic) {
+				return dynamic;
+			}
+		}
+		throw new AssertionError("The table declares computed columns.");
+	}
+
+	/**
+	 * Tests that the columns of an embedding are named after the path leading to them, so that a
+	 * column of the embedded object and one of the row itself stay apart.
+	 */
+	public void testEmbeddedColumnsAreNamedAfterTheirPath() throws Exception {
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestTableElement.class);
+		List<ColumnDeclaration> declarations =
+			ColumnDeclarations.instantiate(context, readTableConfig().getColumns());
+		context.checkErrors();
+
+		assertEquals(List.of("name", "active", "owner", "total", "owner.contact.name",
+			"owner.contact.mail", "accounts.number"),
+			ColumnDeclarations.declaredNames(declarations));
+	}
+
+	/**
+	 * Tests that an embedding saying which object it shows in more than one way - or in no way at
+	 * all - is reported.
+	 */
+	public void testEmbeddedTargetIsDeclaredOnce() throws Exception {
+		TableElement.Config both = TypedConfiguration.copy(readTableConfig());
+		EmbeddedColumns.Config referenced = (EmbeddedColumns.Config) both.getColumns().getColumns().get(4);
+		referenced.update(referenced.descriptor().getProperty(EmbeddedColumns.Config.TYPE),
+			TLModelPartRef.ref("demo.test:Contact"));
+
+		assertContains("not both", errors(both));
+
+		TableElement.Config neither = TypedConfiguration.copy(readTableConfig());
+		EmbeddedColumns.Config computed = (EmbeddedColumns.Config) neither.getColumns().getColumns().get(5);
+		computed.update(computed.descriptor().getProperty(EmbeddedColumns.Config.OBJECT), null);
+		computed.update(computed.descriptor().getProperty(EmbeddedColumns.Config.TYPE), null);
+
+		assertContains("must say which object", errors(neither));
+	}
+
+	/**
+	 * The {@code <computed-column>} of the given table.
+	 */
+	private static ComputedColumn.Config computedColumn(TableElement.Config tableConfig) {
+		for (PolymorphicConfiguration<? extends ColumnDeclaration> column : tableConfig.getColumns().getColumns()) {
+			if (column instanceof ComputedColumn.Config computed) {
+				return computed;
+			}
+		}
+		throw new AssertionError("The table declares a computed column.");
+	}
+
+	/**
 	 * The problems reported while instantiating the given configuration.
 	 */
 	private static List<String> errors(TableElement.Config tableConfig) {
@@ -305,7 +492,8 @@ public class TestTableElement extends TestCase {
 		TableElement element = (TableElement) context.getInstance(tableConfig);
 		context.checkErrors();
 
-		assertEquals("demo.test:Row,|name,active,owner,", element.tableId().value());
+		assertEquals("demo.test:Row,|name,active,owner,total,owner.contact.name,owner.contact.mail,"
+			+ "accounts.number,", element.tableId().value());
 	}
 
 	/**
@@ -349,18 +537,63 @@ public class TestTableElement extends TestCase {
 	}
 
 	/**
-	 * Tests that a {@code <column>} carries the display width it configures, and that a column
-	 * configuring none keeps the width its type derives.
+	 * Tests that a {@code <column>} carries what it declares about its column: the display width,
+	 * the header label overriding the attribute's own, the sort direction and the read-only flag.
 	 */
-	public void testParseColumnWidth() throws Exception {
-		List<ColumnConfig> columns = readTableConfig().getColumns().getColumns();
+	public void testParseAttributeColumns() throws Exception {
+		List<PolymorphicConfiguration<? extends ColumnDeclaration>> columns =
+			readTableConfig().getColumns().getColumns();
 
-		assertEquals("name", columns.get(0).getAttribute());
-		assertEquals("The configured width in pixels.", 220, columns.get(0).getWidth());
+		AttributeColumn.Config name = (AttributeColumn.Config) columns.get(0);
+		assertEquals("name", name.getAttribute());
+		assertEquals("The configured width in pixels.", 220, name.getWidth());
+		assertEquals("The column overrides the attribute's label.", "Row name",
+			((ResKey.LiteralKey) name.getLabel()).getTranslationWithoutFallbacks(Locale.ENGLISH));
+		assertEquals(SortDirection.ASC, name.getSort());
+		assertFalse("A column is editable unless it says otherwise.", name.getReadonly());
 
-		assertEquals("active", columns.get(1).getAttribute());
-		assertEquals("A column without a width keeps the one its type derives.", 0,
-			columns.get(1).getWidth());
+		AttributeColumn.Config active = (AttributeColumn.Config) columns.get(1);
+		assertEquals("active", active.getAttribute());
+		assertEquals("A column without a width keeps the one its type derives.", 0, active.getWidth());
+		assertNull("A column without a label keeps the attribute's.", active.getLabel());
+		assertNull("A column that declares no direction starts unsorted.", active.getSort());
+
+		AttributeColumn.Config owner = (AttributeColumn.Config) columns.get(2);
+		assertEquals("owner", owner.getAttribute());
+		assertTrue("The column stays read-only while the rows are edited.", owner.getReadonly());
+	}
+
+	/**
+	 * Tests that a {@code <computed-column>} is parsed with the type of its values, the inputs its
+	 * value function receives and what it aggregates over a group.
+	 */
+	public void testParseComputedColumn() throws Exception {
+		List<PolymorphicConfiguration<? extends ColumnDeclaration>> columns =
+			readTableConfig().getColumns().getColumns();
+
+		ComputedColumn.Config total = (ComputedColumn.Config) columns.get(3);
+		assertEquals("total", total.getName());
+		assertEquals("tl.core:Double", total.getType().qualifiedName());
+		assertFalse("A cell holds a single value unless the column says otherwise.",
+			total.getMultiple());
+		assertNotNull("The value function is declared.", total.getValue());
+		assertEquals("Should declare one input", 1, total.getInputs().size());
+		assertEquals("testInput", total.getInputs().get(0).getChannelName());
+		assertNotNull("The column aggregates over a group.", total.getAggregate());
+		assertNull("A column without a label is named after itself.", total.getLabel());
+	}
+
+	/**
+	 * Tests that two declarations naming the same column are reported: a table refers to its
+	 * columns by name, so two of them sharing one could not be told apart.
+	 */
+	public void testDuplicateColumnNameReported() throws Exception {
+		TableElement.Config tableConfig = TypedConfiguration.copy(readTableConfig());
+		AttributeColumn.Config duplicate = TypedConfiguration.newConfigItem(AttributeColumn.Config.class);
+		duplicate.update(duplicate.descriptor().getProperty(AttributeColumn.Config.ATTRIBUTE), "active");
+		tableConfig.getColumns().getColumns().add(duplicate);
+
+		assertContains("more than once", errors(tableConfig));
 	}
 
 	/**

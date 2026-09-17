@@ -5,20 +5,16 @@
  */
 package com.top_logic.layout.view.element;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationItem;
-import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.basic.config.constraint.annotation.Constraint;
-import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
@@ -27,7 +23,9 @@ import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.FormModel;
 import com.top_logic.layout.view.form.RowEditPolicy;
 import com.top_logic.layout.view.form.RowSetTableControl;
-import com.top_logic.layout.view.table.ColumnBinding;
+import com.top_logic.layout.view.table.ColumnDeclaration;
+import com.top_logic.layout.view.table.ColumnDeclarations;
+import com.top_logic.layout.view.table.ColumnsConfig;
 
 /**
  * Declarative {@link UIElement} that creates a {@link RowSetTableControl} for an inline
@@ -143,61 +141,10 @@ public class CompositionTableElement implements UIElement {
 		int getHeight();
 	}
 
-	/**
-	 * Container for the list of column configurations.
-	 */
-	public interface ColumnsConfig extends ConfigurationItem {
-
-		/**
-		 * The column definitions.
-		 */
-		@DefaultContainer
-		List<ColumnConfig> getColumns();
-	}
-
-	/**
-	 * Configuration for a single column in the composition table.
-	 */
-	@TagName("column")
-	public interface ColumnConfig extends ConfigurationItem {
-
-		/** Configuration name for {@link #getAttribute()}. */
-		String ATTRIBUTE = "attribute";
-
-		/** Configuration name for {@link #getReadonly()}. */
-		String READONLY = "readonly";
-
-		/** Configuration name for {@link #getWidth()}. */
-		String WIDTH = "width";
-
-		/**
-		 * The name of the model attribute to display in this column.
-		 */
-		@Name(ATTRIBUTE)
-		@Mandatory
-		String getAttribute();
-
-		/**
-		 * Whether this column is always read-only regardless of form edit mode.
-		 */
-		@Name(READONLY)
-		boolean getReadonly();
-
-		/**
-		 * The column's default display width in pixels.
-		 *
-		 * <p>
-		 * This is the width the user sees until they resize the column themselves; from then on
-		 * their own width is remembered. {@code 0} - the default - keeps the width the column's
-		 * type derives.
-		 * </p>
-		 */
-		@Name(WIDTH)
-		@Constraint(NonNegative.class)
-		int getWidth();
-	}
-
 	private final Config _config;
+
+	/** The declared {@link Config#getColumns() columns}, in display order. */
+	private final List<ColumnDeclaration> _columns;
 
 	/**
 	 * Creates a new {@link CompositionTableElement} from configuration.
@@ -205,6 +152,7 @@ public class CompositionTableElement implements UIElement {
 	@CalledByReflection
 	public CompositionTableElement(InstantiationContext context, Config config) {
 		_config = config;
+		_columns = ColumnDeclarations.instantiate(context, config.getColumns());
 	}
 
 	@Override
@@ -218,17 +166,9 @@ public class CompositionTableElement implements UIElement {
 		// FormElement always sets a FormControl as the FormModel.
 		FormControl formControl = (FormControl) formModel;
 
-		List<RowSetTableControl.TableColumn> columns = new ArrayList<>();
-		if (_config.getColumns() != null) {
-			for (ColumnConfig col : _config.getColumns().getColumns()) {
-				columns.add(new RowSetTableControl.TableColumn(
-					col.getAttribute(), col.getReadonly(), ColumnBinding.TYPE_DERIVED, col.getWidth()));
-			}
-		}
-
 		String attribute = _config.getAttribute();
 		RowSetTableControl control = new RowSetTableControl(
-			context, formControl, new AttributeRowSetBinding(attribute), columns, RowEditPolicy.ALL);
+			context, formControl, new AttributeRowSetBinding(attribute), _columns, RowEditPolicy.ALL);
 		control.setFallbackTitle(attribute);
 		control.setDetailDialog(_config.getDetailDialog());
 		control.init();

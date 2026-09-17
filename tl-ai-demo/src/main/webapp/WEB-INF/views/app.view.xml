@@ -63,6 +63,15 @@
 							<de>Dunkles Design</de>
 						</label>
 					</set-theme>
+					<open-designer
+						image="css:bi bi-pencil-square"
+						placement="TOOLBAR"
+					>
+						<label>
+							<en>Layout designer</en>
+							<de>Layout-Designer</de>
+						</label>
+					</open-designer>
 					<generic-command
 						image="css:bi bi-box-arrow-in-right"
 						placement="TOOLBAR"
@@ -131,6 +140,21 @@
 						prompt-improver-agent="TL_PromptImprover"
 						trace-mode="overview"
 					/>
+				</nav-item>
+
+				<nav-item id="chat-composed"
+					icon="css:bi bi-layout-three-columns"
+				>
+					<label>
+						<en>Chat (composed elements)</en>
+						<de>Chat (Elemente)</de>
+					</label>
+					<!--
+						Issue #415: the chat built from standalone <chat-sessions> + <chat-thread> +
+						<chat-composer> sharing one conversation, instead of the one-element
+						<agent-chat>. See tl-ai-demo/chat-grouped.view.xml.
+					-->
+					<view-ref view="tl-ai-demo/chat-grouped.view.xml"/>
 				</nav-item>
 
 				<nav-item id="invoices"

@@ -245,6 +245,126 @@
   box-shadow: none;
 }
 
+/* Generic <data-list> reuses the session-rail look; make it fill its host pane and
+   let a row show an optional muted second line. Scoped so it never touches the rail
+   the chat's own <chat-sessions> renders. */
+/*
+ * <data-list> renders outside .tl-cockpit, so the chat's button reset and focus ring do not reach it.
+ * Without this, the row/new/search <button>s show the browser's default chrome (grey, square, bordered)
+ * instead of the .rail* styling - so reset them the same way here.
+ */
+:where(.tl-data-list button) {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.tl-data-list :focus-visible {
+  outline: 2px solid var(--focus, var(--button-primary));
+  outline-offset: 2px;
+  border-radius: var(--r-1);
+}
+
+.tl-data-list {
+  /*
+   * <data-list> renders outside .tl-cockpit, so the chat's component tokens are not in scope here;
+   * redeclare the ones the .rail* styles need. (A themeable token layer would hoist these to :root;
+   * see the tokens note.)
+   */
+  --chat-sidebar: 16.5rem;
+  --chat-rail-narrow: 3.25rem;
+  --r-1: calc(var(--corner-radius, 0.25rem) * 1.5);
+  --r-2: calc(var(--corner-radius, 0.25rem) * 2.5);
+  --r-3: calc(var(--corner-radius, 0.25rem) * 4);
+  --r-pill: 999px;
+  --chat-small: var(--body-01-font-size, 0.75rem);
+  --chat-danger: var(--support-danger, var(--support-error, #d3181b));
+  --chat-danger-soft: var(
+    --background-danger--lighter,
+    color-mix(in srgb, var(--support-error, #d3181b) 12%, transparent)
+  );
+  --chat-shadow: var(--shadow-menu, 0 2px 6px 0 rgba(0, 0, 0, 0.32));
+
+  display: flex;
+  flex: 0 0 auto;
+  width: var(--chat-sidebar);
+  height: 100%;
+  min-height: 0;
+}
+
+.tl-data-list.is-collapsed {
+  width: var(--chat-rail-narrow);
+}
+
+.tl-data-list .rail {
+  position: relative;
+  inset: auto;
+  z-index: auto;
+  width: 100%;
+  flex: 1 1 auto;
+  height: 100%;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Win over the chat's mobile-drawer width so the collapsed column stays narrow at every width. */
+.tl-data-list .rail.is-collapsed {
+  width: 100%;
+  flex-basis: auto;
+}
+
+/* Stay an in-flow collapsible rail at every width - not the chat's mobile drawer. */
+.tl-data-list .rail-collapse {
+  display: inline-grid;
+}
+
+.tl-data-list .rail-close {
+  display: none;
+}
+
+.tl-data-list .rail.is-collapsed .rail-header strong,
+.tl-data-list .rail.is-collapsed .rail-new span,
+.tl-data-list .rail.is-collapsed .rail-search,
+.tl-data-list .rail.is-collapsed .rail-list {
+  display: none;
+}
+
+/* Keep the collapsed header/new-button centred at narrow widths (the mobile query left-aligns them). */
+.tl-data-list .rail.is-collapsed .rail-header {
+  justify-content: center;
+  padding-inline: 0.25rem;
+}
+
+.tl-data-list .rail.is-collapsed .rail-new {
+  justify-content: center;
+  margin-inline: 0.5rem;
+  padding-inline: 0;
+}
+
+.tl-data-list .rail-open {
+  align-items: flex-start;
+}
+
+.tl-data-list .rail-open-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.tl-data-list .rail-line {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tl-data-list .rail-line-secondary {
+  font-size: var(--chat-small);
+  color: var(--text-secondary);
+}
+
 .tl-chat-sessions .rail-close {
   display: none;
 }

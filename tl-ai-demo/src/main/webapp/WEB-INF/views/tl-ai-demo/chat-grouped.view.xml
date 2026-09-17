@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="chatSession"/>
+		<channel name="newChatSignal"/>
+	</channels>
+	<stack direction="row">
+		<chat-session-binding
+			chat-id="grouped"
+			create-signal="newChatSignal"
+			selection="chatSession"
+		/>
+		<data-list
+			collapsible="true"
+			create="true"
+			create-channel="newChatSignal"
+			observed-types="tl.ai.execution:AgentSession"
+			search="true"
+			selection="chatSession"
+			types="tl.ai.execution:AgentSession"
+		>
+			<create-label>
+				<en>New chat</en>
+				<de>Neuer Chat</de>
+			</create-label>
+			<empty-text>
+				<en>No chats yet</en>
+				<de>Noch keine Chats</de>
+			</empty-text>
+			<group-by><![CDATA[s -> {
+				d = $s.get(`tl.ai.execution:AgentSession#lastUpdated`).toSystemCalendar();
+				t = today().toSystemCalendar();
+				switch {
+					$d.isDateEqual($t): #("Today"@en, "Heute"@de);
+					$d.isDateEqual($t.withDayAdded(-1)): #("Yesterday"@en, "Gestern"@de);
+					$d.isDateGreater($t.withDayAdded(-7)): #("Previous 7 days"@en, "Letzte 7 Tage"@de);
+					default: #("Older"@en, "Älter"@de);
+				}
+			}]]></group-by>
+			<lines>
+				<line attribute="title"/>
+			</lines>
+			<rows><![CDATA[all(`tl.ai.execution:AgentSession`)
+				.filter(s -> $s.get(`tl.ai.execution:AgentSession#owner`) == currentUser())
+				.filter(s -> $s.get(`tl.ai.execution:AgentSession#kind`) == `tl.ai.execution:SessionKind#CHAT`)
+				.sort((s -> $s.get(`tl.ai.execution:AgentSession#lastUpdated`)).comparator().desc())]]></rows>
+			<title>
+				<en>Chats</en>
+				<de>Chats</de>
+			</title>
+		</data-list>
+		<split-panel
+			orientation="vertical"
+			resizable="true"
+		>
+			<panes>
+				<pane
+					size="78.0"
+					unit="%"
+				>
+					<panel fill="true">
+						<chat-thread
+							chat-id="grouped"
+							input="chatSession"
+						/>
+					</panel>
+				</pane>
+				<pane
+					min-size="120"
+					size="22.0"
+					unit="%"
+				>
+					<panel fill="true">
+						<chat-composer
+							chat-id="grouped"
+							input="chatSession"
+						>
+							<controls
+								agent-picker="false"
+								attachments="false"
+								mcp="false"
+								model-picker="false"
+								thinking="false"
+								trace-picker="false"
+							/>
+						</chat-composer>
+					</panel>
+				</pane>
+			</panes>
+		</split-panel>
+	</stack>
+</view>

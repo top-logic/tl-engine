@@ -7,6 +7,7 @@ package com.top_logic.layout.react.control.layout;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.layout.react.ReactContext;
@@ -33,6 +34,9 @@ public class ReactStackControl extends ReactControl {
 
 	/** @see #setCssClass(String) */
 	private static final String CSS_CLASS = "cssClass";
+
+	/** @see #setItemClass(String) */
+	private static final String ITEM_CLASS = "itemClass";
 
 	/**
 	 * Flex direction.
@@ -160,11 +164,28 @@ public class ReactStackControl extends ReactControl {
 	}
 
 	/**
+	 * Wraps each child in an element of the given CSS class, carrying the 0-based position of the
+	 * child as the CSS custom property {@code --tl-item-index}.
+	 *
+	 * <p>
+	 * A stylesheet composes a per-item value from that position, a staggered entrance animation
+	 * being the case it is meant for. Without a class, the children are placed in the stack
+	 * directly.
+	 * </p>
+	 *
+	 * @param itemClass
+	 *        The CSS class of the wrapper around each child, or {@code null} for no wrapper.
+	 */
+	public void setItemClass(String itemClass) {
+		putState(ITEM_CLASS, itemClass);
+	}
+
+	/**
 	 * Rendering-only state keys, omitted from the headless projection.
 	 */
 	@Override
-	protected java.util.Set<String> scriptingPresentationKeys() {
-		return java.util.Set.of(CSS_CLASS);
+	protected Set<String> scriptingPresentationKeys() {
+		return Set.of(CSS_CLASS, ITEM_CLASS);
 	}
 
 	/**

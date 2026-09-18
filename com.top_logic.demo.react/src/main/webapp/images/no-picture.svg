@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Placeholder of a picture that is not there: a picture glyph, crossed out. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 180" width="240" height="180" role="img" aria-label="No picture">
+	<rect width="240" height="180" fill="#dcdcdc"/>
+	<rect x="66" y="56" width="108" height="76" rx="6" fill="none" stroke="#9a9a9a" stroke-width="5"/>
+	<circle cx="92" cy="80" r="8" fill="#9a9a9a"/>
+	<path d="M74 122 L106 92 L128 114 L146 100 L166 122 Z" fill="#9a9a9a"/>
+	<line x1="60" y1="140" x2="180" y2="48" stroke="#7a7a7a" stroke-width="6" stroke-linecap="round"/>
+</svg>

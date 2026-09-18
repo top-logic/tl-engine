@@ -28,10 +28,17 @@ import com.top_logic.layout.view.ViewContext;
  * {@link UIElement} that stacks content over a base element.
  *
  * <p>
- * The first child is the base and defines the size of the overlay; every further child is placed
- * over it. A child that is a {@link LayerElement} brings the position it takes and a CSS class of
- * its own; any other child covers the base as a whole. A caption over a picture, a badge in the
- * corner of an avatar and a scrim over a card are all the same composition.
+ * The first child is the base; every further child is placed over it. A child that is a
+ * {@link LayerElement} brings the position it takes and a CSS class of its own; any other child
+ * covers the base as a whole. A caption over a picture, a badge in the corner of an avatar and a
+ * scrim over a card are all the same composition.
+ * </p>
+ *
+ * <p>
+ * The base gives the overlay its height; its width is what the surrounding layout grants, and a
+ * base sized relative to the overlay fills it. A base of fixed width wants a container that does not
+ * stretch its items, such as a stack aligned to its start: stretched past its base, the overlay
+ * anchors its layers to the free space beside the base rather than to the base.
  * </p>
  *
  * <p>

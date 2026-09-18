@@ -1768,7 +1768,8 @@ button.tlDrawerToggle:focus-visible {
 
 /* --- TLOverlay ------------------------------------------------------------- */
 
-/* The base defines the size of the overlay; every layer covers exactly that area. */
+/* The base gives the overlay its height and the surrounding layout its width; every layer covers
+   exactly that area. */
 .tlOverlay {
 	position: relative;
 	display: inline-block;

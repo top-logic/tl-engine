@@ -18,9 +18,15 @@ import com.top_logic.layout.react.control.ReactControl;
  * component.
  *
  * <p>
- * The base defines the size of the overlay; every layer is placed over it, anchored to an edge, a
- * corner or the middle of that area. A caption over a picture, a badge in the corner of an avatar
+ * The base gives the overlay its height; its width is what the surrounding layout grants, and a
+ * base sized relative to the overlay fills it. Every layer covers that area and is anchored to an
+ * edge, a corner or the middle of it. A caption over a picture, a badge in the corner of an avatar
  * and a scrim over a card are all the same composition.
+ * </p>
+ *
+ * <p>
+ * A base of fixed width wants a container that does not stretch its items: stretched past its base,
+ * the overlay anchors its layers to the free space beside the base rather than to the base.
  * </p>
  *
  * <p>
@@ -78,7 +84,7 @@ public class ReactOverlayControl extends ReactControl {
 	 * @param context
 	 *        The {@link ReactContext} for ID allocation and SSE registration.
 	 * @param base
-	 *        The control the layers are placed over, which defines the size of the overlay.
+	 *        The control the layers are placed over, which gives the overlay its height.
 	 * @param layers
 	 *        The content over the base, outermost last.
 	 */

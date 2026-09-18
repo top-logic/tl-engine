@@ -10,9 +10,9 @@ interface LayerDescriptor {
 /**
  * Stacks content over a base control.
  *
- * The base defines the size of the overlay; every layer covers that area and anchors its content to
- * an edge, a corner or the middle of it. The free space of a layer passes the pointer through to
- * the base below.
+ * The base gives the overlay its height, the surrounding layout its width; every layer covers that
+ * area and anchors its content to an edge, a corner or the middle of it. The free space of a layer
+ * passes the pointer through to the base below.
  *
  * State:
  * - base: ChildDescriptor

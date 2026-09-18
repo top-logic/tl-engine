@@ -7,6 +7,7 @@ package com.top_logic.tl.ai.core.execution;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -32,6 +33,11 @@ import com.top_logic.util.model.ModelService;
  * the mirror is where the writing happens - the store's writer thread at HEAD, not the agent thread
  * whose view is pinned to an older revision. Same harness as
  * {@link TestInteractionRecorderRevision}.
+ * </p>
+ *
+ * <p>
+ * Also that every committed change is announced on
+ * {@link AgentExecutionStore.ChangeListener} - the seam the browser push rides on.
  * </p>
  */
 public class TestAgentTaskMirror extends BasicTestCase {
@@ -127,6 +133,38 @@ public class TestAgentTaskMirror extends BasicTestCase {
 			store.createTask("Nowhere to go", null, null);
 		}
 		// Reaching here without an exception is the assertion.
+	}
+
+	/**
+	 * Every committed change is announced once, and a write that changed nothing is not.
+	 *
+	 * <p>
+	 * This is what a live view hangs off: without the notification a model-bound element only learns
+	 * of a background run's writes on the next browser command or on the SSE heartbeat.
+	 * </p>
+	 */
+	public void testCommittedChangesAreAnnounced() {
+		AtomicInteger announced = new AtomicInteger();
+		AgentExecutionStore store = AgentExecutionStore.getInstance();
+		AgentExecutionStore.ChangeListener listener = owner -> announced.incrementAndGet();
+		store.addChangeListener(listener);
+		try {
+			AgentSession session = newSession("mirror-notify");
+			assertEquals("Creating the session is a change.", 1, announced.get());
+
+			store.updateTitle(session, "Renamed");
+			assertEquals("So is renaming it.", 2, announced.get());
+
+			List<TaskState> plan = List.of(new TaskState("1", "Only task", null, TaskStore.STATUS_PENDING, 1));
+			store.syncTasks(session, plan, null);
+			assertEquals("So is writing the plan.", 3, announced.get());
+
+			store.syncTasks(session, plan, null);
+			assertEquals("Syncing the same plan again writes nothing, so it announces nothing.",
+				3, announced.get());
+		} finally {
+			store.removeChangeListener(listener);
+		}
 	}
 
 	/**

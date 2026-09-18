@@ -162,9 +162,9 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 *
 	 * <p>
 	 * The seam a live user interface needs: a run writes from a background thread, so nothing in a
-	 * browser window learns of the change by itself. A listener is called on the writer thread
-	 * <em>after</em> the commit, so it must return quickly and must never write through this
-	 * service (the writer would wait for itself) - it hands the work to its own scheduler.
+	 * browser window learns of the change by itself. A listener is called on the thread that asked
+	 * for the write, once the writer thread has committed it, so it must return quickly and must
+	 * not write through this service in turn - it hands the work to its own scheduler.
 	 * </p>
 	 */
 	public interface ChangeListener {
@@ -390,7 +390,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 *        Display title; may be <code>null</code>.
 	 */
 	public AgentSession createSession(SessionKind kind, Person owner, String title) {
-		return write(() -> {
+		AgentSession created = write(() -> {
 		try (Transaction tx = beginTx("Create agent session")) {
 			AgentSession session = TlAiExecutionFactory.getInstance().createAgentSession();
 			session.setKind(kindClassifier(kind));
@@ -405,6 +405,10 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 			return session;
 		}
 		});
+		// The owner as the caller named it, never read back from the new wrapper: this thread's view
+		// of the database predates the row the writer thread just created.
+		notifyChanged(owner);
+		return created;
 	}
 
 	/**
@@ -455,28 +459,28 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 * Stores the session metadata bag (approved tools, approval mode, loaded skills, ...).
 	 */
 	public void saveMetadata(AgentSession session, String metadataJson) {
-		write(() -> {
+		notifyChanged(write(() -> {
 			try (Transaction tx = beginTx("Save agent session metadata")) {
 				session.setMetadata(metadataJson);
 				session.setLastUpdated(new Date());
 				tx.commit();
 			}
-			return null;
-		});
+			return session.getOwner();
+		}));
 	}
 
 	/**
 	 * Updates the session title.
 	 */
 	public void updateTitle(AgentSession session, String title) {
-		write(() -> {
+		notifyChanged(write(() -> {
 			try (Transaction tx = beginTx("Update agent session title")) {
 				session.setTitle(title);
 				session.setLastUpdated(new Date());
 				tx.commit();
 			}
-			return null;
-		});
+			return session.getOwner();
+		}));
 	}
 
 	/**
@@ -836,8 +840,10 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 		if (session == null) {
 			return;
 		}
-		write(() -> {
+		notifyChanged(write(() -> {
 		try (Transaction tx = beginTx("Delete agent session")) {
+			// Read before the delete: afterwards the wrapper has no owner to report any more.
+			Person owner = session.getOwner();
 			List<AgentExecution> executions = executionsOf(session);
 			for (TLObject obj : allInstances(TlAiExecutionFactory.getInteractionRequestType())) {
 				InteractionRequest request = (InteractionRequest) obj;
@@ -856,9 +862,9 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 			}
 			session.tDelete();
 			tx.commit();
+			return owner;
 		}
-		return null;
-		});
+		}));
 	}
 
 	/**
@@ -1075,21 +1081,24 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 			return false;
 		}
 		List<TaskState> wanted = desired == null ? List.of() : desired;
-		Boolean changed = write(() -> {
+		// Read on the writer thread with the rest: the caller may be an agent thread whose view of
+		// the database predates the session row.
+		Person[] owner = { null };
+		boolean changed = write(() -> {
 			try (Transaction tx = beginTx("Sync agent tasks")) {
-				boolean modified = reconcileTasks(session, wanted, touchedBy);
-				if (!modified) {
+				if (!reconcileTasks(session, wanted, touchedBy)) {
 					// Nothing to say: committing an empty transaction would only burn a revision.
 					return Boolean.FALSE;
 				}
+				owner[0] = session.getOwner();
 				tx.commit();
 				return Boolean.TRUE;
 			}
-		});
-		if (changed.booleanValue()) {
-			notifyChanged(session.getOwner());
+		}).booleanValue();
+		if (changed) {
+			notifyChanged(owner[0]);
 		}
-		return changed.booleanValue();
+		return changed;
 	}
 
 	/**

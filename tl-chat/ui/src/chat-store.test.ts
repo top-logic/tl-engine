@@ -475,6 +475,96 @@ describe('the layout preferences', () => {
   })
 })
 
+describe('a mounted rail', () => {
+  /**
+   * The transcript's badge button is derived from this flag, so the flag is what decides whether a
+   * page without a `<chat-rail/>` shows a button that toggles nothing.
+   */
+  it('is not announced until a rail registers, and is withdrawn when it leaves', () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    expect(store.getState().railMounted).toBe(false)
+
+    const unregister = store.actions.registerRail()
+    expect(store.getState().railMounted).toBe(true)
+
+    unregister()
+    expect(store.getState().railMounted).toBe(false)
+
+    release()
+  })
+
+  /** A rail that mounts after the conversation must still flip the flag, so subscribers re-render. */
+  it('notifies the subscribers already listening', () => {
+    const store = chatStore('alpha', BOOT)
+    let notifications = 0
+    const release = store.subscribe(() => {
+      notifications += 1
+    })
+
+    const unregister = store.actions.registerRail()
+    expect(notifications).toBe(1)
+    expect(store.getState().railMounted).toBe(true)
+
+    unregister()
+    release()
+  })
+
+  /** Counted, not flagged: a remount during development leaves the flag set once, not stuck off. */
+  it('stays announced while a second rail is still mounted', () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+
+    const first = store.actions.registerRail()
+    const second = store.actions.registerRail()
+    first()
+    expect(store.getState().railMounted).toBe(true)
+
+    second()
+    expect(store.getState().railMounted).toBe(false)
+
+    release()
+  })
+
+  /**
+   * The chat quiescing between the two halves must not leave the count below zero.
+   *
+   * A store whose last element left is put back as declared and can be handed new subscribers, and
+   * the rail's own unregister still runs somewhere in that teardown. A count that went negative
+   * there would answer "no rail" to the next rail that mounts.
+   */
+  it('survives a quiesce between a rail registering and unregistering', () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    const unregister = store.actions.registerRail()
+
+    release()
+    unregister()
+
+    const again = store.subscribe(() => undefined)
+    store.actions.registerRail()
+    expect(store.getState().railMounted).toBe(true)
+
+    again()
+  })
+
+  /** An unregister that runs twice must not push the count below zero. */
+  it('ignores a repeated unregister', () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+
+    const unregister = store.actions.registerRail()
+    unregister()
+    unregister()
+    expect(store.getState().railMounted).toBe(false)
+
+    store.actions.registerRail()
+    expect(store.getState().railMounted).toBe(true)
+
+    release()
+  })
+})
+
 describe('the bootstrap', () => {
   it('is what the control put into its state', () => {
     expect(

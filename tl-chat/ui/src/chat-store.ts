@@ -242,6 +242,15 @@ export interface ChatState {
    */
   noticeTone: NoticeTone
 
+  /**
+   * Whether a `<chat-rail/>` on this `chat-id` is mounted.
+   *
+   * The transcript's rail badge button is derived from this rather than configured: with no rail on
+   * the page the button toggles something nobody can see. The rail registers itself on mount, so a
+   * rail that mounts after the conversation makes the button appear then.
+   */
+  railMounted: boolean
+
   // Layout preferences.
   sideOpen: boolean
   paneWidth: number
@@ -300,6 +309,13 @@ export interface ChatActions {
    * user's toggles alone.
    */
   seedCollapsedOnce(ids: string[]): void
+  /**
+   * Announces a mounted rail; the returned function unregisters it again.
+   *
+   * Counted rather than flagged, because React remounts an effect on the same component in
+   * development and two rails on one `chat-id` are not forbidden.
+   */
+  registerRail(): () => void
   bindComposer(api: ComposerApi | null): void
   insertReference(token: ReferenceToken): void
 }
@@ -396,6 +412,9 @@ export class ChatStore {
   /** Whether {@code <chat-rail/>} has already applied its configured collapsed default (D3). */
   private collapsedFromRail = false
 
+  /** How many {@code <chat-rail/>} elements on this `chat-id` are mounted. */
+  private rails = 0
+
   private composerApi: ComposerApi | null = null
 
   private readonly offeredModelsOf = memo(
@@ -456,6 +475,7 @@ export class ChatStore {
       paneContent: null,
       paneOptions: null,
       collapsedSections: boot.collapsedSections ?? ['context'],
+      railMounted: false,
     })
     this.effects = this.declareEffects()
     this.actions = this.declareActions()
@@ -1558,6 +1578,18 @@ export class ChatStore {
         if (this.collapsedFromRail) return
         this.collapsedFromRail = true
         this.patch({ collapsedSections: ids })
+      },
+
+      registerRail: () => {
+        this.rails += 1
+        this.patch({ railMounted: true })
+        let released = false
+        return () => {
+          if (released) return
+          released = true
+          this.rails = Math.max(0, this.rails - 1)
+          this.patch({ railMounted: this.rails > 0 })
+        }
       },
 
       bindComposer: (api) => {

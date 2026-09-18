@@ -338,7 +338,10 @@ An application configures this element in the design view. Its options fall into
   trace picker), `citations` (markers *and* the per-answer sources pill - off removes the whole
   citation surface from the transcript), the nested `<actions>` (`copy`/`rate`/`regenerate`/
   `timestamp`), the nested `<controls>` pickers, `placeholder`, `prompt-improver-agent` (an agent
-  dropdown), `rail-toggle`, `chat-id`, and the `input`/`busy` channels.
+  dropdown), `chat-id`, and the `input`/`busy` channels. The transcript's rail badge button is *not*
+  configured: it appears exactly when a `<chat-rail>` with the same `chat-id` is mounted, which the
+  rail announces to the shared store (`railMounted`), so a rail that mounts after the conversation
+  still makes the button appear.
 - **Points at code (name a component registered in TypeScript; do nothing unless a developer set that
   name up)** - `react-element`, `citation-renderer` (the renamed `annotations`), `<actions host>`,
   `menu-items`, and `reference-source`. Each such tooltip says so, and each carries `@Hidden`, so the

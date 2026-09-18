@@ -38,6 +38,10 @@ export function TLChatRail({ controlId }: TLCellProps) {
   const paneMode = state.paneMode === 'document' ? 'document' : 'card'
   const selected = typeof state.selected === 'string' ? state.selected : ''
 
+  // Tell the chat a rail is on the page, so `<chat-conversation/>` knows its badge button has
+  // something to open. Unregisters on unmount.
+  useEffect(() => actions.registerRail(), [actions])
+
   useEffect(() => {
     if (!selected || selected === chat.sessionId) return
     void actions.selectSession(selected)

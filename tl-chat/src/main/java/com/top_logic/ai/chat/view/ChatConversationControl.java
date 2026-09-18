@@ -75,7 +75,6 @@ public class ChatConversationControl extends ReactControl {
 		// the composer's trace picker then changes live.
 		putState("traceMode", config.getTrace().getExternalName());
 		putState("citations", Boolean.valueOf(config.getCitations()));
-		putState("railToggle", Boolean.valueOf(config.getRailToggle()));
 		String citationRenderer = config.getCitationRenderer();
 		putState("citationRenderer", citationRenderer == null ? "" : citationRenderer.trim());
 		Actions actions = config.getActions();

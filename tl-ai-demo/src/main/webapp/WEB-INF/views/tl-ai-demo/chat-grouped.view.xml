@@ -63,7 +63,6 @@
 				citations="true"
 				input="chatSession"
 				prompt-improver-agent="TL_PromptImprover"
-				rail-toggle="false"
 				trace="summary"
 			>
 				<actions rate="true"/>

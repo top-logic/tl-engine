@@ -125,13 +125,6 @@ public class ChatConversationElement implements UIElement {
 		String CITATIONS = "citations";
 
 		/**
-		 * Configuration property name for {@link #getRailToggle()}.
-		 *
-		 * @see #getRailToggle()
-		 */
-		String RAIL_TOGGLE = "rail-toggle";
-
-		/**
 		 * Configuration property name for {@link #getCitationRenderer()}.
 		 *
 		 * @see #getCitationRenderer()
@@ -263,14 +256,6 @@ public class ChatConversationElement implements UIElement {
 		@Label("Citations")
 		@BooleanDefault(true)
 		boolean getCitations();
-
-		/**
-		 * Whether the transcript bar shows the rail badge button.
-		 */
-		@Name(RAIL_TOGGLE)
-		@Label("Rail toggle")
-		@BooleanDefault(true)
-		boolean getRailToggle();
 
 		/**
 		 * Registered citation-renderer name (names a component set up in code). Empty keeps the

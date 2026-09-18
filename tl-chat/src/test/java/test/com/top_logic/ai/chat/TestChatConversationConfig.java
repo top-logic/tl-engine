@@ -35,7 +35,6 @@ public class TestChatConversationConfig extends TestCase {
 		// Transcript.
 		assertEquals(Trace.SUMMARY, config.getTrace());
 		assertTrue(config.getCitations());
-		assertTrue(config.getRailToggle());
 		assertNull(config.getCitationRenderer());
 		assertTrue(config.getActions().getCopy());
 		assertTrue(config.getActions().getRate());

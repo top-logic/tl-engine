@@ -12,7 +12,6 @@ describe('readThreadConfig', () => {
   it('defaults every transcript flag on (trace is the store axis, not here)', () => {
     expect(readThreadConfig({})).toEqual({
       citationMarkers: true,
-      railToggle: true,
       copy: true,
       rate: true,
       regenerate: true,
@@ -24,7 +23,6 @@ describe('readThreadConfig', () => {
     expect(
       readThreadConfig({
         citations: false,
-        railToggle: false,
         copy: false,
         rate: false,
         regenerate: false,
@@ -32,7 +30,6 @@ describe('readThreadConfig', () => {
       }),
     ).toEqual({
       citationMarkers: false,
-      railToggle: false,
       copy: false,
       rate: false,
       regenerate: false,

@@ -18,7 +18,6 @@ const { useCallback, useEffect, useMemo, useRef } = React
 
 export interface ThreadConfig {
   citationMarkers: boolean
-  railToggle: boolean
   copy: boolean
   rate: boolean
   regenerate: boolean
@@ -34,7 +33,6 @@ export interface ThreadConfig {
 export function readThreadConfig(state: Record<string, unknown>): ThreadConfig {
   return {
     citationMarkers: state.citations !== false,
-    railToggle: state.railToggle !== false,
     copy: state.copy !== false,
     rate: state.rate !== false,
     regenerate: state.regenerate !== false,
@@ -238,7 +236,9 @@ export function TLChatConversation({ controlId }: TLCellProps) {
           )}
           openInPane={actions.openPane}
           headerEnd={
-            config.railToggle ? (
+            // Derived, not configured: the badge button appears exactly when a `<chat-rail/>` on
+            // this `chat-id` is mounted, because with no rail it would toggle nothing visible.
+            chat.railMounted ? (
               <RailToggle
                 open={chat.sideOpen}
                 badge={0}

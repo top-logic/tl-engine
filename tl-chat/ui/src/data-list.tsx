@@ -145,7 +145,9 @@ export function TLDataList({ controlId }: TLCellProps) {
     typeof state.emptyText === 'string' && state.emptyText ? state.emptyText : labels.railEmpty
 
   const [query, setQuery] = useState('')
-  const [collapsed, setCollapsed] = useState(false)
+  // The element's first-load state. Not remembered: a `<data-list>` has no stored layout of its
+  // own, so this is what every page load starts from.
+  const [collapsed, setCollapsed] = useState(state.collapsed === true)
 
   const groups = useMemo(() => {
     const normalized = search ? query.trim().toLocaleLowerCase() : ''

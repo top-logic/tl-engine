@@ -47,6 +47,7 @@ public class TestHiddenElementOptions extends TestCase {
 		assertVisible(DataListElement.Config.class, DataListElement.Config.SEARCH);
 		assertVisible(DataListElement.Config.class, DataListElement.Config.COUNT);
 		assertVisible(DataListElement.Config.class, DataListElement.Config.CSS_CLASS);
+		assertVisible(DataListElement.Config.class, DataListElement.Config.COLLAPSED);
 		// Row actions are an administration decision, not a TypeScript name: the designer configures
 		// which commands a row offers, what the local channel is called and when the trigger shows.
 		assertVisible(DataListElement.Config.class, DataListElement.Config.ROW_COMMANDS);

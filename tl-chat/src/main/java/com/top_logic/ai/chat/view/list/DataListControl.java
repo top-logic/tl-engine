@@ -139,6 +139,7 @@ public class DataListControl extends ReactControl {
 
 		putState("search", Boolean.valueOf(config.getSearch()));
 		putState("collapsible", Boolean.valueOf(config.getCollapsible()));
+		putState("collapsed", Boolean.valueOf(config.getCollapsed()));
 		putState("title", labelOf(config.getTitle()));
 		putState("emptyText", labelOf(config.getEmptyText()));
 		putState("language", currentLanguage());

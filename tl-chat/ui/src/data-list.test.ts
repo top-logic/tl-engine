@@ -58,6 +58,20 @@ describe('the rendered data list', () => {
     const html = render(listState({ rows: [] }))
     expect(html).toContain('Nothing yet')
   })
+
+  /**
+   * `collapsed` is the element's first-load state - what a `<chat-dock>` uses so that opening the
+   * dock shows the conversation rather than three columns of chrome. The rows stay in the markup:
+   * collapsing narrows the list, it does not drop it.
+   */
+  it('starts collapsed when the element says so, and needs collapsible for it', () => {
+    const html = render(listState({ collapsible: true, collapsed: true }))
+    expect(html).toContain('class="tl-data-list is-collapsed"')
+    expect(html).toContain('Read the invoice')
+
+    expect(render(listState({ collapsible: true }))).toContain('class="tl-data-list"')
+    expect(render(listState({ collapsible: false, collapsed: true }))).toContain('class="tl-data-list"')
+  })
 })
 
 /**

@@ -161,6 +161,9 @@ public class DataListElement implements UIElement {
 		/** Configuration property name for {@link #getCollapsible()}. */
 		String COLLAPSIBLE = "collapsible";
 
+		/** Configuration property name for {@link #getCollapsed()}. */
+		String COLLAPSED = "collapsed";
+
 		/** Configuration property name for {@link #getTitle()}. */
 		String TITLE = "title";
 
@@ -339,6 +342,20 @@ public class DataListElement implements UIElement {
 		@Label("Collapsible")
 		@BooleanDefault(true)
 		boolean getCollapsible();
+
+		/**
+		 * Whether the list starts collapsed.
+		 *
+		 * <p>
+		 * The first-load state, and nothing more: it applies to every page load, and a user who
+		 * expands the list has it back to this on the next one. Needs {@link #getCollapsible()}, as
+		 * a list that cannot collapse cannot start collapsed either.
+		 * </p>
+		 */
+		@Name(COLLAPSED)
+		@Label("Collapsed")
+		@BooleanDefault(false)
+		boolean getCollapsed();
 
 		/**
 		 * The header title shown above the list.

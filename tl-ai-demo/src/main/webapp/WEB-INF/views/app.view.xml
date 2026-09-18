@@ -200,7 +200,13 @@
 				<chat chat-id="dock"
 					direction="row"
 				>
+					<!--
+						Collapsed on arrival, like the rail: opening the dock should show the
+						conversation, not three columns of chrome. Both are first-load states, so
+						the strip and the collapse arrow are how the user brings the other two back.
+					-->
 					<data-list
+						collapsed="true"
 						collapsible="true"
 						observed-types="tl.ai.execution:AgentSession"
 						search="true"
@@ -246,7 +252,7 @@
 						the page.
 					-->
 					<chat-rail input="dockPaneObject"
-						open="true"
+						open="false"
 						strip="true"
 					>
 						<section name="progress"

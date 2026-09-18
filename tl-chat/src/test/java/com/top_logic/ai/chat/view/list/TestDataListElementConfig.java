@@ -27,6 +27,7 @@ public class TestDataListElementConfig extends TestCase {
 
 		assertTrue("Search on by default.", config.getSearch());
 		assertTrue("Collapsible by default.", config.getCollapsible());
+		assertFalse("Expanded on arrival: a list starts showing what it holds.", config.getCollapsed());
 		assertNull("No grouping until a group-by expression is set.", config.getGroupBy());
 		assertNull("No lines configured by default.", config.getLines());
 		assertNull("No selection channel by default.", config.getSelection());

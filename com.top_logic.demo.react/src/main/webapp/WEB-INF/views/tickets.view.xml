@@ -328,7 +328,7 @@
 						<object-list
 							element-channel="comment"
 							element-type="demo.tickets:Comment"
-							input="ticket"
+							inputs="ticket"
 							items="ticket -> $ticket.get(`demo.tickets:Ticket#comments`)"
 							link="ticket -> comment -> { persistent = $comment.copy(transient: false); $persistent.set(`demo.tickets:Comment#author`, currentUser()); $persistent.set(`demo.tickets:Comment#date`, now()); $ticket.add(`demo.tickets:Ticket#comments`, $persistent); }"
 							new-element-channel="newComment"

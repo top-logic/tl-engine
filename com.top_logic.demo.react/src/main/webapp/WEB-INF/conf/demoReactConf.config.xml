@@ -25,11 +25,16 @@
 				</bundles>
 			</instance>
 		</config>
-		<!-- The role that may open the administration area, granted in security.xml. -->
+		<!--
+			The roles of this application: the administrator role that may open the administration
+			area, granted in security.xml, and the account reader role that makes accounts and
+			groups visible, granted by the role rules below.
+		-->
 		<config service-class="com.top_logic.base.services.InitialRolesManager">
 			<instance>
 				<roles>
 					<role name="demo.react.Administrator"/>
+					<role name="demo.react.AccountReader"/>
 				</roles>
 			</instance>
 		</config>
@@ -57,6 +62,54 @@
 				<groups>
 					<group name="users"/>
 				</groups>
+			</instance>
+		</config>
+		<!--
+			Every member of the "users" group reads every account and every group, so that the
+			deputy settings can offer the other accounts and show who stands in for whom. This is a
+			decision of this demo; a real application decides for itself whether and which accounts
+			a user may see. The engine grants an account read access to its own account only.
+		-->
+		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+			<instance>
+				<security-config>
+					<class name="tl.accounts:Person">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="demo.react.AccountReader"
+						/>
+					</class>
+					<class name="tl.accounts:Group">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="demo.react.AccountReader"
+						/>
+					</class>
+				</security-config>
+			</instance>
+		</config>
+		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
+			<instance>
+				<role-rules>
+					<rules>
+						<rule id="AccountsReadableByUsers"
+							inherit="true"
+							meta-element="tl.accounts:Person"
+							role="demo.react.AccountReader"
+						>
+							<group-with-name name="users"/>
+						</rule>
+						<rule id="GroupsReadableByUsers"
+							inherit="true"
+							meta-element="tl.accounts:Group"
+							role="demo.react.AccountReader"
+						>
+							<group-with-name name="users"/>
+						</rule>
+					</rules>
+				</role-rules>
 			</instance>
 		</config>
 		<!--
@@ -175,6 +228,21 @@
 						<text name="shadow-raised" value="none"/>
 					</theme>
 				</themes>
+			</instance>
+		</config>
+		<!--
+			The stylesheet of this application, contributed to the client resources of the React UI
+			behind the stylesheets of the controls, so that it overrides them. It holds the
+			staggered entrance of the repeater demo's items.
+		-->
+		<config service-class="com.top_logic.layout.react.resource.ClientResources">
+			<instance class="com.top_logic.layout.react.resource.ClientResources">
+				<resources>
+					<stylesheet name="tl-demo-react-css"
+						requires="tl-react-controls-css"
+						resource="/style/tl-demo-react.css"
+					/>
+				</resources>
 			</instance>
 		</config>
 	</services>

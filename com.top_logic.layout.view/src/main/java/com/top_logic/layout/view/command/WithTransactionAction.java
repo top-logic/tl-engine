@@ -79,6 +79,11 @@ public class WithTransactionAction implements ViewAction {
 	}
 
 	@Override
+	public boolean appliesFormState() {
+		return ViewActions.appliesFormState(_actions);
+	}
+
+	@Override
 	public Object execute(ReactContext context, Object input) {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		Transaction tx = kb.beginTransaction();

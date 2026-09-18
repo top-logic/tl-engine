@@ -17,6 +17,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.overlay.ConfirmDialogControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
+import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.util.Resources;
 
@@ -47,7 +48,7 @@ public class ConfirmAction extends InterruptibleViewAction {
 	 * Configuration for {@link ConfirmAction}.
 	 */
 	@TagName("confirm")
-	public interface Config extends PolymorphicConfiguration<ConfirmAction>, ActionScript.Inputs {
+	public interface Config extends PolymorphicConfiguration<ConfirmAction>, Inputs {
 
 		@Override
 		@ClassDefault(ConfirmAction.class)

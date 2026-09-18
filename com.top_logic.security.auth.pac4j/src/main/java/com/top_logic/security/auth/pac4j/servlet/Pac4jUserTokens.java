@@ -45,6 +45,14 @@ public class Pac4jUserTokens implements UserTokens {
 		installCSRFToken(displayContext);
 	}
 
+	/**
+	 * The {@link Client#getName() name} of the pac4j client that authenticated the user of this
+	 * session.
+	 */
+	public String getClientName() {
+		return _profile.getClientName();
+	}
+
 	@Override
 	public String getAccessToken() {
 		AccessToken accessToken = _profile.getAccessToken();

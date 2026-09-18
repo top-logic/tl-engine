@@ -70,6 +70,26 @@ html, body {
 	min-height: 0;
 }
 
+/* --- Repeated items ----------------------------------------------------- */
+
+/* Wrapper a container (a stack, a grid) puts around each of its children while it repeats them,
+   carrying the position of the item as --tl-item-index next to the class the container is
+   configured with. An application stylesheet composes a per-item value from that position, e.g. a
+   staggered entrance animation. The wrapper stays transparent for the layout of the container: it
+   passes the space it is given on to the item. */
+.tlItem {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	min-height: 0;
+}
+
+/* A wrapper around a filling item fills in turn, so that the fill contract survives the wrapper
+   and the item's height still resolves against the container. */
+.tlItem:has(> .tlFill) {
+	flex: 1;
+}
+
 /* --- React mount point ------------------------------------------------- */
 
 [data-react-module] {
@@ -1029,23 +1049,36 @@ button.tlPhotoCapture__overlayCaptureBtn:active .tlPhotoCapture__overlayCaptureI
 	color: var(--text-error);
 }
 
-/* --- TLPhotoViewer ----------------------------------------------------- */
+/* --- TLImage ----------------------------------------------------------- */
 
-.tlPhotoViewer {
-	display: inline-flex;
-	align-items: center;
-	font-family: var(--font-family);
+/* The box is as wide as the picture unless a size option says otherwise, and never wider than the
+   space available. */
+.tlImage {
+	display: block;
+	position: relative;
+	width: fit-content;
+	max-width: 100%;
 }
 
-.tlPhotoViewer__image {
-	max-width: 320px;
+.tlImage__image {
+	display: block;
+	width: 100%;
+	height: 100%;
 	border-radius: var(--corner-radius);
+}
+
+.tlImage--fit-cover .tlImage__image {
 	object-fit: cover;
 }
 
-.tlPhotoViewer__placeholder {
-	width: 320px;
-	height: 0;
+.tlImage--fit-contain .tlImage__image {
+	object-fit: contain;
+}
+
+/* Holds the space a size option reserves while there is no picture to show. */
+.tlImage__placeholder {
+	width: 100%;
+	height: 100%;
 }
 
 /* --- TLPdfViewer ------------------------------------------------------- */
@@ -1836,9 +1869,46 @@ button.tlDrawerToggle:focus-visible {
 	font-family: var(--font-family);
 }
 
-.tlGrid--gap-compact { gap: var(--spacing-02); }
-.tlGrid--gap-default { gap: var(--spacing-04); }
-.tlGrid--gap-loose   { gap: var(--spacing-06); }
+/* The gap is also published as a custom property, because the responsive column template has to
+   compute with it: bounding the number of auto-fit columns means raising the column minimum to the
+   width a row of that many columns leaves for one of them, gaps taken off. */
+.tlGrid--gap-compact { --tlGrid-gap: var(--spacing-02); gap: var(--tlGrid-gap); }
+.tlGrid--gap-default { --tlGrid-gap: var(--spacing-04); gap: var(--tlGrid-gap); }
+.tlGrid--gap-loose   { --tlGrid-gap: var(--spacing-06); gap: var(--tlGrid-gap); }
+
+/* --- TLOverlay ------------------------------------------------------------- */
+
+/* The base gives the overlay its height and the surrounding layout its width; every layer covers
+   exactly that area. */
+.tlOverlay {
+	position: relative;
+	display: inline-block;
+	max-width: 100%;
+}
+
+.tlOverlay__layer {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	/* The free space of a layer belongs to the base below it; what the layer shows takes the
+	   pointer back. */
+	pointer-events: none;
+}
+
+.tlOverlay__layer > * {
+	pointer-events: auto;
+}
+
+.tlOverlay__layer--fill { align-items: stretch; justify-content: stretch; }
+.tlOverlay__layer--top-left { align-items: flex-start; justify-content: flex-start; }
+.tlOverlay__layer--top { align-items: flex-start; justify-content: center; }
+.tlOverlay__layer--top-right { align-items: flex-start; justify-content: flex-end; }
+.tlOverlay__layer--left { align-items: center; justify-content: flex-start; }
+.tlOverlay__layer--center { align-items: center; justify-content: center; }
+.tlOverlay__layer--right { align-items: center; justify-content: flex-end; }
+.tlOverlay__layer--bottom-left { align-items: flex-end; justify-content: flex-start; }
+.tlOverlay__layer--bottom { align-items: flex-end; justify-content: center; }
+.tlOverlay__layer--bottom-right { align-items: flex-end; justify-content: flex-end; }
 
 /* --- TLCard ---------------------------------------------------------------- */
 
@@ -3869,6 +3939,18 @@ button.tlMenu__item--disabled:hover {
 	background: var(--layer-accent);
 	border: 1px solid var(--border-subtle);
 }
+
+/* The picture of the one the avatar represents, cropped to the circle. */
+.tlAvatar__image {
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+.tlAvatar--small { width: 1.5rem; height: 1.5rem; font-size: 0.5625rem; }
+.tlAvatar--large { width: 3rem; height: 3rem; font-size: 1.125rem; }
+.tlAvatar--x-large { width: 4rem; height: 4rem; font-size: 1.5rem; }
 
 /* --- TLRelativeTime ---------------------------------------------------- */
 

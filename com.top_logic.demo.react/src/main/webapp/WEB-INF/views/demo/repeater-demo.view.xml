@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Repeater demo: <object-list> as a generic repeater over a computed list of objects.
+	
+	The upper list takes the search field as its input and computes its elements from it, so
+	the grid follows what is typed: an empty term yields every flow node, a term yields the
+	nodes whose name contains it. Nothing holds the elements together - there is no container
+	channel and no composite reference; the items function alone decides what is shown, and
+	the list is read-only, so it configures neither <link> nor <new-element>.
+	
+	The grid places as many cards next to each other as fit, with a column at least 16rem wide
+	and at most three columns however wide the screen gets. Each card fades in a bit later than
+	the one before it: the repeater wraps every element in an item carrying its position as a
+	CSS custom property, and the application stylesheet composes the delay of its animation from
+	that position, addressing the items of a grid arrangement (style/tl-demo-react.css). The
+	engine ships the position, not the animation. Items are reused by key, so a card that
+	survives a change of the term keeps its DOM node and does not animate again - only the cards
+	that actually appear do.
+	
+	Each card is a view of its own (demo/repeater-card.view.xml), bound to the element the repeater
+	publishes. It needs one, because a card derives the picture of its flow node from that element
+	and a channel is declared per view. The thumbnail it stacks its name over is loaded lazily, so
+	the browser fetches the pictures of the cards that come into view.
+	
+	The lower list is the same repeater without any input: its items function takes no arguments
+	and names the objects outright. It arranges them as a list, one below the other, which is
+	also what a repeater does when no layout is configured. A list stacks its items rather than
+	placing them in a grid, so the entrance above does not reach them and they appear at once.
+-->
+<view>
+	<channels>
+		<channel name="search"/>
+	</channels>
+
+	<panel>
+		<title>
+			<en>Repeater</en>
+			<de>Repeater</de>
+		</title>
+
+		<text>
+			<label>
+				<en>The grid below repeats a card over the flow nodes the search field selects. It grows to at most three columns, and each card fades in 60ms after the one before it. The list at the bottom is the same element without inputs.</en>
+				<de>Das Gitter unten wiederholt eine Karte über die Flow-Knoten, die das Suchfeld auswählt. Es wächst auf höchstens drei Spalten, und jede Karte blendet sich 60ms nach der vorherigen ein. Die Liste ganz unten ist dasselbe Element ohne Eingaben.</de>
+			</label>
+		</text>
+
+		<fields>
+			<value-input
+				type="tl.core:String"
+				value="search"
+			>
+				<label>
+					<en>Search</en>
+					<de>Suche</de>
+				</label>
+			</value-input>
+		</fields>
+
+		<object-list
+			gap="default"
+			inputs="search"
+			items="search -> all(`test.flowchart:FlowNode`).filter(n -> $search.isEmpty() || $n.get(`test.flowchart:FlowNode#name`).stringContains($search))"
+			layout="grid"
+			max-columns="3"
+			min-column-width="16rem"
+			observed-types="test.flowchart:FlowNode"
+		>
+			<item>
+				<view-ref view="demo/repeater-card.view.xml">
+					<bind
+						channel="element"
+						to="element"
+					/>
+				</view-ref>
+			</item>
+			<empty-text>
+				<en>No flow node matches the search.</en>
+				<de>Kein Flow-Knoten passt zur Suche.</de>
+			</empty-text>
+		</object-list>
+
+		<text>
+			<label>
+				<en>Without inputs</en>
+				<de>Ohne Eingaben</de>
+			</label>
+		</text>
+
+		<object-list
+			gap="compact"
+			items="all(`test.flowchart:FlowNode`).subList(0, 3)"
+			layout="list"
+			observed-types="test.flowchart:FlowNode"
+		>
+			<item>
+				<card>
+					<text input="element"/>
+				</card>
+			</item>
+			<empty-text>
+				<en>No flow nodes.</en>
+				<de>Keine Flow-Knoten.</de>
+			</empty-text>
+		</object-list>
+	</panel>
+</view>

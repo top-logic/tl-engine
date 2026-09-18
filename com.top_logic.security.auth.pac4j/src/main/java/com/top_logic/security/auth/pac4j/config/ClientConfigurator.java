@@ -90,4 +90,23 @@ public interface ClientConfigurator {
 	 */
 	Client createClient(ServletContext context);
 
+	/**
+	 * Creates the pac4j {@link Client} authenticating the user of an established session again.
+	 *
+	 * <p>
+	 * The client carries the same settings as the one {@link #createClient(ServletContext)} builds,
+	 * but demands a fresh authentication instead of accepting the single-sign-on session the user
+	 * already has with the identity provider. It is registered under
+	 * {@link Pac4jConfigFactory#getReauthenticationName(String) a name of its own} and shares the
+	 * callback URL with the client it is derived from, which pac4j tells apart by the client name it
+	 * appends to that URL.
+	 * </p>
+	 *
+	 * @return The client, or <code>null</code> if this authentication mechanism cannot authenticate
+	 *         the user of an established session again.
+	 */
+	default Client createReauthenticationClient(ServletContext context) {
+		return null;
+	}
+
 }

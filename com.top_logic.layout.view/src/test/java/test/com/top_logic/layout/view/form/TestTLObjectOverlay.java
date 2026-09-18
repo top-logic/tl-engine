@@ -8,8 +8,10 @@ package test.com.top_logic.layout.view.form;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 import junit.framework.TestCase;
 
@@ -21,6 +23,7 @@ import com.top_logic.knowledge.service.Revision;
 import com.top_logic.layout.view.form.TLObjectOverlay;
 import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TransientObject;
 
@@ -211,6 +214,21 @@ public class TestTLObjectOverlay extends TestCase {
 	}
 
 	/**
+	 * Tests that the referrers of the edited object are those of the object itself: an expression
+	 * navigating backwards from the editing buffer (e.g. an options function) reaches the same
+	 * objects as it would from the base object.
+	 */
+	public void testReferersDelegateToBase() {
+		MockTLObject referrer = new MockTLObject(objectKey("r1"));
+		MockTLObject base = new MockTLObject(objectKey("o1"));
+		base.setReferers(Collections.singleton(referrer));
+
+		TLObjectOverlay overlay = new TLObjectOverlay(base);
+
+		assertEquals(Collections.singleton(referrer), overlay.tReferers(null));
+	}
+
+	/**
 	 * Tests that an overlay of a different object is not identity-equal.
 	 */
 	public void testDifferentObjectsNotEqual() {
@@ -301,6 +319,8 @@ public class TestTLObjectOverlay extends TestCase {
 
 		private final Map<TLStructuredTypePart, Object> _values = new LinkedHashMap<>();
 
+		private Set<? extends TLObject> _referers = Collections.emptySet();
+
 		/**
 		 * Creates a {@link MockTLObject} without identity.
 		 */
@@ -330,11 +350,23 @@ public class TestTLObjectOverlay extends TestCase {
 			_values.put(part, value);
 		}
 
+		@Override
+		public Set<? extends TLObject> tReferers(TLReference ref) {
+			return _referers;
+		}
+
 		/**
 		 * Convenience setter for test setup.
 		 */
 		void set(TLStructuredTypePart part, Object value) {
 			_values.put(part, value);
+		}
+
+		/**
+		 * Convenience setter for the objects this one is referred to by.
+		 */
+		void setReferers(Set<? extends TLObject> referers) {
+			_referers = referers;
 		}
 	}
 }

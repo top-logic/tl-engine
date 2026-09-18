@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <objects>
-	<!-- The documents the document viewer shows out of the box: a picture for the photo viewer and a PDF for the PDF viewer. -->
+	<!-- The documents the document viewer shows out of the box: a picture and a PDF for the PDF viewer. -->
 	<object id="doc-sample-picture"
 		type="demo.documents:Document"
 	>

@@ -157,6 +157,21 @@ public class TestUIThemeService extends TestCase {
 	}
 
 	/**
+	 * The script names the design system's mode and density on the {@code html} element: the mode
+	 * follows the color scheme of the theme in effect, the density is set once to its default.
+	 */
+	public void testThemeScriptSetsDesignSystemModeAndDensity() throws ConfigurationException {
+		String script = script(service(LIGHT_AND_DARK));
+
+		assertTrue(script, script.contains("'" + UIThemeService.DS_MODE_ATTRIBUTE + "'"));
+		assertTrue(script, script.contains("'" + UIThemeService.DS_DENSITY_ATTRIBUTE + "'"));
+		assertTrue(script, script.contains("'" + UIThemeService.DS_DENSITY_NORMAL + "'"));
+		assertTrue(script, script.contains("var modes = {"));
+		assertTrue(script, script.contains("'dark': 'dark'"));
+		assertTrue(script, script.contains("modes[id] || 'light'"));
+	}
+
+	/**
 	 * Nothing is selected without a personal configuration to select it in.
 	 */
 	public void testNoSelectionWithoutPersonalConfiguration() throws ConfigurationException {

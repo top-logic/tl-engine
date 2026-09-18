@@ -7,13 +7,10 @@ package com.top_logic.layout.view.command;
 
 import java.util.List;
 
-import com.top_logic.basic.config.ConfigurationItem;
-import com.top_logic.basic.config.annotation.ListBinding;
-import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.ChannelRef;
-import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
@@ -57,38 +54,8 @@ public interface ActionScript {
 			return (context, input) -> executor.execute(input);
 		}
 		return (context, input) -> {
-			ViewContext viewContext = (ViewContext) context;
-			Object[] args = new Object[inputs.size() + 1];
-			int i = 0;
-			for (ChannelRef ref : inputs) {
-				ViewChannel channel = viewContext.resolveChannel(ref);
-				args[i++] = channel.get();
-			}
-			args[i] = input;
-			return executor.execute(args);
+			List<ViewChannel> channels = ChannelInputs.resolve((ViewContext) context, inputs);
+			return executor.execute(ChannelInputs.arguments(channels, input));
 		};
-	}
-
-	/**
-	 * Configuration of the channels an {@link ActionScript} takes its leading arguments from.
-	 */
-	interface Inputs extends ConfigurationItem {
-
-		/** Configuration name for {@link #getInputs()}. */
-		String INPUTS = "inputs";
-
-		/**
-		 * References to the {@link ViewChannel}s whose current values become the leading positional
-		 * arguments of the action's function, before the current value of the action chain.
-		 *
-		 * <p>
-		 * Without such a reference, the function is called with the chain's current value as its
-		 * single argument. A reference pulls further context into the function - a create container,
-		 * a selection, a filter term - that the chain itself does not carry.
-		 * </p>
-		 */
-		@Name(INPUTS)
-		@ListBinding(format = ChannelRefFormat.class, tag = "input", attribute = "channel")
-		List<ChannelRef> getInputs();
 	}
 }

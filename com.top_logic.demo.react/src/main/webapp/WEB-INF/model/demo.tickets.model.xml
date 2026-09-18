@@ -9,6 +9,11 @@
 						<color token="support-warning"/>
 					</annotations>
 				</classifier>
+				<classifier name="inProgress">
+					<annotations>
+						<color token="support-info"/>
+					</annotations>
+				</classifier>
 				<classifier name="closed">
 					<annotations>
 						<color token="support-success"/>

@@ -144,10 +144,28 @@ public class ThemeTokenAudit {
 	 */
 	public static Map<String, String> themeTokens(String resource, String themeId)
 			throws IOException, ConfigurationException {
+		return theme(resource, themeId).getTokens();
+	}
+
+	/**
+	 * One resolved theme of a {@link UIThemeService} configuration.
+	 *
+	 * @param resource
+	 *        Web application resource path of the application configuration declaring the themes,
+	 *        e.g. {@code /WEB-INF/conf/tl-react-theme.config.xml}.
+	 * @param themeId
+	 *        The id of the theme to resolve.
+	 * @return The theme, with its token values and their kinds resolved.
+	 * @throws IOException
+	 *         If the resource cannot be read.
+	 * @throws ConfigurationException
+	 *         If the configuration cannot be parsed, or declares no such theme.
+	 */
+	public static UITheme theme(String resource, String themeId) throws IOException, ConfigurationException {
 		UIThemeService service = themeService(resource);
 		for (UITheme theme : service.getThemes()) {
 			if (themeId.equals(theme.getId())) {
-				return theme.getTokens();
+				return theme;
 			}
 		}
 		throw new ConfigurationException("No theme '" + themeId + "' configured in '" + resource + "'.");

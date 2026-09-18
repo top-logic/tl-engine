@@ -10,6 +10,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.gui.DesignTokenKind;
 
 /**
  * A {@link ThemeToken} that aliases another token, rendered as {@code var(--other)}.
@@ -43,8 +44,26 @@ public final class RefToken extends ThemeToken<RefToken.Config> {
 	}
 
 	@Override
+	public String aliasedToken() {
+		return getConfig().getRef();
+	}
+
+	@Override
 	public String cssValue() {
-		return "var(--" + getConfig().getRef() + ")";
+		return "var(--" + aliasedToken() + ")";
+	}
+
+	/**
+	 * The kind of the token this one aliases, which is not known to the token itself.
+	 *
+	 * @return Always <code>null</code>, the kind follows from the aliased token and is resolved
+	 *         where the tokens of a theme are collected.
+	 *
+	 * @see UIThemeService
+	 */
+	@Override
+	public DesignTokenKind kind() {
+		return null;
 	}
 
 }

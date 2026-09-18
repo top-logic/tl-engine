@@ -3241,6 +3241,33 @@ button.tlMenu__item--disabled:hover {
 	white-space: nowrap;
 }
 
+/* A bar that says something is going on without saying how far it has come: a partial fill sweeps
+   across the track instead of standing for a share of it. */
+.tlProgress--indeterminate .tlProgress__fill {
+	width: 40%;
+	transition: none;
+	animation: tlProgressSweep 1.4s ease-in-out infinite;
+}
+
+@keyframes tlProgressSweep {
+	from {
+		transform: translateX(-100%);
+	}
+
+	to {
+		transform: translateX(250%);
+	}
+}
+
+/* Without motion the bar still reads as busy: the fill rests in the middle of the track rather
+   than travelling over it. */
+@media (prefers-reduced-motion: reduce) {
+	.tlProgress--indeterminate .tlProgress__fill {
+		animation: none;
+		transform: translateX(75%);
+	}
+}
+
 .tlTableView__checkboxCell {
 	justify-content: center;
 	flex-shrink: 0;

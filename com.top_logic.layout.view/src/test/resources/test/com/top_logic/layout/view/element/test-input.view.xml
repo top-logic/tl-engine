@@ -13,6 +13,9 @@
 	<panel>
 		<children>
 			<value-input value="term">
+				<placeholder>
+					<en>Search</en>
+				</placeholder>
 				<on-submit>
 					<execute-script function="entered -> $entered"/>
 					<write-channel name="state"/>

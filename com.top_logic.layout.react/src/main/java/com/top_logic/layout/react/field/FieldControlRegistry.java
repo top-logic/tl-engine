@@ -132,7 +132,7 @@ public class FieldControlRegistry {
 	 */
 	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
 		ReactFieldControlProvider provider = lookup(field.getValueType());
-		return (provider == null ? TEXT : provider).createControl(context, field, model);
+		return (provider == null ? TEXT : provider).createField(context, field, model);
 	}
 
 	/**

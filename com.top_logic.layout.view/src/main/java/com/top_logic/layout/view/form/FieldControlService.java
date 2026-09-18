@@ -263,14 +263,14 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 
 		// 0. The control the display asks for.
 		if (control != null) {
-			return _context.getInstance(control).createControl(context, field, model);
+			return _context.getInstance(control).createField(context, field, model);
 		}
 
 		// 1. Annotation on attribute (includes type-level default via VALUE_TYPE strategy).
 		TLInputControl annotation = part.getAnnotation(TLInputControl.class);
 		if (annotation != null) {
 			ReactFieldControlProvider provider = _context.getInstance(annotation.getImpl());
-			return provider.createControl(context, field, model);
+			return provider.createField(context, field, model);
 		}
 
 		return createFieldControl(context, part.getType(), field, model);
@@ -300,13 +300,13 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	public ReactControl createFieldControl(ReactContext context, TLType type, FieldSpec field, FieldModel model) {
 		// 1. Option-based values use a select control.
 		if (model instanceof SelectFieldModel) {
-			return _selectProvider.createControl(context, field, model);
+			return _selectProvider.createField(context, field, model);
 		}
 
 		// 2. Configured control by type.
 		ReactFieldControlProvider mapped = byType(type);
 		if (mapped != null) {
-			return mapped.createControl(context, field, model);
+			return mapped.createField(context, field, model);
 		}
 
 		// 3. The control registered for the kind of value the type holds. The same registry

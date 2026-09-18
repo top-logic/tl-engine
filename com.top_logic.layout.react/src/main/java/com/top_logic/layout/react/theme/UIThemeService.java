@@ -25,6 +25,7 @@ import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.gui.DesignTokenKind;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.mig.html.HTMLConstants;
 
@@ -407,31 +408,100 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 		}
 
 		Map<String, String> tokens = new LinkedHashMap<>();
+		Map<String, DesignTokenKind> kinds = new LinkedHashMap<>();
 		ColorScheme inheritedScheme = null;
 		String parent = config.getExtends();
 		if (!StringServices.isEmpty(parent)) {
 			UITheme parentTheme = resolveTheme(context, parent, configs, result, active);
 			if (parentTheme != null) {
 				tokens.putAll(parentTheme.getTokens());
+				kinds.putAll(parentTheme.getTokenKinds());
 				inheritedScheme = parentTheme.getColorScheme();
 			}
 		}
+		Map<String, ThemeToken<?>> own = new LinkedHashMap<>();
 		for (Map.Entry<String, ThemeToken.Config<?>> entry : config.getTokens().entrySet()) {
 			ThemeToken<?> token = context.getInstance(entry.getValue());
 			if (token != null) {
 				tokens.put(entry.getKey(), token.cssValue());
+				own.put(entry.getKey(), token);
 			}
 		}
+		resolveKinds(context, id, own, tokens, kinds);
 
 		active.remove(id);
 		ColorScheme scheme = config.getColorScheme();
 		if (scheme == null) {
 			scheme = inheritedScheme != null ? inheritedScheme : ColorScheme.LIGHT;
 		}
-		UITheme theme =
-			new UITheme(id, config.getLabel(), config.getIcon(), scheme, config.isSystemDefault(), tokens);
+		UITheme theme = new UITheme(id, config.getLabel(), config.getIcon(), scheme, config.isSystemDefault(),
+			tokens, kinds);
 		result.put(id, theme);
 		return theme;
+	}
+
+	/**
+	 * Enters the kind of each of a theme's own tokens into the theme's kind map.
+	 *
+	 * @param context
+	 *        The context reporting a token that names no token, or a cycle of such names.
+	 * @param themeId
+	 *        The id of the theme whose tokens are resolved, for error reporting.
+	 * @param own
+	 *        The theme's own tokens, keyed by name.
+	 * @param tokens
+	 *        The theme's resolved token values, the theme's own ones and the inherited ones.
+	 * @param kinds
+	 *        The kinds resolved so far, the inherited ones on entry. A token whose kind cannot be
+	 *        resolved is dropped, so that it is not taken for the inherited one it overrides.
+	 */
+	private static void resolveKinds(InstantiationContext context, String themeId, Map<String, ThemeToken<?>> own,
+			Map<String, String> tokens, Map<String, DesignTokenKind> kinds) {
+		for (String name : own.keySet()) {
+			DesignTokenKind kind = kindOf(context, themeId, name, own, tokens, kinds, new HashSet<>());
+			if (kind != null) {
+				kinds.put(name, kind);
+			} else {
+				kinds.remove(name);
+			}
+		}
+	}
+
+	/**
+	 * The kind of the token with the given name, following the chain of
+	 * {@link ThemeToken#aliasedToken() names} a token aliasing another one starts.
+	 *
+	 * @param visiting
+	 *        The names currently being followed, to stop a cycle of them.
+	 * @return The kind, or <code>null</code> if the chain ends in a name no token answers, or in a
+	 *         cycle. Both are reported to the given context.
+	 */
+	private static DesignTokenKind kindOf(InstantiationContext context, String themeId, String name,
+			Map<String, ThemeToken<?>> own, Map<String, String> tokens, Map<String, DesignTokenKind> kinds,
+			Set<String> visiting) {
+		ThemeToken<?> token = own.get(name);
+		if (token == null) {
+			// A token of the extended theme, whose kind is resolved there.
+			return kinds.get(name);
+		}
+		String ref = token.aliasedToken();
+		if (ref == null) {
+			return token.kind();
+		}
+		if (!visiting.add(name)) {
+			context.error("Token '" + name + "' of theme '" + themeId + "' refers to itself through '" + ref + "'.");
+			return null;
+		}
+		try {
+			if (!tokens.containsKey(ref)) {
+				context.error(
+					"Token '" + name + "' of theme '" + themeId + "' refers to the undefined token '" + ref + "'.");
+				return null;
+			}
+			return kindOf(context, themeId, ref, own, tokens, kinds, visiting);
+		} finally {
+			visiting.remove(name);
+		}
 	}
 
 	/**

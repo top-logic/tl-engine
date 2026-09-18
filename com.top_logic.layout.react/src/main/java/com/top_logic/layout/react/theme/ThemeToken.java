@@ -12,6 +12,7 @@ import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.gui.DesignTokenKind;
 
 /**
  * A design token: a named value rendered to a CSS custom property.
@@ -66,5 +67,28 @@ public abstract class ThemeToken<C extends ThemeToken.Config<?>> extends Abstrac
 	 * The CSS value emitted for this token.
 	 */
 	public abstract String cssValue();
+
+	/**
+	 * The kind of value this token holds.
+	 *
+	 * @return The kind of the token's value, or <code>null</code> for a token naming another one in
+	 *         {@link #aliasedToken()}, whose kind it takes.
+	 */
+	public abstract DesignTokenKind kind();
+
+	/**
+	 * The name of the token this token takes its value and its kind from.
+	 *
+	 * <p>
+	 * The counterpart of {@link #kind()}: a token naming another one has no value and no kind of its
+	 * own, both follow from the token it names.
+	 * </p>
+	 *
+	 * @return The name of the aliased token, or <code>null</code> for a token holding a value of its
+	 *         own.
+	 */
+	public String aliasedToken() {
+		return null;
+	}
 
 }

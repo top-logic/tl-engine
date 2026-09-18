@@ -93,6 +93,7 @@
 					<length name="spacing-05" value="2rem"/>
 					<length name="spacing-06" value="3rem"/>
 					<color name="support-error" value="#D3181B"/>
+					<color name="support-info" value="#2968C8"/>
 					<color name="support-success" value="#04A38D"/>
 					<color name="support-warning" value="#D3A118"/>
 					<color name="text-disabled" value="#C4C7CC"/>
@@ -147,6 +148,7 @@
 					<color name="link-primary" value="#7AAEF3"/>
 					<color name="link-primary-hover" value="#97C0F6"/>
 					<color name="script-editor-text-highlight" value="#2A3A55"/>
+					<color name="support-info" value="#5B9BF0"/>
 					<color name="text-disabled" value="#6F7378"/>
 					<color name="text-helper" value="#A7ABB2"/>
 					<color name="text-placeholder" value="#6F7378"/>
@@ -155,6 +157,10 @@
 					</theme>
 				</themes>
 			</instance>
+		</config>
+
+		<config service-class="com.top_logic.gui.DesignTokenService">
+			<instance class="com.top_logic.layout.react.theme.UIThemeDesignTokens"/>
 		</config>
 	</services>
 </application>

@@ -10,6 +10,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.gui.DesignTokenKind;
 
 /**
  * A {@link ThemeToken} holding a raw CSS value, e.g. a font-family list, a shadow or a function such
@@ -46,6 +47,11 @@ public final class TextToken extends ThemeToken<TextToken.Config> {
 	@Override
 	public String cssValue() {
 		return getConfig().getValue();
+	}
+
+	@Override
+	public DesignTokenKind kind() {
+		return DesignTokenKind.TEXT;
 	}
 
 }

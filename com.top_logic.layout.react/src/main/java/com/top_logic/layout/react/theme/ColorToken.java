@@ -13,6 +13,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.gui.DesignTokenKind;
 import com.top_logic.layout.form.format.ColorConfigFormat;
 
 /**
@@ -56,6 +57,11 @@ public final class ColorToken extends ThemeToken<ColorToken.Config> {
 			return String.format("#%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue());
 		}
 		return String.format("#%02x%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue(), alpha);
+	}
+
+	@Override
+	public DesignTokenKind kind() {
+		return DesignTokenKind.COLOR;
 	}
 
 }

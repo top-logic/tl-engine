@@ -15,6 +15,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.gui.DesignTokenKind;
 import com.top_logic.layout.basic.ThemeImage;
 
 /**
@@ -22,7 +23,9 @@ import com.top_logic.layout.basic.ThemeImage;
  *
  * <p>
  * The token map is fully resolved, i.e. the values inherited from the {@link Config#getExtends()
- * parent} theme are already merged with this theme's own overrides.
+ * parent} theme are already merged with this theme's own overrides. Beside the value, a token
+ * answers the {@link DesignTokenKind kind} of value it holds, so that a configuration naming a
+ * token of a certain kind can be checked against the tokens of that kind.
  * </p>
  *
  * <p>
@@ -123,6 +126,8 @@ public final class UITheme {
 
 	private final Map<String, String> _tokens;
 
+	private final Map<String, DesignTokenKind> _tokenKinds;
+
 	/**
 	 * Creates a {@link UITheme}.
 	 *
@@ -138,15 +143,19 @@ public final class UITheme {
 	 *        Whether this theme answers the operating system's preference for its color scheme.
 	 * @param tokens
 	 *        The fully resolved token values (name without {@code --} to CSS value).
+	 * @param tokenKinds
+	 *        The kind of value each token holds, keyed by the same token names. A token whose kind
+	 *        could not be resolved is missing here, while its value is present in {@code tokens}.
 	 */
 	public UITheme(String id, ResKey label, ThemeImage icon, ColorScheme colorScheme, boolean systemDefault,
-			Map<String, String> tokens) {
+			Map<String, String> tokens, Map<String, DesignTokenKind> tokenKinds) {
 		_id = id;
 		_label = label;
 		_icon = icon;
 		_colorScheme = colorScheme;
 		_systemDefault = systemDefault;
 		_tokens = tokens;
+		_tokenKinds = tokenKinds;
 	}
 
 	/**
@@ -195,6 +204,19 @@ public final class UITheme {
 	 */
 	public Map<String, String> getTokens() {
 		return _tokens;
+	}
+
+	/**
+	 * The kind of value each of the {@link #getTokens() tokens} holds, keyed by the same token
+	 * names.
+	 *
+	 * <p>
+	 * A token whose kind could not be resolved - one aliasing a token that is not defined - has a
+	 * value but no kind, so this map may hold fewer entries than {@link #getTokens()}.
+	 * </p>
+	 */
+	public Map<String, DesignTokenKind> getTokenKinds() {
+		return _tokenKinds;
 	}
 
 }

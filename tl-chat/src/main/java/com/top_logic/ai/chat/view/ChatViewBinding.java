@@ -5,9 +5,14 @@
  */
 package com.top_logic.ai.chat.view;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -21,6 +26,7 @@ import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
 
@@ -68,6 +74,17 @@ public final class ChatViewBinding {
 	private final String _language;
 
 	private final boolean _authenticated;
+
+	/**
+	 * The channels the elements of this chat let an agent write, by name.
+	 *
+	 * <p>
+	 * Deny by default: a channel is in here only because a {@code <chat-conversation present="…">}
+	 * named it, and it leaves again when that control is disposed. Concurrent because a running
+	 * agent reads it from its own thread while the window renders.
+	 * </p>
+	 */
+	private final Map<String, ViewChannel> _presentable = new ConcurrentHashMap<>();
 
 	private ChatViewBinding(TLSubSessionContext subSession, String windowName, String contextPath, String chatId) {
 		_chatId = chatId;
@@ -185,6 +202,120 @@ public final class ChatViewBinding {
 	/** Whether the session is signed in. */
 	public boolean authenticated() {
 		return _authenticated;
+	}
+
+	/**
+	 * Lets an agent run in this window write {@code channel} under the name it is configured with.
+	 *
+	 * <p>
+	 * Called by {@link ChatConversationControl} for each entry of its {@code present} option, and
+	 * undone when that control is disposed. Nothing else opens a channel to the agent: the allow
+	 * list is the application's statement about which part of its page an agent may drive, and a
+	 * channel nobody named stays closed.
+	 * </p>
+	 *
+	 * @param name
+	 *        The channel name the tool call has to use - the configured name, not a display name.
+	 * @param channel
+	 *        The resolved channel.
+	 */
+	public void allowPresenting(String name, ViewChannel channel) {
+		if (name == null || name.isBlank() || channel == null) {
+			return;
+		}
+		_presentable.put(name.trim(), channel);
+	}
+
+	/**
+	 * Undoes one {@link #allowPresenting(String, ViewChannel)}, for a control that goes away.
+	 *
+	 * @param name
+	 *        The channel name.
+	 * @param channel
+	 *        The channel that was registered; a later registration of another channel under the
+	 *        same name is left alone.
+	 */
+	public void denyPresenting(String name, ViewChannel channel) {
+		if (name == null || channel == null) {
+			return;
+		}
+		_presentable.remove(name.trim(), channel);
+	}
+
+	/** The channel {@code name}, or <code>null</code> when this chat does not offer it. */
+	public ViewChannel presentable(String name) {
+		return name == null ? null : _presentable.get(name.trim());
+	}
+
+	/** The names an agent may present into in this chat, for telling the model what it may use. */
+	public Set<String> presentableNames() {
+		return new TreeSet<>(_presentable.keySet());
+	}
+
+	/**
+	 * The channel {@code name} an agent running in {@code scope}'s window may write, across every
+	 * chat rendered there.
+	 *
+	 * <p>
+	 * The window rather than the chat is the unit, because that is what a run knows about itself:
+	 * the agent thread runs in the window's sub-session (see
+	 * {@code ChatProcessor.AIBackgroundTask}), while which of possibly several {@code chat-id}s on
+	 * that page it belongs to is not something the tool layer is told.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>So the allow list of a window is the union of its chats' lists.</b> Two conversations on
+	 * one window - a page's own and a {@code <chat-dock>}'s, say - each naming a channel means a run
+	 * in either of them may write both. That is the honest consequence of what a run can be asked
+	 * about itself, and it is bounded by the same thing the whole feature is bounded by: nothing is
+	 * writable that no element of that window named, and every object still resolves with the
+	 * acting user's rights. A host that needs the two kept apart gives them separate windows.
+	 * </p>
+	 *
+	 * @param scope
+	 *        The window's sub-session. May be <code>null</code>, which offers nothing.
+	 * @param name
+	 *        The channel name the agent asked for.
+	 * @return The channel, or <code>null</code> when no chat in that window allows it.
+	 */
+	public static ViewChannel presentable(TypedAnnotatable scope, String name) {
+		for (ChatViewBinding binding : bindings(scope)) {
+			ViewChannel channel = binding.presentable(name);
+			if (channel != null) {
+				return channel;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Every channel name an agent running in {@code scope}'s window may write, for the refusal that
+	 * has to say what <em>is</em> allowed.
+	 *
+	 * @param scope
+	 *        The window's sub-session. May be <code>null</code>, which offers nothing.
+	 * @return The names, sorted; never <code>null</code>.
+	 */
+	public static Set<String> presentableNames(TypedAnnotatable scope) {
+		Set<String> names = new TreeSet<>();
+		for (ChatViewBinding binding : bindings(scope)) {
+			names.addAll(binding._presentable.keySet());
+		}
+		return names;
+	}
+
+	/** The bindings of every chat rendered in {@code scope}'s window. */
+	private static List<ChatViewBinding> bindings(TypedAnnotatable scope) {
+		if (scope == null) {
+			return List.of();
+		}
+		Map<String, ChatViewBinding> map = scope.get(BINDINGS);
+		if (map == null || map.isEmpty()) {
+			return List.of();
+		}
+		synchronized (map) {
+			return new ArrayList<>(map.values());
+		}
 	}
 
 	/**

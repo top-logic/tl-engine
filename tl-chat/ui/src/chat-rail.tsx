@@ -38,7 +38,16 @@ export function TLChatRail({ controlId }: TLCellProps) {
   const openDefault = state.open !== false
   const paneMode = state.paneMode === 'document' ? 'document' : 'card'
   const paneTitle = typeof state.paneTitle === 'string' ? state.paneTitle : ''
-  const paneControl = state.pane ?? null
+  // Two pane children: the <pane> shows one object, the <list-pane> shows several. A rail that
+  // configured only one of them uses it for whatever stands on the channel.
+  //
+  // Both stay mounted and only one is shown, which is the same rule the sections follow: a control
+  // the browser drops loses the row source it was observing, and the one that comes back is the one
+  // that was computed when the pane was still empty.
+  const singleControl = state.pane ?? null
+  const listControl = state.listPane ?? null
+  const showList = state.paneMany === true ? listControl != null : singleControl == null && listControl != null
+  const paneControl = showList ? listControl : singleControl
 
   // Tell the chat a rail is on the page, so `<chat-conversation/>` knows its badge button has
   // something to open. Unregisters on unmount.
@@ -162,7 +171,16 @@ export function TLChatRail({ controlId }: TLCellProps) {
           hidden={!objectPane}
           placement="rail"
         >
-          <TLChild control={paneControl} />
+          {singleControl != null ? (
+            <div className={showList ? 'is-hidden' : undefined}>
+              <TLChild control={singleControl} />
+            </div>
+          ) : null}
+          {listControl != null ? (
+            <div className={showList ? undefined : 'is-hidden'}>
+              <TLChild control={listControl} />
+            </div>
+          ) : null}
         </SidePane>
       ) : null}
 

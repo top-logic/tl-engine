@@ -17,10 +17,27 @@
 	<channels>
 		<channel name="chatSession"/>
 		<!--
-			What the rail's pane is showing, written by the "Belege" list and read by the form in the
-			pane. Empty means the sections; the pane's close button empties it again.
+			What the rail's pane is showing, written by the "Belege" list, by the agent's `present`
+			tool, or by both. Empty means the sections; the pane's close button empties it again.
+			It holds one invoice or several - "show me the three most expensive" puts three there.
 		-->
 		<channel name="paneObject"/>
+		<!--
+			The same value split by how many objects stand on it, because a record is a form and a
+			set of records is a list, and neither element can render the other's value: <form>
+			resolves its input to one object. The rail shows the <pane> for the first and the
+			<list-pane> for the second, so exactly one of the two ever has something to show.
+		-->
+		<derived-channel name="paneInvoice"
+			inputs="paneObject"
+		>
+			<expr><![CDATA[v -> ifElse($v.size() == 1, $v.singleElement(), null)]]></expr>
+		</derived-channel>
+		<derived-channel name="paneInvoices"
+			inputs="paneObject"
+		>
+			<expr><![CDATA[v -> ifElse($v.size() > 1, $v, list())]]></expr>
+		</derived-channel>
 		<!-- The counts the rail shows on the section headers and the strip icons. -->
 		<channel name="progressBadge"/>
 		<channel name="sourcesBadge"/>
@@ -173,9 +190,16 @@
 			render no toolbar at all, but that is the engine's to decide.
 		-->
 		<panel fill="true">
+			<!--
+				`present` is the allow list of the tool of the same name: it names the one channel
+				this page lets the agent write. "Show me invoice X" then ends as that invoice in the
+				rail's pane. Deny by default - without this attribute no run reaches any channel of
+				this view, and a `present` call naming another channel is refused.
+			-->
 			<chat-conversation
 				citations="true"
 				input="chatSession"
+				present="paneObject"
 				prompt-improver-agent="TL_PromptImprover"
 				trace="summary"
 			>
@@ -306,17 +330,43 @@
 				</data-list>
 			</section>
 			<!--
-				The pane's content, shown in place of the sections while "paneObject" holds an object.
-				The form binds to the same channel, so it shows whatever the list wrote there.
+				The pane's content, shown in place of the sections while "paneObject" holds one
+				object - picked in the "Belege" list, or presented by the agent.
 			-->
 			<pane>
-				<form input="paneObject">
+				<form input="paneInvoice">
 					<field attribute="date"/>
 					<field attribute="description"/>
 					<field attribute="amount"/>
 					<field attribute="data"/>
 				</form>
 			</pane>
+			<!--
+				And what it shows instead when several objects stand there, which is what the agent
+				does for "show me the three most expensive invoices". An ordinary <data-list> over
+				the collection - the agent named the objects, this page decided they are a list.
+			-->
+			<list-pane>
+				<data-list
+					collapsible="false"
+					search="false"
+				>
+					<empty-text>
+						<en>Nothing to show</en>
+						<de>Nichts anzuzeigen</de>
+					</empty-text>
+					<inputs>
+						<input channel="paneInvoices"/>
+					</inputs>
+					<lines>
+						<line attribute="description"/>
+						<line attribute="amountLabel"
+							emphasis="secondary"
+						/>
+					</lines>
+					<rows><![CDATA[shown -> $shown]]></rows>
+				</data-list>
+			</list-pane>
 		</chat-rail>
 	</chat>
 </view>

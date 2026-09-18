@@ -51,9 +51,11 @@ import com.top_logic.layout.view.channel.ChannelRefFormat;
  * </p>
  *
  * <p>
- * The {@code input} channel is the rail's second face: while it holds an object, the {@code <pane>}
- * child is shown in place of the sections, with that object available to it over the same channel
- * (an {@code <form input="…"/>}, say). Closing the pane writes {@code null} back.
+ * The {@code input} channel is the rail's second face: while it holds something, a pane child is
+ * shown in place of the sections, with that value available to it over the same channel (an
+ * {@code <form input="…"/>}, say). Closing the pane writes {@code null} back. One object shows the
+ * {@code <pane>}; several show the {@code <list-pane>}, because a record is a form and a set of
+ * records is a list, and no one element is both.
  * </p>
  *
  * <p>
@@ -117,6 +119,13 @@ public class ChatRailElement implements UIElement {
 		 * @see #getPane()
 		 */
 		String PANE = "pane";
+
+		/**
+		 * Configuration property name for {@link #getListPane()}.
+		 *
+		 * @see #getListPane()
+		 */
+		String LIST_PANE = "list-pane";
 
 		/**
 		 * Configuration property name for {@link #getInput()}.
@@ -208,7 +217,7 @@ public class ChatRailElement implements UIElement {
 		List<SectionConfig> getSections();
 
 		/**
-		 * What the pane shows while the {@link #getInput() input channel} holds an object.
+		 * What the pane shows while the {@link #getInput() input channel} holds <em>one</em> object.
 		 *
 		 * Written as a {@code <pane>} child. The element inside binds to the same channel to learn
 		 * which object it is showing, e.g. {@code <pane><form input="selected"/></pane>}. Several
@@ -220,11 +229,35 @@ public class ChatRailElement implements UIElement {
 		List<PolymorphicConfiguration<? extends UIElement>> getPane();
 
 		/**
-		 * Channel holding the object the pane shows, empty for the sections.
+		 * What the pane shows instead while the {@link #getInput() input channel} holds
+		 * <em>several</em> objects.
 		 *
-		 * The same {@code input} a {@code <form>} or a {@code <switch>} takes: while it holds an
-		 * object the {@link #getPane() pane} replaces the section column, and the pane's close
-		 * button writes {@code null} back. Leave it empty for a rail without a pane.
+		 * <p>
+		 * Written as a {@code <list-pane>} child, usually a {@code <data-list>} or a
+		 * {@code <table>} over the same channel. One object and a set of them want different
+		 * elements - a record is a form, a set of records is a list - and an element bound to a
+		 * channel cannot pick between them, so the rail picks by how many objects stand there.
+		 * </p>
+		 *
+		 * <p>
+		 * Empty means the {@link #getPane() pane} handles every case, which is right for a channel
+		 * only ever written one object at a time. Bind the element inside to a channel that yields
+		 * the collection, not to one that a {@code <form>} also reads: both children stay built and
+		 * follow their channels whether or not they are the one on show.
+		 * </p>
+		 */
+		@Name(LIST_PANE)
+		@Label("List pane")
+		@TreeProperty
+		List<PolymorphicConfiguration<? extends UIElement>> getListPane();
+
+		/**
+		 * Channel holding what the pane shows, empty for the sections.
+		 *
+		 * The same {@code input} a {@code <form>} or a {@code <switch>} takes: while it holds
+		 * something the pane replaces the section column, and the pane's close button writes
+		 * {@code null} back. One object shows the {@link #getPane() pane}, several show the
+		 * {@link #getListPane() list pane}. Leave it empty for a rail without a pane.
 		 */
 		@Name(INPUT)
 		@Label("Input")
@@ -436,6 +469,8 @@ public class ChatRailElement implements UIElement {
 
 	private final List<UIElement> _pane;
 
+	private final List<UIElement> _listPane;
+
 	/** Creates a {@link ChatRailElement}. */
 	@CalledByReflection
 	public ChatRailElement(InstantiationContext context, Config config) {
@@ -451,10 +486,13 @@ public class ChatRailElement implements UIElement {
 		_pane = config.getPane().stream()
 			.map(context::getInstance)
 			.collect(Collectors.toList());
+		_listPane = config.getListPane().stream()
+			.map(context::getInstance)
+			.collect(Collectors.toList());
 	}
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		return new ChatRailControl(context, _config, _sections, _pane);
+		return new ChatRailControl(context, _config, _sections, _pane, _listPane);
 	}
 }

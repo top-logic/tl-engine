@@ -24,5 +24,39 @@
 		<config service-class="com.top_logic.ai.chat.view.AgentViewRefreshService">
 			<instance class="com.top_logic.ai.chat.view.AgentViewRefreshService"/>
 		</config>
+		<!--
+			The "present" tool: the agent puts model objects onto a channel of the page it is on.
+			Registered here rather than in tl-ai-core because it needs the view layer - a channel
+			only exists in a rendered window. Every application that depends on tl-chat therefore
+			has the tool; which channel it may write is still the page's own decision
+			(<chat-conversation present="..."/>), and a page that names none allows nothing.
+		-->
+		<config service-class="com.top_logic.tl.ai.tool.api.registry.ToolRegistryService">
+			<instance>
+				<tool-factories>
+					<factory name="present">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.ai.chat.tools.PresentTool"
+						/>
+					</factory>
+				</tool-factories>
+			</instance>
+		</config>
+		<!--
+			The shipped chat entry point gets the tool. A per-entry keyed list, so this adds one
+			tool to the agent tl-ai-core defines without restating its list. An application that
+			ships its own agents names "present.present" in their <tools> the same way.
+		-->
+		<config service-class="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions">
+			<instance>
+				<agents>
+					<agent name="TL_SingleAgent">
+						<tools>
+							<tool name="present.present"/>
+						</tools>
+					</agent>
+				</agents>
+			</instance>
+		</config>
 	</services>
 </application>

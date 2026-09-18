@@ -34,6 +34,7 @@ import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.CommaSeparatedChannelRefs;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.tl.ai.core.provider.LLMService.AllAgentNameOptions;
@@ -60,6 +61,14 @@ import com.top_logic.tl.ai.core.provider.LLMService.AllAgentNameOptions;
  * a name is what every request, and the security policy behind it, is written in: only an agent
  * authored in the knowledge base is a model object at all, while the shipped agents, the models and
  * the MCP servers are configuration. See {@link ChatTurnChannels}.
+ * </p>
+ *
+ * <p>
+ * {@code present} is the other direction and the only one the <em>agent</em> drives: the channels
+ * named there are the ones a run may write with the {@code present} tool, and nothing else on the
+ * page is reachable from a run. <b>Deny by default</b> - an element that names none lets no agent
+ * write any channel. See {@link Config#getPresent()} and
+ * {@link com.top_logic.ai.chat.tools.PresentTool}.
  * </p>
  */
 public class ChatConversationElement implements UIElement {
@@ -147,6 +156,13 @@ public class ChatConversationElement implements UIElement {
 		 * @see #getMcpServers()
 		 */
 		String MCP_SERVERS = "mcp-servers";
+
+		/**
+		 * Configuration property name for {@link #getPresent()}.
+		 *
+		 * @see #getPresent()
+		 */
+		String PRESENT = "present";
 
 		/**
 		 * Configuration property name for {@link #getTrace()}.
@@ -330,6 +346,36 @@ public class ChatConversationElement implements UIElement {
 		@Format(ChannelRefFormat.class)
 		@Nullable
 		ChannelRef getMcpServers();
+
+		/**
+		 * The channels this page lets the agent write, comma-separated - the allow list of the
+		 * {@code present} tool.
+		 *
+		 * <p>
+		 * <b>Deny by default.</b> Empty means the agent may write no channel of this page at all,
+		 * and a {@code present} call naming any other channel is refused with a message saying
+		 * which names exist. Naming a channel here is a decision about how much of the page the
+		 * agent may drive, so it is stated on the element rather than derived from what happens to
+		 * be wired somewhere on the view.
+		 * </p>
+		 *
+		 * <p>
+		 * The agent writes the objects, not the rendering: what the value looks like is whatever
+		 * element reads that channel - a {@code <chat-rail>}'s pane, a {@code <form>}, a
+		 * {@code <data-list>}. Usually one channel, the one the pane reads:
+		 * {@code present="paneObject"}.
+		 * </p>
+		 *
+		 * <p>
+		 * A run without a browser window - headless, TL-Script, the scheduler - has no channels at
+		 * all whatever this says; the tool reports that and does nothing.
+		 * </p>
+		 */
+		@Name(PRESENT)
+		@Label("Present")
+		@Format(CommaSeparatedChannelRefs.class)
+		@Nullable
+		List<ChannelRef> getPresent();
 
 		/**
 		 * How much of the agent's execution the transcript shows: nothing, a collapsed summary, or

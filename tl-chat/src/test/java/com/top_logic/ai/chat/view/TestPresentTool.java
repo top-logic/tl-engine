@@ -1,0 +1,354 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.ai.chat.view;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+
+import junit.framework.Test;
+import junit.framework.TestSuite;
+
+import test.com.top_logic.PersonManagerSetup;
+import test.com.top_logic.basic.BasicTestCase;
+import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.knowledge.wrap.person.TestPerson;
+
+import com.top_logic.ai.chat.history.ChatHistoryService;
+import com.top_logic.ai.chat.tools.PresentTool;
+import com.top_logic.base.context.TLSubSessionContext;
+import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.layout.view.channel.DefaultViewChannel;
+import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.model.TLClass;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.tl.ai.core.agent.ExecutionMode;
+import com.top_logic.tl.ai.core.agent.SecurityContext;
+import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
+import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.tl.ai.core.security.ModelSecurity;
+import com.top_logic.tl.ai.tool.api.Tool;
+import com.top_logic.tool.boundsec.BoundCommandGroup;
+import com.top_logic.util.TLContextManager;
+import com.top_logic.util.model.ModelService;
+
+/**
+ * What the {@code present} tool does with a page, and what it refuses.
+ *
+ * <p>
+ * The test drives the real path: a real sub-session, a window registered with
+ * {@link AgentViewRefreshService} the way a rendering chat registers one, and a channel opened
+ * through {@link ChatViewBinding} the way {@code <chat-conversation present="…">} opens one. What
+ * stands in for the browser is the {@link ReactWindowRegistry} - the tool only ever asks it for the
+ * request lock - and what stands in for the page is a listener on the channel.
+ * </p>
+ *
+ * <p>
+ * The cases live next to {@link ChatViewBinding} rather than next to {@link PresentTool}, for the
+ * reason {@code TestChatViewBinding} does: registering a channel without a live window needs the
+ * binding's package-visible {@code bind}.
+ * </p>
+ */
+public class TestPresentTool extends BasicTestCase {
+
+	/** The channel the fixture's page offers. */
+	private static final String PANE = "paneObject";
+
+	private static Person user;
+
+	private static TLObject first;
+
+	private static TLObject second;
+
+	private PresentTool _tool;
+
+	private ViewChannel _channel;
+
+	private List<Object> _written;
+
+	@Override
+	protected void setUp() throws Exception {
+		super.setUp();
+		if (user == null) {
+			user = TestPerson.createPerson("presenter");
+			// Any persisted object will do: what is under test is the identifier, the rights check
+			// and the write, none of which know what an invoice is.
+			first = ChatHistoryService.createSession("First", user);
+			second = ChatHistoryService.createSession("Second", user);
+		}
+		_tool = new PresentTool();
+		_written = new ArrayList<>();
+		_channel = new DefaultViewChannel(PANE);
+		_channel.addListener((sender, oldValue, newValue) -> _written.add(newValue));
+	}
+
+	@Override
+	protected void tearDown() throws Exception {
+		ChatViewBinding.bind(subSession(), windowName(), "/app", "main").denyPresenting(PANE, _channel);
+		super.tearDown();
+	}
+
+	/** A run with no browser window has no page, and says so rather than blaming the allow list. */
+	public void testWithoutAWindowNothingIsPresented() {
+		allow();
+
+		String result = present(List.of(tid(first)), PANE);
+
+		assertSays("No page is attached", result);
+		assertEquals("Nothing reached the channel.", List.of(), _written);
+	}
+
+	/** A call that names no channel is answered before anything is resolved. */
+	public void testWithoutAChannelNameNothingHappens() {
+		withWindow();
+		allow();
+
+		assertSays("no channel named", present(List.of(tid(first)), "  "));
+		assertEquals(List.of(), _written);
+	}
+
+	/** Nor does a call that names no object. */
+	public void testWithoutIdsNothingHappens() {
+		withWindow();
+		allow();
+
+		assertSays("no ids given", present(List.of(), PANE));
+		assertSays("no ids given", present(null, PANE));
+		assertEquals(List.of(), _written);
+	}
+
+	/** Deny by default: a page that opened no channel is not writable, window or no window. */
+	public void testAPageThatOpensNothingIsNotWritable() {
+		withWindow();
+
+		String result = present(List.of(tid(first)), PANE);
+
+		assertSays("offers no channel", result);
+		assertEquals(List.of(), _written);
+	}
+
+	/** A channel the page did not name is refused, and the refusal says which ones exist. */
+	public void testAnotherChannelIsRefused() {
+		withWindow();
+		allow();
+
+		String result = present(List.of(tid(first)), "secretChannel");
+
+		assertSays("cannot be written here", result);
+		assertSays(PANE, result);
+		assertEquals(List.of(), _written);
+	}
+
+	/**
+	 * An object the acting user may not read is refused - and is refused exactly like one that does
+	 * not exist, because saying which of the two it is discloses that it exists.
+	 */
+	public void testAnObjectTheUserMayNotSeeIsRefused() {
+		withWindow();
+		allow();
+
+		String result = _tool.present(List.of(tid(first)), PANE, context(new NoReadSecurity()));
+
+		assertSays("Nothing was presented", result);
+		assertSays("not found", result);
+		assertEquals(List.of(), _written);
+	}
+
+	/** An id that names nothing refuses the call the same way. */
+	public void testAnUnknownIdIsRefused() {
+		withWindow();
+		allow();
+
+		assertSays("Nothing was presented", present(List.of("GenericObject:no-such-object"), PANE));
+		assertEquals(List.of(), _written);
+	}
+
+	/** All or nothing: one bad id among good ones presents none of them. */
+	public void testOneBadIdRefusesTheWholeCall() {
+		withWindow();
+		allow();
+
+		String result = present(List.of(tid(first), "GenericObject:no-such-object"), PANE);
+
+		assertSays("Nothing was presented", result);
+		assertEquals("A page showing half of what was asked for would be a page that lies.",
+			List.of(), _written);
+	}
+
+	/** One object stands on the channel as itself, which is what a {@code <form>} can render. */
+	public void testOneObjectReachesTheChannel() {
+		withWindow();
+		allow();
+
+		String result = present(List.of(tid(first)), PANE);
+
+		assertSays("The page now shows", result);
+		assertEquals(List.of(first), _written);
+		assertEquals(first, _channel.get());
+	}
+
+	/** Several stand on it as a collection, in the order the model named them. */
+	public void testSeveralObjectsReachTheChannelAsACollection() {
+		withWindow();
+		allow();
+
+		String result = present(List.of(tid(second), tid(first)), PANE);
+
+		assertSays("2 objects", result);
+		assertEquals(List.of(List.of(second, first)), _written);
+	}
+
+	/** The same object named twice is one object: the page shows what the model meant. */
+	public void testADuplicateIdIsOneObject() {
+		withWindow();
+		allow();
+
+		present(List.of(tid(first), tid(first)), PANE);
+
+		assertEquals(List.of(first), _written);
+	}
+
+	/**
+	 * A whole {@code label [id:TID]} entry, as a text tool result writes it, names the object it
+	 * carries - a model that copies what it just read is right rather than wrong.
+	 */
+	public void testAnIdCopiedOutOfATextResultWorks() {
+		withWindow();
+		allow();
+
+		present(List.of("First [id:" + tid(first) + "]"), PANE);
+
+		assertEquals(List.of(first), _written);
+	}
+
+	// --- Fixture ---
+
+	/** Registers the window the run belongs to, as a rendering chat element does. */
+	private void withWindow() {
+		AgentViewRefreshService.registerWindow(subSession(), windowName(), new ReactWindowRegistry());
+	}
+
+	/** Opens the fixture's channel to the agent, as {@code <chat-conversation present="…">} does. */
+	private void allow() {
+		ChatViewBinding.bind(subSession(), windowName(), "/app", "main").allowPresenting(PANE, _channel);
+	}
+
+	private String present(List<String> ids, String channel) {
+		return _tool.present(ids, channel, context(ModelSecurity.UNCHECKED));
+	}
+
+	private static ToolContext context(ModelSecurity security) {
+		return new ToolContext(new RunAs(security), ApprovalCallback.AUTO_APPROVE);
+	}
+
+	private static TLSubSessionContext subSession() {
+		return TLContextManager.getSubSession();
+	}
+
+	private static String windowName() {
+		return "presentWindow";
+	}
+
+	private static String tid(TLObject object) {
+		return object.tId().asString();
+	}
+
+	private static void assertSays(String expected, String actual) {
+		assertTrue("Expected '" + expected + "' in: " + actual, actual.contains(expected));
+	}
+
+	/** A run acting with the given model rights and no tool restrictions. */
+	private static class RunAs implements SecurityContext {
+
+		private final ModelSecurity _security;
+
+		RunAs(ModelSecurity security) {
+			_security = security;
+		}
+
+		@Override
+		public boolean hasToolPermission(Tool tool) {
+			return true;
+		}
+
+		@Override
+		public ExecutionMode executionMode() {
+			return ExecutionMode.DEVELOPMENT;
+		}
+
+		@Override
+		public ModelSecurity modelSecurity() {
+			return _security;
+		}
+	}
+
+	/** Rights that read nothing; everything else is the unchecked answer, which is not under test. */
+	private static class NoReadSecurity implements ModelSecurity {
+
+		@Override
+		public boolean canRead(TLObject obj) {
+			return false;
+		}
+
+		@Override
+		public boolean canRead(TLObject obj, TLStructuredTypePart attribute) {
+			return false;
+		}
+
+		@Override
+		public boolean canWrite(TLObject obj) {
+			return false;
+		}
+
+		@Override
+		public boolean canWrite(TLObject obj, TLStructuredTypePart attribute) {
+			return false;
+		}
+
+		@Override
+		public boolean canDelete(TLObject obj) {
+			return false;
+		}
+
+		@Override
+		public boolean canCreate(TLClass type, TLObject context) {
+			return false;
+		}
+
+		@Override
+		public boolean canCreate(TLObject parent, TLStructuredTypePart compositionAttribute) {
+			return false;
+		}
+
+		@Override
+		public boolean canPerform(TLObject obj, BoundCommandGroup operation) {
+			return false;
+		}
+
+		@Override
+		public <T extends TLObject> List<T> filterReadable(Collection<T> objects) {
+			return List.of();
+		}
+
+		@Override
+		public Set<TLClass> accessibleTypes(BoundCommandGroup operation) {
+			return Set.of();
+		}
+	}
+
+	public static Test suite() {
+		return PersonManagerSetup.createPersonManagerSetup(
+			ServiceTestSetup.createSetup(
+				new TestSuite(TestPresentTool.class),
+				ModelService.Module.INSTANCE,
+				AgentExecutionStore.Module.INSTANCE,
+				AgentViewRefreshService.Module.INSTANCE));
+	}
+}

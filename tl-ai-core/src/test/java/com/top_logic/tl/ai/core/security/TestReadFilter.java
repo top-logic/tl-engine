@@ -274,6 +274,38 @@ public class TestReadFilter extends TestCase {
 		assertTrue("the payload survives verbatim", marked.contains("{\"title\": \"Alpha\"}"));
 	}
 
+	/**
+	 * Several values become one line each, so that the model can pick one out of the result.
+	 *
+	 * <p>
+	 * A collection used to be rendered as a single label - TL-Script's own {@code asString} joins
+	 * one - and a run of labels with commas in them is a string nothing can be read out of. For
+	 * model objects each line also carries the object's identifier, which is what a later call
+	 * names it by; that half is pinned by {@code TestObjectIds}, because a label needs a booted
+	 * application and a plain string does not.
+	 * </p>
+	 */
+	public void testSeveralValuesAreOneLineEach() {
+		String rendered = filter("visible").text("aTool", List.of("first", "second", "third"));
+
+		assertTrue(rendered, rendered.contains("first\nsecond\nthird"));
+	}
+
+	/** One value in a collection is that value: a list of one is not a list to a reader. */
+	public void testOneValueInACollectionIsThatValue() {
+		String rendered = filter("visible").text("aTool", List.of("only"));
+
+		assertTrue(rendered, rendered.contains(">\nonly\n<"));
+	}
+
+	/** An empty collection renders as nothing at all, inside the envelope. */
+	public void testEmptyCollectionRendersNothing() {
+		String rendered = filter("visible").text("aTool", List.of());
+
+		assertTrue(rendered,
+			rendered.contains("<untrusted_model_data source=\"aTool\">\n\n</untrusted_model_data>"));
+	}
+
 	/** The rendering path marks what it renders, so a caller cannot get an unmarked one by accident. */
 	public void testRenderedTextIsMarkedToo() {
 		String rendered = filter("visible").text("aTool", "a stored value");

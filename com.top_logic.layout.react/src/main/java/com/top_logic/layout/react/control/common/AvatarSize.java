@@ -12,11 +12,11 @@ import com.top_logic.basic.config.ExternallyNamed;
  */
 public enum AvatarSize implements ExternallyNamed {
 
-	/** A compact avatar, e.g. in a table cell or a list row. */
-	SMALL("small"),
-
 	/** The standard avatar size (the default). */
 	DEFAULT("default"),
+
+	/** A compact avatar, e.g. in a table cell or a list row. */
+	SMALL("small"),
 
 	/** An emphasized avatar, e.g. in the header of a detail view. */
 	LARGE("large"),

@@ -25,10 +25,10 @@ public class ReactAvatarControl extends ReactControl implements DataProvider {
 	private static final String REACT_MODULE = "TLAvatar";
 
 	/** State key for the display name the avatar represents, or {@code null} for no value. */
-	private static final String NAME = "name";
+	public static final String NAME = "name";
 
 	/** @see #setSize(AvatarSize) */
-	private static final String SIZE = "size";
+	public static final String SIZE = "size";
 
 	private final ImageSource _image = new ImageSource(this::putState);
 

@@ -33,19 +33,19 @@ public class ReactOverlayControl extends ReactControl {
 	private static final String REACT_MODULE = "TLOverlay";
 
 	/** State key for the control the layers are placed over. */
-	private static final String BASE = "base";
+	public static final String BASE = "base";
 
 	/** State key for the layers, outermost last. */
-	private static final String LAYERS = "layers";
+	public static final String LAYERS = "layers";
 
 	/** State key for the control a layer shows. */
-	private static final String CONTENT = "control";
+	public static final String CONTENT = "control";
 
 	/** State key for the position a layer is anchored at. */
-	private static final String ANCHOR = "anchor";
+	public static final String ANCHOR = "anchor";
 
 	/** @see #setCssClass(String) */
-	private static final String CSS_CLASS = "cssClass";
+	public static final String CSS_CLASS = "cssClass";
 
 	/**
 	 * Content placed over the base of a {@link ReactOverlayControl}.

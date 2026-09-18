@@ -72,6 +72,26 @@ browser component, which shows a sign-in note rather than a composer.
 - The agent's task plan persists as `AgentTask` rows of the session. `TaskStore` (tl-ai-core) stays the truth of the running turn - it also carries `activeForm`, `owner` and the blocks/blocked-by sets, which the model does not - and `AgentTaskMirror` writes what it says onto the rows after every mutation, through `AgentExecutionStore.syncTasks` (one transaction, on the writer thread). The store is still serialized into the session metadata as well, because that is what restores it when a session is re-opened and what the SSE `task_update` frame and the App's own Fortschritt list read. So: the blob is the store's own persistence, the rows are the model a view binds to.
 - Legacy `tl.ai.chat:ChatSession` single-blob sessions were migrated to this model eagerly at startup by `LegacyChatSessionMigration`; the legacy model has since been removed
 
+## Engine dependencies
+
+The engine modules this one uses must be plain `compile` dependencies - never `optional`, never
+`provided`. `tl-chat.conf.config.xml` registers services of this module unconditionally, and every
+dependent that loads that configuration has to resolve their classes: `AgentViewRefreshService`
+alone pulls in `ReactWindowRegistry` from `tl-layout-react`. An `optional` dependency does not reach
+dependents, so the missing jar surfaces only when a downstream module boots the configuration, as a
+`NoClassDefFoundError` out of the config reader (#415).
+
+`tl-chat-classic` is that downstream module, and its own suite is what catches it, so after adding
+or rescoping an engine dependency here run both suites:
+
+```bash
+mvn -o -pl tl-chat install -DskipTests=false
+mvn -o -pl tl-chat-classic test -DskipTests=false
+```
+
+The second one needs the first: it resolves `tl-chat` from the local repository, not from the
+reactor.
+
 ## Front end
 
 The chat UI is a React application in `ui/`. It talks to the servlet above and to nothing else - no

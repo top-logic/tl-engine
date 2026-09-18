@@ -2,7 +2,7 @@
 
 <!--
 	The document viewer of the React UI: the table on the left lists the documents, the panel on
-	the right previews the selected one - a picture in the photo viewer (<image>), a PDF in the PDF
+	the right previews the selected one - a picture in the image element (<image>), a PDF in the PDF
 	viewer (<pdf>), an HTML file as a document of its own (<html display="document">). A <switch>
 	on the content type of the document chooses the viewer. The toolbar uploads further documents
 	and deletes the selected one; an uploaded file becomes a document named after the file and is
@@ -126,8 +126,8 @@
 							<inset>
 								<text>
 									<label>
-										<en>Select a document in the table; pictures open in the photo viewer, PDF files in the PDF viewer, HTML files as a document of their own.</en>
-										<de>Wählen Sie ein Dokument in der Tabelle; Bilder öffnen sich im Foto-Viewer, PDF-Dateien im PDF-Viewer, HTML-Dateien als eigenständiges Dokument.</de>
+										<en>Select a document in the table; pictures are shown inline, PDF files in the PDF viewer, HTML files as a document of their own.</en>
+										<de>Wählen Sie ein Dokument in der Tabelle; Bilder werden direkt angezeigt, PDF-Dateien im PDF-Viewer, HTML-Dateien als eigenständiges Dokument.</de>
 									</label>
 								</text>
 							</inset>

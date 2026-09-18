@@ -1,14 +1,21 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+  <channels>
+    <channel name="navPath" />
+  </channels>
+
   <tab-bar>
     <tab id="first">
-      <stack direction="column" />
+      <view-ref view="nav-other.view.xml" />
     </tab>
     <tab id="second">
       <view-ref view="nav-item.view.xml" />
     </tab>
     <tab id="third">
       <view-ref view="nav-item.view.xml" />
+    </tab>
+    <tab id="stack">
+      <tile-stack initial="nav-home.view.xml" path="navPath" />
     </tab>
   </tab-bar>
 </view>

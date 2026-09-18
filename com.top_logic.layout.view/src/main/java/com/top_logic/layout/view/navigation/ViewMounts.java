@@ -39,6 +39,11 @@ import com.top_logic.layout.view.ViewLoader;
  * once a user produced it (a frame pushed onto a tile stack) is not: a tile stack contributes its
  * initial view.
  * </p>
+ *
+ * <p>
+ * What such a frame holds is answered by {@link #forRootView(String)} for the frame's own view file:
+ * the places it reports then lead from that view down, not from the window's root view.
+ * </p>
  */
 public final class ViewMounts {
 

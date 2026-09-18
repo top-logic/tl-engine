@@ -25,6 +25,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.navigation.RevealPath;
 
 /**
  * UIElement that renders a stack of drilled-down views.
@@ -178,7 +179,7 @@ public class TileStackElement implements UIElement {
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		ViewChannel pathChannel = context.resolveChannel(_pathRef);
-		TileStackScope scope = new TileStackScope(pathChannel, _frameRoutes);
+		TileStackScope scope = new TileStackScope(pathChannel, _frameRoutes, RevealPath.of(context), this);
 		return new ReactTileStackControl(context, this, pathChannel, scope, _initialViewRef, _bindPathTo);
 	}
 }

@@ -2,6 +2,7 @@ import { React, useTLState, TLChild, useStandaloneKeyboardScope, useFocusTrap } 
 import type { TLCellProps } from 'tl-react-bridge';
 import { createPortal } from 'react-dom';
 import { ThemeIcon } from './icon/ThemeIcon';
+import { ButtonDefaults } from './button/ButtonDefaults';
 
 const { useCallback, useRef, useState, useEffect, useLayoutEffect } = React;
 
@@ -22,13 +23,15 @@ const InlineGroup: React.FC<{ group: CliqueGroup }> = ({ group }) => {
   if (visibleItems.length === 0) return null;
 
   return (
-    <div className="tlToolbar__group tlToolbar__group--inline">
-      {visibleItems.map((item, i) => (
-        <span key={i} className="tlToolbar__item">
-          <TLChild control={item} />
-        </span>
-      ))}
-    </div>
+    <ButtonDefaults appearance="ghost">
+      <div className="tlToolbar__group tlToolbar__group--inline">
+        {visibleItems.map((item, i) => (
+          <span key={i} className="tlToolbar__item">
+            <TLChild control={item} />
+          </span>
+        ))}
+      </div>
+    </ButtonDefaults>
   );
 };
 
@@ -100,11 +103,13 @@ const MenuGroup: React.FC<{ group: CliqueGroup }> = ({ group }) => {
   // of how many items are currently enabled.
   if (visibleItems.length === 1 && !group.subGroups?.length && !group.icon) {
     return (
-      <div className="tlToolbar__group tlToolbar__group--inline">
-        <span className="tlToolbar__item">
-          <TLChild control={visibleItems[0]} />
-        </span>
-      </div>
+      <ButtonDefaults appearance="ghost">
+        <div className="tlToolbar__group tlToolbar__group--inline">
+          <span className="tlToolbar__item">
+            <TLChild control={visibleItems[0]} />
+          </span>
+        </div>
+      </ButtonDefaults>
     );
   }
 
@@ -147,30 +152,32 @@ const MenuGroup: React.FC<{ group: CliqueGroup }> = ({ group }) => {
           cut it off; React context (and thus the child controls) propagates through the
           portal. */}
       {createPortal(
-        <div
-          ref={menuRef}
-          className="tlToolbar__dropdown"
-          role="menu"
-          hidden={!open}
-          style={open ? menuStyle : undefined}
-          onClick={() => setOpen(false)}
-        >
-          {visibleItems.map((item, i) => (
-            <div key={i} className="tlToolbar__dropdownItem" role="menuitem">
-              <TLChild control={item} />
-            </div>
-          ))}
-          {group.subGroups?.map((sub, si) => (
-            <React.Fragment key={`sub-${si}`}>
-              <hr className="tlToolbar__dropdownSeparator" />
-              {sub.items.map((item, i) => (
-                <div key={i} className="tlToolbar__dropdownItem" role="menuitem">
-                  <TLChild control={item} />
-                </div>
-              ))}
-            </React.Fragment>
-          ))}
-        </div>,
+        <ButtonDefaults appearance="ghost">
+          <div
+            ref={menuRef}
+            className="tlToolbar__dropdown"
+            role="menu"
+            hidden={!open}
+            style={open ? menuStyle : undefined}
+            onClick={() => setOpen(false)}
+          >
+            {visibleItems.map((item, i) => (
+              <div key={i} className="tlToolbar__dropdownItem" role="menuitem">
+                <TLChild control={item} />
+              </div>
+            ))}
+            {group.subGroups?.map((sub, si) => (
+              <React.Fragment key={`sub-${si}`}>
+                <hr className="tlToolbar__dropdownSeparator" />
+                {sub.items.map((item, i) => (
+                  <div key={i} className="tlToolbar__dropdownItem" role="menuitem">
+                    <TLChild control={item} />
+                  </div>
+                ))}
+              </React.Fragment>
+            ))}
+          </div>
+        </ButtonDefaults>,
         document.body
       )}
     </div>

@@ -9,6 +9,9 @@ import type { TLCellProps } from 'tl-react-bridge';
  */
 const COMPACT_MAX_WIDTH = 768;
 
+/** The compact/regular viewport state, so a descendant (e.g. TLAppBar) can react to it. */
+export const AppShellContext = React.createContext<{ compact: boolean }>({ compact: false });
+
 /**
  * Application shell with header / content / footer layout and built-in snackbar.
  *
@@ -27,13 +30,17 @@ const TLAppShell: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
   const fillClass = useFill(true);
+  const [compact, setCompact] = React.useState(false);
 
   // Report the viewport "display class" to the server once on mount and whenever the
-  // responsive breakpoint is crossed, so adaptive controls can switch presentation.
+  // responsive breakpoint is crossed, so adaptive controls can switch presentation. Also keep it
+  // in AppShellContext, so a React descendant (e.g. the app bar) can react without a server
+  // round-trip.
   React.useEffect(() => {
     const query = window.matchMedia(`(max-width: ${COMPACT_MAX_WIDTH}px)`);
     const report = (compact: boolean) => {
       sendCommand('reportDisplayClass', { displayClass: compact ? 'COMPACT' : 'REGULAR' });
+      setCompact(compact);
     };
     report(query.matches);
     const onChange = (e: MediaQueryListEvent) => report(e.matches);
@@ -48,29 +55,31 @@ const TLAppShell: React.FC<TLCellProps> = ({ controlId }) => {
   const snackbar = state.snackbar as unknown;
 
   return (
-    <div id={controlId} className={'tlAppShell ' + fillClass}>
-      {header && (
-        <div className="tlAppShell__header">
-          <TLChild control={header} />
+    <AppShellContext.Provider value={{ compact }}>
+      <div id={controlId} className={'tlAppShell ' + fillClass}>
+        {header && (
+          <div className="tlAppShell__header">
+            <TLChild control={header} />
+          </div>
+        )}
+        {notices && (
+          <div className="tlAppShell__notices">
+            <TLChild control={notices} />
+          </div>
+        )}
+        <div className="tlAppShell__content">
+          <FillBarrier>
+            <TLChild control={content} />
+          </FillBarrier>
         </div>
-      )}
-      {notices && (
-        <div className="tlAppShell__notices">
-          <TLChild control={notices} />
-        </div>
-      )}
-      <div className="tlAppShell__content">
-        <FillBarrier>
-          <TLChild control={content} />
-        </FillBarrier>
+        {footer && (
+          <div className="tlAppShell__footer">
+            <TLChild control={footer} />
+          </div>
+        )}
+        <TLChild control={snackbar} />
       </div>
-      {footer && (
-        <div className="tlAppShell__footer">
-          <TLChild control={footer} />
-        </div>
-      )}
-      <TLChild control={snackbar} />
-    </div>
+    </AppShellContext.Provider>
   );
 };
 

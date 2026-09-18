@@ -1,5 +1,7 @@
 import { React, useTLState, TLChild } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { AppShellContext } from './TLAppShell';
+import { ButtonDefaults } from './button/ButtonDefaults';
 
 /**
  * A top-level application bar with leading slot, title, inline children, and trailing actions.
@@ -15,6 +17,7 @@ import type { TLCellProps } from 'tl-react-bridge';
  */
 const TLAppBar: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
+  const { compact } = React.useContext(AppShellContext);
 
   const title = (state.title as string) ?? '';
   const leading = state.leading;
@@ -46,11 +49,13 @@ const TLAppBar: React.FC<TLCellProps> = ({ controlId }) => {
         </div>
       )}
       {actions.length > 0 && (
-        <div className="tlAppBar__actions">
-          {actions.map((action, i) => (
-            <TLChild key={i} control={action} />
-          ))}
-        </div>
+        <ButtonDefaults appearance="ghost" collapseToIcon={compact}>
+          <div className="tlAppBar__actions">
+            {actions.map((action, i) => (
+              <TLChild key={i} control={action} />
+            ))}
+          </div>
+        </ButtonDefaults>
       )}
       {trailing && (
         <div className="tlAppBar__trailing">

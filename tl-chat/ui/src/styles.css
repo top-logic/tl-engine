@@ -24,10 +24,12 @@
 .tl-chat-conversation,
 .tl-chat-rail,
 .tl-chat-section,
+.tl-data-list,
 .tl-cockpit *,
 .tl-chat-conversation *,
 .tl-chat-rail *,
-.tl-chat-section * {
+.tl-chat-section *,
+.tl-data-list * {
   box-sizing: border-box;
 }
 
@@ -684,6 +686,44 @@
 .rail-delete:hover {
   color: var(--chat-danger);
   background: var(--chat-danger-soft);
+}
+
+/*
+ * The per-row action trigger of a <data-list>, revealed the way .rail-delete is: on hover and on
+ * :focus-within, so the keyboard reaches it. It sits in space the row already reserves, and
+ * .rail-open keeps `flex: 1; min-width: 0`, so the title shortens instead of the row reflowing when
+ * the trigger appears.
+ */
+.rail-row-menu {
+  margin-right: 0.25rem;
+  flex: 0 0 auto;
+  opacity: 0;
+}
+
+.rail-item:hover .rail-row-menu,
+.rail-item:focus-within .rail-row-menu,
+.rail-row-menu.is-always,
+.rail-row-menu:focus-visible {
+  opacity: 1;
+}
+
+/* Three dots, not three rings: the shared .icon-button svg rule strokes and does not fill. */
+.rail-row-menu svg circle {
+  fill: currentColor;
+  stroke: none;
+}
+
+/*
+ * No hover to reveal anything with, so the trigger is always there - the same caveat a
+ * <panel hover-actions> carries. A finger also needs more than the 1.5rem glyph box, so the trigger
+ * grows to the 44px minimum there; the glyph is centred by .icon-button and does not grow with it.
+ */
+@media (hover: none) {
+  .rail-row-menu {
+    opacity: 1;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+  }
 }
 
 .rail-message {

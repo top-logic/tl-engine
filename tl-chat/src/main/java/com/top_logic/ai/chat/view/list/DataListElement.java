@@ -82,6 +82,39 @@ public class DataListElement implements UIElement {
 		}
 	}
 
+	/**
+	 * When a row's action trigger is shown.
+	 *
+	 * <p>
+	 * The same three answers - and the same touch caveat - as a {@code <panel hover-actions="...">}:
+	 * a trigger on every row of a long list is visual noise, so it waits for the pointer or for
+	 * keyboard focus. On a touch device there is no pointer, so {@link #HOVER} shows the trigger
+	 * there anyway.
+	 * </p>
+	 */
+	public enum RowActions implements ExternallyNamed {
+
+		/** Revealed when the pointer is over the row or something in it has focus. */
+		HOVER("hover"),
+
+		/** Always visible. */
+		ALWAYS("always"),
+
+		/** Never rendered, whatever is configured. */
+		NONE("none");
+
+		private final String _externalName;
+
+		RowActions(String externalName) {
+			_externalName = externalName;
+		}
+
+		@Override
+		public String getExternalName() {
+			return _externalName;
+		}
+	}
+
 	/** Configuration for {@link DataListElement}. */
 	@TagName("data-list")
 	public interface Config extends UIElement.Config {
@@ -110,6 +143,14 @@ public class DataListElement implements UIElement {
 		/** Configuration property name for {@link #getCommands()}. */
 		String COMMANDS = "commands";
 
+		/** Configuration property name for {@link #getRowCommands()}. */
+		String ROW_COMMANDS = "row-commands";
+
+		/** Configuration property name for {@link #getRowChannel()}. */
+		String ROW_CHANNEL = "row-channel";
+
+		/** Configuration property name for {@link #getRowActions()}. */
+		String ROW_ACTIONS = "row-actions";
 
 		/** Configuration property name for {@link #getObservedTypes()}. */
 		String OBSERVED_TYPES = "observed-types";
@@ -231,6 +272,49 @@ public class DataListElement implements UIElement {
 		@EntryTag("command")
 		List<PolymorphicConfiguration<? extends ViewCommand>> getCommands();
 
+		/**
+		 * Commands offered on a single row, in a menu opened from the row itself.
+		 *
+		 * <p>
+		 * Each is the same {@code <generic-command>} a header {@link #getCommands() command} is,
+		 * with the same label, image, clique, tooltip, executability and action chain - a rename
+		 * behind an {@code <open-dialog>}, a delete behind a {@code <confirm>}. The row it was
+		 * opened on reaches the command through the {@link #getRowChannel() row channel}, which is
+		 * what a command names in its {@code input}, so an {@code <executability>} rule sees the row
+		 * as well and re-evaluates before the menu opens.
+		 * </p>
+		 *
+		 * <p>
+		 * Rendered by the application's own context menu, so the entries look like every other menu
+		 * in it and answer the same keys. A list placed where there is no menu to open - outside an
+		 * {@code <app-shell>} - renders no trigger rather than a broken one.
+		 * </p>
+		 */
+		@Name(ROW_COMMANDS)
+		@EntryTag("command")
+		List<PolymorphicConfiguration<? extends ViewCommand>> getRowCommands();
+
+		/**
+		 * Name of the local channel a {@link #getRowCommands() row command} reads its row from.
+		 *
+		 * <p>
+		 * Registered by this list and visible only inside it, the way {@code <context-menu>}
+		 * registers its {@code contextTarget}. Rename it only to avoid a clash with a channel of the
+		 * enclosing view.
+		 * </p>
+		 */
+		@Name(ROW_CHANNEL)
+		@Label("Row channel")
+		@StringDefault("row")
+		String getRowChannel();
+
+		/**
+		 * When a row shows the trigger that opens its {@link #getRowCommands() commands}.
+		 */
+		@Name(ROW_ACTIONS)
+		@Label("Row actions")
+		RowActions getRowActions();
+
 
 		/**
 		 * Types whose object changes (create / update / delete) re-run {@link #getRows()}, so the
@@ -337,22 +421,34 @@ public class DataListElement implements UIElement {
 
 	private final List<ViewCommand.Config> _commandConfigs = new ArrayList<>();
 
+	private final List<ViewCommand> _rowCommands = new ArrayList<>();
+
+	private final List<ViewCommand.Config> _rowCommandConfigs = new ArrayList<>();
+
 	/** Creates a {@link DataListElement}. */
 	@CalledByReflection
 	public DataListElement(InstantiationContext context, Config config) {
 		_config = config;
-		// Instantiate header commands here, where an InstantiationContext is available.
-		for (PolymorphicConfiguration<? extends ViewCommand> commandConfig : config.getCommands()) {
+		// Instantiate the commands here, where an InstantiationContext is available.
+		instantiate(context, config.getCommands(), _commands, _commandConfigs);
+		instantiate(context, config.getRowCommands(), _rowCommands, _rowCommandConfigs);
+	}
+
+	private static void instantiate(InstantiationContext context,
+			List<PolymorphicConfiguration<? extends ViewCommand>> configs,
+			List<ViewCommand> commands, List<ViewCommand.Config> commandConfigs) {
+		for (PolymorphicConfiguration<? extends ViewCommand> commandConfig : configs) {
 			ViewCommand command = context.getInstance(commandConfig);
 			if (command != null && commandConfig instanceof ViewCommand.Config cmdConfig) {
-				_commands.add(command);
-				_commandConfigs.add(cmdConfig);
+				commands.add(command);
+				commandConfigs.add(cmdConfig);
 			}
 		}
 	}
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		return new DataListControl(context, _config, _commands, _commandConfigs);
+		return new DataListControl(context, _config, _commands, _commandConfigs, _rowCommands,
+			_rowCommandConfigs);
 	}
 }

@@ -34,6 +34,10 @@ public class TestDataListElementConfig extends TestCase {
 		assertNull("No row state until a css-class expression is set.", config.getCssClass());
 		assertNull("No title by default.", config.getTitle());
 		assertTrue("No header commands by default.", config.getCommands().isEmpty());
+		assertTrue("No row commands by default.", config.getRowCommands().isEmpty());
+		assertEquals("A row command binds the row through this channel.", "row", config.getRowChannel());
+		assertEquals("A trigger on every row of a long list is noise; it waits for the pointer.",
+			DataListElement.RowActions.HOVER, config.getRowActions());
 		assertTrue("No input channels by default.", config.getInputs().isEmpty());
 		assertTrue("A static list by default (no observed types).", config.getObservedTypes().isEmpty());
 		assertEquals("TLDataList", config.getReactElement());
@@ -71,6 +75,35 @@ public class TestDataListElementConfig extends TestCase {
 		assertNotNull("The count channel is configured.", config.getCount());
 		assertEquals("progressBadge", config.getCount().getChannelName());
 		assertNotNull("The row state expression is configured.", config.getCssClass());
+	}
+
+	/**
+	 * A {@code <row-commands>} entry parses as a standard view command, with its own input and
+	 * executability - which is what lets a row command decide on the row the menu was opened on.
+	 */
+	public void testRowCommandsParse() throws Exception {
+		String xml = "<data-list xmlns:config='http://www.top-logic.com/ns/config/6.0'"
+			+ " config:interface='" + DataListElement.Config.class.getName() + "'"
+			+ " row-channel='session' row-actions='always'>"
+			+ "<rows>all(`tl.ai.execution:AgentSession`)</rows>"
+			+ "<row-commands>"
+			+ "<generic-command image='css:bi bi-pencil' input='session'>"
+			+ "<open-dialog dialog-view='demo/rename.view.xml'/>"
+			+ "</generic-command>"
+			+ "<generic-command image='css:bi bi-trash' input='session'>"
+			+ "<executability><visible-if expr='s -> true'/></executability>"
+			+ "<execute-script function='s -> aiSessionDelete($s)'/>"
+			+ "</generic-command>"
+			+ "</row-commands>"
+			+ "</data-list>";
+		DataListElement.Config config =
+			(DataListElement.Config) TypedConfiguration.parse(CharacterContents.newContent(xml));
+
+		assertEquals(2, config.getRowCommands().size());
+		assertEquals(GenericViewCommand.class, config.getRowCommands().get(0).getImplementationClass());
+		assertEquals("session", config.getRowChannel());
+		assertEquals(DataListElement.RowActions.ALWAYS, config.getRowActions());
+		assertTrue("Row commands are not header commands.", config.getCommands().isEmpty());
 	}
 
 	/** Boots the module system so typed-configuration resolves nested config types via TypeIndex. */

@@ -23,6 +23,8 @@ const EN = {
   older: 'Older',
   untitled: 'Untitled',
   deleteChat: 'Delete chat',
+  /** Names the per-row menu trigger of a `<data-list>`, before the row's own first line. */
+  rowActions: 'Actions',
   deleteChatQuestion: 'Delete this chat?',
   delete: 'Delete',
   cancel: 'Cancel',
@@ -240,6 +242,7 @@ const DE: Bundle = {
   older: 'Älter',
   untitled: 'Ohne Titel',
   deleteChat: 'Chat löschen',
+  rowActions: 'Aktionen',
   deleteChatQuestion: 'Diesen Chat löschen?',
   delete: 'Löschen',
   cancel: 'Abbrechen',

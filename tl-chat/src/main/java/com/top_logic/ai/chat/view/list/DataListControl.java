@@ -18,14 +18,19 @@ import java.util.Set;
 import com.top_logic.ai.chat.view.list.DataListElement.Config;
 import com.top_logic.ai.chat.view.list.DataListElement.LineConfig;
 import com.top_logic.ai.chat.view.list.DataListElement.LinesConfig;
+import com.top_logic.ai.chat.view.list.DataListElement.RowActions;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ReactParam;
+import com.top_logic.layout.react.control.overlay.ContextMenuContribution;
+import com.top_logic.layout.react.control.overlay.ContextMenuOpener;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
@@ -53,6 +58,16 @@ import com.top_logic.util.TLContext;
  * reads the object directly. The optional {@code count} channel receives the number of rows with
  * every serialisation, so a rail section can show it without asking the browser.
  * </p>
+ *
+ * <p>
+ * Configured {@code row-commands} are offered per row. The row a menu was opened on reaches its
+ * commands through a local {@code row-channel} this control registers - the same set-then-execute
+ * idiom {@code <context-menu>} uses - so an {@code <executability>} rule sees the row and
+ * re-evaluates before the menu is composed. The menu itself is the application's: the {@code rowMenu}
+ * command hands a {@link ContextMenuContribution} to the enclosing frame's {@link ContextMenuOpener},
+ * which renders, positions and keyboard-operates it. Where there is no opener - a list outside an
+ * {@code <app-shell>} - no trigger is rendered.
+ * </p>
  */
 public class DataListControl extends ReactControl {
 
@@ -75,6 +90,18 @@ public class DataListControl extends ReactControl {
 	/** Header command buttons, in config order, parallel to the {@code buttons} state array. */
 	private final List<ViewCommandModel> _commandModels = new ArrayList<>();
 
+	/** Row commands, in config order; they read their input from {@link #_rowChannel}. */
+	private final List<ViewCommandModel> _rowCommandModels = new ArrayList<>();
+
+	/** The local channel holding the row a menu was opened on, or {@code null} without row commands. */
+	private final ViewChannel _rowChannel;
+
+	/** What the row commands contribute to the frame's menu, or {@code null} when there are none. */
+	private final ContextMenuContribution _rowMenu;
+
+	/** The frame's menu opener, or {@code null} outside an {@code <app-shell>}. */
+	private final ContextMenuOpener _menuOpener;
+
 	private final boolean[] _applyingFromChannel = { false };
 
 	/** The row objects of the last serialisation, by their id, for the {@code select} lookup. */
@@ -82,7 +109,8 @@ public class DataListControl extends ReactControl {
 
 	/** Creates a {@link DataListControl}. */
 	public DataListControl(ViewContext context, Config config, List<ViewCommand> commands,
-			List<ViewCommand.Config> commandConfigs) {
+			List<ViewCommand.Config> commandConfigs, List<ViewCommand> rowCommands,
+			List<ViewCommand.Config> rowCommandConfigs) {
 		super(context, null, blankToDefault(config.getReactElement(), "TLDataList"));
 
 		_rowsExecutor = QueryExecutor.compile(config.getRows());
@@ -132,6 +160,39 @@ public class DataListControl extends ReactControl {
 			addAttachListener(() -> _commandModels.forEach(ViewCommandModel::attach));
 			addDetachListener(() -> _commandModels.forEach(ViewCommandModel::detach));
 		}
+
+		// Row commands. The row reaches them through a channel registered here and visible only
+		// inside this list: a ViewCommandModel reads its input from a channel and takes none from
+		// the caller, so the row is written there just before the menu is composed.
+		RowActions rowActions = config.getRowActions() == null ? RowActions.HOVER : config.getRowActions();
+		_menuOpener = context.getContextMenuOpener();
+		boolean wanted = !rowCommands.isEmpty() && rowActions != RowActions.NONE;
+		if (!wanted) {
+			_rowChannel = null;
+			_rowMenu = null;
+		} else if (_menuOpener == null) {
+			// No frame to open a menu in. Rendering a trigger that cannot do anything is worse than
+			// rendering none, and throwing would take the whole list down over an optional feature.
+			Logger.debug("No context-menu opener in this context; <data-list> renders no row actions."
+				+ " Place the list inside an <app-shell> to use <row-commands>.", DataListControl.class);
+			_rowChannel = null;
+			_rowMenu = null;
+		} else {
+			_rowChannel = new DefaultViewChannel(blankToDefault(config.getRowChannel(), "row"));
+			context.registerChannel(blankToDefault(config.getRowChannel(), "row"), _rowChannel);
+			for (int i = 0; i < rowCommands.size() && i < rowCommandConfigs.size(); i++) {
+				ViewCommand.Config cmdConfig = rowCommandConfigs.get(i);
+				ViewChannel commandInput =
+					cmdConfig.getInput() == null ? _rowChannel : context.resolveChannel(cmdConfig.getInput());
+				ViewExecutabilityRule rule = ViewExecutabilityRules.build(cmdConfig.getExecutability(), context);
+				_rowCommandModels.add(ViewCommandModel.create(rowCommands.get(i), cmdConfig, commandInput, rule));
+			}
+			_rowMenu = new ContextMenuContribution(row -> _rowChannel.set(row), _rowCommandModels);
+			addAttachListener(() -> _rowCommandModels.forEach(ViewCommandModel::attach));
+			addDetachListener(() -> _rowCommandModels.forEach(ViewCommandModel::detach));
+		}
+		putState("hasRowMenu", Boolean.valueOf(_rowMenu != null));
+		putState("rowActions", rowActions.getExternalName());
 
 		ChannelRef countRef = config.getCount();
 		// Resolved before the first serialisation below, which is what writes the initial count.
@@ -212,6 +273,36 @@ public class DataListControl extends ReactControl {
 			return;
 		}
 		_commandModels.get(index).executeCommand(getReactContext());
+	}
+
+	/**
+	 * Opens the row menu for one row, at the point the browser reports.
+	 *
+	 * <p>
+	 * The opener publishes the row into the contribution's channel before it reads which commands
+	 * are visible, so an {@code <executability>} rule decides on the row the user clicked. A menu
+	 * with nothing visible in it does not open.
+	 * </p>
+	 *
+	 * @param args
+	 *        {@code id} is the row id previously pushed in the {@code rows} state; {@code x} and
+	 *        {@code y} are the client coordinates to open at.
+	 */
+	@ReactCommandHandler(value = "rowMenu", params = {
+		@ReactParam(name = "id", type = "string", description = "Row id the menu belongs to."),
+		@ReactParam(name = "x", type = "number", description = "Client x coordinate to open at."),
+		@ReactParam(name = "y", type = "number", description = "Client y coordinate to open at.")
+	})
+	public void rowMenu(Map<String, Object> args) {
+		if (_rowMenu == null || _menuOpener == null) {
+			return;
+		}
+		TLObject row = _rowsById.get(stringArg(args, "id"));
+		if (row == null) {
+			return;
+		}
+		_menuOpener.open(intArg(args, "x"), intArg(args, "y"),
+			List.of(new ContextMenuOpener.Targeted(_rowMenu, row)));
 	}
 
 	private void applyFromChannel(Object value) {

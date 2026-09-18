@@ -2,7 +2,7 @@ import { React, useTLCommand, useTLState } from 'tl-react-bridge'
 import type { TLCellProps } from 'tl-react-bridge'
 import { bundle, toLanguage } from './i18n'
 
-const { useMemo, useState } = React
+const { useEffect, useMemo, useRef, useState } = React
 
 /** One display line of a row: text plus an optional emphasis ('primary' | 'secondary'). */
 interface DataLine {
@@ -123,6 +123,16 @@ export function TLDataList({ controlId }: TLCellProps) {
   const collapsible = state.collapsible !== false
   const buttons = useMemo(() => readButtons(state.buttons), [state.buttons])
   /*
+   * Row actions. The server says whether there is a menu to open at all - it is off without
+   * configured row commands, and off where the frame has no menu to open (a list outside an
+   * `<app-shell>`) - and when the trigger is shown. `hover` is the reveal on `:hover` /
+   * `:focus-within` the stylesheet does; on a touch device, where there is no hover, the same rule
+   * shows it permanently.
+   */
+  const hasRowMenu = state.hasRowMenu === true
+  const rowActions = typeof state.rowActions === 'string' ? state.rowActions : 'hover'
+  const showRowMenu = hasRowMenu && rowActions !== 'none'
+  /*
    * No fallback to the chat's own words.
    *
    * This element was extracted from the chat's session rail and kept its labels: an unconfigured
@@ -144,6 +154,34 @@ export function TLDataList({ controlId }: TLCellProps) {
       : rows
     return groupRows(visible)
   }, [query, rows, search])
+
+  /*
+   * Where focus goes when the row whose menu was open disappears - which is what a Delete in that
+   * menu does. Left alone, focus falls back to <body> and a keyboard user loses their place in the
+   * list; it moves to the neighbouring row's trigger instead (the one before, else the one after,
+   * else the list itself).
+   */
+  const triggers = useRef(new Map<string, HTMLButtonElement | null>())
+  const menuRow = useRef('')
+  const previousIds = useRef<string[]>([])
+  const listNode = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    const ids = rows.map((row) => row.id)
+    const before = previousIds.current
+    previousIds.current = ids
+    const opened = menuRow.current
+    if (!opened || ids.includes(opened)) return
+    menuRow.current = ''
+    const gone = before.indexOf(opened)
+    if (gone < 0) return
+    const neighbour =
+      [...before.slice(0, gone)].reverse().find((id) => ids.includes(id)) ??
+      before.slice(gone + 1).find((id) => ids.includes(id))
+    const target = neighbour ? triggers.current.get(neighbour) : null
+    if (target) target.focus()
+    else listNode.current?.focus()
+  }, [rows])
 
   const isCollapsed = collapsible && collapsed
   return (
@@ -198,7 +236,7 @@ export function TLDataList({ controlId }: TLCellProps) {
           </label>
         ) : null}
 
-        <div className="rail-list" aria-live="polite">
+        <div className="rail-list" aria-live="polite" ref={listNode} tabIndex={-1}>
           {groups.length === 0 ? (
             <div className="rail-message">{query ? labels.noMatchingChats : emptyText}</div>
           ) : null}
@@ -236,6 +274,33 @@ export function TLDataList({ controlId }: TLCellProps) {
                       })}
                     </span>
                   </button>
+                  {showRowMenu ? (
+                    <button
+                      type="button"
+                      className={`icon-button tiny rail-row-menu${
+                        rowActions === 'always' ? ' is-always' : ''
+                      }`}
+                      aria-haspopup="menu"
+                      aria-label={`${labels.rowActions}: ${row.lines[0]?.text ?? ''}`}
+                      ref={(node) => {
+                        triggers.current.set(row.id, node)
+                      }}
+                      onClick={(event) => {
+                        menuRow.current = row.id
+                        void command('rowMenu', {
+                          id: row.id,
+                          x: Math.round(event.clientX),
+                          y: Math.round(event.clientY),
+                        })
+                      }}
+                    >
+                      <svg viewBox="0 0 16 16" aria-hidden="true">
+                        <circle cx="8" cy="3.5" r="1.1" />
+                        <circle cx="8" cy="8" r="1.1" />
+                        <circle cx="8" cy="12.5" r="1.1" />
+                      </svg>
+                    </button>
+                  ) : null}
                 </div>
               ))}
             </section>

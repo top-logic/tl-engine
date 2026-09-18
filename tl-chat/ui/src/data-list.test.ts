@@ -59,3 +59,57 @@ describe('the rendered data list', () => {
     expect(html).toContain('Nothing yet')
   })
 })
+
+/**
+ * The per-row action trigger.
+ *
+ * It is the whole client side of `<row-commands>`: the menu itself is the application's, opened by
+ * the Java control through the frame's context-menu opener. What the browser owns is whether the
+ * trigger is there, what it is called, and that a click says which row and where.
+ */
+describe('the row action trigger', () => {
+  it('is absent until the server says there is a menu', () => {
+    expect(render(listState())).not.toContain('rail-row-menu')
+    expect(render(listState({ rowActions: 'hover' }))).not.toContain('rail-row-menu')
+  })
+
+  /*
+   * `hasRowMenu` is false where the frame has no menu to open - a list outside an `<app-shell>`.
+   * A trigger that opens nothing is worse than none, so nothing is rendered.
+   */
+  it('is absent where there is no menu to open, whatever is configured', () => {
+    const html = render(listState({ hasRowMenu: false, rowActions: 'always' }))
+    expect(html).not.toContain('rail-row-menu')
+  })
+
+  it('names the row it belongs to, so every trigger is not called the same thing', () => {
+    const html = render(listState({ hasRowMenu: true, rowActions: 'hover' }))
+    expect(html).toContain('aria-label="Actions: Read the invoice"')
+    expect(html).toContain('aria-label="Actions: Book it"')
+    expect(html).toContain('aria-haspopup="menu"')
+  })
+
+  it('renders one trigger per row', () => {
+    const html = render(listState({ hasRowMenu: true, rowActions: 'hover' }))
+    expect(html.split('rail-row-menu').length - 1).toBe(3)
+  })
+
+  /* `hover` leaves the reveal to the stylesheet; `always` says so in the markup. */
+  it('marks the always mode and leaves hover to the stylesheet', () => {
+    expect(render(listState({ hasRowMenu: true, rowActions: 'hover' })))
+      .toContain('class="icon-button tiny rail-row-menu"')
+    expect(render(listState({ hasRowMenu: true, rowActions: 'always' })))
+      .toContain('class="icon-button tiny rail-row-menu is-always"')
+  })
+
+  it('renders nothing in the none mode', () => {
+    expect(render(listState({ hasRowMenu: true, rowActions: 'none' }))).not.toContain('rail-row-menu')
+  })
+
+  /*
+   * What a click does - the `rowMenu` command with the row id and the pointer position - and where
+   * focus lands after the row it belonged to is deleted both need a live DOM, and this run renders
+   * to a string (there is no jsdom in the module's test setup and adding one for two assertions is
+   * a heavier dependency than it buys). Both are walked in the browser instead; see the PR.
+   */
+})

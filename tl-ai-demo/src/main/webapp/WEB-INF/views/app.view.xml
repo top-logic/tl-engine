@@ -17,6 +17,17 @@
 		<derived-channel name="currentPerson"
 			expr="currentUser()"
 		/>
+
+		<!--
+			The dock's own wiring, declared here because the dock lives in the shell's footer. Its
+			conversation is "dock", a different one from the "chat" page in the sidebar, so its
+			channels are named apart too: two conversations sharing a session channel would write
+			each other's selection.
+		-->
+		<channel name="dockSession"/>
+		<channel name="dockPaneObject"/>
+		<channel name="dockProgressBadge"/>
+		<channel name="dockSourcesBadge"/>
 	</channels>
 
 	<app-shell>
@@ -153,5 +164,181 @@
 				</nav-item>
 			</sidebar>
 		</content>
+		<!--
+			The same chat again, but as a dock: a launcher in the corner of every page, and a panel
+			over the page when it is opened (Issue #415).
+
+			The <footer> is a mounting point and nothing more - the dock is fixed-position, so it
+			takes no room in the shell's layout and every page keeps its full height.
+
+			Two things about this are worth reading twice.
+
+			The dock CONTAINS the <chat>, so - unlike every other chat element - it cannot inherit
+			the id: a chat scope reaches descendants only. The id is therefore written twice, here
+			and on the <chat> inside, and the two must agree. ChatJoinLog warns about a window whose
+			chat ids do not line up, which is the shape a typo here produces.
+
+			And "dock" is a different conversation from the "chat" page in the sidebar: two chat
+			ids, two session lists, two transcripts, two stored layouts. That is deliberate - the
+			demo shows both placements side by side - not a limitation. An application that wants
+			one conversation in both places writes the same id in both.
+		-->
+		<footer>
+			<chat-dock chat-id="dock"
+				icon="css:bi bi-stars"
+			>
+				<label>
+					<en>Albert</en>
+					<de>Albert</de>
+				</label>
+				<!--
+					One element inside the dock, and it is the <chat> itself: the engine's fill rule
+					on a stack holding a fill panel looks one level deep, so the stack has to be the
+					panel's direct child or the conversation grows with its transcript instead of
+					scrolling inside the panel.
+				-->
+				<chat chat-id="dock"
+					direction="row"
+				>
+					<data-list
+						collapsible="true"
+						observed-types="tl.ai.execution:AgentSession"
+						search="true"
+						selection="dockSession"
+					>
+						<commands>
+							<generic-command image="css:bi bi-plus-lg">
+								<label>
+									<en>New chat</en>
+									<de>Neuer Chat</de>
+								</label>
+								<write-channel name="dockSession"/>
+							</generic-command>
+						</commands>
+						<empty-text>
+							<en>No chats yet</en>
+							<de>Noch keine Chats</de>
+						</empty-text>
+						<lines>
+							<line attribute="title"/>
+						</lines>
+						<rows><![CDATA[all(`tl.ai.execution:AgentSession`)
+							.filter(s -> $s.get(`tl.ai.execution:AgentSession#owner`) == currentUser())
+							.filter(s -> $s.get(`tl.ai.execution:AgentSession#kind`) == `tl.ai.execution:SessionKind#CHAT`)
+							.sort((s -> $s.get(`tl.ai.execution:AgentSession#lastUpdated`)).comparator().desc())]]></rows>
+						<title>
+							<en>Chats</en>
+							<de>Chats</de>
+						</title>
+					</data-list>
+					<panel fill="true">
+						<chat-conversation
+							citations="true"
+							input="dockSession"
+							prompt-improver-agent="TL_PromptImprover"
+							trace="summary"
+						/>
+					</panel>
+					<!--
+						The rail, with its pane - which is what "the pane is visible as well if
+						wanted" means here: picking an invoice in the "Belege" section replaces the
+						section column with the form, inside the dock's panel, exactly as it does on
+						the page.
+					-->
+					<chat-rail input="dockPaneObject"
+						open="true"
+						strip="true"
+					>
+						<section name="progress"
+							badge="dockProgressBadge"
+							icon="css:bi bi-list-check"
+							open="true"
+						>
+							<label>
+								<en>Progress</en>
+								<de>Fortschritt</de>
+							</label>
+							<data-list
+								collapsible="false"
+								count="dockProgressBadge"
+								observed-types="tl.ai.execution:AgentTask"
+								search="false"
+							>
+								<css-class><![CDATA[t -> switch {
+									$t.get(`tl.ai.execution:AgentTask#status`) == "completed": "is-done";
+									$t.get(`tl.ai.execution:AgentTask#status`) == "in_progress": "is-running";
+									default: "is-pending";
+								}]]></css-class>
+								<empty-text>
+									<en>Nothing planned yet</en>
+									<de>Noch nichts geplant</de>
+								</empty-text>
+								<inputs>
+									<input channel="dockSession"/>
+								</inputs>
+								<lines>
+									<line attribute="subject"/>
+									<line emphasis="secondary">
+										<value><![CDATA[t -> switch {
+											$t.get(`tl.ai.execution:AgentTask#status`) == "completed": #("Done"@en, "Erledigt"@de);
+											$t.get(`tl.ai.execution:AgentTask#status`) == "in_progress": #("In progress"@en, "Läuft"@de);
+											default: #("Pending"@en, "Offen"@de);
+										}]]></value>
+									</line>
+								</lines>
+								<rows><![CDATA[session -> ifElse(isEmpty($session), list(),
+									$session.referers(`tl.ai.execution:AgentTask#session`)
+										.sort((t -> $t.get(`tl.ai.execution:AgentTask#ordinal`)).comparator()))]]></rows>
+							</data-list>
+						</section>
+						<section name="sources"
+							badge="dockSourcesBadge"
+							icon="css:bi bi-quote"
+						>
+							<label>
+								<en>Sources</en>
+								<de>Quellen</de>
+							</label>
+							<chat-sources badge="dockSourcesBadge"/>
+						</section>
+						<section name="invoices"
+							icon="css:bi bi-receipt"
+						>
+							<label>
+								<en>Invoices</en>
+								<de>Belege</de>
+							</label>
+							<data-list
+								collapsible="false"
+								observed-types="tl.ai.demo.imageclassification:Invoice"
+								search="false"
+								selection="dockPaneObject"
+							>
+								<empty-text>
+									<en>No invoices yet</en>
+									<de>Noch keine Belege</de>
+								</empty-text>
+								<lines>
+									<line attribute="description"/>
+									<line attribute="amountLabel"
+										emphasis="secondary"
+									/>
+								</lines>
+								<rows><![CDATA[all(`tl.ai.demo.imageclassification:Invoice`)
+									.sort((i -> $i.get(`tl.ai.demo.imageclassification:Invoice#date`)).comparator().desc())]]></rows>
+							</data-list>
+						</section>
+						<pane>
+							<form input="dockPaneObject">
+								<field attribute="date"/>
+								<field attribute="description"/>
+								<field attribute="amount"/>
+								<field attribute="data"/>
+							</form>
+						</pane>
+					</chat-rail>
+				</chat>
+			</chat-dock>
+		</footer>
 	</app-shell>
 </view>

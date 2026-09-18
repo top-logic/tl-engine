@@ -296,6 +296,7 @@ it rewrites a draft and never answers as a persona.
 |--|--|
 | `App.tsx` | The shipped chat as a composition over one `useChat` store, plus this element's own geometry |
 | `chat-conversation.tsx` | `<chat-conversation/>` as `TLChatConversation`: transcript plus prompt field over the same store |
+| `chat-dock.tsx` | `<chat-dock/>` as `TLChatDock`: the floating launcher and the panel it opens over the page |
 | `chat-rail.tsx` / `rail-model.ts` | `<chat-rail/>` as `TLChatRail`: the side-rail shell - strip, section headers, pane chrome - and how it reads its state |
 | `chat-sources.tsx` | `<chat-sources/>`: the one rail section the chat still contributes as an element of its own |
 | `data-list.tsx` | `<data-list>` as `TLDataList`: the generic list - rows, lines, groups, search, selection, per-row state class |
@@ -487,6 +488,20 @@ own, and any element may sit inside it. **Put it where the stack was** rather th
 the engine's `.tlStack:has(> .tlPanel--fill)` rule looks one level deep, so a `<panel fill="true">`
 that stops being a direct child of the page's stack loses its height.
 
+`<chat-dock>` is the one element that **repeats** the id rather than inheriting it, because it
+*contains* the `<chat>` instead of sitting inside one and a scope only reaches descendants:
+
+```xml
+<chat-dock chat-id="assistant" icon="css:bi bi-stars">
+    <label><en>Assistant</en><de>Assistent</de></label>
+    <chat chat-id="assistant" direction="row">…</chat>
+</chat-dock>
+```
+
+The two must agree. A mismatch is not silent: `ChatJoinLog` warns about a window whose chat ids do
+not line up, and a dock joining a chat nobody else is on is exactly that shape - the dock's launcher
+would then count news from a conversation it does not contain.
+
 `chat-id` on a child element is the **override**, for the rare page that holds two conversations;
 it is nullable, and left empty an element outside every `<chat>` joins `default`. `<agent-chat>` is
 the exception that joins nothing: it binds with `""` and `App` falls back to `props.controlId`, so
@@ -606,6 +621,41 @@ hidden, not dropped - so a section keeps reporting its badge while the rail is c
 exactly when the badge matters. Below 1280 px the composed rail stays a column (it has no workspace
 grid to spread a sheet over); `App`'s sheet is unaffected. Two rails on one `chat-id` are not
 supported: the open state and the collapsed set are one per conversation.
+
+#### `<chat-dock>` - the chat over the page
+
+`<chat-dock>` is a **frame**, the way `<chat-rail>` is a shell: a fixed launcher in the corner of the
+window, and a card over the page holding whatever the application nested inside it. It brings no
+conversation of its own - normally one `<chat>` with a session list, a `<chat-conversation>` and a
+`<chat-rail>`, which is what `tl-ai-demo/app.view.xml` puts in the shell's `<footer>`. The footer is
+a mounting point, nothing more: the dock is `position: fixed`, so it takes no room in the layout.
+
+| Surface | Kind | |
+|--|--|--|
+| *(content)* | nested elements | Write **one**. The engine's `.tlStack:has(> .tlPanel--fill)` rule looks one level deep, so a second child adds a wrapping stack and the conversation loses its bounded height. |
+| `chat-id` | String, `@Nullable` | **Repeated**, not inherited - see above. Needed only so the launcher can read `badgeTotal` / `badgeSeen` / `busy` from the browser store. |
+| `icon` | ThemeImage | The launcher's glyph, default `css:bi bi-chat-dots`. An open dock shows a close cross instead. |
+| `<label>` | ResKey | The launcher's tooltip and accessible name; empty falls back to the chat's own wording. |
+| `open` | boolean, default `false` | First-load state, and nothing more. Not remembered, no channel. |
+
+Three things are load-bearing:
+
+- **The panel is hidden when closed, never unmounted.** The store drops a chat when its last element
+  leaves, so a dock that unmounted its panel would hand back a new, empty conversation on every open
+  and would stop hearing about the run it started. `.tl-chat-dock__panel[hidden] { display: none }`
+  is a rule of its own because the `display: flex` beside it would otherwise beat the attribute.
+- **Opening it marks the badges seen, and only that.** `markBadgesSeen(badgeTotal)` moves the same
+  watermark `toggleSide` moves - to the total as it stands, never to zero - without opening the
+  rail, which is the other half of `toggleSide` and the wrong half here.
+- **The breakpoint is the window's, not the dock's** (Gitea #427). The chat's responsive rules are
+  plain `@media (max-width: …)`, so a narrow *window* puts the elements inside the dock into their
+  narrow layout however wide the panel is. Below 1100 px the `<data-list>` session list becomes
+  App's off-canvas drawer and disappears from the dock as it does from the page. The panel is sized
+  for the desktop layout (`min(68.75rem, …)`); the real fix is a container query and belongs to
+  #427.
+
+Everything a theme would restyle is a token on `.tl-chat-dock` - `--chat-dock-width`, `-height`,
+`-offset`, `-launcher`, `-gap`, `-radius`, `-shadow`, `-z`.
 
 The store still issues the one `PUT /chat/preferences`; layout fields are mutated by the rail (and by
 `App`, which contains one). `open` and `<section open>` are first-load defaults for a user who has

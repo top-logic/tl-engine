@@ -71,7 +71,15 @@ to `RunEnvironment.contextSection` and deliberately dropped.
 
 ## The template
 
-Shipped, localized, and changeable without a build: `LLMService`'s `<environment>` section.
+The shipped wording is the resource `tl.ai.environment.template`
+(`WEB-INF/conf/resources/tl-ai-core.app-messages_*.properties`), so it is translated like every
+other text this product ships. It is **not** in the service configuration, and that is deliberate:
+an application that names its own providers overrides `LLMService` wholesale, and a template living
+there would be lost with it - leaving the English constant in front of headings that are still in
+the user's language.
+
+An installation that wants to say something different sets `template` in `LLMService`'s
+`<environment>` section, which wins:
 
 ```xml
 <config service-class="com.top_logic.tl.ai.core.provider.LLMService">
@@ -92,7 +100,7 @@ Shipped, localized, and changeable without a build: `LLMService`'s `<environment
 
 | Property | |
 |--|--|
-| `template` | The block's text, in the language of the account the run acts for. It may use every placeholder but `{{environment}}` - the block cannot contain itself. Empty falls back to `EnvironmentTemplate.DEFAULT`, which is the same English text; `TestEnvironmentTemplate` holds the two together. |
+| `template` | The block's text, in the language of the account the run acts for. It may use every placeholder but `{{environment}}` - the block cannot contain itself. Unset uses the shipped resource, and if that is unreachable `EnvironmentTemplate.DEFAULT`, which is the same English text; `TestEnvironmentTemplate` holds the two together and checks that every shipped language uses the same placeholders. |
 | `application` | What to call this application in front of the model. Empty uses the application's own name. |
 | `user-preferences` | Whether the accounts' preference texts are sent at all. Off sends none, whatever the accounts wrote; the texts are kept. |
 | `max-preferences-length` | How long one account's text may be, in characters. Default 1000. Cleared (0 or less) means no cap. |
@@ -180,7 +188,7 @@ conversation: it sits in the system prompt, which nothing else records.
 | `agent/environment/PromptPlaceholders` | Which `{{name}}` exists, and what filling one means. |
 | `agent/environment/EnvironmentTemplate` | The shipped default, and how an empty section disappears. |
 | `agent/environment/RunEnvironment` | Composing one run's block and applying it to a prompt. |
-| `agent/environment/EnvironmentConfig` / `EnvironmentSettings` | The `<environment>` configuration section and how it is read when the service is not up. |
+| `agent/environment/EnvironmentConfig` / `EnvironmentSettings` | The `<environment>` configuration section, the shipped resource behind it, and how both are read when the service is not up. |
 | `agent/environment/AgentFact` / `EnvironmentFact` / `RunFactsBinding` | The facts: declared, evaluated, and bound for a run. |
 | `agent/environment/UserPreferences` / `PreferencesLengthConstraint` | The account's own text and its cap. |
 | `agent/AgentFactory#buildConfig` | The one place a run's prompt is composed. |

@@ -101,7 +101,8 @@ Nothing in the block may change within a conversation - it sits in front of ever
 providers' prompt caches key on it: day granularity, and only facts marked `stable`. Per-turn facts
 are #438.
 
-The wording is configuration (`LLMService`'s `<environment>`), the facts come from the agent
+The wording is a shipped, translated resource (`tl.ai.environment.template`) that `LLMService`'s
+`<environment>` section may override, the facts come from the agent
 definition and from `<chat-conversation><context>`, the preference text is
 `tl.accounts:Person#aiPreferences`, and the filled block is recorded on
 `tl.ai.execution:AgentExecution#environment`. See `tl-ai-core/doc/environment-block.md`.

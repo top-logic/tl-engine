@@ -94,7 +94,7 @@ public class RunEnvironment {
 		values.put(PromptPlaceholders.PREFERENCES, preferencesSection(UserPreferences.of(account),
 			resources.getString(I18NConstants.ENVIRONMENT_PREFERENCES_HEADING)));
 
-		return of(EnvironmentSettings.template(resolve), values);
+		return of(EnvironmentSettings.template(resources), values);
 	}
 
 	/**

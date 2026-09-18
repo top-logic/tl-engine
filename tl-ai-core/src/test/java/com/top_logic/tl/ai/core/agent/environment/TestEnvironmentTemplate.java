@@ -6,13 +6,14 @@
 package com.top_logic.tl.ai.core.agent.environment;
 
 import java.io.IOException;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Properties;
 
 import junit.framework.TestCase;
 
@@ -23,12 +24,8 @@ import junit.framework.TestCase;
 public class TestEnvironmentTemplate extends TestCase {
 
 	/** Where the shipped, localized template lives. */
-	private static final String SHIPPED =
-		"src/main/webapp/WEB-INF/autoconf/com.top_logic.tl.ai.core.provider.LLMService.config.xml";
-
-	/** The English text of the shipped template. */
-	private static final Pattern ENGLISH_TEMPLATE =
-		Pattern.compile("<template>\\s*<en><!\\[CDATA\\[(.*?)\\]\\]></en>", Pattern.DOTALL);
+	private static final String BUNDLE =
+		"src/main/webapp/WEB-INF/conf/resources/tl-ai-core.app-messages_%s.properties";
 
 	/** Values for every placeholder but the sections, which each test sets itself. */
 	private static Map<String, String> values() {
@@ -73,19 +70,48 @@ public class TestEnvironmentTemplate extends TestCase {
 	 * The English text an installation gets is the one this class documents.
 	 *
 	 * <p>
-	 * The two exist because the shipped template is localized configuration, which is what an
-	 * installation edits, while the constant is what an application that configures none falls back
-	 * to. Nothing but this test keeps them from drifting apart.
+	 * The two exist because the shipped template is a localized resource, which is what an
+	 * installation reads and a translator edits, while the constant is the last-resort fallback for
+	 * a run that cannot reach it. Nothing but this test keeps them from drifting apart.
 	 * </p>
 	 */
-	public void testTheShippedConfigurationMatchesTheDefault() throws IOException {
-		Path shipped = moduleRoot().resolve(SHIPPED);
-		assertTrue("Not found: " + shipped, Files.isRegularFile(shipped));
-		Matcher english = ENGLISH_TEMPLATE.matcher(Files.readString(shipped, StandardCharsets.UTF_8));
-
-		assertTrue("No <template><en> in " + shipped, english.find());
+	public void testTheShippedResourceMatchesTheDefault() throws IOException {
 		assertEquals("The shipped English template drifted away from EnvironmentTemplate.DEFAULT.",
-			EnvironmentTemplate.DEFAULT.strip(), english.group(1).strip());
+			EnvironmentTemplate.DEFAULT.strip(), shippedTemplate("en").strip());
+	}
+
+	/**
+	 * Every language this module ships has the template, and each uses the same placeholders.
+	 *
+	 * <p>
+	 * A translation that drops one silently removes what it named from every run in that language -
+	 * the user's own preferences, say - and nothing in the product says so.
+	 * </p>
+	 */
+	public void testEveryShippedLanguageCarriesTheSamePlaceholders() throws IOException {
+		String english = shippedTemplate("en");
+		for (String language : List.of("de")) {
+			String translated = shippedTemplate(language);
+			for (String name : PromptPlaceholders.NAMES) {
+				assertEquals("The " + language + " template must use {{" + name + "}} exactly as the"
+					+ " English one does.", Boolean.valueOf(PromptPlaceholders.uses(english, name)),
+					Boolean.valueOf(PromptPlaceholders.uses(translated, name)));
+			}
+		}
+	}
+
+	/** The template as the given language's resource bundle holds it. */
+	private static String shippedTemplate(String language) throws IOException {
+		Path bundle = moduleRoot().resolve(String.format(BUNDLE, language));
+		assertTrue("Not found: " + bundle, Files.isRegularFile(bundle));
+		Properties properties = new Properties();
+		try (Reader reader =
+			Files.newBufferedReader(bundle, StandardCharsets.UTF_8)) {
+			properties.load(reader);
+		}
+		String text = properties.getProperty(EnvironmentSettings.TEMPLATE_RESOURCE);
+		assertNotNull("No '" + EnvironmentSettings.TEMPLATE_RESOURCE + "' in " + bundle, text);
+		return text;
 	}
 
 	/** A run with facts and preferences renders both sections. */
@@ -134,13 +160,14 @@ public class TestEnvironmentTemplate extends TestCase {
 
 	/** The directory of the tl-ai-core module, whatever the working directory is. */
 	private static Path moduleRoot() throws IOException {
+		String marker = String.format(BUNDLE, "en");
 		for (Path candidate = Path.of("").toAbsolutePath(); candidate != null; candidate =
 			candidate.getParent()) {
-			if (Files.isRegularFile(candidate.resolve(SHIPPED))) {
+			if (Files.isRegularFile(candidate.resolve(marker))) {
 				return candidate;
 			}
 			Path module = candidate.resolve("tl-ai-core");
-			if (Files.isRegularFile(module.resolve(SHIPPED))) {
+			if (Files.isRegularFile(module.resolve(marker))) {
 				return module;
 			}
 		}

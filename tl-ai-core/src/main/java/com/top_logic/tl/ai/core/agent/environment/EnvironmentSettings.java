@@ -7,6 +7,7 @@ package com.top_logic.tl.ai.core.agent.environment;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.util.Resources;
 
 /**
  * Reads the {@code <environment>} section of the {@link LLMService} configuration.
@@ -33,18 +34,37 @@ public class EnvironmentSettings {
 	}
 
 	/**
-	 * The configured template, or the shipped {@link EnvironmentTemplate#DEFAULT} when none is set.
+	 * Resource key of the shipped template, in {@code tl-ai-core.app-messages}.
 	 *
-	 * @param resolver
-	 *        Renders a {@link ResKey} in the language of the account the run acts for.
+	 * <p>
+	 * The shipped wording lives in a resource bundle rather than in the service configuration,
+	 * because an application that overrides {@code LLMService} wholesale - which is what an
+	 * application that names its own providers does - would otherwise lose the shipped template and
+	 * fall back to the English constant while the block's own headings stayed in the user's
+	 * language. A bundle survives that.
+	 * </p>
 	 */
-	public static String template(java.util.function.Function<ResKey, String> resolver) {
+	public static final String TEMPLATE_RESOURCE = "tl.ai.environment.template";
+
+	/**
+	 * The template to use, in the language of the account the run acts for.
+	 *
+	 * <p>
+	 * Configuration first, then the shipped resource, then {@link EnvironmentTemplate#DEFAULT} - so
+	 * an installation may reword it, a language this product ships is honoured, and a run still gets
+	 * a block when neither is reachable.
+	 * </p>
+	 *
+	 * @param resources
+	 *        Resolves a {@link ResKey} in that account's language.
+	 */
+	public static String template(Resources resources) {
 		EnvironmentConfig config = config();
-		ResKey key = config == null ? null : config.getTemplate();
-		if (key == null) {
-			return EnvironmentTemplate.DEFAULT;
+		ResKey configured = config == null ? null : config.getTemplate();
+		String text = configured == null ? null : resources.getString(configured, null);
+		if (text == null || text.isBlank()) {
+			text = resources.getString(ResKey.legacy(TEMPLATE_RESOURCE), null);
 		}
-		String text = resolver.apply(key);
 		return text == null || text.isBlank() ? EnvironmentTemplate.DEFAULT : text;
 	}
 

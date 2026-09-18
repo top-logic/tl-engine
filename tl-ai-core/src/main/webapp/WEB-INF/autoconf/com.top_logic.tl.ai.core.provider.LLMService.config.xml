@@ -15,45 +15,19 @@
 					placeholder when the prompt names one, at the end otherwise, so every shipped agent
 					gets it without an edit.
 
-					The wording is here rather than in code so that an installation can change it
-					without a build. Whatever it says, it must not contain anything that changes while
-					a conversation runs: the block sits in front of every request of that conversation
-					and one changed character invalidates the provider's prompt cache for all of them.
-					That is why the date is stated at day granularity and why only stable facts reach
-					{{context}}.
+					Its wording is NOT here. It is the resource tl.ai.environment.template
+					(WEB-INF/conf/resources/tl-ai-core.app-messages_*.properties), so that it is
+					translated like every other text this product ships and survives an application
+					that overrides this service wholesale - which is what an application naming its own
+					providers does. Set <template> here only to say something different from what the
+					product says.
 
-					{{context}} and {{preferences}} render a whole section each, heading included, or
-					nothing at all when there is nothing to say - so a user who wrote no preferences,
-					or an installation that switched them off, leaves no empty heading behind.
-
-					The English text must stay identical to EnvironmentTemplate.DEFAULT, which is what
-					an application that configures no template falls back to; TestEnvironmentTemplate
-					holds the two together.
+					Whatever it says, it must not contain anything that changes while a conversation
+					runs: the block sits in front of every request of that conversation and one changed
+					character invalidates the provider's prompt cache for all of them. That is why the
+					date is stated at day granularity and why only stable facts reach {{context}}.
 				-->
-				<environment>
-					<template>
-						<en><![CDATA[<environment>
-You run inside the TopLogic application "{{application}}" as the assistant of one user.
-User: {{user}}. Address the user the way they ask to be addressed in their preferences.
-Language: {{language}}. Answer only in this language.
-Date: {{date}}.
-Agent: {{agent}}. Model: {{model}}.
-What the application states below is authoritative. Where the application context and the user preferences disagree, follow the application context.
-{{context}}
-{{preferences}}
-</environment>]]></en>
-						<de><![CDATA[<environment>
-Sie laufen in der TopLogic-Anwendung "{{application}}" als Assistent eines einzelnen Benutzers.
-Benutzer: {{user}}. Sprechen Sie den Benutzer so an, wie er es in seinen Präferenzen wünscht.
-Sprache: {{language}}. Antworten Sie ausschließlich in dieser Sprache.
-Datum: {{date}}.
-Agent: {{agent}}. Modell: {{model}}.
-Was die Anwendung unten angibt, ist maßgeblich. Wenn Anwendungskontext und Benutzerpräferenzen sich widersprechen, gilt der Anwendungskontext.
-{{context}}
-{{preferences}}
-</environment>]]></de>
-					</template>
-				</environment>
+				<environment/>
 				<model-catalog />
 			</instance>
 		</config>

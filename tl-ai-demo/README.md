@@ -31,10 +31,25 @@ The start page is `/view/` - the React view layer, declared in `WEB-INF/views/ap
 
 | | |
 |--|--|
-| **Chat** (start item) | The agent chat (`tl-chat`), with its own history rail, the agent/model/MCP/trace menu, attachments, human-in-the-loop approvals and the context-usage ring. |
-| **Chat mit Rechnungen** | The same `/chat/*` API composed as `DemoChat`: a Rechnungen rail, a read-only invoice pane, and a quote chip. Fixture invoices, not KB rows. |
+| **Chat** (start item) | The agent chat, built from view elements rather than from the one-element `<agent-chat>`: a `<data-list>` of this user's chats, a `<chat-conversation>` (transcript, prompt field, agent/model/MCP/trace menu, attachments, human-in-the-loop approvals, context-usage ring), and a `<chat-rail>` whose sections are configured in `WEB-INF/views/tl-ai-demo/chat-grouped.view.xml` - Fortschritt, Quellen, and a `<data-list>` of the KB's invoices whose selection opens an invoice form in the rail's pane. Fortschritt is a `<data-list>` too: the agent's plan is written to `tl.ai.execution:AgentTask` objects while it runs, so the list fills within about a second of each step and is still there after a reload. A chat row offers Umbenennen and Löschen behind the `⋯` that appears on hover - generic `<row-commands>` of the list, not chat-specific code; Umbenennen opens `tl-ai-demo/rename-session.view.xml`, Löschen confirms first and is hidden while that chat still has a run in it. |
 | **Belege** | The invoices: a table on the left, the selected invoice's form on the right. "Neuer Beleg" asks only for the scan and has the model read the description, the date and the amount out of it. The table's amount column shows the derived `amountLabel` (`84,90 €`); the form edits the number itself. |
 | **Administration** | The framework's own administration view; visible to accounts holding the `administration` scope. |
+| **Albert**, the dock (bottom right, on **Belege** and **Administration**) | The Chat page's conversation, reachable without leaving the page: a `<chat-dock>` in the shell's `<footer>` whose launcher opens a card holding the session list, the conversation and a rail with Fortschritt, Quellen and the invoices whose selection opens the pane. It is declared in `app.view.xml`, not in the chat page, because the footer is where a shell-wide element belongs. |
+
+**The dock is a second place for one conversation, not a second conversation.** Its `chat-id` is
+`chat` - the Chat page's own - so the dock opens what that page shows, and on the Chat page itself
+it hides, launcher included: there is nothing there for it to open. That is not only tidiness. The
+chat transport is **one conversation per window**: every `/chat/*` call is keyed by the window
+alone, so two chat ids that each show a transcript in one window share the server's active session
+and take each other's turns. Note that the id is written **twice** in `app.view.xml`, on the
+`<chat-dock>` and on the `<chat>` inside it: the dock contains the chat, and a chat scope only
+reaches downward.
+
+The panel is hidden when the dock is closed, never unmounted, so a run started in the dock keeps
+running and keeps its transcript while the user works on the page behind it; the launcher carries
+the unseen count of the rail's sections and a dot while the agent is working. Ask something in the
+dock on **Belege**, then open **Chat**: the same conversation is there, because it is the same
+conversation.
 
 The app bar carries one theme toggle: two `<set-theme>` commands of which the stylesheet shows only
 the one that switches to the other theme (`style/tl-ai-demo-shell.css`). Everything below it, the
@@ -53,7 +68,7 @@ Reach it at <http://localhost:8080/tl-ai-demo/servlet/LayoutServlet>. Its "Alber
 
 | Path | Contents |
 |--|--|
-| `WEB-INF/views/` | The React view layer: `app.view.xml` plus `tl-ai-demo/invoices.view.xml` and `tl-ai-demo/create-invoice.view.xml` |
+| `WEB-INF/views/` | The React view layer: `app.view.xml` plus `tl-ai-demo/chat-grouped.view.xml`, `tl-ai-demo/rename-session.view.xml`, `tl-ai-demo/invoices.view.xml` and `tl-ai-demo/create-invoice.view.xml` |
 | `WEB-INF/layouts/` | The classic LayoutServlet UI |
 | `WEB-INF/model/` | The demo model (`tl.ai.demo.imageclassification:Invoice`) |
 | `WEB-INF/conf/` | Application configuration, including the `ClientResources` declaration that loads the chat bundle |

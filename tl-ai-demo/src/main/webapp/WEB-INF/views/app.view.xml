@@ -8,8 +8,8 @@
 	about and therefore the start item. The classic LayoutServlet UI keeps working unchanged; this is
 	a second front end onto the same model, not a replacement.
 
-	Everything except the chat is built from the standard view elements, so the demo shows what an
-	application gets for free rather than what this module wrote itself.
+	Everything here is built from the standard view elements, the chat included, so the demo shows
+	what an application gets for free rather than what this module wrote itself.
 -->
 <view>
 	<channels>
@@ -17,6 +17,24 @@
 		<derived-channel name="currentPerson"
 			expr="currentUser()"
 		/>
+
+		<!--
+			The dock's wiring, declared here because the dock lives in the shell's footer.
+
+			Its conversation is "chat" - the SAME one the Chat page shows. It has to be: every
+			/chat/* call is keyed by the window alone, so the server holds one active session and
+			one run per window, and two chat ids that each show a transcript would take each
+			other's turns. The dock is therefore a second PLACE for the one conversation, not a
+			second conversation, and it hides itself (launcher included) while the Chat page has
+			that conversation on screen.
+
+			The channels are the dock's own, because the page declares its own in
+			tl-ai-demo/chat-grouped.view.xml and the two are never on screen together.
+		-->
+		<channel name="dockSession"/>
+		<channel name="dockPaneObject"/>
+		<channel name="dockProgressBadge"/>
+		<channel name="dockSourcesBadge"/>
 	</channels>
 
 	<app-shell>
@@ -63,6 +81,15 @@
 							<de>Dunkles Design</de>
 						</label>
 					</set-theme>
+					<open-designer
+						image="css:bi bi-pencil-square"
+						placement="TOOLBAR"
+					>
+						<label>
+							<en>Layout designer</en>
+							<de>Layout-Designer</de>
+						</label>
+					</open-designer>
 					<generic-command
 						image="css:bi bi-box-arrow-in-right"
 						placement="TOOLBAR"
@@ -101,6 +128,11 @@
 				<!--
 					The chat first and active on entry: this application exists to demonstrate the
 					agent, and the invoices are the data it works on rather than the point.
+
+					It is built from view elements rather than from the one-element <agent-chat/> -
+					a <data-list> of this user's chats, a <chat-conversation>, and a <chat-rail>
+					whose sections are configured (Issue #415). See
+					tl-ai-demo/chat-grouped.view.xml.
 				-->
 				<nav-item id="chat"
 					icon="css:bi bi-chat-dots"
@@ -109,28 +141,7 @@
 						<en>Chat</en>
 						<de>Chat</de>
 					</label>
-					<agent-chat
-						prompt-improver-agent="TL_PromptImprover"
-						trace-mode="overview"
-					/>
-				</nav-item>
-
-				<nav-item id="chat-seams"
-					icon="css:bi bi-layout-sidebar-reverse"
-				>
-					<label>
-						<en>Chat with invoices</en>
-						<de>Chat mit Rechnungen</de>
-					</label>
-					<!--
-						The demo's own element, not <agent-chat react-element="…"/>: the composition
-						needs data the framework does not have (this application's invoices), and
-						the Java side of the seam is where a host adds it.
-					-->
-					<demo-agent-chat
-						prompt-improver-agent="TL_PromptImprover"
-						trace-mode="overview"
-					/>
+					<view-ref view="tl-ai-demo/chat-grouped.view.xml"/>
 				</nav-item>
 
 				<nav-item id="invoices"
@@ -160,5 +171,187 @@
 				</nav-item>
 			</sidebar>
 		</content>
+		<!--
+			The chat as a dock: a launcher in the corner of every page, and a panel over the page
+			when it is opened (Issue #415).
+
+			The <footer> is a mounting point and nothing more - the dock is fixed-position, so it
+			takes no room in the shell's layout and every page keeps its full height.
+
+			Two things about this are worth reading twice.
+
+			The dock CONTAINS the <chat>, so - unlike every other chat element - it cannot inherit
+			the id: a chat scope reaches descendants only. The id is therefore written twice, here
+			and on the <chat> inside, and the two must agree. ChatJoinLog warns about a window whose
+			chat ids do not line up, which is the shape a typo here produces.
+
+			And the id is "chat", the Chat page's own: this is the SAME conversation, reachable from
+			Belege and from Administration without leaving the page. On the Chat page itself there
+			is nothing for the dock to open, so it hides - which is also what keeps the window to
+			the one conversation its transport can carry.
+		-->
+		<footer>
+			<chat-dock chat-id="chat"
+				icon="css:bi bi-stars"
+			>
+				<label>
+					<en>Albert</en>
+					<de>Albert</de>
+				</label>
+				<!--
+					One element inside the dock, and it is the <chat> itself: the engine's fill rule
+					on a stack holding a fill panel looks one level deep, so the stack has to be the
+					panel's direct child or the conversation grows with its transcript instead of
+					scrolling inside the panel.
+				-->
+				<chat chat-id="chat"
+					direction="row"
+				>
+					<!--
+						Collapsed on arrival, like the rail: opening the dock should show the
+						conversation, not three columns of chrome. Both are first-load states, so
+						the strip and the collapse arrow are how the user brings the other two back.
+					-->
+					<data-list
+						collapsed="true"
+						collapsible="true"
+						observed-types="tl.ai.execution:AgentSession"
+						search="true"
+						selection="dockSession"
+					>
+						<commands>
+							<generic-command image="css:bi bi-plus-lg">
+								<label>
+									<en>New chat</en>
+									<de>Neuer Chat</de>
+								</label>
+								<write-channel name="dockSession"/>
+							</generic-command>
+						</commands>
+						<empty-text>
+							<en>No chats yet</en>
+							<de>Noch keine Chats</de>
+						</empty-text>
+						<lines>
+							<line attribute="title"/>
+						</lines>
+						<rows><![CDATA[all(`tl.ai.execution:AgentSession`)
+							.filter(s -> $s.get(`tl.ai.execution:AgentSession#owner`) == currentUser())
+							.filter(s -> $s.get(`tl.ai.execution:AgentSession#kind`) == `tl.ai.execution:SessionKind#CHAT`)
+							.sort((s -> $s.get(`tl.ai.execution:AgentSession#lastUpdated`)).comparator().desc())]]></rows>
+						<title>
+							<en>Chats</en>
+							<de>Chats</de>
+						</title>
+					</data-list>
+					<panel fill="true">
+						<chat-conversation
+							citations="true"
+							input="dockSession"
+							prompt-improver-agent="TL_PromptImprover"
+							trace="summary"
+						/>
+					</panel>
+					<!--
+						The rail, with its pane - which is what "the pane is visible as well if
+						wanted" means here: picking an invoice in the "Belege" section replaces the
+						section column with the form, inside the dock's panel, exactly as it does on
+						the page.
+					-->
+					<chat-rail input="dockPaneObject"
+						open="false"
+						strip="true"
+					>
+						<section name="progress"
+							badge="dockProgressBadge"
+							icon="css:bi bi-list-check"
+							open="true"
+						>
+							<label>
+								<en>Progress</en>
+								<de>Fortschritt</de>
+							</label>
+							<data-list
+								collapsible="false"
+								count="dockProgressBadge"
+								observed-types="tl.ai.execution:AgentTask"
+								search="false"
+							>
+								<css-class><![CDATA[t -> switch {
+									$t.get(`tl.ai.execution:AgentTask#status`) == "completed": "is-done";
+									$t.get(`tl.ai.execution:AgentTask#status`) == "in_progress": "is-running";
+									default: "is-pending";
+								}]]></css-class>
+								<empty-text>
+									<en>Nothing planned yet</en>
+									<de>Noch nichts geplant</de>
+								</empty-text>
+								<inputs>
+									<input channel="dockSession"/>
+								</inputs>
+								<lines>
+									<line attribute="subject"/>
+									<line emphasis="secondary">
+										<value><![CDATA[t -> switch {
+											$t.get(`tl.ai.execution:AgentTask#status`) == "completed": #("Done"@en, "Erledigt"@de);
+											$t.get(`tl.ai.execution:AgentTask#status`) == "in_progress": #("In progress"@en, "Läuft"@de);
+											default: #("Pending"@en, "Offen"@de);
+										}]]></value>
+									</line>
+								</lines>
+								<rows><![CDATA[session -> ifElse(isEmpty($session), list(),
+									$session.referers(`tl.ai.execution:AgentTask#session`)
+										.sort((t -> $t.get(`tl.ai.execution:AgentTask#ordinal`)).comparator()))]]></rows>
+							</data-list>
+						</section>
+						<section name="sources"
+							badge="dockSourcesBadge"
+							icon="css:bi bi-quote"
+						>
+							<label>
+								<en>Sources</en>
+								<de>Quellen</de>
+							</label>
+							<chat-sources badge="dockSourcesBadge"/>
+						</section>
+						<section name="invoices"
+							icon="css:bi bi-receipt"
+						>
+							<label>
+								<en>Invoices</en>
+								<de>Belege</de>
+							</label>
+							<data-list
+								collapsible="false"
+								observed-types="tl.ai.demo.imageclassification:Invoice"
+								search="false"
+								selection="dockPaneObject"
+							>
+								<empty-text>
+									<en>No invoices yet</en>
+									<de>Noch keine Belege</de>
+								</empty-text>
+								<lines>
+									<line attribute="description"/>
+									<line attribute="amountLabel"
+										emphasis="secondary"
+									/>
+								</lines>
+								<rows><![CDATA[all(`tl.ai.demo.imageclassification:Invoice`)
+									.sort((i -> $i.get(`tl.ai.demo.imageclassification:Invoice#date`)).comparator().desc())]]></rows>
+							</data-list>
+						</section>
+						<pane>
+							<form input="dockPaneObject">
+								<field attribute="date"/>
+								<field attribute="description"/>
+								<field attribute="amount"/>
+								<field attribute="data"/>
+							</form>
+						</pane>
+					</chat-rail>
+				</chat>
+			</chat-dock>
+		</footer>
 	</app-shell>
 </view>

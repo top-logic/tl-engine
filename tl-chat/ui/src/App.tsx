@@ -43,7 +43,7 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
   const state = useTLState()
   const promptImprovementEnabled = state.promptImprovementEnabled === true
   const boot = useMemo(() => readBootstrap(state), [state])
-  const { chat, actions } = useChat(chatIdOf(state, controlId), boot)
+  const { chat, actions, runs } = useChat(chatIdOf(state, controlId), boot)
   const labels = useMemo(() => bundle(chat.language), [chat.language])
 
   /** Whether the session drawer is open. Below its breakpoint the rail is a drawer, not a column. */
@@ -346,6 +346,7 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
             onOpenSource={openSource}
           />
           <Composer
+            runs={runs}
             windowId={chat.windowId}
             agents={chat.caps.agents}
             models={chat.offeredModels}

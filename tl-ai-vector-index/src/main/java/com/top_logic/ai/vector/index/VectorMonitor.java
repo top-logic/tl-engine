@@ -18,7 +18,7 @@ import com.top_logic.util.monitor.MonitorResult;
 /**
  * {@link MonitorComponent} for the {@link VectorIndex}.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class VectorMonitor extends AbstractMonitorComponent {
 

@@ -1,4 +1,4 @@
-export type TraceMode = 'none' | 'overview' | 'detailed'
+export type TraceMode = 'none' | 'summary' | 'detailed'
 
 export type ToolCallStatus = 'pending' | 'running' | 'done' | 'error'
 

@@ -369,6 +369,9 @@ function AnswerFooter({
   onRegenerate,
   extraActions,
   message,
+  canCopy = true,
+  canRate = true,
+  showTime = true,
 }: {
   text: string
   timestamp: number
@@ -381,11 +384,18 @@ function AnswerFooter({
   onRegenerate?: () => void
   extraActions?: MessageAction[]
   message?: ChatMessage
+  canCopy?: boolean
+  canRate?: boolean
+  showTime?: boolean
 }) {
   const [copied, setCopied] = useState(false)
   const [noteOpen, setNoteOpen] = useState(false)
   const [draft, setDraft] = useState(note ?? '')
   if (!text.trim()) return null
+  const hasActions =
+    canCopy || canRate || Boolean(onRegenerate) || Boolean(extraActions && extraActions.length && message)
+  // Nothing to copy/rate/regenerate and no time to show: render no row rather than an empty strip.
+  if (!hasActions && !showTime) return null
 
   const rate = (next: Rating) => {
     if (!onRate) return
@@ -397,23 +407,27 @@ function AnswerFooter({
   return (
     <div className="answer-footer-wrap">
       <div className="answer-footer">
-        <IconButton
-          label={copied ? labels.copied : labels.copyAnswer}
-          hint={copied ? labels.copied : labels.copyAnswer}
-          onClick={() => {
-            void navigator.clipboard
-              .writeText(text)
-              .then(() => {
-                setCopied(true)
-                window.setTimeout(() => setCopied(false), 1500)
-              })
-              .catch(() => {
-                /* the clipboard may be blocked */
-              })
-          }}
-        >
-          {copied ? CheckIcon : CopyIcon}
-        </IconButton>
+        {canCopy ? (
+          <IconButton
+            label={copied ? labels.copied : labels.copyAnswer}
+            hint={copied ? labels.copied : labels.copyAnswer}
+            onClick={() => {
+              void navigator.clipboard
+                .writeText(text)
+                .then(() => {
+                  setCopied(true)
+                  window.setTimeout(() => setCopied(false), 1500)
+                })
+                .catch(() => {
+                  /* the clipboard may be blocked */
+                })
+            }}
+          >
+            {copied ? CheckIcon : CopyIcon}
+          </IconButton>
+        ) : null}
+        {canRate ? (
+          <>
         <IconButton
           label={labels.goodAnswer}
           hint={labels.goodAnswer}
@@ -430,6 +444,8 @@ function AnswerFooter({
         >
           {ThumbDownIcon}
         </IconButton>
+          </>
+        ) : null}
         {onRegenerate ? (
           <IconButton
             label={regenerating ? labels.regenerating : labels.regenerate}
@@ -451,9 +467,11 @@ function AnswerFooter({
               </IconButton>
             ))
           : null}
-        <time className="answer-time" dateTime={new Date(timestamp).toISOString()}>
-          {formatTimestamp(timestamp, language)}
-        </time>
+        {showTime ? (
+          <time className="answer-time" dateTime={new Date(timestamp).toISOString()}>
+            {formatTimestamp(timestamp, language)}
+          </time>
+        ) : null}
       </div>
       {noteOpen && rating === 'down' ? (
         <div className="feedback-note">
@@ -505,6 +523,10 @@ function AssistantAnswer({
   openInPane,
   extraActions,
   onOpenSource,
+  canCopy = true,
+  canRate = true,
+  citationMarkers = true,
+  showTime = true,
 }: {
   text: string
   streaming: boolean
@@ -522,9 +544,15 @@ function AssistantAnswer({
   openInPane?: (content: React.ReactNode, options: PaneOpenOptions) => void
   extraActions?: MessageAction[]
   onOpenSource?: (citation: Citation) => void
+  canCopy?: boolean
+  canRate?: boolean
+  citationMarkers?: boolean
+  showTime?: boolean
 }) {
   if (!text && !streaming) return null
-  const sources = message ? citedSources([message]) : []
+  // The pill reads the message's own citations, so it must honour the citations switch too - otherwise
+  // turning citations off would hide the markers but leave the "Quellen" pill behind.
+  const sources = citationMarkers && message ? citedSources([message]) : []
   return (
     <div className="turn turn-agent" data-message-id={message?.id}>
       <div className={`answer${streaming ? ' is-streaming' : ''}`}>
@@ -559,6 +587,9 @@ function AssistantAnswer({
           onRegenerate={onRegenerate}
           extraActions={extraActions}
           message={message}
+          canCopy={canCopy}
+          canRate={canRate}
+          showTime={showTime}
         />
       )}
     </div>
@@ -759,13 +790,15 @@ function RunSummary({
   results,
   labels,
   busy,
+  startOpen = false,
 }: {
   events: ChatMessage[]
   results: Map<string, ToolResult>
   labels: Labels
   busy: boolean
+  startOpen?: boolean
 }) {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(startOpen)
   if (events.length === 0) return null
   const steps = events.filter((item) => item.type === 'tool_call').length || events.length
   return (
@@ -833,6 +866,10 @@ function AgentRun({
   openInPane,
   extraActions,
   onOpenSource,
+  canCopy = true,
+  canRate = true,
+  citationMarkers = true,
+  showTimestamp = true,
 }: {
   turn: RunTurn
   results: Map<string, ToolResult>
@@ -850,19 +887,23 @@ function AgentRun({
   openInPane?: (content: React.ReactNode, options: PaneOpenOptions) => void
   extraActions?: MessageAction[]
   onOpenSource?: (citation: Citation) => void
+  canCopy?: boolean
+  canRate?: boolean
+  citationMarkers?: boolean
+  showTimestamp?: boolean
 }) {
   const answer = lastAnswer(turn.events)
   const events = traceEvents(turn.events)
   const tools = toolsOf(turn.events)
   const meta = runMetaOf(turn.events)
-  const summary = traceMode === 'overview' ? overviewLine(tools, labels) : ''
+  const summaryLine = traceMode === 'summary' ? overviewLine(tools, labels) : ''
 
   return (
     <div className="agent-run">
-      {traceMode === 'overview' && events.length > 0 ? (
+      {traceMode === 'summary' && events.length > 0 ? (
         <RunSummary events={events} results={results} labels={labels} busy={busy} />
       ) : (
-        <RunMetaLine meta={meta} summary={summary} busy={busy} labels={labels} />
+        <RunMetaLine meta={meta} summary={summaryLine} busy={busy} labels={labels} />
       )}
       {traceMode === 'detailed' && events.length > 0 ? (
         <DetailedTrace events={events} results={results} labels={labels} effort={effort} model={''} />
@@ -879,12 +920,16 @@ function AgentRun({
           regenerating={regenerating}
           onRate={onRate}
           onRegenerate={onRegenerate}
-          citations={answer.citations}
+          citations={citationMarkers ? answer.citations : []}
           message={answer}
           renderAnnotation={renderAnnotation}
           openInPane={openInPane}
           extraActions={extraActions}
           onOpenSource={onOpenSource}
+          canCopy={canCopy}
+          canRate={canRate}
+          citationMarkers={citationMarkers}
+          showTime={showTimestamp}
         />
       ) : null}
       {traceMode !== 'detailed'
@@ -925,6 +970,12 @@ export const Thread = React.memo(function Thread({
   openInPane,
   extraActions,
   onOpenSource,
+  sessionListToggle = true,
+  canCopy = true,
+  canRate = true,
+  canRegenerate = true,
+  citationMarkers = true,
+  showTimestamp = true,
 }: {
   messages: ChatMessage[]
   traceMode: TraceMode
@@ -948,6 +999,12 @@ export const Thread = React.memo(function Thread({
   openInPane?: (content: React.ReactNode, options: PaneOpenOptions) => void
   extraActions?: MessageAction[]
   onOpenSource?: (citation: Citation) => void
+  sessionListToggle?: boolean
+  canCopy?: boolean
+  canRate?: boolean
+  canRegenerate?: boolean
+  citationMarkers?: boolean
+  showTimestamp?: boolean
 }) {
   const scroller = useRef<HTMLDivElement>(null)
   const stick = useRef(true)
@@ -985,21 +1042,23 @@ export const Thread = React.memo(function Thread({
   return (
     <div className="thread-shell">
       <div className="thread-bar">
-        <button
-          type="button"
-          className="icon-button rail-toggle"
-          aria-label={railCollapsed ? labels.showChats : labels.hideChats}
-          aria-expanded={!railCollapsed}
-          onClick={() => {
-            onToggleRail()
-            onOpenRail()
-          }}
-        >
-          <svg viewBox="0 0 16 16" aria-hidden="true">
-            <rect x="2" y="3" width="12" height="10" rx="1.6" />
-            <path d="M6.2 3v10" />
-          </svg>
-        </button>
+        {sessionListToggle ? (
+          <button
+            type="button"
+            className="icon-button rail-toggle"
+            aria-label={railCollapsed ? labels.showChats : labels.hideChats}
+            aria-expanded={!railCollapsed}
+            onClick={() => {
+              onToggleRail()
+              onOpenRail()
+            }}
+          >
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <rect x="2" y="3" width="12" height="10" rx="1.6" />
+              <path d="M6.2 3v10" />
+            </svg>
+          </button>
+        ) : null}
         <h1 title={title || labels.newChat}>{title || labels.newChat}</h1>
         {headerCaption ? <div className="thread-bar-caption">{headerCaption}</div> : null}
         {headerEnd ? <div className="thread-bar-end">{headerEnd}</div> : null}
@@ -1051,11 +1110,13 @@ export const Thread = React.memo(function Thread({
                     rating={entry?.rating ?? null}
                     note={entry?.note}
                     regenerating={regenerating}
-                    onRate={turn.index >= 0 ? (value, note) => onRate(turn.index, value, note) : undefined}
+                    onRate={
+                      canRate && turn.index >= 0 ? (value, note) => onRate(turn.index, value, note) : undefined
+                    }
                     // Only the last answer can be produced again: regenerating an earlier one would
                     // silently discard everything said after it, which is what editing is for.
                     onRegenerate={
-                      user && position === lastIndex && !busy
+                      canRegenerate && user && position === lastIndex && !busy
                         ? () => onRegenerate(user.id, turn.index)
                         : undefined
                     }
@@ -1063,6 +1124,10 @@ export const Thread = React.memo(function Thread({
                     openInPane={openInPane}
                     extraActions={extraActions}
                     onOpenSource={onOpenSource}
+                    canCopy={canCopy}
+                    canRate={canRate}
+                    citationMarkers={citationMarkers}
+                    showTimestamp={showTimestamp}
                   />
                 </div>
               )

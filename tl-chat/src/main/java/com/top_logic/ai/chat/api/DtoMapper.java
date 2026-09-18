@@ -66,6 +66,10 @@ public final class DtoMapper {
 		}
 		response.setMessages(messages);
 		response.setProcessing(processing);
+		TaskStore tasks = tracker.getActiveTaskStore();
+		if (tasks != null) {
+			response.setTasksJson(tasks.toJson());
+		}
 		return response;
 	}
 

@@ -68,6 +68,7 @@ import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * TL-Script functions for interacting with large language models.
@@ -746,6 +747,96 @@ public class AIScriptFunctions extends TLScriptFunctions {
 			return false;
 		}
 		return AgentExecutionStore.getInstance().requestCancel(execution);
+	}
+
+	/**
+	 * Renames a chat session, so that every list showing it follows at once.
+	 *
+	 * <p>
+	 * The write goes through the {@link AgentExecutionStore}, not through the attribute: the store
+	 * commits on its writer thread (so this works from a read-only context such as a rendering
+	 * expression), bumps the session's {@code lastUpdated} - which is what its list groups by - and
+	 * tells every open window of the owner, so a second browser tab updates without waiting for its
+	 * next command.
+	 * </p>
+	 *
+	 * <p>
+	 * Refuses a session the acting account neither owns nor administers. The check is here and not
+	 * only in the view that calls it: a command's input is whatever a channel happens to hold, and
+	 * this function is reachable from a scheduler task and the TL-Script console as well.
+	 * </p>
+	 *
+	 * @param session
+	 *        The {@code tl.ai.execution:AgentSession} to rename.
+	 * @param title
+	 *        The new title; must not be blank.
+	 * @return The renamed session, so the call can be chained.
+	 * @throws TopLogicException
+	 *         If {@code session} is not a session, is someone else's, or {@code title} is blank.
+	 */
+	public static AgentSession sessionRename(Object session, String title) {
+		AgentSession owned = ownedSession(session);
+		if (title == null || title.isBlank()) {
+			throw new TopLogicException(I18NConstants.ERROR_SESSION_TITLE_EMPTY);
+		}
+		AgentExecutionStore.getInstance().updateTitle(owned, title.trim());
+		return owned;
+	}
+
+	/**
+	 * Deletes a chat session with everything recorded under it, after asking any live run of it to
+	 * stop.
+	 *
+	 * <p>
+	 * A run still going on in the session is asked to stop first; the deletion then cascades over
+	 * the session's tasks, its interaction requests and its executions. It also tells the open
+	 * windows, which is what drops the deleted chat out of a list and out of the window's
+	 * in-memory chat state. Deletion cannot be undone.
+	 * </p>
+	 *
+	 * <p>
+	 * Refuses a session the acting account neither owns nor administers, for the same reason
+	 * renaming one does.
+	 * </p>
+	 *
+	 * @param session
+	 *        The {@code tl.ai.execution:AgentSession} to delete.
+	 * @return Always {@code true}; a refusal is a {@link TopLogicException}, not a {@code false}.
+	 * @throws TopLogicException
+	 *         If {@code session} is not a session or is someone else's.
+	 * @see AgentExecutionStore#deleteSession(AgentSession) What the cancelling and the cascade are.
+	 * @see #sessionRename(Object, String) The same ownership check.
+	 */
+	public static boolean sessionDelete(Object session) {
+		AgentExecutionStore.getInstance().deleteSession(ownedSession(session));
+		return true;
+	}
+
+	/**
+	 * The given value as an {@link AgentSession} the acting account may change.
+	 *
+	 * <p>
+	 * An administrator may change any session. That mirrors {@code ToolAuthorization} and
+	 * {@code RunAuthorization}, where an administrator already bypasses the layer, and it is what
+	 * makes a {@code <data-list>} over all sessions usable as an administration view. It does not
+	 * loosen {@code ChatServlet}, which stays strictly owner-only: there the guard also defends
+	 * against a guessed id arriving from a browser, and no administration surface asks for it.
+	 * </p>
+	 */
+	private static AgentSession ownedSession(Object session) {
+		AgentSession resolved = session instanceof AgentSession found ? found : null;
+		if (resolved == null && session instanceof Collection<?> many && many.size() == 1) {
+			Object only = many.iterator().next();
+			resolved = only instanceof AgentSession found ? found : null;
+		}
+		if (resolved == null) {
+			throw new TopLogicException(I18NConstants.ERROR_NOT_A_SESSION);
+		}
+		Person actor = TLContext.currentUser();
+		if (actor == null || (!actor.equals(resolved.getOwner()) && !actor.isAdmin())) {
+			throw new TopLogicException(I18NConstants.ERROR_SESSION_NOT_OWNED);
+		}
+		return resolved;
 	}
 
 	/**

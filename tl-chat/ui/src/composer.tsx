@@ -2,6 +2,7 @@ import { React } from 'tl-react-bridge'
 import { cancelPromptImprovement, improvePrompt } from './api'
 import { ACCEPT_ATTRIBUTE, collectAttachments, dragHasFiles } from './attachments'
 import { ContextUsage, formatTokens } from './context-usage'
+import type { RunStore } from './store'
 import type { bundle } from './i18n'
 import { agentLabel, effortLabel, modelLabel } from './models'
 import { ComposerNotice } from './notice'
@@ -41,7 +42,7 @@ type Labels = ReturnType<typeof bundle>
 function traceOptions(labels: Labels): { id: TraceMode; label: string; description: string }[] {
   return [
     { id: 'none', label: labels.traceNone, description: labels.traceNoneHint },
-    { id: 'overview', label: labels.traceOverview, description: labels.traceOverviewHint },
+    { id: 'summary', label: labels.traceSummary, description: labels.traceSummaryHint },
     { id: 'detailed', label: labels.traceDetailed, description: labels.traceDetailedHint },
   ]
 }
@@ -207,6 +208,27 @@ function MenuRow({
   )
 }
 
+/** Whether the plus menu has anything to offer. Used by {@code <chat-conversation/>} when every picker is off. */
+export function plusMenuVisible(flags: {
+  attachmentsEnabled: boolean
+  agentPicker: boolean
+  modelPicker: boolean
+  thinking: boolean
+  mcp: boolean
+  tracePicker: boolean
+  extraMenuItems?: { length: number }
+}): boolean {
+  return (
+    flags.attachmentsEnabled ||
+    flags.agentPicker ||
+    flags.modelPicker ||
+    flags.thinking ||
+    flags.mcp ||
+    flags.tracePicker ||
+    (flags.extraMenuItems?.length ?? 0) > 0
+  )
+}
+
 export const Composer = React.memo(
   React.forwardRef(function Composer({
   windowId,
@@ -245,6 +267,16 @@ export const Composer = React.memo(
   onStop,
   extraMenuItems,
   referenceCandidates,
+  attachmentsEnabled = true,
+  agentPicker = true,
+  modelPicker = true,
+  thinking = true,
+  mcp = true,
+  tracePicker = true,
+  autoApproveSwitch = true,
+  enterHint = true,
+  placeholder,
+  runs,
 }: {
   windowId: string
   agents: AgentOption[]
@@ -286,6 +318,18 @@ export const Composer = React.memo(
   onStop: () => void
   extraMenuItems?: ComposerMenuItem[]
   referenceCandidates?: (query: string) => ReferenceCandidate[]
+  /** Whether files can be attached. Default on, matching today's composer. */
+  attachmentsEnabled?: boolean
+  agentPicker?: boolean
+  modelPicker?: boolean
+  thinking?: boolean
+  mcp?: boolean
+  tracePicker?: boolean
+  autoApproveSwitch?: boolean
+  enterHint?: boolean
+  placeholder?: string
+  /** The run store of the chat this composer belongs to; the context ring reads it. */
+  runs?: RunStore
 }, handle: React.Ref<ComposerApi>) {
   const [text, setText] = useState('')
   const [files, setFiles] = useState<Attachment[]>([])
@@ -312,6 +356,16 @@ export const Composer = React.memo(
   const surface = useRef<HTMLDivElement>(null)
   const improveId = useRef<string | null>(null)
   const abort = useRef<AbortController | null>(null)
+  const showPlus = plusMenuVisible({
+    attachmentsEnabled,
+    agentPicker,
+    modelPicker,
+    thinking,
+    mcp,
+    tracePicker,
+    extraMenuItems,
+  })
+  const showModelMenu = modelPicker || thinking
 
   useEffect(() => {
     if (!promptImprovementEnabled || improving || draftIsEmpty(text)) {
@@ -365,6 +419,7 @@ export const Composer = React.memo(
   }, [menuOpen, modelMenuOpen, modelPane, pane])
 
   const addFiles = async (incoming: File[]) => {
+    if (!attachmentsEnabled) return
     const result = await collectAttachments(incoming, files, labels)
     if (result.attachments.length) {
       setFiles((prev) => [...prev, ...result.attachments])
@@ -383,7 +438,8 @@ export const Composer = React.memo(
    * dropping it there must not navigate the browser away from the application.
    */
   useEffect(() => {
-    const root = surface.current?.closest('.tl-cockpit') as HTMLElement | null
+    if (!attachmentsEnabled) return
+    const root = surface.current?.closest('.tl-cockpit, .tl-chat-conversation') as HTMLElement | null
     if (!root) return
     let depth = 0
     const onEnter = (event: DragEvent) => {
@@ -425,22 +481,28 @@ export const Composer = React.memo(
   const q = query.trim().toLocaleLowerCase()
   // Searched by what is on screen and by the identifier, because both are things a user types: the
   // one they read in the row, and the one they know from the configuration.
-  const agentHits = agents.filter(
-    (item) =>
-      !q ||
-      item.name.toLocaleLowerCase().includes(q) ||
-      (item.label ?? '').toLocaleLowerCase().includes(q) ||
-      (item.summary ?? '').toLocaleLowerCase().includes(q),
-  )
-  const modelHits = models.filter(
-    (item) => !q || item.id.toLocaleLowerCase().includes(q) || (item.provider ?? '').toLocaleLowerCase().includes(q),
-  )
-  const mcpHits = mcpServers.filter((item) => !q || item.name.toLocaleLowerCase().includes(q))
+  const agentHits = agentPicker
+    ? agents.filter(
+        (item) =>
+          !q ||
+          item.name.toLocaleLowerCase().includes(q) ||
+          (item.label ?? '').toLocaleLowerCase().includes(q) ||
+          (item.summary ?? '').toLocaleLowerCase().includes(q),
+      )
+    : []
+  const modelHits = modelPicker
+    ? models.filter(
+        (item) => !q || item.id.toLocaleLowerCase().includes(q) || (item.provider ?? '').toLocaleLowerCase().includes(q),
+      )
+    : []
+  const mcpHits = mcp ? mcpServers.filter((item) => !q || item.name.toLocaleLowerCase().includes(q)) : []
   const traces = traceOptions(labels)
-  const traceHits = traces.filter(
-    (item) => !q || item.label.toLocaleLowerCase().includes(q) || item.description.toLocaleLowerCase().includes(q),
-  )
-  const effortHits = effortLevels.filter((level) => !q || level.includes(q))
+  const traceHits = tracePicker
+    ? traces.filter(
+        (item) => !q || item.label.toLocaleLowerCase().includes(q) || item.description.toLocaleLowerCase().includes(q),
+      )
+    : []
+  const effortHits = thinking ? effortLevels.filter((level) => !q || level.includes(q)) : []
   // With a search term the root pane is a result list across all four sections, as in a command
   // palette: typing "opus" must find the model without first walking into the model pane.
   const searching = q.length > 0
@@ -657,7 +719,10 @@ export const Composer = React.memo(
             }}
             onPasteFiles={(pasted) => void addFiles(pasted)}
             ariaLabel={labels.askAnything}
-            placeholder={busy ? labels.typeNext : referenceCandidates ? labels.askAnythingWithAt : labels.askAnything}
+            placeholder={
+              placeholder ||
+              (busy ? labels.typeNext : referenceCandidates ? labels.askAnythingWithAt : labels.askAnything)
+            }
             onKeyDown={(event) => {
               if (event.key === 'Escape' && improving) {
                 event.preventDefault()
@@ -718,20 +783,23 @@ export const Composer = React.memo(
         </div>
 
         <div className="composer-row">
-          <input
-            ref={file}
-            type="file"
-            accept={ACCEPT_ATTRIBUTE}
-            multiple
-            hidden
-            onChange={async (event) => {
-              const list = Array.from(event.target.files ?? [])
-              event.target.value = ''
-              closeMenu()
-              await addFiles(list)
-            }}
-          />
+          {attachmentsEnabled ? (
+            <input
+              ref={file}
+              type="file"
+              accept={ACCEPT_ATTRIBUTE}
+              multiple
+              hidden
+              onChange={async (event) => {
+                const list = Array.from(event.target.files ?? [])
+                event.target.value = ''
+                closeMenu()
+                await addFiles(list)
+              }}
+            />
+          ) : null}
 
+          {showPlus ? (
           <div className="plus-menu" ref={menu}>
             <button
               type="button"
@@ -769,12 +837,14 @@ export const Composer = React.memo(
                 {pane === 'root' && !searching ? (
                   <div className="plus-list">
                     <div className="plus-section">
-                      <MenuRow
-                        icon={Icon.paperclip}
-                        label={labels.uploadFile}
-                        description={labels.uploadFileHint}
-                        onClick={() => file.current?.click()}
-                      />
+                      {attachmentsEnabled ? (
+                        <MenuRow
+                          icon={Icon.paperclip}
+                          label={labels.uploadFile}
+                          description={labels.uploadFileHint}
+                          onClick={() => file.current?.click()}
+                        />
+                      ) : null}
                       {extraMenuItems?.map((item) => (
                         <MenuRow
                           key={item.id}
@@ -789,23 +859,27 @@ export const Composer = React.memo(
                       ))}
                     </div>
                     <div className="plus-section">
-                      <MenuRow
-                        icon={Icon.agent}
-                        label={labels.agent}
-                        description={labels.agentHint}
-                        value={agent ? agentLabel(agent, agents) : labels.defaultValue}
-                        more
-                        onClick={() => setPane('agent')}
-                      />
-                      <MenuRow
-                        icon={Icon.model}
-                        label={labels.model}
-                        description={labels.modelHint}
-                        value={modelName}
-                        more
-                        onClick={() => setPane('model')}
-                      />
-                      {effortLevels.length ? (
+                      {agentPicker ? (
+                        <MenuRow
+                          icon={Icon.agent}
+                          label={labels.agent}
+                          description={labels.agentHint}
+                          value={agent ? agentLabel(agent, agents) : labels.defaultValue}
+                          more
+                          onClick={() => setPane('agent')}
+                        />
+                      ) : null}
+                      {modelPicker ? (
+                        <MenuRow
+                          icon={Icon.model}
+                          label={labels.model}
+                          description={labels.modelHint}
+                          value={modelName}
+                          more
+                          onClick={() => setPane('model')}
+                        />
+                      ) : null}
+                      {thinking && effortLevels.length ? (
                         <MenuRow
                           icon={Icon.effort}
                           label={labels.effort}
@@ -817,22 +891,26 @@ export const Composer = React.memo(
                       ) : null}
                     </div>
                     <div className="plus-section">
-                      <MenuRow
-                        icon={Icon.mcp}
-                        label={labels.mcpServers}
-                        description={labels.mcpHint}
-                        value={selectedMcp.length ? labels.enabledCount(selectedMcp.length) : labels.none}
-                        more
-                        onClick={() => setPane('mcp')}
-                      />
-                      <MenuRow
-                        icon={Icon.trace}
-                        label={labels.traceLevel}
-                        description={labels.traceHint}
-                        value={traces.find((item) => item.id === traceMode)?.label ?? labels.traceOverview}
-                        more
-                        onClick={() => setPane('trace')}
-                      />
+                      {mcp ? (
+                        <MenuRow
+                          icon={Icon.mcp}
+                          label={labels.mcpServers}
+                          description={labels.mcpHint}
+                          value={selectedMcp.length ? labels.enabledCount(selectedMcp.length) : labels.none}
+                          more
+                          onClick={() => setPane('mcp')}
+                        />
+                      ) : null}
+                      {tracePicker ? (
+                        <MenuRow
+                          icon={Icon.trace}
+                          label={labels.traceLevel}
+                          description={labels.traceHint}
+                          value={traces.find((item) => item.id === traceMode)?.label ?? labels.traceSummary}
+                          more
+                          onClick={() => setPane('trace')}
+                        />
+                      ) : null}
                     </div>
                   </div>
                 ) : null}
@@ -944,8 +1022,10 @@ export const Composer = React.memo(
               </div>
             ) : null}
           </div>
+          ) : null}
 
           <div className="composer-actions">
+            {showModelMenu ? (
             <div className="model-menu" ref={modelMenu}>
               <button
                 type="button"
@@ -967,7 +1047,7 @@ export const Composer = React.memo(
                   {modelPane === 'root' ? (
                     <div className="plus-list">
                       {/* Offered only where the provider accepts it - see ModelOptionDto.effortLevels. */}
-                      {effortLevels.length ? (
+                      {thinking && effortLevels.length ? (
                         <MenuRow
                           label={labels.effort}
                           value={effort ? effortLabel(effort, labels) : labels.defaultValue}
@@ -975,12 +1055,14 @@ export const Composer = React.memo(
                           onClick={() => setModelPane('effort')}
                         />
                       ) : null}
-                      <MenuRow
-                        label={labels.model}
-                        value={modelName}
-                        more
-                        onClick={() => setModelPane('model')}
-                      />
+                      {modelPicker ? (
+                        <MenuRow
+                          label={labels.model}
+                          value={modelName}
+                          more
+                          onClick={() => setModelPane('model')}
+                        />
+                      ) : null}
                     </div>
                   ) : null}
                   {modelPane !== 'root' ? (
@@ -1026,7 +1108,8 @@ export const Composer = React.memo(
                 </div>
               ) : null}
             </div>
-            <ContextUsage labels={labels} />
+            ) : null}
+            <ContextUsage labels={labels} runs={runs} />
             <SendButton
               disabled={!text.trim() && files.length === 0}
               busy={busy}
@@ -1039,24 +1122,28 @@ export const Composer = React.memo(
       </div>
 
       <div className="composer-foot">
-        <button
-          type="button"
-          className={`approve-switch${autoApprove ? ' is-on' : ''}`}
-          role="switch"
-          aria-checked={autoApprove}
-          aria-label={labels.autoApprove}
-          title={labels.autoApprove}
-          onClick={onToggleAutoApprove}
-        >
-          <span className="approve-switch-track" aria-hidden="true">
-            <span className="approve-switch-knob" />
+        {autoApproveSwitch ? (
+          <button
+            type="button"
+            className={`approve-switch${autoApprove ? ' is-on' : ''}`}
+            role="switch"
+            aria-checked={autoApprove}
+            aria-label={labels.autoApprove}
+            title={labels.autoApprove}
+            onClick={onToggleAutoApprove}
+          >
+            <span className="approve-switch-track" aria-hidden="true">
+              <span className="approve-switch-knob" />
+            </span>
+            <span className="approve-switch-label">{labels.autoApprove}</span>
+          </button>
+        ) : null}
+        {enterHint ? (
+          <span className="composer-hint" title={labels.enterSends}>
+            <span className="composer-hint-long">{labels.enterSends}</span>
+            <span className="composer-hint-short">{labels.enterSendsShort}</span>
           </span>
-          <span className="approve-switch-label">{labels.autoApprove}</span>
-        </button>
-        <span className="composer-hint" title={labels.enterSends}>
-          <span className="composer-hint-long">{labels.enterSends}</span>
-          <span className="composer-hint-short">{labels.enterSendsShort}</span>
-        </span>
+        ) : null}
       </div>
 
       {dropping ? (

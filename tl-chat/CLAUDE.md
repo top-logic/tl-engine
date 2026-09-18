@@ -18,7 +18,7 @@ Both served by `ChatServlet` at `/chat/*`:
    - `GET /chat/sessions/{id}` – Load session and activate server-side.
    - `PUT /chat/sessions/{id}/title` – Update session title.
    - `DELETE /chat/sessions/{id}` – Delete session (cascades over recorded executions, tasks, interactions).
-   - `PUT /chat/preferences` – Per-user rail/pane layout. The React UI cannot call `PersonalConfiguration` itself, so this wraps `setJSONValue` **and** `storePersonalConfiguration()` (transient otherwise). Key `tl-chat.layout`. There is no `GET`: the bootstrap travels with the control state (`AgentChatControl.putState`), so a second round trip would only repeat it.
+   - `PUT /chat/preferences?chatId=…` – Per-user rail/pane layout of **one** chat. The React UI cannot call `PersonalConfiguration` itself, so this wraps `setJSONValue` **and** `storePersonalConfiguration()` (transient otherwise). Key `tl-chat.layout`, holding one layout per `chat-id`. The body is what the user *decided*, so a fact they never touched is absent. There is no `GET`: the bootstrap travels with the control state (`ChatViewBinding.writeLayoutState`, re-read on every render), so a second round trip would only repeat it.
 
 2. **SSE API** (real-time push):
    - `GET /chat/events` – SSE connection. `ChatSSEHandler` receives `AgentEvent`s and emits structured SSE frames: `connected`, `run_started`, `turn_started`, `text_delta`, `tool_started`, `tool_completed`, `approval_required`, `message_complete`, `heartbeat`, etc.
@@ -51,6 +51,10 @@ browser component, which shows a sign-in note rather than a composer.
 - **`ChatHistoryService`** – Static access to persistent `AgentSession` objects (kind CHAT) via `AgentExecutionStore` (tl-ai-core). Conversations are stored as one transcript per `AgentExecution` (written by `AgentRunner` at run end) and merged in run order on load.
 - **`LegacyChatSessionMigration`** – Startup service migrating legacy `tl.ai.chat:ChatSession` blobs to `AgentSession`s eagerly. The legacy model has been removed (tl-ai-core migration `Issue_230_remove_module_tl_ai_chat`), so the service is a no-op now; it is kept until every deployment is known to have run it.
 - **`ChatSessionRegistry`** – Bridges `WindowScope` (a chat control) and `HttpSession` (`ChatServlet`). Published API: the classic control in `tl-chat-classic` and `Consulting`'s own control register here from outside this module.
+- **`ChatViewBinding`** – Once per (sub-session, `chat-id`): tracker and user. `AgentChatControl` and the split elements (`<chat-conversation>`, `<chat-rail>`) delegate to it so several controls do not bind the window several times. The tracker stays one per window. The layout preference is the exception: it is read whenever `writeLayoutState` is asked for it, which every chat control does from `onBeforeWrite` - see "where the chat's state lives". It is also where every join is tallied for `ChatJoinLog`.
+- **`AgentViewRefreshService`** – Makes a model-bound element beside the transcript follow a running agent. A run commits from a background thread, and a window only sees model changes when its `GlobalModelEventForwarder` is asked to synthesize them - on a browser command or on the 30 s SSE heartbeat. The service listens on `AgentExecutionStore.ChangeListener`, coalesces a burst of writes (200 ms) and synthesizes per window, in that window's sub-session and **under the window's request lock** (a `ReactControl`'s state map is a plain `HashMap`; the heartbeat path skips the lock, and this deliberately does not copy that). Windows are registered by `ChatViewBinding` while a chat renders, which is a fork: the engine offers no way to enumerate an account's live windows.
+- **`ChatScope` / `ChatScopeElement`** – The `<chat>` container and the ambient value it puts into the child `ViewContext`. An element's conversation is its own `chat-id`, else the enclosing `<chat>`, else `default`.
+- **`ChatJoinLog`** – Per render, which element joined which chat id; logged when the interaction ends, with a WARN for an element that joined nobody while another id has several.
 
 ## Thread Safety
 
@@ -65,7 +69,28 @@ browser component, which shows a sign-in note rather than a composer.
 - Execution: `runId`, `agentName`, `model`, `provider`, `status`, `stopReason`, token columns, `transcript` (CLOB)
 - Transcript format: `ConversationLog` turns serialized via `ConversationLogSerializer` (tl-ai-core, `PersistedConversationV2`)
 - Human-in-the-loop requests persist as `InteractionRequest` rows (approval/question/choice with resolution)
+- The agent's task plan persists as `AgentTask` rows of the session. `TaskStore` (tl-ai-core) stays the truth of the running turn - it also carries `activeForm`, `owner` and the blocks/blocked-by sets, which the model does not - and `AgentTaskMirror` writes what it says onto the rows after every mutation, through `AgentExecutionStore.syncTasks` (one transaction, on the writer thread). The store is still serialized into the session metadata as well, because that is what restores it when a session is re-opened and what the SSE `task_update` frame and the App's own Fortschritt list read. So: the blob is the store's own persistence, the rows are the model a view binds to.
 - Legacy `tl.ai.chat:ChatSession` single-blob sessions were migrated to this model eagerly at startup by `LegacyChatSessionMigration`; the legacy model has since been removed
+
+## Engine dependencies
+
+The engine modules this one uses must be plain `compile` dependencies - never `optional`, never
+`provided`. `tl-chat.conf.config.xml` registers services of this module unconditionally, and every
+dependent that loads that configuration has to resolve their classes: `AgentViewRefreshService`
+alone pulls in `ReactWindowRegistry` from `tl-layout-react`. An `optional` dependency does not reach
+dependents, so the missing jar surfaces only when a downstream module boots the configuration, as a
+`NoClassDefFoundError` out of the config reader (#415).
+
+`tl-chat-classic` is that downstream module, and its own suite is what catches it, so after adding
+or rescoping an engine dependency here run both suites:
+
+```bash
+mvn -o -pl tl-chat install -DskipTests=false
+mvn -o -pl tl-chat-classic test -DskipTests=false
+```
+
+The second one needs the first: it resolves `tl-chat` from the local repository, not from the
+reactor.
 
 ## Front end
 
@@ -95,9 +120,13 @@ because the Vite library build strips types without checking them.
 
 `tl-react-bridge` is the host's module: the build keeps it external and the browser resolves it
 through a `<module-script specifier=…>`, so there is nothing in `node_modules` for a test run to
-import. `vite.config.ts` therefore aliases it, for the vitest run only, to `ui/test/tl-react-bridge.ts`
-- a stub of just what importing the chat's modules touches. A test that needs a *rendered* component
-needs a real React, which this is not.
+import. `vite.config.ts` therefore aliases it, for the vitest run only, to `ui/test/tl-react-bridge.ts`.
+The stub hands out the **real** React (a dev dependency), so a test may render a component with
+`react-dom/server` and assert on the markup - `chat-rail.test.ts` does. Everything else in it is the
+smallest stand-in that behaves: the control state a test sets, a command sink it reads back, and a
+marker element in place of a mounted child control. React must still never be imported from `react`
+in `ui/src` - it is the host's instance, and a second copy breaks every hook; `chat-rail.test.ts`
+pins that, which is what the missing dependency used to do.
 
 All four sit in `generate-resources` on purpose, so `-DskipTests` still runs the JS tests: that flag
 is for the Java suites, whose KB setup is what makes a build slow, while the whole vitest run is a
@@ -121,9 +150,102 @@ only after `mvn -pl tl-chat -am -DskipTests install` and a restart of the applic
 
 `view/AgentChatElement` is the `<agent-chat/>` view element (`trace-mode`, `prompt-improver-agent`);
 `view/AgentChatControl` is the `ReactControl` behind it. It registers the per-window
-`TaskProgressTracker` and pushes the bootstrap state (`windowId`, `userName`, `welcomeName`,
-`traceMode`, `promptImprovementEnabled`) the browser component reads. The component itself is
-registered as `TLAgentChat` in `ui/src/main.tsx`.
+`TaskProgressTracker` through `ChatViewBinding` and pushes the bootstrap state (`windowId`,
+`userName`, `welcomeName`, `traceMode`, `promptImprovementEnabled`) the browser component reads.
+The component itself is registered as `TLAgentChat` in `ui/src/main.tsx`.
+
+The session list is no element of this module's own: it is a `<data-list>` of
+`tl.ai.execution:AgentSession` whose `selection` channel feeds `<chat-conversation input>`, which
+is what `tl-ai-demo/chat-grouped.view.xml` configures. (The former `<chat-sessions/>` element was
+deleted with #415 - `<data-list>` does the same job with no chat-specific code.) The agent's task
+plan went the same way: the run mirrors it onto `tl.ai.execution:AgentTask` objects, so the
+Fortschritt section is a `<data-list>` over those, and `<chat-progress/>` is gone. `useChat` is
+**not** exported from `index.ts`: the store is internal to the bundle, so a host cannot write its
+own element against it. New chat pieces live in `ui/src` and are registered next to `TLAgentChat`.
+
+### Configuring `<data-list>`
+
+`com.top_logic.ai.chat.view.list.DataListElement` / `DataListControl` + `ui/src/data-list.tsx`.
+A **declared temporary fork**: the engine has no data-bound list that renders like the navbar with
+selection, grouping and search, so the element lives here and is built on public engine API only, to
+upstream as one clean diff.
+
+| Option | What it is |
+|--|--|
+| `rows` | TL-Script producing the row objects, the way `<table>` binds its rows. Mandatory. |
+| `<inputs><input channel="…"/>` | Channel values passed to `rows` as positional arguments. |
+| `observed-types` | Types whose create/update/delete re-runs `rows`, so the list follows the model. |
+| `<lines><line attribute=…\|<value>…` | What a row shows, top to bottom - a table's columns, stacked. `emphasis` is `primary` / `secondary`. |
+| `group-by` | TL-Script of one row giving its group header; unset means a flat list. |
+| `css-class` | TL-Script of one row giving extra classes on the row element - its *state* (`is-done`, `is-running`, `is-pending` are the ones the stylesheet defines). |
+| `selection` | Two-way channel holding the picked row object. |
+| `count` | Channel receiving the number of rows, written with every serialisation - what a rail section's badge reads without asking the browser. |
+| `search` / `collapsible` / `title` / `empty-text` | The list's own chrome. |
+| `<commands><command>` | Header buttons above the list. Ordinary `<generic-command>`s. |
+| `<row-commands><command>` | Commands offered on a single row - see below. |
+| `row-channel` | Name of the local channel a row command reads its row from. Default `row`. |
+| `row-actions` | `hover` (default) / `always` / `none` - when a row shows its trigger. |
+
+#### Row commands
+
+A `<row-commands>` entry is the same `<generic-command>` a header command is: label, image, clique,
+tooltip, `<executability>` and any action chain. The row the menu was opened on reaches the command
+through the **row channel** the list registers - which is what the command names in its `input`, and
+what an `<executability>` rule therefore sees, re-evaluated each time the menu opens.
+
+```xml
+<data-list selection="chatSession" row-channel="session" row-actions="hover" …>
+    <row-commands>
+        <generic-command image="css:bi bi-pencil" input="session">
+            <label><en>Rename</en><de>Umbenennen</de></label>
+            <open-dialog dialog-view="tl-ai-demo/rename-session.view.xml" bind-input-to="model"/>
+        </generic-command>
+        <generic-command image="css:bi bi-trash" input="session" clique="delete">
+            <label><en>Delete</en><de>Löschen</de></label>
+            <confirm><expr>s -> …names the row…</expr></confirm>
+            <execute-script function="s -> { aiSessionDelete($s); null; }"/>
+            <write-channel name="chatSession"/>
+        </generic-command>
+    </row-commands>
+</data-list>
+```
+
+What the element owns is the trigger; the **menu is the application's** (`ContextMenuOpener` /
+`ReactMenuControl`), so its entries carry the app's typography, its cliques become separators, and
+arrow keys, Enter and Escape already work. Two consequences worth knowing:
+
+- A command's `css-classes` does not reach the menu - the opener emits id, label, icon and disabled -
+  so a red "Delete" entry is not available without an engine change.
+- Outside an `<app-shell>` there is no opener. The list then renders **no trigger** (one DEBUG line,
+  no exception): a trigger that opens nothing is worse than none.
+- The opener dispatches a menu command with the **frame's** `ReactContext`, which is not a
+  `ViewContext` and does not hold this list's row channel: under it `<execute-script><inputs>` throws
+  a `ClassCastException` and `<write-channel>` silently does nothing (the same is true of every
+  `<context-menu>` in the engine). `<data-list>` therefore wraps each row command so it runs in the
+  context it was configured in. Do not remove that wrapper.
+- A channel that already holds a value notifies nobody, so reopening the same row's menu would show
+  what its `<executability>` decided the first time. The control re-evaluates the rules explicitly
+  before every open.
+
+`row-actions` has the same meaning and the same touch caveat as `<panel hover-actions>`: `hover`
+reveals the trigger on `.rail-item:hover` and on `:focus-within` (so the keyboard reaches it), and
+under `@media (hover: none)` it is permanently visible at a 44 px target, because a finger cannot
+hover. The trigger sits in space the row already reserves and `.rail-open` keeps `flex: 1;
+min-width: 0`, so the title shortens rather than the row reflowing.
+
+When the row whose menu was open disappears - what a Delete in that menu does - focus moves to the
+neighbouring row's trigger (previous, else next, else the list), not to `<body>`.
+
+**Tokens.** Anything the element's CSS uses must be declared under **both** roots: `.tl-cockpit …`
+and `.tl-data-list`. A token declared only on the first is silently missing in a standalone list.
+The same holds for the button reset, the focus ring and `box-sizing`.
+
+Writing a session: a row command calls `aiSessionRename(session, title)` / `aiSessionDelete(session)`
+(tl-ai-core `AIScriptFunctions`), never the `title` attribute. Those go through
+`AgentExecutionStore`, which commits on its writer thread, bumps `lastUpdated` (the list's own
+grouping) and tells the other windows; `aiSessionDelete` also asks a live run to stop and drops the
+chat out of every window that holds it. Both refuse a session the acting account neither owns nor
+administers.
 
 An application makes the bundle loadable by declaring it on `ClientResources` - see
 `tl-ai-demo/src/main/webapp/WEB-INF/conf/tl-ai-demo.conf.config.xml`:
@@ -173,6 +295,11 @@ it rewrites a draft and never answers as a persona.
 | File | What it owns |
 |--|--|
 | `App.tsx` | The shipped chat as a composition over one `useChat` store, plus this element's own geometry |
+| `chat-conversation.tsx` | `<chat-conversation/>` as `TLChatConversation`: transcript plus prompt field over the same store |
+| `chat-dock.tsx` | `<chat-dock/>` as `TLChatDock`: the floating launcher and the panel it opens over the page |
+| `chat-rail.tsx` / `rail-model.ts` | `<chat-rail/>` as `TLChatRail`: the side-rail shell - strip, section headers, pane chrome - and how it reads its state |
+| `chat-sources.tsx` | `<chat-sources/>`: the one rail section the chat still contributes as an element of its own |
+| `data-list.tsx` | `<data-list>` as `TLDataList`: the generic list - rows, lines, groups, search, selection, per-row state class |
 | `chat-store.ts` | The chat's state, one store per `chat-id`: bootstrap, capabilities, sessions, turn settings, transcript, run, layout preferences and the one `EventSource` |
 | `composer.tsx` | Input, plus menu, model picker, attachments, drag and drop, improve-prompt |
 | `thread.tsx` | Transcript: user bubbles, answers, run meta line, trace panels |
@@ -182,7 +309,8 @@ it rewrites a draft and never answers as a persona.
 | `api.ts` | Every call to `/chat/*`, plus the persisted-transcript to message mapping |
 | `reducer.ts` / `store.ts` / `types.ts` | Transcript reducer, the `runStore` snapshot a host may subscribe to, shared types |
 | `extensions.ts` | Host composition contract (`ChatExtensions`) |
-| `rail.tsx` / `side-pane.tsx` / `progress.tsx` | Right rail, artefact pane, Fortschritt |
+| `rail.tsx` / `side-pane.tsx` / `progress.tsx` | `App`'s own rail, the artefact pane, the Fortschritt list |
+| `theme-icon.tsx` | A `ThemeImage` (`css:bi bi-…`) as an element, for configured icons |
 | `token-input.tsx` / `reference.ts` | The composer's inline reference tokens and how they travel |
 | `sources.tsx` | The cited-source model, the `Quellen` section and the per-answer pill |
 
@@ -284,12 +412,15 @@ Under an answer sits a collapsed `Quellen · n zitiert` pill with that answer's 
 that point at it - a number scrolls to its answer, the row opens the source, and a filter appears
 once the list is long. `sourceTabs` puts a host list beside it as further tabs.
 
-Layout preferences (`railOpen`, `paneWidth`, `badgeSeen`) are bootstrapped from PersonalConfiguration
-via `AgentChatControl.putState` and written through `PUT /chat/preferences`.
+Layout preferences (`railOpen`, `paneWidth`, `badgeSeen`, the per-section collapse) are bootstrapped
+from PersonalConfiguration via `ChatViewBinding.writeLayoutState` and written through
+`PUT /chat/preferences`.
 
-The Leiste badge is the sum of each section's `badge()` minus the total last stored when the rail was
-opened - "N new since you last looked", so a section whose rows simply exist contributes none and
-uses `count()` for the number beside its own title instead.
+The Leiste badge is the sum of each section's badge minus the total last stored when the rail was
+opened - "N new since you last looked", so a section that reports nothing contributes nothing. In
+`App` the sections are `RailSection` objects and the sum is computed in place; with a composed
+`<chat-rail>` the sections are separate view elements, so the rail publishes the sum into the store
+(`badgeTotal`) and `<chat-conversation>`'s button reads it there.
 
 ### Where the chat's state lives
 
@@ -307,10 +438,254 @@ conversation.
 | Lifetime | The first element to subscribe opens the stream, the last to leave closes it and drops the chat - a fresh mount starts as fresh as it did when `App` owned the state |
 | `PUT /chat/preferences` | Written by the store and by nothing else, so several elements on one chat cannot race on the `tl-chat.layout` key |
 
-`chat-id` is how elements find each other. `<agent-chat>` leaves it empty and `App` falls back to
-`props.controlId`, so two chats in one window stay two chats - Consulting's `CopilotRegistry` keeps a
-*list* of live panels, and a fixed key would silently merge their transcripts
-(`chat-store.test.ts`, `testTwoAppsInOneWindowDoNotShareATranscript`).
+#### What survives a reload, and who decides it
+
+A browser reload does **not** rebuild the control tree: `ViewServlet` re-renders the tree the window
+already holds, deliberately, so that a table keeps its selection. A control constructor therefore
+runs once per window, not once per page load. Everything the chat wants a reload to restore has to
+be read at **render** time, and every chat control reads the layout in `onBeforeWrite`
+(`ChatViewBinding.writeLayoutState`).
+
+| | |
+|--|--|
+| Who writes the layout | The browser store, through the one `PUT /chat/preferences?chatId=…`. Nothing else writes it - not a control, not an element. |
+| Who reads it | `ChatViewBinding`, per render, into the control state the store boots from. There is no `GET`. |
+| Where it is stored | `PersonalConfiguration`, key `tl-chat.layout`, **one layout per `chat-id`**: `<agent-chat>` (empty id) and a composed `<chat-rail chat-id="grouped">` are different places with different sections. |
+| What is stored | What the user *decided*: `railOpen` (absent while they never toggled it), the pane width they dragged to, `badgeSeen`, and a per-section-name open flag for each section they toggled. Never what a page happened to show. |
+| Precedence | The configured defaults - `<chat-rail open>`, `<section open>`, `<chat-rail pane-width>` - apply **only** where the user has decided nothing. Once they toggled it, their choice wins on reload and in a new tab, and the configured flag no longer applies to them. Per section name, so a section added later still starts as configured. |
+
+The store never writes back the layout it booted with (`sameLayout` against `storedLayout`). Before
+#423 it did, and that is what destroyed the stored choice: a reloaded page booted from the first
+render's control state and then persisted that stale value.
+
+`applyRailDefault` / `applyCollapsedDefaults` are how `<chat-rail>` states its configuration. They
+are idempotent - they only touch what the user has not decided - so a remount, or a second rail,
+re-states the same defaults and changes nothing.
+
+Run state is recovered the same way, but over REST rather than the control state: the SSE stream
+replays nothing, so on restoring or selecting a session the store also reads `GET /chat/updates`
+(the tasks of the open run, and whether it is still processing) and `GET /chat/interactions` (the
+approvals waiting for this user). A reload in mid-run therefore comes back with the Fortschritt
+list, a busy composer and the open approval card.
+
+`chat-id` is how elements find each other, and **`<chat>` is where it is written**. A page puts its
+chat elements inside one `<chat chat-id="...">`; each of them inherits that id through the view
+context (`ChatScope`, `ChatScopeElement`) and carries no `chat-id` of its own. That is the normal
+form, because the alternative - the same string repeated on every element - makes the strongest
+coupling on the page the least visible thing about it: a typo in one attribute opens a second, empty
+conversation and nothing in the product says so.
+
+```xml
+<chat chat-id="chat" direction="row">
+    <data-list selection="chatSession" …/>          <!-- joins by channel, not by chat-id -->
+    <panel fill="true"><chat-conversation input="chatSession"/></panel>
+    <chat-rail input="paneObject">…</chat-rail>
+</chat>
+```
+
+`<chat>` is a `<stack>` that carries an id: same `direction`, `gap` and `align`, no chrome of its
+own, and any element may sit inside it. **Put it where the stack was** rather than adding a level:
+the engine's `.tlStack:has(> .tlPanel--fill)` rule looks one level deep, so a `<panel fill="true">`
+that stops being a direct child of the page's stack loses its height.
+
+`<chat-dock>` is the one element that **repeats** the id rather than inheriting it, because it
+*contains* the `<chat>` instead of sitting inside one and a scope only reaches descendants:
+
+```xml
+<chat-dock chat-id="assistant" icon="css:bi bi-stars">
+    <label><en>Assistant</en><de>Assistent</de></label>
+    <chat chat-id="assistant" direction="row">…</chat>
+</chat-dock>
+```
+
+The two must agree. A mismatch is not silent: `ChatJoinLog` warns about a window whose chat ids do
+not line up, and a dock joining a chat nobody else is on is exactly that shape - the dock's launcher
+would then count news from a conversation it does not contain.
+
+`chat-id` on a child element is the **override**, for the rare page that holds two conversations;
+it is nullable, and left empty an element outside every `<chat>` joins `default`. `<agent-chat>` is
+the exception that joins nothing: it binds with `""` and `App` falls back to `props.controlId`, so
+two chats in one window stay two chats - Consulting's `CopilotRegistry` keeps a *list* of live
+panels, and a fixed key would silently merge their transcripts (`chat-store.test.ts`,
+`testTwoAppsInOneWindowDoNotShareATranscript`).
+
+**The join is logged.** `ChatJoinLog` tallies, per render, which chat id each element joined and
+writes one INFO line for it. When a window holds more than one chat id and one of them has a single
+element, it adds a WARN naming that element - the shape a typo produces. A page with one chat id
+never warns, however many elements are on it.
+
+`<chat-conversation>` is the transcript and the prompt field as one element - the transcript and
+the input almost always sit together, so they are one placeable box, while the session list and the
+rail stay separate because those genuinely want independent placement. It honours its configuration
+flags as render guards on the existing `Thread` and `Composer` props.
+
+#### The six channels of `<chat-conversation>`
+
+| Channel | Direction | Value |
+|--|--|--|
+| `input` | two-way | The open `tl.ai.execution:AgentSession`, as the object. Empty means a fresh conversation, so "new chat" is the list clearing it. |
+| `busy` | out | `Boolean`, `true` while the agent works. |
+| `agent` | two-way | The agent's **name** (`String`). |
+| `model` | two-way | The model's **name** (`String`). |
+| `effort` | two-way | The effort level (`String`), one of the levels the selected model offers; empty for none. |
+| `mcp-servers` | two-way | The attached servers' **names**, a `Collection<String>` (one name on its own is read as a set of one). |
+
+The four turn settings carry **names**, not model objects, and that is a fact about this product
+rather than a shortcut: only an agent an installation authored in the knowledge base is a
+`tl.ai.core:Agent` at all - the agents tl-ai ships, every model and every MCP server are
+configuration - while a name is what `/chat/send`, `AgentFactory` and the security policy are
+written in. On the way *in* a `tl.ai.core:Agent` record is read for its `name`, so a `<data-list>`
+of authored agents feeds the `agent` channel; on the way *out* the name is written, so such a list
+is not highlighted back. `ChatTurnChannels` is where that translation and the refusal below live.
+
+Two-way means the same thing for all five: the composer writes the user's choice and **follows a
+write** from outside. It follows a write, not the value standing on the channel - the composer
+changes these itself (restoring a session brings back its effort, picking an agent brings its model
+and its servers) and the channel learns of that one round trip later, so acting on the standing
+value would undo every such change. A host that pre-selects an agent for its page therefore writes
+the channel once and the composer keeps it, including across the `GET /chat/capabilities` answer
+that arrives afterwards.
+
+A channel is a second way past the composer's own filtering, so a write is refused exactly where a
+send naming the same value is: `ChatTurnChannels` asks `AgentFactory.runRefusal`, which is the
+question `ChatServlet` pre-checks a send with, plus "does this application have such an agent at
+all" (the servlet's 404). A refused write is logged at DEBUG, is *not* applied, and the composer's
+own setting is written back onto the channel - so the channel never claims a setting the composer is
+not showing, and the next send cannot be answered 403 for something the user never chose.
+`TestChatTurnChannels` pins it against the shipped defaults, beside `TestChatRunAccess`.
+
+#### Configuring `<chat-conversation>` - easy vs advanced
+
+An application configures this element in the design view. Its options fall into three tiers:
+
+- **Plain toggles / channels a designer sets** - `trace` (`none`/`summary`/`detailed`, one knob that
+  replaces the former trace-mode + run-summary; the user can still change it live with the composer's
+  trace picker), `citations` (markers *and* the per-answer sources pill - off removes the whole
+  citation surface from the transcript), the nested `<actions>` (`copy`/`rate`/`regenerate`/
+  `timestamp`), the nested `<controls>` pickers, `placeholder`, `prompt-improver-agent` (an agent
+  dropdown), `chat-id`, and the six channels (`input`, `busy`, `agent`, `model`, `effort`,
+  `mcp-servers`). The transcript's rail badge button is *not*
+  configured: it appears exactly when a `<chat-rail>` with the same `chat-id` is mounted, which the
+  rail announces to the shared store (`railMounted`), so a rail that mounts after the conversation
+  still makes the button appear.
+- **Points at code (name a component registered in TypeScript; do nothing unless a developer set that
+  name up)** - `react-element`, `citation-renderer` (the renamed `annotations`), `<actions host>`,
+  `menu-items`, and `reference-source`. Each such tooltip says so, and each carries `@Hidden`, so the
+  layout editor does not offer it at all - a name a designer can only get wrong is not a designer
+  option. The XML still accepts them. `<chat-rail pane-width>` and the engine-inherited `class` and
+  `personalization-key` are hidden for the same reason (`TestHiddenElementOptions` pins the set).
+- **Needs data modelling (TL-Script)** - the nested `<mention>` binding: `rows` (the objects `@` may
+  mention), optional `label`/`text` expressions, `observed-types`, `limit`. Same skill as
+  `<data-list>`'s `rows`; the control compiles them with `QueryExecutor`, pushes a bounded candidate
+  set shaped as the browser's `ReferenceCandidate`, and the existing `@` picker filters it client-side.
+  A `<mention>` wins over `reference-source`. Each mention carries the object's stable id; the framework
+  ships no tool that resolves it, so a host that wants the id to mean more gives its agent such a tool
+  (see the `<reference>` prompt fragment).
+
+Coupling to know: elements share one conversation only when they agree on a chat id - which is what
+the enclosing `<chat>` is for - and a session list feeds the conversation over a **two-way** channel — `<data-list selection>` ↔
+`<chat-conversation input>`. The list writes the picked session; the conversation follows it and
+writes its own session back (so a chat created on first send gets highlighted). An **empty** selection
+means a fresh, empty conversation, so "new chat" is just the list clearing the channel — a
+`<data-list create-action="clear-selection">`, no separate binding element. (This replaced the former
+`<chat-session-binding>`.)
+
+`<chat-rail>` is a **shell**, not a set of sections: it renders the strip, the section headers and
+the pane's chrome, and every section's body is a view element the application configured there.
+
+```xml
+<chat-rail input="paneObject">
+    <section name="progress" icon="css:bi bi-list-check" open="true" badge="progressBadge">
+        <label><en>Progress</en><de>Fortschritt</de></label>
+        <data-list count="progressBadge" observed-types="tl.ai.execution:AgentTask" …/>
+    </section>
+    <section name="invoices" icon="css:bi bi-receipt">
+        <label><en>Invoices</en><de>Rechnungen</de></label>
+        <data-list selection="paneObject" …/>
+    </section>
+    <pane><form input="paneObject"/></pane>
+</chat-rail>
+```
+
+Any element is a section - `<chat-sources>`, a `<data-list>` of the agent's tasks or of the
+application's own objects, an element a host wrote - so the rail can show a proposed plan, a document the agent
+produced or a live view of its browser without this element learning about any of them. An empty
+`<chat-rail>` renders an empty rail; there is no framework order and no name registry (the former
+`registerRailSection` is gone, replaced by nesting). `@` sources, `+` menu items, citation renderers
+and message actions are still registered from TypeScript and referenced by name from XML.
+
+The `input` channel is the rail's second face: while it holds an object the `<pane>` replaces the
+section column, with the object available to the element inside over the same channel; closing the
+pane writes `null` back. Every child stays mounted - a collapsed section and an unopened pane are
+hidden, not dropped - so a section keeps reporting its badge while the rail is closed, which is
+exactly when the badge matters. Below 1280 px the composed rail stays a column (it has no workspace
+grid to spread a sheet over); `App`'s sheet is unaffected. Two rails on one `chat-id` are not
+supported: the open state and the collapsed set are one per conversation.
+
+#### `<chat-dock>` - the chat over the page
+
+`<chat-dock>` is a **frame**, the way `<chat-rail>` is a shell: a fixed launcher in the corner of the
+window, and a card over the page holding whatever the application nested inside it. It brings no
+conversation of its own - normally one `<chat>` with a session list, a `<chat-conversation>` and a
+`<chat-rail>`, which is what `tl-ai-demo/app.view.xml` puts in the shell's `<footer>`. The footer is
+a mounting point, nothing more: the dock is `position: fixed`, so it takes no room in the layout.
+
+| Surface | Kind | |
+|--|--|--|
+| *(content)* | nested elements | Write **one**. The engine's `.tlStack:has(> .tlPanel--fill)` rule looks one level deep, so a second child adds a wrapping stack and the conversation loses its bounded height. |
+| `chat-id` | String, `@Nullable` | **Repeated**, not inherited - see above. Needed only so the launcher can read `badgeTotal` / `badgeSeen` / `busy` from the browser store. |
+| `icon` | ThemeImage | The launcher's glyph, default `css:bi bi-chat-dots`. An open dock shows a close cross instead. |
+| `<label>` | ResKey | The launcher's tooltip and accessible name; empty falls back to the chat's own wording. |
+| `open` | boolean, default `false` | First-load state, and nothing more. Not remembered, no channel. |
+
+**One conversation per window, and that is the transport talking.** Every `/chat/*` call carries a
+`windowId` and nothing else: `ChatServlet` resolves one `TaskProgressTracker` per window, holding
+one active session and one processing state, and `ChatEventHandlerRegistry` addresses one handler
+per tracker. Two chat ids that each mount a `<chat-conversation>` in one window therefore attach to
+the same run - each send switches the window's active session, and each transcript renders the
+other's tokens. Three things follow, and all three are in this PR:
+
+- **A dock joins the page's chat id, it does not invent one.** `tl-ai-demo` writes `chat-id="chat"`
+  on the dock *and* on the `<chat>` inside it, so the dock is a second **place** for the one
+  conversation rather than a second conversation.
+- **The dock stands down while a page shows that conversation.** `<chat-conversation>` registers
+  itself with the store (`registerConversation`, `insideDock` from `ChatDockScope`), and a dock
+  whose `conversationsOutsideDock > 0` renders nothing at all - no panel, no launcher - and
+  *unmounts* its content, so the rail inside it stops competing with the page's for the one
+  remembered layout.
+- **`ChatJoinLog` names the shape.** Two chat ids each mounting a `<chat-conversation>` in one
+  window is a WARN, whatever the spelling: "the chat transport is one conversation per window".
+
+Two guards sit behind that rule rather than in place of it: `eventBelongsToChat` drops a
+run-scoped SSE frame that names a session other than the open one (inert while the server stamps
+none, which is most of them today), and both the remembered session (`tl-chat-session:<chat-id>` in
+`sessionStorage`) and the run snapshot the context ring reads (`ChatHandle.runs`) are per chat id.
+The module-level `runStore` export is still written, as the single-chat host seam it has always
+been; nothing in this bundle renders from it. **Making the transport itself per `(window, chat-id)`
+is a ticket of its own** - until it lands, a window shows one conversation.
+
+Three things are load-bearing:
+
+- **The panel is hidden when closed, never unmounted.** The store drops a chat when its last element
+  leaves, so a dock that unmounted its panel would hand back a new, empty conversation on every open
+  and would stop hearing about the run it started. `.tl-chat-dock__panel[hidden] { display: none }`
+  is a rule of its own because the `display: flex` beside it would otherwise beat the attribute.
+- **Opening it marks the badges seen, and only that.** `markBadgesSeen(badgeTotal)` moves the same
+  watermark `toggleSide` moves - to the total as it stands, never to zero - without opening the
+  rail, which is the other half of `toggleSide` and the wrong half here.
+- **The breakpoint is the window's, not the dock's** (Gitea #427). The chat's responsive rules are
+  plain `@media (max-width: …)`, so a narrow *window* puts the elements inside the dock into their
+  narrow layout however wide the panel is. Below 1100 px the `<data-list>` session list becomes
+  App's off-canvas drawer and disappears from the dock as it does from the page. The panel is sized
+  for the desktop layout (`min(68.75rem, …)`); the real fix is a container query and belongs to
+  #427.
+
+Everything a theme would restyle is a token on `.tl-chat-dock` - `--chat-dock-width`, `-height`,
+`-offset`, `-launcher`, `-gap`, `-radius`, `-shadow`, `-z`.
+
+The store still issues the one `PUT /chat/preferences`; layout fields are mutated by the rail (and by
+`App`, which contains one). `open` and `<section open>` are first-load defaults for a user who has
+decided nothing - see "what survives a reload, and who decides it".
 
 ### Stability
 

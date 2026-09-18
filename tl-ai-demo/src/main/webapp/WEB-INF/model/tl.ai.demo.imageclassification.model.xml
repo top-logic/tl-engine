@@ -10,6 +10,17 @@
 				<generalization type="tl.model:TLObject"/>
 			</generalizations>
 			<annotations>
+				<!--
+					What an invoice is called wherever one is shown by name - the rail's pane header,
+					a tooltip, a reference. Without this every invoice reads "Unbenanntes Objekt vom
+					Typ Beleg", because the type has no `name`; its description is what a person
+					calls it.
+				-->
+				<label>
+					<label-provider class="com.top_logic.model.search.providers.LabelProviderByExpression">
+						<label>invoice -> $invoice.get(`tl.ai.demo.imageclassification:Invoice#description`)</label>
+					</label-provider>
+				</label>
 				<form-definition>
 					<form>
 						<field

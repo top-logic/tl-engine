@@ -11,12 +11,36 @@
  * Spacing is a 4 px grid throughout; radii use one scale (--r-1 .. --r-3 plus the pill).
  */
 
+/*
+ * Every chat element is a root of its own.
+ *
+ * `<agent-chat>` renders inside `.tl-cockpit`, but `<chat-conversation/>`, `<chat-dock/>`,
+ * `<chat-rail/>` and the rail-section elements are placed by a view wherever it likes - outside
+ * that root, where neither the component tokens below nor the base CSS after them would be in
+ * scope. Their buttons would
+ * fall back to browser chrome (grey, square, bordered) and every `var(--r-1)` to nothing. One rule
+ * for all of them rather than a copy per root, so a token added here reaches every element.
+ */
 .tl-cockpit,
-.tl-cockpit * {
+.tl-chat-conversation,
+.tl-chat-dock,
+.tl-chat-rail,
+.tl-chat-section,
+.tl-data-list,
+.tl-cockpit *,
+.tl-chat-conversation *,
+.tl-chat-dock *,
+.tl-chat-rail *,
+.tl-chat-section *,
+.tl-data-list * {
   box-sizing: border-box;
 }
 
-.tl-cockpit {
+.tl-cockpit,
+.tl-chat-conversation,
+.tl-chat-dock,
+.tl-chat-rail,
+.tl-chat-section {
   /* Geometry of the chat itself. */
   --chat-column: 49rem;
   --chat-sidebar: 16.5rem;
@@ -39,7 +63,9 @@
   --chat-heading-line: var(--heading-04-line-height, 2rem);
   --chat-shadow: var(--shadow-menu, 0 2px 6px 0 rgba(0, 0, 0, 0.32));
   --chat-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
 
+.tl-cockpit {
   display: flex;
   width: 100%;
   height: 100%;
@@ -98,7 +124,13 @@
  * `.tl-cockpit button` it would out-rank all of them and flatten the send button, the primary
  * actions and the plus trigger.
  */
-:where(.tl-cockpit button) {
+:where(
+    .tl-cockpit button,
+    .tl-chat-conversation button,
+    .tl-chat-dock button,
+    .tl-chat-rail button,
+    .tl-chat-section button
+  ) {
   font: inherit;
   color: inherit;
   background: none;
@@ -107,11 +139,21 @@
   cursor: pointer;
 }
 
-:where(.tl-cockpit button:disabled) {
+:where(
+    .tl-cockpit button:disabled,
+    .tl-chat-conversation button:disabled,
+    .tl-chat-dock button:disabled,
+    .tl-chat-rail button:disabled,
+    .tl-chat-section button:disabled
+  ) {
   cursor: default;
 }
 
-.tl-cockpit :focus-visible {
+.tl-cockpit :focus-visible,
+.tl-chat-conversation :focus-visible,
+.tl-chat-dock :focus-visible,
+.tl-chat-rail :focus-visible,
+.tl-chat-section :focus-visible {
   outline: 2px solid var(--focus, var(--button-primary));
   outline-offset: 2px;
   border-radius: var(--r-1);
@@ -198,6 +240,10 @@
   padding: 0.75rem 0.75rem 0.25rem;
 }
 
+.rail-header[hidden] {
+  display: none;
+}
+
 .rail-header strong {
   flex: 1;
   min-width: 0;
@@ -207,6 +253,480 @@
 
 .rail-close {
   display: none;
+}
+
+/* --- Composed data list ------------------------------------------------ */
+
+/* <data-list> reuses the App session rail's look; make it fill its host pane and let a
+   row show an optional muted second line. The App rail's overlay drawer below 1100 px is
+   geometry that composition gives up: the host's split panel sizes the column. */
+/*
+ * <data-list> renders outside .tl-cockpit, so the chat's button reset and focus ring do not reach it.
+ * Without this, the row/new/search <button>s show the browser's default chrome (grey, square, bordered)
+ * instead of the .rail* styling - so reset them the same way here.
+ */
+:where(.tl-data-list button) {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.tl-data-list :focus-visible {
+  outline: 2px solid var(--focus, var(--button-primary));
+  outline-offset: 2px;
+  border-radius: var(--r-1);
+}
+
+.tl-data-list {
+  /*
+   * <data-list> renders outside .tl-cockpit, so the chat's component tokens are not in scope here;
+   * redeclare the ones the .rail* styles need. (A themeable token layer would hoist these to :root;
+   * see the tokens note.)
+   */
+  --chat-sidebar: 16.5rem;
+  --chat-rail-narrow: 3.25rem;
+  --r-1: calc(var(--corner-radius, 0.25rem) * 1.5);
+  --r-2: calc(var(--corner-radius, 0.25rem) * 2.5);
+  --r-3: calc(var(--corner-radius, 0.25rem) * 4);
+  --r-pill: 999px;
+  --chat-small: var(--body-01-font-size, 0.75rem);
+  --chat-danger: var(--support-danger, var(--support-error, #d3181b));
+  --chat-danger-soft: var(
+    --background-danger--lighter,
+    color-mix(in srgb, var(--support-error, #d3181b) 12%, transparent)
+  );
+  --chat-shadow: var(--shadow-menu, 0 2px 6px 0 rgba(0, 0, 0, 0.32));
+
+  display: flex;
+  flex: 0 0 auto;
+  width: var(--chat-sidebar);
+  height: 100%;
+  min-height: 0;
+}
+
+.tl-data-list.is-collapsed {
+  width: var(--chat-rail-narrow);
+}
+
+.tl-data-list .rail {
+  position: relative;
+  inset: auto;
+  z-index: auto;
+  width: 100%;
+  flex: 1 1 auto;
+  height: 100%;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Win over the chat's mobile-drawer width so the collapsed column stays narrow at every width. */
+.tl-data-list .rail.is-collapsed {
+  width: 100%;
+  flex-basis: auto;
+}
+
+/* Stay an in-flow collapsible rail at every width - not the chat's mobile drawer. */
+.tl-data-list .rail-collapse {
+  display: inline-grid;
+}
+
+.tl-data-list .rail-close {
+  display: none;
+}
+
+.tl-data-list .rail.is-collapsed .rail-header strong,
+.tl-data-list .rail.is-collapsed .rail-new span,
+.tl-data-list .rail.is-collapsed .rail-search,
+.tl-data-list .rail.is-collapsed .rail-list {
+  display: none;
+}
+
+/* Keep the collapsed header/new-button centred at narrow widths (the mobile query left-aligns them). */
+.tl-data-list .rail.is-collapsed .rail-header {
+  justify-content: center;
+  padding-inline: 0.25rem;
+}
+
+.tl-data-list .rail.is-collapsed .rail-new {
+  justify-content: center;
+  margin-inline: 0.5rem;
+  padding-inline: 0;
+}
+
+.tl-data-list .rail-open {
+  align-items: flex-start;
+}
+
+.tl-data-list .rail-open-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.tl-data-list .rail-line {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tl-data-list .rail-line-secondary {
+  font-size: var(--chat-small);
+  color: var(--text-secondary);
+}
+
+/*
+ * Row states a `css-class` expression hands out.
+ *
+ * Which class a row gets is the view's decision; these three are what a list of steps needs and are
+ * named after no particular domain, so any list can use them: something finished, something running,
+ * something not started yet. They read the host theme's tokens, so a theme restyles them with
+ * everything else. An application that wants its own states writes its own rules - nothing here
+ * assumes these names.
+ */
+.tl-data-list .rail-item.is-running .rail-item-mark {
+  background: var(--button-primary);
+}
+
+.tl-data-list .rail-item.is-done .rail-line-primary {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+}
+
+.tl-data-list .rail-item.is-pending .rail-line-primary {
+  color: var(--text-secondary);
+}
+
+/* --- Composed conversation --------------------------------------------- */
+
+/*
+ * It reuses the App's own .stage (normal and .is-empty), so the conversation element only has to be
+ * the fill box that lets .stage take the height its panel gives it - and carry the typography that
+ * .tl-cockpit would otherwise provide. Its tokens, box-sizing, button reset and focus ring come
+ * from the shared rule at the top of this file.
+ */
+.tl-chat-conversation {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+  color: var(--text-primary);
+  background: var(--background);
+  font-family: var(--font-family, Inter, "Segoe UI", system-ui, sans-serif);
+  font-size: var(--body-02-font-size, 0.875rem);
+  line-height: var(--body-02-line-height, 1.25rem);
+}
+
+.tl-chat-conversation .stage {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.tl-chat-conversation .composer {
+  max-width: 100%;
+}
+
+/*
+ * The floating dock: a launcher in the corner of the window, and the panel it opens over the page.
+ *
+ * Fixed rather than in the flow, because the premise is that as much of the page as possible stays
+ * visible and usable. Closed, the dock costs one button. Open, it covers a corner of the work area
+ * and nothing reflows - no column appears, no table gets narrower, and closing it puts the page
+ * back untouched.
+ *
+ * Every measure is a token on this root, so a theme restyles the dock - its corner, its size, its
+ * shadow, how far it stands off the window frame - without touching a rule.
+ */
+.tl-chat-dock {
+  /*
+   * 1100 px is the width the composed chat wants: the session list (16.5rem), the rail strip
+   * (3.25rem) and the rail column (18.75rem) are fixed, so the conversation gets what is left -
+   * about 27rem, which is where its composer still holds the model picker, the send button and the
+   * long Enter hint on one line. Wider buys the transcript nothing: it is centred at 49rem anyway.
+   */
+  --chat-dock-width: min(68.75rem, calc(100vw - 2 * var(--chat-dock-offset)));
+  /*
+   * Capped rather than proportional: on a tall screen a full-height card stops reading as something
+   * *over* the page and becomes a second page. The other term keeps the card clear of the window
+   * frame and of the launcher below it at every viewport, so its composer is always reachable
+   * without scrolling the card.
+   */
+  --chat-dock-height: min(
+    50rem,
+    calc(100vh - var(--chat-dock-launcher) - var(--chat-dock-gap) - 2 * var(--chat-dock-offset))
+  );
+  --chat-dock-offset: 1.5rem;
+  --chat-dock-launcher: 3.5rem;
+  --chat-dock-gap: 0.75rem;
+  --chat-dock-radius: var(--r-2);
+  /*
+   * Black in both themes, not derived from a colour token: a shadow is cast light, and
+   * `--background-inverse` is *light* in the dark theme - which put a white glow around the card
+   * there. The chat's own `--chat-shadow` is the same black, at a menu's geometry rather than a
+   * floating card's.
+   */
+  --chat-dock-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 30%);
+  /* Above the app shell and its panels, below the engine's own dialogs and menus. */
+  --chat-dock-z: 100;
+
+  position: fixed;
+  inset-block-end: var(--chat-dock-offset);
+  inset-inline-end: var(--chat-dock-offset);
+  z-index: var(--chat-dock-z);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--chat-dock-gap);
+  color: var(--text-primary);
+  font-family: var(--font-family, Inter, "Segoe UI", system-ui, sans-serif);
+  font-size: var(--body-02-font-size, 0.875rem);
+  line-height: var(--body-02-line-height, 1.25rem);
+}
+
+/*
+ * Nothing at all, in the two cases where a launcher would be wrong: a session that is not signed in
+ * (the servlet refuses every call it makes), and a page that is already showing this conversation
+ * (the transport carries one conversation per window, so there is no second view to open).
+ */
+.tl-chat-dock.is-stood-down {
+  display: none;
+}
+
+.tl-chat-dock__panel {
+  display: flex;
+  width: var(--chat-dock-width);
+  height: var(--chat-dock-height);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--chat-dock-radius);
+  background: var(--background);
+  box-shadow: var(--chat-dock-shadow);
+}
+
+/*
+ * Hidden, not unmounted.
+ *
+ * The conversation - its event stream, its transcript, its running turn - lives in the elements
+ * inside this panel, and the store drops a chat when its last element leaves. Dropping them on
+ * close would hand the user a new, empty chat on every open. Stated as a rule of its own because
+ * the `display: flex` above would otherwise beat the `hidden` attribute.
+ */
+.tl-chat-dock__panel[hidden] {
+  display: none;
+}
+
+.tl-chat-dock__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+/*
+ * The configured content is the panel's own flex child, and is given the panel's bounded height.
+ *
+ * This is where a dock would otherwise collapse the conversation: the engine's fill rule
+ * (`.tlStack:has(> .tlPanel--fill)`) looks one level deep, so a `<chat>` that is not the direct
+ * child of a box with a definite height grows with its transcript instead of scrolling inside one.
+ * One level is all this can repair - hence the one-element rule on `<chat-dock>`'s content.
+ */
+.tl-chat-dock__body > .tlStack,
+.tl-chat-dock__body > .tlPanel {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.tl-chat-dock__launcher {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: var(--chat-dock-launcher);
+  height: var(--chat-dock-launcher);
+  border-radius: var(--r-pill);
+  background: var(--button-primary);
+  color: var(--text-on-color, #fff);
+  font-size: 1.25rem;
+  box-shadow: var(--chat-dock-shadow);
+  transition: background-color 120ms ease;
+}
+
+.tl-chat-dock__launcher:hover {
+  background: var(--button-primary-hover, var(--button-primary));
+}
+
+.tl-chat-dock__launcher svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* "N new since you last looked", on the button because the rail's own is behind a closed panel. */
+.tl-chat-dock__badge {
+  position: absolute;
+  top: 0.3rem;
+  inset-inline-end: 0.3rem;
+  display: grid;
+  place-items: center;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 0.25rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-pill);
+  background: var(--background);
+  color: var(--text-primary);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* Something is running behind the closed panel. */
+.tl-chat-dock__busy {
+  position: absolute;
+  top: 0.5rem;
+  inset-inline-end: 0.5rem;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: var(--r-pill);
+  background: currentColor;
+  animation: chat-pulse 1.6s ease-in-out infinite;
+}
+
+/*
+ * A rail-section element is an ordinary box: the rail gives it its place, but a view may put one
+ * anywhere, so it carries the chat's typography itself. Its tokens and base CSS come from the
+ * shared rule at the top of this file.
+ */
+.tl-chat-section {
+  min-width: 0;
+  color: var(--text-primary);
+  font-family: var(--font-family, Inter, "Segoe UI", system-ui, sans-serif);
+  font-size: var(--body-02-font-size, 0.875rem);
+  line-height: var(--body-02-line-height, 1.25rem);
+}
+
+/*
+ * The composed rail is a column beside the conversation, not a region of App's workspace grid.
+ *
+ * `.side-strip` and `.side-pane` are App's classes, which place themselves with `grid-column` and
+ * turn into an overlay below 1280 px. Inside this element there is no grid to place into and
+ * nothing to overlay, so their geometry is re-stated here: laid out in flow, sized by themselves,
+ * and a column at every width (`placement="rail"` in side-pane.tsx).
+ */
+.tl-chat-rail {
+  display: flex;
+  flex: 0 0 auto;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--background);
+}
+
+.tl-chat-rail .side-strip,
+.tl-chat-rail .side-pane {
+  position: relative;
+  grid-column: auto;
+}
+
+/*
+ * A section is a card of its own.
+ *
+ * App's `.side-section` is borderless, and tells its own sections from a host's with a dashed
+ * outline. The shell has no such distinction - every section is configured, none is more the
+ * framework's than another - so they are plain cards on the column's own background.
+ */
+.tl-chat-rail .side-section {
+  border: 1px solid var(--border-subtle);
+  background: var(--background);
+}
+
+/*
+ * A list inside a section is content, not a rail of its own.
+ *
+ * `<data-list>` renders the session rail's chrome - its own surface, its own right border, its own
+ * padding. Nested in a section that already is a card, that reads as a box in a box.
+ */
+.tl-chat-rail .tl-data-list .rail {
+  width: auto;
+  min-width: 0;
+  background: none;
+  border-right: 0;
+}
+
+.tl-chat-rail .tl-data-list .rail-list {
+  padding-inline: 0;
+}
+
+/* The sections' own column. Named apart from App's `.side-column`, which is a grid child. */
+.tl-chat-rail .rail-column {
+  flex: 0 0 auto;
+  width: 18.75rem;
+  min-width: 0;
+  border-inline-start: 1px solid var(--border-subtle);
+  background: var(--layer);
+  overflow: auto;
+}
+
+/*
+ * Hidden, not unmounted.
+ *
+ * A collapsed section keeps reporting its badge, and a closed rail keeps the sections that feed the
+ * number on the conversation's button - both of which stop the moment the browser drops the child.
+ */
+.tl-chat-rail .is-hidden {
+  display: none;
+}
+
+/* A count on a strip icon, so a closed rail still says which section the news is in. */
+.side-strip-badge {
+  position: absolute;
+  top: -0.2rem;
+  inset-inline-end: -0.2rem;
+  min-width: 1.05rem;
+  height: 1.05rem;
+  padding: 0 0.22rem;
+  border-radius: var(--r-pill);
+  background: var(--button-primary);
+  color: var(--text-on-color, #fff);
+  font-size: 0.625rem;
+  line-height: 1;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.tl-chat-rail .side-strip-item {
+  position: relative;
+}
+
+/* An icon-font glyph on the strip, beside the SVG ones the chat draws itself. */
+.tl-chat-rail .side-strip-item i {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.side-pane[hidden] {
+  display: none;
+}
+
+.tl-chat-conversation.is-signed-out,
+.tl-chat-rail.is-signed-out {
+  display: grid;
+  place-items: center;
+  padding: 2rem;
 }
 
 .rail-new {
@@ -347,6 +867,44 @@
 .rail-delete:hover {
   color: var(--chat-danger);
   background: var(--chat-danger-soft);
+}
+
+/*
+ * The per-row action trigger of a <data-list>, revealed the way .rail-delete is: on hover and on
+ * :focus-within, so the keyboard reaches it. It sits in space the row already reserves, and
+ * .rail-open keeps `flex: 1; min-width: 0`, so the title shortens instead of the row reflowing when
+ * the trigger appears.
+ */
+.rail-row-menu {
+  margin-right: 0.25rem;
+  flex: 0 0 auto;
+  opacity: 0;
+}
+
+.rail-item:hover .rail-row-menu,
+.rail-item:focus-within .rail-row-menu,
+.rail-row-menu.is-always,
+.rail-row-menu:focus-visible {
+  opacity: 1;
+}
+
+/* Three dots, not three rings: the shared .icon-button svg rule strokes and does not fill. */
+.rail-row-menu svg circle {
+  fill: currentColor;
+  stroke: none;
+}
+
+/*
+ * No hover to reveal anything with, so the trigger is always there - the same caveat a
+ * <panel hover-actions> carries. A finger also needs more than the 1.5rem glyph box, so the trigger
+ * grows to the 44px minimum there; the glyph is centred by .icon-button and does not grow with it.
+ */
+@media (hover: none) {
+  .rail-row-menu {
+    opacity: 1;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+  }
 }
 
 .rail-message {
@@ -2395,7 +2953,10 @@
 @media (prefers-reduced-motion: reduce) {
   .tl-cockpit *,
   .tl-cockpit *::before,
-  .tl-cockpit *::after {
+  .tl-cockpit *::after,
+  .tl-chat-dock *,
+  .tl-chat-dock *::before,
+  .tl-chat-dock *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -2784,21 +3345,6 @@
   padding: 0.75rem;
 }
 
-.composer-host-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  padding: 0.5rem 0.75rem 0;
-}
-
-.chip-remove {
-  border: 0;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  padding: 0 0.15rem;
-}
-
 /*
  * A citation marker: a small grey number after the sentence. Not a chip - it says where the fact
  * comes from without taking the eye off the text that carries it.
@@ -2905,6 +3451,14 @@
   }
 
   /*
+   * ... but not in the composed rail: App hides the strip because its pane becomes a sheet over
+   * the thread, and this element has no sheet to make room for.
+   */
+  .tl-chat-rail .side-strip {
+    display: flex;
+  }
+
+  /*
    * An empty chat centres its greeting and its composer in the page. With a sheet open that puts
    * the composer in the middle of what the sheet covers, so for as long as one is open the stage
    * falls back to the ordinary layout and the composer sits at the bottom, below the sheet's edge.
@@ -2951,6 +3505,7 @@
 }
 
 .token-input {
+  position: relative;
   display: block;
   min-height: 2.25rem;
   max-height: 11.25rem;
@@ -2973,9 +3528,16 @@
   outline: none;
 }
 
+/*
+ * Overlaid, not in flow: a block ::before would take the first line and push the caret onto line two.
+ * Absolute at the field's own padding keeps the caret on line one, where the text will appear.
+ */
 .token-input.is-empty::before {
   content: attr(data-placeholder);
-  display: block;
+  position: absolute;
+  top: 0.4375rem;
+  left: 0.25rem;
+  right: 0.25rem;
   color: var(--text-placeholder, var(--text-secondary));
   pointer-events: none;
   /* One line: in a narrow column the invitation may be cut, but it must not grow the field. */

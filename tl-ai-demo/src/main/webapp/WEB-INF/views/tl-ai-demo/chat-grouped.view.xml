@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The chat built from view elements instead of the one-element <agent-chat/> (Issue #415).
+
+	The page is one <chat chat-id="chat">: it names the conversation once, and every chat element
+	inside it joins that one without repeating the id, so two of them can no longer be written to
+	disagree. In every other respect it is the <stack direction="row"> that held the three columns
+	before: a <data-list> of this user's chats on the left (a generic list - it reaches the
+	conversation over the "chatSession" channel, not by chat-id, and would work the same outside the
+	<chat>), the <chat-conversation/> (transcript plus prompt field) in the middle, and a
+	<chat-rail/> on the right. The rail is a shell - what it shows is configured here, and the
+	"Belege" section is an ordinary <data-list>, which is the point: any view element is a section,
+	so an application puts its own views beside the transcript without the chat knowing about them.
+-->
+<view>
+	<channels>
+		<channel name="chatSession"/>
+		<!--
+			What the rail's pane is showing, written by the "Belege" list and read by the form in the
+			pane. Empty means the sections; the pane's close button empties it again.
+		-->
+		<channel name="paneObject"/>
+		<!-- The counts the rail shows on the section headers and the strip icons. -->
+		<channel name="progressBadge"/>
+		<channel name="sourcesBadge"/>
+	</channels>
+	<chat chat-id="chat"
+		direction="row"
+	>
+		<!--
+			The session list and the conversation share one two-way "chatSession" channel: the list
+			writes the picked session, the conversation follows it and writes its own session back (so a
+			new chat is highlighted). "Neuer Chat" just clears the channel (create-action); the
+			conversation shows its empty state when nothing is selected - no extra binding element.
+		-->
+		<data-list
+			collapsible="true"
+			observed-types="tl.ai.execution:AgentSession"
+			row-actions="hover"
+			row-channel="session"
+			search="true"
+			selection="chatSession"
+		>
+			<!--
+				The "New chat" button is an ordinary view command: it writes null to the selection
+				channel, which deselects the list and shows the conversation's empty state. Any custom
+				action (execute-script, open-dialog, with-transaction, ...) can be configured the same way.
+			-->
+			<commands>
+				<generic-command image="css:bi bi-plus-lg">
+					<label>
+						<en>New chat</en>
+						<de>Neuer Chat</de>
+					</label>
+					<write-channel name="chatSession"/>
+				</generic-command>
+			</commands>
+			<empty-text>
+				<en>No chats yet</en>
+				<de>Noch keine Chats</de>
+			</empty-text>
+			<group-by><![CDATA[s -> {
+				d = $s.get(`tl.ai.execution:AgentSession#lastUpdated`).toSystemCalendar();
+				t = today().toSystemCalendar();
+				switch {
+					$d.isDateEqual($t): #("Today"@en, "Heute"@de);
+					$d.isDateEqual($t.withDayAdded(-1)): #("Yesterday"@en, "Gestern"@de);
+					$d.isDateGreater($t.withDayAdded(-7)): #("Previous 7 days"@en, "Letzte 7 Tage"@de);
+					default: #("Older"@en, "Älter"@de);
+				}
+			}]]></group-by>
+			<lines>
+				<line attribute="title"/>
+			</lines>
+			<!--
+				What a row offers besides being opened. Ordinary view commands: they reach the row
+				the menu was opened on over the "session" channel this list registers, so an
+				<executability> rule sees it too. Both write through the aiSession* functions rather
+				than touching the attribute, because those are what bump the chat's lastUpdated - its
+				group in this very list - and tell a second browser tab.
+			-->
+			<row-commands>
+				<generic-command
+					image="css:bi bi-pencil"
+					input="session"
+				>
+					<label>
+						<en>Rename</en>
+						<de>Umbenennen</de>
+					</label>
+					<open-dialog close-on-backdrop="false"
+						bind-input-to="model"
+						dialog-view="tl-ai-demo/rename-session.view.xml"
+					/>
+				</generic-command>
+				<generic-command
+					clique="delete"
+					image="css:bi bi-trash"
+					input="session"
+				>
+					<label>
+						<en>Delete</en>
+						<de>Löschen</de>
+					</label>
+					<!--
+						Hidden while the chat still has a run in it. Deleting one is safe - the
+						function asks the run to stop first - but a chat that is being answered is
+						not a chat anyone means to throw away, and the rule re-evaluates every time
+						the menu opens.
+					-->
+					<executability>
+						<visible-if>
+							<expr><![CDATA[s -> isEmpty($s)
+								|| $s.referers(`tl.ai.execution:AgentExecution#session`)
+									.filter(e -> $e.get(`tl.ai.execution:AgentExecution#status`)
+										== `tl.ai.execution:ExecutionStatus#RUNNING`)
+									.isEmpty()]]></expr>
+						</visible-if>
+					</executability>
+					<!-- Names the chat, and names the outcomes rather than answering Yes/No. -->
+					<confirm>
+						<cancel-label>
+							<en>Keep</en>
+							<de>Behalten</de>
+						</cancel-label>
+						<confirm-label>
+							<en>Delete</en>
+							<de>Löschen</de>
+						</confirm-label>
+						<title>
+							<en>Delete chat</en>
+							<de>Chat löschen</de>
+						</title>
+						<expr><![CDATA[s -> {
+							title = $s.get(`tl.ai.execution:AgentSession#title`);
+							{
+								"en": "Delete “" + $title + "”? This cannot be undone.",
+								"de": "„" + $title + "“ löschen? Das kann nicht rückgängig gemacht werden."
+							}.internationalize();
+						}]]></expr>
+					</confirm>
+					<!--
+						Clears the open conversation only when it *is* the deleted chat: the value
+						the chain ends with is what <write-channel> writes, so deleting some other
+						chat writes the open one back unchanged and the transcript stays put.
+					-->
+					<execute-script>
+						<inputs>
+							<input channel="chatSession"/>
+						</inputs>
+						<function><![CDATA[open -> s -> {
+							aiSessionDelete($s);
+							ifElse($s == $open, null, $open);
+						}]]></function>
+					</execute-script>
+					<write-channel name="chatSession"/>
+				</generic-command>
+			</row-commands>
+			<rows><![CDATA[all(`tl.ai.execution:AgentSession`)
+				.filter(s -> $s.get(`tl.ai.execution:AgentSession#owner`) == currentUser())
+				.filter(s -> $s.get(`tl.ai.execution:AgentSession#kind`) == `tl.ai.execution:SessionKind#CHAT`)
+				.sort((s -> $s.get(`tl.ai.execution:AgentSession#lastUpdated`)).comparator().desc())]]></rows>
+			<title>
+				<en>Chats</en>
+				<de>Chats</de>
+			</title>
+		</data-list>
+		<!--
+			The <panel> is what bounds the conversation's height so it scrolls inside its column
+			rather than growing with the transcript. Its own header stays empty here, which the dark
+			theme shows as a bare strip above the conversation's header - an untitled panel should
+			render no toolbar at all, but that is the engine's to decide.
+		-->
+		<panel fill="true">
+			<chat-conversation
+				citations="true"
+				input="chatSession"
+				prompt-improver-agent="TL_PromptImprover"
+				trace="summary"
+			>
+				<actions rate="true"/>
+				<controls
+					agent-picker="true"
+					attachments="true"
+					auto-approve="true"
+					enter-hint="true"
+					mcp="true"
+					model-picker="true"
+					thinking="true"
+					trace-picker="true"
+				/>
+				<!--
+					Declarative @-mention: typing "@" offers this application's invoices, no TypeScript.
+					Each mention carries the invoice's id and puts its description into the message as the
+					quoted text the agent reads.
+				-->
+				<mention observed-types="tl.ai.demo.imageclassification:Invoice">
+					<rows><![CDATA[all(`tl.ai.demo.imageclassification:Invoice`)
+						.sort((i -> $i.get(`tl.ai.demo.imageclassification:Invoice#date`)).comparator().desc())]]></rows>
+					<label><![CDATA[i -> $i.get(`tl.ai.demo.imageclassification:Invoice#description`)]]></label>
+					<text><![CDATA[i -> $i.get(`tl.ai.demo.imageclassification:Invoice#description`)
+						+ " (" + $i.get(`tl.ai.demo.imageclassification:Invoice#amountLabel`) + ")"]]></text>
+				</mention>
+			</chat-conversation>
+		</panel>
+		<!--
+			The rail. Its badge channels carry the counts that the transcript's rail button adds up,
+			so a closed rail still says how much is new.
+		-->
+		<chat-rail input="paneObject"
+			open="true"
+			strip="true"
+		>
+			<section name="progress"
+				badge="progressBadge"
+				icon="css:bi bi-list-check"
+				open="true"
+			>
+				<label>
+					<en>Progress</en>
+					<de>Fortschritt</de>
+				</label>
+				<!--
+					The agent's plan, as an ordinary <data-list> over the AgentTask objects the run
+					writes - no chat-specific element, no badge round trip through the browser, and
+					the same rows after a reload. The rows are reached from the session the
+					conversation is showing, so this list can only ever show what that session owns.
+				-->
+				<data-list
+					collapsible="false"
+					count="progressBadge"
+					observed-types="tl.ai.execution:AgentTask"
+					search="false"
+				>
+					<!--
+						The row's state as a CSS class. <data-list> knows nothing about tasks; the
+						three class names are the generic row states its stylesheet defines.
+					-->
+					<css-class><![CDATA[t -> switch {
+						$t.get(`tl.ai.execution:AgentTask#status`) == "completed": "is-done";
+						$t.get(`tl.ai.execution:AgentTask#status`) == "in_progress": "is-running";
+						default: "is-pending";
+					}]]></css-class>
+					<empty-text>
+						<en>Nothing planned yet</en>
+						<de>Noch nichts geplant</de>
+					</empty-text>
+					<inputs>
+						<input channel="chatSession"/>
+					</inputs>
+					<lines>
+						<line attribute="subject"/>
+						<line emphasis="secondary">
+							<value><![CDATA[t -> switch {
+								$t.get(`tl.ai.execution:AgentTask#status`) == "completed": #("Done"@en, "Erledigt"@de);
+								$t.get(`tl.ai.execution:AgentTask#status`) == "in_progress": #("In progress"@en, "Läuft"@de);
+								default: #("Pending"@en, "Offen"@de);
+							}]]></value>
+						</line>
+					</lines>
+					<rows><![CDATA[session -> ifElse(isEmpty($session), list(),
+						$session.referers(`tl.ai.execution:AgentTask#session`)
+							.sort((t -> $t.get(`tl.ai.execution:AgentTask#ordinal`)).comparator()))]]></rows>
+				</data-list>
+			</section>
+			<section name="sources"
+				badge="sourcesBadge"
+				icon="css:bi bi-quote"
+			>
+				<label>
+					<en>Sources</en>
+					<de>Quellen</de>
+				</label>
+				<chat-sources badge="sourcesBadge"/>
+			</section>
+			<!--
+				Nothing chat-specific: an ordinary <data-list> of this application's own objects, in a
+				rail section. Picking one writes it to "paneObject", which is what opens the pane.
+			-->
+			<section name="invoices"
+				icon="css:bi bi-receipt"
+			>
+				<label>
+					<en>Invoices</en>
+					<de>Belege</de>
+				</label>
+				<data-list
+					collapsible="false"
+					observed-types="tl.ai.demo.imageclassification:Invoice"
+					search="false"
+					selection="paneObject"
+				>
+					<empty-text>
+						<en>No invoices yet</en>
+						<de>Noch keine Belege</de>
+					</empty-text>
+					<lines>
+						<line attribute="description"/>
+						<line attribute="amountLabel"
+							emphasis="secondary"
+						/>
+					</lines>
+					<rows><![CDATA[all(`tl.ai.demo.imageclassification:Invoice`)
+						.sort((i -> $i.get(`tl.ai.demo.imageclassification:Invoice#date`)).comparator().desc())]]></rows>
+				</data-list>
+			</section>
+			<!--
+				The pane's content, shown in place of the sections while "paneObject" holds an object.
+				The form binds to the same channel, so it shows whatever the list wrote there.
+			-->
+			<pane>
+				<form input="paneObject">
+					<field attribute="date"/>
+					<field attribute="description"/>
+					<field attribute="amount"/>
+					<field attribute="data"/>
+				</form>
+			</pane>
+		</chat-rail>
+	</chat>
+</view>

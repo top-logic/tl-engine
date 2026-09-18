@@ -37,6 +37,8 @@ export function SidePane({
   mode,
   version,
   actions,
+  hidden,
+  placement = 'workspace',
   children,
 }: {
   title: string
@@ -49,13 +51,32 @@ export function SidePane({
   mode?: PaneMode
   version?: string
   actions?: PaneAction[]
+  /**
+   * Whether the pane is out of sight.
+   *
+   * Hidden rather than unmounted, so what it holds keeps its state and its server-side updates
+   * while the sections are showing - a pane that is rebuilt on every open shows the object as it
+   * was when it was first built.
+   */
+  hidden?: boolean
+  /**
+   * Where this pane sits, which decides what bounds it and whether it becomes a sheet.
+   *
+   * `workspace` (the default) is inside `App`'s workspace grid, which is both the space the pane
+   * shares with the thread and the region a sheet spreads over below 1280 px. `rail` is inside a
+   * composed `<chat-rail/>`, which is itself sized by its children - measuring it would be circular,
+   * so the row the rail sits in is what bounds the pane, and with no grid to spread over and nothing
+   * to dim it stays a column at every width.
+   */
+  placement?: 'workspace' | 'rail'
   children: React.ReactNode
 }) {
   const pane = useRef<HTMLDivElement>(null)
   const dragging = useRef(false)
-  const [sheet, setSheet] = useState(() =>
+  const [narrow, setNarrow] = useState(() =>
     typeof window !== 'undefined' ? window.matchMedia(SHEET_MQ).matches : false,
   )
+  const sheet = placement === 'workspace' && narrow
   /**
    * How wide the workspace is right now.
    *
@@ -65,15 +86,21 @@ export function SidePane({
    */
   const [workspaceWidth, setWorkspaceWidth] = useState(0)
 
+  /** The element whose width the pane may spend; see `placement`. */
+  const boundsOf = useCallback(() => {
+    const parent = pane.current?.parentElement ?? null
+    return placement === 'workspace' ? parent : parent?.parentElement ?? null
+  }, [placement])
+
   useLayoutEffect(() => {
-    const workspace = pane.current?.parentElement
+    const workspace = boundsOf()
     if (!workspace) return undefined
     setWorkspaceWidth(Math.round(workspace.getBoundingClientRect().width))
     if (typeof ResizeObserver === 'undefined') return undefined
     const observer = new ResizeObserver(([entry]) => setWorkspaceWidth(Math.round(entry.contentRect.width)))
     observer.observe(workspace)
     return () => observer.disconnect()
-  }, [])
+  }, [boundsOf])
 
   const maxWidth = useMemo(
     () =>
@@ -110,7 +137,7 @@ export function SidePane({
 
   useEffect(() => {
     const mq = window.matchMedia(SHEET_MQ)
-    const onChange = () => setSheet(mq.matches)
+    const onChange = () => setNarrow(mq.matches)
     mq.addEventListener('change', onChange)
     return () => mq.removeEventListener('change', onChange)
   }, [])
@@ -127,13 +154,13 @@ export function SidePane({
   const onPointerMove = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
       if (!dragging.current || sheet) return
-      const workspace = pane.current?.parentElement
+      const workspace = boundsOf()
       if (!workspace) return
       const box = workspace.getBoundingClientRect()
       const next = Math.max(CONTENT_FLOOR, box.right - event.clientX)
       setWidth(Math.min(next, maxWidth))
     },
-    [maxWidth, setWidth, sheet],
+    [boundsOf, maxWidth, setWidth, sheet],
   )
 
   const onPointerUp = useCallback(() => {
@@ -183,6 +210,7 @@ export function SidePane({
       ref={pane}
       className={`side-pane${sheet ? ' is-sheet' : ''}${mode === 'document' ? ' is-document' : ''}`}
       style={sheet ? undefined : { width: paneWidth, minWidth: CONTENT_FLOOR }}
+      hidden={hidden}
     >
       {sheet ? null : (
         <div

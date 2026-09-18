@@ -492,6 +492,7 @@ export class ChatStore {
       // must not occupy the map. Do not displace a newer store that already owns this id.
       const owner = CHATS.get(this.chatId)
       if (owner == null || owner === this) CHATS.set(this.chatId, this)
+      if (BUILDING.get(this.chatId) === this) BUILDING.delete(this.chatId)
     }
     let released = false
     return () => {
@@ -589,6 +590,7 @@ export class ChatStore {
     this.live = false
     this.composerApi = null
     if (CHATS.get(this.chatId) === this) CHATS.delete(this.chatId)
+    if (BUILDING.get(this.chatId) === this) BUILDING.delete(this.chatId)
     for (const effect of this.effects) {
       effect.cleanup?.()
       effect.cleanup = undefined
@@ -1620,13 +1622,25 @@ function sameField(next: ChatState, previous: ChatState, key: keyof ChatState): 
  */
 const CHATS = new Map<string, ChatStore>()
 
+/**
+ * Stores already built for a chat id whose first element has not subscribed yet.
+ *
+ * A store is not written into {@link CHATS} until it is subscribed, because a render React throws
+ * away would otherwise leave a `live === false` entry there that no `quiesce` ever removes. But
+ * every element of one chat is *built* in the same commit, before any of them subscribes - so
+ * without this the second element builds a store of its own and keeps it for good: a rail and a
+ * transcript on one `chat-id` showing two conversations, with a stream each. Construction is
+ * therefore shared here, and `subscribe` moves the entry into {@link CHATS}.
+ */
+const BUILDING = new Map<string, ChatStore>()
+
 /** The store of a chat, created on first use. Exported for tests; components use {@link useChat}. */
 export function chatStore(chatId: string, boot: ChatBootstrap): ChatStore {
-  const existing = CHATS.get(chatId)
+  const existing = CHATS.get(chatId) ?? BUILDING.get(chatId)
   if (existing) return existing
-  // Not written into CHATS until subscribe: a render that never commits must not leave a
-  // live===false entry that quiesce will never see.
-  return new ChatStore(chatId, boot)
+  const store = new ChatStore(chatId, boot)
+  BUILDING.set(chatId, store)
+  return store
 }
 
 /** How many chats are currently held. Exported for tests. */

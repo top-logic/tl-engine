@@ -175,6 +175,46 @@ describe('one store per chat id', () => {
   })
 
   /**
+   * The elements of one chat are all built in the same commit, before any of them subscribes. The
+   * second one must get the store the first one built - otherwise a `<chat-rail/>` beside a
+   * `<chat-conversation/>` on one `chat-id` keeps a store of its own, and the two show different
+   * conversations with a stream each.
+   */
+  it('gives two elements built before either subscribes the same store', async () => {
+    const conversation = chatStore('alpha', BOOT)
+    const rail = chatStore('alpha', BOOT)
+    expect(rail).toBe(conversation)
+
+    const releaseConversation = conversation.subscribe(() => undefined)
+    const releaseRail = rail.subscribe(() => undefined)
+    conversation.attach(BOOT)
+    await settle()
+
+    expect(streams).toHaveLength(1)
+    expect(liveChatCount()).toBe(1)
+
+    releaseConversation()
+    releaseRail()
+  })
+
+  /** A rail built in that same commit reaches the transcript's store, not one beside it. */
+  it('lets a rail built before the transcript subscribed announce itself to it', () => {
+    const conversation = chatStore('alpha', BOOT)
+    const rail = chatStore('alpha', BOOT)
+    const releaseConversation = conversation.subscribe(() => undefined)
+    const releaseRail = rail.subscribe(() => undefined)
+
+    const unregister = rail.actions.registerRail()
+    expect(conversation.getState().railMounted).toBe(true)
+
+    unregister()
+    expect(conversation.getState().railMounted).toBe(false)
+
+    releaseConversation()
+    releaseRail()
+  })
+
+  /**
    * The reason `<agent-chat>` keys its store by the control id rather than by a fixed name.
    *
    * Consulting's `CopilotRegistry` keeps a *list* of live panels, so one window can show two

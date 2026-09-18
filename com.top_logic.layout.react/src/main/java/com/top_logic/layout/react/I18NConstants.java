@@ -926,6 +926,44 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.calendar.more")
 	public static ResKey JS_CALENDAR_MORE;
 
+	// -- Job status client-side i18n keys --
+
+	/**
+	 * @en Running
+	 */
+	@CustomKey("js.jobStatus.running")
+	public static ResKey JS_JOB_STATUS_RUNNING;
+
+	/**
+	 * @en Completed
+	 */
+	@CustomKey("js.jobStatus.completed")
+	public static ResKey JS_JOB_STATUS_COMPLETED;
+
+	/**
+	 * @en Failed
+	 */
+	@CustomKey("js.jobStatus.failed")
+	public static ResKey JS_JOB_STATUS_FAILED;
+
+	/**
+	 * @en Cancelled
+	 */
+	@CustomKey("js.jobStatus.cancelled")
+	public static ResKey JS_JOB_STATUS_CANCELLED;
+
+	/**
+	 * @en Elapsed time
+	 */
+	@CustomKey("js.jobStatus.elapsed")
+	public static ResKey JS_JOB_STATUS_ELAPSED;
+
+	/**
+	 * @en Cancel
+	 */
+	@CustomKey("js.jobStatus.cancel")
+	public static ResKey JS_JOB_STATUS_CANCEL;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

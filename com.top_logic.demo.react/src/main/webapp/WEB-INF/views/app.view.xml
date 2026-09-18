@@ -197,6 +197,15 @@
 							<de>Bilder</de>
 						</label>
 					</nav-item>
+					<nav-item id="long-job"
+						icon="css:bi bi-hourglass-split"
+					>
+						<view-ref view="demo/long-job-demo.view.xml"/>
+						<label>
+							<en>Long-running job</en>
+							<de>Lang laufender Auftrag</de>
+						</label>
+					</nav-item>
 					<nav-item id="calendar"
 						icon="css:bi bi-calendar3"
 					>

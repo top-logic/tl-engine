@@ -1,22 +1,8 @@
 import { React, useTLState, useTLCommand } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { TICK_MS, formatDuration } from './duration';
 
 const { useCallback, useEffect, useMemo, useRef, useState } = React;
-
-/** Tick interval of the count-down, in ms. */
-const TICK_MS = 1000;
-
-/** Formats a duration in ms as `m:ss`, or `h:mm:ss` once an hour or more remains. */
-function formatRemaining(millis: number): string {
-  const total = Math.max(0, Math.floor(millis / 1000));
-  const seconds = total % 60;
-  const minutes = Math.floor(total / 60) % 60;
-  const hours = Math.floor(total / 3600);
-  const pad = (value: number) => (value < 10 ? `0${value}` : `${value}`);
-  return hours > 0
-    ? `${hours}:${pad(minutes)}:${pad(seconds)}`
-    : `${minutes}:${pad(seconds)}`;
-}
 
 /**
  * A system-wide notice rendered as a full-width bar, e.g. the announcement of a maintenance window.
@@ -106,7 +92,7 @@ const TLNoticeBar: React.FC<TLCellProps> = ({ controlId }) => {
   const remainingMs = deadline != null ? deadline - (Date.now() + clockOffset) : null;
   if (leadMs != null && remainingMs != null && remainingMs > leadMs) return null;
 
-  const remaining = remainingMs != null ? formatRemaining(remainingMs) : null;
+  const remaining = remainingMs != null ? formatDuration(remainingMs) : null;
   const clickable = actionLabel != null;
 
   return (

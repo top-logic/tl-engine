@@ -3452,6 +3452,150 @@ button.tlMenu__item--disabled:hover {
 	white-space: nowrap;
 }
 
+/* A bar that says something is going on without saying how far it has come: a partial fill sweeps
+   across the track instead of standing for a share of it. */
+.tlProgress--indeterminate .tlProgress__fill {
+	width: 40%;
+	transition: none;
+	animation: tlProgressSweep 1.4s ease-in-out infinite;
+}
+
+@keyframes tlProgressSweep {
+	from {
+		transform: translateX(-100%);
+	}
+
+	to {
+		transform: translateX(250%);
+	}
+}
+
+/* Without motion the bar still reads as busy: the fill rests in the middle of the track rather
+   than travelling over it. */
+@media (prefers-reduced-motion: reduce) {
+	.tlProgress--indeterminate .tlProgress__fill {
+		animation: none;
+		transform: translateX(75%);
+	}
+}
+
+/* --- TLJobStatus (what a long-running job reports) ------------------------- */
+
+.tlJobStatus {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-02);
+	min-width: 0;
+	font-family: var(--font-family);
+	font-size: var(--body-compact-01-font-size);
+	color: var(--text-primary);
+}
+
+.tlJobStatus__header {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03);
+}
+
+.tlJobStatus__state {
+	font-weight: 600;
+}
+
+/* Tabular figures keep the elapsed time from jittering as its digits change every second. */
+.tlJobStatus__elapsed {
+	color: var(--text-secondary);
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+/* The request to stop stands at the end of the header line, apart from what the job reports. */
+.tlJobStatus__cancel {
+	margin-left: auto;
+	padding: var(--spacing-01) var(--spacing-03);
+	border: 1px solid var(--border-strong);
+	border-radius: var(--corner-radius);
+	background: transparent;
+	color: var(--text-primary);
+	font-family: inherit;
+	font-size: var(--label-01-font-size);
+	cursor: pointer;
+}
+
+.tlJobStatus__cancel:hover {
+	background: var(--layer-hover);
+}
+
+.tlJobStatus__phases {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-01);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.tlJobStatus__phase {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	font-size: var(--label-01-font-size);
+}
+
+/* Every step carries a marker saying where it stands. The states are the engine's, the symbols a
+   default an application replaces with its own. */
+.tlJobStatus__phase::before {
+	content: '';
+	flex: 0 0 auto;
+	width: 0.5rem;
+	height: 0.5rem;
+	border-radius: 50%;
+	background-color: var(--border-strong);
+}
+
+.tlJobStatus__phase--done::before {
+	background-color: var(--support-success);
+}
+
+.tlJobStatus__phase--active::before {
+	background-color: var(--interactive);
+	animation: tlJobStatusPulse 1.4s ease-in-out infinite;
+}
+
+/* A step the job has not reached recedes, so the eye finds the one it is at. */
+.tlJobStatus__phase--pending {
+	color: var(--text-secondary);
+}
+
+.tlJobStatus__phase--pending::before {
+	background-color: var(--border-subtle);
+}
+
+@keyframes tlJobStatusPulse {
+	0%, 100% {
+		opacity: 1;
+	}
+
+	50% {
+		opacity: 0.4;
+	}
+}
+
+/* Without motion the marker of the active step simply stands in its color. */
+@media (prefers-reduced-motion: reduce) {
+	.tlJobStatus__phase--active::before {
+		animation: none;
+	}
+}
+
+.tlJobStatus__message {
+	color: var(--text-secondary);
+	font-size: var(--label-01-font-size);
+}
+
+.tlJobStatus__error {
+	color: var(--text-error);
+}
+
 .tlTableView__checkboxCell {
 	justify-content: center;
 	flex-shrink: 0;

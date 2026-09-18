@@ -266,11 +266,49 @@ A fraction between 0 and 1 is displayed as a bar with an optional label beside i
 `<progress>` (`ProgressElement`) states the bar one of two ways, never both:
 
 - `<progress input="ch" fraction="x -> …"/>` — the filled part directly. Such a bar carries no label unless `label="x -> …"` gives it one.
+  A fraction expression that answers nothing at all leaves the bar without a share: the client sweeps a partial fill over the track (`tlProgress--indeterminate`) instead of filling a share of it, which is how a bar over an operation that does not know how far it has come is written — and an operation that learns its share later switches between the two displays by reporting a number again.
 - `<progress input="ch" done="x -> …" total="x -> …"/>` — the two counts the fraction is the ratio of, which are also the label (`3 / 7`) unless `label=` replaces it. A total of zero leaves the bar empty.
 
 Every expression is called with the current value of the `input` channel, which is optional: a bar counting the model as a whole needs none. The bar recomputes on a new channel value, on a change of the object the channel holds, and on a create / change / delete of an `observed-types` type — the last is what a bar counting all objects of a type needs, since no channel value changes when one is added. The observation is the shared `ChannelObjectObserver`, attached and detached with the control.
 
 A table cell needs nothing new: a `CellRenderer` yields `new CellContent.Raw((CellControlFactory) ctx -> new ReactProgressControl(ctx, fraction, label))`, the escape hatch `CellContentReactAdapter` already resolves.
+
+## Long-running jobs: `<start-job>` and `<job-status>`
+
+Work that takes longer than a request may take does not belong in the request. `<start-job>` (`StartJobAction`) is the action that hands it to a worker thread, publishes what it reports on a channel, and **suspends the command** until the work has ended — the same suspension a `<confirm>` uses, so the chain simply continues afterwards:
+
+```xml
+<action class="com.top_logic.layout.view.command.GenericViewCommand" input="job">
+  <executability>
+    <disabled-if expr="s -> if(jobIsRunning($s), #('A job is already running.'@en), null)"/>
+  </executability>
+  <start-job job="job" cancelable="true" update-interval="200">
+    <phases>
+      <phase name="read"><label><en>Reading</en><de>Lesen</de></label></phase>
+      <phase name="check"><label><en>Checking</en><de>Prüfen</de></label></phase>
+    </phases>
+    <function><![CDATA[job -> x -> {
+	$job.jobPhase('read');
+	$job.jobMessage(#('Reading the records.'@en));
+	count(1, 6).foreach(i -> { sleep(400); $job.jobProgress($i, 5); });
+	$job.jobPhase('check');
+	$job.jobIndeterminate();
+	sleep(1500);
+	#('5 records processed.'@en);
+}]]></function>
+  </start-job>
+  <write-channel name="report"/>
+</action>
+```
+
+- **The channel carries immutable snapshots.** The `job` channel holds a `JobState` from the moment the job starts, and a *new* one on every report, so nothing a display would have to observe ever changes. `update-interval` is the shortest time in milliseconds between two published snapshots: a job counting thousands of items is followed at that pace instead of flooding the browser, the last report of a burst is never lost, and the snapshot that ends the job is always delivered. The body runs in the sub-session of the starting request and publishes under the window's interaction, so the channel write, the controls updating from it and the updates reaching the browser are serialized against the requests of the same session exactly like a command is.
+- **The work runs outside any transaction, on a thread that serves no request.** Persisting what the job produced is the business of the actions *after* it: the command continues where it left off with the job's result as its value, so a `<with-transaction><execute-script .../></with-transaction>` or a `<write-channel>` behind the `<start-job>` is where the result lands. A job that fails or is cancelled **aborts** the command instead — the remaining actions are skipped, the compensations of the ones before it run, and the failure stays visible in the last state of the job rather than in a snackbar.
+- **The body is a TL-Script `function=` or a Java `<body class="…"/>`**, exactly one of the two. The function is called with the **monitor of the job as its first argument**, followed by the `inputs` channel values in declaration order and the command's own value last. It reports with `$job.jobPhase('name')` (entering a step marks the steps passed over as done; naming a step that was never declared ends the job with an error), `$job.jobPhases([…])` or `$job.jobPhases({name: label})` for a job that learns its steps only while running, `$job.jobProgress(done, total)`, `$job.jobIndeterminate()` and `$job.jobMessage(text)`. What the function returns is the result of the job.
+- **Reading a snapshot** is `jobIsRunning($s)`, `jobIsFinished($s)`, `jobStatus($s)` (the texts `running`, `completed`, `failed`, `cancelled`, so a `<switch><case match="'completed'">` decides on it), `jobResult($s)` and `jobError($s)`. Each of them answers over no job at all as well, which is what the channel holds before the first start — so a start button guards itself with `input="job"` plus `<disabled-if expr="s -> jobIsRunning($s)"/>` and needs no case of its own for the time before the first run.
+- **Cancellation is cooperative.** `cancelable="true"` offers the reader a cancel button; pressing it marks the job and interrupts the worker. `sleep()` keeps the interrupt it was woken by, so a sleeping job wakes at once and ends at the next point it *reports* from — which is what makes a loop of `sleep` + `jobProgress` stop within one step. Every report a Java body makes on its `JobMonitor` checks the same way, and `JobMonitor.checkCancelled()` is that check on its own for a stretch of work that reports nothing. Only declare it for work that may be given up half-done: a cancelled job has done part of what it was started for.
+- **`<job-status input="job"/>`** (`JobStatusElement` → `ReactJobStatusControl` / `TLJobStatus`) is the display, bound to the channel alone and holding no state of its own. It shows the status, the declared steps as done / active / pending, the bar (determinate or indeterminate), the message, the elapsed time — counted in the browser, so it ticks without a server round trip and freezes when the job ends — and at the end the result or the error. A channel holding anything that is not a job state displays nothing. Every text is resolved for the reader on the server: the phases and the message by their `ResKey`, the result through `MetaLabelProvider`, so a body returning an i18n literal `#('…'@en, '…'@de)` is displayed in the reader's language.
+- **CSS hooks**: the BEM block `tlJobStatus` with the status modifier `tlJobStatus--running|completed|failed|cancelled` and the elements `__header`, `__state`, `__elapsed`, `__cancel`, `__phases`, `__phase` (`--done`, `--active`, `--pending`), `__bar`, `__message`, `__error`, `__result` (`tlReactControls.css`). An application restyles the display through these classes; the bar inside it is the shared `tlProgress` block.
+- **Demo**: `com.top_logic.demo.react/…/views/demo/long-job-demo.view.xml` — a three-phase job with a determinate loop, an indeterminate phase and a result written to a second channel, a failing job, and a standalone indeterminate `<progress>`.
 
 ## Drag and drop of table rows
 

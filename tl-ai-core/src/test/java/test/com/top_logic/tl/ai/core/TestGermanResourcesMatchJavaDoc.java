@@ -39,10 +39,26 @@ import junit.framework.TestCase;
  * </p>
  *
  * <p>
+ * The German is not written once and then left alone, either: the translation goal re-translates a
+ * key whose English changed since the last build, so rewording an {@code @en} text throws away the
+ * hand-written German of that key silently. A corrected text is therefore not corrected for good,
+ * which is the second reason this comparison has to run on every build rather than once per key.
+ * </p>
+ *
+ * <p>
  * This test is that comparison. It found six wrong texts on its first run, among them
  * <em>"Klare Modelle"</em> ("lucid models") on the button that clears the model allowlist. German
  * resources are maintained by hand - the fix for a failure here is to correct
  * {@code messages_de.properties}, not to reword the tag.
+ * </p>
+ *
+ * <p>
+ * Comparing is not enough on its own: a constant that carries no {@code @de} has nothing to compare
+ * against, and that is precisely the case the machine translation ships unread. So the German is
+ * required, not optional - a constant documented with {@code @en} must carry {@code @de} as well.
+ * The machine translation survives only where nobody authored a German text at all, which is the
+ * configuration labels and tooltips the doclet derives from prose rather than from a tag. Together
+ * with the placeholder check below, that is what leaves no generated German text unread.
  * </p>
  *
  * <p>
@@ -91,6 +107,28 @@ public class TestGermanResourcesMatchJavaDoc extends TestCase {
 	/** Where the build writes the German resources of a module. */
 	private static final String GERMAN_BUNDLE = SOURCE_FOLDER + "/META-INF/messages_de.properties";
 
+	/** Where the build writes the English resources of a module. */
+	private static final String ENGLISH_BUNDLE = SOURCE_FOLDER + "/META-INF/messages_en.properties";
+
+	/** The bundles the build generates, in the order a failure should report them. */
+	private static final List<String> BUNDLES = List.of(ENGLISH_BUNDLE, GERMAN_BUNDLE);
+
+	/**
+	 * What the i18n generator writes as the text of a key it cannot resolve.
+	 *
+	 * <p>
+	 * Regenerating a bundle reads it back in and writes it out again, so such a placeholder turns
+	 * from a missing key into a present one whose value is the placeholder - which resolves, and
+	 * therefore reaches the user. That is how the unregistered bundle of issue #229 stayed invisible
+	 * until PR #323. {@code TestModelResources} rejects it for the model resources; here it is
+	 * rejected for the generated message bundles, in both languages.
+	 * </p>
+	 */
+	private static final String GENERATOR_PLACEHOLDER = "[missing:";
+
+	/** A module of the reactor, as its POM declares it. */
+	private static final Pattern DECLARED_MODULE = Pattern.compile("<module>\\s*([^<\\s]+)\\s*</module>");
+
 	/**
 	 * A documented resource constant: its JavaDoc block, optional plain comments in between, and the
 	 * field declaration the resource key is derived from.
@@ -110,6 +148,18 @@ public class TestGermanResourcesMatchJavaDoc extends TestCase {
 	/** The {@code @de} tag inside a JavaDoc block, up to the next tag or the end of the block. */
 	private static final Pattern GERMAN_TAG = Pattern.compile(
 		"^\\s*\\*\\s*@de\\s+(.*?)(?=^\\s*\\*\\s*@|\\z)", Pattern.DOTALL | Pattern.MULTILINE);
+
+	/**
+	 * The {@code @en} tag inside a JavaDoc block.
+	 *
+	 * <p>
+	 * Its presence is what makes the doclet write a resource for the constant at all, so it is also
+	 * what makes a German text mandatory. The text itself is of no interest here - the English is
+	 * generated from the tag and therefore cannot disagree with it.
+	 * </p>
+	 */
+	private static final Pattern ENGLISH_TAG_LINE =
+		Pattern.compile("^\\s*\\*\\s*@en\\s", Pattern.MULTILINE);
 
 	/**
 	 * Every line that opens a {@code @de} tag, whatever it documents.
@@ -134,8 +184,18 @@ public class TestGermanResourcesMatchJavaDoc extends TestCase {
 		/* Pure data. */
 	}
 
-	/** What the sources hold: the authored texts, and what it took to find them. */
-	private record Authored(Map<String, AuthoredText> texts, int tags, int files) {
+	/**
+	 * What the sources hold: the authored texts, the constants that need one, and what it took to
+	 * find them.
+	 *
+	 * @param texts
+	 *        The German text of every constant that carries a {@code @de} tag, by resource key.
+	 * @param documented
+	 *        Where every constant that carries an {@code @en} tag is declared, by resource key -
+	 *        that is, every constant the doclet writes a resource for.
+	 */
+	private record Authored(Map<String, AuthoredText> texts, Map<String, String> documented, int tags,
+			int files) {
 		/* Pure data. */
 	}
 
@@ -191,6 +251,102 @@ public class TestGermanResourcesMatchJavaDoc extends TestCase {
 	}
 
 	/**
+	 * Every constant the doclet writes a resource for carries an authored German text.
+	 *
+	 * <p>
+	 * This is the check that closes Gitea #331 from this side. Without it the two above compare only
+	 * what somebody already bothered to write down: a new constant carrying {@code @en} alone passes
+	 * them silently, its German written by {@code tl-maven-plugin:translate} out of the English
+	 * string and read by nobody. That is how <em>"Stornierung beantragen"</em> ("request a
+	 * cancellation") reached the button that cancels a run.
+	 * </p>
+	 *
+	 * <p>
+	 * A tag alone does not ship the text - no generator reads {@code @de} - so a constant added here
+	 * needs both: the tag, and the same text in the module's {@code messages_de.properties}. The
+	 * check above then holds the two together.
+	 * </p>
+	 */
+	public void testEveryDocumentedConstantAuthorsItsGerman() throws IOException {
+		Authored authored = authored();
+		List<String> untranslated = new ArrayList<>();
+		for (Map.Entry<String, String> documented : authored.documented().entrySet()) {
+			if (!authored.texts().containsKey(documented.getKey())) {
+				untranslated.add(documented.getKey() + "\n      source  : " + documented.getValue());
+			}
+		}
+
+		assertEquals("These constants are documented with @en but not with @de, so their German is"
+			+ " whatever the build's machine translation made of the English - nobody has read it."
+			+ " Write the German as a @de tag next to the @en one, and put the same text into the"
+			+ " module's src/main/java/META-INF/messages_de.properties, which is maintained by hand.\n  "
+			+ String.join("\n  ", untranslated), List.of(), untranslated);
+	}
+
+	/**
+	 * No generated bundle ships the generator's placeholder as a text.
+	 *
+	 * <p>
+	 * A placeholder resolves, so nothing at runtime tells it apart from a translation, and a
+	 * regeneration keeps it: this is what PR #323 found in the {@code tl.ai.htmlpages} bundle, as the
+	 * value of every key, in both languages. Both languages are checked because that is how it
+	 * appeared.
+	 * </p>
+	 */
+	public void testNoShippedTextIsAGeneratorPlaceholder() throws IOException {
+		List<String> placeholders = new ArrayList<>();
+		for (Path module : modules()) {
+			for (String bundleName : BUNDLES) {
+				Path bundle = module.resolve(bundleName);
+				if (!Files.isRegularFile(bundle)) {
+					continue;
+				}
+				Map<String, String> texts = load(bundle);
+				for (Map.Entry<String, String> text : texts.entrySet()) {
+					if (text.getValue().startsWith(GENERATOR_PLACEHOLDER)) {
+						placeholders.add(bundle + "\n      " + text.getKey() + " = " + text.getValue());
+					}
+				}
+			}
+		}
+
+		assertEquals("These resources hold the i18n generator's placeholder as their text, so the user"
+			+ " reads it. The key the placeholder names could not be resolved when the bundle was"
+			+ " generated - register the bundle that defines it, or write the text by hand - and then"
+			+ " regenerate, because a placeholder left in the file survives the next generation.\n  "
+			+ String.join("\n  ", placeholders), List.of(), placeholders);
+	}
+
+	/**
+	 * Every module of the reactor is covered by the checks above.
+	 *
+	 * <p>
+	 * They walk the directories next to the reactor POM that have Java sources, which covers a module
+	 * added later without anybody remembering this test. The converse is what needs asserting: a
+	 * module whose sources move out of {@value #SOURCE_FOLDER} drops out of the walk, and the checks
+	 * stay green while covering less.
+	 * </p>
+	 */
+	public void testEveryDeclaredModuleIsChecked() throws IOException {
+		Path root = reactorRoot();
+		List<String> checked = modules().stream().map(module -> module.getFileName().toString()).toList();
+		List<String> missed = new ArrayList<>();
+		String pom = Files.readString(root.resolve("pom.xml"), StandardCharsets.UTF_8);
+		Matcher declared = DECLARED_MODULE.matcher(pom);
+		while (declared.find()) {
+			String module = declared.group(1);
+			if (!checked.contains(module)) {
+				missed.add(module);
+			}
+		}
+
+		assertEquals("These modules are declared in " + root + "/pom.xml but hold no " + SOURCE_FOLDER
+			+ ", so nothing of theirs is checked. The module keeps its Java sources somewhere else -"
+			+ " teach this test where, or the resources it generates go unwatched.\n  "
+			+ String.join("\n  ", missed), List.of(), missed);
+	}
+
+	/**
 	 * Every {@code @de} tag in the sources was read by this check.
 	 *
 	 * <p>
@@ -233,11 +389,27 @@ public class TestGermanResourcesMatchJavaDoc extends TestCase {
 		assertTrue("Only " + authored.texts().size() + " constants carrying a @de tag found. The tags are"
 			+ " the whole input of this test; if they are gone, it checks nothing.",
 			authored.texts().size() > 100);
+		assertTrue("Only " + authored.documented().size() + " constants carrying an @en tag found. They"
+			+ " are what testEveryDocumentedConstantAuthorsItsGerman holds to a German text; if they are"
+			+ " gone, it holds nothing.", authored.documented().size() > 100);
+
+		int bundleFiles = 0;
+		for (Path module : modules()) {
+			for (String bundleName : BUNDLES) {
+				if (Files.isRegularFile(module.resolve(bundleName))) {
+					bundleFiles++;
+				}
+			}
+		}
+		assertTrue("Only " + bundleFiles + " generated bundles found over both languages. They are what"
+			+ " testNoShippedTextIsAGeneratorPlaceholder reads; either " + BUNDLES + " no longer names"
+			+ " them or the doclet did not run.", bundleFiles >= 2 * bundles);
 	}
 
 	/** The German texts the developers of this project wrote, by resource key. */
 	private static Authored authored() throws IOException {
 		Map<String, AuthoredText> texts = new TreeMap<>();
+		Map<String, String> documented = new TreeMap<>();
 		int tags = 0;
 		int files = 0;
 		for (Path module : modules()) {
@@ -246,20 +418,16 @@ public class TestGermanResourcesMatchJavaDoc extends TestCase {
 					.sorted().toList()) {
 					files++;
 					String text = Files.readString(source, StandardCharsets.UTF_8);
-					int found = count(GERMAN_TAG_LINE, text);
-					if (found == 0) {
-						continue;
-					}
-					tags += found;
-					collectAuthoredTexts(source, text, texts);
+					tags += count(GERMAN_TAG_LINE, text);
+					collectAuthoredTexts(source, text, texts, documented);
 				}
 			}
 		}
-		return new Authored(texts, tags, files);
+		return new Authored(texts, documented, tags, files);
 	}
 
 	private static void collectAuthoredTexts(Path source, String text,
-			Map<String, AuthoredText> result) {
+			Map<String, AuthoredText> result, Map<String, String> documented) {
 		String packageName = packageOf(text);
 		if (packageName == null) {
 			return;
@@ -267,13 +435,16 @@ public class TestGermanResourcesMatchJavaDoc extends TestCase {
 		String className = source.getFileName().toString().replaceFirst("\\.java$", "");
 		Matcher constants = DOCUMENTED_CONSTANT.matcher(text);
 		while (constants.find()) {
-			Matcher tag = GERMAN_TAG.matcher(constants.group(1));
-			if (!tag.find()) {
-				continue;
-			}
+			String comment = constants.group(1);
 			String key = KEY_PREFIX + packageName + "." + className + "." + constants.group(2);
 			String where = source + ":" + lineOf(text, constants.start());
-			result.put(key, new AuthoredText(key, unwrap(tag.group(1)), where));
+			if (ENGLISH_TAG_LINE.matcher(comment).find()) {
+				documented.put(key, where);
+			}
+			Matcher tag = GERMAN_TAG.matcher(comment);
+			if (tag.find()) {
+				result.put(key, new AuthoredText(key, unwrap(tag.group(1)), where));
+			}
 		}
 	}
 
@@ -281,14 +452,21 @@ public class TestGermanResourcesMatchJavaDoc extends TestCase {
 	private static Map<String, String> shippedGermanTexts() throws IOException {
 		Map<String, String> result = new TreeMap<>();
 		for (Path bundle : germanBundles()) {
-			Properties properties = new Properties();
-			try (InputStream in = Files.newInputStream(bundle);
-					Reader reader = new InputStreamReader(in, StandardCharsets.UTF_8)) {
-				properties.load(reader);
-			}
-			for (String key : properties.stringPropertyNames()) {
-				result.put(key, properties.getProperty(key));
-			}
+			result.putAll(load(bundle));
+		}
+		return result;
+	}
+
+	/** The texts of a single generated bundle, by resource key. */
+	private static Map<String, String> load(Path bundle) throws IOException {
+		Properties properties = new Properties();
+		try (InputStream in = Files.newInputStream(bundle);
+				Reader reader = new InputStreamReader(in, StandardCharsets.UTF_8)) {
+			properties.load(reader);
+		}
+		Map<String, String> result = new TreeMap<>();
+		for (String key : properties.stringPropertyNames()) {
+			result.put(key, properties.getProperty(key));
 		}
 		return result;
 	}

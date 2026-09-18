@@ -17,6 +17,12 @@
 <view>
 	<channels>
 		<channel name="selectedInvoice"/>
+		<!--
+			The chat composer's unsent text. Declared so this page loads on its own; inside the shell
+			app.view.xml binds its own channel of that name over this one, and the "Dazu fragen"
+			command below then writes the draft of the chat on the *other* nav item (Issue #440).
+		-->
+		<channel name="chatDraft"/>
 	</channels>
 
 	<split-panel orientation="horizontal"
@@ -54,6 +60,37 @@
 									to="selectedInvoice"
 								/>
 							</open-dialog>
+						</generic-command>
+						<!--
+							The cross-view half of issue #440: this page writes a sentence about the
+							selected invoice into the chat's composer, and the chat is a different
+							view on another nav item. No new command class - an <execute-script> that
+							builds the sentence and a <write-channel> that writes it. Nothing is sent:
+							switching to the chat shows the question standing in the composer.
+						-->
+						<generic-command
+							image="css:bi bi-chat-left-text"
+							input="selectedInvoice"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Ask about this</en>
+								<de>Dazu fragen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<execute-script>
+								<function><![CDATA[i -> {
+									"en": "Please explain the invoice “"
+										+ $i.get(`tl.ai.demo.imageclassification:Invoice#description`)
+										+ "” over " + $i.get(`tl.ai.demo.imageclassification:Invoice#amountLabel`) + ".",
+									"de": "Bitte erkläre die Rechnung „"
+										+ $i.get(`tl.ai.demo.imageclassification:Invoice#description`)
+										+ "“ über " + $i.get(`tl.ai.demo.imageclassification:Invoice#amountLabel`) + "."
+								}.internationalize()]]></function>
+							</execute-script>
+							<write-channel name="chatDraft"/>
 						</generic-command>
 						<generic-command
 							clique="more"

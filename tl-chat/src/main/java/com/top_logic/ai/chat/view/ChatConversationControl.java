@@ -413,7 +413,26 @@ public class ChatConversationControl extends ReactControl {
 			putState("draftText", null);
 			return;
 		}
-		applying(() -> putState("draftText", String.valueOf(value)));
+		applying(() -> putState("draftText", draftText(value)));
+	}
+
+	/**
+	 * A written value as the text the composer is to show.
+	 *
+	 * <p>
+	 * A {@link ResKey} is resolved rather than printed, because the obvious way to write a sentence
+	 * from TL-Script is {@code {"en": …, "de": …}.internationalize()} and the user is to read their
+	 * own language, not a resource key. Anything else is labelled the way the transcript labels it.
+	 * </p>
+	 */
+	private static String draftText(Object value) {
+		if (value instanceof ResKey key) {
+			return Resources.getInstance().getString(key);
+		}
+		if (value instanceof CharSequence text) {
+			return text.toString();
+		}
+		return label(value);
 	}
 
 	/**

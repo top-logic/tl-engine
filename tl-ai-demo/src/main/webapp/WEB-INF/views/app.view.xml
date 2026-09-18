@@ -35,6 +35,13 @@
 		<channel name="dockPaneObject"/>
 		<channel name="dockProgressBadge"/>
 		<channel name="dockSourcesBadge"/>
+		<!--
+			The chat composer's unsent text, declared at the top so that two *different* pages can
+			reach it (Issue #440). Every <view-ref> gets its own channel namespace, so a page sees a
+			channel of the enclosing view only where a <bind> hands it over - which is what the two
+			nav items below do. See "Writing a channel across a view boundary" in tl-chat/CLAUDE.md.
+		-->
+		<channel name="chatDraft"/>
 	</channels>
 
 	<app-shell>
@@ -141,7 +148,16 @@
 						<en>Chat</en>
 						<de>Chat</de>
 					</label>
-					<view-ref view="tl-ai-demo/chat-grouped.view.xml"/>
+					<!--
+						The chat page declares a "chatDraft" of its own, so it also works standalone;
+						this binding hands it *this* view's channel instead, which is the one the
+						Belege page below writes.
+					-->
+					<view-ref view="tl-ai-demo/chat-grouped.view.xml">
+						<bind channel="chatDraft"
+							to="chatDraft"
+						/>
+					</view-ref>
 				</nav-item>
 
 				<nav-item id="invoices"
@@ -151,7 +167,15 @@
 						<en>Invoices</en>
 						<de>Belege</de>
 					</label>
-					<view-ref view="tl-ai-demo/invoices.view.xml"/>
+					<!--
+						The other end of the same channel: the "Dazu fragen" toolbar command on this
+						page writes the chat's draft, although the chat is a different view.
+					-->
+					<view-ref view="tl-ai-demo/invoices.view.xml">
+						<bind channel="chatDraft"
+							to="chatDraft"
+						/>
+					</view-ref>
 				</nav-item>
 
 				<!--

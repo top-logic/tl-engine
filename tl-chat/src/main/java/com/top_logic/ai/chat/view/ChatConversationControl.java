@@ -54,6 +54,13 @@ import com.top_logic.util.TLContext;
  * account may not be given is refused by {@link ChatTurnChannels} and the composer's own value is
  * written back, so the channel never claims a setting the composer is not showing.
  * </p>
+ *
+ * <p>
+ * The {@code present} option goes the other way: the channels it names are registered on the
+ * binding, which is what makes them reachable from an agent run in this window
+ * ({@link com.top_logic.ai.chat.tools.PresentTool}). Deny by default, and the registration ends
+ * with this control.
+ * </p>
  */
 public class ChatConversationControl extends ReactControl {
 
@@ -170,6 +177,34 @@ public class ChatConversationControl extends ReactControl {
 		_modelChannel = followTurnChannel(context, config.getModel(), this::applyModelFromChannel);
 		_effortChannel = followTurnChannel(context, config.getEffort(), this::applyEffortFromChannel);
 		_mcpChannel = followTurnChannel(context, config.getMcpServers(), this::applyServersFromChannel);
+
+		allowPresenting(context, config.getPresent());
+	}
+
+	/**
+	 * Opens the configured channels to an agent running in this window - the {@code present} tool's
+	 * allow list.
+	 *
+	 * <p>
+	 * Deny by default: what is not named here cannot be reached from a run, and the registration is
+	 * undone when this control is disposed, so a channel of a view that is gone is not writable
+	 * either. The channels are resolved here, in the view context, because that is the only place
+	 * that has one - the agent thread knows a name and nothing else.
+	 * </p>
+	 */
+	private void allowPresenting(ViewContext context, List<ChannelRef> refs) {
+		if (refs == null || refs.isEmpty()) {
+			return;
+		}
+		for (ChannelRef ref : refs) {
+			if (ref == null) {
+				continue;
+			}
+			String name = ref.getChannelName();
+			ViewChannel channel = context.resolveChannel(ref);
+			_binding.allowPresenting(name, channel);
+			addCleanupAction(() -> _binding.denyPresenting(name, channel));
+		}
 	}
 
 	/**

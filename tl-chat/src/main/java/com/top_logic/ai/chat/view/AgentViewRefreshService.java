@@ -30,6 +30,7 @@ import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
@@ -90,6 +91,13 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 		String LOCK_TIMEOUT_MILLIS = "lock-timeout-millis";
 
 		/**
+		 * Configuration property name for the write timeout.
+		 *
+		 * @see #getWriteTimeoutMillis()
+		 */
+		String WRITE_TIMEOUT_MILLIS = "write-timeout-millis";
+
+		/**
 		 * How long changes are collected before the windows are refreshed, in milliseconds.
 		 *
 		 * <p>
@@ -117,6 +125,48 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 		@Name(LOCK_TIMEOUT_MILLIS)
 		@IntDefault(500)
 		int getLockTimeoutMillis();
+
+		/**
+		 * How long a write into a window waits for that window's request lock, in milliseconds.
+		 *
+		 * <p>
+		 * Longer than {@link #getLockTimeoutMillis()}, and for the opposite reason: a refresh that
+		 * gives up loses nothing, because the command holding the lock synthesizes the same events
+		 * when it finishes. A write has no such second chance - nobody else is going to put the
+		 * agent's value on the channel - so giving up means telling the model that the page could
+		 * not be reached.
+		 * </p>
+		 *
+		 * @see #WRITE_TIMEOUT_MILLIS
+		 * @see #inWindow(TLSubSessionContext, Runnable)
+		 */
+		@Name(WRITE_TIMEOUT_MILLIS)
+		@IntDefault(5000)
+		int getWriteTimeoutMillis();
+	}
+
+	/**
+	 * What became of a write a background thread asked to make in a browser window.
+	 *
+	 * @see #inWindow(TLSubSessionContext, Runnable)
+	 */
+	public enum WindowAccess {
+
+		/** The window was reached and the write ran. */
+		DONE,
+
+		/**
+		 * This run has no window: a headless run, a scheduled one, or one whose browser window is
+		 * gone. Nothing was written, and nothing can be.
+		 */
+		NO_WINDOW,
+
+		/**
+		 * The window is there but stayed busy with a browser command for longer than
+		 * {@link Config#getWriteTimeoutMillis()}. Nothing was written; the same write can be tried
+		 * again.
+		 */
+		BUSY;
 	}
 
 	/**
@@ -201,6 +251,95 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 			return;
 		}
 		service._windows.put(subSession, new WindowRef(windowName, new WeakReference<>(registry)));
+	}
+
+	/**
+	 * Whether a browser window of {@code subSession} is reachable at all.
+	 *
+	 * <p>
+	 * The question a tool asks before it explains itself: a run with no window is a headless, a
+	 * scripted or a scheduled one, and telling its model that a channel name is not on the allow
+	 * list would blame the application for something that is a fact about the run.
+	 * </p>
+	 *
+	 * @param subSession
+	 *        The run's sub-session. May be <code>null</code>.
+	 * @return Whether {@link #inWindow(TLSubSessionContext, Runnable)} has a window to reach.
+	 */
+	public static boolean hasWindow(TLSubSessionContext subSession) {
+		AgentViewRefreshService service = getInstance();
+		if (service == null || subSession == null) {
+			return false;
+		}
+		WindowRef window = service._windows.get(subSession);
+		return window != null && window.registry().get() != null;
+	}
+
+	/**
+	 * Runs {@code action} in the browser window of {@code subSession}, under that window's request
+	 * lock, with the window's pending model changes applied first.
+	 *
+	 * <p>
+	 * This is the write counterpart of the refresh: same window register, same lock discipline, but
+	 * the caller supplies what happens rather than only asking for a synthesize. It is what lets an
+	 * agent tool put a value onto a view channel of the window the run belongs to - a React
+	 * control's state map is a plain {@code HashMap}, so a write from the agent thread beside a
+	 * browser command would corrupt it.
+	 * </p>
+	 *
+	 * <p>
+	 * The pending model events are synthesized <em>before</em> {@code action} runs, so the window
+	 * sees the objects this run has committed; without it a value written onto a channel could name
+	 * an object the window does not know yet.
+	 * </p>
+	 *
+	 * <p>
+	 * A run with no window - headless, TL-Script, the scheduler, or a browser window that has since
+	 * closed - answers {@link WindowAccess#NO_WINDOW} and runs nothing. That is a fact about the
+	 * run, not a failure: there is no page to write to.
+	 * </p>
+	 *
+	 * @param subSession
+	 *        The window's sub-session; on the agent thread that is the bound one. May be
+	 *        <code>null</code>, which is {@link WindowAccess#NO_WINDOW}.
+	 * @param action
+	 *        What to do in the window. Runs on the calling thread.
+	 * @return What became of it; never <code>null</code>.
+	 */
+	public static WindowAccess inWindow(TLSubSessionContext subSession, Runnable action) {
+		AgentViewRefreshService service = getInstance();
+		if (service == null || subSession == null) {
+			return WindowAccess.NO_WINDOW;
+		}
+		WindowRef window = service._windows.get(subSession);
+		if (window == null) {
+			return WindowAccess.NO_WINDOW;
+		}
+		ReactWindowRegistry registry = window.registry().get();
+		if (registry == null) {
+			return WindowAccess.NO_WINDOW;
+		}
+		return ThreadContextManager.inContext(subSession,
+			(ComputationEx2<WindowAccess, RuntimeException, RuntimeException>) () -> {
+				ReentrantLock lock = registry.getRequestLock();
+				boolean locked;
+				try {
+					locked = lock.tryLock(service.getConfig().getWriteTimeoutMillis(), TimeUnit.MILLISECONDS);
+				} catch (InterruptedException ex) {
+					Thread.currentThread().interrupt();
+					return WindowAccess.BUSY;
+				}
+				if (!locked) {
+					return WindowAccess.BUSY;
+				}
+				try {
+					registry.synthesizeModelEvents(window.windowName());
+					action.run();
+					return WindowAccess.DONE;
+				} finally {
+					lock.unlock();
+				}
+			});
 	}
 
 	@Override

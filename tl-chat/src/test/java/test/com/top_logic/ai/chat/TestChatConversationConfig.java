@@ -39,6 +39,8 @@ public class TestChatConversationConfig extends TestCase {
 		assertNull(config.getModel());
 		assertNull(config.getEffort());
 		assertNull(config.getMcpServers());
+		assertNull(config.getDraft());
+		assertNull(config.getReference());
 
 		// Transcript.
 		assertEquals(Trace.SUMMARY, config.getTrace());
@@ -148,6 +150,34 @@ public class TestChatConversationConfig extends TestCase {
 		assertEquals("pickedModel", config.getModel().getChannelName());
 		assertEquals("pickedEffort", config.getEffort().getChannelName());
 		assertEquals("attachedServers", config.getMcpServers().getChannelName());
+	}
+
+	/**
+	 * The composer's two draft channels parse, each naming a channel of its own.
+	 *
+	 * <p>
+	 * {@code draft} is the unsent text, two-way; {@code reference} takes a model object and turns it
+	 * into one atomic token inside that text. Both are wiring: what they carry is pinned by the
+	 * browser's own suite and by the control.
+	 * </p>
+	 */
+	public void testDraftChannelsParse() throws Exception {
+		String xml = "<chat-conversation xmlns:config='http://www.top-logic.com/ns/config/6.0'"
+			+ " config:interface='" + Config.class.getName() + "'"
+			+ " draft='composerDraft' reference='quotedObject'/>";
+		Config config = (Config) TypedConfiguration.parse(CharacterContents.newContent(xml));
+		assertEquals("composerDraft", config.getDraft().getChannelName());
+		assertEquals("quotedObject", config.getReference().getChannelName());
+	}
+
+	/** Neither channel is required: an element that wires none is the ordinary case. */
+	public void testDraftChannelsAreOptional() throws Exception {
+		String xml = "<chat-conversation xmlns:config='http://www.top-logic.com/ns/config/6.0'"
+			+ " config:interface='" + Config.class.getName() + "' draft='composerDraft'/>";
+		Config config = (Config) TypedConfiguration.parse(CharacterContents.newContent(xml));
+		assertEquals("composerDraft", config.getDraft().getChannelName());
+		assertNull("A draft channel alone is enough; the reference one stays unwired.",
+			config.getReference());
 	}
 
 	/** A model-bound {@code <mention>} parses: rows plus the optional label/text and the default limit. */

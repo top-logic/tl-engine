@@ -265,6 +265,7 @@ export const Composer = React.memo(
   onDismissNotice,
   onSend,
   onStop,
+  onDraft,
   extraMenuItems,
   referenceCandidates,
   attachmentsEnabled = true,
@@ -316,6 +317,13 @@ export const Composer = React.memo(
   onDismissNotice: () => void
   onSend: (text: string, attachments: Attachment[]) => Promise<boolean>
   onStop: () => void
+  /**
+   * What stands unsent in the field, for a host that follows the draft.
+   *
+   * `settled` is true for the two moments the host must not learn late: the field losing the focus,
+   * and the send. Everything else is a keystroke, which the caller is free to let pause first.
+   */
+  onDraft?: (text: string, settled: boolean) => void
   extraMenuItems?: ComposerMenuItem[]
   referenceCandidates?: (query: string) => ReferenceCandidate[]
   /** Whether files can be attached. Default on, matching today's composer. */
@@ -511,11 +519,18 @@ export const Composer = React.memo(
   const composerApi: ComposerApi = useMemo(
     () => ({
       insertReference: (token: ReferenceToken) => area.current?.insertReference(token),
+      setDraft: (draft: string) => area.current?.setDraft(draft),
       focus: () => area.current?.focus(),
     }),
     [],
   )
   useImperativeHandle(handle, () => composerApi, [composerApi])
+
+  // Whatever changed the text - a keystroke, an inserted reference, an improved prompt, a host's
+  // own write - the host hears the same thing. Blur and send report it again, settled.
+  useEffect(() => {
+    onDraft?.(text, false)
+  }, [text, onDraft])
 
   const mentionQuery = mention == null ? '' : mention.replace(/^@/, '')
   const candidates = useMemo(
@@ -533,6 +548,8 @@ export const Composer = React.memo(
   const submit = () => {
     const trimmed = text.trim()
     if (draftIsEmpty(text) && files.length === 0) return
+    // Before the send, not after: what the host reads must be the sentence that is going.
+    onDraft?.(text, true)
     const sentFiles = files
     void onSend(trimmed, sentFiles).then((sent) => {
       if (!sent) return
@@ -705,6 +722,7 @@ export const Composer = React.memo(
           <TokenInput
             ref={area}
             value={text}
+            onBlur={() => onDraft?.(text, true)}
             onChange={(next) => {
               setText(next)
               // Reading the word under the caret after the change, so "@" opens the picker on the

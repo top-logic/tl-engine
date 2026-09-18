@@ -71,6 +71,10 @@ public class TestHiddenElementOptions extends TestCase {
 		assertVisible(ChatConversationElement.Config.class, ChatConversationElement.Config.MODEL);
 		assertVisible(ChatConversationElement.Config.class, ChatConversationElement.Config.EFFORT);
 		assertVisible(ChatConversationElement.Config.class, ChatConversationElement.Config.MCP_SERVERS);
+		// Wiring a designer does, not a TypeScript name: which channel carries the composer's unsent
+		// text, and which one puts a model object into it as a reference token.
+		assertVisible(ChatConversationElement.Config.class, ChatConversationElement.Config.DRAFT);
+		assertVisible(ChatConversationElement.Config.class, ChatConversationElement.Config.REFERENCE);
 		assertVisible(ChatConversationElement.Actions.class, ChatConversationElement.Actions.COPY);
 	}
 

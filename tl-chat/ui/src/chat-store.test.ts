@@ -1172,3 +1172,62 @@ describe('eventBelongsToChat', () => {
     expect(eventBelongsToChat('text_delta', JSON.stringify({ text: 'x' }), null)).toBe(true)
   })
 })
+
+/**
+ * How a host reaches the composer: through the store, never through the DOM.
+ *
+ * The composer binds itself once it is mounted, and unbinds when it goes. What the `draft` and the
+ * `reference` channels do is exactly these two calls, so the store is where "a write replaces the
+ * text" and "a write inserts a token" can be held without a browser.
+ */
+describe('the composer seam', () => {
+  it('replaces the draft, and the composer is what focuses and moves the caret', () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    const drafts: string[] = []
+    store.actions.bindComposer({
+      insertReference: () => undefined,
+      setDraft: (text) => drafts.push(text),
+      focus: () => undefined,
+    })
+
+    store.actions.setDraft('Bitte erkläre die Rechnung R-2024-014.')
+    store.actions.setDraft('')
+
+    expect(drafts).toEqual(['Bitte erkläre die Rechnung R-2024-014.', ''])
+
+    release()
+  })
+
+  it('inserts a reference token, as picking it from the "@" menu does', () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    const tokens: string[] = []
+    store.actions.bindComposer({
+      insertReference: (token) => tokens.push(token.label),
+      setDraft: () => undefined,
+      focus: () => undefined,
+    })
+
+    store.actions.insertReference({
+      kind: 'Invoice',
+      id: 'aaa-bbb',
+      label: 'Hotelrechnung Berlin',
+      text: 'Hotelrechnung Berlin (1.240,00 €)',
+    })
+
+    expect(tokens).toEqual(['Hotelrechnung Berlin'])
+
+    release()
+  })
+
+  it('does nothing at all while no composer is mounted', () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.actions.bindComposer(null)
+
+    expect(() => store.actions.setDraft('Bitte erkläre die Rechnung.')).not.toThrow()
+
+    release()
+  })
+})

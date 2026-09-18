@@ -159,6 +159,13 @@ export interface ComposerApi {
    * where the user put it.
    */
   insertReference: (token: ReferenceToken) => void
+  /**
+   * Replaces the whole draft with `text`, focuses the field and puts the caret behind it.
+   *
+   * What the user is looking at when a host writes the draft: the sentence, ready to be read,
+   * changed and sent. The send itself stays the user's.
+   */
+  setDraft: (text: string) => void
   focus: () => void
 }
 

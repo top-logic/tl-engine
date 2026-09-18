@@ -16,6 +16,10 @@ import java.util.Set;
 import java.util.function.Function;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.tl.ai.core.agent.environment.AgentFact;
+import com.top_logic.tl.ai.core.agent.environment.EnvironmentFact;
+import com.top_logic.tl.ai.core.agent.environment.RunEnvironment;
+import com.top_logic.tl.ai.core.agent.environment.RunFactsBinding;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.skills.Skill;
 import com.top_logic.tl.ai.core.mcp.McpServerRegistry;
@@ -722,6 +726,13 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		systemPrompt = injectSkills(agent, systemPrompt, capabilities);
 		systemPrompt = injectDelegateDescriptions(agent, systemPrompt, capabilities);
 
+		// The environment block is composed last, so that a placeholder written into a skill or a
+		// delegate description is filled too, and so that the block is the last thing the model reads
+		// when the prompt does not say where it goes.
+		RunEnvironment environment =
+			RunEnvironment.compose(agent.displayName(), agent.name(), model, runFacts(agent));
+		systemPrompt = environment.apply(systemPrompt);
+
 		// maxOutputTokens: assignment override > catalog
 		Integer assignedMaxTokens = assignment.maxTokens();
 		int maxOutputTokens = assignedMaxTokens != null ? assignedMaxTokens : modelInfo.limits().maxOutput();
@@ -751,7 +762,29 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 
 		return new AgentParams(model, systemPrompt, maxTurns,
 			maxOutputTokens, modelOptions, contextWindowTokens,
-			maxRetries, timeoutSeconds, toolChoice, msg -> true);
+			maxRetries, timeoutSeconds, toolChoice, msg -> true, environment.block());
+	}
+
+	/**
+	 * Everything the host stated about this run: what the agent definition itself says, plus what the
+	 * entry point bound for the run - the chat's {@code <context>}, evaluated where the page was.
+	 *
+	 * <p>
+	 * The agent's own facts come first because they hold for every run of that agent, whereas the
+	 * page's facts hold for this conversation only. A fact that cannot be evaluated is dropped with a
+	 * log line; see {@link AgentFact#evaluate()}.
+	 * </p>
+	 */
+	private static List<EnvironmentFact> runFacts(AgentDefinition agent) {
+		List<EnvironmentFact> facts = new ArrayList<>();
+		for (AgentFact declared : agent.facts()) {
+			EnvironmentFact fact = declared.evaluate();
+			if (fact != null) {
+				facts.add(fact);
+			}
+		}
+		facts.addAll(RunFactsBinding.facts());
+		return facts;
 	}
 
 	private static int resolveMaxToolResultChars(AgentModelAssignment assignment) {

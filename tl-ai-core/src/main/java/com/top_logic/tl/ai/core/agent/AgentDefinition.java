@@ -8,6 +8,7 @@ package com.top_logic.tl.ai.core.agent;
 import java.util.List;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.tl.ai.core.agent.environment.AgentFact;
 
 /**
  * Source-agnostic representation of an agent definition.
@@ -52,6 +53,8 @@ import com.top_logic.basic.util.ResKey;
  * @param skills                skill names (resolved via layered lookup)
  * @param delegations           agent names this agent can delegate to
  * @param source                where this definition originated
+ * @param facts                 what this agent tells every model about the situation it runs in,
+ *                              as TL-Script evaluated in the acting user's context at run start
  */
 public record AgentDefinition(
 		String name,
@@ -63,7 +66,8 @@ public record AgentDefinition(
 		List<String> mcpServers,
 		List<String> skills,
 		List<String> delegations,
-		AgentSource source) {
+		AgentSource source,
+		List<AgentFact> facts) {
 
 	/** */
 	public AgentDefinition {
@@ -74,6 +78,17 @@ public record AgentDefinition(
 		mcpServers = mcpServers != null ? List.copyOf(mcpServers) : List.of();
 		skills = skills != null ? List.copyOf(skills) : List.of();
 		delegations = delegations != null ? List.copyOf(delegations) : List.of();
+		facts = facts != null ? List.copyOf(facts) : List.of();
+	}
+
+	/**
+	 * A definition that states no facts of its own - every source but the configuration.
+	 */
+	public AgentDefinition(String name, ResKey displayName, String description, ResKey summary,
+			String systemPrompt, List<String> tools, List<String> mcpServers, List<String> skills,
+			List<String> delegations, AgentSource source) {
+		this(name, displayName, description, summary, systemPrompt, tools, mcpServers, skills,
+			delegations, source, List.of());
 	}
 
 	/**
@@ -81,6 +96,6 @@ public record AgentDefinition(
 	 */
 	public AgentDefinition withMcpServers(List<String> newMcpServers) {
 		return new AgentDefinition(name, displayName, description, summary, systemPrompt, tools,
-			newMcpServers, skills, delegations, source);
+			newMcpServers, skills, delegations, source, facts);
 	}
 }

@@ -28,6 +28,10 @@ import com.top_logic.tl.ai.core.provider.ToolChoice;
  * @param toolChoice          tool selection behaviour, or {@code null} for provider default
  * @param responseValidator   predicate tested after each LLM response; returning {@code false}
  *                            stops the loop with {@link StopReason#REJECTED}
+ * @param environment         the composed {@code <environment>} block that is part of
+ *                            {@link #systemPrompt()}, kept separately so a run can show an
+ *                            administrator what it told the model about the situation;
+ *                            {@code null} for a run that composed none
  *
  * @see AgentLoop
  */
@@ -41,7 +45,8 @@ public record AgentParams(
 		int maxRetries,
 		int timeoutSeconds,
 		ToolChoice toolChoice,
-		Predicate<AssistantMessage> responseValidator) {
+		Predicate<AssistantMessage> responseValidator,
+		String environment) {
 
 	/** Default maximum turns. */
 	public static final int DEFAULT_MAX_TURNS = 25;
@@ -79,6 +84,19 @@ public record AgentParams(
 		if (timeoutSeconds <= 0) {
 			throw new IllegalArgumentException("timeoutSeconds must be positive.");
 		}
+	}
+
+	/**
+	 * Parameters of a run that composed no environment block - every caller that builds an
+	 * {@link AgentLoop} directly rather than through
+	 * {@link AgentFactory#buildConfig(AgentDefinition, com.top_logic.tl.ai.core.provider.AgentModelAssignment, AgentCapabilities)}.
+	 */
+	public AgentParams(String model, String systemPrompt, int maxTurns,
+			int maxOutputTokens, Map<String, Object> modelOptions,
+			int contextWindowTokens, int maxRetries, int timeoutSeconds,
+			ToolChoice toolChoice, Predicate<AssistantMessage> responseValidator) {
+		this(model, systemPrompt, maxTurns, maxOutputTokens, modelOptions, contextWindowTokens,
+			maxRetries, timeoutSeconds, toolChoice, responseValidator, null);
 	}
 
 	/**

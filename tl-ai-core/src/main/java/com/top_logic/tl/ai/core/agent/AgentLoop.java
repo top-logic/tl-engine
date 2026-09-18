@@ -293,6 +293,7 @@ public class AgentLoop {
 			AgentEventListener.serializing(new DiagnosticLoggingListener(listener));
 		String runId = UUID.randomUUID().toString();
 		emit(serialized, new AgentEvent.RunStarted(runId, 0, now(), _config.model()));
+		emitEnvironment(serialized, runId);
 
 		try {
 			return runLoop(conversation, runContext, serialized, runId);
@@ -479,6 +480,7 @@ public class AgentLoop {
 			AgentEventListener.serializing(new DiagnosticLoggingListener(listener));
 		String runId = UUID.randomUUID().toString();
 		emit(serialized, new AgentEvent.RunStarted(runId, 0, now(), _config.model()));
+		emitEnvironment(serialized, runId);
 
 		try {
 			return runWithMemory(_memory, runContext, serialized, runId);
@@ -1484,6 +1486,22 @@ public class AgentLoop {
 	 * request that carries the whole conversation.
 	 * </p>
 	 */
+	/**
+	 * Reports the environment block this run's system prompt carries, for the run record.
+	 *
+	 * <p>
+	 * Nothing is emitted for a run that composed none - every caller that builds an
+	 * {@link AgentParams} directly rather than through {@code AgentFactory}.
+	 * </p>
+	 */
+	private void emitEnvironment(AgentEventListener listener, String runId) {
+		String environment = _config.environment();
+		if (environment == null || environment.isBlank()) {
+			return;
+		}
+		emit(listener, new AgentEvent.EnvironmentComposed(runId, 0, now(), environment));
+	}
+
 	private String systemPrompt() {
 		return withCitationKinds(UntrustedEnvelope.withStandingRule(_config.systemPrompt()));
 	}

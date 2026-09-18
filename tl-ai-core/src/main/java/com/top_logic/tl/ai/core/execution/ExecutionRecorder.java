@@ -118,6 +118,8 @@ public final class ExecutionRecorder implements AgentEventListener {
 				_handle.setRunId(_runId);
 			}
 			beginRecording(e);
+		} else if (event instanceof AgentEvent.EnvironmentComposed e) {
+			recordEnvironment(e);
 		} else if (event instanceof AgentEvent.ProviderError e) {
 			_lastErrorMessage = e.message();
 		} else if (event instanceof AgentEvent.RunCompleted e) {
@@ -142,6 +144,27 @@ public final class ExecutionRecorder implements AgentEventListener {
 		} catch (RuntimeException ex) {
 			Logger.warn("Failed to record start of agent run " + e.runId() + ": " + ex.getMessage(),
 				ex, ExecutionRecorder.class);
+		}
+	}
+
+	/**
+	 * Writes the run's environment block onto the execution row.
+	 *
+	 * <p>
+	 * A failure here is logged and dropped: the block is what an administrator reads afterwards, and
+	 * losing it is never a reason to fail the run the user is waiting for.
+	 * </p>
+	 */
+	private void recordEnvironment(AgentEvent.EnvironmentComposed e) {
+		AgentExecution execution = _execution;
+		if (execution == null) {
+			return;
+		}
+		try {
+			AgentExecutionStore.getInstance().saveEnvironment(execution, e.environment());
+		} catch (RuntimeException ex) {
+			Logger.warn("Failed to record the environment of agent run " + e.runId() + ": "
+				+ ex.getMessage(), ex, ExecutionRecorder.class);
 		}
 	}
 

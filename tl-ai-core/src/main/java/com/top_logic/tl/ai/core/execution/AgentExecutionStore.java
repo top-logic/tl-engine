@@ -625,6 +625,25 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	}
 
 	/**
+	 * Stores what a run told the model about the situation it happens in.
+	 *
+	 * <p>
+	 * Written as the run starts rather than with the rest of the record at the end, so that the
+	 * block is visible while the run is still going and survives a run that never finishes - the two
+	 * cases in which an administrator most wants to read it.
+	 * </p>
+	 */
+	public void saveEnvironment(AgentExecution execution, String environment) {
+		write(() -> {
+			try (Transaction tx = beginTx("Save agent run environment")) {
+				execution.setEnvironment(environment);
+				tx.commit();
+			}
+			return null;
+		});
+	}
+
+	/**
 	 * Records the terminal state of an agent-loop invocation without a final answer.
 	 *
 	 * @see #finishExecution(AgentExecution, ExecutionStatus, StopReason, String, TokenUsage,

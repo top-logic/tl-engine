@@ -116,6 +116,14 @@
 					<annotations>
 						<multi-line/>
 						<size-constraint/>
+						<constraints>
+							<!--
+								A {{placeholder}} the harness cannot fill would reach the model verbatim
+								and read as an instruction the harness failed to honour, so an unknown one
+								is refused where it is typed rather than sent.
+							-->
+							<constraint class="com.top_logic.tl.ai.core.agent.environment.PlaceholderConstraint"/>
+						</constraints>
 					</annotations>
 				</property>
 				<property name="tools"

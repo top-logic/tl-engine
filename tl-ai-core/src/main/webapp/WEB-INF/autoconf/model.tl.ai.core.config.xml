@@ -6,6 +6,11 @@
       <instance class="com.top_logic.element.model.DynamicModelService">
         <declarations>
           <declaration file="/WEB-INF/model/tl.ai.core.model.xml"/>
+          <!--
+            The account's own preferences for the assistant, added to tl.accounts:Person. Kept in
+            its own file because it extends a type this module does not own.
+          -->
+          <declaration file="/WEB-INF/model/tl-ai-core/extension.tl.accounts.model.xml"/>
         </declarations>
       </instance>
     </config>

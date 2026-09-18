@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.job;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
@@ -23,6 +24,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en The operation reported the step "{0}", which is none of its steps: {1}
 	 */
 	public static ResKey2 ERROR_UNKNOWN_JOB_PHASE__NAME_PHASES;
+
+	/**
+	 * @en Reporting the progress of an operation is only possible from within a running one.
+	 */
+	public static ResKey ERROR_NO_JOB_TO_REPORT_TO;
 
 	static {
 		initConstants(I18NConstants.class);

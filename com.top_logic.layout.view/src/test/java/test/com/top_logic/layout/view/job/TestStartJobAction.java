@@ -13,7 +13,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import junit.framework.Test;
-import junit.framework.TestCase;
 
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
@@ -28,21 +27,12 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ErrorSink;
-import com.top_logic.layout.react.servlet.SSEUpdateQueue;
-import com.top_logic.layout.react.window.ReactWindowRegistry;
-import com.top_logic.layout.view.DefaultViewContext;
-import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
-import com.top_logic.layout.view.channel.DefaultViewChannel;
-import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.Continuation;
 import com.top_logic.layout.view.command.InterruptibleViewAction;
 import com.top_logic.layout.view.command.ViewAction;
-import com.top_logic.layout.view.command.ViewActionChain;
 import com.top_logic.layout.view.job.JobBody;
 import com.top_logic.layout.view.job.JobPhase;
 import com.top_logic.layout.view.job.JobState;
@@ -51,7 +41,6 @@ import com.top_logic.layout.view.job.PhaseStatus;
 import com.top_logic.layout.view.job.ScriptJobBody;
 import com.top_logic.layout.view.job.StartJobAction;
 import com.top_logic.model.TLModel;
-import com.top_logic.model.listen.ModelScope;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -70,50 +59,10 @@ import com.top_logic.util.error.TopLogicException;
  * configured job would produce.
  * </p>
  */
-public class TestStartJobAction extends TestCase {
+public class TestStartJobAction extends AbstractJobTest {
 
-	/** Name of the channel the job reports on. */
-	private static final String JOB = "job";
-
-	/** Name of the channel handed to the job as an input. */
-	private static final String CONTEXT = "context";
-
-	/** How long a test waits for a job before it counts as hanging. */
-	private static final long TIMEOUT = 20_000;
-
-	private ViewContext _context;
-
-	private ViewChannel _job;
-
-	private final List<JobState> _states = Collections.synchronizedList(new ArrayList<>());
-
-	private final List<Object> _completions = Collections.synchronizedList(new ArrayList<>());
-
+	/** What the actions beside the job logged. */
 	private final List<String> _log = Collections.synchronizedList(new ArrayList<>());
-
-	private final CountDownLatch _finished = new CountDownLatch(1);
-
-	private final CountDownLatch _settled = new CountDownLatch(1);
-
-	private final List<HTMLFragment> _shownErrors = Collections.synchronizedList(new ArrayList<>());
-
-	private final CountDownLatch _errorShown = new CountDownLatch(1);
-
-	@Override
-	protected void setUp() throws Exception {
-		super.setUp();
-		_context = new DefaultViewContext(new TestReactContext(new RecordingErrorSink()));
-		_job = new DefaultViewChannel(JOB);
-		_context.registerChannel(JOB, _job);
-		_context.registerChannel(CONTEXT, new DefaultViewChannel(CONTEXT));
-		_job.addListener((sender, oldValue, newValue) -> {
-			JobState state = (JobState) newValue;
-			_states.add(state);
-			if (state.isFinished()) {
-				_finished.countDown();
-			}
-		});
-	}
 
 	/**
 	 * Tests that the channel holds the running job before the command suspends, so what displays it
@@ -242,7 +191,7 @@ public class TestStartJobAction extends TestCase {
 
 		awaitFinished();
 
-		assertEquals(List.of("the context", "in"), seen.get());
+		assertEquals(List.of("the context", INPUT), seen.get());
 	}
 
 	/**
@@ -267,7 +216,7 @@ public class TestStartJobAction extends TestCase {
 		assertSame("The monitor of the job leads the arguments of the function.",
 			last.control(), arguments.get(0));
 		assertEquals("the context", arguments.get(1));
-		assertEquals("in", arguments.get(2));
+		assertEquals(INPUT, arguments.get(2));
 		assertEquals("produced", last.result());
 	}
 
@@ -521,11 +470,6 @@ public class TestStartJobAction extends TestCase {
 		return format.getValue("expr", source);
 	}
 
-	/** The state the channel currently holds. */
-	private JobState current() {
-		return (JobState) _job.get();
-	}
-
 	/** The step the job was in, in the order the states were published. */
 	private List<Object> currentPhases() {
 		List<Object> result = new ArrayList<>();
@@ -533,38 +477,6 @@ public class TestStartJobAction extends TestCase {
 			result.add(Integer.valueOf(state.currentPhase()));
 		}
 		return result;
-	}
-
-	/**
-	 * Waits until the job has published its last state and the command it stands in has settled -
-	 * the state reaches the display before the command runs on, so both are awaited.
-	 */
-	private JobState awaitFinished() throws InterruptedException {
-		assertTrue("The job must finish within " + TIMEOUT + " ms.",
-			_finished.await(TIMEOUT, TimeUnit.MILLISECONDS));
-		assertTrue("The command must settle within " + TIMEOUT + " ms.",
-			_settled.await(TIMEOUT, TimeUnit.MILLISECONDS));
-		return current();
-	}
-
-	private void start(JobBody body, boolean cancelable, List<JobPhase> phases) {
-		run(List.of(job(body, cancelable, phases)));
-	}
-
-	private StartJobAction job(JobBody body, boolean cancelable, List<JobPhase> phases) {
-		return new StartJobAction(new ChannelRef(JOB), List.of(), phases, cancelable, 0, body);
-	}
-
-	private void run(List<ViewAction> actions) {
-		ViewActionChain.run(_context, actions, "in", value -> {
-			_completions.add(value);
-			_settled.countDown();
-		});
-	}
-
-	/** The given work, written where the compiler sees which interface it implements. */
-	private static JobBody body(JobBody body) {
-		return body;
 	}
 
 	/** An action that logs its name and hands the value of the command on. */
@@ -584,23 +496,6 @@ public class TestStartJobAction extends TestCase {
 				continuation.resume(input);
 			}
 		};
-	}
-
-	/**
-	 * Waits for the given latch, ignoring the interrupt a cancellation sends, so that the body ends
-	 * by what it does rather than by being woken.
-	 */
-	private static void awaitQuietly(CountDownLatch latch) {
-		long end = System.currentTimeMillis() + TIMEOUT;
-		while (System.currentTimeMillis() < end) {
-			try {
-				if (latch.await(TIMEOUT, TimeUnit.MILLISECONDS)) {
-					return;
-				}
-			} catch (InterruptedException ex) {
-				// The job was cancelled; this body reports what it produces all the same.
-			}
-		}
 	}
 
 	/** A compiled function computing its result from the arguments it is called with. */
@@ -635,77 +530,6 @@ public class TestStartJobAction extends TestCase {
 				// Nothing to switch off, the function accesses no data.
 			}
 		};
-	}
-
-	/**
-	 * {@link ErrorSink} remembering what it was asked to show.
-	 */
-	private class RecordingErrorSink implements ErrorSink {
-
-		@Override
-		public void showError(HTMLFragment content) {
-			_shownErrors.add(content);
-			_errorShown.countDown();
-		}
-
-		@Override
-		public void showWarning(HTMLFragment content) {
-			// Not of interest here.
-		}
-
-		@Override
-		public void showInfo(HTMLFragment content) {
-			// Not of interest here.
-		}
-	}
-
-	/**
-	 * Minimal {@link ReactContext} for a view that is not displayed in a window.
-	 */
-	private static class TestReactContext implements ReactContext {
-
-		private final ErrorSink _errorSink;
-
-		private int _nextId;
-
-		TestReactContext(ErrorSink errorSink) {
-			_errorSink = errorSink;
-		}
-
-		@Override
-		public ErrorSink getErrorSink() {
-			return _errorSink;
-		}
-
-		@Override
-		public String allocateId() {
-			return "id-" + (_nextId++);
-		}
-
-		@Override
-		public String getWindowName() {
-			return "test-window";
-		}
-
-		@Override
-		public String getContextPath() {
-			return "/test";
-		}
-
-		@Override
-		public SSEUpdateQueue getSSEQueue() {
-			return null;
-		}
-
-		@Override
-		public ReactWindowRegistry getWindowRegistry() {
-			return null;
-		}
-
-		@Override
-		public ModelScope getModelScope() {
-			return null;
-		}
 	}
 
 	/**

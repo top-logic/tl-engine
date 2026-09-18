@@ -5,6 +5,9 @@
  */
 package test.com.top_logic.layout.view.element;
 
+import java.util.List;
+import java.util.Map;
+
 import junit.framework.Test;
 import junit.framework.TestCase;
 
@@ -15,24 +18,43 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.knowledge.service.KnowledgeBase;
+import com.top_logic.layout.react.DefaultReactContext;
+import com.top_logic.layout.react.control.common.ReactProgressControl;
+import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.layout.view.DefaultViewContext;
+import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.DefaultViewChannel;
+import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.ProgressElement;
 import com.top_logic.layout.view.element.ProgressElement.Progress;
+import com.top_logic.model.TLModel;
+import com.top_logic.model.search.expr.EvalContext;
+import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.query.Args;
+import com.top_logic.model.search.expr.query.QueryExecutor;
 
 /**
  * Tests what a {@link ProgressElement} states: the fraction its two counts are the ratio of, the
  * label it derives from them, and which combinations of its expressions are a statement at all.
  *
  * <p>
- * The expressions themselves are not evaluated here: TL-Script evaluation needs the application
- * services (a {@code PersistencyLayer} among them), so what the element computes <em>from</em> the
- * values is tested directly, and the live recomputation of a bar over a channel is exercised in the
- * running application.
+ * The expressions are not written as TL-Script here: evaluating one needs the application services
+ * (a {@code PersistencyLayer} among them), so what the element computes <em>from</em> the values of
+ * its expressions is tested directly, and a bar following a channel is driven by an expression
+ * written in Java.
  * </p>
  */
 public class TestProgressElement extends TestCase {
+
+	/** Name of the channel a bar over a channel is bound to. */
+	private static final String VALUE = "value";
 
 	/** The fraction is the ratio of the two counts. */
 	public void testTheFractionIsTheRatioOfTheTwoCounts() {
@@ -55,6 +77,51 @@ public class TestProgressElement extends TestCase {
 
 		assertEquals(0.0, progress.fraction(), 0.0);
 		assertEquals("0 / 0", progress.label());
+	}
+
+	/** A fraction that answers a number is the share of the bar. */
+	public void testAFractionIsTheShareItAnswers() {
+		assertEquals(Double.valueOf(0.5), ProgressElement.fraction(Double.valueOf(0.5)));
+	}
+
+	/** A fraction that answers nothing at all is no share: the bar has no length to fill. */
+	public void testAFractionThatAnswersNothingIsNoShare() {
+		assertNull(ProgressElement.fraction(null));
+	}
+
+	/** ...and so is a fraction that answers something that is no number. */
+	public void testAFractionThatIsNoNumberIsNoShare() {
+		assertNull(ProgressElement.fraction("half"));
+	}
+
+	/** The two counts always state a share, so a counted bar is never one without a length. */
+	public void testTwoCountsAlwaysStateAShare() {
+		assertNotNull(ProgressElement.counted(0, 0, null).fraction());
+	}
+
+	/**
+	 * Tests that a bar over a channel follows it in both directions: from a share to none when the
+	 * value stops stating one, and back to a share when it states one again.
+	 */
+	public void testAChannelUpdateSwitchesBetweenAShareAndNone() {
+		ViewContext context = new DefaultViewContext(
+			new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test")));
+		ViewChannel value = new DefaultViewChannel(VALUE);
+		context.registerChannel(VALUE, value);
+		value.set(Double.valueOf(0.25));
+
+		ProgressElement element =
+			new ProgressElement(new ChannelRef(VALUE), self(), null, null, null, List.of());
+		ReactProgressControl control = (ReactProgressControl) element.createControl(context);
+
+		assertEquals(Double.valueOf(0.25), displayedFraction(control));
+
+		value.set(null);
+		assertNull("A value stating no share leaves the bar without one.", displayedFraction(control));
+
+		value.set(Double.valueOf(0.75));
+		assertEquals("The bar takes up a share again as soon as the value states one.",
+			Double.valueOf(0.75), displayedFraction(control));
 	}
 
 	/** A label of its own replaces the one the counts would give. */
@@ -113,6 +180,48 @@ public class TestProgressElement extends TestCase {
 			config.update(property, propertyValuePairs[n + 1]);
 		}
 		return config;
+	}
+
+	/** The share the given control displays, {@code null} for the bar without one. */
+	private static Double displayedFraction(ReactProgressControl control) {
+		Object state;
+		try {
+			state = JSON.fromString(control.stateAsJSON());
+		} catch (JSON.ParseException ex) {
+			throw new AssertionError("Not the JSON state of a control: " + control.stateAsJSON(), ex);
+		}
+		Object fraction = ((Map<?, ?>) state).get(ReactProgressControl.FRACTION);
+		return fraction == null ? null : Double.valueOf(((Number) fraction).doubleValue());
+	}
+
+	/** An expression answering the value it is called with. */
+	private static QueryExecutor self() {
+		return new QueryExecutor() {
+			@Override
+			protected Object internalExecuteWith(EvalContext definitions, Args args) {
+				return args.value();
+			}
+
+			@Override
+			public SearchExpression getSearch() {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			protected KnowledgeBase getKnowledgeBase() {
+				return null;
+			}
+
+			@Override
+			protected TLModel getTLModel() {
+				return null;
+			}
+
+			@Override
+			protected void internalDisableSecurity() {
+				// Nothing to switch off, the expression accesses no data.
+			}
+		};
 	}
 
 	/** The given TL-Script source as the configuration reads it. */

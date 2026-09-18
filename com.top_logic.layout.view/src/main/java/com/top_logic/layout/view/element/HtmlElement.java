@@ -15,6 +15,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.exception.I18NException;
 import com.top_logic.basic.exception.I18NFailure;
 import com.top_logic.basic.exception.I18NRuntimeException;
@@ -70,6 +71,12 @@ public class HtmlElement implements UIElement {
 		/** Configuration name for {@link #getCssClass()}. */
 		String CSS_CLASS = "css-class";
 
+		/** Configuration name for {@link #getThumbnailWidth()}. */
+		String THUMBNAIL_WIDTH = "thumbnail-width";
+
+		/** Configuration name for {@link #getThumbnailHeight()}. */
+		String THUMBNAIL_HEIGHT = "thumbnail-height";
+
 		@Override
 		@ClassDefault(HtmlElement.class)
 		Class<? extends UIElement> getImplementationClass();
@@ -99,7 +106,8 @@ public class HtmlElement implements UIElement {
 		 *
 		 * <p>
 		 * The button hands the document to the browser's print dialog, which also offers saving it
-		 * as a PDF file.
+		 * as a PDF file. A thumbnail is a picture of a document rather than the document itself and
+		 * carries no such button, so the setting has no effect there.
 		 * </p>
 		 */
 		@Name(PRINT)
@@ -111,6 +119,33 @@ public class HtmlElement implements UIElement {
 		@Name(CSS_CLASS)
 		@Nullable
 		String getCssClass();
+
+		/**
+		 * The width in CSS pixels a thumbnail lays its content out at.
+		 *
+		 * <p>
+		 * A thumbnail shows the content as the page it is written for and scales that page down to
+		 * the space the element is given, so this is the width the content sees rather than the
+		 * width it is displayed at. Together with the thumbnail height it decides the proportions
+		 * of the preview, which keeps the aspect ratio of the two.
+		 * </p>
+		 */
+		@Name(THUMBNAIL_WIDTH)
+		@IntDefault(800)
+		int getThumbnailWidth();
+
+		/**
+		 * The height in CSS pixels a thumbnail lays its content out at.
+		 *
+		 * <p>
+		 * The default is the height of a portrait page of the thumbnail width, so content written
+		 * as a document appears in the proportions of the paper it is meant for. Content taller
+		 * than this is cut off at the bottom of the preview, as a page is.
+		 * </p>
+		 */
+		@Name(THUMBNAIL_HEIGHT)
+		@IntDefault(1130)
+		int getThumbnailHeight();
 	}
 
 	private final ChannelRef _inputRef;
@@ -121,6 +156,10 @@ public class HtmlElement implements UIElement {
 
 	private final String _cssClass;
 
+	private final int _thumbnailWidth;
+
+	private final int _thumbnailHeight;
+
 	/**
 	 * Creates a new {@link HtmlElement} from configuration.
 	 */
@@ -130,11 +169,14 @@ public class HtmlElement implements UIElement {
 		_display = config.getDisplay();
 		_print = config.getPrint();
 		_cssClass = config.getCssClass();
+		_thumbnailWidth = config.getThumbnailWidth();
+		_thumbnailHeight = config.getThumbnailHeight();
 	}
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		ReactHtmlControl control = new ReactHtmlControl(context, _display.getExternalName(), _print, _cssClass);
+		ReactHtmlControl control = new ReactHtmlControl(context, _display.getExternalName(), _print, _cssClass,
+			_thumbnailWidth, _thumbnailHeight);
 
 		ViewChannel channel = context.resolveChannel(_inputRef);
 		display(control, channel.get());

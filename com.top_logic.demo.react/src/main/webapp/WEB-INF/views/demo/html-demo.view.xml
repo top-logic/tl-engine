@@ -12,8 +12,14 @@
 	script tag in it. Content that becomes part of the page is checked against the application's
 	HTML whitelist first: this one is refused, and the message of the check takes its place.
 	
-	The lower pane shows the first of three exposés - whole HTML documents with a head, styles of
-	their own and a coloured header band - with display="document". A document is not inserted
+	The lower pane holds the three exposés - whole HTML documents with a head, styles of their own
+	and a coloured header band. On the left they are repeated as cards by an <object-list>, each
+	card showing its document with display="thumbnail": a preview laid out at the page size the
+	document is written for and scaled down to the width of the card, so it keeps its proportions
+	instead of being reflowed. A preview takes no clicks and no focus; the button below it writes
+	the card's document to the "expose" channel, which is what selects it.
+	
+	On the right the selected exposé is shown with display="document". A document is not inserted
 	into the page: it is fetched by a frame from the element's data endpoint and shown isolated,
 	keeping its own styles and taking none of this page's. No script runs in that frame, which is
 	why a document needs no whitelist check. The print button hands the frame to the browser's
@@ -215,17 +221,79 @@ th, td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #d3e0d7; }
 				size="55"
 				unit="%"
 			>
-				<panel>
-					<title>
-						<en>Exposé</en>
-						<de>Exposé</de>
-					</title>
-					<html
-						display="document"
-						input="current"
-						print="true"
-					/>
-				</panel>
+				<split-panel
+					orientation="horizontal"
+					resizable="true"
+				>
+					<panes>
+						<pane
+							min-size="240"
+							size="38"
+							unit="%"
+						>
+							<panel>
+								<title>
+									<en>Exposés</en>
+									<de>Exposés</de>
+								</title>
+								<object-list
+									gap="default"
+									inputs="exposes"
+									items="exposes -> $exposes"
+									layout="grid"
+									max-columns="3"
+									min-column-width="8rem"
+								>
+									<item>
+										<card padding="compact">
+											<html
+												display="thumbnail"
+												input="element"
+											/>
+											<text
+												css-class="tlText--strong"
+												input="element"
+												overflow="ellipsis"
+											/>
+											<button appearance="link">
+												<action class="com.top_logic.layout.view.command.GenericViewCommand"
+													input="element"
+												>
+													<label>
+														<en>Show</en>
+														<de>Anzeigen</de>
+													</label>
+													<write-channel name="expose"/>
+												</action>
+											</button>
+										</card>
+									</item>
+									<empty-text>
+										<en>No exposé.</en>
+										<de>Kein Exposé.</de>
+									</empty-text>
+								</object-list>
+							</panel>
+						</pane>
+						<pane
+							min-size="260"
+							size="62"
+							unit="%"
+						>
+							<panel>
+								<title>
+									<en>Exposé</en>
+									<de>Exposé</de>
+								</title>
+								<html
+									display="document"
+									input="current"
+									print="true"
+								/>
+							</panel>
+						</pane>
+					</panes>
+				</split-panel>
 			</pane>
 		</panes>
 	</split-panel>

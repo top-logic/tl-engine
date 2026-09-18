@@ -31,7 +31,8 @@ import com.top_logic.layout.react.control.ReactControl;
  * <p>
  * The {@link #DISPLAY display mode} chosen at construction time decides how the fragment is shown -
  * {@link #DISPLAY_INLINE} inserts it into the page around it, {@link #DISPLAY_DOCUMENT} shows it in
- * a frame of its own. Only content inserted into the page travels with the state: {@link #HTML}
+ * a frame of its own, {@link #DISPLAY_THUMBNAIL} shows that frame scaled down to a preview. Only
+ * content inserted into the page travels with the state: {@link #HTML}
  * carries the fragment in {@link #DISPLAY_INLINE} and stays empty in the other modes, where a frame
  * fetches the content from the data endpoint this control serves as a {@link DataProvider} instead.
  * The document is thus a resource of its own with an address the frame can be pointed at and
@@ -43,7 +44,10 @@ import com.top_logic.layout.react.control.ReactControl;
  *
  * <p>
  * A document is shown with a print button when {@link #PRINT} is set; the button hands the frame to
- * the browser's print dialog.
+ * the browser's print dialog. A thumbnail is a picture of a document rather than the document
+ * itself and carries no such button, so {@link #PRINT} has no effect on it. Its frame is laid out at
+ * {@link #THUMBNAIL_WIDTH} by {@link #THUMBNAIL_HEIGHT} CSS pixels and scaled down to the space the
+ * preview is given, which keeps the aspect ratio of the two.
  * </p>
  */
 public class ReactHtmlControl extends ReactControl implements DataProvider {
@@ -68,6 +72,12 @@ public class ReactHtmlControl extends ReactControl implements DataProvider {
 
 	/** State key telling whether a document is shown with a button that prints it. */
 	public static final String PRINT = "print";
+
+	/** State key holding the width in CSS pixels a thumbnail lays its content out at. */
+	public static final String THUMBNAIL_WIDTH = "thumbnailWidth";
+
+	/** State key holding the height in CSS pixels a thumbnail lays its content out at. */
+	public static final String THUMBNAIL_HEIGHT = "thumbnailHeight";
 
 	/** {@link #DISPLAY} mode inserting the fragment into the page around it. */
 	public static final String DISPLAY_INLINE = "inline";
@@ -99,8 +109,13 @@ public class ReactHtmlControl extends ReactControl implements DataProvider {
 	 *        Whether a document is shown with a button that prints it.
 	 * @param cssClass
 	 *        Additional CSS class to append to the default {@code tlHtml} class, or {@code null}.
+	 * @param thumbnailWidth
+	 *        The width in CSS pixels a thumbnail lays its content out at.
+	 * @param thumbnailHeight
+	 *        The height in CSS pixels a thumbnail lays its content out at.
 	 */
-	public ReactHtmlControl(ReactContext context, String display, boolean print, String cssClass) {
+	public ReactHtmlControl(ReactContext context, String display, boolean print, String cssClass,
+			int thumbnailWidth, int thumbnailHeight) {
 		super(context, null, COMPONENT);
 		_display = display;
 		putState(DISPLAY, display);
@@ -108,6 +123,8 @@ public class ReactHtmlControl extends ReactControl implements DataProvider {
 		putState(ERROR, null);
 		putState(DATA_REVISION, _dataRevision);
 		putState(PRINT, print);
+		putState(THUMBNAIL_WIDTH, thumbnailWidth);
+		putState(THUMBNAIL_HEIGHT, thumbnailHeight);
 		if (cssClass != null) {
 			putState(CSS_CLASS, cssClass);
 		}

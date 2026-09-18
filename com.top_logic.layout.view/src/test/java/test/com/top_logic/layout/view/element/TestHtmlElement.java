@@ -228,6 +228,38 @@ public class TestHtmlElement extends TestCase {
 		assertNull("Nothing failed.", state(view, ReactHtmlControl.ERROR));
 	}
 
+	/** A thumbnail is the same document as a document display, shown as a picture of itself. */
+	public void testAThumbnailIsServedAsTheSameDocument() throws IOException {
+		String source = "<!DOCTYPE html><html><body><p>Erledigt.</p></body></html>";
+
+		ViewChannel channel = new DefaultViewChannel(INPUT);
+		ReactControl view = createView(channel, HtmlDisplay.THUMBNAIL);
+
+		channel.set(source);
+
+		assertEquals(source, read(served(view)));
+		assertEquals("The document is fetched, not sent with the state.", "",
+			state(view, ReactHtmlControl.HTML));
+	}
+
+	/** The page size a thumbnail is laid out at is the one the configuration names. */
+	public void testAThumbnailIsLaidOutAtTheConfiguredPageSize() {
+		ViewChannel channel = new DefaultViewChannel(INPUT);
+		ReactControl view = createView(channel, HtmlDisplay.THUMBNAIL, 400, 300);
+
+		assertEquals(400, size(view, ReactHtmlControl.THUMBNAIL_WIDTH));
+		assertEquals(300, size(view, ReactHtmlControl.THUMBNAIL_HEIGHT));
+	}
+
+	/** Without a configured page size, a thumbnail is laid out at a portrait page. */
+	public void testAThumbnailIsAPortraitPageByDefault() {
+		int width = size(_view, ReactHtmlControl.THUMBNAIL_WIDTH);
+		int height = size(_view, ReactHtmlControl.THUMBNAIL_HEIGHT);
+
+		assertTrue("A page of some width: " + width, width > 0);
+		assertTrue("Taller than wide: " + width + "x" + height, height > width);
+	}
+
 	private static void assertUnsupported(Object value) {
 		try {
 			String html = HtmlValues.toHtml(value);
@@ -238,9 +270,20 @@ public class TestHtmlElement extends TestCase {
 	}
 
 	private static ReactControl createView(ViewChannel channel, HtmlDisplay display) {
+		return createView(channel, display, null, null);
+	}
+
+	private static ReactControl createView(ViewChannel channel, HtmlDisplay display, Integer thumbnailWidth,
+			Integer thumbnailHeight) {
 		HtmlElement.Config config = TypedConfiguration.newConfigItem(HtmlElement.Config.class);
 		config.update(config.descriptor().getProperty(HtmlElement.Config.INPUT), new ChannelRef(INPUT));
 		config.update(config.descriptor().getProperty(HtmlElement.Config.DISPLAY), display);
+		if (thumbnailWidth != null) {
+			config.update(config.descriptor().getProperty(HtmlElement.Config.THUMBNAIL_WIDTH), thumbnailWidth);
+		}
+		if (thumbnailHeight != null) {
+			config.update(config.descriptor().getProperty(HtmlElement.Config.THUMBNAIL_HEIGHT), thumbnailHeight);
+		}
 
 		DefaultInstantiationContext instantiationContext = new DefaultInstantiationContext(TestHtmlElement.class);
 		HtmlElement element = (HtmlElement) instantiationContext.getInstance(config);
@@ -280,6 +323,11 @@ public class TestHtmlElement extends TestCase {
 	/** The revision the given view announces its current content under. */
 	private static int revision(ReactControl view) {
 		return ((Number) state(view, ReactHtmlControl.DATA_REVISION)).intValue();
+	}
+
+	/** The page size the given view lays a thumbnail out at, under the given state key. */
+	private static int size(ReactControl view, String key) {
+		return ((Number) state(view, key)).intValue();
 	}
 
 	private static Object state(ReactControl view, String key) {

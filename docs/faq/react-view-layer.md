@@ -472,8 +472,9 @@ The hiding sits on a wrapper element the stack renders itself: a frame's content
 
 ```xml
 <target type="tl.demo.projectManagement:Ticket">
-  <show view="projects/overview.view.xml"><bind channel="project" expr="t -> $t.get(`…:Ticket#milestone`).container()"/></show>
-  <show view="projects/milestones.view.xml"><bind channel="milestone" expr="t -> $t.get(`…:Ticket#milestone`)"/></show>
+  <show view="projects/overview.view.xml"><bind channel="project" expr="t -> $t.container()"/></show>
+  <show view="projects/milestones.view.xml"><bind channel="project" expr="t -> $t.container()"/></show>
+  <show view="projects/milestone-list.view.xml"><bind channel="milestone" expr="t -> $t.get(`…:Ticket#milestone`)"/></show>
   <show view="projects/ticket-detail.view.xml"><bind channel="ticket"/></show>
 </target>
 <target type="tl.demo.projectManagement:Contributor">
@@ -481,11 +482,13 @@ The hiding sits on a wrapper element the stack renders itself: a frame's content
 </target>
 ```
 
-A `<show>` entry is carried out in one of three ways, decided by how its view is reached:
+A `<show>` entry is carried out in one of three ways, decided by how its view is reached. Where it is looked for is decided first: **within the view the show before it displayed**, and only if it sits nowhere in there, within the window as a whole. A frame the preceding show pushed onto a tile stack is therefore descended into, although the frame itself is part of no statically scanned mount path.
 
-- **Mounted view** (reachable from the root view through sidebar items, tabs, `<view-ref>`, `<adaptive-detail>` panes or the initial view of a `<tile-stack>`): the mount is revealed and the bindings are written to the view's channels in declared order.
+- **Mounted view** (reachable through sidebar items, tabs, `<view-ref>`, `<adaptive-detail>` panes or the initial view of a `<tile-stack>` — from the view the show before it displayed, or else from the root view): the mount is revealed and the bindings are written to the view's channels in declared order.
 - **Unmounted view**: it is a drill-down frame, pushed onto the tile stack that hosts the previously shown view (the bindings become the frame's channel values, exactly like `<navigate-push bind-input-to=…>`). A chain of such entries rebuilds a drill-down path; frames already on the stack with the same view and values are kept (pop to the longest matching prefix, push the rest), so the frames a target pushes must use the same view refs and channel names as the user's own drill-down.
 - **`dialog="true"`**: the view is opened as a dialog with the bindings as initial channel values (the same seam as `<open-dialog>`). It must be the last entry.
+
+A reveal can show views and write channels and nothing else, so revealing a tab — or any other keyed place — inside a frame a preceding show pushed works by naming a view that sits on it: the content of the tab gets a view file of its own, and a `<show>` for that file both brings the tab up and receives the bindings. That file is reachable from no root view, which is exactly why it is found within the frame.
 
 A `<bind expr>` is a TL-Script function of the object being shown and defaults to the object itself. A frame entry carries its breadcrumb label as `<label>` or, computed from the shown object, as `label-expr` — the same expression the drill-down's `<frame-label>` uses, because `TileFrame` equality includes the label. Resolution (`DisplayTargets.resolve`): the most specific type wins (an exact class beats a generalization, following `TLClass.getGeneralizations()`); among targets for the same type, the one whose first view is mounted **nearest** to the view that triggered the navigation (longest common mount prefix), then the one flagged `default="true"`, then the first declared. `hasTarget(type)` is the question "can objects of this type be shown at all?" — it decides whether a value is rendered as a link. At startup the service checks every `<bind channel>` against the channels the view declares and logs a configuration error for a mismatch (a typo in a channel name is found without clicking through the app).
 
@@ -525,7 +528,7 @@ Every control that shows one of several children implements `com.top_logic.layou
 
   The dialog picks whatever it likes in whatever way it likes (a table, a search, a tree) and publishes the markup on its result channel: `<generic-command input="ticket"><execute-script function="t -> htmlObjectLink($t)"/><write-channel name="result"/><close-dialog/></generic-command>` is the whole contract, and `context` gives it the object the text is written for. Nothing about the editor knows what an object link is: it inserts the markup it is handed.
 
-The demo (`com.top_logic.demo.react`): the *Projects* drill-down (project → milestone → ticket → detail) with targets for its types in `demoReactConf.config.xml`, the contributor dialog target, `tl.accounts:Person` shown in the tiles demo, and the object-list comments, whose editor offers a "Reference ticket…" command opening `tickets/reference-ticket.view.xml`.
+The demo (`com.top_logic.demo.react`): the *Projects* drill-down (project → milestone → ticket → detail) with targets for its types in `demoReactConf.config.xml`, the contributor dialog target, `tl.accounts:Person` shown in the tiles demo, and the object-list comments, whose editor offers a "Reference ticket…" command opening `tickets/reference-ticket.view.xml`. The drill-down's second frame is the project home, a tab bar over the project's own data and its milestones; the milestone tab holds `projects/milestone-list.view.xml`, and a milestone target names that file to have the tab revealed inside the frame it pushed.
 
 ## UI inspector, diagnostics and assertions
 

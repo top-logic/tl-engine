@@ -638,6 +638,32 @@ a mounting point, nothing more: the dock is `position: fixed`, so it takes no ro
 | `<label>` | ResKey | The launcher's tooltip and accessible name; empty falls back to the chat's own wording. |
 | `open` | boolean, default `false` | First-load state, and nothing more. Not remembered, no channel. |
 
+**One conversation per window, and that is the transport talking.** Every `/chat/*` call carries a
+`windowId` and nothing else: `ChatServlet` resolves one `TaskProgressTracker` per window, holding
+one active session and one processing state, and `ChatEventHandlerRegistry` addresses one handler
+per tracker. Two chat ids that each mount a `<chat-conversation>` in one window therefore attach to
+the same run - each send switches the window's active session, and each transcript renders the
+other's tokens. Three things follow, and all three are in this PR:
+
+- **A dock joins the page's chat id, it does not invent one.** `tl-ai-demo` writes `chat-id="chat"`
+  on the dock *and* on the `<chat>` inside it, so the dock is a second **place** for the one
+  conversation rather than a second conversation.
+- **The dock stands down while a page shows that conversation.** `<chat-conversation>` registers
+  itself with the store (`registerConversation`, `insideDock` from `ChatDockScope`), and a dock
+  whose `conversationsOutsideDock > 0` renders nothing at all - no panel, no launcher - and
+  *unmounts* its content, so the rail inside it stops competing with the page's for the one
+  remembered layout.
+- **`ChatJoinLog` names the shape.** Two chat ids each mounting a `<chat-conversation>` in one
+  window is a WARN, whatever the spelling: "the chat transport is one conversation per window".
+
+Two guards sit behind that rule rather than in place of it: `eventBelongsToChat` drops a
+run-scoped SSE frame that names a session other than the open one (inert while the server stamps
+none, which is most of them today), and both the remembered session (`tl-chat-session:<chat-id>` in
+`sessionStorage`) and the run snapshot the context ring reads (`ChatHandle.runs`) are per chat id.
+The module-level `runStore` export is still written, as the single-chat host seam it has always
+been; nothing in this bundle renders from it. **Making the transport itself per `(window, chat-id)`
+is a ticket of its own** - until it lands, a window shows one conversation.
+
 Three things are load-bearing:
 
 - **The panel is hidden when closed, never unmounted.** The store drops a chat when its last element

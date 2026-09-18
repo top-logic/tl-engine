@@ -19,10 +19,17 @@
 		/>
 
 		<!--
-			The dock's own wiring, declared here because the dock lives in the shell's footer. Its
-			conversation is "dock", a different one from the "chat" page in the sidebar, so its
-			channels are named apart too: two conversations sharing a session channel would write
-			each other's selection.
+			The dock's wiring, declared here because the dock lives in the shell's footer.
+
+			Its conversation is "chat" - the SAME one the Chat page shows. It has to be: every
+			/chat/* call is keyed by the window alone, so the server holds one active session and
+			one run per window, and two chat ids that each show a transcript would take each
+			other's turns. The dock is therefore a second PLACE for the one conversation, not a
+			second conversation, and it hides itself (launcher included) while the Chat page has
+			that conversation on screen.
+
+			The channels are the dock's own, because the page declares its own in
+			tl-ai-demo/chat-grouped.view.xml and the two are never on screen together.
 		-->
 		<channel name="dockSession"/>
 		<channel name="dockPaneObject"/>
@@ -165,8 +172,8 @@
 			</sidebar>
 		</content>
 		<!--
-			The same chat again, but as a dock: a launcher in the corner of every page, and a panel
-			over the page when it is opened (Issue #415).
+			The chat as a dock: a launcher in the corner of every page, and a panel over the page
+			when it is opened (Issue #415).
 
 			The <footer> is a mounting point and nothing more - the dock is fixed-position, so it
 			takes no room in the shell's layout and every page keeps its full height.
@@ -178,13 +185,13 @@
 			and on the <chat> inside, and the two must agree. ChatJoinLog warns about a window whose
 			chat ids do not line up, which is the shape a typo here produces.
 
-			And "dock" is a different conversation from the "chat" page in the sidebar: two chat
-			ids, two session lists, two transcripts, two stored layouts. That is deliberate - the
-			demo shows both placements side by side - not a limitation. An application that wants
-			one conversation in both places writes the same id in both.
+			And the id is "chat", the Chat page's own: this is the SAME conversation, reachable from
+			Belege and from Administration without leaving the page. On the Chat page itself there
+			is nothing for the dock to open, so it hides - which is also what keeps the window to
+			the one conversation its transport can carry.
 		-->
 		<footer>
-			<chat-dock chat-id="dock"
+			<chat-dock chat-id="chat"
 				icon="css:bi bi-stars"
 			>
 				<label>
@@ -197,7 +204,7 @@
 					panel's direct child or the conversation grows with its transcript instead of
 					scrolling inside the panel.
 				-->
-				<chat chat-id="dock"
+				<chat chat-id="chat"
 					direction="row"
 				>
 					<!--

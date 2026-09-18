@@ -401,11 +401,4 @@ public class ReactButtonControl extends ReactControl {
 	protected java.util.Set<String> scriptingPresentationKeys() {
 		return java.util.Set.of(APPEARANCE, TONE, SIZE, KEY_GESTURE, IMAGE, DISPLAY_MODE, CSS_CLASSES);
 	}
-
-	/**
-	 * The value stored for the given state key, for tests only.
-	 */
-	public Object stateForTest(String key) {
-		return getState(key);
-	}
 }

@@ -62,6 +62,22 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 	 */
 	public static final String THEME_MODE_ATTRIBUTE = "data-theme-mode";
 
+	/**
+	 * Attribute of the {@code html} element naming the appearance mode of the design system,
+	 * {@code light} or {@code dark}. Follows the {@link ColorScheme} of the theme in effect; read by
+	 * the design system's {@code tokens.css}.
+	 */
+	public static final String DS_MODE_ATTRIBUTE = "data-tl-mode";
+
+	/**
+	 * Attribute of the {@code html} element naming the density of the design system, {@code normal}
+	 * or {@code compact}. Set once to {@link #DS_DENSITY_NORMAL} unless the page carries it already.
+	 */
+	public static final String DS_DENSITY_ATTRIBUTE = "data-tl-density";
+
+	/** Value of {@link #DS_DENSITY_ATTRIBUTE} while nothing has selected a density. */
+	public static final String DS_DENSITY_NORMAL = "normal";
+
 	/** Value of {@link #THEME_MODE_ATTRIBUTE} while the page follows the operating system. */
 	public static final String SYSTEM_MODE = "system";
 
@@ -207,6 +223,25 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 	 * @return The theme marked as the system default for that scheme, or the default theme if none
 	 *         is marked.
 	 */
+	/**
+	 * The theme with the given id, or {@code null} if no such theme is registered.
+	 */
+	public UITheme getTheme(String id) {
+		return _themes.get(id);
+	}
+
+	/**
+	 * Writes {@link #DS_MODE_ATTRIBUTE} for the given theme.
+	 *
+	 * @param out
+	 *        The writer of the {@code html} start tag.
+	 * @param theme
+	 *        The theme in effect.
+	 */
+	public void writeModeAttribute(TagWriter out, UITheme theme) {
+		out.writeAttribute(DS_MODE_ATTRIBUTE, theme.getColorScheme().cssKeyword());
+	}
+
 	public UITheme getSystemTheme(ColorScheme scheme) {
 		UITheme marked = _systemThemes.get(scheme);
 		return marked != null ? marked : _themes.get(_defaultTheme);
@@ -289,20 +324,36 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 		String darkQuery = jsString("(prefers-color-scheme: " + ColorScheme.DARK.cssKeyword() + ")");
 		String lightTheme = jsString(getSystemTheme(ColorScheme.LIGHT).getId());
 		String darkTheme = jsString(getSystemTheme(ColorScheme.DARK).getId());
+		String dsModeAttr = jsString(DS_MODE_ATTRIBUTE);
+		String dsDensityAttr = jsString(DS_DENSITY_ATTRIBUTE);
+		String dsDensityNormal = jsString(DS_DENSITY_NORMAL);
+		String lightMode = jsString(ColorScheme.LIGHT.cssKeyword());
+		String darkMode = jsString(ColorScheme.DARK.cssKeyword());
 
 		out.beginScript();
 		out.writeScript("(function() {");
 		out.writeScript("var html = document.documentElement;");
 		out.writeScript("var dark = window.matchMedia(" + darkQuery + ");");
+		// The color scheme of each theme, so that selecting a theme also names the design system's mode.
+		out.writeScript("var modes = {");
+		boolean first = true;
+		for (UITheme theme : _themes.values()) {
+			out.writeScript((first ? "" : ",") + jsString(theme.getId()) + ": "
+				+ jsString(theme.getColorScheme().cssKeyword()));
+			first = false;
+		}
+		out.writeScript("};");
 		out.writeScript("var api = {");
 		out.writeScript(FOLLOW_SYSTEM_FUNCTION + ": function() {");
 		out.writeScript("html.setAttribute(" + modeAttr + ", " + systemMode + ");");
 		out.writeScript("html.setAttribute(" + themeAttr + ", dark.matches ? " + darkTheme + " : " + lightTheme
 			+ ");");
+		out.writeScript("html.setAttribute(" + dsModeAttr + ", dark.matches ? " + darkMode + " : " + lightMode + ");");
 		out.writeScript("},");
 		out.writeScript(SELECT_FUNCTION + ": function(id) {");
 		out.writeScript("html.removeAttribute(" + modeAttr + ");");
 		out.writeScript("html.setAttribute(" + themeAttr + ", id);");
+		out.writeScript("html.setAttribute(" + dsModeAttr + ", modes[id] || " + lightMode + ");");
 		out.writeScript("}");
 		out.writeScript("};");
 		out.writeScript("dark.addEventListener('change', function() {");
@@ -311,6 +362,9 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 		out.writeScript("}");
 		out.writeScript("});");
 		out.writeScript("window." + CLIENT_API + " = api;");
+		out.writeScript("if (!html.hasAttribute(" + dsDensityAttr + ")) {");
+		out.writeScript("html.setAttribute(" + dsDensityAttr + ", " + dsDensityNormal + ");");
+		out.writeScript("}");
 		out.writeScript("if (!html.hasAttribute(" + themeAttr + ")) {");
 		out.writeScript("api." + FOLLOW_SYSTEM_FUNCTION + "();");
 		out.writeScript("}");

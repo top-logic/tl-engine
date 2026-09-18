@@ -44,12 +44,12 @@ import com.top_logic.tl.ai.core.provider.LLMService.AllAgentNameOptions;
  *
  * <p>
  * Merges what used to be the separate {@code <chat-thread/>} and {@code <chat-composer/>} elements.
- * Transcript and input almost always sit together, so they are one placeable box; a session list
- * ({@code <chat-sessions/>}) and a rail ({@code <chat-rail/>}) stay separate because those genuinely
- * want independent placement. Several chat elements on one page join the same conversation through
- * {@code chat-id}. The optional {@code input} channel carries the open {@code AgentSession}; the
- * optional {@code busy} channel is written {@code true} while the agent works, so a host can disable
- * its own commands.
+ * Transcript and input almost always sit together, so they are one placeable box; a session list (a
+ * {@code <data-list>} of {@code AgentSession}s) and a rail ({@code <chat-rail/>}) stay separate
+ * because those genuinely want independent placement. Several chat elements on one page join the
+ * same conversation through {@code chat-id}. The optional {@code input} channel carries the open
+ * {@code AgentSession}; the optional {@code busy} channel is written {@code true} while the agent
+ * works, so a host can disable its own commands.
  * </p>
  */
 public class ChatConversationElement implements UIElement {

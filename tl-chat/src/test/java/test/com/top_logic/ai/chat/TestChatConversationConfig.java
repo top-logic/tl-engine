@@ -16,12 +16,14 @@ import test.com.top_logic.basic.ModuleTestSetup;
 import com.top_logic.ai.chat.view.ChatConversationElement;
 import com.top_logic.ai.chat.view.ChatConversationElement.Config;
 import com.top_logic.ai.chat.view.ChatConversationElement.Trace;
+import com.top_logic.ai.chat.view.ChatSessionIds;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 
 /**
  * Defaults and the nested {@code <actions/>} and {@code <controls/>} groups of
- * {@code <chat-conversation/>}.
+ * {@code <chat-conversation/>}, plus the session-object to id mapping its {@code input} channel
+ * uses - the part of it that does not need a KnowledgeBase.
  */
 public class TestChatConversationConfig extends TestCase {
 
@@ -143,6 +145,21 @@ public class TestChatConversationConfig extends TestCase {
 	public void testMentionAbsentByDefault() {
 		Config config = TypedConfiguration.newConfigItem(Config.class);
 		assertNull(config.getMention());
+	}
+
+	/** No session maps to an empty id, never {@code null}. */
+	public void testEmptyIdWhenThereIsNoSession() {
+		assertEquals("", ChatSessionIds.idOf(null));
+		assertNull(ChatSessionIds.sessionOf(null));
+		assertEquals("", ChatSessionIds.selectedId(null, null));
+		assertNull(ChatSessionIds.ownedSession("", null));
+		assertNull(ChatSessionIds.ownedSession(null, null));
+	}
+
+	/** A one-item collection is the session a multi-select table writes for a single row. */
+	public void testOneItemCollectionIsTheSession() {
+		assertNull(ChatSessionIds.sessionOf(List.of()));
+		assertNull(ChatSessionIds.sessionOf(List.of("not-a-session")));
 	}
 
 	/** Boots the module system so typed-configuration resolves nested config types via TypeIndex. */

@@ -51,7 +51,7 @@ browser component, which shows a sign-in note rather than a composer.
 - **`ChatHistoryService`** – Static access to persistent `AgentSession` objects (kind CHAT) via `AgentExecutionStore` (tl-ai-core). Conversations are stored as one transcript per `AgentExecution` (written by `AgentRunner` at run end) and merged in run order on load.
 - **`LegacyChatSessionMigration`** – Startup service migrating legacy `tl.ai.chat:ChatSession` blobs to `AgentSession`s eagerly. The legacy model has been removed (tl-ai-core migration `Issue_230_remove_module_tl_ai_chat`), so the service is a no-op now; it is kept until every deployment is known to have run it.
 - **`ChatSessionRegistry`** – Bridges `WindowScope` (a chat control) and `HttpSession` (`ChatServlet`). Published API: the classic control in `tl-chat-classic` and `Consulting`'s own control register here from outside this module.
-- **`ChatViewBinding`** – Once per (sub-session, `chat-id`): tracker, user and layout preferences. `AgentChatControl` and the split elements (`<chat-sessions>`, `<chat-conversation>`, `<chat-rail>`) delegate to it so several controls do not load `PersonalConfiguration` several times. The tracker stays one per window.
+- **`ChatViewBinding`** – Once per (sub-session, `chat-id`): tracker, user and layout preferences. `AgentChatControl` and the split elements (`<chat-conversation>`, `<chat-rail>`) delegate to it so several controls do not load `PersonalConfiguration` several times. The tracker stays one per window.
 
 ## Thread Safety
 
@@ -130,11 +130,12 @@ only after `mvn -pl tl-chat -am -DskipTests install` and a restart of the applic
 `userName`, `welcomeName`, `traceMode`, `promptImprovementEnabled`) the browser component reads.
 The component itself is registered as `TLAgentChat` in `ui/src/main.tsx`.
 
-`<chat-sessions/>` (`ChatSessionsElement` / `ChatSessionsControl` / `TLChatSessions`) is the
-session list as its own element. It joins the chat by `chat-id` (default `default`) and may
-publish the open `AgentSession` on an optional two-way `selection` channel. `useChat` is **not**
-exported from `index.ts`: the store is internal to the bundle, so a host cannot write its own
-element against it. New chat pieces live in `ui/src` and are registered next to `TLAgentChat`.
+The session list is no element of this module's own: it is a `<data-list>` of
+`tl.ai.execution:AgentSession` whose `selection` channel feeds `<chat-conversation input>`, which
+is what `tl-ai-demo/chat-grouped.view.xml` configures. (The former `<chat-sessions/>` element was
+deleted with #415 - `<data-list>` does the same job with no chat-specific code.) `useChat` is
+**not** exported from `index.ts`: the store is internal to the bundle, so a host cannot write its
+own element against it. New chat pieces live in `ui/src` and are registered next to `TLAgentChat`.
 
 An application makes the bundle loadable by declaring it on `ClientResources` - see
 `tl-ai-demo/src/main/webapp/WEB-INF/conf/tl-ai-demo.conf.config.xml`:
@@ -184,7 +185,6 @@ it rewrites a draft and never answers as a persona.
 | File | What it owns |
 |--|--|
 | `App.tsx` | The shipped chat as a composition over one `useChat` store, plus this element's own geometry |
-| `chat-sessions.tsx` | `<chat-sessions/>` as `TLChatSessions`: the session list over the same store |
 | `chat-conversation.tsx` | `<chat-conversation/>` as `TLChatConversation`: transcript plus prompt field over the same store |
 | `chat-rail.tsx` / `rail-model.ts` | `<chat-rail/>` as `TLChatRail`: the side-rail shell - strip, section headers, pane chrome - and how it reads its state |
 | `chat-progress.tsx` / `chat-sources.tsx` | `<chat-progress/>` and `<chat-sources/>`: the two sections the chat contributes |
@@ -328,8 +328,8 @@ conversation.
 `chat-id` is how elements find each other. `<agent-chat>` leaves it empty and `App` falls back to
 `props.controlId`, so two chats in one window stay two chats - Consulting's `CopilotRegistry` keeps a
 *list* of live panels, and a fixed key would silently merge their transcripts
-(`chat-store.test.ts`, `testTwoAppsInOneWindowDoNotShareATranscript`). The three pieces
-(`<chat-sessions>`, `<chat-conversation>`, `<chat-rail>`) default to `default`.
+(`chat-store.test.ts`, `testTwoAppsInOneWindowDoNotShareATranscript`). The two pieces
+(`<chat-conversation>`, `<chat-rail>`) default to `default`.
 
 `<chat-conversation>` is the transcript and the prompt field as one element - the transcript and
 the input almost always sit together, so they are one placeable box, while the session list and the

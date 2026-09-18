@@ -105,7 +105,7 @@ module — see `references/mechanics.md` for signatures and a worked skeleton):
   `addAttachListener(() -> observer.attach(context.getModelScope()))` / `addDetachListener`.
 - React→Java actions use `@ReactCommandHandler` / `@ReactParam`, invoked with `useTLCommand()`.
 - Two-way channels use `ViewChannel` `get/set/addListener` with a re-entrancy guard boolean to break
-  the write→notify→write echo (copy the pattern from `ChatSessionsControl`).
+  the write→notify→write echo (copy the pattern from `ChatConversationControl`).
 - Give each row a stable id from `obj.tHandle().getObjectName().toExternalForm()` and keep a
   `Map<id,object>` so a `select` command can resolve the id back to the object.
 

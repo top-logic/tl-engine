@@ -246,45 +246,11 @@
   display: none;
 }
 
-/* --- Composed session list --------------------------------------------- */
+/* --- Composed data list ------------------------------------------------ */
 
-/*
- * <chat-sessions/> lives in a host pane, not in .tl-cockpit. The App rail's overlay drawer
- * below 1100 px is geometry that composition gives up: the host's split-panel sizes the
- * column, and the list fills it at every width.
- */
-.tl-chat-sessions {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  min-width: 0;
-}
-
-.tl-chat-sessions.is-signed-out {
-  display: grid;
-  place-items: center;
-  padding: 2rem;
-}
-
-.tl-chat-sessions .rail-scrim {
-  display: none;
-}
-
-.tl-chat-sessions .rail {
-  position: relative;
-  inset: auto;
-  z-index: auto;
-  width: auto;
-  flex: 1 1 auto;
-  height: 100%;
-  transform: none;
-  box-shadow: none;
-}
-
-/* Generic <data-list> reuses the session-rail look; make it fill its host pane and
-   let a row show an optional muted second line. Scoped so it never touches the rail
-   the chat's own <chat-sessions> renders. */
+/* <data-list> reuses the App session rail's look; make it fill its host pane and let a
+   row show an optional muted second line. The App rail's overlay drawer below 1100 px is
+   geometry that composition gives up: the host's split panel sizes the column. */
 /*
  * <data-list> renders outside .tl-cockpit, so the chat's button reset and focus ring do not reach it.
  * Without this, the row/new/search <button>s show the browser's default chrome (grey, square, bordered)
@@ -400,10 +366,6 @@
 .tl-data-list .rail-line-secondary {
   font-size: var(--chat-small);
   color: var(--text-secondary);
-}
-
-.tl-chat-sessions .rail-close {
-  display: none;
 }
 
 /* --- Composed conversation --------------------------------------------- */
@@ -3135,21 +3097,6 @@
   min-height: 0;
   overflow: auto;
   padding: 0.75rem;
-}
-
-.composer-host-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  padding: 0.5rem 0.75rem 0;
-}
-
-.chip-remove {
-  border: 0;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  padding: 0 0.15rem;
 }
 
 /*

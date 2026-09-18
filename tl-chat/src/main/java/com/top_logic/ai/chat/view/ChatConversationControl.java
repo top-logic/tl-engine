@@ -40,9 +40,9 @@ import com.top_logic.util.TLContext;
  *
  * <p>
  * Binds the window once through {@link ChatViewBinding}. An optional {@code input} channel selects
- * the open session (same mapping as {@code <chat-sessions/>}); an optional {@code busy} channel is
- * written from the browser while the agent works. Prompt improvement is a composer concern: this
- * control names the agent on the shared tracker.
+ * the open session, mapped by {@link ChatSessionIds}; an optional {@code busy} channel is written
+ * from the browser while the agent works. Prompt improvement is a composer concern: this control
+ * names the agent on the shared tracker.
  * </p>
  */
 public class ChatConversationControl extends ReactControl {

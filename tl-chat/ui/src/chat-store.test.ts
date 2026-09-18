@@ -276,10 +276,10 @@ describe('one store per chat id', () => {
   })
 
   /**
-   * {@code TLChatSessions} and {@code App} both call {@code useChat(chatId, boot)}. Two subscribers
-   * on one id are those two elements: one session list, one transcript, one stream.
+   * {@code TLChatConversation} and {@code App} both call {@code useChat(chatId, boot)}. Two
+   * subscribers on one id are two elements on one conversation: one stream, one session list.
    */
-  it('TLChatSessions and App on one chat-id see the same session list', async () => {
+  it('two elements on one chat-id see the same session list', async () => {
     const sessions = chatStore('main', BOOT)
     const releaseSessions = sessions.subscribe(() => undefined)
     const app = chatStore('main', BOOT)

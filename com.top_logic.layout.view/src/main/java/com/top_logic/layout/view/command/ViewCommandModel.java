@@ -38,7 +38,9 @@ import com.top_logic.tool.execution.ExecutableState;
  * decide by: the {@link ViewCommand.Config#getInput() input channel} taking a new value, and the
  * object that value points to being edited. A rule testing an attribute of the input object -
  * a workflow command offered only while a ticket is open, say - therefore re-evaluates when that
- * attribute is stored, although the channel keeps pointing to the same object.
+ * attribute is stored, although the channel keeps pointing to the same object. A rule that decides
+ * by more than the input names the channels carrying it ({@link ChannelDependentRule}), and the
+ * model follows those as well.
  * </p>
  *
  * @see ChannelObjectObserver
@@ -54,6 +56,11 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 	private final ViewExecutabilityRule _rule;
 
 	private final ChannelObjectObserver _inputObserver;
+
+	/**
+	 * Channels the rules decide by beyond the input, followed while this model is attached.
+	 */
+	private final List<ViewChannel> _ruleChannels;
 
 	private ExecutableState _executableState;
 
@@ -82,6 +89,28 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 		List<ViewChannel> observedChannels = inputChannel == null ? List.of() : List.of(inputChannel);
 		Set<TLStructuredType> observedTypes = ObservedTypes.resolve(config.getObservedTypes());
 		_inputObserver = new ChannelObjectObserver(observedChannels, observedTypes, this::updateExecutableState);
+		_ruleChannels = ruleChannels(rule, inputChannel);
+	}
+
+	/**
+	 * The channels the given rule names beyond the input, which the model has to follow itself.
+	 *
+	 * <p>
+	 * The input channel is left out however often a rule names it: the model already follows it, and
+	 * a listener registered twice would be removed once.
+	 * </p>
+	 */
+	private static List<ViewChannel> ruleChannels(ViewExecutabilityRule rule, ViewChannel inputChannel) {
+		if (!(rule instanceof ChannelDependentRule channelDependent)) {
+			return List.of();
+		}
+		List<ViewChannel> result = new ArrayList<>();
+		for (ViewChannel channel : channelDependent.observedChannels()) {
+			if (channel != null && channel != inputChannel && !result.contains(channel)) {
+				result.add(channel);
+			}
+		}
+		return result;
 	}
 
 	/**
@@ -302,6 +331,9 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 		if (_inputChannel != null) {
 			_inputChannel.addListener(this);
 		}
+		for (ViewChannel channel : _ruleChannels) {
+			channel.addListener(this);
+		}
 		_inputObserver.attach(scope);
 		updateExecutableState();
 	}
@@ -320,6 +352,9 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 	public void detach() {
 		if (_inputChannel != null) {
 			_inputChannel.removeListener(this);
+		}
+		for (ViewChannel channel : _ruleChannels) {
+			channel.removeListener(this);
 		}
 		_inputObserver.detach();
 	}

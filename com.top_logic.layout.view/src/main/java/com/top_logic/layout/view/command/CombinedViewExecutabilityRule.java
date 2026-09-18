@@ -5,8 +5,10 @@
  */
 package com.top_logic.layout.view.command;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
@@ -18,7 +20,7 @@ import com.top_logic.tool.execution.ExecutableState;
  * {@link ExecutableState#EXECUTABLE}.
  * </p>
  */
-public class CombinedViewExecutabilityRule implements ViewExecutabilityRule {
+public class CombinedViewExecutabilityRule implements ViewExecutabilityRule, ChannelDependentRule {
 
 	private final List<ViewExecutabilityRule> _rules;
 
@@ -52,6 +54,21 @@ public class CombinedViewExecutabilityRule implements ViewExecutabilityRule {
 			return rules.get(0);
 		}
 		return new CombinedViewExecutabilityRule(rules);
+	}
+
+	/**
+	 * The channels of every combined rule that names some, so that a command following the combined
+	 * rule follows all of them.
+	 */
+	@Override
+	public List<ViewChannel> observedChannels() {
+		List<ViewChannel> result = new ArrayList<>();
+		for (ViewExecutabilityRule rule : _rules) {
+			if (rule instanceof ChannelDependentRule channelDependent) {
+				result.addAll(channelDependent.observedChannels());
+			}
+		}
+		return result;
 	}
 
 	@Override

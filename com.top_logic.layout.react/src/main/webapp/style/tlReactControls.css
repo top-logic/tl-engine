@@ -1739,6 +1739,134 @@ button.tlDrawerToggle:focus-visible {
 	visibility: hidden;
 }
 
+/* --- TLWizard -------------------------------------------------------------- */
+
+/* A multi-step flow: the indicator pinned above, the step content below it. */
+.tlWizard {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	width: 100%;
+	font-family: var(--font-family);
+}
+
+.tlWizard__header {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-03);
+	padding: var(--spacing-04);
+	/* Keep the indicator in place while the step content scrolls. */
+	flex-shrink: 0;
+	border-bottom: 1px solid var(--border-subtle-01);
+}
+
+.tlWizard__counter {
+	color: var(--text-secondary);
+	font-size: var(--label-01-font-size);
+	font-variant-numeric: tabular-nums;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.tlWizard__progress {
+	display: flex;
+}
+
+.tlWizard__steps {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--spacing-02) var(--spacing-05);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	counter-reset: tlWizardStep;
+}
+
+.tlWizard__stepItem {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	counter-increment: tlWizardStep;
+	font-size: var(--body-compact-01-font-size);
+}
+
+/* The position of the step, drawn as a disc in front of its name. */
+.tlWizard__stepItem::before {
+	content: counter(tlWizardStep);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	width: 1.5rem;
+	height: 1.5rem;
+	border-radius: 999px;
+	background-color: var(--layer-active);
+	color: var(--text-secondary);
+	font-size: var(--label-01-font-size);
+	font-variant-numeric: tabular-nums;
+}
+
+.tlWizard__stepItem--done::before {
+	background-color: var(--interactive);
+	color: var(--text-on-color);
+}
+
+.tlWizard__stepItem--current::before {
+	background-color: var(--button-primary);
+	color: var(--text-on-color);
+}
+
+.tlWizard__stepName,
+.tlWizard__stepButton {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	font-family: var(--font-family);
+	font-size: inherit;
+	white-space: nowrap;
+}
+
+.tlWizard__stepName {
+	color: var(--text-secondary);
+}
+
+.tlWizard__stepItem--current .tlWizard__stepName {
+	color: var(--text-primary);
+	font-weight: bold;
+}
+
+.tlWizard__stepButton {
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: var(--link-primary);
+	cursor: pointer;
+}
+
+.tlWizard__stepButton:hover {
+	text-decoration: underline;
+}
+
+.tlWizard__stepButton:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: 2px;
+}
+
+/* The region holding the step content, bounded so that a filling step resolves its height here. */
+.tlWizard__body {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
+.tlWizard__step {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
 /* --- TLGrid ---------------------------------------------------------------- */
 
 .tlGrid {

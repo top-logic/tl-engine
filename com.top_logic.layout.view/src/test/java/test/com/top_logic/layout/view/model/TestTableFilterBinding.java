@@ -28,8 +28,11 @@ import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.model.TableFilterBinding;
 import com.top_logic.table.Column;
+import com.top_logic.table.FilterCodec;
 import com.top_logic.table.NamedFilter;
+import com.top_logic.table.NamedFilterStore;
 import com.top_logic.table.SortSpec;
+import com.top_logic.table.TableId;
 import com.top_logic.table.TableViewState;
 import com.top_logic.table.filter.TextColumnFilter;
 import com.top_logic.table.filter.TextFilterState;
@@ -150,22 +153,153 @@ public class TestTableFilterBinding extends TestCase {
 	}
 
 	/**
-	 * Tests that a text written to the channel is searched for, and that it ends the match with a
-	 * named filter the table was filtered by.
+	 * Tests that a text written to the channel is searched for within the named filter the table is
+	 * filtered by, which goes on being the one the other channel names.
 	 */
 	public void testChannelTermSearchesTheTable() {
 		_activeFilter.set(HOLDS_A);
 
-		_searchTerm.set("bo");
+		_searchTerm.set("car");
 
-		assertEquals(TextFilterState.contains("bo"), _table.getView().state().getSearch());
-		assertNull("The searched text is no criterion of the filter, so the match is over.",
-			_activeFilter.get());
-		assertEquals("Only Bob is searched for, and Bob holds no a.", 0, rowCount());
+		assertEquals(TextFilterState.contains("car"), _table.getView().state().getSearch());
+		assertEquals("The filter names no term of its own, so the search narrows it instead of ending it.",
+			HOLDS_A, _activeFilter.get());
+		assertEquals("Of the rows holding an a, only Carla holds a car.", 1, rowCount());
 
 		_searchTerm.set(null);
 
 		assertNull("The search is given up again.", _table.getView().state().getSearch());
+		assertEquals("The filter the search narrowed is still in effect.", HOLDS_A, _activeFilter.get());
+		assertEquals(2, rowCount());
+	}
+
+	/**
+	 * Tests that both channels together describe the displayed rows, so that the address a preset
+	 * and a search leave behind opens the same table again.
+	 */
+	public void testBothChannelsDescribeTheDisplayedRows() {
+		_activeFilter.set(HOLDS_A);
+		_searchTerm.set("car");
+		assertEquals(1, rowCount());
+
+		// What an address holding both would be opened with.
+		TableViewControl<String> reopened = table(null);
+		TableFilterBinding binding = new TableFilterBinding(reopened, channel("activeFilter", HOLDS_A),
+			channel("searchTerm", "car"));
+		try {
+			assertEquals("The link names the rows it was taken from.", 1, reopened.getView().rowCount());
+			assertEquals(HOLDS_A, reopened.getView().activeNamedFilter().id());
+			assertEquals(TextFilterState.contains("car"), reopened.getView().state().getSearch());
+		} finally {
+			binding.dispose();
+		}
+	}
+
+	/**
+	 * Tests that applying a named filter through the channel leaves a term the other channel already
+	 * holds searched for, although the filter names none of its own.
+	 */
+	public void testAppliedFilterKeepsTheTermOfTheOtherChannel() {
+		_searchTerm.set("car");
+		assertNull("A search alone matches none of the offered filters.", _activeFilter.get());
+
+		_activeFilter.set(HOLDS_A);
+
+		assertEquals("The term of the other channel is searched for again.",
+			TextFilterState.contains("car"), _table.getView().state().getSearch());
+		assertEquals(HOLDS_A, _activeFilter.get());
+		assertEquals("car", _searchTerm.get());
+		assertEquals("Of the rows holding an a, only Carla holds a car.", 1, rowCount());
+	}
+
+	/**
+	 * Tests that a deep link naming a preset and a text ends in the same rows whichever of its two
+	 * parameters is written to its channel first.
+	 */
+	public void testDeepLinkAppliesInEitherOrder() {
+		ViewChannel filterOfOne = new DefaultViewChannel("activeFilter");
+		ViewChannel termOfOne = new DefaultViewChannel("searchTerm");
+		TableViewControl<String> filterFirst = table(null);
+		TableFilterBinding bindingOfOne = new TableFilterBinding(filterFirst, filterOfOne, termOfOne);
+
+		ViewChannel filterOfOther = new DefaultViewChannel("activeFilter");
+		ViewChannel termOfOther = new DefaultViewChannel("searchTerm");
+		TableViewControl<String> termFirst = table(null);
+		TableFilterBinding bindingOfOther = new TableFilterBinding(termFirst, filterOfOther, termOfOther);
+		try {
+			// A query binding writes one bound parameter after the other, in the order they are
+			// declared in.
+			filterOfOne.set(HOLDS_A);
+			termOfOne.set("car");
+
+			termOfOther.set("car");
+			filterOfOther.set(HOLDS_A);
+
+			assertEquals("The link names one set of rows.", 1, filterFirst.getView().rowCount());
+			assertEquals("The other order names the same set.", 1, termFirst.getView().rowCount());
+			assertEquals(HOLDS_A, filterOfOne.get());
+			assertEquals("car", termOfOne.get());
+			assertEquals(HOLDS_A, filterOfOther.get());
+			assertEquals("The term must not be wiped by the filter arriving after it.",
+				"car", termOfOther.get());
+		} finally {
+			bindingOfOne.dispose();
+			bindingOfOther.dispose();
+		}
+	}
+
+	/**
+	 * Tests that giving up the named filter through its channel leaves the searched text in effect,
+	 * which is a channel of its own.
+	 */
+	public void testNoFilterOnTheChannelKeepsTheSearch() {
+		_activeFilter.set(HOLDS_A);
+		_searchTerm.set("car");
+
+		_activeFilter.set(null);
+
+		assertNull("The table is filtered by no named filter.", _activeFilter.get());
+		assertEquals("car", _searchTerm.get());
+		assertEquals(TextFilterState.contains("car"), _table.getView().state().getSearch());
+		assertEquals("Every row holding a car, not only the ones holding an a.", 1, rowCount());
+	}
+
+	/**
+	 * Tests that giving up the search through its channel leaves the named filter applied.
+	 */
+	public void testNoTermOnTheChannelKeepsTheFilter() {
+		_activeFilter.set(HOLDS_A);
+		_searchTerm.set("car");
+		assertEquals(1, rowCount());
+
+		_searchTerm.set(null);
+
+		assertEquals(HOLDS_A, _activeFilter.get());
+		assertNull(_searchTerm.get());
+		assertNull("Nothing is searched for any more.", _table.getView().state().getSearch());
+		assertEquals("Alice and Carla hold an a.", 2, rowCount());
+	}
+
+	/**
+	 * Tests that a filter carrying a term of its own is compared by that term as well: searching for
+	 * another text ends its match and empties the channel naming it.
+	 */
+	public void testTermOfAFilterCarryingOneIsCompared() {
+		_table.applyNamedFilter(HOLDS_LI);
+		assertEquals(HOLDS_LI, _activeFilter.get());
+		assertEquals("Such a filter puts its own term on the other channel.", "li", _searchTerm.get());
+
+		_searchTerm.set("bo");
+
+		assertNull("The filter carries a term of its own, which is no longer the one searched for.",
+			_activeFilter.get());
+	}
+
+	/** A channel of the given name, already holding the given value. */
+	private static ViewChannel channel(String name, String value) {
+		ViewChannel result = new DefaultViewChannel(name);
+		result.set(value);
+		return result;
 	}
 
 	/**
@@ -254,6 +388,30 @@ public class TestTableFilterBinding extends TestCase {
 		assertEquals("The channel keeps what was written to it.", HOLDS_A, _activeFilter.get());
 	}
 
+	/**
+	 * Tests that a filter the user saves while searching within a preset is the one that reaches the
+	 * channel, although the preset matches the same columns and is offered first.
+	 */
+	public void testSavedFilterReachesTheChannelInsteadOfThePreset() {
+		ViewChannel activeFilter = new DefaultViewChannel("activeFilter");
+		ViewChannel searchTerm = new DefaultViewChannel("searchTerm");
+		TableViewControl<String> table = savingTable();
+		TableFilterBinding binding = new TableFilterBinding(table, activeFilter, searchTerm);
+		try {
+			table.applyNamedFilter(HOLDS_A);
+			table.search("car");
+			assertEquals(HOLDS_A, activeFilter.get());
+
+			NamedFilter saved = table.getView().saveNamedFilter("Mine");
+
+			assertEquals("The saved filter names the term as well, so it is the one displayed.",
+				saved.id(), activeFilter.get());
+			assertEquals("car", searchTerm.get());
+		} finally {
+			binding.dispose();
+		}
+	}
+
 	/** The number of rows the table displays. */
 	private int rowCount() {
 		return _table.getView().rowCount();
@@ -274,6 +432,33 @@ public class TestTableFilterBinding extends TestCase {
 		DefaultTableView<String> view = new DefaultTableView<>(columns, rows, state, null, null, Set.of(),
 			declaredFilters(), null, initialFilter);
 		return new TableViewControl<>(_context, view, false);
+	}
+
+	/** A table over the three rows that also keeps the filters the user saves. */
+	private TableViewControl<String> savingTable() {
+		List<Column<String, ?>> columns = columns();
+		TableViewState state = DefaultTableView.initialState(columns, SortSpec.NONE, Set.of());
+		ListRowSource<String> rows =
+			new ListRowSource<>(new ArrayList<>(List.of(ALICE, BOB, CARLA)), columns);
+		DefaultTableView<String> view = new DefaultTableView<>(columns, rows, state, null, new TableId("t-save"),
+			Set.of(), declaredFilters(), new MemoryFilterStore(), null);
+		return new TableViewControl<>(_context, view, false);
+	}
+
+	/** An in-memory {@link NamedFilterStore}, so that a filter can be saved at all. */
+	private static final class MemoryFilterStore implements NamedFilterStore {
+
+		private List<NamedFilter> _filters = List.of();
+
+		@Override
+		public List<NamedFilter> load(TableId id, FilterCodec codec) {
+			return _filters;
+		}
+
+		@Override
+		public void save(TableId id, List<NamedFilter> filters, FilterCodec codec) {
+			_filters = List.copyOf(filters);
+		}
 	}
 
 	/** The single, filterable column showing the row object itself. */

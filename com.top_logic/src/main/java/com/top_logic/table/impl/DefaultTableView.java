@@ -643,14 +643,35 @@ public class DefaultTableView<R> implements TableView<R> {
 		}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * Several of the offered filters can match at once, because a filter naming no search term of
+	 * its own matches whatever is searched for: the preset the user picked goes on matching while
+	 * they search within it, and a filter they saved during that search carries exactly those
+	 * columns plus that term. The one carrying the term is then returned - it describes what the
+	 * user is looking at completely, while the other describes only its columns. Among the filters
+	 * of one kind the offered order decides, so a declared filter still wins over a saved one with
+	 * the same criteria.
+	 * </p>
+	 */
 	@Override
 	public NamedFilter activeNamedFilter() {
+		NamedFilter searchAgnostic = null;
 		for (NamedFilter filter : namedFilters()) {
-			if (filter.matches(_state.getFilters(), _state.getSearch())) {
+			if (!filter.matches(_state.getFilters(), _state.getSearch())) {
+				continue;
+			}
+			if (filter.search() != null) {
+				// Its term is the one being searched for, so it names the search as well.
 				return filter;
 			}
+			if (searchAgnostic == null) {
+				searchAgnostic = filter;
+			}
 		}
-		return null;
+		return searchAgnostic;
 	}
 
 	@Override

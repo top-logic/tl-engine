@@ -1678,8 +1678,9 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	 * filters} the bar offers.
 	 *
 	 * <p>
-	 * The named filter replaces the whole filter, so what the bar displays as active is what the
-	 * table is filtered by - a column the filter does not mention ends up unfiltered.
+	 * The named filter replaces the whole filter, the search term included, so what the bar displays
+	 * as active is what the table is filtered by - a column the filter does not mention ends up
+	 * unfiltered, and a filter that names no term of its own leaves the table searching for nothing.
 	 * </p>
 	 */
 	@ReactCommandHandler(CMD_APPLY_NAMED_FILTER)
@@ -1738,10 +1739,9 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	 * Unfilters the table - clears every column filter and the search term - and re-renders it.
 	 *
 	 * <p>
-	 * This is what clicking the active chip in the filter bar does. While a chip is active, the
-	 * table's criteria are exactly that chip's own, so clearing them all clears exactly what the
-	 * chip applied - the chip acts as a toggle, and a second click leaves the table showing every
-	 * row again.
+	 * This is what clicking the active chip in the filter bar does: the chip acts as a toggle, and a
+	 * second click leaves the table showing every row again. It withdraws the criteria of the chip
+	 * together with a text searched for on top of them, which is what the user sees the chip select.
 	 * </p>
 	 */
 	public void clearFilter() {
@@ -1764,6 +1764,13 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	 * <p>
 	 * The bar searches for a plain {@link TextFilterState#contains(String) case-insensitive
 	 * substring}; the matching flags of a column's own text filter stay that column's business.
+	 * </p>
+	 *
+	 * <p>
+	 * The search narrows the rows within whatever the table is filtered by, and leaves that
+	 * filtering alone: a {@link NamedFilter} the table matches goes on being the
+	 * {@link TableView#activeNamedFilter() active} one while the text is searched for, so the bar
+	 * keeps its chip marked and the table shows the rows of that filter holding the text.
 	 * </p>
 	 *
 	 * @param term

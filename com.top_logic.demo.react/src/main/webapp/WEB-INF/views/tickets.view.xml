@@ -16,17 +16,20 @@
 	logged-in user commented on. The chip the list matches is published on the activeFilter
 	channel and the text it searches its displayed columns for on the searchTerm channel, and
 	<query-bindings> puts the two into the address as filter and q: a list showing a preset is
-	the link /view/tickets/ticket/<id>?filter=discussed, a searched one ?q=<term>, and opening
-	such a link brings the list into that state. Both refine the page instead of navigating to a
-	new one - the address bar follows along, but the back button leaves the page rather than
-	walking the chips clicked on it. A link without the parameters says nothing about the
-	filtering and leaves the list as it establishes itself.
+	the link /view/tickets/ticket/<id>?filter=discussed, a searched one ?q=<term>, and one that
+	is both is ?filter=discussed&q=<term>; opening such a link brings the list into that
+	state. Both refine the page instead of navigating to a new one - the address bar follows
+	along, but the back button leaves the page rather than walking the chips clicked on it. A
+	link without the parameters says nothing about the filtering and leaves the list as it
+	establishes itself.
 	
-	Picking a chip replaces the whole filtering, the search term included, while searching for a
-	text ends the match of a chip - the term is one of the criteria a named filter is compared by
-	- so filter leaves the address as q enters it. Saving the current criteria under a name of
-	one's own puts that filter on the bar beside the presets, and it reaches the address exactly
-	like a preset, under the identifier it was given.
+	The two parameters describe the displayed rows together: a chip selects the rows and the
+	search narrows them within that selection, so typing into the search field keeps the chip
+	marked and adds q beside filter. Picking a chip, on the other hand, replaces the whole
+	filtering, the search term included. Saving the current criteria under a name of one's own
+	puts that filter on the bar beside the presets, and it reaches the address exactly like a
+	preset, under the identifier it was given - it carries the text that was searched when it was
+	saved, so it is the marked one only while exactly that text is searched for again.
 	
 	The inputs above the lists show that an input is bound to a channel for a value of any type:
 	the search term is a tl.core:String and is written in a text field, while the status is an

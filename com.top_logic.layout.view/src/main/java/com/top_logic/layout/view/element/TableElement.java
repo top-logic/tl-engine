@@ -409,7 +409,13 @@ public class TableElement implements UIElement {
 		 * </p>
 		 *
 		 * <p>
-		 * Bound to a query parameter, this is what makes a filtered table linkable.
+		 * A preset says which rows are selected, not what is searched for, so the name stays on the
+		 * channel while the user searches within the preset.
+		 * </p>
+		 *
+		 * <p>
+		 * Bound to a query parameter, this is what makes a filtered table linkable, together with
+		 * the searched text.
 		 * </p>
 		 */
 		@Name(ACTIVE_PRESET)
@@ -428,9 +434,12 @@ public class TableElement implements UIElement {
 		 * </p>
 		 *
 		 * <p>
-		 * A text searched for while the table matches a named filter ends that match, because the
-		 * term is one of the criteria a named filter is compared by: the
-		 * {@link #getActivePreset() active preset} then holds nothing.
+		 * The search narrows the rows within whatever the table is filtered by, so a preset the
+		 * table matches goes on being the {@link #getActivePreset() active preset} while the text is
+		 * searched for. Bound to query parameters, the two together are one address: the preset and
+		 * the text the user sees the table under. A filter the user saved while searching is the
+		 * exception - it carries the text it was saved with, and matches only while exactly that
+		 * text is searched for.
 		 * </p>
 		 */
 		@Name(SEARCH_TERM)

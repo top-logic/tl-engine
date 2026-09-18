@@ -707,9 +707,66 @@ public class TestDefaultTableView extends TestCase {
 
 		view.filter("name", null);
 		assertEquals("Undoing the edit brings the named filter back.", OLDER, view.activeNamedFilter().id());
+	}
+
+	/**
+	 * Tests that a text searched for on top of a named filter that names no term of its own narrows
+	 * the rows that filter selects, and leaves it the active one.
+	 */
+	public void testSearchNarrowsWithinTheActiveNamedFilter() {
+		TableView<Person> view = newFilterBarView(null, null);
+		view.applyNamedFilter(OLDER);
+		assertEquals(List.of("Charlie", "Bob"), names(view));
+
+		view.search(TextFilterState.contains("li"));
+
+		assertEquals("The filter says nothing about the search, so the search does not end it.",
+			OLDER, view.activeNamedFilter().id());
+		assertEquals("The search narrows the rows the filter selects.", List.of("Charlie"), names(view));
+
+		view.filter("name", TextFilterState.contains("Bob"));
+		assertNull("A criterion the filter is made of does end the match.", view.activeNamedFilter());
+	}
+
+	/**
+	 * Tests that a filter the user saved while searching carries that term, so it is the active one
+	 * only while exactly that text is searched for.
+	 */
+	public void testSavedFilterMatchesOnlyWithItsOwnTerm() {
+		TableView<Person> view = newFilterBarView(new MapNamedFilterStore(), new TableId("t-saved-term"));
+		view.filter("name", TextFilterState.contains("li"));
+		view.search(TextFilterState.contains("3"));
+		NamedFilter saved = view.saveNamedFilter("Mine");
+		assertEquals(saved.id(), view.activeNamedFilter().id());
+
+		view.search(TextFilterState.contains("li"));
+		assertNull("The term is one of the things the filter was saved as.", view.activeNamedFilter());
 
 		view.search(TextFilterState.contains("3"));
-		assertNull("Editing the search leaves no named filter active either.", view.activeNamedFilter());
+		assertEquals("Searching for the saved term again brings the filter back.",
+			saved.id(), view.activeNamedFilter().id());
+	}
+
+	/**
+	 * Tests that a named filter without any criterion - the "all rows" chip - is the active one
+	 * exactly while no column is filtered, whether or not the user is searching.
+	 */
+	public void testFilterWithoutCriteriaMatchesWhileSearching() {
+		List<Column<Person, ?>> columns = filterableColumns();
+		TableView<Person> view = DefaultTableView.create(columns, new ListRowSource<>(people(), columns), null,
+			null, SortSpec.NONE, List.of(),
+			List.of(NamedFilter.declared("all", ResKey.text("All rows"), Map.of(), null)), null);
+		assertEquals("all", view.activeNamedFilter().id());
+
+		view.search(TextFilterState.contains("li"));
+
+		assertEquals("A filter by nothing goes on being active while the user searches.",
+			"all", view.activeNamedFilter().id());
+		assertEquals(List.of("Charlie", "alice"), names(view));
+
+		view.filter("age", RangeFilterState.between(Integer.valueOf(26), Integer.valueOf(50)));
+		assertNull("A column filter is a criterion the filter by nothing does not carry.",
+			view.activeNamedFilter());
 	}
 
 	/**
@@ -788,6 +845,44 @@ public class TestDefaultTableView extends TestCase {
 		view.filter("age", null);
 		view.search(TextFilterState.contains("li"));
 		assertEquals(HOLDS_LI, view.activeNamedFilter().id());
+	}
+
+	/**
+	 * Tests that a filter the user saved while searching within a preset is the active one, although
+	 * the preset - which says nothing about the search - is offered first and matches as well.
+	 */
+	public void testFilterNamingTheSearchedTermWinsOverTheSearchAgnosticOne() {
+		TableView<Person> view = newFilterBarView(new MapNamedFilterStore(), new TableId("t-more-specific"));
+		view.applyNamedFilter(OLDER);
+		view.search(TextFilterState.contains("li"));
+		assertEquals(List.of("Charlie"), names(view));
+
+		NamedFilter saved = view.saveNamedFilter("Mine");
+
+		assertEquals("The filter naming the searched term describes the rows completely.",
+			saved.id(), view.activeNamedFilter().id());
+
+		view.search(TextFilterState.contains("3"));
+		assertEquals("The saved filter no longer matches, the preset behind it still does.",
+			OLDER, view.activeNamedFilter().id());
+
+		view.search(TextFilterState.contains("li"));
+		assertEquals("Searching for the saved term again makes the saved filter the active one.",
+			saved.id(), view.activeNamedFilter().id());
+	}
+
+	/**
+	 * Tests that the offered order still decides between matches that are equally specific: a
+	 * declared filter wins over a saved one carrying the same criteria and no term either.
+	 */
+	public void testDeclaredFilterWinsOverASavedOneWithTheSameCriteria() {
+		TableView<Person> view = newFilterBarView(new MapNamedFilterStore(), new TableId("t-same-criteria"));
+		view.applyNamedFilter(OLDER);
+
+		view.saveNamedFilter("Mine");
+
+		assertEquals("Neither of the two names a term, so the offered order decides.",
+			OLDER, view.activeNamedFilter().id());
 	}
 
 	public void testSaveCapturesFiltersAndSearch() {

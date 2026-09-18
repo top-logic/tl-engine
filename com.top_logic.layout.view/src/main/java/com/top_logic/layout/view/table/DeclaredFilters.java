@@ -64,7 +64,13 @@ import com.top_logic.table.filter.TextFilterState;
  * leaves its column unfiltered. A declaration all of whose criteria select nothing is withheld -
  * nothing is left of what it says - and offered again as soon as its inputs select something. A
  * declaration that names no criterion at all is a different thing: it says "no filter", is offered
- * as such, and is the active one exactly while the table is unfiltered.
+ * as such, and is the active one exactly while no column of the table is filtered.
+ * </p>
+ *
+ * <p>
+ * A declaration names criteria per column and never a search term, so what the table is searched for
+ * is none of its business: a preset goes on being the active one while the user searches, and the
+ * search narrows the rows the preset selects, see {@link NamedFilter#matches(Map, TextFilterState)}.
  * </p>
  */
 public class DeclaredFilters {

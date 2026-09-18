@@ -32,11 +32,36 @@ import com.top_logic.table.filter.TextFilterState;
  * </p>
  *
  * <p>
- * A value neither channel can be brought to: a term that is searched for while the table matches a
- * named filter ends that match, because the term is one of the criteria a named filter is compared
- * by. The binding then writes what the table actually shows - the identifier of no filter at all -
- * exactly as it does for an identifier no offered filter carries, so a stale or mistyped address
- * corrects itself instead of describing something nobody sees.
+ * The two describe the displayed rows together: the named filter selects them, the term searches
+ * within that selection, and a term searched for on top of a matched filter leaves that match
+ * standing (see {@link NamedFilter#matches(java.util.Map, TextFilterState)}). A pair of query
+ * parameters therefore names exactly one set of rows, and opening it again yields them.
+ * </p>
+ *
+ * <p>
+ * A value written to either channel therefore brings the table to what <em>both</em> of them say:
+ * the named filter is applied, then the term is searched for. Every writer sets one channel at a
+ * time - a query binding writes one bound parameter after the other, a command sets the filter
+ * while an input elsewhere holds the term - and applying a named filter replaces the whole
+ * filtering, the term included, so applying only the channel that changed would let the outcome
+ * depend on which of two independent writes came last. Applying both is order-independent and
+ * repeatable: the filter that is already applied reproduces the same criteria, and the term is
+ * applied last in either order.
+ * </p>
+ *
+ * <p>
+ * Nothing on the channel naming the filter therefore means "by no named filter", and the term
+ * survives it, being a channel of its own. A filter carrying a term of its own is named by both
+ * channels together - which is what the binding publishes when one is applied - so the two travel
+ * together in an address just as they describe the rows together. The filter bar is untouched by
+ * this: clicking the active chip clears the columns and the term together, as the table's own
+ * command, and the binding publishes the outcome.
+ * </p>
+ *
+ * <p>
+ * A value a channel cannot be brought to is corrected: an identifier no offered filter carries - a
+ * stale or mistyped address - leaves the table unfiltered, and the binding writes back what the
+ * table actually shows instead of describing something nobody sees.
  * </p>
  *
  * <p>
@@ -56,7 +81,7 @@ public class TableFilterBinding {
 	private final ViewChannel _searchTerm;
 
 	private final ViewChannel.ChannelListener _channelListener =
-		(sender, oldValue, newValue) -> applyChannelValue(sender, newValue);
+		(sender, oldValue, newValue) -> handleChannelWrite();
 
 	private final TableViewListener _viewListener = new TableViewListener() {
 		@Override
@@ -122,41 +147,56 @@ public class TableFilterBinding {
 	 * Applies what the channels already hold, and publishes the state the table ends up in.
 	 */
 	private void initialize() {
-		_syncing = true;
-		try {
-			String filterId = text(_activeFilter);
-			if (filterId != null) {
-				_table.applyNamedFilter(filterId);
-			}
-			String term = text(_searchTerm);
-			if (term != null) {
-				_table.search(term);
-			}
-		} finally {
-			_syncing = false;
-		}
-		publish();
+		applyChannels(true);
 	}
 
 	/**
-	 * Applies a value written to one of the channels, and publishes the state the table ends up in.
+	 * Answers a value written to one of the channels by bringing the table to the state both of
+	 * them describe.
 	 *
-	 * @param sender
-	 *        The channel the value was written to.
-	 * @param value
-	 *        Its new value.
+	 * <p>
+	 * Which channel was written to makes no difference, so a deep link whose parameters arrive one
+	 * after the other ends in the rows it names, whichever of them is bound first.
+	 * </p>
 	 */
-	private void applyChannelValue(ViewChannel sender, Object value) {
+	private void handleChannelWrite() {
 		if (_syncing) {
 			// The binding's own write, echoed back: the table already is what the value says.
 			return;
 		}
+		applyChannels(false);
+	}
+
+	/**
+	 * Filters the table by what the channels hold - by the named filter of the one, searched for the
+	 * text of the other - and publishes the state it ends up in.
+	 *
+	 * <p>
+	 * The filter is applied first and the search afterwards, because applying a named filter
+	 * replaces the whole filtering, the term of the search included.
+	 * </p>
+	 *
+	 * @param creation
+	 *        Whether the table is being brought together with the channels for the first time. A
+	 *        channel holding nothing then leaves its side of the filtering as the table establishes
+	 *        it - the filter its definition and the user's personalization say - instead of
+	 *        withdrawing it. Afterwards a channel holds what the table shows, so nothing on it is a
+	 *        statement: filtered by no named filter, searched for no text.
+	 */
+	private void applyChannels(boolean creation) {
 		_syncing = true;
 		try {
-			if (sender == _activeFilter) {
-				_table.applyNamedFilter(text(value));
-			} else {
-				_table.search(text(value));
+			if (_activeFilter != null) {
+				String filterId = text(_activeFilter);
+				if (filterId != null || !creation) {
+					_table.applyNamedFilter(filterId);
+				}
+			}
+			if (_searchTerm != null) {
+				String term = text(_searchTerm);
+				if (term != null || !creation) {
+					_table.search(term);
+				}
 			}
 		} finally {
 			_syncing = false;

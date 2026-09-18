@@ -1783,6 +1783,19 @@ button.tlDrawerToggle:focus-visible {
 .tlGrid--gap-default { --tlGrid-gap: var(--spacing-04); gap: var(--tlGrid-gap); }
 .tlGrid--gap-loose   { --tlGrid-gap: var(--spacing-06); gap: var(--tlGrid-gap); }
 
+/* --- TLDeckPane ------------------------------------------------------------ */
+
+/* Shows one child at a time and takes its size from that child: a column flex box that states no
+   size of its own, so a deck standing inline - in an app bar, beside a breadcrumb - is as wide and
+   as high as the content it shows. A deck showing a filling child carries .tlFill (see the fill
+   contract above) and is then a bounded flex container the child's height resolves against. */
+.tlDeckPane {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	min-height: 0;
+}
+
 /* --- TLOverlay ------------------------------------------------------------- */
 
 /* The base gives the overlay its height and the surrounding layout its width; every layer covers

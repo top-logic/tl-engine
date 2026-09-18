@@ -81,8 +81,34 @@ see `invoices.view.xml` (`<table selection="c">` → `<form input="c">`) and the
 (a count the React store computes) reaches another element only by a command to its own control,
 which writes the channel — a round trip. Prefer a channel whose value the server can compute.
 
+**Ambient scope**: the third way, for the case where neither fits - several *peer* elements that must
+agree on one value, and a channel would be wrong because the value is wiring, not data. The engine's
+`ViewContext.withScope(Class, Object)` puts a value in reach of every descendant context
+(`getScope(Class)` reads it, `childContext` inherits it, a nested `withScope` of the same type
+overrides), and a container element declares it once for everything inside. `<chat chat-id="...">`
+is the chat's use of it: `ChatScopeElement` extends the engine's `StackElement`, wraps the child
+context in a `ChatScope`, and every `<chat-conversation>`, `<chat-rail>` and rail section inside
+resolves *its own `chat-id`, else the scope, else a default*. `ReactTileStackControl` does the same
+with `TileStackScope`.
+
+Two rules that make this worth the class:
+
+- **Declare the scope where the layout already is.** `ChatScopeElement` adds a `chat-id` to
+  `<stack>`'s config and overrides `createControl` to derive the context - about fifteen lines, no
+  control, no React element, and the app writes `<chat>` in place of the `<stack>` it already had.
+  Wrapping *extra* nesting around existing elements is the version to avoid: the engine's
+  `.tlStack:has(> .tlPanel--fill)` rule looks one level deep, so an added stack silently costs a
+  `<panel fill="true">` its height.
+- **Make the join say something when it is wrong.** An ambient default means an element that
+  disagrees still renders - empty, forever, with no symptom. Tally the joins where they are all
+  visible (for the chat, `ChatViewBinding` plus `ChatJoinLog`, keyed on the `InteractionContext`,
+  which is one render) and log it: one INFO line per render with the ids and their counts, one WARN
+  when a window holds several ids and one of them has a single element. A correct page must stay
+  silent, or the log teaches people to ignore it.
+
 Use nesting when one element is the *frame* of the others (a rail and its sections, a tab bar and its
-tabs). Use a channel when they are peers.
+tabs). Use a channel when they are peers and the value is data. Use a scope when they are peers and
+the value is which thing they all belong to.
 - **Decomposition trades cohesion for placement.** Pulling a control out into its own channel-wired
   element (e.g. a standalone collapse toggle) makes it placeable anywhere but visually *detached* — it
   becomes its own box outside the panel. If the control belongs *inside* a panel's chrome, keep it in

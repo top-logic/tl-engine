@@ -51,8 +51,10 @@ browser component, which shows a sign-in note rather than a composer.
 - **`ChatHistoryService`** – Static access to persistent `AgentSession` objects (kind CHAT) via `AgentExecutionStore` (tl-ai-core). Conversations are stored as one transcript per `AgentExecution` (written by `AgentRunner` at run end) and merged in run order on load.
 - **`LegacyChatSessionMigration`** – Startup service migrating legacy `tl.ai.chat:ChatSession` blobs to `AgentSession`s eagerly. The legacy model has been removed (tl-ai-core migration `Issue_230_remove_module_tl_ai_chat`), so the service is a no-op now; it is kept until every deployment is known to have run it.
 - **`ChatSessionRegistry`** – Bridges `WindowScope` (a chat control) and `HttpSession` (`ChatServlet`). Published API: the classic control in `tl-chat-classic` and `Consulting`'s own control register here from outside this module.
-- **`ChatViewBinding`** – Once per (sub-session, `chat-id`): tracker and user. `AgentChatControl` and the split elements (`<chat-conversation>`, `<chat-rail>`) delegate to it so several controls do not bind the window several times. The tracker stays one per window. The layout preference is the exception: it is read whenever `writeLayoutState` is asked for it, which every chat control does from `onBeforeWrite` - see "where the chat's state lives".
+- **`ChatViewBinding`** – Once per (sub-session, `chat-id`): tracker and user. `AgentChatControl` and the split elements (`<chat-conversation>`, `<chat-rail>`) delegate to it so several controls do not bind the window several times. The tracker stays one per window. The layout preference is the exception: it is read whenever `writeLayoutState` is asked for it, which every chat control does from `onBeforeWrite` - see "where the chat's state lives". It is also where every join is tallied for `ChatJoinLog`.
 - **`AgentViewRefreshService`** – Makes a model-bound element beside the transcript follow a running agent. A run commits from a background thread, and a window only sees model changes when its `GlobalModelEventForwarder` is asked to synthesize them - on a browser command or on the 30 s SSE heartbeat. The service listens on `AgentExecutionStore.ChangeListener`, coalesces a burst of writes (200 ms) and synthesizes per window, in that window's sub-session and **under the window's request lock** (a `ReactControl`'s state map is a plain `HashMap`; the heartbeat path skips the lock, and this deliberately does not copy that). Windows are registered by `ChatViewBinding` while a chat renders, which is a fork: the engine offers no way to enumerate an account's live windows.
+- **`ChatScope` / `ChatScopeElement`** – The `<chat>` container and the ambient value it puts into the child `ViewContext`. An element's conversation is its own `chat-id`, else the enclosing `<chat>`, else `default`.
+- **`ChatJoinLog`** – Per render, which element joined which chat id; logged when the interaction ends, with a WARN for an element that joined nobody while another id has several.
 
 ## Thread Safety
 
@@ -361,11 +363,37 @@ replays nothing, so on restoring or selecting a session the store also reads `GE
 approvals waiting for this user). A reload in mid-run therefore comes back with the Fortschritt
 list, a busy composer and the open approval card.
 
-`chat-id` is how elements find each other. `<agent-chat>` leaves it empty and `App` falls back to
-`props.controlId`, so two chats in one window stay two chats - Consulting's `CopilotRegistry` keeps a
-*list* of live panels, and a fixed key would silently merge their transcripts
-(`chat-store.test.ts`, `testTwoAppsInOneWindowDoNotShareATranscript`). The two pieces
-(`<chat-conversation>`, `<chat-rail>`) default to `default`.
+`chat-id` is how elements find each other, and **`<chat>` is where it is written**. A page puts its
+chat elements inside one `<chat chat-id="...">`; each of them inherits that id through the view
+context (`ChatScope`, `ChatScopeElement`) and carries no `chat-id` of its own. That is the normal
+form, because the alternative - the same string repeated on every element - makes the strongest
+coupling on the page the least visible thing about it: a typo in one attribute opens a second, empty
+conversation and nothing in the product says so.
+
+```xml
+<chat chat-id="chat" direction="row">
+    <data-list selection="chatSession" …/>          <!-- joins by channel, not by chat-id -->
+    <panel fill="true"><chat-conversation input="chatSession"/></panel>
+    <chat-rail input="paneObject">…</chat-rail>
+</chat>
+```
+
+`<chat>` is a `<stack>` that carries an id: same `direction`, `gap` and `align`, no chrome of its
+own, and any element may sit inside it. **Put it where the stack was** rather than adding a level:
+the engine's `.tlStack:has(> .tlPanel--fill)` rule looks one level deep, so a `<panel fill="true">`
+that stops being a direct child of the page's stack loses its height.
+
+`chat-id` on a child element is the **override**, for the rare page that holds two conversations;
+it is nullable, and left empty an element outside every `<chat>` joins `default`. `<agent-chat>` is
+the exception that joins nothing: it binds with `""` and `App` falls back to `props.controlId`, so
+two chats in one window stay two chats - Consulting's `CopilotRegistry` keeps a *list* of live
+panels, and a fixed key would silently merge their transcripts (`chat-store.test.ts`,
+`testTwoAppsInOneWindowDoNotShareATranscript`).
+
+**The join is logged.** `ChatJoinLog` tallies, per render, which chat id each element joined and
+writes one INFO line for it. When a window holds more than one chat id and one of them has a single
+element, it adds a WARN naming that element - the shape a typo produces. A page with one chat id
+never warns, however many elements are on it.
 
 `<chat-conversation>` is the transcript and the prompt field as one element - the transcript and
 the input almost always sit together, so they are one placeable box, while the session list and the
@@ -400,8 +428,8 @@ An application configures this element in the design view. Its options fall into
   ships no tool that resolves it, so a host that wants the id to mean more gives its agent such a tool
   (see the `<reference>` prompt fragment).
 
-Coupling to know: elements share one conversation only when their `chat-id` matches, and a session
-list feeds the conversation over a **two-way** channel — `<data-list selection>` ↔
+Coupling to know: elements share one conversation only when they agree on a chat id - which is what
+the enclosing `<chat>` is for - and a session list feeds the conversation over a **two-way** channel — `<data-list selection>` ↔
 `<chat-conversation input>`. The list writes the picked session; the conversation follows it and
 writes its own session back (so a chat created on first send gets highlighted). An **empty** selection
 means a fresh, empty conversation, so "new chat" is just the list clearing the channel — a
@@ -412,7 +440,7 @@ means a fresh, empty conversation, so "new chat" is just the list clearing the c
 the pane's chrome, and every section's body is a view element the application configured there.
 
 ```xml
-<chat-rail chat-id="grouped" input="paneObject">
+<chat-rail input="paneObject">
     <section name="progress" icon="css:bi bi-list-check" open="true" badge="progressBadge">
         <label><en>Progress</en><de>Fortschritt</de></label>
         <data-list count="progressBadge" observed-types="tl.ai.execution:AgentTask" …/>

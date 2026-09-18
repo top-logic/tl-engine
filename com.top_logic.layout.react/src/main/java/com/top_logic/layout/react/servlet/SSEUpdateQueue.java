@@ -341,11 +341,16 @@ public class SSEUpdateQueue {
 	 * client has the current state of all controls, recovering any state that may have been lost
 	 * while the connection was down.
 	 * </p>
+	 *
+	 * <p>
+	 * Only the controls the window still displays are sent: a
+	 * {@link #isRetired(ReactCommandTarget) retired} control is registered so that a command can
+	 * still reach it by ID, not because the client shows it.
+	 * </p>
 	 */
 	private void sendFullState(SSEConnection connection) {
 		for (ReactCommandTarget control : _controls.values()) {
-			if (control instanceof ReactControl) {
-				ReactControl rc = (ReactControl) control;
+			if (control instanceof ReactControl rc && !isRetired(rc)) {
 				StateEvent event = StateEvent.create()
 					.setControlId(rc.getID())
 					.setState(rc.stateAsJSON());
@@ -455,6 +460,23 @@ public class SSEUpdateQueue {
 		if (target == null) {
 			return true;
 		}
+		return isRetired(target);
+	}
+
+	/**
+	 * Whether the given registered target is one this window no longer displays: a
+	 * {@link ReactControl} that a container detached.
+	 *
+	 * <p>
+	 * A control stays registered until it is disposed, so that a command can still reach it by ID
+	 * even while a container holds it aside. That is why {@link #sendFullState(SSEConnection)} asks
+	 * here instead of sending everything it can dispatch to: serializing a control attaches it,
+	 * because {@link ReactControl#writeAsChild(JsonWriter)} attaches what it renders. Serializing a
+	 * control the window does not display would thereby put its subtree back into the registries of
+	 * the display - the app bar would then paint the breadcrumb of a sidebar item the user has left.
+	 * </p>
+	 */
+	private boolean isRetired(ReactCommandTarget target) {
 		return target instanceof ReactControl control && !control.isAttached();
 	}
 

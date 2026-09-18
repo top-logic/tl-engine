@@ -161,7 +161,7 @@ export function TLDataList({ controlId }: TLCellProps) {
    * list; it moves to the neighbouring row's trigger instead (the one before, else the one after,
    * else the list itself).
    */
-  const triggers = useRef(new Map<string, HTMLButtonElement | null>())
+  const triggers = useRef(new Map<string, HTMLButtonElement>())
   const menuRow = useRef('')
   const previousIds = useRef<string[]>([])
   const listNode = useRef<HTMLDivElement | null>(null)
@@ -283,7 +283,8 @@ export function TLDataList({ controlId }: TLCellProps) {
                       aria-haspopup="menu"
                       aria-label={`${labels.rowActions}: ${row.lines[0]?.text ?? ''}`}
                       ref={(node) => {
-                        triggers.current.set(row.id, node)
+                        if (node) triggers.current.set(row.id, node)
+                        else triggers.current.delete(row.id)
                       }}
                       onClick={(event) => {
                         menuRow.current = row.id

@@ -108,9 +108,6 @@ public class DataListControl extends ReactControl {
 	/** The frame's menu opener, or {@code null} outside an {@code <app-shell>}. */
 	private final ContextMenuOpener _menuOpener;
 
-	/** This list's own context - what a row command's actions resolve their channels against. */
-	private final ViewContext _viewContext;
-
 	private final boolean[] _applyingFromChannel = { false };
 
 	/** The row objects of the last serialisation, by their id, for the {@code select} lookup. */
@@ -121,7 +118,6 @@ public class DataListControl extends ReactControl {
 			List<ViewCommand.Config> commandConfigs, List<ViewCommand> rowCommands,
 			List<ViewCommand.Config> rowCommandConfigs) {
 		super(context, null, blankToDefault(config.getReactElement(), "TLDataList"));
-		_viewContext = context;
 
 		_rowsExecutor = QueryExecutor.compile(config.getRows());
 		_groupExecutor = config.getGroupBy() == null ? null : QueryExecutor.compile(config.getGroupBy());
@@ -188,8 +184,9 @@ public class DataListControl extends ReactControl {
 			_rowChannel = null;
 			_rowMenu = null;
 		} else {
-			_rowChannel = new DefaultViewChannel(blankToDefault(config.getRowChannel(), "row"));
-			context.registerChannel(blankToDefault(config.getRowChannel(), "row"), _rowChannel);
+			String rowChannelName = blankToDefault(config.getRowChannel(), "row");
+			_rowChannel = new DefaultViewChannel(rowChannelName);
+			context.registerChannel(rowChannelName, _rowChannel);
 			for (int i = 0; i < rowCommands.size() && i < rowCommandConfigs.size(); i++) {
 				ViewCommand.Config cmdConfig = rowCommandConfigs.get(i);
 				ViewChannel commandInput =

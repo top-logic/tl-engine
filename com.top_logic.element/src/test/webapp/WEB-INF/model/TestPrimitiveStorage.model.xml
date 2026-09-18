@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="TestPrimitiveStorage">
+			<types>
+				<class name="Node">
+					<annotations>
+						<table name="GenericObject"/>
+					</annotations>
+					<attributes>
+						<property name="dates"
+							bag="true"
+							multiple="true"
+							ordered="true"
+							type="tl.core:Date"
+						/>
+						<property name="numbers"
+							bag="true"
+							multiple="true"
+							ordered="true"
+							type="tl.core:Long"
+						/>
+						<property name="flags"
+							bag="true"
+							multiple="true"
+							ordered="true"
+							type="tl.core:Boolean"
+						/>
+						<property name="names"
+							bag="true"
+							multiple="true"
+							ordered="true"
+							type="tl.core:String"
+						/>
+						<property name="blobs"
+							bag="true"
+							multiple="true"
+							ordered="true"
+							type="tl.core:Binary"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.model:TLObject"/>
+					</generalizations>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

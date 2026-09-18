@@ -5,8 +5,12 @@
  */
 package test.com.top_logic.layout.react.control.button;
 
+import junit.framework.Test;
 import junit.framework.TestCase;
 
+import test.com.top_logic.basic.module.ServiceTestSetup;
+
+import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.ButtonAction;
@@ -22,7 +26,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * Erscheinung, Tönung und Größe eines {@link ReactButtonControl} landen als externe Namen im
  * Zustand — und der Standardwert lässt den Schlüssel weg, damit der Container die Vorgabe macht.
  */
-public class TestReactButtonControl extends TestCase {
+public class TestReactButtonState extends TestCase {
 
 	public void testAppearanceDefaultLeavesKeyUnset() {
 		Button button = newButton();
@@ -76,4 +80,9 @@ public class TestReactButtonControl extends TestCase {
 			return getState("size");
 		}
 	}
+
+	public static Test suite() {
+		return ServiceTestSetup.createSetup(TestReactButtonState.class, TypeIndex.Module.INSTANCE);
+	}
+
 }

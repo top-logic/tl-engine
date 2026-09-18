@@ -139,7 +139,6 @@
 
 .tl-button[aria-busy="true"] {
   cursor: progress;
-  pointer-events: none;
 }
 
 .tl-button:disabled {
@@ -148,4 +147,11 @@
   color: var(--tl-text-disabled);
   cursor: default;
   pointer-events: none;
+}
+
+/* Ghost und Link haben in Ruhe keine Fläche — auch deaktiviert nicht; sonst wird eine Menüspalte zu grauen Kästen. */
+.tl-button--ghost:disabled,
+.tl-button--link:disabled {
+  background: transparent;
+  border-color: transparent;
 }

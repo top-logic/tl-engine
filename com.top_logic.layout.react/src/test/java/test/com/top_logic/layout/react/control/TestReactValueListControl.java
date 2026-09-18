@@ -24,6 +24,7 @@ import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.FieldValueArguments;
+import com.top_logic.layout.react.control.form.MoveElementArguments;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactValueListControl;
 import com.top_logic.layout.react.control.form.RemoveElementArguments;
@@ -106,6 +107,100 @@ public class TestReactValueListControl extends TestCase {
 	}
 
 	/**
+	 * A value moved to a later position is stored there, and the values it passes move up.
+	 */
+	public void testMoveValueForwards() {
+		ValueList list = list(Arrays.asList("T1", "T2", "T3"), ordered());
+		List<ReactControl> before = List.copyOf(list.elements());
+
+		list.move(0, 2);
+
+		assertEquals(Arrays.asList("T2", "T3", "T1"), list.getFieldModel().getValue());
+		assertEquals("T2", list.valueOf(0));
+		assertEquals("T3", list.valueOf(1));
+		assertEquals("T1", list.valueOf(2));
+		assertControlsInPlace(before, list);
+	}
+
+	/**
+	 * A value moved to an earlier position is stored there, and the values it passes move down.
+	 */
+	public void testMoveValueBackwards() {
+		ValueList list = list(Arrays.asList("T1", "T2", "T3"), ordered());
+		List<ReactControl> before = List.copyOf(list.elements());
+
+		list.move(2, 0);
+
+		assertEquals(Arrays.asList("T3", "T1", "T2"), list.getFieldModel().getValue());
+		assertEquals("T3", list.valueOf(0));
+		assertEquals("T1", list.valueOf(1));
+		assertEquals("T2", list.valueOf(2));
+		assertControlsInPlace(before, list);
+	}
+
+	/**
+	 * A move naming a position that holds no value is not carried out.
+	 */
+	public void testMoveOutOfRange() {
+		ValueList list = list(Arrays.asList("T1", "T2"), ordered());
+
+		list.move(2, 0);
+		list.move(-1, 0);
+		list.move(0, 2);
+		list.move(0, -1);
+
+		assertEquals(Arrays.asList("T1", "T2"), list.getFieldModel().getValue());
+	}
+
+	/**
+	 * A value moved to the position it already holds stays where it is.
+	 */
+	public void testMoveToSamePosition() {
+		ValueList list = list(Arrays.asList("T1", "T2"), ordered());
+		List<ReactControl> before = List.copyOf(list.elements());
+
+		list.move(1, 1);
+
+		assertEquals(Arrays.asList("T1", "T2"), list.getFieldModel().getValue());
+		assertControlsInPlace(before, list);
+	}
+
+	/**
+	 * The values of a field that is only displayed cannot be arranged.
+	 */
+	public void testMoveNotEditable() {
+		AbstractFieldModel model = new AbstractFieldModel(Arrays.asList("T1", "T2"));
+		model.setEditable(false);
+		ValueList list = list(model, ordered());
+
+		list.move(0, 1);
+
+		assertEquals(Arrays.asList("T1", "T2"), list.getFieldModel().getValue());
+	}
+
+	/**
+	 * A field whose values form a set offers no arranging, and a move is not carried out.
+	 */
+	public void testUnorderedValuesAreNotArranged() {
+		ValueList list = list(Arrays.asList("T1", "T2"), FieldSpec.of(String.class, "Texts"));
+
+		assertEquals(Boolean.FALSE, list.ordered());
+
+		list.move(0, 1);
+
+		assertEquals(Arrays.asList("T1", "T2"), list.getFieldModel().getValue());
+	}
+
+	/**
+	 * A field whose order is part of its value offers arranging.
+	 */
+	public void testOrderedValuesAreArranged() {
+		ValueList list = list(Arrays.asList("T1", "T2"), ordered());
+
+		assertEquals(Boolean.TRUE, list.ordered());
+	}
+
+	/**
 	 * A collection written from elsewhere is taken over: the controls follow the values it holds.
 	 */
 	public void testExternalChange() {
@@ -177,6 +272,18 @@ public class TestReactValueListControl extends TestCase {
 		assertEquals(Collections.singletonList(null), list.getFieldModel().getValue());
 	}
 
+	private static FieldSpec ordered() {
+		return FieldSpec.of(String.class, "Texts").setOrdered(true);
+	}
+
+	private static void assertControlsInPlace(List<ReactControl> before, ValueList list) {
+		assertEquals("Arranging the values creates no control", before.size(), list.elements().size());
+		for (int n = 0; n < before.size(); n++) {
+			assertSame("The control at position " + n + " stays where it is", before.get(n),
+				list.elements().get(n));
+		}
+	}
+
 	private static ValueList list(Object value, FieldSpec spec) {
 		return list(new AbstractFieldModel(value), spec);
 	}
@@ -184,7 +291,7 @@ public class TestReactValueListControl extends TestCase {
 	private static ValueList list(FieldModel model, FieldSpec spec) {
 		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue(),
 			new ReactWindowRegistry("test"));
-		return new ValueList(context, model, spec.elementSpec(), FieldControlRegistry.TEXT);
+		return new ValueList(context, model, spec, FieldControlRegistry.TEXT);
 	}
 
 	/**
@@ -193,9 +300,9 @@ public class TestReactValueListControl extends TestCase {
 	 */
 	private static final class ValueList extends ReactValueListControl {
 
-		ValueList(ReactContext context, FieldModel listModel, FieldSpec elementSpec,
+		ValueList(ReactContext context, FieldModel listModel, FieldSpec fieldSpec,
 				ReactFieldControlProvider elementProvider) {
-			super(context, listModel, elementSpec, elementProvider);
+			super(context, listModel, fieldSpec, elementProvider);
 		}
 
 		/** The controls editing the single values, in value order. */
@@ -206,6 +313,11 @@ public class TestReactValueListControl extends TestCase {
 		/** How the values are arranged. */
 		Object layout() {
 			return getState(LAYOUT);
+		}
+
+		/** Whether the client offers arranging the values. */
+		Object ordered() {
+			return getState(ORDERED);
 		}
 
 		/** The value the control at the given position holds. */
@@ -233,6 +345,13 @@ public class TestReactValueListControl extends TestCase {
 		void remove(int index) {
 			executeClientCommand(CMD_REMOVE_ELEMENT,
 				Map.of(RemoveElementArguments.INDEX, Integer.valueOf(index)));
+		}
+
+		/** Moves the value at the given position to the given one, as the client's gesture does. */
+		void move(int index, int targetIndex) {
+			executeClientCommand(CMD_MOVE_ELEMENT,
+				Map.of(MoveElementArguments.INDEX, Integer.valueOf(index),
+					MoveElementArguments.TARGET_INDEX, Integer.valueOf(targetIndex)));
 		}
 	}
 

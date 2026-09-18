@@ -171,7 +171,7 @@ public class FieldControlRegistry {
 	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model,
 			ReactFieldControlProvider provider) {
 		if (field.isMultiple() && !provider.editsCollections()) {
-			return new ReactValueListControl(context, model, field.elementSpec(), provider);
+			return new ReactValueListControl(context, model, field, provider);
 		}
 		return provider.createControl(context, field, model);
 	}

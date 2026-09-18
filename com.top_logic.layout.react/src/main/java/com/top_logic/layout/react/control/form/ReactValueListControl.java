@@ -29,6 +29,13 @@ import com.top_logic.layout.react.field.ReactFieldControlProvider;
  * </p>
  *
  * <p>
+ * Where the order of the values is part of the value - an {@link FieldSpec#isOrdered() ordered}
+ * field - the user arranges them: a value is moved to another position, and the values it passes
+ * shift to make room for it. A field whose values form a set is displayed in the order they are
+ * stored in, and moving one of them is refused, since it would change nothing.
+ * </p>
+ *
+ * <p>
  * Which field is displayed this way is decided in
  * {@link FieldControlRegistry#createControl(ReactContext, FieldSpec, FieldModel, ReactFieldControlProvider)}:
  * every multi-valued field whose provider edits one value at a time.
@@ -44,8 +51,16 @@ public class ReactValueListControl extends ReactFormFieldControl {
 	/** Command sent by the client to drop one of the values. */
 	public static final String CMD_REMOVE_ELEMENT = "removeElement";
 
+	/** Command sent by the client to move one of the values to another position. */
+	public static final String CMD_MOVE_ELEMENT = "moveElement";
+
 	/** State key for the controls editing the single values, one per element and in element order. */
 	protected static final String ELEMENTS = "elements";
+
+	/**
+	 * State key for whether the user may arrange the values, see {@link FieldSpec#isOrdered()}.
+	 */
+	protected static final String ORDERED = "ordered";
 
 	/**
 	 * State key for how the values are arranged, either {@link #LAYOUT_INLINE} or
@@ -61,6 +76,8 @@ public class ReactValueListControl extends ReactFormFieldControl {
 
 	private final FieldSpec _elementSpec;
 
+	private final boolean _ordered;
+
 	private final ReactFieldControlProvider _elementProvider;
 
 	private final List<ListElementFieldModel> _elementModels = new ArrayList<>();
@@ -74,19 +91,22 @@ public class ReactValueListControl extends ReactFormFieldControl {
 	 *        The React context for ID allocation and SSE registration.
 	 * @param listModel
 	 *        Holds the whole collection of values.
-	 * @param elementSpec
-	 *        Describes a single one of those values, see {@link FieldSpec#elementSpec()}.
+	 * @param fieldSpec
+	 *        Describes the multi-valued field as a whole; each of its values is described by
+	 *        {@link FieldSpec#elementSpec()}, which is what the element controls are created with.
 	 * @param elementProvider
 	 *        Creates the control editing a single value.
 	 */
-	public ReactValueListControl(ReactContext context, FieldModel listModel, FieldSpec elementSpec,
+	public ReactValueListControl(ReactContext context, FieldModel listModel, FieldSpec fieldSpec,
 			ReactFieldControlProvider elementProvider) {
 		super(context, listModel, REACT_MODULE);
-		_elementSpec = elementSpec;
+		_elementSpec = fieldSpec.elementSpec();
+		_ordered = fieldSpec.isOrdered();
 		_elementProvider = elementProvider;
 		// The values are the element controls; the collection itself is nothing the client draws.
 		putState(VALUE, null);
-		putState(LAYOUT, elementSpec.getMultilineRows() > 0 ? LAYOUT_BLOCK : LAYOUT_INLINE);
+		putState(LAYOUT, _elementSpec.getMultilineRows() > 0 ? LAYOUT_BLOCK : LAYOUT_INLINE);
+		putState(ORDERED, Boolean.valueOf(_ordered));
 		reconcile();
 	}
 
@@ -177,6 +197,35 @@ public class ReactValueListControl extends ReactFormFieldControl {
 			return;
 		}
 		values.remove(index);
+		getFieldModel().setValue(values);
+	}
+
+	/**
+	 * Moves the value the client names to the position it names, shifting the values in between.
+	 *
+	 * @implNote The elements are not moved: they keep their position and take over the values that
+	 *           are now stored there, which is the same reconciliation a collection rearranged from
+	 *           elsewhere goes through.
+	 */
+	@ReactCommandHandler(CMD_MOVE_ELEMENT)
+	final void handleMoveElement(MoveElementArguments args) {
+		if (!acceptsClientValue()) {
+			return;
+		}
+		if (!_ordered) {
+			return;
+		}
+		int index = args.getIndex();
+		int targetIndex = args.getTargetIndex();
+		if (index == targetIndex) {
+			return;
+		}
+		List<Object> values = ListElementFieldModel.elementsOf(getFieldModel());
+		int count = values.size();
+		if (index < 0 || index >= count || targetIndex < 0 || targetIndex >= count) {
+			return;
+		}
+		values.add(targetIndex, values.remove(index));
 		getFieldModel().setValue(values);
 	}
 

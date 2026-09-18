@@ -3,13 +3,14 @@
 <!--
 	The document viewer of the React UI: the table on the left lists the documents, the panel on
 	the right previews the selected one - a picture in the image element (<image>), a PDF in the PDF
-	viewer (<pdf>). A <switch> on the content type of the document chooses the viewer. The toolbar
-	uploads further documents and deletes the selected one; an uploaded file becomes a document
-	named after the file and is selected right away.
+	viewer (<pdf>), an HTML file as a document of its own (<html display="document">). A <switch>
+	on the content type of the document chooses the viewer. The toolbar uploads further documents
+	and deletes the selected one; an uploaded file becomes a document named after the file and is
+	selected right away.
 	
-	Both viewers read the "data" channel, which is derived from the "document" channel the <switch>
-	switches on. Both therefore change within the same notification - the viewer being replaced
-	sees the new document value before its container replaces it.
+	Every viewer reads the "data" channel, which is derived from the "document" channel the
+	<switch> switches on. They therefore change within the same notification - the viewer being
+	replaced sees the new document value before its container replaces it.
 -->
 <view>
 	<channels>
@@ -40,7 +41,7 @@
 					</title>
 					<commands>
 						<upload-command
-							accept="image/*,.pdf"
+							accept="image/*,.pdf,.html,text/html"
 							image="css:bi bi-upload"
 							multiple="true"
 							placement="TOOLBAR"
@@ -74,8 +75,8 @@
 					</commands>
 					<text>
 						<label>
-							<en>Upload a picture or a PDF file to add it to the list. The document selected here is shown in the preview beside it.</en>
-							<de>Laden Sie ein Bild oder eine PDF-Datei hoch, um sie der Liste hinzuzufügen. Das hier gewählte Dokument wird in der Vorschau daneben angezeigt.</de>
+							<en>Upload a picture, a PDF file or an HTML file to add it to the list. The document selected here is shown in the preview beside it.</en>
+							<de>Laden Sie ein Bild, eine PDF-Datei oder eine HTML-Datei hoch, um sie der Liste hinzuzufügen. Das hier gewählte Dokument wird in der Vorschau daneben angezeigt.</de>
 						</label>
 					</text>
 					<table
@@ -114,12 +115,19 @@
 						<case test="d -> $d != null &amp;&amp; binaryContentType($d.get(`demo.documents:Document#data`)).stringStartsWith('application/pdf')">
 							<pdf input="data"/>
 						</case>
+						<case test="d -> $d != null &amp;&amp; binaryContentType($d.get(`demo.documents:Document#data`)).stringStartsWith('text/html')">
+							<html
+								display="document"
+								input="data"
+								print="true"
+							/>
+						</case>
 						<default>
 							<inset>
 								<text>
 									<label>
-										<en>Select a document in the table; pictures are shown inline, PDF files in the PDF viewer.</en>
-										<de>Wählen Sie ein Dokument in der Tabelle; Bilder werden direkt angezeigt, PDF-Dateien im PDF-Viewer.</de>
+										<en>Select a document in the table; pictures are shown inline, PDF files in the PDF viewer, HTML files as a document of their own.</en>
+										<de>Wählen Sie ein Dokument in der Tabelle; Bilder werden direkt angezeigt, PDF-Dateien im PDF-Viewer, HTML-Dateien als eigenständiges Dokument.</de>
 									</label>
 								</text>
 							</inset>

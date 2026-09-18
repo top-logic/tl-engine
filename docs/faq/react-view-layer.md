@@ -214,6 +214,57 @@ The app bar of `com.top_logic.demo.react` shows both this and the two ways an un
 </slot-content>
 ```
 
+## Ready-made HTML: `<html>`
+
+`<html input="ch">` (`HtmlElement`) displays HTML the application did not compose itself — the answer of an agent, a generated exposé, an imported page. The channel carries that content in one of three shapes, and `HtmlValues` reduces all of them to the source text to display:
+
+- a `String` holding the source,
+- an `HTMLFragment` — what an HTML literal `{{{ … }}}` of a script expression evaluates to — rendered to its source,
+- a `BinaryData` of content type `text/html`, read with the charset that content type declares. `binary('expose.html', $source, 'text/html')` builds one in TL-Script, and an uploaded file arrives as one anyway.
+
+A value of any other type has no HTML representation; the element reports that in its place, the same way it reports content a check refuses. Nothing on the channel is no content and no failure.
+
+`display` decides how the content is shown, and with it what stands between it and the reader.
+
+**`inline`** (the default) inserts the fragment into the page where the element stands, after `SafeHTML` has checked it against the application's whitelist — a script, an attribute carrying one, anything else the check refuses is not inserted, and the message of the check takes its place. The fragment brings its structure and the page gives it typography: the stylesheet gives `.tlHtml--inline` the theme's text color and font and spaces the elements a fragment is made of, so an answer reads as a section of the page it lands in. `css-class` adds a class of the application's own beside it.
+
+```xml
+<html input="answer"/>
+```
+
+**`document`** shows the content as a page of its own, in a sandboxed frame filling the space the element is given. The frame is not handed the source: it fetches it from the control's data endpoint (`ReactHtmlControl` is the `DataProvider`), with the current `dataRevision` in its URL, so the document crosses the wire once and a replaced one is fetched rather than taken from the browser cache. The sandbox runs no script, which is why a document needs no whitelist check — it keeps the styles it brings along and takes none of the page's. `print="true"` puts a button on it that hands the frame to the browser's print dialog, which is also where the browser offers saving the document as a PDF file, with the document's own styles.
+
+```xml
+<html
+	display="document"
+	input="current"
+	print="true"
+/>
+```
+
+**`thumbnail`** shows that same isolated document as a picture of itself: a card-sized preview for a grid of documents. The frame is laid out at `thumbnail-width` × `thumbnail-height` CSS pixels — 800 × 1130 by default, a portrait page at that width — and scaled down to the width the preview box measures (a `ResizeObserver` on the box, `transform: scale(…)` from its top left corner), so the document appears in its own proportions instead of being reflowed into a small one. The box keeps the aspect ratio of the two sizes and cuts off what is taller, as a page does. A preview is looked at rather than used: it takes no clicks, no focus and no print button, and it is fetched only once it comes near the viewport, so a grid loads the previews the reader actually reaches. Selecting one is therefore the business of whatever carries it — a button in the card writing the element to a channel, for instance.
+
+```xml
+<object-list inputs="exposes" items="exposes -> $exposes" layout="grid" max-columns="3">
+	<item>
+		<card padding="compact">
+			<html display="thumbnail" input="element"/>
+			<text css-class="tlText--strong" input="element"/>
+			<button appearance="link">
+				<action class="com.top_logic.layout.view.command.GenericViewCommand" input="element">
+					<label><en>Show</en></label>
+					<write-channel name="expose"/>
+				</action>
+			</button>
+		</card>
+	</item>
+</object-list>
+```
+
+The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/html-demo.view.xml`: an inline agent answer and a refused fragment above, the three exposés as a grid of previews beside the selected one below.
+
+**PDF, server-side.** The print dialog is the reader's way to a PDF. An application that produces the file itself — to store it, mail it, attach it — converts the HTML in TL-Script instead: `pdfFile($html, name: "expose.pdf")` yields a `BinaryData` that `<pdf input="ch"/>` displays and a download hands out. That conversion is Flying Saucer rather than a browser, so it takes well-formed XHTML and CSS 2.1 and renders a document written for it, not any page a browser shows.
+
 ## `TableViewControl` is the sole React table control
 
 `TableViewControl` / `com.top_logic.table.TableView` (#29108) is the only React table control. Everything renders through this stack: the `<table>` element (`TableElement`; sort, per-column `<filter>`, type-derived default columns, width personalization, shared `ColumnsConfig` / `ColumnConfig`), the access-control permission matrix (`SecurityMatrixElement`), the in-form `<composition-table>` (`CompositionTableControl`), and the technical React-table demo (`DemoReactTableComponent`: flat `ListRowSource` + `TreeRowSource` tree).
@@ -263,11 +314,49 @@ A fraction between 0 and 1 is displayed as a bar with an optional label beside i
 `<progress>` (`ProgressElement`) states the bar one of two ways, never both:
 
 - `<progress input="ch" fraction="x -> …"/>` — the filled part directly. Such a bar carries no label unless `label="x -> …"` gives it one.
+  A fraction expression that answers nothing at all leaves the bar without a share: the client sweeps a partial fill over the track (`tlProgress--indeterminate`) instead of filling a share of it, which is how a bar over an operation that does not know how far it has come is written — and an operation that learns its share later switches between the two displays by reporting a number again.
 - `<progress input="ch" done="x -> …" total="x -> …"/>` — the two counts the fraction is the ratio of, which are also the label (`3 / 7`) unless `label=` replaces it. A total of zero leaves the bar empty.
 
 Every expression is called with the current value of the `input` channel, which is optional: a bar counting the model as a whole needs none. The bar recomputes on a new channel value, on a change of the object the channel holds, and on a create / change / delete of an `observed-types` type — the last is what a bar counting all objects of a type needs, since no channel value changes when one is added. The observation is the shared `ChannelObjectObserver`, attached and detached with the control.
 
 A table cell needs nothing new: a `CellRenderer` yields `new CellContent.Raw((CellControlFactory) ctx -> new ReactProgressControl(ctx, fraction, label))`, the escape hatch `CellContentReactAdapter` already resolves.
+
+## Long-running jobs: `<start-job>` and `<job-status>`
+
+Work that takes longer than a request may take does not belong in the request. `<start-job>` (`StartJobAction`) is the action that hands it to a worker thread, publishes what it reports on a channel, and **suspends the command** until the work has ended — the same suspension a `<confirm>` uses, so the chain simply continues afterwards:
+
+```xml
+<action class="com.top_logic.layout.view.command.GenericViewCommand" input="job">
+  <executability>
+    <disabled-if expr="s -> if(jobIsRunning($s), #('A job is already running.'@en), null)"/>
+  </executability>
+  <start-job job="job" cancelable="true" update-interval="200">
+    <phases>
+      <phase name="read"><label><en>Reading</en><de>Lesen</de></label></phase>
+      <phase name="check"><label><en>Checking</en><de>Prüfen</de></label></phase>
+    </phases>
+    <function><![CDATA[job -> x -> {
+	$job.jobPhase('read');
+	$job.jobMessage(#('Reading the records.'@en));
+	count(1, 6).foreach(i -> { sleep(400); $job.jobProgress($i, 5); });
+	$job.jobPhase('check');
+	$job.jobIndeterminate();
+	sleep(1500);
+	#('5 records processed.'@en);
+}]]></function>
+  </start-job>
+  <write-channel name="report"/>
+</action>
+```
+
+- **The channel carries immutable snapshots.** The `job` channel holds a `JobState` from the moment the job starts, and a *new* one on every report, so nothing a display would have to observe ever changes. `update-interval` is the shortest time in milliseconds between two published snapshots: a job counting thousands of items is followed at that pace instead of flooding the browser, the last report of a burst is never lost, and the snapshot that ends the job is always delivered. The body runs in the sub-session of the starting request and publishes under the window's interaction, so the channel write, the controls updating from it and the updates reaching the browser are serialized against the requests of the same session exactly like a command is.
+- **The work runs outside any transaction, on a thread that serves no request.** Persisting what the job produced is the business of the actions *after* it: the command continues where it left off with the job's result as its value, so a `<with-transaction><execute-script .../></with-transaction>` or a `<write-channel>` behind the `<start-job>` is where the result lands. A job that fails or is cancelled **aborts** the command instead — the remaining actions are skipped, the compensations of the ones before it run, and the failure stays visible in the last state of the job rather than in a snackbar.
+- **The body is a TL-Script `function=` or a Java `<body class="…"/>`**, exactly one of the two. The function is called with the **monitor of the job as its first argument**, followed by the `inputs` channel values in declaration order and the command's own value last. It reports with `$job.jobPhase('name')` (entering a step marks the steps passed over as done; naming a step that was never declared ends the job with an error), `$job.jobPhases([…])` or `$job.jobPhases({name: label})` for a job that learns its steps only while running, `$job.jobProgress(done, total)`, `$job.jobIndeterminate()` and `$job.jobMessage(text)`. What the function returns is the result of the job.
+- **Reading a snapshot** is `jobIsRunning($s)`, `jobIsFinished($s)`, `jobStatus($s)` (the texts `running`, `completed`, `failed`, `cancelled`, so a `<switch><case match="'completed'">` decides on it), `jobResult($s)` and `jobError($s)`. Each of them answers over no job at all as well, which is what the channel holds before the first start — so a start button guards itself with `input="job"` plus `<disabled-if expr="s -> jobIsRunning($s)"/>` and needs no case of its own for the time before the first run.
+- **Cancellation is cooperative.** `cancelable="true"` offers the reader a cancel button; pressing it marks the job and interrupts the worker. `sleep()` keeps the interrupt it was woken by, so a sleeping job wakes at once and ends at the next point it *reports* from — which is what makes a loop of `sleep` + `jobProgress` stop within one step. Every report a Java body makes on its `JobMonitor` checks the same way, and `JobMonitor.checkCancelled()` is that check on its own for a stretch of work that reports nothing. Only declare it for work that may be given up half-done: a cancelled job has done part of what it was started for.
+- **`<job-status input="job"/>`** (`JobStatusElement` → `ReactJobStatusControl` / `TLJobStatus`) is the display, bound to the channel alone and holding no state of its own. It shows the status, the declared steps as done / active / pending, the bar (determinate or indeterminate), the message, the elapsed time — counted in the browser, so it ticks without a server round trip and freezes when the job ends — and at the end the result or the error. A channel holding anything that is not a job state displays nothing. Every text is resolved for the reader on the server: the phases and the message by their `ResKey`, the result through `MetaLabelProvider`, so a body returning an i18n literal `#('…'@en, '…'@de)` is displayed in the reader's language.
+- **CSS hooks**: the BEM block `tlJobStatus` with the status modifier `tlJobStatus--running|completed|failed|cancelled` and the elements `__header`, `__state`, `__elapsed`, `__cancel`, `__phases`, `__phase` (`--done`, `--active`, `--pending`), `__bar`, `__message`, `__error`, `__result` (`tlReactControls.css`). An application restyles the display through these classes; the bar inside it is the shared `tlProgress` block.
+- **Demo**: `com.top_logic.demo.react/…/views/demo/long-job-demo.view.xml` — a three-phase job with a determinate loop, an indeterminate phase and a result written to a second channel, a failing job, and a standalone indeterminate `<progress>`.
 
 ## Drag and drop of table rows
 

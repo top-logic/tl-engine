@@ -159,13 +159,8 @@ export const SessionRail = React.memo(function SessionRail({
             <div className="rail-message">{query ? labels.noMatchingChats : labels.noChats}</div>
           ) : null}
           {groups.map((group) => (
-            <section
-              className="rail-group"
-              key={group.label || 'all'}
-              aria-labelledby={group.label ? `chat-group-${group.label}` : undefined}
-              aria-label={group.label ? undefined : labels.chats}
-            >
-              {group.label ? <h2 id={`chat-group-${group.label}`}>{group.label}</h2> : null}
+            <section className="rail-group" key={group.label} aria-labelledby={`chat-group-${group.label}`}>
+              <h2 id={`chat-group-${group.label}`}>{group.label}</h2>
               {group.sessions.map((session) => {
                 const title = session.title || labels.untitled
                 if (confirming === session.id) {

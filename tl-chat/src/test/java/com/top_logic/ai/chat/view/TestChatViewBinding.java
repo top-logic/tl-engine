@@ -160,7 +160,8 @@ public class TestChatViewBinding extends TestCase {
 
 	/**
 	 * The window is the unit, not the chat: a run knows the sub-session it is in, and not which of
-	 * the chat ids rendered there it belongs to.
+	 * the chat ids rendered there it belongs to - so a window's allow list is the union of its
+	 * chats' lists, which is what a page plus a {@code <chat-dock>} produces.
 	 */
 	public void testAChannelOfAnyChatInTheWindowIsReachable() {
 		TypedAnnotatable scope = new LazyTypedAnnotatable();

@@ -260,9 +260,16 @@ public final class ChatViewBinding {
 	 * The window rather than the chat is the unit, because that is what a run knows about itself:
 	 * the agent thread runs in the window's sub-session (see
 	 * {@code ChatProcessor.AIBackgroundTask}), while which of possibly several {@code chat-id}s on
-	 * that page it belongs to is not something the tool layer is told. Two chats in one window that
-	 * both allow a name resolve to the same channel anyway - a channel belongs to the view, not to
-	 * the element that named it.
+	 * that page it belongs to is not something the tool layer is told.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>So the allow list of a window is the union of its chats' lists.</b> Two conversations on
+	 * one window - a page's own and a {@code <chat-dock>}'s, say - each naming a channel means a run
+	 * in either of them may write both. That is the honest consequence of what a run can be asked
+	 * about itself, and it is bounded by the same thing the whole feature is bounded by: nothing is
+	 * writable that no element of that window named, and every object still resolves with the
+	 * acting user's rights. A host that needs the two kept apart gives them separate windows.
 	 * </p>
 	 *
 	 * @param scope

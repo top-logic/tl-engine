@@ -44,13 +44,15 @@ export function TLChatRail({ controlId }: TLCellProps) {
   // something to open. Unregisters on unmount.
   useEffect(() => actions.registerRail(), [actions])
 
-  const collapsedSeed = useMemo(() => collapsedFromSections(sections), [sections])
+  // What this rail configures. The store applies it per section name and only where the user has
+  // decided nothing, so a user's own collapse survives a reload and a new tab (#423).
+  const collapsedDefaults = useMemo(() => collapsedFromSections(sections), [sections])
   useEffect(() => {
-    if (!collapsedSeed) return
-    actions.seedCollapsedOnce(collapsedSeed)
-  }, [actions, collapsedSeed])
+    if (!collapsedDefaults) return
+    actions.applyCollapsedDefaults(collapsedDefaults)
+  }, [actions, collapsedDefaults])
 
-  useEffect(() => actions.seedRailOpenOnce(openDefault), [actions, openDefault])
+  useEffect(() => actions.applyRailDefault(openDefault), [actions, openDefault])
 
   const badgeTotal = useMemo(() => railBadgeTotal(sections, badges), [sections, badges])
   useEffect(() => actions.publishBadgeTotal(badgeTotal), [actions, badgeTotal])

@@ -243,7 +243,11 @@ public class ChatRailElement implements UIElement {
 		/**
 		 * Whether the rail starts open.
 		 *
-		 * The first-load state only: from then on the rail is where the user last left it.
+		 * <p>
+		 * The state for a user who has never opened or closed this rail. Once the user has, their
+		 * own choice is what every later page load and every new tab shows, and this flag no longer
+		 * applies to them.
+		 * </p>
 		 */
 		@Name(OPEN)
 		@Label("Open")
@@ -259,10 +263,13 @@ public class ChatRailElement implements UIElement {
 		PaneMode getPaneMode();
 
 		/**
-		 * Pane width in pixels. Zero keeps the remembered or automatic width.
+		 * Pane width in pixels. Zero keeps the automatic width.
 		 *
-		 * Hidden in the layout editor: the user drags the pane and the width is remembered per user,
-		 * so a fixed number here overrides what the user chose.
+		 * <p>
+		 * The width for a user who has never dragged the splitter of this rail; a user who has keeps
+		 * their own. Hidden in the layout editor, because a number here is a choice about somebody
+		 * else's window that the user can make better themselves.
+		 * </p>
 		 */
 		@Name(PANE_WIDTH)
 		@Label("Pane width")
@@ -362,7 +369,12 @@ public class ChatRailElement implements UIElement {
 		/**
 		 * Whether this section starts expanded.
 		 *
-		 * The first-load state only: from then on the section is where the user left it.
+		 * <p>
+		 * The state for a user who has never collapsed or expanded this section. Once the user has,
+		 * their own choice is what every later page load and every new tab shows. The choice is
+		 * remembered per section {@link #getName() name}, so a section added to the rail later
+		 * starts as configured even for a user who arranged the others long ago.
+		 * </p>
 		 */
 		@Name(OPEN)
 		@Label("Open")

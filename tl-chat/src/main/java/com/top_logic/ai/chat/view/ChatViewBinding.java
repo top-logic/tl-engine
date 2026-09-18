@@ -5,10 +5,11 @@
  */
 package com.top_logic.ai.chat.view;
 
+import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.BiConsumer;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 import com.top_logic.ai.chat.api.ChatPreferencesStore;
 import com.top_logic.ai.chat.api.messages.ChatPreferencesDto;
@@ -49,10 +50,12 @@ public final class ChatViewBinding {
 	private static final Property<Map<String, ChatViewBinding>> BINDINGS =
 		TypedAnnotatable.propertyMap("tl.chat.view.bindings");
 
-	/** Loads layout preferences. Tests replace this to observe when a load happens. */
-	static Supplier<ChatPreferencesDto> preferenceSource = ChatPreferencesStore::load;
+	/** Loads the layout of a {@code chat-id}. Tests replace this to observe when a load happens. */
+	static Function<String, ChatPreferencesDto> preferenceSource = ChatPreferencesStore::load;
 
 	private final TaskProgressTracker _tracker;
+
+	private final String _chatId;
 
 	private final String _windowId;
 
@@ -66,7 +69,8 @@ public final class ChatViewBinding {
 
 	private final boolean _authenticated;
 
-	private ChatViewBinding(TLSubSessionContext subSession, String windowName, String contextPath) {
+	private ChatViewBinding(TLSubSessionContext subSession, String windowName, String contextPath, String chatId) {
+		_chatId = chatId;
 		_tracker = bindTracker(subSession, windowName);
 		storeUser(_tracker);
 		_windowId = windowName;
@@ -99,7 +103,7 @@ public final class ChatViewBinding {
 	static ChatViewBinding bind(TypedAnnotatable scope, String windowName, String contextPath, String chatId) {
 		String key = chatId == null ? "" : chatId.trim();
 		if (scope == null) {
-			return new ChatViewBinding(null, windowName, contextPath);
+			return new ChatViewBinding(null, windowName, contextPath, key);
 		}
 		Map<String, ChatViewBinding> map = scope.mkMap(BINDINGS);
 		synchronized (map) {
@@ -108,7 +112,7 @@ public final class ChatViewBinding {
 				return existing;
 			}
 			TLSubSessionContext subSession = scope instanceof TLSubSessionContext session ? session : null;
-			ChatViewBinding created = new ChatViewBinding(subSession, windowName, contextPath);
+			ChatViewBinding created = new ChatViewBinding(subSession, windowName, contextPath, key);
 			map.put(key, created);
 			return created;
 		}
@@ -121,7 +125,12 @@ public final class ChatViewBinding {
 
 	/** The layout preferences stored for this chat, as they are now. */
 	public ChatPreferencesDto preferences() {
-		return preferenceSource.get();
+		return preferenceSource.apply(_chatId);
+	}
+
+	/** The {@code chat-id} this binding belongs to; the key its layout is stored under. */
+	public String chatId() {
+		return _chatId;
 	}
 
 	/** User name shown in the chat. */
@@ -191,9 +200,15 @@ public final class ChatViewBinding {
 	 */
 	public void writeLayoutState(BiConsumer<String, Object> put) {
 		ChatPreferencesDto preferences = preferences();
-		put.accept("railOpen", Boolean.valueOf(preferences.isRailOpen()));
+		// The key the browser puts the layout back under. Not the same as the store's own chat key,
+		// which falls back to the control id so that two <agent-chat> elements stay two chats.
+		put.accept("layoutKey", _chatId);
+		// Null, not false, while the user has decided nothing: the element's configured default is
+		// what applies then.
+		put.accept("railOpen", preferences.getRailOpen());
 		put.accept("paneWidth", Integer.valueOf(preferences.getPaneWidth()));
 		put.accept("badgeSeen", Integer.valueOf(preferences.getBadgeSeen()));
+		put.accept("sectionChoices", new LinkedHashMap<>(preferences.getSections()));
 	}
 
 	private static TaskProgressTracker bindTracker(TLSubSessionContext subSession, String windowName) {

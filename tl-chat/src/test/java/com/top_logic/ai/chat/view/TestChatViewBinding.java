@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 import junit.framework.TestCase;
 
@@ -23,7 +23,7 @@ import com.top_logic.basic.col.TypedAnnotatable;
  */
 public class TestChatViewBinding extends TestCase {
 
-	private Supplier<ChatPreferencesDto> _previous;
+	private Function<String, ChatPreferencesDto> _previous;
 
 	@Override
 	protected void setUp() {
@@ -54,7 +54,7 @@ public class TestChatViewBinding extends TestCase {
 	/** Binding costs no preference load: the layout is read when it is written, not when bound. */
 	public void testBindDoesNotLoadPreferences() {
 		AtomicInteger loads = new AtomicInteger();
-		ChatViewBinding.preferenceSource = () -> {
+		ChatViewBinding.preferenceSource = chatId -> {
 			loads.incrementAndGet();
 			return ChatPreferencesDto.create();
 		};
@@ -76,7 +76,7 @@ public class TestChatViewBinding extends TestCase {
 	public void testLayoutStateIsReadPerWrite() {
 		AtomicBoolean railOpen = new AtomicBoolean(false);
 		ChatViewBinding.preferenceSource =
-			() -> ChatPreferencesDto.create().setRailOpen(railOpen.get());
+			chatId -> ChatPreferencesDto.create().setRailOpen(Boolean.valueOf(railOpen.get()));
 		ChatViewBinding binding = ChatViewBinding.bind(new LazyTypedAnnotatable(), "w1", "/app", "main");
 
 		Map<String, Object> first = new HashMap<>();
@@ -88,6 +88,35 @@ public class TestChatViewBinding extends TestCase {
 		binding.writeLayoutState(second::put);
 		assertEquals("The second render replays the layout stored now.", Boolean.TRUE,
 			second.get("railOpen"));
+	}
+
+	/**
+	 * The layout is looked up under the {@code chat-id}, so two chats on one page keep two layouts.
+	 */
+	public void testLayoutIsReadPerChatId() {
+		ChatViewBinding.preferenceSource =
+			chatId -> ChatPreferencesDto.create().setRailOpen(Boolean.valueOf("main".equals(chatId)));
+		TypedAnnotatable scope = new LazyTypedAnnotatable();
+
+		Map<String, Object> main = new HashMap<>();
+		ChatViewBinding.bind(scope, "w1", "/app", "main").writeLayoutState(main::put);
+		Map<String, Object> other = new HashMap<>();
+		ChatViewBinding.bind(scope, "w1", "/app", "other").writeLayoutState(other::put);
+
+		assertEquals("main", main.get("layoutKey"));
+		assertEquals(Boolean.TRUE, main.get("railOpen"));
+		assertEquals("other", other.get("layoutKey"));
+		assertEquals(Boolean.FALSE, other.get("railOpen"));
+	}
+
+	/** A user who decided nothing leaves the element's configured default in force. */
+	public void testUndecidedRailIsWrittenAsNull() {
+		ChatViewBinding.preferenceSource = chatId -> ChatPreferencesDto.create();
+		Map<String, Object> state = new HashMap<>();
+		ChatViewBinding.bind(new LazyTypedAnnotatable(), "w1", "/app", "main").writeLayoutState(state::put);
+
+		assertTrue("The key is written, so a patch can clear a stale value.", state.containsKey("railOpen"));
+		assertNull("Null, not false: nothing decided is not 'closed'.", state.get("railOpen"));
 	}
 
 	/** Two windows do not share a binding even when they use the same chat-id. */

@@ -18,7 +18,7 @@ Both served by `ChatServlet` at `/chat/*`:
    - `GET /chat/sessions/{id}` – Load session and activate server-side.
    - `PUT /chat/sessions/{id}/title` – Update session title.
    - `DELETE /chat/sessions/{id}` – Delete session (cascades over recorded executions, tasks, interactions).
-   - `PUT /chat/preferences` – Per-user rail/pane layout. The React UI cannot call `PersonalConfiguration` itself, so this wraps `setJSONValue` **and** `storePersonalConfiguration()` (transient otherwise). Key `tl-chat.layout`. There is no `GET`: the bootstrap travels with the control state (`AgentChatControl.putState`), so a second round trip would only repeat it.
+   - `PUT /chat/preferences?chatId=…` – Per-user rail/pane layout of **one** chat. The React UI cannot call `PersonalConfiguration` itself, so this wraps `setJSONValue` **and** `storePersonalConfiguration()` (transient otherwise). Key `tl-chat.layout`, holding one layout per `chat-id`. The body is what the user *decided*, so a fact they never touched is absent. There is no `GET`: the bootstrap travels with the control state (`ChatViewBinding.writeLayoutState`, re-read on every render), so a second round trip would only repeat it.
 
 2. **SSE API** (real-time push):
    - `GET /chat/events` – SSE connection. `ChatSSEHandler` receives `AgentEvent`s and emits structured SSE frames: `connected`, `run_started`, `turn_started`, `text_delta`, `tool_started`, `tool_completed`, `approval_required`, `message_complete`, `heartbeat`, etc.
@@ -51,7 +51,7 @@ browser component, which shows a sign-in note rather than a composer.
 - **`ChatHistoryService`** – Static access to persistent `AgentSession` objects (kind CHAT) via `AgentExecutionStore` (tl-ai-core). Conversations are stored as one transcript per `AgentExecution` (written by `AgentRunner` at run end) and merged in run order on load.
 - **`LegacyChatSessionMigration`** – Startup service migrating legacy `tl.ai.chat:ChatSession` blobs to `AgentSession`s eagerly. The legacy model has been removed (tl-ai-core migration `Issue_230_remove_module_tl_ai_chat`), so the service is a no-op now; it is kept until every deployment is known to have run it.
 - **`ChatSessionRegistry`** – Bridges `WindowScope` (a chat control) and `HttpSession` (`ChatServlet`). Published API: the classic control in `tl-chat-classic` and `Consulting`'s own control register here from outside this module.
-- **`ChatViewBinding`** – Once per (sub-session, `chat-id`): tracker, user and layout preferences. `AgentChatControl` and the split elements (`<chat-conversation>`, `<chat-rail>`) delegate to it so several controls do not load `PersonalConfiguration` several times. The tracker stays one per window.
+- **`ChatViewBinding`** – Once per (sub-session, `chat-id`): tracker and user. `AgentChatControl` and the split elements (`<chat-conversation>`, `<chat-rail>`) delegate to it so several controls do not bind the window several times. The tracker stays one per window. The layout preference is the exception: it is read whenever `writeLayoutState` is asked for it, which every chat control does from `onBeforeWrite` - see "where the chat's state lives".
 
 ## Thread Safety
 
@@ -300,8 +300,9 @@ Under an answer sits a collapsed `Quellen · n zitiert` pill with that answer's 
 that point at it - a number scrolls to its answer, the row opens the source, and a filter appears
 once the list is long. `sourceTabs` puts a host list beside it as further tabs.
 
-Layout preferences (`railOpen`, `paneWidth`, `badgeSeen`) are bootstrapped from PersonalConfiguration
-via `AgentChatControl.putState` and written through `PUT /chat/preferences`.
+Layout preferences (`railOpen`, `paneWidth`, `badgeSeen`, the per-section collapse) are bootstrapped
+from PersonalConfiguration via `ChatViewBinding.writeLayoutState` and written through
+`PUT /chat/preferences`.
 
 The Leiste badge is the sum of each section's badge minus the total last stored when the rail was
 opened - "N new since you last looked", so a section that reports nothing contributes nothing. In
@@ -324,6 +325,36 @@ conversation.
 | What a chat element keeps | Its own geometry and its host composition: for `App` the session drawer, the collapsed rail, the sheet breakpoint, the published `--composer-height`, and `ChatExtensions` |
 | Lifetime | The first element to subscribe opens the stream, the last to leave closes it and drops the chat - a fresh mount starts as fresh as it did when `App` owned the state |
 | `PUT /chat/preferences` | Written by the store and by nothing else, so several elements on one chat cannot race on the `tl-chat.layout` key |
+
+#### What survives a reload, and who decides it
+
+A browser reload does **not** rebuild the control tree: `ViewServlet` re-renders the tree the window
+already holds, deliberately, so that a table keeps its selection. A control constructor therefore
+runs once per window, not once per page load. Everything the chat wants a reload to restore has to
+be read at **render** time, and every chat control reads the layout in `onBeforeWrite`
+(`ChatViewBinding.writeLayoutState`).
+
+| | |
+|--|--|
+| Who writes the layout | The browser store, through the one `PUT /chat/preferences?chatId=…`. Nothing else writes it - not a control, not an element. |
+| Who reads it | `ChatViewBinding`, per render, into the control state the store boots from. There is no `GET`. |
+| Where it is stored | `PersonalConfiguration`, key `tl-chat.layout`, **one layout per `chat-id`**: `<agent-chat>` (empty id) and a composed `<chat-rail chat-id="grouped">` are different places with different sections. |
+| What is stored | What the user *decided*: `railOpen` (absent while they never toggled it), the pane width they dragged to, `badgeSeen`, and a per-section-name open flag for each section they toggled. Never what a page happened to show. |
+| Precedence | The configured defaults - `<chat-rail open>`, `<section open>`, `<chat-rail pane-width>` - apply **only** where the user has decided nothing. Once they toggled it, their choice wins on reload and in a new tab, and the configured flag no longer applies to them. Per section name, so a section added later still starts as configured. |
+
+The store never writes back the layout it booted with (`sameLayout` against `storedLayout`). Before
+#423 it did, and that is what destroyed the stored choice: a reloaded page booted from the first
+render's control state and then persisted that stale value.
+
+`applyRailDefault` / `applyCollapsedDefaults` are how `<chat-rail>` states its configuration. They
+are idempotent - they only touch what the user has not decided - so a remount, or a second rail,
+re-states the same defaults and changes nothing.
+
+Run state is recovered the same way, but over REST rather than the control state: the SSE stream
+replays nothing, so on restoring or selecting a session the store also reads `GET /chat/updates`
+(the tasks of the open run, and whether it is still processing) and `GET /chat/interactions` (the
+approvals waiting for this user). A reload in mid-run therefore comes back with the Fortschritt
+list, a busy composer and the open approval card.
 
 `chat-id` is how elements find each other. `<agent-chat>` leaves it empty and `App` falls back to
 `props.controlId`, so two chats in one window stay two chats - Consulting's `CopilotRegistry` keeps a
@@ -405,7 +436,8 @@ grid to spread a sheet over); `App`'s sheet is unaffected. Two rails on one `cha
 supported: the open state and the collapsed set are one per conversation.
 
 The store still issues the one `PUT /chat/preferences`; layout fields are mutated by the rail (and by
-`App`, which contains one).
+`App`, which contains one). `open` and `<section open>` are first-load defaults for a user who has
+decided nothing - see "what survives a reload, and who decides it".
 
 ### Stability
 

@@ -1740,6 +1740,15 @@ public class ChatServlet extends TopLogicServlet {
 			DtoMapper.toJson(ChatCapabilities.build(resolveCurrentPerson(req), improver)));
 	}
 
+	/**
+	 * {@code PUT /chat/preferences?chatId=…} - the layout of one chat.
+	 *
+	 * <p>
+	 * The {@code chatId} is the key the layout is stored under; the empty one belongs to the
+	 * one-element {@code <agent-chat>}. The body is what the user decided, so a rail the user never
+	 * touched arrives without {@code railOpen} and keeps following the configured default.
+	 * </p>
+	 */
 	private void handlePutPreferences(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		ChatPreferencesDto body;
 		try {
@@ -1749,11 +1758,12 @@ public class ChatServlet extends TopLogicServlet {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON body: " + ex.getMessage());
 			return;
 		}
-		ChatPreferencesStore.save(body);
+		String chatId = req.getParameter("chatId");
+		ChatPreferencesStore.save(chatId, body);
 		resp.setStatus(HttpServletResponse.SC_OK);
 		resp.setContentType(CONTENT_TYPE_JSON);
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
-		resp.getWriter().write(DtoMapper.toJson(ChatPreferencesStore.load()));
+		resp.getWriter().write(DtoMapper.toJson(ChatPreferencesStore.load(chatId)));
 	}
 
 	private static String blankToNull(String value) {

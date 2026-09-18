@@ -25,7 +25,14 @@ import type { ComposerApi, PaneOpenOptions } from './extensions'
 import type { ReferenceToken } from './reference'
 import { bundle, providerErrorText, toLanguage, type Language } from './i18n'
 import { effortLevelsOf, modelsFor } from './models'
-import { parsePreferences, sameLayout, savePreferences, type ChatPreferences } from './preferences'
+import {
+  collapsedSections,
+  configuredPaneWidth,
+  parsePreferences,
+  sameLayout,
+  savePreferences,
+  type ChatPreferences,
+} from './preferences'
 import { parseTasksJson, type AgentTask } from './progress-model'
 import { chatReducer, type ChatAction } from './reducer'
 import { composeOutboundText } from './send-prefix'
@@ -139,9 +146,19 @@ export interface ChatBootstrap {
   language: Language
   /** The element's configured default; the user's own stored pick wins over it. */
   traceMode: TraceMode
-  railOpen: boolean
+  /** The `chat-id` the layout is stored under, which is not the store's own key - see `layoutKey`. */
+  layoutKey: string
+  /** Whether the user decided the rail is open; `null` leaves {@link railOpenDefault} in force. */
+  railOpen: boolean | null
+  /** What the element configures, for a user who has never toggled the rail. */
+  railOpenDefault: boolean
+  /** The width the user dragged the pane to; 0 while they never did. */
   paneWidth: number
+  /** The width the element configures, for a user who has never dragged the splitter. */
+  paneWidthDefault: number
   badgeSeen: number
+  /** Per section name, whether the user left it open. A section never toggled is absent. */
+  sectionChoices: Record<string, boolean>
   /**
    * Section ids that start collapsed. Omitted keeps today's App default ({@code context} closed).
    * Set by {@code <chat-rail/>} from each section's {@code open} flag (D3).
@@ -160,9 +177,14 @@ export function readBootstrap(state: Record<string, unknown>): ChatBootstrap {
     // The chat speaks the language the rest of the application speaks: the user's own locale.
     language: toLanguage(state.language),
     traceMode: parseTraceMode(state.traceMode),
+    layoutKey: typeof state.layoutKey === 'string' ? state.layoutKey : '',
     railOpen: prefs.railOpen,
+    // `<chat-rail open>`; every other element leaves the rail closed for a user who never opened it.
+    railOpenDefault: state.open === true,
     paneWidth: prefs.paneWidth,
+    paneWidthDefault: configuredPaneWidth(state),
     badgeSeen: prefs.badgeSeen,
+    sectionChoices: prefs.sections,
     collapsedSections: Array.isArray(state.collapsedSections)
       ? state.collapsedSections.map((id) => String(id))
       : undefined,
@@ -262,11 +284,22 @@ export interface ChatState {
 
   // Layout preferences.
   sideOpen: boolean
+  /**
+   * Whether {@link sideOpen} is the user's own decision.
+   *
+   * While it is not, the rail follows what the element configured and nothing is stored for it - so
+   * a rail configured open still opens in a new tab, and one the user closed stays closed.
+   */
+  railDecided: boolean
+  /** The pane width in force: what the user dragged to, else what the element configured. */
   paneWidth: number
   badgeSeen: number
   paneContent: ReactNode
   paneOptions: PaneOpenOptions | null
+  /** The sections showing as collapsed: the configured defaults, overruled per name by the user. */
   collapsedSections: string[]
+  /** Per section name, whether the user left it open. A section never toggled is absent. */
+  sectionChoices: Record<string, boolean>
 }
 
 /** What a send needs from the element that triggered it. */
@@ -314,19 +347,19 @@ export interface ChatActions {
   setPaneWidth(width: number): void
   toggleSection(id: string): void
   /**
-   * Applies the rail element's configured default once. Later mounts, and {@code App}, leave the
-   * user's toggles alone.
-   */
-  seedCollapsedOnce(ids: string[]): void
-  /**
-   * Applies the rail element's configured {@code open} default once per page load, the way
-   * {@link seedCollapsedOnce} applies its collapsed default.
+   * States which sections the rail element configures as collapsed.
    *
-   * The stored preference is what {@code App} boots from; a composed rail states its first-load
-   * state in the view instead, because a rail whose stored default is "closed" would show a
-   * standalone page nothing at all.
+   * Applied per section name and only where the user has decided nothing, so it is idempotent: a
+   * remount re-states the same defaults and leaves every section the user toggled alone.
    */
-  seedRailOpenOnce(open: boolean): void
+  applyCollapsedDefaults(ids: string[]): void
+  /**
+   * States the rail element's configured {@code open} flag.
+   *
+   * A user who has never toggled the rail gets it; one who has keeps their own choice, in this tab
+   * and in the next one. Idempotent, for the same reason as {@link applyCollapsedDefaults}.
+   */
+  applyRailDefault(open: boolean): void
   /** Publishes the sum of the rail's section badges; see {@link ChatState.badgeTotal}. */
   publishBadgeTotal(total: number): void
   /**
@@ -429,11 +462,14 @@ export class ChatStore {
   /** Whether the remembered chat has been dealt with; restoring happens once per store. */
   private restored = false
 
-  /** Whether {@code <chat-rail/>} has already applied its configured collapsed default (D3). */
-  private collapsedFromRail = false
+  /** The configured collapsed sections, so a later choice can still be resolved against them. */
+  private collapsedDefaults: string[]
 
-  /** Whether {@code <chat-rail/>} has already applied its configured open default. */
-  private railOpenFromRail = false
+  /** The width the element configures, kept apart from the width the user dragged to. */
+  private readonly paneWidthDefault: number
+
+  /** The `chat-id` the layout is stored under; the store's own key may be a control id. */
+  private readonly layoutKey: string
 
   /** How many {@code <chat-rail/>} elements on this `chat-id` are mounted. */
   private rails = 0
@@ -445,6 +481,20 @@ export class ChatStore {
    * booted from a stale control state, would overwrite the user's real choice.
    */
   private storedLayout: ChatPreferences
+
+  /** What the user decided per fact, which is what is stored - never what the page happens to show. */
+  private get layout(): ChatPreferences {
+    const { railDecided, sideOpen, badgeSeen, sectionChoices } = this.state
+    return {
+      railOpen: railDecided ? sideOpen : null,
+      paneWidth: this.paneWidthStored,
+      badgeSeen,
+      sections: sectionChoices,
+    }
+  }
+
+  /** The width the user dragged the pane to; 0 while they never did. */
+  private paneWidthStored: number
 
   private composerApi: ComposerApi | null = null
 
@@ -466,7 +516,16 @@ export class ChatStore {
   constructor(chatId: string, boot: ChatBootstrap) {
     this.chatId = chatId
     this.remembered = readActiveSession()
-    this.storedLayout = { railOpen: boot.railOpen, paneWidth: boot.paneWidth, badgeSeen: boot.badgeSeen }
+    this.layoutKey = boot.layoutKey
+    this.paneWidthDefault = boot.paneWidthDefault
+    this.paneWidthStored = boot.paneWidth
+    this.collapsedDefaults = boot.collapsedSections ?? ['context']
+    this.storedLayout = {
+      railOpen: boot.railOpen,
+      paneWidth: boot.paneWidth,
+      badgeSeen: boot.badgeSeen,
+      sections: boot.sectionChoices,
+    }
     this.snapshot = this.derive({
       windowId: boot.windowId,
       authenticated: boot.authenticated,
@@ -501,12 +560,16 @@ export class ChatStore {
       notice: '',
       noticeDetail: '',
       noticeTone: 'warn',
-      sideOpen: boot.railOpen,
-      paneWidth: boot.paneWidth,
+      // The user's own decision, else what the element configured. The one is stored, the other is
+      // not - which is the whole of the precedence rule (#423).
+      sideOpen: boot.railOpen ?? boot.railOpenDefault,
+      railDecided: boot.railOpen !== null,
+      paneWidth: boot.paneWidth > 0 ? boot.paneWidth : boot.paneWidthDefault,
       badgeSeen: boot.badgeSeen,
       paneContent: null,
       paneOptions: null,
-      collapsedSections: boot.collapsedSections ?? ['context'],
+      collapsedSections: collapsedSections(this.collapsedDefaults, boot.sectionChoices),
+      sectionChoices: boot.sectionChoices,
       railMounted: false,
       badgeTotal: 0,
     })
@@ -639,17 +702,25 @@ export class ChatStore {
       // The layout preferences, written by the store and by nothing else: one writer per chat, so
       // several elements showing one chat cannot race on the PersonalConfiguration key.
       {
-        deps: (s) => [s.authenticated, s.windowId, s.sideOpen, s.paneWidth, s.badgeSeen],
+        deps: (s) => [
+          s.authenticated,
+          s.windowId,
+          s.railDecided,
+          s.sideOpen,
+          s.paneWidth,
+          s.badgeSeen,
+          s.sectionChoices,
+        ],
         run: () => {
-          const { authenticated, windowId, sideOpen, paneWidth, badgeSeen } = this.state
+          const { authenticated, windowId } = this.state
           if (!authenticated || !windowId) return
-          const next: ChatPreferences = { railOpen: sideOpen, paneWidth, badgeSeen }
+          const next = this.layout
           // What the page booted with is what the server already holds. Writing it back would make
           // every reload store the layout the page happened to start with, which is how the stored
           // choice used to be lost (#423).
           if (sameLayout(next, this.storedLayout)) return
           this.storedLayout = next
-          void savePreferences(windowId, next)
+          void savePreferences(windowId, this.layoutKey, next)
         },
       },
       {
@@ -1579,19 +1650,22 @@ export class ChatStore {
       loadSubagentTranscript: (id: string) => loadSubagentTranscript(this.state.windowId, id),
 
       openPane: (content: ReactNode, options: PaneOpenOptions) => {
-        this.patch({ paneContent: content, paneOptions: options, sideOpen: true })
+        // Opening a pane opens the side, and that is the user opening it: a reload shows what they
+        // were looking at rather than the element's default.
+        this.patch({ paneContent: content, paneOptions: options, sideOpen: true, railDecided: true })
       },
 
       closePane: () => this.patch({ paneContent: null, paneOptions: null }),
 
-      closeSide: () => this.patch({ paneContent: null, paneOptions: null, sideOpen: false }),
+      closeSide: () =>
+        this.patch({ paneContent: null, paneOptions: null, sideOpen: false, railDecided: true }),
 
       toggleSide: (badgeTotal: number) => {
         if (this.state.sideOpen) {
-          this.patch({ paneContent: null, paneOptions: null, sideOpen: false })
+          this.patch({ paneContent: null, paneOptions: null, sideOpen: false, railDecided: true })
           return
         }
-        this.patch({ sideOpen: true, badgeSeen: badgeTotal })
+        this.patch({ sideOpen: true, railDecided: true, badgeSeen: badgeTotal })
       },
 
       showSection: (id: string, badgeTotal: number) => {
@@ -1599,31 +1673,35 @@ export class ChatStore {
           paneContent: null,
           paneOptions: null,
           sideOpen: true,
+          railDecided: true,
           badgeSeen: badgeTotal,
           collapsedSections: this.state.collapsedSections.filter((item) => item !== id),
+          sectionChoices: { ...this.state.sectionChoices, [id]: true },
         })
       },
 
-      setPaneWidth: (width: number) => this.patch({ paneWidth: width }),
+      setPaneWidth: (width: number) => {
+        // Dragging back to nothing is not a width the user chose: the configured one applies again.
+        this.paneWidthStored = width > 0 ? width : 0
+        this.patch({ paneWidth: width > 0 ? width : this.paneWidthDefault })
+      },
 
       toggleSection: (id: string) => {
         const collapsed = this.state.collapsedSections
+        const open = collapsed.includes(id)
         this.patch({
-          collapsedSections: collapsed.includes(id)
-            ? collapsed.filter((item) => item !== id)
-            : [...collapsed, id],
+          collapsedSections: open ? collapsed.filter((item) => item !== id) : [...collapsed, id],
+          sectionChoices: { ...this.state.sectionChoices, [id]: open },
         })
       },
 
-      seedCollapsedOnce: (ids: string[]) => {
-        if (this.collapsedFromRail) return
-        this.collapsedFromRail = true
-        this.patch({ collapsedSections: ids })
+      applyCollapsedDefaults: (ids: string[]) => {
+        this.collapsedDefaults = ids
+        this.patch({ collapsedSections: collapsedSections(ids, this.state.sectionChoices) })
       },
 
-      seedRailOpenOnce: (open: boolean) => {
-        if (this.railOpenFromRail) return
-        this.railOpenFromRail = true
+      applyRailDefault: (open: boolean) => {
+        if (this.state.railDecided) return
         this.patch({ sideOpen: open })
       },
 

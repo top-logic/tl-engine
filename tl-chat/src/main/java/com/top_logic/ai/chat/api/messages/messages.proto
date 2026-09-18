@@ -909,16 +909,35 @@ message MessageCompleteEvent {
 	repeated CitationDto citations;
 }
 
-/** Per-user layout of the right rail and artefact pane. */
+/**
+ * Per-user layout of the right rail and artefact pane, for one chat.
+ *
+ * <p>
+ * This is what the user decided, not what the page currently shows. A fact the user never touched
+ * is absent, and the element's configured default applies to it - so a rail configured
+ * <code>open="true"</code> opens for a new user and stays closed for one who closed it (#423).
+ * </p>
+ */
 message ChatPreferencesDto {
-	/** Whether the right rail is open. */
+	/** Whether the right rail is open, or null while the user has not decided. */
+	@Nullable
 	bool railOpen;
 
-	/** Width of the artefact pane in pixels; 0 means the default. */
+	/** Width of the artefact pane in pixels; 0 means the configured or built-in default. */
 	int paneWidth;
 
 	/** Sum of section badges last stored when the rail was opened. */
 	int badgeSeen;
+
+	/**
+	 * Per section name, whether the user left that section open.
+	 *
+	 * <p>
+	 * A section the user never toggled is absent and follows the <code>open</code> flag its
+	 * configuration gives it.
+	 * </p>
+	 */
+	map<string, bool> sections;
 }
 
 /** Token usage breakdown. */

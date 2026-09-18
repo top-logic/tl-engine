@@ -66,9 +66,13 @@ const BOOT: ChatBootstrap = {
   welcomeName: 'Sandra',
   language: 'de',
   traceMode: 'summary',
-  railOpen: false,
+  layoutKey: '',
+  railOpen: null,
+  railOpenDefault: false,
   paneWidth: 0,
+  paneWidthDefault: 0,
   badgeSeen: 0,
+  sectionChoices: {},
 }
 
 /** Lets every scheduled microtask and the pending `await`s of the bootstrap run. */
@@ -496,7 +500,13 @@ describe('the layout preferences', () => {
     await settle()
 
     expect(preferenceWrites).toHaveLength(1)
-    expect(preferenceWrites[0]).toEqual({ railOpen: true, paneWidth: 0, badgeSeen: 4 })
+    expect(preferenceWrites[0]).toEqual({
+      railOpen: true,
+      paneWidth: 0,
+      badgeSeen: 4,
+      // Opening the rail on a section expands that section, and that is a decision too.
+      sections: { progress: true },
+    })
 
     release()
   })
@@ -644,22 +654,79 @@ describe('a mounted rail', () => {
   })
 
   /**
-   * The rail states its own first-load state, because the stored preference defaults to "closed"
-   * and a standalone rail would then show a page nothing at all.
+   * The rail states its own default, because a rail nobody has ever opened would otherwise show a
+   * standalone page nothing at all. Only the user's own toggle overrules it - and then for good.
    */
-  it('applies the configured open default once', () => {
+  it('applies the configured open default until the user decides', () => {
     const store = chatStore('alpha', BOOT)
     const release = store.subscribe(() => undefined)
     expect(store.getState().sideOpen).toBe(false)
 
-    store.actions.seedRailOpenOnce(true)
+    store.actions.applyRailDefault(true)
     expect(store.getState().sideOpen).toBe(true)
 
-    // The user's own toggle wins: a second seed - a remount, or a second rail - leaves it alone.
+    // The user's own toggle wins: a remount, or a second rail, re-states the default and is ignored.
     store.actions.toggleSide(0)
     expect(store.getState().sideOpen).toBe(false)
-    store.actions.seedRailOpenOnce(true)
+    store.actions.applyRailDefault(true)
     expect(store.getState().sideOpen).toBe(false)
+
+    release()
+  })
+
+  /** A rail the user closed stays closed on the next page load, configured default or not. */
+  it('lets the stored rail state overrule the configured default', () => {
+    const store = chatStore('alpha', { ...BOOT, railOpen: false, railOpenDefault: true })
+    const release = store.subscribe(() => undefined)
+
+    expect(store.getState().sideOpen).toBe(false)
+    store.actions.applyRailDefault(true)
+    expect(store.getState().sideOpen).toBe(false)
+
+    release()
+  })
+
+  /**
+   * Collapsing is remembered per section name.
+   *
+   * A section the user never touched follows its configured `open` flag, so adding a section to a
+   * rail gives it its configured state even for a user who arranged the others long ago.
+   */
+  it('lets a stored section choice overrule the configured default, per name', () => {
+    const store = chatStore('alpha', {
+      ...BOOT,
+      collapsedSections: ['context'],
+      sectionChoices: { context: true, progress: false },
+    })
+    const release = store.subscribe(() => undefined)
+
+    // context: configured collapsed, expanded by the user. progress: configured open, collapsed.
+    expect(store.getState().collapsedSections).toEqual(['progress'])
+
+    // A rail re-stating its defaults changes nothing the user decided, and adds what is new.
+    store.actions.applyCollapsedDefaults(['context', 'sources'])
+    expect(new Set(store.getState().collapsedSections)).toEqual(new Set(['sources', 'progress']))
+
+    release()
+  })
+
+  /** Toggling a section is a decision, and decisions are what gets stored. */
+  it('records a section toggle as the user choice', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+
+    store.actions.toggleSection('progress')
+    await settle()
+
+    expect(store.getState().collapsedSections).toContain('progress')
+    expect(preferenceWrites).toHaveLength(1)
+    expect(preferenceWrites[0]).toEqual({
+      paneWidth: 0,
+      badgeSeen: 0,
+      sections: { progress: false },
+    })
 
     release()
   })
@@ -693,6 +760,7 @@ describe('the bootstrap', () => {
         railOpen: true,
         paneWidth: 480,
         badgeSeen: 3,
+        sectionChoices: { progress: false },
       }),
     ).toEqual({
       windowId: 'w9',
@@ -701,9 +769,14 @@ describe('the bootstrap', () => {
       welcomeName: 'Sandra',
       language: 'de',
       traceMode: 'detailed',
+      layoutKey: '',
       railOpen: true,
+      railOpenDefault: false,
       paneWidth: 480,
+      paneWidthDefault: 0,
       badgeSeen: 3,
+      sectionChoices: { progress: false },
+      collapsedSections: undefined,
     })
   })
 
@@ -715,15 +788,25 @@ describe('the bootstrap', () => {
       welcomeName: '',
       language: 'en',
       traceMode: 'summary',
-      railOpen: false,
+      layoutKey: '',
+      railOpen: null,
+      railOpenDefault: false,
       paneWidth: 0,
+      paneWidthDefault: 0,
       badgeSeen: 0,
+      sectionChoices: {},
+      collapsedSections: undefined,
     })
   })
 
   /** The element's configured default is what a user who never chose starts with. */
   it('seeds the chat with the configured trace mode and the stored layout', () => {
-    const store = chatStore('alpha', { ...BOOT, traceMode: 'detailed', railOpen: true, paneWidth: 480 })
+    const store = chatStore('alpha', {
+      ...BOOT,
+      traceMode: 'detailed',
+      railOpen: true,
+      paneWidth: 480,
+    })
     const release = store.subscribe(() => undefined)
 
     expect(store.getState().traceMode).toBe('detailed')

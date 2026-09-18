@@ -28,8 +28,8 @@
 	from. Both start buttons take the job channel as their input and are disabled while a job runs.
 	
 	The bar at the bottom is a standalone <progress> whose fraction answers nothing at all: the
-	indeterminate display of the same bar, without any job behind it. It carries no label of its
-	own - the text above it says what it shows.
+	indeterminate display of the same bar, without any job behind it. Its label is an
+	internationalized literal, which the bar displays as the text it stands for.
 -->
 <view>
 	<channels>
@@ -177,6 +177,9 @@
 			</label>
 		</text>
 
-		<progress fraction="x -> null"/>
+		<progress
+			fraction="x -> null"
+			label="x -> #('Working…'@en, 'In Arbeit…'@de)"
+		/>
 	</panel>
 </view>

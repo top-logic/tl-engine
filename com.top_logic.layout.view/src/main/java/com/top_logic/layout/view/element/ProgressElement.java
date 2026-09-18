@@ -275,7 +275,7 @@ public class ProgressElement implements UIElement {
 	 * @return The fraction and the label of the bar.
 	 */
 	public Progress progressOf(Object input) {
-		String label = _label == null ? null : text(_label.execute(input));
+		String label = _label == null ? null : ValueLabel.label(_label.execute(input));
 		if (_fraction != null) {
 			return new Progress(fraction(_fraction.execute(input)), label);
 		}
@@ -318,13 +318,6 @@ public class ProgressElement implements UIElement {
 	 */
 	private static double number(Object value) {
 		return value instanceof Number number ? number.doubleValue() : 0d;
-	}
-
-	/**
-	 * The given expression result as the text it contributes, {@code null} for no result at all.
-	 */
-	private static String text(Object value) {
-		return value == null ? null : value.toString();
 	}
 
 	/**

@@ -31,7 +31,6 @@ import com.top_logic.layout.view.job.JobPhase;
 import com.top_logic.layout.view.job.JobState;
 import com.top_logic.layout.view.job.JobStatus;
 import com.top_logic.layout.view.job.PhaseStatus;
-import com.top_logic.util.Resources;
 
 /**
  * {@link UIElement} displaying the long-running job its {@link Config#getInput() input} channel
@@ -124,16 +123,15 @@ public class JobStatusElement implements UIElement {
 		if (!(value instanceof JobState state)) {
 			return null;
 		}
-		Resources resources = Resources.getInstance();
 		List<JobPhase> phases = state.phases();
 		List<JobDisplay.Phase> displayed = new ArrayList<>(phases.size());
 		for (int n = 0, size = phases.size(); n < size; n++) {
-			displayed.add(new JobDisplay.Phase(resources.getString(phases.get(n).label()),
+			displayed.add(new JobDisplay.Phase(ValueLabel.label(phases.get(n).label()),
 				phaseState(state.phaseStatus(n))));
 		}
 		return new JobDisplay(status(state.status()), displayed, state.fraction(),
-			text(resources, state.message()), state.startedAt(), state.finishedAt(),
-			label(state.result()), text(resources, state.error()),
+			ValueLabel.label(state.message()), state.startedAt(), state.finishedAt(),
+			ValueLabel.label(state.result()), ValueLabel.label(state.error()),
 			state.isCancelable() ? state.control()::cancel : null);
 	}
 
@@ -158,20 +156,6 @@ public class JobStatusElement implements UIElement {
 			case ACTIVE -> JobDisplay.PhaseState.ACTIVE;
 			case PENDING -> JobDisplay.PhaseState.PENDING;
 		};
-	}
-
-	/**
-	 * The given key as the text the reader sees, {@code null} for no key at all.
-	 */
-	private static String text(Resources resources, ResKey key) {
-		return key == null ? null : resources.getString(key);
-	}
-
-	/**
-	 * The given result as the text naming it, {@code null} for no result at all.
-	 */
-	private static String label(Object result) {
-		return result == null ? null : MetaLabelProvider.INSTANCE.getLabel(result);
 	}
 
 }

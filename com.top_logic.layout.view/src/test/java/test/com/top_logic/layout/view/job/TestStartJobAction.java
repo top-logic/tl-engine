@@ -18,7 +18,6 @@ import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.AbortExecutionException;
-import com.top_logic.basic.config.AbstractConfigurationValueProvider;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -43,7 +42,7 @@ import com.top_logic.layout.view.job.StartJobAction;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.util.error.TopLogicException;
@@ -350,6 +349,72 @@ public class TestStartJobAction extends AbstractJobTest {
 	}
 
 	/**
+	 * Tests that cancelling a job whose work is a script ends it as cancelled: the abort reaches the
+	 * outside as the failure of the expression it was raised in, and the request to stop decides how
+	 * the job ended all the same.
+	 */
+	public void testCancellingAScriptJobEndsItAsCancelled() throws Exception {
+		run(List.of(compensate("read"),
+			job(new ScriptJobBody(compile("job -> x -> { sleep(10000); $job.jobProgress(1, 2); 'done' }")),
+				true, List.of()),
+			record("after")));
+
+		assertEquals("The channel holds the running script job.", JobStatus.RUNNING, current().status());
+		current().control().cancel();
+
+		JobState last = awaitFinished();
+
+		assertEquals(JobStatus.CANCELLED, last.status());
+		assertNull("A cancelled job ends without a failure to report.", last.error());
+		assertEquals("The work that waited for the job is abandoned.", List.of("read compensated"), _log);
+		assertEquals(Collections.singletonList(null), _completions);
+	}
+
+	/**
+	 * Tests that a body wrapping the abort into a failure of its own ends the job as cancelled, so
+	 * that what a body does on its way out does not turn a stopped job into a failed one.
+	 */
+	public void testABodyWrappingTheAbortEndsAsCancelled() throws Exception {
+		CountDownLatch started = new CountDownLatch(1);
+		CountDownLatch cancelled = new CountDownLatch(1);
+		start(body((job, arguments) -> {
+			started.countDown();
+			awaitQuietly(cancelled);
+			try {
+				job.checkCancelled();
+				return "done";
+			} catch (AbortExecutionException ex) {
+				throw new IllegalStateException("The import was rolled back.", ex);
+			}
+		}), true, List.of());
+
+		assertTrue(started.await(TIMEOUT, TimeUnit.MILLISECONDS));
+		current().control().cancel();
+		cancelled.countDown();
+
+		JobState last = awaitFinished();
+
+		assertEquals(JobStatus.CANCELLED, last.status());
+		assertNull("A cancelled job ends without a failure to report.", last.error());
+	}
+
+	/**
+	 * Tests that a body abandoning its work on its own ends the job as cancelled, wherever in the
+	 * chain of causes it says so.
+	 */
+	public void testABodyThatAbandonsItsWorkEndsAsCancelled() throws Exception {
+		start(body((job, arguments) -> {
+			throw new IllegalStateException("The import was rolled back.",
+				new AbortExecutionException("There is nothing to import.", null));
+		}), false, List.of());
+
+		JobState last = awaitFinished();
+
+		assertEquals(JobStatus.CANCELLED, last.status());
+		assertNull("Abandoned work is no failure to report.", last.error());
+	}
+
+	/**
 	 * Tests that the next report of a cancelled job ends it, so a body that reports regularly needs
 	 * no check of its own.
 	 */
@@ -463,13 +528,6 @@ public class TestStartJobAction extends AbstractJobTest {
 		config.update(property, value);
 	}
 
-	/** The given TL-Script source as the configuration reads it. */
-	private static Expr expr(String source) throws ConfigurationException {
-		AbstractConfigurationValueProvider<Expr> format =
-			com.top_logic.model.search.expr.config.ExprFormat.INSTANCE;
-		return format.getValue("expr", source);
-	}
-
 	/** The step the job was in, in the order the states were published. */
 	private List<Object> currentPhases() {
 		List<Object> result = new ArrayList<>();
@@ -533,11 +591,12 @@ public class TestStartJobAction extends AbstractJobTest {
 	}
 
 	/**
-	 * Test suite requiring the {@link TypeIndex} and the {@link SchedulerService} the job runs on.
+	 * Test suite requiring the {@link TypeIndex}, the {@link SchedulerService} the job runs on and
+	 * the {@link SearchBuilder} a script body is compiled with.
 	 */
 	public static Test suite() {
 		return ModuleTestSetup.setupModule(
 			ServiceTestSetup.createSetup(TestStartJobAction.class, TypeIndex.Module.INSTANCE,
-				SchedulerService.Module.INSTANCE));
+				SchedulerService.Module.INSTANCE, SearchBuilder.Module.INSTANCE));
 	}
 }

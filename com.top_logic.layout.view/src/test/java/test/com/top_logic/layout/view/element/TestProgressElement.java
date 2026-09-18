@@ -11,6 +11,7 @@ import java.util.Map;
 import junit.framework.Test;
 import junit.framework.TestCase;
 
+import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.AbortExecutionException;
@@ -20,6 +21,9 @@ import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.control.common.ReactProgressControl;
@@ -129,6 +133,25 @@ public class TestProgressElement extends TestCase {
 		assertEquals("almost there", ProgressElement.counted(3, 7, "almost there").label());
 	}
 
+	/**
+	 * Tests that an internationalized label is displayed as the text it stands for, not as the
+	 * literal a script writes it as.
+	 */
+	public void testAnInternationalizedLabelIsResolved() {
+		ProgressElement element = new ProgressElement(null, constant(Double.valueOf(0.5)), null, null,
+			constant(ResKey.text("Working")), List.of());
+
+		assertEquals("Working", element.progressOf(null).label());
+	}
+
+	/** A label that is a text already is displayed as it is written. */
+	public void testATextLabelIsDisplayedAsItIs() {
+		ProgressElement element = new ProgressElement(null, constant(Double.valueOf(0.5)), null, null,
+			constant("3 of 7 files"), List.of());
+
+		assertEquals("3 of 7 files", element.progressOf(null).label());
+	}
+
 	/** Stating the fraction and the counts it would be the ratio of states it twice. */
 	public void testStatingBothFormsIsAConfigurationError() {
 		assertRejected(
@@ -194,6 +217,36 @@ public class TestProgressElement extends TestCase {
 		return fraction == null ? null : Double.valueOf(((Number) fraction).doubleValue());
 	}
 
+	/** An expression answering the given value, whatever it is called with. */
+	private static QueryExecutor constant(Object value) {
+		return new QueryExecutor() {
+			@Override
+			protected Object internalExecuteWith(EvalContext definitions, Args args) {
+				return value;
+			}
+
+			@Override
+			public SearchExpression getSearch() {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			protected KnowledgeBase getKnowledgeBase() {
+				return null;
+			}
+
+			@Override
+			protected TLModel getTLModel() {
+				return null;
+			}
+
+			@Override
+			protected void internalDisableSecurity() {
+				// Nothing to switch off, the expression accesses no data.
+			}
+		};
+	}
+
 	/** An expression answering the value it is called with. */
 	private static QueryExecutor self() {
 		return new QueryExecutor() {
@@ -233,9 +286,14 @@ public class TestProgressElement extends TestCase {
 		}
 	}
 
-	/** Suite requiring the {@link TypeIndex} the TL-Script compiler resolves against. */
+	/**
+	 * Suite requiring the {@link TypeIndex} the TL-Script compiler resolves against and the resource
+	 * bundles a label is resolved with.
+	 */
 	public static Test suite() {
-		return ServiceTestSetup.createSetup(TestProgressElement.class, TypeIndex.Module.INSTANCE);
+		return ModuleTestSetup.setupModule(
+			ServiceTestSetup.createSetup(TestProgressElement.class, TypeIndex.Module.INSTANCE,
+				ThreadContextManager.Module.INSTANCE, ResourcesModule.Module.INSTANCE));
 	}
 
 }

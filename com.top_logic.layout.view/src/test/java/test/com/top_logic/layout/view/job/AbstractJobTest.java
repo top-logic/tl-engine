@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 import junit.framework.TestCase;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
@@ -30,6 +31,12 @@ import com.top_logic.layout.view.job.JobPhase;
 import com.top_logic.layout.view.job.JobState;
 import com.top_logic.layout.view.job.StartJobAction;
 import com.top_logic.model.listen.ModelScope;
+import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.config.ExprFormat;
+import com.top_logic.model.search.expr.config.SearchBuilder;
+import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.interpreter.DefResolver;
+import com.top_logic.model.search.expr.query.QueryExecutor;
 
 /**
  * What a test of a long-running job needs: a view that is not displayed in a window, the channel
@@ -127,6 +134,34 @@ public abstract class AbstractJobTest extends TestCase {
 			_completions.add(value);
 			_settled.countDown();
 		});
+	}
+
+	/**
+	 * The given TL-Script source, compiled for interpretation without an application model and
+	 * without a knowledge base, which a script about a job touches neither of.
+	 *
+	 * <p>
+	 * Only the variables are resolved; the types of the expressions are not, because that
+	 * resolution looks the primitive types up in the model of a running application.
+	 * </p>
+	 *
+	 * @param source
+	 *        The script to compile.
+	 * @return The compiled script, ready to be run as the body of a job.
+	 */
+	protected static QueryExecutor compile(String source) {
+		SearchExpression search = SearchBuilder.toSearchExpression(null, expr(source));
+		search.visit(new DefResolver(), null);
+		return QueryExecutor.executor(null, null, search);
+	}
+
+	/** The given TL-Script source as the configuration reads it. */
+	protected static Expr expr(String source) {
+		try {
+			return ExprFormat.INSTANCE.getValue("expr", source);
+		} catch (ConfigurationException ex) {
+			throw new AssertionError("Not a TL-Script expression: " + source, ex);
+		}
 	}
 
 	/** The given work, written where the compiler sees which interface it implements. */

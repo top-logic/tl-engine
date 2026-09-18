@@ -178,6 +178,21 @@ public class JobRunner implements JobControl, JobMonitor {
 	 * Runs the body and ends the job with what it produced.
 	 *
 	 * <p>
+	 * A job that was asked to stop ends as cancelled, on both ways out of the body: the request to
+	 * stop decides how the job ended, whatever the body does on its way out. A body that is woken
+	 * from what it waits for reaches the outside in whatever shape the layer it was stopped in gives
+	 * it - an interrupted read as the I/O failure it raises, an abort of a script as the failure of
+	 * the expression it was raised in - and none of these shapes is a failure the reader is to be
+	 * told about.
+	 * </p>
+	 *
+	 * <p>
+	 * A body that abandons its work on its own - raising an {@link AbortExecutionException}, or
+	 * being interrupted by something other than this job - ends the job as cancelled as well; that
+	 * is what such a failure says, wherever in the chain of causes it appears.
+	 * </p>
+	 *
+	 * <p>
 	 * How the body ended is decided first and the job is ended afterwards, outside the catch: what
 	 * ending the job sets off - the last snapshot, and the work waiting for the job taken up again
 	 * - is no longer the body's doing, and a failure of that work must not be read as a failure of
@@ -196,18 +211,41 @@ public class JobRunner implements JobControl, JobMonitor {
 				status = JobStatus.COMPLETED;
 				result = produced;
 			}
-		} catch (AbortExecutionException | InterruptedException ex) {
-			status = JobStatus.CANCELLED;
-		} catch (I18NRuntimeException ex) {
-			status = JobStatus.FAILED;
-			error = ex.getErrorKey();
 		} catch (Throwable ex) {
-			Logger.error("Background job failed.", ex, JobRunner.class);
-			String message = ex.getMessage() == null ? ex.getClass().getName() : ex.getMessage();
-			status = JobStatus.FAILED;
-			error = I18NConstants.ERROR_JOB_FAILED__MESSAGE.fill(message);
+			if (_cancelled || isAbort(ex)) {
+				status = JobStatus.CANCELLED;
+			} else if (ex instanceof I18NRuntimeException failure) {
+				status = JobStatus.FAILED;
+				error = failure.getErrorKey();
+			} else {
+				Logger.error("Background job failed.", ex, JobRunner.class);
+				String message = ex.getMessage() == null ? ex.getClass().getName() : ex.getMessage();
+				status = JobStatus.FAILED;
+				error = I18NConstants.ERROR_JOB_FAILED__MESSAGE.fill(message);
+			}
 		}
 		finish(status, result, error);
+	}
+
+	/**
+	 * Whether the given failure says that the work was abandoned rather than that it failed.
+	 *
+	 * @param failure
+	 *        What the body threw.
+	 * @return Whether an {@link AbortExecutionException} or an {@link InterruptedException} stands
+	 *         anywhere in the chain of causes, which is where it ends up once a layer above wraps
+	 *         it into a failure of its own.
+	 */
+	private static boolean isAbort(Throwable failure) {
+		for (Throwable cause = failure; cause != null; cause = cause.getCause()) {
+			if (cause instanceof AbortExecutionException || cause instanceof InterruptedException) {
+				return true;
+			}
+			if (cause.getCause() == cause) {
+				return false;
+			}
+		}
+		return false;
 	}
 
 	@Override

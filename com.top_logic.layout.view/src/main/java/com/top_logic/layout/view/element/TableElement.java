@@ -61,6 +61,7 @@ import com.top_logic.layout.view.form.RowSetBinding;
 import com.top_logic.layout.view.form.RowSetTableControl;
 import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.layout.view.model.RowSourceObserver;
+import com.top_logic.layout.view.model.TableFilterBinding;
 import com.top_logic.layout.view.model.TableSelectionBinding;
 import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
@@ -182,6 +183,12 @@ public class TableElement implements UIElement {
 
 		/** Configuration name for {@link #getPresets()}. */
 		String PRESETS = "presets";
+
+		/** Configuration name for {@link #getActivePreset()}. */
+		String ACTIVE_PRESET = "active-preset";
+
+		/** Configuration name for {@link #getSearchTerm()}. */
+		String SEARCH_TERM = "search-term";
 
 		/** Configuration name for {@link #getDrag()}. */
 		String DRAG = "drag";
@@ -391,6 +398,56 @@ public class TableElement implements UIElement {
 		PresetsConfig getPresets();
 
 		/**
+		 * Optional {@link ViewChannel} holding the name of the named filter this table is filtered
+		 * by, and nothing while it matches none of them.
+		 *
+		 * <p>
+		 * It carries the name of a {@link PresetConfig preset} as well as the generated name of a
+		 * filter the user saved, and it works in both directions: a name written to it filters the
+		 * table by that filter, and a name nothing carries - a link that has outlived the preset it
+		 * names - leaves the table unfiltered and is corrected to what the table shows.
+		 * </p>
+		 *
+		 * <p>
+		 * A preset says which rows are selected, not what is searched for, so the name stays on the
+		 * channel while the user searches within the preset.
+		 * </p>
+		 *
+		 * <p>
+		 * Bound to a query parameter, this is what makes a filtered table linkable, together with
+		 * the searched text.
+		 * </p>
+		 */
+		@Name(ACTIVE_PRESET)
+		@Format(ChannelRefFormat.class)
+		@Nullable
+		ChannelRef getActivePreset();
+
+		/**
+		 * Optional {@link ViewChannel} holding the text this table searches its displayed columns
+		 * for, and nothing while it searches for none.
+		 *
+		 * <p>
+		 * It works in both directions: what the user types into the search field of the filter bar
+		 * reaches the channel, and a text written to the channel is searched for - so a table
+		 * without a bar of its own can be searched from an input elsewhere.
+		 * </p>
+		 *
+		 * <p>
+		 * The search narrows the rows within whatever the table is filtered by, so a preset the
+		 * table matches goes on being the {@link #getActivePreset() active preset} while the text is
+		 * searched for. Bound to query parameters, the two together are one address: the preset and
+		 * the text the user sees the table under. A filter the user saved while searching is the
+		 * exception - it carries the text it was saved with, and matches only while exactly that
+		 * text is searched for.
+		 * </p>
+		 */
+		@Name(SEARCH_TERM)
+		@Format(ChannelRefFormat.class)
+		@Nullable
+		ChannelRef getSearchTerm();
+
+		/**
 		 * Makes the rows of this table draggable, so they can be dropped on a display that accepts
 		 * their type.
 		 *
@@ -507,12 +564,36 @@ public class TableElement implements UIElement {
 	 */
 	public interface PresetsConfig extends ConfigurationItem {
 
+		/** Configuration name for {@link #getInitial()}. */
+		String INITIAL = "initial";
+
 		/**
 		 * The named filters the table offers, in the order they are displayed in.
 		 */
 		@DefaultContainer
 		@Key(PresetConfig.NAME)
 		List<PresetConfig> getPresets();
+
+		/**
+		 * The {@link PresetConfig#getName() name} of the preset the table is filtered by until the
+		 * user decides about its filtering themselves.
+		 *
+		 * <p>
+		 * This is what a user sees who opens the table for the first time - the open items, their
+		 * own rows - instead of everything the table holds. It is part of the table's initial state,
+		 * like its sort order and its grouping, so it takes effect only as long as no
+		 * personalization of this table exists: a user who applied other criteria keeps them, and
+		 * one who cleared the filter keeps the table unfiltered.
+		 * </p>
+		 *
+		 * <p>
+		 * Unset (default), the table starts out unfiltered. A name none of the declared presets
+		 * carries is a configuration error.
+		 * </p>
+		 */
+		@Name(INITIAL)
+		@Nullable
+		String getInitial();
 	}
 
 	/**
@@ -774,6 +855,9 @@ public class TableElement implements UIElement {
 	/** The compiled {@link Config#getPresets() presets}, in the order they are offered. */
 	private final List<CompiledPreset> _presets;
 
+	/** @see #initialFilter() */
+	private final String _initialFilter;
+
 	/**
 	 * The type tag the rows are dragged under, or {@code null} while the table declares no
 	 * {@link Config#getDrag() drag}.
@@ -873,6 +957,7 @@ public class TableElement implements UIElement {
 		_declaredNames = ColumnDeclarations.declaredNames(_declarations);
 
 		_presets = compilePresets(context, config.getPresets());
+		_initialFilter = initialFilter(context, config.getPresets());
 
 		PolymorphicConfiguration<? extends ViewCommand> onActivate = config.getOnActivate();
 		_onActivateConfig = onActivate instanceof ViewCommand.Config activateConfig ? activateConfig : null;
@@ -1008,6 +1093,46 @@ public class TableElement implements UIElement {
 			criterionConfig.getInverted());
 	}
 
+	/**
+	 * The name of the preset the table starts out filtered by, {@code null} for a table that starts
+	 * out unfiltered.
+	 *
+	 * <p>
+	 * A name none of the declared presets carries is reported: it would leave the table unfiltered
+	 * without anything saying why.
+	 * </p>
+	 */
+	private static String initialFilter(Log log, PresetsConfig presetsConfig) {
+		if (presetsConfig == null) {
+			return null;
+		}
+		String initial = presetsConfig.getInitial();
+		if (StringServices.isEmpty(initial)) {
+			return null;
+		}
+		for (PresetConfig presetConfig : presetsConfig.getPresets()) {
+			if (initial.equals(presetConfig.getName())) {
+				return initial;
+			}
+		}
+		log.error("The '" + PresetsConfig.INITIAL + "' of the <" + Config.PRESETS
+			+ "> of a <table> names no declared preset: '" + initial + "'.");
+		return null;
+	}
+
+	/**
+	 * The preset the table is filtered by until a personalization of its own exists, {@code null}
+	 * for a table that starts out unfiltered.
+	 *
+	 * <p>
+	 * This is what the table's initial state carries, so criteria the user applied - which are
+	 * persisted under the table's identity - win over it, and so does a filter the user cleared.
+	 * </p>
+	 */
+	public String initialFilter() {
+		return _initialFilter;
+	}
+
 	/** How a criterion of a preset is named in a configuration error. */
 	private static String criterion(PresetConfig presetConfig, CriterionConfig criterionConfig) {
 		return "The criterion for the column '" + criterionConfig.getColumn() + "' of the preset '"
@@ -1043,7 +1168,7 @@ public class TableElement implements UIElement {
 		initialState.setSelection(Selection.none(_config.getSelectionMode()));
 		DefaultTableView<Object> view = new DefaultTableView<>(columns, source, initialState,
 			PersonalConfigViewStateStore.INSTANCE, tableId(), hiddenByDefault,
-			declaredFilters(columns, inputValues), filterStore());
+			declaredFilters(columns, inputValues), filterStore(), _initialFilter);
 
 		TableViewControl<Object> control = new TableViewControl<>(context, view, false);
 		applyRowDiagnostics(control, initialRows.securityReport());
@@ -1065,6 +1190,11 @@ public class TableElement implements UIElement {
 			selectionRef != null ? new TableSelectionBinding(control, context.resolveChannel(selectionRef)) : null;
 		if (selectionBinding != null) {
 			control.addCleanupAction(selectionBinding::dispose);
+		}
+
+		TableFilterBinding filterBinding = filterBinding(context, control);
+		if (filterBinding != null) {
+			control.addCleanupAction(filterBinding::dispose);
 		}
 
 		control.setActivationHandler(activationHandler(context, activation));
@@ -1095,6 +1225,29 @@ public class TableElement implements UIElement {
 		control.addDetachListener(observer::detach);
 
 		return control;
+	}
+
+	/**
+	 * Publishes the table's filtering on the configured channels, {@code null} when the table
+	 * configures neither of them.
+	 *
+	 * @param control
+	 *        The control displaying the table.
+	 */
+	private TableFilterBinding filterBinding(ViewContext context, TableViewControl<?> control) {
+		ViewChannel activePreset = channel(context, _config.getActivePreset());
+		ViewChannel searchTerm = channel(context, _config.getSearchTerm());
+		if (activePreset == null && searchTerm == null) {
+			return null;
+		}
+		return new TableFilterBinding(control, activePreset, searchTerm);
+	}
+
+	/**
+	 * The channel the given reference names, {@code null} when the table declares none.
+	 */
+	private static ViewChannel channel(ViewContext context, ChannelRef ref) {
+		return ref == null ? null : context.resolveChannel(ref);
 	}
 
 	/**
@@ -1178,7 +1331,9 @@ public class TableElement implements UIElement {
 		control.setFramed(false);
 		control.setPersonalization(PersonalConfigViewStateStore.INSTANCE, tableId());
 		control.setNamedFilters(columns -> declaredFilters(columns, ChannelInputs.arguments(inputChannels)),
-			filterStore());
+			filterStore(), _initialFilter);
+		control.setFilterChannels(channel(context, _config.getActivePreset()),
+			channel(context, _config.getSearchTerm()));
 		control.setFilterBar(filterBar());
 		control.setDefaultSort(defaultSort());
 		control.setGrouping(initialGrouping());

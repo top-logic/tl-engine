@@ -10,17 +10,33 @@
 	characters cannot break the path. An identifier of a ticket that no longer exists resolves
 	to no object, and the prefix and the segment leave the address bar again.
 	
-	The filter above the list demonstrates the other half of the address bar: <query-bindings>
-	binds the filter channel to the query parameter q, so a filtered list is the link
-	/view/tickets/ticket/<id>?q=<term>, and typing in the filter refines the page instead of
-	navigating to a new one - the address bar follows along, but the back button leaves the
-	page rather than walking the terms typed on it. A link without q says nothing about the
-	filter and shows the list unfiltered.
+	The Open list carries a filter bar and demonstrates the other half of the address bar. It
+	offers three presets as chips, and the one named by initial= filters the list for a user who
+	has not decided about its filtering themselves, so the list opens showing the tickets the
+	logged-in user commented on. The chip the list matches is published on the activeFilter
+	channel and the text it searches its displayed columns for on the searchTerm channel, and
+	<query-bindings> puts the two into the address as filter and q: a list showing a preset is
+	the link /view/tickets/ticket/<id>?filter=discussed, a searched one ?q=<term>, and one that
+	is both is ?filter=discussed&q=<term>; opening such a link brings the list into that
+	state. Both refine the page instead of navigating to a new one - the address bar follows
+	along, but the back button leaves the page rather than walking the chips clicked on it. A
+	link without the parameters says nothing about the filtering and leaves the list as it
+	establishes itself.
+	
+	The two parameters describe the displayed rows together: a chip selects the rows and the
+	search narrows them within that selection, so typing into the search field keeps the chip
+	marked and adds q beside filter. Picking a chip, on the other hand, replaces the whole
+	filtering, the search term included. Saving the current criteria under a name of one's own
+	puts that filter on the bar beside the presets, and it reaches the address exactly like a
+	preset, under the identifier it was given - it carries the text that was searched when it was
+	saved, so it is the marked one only while exactly that text is searched for again.
 	
 	The inputs above the lists show that an input is bound to a channel for a value of any type:
-	the filter term is a tl.core:String and is written in a text field, while the status is an
-	enumeration and is chosen from a dropdown of its classifiers. Either list reads both channels
-	through its <inputs>, so the two inputs narrow both lists together.
+	the search term is a tl.core:String and is written in a text field, while the status is an
+	enumeration and is chosen from a dropdown of its classifiers. The search term is what a table
+	searched from outside looks like - the Open list shows it in the search field of its bar, and
+	the Closed list, which displays no bar at all, is searched by it just the same - and either
+	list reads the status through its <inputs> and narrows its rows by it.
 	
 	The third input demonstrates the submit hook: pressing Enter in "Jump to ticket" writes the
 	entered text to the jump channel and then runs the <on-submit> command over it, which resolves
@@ -31,7 +47,10 @@
 	The two lists split the tickets by their status and share the one ticket channel: the
 	selected ticket is shown in whichever list holds it, and a ticket that moves between the
 	lists leaves the selection empty, because the list that showed it as selected no longer
-	has it.
+	has it. "Generate samples" fills them with tickets, some commented by the logged-in user and
+	some by somebody else, which is what the presets of the Open list select over: its Comments
+	and "Commented by me" columns are computed from a ticket's comments, and a preset filters one
+	of them.
 	
 	Both lists are drag sources and drop targets: dragging a ticket from Open to Closed
 	closes it and dragging it back reopens it, which is what each list's <drop> does with the
@@ -50,7 +69,8 @@
 	<channels>
 		<channel name="model"/>
 		<channel name="ticket"/>
-		<channel name="filter"/>
+		<channel name="activeFilter"/>
+		<channel name="searchTerm"/>
 		<channel name="status"/>
 		<channel name="jump"/>
 		<channel name="dropPerson"/>
@@ -73,7 +93,11 @@
 	</param-bindings>
 	<query-bindings>
 		<bind
-			channel="filter"
+			channel="activeFilter"
+			query-param="filter"
+		/>
+		<bind
+			channel="searchTerm"
 			query-param="q"
 		/>
 	</query-bindings>
@@ -93,6 +117,18 @@
 						<de>Tickets</de>
 					</title>
 					<commands>
+						<generic-command
+							image="css:bi bi-magic"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Generate samples</en>
+								<de>Beispiele erzeugen</de>
+							</label>
+							<with-transaction>
+								<execute-script function="x -> { areas = ['Login', 'Export', 'Layout', 'Import']; other = all(`tl.accounts:Person`).filter(p -> $p != currentUser()).firstElement(); count(8).foreach(i -> { t = new(`demo.tickets:Ticket`, transient: false); $t.set(`demo.tickets:Ticket#name`, $areas[$i % 4] + ' ' + ($i + 1)); $t.set(`demo.tickets:Ticket#status`, if($i % 4 == 3, `demo.tickets:TicketStatus#closed`, `demo.tickets:TicketStatus#open`)); count($i % 3).foreach(j -> { c = new(`demo.tickets:Comment`, $t); $c.set(`demo.tickets:Comment#content`, 'Comment ' + ($j + 1) + '.'); $c.set(`demo.tickets:Comment#author`, if($i % 2 == 0, currentUser(), $other)); $c.set(`demo.tickets:Comment#date`, now()); $t.add(`demo.tickets:Ticket#comments`, $c); }); $t; }); }"/>
+							</with-transaction>
+						</generic-command>
 						<generic-command
 							image="css:bi bi-plus-lg"
 							placement="TOOLBAR"
@@ -201,11 +237,11 @@
 					<fields>
 						<value-input
 							type="tl.core:String"
-							value="filter"
+							value="searchTerm"
 						>
 							<label>
-								<en>Filter</en>
-								<de>Filter</de>
+								<en>Search</en>
+								<de>Suche</de>
 							</label>
 						</value-input>
 						<value-input
@@ -234,8 +270,11 @@
 							<de>Offen</de>
 						</title>
 						<table
+							active-preset="activeFilter"
 							group-by="status"
 							observed-types="demo.tickets:Ticket"
+							personalization-key="demo-tickets-open"
+							search-term="searchTerm"
 							selection="ticket"
 							types="demo.tickets:Ticket"
 						>
@@ -246,15 +285,68 @@
 								</with-transaction>
 							</drop>
 							<inputs>
-								<input channel="filter"/>
 								<input channel="status"/>
 							</inputs>
+							<presets initial="mine">
+								<preset name="mine">
+									<label>
+										<en>Commented by me</en>
+										<de>Von mir kommentiert</de>
+									</label>
+									<criterion
+										column="commentedByMe"
+										expr="true"
+									/>
+								</preset>
+								<preset name="discussed">
+									<label>
+										<en>Discussed</en>
+										<de>Diskutiert</de>
+									</label>
+									<!-- Written in the form of the column's range filter: more than no comment. -->
+									<criterion column="comments">
+										<range
+											operator="GT"
+											primary="0"
+										/>
+									</criterion>
+								</preset>
+								<preset name="untouched">
+									<label>
+										<en>Without comments</en>
+										<de>Ohne Kommentare</de>
+									</label>
+									<!-- A single value the column's range filter reads as an exact match. -->
+									<criterion
+										column="comments"
+										expr="0"
+									/>
+								</preset>
+							</presets>
 							<columns>
 								<column attribute="name"/>
 								<column attribute="status"/>
 								<column attribute="statusLabel"/>
+								<computed-column name="comments"
+									type="tl.core:Integer"
+								>
+									<label>
+										<en>Comments</en>
+										<de>Kommentare</de>
+									</label>
+									<value>t -&gt; $t.get(`demo.tickets:Ticket#comments`).size()</value>
+								</computed-column>
+								<computed-column name="commentedByMe"
+									type="tl.core:Boolean"
+								>
+									<label>
+										<en>Commented by me</en>
+										<de>Von mir kommentiert</de>
+									</label>
+									<value>t -&gt; $t.get(`demo.tickets:Ticket#comments`).filter(c -&gt; $c.get(`demo.tickets:Comment#author`) == currentUser()).size() &gt; 0</value>
+								</computed-column>
 							</columns>
-							<rows>term -&gt; state -&gt; { tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) != `demo.tickets:TicketStatus#closed`); named = if($term == null || $term == "", $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#name`).stringContains($term))); if($state == null, $named, $named.filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == $state)); }</rows>
+							<rows>state -&gt; { tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) != `demo.tickets:TicketStatus#closed`); if($state == null, $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == $state)); }</rows>
 						</table>
 					</panel>
 					<panel>
@@ -264,6 +356,7 @@
 						</title>
 						<table
 							observed-types="demo.tickets:Ticket"
+							search-term="searchTerm"
 							selection="ticket"
 							types="demo.tickets:Ticket"
 						>
@@ -274,7 +367,6 @@
 								</with-transaction>
 							</drop>
 							<inputs>
-								<input channel="filter"/>
 								<input channel="status"/>
 							</inputs>
 							<columns>
@@ -282,7 +374,7 @@
 								<column attribute="status"/>
 								<column attribute="statusLabel"/>
 							</columns>
-							<rows>term -&gt; state -&gt; { tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`); named = if($term == null || $term == "", $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#name`).stringContains($term))); if($state == null, $named, $named.filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == $state)); }</rows>
+							<rows>state -&gt; { tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`); if($state == null, $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == $state)); }</rows>
 						</table>
 					</panel>
 					<panel>

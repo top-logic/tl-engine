@@ -36,6 +36,7 @@ import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.CompositionTableElement;
 import com.top_logic.layout.view.model.RowSourceObserver;
+import com.top_logic.layout.view.model.TableFilterBinding;
 import com.top_logic.layout.view.model.TableSelectionBinding;
 import com.top_logic.layout.view.table.CellEditing;
 import com.top_logic.layout.view.table.ColumnDeclaration;
@@ -132,11 +133,14 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 	private TableId _tableId;
 
-	/** @see #setNamedFilters(Function, NamedFilterStore) */
+	/** @see #setNamedFilters(Function, NamedFilterStore, String) */
 	private Function<List<? extends Column<?, ?>>, List<NamedFilter>> _declaredFilters;
 
-	/** @see #setNamedFilters(Function, NamedFilterStore) */
+	/** @see #setNamedFilters(Function, NamedFilterStore, String) */
 	private NamedFilterStore _filterStore;
+
+	/** @see #setNamedFilters(Function, NamedFilterStore, String) */
+	private String _initialFilter;
 
 	/** @see #setFilterBar(boolean) */
 	private boolean _filterBar;
@@ -154,6 +158,15 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 	/** Binds {@link #_selectionChannel} to the current {@link #_tableControl}. */
 	private TableSelectionBinding _selectionBinding;
+
+	/** @see #setFilterChannels(ViewChannel, ViewChannel) */
+	private ViewChannel _activePresetChannel;
+
+	/** @see #setFilterChannels(ViewChannel, ViewChannel) */
+	private ViewChannel _searchTermChannel;
+
+	/** Binds the filter channels to the current {@link #_tableControl}. */
+	private TableFilterBinding _filterBinding;
 
 	private Function<Object[], Collection<?>> _rowFunction;
 
@@ -293,11 +306,35 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * @param filterStore
 	 *        Where the filters the user saves under a name are persisted, or {@code null} to offer
 	 *        only the declared ones.
+	 * @param initialFilter
+	 *        The {@link NamedFilter#id() identifier} of the filter the table is filtered by until a
+	 *        personalization of its own exists, or {@code null} to start out unfiltered.
 	 */
 	public void setNamedFilters(Function<List<? extends Column<?, ?>>, List<NamedFilter>> declaredFilters,
-			NamedFilterStore filterStore) {
+			NamedFilterStore filterStore, String initialFilter) {
 		_declaredFilters = declaredFilters;
 		_filterStore = filterStore;
+		_initialFilter = initialFilter;
+	}
+
+	/**
+	 * Binds the table's filtering two-way to the given channels through a
+	 * {@link TableFilterBinding}: the named filter it matches, and the text it searches for.
+	 *
+	 * <p>
+	 * To be called before {@link #init()}: the binding is established for each
+	 * {@link TableViewControl} this control builds.
+	 * </p>
+	 *
+	 * @param activePreset
+	 *        The channel holding the name of the matched filter, {@code null} to leave it
+	 *        unpublished.
+	 * @param searchTerm
+	 *        The channel holding the searched text, {@code null} to leave it unpublished.
+	 */
+	public void setFilterChannels(ViewChannel activePreset, ViewChannel searchTerm) {
+		_activePresetChannel = activePreset;
+		_searchTermChannel = searchTerm;
 	}
 
 	/**
@@ -538,9 +575,10 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		List<NamedFilter> declaredFilters =
 			_declaredFilters == null ? List.of() : _declaredFilters.apply(columns);
 		DefaultTableView<TLObject> view = new DefaultTableView<>(columns, _rowSource, initialState, _store,
-			_tableId, _hiddenByDefault, declaredFilters, _filterStore);
+			_tableId, _hiddenByDefault, declaredFilters, _filterStore, _initialFilter);
 
 		disposeSelectionBinding();
+		disposeFilterBinding();
 		if (_tableControl != null) {
 			_tableControl.cleanupTree();
 		}
@@ -555,6 +593,10 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		_tableControl.addSelectionListener(this::handleSelectionChanged);
 		if (_selectionChannel != null) {
 			_selectionBinding = new TableSelectionBinding(_tableControl, _selectionChannel);
+		}
+		if (_activePresetChannel != null || _searchTermChannel != null) {
+			_filterBinding =
+				new TableFilterBinding(_tableControl, _activePresetChannel, _searchTermChannel);
 		}
 
 		// Let each column contribute any per-session UI (e.g. a custom filter dialog).
@@ -658,6 +700,16 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		if (_selectionBinding != null) {
 			_selectionBinding.dispose();
 			_selectionBinding = null;
+		}
+	}
+
+	/**
+	 * Detaches the {@link TableFilterBinding} from the table it was created for.
+	 */
+	private void disposeFilterBinding() {
+		if (_filterBinding != null) {
+			_filterBinding.dispose();
+			_filterBinding = null;
 		}
 	}
 
@@ -797,6 +849,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	protected void onCleanup() {
 		detachObserver();
 		disposeSelectionBinding();
+		disposeFilterBinding();
 		// The toolbar and the table itself are part of the state and are disposed with it; only the
 		// references are dropped here, so a trailing event cannot reach a torn-down control.
 		_toolbar = null;

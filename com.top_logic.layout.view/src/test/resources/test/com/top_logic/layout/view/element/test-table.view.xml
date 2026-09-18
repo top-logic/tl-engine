@@ -5,13 +5,17 @@
 		<channel name="testInput"/>
 		<channel name="selectedRow"/>
 		<channel name="dropTarget"/>
+		<channel name="activeFilter"/>
+		<channel name="searchTerm"/>
 	</channels>
 
 	<table
 		activation-button="false"
+		active-preset="activeFilter"
 		filter-bar="true"
 		group-by="owner"
 		personalization-key="test-table"
+		search-term="searchTerm"
 		selection="selectedRow"
 		selection-mode="multi"
 		types="demo.test:Row"
@@ -30,7 +34,7 @@
 		<inputs>
 			<input channel="testInput"/>
 		</inputs>
-		<presets>
+		<presets initial="all-active">
 			<preset name="mine">
 				<label>
 					<en>My rows</en>

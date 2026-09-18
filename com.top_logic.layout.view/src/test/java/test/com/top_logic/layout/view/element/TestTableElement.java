@@ -91,6 +91,55 @@ public class TestTableElement extends TestCase {
 		assertEquals("Configured personalization key", "test-table", tableConfig.getPersonalizationKey());
 		assertTrue("Filter bar should be switched on", tableConfig.getFilterBar());
 		assertEquals("Configured initial grouping", "owner", tableConfig.getGroupBy());
+
+		// Verify the channels publishing the filtering.
+		assertNotNull("Active preset channel should be set", tableConfig.getActivePreset());
+		assertEquals("Active preset channel name", "activeFilter",
+			tableConfig.getActivePreset().getChannelName());
+		assertNotNull("Search term channel should be set", tableConfig.getSearchTerm());
+		assertEquals("Search term channel name", "searchTerm", tableConfig.getSearchTerm().getChannelName());
+		assertNull("A table publishes its filtering only where it says so.",
+			TypedConfiguration.newConfigItem(TableElement.Config.class).getActivePreset());
+		assertNull("A table publishes its filtering only where it says so.",
+			TypedConfiguration.newConfigItem(TableElement.Config.class).getSearchTerm());
+	}
+
+	/**
+	 * Tests that the preset the table starts out filtered by is parsed, reaches the table, and that
+	 * a table declaring none starts out unfiltered.
+	 */
+	public void testInitialPreset() throws Exception {
+		TableElement.Config tableConfig = readTableConfig();
+		assertEquals("The presets declare which of them the table starts with.",
+			"all-active", tableConfig.getPresets().getInitial());
+
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestTableElement.class);
+		TableElement element = (TableElement) context.getInstance(tableConfig);
+		context.checkErrors();
+
+		assertEquals("The declared preset is what the table is filtered by.",
+			"all-active", element.initialFilter());
+
+		TableElement.Config unfiltered = TypedConfiguration.copy(tableConfig);
+		PresetsConfig presets = unfiltered.getPresets();
+		presets.update(presets.descriptor().getProperty(PresetsConfig.INITIAL), null);
+		TableElement withoutInitial = (TableElement) new DefaultInstantiationContext(
+			TestTableElement.class).getInstance(unfiltered);
+
+		assertNull("A table that names no initial preset starts out unfiltered.",
+			withoutInitial.initialFilter());
+	}
+
+	/**
+	 * Tests that an initial preset naming none of the declared ones is reported: it would leave the
+	 * table unfiltered without anything saying why.
+	 */
+	public void testUnknownInitialPresetReported() throws Exception {
+		TableElement.Config tableConfig = TypedConfiguration.copy(readTableConfig());
+		PresetsConfig presets = tableConfig.getPresets();
+		presets.update(presets.descriptor().getProperty(PresetsConfig.INITIAL), "nonesuch");
+
+		assertContains("names no declared preset", errors(tableConfig));
 	}
 
 	/**

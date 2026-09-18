@@ -158,7 +158,13 @@ Standard Maven layout. Key package roots:
 ## Coding Rules
 
 - **DO NOT** manually edit `messages_en.properties` - the build's doclet regenerates it wholesale from the `@en` JavaDoc tags
-- **DO** maintain `messages_de.properties` by hand: the build's machine translation only seeds a key that has no German yet and never overwrites an existing value, so after adding a key read the generated German and correct it there. A `@de` tag in JavaDoc is read by no generator today (Gitea #331), so writing one changes nothing - `TestGermanResourcesMatchJavaDoc` is what holds the shipped German to it.
+- **DO** write both `@en` and `@de` on every `ResKey` constant, and copy the `@de` text verbatim into the module's `messages_de.properties`. No generator reads `@de` (Gitea #331): the doclet exports `@en` to `messages_en.properties`, and `tl-maven-plugin:translate` machine-translates from that English alone - silently, and often wrongly ("Stornierung beantragen" for a cancel-run command). It does that for a key with no German yet **and** for a key whose English changed since the last build, so rewording an `@en` text discards the hand-written German of that key without a word. `@de` is the authored source of truth and `messages_de.properties` is maintained by hand; the tag alone ships nothing.
+  Adding a resource key is therefore three edits, and the guard checks all three:
+  1. `@en` on the constant - the doclet writes `messages_en.properties` from it, never edit that file.
+  2. `@de` on the same constant - required. A constant with `@en` and no `@de` fails the build's check, because its German would be an unread machine translation.
+  3. The same German text in the module's `src/main/java/META-INF/messages_de.properties`.
+  Then run the guard: `mvn -pl tl-ai-core test -DskipTests=false -Dtest=TestGermanResourcesMatchJavaDoc`. It walks every module of the reactor, so run it once from `tl-ai-core` whichever module you changed. It fails when a documented constant has no `@de`, when the shipped German is not the `@de` text, when a `@de` text reaches no bundle, and when a bundle holds a `[missing:...]` generator placeholder.
+  Config-property labels and tooltips have no `@en`/`@de` mechanism - the doclet derives them from the JavaDoc prose and the German stays machine-translated, so read it after adding a config option.
 - **DO NOT** add `@author` tags to JavaDoc (use git history)
 - **DO NOT** create hand-written POJO DTOs — use msgbuf `.proto` files (see `/create-dto` skill)
 - **DO NOT** use Jackson (`ObjectMapper`) — use msgbuf `JsonWriter`/`JsonReader`

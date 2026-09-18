@@ -18,7 +18,10 @@
 		<channel name="model"/>
 	</channels>
 
-	<window width="420px">
+	<!-- One field: nothing to resize or maximise, so the window offers neither. -->
+	<window resizable="false"
+		width="420px"
+	>
 		<title>
 			<en>Rename chat</en>
 			<de>Chat umbenennen</de>

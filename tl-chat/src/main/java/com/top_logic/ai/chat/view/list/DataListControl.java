@@ -23,9 +23,14 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ReactParam;
+import com.top_logic.layout.react.control.button.ButtonDisplayMode;
+import com.top_logic.layout.react.control.button.CommandModel;
+import com.top_logic.layout.react.control.button.CommandPlacement;
+import com.top_logic.layout.react.control.button.KeyStroke;
 import com.top_logic.layout.react.control.overlay.ContextMenuContribution;
 import com.top_logic.layout.react.control.overlay.ContextMenuOpener;
 import com.top_logic.layout.view.ViewContext;
@@ -42,6 +47,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
+import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 
@@ -102,6 +108,9 @@ public class DataListControl extends ReactControl {
 	/** The frame's menu opener, or {@code null} outside an {@code <app-shell>}. */
 	private final ContextMenuOpener _menuOpener;
 
+	/** This list's own context - what a row command's actions resolve their channels against. */
+	private final ViewContext _viewContext;
+
 	private final boolean[] _applyingFromChannel = { false };
 
 	/** The row objects of the last serialisation, by their id, for the {@code select} lookup. */
@@ -112,6 +121,7 @@ public class DataListControl extends ReactControl {
 			List<ViewCommand.Config> commandConfigs, List<ViewCommand> rowCommands,
 			List<ViewCommand.Config> rowCommandConfigs) {
 		super(context, null, blankToDefault(config.getReactElement(), "TLDataList"));
+		_viewContext = context;
 
 		_rowsExecutor = QueryExecutor.compile(config.getRows());
 		_groupExecutor = config.getGroupBy() == null ? null : QueryExecutor.compile(config.getGroupBy());
@@ -187,7 +197,16 @@ public class DataListControl extends ReactControl {
 				ViewExecutabilityRule rule = ViewExecutabilityRules.build(cmdConfig.getExecutability(), context);
 				_rowCommandModels.add(ViewCommandModel.create(rowCommands.get(i), cmdConfig, commandInput, rule));
 			}
-			_rowMenu = new ContextMenuContribution(row -> _rowChannel.set(row), _rowCommandModels);
+			// Wrapped, so each command runs in *this* list's context. The opener dispatches with the
+			// frame's own ReactContext, which is not a ViewContext and does not hold this list's row
+			// channel - under it an <execute-script> with <inputs> throws, a <write-channel> silently
+			// does nothing, and the row channel would be unreachable. The context a command was
+			// configured in is the one it belongs to.
+			List<CommandModel> menuCommands = new ArrayList<>();
+			for (ViewCommandModel model : _rowCommandModels) {
+				menuCommands.add(new InListContext(model, context));
+			}
+			_rowMenu = new ContextMenuContribution(row -> _rowChannel.set(row), menuCommands);
 			addAttachListener(() -> _rowCommandModels.forEach(ViewCommandModel::attach));
 			addDetachListener(() -> _rowCommandModels.forEach(ViewCommandModel::detach));
 		}
@@ -301,6 +320,12 @@ public class DataListControl extends ReactControl {
 		if (row == null) {
 			return;
 		}
+		// Publish the row and re-evaluate before the opener composes the menu. The opener publishes
+		// it too, but a channel that already holds this row notifies nobody - so opening the same
+		// row's menu twice would show what its rules decided the first time, however much the row
+		// has changed since (a run of it has finished, say).
+		_rowChannel.set(row);
+		_rowCommandModels.forEach(ViewCommandModel::revalidate);
 		_menuOpener.open(intArg(args, "x"), intArg(args, "y"),
 			List.of(new ContextMenuOpener.Targeted(_rowMenu, row)));
 	}
@@ -479,5 +504,82 @@ public class DataListControl extends ReactControl {
 	/** One configured display line: an attribute or a computed value, with an optional emphasis. */
 	private record LineSpec(String attribute, QueryExecutor executor, String emphasis) {
 		// A compact holder for a resolved <line> configuration.
+	}
+
+	/**
+	 * A row command as the menu sees it: everything the wrapped model says, but executed in the
+	 * list's context instead of the one the menu offers.
+	 *
+	 * @param model
+	 *        The configured command.
+	 * @param context
+	 *        The list's own context, which holds its row channel.
+	 */
+	private record InListContext(ViewCommandModel model, ViewContext context) implements CommandModel {
+
+		@Override
+		public HandlerResult executeCommand(ReactContext ignored) {
+			return model.executeCommand(context);
+		}
+
+		@Override
+		public String getName() {
+			return model.getName();
+		}
+
+		@Override
+		public String getLabel() {
+			return model.getLabel();
+		}
+
+		@Override
+		public ThemeImage getImage() {
+			return model.getImage();
+		}
+
+		@Override
+		public String getTooltip() {
+			return model.getTooltip();
+		}
+
+		@Override
+		public boolean isExecutable() {
+			return model.isExecutable();
+		}
+
+		@Override
+		public boolean isVisible() {
+			return model.isVisible();
+		}
+
+		@Override
+		public CommandPlacement getPlacement() {
+			return model.getPlacement();
+		}
+
+		@Override
+		public String getClique() {
+			return model.getClique();
+		}
+
+		@Override
+		public ButtonDisplayMode getDisplayMode() {
+			return model.getDisplayMode();
+		}
+
+		@Override
+		public KeyStroke getKeyGesture() {
+			return model.getKeyGesture();
+		}
+
+		@Override
+		public void addStateChangeListener(Runnable listener) {
+			model.addStateChangeListener(listener);
+		}
+
+		@Override
+		public void removeStateChangeListener(Runnable listener) {
+			model.removeStateChangeListener(listener);
+		}
 	}
 }

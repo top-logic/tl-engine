@@ -117,11 +117,13 @@
 						the menu opens.
 					-->
 					<executability>
-						<visible-if><![CDATA[s -> isEmpty($s)
-							|| $s.referers(`tl.ai.execution:AgentExecution#session`)
-								.filter(e -> $e.get(`tl.ai.execution:AgentExecution#status`)
-									== `tl.ai.execution:ExecutionStatus#RUNNING`)
-								.isEmpty()]]></visible-if>
+						<visible-if>
+							<expr><![CDATA[s -> isEmpty($s)
+								|| $s.referers(`tl.ai.execution:AgentExecution#session`)
+									.filter(e -> $e.get(`tl.ai.execution:AgentExecution#status`)
+										== `tl.ai.execution:ExecutionStatus#RUNNING`)
+									.isEmpty()]]></expr>
+						</visible-if>
 					</executability>
 					<!-- Names the chat, and names the outcomes rather than answering Yes/No. -->
 					<confirm>

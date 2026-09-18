@@ -45,12 +45,13 @@ import com.top_logic.util.TLContext;
  *
  * <p>
  * Runs the {@code rows} TL-Script expression, serialises each row to
- * {@code {id, primary, secondary?, group?}} and {@code putState}s the array to the {@code TLDataList}
+ * {@code {id, lines[], group?, cssClass?}} and {@code putState}s the array to the {@code TLDataList}
  * React component; re-runs and re-pushes when observed model objects change. A row click arrives as
  * the {@code select} command carrying the row id; the control resolves it to the row object and
  * writes it to the two-way {@code selection} channel (and reflects an incoming channel value as the
  * selected id). The channel holds the {@link TLObject} so a consumer like {@code <chat-conversation>}
- * reads the object directly.
+ * reads the object directly. The optional {@code count} channel receives the number of rows with
+ * every serialisation, so a rail section can show it without asking the browser.
  * </p>
  */
 public class DataListControl extends ReactControl {
@@ -61,11 +62,15 @@ public class DataListControl extends ReactControl {
 
 	private final QueryExecutor _groupExecutor;
 
+	private final QueryExecutor _cssClassExecutor;
+
 	private final List<ViewChannel> _inputChannels = new ArrayList<>();
 
 	private final Set<TLStructuredType> _observedTypes;
 
 	private final ViewChannel _selectionChannel;
+
+	private final ViewChannel _countChannel;
 
 	/** Header command buttons, in config order, parallel to the {@code buttons} state array. */
 	private final List<ViewCommandModel> _commandModels = new ArrayList<>();
@@ -82,6 +87,7 @@ public class DataListControl extends ReactControl {
 
 		_rowsExecutor = QueryExecutor.compile(config.getRows());
 		_groupExecutor = config.getGroupBy() == null ? null : QueryExecutor.compile(config.getGroupBy());
+		_cssClassExecutor = config.getCssClass() == null ? null : QueryExecutor.compile(config.getCssClass());
 
 		LinesConfig linesConfig = config.getLines();
 		if (linesConfig != null) {
@@ -126,6 +132,10 @@ public class DataListControl extends ReactControl {
 			addAttachListener(() -> _commandModels.forEach(ViewCommandModel::attach));
 			addDetachListener(() -> _commandModels.forEach(ViewCommandModel::detach));
 		}
+
+		ChannelRef countRef = config.getCount();
+		// Resolved before the first serialisation below, which is what writes the initial count.
+		_countChannel = countRef == null ? null : context.resolveChannel(countRef);
 
 		ChannelRef selectionRef = config.getSelection();
 		if (selectionRef == null) {
@@ -233,10 +243,21 @@ public class DataListControl extends ReactControl {
 			if (_groupExecutor != null) {
 				entry.put("group", label(_groupExecutor.execute(object)));
 			}
+			if (_cssClassExecutor != null) {
+				entry.put("cssClass", text(_cssClassExecutor.execute(object)));
+			}
 			out.add(entry);
 		}
 		_rowsById = byId;
 		putState("rows", out);
+		if (_countChannel != null) {
+			_countChannel.set(Integer.valueOf(out.size()));
+		}
+	}
+
+	/** The plain string an expression produced, for values that are markup rather than a label. */
+	private static String text(Object value) {
+		return value == null ? "" : String.valueOf(value).trim();
 	}
 
 	/** The browser id of a row object: its stable knowledge-object name. */

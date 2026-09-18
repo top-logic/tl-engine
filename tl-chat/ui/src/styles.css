@@ -368,6 +368,28 @@
   color: var(--text-secondary);
 }
 
+/*
+ * Row states a `css-class` expression hands out.
+ *
+ * Which class a row gets is the view's decision; these three are what a list of steps needs and are
+ * named after no particular domain, so any list can use them: something finished, something running,
+ * something not started yet. They read the host theme's tokens, so a theme restyles them with
+ * everything else. An application that wants its own states writes its own rules - nothing here
+ * assumes these names.
+ */
+.tl-data-list .rail-item.is-running .rail-item-mark {
+  background: var(--button-primary);
+}
+
+.tl-data-list .rail-item.is-done .rail-line-primary {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+}
+
+.tl-data-list .rail-item.is-pending .rail-line-primary {
+  color: var(--text-secondary);
+}
+
 /* --- Composed conversation --------------------------------------------- */
 
 /*

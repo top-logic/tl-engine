@@ -44,6 +44,8 @@ public class TestHiddenElementOptions extends TestCase {
 		assertVisible(DataListElement.Config.class, DataListElement.Config.ROWS);
 		assertVisible(DataListElement.Config.class, DataListElement.Config.SELECTION);
 		assertVisible(DataListElement.Config.class, DataListElement.Config.SEARCH);
+		assertVisible(DataListElement.Config.class, DataListElement.Config.COUNT);
+		assertVisible(DataListElement.Config.class, DataListElement.Config.CSS_CLASS);
 	}
 
 	/** {@code <chat-conversation>} hides the four names that only mean something in TypeScript. */

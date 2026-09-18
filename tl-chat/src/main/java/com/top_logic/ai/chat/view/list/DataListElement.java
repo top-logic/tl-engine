@@ -101,6 +101,12 @@ public class DataListElement implements UIElement {
 		/** Configuration property name for {@link #getSelection()}. */
 		String SELECTION = "selection";
 
+		/** Configuration property name for {@link #getCount()}. */
+		String COUNT = "count";
+
+		/** Configuration property name for {@link #getCssClass()}. */
+		String CSS_CLASS = "css-class";
+
 		/** Configuration property name for {@link #getCommands()}. */
 		String COMMANDS = "commands";
 
@@ -182,6 +188,37 @@ public class DataListElement implements UIElement {
 		@Format(ChannelRefFormat.class)
 		@Nullable
 		ChannelRef getSelection();
+
+		/**
+		 * Optional channel receiving how many rows the list shows, written whenever the rows change.
+		 *
+		 * <p>
+		 * What a {@code <chat-rail/>} section reads to put a number beside its title. Unlike the
+		 * chat's own sections, which count in the browser and report the number back, a list counts
+		 * what it already has on the server - no round trip, and the number is right before the
+		 * first paint.
+		 * </p>
+		 */
+		@Name(COUNT)
+		@Label("Count")
+		@Format(ChannelRefFormat.class)
+		@Nullable
+		ChannelRef getCount();
+
+		/**
+		 * Optional TL-Script function of one row computing extra CSS classes for its row element.
+		 *
+		 * <p>
+		 * The hook a view needs to show a row's <em>state</em> rather than only its text - a done
+		 * step, a failed import, an overdue item. The result is written onto the row as it comes,
+		 * so several classes are a space-separated string; what they look like is the application
+		 * theme's business.
+		 * </p>
+		 */
+		@Name(CSS_CLASS)
+		@Label("CSS class")
+		@Nullable
+		Expr getCssClass();
 
 		/**
 		 * Header buttons, rendered above the list. Each is a standard view command - a

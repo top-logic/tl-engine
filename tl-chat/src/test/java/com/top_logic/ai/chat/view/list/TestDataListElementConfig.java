@@ -30,6 +30,8 @@ public class TestDataListElementConfig extends TestCase {
 		assertNull("No grouping until a group-by expression is set.", config.getGroupBy());
 		assertNull("No lines configured by default.", config.getLines());
 		assertNull("No selection channel by default.", config.getSelection());
+		assertNull("No count channel by default.", config.getCount());
+		assertNull("No row state until a css-class expression is set.", config.getCssClass());
 		assertNull("No title by default.", config.getTitle());
 		assertTrue("No header commands by default.", config.getCommands().isEmpty());
 		assertTrue("No input channels by default.", config.getInputs().isEmpty());
@@ -51,6 +53,24 @@ public class TestDataListElementConfig extends TestCase {
 			(DataListElement.Config) TypedConfiguration.parse(CharacterContents.newContent(xml));
 		assertEquals(1, config.getCommands().size());
 		assertEquals(GenericViewCommand.class, config.getCommands().get(0).getImplementationClass());
+	}
+
+	/**
+	 * The two hooks a rail section needs: the channel the row count is written to, and the
+	 * expression that gives a row its state class.
+	 */
+	public void testCountChannelAndRowStateParse() throws Exception {
+		String xml = "<data-list xmlns:config='http://www.top-logic.com/ns/config/6.0'"
+			+ " config:interface='" + DataListElement.Config.class.getName() + "'"
+			+ " count='progressBadge'>"
+			+ "<rows>all(`tl.ai.execution:AgentTask`)</rows>"
+			+ "<css-class>t -> \"is-done\"</css-class>"
+			+ "</data-list>";
+		DataListElement.Config config =
+			(DataListElement.Config) TypedConfiguration.parse(CharacterContents.newContent(xml));
+		assertNotNull("The count channel is configured.", config.getCount());
+		assertEquals("progressBadge", config.getCount().getChannelName());
+		assertNotNull("The row state expression is configured.", config.getCssClass());
 	}
 
 	/** Boots the module system so typed-configuration resolves nested config types via TypeIndex. */

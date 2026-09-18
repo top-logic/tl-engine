@@ -10,11 +10,13 @@ interface DataLine {
   emphasis?: string
 }
 
-/** One row pushed by {@code DataListControl}: {id, lines[], group?}. */
+/** One row pushed by {@code DataListControl}: {id, lines[], group?, cssClass?}. */
 interface DataRow {
   id: string
   lines: DataLine[]
   group?: string
+  /** Extra classes the view's `css-class` expression put on this row, e.g. a done/running state. */
+  cssClass?: string
 }
 
 interface RowGroup {
@@ -82,6 +84,7 @@ function readRows(value: unknown): DataRow[] {
       id: row.id,
       lines: readLines(row.lines),
       group: typeof row.group === 'string' ? row.group : undefined,
+      cssClass: typeof row.cssClass === 'string' && row.cssClass ? row.cssClass : undefined,
     })
   }
   return out
@@ -208,7 +211,12 @@ export function TLDataList({ controlId }: TLCellProps) {
             >
               {group.label ? <h2 id={`data-group-${group.label}`}>{group.label}</h2> : null}
               {group.rows.map((row) => (
-                <div key={row.id} className={`rail-item${row.id === selectedId ? ' is-active' : ''}`}>
+                <div
+                  key={row.id}
+                  className={`rail-item${row.id === selectedId ? ' is-active' : ''}${
+                    row.cssClass ? ` ${row.cssClass}` : ''
+                  }`}
+                >
                   <button
                     type="button"
                     className="rail-open"

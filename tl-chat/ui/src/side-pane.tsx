@@ -37,6 +37,8 @@ export function SidePane({
   mode,
   version,
   actions,
+  hidden,
+  allowSheet = true,
   children,
 }: {
   title: string
@@ -49,13 +51,30 @@ export function SidePane({
   mode?: PaneMode
   version?: string
   actions?: PaneAction[]
+  /**
+   * Whether the pane is out of sight.
+   *
+   * Hidden rather than unmounted, so what it holds keeps its state and its server-side updates
+   * while the sections are showing - a pane that is rebuilt on every open shows the object as it
+   * was when it was first built.
+   */
+  hidden?: boolean
+  /**
+   * Whether the pane becomes a sheet over the thread below 1280 px.
+   *
+   * True inside `App`, whose sheet is a child of its workspace grid. A composed rail is a column
+   * beside the conversation, with no grid to span and no scrim to dim, so it stays a column at
+   * every width.
+   */
+  allowSheet?: boolean
   children: React.ReactNode
 }) {
   const pane = useRef<HTMLDivElement>(null)
   const dragging = useRef(false)
-  const [sheet, setSheet] = useState(() =>
+  const [narrow, setNarrow] = useState(() =>
     typeof window !== 'undefined' ? window.matchMedia(SHEET_MQ).matches : false,
   )
+  const sheet = allowSheet && narrow
   /**
    * How wide the workspace is right now.
    *
@@ -110,7 +129,7 @@ export function SidePane({
 
   useEffect(() => {
     const mq = window.matchMedia(SHEET_MQ)
-    const onChange = () => setSheet(mq.matches)
+    const onChange = () => setNarrow(mq.matches)
     mq.addEventListener('change', onChange)
     return () => mq.removeEventListener('change', onChange)
   }, [])
@@ -183,6 +202,7 @@ export function SidePane({
       ref={pane}
       className={`side-pane${sheet ? ' is-sheet' : ''}${mode === 'document' ? ' is-document' : ''}`}
       style={sheet ? undefined : { width: paneWidth, minWidth: CONTENT_FLOOR }}
+      hidden={hidden}
     >
       {sheet ? null : (
         <div

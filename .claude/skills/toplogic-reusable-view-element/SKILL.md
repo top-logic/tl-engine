@@ -59,19 +59,30 @@ An application configures a reusable element; it should feel like the elements i
 - **Every expression is one-argument-per-row where it applies.** A per-row expression is a lambda
   `row -> ...`; run it with `QueryExecutor.compile(expr)` then `execute(row)`.
 
-## 3. Respect the composition seam — channels link elements, nesting does not
+## 3. Respect the composition seam — both nesting and channels are available
 
-The single biggest constraint on decomposition in `tl-ai`: **`tl-react-bridge` exposes no way for a
-tl-ai React component to host engine child view-elements** (only `React`, `register`, `useTLState`,
-`useTLCommand`). Consequences:
+Two ways exist to put elements together, and they answer different questions.
 
-- You **cannot** build a `<container>` element in `tl-ai` that wraps *separate* `<button>`/`<list>`
-  child elements and renders them in your own React tree. A reusable composite must be **one element**
-  that renders its own DOM (composing plain React sub-components inside one bundle).
-- **Separate view elements communicate by channels, not by nesting.** Two elements sharing a
-  `selection` channel (one writes the object, the other reads it) is the idiom — see
-  `invoices.view.xml` (`<table selection="c">` → `<form input="c">`) and the chat's
-  `<data-list selection>` → `<chat-conversation input>`.
+**Nesting**: an app-module element *can* host arbitrary configured child elements. The Java side
+builds each child's control (`ContentControls.toControl(elements, context.childContext(…)
+.withChildSlotPath(id))`) and puts it into its own state; `ReactControl` serializes an embedded
+control as a `{controlId, module, state}` descriptor, propagates attach/detach and disposal to it,
+and the browser renders it with `TLChild` — **which `tl-react-bridge` does export** (`import { TLChild
+} from 'tl-react-bridge'`, `<TLChild control={state.someChild} />`). `<chat-rail>`'s sections are
+built this way; `TabBarElement` and `SwitchElement` are the engine's own examples. Two things to get
+right: give each child its own child context, and keep a child **mounted but hidden** rather than
+unmounting it when it goes out of sight — `TLChild` drops the child's SSE subscription on unmount and
+remounts it from the descriptor's mount-time state, so a re-shown child would be stale.
+
+**Channels**: for elements that are *siblings* in a view, or that must stay independently placeable.
+Two elements sharing a `selection` channel (one writes the object, the other reads it) is the idiom —
+see `invoices.view.xml` (`<table selection="c">` → `<form input="c">`) and the chat's
+`<data-list selection>` → `<chat-conversation input>`. Note that a value derived in the *browser*
+(a count the React store computes) reaches another element only by a command to its own control,
+which writes the channel — a round trip. Prefer a channel whose value the server can compute.
+
+Use nesting when one element is the *frame* of the others (a rail and its sections, a tab bar and its
+tabs). Use a channel when they are peers.
 - **Decomposition trades cohesion for placement.** Pulling a control out into its own channel-wired
   element (e.g. a standalone collapse toggle) makes it placeable anywhere but visually *detached* — it
   becomes its own box outside the panel. If the control belongs *inside* a panel's chrome, keep it in

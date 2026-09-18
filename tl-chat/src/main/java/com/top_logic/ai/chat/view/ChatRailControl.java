@@ -6,106 +6,183 @@
 package com.top_logic.ai.chat.view;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.top_logic.ai.chat.view.ChatRailElement.Config;
-import com.top_logic.ai.chat.view.ChatRailElement.SectionConfig;
-import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.ai.chat.view.ChatRailElement.Section;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.basic.ThemeImage;
+import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.util.TLContext;
+import com.top_logic.layout.view.element.ContentControls;
+import com.top_logic.util.Resources;
 
 /**
  * React control for {@code <chat-rail/>}.
  *
  * <p>
- * Binds the window once through {@link ChatViewBinding}. An optional {@code input} channel selects
- * the open session. Section names, strip and pane defaults go into this control's own state; the
- * remembered layout preferences stay on the shared binding.
+ * Builds one child control per configured section and one for the pane, and puts them into its own
+ * state, which is how a control reaches the client: the browser renders each of them in its place
+ * inside the rail. Every child is built once and stays built - a collapsed section, and a pane
+ * nobody has opened, are hidden rather than dropped, so a section keeps reporting its badge while it
+ * is out of sight and a reopened pane shows the object as it is now.
+ * </p>
+ *
+ * <p>
+ * The state this control owns is the frame: which sections there are, what they are called, their
+ * icons, the current badge numbers and whether the pane has something to show. Everything inside a
+ * section belongs to the element configured there.
  * </p>
  */
 public class ChatRailControl extends ReactControl {
 
-	private final ViewChannel _inputChannel;
+	/** State key for the section badge numbers, keyed by section name. */
+	private static final String SECTION_BADGES = "sectionBadges";
 
-	private final boolean[] _applyingFromChannel = { false };
+	private final ViewChannel _paneChannel;
 
-	/** Creates a {@link ChatRailControl}. */
-	public ChatRailControl(ViewContext context, Config config) {
+	private final Map<String, Integer> _badges = new LinkedHashMap<>();
+
+	/**
+	 * Creates a {@link ChatRailControl}.
+	 *
+	 * @param context
+	 *        The view context of the rail element.
+	 * @param config
+	 *        The rail's configuration.
+	 * @param sections
+	 *        The configured sections with their content elements.
+	 * @param pane
+	 *        The elements the pane shows; empty for a rail without a pane.
+	 */
+	public ChatRailControl(ViewContext context, Config config, List<Section> sections, List<UIElement> pane) {
 		super(context, null, blankToDefault(config.getReactElement(), "TLChatRail"));
 
 		ChatViewBinding binding = ChatViewBinding.bind(context, config.getChatId());
 		binding.writeSharedState(this::putState);
 		putState("chatId", config.getChatId());
 		putState("strip", Boolean.valueOf(config.getStrip()));
+		putState("open", Boolean.valueOf(config.getOpen()));
 		putState("paneMode", config.getPaneMode().getExternalName());
 		int paneWidth = config.getPaneWidth();
 		if (paneWidth > 0) {
 			putState("paneWidth", Integer.valueOf(paneWidth));
 		}
-		List<SectionConfig> configured = config.getSections();
-		List<Map<String, Object>> sections = new ArrayList<>();
-		List<String> collapsed = new ArrayList<>();
-		if (configured != null) {
-			for (SectionConfig section : configured) {
-				if (section == null || section.getName() == null || section.getName().isBlank()) {
-					continue;
-				}
-				String xmlName = section.getName().trim();
-				String id = ChatRailElement.internalName(xmlName);
-				Map<String, Object> row = new LinkedHashMap<>();
-				row.put("name", xmlName);
-				row.put("id", id);
-				row.put("open", Boolean.valueOf(section.getOpen()));
-				row.put("badge", Boolean.valueOf(section.getBadge()));
-				sections.add(row);
-				if (!section.getOpen()) {
-					collapsed.add(id);
-				}
-			}
-		}
-		putState("sections", sections);
-		if (!sections.isEmpty()) {
-			putState("collapsedSections", collapsed);
+
+		putState("sections", sectionState(context, sections));
+		putState(SECTION_BADGES, new LinkedHashMap<>(_badges));
+		// Part of the bootstrap, so a rail that is the first element of its chat renders collapsed
+		// where it should be rather than flashing every section open. When another element built the
+		// store first, the browser applies the same seed once instead.
+		putState("collapsedSections", sections.stream()
+			.filter(section -> !section.open())
+			.map(Section::name)
+			.collect(Collectors.toList()));
+
+		if (!pane.isEmpty()) {
+			putState("pane", ContentControls.toControl(pane, context.childContext("pane")
+				.withChildSlotPath("pane")));
 		}
 
 		ChannelRef inputRef = config.getInput();
 		if (inputRef == null) {
-			_inputChannel = null;
-			putState("selected", "");
+			_paneChannel = null;
+			applyPane(null);
 			return;
 		}
-		_inputChannel = context.resolveChannel(inputRef);
-		ViewChannel.ChannelListener listener = (sender, oldValue, newValue) -> applyFromChannel(newValue);
-		_inputChannel.addListener(listener);
-		addCleanupAction(() -> _inputChannel.removeListener(listener));
-		applyFromChannel(_inputChannel.get());
+		_paneChannel = context.resolveChannel(inputRef);
+		ViewChannel.ChannelListener listener = (sender, oldValue, newValue) -> applyPane(newValue);
+		_paneChannel.addListener(listener);
+		addCleanupAction(() -> _paneChannel.removeListener(listener));
+		applyPane(_paneChannel.get());
 	}
 
-	@Override
-	protected void onAttach() {
-		super.onAttach();
-		if (_inputChannel != null) {
-			applyFromChannel(_inputChannel.get());
+	/** Closes the pane, which is writing {@code null} back to the channel that opened it. */
+	@ReactCommandHandler("closePane")
+	public void closePane() {
+		if (_paneChannel != null) {
+			_paneChannel.set(null);
 		}
 	}
 
-	private void applyFromChannel(Object value) {
-		_applyingFromChannel[0] = true;
-		try {
-			putState("selected", ChatSessionIds.selectedId(value, currentPerson()));
-		} finally {
-			_applyingFromChannel[0] = false;
+	private List<Map<String, Object>> sectionState(ViewContext context, List<Section> sections) {
+		Resources resources = Resources.getInstance();
+		List<Map<String, Object>> rows = new ArrayList<>(sections.size());
+		for (Section section : sections) {
+			String name = section.name();
+			Map<String, Object> row = new LinkedHashMap<>();
+			row.put("name", name);
+			row.put("label", label(resources, section.label(), name));
+			row.put("icon", icon(section.icon()));
+			row.put("open", Boolean.valueOf(section.open()));
+			// One child context per section, so two sections routing `<slot-content>` of the same
+			// name reach independent positions.
+			row.put("content", ContentControls.toControl(section.content(),
+				context.childContext("section").withChildSlotPath(name)));
+			rows.add(row);
+
+			ChannelRef badgeRef = section.badge();
+			if (badgeRef == null) {
+				continue;
+			}
+			ViewChannel badge = context.resolveChannel(badgeRef);
+			_badges.put(name, Integer.valueOf(count(badge.get())));
+			ViewChannel.ChannelListener listener = (sender, oldValue, newValue) -> applyBadge(name, newValue);
+			badge.addListener(listener);
+			addCleanupAction(() -> badge.removeListener(listener));
 		}
+		return rows;
 	}
 
-	private static Person currentPerson() {
-		TLContext context = TLContext.getContext();
-		return context == null ? null : context.getPerson();
+	private void applyBadge(String name, Object value) {
+		Integer count = Integer.valueOf(count(value));
+		if (count.equals(_badges.get(name))) {
+			return;
+		}
+		_badges.put(name, count);
+		// A map of its own, so the section list - which carries the child controls - is written once
+		// and never re-serialized for a changing number.
+		putState(SECTION_BADGES, new LinkedHashMap<>(_badges));
+	}
+
+	private void applyPane(Object value) {
+		Object shown = single(value);
+		putState("paneOpen", Boolean.valueOf(shown != null));
+		putState("paneTitle", shown == null ? "" : MetaLabelProvider.INSTANCE.getLabel(shown));
+	}
+
+	/** The one object a channel holds, {@code null} for nothing and for a set of several. */
+	private static Object single(Object value) {
+		if (value instanceof Collection<?> many) {
+			return many.size() == 1 ? many.iterator().next() : null;
+		}
+		return value;
+	}
+
+	private static int count(Object value) {
+		Object single = single(value);
+		return single instanceof Number number ? Math.max(0, number.intValue()) : 0;
+	}
+
+	private static String label(Resources resources, ResKey key, String fallback) {
+		if (key == null) {
+			return fallback;
+		}
+		String label = resources.getString(key, null);
+		return label == null || label.isEmpty() ? fallback : label;
+	}
+
+	private static String icon(ThemeImage image) {
+		return image == null ? "" : image.resolve().toEncodedForm();
 	}
 
 	private static String blankToDefault(String value, String fallback) {

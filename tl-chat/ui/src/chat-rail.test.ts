@@ -1,142 +1,193 @@
-import { describe, expect, it, afterEach } from 'vitest'
-import { App } from './App'
+import { afterEach, describe, expect, it } from 'vitest'
+import { React } from 'tl-react-bridge'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { resetTLBridge, setTLState } from '../test/tl-react-bridge'
 import { TLChatRail } from './chat-rail'
 import {
-  collapsedFromConfig,
+  collapsedFromSections,
   paneIsOpen,
+  railBadgeTotal,
   readRailSections,
-  resolveRailSections,
-} from './rail-order'
-import {
-  registerRailSection,
-  registeredRailSection,
-  registeredRailSectionNames,
-  resetRegistries,
-} from './registry'
-import type { RailRenderContext, RailSection } from './extensions'
+  readSectionBadges,
+} from './rail-model'
 
-afterEach(() => resetRegistries())
+afterEach(() => resetTLBridge())
 
-const stubCtx = {} as RailRenderContext
+const PROGRESS = { controlId: 'c2', module: 'TLChatProgress', state: {} }
+const INVOICES = { controlId: 'c3', module: 'TLDataList', state: {} }
 
-const framework = {
-  progress: { id: 'progress', title: 'Fortschritt', render: () => null } satisfies RailSection,
-  context: { id: 'context', title: 'Kontext', render: () => null } satisfies RailSection,
-  sources: { id: 'sources', title: 'Quellen', render: () => null } satisfies RailSection,
+/** The state a `<chat-rail/>` control writes, as the browser reads it. */
+function railState(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    chatId: 'render-test',
+    windowId: 'w1',
+    authenticated: true,
+    language: 'en',
+    // The bootstrap the control writes: the user's remembered rail state, and the collapse seed.
+    railOpen: true,
+    collapsedSections: ['invoices'],
+    strip: true,
+    open: true,
+    paneMode: 'card',
+    sections: [
+      { name: 'progress', label: 'Progress', icon: 'css:bi bi-list-check', open: true, content: PROGRESS },
+      { name: 'invoices', label: 'Invoices', icon: '', open: false, content: INVOICES },
+    ],
+    sectionBadges: { progress: 2 },
+    ...overrides,
+  }
 }
 
-describe('resolveRailSections', () => {
-  it('uses Fortschritt, host, Kontext, Quellen when the list is empty', () => {
-    registerRailSection('host-belege', () => ({
-      id: 'host-belege',
-      title: 'Belege',
-      render: () => null,
-    }))
-    const host = registeredRailSection('host-belege', stubCtx)!
-    const { sections, dropped } = resolveRailSections([], framework, [host])
-    expect(dropped).toEqual([])
-    expect(sections.map((section) => section.id)).toEqual([
-      'progress',
-      'host-belege',
-      'context',
-      'sources',
-    ])
-  })
-
-  it('places a registered section at its configured position', () => {
-    registerRailSection('host-belege', () => ({
-      id: 'host-belege',
-      title: 'Belege',
-      render: () => null,
-    }))
-    const host = registeredRailSection('host-belege', stubCtx)!
-    const { sections } = resolveRailSections(
-      [
-        { name: 'quellen', id: 'sources', open: true, badge: true },
-        { name: 'host-belege', id: 'host-belege', open: true, badge: true },
-        { name: 'fortschritt', id: 'progress', open: false, badge: true },
-      ],
-      framework,
-      [host],
-    )
-    expect(sections.map((section) => section.id)).toEqual(['sources', 'host-belege', 'progress'])
-  })
-
-  it('drops an unregistered name without throwing', () => {
-    expect(() => {
-      const { sections, dropped } = resolveRailSections(
-        [
-          { name: 'not-a-section', id: 'not-a-section', open: false, badge: true },
-          { name: 'kontext', id: 'context', open: true, badge: true },
-        ],
-        framework,
-        [],
-      )
-      expect(dropped).toEqual(['not-a-section'])
-      expect(sections.map((section) => section.id)).toEqual(['context'])
-    }).not.toThrow()
-  })
-})
-
-describe('collapsedFromConfig', () => {
-  it('leaves the store default when the list is empty', () => {
-    expect(collapsedFromConfig([])).toBeUndefined()
-  })
-
-  it('collapses every section that is not open', () => {
-    expect(
-      collapsedFromConfig([
-        { name: 'fortschritt', id: 'progress', open: false, badge: true },
-        { name: 'kontext', id: 'context', open: true, badge: true },
-      ]),
-    ).toEqual(['progress'])
-  })
-})
+/** Renders the rail against a control state, without a browser. */
+function render(state: Record<string, unknown>): string {
+  setTLState(state)
+  return renderToStaticMarkup(
+    React.createElement(TLChatRail, { controlId: state.chatId as string, state }),
+  )
+}
 
 describe('readRailSections', () => {
-  it('reads the rows the control put into state', () => {
-    expect(
-      readRailSections({
-        sections: [{ name: 'fortschritt', id: 'progress', open: false, badge: true }],
-      }),
-    ).toEqual([{ name: 'fortschritt', id: 'progress', open: false, badge: true }])
+  it('reads what the control serialized, in order', () => {
+    const sections = readRailSections(railState())
+    expect(sections.map((section) => section.name)).toEqual(['progress', 'invoices'])
+    expect(sections[0].label).toBe('Progress')
+    expect(sections[0].icon).toBe('css:bi bi-list-check')
+    expect(sections[0].content).toBe(PROGRESS)
+  })
+
+  it('is empty rather than broken when there is no section list', () => {
+    expect(readRailSections({})).toEqual([])
+  })
+
+  it('falls back to the technical name when a section has no label', () => {
+    const sections = readRailSections({ sections: [{ name: 'plan', content: null }] })
+    expect(sections[0].label).toBe('plan')
+    expect(sections[0].open).toBe(false)
   })
 })
 
-describe('openInPane on a rail of its own', () => {
-  it('opens the pane when a section asks', () => {
-    registerRailSection('host-belege', (ctx) => ({
-      id: 'host-belege',
-      title: 'Belege',
-      render: () => {
-        ctx.openInPane('invoice-node', { title: 'Invoice', mode: 'card' })
-        return null
-      },
-    }))
-    let opened: { content: unknown; title: string } | null = null
-    const ctx: RailRenderContext = {
-      sessionId: 's1',
-      messages: [],
-      busy: false,
-      pendingApprovals: [],
-      openInPane: (content, options) => {
-        opened = { content, title: options.title }
-      },
-      closePane: () => undefined,
-      insertReference: () => undefined,
+describe('the badge total', () => {
+  it('sums the sections that report a count', () => {
+    const sections = readRailSections(railState())
+    const badges = readSectionBadges(railState({ sectionBadges: { progress: 2, invoices: 3 } }))
+    expect(railBadgeTotal(sections, badges)).toBe(5)
+  })
+
+  /**
+   * A section with no badge channel has no notion of "new"; counting its rows would put a number on
+   * the conversation's button that never goes away.
+   */
+  it('ignores a section that reports nothing', () => {
+    const sections = readRailSections(railState())
+    expect(railBadgeTotal(sections, readSectionBadges(railState()))).toBe(2)
+  })
+
+  it('drops values that are not a positive number', () => {
+    expect(readSectionBadges({ sectionBadges: { a: 0, b: -1, c: 'x', d: '4' } })).toEqual({ d: 4 })
+  })
+})
+
+describe('collapsedFromSections', () => {
+  it('collapses every section that does not start open', () => {
+    expect(collapsedFromSections(readRailSections(railState()))).toEqual(['invoices'])
+  })
+
+  it('has nothing to seed for an empty rail', () => {
+    expect(collapsedFromSections([])).toBeUndefined()
+  })
+})
+
+describe('the rendered rail', () => {
+  it('renders one header and one child control per configured section, in order', () => {
+    const html = render(railState())
+    expect(html.indexOf('Progress')).toBeLessThan(html.indexOf('Invoices'))
+    expect(html).toContain('data-module="TLChatProgress"')
+    expect(html).toContain('data-module="TLDataList"')
+    expect(html).toContain('class="tl-chat-rail"')
+  })
+
+  /** Hidden, not dropped: a collapsed section keeps reporting the badge the strip shows. */
+  it('keeps a collapsed section mounted and hides its body', () => {
+    const html = render(railState())
+    expect(html).toContain('class="side-section-body is-hidden"')
+    expect(html).toContain('data-module="TLDataList"')
+  })
+
+  it('shows the badge beside the title and on the strip icon', () => {
+    const html = render(railState())
+    expect(html).toContain('<span class="side-section-badge">2</span>')
+    expect(html).toContain('<span class="side-strip-badge">2</span>')
+  })
+
+  it('renders the configured icon and a fallback glyph for a section without one', () => {
+    const html = render(railState())
+    expect(html).toContain('class="bi bi-list-check"')
+    expect(html).toContain('<svg viewBox="0 0 16 16"')
+  })
+
+  it('leaves the strip out when it is turned off', () => {
+    expect(render(railState({ strip: false }))).not.toContain('side-strip')
+  })
+
+  /** An empty `<chat-rail/>` is a legitimate configuration: the shell ships no sections. */
+  it('says so when nothing is configured', () => {
+    const html = render(railState({ sections: [], sectionBadges: {} }))
+    expect(html).toContain('side-empty')
+    expect(html).not.toContain('data-module')
+  })
+
+  it('shows the sign-in note instead of a rail in a session that is not signed in', () => {
+    const html = render(railState({ authenticated: false, chatId: 'signed-out-rail' }))
+    expect(html).toContain('is-signed-out')
+    expect(html).not.toContain('data-module')
+  })
+
+  /**
+   * The pane is the rail's other face: `paneOpen` swaps which of the two the user sees, and the
+   * pane's element stays mounted in both, so reopening it shows the object as it is now.
+   */
+  it('swaps the sections for the pane while the input channel holds an object', () => {
+    const pane = { controlId: 'c9', module: 'TLForm', state: {} }
+    const closed = render(railState({ pane, paneOpen: false, chatId: 'pane-closed' }))
+    expect(closed).toContain('class="rail-column"')
+    expect(closed).toContain('data-module="TLForm"')
+    expect(closed).toMatch(/class="side-pane"[^>]*hidden/)
+
+    const open = render(railState({ pane, paneOpen: true, paneTitle: 'Invoice 4711', chatId: 'pane-open' }))
+    expect(open).toContain('class="rail-column is-hidden"')
+    expect(open).toContain('Invoice 4711')
+    expect(open).not.toMatch(/class="side-pane"[^>]*hidden/)
+  })
+})
+
+describe('the chat bundle', () => {
+  /**
+   * React is the host's, handed to this bundle by `tl-react-bridge`.
+   *
+   * Importing it directly bundles a second copy, and hooks called against the copy that did not
+   * render the tree fail at runtime with "useState is null". Until this run had a real React of its
+   * own, the absent dependency was what enforced that; now it is this test. A type-only import is
+   * erased by the build and harmless.
+   */
+  it('takes React from the bridge, never from react itself', () => {
+    const sources = import.meta.glob('./*.{ts,tsx}', { query: '?raw', import: 'default', eager: true })
+    const offenders: string[] = []
+    for (const [name, source] of Object.entries(sources)) {
+      if (name.endsWith('.test.ts') || name.endsWith('.test.tsx')) continue
+      for (const line of String(source).split('\n')) {
+        if (/^\s*import\s+(?!type\b)[^;]*from\s+'react(-dom)?'/.test(line)) {
+          offenders.push(`${name}: ${line}`)
+        }
+      }
     }
-    const section = registeredRailSection('host-belege', ctx)!
-    section.render(ctx)
-    expect(opened).toEqual({ content: 'invoice-node', title: 'Invoice' })
+    expect(offenders).toEqual([])
+  })
+})
+
+describe('the chat-owned pane', () => {
+  it('is open only while the rail is open and something was put in it', () => {
     expect(paneIsOpen(true, 'invoice-node')).toBe(true)
     expect(paneIsOpen(true, null)).toBe(false)
-  })
-})
-
-describe('TLChatRail and App', () => {
-  it('are functions over the same store API', () => {
-    expect(typeof TLChatRail).toBe('function')
-    expect(typeof App).toBe('function')
-    expect(registeredRailSectionNames()).toEqual([])
+    expect(paneIsOpen(false, 'invoice-node')).toBe(false)
   })
 })

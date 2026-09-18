@@ -96,9 +96,13 @@ because the Vite library build strips types without checking them.
 
 `tl-react-bridge` is the host's module: the build keeps it external and the browser resolves it
 through a `<module-script specifier=…>`, so there is nothing in `node_modules` for a test run to
-import. `vite.config.ts` therefore aliases it, for the vitest run only, to `ui/test/tl-react-bridge.ts`
-- a stub of just what importing the chat's modules touches. A test that needs a *rendered* component
-needs a real React, which this is not.
+import. `vite.config.ts` therefore aliases it, for the vitest run only, to `ui/test/tl-react-bridge.ts`.
+The stub hands out the **real** React (a dev dependency), so a test may render a component with
+`react-dom/server` and assert on the markup - `chat-rail.test.ts` does. Everything else in it is the
+smallest stand-in that behaves: the control state a test sets, a command sink it reads back, and a
+marker element in place of a mounted child control. React must still never be imported from `react`
+in `ui/src` - it is the host's instance, and a second copy breaks every hook; `chat-rail.test.ts`
+pins that, which is what the missing dependency used to do.
 
 All four sit in `generate-resources` on purpose, so `-DskipTests` still runs the JS tests: that flag
 is for the Java suites, whose KB setup is what makes a build slow, while the whole vitest run is a
@@ -182,7 +186,8 @@ it rewrites a draft and never answers as a persona.
 | `App.tsx` | The shipped chat as a composition over one `useChat` store, plus this element's own geometry |
 | `chat-sessions.tsx` | `<chat-sessions/>` as `TLChatSessions`: the session list over the same store |
 | `chat-conversation.tsx` | `<chat-conversation/>` as `TLChatConversation`: transcript plus prompt field over the same store |
-| `chat-rail.tsx` | `<chat-rail/>` as `TLChatRail`: the right rail and its pane |
+| `chat-rail.tsx` / `rail-model.ts` | `<chat-rail/>` as `TLChatRail`: the side-rail shell - strip, section headers, pane chrome - and how it reads its state |
+| `chat-progress.tsx` / `chat-sources.tsx` | `<chat-progress/>` and `<chat-sources/>`: the two sections the chat contributes |
 | `chat-store.ts` | The chat's state, one store per `chat-id`: bootstrap, capabilities, sessions, turn settings, transcript, run, layout preferences and the one `EventSource` |
 | `composer.tsx` | Input, plus menu, model picker, attachments, drag and drop, improve-prompt |
 | `thread.tsx` | Transcript: user bubbles, answers, run meta line, trace panels |
@@ -192,7 +197,8 @@ it rewrites a draft and never answers as a persona.
 | `api.ts` | Every call to `/chat/*`, plus the persisted-transcript to message mapping |
 | `reducer.ts` / `store.ts` / `types.ts` | Transcript reducer, the `runStore` snapshot a host may subscribe to, shared types |
 | `extensions.ts` | Host composition contract (`ChatExtensions`) |
-| `rail.tsx` / `side-pane.tsx` / `progress.tsx` | Right rail, artefact pane, Fortschritt |
+| `rail.tsx` / `side-pane.tsx` / `progress.tsx` | `App`'s own rail, the artefact pane, the Fortschritt list |
+| `theme-icon.tsx` | A `ThemeImage` (`css:bi bi-…`) as an element, for configured icons |
 | `token-input.tsx` / `reference.ts` | The composer's inline reference tokens and how they travel |
 | `sources.tsx` | The cited-source model, the `Quellen` section and the per-answer pill |
 
@@ -297,9 +303,11 @@ once the list is long. `sourceTabs` puts a host list beside it as further tabs.
 Layout preferences (`railOpen`, `paneWidth`, `badgeSeen`) are bootstrapped from PersonalConfiguration
 via `AgentChatControl.putState` and written through `PUT /chat/preferences`.
 
-The Leiste badge is the sum of each section's `badge()` minus the total last stored when the rail was
-opened - "N new since you last looked", so a section whose rows simply exist contributes none and
-uses `count()` for the number beside its own title instead.
+The Leiste badge is the sum of each section's badge minus the total last stored when the rail was
+opened - "N new since you last looked", so a section that reports nothing contributes nothing. In
+`App` the sections are `RailSection` objects and the sum is computed in place; with a composed
+`<chat-rail>` the sections are separate view elements, so the rail publishes the sum into the store
+(`badgeTotal`) and `<chat-conversation>`'s button reads it there.
 
 ### Where the chat's state lives
 
@@ -364,12 +372,40 @@ means a fresh, empty conversation, so "new chat" is just the list clearing the c
 `<data-list create-action="clear-selection">`, no separate binding element. (This replaced the former
 `<chat-session-binding>`.)
 
-`<chat-rail>` is the right rail and its pane. An empty `<sections>` list is Fortschritt, then
-registered host sections, then Kontext and Quellen. Named host sections, `@` sources, `+` menu
-items, citation renderers and message actions are registered from TypeScript
-(`registerRailSection` and the four neighbours) and referenced by name from XML. The store still
-issues the one `PUT /chat/preferences`; layout fields are mutated by the rail (and by `App`, which
-contains one).
+`<chat-rail>` is a **shell**, not a set of sections: it renders the strip, the section headers and
+the pane's chrome, and every section's body is a view element the application configured there.
+
+```xml
+<chat-rail chat-id="grouped" input="paneObject">
+    <section name="progress" icon="css:bi bi-list-check" open="true" badge="progressBadge">
+        <label><en>Progress</en><de>Fortschritt</de></label>
+        <chat-progress chat-id="grouped" badge="progressBadge"/>
+    </section>
+    <section name="invoices" icon="css:bi bi-receipt">
+        <label><en>Invoices</en><de>Rechnungen</de></label>
+        <data-list selection="paneObject" …/>
+    </section>
+    <pane><form input="paneObject"/></pane>
+</chat-rail>
+```
+
+Any element is a section - `<chat-progress>`, `<chat-sources>`, a `<data-list>` of the application's
+own objects, an element a host wrote - so the rail can show a proposed plan, a document the agent
+produced or a live view of its browser without this element learning about any of them. An empty
+`<chat-rail>` renders an empty rail; there is no framework order and no name registry (the former
+`registerRailSection` is gone, replaced by nesting). `@` sources, `+` menu items, citation renderers
+and message actions are still registered from TypeScript and referenced by name from XML.
+
+The `input` channel is the rail's second face: while it holds an object the `<pane>` replaces the
+section column, with the object available to the element inside over the same channel; closing the
+pane writes `null` back. Every child stays mounted - a collapsed section and an unopened pane are
+hidden, not dropped - so a section keeps reporting its badge while the rail is closed, which is
+exactly when the badge matters. Below 1280 px the composed rail stays a column (it has no workspace
+grid to spread a sheet over); `App`'s sheet is unaffected. Two rails on one `chat-id` are not
+supported: the open state and the collapsed set are one per conversation.
+
+The store still issues the one `PUT /chat/preferences`; layout fields are mutated by the rail (and by
+`App`, which contains one).
 
 ### Stability
 

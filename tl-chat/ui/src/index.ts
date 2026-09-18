@@ -5,7 +5,6 @@ export { TLChatRail } from './chat-rail'
 export { TLChatProgress } from './chat-progress'
 export { TLChatSources } from './chat-sources'
 export {
-  registerRailSection,
   registerReferenceSource,
   registerMenuItem,
   registerAnnotationRenderer,
@@ -20,6 +19,7 @@ export { Thread } from './thread'
 export { ContextIcon, ContextSection, ProgressIcon, ProgressSection } from './progress'
 export { progressSteps, progressBadge, unseenBadge, parseTasksJson } from './progress-model'
 export { SideRail, SideStrip, RailToggle } from './rail'
+export { ThemeIcon } from './theme-icon'
 export { SidePane, PANE_CONTENT_FLOOR } from './side-pane'
 export { chatReducer } from './reducer'
 export { runStore, EMPTY_RUN } from './store'

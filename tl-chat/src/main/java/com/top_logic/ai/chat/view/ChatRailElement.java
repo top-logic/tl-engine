@@ -7,12 +7,13 @@ package com.top_logic.ai.chat.view;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
@@ -22,11 +23,14 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
@@ -34,19 +38,40 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 
 /**
- * Declarative {@code <chat-rail/>} element: the right rail and its pane as one view element.
+ * Declarative {@code <chat-rail/>} element: the side rail beside a conversation, as a shell whose
+ * content is configured.
  *
  * <p>
- * Several chat elements on one page join the same conversation through {@code chat-id}. The
- * optional {@code input} channel selects the open {@code AgentSession}. An empty section list is
- * the framework order (Fortschritt, Kontext, Quellen); named host sections come from the browser
- * registry. The pane is configuration of this element, not a fifth tag.
+ * The rail extends the chat so it can show more beside the transcript - what the agent is doing, a
+ * proposed plan, the sources, a document it wrote. <b>Which</b> of those is the application's
+ * decision, so this element brings no content of its own: each {@code <section>} holds one view
+ * element, and any element will do - {@code <chat-progress/>}, a {@code <data-list>} of the
+ * application's own objects, or an element a host wrote. An empty {@code <chat-rail/>} renders an
+ * empty rail.
+ * </p>
+ *
+ * <p>
+ * The {@code input} channel is the rail's second face: while it holds an object, the {@code <pane>}
+ * child is shown in place of the sections, with that object available to it over the same channel
+ * (an {@code <form input="…"/>}, say). Closing the pane writes {@code null} back.
+ * </p>
+ *
+ * <p>
+ * Several chat elements on one page join the same conversation through {@code chat-id}. Two rails
+ * on one {@code chat-id} are not supported: the open state and the collapsed sections are one per
+ * conversation, and both rails would fight over them.
+ * </p>
+ *
+ * <p>
+ * <b>TEMPORARY FORK.</b> Nothing here is chat-specific except the {@code chat-id} binding and the
+ * remembered layout. <b>Upstream target:</b> a generic side-rail shell in {@code tl-layout-view}
+ * (engine hand-off E2), leaving {@code tl-chat} only the sections it contributes.
  * </p>
  */
 public class ChatRailElement implements UIElement {
 
 	/**
-	 * How wide the pane opens when a host does not name a mode.
+	 * How wide the pane opens.
 	 */
 	public enum PaneMode implements ExternallyNamed {
 
@@ -80,13 +105,6 @@ public class ChatRailElement implements UIElement {
 		String CHAT_ID = "chat-id";
 
 		/**
-		 * Configuration property name for {@link #getInput()}.
-		 *
-		 * @see #getInput()
-		 */
-		String INPUT = "input";
-
-		/**
 		 * Configuration property name for {@link #getSections()}.
 		 *
 		 * @see #getSections()
@@ -94,11 +112,32 @@ public class ChatRailElement implements UIElement {
 		String SECTIONS = "sections";
 
 		/**
+		 * Configuration property name for {@link #getPane()}.
+		 *
+		 * @see #getPane()
+		 */
+		String PANE = "pane";
+
+		/**
+		 * Configuration property name for {@link #getInput()}.
+		 *
+		 * @see #getInput()
+		 */
+		String INPUT = "input";
+
+		/**
 		 * Configuration property name for {@link #getStrip()}.
 		 *
 		 * @see #getStrip()
 		 */
 		String STRIP = "strip";
+
+		/**
+		 * Configuration property name for {@link #getOpen()}.
+		 *
+		 * @see #getOpen()
+		 */
+		String OPEN = "open";
 
 		/**
 		 * Configuration property name for {@link #getPaneMode()}.
@@ -143,7 +182,7 @@ public class ChatRailElement implements UIElement {
 		String getPersonalizationKey();
 
 		/**
-		 * Shared key that lets this rail, a thread and a composer show one conversation.
+		 * Shared key that lets this rail, a transcript and a session list show one conversation.
 		 *
 		 * Defaults to {@code default}, so unconfigured pieces on one page find each other.
 		 */
@@ -153,10 +192,36 @@ public class ChatRailElement implements UIElement {
 		String getChatId();
 
 		/**
-		 * Optional channel holding the open {@code AgentSession}.
+		 * The rail's sections, top to bottom in the order written.
 		 *
-		 * The rail follows a write. Leave empty when the rail should only talk to the other chat
-		 * elements through {@code chat-id}.
+		 * Written directly as {@code <section>} children of the {@code <chat-rail>}. An empty list
+		 * is an empty rail; this element ships no sections of its own.
+		 */
+		@Name(SECTIONS)
+		@Label("Sections")
+		@DefaultContainer
+		@EntryTag("section")
+		@TreeProperty
+		List<SectionConfig> getSections();
+
+		/**
+		 * What the pane shows while the {@link #getInput() input channel} holds an object.
+		 *
+		 * Written as a {@code <pane>} child. The element inside binds to the same channel to learn
+		 * which object it is showing, e.g. {@code <pane><form input="selected"/></pane>}. Several
+		 * elements are stacked.
+		 */
+		@Name(PANE)
+		@Label("Pane")
+		@TreeProperty
+		List<PolymorphicConfiguration<? extends UIElement>> getPane();
+
+		/**
+		 * Channel holding the object the pane shows, empty for the sections.
+		 *
+		 * The same {@code input} a {@code <form>} or a {@code <switch>} takes: while it holds an
+		 * object the {@link #getPane() pane} replaces the section column, and the pane's close
+		 * button writes {@code null} back. Leave it empty for a rail without a pane.
 		 */
 		@Name(INPUT)
 		@Label("Input")
@@ -165,16 +230,10 @@ public class ChatRailElement implements UIElement {
 		ChannelRef getInput();
 
 		/**
-		 * Ordered rail sections. Empty means the framework order.
-		 */
-		@Name(SECTIONS)
-		@Label("Sections")
-		@DefaultContainer
-		@EntryTag("section")
-		List<SectionConfig> getSections();
-
-		/**
-		 * Whether the 56 px icon strip is shown.
+		 * Whether the strip of section icons is shown.
+		 *
+		 * The strip is what says what the rail holds while it is closed, and clicking an icon opens
+		 * the rail on that section. Without it the only way in is the transcript's rail button.
 		 */
 		@Name(STRIP)
 		@Label("Strip")
@@ -182,7 +241,17 @@ public class ChatRailElement implements UIElement {
 		boolean getStrip();
 
 		/**
-		 * Default pane mode when a host opens without one.
+		 * Whether the rail starts open.
+		 *
+		 * The first-load state only: from then on the rail is where the user last left it.
+		 */
+		@Name(OPEN)
+		@Label("Open")
+		@BooleanDefault(true)
+		boolean getOpen();
+
+		/**
+		 * How wide the pane opens: a record beside the transcript, or something to read.
 		 */
 		@Name(PANE_MODE)
 		@Label("Pane mode")
@@ -214,10 +283,7 @@ public class ChatRailElement implements UIElement {
 		String getReactElement();
 	}
 
-	/**
-	 * One named block in the rail, resolved against the three framework sections and the browser
-	 * registry.
-	 */
+	/** One collapsible block of the rail, holding one view element. */
 	@TagName("section")
 	public interface SectionConfig extends ConfigurationItem {
 
@@ -227,6 +293,20 @@ public class ChatRailElement implements UIElement {
 		 * @see #getName()
 		 */
 		String NAME = "name";
+
+		/**
+		 * Configuration property name for {@link #getLabel()}.
+		 *
+		 * @see #getLabel()
+		 */
+		String LABEL = "label";
+
+		/**
+		 * Configuration property name for {@link #getIcon()}.
+		 *
+		 * @see #getIcon()
+		 */
+		String ICON = "icon";
 
 		/**
 		 * Configuration property name for {@link #getOpen()}.
@@ -243,8 +323,17 @@ public class ChatRailElement implements UIElement {
 		String BADGE = "badge";
 
 		/**
-		 * Framework name ({@code fortschritt}, {@code kontext}, {@code quellen}) or a registered
-		 * host name.
+		 * Configuration property name for {@link #getContent()}.
+		 *
+		 * @see #getContent()
+		 */
+		String CONTENT = "content";
+
+		/**
+		 * Technical name of this section, unique within the rail.
+		 *
+		 * It is the key under which the section remembers whether the user collapsed it, so
+		 * renaming a section forgets that.
 		 */
 		@Name(NAME)
 		@Label("Name")
@@ -252,7 +341,28 @@ public class ChatRailElement implements UIElement {
 		String getName();
 
 		/**
-		 * Whether the section starts expanded.
+		 * The title shown in the section's header.
+		 */
+		@Name(LABEL)
+		@Label("Label")
+		@Nullable
+		ResKey getLabel();
+
+		/**
+		 * The icon shown on the strip, e.g. {@code css:bi bi-list-check}.
+		 *
+		 * Sections without one share a generic glyph, which says nothing about what is inside; give
+		 * every section an icon of its own where the strip is shown.
+		 */
+		@Name(ICON)
+		@Label("Icon")
+		@Nullable
+		ThemeImage getIcon();
+
+		/**
+		 * Whether this section starts expanded.
+		 *
+		 * The first-load state only: from then on the section is where the user left it.
 		 */
 		@Name(OPEN)
 		@Label("Open")
@@ -260,81 +370,76 @@ public class ChatRailElement implements UIElement {
 		boolean getOpen();
 
 		/**
-		 * Whether this section contributes to the rail badge.
+		 * Optional channel carrying how many things this section is showing.
+		 *
+		 * The number appears beside the section's title and on its strip icon, and the rail sums the
+		 * sections into the total the transcript's rail button shows. The content element writes it
+		 * - {@code <chat-progress badge="…"/>} does - or a derived channel computes it.
 		 */
 		@Name(BADGE)
 		@Label("Badge")
-		@BooleanDefault(true)
-		boolean getBadge();
+		@Format(ChannelRefFormat.class)
+		@Nullable
+		ChannelRef getBadge();
+
+		/**
+		 * What this section shows: one view element, written as the {@code <section>}'s child.
+		 *
+		 * Several elements are stacked, as in a {@code <tab>}.
+		 */
+		@Name(CONTENT)
+		@DefaultContainer
+		@TreeProperty
+		List<PolymorphicConfiguration<? extends UIElement>> getContent();
+	}
+
+	/**
+	 * One configured section with its content elements instantiated.
+	 *
+	 * @param name
+	 *        {@link SectionConfig#getName()}.
+	 * @param label
+	 *        {@link SectionConfig#getLabel()}, unresolved: the locale is a session's, not the
+	 *        element's.
+	 * @param icon
+	 *        {@link SectionConfig#getIcon()}, or {@code null}.
+	 * @param open
+	 *        {@link SectionConfig#getOpen()}.
+	 * @param badge
+	 *        {@link SectionConfig#getBadge()}, or {@code null}.
+	 * @param content
+	 *        The instantiated {@link SectionConfig#getContent()} elements.
+	 */
+	public record Section(String name, ResKey label, ThemeImage icon, boolean open, ChannelRef badge,
+			List<UIElement> content) {
+		// Sole record.
 	}
 
 	private final Config _config;
+
+	private final List<Section> _sections;
+
+	private final List<UIElement> _pane;
 
 	/** Creates a {@link ChatRailElement}. */
 	@CalledByReflection
 	public ChatRailElement(InstantiationContext context, Config config) {
 		_config = config;
+		_sections = new ArrayList<>();
+		for (SectionConfig section : config.getSections()) {
+			List<UIElement> content = section.getContent().stream()
+				.map(context::getInstance)
+				.collect(Collectors.toList());
+			_sections.add(new Section(section.getName(), section.getLabel(), section.getIcon(),
+				section.getOpen(), section.getBadge(), content));
+		}
+		_pane = config.getPane().stream()
+			.map(context::getInstance)
+			.collect(Collectors.toList());
 	}
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		return new ChatRailControl(context, _config);
-	}
-
-	/**
-	 * The three framework sections, in the order an unconfigured rail shows them. Host sections
-	 * slot in between Fortschritt and Kontext in the browser, the way {@code App} places
-	 * {@code railSections} today.
-	 */
-	public static List<String> defaultSectionNames() {
-		return List.of("fortschritt", "kontext", "quellen");
-	}
-
-	/**
-	 * Browser section id for an XML name. Framework names are German in XML and English in the
-	 * store, matching {@code App}.
-	 */
-	public static String internalName(String xmlName) {
-		if (xmlName == null) {
-			return "";
-		}
-		String trimmed = xmlName.trim();
-		if ("fortschritt".equals(trimmed)) {
-			return "progress";
-		}
-		if ("kontext".equals(trimmed)) {
-			return "context";
-		}
-		if ("quellen".equals(trimmed)) {
-			return "sources";
-		}
-		return trimmed;
-	}
-
-	/**
-	 * Drops names that have no framework section and no registered host section, with a debug
-	 * line each, instead of failing the view.
-	 */
-	public static int ignoreUnknownSections(List<String> names, List<String> registered) {
-		if (names == null || names.isEmpty()) {
-			return 0;
-		}
-		int ignored = 0;
-		List<String> known = new ArrayList<>(defaultSectionNames());
-		if (registered != null) {
-			known.addAll(registered);
-		}
-		for (String name : names) {
-			if (name == null || name.isBlank()) {
-				continue;
-			}
-			String trimmed = name.trim();
-			if (known.contains(trimmed) || known.contains(internalName(trimmed))) {
-				continue;
-			}
-			Logger.debug("Ignoring unknown chat rail section '" + trimmed + "'.", ChatRailElement.class);
-			ignored++;
-		}
-		return ignored;
+		return new ChatRailControl(context, _config, _sections, _pane);
 	}
 }

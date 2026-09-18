@@ -444,18 +444,82 @@
   line-height: var(--body-02-line-height, 1.25rem);
 }
 
+/*
+ * The composed rail is a column beside the conversation, not a region of App's workspace grid.
+ *
+ * `.side-strip` and `.side-pane` are App's classes, which place themselves with `grid-column` and
+ * turn into an overlay below 1280 px. Inside this element there is no grid to place into and
+ * nothing to overlay, so their geometry is re-stated here: laid out in flow, sized by themselves,
+ * and a column at every width (see `allowSheet` in side-pane.tsx).
+ */
 .tl-chat-rail {
   display: flex;
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   min-width: 0;
   min-height: 0;
   height: 100%;
+  overflow: hidden;
+  background: var(--background);
 }
 
-.tl-chat-rail .side-column,
-.tl-chat-rail .side-pane,
-.tl-chat-rail .side-strip {
+.tl-chat-rail .side-strip,
+.tl-chat-rail .side-pane {
   position: relative;
+  grid-column: auto;
+}
+
+/* The sections' own column. Named apart from App's `.side-column`, which is a grid child. */
+.tl-chat-rail .rail-column {
+  flex: 0 0 auto;
+  width: 18.75rem;
+  min-width: 0;
+  border-inline-start: 1px solid var(--border-subtle);
+  background: var(--layer);
+  overflow: auto;
+}
+
+/*
+ * Hidden, not unmounted.
+ *
+ * A collapsed section keeps reporting its badge, and a closed rail keeps the sections that feed the
+ * number on the conversation's button - both of which stop the moment the browser drops the child.
+ */
+.tl-chat-rail .is-hidden {
+  display: none;
+}
+
+/* A count on a strip icon, so a closed rail still says which section the news is in. */
+.side-strip-badge {
+  position: absolute;
+  top: -0.2rem;
+  inset-inline-end: -0.2rem;
+  min-width: 1.05rem;
+  height: 1.05rem;
+  padding: 0 0.22rem;
+  border-radius: var(--r-pill);
+  background: var(--button-primary);
+  color: var(--text-on-color, #fff);
+  font-size: 0.625rem;
+  line-height: 1;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.tl-chat-rail .side-strip-item {
+  position: relative;
+}
+
+/* An icon-font glyph on the strip, beside the SVG ones the chat draws itself. */
+.tl-chat-rail .side-strip-item i {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.side-pane[hidden] {
+  display: none;
 }
 
 .tl-chat-conversation.is-signed-out,
@@ -3158,6 +3222,14 @@
 
   .side-strip {
     display: none;
+  }
+
+  /*
+   * ... but not in the composed rail: App hides the strip because its pane becomes a sheet over
+   * the thread, and this element has no sheet to make room for.
+   */
+  .tl-chat-rail .side-strip {
+    display: flex;
   }
 
   /*

@@ -1,183 +1,84 @@
-import { React, useTLState } from 'tl-react-bridge'
+import { React, TLChild, useTLCommand, useTLState } from 'tl-react-bridge'
 import type { TLCellProps } from 'tl-react-bridge'
 import { chatIdOf, readBootstrap, useChat } from './chat-store'
 import { bundle } from './i18n'
-import { agentLabel, modelLabel, toolLabel } from './models'
-import type { RailRenderContext, RailSection } from './extensions'
-import type { ReferenceToken } from './reference'
-import { ContextIcon, ContextSection, ProgressIcon, ProgressSection } from './progress'
-import { SourcesIcon, SourcesSection, type CitedSource } from './sources'
-import { progressBadge } from './progress-model'
-import { SideRail, SideStrip } from './rail'
-import { SidePane } from './side-pane'
 import {
-  collapsedFromConfig,
+  collapsedFromSections,
   paneIsOpen,
+  railBadgeTotal,
   readRailSections,
-  resolveRailSections,
-} from './rail-order'
-import { registeredRailSection, registeredRailSectionNames } from './registry'
-import type { ApprovalRequest, Citation } from './types'
+  readSectionBadges,
+  type RailSectionState,
+} from './rail-model'
+import { SidePane } from './side-pane'
+import { ThemeIcon } from './theme-icon'
 
 const { useCallback, useEffect, useMemo } = React
 
 /**
- * The right rail and its pane as their own view element.
+ * `<chat-rail/>`: the side rail beside a conversation, as a shell whose content is configured.
  *
- * It joins the chat through {@code chat-id}. A configured {@code input} channel selects the
- * session; without one the store is the source. {@code openInPane} from a section still opens the
- * pane here, because the pane is this element's other face, not a fifth tag.
+ * It renders the frame - the strip, the section headers, the pane's chrome - and nothing else: each
+ * section's body is the view element the application put there, rendered as a child control.
+ *
+ * Every child stays mounted. A collapsed section and an unopened pane are hidden, not dropped, so a
+ * section keeps reporting its badge while it is out of sight (the badge is the whole point of a
+ * closed rail) and a reopened pane shows its object as it is now rather than as it was.
  */
 export function TLChatRail({ controlId }: TLCellProps) {
   const state = useTLState()
+  const command = useTLCommand()
   const boot = useMemo(() => readBootstrap(state), [state])
   const { chat, actions } = useChat(chatIdOf(state, controlId), boot)
   const labels = useMemo(() => bundle(chat.language), [chat.language])
-  const configured = useMemo(() => readRailSections(state), [state])
+
+  const sections = useMemo(() => readRailSections(state), [state])
+  const badges = useMemo(() => readSectionBadges(state), [state])
   const strip = state.strip !== false
+  const openDefault = state.open !== false
   const paneMode = state.paneMode === 'document' ? 'document' : 'card'
-  const selected = typeof state.selected === 'string' ? state.selected : ''
+  const paneTitle = typeof state.paneTitle === 'string' ? state.paneTitle : ''
+  const paneControl = state.pane ?? null
 
   // Tell the chat a rail is on the page, so `<chat-conversation/>` knows its badge button has
   // something to open. Unregisters on unmount.
   useEffect(() => actions.registerRail(), [actions])
 
+  const collapsedSeed = useMemo(() => collapsedFromSections(sections), [sections])
   useEffect(() => {
-    if (!selected || selected === chat.sessionId) return
-    void actions.selectSession(selected)
-  }, [actions, chat.sessionId, selected])
+    if (!collapsedSeed) return
+    actions.seedCollapsedOnce(collapsedSeed)
+  }, [actions, collapsedSeed])
 
-  const seed = useMemo(() => collapsedFromConfig(configured), [configured])
-  useEffect(() => {
-    if (!seed) return
-    actions.seedCollapsedOnce(seed)
-  }, [actions, seed])
+  useEffect(() => actions.seedRailOpenOnce(openDefault), [actions, openDefault])
 
-  const awaitingApproval = useMemo(
-    () =>
-      chat.messages
-        .filter(
-          (message): message is ApprovalRequest =>
-            message.type === 'approval_request' && message.outcome === 'pending',
-        )
-        .map((request) => ({
-          id: request.id,
-          toolName: toolLabel(request.toolName),
-        })),
-    [chat.messages],
-  )
+  const badgeTotal = useMemo(() => railBadgeTotal(sections, badges), [sections, badges])
+  useEffect(() => actions.publishBadgeTotal(badgeTotal), [actions, badgeTotal])
 
-  const progressSection: RailSection = useMemo(
-    () => ({
-      id: 'progress',
-      title: labels.progressTitle,
-      icon: ProgressIcon,
-      badge: () => progressBadge(chat.tasks, awaitingApproval),
-      count: () => progressBadge(chat.tasks, awaitingApproval),
-      render: () => <ProgressSection tasks={chat.tasks} approvals={awaitingApproval} labels={labels} />,
-    }),
-    [labels, chat.tasks, awaitingApproval],
-  )
-
-  const contextFacts = useMemo(
-    () => [
-      { id: 'language', label: labels.contextLanguage, value: labels.languageName },
-      { id: 'agent', label: labels.contextAgent, value: agentLabel(chat.agent, chat.caps.agents) },
-      { id: 'model', label: labels.contextModel, value: modelLabel(chat.model) },
-      { id: 'session', label: labels.contextSession, value: chat.sessionTitle },
-    ],
-    [labels, chat.caps.agents, chat.agent, chat.model, chat.sessionTitle],
-  )
-
-  const contextSection: RailSection = useMemo(
-    () => ({
-      id: 'context',
-      title: labels.contextTitle,
-      icon: ContextIcon,
-      render: () => <ContextSection facts={contextFacts} labels={labels} />,
-    }),
-    [labels, contextFacts],
-  )
-
-  const openInPane = actions.openPane
-
-  const openSource = useCallback(
-    (citation: Citation) => {
-      const href = citation.url || (/^https?:\/\//i.test(citation.id) ? citation.id : '')
-      if (href) window.open(href, '_blank', 'noopener,noreferrer')
-    },
-    [],
-  )
-
-  const goToAnswer = useCallback((messageId: string) => {
-    const el = document.querySelector(`[data-message-id="${CSS.escape(messageId)}"]`)
-    el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    el?.classList.add('is-pointed')
-    window.setTimeout(() => el?.classList.remove('is-pointed'), 1600)
-  }, [])
-
-  const sourcesSection: RailSection = useMemo(
-    () => ({
-      id: 'sources',
-      title: labels.sourcesTitle,
-      icon: SourcesIcon,
-      count: () => chat.sources.length,
-      render: () => (
-        <SourcesSection
-          sources={chat.sources}
-          labels={labels}
-          onOpen={(source: CitedSource) => openSource(source.citation)}
-          onGoTo={goToAnswer}
-        />
-      ),
-    }),
-    [labels, chat.sources, openSource, goToAnswer],
-  )
-
-  const insertReference = useCallback(
-    (token: ReferenceToken) => actions.insertReference(token),
-    [actions],
-  )
-
-  const railCtx: RailRenderContext = useMemo(
-    () => ({
-      sessionId: chat.sessionId,
-      messages: chat.messages,
-      busy: chat.busy,
-      pendingApprovals: awaitingApproval,
-      openInPane,
-      closePane: actions.closePane,
-      insertReference,
-    }),
-    [chat.sessionId, chat.messages, chat.busy, awaitingApproval, openInPane, actions, insertReference],
-  )
-
-  const registered = useMemo(() => {
-    const sections: RailSection[] = []
-    for (const name of registeredRailSectionNames()) {
-      const section = registeredRailSection(name, railCtx)
-      if (section) sections.push(section)
-    }
-    return sections
-  }, [railCtx])
-
-  const { sections } = useMemo(
-    () =>
-      resolveRailSections(configured, {
-        progress: progressSection,
-        context: contextSection,
-        sources: sourcesSection,
-      }, registered),
-    [configured, progressSection, contextSection, sourcesSection, registered],
-  )
-
-  const badgeTotal = useMemo(
-    () => sections.reduce((sum, section) => sum + (section.badge?.() ?? 0), 0),
-    [sections],
-  )
   const collapsedIds = useMemo(() => new Set(chat.collapsedSections), [chat.collapsedSections])
-  const paneOpen = paneIsOpen(chat.sideOpen, chat.paneContent)
-  const railVisible = chat.sideOpen && !paneOpen
+  /** The pane the `input` channel opens. */
+  const objectPane = state.paneOpen === true && paneControl != null
+  /** The chat's own transient pane, which a citation renderer still opens with `openInPane`. */
+  const hostPane = paneIsOpen(chat.sideOpen, chat.paneContent)
+  const paneOpen = objectPane || hostPane
+  const sectionsVisible = chat.sideOpen && !paneOpen
+
+  const onStrip = useCallback(
+    (section: RailSectionState) => {
+      // A second click on what is already showing closes the rail: with no header of its own, the
+      // strip is where a rail says "that is enough for now".
+      if (chat.sideOpen && !paneOpen && !collapsedIds.has(section.name)) {
+        actions.toggleSide(badgeTotal)
+        return
+      }
+      actions.showSection(section.name, badgeTotal)
+    },
+    [actions, badgeTotal, chat.sideOpen, collapsedIds, paneOpen],
+  )
+
+  const closeObjectPane = useCallback(() => {
+    void command('closePane')
+  }, [command])
 
   if (!chat.authenticated) {
     return (
@@ -193,25 +94,77 @@ export function TLChatRail({ controlId }: TLCellProps) {
   return (
     <div id={controlId} className="tl-chat-rail">
       {strip ? (
-        <SideStrip
-          sections={sections}
-          activeId={paneOpen ? chat.paneOptions?.sectionId : undefined}
-          onSelect={(id) => actions.showSection(id, badgeTotal)}
+        <nav className="side-strip" aria-label={labels.sideRail}>
+          {sections.map((section) => (
+            <button
+              type="button"
+              key={section.name}
+              className={`side-strip-item${
+                sectionsVisible && !collapsedIds.has(section.name) ? ' is-active' : ''
+              }`}
+              title={section.label}
+              aria-label={section.label}
+              onClick={() => onStrip(section)}
+            >
+              <SectionIcon icon={section.icon} />
+              {badges[section.name] ? (
+                <span className="side-strip-badge">{badges[section.name]}</span>
+              ) : null}
+            </button>
+          ))}
+        </nav>
+      ) : null}
+
+      <aside
+        className={`rail-column${sectionsVisible ? '' : ' is-hidden'}`}
+        aria-label={labels.sideRail}
+        aria-hidden={!sectionsVisible}
+      >
+        <div className="side-rail">
+          {sections.map((section) => {
+            const collapsed = collapsedIds.has(section.name)
+            const count = badges[section.name] ?? 0
+            return (
+              <section
+                key={section.name}
+                className={`side-section is-framework${collapsed ? ' is-collapsed' : ''}`}
+              >
+                <button
+                  type="button"
+                  className="side-section-head"
+                  aria-expanded={!collapsed}
+                  onClick={() => actions.toggleSection(section.name)}
+                >
+                  <span className={`side-caret${collapsed ? '' : ' is-open'}`} aria-hidden="true" />
+                  <span className="side-section-title">{section.label}</span>
+                  {count > 0 ? <span className="side-section-badge">{count}</span> : null}
+                </button>
+                <div className={`side-section-body${collapsed ? ' is-hidden' : ''}`}>
+                  <TLChild control={section.content} />
+                </div>
+              </section>
+            )
+          })}
+          {sections.length === 0 ? <p className="side-empty">{labels.railEmpty}</p> : null}
+        </div>
+      </aside>
+
+      {paneControl != null ? (
+        <SidePane
+          title={paneTitle}
+          width={chat.paneWidth}
+          onWidth={actions.setPaneWidth}
+          onBack={closeObjectPane}
           labels={labels}
-        />
+          mode={paneMode}
+          hidden={!objectPane}
+          allowSheet={false}
+        >
+          <TLChild control={paneControl} />
+        </SidePane>
       ) : null}
-      {railVisible ? (
-        <aside className="side-column" aria-label={labels.sideRail}>
-          <SideRail
-            sections={sections}
-            ctx={railCtx}
-            collapsedIds={collapsedIds}
-            onToggleSection={actions.toggleSection}
-            labels={labels}
-          />
-        </aside>
-      ) : null}
-      {paneOpen ? (
+
+      {hostPane ? (
         <SidePane
           title={chat.paneOptions?.title ?? ''}
           backLabel={chat.paneOptions?.backLabel}
@@ -223,6 +176,7 @@ export function TLChatRail({ controlId }: TLCellProps) {
           mode={chat.paneOptions?.mode ?? paneMode}
           version={chat.paneOptions?.version}
           actions={chat.paneOptions?.actions}
+          allowSheet={false}
         >
           {chat.paneContent}
         </SidePane>
@@ -231,4 +185,13 @@ export function TLChatRail({ controlId }: TLCellProps) {
   )
 }
 
-export { collapsedFromConfig, paneIsOpen, readRailSections, resolveRailSections }
+/** A section without an icon of its own gets a panel glyph, never a letter. */
+function SectionIcon({ icon }: { icon: string }) {
+  if (icon) return <ThemeIcon encoded={icon} />
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden="true">
+      <rect x="2.5" y="3" width="11" height="10" rx="1.4" />
+      <path d="M2.5 6.4h11" />
+    </svg>
+  )
+}

@@ -22,15 +22,20 @@ editing the engine. The canonical live example is `DataListElement`/`DataListCon
 - `com.top_logic.layout.react.control.ReactControl` (extend it)
   - `protected void putState(String key, Object value)` — value may be a nested JSON tree
     (`List<Map<String,Object>>` works; proven by `ChatRailControl`). React reads `useTLState()[key]`.
+    An embedded `ReactControl` — anywhere in that tree — is serialized as a child descriptor and
+    rendered by `<TLChild control={…}/>`; attach, detach and disposal follow the state automatically.
   - `@ReactCommandHandler(value="name", params={@ReactParam(name="x", type="string", description="…")})`
     on a `public void m(Map<String,Object> args)` — React invokes with `useTLCommand()('name', {x})`.
   - `addCleanupAction(Runnable)`, `addAttachListener(Runnable)`, `addDetachListener(Runnable)` (from
     `Control`).
+- `com.top_logic.layout.view.element.ContentControls.toControl(List<UIElement>, ViewContext)` — a
+  container's children as one control (the sole one, or a `ReactStackControl` of them).
 - `com.top_logic.layout.view.model.RowSourceObserver` — generic constructor:
   `new RowSourceObserver<>(List<R> initial, Function<Object[],Collection<?>> rowFn,
   Set<TLStructuredType> observedTypes, List<ViewChannel> inputChannels, Consumer<List<R>> sink)`,
   then `attach(ModelScope)` / `detach()`. The sink is where you re-serialize + `putState`.
-- `com.top_logic.layout.view.ViewContext`: `resolveChannel(ChannelRef)`, `getModelScope()`.
+- `com.top_logic.layout.view.ViewContext`: `resolveChannel(ChannelRef)`, `getModelScope()`,
+  `childContext(String)` + `withChildSlotPath(String)` (one per child of a container).
 - `com.top_logic.layout.view.channel.ViewChannel`: `get()`, `set(Object)`,
   `addListener(ChannelListener)` / `removeListener`. `ChannelListener` = `(sender, old, new) -> void`.
 - Config formats: `Expr` (renders as TL-Script), `ChannelRef` + `@Format(ChannelRefFormat.class)`,

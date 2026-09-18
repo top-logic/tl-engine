@@ -44,6 +44,8 @@
 		<data-list
 			collapsible="true"
 			observed-types="tl.ai.execution:AgentSession"
+			row-actions="hover"
+			row-channel="session"
 			search="true"
 			selection="chatSession"
 		>
@@ -78,6 +80,88 @@
 			<lines>
 				<line attribute="title"/>
 			</lines>
+			<!--
+				What a row offers besides being opened. Ordinary view commands: they reach the row
+				the menu was opened on over the "session" channel this list registers, so an
+				<executability> rule sees it too. Both write through the aiSession* functions rather
+				than touching the attribute, because those are what bump the chat's lastUpdated - its
+				group in this very list - and tell a second browser tab.
+			-->
+			<row-commands>
+				<generic-command
+					image="css:bi bi-pencil"
+					input="session"
+				>
+					<label>
+						<en>Rename</en>
+						<de>Umbenennen</de>
+					</label>
+					<open-dialog close-on-backdrop="false"
+						bind-input-to="model"
+						dialog-view="tl-ai-demo/rename-session.view.xml"
+					/>
+				</generic-command>
+				<generic-command
+					clique="delete"
+					image="css:bi bi-trash"
+					input="session"
+				>
+					<label>
+						<en>Delete</en>
+						<de>Löschen</de>
+					</label>
+					<!--
+						Hidden while the chat still has a run in it. Deleting one is safe - the
+						function asks the run to stop first - but a chat that is being answered is
+						not a chat anyone means to throw away, and the rule re-evaluates every time
+						the menu opens.
+					-->
+					<executability>
+						<visible-if><![CDATA[s -> isEmpty($s)
+							|| $s.referers(`tl.ai.execution:AgentExecution#session`)
+								.filter(e -> $e.get(`tl.ai.execution:AgentExecution#status`)
+									== `tl.ai.execution:ExecutionStatus#RUNNING`)
+								.isEmpty()]]></visible-if>
+					</executability>
+					<!-- Names the chat, and names the outcomes rather than answering Yes/No. -->
+					<confirm>
+						<cancel-label>
+							<en>Keep</en>
+							<de>Behalten</de>
+						</cancel-label>
+						<confirm-label>
+							<en>Delete</en>
+							<de>Löschen</de>
+						</confirm-label>
+						<title>
+							<en>Delete chat</en>
+							<de>Chat löschen</de>
+						</title>
+						<expr><![CDATA[s -> {
+							title = $s.get(`tl.ai.execution:AgentSession#title`);
+							{
+								"en": "Delete “" + $title + "”? This cannot be undone.",
+								"de": "„" + $title + "“ löschen? Das kann nicht rückgängig gemacht werden."
+							}.internationalize();
+						}]]></expr>
+					</confirm>
+					<!--
+						Clears the open conversation only when it *is* the deleted chat: the value
+						the chain ends with is what <write-channel> writes, so deleting some other
+						chat writes the open one back unchanged and the transcript stays put.
+					-->
+					<execute-script>
+						<inputs>
+							<input channel="chatSession"/>
+						</inputs>
+						<function><![CDATA[open -> s -> {
+							aiSessionDelete($s);
+							ifElse($s == $open, null, $open);
+						}]]></function>
+					</execute-script>
+					<write-channel name="chatSession"/>
+				</generic-command>
+			</row-commands>
 			<rows><![CDATA[all(`tl.ai.execution:AgentSession`)
 				.filter(s -> $s.get(`tl.ai.execution:AgentSession#owner`) == currentUser())
 				.filter(s -> $s.get(`tl.ai.execution:AgentSession#kind`) == `tl.ai.execution:SessionKind#CHAT`)

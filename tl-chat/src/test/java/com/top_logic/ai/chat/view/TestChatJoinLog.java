@@ -1,0 +1,109 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.ai.chat.view;
+
+import java.util.List;
+
+import junit.framework.TestCase;
+
+import com.top_logic.ai.chat.view.ChatJoinLog.Message;
+
+/**
+ * What the join diagnostic says about one rendered window, and - more importantly - when it says
+ * nothing.
+ */
+public class TestChatJoinLog extends TestCase {
+
+	/** A page whose elements all agree gets the tally and no warning, however many they are. */
+	public void testOneChatIdNeverWarns() {
+		ChatJoinLog log = new ChatJoinLog();
+		log.join("w1", "support", "chat-conversation");
+		log.join("w1", "support", "chat-rail");
+		log.join("w1", "support", "chat-progress");
+
+		List<Message> messages = log.messages();
+		assertEquals(1, messages.size());
+		assertFalse(messages.get(0).warning());
+		assertEquals("Chat elements in window 'w1': 'support' (3).", messages.get(0).text());
+	}
+
+	/** A single element on a page is the whole page: still no warning. */
+	public void testSingleElementNeverWarns() {
+		ChatJoinLog log = new ChatJoinLog();
+		log.join("w1", "default", "chat-conversation");
+
+		List<Message> messages = log.messages();
+		assertEquals(1, messages.size());
+		assertFalse(messages.get(0).warning());
+	}
+
+	/** Two ids that both hold several elements are two chats, not a typo. */
+	public void testTwoSharedChatsDoNotWarn() {
+		ChatJoinLog log = new ChatJoinLog();
+		log.join("w1", "left", "chat-conversation");
+		log.join("w1", "left", "chat-rail");
+		log.join("w1", "right", "chat-conversation");
+		log.join("w1", "right", "chat-rail");
+
+		assertEquals(1, log.messages().size());
+	}
+
+	/** The typo: a second id that nobody else joined. */
+	public void testLoneElementBesideASharedChatWarns() {
+		ChatJoinLog log = new ChatJoinLog();
+		log.join("w1", "support", "chat-conversation");
+		log.join("w1", "support", "chat-progress");
+		log.join("w1", "suport", "chat-rail");
+
+		List<Message> messages = log.messages();
+		assertEquals(2, messages.size());
+		assertFalse(messages.get(0).warning());
+		assertEquals("Chat elements in window 'w1': 'support' (2), 'suport' (1).", messages.get(0).text());
+
+		Message warning = messages.get(1);
+		assertTrue(warning.warning());
+		assertTrue("Names the element that found nobody: " + warning.text(),
+			warning.text().startsWith("<chat-rail chat-id='suport'> joins no other chat element in window 'w1'."));
+		assertTrue("Names what it could have joined: " + warning.text(),
+			warning.text().contains("'support' (2)"));
+		assertTrue("Says what to do: " + warning.text(),
+			warning.text().contains("<chat chat-id='...'>"));
+	}
+
+	/** Several lonely ids are one warning, not one each. */
+	public void testSeveralLoneElementsAreOneWarning() {
+		ChatJoinLog log = new ChatJoinLog();
+		log.join("w1", "a", "chat-conversation");
+		log.join("w1", "b", "chat-rail");
+
+		List<Message> messages = log.messages();
+		assertEquals(2, messages.size());
+		Message warning = messages.get(1);
+		assertTrue(warning.text().startsWith(
+			"<chat-conversation chat-id='a'>, <chat-rail chat-id='b'> joins no other chat element"));
+		assertTrue("Nothing to point at: " + warning.text(),
+			warning.text().contains("No other chat id in window 'w1' holds more than one element."));
+	}
+
+	/** Two windows are two pages: neither the tally nor the rule crosses them. */
+	public void testWindowsAreCountedApart() {
+		ChatJoinLog log = new ChatJoinLog();
+		log.join("w1", "support", "chat-conversation");
+		log.join("w2", "other", "chat-rail");
+
+		List<Message> messages = log.messages();
+		assertEquals("One tally each, no warning: each window has a single chat id.", 2, messages.size());
+		assertFalse(messages.get(0).warning());
+		assertFalse(messages.get(1).warning());
+		assertEquals("Chat elements in window 'w1': 'support' (1).", messages.get(0).text());
+		assertEquals("Chat elements in window 'w2': 'other' (1).", messages.get(1).text());
+	}
+
+	/** Nothing rendered, nothing said. */
+	public void testEmptyLogSaysNothing() {
+		assertTrue(new ChatJoinLog().messages().isEmpty());
+	}
+}

@@ -68,6 +68,6 @@ public class ChatSourcesElement extends ChatSectionElement {
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		return new ChatSectionControl(context, _config, "TLChatSources");
+		return new ChatSectionControl(context, _config, "chat-sources", "TLChatSources");
 	}
 }

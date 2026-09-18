@@ -72,7 +72,7 @@ public class ChatRailControl extends ReactControl {
 		// The rail's own chat-id when it has one, otherwise the enclosing <chat>'s, otherwise
 		// "default". The browser keys its store by what we push here, so it must be the resolved id.
 		String chatId = ChatScope.resolve(context, config.getChatId());
-		_binding = ChatViewBinding.bind(context, chatId);
+		_binding = ChatViewBinding.bind(context, chatId, "chat-rail");
 		_binding.writeSharedState(this::putState);
 		putState("chatId", chatId);
 		putState("strip", Boolean.valueOf(config.getStrip()));

@@ -44,16 +44,18 @@ public class ChatSectionControl extends ReactControl {
 	 *        The view context of the element.
 	 * @param config
 	 *        The element's configuration.
+	 * @param tag
+	 *        The element's tag, e.g. {@code chat-progress}, for the join diagnostic.
 	 * @param defaultReactElement
 	 *        Registered React element rendering this section when the configuration names none.
 	 */
-	public ChatSectionControl(ViewContext context, Config config, String defaultReactElement) {
+	public ChatSectionControl(ViewContext context, Config config, String tag, String defaultReactElement) {
 		super(context, null, blankToDefault(config.getReactElement(), defaultReactElement));
 
 		// The section's own chat-id when it has one, otherwise the enclosing <chat>'s, otherwise
 		// "default". The browser keys its store by what we push here, so it must be the resolved id.
 		String chatId = ChatScope.resolve(context, config.getChatId());
-		_binding = ChatViewBinding.bind(context, chatId);
+		_binding = ChatViewBinding.bind(context, chatId, tag);
 		_binding.writeSharedState(this::putState);
 		putState("chatId", chatId);
 

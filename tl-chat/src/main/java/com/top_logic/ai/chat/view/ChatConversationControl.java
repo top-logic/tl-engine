@@ -70,7 +70,7 @@ public class ChatConversationControl extends ReactControl {
 		// The element's own chat-id when it has one, otherwise the enclosing <chat>'s, otherwise
 		// "default". The browser keys its store by what we push here, so it must be the resolved id.
 		String chatId = ChatScope.resolve(context, config.getChatId());
-		_binding = ChatViewBinding.bind(context, chatId);
+		_binding = ChatViewBinding.bind(context, chatId, "chat-conversation");
 		String configuredImprover = blankToNull(config.getPromptImproverAgent());
 		_binding.tracker().setPromptImproverAgentName(configuredImprover);
 		_binding.writeSharedState(this::putState);

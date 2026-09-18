@@ -99,6 +99,25 @@ public final class ChatViewBinding {
 	}
 
 	/**
+	 * The binding for {@code chatId}, recording that {@code element} joined that conversation.
+	 *
+	 * <p>
+	 * This is what the elements that share a conversation by {@code chat-id} use. The join is
+	 * tallied per render and logged when the render ends, so that an element which found nobody to
+	 * join says so instead of rendering an empty box (see {@link ChatJoinLog}).
+	 * {@link AgentChatControl} binds through {@link #bind(ReactContext, String)} instead: it keys
+	 * by its own control id on purpose and joins nothing.
+	 * </p>
+	 *
+	 * @param element
+	 *        The joining element's tag, e.g. {@code chat-rail}.
+	 */
+	public static ChatViewBinding bind(ReactContext context, String chatId, String element) {
+		ChatJoinLog.record(context.getWindowName(), chatId, element);
+		return bind(context, chatId);
+	}
+
+	/**
 	 * The binding for {@code chatId} on {@code scope}.
 	 *
 	 * <p>

@@ -3,8 +3,12 @@
 <!--
 	The chat built from view elements instead of the one-element <agent-chat/> (Issue #415).
 
-	Three elements share one conversation through chat-id "grouped": a <data-list> of this user's
-	chats on the left, the <chat-conversation/> (transcript plus prompt field) in the middle, and a
+	The page is one <chat chat-id="chat">: it names the conversation once, and every chat element
+	inside it joins that one without repeating the id, so two of them can no longer be written to
+	disagree. In every other respect it is the <stack direction="row"> that held the three columns
+	before: a <data-list> of this user's chats on the left (a generic list - it reaches the
+	conversation over the "chatSession" channel, not by chat-id, and would work the same outside the
+	<chat>), the <chat-conversation/> (transcript plus prompt field) in the middle, and a
 	<chat-rail/> on the right. The rail is a shell - what it shows is configured here, and the
 	"Belege" section is an ordinary <data-list>, which is the point: any view element is a section,
 	so an application puts its own views beside the transcript without the chat knowing about them.
@@ -21,7 +25,9 @@
 		<channel name="progressBadge"/>
 		<channel name="sourcesBadge"/>
 	</channels>
-	<stack direction="row">
+	<chat chat-id="chat"
+		direction="row"
+	>
 		<!--
 			The session list and the conversation share one two-way "chatSession" channel: the list
 			writes the picked session, the conversation follows it and writes its own session back (so a
@@ -82,7 +88,6 @@
 		-->
 		<panel fill="true">
 			<chat-conversation
-				chat-id="grouped"
 				citations="true"
 				input="chatSession"
 				prompt-improver-agent="TL_PromptImprover"
@@ -117,8 +122,7 @@
 			The rail. Its badge channels carry the counts that the transcript's rail button adds up,
 			so a closed rail still says how much is new.
 		-->
-		<chat-rail chat-id="grouped"
-			input="paneObject"
+		<chat-rail input="paneObject"
 			open="true"
 			strip="true"
 		>
@@ -182,9 +186,7 @@
 					<en>Sources</en>
 					<de>Quellen</de>
 				</label>
-				<chat-sources badge="sourcesBadge"
-					chat-id="grouped"
-				/>
+				<chat-sources badge="sourcesBadge"/>
 			</section>
 			<!--
 				Nothing chat-specific: an ordinary <data-list> of this application's own objects, in a
@@ -230,5 +232,5 @@
 				</form>
 			</pane>
 		</chat-rail>
-	</stack>
+	</chat>
 </view>

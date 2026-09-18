@@ -190,6 +190,48 @@ public class TestFieldControlServiceMultiplicity extends TestCase {
 	}
 
 	/**
+	 * The user arranges the values of an ordered attribute: the order of its values is part of its
+	 * value, so the value list offers moving one of them.
+	 */
+	public void testTheValuesOfAnOrderedAttributeAreArranged() {
+		ReactControl control = control(property("orderedTexts", _textType, true, true), List.of("first", "second"));
+
+		assertEquals(ReactValueListControl.class, control.getClass());
+		assertEquals(Boolean.TRUE, control.scriptingScalarState().get(ReactValueListControl.ORDERED));
+	}
+
+	/**
+	 * The values of an unordered attribute form a set: moving one of them would change nothing, so
+	 * the value list offers no arranging.
+	 */
+	public void testTheValuesOfAnUnorderedAttributeAreNotArranged() {
+		ReactControl control = control(property("texts", _textType, true, false), List.of("first", "second"));
+
+		assertEquals(ReactValueListControl.class, control.getClass());
+		assertEquals(Boolean.FALSE, control.scriptingScalarState().get(ReactValueListControl.ORDERED));
+	}
+
+	/**
+	 * A single value has nothing to arrange, whatever the attribute holding it says about the order
+	 * of its values.
+	 */
+	public void testASingleValueIsNotArranged() {
+		ReactControl control = control(property("text", _textType, false, true), "only one");
+
+		assertEquals("A single text is entered in the control of one text, which arranges nothing.",
+			ReactTextInputControl.class, control.getClass());
+	}
+
+	/**
+	 * A value the view itself holds is not arranged: with no attribute holding it, nothing stores an
+	 * order of its values.
+	 */
+	public void testAValueWithoutAnAttributeIsNotArranged() {
+		assertFalse("Nothing states an order for a value no attribute holds.",
+			spec(_textType, true).isOrdered());
+	}
+
+	/**
 	 * A cell holding several numbers is searched by the text it shows: every number in the format
 	 * of the column, separated from the next.
 	 */
@@ -199,6 +241,37 @@ public class TestFieldControlServiceMultiplicity extends TestCase {
 
 		assertEquals(format.format(values.get(0)) + ", " + format.format(values.get(1)),
 			column("numbers", _numberType, true).searchText(values));
+	}
+
+	/**
+	 * The control editing the value of the given attribute.
+	 *
+	 * @param part
+	 *        The edited attribute.
+	 * @param value
+	 *        The edited value.
+	 */
+	private ReactControl control(TLStructuredTypePart part, Object value) {
+		return _controls.createFieldControl(_context, part, new AbstractFieldModel(value));
+	}
+
+	/**
+	 * An attribute of the type under test.
+	 *
+	 * @param name
+	 *        The name of the attribute.
+	 * @param type
+	 *        The type of its values.
+	 * @param multiple
+	 *        Whether it holds a collection of values rather than a single one.
+	 * @param ordered
+	 *        Whether the order of its values is part of its value.
+	 */
+	private TLStructuredTypePart property(String name, TLType type, boolean multiple, boolean ordered) {
+		TLStructuredTypePart part = TLModelUtil.addProperty(_rowType, name, type);
+		part.setMultiple(multiple);
+		part.setOrdered(ordered);
+		return part;
 	}
 
 	/** The control displaying the given value in a cell of the described column. */
@@ -266,10 +339,8 @@ public class TestFieldControlServiceMultiplicity extends TestCase {
 	 * themselves.
 	 */
 	private Column<Object, ?> column(String name, TLType type, boolean multiple) {
-		TLStructuredTypePart part = TLModelUtil.addProperty(_rowType, name, type);
-		part.setMultiple(multiple);
 		return ColumnProviderService.getInstance()
-			.createColumn(name, ResKey.text(name), ColumnType.of(part), row -> row);
+			.createColumn(name, ResKey.text(name), ColumnType.of(property(name, type, multiple, false)), row -> row);
 	}
 
 	/**

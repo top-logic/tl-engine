@@ -118,7 +118,9 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 		// so a type registered only for its label is labelled exactly as before.
 		LabelProvider labels = MetaResourceProvider.INSTANCE;
 		Comparator<?> optionOrder = LabelComparator.newCachingInstance(labels);
-		return new ReactDropdownSelectControl(context, selectModel, labels, optionOrder, false);
+		// An ordered attribute keeps the order the user gives its selection; an unordered one is
+		// shown in the order of the options.
+		return new ReactDropdownSelectControl(context, selectModel, labels, optionOrder, field.isOrdered());
 	}
 
 }

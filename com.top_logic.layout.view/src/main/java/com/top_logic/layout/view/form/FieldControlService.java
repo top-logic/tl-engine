@@ -376,12 +376,20 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * Describes a value of the given attribute for the control that edits it, holding as many
 	 * values as stated.
 	 *
+	 * <p>
+	 * The attribute decides whether the order of the values is part of the value: a field holding
+	 * several values of an {@link TLStructuredTypePart#isOrdered() ordered} attribute is
+	 * {@link FieldSpec#isOrdered() arranged} by the user, while a single value has no order to
+	 * arrange.
+	 * </p>
+	 *
 	 * @param multiple
 	 *        Whether the described field holds a collection of the attribute's values rather than
 	 *        a single one, see {@link ColumnType#collected()}.
 	 */
 	private static FieldSpec fieldSpec(TLStructuredTypePart part, boolean multiple, FieldModel model) {
-		return fieldSpec(part.getType(), part, MetaLabelProvider.INSTANCE.getLabel(part), multiple, model);
+		return fieldSpec(part.getType(), part, MetaLabelProvider.INSTANCE.getLabel(part), multiple, model)
+			.setOrdered(multiple && part.isOrdered());
 	}
 
 	/**
@@ -399,7 +407,9 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 *        Whether the value is a collection of values rather than a single one.
 	 * @param model
 	 *        The field model holding the value.
-	 * @return The description to pass to {@link ReactFieldControlProvider#createControl}.
+	 * @return The description to pass to {@link ReactFieldControlProvider#createControl}. Its values
+	 *         are not {@link FieldSpec#isOrdered() ordered}: with no attribute holding them, nothing
+	 *         stores an order the user could arrange.
 	 */
 	public static FieldSpec fieldSpec(TLType type, AnnotationLookup annotations, String label, boolean multiple,
 			FieldModel model) {

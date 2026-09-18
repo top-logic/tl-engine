@@ -60,7 +60,7 @@ public class ReactValueListControl extends ReactFormFieldControl {
 	/**
 	 * State key for whether the user may arrange the values, see {@link FieldSpec#isOrdered()}.
 	 */
-	protected static final String ORDERED = "ordered";
+	public static final String ORDERED = "ordered";
 
 	/**
 	 * State key for how the values are arranged, either {@link #LAYOUT_INLINE} or

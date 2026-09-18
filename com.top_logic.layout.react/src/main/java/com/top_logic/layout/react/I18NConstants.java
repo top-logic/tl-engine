@@ -336,6 +336,18 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_PDF_VIEWER_TITLE;
 
 	/**
+	 * @en HTML document
+	 */
+	@CustomKey("js.html.document")
+	public static ResKey JS_HTML_DOCUMENT;
+
+	/**
+	 * @en Print
+	 */
+	@CustomKey("js.html.print")
+	public static ResKey JS_HTML_PRINT;
+
+	/**
 	 * @en No document available
 	 */
 	@CustomKey("js.pdfViewer.noDocument")

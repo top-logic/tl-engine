@@ -5,6 +5,8 @@
  */
 package test.com.top_logic.layout.view.element;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -25,6 +27,7 @@ import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.json.JSON.ParseException;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResourcesModule;
+import com.top_logic.layout.react.DataProvider;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.html.ReactHtmlControl;
@@ -36,6 +39,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.element.HtmlDisplay;
 import com.top_logic.layout.view.element.HtmlElement;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.util.error.TopLogicException;
@@ -47,6 +51,11 @@ import com.top_logic.util.error.TopLogicException;
  * The conversion is exercised through {@link HtmlValues}, the display through the element's public
  * seam - a configuration naming an input channel, a control created for a view context, and the
  * client state that control publishes.
+ * </p>
+ *
+ * <p>
+ * Content displayed as a document does not travel with that state: it is the document the control
+ * serves as a {@link DataProvider} to the frame showing it.
  * </p>
  */
 public class TestHtmlElement extends TestCase {
@@ -62,7 +71,7 @@ public class TestHtmlElement extends TestCase {
 		super.setUp();
 
 		_channel = new DefaultViewChannel(INPUT);
-		_view = createView(_channel);
+		_view = createView(_channel, HtmlDisplay.INLINE);
 	}
 
 	/** HTML source is displayed as it stands. */
@@ -169,6 +178,56 @@ public class TestHtmlElement extends TestCase {
 		assertNull("The message of the content before is gone.", error());
 	}
 
+	/** A document is served as the HTML file the frame showing it fetches. */
+	public void testADocumentIsServedAsAnHtmlFile() throws IOException {
+		String source = "<!DOCTYPE html><html><head><title>Expos\u00e9</title></head><body><p>Erledigt.</p></body></html>";
+
+		ViewChannel channel = new DefaultViewChannel(INPUT);
+		ReactControl view = createView(channel, HtmlDisplay.DOCUMENT);
+
+		channel.set(source);
+
+		BinaryData served = served(view);
+		assertTrue("Served as HTML: " + served.getContentType(),
+			served.getContentType().startsWith(HtmlValues.HTML_CONTENT_TYPE));
+		assertEquals(source, read(served));
+		assertEquals("The document is fetched, not sent with the state.", "",
+			state(view, ReactHtmlControl.HTML));
+	}
+
+	/** Every content is another revision, so the frame fetches it instead of the one before. */
+	public void testEveryContentIsAnotherRevision() throws IOException {
+		ViewChannel channel = new DefaultViewChannel(INPUT);
+		ReactControl view = createView(channel, HtmlDisplay.DOCUMENT);
+
+		int initial = revision(view);
+
+		channel.set("<p>Erledigt.</p>");
+		int first = revision(view);
+		assertTrue("A content later than the one the control started with.", first > initial);
+
+		channel.set("<p>Abgeschlossen.</p>");
+		assertTrue("A content later than the one before.", revision(view) > first);
+		assertEquals("<p>Abgeschlossen.</p>", read(served(view)));
+	}
+
+	/** What is not inserted into the page is served as a document, which the frame isolates. */
+	public void testAScriptIsServedAsADocument() throws IOException {
+		String source = "<p>Done.</p><script>alert('!')</script>";
+
+		_channel.set(source);
+		assertEquals("Not inserted into the page.", "", html());
+		assertNotNull(error());
+
+		ViewChannel channel = new DefaultViewChannel(INPUT);
+		ReactControl view = createView(channel, HtmlDisplay.DOCUMENT);
+
+		channel.set(source);
+
+		assertEquals("No check stands between the content and the document.", source, read(served(view)));
+		assertNull("Nothing failed.", state(view, ReactHtmlControl.ERROR));
+	}
+
 	private static void assertUnsupported(Object value) {
 		try {
 			String html = HtmlValues.toHtml(value);
@@ -178,9 +237,10 @@ public class TestHtmlElement extends TestCase {
 		}
 	}
 
-	private static ReactControl createView(ViewChannel channel) {
+	private static ReactControl createView(ViewChannel channel, HtmlDisplay display) {
 		HtmlElement.Config config = TypedConfiguration.newConfigItem(HtmlElement.Config.class);
 		config.update(config.descriptor().getProperty(HtmlElement.Config.INPUT), new ChannelRef(INPUT));
+		config.update(config.descriptor().getProperty(HtmlElement.Config.DISPLAY), display);
 
 		DefaultInstantiationContext instantiationContext = new DefaultInstantiationContext(TestHtmlElement.class);
 		HtmlElement element = (HtmlElement) instantiationContext.getInstance(config);
@@ -198,15 +258,32 @@ public class TestHtmlElement extends TestCase {
 	}
 
 	private String html() {
-		return (String) state(ReactHtmlControl.HTML);
+		return (String) state(_view, ReactHtmlControl.HTML);
 	}
 
 	private String error() {
-		return (String) state(ReactHtmlControl.ERROR);
+		return (String) state(_view, ReactHtmlControl.ERROR);
 	}
 
-	private Object state(String key) {
-		String json = _view.stateAsJSON();
+	/** The document the given view serves to the frame showing it. */
+	private static BinaryData served(ReactControl view) {
+		return ((DataProvider) view).getDownloadData(null);
+	}
+
+	/** The source of the given document. */
+	private static String read(BinaryData data) throws IOException {
+		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+		data.deliverTo(buffer);
+		return buffer.toString(StandardCharsets.UTF_8);
+	}
+
+	/** The revision the given view announces its current content under. */
+	private static int revision(ReactControl view) {
+		return ((Number) state(view, ReactHtmlControl.DATA_REVISION)).intValue();
+	}
+
+	private static Object state(ReactControl view, String key) {
+		String json = view.stateAsJSON();
 		try {
 			return ((Map<?, ?>) JSON.fromString(json)).get(key);
 		} catch (ParseException ex) {

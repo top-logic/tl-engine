@@ -64,6 +64,9 @@ public class HtmlElement implements UIElement {
 		/** Configuration name for {@link #getDisplay()}. */
 		String DISPLAY = "display";
 
+		/** Configuration name for {@link #getPrint()}. */
+		String PRINT = "print";
+
 		/** Configuration name for {@link #getCssClass()}. */
 		String CSS_CLASS = "css-class";
 
@@ -92,6 +95,17 @@ public class HtmlElement implements UIElement {
 		HtmlDisplay getDisplay();
 
 		/**
+		 * Whether content displayed as a document is shown with a button that prints it.
+		 *
+		 * <p>
+		 * The button hands the document to the browser's print dialog, which also offers saving it
+		 * as a PDF file.
+		 * </p>
+		 */
+		@Name(PRINT)
+		boolean getPrint();
+
+		/**
 		 * Optional additional CSS class appended to the default {@code tlHtml} class.
 		 */
 		@Name(CSS_CLASS)
@@ -103,6 +117,8 @@ public class HtmlElement implements UIElement {
 
 	private final HtmlDisplay _display;
 
+	private final boolean _print;
+
 	private final String _cssClass;
 
 	/**
@@ -112,12 +128,13 @@ public class HtmlElement implements UIElement {
 	public HtmlElement(InstantiationContext context, Config config) {
 		_inputRef = config.getInput();
 		_display = config.getDisplay();
+		_print = config.getPrint();
 		_cssClass = config.getCssClass();
 	}
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		ReactHtmlControl control = new ReactHtmlControl(context, _display.getExternalName(), _cssClass);
+		ReactHtmlControl control = new ReactHtmlControl(context, _display.getExternalName(), _print, _cssClass);
 
 		ViewChannel channel = context.resolveChannel(_inputRef);
 		display(control, channel.get());

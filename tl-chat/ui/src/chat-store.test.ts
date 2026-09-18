@@ -29,6 +29,9 @@ let preferenceWrites: unknown[] = []
 /** The `text` of every `POST /chat/send`, in order - what the model would actually receive. */
 let sentTexts: string[] = []
 
+/** The whole body of every `POST /chat/send`, in order. */
+let sentBodies: Record<string, unknown>[] = []
+
 class FakeEventSource {
   static readonly CLOSED = 2
 
@@ -93,6 +96,7 @@ beforeEach(() => {
   streams = []
   preferenceWrites = []
   sentTexts = []
+  sentBodies = []
   const globals = globalThis as unknown as Record<string, unknown>
   globals.window = {
     location: { pathname: '/app/view/chat' },
@@ -109,7 +113,9 @@ beforeEach(() => {
       return { ok: true, status: 200, json: async () => ({ agents: [], models: [], mcpServers: [] }) }
     }
     if (url.includes('/chat/send')) {
-      sentTexts.push(JSON.parse(init?.body ?? '{}').text)
+      const body = JSON.parse(init?.body ?? '{}')
+      sentBodies.push(body)
+      sentTexts.push(body.text)
       return { ok: true, status: 200, json: async () => ({ status: 'processing' }) }
     }
     // A created session, then the load that activates it. The order matters: the id-bearing path
@@ -405,6 +411,63 @@ describe('the host\'s context prefix', () => {
     await store.actions.send('ohne Prefix', [])
 
     expect(sentTexts).toEqual(['ohne Prefix'])
+
+    await settle()
+    release()
+  })
+})
+
+/**
+ * What a page states about the situation travels beside the message, never inside it (#437).
+ *
+ * The facts are computed on the server, out of the chat element's `<context>`; the store only
+ * carries them back with the send, so the harness can render the stable ones into the system prompt.
+ */
+describe('context facts', () => {
+  it('carries the facts with the message and leaves the text alone', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    const facts = [
+      { name: 'Project', value: 'Airport expansion', stable: true },
+      { name: 'Open invoice', value: 'none', stable: false },
+    ]
+
+    store.actions.setContextFacts(facts)
+    await store.actions.send('Was steht an?', [])
+
+    expect(sentTexts).toEqual(['Was steht an?'])
+    expect(sentBodies[0].facts).toEqual(facts)
+
+    await settle()
+    release()
+  })
+
+  it('sends no facts field when the page states nothing', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+
+    await store.actions.send('Was steht an?', [])
+
+    expect(sentBodies[0].facts).toBeUndefined()
+
+    await settle()
+    release()
+  })
+
+  it('ignores a repeated set, so an unchanged page does not re-render the chat', async () => {
+    const store = chatStore('alpha', BOOT)
+    let renders = 0
+    const release = store.subscribe(() => {
+      renders += 1
+    })
+    const facts = [{ name: 'Project', value: 'Airport expansion', stable: true }]
+
+    store.actions.setContextFacts(facts)
+    const afterFirst = renders
+    store.actions.setContextFacts([{ name: 'Project', value: 'Airport expansion', stable: true }])
+
+    expect(renders).toBe(afterFirst)
+    expect(store.getState().contextFacts).toEqual(facts)
 
     await settle()
     release()

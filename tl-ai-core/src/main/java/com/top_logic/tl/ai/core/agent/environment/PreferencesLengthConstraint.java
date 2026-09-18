@@ -34,8 +34,19 @@ public class PreferencesLengthConstraint implements ConstraintCheck {
 		if (!(value instanceof String text)) {
 			return null;
 		}
-		int limit = EnvironmentSettings.maxPreferencesLength();
-		if (limit <= 0 || text.length() <= limit) {
+		return refusal(text, EnvironmentSettings.maxPreferencesLength());
+	}
+
+	/**
+	 * Why the given text is refused at the given cap, or {@code null} when it is not.
+	 *
+	 * <p>
+	 * A cap of zero or less is no cap: an installation that wants no limit says so by clearing the
+	 * number rather than by typing one nobody could reach.
+	 * </p>
+	 */
+	static ResKey refusal(String text, int limit) {
+		if (text == null || limit <= 0 || text.length() <= limit) {
 			return null;
 		}
 		return I18NConstants.PREFERENCES_TOO_LONG__LENGTH_LIMIT.fill(

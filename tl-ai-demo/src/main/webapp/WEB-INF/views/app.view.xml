@@ -179,6 +179,21 @@
 				</nav-item>
 
 				<!--
+					What this account tells every agent about itself (Issue #437): one free-text
+					field on tl.accounts:Person, which the harness renders into the environment block
+					of every run this user triggers.
+				-->
+				<nav-item id="profile"
+					icon="css:bi bi-person-gear"
+				>
+					<label>
+						<en>My settings</en>
+						<de>Meine Einstellungen</de>
+					</label>
+					<view-ref view="tl-ai-demo/profile.view.xml"/>
+				</nav-item>
+
+				<!--
 					Administration is the framework's own view (WEB-INF/views/admin/admin.view.xml),
 					extended by depending modules through overlay merge. The scope is declared by
 					tl-layout-view, so with no roles assigned the entry is visible to root only.

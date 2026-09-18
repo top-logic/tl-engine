@@ -89,12 +89,27 @@ public class RunEnvironment {
 		values.put(PromptPlaceholders.AGENT, agentLabel(agentDisplayName, agentName, resolve));
 		values.put(PromptPlaceholders.MODEL, model == null ? "" : model);
 		values.put(PromptPlaceholders.APPLICATION, application(resolve));
-		values.put(PromptPlaceholders.CONTEXT, contextSection(facts, resources));
-		values.put(PromptPlaceholders.PREFERENCES, preferencesSection(account, resources));
+		values.put(PromptPlaceholders.CONTEXT,
+			contextSection(facts, resources.getString(I18NConstants.ENVIRONMENT_CONTEXT_HEADING)));
+		values.put(PromptPlaceholders.PREFERENCES, preferencesSection(UserPreferences.of(account),
+			resources.getString(I18NConstants.ENVIRONMENT_PREFERENCES_HEADING)));
 
-		String block = EnvironmentTemplate.render(EnvironmentSettings.template(resolve), values);
-		values.put(PromptPlaceholders.ENVIRONMENT, block);
-		return new RunEnvironment(Map.copyOf(values), block);
+		return of(EnvironmentSettings.template(resolve), values);
+	}
+
+	/**
+	 * A {@link RunEnvironment} over values that are already resolved.
+	 *
+	 * <p>
+	 * The seam {@link #compose} is built on, and what a test uses: it looks nothing up, so it has no
+	 * opinion about which services are running.
+	 * </p>
+	 */
+	public static RunEnvironment of(String template, Map<String, String> values) {
+		Map<String, String> all = new LinkedHashMap<>(values);
+		String block = EnvironmentTemplate.render(template, all);
+		all.put(PromptPlaceholders.ENVIRONMENT, block);
+		return new RunEnvironment(Map.copyOf(all), block);
 	}
 
 	/** The composed {@code <environment>} block. */
@@ -134,10 +149,10 @@ public class RunEnvironment {
 	}
 
 	/**
-	 * The {@code {{context}}} section: a heading and the stable facts, or nothing when the host
+	 * The {@code {{context}}} section: the heading and the stable facts, or nothing when the host
 	 * stated none.
 	 */
-	private static String contextSection(List<EnvironmentFact> facts, Resources resources) {
+	static String contextSection(List<EnvironmentFact> facts, String heading) {
 		if (facts == null || facts.isEmpty()) {
 			return "";
 		}
@@ -154,17 +169,15 @@ public class RunEnvironment {
 		if (lines.isEmpty()) {
 			return "";
 		}
-		return resources.getString(I18NConstants.ENVIRONMENT_CONTEXT_HEADING) + "\n"
-			+ String.join("\n", lines);
+		return heading + "\n" + String.join("\n", lines);
 	}
 
 	/** The {@code {{preferences}}} section, or nothing when there is no text to send. */
-	private static String preferencesSection(Person account, Resources resources) {
-		String text = UserPreferences.of(account);
-		if (text == null) {
+	static String preferencesSection(String text, String heading) {
+		if (text == null || text.isBlank()) {
 			return "";
 		}
-		return resources.getString(I18NConstants.ENVIRONMENT_PREFERENCES_HEADING) + "\n" + text;
+		return heading + "\n" + text;
 	}
 
 	private static String agentLabel(ResKey displayName, String agentName,

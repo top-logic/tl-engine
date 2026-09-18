@@ -6,6 +6,8 @@
 package com.top_logic.tl.ai.core.agent.environment;
 
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * The text of the environment block, before its placeholders are filled.
@@ -46,6 +48,10 @@ public class EnvironmentTemplate {
 		{{preferences}}
 		</environment>""";
 
+	/** A line holding one placeholder and nothing else. */
+	private static final Pattern LINE_PLACEHOLDER =
+		Pattern.compile("\\s*\\{\\{\\s*(\\w+)\\s*\\}\\}\\s*");
+
 	private EnvironmentTemplate() {
 		// Static utility.
 	}
@@ -66,8 +72,43 @@ public class EnvironmentTemplate {
 	 *         section leaves behind.
 	 */
 	public static String render(String template, Map<String, String> values) {
-		String filled = PromptPlaceholders.fill(template, values);
-		return tidy(filled);
+		String pruned = dropEmptySections(template, values);
+		return tidy(PromptPlaceholders.fill(pruned, values));
+	}
+
+	/**
+	 * A line that is nothing but a placeholder with nothing to say is not a line.
+	 *
+	 * <p>
+	 * That is how a section disappears whole: {@code {{context}}} and {@code {{preferences}}} stand
+	 * on lines of their own and render their own heading, so an account that wrote no preferences -
+	 * or an installation that switched them off - leaves no heading and no gap. A placeholder inside
+	 * a sentence is left to {@link PromptPlaceholders#fill}, because the rest of that sentence is
+	 * still meant.
+	 * </p>
+	 */
+	private static String dropEmptySections(String template, Map<String, String> values) {
+		if (template == null || template.isEmpty()) {
+			return template;
+		}
+		StringBuilder result = new StringBuilder(template.length());
+		boolean first = true;
+		for (String line : template.split("\n", -1)) {
+			Matcher alone = LINE_PLACEHOLDER.matcher(line);
+			if (alone.matches() && isEmpty(values.get(alone.group(1)))) {
+				continue;
+			}
+			if (!first) {
+				result.append('\n');
+			}
+			first = false;
+			result.append(line);
+		}
+		return result.toString();
+	}
+
+	private static boolean isEmpty(String value) {
+		return value == null || value.isEmpty();
 	}
 
 	/**

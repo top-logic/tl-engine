@@ -775,7 +775,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 * log line; see {@link AgentFact#evaluate()}.
 	 * </p>
 	 */
-	private static List<EnvironmentFact> runFacts(AgentDefinition agent) {
+	static List<EnvironmentFact> runFacts(AgentDefinition agent) {
 		List<EnvironmentFact> facts = new ArrayList<>();
 		for (AgentFact declared : agent.facts()) {
 			EnvironmentFact fact = declared.evaluate();

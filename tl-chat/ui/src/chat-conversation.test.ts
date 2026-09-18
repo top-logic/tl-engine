@@ -6,6 +6,7 @@ import {
   channelNames,
   modelBoundSource,
   readComposerControls,
+  readContextFacts,
   readThreadConfig,
   referenceWrite,
   sameServers,
@@ -131,6 +132,44 @@ describe('modelBoundSource', () => {
   it('skips malformed rows without a token id', () => {
     const source = modelBoundSource([{ id: 'x', label: 'no token' }, ...pushed])!
     expect(source('').map((c) => c.id)).toEqual(['i1', 'i2'])
+  })
+})
+
+describe('readContextFacts', () => {
+  it('reads what the control computed from its <context> facts', () => {
+    expect(
+      readContextFacts([
+        { name: 'Project', value: 'Airport expansion', stable: true },
+        { name: 'Open invoice', value: 'none', stable: false },
+      ]),
+    ).toEqual([
+      { name: 'Project', value: 'Airport expansion', stable: true },
+      { name: 'Open invoice', value: 'none', stable: false },
+    ])
+  })
+
+  it('treats a fact as stable unless it says otherwise', () => {
+    expect(readContextFacts([{ name: 'Project', value: 'Airport' }])).toEqual([
+      { name: 'Project', value: 'Airport', stable: true },
+    ])
+  })
+
+  it('is empty when the element configured no context', () => {
+    expect(readContextFacts(undefined)).toEqual([])
+    expect(readContextFacts('x')).toEqual([])
+    expect(readContextFacts([])).toEqual([])
+  })
+
+  it('skips a row without a name, which states nothing', () => {
+    expect(readContextFacts([{ value: 'Airport' }, null, { name: 'Tenant', value: 'ACME' }])).toEqual([
+      { name: 'Tenant', value: 'ACME', stable: true },
+    ])
+  })
+
+  it('reads a missing value as empty rather than as "undefined"', () => {
+    expect(readContextFacts([{ name: 'Project' }])).toEqual([
+      { name: 'Project', value: '', stable: true },
+    ])
   })
 })
 

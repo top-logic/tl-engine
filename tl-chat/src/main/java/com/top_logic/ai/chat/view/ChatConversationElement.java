@@ -13,6 +13,7 @@ import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Hidden;
@@ -838,8 +839,14 @@ public class ChatConversationElement implements UIElement {
 
 		/**
 		 * The facts themselves, in the order they reach the model.
+		 *
+		 * <p>
+		 * The default container, so a fact is written as a direct child of the context rather than
+		 * inside a wrapper element of its own.
+		 * </p>
 		 */
 		@Name(FACTS)
+		@DefaultContainer
 		@EntryTag("fact")
 		List<Fact> getFacts();
 	}

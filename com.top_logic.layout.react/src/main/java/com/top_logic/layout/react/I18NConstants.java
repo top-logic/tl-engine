@@ -324,10 +324,10 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_PHOTO_CAPTURE_CAPTURE;
 
 	/**
-	 * @en Captured photo
+	 * @en Image
 	 */
-	@CustomKey("js.photoViewer.alt")
-	public static ResKey JS_PHOTO_VIEWER_ALT;
+	@CustomKey("js.image.alt")
+	public static ResKey JS_IMAGE_ALT;
 
 	/**
 	 * @en PDF document

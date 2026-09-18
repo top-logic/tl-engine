@@ -123,6 +123,49 @@ A form with unsaved input blocks the write of the channel it is bound to: it reg
 
 The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/repeater-demo.view.xml` with `style/tl-demo-react.css`.
 
+## Pictures: `<image>`, `<overlay>`, `<avatar>`
+
+`<image>` (`ImageElement`) shows one picture, and it takes that picture from either of two places.
+
+- **From a channel** (`input`). The channel value is either **picture data** — a `BinaryData` whose content type starts with `image/`, e.g. the binary attribute of a model object or the result of an upload — or a **text naming an address**. Who serves the bytes differs: picture data is served by the control itself through its data endpoint (`ImageSource`, `hasData` plus a `dataRevision` the client appends so a replaced picture is not taken from the browser cache), while an address is loaded by the browser directly. Any other value — no value, binary data that is no picture, an unrelated object — shows no picture.
+- **From a resource of the web application** (`resource`, e.g. `/images/logo.svg`, resolved against the context path). On its own it *is* the picture; together with `input` it is the placeholder shown as long as the channel holds no picture.
+
+The box the picture is shown in is described by `aspect-ratio` (`16/9`, so a row of pictures of differing originals stays even), `width` and `height` (CSS lengths); with none of them the box takes the size of the picture, limited to the width available. `fit` decides what a picture whose proportions differ from the box does with it: `cover` (the default) crops it to fill the box, `contain` fits the whole picture into it. `lazy="true"` lets the browser postpone the loading until the box comes close to the visible part of the page — right for the thumbnails of a long card grid, wrong for a picture the user sees at once. `alt` says what the picture shows for a reader who cannot see it, and `css-class` adds a class to the box.
+
+`<overlay>` stacks content over a base: its **first child is the base**, every further child is a layer over it. The base gives the overlay its height; its width is what the surrounding layout grants, and a base sized relative to it (`width="100%"`) fills it. A base of fixed width wants a container that does not stretch its items (`<stack align="start">`), or the overlay is stretched past the base and anchors its layers to the free space beside it. A `<layer position="fill|top-left|top|top-right|left|center|right|bottom-left|bottom|bottom-right" css-class="…">` brings the position its content takes and a class of its own; a child written without a layer covers the base as a whole. A layer passes the pointer through wherever it shows nothing (`.tlOverlay__layer` is `pointer-events: none`, its content `auto`), so the base stays usable below the free space of a layer that only anchors a badge. Placement comes from the element, the look from application CSS on the layer's class — a badge pill, a caption scrim.
+
+`<avatar input="ch" image="photoCh" size="small|default|large|x-large"/>` shows the picture of the `image` channel circle-cropped, and the initials of the `input` value's label over a color derived from it while there is none. The picture follows its channel, so a photo replaced elsewhere appears without the avatar being built anew.
+
+```xml
+<overlay>
+	<image
+		aspect-ratio="4/3"
+		fit="cover"
+		input="photo"
+		resource="/images/no-picture.svg"
+		width="20rem"
+	/>
+	<layer
+		css-class="tlDemoBadge"
+		position="top-left"
+	>
+		<text>
+			<label>
+				<en>Preview</en>
+			</label>
+		</text>
+	</layer>
+	<layer
+		css-class="tlDemoCaption"
+		position="bottom"
+	>
+		<text input="node"/>
+	</layer>
+</overlay>
+```
+
+The client classes an application styles against are `.tlImage` / `.tlImage__image`, `.tlOverlay` / `.tlOverlay__layer` / `.tlOverlay__layer--<anchor>` and `.tlAvatar--<size>` / `.tlAvatar__image`. The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/image-demo.view.xml` with `style/tl-demo-react.css`.
+
 ## `TableViewControl` is the sole React table control
 
 `TableViewControl` / `com.top_logic.table.TableView` (#29108) is the only React table control. Everything renders through this stack: the `<table>` element (`TableElement`; sort, per-column `<filter>`, type-derived default columns, width personalization, shared `ColumnsConfig` / `ColumnConfig`), the access-control permission matrix (`SecurityMatrixElement`), the in-form `<composition-table>` (`CompositionTableControl`), and the technical React-table demo (`DemoReactTableComponent`: flat `ListRowSource` + `TreeRowSource` tree).

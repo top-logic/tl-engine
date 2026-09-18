@@ -42,13 +42,14 @@ import com.top_logic.model.util.TLModelPartRef;
  * list - the presentation of a chat rail generalised to any model.
  *
  * <p>
- * The rows come from a TL-Script {@link Config#getRows() rows} expression (over
- * {@link Config#getTypes() types}), exactly as {@code <table>} binds its rows. Each row shows an
- * ordered list of {@link LineConfig lines} (the vertical counterpart of a table's columns); its group
- * label is a further expression. A row click writes the row object to the two-way
- * {@link Config#getSelection() selection} channel. Search and collapse are client-side. Unlike
- * {@code <table>} this renders a styled list (the session-rail look), not a data grid; unlike
- * {@code <object-list>} it is a selectable picker, not an in-place editor of composite items.
+ * The rows come from a TL-Script {@link Config#getRows() rows} expression, exactly as
+ * {@code <table>} binds its rows; an {@link LineConfig#getAttribute() attribute} line resolves
+ * against the row object's own type. Each row shows an ordered list of {@link LineConfig lines} (the
+ * vertical counterpart of a table's columns); its group label is a further expression. A row click
+ * writes the row object to the two-way {@link Config#getSelection() selection} channel. Search and
+ * collapse are client-side. Unlike {@code <table>} this renders a styled list (the session-rail
+ * look), not a data grid; unlike {@code <object-list>} it is a selectable picker, not an in-place
+ * editor of composite items.
  * </p>
  *
  * <p>
@@ -84,9 +85,6 @@ public class DataListElement implements UIElement {
 	/** Configuration for {@link DataListElement}. */
 	@TagName("data-list")
 	public interface Config extends UIElement.Config {
-
-		/** Configuration property name for {@link #getTypes()}. */
-		String TYPES = "types";
 
 		/** Configuration property name for {@link #getRows()}. */
 		String ROWS = "rows";
@@ -145,14 +143,6 @@ public class DataListElement implements UIElement {
 		@Override
 		@Hidden
 		String getPersonalizationKey();
-
-		/**
-		 * Optional qualified TL type name(s) of the row objects (for {@link LineConfig#getAttribute()
-		 * attribute} resolution). Same as {@code <table>}'s {@code types}.
-		 */
-		@Name(TYPES)
-		@Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
-		List<TLModelPartRef> getTypes();
 
 		/**
 		 * TL-Script function computing the row objects (a {@link java.util.Collection}), same as

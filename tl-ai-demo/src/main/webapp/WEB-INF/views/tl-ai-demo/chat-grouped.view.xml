@@ -16,7 +16,6 @@
 			observed-types="tl.ai.execution:AgentSession"
 			search="true"
 			selection="chatSession"
-			types="tl.ai.execution:AgentSession"
 		>
 			<!--
 				The "New chat" button is an ordinary view command: it writes null to the selection

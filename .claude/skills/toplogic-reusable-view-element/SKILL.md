@@ -40,7 +40,9 @@ An application configures a reusable element; it should feel like the elements i
   `types` + `rows` (a TL-Script `Expr`) + `inputs` (channels) + `observed-types` + a `selection`
   channel. A new list/grid element should use the *same* names so an admin binds "which objects" the
   same way. Differ only where the element genuinely differs (e.g. a list's display is vertical
-  `<lines>` where a table's is horizontal `<columns>`).
+  `<lines>` where a table's is horizontal `<columns>`). Copy a name only when your element *reads*
+  it: `<data-list>` took `types` along with the rest and nothing ever looked at it - attributes
+  resolve against the row object's own type - so it shipped an option that did nothing.
 - **Policy belongs in configuration, not in a bespoke server function.** A `chatSessions()` method
   that returns "the current user's CHAT sessions" bakes in a policy and is ambiguous. Prefer a generic
   `rows` expression the application writes:

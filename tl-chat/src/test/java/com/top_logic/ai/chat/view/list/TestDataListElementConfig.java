@@ -33,7 +33,6 @@ public class TestDataListElementConfig extends TestCase {
 		assertNull("No title by default.", config.getTitle());
 		assertTrue("No header commands by default.", config.getCommands().isEmpty());
 		assertTrue("No input channels by default.", config.getInputs().isEmpty());
-		assertTrue("No types configured by default.", config.getTypes().isEmpty());
 		assertTrue("A static list by default (no observed types).", config.getObservedTypes().isEmpty());
 		assertEquals("TLDataList", config.getReactElement());
 		assertEquals(DataListElement.class, config.getImplementationClass());

@@ -94,7 +94,8 @@ public class TestHiddenElementOptions extends TestCase {
 			+ " is a designer option and must stay visible.", annotation == null || !annotation.value());
 	}
 
-	private static PropertyDescriptor property(Class<? extends ConfigurationItem> configType, String propertyName) {
+	private static PropertyDescriptor property(Class<? extends ConfigurationItem> configType,
+			String propertyName) {
 		PropertyDescriptor property =
 			TypedConfiguration.getConfigurationDescriptor(configType).getProperty(propertyName);
 		assertNotNull("No property '" + propertyName + "' in " + configType.getName() + ".", property);

@@ -47,6 +47,8 @@ import com.top_logic.util.TLContext;
  */
 public class ChatConversationControl extends ReactControl {
 
+	private final ChatViewBinding _binding;
+
 	private final ViewChannel _inputChannel;
 
 	private final ViewChannel _busyChannel;
@@ -65,10 +67,10 @@ public class ChatConversationControl extends ReactControl {
 	public ChatConversationControl(ViewContext context, Config config) {
 		super(context, null, blankToDefault(config.getReactElement(), "TLChatConversation"));
 
-		ChatViewBinding binding = ChatViewBinding.bind(context, config.getChatId());
+		_binding = ChatViewBinding.bind(context, config.getChatId());
 		String configuredImprover = blankToNull(config.getPromptImproverAgent());
-		binding.tracker().setPromptImproverAgentName(configuredImprover);
-		binding.writeSharedState(this::putState);
+		_binding.tracker().setPromptImproverAgentName(configuredImprover);
+		_binding.writeSharedState(this::putState);
 		putState("chatId", config.getChatId());
 
 		// Transcript. The trace level seeds the store's own axis (state key stays "traceMode"), which
@@ -124,6 +126,21 @@ public class ChatConversationControl extends ReactControl {
 
 		ChannelRef busyRef = config.getBusy();
 		_busyChannel = busyRef == null ? null : context.resolveChannel(busyRef);
+	}
+
+	/**
+	 * Re-reads the user's stored layout.
+	 *
+	 * <p>
+	 * A browser reload re-renders the control tree the window already holds, so this hook is the
+	 * only place that runs again. Writing the layout in the constructor would replay the first
+	 * render's rail state for the life of the window (Gitea #423).
+	 * </p>
+	 */
+	@Override
+	protected void onBeforeWrite() {
+		super.onBeforeWrite();
+		_binding.writeLayoutState(this::putState);
 	}
 
 	@Override

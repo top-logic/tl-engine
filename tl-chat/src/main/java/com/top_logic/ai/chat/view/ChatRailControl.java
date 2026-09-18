@@ -48,6 +48,8 @@ public class ChatRailControl extends ReactControl {
 	/** State key for the section badge numbers, keyed by section name. */
 	private static final String SECTION_BADGES = "sectionBadges";
 
+	private final ChatViewBinding _binding;
+
 	private final ViewChannel _paneChannel;
 
 	private final Map<String, Integer> _badges = new LinkedHashMap<>();
@@ -67,16 +69,15 @@ public class ChatRailControl extends ReactControl {
 	public ChatRailControl(ViewContext context, Config config, List<Section> sections, List<UIElement> pane) {
 		super(context, null, blankToDefault(config.getReactElement(), "TLChatRail"));
 
-		ChatViewBinding binding = ChatViewBinding.bind(context, config.getChatId());
-		binding.writeSharedState(this::putState);
+		_binding = ChatViewBinding.bind(context, config.getChatId());
+		_binding.writeSharedState(this::putState);
 		putState("chatId", config.getChatId());
 		putState("strip", Boolean.valueOf(config.getStrip()));
 		putState("open", Boolean.valueOf(config.getOpen()));
 		putState("paneMode", config.getPaneMode().getExternalName());
-		int paneWidth = config.getPaneWidth();
-		if (paneWidth > 0) {
-			putState("paneWidth", Integer.valueOf(paneWidth));
-		}
+		// A key of its own, because the stored width is written under "paneWidth" on every render:
+		// the configured width is what a user who has never dragged the splitter gets.
+		putState("paneWidthDefault", Integer.valueOf(Math.max(0, config.getPaneWidth())));
 
 		putState("sections", sectionState(context, sections));
 		putState(SECTION_BADGES, new LinkedHashMap<>(_badges));
@@ -104,6 +105,21 @@ public class ChatRailControl extends ReactControl {
 		_paneChannel.addListener(listener);
 		addCleanupAction(() -> _paneChannel.removeListener(listener));
 		applyPane(_paneChannel.get());
+	}
+
+	/**
+	 * Re-reads the user's stored layout.
+	 *
+	 * <p>
+	 * A browser reload re-renders the control tree the window already holds, so this hook is the
+	 * only place that runs again. Writing the layout in the constructor would replay the first
+	 * render's rail state for the life of the window (Gitea #423).
+	 * </p>
+	 */
+	@Override
+	protected void onBeforeWrite() {
+		super.onBeforeWrite();
+		_binding.writeLayoutState(this::putState);
 	}
 
 	/** Closes the pane, which is writing {@code null} back to the channel that opened it. */

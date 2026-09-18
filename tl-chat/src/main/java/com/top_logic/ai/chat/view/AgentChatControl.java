@@ -16,11 +16,14 @@ import com.top_logic.layout.react.control.ReactControl;
  * <p>
  * The control only establishes the per-window chat state and supplies bootstrap data. The
  * {@code TLAgentChat} browser component owns the chat UI and consumes the existing REST/SSE API.
- * Tracker, user and layout preferences come from {@link ChatViewBinding}, so a second chat element
- * on the same {@code chat-id} does not load them again.
+ * Tracker and user come from {@link ChatViewBinding}, so a second chat element
+ * on the same {@code chat-id} does not bind them again. The layout preference is re-read on every
+ * render, so a browser reload replays the current one rather than the first render's.
  * </p>
  */
 public class AgentChatControl extends ReactControl {
+
+	private final ChatViewBinding _binding;
 
 	/** Creates an {@link AgentChatControl}. */
 	public AgentChatControl(ReactContext context, TraceMode traceMode, String promptImproverAgent) {
@@ -38,14 +41,29 @@ public class AgentChatControl extends ReactControl {
 
 		// Empty chat-id: this one-element form stays isolated from the four pieces, which default
 		// to "default". App then keys the browser store by the control id.
-		ChatViewBinding binding = ChatViewBinding.bind(context, "");
-		TaskProgressTracker tracker = binding.tracker();
+		_binding = ChatViewBinding.bind(context, "");
+		TaskProgressTracker tracker = _binding.tracker();
 		String configuredImprover = blankToNull(promptImproverAgent);
 		tracker.setPromptImproverAgentName(configuredImprover);
 
-		binding.writeSharedState(this::putState);
+		_binding.writeSharedState(this::putState);
 		putState("traceMode", traceMode.getExternalName());
 		putState("promptImprovementEnabled", Boolean.valueOf(configuredImprover != null));
+	}
+
+	/**
+	 * Re-reads the user's stored layout.
+	 *
+	 * <p>
+	 * A browser reload re-renders the control tree the window already holds, so this hook is the
+	 * only place that runs again. Writing the layout in the constructor would replay the first
+	 * render's rail state for the life of the window (Gitea #423).
+	 * </p>
+	 */
+	@Override
+	protected void onBeforeWrite() {
+		super.onBeforeWrite();
+		_binding.writeLayoutState(this::putState);
 	}
 
 	private static String blankToNull(String value) {

@@ -33,6 +33,8 @@ import com.top_logic.layout.view.channel.ViewChannel;
  */
 public class ChatSectionControl extends ReactControl {
 
+	private final ChatViewBinding _binding;
+
 	private final ViewChannel _badgeChannel;
 
 	/**
@@ -48,8 +50,8 @@ public class ChatSectionControl extends ReactControl {
 	public ChatSectionControl(ViewContext context, Config config, String defaultReactElement) {
 		super(context, null, blankToDefault(config.getReactElement(), defaultReactElement));
 
-		ChatViewBinding binding = ChatViewBinding.bind(context, config.getChatId());
-		binding.writeSharedState(this::putState);
+		_binding = ChatViewBinding.bind(context, config.getChatId());
+		_binding.writeSharedState(this::putState);
 		putState("chatId", config.getChatId());
 
 		ChannelRef badgeRef = config.getBadge();
@@ -57,6 +59,21 @@ public class ChatSectionControl extends ReactControl {
 		// The browser only reports a count when somebody is listening; without a channel the round
 		// trip would end nowhere.
 		putState("badge", Boolean.valueOf(_badgeChannel != null));
+	}
+
+	/**
+	 * Re-reads the user's stored layout.
+	 *
+	 * <p>
+	 * A browser reload re-renders the control tree the window already holds, so this hook is the
+	 * only place that runs again. Writing the layout in the constructor would replay the first
+	 * render's rail state for the life of the window (Gitea #423).
+	 * </p>
+	 */
+	@Override
+	protected void onBeforeWrite() {
+		super.onBeforeWrite();
+		_binding.writeLayoutState(this::putState);
 	}
 
 	/**

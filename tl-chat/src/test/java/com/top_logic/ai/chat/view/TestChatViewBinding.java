@@ -5,6 +5,9 @@
  */
 package com.top_logic.ai.chat.view;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
@@ -15,8 +18,8 @@ import com.top_logic.basic.col.LazyTypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable;
 
 /**
- * {@link ChatViewBinding#bind} is once per (sub-session, chat-id) and does not reload preferences
- * on a second join.
+ * {@link ChatViewBinding#bind} is once per (sub-session, chat-id), while the layout preference is
+ * read again every time the state is written.
  */
 public class TestChatViewBinding extends TestCase {
 
@@ -48,22 +51,43 @@ public class TestChatViewBinding extends TestCase {
 		assertNotSame(main, other);
 	}
 
-	/** The second bind on the same key does not read {@code PersonalConfiguration} again. */
-	public void testSecondBindDoesNotReloadPreferences() {
+	/** Binding costs no preference load: the layout is read when it is written, not when bound. */
+	public void testBindDoesNotLoadPreferences() {
 		AtomicInteger loads = new AtomicInteger();
 		ChatViewBinding.preferenceSource = () -> {
 			loads.incrementAndGet();
 			return ChatPreferencesDto.create();
 		};
 		TypedAnnotatable scope = new LazyTypedAnnotatable();
-		ChatViewBinding first = ChatViewBinding.bind(scope, "w1", "/app", "main");
-		ChatViewBinding second = ChatViewBinding.bind(scope, "w1", "/app", "main");
-		assertSame(first, second);
-		assertEquals("Preferences load once per (scope, chat-id).", 1, loads.get());
-		assertSame(first.preferences(), second.preferences());
-
+		ChatViewBinding.bind(scope, "w1", "/app", "main");
 		ChatViewBinding.bind(scope, "w1", "/app", "other");
-		assertEquals("A new chat-id loads once for itself.", 2, loads.get());
+		assertEquals("Binding reads no preference.", 0, loads.get());
+	}
+
+	/**
+	 * Every write of the layout state reads the stored layout again.
+	 *
+	 * <p>
+	 * This is what makes a page reload replay the current rail state: the engine re-renders the
+	 * control tree the window already holds, so a layout captured at construction time would be the
+	 * first render's layout forever (Gitea #423).
+	 * </p>
+	 */
+	public void testLayoutStateIsReadPerWrite() {
+		AtomicBoolean railOpen = new AtomicBoolean(false);
+		ChatViewBinding.preferenceSource =
+			() -> ChatPreferencesDto.create().setRailOpen(railOpen.get());
+		ChatViewBinding binding = ChatViewBinding.bind(new LazyTypedAnnotatable(), "w1", "/app", "main");
+
+		Map<String, Object> first = new HashMap<>();
+		binding.writeLayoutState(first::put);
+		assertEquals(Boolean.FALSE, first.get("railOpen"));
+
+		railOpen.set(true);
+		Map<String, Object> second = new HashMap<>();
+		binding.writeLayoutState(second::put);
+		assertEquals("The second render replays the layout stored now.", Boolean.TRUE,
+			second.get("railOpen"));
 	}
 
 	/** Two windows do not share a binding even when they use the same chat-id. */

@@ -489,15 +489,33 @@ describe('the layout preferences', () => {
     const release = store.subscribe(() => undefined)
     store.attach(BOOT)
     await settle()
-    // The bootstrap's own write; what follows is what the click costs.
-    const afterBootstrap = preferenceWrites.length
-    expect(afterBootstrap).toBe(1)
+    // Booting writes nothing: the bootstrap IS what the server holds.
+    expect(preferenceWrites).toHaveLength(0)
 
     store.actions.showSection('progress', 4)
     await settle()
 
-    expect(preferenceWrites).toHaveLength(afterBootstrap + 1)
-    expect(preferenceWrites[afterBootstrap]).toEqual({ railOpen: true, paneWidth: 0, badgeSeen: 4 })
+    expect(preferenceWrites).toHaveLength(1)
+    expect(preferenceWrites[0]).toEqual({ railOpen: true, paneWidth: 0, badgeSeen: 4 })
+
+    release()
+  })
+
+  /**
+   * A reload must not persist what the page started with.
+   *
+   * The engine re-renders the control tree the window already holds, so before #423 a reloaded page
+   * booted from the first render's layout and its own bootstrap write made that stale value the
+   * stored one - the user's choice was overwritten by the page that was supposed to restore it.
+   */
+  it('does not write back the layout it booted with', async () => {
+    const store = chatStore('alpha', { ...BOOT, railOpen: true, paneWidth: 480, badgeSeen: 3 })
+    const release = store.subscribe(() => undefined)
+    store.attach({ ...BOOT, railOpen: true, paneWidth: 480, badgeSeen: 3 })
+    await settle()
+
+    expect(preferenceWrites).toHaveLength(0)
+    expect(store.getState().sideOpen).toBe(true)
 
     release()
   })

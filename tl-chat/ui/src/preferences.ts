@@ -11,6 +11,15 @@ export interface ChatPreferences {
 
 const DEFAULTS: ChatPreferences = { railOpen: false, paneWidth: 0, badgeSeen: 0 }
 
+/** Whether two layouts say the same thing, so an unchanged one is not written back. */
+export function sameLayout(left: ChatPreferences, right: ChatPreferences): boolean {
+  return (
+    left.railOpen === right.railOpen &&
+    left.paneWidth === right.paneWidth &&
+    left.badgeSeen === right.badgeSeen
+  )
+}
+
 function path(windowId: string): string {
   const sep = '/chat/preferences'
   return `${apiBase()}${sep}?windowId=${encodeURIComponent(windowId)}`
@@ -19,13 +28,23 @@ function path(windowId: string): string {
 /**
  * Reads the per-user chat layout preferences out of the control state.
  *
- * The bootstrap comes with the control (`AgentChatControl.putState`), so there is no `GET` to make:
- * the values are already in the first render.
+ * The bootstrap comes with the control (`ChatViewBinding.writeLayoutState`), so there is no `GET`
+ * to make: the values are already in the first render. The control writes them again on every
+ * render, so the values a reloaded page starts from are the ones stored now, not the ones the
+ * window was first rendered with.
+ *
+ * `paneWidthDefault` is the width `<chat-rail pane-width>` configures. It applies only while the
+ * user has not dragged the splitter themselves.
  */
 export function parsePreferences(state: Record<string, unknown>): ChatPreferences {
+  const stored = typeof state.paneWidth === 'number' && state.paneWidth > 0 ? state.paneWidth : 0
+  const configured =
+    typeof state.paneWidthDefault === 'number' && state.paneWidthDefault > 0
+      ? state.paneWidthDefault
+      : 0
   return {
     railOpen: state.railOpen === true,
-    paneWidth: typeof state.paneWidth === 'number' && state.paneWidth > 0 ? state.paneWidth : 0,
+    paneWidth: stored > 0 ? stored : configured,
     badgeSeen: typeof state.badgeSeen === 'number' && state.badgeSeen >= 0 ? state.badgeSeen : 0,
   }
 }

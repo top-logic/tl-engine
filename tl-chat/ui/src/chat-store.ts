@@ -25,7 +25,7 @@ import type { ComposerApi, PaneOpenOptions } from './extensions'
 import type { ReferenceToken } from './reference'
 import { bundle, providerErrorText, toLanguage, type Language } from './i18n'
 import { effortLevelsOf, modelsFor } from './models'
-import { parsePreferences, savePreferences } from './preferences'
+import { parsePreferences, sameLayout, savePreferences, type ChatPreferences } from './preferences'
 import { parseTasksJson, type AgentTask } from './progress-model'
 import { chatReducer, type ChatAction } from './reducer'
 import { composeOutboundText } from './send-prefix'
@@ -438,6 +438,14 @@ export class ChatStore {
   /** How many {@code <chat-rail/>} elements on this `chat-id` are mounted. */
   private rails = 0
 
+  /**
+   * The layout the server holds, so an unchanged layout is not written back.
+   *
+   * The bootstrap is the stored layout; a `PUT` of it would be a no-op at best and, when the page
+   * booted from a stale control state, would overwrite the user's real choice.
+   */
+  private storedLayout: ChatPreferences
+
   private composerApi: ComposerApi | null = null
 
   private readonly offeredModelsOf = memo(
@@ -458,6 +466,7 @@ export class ChatStore {
   constructor(chatId: string, boot: ChatBootstrap) {
     this.chatId = chatId
     this.remembered = readActiveSession()
+    this.storedLayout = { railOpen: boot.railOpen, paneWidth: boot.paneWidth, badgeSeen: boot.badgeSeen }
     this.snapshot = this.derive({
       windowId: boot.windowId,
       authenticated: boot.authenticated,
@@ -634,7 +643,13 @@ export class ChatStore {
         run: () => {
           const { authenticated, windowId, sideOpen, paneWidth, badgeSeen } = this.state
           if (!authenticated || !windowId) return
-          void savePreferences(windowId, { railOpen: sideOpen, paneWidth, badgeSeen })
+          const next: ChatPreferences = { railOpen: sideOpen, paneWidth, badgeSeen }
+          // What the page booted with is what the server already holds. Writing it back would make
+          // every reload store the layout the page happened to start with, which is how the stored
+          // choice used to be lost (#423).
+          if (sameLayout(next, this.storedLayout)) return
+          this.storedLayout = next
+          void savePreferences(windowId, next)
         },
       },
       {

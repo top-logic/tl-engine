@@ -33,6 +33,15 @@ import com.top_logic.util.TLContextManager;
  * (sub-session, chat-id). The tracker itself stays one per window:
  * {@link com.top_logic.ai.chat.api.ChatServlet} still resolves it from {@code windowId} alone.
  * </p>
+ *
+ * <p>
+ * The layout preference is the one thing here that is <em>not</em> bound once: it is read whenever
+ * {@link #writeLayoutState(BiConsumer)} is asked for it. A browser reload re-renders the control
+ * tree the window already holds instead of rebuilding it, so a value captured in a constructor
+ * would replay the first render's layout for as long as the window lives (Gitea #423). Reading it
+ * again costs a lookup in the sub-session's personal configuration, which is already in memory,
+ * plus a small JSON parse.
+ * </p>
  */
 public final class ChatViewBinding {
 
@@ -40,12 +49,10 @@ public final class ChatViewBinding {
 	private static final Property<Map<String, ChatViewBinding>> BINDINGS =
 		TypedAnnotatable.propertyMap("tl.chat.view.bindings");
 
-	/** Loads layout preferences. Tests replace this so a second bind can be shown not to load. */
+	/** Loads layout preferences. Tests replace this to observe when a load happens. */
 	static Supplier<ChatPreferencesDto> preferenceSource = ChatPreferencesStore::load;
 
 	private final TaskProgressTracker _tracker;
-
-	private final ChatPreferencesDto _preferences;
 
 	private final String _windowId;
 
@@ -62,7 +69,6 @@ public final class ChatViewBinding {
 	private ChatViewBinding(TLSubSessionContext subSession, String windowName, String contextPath) {
 		_tracker = bindTracker(subSession, windowName);
 		storeUser(_tracker);
-		_preferences = preferenceSource.get();
 		_windowId = windowName;
 		_contextPath = contextPath == null ? "" : contextPath;
 		_userName = valueOr(_tracker.getUserName(), "User");
@@ -76,7 +82,7 @@ public final class ChatViewBinding {
 	 *
 	 * <p>
 	 * Idempotent per (sub-session, chat-id): a second element that joins the same chat reuses the
-	 * tracker, the user and the already loaded preferences.
+	 * tracker and the user.
 	 * </p>
 	 */
 	public static ChatViewBinding bind(ReactContext context, String chatId) {
@@ -113,9 +119,9 @@ public final class ChatViewBinding {
 		return _tracker;
 	}
 
-	/** Layout preferences loaded once for this chat. */
+	/** The layout preferences stored for this chat, as they are now. */
 	public ChatPreferencesDto preferences() {
-		return _preferences;
+		return preferenceSource.get();
 	}
 
 	/** User name shown in the chat. */
@@ -155,6 +161,12 @@ public final class ChatViewBinding {
 	 * Each control still has its own state map. The values are the same for every element on this
 	 * chat because they come from this binding.
 	 * </p>
+	 *
+	 * <p>
+	 * Everything written here is fixed for the lifetime of the window. The layout preference is
+	 * not, so it has {@link #writeLayoutState(BiConsumer)} of its own; this method writes it too,
+	 * so that a caller which only ever renders once needs the one call.
+	 * </p>
 	 */
 	public void writeSharedState(BiConsumer<String, Object> put) {
 		put.accept("authenticated", Boolean.valueOf(_authenticated));
@@ -163,9 +175,25 @@ public final class ChatViewBinding {
 		put.accept("userName", _userName);
 		put.accept("welcomeName", _welcomeName);
 		put.accept("language", _language);
-		put.accept("railOpen", Boolean.valueOf(_preferences.isRailOpen()));
-		put.accept("paneWidth", Integer.valueOf(_preferences.getPaneWidth()));
-		put.accept("badgeSeen", Integer.valueOf(_preferences.getBadgeSeen()));
+		writeLayoutState(put);
+	}
+
+	/**
+	 * Writes the user's stored layout into the control's state.
+	 *
+	 * <p>
+	 * Every chat control calls this from its {@code onBeforeWrite} hook, because that is the one
+	 * moment that happens again when the browser is reloaded. The constructor does not: the engine
+	 * re-renders the control tree the window already holds, deliberately, so that a table keeps its
+	 * selection - which means a layout captured at construction time is the layout of the first
+	 * render forever (Gitea #423).
+	 * </p>
+	 */
+	public void writeLayoutState(BiConsumer<String, Object> put) {
+		ChatPreferencesDto preferences = preferences();
+		put.accept("railOpen", Boolean.valueOf(preferences.isRailOpen()));
+		put.accept("paneWidth", Integer.valueOf(preferences.getPaneWidth()));
+		put.accept("badgeSeen", Integer.valueOf(preferences.getBadgeSeen()));
 	}
 
 	private static TaskProgressTracker bindTracker(TLSubSessionContext subSession, String windowName) {

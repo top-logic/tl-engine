@@ -98,6 +98,15 @@
 							<de>Dokumentanzeige</de>
 						</label>
 					</nav-item>
+					<nav-item id="html"
+						icon="css:bi bi-filetype-html"
+					>
+						<view-ref view="demo/html-demo.view.xml"/>
+						<label>
+							<en>HTML content</en>
+							<de>HTML-Inhalte</de>
+						</label>
+					</nav-item>
 					<nav-item id="config-editor"
 						icon="css:bi bi-sliders"
 					>

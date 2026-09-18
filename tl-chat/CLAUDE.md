@@ -398,8 +398,42 @@ never warns, however many elements are on it.
 `<chat-conversation>` is the transcript and the prompt field as one element - the transcript and
 the input almost always sit together, so they are one placeable box, while the session list and the
 rail stay separate because those genuinely want independent placement. It honours its configuration
-flags as render guards on the existing `Thread` and `Composer` props. An optional `input` channel
-selects the session; without one the store is the source. It writes an optional `busy` channel.
+flags as render guards on the existing `Thread` and `Composer` props.
+
+#### The six channels of `<chat-conversation>`
+
+| Channel | Direction | Value |
+|--|--|--|
+| `input` | two-way | The open `tl.ai.execution:AgentSession`, as the object. Empty means a fresh conversation, so "new chat" is the list clearing it. |
+| `busy` | out | `Boolean`, `true` while the agent works. |
+| `agent` | two-way | The agent's **name** (`String`). |
+| `model` | two-way | The model's **name** (`String`). |
+| `effort` | two-way | The effort level (`String`), one of the levels the selected model offers; empty for none. |
+| `mcp-servers` | two-way | The attached servers' **names**, a `Collection<String>` (one name on its own is read as a set of one). |
+
+The four turn settings carry **names**, not model objects, and that is a fact about this product
+rather than a shortcut: only an agent an installation authored in the knowledge base is a
+`tl.ai.core:Agent` at all - the agents tl-ai ships, every model and every MCP server are
+configuration - while a name is what `/chat/send`, `AgentFactory` and the security policy are
+written in. On the way *in* a `tl.ai.core:Agent` record is read for its `name`, so a `<data-list>`
+of authored agents feeds the `agent` channel; on the way *out* the name is written, so such a list
+is not highlighted back. `ChatTurnChannels` is where that translation and the refusal below live.
+
+Two-way means the same thing for all five: the composer writes the user's choice and **follows a
+write** from outside. It follows a write, not the value standing on the channel - the composer
+changes these itself (restoring a session brings back its effort, picking an agent brings its model
+and its servers) and the channel learns of that one round trip later, so acting on the standing
+value would undo every such change. A host that pre-selects an agent for its page therefore writes
+the channel once and the composer keeps it, including across the `GET /chat/capabilities` answer
+that arrives afterwards.
+
+A channel is a second way past the composer's own filtering, so a write is refused exactly where a
+send naming the same value is: `ChatTurnChannels` asks `AgentFactory.runRefusal`, which is the
+question `ChatServlet` pre-checks a send with, plus "does this application have such an agent at
+all" (the servlet's 404). A refused write is logged at DEBUG, is *not* applied, and the composer's
+own setting is written back onto the channel - so the channel never claims a setting the composer is
+not showing, and the next send cannot be answered 403 for something the user never chose.
+`TestChatTurnChannels` pins it against the shipped defaults, beside `TestChatRunAccess`.
 
 #### Configuring `<chat-conversation>` - easy vs advanced
 
@@ -410,7 +444,8 @@ An application configures this element in the design view. Its options fall into
   trace picker), `citations` (markers *and* the per-answer sources pill - off removes the whole
   citation surface from the transcript), the nested `<actions>` (`copy`/`rate`/`regenerate`/
   `timestamp`), the nested `<controls>` pickers, `placeholder`, `prompt-improver-agent` (an agent
-  dropdown), `chat-id`, and the `input`/`busy` channels. The transcript's rail badge button is *not*
+  dropdown), `chat-id`, and the six channels (`input`, `busy`, `agent`, `model`, `effort`,
+  `mcp-servers`). The transcript's rail badge button is *not*
   configured: it appears exactly when a `<chat-rail>` with the same `chat-id` is mounted, which the
   rail announces to the shared store (`railMounted`), so a rail that mounts after the conversation
   still makes the button appear.

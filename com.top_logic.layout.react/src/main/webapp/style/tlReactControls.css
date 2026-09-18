@@ -97,181 +97,6 @@ html, body {
 	height: 100%;
 }
 
-/* --- TLButton ----------------------------------------------------------- */
-
-.tlReactButton {
-	display: inline-flex;
-	justify-content: center;
-	align-items: center;
-	gap: var(--spacing-02);
-	height: 2rem;
-	padding: 0 var(--spacing-03);
-	border: none;
-	border-radius: var(--corner-radius);
-	font-family: var(--font-family);
-	font-weight: bold;
-	font-size: var(--heading-compact-02-font-size);
-	line-height: var(--heading-compact-02-line-height);
-	letter-spacing: var(--heading-compact-02-letter-spacing);
-	cursor: pointer;
-	background: transparent;
-	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
-	color: var(--button-secondary);
-	white-space: nowrap;
-}
-
-button.tlReactButton:not(:disabled):hover {
-	background: var(--layer-hover);
-}
-
-button.tlReactButton:focus-visible {
-	outline: 2px solid var(--focus);
-	outline-offset: 1px;
-}
-
-button.tlReactButton:not(:disabled):active {
-	background: var(--button-secondary-active);
-	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
-	color: var(--text-on-color);
-}
-
-button.tlReactButton:disabled {
-	cursor: default;
-	background: none;
-	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
-	color: var(--text-disabled);
-}
-
-/* --- TLButton link variant: render the button as an inline text link ---- */
-
-.tlReactButton--link,
-button.tlReactButton--link {
-	height: auto;
-	padding: 0;
-	border: none;
-	box-shadow: none;
-	background: transparent;
-	font-weight: normal;
-	color: var(--link-primary);
-	text-decoration: underline;
-}
-
-button.tlReactButton--link:not(:disabled):hover,
-button.tlReactButton--link:not(:disabled):active {
-	background: transparent;
-	box-shadow: none;
-	color: var(--link-primary-hover);
-}
-
-/* --- TLButton primary variant: emphasized (filled) dialog action -------- */
-
-.tlReactButton--primary,
-button.tlReactButton--primary {
-	background: var(--button-primary);
-	box-shadow: inset 0px 0px 0px 2px var(--button-primary);
-	color: var(--text-on-color);
-}
-
-button.tlReactButton--primary:not(:disabled):hover {
-	background: var(--button-primary-hover);
-	box-shadow: inset 0px 0px 0px 2px var(--button-primary-hover);
-	color: var(--text-on-color);
-}
-
-button.tlReactButton--primary:focus-visible {
-	box-shadow: inset 0px 0px 0px 2px var(--button-primary), 0 0 0 2px var(--focus-inset);
-	outline: 2px solid var(--focus);
-	outline-offset: 2px;
-}
-
-button.tlReactButton--primary:not(:disabled):active {
-	background: var(--button-primary-active);
-	box-shadow: inset 0px 0px 0px 2px var(--button-primary-active);
-	color: var(--text-on-color);
-}
-
-/* --- TLButton small size (independent of appearance) -------------------- */
-
-.tlReactButton--small,
-button.tlReactButton--small {
-	height: 1.5rem;
-	padding: 0 var(--spacing-02);
-	font-size: var(--label-01-font-size);
-}
-
-.tlReactButton--large,
-button.tlReactButton--large {
-	height: 2.5rem;
-	padding: 0 var(--spacing-05);
-	font-size: var(--heading-compact-03-font-size);
-}
-
-/* A link keeps its inline layout regardless of size; only the font size differs. */
-button.tlReactButton--small.tlReactButton--link,
-button.tlReactButton--large.tlReactButton--link {
-	height: auto;
-	padding: 0;
-}
-
-/* --- TLButton icon-only variant ----------------------------------------- */
-
-.tlReactButton--icon {
-	box-shadow: none;
-	background: none;
-	padding: var(--spacing-01);
-	min-height: 0;
-	line-height: 1;
-	color: var(--icon-primary);
-}
-
-button.tlReactButton--icon:not(:disabled):hover {
-	background: var(--layer-hover);
-	color: var(--icon-primary);
-}
-
-button.tlReactButton--icon:disabled {
-	box-shadow: none;
-	color: var(--icon-disabled);
-}
-
-/* The panel-toolbar buttons inherit the default (secondary) button styling:
-   the panel header is now a light surface, so no on-accent inversion is needed. */
-
-/* --- Active button: a pressed toggle, or the chosen alternative --------- */
-
-.tlReactButton.tlReactButton--active {
-	background: var(--button-primary);
-	box-shadow: inset 0px 0px 0px 2px var(--button-primary);
-	color: var(--text-on-color);
-}
-
-button.tlReactButton.tlReactButton--active:hover {
-	background: var(--button-primary-hover);
-	box-shadow: inset 0px 0px 0px 2px var(--button-primary-hover);
-	color: var(--text-on-color);
-}
-
-button.tlReactButton.tlReactButton--active:focus {
-	color: var(--text-on-color);
-}
-
-button.tlReactButton.tlReactButton--active:focus-visible {
-	box-shadow: inset 0px 0px 0px 2px var(--button-primary), 0 0 0 2px var(--focus-inset);
-	outline: 2px solid var(--focus);
-	outline-offset: 2px;
-}
-
-button.tlReactButton.tlReactButton--active:active {
-	background: var(--button-primary-active);
-	color: var(--text-on-color);
-}
-
-button.tlReactButton.tlReactButton--active:disabled {
-	background: var(--button-disabled);
-	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
-	color: var(--text-on-color-disabled);
-}
-
 /* --- TLCounter ---------------------------------------------------------- */
 
 .tlCounter {
@@ -1896,56 +1721,9 @@ button.tlDrawerToggle:focus-visible {
 	background: var(--layer-accent-active);
 }
 
-.tlAppBar--primary .tlReactButton {
-	color: var(--layer-accent-text);
-	box-shadow: inset 0px 0px 0px 2px var(--layer-accent-text);
-}
-
-.tlAppBar--primary button.tlReactButton:not(:disabled):hover {
-	background: rgba(255, 255, 255, 0.16);
-}
-
-.tlAppBar--primary button.tlReactButton:not(:disabled):active {
-	background: rgba(255, 255, 255, 0.24);
-	color: var(--layer-accent-text);
-	box-shadow: inset 0px 0px 0px 2px var(--layer-accent-text);
-}
-
-.tlAppBar--primary button.tlReactButton:disabled {
-	background: none;
-	color: rgba(255, 255, 255, 0.5);
-	box-shadow: inset 0px 0px 0px 2px rgba(255, 255, 255, 0.4);
-}
-
-.tlAppBar--primary .tlReactButton--icon {
-	box-shadow: none;
-	color: var(--icon-on-color);
-}
-
-.tlAppBar--primary .tlReactButton--link {
-	color: var(--layer-accent-text);
-}
-
 /* --- Responsive: compact app bar at small viewports ------------------------- */
 
 @media (max-width: 768px) {
-	/* Labeled command buttons collapse to their icon so the bar never grows wider
-	   than the device. Buttons without an icon keep their label. */
-	.tlAppBar .tlReactButton:has(> .tlReactButton__image) {
-		width: 2rem;
-		flex-shrink: 0;
-		padding: 0;
-		box-shadow: none;
-	}
-
-	.tlAppBar .tlReactButton:has(> .tlReactButton__image) > .tlReactButton__image {
-		display: inline-block;
-	}
-
-	.tlAppBar .tlReactButton:has(> .tlReactButton__image) > .tlReactButton__label {
-		display: none;
-	}
-
 	.tlAppBar__actions {
 		min-width: 0;
 	}
@@ -2146,24 +1924,6 @@ button.tlBottomBar__item:hover {
 	display: flex;
 	align-items: center;
 	gap: var(--spacing-02);
-}
-
-.tlWindow__toolbar .tlReactButton {
-	box-shadow: none;
-	background: none;
-	color: var(--text-secondary);
-	font-weight: normal;
-}
-
-.tlWindow__toolbar button.tlReactButton:not(:disabled):hover {
-	background: var(--layer-hover);
-	color: var(--text-primary);
-}
-
-.tlWindow__toolbar button.tlReactButton:not(:disabled):active {
-	background: var(--layer-active);
-	box-shadow: none;
-	color: var(--text-primary);
 }
 
 .tlWindow__closeBtn {
@@ -3385,23 +3145,6 @@ button.tlMenu__item--disabled:hover {
 .tlTableView__headerCell.tlRowCommandCell {
 	padding: 0;
 	justify-content: center;
-}
-
-.tlTableView__cell.tlRowCommandCell .tlReactButton {
-	box-shadow: none;
-	background: transparent;
-	color: var(--icon-primary);
-}
-
-.tlTableView__cell.tlRowCommandCell button.tlReactButton:not(:disabled):hover {
-	background: var(--layer-hover);
-	box-shadow: inset 0 0 0 2px var(--button-secondary);
-}
-
-.tlTableView__cell.tlRowCommandCell button.tlReactButton:disabled {
-	background: transparent;
-	box-shadow: none;
-	color: var(--icon-disabled);
 }
 
 /* Grip to drag the boundary of the frozen area to another column. Sits above the sticky header cells
@@ -5698,78 +5441,15 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 	padding: var(--spacing-02) 0;
 }
 
+/* Ein Menüeintrag füllt seine Zeile; der Button darin ist ghost und streckt sich. */
 .tlToolbar__dropdownItem {
-	display: flex;
-}
-
-/* Dropdown opens over a light surface — reset the inverse colors that
-   buttons inherit when the toolbar lives inside a dark panel header,
-   and let buttons fill the row so the dropdown reads as a clean list. */
-.tlToolbar__dropdown .tlReactButton {
-	box-shadow: none;
-	border-radius: 0;
-	background: transparent;
-	color: var(--text-primary);
-	width: 100%;
-	justify-content: flex-start;
-	font-weight: normal;
-	padding: var(--spacing-02) var(--spacing-04);
-}
-
-.tlToolbar__dropdown button.tlReactButton:not(:disabled):hover {
-	background: var(--layer-hover);
-	color: var(--text-primary);
-}
-
-/* A disabled menu entry is plain greyed text, never an outlined box. The base
-   button:disabled rule re-adds an inset 2px outline (higher specificity than the
-   dropdown reset above), so stacked disabled items otherwise look like a series of
-   framed rows ("horizontal lines"). Override it here. */
-.tlToolbar__dropdown button.tlReactButton:disabled {
-	box-shadow: none;
-	background: transparent;
-	color: var(--text-disabled);
-}
-
-.tlToolbar__dropdown .tlReactButton--icon {
-	color: var(--icon-primary);
+	display: grid;
 }
 
 .tlToolbar__dropdownSeparator {
 	border: none;
 	border-top: 1px solid var(--border-subtle);
 	margin: var(--spacing-02) var(--spacing-04);
-}
-
-/* --- TLButton enhancements ------------------------------------------------- */
-
-.tlReactButton--iconOnly {
-	width: 2rem;
-	padding: 0;
-}
-
-/* A label-only button still carries its icon element in the DOM when an image is set,
-   so responsive containers can swap it to the icon presentation with a media query
-   (see the compact app bar rules). By default only the label is visible. */
-.tlReactButton--labelOnly > .tlReactButton__image {
-	display: none;
-}
-
-.tlReactButton__image {
-	font-size: 1rem;
-	line-height: 1;
-	flex-shrink: 0;
-}
-
-.tlReactButton__label {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-/* Icon + label gap */
-.tlReactButton__image + .tlReactButton__label {
-	margin-left: var(--spacing-02);
 }
 
 /* --- TLPanel button bar ---------------------------------------------------- */

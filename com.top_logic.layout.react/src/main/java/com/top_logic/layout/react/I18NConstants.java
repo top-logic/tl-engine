@@ -433,6 +433,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_VALUE_LIST_REMOVE;
 
 	/**
+	 * @en Move this value
+	 */
+	@CustomKey("js.valueList.move")
+	public static ResKey JS_VALUE_LIST_MOVE;
+
+	/**
 	 * @en No value
 	 */
 	public static ResKey VALUE_NONE;

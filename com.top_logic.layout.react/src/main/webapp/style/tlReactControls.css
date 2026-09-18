@@ -1137,6 +1137,22 @@ div.tlValueList {
 	gap: var(--spacing-02);
 	width: 100%;
 	min-width: 0;
+	/* The drop indicator of a dragged value is drawn as a border, so reserve its space on both edges
+	   to keep the rows from jumping while a value is dragged across them. */
+	border-top: 2px solid transparent;
+	border-bottom: 2px solid transparent;
+}
+
+.tlValueList__row--dragging {
+	opacity: 0.4;
+}
+
+.tlValueList__row--dragOver-before {
+	border-top-color: var(--interactive);
+}
+
+.tlValueList__row--dragOver-after {
+	border-bottom-color: var(--interactive);
 }
 
 .tlValueList__row > .tlValueList__item {
@@ -1145,6 +1161,7 @@ div.tlValueList {
 	min-width: 0;
 }
 
+.tlValueList__handle,
 .tlValueList__remove,
 .tlValueList__add {
 	display: flex;
@@ -1162,11 +1179,13 @@ div.tlValueList {
 	cursor: pointer;
 }
 
+.tlValueList__handle:hover,
 .tlValueList__remove:hover,
 .tlValueList__add:hover {
 	background-color: var(--layer-hover);
 }
 
+.tlValueList__handle:focus-visible,
 .tlValueList__remove:focus-visible,
 .tlValueList__add:focus-visible {
 	outline: 2px solid var(--focus);
@@ -1175,6 +1194,16 @@ div.tlValueList {
 
 .tlValueList__remove:hover {
 	color: var(--support-error);
+}
+
+/* The grip the value is dragged by; the arrow keys move the value while it has the focus. */
+.tlValueList__handle {
+	color: var(--text-secondary);
+	cursor: grab;
+}
+
+.tlValueList__handle:active {
+	cursor: grabbing;
 }
 
 /* --- TLPanel ----------------------------------------------------------- */
@@ -3642,11 +3671,11 @@ button.tlMenu__item--disabled:hover {
 	background: var(--layer-hover);
 }
 
-.tlColumnSelect__row--dragOver-top {
+.tlColumnSelect__row--dragOver-before {
 	border-top-color: var(--interactive);
 }
 
-.tlColumnSelect__row--dragOver-bottom {
+.tlColumnSelect__row--dragOver-after {
 	border-bottom-color: var(--interactive);
 }
 

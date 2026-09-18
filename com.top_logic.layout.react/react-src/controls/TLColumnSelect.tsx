@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, useListReorder } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -6,6 +6,24 @@ const I18N_KEYS = {
   'js.table.groupBy': 'Group by this column',
   'js.table.ungroup': 'Remove grouping',
 };
+
+/** Shows or hides one of the columns. */
+const CMD_COLUMN_VISIBLE = 'columnVisible';
+
+/** Moves one of the columns to the position the `targetIndex` argument names. */
+const CMD_COLUMN_REORDER = 'columnReorder';
+
+/** Groups the rows by one of the columns, or removes the grouping by it. */
+const CMD_GROUP_BY = 'groupBy';
+
+/** Argument of every command: which column it applies to. */
+const ARG_COLUMN = 'column';
+
+/** Argument of {@link CMD_COLUMN_VISIBLE}: whether the column is shown. */
+const ARG_VISIBLE = 'visible';
+
+/** Argument of {@link CMD_COLUMN_REORDER}: the position the moved column ends up at. */
+const ARG_TARGET_INDEX = 'targetIndex';
 
 interface ColumnEntry {
   name: string;
@@ -33,89 +51,40 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
 
   // A table over a large type offers a column per attribute, which is a long list to scroll. The
   // search narrows what is rendered; the full list stays the reference for the drop position, so a
-  // row can be dropped next to a row the search has hidden.
+  // row can be dropped next to a row the search has hidden. Each rendered row therefore carries its
+  // position within the full list, which is the position the reorder gesture works with.
   const [search, setSearch] = React.useState('');
   const needle = search.trim().toLowerCase();
+  const positioned = entries.map((entry, index) => ({ entry, index }));
   const shown = needle
-    ? entries.filter((entry) => entry.label.toLowerCase().includes(needle))
-    : entries;
-
-  // The row being dragged, and the row it currently hovers over — the drop lands above or below
-  // that row depending on which half the pointer is in, mirroring the column header drag.
-  // The hovered row is held in a ref as well as in state: the state drives the drop indicator,
-  // while the drop handler reads the ref, so it sees the last hover even if no render happened
-  // between the two events.
-  const dragNameRef = React.useRef<string | null>(null);
-  const dragOverRef = React.useRef<{ name: string; side: 'top' | 'bottom' } | null>(null);
-  const [dragOver, setDragOver] = React.useState<{ name: string; side: 'top' | 'bottom' } | null>(null);
-
-  const setDragTarget = React.useCallback((target: { name: string; side: 'top' | 'bottom' } | null) => {
-    dragOverRef.current = target;
-    setDragOver(target);
-  }, []);
+    ? positioned.filter(({ entry }) => entry.label.toLowerCase().includes(needle))
+    : positioned;
 
   const handleToggle = React.useCallback((name: string, visible: boolean) => {
-    sendCommand('columnVisible', { column: name, visible });
+    sendCommand(CMD_COLUMN_VISIBLE, { [ARG_COLUMN]: name, [ARG_VISIBLE]: visible });
   }, [sendCommand]);
 
   // Choosing a column moves the grouping there, choosing the grouped one removes it - resolved on
   // the server, which owns the edited working copy.
   const handleGroupBy = React.useCallback((name: string) => {
-    sendCommand('groupBy', { column: name });
+    sendCommand(CMD_GROUP_BY, { [ARG_COLUMN]: name });
   }, [sendCommand]);
 
-  const handleDragStart = React.useCallback((name: string, event: React.DragEvent) => {
-    dragNameRef.current = name;
-    event.dataTransfer.effectAllowed = 'move';
-    // Firefox starts no drag at all without payload.
-    event.dataTransfer.setData('text/plain', name);
-  }, []);
+  // The moved column is named rather than counted: the server resolves it against its own working
+  // copy, which the client's list is only a picture of.
+  const handleMove = React.useCallback((from: number, targetIndex: number) => {
+    const moved = entries[from];
+    if (moved) {
+      sendCommand(CMD_COLUMN_REORDER, { [ARG_COLUMN]: moved.name, [ARG_TARGET_INDEX]: targetIndex });
+    }
+  }, [entries, sendCommand]);
 
-  const handleDragOver = React.useCallback((name: string, event: React.DragEvent) => {
-    if (!dragNameRef.current || dragNameRef.current === name) {
-      setDragTarget(null);
-      return;
-    }
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
-    const rect = event.currentTarget.getBoundingClientRect();
-    const side = event.clientY < rect.top + rect.height / 2 ? 'top' : 'bottom';
-    setDragTarget({ name, side });
-  }, [setDragTarget]);
-
-  const handleDragEnd = React.useCallback(() => {
-    dragNameRef.current = null;
-    setDragTarget(null);
-  }, [setDragTarget]);
-
-  const handleDrop = React.useCallback((event: React.DragEvent) => {
-    event.preventDefault();
-    const dragged = dragNameRef.current;
-    const target = dragOverRef.current;
-    dragNameRef.current = null;
-    setDragTarget(null);
-    if (!dragged || !target) {
-      return;
-    }
-    const targetIdx = entries.findIndex((entry) => entry.name === target.name);
-    const draggedIdx = entries.findIndex((entry) => entry.name === dragged);
-    if (targetIdx < 0 || draggedIdx < 0) {
-      return;
-    }
-    let insertAt = target.side === 'top' ? targetIdx : targetIdx + 1;
-    // The dragged row is removed before it is re-inserted, so a target below it shifts up by one.
-    if (draggedIdx < insertAt) {
-      insertAt--;
-    }
-    if (insertAt !== draggedIdx) {
-      sendCommand('columnReorder', { column: dragged, targetIndex: insertAt });
-    }
-  }, [entries, sendCommand, setDragTarget]);
+  const reorder = useListReorder({ axis: 'vertical', onMove: handleMove });
 
   const searchable = entries.length > 10;
 
   return (
-    <div id={controlId} className="tlColumnSelect" onDrop={handleDrop}>
+    <div id={controlId} className="tlColumnSelect" {...reorder.containerProps}>
       {searchable && (
         <div className="tlColumnSelect__search">
           <i className="bi bi-search" aria-hidden="true" />
@@ -132,22 +101,22 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
       {/* Alongside the search the list scrolls within a fixed height: a list that grows and shrinks
           with the number of matches would resize the dialog under the pointer on every keystroke. */}
       <div className={'tlColumnSelect__list' + (searchable ? ' tlColumnSelect__list--fixed' : '')}>
-      {shown.map((entry) => {
+      {shown.map(({ entry, index }) => {
         // Keep the table from losing its last column: there would be nothing left to click.
         const lastVisible = entry.visible && visibleCount <= 1;
+        const dragState = reorder.itemState(index);
         let cls = 'tlColumnSelect__row';
-        if (dragOver && dragOver.name === entry.name) {
-          cls += ' tlColumnSelect__row--dragOver-' + dragOver.side;
+        if (dragState.dropBefore) {
+          cls += ' tlColumnSelect__row--dragOver-before';
+        }
+        if (dragState.dropAfter) {
+          cls += ' tlColumnSelect__row--dragOver-after';
         }
         return (
           <div
             key={entry.name}
             className={cls}
-            draggable={true}
-            onDragStart={(e) => handleDragStart(entry.name, e)}
-            onDragOver={(e) => handleDragOver(entry.name, e)}
-            onDrop={handleDrop}
-            onDragEnd={handleDragEnd}
+            {...reorder.itemProps(index)}
           >
             <i className="tlColumnSelect__handle bi bi-grip-vertical" aria-hidden="true" />
             <button

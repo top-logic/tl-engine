@@ -216,15 +216,11 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 	}
 
 	/**
-	 * The theme answering the given appearance preference of the operating system.
+	 * The theme with the given id.
 	 *
-	 * @param scheme
-	 *        The scheme the operating system asks for.
-	 * @return The theme marked as the system default for that scheme, or the default theme if none
-	 *         is marked.
-	 */
-	/**
-	 * The theme with the given id, or {@code null} if no such theme is registered.
+	 * @param id
+	 *        The id of a registered theme.
+	 * @return The theme, or {@code null} if no theme with that id is registered.
 	 */
 	public UITheme getTheme(String id) {
 		return _themes.get(id);
@@ -242,6 +238,14 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 		out.writeAttribute(DS_MODE_ATTRIBUTE, theme.getColorScheme().cssKeyword());
 	}
 
+	/**
+	 * The theme answering the given appearance preference of the operating system.
+	 *
+	 * @param scheme
+	 *        The scheme the operating system asks for.
+	 * @return The theme marked as the system default for that scheme, or the default theme if none
+	 *         is marked.
+	 */
 	public UITheme getSystemTheme(ColorScheme scheme) {
 		UITheme marked = _systemThemes.get(scheme);
 		return marked != null ? marked : _themes.get(_defaultTheme);

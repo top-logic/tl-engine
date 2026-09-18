@@ -163,6 +163,90 @@ Fortschritt section is a `<data-list>` over those, and `<chat-progress/>` is gon
 **not** exported from `index.ts`: the store is internal to the bundle, so a host cannot write its
 own element against it. New chat pieces live in `ui/src` and are registered next to `TLAgentChat`.
 
+### Configuring `<data-list>`
+
+`com.top_logic.ai.chat.view.list.DataListElement` / `DataListControl` + `ui/src/data-list.tsx`.
+A **declared temporary fork**: the engine has no data-bound list that renders like the navbar with
+selection, grouping and search, so the element lives here and is built on public engine API only, to
+upstream as one clean diff.
+
+| Option | What it is |
+|--|--|
+| `rows` | TL-Script producing the row objects, the way `<table>` binds its rows. Mandatory. |
+| `<inputs><input channel="…"/>` | Channel values passed to `rows` as positional arguments. |
+| `observed-types` | Types whose create/update/delete re-runs `rows`, so the list follows the model. |
+| `<lines><line attribute=…\|<value>…` | What a row shows, top to bottom - a table's columns, stacked. `emphasis` is `primary` / `secondary`. |
+| `group-by` | TL-Script of one row giving its group header; unset means a flat list. |
+| `css-class` | TL-Script of one row giving extra classes on the row element - its *state* (`is-done`, `is-running`, `is-pending` are the ones the stylesheet defines). |
+| `selection` | Two-way channel holding the picked row object. |
+| `count` | Channel receiving the number of rows, written with every serialisation - what a rail section's badge reads without asking the browser. |
+| `search` / `collapsible` / `title` / `empty-text` | The list's own chrome. |
+| `<commands><command>` | Header buttons above the list. Ordinary `<generic-command>`s. |
+| `<row-commands><command>` | Commands offered on a single row - see below. |
+| `row-channel` | Name of the local channel a row command reads its row from. Default `row`. |
+| `row-actions` | `hover` (default) / `always` / `none` - when a row shows its trigger. |
+
+#### Row commands
+
+A `<row-commands>` entry is the same `<generic-command>` a header command is: label, image, clique,
+tooltip, `<executability>` and any action chain. The row the menu was opened on reaches the command
+through the **row channel** the list registers - which is what the command names in its `input`, and
+what an `<executability>` rule therefore sees, re-evaluated each time the menu opens.
+
+```xml
+<data-list selection="chatSession" row-channel="session" row-actions="hover" …>
+    <row-commands>
+        <generic-command image="css:bi bi-pencil" input="session">
+            <label><en>Rename</en><de>Umbenennen</de></label>
+            <open-dialog dialog-view="tl-ai-demo/rename-session.view.xml" bind-input-to="model"/>
+        </generic-command>
+        <generic-command image="css:bi bi-trash" input="session" clique="delete">
+            <label><en>Delete</en><de>Löschen</de></label>
+            <confirm><expr>s -> …names the row…</expr></confirm>
+            <execute-script function="s -> { aiSessionDelete($s); null; }"/>
+            <write-channel name="chatSession"/>
+        </generic-command>
+    </row-commands>
+</data-list>
+```
+
+What the element owns is the trigger; the **menu is the application's** (`ContextMenuOpener` /
+`ReactMenuControl`), so its entries carry the app's typography, its cliques become separators, and
+arrow keys, Enter and Escape already work. Two consequences worth knowing:
+
+- A command's `css-classes` does not reach the menu - the opener emits id, label, icon and disabled -
+  so a red "Delete" entry is not available without an engine change.
+- Outside an `<app-shell>` there is no opener. The list then renders **no trigger** (one DEBUG line,
+  no exception): a trigger that opens nothing is worse than none.
+- The opener dispatches a menu command with the **frame's** `ReactContext`, which is not a
+  `ViewContext` and does not hold this list's row channel: under it `<execute-script><inputs>` throws
+  a `ClassCastException` and `<write-channel>` silently does nothing (the same is true of every
+  `<context-menu>` in the engine). `<data-list>` therefore wraps each row command so it runs in the
+  context it was configured in. Do not remove that wrapper.
+- A channel that already holds a value notifies nobody, so reopening the same row's menu would show
+  what its `<executability>` decided the first time. The control re-evaluates the rules explicitly
+  before every open.
+
+`row-actions` has the same meaning and the same touch caveat as `<panel hover-actions>`: `hover`
+reveals the trigger on `.rail-item:hover` and on `:focus-within` (so the keyboard reaches it), and
+under `@media (hover: none)` it is permanently visible at a 44 px target, because a finger cannot
+hover. The trigger sits in space the row already reserves and `.rail-open` keeps `flex: 1;
+min-width: 0`, so the title shortens rather than the row reflowing.
+
+When the row whose menu was open disappears - what a Delete in that menu does - focus moves to the
+neighbouring row's trigger (previous, else next, else the list), not to `<body>`.
+
+**Tokens.** Anything the element's CSS uses must be declared under **both** roots: `.tl-cockpit …`
+and `.tl-data-list`. A token declared only on the first is silently missing in a standalone list.
+The same holds for the button reset, the focus ring and `box-sizing`.
+
+Writing a session: a row command calls `aiSessionRename(session, title)` / `aiSessionDelete(session)`
+(tl-ai-core `AIScriptFunctions`), never the `title` attribute. Those go through
+`AgentExecutionStore`, which commits on its writer thread, bumps `lastUpdated` (the list's own
+grouping) and tells the other windows; `aiSessionDelete` also asks a live run to stop and drops the
+chat out of every window that holds it. Both refuse a session the acting account neither owns nor
+administers.
+
 An application makes the bundle loadable by declaring it on `ClientResources` - see
 `tl-ai-demo/src/main/webapp/WEB-INF/conf/tl-ai-demo.conf.config.xml`:
 

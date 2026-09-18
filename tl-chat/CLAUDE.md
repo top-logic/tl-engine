@@ -520,7 +520,7 @@ the input almost always sit together, so they are one placeable box, while the s
 rail stay separate because those genuinely want independent placement. It honours its configuration
 flags as render guards on the existing `Thread` and `Composer` props.
 
-#### The six channels of `<chat-conversation>`
+#### The eight channels of `<chat-conversation>`
 
 | Channel | Direction | Value |
 |--|--|--|
@@ -530,6 +530,8 @@ flags as render guards on the existing `Thread` and `Composer` props.
 | `model` | two-way | The model's **name** (`String`). |
 | `effort` | two-way | The effort level (`String`), one of the levels the selected model offers; empty for none. |
 | `mcp-servers` | two-way | The attached servers' **names**, a `Collection<String>` (one name on its own is read as a set of one). |
+| `draft` | two-way | The text standing unsent in the composer (`String`, or a `ResKey` on the way in). |
+| `reference` | in | A model object, inserted into the draft as one atomic reference token. |
 
 `present` is not a seventh: it is a *list* of channels this element opens to the agent rather than
 a channel the element itself reads or writes - see "the agent writes a channel" below.
@@ -579,6 +581,95 @@ Which channel a host names is the whole configuration surface: the agent points 
 that data *looks like* is whatever element reads that channel. `TestPresentTool` drives the real
 path - a registered window, a registered channel, a listener standing in for the page.
 
+#### The draft as a channel (#440)
+
+A page button could not put text into the chat, so consulting built a view action that found the
+chat control, reached the browser and typed into the composer with a DOM hack (`SendToCopilotAction`,
+issue #414). One element changing another element's editable state is what a channel is for, and
+`draft` is that channel:
+
+```xml
+<generic-command image="css:bi bi-chat-left-text" input="invoice">
+    <label><en>Ask about this</en><de>Dazu fragen</de></label>
+    <execute-script><![CDATA[i -> {"en": "Please explain …", "de": "Bitte erkläre …"}.internationalize()]]></execute-script>
+    <write-channel name="chatDraft"/>
+</generic-command>
+```
+
+Two existing engine actions, no new class. What to know about it:
+
+- **Out** the composer reports its text on a typing pause (300 ms, `createDraftReporter` in
+  `ui/src/draft.ts`), when the field loses the focus, and immediately before a send. A channel write
+  is a round trip and a keystroke is not worth one; blur and send do not wait, because those are the
+  moments a host acts on what it reads.
+- **In** a write replaces the whole draft, focuses the field and puts the caret behind the text. The
+  user still presses send - there is no `send` mode, deliberately: reading the sentence before it
+  goes is worth one keystroke.
+- A write may be a `ResKey`, because `{"en": …, "de": …}.internationalize()` is the obvious way to
+  build a sentence in TL-Script; the control resolves it in the user's language
+  (`ChatConversationControl.draftText`). `null` - what an unwritten channel holds - says nothing and
+  leaves the composer alone; the empty string clears the draft.
+- It follows a **write**, not the standing value, the same way the turn settings do, and for the
+  same reason. The echo is recognised in the browser: what this element last published is
+  remembered, so a report of "Was" arriving back two keystrokes later does not put the composer back
+  two keystrokes. The one place the standing value *is* applied is `onAttach` - a host may have
+  written the draft while this element was on another page of the shell and its browser component
+  was gone.
+- `reference` is the "quote this" half: a model object written to it becomes one atomic reference
+  token at the caret, the same token the `@` picker inserts, so it serialises to the same
+  `<quote/>` on send. The token carries the object's label and its stable id, and the quoted text a
+  nested `<mention>`'s `text` expression computes - without a `<mention>` the label is the quoted
+  text too, because the element has nothing else to say about the object. It is read only: the
+  tokens are part of the draft `draft` already carries.
+- A channel notifies nobody when it is written the value it already holds, so writing the **same**
+  object to `reference` twice in a row inserts one token. (A, B, A does insert three: the control
+  numbers its writes so the browser can tell the third from the first.)
+
+`TestChatConversationConfig` holds the two options, `draft.test.ts` the debounce, and the
+`chat-store.test.ts` "composer seam" block the two calls a write turns into.
+
+#### Writing a channel across a view boundary
+
+The dock case of #440 - a button on one page writing the draft of a chat that lives in another view -
+comes down to two questions about the engine. Both are answered, with the code:
+
+1. **Can a nested `<view-ref>` view write a channel of the enclosing view?** Yes, but only through
+   an explicit `<bind>`. `ReferenceElement.createControl` calls `parentContext.withIsolatedChannels()`
+   (`ReferenceElement.java:118`), which is a `DefaultViewContext` with a **fresh** channel map
+   (`DefaultViewContext.java:207-211`), so `resolveChannel` in the child cannot find a parent channel
+   by name and throws "Unknown channel" (`DefaultViewContext.java:228-236`). Each `<bind channel="x"
+   to="y"/>` then registers the *parent's* channel instance under the child's name
+   (`ReferenceElement.java:121-124`), and `ViewElement.createControl` skips creating a local one for
+   a name that is already there (`ViewElement.java:139-142`) - so the child view may declare the
+   channel for its standalone case and still get the parent's instance inside the shell. Both sides
+   hold the same object, so the write travels in either direction.
+2. **Can `<app-shell>`'s view declare channels that its pages see?** Directly, yes: `AppShellElement`
+   never isolates - its header, content and footer contexts come from `withErrorSink` / `withScope` /
+   `withContextMenuOpener` / `withChildSlotPath` (`AppShellElement.java:144-163`), each of which
+   passes the **same** `_channels` map on, as does `childContext` (`DefaultViewContext.java:104-109`).
+   `<sidebar>` is no different (`SidebarElement.java:441`). So an element written straight into the
+   shell's own view - the `<chat-dock>` in the footer, for instance - shares the shell's channels with
+   everything else in that file. What does *not* see them is a page, because a page is reached through
+   `<view-ref>`, and that is question 1 again.
+
+The demo shows all three positions on one channel. `app.view.xml` declares `chatDraft`; the dock's
+`<chat-conversation draft="chatDraft"/>` names it with **no** `<bind>`, because the dock is in that
+same file, while the chat page and the Belege page each get it through one `<bind>` on their
+`<view-ref>`. The Belege page's "Dazu fragen" then reaches both: open the dock on that page and the
+question is in its composer; switch to the Chat page instead and it is in that one's.
+
+Two conversations on one draft channel work here only because the two are **never mounted at once** -
+a dock unmounts its content while a `<chat-conversation/>` of its chat id is on the page (see
+`chat-dock.tsx`). A composer holds its own text and reports it, so two that are mounted together
+would overwrite each other's drafts; that is a property of the channel, not of the dock. The one that
+mounts applies what stands on the channel (`onAttach`), which is what makes the draft follow the user
+from the dock to the page and back.
+
+So there is no engine gap for the dock case: a dock in `<app-shell><footer>` reaches the shell's
+channels with no binding at all, and a page reaches them with one `<bind>` per `<view-ref>`. What the
+engine has no answer for is *opening* the dock from the page - that is a second channel and a dock
+element that follows one, not a channel-scope question.
+
 #### Configuring `<chat-conversation>` - easy vs advanced
 
 An application configures this element in the design view. Its options fall into three tiers:
@@ -588,8 +679,9 @@ An application configures this element in the design view. Its options fall into
   trace picker), `citations` (markers *and* the per-answer sources pill - off removes the whole
   citation surface from the transcript), the nested `<actions>` (`copy`/`rate`/`regenerate`/
   `timestamp`), the nested `<controls>` pickers, `placeholder`, `prompt-improver-agent` (an agent
-  dropdown), `chat-id`, and the six channels (`input`, `busy`, `agent`, `model`, `effort`,
-  `mcp-servers`), and `present` - the channels the agent may write, deny by default. The transcript's rail badge button is *not*
+  dropdown), `chat-id`, the eight channels (`input`, `busy`, `agent`, `model`, `effort`,
+  `mcp-servers`, `draft`, `reference`), and `present` - the channels the agent may write, deny by
+  default. The transcript's rail badge button is *not*
   configured: it appears exactly when a `<chat-rail>` with the same `chat-id` is mounted, which the
   rail announces to the shared store (`railMounted`), so a rail that mounts after the conversation
   still makes the button appear.

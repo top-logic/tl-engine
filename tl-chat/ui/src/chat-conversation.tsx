@@ -3,8 +3,10 @@ import type { TLCellProps } from 'tl-react-bridge'
 import type { ApprovalRequest, Attachment, InteractionRequest } from './types'
 import { chatIdOf, readBootstrap, useChat } from './chat-store'
 import { Composer, plusMenuVisible } from './composer'
+import { createDraftReporter } from './draft'
 import type { ComposerApi, ReferenceCandidate } from './extensions'
 import { bundle } from './i18n'
+import type { ReferenceToken } from './reference'
 import { RailToggle } from './rail'
 import { unseenBadge } from './progress-model'
 import {
@@ -111,6 +113,30 @@ export function channelName(raw: unknown): string | undefined {
   return typeof raw === 'string' ? raw : undefined
 }
 
+/**
+ * One write of the `reference` channel, out of the control state.
+ *
+ * The `seq` is what makes a write a write: a channel notifies for A, B, A, and the third write
+ * carries the same token as the first, which unchanged state could not tell apart from no write at
+ * all. `undefined` means the channel is unwired or holds nothing insertable.
+ */
+export function referenceWrite(raw: unknown): { seq: number; token: ReferenceToken } | undefined {
+  if (!raw || typeof raw !== 'object') return undefined
+  const row = raw as Record<string, unknown>
+  if (typeof row.id !== 'string' || !row.id) return undefined
+  const seq = typeof row.seq === 'number' ? row.seq : Number(row.seq)
+  if (!Number.isFinite(seq)) return undefined
+  return {
+    seq,
+    token: {
+      kind: typeof row.kind === 'string' ? row.kind : '',
+      id: row.id,
+      label: typeof row.label === 'string' ? row.label : '',
+      text: typeof row.text === 'string' ? row.text : '',
+    },
+  }
+}
+
 /** The same for the channel that holds a set of names; an empty array attaches no server at all. */
 export function channelNames(raw: unknown): string[] | undefined {
   return Array.isArray(raw) ? raw.map(String) : undefined
@@ -135,6 +161,10 @@ export function sameServers(a: string[], b: string[]): boolean {
  * The four turn settings - agent, model, effort and the attached MCP servers - travel over their own
  * two-way channels: a write from outside is applied as if the user had picked it, and what the user
  * picks is reported back with one {@code publishTurnSettings} command.
+ *
+ * The {@code draft} channel carries the unsent text the same way, and {@code reference} puts a
+ * written model object into it as one atomic token. A host that writes both has put a question into
+ * the chat; pressing send is still the user's.
  */
 export function TLChatConversation({ controlId }: TLCellProps) {
   const state = useTLState()
@@ -263,6 +293,53 @@ export function TLChatConversation({ controlId }: TLCellProps) {
     void command('publishTurnSettings', settings)
   }, [chat.agent, chat.model, chat.effort, chat.mcp, command])
 
+  // The draft channel, in both directions.
+  //
+  // Out: the composer's text, but not on the keystroke - a channel write is a round trip, so an
+  // ordinary report waits for the pause, while blur and send report at once (`createDraftReporter`).
+  // In: a *write* replaces the draft, focuses the composer and puts the caret at the end. What
+  // comes back from the control is mostly this element's own report travelling the loop, so what
+  // was last published is remembered and recognised - otherwise an echo that arrives two keystrokes
+  // later would put the composer back where it was two keystrokes ago.
+  const publishedDraft = useRef<string | null>(null)
+  const reporter = useMemo(
+    () =>
+      createDraftReporter((text) => {
+        publishedDraft.current = text
+        void command('publishDraft', { text })
+      }),
+    [command],
+  )
+  useEffect(() => reporter.cancel, [reporter])
+  const onDraft = useCallback(
+    (text: string, settled: boolean) => {
+      if (settled) reporter.flush(text)
+      else reporter.report(text)
+    },
+    [reporter],
+  )
+  const channelDraft = channelName(state.draftText)
+  const wroteDraft = useRef<string | undefined>(undefined)
+  useEffect(() => {
+    const written = wroteDraft.current !== channelDraft
+    wroteDraft.current = channelDraft
+    if (!written || channelDraft === undefined) return
+    if (channelDraft === publishedDraft.current) return
+    publishedDraft.current = channelDraft
+    actions.setDraft(channelDraft)
+  }, [channelDraft, actions])
+
+  // The reference channel: an object written to it becomes one atomic token at the caret, exactly
+  // as picking it from the "@" menu does. In only - the token is part of the draft the channel
+  // above already carries.
+  const reference = useMemo(() => referenceWrite(state.referenceWrite), [state.referenceWrite])
+  const insertedReference = useRef<number | null>(null)
+  useEffect(() => {
+    if (!reference || insertedReference.current === reference.seq) return
+    insertedReference.current = reference.seq
+    actions.insertReference(reference.token)
+  }, [reference, actions])
+
   const pendingApprovals = useMemo(
     () =>
       chat.messages.filter(
@@ -383,6 +460,7 @@ export function TLChatConversation({ controlId }: TLCellProps) {
           onDismissNotice={() => actions.showNotice('')}
           onSend={onSend}
           onStop={actions.stop}
+          onDraft={onDraft}
           placeholder={placeholder || undefined}
           extraMenuItems={extraMenuItems}
           referenceCandidates={referenceCandidates}

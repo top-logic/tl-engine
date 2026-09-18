@@ -7,6 +7,7 @@ import {
   modelBoundSource,
   readComposerControls,
   readThreadConfig,
+  referenceWrite,
   sameServers,
   TLChatConversation,
 } from './chat-conversation'
@@ -171,5 +172,71 @@ describe('the turn-setting channels', () => {
     expect(sameServers([], [])).toBe(true)
     expect(sameServers(['a'], ['a', 'b'])).toBe(false)
     expect(sameServers(['a', 'b'], ['a', 'c'])).toBe(false)
+  })
+})
+
+/**
+ * What the `draft` channel says, read the same way a turn setting is.
+ *
+ * `undefined` is "the channel says nothing" - it is unwired or holds nothing - and the composer
+ * keeps what the user typed. The empty string is the opposite: an instruction to clear the draft.
+ */
+describe('the draft channel', () => {
+  it('reads the text a host wrote, the empty one included', () => {
+    expect(channelName('Bitte erkläre die Rechnung R-2024-014.')).toBe(
+      'Bitte erkläre die Rechnung R-2024-014.',
+    )
+    expect(channelName('')).toBe('')
+  })
+
+  it('says nothing for an unwired or empty channel', () => {
+    expect(channelName(null)).toBeUndefined()
+    expect(channelName(undefined)).toBeUndefined()
+  })
+})
+
+/**
+ * What the `reference` channel says.
+ *
+ * The sequence number is what makes a write a write: a channel notifies for A, B, A, and the third
+ * write carries the token of the first, which unchanged state alone could not tell from no write.
+ */
+describe('the reference channel', () => {
+  it('reads the token the control built out of the written object', () => {
+    expect(
+      referenceWrite({
+        seq: 3,
+        kind: 'Invoice',
+        id: 'aaa-bbb',
+        label: 'Hotelrechnung Berlin',
+        text: 'Hotelrechnung Berlin (1.240,00 €)',
+      }),
+    ).toEqual({
+      seq: 3,
+      token: {
+        kind: 'Invoice',
+        id: 'aaa-bbb',
+        label: 'Hotelrechnung Berlin',
+        text: 'Hotelrechnung Berlin (1.240,00 €)',
+      },
+    })
+  })
+
+  it('defaults the fields the control left out, but insists on the id', () => {
+    expect(referenceWrite({ seq: 1, id: 'aaa-bbb' })?.token).toEqual({
+      kind: '',
+      id: 'aaa-bbb',
+      label: '',
+      text: '',
+    })
+    expect(referenceWrite({ seq: 1, id: '' })).toBeUndefined()
+    expect(referenceWrite({ seq: 1 })).toBeUndefined()
+  })
+
+  it('says nothing for an unwired channel or a write with no sequence', () => {
+    expect(referenceWrite(null)).toBeUndefined()
+    expect(referenceWrite(undefined)).toBeUndefined()
+    expect(referenceWrite('an-id')).toBeUndefined()
+    expect(referenceWrite({ id: 'aaa-bbb' })).toBeUndefined()
   })
 })

@@ -61,6 +61,12 @@ import com.top_logic.util.TLContext;
  * ({@link com.top_logic.ai.chat.tools.PresentTool}). Deny by default, and the registration ends
  * with this control.
  * </p>
+ *
+ * <p>
+ * The {@code draft} channel carries the composer's unsent text the same way, debounced in the
+ * browser; {@code reference} is read-only and turns a written model object into one atomic reference
+ * token in that draft.
+ * </p>
  */
 public class ChatConversationControl extends ReactControl {
 
@@ -78,7 +84,21 @@ public class ChatConversationControl extends ReactControl {
 
 	private final ViewChannel _mcpChannel;
 
+	private final ViewChannel _draftChannel;
+
 	private final boolean[] _applyingFromChannel = { false };
+
+	/**
+	 * How many objects have been written to the {@code reference} channel, so the browser can tell a
+	 * new write from the one it has already inserted.
+	 *
+	 * <p>
+	 * A channel does not notify when it is written the value it already holds, but it does notify for
+	 * A, B, A - and the third write pushes the same token as the first. Without a counter the browser
+	 * would see unchanged state and insert nothing.
+	 * </p>
+	 */
+	private int _referenceWrites;
 
 	/**
 	 * What the composer last reported it is set to, so a channel write can be judged against the
@@ -179,6 +199,13 @@ public class ChatConversationControl extends ReactControl {
 		_mcpChannel = followTurnChannel(context, config.getMcpServers(), this::applyServersFromChannel);
 
 		allowPresenting(context, config.getPresent());
+
+		// The composer's unsent text, and the objects a host puts into it as reference tokens. Both
+		// follow the same rule as the turn settings: a *write* is what the composer follows.
+		_draftChannel = followTurnChannel(context, config.getDraft(), this::applyDraftFromChannel);
+		// Read-only: a token the composer holds is part of the draft the channel above already
+		// carries, so nothing is ever written back and the channel itself is not kept.
+		followTurnChannel(context, config.getReference(), this::applyReferenceFromChannel);
 	}
 
 	/**
@@ -253,6 +280,10 @@ public class ChatConversationControl extends ReactControl {
 		reapply(_modelChannel, this::applyModelFromChannel);
 		reapply(_effortChannel, this::applyEffortFromChannel);
 		reapply(_mcpChannel, this::applyServersFromChannel);
+		// Deliberately re-applied: a host may have written the draft while this element was on
+		// another page of the shell and its browser component was gone. The composer's own text is
+		// what stands on the channel by then, so re-applying it is otherwise a no-op.
+		reapply(_draftChannel, this::applyDraftFromChannel);
 	}
 
 	private static void reapply(ViewChannel channel, Consumer<Object> apply) {
@@ -346,6 +377,99 @@ public class ChatConversationControl extends ReactControl {
 		// No field for the effort: no role gates it, so there is never a refusal to correct.
 		setChannel(_effortChannel, stringArg(args, "effort"));
 		setChannel(_mcpChannel, _mcpServers);
+	}
+
+	/**
+	 * Reports the text standing unsent in the composer onto the {@code draft} channel.
+	 *
+	 * <p>
+	 * The browser decides when: on a typing pause, when the field loses the focus, and immediately
+	 * before a send. A channel write is a round trip, and a keystroke is not worth one.
+	 * </p>
+	 *
+	 * @param args
+	 *        {@code text} is the whole draft, references serialised as they are on send.
+	 */
+	@ReactCommandHandler(value = "publishDraft", params = {
+		@ReactParam(name = "text", type = "string", description = "The composer's unsent text.")
+	})
+	public void publishDraft(Map<String, Object> args) {
+		if (_draftChannel == null || _applyingFromChannel[0]) {
+			return;
+		}
+		_draftChannel.set(args == null ? "" : String.valueOf(args.getOrDefault("text", "")));
+	}
+
+	/**
+	 * Pushes a draft written from outside at the composer, which replaces its text with it.
+	 *
+	 * <p>
+	 * {@code null} - what an unwritten channel holds - says nothing and leaves the composer alone. An
+	 * empty string is an instruction: it clears the draft.
+	 * </p>
+	 */
+	private void applyDraftFromChannel(Object value) {
+		if (value == null) {
+			putState("draftText", null);
+			return;
+		}
+		applying(() -> putState("draftText", draftText(value)));
+	}
+
+	/**
+	 * A written value as the text the composer is to show.
+	 *
+	 * <p>
+	 * A {@link ResKey} is resolved rather than printed, because the obvious way to write a sentence
+	 * from TL-Script is {@code {"en": …, "de": …}.internationalize()} and the user is to read their
+	 * own language, not a resource key. Anything else is labelled the way the transcript labels it.
+	 * </p>
+	 */
+	private static String draftText(Object value) {
+		if (value instanceof ResKey key) {
+			return Resources.getInstance().getString(key);
+		}
+		if (value instanceof CharSequence text) {
+			return text.toString();
+		}
+		return label(value);
+	}
+
+	/**
+	 * Turns a model object written to the {@code reference} channel into one atomic reference token
+	 * for the composer to insert at the caret.
+	 *
+	 * <p>
+	 * The token is the same shape the {@code @} picker inserts, so it serialises to the same
+	 * {@code <quote/>} on send. Anything that is not a model object clears the pending write.
+	 * </p>
+	 */
+	private void applyReferenceFromChannel(Object value) {
+		TLObject object = referencedObject(value);
+		if (object == null) {
+			putState("referenceWrite", null);
+			return;
+		}
+		Map<String, Object> fields = tokenOf(object);
+		if (fields.isEmpty()) {
+			putState("referenceWrite", null);
+			return;
+		}
+		Map<String, Object> token = new LinkedHashMap<>(fields);
+		token.put("seq", Integer.valueOf(++_referenceWrites));
+		applying(() -> putState("referenceWrite", token));
+	}
+
+	/** The object a host wrote, also when a selection channel handed over its single row. */
+	private static TLObject referencedObject(Object value) {
+		if (value instanceof TLObject object) {
+			return object;
+		}
+		if (value instanceof Collection<?> many && many.size() == 1) {
+			Object single = many.iterator().next();
+			return single instanceof TLObject object ? object : null;
+		}
+		return null;
 	}
 
 	private void applyAgentFromChannel(Object value) {
@@ -501,23 +625,14 @@ public class ChatConversationControl extends ReactControl {
 			if (!(row instanceof TLObject object)) {
 				continue;
 			}
-			String id = idOf(object);
-			if (id.isEmpty()) {
+			Map<String, Object> token = tokenOf(object);
+			if (token.isEmpty()) {
 				continue;
 			}
-			String label = _mentionLabel != null ? label(_mentionLabel.execute(object)) : label(object);
-			String text = _mentionText != null ? label(_mentionText.execute(object)) : label;
-			String kind = object.tType() == null ? "" : object.tType().getName();
-
-			Map<String, Object> token = new LinkedHashMap<>();
-			token.put("kind", kind);
-			token.put("id", id);
-			token.put("label", label);
-			token.put("text", text);
 
 			Map<String, Object> candidate = new LinkedHashMap<>();
-			candidate.put("id", id);
-			candidate.put("label", label);
+			candidate.put("id", token.get("id"));
+			candidate.put("label", token.get("label"));
 			candidate.put("token", token);
 			out.add(candidate);
 			count++;
@@ -546,6 +661,30 @@ public class ChatConversationControl extends ReactControl {
 			types.add(type);
 		}
 		return types;
+	}
+
+	/**
+	 * One object as the browser's reference token: what {@code @} inserts and what the
+	 * {@code reference} channel writes.
+	 *
+	 * <p>
+	 * A nested {@code <mention>} says how this application labels an object and what quoted text it
+	 * puts into the message; without one the object's own label is both. Empty for an object with no
+	 * stable id - there would be nothing for a host tool to resolve.
+	 * </p>
+	 */
+	private Map<String, Object> tokenOf(TLObject object) {
+		String id = idOf(object);
+		if (id.isEmpty()) {
+			return Map.of();
+		}
+		String label = _mentionLabel != null ? label(_mentionLabel.execute(object)) : label(object);
+		Map<String, Object> token = new LinkedHashMap<>();
+		token.put("kind", object.tType() == null ? "" : object.tType().getName());
+		token.put("id", id);
+		token.put("label", label);
+		token.put("text", _mentionText != null ? label(_mentionText.execute(object)) : label);
+		return token;
 	}
 
 	/** The browser id of an object: its stable knowledge-object name (the id a mention carries). */

@@ -70,6 +70,14 @@ import com.top_logic.tl.ai.core.provider.LLMService.AllAgentNameOptions;
  * write any channel. See {@link Config#getPresent()} and
  * {@link com.top_logic.ai.chat.tools.PresentTool}.
  * </p>
+ *
+ * <p>
+ * Two more carry the composer's unsent text: {@code draft} is the text itself, two-way, and
+ * {@code reference} turns a written model object into one atomic reference token inside it. Together
+ * they are what lets a button anywhere on the page put a question into the chat without a line of
+ * code - an {@code <execute-script>} that builds the sentence and a {@code <write-channel>} that
+ * writes it.
+ * </p>
  */
 public class ChatConversationElement implements UIElement {
 
@@ -163,6 +171,20 @@ public class ChatConversationElement implements UIElement {
 		 * @see #getPresent()
 		 */
 		String PRESENT = "present";
+
+		/**
+		 * Configuration property name for {@link #getDraft()}.
+		 *
+		 * @see #getDraft()
+		 */
+		String DRAFT = "draft";
+
+		/**
+		 * Configuration property name for {@link #getReference()}.
+		 *
+		 * @see #getReference()
+		 */
+		String REFERENCE = "reference";
 
 		/**
 		 * Configuration property name for {@link #getTrace()}.
@@ -376,6 +398,50 @@ public class ChatConversationElement implements UIElement {
 		@Format(CommaSeparatedChannelRefs.class)
 		@Nullable
 		List<ChannelRef> getPresent();
+
+		/**
+		 * Optional two-way channel holding the text standing in the composer, unsent.
+		 *
+		 * <p>
+		 * The composer reports what the user has typed - when they pause, when the field loses the
+		 * focus, and just before a send - and follows a write from outside: the written text replaces
+		 * the draft, the composer takes the focus and the caret goes to the end. The user still
+		 * presses send, so a host that writes a question can be read before it goes.
+		 * </p>
+		 *
+		 * <p>
+		 * An empty write clears the draft; {@code null} says nothing and leaves the composer alone,
+		 * which is what an unwritten channel holds.
+		 * </p>
+		 */
+		@Name(DRAFT)
+		@Label("Draft")
+		@Format(ChannelRefFormat.class)
+		@Nullable
+		ChannelRef getDraft();
+
+		/**
+		 * Optional input channel: a model object written to it becomes one atomic reference token in
+		 * the draft, exactly as picking it from the {@code @} menu would.
+		 *
+		 * <p>
+		 * The token carries the object's label and its stable id, and the quoted text a nested
+		 * {@code <mention>}'s {@code text} expression computes - without a {@code <mention>} the label
+		 * is the quoted text as well, because the element has nothing else to say about the object.
+		 * The token lands at the caret, so a host can write a sentence to {@link #getDraft() draft}
+		 * and a reference into it.
+		 * </p>
+		 *
+		 * <p>
+		 * This channel is read, never written: the composer does not report its tokens back, because
+		 * the draft they sit in is what {@link #getDraft() draft} already carries.
+		 * </p>
+		 */
+		@Name(REFERENCE)
+		@Label("Reference")
+		@Format(ChannelRefFormat.class)
+		@Nullable
+		ChannelRef getReference();
 
 		/**
 		 * How much of the agent's execution the transcript shows: nothing, a collapsed summary, or

@@ -464,6 +464,8 @@ export interface ChatActions {
   registerConversation(insideDock: boolean): () => void
   bindComposer(api: ComposerApi | null): void
   insertReference(token: ReferenceToken): void
+  /** Replaces the composer's draft, focuses it and puts the caret at the end. */
+  setDraft(text: string): void
 }
 
 /**
@@ -1925,6 +1927,10 @@ export class ChatStore {
 
       insertReference: (token) => {
         this.composerApi?.insertReference(token)
+      },
+
+      setDraft: (text) => {
+        this.composerApi?.setDraft(text)
       },
     }
   }

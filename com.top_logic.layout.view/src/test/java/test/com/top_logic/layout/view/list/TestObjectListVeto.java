@@ -14,6 +14,7 @@ import test.com.top_logic.TLTestSetup;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
@@ -26,8 +27,10 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelVetoException;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.element.GridOptions;
 import com.top_logic.layout.view.form.StateHandler;
-import com.top_logic.layout.view.list.ObjectListControl;
+import com.top_logic.layout.view.list.ObjectListElement.Layout;
+import com.top_logic.layout.view.list.ObjectListItems;
 import com.top_logic.layout.view.list.ObjectListScope;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
@@ -39,20 +42,23 @@ import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.model.CompatibilityService;
 
 /**
- * Tests that the unsaved changes of the new-element form of an {@link ObjectListControl} are
- * reported when the container channel is asked, before the container is written.
+ * Tests that the unsaved changes of the new-element form of an {@link ObjectListItems} are reported
+ * when an input channel of the list is asked, before that input is written.
  *
  * <p>
- * Switching the container discards the draft the new-element form holds, so the user decides about
- * it while the list still displays the container the draft belongs to; after a discard, the
- * continuation of the {@link ChannelVetoException} writes the container and the list starts the
- * next draft in it.
+ * A change of what the inputs hold discards the draft the new-element form holds, so the user
+ * decides about it while the list still displays what the draft was composed for; after a discard,
+ * the continuation of the {@link ChannelVetoException} writes the input and the list starts the next
+ * draft for what it displays then.
  * </p>
  */
 public class TestObjectListVeto extends BasicTestCase {
 
-	/** Name of the channel holding the container whose elements are listed. */
+	/** Name of the channel holding the object whose elements are listed. */
 	private static final String CONTAINER_CHANNEL = "ticket";
+
+	/** Name of a second input of the list, narrowing what it displays. */
+	private static final String FILTER_CHANNEL = "filter";
 
 	/** Name of the channel publishing an element to the item content. */
 	private static final String ELEMENT_CHANNEL = "element";
@@ -67,6 +73,8 @@ public class TestObjectListVeto extends BasicTestCase {
 	private TLObject _ticketB;
 
 	private ViewChannel _container;
+
+	private ViewChannel _filter;
 
 	private ViewContext _context;
 
@@ -88,12 +96,17 @@ public class TestObjectListVeto extends BasicTestCase {
 		_container = new DefaultViewChannel(CONTAINER_CHANNEL);
 		_context.registerChannel(CONTAINER_CHANNEL, _container);
 		_container.set(_ticketA);
+
+		_filter = new DefaultViewChannel(FILTER_CHANNEL);
+		_context.registerChannel(FILTER_CHANNEL, _filter);
+		_filter.set("open");
 	}
 
 	@Override
 	protected void tearDown() throws Exception {
 		_context = null;
 		_container = null;
+		_filter = null;
 		_commentType = null;
 		_ticketA = null;
 		_ticketB = null;
@@ -102,13 +115,13 @@ public class TestObjectListVeto extends BasicTestCase {
 	}
 
 	/**
-	 * Tests that the container write is blocked by the unsaved changes of the new-element form, and
-	 * that the continuation completes the switch including the fresh draft.
+	 * Tests that the write of an input is blocked by the unsaved changes of the new-element form,
+	 * and that the continuation completes the switch including the fresh draft.
 	 */
-	public void testContainerSwitchAsksTheDraftForm() {
+	public void testInputSwitchAsksTheDraftForm() {
 		DraftForm form = new DraftForm();
 		form.enterText();
-		list(form);
+		list(form, List.of(_container));
 
 		TLObject draft = draft(form);
 		assertSame("The draft belongs to the container the list displays.", _ticketA, draft.tContainer());
@@ -142,7 +155,7 @@ public class TestObjectListVeto extends BasicTestCase {
 	 */
 	public void testCleanDraftFormDoesNotBlock() {
 		DraftForm form = new DraftForm();
-		list(form);
+		list(form, List.of(_container));
 
 		assertEquals("A form without unsaved changes has nothing to report.", List.of(),
 			_container.dirtyHandlers());
@@ -156,31 +169,64 @@ public class TestObjectListVeto extends BasicTestCase {
 	 * Tests that a list without a new-element template leaves the container channel unquestioned.
 	 */
 	public void testReadOnlyListAsksNothing() {
-		ObjectListScope scope = new ObjectListScope(_container, null, null);
-		new ObjectListControl(_context.withScope(ObjectListScope.class, scope), scope, _container,
-			List.of(), List.of(), ELEMENT_CHANNEL, NEW_ELEMENT_CHANNEL, null, null);
+		List<ViewChannel> inputs = List.of(_container);
+		ObjectListScope scope = new ObjectListScope(inputs, null, null);
+		new ObjectListItems(_context.withScope(ObjectListScope.class, scope), scope, Layout.LIST, gridOptions(),
+			inputs, List.of(), List.of(), ELEMENT_CHANNEL, NEW_ELEMENT_CHANNEL, null, null);
 
 		assertEquals("A list without a draft has nothing to report.", List.of(), _container.dirtyHandlers());
 		assertTrue("The switch must happen.", _container.set(_ticketB));
 	}
 
 	/**
-	 * An object list over {@link #CONTAINER_CHANNEL} whose new-element content is the given form.
+	 * Tests that every input of the list reports the unsaved changes of the draft, because the draft
+	 * is composed for what all of them hold together.
+	 */
+	public void testEveryInputAsksTheDraftForm() {
+		DraftForm form = new DraftForm();
+		form.enterText();
+		list(form, List.of(_container, _filter));
+
+		assertEquals("The unsaved changes of the draft must be visible on the first input.",
+			List.of(form), _container.dirtyHandlers());
+		assertEquals("The unsaved changes of the draft must be visible on the second input.",
+			List.of(form), _filter.dirtyHandlers());
+
+		try {
+			_filter.set("closed");
+			fail("Expected ChannelVetoException");
+		} catch (ChannelVetoException expected) {
+			assertEquals("The form holding the draft must block the switch.", List.of(form),
+				expected.getDirtyHandlers());
+		}
+	}
+
+	/**
+	 * An object list over the given inputs whose new-element content is the given form.
 	 *
 	 * <p>
-	 * The listener refreshing the display stands in for the
+	 * The listeners refreshing the display stand in for the
 	 * {@link com.top_logic.layout.view.model.RowSourceObserver} the
-	 * {@link com.top_logic.layout.view.list.ObjectListElement} attaches to the container channel.
+	 * {@link com.top_logic.layout.view.list.ObjectListElement} attaches to the input channels.
 	 * </p>
 	 */
-	private ObjectListControl list(DraftForm form) {
-		ObjectListScope scope = new ObjectListScope(_container, null, null);
-		ObjectListControl control =
-			new ObjectListControl(_context.withScope(ObjectListScope.class, scope), scope, _container,
-				List.of(), List.of(form), ELEMENT_CHANNEL, NEW_ELEMENT_CHANNEL, _commentType, null);
-		control.showElements(List.of());
-		_container.addListener((sender, oldValue, newValue) -> control.showElements(List.of()));
-		return control;
+	private ObjectListItems list(DraftForm form, List<ViewChannel> inputs) {
+		ObjectListScope scope = new ObjectListScope(inputs, null, null);
+		ObjectListItems items =
+			new ObjectListItems(_context.withScope(ObjectListScope.class, scope), scope, Layout.LIST, gridOptions(),
+				inputs, List.of(), List.of(form), ELEMENT_CHANNEL, NEW_ELEMENT_CHANNEL, _commentType, null);
+		items.showElements(List.of());
+		for (ViewChannel input : inputs) {
+			input.addListener((sender, oldValue, newValue) -> items.showElements(List.of()));
+		}
+		return items;
+	}
+
+	/**
+	 * The arrangement options of a list that displays its elements as a plain column.
+	 */
+	private static GridOptions gridOptions() {
+		return TypedConfiguration.newConfigItem(GridOptions.class);
 	}
 
 	/**

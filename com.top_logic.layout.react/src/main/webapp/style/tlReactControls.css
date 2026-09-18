@@ -70,6 +70,26 @@ html, body {
 	min-height: 0;
 }
 
+/* --- Repeated items ----------------------------------------------------- */
+
+/* Wrapper a container (a stack, a grid) puts around each of its children while it repeats them,
+   carrying the position of the item as --tl-item-index next to the class the container is
+   configured with. An application stylesheet composes a per-item value from that position, e.g. a
+   staggered entrance animation. The wrapper stays transparent for the layout of the container: it
+   passes the space it is given on to the item. */
+.tlItem {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	min-height: 0;
+}
+
+/* A wrapper around a filling item fills in turn, so that the fill contract survives the wrapper
+   and the item's height still resolves against the container. */
+.tlItem:has(> .tlFill) {
+	flex: 1;
+}
+
 /* --- React mount point ------------------------------------------------- */
 
 [data-react-module] {
@@ -1726,9 +1746,12 @@ button.tlDrawerToggle:focus-visible {
 	font-family: var(--font-family);
 }
 
-.tlGrid--gap-compact { gap: var(--spacing-02); }
-.tlGrid--gap-default { gap: var(--spacing-04); }
-.tlGrid--gap-loose   { gap: var(--spacing-06); }
+/* The gap is also published as a custom property, because the responsive column template has to
+   compute with it: bounding the number of auto-fit columns means raising the column minimum to the
+   width a row of that many columns leaves for one of them, gaps taken off. */
+.tlGrid--gap-compact { --tlGrid-gap: var(--spacing-02); gap: var(--tlGrid-gap); }
+.tlGrid--gap-default { --tlGrid-gap: var(--spacing-04); gap: var(--tlGrid-gap); }
+.tlGrid--gap-loose   { --tlGrid-gap: var(--spacing-06); gap: var(--tlGrid-gap); }
 
 /* --- TLCard ---------------------------------------------------------------- */
 

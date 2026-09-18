@@ -170,6 +170,15 @@
 							<de>Switch-Demo</de>
 						</label>
 					</nav-item>
+					<nav-item id="repeater"
+						icon="css:bi bi-grid-3x3-gap"
+					>
+						<view-ref view="demo/repeater-demo.view.xml"/>
+						<label>
+							<en>Repeater</en>
+							<de>Repeater</de>
+						</label>
+					</nav-item>
 					<nav-item id="calendar"
 						icon="css:bi bi-calendar3"
 					>

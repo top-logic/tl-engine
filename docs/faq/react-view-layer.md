@@ -7,7 +7,7 @@
 - **Forms** bind to a model object: `<form input="ch"><field attribute="x"/>`. A value that belongs to no object is entered with a `<value-input>` (next bullet), not by wrapping it in a transient model type; a field's control is chosen by a `<input-control><impl class="…Provider"/></input-control>` annotation on the attribute, or — where the choice belongs to one place in the user interface rather than to the model — by `<field attribute="x"><input-control class="…Provider" …/></field>` in the view itself (`FieldElement.Config.getInputControl()`), whose `class=` names the same `ReactFieldControlProvider` and carries its configuration.
 - **View-owned values: `<value-input value="ch" type="…"/>`** (`ValueInputElement`). A value that belongs to the view rather than to an object - the term a table filters by, the status a list is narrowed to - needs no form and no object: the element binds the channel to an input control in both directions (what the user enters becomes the channel value, a value the channel receives from elsewhere appears in the input).
   - `type` is a `TLModelPartRef` and decides the input; it defaults to `tl.core:String`. The control is resolved by `FieldControlService.createFieldControl(context, type, spec, model)` - the same chain that picks the control for a `<field>` over an attribute of that type, which only adds the lookup of the attribute's own `<input-control>` annotation. So `tl.core:Integer` is a number input, `tl.core:Date` a date picker, `tl.core:Boolean` a checkbox, `tl.core:Text` a text area, and an enumeration or a class a dropdown.
-  - A value of an enumeration or a class is chosen from options: without an `options` expression these are the classifiers respectively the instances of the type (`AttributeOptions.optionsFor(type)`). `options` is a TL-Script function whose arguments are the values of the `<inputs><input channel="…"/></inputs>` channels, in declaration order - the same shape as `<execute-script>` - and the options are recomputed whenever one of those channels changes. `multiple="true"` makes the channel carry a collection instead of a single value; a single-valued selection is unwrapped, so the channel holds the value itself and not a list of one.
+  - A value of an enumeration or a class is chosen from options: without an `options` expression these are the classifiers respectively the instances of the type (`AttributeOptions.optionsFor(type)`). `options` is a TL-Script function whose arguments are the values of the `<inputs><input channel="…"/></inputs>` channels, in declaration order - the same shape as `<execute-script>` - and the options are recomputed whenever one of those channels changes. Every `inputs` property of the view layer - here, a `<table>`'s `<rows>`, a column declaration, an action - reads both notations: the nested `<inputs><input channel="…"/></inputs>` and the comma-separated attribute `inputs="a, b"` (`Inputs`). `multiple="true"` makes the channel carry a collection instead of a single value; a single-valued selection is unwrapped, so the channel holds the value itself and not a list of one.
   - Further properties: `label` (a `ResKey`; without it the input stands alone, without the label chrome), `label-position` and `readonly`.
   - **Layout: `<fields>`** (`FieldsElement`). A `<value-input>` renders the label-and-input chrome of a field but, standing outside a `<form>`, gets none of the grid a form renders around its fields. `<fields>` is that grid on its own (`ReactFormLayoutControl`, `TLFormLayout`): the `var(--page-inset)` padding content owns in the spacing model, the auto-fit columns (`max-columns`, 3 by default), and the `FormLayoutContext` a `TLFormField` reads to move a label from beside its input to above it when the column is narrower than 320px (`label-position` `auto` by default, or fixed `side` / `top`; the field-level `after` / `hidden` are rejected). A `<form>` needs no `<fields>`, being such a grid already; a `<field>` still needs a `<form>`, since `<fields>` carries no object.
   - **Submit hook**: `<on-submit>` names a `ViewCommand` run over the value the user finishes entering - one input plus one command over what was entered, which is what a search field or a jump-to box is. The value reaches the channel first, then the command as its input, so the command's `<execute-script function="entered -> …">` receives it directly and needs no `input` channel of its own. The property defaults to `GenericViewCommand` (`@ImplementationClassDefault`), so the actions stand inside the element:
@@ -22,7 +22,7 @@
     </fields>
     ```
     Another command is `<on-submit class="fq.MyCommand" .../>`. What counts as a submit depends on the control: a field the user *types* in (`ReactTextInputControl` single-line, `ReactNumberInputControl`) reports `ReactFormFieldControl.hasSubmitGesture() == true` and submits on **Enter** - the client sends the `submit` command (`FieldSubmitArguments`, carrying the text, so one recorded step both stores and submits it) from the shared `useTLSubmitOnEnter()` bridge hook, enabled by the `submitOnEnter` state the server sets in `setSubmitListener(…)`. A field that is *picked* from - a dropdown, a date picker, a checkbox - has no such gesture, so **every choice is a submit**; there the element follows `ChannelFieldBinding.setCommitListener(…)`, which reports only values the user produced (a value pushed in from the channel is not a commit). A multi-line text area has no submit gesture at all, since Enter is part of the text.
-  - The tag is `value-input`, not `input`: `input` is the name of the channel property ~21 element configs declare, and a content tag that shadows a property name of the same config makes that config invalid outright - "Ambiguous content tag name 'input': May either represent the property getInput(), or a content element of the default container" - which would take out `<form>`, `<anchor>`, `<object-list>`, `<switch>` and every other element that has both an `input` channel and children.
+  - The tag is `value-input`, not `input`: `input` is the name of the channel property ~21 element configs declare, and a content tag that shadows a property name of the same config makes that config invalid outright - "Ambiguous content tag name 'input': May either represent the property getInput(), or a content element of the default container" - which would take out `<form>`, `<anchor>`, `<switch>` and every other element that has both an `input` channel and children.
 - **Dialogs** open a `.view.xml` via `<open-dialog dialog-view="…">`; close via `CancelDialogCommand` / `DialogManager.closeTopDialog`. `currentUser()` is a TL-Script function usable in `<derived-channel expr="…">`.
 - **Referencing a `UIElement` impl by `class=` in view content.** View content lists resolve entries by `@TagName`, so an app-specific element that should not claim a global tag is placed via the content property's *entry tag* plus `class=`. The `children` content property (`ContainerElement.Config`) is `@EntryTag("child")`, so write `<child class="fq.MyElement"/>` inside a `<panel>` / container. If a cell provider is reusable, make it public rather than justifying a separate element; justify a separate element by genuinely different data / behavior.
 - **Standalone form-field controls bind to a `FieldModel`.** For a standalone field control (e.g. a checkbox cell), use the concrete `com.top_logic.layout.form.model.AbstractFieldModel` + `FieldModelListener` — not `FormContext` / `FormField` / `FormFieldAdapter`, which are legacy-compat shims. `AbstractFieldModel` is editable by default, needs no `FormContext` parent, and triggers no label resource lookup in `ReactFormFieldControl`.
@@ -70,7 +70,58 @@ Two actions branch the chain by a TL-Script function over its current value. `<i
 
 ## Unsaved changes are asked before a channel write, transitively
 
-A form with unsaved input blocks the write of the channel it is bound to: it registers a `ViewChannel.VetoListener` there, and a veto listener answers with the `List<StateHandler>` it objects with, so the dialog asks about every form blocking the change at once (`ViewChannel.dirtyHandlers()` collects the answers, each handler once). A component that writes a channel *from a `ChannelListener` of another one* hands the question on with `VetoForwarder.forward(source, target)` and drops the forwarder in a cleanup action, so the unsaved changes blocking the target are reported when the source is asked — before the source is written. The object list forwards from its container channel to the channel holding the draft of the `<new-element>` content, the `<adaptive-detail>` from each `reset-on` master to its selection, the flow diagram from each input to the selection a rebuild drops, and a `<derived-channel>` from its inputs to the derived value a form may be bound to. The `ChannelVetoException` carries a continuation that retries the write of the *source*, so after a discard every listener of the source runs, including the one writing the target. A veto raised from inside a notification is a programming error: the notifying channel already holds its new value, the listeners after the writing one are never told, and the continuation retries the nested write alone.
+A form with unsaved input blocks the write of the channel it is bound to: it registers a `ViewChannel.VetoListener` there, and a veto listener answers with the `List<StateHandler>` it objects with, so the dialog asks about every form blocking the change at once (`ViewChannel.dirtyHandlers()` collects the answers, each handler once). A component that writes a channel *from a `ChannelListener` of another one* hands the question on with `VetoForwarder.forward(source, target)` and drops the forwarder in a cleanup action, so the unsaved changes blocking the target are reported when the source is asked — before the source is written. The object list forwards from each of its inputs to the channel holding the draft of the `<new-element>` content, the `<adaptive-detail>` from each `reset-on` master to its selection, the flow diagram from each input to the selection a rebuild drops, and a `<derived-channel>` from its inputs to the derived value a form may be bound to. The `ChannelVetoException` carries a continuation that retries the write of the *source*, so after a discard every listener of the source runs, including the one writing the target. A veto raised from inside a notification is a programming error: the notifying channel already holds its new value, the listeners after the writing one are never told, and the continuation retries the nested write alone.
+
+## Repeating a template over a computed list: `<object-list>`
+
+`<object-list>` (`ObjectListElement`) instantiates its `<item>` content once per object of a list it computes itself, with the object published on a channel (`element-channel`, `element` by default). What the list holds is decided by TL-Script over channel values, not by a containment the element knows about, so the same element serves the comments of a ticket, a catalogue of products and the result of a search.
+
+- **Inputs.** `inputs` names the channels the functions read, either as the comma-separated attribute `inputs="catalogue, term"` or as nested `<inputs><input channel="catalogue"/></inputs>` (`Inputs`, the same notation every `inputs` property of the view layer takes). Their values are the leading positional arguments, in declaration order: `items` is `...inputs -> elements`, `link` and `remove` are `...inputs -> element -> ...`, the element coming last. A list with no inputs is a repeater over a plain query — `items="all(\`test.flowchart:FlowNode\`)"` — and follows the model through its `observed-types`.
+- **With and without a container.** A read-only list configures `items` alone. A list that composes objects adds `element-type` plus the `<new-element>` content bound to `new-element-channel`, whose command chain persists the draft with `<link-element>`, and `<remove-element>` inside the `<item>` content detaches one. The composer appears only while *every* input holds a value, because an element is composed to be attached somewhere; `link` is what attaches it, so any containment style works — a composite reference, a back-reference, an association.
+- **Arrangement.** `layout="list"` (the default) stacks the elements in a column; `layout="grid"` places as many next to each other as fit, taking the shared grid options `min-column-width` (16rem by default), `max-columns` and `gap` — the same options `<grid>` takes. `gap` applies to either arrangement, the other two to a grid.
+- **Item wrapper and staggered entrance.** The client wraps every element in `<div class="tlItem tlObjectList__item" style="--tl-item-index: 0">` carrying the 0-based position (`ObjectListElement.ITEM_CSS_CLASS`). The engine ships the position, not the animation: an application composes a per-item delay from it. The arrangement is what an application's rule addresses next to that class — a grid puts its items into a `.tlGrid`, a list into a `.tlStack` — so an entrance can be given to the cards of a grid while the rows of a list keep appearing at once. Items are reused by key, so an element that stays through a change of the inputs keeps its DOM node and does not animate again — only the ones that appear do.
+
+```xml
+<object-list
+	gap="default"
+	inputs="search"
+	items="search -> all(`test.flowchart:FlowNode`).filter(n -> $search.isEmpty() || $n.get(`test.flowchart:FlowNode#name`).stringContains($search))"
+	layout="grid"
+	max-columns="3"
+	min-column-width="16rem"
+	observed-types="test.flowchart:FlowNode"
+>
+	<item>
+		<card>
+			<text input="element"/>
+		</card>
+	</item>
+	<empty-text>
+		<en>No flow node matches the search.</en>
+	</empty-text>
+</object-list>
+```
+
+```css
+@keyframes tlDemoRepeaterFadeUp {
+	from { opacity: 0; transform: translateY(8px); }
+	to { opacity: 1; transform: none; }
+}
+
+/* The items of a grid arrangement; a list arranges its items in a `.tlStack` instead. */
+.tlGrid > .tlObjectList__item {
+	animation: tlDemoRepeaterFadeUp 300ms ease-out both;
+	animation-delay: calc(var(--tl-item-index) * 60ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.tlGrid > .tlObjectList__item {
+		animation: none;
+	}
+}
+```
+
+The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/repeater-demo.view.xml` with `style/tl-demo-react.css`.
 
 ## `TableViewControl` is the sole React table control
 

@@ -230,6 +230,21 @@
 				</themes>
 			</instance>
 		</config>
+		<!--
+			The stylesheet of this application, contributed to the client resources of the React UI
+			behind the stylesheets of the controls, so that it overrides them. It holds the
+			staggered entrance of the repeater demo's items.
+		-->
+		<config service-class="com.top_logic.layout.react.resource.ClientResources">
+			<instance class="com.top_logic.layout.react.resource.ClientResources">
+				<resources>
+					<stylesheet name="tl-demo-react-css"
+						requires="tl-react-controls-css"
+						resource="/style/tl-demo-react.css"
+					/>
+				</resources>
+			</instance>
+		</config>
 	</services>
 
 	<configs>

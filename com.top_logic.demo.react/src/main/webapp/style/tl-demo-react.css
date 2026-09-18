@@ -1,0 +1,48 @@
+/*
+ * Stylesheet of the React demo application.
+ *
+ * Registered as a client resource in WEB-INF/conf/demoReactConf.config.xml, behind the
+ * stylesheets of the React controls, so that it overrides them.
+ */
+
+/*
+ * Entrance of a repeated item: it rises into place while it fades in.
+ */
+@keyframes tlDemoRepeaterFadeUp {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+/*
+ * Staggered entrance of the cards of a repeater grid.
+ *
+ * <object-list> wraps every element in an item carrying its 0-based position as the custom
+ * property --tl-item-index; the delay of the animation is composed from that position, so each
+ * card starts 60ms after the one before it. Items are reused by key, so a card that survives a
+ * change of the inputs keeps its element and does not animate again.
+ *
+ * The rule addresses the items of a grid arrangement, the cards this application wants to see
+ * appear one after the other. An object list arranged as a list puts its items in a stack
+ * instead, where an entrance per item would read as the page assembling itself, so those items
+ * are left alone.
+ */
+.tlGrid > .tlObjectList__item {
+	animation: tlDemoRepeaterFadeUp 300ms ease-out both;
+	animation-delay: calc(var(--tl-item-index) * 60ms);
+}
+
+/*
+ * A viewer who asked for reduced motion sees the items in place.
+ */
+@media (prefers-reduced-motion: reduce) {
+	.tlGrid > .tlObjectList__item {
+		animation: none;
+	}
+}

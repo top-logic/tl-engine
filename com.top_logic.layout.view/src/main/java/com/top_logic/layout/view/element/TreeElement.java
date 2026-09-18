@@ -16,7 +16,6 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
-import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
@@ -37,8 +36,10 @@ import com.top_logic.layout.tree.model.DefaultTreeUINodeModel.DefaultTreeUINode;
 import com.top_logic.layout.tree.model.TreeBuilder;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
@@ -79,14 +80,11 @@ public class TreeElement implements UIElement {
 	 * Configuration for {@link TreeElement}.
 	 */
 	@TagName("tree")
-	public interface Config extends UIElement.Config {
+	public interface Config extends UIElement.Config, Inputs {
 
 		@Override
 		@ClassDefault(TreeElement.class)
 		Class<? extends UIElement> getImplementationClass();
-
-		/** Configuration name for {@link #getInputs()}. */
-		String INPUTS = "inputs";
 
 		/** Configuration name for {@link #getRoot()}. */
 		String ROOT = "root";
@@ -126,14 +124,6 @@ public class TreeElement implements UIElement {
 
 		/** Configuration name for {@link #getOnActivate()}. */
 		String ON_ACTIVATE = "on-activate";
-
-		/**
-		 * References to {@link ViewChannel}s whose current values become positional arguments to
-		 * the expression properties.
-		 */
-		@Name(INPUTS)
-		@ListBinding(format = ChannelRefFormat.class, tag = "input", attribute = "channel")
-		List<ChannelRef> getInputs();
 
 		/**
 		 * TL-Script function computing the root object of the tree.
@@ -343,14 +333,10 @@ public class TreeElement implements UIElement {
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		// 1. Resolve input channels.
-		List<ChannelRef> inputRefs = _config.getInputs();
-		List<ViewChannel> inputChannels = new ArrayList<>(inputRefs.size());
-		for (ChannelRef ref : inputRefs) {
-			inputChannels.add(context.resolveChannel(ref));
-		}
+		List<ViewChannel> inputChannels = ChannelInputs.resolve(context, _config.getInputs());
 
 		// 2. Execute initial root query.
-		Object[] channelValues = readChannelValues(inputChannels);
+		Object[] channelValues = ChannelInputs.arguments(inputChannels);
 		Object rootObject = _rootExecutor.execute(channelValues);
 
 		// 3. Build tree model with custom TreeBuilder.
@@ -412,7 +398,7 @@ public class TreeElement implements UIElement {
 
 			@Override
 			public List<DefaultTreeUINode> createChildList(DefaultTreeUINode node) {
-				Object[] channelValues = readChannelValues(inputChannels);
+				Object[] channelValues = ChannelInputs.arguments(inputChannels);
 				Object[] args = appendArg(channelValues, node.getBusinessObject());
 				Object result = _childrenExecutor.execute(args);
 				Collection<?> children = toCollection(result);
@@ -440,14 +426,6 @@ public class TreeElement implements UIElement {
 	 */
 	private static Object businessObject(Object node) {
 		return node instanceof DefaultTreeUINode uiNode ? uiNode.getBusinessObject() : node;
-	}
-
-	private static Object[] readChannelValues(List<ViewChannel> channels) {
-		Object[] values = new Object[channels.size()];
-		for (int i = 0; i < channels.size(); i++) {
-			values[i] = channels.get(i).get();
-		}
-		return values;
 	}
 
 	private static Object[] appendArg(Object[] base, Object extra) {

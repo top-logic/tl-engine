@@ -11,7 +11,6 @@ import java.util.function.Function;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
@@ -19,8 +18,7 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.view.channel.ChannelRef;
-import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.util.TLModelPartRef;
@@ -57,7 +55,7 @@ public class ComputedColumn extends AbstractColumnDeclaration {
 	 * Configuration of a {@link ComputedColumn}.
 	 */
 	@TagName(TAG_NAME)
-	public interface Config extends AbstractColumnDeclaration.Config<ComputedColumn> {
+	public interface Config extends AbstractColumnDeclaration.Config<ComputedColumn>, Inputs {
 
 		/** Configuration name for {@link #getName()}. */
 		String NAME = "name";
@@ -76,9 +74,6 @@ public class ComputedColumn extends AbstractColumnDeclaration {
 
 		/** Configuration name for {@link #getCanUpdate()}. */
 		String CAN_UPDATE = "can-update";
-
-		/** Configuration name for {@link #getInputs()}. */
-		String INPUTS = "inputs";
 
 		@Override
 		@ClassDefault(ComputedColumn.class)
@@ -159,14 +154,6 @@ public class ComputedColumn extends AbstractColumnDeclaration {
 		@Name(CAN_UPDATE)
 		@Nullable
 		Expr getCanUpdate();
-
-		/**
-		 * References to channels whose values become the leading arguments of the value function,
-		 * ahead of the row.
-		 */
-		@Name(INPUTS)
-		@ListBinding(format = ChannelRefFormat.class, tag = "input", attribute = "channel")
-		List<ChannelRef> getInputs();
 
 	}
 

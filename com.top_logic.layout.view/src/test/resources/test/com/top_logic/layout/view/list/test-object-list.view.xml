@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="catalogue"/>
+		<channel name="season"/>
+	</channels>
+
+	<object-list
+		inputs="catalogue, season"
+		items="catalogue -> season -> [$catalogue, $season]"
+		layout="grid"
+		max-columns="3"
+		min-column-width="18rem"
+	>
+		<item>
+			<text input="element"/>
+		</item>
+	</object-list>
+</view>

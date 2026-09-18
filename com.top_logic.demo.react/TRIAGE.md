@@ -28,6 +28,7 @@ implemented in the current deliverable.
 | Tiles + multi-tab tiles | **Migrated** | `demo/tiles-demo.view.xml` and `demo/tiles-multi-demo.view.xml` (drill-down tile stacks with app-bar breadcrumb). |
 | Responsive master-detail | **Migrated** | `demo/responsive-md-demo.view.xml` (`<adaptive-detail>`, cascading scopes → milestones) over the `tl.demo.projectManagement` model + seed data (+ create dialogs). |
 | Error handling | **Migrated** | `demo/error-handling-demo.view.xml` — `TopLogicException` and wrapped KB errors. |
+| Repeater (`<object-list>`) | **Migrated** | `demo/repeater-demo.view.xml` — a grid of cards computed from a search field (capped at three columns) and an input-less list, over the `test.flowchart` model + seed data. The staggered entrance of the cards is application CSS over the item wrapper's `--tl-item-index` (`style/tl-demo-react.css`). |
 | Green-field table filtering | **Migrated** | Per-column `RegexpOptionsFilter` (facets) and model/script-defined `ScriptedFilter` (over `demo.filter:LongRange`) folded into the **Attributes** table. |
 
 ## Folded out (deliberately not reproduced as standalone demos)

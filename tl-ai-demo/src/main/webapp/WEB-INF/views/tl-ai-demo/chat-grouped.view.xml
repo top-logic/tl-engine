@@ -24,6 +24,13 @@
 		<!-- The counts the rail shows on the section headers and the strip icons. -->
 		<channel name="progressBadge"/>
 		<channel name="sourcesBadge"/>
+		<!--
+			What the composer is set up to run next. Two-way: the conversation writes what the user
+			picked in the composer, and follows what is written here. The rail's "Zug" section reads
+			both and writes the agent one.
+		-->
+		<channel name="selectedAgent"/>
+		<channel name="selectedModel"/>
 	</channels>
 	<chat chat-id="chat"
 		direction="row"
@@ -88,8 +95,10 @@
 		-->
 		<panel fill="true">
 			<chat-conversation
+				agent="selectedAgent"
 				citations="true"
 				input="chatSession"
+				model="selectedModel"
 				prompt-improver-agent="TL_PromptImprover"
 				trace="summary"
 			>
@@ -218,6 +227,49 @@
 					<rows><![CDATA[all(`tl.ai.demo.imageclassification:Invoice`)
 						.sort((i -> $i.get(`tl.ai.demo.imageclassification:Invoice#date`)).comparator().desc())]]></rows>
 				</data-list>
+			</section>
+			<!--
+				What the composer will run next, over the "agent" and "model" channels - the same kind
+				of coupling as the session list, for a value that is not a model object: agents, models
+				and MCP servers are configuration in this application, so the channels carry their
+				names, and a <text> is what shows a name. The button is the other direction: it writes
+				an agent onto the channel and the composer's picker follows.
+			-->
+			<section name="turn"
+				icon="css:bi bi-sliders"
+			>
+				<label>
+					<en>Turn</en>
+					<de>Zug</de>
+				</label>
+				<text>
+					<label>
+						<en>Agent</en>
+						<de>Agent</de>
+					</label>
+				</text>
+				<text input="selectedAgent"/>
+				<text>
+					<label>
+						<en>Model</en>
+						<de>Modell</de>
+					</label>
+				</text>
+				<text input="selectedModel"/>
+				<button>
+					<action class="com.top_logic.layout.view.command.GenericViewCommand"
+						image="css:bi bi-diagram-3"
+					>
+						<label>
+							<en>Ask the model explorer</en>
+							<de>Modell-Explorer fragen</de>
+						</label>
+						<execute-script>
+							<function><![CDATA[x -> "TL_ModelExplorer"]]></function>
+						</execute-script>
+						<write-channel name="selectedAgent"/>
+					</action>
+				</button>
 			</section>
 			<!--
 				The pane's content, shown in place of the sections while "paneObject" holds an object.

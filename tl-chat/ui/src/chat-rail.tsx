@@ -127,7 +127,7 @@ export function TLChatRail({ controlId }: TLCellProps) {
             return (
               <section
                 key={section.name}
-                className={`side-section is-framework${collapsed ? ' is-collapsed' : ''}`}
+                className={`side-section${collapsed ? ' is-collapsed' : ''}`}
               >
                 <button
                   type="button"
@@ -158,7 +158,7 @@ export function TLChatRail({ controlId }: TLCellProps) {
           labels={labels}
           mode={paneMode}
           hidden={!objectPane}
-          allowSheet={false}
+          placement="rail"
         >
           <TLChild control={paneControl} />
         </SidePane>
@@ -176,7 +176,7 @@ export function TLChatRail({ controlId }: TLCellProps) {
           mode={chat.paneOptions?.mode ?? paneMode}
           version={chat.paneOptions?.version}
           actions={chat.paneOptions?.actions}
-          allowSheet={false}
+          placement="rail"
         >
           {chat.paneContent}
         </SidePane>

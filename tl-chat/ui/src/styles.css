@@ -231,6 +231,10 @@
   padding: 0.75rem 0.75rem 0.25rem;
 }
 
+.rail-header[hidden] {
+  display: none;
+}
+
 .rail-header strong {
   flex: 1;
   min-width: 0;
@@ -450,7 +454,7 @@
  * `.side-strip` and `.side-pane` are App's classes, which place themselves with `grid-column` and
  * turn into an overlay below 1280 px. Inside this element there is no grid to place into and
  * nothing to overlay, so their geometry is re-stated here: laid out in flow, sized by themselves,
- * and a column at every width (see `allowSheet` in side-pane.tsx).
+ * and a column at every width (`placement="rail"` in side-pane.tsx).
  */
 .tl-chat-rail {
   display: flex;
@@ -466,6 +470,35 @@
 .tl-chat-rail .side-pane {
   position: relative;
   grid-column: auto;
+}
+
+/*
+ * A section is a card of its own.
+ *
+ * App's `.side-section` is borderless, and tells its own sections from a host's with a dashed
+ * outline. The shell has no such distinction - every section is configured, none is more the
+ * framework's than another - so they are plain cards on the column's own background.
+ */
+.tl-chat-rail .side-section {
+  border: 1px solid var(--border-subtle);
+  background: var(--background);
+}
+
+/*
+ * A list inside a section is content, not a rail of its own.
+ *
+ * `<data-list>` renders the session rail's chrome - its own surface, its own right border, its own
+ * padding. Nested in a section that already is a card, that reads as a box in a box.
+ */
+.tl-chat-rail .tl-data-list .rail {
+  width: auto;
+  min-width: 0;
+  background: none;
+  border-right: 0;
+}
+
+.tl-chat-rail .tl-data-list .rail-list {
+  padding-inline: 0;
 }
 
 /* The sections' own column. Named apart from App's `.side-column`, which is a grid child. */

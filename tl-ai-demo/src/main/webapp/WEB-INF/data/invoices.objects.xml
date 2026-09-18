@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Four invoices, so the application has something to show on its first start.
+
+	Every view of this demo is about invoices - the "Belege" page, the chat's "@" mentions, the
+	rail's "Belege" section and the form in its pane - and every one of them was empty until a user
+	had scanned one, which is a poor first impression of what the application does. The scan is a
+	placeholder image rather than a photograph: what the demo is about is the classification the
+	model does on a real one, and shipping four photographs into the WAR to say so is not worth it.
+
+	Load-once: InitialDataSetupService records the file name, so editing this file changes nothing
+	in a database that already read it (rename it to re-import).
+-->
+<objects>
+	<object id="invoice-office" type="tl.ai.demo.imageclassification:Invoice">
+		<attribute name="date" value="2026-08-04T10:15:00Z"/>
+		<attribute name="description" value="Büromaterial, Papier und Toner"/>
+		<attribute name="amount" value="84.9"/>
+		<attribute name="data" value="iVBORw0KGgoAAAANSUhEUgAAAEAAAABYCAIAAADKjmZ/AAAAjElEQVR42u3bwQmAMBAEwFQnvqws+LJIJS1EsAg1ct7ANjAsx36Ssh8tdAoAwIOA3s8QAQAAAAAYBZjm5ZMA/AbgiAEAAAAAQgPqug2IBgAAAADsgAYAAAAA7IAGAAAAAOyABgAAAADsgAYAAAAA7IAGAAAAAAAA7uW9d9QASQCOGAAAIB3Aj26AhIALe1p5wPFTlyUAAAAASUVORK5CYII="/>
+	</object>
+	<object id="invoice-hosting" type="tl.ai.demo.imageclassification:Invoice">
+		<attribute name="date" value="2026-08-19T09:00:00Z"/>
+		<attribute name="description" value="Hosting August"/>
+		<attribute name="amount" value="249.0"/>
+		<attribute name="data" value="iVBORw0KGgoAAAANSUhEUgAAAEAAAABYCAIAAADKjmZ/AAAAjElEQVR42u3bwQmAMBAEwFQnvqws+LJIJS1EsAg1ct7ANjAsx36Ssh8tdAoAwIOA3s8QAQAAAAAYBZjm5ZMA/AbgiAEAAAAAQgPqug2IBgAAAADsgAYAAAAA7IAGAAAAAOyABgAAAADsgAYAAAAA7IAGAAAAAAAA7uW9d9QASQCOGAAAIB3Aj26AhIALe1p5wPFTlyUAAAAASUVORK5CYII="/>
+	</object>
+	<object id="invoice-train" type="tl.ai.demo.imageclassification:Invoice">
+		<attribute name="date" value="2026-09-02T17:40:00Z"/>
+		<attribute name="description" value="Bahnfahrt Frankfurt - Berlin"/>
+		<attribute name="amount" value="143.6"/>
+		<attribute name="data" value="iVBORw0KGgoAAAANSUhEUgAAAEAAAABYCAIAAADKjmZ/AAAAjElEQVR42u3bwQmAMBAEwFQnvqws+LJIJS1EsAg1ct7ANjAsx36Ssh8tdAoAwIOA3s8QAQAAAAAYBZjm5ZMA/AbgiAEAAAAAQgPqug2IBgAAAADsgAYAAAAA7IAGAAAAAOyABgAAAADsgAYAAAAA7IAGAAAAAAAA7uW9d9QASQCOGAAAIB3Aj26AhIALe1p5wPFTlyUAAAAASUVORK5CYII="/>
+	</object>
+	<object id="invoice-lunch" type="tl.ai.demo.imageclassification:Invoice">
+		<attribute name="date" value="2026-09-11T13:05:00Z"/>
+		<attribute name="description" value="Bewirtung Projektworkshop"/>
+		<attribute name="amount" value="62.35"/>
+		<attribute name="data" value="iVBORw0KGgoAAAANSUhEUgAAAEAAAABYCAIAAADKjmZ/AAAAjElEQVR42u3bwQmAMBAEwFQnvqws+LJIJS1EsAg1ct7ANjAsx36Ssh8tdAoAwIOA3s8QAQAAAAAYBZjm5ZMA/AbgiAEAAAAAQgPqug2IBgAAAADsgAYAAAAA7IAGAAAAAOyABgAAAADsgAYAAAAA7IAGAAAAAAAA7uW9d9QASQCOGAAAIB3Aj26AhIALe1p5wPFTlyUAAAAASUVORK5CYII="/>
+	</object>
+</objects>

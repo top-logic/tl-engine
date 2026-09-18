@@ -1,8 +1,25 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
+<!--
+	The chat built from view elements instead of the one-element <agent-chat/> (Issue #415).
+
+	Three elements share one conversation through chat-id "grouped": a <data-list> of this user's
+	chats on the left, the <chat-conversation/> (transcript plus prompt field) in the middle, and a
+	<chat-rail/> on the right. The rail is a shell - what it shows is configured here, and the
+	"Belege" section is an ordinary <data-list>, which is the point: any view element is a section,
+	so an application puts its own views beside the transcript without the chat knowing about them.
+-->
 <view>
 	<channels>
 		<channel name="chatSession"/>
+		<!--
+			What the rail's pane is showing, written by the "Belege" list and read by the form in the
+			pane. Empty means the sections; the pane's close button empties it again.
+		-->
+		<channel name="paneObject"/>
+		<!-- The counts the rail shows on the section headers and the strip icons. -->
+		<channel name="progressBadge"/>
+		<channel name="sourcesBadge"/>
 	</channels>
 	<stack direction="row">
 		<!--
@@ -57,6 +74,12 @@
 				<de>Chats</de>
 			</title>
 		</data-list>
+		<!--
+			The <panel> is what bounds the conversation's height so it scrolls inside its column
+			rather than growing with the transcript. Its own header stays empty here, which the dark
+			theme shows as a bare strip above the conversation's header - an untitled panel should
+			render no toolbar at all, but that is the engine's to decide.
+		-->
 		<panel fill="true">
 			<chat-conversation
 				chat-id="grouped"
@@ -90,5 +113,83 @@
 				</mention>
 			</chat-conversation>
 		</panel>
+		<!--
+			The rail. Its badge channels carry the counts that the transcript's rail button adds up,
+			so a closed rail still says how much is new.
+		-->
+		<chat-rail chat-id="grouped"
+			input="paneObject"
+			open="true"
+			strip="true"
+		>
+			<section name="progress"
+				badge="progressBadge"
+				icon="css:bi bi-list-check"
+				open="true"
+			>
+				<label>
+					<en>Progress</en>
+					<de>Fortschritt</de>
+				</label>
+				<chat-progress badge="progressBadge"
+					chat-id="grouped"
+				/>
+			</section>
+			<section name="sources"
+				badge="sourcesBadge"
+				icon="css:bi bi-quote"
+			>
+				<label>
+					<en>Sources</en>
+					<de>Quellen</de>
+				</label>
+				<chat-sources badge="sourcesBadge"
+					chat-id="grouped"
+				/>
+			</section>
+			<!--
+				Nothing chat-specific: an ordinary <data-list> of this application's own objects, in a
+				rail section. Picking one writes it to "paneObject", which is what opens the pane.
+			-->
+			<section name="invoices"
+				icon="css:bi bi-receipt"
+			>
+				<label>
+					<en>Invoices</en>
+					<de>Belege</de>
+				</label>
+				<data-list
+					collapsible="false"
+					observed-types="tl.ai.demo.imageclassification:Invoice"
+					search="false"
+					selection="paneObject"
+				>
+					<empty-text>
+						<en>No invoices yet</en>
+						<de>Noch keine Belege</de>
+					</empty-text>
+					<lines>
+						<line attribute="description"/>
+						<line attribute="amountLabel"
+							emphasis="secondary"
+						/>
+					</lines>
+					<rows><![CDATA[all(`tl.ai.demo.imageclassification:Invoice`)
+						.sort((i -> $i.get(`tl.ai.demo.imageclassification:Invoice#date`)).comparator().desc())]]></rows>
+				</data-list>
+			</section>
+			<!--
+				The pane's content, shown in place of the sections while "paneObject" holds an object.
+				The form binds to the same channel, so it shows whatever the list wrote there.
+			-->
+			<pane>
+				<form input="paneObject">
+					<field attribute="date"/>
+					<field attribute="description"/>
+					<field attribute="amount"/>
+					<field attribute="data"/>
+				</form>
+			</pane>
+		</chat-rail>
 	</stack>
 </view>

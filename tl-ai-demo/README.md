@@ -33,6 +33,7 @@ The start page is `/view/` - the React view layer, declared in `WEB-INF/views/ap
 |--|--|
 | **Chat** (start item) | The agent chat (`tl-chat`), with its own history rail, the agent/model/MCP/trace menu, attachments, human-in-the-loop approvals and the context-usage ring. |
 | **Chat mit Rechnungen** | The same `/chat/*` API composed as `DemoChat`: a Rechnungen rail, a read-only invoice pane, and a quote chip. Fixture invoices, not KB rows. |
+| **Chat (Elemente)** | The same chat built from view elements instead of the one-element `<agent-chat>`: a `<data-list>` of this user's chats, a `<chat-conversation>`, and a `<chat-rail>` whose sections are configured in `WEB-INF/views/tl-ai-demo/chat-grouped.view.xml` - Fortschritt, Quellen, and a `<data-list>` of the KB's invoices whose selection opens an invoice form in the rail's pane. |
 | **Belege** | The invoices: a table on the left, the selected invoice's form on the right. "Neuer Beleg" asks only for the scan and has the model read the description, the date and the amount out of it. The table's amount column shows the derived `amountLabel` (`84,90 €`); the form edits the number itself. |
 | **Administration** | The framework's own administration view; visible to accounts holding the `administration` scope. |
 

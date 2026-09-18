@@ -119,8 +119,17 @@ export function TLDataList({ controlId }: TLCellProps) {
   const search = state.search !== false
   const collapsible = state.collapsible !== false
   const buttons = useMemo(() => readButtons(state.buttons), [state.buttons])
-  const title = typeof state.title === 'string' && state.title ? state.title : labels.chats
-  const emptyText = typeof state.emptyText === 'string' && state.emptyText ? state.emptyText : labels.noChats
+  /*
+   * No fallback to the chat's own words.
+   *
+   * This element was extracted from the chat's session rail and kept its labels: an unconfigured
+   * `<data-list>` of invoices announced itself as "Chats" and said "Noch keine Chats" when it was
+   * empty. A generic list has no title unless the view gives it one - inside a rail section the
+   * section's own header already names it - and says the neutral thing when it is empty.
+   */
+  const title = typeof state.title === 'string' ? state.title : ''
+  const emptyText =
+    typeof state.emptyText === 'string' && state.emptyText ? state.emptyText : labels.railEmpty
 
   const [query, setQuery] = useState('')
   const [collapsed, setCollapsed] = useState(false)
@@ -138,9 +147,10 @@ export function TLDataList({ controlId }: TLCellProps) {
     <div id={controlId} className={`tl-data-list${isCollapsed ? ' is-collapsed' : ''}`}>
       <aside
         className={`rail${isCollapsed ? ' is-collapsed' : ''}`}
-        aria-label={title}
+        aria-label={title || undefined}
       >
-        <div className="rail-header">
+        {/* A header with neither a title nor a collapse button is an empty bar; leave it out. */}
+        <div className="rail-header" hidden={!title && !collapsible}>
           <strong>{title}</strong>
           {collapsible ? (
             <button

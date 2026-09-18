@@ -12,8 +12,17 @@
 						deployment is known to have booted a version containing it.
 					-->
 					<module key="com.top_logic.ai.chat.history.LegacyChatSessionMigration$Module" value="true"/>
+					<!--
+						Pushes a running agent's writes into the open chat windows, so a model-bound
+						element beside the transcript follows the run instead of waiting for the SSE
+						heartbeat.
+					-->
+					<module key="com.top_logic.ai.chat.view.AgentViewRefreshService$Module" value="true"/>
 				</modules>
 			</instance>
+		</config>
+		<config service-class="com.top_logic.ai.chat.view.AgentViewRefreshService">
+			<instance class="com.top_logic.ai.chat.view.AgentViewRefreshService"/>
 		</config>
 	</services>
 </application>

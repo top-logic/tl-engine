@@ -90,6 +90,11 @@ public final class ChatViewBinding {
 	 * </p>
 	 */
 	public static ChatViewBinding bind(ReactContext context, String chatId) {
+		// Every chat element renders through here, so this is where the window becomes known to the
+		// refresher: a running agent writes from a background thread, and without this the window
+		// would only notice on its next command or on the 30 s heartbeat.
+		AgentViewRefreshService.registerWindow(TLContextManager.getSubSession(), context.getWindowName(),
+			context.getWindowRegistry());
 		return bind(TLContextManager.getSubSession(), context.getWindowName(), context.getContextPath(), chatId);
 	}
 

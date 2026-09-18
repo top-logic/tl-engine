@@ -64,9 +64,13 @@ public class ChatRailControl extends ReactControl {
 	 * @param sections
 	 *        The configured sections with their content elements.
 	 * @param pane
-	 *        The elements the pane shows; empty for a rail without a pane.
+	 *        The elements the pane shows for one object; empty for a rail without a pane.
+	 * @param listPane
+	 *        The elements the pane shows instead for several objects; empty when the {@code pane}
+	 *        handles every case.
 	 */
-	public ChatRailControl(ViewContext context, Config config, List<Section> sections, List<UIElement> pane) {
+	public ChatRailControl(ViewContext context, Config config, List<Section> sections, List<UIElement> pane,
+			List<UIElement> listPane) {
 		super(context, null, blankToDefault(config.getReactElement(), "TLChatRail"));
 
 		// The rail's own chat-id when it has one, otherwise the enclosing <chat>'s, otherwise
@@ -95,6 +99,14 @@ public class ChatRailControl extends ReactControl {
 		if (!pane.isEmpty()) {
 			putState("pane", ContentControls.toControl(pane, context.childContext("pane")
 				.withChildSlotPath("pane")));
+		}
+		// Built whether or not it is ever shown, like every other child of the rail: a control that
+		// is built on demand would start empty each time the pane opens, and a list that lost its
+		// scroll position on every reopen is the bug that keeping children built avoids everywhere
+		// else here.
+		if (!listPane.isEmpty()) {
+			putState("listPane", ContentControls.toControl(listPane, context.childContext("listPane")
+				.withChildSlotPath("listPane")));
 		}
 
 		ChannelRef inputRef = config.getInput();
@@ -173,10 +185,41 @@ public class ChatRailControl extends ReactControl {
 		putState(SECTION_BADGES, new LinkedHashMap<>(_badges));
 	}
 
+	/**
+	 * Opens or closes the pane for what now stands on the {@code input} channel.
+	 *
+	 * <p>
+	 * One object and a set of several both open it: the pane shows whatever its configured element
+	 * makes of the channel value, and an element that renders a list - a {@code <data-list>} over
+	 * the same channel - is as ordinary a pane content as a {@code <form>} over one object. Only an
+	 * empty channel closes it.
+	 * </p>
+	 *
+	 * <p>
+	 * A set has no label of its own, so it is titled with its size. A single object keeps its own
+	 * label, which is what a pane over a picked row has always shown.
+	 * </p>
+	 */
 	private void applyPane(Object value) {
 		Object shown = single(value);
-		putState("paneOpen", Boolean.valueOf(shown != null));
-		putState("paneTitle", shown == null ? "" : MetaLabelProvider.INSTANCE.getLabel(shown));
+		int count = size(value);
+		putState("paneOpen", Boolean.valueOf(count > 0));
+		// Which of the two pane children is the one on show. The browser needs the answer rather
+		// than the count, because a rail that configured no <list-pane> shows its <pane> for
+		// whatever stands on the channel.
+		putState("paneMany", Boolean.valueOf(count > 1));
+		putState("paneTitle", paneTitle(shown, count));
+	}
+
+	private static String paneTitle(Object shown, int count) {
+		if (count == 0) {
+			return "";
+		}
+		if (shown != null) {
+			return MetaLabelProvider.INSTANCE.getLabel(shown);
+		}
+		return Resources.getInstance()
+			.getString(I18NConstants.PANE_TITLE_OBJECTS__COUNT.fill(Integer.valueOf(count)));
 	}
 
 	/** The one object a channel holds, {@code null} for nothing and for a set of several. */
@@ -185,6 +228,14 @@ public class ChatRailControl extends ReactControl {
 			return many.size() == 1 ? many.iterator().next() : null;
 		}
 		return value;
+	}
+
+	/** How many objects a channel holds: 0, 1, or the size of the collection standing on it. */
+	private static int size(Object value) {
+		if (value instanceof Collection<?> many) {
+			return many.size();
+		}
+		return value == null ? 0 : 1;
 	}
 
 	private static int count(Object value) {

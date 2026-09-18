@@ -157,6 +157,36 @@ describe('the rendered rail', () => {
     expect(open).toContain('Invoice 4711')
     expect(open).not.toMatch(/class="side-pane"[^>]*hidden/)
   })
+
+  /**
+   * One object is a form, several are a list, and no element renders both - so the rail picks the
+   * pane child by how many objects the channel holds (`paneMany`, written by the control).
+   */
+  it('shows the list pane instead of the pane while several objects stand on the channel', () => {
+    const pane = { controlId: 'c9', module: 'TLForm', state: {} }
+    const listPane = { controlId: 'c10', module: 'TLDataList', state: {} }
+
+    // Both stay mounted, as every other child of the rail does; one of the two is hidden.
+    const one = render(railState({ pane, listPane, paneOpen: true, paneMany: false, chatId: 'pane-one' }))
+    expect(one).toMatch(/class="is-hidden"><tl-child data-control-id="c10"/)
+    expect(one).toMatch(/<div><tl-child data-control-id="c9"/)
+
+    const many = render(railState({
+      pane, listPane, paneOpen: true, paneMany: true, paneTitle: '3 objects', chatId: 'pane-many',
+    }))
+    expect(many).toMatch(/class="is-hidden"><tl-child data-control-id="c9"/)
+    expect(many).toMatch(/<div><tl-child data-control-id="c10"/)
+    expect(many).toContain('3 objects')
+  })
+
+  /** A rail that configured only a `<pane>` shows it for whatever stands on the channel. */
+  it('falls back to the one pane child that is configured', () => {
+    const pane = { controlId: 'c9', module: 'TLForm', state: {} }
+
+    const html = render(railState({ pane, paneOpen: true, paneMany: true, chatId: 'pane-only-one' }))
+    expect(html).toMatch(/<div><tl-child data-control-id="c9"/)
+    expect(html).not.toContain('is-hidden"><tl-child data-control-id="c9"')
+  })
 })
 
 describe('the chat bundle', () => {

@@ -18,8 +18,6 @@ export interface ChatPreferences {
   sections: Record<string, boolean>
 }
 
-const DEFAULTS: ChatPreferences = { railOpen: null, paneWidth: 0, badgeSeen: 0, sections: {} }
-
 /** Whether two layouts say the same thing, so an unchanged one is not written back. */
 export function sameLayout(left: ChatPreferences, right: ChatPreferences): boolean {
   if (
@@ -115,5 +113,3 @@ export async function savePreferences(
     // A failed write leaves the in-memory choice; the next session restores the last stored one.
   }
 }
-
-export const defaultPreferences = DEFAULTS

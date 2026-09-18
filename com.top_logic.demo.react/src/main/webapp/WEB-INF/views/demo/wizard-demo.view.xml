@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Wizard demo: an onboarding flow whose steps come from two sources at once.
+	
+	The wizard walks a sequence of steps and displays one of them at a time. Which step that is
+	lives in the currentStep channel, and that channel is the single source of truth: every move -
+	a Next button, a Back button, a click on an already finished step in the indicator - is a write
+	to it. <param-bindings> puts the step into the address bar, so /view/wizard/profile opens the
+	flow on the profile step and the browser back button walks the steps taken.
+	
+	The sequence mixes the two kinds of source. "Welcome", "Your profile" and "Summary" are written
+	out as <step> and are always there. Between the profile and the summary sits a <dynamic-steps>
+	over the questions channel, which contributes one step per element of that list: the flow asks
+	as many questions as the list holds, and the list grows while the flow is walked. The Next
+	button of a question appends the next question and moves on in one command - the append writes
+	the channel, the wizard expands its sequence again inside that write, and the <wizard-next/>
+	following it already sees the step it created. After the last question the same Next leads to
+	the summary, because the written-out step follows the dynamic ones.
+	
+	Between the profile and the questions sits an interstitial: "Setting up" carries an
+	auto-advance="2s" and no buttons at all, so it shows itself for two seconds and then moves on by
+	itself. The footer slot simply stays empty while it is displayed.
+	
+	A question step chooses its display by the question it asks: a <switch input="question"> picks
+	the field to fill in, so the three questions are three different inputs on one content template.
+	Every step edits the one profile object the flow set up at the start, and the summary reads it
+	back: the step content is built when the step is reached, so the read-only form there shows what
+	the steps before it collected.
+	
+	The navigation buttons are not part of the wizard: it renders the indicator and the content of
+	the step, and the flow composes what moves it. Each step raises its own buttons into the
+	<slot name="wizard-actions"/> below the wizard, so they appear in one footer wherever the user
+	is - and they sit inside the step, which is what lets them find the wizard (the wizard hands
+	every step's content a scope) and what lets the profile step's Next be guarded by
+	<form-valid/>: the rule resolves the form it sits in. The name of the profile is mandatory, so
+	Next stays disabled until it is filled in.
+-->
+<view>
+	<channels>
+		<channel name="currentStep"/>
+		<channel name="profile"/>
+		<channel name="questions"/>
+	</channels>
+	<param-bindings>
+		<bind
+			channel="currentStep"
+			route-param="step"
+		/>
+	</param-bindings>
+	<panel>
+		<title>
+			<en>Onboarding</en>
+			<de>Einrichtung</de>
+		</title>
+		<stack gap="default">
+			<wizard
+				current-step="currentStep"
+				step-list="true"
+			>
+				<step id="welcome"
+					icon="css:bi bi-flag"
+				>
+					<label>
+						<en>Welcome</en>
+						<de>Willkommen</de>
+					</label>
+					<inset>
+						<text>
+							<label>
+								<en>This flow sets up an account in a few steps. The indicator above counts the steps, shows how far along they are and names them; a step already done is a button that jumps back to it. Press Start to begin.</en>
+								<de>Dieser Ablauf richtet ein Konto in wenigen Schritten ein. Die Anzeige oben zählt die Schritte, zeigt den Fortschritt und benennt sie; ein bereits erledigter Schritt ist eine Schaltfläche, die dorthin zurückspringt. Zum Beginnen auf Start klicken.</de>
+							</label>
+						</text>
+					</inset>
+					<slot-content to="wizard-actions">
+						<stack
+							align="end"
+							direction="row"
+							gap="default"
+						>
+							<button appearance="primary">
+								<action class="com.top_logic.layout.view.command.GenericViewCommand">
+									<label>
+										<en>Start</en>
+										<de>Start</de>
+									</label>
+									<executability>
+										<wizard-has-next/>
+									</executability>
+									<execute-script
+										function="p -> x -> if($p == null, new(`demo.react:Demo`, transient: true), $p)"
+										inputs="profile"
+									/>
+									<write-channel name="profile"/>
+									<execute-script
+										function="qs -> x -> if($qs == null || $qs.isEmpty(), ['role'], $qs)"
+										inputs="questions"
+									/>
+									<write-channel name="questions"/>
+									<wizard-next/>
+								</action>
+							</button>
+						</stack>
+					</slot-content>
+				</step>
+				<step id="profile"
+					icon="css:bi bi-person-badge"
+				>
+					<label>
+						<en>Your profile</en>
+						<de>Ihr Profil</de>
+					</label>
+					<form
+						initial-edit-mode="true"
+						input="profile"
+						mode-switch="false"
+					>
+						<field attribute="name"/>
+						<field attribute="email"/>
+						<slot-content to="wizard-actions">
+							<stack
+								align="end"
+								direction="row"
+								gap="default"
+							>
+								<button>
+									<action class="com.top_logic.layout.view.wizard.WizardBackCommand">
+										<label>
+											<en>Back</en>
+											<de>Zurück</de>
+										</label>
+										<executability>
+											<wizard-has-back/>
+										</executability>
+									</action>
+								</button>
+								<button appearance="primary">
+									<action class="com.top_logic.layout.view.command.GenericViewCommand">
+										<label>
+											<en>Next</en>
+											<de>Weiter</de>
+										</label>
+										<executability>
+											<wizard-has-next/>
+											<form-valid/>
+										</executability>
+										<store-form-state/>
+										<wizard-next/>
+									</action>
+								</button>
+							</stack>
+						</slot-content>
+					</form>
+				</step>
+				<step id="ready"
+					auto-advance="2s"
+					icon="css:bi bi-hourglass-split"
+				>
+					<label>
+						<en>Setting up</en>
+						<de>Wird eingerichtet</de>
+					</label>
+					<inset>
+						<text>
+							<label>
+								<en>Setting up your profile — this takes a moment.</en>
+								<de>Wir richten Ihr Profil ein — das dauert einen Moment.</de>
+							</label>
+						</text>
+					</inset>
+				</step>
+				<dynamic-steps
+					element-channel="question"
+					icon="q -> 'css:bi bi-question-circle'"
+					label="q -> if($q == 'role', 'Role', if($q == 'phone', 'Phone', 'Notes'))"
+					steps="questions"
+				>
+					<form
+						initial-edit-mode="true"
+						input="profile"
+						mode-switch="false"
+					>
+						<switch input="question">
+							<case test="q -> $q == 'role'">
+								<field attribute="string"/>
+							</case>
+							<case test="q -> $q == 'phone'">
+								<field attribute="phone"/>
+							</case>
+							<default>
+								<field attribute="multiLine"/>
+							</default>
+						</switch>
+						<slot-content to="wizard-actions">
+							<stack
+								align="end"
+								direction="row"
+								gap="default"
+							>
+								<button>
+									<action class="com.top_logic.layout.view.wizard.WizardBackCommand">
+										<label>
+											<en>Back</en>
+											<de>Zurück</de>
+										</label>
+										<executability>
+											<wizard-has-back/>
+										</executability>
+									</action>
+								</button>
+								<button appearance="primary">
+									<action class="com.top_logic.layout.view.command.GenericViewCommand">
+										<label>
+											<en>Next</en>
+											<de>Weiter</de>
+										</label>
+										<executability>
+											<form-valid/>
+										</executability>
+										<store-form-state/>
+										<execute-script
+											function="qs -> x -> if($qs.size() == 1, ['role', 'phone'], if($qs.size() == 2, ['role', 'phone', 'notes'], $qs))"
+											inputs="questions"
+										/>
+										<write-channel name="questions"/>
+										<wizard-next/>
+									</action>
+								</button>
+							</stack>
+						</slot-content>
+					</form>
+				</dynamic-steps>
+				<step id="summary"
+					icon="css:bi bi-check2-circle"
+				>
+					<label>
+						<en>Summary</en>
+						<de>Zusammenfassung</de>
+					</label>
+					<stack gap="default">
+						<inset>
+							<text>
+								<label>
+									<en>The account is set up. What the flow collected:</en>
+									<de>Das Konto ist eingerichtet. Was der Ablauf gesammelt hat:</de>
+								</label>
+							</text>
+						</inset>
+						<form
+							input="profile"
+							mode-switch="false"
+						>
+							<field attribute="name"/>
+							<field attribute="email"/>
+							<field attribute="string"/>
+							<field attribute="phone"/>
+							<field attribute="multiLine"/>
+						</form>
+					</stack>
+					<slot-content to="wizard-actions">
+						<stack
+							align="end"
+							direction="row"
+							gap="default"
+						>
+							<button>
+								<action class="com.top_logic.layout.view.wizard.WizardBackCommand">
+									<label>
+										<en>Back</en>
+										<de>Zurück</de>
+									</label>
+									<executability>
+										<wizard-has-back/>
+									</executability>
+								</action>
+							</button>
+							<button appearance="primary">
+								<action class="com.top_logic.layout.view.wizard.WizardGotoCommand"
+									step="welcome"
+								>
+									<label>
+										<en>Back to start</en>
+										<de>Zurück zum Anfang</de>
+									</label>
+								</action>
+							</button>
+						</stack>
+					</slot-content>
+				</step>
+			</wizard>
+			<slot name="wizard-actions"/>
+		</stack>
+	</panel>
+</view>

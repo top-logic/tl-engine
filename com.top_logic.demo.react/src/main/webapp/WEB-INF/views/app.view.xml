@@ -206,6 +206,15 @@
 							<de>Lang laufender Auftrag</de>
 						</label>
 					</nav-item>
+					<nav-item id="wizard"
+						icon="css:bi bi-signpost-2"
+					>
+						<view-ref view="demo/wizard-demo.view.xml"/>
+						<label>
+							<en>Wizard</en>
+							<de>Assistent</de>
+						</label>
+					</nav-item>
 					<nav-item id="calendar"
 						icon="css:bi bi-calendar3"
 					>

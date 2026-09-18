@@ -1862,6 +1862,202 @@ button.tlDrawerToggle:focus-visible {
 	visibility: hidden;
 }
 
+/* --- TLWizard -------------------------------------------------------------- */
+
+/* A multi-step flow: the indicator pinned above, the step content below it. */
+.tlWizard {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	width: 100%;
+	font-family: var(--font-family);
+}
+
+.tlWizard__header {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-03);
+	padding: var(--spacing-04);
+	/* Keep the indicator in place while the step content scrolls. */
+	flex-shrink: 0;
+	border-bottom: 1px solid var(--border-subtle-01);
+}
+
+.tlWizard__counter {
+	color: var(--text-secondary);
+	font-size: var(--label-01-font-size);
+	font-variant-numeric: tabular-nums;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+/* The bar stands for a length walked, so it is given one instead of taking the width of the page. */
+.tlWizard__progress {
+	display: flex;
+	max-width: 24rem;
+}
+
+.tlWizard__progress > * {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.tlWizard__steps {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--spacing-02) var(--spacing-05);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	counter-reset: tlWizardStep;
+}
+
+.tlWizard__stepItem {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	counter-increment: tlWizardStep;
+	font-size: var(--body-compact-01-font-size);
+}
+
+/* The position of the step, drawn as a disc in front of its name. */
+.tlWizard__stepItem::before {
+	content: counter(tlWizardStep);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	width: 1.5rem;
+	height: 1.5rem;
+	border-radius: 999px;
+	background-color: var(--layer-active);
+	color: var(--text-secondary);
+	font-size: var(--label-01-font-size);
+	font-variant-numeric: tabular-nums;
+}
+
+.tlWizard__stepItem--done::before {
+	background-color: var(--interactive);
+	color: var(--text-on-color);
+}
+
+.tlWizard__stepItem--current::before {
+	background-color: var(--button-primary);
+	color: var(--text-on-color);
+}
+
+.tlWizard__stepName,
+.tlWizard__stepButton {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	font-family: var(--font-family);
+	font-size: inherit;
+	white-space: nowrap;
+}
+
+.tlWizard__stepName {
+	color: var(--text-secondary);
+}
+
+.tlWizard__stepItem--current .tlWizard__stepName {
+	color: var(--text-primary);
+	font-weight: bold;
+}
+
+.tlWizard__stepButton {
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: var(--link-primary);
+	cursor: pointer;
+}
+
+.tlWizard__stepButton:hover {
+	text-decoration: underline;
+}
+
+.tlWizard__stepButton:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: 2px;
+}
+
+/* The region holding the step content, bounded so that a filling step resolves its height here. It
+   positions the copy of the step leaving, which lies over the one arriving while it fades out. */
+.tlWizard__body {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
+.tlWizard__step {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
+/* The step change, as the engine draws it by default: the arriving step slides in from the side the
+   wizard moved towards, the one left behind fades out over it. An application restyles the change by
+   redefining these four rules; the classes (and the direction modifier on the root) are what it
+   addresses, so it can also drop the movement and keep only the fade, or animate something else
+   entirely. */
+.tlWizard__step--entering {
+	animation: tlWizardEnterForward 0.2s ease-out;
+}
+
+.tlWizard--backward .tlWizard__step--entering {
+	animation-name: tlWizardEnterBackward;
+}
+
+/* A picture of the step left behind: it neither takes input nor is read out, and it takes no place
+   in the layout, so the step arriving sits where it will stay. */
+.tlWizard__step--exiting {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	animation: tlWizardLeaveForward 0.2s ease-out forwards;
+}
+
+.tlWizard--backward .tlWizard__step--exiting {
+	animation-name: tlWizardLeaveBackward;
+}
+
+@keyframes tlWizardEnterForward {
+	from { opacity: 0; transform: translateX(12px); }
+	to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes tlWizardEnterBackward {
+	from { opacity: 0; transform: translateX(-12px); }
+	to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes tlWizardLeaveForward {
+	from { opacity: 1; transform: translateX(0); }
+	to   { opacity: 0; transform: translateX(-12px); }
+}
+
+@keyframes tlWizardLeaveBackward {
+	from { opacity: 1; transform: translateX(0); }
+	to   { opacity: 0; transform: translateX(12px); }
+}
+
+/* A viewer who asked for less movement gets the step change without one; the copy of the step
+   leaving is dropped by the component's own fallback instead of by an animation ending. */
+@media (prefers-reduced-motion: reduce) {
+	.tlWizard__step--entering,
+	.tlWizard__step--exiting {
+		animation: none;
+	}
+
+	.tlWizard__step--exiting {
+		opacity: 0;
+	}
+}
+
 /* --- TLGrid ---------------------------------------------------------------- */
 
 .tlGrid {

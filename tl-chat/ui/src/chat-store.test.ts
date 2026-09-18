@@ -1,5 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { chatIdOf, chatStore, liveChatCount, readBootstrap, type ChatBootstrap } from './chat-store'
+import {
+  chatIdOf,
+  chatStore,
+  eventBelongsToChat,
+  liveChatCount,
+  readBootstrap,
+  type ChatBootstrap,
+} from './chat-store'
 import { unseenBadge } from './progress-model'
 import type { ChatMessage } from './types'
 
@@ -641,6 +648,34 @@ describe('a mounted rail', () => {
   })
 
   /**
+   * The dock asks this before it shows itself at all.
+   *
+   * The transport is one conversation per window, so a dock offering a second view of the
+   * conversation the page already shows would have the two taking each other's turns. Its own
+   * nested conversation must not be what makes it hide, which is what `insideDock` says.
+   */
+  it('counts the conversations mounted outside a dock, and only those', () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    expect(store.getState().conversationsOutsideDock).toBe(0)
+
+    const inDock = store.actions.registerConversation(true)
+    expect(store.getState().conversationsOutsideDock).toBe(0)
+
+    const onPage = store.actions.registerConversation(false)
+    expect(store.getState().conversationsOutsideDock).toBe(1)
+
+    onPage()
+    expect(store.getState().conversationsOutsideDock).toBe(0)
+    // Idempotent, like the rail's: a second release must not count below zero.
+    onPage()
+    inDock()
+    expect(store.getState().conversationsOutsideDock).toBe(0)
+
+    release()
+  })
+
+  /**
    * A `<chat-dock/>` is the user looking without the user opening the rail.
    *
    * The dock's launcher carries the same unseen count the transcript's rail button does, so opening
@@ -1097,5 +1132,43 @@ describe('the turn settings', () => {
     expect(store.getState().mcpDirty).toBe(false)
 
     release()
+  })
+})
+
+/**
+ * The frames of somebody else's turn.
+ *
+ * Every `/chat/*` call is keyed by the window alone, so both stores of a window with two chat ids
+ * attach to one server-side tracker and see one stream. A frame naming a session that is not the
+ * open one is the other conversation's.
+ */
+describe('eventBelongsToChat', () => {
+  it('drops a run-scoped frame that names another session', () => {
+    expect(eventBelongsToChat('text_delta', JSON.stringify({ sessionId: '77', text: 'x' }), '42')).toBe(false)
+    expect(eventBelongsToChat('run_started', JSON.stringify({ sessionId: '77' }), '42')).toBe(false)
+    expect(eventBelongsToChat('message_complete', JSON.stringify({ sessionId: '42' }), '42')).toBe(true)
+  })
+
+  /**
+   * Inert where the server says nothing: most frames carry no session id today, and a guard that
+   * dropped those would leave every transcript empty. It tightens by itself once they do.
+   */
+  it('delivers a frame that names no session, and anything unparsable', () => {
+    expect(eventBelongsToChat('text_delta', JSON.stringify({ text: 'x' }), '42')).toBe(true)
+    expect(eventBelongsToChat('text_delta', 'not json', '42')).toBe(true)
+    expect(eventBelongsToChat('text_delta', JSON.stringify({ sessionId: '' }), '42')).toBe(true)
+  })
+
+  /** What is addressed to the window rather than to a turn is never filtered. */
+  it('always delivers the frames that belong to the window', () => {
+    for (const name of ['connected', 'heartbeat', 'approval_required', 'user_interaction']) {
+      expect(eventBelongsToChat(name, JSON.stringify({ sessionId: '77' }), '42')).toBe(true)
+    }
+  })
+
+  /** A store with no session open yet must not swallow the run that is creating one. */
+  it('drops a named frame while no session is open, and keeps an unnamed one', () => {
+    expect(eventBelongsToChat('text_delta', JSON.stringify({ sessionId: '77' }), null)).toBe(false)
+    expect(eventBelongsToChat('text_delta', JSON.stringify({ text: 'x' }), null)).toBe(true)
   })
 })

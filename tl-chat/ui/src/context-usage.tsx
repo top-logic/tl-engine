@@ -1,7 +1,7 @@
 import { React } from 'tl-react-bridge'
 import type { bundle } from './i18n'
 import { effortLabel, modelLabel } from './models'
-import { runStore } from './store'
+import { runStore, type RunStore } from './store'
 import { answerTokens, type ContextComposition, type RunSnapshot } from './types'
 
 const { useEffect, useRef, useState, useSyncExternalStore } = React
@@ -151,8 +151,21 @@ function arcLength(ratio: number, circumference: number): number {
   return Math.max(circumference * 0.04, circumference * ratio)
 }
 
-export const ContextUsage = React.memo(function ContextUsage({ labels }: { labels: Labels }) {
-  const snapshot = useSyncExternalStore(runStore.subscribe, runStore.get, runStore.get)
+/**
+ * The ring reads the run store of the chat it belongs to.
+ *
+ * It defaults to the module-level one, which is what a host composing its own chat still gets;
+ * every element of this bundle passes the store of the chat it joined, because a window holding
+ * two conversations has two runs and the module store only ever holds the last writer's.
+ */
+export const ContextUsage = React.memo(function ContextUsage({
+  labels,
+  runs = runStore,
+}: {
+  labels: Labels
+  runs?: RunStore
+}) {
+  const snapshot = useSyncExternalStore(runs.subscribe, runs.get, runs.get)
   const [open, setOpen] = useState(false)
   const wrap = useRef<HTMLDivElement>(null)
   const reading = readContext(snapshot)

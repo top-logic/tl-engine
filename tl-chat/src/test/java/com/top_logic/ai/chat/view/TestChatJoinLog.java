@@ -47,15 +47,62 @@ public class TestChatJoinLog extends TestCase {
 		assertFalse(messages.get(0).warning());
 	}
 
-	/** Two ids that both hold several elements are two chats, not a typo. */
-	public void testTwoSharedChatsDoNotWarn() {
+	/**
+	 * Two ids that both hold a transcript are not a typo - they are the shape the transport cannot
+	 * carry.
+	 *
+	 * <p>
+	 * This used to be the example of a page that is fine. It is not: every {@code /chat/*} call is
+	 * keyed by the window alone, so both conversations attach to one active session and one run,
+	 * and each shows the other's answer. No spelling warning (both ids hold several elements), but
+	 * the transport warning.
+	 * </p>
+	 */
+	public void testTwoConversationsInOneWindowWarn() {
 		ChatJoinLog log = new ChatJoinLog();
 		log.join("w1", "left", "chat-conversation");
 		log.join("w1", "left", "chat-rail");
 		log.join("w1", "right", "chat-conversation");
 		log.join("w1", "right", "chat-rail");
 
-		assertEquals(1, log.messages().size());
+		List<Message> messages = log.messages();
+		assertEquals(2, messages.size());
+		assertFalse(messages.get(0).warning());
+		assertTrue(messages.get(1).warning());
+		String text = messages.get(1).text();
+		assertTrue(text, text.contains("'left'") && text.contains("'right'"));
+		assertTrue(text, text.contains("one conversation per window"));
+	}
+
+	/** Several elements of one chat, and the second id holding no transcript, is silent. */
+	public void testOnlyATranscriptCountsAsAConversation() {
+		ChatJoinLog log = new ChatJoinLog();
+		log.join("w1", "left", "chat-conversation");
+		log.join("w1", "left", "chat-rail");
+		log.join("w1", "right", "chat-sources");
+		log.join("w1", "right", "chat-rail");
+
+		assertEquals("A second chat id that shows no transcript takes no turns.", 1, log.messages().size());
+	}
+
+	/**
+	 * A dock and the page it hides on both render before the browser decides which of them shows.
+	 *
+	 * <p>
+	 * They are the same conversation, so there is one id and nothing to warn about - which is what
+	 * makes "give them one chat-id" the advice the warning ends with.
+	 * </p>
+	 */
+	public void testADockOnThePagesOwnChatIsSilent() {
+		ChatJoinLog log = new ChatJoinLog();
+		log.join("w1", "chat", "chat-conversation");
+		log.join("w1", "chat", "chat-rail");
+		log.join("w1", "chat", "chat-dock");
+		log.join("w1", "chat", "chat-conversation");
+
+		List<Message> messages = log.messages();
+		assertEquals(1, messages.size());
+		assertFalse(messages.get(0).warning());
 	}
 
 	/** The typo: a second id that nobody else joined. */

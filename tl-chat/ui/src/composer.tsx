@@ -2,6 +2,7 @@ import { React } from 'tl-react-bridge'
 import { cancelPromptImprovement, improvePrompt } from './api'
 import { ACCEPT_ATTRIBUTE, collectAttachments, dragHasFiles } from './attachments'
 import { ContextUsage, formatTokens } from './context-usage'
+import type { RunStore } from './store'
 import type { bundle } from './i18n'
 import { agentLabel, effortLabel, modelLabel } from './models'
 import { ComposerNotice } from './notice'
@@ -275,6 +276,7 @@ export const Composer = React.memo(
   autoApproveSwitch = true,
   enterHint = true,
   placeholder,
+  runs,
 }: {
   windowId: string
   agents: AgentOption[]
@@ -326,6 +328,8 @@ export const Composer = React.memo(
   autoApproveSwitch?: boolean
   enterHint?: boolean
   placeholder?: string
+  /** The run store of the chat this composer belongs to; the context ring reads it. */
+  runs?: RunStore
 }, handle: React.Ref<ComposerApi>) {
   const [text, setText] = useState('')
   const [files, setFiles] = useState<Attachment[]>([])
@@ -1105,7 +1109,7 @@ export const Composer = React.memo(
               ) : null}
             </div>
             ) : null}
-            <ContextUsage labels={labels} />
+            <ContextUsage labels={labels} runs={runs} />
             <SendButton
               disabled={!text.trim() && files.length === 0}
               busy={busy}

@@ -108,6 +108,9 @@ public class ChatConversationControl extends ReactControl {
 		_binding.tracker().setPromptImproverAgentName(configuredImprover);
 		_binding.writeSharedState(this::putState);
 		putState("chatId", chatId);
+		// Whether this conversation is the one a <chat-dock/> frames. A dock stands down while a
+		// conversation of its chat is on the page, and its own must not be what triggers that.
+		putState("insideDock", Boolean.valueOf(ChatDockScope.isInsideDock(context)));
 
 		// Transcript. The trace level seeds the store's own axis (state key stays "traceMode"), which
 		// the composer's trace picker then changes live.

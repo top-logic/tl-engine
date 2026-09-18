@@ -140,7 +140,7 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   const state = useTLState()
   const command = useTLCommand()
   const boot = useMemo(() => readBootstrap(state), [state])
-  const { chat, actions } = useChat(chatIdOf(state, controlId), boot)
+  const { chat, actions, runs } = useChat(chatIdOf(state, controlId), boot)
   const labels = useMemo(() => bundle(chat.language), [chat.language])
   const config = useMemo(() => readThreadConfig(state), [state])
   const controls = useMemo(() => readComposerControls(state), [state])
@@ -158,6 +158,13 @@ export function TLChatConversation({ controlId }: TLCellProps) {
       registeredReferenceSource(typeof state.referenceSource === 'string' ? state.referenceSource : ''),
     [state.referenceCandidates, state.referenceSource],
   )
+
+  // Tell the chat a conversation is on the page. A `<chat-dock/>` asks for this: the transport is
+  // one conversation per window, so a dock must not open a second copy of the one the page is
+  // already showing. Its own nested conversation does not count - `insideDock` says which is which,
+  // and comes from the view context rather than from the React tree.
+  const insideDock = state.insideDock === true
+  useEffect(() => actions.registerConversation(insideDock), [actions, insideDock])
 
   // Follow the selection channel. A non-empty value selects that session; clearing it (a transition
   // to empty) means "new chat" - a deselect shows a fresh, empty conversation. The transition guard
@@ -379,6 +386,7 @@ export function TLChatConversation({ controlId }: TLCellProps) {
           placeholder={placeholder || undefined}
           extraMenuItems={extraMenuItems}
           referenceCandidates={referenceCandidates}
+          runs={runs}
           ref={(api: ComposerApi | null) => actions.bindComposer(api)}
           {...controls}
         />

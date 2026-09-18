@@ -64,8 +64,11 @@ public class ChatDockControl extends ReactControl {
 		putState("dockOpen", Boolean.valueOf(config.getOpen()));
 
 		if (!content.isEmpty()) {
+			// Scoped, so a <chat-conversation/> in here knows it is the dock's own and does not make
+			// the dock stand down for itself - see ChatDockScope.
 			putState("content", ContentControls.toControl(content, context.childContext("content")
-				.withChildSlotPath("content")));
+				.withChildSlotPath("content")
+				.withScope(ChatDockScope.class, ChatDockScope.INSTANCE)));
 		}
 	}
 

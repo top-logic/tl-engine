@@ -486,10 +486,11 @@
 }
 
 /*
- * A session that is not signed in cannot chat, and the servlet refuses every call it makes, so the
- * dock offers no way in rather than a launcher onto a dead end.
+ * Nothing at all, in the two cases where a launcher would be wrong: a session that is not signed in
+ * (the servlet refuses every call it makes), and a page that is already showing this conversation
+ * (the transport carries one conversation per window, so there is no second view to open).
  */
-.tl-chat-dock.is-signed-out {
+.tl-chat-dock.is-stood-down {
   display: none;
 }
 

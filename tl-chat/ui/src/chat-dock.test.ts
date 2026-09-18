@@ -172,9 +172,34 @@ describe('the rendered dock', () => {
   /** A launcher onto a chat the servlet refuses every call of is an invitation to a dead end. */
   it('offers nothing at all in a session that is not signed in', () => {
     const html = render(dockState({ authenticated: false, chatId: 'dock-signed-out' }))
-    expect(html).toContain('is-signed-out')
+    expect(html).toContain('is-stood-down')
     expect(html).not.toContain('data-module')
     expect(html).not.toContain('<button')
+  })
+
+  /**
+   * The other case where a dock must not appear: the page is showing this very conversation.
+   *
+   * The chat transport is one conversation per window, so a second view of it would take the
+   * page's turns. The content is unmounted rather than hidden, so the rail inside the dock stops
+   * competing with the page's rail for the one remembered layout.
+   */
+  it('stands down entirely while a page shows its conversation', () => {
+    const { store, release } = seedChat('dock-stand-down')
+    const onPage = store.actions.registerConversation(false)
+
+    const html = render(dockState({ chatId: 'dock-stand-down' }))
+    expect(html).toContain('is-stood-down')
+    expect(html).not.toContain('<button')
+    expect(html).not.toContain('data-module')
+
+    // The page's conversation goes away (the user navigated): the dock comes back with it.
+    onPage()
+    const back = render(dockState({ chatId: 'dock-stand-down' }))
+    expect(back).not.toContain('is-stood-down')
+    expect(back).toContain('data-module="TLStack"')
+
+    release()
   })
 
   /** The dock is a frame; a dock with nothing in it is a configuration, not a crash. */

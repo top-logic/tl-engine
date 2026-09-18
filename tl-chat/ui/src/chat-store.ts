@@ -41,10 +41,12 @@ import { composeOutboundText } from './send-prefix'
 import { citedSources, type CitedSource } from './sources'
 import {
   EMPTY_RUN,
+  createRunStore,
   readActiveSession,
   readEffort,
   readTraceMode,
   runStore,
+  type RunStore,
   writeActiveSession,
   writeEffort,
   writeTraceMode,
@@ -63,6 +65,7 @@ import {
   type ModelOption,
   type NoticeTone,
   type Rating,
+  type RunSnapshot,
   type SessionSummary,
   type SubagentActivity,
   type SubagentStatus,
@@ -194,6 +197,59 @@ export function readBootstrap(state: Record<string, unknown>): ChatBootstrap {
 }
 
 /**
+ * The SSE frames that belong to one turn of one conversation.
+ *
+ * Everything else a stream carries - the connect, the heartbeat, an approval or a question the
+ * *user* has to answer - is addressed to the window rather than to a turn, and is delivered
+ * whatever conversation is open.
+ */
+const RUN_SCOPED_EVENTS = new Set([
+  'run_started',
+  'run_completed',
+  'turn_started',
+  'turn_completed',
+  'context_composition',
+  'text_delta',
+  'thinking_delta',
+  'tool_started',
+  'tool_completed',
+  'tool_failed',
+  'tool_denied',
+  'task_update',
+  'compaction_started',
+  'message_complete',
+  'provider_error',
+  'delegation_event',
+])
+
+/**
+ * Whether a stream frame belongs to the conversation this store is showing.
+ *
+ * **The chat transport is one conversation per window.** Every `/chat/*` call carries a
+ * `windowId` and nothing else, so the server holds one `TaskProgressTracker` - one active session,
+ * one processing state - per window, and both stores of a window with two chat ids attach to it.
+ * A frame that names a session other than the open one is therefore the other conversation's and
+ * is dropped here rather than rendered into this transcript.
+ *
+ * A frame that names no session at all is delivered: today most of them name none, so this is a
+ * guard that tightens by itself as the server learns to stamp them (the per-window transport is a
+ * ticket of its own). It is not a substitute for the rule that a window shows one conversation -
+ * see `<chat-dock>` in `tl-chat/CLAUDE.md`.
+ */
+export function eventBelongsToChat(name: string, raw: unknown, sessionId: string | null): boolean {
+  if (!RUN_SCOPED_EVENTS.has(name)) return true
+  if (typeof raw !== 'string') return true
+  let named: unknown
+  try {
+    named = (JSON.parse(raw) as { sessionId?: unknown }).sessionId
+  } catch {
+    return true
+  }
+  if (typeof named !== 'string' || !named) return true
+  return named === sessionId
+}
+
+/**
  * Which store a chat element joins.
  *
  * `chat-id` is what lets separate elements find each other. `<agent-chat>` leaves it empty and
@@ -274,6 +330,16 @@ export interface ChatState {
    * rail that mounts after the conversation makes the button appear then.
    */
   railMounted: boolean
+
+  /**
+   * How many `<chat-conversation/>` elements of this chat are mounted **outside** a
+   * `<chat-dock/>`.
+   *
+   * What a dock asks before it shows itself: the transport is one conversation per window, so a
+   * dock whose conversation is already on the page must not open a second copy of it. The page's
+   * conversation wins - it is the one the user navigated to.
+   */
+  conversationsOutsideDock: number
 
   /**
    * The sum of the mounted rail's section badges.
@@ -388,6 +454,14 @@ export interface ChatActions {
    * development and two rails on one `chat-id` are not forbidden.
    */
   registerRail(): () => void
+  /**
+   * Announces a mounted `<chat-conversation/>`; the returned function unregisters it again.
+   *
+   * `insideDock` is what the element's control read from its view context, so a dock's own
+   * conversation does not count against the dock itself. Counted rather than flagged, for the same
+   * reason {@link registerRail} counts.
+   */
+  registerConversation(insideDock: boolean): () => void
   bindComposer(api: ComposerApi | null): void
   insertReference(token: ReferenceToken): void
 }
@@ -481,6 +555,15 @@ export class ChatStore {
   /** Whether the remembered chat has been dealt with; restoring happens once per store. */
   private restored = false
 
+  /**
+   * This chat's run snapshot: what the context ring reads.
+   *
+   * One per chat rather than the module-level {@link runStore}, which a window holding two
+   * conversations would have both of them writing - and the ring beside either composer would then
+   * show whichever ran last. The module store is still mirrored for the single-chat host seam.
+   */
+  readonly runs: RunStore = createRunStore()
+
   /** The width the element configures, kept apart from the width the user dragged to. */
   private readonly paneWidthDefault: number
 
@@ -490,6 +573,9 @@ export class ChatStore {
   /** How many {@code <chat-rail/>} elements on this `chat-id` are mounted. */
   private rails = 0
 
+  /** How many `<chat-conversation/>` elements on this `chat-id` are mounted outside a dock. */
+  private conversations = 0
+
   /**
    * The layout the server holds, so an unchanged layout is not written back.
    *
@@ -497,6 +583,18 @@ export class ChatStore {
    * booted from a stale control state, would overwrite the user's real choice.
    */
   private storedLayout: ChatPreferences
+
+  /**
+   * Writes this chat's run snapshot, and mirrors it onto the module-level {@link runStore}.
+   *
+   * The mirror is the host seam (`index.ts` exports `runStore`) and nothing in this bundle renders
+   * from it; a window with two chats leaves the last writer standing there, which is what that
+   * seam has always meant.
+   */
+  private setRun = (next: RunSnapshot | ((prev: RunSnapshot) => RunSnapshot)): void => {
+    this.runs.set(next)
+    runStore.set(this.runs.get())
+  }
 
   /** What the user decided per fact, which is what is stored - never what the page happens to show. */
   private get layout(): ChatPreferences {
@@ -531,7 +629,7 @@ export class ChatStore {
 
   constructor(chatId: string, boot: ChatBootstrap) {
     this.chatId = chatId
-    this.remembered = readActiveSession()
+    this.remembered = readActiveSession(chatId)
     this.layoutKey = boot.layoutKey
     this.paneWidthDefault = boot.paneWidthDefault
     this.paneWidthStored = boot.paneWidth
@@ -588,6 +686,7 @@ export class ChatStore {
       collapsedSections: collapsedSections(boot.collapsedSections ?? ['context'], boot.sectionChoices),
       sectionChoices: boot.sectionChoices,
       railMounted: false,
+      conversationsOutsideDock: 0,
       badgeTotal: 0,
     })
     this.effects = this.declareEffects()
@@ -742,7 +841,7 @@ export class ChatStore {
       },
       {
         deps: (s) => [s.sessionId],
-        run: () => writeActiveSession(this.state.sessionId),
+        run: () => writeActiveSession(this.chatId, this.state.sessionId),
       },
       {
         deps: (s) => [s.authenticated, s.windowId],
@@ -760,7 +859,7 @@ export class ChatStore {
           const { caps, model } = this.state
           const known = caps.models.find((item) => item.id === model)
           if (!known?.contextWindow) return
-          runStore.set((snapshot) => ({
+          this.setRun((snapshot) => ({
             ...snapshot,
             model: model || snapshot.model,
             contextWindow: known.contextWindow ?? snapshot.contextWindow,
@@ -779,7 +878,7 @@ export class ChatStore {
       },
       {
         deps: (s) => [s.effort],
-        run: () => runStore.set((snapshot) => ({ ...snapshot, effort: this.state.effort })),
+        run: () => this.setRun((snapshot) => ({ ...snapshot, effort: this.state.effort })),
       },
       {
         deps: (s) => [s.authenticated, s.sessionsLoading, s.sessions],
@@ -839,7 +938,7 @@ export class ChatStore {
     const id = this.remembered
     if (!id) return
     if (!sessions.some((item) => item.id === id)) {
-      writeActiveSession(null)
+      writeActiveSession(this.chatId, null)
       return
     }
     void this.actions.selectSession(id)
@@ -873,7 +972,7 @@ export class ChatStore {
       }
       if (error) this.showNotice(error, detail ?? '', { tone: errorTone })
       this.patch({ busy: false })
-      runStore.set((s) => ({ ...s, busy: false }))
+      this.setRun((s) => ({ ...s, busy: false }))
     }
 
     /**
@@ -908,11 +1007,14 @@ export class ChatStore {
       const on = (name: string, fn: (e: MessageEvent) => void) =>
         es.addEventListener(name, ((event: MessageEvent) => {
           markAlive()
+          // The transport is one conversation per window (see `eventBelongsToChat`), so a frame
+          // that names a conversation other than this store's is somebody else's turn.
+          if (!eventBelongsToChat(name, event.data, this.state.sessionId)) return
           fn(event)
         }) as EventListener)
 
       const setTokens = (windowSize?: number, modelName?: string, usage?: TokenUsage) => {
-        runStore.set((s) => ({
+        this.setRun((s) => ({
           ...s,
           contextWindow: windowSize || s.contextWindow,
           model: modelName || s.model,
@@ -935,7 +1037,7 @@ export class ChatStore {
         this.cancelled = false
         this.runId = data.runId ?? crypto.randomUUID()
         this.dispatch({ type: 'START_RUN', runId: this.runId })
-        runStore.set((s) => ({
+        this.setRun((s) => ({
           ...s,
           busy: true,
           estimatedTokens: data.usedTokens ?? s.estimatedTokens,
@@ -945,7 +1047,7 @@ export class ChatStore {
       })
       on('turn_started', (e) => {
         const data = parseJson<{ usedTokens?: number; contextWindow?: number }>(e.data, {})
-        runStore.set((s) => ({
+        this.setRun((s) => ({
           ...s,
           estimatedTokens: data.usedTokens ?? s.estimatedTokens,
           contextWindow: data.contextWindow || s.contextWindow,
@@ -957,7 +1059,7 @@ export class ChatStore {
       })
       on('context_composition', (e) => {
         const data = parseJson<Partial<ContextComposition>>(e.data, {})
-        runStore.set((s) => ({
+        this.setRun((s) => ({
           ...s,
           composition: {
             systemPromptTokens: data.systemPromptTokens ?? 0,
@@ -1193,7 +1295,7 @@ export class ChatStore {
         const data = parseJson<{ contextWindow?: number }>(e.data, {})
         // The measured figure describes a conversation that no longer exists; the next turn
         // reports the compacted one, and until then the ring falls back to the estimate.
-        runStore.set((s) => ({ ...s, measuredTokens: 0, contextWindow: data.contextWindow || s.contextWindow }))
+        this.setRun((s) => ({ ...s, measuredTokens: 0, contextWindow: data.contextWindow || s.contextWindow }))
       })
       on('turn_completed', (e) => {
         const data = parseJson<{ turnUsage?: TokenUsage; contextWindow?: number }>(e.data, {})
@@ -1396,7 +1498,7 @@ export class ChatStore {
         this.noticeSticky = false
         // The model does not change when the chat does, so its window survives the reset; only what
         // the previous conversation measured is dropped.
-        runStore.set((s) => ({ ...EMPTY_RUN, model: s.model, contextWindow: s.contextWindow }))
+        this.setRun((s) => ({ ...EMPTY_RUN, model: s.model, contextWindow: s.contextWindow }))
         const detail = await loadSession(windowId, id)
         this.patch({
           sessionId: id,
@@ -1405,7 +1507,7 @@ export class ChatStore {
           ...(detail.lastEffort ? { effort: detail.lastEffort } : {}),
         })
         // A re-opened session shows what its last request really cost, not a fresh estimate.
-        runStore.set((snapshot) => ({
+        this.setRun((snapshot) => ({
           ...snapshot,
           model: detail.lastModel || snapshot.model,
           contextWindow: detail.contextWindow || snapshot.contextWindow,
@@ -1440,7 +1542,7 @@ export class ChatStore {
           messages: chatReducer(this.snapshot.messages, { type: 'RESET' }),
           busy: false,
         })
-        runStore.set((s) => ({ ...EMPTY_RUN, model: s.model, contextWindow: s.contextWindow }))
+        this.setRun((s) => ({ ...EMPTY_RUN, model: s.model, contextWindow: s.contextWindow }))
       },
 
       deleteSession: async (id: string) => {
@@ -1452,7 +1554,7 @@ export class ChatStore {
             tasks: [],
             messages: chatReducer(this.snapshot.messages, { type: 'RESET' }),
           })
-          runStore.set((s) => ({ ...EMPTY_RUN, model: s.model, contextWindow: s.contextWindow }))
+          this.setRun((s) => ({ ...EMPTY_RUN, model: s.model, contextWindow: s.contextWindow }))
         }
         await this.refreshSessions()
       },
@@ -1503,7 +1605,7 @@ export class ChatStore {
           edited: options.edited,
         })
         this.patch({ busy: true })
-        runStore.set((s) => ({ ...s, busy: true }))
+        this.setRun((s) => ({ ...s, busy: true }))
         try {
           await sendMessage(windowId, {
             text: outbound,
@@ -1518,7 +1620,7 @@ export class ChatStore {
         } catch (err) {
           this.dispatch({ type: 'REMOVE_MESSAGE', id: messageId })
           this.patch({ busy: false })
-          runStore.set((s) => ({ ...s, busy: false }))
+          this.setRun((s) => ({ ...s, busy: false }))
           // A refusal is not a failure: the server wrote a sentence for this user saying what they
           // may not use, and it reads as information rather than as something that went wrong.
           if (err instanceof ForbiddenError) {
@@ -1563,7 +1665,7 @@ export class ChatStore {
         }
         this.dispatch({ type: 'REMOVE_FROM_USER', id: messageId })
         this.patch({ feedback: this.state.feedback.filter((entry) => entry.turnIndex < turnIndex) })
-        runStore.set((snapshot) => ({ ...snapshot, measuredTokens: 0 }))
+        this.setRun((snapshot) => ({ ...snapshot, measuredTokens: 0 }))
         const sent = await this.actions.send(text, [], { ...options, edited: true })
         // Dropping the edited turn is what editing always does; saying so only helps when answers
         // the user could still see went with it.
@@ -1611,7 +1713,7 @@ export class ChatStore {
           this.patch({ feedback: this.state.feedback.filter((entry) => entry.turnIndex !== turnIndex) })
           this.dispatch({ type: 'ADD_USER', id: crypto.randomUUID(), text: result.text ?? '' })
           this.patch({ busy: true })
-          runStore.set((snapshot) => ({ ...snapshot, busy: true, measuredTokens: 0 }))
+          this.setRun((snapshot) => ({ ...snapshot, busy: true, measuredTokens: 0 }))
         } catch (err) {
           if (err instanceof ForbiddenError) {
             this.showNotice(err.reason || labels.notAllowed, '', { tone: 'info', sticky: true })
@@ -1804,6 +1906,19 @@ export class ChatStore {
         }
       },
 
+      registerConversation: (insideDock: boolean) => {
+        if (insideDock) return () => undefined
+        this.conversations += 1
+        this.patch({ conversationsOutsideDock: this.conversations })
+        let released = false
+        return () => {
+          if (released) return
+          released = true
+          this.conversations = Math.max(0, this.conversations - 1)
+          this.patch({ conversationsOutsideDock: this.conversations })
+        }
+      },
+
       bindComposer: (api) => {
         this.composerApi = api
       },
@@ -1862,6 +1977,8 @@ export function liveChatCount(): number {
 export interface ChatHandle {
   chat: ChatState
   actions: ChatActions
+  /** This chat's run snapshot - what the context ring beside its composer reads. */
+  runs: RunStore
 }
 
 /**
@@ -1882,5 +1999,5 @@ export function useChat(chatId: string, boot: ChatBootstrap): ChatHandle {
     // re-run what a sign-in or a late window id is what really changes.
     [store, boot.windowId, boot.authenticated, boot.userName, boot.welcomeName, boot.language],
   )
-  return { chat, actions: store.actions }
+  return { chat, actions: store.actions, runs: store.runs }
 }

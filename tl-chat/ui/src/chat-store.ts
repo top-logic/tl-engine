@@ -464,9 +464,6 @@ export class ChatStore {
   /** Whether the remembered chat has been dealt with; restoring happens once per store. */
   private restored = false
 
-  /** The configured collapsed sections, so a later choice can still be resolved against them. */
-  private collapsedDefaults: string[]
-
   /** The width the element configures, kept apart from the width the user dragged to. */
   private readonly paneWidthDefault: number
 
@@ -521,7 +518,6 @@ export class ChatStore {
     this.layoutKey = boot.layoutKey
     this.paneWidthDefault = boot.paneWidthDefault
     this.paneWidthStored = boot.paneWidth
-    this.collapsedDefaults = boot.collapsedSections ?? ['context']
     this.storedLayout = {
       railOpen: boot.railOpen,
       paneWidth: boot.paneWidth,
@@ -570,7 +566,9 @@ export class ChatStore {
       badgeSeen: boot.badgeSeen,
       paneContent: null,
       paneOptions: null,
-      collapsedSections: collapsedSections(this.collapsedDefaults, boot.sectionChoices),
+      // `App`'s own default is Kontext collapsed; a `<chat-rail/>` states its sections' own flags
+      // through `applyCollapsedDefaults` as soon as it mounts.
+      collapsedSections: collapsedSections(boot.collapsedSections ?? ['context'], boot.sectionChoices),
       sectionChoices: boot.sectionChoices,
       railMounted: false,
       badgeTotal: 0,
@@ -1743,7 +1741,6 @@ export class ChatStore {
       },
 
       applyCollapsedDefaults: (ids: string[]) => {
-        this.collapsedDefaults = ids
         this.patch({ collapsedSections: collapsedSections(ids, this.state.sectionChoices) })
       },
 

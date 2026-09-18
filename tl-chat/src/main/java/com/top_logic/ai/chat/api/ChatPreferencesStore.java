@@ -107,7 +107,7 @@ public final class ChatPreferencesStore {
 					byChat.put(String.valueOf(entry.getKey()), entry.getValue());
 				}
 			}
-			byChat.put(key(chatId), layout);
+			byChat.put(storageKey(chatId), layout);
 			pc.setJSONValue(KEY, byChat);
 			PersonalConfiguration.storePersonalConfiguration();
 		} catch (RuntimeException ex) {
@@ -132,11 +132,21 @@ public final class ChatPreferencesStore {
 		if (!(pc.getJSONValue(KEY) instanceof Map<?, ?> byChat)) {
 			return null;
 		}
-		return byChat.get(key(chatId)) instanceof Map<?, ?> layout ? layout : null;
+		return byChat.get(storageKey(chatId)) instanceof Map<?, ?> layout ? layout : null;
 	}
 
-	private static String key(String chatId) {
-		return chatId == null ? "" : chatId.trim();
+	/**
+	 * The key {@code chatId} is stored under inside the {@link #KEY} map.
+	 *
+	 * <p>
+	 * Prefixed, because the one-element {@code <agent-chat>} has the <em>empty</em> chat-id and
+	 * {@link com.top_logic.basic.json.JSON} refuses to parse a map with an empty key - it then
+	 * treats the whole value as a legacy format and drops it, taking every other chat's layout with
+	 * it. The prefix also keeps a chat-id from ever colliding with something else put in this map.
+	 * </p>
+	 */
+	static String storageKey(String chatId) {
+		return "chat:" + (chatId == null ? "" : chatId.trim());
 	}
 
 	private static int intOf(Object value) {

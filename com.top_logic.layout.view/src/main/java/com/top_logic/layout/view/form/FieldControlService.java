@@ -272,8 +272,23 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 */
 	public ReactControl createFieldControl(ReactContext context, TLStructuredTypePart part, FieldModel model,
 			PolymorphicConfiguration<? extends ReactFieldControlProvider> control) {
-		FieldSpec field = fieldSpec(part, model);
+		return createFieldControl(context, part, fieldSpec(part, model), model, control);
+	}
 
+	/**
+	 * Creates the input control for the given attribute, described by the given specification.
+	 *
+	 * <p>
+	 * How many values the field holds is part of that specification and need not be what the
+	 * attribute says: a column may collect the values of a single-valued attribute over several
+	 * objects and show all of them in one cell.
+	 * </p>
+	 *
+	 * @param field
+	 *        What is being edited, describing the given attribute.
+	 */
+	private ReactControl createFieldControl(ReactContext context, TLStructuredTypePart part, FieldSpec field,
+			FieldModel model, PolymorphicConfiguration<? extends ReactFieldControlProvider> control) {
 		// 0. The control the display asks for.
 		if (control != null) {
 			return createControl(context, field, model, _context.getInstance(control));
@@ -354,7 +369,19 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * Describes the given attribute for the control that edits it.
 	 */
 	private static FieldSpec fieldSpec(TLStructuredTypePart part, FieldModel model) {
-		return fieldSpec(part.getType(), part, MetaLabelProvider.INSTANCE.getLabel(part), part.isMultiple(), model);
+		return fieldSpec(part, part.isMultiple(), model);
+	}
+
+	/**
+	 * Describes a value of the given attribute for the control that edits it, holding as many
+	 * values as stated.
+	 *
+	 * @param multiple
+	 *        Whether the described field holds a collection of the attribute's values rather than
+	 *        a single one, see {@link ColumnType#collected()}.
+	 */
+	private static FieldSpec fieldSpec(TLStructuredTypePart part, boolean multiple, FieldModel model) {
+		return fieldSpec(part.getType(), part, MetaLabelProvider.INSTANCE.getLabel(part), multiple, model);
 	}
 
 	/**
@@ -671,9 +698,29 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 *        The attribute value to display, may be {@code null}.
 	 */
 	public ReactControl createDisplayControl(ReactContext context, TLStructuredTypePart part, Object value) {
-		AbstractFieldModel model = displayModel(part, value);
+		return createDisplayControl(context, part, part.isMultiple(), value);
+	}
+
+	/**
+	 * Creates a read-only control displaying the given value of the given attribute, the field
+	 * holding as many values as stated.
+	 *
+	 * <p>
+	 * The attribute decides everything but how many values there are: its annotations, its options
+	 * and its own control annotation shape the display, while the multiplicity is the one of the
+	 * field, which a column reaching the attribute over a multi-valued step answers for itself, see
+	 * {@link ColumnType#collected()}.
+	 * </p>
+	 *
+	 * @param multiple
+	 *        Whether the displayed value is a collection of the attribute's values rather than a
+	 *        single one.
+	 */
+	private ReactControl createDisplayControl(ReactContext context, TLStructuredTypePart part, boolean multiple,
+			Object value) {
+		AbstractFieldModel model = displayModel(part, multiple, value);
 		model.setEditable(false);
-		return createFieldControl(context, part, model);
+		return createFieldControl(context, part, fieldSpec(part, multiple, model), model, null);
 	}
 
 	/**
@@ -685,7 +732,9 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * ({@link ColumnType#type()}, {@link ColumnType#multiple()}) and where its display annotations
 	 * come from ({@link ColumnType#annotations()}) is all the display needs. Where an attribute
 	 * <em>does</em> hold the value ({@link ColumnType#part()}), that attribute decides the display,
-	 * so its options and its own annotations keep shaping the cell.
+	 * so its options and its own annotations keep shaping the cell - all but how many values the
+	 * cell holds, which is the column's answer ({@link ColumnType#multiple()}): a column reaching a
+	 * single-valued attribute over a multi-valued step shows all the values it collected.
 	 * </p>
 	 *
 	 * <p>
@@ -702,7 +751,7 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	public ReactControl createDisplayControl(ReactContext context, ColumnType columnType, Object value) {
 		TLStructuredTypePart part = columnType.part();
 		if (part != null) {
-			return createDisplayControl(context, part, value);
+			return createDisplayControl(context, part, columnType.multiple(), value);
 		}
 		TLType type = columnType.type();
 		if (type == null) {
@@ -714,19 +763,29 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 		return createFieldControl(context, type, field, model);
 	}
 
-	private AbstractFieldModel displayModel(TLStructuredTypePart part, Object value) {
+	/**
+	 * The field holding the displayed value of an attribute: an option-less select model where the
+	 * attribute is edited by selecting from options, so that its values render with the select
+	 * control's read-only representation, and a plain field otherwise.
+	 *
+	 * @param multiple
+	 *        Whether the field holds a collection of the attribute's values rather than a single
+	 *        one.
+	 */
+	private AbstractFieldModel displayModel(TLStructuredTypePart part, boolean multiple, Object value) {
 		if (selectOptionSource(part) == null) {
 			return new AbstractFieldModel(value);
 		}
-		return new SimpleSelectFieldModel(selection(part, value), Collections.emptyList(), part.isMultiple());
+		return new SimpleSelectFieldModel(selection(multiple, value), Collections.emptyList(), multiple);
 	}
 
 	/**
 	 * Normalizes an attribute value to the selection representation expected by the select
-	 * control: a {@link java.util.List} for multi-valued attributes, the raw value otherwise.
+	 * control: a {@link java.util.List} for a field holding several values, the raw value
+	 * otherwise.
 	 */
-	private static Object selection(TLStructuredTypePart part, Object value) {
-		if (!part.isMultiple()) {
+	private static Object selection(boolean multiple, Object value) {
+		if (!multiple) {
 			return value;
 		}
 		if (value instanceof Collection<?> collection) {

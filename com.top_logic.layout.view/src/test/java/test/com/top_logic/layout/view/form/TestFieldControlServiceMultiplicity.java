@@ -175,6 +175,21 @@ public class TestFieldControlServiceMultiplicity extends TestCase {
 	}
 
 	/**
+	 * A column reaching a single-valued attribute over a multi-valued step shows all the values it
+	 * collected: the attribute decides which control writes a value, the column how many values
+	 * there are.
+	 */
+	public void testACollectedAttributeIsDisplayedAsAList() {
+		TLStructuredTypePart part = TLModelUtil.addProperty(_rowType, "title", _textType);
+
+		assertEquals("The title of one object is one text.",
+			ReactTextInputControl.class, display(ColumnType.of(part), "T1").getClass());
+		assertEquals("The titles collected over several objects are a list of texts.",
+			ReactValueListControl.class,
+			display(ColumnType.of(part).collected(), List.of("T1", "T2")).getClass());
+	}
+
+	/**
 	 * A cell holding several numbers is searched by the text it shows: every number in the format
 	 * of the column, separated from the next.
 	 */
@@ -184,6 +199,11 @@ public class TestFieldControlServiceMultiplicity extends TestCase {
 
 		assertEquals(format.format(values.get(0)) + ", " + format.format(values.get(1)),
 			column("numbers", _numberType, true).searchText(values));
+	}
+
+	/** The control displaying the given value in a cell of the described column. */
+	private ReactControl display(ColumnType columnType, Object value) {
+		return _controls.createDisplayControl(_context, columnType, value);
 	}
 
 	/**

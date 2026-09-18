@@ -57,6 +57,31 @@ public class TaskStore {
 
 	private AgentEventListener _listener;
 
+	private Mirror _mirror;
+
+	/**
+	 * Receives the store's whole task list after every mutation - the seam a durable copy of the
+	 * plan follows.
+	 *
+	 * <p>
+	 * The store stays the truth of the running turn; a mirror only writes what the store says
+	 * somewhere else (the {@code tl.ai.execution:AgentTask} rows a view can bind to). It is called
+	 * while the store is locked, so it must read the list it is given and return, and it must not
+	 * call back into the store.
+	 * </p>
+	 */
+	public interface Mirror {
+
+		/**
+		 * Called after every task mutation.
+		 *
+		 * @param tasks
+		 *        The store's tasks in plan order. The elements are the store's own mutable tasks:
+		 *        read them now, do not keep them.
+		 */
+		void tasksChanged(List<AgentTask> tasks);
+	}
+
 	/**
 	 * Sets the event listener that receives
 	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.TaskUpdated} events on every task
@@ -66,6 +91,13 @@ public class TaskStore {
 		_listener = listener;
 	}
 
+	/**
+	 * Sets the {@link Mirror} that follows every task mutation. Pass {@code null} to clear.
+	 */
+	public synchronized void setMirror(Mirror mirror) {
+		_mirror = mirror;
+	}
+
 	private void fireTaskUpdated() {
 		AgentEventListener listener = _listener;
 		if (listener != null) {
@@ -73,6 +105,16 @@ public class TaskStore {
 				listener.onEvent(new AgentEvent.TaskUpdated("", 0, Instant.now(), toJson()));
 			} catch (Exception ex) {
 				Logger.error("Failed to fire TaskUpdated event.", ex, TaskStore.class);
+			}
+		}
+		Mirror mirror = _mirror;
+		if (mirror != null) {
+			try {
+				// After the browser push: the mirror writes to the database, and the step the user
+				// is watching should not wait for that.
+				mirror.tasksChanged(new ArrayList<>(_tasks.values()));
+			} catch (Exception ex) {
+				Logger.error("Failed to mirror the task store.", ex, TaskStore.class);
 			}
 		}
 	}

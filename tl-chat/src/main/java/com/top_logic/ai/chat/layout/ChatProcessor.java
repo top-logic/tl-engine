@@ -51,6 +51,7 @@ import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.execution.AgentEnvironment;
 import com.top_logic.tl.ai.core.execution.AgentRunner;
+import com.top_logic.tl.ai.core.execution.AgentTaskMirror;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.agent.event.CompositeAgentEventListener;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
@@ -286,7 +287,12 @@ public class ChatProcessor {
 			// Record the run against the session captured at send time (not the currently
 			// active one), so a completed run is never written under the wrong session.
 			AgentSession agentSession = resolveAgentSession(state.getSessionId(), taskTracker.getSessionOwner());
-			try (SubagentRegistryBinding.Binding saBind = SubagentRegistryBinding.bind(subagentRegistry)) {
+			// The agent's plan is in-memory state of the run; mirroring it onto AgentTask rows is
+			// what makes it survive a reload and lets a model-bound view show it while the run is
+			// still going.
+			try (SubagentRegistryBinding.Binding saBind = SubagentRegistryBinding.bind(subagentRegistry);
+					AgentTaskMirror taskMirror =
+						AgentTaskMirror.attach(taskStore, agentSession, toolContext.executionHandle())) {
 				AgentRunner.RecordedRun runResult = AgentRunner.run(entryPointAgent, conversation,
 					conversationMemory, toolContext, listener, sessionRegistry, convLog, agentSession, null,
 					runOverrides);

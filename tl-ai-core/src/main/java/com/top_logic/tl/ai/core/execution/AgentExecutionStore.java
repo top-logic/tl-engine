@@ -9,9 +9,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -151,6 +155,28 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 */
 	public interface Config<I extends AgentExecutionStore> extends ConfiguredManagedClass.Config<I> {
 		// No configurable properties for v1.
+	}
+
+	/**
+	 * Notified after the writer thread committed a change to the recorded agent data.
+	 *
+	 * <p>
+	 * The seam a live user interface needs: a run writes from a background thread, so nothing in a
+	 * browser window learns of the change by itself. A listener is called on the writer thread
+	 * <em>after</em> the commit, so it must return quickly and must never write through this
+	 * service (the writer would wait for itself) - it hands the work to its own scheduler.
+	 * </p>
+	 */
+	public interface ChangeListener {
+
+		/**
+		 * Called after a committed change.
+		 *
+		 * @param owner
+		 *        The account whose data changed, or <code>null</code> when the change belongs to no
+		 *        particular account.
+		 */
+		void onAgentDataChanged(Person owner);
 	}
 
 	/**
@@ -306,6 +332,41 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 				throw runtime;
 			}
 			throw new RuntimeException("Failed to write agent execution data: " + cause.getMessage(), cause);
+		}
+	}
+
+	private final CopyOnWriteArrayList<ChangeListener> _changeListeners = new CopyOnWriteArrayList<>();
+
+	/**
+	 * Registers a listener that is told about every committed change.
+	 *
+	 * @see ChangeListener
+	 */
+	public void addChangeListener(ChangeListener listener) {
+		if (listener != null) {
+			_changeListeners.addIfAbsent(listener);
+		}
+	}
+
+	/**
+	 * Removes a listener registered with {@link #addChangeListener(ChangeListener)}.
+	 */
+	public void removeChangeListener(ChangeListener listener) {
+		_changeListeners.remove(listener);
+	}
+
+	/**
+	 * Tells the registered listeners that data of {@code owner} changed. Best-effort: a failing
+	 * listener is logged and never disturbs the write that caused the notification.
+	 */
+	private void notifyChanged(Person owner) {
+		for (ChangeListener listener : _changeListeners) {
+			try {
+				listener.onAgentDataChanged(owner);
+			} catch (RuntimeException ex) {
+				Logger.warn("Agent-data change listener failed: " + ex.getMessage(), ex,
+					AgentExecutionStore.class);
+			}
 		}
 	}
 
@@ -964,70 +1025,138 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	// ---- AgentTask ----
 
 	/**
-	 * Creates a new task in the session's todo plan.
+	 * The wanted state of one task of a session's todo plan - what a
+	 * {@link #syncTasks(AgentSession, List, AgentExecution) sync} makes the model say.
+	 *
+	 * <p>
+	 * Plain data, so the caller can build it on an agent thread without touching the
+	 * {@link com.top_logic.knowledge.service.KnowledgeBase}: the whole reconciliation - reading the
+	 * existing rows and writing the difference - happens on the writer thread, which sees HEAD.
+	 * </p>
+	 *
+	 * @param taskId
+	 *        The identity of the task within its session; the key the sync matches rows on.
+	 * @param subject
+	 *        Brief title, or <code>null</code>.
+	 * @param content
+	 *        The detailed description, or <code>null</code>.
+	 * @param status
+	 *        The task's status word, or <code>null</code>.
+	 * @param ordinal
+	 *        The task's one-based position in the plan.
 	 */
-	public AgentTask createTask(AgentSession session, String taskId, String subject, String content,
-			String status, int ordinal, AgentExecution touchedBy) {
-		return write(() -> {
-		try (Transaction tx = beginTx("Create agent task " + taskId)) {
-			AgentTask task = TlAiExecutionFactory.getInstance().createAgentTask();
-			task.setSession(session);
-			task.setTaskId(taskId);
-			task.setSubject(subject);
-			task.setContent(content);
-			task.setStatus(status);
-			task.setOrdinal(ordinal);
-			if (touchedBy != null) {
-				task.setLastTouchedByExecution(touchedBy);
-			}
-			tx.commit();
-			return task;
-		}
-		});
+	public record TaskState(String taskId, String subject, String content, String status, int ordinal) {
+		// A transport record; see the type comment.
 	}
 
 	/**
-	 * Updates a task's mutable fields; <code>null</code> arguments leave the field unchanged.
+	 * Makes the session's persistent todo plan say exactly what {@code desired} says: missing tasks
+	 * are created, differing ones updated, and tasks that are no longer wanted deleted - all in one
+	 * transaction.
+	 *
+	 * <p>
+	 * The caller passes plain {@link TaskState} data rather than persistent wrappers: rows are looked
+	 * up, compared and written on the writer thread, so no wrapper is ever dereferenced on the
+	 * (revision-pinned) agent thread that asked for the sync. Matching is by
+	 * {@link TaskState#taskId()} within the session, which makes the call idempotent - repeating it
+	 * writes nothing.
+	 * </p>
+	 *
+	 * @param session
+	 *        The session whose plan is synchronized; <code>null</code> is a no-op.
+	 * @param desired
+	 *        The tasks the plan should consist of, in plan order; empty clears it.
+	 * @param touchedBy
+	 *        The execution to attribute created and changed rows to; may be <code>null</code>.
+	 * @return Whether anything was actually written.
 	 */
-	public void updateTask(AgentTask task, String subject, String content, String status,
-			Integer ordinal, AgentExecution touchedBy) {
-		write(() -> {
-		try (Transaction tx = beginTx("Update agent task " + task.getTaskId())) {
-			if (subject != null) {
-				task.setSubject(subject);
-			}
-			if (content != null) {
-				task.setContent(content);
-			}
-			if (status != null) {
-				task.setStatus(status);
-			}
-			if (ordinal != null) {
-				task.setOrdinal(ordinal);
-			}
-			if (touchedBy != null) {
-				task.setLastTouchedByExecution(touchedBy);
-			}
-			tx.commit();
+	public boolean syncTasks(AgentSession session, List<TaskState> desired, AgentExecution touchedBy) {
+		if (session == null) {
+			return false;
 		}
-		return null;
-		});
-	}
-
-	/**
-	 * Deletes the given task.
-	 */
-	public void deleteTask(AgentTask task) {
-		if (task == null) {
-			return;
-		}
-		write(() -> {
-			try (Transaction tx = beginTx("Delete agent task " + task.getTaskId())) {
-				task.tDelete();
+		List<TaskState> wanted = desired == null ? List.of() : desired;
+		Boolean changed = write(() -> {
+			try (Transaction tx = beginTx("Sync agent tasks")) {
+				boolean modified = reconcileTasks(session, wanted, touchedBy);
+				if (!modified) {
+					// Nothing to say: committing an empty transaction would only burn a revision.
+					return Boolean.FALSE;
+				}
 				tx.commit();
+				return Boolean.TRUE;
 			}
-			return null;
 		});
+		if (changed.booleanValue()) {
+			notifyChanged(session.getOwner());
+		}
+		return changed.booleanValue();
+	}
+
+	/**
+	 * Writes the difference between the session's existing task rows and {@code desired} inside the
+	 * caller's transaction; answers whether anything changed.
+	 */
+	private boolean reconcileTasks(AgentSession session, List<TaskState> desired,
+			AgentExecution touchedBy) {
+		Map<String, AgentTask> existing = new LinkedHashMap<>();
+		List<AgentTask> obsolete = new ArrayList<>();
+		for (AgentTask row : tasksOf(session)) {
+			if (existing.putIfAbsent(row.getTaskId(), row) != null) {
+				// One row per task id is the invariant; a duplicate is a leftover and goes.
+				obsolete.add(row);
+			}
+		}
+
+		boolean changed = false;
+		for (TaskState state : desired) {
+			AgentTask row = existing.remove(state.taskId());
+			if (row == null) {
+				row = TlAiExecutionFactory.getInstance().createAgentTask();
+				row.setSession(session);
+				row.setTaskId(state.taskId());
+				row.setSubject(state.subject());
+				row.setContent(state.content());
+				row.setStatus(state.status());
+				row.setOrdinal(Integer.valueOf(state.ordinal()));
+				row.setLastTouchedByExecution(touchedBy);
+				changed = true;
+				continue;
+			}
+			changed |= applyTaskState(row, state, touchedBy);
+		}
+
+		obsolete.addAll(existing.values());
+		for (AgentTask row : obsolete) {
+			row.tDelete();
+			changed = true;
+		}
+		return changed;
+	}
+
+	/** Applies {@code state} to an existing row, answering whether it changed anything. */
+	private static boolean applyTaskState(AgentTask row, TaskState state, AgentExecution touchedBy) {
+		boolean changed = false;
+		if (!Objects.equals(row.getSubject(), state.subject())) {
+			row.setSubject(state.subject());
+			changed = true;
+		}
+		if (!Objects.equals(row.getContent(), state.content())) {
+			row.setContent(state.content());
+			changed = true;
+		}
+		if (!Objects.equals(row.getStatus(), state.status())) {
+			row.setStatus(state.status());
+			changed = true;
+		}
+		Integer ordinal = Integer.valueOf(state.ordinal());
+		if (!ordinal.equals(row.getOrdinal())) {
+			row.setOrdinal(ordinal);
+			changed = true;
+		}
+		if (touchedBy != null && changed && !touchedBy.equals(row.getLastTouchedByExecution())) {
+			row.setLastTouchedByExecution(touchedBy);
+		}
+		return changed;
 	}
 
 	/**

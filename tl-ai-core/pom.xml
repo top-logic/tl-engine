@@ -190,6 +190,7 @@
 								<include>**/TestSubagentJobRegistry.java</include>
 								<include>**/TestAsyncDelegationIntegration.java</include>
 								<include>**/TestInteractionRecorderRevision.java</include>
+								<include>**/TestAgentTaskMirror.java</include>
 							</includes>
 						</configuration>
 					</plugin>

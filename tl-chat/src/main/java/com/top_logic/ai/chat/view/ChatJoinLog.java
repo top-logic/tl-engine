@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.InteractionContext;
@@ -42,6 +43,9 @@ final class ChatJoinLog {
 
 	private static final Property<ChatJoinLog> LOG =
 		TypedAnnotatable.property(ChatJoinLog.class, "tl.chat.view.joins");
+
+	/** Where a finished render reports to. Tests replace this to read what was said. */
+	static Consumer<Message> sink = ChatJoinLog::write;
 
 	/**
 	 * One line of the diagnostic.
@@ -136,12 +140,14 @@ final class ChatJoinLog {
 	}
 
 	private void report() {
-		for (Message message : messages()) {
-			if (message.warning()) {
-				Logger.warn(message.text(), ChatJoinLog.class);
-			} else {
-				Logger.info(message.text(), ChatJoinLog.class);
-			}
+		messages().forEach(sink);
+	}
+
+	private static void write(Message message) {
+		if (message.warning()) {
+			Logger.warn(message.text(), ChatJoinLog.class);
+		} else {
+			Logger.info(message.text(), ChatJoinLog.class);
 		}
 	}
 

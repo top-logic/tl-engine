@@ -6,7 +6,6 @@
 package test.com.top_logic.ai.chat;
 
 import junit.framework.Test;
-import junit.framework.TestSuite;
 
 /**
  * Collects {@link com.top_logic.ai.chat.view.TestChatJoinLog} into {@code test.TestAll}. The cases
@@ -15,6 +14,6 @@ import junit.framework.TestSuite;
 public class TestChatJoinLog {
 
 	public static Test suite() {
-		return new TestSuite(com.top_logic.ai.chat.view.TestChatJoinLog.class);
+		return com.top_logic.ai.chat.view.TestChatJoinLog.suite();
 	}
 }

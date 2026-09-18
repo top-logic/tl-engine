@@ -5,11 +5,18 @@
  */
 package com.top_logic.ai.chat.view;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
+import junit.framework.Test;
 import junit.framework.TestCase;
+import junit.framework.TestSuite;
+
+import test.com.top_logic.basic.ModuleTestSetup;
 
 import com.top_logic.ai.chat.view.ChatJoinLog.Message;
+import com.top_logic.basic.thread.ThreadContextManager;
 
 /**
  * What the join diagnostic says about one rendered window, and - more importantly - when it says
@@ -105,5 +112,50 @@ public class TestChatJoinLog extends TestCase {
 	/** Nothing rendered, nothing said. */
 	public void testEmptyLogSaysNothing() {
 		assertTrue(new ChatJoinLog().messages().isEmpty());
+	}
+
+	/**
+	 * The wiring: joins recorded during one render are tallied together and reported once, when the
+	 * render ends.
+	 */
+	public void testOneReportPerRender() {
+		List<Message> said = new ArrayList<>();
+		Consumer<Message> previous = ChatJoinLog.sink;
+		ChatJoinLog.sink = said::add;
+		try {
+			ThreadContextManager.inInteraction("test-render-1", () -> {
+				ChatJoinLog.record("w1", "support", "chat-conversation");
+				ChatJoinLog.record("w1", "support", "chat-rail");
+				assertTrue("Nothing is said while the render is still running.", said.isEmpty());
+			});
+			assertEquals(1, said.size());
+			assertEquals("Chat elements in window 'w1': 'support' (2).", said.get(0).text());
+
+			ThreadContextManager.inInteraction("test-render-2", () -> {
+				ChatJoinLog.record("w1", "support", "chat-conversation");
+			});
+			assertEquals("The next render starts a tally of its own.", 2, said.size());
+			assertEquals("Chat elements in window 'w1': 'support' (1).", said.get(1).text());
+		} finally {
+			ChatJoinLog.sink = previous;
+		}
+	}
+
+	/** Outside a render there is nothing to tally, and recording a join must not fail. */
+	public void testOutsideAnInteractionNothingHappens() {
+		List<Message> said = new ArrayList<>();
+		Consumer<Message> previous = ChatJoinLog.sink;
+		ChatJoinLog.sink = said::add;
+		try {
+			ChatJoinLog.record("w1", "support", "chat-conversation");
+			assertTrue(said.isEmpty());
+		} finally {
+			ChatJoinLog.sink = previous;
+		}
+	}
+
+	/** Boots the module system, so that an interaction can be opened. */
+	public static Test suite() {
+		return ModuleTestSetup.setupModule(new TestSuite(TestChatJoinLog.class));
 	}
 }

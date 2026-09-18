@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { chatIdOf, chatStore, liveChatCount, readBootstrap, type ChatBootstrap } from './chat-store'
+import { unseenBadge } from './progress-model'
 import type { ChatMessage } from './types'
 
 /**
@@ -586,6 +587,63 @@ describe('a mounted rail', () => {
     expect(store.getState().railMounted).toBe(true)
 
     again()
+  })
+
+  /**
+   * The badge the transcript's toggle shows is the rail's sum, and opening the rail records it.
+   *
+   * Passing 0 - which is what the toggle did before the rail published a total - reset `badgeSeen`
+   * in the user's preferences on every open, so the next unseen count was measured against nothing.
+   */
+  it('publishes the badge total the toggle shows and records', () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.actions.registerRail()
+
+    store.actions.publishBadgeTotal(3)
+    expect(store.getState().badgeTotal).toBe(3)
+    expect(unseenBadge(store.getState().badgeTotal, store.getState().badgeSeen)).toBe(3)
+
+    store.actions.toggleSide(store.getState().badgeTotal)
+    expect(store.getState().sideOpen).toBe(true)
+    expect(store.getState().badgeSeen).toBe(3)
+    expect(unseenBadge(store.getState().badgeTotal, store.getState().badgeSeen)).toBe(0)
+
+    release()
+  })
+
+  /** Nothing to count once the rail is gone: a stale number on the button would open nothing. */
+  it('drops the badge total when the last rail leaves', () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+
+    const unregister = store.actions.registerRail()
+    store.actions.publishBadgeTotal(2)
+    unregister()
+
+    expect(store.getState().badgeTotal).toBe(0)
+    release()
+  })
+
+  /**
+   * The rail states its own first-load state, because the stored preference defaults to "closed"
+   * and a standalone rail would then show a page nothing at all.
+   */
+  it('applies the configured open default once', () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    expect(store.getState().sideOpen).toBe(false)
+
+    store.actions.seedRailOpenOnce(true)
+    expect(store.getState().sideOpen).toBe(true)
+
+    // The user's own toggle wins: a second seed - a remount, or a second rail - leaves it alone.
+    store.actions.toggleSide(0)
+    expect(store.getState().sideOpen).toBe(false)
+    store.actions.seedRailOpenOnce(true)
+    expect(store.getState().sideOpen).toBe(false)
+
+    release()
   })
 
   /** An unregister that runs twice must not push the count below zero. */

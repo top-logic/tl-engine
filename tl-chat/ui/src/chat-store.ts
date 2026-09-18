@@ -251,6 +251,15 @@ export interface ChatState {
    */
   railMounted: boolean
 
+  /**
+   * The sum of the mounted rail's section badges.
+   *
+   * Published by the rail because the sections are its children and nothing else can see them. The
+   * transcript's toggle button shows this minus {@link badgeSeen} and hands it back to
+   * {@link ChatActions.toggleSide}, so opening the rail records what the user has now seen.
+   */
+  badgeTotal: number
+
   // Layout preferences.
   sideOpen: boolean
   paneWidth: number
@@ -309,6 +318,17 @@ export interface ChatActions {
    * user's toggles alone.
    */
   seedCollapsedOnce(ids: string[]): void
+  /**
+   * Applies the rail element's configured {@code open} default once per page load, the way
+   * {@link seedCollapsedOnce} applies its collapsed default.
+   *
+   * The stored preference is what {@code App} boots from; a composed rail states its first-load
+   * state in the view instead, because a rail whose stored default is "closed" would show a
+   * standalone page nothing at all.
+   */
+  seedRailOpenOnce(open: boolean): void
+  /** Publishes the sum of the rail's section badges; see {@link ChatState.badgeTotal}. */
+  publishBadgeTotal(total: number): void
   /**
    * Announces a mounted rail; the returned function unregisters it again.
    *
@@ -412,6 +432,9 @@ export class ChatStore {
   /** Whether {@code <chat-rail/>} has already applied its configured collapsed default (D3). */
   private collapsedFromRail = false
 
+  /** Whether {@code <chat-rail/>} has already applied its configured open default. */
+  private railOpenFromRail = false
+
   /** How many {@code <chat-rail/>} elements on this `chat-id` are mounted. */
   private rails = 0
 
@@ -476,6 +499,7 @@ export class ChatStore {
       paneOptions: null,
       collapsedSections: boot.collapsedSections ?? ['context'],
       railMounted: false,
+      badgeTotal: 0,
     })
     this.effects = this.declareEffects()
     this.actions = this.declareActions()
@@ -1582,6 +1606,18 @@ export class ChatStore {
         this.patch({ collapsedSections: ids })
       },
 
+      seedRailOpenOnce: (open: boolean) => {
+        if (this.railOpenFromRail) return
+        this.railOpenFromRail = true
+        this.patch({ sideOpen: open })
+      },
+
+      publishBadgeTotal: (total: number) => {
+        const next = Number.isFinite(total) && total > 0 ? Math.round(total) : 0
+        if (next === this.state.badgeTotal) return
+        this.patch({ badgeTotal: next })
+      },
+
       registerRail: () => {
         this.rails += 1
         this.patch({ railMounted: true })
@@ -1590,7 +1626,10 @@ export class ChatStore {
           if (released) return
           released = true
           this.rails = Math.max(0, this.rails - 1)
-          this.patch({ railMounted: this.rails > 0 })
+          const mounted = this.rails > 0
+          // The badge belongs to the rail that reported it: with none left there is nothing to
+          // count, and a stale total would keep a number on a button that opens nothing.
+          this.patch({ railMounted: mounted, badgeTotal: mounted ? this.state.badgeTotal : 0 })
         }
       },
 

@@ -6,6 +6,7 @@ import { Composer, plusMenuVisible } from './composer'
 import type { ComposerApi, ReferenceCandidate } from './extensions'
 import { bundle } from './i18n'
 import { RailToggle } from './rail'
+import { unseenBadge } from './progress-model'
 import {
   registeredAnnotationRenderer,
   registeredReferenceSource,
@@ -241,9 +242,9 @@ export function TLChatConversation({ controlId }: TLCellProps) {
             chat.railMounted ? (
               <RailToggle
                 open={chat.sideOpen}
-                badge={0}
+                badge={unseenBadge(chat.badgeTotal, chat.badgeSeen)}
                 labels={labels}
-                onToggle={() => actions.toggleSide(0)}
+                onToggle={() => actions.toggleSide(chat.badgeTotal)}
               />
             ) : null
           }

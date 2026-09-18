@@ -214,6 +214,64 @@ export async function sendFeedback(
   if (!res.ok) throw new Error(`feedback failed (${res.status})`)
 }
 
+/** What a run that is still in flight looks like from outside the stream. */
+export interface RunSnapshot {
+  /** Whether the open session's agent is still working. */
+  processing: boolean
+  /** The run's task list, in the format the `task_update` frame carries; empty when there is none. */
+  tasksJson: string
+}
+
+/**
+ * The open session's run, as the server sees it now.
+ *
+ * The SSE stream replays nothing, so a page that was reloaded in mid-run learns from here that the
+ * agent is still working and what it has got through so far.
+ */
+export async function fetchRunSnapshot(windowId: string): Promise<RunSnapshot> {
+  const data = await readJson<{ processing?: boolean; tasksJson?: string }>(
+    await fetch(withWindow('/chat/updates', windowId), { credentials: 'include' }),
+  )
+  return { processing: data.processing === true, tasksJson: data.tasksJson ?? '' }
+}
+
+/** One human-in-the-loop request waiting for this user, as `/chat/interactions` reports it. */
+export interface PendingInteraction {
+  requestId: string
+  /** `approval`, `question` or `choice`. */
+  type: string
+  /** Short label; for an approval the tool's name. */
+  header: string
+  /** For an approval the display reason. */
+  prompt: string
+  /** For an approval the tool call's argument JSON. */
+  payload: string
+  sessionId: string
+  /** How long the requester is still waiting; zero or less means nobody is listening any more. */
+  remainingMs: number
+}
+
+/**
+ * Every approval and question waiting for this user, across their chats.
+ *
+ * Approvals have no server poll of their own, so this is what lets a reloaded page put the card
+ * back in front of the user instead of a composer that is locked for no visible reason.
+ */
+export async function fetchPendingInteractions(windowId: string): Promise<PendingInteraction[]> {
+  const data = await readJson<{ interactions?: Partial<PendingInteraction>[] }>(
+    await fetch(withWindow('/chat/interactions', windowId), { credentials: 'include' }),
+  )
+  return (data.interactions ?? []).map((item) => ({
+    requestId: item.requestId ?? '',
+    type: item.type ?? '',
+    header: item.header ?? '',
+    prompt: item.prompt ?? '',
+    payload: item.payload ?? '',
+    sessionId: item.sessionId ?? '',
+    remainingMs: typeof item.remainingMs === 'number' ? item.remainingMs : 0,
+  }))
+}
+
 export async function cancelRun(windowId: string): Promise<void> {
   await fetch(withWindow('/chat/cancel', windowId), { method: 'POST', credentials: 'include' })
 }

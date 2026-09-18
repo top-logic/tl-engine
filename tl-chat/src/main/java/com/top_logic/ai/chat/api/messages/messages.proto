@@ -60,6 +60,16 @@ message ChatUpdatesResponse {
 	 */
 	repeated MessageDto messages;
 
+	/**
+	 * The open session's task list as JSON, in the format the <code>task_update</code> SSE frame
+	 * carries (<code>TaskStore.toJson()</code>).
+	 *
+	 * <p>
+	 * The stream replays nothing, so this is how a page that was reloaded in mid-run gets the
+	 * progress it was showing back.
+	 * </p>
+	 */
+	string tasksJson;
 }
 
 /**

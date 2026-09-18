@@ -816,3 +816,160 @@ describe('the bootstrap', () => {
     release()
   })
 })
+
+/**
+ * What a reload in mid-run gets back.
+ *
+ * `GET /chat/sessions/{id}` brings the transcript, but the stream replays nothing: before this the
+ * page came back with an empty Fortschritt list, an idle composer and no sign of the approval the
+ * agent was blocked on, while the run carried on server-side.
+ */
+describe('recovering a run on boot', () => {
+  /** What `/chat/updates` and `/chat/interactions` answer in the test at hand. */
+  let runState: { processing: boolean; tasksJson: string }
+  let waiting: Record<string, unknown>[]
+  /** Held to make the feed answer late, so a frame can arrive while it is in flight. */
+  let feedGate: Promise<void>
+
+  beforeEach(() => {
+    runState = { processing: false, tasksJson: '' }
+    waiting = []
+    feedGate = Promise.resolve()
+    const globals = globalThis as unknown as Record<string, unknown>
+    const inner = globals.fetch as (url: string, init?: unknown) => Promise<unknown>
+    globals.fetch = vi.fn(async (url: string, init?: { method?: string; body?: string }) => {
+      if (url.includes('/chat/updates')) {
+        return { ok: true, status: 200, json: async () => runState }
+      }
+      if (url.includes('/chat/interactions')) {
+        await feedGate
+        return { ok: true, status: 200, json: async () => ({ interactions: waiting }) }
+      }
+      return inner(url, init)
+    })
+  })
+
+  it('brings back the progress list and the busy composer', async () => {
+    runState = {
+      processing: true,
+      tasksJson: JSON.stringify({
+        tasks: [{ id: '1', subject: 'Rechnungen lesen', status: 'in_progress' }],
+      }),
+    }
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+
+    await store.actions.selectSession('s1')
+
+    expect(store.getState().busy).toBe(true)
+    expect(store.getState().tasks.map((task) => task.subject)).toEqual(['Rechnungen lesen'])
+
+    release()
+  })
+
+  it('puts the open approval back in front of the user', async () => {
+    waiting = [
+      {
+        requestId: 'r1',
+        type: 'approval',
+        header: 'writeInvoice',
+        prompt: 'Rechnung schreiben?',
+        payload: '{"id":7}',
+        sessionId: 's1',
+        remainingMs: 40_000,
+      },
+    ]
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+
+    await store.actions.selectSession('s1')
+
+    const approvals = store.getState().messages.filter((m) => m.type === 'approval_request')
+    expect(approvals).toHaveLength(1)
+    expect(approvals[0]).toMatchObject({
+      approvalRequestId: 'r1',
+      toolName: 'writeInvoice',
+      argsJson: '{"id":7}',
+      outcome: 'pending',
+    })
+
+    release()
+  })
+
+  /**
+   * Two reasons not to rebuild a card: it belongs to another chat, or its deadline has passed - the
+   * agent has stopped waiting for it, so a card offering that decision leads nowhere. A question is
+   * not rebuilt here either; those re-surface over the stream when the chat is reopened.
+   */
+  it('leaves a foreign, an expired and a non-approval request alone', async () => {
+    waiting = [
+      { requestId: 'r2', type: 'approval', header: 't', sessionId: 's2', remainingMs: 40_000 },
+      { requestId: 'r3', type: 'approval', header: 't', sessionId: 's1', remainingMs: 0 },
+      { requestId: 'r4', type: 'question', header: 't', sessionId: 's1', remainingMs: 40_000 },
+    ]
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+
+    await store.actions.selectSession('s1')
+    expect(store.getState().messages.filter((m) => m.type === 'approval_request')).toHaveLength(0)
+
+    release()
+  })
+
+  /** The stream and the feed both report the same approval; the user must see one card. */
+  it('does not double a card the stream delivered while the feed was in flight', async () => {
+    let openFeed: () => void = () => undefined
+    feedGate = new Promise<void>((resolve) => {
+      openFeed = resolve
+    })
+    waiting = [
+      {
+        requestId: 'r5',
+        type: 'approval',
+        header: 'writeInvoice',
+        sessionId: 's1',
+        remainingMs: 40_000,
+      },
+    ]
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+
+    const selecting = store.actions.selectSession('s1')
+    await settle()
+    streams[0].emit('approval_required', {
+      approvalRequestId: 'r5',
+      toolName: 'writeInvoice',
+      argsJson: '{}',
+    })
+    openFeed()
+    await selecting
+
+    expect(store.getState().messages.filter((m) => m.type === 'approval_request')).toHaveLength(1)
+
+    release()
+  })
+
+  /** A chat with nothing in flight comes back exactly as it did before. */
+  it('says nothing about a chat whose run has ended', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+
+    await store.actions.selectSession('s1')
+
+    expect(store.getState().busy).toBe(false)
+    expect(store.getState().tasks).toEqual([])
+    expect(store.getState().messages).toEqual([])
+
+    release()
+  })
+})

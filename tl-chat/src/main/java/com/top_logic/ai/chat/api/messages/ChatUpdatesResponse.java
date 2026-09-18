@@ -21,9 +21,14 @@ public class ChatUpdatesResponse extends de.haumacher.msgbuf.data.AbstractDataOb
 	/** @see #getMessages() */
 	public static final String MESSAGES__PROP = "messages";
 
+	/** @see #getTasksJson() */
+	public static final String TASKS_JSON__PROP = "tasksJson";
+
 	private boolean _processing = false;
 
 	private final java.util.List<com.top_logic.ai.chat.api.messages.MessageDto> _messages = new java.util.ArrayList<>();
+
+	private String _tasksJson = "";
 
 	/**
 	 * Creates a {@link ChatUpdatesResponse} instance.
@@ -96,6 +101,32 @@ public class ChatUpdatesResponse extends de.haumacher.msgbuf.data.AbstractDataOb
 		_messages.remove(value);
 	}
 
+	/**
+	 * The open session's task list as JSON, in the format the <code>task_update</code> SSE frame
+	 * carries (<code>TaskStore.toJson()</code>).
+	 *
+	 * <p>
+	 * The stream replays nothing, so this is how a page that was reloaded in mid-run gets the
+	 * progress it was showing back.
+	 * </p>
+	 */
+	public final String getTasksJson() {
+		return _tasksJson;
+	}
+
+	/**
+	 * @see #getTasksJson()
+	 */
+	public com.top_logic.ai.chat.api.messages.ChatUpdatesResponse setTasksJson(String value) {
+		internalSetTasksJson(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getTasksJson()} without chain call utility. */
+	protected final void internalSetTasksJson(String value) {
+		_tasksJson = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return CHAT_UPDATES_RESPONSE__TYPE;
@@ -105,7 +136,8 @@ public class ChatUpdatesResponse extends de.haumacher.msgbuf.data.AbstractDataOb
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
 			PROCESSING__PROP, 
-			MESSAGES__PROP);
+			MESSAGES__PROP, 
+			TASKS_JSON__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -132,6 +164,7 @@ public class ChatUpdatesResponse extends de.haumacher.msgbuf.data.AbstractDataOb
 		switch (field) {
 			case PROCESSING__PROP: return isProcessing();
 			case MESSAGES__PROP: return getMessages();
+			case TASKS_JSON__PROP: return getTasksJson();
 			default: return null;
 		}
 	}
@@ -141,6 +174,7 @@ public class ChatUpdatesResponse extends de.haumacher.msgbuf.data.AbstractDataOb
 		switch (field) {
 			case PROCESSING__PROP: internalSetProcessing((boolean) value); break;
 			case MESSAGES__PROP: internalSetMessages(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.MessageDto.class, value)); break;
+			case TASKS_JSON__PROP: internalSetTasksJson((String) value); break;
 		}
 	}
 
@@ -167,6 +201,8 @@ public class ChatUpdatesResponse extends de.haumacher.msgbuf.data.AbstractDataOb
 			x.writeTo(out);
 		}
 		out.endArray();
+		out.name(TASKS_JSON__PROP);
+		out.value(getTasksJson());
 	}
 
 	@Override
@@ -183,6 +219,7 @@ public class ChatUpdatesResponse extends de.haumacher.msgbuf.data.AbstractDataOb
 				setMessages(newValue);
 			}
 			break;
+			case TASKS_JSON__PROP: setTasksJson(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

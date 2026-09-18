@@ -7,6 +7,8 @@ import {
   createSession,
   deleteSession,
   fetchCapabilities,
+  fetchPendingInteractions,
+  fetchRunSnapshot,
   ForbiddenError,
   listSessions,
   listSubagents,
@@ -1281,6 +1283,50 @@ export class ChatStore {
     }
   }
 
+  /**
+   * Puts the run this chat may still be in back on screen.
+   *
+   * The transcript travels with the session, but the stream replays nothing: after a reload the
+   * progress list is empty, the composer is idle and an open approval card is gone, while the agent
+   * is still working. `GET /chat/updates` says whether it is and what it has got through;
+   * `GET /chat/interactions` says what is waiting for this user. Both are best effort - a chat that
+   * shows only what the transcript says is what a failure here leaves behind, which is what every
+   * reload used to look like.
+   */
+  private async recoverRunState(sessionId: string): Promise<void> {
+    const windowId = this.state.windowId
+    const [snapshot, pending] = await Promise.all([
+      fetchRunSnapshot(windowId).catch(() => null),
+      fetchPendingInteractions(windowId).catch(() => []),
+    ])
+    // The user may have moved to another chat while this was in flight.
+    if (this.state.sessionId !== sessionId) return
+    if (snapshot) {
+      this.patch({ busy: snapshot.processing, tasks: parseTasksJson(snapshot.tasksJson) })
+    }
+    for (const item of pending) {
+      if (item.type !== 'approval' || item.sessionId !== sessionId) continue
+      // An approval past its deadline can no longer be answered: the agent has stopped waiting for
+      // it, and a card nobody is listening to would lock the composer behind a decision that leads
+      // nowhere.
+      if (item.remainingMs <= 0) continue
+      const known = this.state.messages.some(
+        (message) =>
+          message.type === 'approval_request' && message.approvalRequestId === item.requestId,
+      )
+      if (known) continue
+      this.dispatch({
+        type: 'ADD_APPROVAL',
+        approvalRequestId: item.requestId,
+        toolCallId: '',
+        toolName: item.header,
+        argsJson: item.payload,
+        displayReason: item.prompt,
+        remainingMs: item.remainingMs,
+      })
+    }
+  }
+
   private async refreshSubagents(): Promise<void> {
     try {
       this.patch({ subagents: await listSubagents(this.state.windowId) })
@@ -1348,6 +1394,7 @@ export class ChatStore {
           composition: detail.lastComposition ?? undefined,
         }))
         await this.refreshSubagents()
+        await this.recoverRunState(id)
       },
 
       /**

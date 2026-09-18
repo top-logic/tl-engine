@@ -788,15 +788,15 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * stop.
 	 *
 	 * <p>
-	 * {@link AgentExecutionStore#deleteSession(AgentSession)} cancels the session's still-running
-	 * executions first and cascades over its tasks, interaction requests and executions; it also
-	 * tells the open windows, which is what drops the deleted chat out of a list and out of the
-	 * window's in-memory chat state. Deletion cannot be undone.
+	 * A run still going on in the session is asked to stop first; the deletion then cascades over
+	 * the session's tasks, its interaction requests and its executions. It also tells the open
+	 * windows, which is what drops the deleted chat out of a list and out of the window's
+	 * in-memory chat state. Deletion cannot be undone.
 	 * </p>
 	 *
 	 * <p>
 	 * Refuses a session the acting account neither owns nor administers, for the same reason
-	 * {@link #sessionRename(Object, String)} does.
+	 * renaming one does.
 	 * </p>
 	 *
 	 * @param session
@@ -804,6 +804,8 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * @return Always {@code true}; a refusal is a {@link TopLogicException}, not a {@code false}.
 	 * @throws TopLogicException
 	 *         If {@code session} is not a session or is someone else's.
+	 * @see AgentExecutionStore#deleteSession(AgentSession) What the cancelling and the cascade are.
+	 * @see #sessionRename(Object, String) The same ownership check.
 	 */
 	public static boolean sessionDelete(Object session) {
 		AgentExecutionStore.getInstance().deleteSession(ownedSession(session));

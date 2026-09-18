@@ -97,6 +97,23 @@ html, body {
 	height: 100%;
 }
 
+/* --- Visually hidden text ----------------------------------------------- */
+
+/* Text that names a control for assistive technology without taking up space on screen: it is
+   clipped to a one-pixel box, since "display: none" or "visibility: hidden" would drop it from
+   the accessibility tree as well and it would then name nothing. */
+.tlVisuallyHidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	border: 0;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
 /* --- TLButton ----------------------------------------------------------- */
 
 .tlReactButton {
@@ -4097,8 +4114,10 @@ button.tlMenu__item--disabled:hover {
 	color: var(--text-primary);
 }
 
-/* Input wrapper */
+/* Input wrapper. It is a "label" element when the field's label is hidden, which lays out as a
+   block like the "div" of a visible-label field, whatever the element's inline default. */
 .tlFormField__input {
+	display: block;
 	min-width: 0;
 }
 
@@ -4409,6 +4428,8 @@ button.tlMenu__item--disabled:hover {
 	white-space: nowrap;
 }
 
+/* One option: a radio and the label naming it, which refers to the radio by id and is therefore a
+   sibling, not a wrapper. The container states its display, being a plain inline element. */
 .tlBooleanChoice__option {
 	display: inline-flex;
 	align-items: center;

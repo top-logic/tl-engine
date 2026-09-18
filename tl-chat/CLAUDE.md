@@ -648,20 +648,27 @@ comes down to two questions about the engine. Both are answered, with the code:
    `withContextMenuOpener` / `withChildSlotPath` (`AppShellElement.java:144-163`), each of which
    passes the **same** `_channels` map on, as does `childContext` (`DefaultViewContext.java:104-109`).
    `<sidebar>` is no different (`SidebarElement.java:441`). So an element written straight into the
-   shell's own view - a dock in the footer, say - shares the shell's channels with everything else in
-   that file. What does *not* see them is a page, because a page is reached through `<view-ref>`, and
-   that is question 1 again.
+   shell's own view - the `<chat-dock>` in the footer, for instance - shares the shell's channels with
+   everything else in that file. What does *not* see them is a page, because a page is reached through
+   `<view-ref>`, and that is question 1 again.
 
-The demo shows both ends: `app.view.xml` declares `chatDraft` and hands it to the chat page and to
-the Belege page with one `<bind>` each, and the Belege page's "Dazu fragen" toolbar command writes
-it. The value stands on the channel while the chat's browser component is not mounted, and the
-conversation applies it when it attaches - which is why switching to the chat afterwards shows the
-question in the composer.
+The demo shows all three positions on one channel. `app.view.xml` declares `chatDraft`; the dock's
+`<chat-conversation draft="chatDraft"/>` names it with **no** `<bind>`, because the dock is in that
+same file, while the chat page and the Belege page each get it through one `<bind>` on their
+`<view-ref>`. The Belege page's "Dazu fragen" then reaches both: open the dock on that page and the
+question is in its composer; switch to the Chat page instead and it is in that one's.
 
-So there is no engine gap for the dock: a dock in `<app-shell><footer>` reaches the shell's channels
-with no binding at all, and a page reaches them with one `<bind>` per `<view-ref>`. What the engine
-has no answer for is *opening* the dock from the page - that is a second channel and a `<switch>`
-or a dock element that follows one, not a channel-scope question.
+Two conversations on one draft channel work here only because the two are **never mounted at once** -
+a dock unmounts its content while a `<chat-conversation/>` of its chat id is on the page (see
+`chat-dock.tsx`). A composer holds its own text and reports it, so two that are mounted together
+would overwrite each other's drafts; that is a property of the channel, not of the dock. The one that
+mounts applies what stands on the channel (`onAttach`), which is what makes the draft follow the user
+from the dock to the page and back.
+
+So there is no engine gap for the dock case: a dock in `<app-shell><footer>` reaches the shell's
+channels with no binding at all, and a page reaches them with one `<bind>` per `<view-ref>`. What the
+engine has no answer for is *opening* the dock from the page - that is a second channel and a dock
+element that follows one, not a channel-scope question.
 
 #### Configuring `<chat-conversation>` - easy vs advanced
 

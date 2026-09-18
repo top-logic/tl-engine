@@ -269,8 +269,19 @@
 						</title>
 					</data-list>
 					<panel fill="true">
+						<!--
+							"draft" is the shell's own channel, named with no <bind> at all - this
+							element sits in app.view.xml, and <app-shell> does not isolate channels.
+							That is the dock half of issue #440: "Dazu fragen" on the Belege page
+							behind it writes the draft, and the question is standing here when the
+							user opens the dock. The Chat page's conversation follows the same
+							channel, and the two are never mounted at once (a dock steps aside for a
+							page showing its conversation), so the draft simply follows the user
+							from the one place to the other.
+						-->
 						<chat-conversation
 							citations="true"
+							draft="chatDraft"
 							input="dockSession"
 							prompt-improver-agent="TL_PromptImprover"
 							trace="summary"

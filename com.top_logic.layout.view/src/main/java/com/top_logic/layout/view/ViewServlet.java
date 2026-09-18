@@ -24,6 +24,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.react.resource.ClientResources;
+import com.top_logic.layout.react.theme.UITheme;
 import com.top_logic.layout.react.theme.UIThemeService;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -768,6 +769,10 @@ public class ViewServlet extends TopLogicServlet {
 		String selectedTheme = themes.getSelectedThemeId();
 		if (selectedTheme != null) {
 			out.writeAttribute(UIThemeService.THEME_ATTRIBUTE, selectedTheme);
+			UITheme theme = themes.getTheme(selectedTheme);
+			if (theme != null) {
+				themes.writeModeAttribute(out, theme);
+			}
 		}
 		out.endBeginTag();
 

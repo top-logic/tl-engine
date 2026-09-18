@@ -51,8 +51,9 @@ browser component, which shows a sign-in note rather than a composer.
 - **`ChatHistoryService`** – Static access to persistent `AgentSession` objects (kind CHAT) via `AgentExecutionStore` (tl-ai-core). Conversations are stored as one transcript per `AgentExecution` (written by `AgentRunner` at run end) and merged in run order on load.
 - **`LegacyChatSessionMigration`** – Startup service migrating legacy `tl.ai.chat:ChatSession` blobs to `AgentSession`s eagerly. The legacy model has been removed (tl-ai-core migration `Issue_230_remove_module_tl_ai_chat`), so the service is a no-op now; it is kept until every deployment is known to have run it.
 - **`ChatSessionRegistry`** – Bridges `WindowScope` (a chat control) and `HttpSession` (`ChatServlet`). Published API: the classic control in `tl-chat-classic` and `Consulting`'s own control register here from outside this module.
-- **`ChatViewBinding`** – Once per (sub-session, `chat-id`): tracker and user. `AgentChatControl` and the split elements (`<chat-conversation>`, `<chat-rail>`) delegate to it so several controls do not bind the window several times. The tracker stays one per window. The layout preference is the exception: it is read whenever `writeLayoutState` is asked for it, which every chat control does from `onBeforeWrite` - see "where the chat's state lives". It is also where every join is tallied for `ChatJoinLog`.
-- **`AgentViewRefreshService`** – Makes a model-bound element beside the transcript follow a running agent. A run commits from a background thread, and a window only sees model changes when its `GlobalModelEventForwarder` is asked to synthesize them - on a browser command or on the 30 s SSE heartbeat. The service listens on `AgentExecutionStore.ChangeListener`, coalesces a burst of writes (200 ms) and synthesizes per window, in that window's sub-session and **under the window's request lock** (a `ReactControl`'s state map is a plain `HashMap`; the heartbeat path skips the lock, and this deliberately does not copy that). Windows are registered by `ChatViewBinding` while a chat renders, which is a fork: the engine offers no way to enumerate an account's live windows.
+- **`ChatViewBinding`** – Once per (sub-session, `chat-id`): tracker, user, and the channels the agent may write there. `AgentChatControl` and the split elements (`<chat-conversation>`, `<chat-rail>`) delegate to it so several controls do not bind the window several times. The tracker stays one per window. The layout preference is the exception: it is read whenever `writeLayoutState` is asked for it, which every chat control does from `onBeforeWrite` - see "where the chat's state lives". It is also where every join is tallied for `ChatJoinLog`.
+- **`AgentViewRefreshService`** – Makes a model-bound element beside the transcript follow a running agent. A run commits from a background thread, and a window only sees model changes when its `GlobalModelEventForwarder` is asked to synthesize them - on a browser command or on the 30 s SSE heartbeat. The service listens on `AgentExecutionStore.ChangeListener`, coalesces a burst of writes (200 ms) and synthesizes per window, in that window's sub-session and **under the window's request lock** (a `ReactControl`'s state map is a plain `HashMap`; the heartbeat path skips the lock, and this deliberately does not copy that). Windows are registered by `ChatViewBinding` while a chat renders, which is a fork: the engine offers no way to enumerate an account's live windows. The same register and the same lock serve the write direction: `inWindow` runs a caller's action in the window's sub-session under its lock (after synthesizing, so the window knows the run's objects), and `hasWindow` is what lets a tool tell "this run is headless" from "this page allows nothing". A write waits longer for the lock than a refresh does (`write-timeout-millis`, 5 s): a refresh that gives up loses nothing, a write has no second chance.
+- **`PresentTool`** – The `present` tool (`com.top_logic.ai.chat.tools`): the agent puts model objects onto a channel of the page it is on, and the page renders them however it likes. Registered from this module's own configuration, so every application that depends on `tl-chat` has the tool; **which** channel it may write is the page's decision (`<chat-conversation present="…">`, deny by default). See "the agent writes a channel" below.
 - **`ChatScope` / `ChatScopeElement`** – The `<chat>` container and the ambient value it puts into the child `ViewContext`. An element's conversation is its own `chat-id`, else the enclosing `<chat>`, else `default`.
 - **`ChatJoinLog`** – Per render, which element joined which chat id; logged when the interaction ends, with a WARN for an element that joined nobody while another id has several.
 
@@ -530,6 +531,9 @@ flags as render guards on the existing `Thread` and `Composer` props.
 | `effort` | two-way | The effort level (`String`), one of the levels the selected model offers; empty for none. |
 | `mcp-servers` | two-way | The attached servers' **names**, a `Collection<String>` (one name on its own is read as a set of one). |
 
+`present` is not a seventh: it is a *list* of channels this element opens to the agent rather than
+a channel the element itself reads or writes - see "the agent writes a channel" below.
+
 The four turn settings carry **names**, not model objects, and that is a fact about this product
 rather than a shortcut: only an agent an installation authored in the knowledge base is a
 `tl.ai.core:Agent` at all - the agents tl-ai ships, every model and every MCP server are
@@ -554,6 +558,27 @@ own setting is written back onto the channel - so the channel never claims a set
 not showing, and the next send cannot be answered 403 for something the user never chose.
 `TestChatTurnChannels` pins it against the shipped defaults, beside `TestChatRunAccess`.
 
+#### The agent writes a channel: `present`
+
+`present` is the only way an agent reaches the page it is on, and the page decides how much of
+itself to offer:
+
+```xml
+<chat-conversation input="chatSession" present="paneObject"/>
+```
+
+| | |
+|--|--|
+| The tool | `present(ids, channel)` - `com.top_logic.ai.chat.tools.PresentTool`, registered as `present.present` from `tl-chat.conf.config.xml`, so every host of this module has it. Classified READ / `interaction`: it reads business data and changes page state, not the knowledge base, so there is nothing to approve - and the approval card would sit in the very page it is filling. |
+| The ids | The identifiers tool results carry as `label [id:TID]` (`ReadFilter.withId`, read back by `TidResolver.objectId`). One id puts the object on the channel as itself; several put a `List`. All or nothing - one unreadable id refuses the whole call, because a page showing three of four objects is a page that lies about what the user is looking at. |
+| The rights | Every id resolves through `TidResolver` with the **acting user's** `ModelSecurity`. An object they may not read is refused exactly like one that does not exist. A tool never exceeds its user. |
+| The allow list | **Deny by default.** `ChatConversationControl` resolves each `present="…"` entry and registers it on the `ChatViewBinding` of its (window, chat-id); the tool looks the name up across the bindings of that *window* - which is what a run knows about itself, the chat id being something the tool layer is never told. A name nobody registered is refused with the list of names that exist. The registration ends with the control, so a view that is gone is not writable. |
+| The window | The value is written in the window's sub-session, **under its request lock**, through `AgentViewRefreshService.inWindow` - a `ReactControl`'s state map is a plain `HashMap`. A run with no window (headless, TL-Script, the scheduler) says "no page is attached" and does nothing; that is a fact about the run, and is deliberately a different sentence from "this page allows nothing". |
+
+Which channel a host names is the whole configuration surface: the agent points at data, and what
+that data *looks like* is whatever element reads that channel. `TestPresentTool` drives the real
+path - a registered window, a registered channel, a listener standing in for the page.
+
 #### Configuring `<chat-conversation>` - easy vs advanced
 
 An application configures this element in the design view. Its options fall into three tiers:
@@ -564,7 +589,7 @@ An application configures this element in the design view. Its options fall into
   citation surface from the transcript), the nested `<actions>` (`copy`/`rate`/`regenerate`/
   `timestamp`), the nested `<controls>` pickers, `placeholder`, `prompt-improver-agent` (an agent
   dropdown), `chat-id`, and the six channels (`input`, `busy`, `agent`, `model`, `effort`,
-  `mcp-servers`). The transcript's rail badge button is *not*
+  `mcp-servers`), and `present` - the channels the agent may write, deny by default. The transcript's rail badge button is *not*
   configured: it appears exactly when a `<chat-rail>` with the same `chat-id` is mounted, which the
   rail announces to the shared store (`railMounted`), so a rail that mounts after the conversation
   still makes the button appear.
@@ -603,7 +628,8 @@ the pane's chrome, and every section's body is a view element the application co
         <label><en>Invoices</en><de>Rechnungen</de></label>
         <data-list selection="paneObject" …/>
     </section>
-    <pane><form input="paneObject"/></pane>
+    <pane><form input="paneInvoice"/></pane>
+    <list-pane><data-list …/></list-pane>
 </chat-rail>
 ```
 
@@ -614,9 +640,12 @@ produced or a live view of its browser without this element learning about any o
 `registerRailSection` is gone, replaced by nesting). `@` sources, `+` menu items, citation renderers
 and message actions are still registered from TypeScript and referenced by name from XML.
 
-The `input` channel is the rail's second face: while it holds an object the `<pane>` replaces the
-section column, with the object available to the element inside over the same channel; closing the
-pane writes `null` back. Every child stays mounted - a collapsed section and an unopened pane are
+The `input` channel is the rail's second face: while it holds something the pane replaces the
+section column, with the value available to the element inside over the same channel; closing the
+pane writes `null` back. **One** object shows the `<pane>`, **several** show the `<list-pane>` - a
+record is a form and a set of records is a list, and no one element renders both (`<form>` resolves
+its input to one object). A rail that configured only one of the two uses it for whatever stands
+there. The pane's title is the object's label, or the count for a set. Every child stays mounted - a collapsed section and an unopened pane are
 hidden, not dropped - so a section keeps reporting its badge while the rail is closed, which is
 exactly when the badge matters. Below 1280 px the composed rail stays a column (it has no workspace
 grid to spread a sheet over); `App`'s sheet is unaffected. Two rails on one `chat-id` are not

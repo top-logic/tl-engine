@@ -57,8 +57,8 @@ public interface EnvironmentConfig extends ConfigPart {
 	 *
 	 * <p>
 	 * It may use every placeholder a system prompt may use, except {@code {{environment}}} - the
-	 * block cannot contain itself. Left empty, the shipped English default is used; that default is
-	 * {@link EnvironmentTemplate#DEFAULT}.
+	 * block cannot contain itself. Left empty, the shipped English default is used, which is the
+	 * constant {@code EnvironmentTemplate.DEFAULT}.
 	 * </p>
 	 *
 	 * @see #TEMPLATE

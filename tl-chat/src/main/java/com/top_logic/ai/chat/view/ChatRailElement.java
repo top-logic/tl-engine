@@ -16,6 +16,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -120,9 +121,26 @@ public class ChatRailElement implements UIElement {
 		 */
 		String REACT_ELEMENT = "react-element";
 
+		/**
+		 * The element implementation.
+		 *
+		 * Hidden in the layout editor: the tag already fixes it, and changing it gives an element
+		 * that no longer matches the options shown beside it.
+		 */
 		@Override
+		@Hidden
 		@ClassDefault(ChatRailElement.class)
 		Class<? extends UIElement> getImplementationClass();
+
+		/**
+		 * Optional override for the auto-derived personalization key.
+		 *
+		 * Hidden in the layout editor: the key derived from the view context is the right one, and a
+		 * hand-written value silently moves what a user has personalized somewhere else.
+		 */
+		@Override
+		@Hidden
+		String getPersonalizationKey();
 
 		/**
 		 * Shared key that lets this rail, a thread and a composer show one conversation.
@@ -173,19 +191,25 @@ public class ChatRailElement implements UIElement {
 
 		/**
 		 * Pane width in pixels. Zero keeps the remembered or automatic width.
+		 *
+		 * Hidden in the layout editor: the user drags the pane and the width is remembered per user,
+		 * so a fixed number here overrides what the user chose.
 		 */
 		@Name(PANE_WIDTH)
 		@Label("Pane width")
+		@Hidden
 		@IntDefault(0)
 		int getPaneWidth();
 
 		/**
 		 * Registered React element that renders this rail.
 		 *
-		 * Defaults to {@code TLChatRail}.
+		 * Defaults to {@code TLChatRail}. Hidden in the layout editor: the value must match a
+		 * registration in {@code TypeScript}.
 		 */
 		@Name(REACT_ELEMENT)
 		@Label("React element")
+		@Hidden
 		@StringDefault("TLChatRail")
 		String getReactElement();
 	}

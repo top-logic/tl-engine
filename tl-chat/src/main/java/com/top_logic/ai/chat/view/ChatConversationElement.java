@@ -14,6 +14,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -193,9 +194,26 @@ public class ChatConversationElement implements UIElement {
 		 */
 		String REACT_ELEMENT = "react-element";
 
+		/**
+		 * The element implementation.
+		 *
+		 * Hidden in the layout editor: the tag already fixes it, and changing it gives an element
+		 * that no longer matches the options shown beside it.
+		 */
 		@Override
+		@Hidden
 		@ClassDefault(ChatConversationElement.class)
 		Class<? extends UIElement> getImplementationClass();
+
+		/**
+		 * Optional override for the auto-derived personalization key.
+		 *
+		 * Hidden in the layout editor: the key derived from the view context is the right one, and a
+		 * hand-written value silently moves what a user has personalized somewhere else.
+		 */
+		@Override
+		@Hidden
+		String getPersonalizationKey();
 
 		/**
 		 * Shared key that lets this conversation, a session list and a rail show one conversation.
@@ -257,9 +275,12 @@ public class ChatConversationElement implements UIElement {
 		/**
 		 * Registered citation-renderer name (names a component set up in code). Empty keeps the
 		 * built-in citation popover.
+		 *
+		 * Hidden in the layout editor: the value must match a registration in {@code TypeScript}.
 		 */
 		@Name(CITATION_RENDERER)
 		@Label("Citation renderer")
+		@Hidden
 		@Nullable
 		String getCitationRenderer();
 
@@ -300,9 +321,13 @@ public class ChatConversationElement implements UIElement {
 		 * Registered reference-source name (names a component set up in code). Empty, and with no
 		 * {@link #getMention() mention} binding, hides the {@code @} picker. A {@code mention} binding
 		 * takes precedence over this name.
+		 *
+		 * Hidden in the layout editor: the value must match a registration in {@code TypeScript}; a
+		 * designer binds {@code @} with the {@link #getMention() mention} group instead.
 		 */
 		@Name(REFERENCE_SOURCE)
 		@Label("Reference source")
+		@Hidden
 		@Nullable
 		String getReferenceSource();
 
@@ -318,19 +343,24 @@ public class ChatConversationElement implements UIElement {
 
 		/**
 		 * Registered composer-menu-item names.
+		 *
+		 * Hidden in the layout editor: the values must match registrations in {@code TypeScript}.
 		 */
 		@Name(MENU_ITEMS)
 		@Label("Menu items")
+		@Hidden
 		@Format(CommaSeparatedStrings.class)
 		List<String> getMenuItems();
 
 		/**
 		 * Registered React element that renders this conversation.
 		 *
-		 * Defaults to {@code TLChatConversation}.
+		 * Defaults to {@code TLChatConversation}. Hidden in the layout editor: the value must match a
+		 * registration in {@code TypeScript}.
 		 */
 		@Name(REACT_ELEMENT)
 		@Label("React element")
+		@Hidden
 		@StringDefault("TLChatConversation")
 		String getReactElement();
 	}
@@ -411,9 +441,12 @@ public class ChatConversationElement implements UIElement {
 		/**
 		 * Registered message-action names (names components set up in code). Unknown names are ignored
 		 * with a debug line; they do not fail the view.
+		 *
+		 * Hidden in the layout editor: the values must match registrations in {@code TypeScript}.
 		 */
 		@Name(HOST)
 		@Label("Host")
+		@Hidden
 		@Format(CommaSeparatedStrings.class)
 		List<String> getHost();
 	}

@@ -16,6 +16,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -124,9 +125,26 @@ public class DataListElement implements UIElement {
 		/** Configuration property name for {@link #getReactElement()}. */
 		String REACT_ELEMENT = "react-element";
 
+		/**
+		 * The element implementation.
+		 *
+		 * Hidden in the layout editor: the tag already fixes it, and changing it gives an element
+		 * that no longer matches the options shown beside it.
+		 */
 		@Override
+		@Hidden
 		@ClassDefault(DataListElement.class)
 		Class<? extends UIElement> getImplementationClass();
+
+		/**
+		 * Optional override for the auto-derived personalization key.
+		 *
+		 * Hidden in the layout editor: the key derived from the view context is the right one, and a
+		 * hand-written value silently moves what a user has personalized somewhere else.
+		 */
+		@Override
+		@Hidden
+		String getPersonalizationKey();
 
 		/**
 		 * Optional qualified TL type name(s) of the row objects (for {@link LineConfig#getAttribute()
@@ -230,10 +248,12 @@ public class DataListElement implements UIElement {
 		/**
 		 * Registered React element that renders this list.
 		 *
-		 * Defaults to {@code TLDataList}.
+		 * Defaults to {@code TLDataList}. Hidden in the layout editor: the value must match a
+		 * registration in {@code TypeScript}.
 		 */
 		@Name(REACT_ELEMENT)
 		@Label("React element")
+		@Hidden
 		@StringDefault("TLDataList")
 		String getReactElement();
 	}

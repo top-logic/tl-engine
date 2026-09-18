@@ -341,7 +341,10 @@ An application configures this element in the design view. Its options fall into
   dropdown), `rail-toggle`, `chat-id`, and the `input`/`busy` channels.
 - **Points at code (name a component registered in TypeScript; do nothing unless a developer set that
   name up)** - `react-element`, `citation-renderer` (the renamed `annotations`), `<actions host>`,
-  `menu-items`, and `reference-source`. Each such tooltip says so.
+  `menu-items`, and `reference-source`. Each such tooltip says so, and each carries `@Hidden`, so the
+  layout editor does not offer it at all - a name a designer can only get wrong is not a designer
+  option. The XML still accepts them. `<chat-rail pane-width>` and the engine-inherited `class` and
+  `personalization-key` are hidden for the same reason (`TestHiddenElementOptions` pins the set).
 - **Needs data modelling (TL-Script)** - the nested `<mention>` binding: `rows` (the objects `@` may
   mention), optional `label`/`text` expressions, `observed-types`, `limit`. Same skill as
   `<data-list>`'s `rows`; the control compiles them with `QueryExecutor`, pushes a bounded candidate

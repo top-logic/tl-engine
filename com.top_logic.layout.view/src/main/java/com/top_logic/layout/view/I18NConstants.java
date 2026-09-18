@@ -131,6 +131,26 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey DASHBOARD_DONE;
 
+	/**
+	 * @en A value of type "{0}" cannot be displayed as HTML.
+	 */
+	public static ResKey1 ERROR_HTML_UNSUPPORTED_VALUE__TYPE;
+
+	/**
+	 * @en The document "{0}" is of content type "{1}" and therefore not HTML.
+	 */
+	public static ResKey2 ERROR_HTML_UNSUPPORTED_CONTENT_TYPE__NAME_TYPE;
+
+	/**
+	 * @en The document "{0}" cannot be read.
+	 */
+	public static ResKey1 ERROR_HTML_NOT_READABLE__NAME;
+
+	/**
+	 * @en The HTML content cannot be rendered.
+	 */
+	public static ResKey ERROR_HTML_NOT_RENDERABLE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

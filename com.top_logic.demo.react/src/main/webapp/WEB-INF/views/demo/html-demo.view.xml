@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	HTML content demo: <html> displays ready-made HTML - the answer of an agent, a generated
+	report - as part of the page.
+	
+	The upper panel reads a channel holding an HTML literal of a script expression, which
+	evaluates to a fragment; the element renders it and inserts the result where it stands, so
+	headings, emphasis, lists and tables read as a section of this page.
+	
+	The lower panel reads a channel holding the same kind of content as plain text, with a script
+	tag in it. The element checks every fragment against the application's HTML whitelist before
+	it reaches the page: this one is refused, and the message of the check takes its place.
+-->
+<view>
+	<channels>
+		<derived-channel name="answer">
+			<expr><![CDATA[{{{
+<h3>Statusbericht Projekt Apollo</h3>
+<p>Der Meilenstein <strong>Beta-Release</strong> ist erreicht. Zwei Arbeitspakete sind noch offen, beide ohne Auswirkung auf den Termin.</p>
+<ul>
+<li>Abnahme der Schnittstelle durch den Fachbereich</li>
+<li>Migration der Altdaten aus dem Vorsystem</li>
+</ul>
+<table>
+<tr><th>Paket</th><th>Stand</th></tr>
+<tr><td>Oberfläche</td><td>abgeschlossen</td></tr>
+<tr><td>Import</td><td>in Arbeit</td></tr>
+</table>
+}}}]]></expr>
+		</derived-channel>
+		<derived-channel name="rejected">
+			<expr><![CDATA["<p>Dieser Absatz bringt ein Skript mit.</p><script>alert('!')</script>"]]></expr>
+		</derived-channel>
+	</channels>
+
+	<inset>
+		<stack
+			direction="column"
+			gap="default"
+		>
+			<panel>
+				<title>
+					<en>Agent answer</en>
+					<de>Agenten-Antwort</de>
+				</title>
+				<html input="answer"/>
+			</panel>
+
+			<panel>
+				<title>
+					<en>Rejected fragment</en>
+					<de>Abgewiesenes Fragment</de>
+				</title>
+				<text>
+					<label>
+						<en>The content below carries a script tag. It is checked against the application's HTML whitelist before it reaches the page, and what the check refuses is not displayed.</en>
+						<de>Der Inhalt unten enthält ein Skript-Tag. Er wird gegen die HTML-Whitelist der Anwendung geprüft, bevor er die Seite erreicht; was die Prüfung ablehnt, wird nicht angezeigt.</de>
+					</label>
+				</text>
+				<html input="rejected"/>
+			</panel>
+		</stack>
+	</inset>
+</view>

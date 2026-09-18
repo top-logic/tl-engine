@@ -2,6 +2,8 @@ export { App } from './App'
 export { TLChatSessions } from './chat-sessions'
 export { TLChatConversation } from './chat-conversation'
 export { TLChatRail } from './chat-rail'
+export { TLChatProgress } from './chat-progress'
+export { TLChatSources } from './chat-sources'
 export {
   registerRailSection,
   registerReferenceSource,

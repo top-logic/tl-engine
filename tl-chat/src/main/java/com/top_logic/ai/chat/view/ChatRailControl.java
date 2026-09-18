@@ -69,9 +69,12 @@ public class ChatRailControl extends ReactControl {
 	public ChatRailControl(ViewContext context, Config config, List<Section> sections, List<UIElement> pane) {
 		super(context, null, blankToDefault(config.getReactElement(), "TLChatRail"));
 
-		_binding = ChatViewBinding.bind(context, config.getChatId());
+		// The rail's own chat-id when it has one, otherwise the enclosing <chat>'s, otherwise
+		// "default". The browser keys its store by what we push here, so it must be the resolved id.
+		String chatId = ChatScope.resolve(context, config.getChatId());
+		_binding = ChatViewBinding.bind(context, chatId);
 		_binding.writeSharedState(this::putState);
-		putState("chatId", config.getChatId());
+		putState("chatId", chatId);
 		putState("strip", Boolean.valueOf(config.getStrip()));
 		putState("open", Boolean.valueOf(config.getOpen()));
 		putState("paneMode", config.getPaneMode().getExternalName());

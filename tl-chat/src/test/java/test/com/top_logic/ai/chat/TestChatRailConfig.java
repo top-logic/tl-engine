@@ -26,10 +26,11 @@ import com.top_logic.basic.io.character.CharacterContents;
  */
 public class TestChatRailConfig extends TestCase {
 
-	/** Unconfigured: pieces find each other, the rail is open, and it holds nothing. */
+	/** Unconfigured: the rail inherits its chat, is open, and holds nothing. */
 	public void testDefaults() {
 		Config config = TypedConfiguration.newConfigItem(Config.class);
-		assertEquals("default", config.getChatId());
+		assertNull("No id of its own: the enclosing <chat> names it, else it is the default chat.",
+			config.getChatId());
 		assertTrue(config.getSections().isEmpty());
 		assertTrue("The shell ships no sections of its own.", config.getPane().isEmpty());
 		assertNull(config.getInput());

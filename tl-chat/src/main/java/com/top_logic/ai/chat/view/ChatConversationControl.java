@@ -67,11 +67,14 @@ public class ChatConversationControl extends ReactControl {
 	public ChatConversationControl(ViewContext context, Config config) {
 		super(context, null, blankToDefault(config.getReactElement(), "TLChatConversation"));
 
-		_binding = ChatViewBinding.bind(context, config.getChatId());
+		// The element's own chat-id when it has one, otherwise the enclosing <chat>'s, otherwise
+		// "default". The browser keys its store by what we push here, so it must be the resolved id.
+		String chatId = ChatScope.resolve(context, config.getChatId());
+		_binding = ChatViewBinding.bind(context, chatId);
 		String configuredImprover = blankToNull(config.getPromptImproverAgent());
 		_binding.tracker().setPromptImproverAgentName(configuredImprover);
 		_binding.writeSharedState(this::putState);
-		putState("chatId", config.getChatId());
+		putState("chatId", chatId);
 
 		// Transcript. The trace level seeds the store's own axis (state key stays "traceMode"), which
 		// the composer's trace picker then changes live.

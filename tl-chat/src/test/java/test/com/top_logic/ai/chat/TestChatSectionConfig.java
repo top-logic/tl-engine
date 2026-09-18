@@ -24,7 +24,8 @@ public class TestChatSectionConfig extends TestCase {
 	public void testDefaults() {
 		ChatSourcesElement.Config sources =
 			TypedConfiguration.newConfigItem(ChatSourcesElement.Config.class);
-		assertEquals("default", sources.getChatId());
+		assertNull("No id of its own: the enclosing <chat> names it, else it is the default chat.",
+			sources.getChatId());
 		assertNull(sources.getBadge());
 		assertEquals("TLChatSources", sources.getReactElement());
 	}

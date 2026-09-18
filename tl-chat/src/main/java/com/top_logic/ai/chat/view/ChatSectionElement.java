@@ -10,7 +10,6 @@ import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
-import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
@@ -70,13 +69,16 @@ public abstract class ChatSectionElement implements UIElement {
 		String getPersonalizationKey();
 
 		/**
-		 * Shared key that lets this section and the rest of the chat show one conversation.
+		 * Which conversation this section shows, when it must not be the one the enclosing
+		 * {@code <chat>} names.
 		 *
-		 * Defaults to {@code default}, so unconfigured pieces on one page find each other.
+		 * Leave it empty: a section inside a {@code <chat>} shows that chat, and one outside every
+		 * {@code <chat>} shows {@code default}, so the pieces of one page find each other without
+		 * being told. Set it only to break out of the enclosing chat.
 		 */
 		@Name(CHAT_ID)
 		@Label("Chat id")
-		@StringDefault("default")
+		@Nullable
 		String getChatId();
 
 		/**

@@ -182,13 +182,16 @@ public class ChatRailElement implements UIElement {
 		String getPersonalizationKey();
 
 		/**
-		 * Shared key that lets this rail, a transcript and a session list show one conversation.
+		 * Which conversation this rail belongs to, when it must not be the one the enclosing
+		 * {@code <chat>} names.
 		 *
-		 * Defaults to {@code default}, so unconfigured pieces on one page find each other.
+		 * Leave it empty: a rail inside a {@code <chat>} belongs to that chat, and a rail outside
+		 * every {@code <chat>} belongs to {@code default}, so the pieces of one page find each other
+		 * without being told. Set it only to break out of the enclosing chat.
 		 */
 		@Name(CHAT_ID)
 		@Label("Chat id")
-		@StringDefault("default")
+		@Nullable
 		String getChatId();
 
 		/**

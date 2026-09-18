@@ -30,7 +30,8 @@ public class TestChatConversationConfig extends TestCase {
 	/** Unconfigured attributes match the design: pieces find each other, every action and picker on. */
 	public void testDefaults() {
 		Config config = TypedConfiguration.newConfigItem(Config.class);
-		assertEquals("default", config.getChatId());
+		assertNull("No id of its own: the enclosing <chat> names it, else it is the default chat.",
+			config.getChatId());
 		assertNull(config.getInput());
 		assertNull(config.getBusy());
 

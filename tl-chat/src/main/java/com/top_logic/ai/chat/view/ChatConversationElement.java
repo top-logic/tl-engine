@@ -209,13 +209,17 @@ public class ChatConversationElement implements UIElement {
 		String getPersonalizationKey();
 
 		/**
-		 * Shared key that lets this conversation, a session list and a rail show one conversation.
+		 * Which conversation this element shows, when it must not be the one the enclosing
+		 * {@code <chat>} names.
 		 *
-		 * Defaults to {@code default}, so unconfigured pieces on one page find each other.
+		 * Leave it empty: an element inside a {@code <chat>} shows that chat, and an element outside
+		 * every {@code <chat>} shows {@code default}, so the pieces of one page find each other
+		 * without being told. Set it only to break out of the enclosing chat, e.g. for a second
+		 * conversation beside the first.
 		 */
 		@Name(CHAT_ID)
 		@Label("Chat id")
-		@StringDefault("default")
+		@Nullable
 		String getChatId();
 
 		/**

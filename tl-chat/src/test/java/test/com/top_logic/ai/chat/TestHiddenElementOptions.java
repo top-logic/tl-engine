@@ -13,6 +13,7 @@ import test.com.top_logic.basic.ModuleTestSetup;
 
 import com.top_logic.ai.chat.view.ChatConversationElement;
 import com.top_logic.ai.chat.view.ChatRailElement;
+import com.top_logic.ai.chat.view.ChatScopeElement;
 import com.top_logic.ai.chat.view.ChatSectionElement;
 import com.top_logic.ai.chat.view.ChatSourcesElement;
 import com.top_logic.ai.chat.view.list.DataListElement;
@@ -60,6 +61,13 @@ public class TestHiddenElementOptions extends TestCase {
 		assertVisible(ChatConversationElement.Config.class, ChatConversationElement.Config.CITATIONS);
 		assertVisible(ChatConversationElement.Config.class, ChatConversationElement.Config.CHAT_ID);
 		assertVisible(ChatConversationElement.Actions.class, ChatConversationElement.Actions.COPY);
+	}
+
+	/** {@code <chat>} hides only the two engine-inherited options; the id it hands down is visible. */
+	public void testChatScopeHiddenOptions() {
+		assertEngineOptionsHidden(ChatScopeElement.Config.class);
+
+		assertVisible(ChatScopeElement.Config.class, ChatScopeElement.Config.CHAT_ID);
 	}
 
 	/** {@code <chat-rail>} hides its React binding and the pane width the user drags. */

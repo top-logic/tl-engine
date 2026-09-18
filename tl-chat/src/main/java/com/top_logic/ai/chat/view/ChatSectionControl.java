@@ -50,9 +50,12 @@ public class ChatSectionControl extends ReactControl {
 	public ChatSectionControl(ViewContext context, Config config, String defaultReactElement) {
 		super(context, null, blankToDefault(config.getReactElement(), defaultReactElement));
 
-		_binding = ChatViewBinding.bind(context, config.getChatId());
+		// The section's own chat-id when it has one, otherwise the enclosing <chat>'s, otherwise
+		// "default". The browser keys its store by what we push here, so it must be the resolved id.
+		String chatId = ChatScope.resolve(context, config.getChatId());
+		_binding = ChatViewBinding.bind(context, chatId);
 		_binding.writeSharedState(this::putState);
-		putState("chatId", config.getChatId());
+		putState("chatId", chatId);
 
 		ChannelRef badgeRef = config.getBadge();
 		_badgeChannel = badgeRef == null ? null : context.resolveChannel(badgeRef);

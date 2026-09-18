@@ -21,9 +21,9 @@ import com.top_logic.tl.ai.core.security.ReadFilter;
  *
  * <p>
  * The format is the external form of an object's {@link TLObject#tId() object key}, so anything a
- * tool reported as a TID can be fed back in. The optional {@code #branch} and {@code @revision}
- * suffixes an object key may carry are stripped: tools always operate on the current revision of
- * the trunk.
+ * tool reported as a TID can be fed back in - including a whole {@code label [id:TID]} entry as a
+ * text result writes it. The optional {@code #branch} and {@code @revision} suffixes an object key
+ * may carry are stripped: tools always operate on the current revision of the trunk.
  * </p>
  *
  * <p>
@@ -67,7 +67,7 @@ public final class TidResolver {
 			throw new IllegalStateException("Resolving a TID is a read check, and this call names no"
 				+ " principal to check it for. Pass the ModelSecurity of the agent run.");
 		}
-		String[] split = tid.split(":", 2);
+		String[] split = objectId(tid).split(":", 2);
 		if (split.length != 2) {
 			throw new IllegalArgumentException(
 				"Invalid TID format. Expected 'TypeName:id', got: " + tid);
@@ -83,6 +83,30 @@ public final class TidResolver {
 			throw new IllegalArgumentException(notFound(tid));
 		}
 		return result;
+	}
+
+	/**
+	 * The identifier in something the model wrote, which may be a whole {@code label [id:TID]}.
+	 *
+	 * <p>
+	 * That is how a tool result written as text names an object
+	 * ({@link com.top_logic.tl.ai.core.security.ReadFilter#withId(String, String)}), so a model that
+	 * copies the entry it just read back into a tool call is right rather than wrong. Anything
+	 * without the marker is returned trimmed and otherwise unchanged - a bare TID is what every
+	 * JSON result carries.
+	 * </p>
+	 *
+	 * @param value
+	 *        What the model named. Must not be <code>null</code>.
+	 * @return The identifier part; never <code>null</code>.
+	 */
+	public static String objectId(String value) {
+		int start = value.indexOf("[id:");
+		if (start < 0) {
+			return value.trim();
+		}
+		int end = value.indexOf(']', start);
+		return (end < 0 ? value.substring(start + 4) : value.substring(start + 4, end)).trim();
 	}
 
 	/**

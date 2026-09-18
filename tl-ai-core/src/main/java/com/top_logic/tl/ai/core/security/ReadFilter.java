@@ -18,6 +18,7 @@ import java.util.Objects;
 import java.util.RandomAccess;
 import java.util.Set;
 
+import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -322,7 +323,7 @@ public final class ReadFilter {
 	 */
 	private static Map<String, Object> identity(TLObject obj) {
 		Map<String, Object> result = new LinkedHashMap<>();
-		result.put(TID, obj.tId().asString());
+		result.put(TID, idOf(obj));
 		TLStructuredType type = obj.tType();
 		result.put(TYPE, type == null ? null : TLModelUtil.qualifiedName(type));
 		result.put(DISPLAY, MetaLabelProvider.INSTANCE.getLabel(obj));
@@ -362,13 +363,21 @@ public final class ReadFilter {
 	}
 
 	/**
-	 * The given value rendered the way TL-Script renders it, with everything the principal may not read
+	 * The given value rendered as text for the model, with everything the principal may not read
 	 * removed first, {@link #marked(String, String) marked} as business data.
 	 *
 	 * <p>
 	 * For the tools whose result is a sentence rather than a JSON document - a configured TL-Script
-	 * tool, whose body may return anything at all. {@link SearchExpression#asString(Object)} labels a
-	 * model object, and a label is business data, so it must never see one the principal may not read.
+	 * tool, whose body may return anything at all. Scalars are rendered the way TL-Script renders
+	 * them ({@link SearchExpression#asString(Object)}); a model object is rendered by
+	 * {@link #labelled(TLObject)}, so that the model reads its label <em>and</em> the identifier it
+	 * can hand back to a tool; a collection becomes one line per element, because a run of labels
+	 * joined by commas is a single string the model cannot pick an object out of.
+	 * </p>
+	 *
+	 * <p>
+	 * A label is business data, so nothing here may see an object the principal may not read - which
+	 * is why the filtering happens first and not in the renderer.
 	 * </p>
 	 *
 	 * @param source
@@ -380,7 +389,103 @@ public final class ReadFilter {
 	 * @return The marked rendering; never {@code null}.
 	 */
 	public String text(String source, Object value) {
-		return marked(source, SearchExpression.asString(visible(value)));
+		return marked(source, asText(visible(value)));
+	}
+
+	/**
+	 * How a model object is written wherever a tool result is text rather than JSON:
+	 * {@code label [id:TID]}.
+	 *
+	 * <p>
+	 * One form, in one place, because the identifier is what makes a tool result actionable: the
+	 * model reads an object here and names it again in the next call - {@code getInstance},
+	 * {@code cite}, a host's {@code present}. A label alone cannot be fed back, and the model would
+	 * have to search for the object it was just shown.
+	 * </p>
+	 *
+	 * <p>
+	 * The identifier is the object key's external form, the same {@code "TypeName:id"} the JSON
+	 * renderings disclose as {@code _tid} and
+	 * {@code com.top_logic.tl.ai.core.tools.model.TidResolver} reads back. An object that has none -
+	 * a transient one, or a stand-in in a test - renders as its bare label rather than as a broken
+	 * identifier.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>Disclosure.</b> Both halves are business data: the label is text an end user typed, and the
+	 * identifier says that an object of that type exists. So this is only ever called on a value
+	 * that has already passed {@link #visible(Object)}.
+	 * </p>
+	 *
+	 * @param obj
+	 *        The object to render; must be one the principal may read.
+	 * @return The rendering; never {@code null}.
+	 */
+	public static String labelled(TLObject obj) {
+		if (obj == null) {
+			return "";
+		}
+		return withId(MetaLabelProvider.INSTANCE.getLabel(obj), idOf(obj));
+	}
+
+	/**
+	 * The {@code label [id:TID]} form itself, for a caller that has the two halves already.
+	 *
+	 * <p>
+	 * Separate from {@link #labelled(TLObject)} so that the form is one string literal in one
+	 * place: a host tool that renders objects its own way still writes the identifier the way every
+	 * other tool writes it, and {@code TidResolver.objectId} reads exactly this back.
+	 * </p>
+	 *
+	 * @param label
+	 *        What to call the object. May be empty.
+	 * @param id
+	 *        Its identifier, or <code>null</code> for an object that has none - which renders as the
+	 *        bare label rather than as a broken identifier.
+	 * @return The rendering; never {@code null}.
+	 */
+	public static String withId(String label, String id) {
+		String text = label == null ? "" : label;
+		return id == null || id.isEmpty() ? text : text + " [id:" + id + "]";
+	}
+
+	/**
+	 * The identifier {@link #labelled(TLObject)} writes and the tools read back, or {@code null} for
+	 * an object that has none.
+	 *
+	 * @param obj
+	 *        Any object, including <code>null</code>.
+	 * @return The external form of the object key, e.g. {@code "GenericObject:5371"}.
+	 */
+	public static String idOf(TLObject obj) {
+		ObjectKey key = obj == null ? null : obj.tId();
+		return key == null ? null : key.asString();
+	}
+
+	/**
+	 * The text rendering behind {@link #text(String, Object)}, on an already filtered value.
+	 */
+	private static String asText(Object value) {
+		if (value instanceof Collection<?> many) {
+			if (many.isEmpty()) {
+				return "";
+			}
+			if (many.size() == 1) {
+				return asText(many.iterator().next());
+			}
+			StringBuilder result = new StringBuilder();
+			for (Object element : many) {
+				if (result.length() > 0) {
+					result.append('\n');
+				}
+				result.append(asText(element));
+			}
+			return result.toString();
+		}
+		if (value instanceof TLObject obj) {
+			return labelled(obj);
+		}
+		return SearchExpression.asString(value);
 	}
 
 	/**

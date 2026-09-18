@@ -9,6 +9,7 @@
   - `type` is a `TLModelPartRef` and decides the input; it defaults to `tl.core:String`. The control is resolved by `FieldControlService.createFieldControl(context, type, spec, model)` - the same chain that picks the control for a `<field>` over an attribute of that type, which only adds the lookup of the attribute's own `<input-control>` annotation. So `tl.core:Integer` is a number input, `tl.core:Date` a date picker, `tl.core:Boolean` a checkbox, `tl.core:Text` a text area, and an enumeration or a class a dropdown.
   - A value of an enumeration or a class is chosen from options: without an `options` expression these are the classifiers respectively the instances of the type (`AttributeOptions.optionsFor(type)`). `options` is a TL-Script function whose arguments are the values of the `<inputs><input channel="…"/></inputs>` channels, in declaration order - the same shape as `<execute-script>` - and the options are recomputed whenever one of those channels changes. Every `inputs` property of the view layer - here, a `<table>`'s `<rows>`, a column declaration, an action - reads both notations: the nested `<inputs><input channel="…"/></inputs>` and the comma-separated attribute `inputs="a, b"` (`Inputs`). `multiple="true"` makes the channel carry a collection instead of a single value; a single-valued selection is unwrapped, so the channel holds the value itself and not a list of one.
   - Further properties: `label` (a `ResKey`; without it the input stands alone, without the label chrome), `label-position` and `readonly`.
+  - **An input standing without a visible label** - in an app bar, in a toolbar, above a list - says what it is for in two places. `placeholder` (a `ResKey`) is the text shown inside the input while it is empty: "Search" in a search box, `name@example.com` in a mail address; it disappears with the value entered. It is a property of the field description (`FieldSpec.setPlaceholder(…)`) rather than of one control, so every control `FieldControlService` builds from such a description carries it - the text and number inputs render it, a control that has nothing to show an empty box in ignores it. `label-position="hide-label"` then takes the label out of the display but keeps it as the *name* of the input: the input area is a `label` element holding the label text in a visually hidden span (`.tlVisuallyHidden` in `TLFormField`), so every native input inside takes its accessible name from HTML's implicit label association, and a click anywhere in the area focuses it. An input that keeps its `label` and hides it is named for a screen reader; one that drops the `label` altogether is not. A radio group names its options by `id` / `for` instead (`TLBooleanChoice`), since no label may contain another.
   - **Layout: `<fields>`** (`FieldsElement`). A `<value-input>` renders the label-and-input chrome of a field but, standing outside a `<form>`, gets none of the grid a form renders around its fields. `<fields>` is that grid on its own (`ReactFormLayoutControl`, `TLFormLayout`): the `var(--page-inset)` padding content owns in the spacing model, the auto-fit columns (`max-columns`, 3 by default), and the `FormLayoutContext` a `TLFormField` reads to move a label from beside its input to above it when the column is narrower than 320px (`label-position` `auto` by default, or fixed `side` / `top`; the field-level `after` / `hidden` are rejected). A `<form>` needs no `<fields>`, being such a grid already; a `<field>` still needs a `<form>`, since `<fields>` carries no object.
   - **Submit hook**: `<on-submit>` names a `ViewCommand` run over the value the user finishes entering - one input plus one command over what was entered, which is what a search field or a jump-to box is. The value reaches the channel first, then the command as its input, so the command's `<execute-script function="entered -> …">` receives it directly and needs no `input` channel of its own. The property defaults to `GenericViewCommand` (`@ImplementationClassDefault`), so the actions stand inside the element:
     ```xml
@@ -165,6 +166,53 @@ The box the picture is shown in is described by `aspect-ratio` (`16/9`, so a row
 ```
 
 The client classes an application styles against are `.tlImage` / `.tlImage__image`, `.tlOverlay` / `.tlOverlay__layer` / `.tlOverlay__layer--<anchor>` and `.tlAvatar--<size>` / `.tlAvatar__image`. The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/image-demo.view.xml` with `style/tl-demo-react.css`.
+
+## Content shown under one condition: `<visible-if>`
+
+`<visible-if input="ch" expr="x -> …">` (`VisibleIfElement`) shows its children while a TL-Script predicate over the value of the `input` channel holds, and nothing while it does not. It is the short form of a `<switch>` with a single case and no default, and it is that literally: the element builds the `ReactSwitchControl` of such a switch, so the re-evaluation, the observation and the disposal are the ones of a `<switch>`. Several alternatives of which one is shown at a time stay a `<switch>`.
+
+- The condition is re-evaluated on a new channel value and on a change of the object the channel holds - a condition usually decides by an attribute of that object, which is edited without the channel value changing. A condition reaching beyond the input object (deciding by an attribute of its container, say) names the types it navigates to in `observed-types`, since a change of another object is invisible to the input's own observation.
+- Content that is hidden is disposed rather than kept alive, so it leaves no contributions - a form's edit / save / cancel commands, a slot contribution - behind in the enclosing scope. While the condition keeps holding, the content stays as it is and follows its own channels.
+- Not to be confused with the `<visible-if>` inside a command's `<executability>` (`com.top_logic.layout.view.command.VisibleIf`), which carries the same tag name and decides whether a *command* is offered for its input.
+
+**Conditional content takes the size of what it shows.** A `<switch>` and a `<visible-if>` render through the deck pane (`TLDeckPane`, `.tlDeckPane`), a column flex box that states no size of its own: a deck showing content of its own size is exactly as wide and as high as that content, so conditional content stands inline - in an app bar, beside a breadcrumb, in a row of buttons - instead of claiming the box around it. A deck whose content fills takes part in the fill contract as a container (see below) and is then the bounded box the child's height resolves against.
+
+The app bar of `com.top_logic.demo.react` shows both this and the two ways an unlabelled input says what it is for. `WEB-INF/views/tickets.view.xml` raises its jump-to box into the shell's app bar with `<slot-content to="appbar-content">` - the contribution belongs to the view that owns the `ticket` channel, and the shell knows nothing of it - and puts the name of the selected ticket beside it, shown only while a ticket is selected:
+
+```xml
+<slot-content to="appbar-content">
+	<stack
+		align="center"
+		direction="row"
+		gap="compact"
+	>
+		<value-input
+			label-position="hide-label"
+			value="jump"
+		>
+			<label>
+				<en>Jump to ticket</en>
+			</label>
+			<placeholder>
+				<en>Jump to ticket</en>
+			</placeholder>
+			<on-submit>
+				<execute-script function="name -> all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#name`) == $name).firstElement()"/>
+				<write-channel name="ticket"/>
+			</on-submit>
+		</value-input>
+		<visible-if
+			expr="t -> $t != null"
+			input="ticket"
+		>
+			<text
+				input="ticket"
+				overflow="ellipsis"
+			/>
+		</visible-if>
+	</stack>
+</slot-content>
+```
 
 ## `TableViewControl` is the sole React table control
 

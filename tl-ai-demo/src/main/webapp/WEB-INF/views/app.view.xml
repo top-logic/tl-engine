@@ -8,8 +8,8 @@
 	about and therefore the start item. The classic LayoutServlet UI keeps working unchanged; this is
 	a second front end onto the same model, not a replacement.
 
-	Everything except the chat is built from the standard view elements, so the demo shows what an
-	application gets for free rather than what this module wrote itself.
+	Everything here is built from the standard view elements, the chat included, so the demo shows
+	what an application gets for free rather than what this module wrote itself.
 -->
 <view>
 	<channels>
@@ -110,6 +110,11 @@
 				<!--
 					The chat first and active on entry: this application exists to demonstrate the
 					agent, and the invoices are the data it works on rather than the point.
+
+					It is built from view elements rather than from the one-element <agent-chat/> -
+					a <data-list> of this user's chats, a <chat-conversation>, and a <chat-rail>
+					whose sections are configured (Issue #415). See
+					tl-ai-demo/chat-grouped.view.xml.
 				-->
 				<nav-item id="chat"
 					icon="css:bi bi-chat-dots"
@@ -118,44 +123,6 @@
 						<en>Chat</en>
 						<de>Chat</de>
 					</label>
-					<agent-chat
-						prompt-improver-agent="TL_PromptImprover"
-						trace-mode="overview"
-					/>
-				</nav-item>
-
-				<nav-item id="chat-seams"
-					icon="css:bi bi-layout-sidebar-reverse"
-				>
-					<label>
-						<en>Chat with invoices</en>
-						<de>Chat mit Rechnungen</de>
-					</label>
-					<!--
-						The demo's own element, not <agent-chat react-element="…"/>: the composition
-						needs data the framework does not have (this application's invoices), and
-						the Java side of the seam is where a host adds it.
-					-->
-					<demo-agent-chat
-						prompt-improver-agent="TL_PromptImprover"
-						trace-mode="overview"
-					/>
-				</nav-item>
-
-				<nav-item id="chat-composed"
-					icon="css:bi bi-layout-three-columns"
-				>
-					<label>
-						<en>Chat (composed elements)</en>
-						<de>Chat (Elemente)</de>
-					</label>
-					<!--
-						Issue #415: the chat built from view elements instead of the one-element
-						<agent-chat> - a session list, the transcript with its prompt field, and a
-						<chat-rail> whose sections are configured (two of the chat's own plus one
-						<data-list> of this application's invoices). See
-						tl-ai-demo/chat-grouped.view.xml.
-					-->
 					<view-ref view="tl-ai-demo/chat-grouped.view.xml"/>
 				</nav-item>
 

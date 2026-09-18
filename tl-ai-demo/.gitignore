@@ -7,7 +7,4 @@ test-time.txt
 jacoco.exec
 dist
 report
-/ui/node
-/ui/node_modules
-/src/main/webapp/script/tl-ai-demo-chat.js
 

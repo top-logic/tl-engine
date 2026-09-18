@@ -1,5 +1,6 @@
 import { React, useTLState } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { useImageSrc } from './imageSource';
 
 /** Derives up to two initials from a display name. */
 function initials(name: string): string {
@@ -23,24 +24,42 @@ function hue(name: string): number {
 }
 
 /**
- * Circular initials avatar for a person or object. Initials and a stable background color are
- * derived from the display name.
+ * Circular avatar for a person or object. It shows the picture of the one it represents; where
+ * there is none, initials and a stable background color derived from the display name.
  *
  * State:
  * - name: string | null
+ * - size: "small" | "default" | "large" | "x-large"
+ * - url / hasData / dataRevision: the picture, see useImageSrc
  */
 const TLAvatar: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
+  const src = useImageSrc();
+
   const name = state.name as string | null;
+  const size = (state.size as string) ?? 'default';
+  const sizeClass = size === 'default' ? '' : `tlAvatar--${size}`;
+
+  if (src) {
+    return (
+      <span
+        id={controlId}
+        className={['tlAvatar', sizeClass].filter(Boolean).join(' ')}
+        title={name ?? undefined}
+      >
+        <img className="tlAvatar__image" src={src} alt={name ?? ''} />
+      </span>
+    );
+  }
 
   if (!name) {
-    return <span id={controlId} className="tlAvatar tlAvatar--empty" />;
+    return <span id={controlId} className={['tlAvatar', 'tlAvatar--empty', sizeClass].filter(Boolean).join(' ')} />;
   }
 
   return (
     <span
       id={controlId}
-      className="tlAvatar"
+      className={['tlAvatar', sizeClass].filter(Boolean).join(' ')}
       style={{ backgroundColor: `hsl(${hue(name)}, 45%, 45%)` }}
       title={name}
       aria-label={name}

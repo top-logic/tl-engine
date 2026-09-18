@@ -5,6 +5,7 @@
  */
 
 /**
- * React-based layout controls: split panels, collapsible panels, maximize roots, and deck panes.
+ * React-based layout controls: split panels, collapsible panels, maximize roots, deck panes, and
+ * overlays.
  */
 package com.top_logic.layout.react.control.layout;

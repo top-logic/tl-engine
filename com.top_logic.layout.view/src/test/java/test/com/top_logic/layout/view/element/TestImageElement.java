@@ -18,7 +18,7 @@ import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.json.JSON.ParseException;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.layout.react.control.photo.ReactPhotoViewerControl;
+import com.top_logic.layout.react.control.image.ImageSource;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
@@ -29,8 +29,8 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.ImageElement;
 
 /**
- * Tests which channel values an {@link ImageElement} displays: a picture is shown, anything else is
- * not.
+ * Tests which channel values an {@link ImageElement} displays: a picture and an address naming one
+ * are shown, anything else is not.
  *
  * <p>
  * The element is exercised through its public seam - a configuration naming an input channel, a
@@ -43,14 +43,14 @@ public class TestImageElement extends TestCase {
 
 	private ViewChannel _channel;
 
-	private ReactControl _viewer;
+	private ReactControl _image;
 
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
 
 		_channel = new DefaultViewChannel(INPUT);
-		_viewer = createViewer(_channel);
+		_image = createImage(_channel);
 	}
 
 	/** A picture is displayed. */
@@ -59,7 +59,7 @@ public class TestImageElement extends TestCase {
 
 		_channel.set(data("image/png"));
 
-		assertTrue("A PNG is a picture.", hasPhoto());
+		assertTrue("A PNG is a picture.", hasData());
 		assertTrue("The displayed data has changed.", dataRevision() > revision);
 	}
 
@@ -70,43 +70,52 @@ public class TestImageElement extends TestCase {
 
 		_channel.set(data("application/pdf"));
 
-		assertFalse("A PDF is not a picture.", hasPhoto());
+		assertFalse("A PDF is not a picture.", hasData());
 		assertTrue("The picture shown before is gone.", dataRevision() > revision);
 	}
 
 	/** The content type names the media type regardless of case and of its parameters. */
 	public void testContentTypeSyntax() {
 		_channel.set(data("IMAGE/PNG"));
-		assertTrue("The media type is case-insensitive.", hasPhoto());
+		assertTrue("The media type is case-insensitive.", hasData());
 
 		_channel.set(data("image/svg+xml; charset=utf-8"));
-		assertTrue("Parameters after the media type are tolerated.", hasPhoto());
+		assertTrue("Parameters after the media type are tolerated.", hasData());
 
 		_channel.set(data(null));
-		assertFalse("Data without a content type is not known to be a picture.", hasPhoto());
+		assertFalse("Data without a content type is not known to be a picture.", hasData());
 	}
 
-	/** A value that is no binary data at all is not displayed. */
-	public void testNonBinaryValueIsNotDisplayed() {
+	/** A text value names the address the picture is loaded from. */
+	public void testUrlIsDisplayed() {
+		_channel.set("/media/logo.png");
+
+		assertFalse("The address is loaded by the client, not served by the control.", hasData());
+		assertEquals("/media/logo.png", url());
+	}
+
+	/** A value that is neither a picture nor an address is not displayed. */
+	public void testUnrelatedValueIsNotDisplayed() {
 		_channel.set(data("image/png"));
 
-		_channel.set("some text");
+		_channel.set(Integer.valueOf(42));
 
-		assertFalse("Only binary data can be a picture.", hasPhoto());
+		assertFalse("A number is no picture.", hasData());
+		assertNull("A number names no address either.", url());
 	}
 
 	/** The value a channel already carries when the control is created is displayed the same way. */
 	public void testInitialChannelValue() {
 		ViewChannel pdfChannel = new DefaultViewChannel(INPUT);
 		pdfChannel.set(data("application/pdf"));
-		assertFalse("A PDF is not a picture.", hasPhoto(createViewer(pdfChannel)));
+		assertFalse("A PDF is not a picture.", hasData(createImage(pdfChannel)));
 
 		ViewChannel imageChannel = new DefaultViewChannel(INPUT);
 		imageChannel.set(data("image/png"));
-		assertTrue("A PNG is a picture.", hasPhoto(createViewer(imageChannel)));
+		assertTrue("A PNG is a picture.", hasData(createImage(imageChannel)));
 	}
 
-	private ReactControl createViewer(ViewChannel channel) {
+	private ReactControl createImage(ViewChannel channel) {
 		ImageElement.Config config = TypedConfiguration.newConfigItem(ImageElement.Config.class);
 		config.update(config.descriptor().getProperty(ImageElement.Config.INPUT), new ChannelRef(INPUT));
 
@@ -132,20 +141,24 @@ public class TestImageElement extends TestCase {
 		return BinaryDataFactory.createBinaryData(name.getBytes(StandardCharsets.UTF_8), contentType, name);
 	}
 
-	private boolean hasPhoto() {
-		return hasPhoto(_viewer);
+	private boolean hasData() {
+		return hasData(_image);
 	}
 
-	private static boolean hasPhoto(ReactControl viewer) {
-		return Boolean.TRUE.equals(state(viewer, ReactPhotoViewerControl.HAS_PHOTO));
+	private static boolean hasData(ReactControl image) {
+		return Boolean.TRUE.equals(state(image, ImageSource.HAS_DATA));
+	}
+
+	private String url() {
+		return (String) state(_image, ImageSource.URL);
 	}
 
 	private long dataRevision() {
-		return ((Number) state(_viewer, ReactPhotoViewerControl.DATA_REVISION)).longValue();
+		return ((Number) state(_image, ImageSource.DATA_REVISION)).longValue();
 	}
 
-	private static Object state(ReactControl viewer, String key) {
-		String json = viewer.stateAsJSON();
+	private static Object state(ReactControl image, String key) {
+		String json = image.stateAsJSON();
 		try {
 			return ((Map<?, ?>) JSON.fromString(json)).get(key);
 		} catch (ParseException ex) {

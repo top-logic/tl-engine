@@ -179,6 +179,15 @@
 							<de>Repeater</de>
 						</label>
 					</nav-item>
+					<nav-item id="images"
+						icon="css:bi bi-image"
+					>
+						<view-ref view="demo/image-demo.view.xml"/>
+						<label>
+							<en>Images</en>
+							<de>Bilder</de>
+						</label>
+					</nav-item>
 					<nav-item id="wizard"
 						icon="css:bi bi-signpost-2"
 					>

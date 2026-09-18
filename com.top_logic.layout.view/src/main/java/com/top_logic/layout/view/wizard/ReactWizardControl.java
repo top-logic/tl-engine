@@ -8,8 +8,11 @@ package com.top_logic.layout.view.wizard;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
@@ -37,9 +40,20 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
+ * The sequence is expanded from the wizard's sources, and expanded again whenever one of the
+ * channels a source names takes a new value: a step appended to a list channel becomes a step of the
+ * wizard in the same breath. The expansion runs inside the channel notification, so an action chain
+ * that writes such a channel and then moves on already sees the step it created. What the user is
+ * looking at survives the re-expansion where its key is still in the sequence - the content stays as
+ * it is and only its position is corrected; otherwise the display falls back to where the step
+ * channel value points, which for a key that has gone is the first step.
+ * </p>
+ *
+ * <p>
  * The client addresses a step by a string, because a step key is any object. The control assigns
  * each key such an identifier once and keeps both directions of the mapping, so that the identifier
- * a step is published under is the one a click on it comes back with.
+ * a step is published under is the one a click on it comes back with. An identifier stays assigned
+ * once given, so a step that comes back after being away comes back under the name it had.
  * </p>
  *
  * <p>
@@ -51,10 +65,10 @@ public class ReactWizardControl extends ReactControl implements ChildRevealer {
 	private static final String REACT_MODULE = "TLWizard";
 
 	/** State key for the published steps, one entry per step of the wizard. */
-	private static final String STEPS = "steps";
+	public static final String STEPS = "steps";
 
 	/** Step entry key for the client-side identifier of the step. */
-	private static final String STEP_KEY = "key";
+	public static final String STEP_KEY = "key";
 
 	/** Step entry key for the name of the step, resolved for the session being served. */
 	private static final String STEP_LABEL = "label";
@@ -63,7 +77,7 @@ public class ReactWizardControl extends ReactControl implements ChildRevealer {
 	private static final String STEP_ICON = "icon";
 
 	/** State key for the position of the step displayed. */
-	private static final String ACTIVE_INDEX = "activeIndex";
+	public static final String ACTIVE_INDEX = "activeIndex";
 
 	/** State key for the content of the step displayed. */
 	private static final String ACTIVE_CHILD = "activeChild";
@@ -114,6 +128,9 @@ public class ReactWizardControl extends ReactControl implements ChildRevealer {
 
 	private int _activeIndex = -1;
 
+	/** The key of the step whose content is displayed, {@code null} while none is. */
+	private Object _activeKey;
+
 	private boolean _disposed;
 
 	/**
@@ -135,14 +152,18 @@ public class ReactWizardControl extends ReactControl implements ChildRevealer {
 		_stepChannel = stepChannel;
 
 		_steps = new ArrayList<>();
-		for (WizardStepSource source : element.getSources()) {
-			_steps.addAll(source.steps(context));
-		}
+		expandSteps();
 		_scope = new WizardScope(stepChannel, this::steps);
 
 		_stepListener = (sender, oldValue, newValue) -> displayCurrentStep();
 		_stepChannel.addListener(_stepListener);
 		addCleanupAction(() -> _stepChannel.removeListener(_stepListener));
+
+		ChannelListener sequenceListener = (sender, oldValue, newValue) -> refreshSteps();
+		for (ViewChannel channel : sequenceChannels()) {
+			channel.addListener(sequenceListener);
+			addCleanupAction(() -> channel.removeListener(sequenceListener));
+		}
 
 		RevealRegistry registry = context.getRevealRegistry();
 		if (registry != null) {
@@ -162,10 +183,55 @@ public class ReactWizardControl extends ReactControl implements ChildRevealer {
 	}
 
 	/**
-	 * The steps of the wizard, in the order it walks them.
+	 * The steps of the wizard, in the order it walks them, as the sources currently answer them.
 	 */
 	public List<WizardStep> steps() {
 		return _steps;
+	}
+
+	/**
+	 * Asks every source for its steps and makes their concatenation the sequence of this wizard.
+	 *
+	 * <p>
+	 * The sequence keeps its identity, so whoever holds the {@link WizardScope} reads the steps as
+	 * they are now rather than as they were when the scope was handed out.
+	 * </p>
+	 */
+	private void expandSteps() {
+		_steps.clear();
+		for (WizardStepSource source : _element.getSources()) {
+			_steps.addAll(source.steps(_context));
+		}
+	}
+
+	/**
+	 * The channels the sources decide their contribution by, each of them once however many sources
+	 * name it.
+	 */
+	private Set<ViewChannel> sequenceChannels() {
+		Set<ViewChannel> result = new LinkedHashSet<>();
+		for (WizardStepSource source : _element.getSources()) {
+			result.addAll(source.observedChannels(_context));
+		}
+		// The step channel is followed on its own account, and a listener registered twice would be
+		// removed once.
+		result.remove(_stepChannel);
+		return result;
+	}
+
+	/**
+	 * Expands the sequence anew and brings the display in line with it.
+	 */
+	private void refreshSteps() {
+		if (_disposed) {
+			return;
+		}
+		expandSteps();
+
+		Object tx = beginUpdate();
+		putState(STEPS, publishedSteps());
+		displayCurrentStep();
+		commitUpdate(tx);
 	}
 
 	/**
@@ -184,15 +250,20 @@ public class ReactWizardControl extends ReactControl implements ChildRevealer {
 			return;
 		}
 		int index = _scope.currentIndex();
-		if (index == _activeIndex && _content != null) {
-			// The step displayed is unchanged; its content is bound to its own channels and updates
-			// itself.
+		Object key = index < 0 ? null : _steps.get(index).key();
+		// The content belongs to a step, not to a position: a step that keeps its key keeps its
+		// content, however far the steps before it have moved it along.
+		boolean sameStep = _content != null && Objects.equals(key, _activeKey);
+		if (sameStep && index == _activeIndex) {
+			// Nothing about the step displayed has changed; its content is bound to its own channels
+			// and updates itself.
 			return;
 		}
 		_activeIndex = index;
+		_activeKey = key;
 
-		ReactControl content =
-			index < 0 ? ContentControls.combine(_context, List.of()) : buildContent(_steps.get(index));
+		ReactControl content = sameStep ? _content
+			: index < 0 ? ContentControls.combine(_context, List.of()) : buildContent(_steps.get(index));
 		ReactControl previous = _content;
 		_content = content;
 
@@ -318,8 +389,8 @@ public class ReactWizardControl extends ReactControl implements ChildRevealer {
 	 */
 	@Override
 	public String scriptingChildSlot(ReactControl child) {
-		if (child == _content && _activeIndex >= 0) {
-			return ScriptingControl.slotSegment(STEP_SLOT, idFor(_steps.get(_activeIndex).key()));
+		if (child == _content && _activeKey != null) {
+			return ScriptingControl.slotSegment(STEP_SLOT, idFor(_activeKey));
 		}
 		return null;
 	}

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="currentStep"/>
+		<channel name="conciergeStep"/>
+		<channel name="scriptedStep"/>
+		<channel name="questions"/>
+	</channels>
+	<panel title="Dynamic Steps Test">
+		<wizard
+			current-step="currentStep"
+			progress="false"
+		>
+			<step id="welcome"
+				label="wizard.welcome"
+			/>
+			<dynamic-steps steps="questions">
+				<text input="element"/>
+			</dynamic-steps>
+			<step id="summary"
+				label="wizard.summary"
+			/>
+		</wizard>
+		<wizard
+			current-step="conciergeStep"
+			progress="false"
+		>
+			<step id="welcome"
+				label="wizard.welcome"
+			/>
+			<dynamic-steps steps="questions">
+				<text input="element"/>
+			</dynamic-steps>
+		</wizard>
+		<wizard
+			current-step="scriptedStep"
+			progress="false"
+		>
+			<dynamic-steps
+				element-channel="question"
+				icon="q -&gt; 'css:fa-solid fa-circle-question'"
+				label="q -&gt; $q.toUpperCase()"
+				steps="questions"
+			>
+				<text input="question"/>
+			</dynamic-steps>
+		</wizard>
+	</panel>
+</view>

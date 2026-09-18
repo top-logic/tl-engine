@@ -46,9 +46,11 @@ import com.top_logic.layout.view.channel.ViewChannel;
  * <p>
  * The step sequence is the concatenation of what the wizard's {@link Config#getSteps() sources}
  * contribute; a {@link StaticStepSource &lt;step&gt;} contributes exactly the one step it is
- * written as. The content of the step displayed is built when the step is reached and disposed when
- * it is left, so a step leaves nothing behind in the enclosing scope - a form's Save button
- * included.
+ * written as, a {@link DynamicStepsSource &lt;dynamic-steps&gt;} one per element of a list a channel
+ * holds, and the two mix in one wizard. The sequence is expanded anew whenever a channel a source
+ * decides by takes a new value. The content of the step displayed is built when the step is reached
+ * and disposed when it is left, so a step leaves nothing behind in the enclosing scope - a form's
+ * Save button included.
  * </p>
  *
  * <p>

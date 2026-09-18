@@ -10,6 +10,7 @@ import java.util.List;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ViewChannel;
 
 /**
  * Contributes steps to a {@link WizardElement &lt;wizard&gt;}.
@@ -22,7 +23,9 @@ import com.top_logic.layout.view.ViewContext;
  * </p>
  *
  * <p>
- * A source is stateless and shared by every session, like the element that holds it.
+ * A source is stateless and shared by every session, like the element that holds it. How many steps
+ * it stands for can change while the wizard is displayed; the channels that decide it are the ones
+ * the source names in {@link #observedChannels(ViewContext)}.
  * </p>
  */
 public interface WizardStepSource {
@@ -42,6 +45,23 @@ public interface WizardStepSource {
 	 * @return The steps; empty for a source that contributes none in this session.
 	 */
 	List<WizardStep> steps(ViewContext context);
+
+	/**
+	 * The channels this source's contribution depends on.
+	 *
+	 * <p>
+	 * The wizard follows them and asks its sources again whenever one takes a new value, so that a
+	 * source computing its steps from a channel keeps the wizard in step with what that channel
+	 * holds.
+	 * </p>
+	 *
+	 * @param context
+	 *        The context of the wizard, the same one {@link #steps(ViewContext)} is asked with.
+	 * @return The channels; empty for a source whose steps are the same for the whole session.
+	 */
+	default List<ViewChannel> observedChannels(ViewContext context) {
+		return List.of();
+	}
 
 	/**
 	 * The content this source holds according to its configuration, as the wizard reports it from

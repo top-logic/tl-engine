@@ -12,7 +12,11 @@
  * with an indicator saying where in the sequence the user is. The sequence is the concatenation of
  * what the wizard's {@link com.top_logic.layout.view.wizard.WizardStepSource sources} contribute; a
  * {@link com.top_logic.layout.view.wizard.StaticStepSource &lt;step&gt;} stands for the one step it
- * is written as.
+ * is written as, a {@link com.top_logic.layout.view.wizard.DynamicStepsSource &lt;dynamic-steps&gt;}
+ * for one step per element of a list a channel holds. The two mix, so a flow can open with a
+ * written-out step, continue over as many elements as the channel holds, and close with another
+ * written-out step. A source names the channels its contribution depends on, and the wizard expands
+ * the sequence anew whenever one of them takes a new value.
  * </p>
  *
  * <p>

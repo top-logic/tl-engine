@@ -1129,6 +1129,116 @@ button.tlPhotoCapture__overlayCaptureBtn:active .tlPhotoCapture__overlayCaptureI
 	border-bottom: 1px solid var(--border-subtle-01);
 }
 
+/* --- TLValueList ------------------------------------------------------- */
+
+/* The values of a multi-valued field. Read-only they read as one text - the separator between them
+   is written out, so that what is on screen is what is copied - or as one value per line where a
+   value is a text of several lines. Edited, each value takes a row with the button that removes it. */
+.tlValueList {
+	font-family: var(--font-family);
+	color: var(--text-primary);
+	min-width: 0;
+}
+
+.tlValueList--inline {
+	display: inline;
+}
+
+.tlValueList--block .tlValueList__item {
+	display: block;
+}
+
+.tlValueList__separator {
+	color: var(--text-secondary);
+	white-space: pre;
+}
+
+/* Edit mode: the rows and the button appending a value follow each other vertically. The edited
+   list is a block container while the displayed one is inline text, so the element itself carries
+   the distinction and the layout modifier keeps its one meaning - how the values read. */
+div.tlValueList {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--spacing-02);
+	width: 100%;
+}
+
+.tlValueList__row {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	width: 100%;
+	min-width: 0;
+	/* The drop indicator of a dragged value is drawn as a border, so reserve its space on both edges
+	   to keep the rows from jumping while a value is dragged across them. */
+	border-top: 2px solid transparent;
+	border-bottom: 2px solid transparent;
+}
+
+.tlValueList__row--dragging {
+	opacity: 0.4;
+}
+
+.tlValueList__row--dragOver-before {
+	border-top-color: var(--interactive);
+}
+
+.tlValueList__row--dragOver-after {
+	border-bottom-color: var(--interactive);
+}
+
+.tlValueList__row > .tlValueList__item {
+	display: block;
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.tlValueList__handle,
+.tlValueList__remove,
+.tlValueList__add {
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	border: none;
+	border-radius: var(--corner-radius);
+	background: none;
+	padding: var(--spacing-01) var(--spacing-02);
+	min-height: 1.5rem;
+	color: var(--icon-primary);
+	font-size: var(--body-compact-01-font-size);
+	line-height: 1;
+	cursor: pointer;
+}
+
+.tlValueList__handle:hover,
+.tlValueList__remove:hover,
+.tlValueList__add:hover {
+	background-color: var(--layer-hover);
+}
+
+.tlValueList__handle:focus-visible,
+.tlValueList__remove:focus-visible,
+.tlValueList__add:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -1px;
+}
+
+.tlValueList__remove:hover {
+	color: var(--support-error);
+}
+
+/* The grip the value is dragged by; the arrow keys move the value while it has the focus. */
+.tlValueList__handle {
+	color: var(--text-secondary);
+	cursor: grab;
+}
+
+.tlValueList__handle:active {
+	cursor: grabbing;
+}
+
 /* --- TLPanel ----------------------------------------------------------- */
 
 .tlPanel {
@@ -3939,11 +4049,11 @@ button.tlMenu__item--disabled:hover {
 	background: var(--layer-hover);
 }
 
-.tlColumnSelect__row--dragOver-top {
+.tlColumnSelect__row--dragOver-before {
 	border-top-color: var(--interactive);
 }
 
-.tlColumnSelect__row--dragOver-bottom {
+.tlColumnSelect__row--dragOver-after {
 	border-bottom-color: var(--interactive);
 }
 

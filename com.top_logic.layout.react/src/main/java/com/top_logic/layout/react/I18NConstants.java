@@ -430,6 +430,26 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.textInput.open")
 	public static ResKey JS_TEXT_INPUT_OPEN;
 
+	// -- Value list client-side i18n keys --
+
+	/**
+	 * @en Add a value
+	 */
+	@CustomKey("js.valueList.add")
+	public static ResKey JS_VALUE_LIST_ADD;
+
+	/**
+	 * @en Remove this value
+	 */
+	@CustomKey("js.valueList.remove")
+	public static ResKey JS_VALUE_LIST_REMOVE;
+
+	/**
+	 * @en Move this value
+	 */
+	@CustomKey("js.valueList.move")
+	public static ResKey JS_VALUE_LIST_MOVE;
+
 	/**
 	 * @en No value
 	 */

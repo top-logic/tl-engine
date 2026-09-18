@@ -9,6 +9,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -83,6 +84,10 @@ public class TestDateFormat extends TestCase {
 		addProperty("stampCustom", stamp).setAnnotation(customDate("dd.MM."));
 		addProperty("broken", dateTime).setAnnotation(decimal("#0.00"));
 		addProperty("days", date).setMultiple(true);
+
+		TLProperty daysCustom = addProperty("daysCustom", date);
+		daysCustom.setAnnotation(customDate(ATTRIBUTE_PATTERN));
+		daysCustom.setMultiple(true);
 	}
 
 	public void testAnUnannotatedAttributeUsesTheUsersFormat() {
@@ -111,8 +116,24 @@ public class TestDateFormat extends TestCase {
 			HTMLFormatter.getInstance().getDateTimeFormat(), dateFormat("broken"));
 	}
 
-	public void testACollectionOfDatesHasNoSingleFormat() {
-		assertNull(dateFormat("days"));
+	public void testACollectionOfDatesIsWrittenInTheFormatOfOneDate() {
+		assertEquals("Every point in time of the collection is shown in the user's date format.",
+			HTMLFormatter.getInstance().getDateFormat(), dateFormat("days"));
+		assertEquals("...and an annotated format applies to each of them, too.",
+			ATTRIBUTE_PATTERN, pattern(dateFormat("daysCustom")));
+	}
+
+	/**
+	 * A cell holding several points in time writes each of them in the attribute's format and
+	 * separates them, exactly as the value list displaying them does.
+	 */
+	public void testACollectionOfDatesIsSearchedByAllOfItsValues() throws ParseException {
+		DateFormat format = dateFormat("daysCustom");
+		Date first = format.parse("2026/09/17 10:23");
+		Date second = format.parse("2026/10/01 08:00");
+
+		assertEquals("2026/09/17 10:23, 2026/10/01 08:00",
+			column("daysCustom").searchText(List.of(first, second)));
 	}
 
 	public void testAFilterBoundIsAcceptedInTheAnnotatedAndInTheDefaultFormat() throws ParseException {

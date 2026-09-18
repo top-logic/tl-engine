@@ -23,6 +23,7 @@ import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.layout.react.control.form.ReactI18NStringInputControl;
 import com.top_logic.layout.react.control.form.ReactNumberInputControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
+import com.top_logic.layout.react.control.form.ReactValueListControl;
 import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.model.annotate.ui.BooleanPresentation;
 
@@ -40,6 +41,16 @@ import com.top_logic.model.annotate.ui.BooleanPresentation;
  * or another module registers further ones through {@link #register(Class, ReactFieldControlProvider)}.
  * A single field can deviate from its type's provider; how that is expressed is up to the editing
  * side, which passes the provider it resolved instead of asking the registry.
+ * </p>
+ *
+ * <p>
+ * Both halves of the decision are made here: which provider edits the value type, and how the
+ * multiplicity of the field is realized. A {@link FieldSpec#isMultiple() multi-valued} field whose
+ * provider edits one value at a time is wrapped in a {@link ReactValueListControl}, so that each
+ * element is edited by the very control its type asks for. An editing side therefore reaches the
+ * control through {@link #createControl(ReactContext, FieldSpec, FieldModel)} or
+ * {@link #createControl(ReactContext, FieldSpec, FieldModel, ReactFieldControlProvider)} rather than
+ * calling a provider itself.
  * </p>
  */
 public class FieldControlRegistry {
@@ -132,7 +143,37 @@ public class FieldControlRegistry {
 	 */
 	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
 		ReactFieldControlProvider provider = lookup(field.getValueType());
-		return (provider == null ? TEXT : provider).createControl(context, field, model);
+		return createControl(context, field, model, provider == null ? TEXT : provider);
+	}
+
+	/**
+	 * Creates the control editing the given value with the given provider.
+	 *
+	 * <p>
+	 * The place where the multiplicity of a field is realized. A field holding
+	 * {@link FieldSpec#isMultiple() several values} whose provider
+	 * {@link ReactFieldControlProvider#editsCollections() edits one value at a time} is displayed as
+	 * a {@link ReactValueListControl}: one control per element, each created by the given provider
+	 * over the {@link FieldSpec#elementSpec() element specification}. Everything else is handed to
+	 * the provider as it stands.
+	 * </p>
+	 *
+	 * @param context
+	 *        The context to create the control in.
+	 * @param field
+	 *        What is being edited.
+	 * @param model
+	 *        Holds the edited value; the whole collection for a multi-valued field.
+	 * @param provider
+	 *        Creates the control editing a value of this field's type.
+	 * @return The control to display.
+	 */
+	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model,
+			ReactFieldControlProvider provider) {
+		if (field.isMultiple() && !provider.editsCollections()) {
+			return new ReactValueListControl(context, model, field, provider);
+		}
+		return provider.createControl(context, field, model);
 	}
 
 	/**

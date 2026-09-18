@@ -17,6 +17,7 @@ import com.top_logic.ai.chat.view.ChatConversationElement;
 import com.top_logic.ai.chat.view.ChatConversationElement.Config;
 import com.top_logic.ai.chat.view.ChatConversationElement.Trace;
 import com.top_logic.ai.chat.view.ChatSessionIds;
+import com.top_logic.ai.chat.view.ChatTurnChannels;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 
@@ -34,6 +35,10 @@ public class TestChatConversationConfig extends TestCase {
 			config.getChatId());
 		assertNull(config.getInput());
 		assertNull(config.getBusy());
+		assertNull(config.getAgent());
+		assertNull(config.getModel());
+		assertNull(config.getEffort());
+		assertNull(config.getMcpServers());
 
 		// Transcript.
 		assertEquals(Trace.SUMMARY, config.getTrace());
@@ -124,6 +129,27 @@ public class TestChatConversationConfig extends TestCase {
 		assertFalse(config.getControls().getTracePicker());
 	}
 
+	/**
+	 * The four turn-setting channels parse, each naming a channel of its own.
+	 *
+	 * <p>
+	 * Wiring, not data: what they carry - an agent, a model, an effort level, a set of MCP servers -
+	 * is pinned by {@code TestChatTurnChannels} and by the browser's own suite. What this holds is
+	 * that an application can name a channel for each.
+	 * </p>
+	 */
+	public void testTurnSettingChannelsParse() throws Exception {
+		String xml = "<chat-conversation xmlns:config='http://www.top-logic.com/ns/config/6.0'"
+			+ " config:interface='" + Config.class.getName() + "'"
+			+ " agent='pickedAgent' model='pickedModel' effort='pickedEffort'"
+			+ " mcp-servers='attachedServers'/>";
+		Config config = (Config) TypedConfiguration.parse(CharacterContents.newContent(xml));
+		assertEquals("pickedAgent", config.getAgent().getChannelName());
+		assertEquals("pickedModel", config.getModel().getChannelName());
+		assertEquals("pickedEffort", config.getEffort().getChannelName());
+		assertEquals("attachedServers", config.getMcpServers().getChannelName());
+	}
+
 	/** A model-bound {@code <mention>} parses: rows plus the optional label/text and the default limit. */
 	public void testMentionGroupParses() throws Exception {
 		String xml = "<chat-conversation xmlns:config='http://www.top-logic.com/ns/config/6.0'"
@@ -161,6 +187,41 @@ public class TestChatConversationConfig extends TestCase {
 	public void testOneItemCollectionIsTheSession() {
 		assertNull(ChatSessionIds.sessionOf(List.of()));
 		assertNull(ChatSessionIds.sessionOf(List.of("not-a-session")));
+	}
+
+	/**
+	 * What a turn-setting channel says when it holds nothing, or something that is not a name.
+	 *
+	 * <p>
+	 * {@code null} is the answer that leaves the composer alone, and a blank string is the same
+	 * answer: there is no agent, model or effort level whose name is empty. An empty <em>list</em> of
+	 * servers is the opposite - an instruction to attach none - which is why the two are told apart.
+	 * </p>
+	 */
+	public void testAnEmptyTurnChannelSaysNothing() {
+		assertNull(ChatTurnChannels.name(null));
+		assertNull(ChatTurnChannels.name(""));
+		assertNull(ChatTurnChannels.name("   "));
+		assertNull(ChatTurnChannels.name(List.of()));
+		assertNull(ChatTurnChannels.names(null));
+		assertEquals(List.of(), ChatTurnChannels.names(List.of()));
+	}
+
+	/** A name, however a host wrote it: on its own, padded, or as the one row a list selected. */
+	public void testTurnChannelReadsTheName() {
+		assertEquals("TL_ModelExplorer", ChatTurnChannels.name("TL_ModelExplorer"));
+		assertEquals("TL_ModelExplorer", ChatTurnChannels.name("  TL_ModelExplorer  "));
+		assertEquals("TL_ModelExplorer", ChatTurnChannels.name(List.of("TL_ModelExplorer")));
+		assertNull("Several rows name no single agent.",
+			ChatTurnChannels.name(List.of("one", "two")));
+	}
+
+	/** The server channel takes a collection, or a single name as a collection of one. */
+	public void testServerNamesFromACollectionOrOne() {
+		assertEquals(List.of("files", "issues"), ChatTurnChannels.names(List.of("files", "issues")));
+		assertEquals(List.of("files"), ChatTurnChannels.names("files"));
+		assertEquals("A blank entry names no server.", List.of("files"),
+			ChatTurnChannels.names(java.util.Arrays.asList("files", "  ")));
 	}
 
 	/** Boots the module system so typed-configuration resolves nested config types via TypeIndex. */

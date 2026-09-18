@@ -60,6 +60,10 @@ public class TestHiddenElementOptions extends TestCase {
 		assertVisible(ChatConversationElement.Config.class, ChatConversationElement.Config.TRACE);
 		assertVisible(ChatConversationElement.Config.class, ChatConversationElement.Config.CITATIONS);
 		assertVisible(ChatConversationElement.Config.class, ChatConversationElement.Config.CHAT_ID);
+		assertVisible(ChatConversationElement.Config.class, ChatConversationElement.Config.AGENT);
+		assertVisible(ChatConversationElement.Config.class, ChatConversationElement.Config.MODEL);
+		assertVisible(ChatConversationElement.Config.class, ChatConversationElement.Config.EFFORT);
+		assertVisible(ChatConversationElement.Config.class, ChatConversationElement.Config.MCP_SERVERS);
 		assertVisible(ChatConversationElement.Actions.class, ChatConversationElement.Actions.COPY);
 	}
 

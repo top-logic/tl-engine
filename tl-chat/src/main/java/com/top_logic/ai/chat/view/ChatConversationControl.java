@@ -13,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import com.top_logic.ai.chat.view.ChatConversationElement.Actions;
 import com.top_logic.ai.chat.view.ChatConversationElement.Config;
@@ -44,6 +45,15 @@ import com.top_logic.util.TLContext;
  * from the browser while the agent works. Prompt improvement is a composer concern: this control
  * names the agent on the shared tracker.
  * </p>
+ *
+ * <p>
+ * The four turn settings - {@code agent}, {@code model}, {@code effort}, {@code mcp-servers} - are
+ * two-way the same way {@code input} is: the browser reports what the user picked with one
+ * {@code publishTurnSettings} command and this control writes it onto the channels, while a write
+ * from outside is pushed into the control state for the composer to follow. A value the acting
+ * account may not be given is refused by {@link ChatTurnChannels} and the composer's own value is
+ * written back, so the channel never claims a setting the composer is not showing.
+ * </p>
  */
 public class ChatConversationControl extends ReactControl {
 
@@ -53,7 +63,32 @@ public class ChatConversationControl extends ReactControl {
 
 	private final ViewChannel _busyChannel;
 
+	private final ViewChannel _agentChannel;
+
+	private final ViewChannel _modelChannel;
+
+	private final ViewChannel _effortChannel;
+
+	private final ViewChannel _mcpChannel;
+
 	private final boolean[] _applyingFromChannel = { false };
+
+	/**
+	 * What the composer last reported it is set to, so a channel write can be judged against the
+	 * agent in force and corrected back to what the user is looking at.
+	 *
+	 * <p>
+	 * {@code null} until the browser has said - a control lives from the first render, the store from
+	 * the first mount.
+	 * </p>
+	 */
+	private String _agent;
+
+	private String _model;
+
+	private String _effort;
+
+	private List<String> _mcpServers;
 
 	private QueryExecutor _mentionRows;
 
@@ -129,6 +164,32 @@ public class ChatConversationControl extends ReactControl {
 
 		ChannelRef busyRef = config.getBusy();
 		_busyChannel = busyRef == null ? null : context.resolveChannel(busyRef);
+
+		_agentChannel = followTurnChannel(context, config.getAgent(), this::applyAgentFromChannel);
+		_modelChannel = followTurnChannel(context, config.getModel(), this::applyModelFromChannel);
+		_effortChannel = followTurnChannel(context, config.getEffort(), this::applyEffortFromChannel);
+		_mcpChannel = followTurnChannel(context, config.getMcpServers(), this::applyServersFromChannel);
+	}
+
+	/**
+	 * Resolves one turn-setting channel and makes the composer follow it.
+	 *
+	 * @param ref
+	 *        The configured channel, or <code>null</code> when the element wires none.
+	 * @param apply
+	 *        What to do with a value written to it, now and on every later write.
+	 * @return The resolved channel, or <code>null</code>.
+	 */
+	private ViewChannel followTurnChannel(ViewContext context, ChannelRef ref, Consumer<Object> apply) {
+		if (ref == null) {
+			return null;
+		}
+		ViewChannel channel = context.resolveChannel(ref);
+		ViewChannel.ChannelListener listener = (sender, oldValue, newValue) -> apply.accept(newValue);
+		channel.addListener(listener);
+		addCleanupAction(() -> channel.removeListener(listener));
+		apply.accept(channel.get());
+		return channel;
 	}
 
 	/**
@@ -151,6 +212,16 @@ public class ChatConversationControl extends ReactControl {
 		super.onAttach();
 		if (_inputChannel != null) {
 			applyFromChannel(_inputChannel.get());
+		}
+		reapply(_agentChannel, this::applyAgentFromChannel);
+		reapply(_modelChannel, this::applyModelFromChannel);
+		reapply(_effortChannel, this::applyEffortFromChannel);
+		reapply(_mcpChannel, this::applyServersFromChannel);
+	}
+
+	private static void reapply(ViewChannel channel, Consumer<Object> apply) {
+		if (channel != null) {
+			apply.accept(channel.get());
 		}
 	}
 
@@ -203,6 +274,150 @@ public class ChatConversationControl extends ReactControl {
 		} finally {
 			_applyingFromChannel[0] = false;
 		}
+	}
+
+	/**
+	 * Reports what the composer is set to for the next turn, onto the four channels a host wired.
+	 *
+	 * <p>
+	 * One command for all four because the composer settles them together: picking an agent also sets
+	 * the model it is assigned and the servers it declares, and four commands would put a host
+	 * through the intermediate states of one user action.
+	 * </p>
+	 *
+	 * @param args
+	 *        {@code agent}, {@code model} and {@code effort} are names, empty for none;
+	 *        {@code mcpServers} is the list of attached server names.
+	 */
+	@ReactCommandHandler(value = "publishTurnSettings", params = {
+		@ReactParam(name = "agent", type = "string", description = "Selected agent name, or empty."),
+		@ReactParam(name = "model", type = "string", description = "Selected model name, or empty."),
+		@ReactParam(name = "effort", type = "string", description = "Selected effort level, or empty."),
+		@ReactParam(name = "mcpServers", type = "string[]", description = "Attached MCP server names.")
+	})
+	public void publishTurnSettings(Map<String, Object> args) {
+		if (_applyingFromChannel[0]) {
+			return;
+		}
+		_agent = stringArg(args, "agent");
+		_model = stringArg(args, "model");
+		_effort = stringArg(args, "effort");
+		_mcpServers = listArg(args, "mcpServers");
+
+		// A value equal to what the channel holds notifies nobody, so the common case - the browser
+		// re-reporting what a channel write just told it - stops here.
+		setChannel(_agentChannel, _agent);
+		setChannel(_modelChannel, _model);
+		setChannel(_effortChannel, _effort);
+		setChannel(_mcpChannel, _mcpServers);
+	}
+
+	private void applyAgentFromChannel(Object value) {
+		String name = ChatTurnChannels.name(value);
+		if (name == null) {
+			putState("agentSelected", null);
+			return;
+		}
+		if (!ChatTurnChannels.allowsAgent(currentPerson(), name)) {
+			refuse(_agentChannel, _agent);
+			return;
+		}
+		applying(() -> putState("agentSelected", name));
+	}
+
+	private void applyModelFromChannel(Object value) {
+		String name = ChatTurnChannels.name(value);
+		if (name == null) {
+			putState("modelSelected", null);
+			return;
+		}
+		if (!ChatTurnChannels.allowsModel(currentPerson(), currentAgent(), name)) {
+			refuse(_modelChannel, _model);
+			return;
+		}
+		applying(() -> putState("modelSelected", name));
+	}
+
+	/**
+	 * How hard the model may think, which no role gates: what the providers accept is a property of
+	 * the model, and the composer drops a level the selected one does not offer.
+	 */
+	private void applyEffortFromChannel(Object value) {
+		String name = ChatTurnChannels.name(value);
+		applying(() -> putState("effortSelected", name));
+	}
+
+	private void applyServersFromChannel(Object value) {
+		List<String> names = ChatTurnChannels.names(value);
+		if (names == null) {
+			putState("mcpSelected", null);
+			return;
+		}
+		if (!ChatTurnChannels.allowsServers(currentPerson(), currentAgent(), names)) {
+			refuse(_mcpChannel, _mcpServers);
+			return;
+		}
+		applying(() -> putState("mcpSelected", List.copyOf(names)));
+	}
+
+	/**
+	 * Puts the composer's own setting back onto a channel that was written something forbidden.
+	 *
+	 * <p>
+	 * The refusal itself is logged where it is decided. Writing back matters because the channel is
+	 * two-way and a host reads it: left alone it would claim a setting the composer is not showing
+	 * and the next send would be answered 403 for. Nothing to write back before the browser has
+	 * reported anything, and the composer then simply does not follow.
+	 * </p>
+	 */
+	private void refuse(ViewChannel channel, Object composersOwn) {
+		if (channel == null || composersOwn == null) {
+			return;
+		}
+		applying(() -> channel.set(composersOwn));
+	}
+
+	/** The agent a model or a server write is judged against: the channel's, else the composer's. */
+	private String currentAgent() {
+		String wired = _agentChannel == null ? null : ChatTurnChannels.name(_agentChannel.get());
+		return wired != null ? wired : _agent;
+	}
+
+	private void applying(Runnable action) {
+		_applyingFromChannel[0] = true;
+		try {
+			action.run();
+		} finally {
+			_applyingFromChannel[0] = false;
+		}
+	}
+
+	private static void setChannel(ViewChannel channel, Object value) {
+		if (channel != null) {
+			channel.set(value);
+		}
+	}
+
+	/** A command argument as a name, or <code>null</code> when it is absent or blank. */
+	private static String stringArg(Map<String, Object> args, String key) {
+		Object value = args == null ? null : args.get(key);
+		return value == null ? null : blankToNull(String.valueOf(value));
+	}
+
+	/** A command argument as a list of names; an empty list is an answer, a missing one is not. */
+	private static List<String> listArg(Map<String, Object> args, String key) {
+		Object value = args == null ? null : args.get(key);
+		if (!(value instanceof Collection<?> many)) {
+			return null;
+		}
+		List<String> names = new ArrayList<>(many.size());
+		for (Object element : many) {
+			String name = element == null ? null : blankToNull(String.valueOf(element));
+			if (name != null) {
+				names.add(name);
+			}
+		}
+		return List.copyOf(names);
 	}
 
 	/**

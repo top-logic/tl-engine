@@ -51,6 +51,16 @@ import com.top_logic.tl.ai.core.provider.LLMService.AllAgentNameOptions;
  * {@code AgentSession}; the optional {@code busy} channel is written {@code true} while the agent
  * works, so a host can disable its own commands.
  * </p>
+ *
+ * <p>
+ * Four further channels carry what the user set up for the next turn: {@code agent}, {@code model},
+ * {@code effort} and {@code mcp-servers}. Each is two-way - the composer writes the user's choice and
+ * follows a write from outside - so a host can show which agent answers, gate a button on the model,
+ * or pre-select an agent for a page. They carry the <em>names</em> these things are known by, because
+ * a name is what every request, and the security policy behind it, is written in: only an agent
+ * authored in the knowledge base is a model object at all, while the shipped agents, the models and
+ * the MCP servers are configuration. See {@link ChatTurnChannels}.
+ * </p>
  */
 public class ChatConversationElement implements UIElement {
 
@@ -109,6 +119,34 @@ public class ChatConversationElement implements UIElement {
 		 * @see #getBusy()
 		 */
 		String BUSY = "busy";
+
+		/**
+		 * Configuration property name for {@link #getAgent()}.
+		 *
+		 * @see #getAgent()
+		 */
+		String AGENT = "agent";
+
+		/**
+		 * Configuration property name for {@link #getModel()}.
+		 *
+		 * @see #getModel()
+		 */
+		String MODEL = "model";
+
+		/**
+		 * Configuration property name for {@link #getEffort()}.
+		 *
+		 * @see #getEffort()
+		 */
+		String EFFORT = "effort";
+
+		/**
+		 * Configuration property name for {@link #getMcpServers()}.
+		 *
+		 * @see #getMcpServers()
+		 */
+		String MCP_SERVERS = "mcp-servers";
 
 		/**
 		 * Configuration property name for {@link #getTrace()}.
@@ -242,6 +280,56 @@ public class ChatConversationElement implements UIElement {
 		@Format(ChannelRefFormat.class)
 		@Nullable
 		ChannelRef getBusy();
+
+		/**
+		 * Optional two-way channel holding the name of the agent the composer is set to.
+		 *
+		 * The composer writes what the user picked, and follows a write from outside. An empty
+		 * channel says nothing and leaves the picker alone. A name this account may not run is
+		 * ignored, and the composer's own agent is written back.
+		 */
+		@Name(AGENT)
+		@Label("Agent")
+		@Format(ChannelRefFormat.class)
+		@Nullable
+		ChannelRef getAgent();
+
+		/**
+		 * Optional two-way channel holding the name of the model the next turn runs on.
+		 *
+		 * Written and followed like {@link #getAgent()}. Picking an agent sets this to the model that
+		 * agent is assigned, so a host sees the model a turn would really use.
+		 */
+		@Name(MODEL)
+		@Label("Model")
+		@Format(ChannelRefFormat.class)
+		@Nullable
+		ChannelRef getModel();
+
+		/**
+		 * Optional two-way channel holding how hard the model may be asked to think.
+		 *
+		 * One of the levels the selected model offers, empty for none. Written and followed like
+		 * {@link #getAgent()}; a level the model does not know is dropped by the composer, as the
+		 * thinking picker's own choice is.
+		 */
+		@Name(EFFORT)
+		@Label("Effort")
+		@Format(ChannelRefFormat.class)
+		@Nullable
+		ChannelRef getEffort();
+
+		/**
+		 * Optional two-way channel holding the names of the MCP servers attached to the next turn.
+		 *
+		 * A collection of names, or one name. Written and followed like {@link #getAgent()}; an empty
+		 * channel says nothing, while an empty collection attaches no server at all.
+		 */
+		@Name(MCP_SERVERS)
+		@Label("MCP servers")
+		@Format(ChannelRefFormat.class)
+		@Nullable
+		ChannelRef getMcpServers();
 
 		/**
 		 * How much of the agent's execution the transcript shows: nothing, a collapsed summary, or

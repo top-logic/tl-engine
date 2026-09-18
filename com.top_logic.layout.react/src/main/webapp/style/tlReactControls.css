@@ -3253,6 +3253,170 @@ button.tlMenu__item--disabled:hover {
 	}
 }
 
+/* --- TLHtml ---------------------------------------------------------------- */
+
+/* Ready-made HTML - an agent answer, a generated report - inserted into the page around it. The
+   fragment brings its own structure but no typography, so the block gives it the theme's text
+   color and font and spaces the elements a fragment is made of. The margins at its edges are
+   dropped, so the content aligns with whatever stands above and below it. */
+.tlHtml--inline {
+	color: var(--text-primary);
+	font-size: var(--body-compact-01-font-size);
+	line-height: 1.5;
+	overflow-wrap: break-word;
+}
+
+.tlHtml--inline > :first-child {
+	margin-top: 0;
+}
+
+.tlHtml--inline > :last-child {
+	margin-bottom: 0;
+}
+
+.tlHtml--inline p {
+	margin: var(--spacing-03) 0;
+}
+
+.tlHtml--inline h1,
+.tlHtml--inline h2,
+.tlHtml--inline h3,
+.tlHtml--inline h4,
+.tlHtml--inline h5,
+.tlHtml--inline h6 {
+	margin: var(--spacing-05) 0 var(--spacing-03) 0;
+	line-height: 1.3;
+	font-weight: 600;
+}
+
+.tlHtml--inline ul,
+.tlHtml--inline ol {
+	margin: var(--spacing-03) 0;
+	padding-left: var(--spacing-06);
+}
+
+.tlHtml--inline li {
+	margin: var(--spacing-01) 0;
+}
+
+.tlHtml--inline a {
+	color: var(--link-primary);
+	text-decoration: underline;
+}
+
+/* A picture wider than the column it stands in is scaled down rather than pushing the page sideways. */
+.tlHtml--inline img {
+	max-width: 100%;
+	height: auto;
+}
+
+.tlHtml--inline table {
+	margin: var(--spacing-03) 0;
+	border-collapse: collapse;
+}
+
+.tlHtml--inline td,
+.tlHtml--inline th {
+	padding: var(--spacing-02) var(--spacing-03);
+	border: 1px solid var(--border-subtle);
+	text-align: left;
+}
+
+.tlHtml--inline th {
+	background: var(--layer);
+	font-weight: 600;
+}
+
+.tlHtml--inline code {
+	padding: 0 var(--spacing-02);
+	border-radius: var(--corner-radius);
+	background: var(--layer);
+	font-family: var(--font-family-mono);
+	font-size: 0.9em;
+}
+
+.tlHtml--inline pre {
+	padding: var(--spacing-03) var(--spacing-05);
+	border-radius: var(--border-radius-02);
+	background: var(--layer);
+	overflow-x: auto;
+}
+
+.tlHtml--inline blockquote {
+	margin-left: 0;
+	padding-left: var(--spacing-05);
+	border-left: 3px solid var(--border-interactive);
+	color: var(--text-secondary);
+}
+
+/* A document is read on a page of its own: it fills the space the element is given, keeps the
+   styles it brings along, and stands on the white surface those styles assume. The minimum height
+   keeps it readable where the space is not measured out but flows with the page. */
+.tlHtml--document {
+	position: relative;
+	display: flex;
+	width: 100%;
+	height: 100%;
+	min-height: 24rem;
+	overflow: hidden;
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--border-radius-02);
+	background: #ffffff;
+}
+
+.tlHtml__frame {
+	flex: 1 1 auto;
+	width: 100%;
+	height: 100%;
+	min-height: 0;
+	border: none;
+}
+
+/* The print button stands on the document rather than beside it, so the frame keeps the whole
+   space; its own surface lifts it off whatever the document shows underneath. */
+.tlHtml__print {
+	position: absolute;
+	top: var(--spacing-03);
+	right: var(--spacing-03);
+	background: var(--layer-01);
+	box-shadow: var(--shadow-raised);
+}
+
+/* A thumbnail is a picture of a document: a box in the proportions the page is laid out in, with
+   the page scaled down into it. The ratio arrives as an inline style from the configured page size,
+   and the overflow keeps a page taller than the box inside it, cut off at the bottom as paper is.
+   The surface is the white a document's own styles assume, like the one a document is read on. */
+.tlHtml--thumbnail {
+	position: relative;
+	display: block;
+	width: 100%;
+	overflow: hidden;
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--border-radius-02);
+	background: #ffffff;
+}
+
+/* The page inside a thumbnail keeps the size it is written for and is scaled from its top left
+   corner, both set as inline styles from the configured size and the measured box. It is looked at
+   rather than used, so a click on it reaches whatever carries the preview. */
+.tlHtml__page {
+	position: absolute;
+	top: 0;
+	left: 0;
+	border: none;
+	pointer-events: none;
+}
+
+/* A fragment that is not shown says why in its place, in the box a failed view is reported in. */
+.tlHtml__error {
+	padding: var(--spacing-03) var(--spacing-05);
+	border: 1px solid var(--support-error);
+	border-left-width: var(--spacing-03);
+	border-radius: var(--border-radius-02);
+	background: var(--layer-01);
+	color: var(--support-error);
+}
+
 /* A fraction displayed as a bar with an optional label beside it. The track carries the theme's
    layer color, the filled part the interactive color, so the bar reads on a light and a dark
    theme from the same declaration. */

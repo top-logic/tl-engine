@@ -166,6 +166,57 @@ The box the picture is shown in is described by `aspect-ratio` (`16/9`, so a row
 
 The client classes an application styles against are `.tlImage` / `.tlImage__image`, `.tlOverlay` / `.tlOverlay__layer` / `.tlOverlay__layer--<anchor>` and `.tlAvatar--<size>` / `.tlAvatar__image`. The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/image-demo.view.xml` with `style/tl-demo-react.css`.
 
+## Ready-made HTML: `<html>`
+
+`<html input="ch">` (`HtmlElement`) displays HTML the application did not compose itself — the answer of an agent, a generated exposé, an imported page. The channel carries that content in one of three shapes, and `HtmlValues` reduces all of them to the source text to display:
+
+- a `String` holding the source,
+- an `HTMLFragment` — what an HTML literal `{{{ … }}}` of a script expression evaluates to — rendered to its source,
+- a `BinaryData` of content type `text/html`, read with the charset that content type declares. `binary('expose.html', $source, 'text/html')` builds one in TL-Script, and an uploaded file arrives as one anyway.
+
+A value of any other type has no HTML representation; the element reports that in its place, the same way it reports content a check refuses. Nothing on the channel is no content and no failure.
+
+`display` decides how the content is shown, and with it what stands between it and the reader.
+
+**`inline`** (the default) inserts the fragment into the page where the element stands, after `SafeHTML` has checked it against the application's whitelist — a script, an attribute carrying one, anything else the check refuses is not inserted, and the message of the check takes its place. The fragment brings its structure and the page gives it typography: the stylesheet gives `.tlHtml--inline` the theme's text color and font and spaces the elements a fragment is made of, so an answer reads as a section of the page it lands in. `css-class` adds a class of the application's own beside it.
+
+```xml
+<html input="answer"/>
+```
+
+**`document`** shows the content as a page of its own, in a sandboxed frame filling the space the element is given. The frame is not handed the source: it fetches it from the control's data endpoint (`ReactHtmlControl` is the `DataProvider`), with the current `dataRevision` in its URL, so the document crosses the wire once and a replaced one is fetched rather than taken from the browser cache. The sandbox runs no script, which is why a document needs no whitelist check — it keeps the styles it brings along and takes none of the page's. `print="true"` puts a button on it that hands the frame to the browser's print dialog, which is also where the browser offers saving the document as a PDF file, with the document's own styles.
+
+```xml
+<html
+	display="document"
+	input="current"
+	print="true"
+/>
+```
+
+**`thumbnail`** shows that same isolated document as a picture of itself: a card-sized preview for a grid of documents. The frame is laid out at `thumbnail-width` × `thumbnail-height` CSS pixels — 800 × 1130 by default, a portrait page at that width — and scaled down to the width the preview box measures (a `ResizeObserver` on the box, `transform: scale(…)` from its top left corner), so the document appears in its own proportions instead of being reflowed into a small one. The box keeps the aspect ratio of the two sizes and cuts off what is taller, as a page does. A preview is looked at rather than used: it takes no clicks, no focus and no print button, and it is fetched only once it comes near the viewport, so a grid loads the previews the reader actually reaches. Selecting one is therefore the business of whatever carries it — a button in the card writing the element to a channel, for instance.
+
+```xml
+<object-list inputs="exposes" items="exposes -> $exposes" layout="grid" max-columns="3">
+	<item>
+		<card padding="compact">
+			<html display="thumbnail" input="element"/>
+			<text css-class="tlText--strong" input="element"/>
+			<button appearance="link">
+				<action class="com.top_logic.layout.view.command.GenericViewCommand" input="element">
+					<label><en>Show</en></label>
+					<write-channel name="expose"/>
+				</action>
+			</button>
+		</card>
+	</item>
+</object-list>
+```
+
+The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/html-demo.view.xml`: an inline agent answer and a refused fragment above, the three exposés as a grid of previews beside the selected one below.
+
+**PDF, server-side.** The print dialog is the reader's way to a PDF. An application that produces the file itself — to store it, mail it, attach it — converts the HTML in TL-Script instead: `pdfFile($html, name: "expose.pdf")` yields a `BinaryData` that `<pdf input="ch"/>` displays and a download hands out. That conversion is Flying Saucer rather than a browser, so it takes well-formed XHTML and CSS 2.1 and renders a document written for it, not any page a browser shows.
+
 ## `TableViewControl` is the sole React table control
 
 `TableViewControl` / `com.top_logic.table.TableView` (#29108) is the only React table control. Everything renders through this stack: the `<table>` element (`TableElement`; sort, per-column `<filter>`, type-derived default columns, width personalization, shared `ColumnsConfig` / `ColumnConfig`), the access-control permission matrix (`SecurityMatrixElement`), the in-form `<composition-table>` (`CompositionTableControl`), and the technical React-table demo (`DemoReactTableComponent`: flat `ListRowSource` + `TreeRowSource` tree).

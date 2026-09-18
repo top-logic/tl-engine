@@ -30,6 +30,7 @@ import com.top_logic.gui.DesignTokenService;
  * </p>
  *
  * @see ColorSpec#getToken()
+ * @see ColorTokenOptions
  */
 public class ColorTokenConstraint extends ValueConstraint<String> {
 

@@ -38,6 +38,7 @@ import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.gui.DesignTokenKind;
 import com.top_logic.gui.DesignTokenService;
 import com.top_logic.model.annotate.ui.ColorSpec;
+import com.top_logic.model.annotate.ui.ColorTokenOptions;
 import com.top_logic.model.config.EnumConfig.ClassifierConfig;
 
 /**
@@ -81,6 +82,19 @@ public class TestColorTokenConstraint extends BasicTestCase {
 		assertNoProblem(check(tokenClassifier("")));
 	}
 
+	public void testOptionsAreTheSortedColorTokens() {
+		assertEquals("The color tokens of the vocabulary are offered, sorted by name.",
+			sortedColorTokens(), new ColorTokenOptions().apply());
+	}
+
+	public void testOptionsOfferNoTokenOfAnotherKind() {
+		List<String> options = new ColorTokenOptions().apply();
+		for (String lengthToken : Vocabulary.LENGTH_TOKENS) {
+			assertFalse("A token of another kind is no option: " + lengthToken + " in " + options,
+				options.contains(lengthToken));
+		}
+	}
+
 	public void testTokenOfAnotherKindIsReported() throws ConfigurationException {
 		for (String lengthToken : Vocabulary.LENGTH_TOKENS) {
 			assertEquals("A token of another kind is no color token: " + lengthToken,
@@ -93,6 +107,11 @@ public class TestColorTokenConstraint extends BasicTestCase {
 	 */
 	@SuppressWarnings("javadoc")
 	public static class WithoutVocabulary extends BasicTestCase {
+
+		public void testNoVocabularyOffersNoOption() {
+			assertTrue("Without a started service, nothing is offered to choose from.",
+				new ColorTokenOptions().apply().isEmpty());
+		}
 
 		public void testNoVocabularyChecksNothing() throws ConfigurationException {
 			assertTrue("Without a started service, no token is known.",

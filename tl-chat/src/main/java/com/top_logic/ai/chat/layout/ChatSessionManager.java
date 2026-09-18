@@ -344,6 +344,41 @@ public class ChatSessionManager {
 	}
 
 	/**
+	 * Drops everything this manager still holds for a session that no longer exists.
+	 *
+	 * <p>
+	 * A deleted chat must not stay the active one: the next message would be written into a session
+	 * that is gone, and the cached {@link Chat} would keep showing a conversation the user threw
+	 * away. Nothing is persisted on the way out - there is nothing left to persist it into.
+	 * </p>
+	 *
+	 * @param sessionId
+	 *        The deleted session's id; unknown ids and {@code null} are a no-op.
+	 * @return Whether this manager held that session.
+	 */
+	public boolean forgetSession(String sessionId) {
+		if (sessionId == null || sessionId.isEmpty()) {
+			return false;
+		}
+		synchronized (_lock) {
+			SessionState state = _sessions.remove(sessionId);
+			boolean wasActive = sessionId.equals(_activeSessionId);
+			if (state == null && !wasActive) {
+				return false;
+			}
+			disposeSessionState(state);
+			if (wasActive) {
+				_activeSessionId = null;
+				_activeOwner = null;
+				if (_tracker != null) {
+					_tracker.resetSessionState();
+				}
+			}
+			return true;
+		}
+	}
+
+	/**
 	 * Persists the active session's metadata to the database.
 	 *
 	 * <p>

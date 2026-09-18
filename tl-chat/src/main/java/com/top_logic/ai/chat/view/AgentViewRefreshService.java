@@ -18,6 +18,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.top_logic.ai.chat.layout.ChatSessionRegistry;
+import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
@@ -209,6 +211,40 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 			_pending.add(owner);
 		}
 		schedule();
+	}
+
+	/**
+	 * Drops the deleted chat out of the in-memory state of every window that still holds it.
+	 *
+	 * <p>
+	 * The window register this service keeps for the refresh is also the only list of the windows a
+	 * deletion has to reach. Done inline rather than on the scheduler: a window whose active session
+	 * was just deleted must not accept another message into it, and the caller is the request that
+	 * deleted it.
+	 * </p>
+	 */
+	@Override
+	public void onSessionDeleted(Person owner, String sessionId) {
+		for (Map.Entry<TLSubSessionContext, WindowRef> entry : snapshot()) {
+			TLSubSessionContext subSession = entry.getKey();
+			if (owner != null && !owner.equals(subSession.getPerson())) {
+				continue;
+			}
+			TaskProgressTracker tracker = subSession.get(ChatSessionRegistry.CHAT_TRACKER);
+			if (tracker == null) {
+				continue;
+			}
+			try {
+				if (tracker.getSessionManager().forgetSession(sessionId)) {
+					Logger.info("Dropped deleted chat session " + sessionId + " from window '"
+						+ entry.getValue().windowName() + "'.", AgentViewRefreshService.class);
+				}
+			} catch (RuntimeException ex) {
+				Logger.warn("Could not drop deleted chat session " + sessionId + " from window '"
+					+ entry.getValue().windowName() + "': " + ex.getMessage(), ex,
+					AgentViewRefreshService.class);
+			}
+		}
 	}
 
 	/** Schedules the refresh unless one is already due, which is what coalesces a burst of writes. */

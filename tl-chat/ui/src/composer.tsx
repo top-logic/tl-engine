@@ -41,7 +41,7 @@ type Labels = ReturnType<typeof bundle>
 function traceOptions(labels: Labels): { id: TraceMode; label: string; description: string }[] {
   return [
     { id: 'none', label: labels.traceNone, description: labels.traceNoneHint },
-    { id: 'overview', label: labels.traceOverview, description: labels.traceOverviewHint },
+    { id: 'summary', label: labels.traceSummary, description: labels.traceSummaryHint },
     { id: 'detailed', label: labels.traceDetailed, description: labels.traceDetailedHint },
   ]
 }
@@ -207,7 +207,7 @@ function MenuRow({
   )
 }
 
-/** Whether the plus menu has anything to offer. Used by {@code <chat-composer/>} when every picker is off. */
+/** Whether the plus menu has anything to offer. Used by {@code <chat-conversation/>} when every picker is off. */
 export function plusMenuVisible(flags: {
   attachmentsEnabled: boolean
   agentPicker: boolean
@@ -274,7 +274,6 @@ export const Composer = React.memo(
   tracePicker = true,
   autoApproveSwitch = true,
   enterHint = true,
-  agentSlash = false,
   placeholder,
 }: {
   windowId: string
@@ -326,8 +325,6 @@ export const Composer = React.memo(
   tracePicker?: boolean
   autoApproveSwitch?: boolean
   enterHint?: boolean
-  /** When true, {@code /} on an empty draft opens the agent picker. Default off since #416. */
-  agentSlash?: boolean
   placeholder?: string
 }, handle: React.Ref<ComposerApi>) {
   const [text, setText] = useState('')
@@ -438,7 +435,7 @@ export const Composer = React.memo(
    */
   useEffect(() => {
     if (!attachmentsEnabled) return
-    const root = surface.current?.closest('.tl-cockpit, .tl-chat-composer') as HTMLElement | null
+    const root = surface.current?.closest('.tl-cockpit, .tl-chat-conversation') as HTMLElement | null
     if (!root) return
     let depth = 0
     const onEnter = (event: DragEvent) => {
@@ -748,21 +745,6 @@ export const Composer = React.memo(
                 setMention(null)
                 return
               }
-              if (
-                agentSlash &&
-                agentPicker &&
-                event.key === '/' &&
-                draftIsEmpty(text) &&
-                !event.shiftKey &&
-                !event.ctrlKey &&
-                !event.metaKey &&
-                !event.altKey
-              ) {
-                event.preventDefault()
-                setMenuOpen(true)
-                setPane('agent')
-                return
-              }
               if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault()
                 submit()
@@ -920,7 +902,7 @@ export const Composer = React.memo(
                           icon={Icon.trace}
                           label={labels.traceLevel}
                           description={labels.traceHint}
-                          value={traces.find((item) => item.id === traceMode)?.label ?? labels.traceOverview}
+                          value={traces.find((item) => item.id === traceMode)?.label ?? labels.traceSummary}
                           more
                           onClick={() => setPane('trace')}
                         />

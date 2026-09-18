@@ -19,6 +19,7 @@ import com.top_logic.ai.chat.view.list.DataListElement.Config;
 import com.top_logic.ai.chat.view.list.DataListElement.LineConfig;
 import com.top_logic.ai.chat.view.list.DataListElement.LinesConfig;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
@@ -26,6 +27,10 @@ import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.command.ViewCommand;
+import com.top_logic.layout.view.command.ViewCommandModel;
+import com.top_logic.layout.view.command.ViewExecutabilityRule;
+import com.top_logic.layout.view.command.ViewExecutabilityRules;
 import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -44,8 +49,8 @@ import com.top_logic.util.TLContext;
  * React component; re-runs and re-pushes when observed model objects change. A row click arrives as
  * the {@code select} command carrying the row id; the control resolves it to the row object and
  * writes it to the two-way {@code selection} channel (and reflects an incoming channel value as the
- * selected id). The channel holds the {@link TLObject} so a consumer like {@code <chat-thread>} reads
- * the object directly.
+ * selected id). The channel holds the {@link TLObject} so a consumer like {@code <chat-conversation>}
+ * reads the object directly.
  * </p>
  */
 public class DataListControl extends ReactControl {
@@ -62,9 +67,8 @@ public class DataListControl extends ReactControl {
 
 	private final ViewChannel _selectionChannel;
 
-	private final ViewChannel _createChannel;
-
-	private long _createTick;
+	/** Header command buttons, in config order, parallel to the {@code buttons} state array. */
+	private final List<ViewCommandModel> _commandModels = new ArrayList<>();
 
 	private final boolean[] _applyingFromChannel = { false };
 
@@ -72,7 +76,8 @@ public class DataListControl extends ReactControl {
 	private Map<String, TLObject> _rowsById = Map.of();
 
 	/** Creates a {@link DataListControl}. */
-	public DataListControl(ViewContext context, Config config) {
+	public DataListControl(ViewContext context, Config config, List<ViewCommand> commands,
+			List<ViewCommand.Config> commandConfigs) {
 		super(context, null, blankToDefault(config.getReactElement(), "TLDataList"));
 
 		_rowsExecutor = QueryExecutor.compile(config.getRows());
@@ -96,12 +101,31 @@ public class DataListControl extends ReactControl {
 		putState("collapsible", Boolean.valueOf(config.getCollapsible()));
 		putState("title", labelOf(config.getTitle()));
 		putState("emptyText", labelOf(config.getEmptyText()));
-		putState("create", Boolean.valueOf(config.getCreate()));
-		putState("createLabel", labelOf(config.getCreateLabel()));
 		putState("language", currentLanguage());
 
-		ChannelRef createRef = config.getCreateChannel();
-		_createChannel = createRef == null ? null : context.resolveChannel(createRef);
+		// Header buttons are standard view commands (instantiated by the element): build a model per
+		// command (resolving input and executability) and push its label + icon for the list to render.
+		// Clicks run the command via executeCommand.
+		List<Map<String, Object>> buttons = new ArrayList<>();
+		for (int i = 0; i < commands.size() && i < commandConfigs.size(); i++) {
+			ViewCommand.Config cmdConfig = commandConfigs.get(i);
+			ViewChannel commandInput =
+				cmdConfig.getInput() == null ? null : context.resolveChannel(cmdConfig.getInput());
+			ViewExecutabilityRule rule = ViewExecutabilityRules.build(cmdConfig.getExecutability(), context);
+			ViewCommandModel model = ViewCommandModel.create(commands.get(i), cmdConfig, commandInput, rule);
+			_commandModels.add(model);
+
+			Map<String, Object> entry = new LinkedHashMap<>();
+			entry.put("label", model.getLabel() == null ? "" : model.getLabel());
+			ThemeImage image = cmdConfig.getImage();
+			entry.put("icon", image == null ? "" : image.toEncodedForm());
+			buttons.add(entry);
+		}
+		putState("buttons", buttons);
+		if (!_commandModels.isEmpty()) {
+			addAttachListener(() -> _commandModels.forEach(ViewCommandModel::attach));
+			addDetachListener(() -> _commandModels.forEach(ViewCommandModel::detach));
+		}
 
 		ChannelRef selectionRef = config.getSelection();
 		if (selectionRef == null) {
@@ -164,14 +188,20 @@ public class DataListControl extends ReactControl {
 	}
 
 	/**
-	 * Pulses the create channel so a host command reacts to a "new" click. Each click writes a fresh
-	 * value, so a listener fires every time.
+	 * Runs a configured header command.
+	 *
+	 * @param args
+	 *        {@code index} is the command's position in the configured list.
 	 */
-	@ReactCommandHandler(value = "create", params = {})
-	public void create(Map<String, Object> args) {
-		if (_createChannel != null) {
-			_createChannel.set(Long.valueOf(++_createTick));
+	@ReactCommandHandler(value = "button", params = {
+		@ReactParam(name = "index", type = "number", description = "Index of the clicked header button.")
+	})
+	public void button(Map<String, Object> args) {
+		int index = intArg(args, "index");
+		if (index < 0 || index >= _commandModels.size()) {
+			return;
 		}
+		_commandModels.get(index).executeCommand(getReactContext());
 	}
 
 	private void applyFromChannel(Object value) {
@@ -312,6 +342,18 @@ public class DataListControl extends ReactControl {
 		}
 		Object value = args.get(key);
 		return value == null ? "" : String.valueOf(value).trim();
+	}
+
+	private static int intArg(Map<String, Object> args, String key) {
+		Object value = args == null ? null : args.get(key);
+		if (value instanceof Number number) {
+			return number.intValue();
+		}
+		try {
+			return value == null ? -1 : Integer.parseInt(String.valueOf(value).trim());
+		} catch (NumberFormatException ex) {
+			return -1;
+		}
 	}
 
 	private static String blankToDefault(String value, String fallback) {

@@ -12,6 +12,8 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.layout.view.command.GenericViewCommand;
 
 /**
  * Checks the defaults of the {@code <data-list>} configuration: search and collapse on, no grouping
@@ -29,12 +31,27 @@ public class TestDataListElementConfig extends TestCase {
 		assertNull("No lines configured by default.", config.getLines());
 		assertNull("No selection channel by default.", config.getSelection());
 		assertNull("No title by default.", config.getTitle());
-		assertFalse("No create button by default.", config.getCreate());
+		assertTrue("No header commands by default.", config.getCommands().isEmpty());
 		assertTrue("No input channels by default.", config.getInputs().isEmpty());
 		assertTrue("No types configured by default.", config.getTypes().isEmpty());
 		assertTrue("A static list by default (no observed types).", config.getObservedTypes().isEmpty());
 		assertEquals("TLDataList", config.getReactElement());
 		assertEquals(DataListElement.class, config.getImplementationClass());
+	}
+
+	/** A header {@code <commands>} entry parses as a standard view command with its actions. */
+	public void testCommandParses() throws Exception {
+		String xml = "<data-list xmlns:config='http://www.top-logic.com/ns/config/6.0'"
+			+ " config:interface='" + DataListElement.Config.class.getName() + "'>"
+			+ "<rows>all(`tl.ai.execution:AgentSession`)</rows>"
+			+ "<commands>"
+			+ "<generic-command image='css:bi bi-plus-lg'><write-channel name='chatSession'/></generic-command>"
+			+ "</commands>"
+			+ "</data-list>";
+		DataListElement.Config config =
+			(DataListElement.Config) TypedConfiguration.parse(CharacterContents.newContent(xml));
+		assertEquals(1, config.getCommands().size());
+		assertEquals(GenericViewCommand.class, config.getCommands().get(0).getImplementationClass());
 	}
 
 	/** Boots the module system so typed-configuration resolves nested config types via TypeIndex. */

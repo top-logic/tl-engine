@@ -98,7 +98,10 @@ function parseToolInput(argsJson: string | undefined): unknown {
 }
 
 function parseTraceMode(value: unknown): TraceMode {
-  return value === 'none' || value === 'detailed' || value === 'overview' ? value : 'overview'
+  if (value === 'none' || value === 'summary' || value === 'detailed') return value
+  // "overview" is the legacy name (and the vocabulary <agent-chat> still emits) - it maps to summary.
+  if (value === 'overview') return 'summary'
+  return 'summary'
 }
 
 function mergeSubagent(

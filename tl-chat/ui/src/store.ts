@@ -38,7 +38,7 @@ const EFFORT_KEY = 'tl-chat-effort'
 const ACTIVE_SESSION_KEY = 'tl-chat-session'
 
 function isTraceMode(value: unknown): value is TraceMode {
-  return value === 'none' || value === 'overview' || value === 'detailed'
+  return value === 'none' || value === 'summary' || value === 'detailed'
 }
 
 /**

@@ -1,7 +1,6 @@
 export { App } from './App'
 export { TLChatSessions } from './chat-sessions'
-export { TLChatThread } from './chat-thread'
-export { TLChatComposer } from './chat-composer'
+export { TLChatConversation } from './chat-conversation'
 export { TLChatRail } from './chat-rail'
 export {
   registerRailSection,

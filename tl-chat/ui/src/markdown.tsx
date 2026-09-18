@@ -356,15 +356,54 @@ export function SourcePopover({
   )
 }
 
-/** The excerpt with the cited sentence marked inside it. */
+/**
+ * Collapses whitespace runs to one space and lowercases, keeping a map from each normalized
+ * character back to its index in the original text. The trailing entry is the original length, so a
+ * match that ends at the last character still has an end boundary.
+ */
+function normalizeWithMap(text: string): { norm: string; map: number[] } {
+  let norm = ''
+  const map: number[] = []
+  let prevSpace = false
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i]
+    if (/\s/.test(ch)) {
+      if (norm.length > 0 && !prevSpace) {
+        norm += ' '
+        map.push(i)
+        prevSpace = true
+      }
+      continue
+    }
+    norm += ch.toLowerCase()
+    map.push(i)
+    prevSpace = false
+  }
+  map.push(text.length)
+  return { norm, map }
+}
+
+/**
+ * The excerpt with the cited sentence marked inside it.
+ *
+ * The match is tolerant: the server's verbatim passage and the excerpt window it was cut from can
+ * differ in whitespace or case, and an exact substring search then silently found nothing and showed
+ * no highlight. We match on a whitespace-collapsed, lowercased form, then highlight the corresponding
+ * slice of the original text. A genuinely absent passage still degrades to the plain excerpt.
+ */
 function Excerpt({ excerpt, passage }: { excerpt: string; passage: string }) {
-  const at = passage ? excerpt.indexOf(passage) : -1
+  const needle = passage.replace(/\s+/g, ' ').trim().toLowerCase()
+  if (!needle) return <>{excerpt}</>
+  const { norm, map } = normalizeWithMap(excerpt)
+  const at = norm.indexOf(needle)
   if (at < 0) return <>{excerpt}</>
+  const start = map[at]
+  const end = map[at + needle.length] ?? excerpt.length
   return (
     <>
-      {excerpt.slice(0, at)}
-      <mark className="cite-passage">{passage}</mark>
-      {excerpt.slice(at + passage.length)}
+      {excerpt.slice(0, start)}
+      <mark className="cite-passage">{excerpt.slice(start, end)}</mark>
+      {excerpt.slice(end)}
     </>
   )
 }

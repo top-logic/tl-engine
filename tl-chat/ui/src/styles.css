@@ -369,27 +369,82 @@
   display: none;
 }
 
-.tl-chat-thread,
-.tl-chat-composer {
+/* --- Composed conversation --------------------------------------------- */
+
+/*
+ * <chat-conversation/> renders outside .tl-cockpit, so the chat's box-sizing, button reset, focus
+ * ring and component tokens are not in scope here. It hosts the whole thread + composer, so it needs
+ * the full token set, not the subset <data-list> redeclares. Reset them the same way. (A themeable
+ * token layer would hoist these to :root; see the tokens note.)
+ */
+.tl-chat-conversation,
+.tl-chat-conversation * {
+  box-sizing: border-box;
+}
+
+:where(.tl-chat-conversation button) {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+:where(.tl-chat-conversation button:disabled) {
+  cursor: default;
+}
+
+.tl-chat-conversation :focus-visible {
+  outline: 2px solid var(--focus, var(--button-primary));
+  outline-offset: 2px;
+  border-radius: var(--r-1);
+}
+
+/*
+ * It reuses the App's own .stage (normal and .is-empty), so the conversation element only has to be
+ * the fill box that lets .stage take the height its panel gives it - and carry the tokens and
+ * typography that .tl-cockpit would otherwise provide.
+ */
+.tl-chat-conversation {
+  --chat-column: 49rem;
+  --chat-sidebar: 16.5rem;
+  --chat-rail-narrow: 3.25rem;
+  --r-1: calc(var(--corner-radius, 0.25rem) * 1.5);
+  --r-2: calc(var(--corner-radius, 0.25rem) * 2.5);
+  --r-3: calc(var(--corner-radius, 0.25rem) * 4);
+  --r-pill: 999px;
+  --chat-danger: var(--support-danger, var(--support-error, #d3181b));
+  --chat-danger-soft: var(
+    --background-danger--lighter,
+    color-mix(in srgb, var(--support-error, #d3181b) 12%, transparent)
+  );
+  --chat-warn: var(--text-warning, var(--support-warning, #d3a118));
+  --chat-link: var(--link, var(--link-primary, var(--button-primary, #2968c8)));
+  --chat-small: var(--body-01-font-size, 0.75rem);
+  --chat-heading: var(--heading-04-font-size, 1.5rem);
+  --chat-heading-line: var(--heading-04-line-height, 2rem);
+  --chat-shadow: var(--shadow-menu, 0 2px 6px 0 rgba(0, 0, 0, 0.32));
+  --chat-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
   display: flex;
   flex-direction: column;
   min-width: 0;
-}
-
-.tl-chat-thread {
-  flex: 1 1 auto;
-  min-height: 0;
   height: 100%;
+  color: var(--text-primary);
+  background: var(--background);
+  font-family: var(--font-family, Inter, "Segoe UI", system-ui, sans-serif);
+  font-size: var(--body-02-font-size, 0.875rem);
+  line-height: var(--body-02-line-height, 1.25rem);
 }
 
-.tl-chat-thread .thread-shell {
-  flex: 1 1 auto;
-  min-height: 0;
-  height: 100%;
+.tl-chat-conversation .stage {
+  min-width: 0;
+  overflow: hidden;
 }
 
-.tl-chat-composer {
-  flex: 0 0 auto;
+.tl-chat-conversation .composer {
+  max-width: 100%;
 }
 
 .tl-chat-rail {
@@ -406,8 +461,7 @@
   position: relative;
 }
 
-.tl-chat-thread.is-signed-out,
-.tl-chat-composer.is-signed-out,
+.tl-chat-conversation.is-signed-out,
 .tl-chat-rail.is-signed-out {
   display: grid;
   place-items: center;
@@ -3156,6 +3210,7 @@
 }
 
 .token-input {
+  position: relative;
   display: block;
   min-height: 2.25rem;
   max-height: 11.25rem;
@@ -3178,9 +3233,16 @@
   outline: none;
 }
 
+/*
+ * Overlaid, not in flow: a block ::before would take the first line and push the caret onto line two.
+ * Absolute at the field's own padding keeps the caret on line one, where the text will appear.
+ */
 .token-input.is-empty::before {
   content: attr(data-placeholder);
-  display: block;
+  position: absolute;
+  top: 0.4375rem;
+  left: 0.25rem;
+  right: 0.25rem;
   color: var(--text-placeholder, var(--text-secondary));
   pointer-events: none;
   /* One line: in a narrow column the invitation may be cut, but it must not grow the field. */

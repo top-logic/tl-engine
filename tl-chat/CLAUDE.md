@@ -51,7 +51,7 @@ browser component, which shows a sign-in note rather than a composer.
 - **`ChatHistoryService`** – Static access to persistent `AgentSession` objects (kind CHAT) via `AgentExecutionStore` (tl-ai-core). Conversations are stored as one transcript per `AgentExecution` (written by `AgentRunner` at run end) and merged in run order on load.
 - **`LegacyChatSessionMigration`** – Startup service migrating legacy `tl.ai.chat:ChatSession` blobs to `AgentSession`s eagerly. The legacy model has been removed (tl-ai-core migration `Issue_230_remove_module_tl_ai_chat`), so the service is a no-op now; it is kept until every deployment is known to have run it.
 - **`ChatSessionRegistry`** – Bridges `WindowScope` (a chat control) and `HttpSession` (`ChatServlet`). Published API: the classic control in `tl-chat-classic` and `Consulting`'s own control register here from outside this module.
-- **`ChatViewBinding`** – Once per (sub-session, `chat-id`): tracker, user and layout preferences. `AgentChatControl` and `<chat-sessions>` (later the other three elements) delegate to it so four controls do not load `PersonalConfiguration` four times. The tracker stays one per window.
+- **`ChatViewBinding`** – Once per (sub-session, `chat-id`): tracker, user and layout preferences. `AgentChatControl` and the split elements (`<chat-sessions>`, `<chat-conversation>`, `<chat-rail>`) delegate to it so several controls do not load `PersonalConfiguration` several times. The tracker stays one per window.
 
 ## Thread Safety
 
@@ -181,6 +181,8 @@ it rewrites a draft and never answers as a persona.
 |--|--|
 | `App.tsx` | The shipped chat as a composition over one `useChat` store, plus this element's own geometry |
 | `chat-sessions.tsx` | `<chat-sessions/>` as `TLChatSessions`: the session list over the same store |
+| `chat-conversation.tsx` | `<chat-conversation/>` as `TLChatConversation`: transcript plus prompt field over the same store |
+| `chat-rail.tsx` | `<chat-rail/>` as `TLChatRail`: the right rail and its pane |
 | `chat-store.ts` | The chat's state, one store per `chat-id`: bootstrap, capabilities, sessions, turn settings, transcript, run, layout preferences and the one `EventSource` |
 | `composer.tsx` | Input, plus menu, model picker, attachments, drag and drop, improve-prompt |
 | `thread.tsx` | Transcript: user bubbles, answers, run meta line, trace panels |
@@ -318,12 +320,43 @@ conversation.
 `chat-id` is how elements find each other. `<agent-chat>` leaves it empty and `App` falls back to
 `props.controlId`, so two chats in one window stay two chats - Consulting's `CopilotRegistry` keeps a
 *list* of live panels, and a fixed key would silently merge their transcripts
-(`chat-store.test.ts`, `testTwoAppsInOneWindowDoNotShareATranscript`). The four pieces
-(`<chat-sessions>`, `<chat-thread>`, `<chat-composer>`, `<chat-rail>`) default to `default`.
+(`chat-store.test.ts`, `testTwoAppsInOneWindowDoNotShareATranscript`). The three pieces
+(`<chat-sessions>`, `<chat-conversation>`, `<chat-rail>`) default to `default`.
 
-`<chat-thread>` and `<chat-composer>` honour their configuration flags as render guards on the
-existing `Thread` and `Composer` props. An optional `input` channel selects the session; without
-one the store is the source. `<chat-thread>` writes an optional `busy` channel.
+`<chat-conversation>` is the transcript and the prompt field as one element - the transcript and
+the input almost always sit together, so they are one placeable box, while the session list and the
+rail stay separate because those genuinely want independent placement. It honours its configuration
+flags as render guards on the existing `Thread` and `Composer` props. An optional `input` channel
+selects the session; without one the store is the source. It writes an optional `busy` channel.
+
+#### Configuring `<chat-conversation>` - easy vs advanced
+
+An application configures this element in the design view. Its options fall into three tiers:
+
+- **Plain toggles / channels a designer sets** - `trace` (`none`/`summary`/`detailed`, one knob that
+  replaces the former trace-mode + run-summary; the user can still change it live with the composer's
+  trace picker), `citations` (markers *and* the per-answer sources pill - off removes the whole
+  citation surface from the transcript), the nested `<actions>` (`copy`/`rate`/`regenerate`/
+  `timestamp`), the nested `<controls>` pickers, `placeholder`, `prompt-improver-agent` (an agent
+  dropdown), `rail-toggle`, `chat-id`, and the `input`/`busy` channels.
+- **Points at code (name a component registered in TypeScript; do nothing unless a developer set that
+  name up)** - `react-element`, `citation-renderer` (the renamed `annotations`), `<actions host>`,
+  `menu-items`, and `reference-source`. Each such tooltip says so.
+- **Needs data modelling (TL-Script)** - the nested `<mention>` binding: `rows` (the objects `@` may
+  mention), optional `label`/`text` expressions, `observed-types`, `limit`. Same skill as
+  `<data-list>`'s `rows`; the control compiles them with `QueryExecutor`, pushes a bounded candidate
+  set shaped as the browser's `ReferenceCandidate`, and the existing `@` picker filters it client-side.
+  A `<mention>` wins over `reference-source`. Each mention carries the object's stable id; the framework
+  ships no tool that resolves it, so a host that wants the id to mean more gives its agent such a tool
+  (see the `<reference>` prompt fragment).
+
+Coupling to know: elements share one conversation only when their `chat-id` matches, and a session
+list feeds the conversation over a **two-way** channel — `<data-list selection>` ↔
+`<chat-conversation input>`. The list writes the picked session; the conversation follows it and
+writes its own session back (so a chat created on first send gets highlighted). An **empty** selection
+means a fresh, empty conversation, so "new chat" is just the list clearing the channel — a
+`<data-list create-action="clear-selection">`, no separate binding element. (This replaced the former
+`<chat-session-binding>`.)
 
 `<chat-rail>` is the right rail and its pane. An empty `<sections>` list is Fortschritt, then
 registered host sections, then Kontext and Quellen. Named host sections, `@` sources, `+` menu

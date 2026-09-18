@@ -5,13 +5,16 @@
  */
 package com.top_logic.ai.chat.view.list;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.ListBinding;
@@ -29,6 +32,7 @@ import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.util.TLModelPartRef;
 
@@ -98,14 +102,9 @@ public class DataListElement implements UIElement {
 		/** Configuration property name for {@link #getSelection()}. */
 		String SELECTION = "selection";
 
-		/** Configuration property name for {@link #getCreate()}. */
-		String CREATE = "create";
+		/** Configuration property name for {@link #getCommands()}. */
+		String COMMANDS = "commands";
 
-		/** Configuration property name for {@link #getCreateLabel()}. */
-		String CREATE_LABEL = "create-label";
-
-		/** Configuration property name for {@link #getCreateChannel()}. */
-		String CREATE_CHANNEL = "create-channel";
 
 		/** Configuration property name for {@link #getObservedTypes()}. */
 		String OBSERVED_TYPES = "observed-types";
@@ -177,30 +176,16 @@ public class DataListElement implements UIElement {
 		ChannelRef getSelection();
 
 		/**
-		 * Whether the list header shows a primary-action ("new") button.
+		 * Header buttons, rendered above the list. Each is a standard view command - a
+		 * {@code <generic-command>} composing any actions (execute-script, open-dialog, write-channel,
+		 * with-transaction, ...), with the usual label, image, tooltip, executability and input. A chat
+		 * session list, for example, configures one command that clears the {@link #getSelection()
+		 * selection} channel ("New chat").
 		 */
-		@Name(CREATE)
-		@Label("Create button")
-		@BooleanDefault(false)
-		boolean getCreate();
+		@Name(COMMANDS)
+		@EntryTag("command")
+		List<PolymorphicConfiguration<? extends ViewCommand>> getCommands();
 
-		/**
-		 * Label of the create button. Empty falls back to the generic "new" caption.
-		 */
-		@Name(CREATE_LABEL)
-		@Label("Create label")
-		@Nullable
-		ResKey getCreateLabel();
-
-		/**
-		 * Optional channel the create button pulses on each click, so a host command (e.g. a chat's
-		 * "new conversation") can react. The list itself performs no create.
-		 */
-		@Name(CREATE_CHANNEL)
-		@Label("Create channel")
-		@Format(ChannelRefFormat.class)
-		@Nullable
-		ChannelRef getCreateChannel();
 
 		/**
 		 * Types whose object changes (create / update / delete) re-run {@link #getRows()}, so the
@@ -301,14 +286,26 @@ public class DataListElement implements UIElement {
 
 	private final Config _config;
 
+	private final List<ViewCommand> _commands = new ArrayList<>();
+
+	private final List<ViewCommand.Config> _commandConfigs = new ArrayList<>();
+
 	/** Creates a {@link DataListElement}. */
 	@CalledByReflection
 	public DataListElement(InstantiationContext context, Config config) {
 		_config = config;
+		// Instantiate header commands here, where an InstantiationContext is available.
+		for (PolymorphicConfiguration<? extends ViewCommand> commandConfig : config.getCommands()) {
+			ViewCommand command = context.getInstance(commandConfig);
+			if (command != null && commandConfig instanceof ViewCommand.Config cmdConfig) {
+				_commands.add(command);
+				_commandConfigs.add(cmdConfig);
+			}
+		}
 	}
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		return new DataListControl(context, _config);
+		return new DataListControl(context, _config, _commands, _commandConfigs);
 	}
 }

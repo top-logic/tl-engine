@@ -3,27 +3,35 @@
 <view>
 	<channels>
 		<channel name="chatSession"/>
-		<channel name="newChatSignal"/>
 	</channels>
 	<stack direction="row">
-		<chat-session-binding
-			chat-id="grouped"
-			create-signal="newChatSignal"
-			selection="chatSession"
-		/>
+		<!--
+			The session list and the conversation share one two-way "chatSession" channel: the list
+			writes the picked session, the conversation follows it and writes its own session back (so a
+			new chat is highlighted). "Neuer Chat" just clears the channel (create-action); the
+			conversation shows its empty state when nothing is selected - no extra binding element.
+		-->
 		<data-list
 			collapsible="true"
-			create="true"
-			create-channel="newChatSignal"
 			observed-types="tl.ai.execution:AgentSession"
 			search="true"
 			selection="chatSession"
 			types="tl.ai.execution:AgentSession"
 		>
-			<create-label>
-				<en>New chat</en>
-				<de>Neuer Chat</de>
-			</create-label>
+			<!--
+				The "New chat" button is an ordinary view command: it writes null to the selection
+				channel, which deselects the list and shows the conversation's empty state. Any custom
+				action (execute-script, open-dialog, with-transaction, ...) can be configured the same way.
+			-->
+			<commands>
+				<generic-command image="css:bi bi-plus-lg">
+					<label>
+						<en>New chat</en>
+						<de>Neuer Chat</de>
+					</label>
+					<write-channel name="chatSession"/>
+				</generic-command>
+			</commands>
 			<empty-text>
 				<en>No chats yet</en>
 				<de>Noch keine Chats</de>
@@ -50,44 +58,39 @@
 				<de>Chats</de>
 			</title>
 		</data-list>
-		<split-panel
-			orientation="vertical"
-			resizable="true"
-		>
-			<panes>
-				<pane
-					size="78.0"
-					unit="%"
-				>
-					<panel fill="true">
-						<chat-thread
-							chat-id="grouped"
-							input="chatSession"
-						/>
-					</panel>
-				</pane>
-				<pane
-					min-size="120"
-					size="22.0"
-					unit="%"
-				>
-					<panel fill="true">
-						<chat-composer
-							chat-id="grouped"
-							input="chatSession"
-						>
-							<controls
-								agent-picker="false"
-								attachments="false"
-								mcp="false"
-								model-picker="false"
-								thinking="false"
-								trace-picker="false"
-							/>
-						</chat-composer>
-					</panel>
-				</pane>
-			</panes>
-		</split-panel>
+		<panel fill="true">
+			<chat-conversation
+				chat-id="grouped"
+				citations="true"
+				input="chatSession"
+				prompt-improver-agent="TL_PromptImprover"
+				rail-toggle="false"
+				trace="summary"
+			>
+				<actions rate="true"/>
+				<controls
+					agent-picker="true"
+					attachments="true"
+					auto-approve="true"
+					enter-hint="true"
+					mcp="true"
+					model-picker="true"
+					thinking="true"
+					trace-picker="true"
+				/>
+				<!--
+					Declarative @-mention: typing "@" offers this application's invoices, no TypeScript.
+					Each mention carries the invoice's id and puts its description into the message as the
+					quoted text the agent reads.
+				-->
+				<mention observed-types="tl.ai.demo.imageclassification:Invoice">
+					<rows><![CDATA[all(`tl.ai.demo.imageclassification:Invoice`)
+						.sort((i -> $i.get(`tl.ai.demo.imageclassification:Invoice#date`)).comparator().desc())]]></rows>
+					<label><![CDATA[i -> $i.get(`tl.ai.demo.imageclassification:Invoice#description`)]]></label>
+					<text><![CDATA[i -> $i.get(`tl.ai.demo.imageclassification:Invoice#description`)
+						+ " (" + $i.get(`tl.ai.demo.imageclassification:Invoice#amountLabel`) + ")"]]></text>
+				</mention>
+			</chat-conversation>
+		</panel>
 	</stack>
 </view>

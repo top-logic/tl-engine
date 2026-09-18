@@ -150,9 +150,9 @@
 						<de>Chat (Elemente)</de>
 					</label>
 					<!--
-						Issue #415: the chat built from standalone <chat-sessions> + <chat-thread> +
-						<chat-composer> sharing one conversation, instead of the one-element
-						<agent-chat>. See tl-ai-demo/chat-grouped.view.xml.
+						Issue #415: the chat built from a standalone <chat-sessions> and a
+						<chat-conversation> (transcript plus prompt field) sharing one conversation,
+						instead of the one-element <agent-chat>. See tl-ai-demo/chat-grouped.view.xml.
 					-->
 					<view-ref view="tl-ai-demo/chat-grouped.view.xml"/>
 				</nav-item>

@@ -371,6 +371,7 @@ function AnswerFooter({
   message,
   canCopy = true,
   canRate = true,
+  showTime = true,
 }: {
   text: string
   timestamp: number
@@ -385,11 +386,16 @@ function AnswerFooter({
   message?: ChatMessage
   canCopy?: boolean
   canRate?: boolean
+  showTime?: boolean
 }) {
   const [copied, setCopied] = useState(false)
   const [noteOpen, setNoteOpen] = useState(false)
   const [draft, setDraft] = useState(note ?? '')
   if (!text.trim()) return null
+  const hasActions =
+    canCopy || canRate || Boolean(onRegenerate) || Boolean(extraActions && extraActions.length && message)
+  // Nothing to copy/rate/regenerate and no time to show: render no row rather than an empty strip.
+  if (!hasActions && !showTime) return null
 
   const rate = (next: Rating) => {
     if (!onRate) return
@@ -461,9 +467,11 @@ function AnswerFooter({
               </IconButton>
             ))
           : null}
-        <time className="answer-time" dateTime={new Date(timestamp).toISOString()}>
-          {formatTimestamp(timestamp, language)}
-        </time>
+        {showTime ? (
+          <time className="answer-time" dateTime={new Date(timestamp).toISOString()}>
+            {formatTimestamp(timestamp, language)}
+          </time>
+        ) : null}
       </div>
       {noteOpen && rating === 'down' ? (
         <div className="feedback-note">
@@ -517,6 +525,8 @@ function AssistantAnswer({
   onOpenSource,
   canCopy = true,
   canRate = true,
+  citationMarkers = true,
+  showTime = true,
 }: {
   text: string
   streaming: boolean
@@ -536,9 +546,13 @@ function AssistantAnswer({
   onOpenSource?: (citation: Citation) => void
   canCopy?: boolean
   canRate?: boolean
+  citationMarkers?: boolean
+  showTime?: boolean
 }) {
   if (!text && !streaming) return null
-  const sources = message ? citedSources([message]) : []
+  // The pill reads the message's own citations, so it must honour the citations switch too - otherwise
+  // turning citations off would hide the markers but leave the "Quellen" pill behind.
+  const sources = citationMarkers && message ? citedSources([message]) : []
   return (
     <div className="turn turn-agent" data-message-id={message?.id}>
       <div className={`answer${streaming ? ' is-streaming' : ''}`}>
@@ -575,6 +589,7 @@ function AssistantAnswer({
           message={message}
           canCopy={canCopy}
           canRate={canRate}
+          showTime={showTime}
         />
       )}
     </div>
@@ -851,10 +866,10 @@ function AgentRun({
   openInPane,
   extraActions,
   onOpenSource,
-  runSummary = 'collapsed',
   canCopy = true,
   canRate = true,
   citationMarkers = true,
+  showTimestamp = true,
 }: {
   turn: RunTurn
   results: Map<string, ToolResult>
@@ -872,29 +887,23 @@ function AgentRun({
   openInPane?: (content: React.ReactNode, options: PaneOpenOptions) => void
   extraActions?: MessageAction[]
   onOpenSource?: (citation: Citation) => void
-  runSummary?: 'collapsed' | 'expanded' | 'hidden'
   canCopy?: boolean
   canRate?: boolean
   citationMarkers?: boolean
+  showTimestamp?: boolean
 }) {
   const answer = lastAnswer(turn.events)
   const events = traceEvents(turn.events)
   const tools = toolsOf(turn.events)
   const meta = runMetaOf(turn.events)
-  const summary = traceMode === 'overview' ? overviewLine(tools, labels) : ''
+  const summaryLine = traceMode === 'summary' ? overviewLine(tools, labels) : ''
 
   return (
     <div className="agent-run">
-      {traceMode === 'overview' && events.length > 0 && runSummary !== 'hidden' ? (
-        <RunSummary
-          events={events}
-          results={results}
-          labels={labels}
-          busy={busy}
-          startOpen={runSummary === 'expanded'}
-        />
+      {traceMode === 'summary' && events.length > 0 ? (
+        <RunSummary events={events} results={results} labels={labels} busy={busy} />
       ) : (
-        <RunMetaLine meta={meta} summary={summary} busy={busy} labels={labels} />
+        <RunMetaLine meta={meta} summary={summaryLine} busy={busy} labels={labels} />
       )}
       {traceMode === 'detailed' && events.length > 0 ? (
         <DetailedTrace events={events} results={results} labels={labels} effort={effort} model={''} />
@@ -919,6 +928,8 @@ function AgentRun({
           onOpenSource={onOpenSource}
           canCopy={canCopy}
           canRate={canRate}
+          citationMarkers={citationMarkers}
+          showTime={showTimestamp}
         />
       ) : null}
       {traceMode !== 'detailed'
@@ -960,11 +971,11 @@ export const Thread = React.memo(function Thread({
   extraActions,
   onOpenSource,
   sessionListToggle = true,
-  runSummary = 'collapsed',
   canCopy = true,
   canRate = true,
   canRegenerate = true,
   citationMarkers = true,
+  showTimestamp = true,
 }: {
   messages: ChatMessage[]
   traceMode: TraceMode
@@ -989,11 +1000,11 @@ export const Thread = React.memo(function Thread({
   extraActions?: MessageAction[]
   onOpenSource?: (citation: Citation) => void
   sessionListToggle?: boolean
-  runSummary?: 'collapsed' | 'expanded' | 'hidden'
   canCopy?: boolean
   canRate?: boolean
   canRegenerate?: boolean
   citationMarkers?: boolean
+  showTimestamp?: boolean
 }) {
   const scroller = useRef<HTMLDivElement>(null)
   const stick = useRef(true)
@@ -1113,10 +1124,10 @@ export const Thread = React.memo(function Thread({
                     openInPane={openInPane}
                     extraActions={extraActions}
                     onOpenSource={onOpenSource}
-                    runSummary={runSummary}
                     canCopy={canCopy}
                     canRate={canRate}
                     citationMarkers={citationMarkers}
+                    showTimestamp={showTimestamp}
                   />
                 </div>
               )

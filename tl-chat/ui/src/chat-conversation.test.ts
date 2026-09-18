@@ -1,58 +1,48 @@
 import { describe, expect, it } from 'vitest'
 import { App } from './App'
 import { plusMenuVisible } from './composer'
-import { readComposerControls, TLChatComposer } from './chat-composer'
-import { readThreadConfig, threadSessionToSelect, TLChatThread } from './chat-thread'
+import {
+  modelBoundSource,
+  readComposerControls,
+  readThreadConfig,
+  TLChatConversation,
+} from './chat-conversation'
 
 describe('readThreadConfig', () => {
-  it('defaults to overview, collapsed, and every action on', () => {
+  it('defaults every transcript flag on (trace is the store axis, not here)', () => {
     expect(readThreadConfig({})).toEqual({
-      traceMode: 'overview',
-      runSummary: 'collapsed',
       citationMarkers: true,
       railToggle: true,
       copy: true,
       rate: true,
       regenerate: true,
+      timestamp: true,
     })
   })
 
   it('honours every flag the control put into state', () => {
     expect(
       readThreadConfig({
-        traceMode: 'none',
-        runSummary: 'hidden',
-        citationMarkers: false,
+        citations: false,
         railToggle: false,
         copy: false,
         rate: false,
         regenerate: false,
+        timestamp: false,
       }),
     ).toEqual({
-      traceMode: 'none',
-      runSummary: 'hidden',
       citationMarkers: false,
       railToggle: false,
       copy: false,
       rate: false,
       regenerate: false,
+      timestamp: false,
     })
   })
 })
 
-describe('threadSessionToSelect', () => {
-  it('follows a channel write when input is set', () => {
-    expect(threadSessionToSelect('chat-2', 'chat-1')).toBe('chat-2')
-  })
-
-  it('leaves the store alone when input is not set', () => {
-    expect(threadSessionToSelect('', 'chat-1')).toBe(null)
-    expect(threadSessionToSelect('chat-1', 'chat-1')).toBe(null)
-  })
-})
-
 describe('readComposerControls', () => {
-  it('defaults every picker on and agent-slash off', () => {
+  it('defaults every picker on', () => {
     expect(readComposerControls({})).toEqual({
       autoApproveSwitch: true,
       enterHint: true,
@@ -62,7 +52,6 @@ describe('readComposerControls', () => {
       mcp: true,
       attachmentsEnabled: true,
       tracePicker: true,
-      agentSlash: false,
     })
   })
 
@@ -77,7 +66,6 @@ describe('readComposerControls', () => {
         mcp: false,
         attachments: false,
         tracePicker: false,
-        agentSlash: true,
       }),
     ).toEqual({
       autoApproveSwitch: false,
@@ -88,7 +76,6 @@ describe('readComposerControls', () => {
       mcp: false,
       attachmentsEnabled: false,
       tracePicker: false,
-      agentSlash: true,
     })
   })
 })
@@ -111,10 +98,44 @@ describe('a composer with every picker off', () => {
   })
 })
 
-describe('TLChatThread, TLChatComposer and App', () => {
+describe('modelBoundSource', () => {
+  const pushed = [
+    { id: 'i1', label: 'Invoice 1001', token: { kind: 'Invoice', id: 'i1', label: 'Invoice 1001', text: 'Invoice 1001 — 42€' } },
+    { id: 'i2', label: 'Receipt 2002', token: { kind: 'Invoice', id: 'i2', label: 'Receipt 2002', text: 'Receipt 2002 — 7€' } },
+  ]
+
+  it('returns undefined when no candidates were pushed (falls back to a registered source)', () => {
+    expect(modelBoundSource(undefined)).toBeUndefined()
+    expect(modelBoundSource('x')).toBeUndefined()
+  })
+
+  it('offers all candidates for an empty query and maps them to ReferenceCandidates', () => {
+    const source = modelBoundSource(pushed)!
+    const all = source('')
+    expect(all).toHaveLength(2)
+    expect(all[0]).toEqual({
+      id: 'i1',
+      label: 'Invoice 1001',
+      token: { kind: 'Invoice', id: 'i1', label: 'Invoice 1001', text: 'Invoice 1001 — 42€' },
+    })
+  })
+
+  it('filters case-insensitively on label and quoted text', () => {
+    const source = modelBoundSource(pushed)!
+    expect(source('receipt').map((c) => c.id)).toEqual(['i2'])
+    expect(source('42€').map((c) => c.id)).toEqual(['i1'])
+    expect(source('nomatch')).toEqual([])
+  })
+
+  it('skips malformed rows without a token id', () => {
+    const source = modelBoundSource([{ id: 'x', label: 'no token' }, ...pushed])!
+    expect(source('').map((c) => c.id)).toEqual(['i1', 'i2'])
+  })
+})
+
+describe('TLChatConversation and App', () => {
   it('are functions over the same store API', () => {
-    expect(typeof TLChatThread).toBe('function')
-    expect(typeof TLChatComposer).toBe('function')
+    expect(typeof TLChatConversation).toBe('function')
     expect(typeof App).toBe('function')
   })
 })

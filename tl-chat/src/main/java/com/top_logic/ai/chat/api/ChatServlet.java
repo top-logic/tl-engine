@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashSet;
@@ -29,6 +30,7 @@ import com.top_logic.ai.chat.api.messages.ChatSendRequest;
 import com.top_logic.ai.chat.api.messages.ChatSendResponse;
 import com.top_logic.ai.chat.api.messages.ChatPreferencesDto;
 import com.top_logic.ai.chat.api.messages.ContextCompositionEvent;
+import com.top_logic.ai.chat.api.messages.FactDto;
 import com.top_logic.ai.chat.api.messages.MessageFeedbackDto;
 import com.top_logic.ai.chat.api.messages.MessageFeedbackRequest;
 import com.top_logic.ai.chat.api.messages.RegenerateRequest;
@@ -63,6 +65,7 @@ import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
+import com.top_logic.tl.ai.core.agent.environment.EnvironmentFact;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Decision;
 import com.top_logic.tl.ai.core.security.RunAuthorization;
@@ -372,8 +375,8 @@ public class ChatServlet extends TopLogicServlet {
 				ChatSendResponse.create().setStatus(FORBIDDEN).setReason(refusal.reason()));
 			return;
 		}
-		ChatProcessor.SendResult result =
-			ChatProcessor.sendMessage(tracker, subSession, userName, messageText, attachments, options);
+		ChatProcessor.SendResult result = ChatProcessor.sendMessage(tracker, subSession, userName,
+			messageText, attachments, options, facts(body.getFacts()));
 
 		resp.setStatus(HttpServletResponse.SC_OK);
 		resp.setContentType(CONTENT_TYPE_JSON);
@@ -388,6 +391,33 @@ public class ChatServlet extends TopLogicServlet {
 			.setTaskId(result.getTaskId())
 			.setStatus("processing");
 		resp.getWriter().write(DtoMapper.toJson(sendResponse));
+	}
+
+	/**
+	 * What the page stated about the situation this message is asked in.
+	 *
+	 * <p>
+	 * The values were computed on the server - {@code ChatConversationControl} evaluates the chat
+	 * element's {@code <context>} expressions in this account's context - and the browser echoes them
+	 * back here, because the run happens on a background thread long after those channels were read.
+	 * A client that sends something else therefore states something about its own page to its own
+	 * agent; it gains no authority by it, because every tool still asks the security context, and it
+	 * cannot reach another account's conversation.
+	 * </p>
+	 */
+	private static List<EnvironmentFact> facts(List<FactDto> dtos) {
+		if (dtos == null || dtos.isEmpty()) {
+			return List.of();
+		}
+		List<EnvironmentFact> facts = new ArrayList<>(dtos.size());
+		for (FactDto dto : dtos) {
+			String name = blankToNull(dto.getName());
+			if (name == null) {
+				continue;
+			}
+			facts.add(new EnvironmentFact(name, dto.getValue(), dto.isStable()));
+		}
+		return List.copyOf(facts);
 	}
 
 	/**
@@ -447,7 +477,8 @@ public class ChatServlet extends TopLogicServlet {
 		tracker.setEffort(blankToNull(body.getEffort()));
 		String userName = resolveUserName(req, tracker);
 		ChatProcessor.SendResult result = ChatProcessor.sendMessage(tracker,
-			TLContextManager.getSubSession(), userName, removed.text(), List.of(), options);
+			TLContextManager.getSubSession(), userName, removed.text(), List.of(), options,
+			facts(body.getFacts()));
 
 		TruncateResponse response = TruncateResponse.create()
 			.setRemovedTurns(removed.turns())

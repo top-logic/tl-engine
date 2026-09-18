@@ -5,6 +5,7 @@ import type {
   Capabilities,
   ChatMessage,
   ContextComposition,
+  ContextFact,
   ImprovePromptResponse,
   InteractionOption,
   SendPayload,
@@ -162,7 +163,15 @@ export async function sendMessage(windowId: string, payload: SendPayload): Promi
  */
 export async function regenerate(
   windowId: string,
-  payload: { sessionId: string; agent?: string; model?: string; mcpOverride: boolean; mcpServers: string[]; effort?: string },
+  payload: {
+    sessionId: string
+    agent?: string
+    model?: string
+    mcpOverride: boolean
+    mcpServers: string[]
+    effort?: string
+    facts?: ContextFact[]
+  },
 ): Promise<TruncateResult> {
   return readJson<TruncateResult>(
     await fetch(withWindow('/chat/regenerate', windowId), {

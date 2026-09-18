@@ -33,6 +33,9 @@ public class RegenerateRequest extends de.haumacher.msgbuf.data.AbstractDataObje
 	/** @see #getEffort() */
 	public static final String EFFORT__PROP = "effort";
 
+	/** @see #getFacts() */
+	public static final String FACTS__PROP = "facts";
+
 	private String _sessionId = "";
 
 	private String _agent = "";
@@ -44,6 +47,8 @@ public class RegenerateRequest extends de.haumacher.msgbuf.data.AbstractDataObje
 	private final java.util.List<String> _mcpServers = new java.util.ArrayList<>();
 
 	private String _effort = "";
+
+	private final java.util.List<com.top_logic.ai.chat.api.messages.FactDto> _facts = new java.util.ArrayList<>();
 
 	/**
 	 * Creates a {@link RegenerateRequest} instance.
@@ -195,6 +200,53 @@ public class RegenerateRequest extends de.haumacher.msgbuf.data.AbstractDataObje
 		_effort = value;
 	}
 
+	/**
+	 * What the page states about the situation, as for POST /chat/send.
+	 *
+	 * <p>
+	 * Carried here too because a regenerated turn is a new run with a new system prompt: without the
+	 * facts it would be answered with less context than the turn it replaces.
+	 * </p>
+	 */
+	public final java.util.List<com.top_logic.ai.chat.api.messages.FactDto> getFacts() {
+		return _facts;
+	}
+
+	/**
+	 * @see #getFacts()
+	 */
+	public com.top_logic.ai.chat.api.messages.RegenerateRequest setFacts(java.util.List<? extends com.top_logic.ai.chat.api.messages.FactDto> value) {
+		internalSetFacts(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getFacts()} without chain call utility. */
+	protected final void internalSetFacts(java.util.List<? extends com.top_logic.ai.chat.api.messages.FactDto> value) {
+		if (value == null) throw new IllegalArgumentException("Property 'facts' cannot be null.");
+		_facts.clear();
+		_facts.addAll(value);
+	}
+
+	/**
+	 * Adds a value to the {@link #getFacts()} list.
+	 */
+	public com.top_logic.ai.chat.api.messages.RegenerateRequest addFact(com.top_logic.ai.chat.api.messages.FactDto value) {
+		internalAddFact(value);
+		return this;
+	}
+
+	/** Implementation of {@link #addFact(com.top_logic.ai.chat.api.messages.FactDto)} without chain call utility. */
+	protected final void internalAddFact(com.top_logic.ai.chat.api.messages.FactDto value) {
+		_facts.add(value);
+	}
+
+	/**
+	 * Removes a value from the {@link #getFacts()} list.
+	 */
+	public final void removeFact(com.top_logic.ai.chat.api.messages.FactDto value) {
+		_facts.remove(value);
+	}
+
 	@Override
 	public String jsonType() {
 		return REGENERATE_REQUEST__TYPE;
@@ -208,7 +260,8 @@ public class RegenerateRequest extends de.haumacher.msgbuf.data.AbstractDataObje
 			MODEL__PROP, 
 			MCP_OVERRIDE__PROP, 
 			MCP_SERVERS__PROP, 
-			EFFORT__PROP);
+			EFFORT__PROP, 
+			FACTS__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -239,6 +292,7 @@ public class RegenerateRequest extends de.haumacher.msgbuf.data.AbstractDataObje
 			case MCP_OVERRIDE__PROP: return isMcpOverride();
 			case MCP_SERVERS__PROP: return getMcpServers();
 			case EFFORT__PROP: return getEffort();
+			case FACTS__PROP: return getFacts();
 			default: return null;
 		}
 	}
@@ -252,6 +306,7 @@ public class RegenerateRequest extends de.haumacher.msgbuf.data.AbstractDataObje
 			case MCP_OVERRIDE__PROP: internalSetMcpOverride((boolean) value); break;
 			case MCP_SERVERS__PROP: internalSetMcpServers(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
 			case EFFORT__PROP: internalSetEffort((String) value); break;
+			case FACTS__PROP: internalSetFacts(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.FactDto.class, value)); break;
 		}
 	}
 
@@ -286,6 +341,12 @@ public class RegenerateRequest extends de.haumacher.msgbuf.data.AbstractDataObje
 		out.endArray();
 		out.name(EFFORT__PROP);
 		out.value(getEffort());
+		out.name(FACTS__PROP);
+		out.beginArray();
+		for (com.top_logic.ai.chat.api.messages.FactDto x : getFacts()) {
+			x.writeTo(out);
+		}
+		out.endArray();
 	}
 
 	@Override
@@ -306,6 +367,16 @@ public class RegenerateRequest extends de.haumacher.msgbuf.data.AbstractDataObje
 			}
 			break;
 			case EFFORT__PROP: setEffort(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case FACTS__PROP: {
+				java.util.List<com.top_logic.ai.chat.api.messages.FactDto> newValue = new java.util.ArrayList<>();
+				in.beginArray();
+				while (in.hasNext()) {
+					newValue.add(com.top_logic.ai.chat.api.messages.FactDto.readFactDto(in));
+				}
+				in.endArray();
+				setFacts(newValue);
+			}
+			break;
 			default: super.readField(in, field);
 		}
 	}

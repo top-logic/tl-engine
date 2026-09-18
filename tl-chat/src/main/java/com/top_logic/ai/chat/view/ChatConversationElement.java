@@ -13,9 +13,11 @@ import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
@@ -248,6 +250,13 @@ public class ChatConversationElement implements UIElement {
 		 * @see #getMention()
 		 */
 		String MENTION = "mention";
+
+		/**
+		 * Configuration property name for {@link #getContext()}.
+		 *
+		 * @see #getContext()
+		 */
+		String CONTEXT = "context";
 
 		/**
 		 * Configuration property name for {@link #getMenuItems()}.
@@ -531,6 +540,21 @@ public class ChatConversationElement implements UIElement {
 		Mention getMention();
 
 		/**
+		 * What this page tells the agent about the situation the user is asking in.
+		 *
+		 * <p>
+		 * The facts are computed from this page's channels and travel with every message the user
+		 * sends, where the harness renders the stable ones into the environment block of the system
+		 * prompt. The user's own message text is never touched - what the transcript shows is what the
+		 * user wrote.
+		 * </p>
+		 */
+		@Name(CONTEXT)
+		@Label("Context")
+		@Nullable
+		Context getContext();
+
+		/**
 		 * Registered composer-menu-item names.
 		 *
 		 * Hidden in the layout editor: the values must match registrations in {@code TypeScript}.
@@ -765,6 +789,121 @@ public class ChatConversationElement implements UIElement {
 		@Label("Trace picker")
 		@BooleanDefault(true)
 		boolean getTracePicker();
+	}
+
+	/**
+	 * What a page tells the agent about the situation the user is asking in.
+	 *
+	 * <p>
+	 * Bound with TL-Script the way {@code <data-list>} binds its rows: the {@link #getInputs() inputs}
+	 * are channels of this page whose current values become the leading arguments of every fact's
+	 * {@link Fact#getValue() value} expression. The expressions are evaluated on the server, in the
+	 * acting user's context, and re-evaluated whenever an input changes - so what travels with a
+	 * message is what the page was showing when it was sent.
+	 * </p>
+	 *
+	 * <p>
+	 * Facts that the application states once and that hold for the whole conversation are
+	 * {@link Fact#getStable() stable} and are rendered into the system prompt. A fact that changes
+	 * while the conversation runs must not be: the environment block sits in front of every request
+	 * of that conversation and has to stay byte-identical, or the provider's prompt cache misses on
+	 * every turn. Such facts travel with the message and are dropped for now; rendering them per turn
+	 * is Gitea #438.
+	 * </p>
+	 */
+	@TagName("context")
+	public interface Context extends ConfigurationItem {
+
+		/**
+		 * Configuration property name for {@link #getInputs()}.
+		 *
+		 * @see #getInputs()
+		 */
+		String INPUTS = "inputs";
+
+		/**
+		 * Configuration property name for {@link #getFacts()}.
+		 *
+		 * @see #getFacts()
+		 */
+		String FACTS = "facts";
+
+		/**
+		 * References to channels whose values become the leading positional arguments of every fact
+		 * expression, in the order they are listed.
+		 */
+		@Name(INPUTS)
+		@ListBinding(format = ChannelRefFormat.class, tag = "input", attribute = "channel")
+		List<ChannelRef> getInputs();
+
+		/**
+		 * The facts themselves, in the order they reach the model.
+		 */
+		@Name(FACTS)
+		@EntryTag("fact")
+		List<Fact> getFacts();
+	}
+
+	/**
+	 * One fact a page states about the situation.
+	 *
+	 * @see Context
+	 */
+	@TagName("fact")
+	public interface Fact extends ConfigurationItem {
+
+		/**
+		 * Configuration property name for {@link #getName()}.
+		 *
+		 * @see #getName()
+		 */
+		String NAME = "name";
+
+		/**
+		 * Configuration property name for {@link #getValue()}.
+		 *
+		 * @see #getValue()
+		 */
+		String VALUE = "value";
+
+		/**
+		 * Configuration property name for {@link #getStable()}.
+		 *
+		 * @see #getStable()
+		 */
+		String STABLE = "stable";
+
+		/**
+		 * What the fact is called in front of the model, e.g. {@code Project}.
+		 */
+		@Name(NAME)
+		@Label("Name")
+		@Mandatory
+		String getName();
+
+		/**
+		 * TL-Script computing the value, taking the enclosing {@link Context#getInputs() inputs} as its
+		 * leading arguments.
+		 */
+		@Name(VALUE)
+		@Label("Value")
+		@Mandatory
+		@NonNullable
+		Expr getValue();
+
+		/**
+		 * Whether the value holds for the whole conversation.
+		 *
+		 * <p>
+		 * Only a stable fact reaches the system prompt. Leave it on for something the page decides
+		 * once - the project a chat belongs to - and switch it off for something that follows the
+		 * user's clicks.
+		 * </p>
+		 */
+		@Name(STABLE)
+		@Label("Stable")
+		@BooleanDefault(true)
+		boolean getStable();
 	}
 
 	/**

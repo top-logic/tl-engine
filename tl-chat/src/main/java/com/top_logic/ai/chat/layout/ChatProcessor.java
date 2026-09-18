@@ -44,6 +44,8 @@ import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
 import com.top_logic.util.TLContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
+import com.top_logic.tl.ai.core.agent.environment.EnvironmentFact;
+import com.top_logic.tl.ai.core.agent.environment.RunFactsBinding;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalResult;
@@ -191,7 +193,8 @@ public class ChatProcessor {
 		CancellationToken cancellationToken = new CancellationToken();
 
 		try (AgentEnvironment env = AgentEnvironment.open(logListener, taskStore, interactionStore,
-				loadedSkills, cancellationToken)) {
+				loadedSkills, cancellationToken);
+				RunFactsBinding.Binding factsBinding = RunFactsBinding.bind(state.getFacts())) {
 
 			Logger.info("ChatProcessor: Starting agent in thread: " + Thread.currentThread().getName(),
 				ChatProcessor.class);
@@ -414,6 +417,25 @@ public class ChatProcessor {
 	 */
 	public static SendResult sendMessage(TaskProgressTracker tracker, TLSubSessionContext userSession,
 			String userName, String userMessage, List<AttachmentDto> attachments, ChatRunOptions options) {
+		return sendMessage(tracker, userSession, userName, userMessage, attachments, options, List.of());
+	}
+
+	/**
+	 * Sends a user message, together with what the page states about the situation it is asked in.
+	 *
+	 * <p>
+	 * The facts were computed on the server, from the chat element's {@code <context>} configuration
+	 * and this page's channels. They are the seam between the application and the model: the harness
+	 * renders the stable ones into the system prompt, and the message text stays exactly what the
+	 * user wrote - in the bubble, in the log and in the request.
+	 * </p>
+	 *
+	 * @param facts
+	 *        What the page states; never {@code null}, may be empty.
+	 */
+	public static SendResult sendMessage(TaskProgressTracker tracker, TLSubSessionContext userSession,
+			String userName, String userMessage, List<AttachmentDto> attachments, ChatRunOptions options,
+			List<EnvironmentFact> facts) {
 		// Busy is per chat session: a run in another session must not block this one.
 		if (tracker.hasActiveProcessingStateFor(tracker.getActiveSessionId())) {
 			tracker.getChat().addMessage(new ChatMessage("System", "Please wait for the current response to complete."));
@@ -454,6 +476,7 @@ public class ChatProcessor {
 		state.setChat(capturedChat);
 		state.setSessionId(capturedSessionId);
 		state.setRunOptions(options != null ? options : ChatRunOptions.DEFAULT);
+		state.setFacts(facts);
 
 		// Create ConversationLog Turn before submitting background task
 		String messageText = userMessage != null ? userMessage.trim() : "";
@@ -859,6 +882,8 @@ public class ChatProcessor {
 
 		private volatile ChatRunOptions _runOptions = ChatRunOptions.DEFAULT;
 
+		private volatile List<EnvironmentFact> _facts = List.of();
+
 		// Lifecycle management
 		volatile Future<?> _backgroundTask = null;
 
@@ -1034,6 +1059,16 @@ public class ChatProcessor {
 		/** Captures UI run options before the background task starts. */
 		public void setRunOptions(ChatRunOptions options) {
 			_runOptions = options != null ? options : ChatRunOptions.DEFAULT;
+		}
+
+		/** What the page stated about the situation, captured at send time; never {@code null}. */
+		public List<EnvironmentFact> getFacts() {
+			return _facts;
+		}
+
+		/** Captures the page's facts before the background task starts. */
+		public void setFacts(List<EnvironmentFact> facts) {
+			_facts = facts == null ? List.of() : List.copyOf(facts);
 		}
 
 		/** The thread running the agent; may be null when not executing. */

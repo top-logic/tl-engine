@@ -278,6 +278,25 @@ export interface Attachment {
   size: number
 }
 
+/**
+ * One fact the page states about the situation a message is sent in.
+ *
+ * Computed on the server from the chat element's `<context>` configuration and pushed into the
+ * control state; the browser only carries it back, because the run happens on a background thread
+ * long after those channels were read. The message text is never touched by it.
+ */
+export interface ContextFact {
+  name: string
+  value: string
+  /**
+   * Whether the value holds for the whole conversation.
+   *
+   * Only a stable fact reaches the system prompt, which has to stay byte-identical across the turns
+   * of one conversation or the provider's prompt cache misses on every one of them.
+   */
+  stable: boolean
+}
+
 export interface SendPayload {
   text: string
   sessionId: string
@@ -288,6 +307,8 @@ export interface SendPayload {
   attachments?: Attachment[]
   /** How hard the model may think for this turn; omitted keeps the agent's assignment. */
   effort?: string
+  /** What the page states about the situation this message is asked in. */
+  facts?: ContextFact[]
 }
 
 export interface TokenUsage {

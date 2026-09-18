@@ -56,6 +56,7 @@ import {
   type AgentOption,
   type ApprovalOutcome,
   type Attachment,
+  type ContextFact,
   type Capabilities,
   type ChatMessage,
   type Citation,
@@ -342,6 +343,15 @@ export interface ChatState {
   conversationsOutsideDock: number
 
   /**
+   * What the page states about the situation, as the `<chat-conversation>` control computed it.
+   *
+   * The store only carries it: it is evaluated on the server, in the acting user's context, and
+   * travels with every message so that the run - which happens on a background thread minutes
+   * later - is told the same thing the page was showing. It never changes the message text.
+   */
+  contextFacts: ContextFact[]
+
+  /**
    * The sum of the mounted rail's section badges.
    *
    * Published by the rail because the sections are its children and nothing else can see them. The
@@ -396,6 +406,8 @@ export interface ChatActions {
   regenerate(messageId: string, turnIndex: number): Promise<void>
   rate(turnIndex: number, rating: Rating, note?: string): Promise<void>
   stop(): void
+  /** Takes over what the `<chat-conversation>` control computed from its `<context>` facts. */
+  setContextFacts(facts: ContextFact[]): void
   selectAgent(name: string): void
   selectModel(id: string): void
   toggleMcp(name: string): void
@@ -489,6 +501,25 @@ function sameDeps(a: unknown[] | undefined, b: unknown[]): boolean {
 
 function sameList<T>(a: readonly T[], b: readonly T[]): boolean {
   return a.length === b.length && a.every((value, index) => Object.is(value, b[index]))
+}
+
+/**
+ * Whether two fact lists say the same thing.
+ *
+ * Compared by value rather than by identity: the control state hands out a fresh array on every
+ * render, and patching the store with an equal one would re-render every subscriber of the chat on
+ * each of them.
+ */
+function sameFacts(a: readonly ContextFact[], b: readonly ContextFact[]): boolean {
+  return (
+    a.length === b.length &&
+    a.every(
+      (fact, index) =>
+        fact.name === b[index].name &&
+        fact.value === b[index].value &&
+        fact.stable === b[index].stable,
+    )
+  )
 }
 
 /** Keeps the previous result while the inputs are unchanged, as `useMemo` does. */
@@ -689,6 +720,7 @@ export class ChatStore {
       sectionChoices: boot.sectionChoices,
       railMounted: false,
       conversationsOutsideDock: 0,
+      contextFacts: [],
       badgeTotal: 0,
     })
     this.effects = this.declareEffects()
@@ -1618,6 +1650,7 @@ export class ChatStore {
             mcpServers: this.state.mcp,
             attachments,
             effort: this.state.effort || undefined,
+            facts: this.state.contextFacts.length ? this.state.contextFacts : undefined,
           })
         } catch (err) {
           this.dispatch({ type: 'REMOVE_MESSAGE', id: messageId })
@@ -1701,6 +1734,7 @@ export class ChatStore {
             mcpOverride: this.state.mcpDirty,
             mcpServers: this.state.mcp,
             effort: this.state.effort || undefined,
+            facts: this.state.contextFacts.length ? this.state.contextFacts : undefined,
           })
           if (result.status === 'busy') {
             this.showNotice(labels.busyHint, '', { tone: 'info' })
@@ -1766,6 +1800,11 @@ export class ChatStore {
       selectEffort: (level: string) => {
         this.patch({ effort: level })
         writeEffort(level || null)
+      },
+
+      setContextFacts: (facts: ContextFact[]) => {
+        if (sameFacts(this.state.contextFacts, facts)) return
+        this.patch({ contextFacts: facts })
       },
 
       selectTraceMode: (mode: TraceMode) => {

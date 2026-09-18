@@ -1,6 +1,6 @@
 import { React, useTLCommand, useTLState } from 'tl-react-bridge'
 import type { TLCellProps } from 'tl-react-bridge'
-import type { ApprovalRequest, Attachment, InteractionRequest } from './types'
+import type { ApprovalRequest, Attachment, ContextFact, InteractionRequest } from './types'
 import { chatIdOf, readBootstrap, useChat } from './chat-store'
 import { Composer, plusMenuVisible } from './composer'
 import { createDraftReporter } from './draft'
@@ -104,6 +104,29 @@ export function modelBoundSource(raw: unknown): ((query: string) => ReferenceCan
 }
 
 /**
+ * The facts a `<chat-conversation/>` control computed from its `<context>` configuration.
+ *
+ * They are already evaluated - on the server, in the acting user's context - so the browser only
+ * reads them out of the control state and carries them back with the next message.
+ */
+export function readContextFacts(raw: unknown): ContextFact[] {
+  if (!Array.isArray(raw)) return []
+  const facts: ContextFact[] = []
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue
+    const row = item as Record<string, unknown>
+    const name = typeof row.name === 'string' ? row.name : ''
+    if (!name) continue
+    facts.push({
+      name,
+      value: typeof row.value === 'string' ? row.value : '',
+      stable: row.stable !== false,
+    })
+  }
+  return facts
+}
+
+/**
  * What a turn-setting channel said, out of the control state a `<chat-conversation/>` pushed.
  *
  * `undefined` is "the channel says nothing" - it is unwired, empty, or the write was refused - and
@@ -195,6 +218,13 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   // and comes from the view context rather than from the React tree.
   const insideDock = state.insideDock === true
   useEffect(() => actions.registerConversation(insideDock), [actions, insideDock])
+
+  // What this page states about the situation, handed to the store so that it travels with every
+  // message. The store compares by value, so re-pushing an unchanged set costs nothing.
+  const contextFacts = useMemo(() => readContextFacts(state.contextFacts), [state.contextFacts])
+  useEffect(() => {
+    actions.setContextFacts(contextFacts)
+  }, [contextFacts, actions])
 
   // Follow the selection channel. A non-empty value selects that session; clearing it (a transition
   // to empty) means "new chat" - a deselect shows a fresh, empty conversation. The transition guard

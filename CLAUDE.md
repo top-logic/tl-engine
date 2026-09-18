@@ -89,6 +89,23 @@ Key flow: `AgentFactory.runAgent()` → `AgentLoop` → `LLMProvider.stream()` �
 
 Stop conditions: `StopReason` — COMPLETE, MAX_TURNS, ERROR, CONTEXT_OVERFLOW, REJECTED, ABORTED.
 
+### Environment block (tl-ai-core `agent/environment/`)
+
+Every run is told, in its system prompt, who it is working for: user, UI language, date in the
+user's time zone, agent, model, application, the host's stable facts and the account's own
+preference text. `AgentFactory.buildConfig` composes one `<environment>` block and fills the
+`{{...}}` placeholders; a prompt that names none gets the block appended, so every shipped agent has
+it without an edit. An unknown placeholder is refused where it is written, not at run time.
+
+Nothing in the block may change within a conversation - it sits in front of every request and the
+providers' prompt caches key on it: day granularity, and only facts marked `stable`. Per-turn facts
+are #438.
+
+The wording is configuration (`LLMService`'s `<environment>`), the facts come from the agent
+definition and from `<chat-conversation><context>`, the preference text is
+`tl.accounts:Person#aiPreferences`, and the filled block is recorded on
+`tl.ai.execution:AgentExecution#environment`. See `tl-ai-core/doc/environment-block.md`.
+
 ### Provider System (tl-ai-core `provider/`)
 
 `LLMProvider` interface with streaming-first design. Four implementations: `AnthropicProvider`, `OpenAIProvider`, `MistralProvider`, `XAIProvider`. All use Java `HttpClient` + msgbuf JSON.

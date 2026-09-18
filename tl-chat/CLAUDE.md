@@ -11,7 +11,7 @@ Real-time agentic chat interface for TopLogic applications. Connects users to th
 Both served by `ChatServlet` at `/chat/*`:
 
 1. **REST API** (JSON):
-   - `POST /chat/send` – Send user message, starts background AI processing. Returns `{ taskId, status }`.
+   - `POST /chat/send` – Send user message, starts background AI processing. Returns `{ taskId, status }`. Its `facts` are what the page states about the situation (`<chat-conversation><context>`), computed on the server and echoed back by the browser; the harness renders the stable ones into the run's system prompt and the message text stays untouched. `POST /chat/regenerate` carries them too.
    - `GET /chat/updates` – Poll for full chat state (messages).
    - `POST /chat/sessions` – Create new chat session.
    - `GET /chat/sessions` – List all sessions for current user.
@@ -697,7 +697,39 @@ An application configures this element in the design view. Its options fall into
   set shaped as the browser's `ReferenceCandidate`, and the existing `@` picker filters it client-side.
   A `<mention>` wins over `reference-source`. Each mention carries the object's stable id; the framework
   ships no tool that resolves it, so a host that wants the id to mean more gives its agent such a tool
-  (see the `<reference>` prompt fragment).
+  (see the `<reference>` prompt fragment). The nested `<context>` binding is the same skill again -
+  see below.
+
+#### What a page states about the situation: `<context>`
+
+```xml
+<chat-conversation input="chatSession">
+    <context>
+        <inputs><input channel="project"/></inputs>
+        <fact name="Project" stable="true"><value>p -> $p.label()</value></fact>
+        <fact name="Selection" stable="false"><value>p -> ifElse(isEmpty($p), "nothing", $p.label())</value></fact>
+    </context>
+</chat-conversation>
+```
+
+Bound the way `<data-list>` binds its rows: the `<inputs>` are channels of this page and their
+current values are the **leading arguments** of every fact expression. `ChatConversationControl`
+evaluates them on the server, in the acting user's context, and re-evaluates them whenever an input
+changes; the browser carries them back with `POST /chat/send` and `POST /chat/regenerate`, and
+`ChatProcessor.sendMessage` binds them for the run (`RunFactsBinding`), which is what also reaches a
+delegate and a subagent.
+
+**This is the seam that replaces a context header on the message text** (#406, #428): the user's
+text stays exactly what the user wrote, in the bubble, in the log and in the request.
+
+`stable="true"` (the default) means the value holds for the whole conversation, and only such a fact
+is rendered - into the `{{context}}` section of the run's environment block. The block sits in front
+of every request of the conversation and has to stay byte-identical, or the provider's prompt cache
+misses on every turn. A fact that is not stable travels and is dropped for now; rendering it per turn
+is #438. See `tl-ai-core/doc/environment-block.md`.
+
+A fact that throws is sent empty with a WARN rather than taking the page down - the user is in the
+middle of a sentence.
 
 Coupling to know: elements share one conversation only when they agree on a chat id - which is what
 the enclosing `<chat>` is for - and a session list feeds the conversation over a **two-way** channel — `<data-list selection>` ↔

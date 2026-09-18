@@ -11,24 +11,17 @@ import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.ModuleTestSetup;
 
-import com.top_logic.ai.chat.view.ChatProgressElement;
 import com.top_logic.ai.chat.view.ChatSourcesElement;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 
 /**
- * Defaults and channel binding of the chat's own rail-section elements.
+ * Defaults and channel binding of the chat's own rail-section element.
  */
 public class TestChatSectionConfig extends TestCase {
 
-	/** Both join the default chat and count nothing until a badge channel is named. */
+	/** It joins the default chat and counts nothing until a badge channel is named. */
 	public void testDefaults() {
-		ChatProgressElement.Config progress =
-			TypedConfiguration.newConfigItem(ChatProgressElement.Config.class);
-		assertEquals("default", progress.getChatId());
-		assertNull(progress.getBadge());
-		assertEquals("TLChatProgress", progress.getReactElement());
-
 		ChatSourcesElement.Config sources =
 			TypedConfiguration.newConfigItem(ChatSourcesElement.Config.class);
 		assertEquals("default", sources.getChatId());
@@ -38,11 +31,11 @@ public class TestChatSectionConfig extends TestCase {
 
 	/** The badge channel is what a section reports its count on; the rail reads the same one. */
 	public void testBadgeChannelParses() throws Exception {
-		ChatProgressElement.Config config = (ChatProgressElement.Config) TypedConfiguration.parse(
-			CharacterContents.newContent("<chat-progress"
+		ChatSourcesElement.Config config = (ChatSourcesElement.Config) TypedConfiguration.parse(
+			CharacterContents.newContent("<chat-sources"
 				+ " xmlns:config='http://www.top-logic.com/ns/config/6.0'"
-				+ " config:interface='" + ChatProgressElement.Config.class.getName() + "'"
-				+ " chat-id='grouped' badge='progressBadge'/>"));
+				+ " config:interface='" + ChatSourcesElement.Config.class.getName() + "'"
+				+ " chat-id='grouped' badge='sourcesBadge'/>"));
 		assertEquals("grouped", config.getChatId());
 		assertNotNull(config.getBadge());
 	}

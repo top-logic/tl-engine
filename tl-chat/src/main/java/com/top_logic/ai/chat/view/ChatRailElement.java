@@ -45,7 +45,7 @@ import com.top_logic.layout.view.channel.ChannelRefFormat;
  * The rail extends the chat so it can show more beside the transcript - what the agent is doing, a
  * proposed plan, the sources, a document it wrote. <b>Which</b> of those is the application's
  * decision, so this element brings no content of its own: each {@code <section>} holds one view
- * element, and any element will do - {@code <chat-progress/>}, a {@code <data-list>} of the
+ * element, and any element will do - a {@code <data-list>} of the agent's tasks or of the
  * application's own objects, or an element a host wrote. An empty {@code <chat-rail/>} renders an
  * empty rail.
  * </p>
@@ -386,7 +386,7 @@ public class ChatRailElement implements UIElement {
 		 *
 		 * The number appears beside the section's title and on its strip icon, and the rail sums the
 		 * sections into the total the transcript's rail button shows. The content element writes it
-		 * - {@code <chat-progress badge="…"/>} does - or a derived channel computes it.
+		 * - a {@code <data-list count="…"/>} does - or a derived channel computes it.
 		 */
 		@Name(BADGE)
 		@Label("Badge")

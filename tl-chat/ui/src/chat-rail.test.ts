@@ -13,7 +13,7 @@ import {
 
 afterEach(() => resetTLBridge())
 
-const PROGRESS = { controlId: 'c2', module: 'TLChatProgress', state: {} }
+const PROGRESS = { controlId: 'c2', module: 'TLDataList', state: {} }
 const INVOICES = { controlId: 'c3', module: 'TLDataList', state: {} }
 
 /** The state a `<chat-rail/>` control writes, as the browser reads it. */
@@ -101,7 +101,6 @@ describe('the rendered rail', () => {
   it('renders one header and one child control per configured section, in order', () => {
     const html = render(railState())
     expect(html.indexOf('Progress')).toBeLessThan(html.indexOf('Invoices'))
-    expect(html).toContain('data-module="TLChatProgress"')
     expect(html).toContain('data-module="TLDataList"')
     expect(html).toContain('class="tl-chat-rail"')
   })

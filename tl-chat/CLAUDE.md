@@ -52,6 +52,7 @@ browser component, which shows a sign-in note rather than a composer.
 - **`LegacyChatSessionMigration`** – Startup service migrating legacy `tl.ai.chat:ChatSession` blobs to `AgentSession`s eagerly. The legacy model has been removed (tl-ai-core migration `Issue_230_remove_module_tl_ai_chat`), so the service is a no-op now; it is kept until every deployment is known to have run it.
 - **`ChatSessionRegistry`** – Bridges `WindowScope` (a chat control) and `HttpSession` (`ChatServlet`). Published API: the classic control in `tl-chat-classic` and `Consulting`'s own control register here from outside this module.
 - **`ChatViewBinding`** – Once per (sub-session, `chat-id`): tracker and user. `AgentChatControl` and the split elements (`<chat-conversation>`, `<chat-rail>`) delegate to it so several controls do not bind the window several times. The tracker stays one per window. The layout preference is the exception: it is read whenever `writeLayoutState` is asked for it, which every chat control does from `onBeforeWrite` - see "where the chat's state lives".
+- **`AgentViewRefreshService`** – Makes a model-bound element beside the transcript follow a running agent. A run commits from a background thread, and a window only sees model changes when its `GlobalModelEventForwarder` is asked to synthesize them - on a browser command or on the 30 s SSE heartbeat. The service listens on `AgentExecutionStore.ChangeListener`, coalesces a burst of writes (200 ms) and synthesizes per window, in that window's sub-session and **under the window's request lock** (a `ReactControl`'s state map is a plain `HashMap`; the heartbeat path skips the lock, and this deliberately does not copy that). Windows are registered by `ChatViewBinding` while a chat renders, which is a fork: the engine offers no way to enumerate an account's live windows.
 
 ## Thread Safety
 
@@ -66,6 +67,7 @@ browser component, which shows a sign-in note rather than a composer.
 - Execution: `runId`, `agentName`, `model`, `provider`, `status`, `stopReason`, token columns, `transcript` (CLOB)
 - Transcript format: `ConversationLog` turns serialized via `ConversationLogSerializer` (tl-ai-core, `PersistedConversationV2`)
 - Human-in-the-loop requests persist as `InteractionRequest` rows (approval/question/choice with resolution)
+- The agent's task plan persists as `AgentTask` rows of the session. `TaskStore` (tl-ai-core) stays the truth of the running turn - it also carries `activeForm`, `owner` and the blocks/blocked-by sets, which the model does not - and `AgentTaskMirror` writes what it says onto the rows after every mutation, through `AgentExecutionStore.syncTasks` (one transaction, on the writer thread). The store is still serialized into the session metadata as well, because that is what restores it when a session is re-opened and what the SSE `task_update` frame and the App's own Fortschritt list read. So: the blob is the store's own persistence, the rows are the model a view binds to.
 - Legacy `tl.ai.chat:ChatSession` single-blob sessions were migrated to this model eagerly at startup by `LegacyChatSessionMigration`; the legacy model has since been removed
 
 ## Front end
@@ -133,7 +135,9 @@ The component itself is registered as `TLAgentChat` in `ui/src/main.tsx`.
 The session list is no element of this module's own: it is a `<data-list>` of
 `tl.ai.execution:AgentSession` whose `selection` channel feeds `<chat-conversation input>`, which
 is what `tl-ai-demo/chat-grouped.view.xml` configures. (The former `<chat-sessions/>` element was
-deleted with #415 - `<data-list>` does the same job with no chat-specific code.) `useChat` is
+deleted with #415 - `<data-list>` does the same job with no chat-specific code.) The agent's task
+plan went the same way: the run mirrors it onto `tl.ai.execution:AgentTask` objects, so the
+Fortschritt section is a `<data-list>` over those, and `<chat-progress/>` is gone. `useChat` is
 **not** exported from `index.ts`: the store is internal to the bundle, so a host cannot write its
 own element against it. New chat pieces live in `ui/src` and are registered next to `TLAgentChat`.
 
@@ -187,7 +191,8 @@ it rewrites a draft and never answers as a persona.
 | `App.tsx` | The shipped chat as a composition over one `useChat` store, plus this element's own geometry |
 | `chat-conversation.tsx` | `<chat-conversation/>` as `TLChatConversation`: transcript plus prompt field over the same store |
 | `chat-rail.tsx` / `rail-model.ts` | `<chat-rail/>` as `TLChatRail`: the side-rail shell - strip, section headers, pane chrome - and how it reads its state |
-| `chat-progress.tsx` / `chat-sources.tsx` | `<chat-progress/>` and `<chat-sources/>`: the two sections the chat contributes |
+| `chat-sources.tsx` | `<chat-sources/>`: the one rail section the chat still contributes as an element of its own |
+| `data-list.tsx` | `<data-list>` as `TLDataList`: the generic list - rows, lines, groups, search, selection, per-row state class |
 | `chat-store.ts` | The chat's state, one store per `chat-id`: bootstrap, capabilities, sessions, turn settings, transcript, run, layout preferences and the one `EventSource` |
 | `composer.tsx` | Input, plus menu, model picker, attachments, drag and drop, improve-prompt |
 | `thread.tsx` | Transcript: user bubbles, answers, run meta line, trace panels |
@@ -410,7 +415,7 @@ the pane's chrome, and every section's body is a view element the application co
 <chat-rail chat-id="grouped" input="paneObject">
     <section name="progress" icon="css:bi bi-list-check" open="true" badge="progressBadge">
         <label><en>Progress</en><de>Fortschritt</de></label>
-        <chat-progress chat-id="grouped" badge="progressBadge"/>
+        <data-list count="progressBadge" observed-types="tl.ai.execution:AgentTask" …/>
     </section>
     <section name="invoices" icon="css:bi bi-receipt">
         <label><en>Invoices</en><de>Rechnungen</de></label>
@@ -420,8 +425,8 @@ the pane's chrome, and every section's body is a view element the application co
 </chat-rail>
 ```
 
-Any element is a section - `<chat-progress>`, `<chat-sources>`, a `<data-list>` of the application's
-own objects, an element a host wrote - so the rail can show a proposed plan, a document the agent
+Any element is a section - `<chat-sources>`, a `<data-list>` of the agent's tasks or of the
+application's own objects, an element a host wrote - so the rail can show a proposed plan, a document the agent
 produced or a live view of its browser without this element learning about any of them. An empty
 `<chat-rail>` renders an empty rail; there is no framework order and no name registry (the former
 `registerRailSection` is gone, replaced by nesting). `@` sources, `+` menu items, citation renderers

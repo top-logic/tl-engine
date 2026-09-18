@@ -13,7 +13,6 @@ import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.ModuleTestSetup;
 
-import com.top_logic.ai.chat.view.ChatProgressElement;
 import com.top_logic.ai.chat.view.ChatRailElement.Config;
 import com.top_logic.ai.chat.view.ChatRailElement.PaneMode;
 import com.top_logic.ai.chat.view.ChatRailElement.SectionConfig;
@@ -59,7 +58,7 @@ public class TestChatRailConfig extends TestCase {
 		Config config = parse("<chat-rail %s chat-id='main' strip='false' open='false'>"
 			+ "<section name='progress' icon='css:bi bi-list-check' open='true' badge='progressBadge'>"
 			+ "<label>Progress</label>"
-			+ "<chat-progress chat-id='main' badge='progressBadge'/>"
+			+ "<data-list count='progressBadge'><rows>all(`tl.ai.execution:AgentTask`)</rows></data-list>"
 			+ "</section>"
 			+ "<section name='invoices'>"
 			+ "<label>Invoices</label>"
@@ -81,7 +80,8 @@ public class TestChatRailConfig extends TestCase {
 		assertEquals("css:bi bi-list-check", progress.getIcon().toEncodedForm());
 		assertNotNull("The badge is a channel the content element writes.", progress.getBadge());
 		assertEquals(1, progress.getContent().size());
-		assertEquals(ChatProgressElement.class, progress.getContent().get(0).getImplementationClass());
+		assertEquals("The progress section is an ordinary list of the agent's tasks.",
+			DataListElement.class, progress.getContent().get(0).getImplementationClass());
 
 		SectionConfig invoices = sections.get(1);
 		assertEquals("invoices", invoices.getName());

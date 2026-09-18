@@ -21,10 +21,11 @@ import com.top_logic.layout.view.channel.ChannelRefFormat;
  * <p>
  * A {@code <chat-rail/>} section holds one view element, and which one is the application's
  * decision - a list of its own objects, a document view, a live view of what the agent is doing.
- * The chat contributes the pieces only it can know: what the agent is working on
- * ({@link ChatProgressElement}) and what it has cited ({@link ChatSourcesElement}). Each joins the
- * conversation through {@code chat-id} and may report a number on an optional {@code badge}
- * channel, which is what the rail sums and shows.
+ * The chat contributes the pieces only it can know: what the run has cited
+ * ({@link ChatSourcesElement}). Anything the agent writes to the model - its task plan, say - is a
+ * plain {@code <data-list>} instead. Each of these joins the conversation through {@code chat-id}
+ * and may report a number on an optional {@code badge} channel, which is what the rail sums and
+ * shows.
  * </p>
  *
  * <p>

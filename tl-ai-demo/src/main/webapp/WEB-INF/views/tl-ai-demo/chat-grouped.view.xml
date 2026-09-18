@@ -131,9 +131,48 @@
 					<en>Progress</en>
 					<de>Fortschritt</de>
 				</label>
-				<chat-progress badge="progressBadge"
-					chat-id="grouped"
-				/>
+				<!--
+					The agent's plan, as an ordinary <data-list> over the AgentTask objects the run
+					writes - no chat-specific element, no badge round trip through the browser, and
+					the same rows after a reload. The rows are reached from the session the
+					conversation is showing, so this list can only ever show what that session owns.
+				-->
+				<data-list
+					collapsible="false"
+					count="progressBadge"
+					observed-types="tl.ai.execution:AgentTask"
+					search="false"
+				>
+					<!--
+						The row's state as a CSS class. <data-list> knows nothing about tasks; the
+						three class names are the generic row states its stylesheet defines.
+					-->
+					<css-class><![CDATA[t -> switch {
+						$t.get(`tl.ai.execution:AgentTask#status`) == "completed": "is-done";
+						$t.get(`tl.ai.execution:AgentTask#status`) == "in_progress": "is-running";
+						default: "is-pending";
+					}]]></css-class>
+					<empty-text>
+						<en>Nothing planned yet</en>
+						<de>Noch nichts geplant</de>
+					</empty-text>
+					<inputs>
+						<input channel="chatSession"/>
+					</inputs>
+					<lines>
+						<line attribute="subject"/>
+						<line emphasis="secondary">
+							<value><![CDATA[t -> switch {
+								$t.get(`tl.ai.execution:AgentTask#status`) == "completed": #("Done"@en, "Erledigt"@de);
+								$t.get(`tl.ai.execution:AgentTask#status`) == "in_progress": #("In progress"@en, "Läuft"@de);
+								default: #("Pending"@en, "Offen"@de);
+							}]]></value>
+						</line>
+					</lines>
+					<rows><![CDATA[session -> ifElse(isEmpty($session), list(),
+						$session.referers(`tl.ai.execution:AgentTask#session`)
+							.sort((t -> $t.get(`tl.ai.execution:AgentTask#ordinal`)).comparator()))]]></rows>
+				</data-list>
 			</section>
 			<section name="sources"
 				badge="sourcesBadge"

@@ -12,7 +12,6 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 
 import com.top_logic.ai.chat.view.ChatConversationElement;
-import com.top_logic.ai.chat.view.ChatProgressElement;
 import com.top_logic.ai.chat.view.ChatRailElement;
 import com.top_logic.ai.chat.view.ChatSectionElement;
 import com.top_logic.ai.chat.view.ChatSourcesElement;
@@ -74,15 +73,12 @@ public class TestHiddenElementOptions extends TestCase {
 		assertVisible(ChatRailElement.Config.class, ChatRailElement.Config.SECTIONS);
 	}
 
-	/** The rail-section elements hide their React binding, like every other element. */
+	/** The rail-section element hides its React binding, like every other element. */
 	public void testChatSectionHiddenOptions() {
-		assertHidden(ChatProgressElement.Config.class, ChatSectionElement.Config.REACT_ELEMENT);
-		assertEngineOptionsHidden(ChatProgressElement.Config.class);
 		assertHidden(ChatSourcesElement.Config.class, ChatSectionElement.Config.REACT_ELEMENT);
 		assertEngineOptionsHidden(ChatSourcesElement.Config.class);
 
-		assertVisible(ChatProgressElement.Config.class, ChatSectionElement.Config.CHAT_ID);
-		assertVisible(ChatProgressElement.Config.class, ChatSectionElement.Config.BADGE);
+		assertVisible(ChatSourcesElement.Config.class, ChatSectionElement.Config.CHAT_ID);
 		assertVisible(ChatSourcesElement.Config.class, ChatSectionElement.Config.BADGE);
 	}
 

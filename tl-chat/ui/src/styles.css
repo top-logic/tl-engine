@@ -14,19 +14,22 @@
 /*
  * Every chat element is a root of its own.
  *
- * `<agent-chat>` renders inside `.tl-cockpit`, but `<chat-conversation/>`, `<chat-rail/>` and the
- * rail-section elements are placed by a view wherever it likes - outside that root, where neither
- * the component tokens below nor the base CSS after them would be in scope. Their buttons would
+ * `<agent-chat>` renders inside `.tl-cockpit`, but `<chat-conversation/>`, `<chat-dock/>`,
+ * `<chat-rail/>` and the rail-section elements are placed by a view wherever it likes - outside
+ * that root, where neither the component tokens below nor the base CSS after them would be in
+ * scope. Their buttons would
  * fall back to browser chrome (grey, square, bordered) and every `var(--r-1)` to nothing. One rule
  * for all of them rather than a copy per root, so a token added here reaches every element.
  */
 .tl-cockpit,
 .tl-chat-conversation,
+.tl-chat-dock,
 .tl-chat-rail,
 .tl-chat-section,
 .tl-data-list,
 .tl-cockpit *,
 .tl-chat-conversation *,
+.tl-chat-dock *,
 .tl-chat-rail *,
 .tl-chat-section *,
 .tl-data-list * {
@@ -35,6 +38,7 @@
 
 .tl-cockpit,
 .tl-chat-conversation,
+.tl-chat-dock,
 .tl-chat-rail,
 .tl-chat-section {
   /* Geometry of the chat itself. */
@@ -123,6 +127,7 @@
 :where(
     .tl-cockpit button,
     .tl-chat-conversation button,
+    .tl-chat-dock button,
     .tl-chat-rail button,
     .tl-chat-section button
   ) {
@@ -137,6 +142,7 @@
 :where(
     .tl-cockpit button:disabled,
     .tl-chat-conversation button:disabled,
+    .tl-chat-dock button:disabled,
     .tl-chat-rail button:disabled,
     .tl-chat-section button:disabled
   ) {
@@ -145,6 +151,7 @@
 
 .tl-cockpit :focus-visible,
 .tl-chat-conversation :focus-visible,
+.tl-chat-dock :focus-visible,
 .tl-chat-rail :focus-visible,
 .tl-chat-section :focus-visible {
   outline: 2px solid var(--focus, var(--button-primary));
@@ -419,6 +426,179 @@
 
 .tl-chat-conversation .composer {
   max-width: 100%;
+}
+
+/*
+ * The floating dock: a launcher in the corner of the window, and the panel it opens over the page.
+ *
+ * Fixed rather than in the flow, because the premise is that as much of the page as possible stays
+ * visible and usable. Closed, the dock costs one button. Open, it covers a corner of the work area
+ * and nothing reflows - no column appears, no table gets narrower, and closing it puts the page
+ * back untouched.
+ *
+ * Every measure is a token on this root, so a theme restyles the dock - its corner, its size, its
+ * shadow, how far it stands off the window frame - without touching a rule.
+ */
+.tl-chat-dock {
+  /*
+   * 1100 px is the width the composed chat wants: the session list (16.5rem), the rail strip
+   * (3.25rem) and the rail column (18.75rem) are fixed, so the conversation gets what is left -
+   * about 27rem, which is where its composer still holds the model picker, the send button and the
+   * long Enter hint on one line. Wider buys the transcript nothing: it is centred at 49rem anyway.
+   */
+  --chat-dock-width: min(68.75rem, calc(100vw - 2 * var(--chat-dock-offset)));
+  /*
+   * Capped rather than proportional: on a tall screen a full-height card stops reading as something
+   * *over* the page and becomes a second page. The other term keeps the card clear of the window
+   * frame and of the launcher below it at every viewport, so its composer is always reachable
+   * without scrolling the card.
+   */
+  --chat-dock-height: min(
+    50rem,
+    calc(100vh - var(--chat-dock-launcher) - var(--chat-dock-gap) - 2 * var(--chat-dock-offset))
+  );
+  --chat-dock-offset: 1.5rem;
+  --chat-dock-launcher: 3.5rem;
+  --chat-dock-gap: 0.75rem;
+  --chat-dock-radius: var(--r-2);
+  /*
+   * Black in both themes, not derived from a colour token: a shadow is cast light, and
+   * `--background-inverse` is *light* in the dark theme - which put a white glow around the card
+   * there. The chat's own `--chat-shadow` is the same black, at a menu's geometry rather than a
+   * floating card's.
+   */
+  --chat-dock-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 30%);
+  /* Above the app shell and its panels, below the engine's own dialogs and menus. */
+  --chat-dock-z: 100;
+
+  position: fixed;
+  inset-block-end: var(--chat-dock-offset);
+  inset-inline-end: var(--chat-dock-offset);
+  z-index: var(--chat-dock-z);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--chat-dock-gap);
+  color: var(--text-primary);
+  font-family: var(--font-family, Inter, "Segoe UI", system-ui, sans-serif);
+  font-size: var(--body-02-font-size, 0.875rem);
+  line-height: var(--body-02-line-height, 1.25rem);
+}
+
+/*
+ * A session that is not signed in cannot chat, and the servlet refuses every call it makes, so the
+ * dock offers no way in rather than a launcher onto a dead end.
+ */
+.tl-chat-dock.is-signed-out {
+  display: none;
+}
+
+.tl-chat-dock__panel {
+  display: flex;
+  width: var(--chat-dock-width);
+  height: var(--chat-dock-height);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--chat-dock-radius);
+  background: var(--background);
+  box-shadow: var(--chat-dock-shadow);
+}
+
+/*
+ * Hidden, not unmounted.
+ *
+ * The conversation - its event stream, its transcript, its running turn - lives in the elements
+ * inside this panel, and the store drops a chat when its last element leaves. Dropping them on
+ * close would hand the user a new, empty chat on every open. Stated as a rule of its own because
+ * the `display: flex` above would otherwise beat the `hidden` attribute.
+ */
+.tl-chat-dock__panel[hidden] {
+  display: none;
+}
+
+.tl-chat-dock__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+/*
+ * The configured content is the panel's own flex child, and is given the panel's bounded height.
+ *
+ * This is where a dock would otherwise collapse the conversation: the engine's fill rule
+ * (`.tlStack:has(> .tlPanel--fill)`) looks one level deep, so a `<chat>` that is not the direct
+ * child of a box with a definite height grows with its transcript instead of scrolling inside one.
+ * One level is all this can repair - hence the one-element rule on `<chat-dock>`'s content.
+ */
+.tl-chat-dock__body > .tlStack,
+.tl-chat-dock__body > .tlPanel {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.tl-chat-dock__launcher {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: var(--chat-dock-launcher);
+  height: var(--chat-dock-launcher);
+  border-radius: var(--r-pill);
+  background: var(--button-primary);
+  color: var(--text-on-color, #fff);
+  font-size: 1.25rem;
+  box-shadow: var(--chat-dock-shadow);
+  transition: background-color 120ms ease;
+}
+
+.tl-chat-dock__launcher:hover {
+  background: var(--button-primary-hover, var(--button-primary));
+}
+
+.tl-chat-dock__launcher svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* "N new since you last looked", on the button because the rail's own is behind a closed panel. */
+.tl-chat-dock__badge {
+  position: absolute;
+  top: 0.3rem;
+  inset-inline-end: 0.3rem;
+  display: grid;
+  place-items: center;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 0.25rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-pill);
+  background: var(--background);
+  color: var(--text-primary);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* Something is running behind the closed panel. */
+.tl-chat-dock__busy {
+  position: absolute;
+  top: 0.5rem;
+  inset-inline-end: 0.5rem;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: var(--r-pill);
+  background: currentColor;
+  animation: chat-pulse 1.6s ease-in-out infinite;
 }
 
 /*
@@ -2772,7 +2952,10 @@
 @media (prefers-reduced-motion: reduce) {
   .tl-cockpit *,
   .tl-cockpit *::before,
-  .tl-cockpit *::after {
+  .tl-cockpit *::after,
+  .tl-chat-dock *,
+  .tl-chat-dock *::before,
+  .tl-chat-dock *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

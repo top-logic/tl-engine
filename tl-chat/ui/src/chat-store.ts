@@ -372,6 +372,16 @@ export interface ChatActions {
   /** Publishes the sum of the rail's section badges; see {@link ChatState.badgeTotal}. */
   publishBadgeTotal(total: number): void
   /**
+   * Records that the user has now looked at this conversation.
+   *
+   * The same watermark {@link toggleSide} moves when the rail is opened: what is counted as new is
+   * {@link ChatState.badgeTotal} minus {@link ChatState.badgeSeen}, so "seen" is the total as it
+   * stands, never zero - a section that reports nothing must not turn into news the next time one
+   * does. This is the half of `toggleSide` that a `<chat-dock/>` needs: opening the dock is the
+   * user looking, but it is not the user opening the rail.
+   */
+  markBadgesSeen(badgeTotal: number): void
+  /**
    * Announces a mounted rail; the returned function unregisters it again.
    *
    * Counted rather than flagged, because React remounts an effect on the same component in
@@ -1769,6 +1779,14 @@ export class ChatStore {
         const next = Number.isFinite(total) && total > 0 ? Math.round(total) : 0
         if (next === this.state.badgeTotal) return
         this.patch({ badgeTotal: next })
+      },
+
+      markBadgesSeen: (badgeTotal: number) => {
+        const seen = Number.isFinite(badgeTotal) && badgeTotal > 0 ? Math.round(badgeTotal) : 0
+        // Guarded rather than patched blindly: the layout is persisted from a state change, and an
+        // unchanged watermark would put a PUT /chat/preferences on every open of the dock.
+        if (seen === this.state.badgeSeen) return
+        this.patch({ badgeSeen: seen })
       },
 
       registerRail: () => {

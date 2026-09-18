@@ -200,6 +200,12 @@ const EN = {
 
   sideRail: 'Rail',
   sideRailBadge: (count: number) => `${count} new`,
+  /** The floating launcher, for an application that configured no name of its own. */
+  dockName: 'Assistant',
+  dockOpen: (name: string) => `Open ${name}`,
+  dockClose: (name: string) => `Close ${name}`,
+  /** Read out beside the launcher while the agent works behind a closed panel. */
+  dockBusy: 'Working…',
   sideBack: 'Back',
   sideSplitter: 'Resize the side pane',
   railEmpty: 'Nothing to show.',
@@ -415,6 +421,10 @@ const DE: Bundle = {
 
   sideRail: 'Leiste',
   sideRailBadge: (count: number) => `${count} neu`,
+  dockName: 'Assistent',
+  dockOpen: (name: string) => `${name} öffnen`,
+  dockClose: (name: string) => `${name} schließen`,
+  dockBusy: 'Arbeitet…',
   sideBack: 'Zurück',
   sideSplitter: 'Seitenbereich in der Breite ändern',
   railEmpty: 'Nichts anzuzeigen.',

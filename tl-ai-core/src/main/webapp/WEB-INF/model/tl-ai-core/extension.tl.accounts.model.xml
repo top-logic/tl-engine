@@ -21,7 +21,7 @@
 					type="tl.core:Text"
 				>
 					<annotations>
-						<label-position value="above"/>
+						<label-position value="above-value"/>
 						<constraints>
 							<constraint class="com.top_logic.tl.ai.core.agent.environment.PreferencesLengthConstraint"/>
 						</constraints>

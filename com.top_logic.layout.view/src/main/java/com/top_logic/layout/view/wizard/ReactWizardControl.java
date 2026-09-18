@@ -57,7 +57,12 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
- * The React component {@code TLWizard} renders the indicator and the active step.
+ * The React component {@code TLWizard} renders the indicator and the active step. It is told which
+ * way the display moved ({@link #DIRECTION}), so the step entering and the step leaving can be
+ * animated in that direction, and how long a step stays before the wizard moves on by itself
+ * ({@link #AUTO_ADVANCE}), which the component turns into a timer reporting back through
+ * {@link #ADVANCE_STEP_COMMAND} - for a step entered going forward, since a step the user came back
+ * to is one they want to look at.
  * </p>
  */
 public class ReactWizardControl extends ReactControl implements ChildRevealer {
@@ -91,11 +96,31 @@ public class ReactWizardControl extends ReactControl implements ChildRevealer {
 	/** State key for whether the indicator lists the steps by name. */
 	private static final String STEP_LIST = "stepList";
 
+	/**
+	 * State key for the way the step displayed was reached, {@link #FORWARD} or {@link #BACKWARD}.
+	 */
+	public static final String DIRECTION = "direction";
+
+	/** {@link #DIRECTION} of a move towards the end of the sequence. */
+	public static final String FORWARD = "forward";
+
+	/** {@link #DIRECTION} of a move towards its beginning. */
+	public static final String BACKWARD = "backward";
+
+	/**
+	 * State key for how long the step displayed stays before the wizard moves on by itself,
+	 * {@code null} for a step the user leaves - which a step entered going back always is.
+	 */
+	public static final String AUTO_ADVANCE = "autoAdvance";
+
 	/** Identifier prefix of a step whose key is no string and is therefore numbered. */
 	private static final String GENERATED_ID_PREFIX = "step";
 
 	/** The {@link ReactCommandHandler} that displays a step the user picked from the indicator. */
 	public static final String GOTO_STEP_COMMAND = "gotoStep";
+
+	/** The {@link ReactCommandHandler} that moves on when a step's own time is up. */
+	public static final String ADVANCE_STEP_COMMAND = "advanceStep";
 
 	/** Addresses the content of a step by the step's identifier. */
 	private static final String STEP_SLOT = "step";
@@ -177,6 +202,7 @@ public class ReactWizardControl extends ReactControl implements ChildRevealer {
 		putState(COUNTER, Boolean.valueOf(element.hasCounter()));
 		putState(STEP_LIST, Boolean.valueOf(element.hasStepList()));
 		putState(PROGRESS, _progressControl);
+		putState(DIRECTION, FORWARD);
 		commitUpdate(tx);
 
 		displayCurrentStep();
@@ -259,6 +285,7 @@ public class ReactWizardControl extends ReactControl implements ChildRevealer {
 			// and updates itself.
 			return;
 		}
+		int previousIndex = _activeIndex;
 		_activeIndex = index;
 		_activeKey = key;
 
@@ -270,6 +297,16 @@ public class ReactWizardControl extends ReactControl implements ChildRevealer {
 		Object tx = beginUpdate();
 		putState(ACTIVE_INDEX, Integer.valueOf(index));
 		putState(ACTIVE_CHILD, content);
+		if (!sameStep) {
+			// A step that keeps its key was not moved to, it was carried along by the steps before
+			// it: the display keeps the direction it last moved in, and a step already counting down
+			// keeps counting rather than starting over.
+			boolean forward = previousIndex <= index;
+			putState(DIRECTION, forward ? FORWARD : BACKWARD);
+			// The time of a step runs while the flow leads through it. Coming back to it is the user
+			// going somewhere, so the step waits for them instead of sending them where they left.
+			putState(AUTO_ADVANCE, forward && index >= 0 ? _steps.get(index).autoAdvanceMillis() : null);
+		}
 		if (_progressControl != null) {
 			_progressControl.setFraction(fraction(index));
 		}
@@ -381,6 +418,23 @@ public class ReactWizardControl extends ReactControl implements ChildRevealer {
 	@ReactCommandHandler(GOTO_STEP_COMMAND)
 	void handleGotoStep(GotoStepArguments args) {
 		revealChild(args.getStepId());
+	}
+
+	/**
+	 * Handles a step whose own time is up.
+	 *
+	 * <p>
+	 * The move happens only while the step the timer was started for is still the one displayed: the
+	 * user may have moved on themselves in the meantime, and a timer that outlived its step must not
+	 * carry the display past what they chose.
+	 * </p>
+	 */
+	@ReactCommandHandler(value = ADVANCE_STEP_COMMAND, technical = true)
+	void handleAdvanceStep(AdvanceStepArguments args) {
+		if (_activeKey == null || !args.getStepId().equals(idFor(_activeKey))) {
+			return;
+		}
+		_scope.next();
 	}
 
 	/**

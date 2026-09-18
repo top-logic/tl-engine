@@ -33,7 +33,12 @@ import com.top_logic.layout.view.ViewContext;
  * @param content
  *        Builds the content of the step in the child context the wizard hands it. Called when the
  *        step is displayed, and again whenever it is displayed after having been left.
+ * @param autoAdvanceMillis
+ *        How long the step is displayed before the wizard moves on by itself, {@code null} for a
+ *        step the user leaves. The time runs while the flow leads through the step: a step the user
+ *        came back to waits for them, however it is configured.
  */
-public record WizardStep(Object key, ResKey label, String icon, Function<ViewContext, ReactControl> content) {
+public record WizardStep(Object key, ResKey label, String icon, Function<ViewContext, ReactControl> content,
+		Long autoAdvanceMillis) {
 	// Pure data.
 }

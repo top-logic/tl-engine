@@ -107,6 +107,9 @@ public class DynamicStepsSource implements WizardStepSource {
 		/** Configuration name for {@link #getContent()}. */
 		String CONTENT = "content";
 
+		/** Configuration name for {@link #getAutoAdvance()}. */
+		String AUTO_ADVANCE = "auto-advance";
+
 		@Override
 		@ClassDefault(DynamicStepsSource.class)
 		Class<? extends WizardStepSource> getImplementationClass();
@@ -156,6 +159,24 @@ public class DynamicStepsSource implements WizardStepSource {
 		Expr getIcon();
 
 		/**
+		 * TL-Script function saying how long a step is displayed before the wizard moves on by
+		 * itself: {@code element -> millis}.
+		 *
+		 * <p>
+		 * An element the function answers nothing for is a step the user leaves; without a function
+		 * that is every step.
+		 * </p>
+		 *
+		 * <p>
+		 * The time runs while the flow leads through the step. A step the user came back to waits
+		 * for them, whatever the function answers for its element.
+		 * </p>
+		 */
+		@Name(AUTO_ADVANCE)
+		@Nullable
+		Expr getAutoAdvance();
+
+		/**
 		 * The content displayed while one of these steps is the current one, with that step's
 		 * element published on the {@link #getElementChannel() element channel}.
 		 *
@@ -176,6 +197,8 @@ public class DynamicStepsSource implements WizardStepSource {
 
 	private final QueryExecutor _icon;
 
+	private final QueryExecutor _autoAdvance;
+
 	private final List<UIElement> _content;
 
 	/**
@@ -187,6 +210,7 @@ public class DynamicStepsSource implements WizardStepSource {
 		_elementChannelName = config.getElementChannel();
 		_label = config.getLabel() == null ? null : QueryExecutor.compile(config.getLabel());
 		_icon = config.getIcon() == null ? null : QueryExecutor.compile(config.getIcon());
+		_autoAdvance = config.getAutoAdvance() == null ? null : QueryExecutor.compile(config.getAutoAdvance());
 		_content = config.getContent().stream()
 			.map(context::getInstance)
 			.collect(Collectors.toList());
@@ -198,7 +222,7 @@ public class DynamicStepsSource implements WizardStepSource {
 		List<WizardStep> result = new ArrayList<>(elements.size());
 		for (Object element : elements) {
 			result.add(new WizardStep(element, label(element), icon(element),
-				stepContext -> content(stepContext, element)));
+				stepContext -> content(stepContext, element), autoAdvance(element)));
 		}
 		return result;
 	}
@@ -242,6 +266,18 @@ public class DynamicStepsSource implements WizardStepSource {
 		}
 		String encoded = asText(_icon.execute(element));
 		return StringServices.isEmpty(encoded) ? null : encoded;
+	}
+
+	/**
+	 * How long the given element's step is displayed before the wizard moves on by itself,
+	 * {@code null} for a step the user leaves.
+	 */
+	private Long autoAdvance(Object element) {
+		if (_autoAdvance == null) {
+			return null;
+		}
+		Object millis = _autoAdvance.execute(element);
+		return millis instanceof Number number ? Long.valueOf(number.longValue()) : null;
 	}
 
 	/**

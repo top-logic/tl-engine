@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.layout.view.wizard;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -41,6 +42,7 @@ import com.top_logic.layout.view.wizard.WizardGotoCommand;
 import com.top_logic.layout.view.wizard.WizardNextCommand;
 import com.top_logic.layout.view.wizard.WizardScope;
 import com.top_logic.layout.view.wizard.WizardStep;
+import com.top_logic.layout.view.wizard.WizardStepSource;
 
 /**
  * Tests that the tags of the wizard resolve: the element with its steps, and the commands moving
@@ -92,6 +94,30 @@ public class TestWizardConfig extends TestCase {
 		assertTrue(commands.get("gotoCommand") instanceof WizardGotoCommand);
 		assertTrue("A <wizard-goto> in a chain is an action of a generic command.",
 			commands.get("finish") instanceof GenericViewCommand);
+	}
+
+	/**
+	 * Tests that a step written out with a duration carries it as the time after which the wizard
+	 * moves on by itself.
+	 */
+	public void testAutoAdvance() throws Exception {
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestWizardConfig.class);
+		WizardElement.Config wizard = wizard(parse(context));
+
+		assertEquals("2s is two thousand milliseconds.", Long.valueOf(2000L),
+			((StaticStepSource.Config) wizard.getSteps().get(1)).getAutoAdvance());
+		assertNull("A step the user leaves has no time of its own.",
+			((StaticStepSource.Config) wizard.getSteps().get(0)).getAutoAdvance());
+
+		WizardElement element = (WizardElement) context.getInstance(wizard);
+		context.checkErrors();
+		List<WizardStep> steps = new ArrayList<>();
+		for (WizardStepSource source : element.getSources()) {
+			steps.addAll(source.steps(new DefaultViewContext(null)));
+		}
+		assertEquals("The step carries the duration to the wizard.", Long.valueOf(2000L),
+			steps.get(1).autoAdvanceMillis());
+		assertNull(steps.get(0).autoAdvanceMillis());
 	}
 
 	/**
@@ -153,7 +179,7 @@ public class TestWizardConfig extends TestCase {
 	 * A step of the sequence the rules are tested over; its content is never built.
 	 */
 	private static WizardStep step(String id) {
-		return new WizardStep(id, null, null, context -> null);
+		return new WizardStep(id, null, null, context -> null, null);
 	}
 
 	private WizardElement.Config wizard(ViewElement.Config view) {

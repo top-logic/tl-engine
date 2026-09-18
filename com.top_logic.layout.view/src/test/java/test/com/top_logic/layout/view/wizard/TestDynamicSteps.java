@@ -34,6 +34,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.element.PanelElement;
+import com.top_logic.layout.view.wizard.AdvanceStepArguments;
 import com.top_logic.layout.view.wizard.DynamicStepsSource;
 import com.top_logic.layout.view.wizard.ReactWizardControl;
 import com.top_logic.layout.view.wizard.StaticStepSource;
@@ -122,6 +123,7 @@ public class TestDynamicSteps extends TestCase {
 		DynamicStepsSource.Config config = dynamicSource(_wizards.get(2));
 		assertNotNull("A function names the steps.", config.getLabel());
 		assertNotNull("A function chooses their icon.", config.getIcon());
+		assertNotNull("A function says how long a step stays.", config.getAutoAdvance());
 		assertEquals("question", config.getElementChannel());
 
 		WizardStepSource source = sources(_wizards.get(2)).get(0);
@@ -239,6 +241,93 @@ public class TestDynamicSteps extends TestCase {
 	}
 
 	/**
+	 * Tests that a step whose time is up moves the wizard on, and that a timer outliving its step
+	 * does not: the user may have moved on themselves while it ran.
+	 */
+	public void testAdvanceStepOnlyFromTheStepDisplayed() throws Exception {
+		_questions.set(new ArrayList<>(List.of("a", "b")));
+		_currentStep.set("a");
+		ReactWizardControl wizard = control(_wizards.get(0));
+
+		assertEquals(Integer.valueOf(1), activeIndex(wizard));
+
+		wizard.executeCommand(ReactWizardControl.ADVANCE_STEP_COMMAND,
+			Map.of(AdvanceStepArguments.STEP_ID, "b"));
+
+		assertEquals("The timer of a step that is not displayed moves nothing.",
+			Integer.valueOf(1), activeIndex(wizard));
+		assertEquals("a", _currentStep.get());
+
+		wizard.executeCommand(ReactWizardControl.ADVANCE_STEP_COMMAND,
+			Map.of(AdvanceStepArguments.STEP_ID, "a"));
+
+		assertEquals("The step displayed ran out of time, so the wizard moved on.", "b",
+			_currentStep.get());
+		assertEquals(Integer.valueOf(2), activeIndex(wizard));
+	}
+
+	/**
+	 * Tests that the wizard publishes how the step displayed was reached.
+	 */
+	public void testPublishedDirection() throws Exception {
+		_questions.set(new ArrayList<>(List.of("a", "b")));
+		ReactWizardControl wizard = control(_wizards.get(0));
+
+		assertEquals(ReactWizardControl.FORWARD, direction(wizard));
+
+		wizard.getScope().goTo("b");
+		assertEquals(ReactWizardControl.FORWARD, direction(wizard));
+
+		wizard.getScope().back();
+		assertEquals("A move towards the beginning is reported as such.", ReactWizardControl.BACKWARD,
+			direction(wizard));
+	}
+
+	/**
+	 * Tests that a step's own time runs while the flow leads through it: it is published for a step
+	 * entered going forward, and not for one the user came back to.
+	 */
+	public void testAutoAdvanceOnlyForwards() throws Exception {
+		_questions.set(new ArrayList<>(List.of("a", "b")));
+		ReactWizardControl wizard = control(_wizards.get(0));
+
+		assertEquals("A wizard opening on a timed step counts it down.", Long.valueOf(2000L),
+			autoAdvance(wizard));
+
+		wizard.getScope().next();
+		assertNull("The step moved to has no time of its own.", autoAdvance(wizard));
+
+		wizard.getScope().goTo("summary");
+		assertEquals("A timed step moved on to counts down.", Long.valueOf(2000L), autoAdvance(wizard));
+
+		wizard.getScope().back();
+		assertEquals(ReactWizardControl.BACKWARD, direction(wizard));
+		assertNull(autoAdvance(wizard));
+
+		wizard.getScope().goTo("welcome");
+		assertEquals("Coming back is a move backwards.", ReactWizardControl.BACKWARD, direction(wizard));
+		assertNull("A timed step the user came back to waits for them.", autoAdvance(wizard));
+	}
+
+	/**
+	 * Tests that a re-expansion carrying the displayed step along leaves its time alone, so a step
+	 * already counting down keeps counting rather than starting over.
+	 */
+	public void testAutoAdvanceSurvivesReExpansion() throws Exception {
+		_questions.set(new ArrayList<>(List.of("a")));
+		_currentStep.set("summary");
+		ReactWizardControl wizard = control(_wizards.get(0));
+
+		assertEquals(Integer.valueOf(2), activeIndex(wizard));
+		assertEquals(Long.valueOf(2000L), autoAdvance(wizard));
+
+		_questions.set(List.of("a", "b"));
+
+		assertEquals("The step was carried along.", Integer.valueOf(3), activeIndex(wizard));
+		assertEquals("Its time was not restarted.", Long.valueOf(2000L), autoAdvance(wizard));
+	}
+
+	/**
 	 * Tests that a step reached again is published under the identifier it had, so that an
 	 * identifier the client holds keeps naming the same step.
 	 */
@@ -313,6 +402,20 @@ public class TestDynamicSteps extends TestCase {
 	 */
 	private static Object activeIndex(ReactWizardControl wizard) {
 		return wizard.scriptingScalarState().get(ReactWizardControl.ACTIVE_INDEX);
+	}
+
+	/**
+	 * How long the wizard says the step displayed stays, {@code null} for one the user leaves.
+	 */
+	private static Object autoAdvance(ReactWizardControl wizard) {
+		return wizard.scriptingScalarState().get(ReactWizardControl.AUTO_ADVANCE);
+	}
+
+	/**
+	 * The way the wizard says the step displayed was reached.
+	 */
+	private static Object direction(ReactWizardControl wizard) {
+		return wizard.scriptingScalarState().get(ReactWizardControl.DIRECTION);
 	}
 
 	/**

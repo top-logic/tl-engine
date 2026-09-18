@@ -13,12 +13,14 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
@@ -73,6 +75,9 @@ public class StaticStepSource implements WizardStepSource {
 		/** Configuration name for {@link #getChildren()}. */
 		String CHILDREN = "children";
 
+		/** Configuration name for {@link #getAutoAdvance()}. */
+		String AUTO_ADVANCE = "auto-advance";
+
 		@Override
 		@ClassDefault(StaticStepSource.class)
 		Class<? extends WizardStepSource> getImplementationClass();
@@ -105,6 +110,25 @@ public class StaticStepSource implements WizardStepSource {
 		String getIcon();
 
 		/**
+		 * How long this step is displayed before the wizard moves on by itself, written as a
+		 * duration ({@code 2s}, {@code 500ms}).
+		 *
+		 * <p>
+		 * For an interstitial the user only watches. Empty for a step the user leaves.
+		 * </p>
+		 *
+		 * <p>
+		 * The time runs while the flow leads through the step. A step the user came back to waits
+		 * for them, so a Back out of the step behind an interstitial is not answered by being sent
+		 * forward again.
+		 * </p>
+		 */
+		@Name(AUTO_ADVANCE)
+		@Nullable
+		@Format(MillisFormat.class)
+		Long getAutoAdvance();
+
+		/**
 		 * The content displayed while this step is the current one.
 		 *
 		 * @implNote Written directly as children of the {@code <step>}.
@@ -124,6 +148,8 @@ public class StaticStepSource implements WizardStepSource {
 
 	private final List<UIElement> _children;
 
+	private final Long _autoAdvance;
+
 	/**
 	 * Creates a new {@link StaticStepSource} from configuration.
 	 */
@@ -136,12 +162,13 @@ public class StaticStepSource implements WizardStepSource {
 		_children = config.getChildren().stream()
 			.map(context::getInstance)
 			.collect(Collectors.toList());
+		_autoAdvance = config.getAutoAdvance();
 	}
 
 	@Override
 	public List<WizardStep> steps(ViewContext context) {
-		return List.of(new WizardStep(_id, _label, _icon, stepContext -> ContentControls.toControl(_children,
-			stepContext)));
+		return List.of(new WizardStep(_id, _label, _icon,
+			stepContext -> ContentControls.toControl(_children, stepContext), _autoAdvance));
 	}
 
 	@Override

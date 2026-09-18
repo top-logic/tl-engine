@@ -36,6 +36,7 @@
 				</panel>
 			</step>
 			<step id="payment"
+				auto-advance="2s"
 				label="wizard.payment"
 			/>
 			<step id="summary"/>

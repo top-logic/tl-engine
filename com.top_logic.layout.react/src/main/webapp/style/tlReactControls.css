@@ -1859,8 +1859,10 @@ button.tlDrawerToggle:focus-visible {
 	outline-offset: 2px;
 }
 
-/* The region holding the step content, bounded so that a filling step resolves its height here. */
+/* The region holding the step content, bounded so that a filling step resolves its height here. It
+   positions the copy of the step leaving, which lies over the one arriving while it fades out. */
 .tlWizard__body {
+	position: relative;
 	display: flex;
 	flex-direction: column;
 	flex: 1 1 auto;
@@ -1872,6 +1874,65 @@ button.tlDrawerToggle:focus-visible {
 	flex-direction: column;
 	flex: 1 1 auto;
 	min-height: 0;
+}
+
+/* The step change, as the engine draws it by default: the arriving step slides in from the side the
+   wizard moved towards, the one left behind fades out over it. An application restyles the change by
+   redefining these four rules; the classes (and the direction modifier on the root) are what it
+   addresses, so it can also drop the movement and keep only the fade, or animate something else
+   entirely. */
+.tlWizard__step--entering {
+	animation: tlWizardEnterForward 0.2s ease-out;
+}
+
+.tlWizard--backward .tlWizard__step--entering {
+	animation-name: tlWizardEnterBackward;
+}
+
+/* A picture of the step left behind: it neither takes input nor is read out, and it takes no place
+   in the layout, so the step arriving sits where it will stay. */
+.tlWizard__step--exiting {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	animation: tlWizardLeaveForward 0.2s ease-out forwards;
+}
+
+.tlWizard--backward .tlWizard__step--exiting {
+	animation-name: tlWizardLeaveBackward;
+}
+
+@keyframes tlWizardEnterForward {
+	from { opacity: 0; transform: translateX(12px); }
+	to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes tlWizardEnterBackward {
+	from { opacity: 0; transform: translateX(-12px); }
+	to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes tlWizardLeaveForward {
+	from { opacity: 1; transform: translateX(0); }
+	to   { opacity: 0; transform: translateX(-12px); }
+}
+
+@keyframes tlWizardLeaveBackward {
+	from { opacity: 1; transform: translateX(0); }
+	to   { opacity: 0; transform: translateX(12px); }
+}
+
+/* A viewer who asked for less movement gets the step change without one; the copy of the step
+   leaving is dropped by the component's own fallback instead of by an animation ending. */
+@media (prefers-reduced-motion: reduce) {
+	.tlWizard__step--entering,
+	.tlWizard__step--exiting {
+		animation: none;
+	}
+
+	.tlWizard__step--exiting {
+		opacity: 0;
+	}
 }
 
 /* --- TLGrid ---------------------------------------------------------------- */

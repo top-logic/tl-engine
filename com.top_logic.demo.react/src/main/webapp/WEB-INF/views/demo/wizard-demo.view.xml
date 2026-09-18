@@ -18,6 +18,10 @@
 	following it already sees the step it created. After the last question the same Next leads to
 	the summary, because the written-out step follows the dynamic ones.
 	
+	Between the profile and the questions sits an interstitial: "Setting up" carries an
+	auto-advance="2s" and no buttons at all, so it shows itself for two seconds and then moves on by
+	itself. The footer slot simply stays empty while it is displayed.
+	
 	A question step chooses its display by the question it asks: a <switch input="question"> picks
 	the field to fill in, so the three questions are three different inputs on one content template.
 	Every step edits the one profile object the flow set up at the start, and the summary reads it
@@ -148,6 +152,23 @@
 							</stack>
 						</slot-content>
 					</form>
+				</step>
+				<step id="ready"
+					auto-advance="2s"
+					icon="css:bi bi-hourglass-split"
+				>
+					<label>
+						<en>Setting up</en>
+						<de>Wird eingerichtet</de>
+					</label>
+					<inset>
+						<text>
+							<label>
+								<en>Setting up your profile — this takes a moment.</en>
+								<de>Wir richten Ihr Profil ein — das dauert einen Moment.</de>
+							</label>
+						</text>
+					</inset>
 				</step>
 				<dynamic-steps
 					element-channel="question"

@@ -256,6 +256,6 @@ public class TestWizardScope extends TestCase {
 	}
 
 	private static WizardStep step(String id) {
-		return new WizardStep(id, null, null, context -> null);
+		return new WizardStep(id, null, null, context -> null, null);
 	}
 }

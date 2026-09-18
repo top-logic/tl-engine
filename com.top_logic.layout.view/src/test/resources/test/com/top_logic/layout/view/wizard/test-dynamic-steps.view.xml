@@ -13,12 +13,14 @@
 			progress="false"
 		>
 			<step id="welcome"
+				auto-advance="2s"
 				label="wizard.welcome"
 			/>
 			<dynamic-steps steps="questions">
 				<text input="element"/>
 			</dynamic-steps>
 			<step id="summary"
+				auto-advance="2s"
 				label="wizard.summary"
 			/>
 		</wizard>
@@ -38,6 +40,7 @@
 			progress="false"
 		>
 			<dynamic-steps
+				auto-advance="q -> if($q == 'a', 2000, null)"
 				element-channel="question"
 				icon="q -&gt; 'css:fa-solid fa-circle-question'"
 				label="q -&gt; $q.toUpperCase()"

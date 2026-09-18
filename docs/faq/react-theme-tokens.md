@@ -47,11 +47,16 @@ The legal names are the colour tokens of the themes: the union, over the `<theme
 of another kind is not a colour: `spacing-02` is a `<length>`, `shadow-menu` a `<text>`, and neither
 is accepted where a colour is asked for.
 
+The colour tokens are offered as the options of the annotation, so the model editor shows a
+drop-down of the names the application emits rather than a free-text field. A token the application
+does not emit is kept alongside them: the form shows it, and saving the form writes it back
+unchanged, so an annotation written against a theme the editing application does not install
+survives. A name can therefore be chosen or kept, but not newly typed.
+
 A name no theme emits is reported as a warning naming the token and listing the known names
-(`WARNING_NO_SUCH_COLOR_TOKEN__TOKEN_KNOWN`) — in the boot log when the annotation stands in a
-`*.model.xml`, and beside the field in a declarative configuration form, which `EditorFactory`
-builds with the constraints the configuration declares. The warning does not block: the application
-starts, the form is saved, and the value is displayed without a colour.
+(`WARNING_NO_SUCH_COLOR_TOKEN__TOKEN_KNOWN`) in the boot log, where the annotation of a
+`*.model.xml` is read. The warning does not block: the application starts, and the value is
+displayed without a colour.
 
 The vocabulary comes from `DesignTokenService`. An application with the React UI answers it with
 `UIThemeDesignTokens`, the tokens of `UIThemeService`; an application without it with

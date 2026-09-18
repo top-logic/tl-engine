@@ -24,16 +24,23 @@ import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.layout.view.ChildGroup;
+import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.UIElement;
+import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
+import com.top_logic.layout.view.channel.DefaultViewChannel;
+import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.GenericViewCommand;
 import com.top_logic.layout.view.command.ViewCommand;
+import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.element.PanelElement;
 import com.top_logic.layout.view.wizard.StaticStepSource;
 import com.top_logic.layout.view.wizard.WizardBackCommand;
 import com.top_logic.layout.view.wizard.WizardElement;
 import com.top_logic.layout.view.wizard.WizardGotoCommand;
 import com.top_logic.layout.view.wizard.WizardNextCommand;
+import com.top_logic.layout.view.wizard.WizardScope;
+import com.top_logic.layout.view.wizard.WizardStep;
 
 /**
  * Tests that the tags of the wizard resolve: the element with its steps, and the commands moving
@@ -85,6 +92,68 @@ public class TestWizardConfig extends TestCase {
 		assertTrue(commands.get("gotoCommand") instanceof WizardGotoCommand);
 		assertTrue("A <wizard-goto> in a chain is an action of a generic command.",
 			commands.get("finish") instanceof GenericViewCommand);
+	}
+
+	/**
+	 * Tests that the rules guarding the moves follow the wizard: a Back button is absent on the
+	 * first step and appears once the wizard has moved on, without anything writing the command's
+	 * own input.
+	 */
+	public void testMoveRulesFollowTheWizard() throws Exception {
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestWizardConfig.class);
+		PanelElement.Config panel = firstStepContent(parse(context));
+
+		ViewChannel step = new DefaultViewChannel("currentStep");
+		WizardScope scope = new WizardScope(step, List.of(step("contact"), step("payment"), step("summary")));
+		ViewContext stepContext = new DefaultViewContext(null).withScope(WizardScope.class, scope);
+
+		ViewCommandModel back = model(context, stepContext, panel, "backCommand");
+		ViewCommandModel next = model(context, stepContext, panel, "nextCommand");
+		back.attach(null);
+		next.attach(null);
+
+		assertFalse("Nothing precedes the first step, so no Back is offered.", back.isVisible());
+		assertTrue("A step follows the first one, so Next is offered.", next.isVisible());
+
+		scope.next();
+
+		assertTrue("The move is reported, so Back appears.", back.isVisible());
+		assertTrue(next.isVisible());
+
+		scope.goTo("summary");
+
+		assertTrue(back.isVisible());
+		assertFalse("Nothing follows the last step, so no Next is offered.", next.isVisible());
+
+		back.detach();
+		next.detach();
+		scope.goTo("contact");
+
+		assertTrue("A detached command hears nothing and keeps the state it had.", back.isVisible());
+	}
+
+	/**
+	 * The {@link ViewCommandModel} of the named command of the given panel, built in the given
+	 * context exactly as a hosting element builds it.
+	 */
+	private ViewCommandModel model(DefaultInstantiationContext context, ViewContext stepContext,
+			PanelElement.Config panel, String name) throws Exception {
+		for (PolymorphicConfiguration<? extends ViewCommand> config : panel.getCommands()) {
+			ViewCommand.Config commandConfig = (ViewCommand.Config) config;
+			if (name.equals(commandConfig.getName())) {
+				ViewCommand command = context.getInstance(config);
+				context.checkErrors();
+				return ViewCommandModel.forCommand(stepContext, command, commandConfig);
+			}
+		}
+		throw new AssertionError("The step holds a command named '" + name + "'.");
+	}
+
+	/**
+	 * A step of the sequence the rules are tested over; its content is never built.
+	 */
+	private static WizardStep step(String id) {
+		return new WizardStep(id, null, null, context -> null);
 	}
 
 	private WizardElement.Config wizard(ViewElement.Config view) {

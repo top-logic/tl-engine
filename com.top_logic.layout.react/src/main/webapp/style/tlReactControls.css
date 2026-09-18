@@ -1768,8 +1768,15 @@ button.tlDrawerToggle:focus-visible {
 	text-transform: uppercase;
 }
 
+/* The bar stands for a length walked, so it is given one instead of taking the width of the page. */
 .tlWizard__progress {
 	display: flex;
+	max-width: 24rem;
+}
+
+.tlWizard__progress > * {
+	flex: 1 1 auto;
+	min-width: 0;
 }
 
 .tlWizard__steps {

@@ -12,6 +12,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.layout.form.format.ColorConfigFormat;
 
 /**
@@ -54,13 +55,15 @@ public interface ColorSpec extends ConfigurationItem {
 	 *
 	 * <p>
 	 * The token is looked up in the theme the user has active, so the color follows a theme switch.
-	 * The tokens are those defined for the UI themes; the name is given without the leading
-	 * <code>--</code> of the CSS custom property the token is emitted as.
+	 * The name is one of the color design tokens the application emits, given without the leading
+	 * <code>--</code> of the CSS custom property the token is emitted as. A name no theme emits is
+	 * reported, since it leaves the value without a color.
 	 * </p>
 	 */
 	@Name(TOKEN)
 	@Nullable
 	@Label("Design token")
+	@Constraint(value = ColorTokenConstraint.class, asWarning = true)
 	String getToken();
 
 	/**

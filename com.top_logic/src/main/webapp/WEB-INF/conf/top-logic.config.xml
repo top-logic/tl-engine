@@ -23,6 +23,7 @@
 			       <module key="com.top_logic.basic.thread.ThreadContextManager$Module" value="true"/>
 			       <module key="com.top_logic.basic.AliasManager$Module" value="true"/>
 			       <module key="com.top_logic.gui.ThemeFactory$Module" value="true"/>
+			       <module key="com.top_logic.gui.DesignTokenService$Module" value="true"/>
 			       <module key="com.top_logic.base.services.simpleajax.RequestLockFactory$Module" value="true"/>
 			       <module key="com.top_logic.knowledge.service.KnowledgeBaseFactory$Module" value="true"/>
 			       <module key="com.top_logic.knowledge.service.PersistencyLayer$Module" value="true"/>
@@ -720,6 +721,10 @@
 			<instance class="com.top_logic.gui.MultiThemeFactory">
 				<default-theme>default</default-theme>	        
 			</instance> 
+		</config>
+		
+		<config service-class="com.top_logic.gui.DesignTokenService">
+			<instance class="com.top_logic.gui.ThemeDesignTokens"/>
 		</config>
 		
 		<config service-class="com.top_logic.base.accesscontrol.Login">

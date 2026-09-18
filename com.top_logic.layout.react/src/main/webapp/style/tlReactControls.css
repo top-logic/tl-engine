@@ -437,10 +437,16 @@ button.tlCounter__button:focus {
 	--page-inset: var(--spacing-04);
 }
 
+/* An inset passes the space it is given on to its content: a bounded flex column, so that content
+   which fills resolves its height against the inset - the inset then carries .tlFill and asks its
+   own container for that height (see the fill contract above). Around content of its own size the
+   inset is exactly as high as that content plus the padding, so it does not claim the height of a
+   container it shares with others. */
 .tlInset {
 	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
 	width: 100%;
-	height: 100%;
 	padding: var(--page-inset);
 }
 
@@ -1254,10 +1260,23 @@ button.tlPanel__actionButton:focus-visible {
 	stroke-linejoin: round;
 }
 
+/* The body of a panel is where the fill chain ends (see the fill contract above): it is bounded by
+   the panel - it takes the space the panel has left over and scrolls what does not fit into it -
+   and is therefore the box a filling child resolves its height against. A child can only do that in
+   a flex container, so the body is a column: a child carrying .tlFill takes the height the body
+   offers, and any other child keeps the height of its content. */
 .tlPanel__content {
+	display: flex;
+	flex-direction: column;
 	flex: 1;
 	overflow: auto;
 	position: relative;
+}
+
+/* Content that does not fill keeps the height of what it contains: standing taller than the body it
+   overflows and the body scrolls it, rather than being squeezed into the body and clipping. */
+.tlPanel__content > :not(.tlFill) {
+	flex-shrink: 0;
 }
 
 .tlPanel--fullLine {

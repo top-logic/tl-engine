@@ -177,6 +177,33 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 		 *        particular account.
 		 */
 		void onAgentDataChanged(Person owner);
+
+		/**
+		 * Called after a session and everything recorded under it was deleted.
+		 *
+		 * <p>
+		 * Separate from {@link #onAgentDataChanged(Person)} because a deletion is the one change a
+		 * listener cannot answer by re-reading: whoever still holds the session - an open window's
+		 * in-memory chat state, a cache - has to be told <em>which</em> one is gone, and the object
+		 * itself no longer exists to be asked. The id is the one the browser and {@code /chat/*}
+		 * use, read before the delete.
+		 * </p>
+		 *
+		 * <p>
+		 * Called on the thread that asked for the delete, once the writer thread committed it, and
+		 * immediately before the matching {@link #onAgentDataChanged(Person)}. Same contract: return
+		 * quickly, and do not write through this service in turn.
+		 * </p>
+		 *
+		 * @param owner
+		 *        The account the deleted session belonged to, or <code>null</code> when it had
+		 *        none.
+		 * @param sessionId
+		 *        The deleted session's id, never empty.
+		 */
+		default void onSessionDeleted(Person owner, String sessionId) {
+			// Most listeners only care that something changed; see onAgentDataChanged.
+		}
 	}
 
 	/**
@@ -365,6 +392,24 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 				listener.onAgentDataChanged(owner);
 			} catch (RuntimeException ex) {
 				Logger.warn("Agent-data change listener failed: " + ex.getMessage(), ex,
+					AgentExecutionStore.class);
+			}
+		}
+	}
+
+	/**
+	 * Tells the registered listeners that the named session is gone. Best-effort, like
+	 * {@link #notifyChanged(Person)}.
+	 */
+	private void notifySessionDeleted(Person owner, String sessionId) {
+		if (sessionId == null || sessionId.isEmpty()) {
+			return;
+		}
+		for (ChangeListener listener : _changeListeners) {
+			try {
+				listener.onSessionDeleted(owner, sessionId);
+			} catch (RuntimeException ex) {
+				Logger.warn("Session-deletion listener failed: " + ex.getMessage(), ex,
 					AgentExecutionStore.class);
 			}
 		}
@@ -833,14 +878,49 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	}
 
 	/**
+	 * Requests cancellation of every execution of the given session that is still
+	 * {@link ExecutionStatus#RUNNING}.
+	 *
+	 * @param session
+	 *        The session whose runs to stop; <code>null</code> is a no-op.
+	 * @return How many executions were newly signalled to cancel.
+	 * @see #requestCancel(AgentExecution)
+	 */
+	public int cancelRunningExecutions(AgentSession session) {
+		if (session == null) {
+			return 0;
+		}
+		int cancelled = 0;
+		for (AgentExecution execution : executionsOf(session)) {
+			if (!isTerminal(execution) && requestCancel(execution)) {
+				cancelled++;
+			}
+		}
+		return cancelled;
+	}
+
+	/**
 	 * Deletes the given session with everything recorded under it: tasks, the interaction
 	 * requests of its executions, the executions themselves, and finally the session.
+	 *
+	 * <p>
+	 * A run that is still live is asked to stop first. Cancellation is asynchronous - the loop
+	 * observes the marker at its next turn, by which time its execution row may already be gone -
+	 * so this narrows the window rather than closing it; it is what keeps a run from carrying on
+	 * writing into a session the user has thrown away. Every delete path goes through here, so the
+	 * REST {@code DELETE /chat/sessions/{id}} is covered by the same guard.
+	 * </p>
 	 */
 	public void deleteSession(AgentSession session) {
 		if (session == null) {
 			return;
 		}
-		notifyChanged(write(() -> {
+		cancelRunningExecutions(session);
+		// Read before the delete: afterwards the wrapper has no id to report any more, and a
+		// listener that still holds this session needs to hear which one it was. The external form
+		// is the id the browser and /chat/* use, which is what such a listener keys its state on.
+		String deletedId = session.tHandle().getObjectName().toExternalForm();
+		Person deletedOwner = write(() -> {
 		try (Transaction tx = beginTx("Delete agent session")) {
 			// Read before the delete: afterwards the wrapper has no owner to report any more.
 			Person owner = session.getOwner();
@@ -864,7 +944,9 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 			tx.commit();
 			return owner;
 		}
-		}));
+		});
+		notifySessionDeleted(deletedOwner, deletedId);
+		notifyChanged(deletedOwner);
 	}
 
 	/**

@@ -640,6 +640,29 @@ describe('a mounted rail', () => {
     release()
   })
 
+  /**
+   * A `<chat-dock/>` is the user looking without the user opening the rail.
+   *
+   * The dock's launcher carries the same unseen count the transcript's rail button does, so opening
+   * it has to move the same watermark - but only that: it does not open the rail, and `toggleSide`
+   * would. To the total as it stands, never to zero, or the next thing a section reports would be
+   * measured against nothing.
+   */
+  it('records what has been seen without touching the rail', () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.actions.registerRail()
+    store.actions.publishBadgeTotal(4)
+
+    store.actions.markBadgesSeen(store.getState().badgeTotal)
+    expect(store.getState().badgeSeen).toBe(4)
+    expect(unseenBadge(store.getState().badgeTotal, store.getState().badgeSeen)).toBe(0)
+    expect(store.getState().sideOpen).toBe(false)
+    expect(store.getState().railDecided).toBe(false)
+
+    release()
+  })
+
   /** Nothing to count once the rail is gone: a stale number on the button would open nothing. */
   it('drops the badge total when the last rail leaves', () => {
     const store = chatStore('alpha', BOOT)

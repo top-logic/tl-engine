@@ -12,6 +12,7 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 
 import com.top_logic.ai.chat.view.ChatConversationElement;
+import com.top_logic.ai.chat.view.ChatDockElement;
 import com.top_logic.ai.chat.view.ChatRailElement;
 import com.top_logic.ai.chat.view.ChatScopeElement;
 import com.top_logic.ai.chat.view.ChatSectionElement;
@@ -77,6 +78,18 @@ public class TestHiddenElementOptions extends TestCase {
 		assertEngineOptionsHidden(ChatScopeElement.Config.class);
 
 		assertVisible(ChatScopeElement.Config.class, ChatScopeElement.Config.CHAT_ID);
+	}
+
+	/** {@code <chat-dock>} hides only its React binding, plus the two engine-inherited options. */
+	public void testChatDockHiddenOptions() {
+		assertHidden(ChatDockElement.Config.class, ChatDockElement.Config.REACT_ELEMENT);
+		assertEngineOptionsHidden(ChatDockElement.Config.class);
+
+		assertVisible(ChatDockElement.Config.class, ChatDockElement.Config.CHAT_ID);
+		assertVisible(ChatDockElement.Config.class, ChatDockElement.Config.CONTENT);
+		assertVisible(ChatDockElement.Config.class, ChatDockElement.Config.ICON);
+		assertVisible(ChatDockElement.Config.class, ChatDockElement.Config.LABEL);
+		assertVisible(ChatDockElement.Config.class, ChatDockElement.Config.OPEN);
 	}
 
 	/** {@code <chat-rail>} hides its React binding and the pane width the user drags. */

@@ -255,7 +255,7 @@ public class DataListControl extends ReactControl {
 		}
 	}
 
-	/** The plain string an expression produced, for values that are markup rather than a label. */
+	/** An expression's result as a plain token - a CSS class is not a value to format for display. */
 	private static String text(Object value) {
 		return value == null ? "" : String.valueOf(value).trim();
 	}

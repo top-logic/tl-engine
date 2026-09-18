@@ -192,6 +192,8 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 
 	private volatile Thread _writerThread;
 
+	private final CopyOnWriteArrayList<ChangeListener> _changeListeners = new CopyOnWriteArrayList<>();
+
 	/**
 	 * Creates an {@link AgentExecutionStore}.
 	 */
@@ -334,8 +336,6 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 			throw new RuntimeException("Failed to write agent execution data: " + cause.getMessage(), cause);
 		}
 	}
-
-	private final CopyOnWriteArrayList<ChangeListener> _changeListeners = new CopyOnWriteArrayList<>();
 
 	/**
 	 * Registers a listener that is told about every committed change.

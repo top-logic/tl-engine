@@ -29,6 +29,7 @@ implemented in the current deliverable.
 | Responsive master-detail | **Migrated** | `demo/responsive-md-demo.view.xml` (`<adaptive-detail>`, cascading scopes → milestones) over the `tl.demo.projectManagement` model + seed data (+ create dialogs). |
 | Error handling | **Migrated** | `demo/error-handling-demo.view.xml` — `TopLogicException` and wrapped KB errors. |
 | Repeater (`<object-list>`) | **Migrated** | `demo/repeater-demo.view.xml` — a grid of cards computed from a search field (capped at three columns) and an input-less list, over the `test.flowchart` model + seed data. The staggered entrance of the cards is application CSS over the item wrapper's `--tl-item-index` (`style/tl-demo-react.css`). |
+| Long-running jobs | **Migrated** | `demo/long-job-demo.view.xml` — `<start-job>` (three declared phases, determinate and indeterminate progress, message, cancel) with `<job-status>` following it on a channel, the result written to a second channel and shown by `<text>`, a failing job, and a standalone indeterminate `<progress>`. Needs no model or seed data. |
 | Green-field table filtering | **Migrated** | Per-column `RegexpOptionsFilter` (facets) and model/script-defined `ScriptedFilter` (over `demo.filter:LongRange`) folded into the **Attributes** table. |
 
 ## Folded out (deliberately not reproduced as standalone demos)

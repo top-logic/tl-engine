@@ -102,12 +102,39 @@ export function modelBoundSource(raw: unknown): ((query: string) => ReferenceCan
 }
 
 /**
+ * What a turn-setting channel said, out of the control state a `<chat-conversation/>` pushed.
+ *
+ * `undefined` is "the channel says nothing" - it is unwired, empty, or the write was refused - and
+ * the composer is then left alone. A string, including the empty one, is an instruction.
+ */
+export function channelName(raw: unknown): string | undefined {
+  return typeof raw === 'string' ? raw : undefined
+}
+
+/** The same for the channel that holds a set of names; an empty array attaches no server at all. */
+export function channelNames(raw: unknown): string[] | undefined {
+  return Array.isArray(raw) ? raw.map(String) : undefined
+}
+
+/** Whether two attachment sets name the same servers, order and duplicates aside. */
+export function sameServers(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false
+  const left = [...a].sort()
+  const right = [...b].sort()
+  return left.every((name, index) => name === right[index])
+}
+
+/**
  * The transcript and the prompt field as one view element.
  *
  * It joins the chat through {@code chat-id}. A configured {@code input} channel selects the
  * session; without one the store is the source. A configured {@code busy} channel is written while
  * the agent works. Every picker can be switched off; sending still works. The pane a source or a
  * host section opens lives in a sibling {@code <chat-rail/>} on the same {@code chat-id}.
+ *
+ * The four turn settings - agent, model, effort and the attached MCP servers - travel over their own
+ * two-way channels: a write from outside is applied as if the user had picked it, and what the user
+ * picks is reported back with one {@code publishTurnSettings} command.
  */
 export function TLChatConversation({ controlId }: TLCellProps) {
   const state = useTLState()
@@ -164,6 +191,70 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   useEffect(() => {
     void command('setBusy', { busy: chat.busy })
   }, [chat.busy, command])
+
+  // Follow the turn-setting channels. A *write* is what the composer follows, not the value standing
+  // on the channel: the composer changes these itself - restoring a session brings back its effort,
+  // an agent brings its own model - and the channel only learns of that one round trip later. Acting
+  // on the value would undo every such change with the one the channel still holds. The transition
+  // guard is the same one the selection channel above uses, and for the same reason.
+  const channelAgent = channelName(state.agentSelected)
+  const channelModel = channelName(state.modelSelected)
+  const channelEffort = channelName(state.effortSelected)
+  const channelServers = useMemo(() => channelNames(state.mcpSelected), [state.mcpSelected])
+  // Undefined, so a channel that already holds a value when the element mounts counts as written.
+  const wroteAgent = useRef<string | undefined>(undefined)
+  const wroteModel = useRef<string | undefined>(undefined)
+  const wroteEffort = useRef<string | undefined>(undefined)
+  const wroteServers = useRef<string[] | undefined>(undefined)
+  // The agent goes first, because picking one resets the model and the servers to that agent's own:
+  // a host that writes the agent and the model means the model it named, not the one it displaced.
+  useEffect(() => {
+    const written = wroteAgent.current !== channelAgent
+    wroteAgent.current = channelAgent
+    if (written && channelAgent !== undefined && channelAgent !== chat.agent) {
+      actions.selectAgent(channelAgent)
+    }
+  }, [channelAgent, chat.agent, actions])
+  useEffect(() => {
+    const written = wroteModel.current !== channelModel
+    wroteModel.current = channelModel
+    if (written && channelModel !== undefined && channelModel !== chat.model) {
+      actions.selectModel(channelModel)
+    }
+  }, [channelModel, chat.model, actions])
+  useEffect(() => {
+    const written = wroteEffort.current !== channelEffort
+    wroteEffort.current = channelEffort
+    if (written && channelEffort !== undefined && channelEffort !== chat.effort) {
+      actions.selectEffort(channelEffort)
+    }
+  }, [channelEffort, chat.effort, actions])
+  useEffect(() => {
+    const previous = wroteServers.current
+    const written = previous === undefined || channelServers === undefined
+      ? previous !== channelServers
+      : !sameServers(previous, channelServers)
+    wroteServers.current = channelServers
+    if (written && channelServers !== undefined && !sameServers(channelServers, chat.mcp)) {
+      actions.selectMcpServers(channelServers)
+    }
+  }, [channelServers, chat.mcp, actions])
+
+  // Write-back, in one command: the composer settles the four together (an agent brings its model and
+  // its servers), so reporting them one at a time would put a host through states no user was ever in.
+  const publishedTurn = useRef<string | null>(null)
+  useEffect(() => {
+    const settings = {
+      agent: chat.agent,
+      model: chat.model,
+      effort: chat.effort,
+      mcpServers: chat.mcp,
+    }
+    const fingerprint = JSON.stringify(settings)
+    if (publishedTurn.current === fingerprint) return
+    publishedTurn.current = fingerprint
+    void command('publishTurnSettings', settings)
+  }, [chat.agent, chat.model, chat.effort, chat.mcp, command])
 
   const pendingApprovals = useMemo(
     () =>

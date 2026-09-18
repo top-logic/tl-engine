@@ -2,9 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { App } from './App'
 import { plusMenuVisible } from './composer'
 import {
+  channelName,
+  channelNames,
   modelBoundSource,
   readComposerControls,
   readThreadConfig,
+  sameServers,
   TLChatConversation,
 } from './chat-conversation'
 
@@ -134,5 +137,39 @@ describe('TLChatConversation and App', () => {
   it('are functions over the same store API', () => {
     expect(typeof TLChatConversation).toBe('function')
     expect(typeof App).toBe('function')
+  })
+})
+
+/**
+ * How a turn-setting channel reaches the composer.
+ *
+ * The control pushes `null` for "the channel says nothing" - unwired, empty, or the write refused -
+ * and the composer must then keep what the user has. The empty string and the empty array are the
+ * opposite: an instruction to hold no level and to attach no server.
+ */
+describe('the turn-setting channels', () => {
+  it('reads a name a channel wrote, including the empty one', () => {
+    expect(channelName('TL_ModelExplorer')).toBe('TL_ModelExplorer')
+    expect(channelName('')).toBe('')
+  })
+
+  it('says nothing for an unwired, empty or refused channel', () => {
+    expect(channelName(null)).toBeUndefined()
+    expect(channelName(undefined)).toBeUndefined()
+    expect(channelName(42)).toBeUndefined()
+  })
+
+  it('reads a set of server names, and tells "none" from "nothing said"', () => {
+    expect(channelNames(['files', 'issues'])).toEqual(['files', 'issues'])
+    expect(channelNames([])).toEqual([])
+    expect(channelNames(null)).toBeUndefined()
+    expect(channelNames('files')).toBeUndefined()
+  })
+
+  it('compares attachment sets by what they name, not by their order', () => {
+    expect(sameServers(['a', 'b'], ['b', 'a'])).toBe(true)
+    expect(sameServers([], [])).toBe(true)
+    expect(sameServers(['a'], ['a', 'b'])).toBe(false)
+    expect(sameServers(['a', 'b'], ['a', 'c'])).toBe(false)
   })
 })

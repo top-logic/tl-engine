@@ -973,3 +973,106 @@ describe('recovering a run on boot', () => {
     release()
   })
 })
+
+/**
+ * What the four turn-setting channels write into the store.
+ *
+ * Attaching a set of servers at once is the one action the pickers did not already have: the MCP
+ * toggles change one name at a time, while a `mcp-servers` channel states the whole attachment. It
+ * counts as an override of what the agent declares, exactly as a toggle does - otherwise the next
+ * send would silently drop it and run on the agent's own servers.
+ */
+describe('the turn settings', () => {
+  /**
+   * An application with two agents: the entry point declares one server, and there is a second of
+   * each to move to.
+   */
+  function withCapabilities(): void {
+    const globals = globalThis as unknown as Record<string, unknown>
+    const inner = globals.fetch as (url: string, init?: unknown) => Promise<unknown>
+    globals.fetch = vi.fn(async (url: string, init?: { method?: string; body?: string }) => {
+      if (url.includes('/chat/capabilities')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            entryPointAgent: 'Albert',
+            agents: [
+              { name: 'Albert', model: 'm1', mcpServers: ['files'] },
+              { name: 'Berta', model: 'm2', mcpServers: [] },
+            ],
+            models: [{ id: 'm1' }, { id: 'm2' }],
+            mcpServers: [{ name: 'files' }, { name: 'issues' }],
+          }),
+        }
+      }
+      return inner(url, init)
+    })
+  }
+
+  it('attaches exactly the servers it is given, and marks the attachment as chosen', async () => {
+    withCapabilities()
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+
+    expect(store.getState().mcp).toEqual(['files'])
+    expect(store.getState().mcpDirty).toBe(false)
+
+    store.actions.selectMcpServers(['files', 'issues'])
+    expect(store.getState().mcp).toEqual(['files', 'issues'])
+    expect(store.getState().mcpDirty).toBe(true)
+
+    store.actions.selectMcpServers([])
+    expect(store.getState().mcp).toEqual([])
+    expect(store.getState().mcpDirty).toBe(true)
+
+    release()
+  })
+
+  /**
+   * An agent chosen before the catalogue arrived survives it, and is then given its model.
+   *
+   * The `agent` channel can name one in the control state the element boots from, which is a whole
+   * round trip earlier than `GET /chat/capabilities` answers. Applying the entry point regardless
+   * would silently overrule a host that pre-selected an agent for its page.
+   */
+  it('keeps an agent chosen before the catalogue arrived, and gives it its model', async () => {
+    withCapabilities()
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    // Not the entry point, so applying the entry point regardless would be visible here.
+    store.actions.selectAgent('Berta')
+    store.attach(BOOT)
+    await settle()
+
+    expect(store.getState().agent).toBe('Berta')
+    expect(store.getState().model).toBe('m2')
+
+    release()
+  })
+
+  /**
+   * Picking an agent brings that agent's model and servers with it - which is why a host writing
+   * both channels has the conversation apply the agent first.
+   */
+  it('resets the model and the attachment to what the agent itself uses', async () => {
+    withCapabilities()
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+
+    store.actions.selectModel('m2')
+    store.actions.selectMcpServers(['issues'])
+    expect(store.getState().model).toBe('m2')
+
+    store.actions.selectAgent('Albert')
+    expect(store.getState().model).toBe('m1')
+    expect(store.getState().mcp).toEqual(['files'])
+    expect(store.getState().mcpDirty).toBe(false)
+
+    release()
+  })
+})

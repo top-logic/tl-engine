@@ -333,6 +333,13 @@ export interface ChatActions {
   selectAgent(name: string): void
   selectModel(id: string): void
   toggleMcp(name: string): void
+  /**
+   * Attaches exactly these MCP servers, as a whole set rather than one toggle at a time.
+   *
+   * What a host writes onto the `mcp-servers` channel: it states the attachment, so it counts as an
+   * override of the agent's own declaration the same way a toggle does.
+   */
+  selectMcpServers(names: string[]): void
   selectEffort(level: string): void
   selectTraceMode(mode: TraceMode): void
   toggleAutoApprove(): Promise<void>
@@ -783,7 +790,12 @@ export class ChatStore {
           listSessions(windowId),
         ])
         if (cancelled) return
+        // An agent already chosen wins over the entry point: the `agent` channel may have named one
+        // before this answer arrived, and so may the user. Re-applying it against the fresh catalogue
+        // is what gives it its model and its servers, which it could not have had until now.
+        const chosen = nextCaps.agents.find((a) => a.name === this.state.agent)?.name
         const initial =
+          chosen ??
           nextCaps.agents.find((a) => a.name === nextCaps.entryPointAgent)?.name ??
           nextCaps.agents[0]?.name ??
           ''
@@ -1624,6 +1636,10 @@ export class ChatStore {
       selectAgent: (name: string) => this.applyAgent(name, this.state.caps.agents),
 
       selectModel: (id: string) => this.patch({ model: id }),
+
+      selectMcpServers: (names: string[]) => {
+        this.patch({ mcpDirty: true, mcp: [...names] })
+      },
 
       toggleMcp: (name: string) => {
         const mcp = this.state.mcp

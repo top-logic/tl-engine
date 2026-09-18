@@ -86,8 +86,6 @@ public class ChatConversationControl extends ReactControl {
 
 	private String _model;
 
-	private String _effort;
-
 	private List<String> _mcpServers;
 
 	private QueryExecutor _mentionRows;
@@ -301,14 +299,14 @@ public class ChatConversationControl extends ReactControl {
 		}
 		_agent = stringArg(args, "agent");
 		_model = stringArg(args, "model");
-		_effort = stringArg(args, "effort");
 		_mcpServers = listArg(args, "mcpServers");
 
 		// A value equal to what the channel holds notifies nobody, so the common case - the browser
 		// re-reporting what a channel write just told it - stops here.
 		setChannel(_agentChannel, _agent);
 		setChannel(_modelChannel, _model);
-		setChannel(_effortChannel, _effort);
+		// No field for the effort: no role gates it, so there is never a refusal to correct.
+		setChannel(_effortChannel, stringArg(args, "effort"));
 		setChannel(_mcpChannel, _mcpServers);
 	}
 

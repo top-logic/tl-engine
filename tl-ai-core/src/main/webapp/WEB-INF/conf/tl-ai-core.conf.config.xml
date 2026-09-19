@@ -1566,6 +1566,23 @@ Before calling any tool, briefly tell the user what you're about to do. Never le
 6. **Report:** Lead with the result, not the process. Bullet points, not paragraphs. Fewer than 4 lines unless detail is needed.
 </workflow>
 
+<user_memory>
+You can keep things about this user across conversations with the `remember` tool. What you already
+know is stated in your environment block; `recall` searches further back.
+
+- Store ONLY when the user asked you to in this turn ("remember that ..."), or when you asked with
+  `askUser` whether you should and the user agreed in their answer. NEVER on your own judgement.
+- Noticing something worth keeping is not permission to keep it. Ask: askUser(type="choice",
+  question="Shall I remember that you prefer short answers?", options=["Yes", "No"]). Store only
+  after a yes. A no is final - do not ask again about the same thing.
+- A call without the user's agreement in the same turn is refused by the tool. That refusal is not a
+  bug to work around: ask the user.
+- One short sentence about the USER, in the user's language. Not a summary of the conversation, not
+  something about the application, not something you can look up.
+- Say what you stored, so the user can correct it. They see every memory in a list and can delete
+  any of them.
+</user_memory>
+
 <core_rules>
 - Call `model-browser.outlineModel` when — and only when — the answer genuinely requires the application's data model: its types, properties, or modules. Questions about what you yourself can do are answered by `listTools`; questions about the TL-Script tool registry or the authoring tools of the whole application by `listScriptToolFactories` / `listScriptTools`. Never by `outlineModel`. Do not call it by default or as orientation.
 - If a tool returns a result, USE it — never repeat the same call with identical arguments
@@ -1618,6 +1635,15 @@ If you loaded a skill but forgot to use its tools — use them now instead of lo
 							<tool name="model-browser.outlineModel"/>
 							<tool name="view-document.viewDocument"/>
 							<tool name="cite.cite"/>
+							<!--
+								Always on the agent, never on a skill: the rule about when they may be
+								called has to be in front of the model before it decides to call one,
+								and a skill is loaded after that decision. An installation that keeps
+								no memories offers neither of them however this list reads - see
+								<user-memory> on LLMService.
+							-->
+							<tool name="user-memory.remember"/>
+							<tool name="user-memory.recall"/>
 						</tools>
 						<skills>
 							<skill name="TL_annotationEditing"/>
@@ -1749,6 +1775,24 @@ When the specialist returns:
 
 ---
 
+# USER MEMORY
+
+You can keep things about this user across conversations with the `remember` tool. What you already
+know is stated in your environment block; `recall` searches further back.
+
+- Store ONLY when the user asked you to in this turn ("remember that ..."), or when you asked with
+  `askUser` whether you should and the user agreed in their answer. NEVER on your own judgement.
+- Noticing something worth keeping is not permission to keep it. Ask first, store after a yes. A no
+  is final - do not ask again about the same thing.
+- A call without the user's agreement in the same turn is refused by the tool. That refusal is not a
+  bug to work around: ask the user.
+- One short sentence about the USER, in the user's language. Not a summary of the conversation.
+- Say what you stored, so the user can correct it. They see every memory in a list and can delete
+  any of them.
+- This is yours, not a specialist's: never delegate remembering.
+
+---
+
 # WORK ORDER DISCIPLINE (for every delegation)
 
 - **goal**: One-line intent for this step
@@ -1784,6 +1828,9 @@ Route by the nature of the request:
 							<tool name="task.createTask"/>
 							<tool name="user-interaction.askUser"/>
 							<tool name="html-pages.publishPage"/>
+							<!-- See the same pair on TL_SingleAgent for why they sit on the agent. -->
+							<tool name="user-memory.remember"/>
+							<tool name="user-memory.recall"/>
 						</tools>
 						<skills>
 							<skill name="TL_taskManagement"/>

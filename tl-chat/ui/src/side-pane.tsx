@@ -2,7 +2,7 @@ import { React } from 'tl-react-bridge'
 import type { PaneAction, PaneMode, PaneTab } from './extensions'
 import type { bundle } from './i18n'
 
-const { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } = React
+const { useCallback, useLayoutEffect, useMemo, useRef, useState } = React
 
 type Labels = ReturnType<typeof bundle>
 
@@ -20,8 +20,14 @@ const STAGE_FLOOR = 240
 const DOCUMENT_SHARE = 2 / 3
 /** Width of the icon strip between thread and pane, i.e. `.side-strip`'s 3.5rem. */
 const STRIP_WIDTH = 56
-/** Below 1280, not at it: 1280 itself is still wide enough for a column beside the thread. */
-export const SHEET_MQ = '(max-width: 1279.98px)'
+/**
+ * Below 1280, not at it: 1280 itself is still wide enough for a column beside the thread.
+ *
+ * Of the chat's own width, not the window's - see the `chat-shell` container query in `styles.css`,
+ * which carries the same number for the CSS half of the same decision (Issue #427). `App` measures
+ * it once and hands the answer down, so the two halves cannot disagree.
+ */
+export const SHEET_MAX = 1279.98
 /** One arrow-key press; Page/Home/End move further. */
 const KEY_STEP = 16
 const KEY_PAGE = 64
@@ -39,6 +45,7 @@ export function SidePane({
   actions,
   hidden,
   placement = 'workspace',
+  narrow = false,
   children,
 }: {
   title: string
@@ -69,13 +76,12 @@ export function SidePane({
    * to dim it stays a column at every width.
    */
   placement?: 'workspace' | 'rail'
+  /** Whether the chat is below {@link SHEET_MAX}; measured by the host, meaningless for `rail`. */
+  narrow?: boolean
   children: React.ReactNode
 }) {
   const pane = useRef<HTMLDivElement>(null)
   const dragging = useRef(false)
-  const [narrow, setNarrow] = useState(() =>
-    typeof window !== 'undefined' ? window.matchMedia(SHEET_MQ).matches : false,
-  )
   const sheet = placement === 'workspace' && narrow
   /**
    * How wide the workspace is right now.
@@ -134,13 +140,6 @@ export function SidePane({
     },
     [mode, onWidth],
   )
-
-  useEffect(() => {
-    const mq = window.matchMedia(SHEET_MQ)
-    const onChange = () => setNarrow(mq.matches)
-    mq.addEventListener('change', onChange)
-    return () => mq.removeEventListener('change', onChange)
-  }, [])
 
   const onPointerDown = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {

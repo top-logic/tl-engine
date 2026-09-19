@@ -28,7 +28,6 @@ import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.StreamHandler;
@@ -59,26 +58,9 @@ public class TestTurnContextInRequests extends TestCase {
 
 		final List<ProviderRequest> requests = new ArrayList<>();
 
-		private int _failFirstWith;
-
-		Recorder() {
-			this(0);
-		}
-
-		/** Answers the first {@code contextOverflows} calls with a context overflow. */
-		Recorder(int contextOverflows) {
-			_failFirstWith = contextOverflows;
-		}
-
 		@Override
-		public void stream(ProviderRequest request, StreamHandler handler)
-				throws ProviderException {
+		public void stream(ProviderRequest request, StreamHandler handler) {
 			requests.add(request);
-			if (_failFirstWith > 0) {
-				_failFirstWith--;
-				throw new ProviderException(ProviderException.Kind.CONTEXT_WINDOW_EXCEEDED, 400,
-					"Too large for this test's window.");
-			}
 			handler.onEvent(new StreamEvent.MessageComplete("msg", MODEL, "end_turn", USAGE,
 				List.of(new TextContent("Done."))));
 		}
@@ -201,18 +183,18 @@ public class TestTurnContextInRequests extends TestCase {
 	 * After a summarizing compaction the newest block still reaches the model.
 	 *
 	 * <p>
-	 * The summarizer is driven against a budget that leaves no preserve zone at all, so the user
-	 * message the block arrived on is summarized away - the one case in which the guarantee is not
-	 * free.
+	 * The summarizer is driven against a budget that leaves next to no preserve zone, so every
+	 * user message the block could have been attached to is summarized away - the one case in
+	 * which the guarantee is not free.
 	 * </p>
 	 */
 	public void testTheNewestBlockSurvivesASummarizingCompaction() {
-		List<Message> retried = afterCompaction(new SummarizingStrategy(summarizer(), MODEL, 256, 1));
+		List<Message> sent = afterCompaction(new SummarizingStrategy(summarizer(), MODEL, 256, 1));
 
-		assertTrue("The history must have been summarized away: " + retried,
-			retried.stream().anyMatch(CompactionMarker.class::isInstance));
+		assertTrue("The history must have been summarized away: " + sent,
+			sent.stream().anyMatch(CompactionMarker.class::isInstance));
 		assertTrue("The newest turn context must still reach the model after a compaction: "
-			+ retried, carriesBlock(retried));
+			+ sent, carriesBlock(sent));
 	}
 
 	/**
@@ -225,12 +207,12 @@ public class TestTurnContextInRequests extends TestCase {
 	 * </p>
 	 */
 	public void testTheNewestBlockSurvivesATruncatingCompaction() {
-		List<Message> retried = afterCompaction(new TruncatingStrategy(1));
+		List<Message> sent = afterCompaction(new TruncatingStrategy(1));
 
 		assertFalse("This test is only about the case in which nothing the user said survives.",
-			retried.subList(0, retried.size() - 1).stream().anyMatch(UserMessage.class::isInstance));
+			sent.subList(0, sent.size() - 1).stream().anyMatch(UserMessage.class::isInstance));
 		assertTrue("The newest turn context must still reach the model after a compaction: "
-			+ retried, carriesBlock(retried));
+			+ sent, carriesBlock(sent));
 	}
 
 	/** A summarizer that answers with one sentence, streamed the way a real one does. */
@@ -243,12 +225,13 @@ public class TestTurnContextInRequests extends TestCase {
 	}
 
 	/**
-	 * Runs one turn whose first request overflows the context window, so the loop compacts with the
-	 * given strategy and retries, and answers with the messages of that retry.
+	 * Runs one turn on a conversation that is already over the budget, so the loop compacts with
+	 * the given strategy <em>before</em> it builds the turn's request (#367), and answers with the
+	 * messages of that one request.
 	 */
 	private static List<Message> afterCompaction(CompactionStrategy strategy) {
 		// A window far too small for the history below, so the preserve zone is squeezed down to
-		// the floor and the turn the block arrived on is compacted away with the rest.
+		// the floor and the messages the block would otherwise have landed on are compacted away.
 		ConversationMemory memory = new ConversationMemory(new Conversation(),
 			new ByteBasedTokenEstimator(), strategy, 200, 0);
 		for (int i = 0; i < 8; i++) {
@@ -259,15 +242,17 @@ public class TestTurnContextInRequests extends TestCase {
 					+ " with enough words in it to push this conversation past the budget.")),
 				USAGE, "end_turn"));
 		}
+		int historySize = memory.messages().size();
 
-		Recorder provider = new Recorder(1);
+		Recorder provider = new Recorder();
 		new AgentLoop(params(BLOCK), provider, noTools(), memory).run(ToolContext.EMPTY, ignore());
 
-		assertEquals("The loop must have compacted and retried.", 2, provider.requests.size());
-		List<Message> retried = provider.requests.get(1).messages();
-		assertTrue("The compaction must have replaced the history.",
-			retried.size() < provider.requests.get(0).messages().size());
-		return retried;
+		assertEquals("An over-budget conversation must reach the provider once, already compacted.",
+			1, provider.requests.size());
+		List<Message> sent = provider.requests.get(0).messages();
+		assertTrue("The compaction must have replaced the history: " + sent,
+			sent.size() < historySize);
+		return sent;
 	}
 
 	/** The run announces the block once, so the transcript can record it beside the user's text. */

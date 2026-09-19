@@ -77,13 +77,20 @@ public class TestCompactionSurvivesReload extends TestCase {
 		new ToolSchema("readReport", "Reads the report.", "{\"type\":\"object\"}");
 
 	/**
-	 * A reloaded session runs its next turn without tripping the reactive overflow path.
+	 * A reloaded session runs its next turn without compacting again.
 	 *
 	 * <p>
 	 * The control at the end is the point of the test: with the compaction's sidecar removed
 	 * from the very same log - which is exactly the state every log was in before this issue
 	 * was fixed - the reloaded session comes back at its full size and its first turn does
-	 * trip the reactive path. So the assertion above is not passing by accident.
+	 * have to compact. So the assertion above is not passing by accident.
+	 * </p>
+	 *
+	 * <p>
+	 * That control compacts <em>proactively</em>, before the turn's request rather than after a
+	 * refused one: since #367 the budget is checked at the start of every turn, so even the
+	 * fallback path costs no round trip. The provider below refuses an oversized request the way a
+	 * real API would and is never asked to.
 	 * </p>
 	 */
 	public void testReloadedSessionDoesNotOverflowOnItsFirstTurn() {
@@ -100,8 +107,10 @@ public class TestCompactionSurvivesReload extends TestCase {
 		ConversationLog stripped = LegacyLogs.withoutSidecars(ConversationLogSerializer.fromJson(json));
 		List<AgentEvent> withoutSidecar = runNextTurn(reload(stripped));
 		assertEquals("Control: without the sidecar the reload is back at full size and the "
-			+ "first turn overflows - which is the defect this test guards.",
-			List.of("reactive"), compactionTriggers(withoutSidecar));
+			+ "first turn has to compact - which is the defect this test guards.",
+			List.of("proactive"), compactionTriggers(withoutSidecar));
+		assertEquals("Even the fallback path must not spend a refused request on the compaction.",
+			StopReason.COMPLETE, resultOf(withoutSidecar));
 	}
 
 	/** The reloaded memory reports the compacted size, not the original one. */

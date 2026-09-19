@@ -92,4 +92,13 @@ public class UserMemorySettings {
 	public static List<String> affirmativeWords() {
 		return config().getAffirmativeWords();
 	}
+
+	/**
+	 * The words with which a user refuses; they win over the affirmative ones.
+	 *
+	 * @see UserMemoryConfig#getNegativeWords()
+	 */
+	public static List<String> negativeWords() {
+		return config().getNegativeWords();
+	}
 }

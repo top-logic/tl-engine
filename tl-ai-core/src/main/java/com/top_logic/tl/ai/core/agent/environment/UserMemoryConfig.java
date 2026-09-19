@@ -38,6 +38,7 @@ import com.top_logic.basic.config.order.DisplayOrder;
 	UserMemoryConfig.MAX_LENGTH,
 	UserMemoryConfig.REQUEST_WORDS,
 	UserMemoryConfig.AFFIRMATIVE_WORDS,
+	UserMemoryConfig.NEGATIVE_WORDS,
 })
 public interface UserMemoryConfig extends ConfigPart {
 
@@ -55,6 +56,9 @@ public interface UserMemoryConfig extends ConfigPart {
 
 	/** Configuration property name for {@link #getAffirmativeWords()}. */
 	String AFFIRMATIVE_WORDS = "affirmative-words";
+
+	/** Configuration property name for {@link #getNegativeWords()}. */
+	String NEGATIVE_WORDS = "negative-words";
 
 	/**
 	 * Whether this installation keeps memories about its users at all.
@@ -143,4 +147,22 @@ public interface UserMemoryConfig extends ConfigPart {
 		+ "ja,jau,klar,gerne,gern,sicher,einverstanden,mach das,mache das,bitte,"
 		+ "in ordnung,passt")
 	List<String> getAffirmativeWords();
+
+	/**
+	 * The words with which a user refuses.
+	 *
+	 * <p>
+	 * They win over {@link #getAffirmativeWords()}: an answer that carries a negation grants
+	 * nothing, even when it also carries a word that would otherwise read as agreement - "no, that
+	 * is fine" is a refusal. Refusing is the safe direction, so the ambiguous case goes that way.
+	 * </p>
+	 *
+	 * @see #NEGATIVE_WORDS
+	 */
+	@Name(NEGATIVE_WORDS)
+	@Label("Negative words")
+	@Format(CommaSeparatedStrings.class)
+	@FormattedDefault("no,nope,never,rather not,don't,do not,"
+		+ "nein,nee,nicht,kein,keine,keinesfalls,lieber nicht,auf keinen fall")
+	List<String> getNegativeWords();
 }

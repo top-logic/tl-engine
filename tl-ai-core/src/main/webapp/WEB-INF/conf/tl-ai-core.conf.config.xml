@@ -2478,6 +2478,16 @@ Note what the last example does NOT do: it does not say the pattern is wrong, an
 							tool-class="com.top_logic.tl.ai.core.tools.interaction.AskUserTool"
 						/>
 					</factory>
+					<!--
+						remember / recall (Issue #439). Switched off wholesale by
+						<user-memory enabled="false"/> on LLMService, which then also keeps both
+						out of every agent's catalog.
+					-->
+					<factory name="user-memory">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.memory.UserMemoryTool"
+						/>
+					</factory>
 					<factory name="cite">
 						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.interaction.CiteTool"

@@ -20,6 +20,8 @@ import com.top_logic.tl.ai.core.agent.environment.AgentFact;
 import com.top_logic.tl.ai.core.agent.environment.EnvironmentFact;
 import com.top_logic.tl.ai.core.agent.environment.RunEnvironment;
 import com.top_logic.tl.ai.core.agent.environment.RunFactsBinding;
+import com.top_logic.tl.ai.core.agent.environment.UserMemorySettings;
+import com.top_logic.tl.ai.core.tools.memory.UserMemoryTool;
 import com.top_logic.tl.ai.core.agent.environment.TurnContext;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.skills.Skill;
@@ -704,6 +706,24 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	}
 
 	/**
+	 * Whether this installation offers the tool at all.
+	 *
+	 * <p>
+	 * Not a security gate - that is {@link ToolPermissionFilter} and the invocation gate in
+	 * {@link AgentLoop}. This answers the narrower question of whether a feature an administrator
+	 * can switch off is switched on, so that an agent whose definition still names its tools does
+	 * not offer the model something the installation has retired. A refused feature also refuses at
+	 * the tool itself, so a catalog built another way is covered too.
+	 * </p>
+	 */
+	static boolean isOffered(Tool tool) {
+		if (UserMemoryTool.MEMORY_TOOLS.contains(tool.name())) {
+			return UserMemorySettings.enabled();
+		}
+		return true;
+	}
+
+	/**
 	 * Builds the {@link AgentParams} record from an {@link AgentDefinition} and its
 	 * {@link AgentModelAssignment}.
 	 *
@@ -964,6 +984,9 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 					Logger.warn("Tool not found in registry: " + toolName, AgentFactory.class);
 					continue;
 				}
+				if (!isOffered(tool)) {
+					continue;
+				}
 				if (!readOnly || isReadOnlyTool(tool)) {
 					try {
 						registry.register(tool);
@@ -1030,6 +1053,9 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 				Tool tool = serviceRegistry.getTool(toolName);
 				if (tool == null) {
 					Logger.warn("Tool not found in registry: " + toolName, AgentFactory.class);
+					continue;
+				}
+				if (!isOffered(tool)) {
 					continue;
 				}
 				if (!readOnly || isReadOnlyTool(tool)) {

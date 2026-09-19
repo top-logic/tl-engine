@@ -17,6 +17,7 @@ import com.top_logic.tl.ai.core.agent.approval.UserInteractionStoreBinding;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.InteractionRecorder;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
+import com.top_logic.tl.ai.core.tools.memory.MemoryConsentBinding;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
@@ -114,6 +115,11 @@ public class AskUserTool {
 			}
 			InteractionRecorder.resolve(interactionId,
 				AgentExecutionStore.InteractionState.RESOLVED, response);
+			// What the user answered is also the only thing that can agree to a memory being kept
+			// in this turn. Recorded here, where the question and the answer are both known, so
+			// that the remember tool asks a record built from what the user said rather than from
+			// what the model reports the user said. See MemoryConsent.
+			MemoryConsentBinding.recordAnswer(question, response);
 			return response;
 		} catch (TimeoutException e) {
 			Logger.warn("User interaction timed out (id: " + request.getId() + ")", AskUserTool.class);

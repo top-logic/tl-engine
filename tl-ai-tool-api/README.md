@@ -100,3 +100,26 @@ The module is compiled with `-parameters`, so parameter names reach the schema. 
 honestly: `READ` tools need no approval and may be dispatched concurrently with other `READ` tools;
 everything else runs serially, asks for approval, and (except `EXTERNAL`) enrols in the turn's
 transaction.
+
+### A tool that changes a long text
+
+If your tool writes a long text value - a document body, a prompt, a stored note - do **not** take
+the whole new value as a parameter. The model then has to emit the entire text to change a sentence
+of it, which costs the whole value in output tokens and lets the untouched parts drift.
+
+Take an anchor and a replacement instead, and apply them with
+`com.top_logic.tl.ai.core.text.TextEdits`, which is `String` in and a structured result out:
+
+```java
+TextEdits.Result edit = TextEdits.replace(current, oldText, newText);
+if (!edit.applied()) {
+    return "error: " + edit.message();   // says what to do next, in a sentence a model can act on
+}
+store(edit.text());
+```
+
+It enforces the part where reliability lives - a unique match or nothing happens, a match cascade
+that tolerates line endings and whitespace and reports when it fell back, and a miss that says where
+the anchor stopped agreeing with the text. Offer a verbatim read beside it: an anchored edit without
+a verbatim read to anchor on is a guess. `text-edit.readText` / `text-edit.editText` in `tl-ai-core`
+are the generic pair; the contract is the JavaDoc of `TextEdits`.

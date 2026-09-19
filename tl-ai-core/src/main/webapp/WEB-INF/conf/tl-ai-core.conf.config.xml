@@ -1583,6 +1583,16 @@ know is stated in your environment block; `recall` searches further back.
   any of them.
 </user_memory>
 
+<long_text>
+To change part of a long Text or String attribute - a document body, a system prompt, a stored
+note - read it with `readText`, then change the one passage with `editText`, quoting the passage
+back as an exact anchor. Never re-emit the whole value: it costs the entire text in output tokens
+for a one-sentence change, and every paragraph that passes through you again can come back subtly
+different. Drop the `NNN| ` gutter of the read before you use a line as an anchor, and extend the
+anchor with the lines around it until it is unique. A whole-value `set` is for a value you are
+writing from nothing, not for editing one that exists.
+</long_text>
+
 <core_rules>
 - Call `model-browser.outlineModel` when — and only when — the answer genuinely requires the application's data model: its types, properties, or modules. Questions about what you yourself can do are answered by `listTools`; questions about the TL-Script tool registry or the authoring tools of the whole application by `listScriptToolFactories` / `listScriptTools`. Never by `outlineModel`. Do not call it by default or as orientation.
 - If a tool returns a result, USE it — never repeat the same call with identical arguments
@@ -1644,6 +1654,14 @@ If you loaded a skill but forgot to use its tools — use them now instead of lo
 							-->
 							<tool name="user-memory.remember"/>
 							<tool name="user-memory.recall"/>
+							<!--
+								Issue #168. Always on the agent for the same reason the memory tools
+								are: the rule about when a long text is edited rather than rewritten
+								has to be in front of the model before it loads the TL-Script skill
+								and writes a whole-value set.
+							-->
+							<tool name="text-edit.readText"/>
+							<tool name="text-edit.editText"/>
 						</tools>
 						<skills>
 							<skill name="TL_annotationEditing"/>
@@ -2019,6 +2037,9 @@ Treat yourself as having ZERO knowledge about available TLScript functions or th
 ## CONTEXT CONTRACT
 You are a **leaf agent for model discovery** — you do not search, navigate, or browse the model. The TL_Orchestrator provides qualified names (type/part/enum literals) in your `context`. However, you have read-only model-introspection tools for verifying facts about those named entities (`listTypes`, `listTypeParts`, `listClassifiers`). Use them per the procedures defined in your skills. If a name you need is missing from `context`, state what is missing — the orchestrator will resolve it and call you again.
 
+## LONG TEXT VALUES
+Do NOT write a script that `set`s a long Text or String attribute to a value that is mostly the value it already has. Read it with `readText`, then change the one passage with `editText`, quoting that passage back as an exact anchor. A whole-value `set` costs the entire text in output tokens for a one-sentence change, and every paragraph re-emitted can come back subtly different. Drop the `NNN| ` gutter of the read before using a line as an anchor, and extend the anchor with the lines around it until it is unique. `set` remains right for a value written from nothing and for anything that is not a single text.
+
 ## SCRIPT AND CONTEXT RULES
 - **Base explanations on actual TLScript code.** Do not infer or invent logic if no code is available.
 - **Code from context:** Use TLScript code provided in your `context` field. If none was provided and you need it, say so.
@@ -2098,6 +2119,14 @@ B) Choosing `.` vs `..`:
 							<tool name="model-browser.listTypes"/>
 							<tool name="model-browser.listTypeParts"/>
 							<tool name="model-browser.listClassifiers"/>
+							<!--
+								Issue #168. On the agent rather than on a skill, for the reason the
+								memory tools are: the rule about when a long text is edited instead
+								of rewritten has to be in front of the model before it writes the
+								script that rewrites it, and a skill is loaded after that decision.
+							-->
+							<tool name="text-edit.readText"/>
+							<tool name="text-edit.editText"/>
 						</tools>
 						<skills>
 							<skill name="TL_tlScriptInstanceCreation"/>
@@ -2439,6 +2468,17 @@ Note what the last example does NOT do: it does not say the pattern is wrong, an
 					<factory name="view-document">
 						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.model.ViewDocumentTool"
+						/>
+					</factory>
+					<!--
+						readText / editText (Issue #168): the partial write path for a long Text or
+						String attribute, so that changing one sentence of a document does not cost
+						the whole document in output tokens. Offer both or neither - an anchored edit
+						without the verbatim read it anchors on is a guess.
+					-->
+					<factory name="text-edit">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.text.TextEditTool"
 						/>
 					</factory>
 					<factory name="model-annotation-browser">

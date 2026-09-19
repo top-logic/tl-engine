@@ -5,14 +5,22 @@
  */
 package com.top_logic.tl.ai.core.screenshots;
 
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.model.TLClass;
+import com.top_logic.model.TLObject;
+import com.top_logic.tl.ai.core.ApplicationUrl;
 import com.top_logic.tl.ai.core.screenshots.model.Screenshot;
 import com.top_logic.tl.ai.core.screenshots.model.TlAiScreenshotsFactory;
 import com.top_logic.util.model.ModelService;
@@ -41,12 +49,20 @@ public class ScreenshotService extends ConfiguredManagedClass<ScreenshotService.
 	/** Content type of the stored image. Screenshots are always captured as PNG. */
 	public static final String PNG_CONTENT_TYPE = "image/png";
 
+	/** The path {@link ScreenshotServlet} is mapped to, including its trailing slash. */
+	public static final String URL_PREFIX = "/screenshot/";
+
+	/** Bytes of randomness for ids; 16 bytes encodes to 22 base64url characters without padding. */
+	private static final int ID_BYTE_LENGTH = 16;
+
 	/**
 	 * Configuration interface for {@link ScreenshotService}.
 	 */
 	public interface Config<I extends ScreenshotService> extends ConfiguredManagedClass.Config<I> {
 		// No configurable properties for v1.
 	}
+
+	private final SecureRandom _random = new SecureRandom();
 
 	/**
 	 * Creates a {@link ScreenshotService}.
@@ -96,6 +112,7 @@ public class ScreenshotService extends ConfiguredManagedClass<ScreenshotService.
 		}
 
 		Screenshot screenshot = TlAiScreenshotsFactory.getInstance().createScreenshot();
+		screenshot.setId(generateId());
 		screenshot.setName(name);
 		screenshot.setImage(BinaryDataFactory.createBinaryData(image, PNG_CONTENT_TYPE, name));
 		screenshot.setSourceUrl(sourceUrl);
@@ -105,6 +122,93 @@ public class ScreenshotService extends ConfiguredManagedClass<ScreenshotService.
 			screenshot.setOwner(owner);
 		}
 		return screenshot;
+	}
+
+	/**
+	 * Looks up a screenshot by the id its viewing URL carries.
+	 *
+	 * <p>
+	 * The lookup is a scan over the type's instances, as {@code GeneratedHtmlPageService#findById}
+	 * is: the id lives in generic (flex) storage, so there is no column to index it by. Screenshots
+	 * are few and the scan reads only their metadata - the PNG payload stays unread until
+	 * {@link Screenshot#getImage()} is called.
+	 * </p>
+	 *
+	 * @param id
+	 *        The value of {@code Screenshot#getId()}. May be <code>null</code>.
+	 * @return The screenshot, or {@link Optional#empty()} when no screenshot carries that id.
+	 */
+	public Optional<Screenshot> findById(String id) {
+		if (id == null || id.isEmpty()) {
+			return Optional.empty();
+		}
+		TLClass type = TlAiScreenshotsFactory.getScreenshotType();
+		List<TLObject> all = MetaElementUtil.getAllInstancesOf(type, TLObject.class);
+		for (TLObject obj : all) {
+			Screenshot screenshot = (Screenshot) obj;
+			if (id.equals(screenshot.getId())) {
+				return Optional.of(screenshot);
+			}
+		}
+		return Optional.empty();
+	}
+
+	/**
+	 * Whether the given account may look at the given screenshot.
+	 *
+	 * <p>
+	 * <b>The owner, or an administrator.</b> A screenshot is a picture of a page somebody drove a
+	 * browser to while logged in somewhere; it can show another system's inbox, another system's
+	 * customer record, or a login form with a name in it. That is the capturing user's own
+	 * material, so nobody else reads it, and an installation that wants a wider rule states one
+	 * rather than inherits it. Issue #227 is where a general read rule for perceivable binaries is
+	 * being discussed; until it exists this is the rule, and it is the narrow one.
+	 * </p>
+	 *
+	 * <p>
+	 * A screenshot captured by an unattended run has no owner. It is readable by an administrator
+	 * only - the safe direction, not an oversight.
+	 * </p>
+	 *
+	 * @param screenshot
+	 *        The screenshot asked for. May be <code>null</code>, which nobody may read.
+	 * @param account
+	 *        The account asking. May be <code>null</code>, which may read nothing.
+	 */
+	public static boolean mayRead(Screenshot screenshot, Person account) {
+		if (screenshot == null || account == null) {
+			return false;
+		}
+		if (Person.isAdmin(account)) {
+			return true;
+		}
+		return account.equals(screenshot.getOwner());
+	}
+
+	/**
+	 * The URL at which {@link ScreenshotServlet} serves the given screenshot.
+	 *
+	 * @param screenshot
+	 *        The screenshot to address.
+	 * @return The absolute or root-relative URL, or <code>null</code> for a screenshot that carries
+	 *         no id (one captured before the viewing route existed).
+	 * @see ApplicationUrl
+	 */
+	public static String viewUrl(Screenshot screenshot) {
+		if (screenshot == null) {
+			return null;
+		}
+		String id = screenshot.getId();
+		if (id == null || id.isEmpty()) {
+			return null;
+		}
+		return ApplicationUrl.of(URL_PREFIX + id);
+	}
+
+	private String generateId() {
+		byte[] buf = new byte[ID_BYTE_LENGTH];
+		_random.nextBytes(buf);
+		return Base64.getUrlEncoder().withoutPadding().encodeToString(buf);
 	}
 
 	/**

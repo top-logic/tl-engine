@@ -549,7 +549,7 @@ user with a vague "I can't do that" or goes hunting for a skill it may also not 
 Six code fixes and one piece of prompt text address that:
 
 - **Skills whose every tool is denied are not offered** (`AgentFactory.injectSkills`,
-  `buildDynamicSkillTool`, `buildSkillTool`, all through `AgentCapabilities.unusableReason`). A skill
+  `buildDynamicSkillTool`, all through `AgentCapabilities.unusableReason`). A skill
   with no tools at all is pure instruction text and is kept; a partly denied skill is kept and loads
   only the permitted subset; a skill whose tool names do not resolve is kept, because a typo is not a
   denial. Every dropped skill is logged at INFO with the deciding reason - silent capability loss is

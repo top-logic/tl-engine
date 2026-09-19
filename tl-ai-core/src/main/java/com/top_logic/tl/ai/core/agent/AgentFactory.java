@@ -53,7 +53,6 @@ import com.top_logic.tl.ai.core.tools.interaction.WaitForSubagentTool;
 import com.top_logic.tl.ai.core.tools.introspection.ListToolsTool;
 import com.top_logic.tl.ai.tool.api.AnnotatedTools;
 import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /**
@@ -712,26 +711,10 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		LLMProvider provider = buildProvider(config.model(), assignment.provider());
 		// Full parity with the parent agent's toolset, minus the ability to spawn subagents.
 		ToolRegistry registry = agentDef.skills().isEmpty()
-			? buildStaticToolCatalog(agentDef, false, false, capabilities)
-			: buildDynamicToolCatalog(agentDef, false, false, capabilities);
+			? buildStaticToolCatalog(agentDef, false, capabilities)
+			: buildDynamicToolCatalog(agentDef, false, capabilities);
 		int maxToolResultChars = resolveMaxToolResultChars(assignment);
 		return new AgentLoop(config, provider, registry, maxToolResultChars);
-	}
-
-	/**
-	 * Returns {@code true} if the tool has a read-only mode ({@code READ} or {@code USER_SCOPED}).
-	 *
-	 * <p>
-	 * {@link ToolMode#EXTERNAL} is not one of them. A read-only catalog exists so that a subagent
-	 * cannot change anything, and an external call changes something - just not here. That it leaves
-	 * this application's data alone is exactly the wrong reason to hand it to a run that was
-	 * deliberately given no way to make changes.
-	 * </p>
-	 */
-	static boolean isReadOnlyTool(Tool tool) {
-		ToolMode mode = tool.mode();
-		return mode == ToolMode.READ
-			|| mode == ToolMode.USER_SCOPED;
 	}
 
 	/**
@@ -1033,12 +1016,12 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 */
 	public ToolRegistry buildToolCatalog(AgentDefinition agent, AgentCapabilities capabilities) {
 		if (!agent.skills().isEmpty()) {
-			return buildDynamicToolCatalog(agent, true, false, capabilities);
+			return buildDynamicToolCatalog(agent, true, capabilities);
 		}
-		return buildStaticToolCatalog(agent, true, false, capabilities);
+		return buildStaticToolCatalog(agent, true, capabilities);
 	}
 
-	private ToolCatalog buildStaticToolCatalog(AgentDefinition agent, boolean includeDelegation, boolean readOnly,
+	private ToolCatalog buildStaticToolCatalog(AgentDefinition agent, boolean includeDelegation,
 			AgentCapabilities capabilities) {
 		ToolCatalog registry =
 			new ToolCatalog();
@@ -1056,14 +1039,12 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 				if (!isOffered(tool)) {
 					continue;
 				}
-				if (!readOnly || isReadOnlyTool(tool)) {
-					try {
-						registry.register(tool);
-					} catch (IllegalArgumentException e) {
-						throw new IllegalArgumentException(
-							"Agent '" + agent.name() + "': " + e.getMessage()
-							+ " (qualified source: '" + toolName + "')", e);
-					}
+				try {
+					registry.register(tool);
+				} catch (IllegalArgumentException e) {
+					throw new IllegalArgumentException(
+						"Agent '" + agent.name() + "': " + e.getMessage()
+						+ " (qualified source: '" + toolName + "')", e);
 				}
 			}
 		}
@@ -1081,20 +1062,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 					continue;
 				}
 				for (Tool mcpTool : mcpTools) {
-					if (!readOnly || isReadOnlyTool(mcpTool)) {
-						registry.register(mcpTool);
-					}
-				}
-			}
-		}
-
-		// Inject skill tool if the agent has skills (but not for read-only subagents to avoid runtime capability escalation)
-		SkillTool skillTool = null;
-		if (!readOnly) {
-			skillTool = buildSkillTool(agent, capabilities);
-			if (skillTool != null) {
-				for (Tool tool : AnnotatedTools.from(skillTool)) {
-					registry.register(tool);
+					registry.register(mcpTool);
 				}
 			}
 		}
@@ -1105,12 +1073,13 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		}
 
 		// Last, so that it sees every tool the agent ended up with - delegation tools included.
-		registry.register(listToolsTool(agent, registry.tools(), skillTool));
+		// No loadSkill tool: this catalog is built exactly for an agent that declares no skills.
+		registry.register(listToolsTool(agent, registry.tools(), null));
 
 		return registry.freeze();
 	}
 
-	private ToolRegistry buildDynamicToolCatalog(AgentDefinition agent, boolean includeDelegation, boolean readOnly,
+	private ToolRegistry buildDynamicToolCatalog(AgentDefinition agent, boolean includeDelegation,
 			AgentCapabilities capabilities) {
 		ToolCatalog baseCatalog = new ToolCatalog();
 
@@ -1127,14 +1096,12 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 				if (!isOffered(tool)) {
 					continue;
 				}
-				if (!readOnly || isReadOnlyTool(tool)) {
-					try {
-						baseCatalog.register(tool);
-					} catch (IllegalArgumentException e) {
-						throw new IllegalArgumentException(
-							"Agent '" + agent.name() + "': " + e.getMessage()
-							+ " (qualified source: '" + toolName + "')", e);
-					}
+				try {
+					baseCatalog.register(tool);
+				} catch (IllegalArgumentException e) {
+					throw new IllegalArgumentException(
+						"Agent '" + agent.name() + "': " + e.getMessage()
+						+ " (qualified source: '" + toolName + "')", e);
 				}
 			}
 		}
@@ -1152,9 +1119,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 					continue;
 				}
 				for (Tool mcpTool : mcpTools) {
-					if (!readOnly || isReadOnlyTool(mcpTool)) {
-						baseCatalog.register(mcpTool);
-					}
+					baseCatalog.register(mcpTool);
 				}
 			}
 		}
@@ -1253,21 +1218,6 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 			AgentCapabilities capabilities) {
 		List<String> declared = agent.skills();
 		return skillId -> capabilities.skillAbsenceReason(skillId, declared);
-	}
-
-	/**
-	 * Builds a {@link SkillTool} for the agent's skills, or {@code null} if the agent has no
-	 * skills.
-	 */
-	private SkillTool buildSkillTool(AgentDefinition agent, AgentCapabilities capabilities) {
-		List<String> skillNames = agent.skills();
-		if (skillNames.isEmpty()) {
-			return null;
-		}
-
-		Map<String, Skill> skillMap = buildSkillMap(skillNames, skillLookup(), capabilities);
-		return skillMap.isEmpty() ? null
-			: new SkillTool(skillMap, null, null, null, null, absenceReason(agent, capabilities));
 	}
 
 	/** Resolves a skill name against the merged config and knowledge-base definitions. */

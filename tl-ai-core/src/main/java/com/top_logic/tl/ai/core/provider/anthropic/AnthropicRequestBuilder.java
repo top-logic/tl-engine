@@ -82,9 +82,7 @@ public final class AnthropicRequestBuilder {
 			req.setTools(tools);
 		}
 
-		if (request.responseFormat() == ResponseFormat.JSON) {
-			req.setResponseFormat(Map.of("type", "json_object"));
-		}
+		writeResponseFormat(req, request.responseFormat());
 
 		if (request.toolChoice() != null && request.toolChoice() != ToolChoice.AUTO) {
 			String choiceType = request.toolChoice() == ToolChoice.REQUIRED ? "any" : "none";
@@ -301,6 +299,49 @@ public final class AnthropicRequestBuilder {
 		return cc;
 	}
 
+	/**
+	 * Writes the requested {@link ResponseFormat} as Anthropic's structured output.
+	 *
+	 * <p>
+	 * Anthropic states the constraint as {@code output_config.format} with a {@code json_schema}.
+	 * There is no untyped JSON mode - a schema is what the API takes - so a request that asks for
+	 * JSON without saying which JSON is refused here rather than sent and rejected, or worse, sent
+	 * and answered in prose.
+	 * </p>
+	 */
+	private static void writeResponseFormat(AnthropicRequest req, ResponseFormat format)
+			throws ProviderException {
+		if (format == null || format.kind() == ResponseFormat.Kind.TEXT) {
+			return;
+		}
+		if (format.kind() == ResponseFormat.Kind.JSON) {
+			throw new ProviderException(ProviderException.Kind.INVALID_REQUEST, 0,
+				"Anthropic has no untyped JSON mode. Pass a JSON schema as the response format"
+					+ " (a map with a 'schema') to get a structured answer.");
+		}
+		Map<String, Object> jsonSchema = new LinkedHashMap<>();
+		jsonSchema.put("type", "json_schema");
+		jsonSchema.put("schema", format.schema());
+		putOutputConfig(req, "format", jsonSchema);
+	}
+
+	/**
+	 * Adds one entry to the request's {@code output_config}, keeping what is already there.
+	 *
+	 * <p>
+	 * Both the thinking effort and the structured output live in that one object, and they are
+	 * written by different code paths.
+	 * </p>
+	 */
+	private static void putOutputConfig(AnthropicRequest req, String key, Object value) {
+		Map<String, Object> outputConfig = new LinkedHashMap<>();
+		if (req.getOutputConfig() instanceof Map<?, ?> existing) {
+			existing.forEach((k, v) -> outputConfig.put(String.valueOf(k), v));
+		}
+		outputConfig.put(key, value);
+		req.setOutputConfig(outputConfig);
+	}
+
 	private static void writeThinkingParams(AnthropicRequest req, String model, int maxOutputTokens,
 			Map<String, Object> modelOptions) {
 		Object thinkingEffort = modelOptions.get("thinking_effort");
@@ -312,7 +353,7 @@ public final class AnthropicRequestBuilder {
 			req.setThinking(Map.of("type", "enabled", "budget_tokens", budgetTokens));
 		} else {
 			req.setThinking(Map.of("type", "adaptive"));
-			req.setOutputConfig(Map.of("effort", thinkingEffort.toString()));
+			putOutputConfig(req, "effort", thinkingEffort.toString());
 		}
 	}
 

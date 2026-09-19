@@ -439,7 +439,10 @@ public class AgentLoop {
 				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), TokenUsage.EMPTY, List.of()));
 				StopReason stopReason = stopReasonFor(e, context);
 				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
-				return new AgentResult(stopReason, turn, totalUsage);
+				// The kind and the message travel on the result, not only in the event stream: an
+				// entry point without a listener of its own (the TL-Script functions) must still be
+				// able to tell a failed run from an empty answer, and say why it failed.
+				return new AgentResult(stopReason, turn, totalUsage, e.kind().name(), e.getMessage());
 			}
 
 			conversation.add(assistantMsg);
@@ -583,7 +586,10 @@ public class AgentLoop {
 				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), TokenUsage.EMPTY, List.of()));
 				StopReason stopReason = stopReasonFor(e, context);
 				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
-				return new AgentResult(stopReason, turn, totalUsage);
+				// The kind and the message travel on the result, not only in the event stream: an
+				// entry point without a listener of its own (the TL-Script functions) must still be
+				// able to tell a failed run from an empty answer, and say why it failed.
+				return new AgentResult(stopReason, turn, totalUsage, e.kind().name(), e.getMessage());
 			}
 
 			conversation.add(assistantMsg);
@@ -1498,7 +1504,7 @@ public class AgentLoop {
 			filteredTools,
 			_config.maxOutputTokens(),
 			_config.modelOptions(),
-			null,
+			_config.responseFormat(),
 			_config.toolChoice(),
 			Duration.ofSeconds(_config.timeoutSeconds()));
 

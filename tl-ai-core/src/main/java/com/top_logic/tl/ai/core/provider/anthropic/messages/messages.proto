@@ -130,12 +130,10 @@ message AnthropicRequest {
 	json messages [Name = "messages"];
 	/** Tool definitions. */
 	json tools [Name = "tools"];
-	/** Response format specification. */
-	json response_format [Name = "response_format"];
 	/** Tool choice configuration. */
 	json tool_choice [Name = "tool_choice"];
 	/** Extended thinking configuration. */
 	json thinking [Name = "thinking"];
-	/** Output configuration (e.g. thinking continuity). */
+	/** Output configuration: thinking effort and the structured-output format. */
 	json output_config [Name = "output_config"];
 }

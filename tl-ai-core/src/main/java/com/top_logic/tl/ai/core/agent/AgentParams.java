@@ -10,6 +10,7 @@ import java.util.Objects;
 import java.util.function.Predicate;
 
 import com.top_logic.tl.ai.core.message.AssistantMessage;
+import com.top_logic.tl.ai.core.provider.ResponseFormat;
 import com.top_logic.tl.ai.core.provider.ToolChoice;
 
 /**
@@ -36,6 +37,9 @@ import com.top_logic.tl.ai.core.provider.ToolChoice;
  *                            beside the user's text - the facts that change while the conversation
  *                            runs, which must stay out of {@link #systemPrompt()};
  *                            {@code null} for a run whose host stated none
+ * @param responseFormat      the format every response of this run must have, or {@code null} for
+ *                            the provider default; a provider that cannot honour it refuses the
+ *                            request rather than answering in another shape
  *
  * @see AgentLoop
  */
@@ -51,7 +55,8 @@ public record AgentParams(
 		ToolChoice toolChoice,
 		Predicate<AssistantMessage> responseValidator,
 		String environment,
-		String turnContext) {
+		String turnContext,
+		ResponseFormat responseFormat) {
 
 	/** Default maximum turns. */
 	public static final int DEFAULT_MAX_TURNS = 25;
@@ -92,6 +97,19 @@ public record AgentParams(
 	}
 
 	/**
+	 * Parameters of a run that states no response format - every caller but the {@code aiChat}
+	 * TL-Script function, which is the one entry point that lets its caller ask for one.
+	 */
+	public AgentParams(String model, String systemPrompt, int maxTurns,
+			int maxOutputTokens, Map<String, Object> modelOptions,
+			int contextWindowTokens, int maxRetries, int timeoutSeconds,
+			ToolChoice toolChoice, Predicate<AssistantMessage> responseValidator,
+			String environment, String turnContext) {
+		this(model, systemPrompt, maxTurns, maxOutputTokens, modelOptions, contextWindowTokens,
+			maxRetries, timeoutSeconds, toolChoice, responseValidator, environment, turnContext, null);
+	}
+
+	/**
 	 * Parameters of a run that composed neither block - every caller that builds an
 	 * {@link AgentLoop} directly rather than through
 	 * {@link AgentFactory#buildConfig(AgentDefinition, com.top_logic.tl.ai.core.provider.AgentModelAssignment, AgentCapabilities)}.
@@ -101,7 +119,7 @@ public record AgentParams(
 			int contextWindowTokens, int maxRetries, int timeoutSeconds,
 			ToolChoice toolChoice, Predicate<AssistantMessage> responseValidator) {
 		this(model, systemPrompt, maxTurns, maxOutputTokens, modelOptions, contextWindowTokens,
-			maxRetries, timeoutSeconds, toolChoice, responseValidator, null, null);
+			maxRetries, timeoutSeconds, toolChoice, responseValidator, null, null, null);
 	}
 
 	/**
@@ -113,7 +131,7 @@ public record AgentParams(
 			ToolChoice toolChoice, Predicate<AssistantMessage> responseValidator,
 			String environment) {
 		this(model, systemPrompt, maxTurns, maxOutputTokens, modelOptions, contextWindowTokens,
-			maxRetries, timeoutSeconds, toolChoice, responseValidator, environment, null);
+			maxRetries, timeoutSeconds, toolChoice, responseValidator, environment, null, null);
 	}
 
 	/**
@@ -133,6 +151,16 @@ public record AgentParams(
 		this(model, systemPrompt, maxTurns, maxOutputTokens, modelOptions,
 			DEFAULT_CONTEXT_WINDOW_TOKENS, DEFAULT_MAX_RETRIES, DEFAULT_TIMEOUT_SECONDS,
 			null, msg -> true);
+	}
+
+	/**
+	 * Convenience constructor with model options and a response format, defaults for the rest.
+	 */
+	public AgentParams(String model, String systemPrompt, int maxTurns,
+			int maxOutputTokens, Map<String, Object> modelOptions, ResponseFormat responseFormat) {
+		this(model, systemPrompt, maxTurns, maxOutputTokens, modelOptions,
+			DEFAULT_CONTEXT_WINDOW_TOKENS, DEFAULT_MAX_RETRIES, DEFAULT_TIMEOUT_SECONDS,
+			null, msg -> true, null, null, responseFormat);
 	}
 
 	/**

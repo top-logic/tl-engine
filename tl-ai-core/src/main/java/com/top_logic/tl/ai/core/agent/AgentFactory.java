@@ -224,27 +224,33 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		int messageCountBefore = effectiveConversation.messages().size();
 
 		AgentLoop loop;
+		AgentResult result;
 		if (conversationMemory != null) {
 			// Session memory is created before the agent is known; align its compaction
 			// budget with the effective context window (assignment override > catalog).
 			conversationMemory.setContextWindowTokens(coreConfig.contextWindowTokens());
 			loop = new AgentLoop(coreConfig, provider, registry, conversationMemory, maxToolResultChars);
-			loop.run(context, listener);
+			result = loop.run(context, listener);
 		} else {
 			loop = new AgentLoop(coreConfig, provider, registry, maxToolResultChars);
-			loop.run(conversation, context, listener);
+			result = loop.run(conversation, context, listener);
 		}
 
-		return new RunResult(extractResponseText(effectiveConversation, messageCountBefore), registry);
+		return new RunResult(extractResponseText(effectiveConversation, messageCountBefore), registry,
+			result);
 	}
 
 	/**
-	 * Result of {@link #runAgent}, carrying both the response text and the tool registry used.
+	 * Result of {@link #runAgent}, carrying the response text, the tool registry used and why the
+	 * loop stopped.
 	 *
 	 * @param response The final assistant response text.
 	 * @param registry The tool registry used during the run.
+	 * @param result   Why the loop stopped, and what the provider said if it failed. A caller that
+	 *                 has no event listener reads the failure here - the response text of a failed
+	 *                 run is the empty string, which is indistinguishable from an empty answer.
 	 */
-	public record RunResult(String response, ToolRegistry registry) {}
+	public record RunResult(String response, ToolRegistry registry, AgentResult result) {}
 
 	/**
 	 * Optional per-run overrides supplied by the chat UI.

@@ -76,6 +76,25 @@ invoices and administration through the LayoutServlet, and the classic chat cont
 Reach it at <http://localhost:8080/tl-ai-demo/servlet/LayoutServlet>. Its "Albert" tab comes from
 `tl-chat-classic`, which this application depends on for exactly that reason (#398).
 
+## An agent on a schedule
+
+`WEB-INF/autoconf/com.top_logic.util.sched.Scheduler.config.xml` declares one
+`com.top_logic.ai.chat.sched.AgentTask`, **DailyInvoiceSummary**, so that the path exists in a
+running application and can be tried by hand. It asks the entry-point agent to summarise the invoices
+recorded today and writes the sitting into `root`'s chat history, where it can be opened and
+continued like any other conversation.
+
+It is configured `enabled="false"`, because every run of it costs a real model call and this
+application is started for a minute at a time. To see it work, either set `enabled="true"` and wait
+for 18:00, or - the quicker way - open **Administration → Scheduler**, select `DailyInvoiceSummary`
+and press "Start task". Then open **Chat**: the sitting is in the session list, titled
+*Tageszusammenfassung der Belege*, with the transcript of what the agent did.
+
+A scheduled run has no window, so it cannot ask anything: `askUser` in it answers "no user is present
+in this run" instead of waiting, and what its tools may do is bounded by the tool-access policy's
+`<background-allowlist>` rather than by an approval prompt. How to configure one, and what such a run
+has and lacks, is in `tl-chat/doc/scheduled-agent.md`.
+
 ## Layout of the module
 
 | Path | Contents |
@@ -84,4 +103,5 @@ Reach it at <http://localhost:8080/tl-ai-demo/servlet/LayoutServlet>. Its "Alber
 | `WEB-INF/layouts/` | The classic LayoutServlet UI |
 | `WEB-INF/model/` | The demo model (`tl.ai.demo.imageclassification:Invoice`) |
 | `WEB-INF/conf/` | Application configuration, including the `ClientResources` declaration that loads the chat bundle |
+| `WEB-INF/autoconf/` | Service overlays: the agent definitions, the LLM service, the MCP server - and the `Scheduler` with the disabled `AgentTask` above |
 | `doc/secdemo/` | A separate security testbed with its own personas; see `doc/secdemo/testbed.md` |

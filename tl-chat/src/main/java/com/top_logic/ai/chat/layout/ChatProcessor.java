@@ -192,9 +192,15 @@ public class ChatProcessor {
 		// /chat/cancel apart from an interrupt with any other cause.
 		CancellationToken cancellationToken = new CancellationToken();
 
+		// The turn this run answers, for the per-turn context block: the framework states it beside
+		// the page's facts, and nothing between here and AgentFactory.buildConfig would carry it.
+		Turn currentTurn = convLog.currentTurn();
+		int turnNumber = currentTurn == null ? 0 : currentTurn.turnNumber();
+
 		try (AgentEnvironment env = AgentEnvironment.open(logListener, taskStore, interactionStore,
 				loadedSkills, cancellationToken);
-				RunFactsBinding.Binding factsBinding = RunFactsBinding.bind(state.getFacts())) {
+				RunFactsBinding.Binding factsBinding =
+					RunFactsBinding.bind(state.getFacts(), turnNumber)) {
 
 			Logger.info("ChatProcessor: Starting agent in thread: " + Thread.currentThread().getName(),
 				ChatProcessor.class);

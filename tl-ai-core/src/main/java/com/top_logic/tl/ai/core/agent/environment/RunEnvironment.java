@@ -40,12 +40,13 @@ import com.top_logic.util.TLContext;
  * the providers' prompt caches key on. One changed character there invalidates the cache for every
  * following turn, so the block carries the date at day granularity and never the time of day, and
  * it carries only the facts the host marked {@link EnvironmentFact#stable() stable}. Facts that
- * change while the conversation runs belong in the per-turn block (Gitea #438), which this release
- * passes through and does not render.
+ * change while the conversation runs are rendered by {@link TurnContext} instead, into the turn
+ * itself.
  * </p>
  *
  * @see PromptPlaceholders
  * @see EnvironmentTemplate
+ * @see TurnContext
  */
 public class RunEnvironment {
 
@@ -73,7 +74,7 @@ public class RunEnvironment {
 	 *        The model this run talks to.
 	 * @param facts
 	 *        Everything the host application stated about this run; only the stable ones are
-	 *        rendered. May be {@code null}.
+	 *        rendered here, the others by {@link TurnContext}. May be {@code null}.
 	 */
 	public static RunEnvironment compose(ResKey agentDisplayName, String agentName, String model,
 			List<EnvironmentFact> facts) {
@@ -159,9 +160,8 @@ public class RunEnvironment {
 		List<String> lines = new ArrayList<>();
 		for (EnvironmentFact fact : facts) {
 			if (!fact.stable()) {
-				// TODO Gitea #438: render the per-turn facts into their own block. Until then a fact
-				// that is not stable is carried to here and deliberately dropped - putting it into the
-				// environment block would break the prompt cache on every turn it changes.
+				// Rendered by TurnContext, into the turn itself: a fact that changes with the next
+				// click would break the prompt cache on every turn it changes.
 				continue;
 			}
 			lines.add("- " + fact.name() + ": " + fact.value());
@@ -239,7 +239,8 @@ public class RunEnvironment {
 		return DAY.format(ZonedDateTime.now(zone)) + " (" + zone.getId() + ")";
 	}
 
-	private static ZoneId zoneOf(Person account) {
+	/** The acting account's own time zone, the system's when it states none. */
+	static ZoneId zoneOf(Person account) {
 		if (account != null) {
 			try {
 				TimeZone zone = account.getTimeZone();
@@ -253,7 +254,8 @@ public class RunEnvironment {
 		return ZoneId.systemDefault();
 	}
 
-	private static Locale localeOf(Person account) {
+	/** The acting account's UI language, the session's or English when it states none. */
+	static Locale localeOf(Person account) {
 		if (account != null) {
 			try {
 				Locale locale = account.getLocale();
@@ -269,7 +271,8 @@ public class RunEnvironment {
 		return sessionLocale != null ? sessionLocale : Locale.ENGLISH;
 	}
 
-	private static Person currentAccount() {
+	/** The account this run acts for, or <code>null</code> outside a session. */
+	static Person currentAccount() {
 		TLContext context = TLContext.getContext();
 		return context == null ? null : context.getPerson();
 	}

@@ -42,7 +42,9 @@ browser component, which shows a sign-in note rather than a composer.
 `ChatProcessor.buildToolContext` no longer builds the run's `SecurityContext` itself. It asks
 `RunSecurity.contextFor(new RunPrincipal(account, RunEntryPoint.CHAT, false, sessionId))`, and what
 answers is the installation's configured `SecurityContextFactory` - by default the one backed by
-TopLogic's roles and model access rights, which is what this line did before.
+TopLogic's roles and model access rights, which is what this line did before. A run whose tracker
+says it has no window (#384) is announced as `SCHEDULED` and as a background run instead; everything
+else on this path is the same.
 
 An application substitutes that factory when its answer depends on **what** is being changed rather
 than only on the tool's `ToolMode`: overwriting an empty section a machine wrote, overwriting what a
@@ -82,6 +84,39 @@ works.
 Not fixed by this: `POST /chat/cancel` still acts on the asking window's own tracker, so a run
 cannot be cancelled from another window.
 
+### Running an agent on a schedule (#384)
+
+`com.top_logic.ai.chat.sched.AgentTask` is a configured `Task` of the engine's `Scheduler` that puts
+one prompt to a named agent and records the run as a chat session of the `run-as` account. The prompt
+is plain text or a TL-Script expression evaluated at the start of every run; the rest of the frame -
+`name`, `enabled`, `run-on-startup`, `schedules` - is the engine's own.
+
+It goes through `ChatProcessor.sendMessage`, not through `AgentRunner`, and that is the whole point:
+what an operator wants from a nightly agent is a **sitting** they can open in their chat history, not
+an execution row. The task therefore does what a browser window would - a `TaskProgressTracker`, a
+session created by `ChatHistoryService.createSession`, the `run-as` account bound to its sub-session -
+and then waits for the run, skipping a start while the previous one is still working and interrupting
+the agent thread when the scheduler stops it. It is not node-local: one cluster node runs it, because
+an agent run writes and costs money.
+
+**A scheduled run has nobody to ask,** and two things follow from that, set together by the task and
+carried by `ChatProcessor.buildToolContext`:
+
+| | |
+|--|--|
+| `TaskProgressTracker#isUnattended()` → `ToolContext#attended()` | `askUser` answers `AskUserTool.NOBODY_TO_ASK` at once instead of parking the agent thread until the 30-minute interaction timeout. Keyed on the context the entry point sets, never on what the prompt says. |
+| `RunSecurity.contextFor(new RunPrincipal(account, SCHEDULED, background = true, ...))` | Approval is the compensating control for a write-classified tool, and a run that cannot show a prompt has lost it, so the run is additionally bounded by the policy's `<background-allowlist>`. The entry point the factory is told about is `RunEntryPoint.SCHEDULED` rather than `CHAT` (#381), because nobody typed this message. |
+
+`isUnattended()` is deliberately **not** derived from the approval mode inside `ChatProcessor`: a user
+who switches their own chat to `AUTO_APPROVE` has not left the room. Only a caller that knows there is
+no window sets it - today, the task, and it sets it for `AUTO_APPROVE` only. A task configured
+`approval-mode="MANUAL"` declares that a person will answer, which since #393 any window of that
+account can, and is therefore an ordinary attended run started by a clock.
+
+Approval prompts never blocked in `AUTO_APPROVE` - the callback is `ApprovalCallback.AUTO_APPROVE`,
+which answers on the calling thread - so `askUser` was the one thing that could park an unattended
+run. See `doc/scheduled-agent.md`.
+
 ### Key Classes
 
 - **`ChatProcessor`** – Static utility: background thread pool, orchestrator execution, state sync
@@ -100,6 +135,8 @@ cannot be cancelled from another window.
 - **`ChatSessionManager`** – Manages per-session in-memory state (Chat + ConversationMemory + ConversationLog) with LRU caching (max 5 sessions). Handles session switching with persist/load/rebuild cycle.
 - **`ChatHistoryService`** – Static access to persistent `AgentSession` objects (kind CHAT) via `AgentExecutionStore` (tl-ai-core). Conversations are stored as one transcript per `AgentExecution` (written by `AgentRunner` at run end) and merged in run order on load.
 - **`LegacyChatSessionMigration`** – Startup service migrating legacy `tl.ai.chat:ChatSession` blobs to `AgentSession`s eagerly. The legacy model has been removed (tl-ai-core migration `Issue_230_remove_module_tl_ai_chat`), so the service is a no-op now; it is kept until every deployment is known to have run it.
+- **`AgentTask`** (`…chat.sched`) – The scheduler task above. Not to be confused with
+  `tl.ai.execution:AgentTask`, which is one entry of the plan an agent writes while it works
 - **`ChatSessionRegistry`** – Bridges `WindowScope` (a chat control) and `HttpSession` (`ChatServlet`). Published API: the classic control in `tl-chat-classic` and `Consulting`'s own control register here from outside this module.
 - **`ChatViewBinding`** – Once per (sub-session, `chat-id`): tracker, user, and the channels the agent may write there. `AgentChatControl` and the split elements (`<chat-conversation>`, `<chat-rail>`) delegate to it so several controls do not bind the window several times. The tracker stays one per window. The layout preference is the exception: it is read whenever `writeLayoutState` is asked for it, which every chat control does from `onBeforeWrite` - see "where the chat's state lives". It is also where every join is tallied for `ChatJoinLog`.
 - **`AgentViewRefreshService`** – Makes a model-bound element beside the transcript follow a running agent. A run commits from a background thread, and a window only sees model changes when its `GlobalModelEventForwarder` is asked to synthesize them - on a browser command or on the 30 s SSE heartbeat. The service listens on `AgentExecutionStore.ChangeListener`, coalesces a burst of writes (200 ms) and synthesizes per window, in that window's sub-session and **under the window's request lock** (a `ReactControl`'s state map is a plain `HashMap`; the heartbeat path skips the lock, and this deliberately does not copy that). Windows are registered by `ChatViewBinding` while a chat renders, which is a fork: the engine offers no way to enumerate an account's live windows. The same register and the same lock serve the write direction: `inWindow` runs a caller's action in the window's sub-session under its lock (after synthesizing, so the window knows the run's objects), and `hasWindow` is what lets a tool tell "this run is headless" from "this page allows nothing". A write waits longer for the lock than a refresh does (`write-timeout-millis`, 5 s): a refresh that gives up loses nothing, a write has no second chance.

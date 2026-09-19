@@ -15,6 +15,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.tl.ai.core.security.ReadFilter;
+import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
@@ -98,7 +99,7 @@ public class VectorIndexSearchTool {
 			+ "Returns ranked results, each with the object's identifier and the attributes you may "
 			+ "read; objects you may not read are not listed. Optionally limit the number of results "
 			+ "via maxResults (default: 10).",
-		mode = ToolMode.READ, group = ToolGroups.DATA_READ)
+		mode = ToolMode.READ, group = ToolGroups.DATA_READ, marking = AnswerMarking.TOOL)
 	public String searchVectorIndex(
 			@P("Natural language search query") String query,
 			@P(value = "Optional: maximum number of results to return (default: 10, must be > 0)",

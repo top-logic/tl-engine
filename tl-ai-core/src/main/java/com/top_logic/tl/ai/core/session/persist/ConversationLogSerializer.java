@@ -473,6 +473,7 @@ public final class ConversationLogSerializer {
 		dto.setToolName(citation.toolName());
 		dto.setToolCallId(citation.toolCallId());
 		dto.setKind(citation.kind());
+		dto.setKindLabel(citation.kindLabel());
 		dto.setId(citation.id());
 		dto.setLabel(citation.label());
 		dto.setUrl(citation.url());
@@ -483,7 +484,8 @@ public final class ConversationLogSerializer {
 
 	private static Citation fromCitationDto(CitationDto dto) {
 		return new Citation(dto.getIndex(), dto.getToolName(), dto.getToolCallId(), dto.getKind(),
-			dto.getId(), dto.getLabel(), dto.getUrl(), dto.getPassage(), dto.getExcerpt());
+			dto.getKindLabel(), dto.getId(), dto.getLabel(), dto.getUrl(), dto.getPassage(),
+			dto.getExcerpt());
 	}
 
 	private static String nullToEmpty(String value) {

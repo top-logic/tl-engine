@@ -90,7 +90,14 @@
 							<goal>install-node-and-npm</goal>
 						</goals>
 						<configuration>
-							<nodeVersion>v20.10.0</nodeVersion>
+							<!--
+								20.19 or newer, because jsdom 29 reaches @exodus/bytes through a
+								require() of an ES module: on 20.10 that throws ERR_REQUIRE_ESM and the
+								one test file that needs a DOM never loads - vitest reports it as an
+								unhandled error beside 178 passing tests and the build fails with no
+								test failure to look at.
+							-->
+							<nodeVersion>v20.20.2</nodeVersion>
 						</configuration>
 					</execution>
 					<execution>

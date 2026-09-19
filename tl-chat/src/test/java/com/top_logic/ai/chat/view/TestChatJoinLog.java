@@ -48,17 +48,16 @@ public class TestChatJoinLog extends TestCase {
 	}
 
 	/**
-	 * Two ids that both hold a transcript are not a typo - they are the shape the transport cannot
-	 * carry.
+	 * Two conversations in one window are an ordinary page, and are not reported.
 	 *
 	 * <p>
-	 * This used to be the example of a page that is fine. It is not: every {@code /chat/*} call is
-	 * keyed by the window alone, so both conversations attach to one active session and one run,
-	 * and each shows the other's answer. No spelling warning (both ids hold several elements), but
-	 * the transport warning.
+	 * They used to be: every {@code /chat/*} call was keyed by the window alone, so both attached to
+	 * one active session and one run and each showed the other's answer. Every call now names its
+	 * conversation and the server holds a tracker for each (Gitea #502), so there is nothing here to
+	 * warn about - only the tally.
 	 * </p>
 	 */
-	public void testTwoConversationsInOneWindowWarn() {
+	public void testTwoConversationsInOneWindowAreNotReported() {
 		ChatJoinLog log = new ChatJoinLog();
 		log.join("w1", "left", "chat-conversation");
 		log.join("w1", "left", "chat-rail");
@@ -66,23 +65,9 @@ public class TestChatJoinLog extends TestCase {
 		log.join("w1", "right", "chat-rail");
 
 		List<Message> messages = log.messages();
-		assertEquals(2, messages.size());
-		assertFalse(messages.get(0).warning());
-		assertTrue(messages.get(1).warning());
-		String text = messages.get(1).text();
-		assertTrue(text, text.contains("'left'") && text.contains("'right'"));
-		assertTrue(text, text.contains("one conversation per window"));
-	}
-
-	/** Several elements of one chat, and the second id holding no transcript, is silent. */
-	public void testOnlyATranscriptCountsAsAConversation() {
-		ChatJoinLog log = new ChatJoinLog();
-		log.join("w1", "left", "chat-conversation");
-		log.join("w1", "left", "chat-rail");
-		log.join("w1", "right", "chat-sources");
-		log.join("w1", "right", "chat-rail");
-
-		assertEquals("A second chat id that shows no transcript takes no turns.", 1, log.messages().size());
+		assertEquals(1, messages.size());
+		assertFalse("Two conversations in one window is what the transport now carries.",
+			messages.get(0).warning());
 	}
 
 	/**

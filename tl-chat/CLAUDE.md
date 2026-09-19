@@ -18,7 +18,7 @@ Both served by `ChatServlet` at `/chat/*`:
    - `GET /chat/sessions/{id}` – Load session and activate server-side.
    - `PUT /chat/sessions/{id}/title` – Update session title.
    - `DELETE /chat/sessions/{id}` – Delete session (cascades over recorded executions, tasks, interactions).
-   - `PUT /chat/preferences?chatId=…` – Per-user rail/pane layout of **one** chat. The React UI cannot call `PersonalConfiguration` itself, so this wraps `setJSONValue` **and** `storePersonalConfiguration()` (transient otherwise). Key `tl-chat.layout`, holding one layout per `chat-id`. The body is what the user *decided*, so a fact they never touched is absent. There is no `GET`: the bootstrap travels with the control state (`ChatViewBinding.writeLayoutState`, re-read on every render), so a second round trip would only repeat it.
+   - `PUT /chat/preferences?chatId=…` – Per-user rail/pane layout of **one** chat. Its `chatId` is the key the layout is *stored* under, not the conversation the request comes from; the conversation travels beside it as `conversation=…`, like on every other call. The React UI cannot call `PersonalConfiguration` itself, so this wraps `setJSONValue` **and** `storePersonalConfiguration()` (transient otherwise). Key `tl-chat.layout`, holding one layout per `chat-id`. The body is what the user *decided*, so a fact they never touched is absent. There is no `GET`: the bootstrap travels with the control state (`ChatViewBinding.writeLayoutState`, re-read on every render), so a second round trip would only repeat it.
 
 2. **SSE API** (real-time push):
    - `GET /chat/events` – SSE connection. `ChatSSEHandler` receives `AgentEvent`s and emits structured SSE frames: `connected`, `run_started`, `turn_started`, `text_delta`, `tool_started`, `tool_completed`, `approval_required`, `approval_resolved`, `interaction_resolved`, `message_complete`, `heartbeat`, etc.
@@ -61,8 +61,8 @@ through the same call, so the substitution is one class and not five call sites.
 
 A run that needs a tool approval, or that asks a question through `askUser`, parks its agent thread
 on a future in the `UserInteractionStore` of its own `AIProcessingState`. That state hangs on the
-`TaskProgressTracker` of **one** browser window, and the chat transport addresses one window at a
-time (`windowId` → sub-session → tracker). The request itself, though, is addressed to an
+`TaskProgressTracker` of **one** conversation of one browser window, which the chat transport
+addresses one at a time (`windowId` + `conversation` → sub-session → tracker). The request itself, though, is addressed to an
 **account**: `InteractionRecorder` persists it as a `tl.ai.execution:InteractionRequest` with a
 `responder`, and that is the rule this module follows everywhere.
 
@@ -138,8 +138,8 @@ run. See `doc/scheduled-agent.md`.
 - **`LegacyChatSessionMigration`** – Startup service migrating legacy `tl.ai.chat:ChatSession` blobs to `AgentSession`s eagerly. The legacy model has been removed (tl-ai-core migration `Issue_230_remove_module_tl_ai_chat`), so the service is a no-op now; it is kept until every deployment is known to have run it.
 - **`AgentTask`** (`…chat.sched`) – The scheduler task above. Not to be confused with
   `tl.ai.execution:AgentTask`, which is one entry of the plan an agent writes while it works
-- **`ChatSessionRegistry`** – Bridges `WindowScope` (a chat control) and `HttpSession` (`ChatServlet`). Published API: the classic control in `tl-chat-classic` and `Consulting`'s own control register here from outside this module.
-- **`ChatViewBinding`** – Once per (sub-session, `chat-id`): tracker, user, and the channels the agent may write there. `AgentChatControl` and the split elements (`<chat-conversation>`, `<chat-rail>`) delegate to it so several controls do not bind the window several times. The tracker stays one per window. The layout preference is the exception: it is read whenever `writeLayoutState` is asked for it, which every chat control does from `onBeforeWrite` - see "where the chat's state lives". It is also where every join is tallied for `ChatJoinLog`.
+- **`ChatSessionRegistry`** – Bridges `WindowScope` (a chat control) and `HttpSession` (`ChatServlet`), keyed by `(sub-session, conversation)`: a window showing a page's chat beside a `<chat-dock>`'s, or two `<agent-chat>` elements, has a `TaskProgressTracker` for each (#502). A caller that names no conversation registers and resolves the window's unnamed one, which is what the classic client has. Published API: the classic control in `tl-chat-classic` and `Consulting`'s own control register here from outside this module.
+- **`ChatViewBinding`** – Once per (sub-session, conversation): tracker, user, and the channels the agent may write there. `AgentChatControl` and the split elements (`<chat-conversation>`, `<chat-rail>`) delegate to it so several controls do not bind the window several times. The conversation is the `chat-id` for the split elements and the control's own id for `<agent-chat>` (`bindOwn`), whose layout key stays empty. The layout preference is the exception: it is read whenever `writeLayoutState` is asked for it, which every chat control does from `onBeforeWrite` - see "where the chat's state lives". It is also where every join is tallied for `ChatJoinLog`.
 - **`AgentViewRefreshService`** – Makes a model-bound element beside the transcript follow a running agent. A run commits from a background thread, and a window only sees model changes when its `GlobalModelEventForwarder` is asked to synthesize them - on a browser command or on the 30 s SSE heartbeat. The service listens on `AgentExecutionStore.ChangeListener`, coalesces a burst of writes (200 ms) and synthesizes per window, in that window's sub-session and **under the window's request lock** (a `ReactControl`'s state map is a plain `HashMap`; the heartbeat path skips the lock, and this deliberately does not copy that). **Coalescing never forgets a change**: a pass takes as long as it takes to enter every registered window and wait for its lock, and a change that arrives while one is running is carried into the next pass rather than dropped - `PendingRefreshes` is the whole of that rule, and `TestAgentViewRefresh` is what holds it (#497). A window is registered with the account it is logged in as, read where a context is bound, because the pass runs on a scheduler thread that has none. Windows are registered by `ChatViewBinding` while a chat renders, which is a fork: the engine offers no way to enumerate an account's live windows. The same register and the same lock serve the write direction: `inWindow` runs a caller's action in the window's sub-session under its lock (after synthesizing, so the window knows the run's objects), and `hasWindow` is what lets a tool tell "this run is headless" from "this page allows nothing". A write waits longer for the lock than a refresh does (`write-timeout-millis`, 5 s): a refresh that gives up loses nothing, a write has no second chance.
 - **`PresentTool`** – The `present` tool (`com.top_logic.ai.chat.tools`): the agent puts model objects onto a channel of the page it is on, and the page renders them however it likes. Registered from this module's own configuration, so every application that depends on `tl-chat` has the tool; **which** channel it may write is the page's decision (`<chat-conversation present="…">`, deny by default). See "the agent writes a channel" below.
 - **`ChatScope` / `ChatScopeElement`** – The `<chat>` container and the ambient value it puts into the child `ViewContext`. An element's conversation is its own `chat-id`, else the enclosing `<chat>`, else `default`.
@@ -1118,31 +1118,38 @@ a mounting point, nothing more: the dock is `position: fixed`, so it takes no ro
 | `<label>` | ResKey | The launcher's tooltip and accessible name; empty falls back to the chat's own wording. |
 | `open` | boolean, default `false` | First-load state, and nothing more. Not remembered, no channel. |
 
-**One conversation per window, and that is the transport talking.** Every `/chat/*` call carries a
-`windowId` and nothing else: `ChatServlet` resolves one `TaskProgressTracker` per window, holding
-one active session and one processing state, and `ChatEventHandlerRegistry` addresses one handler
-per tracker. Two chat ids that each mount a `<chat-conversation>` in one window therefore attach to
-the same run - each send switches the window's active session, and each transcript renders the
-other's tokens. Three things follow, and all three are in this PR:
+**A window carries as many conversations as it shows (#502).** Every `/chat/*` call names its
+window **and** its conversation (`windowId` + `conversation`, the browser's own chat id), and
+`ChatSessionRegistry` holds a `TaskProgressTracker` - one active session, one processing state - for
+each of them; `ChatEventHandlerRegistry` is keyed by tracker, so each conversation gets its own SSE
+handler by construction. Until #502 the tracker was one per window: two chat ids that each mounted a
+`<chat-conversation>` attached to the same run, each send switched the window's active session, the
+second conversation to send took the first one's stream, and the first waited for an answer that
+never arrived. `TestChatConversationRouting` pins the new shape, including that a request naming a
+conversation the window does not show is answered `stale_window` rather than served from another
+one.
 
-- **A dock joins the page's chat id, it does not invent one.** `tl-ai-demo` writes `chat-id="chat"`
-  on the dock *and* on the `<chat>` inside it, so the dock is a second **place** for the one
-  conversation rather than a second conversation.
-- **The dock stands down while a page shows that conversation.** `<chat-conversation>` registers
-  itself with the store (`registerConversation`, `insideDock` from `ChatDockScope`), and a dock
-  whose `conversationsOutsideDock > 0` renders nothing at all - no panel, no launcher - and
-  *unmounts* its content, so the rail inside it stops competing with the page's for the one
-  remembered layout.
-- **`ChatJoinLog` names the shape.** Two chat ids each mounting a `<chat-conversation>` in one
-  window is a WARN, whatever the spelling: "the chat transport is one conversation per window".
+Two keys travel, and they are **not** the same string: `conversation` is which chat of the window is
+asking, and `chatId` on `PUT /chat/preferences` is the key a *layout* is stored under. They agree
+for every element of a named chat; for `<agent-chat>` the layout key is empty (the one-element
+chat's own place) while the conversation is the control's id, which is exactly how the browser keys
+its store. Two `<agent-chat>` elements in one window are therefore two conversations on the server
+as well as two stores in the browser.
 
-Two guards sit behind that rule rather than in place of it: `eventBelongsToChat` drops a
-run-scoped SSE frame that names a session other than the open one (inert while the server stamps
-none, which is most of them today), and both the remembered session (`tl-chat-session:<chat-id>` in
-`sessionStorage`) and the run snapshot the context ring reads (`ChatHandle.runs`) are per chat id.
-The module-level `runStore` export is still written, as the single-chat host seam it has always
-been; nothing in this bundle renders from it. **Making the transport itself per `(window, chat-id)`
-is a ticket of its own** - until it lands, a window shows one conversation.
+**The dock still stands down while a page shows its conversation** - but for a different reason now.
+`tl-ai-demo` writes `chat-id="chat"` on the dock *and* on the `<chat>` inside it, so the two are the
+**same** conversation in two places; showing both at once would give one `draft` channel two
+composers and one remembered layout two rails. `<chat-conversation>` registers itself with the store
+(`registerConversation`, `insideDock` from `ChatDockScope`), and a dock whose
+`conversationsOutsideDock > 0` renders nothing at all - no panel, no launcher - and *unmounts* its
+content. A dock on a chat id of its own needs none of that.
+
+Two guards sit beside it: `eventBelongsToChat` drops a run-scoped SSE frame that names a session
+other than the open one - a run this conversation has since moved away from (inert while the server
+stamps none, which is most of them today) - and both the remembered session
+(`tl-chat-session:<chat-id>` in `sessionStorage`) and the run snapshot the context ring reads
+(`ChatHandle.runs`) are per chat id. The module-level `runStore` export is still written, as the
+single-chat host seam it has always been; nothing in this bundle renders from it.
 
 Three things are load-bearing:
 

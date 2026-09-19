@@ -32,11 +32,12 @@ import com.top_logic.basic.thread.ThreadContextManager;
  * </p>
  *
  * <p>
- * It is also where the <b>one conversation per window</b> rule is checked. Every {@code /chat/*}
- * call carries a {@code windowId} and nothing else, so the server holds one active session and one
- * processing state per window; two chat ids that each show a transcript in one window therefore
- * take each other's turns, whatever the browser does. That shape is named here because this is the
- * only place that sees both.
+ * It used to be where the <b>one conversation per window</b> rule was checked as well, because
+ * every {@code /chat/*} call carried a {@code windowId} and nothing else and two chat ids that each
+ * showed a transcript in one window then took each other's turns. Every call now names its
+ * conversation and the server holds a tracker for each (Gitea #502), so that is an ordinary page
+ * and this log says nothing about it. What remains is the spelling check below, which is about an
+ * element that joined nobody.
  * </p>
  *
  * <p>
@@ -51,9 +52,6 @@ final class ChatJoinLog {
 
 	private static final Property<ChatJoinLog> LOG =
 		TypedAnnotatable.property(ChatJoinLog.class, "tl.chat.view.joins");
-
-	/** The element that shows a transcript, and so is the one the per-window transport limits. */
-	private static final String CONVERSATION = "chat-conversation";
 
 	/** Where a finished render reports to. Tests replace this to read what was said. */
 	static Consumer<Message> sink = ChatJoinLog::write;
@@ -104,20 +102,6 @@ final class ChatJoinLog {
 			}
 			String where = " in window '" + window.getKey() + "'";
 			result.add(new Message(false, "Chat elements" + where + ": " + counts(joins) + "."));
-
-			List<String> transcripts = joins.entrySet().stream()
-				.filter(join -> join.getValue().contains(CONVERSATION))
-				.map(Map.Entry::getKey)
-				.collect(Collectors.toList());
-			if (transcripts.size() > 1) {
-				result.add(new Message(true, "Two conversations" + where + ": the chat ids "
-					+ transcripts.stream().map(id -> "'" + id + "'").collect(Collectors.joining(", "))
-					+ " each mount a <chat-conversation>. The chat transport is one conversation per"
-					+ " window - every /chat/* call is keyed by the window alone - so these share one"
-					+ " active session and one run, and each will show the other's answer. Give them"
-					+ " one chat-id, or show only one of them at a time"
-					+ " (a <chat-dock> hides itself while a page shows its conversation)."));
-			}
 
 			List<String> alone = joins.entrySet().stream()
 				.filter(join -> join.getValue().size() == 1)

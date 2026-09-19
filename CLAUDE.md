@@ -160,6 +160,8 @@ Key flow: `AgentFactory.runAgent()` → `AgentLoop` → `LLMProvider.stream()` �
 
 Stop conditions: `StopReason` — COMPLETE, MAX_TURNS, ERROR, CONTEXT_OVERFLOW, REJECTED, ABORTED.
 
+An installation renames a shipped agent in *Service Editor → TopLogic-Agents and Skills* (`display-name`, `summary`, first in the form); the technical `name` stays, and the change takes effect when that service is restarted - see `tl-chat/CLAUDE.md`.
+
 ### Environment block (tl-ai-core `agent/environment/`)
 
 Every run is told, in its system prompt, who it is working for: user, UI language, date in the

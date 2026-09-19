@@ -77,4 +77,30 @@ public interface ToolExecutionContext {
 			+ " context names no principal to check it for. Execute the tool with the context of an"
 			+ " agent run.");
 	}
+
+	/**
+	 * Whether a human is present in this run who could be asked a question.
+	 *
+	 * <p>
+	 * {@code false} for a run nobody is watching - a scheduled {@code AgentTask}, a request through
+	 * the MCP endpoint - and {@code true} for every run started from a chat or a script, where the
+	 * account that started it is there to answer. The default is {@code true}: a context that says
+	 * nothing about this is an attended one.
+	 * </p>
+	 *
+	 * <p>
+	 * A tool that would otherwise park its thread waiting for an answer asks here first and fails
+	 * with an error the model can act on instead. Without it an unattended run does not fail - it
+	 * waits out the full interaction timeout and then reports a timeout, which is 30 minutes of a
+	 * scheduler thread spent on a question nobody was ever going to read.
+	 * </p>
+	 *
+	 * <p>
+	 * This is not a security decision and nothing is authorized by it; what an unattended run may
+	 * <em>do</em> is decided by its security context's background ceiling.
+	 * </p>
+	 */
+	default boolean attended() {
+		return true;
+	}
 }

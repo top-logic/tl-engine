@@ -48,6 +48,7 @@ import com.top_logic.tl.ai.core.execution.CancelSignalObserver;
 import com.top_logic.tl.ai.core.execution.ExecutionRecorder;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
+import com.top_logic.tl.ai.core.execution.model.UserMemory;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
@@ -961,6 +962,60 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	public static boolean sessionDelete(Object session) {
 		AgentExecutionStore.getInstance().deleteSession(ownedSession(session));
 		return true;
+	}
+
+	/**
+	 * Deletes one memory the agent kept about a user.
+	 *
+	 * <p>
+	 * The write goes through the {@link AgentExecutionStore}, not through the wrapper: the store
+	 * commits on its writer thread (so this works from a read-only context such as a rendering
+	 * expression) and tells every open window of the owner, which is what drops the row out of the
+	 * memory list without waiting for the next command.
+	 * </p>
+	 *
+	 * <p>
+	 * Refuses a memory the acting account neither owns nor administers. The check is here and not
+	 * only in the view that calls it, for the same reason {@link #sessionDelete(Object)} has it
+	 * here: a command's input is whatever a channel happens to hold, and this function is reachable
+	 * from a scheduler task and the TL-Script console as well.
+	 * </p>
+	 *
+	 * @param memory
+	 *        The {@code tl.ai.execution:UserMemory} to delete.
+	 * @return Always {@code true}; a refusal is a {@link TopLogicException}, not a {@code false}.
+	 * @throws TopLogicException
+	 *         If {@code memory} is not a memory or is someone else's.
+	 */
+	public static boolean memoryDelete(Object memory) {
+		AgentExecutionStore.getInstance().deleteMemory(ownedMemory(memory));
+		return true;
+	}
+
+	/**
+	 * The given value as a {@link UserMemory} the acting account may delete.
+	 *
+	 * <p>
+	 * An administrator may delete any of them, which mirrors {@link #ownedSession(Object)} and is
+	 * what makes a {@code <data-list>} over all memories usable as an administration view. Nobody
+	 * else reaches another account's memory: the store's reader filters by owner, so a row of
+	 * somebody else can only arrive here by being guessed, and it is refused.
+	 * </p>
+	 */
+	private static UserMemory ownedMemory(Object memory) {
+		UserMemory resolved = memory instanceof UserMemory found ? found : null;
+		if (resolved == null && memory instanceof Collection<?> many && many.size() == 1) {
+			Object only = many.iterator().next();
+			resolved = only instanceof UserMemory found ? found : null;
+		}
+		if (resolved == null) {
+			throw new TopLogicException(I18NConstants.ERROR_NOT_A_MEMORY);
+		}
+		Person actor = TLContext.currentUser();
+		if (actor == null || (!actor.equals(resolved.getOwner()) && !actor.isAdmin())) {
+			throw new TopLogicException(I18NConstants.ERROR_MEMORY_NOT_OWNED);
+		}
+		return resolved;
 	}
 
 	/**

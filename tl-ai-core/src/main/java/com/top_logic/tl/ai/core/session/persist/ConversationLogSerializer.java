@@ -134,7 +134,7 @@ public final class ConversationLogSerializer {
 					turnDto.getTurnNumber(), Instant.ofEpochMilli(turnDto.getTimestamp()),
 					composition.getSystemPromptTokens(), composition.getToolDefinitionTokens(),
 					composition.getMessageTokens(), composition.getToolResultTokens(),
-					composition.getToolCount()));
+					composition.getToolCount(), composition.getLoadedSkills()));
 			}
 			turn.setTurnContext(emptyToNull(turnDto.getTurnContext()));
 			turn.setUserParts(turnDto.getUserParts().stream()
@@ -163,7 +163,8 @@ public final class ConversationLogSerializer {
 				.setToolDefinitionTokens(composition.toolDefinitionTokens())
 				.setMessageTokens(composition.messageTokens())
 				.setToolResultTokens(composition.toolResultTokens())
-				.setToolCount(composition.toolCount()));
+				.setToolCount(composition.toolCount())
+				.setLoadedSkills(composition.loadedSkills()));
 		}
 		dto.setTurnContext(nullToEmpty(turn.turnContext()));
 		for (Part part : turn.userParts()) {

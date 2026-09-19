@@ -8,7 +8,9 @@ package com.top_logic.ai.chat.layout;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -85,7 +87,7 @@ public class TaskProgressTracker {
 	private final Set<String> _sessionApprovedTools = ConcurrentHashMap.newKeySet();
 
 	/** Skills loaded via loadSkill() in this session. */
-	private final Set<String> _loadedSkills = ConcurrentHashMap.newKeySet();
+	private final Set<String> _loadedSkills = Collections.synchronizedSet(new LinkedHashSet<>());
 
 	/**
 	 * Answer ratings of the active session, keyed by the zero-based turn index they belong to.
@@ -499,9 +501,19 @@ public class TaskProgressTracker {
 		_loadedSkills.add(skillId);
 	}
 
-	/** Returns the set of loaded skill IDs. */
+	/**
+	 * The loaded skill IDs, in the order the session loaded them.
+	 *
+	 * <p>
+	 * Ordered on purpose: this is what the next run restores its tool catalog from, and a catalog
+	 * restored in another order sends the same tools as different bytes - a prompt cache thrown away
+	 * for nothing (Gitea #346).
+	 * </p>
+	 */
 	public Set<String> getLoadedSkills() {
-		return Set.copyOf(_loadedSkills);
+		synchronized (_loadedSkills) {
+			return Collections.unmodifiableSet(new LinkedHashSet<>(_loadedSkills));
+		}
 	}
 
 	/** Loads skill IDs from persisted metadata. */

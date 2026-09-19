@@ -8,6 +8,7 @@ package com.top_logic.ai.chat.layout;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -223,7 +224,9 @@ public class ChatProcessor {
 		UserInteractionStore interactionStore = new UserInteractionStore();
 		state.setUserInteractionStore(interactionStore);
 
-		Set<String> loadedSkills = ConcurrentHashMap.newKeySet();
+		// Ordered, because the order is what the next run restores the tool catalog in: a catalog
+		// restored in another order sends the same tools as different bytes (Gitea #346).
+		Set<String> loadedSkills = Collections.synchronizedSet(new LinkedHashSet<>());
 		loadedSkills.addAll(taskTracker.getLoadedSkills());
 
 		// One token per run, shared by the tool context, the transaction scope and the run's
@@ -354,9 +357,10 @@ public class ChatProcessor {
 				} else {
 					taskTracker.setActiveToolRegistry(runResult.registry());
 				}
-				for (String skillId : loadedSkills) {
-					taskTracker.addLoadedSkill(skillId);
-				}
+				// Replaced rather than merged: the run's set is authoritative, and a skill the
+				// catalog evicted has to disappear from the session too, or the next run restores
+				// tools that are no longer loaded.
+				taskTracker.loadLoadedSkills(loadedSkills);
 				String result = runResult.response();
 				state.setLastAgentResponse(result);
 				state.setLastCitations(lastCitations(convLog));

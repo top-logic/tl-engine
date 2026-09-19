@@ -396,7 +396,8 @@ public class ChatSSEHandler implements ChatEventHandler {
 				.setToolDefinitionTokens(e.toolDefinitionTokens())
 				.setMessageTokens(e.messageTokens())
 				.setToolResultTokens(e.toolResultTokens())
-				.setToolCount(e.toolCount())));
+				.setToolCount(e.toolCount())
+				.setLoadedSkills(e.loadedSkills())));
 		} else if (event instanceof AgentEvent.TextDelta e) {
 			sendEvent("text_delta", DtoMapper.toJson(TextDeltaEvent.create()
 				.setText(e.text())));

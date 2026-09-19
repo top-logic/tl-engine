@@ -26,6 +26,12 @@ import com.top_logic.tl.ai.tool.api.ToolSchema;
  * @param responseFormat  desired response format, or {@code null} for provider default
  * @param toolChoice      tool selection behaviour, or {@code null} for provider default
  * @param timeout         HTTP request timeout, or {@code null} for the provider default
+ * @param stableToolCount how many leading entries of {@code tools} are the same on every request
+ *                        of this conversation. The prompt-cache boundary of the tool array
+ *                        (Gitea #346): everything behind it is a skill the run loaded and can
+ *                        still appear or disappear, so a provider that places explicit cache
+ *                        breakpoints places one here. {@code 0} means "make no promise", which is
+ *                        what every caller that does not know says.
  */
 public record ProviderRequest(
 		String model,
@@ -36,7 +42,8 @@ public record ProviderRequest(
 		Map<String, Object> modelOptions,
 		ResponseFormat responseFormat,
 		ToolChoice toolChoice,
-		Duration timeout) {
+		Duration timeout,
+		int stableToolCount) {
 
 	/** */
 	public ProviderRequest {
@@ -53,6 +60,21 @@ public record ProviderRequest(
 		if (timeout != null && (timeout.isZero() || timeout.isNegative())) {
 			throw new IllegalArgumentException("timeout must be positive.");
 		}
+		if (stableToolCount < 0 || stableToolCount > tools.size()) {
+			throw new IllegalArgumentException(
+				"stableToolCount must name a prefix of the tool list, was " + stableToolCount
+					+ " of " + tools.size() + ".");
+		}
+	}
+
+	/**
+	 * Convenience constructor for a caller that makes no promise about the tool array.
+	 */
+	public ProviderRequest(String model, String systemPrompt, List<Message> messages,
+			List<ToolSchema> tools, int maxOutputTokens, Map<String, Object> modelOptions,
+			ResponseFormat responseFormat, ToolChoice toolChoice, Duration timeout) {
+		this(model, systemPrompt, messages, tools, maxOutputTokens, modelOptions,
+			responseFormat, toolChoice, timeout, 0);
 	}
 
 	/**
@@ -62,7 +84,7 @@ public record ProviderRequest(
 			List<ToolSchema> tools, int maxOutputTokens, Map<String, Object> modelOptions,
 			ResponseFormat responseFormat, ToolChoice toolChoice) {
 		this(model, systemPrompt, messages, tools, maxOutputTokens, modelOptions,
-			responseFormat, toolChoice, null);
+			responseFormat, toolChoice, null, 0);
 	}
 
 	/**
@@ -70,7 +92,7 @@ public record ProviderRequest(
 	 */
 	public ProviderRequest(String model, String systemPrompt, List<Message> messages,
 			List<ToolSchema> tools, int maxOutputTokens, Map<String, Object> modelOptions) {
-		this(model, systemPrompt, messages, tools, maxOutputTokens, modelOptions, null, null, null);
+		this(model, systemPrompt, messages, tools, maxOutputTokens, modelOptions, null, null, null, 0);
 	}
 
 	/**
@@ -79,6 +101,6 @@ public record ProviderRequest(
 	 */
 	public ProviderRequest(String model, String systemPrompt, List<Message> messages,
 			List<ToolSchema> tools, int maxOutputTokens) {
-		this(model, systemPrompt, messages, tools, maxOutputTokens, Map.of(), null, null, null);
+		this(model, systemPrompt, messages, tools, maxOutputTokens, Map.of(), null, null, null, 0);
 	}
 }

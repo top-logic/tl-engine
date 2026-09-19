@@ -6,6 +6,8 @@
 package com.top_logic.ai.chat.layout;
 
 import java.time.Instant;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -518,7 +520,8 @@ public final class PromptImprovementProcessor {
 		UserInteractionStore interactionStore = new UserInteractionStore();
 		try (TransactionScope transaction = new TransactionScope(cancellationToken);
 				AgentEnvironment environment = AgentEnvironment.open(logListener, taskStore,
-					interactionStore, ConcurrentHashMap.newKeySet(), cancellationToken)) {
+					interactionStore, Collections.synchronizedSet(new LinkedHashSet<>()),
+					cancellationToken)) {
 			// withoutAgentChoice: the user did not pick this agent and cannot pick another. The agent
 			// allowlist decides which persona answers them, and the improver never answers - it
 			// rewrites the draft they are about to send. Gating it would make an administrator grant

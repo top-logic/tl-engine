@@ -389,9 +389,26 @@ public final class BedrockConverseRequestBuilder {
 		return cfg;
 	}
 
+	/**
+	 * The {@code toolConfig}, with a cache breakpoint where the tool array stops being the same
+	 * bytes.
+	 *
+	 * <p>
+	 * Same reasoning as the Anthropic builder's, in Bedrock's spelling: the tools are rendered in
+	 * front of the system prompt, so the {@code cachePoint} in {@code system} covers them all, and a
+	 * skill loaded mid-conversation moves everything behind the tool it appended. A
+	 * {@code cachePoint} between the agent's own tools and a run's loaded skills keeps the first
+	 * part readable across that load. Only placed when there is something behind it - see #346.
+	 * </p>
+	 */
 	private static Map<String, Object> buildToolConfig(ProviderRequest request) {
+		List<ToolSchema> schemas = request.tools();
+		int stable = request.stableToolCount();
+		boolean breakAfterStable = stable > 0 && stable < schemas.size();
+
 		List<Object> tools = new ArrayList<>();
-		for (ToolSchema schema : request.tools()) {
+		for (int i = 0; i < schemas.size(); i++) {
+			ToolSchema schema = schemas.get(i);
 			Map<String, Object> inputSchema = new LinkedHashMap<>();
 			inputSchema.put("json", parseJson(schema.inputSchemaJson()));
 
@@ -403,6 +420,9 @@ public final class BedrockConverseRequestBuilder {
 			Map<String, Object> toolEntry = new LinkedHashMap<>();
 			toolEntry.put("toolSpec", toolSpec);
 			tools.add(toolEntry);
+			if (breakAfterStable && i == stable - 1) {
+				tools.add(cachePoint());
+			}
 		}
 
 		Map<String, Object> toolConfig = new LinkedHashMap<>();

@@ -93,9 +93,9 @@ public final class ExecutionRecorder implements AgentEventListener {
 	 * The stable conversation id of {@code session} as a plain String (its persistent object id, as
 	 * used to look the session back up), or <code>null</code> when no session is given or its id
 	 * cannot be read. Best-effort: any failure degrades to <code>null</code> (the browser tool then
-	 * falls back to per-run keying) rather than disturbing the run. Package-visible for testing.
+	 * falls back to per-run keying) rather than disturbing the run.
 	 */
-	static String conversationIdOf(AgentSession session) {
+	public static String conversationIdOf(AgentSession session) {
 		if (session == null) {
 			return null;
 		}

@@ -123,3 +123,61 @@ that tolerates line endings and whitespace and reports when it fell back, and a 
 the anchor stopped agreeing with the text. Offer a verbatim read beside it: an anchored edit without
 a verbatim read to anchor on is a guess. `text-edit.readText` / `text-edit.editText` in `tl-ai-core`
 are the generic pair; the contract is the JavaDoc of `TextEdits`.
+
+### A parameter that names a model object
+
+Declare the parameter as the object, not as its identifier:
+
+```java
+@ToolMethod(description = "Reports what an invoice is still worth.", mode = ToolMode.READ,
+    group = ToolGroups.DATA_READ)
+public String openAmount(@P("The invoice") Invoice invoice) {
+    ...
+}
+```
+
+The model is shown a `string` whose description says the identifier is the `"TypeName:id"` a tool
+result reports, and the framework resolves it back to the object **before the method is invoked**,
+through `ToolExecutionContext.resolveObject(String)`. That call is the read check of the run's
+principal, so a tool does not run one and cannot forget one; an object the principal may not read is
+reported exactly like one that does not exist. A `List<Invoice>` parameter works the same way, element
+by element.
+
+An identifier that names nothing, names something unreadable, or is not an identifier at all fails as
+a `ToolArgumentCoercionException`. That matters beyond the wording: the agent loop treats it as a
+**synthetic** failure - the method never ran, so the turn's other writes are not rolled back. Before
+this existed, every Java tool resolved the string itself, which meant one resolver and one read check
+per application, and a forgotten one leaked (Gitea #381).
+
+## A tool written as TL-Script
+
+An administrator can configure a tool whose body is TL-Script instead of Java, with
+`ScriptToolFactory`. It reaches the same `ToolResult`, and the two fields that matter for a long
+answer are configured beside the implementation:
+
+```xml
+<factory name="script-tools">
+  <implementation class="com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory">
+    <tools>
+      <tool name="findOverdueInvoices" mode="READ" truncation-hint="4000">
+        <parameters>...</parameters>
+        <implementation>all(`acme:Invoice`).filter(i -> $i.get(`acme:Invoice#overdue`))</implementation>
+        <summary>rows -> $rows.size() + " overdue invoices"</summary>
+      </tool>
+    </tools>
+  </implementation>
+</factory>
+```
+
+| | |
+|--|--|
+| `truncation-hint` | How many characters of the result reach the model before it is cut. Unset uses the installation's default. |
+| `summary` | One argument - the value the body answered - and the short form compaction keeps in place of the result. Unset keeps the beginning of the result. It is disclosed under the same read rights as the result, so it may name objects. |
+
+Which run the call belongs to is `aiRunInfo()` inside the body: the same facts `runInfo()` gives a
+Java tool, as a map with the keys `runId`, `conversationId`, `agentName`, `model`, `provider`,
+`executionId` and `delegationDepth`. Outside an agent run every value is empty.
+
+The one thing a script body still cannot answer with is `ToolContent` - an image or a PDF for the
+model to *perceive* - because TL-Script has no value that says "this is a picture". Everything else
+the two kinds of tool can do is the same, object-typed parameters included.

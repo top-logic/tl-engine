@@ -9,10 +9,15 @@ import java.util.Objects;
 import java.util.Set;
 
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.citation.CitationMarkers;
 import com.top_logic.tl.ai.core.execution.ExecutionHandle;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
+import com.top_logic.tl.ai.core.security.RunEntryPoint;
+import com.top_logic.tl.ai.core.security.RunPrincipal;
+import com.top_logic.tl.ai.core.security.RunSecurity;
+import com.top_logic.tl.ai.core.tools.model.TidResolver;
 import com.top_logic.util.TLContext;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.ProgressReporter;
@@ -94,7 +99,8 @@ public class ToolContext implements ToolExecutionContext {
 	public static ToolContext forCurrentUser() {
 		CancellationToken cancellationToken = new CancellationToken();
 		return new ToolContext(
-			TopLogicSecurityContext.forRun(TLContext.currentUser(), false),
+			RunSecurity.contextFor(
+				new RunPrincipal(TLContext.currentUser(), RunEntryPoint.SCRIPT, false)),
 			ApprovalCallback.AUTO_APPROVE, new TransactionScope(cancellationToken), cancellationToken);
 	}
 
@@ -129,7 +135,7 @@ public class ToolContext implements ToolExecutionContext {
 	public static ToolContext forBackgroundRun(Person principal) {
 		CancellationToken cancellationToken = new CancellationToken();
 		return new ToolContext(
-			TopLogicSecurityContext.forRun(principal, true),
+			RunSecurity.contextFor(new RunPrincipal(principal, RunEntryPoint.MCP, true)),
 			ApprovalCallback.AUTO_APPROVE, new TransactionScope(cancellationToken), cancellationToken);
 	}
 
@@ -285,6 +291,20 @@ public class ToolContext implements ToolExecutionContext {
 	 */
 	public ModelSecurity modelSecurity() {
 		return _security.modelSecurity();
+	}
+
+	/**
+	 * The object the given identifier names, read with the rights of this run's principal.
+	 *
+	 * <p>
+	 * The same resolution a script tool's object-typed parameter gets, reached from the context a
+	 * Java tool already holds, so both kinds of tool turn an identifier into an object in the one
+	 * place that runs the read check.
+	 * </p>
+	 */
+	@Override
+	public TLObject resolveObject(String id) {
+		return TidResolver.resolve(id, modelSecurity());
 	}
 
 	/**

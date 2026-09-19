@@ -148,7 +148,7 @@ Extracted contract module (package `com.top_logic.tl.ai.tool.api`) enabling tool
 - `Tool` interface — `execute(Map<String, Object> args, ToolExecutionContext context) → ToolResult`
 - `ToolMode` enum - READ (parallel-safe, no approval); USER_SCOPED / DATA_WRITE / STRUCTURAL (serial, need approval, enrol in the turn's transaction); EXTERNAL (serial, needs approval, no transaction - the change lands in another system)
 - `@ToolMethod` / `@P` — annotation framework for reflection-based tool creation
-- `ToolExecutionContext` - what the framework tells a tool about the call; concrete `ToolContext` lives in tl-ai-core
+- `ToolExecutionContext` - what the framework tells a tool about the call; concrete `ToolContext` lives in tl-ai-core. `resolveObject(id)` turns the `"TypeName:id"` a model wrote into the object, under the run's read rights - which is how a `TLObject` parameter of an `@ToolMethod` is coerced, so a Java tool resolves an identifier exactly as a script tool does and cannot forget the check (#381).
 - `RunInfo` - which run the call belongs to (run id, conversation, agent, model, parent run), as plain strings. `ToolExecutionContext.runInfo()` for a tool, `RunInfoBinding.current()` for code beneath one. The run's persistent `AgentExecution` is **not** readable from a tool - the store writes it at a newer revision (#405); the wrapper is a token to hand back to `AgentExecutionStore`, never an object to read. See `tl-ai-tool-api/README.md`.
 - `ToolRegistryService` — service-level registry with qualified names `{factory}.{tool}`
 
@@ -273,6 +273,8 @@ Two front ends consume that one API:
 ### Security & Approval
 
 Multi-layer: `SecurityContext.hasToolPermission()` → `ExecutionMode` gate (GLOBAL tools blocked in PRODUCTION) → `PermissionDecision` (Allowed/Denied/NeedsApproval) → `ApprovalCallback` for human-in-the-loop. Session-level approval caching.
+
+**Which `SecurityContext` a run gets is configurable (#381).** Every entry point - chat, TL-Script, MCP, the prompt improver - builds it through `RunSecurity.contextFor(RunPrincipal)`, which asks the `<security-context>` factory on `LLMService`. The default is `DefaultSecurityContextFactory`, i.e. `TopLogicSecurityContext.forRun`; an application that must answer approval from the *call* rather than from the tool's `ToolMode` extends `SecurityContextProxy` over the default and overrides `checkApproval` alone. Never build `TopLogicSecurityContext` at a new entry point - go through `RunSecurity`, or the installation's factory is skipped. See `doc/security/agent-security-architecture.md` 4.5.
 
 **Rendering an answer is a security boundary (#385).** The text is model output, so it carries whatever
 `webFetch` and the tool results put in front of the model, and it is persisted and re-rendered on every

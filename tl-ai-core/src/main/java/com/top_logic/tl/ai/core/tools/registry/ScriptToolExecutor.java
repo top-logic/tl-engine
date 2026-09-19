@@ -32,6 +32,25 @@ import com.top_logic.tl.ai.tool.api.ToolSchema;
  * {@link SearchExpression#asString(Object)} - which labels a model object, and a label is business
  * data. Object-typed arguments are checked the same way, where their TID is resolved.
  * </p>
+ *
+ * <h2>What a script tool can say about its result, and what it cannot</h2>
+ *
+ * <p>
+ * A script tool answers with the same {@link ToolResult} a Java tool does, and it states the two
+ * fields that matter for a long answer: the {@code truncation-hint}, which is how much of the result
+ * reaches the model before it is cut, and the {@code summary}, an expression over the result that
+ * compaction keeps in place of it. Both are configured beside the implementation - see
+ * {@code ScriptToolFactory.ScriptToolConfig} - and both are unset by default, which is what a script
+ * tool answered before (Gitea #381).
+ * </p>
+ *
+ * <p>
+ * The one thing a script body still cannot do is return
+ * {@link com.top_logic.tl.ai.tool.api.ToolContent} - an image or a PDF for the model to perceive -
+ * because TL-Script has no value that says "this is a picture". Which run the call belongs to is not
+ * missing: {@code aiRunInfo()} answers it inside a script body, from the same record a Java tool reads
+ * through {@link ToolExecutionContext#runInfo()}.
+ * </p>
  */
 public class ScriptToolExecutor implements Tool {
 
@@ -49,12 +68,23 @@ public class ScriptToolExecutor implements Tool {
 
 	private final boolean _concurrencySafe;
 
+	private final QueryExecutor _summary;
+
+	private final int _truncationHint;
+
 	/**
 	 * Creates a new {@link ScriptToolExecutor}.
+	 *
+	 * @param summary
+	 *        Computes what compaction keeps in place of the result, from the result; may be
+	 *        <code>null</code>, which keeps the beginning of the result instead.
+	 * @param truncationHint
+	 *        How many characters of the result reach the model, or a value of zero or less for the
+	 *        installation's default.
 	 */
 	public ScriptToolExecutor(String name, String description, String inputSchemaJson,
 			QueryExecutor executor, ScriptParamCoercion coercion, ToolMode mode,
-			boolean concurrencySafe) {
+			boolean concurrencySafe, QueryExecutor summary, int truncationHint) {
 		_name = name;
 		_description = description;
 		_schema = new ToolSchema(name, description, inputSchemaJson);
@@ -62,6 +92,8 @@ public class ScriptToolExecutor implements Tool {
 		_coercion = coercion;
 		_mode = mode;
 		_concurrencySafe = concurrencySafe;
+		_summary = summary;
+		_truncationHint = truncationHint > 0 ? truncationHint : -1;
 	}
 
 	@Override
@@ -101,7 +133,12 @@ public class ScriptToolExecutor implements Tool {
 			// business data is also what the rendering is marked as, for the model's benefit.
 			Object[] positional = _coercion.coerce(args, readFilter.security());
 			Object result = _executor.executeWith(Args.some(positional));
-			return ToolResult.of(readFilter.text(_name, result));
+			// The summary is disclosed through the same filter as the result: it is computed from the
+			// raw value, so a summary naming an object would otherwise reach the model past the check
+			// the result itself passed.
+			String summary = _summary == null ? null
+				: readFilter.text(_name, _summary.execute(result));
+			return new ToolResult(readFilter.text(_name, result), summary, _truncationHint);
 		} catch (Exception ex) {
 			Logger.error("Error executing script tool '" + _name + "': " + ex.getMessage(), ex,
 				ScriptToolExecutor.class);

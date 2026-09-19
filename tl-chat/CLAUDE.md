@@ -37,6 +37,24 @@ browser component, which shows a sign-in note rather than a composer.
 5. `ChatProcessor.applyPollUpdates()` flushes pending messages into Chat
 6. On completion, agent response added as `ChatMessage` and `ConversationLog` persisted
 
+### Who decides that a call needs a person (#381)
+
+`ChatProcessor.buildToolContext` no longer builds the run's `SecurityContext` itself. It asks
+`RunSecurity.contextFor(new RunPrincipal(account, RunEntryPoint.CHAT, false, sessionId))`, and what
+answers is the installation's configured `SecurityContextFactory` - by default the one backed by
+TopLogic's roles and model access rights, which is what this line did before.
+
+An application substitutes that factory when its answer depends on **what** is being changed rather
+than only on the tool's `ToolMode`: overwriting an empty section a machine wrote, overwriting what a
+colleague wrote, and releasing a document to a customer are all `DATA_WRITE`, and only some of them
+deserve an approval card. `ApprovalMode` cannot express that - it decides who answers a prompt, not
+whether one is raised. The factory is asked once per run and returns a context whose
+`checkApproval(Tool, ToolCall)` reads the call's arguments; extend `SecurityContextProxy` over
+`DefaultSecurityContextFactory.defaultContext(run)` so that every other question keeps its answer.
+Every other entry point - the TL-Script functions, the MCP endpoint, the prompt improver - goes
+through the same call, so the substitution is one class and not five call sites. See
+[the security architecture, 4.5](../doc/security/agent-security-architecture.md).
+
 ### Human-in-the-loop: a pending interaction belongs to the account (#393)
 
 A run that needs a tool approval, or that asks a question through `askUser`, parks its agent thread

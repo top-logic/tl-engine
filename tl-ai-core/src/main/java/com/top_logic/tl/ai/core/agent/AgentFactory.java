@@ -762,6 +762,8 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		String systemPrompt = agent.systemPrompt();
 		systemPrompt = injectSkills(agent, systemPrompt, capabilities);
 		systemPrompt = injectDelegateDescriptions(agent, systemPrompt, capabilities);
+		systemPrompt = appendContributions(agent, assignment, systemPrompt,
+			LLMService.promptContributors());
 
 		// The environment block is composed last, so that a placeholder written into a skill or a
 		// delegate description is filled too, and so that the block is the last thing the model reads
@@ -807,6 +809,44 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		return new AgentParams(model, systemPrompt, maxTurns,
 			maxOutputTokens, modelOptions, contextWindowTokens,
 			maxRetries, timeoutSeconds, toolChoice, msg -> true, environment.block(), turnContext);
+	}
+
+	/**
+	 * Appends what the installation's {@link SystemPromptContributor}s say about this run.
+	 *
+	 * <p>
+	 * After the generated sections, so a contributor reads as the installation speaking after the
+	 * agent rather than as part of the agent's own instructions, and before the {@code <environment>}
+	 * block is composed, so a placeholder in the contributed text is filled like one in the agent's
+	 * prompt.
+	 * </p>
+	 *
+	 * <p>
+	 * A contributor that throws is skipped with a log line rather than failing the run: losing a
+	 * section of standing instructions is a better answer than no answer at all, which is how a
+	 * failed {@link com.top_logic.tl.ai.core.agent.environment.AgentFact} is treated too.
+	 * </p>
+	 */
+	static String appendContributions(AgentDefinition agent, AgentModelAssignment assignment,
+			String systemPrompt, List<SystemPromptContributor> contributors) {
+		String result = systemPrompt == null ? "" : systemPrompt;
+		for (SystemPromptContributor contributor : contributors) {
+			String text;
+			try {
+				text = contributor.contribute(agent, assignment);
+			} catch (RuntimeException ex) {
+				Logger.error("System prompt contributor " + contributor.getClass().getName()
+					+ " failed for agent '" + agent.name() + "': " + ex.getMessage(), ex,
+					AgentFactory.class);
+				continue;
+			}
+			if (text == null || text.isBlank()) {
+				continue;
+			}
+			String trimmed = result.stripTrailing();
+			result = trimmed.isEmpty() ? text.strip() : trimmed + "\n\n" + text.strip();
+		}
+		return result;
 	}
 
 	/**

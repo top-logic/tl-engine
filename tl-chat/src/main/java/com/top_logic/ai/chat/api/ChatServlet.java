@@ -64,7 +64,10 @@ import com.top_logic.tl.ai.core.message.ImageContent;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
+import com.top_logic.basic.InteractionContext;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.col.TypedAnnotatable;
+import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.tl.ai.core.agent.AgentDefinition;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
@@ -148,6 +151,18 @@ public class ChatServlet extends TopLogicServlet {
 	private static final String PATH_PREFERENCES = "/preferences";
 	private static final String TRANSCRIPT_SUFFIX = "/transcript";
 	private static final String CONTENT_TYPE_JSON = "application/json; charset=UTF-8";
+
+	/**
+	 * The conversation this request named, put here by {@link #doService} so that the handlers below
+	 * do not each have to read the parameter again.
+	 *
+	 * <p>
+	 * Its default is the window's unnamed conversation, which is both what a request naming none
+	 * addresses and what a handler driven without {@link #doService} - a servlet test - gets.
+	 * </p>
+	 */
+	private static final Property<String> REQUEST_CONVERSATION =
+		TypedAnnotatable.property(String.class, "tl.chat.request.conversation", "");
 
 	/**
 	 * The status of a request the acting account may not make.
@@ -1710,6 +1725,27 @@ public class ChatServlet extends TopLogicServlet {
 	}
 
 	/**
+	 * The conversation this request addresses, as the client's {@code conversation} parameter.
+	 *
+	 * <p>
+	 * A window can show more than one: a page's chat beside a {@code <chat-dock>}'s, two
+	 * {@code <agent-chat>} elements, a chat in a dialog over the one on the page. A request that
+	 * names none addresses the window's unnamed conversation, which is what the classic
+	 * {@code chat-client.js} has.
+	 * </p>
+	 *
+	 * <p>
+	 * Not {@code chatId}: that parameter is taken, by {@code PUT /chat/preferences}, for the key a
+	 * <em>layout</em> is stored under. The two are the same string for every element of a chat and
+	 * differ for an {@code <agent-chat>}, whose layout is the one-element chat's and whose
+	 * conversation is its own.
+	 * </p>
+	 */
+	private static String conversation(HttpServletRequest req) {
+		return ChatSessionRegistry.key(req.getParameter("conversation"));
+	}
+
+	/**
 	 * Binds the application-window sub-session addressed by the request's {@code windowId} to the
 	 * current thread before dispatching, so every chat endpoint runs in the user's UI context.
 	 *
@@ -1738,7 +1774,8 @@ public class ChatServlet extends TopLogicServlet {
 			throws ServletException, IOException {
 		TLSubSessionContext subSession =
 			ChatSessionRegistry.resolveSubSession(TLContextManager.getSession(), windowId(req));
-		if (subSession == null || subSession.get(ChatSessionRegistry.CHAT_TRACKER) == null) {
+		String conversation = conversation(req);
+		if (ChatSessionRegistry.tracker(subSession, conversation) == null) {
 			sendStaleWindow(resp);
 			return;
 		}
@@ -1748,6 +1785,9 @@ public class ChatServlet extends TopLogicServlet {
 		// so no explicit restore is needed. Going through ThreadContextManager.inContext(...) would
 		// instead log an "Overriding subsession" info on every request.
 		TLContextManager.getInteraction().installSubSessionContext(subSession);
+		// Which conversation of the window this is, read once: the handlers below resolve their
+		// tracker through currentTracker(), which has no request to read the parameter from.
+		TLContextManager.getInteraction().set(REQUEST_CONVERSATION, conversation);
 		// Only now is there a user to ask about: the interaction this request started with carries
 		// no sub-session, and therefore no person.
 		if (TLContext.isAnonymous()) {
@@ -1758,16 +1798,18 @@ public class ChatServlet extends TopLogicServlet {
 	}
 
 	/**
-	 * The {@link TaskProgressTracker} bound to the sub-session of the current request.
+	 * The {@link TaskProgressTracker} of the conversation the current request addresses.
 	 *
 	 * <p>
-	 * Never null inside a handler: {@link #doService} rejects requests whose sub-session or tracker
-	 * cannot be resolved before any handler runs.
+	 * Never null inside a handler: {@link #doService} rejects a request whose sub-session or
+	 * conversation cannot be resolved before any handler runs, and puts what it resolved onto the
+	 * interaction.
 	 * </p>
 	 */
 	private static TaskProgressTracker currentTracker() {
-		TLSubSessionContext subSession = TLContextManager.getSubSession();
-		return subSession == null ? null : subSession.get(ChatSessionRegistry.CHAT_TRACKER);
+		InteractionContext interaction = TLContextManager.getInteraction();
+		String conversation = interaction == null ? "" : interaction.get(REQUEST_CONVERSATION);
+		return ChatSessionRegistry.tracker(TLContextManager.getSubSession(), conversation);
 	}
 
 	/**

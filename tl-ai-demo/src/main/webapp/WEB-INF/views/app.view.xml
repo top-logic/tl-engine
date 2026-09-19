@@ -21,12 +21,13 @@
 		<!--
 			The dock's wiring, declared here because the dock lives in the shell's footer.
 
-			Its conversation is "chat" - the SAME one the Chat page shows. It has to be: every
-			/chat/* call is keyed by the window alone, so the server holds one active session and
-			one run per window, and two chat ids that each show a transcript would take each
-			other's turns. The dock is therefore a second PLACE for the one conversation, not a
-			second conversation, and it hides itself (launcher included) while the Chat page has
-			that conversation on screen.
+			Its conversation is "chat" - the SAME one the Chat page shows. The dock is a second
+			PLACE for that conversation, not a second conversation, and it hides itself (launcher
+			included) while the Chat page has it on screen: two views of one conversation would give
+			its draft channel two composers and its remembered layout two rails. A dock on a chat
+			id of its own would be a second conversation and would work - since #502 every /chat/*
+			call names its conversation beside its window, and the server holds an active session,
+			a run and a stream for each.
 
 			The channels are the dock's own, because the page declares its own in
 			tl-ai-demo/chat-grouped.view.xml and the two are never on screen together.
@@ -241,13 +242,13 @@
 
 			The dock CONTAINS the <chat>, so - unlike every other chat element - it cannot inherit
 			the id: a chat scope reaches descendants only. The id is therefore written twice, here
-			and on the <chat> inside, and the two must agree. ChatJoinLog warns about a window whose
-			chat ids do not line up, which is the shape a typo here produces.
+			and on the <chat> inside, and the two must agree. ChatJoinLog warns about an element that
+			joined nobody, which is the shape a typo here produces.
 
 			And the id is "chat", the Chat page's own: this is the SAME conversation, reachable from
 			Belege and from Administration without leaving the page. On the Chat page itself there
-			is nothing for the dock to open, so it hides - which is also what keeps the window to
-			the one conversation its transport can carry.
+			is nothing for the dock to open, so it hides - and showing it there would put two
+			composers on one draft channel and two rails on one remembered layout.
 		-->
 		<footer>
 			<chat-dock chat-id="chat"

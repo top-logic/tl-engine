@@ -1,5 +1,6 @@
 import { React } from 'tl-react-bridge'
 import { respond } from './api'
+import type { ChatAddress } from './api'
 import type { bundle } from './i18n'
 import { toolLabel } from './models'
 import type { ChatAction } from './reducer'
@@ -14,13 +15,13 @@ const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 export function PromptStack({
   approvals,
   questions,
-  windowId,
+  at,
   labels,
   dispatch,
 }: {
   approvals: ApprovalRequest[]
   questions: InteractionRequest[]
-  windowId: string
+  at: ChatAddress
   labels: Labels
   dispatch: React.Dispatch<ChatAction>
 }) {
@@ -28,10 +29,10 @@ export function PromptStack({
   return (
     <div className="prompt-stack">
       {approvals.map((item) => (
-        <ApprovalCard key={item.id} item={item} windowId={windowId} labels={labels} dispatch={dispatch} />
+        <ApprovalCard key={item.id} item={item} at={at} labels={labels} dispatch={dispatch} />
       ))}
       {questions.map((item) => (
-        <QuestionCard key={item.id} item={item} windowId={windowId} labels={labels} dispatch={dispatch} />
+        <QuestionCard key={item.id} item={item} at={at} labels={labels} dispatch={dispatch} />
       ))}
     </div>
   )
@@ -162,17 +163,17 @@ function approvalReason(item: ApprovalRequest, labels: Labels): string {
 
 function ApprovalCard({
   item,
-  windowId,
+  at,
   labels,
   dispatch,
 }: {
   item: ApprovalRequest
-  windowId: string
+  at: ChatAddress
   labels: Labels
   dispatch: React.Dispatch<ChatAction>
 }) {
   const send = async (response: 'APPROVED' | 'APPROVED_FOR_SESSION' | 'REJECTED') => {
-    await respond(windowId, {
+    await respond(at, {
       requestId: item.approvalRequestId,
       response,
       toolName: item.toolName,
@@ -208,19 +209,19 @@ function ApprovalCard({
 
 function QuestionCard({
   item,
-  windowId,
+  at,
   labels,
   dispatch,
 }: {
   item: InteractionRequest
-  windowId: string
+  at: ChatAddress
   labels: Labels
   dispatch: React.Dispatch<ChatAction>
 }) {
   const [text, setText] = useState('')
   const [picked, setPicked] = useState<string[]>([])
   const submit = async (answer: string) => {
-    await respond(windowId, { requestId: item.requestId, response: answer })
+    await respond(at, { requestId: item.requestId, response: answer })
     dispatch({ type: 'RESOLVE_INTERACTION', requestId: item.requestId })
   }
   const toggle = (label: string) => {

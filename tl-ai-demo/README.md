@@ -40,12 +40,12 @@ The start page is `/view/` - the React view layer, declared in `WEB-INF/views/ap
 
 **The dock is a second place for one conversation, not a second conversation.** Its `chat-id` is
 `chat` - the Chat page's own - so the dock opens what that page shows, and on the Chat page itself
-it hides, launcher included: there is nothing there for it to open. That is not only tidiness. The
-chat transport is **one conversation per window**: every `/chat/*` call is keyed by the window
-alone, so two chat ids that each show a transcript in one window share the server's active session
-and take each other's turns. Note that the id is written **twice** in `app.view.xml`, on the
-`<chat-dock>` and on the `<chat>` inside it: the dock contains the chat, and a chat scope only
-reaches downward.
+it hides, launcher included: there is nothing there for it to open, and showing both would give one
+`draft` channel two composers and one remembered layout two rails. A dock on a chat id of its own
+would be a second conversation and would work: since #502 every `/chat/*` call names its
+conversation beside its window, and the server holds an active session, a run and a stream for each.
+Note that the id is written **twice** in `app.view.xml`, on the `<chat-dock>` and on the `<chat>`
+inside it: the dock contains the chat, and a chat scope only reaches downward.
 
 The panel is hidden when the dock is closed, never unmounted, so a run started in the dock keeps
 running and keeps its transcript while the user works on the page behind it; the launcher carries

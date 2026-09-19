@@ -138,7 +138,9 @@ public class ChatComponentBuilder implements ModelBuilder {
 			}
 			TLSessionContext session = subSession.getSessionContext();
 			taskTracker.setWindowId(ChatSessionRegistry.windowId(session, subSession));
-			ChatSessionRegistry.register(subSession, taskTracker);
+			// The unnamed conversation of the window: the classic client sends no chat id, and the
+			// servlet reads a request that names none as addressing exactly this one.
+			ChatSessionRegistry.register(subSession, null, taskTracker);
 		} catch (Exception e) {
 			Logger.debug("Could not bind chat tracker to sub-session (JSON API will not resolve this window)", e,
 				ChatComponentBuilder.class);

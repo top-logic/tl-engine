@@ -391,7 +391,7 @@ public class TestChatPendingInteraction extends BasicTestCase {
 	private static void inWindow(TaskProgressTracker window) {
 		TLSubSessionContext subSession = TLContextManager.getSubSession();
 		assertNotNull("The test needs a sub-session to hang the tracker on.", subSession);
-		ChatSessionRegistry.register(subSession, window);
+		ChatSessionRegistry.register(subSession, null, window);
 	}
 
 	private int respond(Person caller, String response) throws Exception {

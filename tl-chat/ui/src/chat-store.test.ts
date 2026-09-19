@@ -32,6 +32,9 @@ let sentTexts: string[] = []
 /** The whole body of every `POST /chat/send`, in order. */
 let sentBodies: Record<string, unknown>[] = []
 
+/** Every URL the store asked `fetch` for, in order. */
+let requested: string[] = []
+
 class FakeEventSource {
   static readonly CLOSED = 2
 
@@ -97,6 +100,7 @@ beforeEach(() => {
   preferenceWrites = []
   sentTexts = []
   sentBodies = []
+  requested = []
   const globals = globalThis as unknown as Record<string, unknown>
   globals.window = {
     location: { pathname: '/app/view/chat' },
@@ -105,6 +109,7 @@ beforeEach(() => {
   }
   globals.EventSource = FakeEventSource
   globals.fetch = vi.fn(async (url: string, init?: { method?: string; body?: string }) => {
+    requested.push(url)
     if (init?.method === 'PUT' && url.includes('/chat/preferences')) {
       preferenceWrites.push(JSON.parse(init.body ?? '{}'))
       return { ok: true, status: 200, json: async () => ({}) }
@@ -794,9 +799,9 @@ describe('a mounted rail', () => {
   /**
    * The dock asks this before it shows itself at all.
    *
-   * The transport is one conversation per window, so a dock offering a second view of the
-   * conversation the page already shows would have the two taking each other's turns. Its own
-   * nested conversation must not be what makes it hide, which is what `insideDock` says.
+   * A dock offering a second view of the conversation the page already shows would give one draft
+   * channel two composers and one remembered layout two rails. Its own nested conversation must not
+   * be what makes it hide, which is what `insideDock` says.
    */
   it('counts the conversations mounted outside a dock, and only those', () => {
     const store = chatStore('alpha', BOOT)
@@ -1438,5 +1443,73 @@ describe('the composer seam', () => {
     expect(() => store.actions.setDraft('Bitte erkläre die Rechnung.')).not.toThrow()
 
     release()
+  })
+})
+
+/**
+ * Which conversation a request is for, beside which window it comes from.
+ *
+ * A window can show more than one - a page's chat beside a `<chat-dock>`'s, two `<agent-chat>`
+ * elements - and the server holds an active session, a run and an event stream for each. It used to
+ * hold one per window, so the second conversation to send took the first one's stream and the first
+ * waited for an answer that never came. Every call therefore names its conversation.
+ */
+describe('every request names its conversation', () => {
+  it('puts the chat id on the stream, the capabilities, the sessions and the layout', async () => {
+    const store = chatStore('belege', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    store.actions.toggleSide(0)
+    await settle()
+
+    expect(streams[0].url).toContain('conversation=belege')
+    for (const url of requested) {
+      expect(url).toContain('conversation=belege')
+    }
+    expect(requested.some((url) => url.includes('/chat/capabilities'))).toBe(true)
+    expect(requested.some((url) => url.includes('/chat/preferences'))).toBe(true)
+
+    release()
+  })
+
+  /**
+   * The layout key and the conversation are two different keys on the preferences call.
+   *
+   * `chatId` is where the layout is stored - the empty one for an `<agent-chat>` - while
+   * `conversation` is which chat of the window is asking, which is how the servlet resolves the
+   * request at all.
+   */
+  it('keeps the layout key apart from the conversation', async () => {
+    const boot = { ...BOOT, layoutKey: '' }
+    const store = chatStore('v42', boot)
+    const release = store.subscribe(() => undefined)
+    store.attach(boot)
+    await settle()
+    store.actions.toggleSide(0)
+    await settle()
+
+    const layout = requested.find((url) => url.includes('/chat/preferences'))
+    expect(layout).toContain('chatId=&')
+    expect(layout).toContain('conversation=v42')
+
+    release()
+  })
+
+  it('gives two conversations of one window two different addresses', async () => {
+    const page = chatStore('page', BOOT)
+    const dock = chatStore('dock', BOOT)
+    const releasePage = page.subscribe(() => undefined)
+    const releaseDock = dock.subscribe(() => undefined)
+    page.attach(BOOT)
+    dock.attach(BOOT)
+    await settle()
+
+    expect(streams).toHaveLength(2)
+    expect(streams.map((stream) => stream.url.includes('conversation=page'))).toContain(true)
+    expect(streams.map((stream) => stream.url.includes('conversation=dock'))).toContain(true)
+
+    releasePage()
+    releaseDock()
   })
 })

@@ -1,5 +1,6 @@
 import { React } from 'tl-react-bridge'
 import { cancelPromptImprovement, improvePrompt } from './api'
+import type { ChatAddress } from './api'
 import { ACCEPT_ATTRIBUTE, collectAttachments, dragHasFiles } from './attachments'
 import { ContextUsage, formatTokens } from './context-usage'
 import type { RunStore } from './store'
@@ -231,7 +232,7 @@ export function plusMenuVisible(flags: {
 
 export const Composer = React.memo(
   React.forwardRef(function Composer({
-  windowId,
+  at,
   agents,
   models,
   agent,
@@ -279,7 +280,8 @@ export const Composer = React.memo(
   placeholder,
   runs,
 }: {
-  windowId: string
+  /** The conversation this composer belongs to - its window and its chat id. */
+  at: ChatAddress
   agents: AgentOption[]
   models: ModelOption[]
   agent: string
@@ -588,7 +590,7 @@ export const Composer = React.memo(
     setImproveError('')
     setImproveUnchanged(false)
     try {
-      const result = await improvePrompt(windowId, draft, requestId, abort.current.signal)
+      const result = await improvePrompt(at, draft, requestId, abort.current.signal)
       if (improveId.current !== requestId) return
       const improvedText = result.improvedText || result.text || ''
       if (result.status === 'completed' && improvedText) {
@@ -616,7 +618,7 @@ export const Composer = React.memo(
   const cancelImprove = () => {
     const requestId = improveId.current
     abort.current?.abort()
-    if (requestId) void cancelPromptImprovement(windowId, requestId)
+    if (requestId) void cancelPromptImprovement(at, requestId)
     setImproving(false)
     area.current?.focus()
   }
@@ -645,7 +647,7 @@ export const Composer = React.memo(
         <PromptStack
           approvals={pendingApprovals}
           questions={pendingQuestions}
-          windowId={windowId}
+          at={at}
           labels={labels}
           dispatch={dispatch}
         />

@@ -119,7 +119,7 @@ public class TestChatRunAccess extends BasicTestCase {
 
 		TLSubSessionContext subSession = TLContextManager.getSubSession();
 		assertNotNull("The test needs a sub-session to hang the tracker on.", subSession);
-		ChatSessionRegistry.register(subSession, new TaskProgressTracker());
+		ChatSessionRegistry.register(subSession, null, new TaskProgressTracker());
 	}
 
 	/** Precondition: the fixture this test reasons about actually reached the application. */

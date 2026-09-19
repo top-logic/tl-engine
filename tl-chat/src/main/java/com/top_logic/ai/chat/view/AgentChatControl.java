@@ -57,8 +57,11 @@ public class AgentChatControl extends ReactControl {
 		super(context, null, blankToNull(reactElement) == null ? "TLAgentChat" : reactElement.trim());
 
 		// Empty chat-id: this one-element form stays isolated from the four pieces, which default
-		// to "default". App then keys the browser store by the control id.
-		_binding = ChatViewBinding.bind(context, "");
+		// to "default". App then keys the browser store by the control id - and so does the server,
+		// because the conversation this control shows is its own: two <agent-chat/> elements in one
+		// window are two conversations with a run each, not one they overwrite for each other.
+		_binding = ChatViewBinding.bindOwn(context, getID());
+		putState("chatId", _binding.conversation());
 		TaskProgressTracker tracker = _binding.tracker();
 		String configuredImprover = blankToNull(promptImproverAgent);
 		tracker.setPromptImproverAgentName(configuredImprover);

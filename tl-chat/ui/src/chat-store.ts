@@ -23,6 +23,7 @@ import {
   setApprovalMode,
   truncate,
   turnsJsonToMessages,
+  type ChatAddress,
 } from './api'
 import type { ComposerApi, PaneOpenOptions } from './extensions'
 import type { ReferenceToken } from './reference'
@@ -238,16 +239,14 @@ const RUN_SCOPED_EVENTS = new Set([
 /**
  * Whether a stream frame belongs to the conversation this store is showing.
  *
- * **The chat transport is one conversation per window.** Every `/chat/*` call carries a
- * `windowId` and nothing else, so the server holds one `TaskProgressTracker` - one active session,
- * one processing state - per window, and both stores of a window with two chat ids attach to it.
- * A frame that names a session other than the open one is therefore the other conversation's and
- * is dropped here rather than rendered into this transcript.
+ * A stream belongs to one conversation: every `/chat/*` call names its window *and* its chat id,
+ * and the server holds a `TaskProgressTracker` - one active session, one processing state - for
+ * each of them. So a frame arriving here is already this conversation's, and what is left for this
+ * guard is the frame that names a session other than the one the store has open: a run of this
+ * conversation the user has since moved away from.
  *
- * A frame that names no session at all is delivered: today most of them name none, so this is a
- * guard that tightens by itself as the server learns to stamp them (the per-window transport is a
- * ticket of its own). It is not a substitute for the rule that a window shows one conversation -
- * see `<chat-dock>` in `tl-chat/CLAUDE.md`.
+ * A frame that names no session at all is delivered: most of them name none, so this is a guard
+ * that tightens by itself as the server learns to stamp them.
  */
 export function eventBelongsToChat(name: string, raw: unknown, sessionId: string | null): boolean {
   if (!RUN_SCOPED_EVENTS.has(name)) return true
@@ -355,9 +354,10 @@ export interface ChatState {
    * How many `<chat-conversation/>` elements of this chat are mounted **outside** a
    * `<chat-dock/>`.
    *
-   * What a dock asks before it shows itself: the transport is one conversation per window, so a
-   * dock whose conversation is already on the page must not open a second copy of it. The page's
-   * conversation wins - it is the one the user navigated to.
+   * What a dock asks before it shows itself. Not a transport question any more - a window carries
+   * as many conversations as it shows - but a question about *this* one: two composers on one draft
+   * channel and two rails on one remembered layout are the same conversation shown twice. The
+   * page's conversation wins; it is the one the user navigated to.
    */
   conversationsOutsideDock: number
 
@@ -648,6 +648,17 @@ export class ChatStore {
     runStore.set(this.runs.get())
   }
 
+  /**
+   * Where this store's `/chat/*` calls go: its window, and which conversation of it.
+   *
+   * The window alone is not an address: a window can show a page's chat beside a `<chat-dock>`'s or
+   * two `<agent-chat>` elements, and each of them has an active session, a run and an event stream
+   * of its own on the server.
+   */
+  private get at(): ChatAddress {
+    return { windowId: this.state.windowId, chatId: this.chatId }
+  }
+
   /** What the user decided per fact, which is what is stored - never what the page happens to show. */
   private get layout(): ChatPreferences {
     const { railDecided, sideOpen, badgeSeen, sectionChoices } = this.state
@@ -895,7 +906,7 @@ export class ChatStore {
           // choice used to be lost (#423).
           if (sameLayout(next, this.storedLayout)) return
           this.storedLayout = next
-          void savePreferences(windowId, this.layoutKey, next)
+          void savePreferences(this.at, this.layoutKey, next)
         },
       },
       {
@@ -949,13 +960,13 @@ export class ChatStore {
   private loadCapabilities(): (() => void) | void {
     // Nothing to ask for in a session the servlet answers with 401.
     if (!this.state.authenticated) return
-    const windowId = this.state.windowId
+    const at = this.at
     let cancelled = false
     void (async () => {
       try {
         const [nextCaps, nextSessions] = await Promise.all([
-          fetchCapabilities(windowId),
-          listSessions(windowId),
+          fetchCapabilities(at),
+          listSessions(at),
         ])
         if (cancelled) return
         // An agent already chosen wins over the entry point: the `agent` channel may have named one
@@ -1013,7 +1024,7 @@ export class ChatStore {
     // An EventSource against a 401 reconnects for as long as the page is open; a session that is
     // not signed in opens none.
     if (!this.state.authenticated) return
-    const windowId = this.state.windowId
+    const at = this.at
     let closed = false
     let source: EventSource | null = null
     let staleTimer = 0
@@ -1061,13 +1072,13 @@ export class ChatStore {
 
     const open = () => {
       if (closed) return
-      const es = openEventStream(windowId)
+      const es = openEventStream(at)
       source = es
       const on = (name: string, fn: (e: MessageEvent) => void) =>
         es.addEventListener(name, ((event: MessageEvent) => {
           markAlive()
-          // The transport is one conversation per window (see `eventBelongsToChat`), so a frame
-          // that names a conversation other than this store's is somebody else's turn.
+          // A frame naming a session other than the open one is a run this conversation has since
+          // moved away from - see `eventBelongsToChat`.
           if (!eventBelongsToChat(name, event.data, this.state.sessionId)) return
           fn(event)
         }) as EventListener)
@@ -1196,7 +1207,7 @@ export class ChatStore {
         }>(e.data, {})
         if (!data.approvalRequestId) return
         if (this.state.autoApprove) {
-          void respond(windowId, {
+          void respond(at, {
             requestId: data.approvalRequestId,
             response: 'APPROVED',
             toolName: data.toolName,
@@ -1324,7 +1335,7 @@ export class ChatStore {
           case 'approval_required':
             if (!data.approvalRequestId) break
             if (this.state.autoApprove) {
-              void respond(windowId, {
+              void respond(at, {
                 requestId: data.approvalRequestId,
                 response: 'APPROVED',
                 toolName: data.toolName,
@@ -1495,7 +1506,7 @@ export class ChatStore {
 
   private async refreshSessions(): Promise<void> {
     try {
-      this.patch({ sessions: await listSessions(this.state.windowId), sessionsError: '' })
+      this.patch({ sessions: await listSessions(this.at), sessionsError: '' })
     } catch {
       this.patch({ sessionsError: this.labels.chatsRefreshFailed })
     }
@@ -1512,10 +1523,10 @@ export class ChatStore {
    * reload used to look like.
    */
   private async recoverRunState(sessionId: string): Promise<void> {
-    const windowId = this.state.windowId
+    const at = this.at
     const [snapshot, pending] = await Promise.all([
-      fetchRunSnapshot(windowId).catch(() => null),
-      fetchPendingInteractions(windowId).catch(() => []),
+      fetchRunSnapshot(at).catch(() => null),
+      fetchPendingInteractions(at).catch(() => []),
     ])
     // The user may have moved to another chat while this was in flight.
     if (this.state.sessionId !== sessionId) return
@@ -1548,7 +1559,7 @@ export class ChatStore {
 
   private async refreshSubagents(): Promise<void> {
     try {
-      this.patch({ subagents: await listSubagents(this.state.windowId) })
+      this.patch({ subagents: await listSubagents(this.at) })
     } catch {
       this.patch({ subagents: [] })
     }
@@ -1565,7 +1576,7 @@ export class ChatStore {
   private async discardEmptyChat(createdHere: boolean, id: string): Promise<void> {
     if (!createdHere || !id) return
     try {
-      await deleteSession(this.state.windowId, id)
+      await deleteSession(this.at, id)
     } catch {
       // Best effort: an undeleted empty chat is untidy, not broken.
     }
@@ -1580,7 +1591,7 @@ export class ChatStore {
       showNotice: this.showNotice,
 
       selectSession: async (id: string) => {
-        const windowId = this.state.windowId
+        const at = this.at
         this.assistantId = null
         this.runId = null
         this.patch({
@@ -1596,7 +1607,7 @@ export class ChatStore {
         // The model does not change when the chat does, so its window survives the reset; only what
         // the previous conversation measured is dropped.
         this.setRun((s) => ({ ...EMPTY_RUN, model: s.model, contextWindow: s.contextWindow }))
-        const detail = await loadSession(windowId, id)
+        const detail = await loadSession(at, id)
         this.patch({
           sessionId: id,
           messages: turnsJsonToMessages(detail.turnsJson),
@@ -1643,7 +1654,7 @@ export class ChatStore {
       },
 
       deleteSession: async (id: string) => {
-        await deleteSession(this.state.windowId, id)
+        await deleteSession(this.at, id)
         if (this.state.sessionId === id) {
           this.patch({
             sessionId: null,
@@ -1663,7 +1674,7 @@ export class ChatStore {
        *          can still see and re-send it, which is why this is not fire-and-forget.
        */
       send: async (text: string, attachments: Attachment[], options: SendOptions = {}) => {
-        const windowId = this.state.windowId
+        const at = this.at
         const labels = this.labels
         let active = this.state.sessionId
         // Whether this send is what created the chat. A send that is then refused has produced
@@ -1672,8 +1683,8 @@ export class ChatStore {
         let createdHere = false
         if (!active) {
           // The first send is what brings a chat into being, titled after what was said.
-          const created = await createSession(windowId, autoTitle(text || labels.attachmentOnly))
-          await loadSession(windowId, created.id)
+          const created = await createSession(at, autoTitle(text || labels.attachmentOnly))
+          await loadSession(at, created.id)
           active = created.id
           createdHere = true
           this.patch({ sessionId: active })
@@ -1704,7 +1715,7 @@ export class ChatStore {
         this.patch({ busy: true })
         this.setRun((s) => ({ ...s, busy: true }))
         try {
-          await sendMessage(windowId, {
+          await sendMessage(at, {
             text: outbound,
             sessionId: active,
             agent: this.state.agent,
@@ -1751,14 +1762,14 @@ export class ChatStore {
        * again from the new wording. A cancelled edit leaves the conversation exactly as it was.
        */
       editSend: async (messageId: string, turnIndex: number, text: string, options: SendOptions = {}) => {
-        const windowId = this.state.windowId
+        const at = this.at
         const labels = this.labels
         const active = this.state.sessionId
         if (!active) return false
         this.showNotice('')
         let removed = 0
         try {
-          const result = await truncate(windowId, active, turnIndex)
+          const result = await truncate(at, active, turnIndex)
           if (result.status === 'busy') {
             this.showNotice(labels.busyHint, '', { tone: 'info' })
             return false
@@ -1790,14 +1801,14 @@ export class ChatStore {
        * place.
        */
       regenerate: async (messageId: string, turnIndex: number) => {
-        const windowId = this.state.windowId
+        const at = this.at
         const labels = this.labels
         const active = this.state.sessionId
         if (!active || this.state.regenerating) return
         this.showNotice('')
         this.patch({ regenerating: true })
         try {
-          const result = await regenerateTurn(windowId, {
+          const result = await regenerateTurn(at, {
             sessionId: active,
             agent: this.state.agent,
             model: this.state.model,
@@ -1833,13 +1844,13 @@ export class ChatStore {
 
       /** Records what the user thought of an answer, or withdraws an earlier rating. */
       rate: async (turnIndex: number, rating: Rating, note?: string) => {
-        const windowId = this.state.windowId
+        const at = this.at
         const active = this.state.sessionId
         if (!active) return
         const others = this.state.feedback.filter((entry) => entry.turnIndex !== turnIndex)
         this.patch({ feedback: rating ? [...others, { turnIndex, rating, note }] : others })
         try {
-          await sendFeedback(windowId, active, turnIndex, rating, note)
+          await sendFeedback(at, active, turnIndex, rating, note)
         } catch {
           // The rating is a convenience, not the conversation: a failed write is not worth an error
           // banner, but it must not look recorded either.
@@ -1848,7 +1859,7 @@ export class ChatStore {
       },
 
       stop: () => {
-        void cancelRun(this.state.windowId)
+        void cancelRun(this.at)
       },
 
       selectAgent: (name: string) => this.applyAgent(name, this.state.caps.agents),
@@ -1883,11 +1894,11 @@ export class ChatStore {
       },
 
       toggleAutoApprove: async () => {
-        const windowId = this.state.windowId
+        const at = this.at
         const next = !this.state.autoApprove
         this.patch({ autoApprove: next })
         try {
-          await setApprovalMode(windowId, next ? 'AUTO_APPROVE' : 'MANUAL')
+          await setApprovalMode(at, next ? 'AUTO_APPROVE' : 'MANUAL')
         } catch {
           this.patch({ autoApprove: !next })
           return
@@ -1895,7 +1906,7 @@ export class ChatStore {
         if (!next) return
         for (const message of this.state.messages) {
           if (message.type !== 'approval_request' || message.outcome !== 'pending') continue
-          void respond(windowId, {
+          void respond(at, {
             requestId: message.approvalRequestId,
             response: 'APPROVED',
             toolName: message.toolName,
@@ -1910,7 +1921,7 @@ export class ChatStore {
       },
 
       cancelSubagent: async (id: string) => {
-        await cancelSubagent(this.state.windowId, id)
+        await cancelSubagent(this.at, id)
         this.patch({
           subagents: this.state.subagents.map((item) =>
             item.subagentId === id ? { ...item, status: 'CANCELLED' } : item,
@@ -1919,11 +1930,11 @@ export class ChatStore {
       },
 
       stopSubagents: async () => {
-        const windowId = this.state.windowId
+        const at = this.at
         const active = this.state.subagents.filter(
           (item) => item.status === 'RUNNING' || item.status === 'QUEUED',
         )
-        await Promise.all(active.map((item) => cancelSubagent(windowId, item.subagentId)))
+        await Promise.all(active.map((item) => cancelSubagent(at, item.subagentId)))
         this.patch({
           subagents: this.state.subagents.map((item) =>
             item.status === 'RUNNING' || item.status === 'QUEUED' ? { ...item, status: 'CANCELLED' } : item,
@@ -1931,7 +1942,7 @@ export class ChatStore {
         })
       },
 
-      loadSubagentTranscript: (id: string) => loadSubagentTranscript(this.state.windowId, id),
+      loadSubagentTranscript: (id: string) => loadSubagentTranscript(this.at, id),
 
       openPane: (content: ReactNode, options: PaneOpenOptions) => {
         // Opening a pane opens the side, and that is the user opening it: a reload shows what they

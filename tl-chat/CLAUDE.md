@@ -265,6 +265,59 @@ the theme the app-bar's `<set-theme>` buttons select. Tokens the shipped themes 
 are aliased once at the top of the file with a fallback that is correct in both themes; add new ones
 there rather than hard-coding a colour.
 
+### An element measures itself, not the window
+
+Every responsive rule in `ui/src/styles.css` that is about *how much room the chat has* is a
+`@container` query, not a `@media` one (Issue #427). A chat placed by an application almost never
+owns the window - a shell's navigation and the page gutters take their share first - so a viewport
+query asks a box the chat does not have: it stayed wide while the conversation was 234 px, and the
+narrow layout arrived hundreds of pixels late or never.
+
+Two containers carry all of it:
+
+| Container | On | What it decides |
+|--|--|--|
+| `chat-shell` | `.tl-cockpit` - App's root, i.e. `<agent-chat>` | Session rail: column or drawer over the thread (≤ 1100 px). Artefact pane: column or sheet, and the icon strip (≤ 1279.98 px). |
+| `chat-stage` | `.stage` - the transcript plus the composer, in App **and** in a composed `<chat-conversation/>` | Thread gutters (≤ 1080 px), Enter hint long/short (≤ 26 rem), the auto-approve label (≤ 19 rem), the model name on its picker (≤ 18 rem), and whether the composer's controls wrap (≤ 16 rem). |
+
+Rules to know when touching this:
+
+- **The stage, not the cockpit, is what the composer measures.** The cockpit stays as wide as ever
+  while the rail and the artefact pane take their columns. Two class hacks used to stand in for that
+  width - `.tl-cockpit.has-pane` (short Enter hint) and `.tl-cockpit.has-document` (no auto-approve
+  label) - and neither ever reached a composed `<chat-conversation/>`, which has no cockpit at all.
+  Both are gone; `has-document` survives only for the one rule that is about a document being open
+  rather than about a width.
+- **`.tl-chat-rail`, `.tl-data-list` and `.tl-chat-dock__body` are deliberately not containers.** The
+  rail is as wide as its own strip plus column, so inline-size containment - which is what
+  `container-type` applies - would leave its contents contributing nothing and collapse it to 0 px.
+  The other two have nothing to ask: a list is as wide as the column it was placed in, and what the
+  dock's card size has to reach is the conversation inside it, which measures itself through
+  `.stage`.
+- **One number, one measurement, for the sheet.** `SHEET_MAX` in `side-pane.tsx` (1279.98) and the
+  `chat-shell` container query are the two halves of the same decision, because whether the pane is
+  a sheet is partly React state (the scrim, the splitter, the pane's own width). `App` measures its
+  root with a `ResizeObserver` and hands `narrow` down to `SidePane`; nothing in the bundle reads
+  `window.matchMedia` any more. Keep it that way - a JS half that asks the window and a CSS half
+  that asks the element disagree at every width where it matters.
+- **What stays a media query, and why.** `@media (hover: none)` and
+  `@media (prefers-reduced-motion: reduce)` are about the person's input device and their
+  preference, not about a box. `@media (max-width: 1100px)` on `.plus-popover` / `.model-popover` /
+  `.context-popover` / `.activity-panel` makes them full-bleed sheets on the bottom edge, which is a
+  phone idiom and so genuinely the screen's business - note only that `position: fixed` there now
+  resolves against `.stage`, because a query container is the containing block of its fixed
+  descendants, which is what puts the popover over the chat rather than over the application.
+- **Sizing inside a container query uses `cqi`, not `vw`** - the drawer's `min(20rem, 88cqi)` is 88 %
+  of the chat, which is the width it is spilling out of.
+
+**Browser support.** `container-type`, `@container` and the container query units (`cqi`) are
+Baseline **Widely available**, across browsers since **February 2023** (MDN). They raise no floor
+this product did not already have: the engine's React layer and this application's own shell are
+written with `:has()` - `.tlStack:has(> .tlPanel--fill)`, `button:has(.bi-moon-stars)` - which is
+Baseline Widely available only since **December 2023**, ten months later. The repo's own browser
+tests run current Chromium (`tools/web`, Playwright); there is no listed minimum browser beyond
+that.
+
 ### What the agent picker shows, and what it filters
 
 Two fields of the agent definition are written for a person and are the only ones the UI shows:

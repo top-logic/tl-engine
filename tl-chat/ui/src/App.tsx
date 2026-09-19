@@ -17,7 +17,7 @@ import { ContextIcon, ContextSection, ProgressIcon, ProgressSection } from './pr
 import { SourcesIcon, SourcesSection, type CitedSource } from './sources'
 import { progressBadge, unseenBadge } from './progress-model'
 import { RailToggle, SideRail, SideStrip } from './rail'
-import { SHEET_MQ, SidePane } from './side-pane'
+import { SHEET_MAX, SidePane } from './side-pane'
 import { Thread } from './thread'
 import {
   type ApprovalRequest,
@@ -27,7 +27,7 @@ import {
   type Citation,
 } from './types'
 
-const { useCallback, useEffect, useMemo, useRef, useState } = React
+const { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } = React
 
 /**
  * The shipped agentic chat: session rail, thread, composer and right rail over one {@link useChat}
@@ -58,10 +58,10 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
    */
   const composerBox = useRef<HTMLDivElement | null>(null)
 
+  /** The chat's own root, which is what decides the layout mode - not the window. */
+  const cockpit = useRef<HTMLDivElement | null>(null)
   /** True below 1280, where the rail and the pane are sheets over the thread rather than columns. */
-  const [sheet, setSheet] = useState(() =>
-    typeof window !== 'undefined' ? window.matchMedia(SHEET_MQ).matches : false,
-  )
+  const [sheet, setSheet] = useState(false)
 
   useEffect(() => {
     const workspace = composerBox.current
@@ -75,11 +75,23 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
     return () => observer.disconnect()
   })
 
-  useEffect(() => {
-    const mq = window.matchMedia(SHEET_MQ)
-    const onChange = () => setSheet(mq.matches)
-    mq.addEventListener('change', onChange)
-    return () => mq.removeEventListener('change', onChange)
+  /*
+   * Measured, not asked of the window (Issue #427).
+   *
+   * An `<agent-chat>` placed by an application owns the window almost never: a shell's navigation
+   * and the page gutters take their share first, so a viewport query answered for a box the chat
+   * does not have and the sheet arrived hundreds of pixels late, or never. The stylesheet decides
+   * the same thing from the same element, as a `chat-shell` container query on the same number.
+   */
+  useLayoutEffect(() => {
+    const root = cockpit.current
+    if (!root) return undefined
+    const decide = (width: number) => setSheet(width <= SHEET_MAX)
+    decide(root.getBoundingClientRect().width)
+    if (typeof ResizeObserver === 'undefined') return undefined
+    const observer = new ResizeObserver(([entry]) => decide(entry.contentRect.width))
+    observer.observe(root)
+    return () => observer.disconnect()
   }, [])
 
   useEffect(() => {
@@ -290,12 +302,16 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
   const documentMode = paneOpen && chat.paneOptions?.mode === 'document'
 
   return (
+    // `has-pane` is gone: it was here to tell the composer that its column had shrunk, which the
+    // stage now says itself as a container query (Issue #427) - and says for a composed
+    // conversation too, which never had the class. `has-document` stays, for the one rule that is
+    // about a document being open rather than about a width.
     <div
       id={controlId}
+      ref={cockpit}
       className={
         `tl-cockpit${railCollapsed ? ' is-rail-collapsed' : ''}` +
-        `${chat.sideOpen ? ' has-side' : ''}${paneOpen ? ' has-pane' : ''}` +
-        `${documentMode ? ' has-document' : ''}`
+        `${chat.sideOpen ? ' has-side' : ''}${documentMode ? ' has-document' : ''}`
       }
     >
       <SessionRail
@@ -419,6 +435,7 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
         ) : null}
         {paneOpen ? (
           <SidePane
+            narrow={sheet}
             title={chat.paneOptions?.title ?? ''}
             backLabel={chat.paneOptions?.backLabel}
             tabs={chat.paneOptions?.tabs}

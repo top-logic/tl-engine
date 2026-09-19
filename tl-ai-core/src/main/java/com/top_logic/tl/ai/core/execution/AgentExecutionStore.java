@@ -362,11 +362,25 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 * </p>
 	 */
 	private <T> T write(Supplier<T> mutation) {
+		return onWriterThread(mutation);
+	}
+
+	/**
+	 * Runs {@code work} on the dedicated writer thread inside a fresh system interaction, and waits
+	 * for its result.
+	 *
+	 * <p>
+	 * {@link #write} is this for a mutation; {@link #sessionOf} is this for a <em>read</em> of a row
+	 * the calling thread's revision cannot see. Same thread, same fresh interaction, same waiting
+	 * and cancellation behaviour - see {@link #write}.
+	 * </p>
+	 */
+	private <T> T onWriterThread(Supplier<T> work) {
 		if (Thread.currentThread() == _writerThread) {
 			// Defensive: no mutation currently calls another mutator, so this branch is
 			// unreachable. If future code makes it reachable, running directly avoids a
 			// self-submit deadlock (single writer thread waiting on its own queue).
-			return mutation.get();
+			return work.get();
 		}
 		ThreadPoolExecutor writer = _writer;
 		if (writer == null) {
@@ -379,7 +393,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 		}
 		try {
 			return writer.submit(
-				() -> ThreadContextManager.inSystemInteraction(AgentExecutionStore.class, mutation::get))
+				() -> ThreadContextManager.inSystemInteraction(AgentExecutionStore.class, work::get))
 				.get(WRITE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 		} catch (InterruptedException ex) {
 			// Restore the flag before leaving: the interrupt belongs to whoever set it, and code
@@ -800,6 +814,40 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	private boolean isTerminal(AgentExecution execution) {
 		TLClassifier status = execution.getStatus();
 		return status != null && !ExecutionStatus.RUNNING.name().equals(status.getName());
+	}
+
+	/**
+	 * The session an execution belongs to, resolved where that row is visible.
+	 *
+	 * <p>
+	 * This is the sanctioned way for an <em>agent</em> thread to get from the run's
+	 * {@link AgentExecution} to its {@link AgentSession}: the resolution happens on the writer
+	 * thread, in a fresh interaction that reads at the current revision, because the calling
+	 * thread's view is pinned to a revision that predates the row and dereferencing it there throws
+	 * "created after access revision N" (Gitea #405). The returned wrapper is, for the caller,
+	 * another opaque token - hand it back to this service (as {@link #beginExecution}'s
+	 * {@code session}), do not read attributes off it.
+	 * </p>
+	 *
+	 * <p>
+	 * Best-effort: a failure is logged and answered with <code>null</code>, which its callers treat
+	 * as "record nothing", never as a reason to fail the run.
+	 * </p>
+	 *
+	 * @param execution
+	 *        The execution whose session is wanted; <code>null</code> yields <code>null</code>.
+	 */
+	public AgentSession sessionOf(AgentExecution execution) {
+		if (execution == null) {
+			return null;
+		}
+		try {
+			return onWriterThread(() -> execution.getSession());
+		} catch (RuntimeException ex) {
+			Logger.warn("Could not resolve the session of an agent execution: " + ex.getMessage(),
+				ex, AgentExecutionStore.class);
+			return null;
+		}
 	}
 
 	/**

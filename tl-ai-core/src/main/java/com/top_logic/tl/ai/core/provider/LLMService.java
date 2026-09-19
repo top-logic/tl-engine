@@ -55,6 +55,8 @@ import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.environment.EnvironmentConfig;
 import com.top_logic.tl.ai.core.agent.environment.EnvironmentSettings;
 import com.top_logic.tl.ai.core.agent.environment.UserMemoryConfig;
+import com.top_logic.tl.ai.core.limits.RunLimitSettings;
+import com.top_logic.tl.ai.core.limits.RunLimitsConfig;
 import com.top_logic.tl.ai.core.agent.environment.UserMemorySettings;
 import com.top_logic.tl.ai.core.security.DefaultSecurityContextFactory;
 import com.top_logic.tl.ai.core.security.SecurityContextFactory;
@@ -543,6 +545,8 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		Config.PROVIDERS,
 		Config.AGENT_EXECUTION,
 		Config.ENVIRONMENT,
+		Config.USER_MEMORY,
+		Config.RUN_LIMITS,
 		Config.SECURITY_CONTEXT,
 		Config.PROMPT_CONTRIBUTORS,
 		Config.MODEL_CATALOG,
@@ -578,6 +582,13 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		 * @see #getUserMemory()
 		 */
 		String USER_MEMORY = "user-memory";
+
+		/**
+		 * Configuration property name for the run-limits section.
+		 *
+		 * @see #getRunLimits()
+		 */
+		String RUN_LIMITS = "run-limits";
 
 		/**
 		 * Configuration property name for the object-ids section.
@@ -653,6 +664,15 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		 */
 		@Name(USER_MEMORY)
 		UserMemoryConfig getUserMemory();
+
+		/**
+		 * How many agent runs this installation carries at once, and how much one account may
+		 * spend.
+		 *
+		 * @see #RUN_LIMITS
+		 */
+		@Name(RUN_LIMITS)
+		RunLimitsConfig getRunLimits();
 
 		/**
 		 * What this application knows about the identifiers a model passes to a tool: the codes its
@@ -935,6 +955,15 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	 */
 	public UserMemoryConfig getUserMemoryConfig() {
 		return getConfig().getUserMemory();
+	}
+
+	/**
+	 * How many agent runs this installation carries at once, and how much one account may spend.
+	 *
+	 * @see RunLimitSettings
+	 */
+	public RunLimitsConfig getRunLimitsConfig() {
+		return getConfig().getRunLimits();
 	}
 
 	/**

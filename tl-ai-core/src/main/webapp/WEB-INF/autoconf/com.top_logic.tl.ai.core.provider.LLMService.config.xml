@@ -29,6 +29,33 @@
 				-->
 				<environment/>
 				<!--
+					How many agent runs this installation carries at once, and how much one account
+					may spend. Only the first of the three is on by default, because an unbounded
+					thread pool is not a setting anybody chose:
+
+					  chat-workers  how many chat runs run at the same time. 0 (the default) means
+					                max(8, cores * 2). A run thread waits on a provider almost all
+					                of its life, so this is a ceiling on memory and on provider
+					                spend in flight, not on CPU.
+					  chat-queue    how many sends may wait for a free worker. 0 (the default) means
+					                none: a send that finds the pool full is told so, rather than
+					                queued behind a backlog whose length nobody knows.
+
+					The two per-account ceilings are off unless an administrator sets them, because
+					switching one on changes what an existing installation allows:
+
+					  concurrent-runs-per-account="3"
+					  token-budget="2000000" budget-window-hours="24"
+					  <role-budgets>
+					      <role-budget name="tl.admin" tokens="0"/>     (0 means unlimited)
+					  </role-budgets>
+
+					The budget counts what the account's recorded runs consumed, so it needs run
+					recording; reading it costs one pass over the execution rows at every run start.
+					See tl-ai-core/doc/run-limits.md.
+				-->
+				<run-limits/>
+				<!--
 					What this application knows about the identifiers a model passes to a tool.
 
 					When a tool cannot resolve one, TidDiagnostics says which kind of wrong identifier

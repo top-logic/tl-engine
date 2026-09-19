@@ -43,6 +43,13 @@ public class TlAiScreenshotsFactory extends com.top_logic.element.meta.kbbased.A
 	}
 
 	/**
+	 * Lookup {@link Screenshot#ID_ATTR} of {@link Screenshot}.
+	 */
+	public static com.top_logic.model.TLProperty getIdScreenshotAttr() {
+		return (com.top_logic.model.TLProperty) getScreenshotType().getPart(Screenshot.ID_ATTR);
+	}
+
+	/**
 	 * Lookup {@link Screenshot#IMAGE_ATTR} of {@link Screenshot}.
 	 */
 	public static com.top_logic.model.TLProperty getImageScreenshotAttr() {

@@ -105,6 +105,36 @@ public class TestHtmlSanitizer extends TestCase {
 		assertFalse("The resolution base must not leak into the output: " + html, html.contains("localhost"));
 	}
 
+	/**
+	 * A captured screenshot reaches the reader as an image whose {@code src} is a route of this
+	 * application (issue #216), so the filter has to keep a root-relative image the same way it
+	 * keeps a root-relative link. It is the one thing that makes the picture visible at all.
+	 */
+	public void testRelativeImageSurvives() {
+		String html = HtmlSanitizer.sanitize("<img src=\"/screenshot/a7f3b2\" alt=\"page.png\">");
+
+		assertTrue("The image must stay as written: " + html, html.contains("src=\"/screenshot/a7f3b2\""));
+		assertTrue("Its alt text says what it was when it fails to load: " + html, html.contains("alt="));
+		assertFalse("The resolution base must not leak into the output: " + html, html.contains("localhost"));
+	}
+
+	/** An absolute image URL is kept as well - the deployment that declares a %HOST% returns one. */
+	public void testAbsoluteImageSurvives() {
+		String html = HtmlSanitizer.sanitize("<img src=\"https://apps.example.com/hype/screenshot/a7f3b2\">");
+
+		assertTrue("The image must survive: " + html,
+			html.contains("src=\"https://apps.example.com/hype/screenshot/a7f3b2\""));
+	}
+
+	/** But an image whose source is a script or inline payload is not one. */
+	public void testImageWithAScriptOrDataUrlLosesItsSource() {
+		for (String url : new String[] { "javascript:alert(1)", "data:text/html;base64,PHNjcmlwdD4=" }) {
+			String html = HtmlSanitizer.sanitize("<img src=\"" + url + "\">");
+
+			assertFalse("A " + url + " image source must not survive: " + html, html.contains(url));
+		}
+	}
+
 	public void testWhitespaceIsNotReflowed() {
 		String html = HtmlSanitizer.sanitize("<p>a<br>b</p>");
 

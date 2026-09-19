@@ -31,4 +31,18 @@
 		<servlet-name>PdfJsResourceServlet</servlet-name>
 		<url-pattern>/html/pdfjs/*</url-pattern>
 	</servlet-mapping>
+
+	<!--
+		Serves a captured screenshot to the account that captured it (issue #216). Unlike
+		/html/*, this route requires a login: see ScreenshotServlet.
+	-->
+	<servlet>
+		<servlet-name>ScreenshotServlet</servlet-name>
+		<servlet-class>com.top_logic.tl.ai.core.screenshots.ScreenshotServlet</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>ScreenshotServlet</servlet-name>
+		<url-pattern>/screenshot/*</url-pattern>
+	</servlet-mapping>
 </web-fragment>

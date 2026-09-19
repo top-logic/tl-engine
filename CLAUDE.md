@@ -283,6 +283,23 @@ The React chat has its own filter (`marked` → `DOMPurify` in `tl-chat/ui/src/m
 either allow-list without a test in `TestHtmlSanitizer` / `markdown.test.ts` saying why, and never write
 model text into a page with `writeContent`, `innerHTML` or `dangerouslySetInnerHTML` around them.
 
+### Served binaries: two routes, two rules
+
+`tl-ai-core` serves content on two routes, and they are deliberately not alike:
+
+- `/html/{id}` (`GeneratedHtmlPageServlet`) answers **anonymously**. A page `publishPage` stored is
+  meant to be handed around, so its unguessable 128-bit id is the capability, and the answer carries
+  a sandbox CSP so LLM-authored HTML cannot act in the app's origin.
+- `/screenshot/{id}` (`ScreenshotServlet`, #216) requires a **login** and then asks
+  `ScreenshotService.mayRead` - the owner, or an administrator. A screenshot is a picture of a page
+  somebody drove a browser to on their own account; the id is defence in depth, not the rule. A
+  foreign id and an unknown id both answer 404, so the route says nothing about which ids exist.
+
+`browserScreenshot` returns `ScreenshotService.viewUrl(...)` and tells the model to write it as a
+Markdown image, which both rendering paths keep (`HtmlSanitizer`, `markdown.tsx`). The browse/list
+view over `tl.ai.screenshots:Screenshot` comes with the React admin views (#452). See
+`tl-ai-core/doc/screenshots.md`.
+
 ### Memory & Compaction (tl-ai-core `memory/`)
 
 `ConversationMemory` wraps conversation with hybrid token estimation (API baseline + byte heuristic). `CompactionStrategy` interface: `SummarizingStrategy` (LLM-based) and `TruncatingStrategy`.

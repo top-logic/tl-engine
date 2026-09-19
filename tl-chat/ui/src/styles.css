@@ -1433,6 +1433,18 @@
   text-underline-offset: 2px;
 }
 
+/* A picture in an answer - a captured screenshot (/screenshot/<id>), a chart, a web image. It is
+   the width of the column at most, never wider, and keeps its own aspect ratio while it loads. */
+.md img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 0 0.85em;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-1);
+  background: var(--layer);
+}
+
 .md hr {
   margin: 1.5em 0;
   border: 0;

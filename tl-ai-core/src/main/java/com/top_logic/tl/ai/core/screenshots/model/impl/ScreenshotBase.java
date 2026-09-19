@@ -36,6 +36,15 @@ public interface ScreenshotBase extends com.top_logic.model.TLNamed {
 	String CONTENT_TYPE_ATTR = "contentType";
 
 	/**
+	 * Part <code>id</code> of <code>Screenshot</code>
+	 *
+	 * <p>
+	 * Declared as <code>tl.core:String</code> in configuration.
+	 * </p>
+	 */
+	String ID_ATTR = "id";
+
+	/**
 	 * Part <code>image</code> of <code>Screenshot</code>
 	 *
 	 * <p>
@@ -97,6 +106,20 @@ public interface ScreenshotBase extends com.top_logic.model.TLNamed {
 	 */
 	default void setContentType(String newValue) {
 		tUpdateByName(CONTENT_TYPE_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #ID_ATTR}.
+	 */
+	default String getId() {
+		return (String) tValueByName(ID_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #ID_ATTR}.
+	 */
+	default void setId(String newValue) {
+		tUpdateByName(ID_ATTR, newValue);
 	}
 
 	/**

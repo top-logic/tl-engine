@@ -176,6 +176,18 @@ public class TestConverters extends TestCase {
 		assertTrue("An https image must survive: " + html, html.contains("src=\"https://example.com/chart.png\""));
 	}
 
+	/**
+	 * A captured screenshot is shown by a root-relative image (issue #216), so the whole
+	 * Markdown-to-HTML path - renderer and filter - has to keep one.
+	 */
+	public void testRootRelativeImageSurvives() {
+		String html = Converters.markdownToHtmlString("![page.png](/hype/screenshot/a7f3b2)");
+
+		assertTrue("A screenshot of this application must survive: " + html,
+			html.contains("src=\"/hype/screenshot/a7f3b2\""));
+		assertTrue("with the alt text that says what it was: " + html, html.contains("page.png"));
+	}
+
 	public void testCodeBlockContentStaysLiteral() {
 		String html = Converters.markdownToHtmlString("```html\n<b>bold</b>\n```");
 

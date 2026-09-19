@@ -14,6 +14,16 @@
 					<table name="Screenshot"/>
 				</annotations>
 				<attributes>
+					<!--
+						The unguessable handle the /screenshot/{id} route addresses this object by.
+						Not mandatory, because screenshots captured before the route existed have
+						none; those are reachable through the object, not through a URL.
+						Generic (flex) storage on purpose: the attribute was added to a type that
+						already ships, and a flex attribute needs no table migration.
+					-->
+					<property name="id"
+						type="tl.core:String"
+					/>
 					<property name="name"
 						mandatory="true"
 						type="tl.core:String"

@@ -6,7 +6,10 @@
 package com.top_logic.tl.ai.core.tools.web;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 import com.top_logic.basic.Logger;
@@ -69,15 +72,23 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * </p>
  *
  * <p>
- * <b>Where the policy is enforced.</b> The authoritative layer is a single service-wide
- * {@link FilteringProxy} on the loopback interface that <em>every</em> browser session is pinned to:
- * every connection Chromium makes - top-level navigation, redirect hop, sub-resource, IP-literal
- * target - is checked there before a packet leaves the machine, and the destination is DNS-pinned so a
- * rebinding host cannot slip through. One proxy suffices because the allowlist, blocklist and
- * allow-any flag are <em>service</em> configuration, identical for every session; nothing about the
- * decision varies per session. Inside each browser the same policy is applied again by a per-context
- * request route, plus a redirect guard and a final-URL re-validation, which is what turns a refusal
- * into the tool's clean policy message.
+ * <b>Above all of this sits the browsing governance of {@link BrowsingPolicy}</b>, configured on
+ * {@code WebToolsService} and resolved per security role: which origins <em>this user's</em> agent
+ * may reach, and whether a page there may hand it a file. It composes with the lists above - both
+ * have to permit an origin - and an application that configures none is bound by nothing extra.
+ * </p>
+ *
+ * <p>
+ * <b>Where the policy is enforced.</b> The authoritative layer is a {@link FilteringProxy} on the
+ * loopback interface that <em>every</em> browser session is pinned to: every connection Chromium
+ * makes - top-level navigation, redirect hop, sub-resource, IP-literal target - is checked there
+ * before a packet leaves the machine, and the destination is DNS-pinned so a rebinding host cannot
+ * slip through. The allowlist, blocklist and allow-any flag are <em>service</em> configuration,
+ * identical for every session, so nothing about that half of the decision varies per session; the
+ * browsing policy does vary, per role, which is why there is one proxy per <em>policy in use</em>
+ * rather than one for the whole service. Inside each browser the same policy is applied again by a
+ * per-context request route, plus a redirect guard and a final-URL re-validation, which is what turns
+ * a refusal into the tool's clean policy message.
  * </p>
  */
 public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsService.Config<?>>
@@ -593,15 +604,25 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 	private volatile BrowserSessionPool<BrowserSession> _pool;
 
 	/**
-	 * The single service-wide filtering forward proxy every browser session is pinned to.
+	 * The filtering forward proxies browser sessions are pinned to, one per browsing policy.
 	 *
 	 * <p>
-	 * Service-scoped rather than session-scoped because the policy it applies - SSRF plus the
-	 * administrator allowlist/blocklist/allow-any configuration - is service configuration that does
-	 * not vary per session. One listener, one thread pool, one place the policy lives.
+	 * Keyed by {@link BrowsingPolicy#name()} rather than one per session, because everything a proxy
+	 * decides - SSRF, the administrator allowlist/blocklist/allow-any configuration, and the browsing
+	 * policy of the acting role - is the same for every session running under the same policy. An
+	 * application that configures no browsing policy therefore has exactly one, as it always had.
+	 * </p>
+	 *
+	 * <p>
+	 * Created lazily and closed only at shutdown. The number of entries is bounded by the number of
+	 * distinct role combinations among the roles the browsing policy names, which is configuration -
+	 * a session cannot invent a policy - so there is nothing here for a run to grow without limit.
 	 * </p>
 	 */
-	private volatile FilteringProxy _proxy;
+	private final Map<String, FilteringProxy> _proxies = new ConcurrentHashMap<>();
+
+	/** Whether the proxies may still be created; {@code false} from {@link #shutDown()} onwards. */
+	private volatile boolean _running;
 
 	/**
 	 * The <b>decrypted</b> {@code storageState} to seed into the next session created for a key, set
@@ -658,21 +679,24 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 		// Resolved once at startup rather than per launch: the environment does not change while the
 		// service runs, and an operator has to be able to read the effective decision off the log.
 		boolean sandboxDisabled = isSandboxDisabled();
-		// Start the outbound filter BEFORE any session can exist: an unproxied browser would not be
-		// bound by the policy for redirects and IP-literal targets.
-		// Sized from the session cap: the proxy serves the browsers this service starts and nothing
-		// else, so their number is what bounds the connections - and the threads - it needs.
-		_proxy = FilteringProxy.start(this, getMaxConcurrentSessions());
-		String proxyServer = _proxy.serverUrl();
+		_running = true;
+		// The unrestricted proxy is started eagerly, before any session can exist: an unproxied
+		// browser would not be bound by the policy for redirects and IP-literal targets, and the
+		// application that configures no browsing policy must see exactly the setup it always had.
+		String proxyServer = proxyFor(BrowsingPolicy.unrestricted()).serverUrl();
 		_pool = new BrowserSessionPool<>(
 			getMaxConcurrentSessions(),
 			getSessionIdleTimeoutSeconds() * 1000L,
 			getAcquireTimeoutSeconds() * 1000L,
 			System::nanoTime,
 			key -> {
+				// Resolved on the calling thread, which is the one that carries the acting account:
+				// the pool creates a session inside the tool call that needed it.
+				BrowsingPolicy browsing = WebToolsService.currentPolicy();
+				GovernedPolicy policy = new GovernedPolicy(this, this, browsing);
 				BrowserSession session = BrowserSession.open(key, navigationTimeoutMillis,
-					actionTimeoutMillis, navigationSettleMillis, this, _seedByKey.lookup(key), headed,
-					evadeBotDetection, proxyServer, sandboxDisabled);
+					actionTimeoutMillis, navigationSettleMillis, policy, _seedByKey.lookup(key), headed,
+					evadeBotDetection, proxyFor(browsing).serverUrl(), sandboxDisabled);
 				// The context now holds the cookies, so the decrypted copy has served its purpose.
 				// Dropped only after a SUCCESSFUL launch: a failed one must stay retryable.
 				_seedByKey.discard(key);
@@ -689,7 +713,7 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 			+ "DOM-quiet waits after a page load; a click that did not navigate waits only for "
 			+ "DOM-quiet), acquire timeout " + getAcquireTimeoutSeconds()
 			+ " s, idle timeout " + getSessionIdleTimeoutSeconds() + " s. Every browser connection is "
-			+ "filtered through " + proxyServer
+			+ "filtered through a loopback proxy; a session under no browsing policy uses " + proxyServer
 			+ (isApplyAllowlistToAllRequests() ? " (allowlist governs every request)." : ".")
 			+ (sandboxDisabled
 				? " WARNING: Chromium runs WITHOUT its OS-level sandbox (browser-sandbox="
@@ -709,11 +733,12 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 		if (pool != null) {
 			pool.close();
 		}
-		// Close the proxy only after every session is gone, so no live browser is left pointing at a
+		// Close the proxies only after every session is gone, so no live browser is left pointing at a
 		// listener that has stopped answering.
-		FilteringProxy proxy = _proxy;
-		_proxy = null;
-		if (proxy != null) {
+		_running = false;
+		List<FilteringProxy> proxies = new ArrayList<>(_proxies.values());
+		_proxies.clear();
+		for (FilteringProxy proxy : proxies) {
 			proxy.close();
 		}
 		super.shutDown();
@@ -966,6 +991,81 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 				+ "administrator.";
 		}
 		return null;
+	}
+
+	/**
+	 * The filtering proxy browser sessions running under {@code browsing} are pinned to, started on
+	 * first use.
+	 *
+	 * @param browsing
+	 *        The browsing policy of the session; {@link BrowsingPolicy#unrestricted()} when the
+	 *        application configures none.
+	 * @return The proxy; never {@code null}.
+	 */
+	FilteringProxy proxyFor(BrowsingPolicy browsing) {
+		return _proxies.computeIfAbsent(browsing.name(), name -> {
+			if (!_running) {
+				// Only reachable from a session creation racing shutdown; starting a listener now
+				// would leak it past the service.
+				throw new IllegalStateException("The browser tool service is shutting down.");
+			}
+			// Sized from the session cap: the proxy serves the browsers this service starts and
+			// nothing else, so their number is what bounds the connections - and the threads - it
+			// needs.
+			FilteringProxy proxy =
+				FilteringProxy.start(new GovernedPolicy(this, this, browsing), getMaxConcurrentSessions());
+			Logger.info("Browser filtering proxy for browsing policy '" + name + "' listening on "
+				+ proxy.serverUrl() + "; it permits " + browsing.describeAllowed() + ".",
+				BrowserToolsService.class);
+			return proxy;
+		});
+	}
+
+	/**
+	 * How many filtering proxies are currently running, one per browsing policy in use. Package-visible
+	 * for testing.
+	 */
+	int proxyCount() {
+		return _proxies.size();
+	}
+
+	/**
+	 * The service's own domain lists and one {@link BrowsingPolicy}, as one decision.
+	 *
+	 * <p>
+	 * Both have to permit an origin, and neither can relax the SSRF check, which the proxy applies
+	 * independently. The service's lists speak first because they are the older, installation-wide
+	 * statement; which of the two answers first cannot change the outcome, since both only ever
+	 * refuse.
+	 * </p>
+	 *
+	 * @param navigations
+	 *        The installation-wide answer for a top-level navigation.
+	 * @param requests
+	 *        The installation-wide answer for one outbound connection. The same service object as
+	 *        {@code navigations} in production; two properties because the two questions are two
+	 *        interfaces, which is what lets a test state one without the other.
+	 * @param browsing
+	 *        The policy of the role this session runs under.
+	 */
+	record GovernedPolicy(BrowserSession.DomainPolicy navigations, FilteringProxy.RequestPolicy requests,
+			BrowsingPolicy browsing) implements BrowserSession.DomainPolicy, FilteringProxy.RequestPolicy {
+
+		@Override
+		public boolean isNavigationPermitted(String host) {
+			return navigations.isNavigationPermitted(host) && browsing.refuseAccess(host) == null;
+		}
+
+		@Override
+		public String refuseRequest(String host) {
+			String refusal = requests.refuseRequest(host);
+			return refusal != null ? refusal : browsing.refuseAccess(host);
+		}
+
+		@Override
+		public String refuseDownload(String host) {
+			return browsing.refuseDownload(host);
+		}
 	}
 
 	/**
@@ -1247,11 +1347,11 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 	}
 
 	/**
-	 * The service-wide filtering forward proxy, or {@code null} when the service is not started.
-	 * Package-visible so a test can assert what the proxy refused.
+	 * The filtering forward proxy of a session under no browsing policy, or {@code null} when the
+	 * service is not started. Package-visible so a test can assert what the proxy refused.
 	 */
 	FilteringProxy proxyForTest() {
-		return _proxy;
+		return _proxies.get(BrowsingPolicy.unrestricted().name());
 	}
 
 	/**

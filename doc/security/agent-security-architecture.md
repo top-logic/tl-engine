@@ -8,7 +8,8 @@ tool layer, and whatever its `<security-config>` grants at the data layer, which
 writes one. Section 6 is the per-artifact map; [role-model-worked-example.md](role-model-worked-example.md) explains the role model
 this design sits on and is the page to read *before* this one;
 [tool-access-configuration.md](tool-access-configuration.md) is the administrator's guide to the part
-that works; [testbed.md](../../tl-ai-demo/doc/secdemo/testbed.md) is the runnable fixture that shows it, one persona and one expected
+that works; [browsing-governance.md](browsing-governance.md) is the administrator's guide to where an
+agent that may browse is allowed to go; [testbed.md](../../tl-ai-demo/doc/secdemo/testbed.md) is the runnable fixture that shows it, one persona and one expected
 result per behaviour.
 **Depends on:** engine ticket **#29088** (`ModelAccessRights` / `SecurityConfigurationService`),
 **released** in engine `8.0.0-alpha7` and present in the `8.0.0-alpha8` engine tl-ai now builds
@@ -474,6 +475,14 @@ Being in `egress` has two consequences beyond ordinary granting:
 - An egress call in the same *turn* as a `data.read` call against a restricted type is recorded in the
   audit log as a correlated pair. This is detection, not prevention - prevention is L2 ensuring the
   agent never held the data.
+
+**Granting `egress` says the agent may send data out; it does not say where to.** That is the
+*browsing policy* (#347), configured on `WebToolsService` and resolved per security role: which origins
+a run may reach at all, with a separate axis for whether a page there may hand it a file. It binds the
+browser, `webFetch` and `webSearch` alike, it is the ceiling a model-supplied `allowedDomains` can only
+narrow, and it composes with - never relaxes - the unconditional SSRF check of `UrlSafety`. An
+application that configures none is bound by nothing extra, which is what every installation before
+#347 was. See [browsing-governance.md](browsing-governance.md).
 
 #### 3.2.5 Background and delegated runs
 

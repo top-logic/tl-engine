@@ -39,6 +39,12 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  * </p>
  *
  * <p>
+ * Which origins it may reach at all is the acting role's {@link BrowsingPolicy}, configured on
+ * {@link WebToolsService}. It is applied to every hop, so an allowed origin redirecting to a
+ * forbidden one is refused rather than followed.
+ * </p>
+ *
+ * <p>
  * What it returns is a page somebody else wrote, so it comes back inside the
  * {@link UntrustedEnvelope#PAGE_CONTENT untrusted-content envelope}. The tool's own sentences - every
  * {@code "Error: ..."} and the notice about a document it cannot extract text from - stay outside it:
@@ -96,6 +102,8 @@ public class WebFetchTool {
 		int maxBytes = Math.max(1024, service != null ? service.getFetchMaxBytes() : 5_000_000);
 		int maxChars = Math.max(256, service != null ? service.getFetchMaxChars() : 50_000);
 
+		BrowsingPolicy browsing = WebToolsService.currentPolicy();
+
 		String currentUrl = url.trim();
 		try {
 			for (int hop = 0; hop <= MAX_REDIRECTS; hop++) {
@@ -108,6 +116,13 @@ public class WebFetchTool {
 				String validationError = validateUrl(uri);
 				if (validationError != null) {
 					return "Error: " + validationError;
+				}
+				// Re-checked on EVERY hop, exactly as the SSRF check above is: a permitted origin
+				// answering with a redirect to an off-policy one is the whole reason the redirects are
+				// followed by hand here rather than by the HttpClient.
+				String offPolicy = browsing.refuseAccess(uri.getHost());
+				if (offPolicy != null) {
+					return "Error: " + BrowsingPolicies.audit(browsing, uri.getHost(), offPolicy);
 				}
 
 				HttpRequest request = HttpRequest.newBuilder(uri)

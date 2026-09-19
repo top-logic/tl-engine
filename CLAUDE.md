@@ -283,6 +283,19 @@ The React chat has its own filter (`marked` → `DOMPurify` in `tl-chat/ui/src/m
 either allow-list without a test in `TestHtmlSanitizer` / `markdown.test.ts` saying why, and never write
 model text into a page with `writeContent`, `innerHTML` or `dangerouslySetInnerHTML` around them.
 
+**Browsing governance is configuration, not a tool argument (#347).** `<browsing>` on `WebToolsService`
+says which origins a run may reach, resolved per security role (`BrowsingPolicyConfig` →
+`BrowsingPolicies.forRoles` → `BrowsingPolicy`), with an `access` and a `downloads` axis per origin and
+`*.example.com` / exact-host patterns; deny beats allow, and a policy name nobody declared is a boot
+error. It is the **ceiling** for all three routes out: the browser (its filtering proxy, now one per
+policy rather than one per service), `webFetch` (every hop) and `webSearch` - whose model-supplied
+`allowedDomains`/`blockedDomains` can only narrow it, enforced by filtering the hits that come back and
+not only by asking the engine. It composes with `BrowserToolsService`'s installation-wide
+`allowed-domains`/`blocked-domains` (both must permit) and relaxes nothing in `UrlSafety`, which stays
+the unconditional SSRF check. Configure nothing and nothing changes. Administrators are **not** exempt
+here, unlike in #392 - this is a statement about the destination, not about the account. See
+`doc/security/browsing-governance.md`.
+
 ### Served binaries: two routes, two rules
 
 `tl-ai-core` serves content on two routes, and they are deliberately not alike:

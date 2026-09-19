@@ -47,12 +47,28 @@ public class EvalReport {
 	/**
 	 * One cell of the matrix: what one arm did with one scenario, over all its repeats.
 	 *
+	 * @param scenarioId
+	 *        The scenario this cell reports on, as the eval file names it.
+	 * @param arm
+	 *        The arm this cell reports on, as the eval file names it.
+	 * @param model
+	 *        The model the arm was run with.
 	 * @param runs
 	 *        How many runs actually happened; 0 for an arm that could not be started.
 	 * @param passes
 	 *        How many of them passed.
 	 * @param couldNotRun
 	 *        Whether the arm was never started, with {@link #reason()} saying why.
+	 * @param reason
+	 *        Why the arm could not be started, or <code>null</code> when it ran.
+	 * @param meanTurns
+	 *        Mean number of agent turns over the runs that happened.
+	 * @param meanInputTokens
+	 *        Mean input tokens over the runs that happened.
+	 * @param meanOutputTokens
+	 *        Mean output tokens over the runs that happened.
+	 * @param meanDurationMs
+	 *        Mean wall-clock duration in milliseconds over the runs that happened.
 	 */
 	public record Cell(
 			String scenarioId,
@@ -83,7 +99,30 @@ public class EvalReport {
 		}
 	}
 
-	/** What one arm did over the whole scenario set. */
+	/**
+	 * What one arm did over the whole scenario set.
+	 *
+	 * @param arm
+	 *        The arm this summary reports on, as the eval file names it.
+	 * @param model
+	 *        The model the arm was run with.
+	 * @param runs
+	 *        How many runs happened, over all cells that ran.
+	 * @param passes
+	 *        How many of them passed.
+	 * @param cells
+	 *        How many cells ran at all - the denominator of pass^k.
+	 * @param cellsAllPassed
+	 *        How many of those cells passed every repeat - the numerator of pass^k.
+	 * @param cellsNotRun
+	 *        How many cells never ran, and are therefore in no rate.
+	 * @param meanInputTokens
+	 *        Mean input tokens per run, over the cells that ran.
+	 * @param meanOutputTokens
+	 *        Mean output tokens per run, over the cells that ran.
+	 * @param meanDurationMs
+	 *        Mean wall-clock duration in milliseconds per run, over the cells that ran.
+	 */
 	public record ArmSummary(
 			String arm,
 			String model,

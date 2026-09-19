@@ -167,6 +167,10 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 		}
 	}
 
+	/**
+	 * What a run asked a human for. Mirrors the
+	 * <code>tl.ai.execution:InteractionType</code> enumeration.
+	 */
 	public enum InteractionType {
 		/** Tool-call approval. */
 		APPROVAL,

@@ -206,10 +206,11 @@ only after `mvn -pl tl-chat -am -DskipTests install` and a restart of the applic
 
 ### Embedding in the React view layer
 
-`view/AgentChatElement` is the `<agent-chat/>` view element (`trace-mode`, `prompt-improver-agent`);
-`view/AgentChatControl` is the `ReactControl` behind it. It registers the per-window
+`view/AgentChatElement` is the `<agent-chat/>` view element (`trace-mode`, `prompt-improver-agent`,
+`placeholder`); `view/AgentChatControl` is the `ReactControl` behind it. It registers the per-window
 `TaskProgressTracker` through `ChatViewBinding` and pushes the bootstrap state (`windowId`,
-`userName`, `welcomeName`, `traceMode`, `promptImprovementEnabled`) the browser component reads.
+`userName`, `welcomeName`, `traceMode`, `promptImprovementEnabled`, `placeholder`) the browser
+component reads.
 The component itself is registered as `TLAgentChat` in `ui/src/main.tsx`.
 
 The session list is no element of this module's own: it is a `<data-list>` of
@@ -452,7 +453,7 @@ Every field of `ChatExtensions` is optional.
 |--|--|--|
 | `railSections` | Fortschritt (this session's `createTask` / `updateTask` store, plus an open approval) and Kontext (language, agent, model, chat) | Extra sections between them, in array order. `accent` tints with `--button-primary` / `--layer-selected`; `icon` is what the 56 px strip shows. |
 | `contextFacts` | language, agent, model, chat | Extra lines in the Kontext section. |
-| `composerAddons` | none | `referenceCandidates(query)` is what typing **@** offers, and `extraMenuItems` adds rows to the `+` menu (their `action` gets the `ComposerApi`). |
+| `composerAddons` | none | `referenceCandidates(query)` is what typing **@** offers, `extraMenuItems` adds rows to the `+` menu (their `action` gets the `ComposerApi`), and `placeholder` is the host's own invitation for the empty field - see below. |
 | `messageAnnotations.render` | web-link popover | May call `openInPane` (invoice kind in the demo). |
 | `messageActions` | copy / rate / regenerate | Extra buttons under an answer. |
 | `contextHook` | none | `header` in the thread bar; `contextTag` prepended as `<context>…</context>` on send and regenerate. |
@@ -473,6 +474,32 @@ header the host fills (`title`, `version`, `actions`, close). The workspace is a
 pane narrows the thread rather than covering it; the splitter is draggable and arrow-key operable,
 and a width dragged in one mode is not imposed on the other. **Below** 1280 px both modes are a
 sheet over the thread.
+
+### The composer's invitation
+
+The empty field says "Frag mich etwas …", which is informal; an application whose every other
+surface addresses the user with *Sie* then has one "du" on its most-read control (#420). Both paths
+into the chat state their own sentence, and both feed one `Composer` prop:
+
+| Path | How |
+|--|--|
+| `<chat-conversation>` / `<agent-chat>` | `<placeholder><en>…</en><de>…</de></placeholder>`, or the key of a text in the application's bundle. The control resolves it in the acting account's language (`ChatViewBinding.resolveText`) and pushes the words, never the key. |
+| A host composing `App` | `extensions.composerAddons.placeholder`, already localised. |
+
+A configured `<agent-chat placeholder>` wins over the seam: it is the installation's decision, the
+seam is the host code's default.
+
+Two rules about it:
+
+- **It is the idle invitation only.** While the agent works the field keeps saying "Nächste
+  Nachricht schreiben …", because that sentence is about the run rather than about the application,
+  and a host that replaced it would be inviting the user to start what is already under way.
+- **It replaces both framework variants**, the one that offers `@` included. A host that wants its
+  sentence to mention `@` writes that into its own text.
+
+Before this the only way in was CSS - a host put its own text in front of
+`.token-input.is-empty::before { content: attr(data-placeholder) }` with a custom property. That was
+a host reaching into a framework pseudo-element; there is no reason to do it any more.
 
 ### The composer's reference tokens
 

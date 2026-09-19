@@ -214,6 +214,17 @@
 				reference="chatReference"
 				trace="summary"
 			>
+				<!--
+					The composer's idle invitation, in this application's own words (Issue #420). The
+					chat's own German addresses the user with "du", which an application that says
+					"Sie" everywhere else cannot have on its most-read control. Idle only: while the
+					agent works the field keeps saying "Nächste Nachricht schreiben …", which is
+					about the run rather than about this application.
+				-->
+				<placeholder>
+					<en>Ask about these invoices, their amounts or who they are from.</en>
+					<de>Fragen Sie nach diesen Belegen, ihren Beträgen oder ihren Absendern.</de>
+				</placeholder>
 				<actions rate="true"/>
 				<controls
 					agent-picker="true"

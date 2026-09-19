@@ -279,3 +279,49 @@ describe('the composer under a burst of input', () => {
     expect(field.querySelectorAll('.ref-token').length).toBe(1)
   })
 })
+
+/**
+ * The host's own invitation for the empty field (#420).
+ *
+ * The framework's German says "Frag mich etwas …", which an application whose every other surface
+ * addresses the user with "Sie" cannot have on its most-read control. A host states its own
+ * sentence, and it replaces both framework variants - including the one that offers "@". What it
+ * does *not* replace is the wording while a run is going: that sentence is about the run.
+ */
+describe('a host placeholder on the composer', () => {
+  const HOST = 'Fragen Sie nach diesem Projekt, seinen Dokumenten oder den Beteiligten.'
+
+  /** What the stylesheet renders as the empty field's text (`.token-input.is-empty::before`). */
+  function shown(field: HTMLElement) {
+    return field.getAttribute('data-placeholder')
+  }
+
+  it('stands in the idle field in place of the framework wording', async () => {
+    const { field } = await mount({ placeholder: HOST })
+
+    expect(shown(field)).toBe(HOST)
+    expect(field.getAttribute('aria-label')).toBe(HOST)
+  })
+
+  it('replaces the "@" variant as well', async () => {
+    const { field } = await mount({
+      placeholder: HOST,
+      referenceCandidates: () => [],
+    })
+
+    expect(shown(field)).toBe(HOST)
+    expect(shown(field)).not.toBe(bundle('en').askAnythingWithAt)
+  })
+
+  it('gives way to the framework wording while the agent works', async () => {
+    const { field } = await mount({ placeholder: HOST, busy: true })
+
+    expect(shown(field)).toBe(bundle('en').typeNext)
+  })
+
+  it('leaves the framework wording alone when the host states none', async () => {
+    const { field } = await mount()
+
+    expect(shown(field)).toBe(bundle('en').askAnything)
+  })
+})

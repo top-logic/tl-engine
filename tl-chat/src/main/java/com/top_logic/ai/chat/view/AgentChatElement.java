@@ -15,6 +15,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.UIElement;
@@ -79,6 +80,13 @@ public class AgentChatElement implements UIElement {
 		String PROMPT_IMPROVER_AGENT = "prompt-improver-agent";
 
 		/**
+		 * Configuration property name for {@link #getPlaceholder()}.
+		 *
+		 * @see #getPlaceholder()
+		 */
+		String PLACEHOLDER = "placeholder";
+
+		/**
 		 * Configuration property name for {@link #getReactElement()}.
 		 *
 		 * @see #getReactElement()
@@ -107,6 +115,26 @@ public class AgentChatElement implements UIElement {
 		String getPromptImproverAgent();
 
 		/**
+		 * The invitation standing in the empty prompt field, in this application's own words.
+		 *
+		 * <p>
+		 * Written here as a text per language, or as the key of one. Empty keeps the chat's own
+		 * wording, which is what every application got before this option existed.
+		 * </p>
+		 *
+		 * <p>
+		 * It is the <em>idle</em> invitation only. While the agent is working the field keeps saying
+		 * "type your next message", because that sentence is about the run rather than about this
+		 * application, and an application that replaced it would be telling the user to start
+		 * something that is already under way.
+		 * </p>
+		 */
+		@Name(PLACEHOLDER)
+		@Label("Placeholder")
+		@Nullable
+		ResKey getPlaceholder();
+
+		/**
 		 * Registered React element that renders this chat.
 		 *
 		 * Defaults to {@code TLAgentChat}. A host that called
@@ -129,6 +157,6 @@ public class AgentChatElement implements UIElement {
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		return new AgentChatControl(context, _config.getTraceMode(), _config.getPromptImproverAgent(),
-			_config.getReactElement());
+			_config.getReactElement(), _config.getPlaceholder());
 	}
 }

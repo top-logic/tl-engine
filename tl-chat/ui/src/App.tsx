@@ -42,6 +42,16 @@ const { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } = R
 export function App({ controlId, extensions }: TLCellProps & { extensions?: ChatExtensions }) {
   const state = useTLState()
   const promptImprovementEnabled = state.promptImprovementEnabled === true
+  /**
+   * The composer's idle invitation, from `<agent-chat placeholder="…">` when the installation
+   * configured one, else from the host's own extensions (#420). The configured text wins: it is
+   * the installation's decision, while the seam is the host code's default. Empty falls through to
+   * the framework's wording, which is what an application that configures neither gets.
+   */
+  const placeholder =
+    (typeof state.placeholder === 'string' ? state.placeholder : '') ||
+    extensions?.composerAddons?.placeholder ||
+    ''
   const boot = useMemo(() => readBootstrap(state), [state])
   const { chat, actions, runs } = useChat(chatIdOf(state, controlId), boot)
   const labels = useMemo(() => bundle(chat.language), [chat.language])
@@ -400,6 +410,7 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
             onSend={onSend}
             onStop={actions.stop}
             ref={composer}
+            placeholder={placeholder || undefined}
             extraMenuItems={extensions?.composerAddons?.extraMenuItems}
             referenceCandidates={extensions?.composerAddons?.referenceCandidates}
           />

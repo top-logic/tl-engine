@@ -122,4 +122,4 @@ It enforces the part where reliability lives - a unique match or nothing happens
 that tolerates line endings and whitespace and reports when it fell back, and a miss that says where
 the anchor stopped agreeing with the text. Offer a verbatim read beside it: an anchored edit without
 a verbatim read to anchor on is a guess. `text-edit.readText` / `text-edit.editText` in `tl-ai-core`
-are the generic pair; the contract is `tl-ai-core/doc/text-edits.md`.
+are the generic pair; the contract is the JavaDoc of `TextEdits`.

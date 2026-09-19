@@ -40,7 +40,7 @@ import java.util.List;
  * <b>Dependency-free by design.</b> {@link String} in, {@link Result} out, no knowledge base, no
  * model, no services - so an application that addresses its own text differently (by heading, by
  * section, by line range) reuses the part where the reliability actually lives without inheriting the
- * generic tool built on it. See {@code tl-ai-core/doc/text-edits.md}.
+ * generic tool built on it.
  * </p>
  *
  * @see com.top_logic.tl.ai.core.tools.text.TextEditTool

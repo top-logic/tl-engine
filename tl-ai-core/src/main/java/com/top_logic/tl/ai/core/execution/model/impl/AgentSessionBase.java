@@ -54,15 +54,6 @@ public interface AgentSessionBase extends com.top_logic.model.TLObject {
 	String LAST_UPDATED_ATTR = "lastUpdated";
 
 	/**
-	 * Part <code>memory</code> of <code>AgentSession</code>
-	 * 
-	 * <p>
-	 * Declared as <code>tl.core:Text</code> in configuration.
-	 * </p>
-	 */
-	String MEMORY_ATTR = "memory";
-
-	/**
 	 * Part <code>metadata</code> of <code>AgentSession</code>
 	 * 
 	 * <p>
@@ -145,20 +136,6 @@ public interface AgentSessionBase extends com.top_logic.model.TLObject {
 	 */
 	default void setLastUpdated(java.util.Date newValue) {
 		tUpdateByName(LAST_UPDATED_ATTR, newValue);
-	}
-
-	/**
-	 * Getter for part {@link #MEMORY_ATTR}.
-	 */
-	default String getMemory() {
-		return (String) tValueByName(MEMORY_ATTR);
-	}
-
-	/**
-	 * Setter for part {@link #MEMORY_ATTR}.
-	 */
-	default void setMemory(String newValue) {
-		tUpdateByName(MEMORY_ATTR, newValue);
 	}
 
 	/**

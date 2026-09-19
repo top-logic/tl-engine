@@ -101,9 +101,6 @@
 					<property name="status"
 						type="tl.core:String"
 					/>
-					<property name="memory"
-						type="tl.core:Text"
-					/>
 					<property name="metadata"
 						type="tl.core:Text"
 					/>

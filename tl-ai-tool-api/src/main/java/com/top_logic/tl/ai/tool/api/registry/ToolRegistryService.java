@@ -5,10 +5,8 @@
  */
 package com.top_logic.tl.ai.tool.api.registry;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -21,7 +19,6 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.tool.api.Tool;
 
 /**
@@ -175,31 +172,6 @@ public class ToolRegistryService extends ConfiguredManagedClass<ToolRegistryServ
 	 */
 	public Collection<Tool> getTools() {
 		return _tools.values();
-	}
-
-	/**
-	 * Returns tool schemas for the specified qualified tool names.
-	 *
-	 * @param qualifiedToolNames
-	 *        Collection of qualified tool names in the format {@code factory-name.tool-name}.
-	 * @return A list of tool schemas for the requested tools.
-	 * @throws IllegalArgumentException
-	 *         If any of the specified tool names is not found in the registry.
-	 */
-	public List<ToolSchema> getToolSchemas(Collection<String> qualifiedToolNames) {
-		List<ToolSchema> schemas = new ArrayList<>();
-
-		for (String qualifiedName : qualifiedToolNames) {
-			Tool tool = getTool(qualifiedName);
-			if (tool != null) {
-				schemas.add(tool.schema());
-			} else {
-				throw new IllegalArgumentException("Tool '" + qualifiedName + "' not found in registry."
-					+ " Available tools: " + _tools.keySet());
-			}
-		}
-
-		return schemas;
 	}
 
 	/**

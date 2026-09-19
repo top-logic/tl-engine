@@ -177,13 +177,6 @@ public class TlAiExecutionFactory extends com.top_logic.element.meta.kbbased.Abs
 	}
 
 	/**
-	 * Lookup {@link AgentSession#MEMORY_ATTR} of {@link AgentSession}.
-	 */
-	public static com.top_logic.model.TLProperty getMemoryAgentSessionAttr() {
-		return (com.top_logic.model.TLProperty) getAgentSessionType().getPart(AgentSession.MEMORY_ATTR);
-	}
-
-	/**
 	 * Lookup {@link AgentSession#METADATA_ATTR} of {@link AgentSession}.
 	 */
 	public static com.top_logic.model.TLProperty getMetadataAgentSessionAttr() {

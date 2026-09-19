@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Removes tl.ai.execution:AgentSession#memory and the CLOB column behind it.
+
+	The attribute was meant to hold the compacted conversation snapshot of a session. Nothing ever
+	wrote it: AgentExecutionStore.saveMemory was the only caller of setMemory, and saveMemory itself
+	had no caller; getMemory was never read. A session's conversation is persisted by
+	ConversationLog / the turn-based format instead, and its metadata bag lives in the sibling
+	`metadata` column. The admin table declared the column excluded, so nobody ever saw that it is
+	always null.
+
+	Data loss: none that matters. Every row's MEMORY is null, because no code path can have set it.
+	The migration drops the column anyway rather than leaving it, because a 10 MB CLOB column that
+	nothing fills is the kind of scaffolding that gets re-used by accident later.
+
+	Order: the column goes first, then the model part. The other way round leaves a window in which
+	the model no longer declares an attribute whose column the schema still has.
+-->
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Issue_487_remove_agent_session_memory"
+		module="tl-ai-core"
+	/>
+	<dependencies>
+		<!--
+			The predecessor in this module's own chain. Without it MigrationUtil cannot chain the
+			tl-ai-core versions and reports "Multiple versions with same base version".
+		-->
+		<dependency name="Issue_230_remove_module_tl_ai_chat"
+			module="tl-ai-core"
+		/>
+		<dependency name="Ticket_29221_Remove_security_domain"
+			module="tl"
+		/>
+		<dependency name="Ticket_29088_Add_PersistentView"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_28710_Added_TLSearch"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_28557_enlarge_contact_attributes"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_29092_multi_factor_authentication"
+			module="tl-layout-formeditor"
+		/>
+		<dependency name="Ticket_29410_filename_binary"
+			module="tl-model-wysiwyg"
+		/>
+		<dependency name="Ticket_28604_changelog"
+			module="tl-doc"
+		/>
+		<dependency name="Ticket_29037_Update_diagram_attribute"
+			module="tl-bpe"
+		/>
+		<dependency name="Ticket_27736_Upgrade_layout"
+			module="tl-monitoring"
+		/>
+		<dependency name="Ticket_27442_Update_lucene_version_to_8_11_2"
+			module="tl-search-lucene"
+		/>
+	</dependencies>
+	<processors>
+		<!--
+			`table` is the type name from tl-ai-coreMeta.xml, `column` the attribute name - not the
+			SQL names; the processor resolves both against the persistent schema.
+		-->
+		<drop-column table="AgentSession"
+			column="memory"
+		/>
+
+		<delete-property name="tl.ai.execution:AgentSession#memory"/>
+	</processors>
+</migration>

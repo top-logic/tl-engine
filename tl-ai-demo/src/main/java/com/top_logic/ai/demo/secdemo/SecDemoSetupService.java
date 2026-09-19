@@ -725,19 +725,6 @@ public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupServ
 	}
 
 	/**
-	 * The projects each configured persona is expected to hold the scope role on, indexed by login.
-	 *
-	 * @return The mapping, never <code>null</code>.
-	 */
-	public static Map<String, List<String>> personaProjects() {
-		Map<String, List<String>> projects = new LinkedHashMap<>();
-		for (PersonaConfig persona : getInstance().getConfig().getPersonas()) {
-			projects.put(persona.getLogin(), persona.getPartnerOf());
-		}
-		return projects;
-	}
-
-	/**
 	 * The singleton {@link SecDemoSetupService} instance.
 	 */
 	public static SecDemoSetupService getInstance() {

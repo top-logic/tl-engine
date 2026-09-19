@@ -546,20 +546,6 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	}
 
 	/**
-	 * Stores the (compacted) conversation memory snapshot of the session.
-	 */
-	public void saveMemory(AgentSession session, String memoryJson) {
-		write(() -> {
-			try (Transaction tx = beginTx("Save agent session memory")) {
-				session.setMemory(memoryJson);
-				session.setLastUpdated(new Date());
-				tx.commit();
-			}
-			return null;
-		});
-	}
-
-	/**
 	 * Stores the session metadata bag (approved tools, approval mode, loaded skills, ...).
 	 */
 	public void saveMetadata(AgentSession session, String metadataJson) {
@@ -891,8 +877,8 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 * <p>
 	 * Every execution row counts once, including the rows of delegated sub-agents. They carry their
 	 * own usage and belong to the same session as the run that delegated them, so summing the rows
-	 * is the account's true spend - {@link #totalUsageWithChildren(AgentExecution)}, which walks one
-	 * tree, would count a parent's children twice here.
+	 * is the account's true spend; a sum that walked one tree and added each parent's children to
+	 * the parent would count them twice here.
 	 * </p>
 	 *
 	 * <p>
@@ -1135,34 +1121,6 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 		});
 		notifySessionDeleted(deletedOwner, deletedId);
 		notifyChanged(deletedOwner);
-	}
-
-	/**
-	 * Total token usage of the given execution including all (transitive) child executions.
-	 *
-	 * <p>
-	 * This is the "true cost" of a delegating run: the parent's own tokens plus everything its
-	 * sub-agents consumed.
-	 * </p>
-	 */
-	public TokenUsage totalUsageWithChildren(AgentExecution root) {
-		List<AgentExecution> all = new ArrayList<>();
-		for (TLObject obj : allInstances(TlAiExecutionFactory.getAgentExecutionType())) {
-			all.add((AgentExecution) obj);
-		}
-		TokenUsage sum = usageOf(root);
-		List<AgentExecution> frontier = new ArrayList<>(List.of(root));
-		while (!frontier.isEmpty()) {
-			List<AgentExecution> next = new ArrayList<>();
-			for (AgentExecution execution : all) {
-				if (frontier.contains(execution.getParentExecution())) {
-					sum = sum.add(usageOf(execution));
-					next.add(execution);
-				}
-			}
-			frontier = next;
-		}
-		return sum;
 	}
 
 	// ---- InteractionRequest ----

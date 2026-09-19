@@ -62,12 +62,4 @@ export function resolveMessageActions(names: string[]): MessageAction[] {
   return actions
 }
 
-/** Test helper: drop every registration. */
-export function resetRegistries(): void {
-  REFERENCE_SOURCES.clear()
-  MENU_ITEMS.clear()
-  ANNOTATION_RENDERERS.clear()
-  MESSAGE_ACTIONS.clear()
-}
-
 export type { ReactNode }

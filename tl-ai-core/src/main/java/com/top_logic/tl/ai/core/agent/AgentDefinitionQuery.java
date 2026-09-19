@@ -121,27 +121,6 @@ public class AgentDefinitionQuery {
 	}
 
 	/**
-	 * Determines the {@link AgentSource} for the agent with the given name.
-	 *
-	 * @return the source, or {@code null} if no agent with that name exists
-	 */
-	public AgentSource getAgentSource(String name) {
-		boolean inKB = findKBAgentByName(name) != null;
-		boolean inConfig = hasConfigAgent(name);
-
-		if (inKB && inConfig) {
-			return AgentSource.KB_OVERRIDE;
-		}
-		if (inKB) {
-			return AgentSource.KB;
-		}
-		if (inConfig) {
-			return AgentSource.CONFIG;
-		}
-		return null;
-	}
-
-	/**
 	 * All raw KB agent wrapper objects.
 	 *
 	 * <p>

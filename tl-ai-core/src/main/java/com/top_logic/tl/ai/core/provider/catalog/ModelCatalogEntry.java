@@ -365,30 +365,4 @@ public class ModelCatalogEntry {
 
 		return config;
 	}
-
-	/**
-	 * Converts a read-only config item back into a {@link ModelInfo} record.
-	 */
-	public static ModelInfo toModelInfo(String modelId, Config config) {
-		int contextWindow = config.getContextWindow() != null ? config.getContextWindow() : 0;
-		int maxOutput = config.getMaxOutput() != null ? config.getMaxOutput() : 0;
-		int maxInput = config.getMaxInput() != null ? config.getMaxInput() : 0;
-
-		boolean reasoning = config.getReasoning() != null && config.getReasoning();
-		boolean toolCall = config.getToolCall() != null && config.getToolCall();
-		boolean temperature = config.getTemperature() != null && config.getTemperature();
-		boolean attachment = config.getAttachment() != null && config.getAttachment();
-		boolean structuredOutput = config.getStructuredOutput() != null && config.getStructuredOutput();
-		boolean openWeights = config.getOpenWeights() != null && config.getOpenWeights();
-
-		return new ModelInfo(
-			modelId,
-			null,
-			new ModelInfo.ModelLimits(contextWindow, maxOutput, maxInput),
-			new ModelInfo.ModelCapabilities(reasoning, toolCall, temperature, attachment, structuredOutput, null, null),
-			null,
-			new ModelInfo.ModelDates(config.getKnowledgeCutoff(), config.getReleaseDate(), config.getLastUpdated()),
-			openWeights,
-			config.getStatus());
-	}
 }

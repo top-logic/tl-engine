@@ -130,13 +130,6 @@
 			mandatory="false"
 		/>
 		<mo_attribute
-			att_name="memory"
-			att_type="String"
-			db_size="10000000"
-			db_type="clob"
-			mandatory="false"
-		/>
-		<mo_attribute
 			att_name="metadata"
 			att_type="String"
 			db_size="1000000"

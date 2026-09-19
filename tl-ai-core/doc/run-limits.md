@@ -147,8 +147,8 @@ Also decided in `RunLimits.admit`, and in two halves:
 **At run start.** `AgentExecutionStore.tokensSpentSince(owner, since)` sums every recorded run of
 that account which *started* within the window - prompt including its cached part, output and
 thinking. Every execution row counts once, delegated children included: they carry their own usage
-and belong to the same session, so summing rows is the account's true spend, while
-`totalUsageWithChildren` would count a parent's children twice here. The read happens **on the
+and belong to the same session, so summing rows is the account's true spend; a sum that added each
+parent's children to the parent would count them twice here. The read happens **on the
 store's writer thread**, in a fresh interaction at the current revision, for the reason #405
 established: the calling thread's view is pinned to an older one.
 

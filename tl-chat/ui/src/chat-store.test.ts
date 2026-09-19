@@ -566,9 +566,12 @@ describe('the stream', () => {
     stream.emit('turn_started', {})
     stream.emit('provider_error', { kind: 'OVERLOADED', errorMessage: 'upstream 529' })
 
+    // Recorded the way a re-opened session records it: the provider's own words and the kind. The
+    // sentence the user reads is derived from the kind when the thread renders it.
     const error = store.getState().messages.find((m) => m.type === 'error')
     expect(error).toBeDefined()
-    expect(error && 'message' in error ? error.message : '').toContain('upstream 529')
+    expect(error && 'message' in error ? error.message : '').toBe('upstream 529')
+    expect(error && 'code' in error ? error.code : '').toBe('OVERLOADED')
     expect(store.getState().notice).not.toBe('')
     expect(store.getState().busy).toBe(false)
 

@@ -102,15 +102,28 @@ describe('a running turn', () => {
     const html = render(
       build([
         ...TURN_STARTED,
-        { type: 'ADD_ERROR', message: 'Das Modell hat nicht geantwortet.', code: 'PROVIDER' },
+        { type: 'ADD_ERROR', message: 'upstream 529', code: 'OVERLOADED' },
         { type: 'END_RUN', runId: 'r1' },
       ]),
       false,
     )
     expect(html).toContain('error-card')
-    expect(html).toContain('Das Modell hat nicht geantwortet.')
+    // The sentence comes from the kind, so a run read back from the server - which keeps the kind
+    // and the provider's words, not a translation - renders the same card.
+    expect(html).toContain(labels.providerErrorOverloaded)
+    expect(html).toContain('upstream 529')
     expect(html).not.toContain('answer is-pending')
     expect(html).not.toContain(labels.runSteps(1))
+  })
+
+  /** A failure the provider said nothing about still reads as a sentence, not as an empty box. */
+  it('names the failure even when the provider sent no message', () => {
+    const html = render(
+      build([...TURN_STARTED, { type: 'ADD_ERROR', message: '' }, { type: 'END_RUN', runId: 'r1' }]),
+      false,
+    )
+    expect(html).toContain(labels.providerError)
+    expect(html).not.toContain('error-card-detail')
   })
 
   it('reports the duration once the run has ended', () => {

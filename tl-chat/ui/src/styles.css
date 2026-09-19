@@ -1730,6 +1730,13 @@
   border-radius: 0 var(--r-1) var(--r-1) 0;
 }
 
+/* The provider's own words under the sentence: available, not shouted (#429). */
+.error-card-detail {
+  margin-top: 0.125rem;
+  font-size: var(--chat-small);
+  opacity: 0.8;
+}
+
 .jump-latest {
   position: absolute;
   left: 50%;

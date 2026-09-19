@@ -4,13 +4,14 @@ import { Markdown } from './markdown'
 import { AnswerSources, citedSources } from './sources'
 import { parseDraft, referenceSummary, withoutContextPrefix, type ReferenceToken } from './reference'
 import { TokenInput, type TokenInputHandle } from './token-input'
-import { bundle, formatTimestamp, type Language } from './i18n'
+import { bundle, formatTimestamp, providerErrorText, type Language } from './i18n'
 import { effortLabel } from './models'
 import type {
   ApprovalRequest,
   AssistantText,
   ChatMessage,
   Citation,
+  ErrorMessage,
   InteractionRequest,
   MessageFeedback,
   Rating,
@@ -821,6 +822,26 @@ function RunSummary({
 }
 
 /**
+ * What a failed run leaves in the thread, in the place the answer would have taken.
+ *
+ * The sentence is derived from the failure's kind rather than stored with the message, because the
+ * same run is read back from the server after a reload and both have to say the same thing - the
+ * server keeps the provider's own words and the kind, not a translated sentence. Those words follow
+ * underneath: they are what a bug report needs and the composer's strip, which also carries them,
+ * is gone by the next send.
+ */
+function ErrorCard({ item, language }: { item: ErrorMessage; language: Language }) {
+  const detail = item.message.trim()
+  const text = providerErrorText(item.code, language)
+  return (
+    <div className="error-card">
+      <div>{text}</div>
+      {detail && detail !== text ? <div className="error-card-detail">{detail}</div> : null}
+    </div>
+  )
+}
+
+/**
  * The answer's place, held while the run has produced no text yet.
  *
  * A turn that calls no tool has nothing else to show: without this the thread is the question and
@@ -971,11 +992,7 @@ function AgentRun({
         ? turn.events
             .filter((item) => item.type === 'error')
             .map((item) =>
-              item.type === 'error' ? (
-                <div key={item.id} className="error-card">
-                  {item.message}
-                </div>
-              ) : null,
+              item.type === 'error' ? <ErrorCard key={item.id} item={item} language={language} /> : null,
             )
         : null}
     </div>

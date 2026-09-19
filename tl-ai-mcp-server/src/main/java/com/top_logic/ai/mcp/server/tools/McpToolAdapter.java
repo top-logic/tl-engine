@@ -66,6 +66,12 @@ public class McpToolAdapter {
 	/**
 	 * Adapts a single {@link Tool} to an MCP tool specification.
 	 *
+	 * <p>
+	 * The definition carries {@link McpToolAnnotations annotations} derived from the tool's
+	 * {@link Tool#mode() mode} and {@link Tool#group() group}, so that a client that does not know
+	 * this application can still tell a read from a write before it calls one.
+	 * </p>
+	 *
 	 * @param tool
 	 *        The tool to adapt.
 	 * @param qualifiedName
@@ -77,11 +83,15 @@ public class McpToolAdapter {
 
 		McpJsonMapper jsonMapper = McpJsonDefaults.getMapper();
 
+		McpSchema.ToolAnnotations annotations = McpToolAnnotations.of(tool);
 		McpSchema.Tool mcpTool = McpSchema.Tool.builder()
 			.name(mcpToolName)
-			.title(tool.name())
+			// The same display name in both places, because the top-level field is the newer one and
+			// an older client reads only the one in the annotations. See McpToolAnnotations.of.
+			.title(annotations.title())
 			.description(tool.description())
 			.inputSchema(jsonMapper, tool.schema().inputSchemaJson())
+			.annotations(annotations)
 			.build();
 
 		return McpServerFeatures.SyncToolSpecification.builder()

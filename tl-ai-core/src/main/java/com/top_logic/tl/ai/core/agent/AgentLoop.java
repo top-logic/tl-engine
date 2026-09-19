@@ -41,7 +41,7 @@ import com.top_logic.tl.ai.core.agent.event.DiagnosticLoggingListener;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentResult;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentResultDelivery;
 import com.top_logic.tl.ai.core.binding.BindingSnapshot;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.InteractionRecorder;
@@ -53,7 +53,6 @@ import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.Conversation;
-import com.top_logic.tl.ai.core.message.SystemMessage;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
@@ -68,6 +67,9 @@ import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.StreamHandler;
 import com.top_logic.tl.ai.core.security.PreCommitGuard;
+import com.top_logic.tl.ai.core.session.ConversationLogListener;
+import com.top_logic.tl.ai.core.session.ConversationLogListenerBinding;
+import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
 import com.top_logic.tl.ai.core.citation.CitationKinds;
@@ -245,27 +247,62 @@ public class AgentLoop {
 	 * appended and before the next provider request is built.</p>
 	 */
 	private void injectBetweenTurns(Conversation conversation) {
-		injectSubagentResultsForTest(conversation);
+		injectSubagentResults(conversation);
 	}
 
 	/**
-	 * Injects results of any completed-but-undelivered subagents (from the thread-bound
-	 * registry) into the conversation as system messages, so the next provider call sees them.
-	 * Realizes the long-standing "memory/attachment injection between turns" intent.
+	 * Delivers the results of every completed-but-undelivered subagent of the thread-bound
+	 * registry to the model, as the last message before the next provider request is built.
 	 *
-	 * <p>Test-visible entry point for the subagent part of {@link #injectBetweenTurns}.</p>
+	 * <p>
+	 * The delivery is a {@link UserMessage}, and that is the whole point of #359: this used to be
+	 * a mid-conversation {@link com.top_logic.tl.ai.core.message.SystemMessage}, which <em>no</em>
+	 * provider's request builder transmits, so the parent was never told its subagent had finished
+	 * while the transcript and the token estimate both claimed it had been. A user message is the
+	 * one shape every builder sends, and it is the shape {@code SummarizingStrategy} and the
+	 * rollback notice already use to put non-conversational text in front of the model.
+	 * {@link SubagentResultDelivery#NOTICE} says in the text what the role no longer can: the user
+	 * did not write this.
+	 * </p>
+	 *
+	 * <p>
+	 * A batch that arrives together is one message - see
+	 * {@link SubagentResultDelivery#deliveryText(List)}. Nothing is injected when no subagent
+	 * finished, so an ordinary turn is untouched. A result that becomes ready while no run is in
+	 * progress simply waits in the registry: the next run's first turn picks it up, which is the
+	 * turn that follows the user's next message.
+	 * </p>
+	 *
+	 * <p>
+	 * The same text is recorded on the current turn of the bound {@code ConversationLog} as a
+	 * {@link Part.SystemEventType#SUBAGENT_RESULT} part. That is what makes it visible in the
+	 * transcript, and what lets {@code ConversationLogReplay} put the very same message back into
+	 * a reloaded session - as a log part rather than a user part, so the chat does not draw it as
+	 * a user bubble.
+	 * </p>
+	 *
+	 * <p>
+	 * Per-turn context (#438) attaches its block to the turn's user message. If that lands, this
+	 * delivery becomes a block of it rather than a message of its own; until then the two do not
+	 * overlap, because nothing here touches the user's message.
+	 * </p>
 	 */
-	static void injectSubagentResultsForTest(Conversation conversation) {
+	static void injectSubagentResults(Conversation conversation) {
 		SubagentJobRegistry registry = SubagentRegistryBinding.getRegistry();
 		if (registry == null) {
 			return;
 		}
-		for (SubagentJob job : registry.takeUndeliveredResults()) {
-			SubagentResult r = job.result();
-			String text = "Subagent " + job.targetAgentName() + " (" + job.subagentId()
-				+ ") finished with status " + job.status() + ":\n" + r.finalText();
-			conversation.add(new SystemMessage(
-				UUID.randomUUID().toString(), Instant.now(), text));
+		List<SubagentJob> finished = registry.takeUndeliveredResults();
+		if (finished.isEmpty()) {
+			return;
+		}
+		String text = SubagentResultDelivery.deliveryText(finished);
+		conversation.add(new UserMessage(
+			UUID.randomUUID().toString(), Instant.now(), List.of(new TextContent(text))));
+
+		ConversationLogListener log = ConversationLogListenerBinding.getListener();
+		if (log != null) {
+			log.recordSubagentResultsDelivered(text);
 		}
 	}
 

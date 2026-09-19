@@ -264,7 +264,22 @@ public sealed interface Part {
 		/** Approval mode was changed during the run. */
 		APPROVAL_MODE_CHANGED,
 		/** LLM model was switched during the run. */
-		MODEL_CHANGED
+		MODEL_CHANGED,
+		/**
+		 * Results of background subagents were handed to the model at the start of a turn.
+		 *
+		 * <p>
+		 * The odd one out: the other three record something that happened <em>around</em> the
+		 * conversation, while this one records conversation content. Its {@code details} are
+		 * verbatim the text the model was shown, which is why
+		 * {@code ConversationLogReplay} rebuilds a user message from it instead of skipping it
+		 * like every other system event - a reloaded session has to tell the model the same
+		 * thing the live run did.
+		 * </p>
+		 *
+		 * @see com.top_logic.tl.ai.core.agent.subagent.SubagentResultDelivery
+		 */
+		SUBAGENT_RESULT
 	}
 
 	/**

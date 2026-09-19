@@ -536,6 +536,35 @@ public class ConversationLogListener implements AgentEventListener {
 		}
 	}
 
+	/**
+	 * Records what the turn-start injection told the model about its finished subagents.
+	 *
+	 * <p>
+	 * Written as a {@link Part.SystemEventType#SUBAGENT_RESULT} part rather than a user part:
+	 * it is not the user's text, so the chat must not draw it as a user bubble, but it <em>is</em>
+	 * conversation content, so the transcript has to hold it and
+	 * {@link ConversationLogReplay} has to put it back on reload.
+	 * </p>
+	 *
+	 * @param text
+	 *        Verbatim the text the model was shown.
+	 *
+	 * @see com.top_logic.tl.ai.core.agent.subagent.SubagentResultDelivery
+	 */
+	public void recordSubagentResultsDelivered(String text) {
+		Turn turn = _log.currentTurn();
+		if (turn == null) {
+			return;
+		}
+		// The injection happens between the model's messages, so whatever the previous turn was
+		// still buffering ends before it - as for any other part that is a message boundary.
+		flushTextBuffer(turn);
+		flushThinkingBuffer(turn);
+		turn.addAssistantPart(new Part.SystemPart(
+			UUID.randomUUID().toString(), Instant.now(),
+			Part.SystemEventType.SUBAGENT_RESULT, text));
+	}
+
 	/** Records a user cancellation as a system event on the current turn. */
 	public void recordCancellation() {
 		Turn turn = _log.currentTurn();

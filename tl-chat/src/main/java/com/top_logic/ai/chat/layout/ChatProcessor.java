@@ -136,6 +136,47 @@ public class ChatProcessor {
 		return resolved != null ? resolved : agentFactory.getEntryPointAgentName();
 	}
 
+	/**
+	 * The {@code kind} of an SSE {@code provider_error} frame that reports a failure of this
+	 * application rather than of the model's provider.
+	 *
+	 * <p>
+	 * Every other value of that field is a {@link ProviderException.Kind}, and a client is entitled
+	 * to read it as one: {@code RATE_LIMITED} means wait, {@code CONTEXT_WINDOW_EXCEEDED} means
+	 * start a new chat. This value says the opposite - the model did nothing wrong and repeating
+	 * the message will not help - and exists so that the two are distinguishable at all, which
+	 * {@code UNKNOWN} for everything made impossible (issue #410). The chat UI matches on the
+	 * literal, so it is part of the wire contract.
+	 * </p>
+	 */
+	public static final String APPLICATION_ERROR = "APPLICATION_ERROR";
+
+	/**
+	 * The {@link ProviderException} behind a failed run, or <code>null</code> if the run did not
+	 * fail in the provider.
+	 *
+	 * <p>
+	 * Looked for one level down as well, because the loop's own wrapping puts it there; deeper than
+	 * that a provider failure is no longer what the run died of.
+	 * </p>
+	 */
+	static ProviderException providerFailure(Throwable ex) {
+		if (ex instanceof ProviderException pe) {
+			return pe;
+		}
+		return ex.getCause() instanceof ProviderException pe ? pe : null;
+	}
+
+	/**
+	 * Whose failure ended the run, as the {@code kind} of the SSE frame that reports it.
+	 *
+	 * @see #APPLICATION_ERROR
+	 */
+	static String errorKind(Throwable ex) {
+		ProviderException provider = providerFailure(ex);
+		return provider != null ? provider.kind().name() : APPLICATION_ERROR;
+	}
+
 	/** Background thread pool for AI operations. */
 	private static final ExecutorService BACKGROUND_EXECUTOR =
 		Executors.newCachedThreadPool(new ThreadFactory() {
@@ -767,16 +808,23 @@ public class ChatProcessor {
 			}
 		}
 
+		/**
+		 * Tells the browser and the chat history that the run died.
+		 *
+		 * <p>
+		 * The kind says <em>whose</em> failure it was, and a reader is told a different thing for
+		 * each: a provider kind means the model or its service refused, and sending again may well
+		 * work; {@link ChatProcessor#APPLICATION_ERROR} means this application broke while
+		 * answering, and sending the same message again will break it again. Reporting everything
+		 * as an unknown provider kind is what told a user "the model reported an error, you can
+		 * send again" after their own application had refused a write for a missing mandatory
+		 * attribute (issue #410), and left no way for anything downstream to tell the two apart.
+		 * </p>
+		 */
 		private void notifyError(AIProcessingState state, Throwable ex) {
-			// Determine error kind and message
-			String kind = "UNKNOWN";
-			String message = ex.getMessage();
-			if (ex instanceof ProviderException pe) {
-				kind = pe.kind().name();
-			} else if (ex.getCause() instanceof ProviderException pe) {
-				kind = pe.kind().name();
-				message = pe.getMessage();
-			}
+			ProviderException provider = providerFailure(ex);
+			String kind = errorKind(ex);
+			String message = provider != null ? provider.getMessage() : ex.getMessage();
 			// Send via SSE if handler is available
 			ChatEventHandler handler = state.getSseHandler();
 			if (handler != null) {

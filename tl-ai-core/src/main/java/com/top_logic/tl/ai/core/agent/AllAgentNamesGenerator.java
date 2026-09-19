@@ -24,11 +24,11 @@ import com.top_logic.element.meta.kbbased.filtergen.ListGeneratorAdaptor;
  * </p>
  *
  * <p>
- * An {@link AgentDefinition#infrastructure()} agent is not offered: the application runs it for a
- * user, and the gate refuses a delegation to it, so an option naming one would be an option that
- * never works.
+ * An agent marked as infrastructure is not offered: the application runs it for a user, and the
+ * gate refuses a delegation to it, so an option naming one would be an option that never works.
  * </p>
  *
+ * @see AgentDefinition#infrastructure()
  * @see AgentDefinitionQuery#getAllAgents()
  */
 @InApp

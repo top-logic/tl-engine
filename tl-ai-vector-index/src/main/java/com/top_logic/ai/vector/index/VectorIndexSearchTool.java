@@ -40,8 +40,8 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  * <ul>
  * <li>{@link VectorReadFilter} drops every hit whose source object the principal may not read, or
  * cannot be attributed to one at all.</li>
- * <li>What is then written is <b>not the indexed chunk</b> but the object as
- * {@link ReadFilter#attributesOf(com.top_logic.model.TLObject)} renders it now. The chunk is a
+ * <li>What is then written is <b>not the indexed chunk</b> but the object as the read filter
+ * renders it now, attribute by attribute and under the principal's own rights. The chunk is a
  * snapshot of every flex attribute at indexing time, so handing it over would disclose an attribute
  * the principal may not read, and a value that has since changed. That is two defects for the price
  * of one.</li>
@@ -50,6 +50,8 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  * <p>
  * The tool is registered in the {@code ToolRegistryService} but is not assigned to any agent by default.
  * </p>
+ *
+ * @see ReadFilter#attributesOf(com.top_logic.model.TLObject)
  */
 public class VectorIndexSearchTool {
 

@@ -11,8 +11,12 @@ package com.top_logic.tl.ai.core.provider.health;
  * <p>
  * The order of the constants is the strength order: a mark replaces a live one only when its cause
  * is at least as strong. That is what keeps a transient blip from clearing a quota lockout that is
- * still in force - see {@link ModelAvailability#reportFailure}.
+ * still in force: a transient failure reported while a quota lockout is marked leaves the lockout
+ * standing.
  * </p>
+ *
+ * @see ModelAvailability#reportFailure(String, com.top_logic.tl.ai.core.provider.ProviderException.Kind,
+ *      String, String)
  */
 public enum HealthCause {
 

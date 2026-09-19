@@ -9,6 +9,25 @@
 				<agent-execution
 					default-model="%DEFAULT_MODEL%"
 				/>
+				<!--
+					What every agent run is told about the situation it runs in. The harness composes
+					this block once per run and puts it into the system prompt - at the {{environment}}
+					placeholder when the prompt names one, at the end otherwise, so every shipped agent
+					gets it without an edit.
+
+					Its wording is NOT here. It is the resource tl.ai.environment.template
+					(WEB-INF/conf/resources/tl-ai-core.app-messages_*.properties), so that it is
+					translated like every other text this product ships and survives an application
+					that overrides this service wholesale - which is what an application naming its own
+					providers does. Set <template> here only to say something different from what the
+					product says.
+
+					Whatever it says, it must not contain anything that changes while a conversation
+					runs: the block sits in front of every request of that conversation and one changed
+					character invalidates the provider's prompt cache for all of them. That is why the
+					date is stated at day granularity and why only stable facts reach {{context}}.
+				-->
+				<environment/>
 				<model-catalog />
 			</instance>
 		</config>

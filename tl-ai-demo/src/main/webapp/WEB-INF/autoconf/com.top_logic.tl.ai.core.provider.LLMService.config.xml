@@ -28,6 +28,22 @@
 					/>
 				</providers>
 				<agent-execution default-model="claude-sonnet-4-6"/>
+				<!--
+					What the model is told it is working in (Issue #437). Without it a run reads the
+					application's own name, which is the platform's here; this demo is about invoices,
+					and saying so is worth one line in every prompt.
+
+					The block's wording itself is NOT configured here: it is the shipped, translated
+					resource tl.ai.environment.template, which is why it survives this section
+					replacing the service's configuration wholesale. See
+					tl-ai-core/doc/environment-block.md.
+				-->
+				<environment>
+					<application>
+						<en>Invoice management demo (tl-ai-demo)</en>
+						<de>Belegverwaltung (Demo, tl-ai-demo)</de>
+					</application>
+				</environment>
 				<model-catalog>
 					<llm-configuration>
 						<model name="claude-sonnet-4-6"

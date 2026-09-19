@@ -175,6 +175,19 @@
 					<property name="errorMessage"
 						type="tl.core:Text"
 					/>
+					<!--
+						What this run told the model about the situation it happened in: the filled
+						<environment> block, written as the run starts.
+
+						It is a field of its own rather than a slice of the transcript because it is
+						not part of the conversation: it sits in the system prompt, which nothing else
+						records, and an administrator asking "why did it answer in English" has no other
+						place to look. Written at run start, so a run that is still going or that
+						crashed has it too.
+					-->
+					<property name="environment"
+						type="tl.core:Text"
+					/>
 					<property name="inputTokens"
 						type="tl.core:Long"
 					/>

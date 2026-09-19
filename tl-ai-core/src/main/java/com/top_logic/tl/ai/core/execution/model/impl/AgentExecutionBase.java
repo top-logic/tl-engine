@@ -189,6 +189,15 @@ public interface AgentExecutionBase extends com.top_logic.model.TLObject {
 	String THINKING_TOKENS_ATTR = "thinkingTokens";
 
 	/**
+	 * Part <code>environment</code> of <code>AgentExecution</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Text</code> in configuration.
+	 * </p>
+	 */
+	String ENVIRONMENT_ATTR = "environment";
+
+	/**
 	 * Part <code>transcript</code> of <code>AgentExecution</code>
 	 * 
 	 * <p>
@@ -454,6 +463,20 @@ public interface AgentExecutionBase extends com.top_logic.model.TLObject {
 	 */
 	default void setThinkingTokens(Long newValue) {
 		tUpdateByName(THINKING_TOKENS_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #ENVIRONMENT_ATTR}.
+	 */
+	default String getEnvironment() {
+		return (String) tValueByName(ENVIRONMENT_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #ENVIRONMENT_ATTR}.
+	 */
+	default void setEnvironment(String newValue) {
+		tUpdateByName(ENVIRONMENT_ATTR, newValue);
 	}
 
 	/**

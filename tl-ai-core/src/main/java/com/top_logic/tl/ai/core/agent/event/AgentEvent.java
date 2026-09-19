@@ -86,6 +86,23 @@ public sealed interface AgentEvent {
 			implements AgentEvent {}
 
 	/**
+	 * What this run told the model about the situation it happens in.
+	 *
+	 * <p>
+	 * Emitted immediately after {@link RunStarted}, and only when the run composed a block at all.
+	 * It is the one place an administrator can see the filled environment: the block is part of the
+	 * system prompt, which is not recorded anywhere else.
+	 * </p>
+	 *
+	 * @param runId agent run identifier
+	 * @param turnNumber 1-based loop iteration; {@code 0}, like {@link RunStarted}
+	 * @param timestamp when the event occurred
+	 * @param environment the composed {@code <environment>} block, as sent
+	 */
+	record EnvironmentComposed(String runId, int turnNumber, Instant timestamp, String environment)
+			implements AgentEvent {}
+
+	/**
 	 * Final event of a run. {@code turnNumber} is the last turn reached.
 	 *
 	 * @param runId agent run identifier

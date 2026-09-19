@@ -163,6 +163,26 @@
 							type="tl.model.search:Macro"
 						/>
 					</group>
+					<!--
+						What this run told the model about the situation it happened in. Collapsed,
+						because it is the same text for every run of one conversation and is read when
+						a question about the answer - the language it came back in, the date it
+						assumed, the facts it was given - points at the system prompt rather than at
+						the transcript.
+					-->
+					<group
+						columns="ONE"
+						initiallyOpened="false"
+						labelPlacement="hide-label"
+						wholeLine="true"
+					>
+						<label key="admin.ai.agentActivity.executions.group.environment"/>
+						<field
+							attribute="environment"
+							fullQualifiedName="tl.ai.execution:AgentExecution#environment"
+							type="tl.core:Text"
+						/>
+					</group>
 					<group
 						columns="ONE"
 						initiallyOpened="false"

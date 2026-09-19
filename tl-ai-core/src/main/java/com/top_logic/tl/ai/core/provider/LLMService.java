@@ -47,6 +47,8 @@ import com.top_logic.tl.ai.core.agent.AgentDefinition;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
+import com.top_logic.tl.ai.core.agent.environment.EnvironmentConfig;
+import com.top_logic.tl.ai.core.agent.environment.EnvironmentSettings;
 import com.top_logic.tl.ai.core.provider.catalog.ModelCatalogEntry;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.provider.catalog.ModelsDevFetcher;
@@ -526,6 +528,7 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	@DisplayOrder({
 		Config.PROVIDERS,
 		Config.AGENT_EXECUTION,
+		Config.ENVIRONMENT,
 		Config.MODEL_CATALOG,
 	})
 	public interface Config<I extends LLMService> extends ConfiguredManagedClass.Config<I> {
@@ -545,6 +548,13 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		 * @see #getAgentExecution()
 		 */
 		String AGENT_EXECUTION = "agent-execution";
+
+		/**
+		 * Configuration property name for the environment section.
+		 *
+		 * @see #getEnvironment()
+		 */
+		String ENVIRONMENT = "environment";
 
 		/**
 		 * Configuration property name for the model catalog.
@@ -573,6 +583,16 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		 */
 		@Name(AGENT_EXECUTION)
 		AgentExecutionConfig getAgentExecution();
+
+		/**
+		 * What every agent run is told about the situation it runs in: the wording of the environment
+		 * block, the application name the model is given, and whether the accounts' own preference
+		 * texts are part of it.
+		 *
+		 * @see #ENVIRONMENT
+		 */
+		@Name(ENVIRONMENT)
+		EnvironmentConfig getEnvironment();
 
 		/**
 		 * Model metadata catalog describing each model's capabilities and limits.
@@ -707,6 +727,15 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	 */
 	public static LLMService getInstance() {
 		return _instance;
+	}
+
+	/**
+	 * What every agent run is told about the situation it runs in.
+	 *
+	 * @see EnvironmentSettings
+	 */
+	public EnvironmentConfig getEnvironmentConfig() {
+		return getConfig().getEnvironment();
 	}
 
 	@Override

@@ -33,7 +33,8 @@ The start page is `/view/` - the React view layer, declared in `WEB-INF/views/ap
 |--|--|
 | **Chat** (start item) | The agent chat, built from view elements rather than from the one-element `<agent-chat>`: a `<data-list>` of this user's chats, a `<chat-conversation>` (transcript, prompt field, agent/model/MCP/trace menu, attachments, human-in-the-loop approvals, context-usage ring), and a `<chat-rail>` whose sections are configured in `WEB-INF/views/tl-ai-demo/chat-grouped.view.xml` - Fortschritt, Quellen, and a `<data-list>` of the KB's invoices whose selection opens an invoice form in the rail's pane. Fortschritt is a `<data-list>` too: the agent's plan is written to `tl.ai.execution:AgentTask` objects while it runs, so the list fills within about a second of each step and is still there after a reload. A chat row offers Umbenennen and Löschen behind the `⋯` that appears on hover - generic `<row-commands>` of the list, not chat-specific code; Umbenennen opens `tl-ai-demo/rename-session.view.xml`, Löschen confirms first and is hidden while that chat still has a run in it. The agent can open that pane itself: `<chat-conversation present="paneObject">` lets it write that one channel, so "zeig mir den Beleg von Müller" ends as the invoice form and "zeig mir die drei teuersten" as a list - it names the objects, the page decides how they look (#436). The rail's invoice rows offer "Dazu fragen" and "In die Nachricht übernehmen" the same way: the first writes a German sentence about that invoice to the `chatDraft` channel, the second writes the invoice itself to `chatReference`, and the composer shows the sentence, or the invoice as one atomic reference token, unsent (#440). |
 | **Belege** | The invoices: a table on the left, the selected invoice's form on the right. "Neuer Beleg" asks only for the scan and has the model read the description, the date and the amount out of it. The table's amount column shows the derived `amountLabel` (`84,90 €`); the form edits the number itself. "Dazu fragen" in the toolbar writes a sentence about the selected invoice into the chat's composer - the chat being a *different* view on another nav item, which works because `app.view.xml` declares the `chatDraft` channel and hands the same one to both pages with `<bind>` (#440). Switching to the chat shows the question standing in the composer; nothing is sent. |
-| **Administration** | The framework's own administration view; visible to accounts holding the `administration` scope. |
+| **Meine Einstellungen** | What this account tells every agent about itself: one free-text field (`tl.accounts:Person#aiPreferences`, added by `tl-ai-core`). The harness renders it into the environment block of every run this user triggers, below what the application itself states; a text above the configured cap is refused here. `WEB-INF/views/tl-ai-demo/profile.view.xml`. |
+| **Administration** | The framework's own administration view; visible to accounts holding the `administration` scope. Its "Agent activity" run detail shows the filled environment block of each run, beside the transcript. |
 | **Albert**, the dock (bottom right, on **Belege** and **Administration**) | The Chat page's conversation, reachable without leaving the page: a `<chat-dock>` in the shell's `<footer>` whose launcher opens a card holding the session list, the conversation and a rail with Fortschritt, Quellen and the invoices whose selection opens the pane. It is declared in `app.view.xml`, not in the chat page, because the footer is where a shell-wide element belongs. Its composer is on the shell's `chatDraft` channel with no binding at all - the shell does not isolate channels - so "Dazu fragen" on the page behind it puts its question here (#440). |
 
 **The dock is a second place for one conversation, not a second conversation.** Its `chat-id` is
@@ -50,6 +51,12 @@ running and keeps its transcript while the user works on the page behind it; the
 the unseen count of the rail's sections and a dot while the agent is working. Ask something in the
 dock on **Belege**, then open **Chat**: the same conversation is there, because it is the same
 conversation.
+
+The chat states two facts about the situation it is asked in (`<chat-conversation><context>` in
+`chat-grouped.view.xml`): the application, which holds for the whole conversation and is therefore
+rendered into the run's system prompt, and the invoice open in the rail's pane, which follows the
+user's clicks and is therefore not. Neither changes the message text - that is the point of the seam
+(#437; see `tl-ai-core/doc/environment-block.md`).
 
 The app bar carries one theme toggle: two `<set-theme>` commands of which the stylesheet shows only
 the one that switches to the other theme (`style/tl-ai-demo-shell.css`). Everything below it, the
@@ -68,7 +75,7 @@ Reach it at <http://localhost:8080/tl-ai-demo/servlet/LayoutServlet>. Its "Alber
 
 | Path | Contents |
 |--|--|
-| `WEB-INF/views/` | The React view layer: `app.view.xml` plus `tl-ai-demo/chat-grouped.view.xml`, `tl-ai-demo/rename-session.view.xml`, `tl-ai-demo/invoices.view.xml` and `tl-ai-demo/create-invoice.view.xml` |
+| `WEB-INF/views/` | The React view layer: `app.view.xml` plus `tl-ai-demo/chat-grouped.view.xml`, `tl-ai-demo/rename-session.view.xml`, `tl-ai-demo/invoices.view.xml`, `tl-ai-demo/create-invoice.view.xml` and `tl-ai-demo/profile.view.xml` |
 | `WEB-INF/layouts/` | The classic LayoutServlet UI |
 | `WEB-INF/model/` | The demo model (`tl.ai.demo.imageclassification:Invoice`) |
 | `WEB-INF/conf/` | Application configuration, including the `ClientResources` declaration that loads the chat bundle |

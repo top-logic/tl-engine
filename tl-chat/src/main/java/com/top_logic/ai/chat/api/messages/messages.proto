@@ -143,6 +143,44 @@ message ChatSendRequest {
 	 * offer is ignored with a logged warning rather than failing the run.
 	 */
 	string effort;
+
+	/**
+	 * What the page states about the situation this message is asked in.
+	 *
+	 * <p>
+	 * Computed on the server from the chat element's <code>&lt;context&gt;</code> configuration and
+	 * echoed back here by the browser, because the run happens on a background thread long after the
+	 * page's channels were read. The harness renders the stable ones into the system prompt; the
+	 * message text is never touched.
+	 * </p>
+	 */
+	repeated FactDto facts;
+}
+
+/**
+ * One fact a page states about the situation a message is sent in.
+ */
+message FactDto {
+	/**
+	 * What the fact is called in front of the model, e.g. "Project".
+	 */
+	string name;
+
+	/**
+	 * The rendered value.
+	 */
+	string value;
+
+	/**
+	 * Whether the value holds for the whole conversation.
+	 *
+	 * <p>
+	 * Only a stable fact reaches the system prompt, which has to stay byte-identical across the turns
+	 * of one conversation or the provider's prompt cache misses on every one of them. A fact that is
+	 * not stable is carried and, for now, dropped; rendering it per turn is Gitea #438.
+	 * </p>
+	 */
+	boolean stable;
 }
 
 /**
@@ -237,6 +275,16 @@ message RegenerateRequest {
 
 	/** How hard the model may think for the new run. */
 	string effort;
+
+	/**
+	 * What the page states about the situation, as for POST /chat/send.
+	 *
+	 * <p>
+	 * Carried here too because a regenerated turn is a new run with a new system prompt: without the
+	 * facts it would be answered with less context than the turn it replaces.
+	 * </p>
+	 */
+	repeated FactDto facts;
 }
 
 /**

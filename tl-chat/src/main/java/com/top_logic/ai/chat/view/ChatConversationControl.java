@@ -17,8 +17,11 @@ import java.util.function.Consumer;
 
 import com.top_logic.ai.chat.view.ChatConversationElement.Actions;
 import com.top_logic.ai.chat.view.ChatConversationElement.Config;
+import com.top_logic.ai.chat.view.ChatConversationElement.Context;
 import com.top_logic.ai.chat.view.ChatConversationElement.Controls;
+import com.top_logic.ai.chat.view.ChatConversationElement.Fact;
 import com.top_logic.ai.chat.view.ChatConversationElement.Mention;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.provider.MetaLabelProvider;
@@ -123,6 +126,12 @@ public class ChatConversationControl extends ReactControl {
 
 	private int _mentionLimit;
 
+	/** The compiled {@code <context>} facts, in configured order; empty when none are configured. */
+	private final List<FactSpec> _facts = new ArrayList<>();
+
+	/** The channels whose values are the leading arguments of every fact expression. */
+	private final List<ViewChannel> _factInputs = new ArrayList<>();
+
 	/** Creates a {@link ChatConversationControl}. */
 	public ChatConversationControl(ViewContext context, Config config) {
 		super(context, null, blankToDefault(config.getReactElement(), "TLChatConversation"));
@@ -163,6 +172,10 @@ public class ChatConversationControl extends ReactControl {
 		if (mention != null) {
 			setupMention(context, mention);
 		}
+		// What this page states about the situation. Evaluated here - on the server, in the acting
+		// user's context - and pushed to the browser, which sends it back with every message. The
+		// user's own text is never touched by any of this.
+		setupContext(context, config.getContext());
 		List<String> menuItems = config.getMenuItems();
 		putState("menuItems", menuItems == null ? List.of() : List.copyOf(menuItems));
 		Controls controls = config.getControls();
@@ -578,6 +591,76 @@ public class ChatConversationControl extends ReactControl {
 			}
 		}
 		return List.copyOf(names);
+	}
+
+	/**
+	 * Compiles the {@code <context>} facts, publishes them and keeps them current.
+	 *
+	 * <p>
+	 * A fact is re-evaluated whenever one of its input channels changes, so what the browser holds is
+	 * what the page was showing. The harness renders the stable ones into the environment block of
+	 * the system prompt; it does not touch the message text.
+	 * </p>
+	 */
+	private void setupContext(ViewContext context, Context facts) {
+		if (facts == null) {
+			return;
+		}
+		for (Fact fact : facts.getFacts()) {
+			_facts.add(new FactSpec(fact.getName(), fact.getStable(), QueryExecutor.compile(fact.getValue())));
+		}
+		if (_facts.isEmpty()) {
+			return;
+		}
+		for (ChannelRef ref : facts.getInputs()) {
+			ViewChannel channel = context.resolveChannel(ref);
+			_factInputs.add(channel);
+			ViewChannel.ChannelListener listener = (sender, oldValue, newValue) -> serializeFacts();
+			channel.addListener(listener);
+			addCleanupAction(() -> channel.removeListener(listener));
+		}
+		serializeFacts();
+		// A channel written while this control was detached notified nobody, so the values are read
+		// again when it comes back - the same reason the mention candidates are.
+		addAttachListener(this::serializeFacts);
+	}
+
+	/** Evaluates every fact and pushes the result to the browser. */
+	private void serializeFacts() {
+		Object[] arguments = new Object[_factInputs.size()];
+		for (int n = 0; n < arguments.length; n++) {
+			arguments[n] = _factInputs.get(n).get();
+		}
+		List<Map<String, Object>> out = new ArrayList<>(_facts.size());
+		for (FactSpec fact : _facts) {
+			Map<String, Object> entry = new LinkedHashMap<>();
+			entry.put("name", fact.name());
+			entry.put("value", fact.evaluate(arguments));
+			entry.put("stable", Boolean.valueOf(fact.stable()));
+			out.add(entry);
+		}
+		putState("contextFacts", out);
+	}
+
+	/**
+	 * One compiled {@code <fact>}.
+	 *
+	 * <p>
+	 * A fact that throws is sent as an empty value rather than taking the page down: a mistyped
+	 * expression costs the agent one line of context, and the user is in the middle of a sentence.
+	 * </p>
+	 */
+	private record FactSpec(String name, boolean stable, QueryExecutor value) {
+
+		String evaluate(Object[] arguments) {
+			try {
+				return label(value.execute(arguments));
+			} catch (RuntimeException ex) {
+				Logger.warn("Chat context fact '" + name + "' could not be evaluated: " + ex.getMessage(),
+					ex, ChatConversationControl.class);
+				return "";
+			}
+		}
 	}
 
 	/**

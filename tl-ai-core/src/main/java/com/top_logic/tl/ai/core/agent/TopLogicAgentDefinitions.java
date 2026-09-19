@@ -12,14 +12,19 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
 
 import com.top_logic.basic.module.ConfiguredManagedClass;
@@ -30,6 +35,9 @@ import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.LabelPositioning;
 import com.top_logic.model.annotate.LabelPosition;
+import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.tl.ai.core.agent.environment.AgentFact;
+import com.top_logic.tl.ai.core.agent.environment.PromptPlaceholders;
 
 /**
  * TopLogic-provided agent and skill definitions.
@@ -73,6 +81,7 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		AgentConfig.DELEGATIONS,
 		AgentConfig.MCP_SERVERS,
 		AgentConfig.SYSTEM_PROMPT,
+		AgentConfig.FACTS,
 	})
 	public interface AgentConfig extends NamedConfigMandatory {
 
@@ -87,6 +96,9 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 
 		/** Configuration property name for {@link #getSystemPrompt()}. */
 		String SYSTEM_PROMPT = "system-prompt";
+
+		/** Configuration property name for {@link #getFacts()}. */
+		String FACTS = "facts";
 
 		/** Configuration property name for {@link #getTools()}. */
 		String TOOLS = "tools";
@@ -153,6 +165,24 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		@LabelPositioning(LabelPosition.ABOVE)
 		@ControlProvider(MultiLineText.class)
 		String getSystemPrompt();
+
+		/**
+		 * What this agent tells every model about the situation it runs in.
+		 *
+		 * <p>
+		 * Each fact is TL-Script of no arguments, evaluated in the acting user's context when a run
+		 * starts, and rendered into the {@code {{context}}} section of the environment block. These are
+		 * the facts that need no page, so they are the same whether the run comes from the chat, from
+		 * {@code aiAgentChat} or from the scheduler; a fact that needs what a page is showing is
+		 * declared on the chat conversation element instead.
+		 * </p>
+		 *
+		 * @see FactConfig#getStable()
+		 */
+		@Name(FACTS)
+		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
+		@EntryTag("fact")
+		List<FactConfig> getFacts();
 
 		/**
 		 * Qualified tool names available to this agent.
@@ -239,6 +269,50 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		@EntryTag("removed-delegation")
 		List<DelegationRef> getRemovedDelegations();
 
+	}
+
+	/**
+	 * One fact an agent states about the situation a run of it happens in.
+	 *
+	 * @see AgentConfig#getFacts()
+	 */
+	@TagName("fact")
+	public interface FactConfig extends NamedConfigMandatory {
+
+		/** Configuration property name for {@link #getValue()}. */
+		String VALUE = "value";
+
+		/** Configuration property name for {@link #getStable()}. */
+		String STABLE = "stable";
+
+		@Override
+		@Label("Name")
+		String getName();
+
+		/**
+		 * TL-Script of no arguments computing the value, evaluated in the acting user's context when
+		 * a run starts.
+		 */
+		@Name(VALUE)
+		@Label("Value")
+		@Mandatory
+		@NonNullable
+		Expr getValue();
+
+		/**
+		 * Whether the value holds for the whole conversation.
+		 *
+		 * <p>
+		 * Only a stable fact is rendered into the environment block: that block sits in front of every
+		 * request of the conversation and must stay byte-identical, or the provider's prompt cache
+		 * misses on every turn. A fact that changes while the conversation runs belongs in the per-turn
+		 * block (Gitea #438), which this release does not render yet.
+		 * </p>
+		 */
+		@Name(STABLE)
+		@Label("Stable")
+		@BooleanDefault(true)
+		boolean getStable();
 	}
 
 	/**
@@ -354,6 +428,7 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		for (Map.Entry<String, AgentConfig> entry : getConfig().getAgents().entrySet()) {
 			String name = entry.getKey();
 			AgentConfig cfg = entry.getValue();
+			checkPlaceholders(name, cfg.getSystemPrompt());
 			agents.put(name, new AgentDefinition(
 				name,
 				cfg.getDisplayName(),
@@ -364,7 +439,8 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 				toNames(cfg.getMcpServers()),
 				effectiveNames(cfg.getSkills(), cfg.getRemovedSkills()),
 				effectiveNames(cfg.getDelegations(), cfg.getRemovedDelegations()),
-				AgentSource.CONFIG));
+				AgentSource.CONFIG,
+				toFacts(cfg.getFacts())));
 		}
 		_agents = Collections.unmodifiableMap(agents);
 
@@ -394,6 +470,37 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		} finally {
 			super.shutDown();
 		}
+	}
+
+	/**
+	 * Refuses an agent whose system prompt names a placeholder the harness cannot fill.
+	 *
+	 * <p>
+	 * A placeholder nobody fills would reach the model verbatim and read as an instruction the
+	 * harness failed to honour, and the typo behind it is invisible in the answer. Failing here -
+	 * while the definitions are read - names the agent and the placeholder, which is what makes it a
+	 * two-second fix rather than a puzzle.
+	 * </p>
+	 */
+	static void checkPlaceholders(String agentName, String systemPrompt) {
+		List<String> unknown = PromptPlaceholders.unknownIn(systemPrompt);
+		if (unknown.isEmpty()) {
+			return;
+		}
+		String names = String.join(", ", unknown.stream().map(n -> "{{" + n + "}}").toList());
+		throw new ConfigurationError(ResKey.text("Agent '" + agentName + "' uses unknown placeholder(s)"
+			+ " in its system prompt: " + names + ". Known are: " + PromptPlaceholders.knownNames()));
+	}
+
+	private static List<AgentFact> toFacts(List<FactConfig> configs) {
+		if (configs == null || configs.isEmpty()) {
+			return List.of();
+		}
+		List<AgentFact> facts = new ArrayList<>(configs.size());
+		for (FactConfig config : configs) {
+			facts.add(new AgentFact(config.getName(), config.getStable(), config.getValue()));
+		}
+		return List.copyOf(facts);
 	}
 
 	private static List<String> toNames(List<? extends NameRef> refs) {

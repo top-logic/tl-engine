@@ -225,6 +225,36 @@
 					trace-picker="true"
 				/>
 				<!--
+					What this page states about the situation the user is asking in (Issue #437). The
+					server evaluates these when the page's channels change and they travel with every
+					message; the message text itself is never touched.
+
+					"Application" is stable, so it is rendered into the environment block of the system
+					prompt - which has to stay byte-identical across the turns of one conversation, or
+					the provider's prompt cache misses on every one of them. "Open invoice" follows the
+					user's clicks in the rail, so it is not: it is carried and, for now, dropped.
+					Rendering such a fact per turn is #438.
+
+					Every fact takes the <inputs> as its leading arguments, the way <data-list> binds
+					its rows - which is why the stable one names the channel it does not use.
+				-->
+				<context>
+					<inputs>
+						<input channel="paneObject"/>
+					</inputs>
+					<fact name="Application"
+						stable="true"
+					>
+						<value><![CDATA[open -> "Invoice management demo (tl-ai-demo)"]]></value>
+					</fact>
+					<fact name="Open invoice"
+						stable="false"
+					>
+						<value><![CDATA[open -> ifElse(isEmpty($open), "none",
+							$open.get(`tl.ai.demo.imageclassification:Invoice#description`))]]></value>
+					</fact>
+				</context>
+				<!--
 					Declarative @-mention: typing "@" offers this application's invoices, no TypeScript.
 					Each mention carries the invoice's id and puts its description into the message as the
 					quoted text the agent reads.

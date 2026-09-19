@@ -88,6 +88,22 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey ERROR_MEMORY_NOT_OWNED;
 
+	/**
+	 * A non-administrator asked to clear a model health mark.
+	 *
+	 * @en Only an administrator can reset the health of a model.
+	 * @de Nur eine Administratorin oder ein Administrator kann den Zustand eines Modells zurücksetzen.
+	 */
+	public static ResKey ERROR_MODEL_HEALTH_NOT_ADMIN;
+
+	/**
+	 * A model health function was called while the LLM service is not running.
+	 *
+	 * @en The LLM service is not running, so no model health is known.
+	 * @de Der LLM-Dienst läuft nicht, daher ist kein Modellzustand bekannt.
+	 */
+	public static ResKey ERROR_MODEL_HEALTH_UNAVAILABLE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

@@ -58,6 +58,8 @@ import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.provider.health.ModelAvailability;
+import com.top_logic.tl.ai.core.provider.health.ModelHealthMark;
 import com.top_logic.tl.ai.core.provider.ResponseFormat;
 import com.top_logic.tl.ai.core.security.RunEntryPoint;
 import com.top_logic.tl.ai.core.security.RunPrincipal;
@@ -1039,6 +1041,80 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	public static boolean memoryDelete(Object memory) {
 		AgentExecutionStore.getInstance().deleteMemory(ownedMemory(memory));
 		return true;
+	}
+
+	/**
+	 * What every model of this installation is currently known to be good for.
+	 *
+	 * <p>
+	 * One map per model that is marked; a model nobody has had trouble with is simply absent, so an
+	 * empty list means every model is healthy. The keys are {@code model}, {@code cause}
+	 * ({@code QUOTA}, {@code CAPACITY} or {@code TRANSIENT}), {@code kind} (the provider error that
+	 * produced the mark), {@code terminal} (whether the model is skipped outright rather than
+	 * getting one attempt per turn), {@code detail} (the provider's own words), {@code markedAt} and
+	 * {@code expiresAt} - the last being absent for a mark that holds until it is reset.
+	 * </p>
+	 *
+	 * <p>
+	 * A read for a monitor, so it takes nothing and needs no permission: which models are currently
+	 * failing is operational state, not anybody's data.
+	 * </p>
+	 *
+	 * @return One map per live mark, the newest first; never <code>null</code>.
+	 */
+	public static List<Map<String, Object>> modelHealth() {
+		if (!LLMService.Module.INSTANCE.isActive()) {
+			return List.of();
+		}
+		List<Map<String, Object>> result = new ArrayList<>();
+		for (ModelHealthMark mark : LLMService.getInstance().modelHealth().marks()) {
+			Map<String, Object> row = new LinkedHashMap<>();
+			row.put("model", mark.model());
+			row.put("cause", mark.cause().name());
+			row.put("kind", mark.kind());
+			row.put("terminal", Boolean.valueOf(mark.terminal()));
+			row.put("detail", mark.detail());
+			row.put("markedAt", mark.markedAt());
+			row.put("expiresAt", mark.expiresAt());
+			result.add(row);
+		}
+		return result;
+	}
+
+	/**
+	 * Clears what is held against a model, so the next run tries it again.
+	 *
+	 * <p>
+	 * The way out of a sticky {@code QUOTA} mark: a rejected key or an exhausted budget is fixed
+	 * outside this application, and nothing in here can notice that it was. An administrator who
+	 * has fixed it says so with this.
+	 * </p>
+	 *
+	 * <p>
+	 * Administrators only. The marks are what keeps a run off a model that is costing money for
+	 * nothing, and clearing them is an operational decision, not a user preference.
+	 * </p>
+	 *
+	 * @param model
+	 *        The model to clear, or <code>null</code>/empty to clear every mark.
+	 * @return How many marks were dropped - {@code 0} when the model was not marked at all.
+	 * @throws TopLogicException
+	 *         If the acting account does not administer the application, or the LLM service is not
+	 *         running.
+	 */
+	public static int modelHealthReset(String model) {
+		Person actor = TLContext.currentUser();
+		if (actor == null || !actor.isAdmin()) {
+			throw new TopLogicException(I18NConstants.ERROR_MODEL_HEALTH_NOT_ADMIN);
+		}
+		if (!LLMService.Module.INSTANCE.isActive()) {
+			throw new TopLogicException(I18NConstants.ERROR_MODEL_HEALTH_UNAVAILABLE);
+		}
+		ModelAvailability health = LLMService.getInstance().modelHealth();
+		if (model == null || model.isBlank()) {
+			return health.resetAll();
+		}
+		return health.reset(model) ? 1 : 0;
 	}
 
 	/**

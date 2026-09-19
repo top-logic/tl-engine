@@ -8,6 +8,8 @@ package com.top_logic.tl.ai.core.tools;
 import java.util.Map;
 
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.tl.ai.core.execution.RunInfoBinding;
+import com.top_logic.tl.ai.tool.api.RunInfo;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolResult;
@@ -32,7 +34,15 @@ import com.top_logic.tl.ai.tool.api.ToolResult;
  * calls the tool inside the caller's own context and refuses when there is none.
  * </p>
  *
+ * <p>
+ * It also {@link RunInfoBinding binds the run} the call belongs to for the duration of the call, on
+ * the thread the tool runs on - which is a worker thread for the tools of a concurrent batch - so
+ * that code <em>beneath</em> a tool, which gets no {@link ToolExecutionContext}, can still learn
+ * which agent run it is serving. The binding is removed when the call returns.
+ * </p>
+ *
  * @see ThreadContextManager#inSystemInteraction(Class, com.top_logic.basic.util.ComputationEx2)
+ * @see ToolExecutionContext#runInfo()
  */
 public final class ToolExecutions {
 
@@ -53,9 +63,12 @@ public final class ToolExecutions {
 	 * @return The tool result.
 	 */
 	public static ToolResult execute(Tool tool, Map<String, Object> args, ToolExecutionContext context) {
-		return ThreadContextManager.inSystemInteraction(tool.getClass(),
-			() -> {
-				return tool.execute(args, context);
-			});
+		RunInfo run = context != null ? context.runInfo() : RunInfo.NONE;
+		try (RunInfoBinding.Binding bound = RunInfoBinding.bind(run)) {
+			return ThreadContextManager.inSystemInteraction(tool.getClass(),
+				() -> {
+					return tool.execute(args, context);
+				});
+		}
 	}
 }

@@ -197,6 +197,10 @@ public final class AgentRunner {
 	public static RecordedRun run(AgentLoop loop, String agentName, Conversation conversation,
 			ToolContext context, AgentEventListener listener, ConversationLog log,
 			AgentSession session, AgentExecution parentExecution) {
+		// A pre-built loop never passed through AgentFactory, so this is the only place that knows
+		// which agent the run serves. Published as plain data for the run's tools to read.
+		context.executionHandle().setAgentName(agentName);
+
 		AgentEventListener downstream = withTranscriptRecording(listener, log);
 
 		AgentEventListener effectiveListener = downstream;

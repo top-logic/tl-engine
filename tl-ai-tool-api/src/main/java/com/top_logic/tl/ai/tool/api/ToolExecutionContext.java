@@ -24,4 +24,19 @@ public interface ToolExecutionContext {
 	 * during long-running operations.
 	 */
 	CancellationToken cancellationToken();
+
+	/**
+	 * Which agent run this tool call belongs to - run id, conversation, agent, model, and the
+	 * delegating run for a sub-agent.
+	 *
+	 * <p>
+	 * Never {@code null}: a tool called outside an agent run gets {@link RunInfo#NONE}, whose fields
+	 * are all {@code null}. Reading any of them is always safe, which is the whole point - the run's
+	 * persistent {@code AgentExecution} row cannot be dereferenced from a tool (Gitea #405), so this
+	 * hands over the same facts as plain data captured before the tool call.
+	 * </p>
+	 */
+	default RunInfo runInfo() {
+		return RunInfo.NONE;
+	}
 }

@@ -349,7 +349,16 @@ export const Composer = React.memo(
   const [modelPane, setModelPane] = useState<'root' | 'effort' | 'model'>('root')
   const [pane, setPane] = useState<MenuPane>('root')
   const [query, setQuery] = useState('')
-  const [improveVisible, setImproveVisible] = useState(false)
+  /**
+   * The draft the "improve" pause has elapsed for, or null while none has.
+   *
+   * The chip's visibility is *derived* from this and never stored: an effect that writes state on
+   * every keystroke is a nested update per keystroke, and React counts fifty of those in a row
+   * without an idle frame as "maximum update depth exceeded" - which typing at full speed reaches
+   * (#419). Written once by the timer below and by nothing else; a keystroke hides the chip by
+   * moving `text` away from it, with no render of its own.
+   */
+  const [improvePausedFor, setImprovePausedFor] = useState<string | null>(null)
   const [improving, setImproving] = useState(false)
   const [improveError, setImproveError] = useState('')
   const [improveUnchanged, setImproveUnchanged] = useState(false)
@@ -376,13 +385,15 @@ export const Composer = React.memo(
   const showModelMenu = modelPicker || thinking
 
   useEffect(() => {
-    if (!promptImprovementEnabled || improving || draftIsEmpty(text)) {
-      setImproveVisible(false)
-      return
-    }
-    const timer = window.setTimeout(() => setImproveVisible(true), 700)
+    if (!promptImprovementEnabled || improving || draftIsEmpty(text)) return
+    const timer = window.setTimeout(() => setImprovePausedFor(text), 700)
     return () => window.clearTimeout(timer)
   }, [improving, promptImprovementEnabled, text])
+
+  // The pause is over and it was this sentence the user stopped on. Returning to a sentence the
+  // pause already elapsed for - a character typed and taken back again - offers the chip at once
+  // rather than waiting another 700 ms, which is the same answer to the same draft.
+  const improveVisible = improvePausedFor === text
 
   useEffect(() => {
     if (!menuOpen && !modelMenuOpen) return
@@ -556,7 +567,6 @@ export const Composer = React.memo(
       setText('')
       setFiles([])
       setUndoDraft(null)
-      setImproveVisible(false)
       setMention(null)
     })
   }
@@ -580,12 +590,10 @@ export const Composer = React.memo(
           // The server hands the draft back when there is nothing to rewrite - a confirmation, a
           // single word, a prompt already fine. Saying so beats silently replacing text with itself.
           setImproveUnchanged(true)
-          setImproveVisible(false)
           window.setTimeout(() => setImproveUnchanged(false), 4000)
         } else {
           setUndoDraft(draft)
           setText(improvedText)
-          setImproveVisible(false)
         }
         area.current?.focus()
       } else if (result.status !== 'cancelled' && result.status !== 'stale') {

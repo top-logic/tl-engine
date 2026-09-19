@@ -54,6 +54,8 @@ import com.top_logic.tl.ai.core.agent.environment.UserMemorySettings;
 import com.top_logic.tl.ai.core.provider.catalog.ModelCatalogEntry;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.provider.catalog.ModelsDevFetcher;
+import com.top_logic.tl.ai.core.tools.model.ObjectIdConfig;
+import com.top_logic.tl.ai.core.tools.model.ObjectIdSettings;
 
 /**
  * Central service for LLM provider management, model resolution, and agent execution
@@ -566,6 +568,13 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		String USER_MEMORY = "user-memory";
 
 		/**
+		 * Configuration property name for the object-ids section.
+		 *
+		 * @see #getObjectIds()
+		 */
+		String OBJECT_IDS = "object-ids";
+
+		/**
 		 * Configuration property name for the model catalog.
 		 *
 		 * @see #getModelCatalog()
@@ -611,6 +620,15 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		 */
 		@Name(USER_MEMORY)
 		UserMemoryConfig getUserMemory();
+
+		/**
+		 * What this application knows about the identifiers a model passes to a tool: the codes its
+		 * own users speak, and what to tell a model that passed one instead of an object id.
+		 *
+		 * @see #OBJECT_IDS
+		 */
+		@Name(OBJECT_IDS)
+		ObjectIdConfig getObjectIds();
 
 		/**
 		 * Model metadata catalog describing each model's capabilities and limits.
@@ -763,6 +781,15 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	 */
 	public UserMemoryConfig getUserMemoryConfig() {
 		return getConfig().getUserMemory();
+	}
+
+	/**
+	 * What this application knows about the identifiers a model passes to a tool.
+	 *
+	 * @see ObjectIdSettings
+	 */
+	public ObjectIdConfig getObjectIdConfig() {
+		return getConfig().getObjectIds();
 	}
 
 	@Override

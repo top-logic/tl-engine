@@ -28,6 +28,31 @@
 					date is stated at day granularity and why only stable facts reach {{context}}.
 				-->
 				<environment/>
+				<!--
+					What this application knows about the identifiers a model passes to a tool.
+
+					When a tool cannot resolve one, TidDiagnostics says which kind of wrong identifier
+					it was - a uuid, a printed object, an unknown type, an id of the wrong shape - so
+					that the model corrects itself in one step instead of trying the same string in
+					the next tool. Those classes are the same everywhere and need no configuration.
+
+					What needs configuration is the identifier this application's own users speak: an
+					order number, a ticket code, a part number. Declare one hint per such code; the
+					pattern is matched against the whole identifier, and the explanation continues the
+					sentence that begins with the quoted identifier:
+
+					<object-ids>
+						<hints>
+							<hint pattern="[A-Za-z][A-Za-z0-9]*-[0-9]+"
+								explanation="is a record code. Search for it with sales__search and use the id from the answer."
+							/>
+						</hints>
+					</object-ids>
+
+					gives the model: 'LEAD-014' is a record code. Search for it with sales__search and
+					use the id from the answer.
+				-->
+				<object-ids/>
 				<model-catalog />
 			</instance>
 		</config>

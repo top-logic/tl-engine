@@ -7,7 +7,6 @@ package com.top_logic.tl.ai.core.execution;
 
 import java.time.Instant;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
@@ -29,11 +28,11 @@ import com.top_logic.tl.ai.core.execution.AgentExecutionStore.SessionKind;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.tools.ToolExecutions;
+import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.RunInfo;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.util.model.ModelService;
@@ -226,32 +225,9 @@ public class TestRunInfoRevisionSafety extends BasicTestCase {
 	}
 
 	private static Tool tool(Function<ToolExecutionContext, ToolResult> body) {
-		return new Tool() {
-			@Override
-			public String name() {
-				return "run_probe";
-			}
-
-			@Override
-			public String description() {
-				return "Reports the run it executes in.";
-			}
-
-			@Override
-			public ToolMode mode() {
-				return ToolMode.READ;
-			}
-
-			@Override
-			public ToolSchema schema() {
-				return new ToolSchema("run_probe", "Reports the run it executes in.", "{}");
-			}
-
-			@Override
-			public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
-				return body.apply(context);
-			}
-		};
+		return ToolStubs.builder("run_probe").description("Reports the run it executes in.")
+			.schema(new ToolSchema("run_probe", "Reports the run it executes in.", "{}"))
+			.execute((args, context) -> body.apply(context)).build();
 	}
 
 	public static Test suite() {

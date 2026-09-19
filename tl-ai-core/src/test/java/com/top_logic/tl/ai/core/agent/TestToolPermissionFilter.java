@@ -5,14 +5,12 @@
  */
 package com.top_logic.tl.ai.core.agent;
 
-import java.util.Map;
 
 import junit.framework.TestCase;
 
+import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
@@ -119,23 +117,7 @@ public class TestToolPermissionFilter extends TestCase {
 	}
 
 	private static Tool stubTool(String name, ToolMode mode) {
-		return new Tool() {
-			@Override
-			public String name() { return name; }
-
-			@Override
-			public String description() { return ""; }
-
-			@Override
-			public ToolSchema schema() { return new ToolSchema(name, "", "{}"); }
-
-			@Override
-			public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
-				return ToolResult.of("");
-			}
-
-			@Override
-			public ToolMode mode() { return mode; }
-		};
+		return ToolStubs.builder(name).description("").schema(new ToolSchema(name, "", "{}")).mode(mode).result("")
+			.build();
 	}
 }

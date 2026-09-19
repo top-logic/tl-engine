@@ -10,7 +10,6 @@ import java.lang.reflect.Modifier;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.Test;
@@ -42,8 +41,8 @@ import com.top_logic.tl.ai.core.provider.LLMService;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
+import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
@@ -232,33 +231,11 @@ public class TestSecurityContextFactory extends TestCase {
 	}
 
 	private static Tool writeTool(List<String> executed) {
-		return new Tool() {
-			@Override
-			public String name() {
-				return "writeSection";
-			}
-
-			@Override
-			public String description() {
-				return "Writes a section";
-			}
-
-			@Override
-			public ToolSchema schema() {
-				return WRITE_SECTION;
-			}
-
-			@Override
-			public ToolMode mode() {
-				return ToolMode.DATA_WRITE;
-			}
-
-			@Override
-			public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
+		return ToolStubs.builder("writeSection").description("Writes a section").schema(WRITE_SECTION)
+			.mode(ToolMode.DATA_WRITE).execute((args, context) -> {
 				executed.add(String.valueOf(args.get("section")));
 				return ToolResult.of("Written.");
-			}
-		};
+			}).build();
 	}
 
 	@SafeVarargs

@@ -293,32 +293,7 @@ public class TestToolCatalog extends TestCase {
 	}
 
 	private static Tool secretTool() {
-		return new Tool() {
-			@Override
-			public String name() {
-				return "secret";
-			}
-
-			@Override
-			public String description() {
-				return "A tool the test user may not call.";
-			}
-
-			@Override
-			public ToolSchema schema() {
-				return new ToolSchema("secret", description(), "{\"type\":\"object\",\"properties\":{}}");
-			}
-
-			@Override
-			public ToolMode mode() {
-				return ToolMode.READ;
-			}
-
-			@Override
-			public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
-				return ToolResult.of("nope");
-			}
-		};
+		return ToolStubs.builder("secret").description("A tool the test user may not call.").result("nope").build();
 	}
 
 	/** Malformed JSON arguments -> Failed state with "Invalid JSON". */
@@ -389,17 +364,9 @@ public class TestToolCatalog extends TestCase {
 	/** Tool throws CancellationException -> Failed state with "Tool execution cancelled." */
 	public void testExecuteToolCancelled() {
 		ToolCatalog catalog = new ToolCatalog();
-		Tool cancelling = new Tool() {
-			@Override public String name() { return "canceller"; }
-			@Override public String description() { return "Cancels"; }
-			@Override public ToolSchema schema() {
-				return new ToolSchema("canceller", "Cancels", "{\"type\":\"object\",\"properties\":{}}");
-			}
-			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext ctx) {
+		Tool cancelling = ToolStubs.builder("canceller").description("Cancels").execute((args, ctx) -> {
 				throw new CancellationException("cancelled");
-			}
-			@Override public ToolMode mode() { return ToolMode.READ; }
-		};
+			}).build();
 		catalog.register(cancelling);
 
 		ToolCall call = new ToolCall("call-1", "canceller", "{}");
@@ -427,17 +394,8 @@ public class TestToolCatalog extends TestCase {
 	/** ToolResult with summary -> ToolState.Completed carries it. */
 	public void testExecutePropagatesSummary() {
 		ToolCatalog catalog = new ToolCatalog();
-		Tool withSummary = new Tool() {
-			@Override public String name() { return "summarizer"; }
-			@Override public String description() { return "Returns summary"; }
-			@Override public ToolSchema schema() {
-				return new ToolSchema("summarizer", "Returns summary", "{\"type\":\"object\",\"properties\":{}}");
-			}
-			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext ctx) {
-				return new ToolResult("full text", "short summary", -1);
-			}
-			@Override public ToolMode mode() { return ToolMode.READ; }
-		};
+		Tool withSummary = ToolStubs.builder("summarizer").description("Returns summary")
+			.execute((args, ctx) -> new ToolResult("full text", "short summary", -1)).build();
 		catalog.register(withSummary);
 
 		ToolCall call = new ToolCall("call-1", "summarizer", "{}");
@@ -451,17 +409,9 @@ public class TestToolCatalog extends TestCase {
 	/** ToolResult with content parts -> ToolState.Completed carries them as ContentParts. */
 	public void testExecutePropagatesContentParts() {
 		ToolCatalog catalog = new ToolCatalog();
-		Tool multimodal = new Tool() {
-			@Override public String name() { return "viewer"; }
-			@Override public String description() { return "Returns an image"; }
-			@Override public ToolSchema schema() {
-				return new ToolSchema("viewer", "Returns an image", "{\"type\":\"object\",\"properties\":{}}");
-			}
-			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext ctx) {
-				return ToolResult.multimodal("A screenshot.", new ToolContent.Image("QQ==", "image/png"));
-			}
-			@Override public ToolMode mode() { return ToolMode.READ; }
-		};
+		Tool multimodal = ToolStubs.builder("viewer").description("Returns an image")
+			.execute((args, ctx) -> ToolResult.multimodal("A screenshot.", new ToolContent.Image("QQ==", "image/png")))
+			.build();
 		catalog.register(multimodal);
 
 		ToolResultMessage result = catalog.execute(new ToolCall("call-1", "viewer", "{}"),
@@ -515,17 +465,8 @@ public class TestToolCatalog extends TestCase {
 	/** ToolResult with truncationHint -> ToolState.Completed carries it. */
 	public void testExecutePropagatesTruncationHint() {
 		ToolCatalog catalog = new ToolCatalog();
-		Tool withHint = new Tool() {
-			@Override public String name() { return "hinter"; }
-			@Override public String description() { return "Returns hint"; }
-			@Override public ToolSchema schema() {
-				return new ToolSchema("hinter", "Returns hint", "{\"type\":\"object\",\"properties\":{}}");
-			}
-			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext ctx) {
-				return new ToolResult("data", null, 500);
-			}
-			@Override public ToolMode mode() { return ToolMode.READ; }
-		};
+		Tool withHint = ToolStubs.builder("hinter").description("Returns hint")
+			.execute((args, ctx) -> new ToolResult("data", null, 500)).build();
 		catalog.register(withHint);
 
 		ToolCall call = new ToolCall("call-1", "hinter", "{}");
@@ -565,62 +506,25 @@ public class TestToolCatalog extends TestCase {
 	}
 
 	private static Tool echoTool() {
-		return new Tool() {
-			@Override public String name() { return "echo"; }
-			@Override public String description() { return "Echoes input"; }
-			@Override public ToolSchema schema() {
-				return new ToolSchema("echo", "Echoes input",
-					"{\"type\":\"object\",\"properties\":{\"msg\":{\"type\":\"string\"}}}");
-			}
-			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext ctx) {
-				return ToolResult.of("Echo: " + args.get("msg"));
-			}
-			@Override public ToolMode mode() { return ToolMode.READ; }
-		};
+		return ToolStubs.builder("echo").description("Echoes input")
+			.schema(new ToolSchema("echo", "Echoes input", "{\"type\":\"object\",\"properties\":{\"msg\":{\"type\":\"string\"}}}"))
+			.execute((args, ctx) -> ToolResult.of("Echo: " + args.get("msg"))).build();
 	}
 
 	private static Tool structuralTool() {
-		return new Tool() {
-			@Override public String name() { return "modifier"; }
-			@Override public String description() { return "Modifies structure"; }
-			@Override public ToolSchema schema() {
-				return new ToolSchema("modifier", "Modifies structure",
-					"{\"type\":\"object\",\"properties\":{}}");
-			}
-			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext ctx) {
-				return ToolResult.of("done");
-			}
-			@Override public ToolMode mode() { return ToolMode.STRUCTURAL; }
-		};
+		return ToolStubs.builder("modifier").description("Modifies structure").mode(ToolMode.STRUCTURAL).result("done")
+			.build();
 	}
 
 	private static Tool throwingTool(RuntimeException ex) {
-		return new Tool() {
-			@Override public String name() { return "thrower"; }
-			@Override public String description() { return "Always throws"; }
-			@Override public ToolSchema schema() {
-				return new ToolSchema("thrower", "Always throws",
-					"{\"type\":\"object\",\"properties\":{}}");
-			}
-			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext ctx) {
+		return ToolStubs.builder("thrower").description("Always throws").execute((args, ctx) -> {
 				throw ex;
-			}
-			@Override public ToolMode mode() { return ToolMode.READ; }
-		};
+			}).build();
 	}
 
 	private static Tool invalidSchemaTool() {
-		return new Tool() {
-			@Override public String name() { return "badSchema"; }
-			@Override public String description() { return "Bad schema"; }
-			@Override public ToolSchema schema() {
-				return new ToolSchema("badSchema", "Bad schema", "not valid json {{");
-			}
-			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext ctx) {
-				return ToolResult.of("unreachable");
-			}
-			@Override public ToolMode mode() { return ToolMode.READ; }
-		};
+		return ToolStubs.builder("badSchema").description("Bad schema")
+			.schema(new ToolSchema("badSchema", "Bad schema", "not valid json {{")).result("unreachable").build();
 	}
 
 	// ----- Collision test helper classes (from former TestToolCatalogCollision) -----

@@ -7,7 +7,6 @@ package com.top_logic.tl.ai.core.tools;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -17,9 +16,6 @@ import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
-import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
@@ -244,16 +240,6 @@ public class TestDynamicToolCatalog extends TestCase {
 	}
 
 	private static Tool stubTool(String name) {
-		return new Tool() {
-			@Override public String name() { return name; }
-			@Override public String description() { return "Stub tool: " + name; }
-			@Override public ToolSchema schema() {
-				return new ToolSchema(name, description(), "{\"type\":\"object\",\"properties\":{}}");
-			}
-			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
-				return ToolResult.of("ok");
-			}
-			@Override public ToolMode mode() { return ToolMode.READ; }
-		};
+		return ToolStubs.builder(name).description("Stub tool: " + name).build();
 	}
 }

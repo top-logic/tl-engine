@@ -9,7 +9,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.Test;
@@ -36,10 +35,9 @@ import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
+import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
@@ -146,32 +144,8 @@ public class TestInteractionTimeoutService extends TestCase {
 
 	/** A {@link ToolMode#STRUCTURAL} tool, which the approval check always routes to the user. */
 	private static Tool approvalRequiringTool(String name, ToolSchema schema) {
-		return new Tool() {
-			@Override
-			public String name() {
-				return name;
-			}
-
-			@Override
-			public String description() {
-				return "";
-			}
-
-			@Override
-			public ToolSchema schema() {
-				return schema;
-			}
-
-			@Override
-			public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
-				return ToolResult.of("Result of " + name);
-			}
-
-			@Override
-			public ToolMode mode() {
-				return ToolMode.STRUCTURAL;
-			}
-		};
+		return ToolStubs.builder(name).description("").schema(schema).mode(ToolMode.STRUCTURAL)
+			.result("Result of " + name).build();
 	}
 
 	private static SecurityContext developmentSecurity() {

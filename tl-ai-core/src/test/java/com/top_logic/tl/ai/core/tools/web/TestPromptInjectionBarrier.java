@@ -37,9 +37,8 @@ import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.anthropic.AnthropicMessagesProvider;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
+import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 
@@ -250,32 +249,8 @@ public class TestPromptInjectionBarrier extends TestCase {
 	}
 
 	private static Tool tool(String name, String description, String schemaJson, Body body) {
-		return new Tool() {
-			@Override
-			public String name() {
-				return name;
-			}
-
-			@Override
-			public String description() {
-				return description;
-			}
-
-			@Override
-			public ToolSchema schema() {
-				return new ToolSchema(name, description, schemaJson);
-			}
-
-			@Override
-			public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
-				return ToolResult.of(body.apply(args));
-			}
-
-			@Override
-			public ToolMode mode() {
-				return ToolMode.READ;
-			}
-		};
+		return ToolStubs.builder(name).description(description).schema(new ToolSchema(name, description, schemaJson))
+			.execute((args, context) -> ToolResult.of(body.apply(args))).build();
 	}
 
 	/**

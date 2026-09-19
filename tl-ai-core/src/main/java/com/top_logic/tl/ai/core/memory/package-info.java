@@ -12,6 +12,12 @@
  * and compaction. The agent loop uses it to run indefinitely without exceeding
  * the context window.</p>
  *
+ * <p>The loop asks {@link com.top_logic.tl.ai.core.memory.ConversationMemory#shouldCompact()}
+ * at the start of every turn, before that turn's request is built, so a conversation that no
+ * longer fits its budget is compacted rather than sent and refused - see
+ * {@code AgentLoop#compactIfOverBudget}. A provider that reports an overflow the estimate did
+ * not see remains the fallback, not the normal path.</p>
+ *
  * @see com.top_logic.tl.ai.core.memory.ConversationMemory
  * @see com.top_logic.tl.ai.core.memory.TokenEstimator
  * @see com.top_logic.tl.ai.core.memory.CompactionStrategy

@@ -116,6 +116,17 @@
 	background-color: #f7faff;
 }
 
+/*
+ * What the application stated about this turn, as opposed to what the user wrote. Framed like a
+ * part so it lines up with them, but with its own edge: it was never anybody's message.
+ */
+.aiTrContext {
+	padding: 6px 10px 8px 12px;
+	border-left: 3px solid #8a8a8a;
+	background-color: #f6f6f6;
+	margin: 6px 8px;
+}
+
 /* --- one part ------------------------------------------------------------ */
 
 .aiTrPart {

@@ -94,14 +94,22 @@ public class ConversationLogReplay {
 	}
 
 	private void replayTurn(Turn turn) {
-		// 1. Replay user parts.
+		// 1. Replay user parts. The first of them carries what the host stated about this turn,
+		// ahead of the user's text, exactly where AgentLoop.ensureTurnContext put it live: a
+		// reloaded conversation has to be the one the model already saw, or the compaction
+		// sidecars fingerprinted against it stop matching.
+		String turnContext = turn.turnContext();
+		boolean contextPending = turnContext != null && !turnContext.isBlank();
 		for (Part userPart : turn.userParts()) {
 			if (stopAt(userPart, turn)) {
 				return;
 			}
 			if (userPart instanceof Part.TextPart tp) {
-				_messages.add(new UserMessage(tp.id(), tp.timestamp(),
-					List.of(new TextContent(tp.text()))));
+				List<ContentPart> content = contextPending
+					? List.of(new TextContent(turnContext), new TextContent(tp.text()))
+					: List.of(new TextContent(tp.text()));
+				contextPending = false;
+				_messages.add(new UserMessage(tp.id(), tp.timestamp(), content));
 			}
 		}
 

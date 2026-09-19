@@ -102,6 +102,17 @@ message PersistedTurn {
 	 */
 	ContextCompositionDto contextComposition;
 
+	/**
+	 * What the host stated about this turn - the facts that change while the conversation runs.
+	 *
+	 * <p>
+	 * Sent to the model beside the user's text and stored apart from it, so a reader of
+	 * {@link #getUserParts()} gets what the user wrote and nothing else. Empty when the host stated
+	 * no per-turn fact, and in transcripts written before this field existed.
+	 * </p>
+	 */
+	string turnContext;
+
 	/** Parts contributed by the user in this turn. */
 	repeated PersistedPart userParts;
 

@@ -389,6 +389,9 @@
 
 											turn = t -> {
 												usage = $t['usage'];
+												// What the host stated about this turn. Shown with the turn and not with the
+												// user's parts, because it is not the user's text: it travels beside it.
+												context = $t['turnContext'];
 												{{{
 													<details class="aiTrTurn" open="open">
 														<summary>
@@ -399,6 +402,14 @@
 																<span class="aiTrTime">{$usage['inputTokens'] + $usage['outputTokens']} Token</span>
 															}}} }
 														</summary>
+														{ isEmpty($context) ? "" : {{{
+															<div class="aiTrContext">
+																<div class="aiTrHead">
+																	<span class="aiTrKind">{#('Turn context'@en, 'Turn-Kontext'@de)}</span>
+																</div>
+																<pre class="aiTrCode">{$context}</pre>
+															</div>
+														}}} }
 														{foreach($t['userParts'], p -> {{{ <div class="aiTrUser">{$part($p)}</div> }}})}
 														{foreach($t['assistantParts'], p -> $part($p))}
 													</details>

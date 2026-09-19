@@ -1364,7 +1364,17 @@ export class ChatStore {
           return
         }
         const data = parseJson<{ errorMessage?: string; kind?: string }>(e.data, {})
-        finish(providerErrorText(data.kind, this.state.language), data.errorMessage ?? '')
+        const text = providerErrorText(data.kind, this.state.language)
+        // Also into the transcript, not only into the composer's notice strip: a run that ended
+        // without an answer has to say so where the answer would have been, and the strip is
+        // cleared by the next send (#429). A turn that failed before any text would otherwise
+        // leave the question standing alone, which is the blank thread all over again.
+        //
+        // Recorded exactly as a re-opened session records it - the provider's own words as the
+        // message, its kind as the code - so the card reads the same live as after a reload. The
+        // sentence the user reads is the renderer's, from the kind.
+        this.dispatch({ type: 'ADD_ERROR', message: data.errorMessage ?? '', code: data.kind })
+        finish(text, data.errorMessage ?? '')
       })
 
       es.onerror = () => {

@@ -547,6 +547,55 @@ describe('the stream', () => {
     await settle()
     release()
   })
+
+  /**
+   * A failed run leaving its mark in the transcript (#429).
+   *
+   * The notice strip is the composer's and the next send clears it; the thread is the record of the
+   * turn. Reported only in the strip, a turn that failed before any text left the question standing
+   * alone - the same blank thread the ticket is about.
+   */
+  it('writes a provider error into the transcript, not only into the notice strip', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+
+    stream.emit('run_started', { runId: 'r1' })
+    stream.emit('turn_started', {})
+    stream.emit('provider_error', { kind: 'OVERLOADED', errorMessage: 'upstream 529' })
+
+    // Recorded the way a re-opened session records it: the provider's own words and the kind. The
+    // sentence the user reads is derived from the kind when the thread renders it.
+    const error = store.getState().messages.find((m) => m.type === 'error')
+    expect(error).toBeDefined()
+    expect(error && 'message' in error ? error.message : '').toBe('upstream 529')
+    expect(error && 'code' in error ? error.code : '').toBe('OVERLOADED')
+    expect(store.getState().notice).not.toBe('')
+    expect(store.getState().busy).toBe(false)
+
+    await settle()
+    release()
+  })
+
+  /** A run the user stopped is not a failure, and leaves no error in the transcript. */
+  it('writes no error for the stream the cancel closed', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+
+    stream.emit('run_started', { runId: 'r1' })
+    stream.emit('run_completed', { reason: 'ABORTED' })
+    stream.emit('provider_error', { kind: 'UNKNOWN', errorMessage: 'Stream cancelled.' })
+
+    expect(store.getState().messages.some((m) => m.type === 'error')).toBe(false)
+
+    await settle()
+    release()
+  })
 })
 
 describe('the layout preferences', () => {

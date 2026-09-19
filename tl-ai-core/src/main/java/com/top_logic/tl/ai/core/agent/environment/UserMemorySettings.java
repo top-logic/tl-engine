@@ -39,13 +39,55 @@ public class UserMemorySettings {
 		// Static utility.
 	}
 
+	/**
+	 * The section a test put in place of the configured one, or {@code null}.
+	 *
+	 * @see #override(UserMemoryConfig)
+	 */
+	private static volatile UserMemoryConfig _override;
+
 	/** The configured section, or the shipped defaults when the service is not running. */
 	private static UserMemoryConfig config() {
+		UserMemoryConfig overridden = _override;
+		if (overridden != null) {
+			return overridden;
+		}
 		if (!LLMService.Module.INSTANCE.isActive()) {
 			return DEFAULTS;
 		}
 		UserMemoryConfig configured = LLMService.getInstance().getUserMemoryConfig();
 		return configured == null ? DEFAULTS : configured;
+	}
+
+	/**
+	 * Answers every question below from the given section until the handle is closed.
+	 *
+	 * <p>
+	 * <b>A test seam.</b> Whether an installation keeps memories is a property of the
+	 * {@link LLMService} configuration, and a unit test that wanted to exercise the switched-off
+	 * half would otherwise have to boot that service. Nothing in production calls this - the
+	 * administrator's switch is the {@code <user-memory>} section, and there is no second way to
+	 * set it.
+	 * </p>
+	 *
+	 * @param config
+	 *        What to answer from; {@code null} restores the configured section.
+	 */
+	public static Overridden override(UserMemoryConfig config) {
+		UserMemoryConfig before = _override;
+		_override = config;
+		return () -> _override = before;
+	}
+
+	/**
+	 * Handle returned by {@link UserMemorySettings#override(UserMemoryConfig)}; closing it restores
+	 * what was in place before.
+	 */
+	@FunctionalInterface
+	public interface Overridden extends AutoCloseable {
+
+		@java.lang.Override
+		void close();
 	}
 
 	/**

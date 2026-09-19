@@ -46,6 +46,19 @@ describe('renderMarkdown', () => {
     expect(html).toContain('<a href="https://example.com"')
   })
 
+  it('keeps a screenshot of this application', () => {
+    // What makes a captured screenshot visible at all (issue #216): the tool hands the model a
+    // /screenshot/<id> URL and the model writes it as a markdown image.
+    const html = render('![page.png](/screenshot/a7f3b2)')
+    expect(html).toContain('src="/screenshot/a7f3b2"')
+    expect(html).toContain('alt="page.png"')
+  })
+
+  it('drops an image whose source is a script', () => {
+    const html = render('![x](javascript:alert(1))')
+    expect(html).not.toMatch(/src="javascript:/i)
+  })
+
   it('keeps the code block this file builds itself', () => {
     const html = render('```java\nint x = 1;\n```')
     expect(html).toContain('class="code-block"')

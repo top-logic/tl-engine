@@ -51,7 +51,9 @@ import com.top_logic.util.TLContext;
  * that full page; the interaction verbs ({@code browserClick}, {@code browserType},
  * {@code browserBack}) return only a terse status plus the current refs, so the model calls
  * {@code browserSnapshot} when it needs to read the page. {@code browserScreenshot} additionally
- * captures a PNG of the current page and persists it as a {@code Screenshot} object.
+ * captures a PNG of the current page, persists it as a {@code Screenshot} object and returns the
+ * URL {@link com.top_logic.tl.ai.core.screenshots.ScreenshotServlet} serves it at, so the model can
+ * show the picture in its answer.
  * </p>
  *
  * <p>
@@ -327,16 +329,17 @@ public class BrowserTool {
 	 *        visible viewport only.
 	 * @param context
 	 *        Injected execution context; identifies the agent session.
-	 * @return A short confirmation with the persisted object's TID and the source URL, or an error
-	 *         string.
+	 * @return A short confirmation with the URL the screenshot can be viewed at, the persisted
+	 *         object's TID and the source URL, or an error string.
 	 */
 	@ToolMethod(
 		description = "Capture a PNG screenshot of this session's current browser page and save it as a "
 			+ "persistent Screenshot object. Optional 'name' sets the filename/label (a sensible "
 			+ "<host>-<timestamp>.png is generated when omitted). 'fullPage' captures the entire scrolling "
-			+ "page when true, or only the visible viewport when false (the default). Returns the saved "
-			+ "object's TID and the source URL so it can be referenced later; it does NOT return the image "
-			+ "bytes or the page text - use browserSnapshot to read the page. Navigate to a page first.",
+			+ "page when true, or only the visible viewport when false (the default). Returns a viewing URL, "
+			+ "the saved object's TID and the source URL; it does NOT return the image bytes or the page text "
+			+ "- use browserSnapshot to read the page. To show the picture to the user, put the returned "
+			+ "viewing URL in your answer as a markdown image: ![name](url). Navigate to a page first.",
 		mode = ToolMode.DATA_WRITE,
 		group = ToolGroups.EGRESS,
 		// One browser page per session; not safe to run in parallel with other calls in the run.
@@ -383,8 +386,35 @@ public class BrowserTool {
 		String fileName = (name != null && !name.isBlank()) ? name.trim() : autoName(capture.url());
 		Screenshot saved =
 			screenshots.createScreenshot(fileName, capture.png(), capture.url(), currentPersonQuietly());
-		return "Saved screenshot \"" + fileName + "\" (" + capture.png().length + " bytes) from "
-			+ capture.url() + ". Screenshot object TID: " + saved.tId().asString();
+		return screenshotAnswer(fileName, capture.png().length, capture.url(), saved);
+	}
+
+	/**
+	 * What {@code browserScreenshot} tells the model about the picture it just stored.
+	 *
+	 * <p>
+	 * The viewing URL comes first and the model is told, in the result itself, what to write with
+	 * it. Without that the capture is write-only from the user's point of view (issue #216): a TID
+	 * is all the model can repeat back, and a TID renders as nothing.
+	 * </p>
+	 *
+	 * @param fileName
+	 *        The stored name; also the image's alt text, so a picture that fails to load still says
+	 *        what it was.
+	 * @param byteCount
+	 *        Size of the stored PNG.
+	 * @param sourceUrl
+	 *        The page the picture was taken of.
+	 * @param saved
+	 *        The persisted screenshot.
+	 */
+	static String screenshotAnswer(String fileName, int byteCount, String sourceUrl, Screenshot saved) {
+		String viewUrl = ScreenshotService.viewUrl(saved);
+		return "Saved screenshot \"" + fileName + "\" (" + byteCount + " bytes) from "
+			+ sourceUrl + ". View it at: " + viewUrl
+			+ " - show it to the user by writing exactly this markdown image into your answer: "
+			+ "![" + fileName + "](" + viewUrl + ")"
+			+ ". Screenshot object TID: " + saved.tId().asString();
 	}
 
 	/**

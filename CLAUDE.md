@@ -247,6 +247,7 @@ cost regression nothing else reports:
 - `AnnotatedTools` — reflection engine scanning `@ToolMethod` methods into `Tool` instances (lives in tl-ai-tool-api)
 - `ToolCatalog` — frozen registry with JSON Schema validation
 - Subpackages: `model/` (browser/editor/search), `script/` (TL-Script executor), `interaction/` (delegation, ask-user, skill), `task/` (task store, task binding), `config/` (schema, layouts), `integration/` (Gitea), `registry/` (factories), `util/` (serialization, i18n)
+- `TidResolver` turns a model-supplied `TypeName:id` into a `TLObject`, and is the only place that does - every call is a read check. An identifier that does not resolve is classified by `TidDiagnostics` rather than answered with one generic sentence: a uuid, a printed object, an unknown or abstract type, an id of the wrong shape, or a code this application speaks (a pattern and a sentence in `<object-ids>` on `LLMService`, which gets first say). Error path only. All of these messages are model-facing English literals, not resources (see the Coding Rules).
 
 ### MCP Integration
 
@@ -354,6 +355,7 @@ Standard Maven layout. Key package roots:
   3. The same German text in the module's `src/main/java/META-INF/messages_de.properties`.
   Then run the guard: `mvn -pl tl-ai-core test -DskipTests=false -Dtest=TestGermanResourcesMatchJavaDoc`. It walks every module of the reactor, so run it once from `tl-ai-core` whichever module you changed. It fails when a documented constant has no `@de`, when the shipped German is not the `@de` text, when a `@de` text reaches no bundle, and when a bundle holds a `[missing:...]` generator placeholder.
   Config-property labels and tooltips have no `@en`/`@de` mechanism - the doclet derives them from the JavaDoc prose and the German stays machine-translated, so read it after adding a config option.
+- **DO NOT** make a `ResKey` out of a tool's answer to the model - its result text, its refusal, its `@ToolMethod` description. Those are English literals next to the code that writes them (`TidDiagnostics`, `ToolResults`, `PresentTool`, every tool in `tools/`), because they are read by the model rather than by the user: translating them would make what a run does depend on who started it. The exception is text that is *about* the user and is meant to reach them through the model - the environment block's wording (`tl.ai.environment.template`) is a translated resource for exactly that reason. Text a **person** reads - a label, a command, an error in the UI - follows the `@en`/`@de` rule above.
 - **DO NOT** add `@author` tags to JavaDoc (use git history)
 - **DO NOT** create hand-written POJO DTOs — use msgbuf `.proto` files (see `/create-dto` skill)
 - **DO NOT** use Jackson (`ObjectMapper`) — use msgbuf `JsonWriter`/`JsonReader`

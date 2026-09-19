@@ -83,6 +83,9 @@ public class TaskProgressTracker {
 	/** Session-scoped approval mode. Persists across messages/processing states. */
 	private volatile ApprovalMode _approvalMode = ApprovalMode.MANUAL;
 
+	/** Whether the runs of this tracker have nobody to ask. Only a scheduled run sets it. */
+	private volatile boolean _unattended = false;
+
 	/** Tools approved for the current session. */
 	private final Set<String> _sessionApprovedTools = ConcurrentHashMap.newKeySet();
 
@@ -385,6 +388,37 @@ public class TaskProgressTracker {
 	/** Sets the session-scoped approval mode. */
 	public void setApprovalMode(ApprovalMode mode) {
 		_approvalMode = mode;
+	}
+
+	/**
+	 * Whether the runs started through this tracker have no human who could answer a question.
+	 *
+	 * <p>
+	 * {@code false} for every tracker of a browser window, which is what the chat UI creates: there
+	 * is a person looking at it. It is set by an entry point that has no window at all - the
+	 * scheduler's {@code AgentTask} - and {@code ChatProcessor} carries it into the run's
+	 * {@link com.top_logic.tl.ai.core.agent.ToolContext#attended() tool context} and into its
+	 * security context's background ceiling.
+	 * </p>
+	 *
+	 * <p>
+	 * Deliberately <em>not</em> derived from {@link #getApprovalMode()}. A user can switch their own
+	 * chat to {@link ApprovalMode#AUTO_APPROVE}, and that says they do not want to confirm each tool
+	 * call - not that they have left the room. Only the caller who knows there is no window can
+	 * answer this.
+	 * </p>
+	 */
+	public boolean isUnattended() {
+		return _unattended;
+	}
+
+	/**
+	 * Declares that the runs of this tracker have nobody to ask.
+	 *
+	 * @see #isUnattended()
+	 */
+	public void setUnattended(boolean unattended) {
+		_unattended = unattended;
 	}
 
 	/**

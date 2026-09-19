@@ -1734,3 +1734,35 @@ private boolean preCommitGuardPasses(ToolContext context, Conversation conversat
 model was left with. There is deliberately **one** such route - a second one would mean "all-or-nothing"
 could come to mean two different things. The per-violation audit record is written by the guard itself,
 where the principal is bound, in the same shape as a `ToolAuthorization` denial.
+
+### A.3 A commit the application refuses · **implemented**
+
+A commit can also be refused by the application rather than by the guard: a model constraint, a
+mandatory attribute nobody filled, an own `CommitChecker`. That is not a security decision, but it
+ends the turn the same way, and it has the same four obligations - the log, the model, the user and
+the transcript. The route is the one above; what makes it reachable is that **`TransactionScope.commit()`
+wraps every failure the engine can raise into a `TransactionException`**.
+
+That is not a formality. `DefaultDBContext.commitTransaction` picks the exception it throws by cause,
+not by layer: `KnowledgeBaseException` for a poisoned or failed transaction, but a bare
+`I18NRuntimeException` for a veto - `ModelService.checkCommit` throws `TopLogicException` for a
+constraint violation and the engine rethrows it unwrapped. A scope that caught only the first let a
+refused write escape the whole run; the chat's catch-all then announced it to the browser as
+`provider_error` of kind `UNKNOWN`, which reads as *"the model reported an error, you can send
+again"* - for the application's own refusal, and for a message that will be refused again (issue
+#410).
+
+What the four obligations look like now:
+
+| | |
+|---|---|
+| **Log** | `AgentLoop.commitTransaction` writes one ERROR line naming run, turn and cause. Nothing else logs it: the scope wraps without logging and the rollback event is only traced at DEBUG. |
+| **Model** | the `[Framework notice]` of `rollbackTurn`, naming the refusal, stating that every tool result of the turn is void, and telling it not to retry the identical change. |
+| **User** | the run completes normally and the turn is reported rolled back. A failure that does reach the chat's catch-all is classified `ChatProcessor.APPLICATION_ERROR` rather than as a provider kind, and the chat says the application could not complete the request - not that the model erred. |
+| **Transcript** | `ConversationLogListener` retracts the turn's writes to `ToolCallStatus.ROLLED_BACK` with the reason, so a reloaded conversation does not replay a success no revision holds. |
+
+The `StopReason` stays honest throughout: a refused commit ends the turn, not the run, so the run
+still ends `COMPLETE` and no `ProviderError` event is emitted. Pinned by
+`TestCommitFailureReason.testVetoedCommitFailsAsATransactionFailure` (the engine-level wrap),
+`TestAgentLoop.testEngineCommitFailureIsNotAProviderError` / `…IsLoggedWithTheRun` /
+`…testRefusedCommitIsRecordedAsRolledBack`, and `TestChatErrorKind` in `tl-chat`.

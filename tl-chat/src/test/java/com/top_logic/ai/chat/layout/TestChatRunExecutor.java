@@ -5,6 +5,8 @@
  */
 package com.top_logic.ai.chat.layout;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -21,13 +23,16 @@ import com.top_logic.tl.ai.core.limits.RunLimitSettings;
 import com.top_logic.tl.ai.core.limits.RunLimitsConfig;
 
 /**
- * That the chat's thread pool has a ceiling, and what a send finds when it is reached.
+ * What the chat's thread pool does with a send: run it, queue it, or refuse it.
  *
  * <p>
- * The pool used to be {@code Executors.newCachedThreadPool()} - a thread per send, without end
- * (Gitea #343). These tests hold it to a configured size and to the two answers it may give: room,
- * or a refusal the caller can turn into a sentence. What they must never show is a third answer -
- * a task accepted and left waiting - because that is the unbounded queue under another name.
+ * Which of the three depends entirely on what the installation configured, and that is the point of
+ * these tests (Gitea #343). Out of the box there is <b>no ceiling</b> - a worker per send, as
+ * {@code Executors.newCachedThreadPool()} gave it before this class existed - because a product
+ * deployed into applications with a thousand users may not pick their ceiling for them. A ceiling
+ * that an administrator does name makes sends <b>wait</b>, because somebody who asked a question
+ * wants the answer late rather than not at all. Only an installation that also bounds the queue
+ * gets a refusal, which is the answer the chat's 429 path exists for.
  * </p>
  */
 public class TestChatRunExecutor extends TestCase {
@@ -43,9 +48,63 @@ public class TestChatRunExecutor extends TestCase {
 		super.tearDown();
 	}
 
-	/** The configured number of runs execute, and no more. */
+	/** With no ceiling configured, every send that arrives gets a worker of its own. */
+	public void testWithoutACeilingEverySendRunsAtOnce() throws Exception {
+		ChatRunExecutor.resetForTest();
+		assertEquals("The shipped installation names no ceiling.", 0, ChatRunExecutor.workers());
+
+		Blocker blocker = new Blocker();
+		List<Future<?>> running = new ArrayList<>();
+		for (int i = 0; i < 20; i++) {
+			assertTrue("An installation with no ceiling always has room.", ChatRunExecutor.hasRoom());
+			running.add(ChatRunExecutor.submit(blocker));
+		}
+		blocker.awaitStarted(20);
+
+		blocker.release();
+		for (Future<?> task : running) {
+			task.get(10, TimeUnit.SECONDS);
+		}
+	}
+
+	/**
+	 * A ceiling makes a send wait, not fail.
+	 *
+	 * <p>
+	 * The owner's decision for #343: a queue that nobody bounded takes everything the workers cannot
+	 * carry yet, and the user's answer arrives late rather than not at all. Nothing is refused on
+	 * this path, so {@code ChatProcessor}'s pre-check has nothing to report either.
+	 * </p>
+	 */
+	public void testACeilingQueuesRatherThanRefuses() throws Exception {
+		try (RunLimitSettings.Overridden config = RunLimitSettings.override(pool(1, 0))) {
+			ChatRunExecutor.resetForTest();
+			assertEquals(1, ChatRunExecutor.workers());
+
+			Blocker blocker = new Blocker();
+			Future<?> running = ChatRunExecutor.submit(blocker);
+			blocker.awaitStarted(1);
+
+			List<Future<?>> waiting = new ArrayList<>();
+			for (int i = 0; i < 5; i++) {
+				assertTrue("A queue of no fixed length always has room.", ChatRunExecutor.hasRoom());
+				waiting.add(ChatRunExecutor.submit(blocker));
+			}
+			assertEquals("The one worker is carrying one run; the rest wait.", 1, blocker.started());
+
+			blocker.release();
+			running.get(10, TimeUnit.SECONDS);
+			for (Future<?> task : waiting) {
+				task.get(10, TimeUnit.SECONDS);
+			}
+			assertEquals("Every queued run did execute, none was dropped.", 6, blocker.started());
+		}
+	}
+
+	/** An installation that asked to refuse rather than queue runs the configured number, and no more. */
 	public void testOnlyTheConfiguredNumberRunsAtOnce() throws Exception {
-		try (RunLimitSettings.Overridden config = RunLimitSettings.override(pool(2, 0))) {
+		try (RunLimitSettings.Overridden config =
+			RunLimitSettings.override(pool(2, RunLimitSettings.NO_QUEUE))) {
 			ChatRunExecutor.resetForTest();
 			assertEquals(2, ChatRunExecutor.workers());
 
@@ -95,13 +154,6 @@ public class TestChatRunExecutor extends TestCase {
 			queued.get(10, TimeUnit.SECONDS);
 			assertEquals("The queued run did execute, it was not dropped.", 2, blocker.started());
 		}
-	}
-
-	/** An unconfigured installation still has a bound, decided from the machine. */
-	public void testTheDefaultIsStillBounded() {
-		ChatRunExecutor.resetForTest();
-		assertEquals(Math.max(8, Runtime.getRuntime().availableProcessors() * 2),
-			ChatRunExecutor.workers());
 	}
 
 	/** A task that holds its worker until it is told to let go. */

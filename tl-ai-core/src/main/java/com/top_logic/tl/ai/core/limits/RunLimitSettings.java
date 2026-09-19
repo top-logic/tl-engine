@@ -26,6 +26,13 @@ import com.top_logic.tl.ai.core.provider.LLMService;
 public class RunLimitSettings {
 
 	/**
+	 * What {@link #chatQueue()} answers for an installation that wants no waiting room at all.
+	 *
+	 * @see RunLimitsConfig#getChatQueue()
+	 */
+	public static final int NO_QUEUE = -1;
+
+	/**
 	 * The shipped defaults, as an instance of the configuration interface.
 	 *
 	 * <p>
@@ -99,26 +106,29 @@ public class RunLimitSettings {
 	}
 
 	/**
-	 * How many chat runs this installation carries at the same time, already resolved: never
-	 * {@code 0}, because the pool has to have a size.
+	 * How many chat runs this installation carries at the same time; {@code 0}, the default, for as
+	 * many as arrive.
 	 *
 	 * @see RunLimitsConfig#getChatWorkers()
 	 */
 	public static int chatWorkers() {
-		int configured = config().getChatWorkers();
-		if (configured > 0) {
-			return configured;
-		}
-		return Math.max(8, Runtime.getRuntime().availableProcessors() * 2);
+		return Math.max(0, config().getChatWorkers());
 	}
 
 	/**
-	 * How many chat runs may wait for a free worker; {@code 0} for no queue.
+	 * How many chat runs may wait for a free worker: {@code 0}, the default, for a queue of no fixed
+	 * length, a positive number for a queue of that length, {@link #NO_QUEUE} for no queue at all.
+	 *
+	 * <p>
+	 * Only of consequence when {@link #chatWorkers()} names a ceiling; without one nothing ever
+	 * waits.
+	 * </p>
 	 *
 	 * @see RunLimitsConfig#getChatQueue()
 	 */
 	public static int chatQueue() {
-		return Math.max(0, config().getChatQueue());
+		int configured = config().getChatQueue();
+		return configured < 0 ? NO_QUEUE : configured;
 	}
 
 	/**

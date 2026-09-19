@@ -245,17 +245,22 @@ cost regression nothing else reports:
 
 ### Run limits (tl-ai-core `limits/`)
 
-Three ceilings on what this installation carries and what one account may spend, configured in one
-`<run-limits>` section beside `<environment>` and `<user-memory>` on `LLMService` (#343):
+Three ceilings an administrator **may** put on what this installation carries and what one account
+may spend, configured in one `<run-limits>` section beside `<environment>` and `<user-memory>` on
+`LLMService` (#343). **All three are off by default** - this product runs in applications with a
+thousand users, and any figure it picked for them would refuse work the installation allowed before
+the upgrade:
 
-- **The chat's thread pool is bounded** - `ChatRunExecutor`, `max(8, cores * 2)` by default, with no
-  queue. **The one limit that is on by default**, because an unbounded `newCachedThreadPool` was
-  never a setting anybody chose. A send with no room is refused *before* anything is written down,
-  as HTTP 429 with a sentence the client shows.
-- **`concurrent-runs-per-account`** (0 = off) and **`token-budget` over `budget-window-hours`**
-  (0 = unlimited, per-role overrides possible) are enforced by `RunLimits.admit` in
-  `AgentFactory.runAgent` - the choke point every entry point arrives at. Both are off by default:
-  switching one on changes what an existing installation allows.
+- **`chat-workers`** (0 = no ceiling) bounds `ChatRunExecutor`. At 0 it is the cached pool the chat
+  always had, a worker per send. With a ceiling, a send that finds every worker busy **waits**:
+  `chat-queue` is 0 = a queue of no fixed length, because somebody who asked a question wants the
+  answer late rather than not at all. An installation that would rather refuse bounds the queue
+  (`chat-queue="10"`) or keeps none (`chat-queue="-1"`); only then is a send refused, *before*
+  anything is written down, as HTTP 429 with a sentence the client shows.
+- **`concurrent-runs-per-account`** (0 = off, 3-5 recommended for a shared installation) and
+  **`token-budget` over `budget-window-hours`** (0 = unlimited, per-role overrides possible) are
+  enforced by `RunLimits.admit` in `AgentFactory.runAgent` - the choke point every entry point
+  arrives at. These two refuse rather than queue: the account is already being served.
 
 A **delegated** run is neither counted nor budgeted separately: it is part of the run that delegated
 it, and shares that run's `TokenAllowance`. The budget is computed from the recorded

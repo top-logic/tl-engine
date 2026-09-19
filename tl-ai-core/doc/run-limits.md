@@ -1,12 +1,14 @@
 # Run limits: how many runs at once, and how much they may spend
 
 tl-ai is not a coding CLI. It runs inside a shared application server, on behalf of many users at
-once, against metered provider APIs. Until #343 there was no ceiling of any kind: the chat gave
-every send a thread of its own out of an unbounded pool, and no run was ever stopped because the
-account it acted for had spent enough. One user's long analysis was indistinguishable from a hundred.
+once, against metered provider APIs. Until #343 there was no ceiling of any kind and no way to ask
+for one: the chat gave every send a thread of its own out of an unbounded pool, and no run was ever
+stopped because the account it acted for had spent enough. One user's long analysis was
+indistinguishable from a hundred.
 
-This document is the configuration reference for the three ceilings that answer that, and the
-description of where each one is enforced.
+This document is the configuration reference for the three ceilings an administrator may now set,
+and the description of where each one is enforced. **It sets none of them.** An installation that
+upgrades finds exactly the behaviour it had.
 
 ## The configuration
 
@@ -32,32 +34,58 @@ One section, `<run-limits>`, beside `<environment>` and `<user-memory>` on `LLMS
 
 | Setting | Default | What it does |
 |---|---|---|
-| `chat-workers` | `0` = `max(8, cores * 2)` | How many chat runs execute at the same time. **The one limit that is on by default.** |
-| `chat-queue` | `0` = no queue | How many sends may wait for a free worker. |
+| `chat-workers` | `0` = **no ceiling** | How many chat runs execute at the same time. `0` is a worker per send. |
+| `chat-queue` | `0` = **queue of no fixed length** | How many sends may wait for a free worker, once there is a ceiling. `-1` keeps no queue and refuses instead. |
 | `concurrent-runs-per-account` | `0` = off | How many runs one account may have going, over every entry point. |
 | `token-budget` | `0` = unlimited | How many tokens one account may spend in the window. |
 | `budget-window-hours` | `24` | How far back the budget counts. A rolling window, not a calendar day. |
 | `<role-budget name tokens>` | none | A budget for the holders of one role. `tokens="0"` is unlimited. |
 
-**Only the pool bound is on by default**, and that is deliberate. An unbounded thread pool was never
-a setting anybody chose, so bounding it is a fix rather than a change of policy. The two per-account
-ceilings *are* a change of policy - an installation whose service account runs five scheduled jobs
-would start failing on an upgrade - so they do nothing until an administrator sets them. A production
-installation serving many users wants `concurrent-runs-per-account="3"` or thereabouts.
+### Nothing is limited until it is configured
+
+All three ceilings are off out of the box, and that is the decision this feature turns on. tl-ai is
+deployed into applications with a thousand users on hardware this product knows nothing about; every
+figure it could pick for them - how many runs at once, how many per account, how many tokens - would
+refuse work that the installation allowed the day before the upgrade. The administrator who knows
+the machine and the provider contract names the numbers, and until they do, the behaviour is exactly
+what it was before #343.
+
+What this feature ships is therefore the *ability* to set a ceiling, plus one decision about what
+happens at it:
+
+**A ceiling makes a run wait, it does not turn it away.** With `chat-workers="32"` and the default
+`chat-queue="0"`, the 33rd send of the moment waits for a worker and its answer arrives late. That
+is what somebody who asked a question wants; "too many runs in progress, please try again" is not,
+and it is worse than useless at a moment when the installation is busy enough that they will get the
+same answer if they do try again. An installation that would rather refuse says so - `chat-queue`
+to a length it accepts, or `-1` for no waiting room at all - and the refusal path below is then what
+a user meets.
+
+For a shared installation, `concurrent-runs-per-account="3"` to `"5"` is the setting to reach for
+first: it is the one that stops a single account from taking every worker, and unlike a global
+ceiling it costs an ordinary user nothing.
 
 The section is read once per question, from the running `LLMService`, through `RunLimitSettings`. As
 with `UserMemorySettings`, every accessor answers the shipped default when the service is not up, so
-a unit test or a boot step gets a number rather than an exception. The **pool size** is read once,
-when the pool is first used: changing it needs a restart.
+a unit test or a boot step gets a number rather than an exception. The **pool size and the queue**
+are read once, when the pool is first used: changing them needs a restart.
 
 ## Where each limit is enforced
 
 ### 1. The pool - `ChatRunExecutor`
 
 `ChatProcessor.BACKGROUND_EXECUTOR`, a `static` `newCachedThreadPool()` in a layout class, is gone.
-The pool is now `ChatRunExecutor`, a `ThreadPoolExecutor` with `core == max == chat-workers` and
-either a `SynchronousQueue` (no queue) or a bounded `LinkedBlockingQueue`. `allowCoreThreadTimeOut`
-is on, so a quiet installation does not hold the pool's worth of stacks overnight.
+The pool is now `ChatRunExecutor`, and which pool it builds is the configuration's decision:
+
+| `chat-workers` | `chat-queue` | The pool |
+|---|---|---|
+| `0` (default) | - | `0 / MAX_VALUE`, `SynchronousQueue` - the cached pool, spelled out. A worker per send, an idle one let go after a minute. Nothing is ever refused. |
+| `n` | `0` (default) | `core == max == n`, `LinkedBlockingQueue` of no fixed length. n run, the rest wait. Nothing is refused. |
+| `n` | `q > 0` | `core == max == n`, `LinkedBlockingQueue(q)`. n run, q wait, the next is refused. |
+| `n` | `-1` | `core == max == n`, `SynchronousQueue`. n run, the next is refused. |
+
+`allowCoreThreadTimeOut` is on for the bounded pools, so a quiet installation does not hold the
+pool's worth of stacks overnight; the cached pool has a core of zero and needs no such setting.
 
 It is a class and not a TopLogic service on purpose: a thread pool has no lifecycle of its own
 beyond the application's, nothing to inject and nothing for another component to look up, and making
@@ -65,15 +93,16 @@ it a `ConfiguredManagedClass` would add a service every application has to regis
 something it cannot run without. What it did need was a *configured* size, and that lives where the
 installation's other ceilings live.
 
-**Queue-full behaviour is explicit.** `ChatProcessor.sendMessage` asks `ChatRunExecutor.hasRoom()`
-*before* it writes anything down - before the user's message is added to the conversation, before it
-is persisted, before a turn is opened - and answers `SendResult.rejected(reason)`. `ChatServlet`
+**Queue-full behaviour is explicit**, and only the bottom two rows of that table can reach it.
+`ChatProcessor.sendMessage` asks `ChatRunExecutor.hasRoom()` *before* it writes anything down -
+before the user's message is added to the conversation, before it is persisted, before a turn is
+opened - and answers `SendResult.rejected(reason)`. `ChatServlet`
 turns that into **HTTP 429** with `{"status":"rejected","reason":"…"}`; the React client throws a
 `RefusedError` (a `ForbiddenError`, so every caller that already shows a refusal as information
 shows this one too) and the composer puts the sentence in the notice strip, not sticky - the answer
 is to send again in a moment. The classic control shows it as a system bubble.
 
-The check is advisory, because between it and the submit another request can take the last worker.
+The check is advisory, because between it and the submit another request can take the last place.
 That path is caught too: `ChatRunExecutor.submit` throws `NoRoom`, and there - the only place where
 the user's message is already in the conversation - the refusal is said in the conversation, under
 their own message.
@@ -92,6 +121,10 @@ Two runs are **not** counted:
 - A **delegated** run - `ToolContext.delegationDepth() > 0`. It is part of the run that delegated it,
   which was already counted. Counting it again would make a user's ceiling depend on how an agent
   happens to be built: a cap of 3 would refuse the first agent that delegates three times.
+
+Unlike the pool, this cap **refuses**; there is no queue behind it. A run held back until the
+account's other runs finish is a run whose own ceiling did the waiting, and the account is by
+definition already being served - which is not the case when the installation as a whole is full.
 
 Today a delegation does not reach `runAgent` at all: `DelegationTool` builds its loop through
 `AgentLoopFactory.buildAgentLoop` and runs it directly, and `SubagentSpawner` goes through
@@ -163,8 +196,11 @@ Permission to run denied: account 'jdoe' already has 3 agent runs in progress, w
   installation's limit.
 Permission to run denied: account 'jdoe' spent 2145300 tokens in the last 24h, which is its budget
   of 2000000.
-Chat run refused for 'jdoe': all 32 chat workers are busy.
+Chat run refused: all 32 chat workers are busy and the queue of 10 is full.
 ```
+
+The last of the three only appears in an installation that configured both a ceiling and a bounded
+queue; the shipped one has neither.
 
 ## What the user sees
 
@@ -187,6 +223,10 @@ the user to argue with a number they cannot change.
   parent run ends and frees its slot, and the child keeps working on a pool thread of
   `SubagentJobRegistry`. It is still not counted as a run of its own (it is a delegate) and it still
   spends the parent's allowance, but the concurrency cap does not see it.
-- **`AgentLoop.TOOL_WORKERS` and `SubagentJobRegistry`'s pool are still unbounded cached pools.**
-  Only the chat's run pool is bounded here.
+- **`AgentLoop.TOOL_WORKERS` and `SubagentJobRegistry`'s pool are still unbounded cached pools**,
+  with no setting to bound them. Only the chat's run pool can be given a ceiling here.
+- **A queued send holds nothing but a task.** The waiting user sees the composer busy and the run
+  has not started, so it has spent no tokens and holds no conversation - which is why the default
+  queue needs no length. What it does not do is tell the user *why* the answer is slow; a "waiting
+  for a free worker" notice is a follow-up, not part of this.
 - **The budget is a scan.** See "What it costs" above.

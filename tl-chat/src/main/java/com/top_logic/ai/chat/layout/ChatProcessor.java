@@ -594,6 +594,13 @@ public class ChatProcessor {
 	 * </p>
 	 *
 	 * <p>
+	 * <b>Usually <code>null</code>.</b> An installation that configured no ceiling has room for
+	 * every send, and one that configured a ceiling queues behind it; this answers a reason only
+	 * where the {@code <run-limits>} section asked for a refusal - a bounded chat queue, or a
+	 * per-account cap.
+	 * </p>
+	 *
+	 * <p>
 	 * <b>Not the gate.</b> {@code AgentFactory} refuses the run whatever this says, and the pool
 	 * refuses the submit; this exists so that the ordinary case reads as information rather than as
 	 * a turn that failed. Between this answer and the run, another request can take the last place.
@@ -601,8 +608,7 @@ public class ChatProcessor {
 	 */
 	public static String noRoomReason(TaskProgressTracker tracker) {
 		if (!ChatRunExecutor.hasRoom()) {
-			Logger.info("Chat run refused: all " + ChatRunExecutor.workers()
-				+ " chat workers are busy.", ChatProcessor.class);
+			Logger.info("Chat run refused: " + ChatRunExecutor.noRoomDescription(), ChatProcessor.class);
 			return Resources.getInstance().getString(I18NConstants.TOO_MANY_RUNS_IN_PROGRESS);
 		}
 		ResKey capRefusal = RunLimits.concurrencyRefusal(tracker.getSessionOwner());

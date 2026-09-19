@@ -112,12 +112,19 @@ public final class ExecutionRecorder implements AgentEventListener {
 	public void onEvent(AgentEvent event) {
 		if (event instanceof AgentEvent.RunStarted e) {
 			_runId = e.runId();
-			// Publish the run id on the shared handle before any tool runs, so tools can derive a
-			// stable per-run key without a revision-sensitive read of the persistent execution
-			// wrapper. Done unconditionally (even when execution recording is inactive) so the key
-			// is available whether or not the run is persisted.
+			// Publish what identifies the run on the shared handle before any tool runs, so tools
+			// read it as plain data instead of dereferencing the persistent execution wrapper,
+			// which their revision cannot see (Gitea #405). Done unconditionally (even when
+			// execution recording is inactive) so the facts are there whether or not the run is
+			// persisted. AgentLoop publishes the same run id and model just before emitting this
+			// event; repeating them here covers an emitter other than the loop, with the same
+			// values. The agent name is published here rather than only by AgentFactory because a
+			// run whose loop was built by hand - the aiChat script function's "ai.chat" - passes no
+			// factory, and this recorder is the only place that knows the name.
 			if (_handle != null) {
 				_handle.setRunId(_runId);
+				_handle.setAgentName(_agentName);
+				_handle.setModel(e.model(), resolveProviderId(e.model()));
 			}
 			beginRecording(e);
 		} else if (event instanceof AgentEvent.EnvironmentComposed e) {
@@ -142,7 +149,7 @@ public final class ExecutionRecorder implements AgentEventListener {
 			return;
 		}
 		try {
-			String provider = resolveProviderId(e.model());
+			String provider = _handle != null ? _handle.runInfo().provider() : resolveProviderId(e.model());
 			_execution = AgentExecutionStore.getInstance()
 				.beginExecution(_session, e.runId(), _agentName, e.model(), provider, _parent);
 			if (_handle != null) {

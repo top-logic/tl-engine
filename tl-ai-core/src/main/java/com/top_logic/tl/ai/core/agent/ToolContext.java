@@ -16,6 +16,7 @@ import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.util.TLContext;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.ProgressReporter;
+import com.top_logic.tl.ai.tool.api.RunInfo;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.core.tools.ToolExecutor;
 
@@ -40,10 +41,31 @@ public class ToolContext implements ToolExecutionContext {
 	 * {@link #forCurrentUser()} and {@code ChatProcessor}, both of which resolve the acting account
 	 * and refuse without one.
 	 * </p>
+	 *
+	 * <p>
+	 * It is a <em>shared</em> instance, and so is its {@link #executionHandle()}. Use it to call a
+	 * tool, never to run an agent loop: a run publishes its identity onto that handle, and two runs
+	 * sharing this constant would overwrite each other's. {@link #unrestricted()} is the same
+	 * context with a handle of its own.
+	 * </p>
 	 */
 	public static final ToolContext EMPTY =
 		new ToolContext(SecurityContext.UNRESTRICTED, ApprovalCallback.AUTO_APPROVE,
 			TransactionScope.NOOP, CancellationToken.UNCANCELLABLE);
+
+	/**
+	 * A fresh context shaped like {@link #EMPTY} - no security restrictions, auto-approval, no-op
+	 * transaction scope - but with an {@link #executionHandle()} of its own.
+	 *
+	 * <p>
+	 * What the entry points that take no context from their caller run with. Each call gets its own
+	 * instance, so concurrent runs do not report each other's run to their tools.
+	 * </p>
+	 */
+	public static ToolContext unrestricted() {
+		return new ToolContext(SecurityContext.UNRESTRICTED, ApprovalCallback.AUTO_APPROVE,
+			TransactionScope.NOOP, CancellationToken.UNCANCELLABLE);
+	}
 
 	/**
 	 * Creates a context acting as the user bound to the calling thread, with a live transaction scope.
@@ -352,6 +374,22 @@ public class ToolContext implements ToolExecutionContext {
 	}
 
 	/**
+	 * Which agent run this tool call belongs to - run id, conversation, agent, model, and the
+	 * delegating run for a sub-agent.
+	 *
+	 * <p>
+	 * Plain data, captured as the run started, so reading it touches no {@code KnowledgeBase} and
+	 * can never throw. This is the accessor a tool uses; {@link #executionHandle()}'s
+	 * {@link ExecutionHandle#get() wrapper} is an opaque token for the execution store, not a
+	 * readable object (Gitea #405).
+	 * </p>
+	 */
+	@Override
+	public RunInfo runInfo() {
+		return _executionHandle.runInfo();
+	}
+
+	/**
 	 * The {@code [n]} marker numbers this run hands out to the cite tool.
 	 *
 	 * <p>
@@ -427,7 +465,7 @@ public class ToolContext implements ToolExecutionContext {
 	public ToolContext forDelegation(TransactionScope childTransaction) {
 		return new ToolContext(_security, _approval, childTransaction, _sessionApprovedTools,
 			_delegationDepth + 1, null, _cancellationToken, ProgressReporter.NOOP,
-			new ExecutionHandle(), new CitationMarkers(), _model);
+			childExecutionHandle(), new CitationMarkers(), _model);
 	}
 
 	/**
@@ -464,6 +502,20 @@ public class ToolContext implements ToolExecutionContext {
 	public ToolContext forDetachedSubagent(TransactionScope childTransaction, CancellationToken childToken) {
 		return new ToolContext(_security.withBackgroundCeiling(), _approval, childTransaction,
 			_sessionApprovedTools, _delegationDepth + 1, null, childToken, ProgressReporter.NOOP,
-			new ExecutionHandle(), new CitationMarkers(), _model);
+			childExecutionHandle(), new CitationMarkers(), _model);
+	}
+
+	/**
+	 * A fresh {@link ExecutionHandle} for a run this one delegates: its own execution, with this
+	 * run named as its {@link RunInfo#parent() parent}.
+	 *
+	 * <p>
+	 * The parent's {@link RunInfo} is plain data, so a child tool can read who delegated it (and,
+	 * through {@link RunInfo#root()}, the whole chain up to the top-level run) with the same
+	 * revision safety as its own facts.
+	 * </p>
+	 */
+	private ExecutionHandle childExecutionHandle() {
+		return new ExecutionHandle(runInfo(), _delegationDepth + 1);
 	}
 }

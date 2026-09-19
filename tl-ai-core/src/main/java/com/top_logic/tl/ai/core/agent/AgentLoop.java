@@ -331,6 +331,13 @@ public class AgentLoop {
 		AgentEventListener serialized =
 			AgentEventListener.serializing(new DiagnosticLoggingListener(listener));
 		String runId = UUID.randomUUID().toString();
+		// Publish the run's identity to its tools before anything of the run happens, and as plain
+		// data: the persistent AgentExecution row is written later, by the execution store's writer
+		// thread, at a revision no tool can read (Gitea #405). Done here rather than in the
+		// ExecutionRecorder so that an unrecorded run - a test, a run without a session - tells its
+		// tools which run they are in just the same.
+		context.executionHandle().setRunId(runId);
+		context.executionHandle().setModel(_config.model(), null);
 		emit(serialized, new AgentEvent.RunStarted(runId, 0, now(), _config.model()));
 		emitEnvironment(serialized, runId);
 		emitTurnContext(serialized, runId);
@@ -491,7 +498,7 @@ public class AgentLoop {
 	 * <p>Convenience method for tests and trusted internal use.</p>
 	 */
 	public AgentResult run(Conversation conversation, AgentEventListener listener) {
-		return run(conversation, ToolContext.EMPTY, listener);
+		return run(conversation, ToolContext.unrestricted(), listener);
 	}
 
 	/**

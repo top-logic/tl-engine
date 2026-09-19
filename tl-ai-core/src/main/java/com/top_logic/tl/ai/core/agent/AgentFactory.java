@@ -114,7 +114,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 *
 	 * <p>
 	 * Convenience overload for trusted internal use (scripts, background agents). Uses
-	 * {@link ToolContext#EMPTY} which auto-approves all tools. For interactive use with
+	 * an {@link ToolContext#unrestricted()} context which auto-approves all tools. For interactive use with
 	 * human-in-the-loop approval, call
 	 * {@link #runAgent(String, Conversation, ConversationMemory, ToolContext, AgentEventListener)}.
 	 * </p>
@@ -131,7 +131,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 */
 	public String runAgent(String name, Conversation conversation,
 			ConversationMemory conversationMemory, AgentEventListener listener) {
-		return runAgent(name, conversation, conversationMemory, ToolContext.EMPTY, listener);
+		return runAgent(name, conversation, conversationMemory, ToolContext.unrestricted(), listener);
 	}
 
 	/**
@@ -212,6 +212,12 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 
 		AgentParams coreConfig = buildConfig(agentDef, assignment, capabilities);
 		LLMProvider provider = buildProvider(coreConfig.model(), assignment.provider());
+
+		// Tell the run's tools which agent they are serving, as plain data. The name is resolved
+		// here and nowhere else, and publishing it here (rather than from the execution recorder)
+		// means an unrecorded run answers the question too - see ExecutionHandle#setAgentName.
+		context.executionHandle().setAgentName(agentDef.name());
+
 		boolean hasDynamicLoading = !agentDef.skills().isEmpty();
 		ToolRegistry registry = sessionRegistry != null && hasDynamicLoading
 			? sessionRegistry

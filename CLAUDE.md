@@ -148,7 +148,8 @@ Extracted contract module (package `com.top_logic.tl.ai.tool.api`) enabling tool
 - `Tool` interface — `execute(Map<String, Object> args, ToolExecutionContext context) → ToolResult`
 - `ToolMode` enum - READ (parallel-safe, no approval); USER_SCOPED / DATA_WRITE / STRUCTURAL (serial, need approval, enrol in the turn's transaction); EXTERNAL (serial, needs approval, no transaction - the change lands in another system)
 - `@ToolMethod` / `@P` — annotation framework for reflection-based tool creation
-- `ToolExecutionContext` — marker interface; concrete `ToolContext` lives in tl-ai-core
+- `ToolExecutionContext` - what the framework tells a tool about the call; concrete `ToolContext` lives in tl-ai-core
+- `RunInfo` - which run the call belongs to (run id, conversation, agent, model, parent run), as plain strings. `ToolExecutionContext.runInfo()` for a tool, `RunInfoBinding.current()` for code beneath one. The run's persistent `AgentExecution` is **not** readable from a tool - the store writes it at a newer revision (#405); the wrapper is a token to hand back to `AgentExecutionStore`, never an object to read. See `tl-ai-tool-api/README.md`.
 - `ToolRegistryService` — service-level registry with qualified names `{factory}.{tool}`
 
 ### Agent Loop (tl-ai-core `agent/`)

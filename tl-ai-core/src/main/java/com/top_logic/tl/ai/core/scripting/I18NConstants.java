@@ -8,6 +8,7 @@ package com.top_logic.tl.ai.core.scripting;
 import com.top_logic.basic.i18n.I18NConstantsBase;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
+import com.top_logic.basic.util.ResKey2;
 
 /**
  * I18N constants of the {@code ai...} TL-Script functions.
@@ -37,6 +38,22 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @de Ein Chat braucht einen Titel.
 	 */
 	public static ResKey ERROR_SESSION_TITLE_EMPTY;
+
+	/**
+	 * An AI run ended without an answer, and the provider said why.
+	 *
+	 * @en The AI request failed ({0}): {1}
+	 * @de Die KI-Anfrage ist fehlgeschlagen ({0}): {1}
+	 */
+	public static ResKey2 ERROR_RUN_FAILED__KIND_MESSAGE;
+
+	/**
+	 * An AI run ended without an answer, with nothing said about why.
+	 *
+	 * @en The AI request produced no answer ({0}).
+	 * @de Die KI-Anfrage hat keine Antwort geliefert ({0}).
+	 */
+	public static ResKey1 ERROR_RUN_WITHOUT_ANSWER__REASON;
 
 	/**
 	 * The response format of an {@code aiChat} call is neither "text", "json" nor a schema map.

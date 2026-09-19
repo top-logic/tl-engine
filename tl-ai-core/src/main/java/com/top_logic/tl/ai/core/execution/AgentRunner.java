@@ -53,8 +53,9 @@ public final class AgentRunner {
 	 * @param registry
 	 *        The tool registry used during the run.
 	 * @param result
-	 *        The terminal {@link AgentResult}, or <code>null</code> if the loop died before
-	 *        emitting a completion event.
+	 *        The terminal {@link AgentResult} - why the run stopped, and what the provider said if
+	 *        it failed. <code>null</code> only if the loop died before emitting a completion
+	 *        event.
 	 * @param execution
 	 *        The persisted execution row, or <code>null</code> when recording was off.
 	 */
@@ -147,8 +148,10 @@ public final class AgentRunner {
 		if (recorder != null) {
 			recorder.complete(transcriptOf(log, turnsBefore), response, null);
 		}
+		// The recorder's result carries the provider's own error message (it saw the ProviderError
+		// event); the loop's own result is the fallback for an unrecorded run.
 		return new RecordedRun(response, runResult.registry(),
-			recorder != null ? recorder.result() : null,
+			recorder != null && recorder.result() != null ? recorder.result() : runResult.result(),
 			recorder != null ? recorder.execution() : null);
 	}
 

@@ -1,7 +1,7 @@
-# What `aiChat` asks a model for
+# What `aiChat` asks for, and what it does when there is no answer
 
 The TL-Script function `aiChat(messages, model, responseFormat, tools)` runs one exchange with a
-model. Its `responseFormat` argument was a promise the code did not keep, fixed in Gitea #388.
+model. Two things about it were promises the code did not keep, fixed in Gitea #388 and #389.
 
 ## The response format reaches the provider
 
@@ -36,3 +36,33 @@ request builder spells it the way its API does:
 
 A refusal is a `ProviderException` of kind `INVALID_REQUEST`, raised while the request is built, so
 nothing is sent. `TestResponseFormatInRequests` pins every row of that table.
+
+## A failed run is a failure
+
+`aiChat` used to return the empty string whenever the run added no assistant message - a rejected
+API key, a stream error, an exhausted turn budget and a model that answered nothing all read the
+same to the script (#389). It now throws a `TopLogicException` carrying the provider's own error
+kind and message for every stop reason but `COMPLETE`, after the run has been recorded, so the
+failed run is both a row an administrator can look at and an error the caller cannot mistake for an
+answer. `aiAgentChat` reports the same way.
+
+The asynchronous half is symmetric, because it has a handle rather than a return value:
+
+- `aiAgentRunStatus($handle)` - `RUNNING`, `COMPLETE`, `ERROR`, `CANCELLED`, `REJECTED`.
+- `aiAgentRunResult($handle)` - the answer of a `COMPLETE` run, `null` while it is not finished, and
+  the same raise as `aiChat` for a run that ended in any other state.
+- `aiAgentRunError($handle)` - the recorded message without raising it, for a script that wants to
+  store or display the failure rather than be stopped by it.
+
+The documented polling shape never reaches the raise:
+
+```
+aiAgentRunStatus($handle) == "COMPLETE" ? aiAgentRunResult($handle) : null
+```
+
+## A call with tools gets the turns to use them
+
+`aiChat` without tools is one exchange, as it always was. A call that passes tools now gets the
+default turn budget: the answer comes after the tool results, so the one-turn budget stopped the
+loop with the tool calls made and nothing said - which, after #389, would be a failure rather than
+an empty string.

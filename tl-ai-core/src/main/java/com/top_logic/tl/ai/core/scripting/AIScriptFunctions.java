@@ -34,6 +34,7 @@ import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentParams;
+import com.top_logic.tl.ai.core.agent.AgentResult;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
@@ -90,8 +91,8 @@ import com.top_logic.util.error.TopLogicException;
  * </pre>
  *
  * <p>
- * What {@code aiChat} can ask a model for and what each provider makes of it:
- * {@code tl-ai-core/doc/script-chat.md}.
+ * What {@code aiChat} can ask a model for, what each provider makes of it, and how a run that never
+ * answered is reported: {@code tl-ai-core/doc/script-chat.md}.
  * </p>
  */
 @ScriptPrefix("ai")
@@ -257,6 +258,11 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *        {@code ["mytools.calculateSum", "texttools.formatText"]}), or {@code null} to provide
 	 *        no tools.
 	 * @return The assistant's response text.
+	 * @throws TopLogicException
+	 *         If the run did not reach an answer - an HTTP error, a stream error, a refusal, a
+	 *         cancellation or an exhausted turn budget - carrying the provider's error kind and
+	 *         message. It never returns the empty string for a failed call: a caller cannot tell
+	 *         that apart from a model that answered nothing.
 	 */
 	public static String chat(List<Object> messages, String model, Object responseFormat,
 			Collection<String> tools) {
@@ -309,7 +315,10 @@ public class AIScriptFunctions extends TLScriptFunctions {
 
 		AgentParams config = new AgentParams(
 			modelName, systemPrompt != null ? systemPrompt : "",
-			1, // single turn for chat()
+			// A call without tools is one exchange. A call with tools needs the turns to use them:
+			// the answer comes after the tool results, so a one-turn budget would stop the loop
+			// with the tool calls made and nothing said.
+			toolRegistry.tools().isEmpty() ? 1 : AgentParams.DEFAULT_MAX_TURNS,
 			AgentParams.DEFAULT_MAX_OUTPUT_TOKENS,
 			Map.of(),
 			toResponseFormat(responseFormat));
@@ -324,8 +333,9 @@ public class AIScriptFunctions extends TLScriptFunctions {
 				? new ExecutionRecorder(session, "ai.chat", null, context.executionHandle(),
 					NO_LISTENER)
 				: null;
+			AgentResult result;
 			try {
-				loop.run(conversation, context, recorder != null ? recorder : NO_LISTENER);
+				result = loop.run(conversation, context, recorder != null ? recorder : NO_LISTENER);
 			} catch (RuntimeException ex) {
 				if (recorder != null) {
 					recorder.complete(scriptTranscript(env), ex);
@@ -335,6 +345,9 @@ public class AIScriptFunctions extends TLScriptFunctions {
 			if (recorder != null) {
 				recorder.complete(scriptTranscript(env), null);
 			}
+			// The run is recorded before this throws: a failed run is a row an administrator can
+			// look at, and an exception the script cannot mistake for an empty answer.
+			checkRunSucceeded(result);
 			return AgentFactory.extractResponseText(conversation, messageCountBefore);
 		} finally {
 			context.transaction().close();
@@ -395,6 +408,31 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	}
 
 	/**
+	 * Fails the script call when the run did not reach an answer.
+	 *
+	 * <p>
+	 * Every stop reason but {@link StopReason#COMPLETE} is a failure here. The response text of
+	 * such a run is the empty string, which a script cannot tell apart from a model that answered
+	 * nothing - so the failure is raised, with the provider's own kind and message where there is
+	 * one (Gitea #389).
+	 * </p>
+	 *
+	 * @param result
+	 *        What the loop reported; {@code null} is accepted as success (no loop ran).
+	 */
+	static void checkRunSucceeded(AgentResult result) {
+		if (result == null || result.isComplete()) {
+			return;
+		}
+		String kind = result.errorKind() != null ? result.errorKind() : result.stopReason().name();
+		if (result.errorMessage() != null && !result.errorMessage().isBlank()) {
+			throw new TopLogicException(
+				I18NConstants.ERROR_RUN_FAILED__KIND_MESSAGE.fill(kind, result.errorMessage()));
+		}
+		throw new TopLogicException(I18NConstants.ERROR_RUN_WITHOUT_ANSWER__REASON.fill(kind));
+	}
+
+	/**
 	 * Runs a named agent from the {@link AgentFactory} registry with a single user message.
 	 *
 	 * <p>
@@ -450,6 +488,9 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * @param userMessage
 	 *        The user message to send to the agent.
 	 * @return The agent's final text response.
+	 * @throws TopLogicException
+	 *         If the run did not reach an answer, carrying the provider's error kind and message -
+	 *         as {@link #chat(List, String, Object, Collection)} does, and for the same reason.
 	 * @see #agentChatAsync(String, Object)
 	 * @see ToolContext#forCurrentUser()
 	 */
@@ -468,6 +509,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 			AgentSession session = createScriptSession("ai.agentChat: " + agentName);
 			AgentRunner.RecordedRun run = AgentRunner.run(agentName, conversation, null, context,
 				NO_LISTENER, null, env.logListener().log(), session, null);
+			checkRunSucceeded(run.result());
 			return run.response();
 		} finally {
 			context.transaction().close();
@@ -728,18 +770,32 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * {@link com.top_logic.tl.ai.core.execution.AgentExecutionStore.ExecutionStatus#COMPLETE}.
 	 *
 	 * <p>
-	 * This is symmetric with the synchronous {@link #agentChat(String, Object)}: it returns the
-	 * same final-answer string that {@code agentChat} would have returned for the run - the
-	 * persisted {@link AgentExecution#getResponse() response}, not the transcript. Use
-	 * {@link #agentRunTranscript(Object)} for the full conversation log. Before the run completes -
-	 * or if it ended in any non-{@code COMPLETE} state - this returns {@code null}; use
-	 * {@link #agentRunStatus(Object)} to distinguish the cases.
+	 * This is symmetric with the synchronous {@link #agentChat(String, Object)}, in both
+	 * directions: it returns the same final-answer string that {@code agentChat} would have
+	 * returned for the run - the persisted {@link AgentExecution#getResponse() response}, not the
+	 * transcript - and it raises what {@code agentChat} would have raised. A run that ended in
+	 * {@code ERROR}, {@code CANCELLED} or {@code REJECTED} therefore fails here with the recorded
+	 * error message rather than reading as an absent answer. Use
+	 * {@link #agentRunTranscript(Object)} for the full conversation log.
+	 * </p>
+	 *
+	 * <p>
+	 * {@code null} means only "not finished yet": the handle resolves to no execution (queued, or
+	 * not yet visible in this request's revision) or the run is still {@code RUNNING}. A script
+	 * that wants to handle a failure instead of failing asks {@link #agentRunStatus(Object)} first
+	 * and reads {@link #agentRunError(Object)}; the documented polling shape
+	 * ({@code aiAgentRunStatus($h) == "COMPLETE" ? aiAgentRunResult($h) : null}) never reaches the
+	 * raise.
 	 * </p>
 	 *
 	 * @param handle
 	 *        The string session-id handle returned by {@link #agentChatAsync(String, Object)}, an
 	 *        {@link AgentSession} directly, an {@link AgentExecution} directly, or a run-id string.
-	 * @return The final answer text when the run is {@code COMPLETE}, otherwise {@code null}.
+	 * @return The final answer text when the run is {@code COMPLETE}, or {@code null} while it is
+	 *         not finished.
+	 * @throws TopLogicException
+	 *         If the run ended in a state other than {@code COMPLETE}, carrying the recorded error
+	 *         message.
 	 */
 	public static String agentRunResult(Object handle) {
 		AgentExecution execution = resolveExecution(handle);
@@ -747,11 +803,45 @@ public class AIScriptFunctions extends TLScriptFunctions {
 			return null;
 		}
 		com.top_logic.model.TLClassifier status = execution.getStatus();
-		if (status == null
-			|| !AgentExecutionStore.ExecutionStatus.COMPLETE.name().equals(status.getName())) {
+		String statusName = status != null ? status.getName() : null;
+		if (statusName == null
+			|| AgentExecutionStore.ExecutionStatus.RUNNING.name().equals(statusName)) {
 			return null;
 		}
+		if (!AgentExecutionStore.ExecutionStatus.COMPLETE.name().equals(statusName)) {
+			String message = execution.getErrorMessage();
+			if (message != null && !message.isBlank()) {
+				throw new TopLogicException(
+					I18NConstants.ERROR_RUN_FAILED__KIND_MESSAGE.fill(statusName, message));
+			}
+			throw new TopLogicException(I18NConstants.ERROR_RUN_WITHOUT_ANSWER__REASON.fill(statusName));
+		}
 		return execution.getResponse();
+	}
+
+	/**
+	 * Returns what went wrong in an async agent run, without raising it.
+	 *
+	 * <p>
+	 * This is the error message {@link #agentRunResult(Object)} would raise: the provider's own
+	 * message for a run that failed against the model, the exception message for a run that failed
+	 * before or around it, {@code null} for a run that is still going or that succeeded. Use it
+	 * when the script wants to record or display the failure rather than be stopped by it.
+	 * </p>
+	 *
+	 * @param handle
+	 *        The string session-id handle returned by {@link #agentChatAsync(String, Object)}, an
+	 *        {@link AgentSession} directly, an {@link AgentExecution} directly, or a run-id string.
+	 * @return The recorded error message, or {@code null} if there is none.
+	 * @see #agentRunStatus(Object)
+	 */
+	public static String agentRunError(Object handle) {
+		AgentExecution execution = resolveExecution(handle);
+		if (execution == null) {
+			return null;
+		}
+		String message = execution.getErrorMessage();
+		return message == null || message.isBlank() ? null : message;
 	}
 
 	/**

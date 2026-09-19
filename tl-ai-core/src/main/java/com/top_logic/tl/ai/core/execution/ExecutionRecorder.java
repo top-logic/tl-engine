@@ -50,6 +50,8 @@ public final class ExecutionRecorder implements AgentEventListener {
 
 	private volatile String _runId;
 
+	private volatile String _lastErrorKind;
+
 	private volatile String _lastErrorMessage;
 
 	private volatile AgentResult _result;
@@ -121,9 +123,14 @@ public final class ExecutionRecorder implements AgentEventListener {
 		} else if (event instanceof AgentEvent.EnvironmentComposed e) {
 			recordEnvironment(e);
 		} else if (event instanceof AgentEvent.ProviderError e) {
+			_lastErrorKind = e.kind();
 			_lastErrorMessage = e.message();
 		} else if (event instanceof AgentEvent.RunCompleted e) {
-			_result = new AgentResult(e.reason(), e.turnNumber(), e.totalUsage());
+			// The completion event carries no failure detail - it is the same event for every stop
+			// reason - so the last provider error seen is what names the failure on the result.
+			boolean failed = e.reason() != StopReason.COMPLETE;
+			_result = new AgentResult(e.reason(), e.turnNumber(), e.totalUsage(),
+				failed ? _lastErrorKind : null, failed ? _lastErrorMessage : null);
 		}
 		_delegate.onEvent(event);
 	}

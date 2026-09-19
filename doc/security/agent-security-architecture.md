@@ -1582,6 +1582,59 @@ interactively can be committed to version control - the same round-trip administ
 4. MCP tools arrive at runtime and cannot be annotated. They default to **ungrouped/denied** and must
    be granted through `<tool-groups>` (section 4.1) - explicitly, tool by tool, ideally into `egress`.
 
+### 4.5 Deciding approval from the call, not only from the tool · **implemented** (#381)
+
+`SecurityContext.checkApproval(Tool, ToolCall)` receives the call with its arguments and can
+therefore answer two calls of the same tool differently. The default answers by
+[`ToolMode`](../../tl-ai-tool-api/README.md) alone, which is right for most applications and wrong for
+one whose authority follows the *state of the object*: overwriting an empty section a machine wrote,
+overwriting what a colleague wrote, and releasing a document to a customer are all `DATA_WRITE`, and
+only the second and third deserve a prompt. `ApprovalMode` cannot express that - it decides *who*
+answers a prompt, not *whether* one is raised.
+
+The seam is the factory that builds the context of a run:
+
+```xml
+<config service-class="com.top_logic.tl.ai.core.provider.LLMService">
+    <instance>
+        <security-context class="com.acme.agent.SectionApproval"/>
+    </instance>
+</config>
+```
+
+```java
+public class SectionApproval implements SecurityContextFactory {
+    @Override
+    public SecurityContext createSecurityContext(RunPrincipal run) {
+        SecurityContext base = DefaultSecurityContextFactory.defaultContext(run);
+        return new SecurityContextProxy(base) {   // ships with the seam; delegates everything
+            @Override
+            public PermissionDecision checkApproval(Tool tool, ToolCall call) {
+                // ... read the object the call names, answer Allowed or NeedsApproval
+            }
+        };
+    }
+}
+```
+
+What the factory is told is a `RunPrincipal`: the account the run acts as, how the run was started
+(`CHAT`, `SCRIPT`, `MCP`, `SCHEDULED`, `INTERNAL`), whether anybody is there to answer a prompt, and
+the conversation the run belongs to when the entry point has one. The run has no id and no agent yet -
+those are settled after the context is built.
+
+Three rules:
+
+- **Every entry point asks.** `RunSecurity.contextFor` is the one call, and the chat, the TL-Script
+  functions, the MCP endpoint and the prompt improver all go through it. An application substitutes
+  one implementation, not five call sites.
+- **Configuring nothing changes nothing.** The default is `DefaultSecurityContextFactory`, which is
+  what each entry point built by hand before.
+- **A factory may narrow and it may not widen.** Everything else about a run - which tools, which
+  agents, which objects - is decided against the account's roles, and a context written from scratch
+  would answer all of that permissively - `SecurityContext`'s fifteen methods have permissive
+  defaults. Build `DefaultSecurityContextFactory.defaultContext(run)`, wrap it in
+  `SecurityContextProxy`, and override the one answer that is to differ.
+
 ---
 
 ## 5. Rollout and migration

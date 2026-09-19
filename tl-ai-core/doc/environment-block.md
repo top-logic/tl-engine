@@ -158,6 +158,52 @@ long after those channels were read. A client that sends something else states s
 own page to its own agent; it gains nothing by it, because every tool still asks the security
 context, and it cannot reach another account's conversation.
 
+## Prose the application contributes (#381)
+
+A fact is a name and a value, rendered as one line under a heading that says the application is
+*stating* something. Some applications have to *instruct* instead - house rules per client, per
+project or per account, in whole sentences. That is a `SystemPromptContributor`, configured on
+`LLMService`:
+
+```xml
+<config service-class="com.top_logic.tl.ai.core.provider.LLMService">
+  <instance>
+    <prompt-contributors>
+      <contributor class="com.acme.agent.ClientHouseRules"/>
+    </prompt-contributors>
+  </instance>
+</config>
+```
+
+```java
+public class ClientHouseRules implements SystemPromptContributor {
+    @Override
+    public String contribute(AgentDefinition agent, AgentModelAssignment assignment) {
+        return rulesOf(TLContext.currentUser());   // null or blank contributes nothing
+    }
+}
+```
+
+`AgentFactory.buildConfig` asks every configured contributor once per run, in configuration order,
+after the generated skill and delegate sections and **before** the `<environment>` block is composed -
+so a `{{...}}` placeholder in the contributed text is filled like one in the agent's own prompt. A
+contributor that throws costs its own section and a log line, not the run.
+
+Which of the three to use:
+
+| | |
+|--|--|
+| a named value that holds for the conversation | a **stable fact** - it is rendered where the model already reads the situation |
+| a named value that changes with the next click | an **unstable fact**, which travels in the [per-turn block](#the-per-turn-block) |
+| sentences the model is to follow | a **contributor** |
+
+The same rule as everything else in the prompt applies, and it is the one thing that can go wrong
+here: **what a contributor returns must not change within a conversation.** The text sits in front of
+every request, so one changed character misses the providers' prompt cache on every following turn.
+That is also the point of putting it here rather than in front of every user message, which is what
+an application without this seam had to do: the text is charged once for the conversation instead of
+once per turn.
+
 ## The per-turn block
 
 Some facts change while the user talks to the agent: which object is open, which row was just
@@ -352,6 +398,7 @@ conversation: it sits in the system prompt, which nothing else records.
 | `agent/environment/UserPreferences` / `PreferencesLengthConstraint` | The account's own text and its cap. |
 | `agent/environment/UserMemories` / `UserMemoryBinding` | Reading the account's memories, rendering the section, and the per-conversation snapshot. |
 | `agent/environment/UserMemoryConfig` / `UserMemorySettings` | The `<user-memory>` configuration section and its defaults. |
+| `agent/SystemPromptContributor` / `AgentFactory#appendContributions` | Prose the installation adds to every prompt, and where it lands. |
 | `tools/memory/UserMemoryTool` | `remember` and `recall`. |
 | `tools/memory/MemoryConsent` / `MemoryConsentBinding` / `ConsentWords` | What the user agreed to in this turn, and the one rule that decides it. |
 | `execution/AgentExecutionStore#createMemory` / `memoriesOf` / `deleteMemory` | The write path, the owner filter and the delete. |

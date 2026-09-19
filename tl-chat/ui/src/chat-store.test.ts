@@ -1127,6 +1127,71 @@ describe('recovering a run on boot', () => {
     release()
   })
 
+  /** The recovered card is phrased from the tool's mode, as the live one is (#393). */
+  it('recovers an approval with the mode its sentence is phrased from', async () => {
+    waiting = [
+      {
+        requestId: 'r8',
+        type: 'approval',
+        header: 'executeTLScript',
+        toolMode: 'DATA_WRITE',
+        sessionId: 's1',
+        remainingMs: 40_000,
+      },
+    ]
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+
+    await store.actions.selectSession('s1')
+
+    const card = store
+      .getState()
+      .messages.find((m) => m.type === 'approval_request' && m.approvalRequestId === 'r8')
+    expect(card && card.type === 'approval_request' ? card.toolMode : 'missing').toBe('DATA_WRITE')
+
+    release()
+  })
+
+  /**
+   * Another window of this account answered the card this one is showing (#393).
+   *
+   * A window that only listed the request has no run of its own to hear `approval_resolved` from;
+   * `interaction_resolved` is what stops it from showing a card nobody is waiting on.
+   */
+  it('takes back a card another window answered', async () => {
+    waiting = [
+      {
+        requestId: 'r7',
+        type: 'approval',
+        header: 'writeInvoice',
+        sessionId: 's1',
+        remainingMs: 40_000,
+      },
+    ]
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+
+    await store.actions.selectSession('s1')
+    const shown = store
+      .getState()
+      .messages.find((m) => m.type === 'approval_request' && m.approvalRequestId === 'r7')
+    expect(shown).toBeDefined()
+
+    streams[0].emit('interaction_resolved', { requestId: 'r7', outcome: 'REJECTED:Zu teuer.' })
+    await settle()
+
+    const card = store
+      .getState()
+      .messages.find((m) => m.type === 'approval_request' && m.approvalRequestId === 'r7')
+    expect(card && card.type === 'approval_request' ? card.outcome : 'missing').toBe('REJECTED')
+
+    release()
+  })
+
   /** A chat with nothing in flight comes back exactly as it did before. */
   it('says nothing about a chat whose run has ended', async () => {
     const store = chatStore('alpha', BOOT)

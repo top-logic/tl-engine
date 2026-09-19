@@ -42,10 +42,14 @@ public class RunAuthorization {
 	 * {@link AiToolAccessService#runAuthorizationFor(Person)} always evaluates the running service's
 	 * policy and refuses if that service is down. An application that authored no policy gets a real
 	 * authorization over an empty one - which permits every agent, the agent's own model and the
-	 * agent's own servers, and that is a decision rather than the absence of one.
+	 * agent's own servers, and that is a decision rather than the absence of one. It waives the
+	 * persona rule of {@link #agentRefusal(String, boolean)} too, so that the internal entry points
+	 * built on it - {@code AgentFactory.runAgent} with an unrestricted context, the test setups -
+	 * keep reaching every agent the application has.
 	 * </p>
 	 */
-	public static final RunAuthorization UNCHECKED = new RunAuthorization(null, null, null, null, Set.of());
+	public static final RunAuthorization UNCHECKED =
+		new RunAuthorization(null, null, null, null, Set.of()).withProductChosenAgent();
 
 	private final RoleAccessPolicy _agents;
 
@@ -56,6 +60,13 @@ public class RunAuthorization {
 	private final Person _principal;
 
 	private final Set<String> _heldRoleNames;
+
+	/**
+	 * Whether the agent of this run is the product's choice rather than the user's.
+	 *
+	 * @see #withProductChosenAgent()
+	 */
+	private final boolean _productChosenAgent;
 
 	/**
 	 * Creates a {@link RunAuthorization} for one run.
@@ -75,11 +86,18 @@ public class RunAuthorization {
 	 */
 	public RunAuthorization(RoleAccessPolicy agents, RoleAccessPolicy models, RoleAccessPolicy mcpServers,
 			Person principal, Collection<String> heldRoleNames) {
+		this(agents, models, mcpServers, principal, heldRoleNames, false);
+	}
+
+	private RunAuthorization(RoleAccessPolicy agents, RoleAccessPolicy models,
+			RoleAccessPolicy mcpServers, Person principal, Collection<String> heldRoleNames,
+			boolean productChosenAgent) {
 		_agents = agents;
 		_models = models;
 		_mcpServers = mcpServers;
 		_principal = principal;
 		_heldRoleNames = heldRoleNames == null ? Set.of() : Set.copyOf(heldRoleNames);
+		_productChosenAgent = productChosenAgent;
 	}
 
 	/**
@@ -96,15 +114,40 @@ public class RunAuthorization {
 	 *
 	 * <p>
 	 * The model and the MCP servers stay decided, and so does every tool the run then calls - this
-	 * widens exactly one dimension and nothing else. It is the only widening this class has, which is
-	 * why it is a method with a name rather than a flag on a constructor.
+	 * widens the agent dimension and nothing else. Such a run may also name an agent marked
+	 * {@code infrastructure}, which is the other half of "the product chose it" - see
+	 * {@link #withProductChosenAgent()}.
 	 * </p>
 	 */
 	public RunAuthorization withoutAgentCheck() {
-		if (_agents == null) {
+		if (_agents == null && _productChosenAgent) {
 			return this;
 		}
-		return new RunAuthorization(null, _models, _mcpServers, _principal, _heldRoleNames);
+		return new RunAuthorization(null, _models, _mcpServers, _principal, _heldRoleNames, true);
+	}
+
+	/**
+	 * The same authorization for a run whose agent the product named, keeping the allowlist.
+	 *
+	 * <p>
+	 * The half of {@link #withoutAgentCheck()} that answers the {@link #agentRefusal(String, boolean)
+	 * persona question} alone: an {@code infrastructure} agent - one the application runs <em>for</em>
+	 * a user rather than letting them talk to it - is refused while a user's own run names it, and
+	 * permitted here. Which agents the account may run is still decided by {@code <agent-access>}, so
+	 * this widens strictly less than {@link #withoutAgentCheck()} does.
+	 * </p>
+	 *
+	 * <p>
+	 * Carried by {@link #UNCHECKED} and by nothing else in this class. A production entry point states
+	 * it through {@code SecurityContext.withoutAgentChoice()}, which is the one seam that says in code
+	 * that the user did not pick this agent.
+	 * </p>
+	 */
+	public RunAuthorization withProductChosenAgent() {
+		if (_productChosenAgent) {
+			return this;
+		}
+		return new RunAuthorization(_agents, _models, _mcpServers, _principal, _heldRoleNames, true);
 	}
 
 	/** The roles the run's principal holds on the security root. */
@@ -115,11 +158,28 @@ public class RunAuthorization {
 	/**
 	 * Why the run's principal may not run the named agent, recording the refusal in the audit log.
 	 *
+	 * <p>
+	 * Two questions, and the first one no role answers: an <em>infrastructure</em> agent is one the
+	 * application runs for a user rather than one a user talks to, so naming it as a conversation
+	 * partner is refused whatever {@code <agent-access>} grants - including under
+	 * {@code default="all"}. The product's own call path says that it is not a user's choice by
+	 * carrying {@link #withProductChosenAgent()}, which is what
+	 * {@code SecurityContext.withoutAgentChoice()} hands it.
+	 * </p>
+	 *
 	 * @param agentName
 	 *        The agent the run wants to be.
+	 * @param infrastructure
+	 *        Whether that agent is marked {@code AgentDefinition#infrastructure()}. Pass
+	 *        <code>false</code> for a name no definition could be read for - a name nothing knows is
+	 *        refused as unknown elsewhere, and must not be refused as infrastructure here.
 	 * @return The refusal, or <code>null</code> if the agent is permitted.
 	 */
-	public Decision.Denied agentRefusal(String agentName) {
+	public Decision.Denied agentRefusal(String agentName, boolean infrastructure) {
+		if (infrastructure && !_productChosenAgent) {
+			return audit(new Decision.Denied(RoleAccessPolicy.Dimension.AGENT, agentName, null,
+				RoleAccessPolicy.Cause.INFRASTRUCTURE_AGENT));
+		}
 		return audit(decide(_agents, agentName, Set.of()));
 	}
 
@@ -251,8 +311,17 @@ public class RunAuthorization {
 		return name == null ? Set.of() : Set.of(name);
 	}
 
-	/** Whether the run's principal may run the named agent, without logging a refusal. */
-	public boolean allowsAgent(String agentName) {
+	/**
+	 * Whether the run's principal may run the named agent, without logging a refusal.
+	 *
+	 * @param infrastructure
+	 *        Whether that agent is marked {@code AgentDefinition#infrastructure()}.
+	 * @see #agentRefusal(String, boolean)
+	 */
+	public boolean allowsAgent(String agentName, boolean infrastructure) {
+		if (infrastructure && !_productChosenAgent) {
+			return false;
+		}
 		return decide(_agents, agentName, Set.of()) == null;
 	}
 

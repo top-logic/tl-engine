@@ -225,7 +225,8 @@ public class AgentDefinitionQuery {
 			new ArrayList<>(agent.getMcpServers()),
 			skillNames,
 			delegationNames,
-			source);
+			source,
+			agent.getInfrastructure());
 	}
 
 	/**

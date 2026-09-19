@@ -417,18 +417,26 @@ public class EffectiveToolAccessComponent extends FormComponent implements Contr
 		// whose own servers, a role forbids cannot run at all - the chat's menu, the fallback agent and
 		// the delegate catalog all drop it, and a view that counted it as reachable would be the one
 		// place in the product that disagrees with the gate. Its row says why instead of vanishing.
-		Map<String, Decision.Denied> stoppedByItsOwn = new LinkedHashMap<>();
+		// An infrastructure agent is stopped for a third reason that no role decides: the application
+		// runs it for the user and nobody converses with it (#397). Its row says so rather than
+		// reporting a grant that the gate would refuse.
+		Map<String, Decision.Denied> stopped = new LinkedHashMap<>();
 		List<String> allowedAgents = new ArrayList<>();
 		for (String agentName : access.allowedAgents(agents)) {
+			if (isInfrastructure(agentName)) {
+				stopped.put(agentName, new Decision.Denied(Dimension.AGENT, agentName, null,
+					RoleAccessPolicy.Cause.INFRASTRUCTURE_AGENT));
+				continue;
+			}
 			Decision.Denied own =
 				access.agentsOwnRefusal(assignedModel(agentName), declaredServers(agentName));
 			if (own == null) {
 				allowedAgents.add(agentName);
 			} else {
-				stoppedByItsOwn.put(agentName, own);
+				stopped.put(agentName, own);
 			}
 		}
-		addSection(root, Dimension.AGENT, agents, allowedAgents, Set.of(), stoppedByItsOwn);
+		addSection(root, Dimension.AGENT, agents, allowedAgents, Set.of(), stopped);
 
 		Set<String> assignedModels = new TreeSet<>();
 		Set<String> declaredServers = new TreeSet<>();
@@ -450,12 +458,12 @@ public class EffectiveToolAccessComponent extends FormComponent implements Contr
 	/**
 	 * One heading row and one row per candidate, with the rule that decided each.
 	 *
-	 * @param stoppedByItsOwn
-	 *        The candidates its own section permits and another one stops, with the refusal that
+	 * @param stopped
+	 *        The candidates its own section permits and something else stops, with the refusal that
 	 *        stops them; empty for every dimension but {@link Dimension#AGENT}.
 	 */
 	private void addSection(DefaultTreeTableNode root, Dimension dimension, List<String> candidates,
-			List<String> allowed, Set<String> agentsOwn, Map<String, Decision.Denied> stoppedByItsOwn) {
+			List<String> allowed, Set<String> agentsOwn, Map<String, Decision.Denied> stopped) {
 		DefaultTreeTableNode node = root.createChild(
 			new EffectiveAccessRow.RunSection(dimension, allowed.size(), candidates.size()));
 		RoleAccessPolicy policy = sectionOf(dimension);
@@ -463,18 +471,28 @@ public class EffectiveToolAccessComponent extends FormComponent implements Contr
 			? AiToolAccessService.heldRoleNames(_account)
 			: (_role == null ? Set.of() : Set.of(_role));
 		for (String candidate : candidates) {
-			Decision.Denied own = stoppedByItsOwn.get(candidate);
+			Decision.Denied own = stopped.get(candidate);
 			node.createChild(own == null
 				? new EffectiveAccessRow.RunName(dimension, candidate,
 					policy.check(roleNames, candidate, agentsOwn))
-				: new EffectiveAccessRow.RunName(dimension, candidate, own, usesDenied(candidate, own)));
+				: new EffectiveAccessRow.RunName(dimension, candidate, own, stoppedBecause(candidate, own)));
 		}
 	}
 
-	/** What the row of an agent says that its own model or its own server stops. */
-	private static String usesDenied(String agentName, Decision.Denied own) {
+	/** What the row of an agent says that something other than the agent section stops. */
+	private static String stoppedBecause(String agentName, Decision.Denied own) {
+		if (own.cause() == RoleAccessPolicy.Cause.INFRASTRUCTURE_AGENT) {
+			// No role is involved, so the user-facing sentence is the whole explanation.
+			return Resources.getInstance().getString(own.reason());
+		}
 		return Resources.getInstance().getString(I18NConstants.AGENT_USES_DENIED__AGENT_NAME_ROLE
 			.fill(agentName, own.name(), own.byRole()));
+	}
+
+	/** Whether the named agent is one the application runs for a user rather than a persona. */
+	private static boolean isInfrastructure(String agentName) {
+		AgentDefinition agent = AgentDefinitionQuery.getInstance().findAgentByName(agentName);
+		return agent != null && agent.infrastructure();
 	}
 
 	/** The MCP servers the named agent declares, empty if there is no such agent. */

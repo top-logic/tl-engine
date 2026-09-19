@@ -97,6 +97,9 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		/** Configuration property name for {@link #getSystemPrompt()}. */
 		String SYSTEM_PROMPT = "system-prompt";
 
+		/** Configuration property name for {@link #isInfrastructure()}. */
+		String INFRASTRUCTURE = "infrastructure";
+
 		/** Configuration property name for {@link #getFacts()}. */
 		String FACTS = "facts";
 
@@ -165,6 +168,22 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		@LabelPositioning(LabelPosition.ABOVE)
 		@ControlProvider(MultiLineText.class)
 		String getSystemPrompt();
+
+		/**
+		 * Whether the application runs this agent <em>for</em> a user instead of letting them talk to
+		 * it.
+		 *
+		 * <p>
+		 * The chat's prompt improver is such an agent: it rewrites the draft a user is about to send
+		 * and never answers as a persona. An agent marked here is offered by no menu and is refused
+		 * wherever a user's own run would name it, whatever the agent access policy grants - see
+		 * {@code doc/security/tool-access-configuration.md}. The product's own call path stays open:
+		 * it builds its run with {@code SecurityContext.withoutAgentChoice()}, which is what says in
+		 * code that the agent is not the user's choice.
+		 * </p>
+		 */
+		@Name(INFRASTRUCTURE)
+		boolean isInfrastructure();
 
 		/**
 		 * What this agent tells every model about the situation it runs in.
@@ -441,7 +460,8 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 				effectiveNames(cfg.getSkills(), cfg.getRemovedSkills()),
 				effectiveNames(cfg.getDelegations(), cfg.getRemovedDelegations()),
 				AgentSource.CONFIG,
-				toFacts(cfg.getFacts())));
+				toFacts(cfg.getFacts()),
+				cfg.isInfrastructure()));
 		}
 		_agents = Collections.unmodifiableMap(agents);
 

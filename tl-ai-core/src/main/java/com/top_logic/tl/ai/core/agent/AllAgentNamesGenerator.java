@@ -23,6 +23,12 @@ import com.top_logic.element.meta.kbbased.filtergen.ListGeneratorAdaptor;
  * Provides the options for the {@code delegations} attribute of {@code tl.ai.core:Agent}.
  * </p>
  *
+ * <p>
+ * An {@link AgentDefinition#infrastructure()} agent is not offered: the application runs it for a
+ * user, and the gate refuses a delegation to it, so an option naming one would be an option that
+ * never works.
+ * </p>
+ *
  * @see AgentDefinitionQuery#getAllAgents()
  */
 @InApp
@@ -47,6 +53,9 @@ public class AllAgentNamesGenerator extends ListGeneratorAdaptor {
 	public List<?> generateList(EditContext editContext) {
 		List<String> names = new ArrayList<>();
 		for (AgentDefinition ad : AgentDefinitionQuery.getInstance().getAllAgents()) {
+			if (ad.infrastructure()) {
+				continue;
+			}
 			names.add(ad.name());
 		}
 		return names;

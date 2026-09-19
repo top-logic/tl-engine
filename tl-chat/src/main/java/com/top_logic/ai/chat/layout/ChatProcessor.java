@@ -128,14 +128,10 @@ public class ChatProcessor {
 	/**
 	 * The agent a request that names none runs as.
 	 *
-	 * @see AgentFactory#defaultAgentFor(com.top_logic.tl.ai.core.security.RunAuthorization,
-	 *      java.util.Collection)
+	 * @see AgentFactory#defaultAgentFor(com.top_logic.tl.ai.core.security.RunAuthorization)
 	 */
-	private static String defaultAgent(ToolContext context, TaskProgressTracker tracker,
-			AgentFactory agentFactory) {
-		String improver = tracker == null ? null : tracker.getPromptImproverAgentName();
-		String resolved = AgentFactory.defaultAgentFor(context.security().runAuthorization(),
-			improver == null || improver.isBlank() ? Set.of() : Set.of(improver));
+	private static String defaultAgent(ToolContext context, AgentFactory agentFactory) {
+		String resolved = AgentFactory.defaultAgentFor(context.security().runAuthorization());
 		return resolved != null ? resolved : agentFactory.getEntryPointAgentName();
 	}
 
@@ -300,7 +296,7 @@ public class ChatProcessor {
 			}
 			String entryPointAgent = options.agent() != null && !options.agent().isBlank()
 				? options.agent().trim()
-				: defaultAgent(toolContext, taskTracker, agentFactory);
+				: defaultAgent(toolContext, agentFactory);
 			List<String> mcpOverride = options.mcpOverride() ? options.mcpServers() : null;
 			AgentFactory.RunOverrides runOverrides =
 				new AgentFactory.RunOverrides(options.model(), mcpOverride, options.effort());

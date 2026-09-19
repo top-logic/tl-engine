@@ -48,6 +48,11 @@ public class TestAgentGate extends TestCase {
 	/** A second one, to show the gate refuses the named agent rather than every agent. */
 	private static final String OTHER_AGENT = "TL_SingleAgent";
 
+	/**
+	 * The one agent this module ships as {@code infrastructure}: the chat runs it for the user.
+	 */
+	private static final String INFRASTRUCTURE_AGENT = "TL_PromptImprover";
+
 	private static final String ROLE = "Clerk";
 
 	/** The configured agents have to be readable, and the policy items need the type index. */
@@ -116,6 +121,83 @@ public class TestAgentGate extends TestCase {
 			.buildAgentLoop(AGENT, denying(AGENT).withoutAgentChoice()));
 	}
 
+	/** The shipped improver carries the mark the rest of this reasons about. */
+	public void testTheImproverIsMarkedInfrastructure() {
+		AgentDefinition improver =
+			AgentDefinitionQuery.getInstance().findAgentByName(INFRASTRUCTURE_AGENT);
+
+		assertNotNull("This module configures " + INFRASTRUCTURE_AGENT + "; the test needs it.",
+			improver);
+		assertTrue("The chat runs it for the user, so it is not a persona.", improver.infrastructure());
+		assertFalse("An ordinary agent is a persona.",
+			AgentDefinitionQuery.getInstance().findAgentByName(AGENT).infrastructure());
+	}
+
+	/**
+	 * An infrastructure agent is refused although the account's role grants it (#397).
+	 *
+	 * <p>
+	 * The point of the rule: the refusal is not the policy's, so no grant lifts it - not a role's,
+	 * and not the {@code default="all"} of an application that wrote no policy at all.
+	 * </p>
+	 */
+	public void testAnInfrastructureAgentIsRefusedAlthoughTheRoleGrantsIt() {
+		try {
+			AgentFactory.getInstance()
+				.buildAgentLoop(INFRASTRUCTURE_AGENT, grantingEveryAgent());
+			fail("An agent the application runs for the user must not be runnable as a persona.");
+		} catch (ToolSecurityException expected) {
+			assertTrue(expected.getMessage(), expected.getMessage().contains(INFRASTRUCTURE_AGENT));
+			assertNotNull("The refusal has to be showable to the user.", expected.reason());
+		}
+	}
+
+	/** Reaching it through a delegation or a spawn is the same run under another name. */
+	public void testAnInfrastructureAgentIsNoSubagentEither() {
+		try {
+			AgentFactory.getInstance()
+				.buildSubagentLoop(INFRASTRUCTURE_AGENT, grantingEveryAgent());
+			fail("Spawning an agent the application runs for the user must be refused.");
+		} catch (ToolSecurityException expected) {
+			assertTrue(expected.getMessage(), expected.getMessage().contains(INFRASTRUCTURE_AGENT));
+		}
+	}
+
+	/**
+	 * The product's own call path still runs it - the improve-prompt button.
+	 *
+	 * <p>
+	 * {@code PromptImprovementProcessor} builds its run with exactly this context. What says the
+	 * agent is not the user's choice is the context, not which class called: a caller that does not
+	 * say so is refused whatever it is.
+	 * </p>
+	 */
+	public void testTheProductStillRunsItsOwnInfrastructureAgent() {
+		assertNotRefused(() -> AgentFactory.getInstance()
+			.buildAgentLoop(INFRASTRUCTURE_AGENT, grantingEveryAgent().withoutAgentChoice()));
+	}
+
+	/** The delegate catalogue drops it too, so no model is shown an agent it may not hand work to. */
+	public void testDelegateCatalogueDropsAnInfrastructureAgent() {
+		AgentDefinition improver =
+			AgentDefinitionQuery.getInstance().findAgentByName(INFRASTRUCTURE_AGENT);
+
+		String reason = new AgentCapabilities(name -> null, grantingEveryAgent())
+			.unusableReason(improver);
+		assertNotNull("An agent the application runs for the user must not be offered as a delegate.",
+			reason);
+		assertTrue(reason, reason.contains("infrastructure"));
+	}
+
+	/** A request that names no agent is never answered with one nobody may talk to. */
+	public void testTheFallbackAgentIsNeverInfrastructure() {
+		String fallback = AgentFactory.defaultAgentFor(grantingEveryAgent().runAuthorization());
+
+		assertNotNull("Every agent is granted here, so there is one to fall back to.", fallback);
+		assertFalse("The fallback must not be an agent the application runs for the user.",
+			INFRASTRUCTURE_AGENT.equals(fallback));
+	}
+
 	/**
 	 * That the given call is not refused by the agent gate.
 	 *
@@ -147,6 +229,15 @@ public class TestAgentGate extends TestCase {
 
 		return TopLogicSecurityContext.enforcedRun(new RunAuthorization(
 			RoleAccessPolicy.agents(policy), null, null, null, Set.of(ROLE)));
+	}
+
+	/**
+	 * A security context of an account no role restricts - what {@code <agent-access default="all">}
+	 * and an application that wrote no policy both amount to.
+	 */
+	private static TopLogicSecurityContext grantingEveryAgent() {
+		return TopLogicSecurityContext.enforcedRun(
+			new RunAuthorization(null, null, null, null, Set.of()));
 	}
 
 	/** A security context of an account whose one role forbids exactly the given agent. */

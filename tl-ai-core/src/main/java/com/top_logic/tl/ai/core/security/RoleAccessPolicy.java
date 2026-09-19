@@ -155,7 +155,18 @@ public final class RoleAccessPolicy {
 		 * therefore gets a sentence of its own, addressed to a user who can do nothing but report it.
 		 * </p>
 		 */
-		AGENTS_OWN_DENIED;
+		AGENTS_OWN_DENIED,
+
+		/**
+		 * The agent is infrastructure: the application runs it, nobody converses with it.
+		 *
+		 * <p>
+		 * Not a role's decision and not overridable by one - see
+		 * {@code AgentDefinition#infrastructure()}. It gets a sentence of its own because "your roles
+		 * do not include it" would send the user to an administrator who has nothing to grant.
+		 * </p>
+		 */
+		INFRASTRUCTURE_AGENT;
 	}
 
 	/**
@@ -207,6 +218,10 @@ public final class RoleAccessPolicy {
 			public String message() {
 				String what = dimension().label() + " '" + name() + "'";
 				switch (cause()) {
+					case INFRASTRUCTURE_AGENT:
+						return "Permission denied: " + what + " is an infrastructure agent - the"
+							+ " application runs it on a user's behalf and nobody converses with it."
+							+ " No role grant changes that.";
 					case AGENTS_OWN_DENIED:
 						return "Permission denied: the agent uses " + what + " itself, and it is"
 							+ " explicitly denied to your role '" + byRole() + "'. The agent cannot run"

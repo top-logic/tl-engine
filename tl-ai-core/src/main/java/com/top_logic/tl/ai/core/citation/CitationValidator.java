@@ -57,15 +57,8 @@ public final class CitationValidator {
 
 	private static final Pattern MARKER = Pattern.compile("\\[(\\d+)\\]");
 
-	/** One {@code "name": value} pair of a tool result that returned an object. */
-	private static final Pattern FIELD =
-		Pattern.compile("\"([A-Za-z_][A-Za-z0-9_]*)\"\\s*[:=]\\s*\"?([^\",}\\n]{1,120})\"?");
-
 	/** Shorter than this a "passage" says nothing and is more likely a stray word. */
 	private static final int MIN_PASSAGE = 12;
-
-	/** How much of the source to keep on either side of the cited passage. */
-	private static final int EXCERPT_MARGIN = 220;
 
 	private CitationValidator() {
 		// Utility
@@ -249,10 +242,14 @@ public final class CitationValidator {
 			remap.put(claimedIndex, Integer.valueOf(next));
 			String passage = verifiedPassage(item, evidence);
 			String excerpt = passage.isEmpty()
-				? fieldsOf(item, evidence)
-				: excerptAround(passage, evidence);
-			citations.add(new Citation(next, item.toolName(), item.toolCallId(), item.kind(), item.id(),
-				item.label(), item.url(), passage, excerpt));
+				? CitationExcerpt.ofSource(item.id(), item.label(), !kindHasPassage(item.kind()), evidence)
+				: CitationExcerpt.around(passage, evidence);
+			// The popover highlights the passage inside the excerpt, and the excerpt is rendered
+			// text: the passage has to be the same rendering of the same words, or the highlight
+			// silently finds nothing.
+			citations.add(new Citation(next, item.toolName(), item.toolCallId(), item.kind(),
+				kindLabel(item.kind()), item.id(), item.label(), item.url(),
+				CitationExcerpt.plain(passage), excerpt));
 			next++;
 		}
 		// In a turn that cited, [n] is the turn's own numbering: a number that points at no surviving
@@ -381,6 +378,11 @@ public final class CitationValidator {
 		return !CitationKinds.isActive() || CitationKinds.getInstance().isDeclared(kind);
 	}
 
+	/** What to call this kind in front of a reader; empty outside an application. */
+	private static String kindLabel(String kind) {
+		return CitationKinds.isActive() ? CitationKinds.getInstance().label(kind) : "";
+	}
+
 	/** Whether a source of this kind has a sentence to quote at all. */
 	private static boolean kindHasPassage(String kind) {
 		return !CitationKinds.isActive() || CitationKinds.getInstance().hasPassage(kind);
@@ -404,88 +406,6 @@ public final class CitationValidator {
 		Logger.debug("Citation passage not found in this turn's tool results; dropped: "
 			+ passage.substring(0, Math.min(60, passage.length())), CitationValidator.class);
 		return "";
-	}
-
-	/**
-	 * What a structured source says, for a popover that has no sentence to show.
-	 *
-	 * <p>
-	 * The window around the cited id, rendered as {@code label: value} lines when the tool returned
-	 * an object and as plain text otherwise. It is the tool's own output either way - the reader
-	 * still sees what the fact rests on.
-	 * </p>
-	 */
-	private static String fieldsOf(Declaration item, List<String> evidence) {
-		for (String blob : evidence) {
-			int at = blob == null ? -1 : blob.indexOf(item.id());
-			if (at < 0) {
-				continue;
-			}
-			int from = Math.max(0, at - EXCERPT_MARGIN);
-			int to = Math.min(blob.length(), at + item.id().length() + EXCERPT_MARGIN);
-			String window = blob.substring(from, to);
-			String fields = asFieldLines(window);
-			if (!fields.isEmpty()) {
-				return fields;
-			}
-			return (from > 0 ? "… " : "") + readable(window) + (to < blob.length() ? " …" : "");
-		}
-		return "";
-	}
-
-	/** {@code "a":"b","c":1} rendered as {@code a: b} lines; empty when the window holds no pairs. */
-	private static String asFieldLines(String window) {
-		Matcher pair = FIELD.matcher(window);
-		StringBuilder out = new StringBuilder();
-		while (pair.find()) {
-			if (out.length() > 0) {
-				out.append('\n');
-			}
-			out.append(pair.group(1)).append(": ").append(pair.group(2).replace("\\\"", "\"").trim());
-		}
-		return out.toString();
-	}
-
-	/** A window of the source around {@code passage}, so the popover shows it in its context. */
-	private static String excerptAround(String passage, List<String> evidence) {
-		if (passage.isEmpty()) {
-			return "";
-		}
-		for (String blob : evidence) {
-			int at = blob == null ? -1 : blob.indexOf(passage);
-			if (at < 0) {
-				continue;
-			}
-			int from = Math.max(0, at - EXCERPT_MARGIN);
-			int to = Math.min(blob.length(), at + passage.length() + EXCERPT_MARGIN);
-			String window = readable(blob.substring(from, to));
-			return (from > 0 ? "… " : "") + window + (to < blob.length() ? " …" : "");
-		}
-		return passage;
-	}
-
-	/**
-	 * The excerpt as a reader sees it rather than as the tool wrote it.
-	 *
-	 * <p>
-	 * A tool result carries the envelope the run wraps untrusted content in and the markdown a page
-	 * was converted to. Neither is the source; both would be noise in a popover two lines high.
-	 * </p>
-	 */
-	private static String readable(String window) {
-		String text = window
-			.replaceAll("</?untrusted_page_content[^>]*>", " ")
-			.replaceAll("\\[([^\\]]*)\\]\\([^)]*\\)", "$1")
-			.replaceAll("^#+\\s*", " ")
-			.replaceAll("\\s+", " ")
-			.trim();
-		// The window cuts wherever the character count runs out, which can be in the middle of a
-		// markdown link the replacement above could then not undo. Drop what is left of it.
-		int dangling = text.lastIndexOf('[');
-		if (dangling >= 0 && text.indexOf(')', dangling) < 0) {
-			text = text.substring(0, dangling).trim();
-		}
-		return text;
 	}
 
 	private static boolean containsToken(String blob, String token) {

@@ -116,8 +116,9 @@ the React chat. Session state the classic control reads - `Chat`, `ChatProcessor
 | Dependencies | `marked` (MIT) + `dompurify` (Apache-2.0 or MPL-2.0) for markdown, `highlight.js` (BSD-3-Clause) for code blocks - core plus 13 registered grammars. All three are bundled into `tl-chat-ui.js`, so their licences travel with the WAR. |
 
 `mvn -pl tl-chat install` runs, in `generate-resources`: `npm install`, then `npm run typecheck`
-(`tsc --noEmit`), then `vitest run`, then `npm run build`. The type check is a build step of its own
-because the Vite library build strips types without checking them.
+(`tsc --noEmit`), then `npm run build`. The type check is a build step of its own because the Vite
+library build strips types without checking them. `vitest run` comes later, in the `test` phase -
+see below.
 
 `tl-react-bridge` is the host's module: the build keeps it external and the browser resolves it
 through a `<module-script specifier=…>`, so there is nothing in `node_modules` for a test run to
@@ -129,11 +130,20 @@ marker element in place of a mounted child control. React must still never be im
 in `ui/src` - it is the host's instance, and a second copy breaks every hook; `chat-rail.test.ts`
 pins that, which is what the missing dependency used to do.
 
-All four sit in `generate-resources` on purpose, so `-DskipTests` still runs the JS tests: that flag
-is for the Java suites, whose KB setup is what makes a build slow, while the whole vitest run is a
-second or two. Keeping it there means the bundle that goes into the WAR was never built from code
-its own tests reject - including on a `-DskipTests` build, which is how this module is usually
-built.
+The install, the type check and the bundle sit in `generate-resources`, because the bundle that goes
+into the WAR must not be built from code that does not compile. **The `vitest run` does not** - it
+is bound to the `test` phase, behind surefire (#450). Bound before `compile`, one broken frontend
+test aborted the module, and the state of its ~190 Java tests was then not merely unreported but
+unproduced: no `target/surefire-reports` directory existed at all. Behind surefire, a build always
+has both answers, and a failing JS test still fails the build before `package`, so nothing that its
+own tests reject is ever packaged or installed.
+
+`-DskipTests` still runs the JS tests. The execution pins `skipTests` to `false` for that: the
+frontend plugin honours `${skipTests}` for an execution in a testing phase, so without the pin the
+move would have switched the JS tests off in every build that does not say `-DskipTests=false`,
+which in this repository is the default. The flag is for the Java suites, whose KB setup is what
+makes a build slow, while the whole vitest run is a second or two. What switches the frontend steps
+off is `-Dskip.npm=true`.
 
 `composer.test.tsx` is the one suite that mounts a component into a live DOM - `jsdom`, asked for by
 that file's `@vitest-environment` docblock and by nothing else. It has to: what it guards only

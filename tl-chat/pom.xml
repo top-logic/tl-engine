@@ -124,16 +124,6 @@
 						</configuration>
 					</execution>
 					<execution>
-						<id>npm-test</id>
-						<phase>generate-resources</phase>
-						<goals>
-							<goal>npm</goal>
-						</goals>
-						<configuration>
-							<arguments>test</arguments>
-						</configuration>
-					</execution>
-					<execution>
 						<id>npm-build</id>
 						<phase>generate-resources</phase>
 						<goals>
@@ -141,6 +131,35 @@
 						</goals>
 						<configuration>
 							<arguments>run build</arguments>
+						</configuration>
+					</execution>
+					<!--
+						The JS tests run in the `test` phase, after surefire, and not with the
+						bundle in `generate-resources` (#450): bound before `compile`, a single
+						broken frontend test aborted the module and the state of its ~190 Java
+						tests was not merely unreported but unproduced - no surefire-reports
+						directory existed at all. Behind surefire, both answers are always in.
+
+						Surefire runs first because it is declared in the parent pom and this
+						plugin in the child, and Maven orders executions of one phase by the
+						order their plugins appear in the effective pom.
+
+						`skipTests` is pinned to false because the frontend plugin honours
+						`${skipTests}` only for an execution in a testing phase: without the pin,
+						moving the execution here would have silently turned the JS tests off in
+						every build that does not pass `-DskipTests=false`, which in this
+						repository is the default. What switches them off is what switched them
+						off before, `-Dskip.npm=true`.
+					-->
+					<execution>
+						<id>npm-test</id>
+						<phase>test</phase>
+						<goals>
+							<goal>npm</goal>
+						</goals>
+						<configuration>
+							<arguments>test</arguments>
+							<skipTests>false</skipTests>
 						</configuration>
 					</execution>
 				</executions>

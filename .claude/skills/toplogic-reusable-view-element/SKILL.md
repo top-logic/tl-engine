@@ -176,8 +176,8 @@ The engine release cycle is slow; iterate in the app module and upstream once pr
 
 ## 7. Verify, and leave nothing dead
 
-- Build the module (`mvn -o -pl <module> install -DskipTests` runs the JS typecheck + vitest + bundle
-  even with `-DskipTests`, because those are `generate-resources`).
+- Build the module (`mvn -o -pl <module> install -DskipTests` runs the JS typecheck, the bundle and
+  vitest even with `-DskipTests`).
 - Add a booted config-defaults test (plain `TestCase` can't instantiate config — `TypeIndex` isn't
   started; wrap with `ModuleTestSetup.setupModule(new TestSuite(Test.class))`).
 - Walk it live in the real app, **both themes and a narrow width**, since the token/media-query traps

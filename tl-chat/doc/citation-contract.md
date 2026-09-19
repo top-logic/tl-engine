@@ -11,8 +11,8 @@ only the configured one made every declaration invisible.
 
 ## Wire
 
-`CitationDto` (`index`, `toolName`, `toolCallId`, `kind`, `id`, `label`, `url`, `passage`,
-`excerpt`) travels:
+`CitationDto` (`index`, `toolName`, `toolCallId`, `kind`, `kindLabel`, `id`, `label`, `url`,
+`passage`, `excerpt`) travels:
 
 - on `message_complete` (SSE), so the live answer can chip the markers
 - on persist `TextPartDto`, so a reload restores the same chips
@@ -27,7 +27,9 @@ The compact `Part.TextPart` constructor is still `(id, timestamp, text)`.
 `passage` is the sentence of the source the fact rests on, copied verbatim. The validator keeps it
 only when the turn's own tool results really contain it, and cuts the excerpt around it out of that
 same result - so the popover shows the source's wording in its context rather than the model's
-memory of it. A passage shorter than 12 characters is ignored.
+memory of it. A passage shorter than 12 characters is ignored. What the citation then *carries* is
+the rendered form of that sentence, because that is what the popover highlights inside the rendered
+excerpt; verification is against the verbatim text, display is of the rendered one.
 
 The numbering belongs to the **run**, not to the calling thread: the tool is parallel-safe, so two
 cite calls of one turn run on two pool threads, and a per-thread counter gave both of them `1`. The
@@ -52,13 +54,18 @@ a host's, and a host declares it **once**, in configuration:
         description="a Beleg of this application"
         id-source="the id an invoice tool or a TL-Script read returned for that object"
         passage="false"
-      />
+      >
+        <label>
+          <de>Beleg</de>
+          <en>Invoice</en>
+        </label>
+      </kind>
     </kinds>
   </instance>
 </config>
 ```
 
-That one declaration feeds three places:
+That one declaration feeds four places:
 
 - **the model** - `AgentLoop` appends the list to the system prompt of every run whose agent has the
   cite tool, the same way it appends the untrusted-content rule. The tool's own description no longer
@@ -67,7 +74,12 @@ That one declaration feeds three places:
   like an invented id. Outside an application (a unit test) nothing is refused for being undeclared;
 - **the popover** - `passage="false"` says this kind is a structured object rather than prose. The
   model is told to pass no `passage` for it, and the excerpt is built from the tool result's own
-  fields (`label: value` lines) instead.
+  fields (`label: value` lines) instead;
+- **the reader** - `name` is the model's vocabulary and stays the same English word in every
+  installation, so the `Quellen` rail and the marker popover showed a German reader `section` and
+  `material` (#417). `label` is what they show instead, resolved in the reader's language and
+  carried on `CitationDto.kindLabel`. A kind without one still shows its name, and a `web` source
+  still shows the host name of its URL.
 
 Without this, `kind` was a free string: asked to cite an invoice the model invented `model`, nothing
 could resolve it, and its popover stayed empty (#409).
@@ -96,13 +108,34 @@ could resolve it, and its popover stayed empty (#409).
 5. Rewrite the turn's `TextPart`s, attach the kept citations to the parts their markers occur in,
    and put text plus citations on `message_complete`.
 
+## The excerpt
+
+`CitationExcerpt` produces everything the popover shows of the source, and it never slices the raw
+tool result. A tool result is a transport format - JSON with Markdown inside it, a page converted to
+Markdown and wrapped in `<untrusted_page_content>` - and a window cut out of it by character count
+put `"body": "Die **Versand**…\n\n"` in front of a consultant (#418).
+
+Four cases, decided by the shape of the evidence rather than by luck:
+
+| The turn's evidence | What the popover shows |
+|---|---|
+| a passage the evidence carries | the *string value* holding it, rendered, windowed around the passage |
+| JSON, no usable passage | the cited object's own prose field when it has one and the kind is not `passage="false"`; its `label: value` fields otherwise |
+| text, no usable passage | a window of the rendered text around the cited id |
+| the id nowhere | the source's label |
+
+A window is cut on sentence boundaries, never mid-word, and marks where it was cut with `…`. JSON
+escapes are resolved and Markdown is rendered away in every case: a reader never sees `\n`, `\"`,
+`**` or `](`.
+
 ## Rendering
 
 `[n]` becomes a small grey number after the sentence (`data-citation-id`, keyboard-reachable
 `<button>`) - quiet, so it says where a fact comes from without taking the eye off the text.
 
 Hovering or focusing it opens a popover with the source's label, its origin (the web host, or the
-kind) and the excerpt with the cited passage highlighted. Clicking **opens** the source:
+kind's declared label) and the excerpt with the cited passage highlighted. Clicking **opens** the
+source:
 `messageAnnotations.render` decides what that means for a host kind, and a host that returns nothing
 for a kind leaves the web default, which opens the page. The same action is what the `Quellen` rail
 section and the per-answer `Quellen · n zitiert` pill perform.

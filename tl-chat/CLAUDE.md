@@ -790,11 +790,32 @@ delegate and a subagent.
 **This is the seam that replaces a context header on the message text** (#406, #428): the user's
 text stays exactly what the user wrote, in the bubble, in the log and in the request.
 
-`stable="true"` (the default) means the value holds for the whole conversation, and only such a fact
-is rendered - into the `{{context}}` section of the run's environment block. The block sits in front
+**`stable` decides where a fact is rendered, and nothing else does.**
+
+`stable="true"` (the default) means the value holds for the whole conversation: it goes into the
+`{{context}}` section of the run's environment block, in the system prompt. That block sits in front
 of every request of the conversation and has to stay byte-identical, or the provider's prompt cache
-misses on every turn. A fact that is not stable travels and is dropped for now; rendering it per turn
-is #438. See `tl-ai-core/doc/environment-block.md`.
+misses on every turn - which is why nothing that changes may be in it.
+
+`stable="false"` means the value changes while the user talks - the open object, the selected row,
+the section being read. Such a fact goes into the per-turn `<turn-context>` block, which travels in
+the turn itself as its own content block of the user message, ahead of the user's text:
+
+```
+<turn-context>
+Turn: 3
+Time: 14:32 (Europe/Berlin)
+Open invoice: RE-2026-0042
+</turn-context>
+```
+
+The turn number and the time of day are added by the framework; they change per turn by nature,
+which is exactly why the environment block states the date at day granularity and no time at all.
+The block is composed per run (`TurnContext`, from the same facts), attached by `AgentLoop` where the
+request is built - so a compaction cannot lose the newest one - and stored on the turn
+(`Turn#turnContext`), apart from the user's text: the bubble shows what the user wrote, the
+transcript and the run detail show both. A page that states no per-turn fact gets no block at all.
+See `tl-ai-core/doc/environment-block.md`.
 
 A fact that throws is sent empty with a WARN rather than taking the page down - the user is in the
 middle of a sentence.

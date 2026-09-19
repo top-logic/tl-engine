@@ -70,9 +70,8 @@ public class TestChatContextConfig extends TestCase {
 	 * A fact is stable unless it says otherwise.
 	 *
 	 * <p>
-	 * The safe default: a stable fact is rendered into the system prompt, which is what a host
-	 * configuring a context wants, while the per-turn block it would otherwise fall into does not
-	 * exist yet (Gitea #438).
+	 * The safe default: a fact a host states without saying more is one about the situation as a
+	 * whole, and the system prompt is where such a statement costs nothing per turn.
 	 * </p>
 	 */
 	public void testAFactIsStableByDefault() throws Exception {

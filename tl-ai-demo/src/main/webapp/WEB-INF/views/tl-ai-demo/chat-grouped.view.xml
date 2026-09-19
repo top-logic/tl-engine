@@ -231,9 +231,10 @@
 
 					"Application" is stable, so it is rendered into the environment block of the system
 					prompt - which has to stay byte-identical across the turns of one conversation, or
-					the provider's prompt cache misses on every one of them. "Open invoice" follows the
-					user's clicks in the rail, so it is not: it is carried and, for now, dropped.
-					Rendering such a fact per turn is #438.
+					the provider's prompt cache misses on every one of them. "Open invoice" and
+					"Open invoice amount" follow the user's clicks in the rail, so they are not: they go
+					into the per-turn <turn-context> block, which travels in the turn itself, beside the
+					user's text (#438).
 
 					Every fact takes the <inputs> as its leading arguments, the way <data-list> binds
 					its rows - which is why the stable one names the channel it does not use.
@@ -252,6 +253,12 @@
 					>
 						<value><![CDATA[open -> ifElse(isEmpty($open), "none",
 							$open.get(`tl.ai.demo.imageclassification:Invoice#description`))]]></value>
+					</fact>
+					<fact name="Open invoice amount"
+						stable="false"
+					>
+						<value><![CDATA[open -> ifElse(isEmpty($open), "none",
+							$open.get(`tl.ai.demo.imageclassification:Invoice#amountLabel`))]]></value>
 					</fact>
 				</context>
 				<!--

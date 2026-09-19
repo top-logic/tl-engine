@@ -20,6 +20,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.tools.model.TidResolver;
+import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
@@ -92,7 +93,8 @@ public class PresentTool {
 			+ "the page offers - if you do not know it, call this once and the refusal names them. "
 			+ "This changes no data; it only changes what the user is looking at. It is not a "
 			+ "substitute for answering: say in your reply what you put there.",
-		mode = ToolMode.READ, group = ToolGroups.INTERACTION)
+		mode = ToolMode.READ, group = ToolGroups.INTERACTION,
+		marking = AnswerMarking.NONE)
 	public String present(
 			@P("Ids of the objects to show, e.g. \"GenericObject:5371\". One shows one object, several show a list.") List<String> ids,
 			@P("Name of the page channel to write, e.g. \"paneObject\".") String channel,

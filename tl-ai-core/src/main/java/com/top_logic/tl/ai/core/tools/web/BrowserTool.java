@@ -25,16 +25,17 @@ import com.top_logic.tl.ai.core.execution.ExecutionHandle;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.screenshots.ScreenshotService;
 import com.top_logic.tl.ai.core.screenshots.model.Screenshot;
-import com.top_logic.tl.ai.core.tools.util.UntrustedEnvelope;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.BlockSignal;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.InteractiveElement;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.PageView;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.ScreenshotCapture;
+import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
+import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
 import com.top_logic.util.TLContext;
 
 /**
@@ -141,7 +142,8 @@ public class BrowserTool {
 		group = ToolGroups.EGRESS,
 		// One browser page per session; not safe to run in parallel with other calls in the run.
 		concurrencySafe = false,
-		truncationHint = PAGE_SNAPSHOT_TRUNCATION_HINT)
+		truncationHint = PAGE_SNAPSHOT_TRUNCATION_HINT,
+		marking = AnswerMarking.TOOL)
 	public String browserNavigate(@P("The absolute http or https URL to open.") String url,
 			ToolExecutionContext context) {
 		if (url == null || url.isBlank()) {
@@ -203,7 +205,8 @@ public class BrowserTool {
 		mode = ToolMode.READ,
 		group = ToolGroups.EGRESS,
 		concurrencySafe = false,
-		truncationHint = PAGE_SNAPSHOT_TRUNCATION_HINT)
+		truncationHint = PAGE_SNAPSHOT_TRUNCATION_HINT,
+		marking = AnswerMarking.TOOL)
 	public String browserSnapshot(ToolExecutionContext context) {
 		BrowserToolsService service = BrowserToolsService.getInstance();
 		if (service == null) {
@@ -238,7 +241,8 @@ public class BrowserTool {
 		mode = ToolMode.READ,
 		group = ToolGroups.EGRESS,
 		concurrencySafe = false,
-		truncationHint = PAGE_SNAPSHOT_TRUNCATION_HINT)
+		truncationHint = PAGE_SNAPSHOT_TRUNCATION_HINT,
+		marking = AnswerMarking.TOOL)
 	public String browserClick(
 			@P("The ref of the element to click, taken from the latest snapshot (e.g. s1e3).") String ref,
 			ToolExecutionContext context) {
@@ -279,7 +283,8 @@ public class BrowserTool {
 		mode = ToolMode.READ,
 		group = ToolGroups.EGRESS,
 		concurrencySafe = false,
-		truncationHint = PAGE_SNAPSHOT_TRUNCATION_HINT)
+		truncationHint = PAGE_SNAPSHOT_TRUNCATION_HINT,
+		marking = AnswerMarking.TOOL)
 	public String browserType(
 			@P("The ref of the input element, taken from the latest snapshot (e.g. s1e2).") String ref,
 			@P("The text to type into the field.") String text,
@@ -315,7 +320,8 @@ public class BrowserTool {
 		mode = ToolMode.READ,
 		group = ToolGroups.EGRESS,
 		concurrencySafe = false,
-		truncationHint = PAGE_SNAPSHOT_TRUNCATION_HINT)
+		truncationHint = PAGE_SNAPSHOT_TRUNCATION_HINT,
+		marking = AnswerMarking.TOOL)
 	public String browserBack(ToolExecutionContext context) {
 		BrowserToolsService service = BrowserToolsService.getInstance();
 		if (service == null) {
@@ -354,7 +360,8 @@ public class BrowserTool {
 		mode = ToolMode.DATA_WRITE,
 		group = ToolGroups.EGRESS,
 		// One browser page per session; not safe to run in parallel with other calls in the run.
-		concurrencySafe = false)
+		concurrencySafe = false,
+		marking = AnswerMarking.NONE)
 	public String browserScreenshot(
 			@P("Optional filename/label for the screenshot; a <host>-<timestamp>.png name is generated "
 				+ "when omitted.") String name,
@@ -478,7 +485,8 @@ public class BrowserTool {
 		mode = ToolMode.DATA_WRITE,
 		group = ToolGroups.EGRESS,
 		// One browser page per session; not safe to run in parallel with other calls in the run.
-		concurrencySafe = false)
+		concurrencySafe = false,
+		marking = AnswerMarking.NONE)
 	public String browserSaveCookies(
 			@P("The name of the cookie pool to save this session's login into (private to you unless you "
 				+ "pass shared=true, or that pool is already shared).") String poolName,
@@ -583,7 +591,8 @@ public class BrowserTool {
 		mode = ToolMode.READ,
 		group = ToolGroups.EGRESS,
 		// Rebinds the session's context; not safe to run in parallel with other calls in the run.
-		concurrencySafe = false)
+		concurrencySafe = false,
+		marking = AnswerMarking.NONE)
 	public String browserUseCookies(
 			@P("The name of the cookie pool to start this session from (your own or a shared pool).")
 			String poolName,

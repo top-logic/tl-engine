@@ -45,6 +45,7 @@ import com.top_logic.tl.ai.core.tools.model.messages.AnnotationSearchResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.AnnotationSearchResult;
 import com.top_logic.tl.ai.core.tools.model.messages.ImplementationOption;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
+import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
@@ -102,7 +103,8 @@ public class SearchAnnotationTool {
 	 * @return JSON object listing all applicable annotation types.
 	 */
 	@ToolMethod(description = "List all available annotation types for a given model element. "
-		+ "Returns every applicable annotation that can be set on the target.", mode = ToolMode.READ, group = ToolGroups.MODEL_READ)
+		+ "Returns every applicable annotation that can be set on the target.", mode = ToolMode.READ, group = ToolGroups.MODEL_READ,
+		marking = AnswerMarking.NONE)
 	public String listAvailableAnnotations(
 			@P("Target reference (e.g. 'module:Type#part')") String targetRef) {
 

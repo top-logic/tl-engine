@@ -59,7 +59,7 @@ public final class CitationExcerpt {
 	 * past it never finds the JSON a tool actually returned.
 	 * </p>
 	 *
-	 * @see com.top_logic.tl.ai.core.tools.util.UntrustedEnvelope
+	 * @see com.top_logic.tl.ai.tool.api.UntrustedEnvelope
 	 */
 	private static final String ENVELOPE = "</?untrusted_[A-Za-z_]*[^>]*>";
 

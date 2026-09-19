@@ -94,7 +94,7 @@ public final class AnnotatedTools {
 		ToolSchema schema = generateSchema(toolName, description, method);
 
 		return new ReflectiveTool(toolName, description, schema, mode, concurrencySafe,
-			truncationHint, annotation.group(), provider, method);
+			truncationHint, annotation.group(), annotation.marking(), provider, method);
 	}
 
 	private static ToolSchema generateSchema(String toolName, String description, Method method) {
@@ -493,13 +493,15 @@ public final class AnnotatedTools {
 
 		private final String _group;
 
+		private final AnswerMarking _marking;
+
 		private final Object _provider;
 
 		private final Method _method;
 
 		ReflectiveTool(String name, String description, ToolSchema schema,
 				ToolMode mode, boolean concurrencySafe, int truncationHint, String group,
-				Object provider, Method method) {
+				AnswerMarking marking, Object provider, Method method) {
 			_name = name;
 			_description = description;
 			_schema = schema;
@@ -507,6 +509,7 @@ public final class AnnotatedTools {
 			_concurrencySafe = concurrencySafe;
 			_truncationHint = truncationHint;
 			_group = group;
+			_marking = marking;
 			_provider = provider;
 			_method = method;
 		}
@@ -560,6 +563,7 @@ public final class AnnotatedTools {
 			try {
 				Object result = _method.invoke(_provider, invokeArgs);
 				if (_method.getReturnType() == void.class) {
+					// The framework's own word for "it worked", not an answer of the tool's.
 					return new ToolResult("Success", null, _truncationHint);
 				}
 				if (result == null) {
@@ -568,12 +572,13 @@ public final class AnnotatedTools {
 				if (result instanceof ToolResult toolResult) {
 					// A tool that returns the structured result speaks for itself: keep its summary
 					// and content, and only fill in the truncation hint it did not specify.
-					return toolResult.truncationHint() < 0
+					ToolResult hinted = toolResult.truncationHint() < 0
 						? new ToolResult(toolResult.text(), toolResult.summary(), _truncationHint,
 							toolResult.content())
 						: toolResult;
+					return marked(hinted);
 				}
-				return new ToolResult(result.toString(), null, _truncationHint);
+				return marked(new ToolResult(result.toString(), null, _truncationHint));
 			} catch (InvocationTargetException e) {
 				Throwable cause = e.getCause();
 				if (cause instanceof RuntimeException re) {
@@ -583,6 +588,51 @@ public final class AnnotatedTools {
 			} catch (IllegalAccessException e) {
 				throw new RuntimeException("Cannot invoke tool method: " + _method.getName(), e);
 			}
+		}
+
+		/**
+		 * The answer as the model is to read it: marked as untrusted content unless this tool says
+		 * somebody else does that, or does not need to.
+		 *
+		 * <p>
+		 * <b>The whole answer, not the successful half of it.</b> A reflective tool hands back a
+		 * string; nothing here can tell a disclosed record from the tool's own sentence about a call
+		 * that failed, and a rule that held only for some answers would be a rule the model cannot
+		 * use. A tool that must draw that line draws it itself, with {@link AnswerMarking#TOOL}.
+		 * </p>
+		 *
+		 * <p>
+		 * The content parts are marked too, and not only {@link ToolResult#text()}: a multimodal
+		 * result is read by the model <em>through</em> its parts, so marking the text alone would mark
+		 * the one rendering nobody sees. Images and documents pass through untouched - they are not
+		 * text and cannot carry a tag.
+		 * </p>
+		 */
+		private ToolResult marked(ToolResult result) {
+			if (_marking != AnswerMarking.FRAMEWORK) {
+				return result;
+			}
+			String text = mark(result.text());
+			List<ToolContent> content = result.content();
+			if (text.equals(result.text()) && content.isEmpty()) {
+				return result;
+			}
+			List<ToolContent> markedContent = new ArrayList<>(content.size());
+			for (ToolContent part : content) {
+				markedContent.add(part instanceof ToolContent.Text textPart
+					? new ToolContent.Text(mark(textPart.text()))
+					: part);
+			}
+			return new ToolResult(text, result.summary(), result.truncationHint(), markedContent);
+		}
+
+		/**
+		 * The given text marked, unless there is nothing to mark (an empty answer) or it is marked
+		 * already.
+		 */
+		private String mark(String text) {
+			return text.isBlank() || UntrustedEnvelope.isMarked(text) ? text
+				: UntrustedEnvelope.MODEL_DATA.wrap(_name, text);
 		}
 	}
 

@@ -23,6 +23,7 @@ import com.top_logic.tl.ai.core.tools.authoring.messages.SkillDetail;
 import com.top_logic.tl.ai.core.tools.authoring.messages.SkillListResult;
 import com.top_logic.tl.ai.core.tools.authoring.messages.SkillSummary;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
+import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
@@ -152,7 +153,7 @@ public class FrameworkWiringTool {
 	/**
 	 * Adds a tool to a framework agent.
 	 */
-	@ToolMethod(description = "Add a tool to a framework agent. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING)
+	@ToolMethod(description = "Add a tool to a framework agent. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE)
 	public String addToolToAgent(
 			@P("Framework agent name") String agentName,
 			@P("Qualified tool name to add") String toolName) {
@@ -164,7 +165,7 @@ public class FrameworkWiringTool {
 	/**
 	 * Removes a tool from a framework agent.
 	 */
-	@ToolMethod(description = "Remove a tool from a framework agent. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING)
+	@ToolMethod(description = "Remove a tool from a framework agent. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE)
 	public String removeToolFromAgent(
 			@P("Framework agent name") String agentName,
 			@P("Qualified tool name to remove") String toolName) {
@@ -176,7 +177,7 @@ public class FrameworkWiringTool {
 	/**
 	 * Adds a skill to a framework agent.
 	 */
-	@ToolMethod(description = "Add a skill to a framework agent. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING)
+	@ToolMethod(description = "Add a skill to a framework agent. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE)
 	public String addSkillToAgent(
 			@P("Framework agent name") String agentName,
 			@P("Skill name to add") String skillName) {
@@ -188,7 +189,7 @@ public class FrameworkWiringTool {
 	/**
 	 * Removes a skill from a framework agent.
 	 */
-	@ToolMethod(description = "Remove a skill from a framework agent. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING)
+	@ToolMethod(description = "Remove a skill from a framework agent. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE)
 	public String removeSkillFromAgent(
 			@P("Framework agent name") String agentName,
 			@P("Skill name to remove") String skillName) {
@@ -200,7 +201,7 @@ public class FrameworkWiringTool {
 	/**
 	 * Adds a delegation target to a framework agent.
 	 */
-	@ToolMethod(description = "Add a delegation target to a framework agent. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING)
+	@ToolMethod(description = "Add a delegation target to a framework agent. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE)
 	public String addDelegationToAgent(
 			@P("Framework agent name") String agentName,
 			@P("Delegation target agent name to add") String delegationName) {
@@ -212,7 +213,7 @@ public class FrameworkWiringTool {
 	/**
 	 * Removes a delegation target from a framework agent.
 	 */
-	@ToolMethod(description = "Remove a delegation target from a framework agent. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING)
+	@ToolMethod(description = "Remove a delegation target from a framework agent. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE)
 	public String removeDelegationFromAgent(
 			@P("Framework agent name") String agentName,
 			@P("Delegation target agent name to remove") String delegationName) {
@@ -226,7 +227,7 @@ public class FrameworkWiringTool {
 	/**
 	 * Adds a tool to a framework skill.
 	 */
-	@ToolMethod(description = "Add a tool to a framework skill. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING)
+	@ToolMethod(description = "Add a tool to a framework skill. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE)
 	public String addToolToSkill(
 			@P("Framework skill name") String skillName,
 			@P("Qualified tool name to add") String toolName) {
@@ -238,7 +239,7 @@ public class FrameworkWiringTool {
 	/**
 	 * Removes a tool from a framework skill.
 	 */
-	@ToolMethod(description = "Remove a tool from a framework skill. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING)
+	@ToolMethod(description = "Remove a tool from a framework skill. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE)
 	public String removeToolFromSkill(
 			@P("Framework skill name") String skillName,
 			@P("Qualified tool name to remove") String toolName) {

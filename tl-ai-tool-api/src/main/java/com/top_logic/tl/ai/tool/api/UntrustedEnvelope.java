@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.tl.ai.core.tools.util;
+package com.top_logic.tl.ai.tool.api;
 
 import java.util.List;
 import java.util.regex.Matcher;
@@ -32,6 +32,17 @@ import java.util.regex.Pattern;
  * </p>
  *
  * <p>
+ * <b>Who puts it on.</b> A tool author does not have to remember: a {@link ToolMethod} answer is
+ * marked as {@link #MODEL_DATA} by {@link AnnotatedTools} unless the method
+ * {@link ToolMethod#marking() says otherwise}, the same way a TL-Script tool's answer is marked by
+ * the executor that runs it. A tool whose content deserves another kind - a fetched page, a stored
+ * document, an external MCP server's answer - marks it itself and declares
+ * {@link AnswerMarking#TOOL}, and a tool whose answer is this application's own sentence declares
+ * {@link AnswerMarking#NONE}. Marking is per tool, never per dispatcher, because the dispatcher sees
+ * a serialized string and could no longer tell what is in it.
+ * </p>
+ *
+ * <p>
  * <b>The content cannot close it.</b> An envelope the wrapped text can end itself is no barrier at
  * all: text containing the literal closing tag would end the block early and everything printed after
  * it would read as the tool's own trusted output. Every envelope tag occurring in the body is
@@ -51,8 +62,9 @@ public final class UntrustedEnvelope {
 	/**
 	 * The envelope for text read off a web page.
 	 *
-	 * @see com.top_logic.tl.ai.core.tools.web.BrowserTool
-	 * @see com.top_logic.tl.ai.core.tools.web.WebFetchTool
+	 * <p>
+	 * Applied by {@code BrowserTool} and {@code WebFetchTool} of {@code tl-ai-core}.
+	 * </p>
 	 */
 	public static final UntrustedEnvelope PAGE_CONTENT = new UntrustedEnvelope("untrusted_page_content",
 		"content fetched from a web page");
@@ -60,7 +72,9 @@ public final class UntrustedEnvelope {
 	/**
 	 * The envelope for text read out of a stored document (uploads, saved downloads).
 	 *
-	 * @see com.top_logic.tl.ai.core.tools.perception.BinaryPerception
+	 * <p>
+	 * Applied by {@code BinaryPerception} of {@code tl-ai-core}.
+	 * </p>
 	 */
 	public static final UntrustedEnvelope DOCUMENT_CONTENT =
 		new UntrustedEnvelope("untrusted_document_content", "content read from a stored document");
@@ -74,7 +88,9 @@ public final class UntrustedEnvelope {
 	 * an attacker needs no access to anything, only a page that ranks.
 	 * </p>
 	 *
-	 * @see com.top_logic.tl.ai.core.tools.web.WebSearchTool
+	 * <p>
+	 * Applied by {@code WebSearchTool} of {@code tl-ai-core}.
+	 * </p>
 	 */
 	public static final UntrustedEnvelope SEARCH_RESULTS =
 		new UntrustedEnvelope("untrusted_search_results",
@@ -91,7 +107,14 @@ public final class UntrustedEnvelope {
 	 * the tag saying it is not.
 	 * </p>
 	 *
-	 * @see com.top_logic.tl.ai.core.security.ReadFilter
+	 * <p>
+	 * <b>The default kind of a Java tool's answer.</b> Every {@link ToolMethod} is marked with this
+	 * kind unless it {@link ToolMethod#marking() says otherwise}, and {@code ReadFilter} of
+	 * {@code tl-ai-core} marks every rendering of model data with it as well - the two together are
+	 * what makes the marking hold whether a tool is written in TL-Script or in Java.
+	 * </p>
+	 *
+	 * @see AnswerMarking
 	 */
 	public static final UntrustedEnvelope MODEL_DATA = new UntrustedEnvelope("untrusted_model_data",
 		"business data stored in this application, written by its users");
@@ -100,13 +123,12 @@ public final class UntrustedEnvelope {
 	 * The envelope for what a tool call on an <b>external</b> MCP server returned.
 	 *
 	 * <p>
-	 * tl-ai's own tools produce trusted output and are not wrapped. What separates the two is not a
-	 * flag but the class: every tool reached through {@link com.top_logic.tl.ai.core.mcp.McpTool} is a
-	 * proxy for a server the administrator configured as a separate process or a remote endpoint, and
-	 * no tool of this application is ever dispatched through it.
+	 * Its own kind, and not {@link #MODEL_DATA}, because the two say different things about where the
+	 * text comes from: every tool reached through {@code McpTool} of {@code tl-ai-core} is a proxy for
+	 * a server the administrator configured as a separate process or a remote endpoint, and no tool of
+	 * this application is ever dispatched through it. What such a server returns is therefore not this
+	 * application's data at all.
 	 * </p>
-	 *
-	 * @see com.top_logic.tl.ai.core.mcp.McpTool
 	 */
 	public static final UntrustedEnvelope MCP_TOOL_RESULT = new UntrustedEnvelope("untrusted_mcp_result",
 		"the result of a tool call on an external MCP server");
@@ -271,6 +293,61 @@ public final class UntrustedEnvelope {
 		}
 		out.append("\n</").append(_tag).append(">");
 		return out.toString();
+	}
+
+	/**
+	 * Whether the given text already <em>is</em> one marked block, so that marking it again would
+	 * destroy the marking it has.
+	 *
+	 * <p>
+	 * <b>Why this question is asked at all.</b> {@link #wrap(String, String) Wrapping} neutralises
+	 * every envelope tag in the body it wraps, deliberately, so that content cannot close the block
+	 * that holds it. A second wrap around an answer that is already an envelope would therefore hand
+	 * the model an inner tag with its angle bracket escaped, delimiting nothing. The framework marks a
+	 * Java tool's answer by default (see {@link AnswerMarking#FRAMEWORK}), and a tool written before
+	 * that - or one outside this repository - may have marked its answer itself; this is what tells the
+	 * two apart.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>Strict on purpose, because the body is attacker-controlled.</b> The text must be exactly one
+	 * block: a known opening tag at the very start, its closing tag at the very end, and no further
+	 * envelope tag in between. A tool result that is a block with prose around it, or two blocks, is
+	 * <em>not</em> one marked block, and saying otherwise would let content that merely contains a tag
+	 * suppress the framework's marking. What a forged block can still achieve is bounded and harmless:
+	 * text that writes a whole well-formed envelope around itself ends up marked as untrusted, which is
+	 * what it would have been anyway. A tool whose answer is a block plus something else says so with
+	 * {@link AnswerMarking#TOOL}.
+	 * </p>
+	 *
+	 * @param text
+	 *        The answer to inspect; may be {@code null}.
+	 * @return Whether {@code text} is one complete, unnested envelope block.
+	 */
+	public static boolean isMarked(String text) {
+		if (text == null) {
+			return false;
+		}
+		String trimmed = text.strip();
+		for (UntrustedEnvelope kind : KINDS) {
+			String open = "<" + kind._tag;
+			String close = "</" + kind._tag + ">";
+			if (!trimmed.startsWith(open) || !trimmed.endsWith(close)) {
+				continue;
+			}
+			char afterName = trimmed.charAt(open.length());
+			if (afterName != '>' && !Character.isWhitespace(afterName)) {
+				// A longer tag name that happens to start with this one.
+				continue;
+			}
+			int bodyStart = trimmed.indexOf('>') + 1;
+			int bodyEnd = trimmed.length() - close.length();
+			if (bodyStart >= bodyEnd) {
+				return true;
+			}
+			return !ENVELOPE_TAG_IN_BODY.matcher(trimmed.substring(bodyStart, bodyEnd)).find();
+		}
+		return false;
 	}
 
 	/**

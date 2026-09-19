@@ -18,6 +18,7 @@ import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.InteractionRecorder;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.tools.memory.MemoryConsentBinding;
+import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
@@ -82,7 +83,9 @@ public class AskUserTool {
 	 */
 	@ToolMethod(description = "Ask the user a question and wait for their response. "
 		+ "Use for clarifying ambiguous requests, presenting choices, or getting feedback on plans.",
-		mode = ToolMode.READ, group = ToolGroups.INTERACTION)
+		mode = ToolMode.READ, group = ToolGroups.INTERACTION,
+		// The answer comes from the principal this run serves, and is meant to be acted on.
+		marking = AnswerMarking.NONE)
 	public String askUser(
 			@P("The question to present") String question,
 			@P("Short label (e.g. 'Clarify', 'Choose')") String header,

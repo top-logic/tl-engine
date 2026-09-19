@@ -19,6 +19,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.agent.skills.Skill;
 import com.top_logic.tl.ai.core.tools.DynamicToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
+import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
@@ -236,7 +237,9 @@ public class SkillTool {
 		description = "Loads a skill by its id. Returns specialized instructions you MUST follow for the related task. When a skill provides tools, they become available immediately. Check the Available Skills section in your system instructions for skill ids and when to use them.",
 		mode = ToolMode.READ,
 		concurrencySafe = true,
-		truncationHint = Integer.MAX_VALUE, group = ToolGroups.INTERACTION)
+		truncationHint = Integer.MAX_VALUE, group = ToolGroups.INTERACTION,
+		// A skill's text is instructions to follow; marking it would switch the mechanism off.
+		marking = AnswerMarking.NONE)
 	public String loadSkill(@P("Skill id from the catalog") String skillId) {
 		Skill skill = _skills.get(skillId);
 		if (skill == null) {

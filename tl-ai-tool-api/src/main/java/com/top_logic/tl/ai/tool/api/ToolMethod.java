@@ -37,6 +37,21 @@ public @interface ToolMethod {
 	ToolMode mode() default ToolMode.STRUCTURAL;
 
 	/**
+	 * Who marks this tool's answer as untrusted content.
+	 *
+	 * <p>
+	 * Defaults to {@link AnswerMarking#FRAMEWORK}, which wraps the answer in
+	 * {@link UntrustedEnvelope#MODEL_DATA} - the same marking a TL-Script tool's answer gets, so that
+	 * moving a tool from TL-Script to Java does not silently take the envelope off (issue #478).
+	 * Declare {@link AnswerMarking#NONE} when the answer is this application's own sentence, and
+	 * {@link AnswerMarking#TOOL} when the tool marks its content itself.
+	 * </p>
+	 *
+	 * @see AnswerMarking
+	 */
+	AnswerMarking marking() default AnswerMarking.FRAMEWORK;
+
+	/**
 	 * Whether this tool can safely run in parallel with other concurrency-safe tools.
 	 * Defaults to {@code true}. Override to {@code false} only for tools with
 	 * external concurrency constraints.

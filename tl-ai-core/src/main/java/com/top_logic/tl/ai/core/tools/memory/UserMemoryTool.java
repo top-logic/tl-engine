@@ -19,6 +19,7 @@ import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore.MemoryKind;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.UserMemory;
+import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
@@ -93,7 +94,8 @@ public class UserMemoryTool {
 		+ "the user agreed. NEVER call it on your own judgement: a call without the user's agreement "
 		+ "in the same turn is refused. Store one short sentence about the user, not a summary of the "
 		+ "conversation.",
-		mode = ToolMode.USER_SCOPED, group = ToolGroups.WORKSPACE)
+		mode = ToolMode.USER_SCOPED, group = ToolGroups.WORKSPACE,
+		marking = AnswerMarking.NONE)
 	public String remember(
 			@P("What kind of thing this is: 'preference' (how the user wants to be served), "
 				+ "'fact' (something that is the case about the user or their work) or "
@@ -154,7 +156,10 @@ public class UserMemoryTool {
 		+ "are already part of what you were told at the start of this conversation, so use this only "
 		+ "to look further back - for example when the user refers to something they told you a long "
 		+ "time ago. An empty query returns the newest memories.",
-		mode = ToolMode.READ, group = ToolGroups.WORKSPACE)
+		mode = ToolMode.READ, group = ToolGroups.WORKSPACE,
+		// The agent's own notes about this user, and the environment block renders the same
+		// memories unmarked; marking them here only would contradict that.
+		marking = AnswerMarking.NONE)
 	public String recall(
 			@P("The words to look for; leave empty for the newest memories") String query,
 			ToolExecutionContext context) {

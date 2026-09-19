@@ -29,6 +29,7 @@ import com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory.ScriptToolConfi
 import com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory;
 import com.top_logic.tl.ai.core.tools.registry.ToolDescriptions;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
+import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
@@ -93,7 +94,8 @@ public class ScriptToolAuthoringTool {
 	 */
 	@ToolMethod(description = "Create a TL-Script tool (a tool whose body is a TL-Script expression). "
 		+ "Persists to the named factory (default 'custom') and restarts the tool registry; "
-		+ "the tool is immediately usable as {factory}.{name}.", group = ToolGroups.AGENT_AUTHORING)
+		+ "the tool is immediately usable as {factory}.{name}.", group = ToolGroups.AGENT_AUTHORING,
+		marking = AnswerMarking.NONE)
 	public String createScriptTool(
 			@P("Unique tool name; letters, digits, _ and -") String name,
 			@P(value = "Human-readable label", required = false) String label,
@@ -127,7 +129,8 @@ public class ScriptToolAuthoringTool {
 	 * @return JSON-serialized {@link OperationResult}.
 	 */
 	@ToolMethod(description = "Update an existing TL-Script tool. "
-		+ "Omitted fields are left unchanged. Changes take effect immediately.", group = ToolGroups.AGENT_AUTHORING)
+		+ "Omitted fields are left unchanged. Changes take effect immediately.", group = ToolGroups.AGENT_AUTHORING,
+		marking = AnswerMarking.NONE)
 	public String updateScriptTool(
 			@P("Name of the tool to update") String name,
 			@P(value = "New label (omit to leave unchanged)", required = false) String label,
@@ -157,7 +160,7 @@ public class ScriptToolAuthoringTool {
 	 *
 	 * @return JSON-serialized {@link OperationResult}.
 	 */
-	@ToolMethod(description = "Delete a TL-Script tool. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING)
+	@ToolMethod(description = "Delete a TL-Script tool. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE)
 	public String deleteScriptTool(
 			@P("Name of the tool to delete") String name,
 			@P(value = "Factory name (default 'custom')", required = false) String factory) {
@@ -254,7 +257,8 @@ public class ScriptToolAuthoringTool {
 	@ToolMethod(
 		description = "Returns all distinct factory names that have registered TL-Script tools. "
 			+ "Call this before listScriptTools when the factory name is unknown.",
-		mode = ToolMode.READ, group = ToolGroups.AGENT_META)
+		mode = ToolMode.READ, group = ToolGroups.AGENT_META,
+		marking = AnswerMarking.NONE)
 	public String listScriptToolFactories() {
 		try {
 			ScriptToolFactoryListResult result = ScriptToolFactoryListResult.create();

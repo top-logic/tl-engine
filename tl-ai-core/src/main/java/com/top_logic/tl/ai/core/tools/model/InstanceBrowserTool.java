@@ -31,6 +31,7 @@ import com.top_logic.tl.ai.core.tools.model.messages.InstanceListResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.InstanceMetadata;
 import com.top_logic.tl.ai.core.tools.model.messages.InstanceResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.InstanceTypeInfo;
+import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
@@ -123,7 +124,7 @@ public class InstanceBrowserTool {
 	 * @return JSON object with the page's instances as {@code label [id:TID]} plus pagination
 	 *         metadata, marked as business data; or error JSON, unmarked, if the type was not found.
 	 */
-	@ToolMethod(description = "Get a paginated list of instances for a specific type. Each entry reads 'label [id:TID]'; pass that TID to any tool that takes one. Only instances you may read are listed, and the total count is the number of those. Use limit parameter to control page size (default: 100, max: 1000). Use cursor from previous response to get next page.", mode = ToolMode.READ, group = ToolGroups.DATA_READ)
+	@ToolMethod(description = "Get a paginated list of instances for a specific type. Each entry reads 'label [id:TID]'; pass that TID to any tool that takes one. Only instances you may read are listed, and the total count is the number of those. Use limit parameter to control page size (default: 100, max: 1000). Use cursor from previous response to get next page.", mode = ToolMode.READ, group = ToolGroups.DATA_READ, marking = AnswerMarking.TOOL)
 	public String listInstances(
 			@P("The module containing the type") String moduleName,
 			@P("The name of the type") String typeName,
@@ -281,7 +282,7 @@ public class InstanceBrowserTool {
 	 *         answer, see
 	 *         {@link TidResolver#resolve(String, com.top_logic.tl.ai.core.security.ModelSecurity)}.
 	 */
-	@ToolMethod(description = "Get detailed information about a single instance by its TID including the attribute values you may read", mode = ToolMode.READ, group = ToolGroups.DATA_READ)
+	@ToolMethod(description = "Get detailed information about a single instance by its TID including the attribute values you may read", mode = ToolMode.READ, group = ToolGroups.DATA_READ, marking = AnswerMarking.TOOL)
 	public String getInstance(@P("The TopLogic identifier (TID) in format 'TypeName:id'") String tid,
 			ToolExecutionContext context) {
 

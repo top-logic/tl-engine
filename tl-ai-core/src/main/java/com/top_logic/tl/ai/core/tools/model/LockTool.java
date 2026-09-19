@@ -13,6 +13,7 @@ import com.top_logic.model.TLModelPart;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tl.ai.core.tools.model.messages.LockStatusResponse;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
+import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
@@ -55,7 +56,8 @@ public class LockTool {
 			+ "or after receiving a lock conflict error. "
 			+ "Qualified name format: 'moduleName' for modules, 'moduleName:TypeName' for classes/enums, "
 			+ "'moduleName:TypeName#partName' for properties/references/classifiers.",
-		mode = ToolMode.READ, group = ToolGroups.DATA_READ)
+		mode = ToolMode.READ, group = ToolGroups.DATA_READ,
+		marking = AnswerMarking.NONE)
 	public String checkLock(
 			@P("Qualified name of the model element to check") String qualifiedName) {
 

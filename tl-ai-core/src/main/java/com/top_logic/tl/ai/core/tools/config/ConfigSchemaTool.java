@@ -16,6 +16,7 @@ import com.top_logic.basic.json.schema.JsonSchemaWriter;
 import com.top_logic.basic.json.schema.model.Schema;
 import com.top_logic.layout.editor.DynamicComponentDefinition;
 import com.top_logic.layout.editor.DynamicComponentService;
+import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
@@ -71,7 +72,7 @@ public class ConfigSchemaTool {
 	 * @return The JSON Schema as a string, or an error message if the class cannot be found or is
 	 *         not a valid configuration type.
 	 */
-	@ToolMethod(description = "Get JSON Schema for a TopLogic configuration type or layout template. Accepts config schema URIs (toplogic://schema/config/...), layout template URIs (toplogic://schema/layout-template/{name}), or class names. Returns the schema with $ref URIs for nested types that can be resolved by calling this tool again.", mode = ToolMode.READ, group = ToolGroups.MODEL_READ)
+	@ToolMethod(description = "Get JSON Schema for a TopLogic configuration type or layout template. Accepts config schema URIs (toplogic://schema/config/...), layout template URIs (toplogic://schema/layout-template/{name}), or class names. Returns the schema with $ref URIs for nested types that can be resolved by calling this tool again.", mode = ToolMode.READ, group = ToolGroups.MODEL_READ, marking = AnswerMarking.NONE)
 	public String getConfigSchema(
 			@P("Schema URI (toplogic://schema/config/... or toplogic://schema/layout-template/{name}) or class name") String typeReference) {
 

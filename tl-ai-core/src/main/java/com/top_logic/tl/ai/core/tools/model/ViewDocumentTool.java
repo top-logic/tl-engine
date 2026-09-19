@@ -25,6 +25,7 @@ import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.tools.perception.BinaryPerception;
 import com.top_logic.tl.ai.core.tools.perception.ModelPerception;
+import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
@@ -109,7 +110,8 @@ public class ViewDocumentTool {
 			+ "stored image or an attached document. Pass the object's TID; pass 'attribute' only "
 			+ "when the object stores more than one binary and the tool asks for it.",
 		mode = ToolMode.READ,
-		group = ToolGroups.DATA_READ)
+		group = ToolGroups.DATA_READ,
+		marking = AnswerMarking.TOOL)
 	public ToolResult viewDocument(
 			@P("The TopLogic identifier (TID) of the object holding the content, "
 				+ "format 'TypeName:id'.") String tid,

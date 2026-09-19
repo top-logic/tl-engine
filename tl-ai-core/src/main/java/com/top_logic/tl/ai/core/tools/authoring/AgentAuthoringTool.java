@@ -36,6 +36,7 @@ import com.top_logic.tl.ai.core.tools.authoring.messages.SkillSummary;
 import com.top_logic.tl.ai.core.tools.authoring.messages.ToolListResult;
 import com.top_logic.tl.ai.core.tools.authoring.messages.ToolSummary;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
+import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
@@ -90,7 +91,7 @@ public class AgentAuthoringTool {
 	 *        The skill's instruction content (markdown).
 	 * @return JSON-serialized {@link OperationResult} describing the outcome.
 	 */
-	@ToolMethod(description = "Create a new skill (instruction text + optional tools) in the application", group = ToolGroups.AGENT_AUTHORING)
+	@ToolMethod(description = "Create a new skill (instruction text + optional tools) in the application", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE)
 	public String createSkill(
 			@P("Unique skill name — do NOT use the TL_ prefix (reserved for TopLogic)") String name,
 			@P("Short description that tells the agent WHEN to load this skill, not what it does internally") String description,
@@ -137,7 +138,7 @@ public class AgentAuthoringTool {
 	 *        New content, or {@code null} to leave unchanged.
 	 * @return JSON-serialized {@link OperationResult} describing the outcome.
 	 */
-	@ToolMethod(description = "Update an existing application skill. Omitted fields are left unchanged.", group = ToolGroups.AGENT_AUTHORING)
+	@ToolMethod(description = "Update an existing application skill. Omitted fields are left unchanged.", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE)
 	public String updateSkill(
 			@P("Name of the skill to update") String name,
 			@P(value = "New description — tells the agent WHEN to load (omit to leave unchanged)", required = false) String description,
@@ -186,7 +187,7 @@ public class AgentAuthoringTool {
 	 *        Name of the skill to delete.
 	 * @return JSON-serialized {@link OperationResult} describing the outcome.
 	 */
-	@ToolMethod(description = "Delete a application skill by name", group = ToolGroups.AGENT_AUTHORING)
+	@ToolMethod(description = "Delete a application skill by name", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE)
 	public String deleteSkill(@P("Name of the skill to delete") String name) {
 		try {
 			OperationResult result = doDeleteSkill(name);
@@ -275,7 +276,7 @@ public class AgentAuthoringTool {
 	 *        Names of agents this agent may delegate to, or {@code null} for none.
 	 * @return JSON-serialized {@link OperationResult} describing the outcome.
 	 */
-	@ToolMethod(description = "Create a new agent in the application", group = ToolGroups.AGENT_AUTHORING)
+	@ToolMethod(description = "Create a new agent in the application", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE)
 	public String createAgent(
 			@P("Unique agent name — do NOT use the TL_ prefix (reserved for TopLogic)") String name,
 			@P("Short description of the agent") String description,
@@ -338,7 +339,7 @@ public class AgentAuthoringTool {
 	 *        New delegation list, or {@code null} to leave unchanged (an empty list replaces with none).
 	 * @return JSON-serialized {@link OperationResult} describing the outcome.
 	 */
-	@ToolMethod(description = "Update an existing application agent. Omitted fields are left unchanged.", group = ToolGroups.AGENT_AUTHORING)
+	@ToolMethod(description = "Update an existing application agent. Omitted fields are left unchanged.", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE)
 	public String updateAgent(
 			@P("Name of the agent to update") String name,
 			@P(value = "New description (omit to leave unchanged)", required = false) String description,
@@ -401,7 +402,7 @@ public class AgentAuthoringTool {
 	 *        Name of the agent to delete.
 	 * @return JSON-serialized {@link OperationResult} describing the outcome.
 	 */
-	@ToolMethod(description = "Delete a application agent by name", group = ToolGroups.AGENT_AUTHORING)
+	@ToolMethod(description = "Delete a application agent by name", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE)
 	public String deleteAgent(@P("Name of the agent to delete") String name) {
 		try {
 			OperationResult result = doDeleteAgent(name);

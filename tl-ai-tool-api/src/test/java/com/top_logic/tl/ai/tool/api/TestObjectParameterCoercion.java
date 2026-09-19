@@ -23,12 +23,17 @@ public class TestObjectParameterCoercion extends TestCase {
 	/** A tool whose parameters carry objects rather than their identifiers. */
 	public static class ObjectTools {
 
-		@ToolMethod(description = "Reports what it was handed", mode = ToolMode.READ)
+		// Marking is off here so that these tests assert the coerced arguments and nothing else;
+		// what the framework puts around an answer is TestAnnotatedToolMarking's subject.
+
+		@ToolMethod(description = "Reports what it was handed", mode = ToolMode.READ,
+			marking = AnswerMarking.NONE)
 		public String inspect(@P("the invoice") TLObject invoice) {
 			return "got " + label(invoice);
 		}
 
-		@ToolMethod(description = "Reports what it was handed", mode = ToolMode.READ)
+		@ToolMethod(description = "Reports what it was handed", mode = ToolMode.READ,
+			marking = AnswerMarking.NONE)
 		public String inspectAll(List<TLObject> invoices) {
 			return "got " + invoices.size();
 		}

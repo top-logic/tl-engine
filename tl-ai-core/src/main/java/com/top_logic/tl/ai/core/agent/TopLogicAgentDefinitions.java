@@ -54,7 +54,9 @@ import com.top_logic.tl.ai.core.agent.environment.PromptPlaceholders;
  * mechanism: an overlay only declares the entries it adds or removes, and the platform's
  * remaining entries flow through unchanged. Scalar properties such as {@code description} and
  * {@code system-prompt} are still atomically replaced when overridden, so overlays should leave
- * them unset unless a true replacement is intended.
+ * them unset unless a true replacement is intended. The two texts a user reads -
+ * {@link AgentConfig#getDisplayName display-name} and {@link AgentConfig#getSummary summary} - are
+ * overridden the same way; that is how an installation renames an agent this product ships.
  * </p>
  *
  * @see AgentDefinition
@@ -73,8 +75,24 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 	 * Contains only identity and capabilities. Tuning parameters belong in
 	 * {@link com.top_logic.tl.ai.core.provider.LLMService.AgentOverride AgentOverride}.
 	 * </p>
+	 *
+	 * <p>
+	 * This is where an installation renames an agent it was shipped, or describes it in its own
+	 * words. What is saved here reaches the users when this service is restarted - the restart
+	 * button in the list of services, or the next start of the application; saving alone changes
+	 * nothing a running agent does.
+	 * </p>
+	 *
+	 * <p>
+	 * Saving writes the configuration of every agent as it currently reads, so from then on this
+	 * installation carries its own copy of them and a later release's wording, prompt or tool list
+	 * no longer flows through. An installation that wants to change two texts and keep receiving
+	 * the rest writes the overlay by hand instead, naming only the properties it replaces.
+	 * </p>
 	 */
 	@DisplayOrder({
+		AgentConfig.DISPLAY_NAME,
+		AgentConfig.SUMMARY,
 		AgentConfig.DESCRIPTION,
 		AgentConfig.TOOLS,
 		AgentConfig.SKILLS,
@@ -137,10 +155,15 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		 * What to call this agent in front of a user, in their language.
 		 *
 		 * <p>
-		 * Leave it out and the agent is called by the name above, which is its identifier. That name is
-		 * referenced by other configuration, by skills and by every conversation already held with this
-		 * agent, so it is worth leaving alone even when it reads badly - this is the setting to change
-		 * instead.
+		 * This is the name the chat's agent menu shows, and it is the one field an installation
+		 * changes to rename an agent it was shipped. Leave it out and the agent is offered under the
+		 * technical name above, which is its identifier: other configuration, the skills and every
+		 * conversation already held with this agent refer to that identifier, so it stays as it is
+		 * even when it reads badly - this is the field to change instead.
+		 * </p>
+		 *
+		 * <p>
+		 * Takes effect when this service is restarted.
 		 * </p>
 		 */
 		@Name(DISPLAY_NAME)
@@ -151,9 +174,14 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		 * One line saying what this agent is for, in the language of whoever reads it.
 		 *
 		 * <p>
-		 * This is what a user picking an agent is shown. Leave it out and the agent is offered by its
-		 * name alone - which is better than showing the description above, because that one is written
-		 * for a model rather than for a person.
+		 * This is the line under the name in the chat's agent menu, and the second field an
+		 * installation changes to describe an agent it was shipped in its own words. Leave it out and
+		 * the agent is offered by its name alone - which is better than showing the description
+		 * below, because that one is written for a model rather than for a person.
+		 * </p>
+		 *
+		 * <p>
+		 * Takes effect when this service is restarted.
 		 * </p>
 		 */
 		@Name(SUMMARY)

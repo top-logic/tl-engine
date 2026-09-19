@@ -197,6 +197,23 @@ Multi-layer: `SecurityContext.hasToolPermission()` → `ExecutionMode` gate (GLO
 
 `DelegationTool` creates isolated sub-agent runs (max depth 3). Parent passes `TransactionScope` and `SecurityContext`. Child events recorded in parent's `ConversationLog`.
 
+`spawn_subagent` is the asynchronous half: fire-and-forget, the turn ends, the child works on in a
+`SubagentJobRegistry` bound to the session. Its result reaches the parent on one of two paths, and
+both render it through `SubagentResultDelivery` so the parent reads the same block either way:
+`wait_for_subagent` when the parent asked, and `AgentLoop.injectSubagentResults` at the start of the
+next turn when it did not.
+
+The injection is a **`UserMessage`**, not a `SystemMessage`: no provider's request builder transmits
+a mid-conversation system message, so that shape never reached the model (#359). It opens with
+`SubagentResultDelivery.NOTICE`, which says in the text what the role cannot - the user did not write
+this. Everything finishing in one gap becomes one message, in the order the parent started the
+subagents. Being an ordinary user message, it is compacted like any other turn content.
+
+The same text is recorded on the turn as a `Part.SystemPart` of type `SUBAGENT_RESULT`: an assistant-side
+part, so the admin transcript shows it while the chat does not draw it as a user bubble.
+`ConversationLogReplay` turns that part back into the identical `UserMessage`, which is the one system
+event replay does not skip. See `tl-ai-core/doc/subagent-results.md`.
+
 ## Project Structure
 
 Standard Maven layout. Key package roots:

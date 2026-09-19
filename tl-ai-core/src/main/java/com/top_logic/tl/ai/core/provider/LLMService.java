@@ -48,6 +48,7 @@ import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.tl.ai.core.agent.AgentDefinition;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
+import com.top_logic.tl.ai.core.agent.SystemPromptContributor;
 import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.environment.EnvironmentConfig;
@@ -539,6 +540,7 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		Config.AGENT_EXECUTION,
 		Config.ENVIRONMENT,
 		Config.SECURITY_CONTEXT,
+		Config.PROMPT_CONTRIBUTORS,
 		Config.MODEL_CATALOG,
 	})
 	public interface Config<I extends LLMService> extends ConfiguredManagedClass.Config<I> {
@@ -586,6 +588,13 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		 * @see #getSecurityContext()
 		 */
 		String SECURITY_CONTEXT = "security-context";
+
+		/**
+		 * Configuration property name for the system-prompt contributors.
+		 *
+		 * @see #getPromptContributors()
+		 */
+		String PROMPT_CONTRIBUTORS = "prompt-contributors";
 
 		/**
 		 * Configuration property name for the model catalog.
@@ -659,6 +668,22 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		@ItemDefault
 		@ImplementationClassDefault(DefaultSecurityContextFactory.class)
 		PolymorphicConfiguration<SecurityContextFactory> getSecurityContext();
+
+		/**
+		 * Standing instructions this installation adds to the system prompt of every agent run.
+		 *
+		 * <p>
+		 * For house rules that belong to the application rather than to one agent, so that they do
+		 * not have to be written into every agent and do not have to be repeated on every turn. Each
+		 * entry is asked once per run, in the order they are listed here, and what it answers is part
+		 * of the cached prompt - so it must say the same thing throughout a conversation.
+		 * </p>
+		 *
+		 * @see #PROMPT_CONTRIBUTORS
+		 */
+		@Name(PROMPT_CONTRIBUTORS)
+		@EntryTag("contributor")
+		List<PolymorphicConfiguration<? extends SystemPromptContributor>> getPromptContributors();
 
 		/**
 		 * Model metadata catalog describing each model's capabilities and limits.
@@ -778,6 +803,11 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	private SecurityContextFactory _securityContextFactory;
 
 	/**
+	 * What this installation adds to every agent's system prompt, in configuration order.
+	 */
+	private List<SystemPromptContributor> _promptContributors;
+
+	/**
 	 * Creates a new {@link LLMService} from configuration.
 	 *
 	 * @param context
@@ -841,6 +871,31 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		return _securityContextFactory;
 	}
 
+	/**
+	 * What this installation adds to the system prompt of every agent run.
+	 *
+	 * @return The configured contributors in configuration order; empty when none are configured.
+	 * @see SystemPromptContributor
+	 */
+	public List<SystemPromptContributor> getPromptContributors() {
+		return _promptContributors;
+	}
+
+	/**
+	 * What the installation adds to every system prompt, also answered when this service is down.
+	 *
+	 * <p>
+	 * Empty for a minimal setup that boots no services, which is the same prompt such a setup built
+	 * before the seam existed.
+	 * </p>
+	 */
+	public static List<SystemPromptContributor> promptContributors() {
+		if (!Module.INSTANCE.isActive()) {
+			return List.of();
+		}
+		return getInstance().getPromptContributors();
+	}
+
 	@Override
 	protected void startUp() {
 		super.startUp();
@@ -852,6 +907,16 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		SecurityContextFactory securityContextFactory = _context.getInstance(getConfig().getSecurityContext());
 		_securityContextFactory = securityContextFactory == null
 			? DefaultSecurityContextFactory.INSTANCE : securityContextFactory;
+
+		List<SystemPromptContributor> contributors = new ArrayList<>();
+		for (PolymorphicConfiguration<? extends SystemPromptContributor> contributor
+				: getConfig().getPromptContributors()) {
+			SystemPromptContributor instance = _context.getInstance(contributor);
+			if (instance != null) {
+				contributors.add(instance);
+			}
+		}
+		_promptContributors = List.copyOf(contributors);
 
 		Map<String, LLMProviderConfig> providerConfigs = new LinkedHashMap<>();
 		Map<String, List<String>> modelProviders = new LinkedHashMap<>();

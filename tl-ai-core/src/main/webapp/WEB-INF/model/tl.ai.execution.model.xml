@@ -657,7 +657,8 @@
 					<!--
 						Where the memory came from, so the user can go back and read the exchange
 						that produced it. Optional: a memory written from a headless run belongs to
-						no chat.
+						no chat, and deleting the chat only clears this reference (the default
+						deletion policy) - a memory outlives the conversation it came out of.
 					-->
 					<reference name="session"
 						type="tl.ai.execution:AgentSession"

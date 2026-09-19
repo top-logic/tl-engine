@@ -49,6 +49,7 @@ import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.execution.model.AgentTask;
 import com.top_logic.tl.ai.core.execution.model.InteractionRequest;
 import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
+import com.top_logic.tl.ai.core.execution.model.UserMemory;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedConversationV2;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedTurn;
@@ -56,7 +57,8 @@ import com.top_logic.util.model.ModelService;
 
 /**
  * Service that persists and retrieves the <code>tl.ai.execution</code> model:
- * {@link AgentSession}, {@link AgentExecution}, {@link InteractionRequest} and {@link AgentTask}.
+ * {@link AgentSession}, {@link AgentExecution}, {@link InteractionRequest}, {@link AgentTask} and
+ * {@link UserMemory}.
  *
  * <p>
  * This is the single write path for agent-run persistence. Any entry point that runs an agent
@@ -126,6 +128,45 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 * Kind of human-in-the-loop request. Mirrors the <code>tl.ai.execution:InteractionType</code>
 	 * enumeration.
 	 */
+	/**
+	 * What kind of thing an agent kept about a user.
+	 *
+	 * @see com.top_logic.tl.ai.core.execution.model.UserMemory
+	 */
+	public enum MemoryKind {
+		/** How the user wants to be served. */
+		PREFERENCE,
+
+		/** Something that is the case about the user or their work. */
+		FACT,
+
+		/** A judgement the user passed on the work, to be honoured next time. */
+		FEEDBACK;
+
+		/**
+		 * The kind named by the given string, case-insensitively, or {@code null} when the string
+		 * names none.
+		 *
+		 * <p>
+		 * The argument comes from a model, so it is matched leniently rather than parsed: an
+		 * unrecognised word is answered with {@code null} and refused by the caller with a message
+		 * naming the three, not with an exception the model cannot read.
+		 * </p>
+		 */
+		public static MemoryKind byName(String name) {
+			if (name == null) {
+				return null;
+			}
+			String normalized = name.trim().toUpperCase(java.util.Locale.ROOT);
+			for (MemoryKind kind : values()) {
+				if (kind.name().equals(normalized)) {
+					return kind;
+				}
+			}
+			return null;
+		}
+	}
+
 	public enum InteractionType {
 		/** Tool-call approval. */
 		APPROVAL,
@@ -1301,6 +1342,136 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 				request.setResolvedAt(now);
 			}
 		}
+	}
+
+	// ---- UserMemory ----
+
+	/**
+	 * Keeps one memory about the given account.
+	 *
+	 * <p>
+	 * Written on the writer thread like every other row of this module, so a tool may write one
+	 * from a read-only context and a rolled-back turn cannot take the memory down with it. The
+	 * owner is told to the listeners afterwards, which is what makes the user's memory list follow
+	 * at once instead of at the next heartbeat.
+	 * </p>
+	 *
+	 * @param owner
+	 *        The account the memory is about; must not be <code>null</code>.
+	 * @param kind
+	 *        What kind of thing is kept; must not be <code>null</code>.
+	 * @param text
+	 *        What is kept; must not be blank.
+	 * @param session
+	 *        The conversation it came out of; may be <code>null</code> for a headless run.
+	 * @param runId
+	 *        The run that wrote it; may be <code>null</code>.
+	 * @return The created row.
+	 */
+	public UserMemory createMemory(Person owner, MemoryKind kind, String text, AgentSession session,
+			String runId) {
+		Objects.requireNonNull(owner, "A memory needs an owner.");
+		Objects.requireNonNull(kind, "A memory needs a kind.");
+		if (text == null || text.isBlank()) {
+			throw new IllegalArgumentException("A memory needs a text.");
+		}
+		UserMemory created = write(() -> {
+		try (Transaction tx = beginTx("Create user memory")) {
+			UserMemory memory = TlAiExecutionFactory.getInstance().createUserMemory();
+			memory.setOwner(owner);
+			memory.setKind(memoryKindClassifier(kind));
+			memory.setText(text.strip());
+			if (session != null) {
+				memory.setSession(session);
+			}
+			memory.setRunId(runId);
+			memory.setCreatedAt(new Date());
+			tx.commit();
+			return memory;
+		}
+		});
+		// The owner as the caller named it, never read back from the new wrapper: this thread's view
+		// of the database predates the row the writer thread just created.
+		notifyChanged(owner);
+		return created;
+	}
+
+	/**
+	 * The memories of the given account, newest first.
+	 *
+	 * <p>
+	 * The owner filter is the privacy guard, and it is applied here rather than left to the caller:
+	 * every reader of this type - the environment block, the recall tool, a view - goes through
+	 * this method, so no reader can forget it.
+	 * </p>
+	 *
+	 * @param owner
+	 *        The account to read for; <code>null</code> yields an empty list.
+	 * @param limit
+	 *        At most this many rows; a value of {@code 0} or less means all of them.
+	 */
+	public List<UserMemory> memoriesOf(Person owner, int limit) {
+		if (owner == null) {
+			return List.of();
+		}
+		List<UserMemory> result = new ArrayList<>();
+		for (TLObject obj : allInstances(TlAiExecutionFactory.getUserMemoryType())) {
+			UserMemory memory = (UserMemory) obj;
+			if (owner.equals(memory.getOwner())) {
+				result.add(memory);
+			}
+		}
+		result.sort(Comparator.comparing(UserMemory::getCreatedAt,
+			Comparator.nullsLast(Comparator.reverseOrder())));
+		if (limit > 0 && result.size() > limit) {
+			return List.copyOf(result.subList(0, limit));
+		}
+		return result;
+	}
+
+	/**
+	 * Deletes one memory.
+	 *
+	 * <p>
+	 * Says nothing about who may do it - the caller has already established that. See
+	 * {@code AIScriptFunctions.memoryDelete}, which is the one path a user's click takes and which
+	 * refuses a row of somebody else.
+	 * </p>
+	 */
+	public void deleteMemory(UserMemory memory) {
+		if (memory == null) {
+			return;
+		}
+		Person deletedOwner = write(() -> {
+		try (Transaction tx = beginTx("Delete user memory")) {
+			// Read before the delete: afterwards the wrapper has no owner to report any more.
+			Person owner = memory.getOwner();
+			memory.tDelete();
+			tx.commit();
+			return owner;
+		}
+		});
+		notifyChanged(deletedOwner);
+	}
+
+	private static TLClassifier memoryKindClassifier(MemoryKind kind) {
+		switch (kind) {
+			case PREFERENCE:
+				return TlAiExecutionFactory.getPREFERENCEMemoryKindClassifier();
+			case FACT:
+				return TlAiExecutionFactory.getFACTMemoryKindClassifier();
+			case FEEDBACK:
+				return TlAiExecutionFactory.getFEEDBACKMemoryKindClassifier();
+		}
+		throw new IllegalArgumentException("Unknown memory kind: " + kind);
+	}
+
+	/**
+	 * The {@link MemoryKind} the given row carries, or <code>null</code> when it carries none.
+	 */
+	public static MemoryKind memoryKindOf(UserMemory memory) {
+		TLClassifier classifier = memory == null ? null : memory.getKind();
+		return classifier == null ? null : MemoryKind.byName(classifier.getName());
 	}
 
 	private static Transaction beginTx(String message) {

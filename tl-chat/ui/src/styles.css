@@ -3581,6 +3581,8 @@
 }
 
 .cite-popover {
+  display: flex;
+  flex-direction: column;
   margin-top: 0;
   padding: 0.6rem 0.75rem;
   border: 1px solid var(--border-subtle);
@@ -3839,20 +3841,90 @@
 
 /* --- Citation presentation: popover, sources, run summary (Issue #408) --- */
 
+/*
+ * The head reads like a row of the Quellen list - kind icon, title, origin - so that a marker, its
+ * popover and the rail all describe a source the same way.
+ */
+.cite-popover-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+}
+
+.cite-popover-heading {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
 .cite-popover-title {
   margin: 0;
   font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .cite-popover-origin {
   margin: 0.1rem 0 0;
   color: var(--text-secondary);
   font-size: var(--chat-small);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Which page of the site, which record of the kind: the origin alone does not say. */
+.cite-popover-detail::before {
+  content: "·";
+  margin: 0 0.3rem;
+  opacity: 0.6;
+}
+
+/*
+ * A structured source, one field per row: the record as a record. The grid gives every value one
+ * start, which is what a run of `label: value` lines could not do.
+ */
+.cite-popover-fields {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+  gap: 0.1rem 0.5rem;
+  margin: 0.5rem 0 0;
+  padding: 0.4rem 0.5rem;
+  border-inline-start: 2px solid var(--border-subtle);
+  border-radius: 0 var(--r-1) var(--r-1) 0;
+  background: color-mix(in srgb, var(--text-primary) 4%, transparent);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  /* A record with many fields must not make the popover taller than the answer it sits on. */
+  max-height: 12rem;
+  overflow: auto;
+}
+
+.cite-popover-field {
+  display: contents;
+}
+
+.cite-popover-fields dt {
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cite-popover-fields dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 /* The window of the source the fact was read in, with the cited sentence marked inside it. */
 .cite-popover-excerpt {
-  margin: 0.45rem 0 0;
+  margin: 0.5rem 0 0;
+  padding: 0.4rem 0.5rem;
+  border-inline-start: 2px solid var(--border-subtle);
+  border-radius: 0 var(--r-1) var(--r-1) 0;
+  background: color-mix(in srgb, var(--text-primary) 4%, transparent);
   color: var(--text-secondary);
   font-size: 0.8125rem;
   line-height: 1.45;
@@ -3869,14 +3941,23 @@
   overflow: hidden;
 }
 
+/*
+ * The sentence the fact rests on, inside the window it was read in. Marked rather than merely
+ * tinted: it is the one line of the excerpt the reader came for.
+ */
 .cite-passage {
-  background: color-mix(in srgb, var(--button-primary) 16%, transparent);
+  background: color-mix(in srgb, var(--button-primary) 22%, transparent);
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--button-primary) 55%, transparent);
   color: var(--text-primary);
   border-radius: 2px;
   padding: 0 0.1rem;
 }
 
 .cite-popover-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  align-self: start;
   margin-top: 0.5rem;
   padding: 0;
   border: 0;
@@ -3886,6 +3967,12 @@
   font: inherit;
   font-size: 0.8125rem;
 }
+
+.cite-popover-open:hover,
+.cite-popover-open:focus-visible {
+  text-decoration: underline;
+}
+
 
 /* The collapsed pill under an answer: how much of it rests on sources. */
 .answer-sources {

@@ -1,5 +1,5 @@
 import { React } from 'tl-react-bridge'
-import { sourceOrigin } from './markdown'
+import { kindIcon, sourceOrigin } from './citations'
 import type { bundle } from './i18n'
 import type { ChatMessage, Citation } from './types'
 
@@ -52,6 +52,25 @@ export function citedSources(messages: ChatMessage[]): CitedSource[] {
     }
   }
   return [...byKey.values()]
+}
+
+/**
+ * The sources of the newest answer - what the section's count badge reports.
+ *
+ * The list itself is the conversation's: a page cited in three answers stays one row for the whole
+ * chat, and nothing a reader has seen is taken away from them. A *badge* of that list would be a
+ * running total that only ever grows, sits on the Quellen icon for the rest of the chat and cannot
+ * be dismissed (#495). What a badge is for is "look here now", so it counts what the answer in
+ * front of the reader rests on: an answer that cited nothing carries no badge, and an answer that
+ * is still streaming carries none either - its citations arrive with the finished text.
+ */
+export function latestAnswerSources(messages: ChatMessage[]): CitedSource[] {
+  for (let at = messages.length - 1; at >= 0; at--) {
+    const message = messages[at]
+    if (message.type !== 'assistant_text') continue
+    return message.citations?.length ? citedSources([message]) : []
+  }
+  return []
 }
 
 /** Above this many rows the list gets a filter field. */
@@ -227,23 +246,6 @@ export function AnswerSources({
         </ul>
       ) : null}
     </div>
-  )
-}
-
-/** A document for a host kind, a globe for the web. */
-export function kindIcon(kind: string): React.ReactNode {
-  if (!kind || kind === 'web') {
-    return (
-      <svg viewBox="0 0 16 16" aria-hidden="true">
-        <circle cx="8" cy="8" r="5.8" />
-        <path d="M2.4 8h11.2M8 2.2c1.6 1.7 2.4 3.6 2.4 5.8s-.8 4.1-2.4 5.8c-1.6-1.7-2.4-3.6-2.4-5.8s.8-4.1 2.4-5.8z" />
-      </svg>
-    )
-  }
-  return (
-    <svg viewBox="0 0 16 16" aria-hidden="true">
-      <path d="M4 2.5h5.2L12 5.3v8.2H4zM9 2.6v3h3M6 8.4h4M6 10.8h4" />
-    </svg>
   )
 }
 

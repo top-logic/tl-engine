@@ -607,10 +607,18 @@ you have takes such an id" applies.
 ### What an answer's citations look like
 
 A marker is a small grey number after the sentence. Hovering (or focusing) it shows the source's
-label, where it comes from, and the excerpt of the source with the cited passage highlighted -
-`cite`'s `passage` argument, kept only when the turn's own tool results really contain it. Clicking
-opens the source: `messageAnnotations.render` decides that for a host kind (returning nothing leaves
-the web default, which opens the page).
+kind icon and label, where it comes from and which one it is (the page's path, or the record's id),
+and what the source says: prose with the cited passage highlighted - `cite`'s `passage` argument,
+kept only when the turn's own tool results really contain it - or, for a kind declared
+`passage="false"`, the record's fields as a field list. Clicking opens the source:
+`messageAnnotations.render` decides that for a host kind (returning nothing leaves the web default,
+which opens the page).
+
+**The number the model writes is the conversation's, not the run's.** `CitationMarkers` continues
+the numbering across the sends of one chat (`resumeFrom(log)`), because the model reads its own
+earlier answers back and a counter restarting at 1 handed out a number that already meant another
+source - which the validator then deleted, and with it every citation of every later answer (#495).
+What the reader sees is renumbered per answer regardless.
 
 **Kinds are declared, not invented.** The framework knows `web`; a host declares its own kinds once
 through the `CitationKinds` service (name, one-line description, where the id comes from, whether a
@@ -623,6 +631,10 @@ Under an answer sits a collapsed `Quellen · n zitiert` pill with that answer's 
 `Quellen` section is the session-wide list: every source cited in this chat, with the marker numbers
 that point at it - a number scrolls to its answer, the row opens the source, and a filter appears
 once the list is long. `sourceTabs` puts a host list beside it as further tabs.
+
+Its **badge** is not the length of that list: it counts what the *newest answer* cited
+(`latestAnswerSources`). A badge over a list that only grows sat on the Quellen icon for the rest of
+the conversation and could not be dismissed (#495); an answer that cited nothing now carries none.
 
 Layout preferences (`railOpen`, `paneWidth`, `badgeSeen`, the per-section collapse) are bootstrapped
 from PersonalConfiguration via `ChatViewBinding.writeLayoutState` and written through

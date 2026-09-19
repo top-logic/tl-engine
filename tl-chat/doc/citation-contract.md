@@ -22,7 +22,7 @@ The compact `Part.TextPart` constructor is still `(id, timestamp, text)`.
 ## Tool and prompt
 
 `cite.cite` (`ToolMode.READ`) records `kind`, `id`, `label`, and optional `url` / `toolCallId` /
-`passage`. It returns the next 1-based marker for this run.
+`passage`. It returns the next 1-based marker of this conversation.
 
 `passage` is the sentence of the source the fact rests on, copied verbatim. The validator keeps it
 only when the turn's own tool results really contain it, and cuts the excerpt around it out of that
@@ -31,10 +31,29 @@ memory of it. A passage shorter than 12 characters is ignored. What the citation
 the rendered form of that sentence, because that is what the popover highlights inside the rendered
 excerpt; verification is against the verbatim text, display is of the rendered one.
 
-The numbering belongs to the **run**, not to the calling thread: the tool is parallel-safe, so two
-cite calls of one turn run on two pool threads, and a per-thread counter gave both of them `1`. The
-counter is `CitationMarkers` on the run's `ToolContext`, shared by every copy of that context and
-reset by `AgentRunner` when a run begins. A delegated sub-agent gets its own.
+The numbering belongs to the **conversation**, and to no smaller thing.
+
+Not to the calling thread: the tool is parallel-safe, so two cite calls of one turn run on two pool
+threads, and a per-thread counter gave both of them `1`. The counter is `CitationMarkers` on the
+run's `ToolContext`, shared by every copy of that context.
+
+Not to the run either (#495). `AgentRunner` no longer restarts it at 1 when a run begins; it
+*continues* it - `CitationMarkers.resumeFrom(log)` sets the next number above every number the
+conversation has already handed out, read from the cite calls' own recorded results. The model's
+context is the whole conversation: it reads the raw text of its earlier answers back, markers and
+all, because what the validator rewrites is the transcript and not the `Conversation` the request is
+built from. While the counter restarted, the second answer of a chat was told to write `[1]` for a
+source for which the model could see `[1]` already standing - and whichever of the two signals it
+followed, the other one said it was wrong. A marker the turn's cite calls did not claim is deleted,
+so the citation went with it, and because the drift then lived in the model's own context, no later
+answer of that chat cited anything either.
+
+Continuing the numbering makes both readings the same one. The numbers a long conversation reaches
+never appear in front of a reader: the validator renumbers each answer's surviving markers to `[1]`,
+`[2]`, … in order of first appearance, which is what the message-local citation list of the UI is
+indexed by.
+
+A delegated sub-agent gets its own counter.
 
 Albert (`TL_SingleAgent`) has the tool on its catalog and a `<cite>` fragment in the system prompt:
 cite what you read, using the id or URL the producing tool returned; this turn only; one marker per
@@ -133,12 +152,35 @@ escapes are resolved and Markdown is rendered away in every case: a reader never
 `[n]` becomes a small grey number after the sentence (`data-citation-id`, keyboard-reachable
 `<button>`) - quiet, so it says where a fact comes from without taking the eye off the text.
 
-Hovering or focusing it opens a popover with the source's label, its origin (the web host, or the
-kind's declared label) and the excerpt with the cited passage highlighted. Clicking **opens** the
-source:
+Hovering or focusing it opens a popover built like a row of the `Quellen` list - the kind's icon,
+the source's label, and beneath it its origin (the web host, or the kind's declared label) followed
+by *which* one it is: the path of the page, or the id of the record when that is not already the
+label. Two sections of one document and two pages of one site otherwise describe themselves
+identically.
+
+Under that comes what the source says, in the shape the source has:
+
+- **prose** - the excerpt, with the cited passage marked (`<mark class="cite-passage">`), in a quoted
+  block with a rule down its side;
+- **a record** - a kind declared `passage="false"` has fields rather than a sentence, so the
+  server's `label: value` lines are rendered as a field list (`excerptFields` in `citations.tsx`
+  reads them back) rather than as a run of grey lines with nothing to highlight in it. A citation
+  that carries a passage is prose whatever colons it contains, so nothing that *is* a sentence is
+  taken apart this way.
+
+Clicking **opens** the source:
 `messageAnnotations.render` decides what that means for a host kind, and a host that returns nothing
 for a kind leaves the web default, which opens the page. The same action is what the `Quellen` rail
 section and the per-answer `Quellen · n zitiert` pill perform.
+
+## The rail section, and what its badge counts
+
+The `Quellen` section lists **every** source of the conversation, a source cited three times being
+one row with three marker numbers. Its **badge** counts something else on purpose: the sources of
+the **newest answer** (`latestAnswerSources`). A badge over the list could only grow - it sat on the
+Quellen icon for the rest of the chat, could not be dismissed, and said nothing about the answer the
+reader is looking at (#495). An answer that cited nothing therefore carries no badge, and an answer
+that is still streaming carries none either: its citations arrive with the finished text.
 
 A message's own text never carries a `<quote/>`; that element belongs to the composer's reference
 tokens (#407) and travels the other way, from the user to the model.

@@ -39,7 +39,7 @@ import {
 import { parseTasksJson, type AgentTask } from './progress-model'
 import { chatReducer, type ChatAction } from './reducer'
 import { composeOutboundText } from './send-prefix'
-import { citedSources, type CitedSource } from './sources'
+import { citedSources, latestAnswerSources, type CitedSource } from './sources'
 import {
   EMPTY_RUN,
   createRunStore,
@@ -317,6 +317,13 @@ export interface ChatState {
   feedback: MessageFeedback[]
   /** Every source this chat has cited, newest run included. */
   sources: CitedSource[]
+  /**
+   * What the newest answer cited - the count the Quellen badge reports.
+   *
+   * A badge over {@link sources} could only grow, so it sat on the icon for the rest of the chat
+   * and said nothing about the answer in front of the reader (#495).
+   */
+  latestSources: CitedSource[]
 
   // Run.
   busy: boolean
@@ -668,6 +675,10 @@ export class ChatStore {
 
   private readonly sourcesOf = memo((messages: ChatMessage[]): CitedSource[] => citedSources(messages))
 
+  private readonly latestSourcesOf = memo((messages: ChatMessage[]): CitedSource[] =>
+    latestAnswerSources(messages),
+  )
+
   readonly actions: ChatActions
 
   private readonly chatId: string
@@ -710,6 +721,7 @@ export class ChatStore {
       messages: [],
       feedback: [],
       sources: [],
+      latestSources: [],
       busy: false,
       regenerating: false,
       subagents: [],
@@ -786,10 +798,11 @@ export class ChatStore {
     const offeredModels = this.offeredModelsOf(base.caps.models, base.caps.agents, base.agent)
     const effortLevels = this.effortLevelsOf(base.caps.models, base.model)
     const sources = this.sourcesOf(base.messages)
+    const latestSources = this.latestSourcesOf(base.messages)
     const sessionTitle =
       base.sessions.find((session) => session.id === base.sessionId)?.title ||
       bundle(base.language).newChat
-    return { ...base, offeredModels, effortLevels, sources, sessionTitle }
+    return { ...base, offeredModels, effortLevels, sources, latestSources, sessionTitle }
   }
 
   private patch(next: Partial<ChatState>): void {

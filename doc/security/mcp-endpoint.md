@@ -114,6 +114,41 @@ Everything the endpoint serves is decided against the authenticated account:
   `initialize` by the `mcp-session-id` header and keeps no owner of its own, so a second
   authenticated account presenting somebody else's session id is refused with **HTTP 403**.
 
+### What the tool list says about a tool
+
+Every published tool carries MCP `annotations`, derived from the tool's own `ToolMode` and its
+[tool group](tool-access-configuration.md) (`McpToolAnnotations`). They are what a client that has
+never heard of TopLogic goes by when it decides whether to put a call in front of its user:
+
+| `ToolMode` | `readOnlyHint` | `destructiveHint` | `idempotentHint` | `openWorldHint` |
+|---|---|---|---|---|
+| `READ` | `true` | `false` | unset | `true` iff the tool's group is `egress` |
+| `USER_SCOPED` | `false` | `false` | unset | `true` iff the tool's group is `egress` |
+| `DATA_WRITE` | `false` | `true` | unset | `true` iff the tool's group is `egress` |
+| `STRUCTURAL` | `false` | `true` | unset | `true` iff the tool's group is `egress` |
+| `EXTERNAL` | `false` | `true` | unset | `true` |
+
+Four decisions are worth knowing:
+
+- **`USER_SCOPED` publishes a write, the non-destructive kind.** The hints have two states and this
+  mode is a third thing - it changes something, but only the calling account's own workspace.
+  `readOnlyHint: true` would be false, so it is a write; what it can damage belongs to the account
+  making the call, so it is not a destructive one.
+- **`destructiveHint` is stated even for `READ`**, where the specification calls it meaningful only
+  when `readOnlyHint == false`. Its default is `true`, and a client that reads the one field without
+  the other would otherwise take a read-only tool for a destructive one.
+- **`idempotentHint` is left unset.** Nothing in the tool contract answers whether calling a tool
+  twice differs from calling it once, and a per-mode guess would be a claim with nothing behind it.
+- **`openWorldHint` follows the group, not only the mode.** The mode says what a call changes *here*
+  and nothing about where its data goes. `webFetch` is a `READ` tool that reaches the whole internet,
+  which is the specification's own example of an open world; `egress` is the axis that carries that.
+
+**A tl-ai consuming this server ignores all of it.** The hints are a server's claims about itself,
+and the specification tells clients not to base trust decisions on them; every tool reached over MCP
+is `ToolMode.EXTERNAL` here, read and write alike (#338), because a server could otherwise obtain
+auto-approval for itself by sending `readOnlyHint: true`. The annotations are published for the
+benefit of foreign clients, and they change no gate at either end.
+
 ### What is still open
 
 - **`tools/list` is not filtered per caller.** The MCP Java SDK (1.1.4) answers it from the globally
@@ -160,7 +195,9 @@ The service's own settings (`server-name`, `server-version`, `keep-alive-interva
 
 - `tl-ai-mcp-server`: `TestMcpAuthentication` (nothing configured serves nobody; a scheme's own 401
   challenge), `TestMcpAuthenticationFilter` (what is refused, and that a refused request never reaches
-  the protocol), `TestMcpSessionPrincipals` (session ownership).
+  the protocol), `TestMcpSessionPrincipals` (session ownership), `TestMcpToolAnnotations` (the table
+  above, that the hints survive the JSON mapper, and that a tl-ai consuming them still says
+  `EXTERNAL`).
 - `tl-ai-demo`: `SecDemoMcpEndpointTest`, against the security test bed's real accounts and real
   access rights - a resource read filtered per object, an attribute left out, a listing counted after
   filtering, an API key resolved to its account, a tool call authorized and one refused by the

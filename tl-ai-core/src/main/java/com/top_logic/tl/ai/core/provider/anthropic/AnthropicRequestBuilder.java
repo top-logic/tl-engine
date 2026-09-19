@@ -71,15 +71,7 @@ public final class AnthropicRequestBuilder {
 		req.setMessages(buildMessages(messages, cacheFrom, cacheTtl));
 
 		if (!request.tools().isEmpty()) {
-			List<Object> tools = new ArrayList<>();
-			for (ToolSchema tool : request.tools()) {
-				Map<String, Object> entry = new LinkedHashMap<>();
-				entry.put("name", tool.name());
-				entry.put("description", tool.description());
-				entry.put("input_schema", parseJson(tool.inputSchemaJson()));
-				tools.add(entry);
-			}
-			req.setTools(tools);
+			req.setTools(buildTools(request, cacheTtl));
 		}
 
 		writeResponseFormat(req, request.responseFormat());
@@ -100,6 +92,43 @@ public final class AnthropicRequestBuilder {
 	}
 
 	// ---- Private helpers ----
+
+	/**
+	 * The tool definitions, with a cache breakpoint where the array stops being the same bytes.
+	 *
+	 * <p>
+	 * Anthropic renders a request as tools, then system, then messages, and a breakpoint caches
+	 * everything in front of it. The breakpoint on the system block therefore covers the whole tool
+	 * array, which is right until a run loads a skill: one appended tool moves the system block and
+	 * the entire prefix is written again (Gitea #346).
+	 * </p>
+	 *
+	 * <p>
+	 * A second breakpoint on the last tool that <em>cannot</em> move keeps that part readable across
+	 * the load. It is only worth a breakpoint when there is something behind it - with no loaded
+	 * skill the system breakpoint already covers the array, and the four we may place are better
+	 * spent on the conversation.
+	 * </p>
+	 */
+	private static List<Object> buildTools(ProviderRequest request, String cacheTtl) {
+		List<ToolSchema> schemas = request.tools();
+		int stable = request.stableToolCount();
+		boolean breakAfterStable = stable > 0 && stable < schemas.size();
+
+		List<Object> tools = new ArrayList<>();
+		for (int i = 0; i < schemas.size(); i++) {
+			ToolSchema tool = schemas.get(i);
+			Map<String, Object> entry = new LinkedHashMap<>();
+			entry.put("name", tool.name());
+			entry.put("description", tool.description());
+			entry.put("input_schema", parseJson(tool.inputSchemaJson()));
+			if (breakAfterStable && i == stable - 1) {
+				entry.put("cache_control", buildCacheControl(cacheTtl));
+			}
+			tools.add(entry);
+		}
+		return tools;
+	}
 
 	private static int countUserRolePositions(List<Message> messages) {
 		int count = 0;

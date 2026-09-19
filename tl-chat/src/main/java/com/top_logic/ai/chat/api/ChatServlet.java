@@ -1488,7 +1488,8 @@ public class ChatServlet extends TopLogicServlet {
 					.setToolDefinitionTokens(composition.getToolDefinitionTokens())
 					.setMessageTokens(composition.getMessageTokens())
 					.setToolResultTokens(composition.getToolResultTokens())
-					.setToolCount(composition.getToolCount()));
+					.setToolCount(composition.getToolCount())
+					.setLoadedSkills(composition.getLoadedSkills()));
 			}
 			String model = turn.getModel();
 			if (model != null && !model.isEmpty()) {

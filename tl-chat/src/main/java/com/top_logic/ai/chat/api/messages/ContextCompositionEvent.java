@@ -36,6 +36,9 @@ public class ContextCompositionEvent extends de.haumacher.msgbuf.data.AbstractDa
 	/** @see #getToolCount() */
 	public static final String TOOL_COUNT__PROP = "toolCount";
 
+	/** @see #getLoadedSkills() */
+	public static final String LOADED_SKILLS__PROP = "loadedSkills";
+
 	private int _systemPromptTokens = 0;
 
 	private int _toolDefinitionTokens = 0;
@@ -45,6 +48,8 @@ public class ContextCompositionEvent extends de.haumacher.msgbuf.data.AbstractDa
 	private int _toolResultTokens = 0;
 
 	private int _toolCount = 0;
+
+	private final java.util.List<String> _loadedSkills = new java.util.ArrayList<>();
 
 	/**
 	 * Creates a {@link ContextCompositionEvent} instance.
@@ -155,6 +160,52 @@ public class ContextCompositionEvent extends de.haumacher.msgbuf.data.AbstractDa
 		_toolCount = value;
 	}
 
+	/**
+	 * The skills whose tools this request carried, in the order they were loaded.
+	 *
+	 * <p>
+	 * The part of {@link #getToolDefinitionTokens()} a {@code loadSkill} added, and the only part of the
+	 * tool array that can still change within a conversation.
+	 * </p>
+	 */
+	public final java.util.List<String> getLoadedSkills() {
+		return _loadedSkills;
+	}
+
+	/**
+	 * @see #getLoadedSkills()
+	 */
+	public com.top_logic.ai.chat.api.messages.ContextCompositionEvent setLoadedSkills(java.util.List<? extends String> value) {
+		internalSetLoadedSkills(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getLoadedSkills()} without chain call utility. */
+	protected final void internalSetLoadedSkills(java.util.List<? extends String> value) {
+		_loadedSkills.clear();
+		_loadedSkills.addAll(value);
+	}
+
+	/**
+	 * Adds a value to the {@link #getLoadedSkills()} list.
+	 */
+	public com.top_logic.ai.chat.api.messages.ContextCompositionEvent addLoadedSkill(String value) {
+		internalAddLoadedSkill(value);
+		return this;
+	}
+
+	/** Implementation of {@link #addLoadedSkill(String)} without chain call utility. */
+	protected final void internalAddLoadedSkill(String value) {
+		_loadedSkills.add(value);
+	}
+
+	/**
+	 * Removes a value from the {@link #getLoadedSkills()} list.
+	 */
+	public final void removeLoadedSkill(String value) {
+		_loadedSkills.remove(value);
+	}
+
 	@Override
 	public String jsonType() {
 		return CONTEXT_COMPOSITION_EVENT__TYPE;
@@ -167,7 +218,8 @@ public class ContextCompositionEvent extends de.haumacher.msgbuf.data.AbstractDa
 			TOOL_DEFINITION_TOKENS__PROP, 
 			MESSAGE_TOKENS__PROP, 
 			TOOL_RESULT_TOKENS__PROP, 
-			TOOL_COUNT__PROP);
+			TOOL_COUNT__PROP, 
+			LOADED_SKILLS__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -197,6 +249,7 @@ public class ContextCompositionEvent extends de.haumacher.msgbuf.data.AbstractDa
 			case MESSAGE_TOKENS__PROP: return getMessageTokens();
 			case TOOL_RESULT_TOKENS__PROP: return getToolResultTokens();
 			case TOOL_COUNT__PROP: return getToolCount();
+			case LOADED_SKILLS__PROP: return getLoadedSkills();
 			default: return null;
 		}
 	}
@@ -209,6 +262,7 @@ public class ContextCompositionEvent extends de.haumacher.msgbuf.data.AbstractDa
 			case MESSAGE_TOKENS__PROP: internalSetMessageTokens((int) value); break;
 			case TOOL_RESULT_TOKENS__PROP: internalSetToolResultTokens((int) value); break;
 			case TOOL_COUNT__PROP: internalSetToolCount((int) value); break;
+			case LOADED_SKILLS__PROP: internalSetLoadedSkills(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
 		}
 	}
 
@@ -237,6 +291,12 @@ public class ContextCompositionEvent extends de.haumacher.msgbuf.data.AbstractDa
 		out.value(getToolResultTokens());
 		out.name(TOOL_COUNT__PROP);
 		out.value(getToolCount());
+		out.name(LOADED_SKILLS__PROP);
+		out.beginArray();
+		for (String x : getLoadedSkills()) {
+			out.value(x);
+		}
+		out.endArray();
 	}
 
 	@Override
@@ -247,6 +307,16 @@ public class ContextCompositionEvent extends de.haumacher.msgbuf.data.AbstractDa
 			case MESSAGE_TOKENS__PROP: setMessageTokens(in.nextInt()); break;
 			case TOOL_RESULT_TOKENS__PROP: setToolResultTokens(in.nextInt()); break;
 			case TOOL_COUNT__PROP: setToolCount(in.nextInt()); break;
+			case LOADED_SKILLS__PROP: {
+				java.util.List<String> newValue = new java.util.ArrayList<>();
+				in.beginArray();
+				while (in.hasNext()) {
+					newValue.add(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in));
+				}
+				in.endArray();
+				setLoadedSkills(newValue);
+			}
+			break;
 			default: super.readField(in, field);
 		}
 	}

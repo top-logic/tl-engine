@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
@@ -321,7 +322,7 @@ public final class DtoMapper {
 			tracker.setEffort(meta.getLastEffort());
 			List<String> loadedSkills = meta.getLoadedSkills();
 			if (loadedSkills != null && !loadedSkills.isEmpty()) {
-				tracker.loadLoadedSkills(new HashSet<>(loadedSkills));
+				tracker.loadLoadedSkills(new LinkedHashSet<>(loadedSkills));
 			}
 		} catch (Exception e) {
 			// Corrupted metadata — ignore and start fresh.

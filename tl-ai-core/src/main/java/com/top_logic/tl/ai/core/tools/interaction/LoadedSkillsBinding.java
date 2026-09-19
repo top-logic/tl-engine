@@ -16,6 +16,12 @@ import com.top_logic.tl.ai.core.binding.ThreadLocalBinding;
  * Skill IDs are added by {@link SkillTool#loadSkill} during agent execution and read by the chat
  * layer after the run to persist them in session metadata.
  * </p>
+ *
+ * <p>
+ * The bound set should keep insertion order: it is what the next run of the session restores its
+ * tool catalog from, and a catalog restored in another order advertises the same tools as different
+ * bytes, which costs the whole prompt cache for nothing (Gitea #346).
+ * </p>
  */
 public class LoadedSkillsBinding {
 
@@ -43,6 +49,21 @@ public class LoadedSkillsBinding {
 		Set<String> skills = SKILLS.get();
 		if (skills != null) {
 			skills.add(skillId);
+		}
+	}
+
+	/**
+	 * Removes a skill ID from the bound set. No-op if no set is bound.
+	 *
+	 * <p>
+	 * What an eviction reports: the catalog dropped the skill's tools, so the session must not
+	 * restore it as loaded in the next run.
+	 * </p>
+	 */
+	public static void removeSkill(String skillId) {
+		Set<String> skills = SKILLS.get();
+		if (skills != null) {
+			skills.remove(skillId);
 		}
 	}
 

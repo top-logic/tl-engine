@@ -178,17 +178,33 @@ public sealed interface AgentEvent {
 	 *        what the agent read back from the tools it ran, which is usually the part of a
 	 *        conversation that grows fastest and the part a user least expects
 	 * @param toolCount number of tool schemas sent with the request
+	 * @param loadedSkills the skills whose tools this request carried, in the order they were
+	 *        loaded - the part of {@code toolDefinitionTokens} a {@code loadSkill} added, and the
+	 *        only part of the tool array that can still change within the conversation
 	 */
 	record ContextComposition(String runId, int turnNumber, Instant timestamp,
 			int systemPromptTokens, int toolDefinitionTokens, int messageTokens, int toolResultTokens,
-			int toolCount)
+			int toolCount, List<String> loadedSkills)
 			implements AgentEvent {
+
+		/** */
+		public ContextComposition {
+			loadedSkills = loadedSkills == null ? List.of() : List.copyOf(loadedSkills);
+		}
+
+		/** Shape of a composition recorded before the loaded skills were named. */
+		public ContextComposition(String runId, int turnNumber, Instant timestamp,
+				int systemPromptTokens, int toolDefinitionTokens, int messageTokens, int toolResultTokens,
+				int toolCount) {
+			this(runId, turnNumber, timestamp, systemPromptTokens, toolDefinitionTokens, messageTokens,
+				toolResultTokens, toolCount, List.of());
+		}
 
 		/** Legacy shape of a composition recorded before tool results were counted apart. */
 		public ContextComposition(String runId, int turnNumber, Instant timestamp,
 				int systemPromptTokens, int toolDefinitionTokens, int messageTokens, int toolCount) {
 			this(runId, turnNumber, timestamp, systemPromptTokens, toolDefinitionTokens, messageTokens, 0,
-				toolCount);
+				toolCount, List.of());
 		}
 	}
 

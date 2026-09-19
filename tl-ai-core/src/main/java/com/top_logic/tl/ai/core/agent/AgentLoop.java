@@ -670,6 +670,7 @@ public class AgentLoop {
 		// CompactionStarted already reported - memory.compact()'s "auto" default is never read by
 		// anything that persists or displays it.
 		CompactionResult result = memory.compact("proactive");
+		_registry.historyCompacted();
 		emit(listener, new AgentEvent.CompactionCompleted(runId, turn, now(), result));
 	}
 
@@ -692,6 +693,7 @@ public class AgentLoop {
 				int tokensBefore = memory.estimateTokens();
 				emit(listener, new AgentEvent.CompactionStarted(runId, turn, now(), tokensBefore, "reactive"));
 				CompactionResult result = memory.compact("reactive");
+				_registry.historyCompacted();
 				emit(listener, new AgentEvent.CompactionCompleted(runId, turn, now(), result));
 			}
 		}
@@ -1480,7 +1482,13 @@ public class AgentLoop {
 			AgentEventListener listener, String runId, int turn) throws ProviderException {
 		ensureTurnContext(conversation);
 
-		List<ToolSchema> filteredTools = _registry.toolSchemas(new ToolPermissionFilter(context.security()));
+		ToolPermissionFilter toolFilter = new ToolPermissionFilter(context.security());
+		List<ToolSchema> filteredTools = _registry.toolSchemas(toolFilter);
+		// Where the tool array stops being the same bytes on every request of this conversation: a
+		// loaded skill's tools follow behind it, and a provider that places cache breakpoints puts
+		// one here rather than paying for the whole array again after a loadSkill (#346).
+		int stableToolCount = Math.min(_registry.stableToolCount(toolFilter), filteredTools.size());
+		List<String> loadedSkills = _registry.loadedSkills();
 
 		if (Logger.isDebugEnabled(AgentLoop.class)) {
 			List<String> toolNames = filteredTools.stream().map(ToolSchema::name).toList();
@@ -1495,7 +1503,7 @@ public class AgentLoop {
 		// whose signature never arrived, is dropped here rather than rejected by the API - a request
 		// refused over a replayed block fails every later one too, because the block stays in memory.
 		List<Message> history = MessageHistorySanitizer.forProvider(conversation.messages(), providerId());
-		emit(listener, contextComposition(runId, turn, systemPrompt, filteredTools, history));
+		emit(listener, contextComposition(runId, turn, systemPrompt, filteredTools, history, loadedSkills));
 
 		ProviderRequest request = new ProviderRequest(
 			_config.model(),
@@ -1506,7 +1514,8 @@ public class AgentLoop {
 			_config.modelOptions(),
 			_config.responseFormat(),
 			_config.toolChoice(),
-			Duration.ofSeconds(_config.timeoutSeconds()));
+			Duration.ofSeconds(_config.timeoutSeconds()),
+			stableToolCount);
 
 		ResponseCollector collector = new ResponseCollector(listener, runId, turn, context.cancellationToken());
 		long startNanos = System.nanoTime();
@@ -1540,7 +1549,8 @@ public class AgentLoop {
 	 * </p>
 	 */
 	private static AgentEvent.ContextComposition contextComposition(String runId, int turn,
-			String systemPrompt, List<ToolSchema> tools, List<Message> messages) {
+			String systemPrompt, List<ToolSchema> tools, List<Message> messages,
+			List<String> loadedSkills) {
 		TokenEstimator estimator = CONTEXT_ESTIMATOR;
 		int toolTokens = 0;
 		for (ToolSchema tool : tools) {
@@ -1556,7 +1566,7 @@ public class AgentLoop {
 		}
 		return new AgentEvent.ContextComposition(runId, turn, now(),
 			estimator.estimateText(systemPrompt), toolTokens,
-			estimator.estimateTokens(messages), toolResultTokens, tools.size());
+			estimator.estimateTokens(messages), toolResultTokens, tools.size(), loadedSkills);
 	}
 
 	/**

@@ -6,6 +6,7 @@
 package com.top_logic.tl.ai.core.agent.skills;
 
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -218,6 +219,88 @@ public class TestSkillTool extends TestCase {
 
 		assertNotNull("The permitted tool is restored", catalog.getTool("test__toolA"));
 		assertNull("The denied tool is not restored", catalog.getTool("test__toolB"));
+	}
+
+	/**
+	 * Past the ceiling, a load says which skill it cost - and the lost skill can be loaded again.
+	 *
+	 * <p>
+	 * The contract of Gitea #346: overlays are bounded, and the model is not left calling a tool
+	 * that quietly went away. It read the evicted skill's instructions earlier in this very
+	 * conversation.
+	 * </p>
+	 */
+	public void testLoadingPastTheCeilingSaysWhatItCost() {
+		ToolCatalog base = new ToolCatalog();
+		base.freeze();
+		DynamicToolCatalog catalog = new DynamicToolCatalog(base, 1);
+
+		Map<String, Skill> skills = new LinkedHashMap<>();
+		skills.put("skill/a", new Skill("skill/a", "A", "A content", List.of("test.toolA")));
+		skills.put("skill/b", new Skill("skill/b", "B", "B content", List.of("test.toolB")));
+		SkillTool tool = new SkillTool(skills, catalog, TestSkillTool::resolveTool);
+
+		tool.loadSkill("skill/a");
+		String second = tool.loadSkill("skill/b");
+
+		assertTrue("The eviction must be stated: " + second, second.contains("skill/a"));
+		assertTrue("The eviction must be stated: " + second, second.contains("unloaded"));
+		assertNull("The evicted skill's tool is gone", catalog.getTool("test__toolA"));
+		assertEquals(Set.of("skill/b"), tool.loadedSkills());
+
+		String again = tool.loadSkill("skill/a");
+		assertFalse("An evicted skill must load again, not answer 'already loaded': " + again,
+			again.contains("already loaded"));
+		assertNotNull("Its tool must come back", catalog.getTool("test__toolA"));
+	}
+
+	/** A skill without tools counts as loaded, so its content is not dumped twice. */
+	public void testASkillWithoutToolsIsLoadedToo() {
+		assertTrue(_tool.loadSkill("test/sample-skill").contains("SAMPLE RULE"));
+		assertEquals(Set.of("test/sample-skill"), _tool.loadedSkills());
+
+		String again = _tool.loadSkill("test/sample-skill");
+		assertTrue("The second load must be the short answer: " + again,
+			again.contains("already loaded"));
+		assertFalse("The content must not be repeated: " + again, again.contains("SAMPLE RULE"));
+	}
+
+	/**
+	 * After a compaction the instructions are delivered again, and the tools never left.
+	 *
+	 * <p>
+	 * A summarizing compaction can replace the turn that carried a skill's text. The tools stay -
+	 * taking a capability away for a reason the model cannot see is worse - but the short "already
+	 * loaded" answer would leave the model following a skill it can no longer read.
+	 * </p>
+	 */
+	public void testACompactionMakesTheInstructionsLoadableAgain() {
+		assertTrue(_tool.loadSkill("test/frontmatter-skill").contains("FRONTMATTER RULE"));
+		assertTrue(_tool.loadSkill("test/frontmatter-skill").contains("already loaded"));
+
+		_dynamicCatalog.historyCompacted();
+
+		String reloaded = _tool.loadSkill("test/frontmatter-skill");
+		assertTrue("The instructions must arrive again: " + reloaded,
+			reloaded.contains("FRONTMATTER RULE"));
+		assertNotNull("The tools must not have moved", _dynamicCatalog.getTool("test__toolA"));
+		assertEquals(List.of("test/frontmatter-skill"), _dynamicCatalog.loadedSkills());
+	}
+
+	/** Restored skills keep the order the session loaded them in. */
+	public void testRestoreKeepsTheLoadOrder() {
+		ToolCatalog base = new ToolCatalog();
+		base.freeze();
+		DynamicToolCatalog catalog = new DynamicToolCatalog(base);
+
+		Map<String, Skill> skills = new LinkedHashMap<>();
+		skills.put("skill/a", new Skill("skill/a", "A", "A content", List.of("test.toolA")));
+		skills.put("skill/b", new Skill("skill/b", "B", "B content", List.of("test.toolB")));
+
+		new SkillTool(skills, catalog, TestSkillTool::resolveTool, null,
+			new LinkedHashSet<>(List.of("skill/b", "skill/a")));
+
+		assertEquals(List.of("skill/b", "skill/a"), catalog.loadedSkills());
 	}
 
 	// ===== Helpers =====

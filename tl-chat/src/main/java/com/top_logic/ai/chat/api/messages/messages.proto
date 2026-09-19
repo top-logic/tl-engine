@@ -732,6 +732,16 @@ message ContextCompositionEvent {
 
 	/** Number of tool schemas sent with the request. */
 	int toolCount;
+
+	/**
+	 * The skills whose tools this request carried, in the order they were loaded.
+	 *
+	 * <p>
+	 * The part of {@link #toolDefinitionTokens} a {@code loadSkill} added, and the only part of the
+	 * tool array that can still change within a conversation.
+	 * </p>
+	 */
+	repeated string loadedSkills;
 }
 
 /** SSE event for tool call started. */

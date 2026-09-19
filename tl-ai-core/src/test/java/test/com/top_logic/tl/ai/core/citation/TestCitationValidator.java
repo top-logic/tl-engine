@@ -305,6 +305,34 @@ public class TestCitationValidator extends TestCase {
 		assertTrue(kept.excerpt().contains("amount: 184.90"));
 	}
 
+	/**
+	 * A prose source cited without a usable passage must not show the raw JSON it was found in.
+	 *
+	 * <p>
+	 * The host's tools answer JSON with Markdown inside. Before the fix the fallback cut a window of
+	 * that JSON out by character count, so the popover said {@code "body": "Die **Versand** …\\n\\n"}
+	 * - escapes, asterisks and punctuation included (#418).
+	 * </p>
+	 */
+	public void testJsonToolResultIsNotShownRaw() {
+		String toolResult = "{\"sections\":[{\"id\":\"sec-3\",\"title\":\"Versand\","
+			+ "\"body\":\"## Versand\\n\\nDie **Versandkosten** tr\u00e4gt der Besteller, sofern nichts"
+			+ " anderes vereinbart ist.\\n\\nEine [Ausnahme](https://example.org/awb) gilt f\u00fcr"
+			+ " Teillieferungen.\"}]}";
+		Result result = CitationValidator.validate("Der Besteller zahlt den Versand [1].",
+			List.of(new Declaration(1, "cite", "c1", "section", "sec-3", "Versand", "", "")),
+			List.of(toolResult));
+
+		String excerpt = result.citations().get(0).excerpt();
+		assertFalse("No JSON escapes in a popover: " + excerpt, excerpt.contains("\\n"));
+		assertFalse("No JSON escapes in a popover: " + excerpt, excerpt.contains("\\\""));
+		assertFalse("No Markdown syntax in a popover: " + excerpt, excerpt.contains("**"));
+		assertFalse("No Markdown headings in a popover: " + excerpt, excerpt.contains("##"));
+		assertFalse("No JSON punctuation in a popover: " + excerpt, excerpt.contains("\":"));
+		assertTrue("The source's own words must survive: " + excerpt,
+			excerpt.contains("Versandkosten tr\u00e4gt der Besteller"));
+	}
+
 	/** Too short to be a sentence, so not shown as one. */
 	public void testTinyPassageIsIgnored() {
 		Result result = CitationValidator.validate("Fakt [1].",

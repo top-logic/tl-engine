@@ -14,7 +14,16 @@
 						description="a Beleg of this application"
 						id-source="the id of that object as a tool reported it, e.g. its TID GenericObject:5371"
 						passage="false"
-					/>
+					>
+						<!--
+							`name` is the model's vocabulary and stays English in every installation;
+							this is the word the Quellen rail and the marker popover show a reader.
+						-->
+						<label>
+							<de>Beleg</de>
+							<en>Invoice</en>
+						</label>
+					</kind>
 				</kinds>
 			</instance>
 		</config>

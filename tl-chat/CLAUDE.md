@@ -112,7 +112,7 @@ the React chat. Session state the classic control reads - `Chat`, `ChatProcessor
 | Sources | `ui/src` (TypeScript, `.tsx`, `jsx: "react"` - the classic runtime, because React comes from the host) |
 | Bundler | Vite library build, entries `ui/src/main.tsx` (`tl-chat-ui.js`) and `ui/src/index.ts` (`tl-chat-seams.js`) |
 | Output | `src/main/webapp/script/tl-chat-ui.js`, `tl-chat-ui.css`, `tl-chat-seams.js` - **git-ignored build output, never commit it** |
-| Node | installed by `frontend-maven-plugin` into `ui/node/` (v20.10.0); a local Node 20 works too |
+| Node | installed by `frontend-maven-plugin` into `ui/node/` (v20.20.2 - 20.19 or newer, because jsdom 29 reaches `@exodus/bytes` through a `require()` of an ES module); a local Node 20.19+ works too. After a version bump, delete `ui/node/` once: the plugin swaps the binary but keeps the old bundled npm, which then fails with "Class extends value undefined is not a constructor or null". |
 | Dependencies | `marked` (MIT) + `dompurify` (Apache-2.0 or MPL-2.0) for markdown, `highlight.js` (BSD-3-Clause) for code blocks - core plus 13 registered grammars. All three are bundled into `tl-chat-ui.js`, so their licences travel with the WAR. |
 
 `mvn -pl tl-chat install` runs, in `generate-resources`: `npm install`, then `npm run typecheck`

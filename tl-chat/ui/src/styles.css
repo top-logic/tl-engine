@@ -3825,7 +3825,16 @@
   color: var(--text-secondary);
   font-size: 0.8125rem;
   line-height: 1.45;
-  max-height: 6.5rem;
+  /* A structured source's excerpt is one `label: value` per line; collapsed, it is a run-on line. */
+  white-space: pre-wrap;
+  /*
+   * Clamped to whole lines with an ellipsis, not cut by height: `max-height` with `overflow:
+   * hidden` sliced the last line through the middle of its letters.
+   */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  line-clamp: 5;
   overflow: hidden;
 }
 

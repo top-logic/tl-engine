@@ -55,7 +55,7 @@ public class TestMemoryScriptFunctions extends BasicTestCase {
 
 	/** The owner forgets their own memory and it is gone. */
 	public void testOwnerDeletesTheirOwn() throws Exception {
-		UserMemory memory = _store.createMemory(anna, MemoryKind.FACT, "Wegwerfen.", null, null);
+		UserMemory memory = _store.createMemory(anna, MemoryKind.FACT, "Wegwerfen.", null);
 		advance();
 		assertEquals(1, _store.memoriesOf(anna, 0).size());
 
@@ -67,7 +67,7 @@ public class TestMemoryScriptFunctions extends BasicTestCase {
 
 	/** Someone else's memory is refused, and stays as it was. */
 	public void testForeignMemoryRefused() throws Exception {
-		UserMemory memory = _store.createMemory(anna, MemoryKind.FACT, "Annas Erinnerung.", null, null);
+		UserMemory memory = _store.createMemory(anna, MemoryKind.FACT, "Annas Erinnerung.", null);
 		advance();
 
 		as(ben, () -> assertRefused(() -> AIScriptFunctions.memoryDelete(memory)));
@@ -87,7 +87,7 @@ public class TestMemoryScriptFunctions extends BasicTestCase {
 
 	/** A single-element selection is the one row the menu was opened on. */
 	public void testSingleElementSelection() throws Exception {
-		UserMemory memory = _store.createMemory(anna, MemoryKind.FACT, "Aus einer Liste.", null, null);
+		UserMemory memory = _store.createMemory(anna, MemoryKind.FACT, "Aus einer Liste.", null);
 		advance();
 
 		as(anna, () -> assertTrue(AIScriptFunctions.memoryDelete(List.of(memory))));
@@ -107,7 +107,7 @@ public class TestMemoryScriptFunctions extends BasicTestCase {
 	public void testAdministratorDeletesAnothersMemory() throws Exception {
 		Person admin = PersonManager.getManager().getRoot();
 		assertTrue("The test needs an administrator to act as.", admin.isAdmin());
-		UserMemory memory = _store.createMemory(anna, MemoryKind.FACT, "Von der Verwaltung.", null, null);
+		UserMemory memory = _store.createMemory(anna, MemoryKind.FACT, "Von der Verwaltung.", null);
 		advance();
 
 		as(admin, () -> assertTrue(AIScriptFunctions.memoryDelete(memory)));

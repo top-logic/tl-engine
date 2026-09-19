@@ -18,7 +18,6 @@ import com.top_logic.tl.ai.core.agent.environment.UserMemorySettings;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore.MemoryKind;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
-import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.execution.model.UserMemory;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
@@ -130,11 +129,11 @@ public class UserMemoryTool {
 			return "error: Memories cannot be stored right now. Tell the user and carry on.";
 		}
 		try {
-			AgentExecution execution = currentExecution(context);
-			AgentSession session = execution == null ? null : execution.getSession();
-			String runId = execution == null ? null : execution.getRunId();
+			// The execution wrapper is handed over unread: the store dereferences it on its writer
+			// thread, which sees HEAD. Reading it here would fail on a run whose execution row the
+			// writer created after this thread's view of the database was fixed.
 			AgentExecutionStore.getInstance()
-				.createMemory(owner, resolvedKind, trimmed, session, runId);
+				.createMemory(owner, resolvedKind, trimmed, currentExecution(context));
 			return "Stored as a " + resolvedKind.name().toLowerCase(Locale.ROOT) + ": " + trimmed
 				+ "\nIt will be part of what you are told at the start of the next conversation. "
 				+ "The user can read it and delete it in their memory list.";

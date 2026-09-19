@@ -24,6 +24,9 @@ import com.top_logic.tl.ai.core.agent.environment.UserMemoryConfig;
 import com.top_logic.tl.ai.core.agent.environment.UserMemorySettings;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore.MemoryKind;
+import com.top_logic.tl.ai.core.execution.AgentExecutionStore.SessionKind;
+import com.top_logic.tl.ai.core.execution.model.AgentExecution;
+import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.execution.model.UserMemory;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.model.ModelService;
@@ -173,8 +176,8 @@ public class TestUserMemoryTool extends BasicTestCase {
 
 	/** What was kept is found again by its words, and nothing else is. */
 	public void testRecall() throws Exception {
-		_store.createMemory(anna, MemoryKind.FACT, "Arbeitet in der Buchhaltung.", null, null);
-		_store.createMemory(anna, MemoryKind.PREFERENCE, "Bevorzugt kurze Antworten.", null, null);
+		_store.createMemory(anna, MemoryKind.FACT, "Arbeitet in der Buchhaltung.", null);
+		_store.createMemory(anna, MemoryKind.PREFERENCE, "Bevorzugt kurze Antworten.", null);
 		advance();
 
 		String hit = as(anna, () -> _tool.recall("Buchhaltung", ToolContext.EMPTY));
@@ -198,7 +201,7 @@ public class TestUserMemoryTool extends BasicTestCase {
 	 * </p>
 	 */
 	public void testAnotherAccountSeesNothing() throws Exception {
-		_store.createMemory(anna, MemoryKind.FACT, "Annas Geheimnis.", null, null);
+		_store.createMemory(anna, MemoryKind.FACT, "Annas Geheimnis.", null);
 		advance();
 
 		String recalled = as(ben, () -> _tool.recall("Geheimnis", ToolContext.EMPTY));
@@ -211,15 +214,42 @@ public class TestUserMemoryTool extends BasicTestCase {
 
 	/** The newest memories are the ones the environment block is opened with. */
 	public void testTheEnvironmentBlockReadsTheNewestFirst() throws Exception {
-		_store.createMemory(anna, MemoryKind.FACT, "Das Ältere.", null, null);
+		_store.createMemory(anna, MemoryKind.FACT, "Das Ältere.", null);
 		Thread.sleep(10);
-		_store.createMemory(anna, MemoryKind.FACT, "Das Neuere.", null, null);
+		_store.createMemory(anna, MemoryKind.FACT, "Das Neuere.", null);
 		advance();
 
 		List<UserMemories.Entry> loaded = as(anna, () -> UserMemories.load(TLContext.currentUser()));
 		assertEquals(2, loaded.size());
 		assertEquals("Das Neuere.", loaded.get(0).text());
 		assertEquals("Das Ältere.", loaded.get(1).text());
+	}
+
+	/**
+	 * A memory records the run it came out of, without the caller ever dereferencing that run.
+	 *
+	 * <p>
+	 * The regression this pins down was found end to end and not here: the tool used to read
+	 * {@code execution.getSession()} on the agent thread, whose view of the database predates the
+	 * execution row the store's writer thread had just created, and every single call came back as
+	 * "created after access revision". So the session revision is deliberately <em>not</em> advanced
+	 * between the two calls below - that gap is the bug.
+	 * </p>
+	 */
+	public void testTheOriginIsReadOnTheWriterThread() throws Exception {
+		AgentSession session = _store.createSession(SessionKind.CHAT, anna, "Ein Chat");
+		AgentExecution execution =
+			_store.beginExecution(session, "run-of-a-memory", "test-agent", "test-model", null, null);
+
+		UserMemory memory =
+			_store.createMemory(anna, MemoryKind.FACT, "Aus einem laufenden Lauf.", execution);
+		advance();
+
+		assertEquals("run-of-a-memory", memory.getRunId());
+		assertEquals("The memory knows the conversation it came out of.", session, memory.getSession());
+
+		_store.deleteSession(session);
+		advance();
 	}
 
 	@Override

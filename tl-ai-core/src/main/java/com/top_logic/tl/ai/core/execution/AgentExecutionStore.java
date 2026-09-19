@@ -1362,14 +1362,16 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 *        What kind of thing is kept; must not be <code>null</code>.
 	 * @param text
 	 *        What is kept; must not be blank.
-	 * @param session
-	 *        The conversation it came out of; may be <code>null</code> for a headless run.
-	 * @param runId
-	 *        The run that wrote it; may be <code>null</code>.
+	 * @param origin
+	 *        The run it came out of, which is also how it finds its conversation; may be
+	 *        <code>null</code> for a run that is not recorded, and the memory then records no
+	 *        origin. <b>Read on the writer thread</b>, not here: the caller is usually an agent
+	 *        thread whose view of the database predates the execution row the writer created, and
+	 *        dereferencing it there fails with "created after access revision".
 	 * @return The created row.
 	 */
-	public UserMemory createMemory(Person owner, MemoryKind kind, String text, AgentSession session,
-			String runId) {
+	public UserMemory createMemory(Person owner, MemoryKind kind, String text,
+			AgentExecution origin) {
 		Objects.requireNonNull(owner, "A memory needs an owner.");
 		Objects.requireNonNull(kind, "A memory needs a kind.");
 		if (text == null || text.isBlank()) {
@@ -1381,10 +1383,11 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 			memory.setOwner(owner);
 			memory.setKind(memoryKindClassifier(kind));
 			memory.setText(text.strip());
-			if (session != null) {
-				memory.setSession(session);
+			if (origin != null) {
+				// Here, inside the writer's fresh system interaction, which sees HEAD.
+				memory.setSession(origin.getSession());
+				memory.setRunId(origin.getRunId());
 			}
-			memory.setRunId(runId);
 			memory.setCreatedAt(new Date());
 			tx.commit();
 			return memory;

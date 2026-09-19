@@ -244,6 +244,23 @@ cost regression nothing else reports:
 
 `LLMProviderRegistry` (TopLogic service) maps model names → providers with auto-discovery via `ProviderModelDiscovery`. Supports configurable base URLs for OpenAI-compatible endpoints (local models, custom providers).
 
+### Model health and failover (tl-ai-core `provider/health/`)
+
+A model that could not answer is remembered: `ModelAvailability` (a component of `LLMService`, not a
+service of its own) turns the `ProviderException.Kind` the providers already produce into a mark -
+`QUOTA` sticky, `CAPACITY` for ~30 s, `TRANSIENT` costing one attempt per turn - and a weaker cause
+never replaces a stronger mark that still holds. `INVALID_REQUEST` and `CONTEXT_WINDOW_EXCEEDED`
+mark nothing: they would fail the same way on the next model.
+
+`LLMService`'s `<failover>` section says where a run goes instead, per model name. It is **empty by
+default and an empty section changes nothing**. Where one is configured, `AgentLoop.callRouted`
+moves the run to the next healthy model of the chain **for the rest of the run** - not for the turn,
+because every provider caches by prefix - rebuilding the provider, the limits and the sampling
+options for the target while the tool schemas and the response format travel unchanged. Every model
+passed over is named on the `AgentEvent.ModelSwitched`, in a `MODEL_CHANGED` transcript part and in
+the chat's notice line; `AgentExecution.model` is corrected to what answered. `aiModelHealth()` /
+`aiModelHealthReset(model)` read and clear the marks. See `tl-ai-core/doc/model-failover.md`.
+
 ### Tool System (tl-ai-core `tools/`)
 
 - `AnnotatedTools` — reflection engine scanning `@ToolMethod` methods into `Tool` instances (lives in tl-ai-tool-api)

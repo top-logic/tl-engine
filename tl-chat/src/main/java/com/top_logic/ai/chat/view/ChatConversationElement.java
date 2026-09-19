@@ -260,6 +260,13 @@ public class ChatConversationElement implements UIElement {
 		String CONTEXT = "context";
 
 		/**
+		 * Configuration property name for {@link #getSelection()}.
+		 *
+		 * @see #getSelection()
+		 */
+		String SELECTION = "selection";
+
+		/**
 		 * Configuration property name for {@link #getMenuItems()}.
 		 *
 		 * @see #getMenuItems()
@@ -566,6 +573,40 @@ public class ChatConversationElement implements UIElement {
 		@Label("Context")
 		@Nullable
 		Context getContext();
+
+		/**
+		 * The object the user has selected, stated to the agent in one line.
+		 *
+		 * <p>
+		 * The question this answers is the one every user asks first - "what about the one I have
+		 * open?" - and the shorthand for the {@code <fact>} nobody writes, because writing it means
+		 * knowing how this product spells an object identifier. Name the page's selection channel
+		 * and the conversation states the selected object, with its type and that identifier, as a
+		 * per-turn fact of the {@code <turn-context>} block:
+		 * </p>
+		 *
+		 * <pre>
+		 * &lt;chat-conversation input="chatSession"&gt;
+		 *   &lt;selection channel="selectedInvoice"/&gt;
+		 * &lt;/chat-conversation&gt;
+		 * </pre>
+		 *
+		 * <p>
+		 * Never stable: what the user has selected is the thing that changes most often in a
+		 * conversation, so it travels in the turn and never in the system prompt.
+		 * </p>
+		 *
+		 * <p>
+		 * A {@code <chat-dock/>} states it the same way, on the {@code <chat-conversation/>} nested
+		 * inside it - and should, because the dock is where a user asks about the page behind it.
+		 * The dock's own channel has to be handed the page's selection for that; on a shell whose
+		 * pages are {@code <view-ref>}s, that is a {@code <bind>} per page.
+		 * </p>
+		 */
+		@Name(SELECTION)
+		@Label("Selection")
+		@Nullable
+		Selection getSelection();
 
 		/**
 		 * Registered composer-menu-item names.
@@ -923,6 +964,93 @@ public class ChatConversationElement implements UIElement {
 		@Label("Stable")
 		@BooleanDefault(true)
 		boolean getStable();
+	}
+
+	/**
+	 * The page's current selection, stated to the agent as one per-turn fact.
+	 *
+	 * <p>
+	 * The one-line form of what {@link Fact} can express the long way round. The value it produces
+	 * names the selected object three times over - the label the user sees, the qualified type name
+	 * and the identifier every tool reads back - so the agent can both answer "which one do I have
+	 * open?" and act on it. See {@link ChatSelection} for the exact form.
+	 * </p>
+	 *
+	 * <p>
+	 * It is a fact of the {@code <turn-context>} block and never of the system prompt: a selection is
+	 * the value that changes most often in a conversation, and the environment block has to stay
+	 * byte-identical across its turns or every provider's prompt cache misses.
+	 * </p>
+	 *
+	 * @see Config#getSelection()
+	 */
+	@TagName("selection")
+	public interface Selection extends ConfigurationItem {
+
+		/**
+		 * Configuration property name for {@link #getChannel()}.
+		 *
+		 * @see #getChannel()
+		 */
+		String CHANNEL = "channel";
+
+		/**
+		 * Configuration property name for {@link #getName()}.
+		 *
+		 * @see #getName()
+		 */
+		String NAME = "name";
+
+		/**
+		 * Configuration property name for {@link #getLabel()}.
+		 *
+		 * @see #getLabel()
+		 */
+		String LABEL = "label";
+
+		/**
+		 * The channel holding what the user has selected - one object, several, or nothing.
+		 *
+		 * <p>
+		 * Normally the {@code selection} channel of the table or list the user picks in. A channel
+		 * of <em>this</em> view: a page of a shell hands its selection to a dock in the shell's
+		 * footer with a {@code <bind>} on the {@code <view-ref>}, the way it hands over the draft.
+		 * </p>
+		 */
+		@Name(CHANNEL)
+		@Label("Channel")
+		@Mandatory
+		@Format(ChannelRefFormat.class)
+		ChannelRef getChannel();
+
+		/**
+		 * What the fact is called in front of the model.
+		 *
+		 * <p>
+		 * Read by the model, so it is English and not a resource, like every other text a tool puts
+		 * in front of one. Name what the page holds - {@code "Open invoice"}, {@code "Selected
+		 * task"} - where that says more than the default does.
+		 * </p>
+		 */
+		@Name(NAME)
+		@Label("Name")
+		@StringDefault(ChatSelection.DEFAULT_NAME)
+		@NonNullable
+		String getName();
+
+		/**
+		 * TL-Script computing what to call one selected object, taking that object as its argument.
+		 *
+		 * <p>
+		 * Left empty the application's own label is used - which is what the user sees on the
+		 * screen, and therefore the right answer to a question about it. Configure an expression
+		 * here when an object's label is not what makes it recognisable in a sentence.
+		 * </p>
+		 */
+		@Name(LABEL)
+		@Label("Label")
+		@Nullable
+		Expr getLabel();
 	}
 
 	/**

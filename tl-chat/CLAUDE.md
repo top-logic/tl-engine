@@ -963,6 +963,56 @@ See `tl-ai-core/doc/environment-block.md`.
 A fact that throws is sent empty with a WARN rather than taking the page down - the user is in the
 middle of a sentence.
 
+#### The one line for the selection: `<selection/>`
+
+The question a user asks a chat beside a page is almost always about what they have open, and
+expressing that as `<fact>`s means knowing how this product spells an object identifier. It is one
+line instead (#494):
+
+```xml
+<chat-conversation input="chatSession">
+    <selection channel="selectedInvoice"/>
+</chat-conversation>
+```
+
+which states, as a per-turn fact of the `<turn-context>` block:
+
+```
+Selected object: Hosting August [type:tl.ai.demo.imageclassification:Invoice] [id:GenericObject:12345]
+```
+
+| | |
+|--|--|
+| `channel` | Mandatory. The channel holding what the user has selected - one object, several, or nothing. A channel of *this* view; a page of a shell hands its selection to a dock in the footer with a `<bind>` on the `<view-ref>`, exactly the way it hands over the draft. |
+| `name` | What the fact is called in front of the model. Default `Selected object`; name what the page actually holds where that says more. |
+| `<label>` | TL-Script naming one object. Empty uses the application's own label - which is what the user sees on their screen, and therefore the right answer to a question about it. |
+
+**Three things, not one**, and each is load-bearing (`ChatSelection`): the label answers "which one
+do I have open?", the qualified type name says what kind of thing it is, and the identifier is the
+same `label [id:TID]` form every tool result writes, so the model feeds it straight into the next
+tool call and `TidResolver` reads it back. A label alone leaves the agent searching for the object
+the user is looking at, which is the state #494 was filed about.
+
+Never stable, and it cannot be configured to be: a selection is the value that changes most often in
+a conversation. Nothing selected says `none` rather than nothing at all, and a selection of more than
+`ChatSelection.MAX_NAMED` (20) objects names that many and counts the rest - a stray Ctrl+A on a
+table must not put ten thousand identifiers in front of the model. The selection is stated **before**
+the `<context>` facts, because the block is read top down.
+
+**A dock states it too, and should.** `<chat-dock>` has no `<selection>` of its own - it frames a
+`<chat-conversation>`, and that is where the line goes. The dock is where a user asks about the page
+*behind* it, so the page has to hand its selection over: in `tl-ai-demo` the shell declares a
+`pageSelection` channel, the Belege page's `<view-ref>` binds its own `selectedInvoice` onto it, and
+the dock's conversation states that channel. Where a shell has no channel naming the active page -
+which is where the engine stands today - name the fact after the list it reads (`Selected invoice`)
+rather than after "the selection", because the value survives the user navigating away.
+
+**State them from every place one conversation is reachable from.** A page that declares a
+`<context>` and a dock over the same conversation that declares none flips the environment block
+between the turns of one chat: the stable facts *and* the `{{turn_context}}` sentence are part of
+the system prompt, and a prompt that changes mid-conversation misses every provider's prompt cache.
+The demo's dock therefore repeats the page's `Application` fact word for word.
+
 **What the agent remembers about the user** (#439) rides in the same block, under its own heading,
 and is read **once per conversation** for the same prompt-cache reason: `ChatProcessor.sendMessage`
 asks `ChatSessionManager.getActiveMemories` when the first message of a conversation is sent, keeps

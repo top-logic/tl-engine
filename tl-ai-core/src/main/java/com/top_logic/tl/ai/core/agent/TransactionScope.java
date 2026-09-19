@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
 import com.top_logic.base.locking.Lock;
 import com.top_logic.base.locking.LockService;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
@@ -231,6 +232,27 @@ public class TransactionScope implements AutoCloseable {
 	/**
 	 * Commit the active transaction and release all locks.
 	 *
+	 * <p>
+	 * Every way the engine can refuse a commit arrives here as a {@link TransactionException}, and
+	 * this is the only exception type this method throws for a failed commit. That is not a
+	 * convenience: the agent loop recognizes a failed commit by this type, and everything the
+	 * failure has to reach - the server log, the rollback of the turn, the notice that corrects
+	 * what the model was told, the transcript - hangs off that. A failure that slipped past in its
+	 * own type left the run to die in the chat's catch-all, which announced it to the browser as a
+	 * provider error: the model was blamed for a mandatory attribute the application refused to
+	 * store (issue #410).
+	 * </p>
+	 *
+	 * <p>
+	 * The engine throws three unrelated families and picks between them by cause, not by layer:
+	 * {@link KnowledgeBaseException} for a poisoned or failed transaction,
+	 * {@link com.top_logic.basic.exception.I18NRuntimeException} for a veto - a model constraint, a
+	 * mandatory attribute, a {@code CommitChecker} - and anything else a listener let escape. All
+	 * three mean the same thing to every caller - the turn wrote nothing - so all three are wrapped
+	 * the same way. {@link Error} is not: an {@link OutOfMemoryError} raised during a commit is not
+	 * a transaction failure to report to a language model.
+	 * </p>
+	 *
 	 * @throws TransactionException if the commit fails (changes are rolled back)
 	 * @throws IllegalStateException if no transaction is active
 	 */
@@ -238,19 +260,31 @@ public class TransactionScope implements AutoCloseable {
 		if (_transaction == null) {
 			throw new IllegalStateException("No active transaction to commit.");
 		}
+		Transaction committing = _transaction;
 		try {
-			_transaction.commit();
-			_commitRevision = _transaction.getCommitRevision();
-			_transaction = null;
-			releaseLock();
-		} catch (KnowledgeBaseException e) {
+			committing.commit();
+		} catch (RuntimeException e) {
 			// Leave _transaction and _locks intact so callers can rollback()
 			throw new TransactionException(COMMIT_FAILED_PREFIX + describeCommitFailure(e), e);
 		}
+		// Outside the catch above: a lock that fails to release did not fail the commit, and
+		// reporting it as one would tell the model its writes are gone when they are persisted.
+		_commitRevision = committing.getCommitRevision();
+		_transaction = null;
+		releaseLock();
 	}
 
 	/**
 	 * The human-readable reason a commit failed.
+	 *
+	 * <p>
+	 * A veto - a model constraint, a mandatory attribute left unset, an application's own
+	 * {@code CommitChecker} - arrives as an {@link I18NRuntimeException} whose own text is the
+	 * summary {@code "Cannot store, constraints violated."} and whose <em>causes</em> name the
+	 * objects and attributes that were refused. Reporting the summary alone is what made a real
+	 * session unactionable, so the chain is resolved and joined: the summary is what happened, the
+	 * causes are what to fix.
+	 * </p>
 	 *
 	 * <p>
 	 * A transaction that was poisoned - typically by a nested transaction of a tool rolling back -
@@ -270,7 +304,10 @@ public class TransactionScope implements AutoCloseable {
 	 * 'name')"} - the only thing the user and the model can act on.
 	 * </p>
 	 */
-	static String describeCommitFailure(KnowledgeBaseException failure) {
+	static String describeCommitFailure(RuntimeException failure) {
+		if (failure instanceof I18NRuntimeException veto) {
+			return describeVeto(veto);
+		}
 		String message = failure.getMessage();
 		if (message == null || !message.startsWith(ENCODED_RES_KEY_PREFIX)) {
 			return appendRootCause(message, failure);
@@ -285,6 +322,40 @@ public class TransactionScope implements AutoCloseable {
 	}
 
 	/**
+	 * The refused commit as one sentence, followed by every reason it was refused.
+	 *
+	 * <p>
+	 * {@code ModelService} collects up to ten constraint problems and nests them as a chain of
+	 * {@link I18NRuntimeException}s under one summary, so the chain - not the outermost message -
+	 * is the report. Texts that repeat are dropped rather than said twice, and the whole is bounded
+	 * to {@value #MAX_CAUSE_LENGTH} characters, because this string is put in front of a language
+	 * model.
+	 * </p>
+	 */
+	private static String describeVeto(I18NRuntimeException veto) {
+		Resources resources = Resources.getInstance();
+		List<String> reasons = new ArrayList<>();
+		Throwable current = veto;
+		for (int depth = 0; current != null && depth < MAX_CAUSE_DEPTH; depth++) {
+			if (current instanceof I18NRuntimeException i18n) {
+				String text = resources.getString(i18n.getErrorKey());
+				if (!StringServices.isEmpty(text) && !reasons.contains(text)) {
+					reasons.add(text);
+				}
+			}
+			Throwable next = current.getCause();
+			current = next == current ? null : next;
+		}
+		if (reasons.isEmpty()) {
+			return appendRootCause(veto.getMessage(), veto);
+		}
+		String joined = StringServices.join(reasons, " ");
+		return joined.length() > MAX_CAUSE_LENGTH
+			? joined.substring(0, MAX_CAUSE_LENGTH) + "..."
+			: joined;
+	}
+
+	/**
 	 * The message with the deepest cause of the failure appended, if there is one that adds
 	 * anything.
 	 *
@@ -293,7 +364,7 @@ public class TransactionScope implements AutoCloseable {
 	 * driver, may quote a whole statement, and this string ends up in an LLM prompt.
 	 * </p>
 	 */
-	private static String appendRootCause(String message, KnowledgeBaseException failure) {
+	private static String appendRootCause(String message, Throwable failure) {
 		Throwable cause = rootCause(failure);
 		if (cause == null) {
 			return message;

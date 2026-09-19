@@ -77,6 +77,30 @@ public class TestTransactionScope extends TestCase {
 	}
 
 	/**
+	 * A commit failure the engine did not wrap is still described, not dropped.
+	 *
+	 * <p>
+	 * Issue #410: {@code DefaultDBContext.commitTransaction} rethrows a
+	 * {@code KnowledgeBaseRuntimeException} - and a veto's {@code I18NRuntimeException} - as itself,
+	 * so "the exception a failed commit throws" is not one type. Describing only
+	 * {@link KnowledgeBaseException} is what let such a failure leave the run untranslated. The
+	 * veto family needs resolved resources and is covered by
+	 * {@link TestCommitFailureReason#testVetoedCommitFailsAsATransactionFailure()}; this is the
+	 * plain one.
+	 * </p>
+	 */
+	public void testUnwrappedCommitFailureIsDescribedToo() {
+		String described = TransactionScope.describeCommitFailure(
+			new IllegalStateException("Commit aborted.",
+				new SQLException("Deadlock found when trying to get lock")));
+
+		assertTrue("The failure's own message must survive: " + described,
+			described.startsWith("Commit aborted."));
+		assertTrue("The deepest cause is the one that says what went wrong: " + described,
+			described.contains("Deadlock found when trying to get lock"));
+	}
+
+	/**
 	 * NOOP scope: isActive() always false, holdsLock() always false.
 	 */
 	public void testNoOpIsInactive() {

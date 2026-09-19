@@ -335,6 +335,12 @@ export const Composer = React.memo(
   tracePicker?: boolean
   autoApproveSwitch?: boolean
   enterHint?: boolean
+  /**
+   * The host's own invitation for the empty field, replacing both framework variants.
+   *
+   * Idle only: while the agent works the field keeps the framework's "type your next message",
+   * which is about the run rather than about the application (#420).
+   */
   placeholder?: string
   /** The run store of the chat this composer belongs to; the context ring reads it. */
   runs?: RunStore
@@ -744,10 +750,14 @@ export const Composer = React.memo(
               }
             }}
             onPasteFiles={(pasted) => void addFiles(pasted)}
-            ariaLabel={labels.askAnything}
+            ariaLabel={placeholder || labels.askAnything}
             placeholder={
-              placeholder ||
-              (busy ? labels.typeNext : referenceCandidates ? labels.askAnythingWithAt : labels.askAnything)
+              // The host's invitation is the *idle* one. "Type your next message" is about the run,
+              // not about this application, so a host that replaced it would be inviting the user
+              // to start something that is already under way (#420).
+              busy
+                ? labels.typeNext
+                : placeholder || (referenceCandidates ? labels.askAnythingWithAt : labels.askAnything)
             }
             onKeyDown={(event) => {
               if (event.key === 'Escape' && improving) {

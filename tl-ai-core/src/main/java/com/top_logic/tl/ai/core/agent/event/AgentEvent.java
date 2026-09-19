@@ -501,6 +501,27 @@ public sealed interface AgentEvent {
 	record ProviderError(String runId, int turnNumber, Instant timestamp,
 			String kind, String message) implements AgentEvent {}
 
+	/**
+	 * Emitted when the run moved on to another model, because the one it was using is marked
+	 * unavailable or just failed.
+	 *
+	 * <p>
+	 * The run continues; the new model serves the rest of it. Everything before this event was
+	 * produced by {@code fromModel}, everything after by {@code toModel}, which is what makes the
+	 * pair worth recording rather than only the model the run ended on.
+	 * </p>
+	 *
+	 * @param runId agent run identifier
+	 * @param turnNumber 1-based loop iteration
+	 * @param timestamp when the event occurred
+	 * @param fromModel the model the run was using, qualified by its provider where one was named
+	 * @param toModel the model the run continues with, qualified the same way
+	 * @param reason why {@code fromModel} was left, in one line (the error kind and the provider's
+	 *        own words, or the mark that was already held against it)
+	 */
+	record ModelSwitched(String runId, int turnNumber, Instant timestamp,
+			String fromModel, String toModel, String reason) implements AgentEvent {}
+
 	// ---------- Subagents ----------
 
 	/**

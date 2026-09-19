@@ -699,6 +699,31 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	}
 
 	/**
+	 * Stores the model that is actually answering this run.
+	 *
+	 * <p>
+	 * Written when a run fails over to another model (Gitea #344), so that the model column of the
+	 * run monitor names what produced the answer rather than what was configured. Which models the
+	 * run passed over, and why, is in its transcript.
+	 * </p>
+	 *
+	 * @param model
+	 *        The model now serving the run.
+	 * @param provider
+	 *        Its catalog provider ID; may be <code>null</code>.
+	 */
+	public void saveModel(AgentExecution execution, String model, String provider) {
+		write(() -> {
+			try (Transaction tx = beginTx("Save agent run model")) {
+				execution.setModel(model);
+				execution.setProvider(provider);
+				tx.commit();
+			}
+			return null;
+		});
+	}
+
+	/**
 	 * Records the terminal state of an agent-loop invocation without a final answer.
 	 *
 	 * @see #finishExecution(AgentExecution, ExecutionStatus, StopReason, String, TokenUsage,

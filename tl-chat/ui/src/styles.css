@@ -1749,6 +1749,25 @@
   opacity: 0.8;
 }
 
+/*
+ * A run that continued on another model (#344). Deliberately quieter than .error-card: nothing
+ * failed for the user, so it sits above the answer as context, in the thread's secondary text
+ * colour rather than in the danger colour.
+ */
+.notice-line {
+  color: var(--text-secondary);
+  border-left: 2px solid var(--border-subtle);
+  padding: 0.25rem 0.75rem;
+  font-size: var(--chat-small);
+}
+
+/* Which model, which model instead, and why - available, not shouted, as under the error card. */
+.notice-line-detail {
+  margin-top: 0.125rem;
+  opacity: 0.8;
+  word-break: break-word;
+}
+
 .jump-latest {
   position: absolute;
   left: 50%;

@@ -5,6 +5,7 @@
  */
 package com.top_logic.tl.ai.core.provider;
 
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -60,6 +61,9 @@ import com.top_logic.tl.ai.core.security.SecurityContextFactory;
 import com.top_logic.tl.ai.core.provider.catalog.ModelCatalogEntry;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.provider.catalog.ModelsDevFetcher;
+import com.top_logic.tl.ai.core.provider.health.FailoverConfig;
+import com.top_logic.tl.ai.core.provider.health.ModelAvailability;
+import com.top_logic.tl.ai.core.provider.health.ModelTarget;
 import com.top_logic.tl.ai.core.tools.model.ObjectIdConfig;
 import com.top_logic.tl.ai.core.tools.model.ObjectIdSettings;
 
@@ -604,6 +608,13 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		String MODEL_CATALOG = "model-catalog";
 
 		/**
+		 * Configuration property name for the failover section.
+		 *
+		 * @see #getFailover()
+		 */
+		String FAILOVER = "failover";
+
+		/**
 		 * The configured LLM providers, keyed by provider name.
 		 *
 		 * <p>
@@ -698,6 +709,19 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		 */
 		@Name(MODEL_CATALOG)
 		ModelCatalogConfig getModelCatalog();
+
+		/**
+		 * Where a run goes when the model it was configured with cannot answer, and how long this
+		 * installation remembers that a model could not.
+		 *
+		 * <p>
+		 * Empty by default, and an empty section changes nothing.
+		 * </p>
+		 *
+		 * @see #FAILOVER
+		 */
+		@Name(FAILOVER)
+		FailoverConfig getFailover();
 
 	}
 
@@ -808,6 +832,17 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	private List<SystemPromptContributor> _promptContributors;
 
 	/**
+	 * What every model is currently known to be good for.
+	 *
+	 * <p>
+	 * A component rather than a service of its own - see {@link ModelAvailability} for why. It is
+	 * replaced on every start, so a restart of this service is also the blunt way to clear every
+	 * mark.
+	 * </p>
+	 */
+	private volatile ModelAvailability _health = new ModelAvailability(null, Clock.systemUTC());
+
+	/**
 	 * Creates a new {@link LLMService} from configuration.
 	 *
 	 * @param context
@@ -837,6 +872,60 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	 */
 	public EnvironmentConfig getEnvironmentConfig() {
 		return getConfig().getEnvironment();
+	}
+
+	/**
+	 * What every model of this installation is currently known to be good for.
+	 *
+	 * <p>
+	 * Never <code>null</code>, and usable before {@link #startUp()} has read the configuration: an
+	 * installation that configured no lifetimes gets the shipped ones.
+	 * </p>
+	 *
+	 * @see ModelAvailability
+	 */
+	public ModelAvailability modelHealth() {
+		return _health;
+	}
+
+	/**
+	 * The models a run configured with the given model reference may use, in order.
+	 *
+	 * <p>
+	 * The first entry is always the reference itself, so a model with no configured chain yields a
+	 * list of one and nothing about that run changes. The rest is the {@code <failover>} section's
+	 * chain for that model name, whichever provider was asked to serve it.
+	 * </p>
+	 *
+	 * @param model
+	 *        The model the run was configured with; may be <code>null</code>, which yields an
+	 *        empty list.
+	 * @param provider
+	 *        The provider qualifying it, or <code>null</code>.
+	 * @return An immutable list, the configured reference first; never <code>null</code>.
+	 */
+	public List<ModelTarget> failoverChain(String model, String provider) {
+		if (model == null || model.isBlank()) {
+			return List.of();
+		}
+		ModelTarget configured = new ModelTarget(model, blankToNull(provider));
+		FailoverConfig failover = getConfig().getFailover();
+		FailoverConfig.Chain chain = failover == null ? null : failover.getChains().get(model);
+		if (chain == null || chain.getFallbacks().isEmpty()) {
+			return List.of(configured);
+		}
+		List<ModelTarget> result = new ArrayList<>();
+		result.add(configured);
+		for (FailoverConfig.Target fallback : chain.getFallbacks()) {
+			ModelTarget target = new ModelTarget(fallback.getModel(), blankToNull(fallback.getProvider()));
+			// A chain that names the model it is the way out of, or names one twice, would spend a
+			// turn re-trying what just failed. Dropped here rather than refused at start-up: the
+			// duplicate may be the same model served by a second provider, which is legitimate.
+			if (result.stream().noneMatch(target::sameAs)) {
+				result.add(target);
+			}
+		}
+		return List.copyOf(result);
 	}
 
 	/**
@@ -943,6 +1032,10 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 
 		refuseUnroutableReferences();
 
+		// Built here rather than in the constructor so that a restart of this service - the blunt
+		// way to clear every mark - also picks up changed lifetimes.
+		_health = new ModelAvailability(getConfig().getFailover(), Clock.systemUTC());
+
 		// --- Catalog phase ---
 		ModelCatalogConfig catalogConfig = getConfig().getModelCatalog();
 		Map<String, Set<String>> catalogRequested = buildCatalogProviderModels();
@@ -1009,8 +1102,8 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	 * </p>
 	 */
 	private void refuseUnroutableReferences() {
-		List<String> refusals =
-			refusals(getConfig().getAgentExecution(), _modelProviders, _providerConfigs.keySet());
+		List<String> refusals = refusals(getConfig().getAgentExecution(), getConfig().getFailover(),
+			_modelProviders, _providerConfigs.keySet());
 		if (refusals.isEmpty()) {
 			return;
 		}
@@ -1041,6 +1134,9 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	 *
 	 * @param execution
 	 *        The agent execution section to inspect.
+	 * @param failover
+	 *        The failover section, whose fallbacks are model references too; may be
+	 *        <code>null</code>.
 	 * @param modelProviders
 	 *        Model name to the names of the providers exposing it.
 	 * @param providerNames
@@ -1048,8 +1144,8 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	 * @return One sentence per problem, in configuration order; empty for a routable
 	 *         configuration.
 	 */
-	static List<String> refusals(AgentExecutionConfig execution, Map<String, List<String>> modelProviders,
-			Set<String> providerNames) {
+	static List<String> refusals(AgentExecutionConfig execution, FailoverConfig failover,
+			Map<String, List<String>> modelProviders, Set<String> providerNames) {
 		List<String> result = new ArrayList<>();
 		String defaultModel = execution.getDefaultModel();
 		String defaultProvider = execution.getDefaultProvider();
@@ -1059,6 +1155,18 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		for (Map.Entry<String, AgentOverride> entry : execution.getAgentOverrides().entrySet()) {
 			addRefusal(result, "Agent '" + entry.getKey() + "'",
 				modelRefOf(entry.getValue(), defaultModel, defaultProvider), modelProviders, providerNames);
+		}
+		// A fallback is a model reference like any other, and one that cannot be routed is worse
+		// than a missing fallback: it is only ever reached on the day the primary model is already
+		// down, which is the worst moment to find out.
+		if (failover != null) {
+			for (Map.Entry<String, FailoverConfig.Chain> entry : failover.getChains().entrySet()) {
+				for (FailoverConfig.Target fallback : entry.getValue().getFallbacks()) {
+					addRefusal(result, "The fallback for model '" + entry.getKey() + "'",
+						new ModelRef(fallback.getModel(), blankToNull(fallback.getProvider())),
+						modelProviders, providerNames);
+				}
+			}
 		}
 		return result;
 	}

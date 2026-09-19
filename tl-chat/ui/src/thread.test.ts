@@ -126,6 +126,32 @@ describe('a running turn', () => {
     expect(html).not.toContain('error-card-detail')
   })
 
+  /**
+   * A run that continued on another model says so above the answer - quietly, and without claiming
+   * to have taken a step it did not take (#344).
+   */
+  it('shows a model switch as a notice, not as an error or a step', () => {
+    const html = render(
+      build([
+        ...TURN_STARTED,
+        {
+          type: 'ADD_NOTICE',
+          kind: 'model_switched',
+          detail: 'claude-sonnet-5 -> gpt-5: OVERLOADED: upstream 529',
+        },
+        { type: 'APPEND_TEXT', id: 'a1', delta: 'Lissabon' },
+        { type: 'END_RUN', runId: 'r1' },
+      ]),
+      false,
+    )
+    expect(html).toContain('notice-line')
+    expect(html).toContain(labels.modelSwitched)
+    expect(html).toContain('claude-sonnet-5 -&gt; gpt-5: OVERLOADED: upstream 529')
+    expect(html).not.toContain('error-card')
+    // The switch is not work the agent did: counted as a step it would make the turn claim one.
+    expect(html).not.toContain(labels.runSteps(1))
+  })
+
   it('reports the duration once the run has ended', () => {
     const html = render(build([...FIRST_DELTA, { type: 'END_RUN', runId: 'r1' }]), false)
     expect(html).toContain('Worked for')

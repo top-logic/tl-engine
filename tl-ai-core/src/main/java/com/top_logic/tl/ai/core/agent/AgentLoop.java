@@ -18,6 +18,7 @@ import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -66,6 +67,11 @@ import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.StreamHandler;
+import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
+import com.top_logic.tl.ai.core.provider.health.ModelAvailability;
+import com.top_logic.tl.ai.core.provider.health.ModelHealthMark;
+import com.top_logic.tl.ai.core.provider.health.ModelOptions;
+import com.top_logic.tl.ai.core.provider.health.ModelTarget;
 import com.top_logic.tl.ai.core.security.PreCommitGuard;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.ConversationLogListenerBinding;
@@ -110,9 +116,60 @@ public class AgentLoop {
 	/** Default maximum characters per tool result before truncation. */
 	public static final int DEFAULT_MAX_RESULT_CHARS = AgentTuning.MAX_TOOL_RESULT_CHARS;
 
-	private final AgentParams _config;
+	/**
+	 * What the run is currently working with.
+	 *
+	 * <p>
+	 * Not final because a run may move to another model when the one it was configured with cannot
+	 * answer - see {@link #callRouted}. Reset to {@link #_configuredParams} at the start of every
+	 * run, so a loop that is used again starts where it was configured, not where its last run
+	 * ended up.
+	 * </p>
+	 */
+	private volatile AgentParams _config;
 
-	private final LLMProvider _provider;
+	/** The provider serving {@link #_config}; switched with it. */
+	private volatile LLMProvider _provider;
+
+	/** What this loop was built with, whatever a failover moved the run to. */
+	private final AgentParams _configuredParams;
+
+	/** @see #_configuredParams */
+	private final LLMProvider _configuredProvider;
+
+	/**
+	 * The models this run may use, in order; index 0 is the one it was configured with.
+	 *
+	 * <p>
+	 * A list of one - the default, because the {@code <failover>} section is empty unless an
+	 * installation writes one - means nothing about this run changes.
+	 * </p>
+	 */
+	private volatile List<ModelTarget> _failoverChain = List.of();
+
+	/** The entry of {@link #_failoverChain} the run is currently trying. */
+	private volatile int _chainIndex;
+
+	/** The entry of {@link #_failoverChain} {@link #_config} and {@link #_provider} belong to. */
+	private volatile int _activeIndex;
+
+	/** The configured provider entry serving {@link #_config}, or <code>null</code>. */
+	private volatile String _activeProviderName;
+
+	/**
+	 * Every model this run passed over, one line each, in the order it passed them.
+	 *
+	 * <p>
+	 * Kept for the whole run rather than per switch: each
+	 * {@link AgentEvent.ModelSwitched} names what was skipped on the way to it, and a run that ran
+	 * out of chain names all of them in the error it fails with - which is the whole point of a
+	 * chain that otherwise continues somewhere else without saying so.
+	 * </p>
+	 */
+	private final List<String> _skipped = new CopyOnWriteArrayList<>();
+
+	/** How many entries of {@link #_skipped} a {@link AgentEvent.ModelSwitched} has already named. */
+	private volatile int _announcedSkips;
 
 	private final ToolRegistry _registry;
 
@@ -191,6 +248,8 @@ public class AgentLoop {
 			int maxResultChars) {
 		_config = Objects.requireNonNull(config, "Config must not be null.");
 		_provider = Objects.requireNonNull(provider, "Provider must not be null.");
+		_configuredParams = _config;
+		_configuredProvider = _provider;
 		_registry = Objects.requireNonNull(registry, "Registry must not be null.");
 		if (maxResultChars <= 0) {
 			throw new IllegalArgumentException("maxResultChars must be positive.");
@@ -226,6 +285,8 @@ public class AgentLoop {
 			ConversationMemory memory, int maxResultChars) {
 		_config = Objects.requireNonNull(config, "Config must not be null.");
 		_provider = Objects.requireNonNull(provider, "Provider must not be null.");
+		_configuredParams = _config;
+		_configuredProvider = _provider;
 		_registry = Objects.requireNonNull(registry, "Registry must not be null.");
 		_memory = Objects.requireNonNull(memory, "Memory must not be null.");
 		if (maxResultChars <= 0) {
@@ -324,6 +385,8 @@ public class AgentLoop {
 		Objects.requireNonNull(context, "Context must not be null.");
 		Objects.requireNonNull(listener, "Listener must not be null.");
 
+		beginRun();
+
 		ToolContext runContext = securedContext(context);
 
 		_sessionApprovedTools.addAll(context.sessionApprovedTools());
@@ -380,7 +443,7 @@ public class AgentLoop {
 		if (!LLMService.Module.INSTANCE.isActive()) {
 			return null;
 		}
-		return LLMService.getInstance().getProviderId(_config.model(), null);
+		return LLMService.getInstance().getProviderId(_config.model(), _activeProviderName);
 	}
 
 	/**
@@ -442,7 +505,10 @@ public class AgentLoop {
 
 			AssistantMessage assistantMsg;
 			try {
-				assistantMsg = callProvider(conversation, context, listener, runId, turn);
+				int currentTurn = turn;
+				assistantMsg = callRouted(
+					() -> callProvider(conversation, context, listener, runId, currentTurn),
+					context, listener, runId, turn);
 			} catch (ProviderException e) {
 				rollbackFailedRun(conversation, resumePoint);
 				emit(listener, new AgentEvent.ProviderError(runId, turn, now(), e.kind().name(), e.getMessage()));
@@ -523,6 +589,8 @@ public class AgentLoop {
 		Objects.requireNonNull(context, "Context must not be null.");
 		Objects.requireNonNull(listener, "Listener must not be null.");
 
+		beginRun();
+
 		ToolContext runContext = securedContext(context);
 
 		_sessionApprovedTools.addAll(context.sessionApprovedTools());
@@ -590,8 +658,11 @@ public class AgentLoop {
 
 			AssistantMessage assistantMsg;
 			try {
-				assistantMsg = callProviderWithReactiveCompaction(
-					conversation, context, memory, listener, runId, turn);
+				int currentTurn = turn;
+				assistantMsg = callRouted(
+					() -> callProviderWithReactiveCompaction(
+						conversation, context, memory, listener, runId, currentTurn),
+					context, listener, runId, turn);
 			} catch (ProviderException e) {
 				emit(listener, new AgentEvent.ProviderError(runId, turn, now(), e.kind().name(), e.getMessage()));
 				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), TokenUsage.EMPTY, List.of()));
@@ -1467,6 +1538,203 @@ public class AgentLoop {
 			}
 		}
 		throw new IllegalStateException("Unreachable");
+	}
+
+	// ---- Cross-provider failover (Gitea #344) ----
+
+	/**
+	 * Puts the run back on the model it was configured with, and works out where it may go from
+	 * there.
+	 *
+	 * <p>
+	 * Called at the start of every run, because a loop is allowed to serve more than one: a run
+	 * that ended on a fallback must not hand its successor that fallback as its starting point.
+	 * The successor may of course be routed there again straight away - the mark that sent the
+	 * first run over is still held - but that decision is taken by {@link #callRouted} with the
+	 * health state of the moment, not inherited.
+	 * </p>
+	 */
+	private void beginRun() {
+		_config = _configuredParams;
+		_provider = _configuredProvider;
+		_chainIndex = 0;
+		_activeIndex = 0;
+		_activeProviderName = null;
+		_skipped.clear();
+		_announcedSkips = 0;
+		_failoverChain = resolveFailoverChain();
+	}
+
+	/**
+	 * The models this run may use, in order.
+	 *
+	 * <p>
+	 * A run whose model is not configured in this application - a test wiring its own provider, a
+	 * loop built by hand - has a chain of one and never fails over, because nothing knows how to
+	 * build a provider for anything else.
+	 * </p>
+	 */
+	private List<ModelTarget> resolveFailoverChain() {
+		// The instance rather than the module: a service that has started is one that can route and
+		// one whose health state is the installation's, however it was started. Everything else in
+		// this class asks the module, because the answer there is "is this application configured",
+		// not "is there a service".
+		LLMService service = LLMService.getInstance();
+		List<ModelTarget> chain = service == null ? List.of() : service.failoverChain(_config.model(), null);
+		return chain.isEmpty() ? List.of(new ModelTarget(_config.model(), null)) : chain;
+	}
+
+	/**
+	 * Calls the provider, moving the run to the next healthy model of its chain when the one it is
+	 * on cannot answer.
+	 *
+	 * <p>
+	 * The switch lasts for the <strong>rest of the run</strong>, not for the turn: every provider
+	 * caches by prefix, so a run that alternated between two models would pay the full prompt again
+	 * on every turn and never read a cache. Once a run has moved, it stays moved; the next run
+	 * starts at the configured model again and is routed by the marks that are then in force.
+	 * </p>
+	 *
+	 * <p>
+	 * A model is passed over for two reasons, and both are recorded: {@link ModelAvailability}
+	 * already holds a mark against it, or the call to it just failed with a kind that says
+	 * something about the model. A failure that says nothing about the model - a malformed request,
+	 * a context overflow - is rethrown untouched: the next model would fail on it in exactly the
+	 * same way, and failing over would only hide it.
+	 * </p>
+	 *
+	 * <p>
+	 * A run with no configured fallback does not enter any of this: {@code call} is invoked once
+	 * and its exception travels out, which is what the loop did before there were chains.
+	 * </p>
+	 *
+	 * @param call
+	 *        Makes one attempt with whatever model is currently active - the retry-and-compact
+	 *        stack the run loop would otherwise have called directly.
+	 */
+	private AssistantMessage callRouted(ProviderCall call, ToolContext context,
+			AgentEventListener listener, String runId, int turn) throws ProviderException {
+		List<ModelTarget> chain = _failoverChain;
+		if (chain.size() <= 1) {
+			return call.call();
+		}
+		ModelAvailability health = LLMService.getInstance().modelHealth();
+		String turnToken = ModelAvailability.turnToken(runId, turn);
+		ProviderException pending = null;
+		while (_chainIndex < chain.size()) {
+			ModelTarget target = chain.get(_chainIndex);
+			if (!health.claim(target.model(), turnToken)) {
+				ModelHealthMark mark = health.mark(target.model());
+				skip(target, mark == null ? "marked unavailable" : mark.reason(), runId);
+				continue;
+			}
+			if (_chainIndex != _activeIndex && !activate(target, context, listener, runId, turn)) {
+				continue;
+			}
+			try {
+				return call.call();
+			} catch (ProviderException e) {
+				if (context.cancellationToken().isCancelled() || Thread.currentThread().isInterrupted()) {
+					throw e;
+				}
+				if (ModelAvailability.causeOf(e.kind()) == null) {
+					throw e;
+				}
+				health.reportFailure(target.model(), e.kind(), e.getMessage(), turnToken);
+				pending = e;
+				skip(target, e.kind().name()
+					+ (e.getMessage() == null || e.getMessage().isBlank() ? "" : ": " + e.getMessage()), runId);
+			}
+		}
+		if (pending != null) {
+			// The last model that was actually called decides how the run reads: a run that died
+			// of a rate limit says so, and only the message names the models it went through.
+			String detail = pending.getMessage() == null ? "" : pending.getMessage() + " ";
+			throw new ProviderException(pending.kind(), pending.statusCode(),
+				detail + exhausted(chain), pending.retryAfter(), pending.requestId(),
+				pending.getCause());
+		}
+		throw new ProviderException(ProviderException.Kind.UNKNOWN, -1, exhausted(chain));
+	}
+
+	/** Why no model of the chain was left to try. */
+	private String exhausted(List<ModelTarget> chain) {
+		return "No model of the failover chain of '" + chain.get(0).label()
+			+ "' could serve this run: " + String.join("; ", _skipped) + ".";
+	}
+
+	/**
+	 * Notes that the given model was passed over, and moves the run one entry further down its
+	 * chain.
+	 */
+	private void skip(ModelTarget target, String reason, String runId) {
+		_skipped.add(target.label() + " - " + reason);
+		Logger.warn("Run " + runId + " passes over model '" + target.label() + "': " + reason,
+			AgentLoop.class);
+		_chainIndex++;
+	}
+
+	/**
+	 * Moves the run onto the given model: its provider, its limits and the sampling options its
+	 * provider understands.
+	 *
+	 * <p>
+	 * The tool schemas and the response format need nothing done to them here - they are
+	 * provider-neutral, and the target's own request builder renders them in its own dialect, which
+	 * is what makes a chain across vendors work at all. What does not survive is the conversation
+	 * memory's budget: it was sized for the configured model and is owned by the caller, so a run
+	 * that fails over to a smaller context window relies on the reactive compaction in
+	 * {@link #callProviderWithReactiveCompaction} to notice.
+	 * </p>
+	 *
+	 * @return <code>false</code> when no provider could be built for the target, which is a
+	 *         configuration fault of that chain entry alone; the entry is then skipped like any
+	 *         other unusable one.
+	 */
+	private boolean activate(ModelTarget target, ToolContext context, AgentEventListener listener,
+			String runId, int turn) {
+		LLMService service = LLMService.getInstance();
+		LLMProvider provider;
+		try {
+			provider = service.buildProvider(target.model(), target.provider());
+		} catch (RuntimeException ex) {
+			skip(target, "no provider could be built: " + ex.getMessage(), runId);
+			return false;
+		}
+		String from = _failoverChain.get(_activeIndex).label();
+		String providerId = service.getProviderId(target.model(), target.provider());
+		ModelInfo info = service.getModel(target.model());
+		int maxOutput = _config.maxOutputTokens();
+		int contextWindow = _config.contextWindowTokens();
+		if (info != null) {
+			// The lower of the two: an installation that asked for fewer tokens meant it, and a
+			// target that allows fewer cannot be asked for more.
+			maxOutput = Math.min(maxOutput, info.limits().maxOutput());
+			contextWindow = Math.min(contextWindow, info.limits().contextWindow());
+		}
+		_config = _config.withModel(target.model(), maxOutput, contextWindow,
+			ModelOptions.forTarget(_config.modelOptions(), providerId, info));
+		_provider = provider;
+		_activeProviderName = target.provider();
+		_activeIndex = _chainIndex;
+		context.executionHandle().setModel(target.model(), providerId);
+
+		List<String> announce = _skipped.subList(_announcedSkips, _skipped.size());
+		String reason = announce.isEmpty() ? "the previous model was not available"
+			: String.join("; ", announce);
+		_announcedSkips = _skipped.size();
+		Logger.info("Run " + runId + " continues on model '" + target.label() + "' instead of '"
+			+ from + "': " + reason, AgentLoop.class);
+		emit(listener, new AgentEvent.ModelSwitched(runId, turn, now(), from, target.label(), reason));
+		return true;
+	}
+
+	/** One attempt at the provider, with whatever model the run is currently on. */
+	@FunctionalInterface
+	private interface ProviderCall {
+
+		/** Makes the attempt. */
+		AssistantMessage call() throws ProviderException;
 	}
 
 	/**

@@ -58,6 +58,34 @@ public record AgentParams(
 		String turnContext,
 		ResponseFormat responseFormat) {
 
+	/**
+	 * The same parameters, but for another model.
+	 *
+	 * <p>
+	 * What a run keeps when it fails over to another model (Gitea #344): its prompt, its turn
+	 * budget, its validator, its timeouts - everything that describes the <em>work</em>. What it
+	 * takes from the target instead are the three things that are properties of the model rather
+	 * than of the work: its name, the limits it accepts, and the sampling options its provider
+	 * understands.
+	 * </p>
+	 *
+	 * @param model
+	 *        The model to continue on; must not be <code>null</code>.
+	 * @param maxOutputTokens
+	 *        What to ask the target for at most.
+	 * @param contextWindowTokens
+	 *        The target's context window.
+	 * @param modelOptions
+	 *        The options rebuilt for the target's provider; see
+	 *        {@link com.top_logic.tl.ai.core.provider.health.ModelOptions}.
+	 */
+	public AgentParams withModel(String model, int maxOutputTokens, int contextWindowTokens,
+			Map<String, Object> modelOptions) {
+		return new AgentParams(model, systemPrompt, maxTurns, maxOutputTokens, modelOptions,
+			contextWindowTokens, maxRetries, timeoutSeconds, toolChoice, responseValidator,
+			environment, turnContext, responseFormat);
+	}
+
 	/** Default maximum turns. */
 	public static final int DEFAULT_MAX_TURNS = 25;
 

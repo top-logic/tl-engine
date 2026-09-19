@@ -579,6 +579,38 @@ describe('the stream', () => {
     release()
   })
 
+  /**
+   * A run that lost its model continued somewhere else, and the thread says so where the answer
+   * is. A notice, not an error: nothing failed for the user (#344).
+   */
+  it('writes a model switch into the transcript as a notice', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+
+    stream.emit('run_started', { runId: 'r1' })
+    stream.emit('turn_started', {})
+    stream.emit('model_switched', {
+      fromModel: 'claude-sonnet-5',
+      toModel: 'gpt-5',
+      reason: 'OVERLOADED: upstream 529',
+    })
+
+    const notice = store.getState().messages.find((m) => m.type === 'notice')
+    expect(notice).toBeDefined()
+    // The server's own line, character for character, so the notice reads the same live as it
+    // does after a reload.
+    expect(notice && 'detail' in notice ? notice.detail : '').toBe(
+      'claude-sonnet-5 -> gpt-5: OVERLOADED: upstream 529',
+    )
+    expect(store.getState().messages.some((m) => m.type === 'error')).toBe(false)
+
+    await settle()
+    release()
+  })
+
   /** A run the user stopped is not a failure, and leaves no error in the transcript. */
   it('writes no error for the stream the cancel closed', async () => {
     const store = chatStore('alpha', BOOT)

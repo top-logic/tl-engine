@@ -97,6 +97,27 @@ export interface ErrorMessage {
   timestamp: number
 }
 
+/**
+ * Something that happened around the conversation rather than in it.
+ *
+ * Today one thing only: the run lost the model it was configured with and continued on another
+ * one. Not an {@link ErrorMessage} - nothing failed for the user, the answer below it simply comes
+ * from somewhere else - and not an assistant message either, because the agent did not say it.
+ *
+ * The `detail` is the server's own line, in the same wording the reloaded transcript carries, so
+ * that a notice reads the same live as after a reload (#429). The sentence around it is the
+ * renderer's, from `kind`.
+ */
+export interface NoticeMessage {
+  type: 'notice'
+  id: string
+  /** What the notice is about. */
+  kind: 'model_switched'
+  /** The server's line: `from -> to: reason`. */
+  detail: string
+  timestamp: number
+}
+
 export interface ApprovalRequest {
   type: 'approval_request'
   id: string
@@ -164,6 +185,7 @@ export type ChatMessage =
   | ToolResult
   | ThinkingBlock
   | ErrorMessage
+  | NoticeMessage
   | ApprovalRequest
   | InteractionRequest
   | RunMeta

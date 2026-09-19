@@ -65,6 +65,7 @@ import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
+import com.top_logic.tl.ai.core.agent.AgentDefinition;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.environment.EnvironmentFact;
@@ -665,6 +666,12 @@ public class ChatServlet extends TopLogicServlet {
 	 */
 	private Refusal runRefusal(Person person, ChatProcessor.ChatRunOptions options) {
 		String named = blankToNull(options.agent());
+		if (named != null) {
+			Refusal notAPersona = personaRefusal(named.trim());
+			if (notAPersona != null) {
+				return notAPersona;
+			}
+		}
 		Refusal denial = policyRefusal(person, options);
 		if (denial != null) {
 			return denial;
@@ -679,6 +686,35 @@ public class ChatServlet extends TopLogicServlet {
 					.fill(named.trim())));
 		}
 		return null;
+	}
+
+	/**
+	 * Why the named agent is nobody's conversation partner, or <code>null</code> if it is one.
+	 *
+	 * <p>
+	 * An {@link AgentDefinition#infrastructure()} agent is one the application runs <em>for</em> the
+	 * user - the prompt improver rewrites their draft. Naming it in a send is refused whatever
+	 * {@code <agent-access>} grants, so this is asked before {@link #policyRefusal} and without the
+	 * policy service: under {@code default="all"} that service permits it, and with the service off
+	 * there is no policy to ask at all (#397). The run itself is refused again where it starts -
+	 * {@code AgentFactory} asks the same question of the run's security context.
+	 * </p>
+	 */
+	private static Refusal personaRefusal(String agentName) {
+		AgentDefinition agentDef;
+		try {
+			agentDef = AgentDefinitionQuery.getInstance().findAgentByName(agentName);
+		} catch (RuntimeException ex) {
+			// Cannot read it, so cannot judge it: leave the request to the run, as before.
+			Logger.warn("Could not check whether '" + agentName + "' is a conversation partner.", ex,
+				ChatServlet.class);
+			return null;
+		}
+		if (agentDef == null || !agentDef.infrastructure()) {
+			return null;
+		}
+		return forbidden(Resources.getInstance().getString(
+			com.top_logic.tl.ai.core.security.I18NConstants.AGENT_NOT_A_PERSONA__AGENT.fill(agentName)));
 	}
 
 	/** Whether this application has an agent of that name, assuming it has while it cannot say. */
@@ -704,7 +740,7 @@ public class ChatServlet extends TopLogicServlet {
 			access = AiToolAccessService.effectiveRunAccessFor(person);
 			agentName = options.agent() != null && !options.agent().isBlank()
 				? options.agent().trim()
-				: AgentFactory.defaultAgentFor(access, hiddenAgents());
+				: AgentFactory.defaultAgentFor(access);
 		} catch (RuntimeException ex) {
 			// A pre-check is a courtesy; a failure in it must not stop a request the run would accept.
 			Logger.warn("Could not pre-check what this account may run.", ex, ChatServlet.class);
@@ -744,13 +780,6 @@ public class ChatServlet extends TopLogicServlet {
 	/** A refusal by the agent security policy. */
 	private static Refusal forbidden(String reason) {
 		return new Refusal(HttpServletResponse.SC_FORBIDDEN, reason);
-	}
-
-	/** The agents this chat runs for itself and never offers as a conversation partner. */
-	private Set<String> hiddenAgents() {
-		TaskProgressTracker tracker = currentTracker();
-		String improver = tracker == null ? null : tracker.getPromptImproverAgentName();
-		return improver == null || improver.isBlank() ? Set.of() : Set.of(improver);
 	}
 
 	/** Answers a send that is refused, with the reason the client shows. */

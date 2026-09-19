@@ -55,12 +55,14 @@ final class ChatCapabilities {
 	 *
 	 * @param person
 	 *        The account asking, may be <code>null</code> - who then holds no role.
-	 * @param hiddenAgent
-	 *        An agent the chat runs for itself rather than on the user's behalf - the prompt
-	 *        improver - which therefore must not be offered as a conversation partner; may be
-	 *        <code>null</code>.
+	 * @param improverAgent
+	 *        The agent behind this chat's improve-prompt button, or <code>null</code> when the chat
+	 *        has none. Only {@link ChatCapabilitiesResponse#isPromptImproverAvailable()} is decided
+	 *        by it - whether an agent is offered as a conversation partner is decided by
+	 *        {@link AgentDefinition#infrastructure()}, which is a property of the agent rather than
+	 *        of the chat that happens to use it.
 	 */
-	static ChatCapabilitiesResponse build(Person person, String hiddenAgent) {
+	static ChatCapabilitiesResponse build(Person person, String improverAgent) {
 		ChatCapabilitiesResponse response = ChatCapabilitiesResponse.create();
 		LLMService llm = LLMService.Module.INSTANCE.isActive() ? LLMService.getInstance() : null;
 		RunAuthorization access = runAccess(person);
@@ -70,10 +72,12 @@ final class ChatCapabilities {
 		Set<String> assignedModels = new LinkedHashSet<>();
 		Set<String> declaredServers = new LinkedHashSet<>();
 		for (AgentDefinition agent : listAgents()) {
-			if (hiddenAgent != null && hiddenAgent.equals(agent.name())) {
+			if (agent.infrastructure()) {
+				// The application runs it for the user; it is no conversation partner, and naming it
+				// in a request is refused whatever <agent-access> grants (#397).
 				continue;
 			}
-			if (access != null && !access.allowsAgent(agent.name())) {
+			if (access != null && !access.allowsAgent(agent.name(), false)) {
 				continue;
 			}
 			AgentOptionDto dto = toAgentDto(agent, llm);
@@ -123,8 +127,9 @@ final class ChatCapabilities {
 		// The prompt improver is outside the agent allowlist - the product chose it - but what it runs
 		// on is still decided, so the client has to be told when offering its button would offer a
 		// refusal. See ChatServlet.improvePrompt, which refuses exactly this case.
-		response.setPromptImproverAvailable(hiddenAgent == null || access == null
-			|| access.allowsAgentsOwn(assignedModelOf(llm, hiddenAgent), declaredServersOf(hiddenAgent)));
+		response.setPromptImproverAvailable(improverAgent == null || access == null
+			|| access.allowsAgentsOwn(assignedModelOf(llm, improverAgent),
+				declaredServersOf(improverAgent)));
 
 		if (McpServerRegistry.Module.INSTANCE.isActive()) {
 			McpServerRegistry mcp = McpServerRegistry.getInstance();

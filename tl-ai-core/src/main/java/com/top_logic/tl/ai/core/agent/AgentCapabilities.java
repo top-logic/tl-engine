@@ -369,10 +369,14 @@ public class AgentCapabilities {
 		if (delegate == null) {
 			return null;
 		}
-		if (!_security.runAuthorization().allowsAgent(delegate.name())) {
+		if (!_security.runAuthorization().allowsAgent(delegate.name(), delegate.infrastructure())) {
 			// Asked quietly, like every other filter here: a run that never calls this agent must not
 			// write a denial line per turn. AgentFactory audits the one that is actually attempted.
-			return "the acting account may not run this agent";
+			// An infrastructure agent fails this too: the application runs it for a user, so it is
+			// not something another agent hands its work to either (#397).
+			return delegate.infrastructure()
+				? "this agent is infrastructure and is not a delegate"
+				: "the acting account may not run this agent";
 		}
 		if (!_security.runAuthorization().allowsAgentsOwn(AgentFactory.assignedModelOf(delegate.name()),
 			delegate.mcpServers())) {

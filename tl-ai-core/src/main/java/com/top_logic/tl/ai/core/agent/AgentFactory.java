@@ -335,9 +335,9 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 *
 	 * <p>
 	 * The configured chat entry point when that principal may run it, and otherwise the first agent
-	 * they may run. The entry point is <em>infrastructure</em>: nobody chose it, a client that names
-	 * no agent is not asking for it, and refusing such a request by its name tells the user about an
-	 * agent they cannot have and cannot avoid. A restricted role gets the agent it does have instead.
+	 * they may run. Nobody chose the entry point: a client that names no agent is not asking for it,
+	 * and refusing such a request by its name tells the user about an agent they cannot have and
+	 * cannot avoid. A restricted role gets the agent it does have instead.
 	 * </p>
 	 *
 	 * <p>
@@ -346,23 +346,27 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 * the defect this method exists to prevent.
 	 * </p>
 	 *
+	 * <p>
+	 * An agent marked {@link AgentDefinition#infrastructure()} is never the answer: the application
+	 * runs it <em>for</em> the user, so falling back to it would start a conversation with something
+	 * that does not answer as a persona. That is read from the definition rather than taken from a
+	 * list the caller keeps, so every caller skips the same agents.
+	 * </p>
+	 *
 	 * @param authorization
 	 *        What the acting principal may run.
-	 * @param excluded
-	 *        Agents the caller does not offer as a conversation partner - the chat's prompt improver
-	 *        is one. May be <code>null</code>.
 	 * @return The agent name, or <code>null</code> if the principal may run none at all - which is a
 	 *         refusal of its own and a different sentence from "you may not run this one".
 	 */
-	public static String defaultAgentFor(RunAuthorization authorization, Collection<String> excluded) {
+	public static String defaultAgentFor(RunAuthorization authorization) {
 		String configured = LLMService.Module.INSTANCE.isActive()
 			? LLMService.getInstance().getEntryPointAgentName()
 			: null;
-		if (canRun(authorization, configured, excluded)) {
+		if (canRun(authorization, configured)) {
 			return configured;
 		}
 		for (AgentDefinition agent : agents()) {
-			if (canRun(authorization, agent.name(), excluded)) {
+			if (canRun(authorization, agent.name())) {
 				return agent.name();
 			}
 		}
@@ -375,12 +379,12 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 * <p>
 	 * More than the allowlist: an agent whose own model or whose own server a role denies cannot run
 	 * for that account either, and falling back to one would answer a client that named no agent with
-	 * a refusal it can do nothing about.
+	 * a refusal it can do nothing about. An {@link AgentDefinition#infrastructure()} agent fails the
+	 * same question, because a run the user did not ask for may not be one.
 	 * </p>
 	 */
-	private static boolean canRun(RunAuthorization authorization, String agentName,
-			Collection<String> excluded) {
-		if (!isOffered(agentName, excluded) || !authorization.allowsAgent(agentName)) {
+	private static boolean canRun(RunAuthorization authorization, String agentName) {
+		if (agentName == null || agentName.isBlank()) {
 			return false;
 		}
 		AgentDefinition agentDef;
@@ -389,10 +393,13 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		} catch (RuntimeException ex) {
 			// Cannot look it up, so cannot rule it out - the run itself decides, as it always does.
 			Logger.debug("Cannot read '" + agentName + "' to check what it uses.", AgentFactory.class);
-			return true;
+			return authorization.allowsAgent(agentName, false);
 		}
-		return agentDef == null
-			|| authorization.allowsAgentsOwn(assignedModelOf(agentDef.name()), agentDef.mcpServers());
+		if (agentDef == null) {
+			return authorization.allowsAgent(agentName, false);
+		}
+		return authorization.allowsAgent(agentDef.name(), agentDef.infrastructure())
+			&& authorization.allowsAgentsOwn(assignedModelOf(agentDef.name()), agentDef.mcpServers());
 	}
 
 	/**
@@ -438,12 +445,6 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		}
 	}
 
-	/** Whether the given name is one a client would be offered. */
-	private static boolean isOffered(String agentName, Collection<String> excluded) {
-		return agentName != null && !agentName.isBlank()
-			&& (excluded == null || !excluded.contains(agentName));
-	}
-
 	/** The agents of this application, in the order a client lists them; empty when none can answer. */
 	private static Collection<AgentDefinition> agents() {
 		try {
@@ -480,7 +481,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 			RunOverrides overrides) {
 		AgentDefinition agentDef = AgentDefinitionQuery.getInstance().findAgentByName(agentName);
 		if (agentDef == null) {
-			return authorization.agentRefusal(agentName);
+			return authorization.agentRefusal(agentName, false);
 		}
 		return refusalFor(authorization, agentDef, assignedModelOf(agentDef.name()), overrides);
 	}
@@ -488,7 +489,8 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	/** The refusal of one run, or <code>null</code>; the one place the three questions are asked. */
 	private static Decision.Denied refusalFor(RunAuthorization authorization, AgentDefinition agentDef,
 			String assignedModel, RunOverrides overrides) {
-		Decision.Denied agentRefusal = authorization.agentRefusal(agentDef.name());
+		Decision.Denied agentRefusal =
+			authorization.agentRefusal(agentDef.name(), agentDef.infrastructure());
 		if (agentRefusal != null) {
 			return agentRefusal;
 		}
@@ -639,7 +641,9 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		// list: a child runs on the user's behalf, so an agent the user may not run is not reachable by
 		// asking another agent for it. AgentCapabilities drops such an agent from the delegate catalog
 		// and from list_agents, so the model normally never asks; this is the gate behind that filter.
-		refuse(security.runAuthorization().agentRefusal(name));
+		// The same call refuses an infrastructure agent - one the application runs for the user -
+		// unless the context says the product, and not the user, named it (#397).
+		refuse(security.runAuthorization().agentRefusal(name, agentDef.infrastructure()));
 
 		AgentModelAssignment assignment =
 			LLMService.getInstance().resolveModelAssignment(agentDef.name());
@@ -679,7 +683,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 			throw new IllegalArgumentException("No agent found with name: " + name);
 		}
 		// See buildAgentLoop: a subagent is the same run under another name.
-		refuse(security.runAuthorization().agentRefusal(name));
+		refuse(security.runAuthorization().agentRefusal(name, agentDef.infrastructure()));
 
 		AgentModelAssignment assignment =
 			LLMService.getInstance().resolveModelAssignment(agentDef.name());

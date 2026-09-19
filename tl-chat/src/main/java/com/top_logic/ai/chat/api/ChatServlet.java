@@ -158,6 +158,25 @@ public class ChatServlet extends TopLogicServlet {
 	 * </p>
 	 */
 	private static final String FORBIDDEN = "forbidden";
+
+	/**
+	 * The {@code status} of a send this installation has no room for right now.
+	 *
+	 * <p>
+	 * Distinct from {@code busy}, which says that <em>this chat</em> is answering something else, and
+	 * from {@code error}, which says that something went wrong. The client shows the {@code reason}
+	 * and lets the user try again.
+	 * </p>
+	 */
+	private static final String REJECTED = "rejected";
+
+	/**
+	 * HTTP 429, which {@code HttpServletResponse} has no constant for.
+	 *
+	 * @see <a href="https://www.rfc-editor.org/rfc/rfc6585#section-4">RFC 6585, section 4</a>
+	 */
+	private static final int SC_TOO_MANY_REQUESTS = 429;
+
 	private static final String CONTENT_TYPE_SSE = "text/event-stream";
 
 	/** The {@link #interactionTypeName(TLClassifier)} of a tool approval. */
@@ -385,6 +404,13 @@ public class ChatServlet extends TopLogicServlet {
 		resp.setStatus(HttpServletResponse.SC_OK);
 		resp.setContentType(CONTENT_TYPE_JSON);
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+		if (result.isRejected()) {
+			// Neither forbidden nor broken: this installation has no room for the run right now, and
+			// the client shows the sentence rather than a failure.
+			writeRefused(resp, new Refusal(SC_TOO_MANY_REQUESTS, result.getReason()),
+				ChatSendResponse.create().setStatus(REJECTED).setReason(result.getReason()));
+			return;
+		}
 		if (result.getTaskId() == null) {
 			ChatSendResponse sendResponse = ChatSendResponse.create()
 				.setStatus(result.isBusy() ? "busy" : "error");
@@ -466,6 +492,15 @@ public class ChatServlet extends TopLogicServlet {
 			return;
 		}
 
+		// Before the turns are dropped: a regenerate refused afterwards would have removed the
+		// answer the user still has and given them nothing in its place.
+		String noRoom = ChatProcessor.noRoomReason(tracker);
+		if (noRoom != null) {
+			writeRefused(resp, new Refusal(SC_TOO_MANY_REQUESTS, noRoom),
+				TruncateResponse.create().setStatus(REJECTED).setReason(noRoom));
+			return;
+		}
+
 		ConversationLog log = tracker.getSessionManager().getOrCreateConversationLog();
 		int turnCount = log.turnCount();
 		if (turnCount == 0) {
@@ -487,6 +522,11 @@ public class ChatServlet extends TopLogicServlet {
 		TruncateResponse response = TruncateResponse.create()
 			.setRemovedTurns(removed.turns())
 			.setText(removed.text());
+		if (result.isRejected()) {
+			writeRefused(resp, new Refusal(SC_TOO_MANY_REQUESTS, result.getReason()),
+				response.setStatus(REJECTED).setReason(result.getReason()));
+			return;
+		}
 		if (result.getTaskId() == null) {
 			writeTruncateResponse(resp, response.setStatus(result.isBusy() ? "busy" : "error"));
 			return;

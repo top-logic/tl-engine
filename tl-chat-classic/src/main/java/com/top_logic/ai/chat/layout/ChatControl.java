@@ -503,6 +503,11 @@ public class ChatControl extends AbstractControlBase {
 					if (result.getTaskId() != null) {
 						chatControl._taskTracker.getAnyActiveProcessingState();
 						chatControl.requestRepaint();
+					} else if (result.isRejected()) {
+						// A ceiling of this installation, said in the user's language: not a failure,
+						// and trying again shortly can work.
+						chatControl._chat.addMessage(new ChatMessage("System", result.getReason()));
+						chatControl.requestRepaint();
 					} else if (!result.isBusy()) {
 						chatControl._chat.addMessage(new ChatMessage("System", "Failed to start AI processing"));
 						chatControl.requestRepaint();

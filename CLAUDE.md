@@ -182,6 +182,40 @@ definition and from `<chat-conversation><context>`, the preference text is
 `tl.accounts:Person#aiPreferences`, and the filled block is recorded on
 `tl.ai.execution:AgentExecution#environment`. See `tl-ai-core/doc/environment-block.md`.
 
+### Skills and tool overlays (tl-ai-core `tools/`, `agent/skills/`)
+
+An agent advertises its own tools plus a catalog of skill names; `loadSkill("id")` hands over the
+skill's instructions as a tool result and appends its tools to `DynamicToolCatalog`. The catalog has
+three layers and always advertises them in this order, whatever order they were added in: the frozen
+base (the agent's `<tools>` and its MCP servers'), the framework overlays every agent carries
+(`loadSkill`, `listTools`), and the skill overlays in load order. The first two are the **stable
+prefix** - `ToolRegistry.stableToolCount` - and a skill restored from a previous run of the session
+lands exactly where loading it would have put it, which is why the loaded-skill set is ordered from
+`LoadedSkillsBinding` through to the persisted `SessionMetadata`.
+
+Overlays are bounded: at most `DynamicToolCatalog.DEFAULT_MAX_SKILL_OVERLAYS` (8) skills keep their
+tools loaded, and loading one more drops the overlay whose tools were called longest ago. The
+eviction is named in the `loadSkill` answer, and a call for an evicted tool is still answered with
+"load the skill that has it". There is deliberately no `unloadSkill` tool. A compaction changes
+nothing in the tool array; it only makes a skill's *instructions* loadable again
+(`ToolRegistry.historyCompacted`), because a summarizing compaction can replace the turn that
+carried them. `AgentEvent.ContextComposition#loadedSkills` names the skills each request paid for.
+See `tl-ai-core/doc/skill-overlays.md`.
+
+### Prompt caching: three rules
+
+Every provider caches by prefix, over the rendering **tools → system prompt → messages**; Anthropic
+and Bedrock need an explicit breakpoint, OpenAI-compatible endpoints match the longest common prefix
+by themselves. The repository therefore holds three rules, and a change that breaks one of them is a
+cost regression nothing else reports:
+
+1. The `<environment>` block is **stable** - day granularity, only facts marked `stable` (#437).
+2. Facts that are not stable go **in the turn**, as the `<turn-context>` content block of the user
+   message, behind the whole cached prefix (#438).
+3. A loaded skill's tools go **behind the stable tool prefix**, appended in load order and never
+   reordered; `ProviderRequest.stableToolCount` carries that boundary and the Anthropic and Bedrock
+   builders put their second breakpoint on it (#346).
+
 ### Provider System (tl-ai-core `provider/`)
 
 `LLMProvider` interface with streaming-first design. Four implementations: `AnthropicProvider`, `OpenAIProvider`, `MistralProvider`, `XAIProvider`. All use Java `HttpClient` + msgbuf JSON.

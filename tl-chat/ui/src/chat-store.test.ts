@@ -238,7 +238,8 @@ describe('one store per chat id', () => {
   })
 
   /**
-   * The reason `<agent-chat>` keys its store by the control id rather than by a fixed name.
+   * The reason a chat with no `chat-id` keys its store by the control id rather than by a fixed
+   * name.
    *
    * Consulting's `CopilotRegistry` keeps a *list* of live panels, so one window can show two
    * copilots. Two `App`s that fell back to one key would answer each other's questions into one

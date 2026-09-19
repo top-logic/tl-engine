@@ -43,7 +43,7 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
   const state = useTLState()
   const promptImprovementEnabled = state.promptImprovementEnabled === true
   /**
-   * The composer's idle invitation, from `<agent-chat placeholder="…">` when the installation
+   * The composer's idle invitation, from `<chat-conversation placeholder="…">` when the installation
    * configured one, else from the host's own extensions (#420). The configured text wins: it is
    * the installation's decision, while the seam is the host code's default. Empty falls through to
    * the framework's wording, which is what an application that configures neither gets.
@@ -92,7 +92,7 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
   /*
    * Measured, not asked of the window (Issue #427).
    *
-   * An `<agent-chat>` placed by an application owns the window almost never: a shell's navigation
+   * A chat placed by an application owns the window almost never: a shell's navigation
    * and the page gutters take their share first, so a viewport query answered for a box the chat
    * does not have and the sheet arrived hundreds of pixels late, or never. The stylesheet decides
    * the same thing from the same element, as a `chat-shell` container query on the same number.

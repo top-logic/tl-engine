@@ -6,13 +6,6 @@
 			<instance>
 				<modules>
 					<!--
-						Converts legacy tl.ai.chat:ChatSession rows to tl.ai.execution:AgentSession.
-						The legacy model itself is gone (Refs #230), so this service has nothing
-						left to do. Remove it together with LegacyChatSessionMigration once every
-						deployment is known to have booted a version containing it.
-					-->
-					<module key="com.top_logic.ai.chat.history.LegacyChatSessionMigration$Module" value="true"/>
-					<!--
 						Pushes a running agent's writes into the open chat windows, so a model-bound
 						element beside the transcript follows the run instead of waiting for the SSE
 						heartbeat.

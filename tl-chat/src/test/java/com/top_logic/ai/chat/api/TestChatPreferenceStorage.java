@@ -19,14 +19,15 @@ import com.top_logic.basic.json.JSON;
  * {@link com.top_logic.knowledge.wrap.person.PersonalConfiguration#setJSONValue} writes the value
  * with {@link JSON} and reads it back with the same parser - and on a parse failure it does not
  * merely return nothing, it <em>drops</em> the stored value as a legacy format. One chat-id that
- * cannot be written as a key therefore silently deletes the layout of every other chat. The
- * one-element {@code <agent-chat>} has the empty chat-id, which is exactly such a key, so this is
- * the case worth pinning.
+ * cannot be written as a key therefore silently deletes the layout of every other chat, and the
+ * empty string is such a key - which is why {@link ChatPreferencesStore#storageKey(String)}
+ * prefixes. No element hands down an empty chat-id any more, but the prefix is a stored format and
+ * the hazard is one character away, so both stay pinned.
  * </p>
  */
 public class TestChatPreferenceStorage extends TestCase {
 
-	/** Every chat-id, the empty one included, is a key this parser accepts. */
+	/** Every chat-id, an empty one included, is a key this parser accepts. */
 	public void testEveryChatIdSurvivesTheJsonRoundTrip() throws Exception {
 		Map<String, Object> byChat = new LinkedHashMap<>();
 		byChat.put(ChatPreferencesStore.storageKey(""), layout(true));

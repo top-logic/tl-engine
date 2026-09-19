@@ -516,36 +516,6 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	}
 
 	/**
-	 * Overwrites the timestamps of a session with the ones it originally had.
-	 *
-	 * <p>
-	 * Needed when a session is imported from an external source: the regular writes
-	 * ({@link #saveMetadata(AgentSession, String)}, {@link #finishExecution}, ...) stamp
-	 * {@code lastUpdated} with the current time, so the original timestamps have to be restored
-	 * afterwards to keep the session in the right place of the history.
-	 * </p>
-	 *
-	 * @param createdAt
-	 *        The creation time to store; <code>null</code> keeps the current value.
-	 * @param lastUpdated
-	 *        The last-modification time to store; <code>null</code> keeps the current value.
-	 */
-	public void setSessionTimestamps(AgentSession session, Date createdAt, Date lastUpdated) {
-		write(() -> {
-			try (Transaction tx = beginTx("Adjust agent session timestamps")) {
-				if (createdAt != null) {
-					session.setCreatedAt(createdAt);
-				}
-				if (lastUpdated != null) {
-					session.setLastUpdated(lastUpdated);
-				}
-				tx.commit();
-			}
-			return null;
-		});
-	}
-
-	/**
 	 * Stores the session metadata bag (approved tools, approval mode, loaded skills, ...).
 	 */
 	public void saveMetadata(AgentSession session, String metadataJson) {

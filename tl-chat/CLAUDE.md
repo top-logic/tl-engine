@@ -25,7 +25,7 @@ Both served by `ChatServlet` at `/chat/*`:
 
 `ChatSessionFilter` (mapped to `/chat/*`) requires a TopLogic session; `ChatServlet.doService`
 additionally refuses anonymous ones with 401, because an application may hand a visitor a session
-without a login. The chat has no anonymous mode: `AgentChatControl` passes `authenticated` to the
+without a login. The chat has no anonymous mode: the chat controls pass `authenticated` to the
 browser component, which shows a sign-in note rather than a composer.
 
 ### Processing Flow
@@ -135,11 +135,10 @@ run. See `doc/scheduled-agent.md`.
 - **`Chat`** – Thread-safe in-memory container using `CopyOnWriteArrayList<ChatMessage>` (max 500)
 - **`ChatSessionManager`** – Manages per-session in-memory state (Chat + ConversationMemory + ConversationLog) with LRU caching (max 5 sessions). Handles session switching with persist/load/rebuild cycle.
 - **`ChatHistoryService`** – Static access to persistent `AgentSession` objects (kind CHAT) via `AgentExecutionStore` (tl-ai-core). Conversations are stored as one transcript per `AgentExecution` (written by `AgentRunner` at run end) and merged in run order on load.
-- **`LegacyChatSessionMigration`** – Startup service migrating legacy `tl.ai.chat:ChatSession` blobs to `AgentSession`s eagerly. The legacy model has been removed (tl-ai-core migration `Issue_230_remove_module_tl_ai_chat`), so the service is a no-op now; it is kept until every deployment is known to have run it.
 - **`AgentTask`** (`…chat.sched`) – The scheduler task above. Not to be confused with
   `tl.ai.execution:AgentTask`, which is one entry of the plan an agent writes while it works
-- **`ChatSessionRegistry`** – Bridges `WindowScope` (a chat control) and `HttpSession` (`ChatServlet`), keyed by `(sub-session, conversation)`: a window showing a page's chat beside a `<chat-dock>`'s, or two `<agent-chat>` elements, has a `TaskProgressTracker` for each (#502). A caller that names no conversation registers and resolves the window's unnamed one, which is what the classic client has. Published API: the classic control in `tl-chat-classic` and `Consulting`'s own control register here from outside this module.
-- **`ChatViewBinding`** – Once per (sub-session, conversation): tracker, user, and the channels the agent may write there. `AgentChatControl` and the split elements (`<chat-conversation>`, `<chat-rail>`) delegate to it so several controls do not bind the window several times. The conversation is the `chat-id` for the split elements and the control's own id for `<agent-chat>` (`bindOwn`), whose layout key stays empty. The layout preference is the exception: it is read whenever `writeLayoutState` is asked for it, which every chat control does from `onBeforeWrite` - see "where the chat's state lives". It is also where every join is tallied for `ChatJoinLog`.
+- **`ChatSessionRegistry`** – Bridges `WindowScope` (a chat control) and `HttpSession` (`ChatServlet`), keyed by `(sub-session, conversation)`: a window showing a page's chat beside a `<chat-dock>`'s has a `TaskProgressTracker` for each (#502). A caller that names no conversation registers and resolves the window's unnamed one, which is what the classic client has. Published API: the classic control in `tl-chat-classic` and `Consulting`'s own control register here from outside this module.
+- **`ChatViewBinding`** – Once per (sub-session, conversation): tracker, user, and the channels the agent may write there. The split elements (`<chat-conversation>`, `<chat-rail>`, `<chat-dock>`, the rail sections) delegate to it so several controls do not bind the window several times. The conversation is the `chat-id`; it is read as a key of its own because a chat that shared its conversation with nobody would key its layout and its tracker differently - the one-element `<agent-chat>` did, until #487 removed it. The layout preference is the exception: it is read whenever `writeLayoutState` is asked for it, which every chat control does from `onBeforeWrite` - see "where the chat's state lives". It is also where every join is tallied for `ChatJoinLog`.
 - **`AgentViewRefreshService`** – Makes a model-bound element beside the transcript follow a running agent. A run commits from a background thread, and a window only sees model changes when its `GlobalModelEventForwarder` is asked to synthesize them - on a browser command or on the 30 s SSE heartbeat. The service listens on `AgentExecutionStore.ChangeListener`, coalesces a burst of writes (200 ms) and synthesizes per window, in that window's sub-session and **under the window's request lock** (a `ReactControl`'s state map is a plain `HashMap`; the heartbeat path skips the lock, and this deliberately does not copy that). **Coalescing never forgets a change**: a pass takes as long as it takes to enter every registered window and wait for its lock, and a change that arrives while one is running is carried into the next pass rather than dropped - `PendingRefreshes` is the whole of that rule, and `TestAgentViewRefresh` is what holds it (#497). A window is registered with the account it is logged in as, read where a context is bound, because the pass runs on a scheduler thread that has none. Windows are registered by `ChatViewBinding` while a chat renders, which is a fork: the engine offers no way to enumerate an account's live windows. The same register and the same lock serve the write direction: `inWindow` runs a caller's action in the window's sub-session under its lock (after synthesizing, so the window knows the run's objects), and `hasWindow` is what lets a tool tell "this run is headless" from "this page allows nothing". A write waits longer for the lock than a refresh does (`write-timeout-millis`, 5 s): a refresh that gives up loses nothing, a write has no second chance.
 - **`PresentTool`** – The `present` tool (`com.top_logic.ai.chat.tools`): the agent puts model objects onto a channel of the page it is on, and the page renders them however it likes. Registered from this module's own configuration, so every application that depends on `tl-chat` has the tool; **which** channel it may write is the page's decision (`<chat-conversation present="…">`, deny by default). See "the agent writes a channel" below.
 - **`ChatScope` / `ChatScopeElement`** – The `<chat>` container and the ambient value it puts into the child `ViewContext`. An element's conversation is its own `chat-id`, else the enclosing `<chat>`, else `default`.
@@ -159,7 +158,7 @@ run. See `doc/scheduled-agent.md`.
 - Transcript format: `ConversationLog` turns serialized via `ConversationLogSerializer` (tl-ai-core, `PersistedConversationV2`)
 - Human-in-the-loop requests persist as `InteractionRequest` rows (approval/question/choice with resolution)
 - The agent's task plan persists as `AgentTask` rows of the session. `TaskStore` (tl-ai-core) stays the truth of the running turn - it also carries `activeForm`, `owner` and the blocks/blocked-by sets, which the model does not - and `AgentTaskMirror` writes what it says onto the rows after every mutation, through `AgentExecutionStore.syncTasks` (one transaction, on the writer thread). The store is still serialized into the session metadata as well, because that is what restores it when a session is re-opened and what the SSE `task_update` frame and the App's own Fortschritt list read. So: the blob is the store's own persistence, the rows are the model a view binds to.
-- Legacy `tl.ai.chat:ChatSession` single-blob sessions were migrated to this model eagerly at startup by `LegacyChatSessionMigration`; the legacy model has since been removed
+- Legacy `tl.ai.chat:ChatSession` single-blob sessions were migrated to this model eagerly at startup by a conversion service; both the legacy model and that service have since been removed (#487)
 
 ## Engine dependencies
 
@@ -262,12 +261,13 @@ only after `mvn -pl tl-chat -am -DskipTests install` and a restart of the applic
 
 ### Embedding in the React view layer
 
-`view/AgentChatElement` is the `<agent-chat/>` view element (`trace-mode`, `prompt-improver-agent`,
-`placeholder`); `view/AgentChatControl` is the `ReactControl` behind it. It registers the per-window
-`TaskProgressTracker` through `ChatViewBinding` and pushes the bootstrap state (`windowId`,
-`userName`, `welcomeName`, `traceMode`, `promptImprovementEnabled`, `placeholder`) the browser
-component reads.
-The component itself is registered as `TLAgentChat` in `ui/src/main.tsx`.
+The chat is composed from view elements: `<chat-conversation>` (transcript, composer, pickers),
+`<chat-rail>` and `<chat-dock>`, all joined by their `chat-id`. Each control registers the
+per-window `TaskProgressTracker` through `ChatViewBinding` and pushes the bootstrap state
+(`windowId`, `userName`, `welcomeName`, `traceMode`, `promptImprovementEnabled`, `placeholder`) the
+browser component reads. The one-element `<agent-chat/>` form was removed with #487: no application
+used it, and the empty chat-id it needed was a special case in three live code paths.
+The shipped browser component is registered as `TLAgentChat` in `ui/src/main.tsx`.
 
 The session list is no element of this module's own: it is a `<data-list>` of
 `tl.ai.execution:AgentSession` whose `selection` channel feeds `<chat-conversation input>`, which
@@ -391,7 +391,7 @@ Two containers carry all of it:
 
 | Container | On | What it decides |
 |--|--|--|
-| `chat-shell` | `.tl-cockpit` - App's root, i.e. `<agent-chat>` | Session rail: column or drawer over the thread (≤ 1100 px). Artefact pane: column or sheet, and the icon strip (≤ 1279.98 px). |
+| `chat-shell` | `.tl-cockpit` - `App`'s root, i.e. a host composing the whole chat | Session rail: column or drawer over the thread (≤ 1100 px). Artefact pane: column or sheet, and the icon strip (≤ 1279.98 px). |
 | `chat-stage` | `.stage` - the transcript plus the composer, in App **and** in a composed `<chat-conversation/>` | Thread gutters (≤ 1080 px), Enter hint long/short (≤ 26 rem), the auto-approve label (≤ 19 rem), the model name on its picker (≤ 18 rem), and whether the composer's controls wrap (≤ 16 rem). |
 
 Rules to know when touching this:
@@ -503,7 +503,7 @@ it rewrites a draft and never answers as a persona.
 ## Extending the chat
 
 The shipped element is `TLAgentChat` (`ui/src/main.tsx`). A host that composes the chat registers its
-own element and points `<agent-chat react-element="MyChat"/>` at it. `AgentChatControl` is still the
+own element and points `<chat-conversation react-element="MyChat"/>` at it. The control is still the
 only binder of session, tracker and prompt-improver; the browser component still talks to `/chat/*`.
 
 ```js
@@ -557,11 +557,11 @@ into the chat state their own sentence, and both feed one `Composer` prop:
 
 | Path | How |
 |--|--|
-| `<chat-conversation>` / `<agent-chat>` | `<placeholder><en>…</en><de>…</de></placeholder>`, or the key of a text in the application's bundle. The control resolves it in the acting account's language (`ChatViewBinding.resolveText`) and pushes the words, never the key. |
+| `<chat-conversation>` | `<placeholder><en>…</en><de>…</de></placeholder>`, or the key of a text in the application's bundle. The control resolves it in the acting account's language (`ChatViewBinding.resolveText`) and pushes the words, never the key. |
 | A host composing `App` | `extensions.composerAddons.placeholder`, already localised. |
 
-A configured `<agent-chat placeholder>` wins over the seam: it is the installation's decision, the
-seam is the host code's default.
+A configured `<chat-conversation placeholder>` wins over the seam: it is the installation's
+decision, the seam is the host code's default.
 
 Two rules about it:
 
@@ -674,7 +674,7 @@ be read at **render** time, and every chat control reads the layout in `onBefore
 |--|--|
 | Who writes the layout | The browser store, through the one `PUT /chat/preferences?chatId=…`. Nothing else writes it - not a control, not an element. |
 | Who reads it | `ChatViewBinding`, per render, into the control state the store boots from. There is no `GET`. |
-| Where it is stored | `PersonalConfiguration`, key `tl-chat.layout`, **one layout per `chat-id`**: `<agent-chat>` (empty id) and a composed `<chat-rail chat-id="grouped">` are different places with different sections. |
+| Where it is stored | `PersonalConfiguration`, key `tl-chat.layout`, **one layout per `chat-id`**: a `<chat-rail chat-id="grouped">` and a `<chat-rail chat-id="review">` are different places with different sections. The key is prefixed (`chat:`), a stored format that must not change. |
 | What is stored | What the user *decided*: `railOpen` (absent while they never toggled it), the pane width they dragged to, `badgeSeen`, and a per-section-name open flag for each section they toggled. Never what a page happened to show. |
 | Precedence | The configured defaults - `<chat-rail open>`, `<section open>`, `<chat-rail pane-width>` - apply **only** where the user has decided nothing. Once they toggled it, their choice wins on reload and in a new tab, and the configured flag no longer applies to them. Per section name, so a section added later still starts as configured. |
 
@@ -727,10 +727,10 @@ not line up, and a dock joining a chat nobody else is on is exactly that shape -
 would then count news from a conversation it does not contain.
 
 `chat-id` on a child element is the **override**, for the rare page that holds two conversations;
-it is nullable, and left empty an element outside every `<chat>` joins `default`. `<agent-chat>` is
-the exception that joins nothing: it binds with `""` and `App` falls back to `props.controlId`, so
-two chats in one window stay two chats - Consulting's `CopilotRegistry` keeps a *list* of live
-panels, and a fixed key would silently merge their transcripts (`chat-store.test.ts`,
+it is nullable, and left empty an element outside every `<chat>` joins `default`. A host that binds
+with no chat-id at all gets `App`'s fallback to `props.controlId`, so two chats in one window stay
+two chats - Consulting's `CopilotRegistry` keeps a *list* of live panels, and a fixed key would
+silently merge their transcripts (`chat-store.test.ts`,
 `testTwoAppsInOneWindowDoNotShareATranscript`).
 
 **The join is logged.** `ChatJoinLog` tallies, per render, which chat id each element joined and

@@ -69,6 +69,29 @@ import com.top_logic.util.Resources;
  */
 public final class TurnContext {
 
+	/**
+	 * What the system prompt says about this block, in English.
+	 *
+	 * <p>
+	 * The shipped wording is the resource {@link EnvironmentSettings#TURN_CONTEXT_RESOURCE}, for the
+	 * reason the template itself is a resource; this constant is the fallback, and a test pins the
+	 * two together. It is rendered as the {@code {{turn_context}}} section of the environment block,
+	 * and only for a run that actually gets a block - an installation that states nothing per turn
+	 * is told nothing about a block it never sends.
+	 * </p>
+	 *
+	 * <p>
+	 * It says one thing the block itself cannot: which of several blocks is the current one. The
+	 * blocks of the earlier turns stay in the history - that is what keeps them out of the prompt
+	 * cache's way - so a model reading the conversation sees the selection as it was three turns ago
+	 * beside the selection as it is now.
+	 * </p>
+	 */
+	public static final String NOTE = "Live state: each user message carries a <turn-context> block"
+		+ " ahead of the user's own text, naming what this application states about that moment -"
+		+ " among it the object the user has selected. The newest block is what is true now; an"
+		+ " earlier one describes a moment that has passed.";
+
 	/** Opens the block. */
 	public static final String OPEN_TAG = "<turn-context>";
 

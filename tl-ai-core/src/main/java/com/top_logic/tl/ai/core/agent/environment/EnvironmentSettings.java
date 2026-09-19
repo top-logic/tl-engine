@@ -68,6 +68,34 @@ public class EnvironmentSettings {
 		return text == null || text.isBlank() ? EnvironmentTemplate.DEFAULT : text;
 	}
 
+	/**
+	 * Resource key of the shipped {@code {{turn_context}}} wording, in {@code tl-ai-core.app-messages}.
+	 *
+	 * <p>
+	 * A bundle rather than the service configuration, for the reason {@link #TEMPLATE_RESOURCE} is
+	 * one: an application that names its own LLM providers overrides the service wholesale, and the
+	 * wording has to survive that in the user's language.
+	 * </p>
+	 */
+	public static final String TURN_CONTEXT_RESOURCE = "tl.ai.environment.turn-context";
+
+	/**
+	 * What the environment block says about the per-turn block, in the language of the account the
+	 * run acts for.
+	 *
+	 * <p>
+	 * The shipped resource, then {@link TurnContext#NOTE} - so a language this product ships is
+	 * honoured and a run still gets a sentence when the bundle is not reachable.
+	 * </p>
+	 *
+	 * @param resources
+	 *        Resolves a {@link ResKey} in that account's language.
+	 */
+	public static String turnContextNote(Resources resources) {
+		String text = resources.getString(ResKey.legacy(TURN_CONTEXT_RESOURCE), null);
+		return text == null || text.isBlank() ? TurnContext.NOTE : text;
+	}
+
 	/** The configured application name key, or {@code null} to use the application's own name. */
 	public static ResKey applicationName() {
 		EnvironmentConfig config = config();

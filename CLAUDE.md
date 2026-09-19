@@ -253,6 +253,15 @@ Two front ends consume that one API:
 
 Multi-layer: `SecurityContext.hasToolPermission()` → `ExecutionMode` gate (GLOBAL tools blocked in PRODUCTION) → `PermissionDecision` (Allowed/Denied/NeedsApproval) → `ApprovalCallback` for human-in-the-loop. Session-level approval caching.
 
+**Rendering an answer is a security boundary (#385).** The text is model output, so it carries whatever
+`webFetch` and the tool results put in front of the model, and it is persisted and re-rendered on every
+reopen. Make HTML from it **only** through `Converters.markdownToHtmlString`, which escapes raw HTML and
+then filters the rendered result through `HtmlSanitizer`'s allow-list - tags, attributes and URL schemes.
+Both layers are needed: escaping cannot see `[text](javascript:...)`, because that is Markdown, not HTML.
+The React chat has its own filter (`marked` → `DOMPurify` in `tl-chat/ui/src/markdown.tsx`). Do not widen
+either allow-list without a test in `TestHtmlSanitizer` / `markdown.test.ts` saying why, and never write
+model text into a page with `writeContent`, `innerHTML` or `dangerouslySetInnerHTML` around them.
+
 ### Memory & Compaction (tl-ai-core `memory/`)
 
 `ConversationMemory` wraps conversation with hybrid token estimation (API baseline + byte heuristic). `CompactionStrategy` interface: `SummarizingStrategy` (LLM-based) and `TruncatingStrategy`.

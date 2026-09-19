@@ -237,6 +237,7 @@ All gates in this design are deterministic Java checks on the call path, never p
                                            │
                        ┌───────────────────▼─────────────────────────┐
    emit answer  ──────▶│ L5  Reference guard (links/ids only)        │
+                       │     + HTML allow-list on the rendered answer│
                        └───────────────────┬─────────────────────────┘
                                            │
                        ┌───────────────────▼─────────────────────────┐
@@ -1138,6 +1139,41 @@ must not have reached the context - that is L2 and L3.
 
 The residual risk is explicit: an agent that legitimately read an object (L2 passed) can paraphrase it
 in prose, and prose is not checked. That is inherent to the product.
+
+#### 3.6.1 Rendering the answer · **implemented** (#385)
+
+The answer is rendered as Markdown, which is where the *other* direction of the output guard sits: not
+what the agent may say, but what a browser may do with what it said. The text is model output, and a
+model writes down what `webFetch` and the tool results put in front of it, so a page carrying
+`<script>`, an `<img onerror>`, a `javascript:` link or an `<iframe>` reaches the renderer as soon as
+the model quotes it. The text is also persisted with the conversation and rendered again on every
+reopen, so anything active in it is stored, not reflected.
+
+Both front ends filter with an allow-list, and neither trusts the other end:
+
+- **Server side** - `Converters.markdownToHtmlString` is the single boundary where HTML is made from
+  model text, and every consumer goes through it: the classic `ChatControl`, the `contentHtml` the
+  chat API hands to `chat-client.js`, and the TL-Script function `convert.markdownToHtml`. Two layers
+  act there. The renderer escapes raw HTML in the Markdown (`HtmlRenderer.ESCAPE_HTML`), so a quoted
+  `<script>` becomes text. `HtmlSanitizer` then filters what the renderer itself produced, which is
+  the layer escaping cannot replace: `[text](javascript:...)` is Markdown, not HTML, and the renderer
+  writes that target into an `href` of its own accord.
+- **React side** - `tl-chat/ui/src/markdown.tsx` parses with `marked` and filters with `DOMPurify`
+  before the result reaches `dangerouslySetInnerHTML`, widened only by the copy button and the data
+  attributes that the file's own code-block and citation markup carry.
+
+The allow-list is the one a Markdown answer needs and nothing beyond it: headings, lists, tables with
+their column alignment, code with its language marker, block quotes, `<del>`, `<ins>`, `<sup>`,
+`<hr>`, and links and images whose scheme is `http`, `https` or `mailto`. A URL in any other scheme -
+`javascript:`, `vbscript:`, `data:`, `file:`, and the same spelled in mixed case, which a browser
+matches and a naive check does not - loses its attribute; the text around it stays, so the reader sees
+what the model wrote without being able to act on it. A relative URL is kept as written, because
+`publishPage` hands the model a root-relative link whenever the deployment declares no `%HOST%`.
+
+What this is not: a defence against the agent *choosing* to write a hostile link to a host it may
+reach. An `https://` link to any site is allowed, as it must be for an agent that cites its sources.
+The guard is against markup becoming behaviour, not against the destination of a link the reader
+clicks knowingly.
 
 ### 3.7 The three bypass routes, closed
 

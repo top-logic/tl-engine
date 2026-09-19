@@ -102,6 +102,8 @@ public class RunEnvironment {
 		values.put(PromptPlaceholders.APPLICATION, application(resolve));
 		values.put(PromptPlaceholders.CONTEXT,
 			contextSection(facts, resources.getString(I18NConstants.ENVIRONMENT_CONTEXT_HEADING)));
+		values.put(PromptPlaceholders.TURN_CONTEXT,
+			turnContextSection(facts, EnvironmentSettings.turnContextNote(resources)));
 		values.put(PromptPlaceholders.PREFERENCES, preferencesSection(UserPreferences.of(account),
 			resources.getString(I18NConstants.ENVIRONMENT_PREFERENCES_HEADING)));
 		values.put(PromptPlaceholders.MEMORIES, UserMemories.section(UserMemories.forRun(account),
@@ -183,6 +185,36 @@ public class RunEnvironment {
 			return "";
 		}
 		return heading + "\n" + String.join("\n", lines);
+	}
+
+	/**
+	 * The {@code {{turn_context}}} section: what a {@code <turn-context>} block is, or nothing at all
+	 * when this run sends none.
+	 *
+	 * <p>
+	 * Conditional for the same reason the sections around it are: an installation that states
+	 * nothing per turn sends no block, and a sentence describing one would be wording it never asked
+	 * for - and a promise the turns do not keep. What decides is the same predicate
+	 * {@link TurnContext} composes by, so the two cannot disagree.
+	 * </p>
+	 *
+	 * <p>
+	 * It is stable within a conversation as long as the host states its per-turn facts from every
+	 * place that conversation is reachable from. A page that states them and a dock that does not
+	 * would flip this section between the turns of one conversation - and would flip the
+	 * {@code {{context}}} section with it, which is the older half of the same rule.
+	 * </p>
+	 */
+	static String turnContextSection(List<EnvironmentFact> facts, String note) {
+		if (facts == null || note == null || note.isBlank()) {
+			return "";
+		}
+		for (EnvironmentFact fact : facts) {
+			if (!fact.stable()) {
+				return note;
+			}
+		}
+		return "";
 	}
 
 	/** The {@code {{preferences}}} section, or nothing when there is no text to send. */

@@ -248,6 +248,11 @@
 					into the per-turn <turn-context> block, which travels in the turn itself, beside the
 					user's text (#438).
 
+					The dock in app.view.xml states the same facts, because it is the same conversation:
+					a page that states them and a dock that does not would flip the environment block
+					between the turns of one chat, and would leave every question asked from the dock
+					without the selection (#494).
+
 					Every fact takes the <inputs> as its leading arguments, the way <data-list> binds
 					its rows - which is why the stable one names the channel it does not use.
 				-->
@@ -260,12 +265,6 @@
 					>
 						<value><![CDATA[open -> "Invoice management demo (tl-ai-demo)"]]></value>
 					</fact>
-					<fact name="Open invoice"
-						stable="false"
-					>
-						<value><![CDATA[open -> ifElse(isEmpty($open), "none",
-							$open.get(`tl.ai.demo.imageclassification:Invoice#description`))]]></value>
-					</fact>
 					<fact name="Open invoice amount"
 						stable="false"
 					>
@@ -273,6 +272,16 @@
 							$open.get(`tl.ai.demo.imageclassification:Invoice#amountLabel`))]]></value>
 					</fact>
 				</context>
+				<!--
+					And the one line that says WHICH object the user is looking at (Issue #494). It
+					states the same channel the pane renders - label, type and the identifier every
+					tool reads back - so "what have I selected?" is answered and "change its date" is
+					possible. The <fact> above could have said the label; it could not have said the
+					identifier without this page knowing how this product spells one.
+				-->
+				<selection name="Open invoice"
+					channel="paneObject"
+				/>
 				<!--
 					Declarative @-mention: typing "@" offers this application's invoices, no TypeScript.
 					Each mention carries the invoice's id and puts its description into the message as the

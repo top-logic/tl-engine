@@ -21,6 +21,7 @@ import com.top_logic.ai.chat.view.ChatConversationElement.Context;
 import com.top_logic.ai.chat.view.ChatConversationElement.Controls;
 import com.top_logic.ai.chat.view.ChatConversationElement.Fact;
 import com.top_logic.ai.chat.view.ChatConversationElement.Mention;
+import com.top_logic.ai.chat.view.ChatConversationElement.Selection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -126,8 +127,12 @@ public class ChatConversationControl extends ReactControl {
 
 	private int _mentionLimit;
 
-	/** The compiled {@code <context>} facts, in configured order; empty when none are configured. */
-	private final List<FactSpec> _facts = new ArrayList<>();
+	/**
+	 * What this page states about the situation, in the order it reaches the model: the
+	 * {@code <selection/>} first, then the {@code <context>} facts as configured. Empty when the
+	 * element states nothing, which is every one of them until it is configured.
+	 */
+	private final List<ContextEntry> _facts = new ArrayList<>();
 
 	/** The channels whose values are the leading arguments of every fact expression. */
 	private final List<ViewChannel> _factInputs = new ArrayList<>();
@@ -175,7 +180,11 @@ public class ChatConversationControl extends ReactControl {
 		// What this page states about the situation. Evaluated here - on the server, in the acting
 		// user's context - and pushed to the browser, which sends it back with every message. The
 		// user's own text is never touched by any of this.
+		// The selection first, because it is the one thing the user is most likely asking about, and
+		// the block is read top down.
+		setupSelection(context, config.getSelection());
 		setupContext(context, config.getContext());
+		publishFacts();
 		List<String> menuItems = config.getMenuItems();
 		putState("menuItems", menuItems == null ? List.of() : List.copyOf(menuItems));
 		Controls controls = config.getControls();
@@ -594,30 +603,62 @@ public class ChatConversationControl extends ReactControl {
 	}
 
 	/**
-	 * Compiles the {@code <context>} facts, publishes them and keeps them current.
+	 * Compiles the {@code <selection/>} and makes it a per-turn fact.
+	 *
+	 * <p>
+	 * Not {@link Context#getFacts() a fact} the host wrote, but the same thing once it reaches the
+	 * model: one line of the {@code <turn-context>} block, re-evaluated whenever the selection
+	 * channel changes. What it says is {@link ChatSelection}'s to decide, so that every page states
+	 * a selection the same way - label, type and the identifier the tools read back.
+	 * </p>
+	 */
+	private void setupSelection(ViewContext context, Selection selection) {
+		if (selection == null) {
+			return;
+		}
+		ViewChannel channel = context.resolveChannel(selection.getChannel());
+		QueryExecutor naming =
+			selection.getLabel() == null ? null : QueryExecutor.compile(selection.getLabel());
+		_facts.add(new SelectionSpec(selection.getName(), channel, naming));
+		refreshFactsOn(channel);
+	}
+
+	/**
+	 * Compiles the {@code <context>} facts and keeps them current.
 	 *
 	 * <p>
 	 * A fact is re-evaluated whenever one of its input channels changes, so what the browser holds is
 	 * what the page was showing. The harness renders the stable ones into the environment block of
-	 * the system prompt; it does not touch the message text.
+	 * the system prompt and the rest into the turn; it does not touch the message text.
 	 * </p>
 	 */
 	private void setupContext(ViewContext context, Context facts) {
-		if (facts == null) {
+		if (facts == null || facts.getFacts().isEmpty()) {
+			// A <context> that states no fact wires no input either: the inputs exist to be the
+			// arguments of expressions there are none of.
 			return;
 		}
 		for (Fact fact : facts.getFacts()) {
 			_facts.add(new FactSpec(fact.getName(), fact.getStable(), QueryExecutor.compile(fact.getValue())));
 		}
-		if (_facts.isEmpty()) {
-			return;
-		}
 		for (ChannelRef ref : facts.getInputs()) {
 			ViewChannel channel = context.resolveChannel(ref);
 			_factInputs.add(channel);
-			ViewChannel.ChannelListener listener = (sender, oldValue, newValue) -> serializeFacts();
-			channel.addListener(listener);
-			addCleanupAction(() -> channel.removeListener(listener));
+			refreshFactsOn(channel);
+		}
+	}
+
+	/** Re-evaluates everything this page states whenever the given channel changes. */
+	private void refreshFactsOn(ViewChannel channel) {
+		ViewChannel.ChannelListener listener = (sender, oldValue, newValue) -> serializeFacts();
+		channel.addListener(listener);
+		addCleanupAction(() -> channel.removeListener(listener));
+	}
+
+	/** Publishes what this page states, once both sources have been compiled. */
+	private void publishFacts() {
+		if (_facts.isEmpty()) {
+			return;
 		}
 		serializeFacts();
 		// A channel written while this control was detached notified nobody, so the values are read
@@ -632,7 +673,7 @@ public class ChatConversationControl extends ReactControl {
 			arguments[n] = _factInputs.get(n).get();
 		}
 		List<Map<String, Object>> out = new ArrayList<>(_facts.size());
-		for (FactSpec fact : _facts) {
+		for (ContextEntry fact : _facts) {
 			Map<String, Object> entry = new LinkedHashMap<>();
 			entry.put("name", fact.name());
 			entry.put("value", fact.evaluate(arguments));
@@ -643,6 +684,32 @@ public class ChatConversationControl extends ReactControl {
 	}
 
 	/**
+	 * One line this page states about the situation, whoever wrote it.
+	 *
+	 * <p>
+	 * Two implementations - a host's {@code <fact>} and the {@code <selection/>} - because they are
+	 * one thing to everything downstream: the browser echoes them back with the message and the
+	 * harness sorts them into the system prompt or the turn by {@link #stable()} alone.
+	 * </p>
+	 */
+	private interface ContextEntry {
+
+		/** What the fact is called in front of the model. */
+		String name();
+
+		/** Whether the value holds for the whole conversation. */
+		boolean stable();
+
+		/**
+		 * The value as it stands now.
+		 *
+		 * @param arguments
+		 *        The current values of the {@code <context>} inputs, in configured order.
+		 */
+		String evaluate(Object[] arguments);
+	}
+
+	/**
 	 * One compiled {@code <fact>}.
 	 *
 	 * <p>
@@ -650,13 +717,46 @@ public class ChatConversationControl extends ReactControl {
 	 * expression costs the agent one line of context, and the user is in the middle of a sentence.
 	 * </p>
 	 */
-	private record FactSpec(String name, boolean stable, QueryExecutor value) {
+	private record FactSpec(String name, boolean stable, QueryExecutor value) implements ContextEntry {
 
-		String evaluate(Object[] arguments) {
+		@Override
+		public String evaluate(Object[] arguments) {
 			try {
 				return label(value.execute(arguments));
 			} catch (RuntimeException ex) {
 				Logger.warn("Chat context fact '" + name + "' could not be evaluated: " + ex.getMessage(),
+					ex, ChatConversationControl.class);
+				return "";
+			}
+		}
+	}
+
+	/**
+	 * The compiled {@code <selection/>}: what stands on the page's selection channel, right now.
+	 *
+	 * <p>
+	 * It reads its own channel rather than an argument, because the channel is its own and not one
+	 * of the {@code <context>} inputs - a page states a selection without writing a {@code <context>}
+	 * at all.
+	 * </p>
+	 */
+	private record SelectionSpec(String name, ViewChannel channel, QueryExecutor naming)
+			implements ContextEntry {
+
+		@Override
+		public boolean stable() {
+			// Never. What the user has selected is the value that changes most often in a
+			// conversation, and the environment block has to stay byte-identical across its turns.
+			return false;
+		}
+
+		@Override
+		public String evaluate(Object[] arguments) {
+			try {
+				return ChatSelection.describe(channel.get(),
+					naming == null ? null : object -> label(naming.execute(object)));
+			} catch (RuntimeException ex) {
+				Logger.warn("The chat could not state the selection '" + name + "': " + ex.getMessage(),
 					ex, ChatConversationControl.class);
 				return "";
 			}

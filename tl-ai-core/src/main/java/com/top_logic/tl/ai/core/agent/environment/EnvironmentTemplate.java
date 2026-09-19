@@ -20,10 +20,10 @@ import java.util.regex.Pattern;
  * </p>
  *
  * <p>
- * The template names {@code {{context}}}, {@code {{preferences}}} and {@code {{memories}}} as whole
- * sections rather than as bare values: each of them renders its own heading, or nothing at all when
- * there is nothing to say. A section that is switched off or empty therefore leaves no orphaned
- * heading behind.
+ * The template names {@code {{context}}}, {@code {{turn_context}}}, {@code {{preferences}}} and
+ * {@code {{memories}}} as whole sections rather than as bare values: each of them renders its own
+ * heading, or nothing at all when there is nothing to say. A section that is switched off or empty
+ * therefore leaves no orphaned heading behind.
  * </p>
  */
 public class EnvironmentTemplate {
@@ -46,6 +46,7 @@ public class EnvironmentTemplate {
 		Agent: {{agent}}. Model: {{model}}.
 		What the application states below is authoritative. Where the application context and the user preferences disagree, follow the application context.
 		{{context}}
+		{{turn_context}}
 		{{preferences}}
 		{{memories}}
 		</environment>""";
@@ -82,11 +83,11 @@ public class EnvironmentTemplate {
 	 * A line that is nothing but a placeholder with nothing to say is not a line.
 	 *
 	 * <p>
-	 * That is how a section disappears whole: {@code {{context}}}, {@code {{preferences}}} and
-	 * {@code {{memories}}} stand on lines of their own and render their own heading, so an account
-	 * that wrote no preferences - or an installation that switched them off - leaves no heading and
-	 * no gap. A placeholder inside a sentence is left to {@link PromptPlaceholders#fill}, because
-	 * the rest of that sentence is still meant.
+	 * That is how a section disappears whole: {@code {{context}}}, {@code {{turn_context}}},
+	 * {@code {{preferences}}} and {@code {{memories}}} stand on lines of their own and render their
+	 * own heading, so an account that wrote no preferences - or an installation that switched them
+	 * off - leaves no heading and no gap. A placeholder inside a sentence is left to
+	 * {@link PromptPlaceholders#fill}, because the rest of that sentence is still meant.
 	 * </p>
 	 */
 	private static String dropEmptySections(String template, Map<String, String> values) {

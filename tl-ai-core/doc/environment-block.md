@@ -45,6 +45,7 @@ A system prompt may use these; the harness fills them at run start.
 | `{{model}}` | The model this run talks to. |
 | `{{application}}` | The configured application name, else the application's own. |
 | `{{context}}` | The application's stable facts, heading included - or nothing. |
+| `{{turn_context}}` | One sentence saying what a `<turn-context>` block is - or nothing, for a run that sends none. |
 | `{{preferences}}` | The account's preference text, heading included - or nothing. |
 | `{{memories}}` | What the agent kept about the account, heading included - or nothing. |
 | `{{environment}}` | The whole block. |
@@ -108,8 +109,8 @@ An installation that wants to say something different sets `template` in `LLMSer
 | `user-preferences` | Whether the accounts' preference texts are sent at all. Off sends none, whatever the accounts wrote; the texts are kept. |
 | `max-preferences-length` | How long one account's text may be, in characters. Default 1000. Cleared (0 or less) means no cap. |
 
-`{{context}}`, `{{preferences}}` and `{{memories}}` render a **whole section each**, heading
-included, or nothing at all. A template line that is nothing but an emptied placeholder is dropped,
+`{{context}}`, `{{turn_context}}`, `{{preferences}}` and `{{memories}}` render a **whole section
+each**, heading included, or nothing at all. A template line that is nothing but an emptied placeholder is dropped,
 so a switched-off preference section leaves no orphaned heading and no gap.
 
 ## Application facts
@@ -232,6 +233,13 @@ user's own text stay untouched. A value that contains one of the tags has its `<
 the way `UntrustedEnvelope` does it, so no fact can end the block early. A value keeps no line
 breaks either: the block is read line by line, and a second line would read as a fact of its own.
 
+**The selection is the fact worth naming first.** The question a user asks a chat beside a page is
+almost always about what they have open, and `tl-chat` offers that as one line rather than as three
+expressions: `<chat-conversation><selection channel="…"/></chat-conversation>` states the selected
+object as a per-turn fact, with the label the user sees, the qualified type name and the
+`label [id:TID]` identifier every tool result carries - so the agent can both answer "which one do I
+have open?" and act on it. See `tl-chat/CLAUDE.md`.
+
 **Turn number and time of day are added by the framework.** Both change per turn by nature, which is
 exactly why the environment block states the date at day granularity and no time at all. The turn
 number is what the entry point counted - `ChatProcessor` binds it with the facts
@@ -240,6 +248,30 @@ is then omitted.
 
 **A host that states nothing per turn gets no block.** Turn number and time are added *to* a block;
 they do not create one.
+
+### The model is told what the block is
+
+A block travelling with the turn says what it holds, but not what it *means* - and in particular not
+that the newest one is the current state while the earlier ones, still in the history, describe
+moments that have passed. The environment block therefore carries one sentence about it, as the
+`{{turn_context}}` section:
+
+```
+Live state: each user message carries a <turn-context> block ahead of the user's own text, naming
+what this application states about that moment - among it the object the user has selected. The
+newest block is what is true now; an earlier one describes a moment that has passed.
+```
+
+It is there **exactly when a block is**, by the same predicate `TurnContext` composes by
+(`RunEnvironment.turnContextSection`): an installation that states nothing per turn is told nothing
+about a block it never sends, the way it gets no `{{context}}` heading for facts it never wrote. Its
+wording is the resource `tl.ai.environment.turn-context`, beside the template itself, with
+`TurnContext.NOTE` as the fallback a test pins it to.
+
+One thing to know before a host states per-turn facts from two places: this section is part of the
+system prompt, so a page that states them and a dock over the same conversation that does not would
+flip it between the turns of one chat - and would flip `{{context}}` with it. State them from every
+place the conversation is reachable from. `tl-ai-demo` does, on the Chat page and in the dock.
 
 ### Where it is attached
 

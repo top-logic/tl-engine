@@ -102,6 +102,55 @@ public class TestRunEnvironment extends TestCase {
 		assertEquals("", RunEnvironment.contextSection(null, "Application context:"));
 	}
 
+	/**
+	 * A run that will send a {@code <turn-context>} block is told what one is; a run that will not
+	 * is told nothing about it (Gitea #494).
+	 */
+	public void testTheTurnContextNoteFollowsThePerTurnFacts() {
+		List<EnvironmentFact> perTurn = List.of(
+			new EnvironmentFact("Project", "Airport expansion", true),
+			new EnvironmentFact("Selected invoice", "Hosting August", false));
+
+		assertEquals("A run that sends a per-turn block says what it is.",
+			TurnContext.NOTE, RunEnvironment.turnContextSection(perTurn, TurnContext.NOTE));
+		assertEquals("Nothing per turn, no block, and therefore nothing to explain.",
+			"", RunEnvironment.turnContextSection(
+				List.of(new EnvironmentFact("Project", "Airport expansion", true)), TurnContext.NOTE));
+		assertEquals("", RunEnvironment.turnContextSection(List.of(), TurnContext.NOTE));
+		assertEquals("", RunEnvironment.turnContextSection(null, TurnContext.NOTE));
+	}
+
+	/**
+	 * The two halves cannot disagree: whatever the note claims, the block is composed by the same
+	 * predicate.
+	 */
+	public void testTheNoteIsThereExactlyWhenTheBlockIs() {
+		List<List<EnvironmentFact>> cases = List.of(
+			List.of(),
+			List.of(new EnvironmentFact("Project", "Airport", true)),
+			List.of(new EnvironmentFact("Selected invoice", "Hosting August", false)),
+			List.of(new EnvironmentFact("Project", "Airport", true),
+				new EnvironmentFact("Selected invoice", "Hosting August", false)));
+
+		for (List<EnvironmentFact> facts : cases) {
+			boolean explained = !RunEnvironment.turnContextSection(facts, TurnContext.NOTE).isEmpty();
+			boolean sent = !TurnContext.render(facts, 1, "Turn", "Time", "14:32").isEmpty();
+
+			assertEquals("Explained and sent must agree for " + facts, Boolean.valueOf(sent),
+				Boolean.valueOf(explained));
+		}
+	}
+
+	/** An installation that reworded the note to nothing is not given the shipped one back. */
+	public void testAnEmptyNoteRendersNoSection() {
+		List<EnvironmentFact> perTurn =
+			List.of(new EnvironmentFact("Selected invoice", "Hosting August", false));
+
+		assertEquals("", RunEnvironment.turnContextSection(perTurn, ""));
+		assertEquals("", RunEnvironment.turnContextSection(perTurn, "   "));
+		assertEquals("", RunEnvironment.turnContextSection(perTurn, null));
+	}
+
 	/** No preference text - the account wrote none, or the administrator switched them off. */
 	public void testNoPreferenceTextRendersNoSection() {
 		assertEquals("", RunEnvironment.preferencesSection(null, "User preferences:"));

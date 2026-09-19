@@ -182,7 +182,11 @@ A fact that is **not** stable goes into the per-turn `<turn-context>` block inst
 its own content block of the turn's user message, ahead of the user's text, which stays exactly what
 the user wrote. The framework adds the turn number and the time of day to it, `AgentLoop` attaches it
 where the request is built - so it survives a compaction - and it is recorded on the turn
-(`Turn#turnContext`, the persisted transcript, the run detail's transcript).
+(`Turn#turnContext`, the persisted transcript, the run detail's transcript). The fact a page most
+often has to state is **which object the user selected**, so `<chat-conversation><selection
+channel="…"/>` states it in one line - label, qualified type and the `label [id:TID]` every tool
+reads back (#494) - and the environment block's `{{turn_context}}` section tells the model what a
+`<turn-context>` block is, for the runs that get one.
 
 The wording is a shipped, translated resource (`tl.ai.environment.template`) that `LLMService`'s
 `<environment>` section may override, the facts come from the agent

@@ -48,6 +48,9 @@ public class PromptPlaceholders {
 	/** The host application's stable facts, one per line. */
 	public static final String CONTEXT = "context";
 
+	/** What a {@code <turn-context>} block is, for the runs that get one. */
+	public static final String TURN_CONTEXT = "turn_context";
+
 	/** The acting account's own preferences text. */
 	public static final String PREFERENCES = "preferences";
 
@@ -61,7 +64,8 @@ public class PromptPlaceholders {
 	 * Every name a prompt may use, in the order the documentation lists them.
 	 */
 	public static final Set<String> NAMES = new LinkedHashSet<>(List.of(
-		USER, LANGUAGE, DATE, AGENT, MODEL, APPLICATION, CONTEXT, PREFERENCES, MEMORIES, ENVIRONMENT));
+		USER, LANGUAGE, DATE, AGENT, MODEL, APPLICATION, CONTEXT, TURN_CONTEXT, PREFERENCES, MEMORIES,
+		ENVIRONMENT));
 
 	/**
 	 * A placeholder occurrence: {@code {{name}}}, optionally with spaces inside the braces.

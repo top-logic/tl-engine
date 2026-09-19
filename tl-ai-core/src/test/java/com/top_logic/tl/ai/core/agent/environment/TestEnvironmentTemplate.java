@@ -100,8 +100,37 @@ public class TestEnvironmentTemplate extends TestCase {
 		}
 	}
 
+	/**
+	 * The shipped sentence about the per-turn block is the one {@link TurnContext#NOTE} documents.
+	 *
+	 * <p>
+	 * Same reason as the template above: the resource is what an installation reads and a translator
+	 * edits, the constant is the fallback for a run that cannot reach the bundle, and nothing but
+	 * this test keeps the two together.
+	 * </p>
+	 */
+	public void testTheShippedTurnContextNoteMatchesTheConstant() throws IOException {
+		assertEquals("The shipped English note drifted away from TurnContext.NOTE.",
+			TurnContext.NOTE.strip(), shipped("en", EnvironmentSettings.TURN_CONTEXT_RESOURCE).strip());
+	}
+
+	/** Every language this module ships says what a {@code <turn-context>} block is. */
+	public void testEveryShippedLanguageExplainsTheTurnContextBlock() throws IOException {
+		for (String language : List.of("en", "de")) {
+			String note = shipped(language, EnvironmentSettings.TURN_CONTEXT_RESOURCE);
+
+			assertTrue("The " + language + " note must name the block it is about: " + note,
+				note.contains(TurnContext.OPEN_TAG));
+		}
+	}
+
 	/** The template as the given language's resource bundle holds it. */
 	private static String shippedTemplate(String language) throws IOException {
+		return shipped(language, EnvironmentSettings.TEMPLATE_RESOURCE);
+	}
+
+	/** One resource of the given language's shipped bundle. */
+	private static String shipped(String language, String key) throws IOException {
 		Path bundle = moduleRoot().resolve(String.format(BUNDLE, language));
 		assertTrue("Not found: " + bundle, Files.isRegularFile(bundle));
 		Properties properties = new Properties();
@@ -109,8 +138,8 @@ public class TestEnvironmentTemplate extends TestCase {
 			Files.newBufferedReader(bundle, StandardCharsets.UTF_8)) {
 			properties.load(reader);
 		}
-		String text = properties.getProperty(EnvironmentSettings.TEMPLATE_RESOURCE);
-		assertNotNull("No '" + EnvironmentSettings.TEMPLATE_RESOURCE + "' in " + bundle, text);
+		String text = properties.getProperty(key);
+		assertNotNull("No '" + key + "' in " + bundle, text);
 		return text;
 	}
 

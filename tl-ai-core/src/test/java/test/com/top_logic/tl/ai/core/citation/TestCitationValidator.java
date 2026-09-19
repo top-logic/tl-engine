@@ -14,6 +14,7 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
+import com.top_logic.tl.ai.core.citation.CitationMarkers;
 import com.top_logic.tl.ai.core.citation.CitationValidator;
 import com.top_logic.tl.ai.core.citation.CitationValidator.Declaration;
 import com.top_logic.tl.ai.core.citation.CitationValidator.Result;
@@ -211,6 +212,69 @@ public class TestCitationValidator extends TestCase {
 		assertEquals(result.text(), stored.text());
 		assertEquals(1, stored.citations().size());
 		assertEquals("https://ok.example/a", stored.citations().get(0).id());
+	}
+
+	/**
+	 * The second answer of a conversation keeps its citation, although its numbering carries on.
+	 *
+	 * <p>
+	 * This is #495. The model's context is the whole conversation: it reads its own first answer
+	 * back, sees {@code [1]} already standing for another source, and writes {@code [2]} for the
+	 * next one. While the counter restarted at 1 on every run, the cite call of that second turn
+	 * answered {@code 1}, the number the model wrote claimed no declaration, and the validator -
+	 * which cannot tell that from an invented marker - deleted the marker and the source with it.
+	 * From then on the drift was in the model's own context and no later answer of that chat cited
+	 * anything.
+	 * </p>
+	 *
+	 * <p>
+	 * The numbering is now the conversation's, so the number the tool returns and the number the
+	 * model would write of its own accord are the same one.
+	 * </p>
+	 */
+	public void testSecondAnswerOfAConversationKeepsItsCitation() {
+		Instant now = Instant.parse("2026-04-01T10:00:00Z");
+		ConversationLog log = new ConversationLog();
+
+		Turn first = log.startTurn();
+		first.addAssistantPart(fetched("w1", now, "{\"id\":\"INV-12\",\"titel\":\"Alpha\"}"));
+		first.addAssistantPart(cited("c1", now, "INV-12", "1"));
+		first.addAssistantPart(new Part.TextPart("t1", now, "Alpha ist es [1]."));
+		assertEquals("Alpha ist es [1].", CitationValidator.apply(log, "Alpha ist es [1].").text());
+		log.completeTurn();
+
+		// What the run does when it starts: continue this conversation's numbering.
+		CitationMarkers markers = new CitationMarkers();
+		markers.resumeFrom(log);
+		String returned = Integer.toString(markers.next());
+
+		// What the model writes, reading its own first answer back: the next free number.
+		String written = "2";
+
+		Turn second = log.startTurn();
+		second.addAssistantPart(fetched("w2", now, "{\"id\":\"INV-12\",\"titel\":\"Alpha\"}"));
+		second.addAssistantPart(cited("c2", now, "INV-12", returned));
+		second.addAssistantPart(new Part.TextPart("t2", now, "Immer noch Alpha [" + written + "]."));
+
+		Result result = CitationValidator.apply(log, "Immer noch Alpha [" + written + "].");
+		assertEquals("The reader's numbering restarts per answer, whatever the model wrote.",
+			"Immer noch Alpha [1].", result.text());
+		assertEquals(1, result.citations().size());
+		assertEquals("INV-12", result.citations().get(0).id());
+
+		// The first answer is untouched by the second run.
+		assertEquals("Alpha ist es [1].", ((Part.TextPart) first.findPart("t1")).text());
+	}
+
+	private static Part.ToolCallPart fetched(String id, Instant now, String result) {
+		return Part.ToolCallPart.started(id, now, "search", "{}", ToolMode.READ)
+			.completed(result, Duration.ZERO);
+	}
+
+	private static Part.ToolCallPart cited(String id, Instant now, String cited, String marker) {
+		return Part.ToolCallPart.started(id, now, "cite",
+			"{\"kind\":\"web\",\"id\":\"" + cited + "\",\"label\":\"Alpha\"}", ToolMode.READ)
+			.completed(marker, Duration.ZERO);
 	}
 
 	/**

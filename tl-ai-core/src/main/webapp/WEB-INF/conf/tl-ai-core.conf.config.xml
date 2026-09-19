@@ -123,6 +123,43 @@
 					<api-key>YOUR_BRAVE_API_KEY</api-key>
 				</search-engine>
 				-->
+
+				<!-- BROWSING GOVERNANCE (issue #347). Which origins an agent run may reach,
+				     resolved per security role. Nothing is configured here, and that is the
+				     shipped default: with no <browsing> section every origin that passes the
+				     SSRF check stays reachable, exactly as before this layer existed.
+
+				     It is the ceiling for ALL THREE routes out of the application - the browser
+				     tool, webFetch and webSearch - and it composes with the browser tool's own
+				     allowed-domains/blocked-domains below: both have to permit an origin. Neither
+				     can relax UrlSafety, which is the SSRF check and is not configurable at all.
+
+				     A worked example:
+
+				<browsing default="research">
+					<policies>
+						<policy name="open"/>
+						<policy name="research" access="deny">
+							<origins>
+								<origin host="docs.oracle.com"/>
+								<origin host="*.top-logic.com" downloads="deny"/>
+							</origins>
+						</policy>
+					</policies>
+					<roles>
+						<role name="SalesAssistantUser" policy="open"/>
+					</roles>
+				</browsing>
+
+				     access="deny" on a policy makes its <origin> rules the only origins it
+				     reaches; access="allow" (the default) makes them exceptions that forbid.
+				     A rule's host is EXACTLY that host; "*.example.com" is the sub-domains and
+				     not the apex - write both entries to cover a domain and everything under it.
+				     downloads="deny" lets a page be read without letting it hand over a file.
+				     A policy name no <policy> declares is a boot error, deliberately, so that a
+				     typo in a security setting cannot silently hand out "everything".
+
+				     See doc/security/browsing-governance.md. -->
 			</instance>
 		</config>
 

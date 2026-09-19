@@ -35,7 +35,6 @@ import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.tools.ToolResults;
 import com.top_logic.tl.ai.core.tools.model.messages.ClassifierInfo;
 import com.top_logic.tl.ai.core.tools.model.messages.EnumerationResponse;
-import com.top_logic.tl.ai.core.tools.model.messages.ErrorResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.ModuleInfo;
 import com.top_logic.tl.ai.core.tools.model.messages.ModuleListResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.TypeInfo;
@@ -192,8 +191,6 @@ public class ModelBrowserTool {
 	private TypeListResponse doListTypes(String moduleName) {
 		// Validate parameter
 		if (moduleName == null || moduleName.isEmpty()) {
-			ErrorResponse error = ErrorResponse.create();
-			error.setError("Module name is required");
 			throw new IllegalArgumentException("Module name is required");
 		}
 

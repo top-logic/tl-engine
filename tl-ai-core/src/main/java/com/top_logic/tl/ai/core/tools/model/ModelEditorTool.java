@@ -37,6 +37,7 @@ import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
+import com.top_logic.model.TLNamed;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLReference;
@@ -45,14 +46,9 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.tools.model.messages.BackwardReferenceResponse;
-import com.top_logic.tl.ai.core.tools.model.messages.ClassResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.DeleteResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.DeletionBlocker;
-import com.top_logic.tl.ai.core.tools.model.messages.EnumResponse;
-import com.top_logic.tl.ai.core.tools.model.messages.ModuleResponse;
-import com.top_logic.tl.ai.core.tools.model.messages.PropertyResponse;
-import com.top_logic.tl.ai.core.tools.model.messages.ReferenceResponse;
+import com.top_logic.tl.ai.core.tools.model.messages.ModelPartResponse;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.tl.ai.core.tools.util.ToolI18NUtil.LocalizedTexts;
 import com.top_logic.tl.ai.core.tools.util.ToolI18NUtil;
@@ -136,7 +132,7 @@ public class ModelEditorTool {
 			@P("German description for the module") String descDe) {
 
 		try {
-			ModuleResponse response = doCreateModule(moduleName, labelEn, labelDe, descEn, descDe);
+			ModelPartResponse response = doCreateModule(moduleName, labelEn, labelDe, descEn, descDe);
 
 			return DataClassSerializer.toJson(response, ModelEditorTool.class, "createModule()",
 				buildArgs("moduleName", moduleName));
@@ -149,7 +145,7 @@ public class ModelEditorTool {
 		}
 	}
 
-	private ModuleResponse doCreateModule(String moduleName, String labelEn, String labelDe,
+	private ModelPartResponse doCreateModule(String moduleName, String labelEn, String labelDe,
 			String descEn, String descDe) {
 
 		if (moduleName == null || moduleName.trim().isEmpty()) {
@@ -173,7 +169,7 @@ public class ModelEditorTool {
 			ToolI18NUtil.applyIfPresent(module, i18n);
 		}
 
-		ModuleResponse response = ModuleResponse.create();
+		ModelPartResponse response = ModelPartResponse.create();
 		response.setSuccess(true);
 		response.setName(module.getName());
 		response.setTid(module.tId().asString());
@@ -206,7 +202,7 @@ public class ModelEditorTool {
 			ToolContext context) {
 
 		try {
-			ModuleResponse response = doUpdateModule(moduleName, labelEn, labelDe, descEn, descDe, context);
+			ModelPartResponse response = doUpdateModule(moduleName, labelEn, labelDe, descEn, descDe, context);
 
 			return DataClassSerializer.toJson(response, ModelEditorTool.class, "updateModule()",
 				buildArgs("moduleName", moduleName));
@@ -219,7 +215,7 @@ public class ModelEditorTool {
 		}
 	}
 
-	private ModuleResponse doUpdateModule(String moduleName, String labelEn, String labelDe,
+	private ModelPartResponse doUpdateModule(String moduleName, String labelEn, String labelDe,
 			String descEn, String descDe, ToolContext context) {
 
 		if (moduleName == null || moduleName.trim().isEmpty()) {
@@ -242,7 +238,7 @@ public class ModelEditorTool {
 
 		ToolI18NUtil.applyIfPresent(module, i18n);
 
-		ModuleResponse response = ModuleResponse.create();
+		ModelPartResponse response = ModelPartResponse.create();
 		response.setSuccess(true);
 		response.setName(module.getName());
 		response.setTid(module.tId().asString());
@@ -288,7 +284,7 @@ public class ModelEditorTool {
 			@P("Names of the classes this class directly extends, as a JSON array string") String generalizations) {
 
 		try {
-			ClassResponse response = doCreateClass(moduleName, className, labelEn, labelDe, descEn, descDe,
+			ModelPartResponse response = doCreateClass(moduleName, className, labelEn, labelDe, descEn, descDe,
 				isAbstract, isFinal, generalizations);
 
 			return DataClassSerializer.toJson(response, ModelEditorTool.class, "createClass()",
@@ -302,7 +298,7 @@ public class ModelEditorTool {
 		}
 	}
 
-	private ClassResponse doCreateClass(String moduleName, String className,
+	private ModelPartResponse doCreateClass(String moduleName, String className,
 			String labelEn, String labelDe, String descEn, String descDe,
 			Boolean isAbstract, Boolean isFinal, String generalizations) {
 
@@ -345,7 +341,7 @@ public class ModelEditorTool {
 			ToolI18NUtil.applyIfPresent(tlClass, ToolI18NUtil.create(labelEn, labelDe, descEn, descDe));
 		}
 
-		ClassResponse response = ClassResponse.create();
+		ModelPartResponse response = ModelPartResponse.create();
 		response.setSuccess(true);
 		response.setName(tlClass.getName());
 		response.setTid(tlClass.tId().asString());
@@ -390,7 +386,7 @@ public class ModelEditorTool {
 			ToolContext context) {
 
 		try {
-			ClassResponse response = doUpdateClass(moduleName, className, labelEn, labelDe, descEn, descDe,
+			ModelPartResponse response = doUpdateClass(moduleName, className, labelEn, labelDe, descEn, descDe,
 				isAbstract, isFinal, generalizations, context);
 
 			return DataClassSerializer.toJson(response, ModelEditorTool.class, "updateClass()",
@@ -404,7 +400,7 @@ public class ModelEditorTool {
 		}
 	}
 
-	private ClassResponse doUpdateClass(String moduleName, String className,
+	private ModelPartResponse doUpdateClass(String moduleName, String className,
 			String labelEn, String labelDe, String descEn, String descDe,
 			Boolean isAbstract, Boolean isFinal, String generalizations, ToolContext context) {
 
@@ -453,7 +449,7 @@ public class ModelEditorTool {
 
 		ToolI18NUtil.applyIfPresent(tlClass, ToolI18NUtil.create(labelEn, labelDe, descEn, descDe));
 
-		ClassResponse response = ClassResponse.create();
+		ModelPartResponse response = ModelPartResponse.create();
 		response.setSuccess(true);
 		response.setName(tlClass.getName());
 		response.setTid(tlClass.tId().asString());
@@ -511,7 +507,7 @@ public class ModelEditorTool {
 			@P("Whether this attribute must be overridden in specific classes (default: false)") Boolean isAbstract) {
 
 		try {
-			PropertyResponse response = doCreateProperty(moduleName, className, propertyName, propertyType,
+			ModelPartResponse response = doCreateProperty(moduleName, className, propertyName, propertyType,
 				labelEn, labelDe, descEn, descDe, mandatory, multiple, ordered, bag, isAbstract);
 
 			return DataClassSerializer.toJson(response, ModelEditorTool.class, "createProperty()",
@@ -525,7 +521,7 @@ public class ModelEditorTool {
 		}
 	}
 
-	private PropertyResponse doCreateProperty(String moduleName, String className,
+	private ModelPartResponse doCreateProperty(String moduleName, String className,
 			String propertyName, String propertyType, String labelEn, String labelDe,
 			String descEn, String descDe, Boolean mandatory, Boolean multiple,
 			Boolean ordered, Boolean bag, Boolean isAbstract) {
@@ -573,7 +569,7 @@ public class ModelEditorTool {
 			ToolI18NUtil.applyIfPresent(property, ToolI18NUtil.create(labelEn, labelDe, descEn, descDe));
 		}
 
-		PropertyResponse response = PropertyResponse.create();
+		ModelPartResponse response = ModelPartResponse.create();
 		response.setSuccess(true);
 		response.setName(property.getName());
 		response.setTid(property.tId().asString());
@@ -627,7 +623,7 @@ public class ModelEditorTool {
 			ToolContext context) {
 
 		try {
-			PropertyResponse response = doUpdateProperty(moduleName, className, propertyName,
+			ModelPartResponse response = doUpdateProperty(moduleName, className, propertyName,
 				labelEn, labelDe, descEn, descDe, mandatory, multiple, ordered, bag, isAbstract, context);
 
 			return DataClassSerializer.toJson(response, ModelEditorTool.class, "updateProperty()",
@@ -641,7 +637,7 @@ public class ModelEditorTool {
 		}
 	}
 
-	private PropertyResponse doUpdateProperty(String moduleName, String className, String propertyName,
+	private ModelPartResponse doUpdateProperty(String moduleName, String className, String propertyName,
 			String labelEn, String labelDe, String descEn, String descDe,
 			Boolean mandatory, Boolean multiple, Boolean ordered, Boolean bag, Boolean isAbstract,
 			ToolContext context) {
@@ -685,7 +681,7 @@ public class ModelEditorTool {
 
 		ToolI18NUtil.applyIfPresent(existingPart, ToolI18NUtil.create(labelEn, labelDe, descEn, descDe));
 
-		PropertyResponse response = PropertyResponse.create();
+		ModelPartResponse response = ModelPartResponse.create();
 		response.setSuccess(true);
 		response.setName(existingPart.getName());
 		response.setTid(existingPart.tId().asString());
@@ -762,7 +758,7 @@ public class ModelEditorTool {
 			@P("Deletion policy: CLEAR_REFERENCE (default), DELETE_REFERER, STABILISE_REFERENCE, or VETO") String deletionPolicy) {
 
 		try {
-			ReferenceResponse response = doCreateReference(moduleName, className, referenceName,
+			ModelPartResponse response = doCreateReference(moduleName, className, referenceName,
 				targetModule, targetClass,
 				labelEn, labelDe, descEn, descDe,
 				mandatory, multiple, ordered, bag, isAbstract,
@@ -779,7 +775,7 @@ public class ModelEditorTool {
 		}
 	}
 
-	private ReferenceResponse doCreateReference(String moduleName, String className, String referenceName,
+	private ModelPartResponse doCreateReference(String moduleName, String className, String referenceName,
 			String targetModule, String targetClass,
 			String labelEn, String labelDe, String descEn, String descDe,
 			Boolean mandatory, Boolean multiple, Boolean ordered, Boolean bag, Boolean isAbstract,
@@ -829,7 +825,7 @@ public class ModelEditorTool {
 				throw new IllegalArgumentException(
 					"Part '" + referenceName + "' already exists on class '" + className + "' but is not a reference");
 			}
-			return buildReferenceResponse(existingRef, false);
+			return buildPartResponse(existingRef, false);
 		}
 
 		TLReference reference;
@@ -866,7 +862,7 @@ public class ModelEditorTool {
 
 		ToolI18NUtil.applyIfPresent(reference, ToolI18NUtil.create(labelEn, labelDe, descEn, descDe));
 
-		return buildReferenceResponse(reference, true);
+		return buildPartResponse(reference, true);
 	}
 
 	// ===== Backward Reference Operations =====
@@ -907,7 +903,7 @@ public class ModelEditorTool {
 			@P("Whether the backward reference is navigable (default: true)") Boolean navigate) {
 
 		try {
-			BackwardReferenceResponse response = doCreateBackwardReference(moduleName, className,
+			ModelPartResponse response = doCreateBackwardReference(moduleName, className,
 				forwardReferenceName, backwardReferenceName,
 				labelEn, labelDe, descEn, descDe, navigate);
 
@@ -924,7 +920,7 @@ public class ModelEditorTool {
 		}
 	}
 
-	private BackwardReferenceResponse doCreateBackwardReference(String moduleName, String className,
+	private ModelPartResponse doCreateBackwardReference(String moduleName, String className,
 			String forwardReferenceName, String backwardReferenceName,
 			String labelEn, String labelDe, String descEn, String descDe, Boolean navigate) {
 
@@ -965,7 +961,7 @@ public class ModelEditorTool {
 					"Part '" + backwardReferenceName + "' already exists on class '" + targetClass.getName()
 						+ "' but is not a reference");
 			}
-			return buildBackwardReferenceResponse(backwardRef, false);
+			return buildPartResponse(backwardRef, false);
 		}
 
 		// Get backward end
@@ -1001,7 +997,7 @@ public class ModelEditorTool {
 
 		ToolI18NUtil.applyIfPresent(backwardRef, ToolI18NUtil.create(labelEn, labelDe, descEn, descDe));
 
-		return buildBackwardReferenceResponse(backwardRef, true);
+		return buildPartResponse(backwardRef, true);
 	}
 
 	// ===== Enumeration Operations =====
@@ -1037,7 +1033,7 @@ public class ModelEditorTool {
 			@P("JSON array of classifiers, each with: classifierName (required), default (boolean), label.en, label.de, description.en, description.de") String classifiersJson) {
 
 		try {
-			EnumResponse response = doCreateEnumeration(moduleName, enumName, labelEn, labelDe, descEn, descDe, classifiersJson);
+			ModelPartResponse response = doCreateEnumeration(moduleName, enumName, labelEn, labelDe, descEn, descDe, classifiersJson);
 
 			return DataClassSerializer.toJson(response, ModelEditorTool.class, "createEnumeration()",
 				buildArgs("moduleName", moduleName, "enumName", enumName));
@@ -1051,7 +1047,7 @@ public class ModelEditorTool {
 	}
 
 	@SuppressWarnings("unchecked")
-	private EnumResponse doCreateEnumeration(String moduleName, String enumName,
+	private ModelPartResponse doCreateEnumeration(String moduleName, String enumName,
 			String labelEn, String labelDe, String descEn, String descDe,
 			String classifiersJson) {
 
@@ -1072,7 +1068,7 @@ public class ModelEditorTool {
 				throw new IllegalArgumentException(
 					"Type '" + enumName + "' exists but is not an enumeration");
 			}
-			return buildEnumResponse(existingEnum, false);
+			return buildPartResponse(existingEnum, false);
 		}
 
 		// Parse classifiers from JSON
@@ -1147,7 +1143,7 @@ public class ModelEditorTool {
 			}
 		}
 
-		return buildEnumResponse(enumeration, true);
+		return buildPartResponse(enumeration, true);
 	}
 
 	/**
@@ -1187,7 +1183,7 @@ public class ModelEditorTool {
 			ToolContext context) {
 
 		try {
-			EnumResponse response = doUpdateEnumeration(moduleName, enumName, labelEn, labelDe, descEn, descDe,
+			ModelPartResponse response = doUpdateEnumeration(moduleName, enumName, labelEn, labelDe, descEn, descDe,
 				addClassifiersJson, updateClassifiersJson, defaultClassifier, context);
 
 			return DataClassSerializer.toJson(response, ModelEditorTool.class, "updateEnumeration()",
@@ -1201,7 +1197,7 @@ public class ModelEditorTool {
 		}
 	}
 
-	private EnumResponse doUpdateEnumeration(String moduleName, String enumName,
+	private ModelPartResponse doUpdateEnumeration(String moduleName, String enumName,
 			String labelEn, String labelDe, String descEn, String descDe,
 			String addClassifiersJson, String updateClassifiersJson, String defaultClassifier,
 			ToolContext context) {
@@ -1333,7 +1329,7 @@ public class ModelEditorTool {
 			tx.commit();
 		}
 
-		return buildEnumResponse(enumeration, false);
+		return buildPartResponse(enumeration, false);
 	}
 
 	// ===== Helper Methods =====
@@ -1626,30 +1622,13 @@ public class ModelEditorTool {
 		return null;
 	}
 
-	private static ReferenceResponse buildReferenceResponse(TLReference reference, boolean created) {
-		ReferenceResponse response = ReferenceResponse.create();
+	/** The successful answer for a model part this call created or found. */
+	private static <T extends TLModelPart & TLNamed> ModelPartResponse buildPartResponse(T part,
+			boolean created) {
+		ModelPartResponse response = ModelPartResponse.create();
 		response.setSuccess(true);
-		response.setName(reference.getName());
-		response.setTid(reference.tId().asString());
-		response.setCreated(created);
-		return response;
-	}
-
-	private static BackwardReferenceResponse buildBackwardReferenceResponse(
-			TLReference backwardRef, boolean created) {
-		BackwardReferenceResponse response = BackwardReferenceResponse.create();
-		response.setSuccess(true);
-		response.setName(backwardRef.getName());
-		response.setTid(backwardRef.tId().asString());
-		response.setCreated(created);
-		return response;
-	}
-
-	private static EnumResponse buildEnumResponse(TLEnumeration enumeration, boolean created) {
-		EnumResponse response = EnumResponse.create();
-		response.setSuccess(true);
-		response.setName(enumeration.getName());
-		response.setTid(enumeration.tId().asString());
+		response.setName(part.getName());
+		response.setTid(part.tId().asString());
 		response.setCreated(created);
 		return response;
 	}

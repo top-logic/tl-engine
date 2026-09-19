@@ -153,7 +153,7 @@ public class TLScriptExecutor {
 		 * </ul>
 		 *
 		 * <p>
-		 * On failure, returns the same format as {@link com.top_logic.tl.ai.core.tools.script.messages.ErrorResult}.
+		 * On failure, returns the same format as {@link com.top_logic.tl.ai.core.tools.model.messages.ErrorResponse}.
 		 * </p>
 		 *
 		 * <p>
@@ -173,8 +173,8 @@ public class TLScriptExecutor {
 		 */
 		public String toJson(ReadFilter readFilter) {
 			if (!_success) {
-				// Use ErrorResult for failures
-				return com.top_logic.tl.ai.core.tools.script.messages.ErrorResult.create()
+				// Use ErrorResponse for failures
+				return com.top_logic.tl.ai.core.tools.model.messages.ErrorResponse.create()
 					.setError(_errorMessage)
 					.toString();
 			}
@@ -208,8 +208,8 @@ public class TLScriptExecutor {
 				return ReadFilter.marked("TL-Script result", buffer.toString());
 
 			} catch (Exception ex) {
-				// Fallback to ErrorResult if serialization fails
-				return com.top_logic.tl.ai.core.tools.script.messages.ErrorResult.create()
+				// Fallback to ErrorResponse if serialization fails
+				return com.top_logic.tl.ai.core.tools.model.messages.ErrorResponse.create()
 					.setError("Serialization failed: " + ex.getMessage())
 					.toString();
 			}

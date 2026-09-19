@@ -126,9 +126,8 @@ public class ModelSearchTool {
 		} catch (Exception ex) {
 			Logger.error("searchModel() error: " + ex.getMessage(), ex, ModelSearchTool.class);
 
-			// Return error as SearchResponse with success=false
+			// A non-empty error is what says the search did not run.
 			SearchResponse errorResponse = SearchResponse.create();
-			errorResponse.setSuccess(false);
 			errorResponse.setError("Search failed: " + ex.getMessage());
 
 			Map<String, Object> args = new HashMap<>();
@@ -578,7 +577,6 @@ public class ModelSearchTool {
 	private static SearchResponse buildSearchResponse(List<SearchResult> results) {
 		// Build response using data classes
 		SearchResponse response = SearchResponse.create();
-		response.setSuccess(true);
 		response.setResultCount(results.size());
 
 		// Add results directly (no conversion needed)

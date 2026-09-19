@@ -14,7 +14,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.tools.script.TLScriptExecutor.ExecutionResult;
-import com.top_logic.tl.ai.core.tools.script.messages.ErrorResult;
+import com.top_logic.tl.ai.core.tools.model.messages.ErrorResponse;
 import com.top_logic.tl.ai.core.tools.script.messages.ValidationResult;
 import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
@@ -92,7 +92,7 @@ public class TLScriptTool {
 		try {
 			// Validate parameter
 			if (script == null || script.trim().isEmpty()) {
-				return toJson(ErrorResult.create().setError("Script is required"));
+				return toJson(ErrorResponse.create().setError("Script is required"));
 			}
 
 			// Perform validation and return JSON directly
@@ -102,7 +102,7 @@ public class TLScriptTool {
 		} catch (Exception ex) {
 			String error = "Validation failed: " + ex.getMessage();
 			Logger.error(error, ex, TLScriptTool.class);
-			return toJson(ErrorResult.create().setError(error));
+			return toJson(ErrorResponse.create().setError(error));
 		}
 	}
 
@@ -144,7 +144,7 @@ public class TLScriptTool {
 		try {
 			// Validate parameter
 			if (script == null || script.trim().isEmpty()) {
-				return toJson(ErrorResult.create().setError("Script is required"));
+				return toJson(ErrorResponse.create().setError("Script is required"));
 			}
 
 			// Default to false if not specified
@@ -156,7 +156,7 @@ public class TLScriptTool {
 				// TL-Script and must not persist with it.
 				String denial = commitDenialReason(context);
 				if (denial != null) {
-					return toJson(ErrorResult.create().setError(denial));
+					return toJson(ErrorResponse.create().setError(denial));
 				}
 			}
 
@@ -170,7 +170,7 @@ public class TLScriptTool {
 		} catch (Exception ex) {
 			String error = "Execution failed: " + ex.getMessage();
 			Logger.error(error, ex, TLScriptTool.class);
-			return toJson(ErrorResult.create().setError(error));
+			return toJson(ErrorResponse.create().setError(error));
 		}
 	}
 

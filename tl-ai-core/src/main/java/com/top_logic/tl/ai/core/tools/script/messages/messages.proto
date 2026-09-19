@@ -36,13 +36,3 @@ message FunctionDocResult {
 	 */
 	string errorMessage;
 }
-
-/**
- * Error result message.
- */
-message ErrorResult {
-	/**
-	 * The error message describing what went wrong.
-	 */
-	string error;
-}

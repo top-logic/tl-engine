@@ -60,8 +60,11 @@ import com.top_logic.util.TLContext;
  * Every navigation is validated by the layered domain policy held by {@link BrowserToolsService}:
  * SSRF protection always wins, the administrator-owned blocklist always applies, and then the
  * origin must be on the allowlist unless allow-any-domains mode is enabled (which relaxes only the
- * allowlist, never SSRF or the blocklist). Returned page text is attacker-controllable, so it is
- * wrapped in an explicit untrusted-data envelope before it becomes the tool result. A CAPTCHA or
+ * allowlist, never SSRF or the blocklist). On top of those installation-wide lists sits the
+ * {@link BrowsingPolicy} of the acting role, which says which origins <em>this user's</em> agent may
+ * reach at all; it can only narrow what the lists permit. Returned page text is
+ * attacker-controllable, so it is wrapped in an explicit untrusted-data envelope before it becomes
+ * the tool result. A CAPTCHA or
  * human-verification challenge is detected and reported as a hard stop - the tool never attempts
  * to solve one.
  * </p>
@@ -167,6 +170,14 @@ public class BrowserTool {
 		if (!service.isAllowAnyDomain() && !service.isAllowedDomain(host)) {
 			return "Error: the domain '" + host
 				+ "' is not on the browser allowlist configured by the administrator.";
+		}
+		// The governance layer on top of the installation-wide lists: which origins the ACTING ROLE
+		// may reach. Checked here as well as in the session's filtering proxy, so the agent is told
+		// why in its own vocabulary instead of reading a transport failure.
+		BrowsingPolicy browsing = WebToolsService.policyFor(currentPersonQuietly());
+		String offPolicy = browsing.refuseAccess(host);
+		if (offPolicy != null) {
+			return "Error: " + BrowsingPolicies.audit(browsing, host, offPolicy);
 		}
 		Object sessionKey = sessionKey(context);
 		if (sessionKey == null) {

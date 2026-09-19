@@ -46,8 +46,9 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
 	 * <li>{@code TL_ModelExplorer} carries {@code model.read} and {@code data.read} tools only, so it is
 	 * the delegate that disappears for a persona holding neither and is <em>limited</em> for one holding
 	 * just the first.</li>
-	 * <li>{@code TL_TLScriptAgent} carries {@code script}, {@code workspace} and {@code model.read}
-	 * tools.</li>
+	 * <li>{@code TL_TLScriptAgent} carries {@code script}, {@code workspace}, {@code model.read},
+	 * {@code data.read} and - since the text edit was offered to the agents that write instance data
+	 * (#168) - {@code data.write} tools.</li>
 	 * <li>{@code TL_ModelEditor} carries {@code user-interaction.askUser}, and {@code interaction} is
 	 * granted implicitly to every role, so it survives for everyone - which is what keeps this test from
 	 * passing by deleting everything.</li>
@@ -63,7 +64,7 @@ public class SecDemoDelegateFilterTest extends SecDemoPersonaTest {
 	/** Reads the model and its instances, and nothing else. */
 	private static final String EXPLORER = "TL_ModelExplorer";
 
-	/** Runs TL-Script, and keeps tasks. */
+	/** Runs TL-Script, keeps tasks, and edits a long text in place. */
 	private static final String SCRIPT_AGENT = "TL_TLScriptAgent";
 
 	/** Changes the model - and asks questions, which every persona may do. */
@@ -122,11 +123,22 @@ public class SecDemoDelegateFilterTest extends SecDemoPersonaTest {
 	 * a script and not to keep a task, and being told so beats discovering it from a child run that
 	 * comes back refused.
 	 * </p>
+	 *
+	 * <p>
+	 * The two personas on the same delegate are what says the limit is a statement about the persona:
+	 * ben reads tickets and writes none, so the text edit is out of reach for him on top of the task
+	 * tools, while anna, who writes, is limited by the task tools alone.
+	 * </p>
 	 */
 	public void testLimitedDelegateIsOfferedAndSaysWhatItCannotDo() {
-		assertEquals("No role holds workspace, so the task tools of TL_TLScriptAgent are out of reach.",
-			Set.of(ToolGroups.WORKSPACE),
+		assertEquals("No role holds workspace, and ben's ticketReader reads but does not write, so the"
+			+ " task tools and the text edit of TL_TLScriptAgent are both out of reach.",
+			Set.of(ToolGroups.DATA_WRITE, ToolGroups.WORKSPACE),
 			capabilitiesOf(BEN).unreachableCapabilities(agent(SCRIPT_AGENT)));
+		assertEquals("anna's projectPartner holds data.write, so the same delegate is limited by the"
+			+ " task tools alone - the limit follows the persona, not the agent.",
+			Set.of(ToolGroups.WORKSPACE),
+			capabilitiesOf(ANNA).unreachableCapabilities(agent(SCRIPT_AGENT)));
 		assertEquals("TL_ModelExplorer needs the two read capabilities, which every persona holds, so"
 			+ " the same persona gets it unlimited.",
 			Set.of(), capabilitiesOf(BEN).unreachableCapabilities(agent(EXPLORER)));

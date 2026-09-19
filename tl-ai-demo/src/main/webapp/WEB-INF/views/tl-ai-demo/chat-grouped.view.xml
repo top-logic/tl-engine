@@ -24,7 +24,7 @@
 		<channel name="paneObject"/>
 		<!--
 			The same value split by how many objects stand on it, because a record is a form and a
-			set of records is a list, and neither element can render the other's value: <form>
+			set of records is a table, and neither element can render the other's value: <form>
 			resolves its input to one object. The rail shows the <pane> for the first and the
 			<list-pane> for the second, so exactly one of the two ever has something to show.
 		-->
@@ -539,29 +539,43 @@
 			</pane>
 			<!--
 				And what it shows instead when several objects stand there, which is what the agent
-				does for "show me the three most expensive invoices". An ordinary <data-list> over
-				the collection - the agent named the objects, this page decided they are a list.
+				does for "show me the three newest invoices": an ordinary <table> over the
+				collection, with the same three columns the Belege page shows. The agent named the
+				objects, this page decided they are a table - and the answer in the transcript, which
+				the model writes as a Markdown table, and the pane beside it now show the same thing
+				(Issue #493).
+
+				Two attributes are load-bearing rather than decorative:
+
+				- `types` fixes the row type. <table> resolves its columns once, when the control is
+				  built, from `types` or else from the rows present at that moment - and the rail
+				  builds both pane children up front, while the channel is still empty, so a <table>
+				  naming neither would fail at page build. Naming the type is also what gives the
+				  columns their model labels and offers the invoice's remaining attributes in the
+				  column selection.
+				- `selection` makes a row click open that invoice: it writes the clicked row to
+				  "paneObject", which is one object, so the pane switches to the <form> above. The
+				  drill-down is one-way - closing the pane returns to the sections, not to the table.
+
+				No <column sort="..."> on purpose: the rows arrive in the order the agent named them,
+				and "the three newest" is an order the user asked for. The user can still sort.
 			-->
 			<list-pane>
-				<data-list
-					collapsible="false"
-					search="false"
+				<table
+					observed-types="tl.ai.demo.imageclassification:Invoice"
+					selection="paneObject"
+					types="tl.ai.demo.imageclassification:Invoice"
 				>
-					<empty-text>
-						<en>Nothing to show</en>
-						<de>Nichts anzuzeigen</de>
-					</empty-text>
+					<columns>
+						<column attribute="date"/>
+						<column attribute="description"/>
+						<column attribute="amountLabel"/>
+					</columns>
 					<inputs>
 						<input channel="paneInvoices"/>
 					</inputs>
-					<lines>
-						<line attribute="description"/>
-						<line attribute="amountLabel"
-							emphasis="secondary"
-						/>
-					</lines>
 					<rows><![CDATA[shown -> $shown]]></rows>
-				</data-list>
+				</table>
 			</list-pane>
 		</chat-rail>
 	</chat>

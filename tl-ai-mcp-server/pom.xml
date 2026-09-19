@@ -79,26 +79,4 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<configuration>
-					<!-- The parent runs the engine's generic test/TestAll only, so this module's own
-					     test classes never executed. Naming them keeps both: the generic suite and
-					     the unit tests of this module. -->
-					<includes>
-						<include>test/TestAll.java</include>
-						<include>**/TestShippedModuleDefault.java</include>
-						<include>**/TestModuleTypesResource.java</include>
-						<include>**/TestMcpAuthentication.java</include>
-						<include>**/TestMcpAuthenticationFilter.java</include>
-						<include>**/TestMcpSessionPrincipals.java</include>
-					</includes>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
 </project>

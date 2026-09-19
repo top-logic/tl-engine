@@ -668,8 +668,23 @@ public class ChatProcessor {
 	 * transactions, and the {@link ApprovalCallback} is backed by the {@link UserInteractionStore} for
 	 * human-in-the-loop approval.
 	 * </p>
+	 *
+	 * <p>
+	 * A tracker that declares itself {@link TaskProgressTracker#isUnattended() unattended} - the
+	 * scheduler's {@code AgentTask}, which has no browser window - is answered with the two things
+	 * that follow from having no human: a {@link SecurityContext#isBackgroundRun() background} tool
+	 * ceiling, and a {@link ToolContext#unattended() context} in which {@code askUser} fails instead
+	 * of parking the run for the length of the interaction timeout. Such a run is also the one the
+	 * factory is told about as {@link RunEntryPoint#SCHEDULED} rather than {@link RunEntryPoint#CHAT}:
+	 * nobody typed its message.
+	 * </p>
+	 *
+	 * <p>
+	 * Package-visible rather than private so a test can ask what a tracker's runs are given; it has
+	 * one production caller, {@link #executeOrchestrator}.
+	 * </p>
 	 */
-	private static ToolContext buildToolContext(UserInteractionStore interactionStore,
+	static ToolContext buildToolContext(UserInteractionStore interactionStore,
 			TaskProgressTracker taskTracker, CancellationToken cancellationToken, String sessionId) {
 		ApprovalCallback approvalCallback;
 		if (taskTracker.getApprovalMode() == ApprovalMode.AUTO_APPROVE) {
@@ -710,17 +725,21 @@ public class ChatProcessor {
 		// waits also end promptly when the user cancels the run.
 		// The chat user is the run's principal: their roles decide which tools the agent may use, and
 		// their model access rights which objects those tools may touch. An interactive run always
-		// has a human who can answer an approval prompt, so it is not a background run.
+		// has a human who can answer an approval prompt, so it is not a background run; a scheduled
+		// one says so on its tracker and is bounded by the policy's <background-allowlist> instead.
 		// ChatSessionFilter has already rejected an unauthenticated caller on /chat/*, so there is a
 		// user here; the factory refuses if there is not, rather than running unchecked.
 		// Which context that is, is the installation's decision (Gitea #381): the default answers
 		// approval by the tool's mode, an application that configured its own factory answers it from
 		// the call.
+		boolean unattended = taskTracker.isUnattended();
+		RunEntryPoint entryPoint = unattended ? RunEntryPoint.SCHEDULED : RunEntryPoint.CHAT;
 		SecurityContext security = RunSecurity.contextFor(
-			new RunPrincipal(TLContext.currentUser(), RunEntryPoint.CHAT, false, sessionId));
-		return new ToolContext(
+			new RunPrincipal(TLContext.currentUser(), entryPoint, unattended, sessionId));
+		ToolContext context = new ToolContext(
 			security, approvalCallback, new TransactionScope(cancellationToken),
 			taskTracker.getSessionApprovedTools(), cancellationToken);
+		return unattended ? context.unattended() : context;
 	}
 
 	/**

@@ -136,7 +136,8 @@ public class ToolContext implements ToolExecutionContext {
 		CancellationToken cancellationToken = new CancellationToken();
 		return new ToolContext(
 			RunSecurity.contextFor(new RunPrincipal(principal, RunEntryPoint.MCP, true)),
-			ApprovalCallback.AUTO_APPROVE, new TransactionScope(cancellationToken), cancellationToken);
+			ApprovalCallback.AUTO_APPROVE, new TransactionScope(cancellationToken), cancellationToken)
+				.unattended();
 	}
 
 	private final SecurityContext _security;
@@ -160,6 +161,8 @@ public class ToolContext implements ToolExecutionContext {
 	private final CitationMarkers _citationMarkers;
 
 	private final String _model;
+
+	private final boolean _attended;
 
 	/**
 	 * Creates a context with the given security, approval callback, and transaction scope.
@@ -245,14 +248,14 @@ public class ToolContext implements ToolExecutionContext {
 			int delegationDepth, String toolCallId, CancellationToken cancellationToken,
 			ProgressReporter progressReporter) {
 		this(security, approval, transaction, sessionApprovedTools, delegationDepth, toolCallId,
-			cancellationToken, progressReporter, new ExecutionHandle(), new CitationMarkers(), null);
+			cancellationToken, progressReporter, new ExecutionHandle(), new CitationMarkers(), null, true);
 	}
 
 	private ToolContext(SecurityContext security, ApprovalCallback approval,
 			TransactionScope transaction, Set<String> sessionApprovedTools,
 			int delegationDepth, String toolCallId, CancellationToken cancellationToken,
 			ProgressReporter progressReporter, ExecutionHandle executionHandle,
-			CitationMarkers citationMarkers, String model) {
+			CitationMarkers citationMarkers, String model, boolean attended) {
 		_security = Objects.requireNonNull(security, "Security context must not be null.");
 		_approval = Objects.requireNonNull(approval, "Approval callback must not be null.");
 		_transaction = Objects.requireNonNull(transaction, "Transaction scope must not be null.");
@@ -264,6 +267,7 @@ public class ToolContext implements ToolExecutionContext {
 		_executionHandle = Objects.requireNonNull(executionHandle, "Execution handle must not be null.");
 		_citationMarkers = Objects.requireNonNull(citationMarkers, "Citation markers must not be null.");
 		_model = model;
+		_attended = attended;
 	}
 
 	/**
@@ -437,12 +441,41 @@ public class ToolContext implements ToolExecutionContext {
 	}
 
 	/**
+	 * Whether a human is present in this run who could be asked a question.
+	 *
+	 * @see ToolExecutionContext#attended()
+	 * @see #unattended()
+	 */
+	@Override
+	public boolean attended() {
+		return _attended;
+	}
+
+	/**
+	 * A copy of this context for a run that has nobody to ask.
+	 *
+	 * <p>
+	 * What the scheduler's {@code AgentTask} and the MCP endpoint build their context with. It says
+	 * only that no answer can arrive; it authorizes nothing and takes nothing away. Whether such a
+	 * run is additionally bounded by the policy's {@code <background-allowlist>} is the decision of
+	 * its {@link #security() security context}, made where that context is built - the two are
+	 * normally set together, and deliberately remain two statements rather than one, because a run
+	 * can lose its human without any change to what it is allowed to do.
+	 * </p>
+	 */
+	public ToolContext unattended() {
+		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
+			_delegationDepth, _toolCallId, _cancellationToken, _progressReporter, _executionHandle,
+			_citationMarkers, _model, false);
+	}
+
+	/**
 	 * Returns a copy of this context bound to the given model.
 	 */
 	public ToolContext withModel(String model) {
 		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
 			_delegationDepth, _toolCallId, _cancellationToken, _progressReporter, _executionHandle,
-			_citationMarkers, model);
+			_citationMarkers, model, _attended);
 	}
 
 	/**
@@ -451,7 +484,7 @@ public class ToolContext implements ToolExecutionContext {
 	public ToolContext withToolCallId(String toolCallId) {
 		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
 			_delegationDepth, toolCallId, _cancellationToken, _progressReporter, _executionHandle,
-			_citationMarkers, _model);
+			_citationMarkers, _model, _attended);
 	}
 
 	/**
@@ -460,7 +493,7 @@ public class ToolContext implements ToolExecutionContext {
 	public ToolContext withProgressReporter(ProgressReporter progressReporter) {
 		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
 			_delegationDepth, _toolCallId, _cancellationToken, progressReporter, _executionHandle,
-			_citationMarkers, _model);
+			_citationMarkers, _model, _attended);
 	}
 
 	/**
@@ -485,7 +518,7 @@ public class ToolContext implements ToolExecutionContext {
 	public ToolContext forDelegation(TransactionScope childTransaction) {
 		return new ToolContext(_security, _approval, childTransaction, _sessionApprovedTools,
 			_delegationDepth + 1, null, _cancellationToken, ProgressReporter.NOOP,
-			childExecutionHandle(), new CitationMarkers(), _model);
+			childExecutionHandle(), new CitationMarkers(), _model, _attended);
 	}
 
 	/**
@@ -516,13 +549,22 @@ public class ToolContext implements ToolExecutionContext {
 	 * worth keeping.
 	 * </p>
 	 *
+	 * <p>
+	 * For the same reason the child inherits the parent's {@link #attended()} rather than being made
+	 * unattended along with its security ceiling: the two answer different questions. The ceiling
+	 * asks whether an approval prompt would be <em>shown in time</em> - the parent turn has ended,
+	 * so it would not - while {@link #attended()} asks whether the account is there at all. A
+	 * subagent of a chat run may therefore still ask its question, and any window of that account
+	 * answers it; a subagent of a scheduled run may not, because there was never anybody.
+	 * </p>
+	 *
 	 * @param childTransaction the transaction scope for the subagent run
 	 * @param childToken       the subagent's own cancellation token
 	 */
 	public ToolContext forDetachedSubagent(TransactionScope childTransaction, CancellationToken childToken) {
 		return new ToolContext(_security.withBackgroundCeiling(), _approval, childTransaction,
 			_sessionApprovedTools, _delegationDepth + 1, null, childToken, ProgressReporter.NOOP,
-			childExecutionHandle(), new CitationMarkers(), _model);
+			childExecutionHandle(), new CitationMarkers(), _model, _attended);
 	}
 
 	/**

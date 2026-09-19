@@ -35,11 +35,40 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  * <li>{@code "text"} — Free text input. Returns the user's text.</li>
  * <li>{@code "choice"} — Option selection. Returns the selected option label(s).</li>
  * </ul>
+ *
+ * <p>
+ * The tool parks the agent thread until somebody answers, so it needs somebody to be there. In an
+ * {@link ToolExecutionContext#attended() unattended} run - a scheduled {@code AgentTask}, a request
+ * through the MCP endpoint - it answers {@link #NOBODY_TO_ASK} at once instead.
+ * </p>
  */
 public class AskUserTool {
 
 	/** Maximum number of options allowed for choice interactions. */
 	private static final int MAX_CHOICE_OPTIONS = 5;
+
+	/**
+	 * What an {@link ToolExecutionContext#attended() unattended} run is told instead of being parked
+	 * on a question nobody will read.
+	 *
+	 * <p>
+	 * Phrased as an instruction the model can act on in the same turn: it names the situation, says
+	 * that retrying is pointless, and gives the two things left to do. An unattended run that keeps
+	 * asking would otherwise burn its turns on the same refusal.
+	 * </p>
+	 *
+	 * <p>
+	 * It is a tool <em>result</em>, not an exception: the run continues and the model decides. A
+	 * scheduled prompt that ends up needing a human is a prompt to fix, and the recorded transcript
+	 * of the run shows exactly where it asked.
+	 * </p>
+	 */
+	static final String NOBODY_TO_ASK =
+		"error: No user is present in this run - it was started by a schedule or by a program, not by "
+			+ "a person, so nothing can answer a question. Do not call askUser again in this run. "
+			+ "Either decide yourself, using the information you already have and stating the "
+			+ "assumption you made, or stop and write a final answer naming what you would have "
+			+ "needed to ask.";
 
 	/**
 	 * Ask the user a question and wait for their response.
@@ -65,6 +94,16 @@ public class AskUserTool {
 				+ "Ignored for other types.") String options,
 			@P("For 'choice': allow multiple selections. Defaults to false.") Boolean multiSelect,
 			ToolExecutionContext context) {
+
+		// Asked before anything is created or recorded: a run with nobody in it must fail here and
+		// now, not park its thread for the 30 minutes of the interaction timeout and then report a
+		// timeout to a model that cannot tell the two apart. Keyed on the context, which the entry
+		// point sets, and never on what the prompt says - a prompt is the model's input, not a gate.
+		if (!context.attended()) {
+			Logger.info("askUser refused: this run has no user to ask (question: " + header + ").",
+				AskUserTool.class);
+			return NOBODY_TO_ASK;
+		}
 
 		UserInteractionStore store = UserInteractionStoreBinding.getStore();
 		if (store == null) {

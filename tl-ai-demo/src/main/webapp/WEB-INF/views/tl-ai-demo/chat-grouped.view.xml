@@ -41,6 +41,7 @@
 		<!-- The counts the rail shows on the section headers and the strip icons. -->
 		<channel name="progressBadge"/>
 		<channel name="sourcesBadge"/>
+		<channel name="memoriesBadge"/>
 		<!--
 			The composer's unsent text, and the object a command puts into it as a reference token.
 			Declared here so this page works on its own; app.view.xml binds its own "chatDraft" over
@@ -416,6 +417,92 @@
 					</lines>
 					<rows><![CDATA[all(`tl.ai.demo.imageclassification:Invoice`)
 						.sort((i -> $i.get(`tl.ai.demo.imageclassification:Invoice#date`)).comparator().desc())]]></rows>
+				</data-list>
+			</section>
+			<!--
+				What the agent has kept about this user (Issue #439), as an ordinary <data-list> over
+				the UserMemory objects - no chat-specific element. The rows are filtered by owner, so
+				this list can only ever show what belongs to the account looking at it, and the Delete
+				command goes through aiMemoryDelete, which refuses a row of somebody else even when a
+				channel happens to hold one.
+
+				A memory written during this conversation shows up here at once - the store tells the
+				open windows - while the agent is told about it only in the NEXT conversation: the
+				environment block it sits in has to stay byte-identical across the turns of one
+				conversation, or the provider's prompt cache misses on every one of them.
+			-->
+			<section name="memories"
+				badge="memoriesBadge"
+				icon="css:bi bi-bookmark-heart"
+			>
+				<label>
+					<en>Memory</en>
+					<de>Gedächtnis</de>
+				</label>
+				<data-list
+					collapsible="false"
+					count="memoriesBadge"
+					observed-types="tl.ai.execution:UserMemory"
+					row-actions="hover"
+					row-channel="memory"
+					search="false"
+				>
+					<empty-text>
+						<en>Nothing remembered yet</en>
+						<de>Noch nichts gemerkt</de>
+					</empty-text>
+					<lines>
+						<line attribute="text"/>
+						<line emphasis="secondary">
+							<value><![CDATA[m -> {
+								kind = $m.get(`tl.ai.execution:UserMemory#kind`);
+								created = $m.get(`tl.ai.execution:UserMemory#createdAt`);
+								ifElse(isEmpty($kind), "", $kind.label())
+									+ ifElse(isEmpty($created), "",
+										" - " + dateFormat("yyyy-MM-dd").format($created));
+							}]]></value>
+						</line>
+					</lines>
+					<row-commands>
+						<generic-command
+							clique="delete"
+							image="css:bi bi-trash"
+							input="memory"
+						>
+							<label>
+								<en>Forget</en>
+								<de>Vergessen</de>
+							</label>
+							<!-- Names what is about to be forgotten rather than asking Yes/No. -->
+							<confirm>
+								<cancel-label>
+									<en>Keep</en>
+									<de>Behalten</de>
+								</cancel-label>
+								<confirm-label>
+									<en>Forget</en>
+									<de>Vergessen</de>
+								</confirm-label>
+								<title>
+									<en>Forget this</en>
+									<de>Das vergessen</de>
+								</title>
+								<expr><![CDATA[m -> {
+									text = $m.get(`tl.ai.execution:UserMemory#text`);
+									{
+										"en": "Forget “" + $text + "”? Albert will no longer know it.",
+										"de": "„" + $text + "“ vergessen? Albert weiß es dann nicht mehr."
+									}.internationalize();
+								}]]></expr>
+							</confirm>
+							<execute-script>
+								<function><![CDATA[m -> { aiMemoryDelete($m); null; }]]></function>
+							</execute-script>
+						</generic-command>
+					</row-commands>
+					<rows><![CDATA[all(`tl.ai.execution:UserMemory`)
+						.filter(m -> $m.get(`tl.ai.execution:UserMemory#owner`) == currentUser())
+						.sort((m -> $m.get(`tl.ai.execution:UserMemory#createdAt`)).comparator().desc())]]></rows>
 				</data-list>
 			</section>
 			<!--

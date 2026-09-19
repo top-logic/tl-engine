@@ -7,6 +7,7 @@ package com.top_logic.tl.ai.core.tools.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.top_logic.model.ModelKind;
@@ -20,30 +21,78 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.TLModuleDisplayGroup;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tl.ai.core.security.ModelSecurity;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
 /**
- * Generates a compact text digest of a {@link TLModel} for injection into agent system prompts.
+ * Generates a compact text digest of a {@link TLModel} for an agent run.
  *
  * <p>
  * The digest gives agents structural knowledge of the application model without requiring
  * exploration tool calls. It uses a notation chosen for token efficiency.
  * </p>
  *
- * @see ModelBrowserTool#outlineModel(Boolean)
+ * <h2>What the principal gets to see</h2>
+ *
+ * <p>
+ * The digest is a <b>read surface</b>: it reaches the model in one piece and describes types the
+ * principal may have no business knowing about. So it is scoped, and it is scoped the way the rest of
+ * L2 is - against the rights of the run, not against a mode or a flag. {@link #generate(TLModel,
+ * boolean, ModelSecurity)} is the only form; there is no argument-less one to forget, which is the
+ * same shape {@code TidResolver.resolve} and {@code ExecutionResult.toJson} have carried since #289.
+ * </p>
+ *
+ * <p>
+ * The unit of the decision is the <b>type</b>, because that is what the digest describes and what
+ * {@link ModelSecurity#accessibleTypes(com.top_logic.tool.boundsec.BoundCommandGroup)} answers about.
+ * A class the principal may not read has no entry, and a module whose classes are all inaccessible is
+ * absent with its enumerations. What the digest never does is <em>describe</em> an inaccessible type.
+ * </p>
+ *
+ * <p>
+ * Three boundaries, stated so that an observation is not mistaken for a finding:
+ * </p>
+ *
+ * <ul>
+ * <li>An emitted type is written out in full - its generalizations and the target types of its parts
+ * are <em>named</em> even where those types have no entry of their own. Naming is not describing, and
+ * a definition with its references cut out would be a false statement about the type rather than a
+ * narrower one. The same line the design draws for object labels, one level up.</li>
+ * <li><b>Enumerations are not scoped</b>, because the engine's model access rights do not scope them:
+ * a {@code <security-config>} grants on classes and on parts, and there is no grant an administrator
+ * could write about an enumeration. They follow their module, which is scoped.</li>
+ * <li>{@code accessibleTypes} resolves the principal's roles at the <b>global security root</b>. An
+ * account that holds a role only on single objects - a scope rather than a tier - therefore does not
+ * get that type advertised, although it may well read instances of it. The error is towards
+ * disclosing less, and the instance surfaces are filtered per object anyway.</li>
+ * </ul>
+ *
+ * @see ModelBrowserTool#outlineModel(Boolean, com.top_logic.tl.ai.tool.api.ToolExecutionContext)
+ * @see ModelSecurity#accessibleTypes(com.top_logic.tool.boundsec.BoundCommandGroup)
  */
 public class ModelDigestGenerator {
 
 	/**
-	 * Generates a compact model digest.
+	 * Generates a compact model digest of everything the given principal may read.
 	 *
 	 * @param model
 	 *        The application model to serialize.
 	 * @param includeFramework
 	 *        Whether to include framework/platform modules (tl.*, tl5.*).
-	 * @return A text digest suitable for system prompt injection, or empty string if no application
-	 *         modules exist.
+	 * @param security
+	 *        The rights of the run's principal. Mandatory: what a read surface discloses is decided
+	 *        against a principal, and a digest generated without one would have to name every type or
+	 *        none.
+	 * @return A text digest, or the empty string if the principal may read no type of any module the
+	 *         request asked for.
 	 */
-	public static String generate(TLModel model, boolean includeFramework) {
+	public static String generate(TLModel model, boolean includeFramework, ModelSecurity security) {
+		if (security == null) {
+			throw new IllegalStateException("A model digest is a read surface, and this call names no"
+				+ " principal to scope it for. Pass the ModelSecurity of the agent run.");
+		}
+		Set<TLClass> accessible = security.accessibleTypes(SimpleBoundCommandGroup.READ);
+
 		List<TLModule> modules = model.getModules().stream()
 			.filter(m -> includeFramework || !isFrameworkModule(m))
 			.sorted((a, b) -> a.getName().compareTo(b.getName()))
@@ -53,28 +102,46 @@ public class ModelDigestGenerator {
 			return "";
 		}
 
+		StringBuilder body = new StringBuilder();
+		for (TLModule module : modules) {
+			appendModule(body, module, accessible);
+		}
+		if (body.length() == 0) {
+			// Nothing survived the scoping. An empty preamble would tell the model there is a model
+			// and no types in it, which is a statement about the principal's rights rather than
+			// about the application.
+			return "";
+		}
+
 		StringBuilder sb = new StringBuilder();
 		sb.append("# Application Model\n");
 		sb.append(
 			"// Notation: `name: Type` property · `name: -> Type` reference · `Type[]` collection · `(...)` modifiers: mandatory, derived, composite, override\n");
 		sb.append(
 			"// Type names: unqualified within the same module, else fully qualified. interface = abstract (no direct instances), class = instantiable.\n");
-
-		for (TLModule module : modules) {
-			appendModule(sb, module);
-		}
+		sb.append(body);
 
 		return sb.toString();
 	}
 
-	private static void appendModule(StringBuilder sb, TLModule module) {
+	/**
+	 * Appends the given module, or nothing at all when the principal may read none of its classes.
+	 *
+	 * <p>
+	 * A module with no readable class is omitted with its enumerations: an enumeration is not scoped
+	 * by the engine's rights, so the module it belongs to is the only statement about it that can be
+	 * made, and a module the principal reads nothing of is not one it should be told about.
+	 * </p>
+	 */
+	private static void appendModule(StringBuilder sb, TLModule module, Set<TLClass> accessible) {
 		List<TLType> types = module.getTypes().stream()
 			.filter(t -> t.getModelKind() != ModelKind.ASSOCIATION
 				&& t.getModelKind() != ModelKind.DATATYPE)
+			.filter(t -> !(t instanceof TLClass tlClass) || accessible.contains(tlClass))
 			.sorted((a, b) -> a.getName().compareTo(b.getName()))
 			.collect(Collectors.toList());
 
-		if (types.isEmpty()) {
+		if (types.stream().noneMatch(t -> t instanceof TLClass)) {
 			return;
 		}
 

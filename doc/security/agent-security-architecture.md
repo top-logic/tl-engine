@@ -80,7 +80,8 @@ the engine's own statement of the rule, and the control (`filterSecurity`).
 | Test/EMPTY context | **Unrestricted, documented as a test seam** | `ToolContext.EMPTY` and `SecurityContext.UNRESTRICTED`; no production path builds a context this way, because `TopLogicSecurityContext.forRun` requires a `Person` |
 | MCP server | **Off by default; authenticated and acting as its caller when on** (#261) | `tl-ai-mcp-server`'s `web-fragment.xml` maps `McpAuthenticationFilter` to `/mcp/*`, which authenticates every request through the OpenAPI server's `Authenticator` framework (HTTP basic, API key, OAuth bearer - a per-deployment choice) and opens the `TLContext` of the resolved `Person` for the whole request. `McpAuthentication` refuses everything when the application configured no authentication, so nothing is served open. `McpToolAdapter` then builds a real `ToolContext` over `TopLogicSecurityContext.forRun(person, background = true)` and applies the same `ToolPermissionFilter` as the chat path; the resource handlers read as that account and disclose through the same `ReadFilter` chokepoint as the data tools. `MCPServerService$Module` still ships as `false`, because serving the endpoint stays an administrative decision - see [mcp-endpoint.md](mcp-endpoint.md) |
 | Java data tools | **Read-filtered** (#289) | `InstanceBrowserTool` filters through `ReadFilter.readable(...)` before counting and paginating; `getInstance`, the TL-Script result and every configured script tool go through the same filter. Aggregates computed inside a script stay unfiltered and say so (**#291**) |
-| Model digest | Unfiltered | `ModelDigestGenerator.generate` walks all modules of the application model (`ModelDigestGenerator.java:46-51`) and is injected into the system prompt |
+| Model digest | **Scoped to the principal's types** (#295) | `ModelDigestGenerator.generate(model, includeFramework, ModelSecurity)` has no form without the rights; it emits only the classes of `accessibleTypes(READ)` and drops a module whose classes are all inaccessible. Reached through `ModelBrowserTool.outlineModel`, which takes the run's `ToolExecutionContext` |
+| Vector index | **Filtered at query time** (#295) | `VectorIndex.searchVectorIndex` has no form without a `ReadFilter`; `VectorReadFilter` resolves each hit's source object through `TidResolver` and drops the hit - with its text - when the source is unreadable or unattributable. Index *contents* stay unrestricted by construction, see 3.4.3 |
 
 Two engine behaviours matter for the design and are verified against released `8.0.0-alpha7`:
 
@@ -155,8 +156,8 @@ All gates in this design are deterministic Java checks on the call path, never p
 | **T7** | **The MCP bypass.** `/mcp/*` used to authenticate nobody: every adapted tool executed with a `null` `ToolContext` in a system interaction - the engine's super-user bypass - and every *resource* read did the same, so anyone who reached the port could read any object by TID. | **Closed** (#261): every request is authenticated to a `Person` and runs in that account's context; tool calls are authorized by `<tool-access>` and bounded by the background allowlist, and resource reads go through the `ReadFilter` chokepoint. An application that configures no authentication serves nothing, and the module still ships off. `tools/list` remains unfiltered per caller (SDK limitation) | 3.1, 3.7, [mcp-endpoint.md](mcp-endpoint.md) |
 | **T8** | **Privilege escalation via self-modification.** `AgentAuthoringTool`, `FrameworkWiringTool`, `ScriptToolAuthoringTool` let an agent create agents, add tools to agents and define new script tools. An agent that may edit agents can grant itself any tool. | Yes | 3.2.3 (privileged group), 3.2.6 (delegation cannot widen) |
 | **T9** | **Privilege escalation via self-selected security level.** Nothing stopped a caller from constructing a permissive `SecurityContext` or picking a laxer mode. | **Closed structurally**: there is no mode to pick, and no production path builds a permissive context | 3.1 |
-| **T10** | **RAG / vector-index leakage.** `searchVectorIndex` returns chunks derived from indexed objects with no per-user filter; the index is built by a background daemon under system rights. | Yes | 3.4.3 |
-| **T11** | **Schema disclosure.** The model digest injected into the system prompt enumerates every module, type and attribute of the application. | Yes | 3.4.2 |
+| **T10** | **RAG / vector-index leakage.** `searchVectorIndex` returned chunks derived from indexed objects with no per-user filter; the index is built by a background daemon under system rights. | **Addressed at query time** (#295): a hit whose source object the caller may not read is dropped before it reaches anybody, and a hit that cannot be attributed to an object is dropped too. That the *embedding* was computed from unfiltered text is accepted and stated, not fixed | 3.4.3 |
+| **T11** | **Schema disclosure.** The model digest enumerated every module, type and attribute of the application. | **Closed** (#295): the digest emits only `accessibleTypes(READ)` and cannot be generated without a principal | 3.4.2 |
 | **T12** | **Write without authority reaching the commit.** Any tool that forgot its check (or a future/MCP tool that never had one) writes through the shared `TransactionScope`, and the end-of-turn commit persists it. **Closed for an enforcing run** by 3.5. | Yes | 3.5 (pre-commit guard) · **implemented** |
 | **T13** | **Cross-session/transcript disclosure.** Session transcripts persist whatever the agent read; a later reader of the session sees data they may no longer be entitled to. | Partially | Out of scope here, see 2.5 |
 
@@ -227,7 +228,7 @@ All gates in this design are deterministic Java checks on the call path, never p
                                            │
                        ┌───────────────────▼─────────────────────────┐
    before serialize ──▶│ L3  Result pre-filter                       │  every result
-                       │     filterSecurity + digest + RAG filter    │
+                       │     ReadFilter + digest scope + RAG filter  │
                        └───────────────────┬─────────────────────────┘
                                            │
                        ┌───────────────────▼─────────────────────────┐
@@ -900,12 +901,12 @@ Still outstanding, and out of #289's scope:
 
 | Tool | Change |
 |---|---|
-| `ModelSearchTool.searchModel` | Searches *model elements* - types, attributes, labels - not instances, so it discloses model structure rather than business data. Bounded by `accessibleTypes(READ)` in section 3.4.2 rather than by the read filter |
-| `ModelBrowserTool.*`, `TypeAnalysisTool.*` | Restrict enumeration to `accessibleTypes(READ)` (section 3.4.2) |
-| `tl-ai-mcp-server`'s model-metadata resources (`ModuleTypesResource`, `TypePartsResource`, `EnumerationClassifiersResource`, `TypeUsagesResource`, `ConfigSchemaResource`) and `tools/list` | These disclose model *structure* rather than business data, so the read filter has nothing to filter. Bounding them by `accessibleTypes(READ)` is the same open question as `ModelBrowserTool` above (section 3.4.2); `tools/list` additionally cannot be filtered per caller within MCP Java SDK 1.1.4. Both are disclosed only to an *authenticated* caller since #261 |
+| `ModelSearchTool.searchModel` | Searches *model elements* - types, attributes, labels - not instances, so it discloses model structure rather than business data. Bounded by `accessibleTypes(READ)`, the bound `ModelBrowserTool.outlineModel` now carries (section 3.4.2); the enumerating methods have not been retrofitted |
+| `ModelBrowserTool.listModules` / `listTypes` / `listTypeParts` / `listClassifiers`, `TypeAnalysisTool.*` | Restrict enumeration to `accessibleTypes(READ)` (section 3.4.2). `outlineModel` - the one that hands over the whole model in a single call, and therefore the one that mattered - is done (#295); these enumerate the same information a type at a time |
+| `tl-ai-mcp-server`'s model-metadata resources (`ModuleTypesResource`, `TypePartsResource`, `EnumerationClassifiersResource`, `TypeUsagesResource`, `ConfigSchemaResource`) and `tools/list` | These disclose model *structure* rather than business data, so the read filter has nothing to filter. Bounding them by `accessibleTypes(READ)` is the same open item as the `ModelBrowserTool` enumeration above (section 3.4.2); `tools/list` additionally cannot be filtered per caller within MCP Java SDK 1.1.4. Both are disclosed only to an *authenticated* caller since #261 |
 | `ModelEditorTool.*`, `ModelAnnotationEditorTool.*` | Structural: gated by the `model.structure` group at L1; L4 backstops the commit |
 | `TLScriptTool.executeTLScript` | Already enforced by the engine inside TL-Script as of `8.0.0-alpha7`; assert user context, never a system interaction. That enforcement was never gated by tl-ai at all, and it denies by default - see section 6 |
-| `VectorIndexSearchTool` | Section 3.4.3 |
+| `VectorIndexSearchTool` | **Done** (#295): filtered at query time through `VectorReadFilter`, and what it reports is the live object through `ReadFilter` rather than the indexed chunk. Section 3.4.3 |
 | `McpTool` (all remote tools) | Cannot be introspected and declares no group, so it is ungrouped and therefore denied until an administrator classifies it in `<tool-groups>`. Same for `ScriptToolExecutor`, i.e. every TL-Script tool authored in the running application. Classification stays with the administrator on purpose - a self-declared group would let whoever authors a tool choose which capability it costs to call (see 3.2.8) |
 
 #### 3.3.3 Declared types - designed, not built
@@ -1008,38 +1009,88 @@ returns the input unchanged when nothing had to go - `SearchExpression.java:278-
 knows one knows the other.
 
 What is still not covered here, stated plainly so an observation is not mistaken for a finding: an
-**aggregate** computed inside a script (`all(...).size()`), the **model digest** (3.4.2) and the
-**vector index** (3.4.3).
+**aggregate** computed inside a script (`all(...).size()`). The **model digest** (3.4.2) and the
+**vector index** (3.4.3) are covered since #295, each by the check its data admits - the digest
+describes types and is bounded by `accessibleTypes(READ)`, the index returns objects and is filtered
+per object.
 
-#### 3.4.2 The model digest
+#### 3.4.2 The model digest · **implemented** (#295)
 
-`ModelDigestGenerator.generate` is injected into the system prompt and currently enumerates every
-module, type and attribute (T11). It gains a `Person`-aware overload that restricts the emitted set to
-`accessibleTypes(READ)` plus the framework modules the agent needs to function.
+The digest is the read surface that reaches the model **in one piece**: one `outlineModel` call hands
+over every module, type and attribute, so a type nobody filtered out is a type the agent now knows the
+name, the shape and the relationships of (T11). It is therefore scoped, and by the check its data
+admits - what it describes is **types**, so the bound is `accessibleTypes(READ)` and not the read
+filter, which decides about objects.
 
-Two caveats:
-- The digest is per-run, so it can no longer be cached globally. It must be keyed by
-  `(person, modelRevision)` or regenerated per run.
-- Attribute-level restrictions are visible in the digest as *absence*, which is the correct behaviour
-  (an attribute nobody may read should not be advertised).
+`ModelDigestGenerator.generate(TLModel, boolean, ModelSecurity)` is the **only** form. There is no
+argument-less one to forget, the same shape `TidResolver.resolve` and `ExecutionResult.toJson` have
+carried since #289, and `ModelBrowserTool.outlineModel` takes the run's `ToolExecutionContext` to
+supply it. A class outside `accessibleTypes(READ)` has no entry; a module whose classes are all
+inaccessible is absent with its enumerations; a principal who may read no type at all is told there is
+nothing, which is the same answer an application with no modules gives.
 
-#### 3.4.3 RAG / vector index (T10)
+Three boundaries, stated so an observation is not mistaken for a finding:
+
+- **An emitted type is written out in full.** Its generalizations and the target types of its parts are
+  *named* even where those types have no entry of their own. Naming is not describing, and a definition
+  with its references cut out would be a false statement about the type rather than a narrower one -
+  the same line this design draws for object labels one level up (3.3.2).
+- **Enumerations are not scoped.** The engine's rights do not scope them: a `<security-config>` grants
+  on classes and on parts, and there is no grant an administrator could write about an enumeration. So
+  they follow their module, which is scoped.
+- **`accessibleTypes` resolves roles at the global security root.** An account holding a role only on
+  single objects - a scope rather than a tier - does not get that type advertised, although it may well
+  read instances of it. The error is towards disclosing less, and the instance surfaces are filtered per
+  object anyway.
+
+Attribute-level restrictions are *not* reflected: the digest advertises a type's parts as the model
+declares them. Making absence mean "you may not read this attribute" needs the same per-part walk
+`ReadFilter.attributesOf` does and is not done; what the digest promises is which **types** exist, and
+what an account may then read of an instance is decided where the instance is read.
+
+The digest is now per-principal, so it must not be cached globally. It is generated fresh on every
+call, which is what the tool always did.
+
+Asserted against the fixture's real accounts by `SecDemoModelDigestTest`: a ticket reader is told about
+`pm:Ticket` and not about `pm:Project`, and the module nobody holds a grant in is absent entirely.
+
+#### 3.4.3 RAG / vector index (T10) · **implemented at query time** (#295)
 
 The index is populated by a background daemon under system rights, so index *contents* are
-unrestricted by construction. Filtering must therefore happen **at query time**, in
-`VectorIndexSearchTool`:
+unrestricted by construction. Filtering therefore happens **at query time**, in `VectorReadFilter`,
+and `VectorIndex.searchVectorIndex` has no form that skips it - a search names the principal it serves
+or does not happen:
 
-1. Each chunk carries the `TLObject` id of its source (an indexing-side requirement - if the id is not
-   stored today, storing it is a prerequisite of this layer).
-2. At query time, resolve source ids and drop chunks whose source fails `canRead`.
-3. **Over-fetch and then filter**: request `k * f` candidates and truncate to `k` after filtering, so a
-   user with narrow access still gets `k` results rather than two. `f` is configurable; a fixed
-   multiplier is a heuristic, not a guarantee, and the tool reports when filtering exhausted the
-   candidate pool.
+1. Each chunk carries the source object's identifier: the `objectId` field of the indexed payload,
+   which the indexer has always written, and since #295 also a `TopLogic-id` metadata entry. The
+   metadata is read first and the payload is the fallback, so an index built before #295 keeps
+   filtering rather than going dark.
+2. The identifier is resolved through `TidResolver.resolve`, which **is** the read check, so "no such
+   object" and "not yours" are one answer here as everywhere else.
+3. **Over-fetch and then filter**: the store is asked for `k * f` candidates and the readable hits are
+   truncated to `k` afterwards (`VectorReadFilter.overfetch`), so an account with narrow access still
+   gets a full page rather than the two survivors of the top ten. A fixed multiplier is a heuristic and
+   not a guarantee, which is why the result says when the candidate pool ran out.
 4. Chunks whose source cannot be resolved are **dropped**, not passed through.
 
-Embedding-level leakage (the embedding vector itself being derived from restricted text) is out of
-scope; the mitigation is that the chunk text never reaches the context.
+`VectorIndexSearchTool` goes one step further than dropping: what it writes for a surviving hit is the
+live object through `ReadFilter` - its identity and the attributes the principal may read - and **not**
+the indexed chunk. The chunk is a serialization of every flex attribute taken at indexing time, so
+handing it over would disclose an attribute the principal may not read and a value that has since
+changed. The TL-Script function `vectorIndex.search` still returns the chunk, because its caller is the
+script author's own session and the object it hands back is read-checked by the engine on every
+attribute access; the per-object drop applies to it identically.
+
+**What this does not claim.** The embedding vector was computed from unfiltered text. Dropping a hit
+keeps the text out of the answer; it does not undo that the vector exists, and a caller who can observe
+scores can still learn that *something* similar is in the index. Not indexing unreadable content in the
+first place is the stronger guarantee, and a different change: it makes the index per-principal (or
+per-role), which multiplies the embedding cost and the storage by the number of distinct rights
+profiles and makes a rights change a re-indexing job. Which guarantee is being bought is an owner's
+decision, not an implementer's - it is written up as a follow-up rather than silently chosen here.
+
+Asserted against the fixture's real accounts by `SecDemoVectorIndexTest`; the store round trip stays
+behind `-Dtl.ai.vector.e2e=true` in `VectorIndexIntegrationTest`, because it needs an embedding key.
 
 ### 3.5 L4 - Pre-commit action guard · **implemented**
 
@@ -1572,9 +1623,14 @@ tools used to, in a system interaction, and was covered by no policy at all; it 
 authenticated account's context and discloses through the same `ReadFilter`
 ([mcp-endpoint.md](mcp-endpoint.md)).
 
-**Still open:** L3 for the model digest (3.4.2) and the vector index (3.4.3), and the model-metadata
-half of the MCP resource surface, which discloses model structure rather than business data and needs
-the `accessibleTypes(READ)` bound of 3.4.2 rather than the read filter.
+**Built:** L3 for the model digest and the vector index, with #295 - the digest bounded by
+`accessibleTypes(READ)` (3.4.2), the index filtered per hit at query time (3.4.3). Neither has a form
+that skips the check.
+
+**Still open:** the model-metadata half of the MCP resource surface and `ModelBrowserTool`'s
+type-at-a-time enumeration, which disclose model structure rather than business data and need the
+`accessibleTypes(READ)` bound of 3.4.2 rather than the read filter. And, as a decision rather than as
+work: whether the vector index should stop *indexing* content its readers may not read (3.4.3).
 
 ### Phase 3 - Tool RBAC · **implemented, except the administration UI**
 
@@ -1642,6 +1698,8 @@ any more. All new types live in `tl-ai-core/src/main/java/com/top_logic/tl/ai/co
 | `ModelAccessRightsSecurity` - the `ModelAccessRights`-backed implementation | **Real and unit-tested** (8 cases against a stub rights service). Replaces what was appendix A |
 | `ToolSecurityException` - the denial a tool raises | Implemented; raised by `ModelSecurity.requireRead`/`requireWrite`. The read path prefers absence to a denial, so a hidden object produces the "not found" of `TidResolver` rather than this exception - saying "exists but hidden" is the disclosure #289 removed |
 | `ReadFilter` - the disclosure chokepoint | **Implemented and unit-tested** (`TestReadFilter`, 18 cases) and end-to-end against the fixture (`SecDemoReadFilterTest`). Cannot be constructed without a `ModelSecurity`; `TidResolver.resolve` has no form that skips the read check, and `ExecutionResult.toJson` none that skips the filter (#289). **It is a chokepoint for `TLObject`s, not for everything a script can return**: a value TL-Script has already reduced to plain data carries no object to recognise, so a count (#291) and a label reached through string coercion (#296) pass through by design. Both are asserted in `SecDemoReadFilterTest` rather than left implicit - see 3.3.2 |
+| `ModelDigestGenerator` - the whole-model digest | **Scoped** (#295). `generate(model, includeFramework, ModelSecurity)` is the only form; emits `accessibleTypes(READ)` and drops a module whose classes are all inaccessible. End-to-end against the fixture (`SecDemoModelDigestTest`). The bound is types, not objects - see 3.4.2 for the three boundaries it does not claim |
+| `VectorReadFilter` - the vector index's query-time filter | **Implemented** (#295) and end-to-end against the fixture (`SecDemoVectorIndexTest`). `VectorIndex.searchVectorIndex` has no form without a `ReadFilter`; the store's own hit list is private to that class. Over-fetches, resolves each hit's source through `TidResolver`, drops what is unreadable or unattributable. Index *contents* stay unrestricted by construction - 3.4.3 states the trade-off that decision carries |
 | `SecurityContext.modelSecurity()`, `ToolContext.modelSecurity()` | The seam every tool reaches. `securityMode()` is gone (#288) |
 | `SecurityContext.hasToolPermission` + `toolDenialReason` | **Enforcing.** `TopLogicSecurityContext` answers both from the policy; `ToolPermissionFilter` and `AgentLoop` prefer the specific reason over a generic "denied" |
 | `TopLogicSecurityContext.forRun(principal, background)` | The single production entry point. Refuses a run with no principal, and binds the model rights and the tool authorization once. **Called by the chat and TL-Script entry points** |
@@ -1700,8 +1758,13 @@ See the branch's PR description for the build and test commands that were actual
    the user's own rights (e.g. "this agent may read Customer but never Contract, even for a manager")?
    `<agent-access>` (4.2) decides which agent a user may run at all; narrowing the *data* an agent may
    reach below its user's own rights is the type-granularity equivalent and is unspecified.
-5. **Vector-index source ids.** Section 3.4.3 assumes each chunk carries its source object id. Whether
-   the current index stores it needs confirming; if not, re-indexing is a prerequisite.
+5. **Indexing unreadable content.** Answered for the query side by #295 - each chunk does carry its
+   source id, in the payload since the beginning and in the metadata since #295, so no re-indexing was
+   needed. What stays open is the guarantee above it: query-time filtering keeps restricted text out of
+   the answer, it does not keep restricted text out of the index. A per-principal or per-role index
+   would, at the cost of multiplying embedding and storage by the number of rights profiles and turning
+   a rights change into a re-indexing job. Section 3.4.3 states the trade-off; the decision is the
+   owner's.
 6. **Approval semantics under RBAC.** Today `DATA_WRITE` -> `NeedsApproval` for everyone. Should a role
    be able to carry "pre-approved for `data.write`", turning approval into a per-role property rather
    than a constant of the tool's `ToolMode`?

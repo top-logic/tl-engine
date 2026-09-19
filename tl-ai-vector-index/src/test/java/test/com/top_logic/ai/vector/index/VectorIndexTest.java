@@ -28,14 +28,14 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.ai.vector.index.VectorIndex;
+import com.top_logic.ai.vector.index.VectorReadFilter;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.TupleFactory.Pair;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.layout.provider.LabelProviderService;
+import com.top_logic.tl.ai.core.security.ModelSecurity;
+import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.util.model.ModelService;
-
-import dev.langchain4j.data.segment.TextSegment;
-import dev.langchain4j.store.embedding.EmbeddingMatch;
 
 /**
  * Test cases for {@link VectorIndex}.
@@ -113,10 +113,13 @@ public class VectorIndexTest extends BasicTestCase {
 
 		for (String query : searchQueries) {
 			Logger.info("=============== Search Vector index for matches for query \"" + query + "\"", this.getClass());
-			List<EmbeddingMatch<TextSegment>> matches = this.vectorIndex.searchVectorIndex(query);
+			// UNCHECKED, because this test drives the store directly and has no principal to serve;
+			// what a real caller may see is asserted against real accounts by SecDemoVectorIndexTest.
+			VectorReadFilter.Hits hits =
+				this.vectorIndex.searchVectorIndex(query, ReadFilter.forSecurity(ModelSecurity.UNCHECKED));
 
-			for (EmbeddingMatch<TextSegment> match : matches) {
-				Logger.info(match.toString(), this.getClass());
+			for (VectorReadFilter.Hit hit : hits.hits()) {
+				Logger.info(hit.match().toString(), this.getClass());
 			}
 		}
 	}

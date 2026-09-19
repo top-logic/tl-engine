@@ -13,6 +13,8 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.model.TLModel;
+import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.tools.model.ModelBrowserTool;
 import com.top_logic.tl.ai.core.tools.model.ModelDigestGenerator;
 import com.top_logic.util.model.ModelService;
@@ -27,7 +29,7 @@ public class ModelDigestGeneratorTest extends BasicTestCase {
 	 */
 	public void testDigestContainsPizzashopModule() {
 		TLModel model = ModelService.getApplicationModel();
-		String digest = ModelDigestGenerator.generate(model, false);
+		String digest = digest(model, false);
 
 		assertNotNull("Digest should not be null", digest);
 		assertFalse("Digest should not be empty", digest.isEmpty());
@@ -40,7 +42,7 @@ public class ModelDigestGeneratorTest extends BasicTestCase {
 	 */
 	public void testDigestContainsTypeDefinitions() {
 		TLModel model = ModelService.getApplicationModel();
-		String digest = ModelDigestGenerator.generate(model, false);
+		String digest = digest(model, false);
 
 		assertTrue("Digest should contain Product class",
 			digest.contains("class Product"));
@@ -57,7 +59,7 @@ public class ModelDigestGeneratorTest extends BasicTestCase {
 	 */
 	public void testDigestContainsEnums() {
 		TLModel model = ModelService.getApplicationModel();
-		String digest = ModelDigestGenerator.generate(model, false);
+		String digest = digest(model, false);
 
 		assertTrue("Digest should contain UnitOfMeasure enum",
 			digest.contains("enum UnitOfMeasure"));
@@ -70,7 +72,7 @@ public class ModelDigestGeneratorTest extends BasicTestCase {
 	 */
 	public void testDigestContainsParts() {
 		TLModel model = ModelService.getApplicationModel();
-		String digest = ModelDigestGenerator.generate(model, false);
+		String digest = digest(model, false);
 
 		assertTrue("Digest should contain budget property",
 			digest.contains("budget"));
@@ -87,7 +89,7 @@ public class ModelDigestGeneratorTest extends BasicTestCase {
 	 */
 	public void testDigestContainsInheritance() {
 		TLModel model = ModelService.getApplicationModel();
-		String digest = ModelDigestGenerator.generate(model, false);
+		String digest = digest(model, false);
 
 		assertTrue("Digest should show Product extends NamedEntities",
 			digest.contains("Product extends NamedEntities"));
@@ -100,7 +102,7 @@ public class ModelDigestGeneratorTest extends BasicTestCase {
 	 */
 	public void testDigestExcludesFrameworkModules() {
 		TLModel model = ModelService.getApplicationModel();
-		String digest = ModelDigestGenerator.generate(model, false);
+		String digest = digest(model, false);
 
 		assertFalse("Digest should NOT contain tl.model module",
 			digest.contains("## tl.model"));
@@ -113,7 +115,7 @@ public class ModelDigestGeneratorTest extends BasicTestCase {
 	 */
 	public void testDigestIncludesFrameworkModules() {
 		TLModel model = ModelService.getApplicationModel();
-		String digest = ModelDigestGenerator.generate(model, true);
+		String digest = digest(model, true);
 
 		assertTrue("Digest should contain framework module tl.model",
 			digest.contains("## tl.model"));
@@ -124,7 +126,7 @@ public class ModelDigestGeneratorTest extends BasicTestCase {
 	 */
 	public void testDigestUsesArrowNotation() {
 		TLModel model = ModelService.getApplicationModel();
-		String digest = ModelDigestGenerator.generate(model, false);
+		String digest = digest(model, false);
 
 		assertTrue("Digest should use -> arrow for references",
 			digest.contains("-> "));
@@ -135,7 +137,7 @@ public class ModelDigestGeneratorTest extends BasicTestCase {
 	 */
 	public void testOutlineModelToolReturnsDigest() {
 		ModelBrowserTool tool = new ModelBrowserTool();
-		String overview = tool.outlineModel(Boolean.FALSE);
+		String overview = tool.outlineModel(Boolean.FALSE, ToolContext.unrestricted());
 
 		assertNotNull("Overview should not be null", overview);
 		assertTrue("Overview should contain pizzashop module",
@@ -144,6 +146,20 @@ public class ModelDigestGeneratorTest extends BasicTestCase {
 			overview.contains("class Product"));
 		assertFalse("Overview should exclude framework modules by default",
 			overview.contains("## tl.core"));
+	}
+
+	/**
+	 * The digest of everything, for the cases that are about the notation rather than about who may
+	 * read what.
+	 *
+	 * <p>
+	 * {@link ModelSecurity#UNCHECKED} is the test seam for a setup with no booted model security; what
+	 * a real account sees is asserted against the fixture's personas by {@code SecDemoModelDigestTest}.
+	 * There is no form of {@code generate} without a principal to call instead.
+	 * </p>
+	 */
+	private static String digest(TLModel model, boolean includeFramework) {
+		return ModelDigestGenerator.generate(model, includeFramework, ModelSecurity.UNCHECKED);
 	}
 
 	/** */

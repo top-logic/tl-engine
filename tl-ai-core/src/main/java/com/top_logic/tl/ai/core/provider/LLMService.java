@@ -49,6 +49,8 @@ import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.environment.EnvironmentConfig;
 import com.top_logic.tl.ai.core.agent.environment.EnvironmentSettings;
+import com.top_logic.tl.ai.core.agent.environment.UserMemoryConfig;
+import com.top_logic.tl.ai.core.agent.environment.UserMemorySettings;
 import com.top_logic.tl.ai.core.provider.catalog.ModelCatalogEntry;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.provider.catalog.ModelsDevFetcher;
@@ -557,6 +559,13 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		String ENVIRONMENT = "environment";
 
 		/**
+		 * Configuration property name for the user-memory section.
+		 *
+		 * @see #getUserMemory()
+		 */
+		String USER_MEMORY = "user-memory";
+
+		/**
 		 * Configuration property name for the model catalog.
 		 *
 		 * @see #getModelCatalog()
@@ -593,6 +602,15 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		 */
 		@Name(ENVIRONMENT)
 		EnvironmentConfig getEnvironment();
+
+		/**
+		 * What an agent may remember about the accounts of this installation: whether it may at
+		 * all, how much of it reaches a model, and the words the agreement check looks for.
+		 *
+		 * @see #USER_MEMORY
+		 */
+		@Name(USER_MEMORY)
+		UserMemoryConfig getUserMemory();
 
 		/**
 		 * Model metadata catalog describing each model's capabilities and limits.
@@ -736,6 +754,15 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	 */
 	public EnvironmentConfig getEnvironmentConfig() {
 		return getConfig().getEnvironment();
+	}
+
+	/**
+	 * What an agent may remember about the accounts of this installation.
+	 *
+	 * @see UserMemorySettings
+	 */
+	public UserMemoryConfig getUserMemoryConfig() {
+		return getConfig().getUserMemory();
 	}
 
 	@Override

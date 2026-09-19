@@ -33,6 +33,17 @@
 		-->
 		<channel name="dockSession"/>
 		<channel name="dockPaneObject"/>
+		<!--
+			What the page BEHIND the dock has selected (Issue #494). Declared in the shell, because
+			the dock floats over every page and the pages are <view-ref>s with channel namespaces of
+			their own: each page hands its own selection channel over with one <bind> below, and the
+			dock states whatever stands here as the turn's "Selected invoice".
+
+			Nothing writes it but the page that is on screen, and a page that binds nothing simply
+			leaves it holding what it held - which is why a page that has a selection to state binds
+			it, and the Chat page, where the dock stands down entirely, does not.
+		-->
+		<channel name="pageSelection"/>
 		<channel name="dockProgressBadge"/>
 		<channel name="dockSourcesBadge"/>
 		<!--
@@ -175,6 +186,15 @@
 						<bind channel="chatDraft"
 							to="chatDraft"
 						/>
+						<!--
+							And the other direction of the same mechanism: the page's own selection
+							channel IS the shell's "pageSelection", so the dock's conversation can
+							state the invoice this page has open without knowing the page exists
+							(Issue #494).
+						-->
+						<bind channel="selectedInvoice"
+							to="pageSelection"
+						/>
 					</view-ref>
 				</nav-item>
 
@@ -300,7 +320,51 @@
 							input="dockSession"
 							prompt-improver-agent="TL_PromptImprover"
 							trace="summary"
-						/>
+						>
+							<!--
+								What the dock states about the situation (Issue #494). It is the SAME
+								conversation the Chat page shows, so "Application" is stated here too
+								and with the same words: a stable fact goes into the environment block
+								of the system prompt, and a block that gained or lost a line between
+								two turns of one chat would miss the provider's prompt cache on every
+								turn after it.
+
+								"Open invoice" is this dock's own rail pane, the way it is the page's
+								rail pane over there.
+							-->
+							<context>
+								<inputs>
+									<input channel="dockPaneObject"/>
+								</inputs>
+								<fact name="Application"
+									stable="true"
+								>
+									<value><![CDATA[open -> "Invoice management demo (tl-ai-demo)"]]></value>
+								</fact>
+								<fact name="Open invoice"
+									stable="false"
+								>
+									<value><![CDATA[open -> ifElse(isEmpty($open), "none",
+										$open.get(`tl.ai.demo.imageclassification:Invoice#description`))]]></value>
+								</fact>
+							</context>
+							<!--
+								And what the user is actually looking at: the selection of the page the
+								dock is floating over, handed to the shell by that page's <view-ref>.
+								One line, and the agent is told the label, the type and the identifier
+								it needs to act on the object.
+
+								Named "Selected invoice" rather than "Selected object", because that is
+								what it truthfully is on every page of this demo: the shell has no
+								channel saying which nav item is active, so this states what the Belege
+								page has selected, and keeps saying so while the user reads their
+								settings. Naming the page's list is honest where naming "the selection"
+								would not be.
+							-->
+							<selection name="Selected invoice"
+								channel="pageSelection"
+							/>
+						</chat-conversation>
 					</panel>
 					<!--
 						The rail, with its pane - which is what "the pane is visible as well if

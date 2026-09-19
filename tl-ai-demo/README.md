@@ -53,11 +53,19 @@ the unseen count of the rail's sections and a dot while the agent is working. As
 dock on **Belege**, then open **Chat**: the same conversation is there, because it is the same
 conversation.
 
-The chat states two facts about the situation it is asked in (`<chat-conversation><context>` in
+The chat states facts about the situation it is asked in (`<chat-conversation><context>` in
 `chat-grouped.view.xml`): the application, which holds for the whole conversation and is therefore
 rendered into the run's system prompt, and the invoice open in the rail's pane, which follows the
 user's clicks and is therefore not. Neither changes the message text - that is the point of the seam
 (#437; see `tl-ai-core/doc/environment-block.md`).
+
+The invoice is stated by a `<selection channel="paneObject"/>` rather than by a `<fact>`, which is
+the one-line way to say which object the user has selected: the agent gets its label, its type and
+the identifier every tool reads back, so it can act on the object and not only name it (#494). The
+**dock** states one too, and its channel is the *page's*: the shell declares a `pageSelection`
+channel, the Belege page hands its own selection over with one `<bind>` on its `<view-ref>`, and the
+dock's conversation states that. Select a Beleg on **Belege**, open the dock and ask "Welches Objekt
+habe ich gerade ausgewählt?" - what the model receives carries it.
 
 Try the memory: ask Albert "Merke dir, dass ich kurze Antworten mag", and the row appears in the
 rail's Gedächtnis section. Ask it to remember something without saying so - "ich mag kurze

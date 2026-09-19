@@ -578,16 +578,6 @@ message ChatSessionDetailResponse {
 }
 
 /**
- * Request body for PUT /chat/sessions/{id}/messages.
- */
-message SaveMessagesRequest {
-	/**
-	 * Messages JSON blob to save.
-	 */
-	string messagesJson;
-}
-
-/**
  * SSE user interaction event payload.
  */
 message UserInteractionEvent {

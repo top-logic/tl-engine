@@ -37,41 +37,6 @@ message LayoutTemplateListResponse {
 }
 
 /**
- * Information about a specific layout configuration.
- */
-message LayoutInfo {
-	/**
-	 * The layout key.
-	 */
-	string layoutKey;
-
-	/**
-	 * Whether the layout is based on a template.
-	 */
-	bool hasTemplate;
-
-	/**
-	 * The template name, if the layout is template-based.
-	 */
-	string templateName;
-
-	/**
-	 * Template arguments as JSON string, if the layout is template-based.
-	 */
-	string arguments;
-
-	/**
-	 * The component configuration as JSON, if the layout is not template-based.
-	 */
-	string componentConfig;
-
-	/**
-	 * URI for retrieving the JSON Schema of the template parameters.
-	 */
-	string templateSchemaUri;
-}
-
-/**
  * Response for a layout creation operation.
  */
 message LayoutCreateResponse {

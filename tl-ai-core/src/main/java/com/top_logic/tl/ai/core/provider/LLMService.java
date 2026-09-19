@@ -19,6 +19,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Container;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Hidden;
@@ -34,6 +35,8 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.ReadOnly;
 import com.top_logic.basic.config.annotation.Ref;
+import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.func.Function0;
@@ -51,6 +54,8 @@ import com.top_logic.tl.ai.core.agent.environment.EnvironmentConfig;
 import com.top_logic.tl.ai.core.agent.environment.EnvironmentSettings;
 import com.top_logic.tl.ai.core.agent.environment.UserMemoryConfig;
 import com.top_logic.tl.ai.core.agent.environment.UserMemorySettings;
+import com.top_logic.tl.ai.core.security.DefaultSecurityContextFactory;
+import com.top_logic.tl.ai.core.security.SecurityContextFactory;
 import com.top_logic.tl.ai.core.provider.catalog.ModelCatalogEntry;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.provider.catalog.ModelsDevFetcher;
@@ -533,6 +538,7 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		Config.PROVIDERS,
 		Config.AGENT_EXECUTION,
 		Config.ENVIRONMENT,
+		Config.SECURITY_CONTEXT,
 		Config.MODEL_CATALOG,
 	})
 	public interface Config<I extends LLMService> extends ConfiguredManagedClass.Config<I> {
@@ -573,6 +579,13 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		 * @see #getObjectIds()
 		 */
 		String OBJECT_IDS = "object-ids";
+
+		/**
+		 * Configuration property name for the security-context factory.
+		 *
+		 * @see #getSecurityContext()
+		 */
+		String SECURITY_CONTEXT = "security-context";
 
 		/**
 		 * Configuration property name for the model catalog.
@@ -629,6 +642,23 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		 */
 		@Name(OBJECT_IDS)
 		ObjectIdConfig getObjectIds();
+
+		/**
+		 * What decides, for every agent run, which tool calls need a person to confirm them.
+		 *
+		 * <p>
+		 * The shipped default asks the tool's mode: a read runs, everything that changes something is
+		 * confirmed. An application whose answer depends on what is being changed - overwriting an
+		 * empty section is not overwriting what a colleague wrote - names its own implementation
+		 * here.
+		 * </p>
+		 *
+		 * @see #SECURITY_CONTEXT
+		 */
+		@Name(SECURITY_CONTEXT)
+		@ItemDefault
+		@ImplementationClassDefault(DefaultSecurityContextFactory.class)
+		PolymorphicConfiguration<SecurityContextFactory> getSecurityContext();
 
 		/**
 		 * Model metadata catalog describing each model's capabilities and limits.
@@ -743,6 +773,11 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	private Map<String, ModelInfo> _models;
 
 	/**
+	 * What builds the security context of every run started while this service is up.
+	 */
+	private SecurityContextFactory _securityContextFactory;
+
+	/**
 	 * Creates a new {@link LLMService} from configuration.
 	 *
 	 * @param context
@@ -792,11 +827,31 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		return getConfig().getObjectIds();
 	}
 
+	/**
+	 * What builds the {@link com.top_logic.tl.ai.core.agent.SecurityContext} of an agent run.
+	 *
+	 * <p>
+	 * Asked by every entry point that starts one, through
+	 * {@link com.top_logic.tl.ai.core.security.RunSecurity#contextFor}.
+	 * </p>
+	 *
+	 * @return The configured factory, never <code>null</code>.
+	 */
+	public SecurityContextFactory getSecurityContextFactory() {
+		return _securityContextFactory;
+	}
+
 	@Override
 	protected void startUp() {
 		super.startUp();
 		_instance = this;
 		ModelDiscoveryHelper.clearCache();
+
+		// Resolved once: a run must not pay for instantiating it, and an application that configured a
+		// broken one must learn about it when the service starts rather than at the first tool call.
+		SecurityContextFactory securityContextFactory = _context.getInstance(getConfig().getSecurityContext());
+		_securityContextFactory = securityContextFactory == null
+			? DefaultSecurityContextFactory.INSTANCE : securityContextFactory;
 
 		Map<String, LLMProviderConfig> providerConfigs = new LinkedHashMap<>();
 		Map<String, List<String>> modelProviders = new LinkedHashMap<>();

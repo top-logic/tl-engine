@@ -37,7 +37,6 @@ import com.top_logic.tl.ai.core.agent.AgentParams;
 import com.top_logic.tl.ai.core.agent.AgentResult;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
@@ -59,6 +58,9 @@ import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMService;
 import com.top_logic.tl.ai.core.provider.ResponseFormat;
+import com.top_logic.tl.ai.core.security.RunEntryPoint;
+import com.top_logic.tl.ai.core.security.RunPrincipal;
+import com.top_logic.tl.ai.core.security.RunSecurity;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
@@ -662,7 +664,9 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		// an additional ceiling. Auto-approval is exactly the compensating control that allowlist
 		// replaces: a run with nobody to ask must not reach write tools by default.
 		ToolContext context = new ToolContext(
-			TopLogicSecurityContext.forRun(TLContext.currentUser(), true),
+			RunSecurity.contextFor(
+				new RunPrincipal(TLContext.currentUser(), RunEntryPoint.SCRIPT, true,
+					ExecutionRecorder.conversationIdOf(session))),
 			ApprovalCallback.AUTO_APPROVE, new TransactionScope(cancellationToken), cancellationToken);
 
 		// Cluster-safe cancellation: this node runs the job and holds the token, so a listener on

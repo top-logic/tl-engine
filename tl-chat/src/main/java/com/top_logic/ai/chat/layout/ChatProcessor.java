@@ -42,7 +42,6 @@ import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
-import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
 import com.top_logic.util.TLContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.environment.EnvironmentFact;
@@ -70,6 +69,9 @@ import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.scripting.Converters;
+import com.top_logic.tl.ai.core.security.RunEntryPoint;
+import com.top_logic.tl.ai.core.security.RunPrincipal;
+import com.top_logic.tl.ai.core.security.RunSecurity;
 import com.top_logic.tl.ai.core.session.Citation;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
@@ -280,7 +282,8 @@ public class ChatProcessor {
 				UUID.randomUUID().toString(), Instant.now(), contentParts));
 
 			// Build ToolContext with real security, approval, and transaction scope
-			ToolContext toolContext = buildToolContext(interactionStore, taskTracker, cancellationToken);
+			ToolContext toolContext =
+				buildToolContext(interactionStore, taskTracker, cancellationToken, state.getSessionId());
 			// Expose the run's cancellation token so /chat/cancel can fire cooperative-cancellation
 			// listeners in addition to interrupting the agent thread.
 			state.setCancellationToken(cancellationToken);
@@ -659,13 +662,15 @@ public class ChatProcessor {
 	 * Builds a {@link ToolContext} for interactive chat use.
 	 *
 	 * <p>
-	 * Uses {@link TopLogicSecurityContext} for permission checks and system mode gating,
-	 * a live {@link TransactionScope} for KB transactions, and an {@link ApprovalCallback}
-	 * backed by the {@link UserInteractionStore} for human-in-the-loop approval.
+	 * The security context comes from the installation's
+	 * {@link com.top_logic.tl.ai.core.security.SecurityContextFactory} - by default the one backed by
+	 * TopLogic's roles and model access rights. A live {@link TransactionScope} carries the KB
+	 * transactions, and the {@link ApprovalCallback} is backed by the {@link UserInteractionStore} for
+	 * human-in-the-loop approval.
 	 * </p>
 	 */
 	private static ToolContext buildToolContext(UserInteractionStore interactionStore,
-			TaskProgressTracker taskTracker, CancellationToken cancellationToken) {
+			TaskProgressTracker taskTracker, CancellationToken cancellationToken, String sessionId) {
 		ApprovalCallback approvalCallback;
 		if (taskTracker.getApprovalMode() == ApprovalMode.AUTO_APPROVE) {
 			approvalCallback = ApprovalCallback.AUTO_APPROVE;
@@ -707,8 +712,12 @@ public class ChatProcessor {
 		// their model access rights which objects those tools may touch. An interactive run always
 		// has a human who can answer an approval prompt, so it is not a background run.
 		// ChatSessionFilter has already rejected an unauthenticated caller on /chat/*, so there is a
-		// user here; forRun refuses if there is not, rather than running unchecked.
-		SecurityContext security = TopLogicSecurityContext.forRun(TLContext.currentUser(), false);
+		// user here; the factory refuses if there is not, rather than running unchecked.
+		// Which context that is, is the installation's decision (Gitea #381): the default answers
+		// approval by the tool's mode, an application that configured its own factory answers it from
+		// the call.
+		SecurityContext security = RunSecurity.contextFor(
+			new RunPrincipal(TLContext.currentUser(), RunEntryPoint.CHAT, false, sessionId));
 		return new ToolContext(
 			security, approvalCallback, new TransactionScope(cancellationToken),
 			taskTracker.getSessionApprovedTools(), cancellationToken);

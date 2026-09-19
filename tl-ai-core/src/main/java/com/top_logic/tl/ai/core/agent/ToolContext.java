@@ -13,6 +13,9 @@ import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.citation.CitationMarkers;
 import com.top_logic.tl.ai.core.execution.ExecutionHandle;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
+import com.top_logic.tl.ai.core.security.RunEntryPoint;
+import com.top_logic.tl.ai.core.security.RunPrincipal;
+import com.top_logic.tl.ai.core.security.RunSecurity;
 import com.top_logic.util.TLContext;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.ProgressReporter;
@@ -94,7 +97,8 @@ public class ToolContext implements ToolExecutionContext {
 	public static ToolContext forCurrentUser() {
 		CancellationToken cancellationToken = new CancellationToken();
 		return new ToolContext(
-			TopLogicSecurityContext.forRun(TLContext.currentUser(), false),
+			RunSecurity.contextFor(
+				new RunPrincipal(TLContext.currentUser(), RunEntryPoint.SCRIPT, false)),
 			ApprovalCallback.AUTO_APPROVE, new TransactionScope(cancellationToken), cancellationToken);
 	}
 
@@ -129,7 +133,7 @@ public class ToolContext implements ToolExecutionContext {
 	public static ToolContext forBackgroundRun(Person principal) {
 		CancellationToken cancellationToken = new CancellationToken();
 		return new ToolContext(
-			TopLogicSecurityContext.forRun(principal, true),
+			RunSecurity.contextFor(new RunPrincipal(principal, RunEntryPoint.MCP, true)),
 			ApprovalCallback.AUTO_APPROVE, new TransactionScope(cancellationToken), cancellationToken);
 	}
 

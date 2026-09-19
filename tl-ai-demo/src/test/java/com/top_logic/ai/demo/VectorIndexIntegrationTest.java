@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.runner.RunWith;
+
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -39,6 +41,8 @@ import com.top_logic.model.search.expr.parser.ParseException;
 import com.top_logic.model.search.expr.parser.SearchExpressionParser;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
+import com.top_logic.tl.ai.core.junit.VectorIndexE2e;
 import com.top_logic.util.model.ModelService;
 
 import dev.langchain4j.data.segment.TextSegment;
@@ -46,8 +50,30 @@ import dev.langchain4j.store.embedding.EmbeddingMatch;
 
 /**
  * Integration test for semantic search utilizing the real Mistral model and JVector.
+ *
+ * <p>
+ * Behind {@link VectorIndexE2e}: it embeds with a real Mistral model, so a build without an
+ * embedding key cannot run it and reports it as skipped instead.
+ * </p>
  */
+@RunWith(AssumptionAwareRunner.class)
 public class VectorIndexIntegrationTest extends BasicTestCase {
+
+	/**
+	 * Asks the gate before anything else, including the thread context {@link BasicTestCase} enters
+	 * around a test.
+	 *
+	 * <p>
+	 * With the gate off the suite below is the bare class, so the modules that context needs were
+	 * never started - and the assumption has to be thrown before the attempt, or it never gets to be
+	 * thrown at all.
+	 * </p>
+	 */
+	@Override
+	public void runBare() throws Throwable {
+		VectorIndexE2e.assumeEnabled();
+		super.runBare();
+	}
 
     @Override
     public void setUp() throws Exception {
@@ -507,6 +533,12 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
 
 	/** */
     public static Test suite() {
+		if (!VectorIndexE2e.enabled()) {
+			// The setup below boots the embedding service, which is the very thing this build has
+			// no key for. Handing back the bare class lets every method reach its assumption and be
+			// reported as skipped, instead of the suite failing before any test starts.
+			return new TestSuite(VectorIndexIntegrationTest.class);
+		}
         return suite(VectorIndexIntegrationTest.class);
     }
 

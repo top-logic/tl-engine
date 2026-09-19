@@ -22,6 +22,15 @@ import com.top_logic.util.model.ModelService;
 
 /**
  * Test cases for {@link TLScriptReferenceTool}.
+ *
+ * <p>
+ * Three of these asserted a {@code functionName} and a {@code hasDocumentation} field on the
+ * documentation response (#366). {@code FunctionDocResult} declares neither - only the body, the
+ * parameters and an error message - so the assertions could never hold, and nothing noticed because
+ * no build ran this class until #369. They now assert the fields the response really carries.
+ * Nothing user-visible asked for the function name to be echoed: a caller gets the documentation for
+ * the function it just named.
+ * </p>
  */
 public class TLScriptReferenceToolTest extends BasicTestCase {
 
@@ -73,12 +82,8 @@ public class TLScriptReferenceToolTest extends BasicTestCase {
 		String result = tool.getTLScriptFunctionDocumentation(IF_FUNCTION);
 
 		assertNotNull("Result should not be null", result);
-		assertTrue("Result should contain functionName",
-			result.contains("\"functionName\""));
-		assertTrue("Result should contain the function name 'if'",
-			result.contains("\"" + IF_FUNCTION + "\""));
-		assertTrue("Result should contain hasDocumentation field",
-			result.contains("\"hasDocumentation\""));
+		assertTrue("Result should contain the documentation body",
+			result.contains("\"documentation\""));
 		assertTrue("Result should contain parameters array",
 			result.contains("\"parameters\""));
 	}
@@ -119,11 +124,10 @@ public class TLScriptReferenceToolTest extends BasicTestCase {
 		String result = tool.getTLScriptFunctionDocumentation("nonExistentFunction12345");
 
 		assertNotNull("Result should not be null", result);
-		assertTrue("Result should contain functionName",
-			result.contains("\"functionName\""));
-		assertTrue("Result should contain the non-existent function name",
+		assertTrue("An unknown function is reported as a missing documentation, not as a crash",
+			result.contains("\"errorMessage\""));
+		assertTrue("The reported error names the function that was asked for",
 			result.contains("nonExistentFunction12345"));
-		// Non-existent functions should still return a valid result with has documentation=false or error message
 	}
 
 	/**
@@ -138,10 +142,8 @@ public class TLScriptReferenceToolTest extends BasicTestCase {
 			String result = tool.getTLScriptFunctionDocumentation(function);
 
 			assertNotNull("Result for " + function + " should not be null", result);
-			assertTrue("Result for " + function + " should contain functionName",
-				result.contains("\"functionName\""));
-			assertTrue("Result for " + function + " should contain the function name",
-				result.contains("\"" + function + "\""));
+			assertTrue("Result for " + function + " should contain the documentation body",
+				result.contains("\"documentation\""));
 			assertTrue("Result for " + function + " should contain parameters array",
 				result.contains("\"parameters\""));
 			assertTrue("Result for " + function + " should be valid JSON",

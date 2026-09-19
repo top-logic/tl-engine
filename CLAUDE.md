@@ -27,6 +27,38 @@ mvn test -pl tl-ai-core               # Test specific module
 mvn clean install -DskipTests          # Skip tests
 ```
 
+### Running the tests
+
+Tests are **skipped by default** in this build; `-DskipTests=false` is what turns them on. One
+command runs everything a machine can run without a key, a browser or an external service:
+
+```bash
+mvn test -DskipTests=false                    # every module
+mvn test -DskipTests=false -pl tl-ai-core     # one module
+```
+
+Two includes decide what that runs, configured once in the aggregator `pom.xml` (and repeated in
+`tl-ai-demo/pom.xml`, whose parent is `tl-parent-app` and which therefore inherits nothing):
+
+| Include | Runs |
+|---|---|
+| `test/TestAll.java` | the engine's generic suite (file names, layout normalization, JSP content, I18N constants, migration-script consistency) **plus** everything below `src/test/java/test/`, recursively |
+| `%regex[com/top_logic/(ai\|tl/ai)/...]` | this repository's own tests, which live in packages mirroring the production code |
+
+**Adding a test.** Put it next to the code it tests, in the mirrored package
+(`com.top_logic.tl.ai.core.agent` for something in `com.top_logic.tl.ai.core.agent`), and name it
+`Test<Something>` or `<Something>Test`. Nothing else is needed - no suite to register it in, no
+include to extend. `TestSuiteReachability` fails the build if a test class is somewhere no include
+reaches, or is named so that no collector recognises it, so a test that would silently never run
+says so instead. Do **not** write a stub in the `test` package that forwards to it: that was the old
+way round the missing includes (#369) and now runs the class twice, which the same test rejects.
+
+A test that needs a knowledge base is still a unit test here: wrap it in the H2 setups
+(`KBSetup.getSingleKBTest`, `ServiceTestSetup`) as the existing ones do, and it runs with the rest.
+A test that needs something the build may not have - a key, a browser, an external service - belongs
+behind one of the opt-in gates below, so that it reports as **skipped** rather than failing or, worse,
+passing without having done anything.
+
 ### Browser end-to-end tests
 
 The `tools/web` browser tests launch a real Chromium, so they are off unless
@@ -67,6 +99,19 @@ without `ANTHROPIC_API_KEY` they skip for that reason instead.
 ```bash
 source env.sh
 mvn -pl tl-ai-core -am test -DskipTests=false -Dtl.ai.injection.e2e=true -Dtest='TestPromptInjection*'
+```
+
+### Vector-index end-to-end test
+
+`VectorIndexIntegrationTest` embeds text with a real Mistral model and stores the vectors in a real
+JVector index, so it needs an embedding key. Behind `-Dtl.ai.vector.e2e=true` - see `VectorIndexE2e`
+next to `AssumptionAwareRunner`. Without it the tests report as **skipped**; the gate is also asked
+by the class's `suite()`, because the setup it would otherwise build boots the very service the key
+is missing for.
+
+```bash
+source env.sh
+mvn -pl tl-ai-demo test -DskipTests=false -Dtl.ai.vector.e2e=true -Dtest='VectorIndexIntegrationTest'
 ```
 
 ## Architecture

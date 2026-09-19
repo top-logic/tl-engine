@@ -190,6 +190,19 @@ export interface ReferenceCandidate {
 export interface ComposerAddons {
   extraMenuItems?: ComposerMenuItem[]
   /**
+   * What the empty field invites the user with, already localised.
+   *
+   * The framework's own wording addresses the user informally in German, which an application
+   * whose every other surface says "Sie" cannot use (#420). A host states its own invitation here;
+   * it replaces both framework variants, the one that mentions "@" included.
+   *
+   * Idle only: while the agent works the field keeps the framework's "type your next message",
+   * which is about the run rather than about the application. An `<agent-chat placeholder="…">`
+   * states the same thing declaratively and wins over this one, being the installation's decision
+   * rather than the host code's default.
+   */
+  placeholder?: string
+  /**
    * What typing "@" in the composer offers, filtered by what has been typed after it.
    *
    * The framework knows of no sources of its own, so without this seam "@" offers nothing and the

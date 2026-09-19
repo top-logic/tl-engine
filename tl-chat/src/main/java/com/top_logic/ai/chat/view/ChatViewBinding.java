@@ -24,9 +24,11 @@ import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
 
@@ -392,6 +394,23 @@ public final class ChatViewBinding {
 		String trimmed = fullName.trim();
 		int separator = trimmed.indexOf(' ');
 		tracker.setWelcomeName(separator < 0 ? trimmed : trimmed.substring(0, separator));
+	}
+
+	/**
+	 * Resolves a configured text in the acting account's language.
+	 *
+	 * <p>
+	 * The browser gets words, not keys: every element of this module resolves its configured texts
+	 * here, on the server, in the session's own locale - the same place {@link #currentLanguage()}
+	 * is read from. An unset option is the empty string rather than {@code null}, because the
+	 * browser reads such a state entry as "nothing configured" and falls back to its own bundle.
+	 * </p>
+	 */
+	public static String resolveText(ResKey key) {
+		if (key == null) {
+			return "";
+		}
+		return Resources.getInstance().getString(key);
 	}
 
 	private static String currentLanguage() {

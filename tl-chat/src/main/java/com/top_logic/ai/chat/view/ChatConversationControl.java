@@ -164,7 +164,7 @@ public class ChatConversationControl extends ReactControl {
 
 		// Composer.
 		putState("promptImprovementEnabled", Boolean.valueOf(configuredImprover != null));
-		putState("placeholder", resolvePlaceholder(config.getPlaceholder()));
+		putState("placeholder", ChatViewBinding.resolveText(config.getPlaceholder()));
 		String referenceSource = blankToNull(config.getReferenceSource());
 		putState("referenceSource", referenceSource == null ? "" : referenceSource);
 		// A model-bound <mention> supplies the @ candidates declaratively and wins over the name above.
@@ -793,13 +793,6 @@ public class ChatConversationControl extends ReactControl {
 			return flag.booleanValue();
 		}
 		return value != null && Boolean.parseBoolean(String.valueOf(value));
-	}
-
-	private static String resolvePlaceholder(ResKey key) {
-		if (key == null) {
-			return "";
-		}
-		return Resources.getInstance().getString(key);
 	}
 
 	private static String blankToNull(String value) {

@@ -501,7 +501,19 @@ public class ChatConversationElement implements UIElement {
 		String getPromptImproverAgent();
 
 		/**
-		 * Optional placeholder for the draft field. Empty keeps the built-in wording.
+		 * The invitation standing in the empty prompt field, in this application's own words.
+		 *
+		 * <p>
+		 * Written here as a text per language, or as the key of one. Empty keeps the chat's own
+		 * wording, which is what every application got before this option existed.
+		 * </p>
+		 *
+		 * <p>
+		 * It is the <em>idle</em> invitation only. While the agent is working the field keeps saying
+		 * "type your next message", because that sentence is about the run rather than about this
+		 * application, and an application that replaced it would be telling the user to start
+		 * something that is already under way.
+		 * </p>
 		 */
 		@Name(PLACEHOLDER)
 		@Label("Placeholder")

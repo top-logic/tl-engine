@@ -396,19 +396,19 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 			if (owner != null && !owner.equals(entry.getValue().account())) {
 				continue;
 			}
-			TaskProgressTracker tracker = subSession.get(ChatSessionRegistry.CHAT_TRACKER);
-			if (tracker == null) {
-				continue;
-			}
-			try {
-				if (tracker.getSessionManager().forgetSession(sessionId)) {
-					Logger.info("Dropped deleted chat session " + sessionId + " from window '"
-						+ entry.getValue().windowName() + "'.", AgentViewRefreshService.class);
+			// Every conversation of the window, not only one of them: a chat that was deleted is
+			// gone for the page's chat and for the dock's alike.
+			for (TaskProgressTracker tracker : ChatSessionRegistry.trackers(subSession)) {
+				try {
+					if (tracker.getSessionManager().forgetSession(sessionId)) {
+						Logger.info("Dropped deleted chat session " + sessionId + " from window '"
+							+ entry.getValue().windowName() + "'.", AgentViewRefreshService.class);
+					}
+				} catch (RuntimeException ex) {
+					Logger.warn("Could not drop deleted chat session " + sessionId + " from window '"
+						+ entry.getValue().windowName() + "': " + ex.getMessage(), ex,
+						AgentViewRefreshService.class);
 				}
-			} catch (RuntimeException ex) {
-				Logger.warn("Could not drop deleted chat session " + sessionId + " from window '"
-					+ entry.getValue().windowName() + "': " + ex.getMessage(), ex,
-					AgentViewRefreshService.class);
 			}
 		}
 	}

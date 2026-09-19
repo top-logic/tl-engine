@@ -39,8 +39,9 @@ import com.top_logic.util.TLContextManager;
  * {@link AgentChatControl} used to bind the tracker, the user and the layout preferences in every
  * constructor. Four elements on one chat would then load {@link ChatPreferencesStore} four times
  * and race on one {@code PersonalConfiguration} key. This class does that work once per
- * (sub-session, chat-id). The tracker itself stays one per window:
- * {@link com.top_logic.ai.chat.api.ChatServlet} still resolves it from {@code windowId} alone.
+ * (sub-session, conversation), and the tracker with it: a window that shows two conversations has a
+ * tracker for each, which the {@link com.top_logic.ai.chat.api.ChatServlet} resolves from the
+ * {@code windowId} and the {@code chatId} the client sends - see {@link ChatSessionRegistry}.
  * </p>
  *
  * <p>
@@ -65,6 +66,18 @@ public final class ChatViewBinding {
 
 	private final String _chatId;
 
+	/**
+	 * The conversation this binding's tracker belongs to - what the client echoes as {@code chatId}.
+	 *
+	 * <p>
+	 * The same string as {@link #_chatId} for the elements that share a chat by name, and the
+	 * control's own id for an {@code <agent-chat/>}, which shares its conversation with nobody. It
+	 * is a key of its own because the layout is stored per {@code chat-id} while a run belongs to
+	 * one conversation, and for {@code <agent-chat/>} those two are not the same thing.
+	 * </p>
+	 */
+	private final String _conversation;
+
 	private final String _windowId;
 
 	private final String _contextPath;
@@ -88,9 +101,11 @@ public final class ChatViewBinding {
 	 */
 	private final Map<String, ViewChannel> _presentable = new ConcurrentHashMap<>();
 
-	private ChatViewBinding(TLSubSessionContext subSession, String windowName, String contextPath, String chatId) {
+	private ChatViewBinding(TLSubSessionContext subSession, String windowName, String contextPath, String chatId,
+			String conversation) {
 		_chatId = chatId;
-		_tracker = bindTracker(subSession, windowName);
+		_conversation = conversation;
+		_tracker = bindTracker(subSession, windowName, conversation);
 		storeUser(_tracker);
 		_windowId = windowName;
 		_contextPath = contextPath == null ? "" : contextPath;
@@ -109,12 +124,35 @@ public final class ChatViewBinding {
 	 * </p>
 	 */
 	public static ChatViewBinding bind(ReactContext context, String chatId) {
+		return bindConversation(context, chatId, chatId);
+	}
+
+	/**
+	 * The binding of a chat that shares its conversation with nobody, keyed by the control showing
+	 * it.
+	 *
+	 * <p>
+	 * What {@code <agent-chat/>} uses. Its layout is stored under the empty {@code chat-id} - that
+	 * is the one-element chat's own place - but its <em>conversation</em> is its own, so two of them
+	 * in one window are two conversations with a tracker each, exactly as the browser keys their two
+	 * stores by control id.
+	 * </p>
+	 *
+	 * @param controlId
+	 *        The showing control's id, which the browser sends back as its {@code chatId}.
+	 */
+	public static ChatViewBinding bindOwn(ReactContext context, String controlId) {
+		return bindConversation(context, "", controlId);
+	}
+
+	private static ChatViewBinding bindConversation(ReactContext context, String chatId, String conversation) {
 		// Every chat element renders through here, so this is where the window becomes known to the
 		// refresher: a running agent writes from a background thread, and without this the window
 		// would only notice on its next command or on the 30 s heartbeat.
 		AgentViewRefreshService.registerWindow(TLContextManager.getSubSession(), context.getWindowName(),
 			context.getWindowRegistry());
-		return bind(TLContextManager.getSubSession(), context.getWindowName(), context.getContextPath(), chatId);
+		return bind(TLContextManager.getSubSession(), context.getWindowName(), context.getContextPath(), chatId,
+			conversation);
 	}
 
 	/**
@@ -124,7 +162,7 @@ public final class ChatViewBinding {
 	 * This is what the elements that share a conversation by {@code chat-id} use. The join is
 	 * tallied per render and logged when the render ends, so that an element which found nobody to
 	 * join says so instead of rendering an empty box (see {@link ChatJoinLog}).
-	 * {@link AgentChatControl} binds through {@link #bind(ReactContext, String)} instead: it keys
+	 * {@link AgentChatControl} binds through {@link #bindOwn(ReactContext, String)} instead: it keys
 	 * by its own control id on purpose and joins nothing.
 	 * </p>
 	 *
@@ -144,9 +182,25 @@ public final class ChatViewBinding {
 	 * </p>
 	 */
 	static ChatViewBinding bind(TypedAnnotatable scope, String windowName, String contextPath, String chatId) {
-		String key = chatId == null ? "" : chatId.trim();
+		return bind(scope, windowName, contextPath, chatId, chatId);
+	}
+
+	/**
+	 * The binding of {@code conversation} on {@code scope}, whose layout is stored under
+	 * {@code chatId}.
+	 *
+	 * <p>
+	 * Package-visible so a test can pass a {@link TypedAnnotatable} without a live window.
+	 * </p>
+	 */
+	static ChatViewBinding bind(TypedAnnotatable scope, String windowName, String contextPath, String chatId,
+			String conversation) {
+		String layoutKey = ChatSessionRegistry.key(chatId);
+		// Keyed by the conversation, not by the layout key: an <agent-chat/> stores its layout under
+		// the empty chat id and still has a conversation, a tracker and a run of its own.
+		String key = ChatSessionRegistry.key(conversation);
 		if (scope == null) {
-			return new ChatViewBinding(null, windowName, contextPath, key);
+			return new ChatViewBinding(null, windowName, contextPath, layoutKey, key);
 		}
 		Map<String, ChatViewBinding> map = scope.mkMap(BINDINGS);
 		synchronized (map) {
@@ -155,7 +209,7 @@ public final class ChatViewBinding {
 				return existing;
 			}
 			TLSubSessionContext subSession = scope instanceof TLSubSessionContext session ? session : null;
-			ChatViewBinding created = new ChatViewBinding(subSession, windowName, contextPath, key);
+			ChatViewBinding created = new ChatViewBinding(subSession, windowName, contextPath, layoutKey, key);
 			map.put(key, created);
 			return created;
 		}
@@ -174,6 +228,14 @@ public final class ChatViewBinding {
 	/** The {@code chat-id} this binding belongs to; the key its layout is stored under. */
 	public String chatId() {
 		return _chatId;
+	}
+
+	/**
+	 * The conversation this binding's tracker serves - what the client echoes as {@code chatId} on
+	 * every {@code /chat/*} call.
+	 */
+	public String conversation() {
+		return _conversation;
 	}
 
 	/** User name shown in the chat. */
@@ -368,14 +430,15 @@ public final class ChatViewBinding {
 		put.accept("sectionChoices", new LinkedHashMap<>(preferences.getSections()));
 	}
 
-	private static TaskProgressTracker bindTracker(TLSubSessionContext subSession, String windowName) {
+	private static TaskProgressTracker bindTracker(TLSubSessionContext subSession, String windowName,
+			String conversation) {
 		TLSessionContext session = subSession == null ? null : subSession.getSessionContext();
-		TaskProgressTracker tracker = ChatSessionRegistry.resolveTracker(session, windowName);
+		TaskProgressTracker tracker = ChatSessionRegistry.resolveTracker(session, windowName, conversation);
 		if (tracker == null) {
 			tracker = new TaskProgressTracker();
 		}
 		tracker.setWindowId(windowName);
-		ChatSessionRegistry.register(subSession, tracker);
+		ChatSessionRegistry.register(subSession, conversation, tracker);
 		return tracker;
 	}
 

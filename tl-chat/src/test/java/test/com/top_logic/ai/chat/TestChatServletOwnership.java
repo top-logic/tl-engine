@@ -110,7 +110,7 @@ public class TestChatServletOwnership extends BasicTestCase {
 		// Every handler resolves its window's tracker before it does anything else.
 		TLSubSessionContext subSession = TLContextManager.getSubSession();
 		assertNotNull("The test needs a sub-session to hang the tracker on.", subSession);
-		ChatSessionRegistry.register(subSession, new TaskProgressTracker());
+		ChatSessionRegistry.register(subSession, null, new TaskProgressTracker());
 	}
 
 	/** The blocker: sending into someone else's chat. */

@@ -5,6 +5,9 @@
  */
 package com.top_logic.ai.chat.layout;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import com.top_logic.base.context.TLSessionContext;
@@ -13,15 +16,14 @@ import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
 
 /**
- * Bridges the TopLogic sub-session of an application window to the {@link TaskProgressTracker}
- * used by the JSON chat API (servlet).
+ * Bridges the conversations of an application window to the {@link TaskProgressTracker}s used by
+ * the JSON chat API (servlet).
  *
  * <p>
- * A single {@code HttpSession} (one login) can host several TopLogic sub-sessions - one per
- * browser window (cloned tabs, popped-out views). Each sub-session has its own
- * {@link com.top_logic.layout.WindowScope} and therefore its own {@link TaskProgressTracker}. The
- * plain HTTP request of the {@code ChatServlet} carries only the session cookie, so the servlet
- * cannot tell the sub-sessions apart on its own.
+ * A single {@code HttpSession} (one login) can host several TopLogic sub-sessions - one per browser
+ * window (cloned tabs, popped-out views). Each sub-session has its own
+ * {@link com.top_logic.layout.WindowScope}. The plain HTTP request of the {@code ChatServlet}
+ * carries only the session cookie, so the servlet cannot tell the sub-sessions apart on its own.
  * </p>
  *
  * <p>
@@ -29,31 +31,67 @@ import com.top_logic.basic.col.TypedAnnotatable.Property;
  * attribute carrying the sub-session registry key (the {@code windowName}, see
  * {@link #windowId(TLSessionContext, TLSubSessionContext)}). The client echoes this id with every
  * chat request, and the servlet resolves it back to the sub-session via
- * {@link TLSessionContext#getSubSession(String)} and to the tracker stored on it under
- * {@link #CHAT_TRACKER}.
+ * {@link TLSessionContext#getSubSession(String)}.
+ * </p>
+ *
+ * <p>
+ * <b>A window can show more than one conversation</b> - a page's chat beside a
+ * {@code <chat-dock>}'s, two {@code <agent-chat>} elements, a chat in a dialog over the one on the
+ * page. Each of them is a conversation of its own: its own active session, its own run, its own
+ * approvals. So the tracker is keyed by {@code (sub-session, conversation)}, and the client echoes
+ * the conversation key - the browser's own {@code chat-id} - as {@code chatId} beside the window
+ * id. A request that names none addresses the window's unnamed conversation, which is what the
+ * classic {@code chat-client.js} has (Gitea #502). Before that, one tracker per window meant that
+ * two conversations in one window took each other's turns: the second one to send got the first
+ * one's stream and the first one waited for an answer that never arrived.
  * </p>
  */
 public final class ChatSessionRegistry {
 
-	/** The {@link TaskProgressTracker} of the chat UI rendered in a sub-session. */
-	public static final Property<TaskProgressTracker> CHAT_TRACKER =
-		TypedAnnotatable.property(TaskProgressTracker.class, "tl.chat.tracker");
+	/**
+	 * The {@link TaskProgressTracker}s of the conversations rendered in a sub-session, by
+	 * conversation key.
+	 */
+	@SuppressWarnings("unchecked")
+	private static final Property<Map<String, TaskProgressTracker>> CHAT_TRACKERS =
+		TypedAnnotatable.propertyMap("tl.chat.trackers");
 
 	private ChatSessionRegistry() {
 		// Static utility.
 	}
 
 	/**
-	 * Stores the given tracker on the sub-session so {@link #resolveTracker} can find it.
+	 * Normalizes a conversation key, so that an absent, blank and empty one are the same
+	 * conversation.
+	 *
+	 * @param conversation
+	 *        The key the client sent or an element configured; may be <code>null</code>.
+	 * @return The key to store and look up under; never <code>null</code>.
+	 */
+	public static String key(String conversation) {
+		return conversation == null ? "" : conversation.trim();
+	}
+
+	/**
+	 * Stores the given tracker as the one of {@code conversation} in the sub-session, so that
+	 * {@link #resolveTracker} can find it.
 	 *
 	 * <p>
-	 * Called while rendering the chat component, where the application's sub-session is bound to the
+	 * Called while rendering a chat element, where the application's sub-session is bound to the
 	 * current thread.
 	 * </p>
+	 *
+	 * @param conversation
+	 *        The conversation key the client echoes as {@code chatId}; <code>null</code> is the
+	 *        window's unnamed conversation.
 	 */
-	public static void register(TLSubSessionContext subSession, TaskProgressTracker tracker) {
-		if (subSession != null && tracker != null) {
-			subSession.set(CHAT_TRACKER, tracker);
+	public static void register(TLSubSessionContext subSession, String conversation, TaskProgressTracker tracker) {
+		if (subSession == null || tracker == null) {
+			return;
+		}
+		Map<String, TaskProgressTracker> trackers = subSession.mkMap(CHAT_TRACKERS);
+		synchronized (trackers) {
+			trackers.put(key(conversation), tracker);
 		}
 	}
 
@@ -69,12 +107,46 @@ public final class ChatSessionRegistry {
 	}
 
 	/**
-	 * Resolves the {@link TaskProgressTracker} for the given client-provided window id, or
-	 * {@code null} if the sub-session is unknown/expired or has no chat tracker.
+	 * Resolves the {@link TaskProgressTracker} of one conversation of the given client-provided
+	 * window id, or {@code null} if the sub-session is unknown or expired or shows no such
+	 * conversation.
 	 */
-	public static TaskProgressTracker resolveTracker(TLSessionContext session, String windowId) {
-		TLSubSessionContext subSession = resolveSubSession(session, windowId);
-		return subSession == null ? null : subSession.get(CHAT_TRACKER);
+	public static TaskProgressTracker resolveTracker(TLSessionContext session, String windowId, String conversation) {
+		return tracker(resolveSubSession(session, windowId), conversation);
+	}
+
+	/**
+	 * The {@link TaskProgressTracker} of one conversation of the given sub-session, or {@code null}
+	 * if it shows no such conversation.
+	 */
+	public static TaskProgressTracker tracker(TLSubSessionContext subSession, String conversation) {
+		if (subSession == null) {
+			return null;
+		}
+		Map<String, TaskProgressTracker> trackers = subSession.get(CHAT_TRACKERS);
+		synchronized (trackers) {
+			return trackers.get(key(conversation));
+		}
+	}
+
+	/**
+	 * The trackers of every conversation rendered in the given sub-session.
+	 *
+	 * <p>
+	 * What a change that is about the window rather than about one conversation has to reach - a
+	 * chat this account deleted in another window, say.
+	 * </p>
+	 *
+	 * @return The trackers, in no particular order; never <code>null</code>.
+	 */
+	public static Collection<TaskProgressTracker> trackers(TLSubSessionContext subSession) {
+		if (subSession == null) {
+			return List.of();
+		}
+		Map<String, TaskProgressTracker> trackers = subSession.get(CHAT_TRACKERS);
+		synchronized (trackers) {
+			return new ArrayList<>(trackers.values());
+		}
 	}
 
 	/**
@@ -99,4 +171,5 @@ public final class ChatSessionRegistry {
 		}
 		return null;
 	}
+
 }

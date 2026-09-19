@@ -193,8 +193,12 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   const state = useTLState()
   const command = useTLCommand()
   const boot = useMemo(() => readBootstrap(state), [state])
-  const { chat, actions, runs } = useChat(chatIdOf(state, controlId), boot)
+  const chatId = chatIdOf(state, controlId)
+  const { chat, actions, runs } = useChat(chatId, boot)
   const labels = useMemo(() => bundle(chat.language), [chat.language])
+  // Where this conversation's requests go. Memoised, because the composer is `React.memo`d and a
+  // fresh object on every render would defeat that.
+  const at = useMemo(() => ({ windowId: chat.windowId, chatId }), [chat.windowId, chatId])
   const config = useMemo(() => readThreadConfig(state), [state])
   const controls = useMemo(() => readComposerControls(state), [state])
   const selected = typeof state.selected === 'string' ? state.selected : ''
@@ -212,10 +216,10 @@ export function TLChatConversation({ controlId }: TLCellProps) {
     [state.referenceCandidates, state.referenceSource],
   )
 
-  // Tell the chat a conversation is on the page. A `<chat-dock/>` asks for this: the transport is
-  // one conversation per window, so a dock must not open a second copy of the one the page is
-  // already showing. Its own nested conversation does not count - `insideDock` says which is which,
-  // and comes from the view context rather than from the React tree.
+  // Tell the chat a conversation is on the page. A `<chat-dock/>` asks for this: it must not open a
+  // second copy of the conversation the page is already showing, which would give one draft channel
+  // two composers and one remembered layout two rails. Its own nested conversation does not count -
+  // `insideDock` says which is which, and comes from the view context rather than from the React tree.
   const insideDock = state.insideDock === true
   useEffect(() => actions.registerConversation(insideDock), [actions, insideDock])
 
@@ -456,7 +460,7 @@ export function TLChatConversation({ controlId }: TLCellProps) {
           onOpenSource={() => undefined}
         />
         <Composer
-          windowId={chat.windowId}
+          at={at}
           agents={chat.caps.agents}
           models={chat.offeredModels}
           agent={chat.agent}

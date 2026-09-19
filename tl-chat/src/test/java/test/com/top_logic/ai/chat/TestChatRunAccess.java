@@ -7,6 +7,8 @@ package test.com.top_logic.ai.chat;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
+import java.util.concurrent.Callable;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -84,6 +86,18 @@ public class TestChatRunAccess extends BasicTestCase {
 	 */
 	private static final String INFRASTRUCTURE_AGENT = "TL_PromptImprover";
 
+	/** What the test application's configuration overlay renames {@link #FRAMEWORK_AGENT} to. */
+	private static final String OVERRIDDEN_NAME_EN = "Model Scout";
+
+	/** The same, in German. */
+	private static final String OVERRIDDEN_NAME_DE = "Modell-Späher";
+
+	/** The summary the overlay leaves alone, as this product ships it. */
+	private static final String SHIPPED_SUMMARY_EN = "Explores model and data, changes nothing.";
+
+	/** The same, in German. */
+	private static final String SHIPPED_SUMMARY_DE = "Erkundet Modell und Daten, ändert nichts.";
+
 	private static Person anna;
 
 	private static TLObject annasChat;
@@ -142,6 +156,45 @@ public class TestChatRunAccess extends BasicTestCase {
 			agent.contains("\"name\":\"" + FRAMEWORK_AGENT + "\""));
 		assertFalse("A framework agent has a display name: " + agent, agent.contains("\"label\":\"\""));
 		assertFalse("A framework agent has a summary: " + agent, agent.contains("\"summary\":\"\""));
+	}
+
+	/**
+	 * What the menu shows is what the installation configured, not what the product ships (#403).
+	 *
+	 * <p>
+	 * The test application overrides the display name of {@link #FRAMEWORK_AGENT} and says nothing
+	 * about its summary - the shape of an administrator renaming one agent in the service editor of
+	 * <em>TopLogic-Agents and Skills</em>. Both halves are asserted here, because they are what makes
+	 * the setting worth having: the renamed text reaches the client, and the text beside it is still
+	 * the shipped one rather than empty.
+	 * </p>
+	 */
+	public void testCapabilitiesCarriesTheInstallationsOwnDisplayName() throws Exception {
+		String agent = agentEntry(inLocale(Locale.ENGLISH, this::capabilities), FRAMEWORK_AGENT);
+
+		assertEquals("The name the installation configured is the name the menu shows: " + agent,
+			OVERRIDDEN_NAME_EN, valueOf(agent, "label"));
+		assertEquals("The summary nobody overrode is still the shipped one: " + agent,
+			SHIPPED_SUMMARY_EN, valueOf(agent, "summary"));
+		assertTrue("The identifier a request names is not what was renamed: " + agent,
+			agent.contains("\"name\":\"" + FRAMEWORK_AGENT + "\""));
+	}
+
+	/**
+	 * Both texts are answered in the reader's language - the overridden one and the shipped one.
+	 *
+	 * <p>
+	 * They are localized separately, so a German reader gets the installation's German name and the
+	 * product's German summary in the same payload.
+	 * </p>
+	 */
+	public void testCapabilitiesAnswersInTheReadersLanguage() throws Exception {
+		String agent = agentEntry(inLocale(Locale.GERMAN, this::capabilities), FRAMEWORK_AGENT);
+
+		assertEquals("The installation's German name: " + agent,
+			OVERRIDDEN_NAME_DE, valueOf(agent, "label"));
+		assertEquals("The shipped German summary: " + agent,
+			SHIPPED_SUMMARY_DE, valueOf(agent, "summary"));
 	}
 
 	/**
@@ -351,6 +404,25 @@ public class TestChatRunAccess extends BasicTestCase {
 
 		assertTrue("The button must not go away with the persona: " + body,
 			body.contains("\"promptImproverAvailable\":true"));
+	}
+
+	/**
+	 * Runs the given call with the session switched to the given language.
+	 *
+	 * <p>
+	 * Through {@code withLocale} rather than by setting the locale, because the bundle a session
+	 * renders with is cached on the session and only that call exchanges it too. Named explicitly in
+	 * both directions, because the test application's own language is neither obvious nor the point.
+	 * </p>
+	 */
+	private static String inLocale(Locale locale, Callable<String> call) {
+		return TLContextManager.getSubSession().withLocale(locale, () -> {
+			try {
+				return call.call();
+			} catch (Exception ex) {
+				throw new RuntimeException(ex);
+			}
+		});
 	}
 
 	/** The capabilities payload of the acting account, as JSON. */

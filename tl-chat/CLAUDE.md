@@ -407,6 +407,24 @@ instruction addressed to a model and never reaches the browser.
 The summary is rendered **as authored**, on one line, cut off with an ellipsis where it does not fit.
 A summary that has to fit is shortened where it is written, not here.
 
+**Where an installation changes them (#403).** For the agents this product ships, both texts are
+configuration, and the place to change them is *Administration → Development → Service Editor →
+TopLogic-Agents and Skills*: each agent's entry now begins with **Display name** and **Summary**,
+above the model-facing description, with a field per language and the shipped text already in it.
+The technical `name` above them is not editable there, and that is the point of having a display
+name at all: other configuration, the skills, the security policy and every persisted session name
+the agent by its identifier, so renaming that is a migration while renaming the display name is a
+setting. Two things about the mechanism are worth knowing before using it. A saved change reaches
+users only when the service is restarted - *Administration → System → Services → Restart*, or the
+next application start; saving alone changes nothing a running agent does. And the editor saves the
+configuration of **every** agent as it currently reads, into
+`WEB-INF/autoconf/com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions.config.xml`, so from then
+on the installation carries its own copy of the shipped prompts and tool lists too; *Reset
+configuration* in the same editor deletes that file and gives the shipped texts back at the next
+restart. An installation that wants to change two texts and keep receiving the rest of every release
+writes that overlay file by hand instead, naming only the two properties it replaces - which is what
+the configuration overlay merge is for, and what `TestShippedAgentOverride` pins.
+
 `GET /chat/capabilities` is filtered by the acting account (#392): the agents and the MCP servers it
 lists are exactly what a run of that account accepts. The **models** are the one thing a single
 payload cannot make exact - it is fetched once and the agent changes without another round trip - so

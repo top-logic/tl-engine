@@ -2344,8 +2344,15 @@ Do NOT include long explanations. Be concise and factual.]]></system-prompt>
 							<delegation name="TL_TLScriptAgent"/>
 						</delegations>
 					</agent>
+					<!--
+						infrastructure: the chat runs this one *for* the user - it rewrites the draft
+						they are about to send and never answers as a persona. It is therefore offered
+						by no menu and refused wherever a user's own run names it, whatever
+						<agent-access> grants. See doc/security/tool-access-configuration.md.
+					-->
 					<agent name="TL_PromptImprover"
 						description="Rewrite a draft user prompt so it is clearer and ready to send. Returns only the improved prompt text."
+						infrastructure="true"
 					>
 						<display-name>
 							<en>Prompt Improver</en>

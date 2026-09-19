@@ -47,6 +47,11 @@
 							</annotations>
 						</field>
 						<field
+							attribute="infrastructure"
+							fullQualifiedName="tl.ai.core:Agent#infrastructure"
+							type="tl.core:Boolean"
+						/>
+						<field
 							attribute="systemPrompt"
 							fullQualifiedName="tl.ai.core:Agent#systemPrompt"
 							type="tl.core:Text"
@@ -110,6 +115,16 @@
 						<size-constraint/>
 					</annotations>
 				</property>
+				<!--
+					An agent the application runs *for* a user rather than letting them talk to it -
+					the chat's prompt improver is one. Such an agent is offered by no menu and is
+					refused wherever a user's own run names it, whatever <agent-access> grants; the
+					product's own call path says so in code instead. See
+					doc/security/tool-access-configuration.md.
+				-->
+				<property name="infrastructure"
+					type="tl.core:Boolean"
+				/>
 				<property name="systemPrompt"
 					type="tl.core:Text"
 				>

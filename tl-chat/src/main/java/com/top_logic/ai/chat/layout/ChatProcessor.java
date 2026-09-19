@@ -891,6 +891,7 @@ public class ChatProcessor {
 			.setToolName(citation.toolName())
 			.setToolCallId(citation.toolCallId())
 			.setKind(citation.kind())
+			.setKindLabel(citation.kindLabel())
 			.setId(citation.id())
 			.setLabel(citation.label())
 			.setUrl(citation.url())

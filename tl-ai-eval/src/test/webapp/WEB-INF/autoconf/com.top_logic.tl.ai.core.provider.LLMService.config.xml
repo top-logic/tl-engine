@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The models the eval can run on.
+
+	Two kinds, and the difference is the whole cost story of this module:
+
+	  * "eval-scripted" is answered by ScriptedProvider, a provider whose replies a test writes. Every
+	    plumbing test of the harness - matrix, runner, graders, CSV, report - runs against it, in an
+	    ordinary build, with no key and at no cost.
+	  * "claude-sonnet-4-6" and "claude-haiku-4-5-20251001" are real. They are reached only behind
+	    -Dtl.ai.eval=true, and only when a key is in the environment; without one the arms report as
+	    "could not run" rather than failing.
+
+	"eval-no-tools" exists to be a model that cannot call tools, so that the harness's own
+	"could not run" path is exercised by a test rather than only by a model nobody has today.
+
+	Model metadata is in <model-overrides>, not in <llm-configuration>: the latter is cleared at
+	startup and repopulated from the remote models.dev catalogue, so hand-written entries there do
+	not survive. The Anthropic entry carries catalog-provider-id="" for the same reason - a test must
+	not depend on reaching the internet, and everything the eval reads about a model (tool-call, the
+	context window) is written here.
+
+	In autoconf rather than in WEB-INF/conf, because that is the layer an application overrides a
+	framework default in: tl-ai-core declares its own default model in autoconf, and a conf file
+	cannot beat it.
+-->
+<application config:interface="com.top_logic.basic.config.ApplicationConfig$Config"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<services>
+		<config service-class="com.top_logic.tl.ai.core.provider.LLMService"
+			config:override="true"
+		>
+			<instance class="com.top_logic.tl.ai.core.provider.LLMService">
+				<providers>
+					<provider class="com.top_logic.tl.ai.eval.ScriptedProvider"
+						models="eval-scripted, eval-no-tools"
+						name="scripted"
+					/>
+					<provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig"
+						api-key="%ANTHROPIC_API_KEY%"
+						catalog-provider-id=""
+						models="claude-sonnet-4-6, claude-haiku-4-5-20251001"
+						name="anthropic"
+					/>
+				</providers>
+				<agent-execution default-model="eval-scripted">
+					<agent-overrides>
+						<agent name="Eval_Scripted" model="eval-scripted" provider="scripted"/>
+						<agent name="Eval_NoTools" model="eval-no-tools" provider="scripted"/>
+						<agent name="Eval_Sonnet" model="claude-sonnet-4-6" provider="anthropic"/>
+						<agent name="Eval_Haiku" model="claude-haiku-4-5-20251001" provider="anthropic"/>
+					</agent-overrides>
+				</agent-execution>
+				<environment>
+					<application>
+						<en>Project management eval fixture (tl-ai-eval)</en>
+						<de>Projektverwaltung, Eval-Testdaten (tl-ai-eval)</de>
+					</application>
+				</environment>
+				<model-catalog>
+					<model-overrides>
+						<model name="eval-scripted"
+							context-window="200000"
+							max-output="8192"
+							reasoning="false"
+							temperature="false"
+							tool-call="true"
+						/>
+						<model name="eval-no-tools"
+							context-window="200000"
+							max-output="8192"
+							reasoning="false"
+							temperature="false"
+							tool-call="false"
+						/>
+						<model name="claude-sonnet-4-6"
+							context-window="1000000"
+							max-output="64000"
+							reasoning="true"
+							temperature="true"
+							tool-call="true"
+						/>
+						<model name="claude-haiku-4-5-20251001"
+							context-window="200000"
+							max-output="64000"
+							reasoning="true"
+							temperature="true"
+							tool-call="true"
+						/>
+					</model-overrides>
+				</model-catalog>
+			</instance>
+		</config>
+	</services>
+</application>

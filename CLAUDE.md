@@ -14,9 +14,10 @@ Custom AI agent framework built on TopLogic, replacing LangChain4j with a purpos
 | **tl-chat** | Agentic chat UI - REST API + SSE streaming servlet, React frontend (`ui/`, Vite), session management, human-in-the-loop approval |
 | **tl-chat-classic** | The frozen classic `chat-client.js` control for LayoutServlet applications - the "Albert" tab. Opt-in: a host gets it by depending on this module. |
 | **tl-ai-vector-index** | Semantic search via embedding models (Mistral) and vector stores (Qdrant/JVector), background indexing daemon |
+| **tl-ai-eval** | Model eval harness: the same business tasks put to several models through our own agent loop, graded against the database they leave behind. Its own runs are gated by `-Dtl.ai.eval=true`; its plumbing runs in every build against a scripted provider. See `tl-ai-eval/README.md` |
 | **tl-ai-demo** | Application module bundling all above for deployment |
 
-**Module dependency order:** `tl-ai-tool-api` → `tl-ai-core` → `tl-ai-mcp-server` / `tl-chat` / `tl-ai-vector-index`; `tl-chat` → `tl-chat-classic`; all → `tl-ai-demo`
+**Module dependency order:** `tl-ai-tool-api` → `tl-ai-core` → `tl-ai-mcp-server` / `tl-chat` / `tl-ai-vector-index` / `tl-ai-eval`; `tl-chat` → `tl-chat-classic`; all but `tl-ai-eval` → `tl-ai-demo`
 
 ## Build Commands
 
@@ -113,6 +114,30 @@ is missing for.
 source env.sh
 mvn -pl tl-ai-demo test -DskipTests=false -Dtl.ai.vector.e2e=true -Dtest='VectorIndexIntegrationTest'
 ```
+
+### The model eval
+
+`tl-ai-eval` puts the same five business tasks to every configured model and grades the database
+each run left behind. Its **plumbing runs in every build**, against a provider whose answers a test
+writes, so the scenario file's TL-Script expressions and the graders are exercised at no cost:
+
+```bash
+mvn -pl tl-ai-eval test -DskipTests=false
+```
+
+The **real models** spend real money and are behind `-Dtl.ai.eval=true` - see `EvalE2e` beside the
+other gates. Without it `TestEvalPmMatrix` reports as **skipped**; the gate is also asked by the
+class's `suite()`, so a build not running the eval does not boot the agent stack to report a skip.
+
+```bash
+source env.sh
+mvn -pl tl-ai-eval test -DskipTests=false -Dtl.ai.eval=true -Dtest=TestEvalPmMatrix
+```
+
+The CSV lands in `tl-ai-eval/target/eval/`. How to add a scenario, how to read the CSV and - most
+importantly - what the numbers may not be used for is in `tl-ai-eval/README.md`. The short version:
+with a handful of scenarios this shows that a model is unusable with our harness, never that one
+good model is three points better than another.
 
 ## Architecture
 

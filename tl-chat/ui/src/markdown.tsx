@@ -408,8 +408,19 @@ function Excerpt({ excerpt, passage }: { excerpt: string; passage: string }) {
   )
 }
 
-/** Where a source comes from: the web host for a URL, the host kind otherwise. */
-export function sourceOrigin(citation: { kind: string; url: string; id: string }): string {
+/**
+ * Where a source comes from: the web host for a URL, otherwise the kind in the reader's language.
+ *
+ * `kind` is the model's vocabulary and stays the same English word in every installation, so a
+ * German chat used to say `section` and `material` under its sources. The host declares a label
+ * beside the kind and that is what a reader sees; without one we still show the kind.
+ */
+export function sourceOrigin(citation: {
+  kind: string
+  kindLabel?: string
+  url: string
+  id: string
+}): string {
   const href = citation.url || (/^https?:\/\//i.test(citation.id) ? citation.id : '')
   if (href) {
     try {
@@ -418,5 +429,5 @@ export function sourceOrigin(citation: { kind: string; url: string; id: string }
       return href
     }
   }
-  return citation.kind || ''
+  return citation.kindLabel || citation.kind || ''
 }

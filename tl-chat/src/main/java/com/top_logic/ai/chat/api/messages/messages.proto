@@ -938,8 +938,15 @@ message CitationDto {
 	/** Tool call id of that tool, when known. */
 	string toolCallId;
 
-	/** Host kind, e.g. {@code web} or {@code invoice}. */
+	/** Host kind, e.g. {@code web} or {@code invoice} - the model's own vocabulary. */
 	string kind;
+
+	/**
+	 * What to call that kind in front of a reader, in the reader's language.
+	 *
+	 * Empty when the host declared no label for the kind; the {@code kind} is then shown instead.
+	 */
+	string kindLabel;
 
 	/** Id the tool returned (a URL, a TID, …). */
 	string id;

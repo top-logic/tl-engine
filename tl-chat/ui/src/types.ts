@@ -44,7 +44,14 @@ export interface Citation {
   index: number
   toolName: string
   toolCallId: string
+  /** The model's own vocabulary for what kind of source this is, e.g. `web` or `invoice`. */
   kind: string
+  /**
+   * What to call that kind in front of a reader, in the reader's language.
+   *
+   * Empty when the host declared no label for the kind; {@link kind} is shown instead.
+   */
+  kindLabel?: string
   id: string
   label: string
   url: string

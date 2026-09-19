@@ -135,6 +135,21 @@ second or two. Keeping it there means the bundle that goes into the WAR was neve
 its own tests reject - including on a `-DskipTests` build, which is how this module is usually
 built.
 
+`composer.test.tsx` is the one suite that mounts a component into a live DOM - `jsdom`, asked for by
+that file's `@vitest-environment` docblock and by nothing else. It has to: what it guards only
+exists between a real commit and the passive effects that follow it, and `react-dom/server` performs
+neither. That is what the dependency buys, and it is why the run now takes ~3 s rather than ~2 s.
+
+**The composer writes no state per keystroke.** A keystroke is a discrete event, so React commits it
+on the microtask that follows; a `setState` that runs *after* that commit - from a passive effect,
+typically - is a nested update, and fifty in a row with no idle frame in between is React's
+"maximum update depth exceeded" (the minified error #185). A driver typing at zero delay, a paste,
+an IME burst and a held key all produce exactly that cadence, so an effect of the composer's that
+writes state on every `text` change makes the chat throw at the fifty-first character (#419). State
+that follows the draft is therefore **derived** at render time, not stored and re-synchronised by an
+effect; an effect may arm a timer, and the timer's own write is fine because it lands on an idle
+frame. `composer.test.tsx` holds that line for typing, paste, composition and the "@" picker.
+
 ### Dev loop
 
 ```bash

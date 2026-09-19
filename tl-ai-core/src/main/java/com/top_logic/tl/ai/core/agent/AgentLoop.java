@@ -795,15 +795,19 @@ public class AgentLoop {
 		if (!preCommitGuardPasses(context, conversation, listener, runId, turn)) {
 			return;
 		}
+		Revision rev;
 		try {
 			scope.commit();
-			Revision rev = scope.commitRevision();
-			long revNum = rev != null ? rev.getCommitNumber() : -1;
-			emit(listener, new AgentEvent.TransactionCommitted(runId, turn, now(), revNum));
-		} catch (TransactionException e) {
-			// Nothing else logs a failed commit: TransactionScope wraps the engine's exception
-			// without logging it and the rollback event is only traced at DEBUG, so without this a
-			// deployment that hits it has no way to find out why.
+			rev = scope.commitRevision();
+		} catch (RuntimeException e) {
+			// Every failed commit, whatever its type. TransactionScope.commit() wraps what the
+			// engine threw into a TransactionException; catching only that was still one gate too
+			// narrow for a failure the engine adds later, and a commit failure that escapes this
+			// method kills the run and is announced to the browser as a provider error - the model
+			// blamed for the application's refusal (issue #410).
+			//
+			// Only scope.commit() is inside: an event listener that throws must not be able to
+			// make this method roll a committed turn back and tell the model its writes are gone.
 			Logger.error("Agent run " + runId + " turn " + turn
 				+ ": the transaction of the turn could not be committed.", e, AgentLoop.class);
 			String reason = rollbackReason(e);
@@ -815,7 +819,10 @@ public class AgentLoop {
 					+ " Tell the user that the change was not saved, and do not claim otherwise."
 					+ " The cause is a database failure, not a mistake of yours, so do not retry"
 					+ " the identical change.");
+			return;
 		}
+		long revNum = rev != null ? rev.getCommitNumber() : -1;
+		emit(listener, new AgentEvent.TransactionCommitted(runId, turn, now(), revNum));
 	}
 
 	/**
@@ -863,13 +870,23 @@ public class AgentLoop {
 	 * "Rolled back: ". Adding {@link TransactionScope#COMMIT_FAILED_PREFIX} here as well is what
 	 * produced the "Rolled back: Commit failed: Commit failed: ..." a real session reported.
 	 * </p>
+	 *
+	 * <p>
+	 * A failure that is not a {@link TransactionException} carries no reason a reader could act on -
+	 * it is a defect of the engine or of a listener, not a refusal the model can work around - so it
+	 * is named by its type. The stack trace is in the log line this reason accompanies.
+	 * </p>
 	 */
-	private static String rollbackReason(TransactionException failure) {
+	private static String rollbackReason(RuntimeException failure) {
 		String message = failure.getMessage();
 		if (message != null && message.startsWith(TransactionScope.COMMIT_FAILED_PREFIX)) {
 			return message.substring(TransactionScope.COMMIT_FAILED_PREFIX.length());
 		}
-		return message;
+		if (StringServices.isEmpty(message)) {
+			return failure.getClass().getSimpleName();
+		}
+		return failure instanceof TransactionException ? message
+			: failure.getClass().getSimpleName() + ": " + message;
 	}
 
 	/**

@@ -246,7 +246,9 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
       id: 'sources',
       title: labels.sourcesTitle,
       icon: SourcesIcon,
-      count: () => chat.sources.length,
+      // The newest answer's sources, not the chat's running total: a badge over the whole list can
+      // only grow, and would sit on the Quellen icon for the rest of the conversation (#495).
+      count: () => chat.latestSources.length,
       render: (ctx) => (
         <SourcesSection
           sources={chat.sources}
@@ -261,7 +263,7 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
         />
       ),
     }),
-    [labels, chat.sources, openSource, goToAnswer, extensions],
+    [labels, chat.sources, chat.latestSources, openSource, goToAnswer, extensions],
   )
 
   const railSections = useMemo(

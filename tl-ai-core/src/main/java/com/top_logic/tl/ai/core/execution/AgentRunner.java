@@ -127,8 +127,10 @@ public final class AgentRunner {
 			? log.turns().size() - (log.currentTurn() != null ? 1 : 0)
 			: 0;
 
-		// The run numbers its citation markers from 1; the context may have served an earlier run.
-		context.citationMarkers().reset();
+		// The numbering belongs to the conversation, not to this run: the model reads its own earlier
+		// answers back, markers and all, so a run that restarted at 1 handed out numbers that already
+		// meant another source - and the validator then deleted the marker (#495).
+		context.citationMarkers().resumeFrom(log);
 		AgentFactory.RunResult runResult;
 		try {
 			runResult = AgentFactory.getInstance().runAgent(agentName, conversation, memory,
@@ -220,8 +222,10 @@ public final class AgentRunner {
 			? log.turns().size() - (log.currentTurn() != null ? 1 : 0)
 			: 0;
 
-		// The run numbers its citation markers from 1; the context may have served an earlier run.
-		context.citationMarkers().reset();
+		// The numbering belongs to the conversation, not to this run: the model reads its own earlier
+		// answers back, markers and all, so a run that restarted at 1 handed out numbers that already
+		// meant another source - and the validator then deleted the marker (#495).
+		context.citationMarkers().resumeFrom(log);
 		AgentResult result;
 		try {
 			result = loop.run(conversation, context, effectiveListener);

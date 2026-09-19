@@ -1,12 +1,13 @@
 import { React } from 'tl-react-bridge'
 import DOMPurify from 'dompurify'
 import { marked } from 'marked'
+import { excerptFields, kindIcon, sourceDetail, sourceHref, sourceOrigin } from './citations'
 import { highlight, languageLabel } from './highlight'
 import type { bundle } from './i18n'
 import type { CitationRender, PaneOpenOptions } from './extensions'
 import type { ChatMessage, Citation } from './types'
 
-const { useCallback, useEffect, useMemo, useRef, useState } = React
+const { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } = React
 
 type Labels = ReturnType<typeof bundle>
 
@@ -17,6 +18,24 @@ type Labels = ReturnType<typeof bundle>
  * Long answers are rare, and the moment they finish they render as markdown like every other one.
  */
 const LIVE_MARKDOWN_LIMIT = 60_000
+
+/** The space between a marker and its popover. */
+const GAP = 4
+
+/**
+ * The box a popover has to stay inside: the scrolling ancestor of the marker, or the window when
+ * it has none.
+ *
+ * What bounds it is the transcript, not the viewport - the composer sits over the bottom of the
+ * page, so a popover on the last answer is cut off long before the window ends.
+ */
+function visibleBox(el: HTMLElement): { top: number; bottom: number } {
+  for (let node = el.parentElement; node; node = node.parentElement) {
+    const overflow = window.getComputedStyle(node).overflowY
+    if (overflow === 'auto' || overflow === 'scroll') return node.getBoundingClientRect()
+  }
+  return { top: 0, bottom: window.innerHeight }
+}
 
 const renderer = new marked.Renderer()
 
@@ -167,8 +186,24 @@ export function Markdown({
   const [open, setOpen] = useState<number | null>(null)
   /** The marker whose source was actually opened - the host's node is mounted for it. */
   const [activated, setActivated] = useState<number | null>(null)
-  /** Where the marker sits inside the answer, so the popover opens at it and not below. */
-  const [anchor, setAnchor] = useState<{ top: number; left: number } | null>(null)
+  /**
+   * Where the marker sits inside the answer, so the popover opens at it and not below.
+   *
+   * `height` is the marker's own; `room` and `above` are the space under and over it inside the
+   * transcript, which is what decides whether the popover opens downwards or upwards.
+   */
+  const [anchor, setAnchor] = useState<
+    { top: number; left: number; height: number; room: number; above: number } | null
+  >(null)
+  /** The popover container, measured once rendered to decide whether it still fits below. */
+  const popover = useRef<HTMLDivElement>(null)
+  /**
+   * Whether the popover opens above its marker.
+   *
+   * The last answer of a thread sits right over the composer, so a popover that opens downwards
+   * there is cut off at the bottom and its "open the source" action is unreachable (#495).
+   */
+  const [flipped, setFlipped] = useState(false)
   const plain = streaming === true && text.length > LIVE_MARKDOWN_LIMIT
 
   const html = useMemo(
@@ -189,14 +224,27 @@ export function Markdown({
     if (wrap) {
       const box = wrap.getBoundingClientRect()
       const at = el.getBoundingClientRect()
+      const visible = visibleBox(el)
       setAnchor({
-        top: at.bottom - box.top + 4,
+        top: at.bottom - box.top + GAP,
         // Clamped, so a marker at the right edge does not push the popover out of the answer.
         left: Math.max(0, Math.min(at.left - box.left, box.width - 320)),
+        height: at.height,
+        room: visible.bottom - at.bottom,
+        above: at.top - visible.top,
       })
     }
+    setFlipped(false)
     setOpen(marker)
   }, [])
+
+  // Measured after it rendered, because nothing knows how tall an excerpt makes it beforehand.
+  useLayoutEffect(() => {
+    const el = popover.current
+    if (open == null || !anchor || !el) return
+    const height = el.getBoundingClientRect().height
+    setFlipped(height + GAP > anchor.room && height + GAP < anchor.above)
+  }, [open, anchor])
 
   /** What a click on a marker does: hand the source to the host, or open the web page. */
   const openSource = useCallback(
@@ -213,7 +261,7 @@ export function Markdown({
         setActivated(marker)
         return
       }
-      const href = source.url || (/^https?:\/\//i.test(source.id) ? source.id : '')
+      const href = sourceHref(source)
       if (href) window.open(href, '_blank', 'noopener,noreferrer')
     },
     [find, message, onOpenSource, openInPane, renderAnnotation],
@@ -295,7 +343,7 @@ export function Markdown({
     (source: Citation) => {
       if (onOpenSource) return true
       if (renderAnnotation && message && renderAnnotation(source.index, source, message, noop)) return true
-      return Boolean(source.url || /^https?:\/\//i.test(source.id))
+      return Boolean(sourceHref(source))
     },
     [message, noop, onOpenSource, renderAnnotation],
   )
@@ -319,8 +367,21 @@ export function Markdown({
       <div className="md" ref={container} dangerouslySetInnerHTML={{ __html: html }} />
       {hovered ? (
         <div
+          ref={popover}
           className="cite-anchor"
-          style={anchor ? { top: anchor.top, left: anchor.left } : undefined}
+          style={
+            anchor
+              ? {
+                  top: anchor.top,
+                  left: anchor.left,
+                  // Flipped without measuring twice: from the position under the marker, "above"
+                  // is its own height plus the marker's plus the two gaps.
+                  ...(flipped
+                    ? { transform: `translateY(calc(-100% - ${anchor.height + 2 * GAP}px))` }
+                    : null),
+                }
+              : undefined
+          }
           onMouseLeave={() => setOpen(null)}
         >
           <SourcePopover
@@ -352,16 +413,41 @@ export function SourcePopover({
   /** False when nothing in this application can open the source; the action is then not offered. */
   canOpen?: boolean
 }) {
+  const passage = citation.passage ?? ''
+  const detail = sourceDetail(citation)
+  const fields = excerptFields(citation.excerpt ?? '', passage)
   return (
     <div className="cite-popover" role="dialog" aria-label={citation.label || citation.id}>
-      <p className="cite-popover-title">{citation.label || citation.id}</p>
-      <p className="cite-popover-origin">{sourceOrigin(citation)}</p>
-      {citation.excerpt ? (
+      <div className="cite-popover-head">
+        <span className="source-icon" aria-hidden="true">
+          {kindIcon(citation.kind)}
+        </span>
+        <span className="cite-popover-heading">
+          <span className="cite-popover-title">{citation.label || citation.id}</span>
+          <span className="cite-popover-origin">
+            {sourceOrigin(citation)}
+            {detail ? <span className="cite-popover-detail">{detail}</span> : null}
+          </span>
+        </span>
+      </div>
+      {fields ? (
+        // A structured source has fields, not a sentence: shown as the record it is rather than as
+        // a run of grey lines nothing can be highlighted in.
+        <dl className="cite-popover-fields">
+          {fields.map((field, at) => (
+            <div className="cite-popover-field" key={`${field.name}-${at}`}>
+              <dt>{field.name}</dt>
+              <dd>{field.value}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : citation.excerpt ? (
         <p className="cite-popover-excerpt">
-          <Excerpt excerpt={citation.excerpt} passage={citation.passage ?? ''} />
+          <Excerpt excerpt={citation.excerpt} passage={passage} />
         </p>
       ) : null}
       {canOpen ? (
+        // The label carries its own arrow ("Quelle öffnen →"); nothing is added to it here.
         <button type="button" className="cite-popover-open" onClick={onOpen}>
           {labels.openSource}
         </button>
@@ -422,26 +508,6 @@ function Excerpt({ excerpt, passage }: { excerpt: string; passage: string }) {
   )
 }
 
-/**
- * Where a source comes from: the web host for a URL, otherwise the kind in the reader's language.
- *
- * `kind` is the model's vocabulary and stays the same English word in every installation, so a
- * German chat used to say `section` and `material` under its sources. The host declares a label
- * beside the kind and that is what a reader sees; without one we still show the kind.
- */
-export function sourceOrigin(citation: {
-  kind: string
-  kindLabel?: string
-  url: string
-  id: string
-}): string {
-  const href = citation.url || (/^https?:\/\//i.test(citation.id) ? citation.id : '')
-  if (href) {
-    try {
-      return new URL(href).hostname
-    } catch {
-      return href
-    }
-  }
-  return citation.kindLabel || citation.kind || ''
-}
+// Where a source says it comes from lives beside the citation model, so that `sources.tsx` and this
+// file do not import each other. Re-exported because it has always been part of this module's API.
+export { sourceOrigin } from './citations'

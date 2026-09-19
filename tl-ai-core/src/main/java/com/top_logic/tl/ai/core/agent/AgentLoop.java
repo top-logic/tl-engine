@@ -331,6 +331,7 @@ public class AgentLoop {
 		String runId = UUID.randomUUID().toString();
 		emit(serialized, new AgentEvent.RunStarted(runId, 0, now(), _config.model()));
 		emitEnvironment(serialized, runId);
+		emitTurnContext(serialized, runId);
 
 		try {
 			return runLoop(conversation, runContext, serialized, runId);
@@ -518,6 +519,7 @@ public class AgentLoop {
 		String runId = UUID.randomUUID().toString();
 		emit(serialized, new AgentEvent.RunStarted(runId, 0, now(), _config.model()));
 		emitEnvironment(serialized, runId);
+		emitTurnContext(serialized, runId);
 
 		try {
 			return runWithMemory(_memory, runContext, serialized, runId);
@@ -1426,6 +1428,8 @@ public class AgentLoop {
 	 */
 	private AssistantMessage callProviderOnce(Conversation conversation, ToolContext context,
 			AgentEventListener listener, String runId, int turn) throws ProviderException {
+		ensureTurnContext(conversation);
+
 		List<ToolSchema> filteredTools = _registry.toolSchemas(new ToolPermissionFilter(context.security()));
 
 		if (Logger.isDebugEnabled(AgentLoop.class)) {
@@ -1519,6 +1523,91 @@ public class AgentLoop {
 			return;
 		}
 		emit(listener, new AgentEvent.EnvironmentComposed(runId, 0, now(), environment));
+	}
+
+	/**
+	 * Reports the per-turn context block this run's turn carries, so the transcript can show it
+	 * beside the user's text.
+	 *
+	 * <p>
+	 * Nothing is emitted for a run whose host stated no per-turn fact, which is every installation
+	 * that has not written a {@code <fact stable="false">}.
+	 * </p>
+	 */
+	private void emitTurnContext(AgentEventListener listener, String runId) {
+		String turnContext = _config.turnContext();
+		if (turnContext == null || turnContext.isBlank()) {
+			return;
+		}
+		emit(listener, new AgentEvent.TurnContextComposed(runId, 0, now(), turnContext));
+	}
+
+	/**
+	 * Makes sure the turn's context block is in the history the next request carries, exactly once.
+	 *
+	 * <p>
+	 * Called from {@link #callProviderOnce} rather than from the run's start, because that is the
+	 * one point a request is built: it therefore holds after a compaction too, including the
+	 * reactive one that happens between two attempts of the same turn. Requirement of the ticket:
+	 * <em>after a summarizing compaction the newest context block must still reach the model</em>,
+	 * and a compaction that shrank the preserve zone to nothing would otherwise have dropped it
+	 * together with the user message that carried it.
+	 * </p>
+	 *
+	 * <p>
+	 * The block goes into the conversation, not into the request alone, so that it stays where it
+	 * was put: a history rewritten per request would invalidate the providers' prompt caches on
+	 * every turn, which is the very thing that keeps this block out of the system prompt.
+	 * </p>
+	 *
+	 * <p>
+	 * It is prepended to the newest {@link UserMessage} rather than inserted as a message of its
+	 * own, because a lone message between an assistant's tool calls and their results is rejected by
+	 * the provider APIs. Only when a compaction left no user message at all - which a truncating
+	 * one does - is the block appended as a message, at the very end, where no such pair can be
+	 * broken.
+	 * </p>
+	 */
+	private void ensureTurnContext(Conversation conversation) {
+		String block = _config.turnContext();
+		if (block == null || block.isBlank()) {
+			return;
+		}
+		List<Message> messages = conversation.messages();
+		int newestUser = -1;
+		for (int i = messages.size() - 1; i >= 0; i--) {
+			if (!(messages.get(i) instanceof UserMessage user)) {
+				continue;
+			}
+			if (carries(user, block)) {
+				// Already there - the ordinary case from the second iteration of a turn onwards.
+				return;
+			}
+			if (newestUser < 0) {
+				newestUser = i;
+			}
+		}
+		if (newestUser < 0) {
+			conversation.add(new UserMessage(UUID.randomUUID().toString(), now(),
+				List.of(new TextContent(block))));
+			return;
+		}
+		UserMessage target = (UserMessage) messages.get(newestUser);
+		List<ContentPart> content = new ArrayList<>(target.content().size() + 1);
+		content.add(new TextContent(block));
+		content.addAll(target.content());
+		conversation.replaceRange(newestUser, newestUser + 1,
+			List.of(new UserMessage(target.id(), target.timestamp(), content)));
+	}
+
+	/** Whether the given message already carries the block as one of its content parts. */
+	private static boolean carries(UserMessage message, String block) {
+		for (ContentPart part : message.content()) {
+			if (part instanceof TextContent text && block.equals(text.text())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

@@ -143,8 +143,13 @@ preference text. `AgentFactory.buildConfig` composes one `<environment>` block a
 it without an edit. An unknown placeholder is refused where it is written, not at run time.
 
 Nothing in the block may change within a conversation - it sits in front of every request and the
-providers' prompt caches key on it: day granularity, and only facts marked `stable`. Per-turn facts
-are #438.
+providers' prompt caches key on it: day granularity, and only facts marked `stable`.
+
+A fact that is **not** stable goes into the per-turn `<turn-context>` block instead (`TurnContext`):
+its own content block of the turn's user message, ahead of the user's text, which stays exactly what
+the user wrote. The framework adds the turn number and the time of day to it, `AgentLoop` attaches it
+where the request is built - so it survives a compaction - and it is recorded on the turn
+(`Turn#turnContext`, the persisted transcript, the run detail's transcript).
 
 The wording is a shipped, translated resource (`tl.ai.environment.template`) that `LLMService`'s
 `<environment>` section may override, the facts come from the agent

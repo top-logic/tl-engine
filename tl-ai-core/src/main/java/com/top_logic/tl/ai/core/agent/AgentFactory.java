@@ -20,6 +20,7 @@ import com.top_logic.tl.ai.core.agent.environment.AgentFact;
 import com.top_logic.tl.ai.core.agent.environment.EnvironmentFact;
 import com.top_logic.tl.ai.core.agent.environment.RunEnvironment;
 import com.top_logic.tl.ai.core.agent.environment.RunFactsBinding;
+import com.top_logic.tl.ai.core.agent.environment.TurnContext;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.skills.Skill;
 import com.top_logic.tl.ai.core.mcp.McpServerRegistry;
@@ -729,9 +730,16 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		// The environment block is composed last, so that a placeholder written into a skill or a
 		// delegate description is filled too, and so that the block is the last thing the model reads
 		// when the prompt does not say where it goes.
+		List<EnvironmentFact> facts = runFacts(agent);
 		RunEnvironment environment =
-			RunEnvironment.compose(agent.displayName(), agent.name(), model, runFacts(agent));
+			RunEnvironment.compose(agent.displayName(), agent.name(), model, facts);
 		systemPrompt = environment.apply(systemPrompt);
+
+		// The same facts, split by the one question the host answered on each: what holds for the
+		// conversation went into the prompt above, what changes with the next click goes into the
+		// turn. AgentLoop puts this block beside the user's text; it must never reach the prompt,
+		// which has to stay byte-identical across the turns of one conversation.
+		String turnContext = TurnContext.compose(facts, RunFactsBinding.turnNumber());
 
 		// maxOutputTokens: assignment override > catalog
 		Integer assignedMaxTokens = assignment.maxTokens();
@@ -762,7 +770,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 
 		return new AgentParams(model, systemPrompt, maxTurns,
 			maxOutputTokens, modelOptions, contextWindowTokens,
-			maxRetries, timeoutSeconds, toolChoice, msg -> true, environment.block());
+			maxRetries, timeoutSeconds, toolChoice, msg -> true, environment.block(), turnContext);
 	}
 
 	/**

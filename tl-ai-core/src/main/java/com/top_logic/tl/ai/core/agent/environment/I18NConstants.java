@@ -33,6 +33,24 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ENVIRONMENT_PREFERENCES_HEADING;
 
 	/**
+	 * Label of the turn number inside the per-turn context block. Read by the model, in the
+	 * language of the account the run acts for.
+	 *
+	 * @en Turn
+	 * @de Turn
+	 */
+	public static ResKey TURN_CONTEXT_TURN;
+
+	/**
+	 * Label of the time of day inside the per-turn context block. Read by the model, in the
+	 * language of the account the run acts for.
+	 *
+	 * @en Time
+	 * @de Uhrzeit
+	 */
+	public static ResKey TURN_CONTEXT_TIME;
+
+	/**
 	 * Error message when a preference text is longer than the configured cap.
 	 *
 	 * @en Your preferences are {0} characters long; at most {1} are allowed. They are sent with

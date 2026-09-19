@@ -37,6 +37,42 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  */
 public class TestConversationLogSerializer extends TestCase {
 
+	/**
+	 * What the host stated about a turn survives the round trip, apart from the user's text.
+	 *
+	 * <p>
+	 * The two are stored separately on purpose: the bubble shows the one the user wrote, the
+	 * transcript shows both.
+	 * </p>
+	 */
+	public void testTheTurnContextRoundTrips() {
+		String block = "<turn-context>\nTurn: 1\nOpen invoice: RE-2026-0042\n</turn-context>";
+		ConversationLog log = new ConversationLog();
+		Turn turn = log.startTurn();
+		turn.setTurnContext(block);
+		turn.setUserParts(List.of(
+			new Part.TextPart("u1", Instant.ofEpochMilli(1000), "Is the payment term okay?")));
+		log.completeTurn();
+
+		Turn restored =
+			ConversationLogSerializer.fromJson(ConversationLogSerializer.toJson(log)).turns().get(0);
+
+		assertEquals(block, restored.turnContext());
+		assertEquals("The user's text must carry no context.",
+			"Is the payment term okay?", ((Part.TextPart) restored.userParts().get(0)).text());
+	}
+
+	/** A transcript written before the field existed has no context, not an empty one. */
+	public void testATurnWithoutContextRestoresNone() {
+		ConversationLog log = new ConversationLog();
+		Turn turn = log.startTurn();
+		turn.setUserParts(List.of(new Part.TextPart("u1", Instant.ofEpochMilli(1000), "Hello")));
+		log.completeTurn();
+
+		assertNull(ConversationLogSerializer.fromJson(ConversationLogSerializer.toJson(log))
+			.turns().get(0).turnContext());
+	}
+
 	/** Round-trip: serialize then deserialize preserves all data. */
 	public void testRoundTrip() {
 		ConversationLog log = new ConversationLog();

@@ -66,8 +66,7 @@ following turn. So:
 - the date is stated at day granularity - never a time of day, never a turn number;
 - only facts the host marked `stable` are rendered.
 
-Per-turn facts are a separate block and a separate ticket (#438). Until it exists they are carried
-to `RunEnvironment.contextSection` and deliberately dropped.
+Facts that change go into the [per-turn block](#the-per-turn-block) instead.
 
 ## The template
 
@@ -155,6 +154,79 @@ long after those channels were read. A client that sends something else states s
 own page to its own agent; it gains nothing by it, because every tool still asks the security
 context, and it cannot reach another account's conversation.
 
+## The per-turn block
+
+Some facts change while the user talks to the agent: which object is open, which row was just
+selected, which section is being read. They must reach the model, and they must not reach the system
+prompt. They travel in the turn instead, as their own content block of the user message, ahead of
+what the user wrote:
+
+```
+<turn-context>
+Turn: 3
+Time: 14:32 (Europe/Berlin)
+Open invoice: RE-2026-0042
+</turn-context>
+```
+
+```
+Is the payment term okay?
+```
+
+**Two blocks, not one string.** Every provider this product speaks to renders a message's content
+parts as separate blocks, so the harness sends two and the user's text stays byte-exact - nothing is
+prepended to it and nothing has to be stripped off it again (#406, #428). The `<turn-context>` tags
+are still there, because nothing guarantees a *visible* separator between two blocks once the model
+reads them; self-delimiting text needs no `[user]` marker on the other half, which is what lets the
+user's own text stay untouched. A value that contains one of the tags has its `<` escaped to `&lt;`,
+the way `UntrustedEnvelope` does it, so no fact can end the block early. A value keeps no line
+breaks either: the block is read line by line, and a second line would read as a fact of its own.
+
+**Turn number and time of day are added by the framework.** Both change per turn by nature, which is
+exactly why the environment block states the date at day granularity and no time at all. The turn
+number is what the entry point counted - `ChatProcessor` binds it with the facts
+(`RunFactsBinding.bind(facts, turnNumber)`); a headless or a scheduled run counts none and the line
+is then omitted.
+
+**A host that states nothing per turn gets no block.** Turn number and time are added *to* a block;
+they do not create one.
+
+### Where it is attached
+
+`AgentFactory.buildConfig` composes it, from the same facts as the environment block, into
+`AgentParams#turnContext`. `AgentLoop.ensureTurnContext` puts it into the conversation - prepended to
+the newest user message - at the one point a request is built, which buys three things at once:
+
+- **it cannot be forgotten**, the same argument that puts the untrusted-content standing rule there;
+- **it survives a compaction**, including the reactive one between two attempts of the same turn: a
+  compaction that squeezed the preserve zone down to nothing takes the user message the block arrived
+  on with it, and the next request re-attaches the block to whatever user message is left - the
+  summary - or, when a truncating compaction left none at all, appends it as a message of its own at
+  the very end, where no tool-call/tool-result pair can be broken;
+- **it stays where it was put**, so each turn keeps its own block and the history does not change
+  under the providers' prompt caches. Rewriting the history per request would cost the very cache
+  this block is kept out of the system prompt to protect.
+
+It is added at most once per message: `ensureTurnContext` checks for the exact block first.
+
+### Where it is stored
+
+On the turn, apart from the user's text: `Turn#turnContext`, `PersistedTurn.turnContext` in the
+transcript proto, and `ConversationLogReplay` puts it back in the same position a live run did - a
+reloaded conversation has to be the one the model already saw, because the compaction sidecars are
+fingerprinted against that projection.
+
+What shows it:
+
+| | |
+|--|--|
+| the chat bubble | only the user's text - the block is not among the turn's `userParts` at all |
+| the transcript / run detail of the activity monitor | the block, above the user's part, in its own frame |
+
+`AgentLoop` announces it once per run as `AgentEvent.TurnContextComposed`, and
+`ConversationLogListener` writes it onto the current turn - once, so a delegate told the same thing
+does not overwrite the entry point's.
+
 ## User preferences
 
 `tl.accounts:Person#aiPreferences`, added to the account model by
@@ -190,6 +262,9 @@ conversation: it sits in the system prompt, which nothing else records.
 | `agent/environment/RunEnvironment` | Composing one run's block and applying it to a prompt. |
 | `agent/environment/EnvironmentConfig` / `EnvironmentSettings` | The `<environment>` configuration section, the shipped resource behind it, and how both are read when the service is not up. |
 | `agent/environment/AgentFact` / `EnvironmentFact` / `RunFactsBinding` | The facts: declared, evaluated, and bound for a run. |
+| `agent/environment/TurnContext` | Composing the per-turn block, and what a fact may not write into it. |
+| `agent/AgentLoop#ensureTurnContext` | Putting the per-turn block into the request, once, compaction or not. |
+| `session/Turn#turnContext` / `ConversationLogReplay` | Storing it with the turn, and replaying it. |
 | `agent/environment/UserPreferences` / `PreferencesLengthConstraint` | The account's own text and its cap. |
 | `agent/AgentFactory#buildConfig` | The one place a run's prompt is composed. |
 | `agent/AgentLoop` | Emits `AgentEvent.EnvironmentComposed` right after `RunStarted`. |

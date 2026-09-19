@@ -305,8 +305,9 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		 * <p>
 		 * Only a stable fact is rendered into the environment block: that block sits in front of every
 		 * request of the conversation and must stay byte-identical, or the provider's prompt cache
-		 * misses on every turn. A fact that changes while the conversation runs belongs in the per-turn
-		 * block (Gitea #438), which this release does not render yet.
+		 * misses on every turn. A fact that changes while the conversation runs is rendered into the
+		 * {@link com.top_logic.tl.ai.core.agent.environment.TurnContext per-turn block} instead, which
+		 * travels in the turn itself.
 		 * </p>
 		 */
 		@Name(STABLE)

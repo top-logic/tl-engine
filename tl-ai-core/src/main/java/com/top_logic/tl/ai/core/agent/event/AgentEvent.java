@@ -103,6 +103,24 @@ public sealed interface AgentEvent {
 			implements AgentEvent {}
 
 	/**
+	 * What this run told the model about <em>this turn</em> - the facts that change while the
+	 * conversation runs.
+	 *
+	 * <p>
+	 * Emitted immediately after {@link EnvironmentComposed}, and only when the run composed a block
+	 * at all. The block travels in the turn, beside the user's text, so it is recorded on the turn
+	 * rather than on the run: the user's own text must stay exactly what the user wrote.
+	 * </p>
+	 *
+	 * @param runId agent run identifier
+	 * @param turnNumber 1-based loop iteration; {@code 0}, like {@link RunStarted}
+	 * @param timestamp when the event occurred
+	 * @param turnContext the composed {@code <turn-context>} block, as sent
+	 */
+	record TurnContextComposed(String runId, int turnNumber, Instant timestamp, String turnContext)
+			implements AgentEvent {}
+
+	/**
 	 * Final event of a run. {@code turnNumber} is the last turn reached.
 	 *
 	 * @param runId agent run identifier

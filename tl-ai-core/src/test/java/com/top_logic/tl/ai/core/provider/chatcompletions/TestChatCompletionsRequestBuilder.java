@@ -57,6 +57,26 @@ public class TestChatCompletionsRequestBuilder extends TestCase {
 			ChatCompletionsRequestBuilder.buildRequestJson(request).contains("stream_options"));
 	}
 
+	/**
+	 * Two text blocks of one user message arrive separated.
+	 *
+	 * <p>
+	 * This API takes one string for a text-only user message, so the harness's blocks have to be
+	 * joined - and a turn that states its context beside the user's question must not arrive with
+	 * the two run together.
+	 * </p>
+	 */
+	public void testTextBlocksOfOneUserMessageAreSeparated() throws Exception {
+		UserMessage user = new UserMessage(UUID.randomUUID().toString(), Instant.now(),
+			List.of(new TextContent("<turn-context>\nTurn: 1\n</turn-context>"),
+				new TextContent("Is the payment term okay?")));
+
+		String json = ChatCompletionsRequestBuilder.buildRequestJson(new ProviderRequest(
+			"gpt-4o", "You are a helpful assistant.", List.of(user), List.of(), 512));
+
+		assertTrue(json, json.contains("</turn-context>\\nIs the payment term okay?"));
+	}
+
 	/** */
 	public void testBasicTextRequest() throws Exception {
 		UserMessage user = new UserMessage(

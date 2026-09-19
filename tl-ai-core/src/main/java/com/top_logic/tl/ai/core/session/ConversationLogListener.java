@@ -127,6 +127,8 @@ public class ConversationLogListener implements AgentEventListener {
 			_textBuffer.append(e.text());
 		} else if (event instanceof AgentEvent.ThinkingDelta e) {
 			_thinkingBuffer.append(e.text());
+		} else if (event instanceof AgentEvent.TurnContextComposed e) {
+			handleTurnContextComposed(e);
 		} else if (event instanceof AgentEvent.ToolCallStarted e) {
 			handleToolCallStarted(e);
 		} else if (event instanceof AgentEvent.ToolCallCompleted e) {
@@ -189,6 +191,21 @@ public class ConversationLogListener implements AgentEventListener {
 			flushThinkingBuffer(turn);
 		}
 		_log.completeTurn();
+	}
+
+	/**
+	 * Records what the run told the model about this turn.
+	 *
+	 * <p>
+	 * Written only once per turn. A delegate and a subagent are told the same thing and emit the
+	 * same event into this log, and the first one to arrive is the entry point's own.
+	 * </p>
+	 */
+	private void handleTurnContextComposed(AgentEvent.TurnContextComposed e) {
+		Turn turn = _log.currentTurn();
+		if (turn != null && turn.turnContext() == null) {
+			turn.setTurnContext(e.turnContext());
+		}
 	}
 
 	private void handleContextComposition(AgentEvent.ContextComposition e) {

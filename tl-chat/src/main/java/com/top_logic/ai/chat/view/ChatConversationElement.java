@@ -808,8 +808,8 @@ public class ChatConversationElement implements UIElement {
 	 * {@link Fact#getStable() stable} and are rendered into the system prompt. A fact that changes
 	 * while the conversation runs must not be: the environment block sits in front of every request
 	 * of that conversation and has to stay byte-identical, or the provider's prompt cache misses on
-	 * every turn. Such facts travel with the message and are dropped for now; rendering them per turn
-	 * is Gitea #438.
+	 * every turn. Such a fact is rendered into the per-turn {@code <turn-context>} block instead,
+	 * which travels in the turn itself, beside the user's text.
 	 * </p>
 	 */
 	@TagName("context")

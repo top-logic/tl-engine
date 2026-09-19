@@ -177,7 +177,8 @@ message FactDto {
 	 * <p>
 	 * Only a stable fact reaches the system prompt, which has to stay byte-identical across the turns
 	 * of one conversation or the provider's prompt cache misses on every one of them. A fact that is
-	 * not stable is carried and, for now, dropped; rendering it per turn is Gitea #438.
+	 * not stable goes into the per-turn context block, which travels in the turn itself, beside the
+	 * user's text.
 	 * </p>
 	 */
 	boolean stable;

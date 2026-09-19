@@ -229,9 +229,16 @@ public class ChatCompletionsRequestBuilder {
 			}
 			msg.put("content", parts);
 		} else {
+			// This API takes one string for a text-only user message, so the blocks of that message
+			// are joined - with a line break, because they are separate blocks and not fragments of
+			// one sentence. A turn that states its context beside the user's question would otherwise
+			// arrive with the two run together.
 			StringBuilder text = new StringBuilder();
 			for (ContentPart part : user.content()) {
 				if (part instanceof TextContent tc) {
+					if (text.length() > 0) {
+						text.append('\n');
+					}
 					text.append(tc.text());
 				}
 			}

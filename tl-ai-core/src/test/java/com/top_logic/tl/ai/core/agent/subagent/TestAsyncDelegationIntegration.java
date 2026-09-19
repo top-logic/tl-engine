@@ -235,11 +235,12 @@ public class TestAsyncDelegationIntegration extends BasicTestCase {
 	 * parent loop's injection point calls {@link SubagentJobRegistry#takeUndeliveredResults}.
 	 *
 	 * <p>
-	 * This test exercises the public registry contract that {@link AgentLoop}'s private
+	 * This test exercises the public registry contract that {@link AgentLoop}'s
 	 * {@code injectSubagentResults} relies on: once a terminal job is taken, subsequent
-	 * calls return an empty list (idempotency). The {@code injectSubagentResultsForTest}
-	 * helper is package-private to {@code com.top_logic.tl.ai.core.agent}, so this test
-	 * verifies the underlying contract via the public {@link SubagentJobRegistry} API instead.
+	 * calls return an empty list (idempotency). That helper is package-private to
+	 * {@code com.top_logic.tl.ai.core.agent}, so this test verifies the underlying contract via
+	 * the public {@link SubagentJobRegistry} API instead; what the injection then does with the
+	 * jobs is covered by {@code TestResultInjection}.
 	 * </p>
 	 *
 	 * <p>

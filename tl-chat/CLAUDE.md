@@ -1044,7 +1044,13 @@ the pane's chrome, and every section's body is a view element the application co
         <data-list selection="paneObject" …/>
     </section>
     <pane><form input="paneInvoice"/></pane>
-    <list-pane><data-list …/></list-pane>
+    <list-pane>
+        <table types="my.module:Invoice" selection="paneObject">
+            <columns><column attribute="date"/><column attribute="description"/>…</columns>
+            <inputs><input channel="paneInvoices"/></inputs>
+            <rows>shown -> $shown</rows>
+        </table>
+    </list-pane>
 </chat-rail>
 ```
 
@@ -1060,7 +1066,25 @@ section column, with the value available to the element inside over the same cha
 pane writes `null` back. **One** object shows the `<pane>`, **several** show the `<list-pane>` - a
 record is a form and a set of records is a list, and no one element renders both (`<form>` resolves
 its input to one object). A rail that configured only one of the two uses it for whatever stands
-there. The pane's title is the object's label, or the count for a set. Every child stays mounted - a collapsed section and an unopened pane are
+there. The pane's title is the object's label, or the count for a set.
+
+**Make the `<list-pane>` a `<table>`, not a list of labels** (Issue #493). The set that lands there
+is what the agent `present`ed, and the answer beside it says what those objects *are* - so a pane
+that only repeats their labels says less about them than the transcript does. Two things the
+element needs, and both are about *when* the pane is built:
+
+- **Name the row type** (`types=`) or write explicit `<column>`s. `<table>` resolves its columns
+  once, when the control is built, from `types` or else from the rows present at that moment - and
+  the rail builds both pane children **up front**, while the channel is still empty, so a `<table>`
+  naming neither fails at page build with *"A `<table>` requires either explicit `<column>`s or a
+  resolvable row type to derive them from"*. Naming the type is also what gives the columns their
+  model labels and offers the type's remaining attributes in the column selection.
+- **Name a `selection` channel** - the pane's own `input` channel - if a row click should open that
+  object: one object on that channel is what switches the pane to the `<pane>` beside it. The
+  drill-down is one-way; closing the pane returns to the sections, not to the table.
+
+A pane whose objects are **not** of one type has no table to build: keep the `<data-list>` there,
+which renders any object by its label. Every child stays mounted - a collapsed section and an unopened pane are
 hidden, not dropped - so a section keeps reporting its badge while the rail is closed, which is
 exactly when the badge matters. Below 1280 px the composed rail stays a column (it has no workspace
 grid to spread a sheet over); `App`'s sheet is unaffected. Two rails on one `chat-id` are not

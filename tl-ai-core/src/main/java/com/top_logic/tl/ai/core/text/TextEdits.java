@@ -115,8 +115,10 @@ public final class TextEdits {
 	 *
 	 * <p>
 	 * Each value is a distinct thing for the caller to do next, which is the only reason to have a
-	 * code at all: the accompanying {@link Result#message()} says which one in words.
+	 * code at all: the message carried by the result says which one in words.
 	 * </p>
+	 *
+	 * @see Result#message()
 	 */
 	public enum Failure {
 

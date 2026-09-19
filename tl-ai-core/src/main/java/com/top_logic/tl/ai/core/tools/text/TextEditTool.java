@@ -35,22 +35,22 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * <b>What it is for.</b> The only way to change a stored text before this was a whole-value write -
  * a TL-Script {@code set} with the complete new value. For a document body or a system prompt that
  * costs the whole value in output tokens per edit, and it puts every untouched paragraph back through
- * the model, where it can come back subtly different. {@link #editText} costs the changed snippet and
- * cannot alter anything outside it, because nothing outside it is ever re-emitted.
+ * the model, where it can come back subtly different. Editing a named passage costs the changed
+ * snippet and cannot alter anything outside it, because nothing outside it is ever re-emitted.
  * </p>
  *
  * <p>
- * <b>Read first, then anchor.</b> {@link #readText} hands out the value as it is stored, with line
- * numbers in a gutter so a passage can be named; {@link #editText} takes a passage out of it and puts
- * another one in its place. The pair only works because the read is verbatim: an anchor quoted back
- * from a rendering that had normalised anything would not be the text.
+ * <b>Read first, then anchor.</b> Reading hands out the value as it is stored, with line numbers in
+ * a gutter so a passage can be named; editing takes that passage out of it and puts another one in
+ * its place. The pair only works because the read is verbatim: an anchor quoted back from a
+ * rendering that had normalised anything would not be the text.
  * </p>
  *
  * <p>
  * <b>Text and String attributes only.</b> Most attributes of a model are not text - references,
  * numbers, dates, enumerations, booleans, binaries, multi-valued properties - and none of them is
- * find-and-replaceable. They are refused by name rather than coerced, see
- * {@link #editableText(TLObject, String)}.
+ * find-and-replaceable. They are refused by name rather than coerced, so a caller is told which
+ * attribute cannot be edited instead of being handed a value that was never text.
  * </p>
  *
  * <p>
@@ -61,6 +61,9 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * second time and where a constraint that vetoes the commit is reported back to the model.
  * </p>
  *
+ * @see #readText(String, String, Integer, Integer, ToolExecutionContext)
+ * @see #editText(String, String, String, String, Boolean, ToolContext)
+ * @see #editableText(TLObject, String)
  * @see TextEdits
  */
 public class TextEditTool {

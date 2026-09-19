@@ -21,9 +21,8 @@ import com.top_logic.basic.config.annotation.defaults.IntDefault;
  * A whole eval: the arms it compares and the scenarios it puts to them.
  *
  * <p>
- * Read from a standalone configuration file with
- * {@link EvalConfigs#load(com.top_logic.basic.io.Content)}, so a scenario set is a file an
- * application ships beside its own model rather than a Java class anybody has to compile.
+ * Read from a standalone configuration file, so a scenario set is a file an application ships
+ * beside its own model rather than a Java class anybody has to compile.
  * </p>
  *
  * <pre>
@@ -39,6 +38,8 @@ import com.top_logic.basic.config.annotation.defaults.IntDefault;
  *   &lt;/scenarios&gt;
  * &lt;/eval&gt;
  * </pre>
+ *
+ * @see EvalConfigs#load(com.top_logic.basic.io.Content)
  */
 @TagName(EvalConfig.TAG_NAME)
 public interface EvalConfig extends ConfigurationItem {

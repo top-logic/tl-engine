@@ -17,8 +17,8 @@ import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
  * The options a run was built with are the ones
  * {@code AgentFactory.buildModelOptions} produced for the model it was configured with, and they
  * are provider-specific: {@code thinking_effort} is Anthropic's word for it, {@code
- * reasoning_effort} is OpenAI's, and a model that takes no temperature is sent none. A request
- * builder reads only the keys it knows, so a stale key is not an error - but it is a silently
+ * reasoning_effort} is what {@code OpenAI} calls it, and a model that takes no temperature is sent
+ * none. A request builder reads only the keys it knows, so a stale key is not an error - but it is a silently
  * dropped setting, and a temperature sent to a model that refuses one <em>is</em> an error. So the
  * map is rebuilt for the target rather than carried over.
  * </p>

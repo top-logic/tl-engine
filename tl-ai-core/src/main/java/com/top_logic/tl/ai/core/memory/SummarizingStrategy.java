@@ -28,7 +28,7 @@ import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
-import com.top_logic.tl.ai.core.tools.util.UntrustedEnvelope;
+import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
 
 /**
  * Compaction strategy that calls an LLM to summarize older messages.

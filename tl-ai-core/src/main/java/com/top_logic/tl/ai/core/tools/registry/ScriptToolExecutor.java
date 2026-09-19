@@ -33,6 +33,12 @@ import com.top_logic.tl.ai.tool.api.ToolSchema;
  * data. Object-typed arguments are checked the same way, where their TID is resolved.
  * </p>
  *
+ * <p>
+ * The marking that comes with that filtering is no longer this path's alone: a Java tool's answer is
+ * marked by {@link com.top_logic.tl.ai.tool.api.AnnotatedTools} in the same way, so a tool rewritten
+ * from TL-Script in Java keeps saying what its payload is (issue #478).
+ * </p>
+ *
  * <h2>What a script tool can say about its result, and what it cannot</h2>
  *
  * <p>

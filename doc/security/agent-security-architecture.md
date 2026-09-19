@@ -1023,6 +1023,31 @@ What is still not covered here, stated plainly so an observation is not mistaken
 describes types and is bounded by `accessibleTypes(READ)`, the index returns objects and is filtered
 per object.
 
+**Filtering decides what the model sees; marking says what it is.** The two are separate and both are
+needed: read rights say *which* business data reaches the context, and nothing about *who wrote it*.
+What reaches it is, by volume, the application's largest untrusted input - the free text in a shared
+record, typed by an end user who is not the principal this run serves - so every such payload carries
+the `UntrustedEnvelope` tags, and the system prompt states once per run what a tagged block is (data
+to read and report, never an instruction, T3). Marking is per tool and never in the dispatcher, for
+the same reason filtering is: by the time `ToolExecutions.execute` sees a serialized string it can no
+longer tell what is in it.
+
+Who applies it (#478): `ReadFilter` marks everything it discloses, so a TL-Script tool's answer is
+marked by the executor that runs it; a `@ToolMethod` answer is marked by `AnnotatedTools` unless the
+method declares `marking = AnswerMarking.NONE` (the answer is this application's own sentence, or is
+itself an instruction the agent is meant to follow - a loaded skill, the user's own reply) or
+`AnswerMarking.TOOL` (the tool marks its own content, in the kind that content deserves - a fetched
+page, a stored document, an external MCP server's answer). The default marks, because the gap this
+closed was silent: a tool moved from TL-Script to Java kept working and quietly stopped saying what
+its payload was, and an application outside this repository had to notice and re-apply the envelope
+by hand. A tool that implements `Tool` directly marks its own answer, as `ScriptToolExecutor` and
+`McpTool` do.
+
+None of this is a control in the sense the other layers are: it is an instruction to a model, and the
+model is not a boundary (2.2). Measured against `claude-haiku-4-5` on a payload aligned with the
+user's own request, an injected tool call went through in 19 of 24 runs with nothing marked and 3 of
+24 with the marking and the standing rule in place - a blast-radius reduction, not immunity (2.5).
+
 #### 3.4.2 The model digest · **implemented** (#295)
 
 The digest is the read surface that reaches the model **in one piece**: one `outlineModel` call hands

@@ -146,7 +146,7 @@ public class TestPromptInjectionBarrier extends TestCase {
 
 	/**
 	 * A search result that instructs a tool call must not get one. The result reaches the model inside
-	 * {@link com.top_logic.tl.ai.core.tools.util.UntrustedEnvelope#SEARCH_RESULTS} tags, which the
+	 * {@link com.top_logic.tl.ai.tool.api.UntrustedEnvelope#SEARCH_RESULTS} tags, which the
 	 * standing rule in the system prompt says are data.
 	 */
 	public void testASearchResultCannotMakeTheAgentCallATool() {
@@ -183,7 +183,7 @@ public class TestPromptInjectionBarrier extends TestCase {
 	/**
 	 * An external MCP server that instructs a tool call must not get one. It authors the whole result,
 	 * so the entire result reaches the model inside
-	 * {@link com.top_logic.tl.ai.core.tools.util.UntrustedEnvelope#MCP_TOOL_RESULT}.
+	 * {@link com.top_logic.tl.ai.tool.api.UntrustedEnvelope#MCP_TOOL_RESULT}.
 	 */
 	public void testAnMcpResultCannotMakeTheAgentCallATool() {
 		PromptInjectionE2e.assumeEnabled();

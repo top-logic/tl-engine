@@ -24,11 +24,12 @@ import org.jsoup.nodes.Element;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.scripting.Converters;
-import com.top_logic.tl.ai.core.tools.util.UntrustedEnvelope;
+import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
+import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
 
 /**
  * Tool that fetches a single web page and returns its main textual content.
@@ -90,7 +91,8 @@ public class WebFetchTool {
 			+ "preserving headings, links, lists and tables. "
 			+ "Use after webSearch to read a specific result, or to read a URL the user provided. "
 			+ "Only public http(s) pages are supported.",
-		mode = ToolMode.READ, group = ToolGroups.EGRESS)
+		mode = ToolMode.READ, group = ToolGroups.EGRESS,
+		marking = AnswerMarking.TOOL)
 	public String webFetch(@P("The absolute http or https URL to fetch.") String url) {
 		if (url == null || url.isBlank()) {
 			return "Error: url is required.";

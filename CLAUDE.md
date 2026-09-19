@@ -150,6 +150,11 @@ Extracted contract module (package `com.top_logic.tl.ai.tool.api`) enabling tool
 - `@ToolMethod` / `@P` — annotation framework for reflection-based tool creation
 - `ToolExecutionContext` - what the framework tells a tool about the call; concrete `ToolContext` lives in tl-ai-core. `resolveObject(id)` turns the `"TypeName:id"` a model wrote into the object, under the run's read rights - which is how a `TLObject` parameter of an `@ToolMethod` is coerced, so a Java tool resolves an identifier exactly as a script tool does and cannot forget the check (#381).
 - `RunInfo` - which run the call belongs to (run id, conversation, agent, model, parent run), as plain strings. `ToolExecutionContext.runInfo()` for a tool, `RunInfoBinding.current()` for code beneath one. The run's persistent `AgentExecution` is **not** readable from a tool - the store writes it at a newer revision (#405); the wrapper is a token to hand back to `AgentExecutionStore`, never an object to read. See `tl-ai-tool-api/README.md`.
+- `UntrustedEnvelope` / `AnswerMarking` - the `<untrusted_…>` tags that say a tool answer is data, not
+  instructions, and who puts them on. A `@ToolMethod` answer is marked as `MODEL_DATA` by default
+  (#478); `marking = AnswerMarking.NONE` is for an answer that is the application's own sentence or an
+  instruction the agent is meant to follow, `AnswerMarking.TOOL` for a tool that marks its own content.
+  An answer that already is one complete envelope block is never wrapped twice.
 - `ToolRegistryService` — service-level registry with qualified names `{factory}.{tool}`
 
 ### Agent Loop (tl-ai-core `agent/`)

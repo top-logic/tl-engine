@@ -56,6 +56,7 @@ import com.top_logic.tl.ai.core.tools.model.messages.ReferenceResponse;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.tl.ai.core.tools.util.ToolI18NUtil.LocalizedTexts;
 import com.top_logic.tl.ai.core.tools.util.ToolI18NUtil;
+import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
@@ -126,7 +127,7 @@ public class ModelEditorTool {
 	 *        German description for the module (optional).
 	 * @return JSON with module details.
 	 */
-	@ToolMethod(description = "Create a new TopLogic module or get an existing one by name", group = ToolGroups.MODEL_STRUCTURE)
+	@ToolMethod(description = "Create a new TopLogic module or get an existing one by name", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
 	public String createModule(
 			@P("Name of the module to create") String moduleName,
 			@P("English label for the module") String labelEn,
@@ -195,7 +196,7 @@ public class ModelEditorTool {
 	 *        German description for the module (optional).
 	 * @return JSON with updated module details.
 	 */
-	@ToolMethod(description = "Update internationalized labels and descriptions for an existing TopLogic module", group = ToolGroups.MODEL_STRUCTURE)
+	@ToolMethod(description = "Update internationalized labels and descriptions for an existing TopLogic module", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
 	public String updateModule(
 			@P("Name of the module to update") String moduleName,
 			@P("English label for the module") String labelEn,
@@ -274,7 +275,7 @@ public class ModelEditorTool {
 	 *        Comma-separated names of parent classes (optional).
 	 * @return JSON with class details.
 	 */
-	@ToolMethod(description = "Create a new TopLogic class in an existing module or get an existing one by name", group = ToolGroups.MODEL_STRUCTURE)
+	@ToolMethod(description = "Create a new TopLogic class in an existing module or get an existing one by name", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
 	public String createClass(
 			@P("Name of the module where the class will be created") String moduleName,
 			@P("Name of the class to create. Must start with an uppercase letter.") String className,
@@ -375,7 +376,7 @@ public class ModelEditorTool {
 	 *        Comma-separated names of parent classes (optional).
 	 * @return JSON with updated class details.
 	 */
-	@ToolMethod(description = "Update properties, flags, and inheritance of an existing TopLogic class", group = ToolGroups.MODEL_STRUCTURE)
+	@ToolMethod(description = "Update properties, flags, and inheritance of an existing TopLogic class", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
 	public String updateClass(
 			@P("Name of the module containing the class") String moduleName,
 			@P("Name of the class to update") String className,
@@ -493,7 +494,7 @@ public class ModelEditorTool {
 	 *        Whether abstract (default: false).
 	 * @return JSON with property details.
 	 */
-	@ToolMethod(description = "Create a new PRIMITIVE property on a TopLogic class, or return an existing one by name. Supports all datatypes available in the model (e.g. String, Text, Integer, Double, Date, Color, URL). NOT for enumerations or references to other types — use createReference for those.", group = ToolGroups.MODEL_STRUCTURE)
+	@ToolMethod(description = "Create a new PRIMITIVE property on a TopLogic class, or return an existing one by name. Supports all datatypes available in the model (e.g. String, Text, Integer, Double, Date, Color, URL). NOT for enumerations or references to other types — use createReference for those.", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
 	public String createProperty(
 			@P("Name of the module containing the class") String moduleName,
 			@P("Name of the class to add the property to") String className,
@@ -609,7 +610,7 @@ public class ModelEditorTool {
 	 *        Whether abstract (optional).
 	 * @return JSON with updated property details.
 	 */
-	@ToolMethod(description = "Update attributes and internationalization of an existing TopLogic class property", group = ToolGroups.MODEL_STRUCTURE)
+	@ToolMethod(description = "Update attributes and internationalization of an existing TopLogic class property", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
 	public String updateProperty(
 			@P("Name of the module containing the class") String moduleName,
 			@P("Name of the class containing the property") String className,
@@ -738,7 +739,7 @@ public class ModelEditorTool {
 	 *        Deletion policy: CLEAR_REFERENCE, DELETE_REFERER, STABILISE_REFERENCE, or VETO.
 	 * @return JSON with reference details.
 	 */
-	@ToolMethod(description = "Create a new reference on a TopLogic class pointing to another class or enumeration, or return an existing one by name", group = ToolGroups.MODEL_STRUCTURE)
+	@ToolMethod(description = "Create a new reference on a TopLogic class pointing to another class or enumeration, or return an existing one by name", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
 	public String createReference(
 			@P("Name of the module containing the source class") String moduleName,
 			@P("Name of the source class to add the reference to") String className,
@@ -893,7 +894,7 @@ public class ModelEditorTool {
 	 *        Whether navigable (default: true).
 	 * @return JSON with backward reference details.
 	 */
-	@ToolMethod(description = "Create a backward reference to an existing forward reference, or return an existing one by name", group = ToolGroups.MODEL_STRUCTURE)
+	@ToolMethod(description = "Create a backward reference to an existing forward reference, or return an existing one by name", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
 	public String createBackwardReference(
 			@P("Name of the module containing the source class (that has the forward reference)") String moduleName,
 			@P("Name of the source class that has the forward reference") String className,
@@ -1025,7 +1026,7 @@ public class ModelEditorTool {
 	 *        label (object with en/de), description (object with en/de). Pass null for none.
 	 * @return JSON with enumeration details.
 	 */
-	@ToolMethod(description = "Create a new TopLogic enumeration with optional classifiers, or get an existing one by name", group = ToolGroups.MODEL_STRUCTURE)
+	@ToolMethod(description = "Create a new TopLogic enumeration with optional classifiers, or get an existing one by name", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
 	public String createEnumeration(
 			@P("Name of the module where the enumeration will be created") String moduleName,
 			@P("Name of the enumeration. Must be a valid Java identifier and may contain dots.") String enumName,
@@ -1172,7 +1173,7 @@ public class ModelEditorTool {
 	 *        Name of classifier to set as default.
 	 * @return JSON with updated enumeration details.
 	 */
-	@ToolMethod(description = "Update properties and classifiers of an existing TopLogic enumeration", group = ToolGroups.MODEL_STRUCTURE)
+	@ToolMethod(description = "Update properties and classifiers of an existing TopLogic enumeration", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
 	public String updateEnumeration(
 			@P("Name of the module containing the enumeration") String moduleName,
 			@P("Name of the enumeration to update") String enumName,
@@ -1672,7 +1673,8 @@ public class ModelEditorTool {
 	@ToolMethod(description = "Delete a model element from the TopLogic application model. "
 		+ "Performs safety checks before deletion — returns detailed blockers on failure. "
 		+ "Qualified name format: 'moduleName' for modules, 'moduleName:TypeName' for classes/enums, "
-		+ "'moduleName:TypeName#partName' for properties/references/classifiers.", group = ToolGroups.MODEL_STRUCTURE)
+		+ "'moduleName:TypeName#partName' for properties/references/classifiers.", group = ToolGroups.MODEL_STRUCTURE,
+		marking = AnswerMarking.NONE)
 	public String deleteModelElement(
 			@P("Qualified name of the element to delete")
 			String qualifiedName,

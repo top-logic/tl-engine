@@ -26,8 +26,8 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.tools.util.UntrustedEnvelope;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
+import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
 
 /**
  * The one place a {@link TLObject} becomes something a language model gets to see.

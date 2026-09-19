@@ -13,8 +13,8 @@ import java.util.Base64;
 import java.util.Locale;
 
 import com.top_logic.tl.ai.core.message.ImageContent;
-import com.top_logic.tl.ai.core.tools.util.UntrustedEnvelope;
 import com.top_logic.tl.ai.tool.api.ToolContent;
+import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
 
 /**
  * Turns stored bytes into something a model can actually perceive.

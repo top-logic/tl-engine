@@ -16,6 +16,7 @@ import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.tools.script.TLScriptExecutor.ExecutionResult;
 import com.top_logic.tl.ai.core.tools.script.messages.ErrorResult;
 import com.top_logic.tl.ai.core.tools.script.messages.ValidationResult;
+import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
@@ -81,7 +82,7 @@ public class TLScriptTool {
 	 *        The TLScript code to validate.
 	 * @return JSON object indicating validation success or containing error details.
 	 */
-	@ToolMethod(description = "Validate TLScript code syntax, model references, and type compatibility. Returns validation status and error details if invalid.", mode = ToolMode.READ, group = ToolGroups.SCRIPT)
+	@ToolMethod(description = "Validate TLScript code syntax, model references, and type compatibility. Returns validation status and error details if invalid.", mode = ToolMode.READ, group = ToolGroups.SCRIPT, marking = AnswerMarking.NONE)
 	public String validateTLScript(
 			@P("TLScript code to validate") String script) {
 		return doValidateTLScript(script);
@@ -129,7 +130,7 @@ public class TLScriptTool {
 	 *         as business data, see {@link ReadFilter#marked(String, String)}. Model objects in the result
 	 *         carry only what the run's principal may read; ones it may not read are absent.
 	 */
-	@ToolMethod(description = "Execute TLScript code and return results. Validates script before execution. Read-only by default; set withCommit=true to persist modifications. Objects in the result that you may not read are omitted, but only while they are still objects: a count or a sum, and a label produced by toString($obj) or \"\" + $obj, are plain values by the time the result is filtered and are returned in full. So wrap fetched model objects in filterSecurity(...) inside the script - filterSecurity(all(`m:T`)) - before you count them, coerce them to text, or present them, and never assume a label you got out of a script is one the user is allowed to see.", mode = ToolMode.DATA_WRITE, group = ToolGroups.SCRIPT)
+	@ToolMethod(description = "Execute TLScript code and return results. Validates script before execution. Read-only by default; set withCommit=true to persist modifications. Objects in the result that you may not read are omitted, but only while they are still objects: a count or a sum, and a label produced by toString($obj) or \"\" + $obj, are plain values by the time the result is filtered and are returned in full. So wrap fetched model objects in filterSecurity(...) inside the script - filterSecurity(all(`m:T`)) - before you count them, coerce them to text, or present them, and never assume a label you got out of a script is one the user is allowed to see.", mode = ToolMode.DATA_WRITE, group = ToolGroups.SCRIPT, marking = AnswerMarking.TOOL)
 	public String executeTLScript(
 			@P("TLScript code to execute") String script,
 			@P("If true, execute within transaction and commit changes (default: false)") Boolean withCommit,

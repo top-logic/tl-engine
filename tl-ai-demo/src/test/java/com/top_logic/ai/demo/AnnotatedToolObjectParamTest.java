@@ -46,6 +46,7 @@ import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.tool.api.AnnotatedTools;
+import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.Tool;
@@ -67,7 +68,10 @@ public class AnnotatedToolObjectParamTest extends BasicTestCase {
 	/** A tool written the way an application writes one. */
 	public static class IngredientTools {
 
-		@ToolMethod(description = "Reports an ingredient's name", mode = ToolMode.READ)
+		// Marking is off here so that these tests assert the resolved object and nothing else;
+		// what the framework puts around an answer is TestAnnotatedToolMarking's subject.
+		@ToolMethod(description = "Reports an ingredient's name", mode = ToolMode.READ,
+			marking = AnswerMarking.NONE)
 		public String ingredientName(@P("the ingredient") TLObject ingredient) {
 			return String.valueOf(ingredient.tValueByName("name"));
 		}

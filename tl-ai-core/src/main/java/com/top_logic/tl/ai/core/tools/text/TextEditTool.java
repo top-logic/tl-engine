@@ -20,6 +20,7 @@ import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.security.ToolSecurityException;
 import com.top_logic.tl.ai.core.text.TextEdits;
 import com.top_logic.tl.ai.core.tools.model.TidResolver;
+import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
@@ -136,7 +137,8 @@ public class TextEditTool {
 		+ " with a line number in front of every line. Read before you edit: editText matches the"
 		+ " anchor you pass against these characters. The 'NNN| ' gutter is NOT part of the value -"
 		+ " strip it before you quote a passage back. Use fromLine/toLine to read a part of a long"
-		+ " value.", mode = ToolMode.READ, group = ToolGroups.DATA_READ)
+		+ " value.", mode = ToolMode.READ, group = ToolGroups.DATA_READ,
+		marking = AnswerMarking.TOOL)
 	public String readText(
 			@P("Identifier of the object, as a tool answer printed it: 'TypeName:id'") String objectId,
 			@P("Name of the Text or String attribute to read") String attribute,
@@ -228,7 +230,8 @@ public class TextEditTool {
 		+ " lines until it is unique, or pass replaceAll=true if you mean every occurrence. To add"
 		+ " text, anchor on a passage you keep and put it back together with the new text in"
 		+ " 'newText'. Never send the whole value.",
-		mode = ToolMode.DATA_WRITE, group = ToolGroups.DATA_WRITE)
+		mode = ToolMode.DATA_WRITE, group = ToolGroups.DATA_WRITE,
+		marking = AnswerMarking.TOOL)
 	public String editText(
 			@P("Identifier of the object, as a tool answer printed it: 'TypeName:id'") String objectId,
 			@P("Name of the Text or String attribute to change") String attribute,

@@ -28,6 +28,7 @@ import com.top_logic.tl.ai.core.tools.config.messages.LayoutCreateResponse;
 import com.top_logic.tl.ai.core.tools.config.messages.LayoutTemplateInfo;
 import com.top_logic.tl.ai.core.tools.config.messages.LayoutTemplateListResponse;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
+import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
@@ -64,7 +65,7 @@ public class LayoutTemplateTool {
 	 *
 	 * @return JSON string containing the list of layout templates.
 	 */
-	@ToolMethod(description = "List all available layout templates with names, labels, and groups. Use the template name with getConfigSchema (toplogic://schema/layout-template/{name}) to get the parameter schema.", mode = ToolMode.READ, group = ToolGroups.MODEL_READ)
+	@ToolMethod(description = "List all available layout templates with names, labels, and groups. Use the template name with getConfigSchema (toplogic://schema/layout-template/{name}) to get the parameter schema.", mode = ToolMode.READ, group = ToolGroups.MODEL_READ, marking = AnswerMarking.NONE)
 	public String listLayoutTemplates() {
 		try {
 			LayoutTemplateListResponse response = LayoutTemplateListResponse.create();
@@ -120,7 +121,7 @@ public class LayoutTemplateTool {
 	 *
 	 * @return The top-level layout key.
 	 */
-	@ToolMethod(description = "Get the top-level layout key of the application. Use this as entry point for getLayout to navigate the layout tree.", mode = ToolMode.READ, group = ToolGroups.MODEL_READ)
+	@ToolMethod(description = "Get the top-level layout key of the application. Use this as entry point for getLayout to navigate the layout tree.", mode = ToolMode.READ, group = ToolGroups.MODEL_READ, marking = AnswerMarking.NONE)
 	public String getTopLevelLayoutKey() {
 		try {
 			return LayoutConfig.getDefaultLayout();
@@ -152,7 +153,10 @@ public class LayoutTemplateTool {
 	 *        The layout identifier.
 	 * @return JSON string containing the layout configuration.
 	 */
-	@ToolMethod(description = "Get the configuration of a layout by its key. Returns template name and arguments for template-based layouts, or the component configuration for others. Use getTopLevelLayoutKey to find the application's top-level layout key.", mode = ToolMode.READ, group = ToolGroups.MODEL_READ)
+	@ToolMethod(description = "Get the configuration of a layout by its key. Returns template name and arguments for template-based layouts, or the component configuration for others. Use getTopLevelLayoutKey to find the application's top-level layout key.", mode = ToolMode.READ, group = ToolGroups.MODEL_READ,
+		// Spelled out although it is the default, because the three tools around it opt out: a
+		// layout configuration is stored data, and createLayout can have written it.
+		marking = AnswerMarking.FRAMEWORK)
 	public String getLayout(
 			@P("The layout key (identifier). Use getTopLevelLayoutKey to find the top-level layout key.") String layoutKey) {
 
@@ -278,7 +282,7 @@ public class LayoutTemplateTool {
 	 *        JSON string with the template arguments.
 	 * @return JSON string indicating success or failure.
 	 */
-	@ToolMethod(description = "Create a new layout from a template. Use listLayoutTemplates to find templates and getConfigSchema with toplogic://schema/layout-template/{name} to get the parameter schema.", group = ToolGroups.MODEL_STRUCTURE)
+	@ToolMethod(description = "Create a new layout from a template. Use listLayoutTemplates to find templates and getConfigSchema with toplogic://schema/layout-template/{name} to get the parameter schema.", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
 	public String createLayout(
 			@P("The name of the template to instantiate") String templateName,
 			@P("The layout key for the new layout") String layoutKey,

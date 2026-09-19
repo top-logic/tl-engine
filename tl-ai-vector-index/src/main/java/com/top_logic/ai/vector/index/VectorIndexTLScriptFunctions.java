@@ -12,21 +12,17 @@ import java.util.List;
 import java.util.Map;
 
 import org.checkerframework.dataflow.qual.SideEffectFree;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
-import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.element.meta.PersistentClass;
-import com.top_logic.knowledge.objects.KnowledgeItem;
-import com.top_logic.knowledge.service.BulkIdLoad;
-import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
+import com.top_logic.tl.ai.core.security.ModelAccessRightsSecurity;
+import com.top_logic.tl.ai.core.security.ReadFilter;
+import com.top_logic.util.TLContext;
 
 import dev.langchain4j.data.segment.TextSegment;
-import dev.langchain4j.store.embedding.EmbeddingMatch;
 import opennlp.tools.cmdline.ArgumentParser.OptionalParameter;
 
 /**
@@ -45,6 +41,13 @@ public class VectorIndexTLScriptFunctions extends TLScriptFunctions {
 
 	/**
 	 * Returns a list of results from the Vector database
+	 *
+	 * <p>
+	 * Only hits the executing account may read are returned. The index is filled by a background
+	 * daemon under system rights, so it holds every object of a configured type whoever may read it;
+	 * the account's own rights are applied here, at query time, and a hit that cannot be attributed to
+	 * a readable object is dropped rather than reported (issue #295).
+	 * </p>
 	 *
 	 * <p>
 	 * Example usage in TL-Script to resolve objects, contained in the Vector Index result:
@@ -203,47 +206,33 @@ public class VectorIndexTLScriptFunctions extends TLScriptFunctions {
 			return results;
 		}
 
-		List<EmbeddingMatch<TextSegment>> matches =
-			VectorIndex.getInstance().searchVectorIndex(query, searchType, limit, scoreThreshold);
+		// The rights of whoever is executing this script. The index holds every object of a
+		// configured type, indexed under system rights, so without this the function would report
+		// objects - and their indexed text - to an account that may not read them (issue #295).
+		ReadFilter readFilter =
+			ReadFilter.forSecurity(new ModelAccessRightsSecurity(TLContext.currentUser()));
 
-		Map<String, Map<String, Object>> objectsToFetch = new HashMap<>();
-		JSONParser parser = new JSONParser();
+		VectorReadFilter.Hits hits =
+			VectorIndex.getInstance().searchVectorIndex(query, searchType, limit, scoreThreshold, readFilter);
 
-		BulkIdLoad loader = new BulkIdLoad(PersistencyLayer.getKnowledgeBase());
-
-		for (EmbeddingMatch<TextSegment> match : matches) {
+		for (VectorReadFilter.Hit hit : hits.hits()) {
 			Map<String, Object> matchItem = new HashMap<>();
-			matchItem.put("score", match.score());
-			matchItem.put("embeddingId", match.embeddingId());
+			matchItem.put("score", hit.match().score());
+			matchItem.put("embeddingId", hit.match().embeddingId());
+			matchItem.put("objectId", hit.source().tId().asString());
+			matchItem.put("TL-instance", hit.source());
 
-			JSONObject obj = (JSONObject) parser.parse(match.embedded().text());
-
-			String objectId = obj.get("objectId").toString();
-
-			matchItem.put("objectId", objectId);
-
-			if (match.embedded() != null) {
+			TextSegment embedded = hit.match().embedded();
+			if (embedded != null) {
 				Map<String, Object> segmentItem = new HashMap<>();
-				segmentItem.put("text", match.embedded().text());
-				if (match.embedded().metadata() != null) {
-					segmentItem.put("metadata", match.embedded().metadata().toMap());
+				segmentItem.put("text", embedded.text());
+				if (embedded.metadata() != null) {
+					segmentItem.put("metadata", embedded.metadata().toMap());
 				}
 				matchItem.put("embedded", segmentItem);
 			}
 
-			loader.add(
-				ObjectKey.fromStringObjectKey(PersistencyLayer.getKnowledgeBase().getMORepository(),
-					objectId));
-
 			results.add(matchItem);
-			objectsToFetch.put(objectId, results.get(results.size() - 1));
-		}
-
-
-		List<KnowledgeItem> items = loader.load();
-
-		for (KnowledgeItem item : items) {
-			objectsToFetch.get(item.tId().asString()).put("TL-instance", item.getWrapper());
 		}
 
 		return results;

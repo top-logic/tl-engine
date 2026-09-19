@@ -21,7 +21,7 @@ Both served by `ChatServlet` at `/chat/*`:
    - `PUT /chat/preferences?chatId=…` – Per-user rail/pane layout of **one** chat. The React UI cannot call `PersonalConfiguration` itself, so this wraps `setJSONValue` **and** `storePersonalConfiguration()` (transient otherwise). Key `tl-chat.layout`, holding one layout per `chat-id`. The body is what the user *decided*, so a fact they never touched is absent. There is no `GET`: the bootstrap travels with the control state (`ChatViewBinding.writeLayoutState`, re-read on every render), so a second round trip would only repeat it.
 
 2. **SSE API** (real-time push):
-   - `GET /chat/events` – SSE connection. `ChatSSEHandler` receives `AgentEvent`s and emits structured SSE frames: `connected`, `run_started`, `turn_started`, `text_delta`, `tool_started`, `tool_completed`, `approval_required`, `message_complete`, `heartbeat`, etc.
+   - `GET /chat/events` – SSE connection. `ChatSSEHandler` receives `AgentEvent`s and emits structured SSE frames: `connected`, `run_started`, `turn_started`, `text_delta`, `tool_started`, `tool_completed`, `approval_required`, `approval_resolved`, `interaction_resolved`, `message_complete`, `heartbeat`, etc.
 
 `ChatSessionFilter` (mapped to `/chat/*`) requires a TopLogic session; `ChatServlet.doService`
 additionally refuses anonymous ones with 401, because an application may hand a visitor a session
@@ -37,6 +37,33 @@ browser component, which shows a sign-in note rather than a composer.
 5. `ChatProcessor.applyPollUpdates()` flushes pending messages into Chat
 6. On completion, agent response added as `ChatMessage` and `ConversationLog` persisted
 
+### Human-in-the-loop: a pending interaction belongs to the account (#393)
+
+A run that needs a tool approval, or that asks a question through `askUser`, parks its agent thread
+on a future in the `UserInteractionStore` of its own `AIProcessingState`. That state hangs on the
+`TaskProgressTracker` of **one** browser window, and the chat transport addresses one window at a
+time (`windowId` → sub-session → tracker). The request itself, though, is addressed to an
+**account**: `InteractionRecorder` persists it as a `tl.ai.execution:InteractionRequest` with a
+`responder`, and that is the rule this module follows everywhere.
+
+| | |
+|--|--|
+| Listing what is pending | `GET /chat/interactions` – `AgentExecutionStore.pendingInteractionsFor(person)`, every chat of the account, whatever window asks. The client replays an approval from it after a reload (`recoverRunState`). |
+| Answering | `POST /chat/respond` – the request id is looked up in `PendingInteractionRegistry`, among **this account's** running runs, not in the asking window's tracker. A second tab, a reloaded page and a new login therefore all reach the parked run. |
+| Who may answer | The account named as the run's responder, and nobody else. Another account finds nothing and is told exactly what a caller naming a request that does not exist is told (`{"status":"ignored"}`), so the answer says nothing about which ids exist. |
+| Order of effects | The decision is recorded (`ConversationLogListener.resolveApproval`, "approve for this session" onto the **run's own** tracker) *before* the future is completed. Completing it unparks the agent mid-turn, and it may call the next tool before this request has returned. |
+| Telling the other windows | `interaction_resolved`, pushed to the account's other live chat UIs (`ChatEventHandlerRegistry.findOthers`). The run's own window is left out: it hears `approval_resolved` from the run itself. A chat UI says which account it is (`ChatEventHandler.getAccount()`) and takes the frame (`sendInteractionResolved`); both have no-op defaults, so a UI that never lists another window's requests is unaffected. |
+| Timeouts | Unchanged, and still the backstop: `InteractionTimeoutService` bounds both waits (30 min by default), and `AgentExecutionStore` cancels every still-pending row at startup, because no run survives a restart. |
+
+`PendingInteractionRegistry` is a process-wide register of the runs currently able to ask a human.
+`ChatProcessor` puts a run in when it creates the run's interaction store and takes it out in the
+same `finally` that unbinds the store, so its entries are bounded by the runs in flight. It is
+**not** what keeps a window alive - the run's own background task already holds its tracker while it
+works.
+
+Not fixed by this: `POST /chat/cancel` still acts on the asking window's own tracker, so a run
+cannot be cancelled from another window.
+
 ### Key Classes
 
 - **`ChatProcessor`** – Static utility: background thread pool, orchestrator execution, state sync
@@ -44,7 +71,12 @@ browser component, which shows a sign-in note rather than a composer.
 - **`ChatEventHandler`** – The contract a chat UI implements to observe a run: the `AgentEvent` stream plus the
   final-message and provider-error notifications `ChatProcessor` produces itself
 - **`ChatEventHandlerRegistry`** – Interface-typed lookup of the chat UI observing a `TaskProgressTracker`;
-  `ChatProcessor` resolves the handler here per event, so a UI other than the SSE servlet can register
+  `ChatProcessor` resolves the handler here per event, so a UI other than the SSE servlet can register.
+  `findOthers` is the account-wide direction: every *other* window of one account, for news that is
+  the account's rather than one run's
+- **`PendingInteractionRegistry`** – The runs currently able to ask a human, keyed by task id and named
+  by the account waiting on them. What lets any window of that account answer a request the window that
+  started the run is parked on - see "a pending interaction belongs to the account"
 - **`ChatSSEHandler`** – Push-based SSE implementation of `ChatEventHandler`
 - **`Chat`** – Thread-safe in-memory container using `CopyOnWriteArrayList<ChatMessage>` (max 500)
 - **`ChatSessionManager`** – Manages per-session in-memory state (Chat + ConversationMemory + ConversationLog) with LRU caching (max 5 sessions). Handles session switching with persist/load/rebuild cycle.

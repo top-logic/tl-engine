@@ -45,6 +45,7 @@ import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.AgentRunner;
 import com.top_logic.tl.ai.core.execution.CancelSignalObserver;
 import com.top_logic.tl.ai.core.execution.ExecutionRecorder;
+import com.top_logic.tl.ai.core.execution.RunInfoBinding;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.execution.model.UserMemory;
@@ -68,6 +69,7 @@ import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolExecutions;
 import com.top_logic.tl.ai.core.tools.perception.BinaryPerception;
+import com.top_logic.tl.ai.tool.api.RunInfo;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
@@ -177,6 +179,49 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		result.put("description", schema.description());
 		result.put("inputSchemaJson", schema.inputSchemaJson());
 
+		return result;
+	}
+
+	/**
+	 * What the agent run the calling code is part of is.
+	 *
+	 * <p>
+	 * Readable from the implementation of a configured script tool, which is executed inside a tool
+	 * call, and from any TL-Script that runs beneath an agent - a script tool's body, a configured
+	 * function it calls, a listener. It is the same record a Java tool reads through its execution
+	 * context.
+	 * </p>
+	 *
+	 * <p>
+	 * The map has these keys, every one of which may be <code>null</code>:
+	 * </p>
+	 * <ul>
+	 * <li>{@code runId} - This run. A new one per chat message.</li>
+	 * <li>{@code conversationId} - The conversation all runs of one chat share.</li>
+	 * <li>{@code agentName} - The agent handling the run.</li>
+	 * <li>{@code model} / {@code provider} - What it talks to.</li>
+	 * <li>{@code executionId} - The persistent execution row of this run, for handing to a service
+	 * that resolves it.</li>
+	 * <li>{@code delegationDepth} - How deep in a delegation chain this run sits; zero at the top.</li>
+	 * </ul>
+	 *
+	 * <p>
+	 * Outside an agent run every value is <code>null</code> and the depth is zero.
+	 * </p>
+	 *
+	 * @return A map with the keys described above; never <code>null</code>.
+	 */
+	public static Map<String, Object> runInfo() {
+		RunInfo run = RunInfoBinding.current();
+
+		Map<String, Object> result = new HashMap<>();
+		result.put("runId", run.runId());
+		result.put("conversationId", run.conversationId());
+		result.put("agentName", run.agentName());
+		result.put("model", run.model());
+		result.put("provider", run.provider());
+		result.put("executionId", run.executionId());
+		result.put("delegationDepth", Integer.valueOf(run.delegationDepth()));
 		return result;
 	}
 

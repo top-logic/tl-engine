@@ -13,13 +13,9 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import com.top_logic.ai.chat.api.ChatEventHandler;
 import com.top_logic.ai.chat.api.ChatEventHandlerRegistry;
@@ -33,15 +29,19 @@ import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
+import com.top_logic.tl.ai.core.agent.AgentResult;
+import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
+import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.environment.EnvironmentFact;
@@ -60,6 +60,10 @@ import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.agent.event.CompositeAgentEventListener;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
+import com.top_logic.tl.ai.core.limits.I18NConstants;
+import com.top_logic.tl.ai.core.limits.RunLimitExceededException;
+import com.top_logic.tl.ai.core.limits.RunLimitSettings;
+import com.top_logic.tl.ai.core.limits.RunLimits;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
@@ -177,20 +181,6 @@ public class ChatProcessor {
 		ProviderException provider = providerFailure(ex);
 		return provider != null ? provider.kind().name() : APPLICATION_ERROR;
 	}
-
-	/** Background thread pool for AI operations. */
-	private static final ExecutorService BACKGROUND_EXECUTOR =
-		Executors.newCachedThreadPool(new ThreadFactory() {
-			private final AtomicInteger _counter = new AtomicInteger();
-
-			@Override
-			public Thread newThread(Runnable r) {
-				Thread thread = new Thread(r);
-				thread.setName("ChatProcessor-AI-Worker-" + _counter.incrementAndGet());
-				thread.setDaemon(true);
-				return thread;
-			}
-		});
 
 	private ChatProcessor() {
 		// Static utility class
@@ -356,22 +346,32 @@ public class ChatProcessor {
 			try (SubagentRegistryBinding.Binding saBind = SubagentRegistryBinding.bind(subagentRegistry);
 					AgentTaskMirror taskMirror =
 						AgentTaskMirror.attach(taskStore, agentSession, toolContext.executionHandle())) {
-				AgentRunner.RecordedRun runResult = AgentRunner.run(entryPointAgent, conversation,
-					conversationMemory, toolContext, listener, sessionRegistry, convLog, agentSession, null,
-					runOverrides);
-				if (ToolRegistryReloadFlag.consume()) {
-					// A tool modified a service that affects the tool catalog (e.g. FrameworkWiringTool
-					// or ScriptToolAuthoringTool). Discard the cached registry so the next turn
-					// rebuilds it from the updated service configuration.
-					taskTracker.setActiveToolRegistry(null);
-				} else {
-					taskTracker.setActiveToolRegistry(runResult.registry());
+				String result;
+				try {
+					AgentRunner.RecordedRun runResult = AgentRunner.run(entryPointAgent, conversation,
+						conversationMemory, toolContext, listener, sessionRegistry, convLog, agentSession, null,
+						runOverrides);
+					if (ToolRegistryReloadFlag.consume()) {
+						// A tool modified a service that affects the tool catalog (e.g. FrameworkWiringTool
+						// or ScriptToolAuthoringTool). Discard the cached registry so the next turn
+						// rebuilds it from the updated service configuration.
+						taskTracker.setActiveToolRegistry(null);
+					} else {
+						taskTracker.setActiveToolRegistry(runResult.registry());
+					}
+					// Replaced rather than merged: the run's set is authoritative, and a skill the
+					// catalog evicted has to disappear from the session too, or the next run restores
+					// tools that are no longer loaded.
+					taskTracker.loadLoadedSkills(loadedSkills);
+					result = withBudgetNotice(runResult.response(), runResult.result());
+				} catch (RunLimitExceededException ex) {
+					// A ceiling of this installation, not a failure: the account's budget was already
+					// spent when the run wanted to start, or the last free slot went to another request
+					// between the pre-check and here. Said as the agent's own answer, because that is
+					// where the user is looking - notifyError would report it as a broken application.
+					Logger.info("Chat run not started: " + ex.getMessage(), ChatProcessor.class);
+					result = Resources.getInstance().getString(ex.reason());
 				}
-				// Replaced rather than merged: the run's set is authoritative, and a skill the
-				// catalog evicted has to disappear from the session too, or the next run restores
-				// tools that are no longer loaded.
-				taskTracker.loadLoadedSkills(loadedSkills);
-				String result = runResult.response();
 				state.setLastAgentResponse(result);
 				state.setLastCitations(lastCitations(convLog));
 
@@ -504,6 +504,11 @@ public class ChatProcessor {
 			return SendResult.busy();
 		}
 
+		String noRoom = noRoomReason(tracker);
+		if (noRoom != null) {
+			return SendResult.rejected(noRoom);
+		}
+
 		List<ChatMessage.AttachmentMetadata> attachmentMeta = Collections.emptyList();
 		if (attachments != null && !attachments.isEmpty()) {
 			attachmentMeta = new ArrayList<>();
@@ -558,11 +563,56 @@ public class ChatProcessor {
 
 		ConversationMemory conversationMemory = tracker.getConversationMemory();
 		// Pass state directly to background task so it is immune to tracker-level overwrites
-		Future<?> future = BACKGROUND_EXECUTOR.submit(
-			new AIBackgroundTask(tracker, state, conversationMemory, userMessage, attachments, userSession));
+		Future<?> future;
+		try {
+			future = ChatRunExecutor.submit(
+				new AIBackgroundTask(tracker, state, conversationMemory, userMessage, attachments, userSession));
+		} catch (ChatRunExecutor.NoRoom ex) {
+			// The pre-check above said there was room and another request took it in between. Rare,
+			// and the only path on which the user's message is already in the conversation - so it is
+			// said in the conversation, where they will see it under their own message.
+			Logger.info("Chat run refused for '" + userName + "': " + ex.getMessage(), ChatProcessor.class);
+			String reason = Resources.getInstance().getString(I18NConstants.TOO_MANY_RUNS_IN_PROGRESS);
+			state.completeSuccessfully();
+			tracker.removeProcessingState(taskId);
+			capturedChat.addMessage(new ChatMessage("System", reason));
+			return SendResult.rejected(reason);
+		}
 		state._backgroundTask = future;
 
 		return SendResult.ok(taskId);
+	}
+
+	/**
+	 * Why this installation has no room for another run of this account right now, in the user's
+	 * language, or <code>null</code> if it has.
+	 *
+	 * <p>
+	 * Asked before anything of the request has been written down, so that a send with no room costs
+	 * the user a sentence and nothing else - no message in a transcript with no answer under it, no
+	 * turn removed by a regenerate that then does not happen.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>Usually <code>null</code>.</b> An installation that configured no ceiling has room for
+	 * every send, and one that configured a ceiling queues behind it; this answers a reason only
+	 * where the {@code <run-limits>} section asked for a refusal - a bounded chat queue, or a
+	 * per-account cap.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>Not the gate.</b> {@code AgentFactory} refuses the run whatever this says, and the pool
+	 * refuses the submit; this exists so that the ordinary case reads as information rather than as
+	 * a turn that failed. Between this answer and the run, another request can take the last place.
+	 * </p>
+	 */
+	public static String noRoomReason(TaskProgressTracker tracker) {
+		if (!ChatRunExecutor.hasRoom()) {
+			Logger.info("Chat run refused: " + ChatRunExecutor.noRoomDescription(), ChatProcessor.class);
+			return Resources.getInstance().getString(I18NConstants.TOO_MANY_RUNS_IN_PROGRESS);
+		}
+		ResKey capRefusal = RunLimits.concurrencyRefusal(tracker.getSessionOwner());
+		return capRefusal == null ? null : Resources.getInstance().getString(capRefusal);
 	}
 
 	/**
@@ -890,6 +940,26 @@ public class ChatProcessor {
 			String displayMessage = message != null ? message : ex.getClass().getSimpleName();
 			chat.addMessage(new ChatMessage("System", "Error: " + displayMessage));
 		}
+	}
+
+	/**
+	 * The answer, with a line saying why it stops there when the account's budget ran out mid-run.
+	 *
+	 * <p>
+	 * The run itself is orderly - it kept every turn it finished - but an answer that simply ends is
+	 * indistinguishable from one the model chose to end. The notice is part of the answer text rather
+	 * than a separate system message so that it is persisted with it and is still there when the
+	 * conversation is reopened.
+	 * </p>
+	 */
+	private static String withBudgetNotice(String response, AgentResult result) {
+		if (result == null || result.stopReason() != StopReason.BUDGET_EXHAUSTED) {
+			return response;
+		}
+		String notice = Resources.getInstance().getString(
+			I18NConstants.RUN_STOPPED_BUDGET_SPENT__HOURS.fill(
+				Integer.valueOf(RunLimitSettings.budgetWindowHours())));
+		return response == null || response.isBlank() ? notice : response + "\n\n" + notice;
 	}
 
 	/**
@@ -1251,14 +1321,21 @@ public class ChatProcessor {
 		}
 	}
 
-	/** Result of a send attempt: success ({@code taskId}), busy (already processing), or error. */
+	/**
+	 * Result of a send attempt: success ({@code taskId}), busy (already processing), rejected (no
+	 * room right now, with a reason), or error.
+	 */
 	public static final class SendResult {
 		private final String _taskId;
+
 		private final boolean _busy;
 
-		private SendResult(String taskId, boolean busy) {
+		private final String _reason;
+
+		private SendResult(String taskId, boolean busy, String reason) {
 			_taskId = taskId;
 			_busy = busy;
+			_reason = reason;
 		}
 
 		/**
@@ -1268,12 +1345,27 @@ public class ChatProcessor {
 		 *        The task ID.
 		 */
 		public static SendResult ok(String taskId) {
-			return new SendResult(taskId, false);
+			return new SendResult(taskId, false, null);
 		}
 
 		/** Creates a busy send result (AI is already processing). */
 		public static SendResult busy() {
-			return new SendResult(null, true);
+			return new SendResult(null, true, null);
+		}
+
+		/**
+		 * Creates a send result for a request this installation has no room for right now.
+		 *
+		 * <p>
+		 * Not an error and not "busy": nothing is wrong with the request and this chat session is
+		 * not running anything - there is simply a ceiling, and trying again shortly can work.
+		 * </p>
+		 *
+		 * @param reason
+		 *        The sentence the client shows, in the user's language.
+		 */
+		public static SendResult rejected(String reason) {
+			return new SendResult(null, false, reason);
 		}
 
 		/** The task ID if successful; null otherwise. */
@@ -1284,6 +1376,20 @@ public class ChatProcessor {
 		/** Whether the send was rejected because AI is already processing. */
 		public boolean isBusy() {
 			return _busy;
+		}
+
+		/** Whether a ceiling of this installation refused the send for now. */
+		public boolean isRejected() {
+			return _reason != null;
+		}
+
+		/**
+		 * Why the send was refused, in the user's language, or <code>null</code> if it was not.
+		 *
+		 * @see #rejected(String)
+		 */
+		public String getReason() {
+			return _reason;
 		}
 	}
 }

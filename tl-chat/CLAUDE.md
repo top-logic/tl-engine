@@ -31,7 +31,7 @@ browser component, which shows a sign-in note rather than a composer.
 ### Processing Flow
 
 1. User sends message via `POST /chat/send` or TopLogic AJAX command
-2. `ChatProcessor.sendMessage()` adds message to `Chat`, creates a `ConversationLog` turn, submits `AIBackgroundTask`
+2. `ChatProcessor.sendMessage()` checks that the installation has room for the run (pool, per-account cap - both unlimited unless configured), adds the message to `Chat`, creates a `ConversationLog` turn, submits `AIBackgroundTask` to `ChatRunExecutor`
 3. Background task resolves entry point agent from `AgentRegistry.getEntryPointAgentName()` and invokes it with `ConversationLogListener` bound for structured event recording
 4. Agent events (tool calls, thinking, text deltas) are delivered to the SSE handler in real-time and recorded in the `ConversationLog`
 5. `ChatProcessor.applyPollUpdates()` flushes pending messages into Chat
@@ -119,7 +119,8 @@ run. See `doc/scheduled-agent.md`.
 
 ### Key Classes
 
-- **`ChatProcessor`** – Static utility: background thread pool, orchestrator execution, state sync
+- **`ChatProcessor`** – Static utility: orchestrator execution, state sync, and the two pre-checks a send passes before anything is written down (pool room, per-account run cap)
+- **`ChatRunExecutor`** – The pool the chat's agent runs execute on. Unbounded unless `<run-limits>` on `LLMService` (tl-ai-core) names a `chat-workers` ceiling, so an installation sets all its ceilings in one place; with a ceiling a send that finds every worker busy waits, and it is refused only where `chat-queue` bounds the waiting room. See `tl-ai-core/doc/run-limits.md`
 - **`TaskProgressTracker`** – Session-scoped chat state, manages processing states and session metadata
 - **`ChatEventHandler`** – The contract a chat UI implements to observe a run: the `AgentEvent` stream plus the
   final-message and provider-error notifications `ChatProcessor` produces itself
@@ -1092,4 +1093,4 @@ number in the answer alone.
 
 - Active chat state lives in session memory; completed sessions persisted to KnowledgeBase
 - SSE connections have no timeout; stay open until client disconnects
-- Background AI tasks run in cached thread pool (`ChatProcessor.BACKGROUND_EXECUTOR`)
+- Background AI tasks run in `ChatRunExecutor`, which carries as many as arrive unless `<run-limits chat-workers>` bounds it and queues behind a ceiling it has; a send with no room - only reachable with a bounded `chat-queue` or a per-account cap - is answered **429** with `{"status":"rejected","reason":"…"}`, which the React client throws as a `RefusedError` and the composer shows in the notice strip

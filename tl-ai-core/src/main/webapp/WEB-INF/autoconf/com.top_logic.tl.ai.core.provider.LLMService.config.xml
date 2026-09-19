@@ -29,6 +29,38 @@
 				-->
 				<environment/>
 				<!--
+					How many agent runs this installation carries at once, and how much one account
+					may spend. Nothing here is limited until it is set: this product runs in
+					applications with a thousand users, and a figure it picked for them would refuse
+					work the installation allowed before the upgrade.
+
+					  chat-workers  how many chat runs run at the same time. 0 (the default) means
+					                as many as arrive - a worker per send. A run thread waits on a
+					                provider almost all of its life, so a ceiling here is about
+					                memory and provider spend in flight, not about CPU.
+					  chat-queue    how many sends may wait for a free worker, once chat-workers
+					                names a ceiling. 0 (the default) is a queue of no fixed length:
+					                a send waits and its answer arrives late, which beats telling
+					                the user to ask again. A positive number bounds the queue and a
+					                send arriving at a full one is refused; -1 keeps no queue at
+					                all, so every send that finds the workers busy is refused.
+
+					What an installation that does want a ceiling writes here:
+
+					  chat-workers="32" chat-queue="0"              (32 at a time, the rest wait)
+					  chat-workers="32" chat-queue="-1"             (32 at a time, the rest refused)
+					  concurrent-runs-per-account="5"               (3 to 5 in a shared installation)
+					  token-budget="2000000" budget-window-hours="24"
+					  <role-budgets>
+					      <role-budget name="tl.admin" tokens="0"/>     (0 means unlimited)
+					  </role-budgets>
+
+					The budget counts what the account's recorded runs consumed, so it needs run
+					recording; reading it costs one pass over the execution rows at every run start.
+					See tl-ai-core/doc/run-limits.md.
+				-->
+				<run-limits/>
+				<!--
 					What this application knows about the identifiers a model passes to a tool.
 
 					When a tool cannot resolve one, TidDiagnostics says which kind of wrong identifier

@@ -25,6 +25,7 @@ import com.top_logic.tl.ai.core.tools.memory.UserMemoryTool;
 import com.top_logic.tl.ai.core.agent.environment.TurnContext;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.skills.Skill;
+import com.top_logic.tl.ai.core.limits.RunLimits;
 import com.top_logic.tl.ai.core.mcp.McpServerRegistry;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
@@ -181,6 +182,24 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 * Runs the named agent, applying optional per-run model and MCP overrides from the chat UI.
 	 */
 	public RunResult runAgent(String name, Conversation conversation,
+			ConversationMemory conversationMemory, ToolContext context,
+			AgentEventListener listener, ToolRegistry sessionRegistry, RunOverrides overrides) {
+		// What this installation carries and what this account may spend, decided before anything of
+		// the run is built. The same choke point as authorizeRun below, and for the same reason: the
+		// chat, AgentRunner, the scheduler and TL-Script all arrive here, so a ceiling put here is a
+		// ceiling on every run rather than on one surface. Released when the loop returns.
+		try (RunLimits.Admission admission = RunLimits.admit(context)) {
+			return runAdmitted(name, conversation, conversationMemory,
+				context.withTokenAllowance(admission.allowance()), listener, sessionRegistry, overrides);
+		}
+	}
+
+	/**
+	 * {@link #runAgent(String, Conversation, ConversationMemory, ToolContext, AgentEventListener, ToolRegistry, RunOverrides)}
+	 * for a run that has been let through, with the budget it may spend already on its
+	 * {@code context}.
+	 */
+	private RunResult runAdmitted(String name, Conversation conversation,
 			ConversationMemory conversationMemory, ToolContext context,
 			AgentEventListener listener, ToolRegistry sessionRegistry, RunOverrides overrides) {
 		AgentDefinition agentDef = AgentDefinitionQuery.getInstance().findAgentByName(name);

@@ -163,7 +163,7 @@ Extracted contract module (package `com.top_logic.tl.ai.tool.api`) enabling tool
 
 Key flow: `AgentFactory.runAgent()` → `AgentLoop` → `LLMProvider.stream()` → `StreamHandler` → `ToolCatalog.execute()` → repeat.
 
-Stop conditions: `StopReason` — COMPLETE, MAX_TURNS, ERROR, CONTEXT_OVERFLOW, REJECTED, ABORTED.
+Stop conditions: `StopReason` — COMPLETE, MAX_TURNS, ERROR, CONTEXT_OVERFLOW, REJECTED, ABORTED, BUDGET_EXHAUSTED.
 
 An installation renames a shipped agent in *Service Editor → TopLogic-Agents and Skills* (`display-name`, `summary`, first in the form); the technical `name` stays, and the change takes effect when that service is restarted - see `tl-chat/CLAUDE.md`.
 
@@ -242,6 +242,32 @@ cost regression nothing else reports:
 3. A loaded skill's tools go **behind the stable tool prefix**, appended in load order and never
    reordered; `ProviderRequest.stableToolCount` carries that boundary and the Anthropic and Bedrock
    builders put their second breakpoint on it (#346).
+
+### Run limits (tl-ai-core `limits/`)
+
+Three ceilings an administrator **may** put on what this installation carries and what one account
+may spend, configured in one `<run-limits>` section beside `<environment>` and `<user-memory>` on
+`LLMService` (#343). **All three are off by default** - this product runs in applications with a
+thousand users, and any figure it picked for them would refuse work the installation allowed before
+the upgrade:
+
+- **`chat-workers`** (0 = no ceiling) bounds `ChatRunExecutor`. At 0 it is the cached pool the chat
+  always had, a worker per send. With a ceiling, a send that finds every worker busy **waits**:
+  `chat-queue` is 0 = a queue of no fixed length, because somebody who asked a question wants the
+  answer late rather than not at all. An installation that would rather refuse bounds the queue
+  (`chat-queue="10"`) or keeps none (`chat-queue="-1"`); only then is a send refused, *before*
+  anything is written down, as HTTP 429 with a sentence the client shows.
+- **`concurrent-runs-per-account`** (0 = off, 3-5 recommended for a shared installation) and
+  **`token-budget` over `budget-window-hours`** (0 = unlimited, per-role overrides possible) are
+  enforced by `RunLimits.admit` in `AgentFactory.runAgent` - the choke point every entry point
+  arrives at. These two refuse rather than queue: the account is already being served.
+
+A **delegated** run is neither counted nor budgeted separately: it is part of the run that delegated
+it, and shares that run's `TokenAllowance`. The budget is computed from the recorded
+`AgentExecution` rows by `AgentExecutionStore.tokensSpentSince`, on the store's writer thread; the
+headroom rides on `ToolContext.tokenAllowance()`, and a run that spends it stops **between turns**
+with `StopReason.BUDGET_EXHAUSTED` (recorded as `ExecutionStatus.REJECTED`). See
+`tl-ai-core/doc/run-limits.md`.
 
 ### Provider System (tl-ai-core `provider/`)
 

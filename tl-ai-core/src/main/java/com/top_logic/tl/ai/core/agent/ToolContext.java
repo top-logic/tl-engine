@@ -13,6 +13,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.citation.CitationMarkers;
 import com.top_logic.tl.ai.core.execution.ExecutionHandle;
+import com.top_logic.tl.ai.core.limits.TokenAllowance;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.security.RunEntryPoint;
 import com.top_logic.tl.ai.core.security.RunPrincipal;
@@ -164,6 +165,8 @@ public class ToolContext implements ToolExecutionContext {
 
 	private final boolean _attended;
 
+	private final TokenAllowance _tokenAllowance;
+
 	/**
 	 * Creates a context with the given security, approval callback, and transaction scope.
 	 *
@@ -248,14 +251,16 @@ public class ToolContext implements ToolExecutionContext {
 			int delegationDepth, String toolCallId, CancellationToken cancellationToken,
 			ProgressReporter progressReporter) {
 		this(security, approval, transaction, sessionApprovedTools, delegationDepth, toolCallId,
-			cancellationToken, progressReporter, new ExecutionHandle(), new CitationMarkers(), null, true);
+			cancellationToken, progressReporter, new ExecutionHandle(), new CitationMarkers(), null,
+			true, TokenAllowance.UNLIMITED);
 	}
 
 	private ToolContext(SecurityContext security, ApprovalCallback approval,
 			TransactionScope transaction, Set<String> sessionApprovedTools,
 			int delegationDepth, String toolCallId, CancellationToken cancellationToken,
 			ProgressReporter progressReporter, ExecutionHandle executionHandle,
-			CitationMarkers citationMarkers, String model, boolean attended) {
+			CitationMarkers citationMarkers, String model, boolean attended,
+			TokenAllowance tokenAllowance) {
 		_security = Objects.requireNonNull(security, "Security context must not be null.");
 		_approval = Objects.requireNonNull(approval, "Approval callback must not be null.");
 		_transaction = Objects.requireNonNull(transaction, "Transaction scope must not be null.");
@@ -268,6 +273,7 @@ public class ToolContext implements ToolExecutionContext {
 		_citationMarkers = Objects.requireNonNull(citationMarkers, "Citation markers must not be null.");
 		_model = model;
 		_attended = attended;
+		_tokenAllowance = Objects.requireNonNull(tokenAllowance, "Token allowance must not be null.");
 	}
 
 	/**
@@ -466,7 +472,40 @@ public class ToolContext implements ToolExecutionContext {
 	public ToolContext unattended() {
 		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
 			_delegationDepth, _toolCallId, _cancellationToken, _progressReporter, _executionHandle,
-			_citationMarkers, _model, false);
+			_citationMarkers, _model, false, _tokenAllowance);
+	}
+
+	/**
+	 * What is left of the principal's token budget for this run, and what the run has spent of it.
+	 *
+	 * <p>
+	 * {@link TokenAllowance#UNLIMITED} unless the installation configured a budget and the run's
+	 * entry point resolved one - which is what {@code RunLimits.admit} does at every run start. The
+	 * loop records each assistant turn into it and stops with
+	 * {@link StopReason#BUDGET_EXHAUSTED} when it runs out.
+	 * </p>
+	 *
+	 * <p>
+	 * A {@link #forDelegation(TransactionScope) delegated} run shares this instance rather than
+	 * getting one of its own: a delegate spends the budget of the run that delegated it.
+	 * </p>
+	 */
+	public TokenAllowance tokenAllowance() {
+		return _tokenAllowance;
+	}
+
+	/**
+	 * Returns a copy of this context carrying the given token allowance.
+	 *
+	 * <p>
+	 * Called once per run, where the run is admitted. The copy is what the loop runs with, so
+	 * everything the run delegates carries the same allowance.
+	 * </p>
+	 */
+	public ToolContext withTokenAllowance(TokenAllowance tokenAllowance) {
+		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
+			_delegationDepth, _toolCallId, _cancellationToken, _progressReporter, _executionHandle,
+			_citationMarkers, _model, _attended, tokenAllowance);
 	}
 
 	/**
@@ -475,7 +514,7 @@ public class ToolContext implements ToolExecutionContext {
 	public ToolContext withModel(String model) {
 		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
 			_delegationDepth, _toolCallId, _cancellationToken, _progressReporter, _executionHandle,
-			_citationMarkers, model, _attended);
+			_citationMarkers, model, _attended, _tokenAllowance);
 	}
 
 	/**
@@ -484,7 +523,7 @@ public class ToolContext implements ToolExecutionContext {
 	public ToolContext withToolCallId(String toolCallId) {
 		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
 			_delegationDepth, toolCallId, _cancellationToken, _progressReporter, _executionHandle,
-			_citationMarkers, _model, _attended);
+			_citationMarkers, _model, _attended, _tokenAllowance);
 	}
 
 	/**
@@ -493,7 +532,7 @@ public class ToolContext implements ToolExecutionContext {
 	public ToolContext withProgressReporter(ProgressReporter progressReporter) {
 		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
 			_delegationDepth, _toolCallId, _cancellationToken, progressReporter, _executionHandle,
-			_citationMarkers, _model, _attended);
+			_citationMarkers, _model, _attended, _tokenAllowance);
 	}
 
 	/**
@@ -518,7 +557,7 @@ public class ToolContext implements ToolExecutionContext {
 	public ToolContext forDelegation(TransactionScope childTransaction) {
 		return new ToolContext(_security, _approval, childTransaction, _sessionApprovedTools,
 			_delegationDepth + 1, null, _cancellationToken, ProgressReporter.NOOP,
-			childExecutionHandle(), new CitationMarkers(), _model, _attended);
+			childExecutionHandle(), new CitationMarkers(), _model, _attended, _tokenAllowance);
 	}
 
 	/**
@@ -564,7 +603,7 @@ public class ToolContext implements ToolExecutionContext {
 	public ToolContext forDetachedSubagent(TransactionScope childTransaction, CancellationToken childToken) {
 		return new ToolContext(_security.withBackgroundCeiling(), _approval, childTransaction,
 			_sessionApprovedTools, _delegationDepth + 1, null, childToken, ProgressReporter.NOOP,
-			childExecutionHandle(), new CitationMarkers(), _model, _attended);
+			childExecutionHandle(), new CitationMarkers(), _model, _attended, _tokenAllowance);
 	}
 
 	/**

@@ -35,6 +35,9 @@ async function readJson<T>(res: Response): Promise<T> {
   if (res.status === 403) {
     throw await forbidden(res)
   }
+  if (res.status === 429) {
+    throw await refused(res)
+  }
   if (!res.ok) {
     throw new Error(`${res.status} ${res.statusText}`)
   }
@@ -54,6 +57,20 @@ export class ForbiddenError extends Error {
   }
 }
 
+/**
+ * A request this installation has no room for right now, with its own sentence.
+ *
+ * A `ForbiddenError`, so that every caller which already shows a refusal as information shows this
+ * one the same way - what differs is only the cause, and the server's sentence says it. Its own
+ * class so that a caller which wants to offer "try again" can tell the two apart.
+ */
+export class RefusedError extends ForbiddenError {
+  constructor(reason: string) {
+    super(reason)
+    this.name = 'RefusedError'
+  }
+}
+
 /** Reads the reason out of a 403, falling back to nothing rather than to the status line. */
 async function forbidden(res: Response): Promise<ForbiddenError> {
   try {
@@ -61,6 +78,16 @@ async function forbidden(res: Response): Promise<ForbiddenError> {
     return new ForbiddenError(data.reason ?? '')
   } catch {
     return new ForbiddenError('')
+  }
+}
+
+/** Reads the reason out of a 429, the same way. */
+async function refused(res: Response): Promise<RefusedError> {
+  try {
+    const data = (await res.json()) as { reason?: string }
+    return new RefusedError(data.reason ?? '')
+  } catch {
+    return new RefusedError('')
   }
 }
 
@@ -145,6 +172,9 @@ export async function sendMessage(windowId: string, payload: SendPayload): Promi
   if (res.status === 403) {
     throw await forbidden(res)
   }
+  if (res.status === 429) {
+    throw await refused(res)
+  }
   const data = (await res.json()) as { taskId?: string; status?: string }
   if (res.status === 409 || data.status === 'busy') {
     throw new Error('busy')
@@ -200,7 +230,7 @@ export async function truncate(
 }
 
 export interface TruncateResult {
-  status: 'ok' | 'busy' | 'error'
+  status: 'ok' | 'busy' | 'rejected' | 'error'
   removedTurns?: number
   text?: string
   taskId?: string

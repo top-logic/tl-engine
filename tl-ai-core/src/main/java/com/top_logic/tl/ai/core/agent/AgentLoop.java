@@ -523,6 +523,7 @@ public class AgentLoop {
 
 			conversation.add(assistantMsg);
 			totalUsage = totalUsage.add(assistantMsg.usage());
+			context.tokenAllowance().record(assistantMsg.usage());
 
 			if (!_config.responseValidator().test(assistantMsg)) {
 				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
@@ -551,6 +552,15 @@ public class AgentLoop {
 			}
 
 			emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
+
+			// Between turns, never inside one: a turn that has begun is finished and its tool results
+			// are written, so the history the next run continues from is whole. The run was admitted,
+			// so it always gets at least this one turn.
+			if (context.tokenAllowance().exhausted()) {
+				StopReason stopReason = StopReason.BUDGET_EXHAUSTED;
+				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
+				return new AgentResult(stopReason, turn, totalUsage);
+			}
 		}
 
 		StopReason stopReason = StopReason.MAX_TURNS;
@@ -676,6 +686,7 @@ public class AgentLoop {
 
 			conversation.add(assistantMsg);
 			totalUsage = totalUsage.add(assistantMsg.usage());
+			context.tokenAllowance().record(assistantMsg.usage());
 			memory.updateTokenBaseline(assistantMsg.usage());
 
 			if (!_config.responseValidator().test(assistantMsg)) {
@@ -705,6 +716,15 @@ public class AgentLoop {
 			}
 
 			emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
+
+			// Between turns, never inside one: a turn that has begun is finished and its tool results
+			// are written, so the history the next run continues from is whole. The run was admitted,
+			// so it always gets at least this one turn.
+			if (context.tokenAllowance().exhausted()) {
+				StopReason stopReason = StopReason.BUDGET_EXHAUSTED;
+				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
+				return new AgentResult(stopReason, turn, totalUsage);
+			}
 		}
 
 		StopReason stopReason = StopReason.MAX_TURNS;

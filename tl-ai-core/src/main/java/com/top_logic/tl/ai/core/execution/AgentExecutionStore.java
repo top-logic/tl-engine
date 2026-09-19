@@ -876,6 +876,57 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	}
 
 	/**
+	 * How many tokens the given account's runs consumed since the given point in time.
+	 *
+	 * <p>
+	 * The figure a token budget is enforced against: everything the provider was asked to read and
+	 * write - prompt including its cached part, output and thinking - summed over every recorded run
+	 * of that account which <em>started</em> within the window.
+	 * </p>
+	 *
+	 * <p>
+	 * Every execution row counts once, including the rows of delegated sub-agents. They carry their
+	 * own usage and belong to the same session as the run that delegated them, so summing the rows
+	 * is the account's true spend - {@link #totalUsageWithChildren(AgentExecution)}, which walks one
+	 * tree, would count a parent's children twice here.
+	 * </p>
+	 *
+	 * <p>
+	 * Read {@link #onWriterThread(Supplier) on the writer thread}, in a fresh interaction at the
+	 * current revision: the caller is a run that is about to start, whose own thread reads at the
+	 * revision its interaction was opened with, and the rows that matter are the newest ones
+	 * (Gitea #405).
+	 * </p>
+	 *
+	 * @param owner
+	 *        The account whose runs are counted; <code>null</code> yields {@code 0}.
+	 * @param since
+	 *        The start of the window; <code>null</code> counts every recorded run.
+	 * @return The token count, never negative.
+	 */
+	public long tokensSpentSince(Person owner, Date since) {
+		if (owner == null) {
+			return 0;
+		}
+		return onWriterThread(() -> {
+			long sum = 0;
+			for (TLObject obj : allInstances(TlAiExecutionFactory.getAgentExecutionType())) {
+				AgentExecution execution = (AgentExecution) obj;
+				Date started = execution.getStartedAt();
+				if (since != null && (started == null || started.before(since))) {
+					continue;
+				}
+				AgentSession session = execution.getSession();
+				if (session == null || !owner.equals(session.getOwner())) {
+					continue;
+				}
+				sum += usageOf(execution).totalTokens();
+			}
+			return Long.valueOf(sum);
+		}).longValue();
+	}
+
+	/**
 	 * Looks up an execution by its run id, or <code>null</code> if none exists.
 	 */
 	public AgentExecution findExecutionByRunId(String runId) {

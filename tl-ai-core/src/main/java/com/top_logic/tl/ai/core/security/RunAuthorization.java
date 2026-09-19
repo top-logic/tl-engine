@@ -156,6 +156,25 @@ public class RunAuthorization {
 	}
 
 	/**
+	 * The account this run acts as, or <code>null</code> when it names none.
+	 *
+	 * <p>
+	 * Who a run is <em>for</em>, which is a different question from what it may do. Read by the
+	 * parts that attribute a run rather than authorize it - the concurrency and budget ceilings of
+	 * {@code RunLimits} - so that they do not each resolve the account their own way and disagree
+	 * with the policy about whose run it is.
+	 * </p>
+	 *
+	 * <p>
+	 * <code>null</code> for {@link #UNCHECKED}, and therefore for every test context: a run that
+	 * cannot name a principal is not attributed to one.
+	 * </p>
+	 */
+	public Person principal() {
+		return _principal;
+	}
+
+	/**
 	 * Why the run's principal may not run the named agent, recording the refusal in the audit log.
 	 *
 	 * <p>

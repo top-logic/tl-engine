@@ -295,7 +295,10 @@ public final class ExecutionRecorder implements AgentEventListener {
 		return switch (stopReason) {
 			case COMPLETE, MAX_TURNS -> ExecutionStatus.COMPLETE;
 			case ERROR, CONTEXT_OVERFLOW -> ExecutionStatus.ERROR;
-			case REJECTED -> ExecutionStatus.REJECTED;
+			// A run cut off by the account's budget did not deliver its answer, and it is not an
+			// error either: the same family as a response the validator refused, which is what
+			// REJECTED names. Which of the two it was is on the stop reason beside it.
+			case REJECTED, BUDGET_EXHAUSTED -> ExecutionStatus.REJECTED;
 			case ABORTED -> ExecutionStatus.CANCELLED;
 		};
 	}

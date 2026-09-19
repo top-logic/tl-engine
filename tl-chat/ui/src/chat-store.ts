@@ -10,6 +10,7 @@ import {
   fetchPendingInteractions,
   fetchRunSnapshot,
   ForbiddenError,
+  RefusedError,
   listSessions,
   listSubagents,
   loadSession,
@@ -1707,9 +1708,16 @@ export class ChatStore {
           this.setRun((s) => ({ ...s, busy: false }))
           // A refusal is not a failure: the server wrote a sentence for this user saying what they
           // may not use, and it reads as information rather than as something that went wrong.
+          // A RefusedError says the same thing about a ceiling that will pass, so it is not sticky -
+          // the answer is to send again in a moment, and a strip the user has to dismiss first is in
+          // the way of exactly that.
           if (err instanceof ForbiddenError) {
+            const temporary = err instanceof RefusedError
             await this.discardEmptyChat(createdHere, active)
-            this.showNotice(err.reason || labels.notAllowed, '', { tone: 'info', sticky: true })
+            this.showNotice(err.reason || labels.notAllowed, '', {
+              tone: 'info',
+              sticky: !temporary,
+            })
             return false
           }
           const busyRefusal = err instanceof Error && err.message === 'busy'

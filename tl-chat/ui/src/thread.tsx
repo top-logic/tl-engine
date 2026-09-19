@@ -821,10 +821,36 @@ function RunSummary({
 }
 
 /**
+ * The answer's place, held while the run has produced no text yet.
+ *
+ * A turn that calls no tool has nothing else to show: without this the thread is the question and
+ * then an empty column for as long as the model takes, which reads as a chat that swallowed the
+ * message rather than as one that is working (#429). The dots sit where the answer will be, so the
+ * text grows out of them instead of appearing somewhere new.
+ *
+ * Decorative: the thread's own live region already announces that an answer is being generated, and
+ * a second announcement of the same fact is noise.
+ */
+function PendingAnswer() {
+  return (
+    <div className="turn turn-agent">
+      <div className="answer is-pending">
+        <span className="answer-dots" aria-hidden="true">
+          <i />
+          <i />
+          <i />
+        </span>
+      </div>
+    </div>
+  )
+}
+
+/**
  * The quiet line between the question and the answer.
  *
  * Reserved even while the run is still going, so the answer does not jump down the moment the
- * duration becomes known.
+ * duration becomes known. It says "working" from the send on - before `run_started` there is no
+ * run to read a duration from, and that gap is exactly when the user is waiting for a sign.
  */
 function RunMetaLine({
   meta,
@@ -838,7 +864,7 @@ function RunMetaLine({
   labels: Labels
 }) {
   const worked = meta?.durationMs != null ? labels.workedFor(formatDuration(meta.durationMs)) : ''
-  const label = worked || (meta && busy ? labels.working : '')
+  const label = worked || (busy ? labels.working : '')
   if (!label && !summary) return null
   return (
     <div className="run-meta">
@@ -874,6 +900,7 @@ function AgentRun({
   turn: RunTurn
   results: Map<string, ToolResult>
   traceMode: TraceMode
+  /** Whether *this* turn is the one being run - never a finished turn above it. */
   busy: boolean
   labels: Labels
   language: Language
@@ -897,18 +924,26 @@ function AgentRun({
   const tools = toolsOf(turn.events)
   const meta = runMetaOf(turn.events)
   const summaryLine = traceMode === 'summary' ? overviewLine(tools, labels) : ''
+  // The summary line counts what the agent *did*. An error is not a step it took, and it has its
+  // own card below in this mode - counted, a failed turn would claim to be "done in 1 step".
+  const steps = events.filter((item) => item.type !== 'error')
+  // `turn_started` opens an empty streaming message; rendering it draws nothing at all, because the
+  // streaming caret hangs off the last markdown element and there is none yet. The placeholder
+  // stands in its place until the first delta gives the bubble something to show.
+  const pending = busy && !answer?.text
 
   return (
     <div className="agent-run">
-      {traceMode === 'summary' && events.length > 0 ? (
-        <RunSummary events={events} results={results} labels={labels} busy={busy} />
+      {traceMode === 'summary' && steps.length > 0 ? (
+        <RunSummary events={steps} results={results} labels={labels} busy={busy} />
       ) : (
         <RunMetaLine meta={meta} summary={summaryLine} busy={busy} labels={labels} />
       )}
       {traceMode === 'detailed' && events.length > 0 ? (
         <DetailedTrace events={events} results={results} labels={labels} effort={effort} model={''} />
       ) : null}
-      {answer ? (
+      {pending ? <PendingAnswer /> : null}
+      {answer && !pending ? (
         <AssistantAnswer
           text={answer.text}
           streaming={answer.isStreaming}
@@ -1103,7 +1138,9 @@ export const Thread = React.memo(function Thread({
                     turn={turn}
                     results={results}
                     traceMode={traceMode}
-                    busy={busy === true}
+                    // Only the turn at the bottom can be the running one. Handing `busy` to every
+                    // turn made each finished run above it say "Working…" again.
+                    busy={busy === true && position === lastIndex}
                     labels={labels}
                     language={language}
                     effort={effort}

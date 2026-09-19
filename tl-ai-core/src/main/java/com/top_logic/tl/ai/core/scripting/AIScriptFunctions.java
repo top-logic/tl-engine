@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -55,6 +56,7 @@ import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.provider.ResponseFormat;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
@@ -86,6 +88,11 @@ import com.top_logic.util.error.TopLogicException;
  * <pre>
  * aiChat("What is TopLogic?")
  * </pre>
+ *
+ * <p>
+ * What {@code aiChat} can ask a model for and what each provider makes of it:
+ * {@code tl-ai-core/doc/script-chat.md}.
+ * </p>
  */
 @ScriptPrefix("ai")
 public class AIScriptFunctions extends TLScriptFunctions {
@@ -232,12 +239,18 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *        The model name to use, or {@code null} to use the default model configured in
 	 *        {@link LLMService}.
 	 * @param responseFormat
-	 *        The response format specification. Can be:
+	 *        The response format specification, which reaches the provider's request. Can be:
 	 *        <ul>
 	 *        <li>{@code null}: No specific format requirement</li>
-	 *        <li>String "text" or "json": Simple format type</li>
-	 *        <li>Map with "name" and "schema" fields describing a JSON schema for structured
-	 *        output.</li>
+	 *        <li>String {@code "text"}: the provider default</li>
+	 *        <li>String {@code "json"}: some JSON object, with nothing saying which. Not every
+	 *        provider has such a mode - Anthropic has not - and one that has not refuses the
+	 *        call.</li>
+	 *        <li>Map with {@code "schema"} (the JSON schema the answer must satisfy), and
+	 *        optionally {@code "name"} (what the provider registers the schema under, default
+	 *        {@code "response"}) and {@code "strict"} (whether the provider must reject its own
+	 *        output when it does not validate, default {@code false}). This is the shape worth
+	 *        using: a JSON mode still lets the model choose its own field names.</li>
 	 *        </ul>
 	 * @param tools
 	 *        A collection of qualified tool names to make available to the AI agent (e.g.,
@@ -292,19 +305,14 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		}
 		toolRegistry.freeze();
 
-		// Build model options from response format
-		Map<String, Object> modelOptions = new HashMap<>();
-		if (responseFormat != null) {
-			modelOptions.put("responseFormat", responseFormat);
-		}
-
 		LLMProvider provider = registry.buildProvider(modelName);
 
 		AgentParams config = new AgentParams(
 			modelName, systemPrompt != null ? systemPrompt : "",
 			1, // single turn for chat()
 			AgentParams.DEFAULT_MAX_OUTPUT_TOKENS,
-			modelOptions.isEmpty() ? Map.of() : Map.copyOf(modelOptions));
+			Map.of(),
+			toResponseFormat(responseFormat));
 
 		AgentLoop loop = new AgentLoop(config, provider, toolRegistry);
 		ToolContext context = ToolContext.forCurrentUser();
@@ -331,6 +339,59 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		} finally {
 			context.transaction().close();
 		}
+	}
+
+	/**
+	 * Translates the {@code responseFormat} argument of {@link #chat(List, String, Object, Collection)}
+	 * into the typed {@link ResponseFormat} the provider request carries.
+	 *
+	 * @param responseFormat
+	 *        {@code null}, the string {@code "text"} or {@code "json"}, a map describing a JSON
+	 *        schema, or a {@link ResponseFormat} already.
+	 * @return The requested format, or {@code null} when nothing was requested.
+	 * @throws TopLogicException
+	 *         If the argument is neither of those, or a schema map carries no schema. Refused where
+	 *         it is written rather than dropped: a caller that asked for JSON and receives prose has
+	 *         no way to tell that its request was ignored.
+	 */
+	static ResponseFormat toResponseFormat(Object responseFormat) {
+		if (responseFormat == null) {
+			return null;
+		}
+		if (responseFormat instanceof ResponseFormat format) {
+			return format;
+		}
+		if (responseFormat instanceof CharSequence text) {
+			String name = text.toString().trim();
+			if ("text".equalsIgnoreCase(name)) {
+				return ResponseFormat.TEXT;
+			}
+			if ("json".equalsIgnoreCase(name)) {
+				return ResponseFormat.JSON;
+			}
+			throw new TopLogicException(I18NConstants.ERROR_UNKNOWN_RESPONSE_FORMAT__VALUE.fill(name));
+		}
+		if (responseFormat instanceof Map<?, ?> map) {
+			Object schema = map.get("schema");
+			if (!(schema instanceof Map<?, ?> schemaMap)) {
+				throw new TopLogicException(I18NConstants.ERROR_RESPONSE_FORMAT_WITHOUT_SCHEMA);
+			}
+			Object name = map.get("name");
+			Object strict = map.get("strict");
+			return ResponseFormat.jsonSchema(name == null ? null : name.toString(),
+				stringKeyed(schemaMap), Boolean.TRUE.equals(strict) || "true".equals(strict));
+		}
+		throw new TopLogicException(
+			I18NConstants.ERROR_UNKNOWN_RESPONSE_FORMAT__VALUE.fill(responseFormat.toString()));
+	}
+
+	/**
+	 * The given map with {@link String} keys, as JSON has them.
+	 */
+	private static Map<String, Object> stringKeyed(Map<?, ?> map) {
+		Map<String, Object> result = new LinkedHashMap<>();
+		map.forEach((key, value) -> result.put(String.valueOf(key), value));
+		return result;
 	}
 
 	/**

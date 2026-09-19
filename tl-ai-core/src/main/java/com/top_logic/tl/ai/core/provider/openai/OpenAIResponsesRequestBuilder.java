@@ -84,9 +84,7 @@ public final class OpenAIResponsesRequestBuilder {
 			req.setTools(tools);
 		}
 
-		if (request.responseFormat() == ResponseFormat.JSON) {
-			req.setText(Map.of("format", Map.of("type", "json_object")));
-		}
+		writeResponseFormat(req, request.responseFormat());
 
 		if (request.toolChoice() != null) {
 			req.setToolChoice(switch (request.toolChoice()) {
@@ -104,6 +102,31 @@ public final class OpenAIResponsesRequestBuilder {
 				"Failed to serialize request JSON", e);
 		}
 		return buffer.toString();
+	}
+
+	/**
+	 * Writes the requested {@link ResponseFormat} as the Responses API {@code text.format}.
+	 *
+	 * <p>
+	 * Unlike Chat Completions, the Responses API flattens the schema into the format object itself
+	 * - {@code name}, {@code schema} and {@code strict} sit beside {@code type}, not inside a
+	 * nested {@code json_schema}.
+	 * </p>
+	 */
+	private static void writeResponseFormat(OpenAIResponsesRequest req, ResponseFormat responseFormat) {
+		if (responseFormat == null || responseFormat.kind() == ResponseFormat.Kind.TEXT) {
+			return;
+		}
+		if (responseFormat.kind() == ResponseFormat.Kind.JSON) {
+			req.setText(Map.of("format", Map.of("type", "json_object")));
+			return;
+		}
+		Map<String, Object> format = new LinkedHashMap<>();
+		format.put("type", "json_schema");
+		format.put("name", responseFormat.schemaName());
+		format.put("strict", Boolean.valueOf(responseFormat.strict()));
+		format.put("schema", responseFormat.schema());
+		req.setText(Map.of("format", format));
 	}
 
 	// --- Input building ---

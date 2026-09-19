@@ -1498,7 +1498,7 @@ public class AgentLoop {
 			filteredTools,
 			_config.maxOutputTokens(),
 			_config.modelOptions(),
-			null,
+			_config.responseFormat(),
 			_config.toolChoice(),
 			Duration.ofSeconds(_config.timeoutSeconds()));
 

@@ -130,7 +130,9 @@ public class PresentTool {
 				// reported exactly like one that does not exist.
 				objects.add(TidResolver.resolve(id, ReadFilter.of(context).security()));
 			} catch (IllegalArgumentException ex) {
-				return "Nothing was presented: " + ex.getMessage() + ".";
+				// The resolver's message is a whole sentence that says which kind of wrong
+				// identifier this was (TidDiagnostics); it is passed on as it stands.
+				return "Nothing was presented: " + ex.getMessage();
 			}
 		}
 

@@ -794,6 +794,20 @@ Two things make the unsafe path absent rather than discouraged:
 - **`ExecutionResult.toJson(ReadFilter)` has no argument-less form.** `All.all()`'s javadoc says the
   caller secures the result; this is where tl-ai does.
 
+**What a refused identifier is told** (#386). "Invalid TID format" is true of every wrong identifier
+and helps with none of them, so `TidDiagnostics` classifies the string the model wrote and names the
+remedy: a uuid copied out of a read answer, an object pasted in its printed form, a type name no
+table has, an abstract table, an id the engine's parser rejects, or none of those. An application
+adds the one class the framework cannot know - the code its own users speak, `LEAD-014` - as a
+pattern and a sentence in the `<object-ids>` section of `LLMService`; a configured hint is tried
+first. The classification runs **on the error path only**, so a resolution that succeeds costs
+nothing extra, and it asks the type repository about the type name rather than the database about
+the object. The security property survives it: every refusing branch of `resolve` calls the *same*
+method with the *same* string, so an object the principal may not read and an object that does not
+exist are refused with the same sentence character for character - asserted, for one object, in
+`TestTidResolverDiagnostics.testAHiddenObjectIsRefusedLikeAMissingOne`. Nothing in the diagnosis
+asks whether an object exists.
+
 What `ReadFilter` enforces:
 
 1. An unreadable object contributes **nothing** - no `_tid`, no `_type`, no `_display`, no attribute

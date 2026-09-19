@@ -7,6 +7,9 @@ package com.top_logic.tl.ai.core.tools.model;
 
 import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.TLID;
+import com.top_logic.dob.MetaObject;
+import com.top_logic.dob.meta.MOClass;
+import com.top_logic.dob.meta.MORepository;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -34,6 +37,13 @@ import com.top_logic.tl.ai.core.security.ReadFilter;
  * run's identity without having said whose rights apply. What it then discloses about the object is
  * {@link ReadFilter}'s job.
  * </p>
+ *
+ * <p>
+ * <b>Every refusal is a diagnosis.</b> An identifier that does not resolve is classified by
+ * {@link TidDiagnostics}, which says which kind of wrong identifier it is - a uuid, a printed
+ * object, an unknown type, a code this application speaks - and what to use instead. The
+ * classification runs on the error path only.
+ * </p>
  */
 public final class TidResolver {
 
@@ -47,7 +57,8 @@ public final class TidResolver {
 	 * <p>
 	 * An object the principal may not read is reported exactly like one that does not exist.
 	 * "It exists and you may not see it" would disclose its existence, which is the disclosure the
-	 * read filter is there to prevent, so the two answers are deliberately spelled the same way.
+	 * read filter is there to prevent, so the two answers are deliberately spelled the same way -
+	 * by the same call, so that they cannot drift apart.
 	 * </p>
 	 *
 	 * @param tid
@@ -57,30 +68,55 @@ public final class TidResolver {
 	 * @return The resolved object, never {@code null}.
 	 * @throws IllegalArgumentException
 	 *         If the TID is malformed, names no existing object, or names one the principal may not
-	 *         read.
+	 *         read. The message says which of those it is; see {@link TidDiagnostics}.
 	 */
 	public static TLObject resolve(String tid, ModelSecurity security) {
 		if (tid == null || tid.isEmpty()) {
-			throw new IllegalArgumentException("TID is required");
+			throw new IllegalArgumentException(TidDiagnostics.explain(tid, TidDiagnostics.Types.NONE));
 		}
 		if (security == null) {
 			throw new IllegalStateException("Resolving a TID is a read check, and this call names no"
 				+ " principal to check it for. Pass the ModelSecurity of the agent run.");
 		}
-		String[] split = objectId(tid).split(":", 2);
+		String identifier = objectId(tid);
+		String[] split = identifier.split(":", 2);
 		if (split.length != 2) {
-			throw new IllegalArgumentException(
-				"Invalid TID format. Expected 'TypeName:id', got: " + tid);
+			// No knowledge base is asked for: an identifier without a colon has no type name to ask
+			// about, and a malformed one must be answered where there is no persistency layer, too.
+			throw new IllegalArgumentException(TidDiagnostics.explain(identifier, TidDiagnostics.Types.NONE));
 		}
-		TLID id = IdentifierUtil.fromExternalForm(stripQualifiers(split[1]));
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		KnowledgeObject ko = kb.getKnowledgeObject(split[0], id);
+		TLID id;
+		try {
+			id = IdentifierUtil.fromExternalForm(TidDiagnostics.stripQualifiers(split[1]));
+		} catch (RuntimeException ex) {
+			// The engine's parser refused the part behind the colon - a NumberFormatException,
+			// which no caller of this method is documented to catch.
+			throw new IllegalArgumentException(diagnosis(identifier, kb), ex);
+		}
+		if (id == null) {
+			throw new IllegalArgumentException(diagnosis(identifier, kb));
+		}
+		KnowledgeObject ko;
+		try {
+			ko = kb.getKnowledgeObject(split[0], id);
+		} catch (RuntimeException ex) {
+			if (types(kb).stateOf(split[0]) == TidDiagnostics.TypeState.INSTANTIABLE) {
+				// The type exists and has instances, and the id parsed: whatever failed in the
+				// lookup is this installation's problem, not a wrong identifier. Reporting it as
+				// "not found" would hide an outage behind a sentence about the model's mistake.
+				throw ex;
+			}
+			// An unknown type name or an abstract table: the model named the wrong thing, and it
+			// is told which, rather than handed the engine's own exception.
+			throw new IllegalArgumentException(diagnosis(identifier, kb), ex);
+		}
 		if (ko == null) {
-			throw new IllegalArgumentException(notFound(tid));
+			throw new IllegalArgumentException(diagnosis(identifier, kb));
 		}
 		TLObject result = WrapperFactory.getWrapper(ko);
 		if (!security.canRead(result)) {
-			throw new IllegalArgumentException(notFound(tid));
+			throw new IllegalArgumentException(diagnosis(identifier, kb));
 		}
 		return result;
 	}
@@ -110,24 +146,34 @@ public final class TidResolver {
 	}
 
 	/**
-	 * The one answer for "no such object" and "not yours to see".
+	 * The one answer for every identifier that does not resolve - a malformed one, one naming no
+	 * object, and one naming an object that is not this principal's to see.
+	 *
+	 * <p>
+	 * One method, called from every refusing branch, so that "not yours to see" and "no such
+	 * object" are not two texts that a later edit can tell apart.
+	 * </p>
 	 */
-	private static String notFound(String tid) {
-		return "Object with TID '" + tid + "' not found";
+	private static String diagnosis(String identifier, KnowledgeBase kb) {
+		return TidDiagnostics.explain(identifier, types(kb));
 	}
 
 	/**
-	 * Cuts off the {@code #branch} / {@code @revision} suffixes of an object key's external form.
+	 * What the knowledge base can say about a type name, without reaching the database.
+	 *
+	 * @see TidDiagnostics.Types
 	 */
-	private static String stripQualifiers(String id) {
-		int end = id.length();
-		for (int i = 0; i < id.length(); i++) {
-			char c = id.charAt(i);
-			if (c == '#' || c == '@') {
-				end = i;
-				break;
+	private static TidDiagnostics.Types types(KnowledgeBase kb) {
+		MORepository repository = kb.getMORepository();
+		return typeName -> {
+			MetaObject type = repository.getTypeOrNull(typeName);
+			if (type == null) {
+				return TidDiagnostics.TypeState.UNKNOWN;
 			}
-		}
-		return id.substring(0, end);
+			if (type instanceof MOClass clazz && clazz.isAbstract()) {
+				return TidDiagnostics.TypeState.ABSTRACT;
+			}
+			return TidDiagnostics.TypeState.INSTANTIABLE;
+		};
 	}
 }

@@ -167,8 +167,8 @@ public class InstanceListResponse extends de.haumacher.msgbuf.data.AbstractDataO
 	/**
 	 * The instances of this page, one entry each, written as `label [id:TID]`.
 	 *
-	 * The identifier is what a later call names the object by (getInstance, cite, a host's
-	 * present tool); the label is what tells two of them apart. See ReadFilter.labelled.
+	 * The identifier is what a later call names the object by ({@code getInstance}, cite, a host's
+	 * present tool); the label is what tells two of them apart. See {@code ReadFilter.labelled}.
 	 */
 	public final java.util.List<String> getInstances() {
 		return _instances;

@@ -35,10 +35,10 @@ import com.top_logic.tl.ai.tool.api.ToolSchema;
  * <p>
  * That order is a prompt-cache contract, not a detail (Gitea #346). Anthropic serialises a request
  * as tools, then system prompt, then messages, and re-uses the cached prefix up to an explicit
- * breakpoint; OpenAI-compatible endpoints re-use the longest common prefix automatically. Under both
- * rules a tool <em>appended</em> behind everything that was there before leaves that prefix
- * byte-identical, while a tool inserted into it - or the same tools sent in another order - throws
- * the whole prefix away. Hence: skill overlays are appended, in load order, and a skill restored
+ * breakpoint; {@code OpenAI}-compatible endpoints re-use the longest common prefix automatically.
+ * Under both rules a tool <em>appended</em> behind everything that was there before leaves that
+ * prefix byte-identical, while a tool inserted into it - or the same tools sent in another order -
+ * throws the whole prefix away. Hence: skill overlays are appended, in load order, and a skill restored
  * from a previous run of the same session lands exactly where loading it would have put it.
  * </p>
  *

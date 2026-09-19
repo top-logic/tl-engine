@@ -17,9 +17,9 @@ import com.top_logic.basic.Logger;
  * Says which kind of wrong identifier a model passed, and what to use instead.
  *
  * <p>
- * "Invalid TID format. Expected 'TypeName:id'" is true of every wrong identifier and helps with
- * none of them, because the mistakes a model actually makes fall into a few recognisable classes
- * and each has a different remedy: it copies a {@code uuid} attribute it saw in a read answer, it
+ * {@code "Invalid TID format. Expected 'TypeName:id'"} is true of every wrong identifier and
+ * helps with none of them, because the mistakes a model actually makes fall into a few recognisable
+ * classes and each has a different remedy: it copies a {@code uuid} attribute it saw in a read answer, it
  * uses the human-facing code it was told to use in the conversation, it pastes the {@code toString}
  * of an object out of a log line, or it writes a type name that no table has. A message that names
  * the class ends the retry loop in one step; the generic one makes the model try the same string

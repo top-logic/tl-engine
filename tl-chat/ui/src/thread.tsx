@@ -14,6 +14,7 @@ import type {
   ErrorMessage,
   InteractionRequest,
   MessageFeedback,
+  NoticeMessage,
   Rating,
   RunMeta,
   ToolCall,
@@ -126,6 +127,9 @@ function traceEvents(events: ChatMessage[]): ChatMessage[] {
   const answer = lastAnswer(events)
   return events.filter((item) => {
     if (item.type === 'run_meta') return false
+    // A notice is not a step the agent took. It has its own line above the answer, and counted as
+    // a step it would make a turn that only switched models claim to have "done" something.
+    if (item.type === 'notice') return false
     if (answer && item === answer) return false
     if (item.type === 'assistant_text' && !item.text.trim()) return false
     return true
@@ -842,6 +846,24 @@ function ErrorCard({ item, language }: { item: ErrorMessage; language: Language 
 }
 
 /**
+ * A run that continued on another model than it started on.
+ *
+ * Quieter than an {@link ErrorCard} on purpose: nothing failed for the user, so this is a line of
+ * context above the answer, not a card demanding attention. The sentence is translated and comes
+ * from the notice's kind; the server's own line - which model, which model instead, and why - sits
+ * under it, exactly as the error card keeps the provider's words (#429).
+ */
+function NoticeLine({ item, language }: { item: NoticeMessage; language: Language }) {
+  const labels = bundle(language)
+  return (
+    <div className="notice-line">
+      <div>{labels.modelSwitched}</div>
+      {item.detail ? <div className="notice-line-detail">{item.detail}</div> : null}
+    </div>
+  )
+}
+
+/**
  * The answer's place, held while the run has produced no text yet.
  *
  * A turn that calls no tool has nothing else to show: without this the thread is the question and
@@ -963,6 +985,11 @@ function AgentRun({
       {traceMode === 'detailed' && events.length > 0 ? (
         <DetailedTrace events={events} results={results} labels={labels} effort={effort} model={''} />
       ) : null}
+      {turn.events
+        .filter((item) => item.type === 'notice')
+        .map((item) =>
+          item.type === 'notice' ? <NoticeLine key={item.id} item={item} language={language} /> : null,
+        )}
       {pending ? <PendingAnswer /> : null}
       {answer && !pending ? (
         <AssistantAnswer

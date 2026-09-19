@@ -16,6 +16,7 @@ import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.tool.api.RunInfo;
 
 /**
  * {@link AgentEventListener} decorator that records an agent run as an {@link AgentExecution}.
@@ -132,6 +133,8 @@ public final class ExecutionRecorder implements AgentEventListener {
 		} else if (event instanceof AgentEvent.ProviderError e) {
 			_lastErrorKind = e.kind();
 			_lastErrorMessage = e.message();
+		} else if (event instanceof AgentEvent.ModelSwitched e) {
+			recordModelSwitch(e);
 		} else if (event instanceof AgentEvent.RunCompleted e) {
 			// The completion event carries no failure detail - it is the same event for every stop
 			// reason - so the last provider error seen is what names the failure on the result.
@@ -178,6 +181,40 @@ public final class ExecutionRecorder implements AgentEventListener {
 			AgentExecutionStore.getInstance().saveEnvironment(execution, e.environment());
 		} catch (RuntimeException ex) {
 			Logger.warn("Failed to record the environment of agent run " + e.runId() + ": "
+				+ ex.getMessage(), ex, ExecutionRecorder.class);
+		}
+	}
+
+	/**
+	 * Follows a run that moved to another model, so that the record names what answered.
+	 *
+	 * <p>
+	 * The model on the row is read as "this is what produced these tokens", and after a failover
+	 * the configured model produced none of them.
+	 * </p>
+	 *
+	 * <p>
+	 * The identifiers come from the handle, not from the event: the event carries the labels a
+	 * human reads - a model qualified by its provider entry where one was named - and the loop has
+	 * already published the resolved model and catalog provider on the handle, one statement before
+	 * it emitted this. An emitter that is not the loop therefore records nothing here rather than
+	 * writing a display label into a field every query reads as an identifier. Best-effort like
+	 * every other write in this class: losing it never disturbs the run.
+	 * </p>
+	 */
+	private void recordModelSwitch(AgentEvent.ModelSwitched e) {
+		AgentExecution execution = _execution;
+		if (execution == null || _handle == null) {
+			return;
+		}
+		RunInfo info = _handle.runInfo();
+		if (info == null || info.model() == null) {
+			return;
+		}
+		try {
+			AgentExecutionStore.getInstance().saveModel(execution, info.model(), info.provider());
+		} catch (RuntimeException ex) {
+			Logger.warn("Failed to record the model switch of agent run " + e.runId() + ": "
 				+ ex.getMessage(), ex, ExecutionRecorder.class);
 		}
 	}

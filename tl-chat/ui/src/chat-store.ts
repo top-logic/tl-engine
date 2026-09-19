@@ -230,6 +230,7 @@ const RUN_SCOPED_EVENTS = new Set([
   'compaction_started',
   'message_complete',
   'provider_error',
+  'model_switched',
   'delegation_event',
 ])
 
@@ -1398,6 +1399,20 @@ export class ChatStore {
         // sentence the user reads is the renderer's, from the kind.
         this.dispatch({ type: 'ADD_ERROR', message: data.errorMessage ?? '', code: data.kind })
         finish(text, data.errorMessage ?? '')
+      })
+
+      on('model_switched', (e) => {
+        // A notice, not an error: the run did not fail, it continued on another model, and the
+        // answer under this line comes from that one. Written into the transcript for the same
+        // reason the provider error is (#429) - it is part of what happened in this turn, and the
+        // composer's strip is wiped by the next send. Composed in exactly the wording the server
+        // persists, so the line reads the same live as after a reload.
+        const data = parseJson<{ fromModel?: string; toModel?: string; reason?: string }>(e.data, {})
+        this.dispatch({
+          type: 'ADD_NOTICE',
+          kind: 'model_switched',
+          detail: `${data.fromModel ?? ''} -> ${data.toModel ?? ''}: ${data.reason ?? ''}`,
+        })
       })
 
       es.onerror = () => {

@@ -418,6 +418,7 @@ interface PersistedPart {
     userResponse?: string
   }
   errorData?: { kind?: string; errorMessage: string }
+  systemData?: { eventType?: string; details?: string }
 }
 
 interface PersistedTurn {
@@ -586,6 +587,21 @@ export function turnsJsonToMessages(turnsJson: string | undefined): ChatMessage[
               id: part.id,
               code: part.errorData.kind,
               message: part.errorData.errorMessage,
+              timestamp: part.timestamp,
+            })
+          }
+          break
+        case 'system':
+          // Only the one system event the thread draws. The others - a cancellation, an approval
+          // mode change, the text a finished subagent was handed - are either shown by something
+          // else or are not the user's business, and an unknown one is silently skipped rather
+          // than rendered as a nameless line.
+          if (part.systemData?.eventType === 'MODEL_CHANGED' && part.systemData.details) {
+            msgs.push({
+              type: 'notice',
+              id: part.id,
+              kind: 'model_switched',
+              detail: part.systemData.details,
               timestamp: part.timestamp,
             })
           }

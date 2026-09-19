@@ -6,6 +6,7 @@ import type {
   ErrorMessage,
   InteractionOption,
   InteractionRequest,
+  NoticeMessage,
   RunMeta,
   ThinkingBlock,
   ToolCall,
@@ -31,6 +32,7 @@ export type ChatAction =
   | { type: 'ADD_TOOL_RESULT'; toolUseId: string; output: string; isError?: boolean }
   | { type: 'APPEND_THINKING'; delta: string }
   | { type: 'ADD_ERROR'; message: string; code?: string }
+  | { type: 'ADD_NOTICE'; kind: 'model_switched'; detail: string }
   | {
       type: 'ADD_APPROVAL'
       approvalRequestId: string
@@ -155,6 +157,16 @@ export function chatReducer(messages: ChatMessage[], action: ChatAction): ChatMe
         id: genId(),
         message: action.message,
         code: action.code,
+        timestamp: Date.now(),
+      }
+      return [...messages, msg]
+    }
+    case 'ADD_NOTICE': {
+      const msg: NoticeMessage = {
+        type: 'notice',
+        id: genId(),
+        kind: action.kind,
+        detail: action.detail,
         timestamp: Date.now(),
       }
       return [...messages, msg]

@@ -942,6 +942,18 @@ message ProviderErrorEvent {
 	string errorMessage;
 }
 
+/** SSE event for a run that continues on another model. */
+message ModelSwitchedEvent {
+	/** The model the run was using, qualified by its provider where one was named. */
+	string fromModel;
+
+	/** The model the run continues with, qualified the same way. */
+	string toModel;
+
+	/** Why the previous model was left, in one line. */
+	string reason;
+}
+
 /** SSE event for compaction started. */
 message CompactionStartedEvent {
 	/** Token count before compaction. */

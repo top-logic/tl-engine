@@ -149,6 +149,8 @@ public class ConversationLogListener implements AgentEventListener {
 			handleCompactionCompleted(e);
 		} else if (event instanceof AgentEvent.ProviderError e) {
 			handleProviderError(e);
+		} else if (event instanceof AgentEvent.ModelSwitched e) {
+			handleModelSwitched(e);
 		} else if (event instanceof AgentEvent.TransactionBegan e) {
 			handleTransactionBegan(e);
 		} else if (event instanceof AgentEvent.TransactionCommitted e) {
@@ -406,6 +408,32 @@ public class ConversationLogListener implements AgentEventListener {
 			turn.addAssistantPart(new Part.ErrorPart(
 				UUID.randomUUID().toString(), e.timestamp(),
 				e.kind(), e.message()));
+		}
+	}
+
+	/**
+	 * Records that the rest of the run is answered by another model than the one it started on.
+	 *
+	 * <p>
+	 * A {@link Part.SystemEventType#MODEL_CHANGED} part rather than an
+	 * {@link Part.ErrorPart}: the run did not fail, it continued somewhere else, and an operator
+	 * reading the transcript needs to know from which part of it onwards the answers come from a
+	 * different model. The details carry the reason, which is where the models the run passed over
+	 * are named.
+	 * </p>
+	 *
+	 * <p>
+	 * The wording is the one the chat composes from the live event, character for character, so a
+	 * notice reads the same while it happens as it does after a reload - the lesson of #429.
+	 * </p>
+	 */
+	private void handleModelSwitched(AgentEvent.ModelSwitched e) {
+		Turn turn = _log.currentTurn();
+		if (turn != null) {
+			turn.addAssistantPart(new Part.SystemPart(
+				UUID.randomUUID().toString(), e.timestamp(),
+				Part.SystemEventType.MODEL_CHANGED,
+				e.fromModel() + " -> " + e.toModel() + ": " + e.reason()));
 		}
 	}
 
@@ -779,7 +807,8 @@ public class ConversationLogListener implements AgentEventListener {
 				forwardToParent(event);
 			} else if (event instanceof AgentEvent.RunStarted
 				|| event instanceof AgentEvent.TurnStarted
-				|| event instanceof AgentEvent.ProviderError) {
+				|| event instanceof AgentEvent.ProviderError
+				|| event instanceof AgentEvent.ModelSwitched) {
 				forwardToParent(event);
 			} else if (event instanceof AgentEvent.RunCompleted) {
 				flushChildBuffers(dp);

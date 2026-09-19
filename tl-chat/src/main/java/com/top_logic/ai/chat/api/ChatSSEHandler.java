@@ -31,6 +31,7 @@ import com.top_logic.ai.chat.api.messages.DelegationEventWrapper;
 import com.top_logic.ai.chat.api.messages.HeartbeatEvent;
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.InteractionResolvedEvent;
+import com.top_logic.ai.chat.api.messages.ModelSwitchedEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
 import com.top_logic.ai.chat.api.messages.RunCompletedEvent;
 import com.top_logic.ai.chat.api.messages.RunStartedEvent;
@@ -518,6 +519,11 @@ public class ChatSSEHandler implements ChatEventHandler {
 			sendEvent("provider_error", DtoMapper.toJson(ProviderErrorEvent.create()
 				.setKind(e.kind())
 				.setErrorMessage(e.message())));
+		} else if (event instanceof AgentEvent.ModelSwitched e) {
+			sendEvent("model_switched", DtoMapper.toJson(ModelSwitchedEvent.create()
+				.setFromModel(e.fromModel())
+				.setToModel(e.toModel())
+				.setReason(e.reason())));
 		}
 	}
 
@@ -593,6 +599,10 @@ public class ChatSSEHandler implements ChatEventHandler {
 			innerType = "provider_error";
 			innerData = DtoMapper.toJson(ProviderErrorEvent.create()
 				.setKind(e.kind()).setErrorMessage(e.message()));
+		} else if (child instanceof AgentEvent.ModelSwitched e) {
+			innerType = "model_switched";
+			innerData = DtoMapper.toJson(ModelSwitchedEvent.create()
+				.setFromModel(e.fromModel()).setToModel(e.toModel()).setReason(e.reason()));
 		} else {
 			return;
 		}

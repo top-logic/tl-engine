@@ -218,12 +218,30 @@ public class ThemeTokenAudit {
 		return result;
 	}
 
+	/**
+	 * The names (without the leading dashes) of every custom property the given stylesheet
+	 * declares, comments ignored.
+	 *
+	 * <p>
+	 * The declarations of a sheet carrying nothing but tokens - the generated token sheet of the
+	 * design system package, say - are the tokens a sheet audited against it may read.
+	 * </p>
+	 *
+	 * @param css
+	 *        The text of the stylesheet.
+	 */
+	public static Set<String> declaredProperties(String css) {
+		Set<String> result = new HashSet<>();
+		Matcher declaration = PROPERTY_DECLARATION.matcher(stripComments(css));
+		while (declaration.find()) {
+			result.add(declaration.group(1));
+		}
+		return result;
+	}
+
 	private static void reportUndefinedReferences(Set<String> tokens, String css, List<String> problems) {
 		Set<String> defined = new HashSet<>(tokens);
-		Matcher declaration = PROPERTY_DECLARATION.matcher(css);
-		while (declaration.find()) {
-			defined.add(declaration.group(1));
-		}
+		defined.addAll(declaredProperties(css));
 
 		Matcher reference = VAR_REFERENCE.matcher(css);
 		while (reference.find()) {

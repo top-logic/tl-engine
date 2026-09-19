@@ -29,6 +29,7 @@
     <module>tl-ai-vector-index</module>
     <module>tl-ai-tool-api</module>
     <module>tl-ai-core</module>
+    <module>tl-ai-eval</module>
   </modules>
   <properties>
     <project.build.sourceEncoding>utf-8</project.build.sourceEncoding>

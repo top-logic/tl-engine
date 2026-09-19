@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+	Main configuration file.
+
+	The alias is the one tl-ai-core declares for the same purpose: the eval's real-model arms read
+	their key out of the environment, so that a key never reaches a configuration file and a build
+	without one simply reports those arms as unable to run.
+-->
+<root>
+	<alias>
+		<entry name="%ANTHROPIC_API_KEY%" value="${env:tl_anthropic_api_key:unencrypted:}"/>
+	</alias>
+</root>

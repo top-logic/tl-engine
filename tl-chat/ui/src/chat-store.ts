@@ -110,6 +110,16 @@ function parseToolInput(argsJson: string | undefined): unknown {
   }
 }
 
+/**
+ * The decision an approval card shows for an answer another window gave, or `null` when the answer
+ * is not an approval decision at all - a question's answer is the user's own text.
+ */
+function approvalOutcome(raw: string | undefined): ApprovalOutcome | null {
+  if (raw === 'APPROVED' || raw === 'APPROVED_FOR_SESSION' || raw === 'TIMED_OUT') return raw
+  if (raw?.startsWith('REJECTED')) return 'REJECTED'
+  return null
+}
+
 function parseTraceMode(value: unknown): TraceMode {
   if (value === 'none' || value === 'summary' || value === 'detailed') return value
   // "overview" is the legacy name (and the vocabulary <agent-chat> still emits) - it maps to summary.
@@ -1199,6 +1209,19 @@ export class ChatStore {
           outcome: (data.outcome as ApprovalOutcome) ?? 'APPROVED',
         })
       })
+      on('interaction_resolved', (e) => {
+        // Another window of this account answered something this one may be showing. The window
+        // whose run it is hears the same news as `approval_resolved` from the run itself; this
+        // frame is what reaches a window that only listed the request (a second tab, a reloaded
+        // page). Both message kinds are addressed by the same id, so one of the two takes effect.
+        const data = parseJson<{ requestId?: string; outcome?: string }>(e.data, {})
+        if (!data.requestId) return
+        const outcome = approvalOutcome(data.outcome)
+        if (outcome) {
+          this.dispatch({ type: 'RESOLVE_APPROVAL', approvalRequestId: data.requestId, outcome })
+        }
+        this.dispatch({ type: 'RESOLVE_INTERACTION', requestId: data.requestId })
+      })
       on('user_interaction', (e) => {
         const data = parseJson<{
           requestId?: string
@@ -1488,6 +1511,7 @@ export class ChatStore {
         toolName: item.header,
         argsJson: item.payload,
         displayReason: item.prompt,
+        toolMode: item.toolMode,
         remainingMs: item.remainingMs,
       })
     }

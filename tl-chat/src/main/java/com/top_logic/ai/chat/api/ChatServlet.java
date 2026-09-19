@@ -44,6 +44,7 @@ import com.top_logic.ai.chat.api.messages.ChatUpdatesResponse;
 import com.top_logic.ai.chat.api.messages.CreateSessionRequest;
 import com.top_logic.ai.chat.api.messages.ImprovePromptRequest;
 import com.top_logic.ai.chat.api.messages.ImprovePromptResponse;
+import com.top_logic.ai.chat.api.messages.InteractionResolvedEvent;
 import com.top_logic.ai.chat.api.messages.PendingInteractionDto;
 import com.top_logic.ai.chat.api.messages.PendingInteractionsResponse;
 import com.top_logic.ai.chat.api.messages.UpdateTitleRequest;
@@ -51,6 +52,7 @@ import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.Chat;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
+import com.top_logic.ai.chat.layout.PendingInteractionRegistry;
 import com.top_logic.ai.chat.layout.PromptImprovementProcessor;
 import com.top_logic.ai.chat.layout.PromptImprovementProcessor.PromptImprovementException;
 import com.top_logic.ai.chat.layout.PromptImprovementProcessor.Result;
@@ -77,6 +79,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService;
+import com.top_logic.tl.ai.core.agent.approval.PendingApproval;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
@@ -883,6 +886,24 @@ public class ChatServlet extends TopLogicServlet {
 		resp.getWriter().write(DtoMapper.toJson(response));
 	}
 
+	/**
+	 * POST /chat/respond - the user's answer to an approval or a question.
+	 *
+	 * <p>
+	 * The request is looked up by its correlation id among the runs <em>this account</em> has
+	 * parked on a human ({@link PendingInteractionRegistry}), not among the runs of the window the
+	 * answer arrives from. That is what lets a second tab, a reloaded page or a new login answer a
+	 * request the first window started (issue #393): the run is parked on a future in its own
+	 * process, and the account - not the window - is who the request is addressed to.
+	 * </p>
+	 *
+	 * <p>
+	 * A request of another account is not found here, and an answer to one is therefore worth
+	 * exactly what an answer to a request that never existed is worth: nothing happens, and the
+	 * caller is told the same thing in both cases, so the answer cannot be used to find out which
+	 * ids exist.
+	 * </p>
+	 */
 	private void handleRespond(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		String jsonBody = new String(req.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
 
@@ -907,31 +928,34 @@ public class ChatServlet extends TopLogicServlet {
 			return;
 		}
 
-		TaskProgressTracker tracker = currentTracker();
-		ChatProcessor.AIProcessingState state = tracker.getAnyActiveProcessingState();
-		UserInteractionStore store = state == null ? null : state.getUserInteractionStore();
-		if (store == null) {
-			// A late answer to a request whose run already ended (completed, cancelled, or timed
-			// out): the interaction is no longer pending, so there is nothing to resolve. Treat
-			// it as a benign no-op rather than an error - the user must not see a failure for
-			// answering a question that the system already tore down (e.g. after cancelling the
-			// orchestrator, which cancels its subagents' pending questions).
-			Logger.info("Ignoring late interaction response for request " + requestId
-				+ ": no active interaction store.", ChatServlet.class);
+		Person responder = resolveCurrentPerson(req);
+		PendingInteractionRegistry.PendingRun run = PendingInteractionRegistry.find(responder, requestId);
+		if (run == null) {
+			// Either a late answer to a request whose run already ended (completed, cancelled, or
+			// timed out), or a request this account is not the responder of. Both are a benign
+			// no-op rather than an error - the user must not see a failure for answering a question
+			// that the system already tore down (e.g. after cancelling the orchestrator, which
+			// cancels its subagents' pending questions), and the two must not be told apart.
+			Logger.info("Ignoring interaction response for request " + requestId
+				+ ": no run of this account is waiting for it.", ChatServlet.class);
 			resp.setContentType(CONTENT_TYPE_JSON);
 			resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
 			resp.getWriter().write("{\"status\":\"ignored\"}");
 			return;
 		}
+		ChatProcessor.AIProcessingState state = run.state();
+		UserInteractionStore store = state.getUserInteractionStore();
 
 		// Include rejection comment in the response string so the ApprovalCallback receives it
 		String resolvedResponse = response;
 		if ("REJECTED".equals(response) && comment != null && !comment.isEmpty()) {
 			resolvedResponse = "REJECTED:" + comment;
 		}
-		store.resolve(requestId, resolvedResponse);
 
-		// Record the approval decision in the conversation log
+		// Everything the decision changes is written before the waiting thread is let go: resolving
+		// the future unparks the agent mid-turn, and it may call the next tool before this request
+		// has returned. A tool approved "for this session" that the run learns of only afterwards
+		// would be asked about again.
 		ConversationLogListener logListener = state.getLogListener();
 		if (logListener != null) {
 			if ("APPROVED_FOR_SESSION".equals(response)) {
@@ -946,14 +970,46 @@ public class ChatServlet extends TopLogicServlet {
 			}
 		}
 
+		// Against the run's own window, not the answering one: that is the tracker holding the set
+		// the agent loop consults.
 		if ("APPROVED_FOR_SESSION".equals(response) && toolName != null && !toolName.isEmpty()) {
-			tracker.addSessionApprovedTool(toolName);
+			run.tracker().addSessionApprovedTool(toolName);
 		}
+
+		store.resolve(requestId, resolvedResponse);
+
+		// The run's own window learns the outcome from the run (approval_resolved). Every other
+		// window of this account that listed the request has no run to hear it from.
+		notifyInteractionResolved(responder, run.tracker(), requestId, resolvedResponse);
 
 		resp.setContentType("application/json");
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
 		String safeRequestId = requestId.replace("\\", "\\\\").replace("\"", "\\\"");
 		resp.getWriter().write("{\"status\":\"ok\",\"requestId\":\"" + safeRequestId + "\"}");
+	}
+
+	/**
+	 * Tells the account's other chat windows that a request they may be showing has been answered.
+	 *
+	 * <p>
+	 * Best effort, and deliberately silent about failures: the answer has already reached the run,
+	 * and a window that misses this frame shows a stale card until it next lists what is pending -
+	 * which is what every window did before the frame existed.
+	 * </p>
+	 */
+	private static void notifyInteractionResolved(Person responder, TaskProgressTracker runWindow,
+			String requestId, String outcome) {
+		InteractionResolvedEvent event = InteractionResolvedEvent.create()
+			.setRequestId(requestId)
+			.setOutcome(outcome);
+		for (ChatEventHandler handler : ChatEventHandlerRegistry.findOthers(responder, runWindow)) {
+			try {
+				handler.sendInteractionResolved(event);
+			} catch (RuntimeException ex) {
+				Logger.info("Could not tell a window that interaction " + requestId
+					+ " was answered: " + ex.getMessage(), ChatServlet.class);
+			}
+		}
 	}
 
 	private void handleApprovalMode(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -1095,6 +1151,7 @@ public class ChatServlet extends TopLogicServlet {
 				.setHeader(request.getHeader())
 				.setPrompt(request.getPrompt())
 				.setPayload(request.getPayload())
+				.setToolMode(toolMode(person, request.getRequestId()))
 				.setSessionId(getObjectId(session))
 				.setSessionTitle(session.getTitle());
 			Date createdAt = request.getCreatedAt();
@@ -1125,6 +1182,29 @@ public class ChatServlet extends TopLogicServlet {
 			: InteractionTimeoutService.questionTimeout();
 	}
 
+	/**
+	 * The mode of the tool a still-waiting approval is about, or the empty string.
+	 *
+	 * <p>
+	 * The persisted request records the reason the security context wrote, in English; the mode is
+	 * what lets the client phrase the question in the reader's language, exactly as it does for the
+	 * card the live event drew. It is known only while the run is still waiting - which is also the
+	 * only time a client may still answer.
+	 * </p>
+	 */
+	private static String toolMode(Person responder, String requestId) {
+		PendingInteractionRegistry.PendingRun run = PendingInteractionRegistry.find(responder, requestId);
+		if (run == null) {
+			return "";
+		}
+		UserInteractionStore store = run.state().getUserInteractionStore();
+		PendingApproval approval = store == null ? null : store.pendingApproval(requestId);
+		if (approval == null || approval.request().mode() == null) {
+			return "";
+		}
+		return approval.request().mode().name();
+	}
+
 	/** Lowercased classifier name ("approval"/"question"/"choice") of an interaction type. */
 	private static String interactionTypeName(TLClassifier type) {
 		return type == null ? null : type.getName().toLowerCase(java.util.Locale.ROOT);
@@ -1143,7 +1223,8 @@ public class ChatServlet extends TopLogicServlet {
 		AsyncContext asyncContext = req.startAsync();
 		asyncContext.setTimeout(0); // No timeout - connection stays open until client disconnects
 
-		ChatSSEHandler handler = new ChatSSEHandler(tracker, asyncContext, resp.getWriter());
+		ChatSSEHandler handler =
+			new ChatSSEHandler(tracker, resolveCurrentPerson(req), asyncContext, resp.getWriter());
 		handler.start();
 	}
 

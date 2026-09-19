@@ -33,6 +33,39 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ENVIRONMENT_PREFERENCES_HEADING;
 
 	/**
+	 * Heading of the memories section inside the environment block. Read by the model, in the
+	 * language of the account the run acts for.
+	 *
+	 * @en What you know about this user - kept from earlier conversations, with their agreement:
+	 * @de Was Sie über diesen Benutzer wissen - aus früheren Unterhaltungen, mit seinem Einverständnis gespeichert:
+	 */
+	public static ResKey ENVIRONMENT_MEMORIES_HEADING;
+
+	/**
+	 * Names a memory that says how the user wants to be served. Read by the model.
+	 *
+	 * @en Preference
+	 * @de Präferenz
+	 */
+	public static ResKey MEMORY_KIND_PREFERENCE;
+
+	/**
+	 * Names a memory that states something about the user or their work. Read by the model.
+	 *
+	 * @en Fact
+	 * @de Tatsache
+	 */
+	public static ResKey MEMORY_KIND_FACT;
+
+	/**
+	 * Names a memory that records a judgement the user passed on the work. Read by the model.
+	 *
+	 * @en Feedback
+	 * @de Rückmeldung
+	 */
+	public static ResKey MEMORY_KIND_FEEDBACK;
+
+	/**
 	 * Label of the turn number inside the per-turn context block. Read by the model, in the
 	 * language of the account the run acts for.
 	 *

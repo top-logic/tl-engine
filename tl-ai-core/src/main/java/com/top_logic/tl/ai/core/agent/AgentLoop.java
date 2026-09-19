@@ -69,6 +69,8 @@ import com.top_logic.tl.ai.core.provider.StreamHandler;
 import com.top_logic.tl.ai.core.security.PreCommitGuard;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.ConversationLogListenerBinding;
+import com.top_logic.tl.ai.core.tools.memory.MemoryConsent;
+import com.top_logic.tl.ai.core.tools.memory.MemoryConsentBinding;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
@@ -333,7 +335,8 @@ public class AgentLoop {
 		emitEnvironment(serialized, runId);
 		emitTurnContext(serialized, runId);
 
-		try {
+		try (MemoryConsentBinding.Binding consent =
+			MemoryConsentBinding.bindIfAbsent(MemoryConsent.forNewestTurn(conversation))) {
 			return runLoop(conversation, runContext, serialized, runId);
 		} catch (RuntimeException e) {
 			// Guarantee a terminal event so event consumers (e.g. SSE clients) are
@@ -524,7 +527,8 @@ public class AgentLoop {
 		emitEnvironment(serialized, runId);
 		emitTurnContext(serialized, runId);
 
-		try {
+		try (MemoryConsentBinding.Binding consent =
+			MemoryConsentBinding.bindIfAbsent(MemoryConsent.forNewestTurn(_memory.conversation()))) {
 			return runWithMemory(_memory, runContext, serialized, runId);
 		} catch (RuntimeException e) {
 			// Guarantee a terminal event so event consumers (e.g. SSE clients) are

@@ -182,6 +182,24 @@ definition and from `<chat-conversation><context>`, the preference text is
 `tl.accounts:Person#aiPreferences`, and the filled block is recorded on
 `tl.ai.execution:AgentExecution#environment`. See `tl-ai-core/doc/environment-block.md`.
 
+### User memory (tl-ai-core `tools/memory/`, `agent/environment/UserMemories`)
+
+The agent keeps things about the user across conversations: `tl.ai.execution:UserMemory` rows
+(owner, kind, text, origin, created), rendered into the environment block's `{{memories}}` section.
+`remember(kind, text)` writes one, `recall(query)` searches the rest.
+
+**`remember` refuses a memory the user did not agree to in that turn**, as a Java check on the call
+path rather than a line in a prompt: `MemoryConsent` is built from the user's own message at the
+start of the run and from what `AskUserTool` recorded, and a nested run inherits it rather than
+building its own. The words it matches are configurable, because they are matched against what the
+user typed.
+
+The section is read **once per conversation** (`UserMemoryBinding`, bound by `ChatProcessor` from
+the chat session state), because the block has to stay byte-identical across the turns of one.
+`<user-memory enabled="false"/>` on `LLMService` retires tools and section together. The user sees
+every memory in a `<data-list>` and deletes one with `aiMemoryDelete`. See
+`tl-ai-core/doc/environment-block.md`.
+
 ### Skills and tool overlays (tl-ai-core `tools/`, `agent/skills/`)
 
 An agent advertises its own tools plus a catalog of skill names; `loadSkill("id")` hands over the
@@ -209,7 +227,8 @@ and Bedrock need an explicit breakpoint, OpenAI-compatible endpoints match the l
 by themselves. The repository therefore holds three rules, and a change that breaks one of them is a
 cost regression nothing else reports:
 
-1. The `<environment>` block is **stable** - day granularity, only facts marked `stable` (#437).
+1. The `<environment>` block is **stable** - day granularity, only facts marked `stable` (#437),
+   and the memories it carries are the ones the conversation was opened with (#439).
 2. Facts that are not stable go **in the turn**, as the `<turn-context>` content block of the user
    message, behind the whole cached prefix (#438).
 3. A loaded skill's tools go **behind the stable tool prefix**, appended in load order and never

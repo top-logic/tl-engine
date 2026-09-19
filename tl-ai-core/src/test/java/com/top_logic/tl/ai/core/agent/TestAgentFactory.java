@@ -5,8 +5,17 @@
  */
 package com.top_logic.tl.ai.core.agent;
 
+import java.util.Map;
+
 import junit.framework.TestCase;
 
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.tl.ai.core.agent.environment.UserMemoryConfig;
+import com.top_logic.tl.ai.core.agent.environment.UserMemorySettings;
+import com.top_logic.tl.ai.tool.api.Tool;
+import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
+import com.top_logic.tl.ai.tool.api.ToolResult;
+import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /**
@@ -64,6 +73,50 @@ public class TestAgentFactory extends TestCase {
 	public void testPlaceholderConstants() {
 		assertEquals("<<AVAILABLE_TOOLS>>", AgentFactory.TOOLS_PLACEHOLDER);
 		assertEquals("<<AVAILABLE_DELEGATES>>", AgentFactory.DELEGATES_PLACEHOLDER);
+	}
+
+	/**
+	 * An installation that keeps no memories offers neither memory tool, however an agent
+	 * definition names them - and offers everything else as before.
+	 */
+	public void testSwitchedOffMemoryIsNotOffered() {
+		assertTrue("On by default.", AgentFactory.isOffered(namedTool("remember")));
+		assertTrue(AgentFactory.isOffered(namedTool("recall")));
+
+		UserMemoryConfig off = TypedConfiguration.newConfigItem(UserMemoryConfig.class);
+		off.update(off.descriptor().getProperty(UserMemoryConfig.ENABLED), Boolean.FALSE);
+		try (UserMemorySettings.Overridden overridden = UserMemorySettings.override(off)) {
+			assertFalse(AgentFactory.isOffered(namedTool("remember")));
+			assertFalse(AgentFactory.isOffered(namedTool("recall")));
+			assertTrue("The switch is about memory and nothing else.",
+				AgentFactory.isOffered(namedTool("askUser")));
+		}
+	}
+
+	/** A {@link Tool} that is nothing but its name, which is all {@code isOffered} reads. */
+	private static Tool namedTool(String name) {
+		return new Tool() {
+
+			@Override
+			public String name() {
+				return name;
+			}
+
+			@Override
+			public String description() {
+				return "A stub for the catalog gate.";
+			}
+
+			@Override
+			public ToolSchema schema() {
+				return null;
+			}
+
+			@Override
+			public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
+				throw new UnsupportedOperationException("Never executed.");
+			}
+		};
 	}
 
 }

@@ -72,6 +72,22 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey ERROR_RESPONSE_FORMAT_WITHOUT_SCHEMA;
 
+	/**
+	 * A memory function was given something that is not a memory.
+	 *
+	 * @en This is not a memory.
+	 * @de Das ist keine Erinnerung.
+	 */
+	public static ResKey ERROR_NOT_A_MEMORY;
+
+	/**
+	 * The acting account neither owns the memory nor administers the application.
+	 *
+	 * @en This memory belongs to someone else.
+	 * @de Diese Erinnerung gehört jemand anderem.
+	 */
+	public static ResKey ERROR_MEMORY_NOT_OWNED;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

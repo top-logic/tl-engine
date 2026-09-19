@@ -47,6 +47,8 @@ import com.top_logic.util.TLContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.environment.EnvironmentFact;
 import com.top_logic.tl.ai.core.agent.environment.RunFactsBinding;
+import com.top_logic.tl.ai.core.agent.environment.UserMemories;
+import com.top_logic.tl.ai.core.agent.environment.UserMemoryBinding;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalResult;
@@ -244,7 +246,9 @@ public class ChatProcessor {
 		try (AgentEnvironment env = AgentEnvironment.open(logListener, taskStore, interactionStore,
 				loadedSkills, cancellationToken);
 				RunFactsBinding.Binding factsBinding =
-					RunFactsBinding.bind(state.getFacts(), turnNumber)) {
+					RunFactsBinding.bind(state.getFacts(), turnNumber);
+				UserMemoryBinding.Binding memoryBinding =
+					UserMemoryBinding.bind(state.getMemories())) {
 
 			Logger.info("ChatProcessor: Starting agent in thread: " + Thread.currentThread().getName(),
 				ChatProcessor.class);
@@ -528,6 +532,10 @@ public class ChatProcessor {
 		state.setSessionId(capturedSessionId);
 		state.setRunOptions(options != null ? options : ChatRunOptions.DEFAULT);
 		state.setFacts(facts);
+		// Read here, on the request thread and in the acting account's context, and only once per
+		// conversation: they go into the environment block, which has to stay byte-identical
+		// across the turns of one conversation. See ChatSessionManager.getActiveMemories.
+		state.setMemories(tracker.getSessionManager().getActiveMemories(tracker.getSessionOwner()));
 
 		// Create ConversationLog Turn before submitting background task
 		String messageText = userMessage != null ? userMessage.trim() : "";
@@ -943,6 +951,12 @@ public class ChatProcessor {
 
 		private volatile List<EnvironmentFact> _facts = List.of();
 
+		/**
+		 * The memories the conversation was opened with, captured at send time; never
+		 * {@code null}.
+		 */
+		private volatile List<UserMemories.Entry> _memories = List.of();
+
 		// Lifecycle management
 		volatile Future<?> _backgroundTask = null;
 
@@ -1128,6 +1142,19 @@ public class ChatProcessor {
 		/** Captures the page's facts before the background task starts. */
 		public void setFacts(List<EnvironmentFact> facts) {
 			_facts = facts == null ? List.of() : List.copyOf(facts);
+		}
+
+		/**
+		 * The memories this conversation was opened with, captured at send time; never
+		 * {@code null}.
+		 */
+		public List<UserMemories.Entry> getMemories() {
+			return _memories;
+		}
+
+		/** Captures the conversation's memories before the background task starts. */
+		public void setMemories(List<UserMemories.Entry> memories) {
+			_memories = memories == null ? List.of() : List.copyOf(memories);
 		}
 
 		/** The thread running the agent; may be null when not executing. */

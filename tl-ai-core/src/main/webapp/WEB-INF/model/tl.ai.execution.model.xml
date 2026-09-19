@@ -31,6 +31,17 @@
 				<classifier name="CHOICE"/>
 			</enum>
 
+			<!--
+				What kind of thing the agent kept about the user. The user reads this label in the
+				memory list, so the three are told apart by what the user can do about them, not by
+				where they came from: a wish, a statement of fact, a judgement about the work.
+			-->
+			<enum name="MemoryKind">
+				<classifier name="PREFERENCE"/>
+				<classifier name="FACT"/>
+				<classifier name="FEEDBACK"/>
+			</enum>
+
 			<enum name="InteractionState">
 				<classifier name="PENDING"/>
 				<classifier name="RESOLVED"/>
@@ -589,6 +600,75 @@
 					/>
 					<property name="ordinal"
 						type="tl.core:Integer"
+					/>
+				</attributes>
+			</class>
+
+			<!--
+				One thing the agent keeps about one user (Issue #439).
+
+				Private to its owner: every list over this type filters by owner, the tool that
+				writes one writes it for the acting account, and the delete function refuses a row
+				of somebody else. A memory is a model object rather than a line in a text blob so
+				that the user can see it, sort it and throw it away one at a time.
+			-->
+			<class name="UserMemory">
+				<annotations>
+					<table name="UserMemory"/>
+					<id-column value="displayName"/>
+					<main-properties properties="text,kind,createdAt"/>
+				</annotations>
+				<attributes>
+					<!--
+						Readable identity: the kind and the beginning of the text. The text is free
+						prose, so its line breaks are collapsed - the same treatment the interaction
+						request gives its prompt.
+					-->
+					<property name="displayName"
+						type="tl.core:String"
+					>
+						<annotations>
+							<storage-algorithm>
+								<query>
+									<expr><![CDATA[
+										m -> {
+											text = regex("\\s+").regexReplace($m.get(`tl.ai.execution:UserMemory#text`), " ");
+											excerpt = ifElse(length($text) > 80, $text.subString(0, 80) + "...", $text);
+											kind = $m.get(`tl.ai.execution:UserMemory#kind`);
+											ifElse(isEmpty($kind), "", $kind.label() + ": ") + $excerpt;
+										}
+									]]></expr>
+								</query>
+							</storage-algorithm>
+						</annotations>
+					</property>
+					<reference name="owner"
+						type="tl.accounts:Person"
+						mandatory="true"
+					/>
+					<reference name="kind"
+						type="tl.ai.execution:MemoryKind"
+						mandatory="true"
+					/>
+					<property name="text"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<!--
+						Where the memory came from, so the user can go back and read the exchange
+						that produced it. Optional: a memory written from a headless run belongs to
+						no chat, and deleting the chat only clears this reference (the default
+						deletion policy) - a memory outlives the conversation it came out of.
+					-->
+					<reference name="session"
+						type="tl.ai.execution:AgentSession"
+					/>
+					<property name="runId"
+						type="tl.core:String"
+					/>
+					<property name="createdAt"
+						mandatory="true"
+						type="tl.core:DateTime"
 					/>
 				</attributes>
 			</class>

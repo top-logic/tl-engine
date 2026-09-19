@@ -44,9 +44,19 @@ import com.top_logic.util.TLContext;
  * itself.
  * </p>
  *
+ * <h2>Why the memories are a snapshot</h2>
+ *
+ * <p>
+ * The memories the agent kept about the account are rendered here too, and they are read once per
+ * conversation rather than once per run for that very reason - see {@link UserMemoryBinding}. A
+ * memory the user had the agent write in one turn appears in the next conversation, not in the next
+ * turn of this one.
+ * </p>
+ *
  * @see PromptPlaceholders
  * @see EnvironmentTemplate
  * @see TurnContext
+ * @see UserMemories
  */
 public class RunEnvironment {
 
@@ -94,6 +104,9 @@ public class RunEnvironment {
 			contextSection(facts, resources.getString(I18NConstants.ENVIRONMENT_CONTEXT_HEADING)));
 		values.put(PromptPlaceholders.PREFERENCES, preferencesSection(UserPreferences.of(account),
 			resources.getString(I18NConstants.ENVIRONMENT_PREFERENCES_HEADING)));
+		values.put(PromptPlaceholders.MEMORIES, UserMemories.section(UserMemories.forRun(account),
+			resources.getString(I18NConstants.ENVIRONMENT_MEMORIES_HEADING),
+			kind -> resources.getString(UserMemories.labelKey(kind))));
 
 		return of(EnvironmentSettings.template(resources), values);
 	}

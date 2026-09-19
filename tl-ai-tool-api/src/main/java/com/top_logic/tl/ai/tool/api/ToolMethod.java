@@ -40,14 +40,15 @@ public @interface ToolMethod {
 	 * Who marks this tool's answer as untrusted content.
 	 *
 	 * <p>
-	 * Defaults to {@link AnswerMarking#FRAMEWORK}, which wraps the answer in
-	 * {@link UntrustedEnvelope#MODEL_DATA} - the same marking a TL-Script tool's answer gets, so that
-	 * moving a tool from TL-Script to Java does not silently take the envelope off (issue #478).
+	 * Defaults to {@link AnswerMarking#FRAMEWORK}, which wraps the answer in the
+	 * {@code MODEL_DATA} envelope - the same marking a TL-Script tool's answer gets, so that moving a
+	 * tool from TL-Script to Java does not silently take the envelope off (issue #478).
 	 * Declare {@link AnswerMarking#NONE} when the answer is this application's own sentence, and
 	 * {@link AnswerMarking#TOOL} when the tool marks its content itself.
 	 * </p>
 	 *
 	 * @see AnswerMarking
+	 * @see UntrustedEnvelope
 	 */
 	AnswerMarking marking() default AnswerMarking.FRAMEWORK;
 

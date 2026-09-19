@@ -21,7 +21,7 @@ package com.top_logic.tl.ai.tool.api;
 public enum AnswerMarking {
 
 	/**
-	 * The framework wraps the answer in {@link UntrustedEnvelope#MODEL_DATA}.
+	 * The framework wraps the answer in the {@code MODEL_DATA} envelope.
 	 *
 	 * <p>
 	 * The default, because the alternative default is the bug this exists to close: a tool moved from
@@ -32,9 +32,8 @@ public enum AnswerMarking {
 	 *
 	 * <p>
 	 * An answer that already is one complete envelope block is left alone - see
-	 * {@link UntrustedEnvelope#isMarked(String)} - so a tool that marked itself before the framework
-	 * did, here or in an application built on it, does not get a second wrap that would neutralise its
-	 * first.
+	 * {@code UntrustedEnvelope.isMarked} - so a tool that marked itself before the framework did, here
+	 * or in an application built on it, does not get a second wrap that would neutralise its first.
 	 * </p>
 	 */
 	FRAMEWORK,

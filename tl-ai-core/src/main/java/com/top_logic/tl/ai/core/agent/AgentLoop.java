@@ -491,9 +491,9 @@ public class AgentLoop {
 	/**
 	 * Run the agent loop using the configured {@link ConversationMemory}.
 	 *
-	 * <p>Uses the memory's conversation for message history. After each LLM response,
-	 * updates the token baseline. At the end of each turn, checks whether compaction
-	 * is needed and triggers it automatically.</p>
+	 * <p>Uses the memory's conversation for message history. At the start of each turn - before
+	 * the request is built - checks whether the conversation still fits the budget and compacts it
+	 * if it does not. After each LLM response, updates the token baseline.</p>
 	 *
 	 * @param context  execution context for the current user
 	 * @param listener receives progress events
@@ -572,6 +572,8 @@ public class AgentLoop {
 
 			injectBetweenTurns(conversation);
 
+			compactIfOverBudget(memory, listener, runId, turn);
+
 			AssistantMessage assistantMsg;
 			try {
 				assistantMsg = callProviderWithReactiveCompaction(
@@ -614,30 +616,55 @@ public class AgentLoop {
 				return new AgentResult(stopReason, turn, totalUsage);
 			}
 
-			// TODO: This check runs once per turn, after every tool result from
-			// executeToolCalls is already appended. A turn with many tool calls can push
-			// the estimate well past the usable budget before this fires (observed:
-			// tokensBefore of 9041/10868 against a 7000-token window). Not a hard failure —
-			// callProviderWithReactiveCompaction still catches an actual provider
-			// CONTEXT_WINDOW_EXCEEDED — but tightening this to check after each tool
-			// result (inside executeToolCalls' batch loop) would bound the overshoot
-			// to one tool result instead of one full turn.
-			if (memory.shouldCompact()) {
-				int tokensBefore = memory.estimateTokens();
-				emit(listener, new AgentEvent.CompactionStarted(runId, turn, now(), tokensBefore, "proactive"));
-				// Pass the same label used above, so CompactionResult.trigger() actually
-				// matches what CompactionStarted already reported — memory.compact()'s
-				// "auto" default is never read by anything that persists or displays it.
-				CompactionResult compactionResult = memory.compact("proactive");
-				emit(listener, new AgentEvent.CompactionCompleted(runId, turn, now(), compactionResult));
-			}
-
 			emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
 		}
 
 		StopReason stopReason = StopReason.MAX_TURNS;
 		emit(listener, new AgentEvent.RunCompleted(runId, maxTurns, now(), stopReason, totalUsage));
 		return new AgentResult(stopReason, maxTurns, totalUsage);
+	}
+
+	/**
+	 * Compacts the conversation when it no longer fits the budget, before the turn's request is
+	 * built.
+	 *
+	 * <p>
+	 * Called at the top of every turn, after {@link #injectBetweenTurns} and before the provider
+	 * call, which is the one order in which a conversation that is already over budget cannot spend
+	 * a round trip on a request that cannot be sent (Gitea #367). The check used to sit at the end
+	 * of a turn, so the first request of an over-budget conversation - a reloaded session whose
+	 * compaction sidecar did not match, most of all - was sent, refused, and only then compacted.
+	 * </p>
+	 *
+	 * <p>
+	 * The same position also answers the other half of that question: a turn's tool results are
+	 * appended by {@link #executeToolCalls} and are therefore measured here, at the start of the
+	 * next turn, which is the next moment that history is actually used. Checking between the tool
+	 * batches of one turn would buy nothing - no request is built there - and would run a compaction
+	 * over a half-finished turn, where an assistant message's tool calls and their results are not
+	 * yet all appended and can therefore not be kept together.
+	 * </p>
+	 *
+	 * <p>
+	 * A run therefore no longer compacts after its last turn: what that pass used to prepare is
+	 * prepared by the first turn of the next run instead, which is where it stops a request rather
+	 * than a summarizer call from being spent on a conversation nobody continues. A provider that
+	 * reports an overflow the estimate did not see is still caught by
+	 * {@link #callProviderWithReactiveCompaction}.
+	 * </p>
+	 */
+	private void compactIfOverBudget(ConversationMemory memory, AgentEventListener listener,
+			String runId, int turn) {
+		if (!memory.shouldCompact()) {
+			return;
+		}
+		int tokensBefore = memory.estimateTokens();
+		emit(listener, new AgentEvent.CompactionStarted(runId, turn, now(), tokensBefore, "proactive"));
+		// Pass the same label used above, so CompactionResult.trigger() actually matches what
+		// CompactionStarted already reported - memory.compact()'s "auto" default is never read by
+		// anything that persists or displays it.
+		CompactionResult result = memory.compact("proactive");
+		emit(listener, new AgentEvent.CompactionCompleted(runId, turn, now(), result));
 	}
 
 	/**

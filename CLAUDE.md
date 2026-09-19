@@ -196,7 +196,23 @@ Multi-layer: `SecurityContext.hasToolPermission()` → `ExecutionMode` gate (GLO
 
 ### Memory & Compaction (tl-ai-core `memory/`)
 
-`ConversationMemory` wraps conversation with hybrid token estimation (API baseline + byte heuristic). `CompactionStrategy` interface: `SummarizingStrategy` (LLM-based) and `TruncatingStrategy`. Reactive retry on CONTEXT_OVERFLOW.
+`ConversationMemory` wraps conversation with hybrid token estimation (API baseline + byte heuristic). `CompactionStrategy` interface: `SummarizingStrategy` (LLM-based) and `TruncatingStrategy`.
+
+**When the budget is checked (#367).** `AgentLoop` checks it at the **start of every turn** -
+after the between-turn injections and *before* the turn's request is built - so a conversation
+that is already over budget is compacted rather than sent, refused and compacted. The same
+position covers the other direction: a turn's tool results are measured at the start of the next
+turn, which is the next moment that history is used. Consequences worth knowing:
+
+- a run does **not** compact after its last turn; the next run compacts before its first request,
+  so no summarizer call is spent on a conversation nobody continues;
+- the `CompactionStarted`/`CompactionCompleted` pair of a proactive compaction precedes the turn's
+  `ContextComposition`, not follows it;
+- a provider that reports `CONTEXT_WINDOW_EXCEEDED` anyway - the estimator cannot see the system
+  prompt or the tool schemas - is still caught by the reactive retry in
+  `callProviderWithReactiveCompaction`, which is the fallback, not the normal path.
+
+`TestCompactionOrder` pins all of this.
 
 ### Multi-Agent Delegation
 

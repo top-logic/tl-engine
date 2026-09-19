@@ -475,6 +475,13 @@ message PendingInteractionDto {
 	 * request it can still answer from one that is only waiting to be cleaned up.
 	 */
 	long remainingMs;
+
+	/**
+	 * For an approval, the tool's mode ("USER_SCOPED", "DATA_WRITE", "STRUCTURAL", "EXTERNAL"), so a
+	 * client can phrase the question in the reader's language rather than repeat the server's
+	 * English reason. Empty when the run that asked is no longer waiting, or for a question.
+	 */
+	string toolMode;
 }
 
 /**
@@ -843,6 +850,27 @@ message ApprovalResolvedEvent {
 	string approvalRequestId;
 
 	/** Outcome: APPROVED, APPROVED_FOR_SESSION, REJECTED, TIMED_OUT. */
+	string outcome;
+}
+
+/**
+ * SSE event telling a chat UI that a human-in-the-loop request it may be showing has been answered.
+ *
+ * <p>
+ * Sent to the other windows of the responder's account when one of them answers an approval or a
+ * question. The window the run belongs to learns the same thing from the run's own
+ * {@code approval_resolved} frame; a window that only listed the request - a second tab, a reloaded
+ * page - has no run to hear it from, and would keep showing a card nobody is waiting on.
+ * </p>
+ */
+message InteractionResolvedEvent {
+	/** Correlation id of the approval or question that was answered. */
+	string requestId;
+
+	/**
+	 * What the responder decided: "APPROVED", "APPROVED_FOR_SESSION", "REJECTED", or the answer of
+	 * a question.
+	 */
 	string outcome;
 }
 

@@ -5,10 +5,12 @@
  */
 package com.top_logic.ai.chat.api;
 
+import com.top_logic.ai.chat.api.messages.InteractionResolvedEvent;
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 
@@ -66,5 +68,43 @@ public interface ChatEventHandler extends AgentEventListener {
 	 * {@link AgentEvent.ProviderError}.
 	 */
 	void sendProviderError(ProviderErrorEvent event);
+
+	/**
+	 * The account this chat UI belongs to - whose windows share what a run asks its user.
+	 *
+	 * <p>
+	 * A pending approval or question is addressed to an account, and every window of that account
+	 * may list it and answer it. This is what makes a window one of them, and it is asked only to
+	 * decide who to tell when one of them answers.
+	 * </p>
+	 *
+	 * <p>
+	 * Default: unknown. A chat UI that does not say whose it is is never told about another
+	 * window's answer, which is what every chat UI got before that frame existed.
+	 * </p>
+	 */
+	default Person getAccount() {
+		return null;
+	}
+
+	/**
+	 * Tells this chat UI that an approval or question it may be showing has been answered
+	 * elsewhere.
+	 *
+	 * <p>
+	 * A pending request belongs to the account, so every window of that account may list it and
+	 * answer it. The window whose run is parked on it learns the outcome from the run's own
+	 * {@link AgentEvent.ApprovalResolved}; a window that only listed the request has no run to hear
+	 * that from, and this is what stops it from showing a card nobody is waiting on any more.
+	 * </p>
+	 *
+	 * <p>
+	 * Default: nothing. A chat UI that never lists another window's requests has nothing to take
+	 * back.
+	 * </p>
+	 */
+	default void sendInteractionResolved(InteractionResolvedEvent event) {
+		// Nothing to take back.
+	}
 
 }

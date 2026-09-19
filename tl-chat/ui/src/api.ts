@@ -255,6 +255,11 @@ export interface PendingInteraction {
   prompt: string
   /** For an approval the tool call's argument JSON. */
   payload: string
+  /**
+   * For an approval still being waited on, the tool's mode - what the card's sentence is phrased
+   * from, so a recovered card reads in the user's language as the live one does. Empty otherwise.
+   */
+  toolMode: string
   sessionId: string
   /** How long the requester is still waiting; zero or less means nobody is listening any more. */
   remainingMs: number
@@ -276,6 +281,7 @@ export async function fetchPendingInteractions(windowId: string): Promise<Pendin
     header: item.header ?? '',
     prompt: item.prompt ?? '',
     payload: item.payload ?? '',
+    toolMode: item.toolMode ?? '',
     sessionId: item.sessionId ?? '',
     remainingMs: typeof item.remainingMs === 'number' ? item.remainingMs : 0,
   }))

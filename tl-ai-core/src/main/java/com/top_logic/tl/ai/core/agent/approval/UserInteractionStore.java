@@ -119,6 +119,40 @@ public class UserInteractionStore {
 	}
 
 	/**
+	 * Whether this store is waiting for an answer to the given request.
+	 *
+	 * <p>
+	 * The non-destructive half of {@link #resolve(String, String)}: it says whether this store is
+	 * the one a given {@code requestId} belongs to, without taking the request. A surface that
+	 * holds several runs - the chat servlet, which must find the run a window other than the one
+	 * that started it is answering - asks this to pick the right store before resolving.
+	 * </p>
+	 *
+	 * @param requestId
+	 *        The ID of a {@link UserInteractionRequest} or a {@link PendingApproval}.
+	 */
+	public boolean isPending(String requestId) {
+		return _pending.containsKey(requestId) || _approvals.containsKey(requestId);
+	}
+
+	/**
+	 * The approval waiting under the given id, or <code>null</code> if none is.
+	 *
+	 * <p>
+	 * What a caller asks when it needs more about a pending approval than its id: the
+	 * {@link ApprovalRequest} carries the tool's {@link com.top_logic.tl.ai.tool.api.ToolMode},
+	 * which is what a surface phrases the question from, and which no persisted record of the
+	 * request holds.
+	 * </p>
+	 *
+	 * @param approvalRequestId
+	 *        The ID the approval was registered under.
+	 */
+	public PendingApproval pendingApproval(String approvalRequestId) {
+		return approvalRequestId == null ? null : _approvals.get(approvalRequestId);
+	}
+
+	/**
 	 * Returns all currently pending interaction requests, i.e. the questions the agent asked
 	 * through {@link com.top_logic.tl.ai.core.tools.interaction.AskUserTool}.
 	 *

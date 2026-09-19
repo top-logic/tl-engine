@@ -113,6 +113,29 @@ marked.use({
 marked.setOptions({ gfm: true, breaks: true, renderer })
 
 /**
+ * Parses one answer and filters the result.
+ *
+ * The text is model output, and a model writes down what `webFetch` and the tool results put in
+ * front of it, so the markup `marked` produces from it is attacker-controlled. `DOMPurify` drops
+ * everything a browser could act on - scripts, event handlers, `javascript:` targets - and is the
+ * only thing standing between that text and the `dangerouslySetInnerHTML` below. The two widenings
+ * are the code-block header this file writes itself: the copy button, and the attributes its click
+ * handlers read.
+ */
+export function renderMarkdown(text: string, labels: Labels, citations?: Citation[]): string {
+  // Set here rather than during render: the parse below is the only reader, and it runs
+  // synchronously on the next line.
+  codeLabels = labels
+  citationLabels = labels
+  citationIds = new Map((citations ?? []).map((item) => [item.index, item.id]))
+  const raw = marked.parse(text || '') as string
+  return DOMPurify.sanitize(raw, {
+    ADD_TAGS: ['button'],
+    ADD_ATTR: ['data-copy', 'data-citation-index', 'data-citation-id', 'type', 'aria-label'],
+  })
+}
+
+/**
  * Renders markdown, sanitized.
  *
  * While `streaming` is set, the source is an unfinished document: an open fence or list is normal,
@@ -148,19 +171,10 @@ export function Markdown({
   const [anchor, setAnchor] = useState<{ top: number; left: number } | null>(null)
   const plain = streaming === true && text.length > LIVE_MARKDOWN_LIMIT
 
-  const html = useMemo(() => {
-    if (plain) return ''
-    // Set here rather than during render: the parse below is the only reader, and it runs
-    // synchronously on the next line.
-    codeLabels = labels
-    citationLabels = labels
-    citationIds = new Map((citations ?? []).map((item) => [item.index, item.id]))
-    const raw = marked.parse(text || '') as string
-    return DOMPurify.sanitize(raw, {
-      ADD_TAGS: ['button'],
-      ADD_ATTR: ['data-copy', 'data-citation-index', 'data-citation-id', 'type', 'aria-label'],
-    })
-  }, [plain, text, labels, citations])
+  const html = useMemo(
+    () => (plain ? '' : renderMarkdown(text, labels, citations)),
+    [plain, text, labels, citations],
+  )
 
   const noop = useCallback((_content: React.ReactNode, _options: PaneOpenOptions) => undefined, [])
 

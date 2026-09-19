@@ -11,6 +11,7 @@ import java.util.Set;
 
 import com.vladsch.flexmark.ast.FencedCodeBlock;
 import com.vladsch.flexmark.ext.emoji.EmojiExtension;
+import com.vladsch.flexmark.ext.emoji.EmojiImageType;
 import com.vladsch.flexmark.ext.gfm.strikethrough.StrikethroughExtension;
 import com.vladsch.flexmark.ext.ins.InsExtension;
 import com.vladsch.flexmark.ext.superscript.SuperscriptExtension;
@@ -53,7 +54,8 @@ public class Converters extends TLScriptFunctions {
 	 *
 	 * @param markdown
 	 *        Text in <i>Markdown</i> format.
-	 * @return HTML fragment that can be rendered.
+	 * @return HTML fragment that can be rendered. Sanitized, see
+	 *         {@link #markdownToHtmlString(String)}.
 	 */
 	public static HTMLFragment markdownToHtml(@Mandatory String markdown) {
 		return Fragments.htmlSource(markdownToHtmlString(markdown));
@@ -61,6 +63,14 @@ public class Converters extends TLScriptFunctions {
 
 	/**
 	 * Converts <i>Markdown</i> to an HTML string.
+	 *
+	 * <p>
+	 * The result is safe to write into a page: raw HTML in the Markdown is escaped by the
+	 * renderer, and what the renderer itself produces is then passed through
+	 * {@link HtmlSanitizer}, which drops every element, attribute and URL scheme a Markdown answer
+	 * does not need. Both steps are needed - escaping cannot see a
+	 * <code>[text](javascript:...)</code> link, because that is Markdown, not HTML.
+	 * </p>
 	 *
 	 * @param markdown
 	 *        Text in <i>Markdown</i> format.
@@ -75,7 +85,7 @@ public class Converters extends TLScriptFunctions {
 			.build();
 
 		Node document = parser.parse(markdown);
-		return renderer.render(document);
+		return HtmlSanitizer.sanitize(renderer.render(document));
 	}
 
 	/**
@@ -125,6 +135,12 @@ public class Converters extends TLScriptFunctions {
 			SuperscriptExtension.create(),
 			NestedMarkdownExtension.create()
 		));
+
+		// Render :shortcuts: as the emoji characters themselves. The default renders them as an
+		// <img> below flexmark's root image path, which is GitHub's own /img/ - a path neither
+		// this application nor the engine serves, so the reader saw a broken image where an emoji
+		// belonged.
+		options.set(EmojiExtension.USE_IMAGE_TYPE, EmojiImageType.UNICODE_ONLY);
 
 		// Escape raw HTML embedded in markdown instead of passing it through. The markdown
 		// rendered in the chat UI is LLM/tool output and may carry attacker-controlled markup

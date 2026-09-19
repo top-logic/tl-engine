@@ -13,7 +13,7 @@ import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobStatus;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentResult;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentResultDelivery;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
@@ -140,29 +140,32 @@ public class WaitForSubagentTool implements Tool {
 			return ToolResult.of("ERROR: No such subagent(s): " + String.join(", ", unknown));
 		}
 
-		List<SubagentResult> results = registry.awaitBlocking(ids, timeoutMs);
-		return ToolResult.of(format(ids, results, registry));
+		// The returned results are not read: what matters here is the wait and the delivery flag
+		// it sets, and the jobs themselves carry everything the answer needs.
+		registry.awaitBlocking(ids, timeoutMs);
+		return ToolResult.of(format(ids, registry));
 	}
 
-	private static String format(List<String> ids, List<SubagentResult> results,
-			SubagentJobRegistry registry) {
+	/**
+	 * The waited-for subagents as the parent reads them.
+	 *
+	 * <p>
+	 * Each finished one is rendered by {@link SubagentResultDelivery}, the same formatter the
+	 * turn-start injection uses, so a parent reads the identical block whether it asked for the
+	 * result or was handed it unasked.
+	 * </p>
+	 */
+	private static String format(List<String> ids, SubagentJobRegistry registry) {
 		StringBuilder sb = new StringBuilder();
 		for (String id : ids) {
 			SubagentJob job = registry.get(id);
-			sb.append("### Subagent ").append(id);
-			if (job != null) {
-				sb.append(" (").append(job.targetAgentName()).append(", ")
-					.append(job.status()).append(")");
-			}
-			sb.append("\n");
-			if (job != null && job.status().isTerminal() && job.result() != null) {
-				SubagentResult r = job.result();
-				sb.append(r.finalText()).append("\n");
-				sb.append("_tokens: ").append(r.tokenUsage().totalTokens())
-					.append(", duration: ").append(r.durationMs()).append("ms, tools: ")
-					.append(r.toolCallCount()).append("_\n\n");
+			if (job == null) {
+				sb.append("### Subagent ").append(id).append("\n_unknown_\n\n");
+			} else if (job.status().isTerminal() && job.result() != null) {
+				sb.append(SubagentResultDelivery.describe(job)).append("\n\n");
 			} else {
-				sb.append("_still running (wait timed out)_\n\n");
+				sb.append(SubagentResultDelivery.heading(job))
+					.append("\n_still running (wait timed out)_\n\n");
 			}
 		}
 		return sb.toString().trim();

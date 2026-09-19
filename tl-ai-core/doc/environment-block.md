@@ -26,6 +26,9 @@ Application context - what this application states about the situation:
 - Tenant: ACME
 User preferences - what this user asked for:
 Keep answers to three sentences and address me as Frau Dr. Meier.
+What you know about this user - kept from earlier conversations, with their agreement:
+- [Preference] Prefers the summary before the detail.
+- [Fact] Works in the accounting department.
 </environment>
 ```
 
@@ -43,6 +46,7 @@ A system prompt may use these; the harness fills them at run start.
 | `{{application}}` | The configured application name, else the application's own. |
 | `{{context}}` | The application's stable facts, heading included - or nothing. |
 | `{{preferences}}` | The account's preference text, heading included - or nothing. |
+| `{{memories}}` | What the agent kept about the account, heading included - or nothing. |
 | `{{environment}}` | The whole block. |
 
 Two rules about them:
@@ -104,9 +108,9 @@ An installation that wants to say something different sets `template` in `LLMSer
 | `user-preferences` | Whether the accounts' preference texts are sent at all. Off sends none, whatever the accounts wrote; the texts are kept. |
 | `max-preferences-length` | How long one account's text may be, in characters. Default 1000. Cleared (0 or less) means no cap. |
 
-`{{context}}` and `{{preferences}}` render a **whole section each**, heading included, or nothing at
-all. A template line that is nothing but an emptied placeholder is dropped, so a switched-off
-preference section leaves no orphaned heading and no gap.
+`{{context}}`, `{{preferences}}` and `{{memories}}` render a **whole section each**, heading
+included, or nothing at all. A template line that is nothing but an emptied placeholder is dropped,
+so a switched-off preference section leaves no orphaned heading and no gap.
 
 ## Application facts
 
@@ -243,6 +247,86 @@ request of that account.
 
 The demo edits it on its "My settings" page (`WEB-INF/views/tl-ai-demo/profile.view.xml`).
 
+## User memories (#439)
+
+A preference text is what the user writes down for themselves. A **memory** is what the agent
+writes down, with the user's agreement, and reads back in the next conversation.
+
+Each one is a `tl.ai.execution:UserMemory`: an owner, a kind (`PREFERENCE` / `FACT` / `FEEDBACK`),
+the text, where it came from (session, run id) and when it was kept. A model object rather than a
+line in a blob, so the user sees it in a list, sorts it and throws away one at a time, and
+TL-Script can query it.
+
+### What reaches the block
+
+The newest `max-loaded` memories of the acting account, one line each, naming their kind - the three
+are acted on differently: a preference is honoured, a fact is used, a piece of feedback is a
+correction to apply again. A memory is put on one line, because the block is read line by line.
+
+**The list is read once per conversation, not once per run.** The block has to stay byte-identical
+across the turns of a conversation (see above), so a memory written in turn 3 must not appear in
+turn 4's block - it appears in the next conversation, which is also the only place it is needed,
+the agent having just written it. `ChatSessionManager.getActiveMemories` reads it when the first
+message of a conversation is sent and keeps it on the session state; `ChatProcessor` binds it for
+every run of that conversation through `UserMemoryBinding`. A run that binds none - headless,
+scheduled, TL-Script - is a conversation of its own and reads the store directly.
+
+### What may be written
+
+`remember(kind, text)` keeps one, `recall(query)` searches the ones that did not fit. Both act for
+the acting account and only for it: the owner filter sits in `AgentExecutionStore.memoriesOf`, so
+every reader there is goes through it.
+
+**`remember` refuses a memory the user did not agree to in the turn it is called in**, and that is a
+Java check on the call path, not a line in a prompt. `MemoryConsent` is built at the start of a run
+from the user's own message; `AskUserTool` records what the user answered onto it. There are two
+ways to agree:
+
+- the user asked in their own words - "remember that ...", "merke dir, dass ...";
+- the agent asked with `askUser` whether it should remember something, and the user agreed to *that*
+  question.
+
+A negation in the answer wins over anything in it that would otherwise read as agreement ("no, that
+is fine" is a refusal). The words are configurable, because they are matched against what the
+**user** typed, in the user's language.
+
+A nested run inherits the record rather than building one (`MemoryConsentBinding.bindIfAbsent`): a
+delegate's "user message" is the instruction its parent wrote, so a run allowed to build its own
+could agree with itself by delegating with the words "remember that ...". A detached subagent binds
+none and can keep nothing.
+
+**What the check establishes**: memory was the subject of this turn and the user was in favour. It
+cannot establish that the stored sentence is the sentence the user meant - no server-side check can
+read a sentence the way the user meant it. That is why the user also sees every memory and can
+delete any of them.
+
+### Configuration
+
+```xml
+<user-memory
+  enabled="true"
+  max-loaded="20"
+  max-length="500"
+  request-words="remember,merk dir,…"
+  affirmative-words="yes,ja,…"
+  negative-words="no,nein,…"
+/>
+```
+
+A sibling of `<environment>` in `LLMService`. `enabled="false"` keeps both tools out of every
+agent's catalog, makes a call that reaches them anyway refuse, and renders no section - existing
+memories are kept, so switching it back on restores them.
+
+### What the user sees
+
+The demo's rail has a "Memory" section: a `<data-list>` over the type filtered by
+`owner == currentUser()`, newest first, with a count badge and a Forget command that calls
+`aiMemoryDelete`. That function refuses a row the acting account neither owns nor administers -
+the check is in the function, because a command's input is whatever a channel happens to hold.
+
+A memory written during the conversation appears in that list at once (the store's writer thread
+notifies the open windows) while the agent is told about it only in the next conversation.
+
 ## What an administrator sees
 
 The filled block is written onto the run as `tl.ai.execution:AgentExecution#environment`, as the run
@@ -266,6 +350,12 @@ conversation: it sits in the system prompt, which nothing else records.
 | `agent/AgentLoop#ensureTurnContext` | Putting the per-turn block into the request, once, compaction or not. |
 | `session/Turn#turnContext` / `ConversationLogReplay` | Storing it with the turn, and replaying it. |
 | `agent/environment/UserPreferences` / `PreferencesLengthConstraint` | The account's own text and its cap. |
+| `agent/environment/UserMemories` / `UserMemoryBinding` | Reading the account's memories, rendering the section, and the per-conversation snapshot. |
+| `agent/environment/UserMemoryConfig` / `UserMemorySettings` | The `<user-memory>` configuration section and its defaults. |
+| `tools/memory/UserMemoryTool` | `remember` and `recall`. |
+| `tools/memory/MemoryConsent` / `MemoryConsentBinding` / `ConsentWords` | What the user agreed to in this turn, and the one rule that decides it. |
+| `execution/AgentExecutionStore#createMemory` / `memoriesOf` / `deleteMemory` | The write path, the owner filter and the delete. |
+| `scripting/AIScriptFunctions#memoryDelete` | `aiMemoryDelete`, with the ownership check. |
 | `agent/AgentFactory#buildConfig` | The one place a run's prompt is composed. |
 | `agent/AgentLoop` | Emits `AgentEvent.EnvironmentComposed` right after `RunStarted`. |
 | `execution/ExecutionRecorder` | Writes it onto the run record. |

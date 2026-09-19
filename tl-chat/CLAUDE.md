@@ -820,6 +820,15 @@ See `tl-ai-core/doc/environment-block.md`.
 A fact that throws is sent empty with a WARN rather than taking the page down - the user is in the
 middle of a sentence.
 
+**What the agent remembers about the user** (#439) rides in the same block, under its own heading,
+and is read **once per conversation** for the same prompt-cache reason: `ChatProcessor.sendMessage`
+asks `ChatSessionManager.getActiveMemories` when the first message of a conversation is sent, keeps
+the answer on the session state and binds it for every run of that conversation
+(`UserMemoryBinding`). A memory the agent writes in turn 3 therefore shows up in the user's memory
+list at once, and in the agent's block in the *next* conversation. The rail section that lists them
+is an ordinary `<data-list>` over `tl.ai.execution:UserMemory` filtered by `owner == currentUser()`,
+with a Forget command that calls `aiMemoryDelete`. See `tl-ai-core/doc/environment-block.md`.
+
 Coupling to know: elements share one conversation only when they agree on a chat id - which is what
 the enclosing `<chat>` is for - and a session list feeds the conversation over a **two-way** channel — `<data-list selection>` ↔
 `<chat-conversation input>`. The list writes the picked session; the conversation follows it and

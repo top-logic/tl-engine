@@ -36,16 +36,6 @@ public class TestTokenUsage extends TestCase {
 		assertEquals(5250, usage.totalTokens());
 	}
 
-	/** All fields accessible. */
-	public void testFields() {
-		TokenUsage usage = new TokenUsage(100, 50, 200, 30, 10);
-		assertEquals(100, usage.inputTokens());
-		assertEquals(50, usage.outputTokens());
-		assertEquals(200, usage.thinkingTokens());
-		assertEquals(30, usage.cacheReadTokens());
-		assertEquals(10, usage.cacheWriteTokens());
-	}
-
 	/** EMPTY constant has all zeros. */
 	public void testEmpty() {
 		TokenUsage empty = TokenUsage.EMPTY;

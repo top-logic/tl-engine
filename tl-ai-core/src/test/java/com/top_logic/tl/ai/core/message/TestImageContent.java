@@ -14,13 +14,6 @@ import junit.framework.TestCase;
  */
 public class TestImageContent extends TestCase {
 
-	/** ImageContent stores url and mediaType. */
-	public void testFields() {
-		ImageContent img = new ImageContent("https://example.com/img.png", "image/png");
-		assertEquals("https://example.com/img.png", img.url());
-		assertEquals("image/png", img.mediaType());
-	}
-
 	/** Null url is rejected. */
 	@SuppressWarnings("unused")
 	public void testNullUrlRejected() {

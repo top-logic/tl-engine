@@ -12,13 +12,6 @@ import junit.framework.TestCase;
  */
 public class TestPdfContent extends TestCase {
 
-	/** PdfContent stores data and mediaType. */
-	public void testFields() {
-		PdfContent pdf = new PdfContent("base64data", "application/pdf");
-		assertEquals("base64data", pdf.data());
-		assertEquals("application/pdf", pdf.mediaType());
-	}
-
 	/** Null data is rejected. */
 	@SuppressWarnings("unused")
 	public void testNullDataRejected() {

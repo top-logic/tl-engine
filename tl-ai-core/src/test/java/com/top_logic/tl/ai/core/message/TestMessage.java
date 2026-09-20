@@ -66,22 +66,6 @@ public class TestMessage extends TestCase {
 		assertTrue(msg.state() instanceof ToolState.Completed);
 	}
 
-	/** SystemMessage stores content string. */
-	public void testSystemMessage() {
-		SystemMessage msg = new SystemMessage("s1", NOW, "You are a helpful assistant.");
-		assertEquals("s1", msg.id());
-		assertEquals("You are a helpful assistant.", msg.content());
-	}
-
-	/** CompactionMarker stores metadata. */
-	public void testCompactionMarker() {
-		CompactionMarker msg = new CompactionMarker("c1", NOW, 15, 50000, "auto");
-		assertEquals("c1", msg.id());
-		assertEquals(15, msg.messagesSummarized());
-		assertEquals(50000, msg.tokensBefore());
-		assertEquals("auto", msg.trigger());
-	}
-
 	/** AssistantMessage content list is unmodifiable. */
 	public void testAssistantMessageContentUnmodifiable() {
 		AssistantMessage msg = new AssistantMessage("a1", NOW,

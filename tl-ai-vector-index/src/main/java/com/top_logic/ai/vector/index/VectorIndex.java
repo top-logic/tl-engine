@@ -21,7 +21,6 @@ import java.util.stream.Stream;
 import org.json.simple.JSONObject;
 
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.TLID;
 import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Encrypted;
@@ -40,7 +39,6 @@ import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.HistoryUtils;
-import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.FlexData;
 import com.top_logic.knowledge.wrap.person.PersonManager;
@@ -535,48 +533,13 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	}
 
 	/**
-	 * Checks (with an heuristic) if a Vector index exists
-	 *
-	 * @return true if the Vector index seems to exist
-	 */
-	public boolean indexExists() {
-		return true;
-	}
-
-	/**
-	 * Create the Vector index. Will delete any old data! <b>Use with caution.</b>
-	 */
-	public void createIndex() {
-		/**
-		 * Does Nothing
-		 */
-	}
-
-	/**
 	 * Force a reset of the {@link VectorIndex}. All indexes will be reset to initial empty state.
 	 * <b>Use with caution.</b>
-	 * 
-	 * @see #createIndex()
 	 */
 	public void resetIndex() {
 		/**
 		 * Does Nothing
 		 */
-	}
-
-	/**
-	 * Get the {@link KnowledgeObject} for the given KO ID.
-	 * 
-	 * @param koID
-	 *                The knowledge object ID for which to get the KO
-	 * @param docType
-	 *                The document type of the KO
-	 * @param aKB
-	 *                The knowledge base used
-	 * @return the knowledge object for the given KO ID
-	 */
-	public static final KnowledgeObject getKO(TLID koID, String docType, KnowledgeBase aKB) {
-		return aKB.getKnowledgeObject(docType, koID);
 	}
 
 	/**

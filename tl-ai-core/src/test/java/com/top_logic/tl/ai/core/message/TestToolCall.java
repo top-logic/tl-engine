@@ -12,14 +12,6 @@ import junit.framework.TestCase;
  */
 public class TestToolCall extends TestCase {
 
-	/** ToolCall stores id, name, and arguments. */
-	public void testFields() {
-		ToolCall call = new ToolCall("tc_1", "read_file", "{\"path\":\"foo.txt\"}");
-		assertEquals("tc_1", call.id());
-		assertEquals("read_file", call.name());
-		assertEquals("{\"path\":\"foo.txt\"}", call.arguments());
-	}
-
 	/** Null id is rejected. */
 	@SuppressWarnings("unused")
 	public void testNullIdRejected() {

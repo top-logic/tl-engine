@@ -1968,9 +1968,9 @@ public class ChatServlet extends TopLogicServlet {
 	 * {@code PUT /chat/preferences?chatId=…} - the layout of one chat.
 	 *
 	 * <p>
-	 * The {@code chatId} is the key the layout is stored under; the empty one belongs to the
-	 * one-element {@code <agent-chat>}. The body is what the user decided, so a rail the user never
-	 * touched arrives without {@code railOpen} and keeps following the configured default.
+	 * The {@code chatId} is the key the layout is stored under. The body is what the user decided,
+	 * so a rail the user never touched arrives without {@code railOpen} and keeps following the
+	 * configured default.
 	 * </p>
 	 */
 	private void handlePutPreferences(HttpServletRequest req, HttpServletResponse resp) throws IOException {

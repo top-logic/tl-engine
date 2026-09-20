@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	The chat built from view elements instead of the one-element <agent-chat/> (Issue #415).
+	The chat built from view elements (Issue #415; the one-element form went with #487).
 
 	The page is one <chat chat-id="chat">: it names the conversation once, and every chat element
 	inside it joins that one without repeating the id, so two of them can no longer be written to

@@ -1,19 +1,25 @@
 package com.top_logic.tl.ai.core.tools.model.messages;
 
 /**
- * Response for reference creation operations.
+ * Response for the creation or update of one model part - a module, class, property, reference,
+ * backward reference or enumeration.
+ *
+ * <p>
+ * One message for all of them: they answer the same four things, and six copies of one shape told
+ * the model nothing the name of the tool it called had not already told it.
+ * </p>
  */
-public class ReferenceResponse extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
+public class ModelPartResponse extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 
 	/**
-	 * Creates a {@link com.top_logic.tl.ai.core.tools.model.messages.ReferenceResponse} instance.
+	 * Creates a {@link com.top_logic.tl.ai.core.tools.model.messages.ModelPartResponse} instance.
 	 */
-	public static com.top_logic.tl.ai.core.tools.model.messages.ReferenceResponse create() {
-		return new com.top_logic.tl.ai.core.tools.model.messages.ReferenceResponse();
+	public static com.top_logic.tl.ai.core.tools.model.messages.ModelPartResponse create() {
+		return new com.top_logic.tl.ai.core.tools.model.messages.ModelPartResponse();
 	}
 
-	/** Identifier for the {@link com.top_logic.tl.ai.core.tools.model.messages.ReferenceResponse} type in JSON format. */
-	public static final String REFERENCE_RESPONSE__TYPE = "ReferenceResponse";
+	/** Identifier for the {@link com.top_logic.tl.ai.core.tools.model.messages.ModelPartResponse} type in JSON format. */
+	public static final String MODEL_PART_RESPONSE__TYPE = "ModelPartResponse";
 
 	/** @see #isSuccess() */
 	public static final String SUCCESS__PROP = "success";
@@ -36,11 +42,11 @@ public class ReferenceResponse extends de.haumacher.msgbuf.data.AbstractDataObje
 	private boolean _created = false;
 
 	/**
-	 * Creates a {@link ReferenceResponse} instance.
+	 * Creates a {@link ModelPartResponse} instance.
 	 *
-	 * @see com.top_logic.tl.ai.core.tools.model.messages.ReferenceResponse#create()
+	 * @see com.top_logic.tl.ai.core.tools.model.messages.ModelPartResponse#create()
 	 */
-	protected ReferenceResponse() {
+	protected ModelPartResponse() {
 		super();
 	}
 
@@ -54,7 +60,7 @@ public class ReferenceResponse extends de.haumacher.msgbuf.data.AbstractDataObje
 	/**
 	 * @see #isSuccess()
 	 */
-	public com.top_logic.tl.ai.core.tools.model.messages.ReferenceResponse setSuccess(boolean value) {
+	public com.top_logic.tl.ai.core.tools.model.messages.ModelPartResponse setSuccess(boolean value) {
 		internalSetSuccess(value);
 		return this;
 	}
@@ -65,7 +71,7 @@ public class ReferenceResponse extends de.haumacher.msgbuf.data.AbstractDataObje
 	}
 
 	/**
-	 * Reference name.
+	 * Name of the model part.
 	 */
 	public final String getName() {
 		return _name;
@@ -74,7 +80,7 @@ public class ReferenceResponse extends de.haumacher.msgbuf.data.AbstractDataObje
 	/**
 	 * @see #getName()
 	 */
-	public com.top_logic.tl.ai.core.tools.model.messages.ReferenceResponse setName(String value) {
+	public com.top_logic.tl.ai.core.tools.model.messages.ModelPartResponse setName(String value) {
 		internalSetName(value);
 		return this;
 	}
@@ -85,7 +91,7 @@ public class ReferenceResponse extends de.haumacher.msgbuf.data.AbstractDataObje
 	}
 
 	/**
-	 * Reference TID.
+	 * TID of the model part.
 	 */
 	public final String getTid() {
 		return _tid;
@@ -94,7 +100,7 @@ public class ReferenceResponse extends de.haumacher.msgbuf.data.AbstractDataObje
 	/**
 	 * @see #getTid()
 	 */
-	public com.top_logic.tl.ai.core.tools.model.messages.ReferenceResponse setTid(String value) {
+	public com.top_logic.tl.ai.core.tools.model.messages.ModelPartResponse setTid(String value) {
 		internalSetTid(value);
 		return this;
 	}
@@ -105,7 +111,7 @@ public class ReferenceResponse extends de.haumacher.msgbuf.data.AbstractDataObje
 	}
 
 	/**
-	 * Whether the reference was newly created.
+	 * Whether the model part was newly created.
 	 */
 	public final boolean isCreated() {
 		return _created;
@@ -114,7 +120,7 @@ public class ReferenceResponse extends de.haumacher.msgbuf.data.AbstractDataObje
 	/**
 	 * @see #isCreated()
 	 */
-	public com.top_logic.tl.ai.core.tools.model.messages.ReferenceResponse setCreated(boolean value) {
+	public com.top_logic.tl.ai.core.tools.model.messages.ModelPartResponse setCreated(boolean value) {
 		internalSetCreated(value);
 		return this;
 	}
@@ -126,7 +132,7 @@ public class ReferenceResponse extends de.haumacher.msgbuf.data.AbstractDataObje
 
 	@Override
 	public String jsonType() {
-		return REFERENCE_RESPONSE__TYPE;
+		return MODEL_PART_RESPONSE__TYPE;
 	}
 
 	static final java.util.List<String> PROPERTIES;
@@ -179,8 +185,8 @@ public class ReferenceResponse extends de.haumacher.msgbuf.data.AbstractDataObje
 	}
 
 	/** Reads a new instance from the given reader. */
-	public static com.top_logic.tl.ai.core.tools.model.messages.ReferenceResponse readReferenceResponse(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
-		com.top_logic.tl.ai.core.tools.model.messages.ReferenceResponse result = new com.top_logic.tl.ai.core.tools.model.messages.ReferenceResponse();
+	public static com.top_logic.tl.ai.core.tools.model.messages.ModelPartResponse readModelPartResponse(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+		com.top_logic.tl.ai.core.tools.model.messages.ModelPartResponse result = new com.top_logic.tl.ai.core.tools.model.messages.ModelPartResponse();
 		result.readContent(in);
 		return result;
 	}

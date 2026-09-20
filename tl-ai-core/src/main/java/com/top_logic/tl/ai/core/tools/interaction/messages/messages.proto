@@ -27,51 +27,6 @@ message TaskResponse {
 }
 
 /**
- * Detailed task information returned by <code>getTask</code>.
- */
-message TaskDetail {
-	/**
-	 * Unique identifier of the task.
-	 */
-	string taskId;
-
-	/**
-	 * Current status of the task (pending, in_progress, completed).
-	 */
-	string status;
-
-	/**
-	 * Brief title of the task.
-	 */
-	string subject;
-
-	/**
-	 * Detailed description of what needs to be done.
-	 */
-	string description;
-
-	/**
-	 * Present continuous form shown in spinner when task is in progress.
-	 */
-	string activeForm;
-
-	/**
-	 * Agent or user assigned to the task.
-	 */
-	string owner;
-
-	/**
-	 * Task IDs that this task blocks (cannot start until this one completes).
-	 */
-	repeated string blocks;
-
-	/**
-	 * Task IDs that must complete before this task can start.
-	 */
-	repeated string blockedBy;
-}
-
-/**
  * Summary of a single task, used as an entry in the task list.
  */
 message TaskSummary {

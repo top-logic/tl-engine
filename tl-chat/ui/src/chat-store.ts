@@ -124,7 +124,7 @@ function approvalOutcome(raw: string | undefined): ApprovalOutcome | null {
 
 function parseTraceMode(value: unknown): TraceMode {
   if (value === 'none' || value === 'summary' || value === 'detailed') return value
-  // "overview" is the legacy name (and the vocabulary <agent-chat> still emits) - it maps to summary.
+  // "overview" is the legacy name a stored preference may still carry - it maps to summary.
   if (value === 'overview') return 'summary'
   return 'summary'
 }
@@ -152,8 +152,8 @@ function mergeSubagent(
 /**
  * What a control knows about the chat before the browser has asked the server anything.
  *
- * It travels with the control state (`AgentChatControl.putState`), which is why there is no `GET`
- * for the preferences - see `preferences.ts`.
+ * It travels with the control state (every chat control's `putState`), which is why there is no
+ * `GET` for the preferences - see `preferences.ts`.
  */
 export interface ChatBootstrap {
   windowId: string
@@ -264,9 +264,9 @@ export function eventBelongsToChat(name: string, raw: unknown, sessionId: string
 /**
  * Which store a chat element joins.
  *
- * `chat-id` is what lets separate elements find each other. `<agent-chat>` leaves it empty and
- * falls back to the control's own id, so two chats in one window stay two chats - `CopilotRegistry`
- * in Consulting keeps a *list* of live panels, and a fixed key would silently merge their
+ * `chat-id` is what lets separate elements find each other. An element that hands down none falls
+ * back to the control's own id, so two chats in one window stay two chats - `CopilotRegistry` in
+ * Consulting keeps a *list* of live panels, and a fixed key would silently merge their
  * transcripts.
  */
 export function chatIdOf(state: Record<string, unknown>, controlId: string): string {

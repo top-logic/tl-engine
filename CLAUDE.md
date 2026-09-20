@@ -319,7 +319,7 @@ the chat's notice line; `AgentExecution.model` is corrected to what answered. `a
 
 Two front ends consume that one API:
 
-- **React** (`tl-chat/ui/`, the current one): TypeScript + Vite, mounted into the React view layer by `AgentChatControl` / the `<agent-chat/>` view element. See `tl-chat/CLAUDE.md` for the toolchain and the dev loop.
+- **React** (`tl-chat/ui/`, the current one): TypeScript + Vite, mounted into the React view layer by the composed view elements `<chat-conversation>`, `<chat-rail>` and `<chat-dock>`. See `tl-chat/CLAUDE.md` for the toolchain and the dev loop.
 - **Legacy** (`tl-chat-classic`, own module since #398): `chat-client.js` and the classic `ChatControl` for LayoutServlet applications. Still shipped and still working; frozen, not developed further. A host gets the "Albert" tab by depending on `tl-chat-classic`; depending on `tl-chat` alone gives the API and the React chat only. See `tl-chat-classic/CLAUDE.md`.
 
 `ChatSessionManager` maintains per-session state (Chat + ConversationMemory + ConversationLog) with LRU cache. `ChatHistoryService` persists to KnowledgeBase.

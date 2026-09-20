@@ -27,7 +27,7 @@ import com.top_logic.util.Resources;
  * StringWriter buffer = new StringWriter();
  * try (JsonWriter json = JsonResponseBuilder.createWriter(buffer)) {
  * 	json.beginObject();
- * 	JsonResponseBuilder.writeField(json, "name", value);
+ * 	json.name("name").value(value);
  * 	JsonResponseBuilder.writeLabelAndDescription(json, resourceKey);
  * 	json.endObject();
  * }
@@ -80,60 +80,6 @@ public final class JsonResponseBuilder {
 		if (value != null && !value.isEmpty()) {
 			json.name(name).value(value);
 		}
-	}
-
-	/**
-	 * Writes a field unconditionally.
-	 *
-	 * <p>
-	 * This is a convenience wrapper that matches the style of
-	 * {@link #writeOptionalField(JsonWriter, String, String)} for consistency in code that mixes
-	 * optional and required fields.
-	 * </p>
-	 *
-	 * @param json
-	 *        The {@code JsonWriter} to write to.
-	 * @param name
-	 *        The field name.
-	 * @param value
-	 *        The value to write.
-	 * @throws IOException
-	 *         If writing fails.
-	 */
-	public static void writeField(JsonWriter json, String name, String value) throws IOException {
-		json.name(name).value(value);
-	}
-
-	/**
-	 * Writes a numeric field unconditionally.
-	 *
-	 * @param json
-	 *        The {@code JsonWriter} to write to.
-	 * @param name
-	 *        The field name.
-	 * @param value
-	 *        The numeric value to write.
-	 * @throws IOException
-	 *         If writing fails.
-	 */
-	public static void writeField(JsonWriter json, String name, Number value) throws IOException {
-		json.name(name).value(value);
-	}
-
-	/**
-	 * Writes a boolean field unconditionally.
-	 *
-	 * @param json
-	 *        The {@code JsonWriter} to write to.
-	 * @param name
-	 *        The field name.
-	 * @param value
-	 *        The boolean value to write.
-	 * @throws IOException
-	 *         If writing fails.
-	 */
-	public static void writeField(JsonWriter json, String name, boolean value) throws IOException {
-		json.name(name).value(value);
 	}
 
 	// ========== Resource Key Conversion ==========
@@ -192,49 +138,6 @@ public final class JsonResponseBuilder {
 			try (JsonWriter json = createWriter(buffer)) {
 				json.beginObject();
 				json.name("error").value(errorMessage);
-				json.endObject();
-			}
-			return buffer.toString();
-		} catch (IOException ex) {
-			// Fallback if JSON creation fails
-			return buildFallbackErrorJson(errorMessage);
-		}
-	}
-
-	/**
-	 * Creates a tool error response JSON string with success field.
-	 *
-	 * <p>
-	 * Tool errors include additional fields for tool call results:
-	 * </p>
-	 *
-	 * <pre>
-	 * {
-	 *   "success": false,
-	 *   "error": "Error message here",
-	 *   "module": null,
-	 *   "created": false
-	 * }
-	 * </pre>
-	 *
-	 * <p>
-	 * Note: The additional fields (module, created, etc.) are tool-specific and should be
-	 * customized by the caller.
-	 * </p>
-	 *
-	 * @param errorMessage
-	 *        The error message to include.
-	 * @return JSON string containing the structured error response.
-	 */
-	public static String buildToolErrorJson(String errorMessage) {
-		try {
-			StringWriter buffer = new StringWriter();
-			try (JsonWriter json = createWriter(buffer)) {
-				json.beginObject();
-				json.name("success").value(false);
-				json.name("error").value(errorMessage);
-				json.name("module").nullValue();
-				json.name("created").value(false);
 				json.endObject();
 			}
 			return buffer.toString();

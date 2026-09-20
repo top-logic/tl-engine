@@ -206,22 +206,6 @@ public class DynamicToolCatalog implements ToolRegistry {
 	}
 
 	/**
-	 * Drops a loaded skill's tools again.
-	 *
-	 * @return Whether the skill was loaded.
-	 */
-	public boolean removeSkillOverlay(String skillId) {
-		synchronized (_skillLock) {
-			if (_skills.remove(skillId) == null) {
-				return false;
-			}
-			_lastUse.remove(skillId);
-			publish();
-			return true;
-		}
-	}
-
-	/**
 	 * Registers a callback for {@link #historyCompacted()}.
 	 *
 	 * <p>

@@ -14,7 +14,7 @@ rather than surgery inside the live one.
 | `layout/ChatControl` - renders the transcript, the input section and the history panel, and injects `chat-client.js` | `ChatServlet` and the whole `/chat/*` REST + SSE API |
 | `layout/ChatComponentBuilder` - the `ModelBuilder` named by `agent.xml` | `Chat`, `ChatMessage`, `ChatProcessor`, `ChatSessionManager`, `ChatSessionRegistry`, `TaskProgressTracker`, `PromptImprovementProcessor` |
 | `webapp/script/chat-client.js` (4152 lines), `webapp/style/chatStyles.css`, `webapp/themes/core/icons/albert.svg` | `ChatHistoryService`, the msgbuf `messages.proto` DTOs |
-| The `WEB-INF/layouts/tl-chat/chat/*` layouts and the `mainTabbar.layout.overlay.xml` that pushes the tab into a host's tab bar | The React application `ui/` and its `<agent-chat/>` view element |
+| The `WEB-INF/layouts/tl-chat/chat/*` layouts and the `mainTabbar.layout.overlay.xml` that pushes the tab into a host's tab bar | The React application `ui/` and its composed view elements |
 
 Both Java classes keep the package `com.top_logic.ai.chat.layout` they had in `tl-chat`, so the
 split cost no import churn. The package is therefore split across two jars - harmless here, and the

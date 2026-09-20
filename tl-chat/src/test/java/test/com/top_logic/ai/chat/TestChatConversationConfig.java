@@ -14,7 +14,6 @@ import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.ModuleTestSetup;
 
-import com.top_logic.ai.chat.view.AgentChatElement;
 import com.top_logic.ai.chat.view.ChatConversationElement;
 import com.top_logic.ai.chat.view.ChatConversationElement.Config;
 import com.top_logic.ai.chat.view.ChatConversationElement.Trace;
@@ -212,20 +211,6 @@ public class TestChatConversationConfig extends TestCase {
 	/** An element that configures none pushes the empty string, which is the browser's "not set". */
 	public void testUnsetPlaceholderIsTheEmptyString() {
 		assertEquals("", ChatViewBinding.resolveText(null));
-	}
-
-	/** The one-element {@code <agent-chat/>} form takes the same option, and defaults to none. */
-	public void testAgentChatTakesTheSamePlaceholder() throws Exception {
-		assertNull(TypedConfiguration.newConfigItem(AgentChatElement.Config.class).getPlaceholder());
-
-		String xml = "<agent-chat xmlns:config='http://www.top-logic.com/ns/config/6.0'"
-			+ " config:interface='" + AgentChatElement.Config.class.getName() + "'>"
-			+ "<placeholder><en>Ask about this project.</en></placeholder>"
-			+ "</agent-chat>";
-		AgentChatElement.Config config =
-			(AgentChatElement.Config) TypedConfiguration.parse(CharacterContents.newContent(xml));
-		assertEquals("Ask about this project.",
-			Resources.getInstance(Locale.ENGLISH).getString(config.getPlaceholder()));
 	}
 
 	/** A model-bound {@code <mention>} parses: rows plus the optional label/text and the default limit. */

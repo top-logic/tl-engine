@@ -21,12 +21,9 @@ import com.top_logic.basic.logging.Level;
 import com.top_logic.tl.ai.core.agent.AgentCapabilities.AgentGraph;
 import com.top_logic.tl.ai.core.agent.AgentFactory.DelegateOffer;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
+import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tl.ai.tool.api.ToolResult;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
  * Tests the delegate filter: which sub-agents an agent is offered, and what its prompt says about the
@@ -447,36 +444,6 @@ public class TestDelegateFilter extends TestCase {
 	}
 
 	private static Tool tool(String name, String group) {
-		return new Tool() {
-			@Override
-			public String name() {
-				return name;
-			}
-
-			@Override
-			public String description() {
-				return "Stub: " + name;
-			}
-
-			@Override
-			public ToolSchema schema() {
-				return new ToolSchema(name, description(), "{\"type\":\"object\",\"properties\":{}}");
-			}
-
-			@Override
-			public String group() {
-				return group;
-			}
-
-			@Override
-			public ToolMode mode() {
-				return ToolMode.READ;
-			}
-
-			@Override
-			public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
-				return ToolResult.of("ok");
-			}
-		};
+		return ToolStubs.builder(name).group(group).build();
 	}
 }

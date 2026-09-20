@@ -15,9 +15,6 @@ public class SearchResponse extends de.haumacher.msgbuf.data.AbstractDataObject 
 	/** Identifier for the {@link com.top_logic.tl.ai.core.tools.model.messages.SearchResponse} type in JSON format. */
 	public static final String SEARCH_RESPONSE__TYPE = "SearchResponse";
 
-	/** @see #isSuccess() */
-	public static final String SUCCESS__PROP = "success";
-
 	/** @see #getResultCount() */
 	public static final String RESULT_COUNT__PROP = "resultCount";
 
@@ -26,8 +23,6 @@ public class SearchResponse extends de.haumacher.msgbuf.data.AbstractDataObject 
 
 	/** @see #getError() */
 	public static final String ERROR__PROP = "error";
-
-	private boolean _success = false;
 
 	private int _resultCount = 0;
 
@@ -42,26 +37,6 @@ public class SearchResponse extends de.haumacher.msgbuf.data.AbstractDataObject 
 	 */
 	protected SearchResponse() {
 		super();
-	}
-
-	/**
-	 * Whether the search succeeded.
-	 */
-	public final boolean isSuccess() {
-		return _success;
-	}
-
-	/**
-	 * @see #isSuccess()
-	 */
-	public com.top_logic.tl.ai.core.tools.model.messages.SearchResponse setSuccess(boolean value) {
-		internalSetSuccess(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #isSuccess()} without chain call utility. */
-	protected final void internalSetSuccess(boolean value) {
-		_success = value;
 	}
 
 	/**
@@ -127,7 +102,8 @@ public class SearchResponse extends de.haumacher.msgbuf.data.AbstractDataObject 
 	}
 
 	/**
-	 * Error message (if success is false).
+	 * Error message, empty if the search ran. A search that found nothing is not an error, so this
+	 * is the only thing that says the search failed.
 	 */
 	public final String getError() {
 		return _error;
@@ -154,7 +130,6 @@ public class SearchResponse extends de.haumacher.msgbuf.data.AbstractDataObject 
 	static final java.util.List<String> PROPERTIES;
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
-			SUCCESS__PROP, 
 			RESULT_COUNT__PROP, 
 			RESULTS__PROP, 
 			ERROR__PROP);
@@ -182,7 +157,6 @@ public class SearchResponse extends de.haumacher.msgbuf.data.AbstractDataObject 
 	@Override
 	public Object get(String field) {
 		switch (field) {
-			case SUCCESS__PROP: return isSuccess();
 			case RESULT_COUNT__PROP: return getResultCount();
 			case RESULTS__PROP: return getResults();
 			case ERROR__PROP: return getError();
@@ -193,7 +167,6 @@ public class SearchResponse extends de.haumacher.msgbuf.data.AbstractDataObject 
 	@Override
 	public void set(String field, Object value) {
 		switch (field) {
-			case SUCCESS__PROP: internalSetSuccess((boolean) value); break;
 			case RESULT_COUNT__PROP: internalSetResultCount((int) value); break;
 			case RESULTS__PROP: internalSetResults(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.tl.ai.core.tools.model.messages.SearchResult.class, value)); break;
 			case ERROR__PROP: internalSetError((String) value); break;
@@ -215,8 +188,6 @@ public class SearchResponse extends de.haumacher.msgbuf.data.AbstractDataObject 
 	@Override
 	protected void writeFields(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
 		super.writeFields(out);
-		out.name(SUCCESS__PROP);
-		out.value(isSuccess());
 		out.name(RESULT_COUNT__PROP);
 		out.value(getResultCount());
 		out.name(RESULTS__PROP);
@@ -232,7 +203,6 @@ public class SearchResponse extends de.haumacher.msgbuf.data.AbstractDataObject 
 	@Override
 	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
-			case SUCCESS__PROP: setSuccess(in.nextBoolean()); break;
 			case RESULT_COUNT__PROP: setResultCount(in.nextInt()); break;
 			case RESULTS__PROP: {
 				java.util.List<com.top_logic.tl.ai.core.tools.model.messages.SearchResult> newValue = new java.util.ArrayList<>();

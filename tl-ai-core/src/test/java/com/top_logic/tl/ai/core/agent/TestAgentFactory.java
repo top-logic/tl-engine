@@ -5,17 +5,15 @@
  */
 package com.top_logic.tl.ai.core.agent;
 
-import java.util.Map;
 
 import junit.framework.TestCase;
 
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.tl.ai.core.agent.environment.UserMemoryConfig;
 import com.top_logic.tl.ai.core.agent.environment.UserMemorySettings;
+import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
-import com.top_logic.tl.ai.tool.api.ToolResult;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
+import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /**
@@ -95,28 +93,10 @@ public class TestAgentFactory extends TestCase {
 
 	/** A {@link Tool} that is nothing but its name, which is all {@code isOffered} reads. */
 	private static Tool namedTool(String name) {
-		return new Tool() {
-
-			@Override
-			public String name() {
-				return name;
-			}
-
-			@Override
-			public String description() {
-				return "A stub for the catalog gate.";
-			}
-
-			@Override
-			public ToolSchema schema() {
-				return null;
-			}
-
-			@Override
-			public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
+		return ToolStubs.builder(name).description("A stub for the catalog gate.").schema(null)
+			.mode(ToolMode.STRUCTURAL).execute((args, context) -> {
 				throw new UnsupportedOperationException("Never executed.");
-			}
-		};
+			}).build();
 	}
 
 }

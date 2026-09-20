@@ -44,11 +44,4 @@ public class TestCompactionResult extends TestCase {
 		}
 	}
 
-	/** Zero values are valid (e.g. an empty conversation). */
-	public void testAllowsZero() {
-		CompactionResult result = new CompactionResult(List.of(), 0, 0, 0, "auto");
-		assertEquals(0, result.messagesSummarized());
-		assertEquals(0, result.tokensBefore());
-		assertEquals(0, result.tokensAfter());
-	}
 }

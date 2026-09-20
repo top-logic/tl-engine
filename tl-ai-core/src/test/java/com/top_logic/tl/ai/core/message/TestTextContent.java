@@ -12,12 +12,6 @@ import junit.framework.TestCase;
  */
 public class TestTextContent extends TestCase {
 
-	/** TextContent stores text. */
-	public void testTextContent() {
-		TextContent content = new TextContent("hello");
-		assertEquals("hello", content.text());
-	}
-
 	/** Null text is rejected. */
 	@SuppressWarnings("unused")
 	public void testNullTextRejected() {

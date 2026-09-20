@@ -8,7 +8,6 @@ package com.top_logic.tl.ai.core.agent;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.Test;
@@ -34,10 +33,8 @@ import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.StreamHandler;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
+import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
-import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
@@ -323,32 +320,8 @@ public class TestCompactionOrder extends TestCase {
 
 	private static ToolCatalog fatResultRegistry() {
 		ToolCatalog catalog = new ToolCatalog();
-		catalog.register(new Tool() {
-			@Override
-			public String name() {
-				return READ_REPORT.name();
-			}
-
-			@Override
-			public String description() {
-				return READ_REPORT.description();
-			}
-
-			@Override
-			public ToolSchema schema() {
-				return READ_REPORT;
-			}
-
-			@Override
-			public ToolMode mode() {
-				return ToolMode.READ;
-			}
-
-			@Override
-			public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
-				return ToolResult.of(FAT_RESULT);
-			}
-		});
+		catalog.register(ToolStubs.builder(READ_REPORT.name()).description(READ_REPORT.description())
+			.schema(READ_REPORT).result(FAT_RESULT).build());
 		catalog.freeze();
 		return catalog;
 	}

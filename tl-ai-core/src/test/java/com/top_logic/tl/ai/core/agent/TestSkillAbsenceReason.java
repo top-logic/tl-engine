@@ -17,13 +17,10 @@ import com.top_logic.tl.ai.core.agent.AgentCapabilities.AgentGraph;
 import com.top_logic.tl.ai.core.agent.skills.Skill;
 import com.top_logic.tl.ai.core.tools.DynamicToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
+import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.core.tools.interaction.SkillTool;
 import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tl.ai.tool.api.ToolResult;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
  * What {@code loadSkill} answers when it cannot hand over the skill that was asked for.
@@ -403,36 +400,6 @@ public class TestSkillAbsenceReason extends TestCase {
 	}
 
 	private static Tool tool(String name, String group) {
-		return new Tool() {
-			@Override
-			public String name() {
-				return name;
-			}
-
-			@Override
-			public String description() {
-				return "Stub: " + name;
-			}
-
-			@Override
-			public ToolSchema schema() {
-				return new ToolSchema(name, description(), "{\"type\":\"object\",\"properties\":{}}");
-			}
-
-			@Override
-			public String group() {
-				return group;
-			}
-
-			@Override
-			public ToolMode mode() {
-				return ToolMode.READ;
-			}
-
-			@Override
-			public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
-				return ToolResult.of("ok");
-			}
-		};
+		return ToolStubs.builder(name).group(group).build();
 	}
 }

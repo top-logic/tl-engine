@@ -7,7 +7,6 @@ package com.top_logic.tl.ai.core.agent;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import org.junit.Assume;
@@ -35,9 +34,7 @@ import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.anthropic.AnthropicMessagesProvider;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
-import com.top_logic.tl.ai.tool.api.ToolMode;
+import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 
@@ -126,28 +123,18 @@ public class VisualAgentLoopTest extends TestCase {
 				new TextContent("was unavailable, but 20°C is about 68°F.")));
 
 		ToolCatalog registry = new ToolCatalog();
-		registry.register(new Tool() {
-			@Override public String name() { return "get_weather"; }
-			@Override public String description() { return "Gets the current weather for a city"; }
-			@Override public ToolSchema schema() { return weatherSpec; }
-			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
+		registry.register(ToolStubs.builder("get_weather").description("Gets the current weather for a city")
+			.schema(weatherSpec).execute((args, context) -> {
 				sleep(100);
 				String city = args.containsKey("city") ? String.valueOf(args.get("city")) : "Unknown";
 				String temp = "Berlin".equals(city) ? "20°C, sunny" : "15°C, cloudy";
 				return ToolResult.of("Weather in " + city + ": " + temp);
-			}
-			@Override public ToolMode mode() { return ToolMode.READ; }
-		});
-		registry.register(new Tool() {
-			@Override public String name() { return "calculate"; }
-			@Override public String description() { return "Evaluates a math expression"; }
-			@Override public ToolSchema schema() { return calcSpec; }
-			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
+			}).build());
+		registry.register(ToolStubs.builder("calculate").description("Evaluates a math expression").schema(calcSpec)
+			.execute((args, context) -> {
 				sleep(100);
 				throw new RuntimeException("Calculator service unavailable");
-			}
-			@Override public ToolMode mode() { return ToolMode.READ; }
-		});
+			}).build());
 		registry.freeze();
 
 		Conversation conv = new Conversation();
@@ -183,15 +170,9 @@ public class VisualAgentLoopTest extends TestCase {
 			"{\"type\":\"object\",\"properties\":{}}");
 
 		ToolCatalog registry = new ToolCatalog();
-		registry.register(new Tool() {
-			@Override public String name() { return "get_current_time"; }
-			@Override public String description() { return "Returns the current server time in ISO-8601 format."; }
-			@Override public ToolSchema schema() { return toolSpec; }
-			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
-				return ToolResult.of(Instant.now().toString());
-			}
-			@Override public ToolMode mode() { return ToolMode.READ; }
-		});
+		registry.register(ToolStubs.builder("get_current_time")
+			.description("Returns the current server time in ISO-8601 format.").schema(toolSpec)
+			.result(Instant.now().toString()).build());
 		registry.freeze();
 
 		Conversation conv = new Conversation();

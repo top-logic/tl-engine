@@ -57,9 +57,6 @@
 			<column name="lastUpdated"
 				columnWidth="175px"
 			/>
-			<column name="memory"
-				visibility="excluded"
-			/>
 			<column name="metadata"
 				visibility="excluded"
 			/>

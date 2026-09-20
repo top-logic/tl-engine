@@ -8,7 +8,6 @@ package com.top_logic.tl.ai.core.execution;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -36,11 +35,11 @@ import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
+import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.RunInfo;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 
@@ -241,35 +240,13 @@ public class TestRunInfoInTool extends TestCase {
 	 * about its run.
 	 */
 	private static Tool probe(String name, List<RunInfo> seen, List<RunInfo> bound) {
-		return new Tool() {
-			@Override
-			public String name() {
-				return name;
-			}
-
-			@Override
-			public String description() {
-				return "Records the run it executes in.";
-			}
-
-			@Override
-			public ToolMode mode() {
-				return ToolMode.READ;
-			}
-
-			@Override
-			public ToolSchema schema() {
-				return new ToolSchema(name, "Records the run it executes in.", "{}");
-			}
-
-			@Override
-			public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
+		return ToolStubs.builder(name).description("Records the run it executes in.")
+			.schema(new ToolSchema(name, "Records the run it executes in.", "{}")).execute((args, context) -> {
 				seen.add(context.runInfo());
 				bound.add(RunInfoBinding.current());
 				THREADS.add(Thread.currentThread().getName());
 				return ToolResult.of("recorded");
-			}
-		};
+			}).build();
 	}
 
 	private static LLMProvider mockProvider(List<ContentPart> first, List<ContentPart> second) {

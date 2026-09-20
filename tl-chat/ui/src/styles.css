@@ -14,10 +14,10 @@
 /*
  * Every chat element is a root of its own.
  *
- * `<agent-chat>` renders inside `.tl-cockpit`, but `<chat-conversation/>`, `<chat-dock/>`,
- * `<chat-rail/>` and the rail-section elements are placed by a view wherever it likes - outside
- * that root, where neither the component tokens below nor the base CSS after them would be in
- * scope. Their buttons would
+ * A host composing the whole chat renders inside `.tl-cockpit`, but `<chat-conversation/>`,
+ * `<chat-dock/>`, `<chat-rail/>` and the rail-section elements are placed by a view wherever it
+ * likes - outside that root, where neither the component tokens below nor the base CSS after them
+ * would be in scope. Their buttons would
  * fall back to browser chrome (grey, square, bordered) and every `var(--r-1)` to nothing. One rule
  * for all of them rather than a copy per root, so a token added here reaches every element.
  */
@@ -68,7 +68,7 @@
 /*
  * The chat measures itself, not the window (Issue #427).
  *
- * `<agent-chat>` is placed by an application and almost never owns the window: a shell's navigation
+ * The chat is placed by an application and almost never owns the window: a shell's navigation
  * and the page gutters take their share first. A viewport media query therefore asks the wrong box
  * - it is still wide while the chat is not - and the narrow layout arrived hundreds of pixels too
  * late, or never. Two containers carry every rule that is about how much room the chat has:
@@ -3607,8 +3607,8 @@
 
 /*
  * Below 1280, not at it: 1280 itself still fits a column beside the thread. Measured on the chat,
- * not on the window - an `<agent-chat>` in an application shell owns neither the window's width nor
- * the room the number is about.
+ * not on the window - a chat in an application shell owns neither the window's width nor the room
+ * the number is about.
  */
 @container chat-shell (max-width: 1279.98px) {
   /*

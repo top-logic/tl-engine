@@ -15,12 +15,9 @@ import junit.framework.TestCase;
 
 import com.top_logic.tl.ai.core.tools.DynamicToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
+import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.core.tools.interaction.SkillTool;
 import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
-import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tl.ai.tool.api.ToolResult;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /** */
@@ -311,17 +308,6 @@ public class TestSkillTool extends TestCase {
 		}
 		// Simulate ToolRegistryService sanitization: config name → provider name
 		String providerName = ToolRegistryService.toProviderName(qualifiedName);
-		return new Tool() {
-			@Override public String name() { return providerName; }
-			@Override public String description() { return "Stub: " + providerName; }
-			@Override public ToolSchema schema() {
-				return new ToolSchema(providerName, description(),
-					"{\"type\":\"object\",\"properties\":{}}");
-			}
-			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
-				return ToolResult.of("ok");
-			}
-			@Override public ToolMode mode() { return ToolMode.READ; }
-		};
+		return ToolStubs.builder(providerName).build();
 	}
 }

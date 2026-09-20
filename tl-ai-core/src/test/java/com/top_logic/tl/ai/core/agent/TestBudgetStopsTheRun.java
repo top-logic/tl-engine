@@ -7,7 +7,6 @@ package com.top_logic.tl.ai.core.agent;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -30,10 +29,8 @@ import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
+import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
-import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
@@ -164,32 +161,7 @@ public class TestBudgetStopsTheRun extends TestCase {
 
 	private static ToolCatalog catalog() {
 		ToolCatalog catalog = new ToolCatalog();
-		catalog.register(new Tool() {
-			@Override
-			public String name() {
-				return LOOK.name();
-			}
-
-			@Override
-			public String description() {
-				return LOOK.description();
-			}
-
-			@Override
-			public ToolSchema schema() {
-				return LOOK;
-			}
-
-			@Override
-			public ToolMode mode() {
-				return ToolMode.READ;
-			}
-
-			@Override
-			public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
-				return ToolResult.of("ok");
-			}
-		});
+		catalog.register(ToolStubs.builder(LOOK.name()).description(LOOK.description()).schema(LOOK).build());
 		catalog.freeze();
 		return catalog;
 	}

@@ -2,7 +2,7 @@
  * The chat's own strings, in the language the application runs in.
  *
  * The language comes from the user's TopLogic locale, pushed into the bootstrap state by
- * `AgentChatControl`, so the chat speaks whatever the app bar and the rest of the view layer speak.
+ * every chat control, so the chat speaks whatever the app bar and the rest of the view layer speak.
  * Anything the framework renders is already localized by the framework; only the strings this
  * bundle owns live here.
  */

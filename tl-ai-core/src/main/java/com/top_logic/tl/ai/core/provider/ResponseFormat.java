@@ -97,9 +97,4 @@ public record ResponseFormat(ResponseFormat.Kind kind, String schemaName, Map<St
 		String effectiveName = name == null || name.isBlank() ? DEFAULT_SCHEMA_NAME : name;
 		return new ResponseFormat(Kind.JSON_SCHEMA, effectiveName, schema, strict);
 	}
-
-	/** Whether this format asks for JSON at all - with or without a schema. */
-	public boolean isJson() {
-		return kind != Kind.TEXT;
-	}
 }

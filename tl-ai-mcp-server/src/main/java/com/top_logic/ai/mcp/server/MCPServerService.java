@@ -482,16 +482,6 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 	}
 
 	/**
-	 * Returns the MCP server instance.
-	 *
-	 * @return The MCP server, or {@code null} if not started.
-	 */
-	public McpSyncServer getMCPServer() {
-		return _mcpServer;
-	}
-
-
-	/**
 	 * Simple ServletConfig adapter for initializing the MCP transport servlet.
 	 */
 	private static class ServletConfigAdapter implements ServletConfig {

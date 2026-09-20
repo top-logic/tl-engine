@@ -113,10 +113,9 @@ public class SkillTool {
 	 * @param skills
 	 *        Map of skill id to {@link Skill}.
 	 * @param dynamicCatalog
-	 *        the dynamic catalog to add tool overlays to, or {@code null} for legacy behavior
+	 *        the dynamic catalog to add tool overlays to
 	 * @param toolResolver
-	 *        resolves qualified tool names to {@link Tool} instances, or {@code null} for legacy
-	 *        behavior
+	 *        resolves qualified tool names to {@link Tool} instances
 	 * @param permitted
 	 *        whether the run's principal may use a given tool; tools it rejects are neither
 	 *        registered nor announced. May be {@code null}, which permits everything.
@@ -137,9 +136,7 @@ public class SkillTool {
 		_permitted = permitted != null ? permitted : tool -> true;
 		_absenceReason = absenceReason != null ? absenceReason : skillId -> null;
 
-		if (dynamicCatalog != null) {
-			dynamicCatalog.onHistoryCompacted(this::forgetDeliveredContent);
-		}
+		dynamicCatalog.onHistoryCompacted(this::forgetDeliveredContent);
 
 		if (preloadedSkillIds != null) {
 			for (String skillId : preloadedSkillIds) {
@@ -165,13 +162,6 @@ public class SkillTool {
 	}
 
 	/**
-	 * Legacy constructor without dynamic tool loading.
-	 */
-	public SkillTool(Map<String, Skill> skills) {
-		this(skills, null, null);
-	}
-
-	/**
 	 * Every tool name any of these skills declares, loaded or not.
 	 *
 	 * <p>
@@ -184,7 +174,7 @@ public class SkillTool {
 		for (Skill skill : _skills.values()) {
 			for (String toolName : skill.tools()) {
 				names.add(toolName);
-				Tool tool = _toolResolver == null ? null : _toolResolver.apply(toolName);
+				Tool tool = _toolResolver.apply(toolName);
 				if (tool != null) {
 					// The model calls a tool by its bare name, not by the qualified name a skill
 					// lists it under.
@@ -325,10 +315,6 @@ public class SkillTool {
 	 */
 	private Load addSkillTools(Skill skill) {
 		if (_loadedSkills.contains(skill.id())) {
-			return Load.NOTHING;
-		}
-		if (_dynamicCatalog == null || _toolResolver == null) {
-			// Legacy mode: no catalog to grow, so nothing to remember either.
 			return Load.NOTHING;
 		}
 		markLoaded(skill.id());

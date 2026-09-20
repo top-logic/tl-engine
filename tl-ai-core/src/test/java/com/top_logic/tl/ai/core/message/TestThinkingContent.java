@@ -12,13 +12,6 @@ import junit.framework.TestCase;
  */
 public class TestThinkingContent extends TestCase {
 
-	/** ThinkingContent stores text and continuity token. */
-	public void testFields() {
-		ThinkingContent content = new ThinkingContent("reasoning step", "sig123");
-		assertEquals("reasoning step", content.text());
-		assertEquals("sig123", content.continuityToken());
-	}
-
 	/** Continuity token may be null. */
 	public void testNullToken() {
 		ThinkingContent content = new ThinkingContent("reasoning step", null);

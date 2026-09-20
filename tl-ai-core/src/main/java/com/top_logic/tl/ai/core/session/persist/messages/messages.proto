@@ -591,9 +591,6 @@ message SessionMetadataV2 {
 	/** Last model used. */
 	string lastModel;
 
-	/** Last provider used. */
-	string lastProvider;
-
 	/** The approval mode for the session. */
 	string approvalMode;
 }

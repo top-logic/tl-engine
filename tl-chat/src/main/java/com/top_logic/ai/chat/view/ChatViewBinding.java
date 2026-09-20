@@ -36,7 +36,7 @@ import com.top_logic.util.TLContextManager;
  * Per-window, per-{@code chat-id} server binding for the chat view elements.
  *
  * <p>
- * {@link AgentChatControl} used to bind the tracker, the user and the layout preferences in every
+ * Every chat control used to bind the tracker, the user and the layout preferences in every
  * constructor. Four elements on one chat would then load {@link ChatPreferencesStore} four times
  * and race on one {@code PersonalConfiguration} key. This class does that work once per
  * (sub-session, conversation), and the tracker with it: a window that shows two conversations has a
@@ -70,10 +70,11 @@ public final class ChatViewBinding {
 	 * The conversation this binding's tracker belongs to - what the client echoes as {@code chatId}.
 	 *
 	 * <p>
-	 * The same string as {@link #_chatId} for the elements that share a chat by name, and the
-	 * control's own id for an {@code <agent-chat/>}, which shares its conversation with nobody. It
-	 * is a key of its own because the layout is stored per {@code chat-id} while a run belongs to
-	 * one conversation, and for {@code <agent-chat/>} those two are not the same thing.
+	 * The same string as {@link #_chatId} for every element there is: a chat's conversation is its
+	 * {@code chat-id}. It is a key of its own because the two answer different questions - the
+	 * layout is stored per {@code chat-id}, a tracker and a run belong to one conversation - and a
+	 * chat that shared its conversation with nobody would key them differently. The one-element
+	 * {@code <agent-chat/>} was such a chat until #487 removed it.
 	 * </p>
 	 */
 	private final String _conversation;
@@ -123,28 +124,21 @@ public final class ChatViewBinding {
 	 * tracker and the user.
 	 * </p>
 	 */
-	public static ChatViewBinding bind(ReactContext context, String chatId) {
+	private static ChatViewBinding bind(ReactContext context, String chatId) {
 		return bindConversation(context, chatId, chatId);
 	}
 
 	/**
-	 * The binding of a chat that shares its conversation with nobody, keyed by the control showing
-	 * it.
+	 * The binding of {@code conversation}, whose layout is stored under {@code chatId}.
 	 *
 	 * <p>
-	 * What {@code <agent-chat/>} uses. Its layout is stored under the empty {@code chat-id} - that
-	 * is the one-element chat's own place - but its <em>conversation</em> is its own, so two of them
-	 * in one window are two conversations with a tracker each, exactly as the browser keys their two
-	 * stores by control id.
+	 * The two are the same string for every element there is: a chat's conversation is its
+	 * {@code chat-id}. They are separate parameters because the tracker and the run are keyed by the
+	 * conversation while the layout is keyed by the {@code chat-id} (#502), and a chat that shared
+	 * its conversation with nobody would key them differently - the one-element {@code <agent-chat/>}
+	 * did exactly that before #487 removed it.
 	 * </p>
-	 *
-	 * @param controlId
-	 *        The showing control's id, which the browser sends back as its {@code chatId}.
 	 */
-	public static ChatViewBinding bindOwn(ReactContext context, String controlId) {
-		return bindConversation(context, "", controlId);
-	}
-
 	private static ChatViewBinding bindConversation(ReactContext context, String chatId, String conversation) {
 		// Every chat element renders through here, so this is where the window becomes known to the
 		// refresher: a running agent writes from a background thread, and without this the window
@@ -162,8 +156,6 @@ public final class ChatViewBinding {
 	 * This is what the elements that share a conversation by {@code chat-id} use. The join is
 	 * tallied per render and logged when the render ends, so that an element which found nobody to
 	 * join says so instead of rendering an empty box (see {@link ChatJoinLog}).
-	 * {@link AgentChatControl} binds through {@link #bindOwn(ReactContext, String)} instead: it keys
-	 * by its own control id on purpose and joins nothing.
 	 * </p>
 	 *
 	 * @param element
@@ -196,8 +188,9 @@ public final class ChatViewBinding {
 	static ChatViewBinding bind(TypedAnnotatable scope, String windowName, String contextPath, String chatId,
 			String conversation) {
 		String layoutKey = ChatSessionRegistry.key(chatId);
-		// Keyed by the conversation, not by the layout key: an <agent-chat/> stores its layout under
-		// the empty chat id and still has a conversation, a tracker and a run of its own.
+		// Keyed by the conversation, not by the layout key. The two are the same string today; they
+		// are read apart so that a chat keyed by something other than its chat-id still gets a
+		// tracker and a run of its own.
 		String key = ChatSessionRegistry.key(conversation);
 		if (scope == null) {
 			return new ChatViewBinding(null, windowName, contextPath, layoutKey, key);
@@ -420,7 +413,7 @@ public final class ChatViewBinding {
 	public void writeLayoutState(BiConsumer<String, Object> put) {
 		ChatPreferencesDto preferences = preferences();
 		// The key the browser puts the layout back under. Not the same as the store's own chat key,
-		// which falls back to the control id so that two <agent-chat> elements stay two chats.
+		// which falls back to the control id so that two elements of one chat-id stay one chat.
 		put.accept("layoutKey", _chatId);
 		// Null, not false, while the user has decided nothing: the element's configured default is
 		// what applies then.

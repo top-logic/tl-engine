@@ -20,19 +20,6 @@ import junit.framework.TestCase;
  */
 public class TestPart extends TestCase {
 
-	/** Verify TextPart stores content. */
-	public void testTextPart() {
-		Part.TextPart p = new Part.TextPart("p1", Instant.now(), "Hello world");
-		assertEquals("Hello world", p.text());
-		assertEquals("p1", p.id());
-	}
-
-	/** Verify ThinkingPart stores reasoning text. */
-	public void testThinkingPart() {
-		Part.ThinkingPart p = new Part.ThinkingPart("p2", Instant.now(), "Let me think...", null);
-		assertEquals("Let me think...", p.text());
-	}
-
 	/** Verify ToolCallPart state transitions. */
 	public void testToolCallPartLifecycle() {
 		Instant now = Instant.now();

@@ -6,7 +6,6 @@
 package com.top_logic.tl.ai.core.security;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import junit.framework.Test;
@@ -22,11 +21,9 @@ import com.top_logic.tl.ai.core.security.ToolAccessPolicy.BackgroundAllowlist;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Baseline;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
+import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
@@ -514,37 +511,9 @@ public class TestToolAuthorization extends TestCase {
 
 	/** A minimal {@link Tool} that carries a name and a declared group. */
 	private static Tool tool(String name, String group) {
-		return new Tool() {
-
-			@Override
-			public String name() {
-				return name;
-			}
-
-			@Override
-			public String description() {
-				return name;
-			}
-
-			@Override
-			public ToolSchema schema() {
-				return new ToolSchema(name, name, "{\"type\":\"object\"}");
-			}
-
-			@Override
-			public ToolMode mode() {
-				return ToolMode.READ;
-			}
-
-			@Override
-			public String group() {
-				return group;
-			}
-
-			@Override
-			public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
+		return ToolStubs.builder(name).description(name).schema(new ToolSchema(name, name, "{\"type\":\"object\"}"))
+			.group(group).execute((args, context) -> {
 				throw new UnsupportedOperationException("Authorization is decided before execution.");
-			}
-		};
+			}).build();
 	}
 }

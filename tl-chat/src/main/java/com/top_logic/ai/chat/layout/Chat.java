@@ -46,17 +46,6 @@ public class Chat {
 	}
 
 	/**
-	 * Replaces all messages with the given list. Used when loading a persisted session.
-	 *
-	 * @param messages
-	 *        The messages to load.
-	 */
-	public void loadMessages(List<ChatMessage> messages) {
-		_messages.clear();
-		_messages.addAll(messages);
-	}
-
-	/**
 	 * Removes oldest messages when the list exceeds {@link #MAX_MESSAGES}.
 	 */
 	private void enforceMaxSize() {

@@ -45,11 +45,6 @@ public record ToolCatalogEntry(String qualifiedName, String description, String 
 		return group() == null;
 	}
 
-	/** Whether no role and no baseline reaches the tool. */
-	public boolean isUnreachable() {
-		return !baselineReaches() && reachingRoles().isEmpty();
-	}
-
 	/** Who reaches the tool, as the one of three states the catalog reports. */
 	public ToolReachability reachability() {
 		if (baselineReaches()) {

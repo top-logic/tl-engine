@@ -37,7 +37,7 @@ public class ModelSearchToolTest extends BasicTestCase {
 		String result = tool.searchModel(PRODUCT_CLASS, null, null);
 
 		assertNotNull("Result should not be null", result);
-		assertTrue("Result should be valid JSON with success", result.contains("\"success\""));
+		assertTrue("Result should be valid JSON with a result count", result.contains("\"resultCount\""));
 		assertTrue("Result should contain Product class", result.contains(PRODUCT_CLASS));
 		assertTrue("Result should contain class kind", result.contains("\"kind\":\"class\""));
 		assertTrue("Result should contain qualified name", result.contains("\"qualifiedName\""));
@@ -111,7 +111,7 @@ public class ModelSearchToolTest extends BasicTestCase {
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain Product", result.contains(PRODUCT_CLASS));
 		assertTrue("Result should contain luigis.pizzashop module", result.contains(PIZZASHOP_MODULE));
-		assertTrue("Result should be successful", result.contains("\"success\":true"));
+		assertTrue("Result should be successful", result.contains("\"error\":\"\""));
 	}
 
 	/**
@@ -178,7 +178,7 @@ public class ModelSearchToolTest extends BasicTestCase {
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain error", result.contains("\"error\""));
-		assertTrue("Result should indicate failure", result.contains("\"success\":false"));
+		assertFalse("Result should indicate failure", result.contains("\"error\":\"\""));
 		assertTrue("Error message should mention query required",
 			result.contains("required") || result.contains("query"));
 	}
@@ -192,7 +192,7 @@ public class ModelSearchToolTest extends BasicTestCase {
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain error", result.contains("\"error\""));
-		assertTrue("Result should indicate failure", result.contains("\"success\":false"));
+		assertFalse("Result should indicate failure", result.contains("\"error\":\"\""));
 	}
 
 	/**
@@ -203,7 +203,7 @@ public class ModelSearchToolTest extends BasicTestCase {
 		String result = tool.searchModel("NonExistentTypeXYZ123", null, null);
 
 		assertNotNull("Result should not be null", result);
-		assertTrue("Result should be successful", result.contains("\"success\":true"));
+		assertTrue("Result should be successful", result.contains("\"error\":\"\""));
 		assertTrue("Result should have zero result count",
 			result.contains("\"resultCount\":0") || result.contains("\"resultCount\": 0"));
 		assertTrue("Result should have empty results array",
@@ -246,7 +246,7 @@ public class ModelSearchToolTest extends BasicTestCase {
 		String result = tool.searchModel("name", null, null);
 
 		assertNotNull("Result should not be null", result);
-		assertTrue("Result should be successful", result.contains("\"success\":true"));
+		assertTrue("Result should be successful", result.contains("\"error\":\"\""));
 		// Parse result count - it should not exceed 10
 		assertTrue("Result should contain resultCount", result.contains("\"resultCount\""));
 		// We can't easily parse JSON here, but we verify the format
@@ -300,7 +300,7 @@ public class ModelSearchToolTest extends BasicTestCase {
 			Collections.singletonList("property"));
 
 		assertNotNull("Result should not be null", result);
-		assertTrue("Result should be successful", result.contains("\"success\":true"));
+		assertTrue("Result should be successful", result.contains("\"error\":\"\""));
 		// If there are results, they should be properties from pizzashop module
 		if (result.contains("\"resultCount\":0") || result.contains("\"resultCount\": 0")) {
 			// No results is valid

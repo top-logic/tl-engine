@@ -71,10 +71,10 @@ import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
+import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ProgressReporter;
 import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
@@ -327,15 +327,8 @@ public class TestAgentLoop extends TestCase {
 	/** A read tool returning a fixed text with a fixed {@code truncationHint}. */
 	private static Tool resultTool(String name, String text, int truncationHint) {
 		ToolSchema schema = new ToolSchema(name, "Returns a fixed result", "{}");
-		return new Tool() {
-			@Override public String name() { return name; }
-			@Override public String description() { return ""; }
-			@Override public ToolSchema schema() { return schema; }
-			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
-				return new ToolResult(text, null, truncationHint);
-			}
-			@Override public ToolMode mode() { return ToolMode.READ; }
-		};
+		return ToolStubs.builder(name).description("").schema(schema)
+			.execute((args, context) -> new ToolResult(text, null, truncationHint)).build();
 	}
 
 	/**
@@ -486,15 +479,10 @@ public class TestAgentLoop extends TestCase {
 			List.of(new TextContent("The tool failed, but I recovered.")));
 
 		ToolCatalog registry = new ToolCatalog();
-		registry.register(new Tool() {
-			@Override public String name() { return "risky_tool"; }
-			@Override public String description() { return "Might fail"; }
-			@Override public ToolSchema schema() { return toolSpec; }
-			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
+		registry.register(ToolStubs.builder("risky_tool").description("Might fail").schema(toolSpec)
+			.execute((args, context) -> {
 				throw new RuntimeException("Something went wrong");
-			}
-			@Override public ToolMode mode() { return ToolMode.READ; }
-		});
+			}).build());
 		registry.freeze();
 
 		AgentLoop loop = new AgentLoop(config(10), provider, registry);
@@ -597,15 +585,10 @@ public class TestAgentLoop extends TestCase {
 			List.of(new TextContent("OK")));
 
 		ToolCatalog registry = new ToolCatalog();
-		registry.register(new Tool() {
-			@Override public String name() { return "bad_tool"; }
-			@Override public String description() { return "Fails"; }
-			@Override public ToolSchema schema() { return toolSpec; }
-			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
+		registry.register(ToolStubs.builder("bad_tool").description("Fails").schema(toolSpec)
+			.execute((args, context) -> {
 				throw new RuntimeException("Boom");
-			}
-			@Override public ToolMode mode() { return ToolMode.READ; }
-		});
+			}).build());
 		registry.freeze();
 
 		List<String> events = new ArrayList<>();
@@ -689,16 +672,10 @@ public class TestAgentLoop extends TestCase {
 			List.of(new TextContent("Done")));
 
 		ToolCatalog registry = new ToolCatalog();
-		registry.register(new Tool() {
-			@Override public String name() { return "tool"; }
-			@Override public String description() { return "T"; }
-			@Override public ToolSchema schema() { return toolSpec; }
-			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
+		registry.register(ToolStubs.builder("tool").description("T").schema(toolSpec).execute((args, context) -> {
 				Thread.currentThread().interrupt();
 				return ToolResult.of("ok");
-			}
-			@Override public ToolMode mode() { return ToolMode.READ; }
-		});
+			}).build());
 		registry.freeze();
 
 		AgentLoop loop = new AgentLoop(config(10), provider, registry);
@@ -829,16 +806,11 @@ public class TestAgentLoop extends TestCase {
 			List.of(new TextContent("I cannot create classes in production mode.")));
 
 		ToolCatalog registry = new ToolCatalog();
-		registry.register(new Tool() {
-			@Override public String name() { return "create_class"; }
-			@Override public String description() { return "Creates a class"; }
-			@Override public ToolSchema schema() { return toolSpec; }
-			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
+		registry.register(ToolStubs.builder("create_class").description("Creates a class").schema(toolSpec)
+			.mode(ToolMode.STRUCTURAL).execute((args, context) -> {
 				fail("Tool should not execute in production mode");
 				return ToolResult.of("");
-			}
-			@Override public ToolMode mode() { return ToolMode.STRUCTURAL; }
-		});
+			}).build());
 		registry.freeze();
 
 		ToolContext ctx = new ToolContext(productionSecurity(), ApprovalCallback.AUTO_APPROVE);
@@ -1094,40 +1066,17 @@ public class TestAgentLoop extends TestCase {
 	}
 
 	private static Tool globalTool(String name, ToolSchema schema) {
-		return new Tool() {
-			@Override public String name() { return name; }
-			@Override public String description() { return ""; }
-			@Override public ToolSchema schema() { return schema; }
-			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
-				return ToolResult.of("Result of " + name);
-			}
-			@Override public ToolMode mode() { return ToolMode.STRUCTURAL; }
-		};
+		return ToolStubs.builder(name).description("").schema(schema).mode(ToolMode.STRUCTURAL)
+			.result("Result of " + name).build();
 	}
 
 	private static Tool readTool(String name, ToolSchema schema) {
-		return new Tool() {
-			@Override public String name() { return name; }
-			@Override public String description() { return ""; }
-			@Override public ToolSchema schema() { return schema; }
-			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
-				return ToolResult.of("Result of " + name);
-			}
-			@Override public ToolMode mode() { return ToolMode.READ; }
-		};
+		return ToolStubs.builder(name).description("").schema(schema).result("Result of " + name).build();
 	}
 
 	private static Tool externalTool(String name, ToolSchema schema) {
-		return new Tool() {
-			@Override public String name() { return name; }
-			@Override public String description() { return ""; }
-			@Override public ToolSchema schema() { return schema; }
-			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
-				return ToolResult.of("Result of " + name);
-			}
-			@Override public ToolMode mode() { return ToolMode.EXTERNAL; }
-			@Override public boolean isConcurrencySafe() { return false; }
-		};
+		return ToolStubs.builder(name).description("").schema(schema).mode(ToolMode.EXTERNAL).concurrencySafe(false)
+			.result("Result of " + name).build();
 	}
 
 	private static SecurityContext productionSecurity() {
@@ -1954,18 +1903,11 @@ public class TestAgentLoop extends TestCase {
 			List.of(new TextContent("Filed.")));
 
 		ToolCatalog registry = new ToolCatalog();
-		registry.register(new Tool() {
-			@Override public String name() { return "createGiteaIssue"; }
-			@Override public String description() { return "Files an issue"; }
-			@Override public ToolSchema schema() { return toolSpec; }
-			@Override public ToolMode mode() { return ToolMode.EXTERNAL; }
-			@Override public boolean isConcurrencySafe() { return false; }
-			@Override public String group() { return ToolGroups.EGRESS; }
-			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext ctx) {
+		registry.register(ToolStubs.builder("createGiteaIssue").description("Files an issue").schema(toolSpec)
+			.mode(ToolMode.EXTERNAL).group(ToolGroups.EGRESS).concurrencySafe(false).execute((args, ctx) -> {
 				calls.incrementAndGet();
 				return ToolResult.of("Issue #1 created.");
-			}
-		});
+			}).build());
 		registry.freeze();
 
 		// A background run: no human, so the policy's background allowlist is the ceiling, and the
@@ -2025,15 +1967,10 @@ public class TestAgentLoop extends TestCase {
 			List.of(new TextContent("OK")));
 
 		ToolCatalog registry = new ToolCatalog();
-		registry.register(new Tool() {
-			@Override public String name() { return "edit_model"; }
-			@Override public String description() { return "Edits"; }
-			@Override public ToolSchema schema() { return toolSpec; }
-			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
+		registry.register(ToolStubs.builder("edit_model").description("Edits").schema(toolSpec)
+			.mode(ToolMode.STRUCTURAL).execute((args, context) -> {
 				throw new RuntimeException("Something went wrong");
-			}
-			@Override public ToolMode mode() { return ToolMode.STRUCTURAL; }
-		});
+			}).build());
 		registry.freeze();
 
 		List<String> events = new ArrayList<>();
@@ -2605,18 +2542,13 @@ public class TestAgentLoop extends TestCase {
 			List.of(new TextContent("Done.")));
 
 		ToolCatalog registry = new ToolCatalog();
-		registry.register(new Tool() {
-			@Override public String name() { return "slow_tool"; }
-			@Override public String description() { return "Reports progress"; }
-			@Override public ToolSchema schema() { return toolSpec; }
-			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
+		registry.register(ToolStubs.builder("slow_tool").description("Reports progress").schema(toolSpec)
+			.execute((args, context) -> {
 				ToolContext toolContext = (ToolContext) context;
 				toolContext.progressReporter().progress("step 1");
 				toolContext.progressReporter().progress("step 2");
 				return ToolResult.of("completed");
-			}
-			@Override public ToolMode mode() { return ToolMode.READ; }
-		});
+			}).build());
 		registry.freeze();
 
 		List<AgentEvent.ToolProgress> progressEvents = new ArrayList<>();
@@ -2753,16 +2685,8 @@ public class TestAgentLoop extends TestCase {
 
 	/** Minimal {@link Tool} stub used by partitionBatches tests. */
 	private static Tool stubTool(String toolName, ToolMode mode, boolean concurrencySafe) {
-		return new Tool() {
-			@Override public String name() { return toolName; }
-			@Override public String description() { return toolName; }
-			@Override public ToolSchema schema() { return new ToolSchema(toolName, toolName, "{}"); }
-			@Override public ToolMode mode() { return mode; }
-			@Override public boolean isConcurrencySafe() { return concurrencySafe; }
-			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext ctx) {
-				return ToolResult.of("ok");
-			}
-		};
+		return ToolStubs.builder(toolName).description(toolName).schema(new ToolSchema(toolName, toolName, "{}"))
+			.mode(mode).concurrencySafe(concurrencySafe).build();
 	}
 
 	/**
@@ -3033,15 +2957,10 @@ public class TestAgentLoop extends TestCase {
 
 		ToolRegistry registry = stubRegistry(
 			globalTool("edit_model", okSpec),
-			new Tool() {
-				@Override public String name() { return "failing_tool"; }
-				@Override public String description() { return "Fails"; }
-				@Override public ToolSchema schema() { return failSpec; }
-				@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
+			ToolStubs.builder("failing_tool").description("Fails").schema(failSpec).mode(ToolMode.STRUCTURAL)
+				.execute((args, context) -> {
 					throw new RuntimeException("boom");
-				}
-				@Override public ToolMode mode() { return ToolMode.STRUCTURAL; }
-			});
+			}).build());
 
 		TestableTransactionScope scope = new TestableTransactionScope();
 		ToolContext ctx = new ToolContext(developmentSecurity(), ApprovalCallback.AUTO_APPROVE, scope);

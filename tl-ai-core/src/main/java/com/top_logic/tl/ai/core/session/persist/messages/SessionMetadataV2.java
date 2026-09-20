@@ -24,9 +24,6 @@ public class SessionMetadataV2 extends de.haumacher.msgbuf.data.AbstractDataObje
 	/** @see #getLastModel() */
 	public static final String LAST_MODEL__PROP = "lastModel";
 
-	/** @see #getLastProvider() */
-	public static final String LAST_PROVIDER__PROP = "lastProvider";
-
 	/** @see #getApprovalMode() */
 	public static final String APPROVAL_MODE__PROP = "approvalMode";
 
@@ -35,8 +32,6 @@ public class SessionMetadataV2 extends de.haumacher.msgbuf.data.AbstractDataObje
 	private com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto _cumulativeUsage = null;
 
 	private String _lastModel = "";
-
-	private String _lastProvider = "";
 
 	private String _approvalMode = "";
 
@@ -138,26 +133,6 @@ public class SessionMetadataV2 extends de.haumacher.msgbuf.data.AbstractDataObje
 	}
 
 	/**
-	 * Last provider used.
-	 */
-	public final String getLastProvider() {
-		return _lastProvider;
-	}
-
-	/**
-	 * @see #getLastProvider()
-	 */
-	public com.top_logic.tl.ai.core.session.persist.messages.SessionMetadataV2 setLastProvider(String value) {
-		internalSetLastProvider(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #getLastProvider()} without chain call utility. */
-	protected final void internalSetLastProvider(String value) {
-		_lastProvider = value;
-	}
-
-	/**
 	 * The approval mode for the session.
 	 */
 	public final String getApprovalMode() {
@@ -188,7 +163,6 @@ public class SessionMetadataV2 extends de.haumacher.msgbuf.data.AbstractDataObje
 			APPROVED_TOOLS__PROP, 
 			CUMULATIVE_USAGE__PROP, 
 			LAST_MODEL__PROP, 
-			LAST_PROVIDER__PROP, 
 			APPROVAL_MODE__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
@@ -217,7 +191,6 @@ public class SessionMetadataV2 extends de.haumacher.msgbuf.data.AbstractDataObje
 			case APPROVED_TOOLS__PROP: return getApprovedTools();
 			case CUMULATIVE_USAGE__PROP: return getCumulativeUsage();
 			case LAST_MODEL__PROP: return getLastModel();
-			case LAST_PROVIDER__PROP: return getLastProvider();
 			case APPROVAL_MODE__PROP: return getApprovalMode();
 			default: return null;
 		}
@@ -229,7 +202,6 @@ public class SessionMetadataV2 extends de.haumacher.msgbuf.data.AbstractDataObje
 			case APPROVED_TOOLS__PROP: internalSetApprovedTools(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
 			case CUMULATIVE_USAGE__PROP: internalSetCumulativeUsage((com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto) value); break;
 			case LAST_MODEL__PROP: internalSetLastModel((String) value); break;
-			case LAST_PROVIDER__PROP: internalSetLastProvider((String) value); break;
 			case APPROVAL_MODE__PROP: internalSetApprovalMode((String) value); break;
 		}
 	}
@@ -261,8 +233,6 @@ public class SessionMetadataV2 extends de.haumacher.msgbuf.data.AbstractDataObje
 		}
 		out.name(LAST_MODEL__PROP);
 		out.value(getLastModel());
-		out.name(LAST_PROVIDER__PROP);
-		out.value(getLastProvider());
 		out.name(APPROVAL_MODE__PROP);
 		out.value(getApprovalMode());
 	}
@@ -282,7 +252,6 @@ public class SessionMetadataV2 extends de.haumacher.msgbuf.data.AbstractDataObje
 			break;
 			case CUMULATIVE_USAGE__PROP: setCumulativeUsage(com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto.readTokenUsageDto(in)); break;
 			case LAST_MODEL__PROP: setLastModel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
-			case LAST_PROVIDER__PROP: setLastProvider(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case APPROVAL_MODE__PROP: setApprovalMode(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}

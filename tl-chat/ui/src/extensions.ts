@@ -197,9 +197,9 @@ export interface ComposerAddons {
    * it replaces both framework variants, the one that mentions "@" included.
    *
    * Idle only: while the agent works the field keeps the framework's "type your next message",
-   * which is about the run rather than about the application. An `<agent-chat placeholder="…">`
-   * states the same thing declaratively and wins over this one, being the installation's decision
-   * rather than the host code's default.
+   * which is about the run rather than about the application. A
+   * `<chat-conversation placeholder="…">` states the same thing declaratively and wins over this
+   * one, being the installation's decision rather than the host code's default.
    */
   placeholder?: string
   /**

@@ -6,6 +6,7 @@
 package com.top_logic.ai.demo;
 
 import java.util.List;
+import java.util.Map;
 
 import junit.framework.Test;
 
@@ -21,8 +22,8 @@ import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.tools.interaction.SubagentSpawner;
 
 /**
-	 * What {@code spawn_subagent} does when the agent a persona asks for can reach nothing that persona may
-	 * call, on the framework agents the deployment really ships.
+	 * What {@code spawn_subagent} does when nothing could come of the agent a persona asks for, on the
+	 * framework agents the deployment really ships.
 	 *
 	 * <p>
 	 * The spawn half of {@link SecDemoDelegateFilterTest}. {@code list_agents} is already filtered, so
@@ -34,9 +35,17 @@ import com.top_logic.tl.ai.core.tools.interaction.SubagentSpawner;
 	 * </p>
 	 *
 	 * <p>
-	 * {@code TL_ModelExplorer} is the agent under test for the same reason it is in
-	 * {@link SecDemoDelegateFilterTest}: it carries {@code model.read} and {@code data.read} tools only, so
-	 * {@code Ben} - which holds neither - can do nothing with it, while {@code Ben} holds both.
+	 * What decides it in this fixture is {@code <agent-access>} (#392) rather than the capability filter:
+	 * every persona reaches a tool of every shipped delegate, so no spawn of this fixture is refused for
+	 * want of a capability, while a persona holding {@link #RESTRICTED_ROLE} is refused every agent but
+	 * {@link #EXPLORER} because its role may not run one. The assertions are therefore per persona (#445).
+	 * </p>
+	 *
+	 * <p>
+	 * The refusal for want of a capability - its wording, and that no child run is started - is pinned by
+	 * {@code TestSpawnFilter} and {@code TestDetachedSubagentCeiling} in {@code tl-ai-core} against
+	 * hand-built policies, because a policy in which an agent is wholly unreachable is one this fixture
+	 * deliberately does not deploy.
 	 * </p>
 	 *
 	 * @see SubagentSpawner#detachedSpawnRefusal(String, AgentCapabilities)
@@ -53,31 +62,63 @@ public class SecDemoSpawnFilterTest extends SecDemoPersonaTest {
 	private static final String SCRIPT_AGENT = "TL_TLScriptAgent";
 
 	/**
-	 * The refusal path is not reachable from this fixture, and the test says so rather than pretending.
+	 * The one role the fixture's {@code <agent-access>} section names, and which it grants
+	 * {@link #EXPLORER} alone.
+	 *
+	 * @see SecDemoDelegateFilterTest
+	 */
+	private static final String RESTRICTED_ROLE = "ticketReader";
+
+	/**
+	 * A spawn is refused exactly where the persona's roles may not run the agent, and let through
+	 * everywhere else.
 	 *
 	 * <p>
-	 * Every persona holds both read capabilities and {@code script}, so every shipped delegate has at
-	 * least one tool each of them can reach and no spawn is refused - which is the correct outcome and
-	 * not a hole. The refusal itself, its wording, and that no child run is started, are pinned by
-	 * {@code TestSpawnFilter} and {@code TestDetachedSubagentCeiling} in {@code tl-ai-core} against
-	 * hand-built policies, because a policy in which an agent is wholly unreachable is one this fixture
-	 * deliberately does not deploy.
+	 * Every persona of this fixture holds both read capabilities and {@code script}, so every shipped
+	 * delegate has at least one tool each of them could reach, and the capability half of the decision
+	 * refuses nothing here - which is the correct outcome and not a hole. What does refuse is
+	 * {@code <agent-access>}: a persona holding {@link #RESTRICTED_ROLE} is granted {@link #EXPLORER}
+	 * alone, so a spawn of either other agent is answered before a child run is built.
 	 * </p>
 	 *
 	 * <p>
-	 * <b>Quarantined, see #445.</b> The fixture's {@code <agent-access>} section (#392) restricts ben's
-	 * role to {@code TL_ModelExplorer}, so this no longer holds - and no build ran it to say so until
-	 * #369. What the fixture should demonstrate instead is the open question in that issue; renaming the
-	 * method back to {@code test...} is what puts it back in the suite.
+	 * That {@code list_agents} already leaves those agents out of that persona's listing is not enough:
+	 * the model can name an agent it read elsewhere, and this is the gate that is asked when it does.
 	 * </p>
 	 */
-	public void quarantinedTestNoSpawnIsRefusedByThisFixture() {
-		for (String login : SecDemoSetupService.personaLogins()) {
-			for (String agentName : List.of(EXPLORER, SCRIPT_AGENT, EDITOR_AGENT)) {
-				assertNull(login + " reaches a tool of '" + agentName + "', so the spawn decision must"
-					+ " let it through.", spawnDecisionFor(login, agentName));
+	public void testSpawnIsRefusedWhereTheRoleMayNotRunTheAgent() {
+		int restrictedPersonas = 0;
+		for (Map.Entry<String, List<String>> persona : SecDemoSetupService.personaRoles().entrySet()) {
+			String login = persona.getKey();
+			boolean restricted = persona.getValue().contains(RESTRICTED_ROLE);
+
+			assertNull(login + " may run '" + EXPLORER + "' whichever roles it holds, and reaches both"
+				+ " of its capabilities, so the spawn decision must let it through.",
+				spawnDecisionFor(login, EXPLORER));
+
+			for (String agentName : List.of(SCRIPT_AGENT, EDITOR_AGENT)) {
+				String refusal = spawnDecisionFor(login, agentName);
+				if (restricted) {
+					assertNotNull(login + " holds '" + RESTRICTED_ROLE + "', which may not run '"
+						+ agentName + "', so the spawn must be refused.", refusal);
+					assertTrue("A refusal must name the agent it is about: " + refusal,
+						refusal.contains(agentName));
+				} else {
+					assertNull(login + " may run '" + agentName + "' and reaches a tool of it, so the"
+						+ " spawn decision must let it through.", refusal);
+				}
+			}
+
+			if (restricted) {
+				restrictedPersonas++;
 			}
 		}
+
+		assertTrue("The fixture must restrict at least one persona, otherwise no spawn of it is ever"
+			+ " refused and this test asserts only the permissive half.", restrictedPersonas > 0);
+		assertTrue("The fixture must leave at least one persona unrestricted, otherwise nothing shows"
+			+ " that the refusal follows the role.",
+			restrictedPersonas < SecDemoSetupService.personaLogins().size());
 	}
 
 	/** An unenforced run spawns whatever it is asked for, as it did before this filter existed. */

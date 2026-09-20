@@ -260,6 +260,17 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	/** Queue depth above which a warning is logged — a growing queue means a stalled commit. */
 	private static final int QUEUE_WARN_THRESHOLD = 25;
 
+	/**
+	 * What {@link #failOrphanedRunningExecutions(Date)} records as the error of a run it swept.
+	 *
+	 * <p>
+	 * Read by an administrator in the run monitor, so it says what happened instead of naming a
+	 * code.
+	 * </p>
+	 */
+	static final String ORPHANED_RUN_ERROR =
+		"The process ended before this run finished; no agent loop survives a restart.";
+
 	private ThreadPoolExecutor _writer;
 
 	private volatile Thread _writerThread;
@@ -276,6 +287,9 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	@Override
 	protected void startUp() {
 		super.startUp();
+		// Before the writer exists: no run of this process can have been recorded yet, which is
+		// what makes this instant a safe cut-off for the orphan sweep below.
+		Date bootTime = new Date();
 		_writer = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
 			new LinkedBlockingQueue<>(), runnable -> {
 				Thread thread = new Thread(runnable, "agent-execution-store");
@@ -284,6 +298,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 				return thread;
 			});
 		cancelOrphanedPendingInteractions();
+		failOrphanedRunningExecutions(bootTime);
 	}
 
 	/**
@@ -325,6 +340,76 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 		} catch (RuntimeException ex) {
 			Logger.warn("Could not cancel orphaned pending interaction requests at startup: "
 				+ ex.getMessage(), ex, AgentExecutionStore.class);
+		}
+	}
+
+	/**
+	 * Fails every {@link AgentExecution} that an earlier process left in
+	 * {@link ExecutionStatus#RUNNING} without an end date.
+	 *
+	 * <p>
+	 * No agent loop survives a process restart, so such a row is a ghost: nothing will ever finish
+	 * it, the operator view keeps counting it among the runs in flight, and every restart adds
+	 * more. It is failed rather than cancelled - {@link ExecutionStatus#CANCELLED} says somebody
+	 * asked the run to stop, while this one was cut off - and it gets the end date it never wrote,
+	 * so that its displayed duration stops growing. Best-effort: a failure here must never prevent
+	 * startup.
+	 * </p>
+	 *
+	 * <p>
+	 * Only rows started <em>before</em> {@code bootTime} are swept. A run of this process cannot
+	 * have started earlier, because recording a run needs this service, so the cut-off keeps the
+	 * sweep off every run that is genuinely alive - including one that starts while the remaining
+	 * services are still coming up. A row without a start date was never written completely and is
+	 * swept as well.
+	 * </p>
+	 *
+	 * <p>
+	 * Single-node assumption: with several nodes on one database, a booting node cannot tell a
+	 * ghost from a run another node is serving right now, and would end the latter's row too.
+	 * </p>
+	 *
+	 * @param bootTime
+	 *        The instant this service started; every run this process records is younger.
+	 * @return How many rows were failed, {@code 0} also when the sweep itself failed.
+	 */
+	int failOrphanedRunningExecutions(Date bootTime) {
+		try {
+			int failed = write(() -> {
+				try (Transaction tx = beginTx("Fail orphaned running agent executions")) {
+					TLClassifier running = statusClassifier(ExecutionStatus.RUNNING);
+					TLClassifier error = statusClassifier(ExecutionStatus.ERROR);
+					Date now = new Date();
+					int count = 0;
+					for (TLObject obj : allInstances(TlAiExecutionFactory.getAgentExecutionType())) {
+						AgentExecution execution = (AgentExecution) obj;
+						if (!running.equals(execution.getStatus()) || execution.getEndedAt() != null) {
+							continue;
+						}
+						Date startedAt = execution.getStartedAt();
+						if (startedAt != null && !startedAt.before(bootTime)) {
+							continue;
+						}
+						execution.setStatus(error);
+						execution.setStopReason(StopReason.ERROR.name());
+						execution.setErrorMessage(ORPHANED_RUN_ERROR);
+						execution.setEndedAt(now);
+						count++;
+					}
+					tx.commit();
+					return count;
+				}
+			});
+			if (failed > 0) {
+				Logger.info("Failed " + failed
+					+ " agent execution(s) left running by a previous process at startup.",
+					AgentExecutionStore.class);
+			}
+			return failed;
+		} catch (RuntimeException ex) {
+			Logger.warn("Could not fail orphaned running agent executions at startup: "
+				+ ex.getMessage(), ex, AgentExecutionStore.class);
+			return 0;
 		}
 	}
 

@@ -31,14 +31,23 @@ import java.util.Objects;
  *                       non-empty this list is the <em>complete</em> rendering of the result, so a
  *                       tool that wants its text read must include it as a
  *                       {@link ToolContent.Text} part - see {@link #multimodal}
+ * @param failed         whether this answer reports a failure rather than an outcome - see
+ *                       {@link #failure(String)}
  */
 public record ToolResult(String text, String summary, int truncationHint,
-		List<ToolContent> content) {
+		List<ToolContent> content, boolean failed) {
 
 	/** */
 	public ToolResult {
 		Objects.requireNonNull(text, "Text must not be null.");
 		content = content == null ? List.of() : List.copyOf(content);
+	}
+
+	/**
+	 * Creates a successful {@link ToolResult}.
+	 */
+	public ToolResult(String text, String summary, int truncationHint, List<ToolContent> content) {
+		this(text, summary, truncationHint, content, false);
 	}
 
 	/**
@@ -53,6 +62,37 @@ public record ToolResult(String text, String summary, int truncationHint,
 	 */
 	public static ToolResult of(String text) {
 		return new ToolResult(text, null, -1);
+	}
+
+	/**
+	 * Creates a {@link ToolResult} that reports a failure.
+	 *
+	 * <p>
+	 * The text is what the model reads, exactly as for a successful answer; what {@link #failed()}
+	 * adds is the one bit every provider and the MCP protocol carry beside it - {@code is_error} for
+	 * Anthropic and Bedrock, {@code isError} for MCP. Without it a sentence beginning with
+	 * {@code "Error: "} arrives as a <em>successful</em> call whose text happens to say otherwise, and
+	 * nothing but the model's reading of English tells the two apart.
+	 * </p>
+	 *
+	 * <p>
+	 * A failure is <b>text only</b>: the agent loop records it as a failed call, and a failed call
+	 * carries no summary, no truncation hint and no content parts. There is nothing to summarize for
+	 * a compaction and nothing to show, so the sentence has to say the whole thing.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>A failure reported this way does not roll the turn back.</b> It is recorded as a synthetic
+	 * failure, so the writes other tools of the same turn made are still committed. A tool whose own
+	 * partial writes must be taken back throws instead - that is what an exception out of a tool
+	 * means, and it is deliberately the more expensive of the two.
+	 * </p>
+	 *
+	 * @param text
+	 *        The result text, read by the model and used for logging and compaction.
+	 */
+	public static ToolResult failure(String text) {
+		return new ToolResult(text, null, -1, List.of(), true);
 	}
 
 	/**

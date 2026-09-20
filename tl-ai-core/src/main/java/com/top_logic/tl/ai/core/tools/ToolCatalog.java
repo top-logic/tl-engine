@@ -270,6 +270,13 @@ public class ToolCatalog implements ToolRegistry {
 
 		try {
 			ToolResult toolResult = ToolExecutions.execute(tool, args, context);
+			if (toolResult.failed()) {
+				// The tool ran and said itself that the call failed. That reaches the model as a failed
+				// tool call - the flag every provider carries beside the text - but it is synthetic,
+				// because a tool reporting a failure instead of throwing is precisely a tool saying it
+				// has nothing for the turn's transaction to take back.
+				return failedResult(toolCall, start, toolResult.text(), true);
+			}
 			Instant end = Instant.now();
 			return new ToolResultMessage(
 				UUID.randomUUID().toString(), Instant.now(),

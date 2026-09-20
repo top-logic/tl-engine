@@ -130,9 +130,39 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 
 		ToolResult result = tool.execute(Map.of(), ToolContext.EMPTY);
 
-		// ScriptToolExecutor catches exceptions and returns them as the result text.
+		// ScriptToolExecutor catches exceptions and returns them as a failed result.
 		assertTrue("Expected missing-parameter error, got: " + result.text(),
 			result.text().contains("Missing required parameter 'message'"));
+	}
+
+	/**
+	 * A script tool that failed answers as a <em>failure</em>, not as a result that reads like one.
+	 *
+	 * <p>
+	 * A TL-Script tool is authored in the running application, so its body is exactly the one that
+	 * fails after an installation edits it. Before Gitea #387 the catch below
+	 * {@code ScriptToolExecutor.execute} returned an ordinary result, which reached the provider as a
+	 * successful tool call - a script tool could therefore fail invisibly, with only the words
+	 * "Error executing tool" to say otherwise.
+	 * </p>
+	 */
+	public void testAFailingScriptToolIsFlagged() {
+		Tool tool = singleTool(scriptConfig("echo", ToolMode.READ, "$message",
+			param("message", "tl.core:String", /*mandatory*/ true)));
+
+		ToolResult result = tool.execute(Map.of(), ToolContext.EMPTY);
+
+		assertTrue("The call failed, so the answer must say so: " + result.text(), result.failed());
+	}
+
+	/** A script tool that ran answers as a success, flag unset. */
+	public void testASucceedingScriptToolIsNotFlagged() {
+		Tool tool = singleTool(scriptConfig("echo", ToolMode.READ, "$message",
+			param("message", "tl.core:String", /*mandatory*/ true)));
+
+		ToolResult result = tool.execute(Map.of("message", "hi!"), ToolContext.EMPTY);
+
+		assertFalse("Nothing failed here: " + result.text(), result.failed());
 	}
 
 	/**

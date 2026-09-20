@@ -209,9 +209,7 @@ public class McpToolAdapter {
 				scope.commit();
 			}
 
-			return McpSchema.CallToolResult.builder()
-				.content(List.of(new McpSchema.TextContent(result.text())))
-				.build();
+			return published(result);
 		} catch (Exception ex) {
 			Logger.error("Error executing MCP tool call '" + request.name() + "': " + ex.getMessage(),
 				ex, McpToolAdapter.class);
@@ -235,6 +233,26 @@ public class McpToolAdapter {
 		SecurityContext security = context.security();
 		List<PreCommitGuard.Violation> violations = guard.check(security, scope.changes());
 		return violations.isEmpty() ? null : PreCommitGuard.describe(violations);
+	}
+
+	/**
+	 * What an external MCP client is told a tool answered.
+	 *
+	 * <p>
+	 * A tool that reports a failure instead of throwing is published with {@code isError: true}, the
+	 * one bit the protocol carries beside the text. Without this a returned failure left this server
+	 * as a <em>successful</em> call whose text happened to say otherwise, and a client had nothing but
+	 * the English to go on (Gitea #387) - while the four framework refusals below it were flagged
+	 * correctly all along.
+	 * </p>
+	 */
+	static McpSchema.CallToolResult published(ToolResult result) {
+		if (result.failed()) {
+			return error(result.text());
+		}
+		return McpSchema.CallToolResult.builder()
+			.content(List.of(new McpSchema.TextContent(result.text())))
+			.build();
 	}
 
 	/**

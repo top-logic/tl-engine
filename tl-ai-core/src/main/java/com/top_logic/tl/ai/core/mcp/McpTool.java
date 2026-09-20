@@ -101,7 +101,29 @@ public class McpTool implements Tool {
 	@Override
 	public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
 		McpSchema.CallToolResult result = _registry.callTool(_serverName, _mcpToolName, args);
-		return ToolResult.of(formatResult(name(), result));
+		return answer(name(), result);
+	}
+
+	/**
+	 * The remote result as the agent loop is to record it: the formatted text, and whether the server
+	 * said the call failed.
+	 *
+	 * <p>
+	 * The server's {@code isError} is the only thing that says so, and it has to survive the trip:
+	 * without {@link ToolResult#failure(String)} a failed remote call arrives at the provider as a
+	 * <em>successful</em> tool call whose text starts with {@code "Error: "} (Gitea #387). The word
+	 * remains in the text as well, because the text alone is what a transcript, a compaction summary
+	 * and a log line carry.
+	 * </p>
+	 *
+	 * @param source
+	 *        Which tool of which server produced the result, for the envelope's {@code source}
+	 *        attribute.
+	 * @see #formatResult(String, McpSchema.CallToolResult)
+	 */
+	static ToolResult answer(String source, McpSchema.CallToolResult result) {
+		String text = formatResult(source, result);
+		return Boolean.TRUE.equals(result.isError()) ? ToolResult.failure(text) : ToolResult.of(text);
 	}
 
 	/**

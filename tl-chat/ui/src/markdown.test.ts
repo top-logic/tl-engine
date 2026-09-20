@@ -192,8 +192,11 @@ describe('stablePrefixEnd', () => {
   })
 
   it('keeps what is indented with the block in front of it', () => {
-    const text = 'Intro.\n\n- one\n\n    still the first item'
-    expect(stablePrefixEnd(text)).toBe(text.indexOf('- one'))
+    // The indented paragraph is the list item's own content, which makes the list loose; a boundary
+    // in front of it would render the item tight and the paragraph as a code block.
+    const text = 'Intro.\n\n- one\n\n    still the first item\n\nBack at the margin.\n'
+    expect(stablePrefixEnd(text)).toBe(text.indexOf('Back at the margin.'))
+    expect(stablePrefixEnd(text.slice(0, text.indexOf('Back')))).toBe(text.indexOf('- one'))
   })
 
   it('commits nothing at all when a link label is defined', () => {
@@ -202,6 +205,63 @@ describe('stablePrefixEnd', () => {
 
   it('does not cut raw HTML apart', () => {
     expect(stablePrefixEnd(RAW_HTML)).toBe(0)
+  })
+})
+
+/**
+ * Every shape a block of an answer has, one sample each.
+ *
+ * What the pair matrix below is built from: which of these, put next to which, `marked` reads as
+ * one block rather than two is the whole justification for what `stablePrefixEnd` refuses.
+ */
+const SHAPES: Record<string, string> = {
+  para: 'Some prose here.',
+  para2: 'Other prose.',
+  h1: '# Heading',
+  h2: '## Sub',
+  ul: '- a\n- b',
+  ulStar: '* c',
+  ol: '1. a\n2. b',
+  ol2: '3. c',
+  oneItem: '- only',
+  quote: '> q one',
+  quote2: '> q two',
+  fence: '```js\nlet x = 1;\n```',
+  fencePlain: '```\nplain\n```',
+  table: '| a | b |\n|---|---|\n| 1 | 2 |',
+  table2: '| c |\n|---|\n| 3 |',
+  rule: '---',
+  indented: '    indented',
+  indented2: '    more',
+  html: '<div>x</div>',
+  htmlOpen: '<div class="note">',
+  htmlClose: '</div>',
+  image: '![a](/x.png)',
+  link: '[a](https://e.example)',
+  setext: 'Title\n=====',
+}
+
+describe('what a boundary may cut', () => {
+  /**
+   * The matrix `merges` in `markdown.tsx` is written from: every shape behind every other shape,
+   * with a blank line between them, asked of the renderer itself.
+   *
+   * A pair the renderer reads as one block must never be split - that is the correctness half, and
+   * it is what the refusals in `stablePrefixEnd` are for. The other direction is reported but not
+   * asserted: refusing a pair that would have been safe costs a boundary, never a wrong answer.
+   */
+  it('never releases a boundary the renderer reads across', () => {
+    const unsafe: string[] = []
+    for (const [beforeName, before] of Object.entries(SHAPES)) {
+      for (const [afterName, after] of Object.entries(SHAPES)) {
+        const source = `${before}\n\n${after}`
+        const at = before.length + 2
+        const oneBlock = render(source) !== render(source.slice(0, at)) + render(source.slice(at))
+        // The trailing newline finishes the last line, which is the other thing a boundary needs.
+        if (oneBlock && stablePrefixEnd(`${source}\n`) === at) unsafe.push(`${beforeName} | ${afterName}`)
+      }
+    }
+    expect(unsafe).toEqual([])
   })
 })
 

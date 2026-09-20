@@ -160,12 +160,12 @@ export function renderMarkdown(text: string, labels: Labels, citations?: Citatio
 /**
  * What a block of an answer is, as far as splitting the answer in two is concerned.
  *
- * Only the distinctions that decide whether two neighbouring blocks render differently when they
- * are parsed apart; everything else is `text`. A fenced code block is `text`: two of them side by
- * side are two blocks, and what keeps a boundary out of the *inside* of a fence is the scanner in
- * `stablePrefixEnd`, not a kind.
+ * Only the two distinctions `merges` needs; everything else is `text`. A fenced code block is
+ * `text` - two of them side by side are two blocks, and what keeps a boundary out of the *inside*
+ * of a fence is the scanner in `stablePrefixEnd`, not a kind - and so are a heading, a table and a
+ * quotation.
  */
-type BlockKind = 'text' | 'code' | 'list' | 'quote' | 'table' | 'html'
+type BlockKind = 'text' | 'list' | 'html'
 
 /**
  * Where a block starts in the source, what it is, how far it is indented, and whether its first
@@ -178,13 +178,24 @@ type BlockKind = 'text' | 'code' | 'list' | 'quote' | 'table' | 'html'
 type Block = { at: number; kind: BlockKind; indent: number; open: boolean }
 
 /**
- * Neighbouring blocks that are one block when they are parsed together.
+ * Whether two neighbouring blocks are one block when they are read together - which is what a
+ * boundary between them would render as two.
  *
- * Two lists with a blank line between them are one loose list, two indented code blocks are one
- * code block with a blank line in it, and the same holds for quotes and for table bodies. Splitting
- * between them would render two of what is one.
+ * Put to `marked` as a matrix over every block shape an answer is made of, three pairs come back
+ * merged, and only three: two lists (a blank line between items makes one *loose* list, not two
+ * lists), a list and an indented block behind it (which is the item's own content), and two
+ * indented code blocks (one code block with a blank line in it). Two quotations and two tables are
+ * not among them. Raw HTML is, whichever side it is on: an unbalanced block is closed at the end of
+ * each half by the sanitizer, so the second half lands outside the element instead of inside it.
+ * `markdown.test.ts` puts the same matrix to this function.
  */
-const MERGING = new Set(['list:list', 'code:code', 'quote:quote', 'table:table'])
+function merges(before: Block, after: Block): boolean {
+  // Anything indented can be the content of the list item or the code block in front of it - which
+  // is also both indented-code cases, an indented code block never starting at the left margin.
+  if (after.indent > 0) return true
+  if (before.kind === 'html' || after.kind === 'html') return true
+  return before.kind === 'list' && after.kind === 'list'
+}
 
 /** The code fence a line opens or closes, if it is one. */
 function fenceRun(line: string): { char: string; len: number; rest: string } | null {
@@ -197,11 +208,8 @@ function classify(line: string): { kind: BlockKind; indent: number } {
   const lead = /^[ \t]*/.exec(line)?.[0] ?? ''
   const indent = lead.replace(/\t/g, '    ').length
   const body = line.slice(lead.length)
-  if (indent >= 4) return { kind: 'code', indent }
   if (/^(?:[-*+]|\d{1,9}[.)])(?:[ \t]|$)/.test(body)) return { kind: 'list', indent }
-  if (body.startsWith('>')) return { kind: 'quote', indent }
   if (body.startsWith('<')) return { kind: 'html', indent }
-  if (body.startsWith('|')) return { kind: 'table', indent }
   return { kind: 'text', indent }
 }
 
@@ -215,9 +223,8 @@ const LINK_DEFINITION = /^ {0,3}\[[^\]\n]+\]:/
  * is final and has to be rendered only once. A boundary is a blank line outside a code fence, and
  * only one the answer can be parsed across:
  *
- * - the blocks on either side of it must not be blocks that are one block when read together,
- * - the block behind it must start at the left margin, because anything indented can belong to the
- *   list or the code block in front of it,
+ * - the blocks on either side of it must not be blocks that are one block when read together
+ *   (`merges`, which is also where the indented case is),
  * - its first line must be finished, or its kind is not settled yet,
  * - and no line may define a link label, which blocks on both sides read.
  *
@@ -255,12 +262,9 @@ export function stablePrefixEnd(text: string): number {
     at = brk + 1
   }
   for (let i = blocks.length - 1; i > 0; i--) {
-    const before = blocks[i - 1]
-    const after = blocks[i]
-    if (after.open || after.indent > 0) continue
-    if (before.kind === 'html' || after.kind === 'html') continue
-    if (MERGING.has(`${before.kind}:${after.kind}`)) continue
-    return after.at
+    if (blocks[i].open) continue
+    if (merges(blocks[i - 1], blocks[i])) continue
+    return blocks[i].at
   }
   return 0
 }

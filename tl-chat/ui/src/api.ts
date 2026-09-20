@@ -335,8 +335,21 @@ export async function fetchPendingInteractions(at: ChatAddress): Promise<Pending
   }))
 }
 
-export async function cancelRun(at: ChatAddress): Promise<void> {
-  await fetch(withWindow('/chat/cancel', at), { method: 'POST', credentials: 'include' })
+/**
+ * Stops the run of the given chat.
+ *
+ * The chat is named rather than left to the server, so the stop reaches the run wherever it is:
+ * the run's state hangs on the window that started it, and a second tab or a reloaded page is a
+ * different window (issue #465). A stop without a chat still works and stops whatever this window
+ * is running.
+ */
+export async function cancelRun(at: ChatAddress, sessionId?: string | null): Promise<void> {
+  await fetch(withWindow('/chat/cancel', at), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ sessionId: sessionId ?? '' }),
+  })
 }
 
 export async function respond(at: ChatAddress, body: Record<string, unknown>): Promise<void> {

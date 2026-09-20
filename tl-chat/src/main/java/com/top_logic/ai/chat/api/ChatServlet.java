@@ -15,6 +15,7 @@ import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TimeZone;
 
@@ -1130,9 +1131,51 @@ public class ChatServlet extends TopLogicServlet {
 		resp.getWriter().write("{\"status\":\"ok\",\"mode\":\"" + approvalMode.name() + "\"}");
 	}
 
+	/**
+	 * POST /chat/cancel - stop the run the user is watching.
+	 *
+	 * <p>
+	 * The body names the chat the stop button was pressed in ({@code sessionId}); a body naming
+	 * none is a client from before issue #465 and is answered as it always was, with whatever run
+	 * the asking window holds.
+	 * </p>
+	 *
+	 * <p>
+	 * A named chat is looked up among the runs of <em>this account</em>
+	 * ({@link PendingInteractionRegistry#findBySession}), not among the runs of the window the stop
+	 * arrives from. That is what lets a second tab, a reloaded page or a new login stop a run the
+	 * first window started: the run's state hangs on that window's tracker, which the user has no
+	 * way to get back to, while the run goes on spending the account's tokens (issue #465). It is
+	 * also what makes the stop hit the chat the user is looking at rather than whatever else that
+	 * window happens to be running.
+	 * </p>
+	 *
+	 * <p>
+	 * A chat of another account is not found here, and neither is one that does not exist: both
+	 * answer {@code {"cancelled":false}}, so the answer cannot be used to find out which chats
+	 * exist or which of them are running.
+	 * </p>
+	 */
 	private void handleCancel(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		TaskProgressTracker tracker = currentTracker();
 		ChatProcessor.AIProcessingState state = tracker.getAnyActiveProcessingState();
+		TaskProgressTracker runWindow = tracker;
+
+		String sessionId = cancelledSessionId(req);
+		if (sessionId != null) {
+			PendingInteractionRegistry.PendingRun run =
+				PendingInteractionRegistry.findBySession(resolveCurrentPerson(req), sessionId);
+			if (run != null) {
+				state = run.state();
+				runWindow = run.tracker();
+			} else if (state != null && !sessionId.equals(state.getSessionId())) {
+				// This window is running something, but not the chat the user pressed stop in -
+				// and the account has no run there. Stopping the other one would stop a chat the
+				// user is not even looking at.
+				state = null;
+			}
+		}
+
 		if (state == null) {
 			resp.setContentType(CONTENT_TYPE_JSON);
 			resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
@@ -1151,7 +1194,13 @@ public class ChatServlet extends TopLogicServlet {
 		// subagent's cancellation token also unblocks a subagent parked on a user question, so
 		// its ask-user wait ends (and its pending interaction is resolved) rather than hanging
 		// until the interaction timeout.
-		SubagentJobRegistry subagentRegistry = tracker.getActiveSubagentRegistry();
+		//
+		// The registry belongs to a window's *active* chat, which is the only one a tracker hands
+		// out; the run's window may have moved on to another chat since. Asked only while the two
+		// are the same chat, because cancelling the subagents of a chat nobody asked about would
+		// be worse than leaving this one's running until they finish.
+		SubagentJobRegistry subagentRegistry = holdsRunsChat(runWindow, state)
+			? runWindow.getActiveSubagentRegistry() : null;
 		if (subagentRegistry != null) {
 			int cancelledSubagents = subagentRegistry.cancelAll();
 			if (cancelledSubagents > 0) {
@@ -1174,6 +1223,36 @@ public class ChatServlet extends TopLogicServlet {
 		resp.setContentType(CONTENT_TYPE_JSON);
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
 		resp.getWriter().write("{\"cancelled\":true}");
+	}
+
+	/**
+	 * The chat a {@code POST /chat/cancel} names, or <code>null</code> when it names none.
+	 *
+	 * <p>
+	 * Unreadable is the same as unnamed here, and deliberately not an error: the stop button is the
+	 * way out of a run that is going wrong, and a client whose body this servlet cannot read must
+	 * still get the stop it had before the body existed.
+	 * </p>
+	 */
+	private static String cancelledSessionId(HttpServletRequest req) throws IOException {
+		String body = new String(req.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
+		if (body.isEmpty()) {
+			return null;
+		}
+		try {
+			@SuppressWarnings("unchecked")
+			Map<String, Object> parsed = (Map<String, Object>) com.top_logic.basic.json.JSON.fromString(body);
+			return blankToNull((String) parsed.get("sessionId"));
+		} catch (Exception ex) {
+			Logger.info("Ignoring an unreadable body of a cancel request: " + ex.getMessage(),
+				ChatServlet.class);
+			return null;
+		}
+	}
+
+	/** Whether the given window is still on the chat the given run belongs to. */
+	private static boolean holdsRunsChat(TaskProgressTracker window, ChatProcessor.AIProcessingState run) {
+		return Objects.equals(run.getSessionId(), window.getActiveSessionId());
 	}
 
 	private void handleUpdates(HttpServletRequest req, HttpServletResponse resp) throws IOException {

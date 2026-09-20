@@ -1859,7 +1859,8 @@ export class ChatStore {
       },
 
       stop: () => {
-        void cancelRun(this.at)
+        // Named, so that the stop reaches the run even when this is not the window that started it.
+        void cancelRun(this.at, this.state.sessionId)
       },
 
       selectAgent: (name: string) => this.applyAgent(name, this.state.caps.agents),

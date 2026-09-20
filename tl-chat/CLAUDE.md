@@ -75,14 +75,35 @@ addresses one at a time (`windowId` + `conversation` → sub-session → tracker
 | Telling the other windows | `interaction_resolved`, pushed to the account's other live chat UIs (`ChatEventHandlerRegistry.findOthers`). The run's own window is left out: it hears `approval_resolved` from the run itself. A chat UI says which account it is (`ChatEventHandler.getAccount()`) and takes the frame (`sendInteractionResolved`); both have no-op defaults, so a UI that never lists another window's requests is unaffected. |
 | Timeouts | Unchanged, and still the backstop: `InteractionTimeoutService` bounds both waits (30 min by default), and `AgentExecutionStore` cancels every still-pending row at startup, because no run survives a restart. |
 
-`PendingInteractionRegistry` is a process-wide register of the runs currently able to ask a human.
-`ChatProcessor` puts a run in when it creates the run's interaction store and takes it out in the
-same `finally` that unbinds the store, so its entries are bounded by the runs in flight. It is
-**not** what keeps a window alive - the run's own background task already holds its tracker while it
-works.
+`PendingInteractionRegistry` is a process-wide register of the chat runs in flight, keyed by task id
+and named by the account each run belongs to. `ChatProcessor` puts a run in when it creates the
+run's interaction store and takes it out in the same `finally` that unbinds the store, so its
+entries are bounded by the runs in flight. It is **not** what keeps a window alive - the run's own
+background task already holds its tracker while it works. Its name is older than its second use
+(#465, below), which is stopping a run rather than answering it.
 
-Not fixed by this: `POST /chat/cancel` still acts on the asking window's own tracker, so a run
-cannot be cancelled from another window.
+### Stopping a run belongs to the account too (#465)
+
+The same window barrier held for `POST /chat/cancel`, which started from the asking window's own
+tracker: the stop button of a second tab, and of the page after a reload, silently did nothing while
+the run went on spending the account's tokens to the end of its turns.
+
+The client now names the chat it is stopping (`cancelRun(at, sessionId)` → `{"sessionId":…}`), and
+the run is looked up by that chat among **this account's** runs
+(`PendingInteractionRegistry.findBySession`). Three consequences:
+
+- any window of the account stops the run, and the run's own state - its cancellation token, its
+  thread, its log listener - is reached through the register rather than through the window;
+- the stop hits the chat the user is looking at, not whatever else the asking window happens to be
+  running;
+- a chat of another account, and a chat with no run, answer the same `{"cancelled":false}`, so the
+  answer says nothing about which chats exist or which of them are running.
+
+A client that names no chat is answered exactly as before - whatever the asking window is running -
+and so is a client whose body cannot be read: the stop button is the way out of a run that is going
+wrong, and must not start refusing requests. The subagents of the run are cancelled through the run
+window's `SubagentJobRegistry`, which a tracker only hands out for its *active* chat, so that step is
+skipped when the run's window has moved on to another chat.
 
 ### Running an agent on a schedule (#384)
 
@@ -128,9 +149,10 @@ run. See `doc/scheduled-agent.md`.
   `ChatProcessor` resolves the handler here per event, so a UI other than the SSE servlet can register.
   `findOthers` is the account-wide direction: every *other* window of one account, for news that is
   the account's rather than one run's
-- **`PendingInteractionRegistry`** – The runs currently able to ask a human, keyed by task id and named
-  by the account waiting on them. What lets any window of that account answer a request the window that
-  started the run is parked on - see "a pending interaction belongs to the account"
+- **`PendingInteractionRegistry`** – The chat runs in flight, keyed by task id and named by the account
+  they belong to. What lets any window of that account answer a request the window that started the run
+  is parked on, and stop the run itself - see "a pending interaction belongs to the account" and
+  "stopping a run belongs to the account too"
 - **`ChatSSEHandler`** – Push-based SSE implementation of `ChatEventHandler`
 - **`Chat`** – Thread-safe in-memory container using `CopyOnWriteArrayList<ChatMessage>` (max 500)
 - **`ChatSessionManager`** – Manages per-session in-memory state (Chat + ConversationMemory + ConversationLog) with LRU caching (max 5 sessions). Handles session switching with persist/load/rebuild cycle.

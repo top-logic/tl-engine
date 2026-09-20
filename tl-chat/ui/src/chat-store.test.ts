@@ -35,6 +35,9 @@ let sentBodies: Record<string, unknown>[] = []
 /** Every URL the store asked `fetch` for, in order. */
 let requested: string[] = []
 
+/** The body of every `POST /chat/cancel`, in order. */
+let cancelBodies: Record<string, unknown>[] = []
+
 class FakeEventSource {
   static readonly CLOSED = 2
 
@@ -101,6 +104,7 @@ beforeEach(() => {
   sentTexts = []
   sentBodies = []
   requested = []
+  cancelBodies = []
   const globals = globalThis as unknown as Record<string, unknown>
   globals.window = {
     location: { pathname: '/app/view/chat' },
@@ -116,6 +120,10 @@ beforeEach(() => {
     }
     if (url.includes('/chat/capabilities')) {
       return { ok: true, status: 200, json: async () => ({ agents: [], models: [], mcpServers: [] }) }
+    }
+    if (url.includes('/chat/cancel')) {
+      cancelBodies.push(JSON.parse(init?.body ?? '{}'))
+      return { ok: true, status: 200, json: async () => ({ cancelled: true }) }
     }
     if (url.includes('/chat/send')) {
       const body = JSON.parse(init?.body ?? '{}')
@@ -1512,5 +1520,31 @@ describe('every request names its conversation', () => {
 
     releasePage()
     releaseDock()
+  })
+})
+
+/**
+ * The stop button names the chat it is stopping (#465).
+ *
+ * The run's state lives in the window that started it, and a second tab or a reloaded page is a
+ * different window to the server. Without the chat in the body the server has nothing but the
+ * asking window to look in, and the stop of every other window did nothing at all.
+ */
+describe('stopping a run', () => {
+  it('names the chat, so a window that did not start the run can stop it', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+
+    await store.actions.send('Mach etwas Langes.', [])
+    const chat = sentBodies[0].sessionId
+    expect(typeof chat).toBe('string')
+    expect(chat).not.toBe('')
+
+    store.actions.stop()
+    await settle()
+
+    expect(cancelBodies).toEqual([{ sessionId: chat }])
+
+    release()
   })
 })

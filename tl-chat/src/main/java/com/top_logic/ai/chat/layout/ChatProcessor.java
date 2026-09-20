@@ -238,11 +238,11 @@ public class ChatProcessor {
 				UserMemoryBinding.Binding memoryBinding =
 					UserMemoryBinding.bind(state.getMemories())) {
 
-			// What this run asks its user belongs to the account, not to the window it was started
-			// in: any window of theirs - a second tab, a reloaded page, a new login - may answer it,
-			// and the answer has to reach this store wherever the run is parked. Registered inside
-			// the scope whose finally drops it again, so a run that dies leaves nothing behind. See
-			// PendingInteractionRegistry.
+			// This run belongs to the account, not to the window it was started in: any window of
+			// theirs - a second tab, a reloaded page, a new login - may answer what it asks and may
+			// stop it, and both have to reach this state wherever the run is parked. Registered
+			// inside the scope whose finally drops it again, so a run that dies leaves nothing
+			// behind. See PendingInteractionRegistry.
 			PendingInteractionRegistry.register(taskId, TLContext.currentUser(), taskTracker, state);
 
 			Logger.info("ChatProcessor: Starting agent in thread: " + Thread.currentThread().getName(),

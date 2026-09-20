@@ -421,6 +421,9 @@ from the object*; both are absent rather than refused. `SecDemoReadFilterTest` a
 > Two controls, both the caller's: `filterSecurity` inside the script (**D8**), or withhold `script` from
 > an account that must learn neither.
 
+The two read surfaces that do **not** hand over objects - the model digest and the vector index - are
+[5.8](#58-the-two-derived-read-surfaces---digest-and-vector-index-issue-295).
+
 ### 5.4 What the agent is told - skills, delegates, notices
 
 User experience, not a control: this is why the agent can say *"you lack `workspace`"* instead of *"I
@@ -538,6 +541,46 @@ loses **both**. As `dora`, the same unchecked write is refused too.
 > P1 stays a switched-off module because serving the endpoint at all is a deployment decision, not
 > because the endpoint would be unsafe if served.
 
+### 5.8 The two derived read surfaces - digest and vector index (issue #295)
+
+[5.3](#53-read-filtering---what-a-permitted-tool-then-discloses-issue-289) is about a tool that hands
+over **objects**. Two surfaces hand over something derived from them instead, and each needs the check
+its data admits.
+
+**The model digest** describes **types**, not objects, so the read filter has nothing to filter and the
+bound is `accessibleTypes(READ)` - the types the persona's roles grant Read on *at the security root*.
+One call hands over the whole model, which is why this one mattered: a type nobody filtered out is a
+type the agent now knows the name, the attributes and the relationships of.
+
+| # | Behaviour | Persona | Do this (console) | You should see |
+|---|---|---|---|---|
+| **D9** | the digest names only the types the persona may read | `ben`, then `anna` | `aiCallTool("model-browser.outlineModel", {"includeFramework": false})` | Ben: `class Ticket` and **no `class Project`** - `pm:Project` grants Read to `projectPartner` only. Anna: both. Same capability, same call, two models |
+| **D10** | a module the persona may read no type of is absent entirely | any persona | the same call | **no `## luigis.pizzashop`**. The demo's own model carries no `<security-config>` grant at all, which is deny-by-default: nobody is told the module exists. The absence includes its enums, because the engine's rights cannot scope an enumeration and its module is the only statement available about it |
+| **D11** | structure is not instances | `dora` | the same call, then `aiCallTool("model-instances.listInstances", {"moduleName": "pm", "typeName": "Project"})` | `class Project` in the digest, `"totalCount":0` in the listing. Dora's role grants Read on the type at the root and she scopes no instance of it, so the two questions get two answers. Collapsing them would describe the wrong thing |
+
+> ⚠️ **What the digest does not claim.** An emitted type is written out *in full*: its generalizations
+> and the target types of its parts are **named** even where those types have no entry of their own -
+> naming is not describing, and a definition with its references cut out would be a false statement
+> about the type rather than a narrower one. Attribute-level grants are not reflected either: the digest
+> advertises `pm:Ticket#body` to Ben, and what he may actually read of a ticket is decided where the
+> ticket is read (**D3**). And `accessibleTypes` resolves roles at the **security root**, so Cara - who
+> partners on Beta but holds `projectPartner` on no root - is not told about `pm:Project` although she
+> may read an instance of it. The error is towards disclosing less.
+
+**The vector index** hands over chunks of text a background daemon embedded under system rights, so its
+*contents* are unrestricted by construction and the whole guarantee is made at query time: a hit whose
+source object the persona may not read is **dropped, with its text**, and so is a hit that cannot be
+attributed to an object at all. There is no console row for it, because the fixture ships no index -
+embedding needs a Mistral key. `SecDemoVectorIndexTest` asserts it against these personas with chunks
+shaped exactly as the indexer writes them: Anna keeps the Alpha hit and loses the Beta one, Cara the
+other way round, Ben and Dora neither.
+
+> ⚠️ **What the index does not claim.** The embedding vector was computed from unfiltered text.
+> Dropping a hit keeps the text out of the answer; it does not undo that the vector exists. Not
+> *indexing* unreadable content is the stronger guarantee and a different change - see
+> [agent-security-architecture.md](../../../doc/security/agent-security-architecture.md) 3.4.3 for the
+> cost it carries.
+
 ---
 
 ## 6. What needs an LLM key
@@ -572,7 +615,7 @@ mvn -o -pl tl-ai-demo -am test -DskipTests=false \
     -Dsurefire.failIfNoSpecifiedTests=false -Dtest='SecDemo*'
 ```
 
-That is 188 tests in 20 classes, green on this branch. The class name says which behaviour broke:
+That is 195 tests in 22 classes, green on this branch. The class name says which behaviour broke:
 
 | Class | Scenarios | Class | Scenarios |
 |---|---|---|---|
@@ -582,6 +625,7 @@ That is 188 tests in 20 classes, green on this branch. The class name says which
 | `SecDemoCapabilityNoticeTest` | C1, C2 | `SecDemoPreCommitGuardTest` | [5.6](#56-the-pre-commit-guard-l4) |
 | `SecDemoSkillAbsenceTest` | C1, C4 - C6 | `SecDemoRoleRuleTest` | R1 |
 | `SecDemoListToolsTest` | C3, C4 | `SecDemoMcpEndpointTest` | P1 |
+| `SecDemoModelDigestTest` | D9 - D11 | `SecDemoVectorIndexTest` | [5.8](#58-the-two-derived-read-surfaces---digest-and-vector-index-issue-295) |
 
 Eight more carry no scenario row of their own, because what they assert is not something you observe
 by logging in as a persona:

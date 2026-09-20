@@ -44,7 +44,14 @@ export interface Citation {
   index: number
   toolName: string
   toolCallId: string
+  /** The model's own vocabulary for what kind of source this is, e.g. `web` or `invoice`. */
   kind: string
+  /**
+   * What to call that kind in front of a reader, in the reader's language.
+   *
+   * Empty when the host declared no label for the kind; {@link kind} is shown instead.
+   */
+  kindLabel?: string
   id: string
   label: string
   url: string
@@ -87,6 +94,27 @@ export interface ErrorMessage {
   id: string
   code?: string
   message: string
+  timestamp: number
+}
+
+/**
+ * Something that happened around the conversation rather than in it.
+ *
+ * Today one thing only: the run lost the model it was configured with and continued on another
+ * one. Not an {@link ErrorMessage} - nothing failed for the user, the answer below it simply comes
+ * from somewhere else - and not an assistant message either, because the agent did not say it.
+ *
+ * The `detail` is the server's own line, in the same wording the reloaded transcript carries, so
+ * that a notice reads the same live as after a reload (#429). The sentence around it is the
+ * renderer's, from `kind`.
+ */
+export interface NoticeMessage {
+  type: 'notice'
+  id: string
+  /** What the notice is about. */
+  kind: 'model_switched'
+  /** The server's line: `from -> to: reason`. */
+  detail: string
   timestamp: number
 }
 
@@ -157,6 +185,7 @@ export type ChatMessage =
   | ToolResult
   | ThinkingBlock
   | ErrorMessage
+  | NoticeMessage
   | ApprovalRequest
   | InteractionRequest
   | RunMeta
@@ -278,6 +307,25 @@ export interface Attachment {
   size: number
 }
 
+/**
+ * One fact the page states about the situation a message is sent in.
+ *
+ * Computed on the server from the chat element's `<context>` configuration and pushed into the
+ * control state; the browser only carries it back, because the run happens on a background thread
+ * long after those channels were read. The message text is never touched by it.
+ */
+export interface ContextFact {
+  name: string
+  value: string
+  /**
+   * Whether the value holds for the whole conversation.
+   *
+   * Only a stable fact reaches the system prompt, which has to stay byte-identical across the turns
+   * of one conversation or the provider's prompt cache misses on every one of them.
+   */
+  stable: boolean
+}
+
 export interface SendPayload {
   text: string
   sessionId: string
@@ -288,6 +336,8 @@ export interface SendPayload {
   attachments?: Attachment[]
   /** How hard the model may think for this turn; omitted keeps the agent's assignment. */
   effort?: string
+  /** What the page states about the situation this message is asked in. */
+  facts?: ContextFact[]
 }
 
 export interface TokenUsage {

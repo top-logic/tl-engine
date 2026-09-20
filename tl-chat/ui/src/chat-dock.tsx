@@ -75,12 +75,12 @@ export function launcherMark(open: boolean, busy: boolean, badge: number): Launc
  * The launcher is what a closed dock still says: the unseen count of the rail's sections, and a dot
  * while the agent works.
  *
- * **A dock steps aside for a page that shows its conversation.** The chat transport is one
- * conversation per window - every `/chat/*` call carries only a `windowId` - so a dock offering a
- * second view of the conversation the page is already showing would have the two of them taking
- * each other's turns. While a `<chat-conversation/>` of this chat id is mounted outside a dock,
- * this element renders nothing at all: no panel, no launcher, and its content is unmounted rather
- * than hidden, so the rail inside it stops competing with the page's for one remembered layout.
+ * **A dock steps aside for a page that shows its conversation.** Not for the transport any more -
+ * a window carries as many conversations as it shows - but because these two are the *same* one:
+ * two composers on one draft channel overwrite each other's text, and two rails on one chat id
+ * fight over the one remembered layout. While a `<chat-conversation/>` of this chat id is mounted
+ * outside a dock, this element therefore renders nothing at all: no panel, no launcher, and its
+ * content is unmounted rather than hidden.
  */
 export function TLChatDock({ controlId }: TLCellProps) {
   const state = useTLState()

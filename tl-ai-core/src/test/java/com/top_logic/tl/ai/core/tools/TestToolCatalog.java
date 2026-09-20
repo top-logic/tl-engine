@@ -34,6 +34,7 @@ import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
+import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
 
 /**
  * Contract tests for {@link ToolCatalog}: registration, freeze, lookup, schema
@@ -486,7 +487,16 @@ public class TestToolCatalog extends TestCase {
 		assertTrue(((ToolState.Completed) result.state()).content().isEmpty());
 	}
 
-	/** An annotated method may return a {@link ToolResult} directly, content and all. */
+	/**
+	 * An annotated method may return a {@link ToolResult} directly, content and all - and what reaches
+	 * the model is marked as untrusted content on the way out (issue #478).
+	 *
+	 * <p>
+	 * Asserted here, at the dispatcher, and not only at {@code AnnotatedTools}, because this is the
+	 * path an actual tool call takes: the marking has to survive being turned into a
+	 * {@link ToolState.Completed} with its content parts, which is what the request builders read.
+	 * </p>
+	 */
 	public void testAnnotatedMethodReturningToolResult() {
 		ToolCatalog catalog = new ToolCatalog();
 		catalog.register(new SampleToolProvider());
@@ -494,9 +504,11 @@ public class TestToolCatalog extends TestCase {
 		ToolResultMessage result = catalog.execute(new ToolCall("call-1", "show", "{}"),
 			ToolContext.EMPTY);
 
+		String marked = UntrustedEnvelope.MODEL_DATA.wrap("show", "A document.");
 		ToolState.Completed completed = (ToolState.Completed) result.state();
-		assertEquals("A document.", completed.result());
+		assertEquals(marked, completed.result());
 		assertEquals(2, completed.content().size());
+		assertEquals(marked, ((TextContent) completed.content().get(0)).text());
 		assertTrue(completed.content().get(1) instanceof PdfContent);
 	}
 

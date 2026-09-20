@@ -77,6 +77,19 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 SERVER_OF_THE_AGENT_DENIED__SERVER;
 
 	/**
+	 * Refusal shown when a request names an agent that is not a conversation partner at all.
+	 *
+	 * <p>
+	 * Says what it is rather than what the roles do not grant: no administrator can grant this one,
+	 * so pointing the user at one would send them away for nothing.
+	 * </p>
+	 *
+	 * @en The agent {0} cannot be talked to: the application runs it for you.
+	 * @de Mit dem Agenten {0} kann man nicht sprechen: Die Anwendung führt ihn für Sie aus.
+	 */
+	public static ResKey1 AGENT_NOT_A_PERSONA__AGENT;
+
+	/**
 	 * Refusal shown when a request names an agent this application does not have.
 	 *
 	 * @en There is no agent named {0}.
@@ -170,6 +183,9 @@ public class I18NConstants extends I18NConstantsBase {
 					? MCP_NOT_THE_AGENTS__SERVER.fill(name)
 					: MCP_NOT_GRANTED__SERVER.fill(name);
 			default:
+				if (cause == Cause.INFRASTRUCTURE_AGENT) {
+					return AGENT_NOT_A_PERSONA__AGENT.fill(name);
+				}
 				// An agent has no counterpart of "what the agent itself uses", so the section default
 				// can only ever refuse it outright - NOT_THE_AGENTS cannot arise here.
 				return cause == Cause.ROLE_DENY

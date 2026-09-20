@@ -29,6 +29,7 @@ import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.util.TLContextManager;
+import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -103,7 +104,8 @@ public class TestAsyncAgentScriptFunctions extends BasicTestCase {
 	}
 
 	/**
-	 * A run that finishes {@code ERROR} is retrievable as such and yields no result transcript.
+	 * A run that finishes {@code ERROR} is retrievable as such, and asking it for its answer fails
+	 * with the recorded message instead of reading as an absent answer (Gitea #389).
 	 */
 	public void testErroredRunRecordedAsError() throws Exception {
 		AgentSession session = _store.createSession(SessionKind.BACKGROUND, null, "errored-run");
@@ -114,7 +116,28 @@ public class TestAsyncAgentScriptFunctions extends BasicTestCase {
 		advance();
 
 		assertEquals(ExecutionStatus.ERROR.name(), AIScriptFunctions.agentRunStatus(session));
-		assertNull("no result for a non-COMPLETE run", AIScriptFunctions.agentRunResult(session));
+		assertEquals("the error is readable without being raised", "boom",
+			AIScriptFunctions.agentRunError(session));
+		try {
+			AIScriptFunctions.agentRunResult(session);
+			fail("A failed run must not report its absent answer as a value.");
+		} catch (TopLogicException ex) {
+			assertTrue("The provider's own message belongs in the failure: " + ex.getMessage(),
+				ex.getMessage().contains("boom"));
+		}
+		assertEquals("the transcript stays readable for diagnosis", TRANSCRIPT,
+			AIScriptFunctions.agentRunTranscript(session));
+	}
+
+	/** A run that is still going reports no error, and no answer either. */
+	public void testRunningRunHasNoErrorAndNoResult() throws Exception {
+		AgentSession session = _store.createSession(SessionKind.BACKGROUND, null, "still-running");
+		_store.beginExecution(session, "run-still-going", "test-agent", "test-model", null, null);
+		advance();
+
+		assertEquals(ExecutionStatus.RUNNING.name(), AIScriptFunctions.agentRunStatus(session));
+		assertNull(AIScriptFunctions.agentRunResult(session));
+		assertNull(AIScriptFunctions.agentRunError(session));
 	}
 
 	/**
@@ -342,7 +365,14 @@ public class TestAsyncAgentScriptFunctions extends BasicTestCase {
 		String status = pollUntilTerminal(handle);
 		assertEquals("failed background run must be recorded as ERROR",
 			ExecutionStatus.ERROR.name(), status);
-		assertNull(AIScriptFunctions.agentRunResult(handle));
+		assertNotNull("the failure must be readable through the handle",
+			AIScriptFunctions.agentRunError(handle));
+		try {
+			AIScriptFunctions.agentRunResult(handle);
+			fail("A failed run must not report its absent answer as a value.");
+		} catch (TopLogicException expected) {
+			// The run never answered; asking for its answer says so.
+		}
 	}
 
 	/**

@@ -47,8 +47,10 @@ public class ConversationLogReplay {
 	 * <p>User text parts become {@link UserMessage}s. Assistant text, thinking,
 	 * and tool call parts are accumulated and flushed as {@link AssistantMessage}s.
 	 * Completed, failed, denied and rolled-back tool calls produce
-	 * {@link ToolResultMessage}s. Parts that are not relevant to LLM context
-	 * (approvals, system events, transactions, etc.) are skipped.</p>
+	 * {@link ToolResultMessage}s. A {@link Part.SystemEventType#SUBAGENT_RESULT} system part
+	 * becomes the {@link UserMessage} the turn-start injection put in front of the model. Parts
+	 * that are not relevant to LLM context (approvals, other system events, transactions, etc.)
+	 * are skipped.</p>
 	 *
 	 * <p>A {@link Part.CompactionPart} carrying a {@link CompactionSidecar} that still
 	 * {@link CompactionSidecar#matches(List) matches} the history replayed up to it replaces
@@ -92,14 +94,22 @@ public class ConversationLogReplay {
 	}
 
 	private void replayTurn(Turn turn) {
-		// 1. Replay user parts.
+		// 1. Replay user parts. The first of them carries what the host stated about this turn,
+		// ahead of the user's text, exactly where AgentLoop.ensureTurnContext put it live: a
+		// reloaded conversation has to be the one the model already saw, or the compaction
+		// sidecars fingerprinted against it stop matching.
+		String turnContext = turn.turnContext();
+		boolean contextPending = turnContext != null && !turnContext.isBlank();
 		for (Part userPart : turn.userParts()) {
 			if (stopAt(userPart, turn)) {
 				return;
 			}
 			if (userPart instanceof Part.TextPart tp) {
-				_messages.add(new UserMessage(tp.id(), tp.timestamp(),
-					List.of(new TextContent(tp.text()))));
+				List<ContentPart> content = contextPending
+					? List.of(new TextContent(turnContext), new TextContent(tp.text()))
+					: List.of(new TextContent(tp.text()));
+				contextPending = false;
+				_messages.add(new UserMessage(tp.id(), tp.timestamp(), content));
 			}
 		}
 
@@ -137,9 +147,18 @@ public class ConversationLogReplay {
 				// in replayedHistoryBefore, which is what makes the two projections equal.
 				flushAssistantMessage(turn);
 				applySidecar(cp);
+			} else if (part instanceof Part.SystemPart sp
+					&& sp.eventType() == Part.SystemEventType.SUBAGENT_RESULT) {
+				// The one system event that is conversation content rather than a note about
+				// the run: its details are verbatim the text a finished subagent put in front
+				// of the model (#359). Replaying it as the same user message the live run
+				// injected is what keeps a reloaded session saying what the live one said.
+				flushAssistantMessage(turn);
+				_messages.add(new UserMessage(sp.id(), sp.timestamp(),
+					List.of(new TextContent(sp.details() == null ? "" : sp.details()))));
 			}
-			// Skip: ApprovalPart, InteractionPart, SystemPart, TransactionPart, ErrorPart,
-			//        DelegationPart
+			// Skip: ApprovalPart, InteractionPart, other SystemParts, TransactionPart,
+			//        ErrorPart, DelegationPart
 		}
 
 		// 3. Flush remaining content as final assistant message.

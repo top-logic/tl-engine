@@ -8,6 +8,7 @@ package com.top_logic.tl.ai.core.agent;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -23,7 +25,11 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.Logger.LogEntry;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.logging.Level;
+import com.top_logic.basic.tools.CollectingLogListener;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
@@ -59,9 +65,12 @@ import com.top_logic.tl.ai.core.security.ToolAccessPolicy;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
 import com.top_logic.tl.ai.core.security.ToolAuthorization;
 import com.top_logic.tl.ai.core.security.ToolChangeSet;
+import com.top_logic.tl.ai.core.session.ConversationLog;
+import com.top_logic.tl.ai.core.session.ConversationLogListener;
+import com.top_logic.tl.ai.core.session.Part;
+import com.top_logic.tl.ai.core.session.Turn;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
-import com.top_logic.tl.ai.core.tools.util.UntrustedEnvelope;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ProgressReporter;
 import com.top_logic.tl.ai.tool.api.Tool;
@@ -71,7 +80,9 @@ import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
+import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests for {@link AgentLoop}.
@@ -2161,6 +2172,170 @@ public class TestAgentLoop extends TestCase {
 		assertTrue("The correction must reach the model in the same request as the tool result it"
 			+ " corrects - otherwise the model has already formed the false belief.",
 			containsNotice(requests.get(1)));
+	}
+
+	/**
+	 * A commit failure that is not a {@link TransactionException} must still end the turn, not the
+	 * run.
+	 *
+	 * <p>
+	 * Issue #410. The engine does not wrap every way a commit can fail: a model constraint, a
+	 * mandatory attribute left unset or an application {@code CommitChecker} arrives as a
+	 * {@link TopLogicException}, which is neither a {@code KnowledgeBaseException} nor - before this
+	 * was fixed - anything {@link TransactionScope#commit()} caught. Such a failure escaped the
+	 * whole run and was announced to the browser as a provider error, which told the user the model
+	 * had failed and to send again. {@link TransactionScope} now wraps it; this test pins the second
+	 * gate, so that a failure family the engine adds later cannot reopen the same hole.
+	 * </p>
+	 */
+	public void testEngineCommitFailureIsNotAProviderError() {
+		Conversation conv = new Conversation();
+		List<AgentEvent> events = new ArrayList<>();
+
+		// A TopLogicException is exactly what ModelService.checkCommit throws for a constraint
+		// violation, and the engine rethrows it unwrapped - it is no KnowledgeBaseException.
+		AgentResult result = runRefusedWrite(conv, vetoingScope(
+			() -> new TopLogicException(ResKey.text("Cannot store, constraints violated."))),
+			events::add);
+
+		assertEquals("A refused write is not a failed run.", StopReason.COMPLETE,
+			result.stopReason());
+		assertTrue("A refused commit is not a provider failure and must not be reported as one.",
+			events.stream().noneMatch(AgentEvent.ProviderError.class::isInstance));
+		assertTrue("Nothing was persisted, so no commit may be reported.",
+			events.stream().noneMatch(AgentEvent.TransactionCommitted.class::isInstance));
+
+		AgentEvent.TransactionRolledBack rollback = events.stream()
+			.filter(AgentEvent.TransactionRolledBack.class::isInstance)
+			.map(AgentEvent.TransactionRolledBack.class::cast)
+			.findFirst().orElse(null);
+		assertNotNull("The turn must be rolled back, and say so.", rollback);
+		assertTrue("The rollback must name why the write was refused, but was: " + rollback.reason(),
+			rollback.reason().contains("constraints violated"));
+
+		String notice = frameworkNotice(conv);
+		assertNotNull("The model must be told that the write of the turn is gone.", notice);
+		assertTrue("The notice must name the refusal, but was: " + notice,
+			notice.contains("constraints violated"));
+	}
+
+	/**
+	 * A refused commit leaves a server-side ERROR line naming the run and the cause.
+	 *
+	 * <p>
+	 * The half of issue #410 that cost the most time: the deployment that hit this found nothing at
+	 * all in its log, so the only way to the real cause was to reproduce it with a debugger
+	 * attached. The line has to carry the run id, because that is what joins it to the persisted
+	 * {@code AgentExecution} row, and the exception, because the reason is in there.
+	 * </p>
+	 */
+	public void testRefusedCommitIsLoggedWithTheRun() {
+		Conversation conv = new Conversation();
+		List<AgentEvent> events = new ArrayList<>();
+		TransactionScope scope = vetoingScope(
+			() -> new TransactionException(TransactionScope.COMMIT_FAILED_PREFIX
+				+ "Cannot store, constraints violated."));
+
+		CollectingLogListener log =
+			new CollectingLogListener(Collections.singleton(Level.ERROR), true);
+		List<LogEntry> entries;
+		try {
+			runRefusedWrite(conv, scope, events::add);
+		} finally {
+			entries = log.getLogEntries();
+			log.deactivate();
+		}
+
+		String runId = events.stream()
+			.filter(AgentEvent.RunStarted.class::isInstance)
+			.map(e -> ((AgentEvent.RunStarted) e).runId())
+			.findFirst().orElse(null);
+		assertNotNull("The run must have started.", runId);
+
+		LogEntry reported = entries.stream()
+			.filter(entry -> entry.getMessage() != null && entry.getMessage().contains(runId))
+			.findFirst().orElse(null);
+		assertNotNull("A failed commit must leave a line naming its run, but the log held: "
+			+ entries, reported);
+		assertTrue("The line must say what failed, but was: " + reported.getMessage(),
+			reported.getMessage().contains("could not be committed"));
+		assertTrue("The cause is the point of the line: it must carry the exception.",
+			reported.getException().hasValue());
+		assertTrue("The reason must be readable from the logged cause, but was: "
+			+ reported.getException().get().getMessage(),
+			reported.getException().get().getMessage().contains("constraints violated"));
+	}
+
+	/**
+	 * A refused commit reaches the persisted transcript as a retraction, not as a green write.
+	 *
+	 * <p>
+	 * The fourth thing issue #410 cost: because the veto escaped the run, no
+	 * {@code TransactionRolledBack} was ever emitted, so the recorded turn kept a {@code COMPLETED}
+	 * write for a change no revision holds. A transcript reloaded from the database then fed the
+	 * model that success again. The retraction itself is
+	 * {@link com.top_logic.tl.ai.core.session.ConversationLogListener}'s, and tested there; what is
+	 * pinned here is that the loop still emits the event it needs for it.
+	 * </p>
+	 */
+	public void testRefusedCommitIsRecordedAsRolledBack() {
+		ConversationLog log = new ConversationLog();
+		log.startTurn();
+
+		runRefusedWrite(new Conversation(), vetoingScope(
+			() -> new TopLogicException(ResKey.text("Cannot store, constraints violated."))),
+			new ConversationLogListener(log));
+
+		// The run closed the turn on its way out, so it is in the finished ones.
+		List<Turn> turns = log.turns();
+		assertFalse("The run must have recorded a turn.", turns.isEmpty());
+		Part.ToolCallPart call =
+			(Part.ToolCallPart) turns.get(turns.size() - 1).findPart("tc1");
+		assertNotNull("The write must be in the transcript.", call);
+		assertEquals("A write whose turn was refused must not stay COMPLETED.",
+			Part.ToolCallStatus.ROLLED_BACK, call.status());
+		assertTrue("The retraction must carry why, but was: " + call.errorMessage(),
+			call.errorMessage().contains("constraints violated"));
+	}
+
+	/**
+	 * Runs one turn in which a write tool succeeds and the turn's commit is then refused.
+	 *
+	 * <p>
+	 * The shape every case of issue #410 needs: the model calls one {@link ToolMode#STRUCTURAL}
+	 * tool, the tool reports success, the commit of the turn fails, and the run is expected to carry
+	 * on and answer.
+	 * </p>
+	 *
+	 * @param conversation
+	 *        Receives the user message, the tool result and the framework notice; pass a fresh one
+	 *        unless the caller wants to read it afterwards.
+	 */
+	private AgentResult runRefusedWrite(Conversation conversation, TransactionScope scope,
+			AgentEventListener listener) {
+		conversation.add(new UserMessage("u1", T0, List.of(new TextContent("Create an invoice"))));
+
+		ToolCatalog registry = new ToolCatalog();
+		registry.register(globalTool("edit_model", new ToolSchema("edit_model", "Edits", "{}")));
+		registry.freeze();
+
+		LLMProvider provider = mockProvider(
+			List.of(new ToolCall("tc1", "edit_model", "{}")),
+			List.of(new TextContent("Created.")));
+		ToolContext context =
+			new ToolContext(developmentSecurity(), ApprovalCallback.AUTO_APPROVE, scope);
+
+		return new AgentLoop(config(), provider, registry).run(conversation, context, listener);
+	}
+
+	/** A scope whose commit is refused with the given failure, leaving rollback possible. */
+	private static TransactionScope vetoingScope(Supplier<RuntimeException> failure) {
+		return new TestableTransactionScope() {
+			@Override
+			public void commit() {
+				throw failure.get();
+			}
+		};
 	}
 
 	/**

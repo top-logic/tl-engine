@@ -17,13 +17,39 @@
 	<channels>
 		<channel name="chatSession"/>
 		<!--
-			What the rail's pane is showing, written by the "Belege" list and read by the form in the
-			pane. Empty means the sections; the pane's close button empties it again.
+			What the rail's pane is showing, written by the "Belege" list, by the agent's `present`
+			tool, or by both. Empty means the sections; the pane's close button empties it again.
+			It holds one invoice or several - "show me the three most expensive" puts three there.
 		-->
 		<channel name="paneObject"/>
+		<!--
+			The same value split by how many objects stand on it, because a record is a form and a
+			set of records is a table, and neither element can render the other's value: <form>
+			resolves its input to one object. The rail shows the <pane> for the first and the
+			<list-pane> for the second, so exactly one of the two ever has something to show.
+		-->
+		<derived-channel name="paneInvoice"
+			inputs="paneObject"
+		>
+			<expr><![CDATA[v -> ifElse($v.size() == 1, $v.singleElement(), null)]]></expr>
+		</derived-channel>
+		<derived-channel name="paneInvoices"
+			inputs="paneObject"
+		>
+			<expr><![CDATA[v -> ifElse($v.size() > 1, $v, list())]]></expr>
+		</derived-channel>
 		<!-- The counts the rail shows on the section headers and the strip icons. -->
 		<channel name="progressBadge"/>
 		<channel name="sourcesBadge"/>
+		<channel name="memoriesBadge"/>
+		<!--
+			The composer's unsent text, and the object a command puts into it as a reference token.
+			Declared here so this page works on its own; app.view.xml binds its own "chatDraft" over
+			this one (<view-ref><bind/></view-ref>), which is what lets the Belege page write it too -
+			see "Writing a channel across a view boundary" in tl-chat/CLAUDE.md.
+		-->
+		<channel name="chatDraft"/>
+		<channel name="chatReference"/>
 	</channels>
 	<chat chat-id="chat"
 		direction="row"
@@ -173,12 +199,32 @@
 			render no toolbar at all, but that is the engine's to decide.
 		-->
 		<panel fill="true">
+			<!--
+				`present` is the allow list of the tool of the same name: it names the one channel
+				this page lets the agent write. "Show me invoice X" then ends as that invoice in the
+				rail's pane. Deny by default - without this attribute no run reaches any channel of
+				this view, and a `present` call naming another channel is refused.
+			-->
 			<chat-conversation
 				citations="true"
+				draft="chatDraft"
 				input="chatSession"
+				present="paneObject"
 				prompt-improver-agent="TL_PromptImprover"
+				reference="chatReference"
 				trace="summary"
 			>
+				<!--
+					The composer's idle invitation, in this application's own words (Issue #420). The
+					chat's own German addresses the user with "du", which an application that says
+					"Sie" everywhere else cannot have on its most-read control. Idle only: while the
+					agent works the field keeps saying "Nächste Nachricht schreiben …", which is
+					about the run rather than about this application.
+				-->
+				<placeholder>
+					<en>Ask about these invoices, their amounts or who they are from.</en>
+					<de>Fragen Sie nach diesen Belegen, ihren Beträgen oder ihren Absendern.</de>
+				</placeholder>
 				<actions rate="true"/>
 				<controls
 					agent-picker="true"
@@ -189,6 +235,52 @@
 					model-picker="true"
 					thinking="true"
 					trace-picker="true"
+				/>
+				<!--
+					What this page states about the situation the user is asking in (Issue #437). The
+					server evaluates these when the page's channels change and they travel with every
+					message; the message text itself is never touched.
+
+					"Application" is stable, so it is rendered into the environment block of the system
+					prompt - which has to stay byte-identical across the turns of one conversation, or
+					the provider's prompt cache misses on every one of them. "Open invoice" and
+					"Open invoice amount" follow the user's clicks in the rail, so they are not: they go
+					into the per-turn <turn-context> block, which travels in the turn itself, beside the
+					user's text (#438).
+
+					The dock in app.view.xml states the same facts, because it is the same conversation:
+					a page that states them and a dock that does not would flip the environment block
+					between the turns of one chat, and would leave every question asked from the dock
+					without the selection (#494).
+
+					Every fact takes the <inputs> as its leading arguments, the way <data-list> binds
+					its rows - which is why the stable one names the channel it does not use.
+				-->
+				<context>
+					<inputs>
+						<input channel="paneObject"/>
+					</inputs>
+					<fact name="Application"
+						stable="true"
+					>
+						<value><![CDATA[open -> "Invoice management demo (tl-ai-demo)"]]></value>
+					</fact>
+					<fact name="Open invoice amount"
+						stable="false"
+					>
+						<value><![CDATA[open -> ifElse(isEmpty($open), "none",
+							$open.get(`tl.ai.demo.imageclassification:Invoice#amountLabel`))]]></value>
+					</fact>
+				</context>
+				<!--
+					And the one line that says WHICH object the user is looking at (Issue #494). It
+					states the same channel the pane renders - label, type and the identifier every
+					tool reads back - so "what have I selected?" is answered and "change its date" is
+					possible. The <fact> above could have said the label; it could not have said the
+					identifier without this page knowing how this product spells one.
+				-->
+				<selection name="Open invoice"
+					channel="paneObject"
 				/>
 				<!--
 					Declarative @-mention: typing "@" offers this application's invoices, no TypeScript.
@@ -288,6 +380,8 @@
 				<data-list
 					collapsible="false"
 					observed-types="tl.ai.demo.imageclassification:Invoice"
+					row-actions="hover"
+					row-channel="invoice"
 					search="false"
 					selection="paneObject"
 				>
@@ -295,6 +389,46 @@
 						<en>No invoices yet</en>
 						<de>Noch keine Belege</de>
 					</empty-text>
+					<!--
+						What issue #440 is about: two ordinary view commands put a question about this
+						row into the composer, with no chat-specific code and no new command class.
+						The first writes a whole German sentence to the "chatDraft" channel; the
+						second writes the invoice itself to "chatReference", which the composer turns
+						into one atomic reference token at the caret - what picking it with "@" does.
+						Neither sends: the user reads the sentence and presses send.
+					-->
+					<row-commands>
+						<generic-command
+							image="css:bi bi-chat-left-text"
+							input="invoice"
+						>
+							<label>
+								<en>Ask about this</en>
+								<de>Dazu fragen</de>
+							</label>
+							<execute-script>
+								<function><![CDATA[i -> {
+									"en": "Please explain the invoice “"
+										+ $i.get(`tl.ai.demo.imageclassification:Invoice#description`)
+										+ "” over " + $i.get(`tl.ai.demo.imageclassification:Invoice#amountLabel`) + ".",
+									"de": "Bitte erkläre die Rechnung „"
+										+ $i.get(`tl.ai.demo.imageclassification:Invoice#description`)
+										+ "“ über " + $i.get(`tl.ai.demo.imageclassification:Invoice#amountLabel`) + "."
+								}.internationalize()]]></function>
+							</execute-script>
+							<write-channel name="chatDraft"/>
+						</generic-command>
+						<generic-command
+							image="css:bi bi-quote"
+							input="invoice"
+						>
+							<label>
+								<en>Quote in the message</en>
+								<de>In die Nachricht übernehmen</de>
+							</label>
+							<write-channel name="chatReference"/>
+						</generic-command>
+					</row-commands>
 					<lines>
 						<line attribute="description"/>
 						<line attribute="amountLabel"
@@ -306,17 +440,143 @@
 				</data-list>
 			</section>
 			<!--
-				The pane's content, shown in place of the sections while "paneObject" holds an object.
-				The form binds to the same channel, so it shows whatever the list wrote there.
+				What the agent has kept about this user (Issue #439), as an ordinary <data-list> over
+				the UserMemory objects - no chat-specific element. The rows are filtered by owner, so
+				this list can only ever show what belongs to the account looking at it, and the Delete
+				command goes through aiMemoryDelete, which refuses a row of somebody else even when a
+				channel happens to hold one.
+
+				A memory written during this conversation shows up here at once - the store tells the
+				open windows - while the agent is told about it only in the NEXT conversation: the
+				environment block it sits in has to stay byte-identical across the turns of one
+				conversation, or the provider's prompt cache misses on every one of them.
+			-->
+			<section name="memories"
+				badge="memoriesBadge"
+				icon="css:bi bi-bookmark-heart"
+			>
+				<label>
+					<en>Memory</en>
+					<de>Gedächtnis</de>
+				</label>
+				<data-list
+					collapsible="false"
+					count="memoriesBadge"
+					observed-types="tl.ai.execution:UserMemory"
+					row-actions="hover"
+					row-channel="memory"
+					search="false"
+				>
+					<empty-text>
+						<en>Nothing remembered yet</en>
+						<de>Noch nichts gemerkt</de>
+					</empty-text>
+					<lines>
+						<line attribute="text"/>
+						<line emphasis="secondary">
+							<value><![CDATA[m -> {
+								kind = $m.get(`tl.ai.execution:UserMemory#kind`);
+								created = $m.get(`tl.ai.execution:UserMemory#createdAt`);
+								ifElse(isEmpty($kind), "", $kind.label())
+									+ ifElse(isEmpty($created), "",
+										" - " + dateFormat("yyyy-MM-dd").format($created));
+							}]]></value>
+						</line>
+					</lines>
+					<row-commands>
+						<generic-command
+							clique="delete"
+							image="css:bi bi-trash"
+							input="memory"
+						>
+							<label>
+								<en>Forget</en>
+								<de>Vergessen</de>
+							</label>
+							<!-- Names what is about to be forgotten rather than asking Yes/No. -->
+							<confirm>
+								<cancel-label>
+									<en>Keep</en>
+									<de>Behalten</de>
+								</cancel-label>
+								<confirm-label>
+									<en>Forget</en>
+									<de>Vergessen</de>
+								</confirm-label>
+								<title>
+									<en>Forget this</en>
+									<de>Das vergessen</de>
+								</title>
+								<expr><![CDATA[m -> {
+									text = $m.get(`tl.ai.execution:UserMemory#text`);
+									{
+										"en": "Forget “" + $text + "”? Albert will no longer know it.",
+										"de": "„" + $text + "“ vergessen? Albert weiß es dann nicht mehr."
+									}.internationalize();
+								}]]></expr>
+							</confirm>
+							<execute-script>
+								<function><![CDATA[m -> { aiMemoryDelete($m); null; }]]></function>
+							</execute-script>
+						</generic-command>
+					</row-commands>
+					<rows><![CDATA[all(`tl.ai.execution:UserMemory`)
+						.filter(m -> $m.get(`tl.ai.execution:UserMemory#owner`) == currentUser())
+						.sort((m -> $m.get(`tl.ai.execution:UserMemory#createdAt`)).comparator().desc())]]></rows>
+				</data-list>
+			</section>
+			<!--
+				The pane's content, shown in place of the sections while "paneObject" holds one
+				object - picked in the "Belege" list, or presented by the agent.
 			-->
 			<pane>
-				<form input="paneObject">
+				<form input="paneInvoice">
 					<field attribute="date"/>
 					<field attribute="description"/>
 					<field attribute="amount"/>
 					<field attribute="data"/>
 				</form>
 			</pane>
+			<!--
+				And what it shows instead when several objects stand there, which is what the agent
+				does for "show me the three newest invoices": an ordinary <table> over the
+				collection, with the same three columns the Belege page shows. The agent named the
+				objects, this page decided they are a table - and the answer in the transcript, which
+				the model writes as a Markdown table, and the pane beside it now show the same thing
+				(Issue #493).
+
+				Two attributes are load-bearing rather than decorative:
+
+				- `types` fixes the row type. <table> resolves its columns once, when the control is
+				  built, from `types` or else from the rows present at that moment - and the rail
+				  builds both pane children up front, while the channel is still empty, so a <table>
+				  naming neither would fail at page build. Naming the type is also what gives the
+				  columns their model labels and offers the invoice's remaining attributes in the
+				  column selection.
+				- `selection` makes a row click open that invoice: it writes the clicked row to
+				  "paneObject", which is one object, so the pane switches to the <form> above. The
+				  drill-down is one-way - closing the pane returns to the sections, not to the table.
+
+				No <column sort="..."> on purpose: the rows arrive in the order the agent named them,
+				and "the three newest" is an order the user asked for. The user can still sort.
+			-->
+			<list-pane>
+				<table
+					observed-types="tl.ai.demo.imageclassification:Invoice"
+					selection="paneObject"
+					types="tl.ai.demo.imageclassification:Invoice"
+				>
+					<columns>
+						<column attribute="date"/>
+						<column attribute="description"/>
+						<column attribute="amountLabel"/>
+					</columns>
+					<inputs>
+						<input channel="paneInvoices"/>
+					</inputs>
+					<rows><![CDATA[shown -> $shown]]></rows>
+				</table>
+			</list-pane>
 		</chat-rail>
 	</chat>
 </view>

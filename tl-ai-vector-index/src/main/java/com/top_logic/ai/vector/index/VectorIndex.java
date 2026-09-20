@@ -44,8 +44,10 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.FlexData;
 import com.top_logic.knowledge.wrap.person.PersonManager;
+import com.top_logic.tl.ai.core.security.ReadFilter;
 
 import dev.langchain4j.community.store.embedding.jvector.JVectorEmbeddingStore;
+import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
@@ -745,6 +747,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		} catch (Exception e) {
 			content = TextSegment.from(pl);
 		}
+		content = withSourceId(content, payload);
 
 		this.vectorStore.addAll(
 			List.of(this.getDocumentUUID(documentId).toString()),
@@ -768,83 +771,112 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		return UUID.nameUUIDFromBytes(documentId.getBytes(StandardCharsets.UTF_8));
 	}
 
-	/** Default maximum number of results returned by {@link #searchVectorIndex(String)}. */
+	/**
+	 * The given chunk with the source object's identifier in its metadata, so that the query side can
+	 * decide whether the caller may read it without parsing the payload.
+	 *
+	 * <p>
+	 * Additional to the {@code objectId} field the payload already carries and written from the same
+	 * value, so an index built before issue #295 keeps filtering through the fallback rather than going
+	 * dark. A payload that names no object - which only a caller writing its own payload produces -
+	 * keeps the chunk unchanged, and the read filter then drops it for want of an attributable source.
+	 * </p>
+	 */
+	private static TextSegment withSourceId(TextSegment content, Map<String, Object> payload) {
+		Object id = payload.get(VectorReadFilter.SOURCE_ID_FIELD);
+		if (id == null || id.toString().isEmpty()) {
+			return content;
+		}
+		Metadata metadata =
+			content.metadata() == null ? new Metadata() : content.metadata().copy();
+		metadata.put(VectorReadFilter.SOURCE_ID_KEY, id.toString());
+		return TextSegment.from(content.text(), metadata);
+	}
+
+	/** Default maximum number of results returned by {@link #searchVectorIndex(String, ReadFilter)}. */
 	private static final int DEFAULT_MAX_RESULTS = 10;
 
+	/** Default minimum similarity score of a hit. */
+	private static final double DEFAULT_SCORE_THRESHOLD = 0.8;
+
 	/**
-	 * Searches the vector index for documents similar to the query.
+	 * Searches the vector index for documents similar to the query, and discloses only what the given
+	 * principal may read.
+	 *
+	 * <p>
+	 * Returns at most {@value #DEFAULT_MAX_RESULTS} hits. Use
+	 * {@link #searchVectorIndex(String, String, Integer, Double, ReadFilter)} to control the limit, the
+	 * type and the score threshold explicitly.
+	 * </p>
 	 *
 	 * @param query
-	 *              Search query text
-	 * @return List of matching documents with similarity scores
+	 *        Search query text.
+	 * @param readFilter
+	 *        The rights of the principal being served.
+	 * @return The hits the principal may read; never <code>null</code>.
 	 */
-	public List<EmbeddingMatch<TextSegment>> searchVectorIndex(String query) {
-		return this.searchVectorIndex(query, DEFAULT_MAX_RESULTS, 0.8);
+	public VectorReadFilter.Hits searchVectorIndex(String query, ReadFilter readFilter) {
+		return this.searchVectorIndex(query, null, DEFAULT_MAX_RESULTS, DEFAULT_SCORE_THRESHOLD, readFilter);
 	}
 
 	/**
-	 * Searches the vector index for documents similar to the query.
-	 * 
-	 * @param query
-	 *        Search query text
-	 * @param scoreThreshold
-	 *        Score treshhold for the search - number between 0 and 1
-	 * @return List of matching documents with similarity scores
-	 */
-	public List<EmbeddingMatch<TextSegment>> searchVectorIndex(String query, Double scoreThreshold) {
-		return this.searchVectorIndex(query, DEFAULT_MAX_RESULTS, scoreThreshold);
-	}
-
-	/**
-	 * Searches the vector index for documents similar to the query.
-	 * 
+	 * Searches the vector index for documents similar to the query, and discloses only what the given
+	 * principal may read.
+	 *
 	 * <p>
-	 * Returns at most {@value #DEFAULT_MAX_RESULTS} results. Use
-	 * {@link #searchVectorIndex(String, Integer, Double)} to control the limit explicitly.
+	 * There is deliberately <b>no form without a {@link ReadFilter}</b>. The index is filled by a
+	 * background daemon under system rights, so a search that could not name the principal it serves
+	 * would have to disclose every indexed object or none, and either answer would be wrong - the same
+	 * shape {@code TidResolver.resolve} and {@code ExecutionResult.toJson} have carried since #289.
+	 * The store is asked for a larger candidate pool than the caller's limit and the readable hits are
+	 * truncated afterwards, so a principal with narrow access still gets a full page.
 	 * </p>
-	 * 
-	 * @param query
-	 *        Search query text
-	 * @param limit
-	 *        Integer return limit value - search will not return more than limit results
-	 * @param scoreThreshold
-	 *        Score treshhold for the search - number between 0 and 1
-	 * 
-	 * @return List of matching documents with similarity scores
-	 */
-	public List<EmbeddingMatch<TextSegment>> searchVectorIndex(String query, Integer limit, Double scoreThreshold) {
-		return this.searchVectorIndex(query, null, DEFAULT_MAX_RESULTS, scoreThreshold);
-	}
-
-	/**
-	 * Searches the vector index for documents similar to the query. This function can filter the
-	 * results by meta key TopLogic-type. Only works for Vector databases which support Meta Keys.
-	 * For example does not work with jvector, but works with Qdrant database.
-	 * 
+	 *
 	 * <p>
-	 * Returns at most {@value #DEFAULT_MAX_RESULTS} results. Use
-	 * {@link #searchVectorIndex(String, String, Integer, Double)} to control the limit explicitly.
+	 * The type filter matches the {@code TopLogic-type} metadata key and therefore only works on a
+	 * store that supports metadata filters - Qdrant does, JVector does not. It is a convenience, never
+	 * a control: what the caller may see is decided by {@code readFilter} either way.
 	 * </p>
-	 * 
+	 *
 	 * @param query
-	 *        Search query text
+	 *        Search query text.
 	 * @param objectType
-	 *        Filter Vector index search results by provided object type in the TopLogic-type key
-	 * @param scoreThreshold
-	 *        Score threshold for the search - number between 0 and 1
+	 *        Qualified type name to restrict the search to, or <code>null</code> for any type.
 	 * @param limit
-	 *        Integer return limit value - search will not return more than limit results
-	 * @return List of matching documents with similarity scores
+	 *        Maximum number of hits to return, or <code>null</code> for {@value #DEFAULT_MAX_RESULTS}.
+	 * @param scoreThreshold
+	 *        Minimum similarity score, between 0 and 1, or <code>null</code> for the default.
+	 * @param readFilter
+	 *        The rights of the principal being served.
+	 * @return The hits the principal may read; never <code>null</code>.
 	 */
-	public List<EmbeddingMatch<TextSegment>> searchVectorIndex(String query, String objectType, Integer limit,
-			Double scoreThreshold) {
+	public VectorReadFilter.Hits searchVectorIndex(String query, String objectType, Integer limit,
+			Double scoreThreshold, ReadFilter readFilter) {
+		int effectiveLimit = limit == null || limit <= 0 ? DEFAULT_MAX_RESULTS : limit.intValue();
+		double effectiveThreshold = scoreThreshold == null ? DEFAULT_SCORE_THRESHOLD : scoreThreshold.doubleValue();
+
+		List<EmbeddingMatch<TextSegment>> candidates =
+			this.searchCandidates(query, objectType, VectorReadFilter.overfetch(effectiveLimit),
+				effectiveThreshold);
+
+		return VectorReadFilter.readable(candidates, readFilter, effectiveLimit);
+	}
+
+	/**
+	 * The store's own answer, before any read check.
+	 *
+	 * <p>
+	 * Private, and the only caller is the method above: an unfiltered hit list must not be reachable
+	 * from outside this class, or the chokepoint is one a caller can walk around.
+	 * </p>
+	 */
+	private List<EmbeddingMatch<TextSegment>> searchCandidates(String query, String objectType, int candidates,
+			double scoreThreshold) {
 		Embedding queryEmbedding = this.getDocumentEmbedding(query);
 		EmbeddingSearchRequestBuilder embeddingSearchRequestBuilder = EmbeddingSearchRequest.builder()
 			.queryEmbedding(queryEmbedding)
-			.maxResults(limit)
-			.minScore(scoreThreshold);
-
-		EmbeddingSearchRequest embeddingSearchRequest;
+			.maxResults(Integer.valueOf(candidates))
+			.minScore(Double.valueOf(scoreThreshold));
 
 		if (objectType != null) {
 			Filter objectTypeMeta = metadataKey(META_TL_TYPE_KEY).isEqualTo(objectType);
@@ -852,9 +884,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 			embeddingSearchRequestBuilder.filter(objectTypeMeta);
 		}
 
-		embeddingSearchRequest = embeddingSearchRequestBuilder.build();
-
-		return this.vectorStore.search(embeddingSearchRequest).matches();
+		return this.vectorStore.search(embeddingSearchRequestBuilder.build()).matches();
 	}
 
 	/** @see VectorThread#isIndexUntrustworthy() */

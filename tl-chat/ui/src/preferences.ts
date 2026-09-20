@@ -1,4 +1,5 @@
 import { apiBase } from './api'
+import type { ChatAddress } from './api'
 
 /**
  * What the user decided about a chat's layout - not what the page currently shows.
@@ -34,9 +35,20 @@ export function sameLayout(left: ChatPreferences, right: ChatPreferences): boole
   return true
 }
 
-function path(windowId: string, layoutKey: string): string {
+/**
+ * Two keys, and they are not the same one.
+ *
+ * `chatId` is where the layout is *stored* - one layout per `chat-id`, the empty one belonging to
+ * `<agent-chat>`. `conversation` is which chat of the window is *asking*, which is how the servlet
+ * resolves the request at all; for an `<agent-chat>` that is its control id while its layout key is
+ * empty.
+ */
+function path(at: ChatAddress, layoutKey: string): string {
   const sep = '/chat/preferences'
-  return `${apiBase()}${sep}?windowId=${encodeURIComponent(windowId)}&chatId=${encodeURIComponent(layoutKey)}`
+  const windowId = typeof at === 'string' ? at : at.windowId
+  const conversation = typeof at === 'string' ? '' : at.chatId
+  const scope = conversation ? `&conversation=${encodeURIComponent(conversation)}` : ''
+  return `${apiBase()}${sep}?windowId=${encodeURIComponent(windowId)}&chatId=${encodeURIComponent(layoutKey)}${scope}`
 }
 
 /**
@@ -90,7 +102,7 @@ export function collapsedSections(
 
 /** Writes the layout through PersonalConfiguration (see /chat/preferences). */
 export async function savePreferences(
-  windowId: string,
+  at: ChatAddress,
   layoutKey: string,
   prefs: ChatPreferences,
 ): Promise<void> {
@@ -103,7 +115,7 @@ export async function savePreferences(
   // freeze the configured default out for good.
   if (prefs.railOpen !== null) body.railOpen = prefs.railOpen
   try {
-    await fetch(path(windowId, layoutKey), {
+    await fetch(path(at, layoutKey), {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',

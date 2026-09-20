@@ -18,6 +18,7 @@ import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -41,7 +42,7 @@ import com.top_logic.tl.ai.core.agent.event.DiagnosticLoggingListener;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentResult;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentResultDelivery;
 import com.top_logic.tl.ai.core.binding.BindingSnapshot;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.InteractionRecorder;
@@ -53,7 +54,6 @@ import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.Conversation;
-import com.top_logic.tl.ai.core.message.SystemMessage;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
@@ -67,17 +67,27 @@ import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.StreamHandler;
+import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
+import com.top_logic.tl.ai.core.provider.health.ModelAvailability;
+import com.top_logic.tl.ai.core.provider.health.ModelHealthMark;
+import com.top_logic.tl.ai.core.provider.health.ModelOptions;
+import com.top_logic.tl.ai.core.provider.health.ModelTarget;
 import com.top_logic.tl.ai.core.security.PreCommitGuard;
+import com.top_logic.tl.ai.core.session.ConversationLogListener;
+import com.top_logic.tl.ai.core.session.ConversationLogListenerBinding;
+import com.top_logic.tl.ai.core.tools.memory.MemoryConsent;
+import com.top_logic.tl.ai.core.tools.memory.MemoryConsentBinding;
+import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
 import com.top_logic.tl.ai.core.citation.CitationKinds;
 import com.top_logic.tl.ai.core.citation.CitationValidator;
-import com.top_logic.tl.ai.core.tools.util.UntrustedEnvelope;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.ProgressReporter;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
+import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
 
 /**
  * Core agent loop: calls the LLM, executes tool calls, feeds results back, repeats.
@@ -106,9 +116,60 @@ public class AgentLoop {
 	/** Default maximum characters per tool result before truncation. */
 	public static final int DEFAULT_MAX_RESULT_CHARS = AgentTuning.MAX_TOOL_RESULT_CHARS;
 
-	private final AgentParams _config;
+	/**
+	 * What the run is currently working with.
+	 *
+	 * <p>
+	 * Not final because a run may move to another model when the one it was configured with cannot
+	 * answer - see {@link #callRouted}. Reset to {@link #_configuredParams} at the start of every
+	 * run, so a loop that is used again starts where it was configured, not where its last run
+	 * ended up.
+	 * </p>
+	 */
+	private volatile AgentParams _config;
 
-	private final LLMProvider _provider;
+	/** The provider serving {@link #_config}; switched with it. */
+	private volatile LLMProvider _provider;
+
+	/** What this loop was built with, whatever a failover moved the run to. */
+	private final AgentParams _configuredParams;
+
+	/** @see #_configuredParams */
+	private final LLMProvider _configuredProvider;
+
+	/**
+	 * The models this run may use, in order; index 0 is the one it was configured with.
+	 *
+	 * <p>
+	 * A list of one - the default, because the {@code <failover>} section is empty unless an
+	 * installation writes one - means nothing about this run changes.
+	 * </p>
+	 */
+	private volatile List<ModelTarget> _failoverChain = List.of();
+
+	/** The entry of {@link #_failoverChain} the run is currently trying. */
+	private volatile int _chainIndex;
+
+	/** The entry of {@link #_failoverChain} {@link #_config} and {@link #_provider} belong to. */
+	private volatile int _activeIndex;
+
+	/** The configured provider entry serving {@link #_config}, or <code>null</code>. */
+	private volatile String _activeProviderName;
+
+	/**
+	 * Every model this run passed over, one line each, in the order it passed them.
+	 *
+	 * <p>
+	 * Kept for the whole run rather than per switch: each
+	 * {@link AgentEvent.ModelSwitched} names what was skipped on the way to it, and a run that ran
+	 * out of chain names all of them in the error it fails with - which is the whole point of a
+	 * chain that otherwise continues somewhere else without saying so.
+	 * </p>
+	 */
+	private final List<String> _skipped = new CopyOnWriteArrayList<>();
+
+	/** How many entries of {@link #_skipped} a {@link AgentEvent.ModelSwitched} has already named. */
+	private volatile int _announcedSkips;
 
 	private final ToolRegistry _registry;
 
@@ -187,6 +248,8 @@ public class AgentLoop {
 			int maxResultChars) {
 		_config = Objects.requireNonNull(config, "Config must not be null.");
 		_provider = Objects.requireNonNull(provider, "Provider must not be null.");
+		_configuredParams = _config;
+		_configuredProvider = _provider;
 		_registry = Objects.requireNonNull(registry, "Registry must not be null.");
 		if (maxResultChars <= 0) {
 			throw new IllegalArgumentException("maxResultChars must be positive.");
@@ -222,6 +285,8 @@ public class AgentLoop {
 			ConversationMemory memory, int maxResultChars) {
 		_config = Objects.requireNonNull(config, "Config must not be null.");
 		_provider = Objects.requireNonNull(provider, "Provider must not be null.");
+		_configuredParams = _config;
+		_configuredProvider = _provider;
 		_registry = Objects.requireNonNull(registry, "Registry must not be null.");
 		_memory = Objects.requireNonNull(memory, "Memory must not be null.");
 		if (maxResultChars <= 0) {
@@ -245,27 +310,62 @@ public class AgentLoop {
 	 * appended and before the next provider request is built.</p>
 	 */
 	private void injectBetweenTurns(Conversation conversation) {
-		injectSubagentResultsForTest(conversation);
+		injectSubagentResults(conversation);
 	}
 
 	/**
-	 * Injects results of any completed-but-undelivered subagents (from the thread-bound
-	 * registry) into the conversation as system messages, so the next provider call sees them.
-	 * Realizes the long-standing "memory/attachment injection between turns" intent.
+	 * Delivers the results of every completed-but-undelivered subagent of the thread-bound
+	 * registry to the model, as the last message before the next provider request is built.
 	 *
-	 * <p>Test-visible entry point for the subagent part of {@link #injectBetweenTurns}.</p>
+	 * <p>
+	 * The delivery is a {@link UserMessage}, and that is the whole point of #359: this used to be
+	 * a mid-conversation {@link com.top_logic.tl.ai.core.message.SystemMessage}, which <em>no</em>
+	 * provider's request builder transmits, so the parent was never told its subagent had finished
+	 * while the transcript and the token estimate both claimed it had been. A user message is the
+	 * one shape every builder sends, and it is the shape {@code SummarizingStrategy} and the
+	 * rollback notice already use to put non-conversational text in front of the model.
+	 * {@link SubagentResultDelivery#NOTICE} says in the text what the role no longer can: the user
+	 * did not write this.
+	 * </p>
+	 *
+	 * <p>
+	 * A batch that arrives together is one message - see
+	 * {@link SubagentResultDelivery#deliveryText(List)}. Nothing is injected when no subagent
+	 * finished, so an ordinary turn is untouched. A result that becomes ready while no run is in
+	 * progress simply waits in the registry: the next run's first turn picks it up, which is the
+	 * turn that follows the user's next message.
+	 * </p>
+	 *
+	 * <p>
+	 * The same text is recorded on the current turn of the bound {@code ConversationLog} as a
+	 * {@link Part.SystemEventType#SUBAGENT_RESULT} part. That is what makes it visible in the
+	 * transcript, and what lets {@code ConversationLogReplay} put the very same message back into
+	 * a reloaded session - as a log part rather than a user part, so the chat does not draw it as
+	 * a user bubble.
+	 * </p>
+	 *
+	 * <p>
+	 * Per-turn context (#438) attaches its block to the turn's user message. If that lands, this
+	 * delivery becomes a block of it rather than a message of its own; until then the two do not
+	 * overlap, because nothing here touches the user's message.
+	 * </p>
 	 */
-	static void injectSubagentResultsForTest(Conversation conversation) {
+	static void injectSubagentResults(Conversation conversation) {
 		SubagentJobRegistry registry = SubagentRegistryBinding.getRegistry();
 		if (registry == null) {
 			return;
 		}
-		for (SubagentJob job : registry.takeUndeliveredResults()) {
-			SubagentResult r = job.result();
-			String text = "Subagent " + job.targetAgentName() + " (" + job.subagentId()
-				+ ") finished with status " + job.status() + ":\n" + r.finalText();
-			conversation.add(new SystemMessage(
-				UUID.randomUUID().toString(), Instant.now(), text));
+		List<SubagentJob> finished = registry.takeUndeliveredResults();
+		if (finished.isEmpty()) {
+			return;
+		}
+		String text = SubagentResultDelivery.deliveryText(finished);
+		conversation.add(new UserMessage(
+			UUID.randomUUID().toString(), Instant.now(), List.of(new TextContent(text))));
+
+		ConversationLogListener log = ConversationLogListenerBinding.getListener();
+		if (log != null) {
+			log.recordSubagentResultsDelivered(text);
 		}
 	}
 
@@ -285,6 +385,8 @@ public class AgentLoop {
 		Objects.requireNonNull(context, "Context must not be null.");
 		Objects.requireNonNull(listener, "Listener must not be null.");
 
+		beginRun();
+
 		ToolContext runContext = securedContext(context);
 
 		_sessionApprovedTools.addAll(context.sessionApprovedTools());
@@ -292,9 +394,19 @@ public class AgentLoop {
 		AgentEventListener serialized =
 			AgentEventListener.serializing(new DiagnosticLoggingListener(listener));
 		String runId = UUID.randomUUID().toString();
+		// Publish the run's identity to its tools before anything of the run happens, and as plain
+		// data: the persistent AgentExecution row is written later, by the execution store's writer
+		// thread, at a revision no tool can read (Gitea #405). Done here rather than in the
+		// ExecutionRecorder so that an unrecorded run - a test, a run without a session - tells its
+		// tools which run they are in just the same.
+		context.executionHandle().setRunId(runId);
+		context.executionHandle().setModel(_config.model(), null);
 		emit(serialized, new AgentEvent.RunStarted(runId, 0, now(), _config.model()));
+		emitEnvironment(serialized, runId);
+		emitTurnContext(serialized, runId);
 
-		try {
+		try (MemoryConsentBinding.Binding consent =
+			MemoryConsentBinding.bindIfAbsent(MemoryConsent.forNewestTurn(conversation))) {
 			return runLoop(conversation, runContext, serialized, runId);
 		} catch (RuntimeException e) {
 			// Guarantee a terminal event so event consumers (e.g. SSE clients) are
@@ -331,7 +443,7 @@ public class AgentLoop {
 		if (!LLMService.Module.INSTANCE.isActive()) {
 			return null;
 		}
-		return LLMService.getInstance().getProviderId(_config.model(), null);
+		return LLMService.getInstance().getProviderId(_config.model(), _activeProviderName);
 	}
 
 	/**
@@ -393,18 +505,25 @@ public class AgentLoop {
 
 			AssistantMessage assistantMsg;
 			try {
-				assistantMsg = callProvider(conversation, context, listener, runId, turn);
+				int currentTurn = turn;
+				assistantMsg = callRouted(
+					() -> callProvider(conversation, context, listener, runId, currentTurn),
+					context, listener, runId, turn);
 			} catch (ProviderException e) {
 				rollbackFailedRun(conversation, resumePoint);
 				emit(listener, new AgentEvent.ProviderError(runId, turn, now(), e.kind().name(), e.getMessage()));
 				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), TokenUsage.EMPTY, List.of()));
 				StopReason stopReason = stopReasonFor(e, context);
 				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
-				return new AgentResult(stopReason, turn, totalUsage);
+				// The kind and the message travel on the result, not only in the event stream: an
+				// entry point without a listener of its own (the TL-Script functions) must still be
+				// able to tell a failed run from an empty answer, and say why it failed.
+				return new AgentResult(stopReason, turn, totalUsage, e.kind().name(), e.getMessage());
 			}
 
 			conversation.add(assistantMsg);
 			totalUsage = totalUsage.add(assistantMsg.usage());
+			context.tokenAllowance().record(assistantMsg.usage());
 
 			if (!_config.responseValidator().test(assistantMsg)) {
 				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
@@ -433,6 +552,15 @@ public class AgentLoop {
 			}
 
 			emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
+
+			// Between turns, never inside one: a turn that has begun is finished and its tool results
+			// are written, so the history the next run continues from is whole. The run was admitted,
+			// so it always gets at least this one turn.
+			if (context.tokenAllowance().exhausted()) {
+				StopReason stopReason = StopReason.BUDGET_EXHAUSTED;
+				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
+				return new AgentResult(stopReason, turn, totalUsage);
+			}
 		}
 
 		StopReason stopReason = StopReason.MAX_TURNS;
@@ -446,15 +574,15 @@ public class AgentLoop {
 	 * <p>Convenience method for tests and trusted internal use.</p>
 	 */
 	public AgentResult run(Conversation conversation, AgentEventListener listener) {
-		return run(conversation, ToolContext.EMPTY, listener);
+		return run(conversation, ToolContext.unrestricted(), listener);
 	}
 
 	/**
 	 * Run the agent loop using the configured {@link ConversationMemory}.
 	 *
-	 * <p>Uses the memory's conversation for message history. After each LLM response,
-	 * updates the token baseline. At the end of each turn, checks whether compaction
-	 * is needed and triggers it automatically.</p>
+	 * <p>Uses the memory's conversation for message history. At the start of each turn - before
+	 * the request is built - checks whether the conversation still fits the budget and compacts it
+	 * if it does not. After each LLM response, updates the token baseline.</p>
 	 *
 	 * @param context  execution context for the current user
 	 * @param listener receives progress events
@@ -471,6 +599,8 @@ public class AgentLoop {
 		Objects.requireNonNull(context, "Context must not be null.");
 		Objects.requireNonNull(listener, "Listener must not be null.");
 
+		beginRun();
+
 		ToolContext runContext = securedContext(context);
 
 		_sessionApprovedTools.addAll(context.sessionApprovedTools());
@@ -479,8 +609,11 @@ public class AgentLoop {
 			AgentEventListener.serializing(new DiagnosticLoggingListener(listener));
 		String runId = UUID.randomUUID().toString();
 		emit(serialized, new AgentEvent.RunStarted(runId, 0, now(), _config.model()));
+		emitEnvironment(serialized, runId);
+		emitTurnContext(serialized, runId);
 
-		try {
+		try (MemoryConsentBinding.Binding consent =
+			MemoryConsentBinding.bindIfAbsent(MemoryConsent.forNewestTurn(_memory.conversation()))) {
 			return runWithMemory(_memory, runContext, serialized, runId);
 		} catch (RuntimeException e) {
 			// Guarantee a terminal event so event consumers (e.g. SSE clients) are
@@ -531,20 +664,29 @@ public class AgentLoop {
 
 			injectBetweenTurns(conversation);
 
+			compactIfOverBudget(memory, listener, runId, turn);
+
 			AssistantMessage assistantMsg;
 			try {
-				assistantMsg = callProviderWithReactiveCompaction(
-					conversation, context, memory, listener, runId, turn);
+				int currentTurn = turn;
+				assistantMsg = callRouted(
+					() -> callProviderWithReactiveCompaction(
+						conversation, context, memory, listener, runId, currentTurn),
+					context, listener, runId, turn);
 			} catch (ProviderException e) {
 				emit(listener, new AgentEvent.ProviderError(runId, turn, now(), e.kind().name(), e.getMessage()));
 				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), TokenUsage.EMPTY, List.of()));
 				StopReason stopReason = stopReasonFor(e, context);
 				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
-				return new AgentResult(stopReason, turn, totalUsage);
+				// The kind and the message travel on the result, not only in the event stream: an
+				// entry point without a listener of its own (the TL-Script functions) must still be
+				// able to tell a failed run from an empty answer, and say why it failed.
+				return new AgentResult(stopReason, turn, totalUsage, e.kind().name(), e.getMessage());
 			}
 
 			conversation.add(assistantMsg);
 			totalUsage = totalUsage.add(assistantMsg.usage());
+			context.tokenAllowance().record(assistantMsg.usage());
 			memory.updateTokenBaseline(assistantMsg.usage());
 
 			if (!_config.responseValidator().test(assistantMsg)) {
@@ -573,30 +715,65 @@ public class AgentLoop {
 				return new AgentResult(stopReason, turn, totalUsage);
 			}
 
-			// TODO: This check runs once per turn, after every tool result from
-			// executeToolCalls is already appended. A turn with many tool calls can push
-			// the estimate well past the usable budget before this fires (observed:
-			// tokensBefore of 9041/10868 against a 7000-token window). Not a hard failure —
-			// callProviderWithReactiveCompaction still catches an actual provider
-			// CONTEXT_WINDOW_EXCEEDED — but tightening this to check after each tool
-			// result (inside executeToolCalls' batch loop) would bound the overshoot
-			// to one tool result instead of one full turn.
-			if (memory.shouldCompact()) {
-				int tokensBefore = memory.estimateTokens();
-				emit(listener, new AgentEvent.CompactionStarted(runId, turn, now(), tokensBefore, "proactive"));
-				// Pass the same label used above, so CompactionResult.trigger() actually
-				// matches what CompactionStarted already reported — memory.compact()'s
-				// "auto" default is never read by anything that persists or displays it.
-				CompactionResult compactionResult = memory.compact("proactive");
-				emit(listener, new AgentEvent.CompactionCompleted(runId, turn, now(), compactionResult));
-			}
-
 			emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
+
+			// Between turns, never inside one: a turn that has begun is finished and its tool results
+			// are written, so the history the next run continues from is whole. The run was admitted,
+			// so it always gets at least this one turn.
+			if (context.tokenAllowance().exhausted()) {
+				StopReason stopReason = StopReason.BUDGET_EXHAUSTED;
+				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
+				return new AgentResult(stopReason, turn, totalUsage);
+			}
 		}
 
 		StopReason stopReason = StopReason.MAX_TURNS;
 		emit(listener, new AgentEvent.RunCompleted(runId, maxTurns, now(), stopReason, totalUsage));
 		return new AgentResult(stopReason, maxTurns, totalUsage);
+	}
+
+	/**
+	 * Compacts the conversation when it no longer fits the budget, before the turn's request is
+	 * built.
+	 *
+	 * <p>
+	 * Called at the top of every turn, after {@link #injectBetweenTurns} and before the provider
+	 * call, which is the one order in which a conversation that is already over budget cannot spend
+	 * a round trip on a request that cannot be sent (Gitea #367). The check used to sit at the end
+	 * of a turn, so the first request of an over-budget conversation - a reloaded session whose
+	 * compaction sidecar did not match, most of all - was sent, refused, and only then compacted.
+	 * </p>
+	 *
+	 * <p>
+	 * The same position also answers the other half of that question: a turn's tool results are
+	 * appended by {@link #executeToolCalls} and are therefore measured here, at the start of the
+	 * next turn, which is the next moment that history is actually used. Checking between the tool
+	 * batches of one turn would buy nothing - no request is built there - and would run a compaction
+	 * over a half-finished turn, where an assistant message's tool calls and their results are not
+	 * yet all appended and can therefore not be kept together.
+	 * </p>
+	 *
+	 * <p>
+	 * A run therefore no longer compacts after its last turn: what that pass used to prepare is
+	 * prepared by the first turn of the next run instead, which is where it stops a request rather
+	 * than a summarizer call from being spent on a conversation nobody continues. A provider that
+	 * reports an overflow the estimate did not see is still caught by
+	 * {@link #callProviderWithReactiveCompaction}.
+	 * </p>
+	 */
+	private void compactIfOverBudget(ConversationMemory memory, AgentEventListener listener,
+			String runId, int turn) {
+		if (!memory.shouldCompact()) {
+			return;
+		}
+		int tokensBefore = memory.estimateTokens();
+		emit(listener, new AgentEvent.CompactionStarted(runId, turn, now(), tokensBefore, "proactive"));
+		// Pass the same label used above, so CompactionResult.trigger() actually matches what
+		// CompactionStarted already reported - memory.compact()'s "auto" default is never read by
+		// anything that persists or displays it.
+		CompactionResult result = memory.compact("proactive");
+		_registry.historyCompacted();
+		emit(listener, new AgentEvent.CompactionCompleted(runId, turn, now(), result));
 	}
 
 	/**
@@ -618,6 +795,7 @@ public class AgentLoop {
 				int tokensBefore = memory.estimateTokens();
 				emit(listener, new AgentEvent.CompactionStarted(runId, turn, now(), tokensBefore, "reactive"));
 				CompactionResult result = memory.compact("reactive");
+				_registry.historyCompacted();
 				emit(listener, new AgentEvent.CompactionCompleted(runId, turn, now(), result));
 			}
 		}
@@ -754,15 +932,19 @@ public class AgentLoop {
 		if (!preCommitGuardPasses(context, conversation, listener, runId, turn)) {
 			return;
 		}
+		Revision rev;
 		try {
 			scope.commit();
-			Revision rev = scope.commitRevision();
-			long revNum = rev != null ? rev.getCommitNumber() : -1;
-			emit(listener, new AgentEvent.TransactionCommitted(runId, turn, now(), revNum));
-		} catch (TransactionException e) {
-			// Nothing else logs a failed commit: TransactionScope wraps the engine's exception
-			// without logging it and the rollback event is only traced at DEBUG, so without this a
-			// deployment that hits it has no way to find out why.
+			rev = scope.commitRevision();
+		} catch (RuntimeException e) {
+			// Every failed commit, whatever its type. TransactionScope.commit() wraps what the
+			// engine threw into a TransactionException; catching only that was still one gate too
+			// narrow for a failure the engine adds later, and a commit failure that escapes this
+			// method kills the run and is announced to the browser as a provider error - the model
+			// blamed for the application's refusal (issue #410).
+			//
+			// Only scope.commit() is inside: an event listener that throws must not be able to
+			// make this method roll a committed turn back and tell the model its writes are gone.
 			Logger.error("Agent run " + runId + " turn " + turn
 				+ ": the transaction of the turn could not be committed.", e, AgentLoop.class);
 			String reason = rollbackReason(e);
@@ -774,7 +956,10 @@ public class AgentLoop {
 					+ " Tell the user that the change was not saved, and do not claim otherwise."
 					+ " The cause is a database failure, not a mistake of yours, so do not retry"
 					+ " the identical change.");
+			return;
 		}
+		long revNum = rev != null ? rev.getCommitNumber() : -1;
+		emit(listener, new AgentEvent.TransactionCommitted(runId, turn, now(), revNum));
 	}
 
 	/**
@@ -822,13 +1007,23 @@ public class AgentLoop {
 	 * "Rolled back: ". Adding {@link TransactionScope#COMMIT_FAILED_PREFIX} here as well is what
 	 * produced the "Rolled back: Commit failed: Commit failed: ..." a real session reported.
 	 * </p>
+	 *
+	 * <p>
+	 * A failure that is not a {@link TransactionException} carries no reason a reader could act on -
+	 * it is a defect of the engine or of a listener, not a refusal the model can work around - so it
+	 * is named by its type. The stack trace is in the log line this reason accompanies.
+	 * </p>
 	 */
-	private static String rollbackReason(TransactionException failure) {
+	private static String rollbackReason(RuntimeException failure) {
 		String message = failure.getMessage();
 		if (message != null && message.startsWith(TransactionScope.COMMIT_FAILED_PREFIX)) {
 			return message.substring(TransactionScope.COMMIT_FAILED_PREFIX.length());
 		}
-		return message;
+		if (StringServices.isEmpty(message)) {
+			return failure.getClass().getSimpleName();
+		}
+		return failure instanceof TransactionException ? message
+			: failure.getClass().getSimpleName() + ": " + message;
 	}
 
 	/**
@@ -1365,6 +1560,203 @@ public class AgentLoop {
 		throw new IllegalStateException("Unreachable");
 	}
 
+	// ---- Cross-provider failover (Gitea #344) ----
+
+	/**
+	 * Puts the run back on the model it was configured with, and works out where it may go from
+	 * there.
+	 *
+	 * <p>
+	 * Called at the start of every run, because a loop is allowed to serve more than one: a run
+	 * that ended on a fallback must not hand its successor that fallback as its starting point.
+	 * The successor may of course be routed there again straight away - the mark that sent the
+	 * first run over is still held - but that decision is taken by {@link #callRouted} with the
+	 * health state of the moment, not inherited.
+	 * </p>
+	 */
+	private void beginRun() {
+		_config = _configuredParams;
+		_provider = _configuredProvider;
+		_chainIndex = 0;
+		_activeIndex = 0;
+		_activeProviderName = null;
+		_skipped.clear();
+		_announcedSkips = 0;
+		_failoverChain = resolveFailoverChain();
+	}
+
+	/**
+	 * The models this run may use, in order.
+	 *
+	 * <p>
+	 * A run whose model is not configured in this application - a test wiring its own provider, a
+	 * loop built by hand - has a chain of one and never fails over, because nothing knows how to
+	 * build a provider for anything else.
+	 * </p>
+	 */
+	private List<ModelTarget> resolveFailoverChain() {
+		// The instance rather than the module: a service that has started is one that can route and
+		// one whose health state is the installation's, however it was started. Everything else in
+		// this class asks the module, because the answer there is "is this application configured",
+		// not "is there a service".
+		LLMService service = LLMService.getInstance();
+		List<ModelTarget> chain = service == null ? List.of() : service.failoverChain(_config.model(), null);
+		return chain.isEmpty() ? List.of(new ModelTarget(_config.model(), null)) : chain;
+	}
+
+	/**
+	 * Calls the provider, moving the run to the next healthy model of its chain when the one it is
+	 * on cannot answer.
+	 *
+	 * <p>
+	 * The switch lasts for the <strong>rest of the run</strong>, not for the turn: every provider
+	 * caches by prefix, so a run that alternated between two models would pay the full prompt again
+	 * on every turn and never read a cache. Once a run has moved, it stays moved; the next run
+	 * starts at the configured model again and is routed by the marks that are then in force.
+	 * </p>
+	 *
+	 * <p>
+	 * A model is passed over for two reasons, and both are recorded: {@link ModelAvailability}
+	 * already holds a mark against it, or the call to it just failed with a kind that says
+	 * something about the model. A failure that says nothing about the model - a malformed request,
+	 * a context overflow - is rethrown untouched: the next model would fail on it in exactly the
+	 * same way, and failing over would only hide it.
+	 * </p>
+	 *
+	 * <p>
+	 * A run with no configured fallback does not enter any of this: {@code call} is invoked once
+	 * and its exception travels out, which is what the loop did before there were chains.
+	 * </p>
+	 *
+	 * @param call
+	 *        Makes one attempt with whatever model is currently active - the retry-and-compact
+	 *        stack the run loop would otherwise have called directly.
+	 */
+	private AssistantMessage callRouted(ProviderCall call, ToolContext context,
+			AgentEventListener listener, String runId, int turn) throws ProviderException {
+		List<ModelTarget> chain = _failoverChain;
+		if (chain.size() <= 1) {
+			return call.call();
+		}
+		ModelAvailability health = LLMService.getInstance().modelHealth();
+		String turnToken = ModelAvailability.turnToken(runId, turn);
+		ProviderException pending = null;
+		while (_chainIndex < chain.size()) {
+			ModelTarget target = chain.get(_chainIndex);
+			if (!health.claim(target.model(), turnToken)) {
+				ModelHealthMark mark = health.mark(target.model());
+				skip(target, mark == null ? "marked unavailable" : mark.reason(), runId);
+				continue;
+			}
+			if (_chainIndex != _activeIndex && !activate(target, context, listener, runId, turn)) {
+				continue;
+			}
+			try {
+				return call.call();
+			} catch (ProviderException e) {
+				if (context.cancellationToken().isCancelled() || Thread.currentThread().isInterrupted()) {
+					throw e;
+				}
+				if (ModelAvailability.causeOf(e.kind()) == null) {
+					throw e;
+				}
+				health.reportFailure(target.model(), e.kind(), e.getMessage(), turnToken);
+				pending = e;
+				skip(target, e.kind().name()
+					+ (e.getMessage() == null || e.getMessage().isBlank() ? "" : ": " + e.getMessage()), runId);
+			}
+		}
+		if (pending != null) {
+			// The last model that was actually called decides how the run reads: a run that died
+			// of a rate limit says so, and only the message names the models it went through.
+			String detail = pending.getMessage() == null ? "" : pending.getMessage() + " ";
+			throw new ProviderException(pending.kind(), pending.statusCode(),
+				detail + exhausted(chain), pending.retryAfter(), pending.requestId(),
+				pending.getCause());
+		}
+		throw new ProviderException(ProviderException.Kind.UNKNOWN, -1, exhausted(chain));
+	}
+
+	/** Why no model of the chain was left to try. */
+	private String exhausted(List<ModelTarget> chain) {
+		return "No model of the failover chain of '" + chain.get(0).label()
+			+ "' could serve this run: " + String.join("; ", _skipped) + ".";
+	}
+
+	/**
+	 * Notes that the given model was passed over, and moves the run one entry further down its
+	 * chain.
+	 */
+	private void skip(ModelTarget target, String reason, String runId) {
+		_skipped.add(target.label() + " - " + reason);
+		Logger.warn("Run " + runId + " passes over model '" + target.label() + "': " + reason,
+			AgentLoop.class);
+		_chainIndex++;
+	}
+
+	/**
+	 * Moves the run onto the given model: its provider, its limits and the sampling options its
+	 * provider understands.
+	 *
+	 * <p>
+	 * The tool schemas and the response format need nothing done to them here - they are
+	 * provider-neutral, and the target's own request builder renders them in its own dialect, which
+	 * is what makes a chain across vendors work at all. What does not survive is the conversation
+	 * memory's budget: it was sized for the configured model and is owned by the caller, so a run
+	 * that fails over to a smaller context window relies on the reactive compaction in
+	 * {@link #callProviderWithReactiveCompaction} to notice.
+	 * </p>
+	 *
+	 * @return <code>false</code> when no provider could be built for the target, which is a
+	 *         configuration fault of that chain entry alone; the entry is then skipped like any
+	 *         other unusable one.
+	 */
+	private boolean activate(ModelTarget target, ToolContext context, AgentEventListener listener,
+			String runId, int turn) {
+		LLMService service = LLMService.getInstance();
+		LLMProvider provider;
+		try {
+			provider = service.buildProvider(target.model(), target.provider());
+		} catch (RuntimeException ex) {
+			skip(target, "no provider could be built: " + ex.getMessage(), runId);
+			return false;
+		}
+		String from = _failoverChain.get(_activeIndex).label();
+		String providerId = service.getProviderId(target.model(), target.provider());
+		ModelInfo info = service.getModel(target.model());
+		int maxOutput = _config.maxOutputTokens();
+		int contextWindow = _config.contextWindowTokens();
+		if (info != null) {
+			// The lower of the two: an installation that asked for fewer tokens meant it, and a
+			// target that allows fewer cannot be asked for more.
+			maxOutput = Math.min(maxOutput, info.limits().maxOutput());
+			contextWindow = Math.min(contextWindow, info.limits().contextWindow());
+		}
+		_config = _config.withModel(target.model(), maxOutput, contextWindow,
+			ModelOptions.forTarget(_config.modelOptions(), providerId, info));
+		_provider = provider;
+		_activeProviderName = target.provider();
+		_activeIndex = _chainIndex;
+		context.executionHandle().setModel(target.model(), providerId);
+
+		List<String> announce = _skipped.subList(_announcedSkips, _skipped.size());
+		String reason = announce.isEmpty() ? "the previous model was not available"
+			: String.join("; ", announce);
+		_announcedSkips = _skipped.size();
+		Logger.info("Run " + runId + " continues on model '" + target.label() + "' instead of '"
+			+ from + "': " + reason, AgentLoop.class);
+		emit(listener, new AgentEvent.ModelSwitched(runId, turn, now(), from, target.label(), reason));
+		return true;
+	}
+
+	/** One attempt at the provider, with whatever model the run is currently on. */
+	@FunctionalInterface
+	private interface ProviderCall {
+
+		/** Makes the attempt. */
+		AssistantMessage call() throws ProviderException;
+	}
+
 	/**
 	 * Sleep for the given backoff duration in {@link #BACKOFF_POLL_MS} slices, re-checking
 	 * cancellation between slices. When the run is cancelled or the thread interrupted,
@@ -1387,7 +1779,15 @@ public class AgentLoop {
 	 */
 	private AssistantMessage callProviderOnce(Conversation conversation, ToolContext context,
 			AgentEventListener listener, String runId, int turn) throws ProviderException {
-		List<ToolSchema> filteredTools = _registry.toolSchemas(new ToolPermissionFilter(context.security()));
+		ensureTurnContext(conversation);
+
+		ToolPermissionFilter toolFilter = new ToolPermissionFilter(context.security());
+		List<ToolSchema> filteredTools = _registry.toolSchemas(toolFilter);
+		// Where the tool array stops being the same bytes on every request of this conversation: a
+		// loaded skill's tools follow behind it, and a provider that places cache breakpoints puts
+		// one here rather than paying for the whole array again after a loadSkill (#346).
+		int stableToolCount = Math.min(_registry.stableToolCount(toolFilter), filteredTools.size());
+		List<String> loadedSkills = _registry.loadedSkills();
 
 		if (Logger.isDebugEnabled(AgentLoop.class)) {
 			List<String> toolNames = filteredTools.stream().map(ToolSchema::name).toList();
@@ -1402,7 +1802,7 @@ public class AgentLoop {
 		// whose signature never arrived, is dropped here rather than rejected by the API - a request
 		// refused over a replayed block fails every later one too, because the block stays in memory.
 		List<Message> history = MessageHistorySanitizer.forProvider(conversation.messages(), providerId());
-		emit(listener, contextComposition(runId, turn, systemPrompt, filteredTools, history));
+		emit(listener, contextComposition(runId, turn, systemPrompt, filteredTools, history, loadedSkills));
 
 		ProviderRequest request = new ProviderRequest(
 			_config.model(),
@@ -1411,9 +1811,10 @@ public class AgentLoop {
 			filteredTools,
 			_config.maxOutputTokens(),
 			_config.modelOptions(),
-			null,
+			_config.responseFormat(),
 			_config.toolChoice(),
-			Duration.ofSeconds(_config.timeoutSeconds()));
+			Duration.ofSeconds(_config.timeoutSeconds()),
+			stableToolCount);
 
 		ResponseCollector collector = new ResponseCollector(listener, runId, turn, context.cancellationToken());
 		long startNanos = System.nanoTime();
@@ -1447,7 +1848,8 @@ public class AgentLoop {
 	 * </p>
 	 */
 	private static AgentEvent.ContextComposition contextComposition(String runId, int turn,
-			String systemPrompt, List<ToolSchema> tools, List<Message> messages) {
+			String systemPrompt, List<ToolSchema> tools, List<Message> messages,
+			List<String> loadedSkills) {
 		TokenEstimator estimator = CONTEXT_ESTIMATOR;
 		int toolTokens = 0;
 		for (ToolSchema tool : tools) {
@@ -1463,7 +1865,108 @@ public class AgentLoop {
 		}
 		return new AgentEvent.ContextComposition(runId, turn, now(),
 			estimator.estimateText(systemPrompt), toolTokens,
-			estimator.estimateTokens(messages), toolResultTokens, tools.size());
+			estimator.estimateTokens(messages), toolResultTokens, tools.size(), loadedSkills);
+	}
+
+	/**
+	 * Reports the environment block this run's system prompt carries, for the run record.
+	 *
+	 * <p>
+	 * Nothing is emitted for a run that composed none - every caller that builds an
+	 * {@link AgentParams} directly rather than through {@code AgentFactory}.
+	 * </p>
+	 */
+	private void emitEnvironment(AgentEventListener listener, String runId) {
+		String environment = _config.environment();
+		if (environment == null || environment.isBlank()) {
+			return;
+		}
+		emit(listener, new AgentEvent.EnvironmentComposed(runId, 0, now(), environment));
+	}
+
+	/**
+	 * Reports the per-turn context block this run's turn carries, so the transcript can show it
+	 * beside the user's text.
+	 *
+	 * <p>
+	 * Nothing is emitted for a run whose host stated no per-turn fact, which is every installation
+	 * that has not written a {@code <fact stable="false">}.
+	 * </p>
+	 */
+	private void emitTurnContext(AgentEventListener listener, String runId) {
+		String turnContext = _config.turnContext();
+		if (turnContext == null || turnContext.isBlank()) {
+			return;
+		}
+		emit(listener, new AgentEvent.TurnContextComposed(runId, 0, now(), turnContext));
+	}
+
+	/**
+	 * Makes sure the turn's context block is in the history the next request carries, exactly once.
+	 *
+	 * <p>
+	 * Called from {@link #callProviderOnce} rather than from the run's start, because that is the
+	 * one point a request is built: it therefore holds after a compaction too, including the
+	 * reactive one that happens between two attempts of the same turn. Requirement of the ticket:
+	 * <em>after a summarizing compaction the newest context block must still reach the model</em>,
+	 * and a compaction that shrank the preserve zone to nothing would otherwise have dropped it
+	 * together with the user message that carried it.
+	 * </p>
+	 *
+	 * <p>
+	 * The block goes into the conversation, not into the request alone, so that it stays where it
+	 * was put: a history rewritten per request would invalidate the providers' prompt caches on
+	 * every turn, which is the very thing that keeps this block out of the system prompt.
+	 * </p>
+	 *
+	 * <p>
+	 * It is prepended to the newest {@link UserMessage} rather than inserted as a message of its
+	 * own, because a lone message between an assistant's tool calls and their results is rejected by
+	 * the provider APIs. Only when a compaction left no user message at all - which a truncating
+	 * one does - is the block appended as a message, at the very end, where no such pair can be
+	 * broken.
+	 * </p>
+	 */
+	private void ensureTurnContext(Conversation conversation) {
+		String block = _config.turnContext();
+		if (block == null || block.isBlank()) {
+			return;
+		}
+		List<Message> messages = conversation.messages();
+		int newestUser = -1;
+		for (int i = messages.size() - 1; i >= 0; i--) {
+			if (!(messages.get(i) instanceof UserMessage user)) {
+				continue;
+			}
+			if (carries(user, block)) {
+				// Already there - the ordinary case from the second iteration of a turn onwards.
+				return;
+			}
+			if (newestUser < 0) {
+				newestUser = i;
+			}
+		}
+		if (newestUser < 0) {
+			conversation.add(new UserMessage(UUID.randomUUID().toString(), now(),
+				List.of(new TextContent(block))));
+			return;
+		}
+		UserMessage target = (UserMessage) messages.get(newestUser);
+		List<ContentPart> content = new ArrayList<>(target.content().size() + 1);
+		content.add(new TextContent(block));
+		content.addAll(target.content());
+		conversation.replaceRange(newestUser, newestUser + 1,
+			List.of(new UserMessage(target.id(), target.timestamp(), content)));
+	}
+
+	/** Whether the given message already carries the block as one of its content parts. */
+	private static boolean carries(UserMessage message, String block) {
+		for (ContentPart part : message.content()) {
+			if (part instanceof TextContent text && block.equals(text.text())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

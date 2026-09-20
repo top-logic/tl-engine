@@ -16,8 +16,16 @@ import java.util.Set;
 import java.util.function.Function;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.tl.ai.core.agent.environment.AgentFact;
+import com.top_logic.tl.ai.core.agent.environment.EnvironmentFact;
+import com.top_logic.tl.ai.core.agent.environment.RunEnvironment;
+import com.top_logic.tl.ai.core.agent.environment.RunFactsBinding;
+import com.top_logic.tl.ai.core.agent.environment.UserMemorySettings;
+import com.top_logic.tl.ai.core.tools.memory.UserMemoryTool;
+import com.top_logic.tl.ai.core.agent.environment.TurnContext;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.skills.Skill;
+import com.top_logic.tl.ai.core.limits.RunLimits;
 import com.top_logic.tl.ai.core.mcp.McpServerRegistry;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
@@ -107,7 +115,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 *
 	 * <p>
 	 * Convenience overload for trusted internal use (scripts, background agents). Uses
-	 * {@link ToolContext#EMPTY} which auto-approves all tools. For interactive use with
+	 * an {@link ToolContext#unrestricted()} context which auto-approves all tools. For interactive use with
 	 * human-in-the-loop approval, call
 	 * {@link #runAgent(String, Conversation, ConversationMemory, ToolContext, AgentEventListener)}.
 	 * </p>
@@ -124,7 +132,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 */
 	public String runAgent(String name, Conversation conversation,
 			ConversationMemory conversationMemory, AgentEventListener listener) {
-		return runAgent(name, conversation, conversationMemory, ToolContext.EMPTY, listener);
+		return runAgent(name, conversation, conversationMemory, ToolContext.unrestricted(), listener);
 	}
 
 	/**
@@ -176,6 +184,24 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	public RunResult runAgent(String name, Conversation conversation,
 			ConversationMemory conversationMemory, ToolContext context,
 			AgentEventListener listener, ToolRegistry sessionRegistry, RunOverrides overrides) {
+		// What this installation carries and what this account may spend, decided before anything of
+		// the run is built. The same choke point as authorizeRun below, and for the same reason: the
+		// chat, AgentRunner, the scheduler and TL-Script all arrive here, so a ceiling put here is a
+		// ceiling on every run rather than on one surface. Released when the loop returns.
+		try (RunLimits.Admission admission = RunLimits.admit(context)) {
+			return runAdmitted(name, conversation, conversationMemory,
+				context.withTokenAllowance(admission.allowance()), listener, sessionRegistry, overrides);
+		}
+	}
+
+	/**
+	 * {@link #runAgent(String, Conversation, ConversationMemory, ToolContext, AgentEventListener, ToolRegistry, RunOverrides)}
+	 * for a run that has been let through, with the budget it may spend already on its
+	 * {@code context}.
+	 */
+	private RunResult runAdmitted(String name, Conversation conversation,
+			ConversationMemory conversationMemory, ToolContext context,
+			AgentEventListener listener, ToolRegistry sessionRegistry, RunOverrides overrides) {
 		AgentDefinition agentDef = AgentDefinitionQuery.getInstance().findAgentByName(name);
 		if (agentDef == null) {
 			throw new RuntimeException(
@@ -205,6 +231,12 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 
 		AgentParams coreConfig = buildConfig(agentDef, assignment, capabilities);
 		LLMProvider provider = buildProvider(coreConfig.model(), assignment.provider());
+
+		// Tell the run's tools which agent they are serving, as plain data. The name is resolved
+		// here and nowhere else, and publishing it here (rather than from the execution recorder)
+		// means an unrecorded run answers the question too - see ExecutionHandle#setAgentName.
+		context.executionHandle().setAgentName(agentDef.name());
+
 		boolean hasDynamicLoading = !agentDef.skills().isEmpty();
 		ToolRegistry registry = sessionRegistry != null && hasDynamicLoading
 			? sessionRegistry
@@ -219,27 +251,33 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		int messageCountBefore = effectiveConversation.messages().size();
 
 		AgentLoop loop;
+		AgentResult result;
 		if (conversationMemory != null) {
 			// Session memory is created before the agent is known; align its compaction
 			// budget with the effective context window (assignment override > catalog).
 			conversationMemory.setContextWindowTokens(coreConfig.contextWindowTokens());
 			loop = new AgentLoop(coreConfig, provider, registry, conversationMemory, maxToolResultChars);
-			loop.run(context, listener);
+			result = loop.run(context, listener);
 		} else {
 			loop = new AgentLoop(coreConfig, provider, registry, maxToolResultChars);
-			loop.run(conversation, context, listener);
+			result = loop.run(conversation, context, listener);
 		}
 
-		return new RunResult(extractResponseText(effectiveConversation, messageCountBefore), registry);
+		return new RunResult(extractResponseText(effectiveConversation, messageCountBefore), registry,
+			result);
 	}
 
 	/**
-	 * Result of {@link #runAgent}, carrying both the response text and the tool registry used.
+	 * Result of {@link #runAgent}, carrying the response text, the tool registry used and why the
+	 * loop stopped.
 	 *
 	 * @param response The final assistant response text.
 	 * @param registry The tool registry used during the run.
+	 * @param result   Why the loop stopped, and what the provider said if it failed. A caller that
+	 *                 has no event listener reads the failure here - the response text of a failed
+	 *                 run is the empty string, which is indistinguishable from an empty answer.
 	 */
-	public record RunResult(String response, ToolRegistry registry) {}
+	public record RunResult(String response, ToolRegistry registry, AgentResult result) {}
 
 	/**
 	 * Optional per-run overrides supplied by the chat UI.
@@ -316,9 +354,9 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 *
 	 * <p>
 	 * The configured chat entry point when that principal may run it, and otherwise the first agent
-	 * they may run. The entry point is <em>infrastructure</em>: nobody chose it, a client that names
-	 * no agent is not asking for it, and refusing such a request by its name tells the user about an
-	 * agent they cannot have and cannot avoid. A restricted role gets the agent it does have instead.
+	 * they may run. Nobody chose the entry point: a client that names no agent is not asking for it,
+	 * and refusing such a request by its name tells the user about an agent they cannot have and
+	 * cannot avoid. A restricted role gets the agent it does have instead.
 	 * </p>
 	 *
 	 * <p>
@@ -327,23 +365,27 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 * the defect this method exists to prevent.
 	 * </p>
 	 *
+	 * <p>
+	 * An agent marked {@link AgentDefinition#infrastructure()} is never the answer: the application
+	 * runs it <em>for</em> the user, so falling back to it would start a conversation with something
+	 * that does not answer as a persona. That is read from the definition rather than taken from a
+	 * list the caller keeps, so every caller skips the same agents.
+	 * </p>
+	 *
 	 * @param authorization
 	 *        What the acting principal may run.
-	 * @param excluded
-	 *        Agents the caller does not offer as a conversation partner - the chat's prompt improver
-	 *        is one. May be <code>null</code>.
 	 * @return The agent name, or <code>null</code> if the principal may run none at all - which is a
 	 *         refusal of its own and a different sentence from "you may not run this one".
 	 */
-	public static String defaultAgentFor(RunAuthorization authorization, Collection<String> excluded) {
+	public static String defaultAgentFor(RunAuthorization authorization) {
 		String configured = LLMService.Module.INSTANCE.isActive()
 			? LLMService.getInstance().getEntryPointAgentName()
 			: null;
-		if (canRun(authorization, configured, excluded)) {
+		if (canRun(authorization, configured)) {
 			return configured;
 		}
 		for (AgentDefinition agent : agents()) {
-			if (canRun(authorization, agent.name(), excluded)) {
+			if (canRun(authorization, agent.name())) {
 				return agent.name();
 			}
 		}
@@ -356,12 +398,12 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 * <p>
 	 * More than the allowlist: an agent whose own model or whose own server a role denies cannot run
 	 * for that account either, and falling back to one would answer a client that named no agent with
-	 * a refusal it can do nothing about.
+	 * a refusal it can do nothing about. An {@link AgentDefinition#infrastructure()} agent fails the
+	 * same question, because a run the user did not ask for may not be one.
 	 * </p>
 	 */
-	private static boolean canRun(RunAuthorization authorization, String agentName,
-			Collection<String> excluded) {
-		if (!isOffered(agentName, excluded) || !authorization.allowsAgent(agentName)) {
+	private static boolean canRun(RunAuthorization authorization, String agentName) {
+		if (agentName == null || agentName.isBlank()) {
 			return false;
 		}
 		AgentDefinition agentDef;
@@ -370,10 +412,13 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		} catch (RuntimeException ex) {
 			// Cannot look it up, so cannot rule it out - the run itself decides, as it always does.
 			Logger.debug("Cannot read '" + agentName + "' to check what it uses.", AgentFactory.class);
-			return true;
+			return authorization.allowsAgent(agentName, false);
 		}
-		return agentDef == null
-			|| authorization.allowsAgentsOwn(assignedModelOf(agentDef.name()), agentDef.mcpServers());
+		if (agentDef == null) {
+			return authorization.allowsAgent(agentName, false);
+		}
+		return authorization.allowsAgent(agentDef.name(), agentDef.infrastructure())
+			&& authorization.allowsAgentsOwn(assignedModelOf(agentDef.name()), agentDef.mcpServers());
 	}
 
 	/**
@@ -419,12 +464,6 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		}
 	}
 
-	/** Whether the given name is one a client would be offered. */
-	private static boolean isOffered(String agentName, Collection<String> excluded) {
-		return agentName != null && !agentName.isBlank()
-			&& (excluded == null || !excluded.contains(agentName));
-	}
-
 	/** The agents of this application, in the order a client lists them; empty when none can answer. */
 	private static Collection<AgentDefinition> agents() {
 		try {
@@ -461,7 +500,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 			RunOverrides overrides) {
 		AgentDefinition agentDef = AgentDefinitionQuery.getInstance().findAgentByName(agentName);
 		if (agentDef == null) {
-			return authorization.agentRefusal(agentName);
+			return authorization.agentRefusal(agentName, false);
 		}
 		return refusalFor(authorization, agentDef, assignedModelOf(agentDef.name()), overrides);
 	}
@@ -469,7 +508,8 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	/** The refusal of one run, or <code>null</code>; the one place the three questions are asked. */
 	private static Decision.Denied refusalFor(RunAuthorization authorization, AgentDefinition agentDef,
 			String assignedModel, RunOverrides overrides) {
-		Decision.Denied agentRefusal = authorization.agentRefusal(agentDef.name());
+		Decision.Denied agentRefusal =
+			authorization.agentRefusal(agentDef.name(), agentDef.infrastructure());
 		if (agentRefusal != null) {
 			return agentRefusal;
 		}
@@ -620,7 +660,9 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		// list: a child runs on the user's behalf, so an agent the user may not run is not reachable by
 		// asking another agent for it. AgentCapabilities drops such an agent from the delegate catalog
 		// and from list_agents, so the model normally never asks; this is the gate behind that filter.
-		refuse(security.runAuthorization().agentRefusal(name));
+		// The same call refuses an infrastructure agent - one the application runs for the user -
+		// unless the context says the product, and not the user, named it (#397).
+		refuse(security.runAuthorization().agentRefusal(name, agentDef.infrastructure()));
 
 		AgentModelAssignment assignment =
 			LLMService.getInstance().resolveModelAssignment(agentDef.name());
@@ -660,7 +702,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 			throw new IllegalArgumentException("No agent found with name: " + name);
 		}
 		// See buildAgentLoop: a subagent is the same run under another name.
-		refuse(security.runAuthorization().agentRefusal(name));
+		refuse(security.runAuthorization().agentRefusal(name, agentDef.infrastructure()));
 
 		AgentModelAssignment assignment =
 			LLMService.getInstance().resolveModelAssignment(agentDef.name());
@@ -693,6 +735,24 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	}
 
 	/**
+	 * Whether this installation offers the tool at all.
+	 *
+	 * <p>
+	 * Not a security gate - that is {@link ToolPermissionFilter} and the invocation gate in
+	 * {@link AgentLoop}. This answers the narrower question of whether a feature an administrator
+	 * can switch off is switched on, so that an agent whose definition still names its tools does
+	 * not offer the model something the installation has retired. A refused feature also refuses at
+	 * the tool itself, so a catalog built another way is covered too.
+	 * </p>
+	 */
+	static boolean isOffered(Tool tool) {
+		if (UserMemoryTool.MEMORY_TOOLS.contains(tool.name())) {
+			return UserMemorySettings.enabled();
+		}
+		return true;
+	}
+
+	/**
 	 * Builds the {@link AgentParams} record from an {@link AgentDefinition} and its
 	 * {@link AgentModelAssignment}.
 	 *
@@ -721,6 +781,22 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		String systemPrompt = agent.systemPrompt();
 		systemPrompt = injectSkills(agent, systemPrompt, capabilities);
 		systemPrompt = injectDelegateDescriptions(agent, systemPrompt, capabilities);
+		systemPrompt = appendContributions(agent, assignment, systemPrompt,
+			LLMService.promptContributors());
+
+		// The environment block is composed last, so that a placeholder written into a skill or a
+		// delegate description is filled too, and so that the block is the last thing the model reads
+		// when the prompt does not say where it goes.
+		List<EnvironmentFact> facts = runFacts(agent);
+		RunEnvironment environment =
+			RunEnvironment.compose(agent.displayName(), agent.name(), model, facts);
+		systemPrompt = environment.apply(systemPrompt);
+
+		// The same facts, split by the one question the host answered on each: what holds for the
+		// conversation went into the prompt above, what changes with the next click goes into the
+		// turn. AgentLoop puts this block beside the user's text; it must never reach the prompt,
+		// which has to stay byte-identical across the turns of one conversation.
+		String turnContext = TurnContext.compose(facts, RunFactsBinding.turnNumber());
 
 		// maxOutputTokens: assignment override > catalog
 		Integer assignedMaxTokens = assignment.maxTokens();
@@ -751,7 +827,67 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 
 		return new AgentParams(model, systemPrompt, maxTurns,
 			maxOutputTokens, modelOptions, contextWindowTokens,
-			maxRetries, timeoutSeconds, toolChoice, msg -> true);
+			maxRetries, timeoutSeconds, toolChoice, msg -> true, environment.block(), turnContext);
+	}
+
+	/**
+	 * Appends what the installation's {@link SystemPromptContributor}s say about this run.
+	 *
+	 * <p>
+	 * After the generated sections, so a contributor reads as the installation speaking after the
+	 * agent rather than as part of the agent's own instructions, and before the {@code <environment>}
+	 * block is composed, so a placeholder in the contributed text is filled like one in the agent's
+	 * prompt.
+	 * </p>
+	 *
+	 * <p>
+	 * A contributor that throws is skipped with a log line rather than failing the run: losing a
+	 * section of standing instructions is a better answer than no answer at all, which is how a
+	 * failed {@link com.top_logic.tl.ai.core.agent.environment.AgentFact} is treated too.
+	 * </p>
+	 */
+	static String appendContributions(AgentDefinition agent, AgentModelAssignment assignment,
+			String systemPrompt, List<SystemPromptContributor> contributors) {
+		String result = systemPrompt == null ? "" : systemPrompt;
+		for (SystemPromptContributor contributor : contributors) {
+			String text;
+			try {
+				text = contributor.contribute(agent, assignment);
+			} catch (RuntimeException ex) {
+				Logger.error("System prompt contributor " + contributor.getClass().getName()
+					+ " failed for agent '" + agent.name() + "': " + ex.getMessage(), ex,
+					AgentFactory.class);
+				continue;
+			}
+			if (text == null || text.isBlank()) {
+				continue;
+			}
+			String trimmed = result.stripTrailing();
+			result = trimmed.isEmpty() ? text.strip() : trimmed + "\n\n" + text.strip();
+		}
+		return result;
+	}
+
+	/**
+	 * Everything the host stated about this run: what the agent definition itself says, plus what the
+	 * entry point bound for the run - the chat's {@code <context>}, evaluated where the page was.
+	 *
+	 * <p>
+	 * The agent's own facts come first because they hold for every run of that agent, whereas the
+	 * page's facts hold for this conversation only. A fact that cannot be evaluated is dropped with a
+	 * log line; see {@link AgentFact#evaluate()}.
+	 * </p>
+	 */
+	static List<EnvironmentFact> runFacts(AgentDefinition agent) {
+		List<EnvironmentFact> facts = new ArrayList<>();
+		for (AgentFact declared : agent.facts()) {
+			EnvironmentFact fact = declared.evaluate();
+			if (fact != null) {
+				facts.add(fact);
+			}
+		}
+		facts.addAll(RunFactsBinding.facts());
+		return facts;
 	}
 
 	private static int resolveMaxToolResultChars(AgentModelAssignment assignment) {
@@ -917,6 +1053,9 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 					Logger.warn("Tool not found in registry: " + toolName, AgentFactory.class);
 					continue;
 				}
+				if (!isOffered(tool)) {
+					continue;
+				}
 				if (!readOnly || isReadOnlyTool(tool)) {
 					try {
 						registry.register(tool);
@@ -983,6 +1122,9 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 				Tool tool = serviceRegistry.getTool(toolName);
 				if (tool == null) {
 					Logger.warn("Tool not found in registry: " + toolName, AgentFactory.class);
+					continue;
+				}
+				if (!isOffered(tool)) {
 					continue;
 				}
 				if (!readOnly || isReadOnlyTool(tool)) {

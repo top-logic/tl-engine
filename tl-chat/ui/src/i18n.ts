@@ -189,12 +189,14 @@ const EN = {
   you: 'You',
   agentLabel: 'Agent',
   providerError: 'The model returned an error. The attempt was discarded; you can send again.',
+  modelSwitched: 'The configured model could not answer. The rest of this reply comes from another one.',
   providerErrorRateLimited: 'The model is being asked too often just now. Try again in a moment.',
   providerErrorBilling: 'The model account cannot be billed. Please tell your administrator.',
   providerErrorOverloaded: 'The model is overloaded just now. Try again in a moment.',
   providerErrorContext: 'The conversation has grown past what this model can read. Start a new chat, or switch to a model with a larger context.',
   providerErrorAuth: 'The model rejected the access key. Please tell your administrator.',
   providerErrorInvalid: 'The model refused the request. The attempt was discarded; you can send again.',
+  applicationError: 'The application could not complete this request. That is not the model’s doing, so sending the same message again will not help.',
   errorDetails: 'Technical details',
   cancelled: 'Stopped.',
 
@@ -410,12 +412,14 @@ const DE: Bundle = {
   you: 'Du',
   agentLabel: 'Agent',
   providerError: 'Das Modell hat einen Fehler gemeldet. Der Versuch wurde verworfen, du kannst erneut senden.',
+  modelSwitched: 'Das eingestellte Modell konnte nicht antworten. Der Rest dieser Antwort kommt von einem anderen.',
   providerErrorRateLimited: 'Das Modell wird gerade zu oft angefragt. Versuche es gleich noch einmal.',
   providerErrorBilling: 'Das Modellkonto kann nicht abgerechnet werden. Bitte wende dich an deine Administration.',
   providerErrorOverloaded: 'Das Modell ist gerade überlastet. Versuche es gleich noch einmal.',
   providerErrorContext: 'Das Gespräch ist länger, als dieses Modell lesen kann. Beginne einen neuen Chat oder wechsle zu einem Modell mit größerem Kontext.',
   providerErrorAuth: 'Das Modell hat den Zugangsschlüssel abgelehnt. Bitte wende dich an deine Administration.',
   providerErrorInvalid: 'Das Modell hat die Anfrage abgelehnt. Der Versuch wurde verworfen, du kannst erneut senden.',
+  applicationError: 'Die Anwendung konnte diese Anfrage nicht abschließen. Das lag nicht am Modell, ein erneutes Senden derselben Nachricht hilft also nicht.',
   errorDetails: 'Technische Details',
   cancelled: 'Abgebrochen.',
 
@@ -493,6 +497,10 @@ export function formatTimestamp(timestamp: number, language: Language): string {
  * request, not for whoever was typing. The `kind` is the part that means something to a reader -
  * that the model was busy, that the conversation outgrew it, that a key is wrong - so the strip
  * says that, and the provider's wording is kept for the tooltip.
+ *
+ * `APPLICATION_ERROR` is the one kind that is not the provider's: the server sends it when the run
+ * died in this application, not at the model. It reads differently on purpose - every other text
+ * here ends in "try again", and for this one trying again repeats the same failure (#410).
  */
 export function providerErrorText(kind: string | undefined, language: Language): string {
   const labels = bundle(language)
@@ -509,6 +517,8 @@ export function providerErrorText(kind: string | undefined, language: Language):
       return labels.providerErrorAuth
     case 'INVALID_REQUEST':
       return labels.providerErrorInvalid
+    case 'APPLICATION_ERROR':
+      return labels.applicationError
     default:
       return labels.providerError
   }

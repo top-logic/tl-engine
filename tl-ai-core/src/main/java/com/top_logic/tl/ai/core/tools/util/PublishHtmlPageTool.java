@@ -9,8 +9,10 @@ import java.nio.charset.StandardCharsets;
 
 import com.top_logic.basic.AliasManager;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.tl.ai.core.ApplicationUrl;
 import com.top_logic.tl.ai.core.htmlpages.GeneratedHtmlPageService;
 import com.top_logic.tl.ai.core.htmlpages.model.GeneratedHtmlPage;
+import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
@@ -58,7 +60,8 @@ public class PublishHtmlPageTool {
 		description = "Publishes an HTML page and returns a URL. After generating the full HTML "
 			+ "document following the chosen design skill's spec, call this tool. Embed the "
 			+ "returned URL in your reply as a markdown link.",
-		mode = ToolMode.USER_SCOPED, group = ToolGroups.WORKSPACE)
+		mode = ToolMode.USER_SCOPED, group = ToolGroups.WORKSPACE,
+		marking = AnswerMarking.NONE)
 	public String publishPage(
 			@P("Short human-readable title for the page. Used in the admin list and as default link text. "
 				+ "If the HTML omits <title>, browsers may show this in the tab.") String title,
@@ -78,52 +81,7 @@ public class PublishHtmlPageTool {
 		GeneratedHtmlPageService service =
 			GeneratedHtmlPageService.Module.INSTANCE.getImplementationInstance();
 		GeneratedHtmlPage page = service.savePage(title, bytes, currentPerson());
-		return hostPrefix() + contextPath() + URL_PREFIX + page.getId();
-	}
-
-	/**
-	 * Resolves the application's public host (scheme + host + optional port) so the returned URL
-	 * is absolute when the deployment declares one.
-	 *
-	 * <p>
-	 * Reads the {@code %HOST%} alias. Returns the empty string when unset (e.g. unit tests, or a
-	 * dev deployment that hasn't bothered to configure it) — yielding a root-relative URL, same
-	 * as before the host prefix was introduced.
-	 * </p>
-	 *
-	 * <p>
-	 * Trailing slashes on the configured host are stripped so callers don't have to be careful
-	 * about whether they ended {@code %HOST%} with one.
-	 * </p>
-	 */
-	private static String hostPrefix() {
-		String host = AliasManager.getInstance().getAlias(AliasManager.HOST);
-		if (host == null) {
-			return "";
-		}
-		host = host.trim();
-		if (host.isEmpty()) {
-			return "";
-		}
-		while (host.endsWith("/")) {
-			host = host.substring(0, host.length() - 1);
-		}
-		return host;
-	}
-
-	/**
-	 * Resolves the application's deployment context path so the returned URL works regardless of
-	 * where the WAR is mounted (e.g. {@code /tl-ai-demo/html/...} vs. {@code /hype/html/...}).
-	 *
-	 * <p>
-	 * Reads the {@code %APP_CONTEXT%} alias maintained by {@link AliasManager}, which is
-	 * populated at startup from {@code ServletContext.getContextPath()}. Returns the empty
-	 * string when the alias is unresolved (e.g. unit tests) — yielding a root-relative URL.
-	 * </p>
-	 */
-	private static String contextPath() {
-		String path = AliasManager.getInstance().getAlias(AliasManager.APP_CONTEXT);
-		return path == null ? "" : path;
+		return ApplicationUrl.of(URL_PREFIX + page.getId());
 	}
 
 	private static Person currentPerson() {

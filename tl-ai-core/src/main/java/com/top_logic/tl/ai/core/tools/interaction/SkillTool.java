@@ -6,11 +6,12 @@
 package com.top_logic.tl.ai.core.tools.interaction;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -18,6 +19,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.agent.skills.Skill;
 import com.top_logic.tl.ai.core.tools.DynamicToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
+import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
@@ -47,6 +49,15 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  * skill, a skill this agent never declared and a misspelled id alike, and the model filled the gap
  * with a capability of its own choosing.
  * </p>
+ *
+ * <p>
+ * Loading is bounded (Gitea #346). A chat session's catalog outlives its runs, so an agent that
+ * could only ever load grew from the handful of tools it advertises to everything its skills can
+ * reach and stayed there for the rest of the session. The {@link DynamicToolCatalog} drops the
+ * overlay used longest ago when a load would take it over its ceiling, and this tool says so in the
+ * answer it gives the model - an eviction it kept quiet about would look like a tool that stopped
+ * existing.
+ * </p>
  */
 public class SkillTool {
 
@@ -61,15 +72,29 @@ public class SkillTool {
 	private final Function<String, String> _absenceReason;
 
 	/**
-	 * Which skills this run has loaded.
+	 * Which skills this run has loaded, in the order it loaded them.
 	 *
 	 * <p>
-	 * Concurrent because concurrency-safe tools of one turn run on parallel threads and both
+	 * Synchronized because concurrency-safe tools of one turn run on parallel threads and both
 	 * {@code loadSkill} and {@code listTools} are such tools: one adding to this set while the other
-	 * reads it is an ordinary turn, not an edge case.
+	 * reads it is an ordinary turn, not an edge case. Ordered because the order is what the next run
+	 * of the session restores the catalog in, and a catalog restored in another order is a prompt
+	 * cache thrown away for nothing.
 	 * </p>
 	 */
-	private final Set<String> _loadedSkills = ConcurrentHashMap.newKeySet();
+	private final Set<String> _loadedSkills = Collections.synchronizedSet(new LinkedHashSet<>());
+
+	/**
+	 * Which skills' instructions are in the conversation the model reads.
+	 *
+	 * <p>
+	 * Kept apart from {@link #_loadedSkills} because the two are lost for different reasons. Tools
+	 * leave when the catalog evicts them; instructions leave when a compaction summarizes the turn
+	 * that carried them away. A skill whose instructions are gone must be loadable again even though
+	 * its tools never left, or the model follows a skill it can no longer read.
+	 * </p>
+	 */
+	private final Set<String> _deliveredContent = Collections.synchronizedSet(new LinkedHashSet<>());
 
 	/**
 	 * Creates a skill tool with dynamic tool loading, refusing an absent skill without explaining it.
@@ -112,11 +137,18 @@ public class SkillTool {
 		_permitted = permitted != null ? permitted : tool -> true;
 		_absenceReason = absenceReason != null ? absenceReason : skillId -> null;
 
+		if (dynamicCatalog != null) {
+			dynamicCatalog.onHistoryCompacted(this::forgetDeliveredContent);
+		}
+
 		if (preloadedSkillIds != null) {
 			for (String skillId : preloadedSkillIds) {
 				Skill skill = _skills.get(skillId);
 				if (skill != null) {
 					addSkillTools(skill);
+					// The session continues the conversation the previous run loaded this skill in,
+					// so its instructions are still in it. A compaction takes this mark away again.
+					_deliveredContent.add(skillId);
 				} else {
 					Logger.info("Skipping restore of removed skill: " + skillId, SkillTool.class);
 				}
@@ -187,7 +219,9 @@ public class SkillTool {
 	 * </p>
 	 */
 	public Set<String> loadedSkills() {
-		return Set.copyOf(_loadedSkills);
+		synchronized (_loadedSkills) {
+			return Collections.unmodifiableSet(new LinkedHashSet<>(_loadedSkills));
+		}
 	}
 
 	/**
@@ -203,27 +237,31 @@ public class SkillTool {
 		description = "Loads a skill by its id. Returns specialized instructions you MUST follow for the related task. When a skill provides tools, they become available immediately. Check the Available Skills section in your system instructions for skill ids and when to use them.",
 		mode = ToolMode.READ,
 		concurrencySafe = true,
-		truncationHint = Integer.MAX_VALUE, group = ToolGroups.INTERACTION)
+		truncationHint = Integer.MAX_VALUE, group = ToolGroups.INTERACTION,
+		// A skill's text is instructions to follow; marking it would switch the mechanism off.
+		marking = AnswerMarking.NONE)
 	public String loadSkill(@P("Skill id from the catalog") String skillId) {
 		Skill skill = _skills.get(skillId);
 		if (skill == null) {
 			return absenceMessage(skillId);
 		}
 
-		// Return short message if skill was already loaded (avoid dumping content twice)
-		if (_loadedSkills.contains(skill.id())) {
+		// Return short message if the instructions are still in the conversation (avoid dumping
+		// the content twice).
+		if (_deliveredContent.contains(skill.id())) {
 			return "Skill \"" + skillId + "\" is already loaded. Its tools are available. "
 				+ "Do not call loadSkill for this skill again.";
 		}
 
-		List<String> addedTools = addSkillTools(skill);
+		Load load = addSkillTools(skill);
+		_deliveredContent.add(skill.id());
 
 		StringBuilder result = new StringBuilder();
 		result.append("Skill \"").append(skillId).append("\" loaded.\n\n");
 
-		if (!addedTools.isEmpty()) {
+		if (!load.addedTools().isEmpty()) {
 			result.append("The following tools are now available:\n");
-			for (String toolName : addedTools) {
+			for (String toolName : load.addedTools()) {
 				Tool tool = _dynamicCatalog.getTool(toolName);
 				if (tool != null) {
 					result.append("- ").append(toolName).append(": ")
@@ -231,6 +269,14 @@ public class SkillTool {
 				}
 			}
 			result.append("\n");
+		}
+
+		if (!load.evictedSkills().isEmpty()) {
+			// Said plainly, because the model has read those skills' instructions earlier in this very
+			// conversation and would otherwise call a tool that has quietly gone away.
+			result.append("To make room, these skills were unloaded and their tools are gone: ")
+				.append(String.join(", ", load.evictedSkills()))
+				.append(". Load one again if you need it.\n\n");
 		}
 
 		result.append(skill.content());
@@ -255,18 +301,40 @@ public class SkillTool {
 		return reason + " Available: " + _skills.keySet();
 	}
 
-	private List<String> addSkillTools(Skill skill) {
-		if (_dynamicCatalog == null || _toolResolver == null) {
-			return List.of();
-		}
-		if (skill.tools().isEmpty()) {
-			return List.of();
-		}
+	/**
+	 * What one load did: the tools it brought, and the skills it cost.
+	 *
+	 * @param addedTools
+	 *        Names of the tools now callable that were not callable before.
+	 * @param evictedSkills
+	 *        Ids of the skills whose tools were dropped to stay under the catalog's ceiling.
+	 */
+	private record Load(List<String> addedTools, List<String> evictedSkills) {
+
+		static final Load NOTHING = new Load(List.of(), List.of());
+	}
+
+	/**
+	 * Registers a skill's tools and records the skill as loaded.
+	 *
+	 * <p>
+	 * A skill without tools is recorded too, although it registers nothing: it is loaded in every
+	 * sense the model cares about, and a skill that never counted as loaded had its whole content
+	 * repeated into the conversation on every {@code loadSkill} of it.
+	 * </p>
+	 */
+	private Load addSkillTools(Skill skill) {
 		if (_loadedSkills.contains(skill.id())) {
-			return List.of();
+			return Load.NOTHING;
 		}
-		_loadedSkills.add(skill.id());
-		LoadedSkillsBinding.addSkill(skill.id());
+		if (_dynamicCatalog == null || _toolResolver == null) {
+			// Legacy mode: no catalog to grow, so nothing to remember either.
+			return Load.NOTHING;
+		}
+		markLoaded(skill.id());
+		if (skill.tools().isEmpty()) {
+			return Load.NOTHING;
+		}
 
 		ToolCatalog overlay = new ToolCatalog();
 		List<String> added = new ArrayList<>();
@@ -299,11 +367,48 @@ public class SkillTool {
 				+ " tools the current user may not use: " + withheld, SkillTool.class);
 		}
 
-		if (!overlay.tools().isEmpty()) {
-			overlay.freeze();
-			_dynamicCatalog.addOverlay(overlay);
+		if (overlay.tools().isEmpty()) {
+			return Load.NOTHING;
 		}
+		overlay.freeze();
+		List<String> evicted = _dynamicCatalog.addSkillOverlay(skill.id(), overlay);
+		for (String evictedSkill : evicted) {
+			forgetLoaded(evictedSkill);
+		}
+		return new Load(added, evicted);
+	}
 
-		return added;
+	/** Records a skill as loaded, here and in the session state the next run restores from. */
+	private void markLoaded(String skillId) {
+		_loadedSkills.add(skillId);
+		LoadedSkillsBinding.addSkill(skillId);
+	}
+
+	/**
+	 * Forgets an evicted skill, so that loading it again works and the next run does not restore it.
+	 *
+	 * <p>
+	 * The instructions are forgotten with the tools although they are still in the conversation: a
+	 * reload has to bring the tools back, and the short "already loaded" answer would not.
+	 * </p>
+	 */
+	private void forgetLoaded(String skillId) {
+		_loadedSkills.remove(skillId);
+		_deliveredContent.remove(skillId);
+		LoadedSkillsBinding.removeSkill(skillId);
+	}
+
+	/**
+	 * Answers a compaction: the instructions may have been summarized away, the tools have not moved.
+	 *
+	 * <p>
+	 * Dropping the tools here instead would take a capability away from the model for a reason it
+	 * cannot see, in the middle of the task it loaded the skill for. What a compaction really costs
+	 * is the text, so that is what is re-delivered on the next {@code loadSkill} - at most one
+	 * repetition per skill per compaction, and only if the model asks.
+	 * </p>
+	 */
+	private void forgetDeliveredContent() {
+		_deliveredContent.clear();
 	}
 }

@@ -337,7 +337,7 @@ written in the same idiom, and until you name a role in one of them nothing chan
 
 | Section | Without any entry | What that means for the chat |
 |---------|-------------------|------------------------------|
-| `agent-access` | Everybody may run every agent | The `+` menu offers every agent, as it always has |
+| `agent-access` | Everybody may run every agent that is not marked `infrastructure` | The `+` menu offers every agent, as it always has |
 | `model-access` | A request runs on the model its agent is assigned | The model menu offers that model and nothing else |
 | `mcp-access` | A request reaches the servers its agent declares | The MCP list offers those servers and nothing else |
 
@@ -413,6 +413,43 @@ want a role to keep it, do not deny the model it runs on.
 
 Everything else an account may run has to be granted.
 
+### Infrastructure agents: not runnable as a persona, whatever this policy says
+
+The prompt improver is the shipped example of an agent the application runs **for** a user instead of
+letting them talk to it. An agent definition says so itself:
+
+```xml
+<agent name="TL_PromptImprover" infrastructure="true">
+    ...
+</agent>
+```
+
+and an agent record in the knowledge base carries the same flag as its **Infrastructure agent**
+checkbox.
+
+The mark is a statement about the agent, not about a role, and `<agent-access>` therefore cannot
+lift it:
+
+- no menu offers it - not `/chat/capabilities`, not the delegate catalogue, not `list_agents`, and
+  not the options of an agent record's `delegations`;
+- a request that names it anyway is answered **403** with *"The agent … cannot be talked to: the
+  application runs it for you."* - `/chat/send`, `/chat/regenerate`, a delegation, a
+  `spawn_subagent`, a TL-Script `aiAgentChat`, a scheduled run;
+- this holds under `<agent-access default="all">`, under a role that explicitly `<grant>`s the agent
+  by name, and in an application that wrote no policy at all. There is nothing to grant.
+
+What still works is the product's own call path. The improve-prompt button runs the very same agent,
+and what makes that run legal is not which class started it but what the run says about itself: it
+is built with `SecurityContext.withoutAgentChoice()`, the one seam that states in code that the
+**product**, and not the user, named this agent. An entry point of your own that runs an
+infrastructure agent on a user's behalf says the same thing the same way; one that does not say it is
+refused like any other caller.
+
+Mark an agent `infrastructure` when it does a piece of work on a user's behalf and its answer is
+consumed by the application rather than read as a reply. Do not mark an agent you merely want to hide
+from most roles - that is what `<agent-access>` is for, and an `infrastructure` agent is hidden from
+everybody including administrators.
+
 ### What happens when a request asks for something else
 
 A request that names an agent, a model or an MCP server the account may not use is answered **403**
@@ -437,8 +474,9 @@ refuses nothing while reading like a prohibition.
 An agent the account may not run is not reachable by asking another agent for it either: it is dropped
 from the delegate catalogue and from `list_agents`, and a `spawn_subagent` naming it is refused. The
 same holds for an agent this account may run but whose own model or own server a role denies - it is
-dropped from the catalogue and refused when named, because a child run is the acting user's run. If
-you want an orchestrator to delegate to a specialist, grant the specialist to the same role.
+dropped from the catalogue and refused when named, because a child run is the acting user's run, and
+for an agent marked `infrastructure`, which is nobody's delegate. If you want an orchestrator to
+delegate to a specialist, grant the specialist to the same role.
 
 ---
 

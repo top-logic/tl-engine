@@ -5,6 +5,7 @@ import type {
   Capabilities,
   ChatMessage,
   ContextComposition,
+  ContextFact,
   ImprovePromptResponse,
   InteractionOption,
   SendPayload,
@@ -25,14 +26,35 @@ export function apiBase(): string {
   return ''
 }
 
-function withWindow(path: string, windowId: string): string {
+/**
+ * Where a `/chat/*` call goes: the browser window, and which conversation of it.
+ *
+ * A window can show more than one - a page's chat beside a `<chat-dock>`'s, two `<agent-chat>`
+ * elements - and each has its own active session, its own run and its own event stream on the
+ * server. A bare window id is the window's unnamed conversation, which is what the classic
+ * `chat-client.js` addresses and what a host calling these functions with a window id alone still
+ * gets.
+ *
+ * The parameter is `conversation` rather than `chatId` because `PUT /chat/preferences` already
+ * spells a `chatId`, and that one is the key the *layout* is stored under - the same string for
+ * every element of a chat, and the empty one for an `<agent-chat>`, whose conversation is its own.
+ */
+export type ChatAddress = string | { windowId: string; chatId: string }
+
+function withWindow(path: string, at: ChatAddress): string {
   const sep = path.includes('?') ? '&' : '?'
-  return `${apiBase()}${path}${sep}windowId=${encodeURIComponent(windowId)}`
+  const windowId = typeof at === 'string' ? at : at.windowId
+  const chatId = typeof at === 'string' ? '' : at.chatId
+  const conversation = chatId ? `&conversation=${encodeURIComponent(chatId)}` : ''
+  return `${apiBase()}${path}${sep}windowId=${encodeURIComponent(windowId)}${conversation}`
 }
 
 async function readJson<T>(res: Response): Promise<T> {
   if (res.status === 403) {
     throw await forbidden(res)
+  }
+  if (res.status === 429) {
+    throw await refused(res)
   }
   if (!res.ok) {
     throw new Error(`${res.status} ${res.statusText}`)
@@ -53,6 +75,20 @@ export class ForbiddenError extends Error {
   }
 }
 
+/**
+ * A request this installation has no room for right now, with its own sentence.
+ *
+ * A `ForbiddenError`, so that every caller which already shows a refusal as information shows this
+ * one the same way - what differs is only the cause, and the server's sentence says it. Its own
+ * class so that a caller which wants to offer "try again" can tell the two apart.
+ */
+export class RefusedError extends ForbiddenError {
+  constructor(reason: string) {
+    super(reason)
+    this.name = 'RefusedError'
+  }
+}
+
 /** Reads the reason out of a 403, falling back to nothing rather than to the status line. */
 async function forbidden(res: Response): Promise<ForbiddenError> {
   try {
@@ -63,14 +99,24 @@ async function forbidden(res: Response): Promise<ForbiddenError> {
   }
 }
 
-export async function fetchCapabilities(windowId: string): Promise<Capabilities> {
+/** Reads the reason out of a 429, the same way. */
+async function refused(res: Response): Promise<RefusedError> {
+  try {
+    const data = (await res.json()) as { reason?: string }
+    return new RefusedError(data.reason ?? '')
+  } catch {
+    return new RefusedError('')
+  }
+}
+
+export async function fetchCapabilities(at: ChatAddress): Promise<Capabilities> {
   const data = await readJson<{
     entryPointAgent?: string
     agents?: Capabilities['agents']
     models?: Capabilities['models']
     mcpServers?: Capabilities['mcpServers']
     promptImproverAvailable?: boolean
-  }>(await fetch(withWindow('/chat/capabilities', windowId), { credentials: 'include' }))
+  }>(await fetch(withWindow('/chat/capabilities', at), { credentials: 'include' }))
   return {
     entryPointAgent: data.entryPointAgent,
     agents: data.agents ?? [],
@@ -80,16 +126,16 @@ export async function fetchCapabilities(windowId: string): Promise<Capabilities>
   }
 }
 
-export async function listSessions(windowId: string): Promise<SessionSummary[]> {
+export async function listSessions(at: ChatAddress): Promise<SessionSummary[]> {
   const data = await readJson<{ sessions?: SessionSummary[] }>(
-    await fetch(withWindow('/chat/sessions', windowId), { credentials: 'include' }),
+    await fetch(withWindow('/chat/sessions', at), { credentials: 'include' }),
   )
   return data.sessions ?? []
 }
 
-export async function createSession(windowId: string, title: string): Promise<SessionSummary> {
+export async function createSession(at: ChatAddress, title: string): Promise<SessionSummary> {
   return readJson<SessionSummary>(
-    await fetch(withWindow('/chat/sessions', windowId), {
+    await fetch(withWindow('/chat/sessions', at), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -118,24 +164,24 @@ export interface SessionDetail {
   lastComposition?: ContextComposition
 }
 
-export async function loadSession(windowId: string, id: string): Promise<SessionDetail> {
+export async function loadSession(at: ChatAddress, id: string): Promise<SessionDetail> {
   return readJson<SessionDetail>(
-    await fetch(withWindow(`/chat/sessions/${encodeURIComponent(id)}`, windowId), {
+    await fetch(withWindow(`/chat/sessions/${encodeURIComponent(id)}`, at), {
       credentials: 'include',
     }),
   )
 }
 
-export async function deleteSession(windowId: string, id: string): Promise<void> {
-  const res = await fetch(withWindow(`/chat/sessions/${encodeURIComponent(id)}`, windowId), {
+export async function deleteSession(at: ChatAddress, id: string): Promise<void> {
+  const res = await fetch(withWindow(`/chat/sessions/${encodeURIComponent(id)}`, at), {
     method: 'DELETE',
     credentials: 'include',
   })
   if (!res.ok) throw new Error(`delete failed (${res.status})`)
 }
 
-export async function sendMessage(windowId: string, payload: SendPayload): Promise<{ taskId?: string; status: string }> {
-  const res = await fetch(withWindow('/chat/send', windowId), {
+export async function sendMessage(at: ChatAddress, payload: SendPayload): Promise<{ taskId?: string; status: string }> {
+  const res = await fetch(withWindow('/chat/send', at), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -143,6 +189,9 @@ export async function sendMessage(windowId: string, payload: SendPayload): Promi
   })
   if (res.status === 403) {
     throw await forbidden(res)
+  }
+  if (res.status === 429) {
+    throw await refused(res)
   }
   const data = (await res.json()) as { taskId?: string; status?: string }
   if (res.status === 409 || data.status === 'busy') {
@@ -161,11 +210,19 @@ export async function sendMessage(windowId: string, payload: SendPayload): Promi
  * answer takes the old one's place instead of following it.
  */
 export async function regenerate(
-  windowId: string,
-  payload: { sessionId: string; agent?: string; model?: string; mcpOverride: boolean; mcpServers: string[]; effort?: string },
+  at: ChatAddress,
+  payload: {
+    sessionId: string
+    agent?: string
+    model?: string
+    mcpOverride: boolean
+    mcpServers: string[]
+    effort?: string
+    facts?: ContextFact[]
+  },
 ): Promise<TruncateResult> {
   return readJson<TruncateResult>(
-    await fetch(withWindow('/chat/regenerate', windowId), {
+    await fetch(withWindow('/chat/regenerate', at), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -176,12 +233,12 @@ export async function regenerate(
 
 /** Drops a turn and everything after it, and hands back the user text of the dropped turn. */
 export async function truncate(
-  windowId: string,
+  at: ChatAddress,
   sessionId: string,
   fromTurn: number,
 ): Promise<TruncateResult> {
   return readJson<TruncateResult>(
-    await fetch(withWindow('/chat/truncate', windowId), {
+    await fetch(withWindow('/chat/truncate', at), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -191,7 +248,7 @@ export async function truncate(
 }
 
 export interface TruncateResult {
-  status: 'ok' | 'busy' | 'error'
+  status: 'ok' | 'busy' | 'rejected' | 'error'
   removedTurns?: number
   text?: string
   taskId?: string
@@ -199,13 +256,13 @@ export interface TruncateResult {
 
 /** Records, changes or withdraws what the user thought of one answer. */
 export async function sendFeedback(
-  windowId: string,
+  at: ChatAddress,
   sessionId: string,
   turnIndex: number,
   rating: Rating,
   note?: string,
 ): Promise<void> {
-  const res = await fetch(withWindow('/chat/feedback', windowId), {
+  const res = await fetch(withWindow('/chat/feedback', at), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -228,9 +285,9 @@ export interface RunSnapshot {
  * The SSE stream replays nothing, so a page that was reloaded in mid-run learns from here that the
  * agent is still working and what it has got through so far.
  */
-export async function fetchRunSnapshot(windowId: string): Promise<RunSnapshot> {
+export async function fetchRunSnapshot(at: ChatAddress): Promise<RunSnapshot> {
   const data = await readJson<{ processing?: boolean; tasksJson?: string }>(
-    await fetch(withWindow('/chat/updates', windowId), { credentials: 'include' }),
+    await fetch(withWindow('/chat/updates', at), { credentials: 'include' }),
   )
   return { processing: data.processing === true, tasksJson: data.tasksJson ?? '' }
 }
@@ -246,6 +303,11 @@ export interface PendingInteraction {
   prompt: string
   /** For an approval the tool call's argument JSON. */
   payload: string
+  /**
+   * For an approval still being waited on, the tool's mode - what the card's sentence is phrased
+   * from, so a recovered card reads in the user's language as the live one does. Empty otherwise.
+   */
+  toolMode: string
   sessionId: string
   /** How long the requester is still waiting; zero or less means nobody is listening any more. */
   remainingMs: number
@@ -257,9 +319,9 @@ export interface PendingInteraction {
  * Approvals have no server poll of their own, so this is what lets a reloaded page put the card
  * back in front of the user instead of a composer that is locked for no visible reason.
  */
-export async function fetchPendingInteractions(windowId: string): Promise<PendingInteraction[]> {
+export async function fetchPendingInteractions(at: ChatAddress): Promise<PendingInteraction[]> {
   const data = await readJson<{ interactions?: Partial<PendingInteraction>[] }>(
-    await fetch(withWindow('/chat/interactions', windowId), { credentials: 'include' }),
+    await fetch(withWindow('/chat/interactions', at), { credentials: 'include' }),
   )
   return (data.interactions ?? []).map((item) => ({
     requestId: item.requestId ?? '',
@@ -267,17 +329,18 @@ export async function fetchPendingInteractions(windowId: string): Promise<Pendin
     header: item.header ?? '',
     prompt: item.prompt ?? '',
     payload: item.payload ?? '',
+    toolMode: item.toolMode ?? '',
     sessionId: item.sessionId ?? '',
     remainingMs: typeof item.remainingMs === 'number' ? item.remainingMs : 0,
   }))
 }
 
-export async function cancelRun(windowId: string): Promise<void> {
-  await fetch(withWindow('/chat/cancel', windowId), { method: 'POST', credentials: 'include' })
+export async function cancelRun(at: ChatAddress): Promise<void> {
+  await fetch(withWindow('/chat/cancel', at), { method: 'POST', credentials: 'include' })
 }
 
-export async function respond(windowId: string, body: Record<string, unknown>): Promise<void> {
-  const res = await fetch(withWindow('/chat/respond', windowId), {
+export async function respond(at: ChatAddress, body: Record<string, unknown>): Promise<void> {
+  const res = await fetch(withWindow('/chat/respond', at), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -286,18 +349,18 @@ export async function respond(windowId: string, body: Record<string, unknown>): 
   if (!res.ok) throw new Error(`respond failed (${res.status})`)
 }
 
-export function openEventStream(windowId: string): EventSource {
-  return new EventSource(withWindow('/chat/events', windowId), { withCredentials: true })
+export function openEventStream(at: ChatAddress): EventSource {
+  return new EventSource(withWindow('/chat/events', at), { withCredentials: true })
 }
 
 export async function improvePrompt(
-  windowId: string,
+  at: ChatAddress,
   text: string,
   requestId: string,
   signal?: AbortSignal,
 ): Promise<ImprovePromptResponse> {
   return readJson<ImprovePromptResponse>(
-    await fetch(withWindow('/chat/improve-prompt', windowId), {
+    await fetch(withWindow('/chat/improve-prompt', at), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -308,10 +371,10 @@ export async function improvePrompt(
 }
 
 export async function setApprovalMode(
-  windowId: string,
+  at: ChatAddress,
   mode: 'AUTO_APPROVE' | 'MANUAL',
 ): Promise<void> {
-  const res = await fetch(withWindow('/chat/approval-mode', windowId), {
+  const res = await fetch(withWindow('/chat/approval-mode', at), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -320,8 +383,8 @@ export async function setApprovalMode(
   if (!res.ok) throw new Error(`approval-mode failed (${res.status})`)
 }
 
-export async function cancelPromptImprovement(windowId: string, requestId: string): Promise<void> {
-  await fetch(withWindow('/chat/improve-prompt/cancel', windowId), {
+export async function cancelPromptImprovement(at: ChatAddress, requestId: string): Promise<void> {
+  await fetch(withWindow('/chat/improve-prompt/cancel', at), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -329,24 +392,24 @@ export async function cancelPromptImprovement(windowId: string, requestId: strin
   })
 }
 
-export async function listSubagents(windowId: string): Promise<SubagentActivity[]> {
+export async function listSubagents(at: ChatAddress): Promise<SubagentActivity[]> {
   const data = await readJson<{ subagents?: SubagentActivity[] }>(
-    await fetch(withWindow('/chat/subagents', windowId), { credentials: 'include' }),
+    await fetch(withWindow('/chat/subagents', at), { credentials: 'include' }),
   )
   return data.subagents ?? []
 }
 
-export async function cancelSubagent(windowId: string, id: string): Promise<void> {
-  const res = await fetch(withWindow(`/chat/subagents/${encodeURIComponent(id)}`, windowId), {
+export async function cancelSubagent(at: ChatAddress, id: string): Promise<void> {
+  const res = await fetch(withWindow(`/chat/subagents/${encodeURIComponent(id)}`, at), {
     method: 'DELETE',
     credentials: 'include',
   })
   if (!res.ok) throw new Error(`cancel subagent failed (${res.status})`)
 }
 
-export async function loadSubagentTranscript(windowId: string, id: string): Promise<ChatMessage[]> {
+export async function loadSubagentTranscript(at: ChatAddress, id: string): Promise<ChatMessage[]> {
   const detail = await readJson<SessionDetail>(
-    await fetch(withWindow(`/chat/subagents/${encodeURIComponent(id)}/transcript`, windowId), {
+    await fetch(withWindow(`/chat/subagents/${encodeURIComponent(id)}/transcript`, at), {
       credentials: 'include',
     }),
   )
@@ -403,6 +466,7 @@ interface PersistedPart {
     userResponse?: string
   }
   errorData?: { kind?: string; errorMessage: string }
+  systemData?: { eventType?: string; details?: string }
 }
 
 interface PersistedTurn {
@@ -571,6 +635,21 @@ export function turnsJsonToMessages(turnsJson: string | undefined): ChatMessage[
               id: part.id,
               code: part.errorData.kind,
               message: part.errorData.errorMessage,
+              timestamp: part.timestamp,
+            })
+          }
+          break
+        case 'system':
+          // Only the one system event the thread draws. The others - a cancellation, an approval
+          // mode change, the text a finished subagent was handed - are either shown by something
+          // else or are not the user's business, and an unknown one is silently skipped rather
+          // than rendered as a nameless line.
+          if (part.systemData?.eventType === 'MODEL_CHANGED' && part.systemData.details) {
+            msgs.push({
+              type: 'notice',
+              id: part.id,
+              kind: 'model_switched',
+              detail: part.systemData.details,
               timestamp: part.timestamp,
             })
           }

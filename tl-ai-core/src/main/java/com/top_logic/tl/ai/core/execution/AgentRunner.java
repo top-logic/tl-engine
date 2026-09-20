@@ -53,8 +53,9 @@ public final class AgentRunner {
 	 * @param registry
 	 *        The tool registry used during the run.
 	 * @param result
-	 *        The terminal {@link AgentResult}, or <code>null</code> if the loop died before
-	 *        emitting a completion event.
+	 *        The terminal {@link AgentResult} - why the run stopped, and what the provider said if
+	 *        it failed. <code>null</code> only if the loop died before emitting a completion
+	 *        event.
 	 * @param execution
 	 *        The persisted execution row, or <code>null</code> when recording was off.
 	 */
@@ -126,8 +127,10 @@ public final class AgentRunner {
 			? log.turns().size() - (log.currentTurn() != null ? 1 : 0)
 			: 0;
 
-		// The run numbers its citation markers from 1; the context may have served an earlier run.
-		context.citationMarkers().reset();
+		// The numbering belongs to the conversation, not to this run: the model reads its own earlier
+		// answers back, markers and all, so a run that restarted at 1 handed out numbers that already
+		// meant another source - and the validator then deleted the marker (#495).
+		context.citationMarkers().resumeFrom(log);
 		AgentFactory.RunResult runResult;
 		try {
 			runResult = AgentFactory.getInstance().runAgent(agentName, conversation, memory,
@@ -147,8 +150,10 @@ public final class AgentRunner {
 		if (recorder != null) {
 			recorder.complete(transcriptOf(log, turnsBefore), response, null);
 		}
+		// The recorder's result carries the provider's own error message (it saw the ProviderError
+		// event); the loop's own result is the fallback for an unrecorded run.
 		return new RecordedRun(response, runResult.registry(),
-			recorder != null ? recorder.result() : null,
+			recorder != null && recorder.result() != null ? recorder.result() : runResult.result(),
 			recorder != null ? recorder.execution() : null);
 	}
 
@@ -194,6 +199,10 @@ public final class AgentRunner {
 	public static RecordedRun run(AgentLoop loop, String agentName, Conversation conversation,
 			ToolContext context, AgentEventListener listener, ConversationLog log,
 			AgentSession session, AgentExecution parentExecution) {
+		// A pre-built loop never passed through AgentFactory, so this is the only place that knows
+		// which agent the run serves. Published as plain data for the run's tools to read.
+		context.executionHandle().setAgentName(agentName);
+
 		AgentEventListener downstream = withTranscriptRecording(listener, log);
 
 		AgentEventListener effectiveListener = downstream;
@@ -213,8 +222,10 @@ public final class AgentRunner {
 			? log.turns().size() - (log.currentTurn() != null ? 1 : 0)
 			: 0;
 
-		// The run numbers its citation markers from 1; the context may have served an earlier run.
-		context.citationMarkers().reset();
+		// The numbering belongs to the conversation, not to this run: the model reads its own earlier
+		// answers back, markers and all, so a run that restarted at 1 handed out numbers that already
+		// meant another source - and the validator then deleted the marker (#495).
+		context.citationMarkers().resumeFrom(log);
 		AgentResult result;
 		try {
 			result = loop.run(conversation, context, effectiveListener);

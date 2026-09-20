@@ -5,6 +5,7 @@
  */
 package com.top_logic.tl.ai.core.provider;
 
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -19,6 +20,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Container;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Hidden;
@@ -34,6 +36,8 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.ReadOnly;
 import com.top_logic.basic.config.annotation.Ref;
+import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.func.Function0;
@@ -45,11 +49,25 @@ import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.tl.ai.core.agent.AgentDefinition;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
+import com.top_logic.tl.ai.core.agent.SystemPromptContributor;
 import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
+import com.top_logic.tl.ai.core.agent.environment.EnvironmentConfig;
+import com.top_logic.tl.ai.core.agent.environment.EnvironmentSettings;
+import com.top_logic.tl.ai.core.agent.environment.UserMemoryConfig;
+import com.top_logic.tl.ai.core.limits.RunLimitSettings;
+import com.top_logic.tl.ai.core.limits.RunLimitsConfig;
+import com.top_logic.tl.ai.core.agent.environment.UserMemorySettings;
+import com.top_logic.tl.ai.core.security.DefaultSecurityContextFactory;
+import com.top_logic.tl.ai.core.security.SecurityContextFactory;
 import com.top_logic.tl.ai.core.provider.catalog.ModelCatalogEntry;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.provider.catalog.ModelsDevFetcher;
+import com.top_logic.tl.ai.core.provider.health.FailoverConfig;
+import com.top_logic.tl.ai.core.provider.health.ModelAvailability;
+import com.top_logic.tl.ai.core.provider.health.ModelTarget;
+import com.top_logic.tl.ai.core.tools.model.ObjectIdConfig;
+import com.top_logic.tl.ai.core.tools.model.ObjectIdSettings;
 
 /**
  * Central service for LLM provider management, model resolution, and agent execution
@@ -526,6 +544,11 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	@DisplayOrder({
 		Config.PROVIDERS,
 		Config.AGENT_EXECUTION,
+		Config.ENVIRONMENT,
+		Config.USER_MEMORY,
+		Config.RUN_LIMITS,
+		Config.SECURITY_CONTEXT,
+		Config.PROMPT_CONTRIBUTORS,
 		Config.MODEL_CATALOG,
 	})
 	public interface Config<I extends LLMService> extends ConfiguredManagedClass.Config<I> {
@@ -547,11 +570,60 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		String AGENT_EXECUTION = "agent-execution";
 
 		/**
+		 * Configuration property name for the environment section.
+		 *
+		 * @see #getEnvironment()
+		 */
+		String ENVIRONMENT = "environment";
+
+		/**
+		 * Configuration property name for the user-memory section.
+		 *
+		 * @see #getUserMemory()
+		 */
+		String USER_MEMORY = "user-memory";
+
+		/**
+		 * Configuration property name for the run-limits section.
+		 *
+		 * @see #getRunLimits()
+		 */
+		String RUN_LIMITS = "run-limits";
+
+		/**
+		 * Configuration property name for the object-ids section.
+		 *
+		 * @see #getObjectIds()
+		 */
+		String OBJECT_IDS = "object-ids";
+
+		/**
+		 * Configuration property name for the security-context factory.
+		 *
+		 * @see #getSecurityContext()
+		 */
+		String SECURITY_CONTEXT = "security-context";
+
+		/**
+		 * Configuration property name for the system-prompt contributors.
+		 *
+		 * @see #getPromptContributors()
+		 */
+		String PROMPT_CONTRIBUTORS = "prompt-contributors";
+
+		/**
 		 * Configuration property name for the model catalog.
 		 *
 		 * @see #getModelCatalog()
 		 */
 		String MODEL_CATALOG = "model-catalog";
+
+		/**
+		 * Configuration property name for the failover section.
+		 *
+		 * @see #getFailover()
+		 */
+		String FAILOVER = "failover";
 
 		/**
 		 * The configured LLM providers, keyed by provider name.
@@ -575,6 +647,76 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		AgentExecutionConfig getAgentExecution();
 
 		/**
+		 * What every agent run is told about the situation it runs in: the wording of the environment
+		 * block, the application name the model is given, and whether the accounts' own preference
+		 * texts are part of it.
+		 *
+		 * @see #ENVIRONMENT
+		 */
+		@Name(ENVIRONMENT)
+		EnvironmentConfig getEnvironment();
+
+		/**
+		 * What an agent may remember about the accounts of this installation: whether it may at
+		 * all, how much of it reaches a model, and the words the agreement check looks for.
+		 *
+		 * @see #USER_MEMORY
+		 */
+		@Name(USER_MEMORY)
+		UserMemoryConfig getUserMemory();
+
+		/**
+		 * How many agent runs this installation carries at once, and how much one account may
+		 * spend.
+		 *
+		 * @see #RUN_LIMITS
+		 */
+		@Name(RUN_LIMITS)
+		RunLimitsConfig getRunLimits();
+
+		/**
+		 * What this application knows about the identifiers a model passes to a tool: the codes its
+		 * own users speak, and what to tell a model that passed one instead of an object id.
+		 *
+		 * @see #OBJECT_IDS
+		 */
+		@Name(OBJECT_IDS)
+		ObjectIdConfig getObjectIds();
+
+		/**
+		 * What decides, for every agent run, which tool calls need a person to confirm them.
+		 *
+		 * <p>
+		 * The shipped default asks the tool's mode: a read runs, everything that changes something is
+		 * confirmed. An application whose answer depends on what is being changed - overwriting an
+		 * empty section is not overwriting what a colleague wrote - names its own implementation
+		 * here.
+		 * </p>
+		 *
+		 * @see #SECURITY_CONTEXT
+		 */
+		@Name(SECURITY_CONTEXT)
+		@ItemDefault
+		@ImplementationClassDefault(DefaultSecurityContextFactory.class)
+		PolymorphicConfiguration<SecurityContextFactory> getSecurityContext();
+
+		/**
+		 * Standing instructions this installation adds to the system prompt of every agent run.
+		 *
+		 * <p>
+		 * For house rules that belong to the application rather than to one agent, so that they do
+		 * not have to be written into every agent and do not have to be repeated on every turn. Each
+		 * entry is asked once per run, in the order they are listed here, and what it answers is part
+		 * of the cached prompt - so it must say the same thing throughout a conversation.
+		 * </p>
+		 *
+		 * @see #PROMPT_CONTRIBUTORS
+		 */
+		@Name(PROMPT_CONTRIBUTORS)
+		@EntryTag("contributor")
+		List<PolymorphicConfiguration<? extends SystemPromptContributor>> getPromptContributors();
+
+		/**
 		 * Model metadata catalog describing each model's capabilities and limits.
 		 *
 		 * <p>
@@ -587,6 +729,19 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		 */
 		@Name(MODEL_CATALOG)
 		ModelCatalogConfig getModelCatalog();
+
+		/**
+		 * Where a run goes when the model it was configured with cannot answer, and how long this
+		 * installation remembers that a model could not.
+		 *
+		 * <p>
+		 * Empty by default, and an empty section changes nothing.
+		 * </p>
+		 *
+		 * @see #FAILOVER
+		 */
+		@Name(FAILOVER)
+		FailoverConfig getFailover();
 
 	}
 
@@ -687,6 +842,27 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	private Map<String, ModelInfo> _models;
 
 	/**
+	 * What builds the security context of every run started while this service is up.
+	 */
+	private SecurityContextFactory _securityContextFactory;
+
+	/**
+	 * What this installation adds to every agent's system prompt, in configuration order.
+	 */
+	private List<SystemPromptContributor> _promptContributors;
+
+	/**
+	 * What every model is currently known to be good for.
+	 *
+	 * <p>
+	 * A component rather than a service of its own - see {@link ModelAvailability} for why. It is
+	 * replaced on every start, so a restart of this service is also the blunt way to clear every
+	 * mark.
+	 * </p>
+	 */
+	private volatile ModelAvailability _health = new ModelAvailability(null, Clock.systemUTC());
+
+	/**
 	 * Creates a new {@link LLMService} from configuration.
 	 *
 	 * @param context
@@ -709,11 +885,156 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		return _instance;
 	}
 
+	/**
+	 * What every agent run is told about the situation it runs in.
+	 *
+	 * @see EnvironmentSettings
+	 */
+	public EnvironmentConfig getEnvironmentConfig() {
+		return getConfig().getEnvironment();
+	}
+
+	/**
+	 * What every model of this installation is currently known to be good for.
+	 *
+	 * <p>
+	 * Never <code>null</code>, and usable before {@link #startUp()} has read the configuration: an
+	 * installation that configured no lifetimes gets the shipped ones.
+	 * </p>
+	 *
+	 * @see ModelAvailability
+	 */
+	public ModelAvailability modelHealth() {
+		return _health;
+	}
+
+	/**
+	 * The models a run configured with the given model reference may use, in order.
+	 *
+	 * <p>
+	 * The first entry is always the reference itself, so a model with no configured chain yields a
+	 * list of one and nothing about that run changes. The rest is the {@code <failover>} section's
+	 * chain for that model name, whichever provider was asked to serve it.
+	 * </p>
+	 *
+	 * @param model
+	 *        The model the run was configured with; may be <code>null</code>, which yields an
+	 *        empty list.
+	 * @param provider
+	 *        The provider qualifying it, or <code>null</code>.
+	 * @return An immutable list, the configured reference first; never <code>null</code>.
+	 */
+	public List<ModelTarget> failoverChain(String model, String provider) {
+		if (model == null || model.isBlank()) {
+			return List.of();
+		}
+		ModelTarget configured = new ModelTarget(model, blankToNull(provider));
+		FailoverConfig failover = getConfig().getFailover();
+		FailoverConfig.Chain chain = failover == null ? null : failover.getChains().get(model);
+		if (chain == null || chain.getFallbacks().isEmpty()) {
+			return List.of(configured);
+		}
+		List<ModelTarget> result = new ArrayList<>();
+		result.add(configured);
+		for (FailoverConfig.Target fallback : chain.getFallbacks()) {
+			ModelTarget target = new ModelTarget(fallback.getModel(), blankToNull(fallback.getProvider()));
+			// A chain that names the model it is the way out of, or names one twice, would spend a
+			// turn re-trying what just failed. Dropped here rather than refused at start-up: the
+			// duplicate may be the same model served by a second provider, which is legitimate.
+			if (result.stream().noneMatch(target::sameAs)) {
+				result.add(target);
+			}
+		}
+		return List.copyOf(result);
+	}
+
+	/**
+	 * What an agent may remember about the accounts of this installation.
+	 *
+	 * @see UserMemorySettings
+	 */
+	public UserMemoryConfig getUserMemoryConfig() {
+		return getConfig().getUserMemory();
+	}
+
+	/**
+	 * How many agent runs this installation carries at once, and how much one account may spend.
+	 *
+	 * @see RunLimitSettings
+	 */
+	public RunLimitsConfig getRunLimitsConfig() {
+		return getConfig().getRunLimits();
+	}
+
+	/**
+	 * What this application knows about the identifiers a model passes to a tool.
+	 *
+	 * @see ObjectIdSettings
+	 */
+	public ObjectIdConfig getObjectIdConfig() {
+		return getConfig().getObjectIds();
+	}
+
+	/**
+	 * What builds the {@link com.top_logic.tl.ai.core.agent.SecurityContext} of an agent run.
+	 *
+	 * <p>
+	 * Asked by every entry point that starts one, through
+	 * {@link com.top_logic.tl.ai.core.security.RunSecurity#contextFor}.
+	 * </p>
+	 *
+	 * @return The configured factory, never <code>null</code>.
+	 */
+	public SecurityContextFactory getSecurityContextFactory() {
+		return _securityContextFactory;
+	}
+
+	/**
+	 * What this installation adds to the system prompt of every agent run.
+	 *
+	 * @return The configured contributors in configuration order; empty when none are configured.
+	 * @see SystemPromptContributor
+	 */
+	public List<SystemPromptContributor> getPromptContributors() {
+		return _promptContributors;
+	}
+
+	/**
+	 * What the installation adds to every system prompt, also answered when this service is down.
+	 *
+	 * <p>
+	 * Empty for a minimal setup that boots no services, which is the same prompt such a setup built
+	 * before the seam existed.
+	 * </p>
+	 */
+	public static List<SystemPromptContributor> promptContributors() {
+		if (!Module.INSTANCE.isActive()) {
+			return List.of();
+		}
+		return getInstance().getPromptContributors();
+	}
+
 	@Override
 	protected void startUp() {
 		super.startUp();
 		_instance = this;
 		ModelDiscoveryHelper.clearCache();
+
+		// Resolved once: a run must not pay for instantiating it, and an application that configured a
+		// broken one must learn about it when the service starts rather than at the first tool call.
+		SecurityContextFactory securityContextFactory = _context.getInstance(getConfig().getSecurityContext());
+		_securityContextFactory = securityContextFactory == null
+			? DefaultSecurityContextFactory.INSTANCE : securityContextFactory;
+
+		List<SystemPromptContributor> contributors = new ArrayList<>();
+		for (PolymorphicConfiguration<? extends SystemPromptContributor> contributor
+				: getConfig().getPromptContributors()) {
+			SystemPromptContributor instance = _context.getInstance(contributor);
+			if (instance != null) {
+				contributors.add(instance);
+			}
+		}
+		_promptContributors = List.copyOf(contributors);
 
 		Map<String, LLMProviderConfig> providerConfigs = new LinkedHashMap<>();
 		Map<String, List<String>> modelProviders = new LinkedHashMap<>();
@@ -739,6 +1060,10 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		_modelProviders = Map.copyOf(index);
 
 		refuseUnroutableReferences();
+
+		// Built here rather than in the constructor so that a restart of this service - the blunt
+		// way to clear every mark - also picks up changed lifetimes.
+		_health = new ModelAvailability(getConfig().getFailover(), Clock.systemUTC());
 
 		// --- Catalog phase ---
 		ModelCatalogConfig catalogConfig = getConfig().getModelCatalog();
@@ -806,8 +1131,8 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	 * </p>
 	 */
 	private void refuseUnroutableReferences() {
-		List<String> refusals =
-			refusals(getConfig().getAgentExecution(), _modelProviders, _providerConfigs.keySet());
+		List<String> refusals = refusals(getConfig().getAgentExecution(), getConfig().getFailover(),
+			_modelProviders, _providerConfigs.keySet());
 		if (refusals.isEmpty()) {
 			return;
 		}
@@ -838,6 +1163,9 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	 *
 	 * @param execution
 	 *        The agent execution section to inspect.
+	 * @param failover
+	 *        The failover section, whose fallbacks are model references too; may be
+	 *        <code>null</code>.
 	 * @param modelProviders
 	 *        Model name to the names of the providers exposing it.
 	 * @param providerNames
@@ -845,8 +1173,8 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	 * @return One sentence per problem, in configuration order; empty for a routable
 	 *         configuration.
 	 */
-	static List<String> refusals(AgentExecutionConfig execution, Map<String, List<String>> modelProviders,
-			Set<String> providerNames) {
+	static List<String> refusals(AgentExecutionConfig execution, FailoverConfig failover,
+			Map<String, List<String>> modelProviders, Set<String> providerNames) {
 		List<String> result = new ArrayList<>();
 		String defaultModel = execution.getDefaultModel();
 		String defaultProvider = execution.getDefaultProvider();
@@ -856,6 +1184,18 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		for (Map.Entry<String, AgentOverride> entry : execution.getAgentOverrides().entrySet()) {
 			addRefusal(result, "Agent '" + entry.getKey() + "'",
 				modelRefOf(entry.getValue(), defaultModel, defaultProvider), modelProviders, providerNames);
+		}
+		// A fallback is a model reference like any other, and one that cannot be routed is worse
+		// than a missing fallback: it is only ever reached on the day the primary model is already
+		// down, which is the worst moment to find out.
+		if (failover != null) {
+			for (Map.Entry<String, FailoverConfig.Chain> entry : failover.getChains().entrySet()) {
+				for (FailoverConfig.Target fallback : entry.getValue().getFallbacks()) {
+					addRefusal(result, "The fallback for model '" + entry.getKey() + "'",
+						new ModelRef(fallback.getModel(), blankToNull(fallback.getProvider())),
+						modelProviders, providerNames);
+				}
+			}
 		}
 		return result;
 	}

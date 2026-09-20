@@ -21,8 +21,10 @@ import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
+import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.ExecutionRecorder;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
+import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
@@ -193,14 +195,25 @@ public class DelegationTool implements Tool {
 
 			ToolContext childContext = toolContext.forDelegation(
 				new TransactionScope(toolContext.cancellationToken()));
+			// The child loop is pre-built, so it never passes AgentFactory: name its agent here, so
+			// the child's tools can read which agent they serve (its parent is already on the
+			// handle - see ToolContext#forDelegation).
+			childContext.executionHandle().setAgentName(_targetAgentName);
 
 			// When the parent run is recorded, record the child as its own execution with
-			// parentExecution set, so the parent+children token total stays a KB query.
+			// parentExecution set, so the parent+children token total stays a KB query. The
+			// parent's session is resolved through the store, which reads the row on its writer
+			// thread: this code runs inside a tool call, whose view of the database predates the
+			// parent's execution row, so `parentExecution.getSession()` here would throw "created
+			// after access revision N" and take the whole delegation down with it (Gitea #405).
 			ExecutionRecorder recorder = null;
 			AgentEventListener effectiveChildListener = childListener;
 			AgentExecution parentExecution = toolContext.executionHandle().get();
-			if (parentExecution != null) {
-				recorder = new ExecutionRecorder(parentExecution.getSession(), _targetAgentName,
+			AgentSession parentSession =
+				parentExecution == null || !AgentExecutionStore.Module.INSTANCE.isActive() ? null
+					: AgentExecutionStore.getInstance().sessionOf(parentExecution);
+			if (parentSession != null) {
+				recorder = new ExecutionRecorder(parentSession, _targetAgentName,
 					parentExecution, childContext.executionHandle(), childListener);
 				effectiveChildListener = recorder;
 			}

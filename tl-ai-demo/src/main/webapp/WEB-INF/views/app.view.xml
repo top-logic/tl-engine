@@ -21,20 +21,39 @@
 		<!--
 			The dock's wiring, declared here because the dock lives in the shell's footer.
 
-			Its conversation is "chat" - the SAME one the Chat page shows. It has to be: every
-			/chat/* call is keyed by the window alone, so the server holds one active session and
-			one run per window, and two chat ids that each show a transcript would take each
-			other's turns. The dock is therefore a second PLACE for the one conversation, not a
-			second conversation, and it hides itself (launcher included) while the Chat page has
-			that conversation on screen.
+			Its conversation is "chat" - the SAME one the Chat page shows. The dock is a second
+			PLACE for that conversation, not a second conversation, and it hides itself (launcher
+			included) while the Chat page has it on screen: two views of one conversation would give
+			its draft channel two composers and its remembered layout two rails. A dock on a chat
+			id of its own would be a second conversation and would work - since #502 every /chat/*
+			call names its conversation beside its window, and the server holds an active session,
+			a run and a stream for each.
 
 			The channels are the dock's own, because the page declares its own in
 			tl-ai-demo/chat-grouped.view.xml and the two are never on screen together.
 		-->
 		<channel name="dockSession"/>
 		<channel name="dockPaneObject"/>
+		<!--
+			What the page BEHIND the dock has selected (Issue #494). Declared in the shell, because
+			the dock floats over every page and the pages are <view-ref>s with channel namespaces of
+			their own: each page hands its own selection channel over with one <bind> below, and the
+			dock states whatever stands here as the turn's "Selected invoice".
+
+			Nothing writes it but the page that is on screen, and a page that binds nothing simply
+			leaves it holding what it held - which is why a page that has a selection to state binds
+			it, and the Chat page, where the dock stands down entirely, does not.
+		-->
+		<channel name="pageSelection"/>
 		<channel name="dockProgressBadge"/>
 		<channel name="dockSourcesBadge"/>
+		<!--
+			The chat composer's unsent text, declared at the top so that two *different* pages can
+			reach it (Issue #440). Every <view-ref> gets its own channel namespace, so a page sees a
+			channel of the enclosing view only where a <bind> hands it over - which is what the two
+			nav items below do. See "Writing a channel across a view boundary" in tl-chat/CLAUDE.md.
+		-->
+		<channel name="chatDraft"/>
 	</channels>
 
 	<app-shell>
@@ -141,7 +160,16 @@
 						<en>Chat</en>
 						<de>Chat</de>
 					</label>
-					<view-ref view="tl-ai-demo/chat-grouped.view.xml"/>
+					<!--
+						The chat page declares a "chatDraft" of its own, so it also works standalone;
+						this binding hands it *this* view's channel instead, which is the one the
+						Belege page below writes.
+					-->
+					<view-ref view="tl-ai-demo/chat-grouped.view.xml">
+						<bind channel="chatDraft"
+							to="chatDraft"
+						/>
+					</view-ref>
 				</nav-item>
 
 				<nav-item id="invoices"
@@ -151,7 +179,39 @@
 						<en>Invoices</en>
 						<de>Belege</de>
 					</label>
-					<view-ref view="tl-ai-demo/invoices.view.xml"/>
+					<!--
+						The other end of the same channel: the "Dazu fragen" toolbar command on this
+						page writes the chat's draft, although the chat is a different view.
+					-->
+					<view-ref view="tl-ai-demo/invoices.view.xml">
+						<bind channel="chatDraft"
+							to="chatDraft"
+						/>
+						<!--
+							And the other direction of the same mechanism: the page's own selection
+							channel IS the shell's "pageSelection", so the dock's conversation can
+							state the invoice this page has open without knowing the page exists
+							(Issue #494).
+						-->
+						<bind channel="selectedInvoice"
+							to="pageSelection"
+						/>
+					</view-ref>
+				</nav-item>
+
+				<!--
+					What this account tells every agent about itself (Issue #437): one free-text
+					field on tl.accounts:Person, which the harness renders into the environment block
+					of every run this user triggers.
+				-->
+				<nav-item id="profile"
+					icon="css:bi bi-person-gear"
+				>
+					<label>
+						<en>My settings</en>
+						<de>Meine Einstellungen</de>
+					</label>
+					<view-ref view="tl-ai-demo/profile.view.xml"/>
 				</nav-item>
 
 				<!--
@@ -182,13 +242,13 @@
 
 			The dock CONTAINS the <chat>, so - unlike every other chat element - it cannot inherit
 			the id: a chat scope reaches descendants only. The id is therefore written twice, here
-			and on the <chat> inside, and the two must agree. ChatJoinLog warns about a window whose
-			chat ids do not line up, which is the shape a typo here produces.
+			and on the <chat> inside, and the two must agree. ChatJoinLog warns about an element that
+			joined nobody, which is the shape a typo here produces.
 
 			And the id is "chat", the Chat page's own: this is the SAME conversation, reachable from
 			Belege and from Administration without leaving the page. On the Chat page itself there
-			is nothing for the dock to open, so it hides - which is also what keeps the window to
-			the one conversation its transport can carry.
+			is nothing for the dock to open, so it hides - and showing it there would put two
+			composers on one draft channel and two rails on one remembered layout.
 		-->
 		<footer>
 			<chat-dock chat-id="chat"
@@ -245,12 +305,67 @@
 						</title>
 					</data-list>
 					<panel fill="true">
+						<!--
+							"draft" is the shell's own channel, named with no <bind> at all - this
+							element sits in app.view.xml, and <app-shell> does not isolate channels.
+							That is the dock half of issue #440: "Dazu fragen" on the Belege page
+							behind it writes the draft, and the question is standing here when the
+							user opens the dock. The Chat page's conversation follows the same
+							channel, and the two are never mounted at once (a dock steps aside for a
+							page showing its conversation), so the draft simply follows the user
+							from the one place to the other.
+						-->
 						<chat-conversation
 							citations="true"
+							draft="chatDraft"
 							input="dockSession"
 							prompt-improver-agent="TL_PromptImprover"
 							trace="summary"
-						/>
+						>
+							<!--
+								What the dock states about the situation (Issue #494). It is the SAME
+								conversation the Chat page shows, so "Application" is stated here too
+								and with the same words: a stable fact goes into the environment block
+								of the system prompt, and a block that gained or lost a line between
+								two turns of one chat would miss the provider's prompt cache on every
+								turn after it.
+
+								"Open invoice" is this dock's own rail pane, the way it is the page's
+								rail pane over there.
+							-->
+							<context>
+								<inputs>
+									<input channel="dockPaneObject"/>
+								</inputs>
+								<fact name="Application"
+									stable="true"
+								>
+									<value><![CDATA[open -> "Invoice management demo (tl-ai-demo)"]]></value>
+								</fact>
+								<fact name="Open invoice"
+									stable="false"
+								>
+									<value><![CDATA[open -> ifElse(isEmpty($open), "none",
+										$open.get(`tl.ai.demo.imageclassification:Invoice#description`))]]></value>
+								</fact>
+							</context>
+							<!--
+								And what the user is actually looking at: the selection of the page the
+								dock is floating over, handed to the shell by that page's <view-ref>.
+								One line, and the agent is told the label, the type and the identifier
+								it needs to act on the object.
+
+								Named "Selected invoice" rather than "Selected object", because that is
+								what it truthfully is on every page of this demo: the shell has no
+								channel saying which nav item is active, so this states what the Belege
+								page has selected, and keeps saying so while the user reads their
+								settings. Naming the page's list is honest where naming "the selection"
+								would not be.
+							-->
+							<selection name="Selected invoice"
+								channel="pageSelection"
+							/>
+						</chat-conversation>
 					</panel>
 					<!--
 						The rail, with its pane - which is what "the pane is visible as well if

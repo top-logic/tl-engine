@@ -113,6 +113,19 @@
         </dependency>
 
 		<!-- Tests -->
+		<!--
+			The junit gates of tl-ai-core - AssumptionAwareRunner and the switches beside it - so that
+			a test here which needs something the build may not have (an embedding key) reports as
+			skipped rather than failing in its setup. Test scope, and surefire's dependenciesToScan
+			names tl-basic only, so nothing of tl-ai-core's own test suite runs here.
+		-->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-ai-core</artifactId>
+			<version>2.0.4-SNAPSHOT</version>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-basic</artifactId>
@@ -129,6 +142,22 @@
 
 	<build>
 		<plugins>
+			<!--
+				This module's parent is tl-parent-app, not tl-ai-parent, so it does not inherit the
+				aggregator's surefire includes and repeats them here. Keep the two in step - see the
+				comment in the aggregator pom for what the regex is for, and TestSuiteReachability
+				for what asserts that it still reaches every test.
+			-->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<includes>
+						<include>test/TestAll.java</include>
+						<include>%regex[com/top_logic/(ai|tl/ai)/(.*/)?(Test[A-Z0-9][^/$]*|[^/$]*Test)\.class]</include>
+					</includes>
+				</configuration>
+			</plugin>
 			<plugin>
 				<groupId>de.haumacher.msgbuf</groupId>
 				<artifactId>msgbuf-generator-maven-plugin</artifactId>

@@ -8,6 +8,7 @@ package com.top_logic.tl.ai.core.agent;
 import java.util.List;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.tl.ai.core.agent.environment.AgentFact;
 
 /**
  * Source-agnostic representation of an agent definition.
@@ -16,6 +17,15 @@ import com.top_logic.basic.util.ResKey;
  * Produced by {@link AgentDefinitionQuery} from either service configuration or KB. All
  * downstream consumers ({@link AgentFactory}, chat UI) operate on this record — never on raw KB
  * objects or config items directly.
+ * </p>
+ *
+ * <p>
+ * <b>Infrastructure agents.</b> {@link #infrastructure()} marks an agent the product runs on a
+ * user's behalf - the chat's prompt improver rewrites a draft, it never answers as a persona. Such
+ * an agent is not a conversation partner anybody may pick: no menu offers it, and naming it is
+ * refused wherever a user's own run would be built, whatever {@code <agent-access>} grants. The
+ * exemption is the product's own call path, which says so by building its run with
+ * {@link com.top_logic.tl.ai.core.agent.SecurityContext#withoutAgentChoice()}.
  * </p>
  *
  * <p>
@@ -52,6 +62,10 @@ import com.top_logic.basic.util.ResKey;
  * @param skills                skill names (resolved via layered lookup)
  * @param delegations           agent names this agent can delegate to
  * @param source                where this definition originated
+ * @param facts                 what this agent tells every model about the situation it runs in,
+ *                              as TL-Script evaluated in the acting user's context at run start
+ * @param infrastructure        whether the application runs this agent <em>for</em> a user rather
+ *                              than letting them talk to it - see below
  */
 public record AgentDefinition(
 		String name,
@@ -63,7 +77,9 @@ public record AgentDefinition(
 		List<String> mcpServers,
 		List<String> skills,
 		List<String> delegations,
-		AgentSource source) {
+		AgentSource source,
+		List<AgentFact> facts,
+		boolean infrastructure) {
 
 	/** */
 	public AgentDefinition {
@@ -74,6 +90,27 @@ public record AgentDefinition(
 		mcpServers = mcpServers != null ? List.copyOf(mcpServers) : List.of();
 		skills = skills != null ? List.copyOf(skills) : List.of();
 		delegations = delegations != null ? List.copyOf(delegations) : List.of();
+		facts = facts != null ? List.copyOf(facts) : List.of();
+	}
+
+	/**
+	 * A definition that states no facts of its own and is an ordinary persona.
+	 */
+	public AgentDefinition(String name, ResKey displayName, String description, ResKey summary,
+			String systemPrompt, List<String> tools, List<String> mcpServers, List<String> skills,
+			List<String> delegations, AgentSource source) {
+		this(name, displayName, description, summary, systemPrompt, tools, mcpServers, skills,
+			delegations, source, List.of(), false);
+	}
+
+	/**
+	 * A definition that states no facts of its own - every source but the configuration.
+	 */
+	public AgentDefinition(String name, ResKey displayName, String description, ResKey summary,
+			String systemPrompt, List<String> tools, List<String> mcpServers, List<String> skills,
+			List<String> delegations, AgentSource source, boolean infrastructure) {
+		this(name, displayName, description, summary, systemPrompt, tools, mcpServers, skills,
+			delegations, source, List.of(), infrastructure);
 	}
 
 	/**
@@ -81,6 +118,6 @@ public record AgentDefinition(
 	 */
 	public AgentDefinition withMcpServers(List<String> newMcpServers) {
 		return new AgentDefinition(name, displayName, description, summary, systemPrompt, tools,
-			newMcpServers, skills, delegations, source);
+			newMcpServers, skills, delegations, source, facts, infrastructure);
 	}
 }

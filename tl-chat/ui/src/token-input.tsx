@@ -16,6 +16,8 @@ export interface TokenInputHandle {
   focus: () => void
   /** Inserts one atomic reference at the caret, or at the end when the editor is not focused. */
   insertReference: (token: ReferenceToken) => void
+  /** Replaces the whole draft, focuses the editor and puts the caret behind the new text. */
+  setDraft: (text: string) => void
   /** Replaces the text between `from` and the caret, e.g. the "@query" that opened a picker. */
   replaceBefore: (length: number, text: string) => void
   /** The word being typed directly before the caret, for the "@" picker. */
@@ -40,6 +42,7 @@ export const TokenInput = React.forwardRef(function TokenInput(
     onChange,
     onKeyDown,
     onPasteFiles,
+    onBlur,
     placeholder,
     ariaLabel,
     className,
@@ -50,6 +53,8 @@ export const TokenInput = React.forwardRef(function TokenInput(
     onKeyDown?: (event: React.KeyboardEvent<HTMLDivElement>) => void
     /** Files pasted into the editor; the text of a paste is always inserted as plain text. */
     onPasteFiles?: (files: File[]) => void
+    /** The editor lost the focus - the moment a host that follows the draft wants to hear about. */
+    onBlur?: () => void
     placeholder: string
     ariaLabel: string
     className?: string
@@ -132,6 +137,17 @@ export const TokenInput = React.forwardRef(function TokenInput(
         rememberCaret()
         emit()
       },
+      setDraft: (text: string) => {
+        const el = host.current
+        if (!el) return
+        // The DOM is the value here, as everywhere in this component: writing it and emitting is
+        // what makes the composer's own state follow, in the same tick as the caret moves.
+        writeDraft(el, text)
+        el.focus()
+        atEnd(el)
+        rememberCaret()
+        emit()
+      },
       replaceBefore: (length: number, text: string) => {
         const el = host.current
         if (!el) return
@@ -165,7 +181,7 @@ export const TokenInput = React.forwardRef(function TokenInput(
         return match ? match[2] : ''
       },
     }),
-    [emit],
+    [emit, rememberCaret],
   )
 
   const onKey = useCallback(
@@ -236,7 +252,10 @@ export const TokenInput = React.forwardRef(function TokenInput(
       }}
       onKeyUp={rememberCaret}
       onMouseUp={rememberCaret}
-      onBlur={rememberCaret}
+      onBlur={() => {
+        rememberCaret()
+        onBlur?.()
+      }}
       onKeyDown={(event) => {
         ensureCaret()
         onKey(event)

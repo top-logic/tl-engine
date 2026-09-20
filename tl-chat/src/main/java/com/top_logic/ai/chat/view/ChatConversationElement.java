@@ -13,9 +13,12 @@ import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
@@ -34,6 +37,7 @@ import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.CommaSeparatedChannelRefs;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.tl.ai.core.provider.LLMService.AllAgentNameOptions;
@@ -60,6 +64,22 @@ import com.top_logic.tl.ai.core.provider.LLMService.AllAgentNameOptions;
  * a name is what every request, and the security policy behind it, is written in: only an agent
  * authored in the knowledge base is a model object at all, while the shipped agents, the models and
  * the MCP servers are configuration. See {@link ChatTurnChannels}.
+ * </p>
+ *
+ * <p>
+ * {@code present} is the other direction and the only one the <em>agent</em> drives: the channels
+ * named there are the ones a run may write with the {@code present} tool, and nothing else on the
+ * page is reachable from a run. <b>Deny by default</b> - an element that names none lets no agent
+ * write any channel. See {@link Config#getPresent()} and
+ * {@link com.top_logic.ai.chat.tools.PresentTool}.
+ * </p>
+ *
+ * <p>
+ * Two more carry the composer's unsent text: {@code draft} is the text itself, two-way, and
+ * {@code reference} turns a written model object into one atomic reference token inside it. Together
+ * they are what lets a button anywhere on the page put a question into the chat without a line of
+ * code - an {@code <execute-script>} that builds the sentence and a {@code <write-channel>} that
+ * writes it.
  * </p>
  */
 public class ChatConversationElement implements UIElement {
@@ -149,6 +169,27 @@ public class ChatConversationElement implements UIElement {
 		String MCP_SERVERS = "mcp-servers";
 
 		/**
+		 * Configuration property name for {@link #getPresent()}.
+		 *
+		 * @see #getPresent()
+		 */
+		String PRESENT = "present";
+
+		/**
+		 * Configuration property name for {@link #getDraft()}.
+		 *
+		 * @see #getDraft()
+		 */
+		String DRAFT = "draft";
+
+		/**
+		 * Configuration property name for {@link #getReference()}.
+		 *
+		 * @see #getReference()
+		 */
+		String REFERENCE = "reference";
+
+		/**
 		 * Configuration property name for {@link #getTrace()}.
 		 *
 		 * @see #getTrace()
@@ -210,6 +251,20 @@ public class ChatConversationElement implements UIElement {
 		 * @see #getMention()
 		 */
 		String MENTION = "mention";
+
+		/**
+		 * Configuration property name for {@link #getContext()}.
+		 *
+		 * @see #getContext()
+		 */
+		String CONTEXT = "context";
+
+		/**
+		 * Configuration property name for {@link #getSelection()}.
+		 *
+		 * @see #getSelection()
+		 */
+		String SELECTION = "selection";
 
 		/**
 		 * Configuration property name for {@link #getMenuItems()}.
@@ -332,6 +387,80 @@ public class ChatConversationElement implements UIElement {
 		ChannelRef getMcpServers();
 
 		/**
+		 * The channels this page lets the agent write, comma-separated - the allow list of the
+		 * {@code present} tool.
+		 *
+		 * <p>
+		 * <b>Deny by default.</b> Empty means the agent may write no channel of this page at all,
+		 * and a {@code present} call naming any other channel is refused with a message saying
+		 * which names exist. Naming a channel here is a decision about how much of the page the
+		 * agent may drive, so it is stated on the element rather than derived from what happens to
+		 * be wired somewhere on the view.
+		 * </p>
+		 *
+		 * <p>
+		 * The agent writes the objects, not the rendering: what the value looks like is whatever
+		 * element reads that channel - a {@code <chat-rail>}'s pane, a {@code <form>}, a
+		 * {@code <data-list>}. Usually one channel, the one the pane reads:
+		 * {@code present="paneObject"}.
+		 * </p>
+		 *
+		 * <p>
+		 * A run without a browser window - headless, TL-Script, the scheduler - has no channels at
+		 * all whatever this says; the tool reports that and does nothing.
+		 * </p>
+		 */
+		@Name(PRESENT)
+		@Label("Present")
+		@Format(CommaSeparatedChannelRefs.class)
+		@Nullable
+		List<ChannelRef> getPresent();
+
+		/**
+		 * Optional two-way channel holding the text standing in the composer, unsent.
+		 *
+		 * <p>
+		 * The composer reports what the user has typed - when they pause, when the field loses the
+		 * focus, and just before a send - and follows a write from outside: the written text replaces
+		 * the draft, the composer takes the focus and the caret goes to the end. The user still
+		 * presses send, so a host that writes a question can be read before it goes.
+		 * </p>
+		 *
+		 * <p>
+		 * An empty write clears the draft; {@code null} says nothing and leaves the composer alone,
+		 * which is what an unwritten channel holds.
+		 * </p>
+		 */
+		@Name(DRAFT)
+		@Label("Draft")
+		@Format(ChannelRefFormat.class)
+		@Nullable
+		ChannelRef getDraft();
+
+		/**
+		 * Optional input channel: a model object written to it becomes one atomic reference token in
+		 * the draft, exactly as picking it from the {@code @} menu would.
+		 *
+		 * <p>
+		 * The token carries the object's label and its stable id, and the quoted text a nested
+		 * {@code <mention>}'s {@code text} expression computes - without a {@code <mention>} the label
+		 * is the quoted text as well, because the element has nothing else to say about the object.
+		 * The token lands at the caret, so a host can write a sentence to {@link #getDraft() draft}
+		 * and a reference into it.
+		 * </p>
+		 *
+		 * <p>
+		 * This channel is read, never written: the composer does not report its tokens back, because
+		 * the draft they sit in is what {@link #getDraft() draft} already carries.
+		 * </p>
+		 */
+		@Name(REFERENCE)
+		@Label("Reference")
+		@Format(ChannelRefFormat.class)
+		@Nullable
+		ChannelRef getReference();
+
+		/**
 		 * How much of the agent's execution the transcript shows: nothing, a collapsed summary, or
 		 * the full inline trace. The user can still change it live with the composer's trace picker.
 		 */
@@ -379,7 +508,19 @@ public class ChatConversationElement implements UIElement {
 		String getPromptImproverAgent();
 
 		/**
-		 * Optional placeholder for the draft field. Empty keeps the built-in wording.
+		 * The invitation standing in the empty prompt field, in this application's own words.
+		 *
+		 * <p>
+		 * Written here as a text per language, or as the key of one. Empty keeps the chat's own
+		 * wording, which is what every application got before this option existed.
+		 * </p>
+		 *
+		 * <p>
+		 * It is the <em>idle</em> invitation only. While the agent is working the field keeps saying
+		 * "type your next message", because that sentence is about the run rather than about this
+		 * application, and an application that replaced it would be telling the user to start
+		 * something that is already under way.
+		 * </p>
 		 */
 		@Name(PLACEHOLDER)
 		@Label("Placeholder")
@@ -417,6 +558,55 @@ public class ChatConversationElement implements UIElement {
 		@Label("Mention")
 		@Nullable
 		Mention getMention();
+
+		/**
+		 * What this page tells the agent about the situation the user is asking in.
+		 *
+		 * <p>
+		 * The facts are computed from this page's channels and travel with every message the user
+		 * sends, where the harness renders the stable ones into the environment block of the system
+		 * prompt. The user's own message text is never touched - what the transcript shows is what the
+		 * user wrote.
+		 * </p>
+		 */
+		@Name(CONTEXT)
+		@Label("Context")
+		@Nullable
+		Context getContext();
+
+		/**
+		 * The object the user has selected, stated to the agent in one line.
+		 *
+		 * <p>
+		 * The question this answers is the one every user asks first - "what about the one I have
+		 * open?" - and the shorthand for the {@code <fact>} nobody writes, because writing it means
+		 * knowing how this product spells an object identifier. Name the page's selection channel
+		 * and the conversation states the selected object, with its type and that identifier, as a
+		 * per-turn fact of the {@code <turn-context>} block:
+		 * </p>
+		 *
+		 * <pre>
+		 * &lt;chat-conversation input="chatSession"&gt;
+		 *   &lt;selection channel="selectedInvoice"/&gt;
+		 * &lt;/chat-conversation&gt;
+		 * </pre>
+		 *
+		 * <p>
+		 * Never stable: what the user has selected is the thing that changes most often in a
+		 * conversation, so it travels in the turn and never in the system prompt.
+		 * </p>
+		 *
+		 * <p>
+		 * A {@code <chat-dock/>} states it the same way, on the {@code <chat-conversation/>} nested
+		 * inside it - and should, because the dock is where a user asks about the page behind it.
+		 * The dock's own channel has to be handed the page's selection for that; on a shell whose
+		 * pages are {@code <view-ref>}s, that is a {@code <bind>} per page.
+		 * </p>
+		 */
+		@Name(SELECTION)
+		@Label("Selection")
+		@Nullable
+		Selection getSelection();
 
 		/**
 		 * Registered composer-menu-item names.
@@ -653,6 +843,214 @@ public class ChatConversationElement implements UIElement {
 		@Label("Trace picker")
 		@BooleanDefault(true)
 		boolean getTracePicker();
+	}
+
+	/**
+	 * What a page tells the agent about the situation the user is asking in.
+	 *
+	 * <p>
+	 * Bound with TL-Script the way {@code <data-list>} binds its rows: the {@link #getInputs() inputs}
+	 * are channels of this page whose current values become the leading arguments of every fact's
+	 * {@link Fact#getValue() value} expression. The expressions are evaluated on the server, in the
+	 * acting user's context, and re-evaluated whenever an input changes - so what travels with a
+	 * message is what the page was showing when it was sent.
+	 * </p>
+	 *
+	 * <p>
+	 * Facts that the application states once and that hold for the whole conversation are
+	 * {@link Fact#getStable() stable} and are rendered into the system prompt. A fact that changes
+	 * while the conversation runs must not be: the environment block sits in front of every request
+	 * of that conversation and has to stay byte-identical, or the provider's prompt cache misses on
+	 * every turn. Such a fact is rendered into the per-turn {@code <turn-context>} block instead,
+	 * which travels in the turn itself, beside the user's text.
+	 * </p>
+	 */
+	@TagName("context")
+	public interface Context extends ConfigurationItem {
+
+		/**
+		 * Configuration property name for {@link #getInputs()}.
+		 *
+		 * @see #getInputs()
+		 */
+		String INPUTS = "inputs";
+
+		/**
+		 * Configuration property name for {@link #getFacts()}.
+		 *
+		 * @see #getFacts()
+		 */
+		String FACTS = "facts";
+
+		/**
+		 * References to channels whose values become the leading positional arguments of every fact
+		 * expression, in the order they are listed.
+		 */
+		@Name(INPUTS)
+		@ListBinding(format = ChannelRefFormat.class, tag = "input", attribute = "channel")
+		List<ChannelRef> getInputs();
+
+		/**
+		 * The facts themselves, in the order they reach the model.
+		 *
+		 * <p>
+		 * The default container, so a fact is written as a direct child of the context rather than
+		 * inside a wrapper element of its own.
+		 * </p>
+		 */
+		@Name(FACTS)
+		@DefaultContainer
+		@EntryTag("fact")
+		List<Fact> getFacts();
+	}
+
+	/**
+	 * One fact a page states about the situation.
+	 *
+	 * @see Context
+	 */
+	@TagName("fact")
+	public interface Fact extends ConfigurationItem {
+
+		/**
+		 * Configuration property name for {@link #getName()}.
+		 *
+		 * @see #getName()
+		 */
+		String NAME = "name";
+
+		/**
+		 * Configuration property name for {@link #getValue()}.
+		 *
+		 * @see #getValue()
+		 */
+		String VALUE = "value";
+
+		/**
+		 * Configuration property name for {@link #getStable()}.
+		 *
+		 * @see #getStable()
+		 */
+		String STABLE = "stable";
+
+		/**
+		 * What the fact is called in front of the model, e.g. {@code Project}.
+		 */
+		@Name(NAME)
+		@Label("Name")
+		@Mandatory
+		String getName();
+
+		/**
+		 * TL-Script computing the value, taking the enclosing {@link Context#getInputs() inputs} as its
+		 * leading arguments.
+		 */
+		@Name(VALUE)
+		@Label("Value")
+		@Mandatory
+		@NonNullable
+		Expr getValue();
+
+		/**
+		 * Whether the value holds for the whole conversation.
+		 *
+		 * <p>
+		 * Only a stable fact reaches the system prompt. Leave it on for something the page decides
+		 * once - the project a chat belongs to - and switch it off for something that follows the
+		 * user's clicks.
+		 * </p>
+		 */
+		@Name(STABLE)
+		@Label("Stable")
+		@BooleanDefault(true)
+		boolean getStable();
+	}
+
+	/**
+	 * The page's current selection, stated to the agent as one per-turn fact.
+	 *
+	 * <p>
+	 * The one-line form of what {@link Fact} can express the long way round. The value it produces
+	 * names the selected object three times over - the label the user sees, the qualified type name
+	 * and the identifier every tool reads back - so the agent can both answer "which one do I have
+	 * open?" and act on it. See {@link ChatSelection} for the exact form.
+	 * </p>
+	 *
+	 * <p>
+	 * It is a fact of the {@code <turn-context>} block and never of the system prompt: a selection is
+	 * the value that changes most often in a conversation, and the environment block has to stay
+	 * byte-identical across its turns or every provider's prompt cache misses.
+	 * </p>
+	 *
+	 * @see Config#getSelection()
+	 */
+	@TagName("selection")
+	public interface Selection extends ConfigurationItem {
+
+		/**
+		 * Configuration property name for {@link #getChannel()}.
+		 *
+		 * @see #getChannel()
+		 */
+		String CHANNEL = "channel";
+
+		/**
+		 * Configuration property name for {@link #getName()}.
+		 *
+		 * @see #getName()
+		 */
+		String NAME = "name";
+
+		/**
+		 * Configuration property name for {@link #getLabel()}.
+		 *
+		 * @see #getLabel()
+		 */
+		String LABEL = "label";
+
+		/**
+		 * The channel holding what the user has selected - one object, several, or nothing.
+		 *
+		 * <p>
+		 * Normally the {@code selection} channel of the table or list the user picks in. A channel
+		 * of <em>this</em> view: a page of a shell hands its selection to a dock in the shell's
+		 * footer with a {@code <bind>} on the {@code <view-ref>}, the way it hands over the draft.
+		 * </p>
+		 */
+		@Name(CHANNEL)
+		@Label("Channel")
+		@Mandatory
+		@Format(ChannelRefFormat.class)
+		ChannelRef getChannel();
+
+		/**
+		 * What the fact is called in front of the model.
+		 *
+		 * <p>
+		 * Read by the model, so it is English and not a resource, like every other text a tool puts
+		 * in front of one. Name what the page holds - {@code "Open invoice"}, {@code "Selected
+		 * task"} - where that says more than the default does.
+		 * </p>
+		 */
+		@Name(NAME)
+		@Label("Name")
+		@StringDefault(ChatSelection.DEFAULT_NAME)
+		@NonNullable
+		String getName();
+
+		/**
+		 * TL-Script computing what to call one selected object, taking that object as its argument.
+		 *
+		 * <p>
+		 * Left empty the application's own label is used - which is what the user sees on the
+		 * screen, and therefore the right answer to a question about it. Configure an expression
+		 * here when an object's label is not what makes it recognisable in a sentence.
+		 * </p>
+		 */
+		@Name(LABEL)
+		@Label("Label")
+		@Nullable
+		Expr getLabel();
 	}
 
 	/**

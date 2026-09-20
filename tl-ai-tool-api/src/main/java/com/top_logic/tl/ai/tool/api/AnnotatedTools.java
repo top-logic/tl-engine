@@ -21,6 +21,7 @@ import java.util.Set;
 import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonWriter;
 
+import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.tool.api.json.JsonTree;
 
 /**
@@ -29,13 +30,30 @@ import com.top_logic.tl.ai.tool.api.json.JsonTree;
  * <p>Scans the full class hierarchy (declared methods of the class and all superclasses),
  * so annotated methods in base classes are discovered.</p>
  *
- * <p>Parameters of type {@link ToolContext} are automatically injected during execution
+ * <p>Parameters of type {@link ToolExecutionContext} are automatically injected during execution
  * and excluded from the JSON Schema sent to the LLM.</p>
+ *
+ * <p>
+ * A parameter of a model type ({@link TLObject} or a subtype) is declared to the model as the
+ * {@code "TypeName:id"} string a tool result reports, and resolved back to the object before the
+ * method is invoked - through {@link ToolExecutionContext#resolveObject(String)}, which runs the
+ * read check of the run's principal. A Java tool therefore resolves an identifier exactly as a
+ * configured script tool does, and cannot forget the check (Gitea #381). An identifier that names
+ * nothing, or names something the principal may not read, fails as a
+ * {@link ToolArgumentCoercionException}: the method never ran, so the turn is not rolled back.
+ * </p>
  *
  * @see ToolMethod
  * @see P
  */
 public final class AnnotatedTools {
+
+	/**
+	 * What a parameter of a model type is told to the model, appended to whatever the tool's author
+	 * wrote about it.
+	 */
+	private static final String OBJECT_ID_HINT =
+		"The object's identifier, in the form \"TypeName:id\" a tool result reports it in.";
 
 	/**
 	 * Scan the given object for {@link ToolMethod}-annotated methods.
@@ -76,7 +94,7 @@ public final class AnnotatedTools {
 		ToolSchema schema = generateSchema(toolName, description, method);
 
 		return new ReflectiveTool(toolName, description, schema, mode, concurrencySafe,
-			truncationHint, annotation.group(), provider, method);
+			truncationHint, annotation.group(), annotation.marking(), provider, method);
 	}
 
 	private static ToolSchema generateSchema(String toolName, String description, Method method) {
@@ -139,10 +157,35 @@ public final class AnnotatedTools {
 	private static void writeParamSchema(JsonWriter json, Class<?> type, Type genericType, P p) throws IOException {
 		json.beginObject();
 		writeTypeSchema(json, type, genericType);
-		if (p != null && !p.value().isEmpty()) {
-			json.name("description").value(p.value());
+		String description = paramDescription(type, genericType, p);
+		if (!description.isEmpty()) {
+			json.name("description").value(description);
 		}
 		json.endObject();
+	}
+
+	/**
+	 * The description of one parameter: what its author wrote, plus - for a parameter that carries an
+	 * object - what the string is supposed to be. A model told only "the invoice" sends a label.
+	 */
+	private static String paramDescription(Class<?> type, Type genericType, P p) {
+		String authored = p == null ? "" : p.value();
+		if (!carriesObjectId(type, genericType)) {
+			return authored;
+		}
+		return authored.isEmpty() ? OBJECT_ID_HINT : authored + " " + OBJECT_ID_HINT;
+	}
+
+	/** Whether the parameter is a model object, or a list of them. */
+	private static boolean carriesObjectId(Class<?> type, Type genericType) {
+		if (TLObject.class.isAssignableFrom(type)) {
+			return true;
+		}
+		if (List.class.isAssignableFrom(type)) {
+			Class<?> elementType = resolveListElementType(genericType);
+			return elementType != null && TLObject.class.isAssignableFrom(elementType);
+		}
+		return false;
 	}
 
 	/**
@@ -180,6 +223,10 @@ public final class AnnotatedTools {
 				json.name("type").value("string");
 			}
 			json.endObject();
+		} else if (TLObject.class.isAssignableFrom(type)) {
+			// An object travels as its identifier: the model reads one in a tool result and names it
+			// again here. The framework resolves it back before the tool method is invoked.
+			json.name("type").value("string");
 		} else if (type.isRecord()) {
 			writeRecordSchema(json, type);
 		} else {
@@ -230,11 +277,16 @@ public final class AnnotatedTools {
 	/**
 	 * Coerce a JSON-parsed value to the target Java parameter type.
 	 *
+	 * @param context
+	 *        The call being served, which resolves an identifier of a model-typed parameter into the
+	 *        object - under the read rights of the run's principal. May be {@code null} only where no
+	 *        parameter carries an object.
 	 * @throws ToolArgumentCoercionException with a clean, LLM-facing message on type mismatch.
 	 *         Always thrown before the tool method is invoked — safe to treat as synthetic
 	 *         (no side effects) by callers deciding whether to roll back a transaction.
 	 */
-	static Object coerceArg(Object value, Class<?> targetType, Type genericType, String paramName) {
+	static Object coerceArg(Object value, Class<?> targetType, Type genericType, String paramName,
+			ToolExecutionContext context) {
 		if (value == null) {
 			if (targetType.isPrimitive()) {
 				throw new ToolArgumentCoercionException(
@@ -244,7 +296,11 @@ public final class AnnotatedTools {
 		}
 
 		try {
-			return doCoerce(value, targetType, genericType);
+			return doCoerce(value, targetType, genericType, context);
+		} catch (ToolArgumentCoercionException e) {
+			// Already phrased for the model - a resolution that failed says why, and restating it as
+			// a type mismatch would replace the reason with a guess.
+			throw e;
 		} catch (IllegalArgumentException e) {
 			throw new ToolArgumentCoercionException(
 				"Parameter '" + paramName + "': expected " + targetType.getSimpleName()
@@ -253,7 +309,8 @@ public final class AnnotatedTools {
 		}
 	}
 
-	private static Object doCoerce(Object value, Class<?> targetType, Type genericType) {
+	private static Object doCoerce(Object value, Class<?> targetType, Type genericType,
+			ToolExecutionContext context) {
 		if (targetType == String.class) {
 			return value.toString();
 		}
@@ -299,12 +356,16 @@ public final class AnnotatedTools {
 			return enumValue;
 		}
 
+		if (TLObject.class.isAssignableFrom(targetType)) {
+			return resolveObject(value, targetType, context);
+		}
+
 		if (List.class.isAssignableFrom(targetType) && value instanceof List<?> list) {
-			return coerceList(list, genericType);
+			return coerceList(list, genericType, context);
 		}
 
 		if (targetType.isRecord() && value instanceof Map<?, ?> map) {
-			return coerceRecord(map, targetType);
+			return coerceRecord(map, targetType, context);
 		}
 
 		// LLMs sometimes stringify complex args as JSON text instead of emitting a real object.
@@ -312,14 +373,49 @@ public final class AnnotatedTools {
 			String trimmed = s.trim();
 			if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
 				Object parsed = parseJsonTree(s);
-				return doCoerce(parsed, targetType, genericType);
+				return doCoerce(parsed, targetType, genericType, context);
 			}
 		}
 
 		return value;
 	}
 
-	private static List<Object> coerceList(List<?> list, Type genericType) {
+	/**
+	 * Turns the identifier the model wrote into the object the parameter declares.
+	 *
+	 * <p>
+	 * The read check lives in {@link ToolExecutionContext#resolveObject(String)}, so this only
+	 * translates the two ways it can say no into the exception that tells the caller the tool never
+	 * ran: an object of the wrong type is as unusable to the method as one that does not exist.
+	 * </p>
+	 */
+	private static Object resolveObject(Object value, Class<?> targetType, ToolExecutionContext context) {
+		if (targetType.isInstance(value)) {
+			// Already the object: a caller that holds one - TL-Script's aiCallTool, a test - passes it
+			// rather than writing its identifier out for this method to read back. Nothing to check
+			// either: whoever produced the object read it with their own rights.
+			return value;
+		}
+		if (context == null) {
+			throw new IllegalStateException("A tool parameter of type " + targetType.getSimpleName()
+				+ " is resolved under the read rights of the run's principal, and this call names no"
+				+ " context to ask. Execute the tool with the context of an agent run.");
+		}
+		String id = String.valueOf(value);
+		Object resolved;
+		try {
+			resolved = context.resolveObject(id);
+		} catch (IllegalArgumentException e) {
+			throw new ToolArgumentCoercionException(e.getMessage(), e);
+		}
+		if (!targetType.isInstance(resolved)) {
+			throw new ToolArgumentCoercionException("'" + id + "' is not a "
+				+ targetType.getSimpleName() + ".");
+		}
+		return resolved;
+	}
+
+	private static List<Object> coerceList(List<?> list, Type genericType, ToolExecutionContext context) {
 		Class<?> elementType = resolveListElementType(genericType);
 		Type elementGenericType = resolveListElementGenericType(genericType);
 		if (elementType == null || elementType == String.class) {
@@ -327,12 +423,12 @@ public final class AnnotatedTools {
 		}
 		List<Object> result = new ArrayList<>(list.size());
 		for (Object item : list) {
-			result.add(doCoerce(item, elementType, elementGenericType));
+			result.add(doCoerce(item, elementType, elementGenericType, context));
 		}
 		return result;
 	}
 
-	private static Object coerceRecord(Map<?, ?> map, Class<?> recordType) {
+	private static Object coerceRecord(Map<?, ?> map, Class<?> recordType, ToolExecutionContext context) {
 		RecordComponent[] components = recordType.getRecordComponents();
 		Object[] args = new Object[components.length];
 		for (int i = 0; i < components.length; i++) {
@@ -342,7 +438,7 @@ public final class AnnotatedTools {
 				// Field omitted by the LLM — use a sensible default instead of failing.
 				args[i] = primitiveDefault(rc.getType());
 			} else {
-				args[i] = coerceArg(raw, rc.getType(), rc.getGenericType(), rc.getName());
+				args[i] = coerceArg(raw, rc.getType(), rc.getGenericType(), rc.getName(), context);
 			}
 		}
 		try {
@@ -397,13 +493,15 @@ public final class AnnotatedTools {
 
 		private final String _group;
 
+		private final AnswerMarking _marking;
+
 		private final Object _provider;
 
 		private final Method _method;
 
 		ReflectiveTool(String name, String description, ToolSchema schema,
 				ToolMode mode, boolean concurrencySafe, int truncationHint, String group,
-				Object provider, Method method) {
+				AnswerMarking marking, Object provider, Method method) {
 			_name = name;
 			_description = description;
 			_schema = schema;
@@ -411,6 +509,7 @@ public final class AnnotatedTools {
 			_concurrencySafe = concurrencySafe;
 			_truncationHint = truncationHint;
 			_group = group;
+			_marking = marking;
 			_provider = provider;
 			_method = method;
 		}
@@ -457,13 +556,14 @@ public final class AnnotatedTools {
 					String paramName = params[i].getName();
 					Object rawValue = args.get(paramName);
 					invokeArgs[i] = coerceArg(rawValue, params[i].getType(),
-						params[i].getParameterizedType(), paramName);
+						params[i].getParameterizedType(), paramName, context);
 				}
 			}
 
 			try {
 				Object result = _method.invoke(_provider, invokeArgs);
 				if (_method.getReturnType() == void.class) {
+					// The framework's own word for "it worked", not an answer of the tool's.
 					return new ToolResult("Success", null, _truncationHint);
 				}
 				if (result == null) {
@@ -472,12 +572,13 @@ public final class AnnotatedTools {
 				if (result instanceof ToolResult toolResult) {
 					// A tool that returns the structured result speaks for itself: keep its summary
 					// and content, and only fill in the truncation hint it did not specify.
-					return toolResult.truncationHint() < 0
+					ToolResult hinted = toolResult.truncationHint() < 0
 						? new ToolResult(toolResult.text(), toolResult.summary(), _truncationHint,
 							toolResult.content())
 						: toolResult;
+					return marked(hinted);
 				}
-				return new ToolResult(result.toString(), null, _truncationHint);
+				return marked(new ToolResult(result.toString(), null, _truncationHint));
 			} catch (InvocationTargetException e) {
 				Throwable cause = e.getCause();
 				if (cause instanceof RuntimeException re) {
@@ -487,6 +588,51 @@ public final class AnnotatedTools {
 			} catch (IllegalAccessException e) {
 				throw new RuntimeException("Cannot invoke tool method: " + _method.getName(), e);
 			}
+		}
+
+		/**
+		 * The answer as the model is to read it: marked as untrusted content unless this tool says
+		 * somebody else does that, or does not need to.
+		 *
+		 * <p>
+		 * <b>The whole answer, not the successful half of it.</b> A reflective tool hands back a
+		 * string; nothing here can tell a disclosed record from the tool's own sentence about a call
+		 * that failed, and a rule that held only for some answers would be a rule the model cannot
+		 * use. A tool that must draw that line draws it itself, with {@link AnswerMarking#TOOL}.
+		 * </p>
+		 *
+		 * <p>
+		 * The content parts are marked too, and not only {@link ToolResult#text()}: a multimodal
+		 * result is read by the model <em>through</em> its parts, so marking the text alone would mark
+		 * the one rendering nobody sees. Images and documents pass through untouched - they are not
+		 * text and cannot carry a tag.
+		 * </p>
+		 */
+		private ToolResult marked(ToolResult result) {
+			if (_marking != AnswerMarking.FRAMEWORK) {
+				return result;
+			}
+			String text = mark(result.text());
+			List<ToolContent> content = result.content();
+			if (text.equals(result.text()) && content.isEmpty()) {
+				return result;
+			}
+			List<ToolContent> markedContent = new ArrayList<>(content.size());
+			for (ToolContent part : content) {
+				markedContent.add(part instanceof ToolContent.Text textPart
+					? new ToolContent.Text(mark(textPart.text()))
+					: part);
+			}
+			return new ToolResult(text, result.summary(), result.truncationHint(), markedContent);
+		}
+
+		/**
+		 * The given text marked, unless there is nothing to mark (an empty answer) or it is marked
+		 * already.
+		 */
+		private String mark(String text) {
+			return text.isBlank() || UntrustedEnvelope.isMarked(text) ? text
+				: UntrustedEnvelope.MODEL_DATA.wrap(_name, text);
 		}
 	}
 

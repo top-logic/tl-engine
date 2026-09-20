@@ -353,7 +353,61 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 			result.text().contains("not found"));
 	}
 
+	/**
+	 * A script tool that says nothing about its result answers exactly as it did before the two
+	 * properties existed.
+	 */
+	public void testResultMetadataIsUnsetByDefault() {
+		Tool tool = singleTool(scriptConfig("echo", ToolMode.READ, "$message",
+			param("message", "tl.core:String", /*mandatory*/ true)));
+
+		ToolResult result = tool.execute(Map.of("message", "hello"), ToolContext.EMPTY);
+
+		assertNull("No summary unless one is configured.", result.summary());
+		assertEquals("The installation's default limit applies.", -1, result.truncationHint());
+	}
+
+	/**
+	 * A configured script tool states how much of its result may reach the model.
+	 */
+	public void testTruncationHintReachesTheResult() {
+		ScriptToolConfig config = scriptConfig("echo", ToolMode.READ, "$message",
+			param("message", "tl.core:String", /*mandatory*/ true));
+		config.update(config.descriptor().getProperty(ScriptToolConfig.TRUNCATION_HINT),
+			Integer.valueOf(120));
+
+		ToolResult result =
+			singleTool(config).execute(Map.of("message", "hello"), ToolContext.EMPTY);
+
+		assertEquals(120, result.truncationHint());
+	}
+
+	/**
+	 * A configured script tool states what compaction keeps in place of its result, computed from
+	 * that result.
+	 */
+	public void testSummaryIsComputedFromTheResult() {
+		ScriptToolConfig config = scriptConfig("count", ToolMode.READ, "$items",
+			multipleParam("items", "tl.core:String"));
+		config.update(config.descriptor().getProperty(ScriptToolConfig.SUMMARY),
+			parseExpr("rows -> $rows.size() + \" rows\""));
+
+		ToolResult result = singleTool(config)
+			.execute(Map.of("items", List.of("a", "b", "c")), ToolContext.EMPTY);
+
+		assertEquals("3 rows", MarkedResults.disclosed(result.summary()));
+	}
+
 	// --- helpers ---
+
+	private static ScriptParameter multipleParam(String name, String typeRef) {
+		ScriptParameter p = TypedConfiguration.newConfigItem(ScriptParameter.class);
+		p.setName(name);
+		p.setType(TLModelPartRef.ref(typeRef));
+		p.setMultiple(true);
+		p.setMandatory(true);
+		return p;
+	}
 
 	private static Tool singleTool(ScriptToolConfig config) {
 		Config factoryConfig = TypedConfiguration.newConfigItem(Config.class);

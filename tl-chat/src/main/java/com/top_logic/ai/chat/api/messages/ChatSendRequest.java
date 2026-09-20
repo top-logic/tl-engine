@@ -39,6 +39,9 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 	/** @see #getEffort() */
 	public static final String EFFORT__PROP = "effort";
 
+	/** @see #getFacts() */
+	public static final String FACTS__PROP = "facts";
+
 	private String _text = "";
 
 	private String _sessionId = "";
@@ -54,6 +57,8 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 	private final java.util.List<String> _mcpServers = new java.util.ArrayList<>();
 
 	private String _effort = "";
+
+	private final java.util.List<com.top_logic.ai.chat.api.messages.FactDto> _facts = new java.util.ArrayList<>();
 
 	/**
 	 * Creates a {@link ChatSendRequest} instance.
@@ -270,6 +275,55 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 		_effort = value;
 	}
 
+	/**
+	 * What the page states about the situation this message is asked in.
+	 *
+	 * <p>
+	 * Computed on the server from the chat element's <code>&lt;context&gt;</code> configuration and
+	 * echoed back here by the browser, because the run happens on a background thread long after the
+	 * page's channels were read. The harness renders the stable ones into the system prompt; the
+	 * message text is never touched.
+	 * </p>
+	 */
+	public final java.util.List<com.top_logic.ai.chat.api.messages.FactDto> getFacts() {
+		return _facts;
+	}
+
+	/**
+	 * @see #getFacts()
+	 */
+	public com.top_logic.ai.chat.api.messages.ChatSendRequest setFacts(java.util.List<? extends com.top_logic.ai.chat.api.messages.FactDto> value) {
+		internalSetFacts(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getFacts()} without chain call utility. */
+	protected final void internalSetFacts(java.util.List<? extends com.top_logic.ai.chat.api.messages.FactDto> value) {
+		if (value == null) throw new IllegalArgumentException("Property 'facts' cannot be null.");
+		_facts.clear();
+		_facts.addAll(value);
+	}
+
+	/**
+	 * Adds a value to the {@link #getFacts()} list.
+	 */
+	public com.top_logic.ai.chat.api.messages.ChatSendRequest addFact(com.top_logic.ai.chat.api.messages.FactDto value) {
+		internalAddFact(value);
+		return this;
+	}
+
+	/** Implementation of {@link #addFact(com.top_logic.ai.chat.api.messages.FactDto)} without chain call utility. */
+	protected final void internalAddFact(com.top_logic.ai.chat.api.messages.FactDto value) {
+		_facts.add(value);
+	}
+
+	/**
+	 * Removes a value from the {@link #getFacts()} list.
+	 */
+	public final void removeFact(com.top_logic.ai.chat.api.messages.FactDto value) {
+		_facts.remove(value);
+	}
+
 	@Override
 	public String jsonType() {
 		return CHAT_SEND_REQUEST__TYPE;
@@ -285,7 +339,8 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 			MODEL__PROP, 
 			MCP_OVERRIDE__PROP, 
 			MCP_SERVERS__PROP, 
-			EFFORT__PROP);
+			EFFORT__PROP, 
+			FACTS__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -318,6 +373,7 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 			case MCP_OVERRIDE__PROP: return isMcpOverride();
 			case MCP_SERVERS__PROP: return getMcpServers();
 			case EFFORT__PROP: return getEffort();
+			case FACTS__PROP: return getFacts();
 			default: return null;
 		}
 	}
@@ -333,6 +389,7 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 			case MCP_OVERRIDE__PROP: internalSetMcpOverride((boolean) value); break;
 			case MCP_SERVERS__PROP: internalSetMcpServers(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
 			case EFFORT__PROP: internalSetEffort((String) value); break;
+			case FACTS__PROP: internalSetFacts(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.FactDto.class, value)); break;
 		}
 	}
 
@@ -375,6 +432,12 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 		out.endArray();
 		out.name(EFFORT__PROP);
 		out.value(getEffort());
+		out.name(FACTS__PROP);
+		out.beginArray();
+		for (com.top_logic.ai.chat.api.messages.FactDto x : getFacts()) {
+			x.writeTo(out);
+		}
+		out.endArray();
 	}
 
 	@Override
@@ -406,6 +469,16 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 			}
 			break;
 			case EFFORT__PROP: setEffort(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case FACTS__PROP: {
+				java.util.List<com.top_logic.ai.chat.api.messages.FactDto> newValue = new java.util.ArrayList<>();
+				in.beginArray();
+				while (in.hasNext()) {
+					newValue.add(com.top_logic.ai.chat.api.messages.FactDto.readFactDto(in));
+				}
+				in.endArray();
+				setFacts(newValue);
+			}
+			break;
 			default: super.readField(in, field);
 		}
 	}

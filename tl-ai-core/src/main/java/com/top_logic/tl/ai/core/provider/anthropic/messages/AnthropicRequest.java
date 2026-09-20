@@ -42,9 +42,6 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 	/** @see #getTools() */
 	public static final String TOOLS__PROP = "tools";
 
-	/** @see #getResponseFormat() */
-	public static final String RESPONSE_FORMAT__PROP = "response_format";
-
 	/** @see #getToolChoice() */
 	public static final String TOOL_CHOICE__PROP = "tool_choice";
 
@@ -71,8 +68,6 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 	private Object _messages = null;
 
 	private Object _tools = null;
-
-	private Object _responseFormat = null;
 
 	private Object _toolChoice = null;
 
@@ -312,33 +307,6 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 	}
 
 	/**
-	 * Response format specification.
-	 */
-	public final Object getResponseFormat() {
-		return _responseFormat;
-	}
-
-	/**
-	 * @see #getResponseFormat()
-	 */
-	public com.top_logic.tl.ai.core.provider.anthropic.messages.AnthropicRequest setResponseFormat(Object value) {
-		internalSetResponseFormat(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #getResponseFormat()} without chain call utility. */
-	protected final void internalSetResponseFormat(Object value) {
-		_responseFormat = value;
-	}
-
-	/**
-	 * Checks, whether {@link #getResponseFormat()} has a value.
-	 */
-	public final boolean hasResponseFormat() {
-		return _responseFormat != null;
-	}
-
-	/**
 	 * Tool choice configuration.
 	 */
 	public final Object getToolChoice() {
@@ -393,7 +361,7 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 	}
 
 	/**
-	 * Output configuration (e.g. thinking continuity).
+	 * Output configuration: thinking effort and the structured-output format.
 	 */
 	public final Object getOutputConfig() {
 		return _outputConfig;
@@ -436,7 +404,6 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 			SYSTEM__PROP, 
 			MESSAGES__PROP, 
 			TOOLS__PROP, 
-			RESPONSE_FORMAT__PROP, 
 			TOOL_CHOICE__PROP, 
 			THINKING__PROP, 
 			OUTPUT_CONFIG__PROP);
@@ -473,7 +440,6 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 			case SYSTEM__PROP: return getSystem();
 			case MESSAGES__PROP: return getMessages();
 			case TOOLS__PROP: return getTools();
-			case RESPONSE_FORMAT__PROP: return getResponseFormat();
 			case TOOL_CHOICE__PROP: return getToolChoice();
 			case THINKING__PROP: return getThinking();
 			case OUTPUT_CONFIG__PROP: return getOutputConfig();
@@ -493,7 +459,6 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 			case SYSTEM__PROP: internalSetSystem((Object) value); break;
 			case MESSAGES__PROP: internalSetMessages((Object) value); break;
 			case TOOLS__PROP: internalSetTools((Object) value); break;
-			case RESPONSE_FORMAT__PROP: internalSetResponseFormat((Object) value); break;
 			case TOOL_CHOICE__PROP: internalSetToolChoice((Object) value); break;
 			case THINKING__PROP: internalSetThinking((Object) value); break;
 			case OUTPUT_CONFIG__PROP: internalSetOutputConfig((Object) value); break;
@@ -545,10 +510,6 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 			out.name(TOOLS__PROP);
 			de.haumacher.msgbuf.json.JsonUtil.writeJsonValue(out, getTools());
 		}
-		if (hasResponseFormat()) {
-			out.name(RESPONSE_FORMAT__PROP);
-			de.haumacher.msgbuf.json.JsonUtil.writeJsonValue(out, getResponseFormat());
-		}
 		if (hasToolChoice()) {
 			out.name(TOOL_CHOICE__PROP);
 			de.haumacher.msgbuf.json.JsonUtil.writeJsonValue(out, getToolChoice());
@@ -575,7 +536,6 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 			case SYSTEM__PROP: setSystem(de.haumacher.msgbuf.json.JsonUtil.nextJsonValue(in)); break;
 			case MESSAGES__PROP: setMessages(de.haumacher.msgbuf.json.JsonUtil.nextJsonValue(in)); break;
 			case TOOLS__PROP: setTools(de.haumacher.msgbuf.json.JsonUtil.nextJsonValue(in)); break;
-			case RESPONSE_FORMAT__PROP: setResponseFormat(de.haumacher.msgbuf.json.JsonUtil.nextJsonValue(in)); break;
 			case TOOL_CHOICE__PROP: setToolChoice(de.haumacher.msgbuf.json.JsonUtil.nextJsonValue(in)); break;
 			case THINKING__PROP: setThinking(de.haumacher.msgbuf.json.JsonUtil.nextJsonValue(in)); break;
 			case OUTPUT_CONFIG__PROP: setOutputConfig(de.haumacher.msgbuf.json.JsonUtil.nextJsonValue(in)); break;

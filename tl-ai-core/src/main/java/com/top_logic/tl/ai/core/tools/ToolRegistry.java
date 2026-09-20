@@ -48,4 +48,49 @@ public interface ToolRegistry extends ToolExecutor {
 	default boolean isReachableBySkill(String name) {
 		return false;
 	}
+
+	/**
+	 * How many of the schemas {@link #toolSchemas(Predicate)} returns are fixed for this agent's
+	 * lifetime, counted from the front.
+	 *
+	 * <p>
+	 * The prompt-cache boundary of the tool array (Gitea #346). Everything up to this index is sent
+	 * byte-identical on every request of the conversation; everything behind it is a loaded skill's
+	 * tools and can appear, disappear or move. A provider that places explicit cache breakpoints
+	 * puts one here, so that loading a skill costs the tokens behind the boundary rather than all of
+	 * them. A registry that cannot grow answers with its whole size.
+	 * </p>
+	 *
+	 * @param filter
+	 *        The same filter {@link #toolSchemas(Predicate)} is called with; the boundary is an
+	 *        index into <em>that</em> list, so it has to be counted the same way.
+	 */
+	default int stableToolCount(Predicate<Tool> filter) {
+		return toolSchemas(filter).size();
+	}
+
+	/**
+	 * The skills whose tools this registry currently advertises, in the order they were loaded.
+	 *
+	 * <p>
+	 * Only a {@link DynamicToolCatalog} has any, and only for the run that loaded them.
+	 * </p>
+	 */
+	default List<String> loadedSkills() {
+		return List.of();
+	}
+
+	/**
+	 * Tells the registry that the conversation it serves was compacted.
+	 *
+	 * <p>
+	 * The tool array does not change - a capability may not disappear for a reason the model cannot
+	 * see. What can have disappeared is text: a loaded skill's instructions live in the conversation
+	 * and a summarizing compaction may have replaced them. A registry that handed out such text
+	 * takes note here, so that asking for it again works.
+	 * </p>
+	 */
+	default void historyCompacted() {
+		// Nothing to forget in a registry that cannot grow.
+	}
 }

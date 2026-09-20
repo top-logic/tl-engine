@@ -31,6 +31,7 @@ import com.top_logic.tl.ai.core.tools.model.messages.InstanceListResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.InstanceMetadata;
 import com.top_logic.tl.ai.core.tools.model.messages.InstanceResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.InstanceTypeInfo;
+import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
@@ -104,8 +105,9 @@ public class InstanceBrowserTool {
 	 * Lists instances of a specific type with pagination support.
 	 *
 	 * <p>
-	 * Returns a JSON object containing paginated instance TIDs, total count, and a cursor for
-	 * retrieving the next page. The cursor is an opaque string that should be passed to
+	 * Returns a JSON object containing the instances of the page - each written as
+	 * {@code label [id:TID]}, see {@link ReadFilter#labelled(TLObject)} - the total count, and a
+	 * cursor for retrieving the next page. The cursor is an opaque string that should be passed to
 	 * subsequent calls to retrieve more results.
 	 * </p>
 	 *
@@ -119,10 +121,10 @@ public class InstanceBrowserTool {
 	 *        Pagination cursor from previous response (null/empty for first page).
 	 * @param context
 	 *        Injected execution context, supplying the read filter of the run.
-	 * @return JSON object with paginated instance TIDs and pagination metadata, marked as business
-	 *         data; or error JSON, unmarked, if the type was not found.
+	 * @return JSON object with the page's instances as {@code label [id:TID]} plus pagination
+	 *         metadata, marked as business data; or error JSON, unmarked, if the type was not found.
 	 */
-	@ToolMethod(description = "Get a paginated list of instances for a specific type. Only instances you may read are listed, and the total count is the number of those. Use limit parameter to control page size (default: 100, max: 1000). Use cursor from previous response to get next page.", mode = ToolMode.READ, group = ToolGroups.DATA_READ)
+	@ToolMethod(description = "Get a paginated list of instances for a specific type. Each entry reads 'label [id:TID]'; pass that TID to any tool that takes one. Only instances you may read are listed, and the total count is the number of those. Use limit parameter to control page size (default: 100, max: 1000). Use cursor from previous response to get next page.", mode = ToolMode.READ, group = ToolGroups.DATA_READ, marking = AnswerMarking.TOOL)
 	public String listInstances(
 			@P("The module containing the type") String moduleName,
 			@P("The name of the type") String typeName,
@@ -197,9 +199,12 @@ public class InstanceBrowserTool {
 		result.setLimit(effectiveLimit);
 		result.setOffset(offset);
 
-		// Add TIDs for this page
+		// Label and identifier per instance, in the one form every text result uses: the identifier
+		// is what the model names the object by in its next call, the label is what tells two of them
+		// apart. Both are business data, and both are disclosed here only because the filter above
+		// already said this instance may be seen.
 		for (TLObject instance : pageInstances) {
-			result.addInstance(instance.tId().asString());
+			result.addInstance(ReadFilter.labelled(instance));
 		}
 
 		// Pagination metadata
@@ -277,7 +282,7 @@ public class InstanceBrowserTool {
 	 *         answer, see
 	 *         {@link TidResolver#resolve(String, com.top_logic.tl.ai.core.security.ModelSecurity)}.
 	 */
-	@ToolMethod(description = "Get detailed information about a single instance by its TID including the attribute values you may read", mode = ToolMode.READ, group = ToolGroups.DATA_READ)
+	@ToolMethod(description = "Get detailed information about a single instance by its TID including the attribute values you may read", mode = ToolMode.READ, group = ToolGroups.DATA_READ, marking = AnswerMarking.TOOL)
 	public String getInstance(@P("The TopLogic identifier (TID) in format 'TypeName:id'") String tid,
 			ToolExecutionContext context) {
 

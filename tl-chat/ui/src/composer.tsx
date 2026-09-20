@@ -1,5 +1,6 @@
 import { React } from 'tl-react-bridge'
 import { cancelPromptImprovement, improvePrompt } from './api'
+import type { ChatAddress } from './api'
 import { ACCEPT_ATTRIBUTE, collectAttachments, dragHasFiles } from './attachments'
 import { ContextUsage, formatTokens } from './context-usage'
 import type { RunStore } from './store'
@@ -231,7 +232,7 @@ export function plusMenuVisible(flags: {
 
 export const Composer = React.memo(
   React.forwardRef(function Composer({
-  windowId,
+  at,
   agents,
   models,
   agent,
@@ -265,6 +266,7 @@ export const Composer = React.memo(
   onDismissNotice,
   onSend,
   onStop,
+  onDraft,
   extraMenuItems,
   referenceCandidates,
   attachmentsEnabled = true,
@@ -278,7 +280,8 @@ export const Composer = React.memo(
   placeholder,
   runs,
 }: {
-  windowId: string
+  /** The conversation this composer belongs to - its window and its chat id. */
+  at: ChatAddress
   agents: AgentOption[]
   models: ModelOption[]
   agent: string
@@ -316,6 +319,13 @@ export const Composer = React.memo(
   onDismissNotice: () => void
   onSend: (text: string, attachments: Attachment[]) => Promise<boolean>
   onStop: () => void
+  /**
+   * What stands unsent in the field, for a host that follows the draft.
+   *
+   * `settled` is true for the two moments the host must not learn late: the field losing the focus,
+   * and the send. Everything else is a keystroke, which the caller is free to let pause first.
+   */
+  onDraft?: (text: string, settled: boolean) => void
   extraMenuItems?: ComposerMenuItem[]
   referenceCandidates?: (query: string) => ReferenceCandidate[]
   /** Whether files can be attached. Default on, matching today's composer. */
@@ -327,6 +337,12 @@ export const Composer = React.memo(
   tracePicker?: boolean
   autoApproveSwitch?: boolean
   enterHint?: boolean
+  /**
+   * The host's own invitation for the empty field, replacing both framework variants.
+   *
+   * Idle only: while the agent works the field keeps the framework's "type your next message",
+   * which is about the run rather than about the application (#420).
+   */
   placeholder?: string
   /** The run store of the chat this composer belongs to; the context ring reads it. */
   runs?: RunStore
@@ -341,7 +357,16 @@ export const Composer = React.memo(
   const [modelPane, setModelPane] = useState<'root' | 'effort' | 'model'>('root')
   const [pane, setPane] = useState<MenuPane>('root')
   const [query, setQuery] = useState('')
-  const [improveVisible, setImproveVisible] = useState(false)
+  /**
+   * The draft the "improve" pause has elapsed for, or null while none has.
+   *
+   * The chip's visibility is *derived* from this and never stored: an effect that writes state on
+   * every keystroke is a nested update per keystroke, and React counts fifty of those in a row
+   * without an idle frame as "maximum update depth exceeded" - which typing at full speed reaches
+   * (#419). Written once by the timer below and by nothing else; a keystroke hides the chip by
+   * moving `text` away from it, with no render of its own.
+   */
+  const [improvePausedFor, setImprovePausedFor] = useState<string | null>(null)
   const [improving, setImproving] = useState(false)
   const [improveError, setImproveError] = useState('')
   const [improveUnchanged, setImproveUnchanged] = useState(false)
@@ -368,13 +393,15 @@ export const Composer = React.memo(
   const showModelMenu = modelPicker || thinking
 
   useEffect(() => {
-    if (!promptImprovementEnabled || improving || draftIsEmpty(text)) {
-      setImproveVisible(false)
-      return
-    }
-    const timer = window.setTimeout(() => setImproveVisible(true), 700)
+    if (!promptImprovementEnabled || improving || draftIsEmpty(text)) return
+    const timer = window.setTimeout(() => setImprovePausedFor(text), 700)
     return () => window.clearTimeout(timer)
   }, [improving, promptImprovementEnabled, text])
+
+  // The pause is over and it was this sentence the user stopped on. Returning to a sentence the
+  // pause already elapsed for - a character typed and taken back again - offers the chip at once
+  // rather than waiting another 700 ms, which is the same answer to the same draft.
+  const improveVisible = improvePausedFor === text
 
   useEffect(() => {
     if (!menuOpen && !modelMenuOpen) return
@@ -511,11 +538,18 @@ export const Composer = React.memo(
   const composerApi: ComposerApi = useMemo(
     () => ({
       insertReference: (token: ReferenceToken) => area.current?.insertReference(token),
+      setDraft: (draft: string) => area.current?.setDraft(draft),
       focus: () => area.current?.focus(),
     }),
     [],
   )
   useImperativeHandle(handle, () => composerApi, [composerApi])
+
+  // Whatever changed the text - a keystroke, an inserted reference, an improved prompt, a host's
+  // own write - the host hears the same thing. Blur and send report it again, settled.
+  useEffect(() => {
+    onDraft?.(text, false)
+  }, [text, onDraft])
 
   const mentionQuery = mention == null ? '' : mention.replace(/^@/, '')
   const candidates = useMemo(
@@ -533,13 +567,14 @@ export const Composer = React.memo(
   const submit = () => {
     const trimmed = text.trim()
     if (draftIsEmpty(text) && files.length === 0) return
+    // Before the send, not after: what the host reads must be the sentence that is going.
+    onDraft?.(text, true)
     const sentFiles = files
     void onSend(trimmed, sentFiles).then((sent) => {
       if (!sent) return
       setText('')
       setFiles([])
       setUndoDraft(null)
-      setImproveVisible(false)
       setMention(null)
     })
   }
@@ -555,7 +590,7 @@ export const Composer = React.memo(
     setImproveError('')
     setImproveUnchanged(false)
     try {
-      const result = await improvePrompt(windowId, draft, requestId, abort.current.signal)
+      const result = await improvePrompt(at, draft, requestId, abort.current.signal)
       if (improveId.current !== requestId) return
       const improvedText = result.improvedText || result.text || ''
       if (result.status === 'completed' && improvedText) {
@@ -563,12 +598,10 @@ export const Composer = React.memo(
           // The server hands the draft back when there is nothing to rewrite - a confirmation, a
           // single word, a prompt already fine. Saying so beats silently replacing text with itself.
           setImproveUnchanged(true)
-          setImproveVisible(false)
           window.setTimeout(() => setImproveUnchanged(false), 4000)
         } else {
           setUndoDraft(draft)
           setText(improvedText)
-          setImproveVisible(false)
         }
         area.current?.focus()
       } else if (result.status !== 'cancelled' && result.status !== 'stale') {
@@ -585,7 +618,7 @@ export const Composer = React.memo(
   const cancelImprove = () => {
     const requestId = improveId.current
     abort.current?.abort()
-    if (requestId) void cancelPromptImprovement(windowId, requestId)
+    if (requestId) void cancelPromptImprovement(at, requestId)
     setImproving(false)
     area.current?.focus()
   }
@@ -614,7 +647,7 @@ export const Composer = React.memo(
         <PromptStack
           approvals={pendingApprovals}
           questions={pendingQuestions}
-          windowId={windowId}
+          at={at}
           labels={labels}
           dispatch={dispatch}
         />
@@ -705,6 +738,7 @@ export const Composer = React.memo(
           <TokenInput
             ref={area}
             value={text}
+            onBlur={() => onDraft?.(text, true)}
             onChange={(next) => {
               setText(next)
               // Reading the word under the caret after the change, so "@" opens the picker on the
@@ -718,10 +752,14 @@ export const Composer = React.memo(
               }
             }}
             onPasteFiles={(pasted) => void addFiles(pasted)}
-            ariaLabel={labels.askAnything}
+            ariaLabel={placeholder || labels.askAnything}
             placeholder={
-              placeholder ||
-              (busy ? labels.typeNext : referenceCandidates ? labels.askAnythingWithAt : labels.askAnything)
+              // The host's invitation is the *idle* one. "Type your next message" is about the run,
+              // not about this application, so a host that replaced it would be inviting the user
+              // to start something that is already under way (#420).
+              busy
+                ? labels.typeNext
+                : placeholder || (referenceCandidates ? labels.askAnythingWithAt : labels.askAnything)
             }
             onKeyDown={(event) => {
               if (event.key === 'Escape' && improving) {

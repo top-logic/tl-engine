@@ -16,6 +16,7 @@ import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.tool.api.RunInfo;
 
 /**
  * {@link AgentEventListener} decorator that records an agent run as an {@link AgentExecution}.
@@ -49,6 +50,8 @@ public final class ExecutionRecorder implements AgentEventListener {
 	private volatile AgentExecution _execution;
 
 	private volatile String _runId;
+
+	private volatile String _lastErrorKind;
 
 	private volatile String _lastErrorMessage;
 
@@ -91,9 +94,9 @@ public final class ExecutionRecorder implements AgentEventListener {
 	 * The stable conversation id of {@code session} as a plain String (its persistent object id, as
 	 * used to look the session back up), or <code>null</code> when no session is given or its id
 	 * cannot be read. Best-effort: any failure degrades to <code>null</code> (the browser tool then
-	 * falls back to per-run keying) rather than disturbing the run. Package-visible for testing.
+	 * falls back to per-run keying) rather than disturbing the run.
 	 */
-	static String conversationIdOf(AgentSession session) {
+	public static String conversationIdOf(AgentSession session) {
 		if (session == null) {
 			return null;
 		}
@@ -110,18 +113,34 @@ public final class ExecutionRecorder implements AgentEventListener {
 	public void onEvent(AgentEvent event) {
 		if (event instanceof AgentEvent.RunStarted e) {
 			_runId = e.runId();
-			// Publish the run id on the shared handle before any tool runs, so tools can derive a
-			// stable per-run key without a revision-sensitive read of the persistent execution
-			// wrapper. Done unconditionally (even when execution recording is inactive) so the key
-			// is available whether or not the run is persisted.
+			// Publish what identifies the run on the shared handle before any tool runs, so tools
+			// read it as plain data instead of dereferencing the persistent execution wrapper,
+			// which their revision cannot see (Gitea #405). Done unconditionally (even when
+			// execution recording is inactive) so the facts are there whether or not the run is
+			// persisted. AgentLoop publishes the same run id and model just before emitting this
+			// event; repeating them here covers an emitter other than the loop, with the same
+			// values. The agent name is published here rather than only by AgentFactory because a
+			// run whose loop was built by hand - the aiChat script function's "ai.chat" - passes no
+			// factory, and this recorder is the only place that knows the name.
 			if (_handle != null) {
 				_handle.setRunId(_runId);
+				_handle.setAgentName(_agentName);
+				_handle.setModel(e.model(), resolveProviderId(e.model()));
 			}
 			beginRecording(e);
+		} else if (event instanceof AgentEvent.EnvironmentComposed e) {
+			recordEnvironment(e);
 		} else if (event instanceof AgentEvent.ProviderError e) {
+			_lastErrorKind = e.kind();
 			_lastErrorMessage = e.message();
+		} else if (event instanceof AgentEvent.ModelSwitched e) {
+			recordModelSwitch(e);
 		} else if (event instanceof AgentEvent.RunCompleted e) {
-			_result = new AgentResult(e.reason(), e.turnNumber(), e.totalUsage());
+			// The completion event carries no failure detail - it is the same event for every stop
+			// reason - so the last provider error seen is what names the failure on the result.
+			boolean failed = e.reason() != StopReason.COMPLETE;
+			_result = new AgentResult(e.reason(), e.turnNumber(), e.totalUsage(),
+				failed ? _lastErrorKind : null, failed ? _lastErrorMessage : null);
 		}
 		_delegate.onEvent(event);
 	}
@@ -133,7 +152,7 @@ public final class ExecutionRecorder implements AgentEventListener {
 			return;
 		}
 		try {
-			String provider = resolveProviderId(e.model());
+			String provider = _handle != null ? _handle.runInfo().provider() : resolveProviderId(e.model());
 			_execution = AgentExecutionStore.getInstance()
 				.beginExecution(_session, e.runId(), _agentName, e.model(), provider, _parent);
 			if (_handle != null) {
@@ -142,6 +161,61 @@ public final class ExecutionRecorder implements AgentEventListener {
 		} catch (RuntimeException ex) {
 			Logger.warn("Failed to record start of agent run " + e.runId() + ": " + ex.getMessage(),
 				ex, ExecutionRecorder.class);
+		}
+	}
+
+	/**
+	 * Writes the run's environment block onto the execution row.
+	 *
+	 * <p>
+	 * A failure here is logged and dropped: the block is what an administrator reads afterwards, and
+	 * losing it is never a reason to fail the run the user is waiting for.
+	 * </p>
+	 */
+	private void recordEnvironment(AgentEvent.EnvironmentComposed e) {
+		AgentExecution execution = _execution;
+		if (execution == null) {
+			return;
+		}
+		try {
+			AgentExecutionStore.getInstance().saveEnvironment(execution, e.environment());
+		} catch (RuntimeException ex) {
+			Logger.warn("Failed to record the environment of agent run " + e.runId() + ": "
+				+ ex.getMessage(), ex, ExecutionRecorder.class);
+		}
+	}
+
+	/**
+	 * Follows a run that moved to another model, so that the record names what answered.
+	 *
+	 * <p>
+	 * The model on the row is read as "this is what produced these tokens", and after a failover
+	 * the configured model produced none of them.
+	 * </p>
+	 *
+	 * <p>
+	 * The identifiers come from the handle, not from the event: the event carries the labels a
+	 * human reads - a model qualified by its provider entry where one was named - and the loop has
+	 * already published the resolved model and catalog provider on the handle, one statement before
+	 * it emitted this. An emitter that is not the loop therefore records nothing here rather than
+	 * writing a display label into a field every query reads as an identifier. Best-effort like
+	 * every other write in this class: losing it never disturbs the run.
+	 * </p>
+	 */
+	private void recordModelSwitch(AgentEvent.ModelSwitched e) {
+		AgentExecution execution = _execution;
+		if (execution == null || _handle == null) {
+			return;
+		}
+		RunInfo info = _handle.runInfo();
+		if (info == null || info.model() == null) {
+			return;
+		}
+		try {
+			AgentExecutionStore.getInstance().saveModel(execution, info.model(), info.provider());
+		} catch (RuntimeException ex) {
+			Logger.warn("Failed to record the model switch of agent run " + e.runId() + ": "
+				+ ex.getMessage(), ex, ExecutionRecorder.class);
 		}
 	}
 
@@ -221,7 +295,10 @@ public final class ExecutionRecorder implements AgentEventListener {
 		return switch (stopReason) {
 			case COMPLETE, MAX_TURNS -> ExecutionStatus.COMPLETE;
 			case ERROR, CONTEXT_OVERFLOW -> ExecutionStatus.ERROR;
-			case REJECTED -> ExecutionStatus.REJECTED;
+			// A run cut off by the account's budget did not deliver its answer, and it is not an
+			// error either: the same family as a response the validator refused, which is what
+			// REJECTED names. Which of the two it was is on the stop reason beside it.
+			case REJECTED, BUDGET_EXHAUSTED -> ExecutionStatus.REJECTED;
 			case ABORTED -> ExecutionStatus.CANCELLED;
 		};
 	}

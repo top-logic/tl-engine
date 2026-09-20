@@ -30,6 +30,8 @@ import com.top_logic.ai.chat.api.messages.ConnectedEvent;
 import com.top_logic.ai.chat.api.messages.DelegationEventWrapper;
 import com.top_logic.ai.chat.api.messages.HeartbeatEvent;
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
+import com.top_logic.ai.chat.api.messages.InteractionResolvedEvent;
+import com.top_logic.ai.chat.api.messages.ModelSwitchedEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
 import com.top_logic.ai.chat.api.messages.RunCompletedEvent;
 import com.top_logic.ai.chat.api.messages.RunStartedEvent;
@@ -49,6 +51,7 @@ import com.top_logic.ai.chat.api.messages.TurnStartedEvent;
 import com.top_logic.ai.chat.layout.Chat;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.basic.Logger;
@@ -103,6 +106,10 @@ public class ChatSSEHandler implements ChatEventHandler {
 			});
 
 	private final TaskProgressTracker _tracker;
+
+	/** The signed-in account this stream was opened for; may be <code>null</code>. */
+	private final Person _account;
+
 	private final AsyncContext _asyncContext;
 	private final PrintWriter _writer;
 	private final AtomicBoolean _closed = new AtomicBoolean(false);
@@ -143,7 +150,20 @@ public class ChatSSEHandler implements ChatEventHandler {
 	 *        Response writer for SSE output.
 	 */
 	public ChatSSEHandler(TaskProgressTracker tracker, AsyncContext asyncContext, PrintWriter writer) {
+		this(tracker, null, asyncContext, writer);
+	}
+
+	/**
+	 * Creates a {@link ChatSSEHandler} for the window of a known account.
+	 *
+	 * @param account
+	 *        The signed-in account this stream was opened for; what makes this window one of the
+	 *        account's when another of them answers a request. May be <code>null</code>.
+	 */
+	public ChatSSEHandler(TaskProgressTracker tracker, Person account, AsyncContext asyncContext,
+			PrintWriter writer) {
 		_tracker = tracker;
+		_account = account;
 		_asyncContext = asyncContext;
 		_writer = writer;
 	}
@@ -151,6 +171,11 @@ public class ChatSSEHandler implements ChatEventHandler {
 	@Override
 	public TaskProgressTracker getTracker() {
 		return _tracker;
+	}
+
+	@Override
+	public Person getAccount() {
+		return _account;
 	}
 
 	@Override
@@ -249,6 +274,12 @@ public class ChatSSEHandler implements ChatEventHandler {
 	@Override
 	public void sendProviderError(ProviderErrorEvent event) {
 		enqueue("provider_error", DtoMapper.toJson(event));
+	}
+
+	/** Queues the news that another window of this account answered a request this one may show. */
+	@Override
+	public void sendInteractionResolved(InteractionResolvedEvent event) {
+		enqueue("interaction_resolved", DtoMapper.toJson(event));
 	}
 
 	/**
@@ -396,7 +427,8 @@ public class ChatSSEHandler implements ChatEventHandler {
 				.setToolDefinitionTokens(e.toolDefinitionTokens())
 				.setMessageTokens(e.messageTokens())
 				.setToolResultTokens(e.toolResultTokens())
-				.setToolCount(e.toolCount())));
+				.setToolCount(e.toolCount())
+				.setLoadedSkills(e.loadedSkills())));
 		} else if (event instanceof AgentEvent.TextDelta e) {
 			sendEvent("text_delta", DtoMapper.toJson(TextDeltaEvent.create()
 				.setText(e.text())));
@@ -487,6 +519,11 @@ public class ChatSSEHandler implements ChatEventHandler {
 			sendEvent("provider_error", DtoMapper.toJson(ProviderErrorEvent.create()
 				.setKind(e.kind())
 				.setErrorMessage(e.message())));
+		} else if (event instanceof AgentEvent.ModelSwitched e) {
+			sendEvent("model_switched", DtoMapper.toJson(ModelSwitchedEvent.create()
+				.setFromModel(e.fromModel())
+				.setToModel(e.toModel())
+				.setReason(e.reason())));
 		}
 	}
 
@@ -562,6 +599,10 @@ public class ChatSSEHandler implements ChatEventHandler {
 			innerType = "provider_error";
 			innerData = DtoMapper.toJson(ProviderErrorEvent.create()
 				.setKind(e.kind()).setErrorMessage(e.message()));
+		} else if (child instanceof AgentEvent.ModelSwitched e) {
+			innerType = "model_switched";
+			innerData = DtoMapper.toJson(ModelSwitchedEvent.create()
+				.setFromModel(e.fromModel()).setToModel(e.toModel()).setReason(e.reason()));
 		} else {
 			return;
 		}

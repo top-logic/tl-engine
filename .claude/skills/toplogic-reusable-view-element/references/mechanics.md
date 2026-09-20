@@ -182,7 +182,7 @@ public static Test suite() {
 ```
 
 Then `TypedConfiguration.newConfigItem(MyListElement.Config.class)` works, and you can assert defaults.
-Build with `mvn -o -pl <module> install -DskipTests` (JS typecheck + vitest + bundle run in
-`generate-resources`, so they run even with `-DskipTests`). Always finish with a live check in the real
+Build with `mvn -o -pl <module> install -DskipTests` (JS typecheck, bundle and vitest all run even
+with `-DskipTests`). Always finish with a live check in the real
 app, in both themes and at a narrow width.
 ```

@@ -11,17 +11,17 @@ Real-time agentic chat interface for TopLogic applications. Connects users to th
 Both served by `ChatServlet` at `/chat/*`:
 
 1. **REST API** (JSON):
-   - `POST /chat/send` – Send user message, starts background AI processing. Returns `{ taskId, status }`.
+   - `POST /chat/send` – Send user message, starts background AI processing. Returns `{ taskId, status }`. Its `facts` are what the page states about the situation (`<chat-conversation><context>`), computed on the server and echoed back by the browser; the harness renders the stable ones into the run's system prompt and the message text stays untouched. `POST /chat/regenerate` carries them too.
    - `GET /chat/updates` – Poll for full chat state (messages).
    - `POST /chat/sessions` – Create new chat session.
    - `GET /chat/sessions` – List all sessions for current user.
    - `GET /chat/sessions/{id}` – Load session and activate server-side.
    - `PUT /chat/sessions/{id}/title` – Update session title.
    - `DELETE /chat/sessions/{id}` – Delete session (cascades over recorded executions, tasks, interactions).
-   - `PUT /chat/preferences?chatId=…` – Per-user rail/pane layout of **one** chat. The React UI cannot call `PersonalConfiguration` itself, so this wraps `setJSONValue` **and** `storePersonalConfiguration()` (transient otherwise). Key `tl-chat.layout`, holding one layout per `chat-id`. The body is what the user *decided*, so a fact they never touched is absent. There is no `GET`: the bootstrap travels with the control state (`ChatViewBinding.writeLayoutState`, re-read on every render), so a second round trip would only repeat it.
+   - `PUT /chat/preferences?chatId=…` – Per-user rail/pane layout of **one** chat. Its `chatId` is the key the layout is *stored* under, not the conversation the request comes from; the conversation travels beside it as `conversation=…`, like on every other call. The React UI cannot call `PersonalConfiguration` itself, so this wraps `setJSONValue` **and** `storePersonalConfiguration()` (transient otherwise). Key `tl-chat.layout`, holding one layout per `chat-id`. The body is what the user *decided*, so a fact they never touched is absent. There is no `GET`: the bootstrap travels with the control state (`ChatViewBinding.writeLayoutState`, re-read on every render), so a second round trip would only repeat it.
 
 2. **SSE API** (real-time push):
-   - `GET /chat/events` – SSE connection. `ChatSSEHandler` receives `AgentEvent`s and emits structured SSE frames: `connected`, `run_started`, `turn_started`, `text_delta`, `tool_started`, `tool_completed`, `approval_required`, `message_complete`, `heartbeat`, etc.
+   - `GET /chat/events` – SSE connection. `ChatSSEHandler` receives `AgentEvent`s and emits structured SSE frames: `connected`, `run_started`, `turn_started`, `text_delta`, `tool_started`, `tool_completed`, `approval_required`, `approval_resolved`, `interaction_resolved`, `message_complete`, `heartbeat`, etc.
 
 `ChatSessionFilter` (mapped to `/chat/*`) requires a TopLogic session; `ChatServlet.doService`
 additionally refuses anonymous ones with 401, because an application may hand a visitor a session
@@ -31,28 +31,117 @@ browser component, which shows a sign-in note rather than a composer.
 ### Processing Flow
 
 1. User sends message via `POST /chat/send` or TopLogic AJAX command
-2. `ChatProcessor.sendMessage()` adds message to `Chat`, creates a `ConversationLog` turn, submits `AIBackgroundTask`
+2. `ChatProcessor.sendMessage()` checks that the installation has room for the run (pool, per-account cap - both unlimited unless configured), adds the message to `Chat`, creates a `ConversationLog` turn, submits `AIBackgroundTask` to `ChatRunExecutor`
 3. Background task resolves entry point agent from `AgentRegistry.getEntryPointAgentName()` and invokes it with `ConversationLogListener` bound for structured event recording
 4. Agent events (tool calls, thinking, text deltas) are delivered to the SSE handler in real-time and recorded in the `ConversationLog`
 5. `ChatProcessor.applyPollUpdates()` flushes pending messages into Chat
 6. On completion, agent response added as `ChatMessage` and `ConversationLog` persisted
 
+### Who decides that a call needs a person (#381)
+
+`ChatProcessor.buildToolContext` no longer builds the run's `SecurityContext` itself. It asks
+`RunSecurity.contextFor(new RunPrincipal(account, RunEntryPoint.CHAT, false, sessionId))`, and what
+answers is the installation's configured `SecurityContextFactory` - by default the one backed by
+TopLogic's roles and model access rights, which is what this line did before. A run whose tracker
+says it has no window (#384) is announced as `SCHEDULED` and as a background run instead; everything
+else on this path is the same.
+
+An application substitutes that factory when its answer depends on **what** is being changed rather
+than only on the tool's `ToolMode`: overwriting an empty section a machine wrote, overwriting what a
+colleague wrote, and releasing a document to a customer are all `DATA_WRITE`, and only some of them
+deserve an approval card. `ApprovalMode` cannot express that - it decides who answers a prompt, not
+whether one is raised. The factory is asked once per run and returns a context whose
+`checkApproval(Tool, ToolCall)` reads the call's arguments; extend `SecurityContextProxy` over
+`DefaultSecurityContextFactory.defaultContext(run)` so that every other question keeps its answer.
+Every other entry point - the TL-Script functions, the MCP endpoint, the prompt improver - goes
+through the same call, so the substitution is one class and not five call sites. See
+[the security architecture, 4.5](../doc/security/agent-security-architecture.md).
+
+### Human-in-the-loop: a pending interaction belongs to the account (#393)
+
+A run that needs a tool approval, or that asks a question through `askUser`, parks its agent thread
+on a future in the `UserInteractionStore` of its own `AIProcessingState`. That state hangs on the
+`TaskProgressTracker` of **one** conversation of one browser window, which the chat transport
+addresses one at a time (`windowId` + `conversation` → sub-session → tracker). The request itself, though, is addressed to an
+**account**: `InteractionRecorder` persists it as a `tl.ai.execution:InteractionRequest` with a
+`responder`, and that is the rule this module follows everywhere.
+
+| | |
+|--|--|
+| Listing what is pending | `GET /chat/interactions` – `AgentExecutionStore.pendingInteractionsFor(person)`, every chat of the account, whatever window asks. The client replays an approval from it after a reload (`recoverRunState`). |
+| Answering | `POST /chat/respond` – the request id is looked up in `PendingInteractionRegistry`, among **this account's** running runs, not in the asking window's tracker. A second tab, a reloaded page and a new login therefore all reach the parked run. |
+| Who may answer | The account named as the run's responder, and nobody else. Another account finds nothing and is told exactly what a caller naming a request that does not exist is told (`{"status":"ignored"}`), so the answer says nothing about which ids exist. |
+| Order of effects | The decision is recorded (`ConversationLogListener.resolveApproval`, "approve for this session" onto the **run's own** tracker) *before* the future is completed. Completing it unparks the agent mid-turn, and it may call the next tool before this request has returned. |
+| Telling the other windows | `interaction_resolved`, pushed to the account's other live chat UIs (`ChatEventHandlerRegistry.findOthers`). The run's own window is left out: it hears `approval_resolved` from the run itself. A chat UI says which account it is (`ChatEventHandler.getAccount()`) and takes the frame (`sendInteractionResolved`); both have no-op defaults, so a UI that never lists another window's requests is unaffected. |
+| Timeouts | Unchanged, and still the backstop: `InteractionTimeoutService` bounds both waits (30 min by default), and `AgentExecutionStore` cancels every still-pending row at startup, because no run survives a restart. |
+
+`PendingInteractionRegistry` is a process-wide register of the runs currently able to ask a human.
+`ChatProcessor` puts a run in when it creates the run's interaction store and takes it out in the
+same `finally` that unbinds the store, so its entries are bounded by the runs in flight. It is
+**not** what keeps a window alive - the run's own background task already holds its tracker while it
+works.
+
+Not fixed by this: `POST /chat/cancel` still acts on the asking window's own tracker, so a run
+cannot be cancelled from another window.
+
+### Running an agent on a schedule (#384)
+
+`com.top_logic.ai.chat.sched.AgentTask` is a configured `Task` of the engine's `Scheduler` that puts
+one prompt to a named agent and records the run as a chat session of the `run-as` account. The prompt
+is plain text or a TL-Script expression evaluated at the start of every run; the rest of the frame -
+`name`, `enabled`, `run-on-startup`, `schedules` - is the engine's own.
+
+It goes through `ChatProcessor.sendMessage`, not through `AgentRunner`, and that is the whole point:
+what an operator wants from a nightly agent is a **sitting** they can open in their chat history, not
+an execution row. The task therefore does what a browser window would - a `TaskProgressTracker`, a
+session created by `ChatHistoryService.createSession`, the `run-as` account bound to its sub-session -
+and then waits for the run, skipping a start while the previous one is still working and interrupting
+the agent thread when the scheduler stops it. It is not node-local: one cluster node runs it, because
+an agent run writes and costs money.
+
+**A scheduled run has nobody to ask,** and two things follow from that, set together by the task and
+carried by `ChatProcessor.buildToolContext`:
+
+| | |
+|--|--|
+| `TaskProgressTracker#isUnattended()` → `ToolContext#attended()` | `askUser` answers `AskUserTool.NOBODY_TO_ASK` at once instead of parking the agent thread until the 30-minute interaction timeout. Keyed on the context the entry point sets, never on what the prompt says. |
+| `RunSecurity.contextFor(new RunPrincipal(account, SCHEDULED, background = true, ...))` | Approval is the compensating control for a write-classified tool, and a run that cannot show a prompt has lost it, so the run is additionally bounded by the policy's `<background-allowlist>`. The entry point the factory is told about is `RunEntryPoint.SCHEDULED` rather than `CHAT` (#381), because nobody typed this message. |
+
+`isUnattended()` is deliberately **not** derived from the approval mode inside `ChatProcessor`: a user
+who switches their own chat to `AUTO_APPROVE` has not left the room. Only a caller that knows there is
+no window sets it - today, the task, and it sets it for `AUTO_APPROVE` only. A task configured
+`approval-mode="MANUAL"` declares that a person will answer, which since #393 any window of that
+account can, and is therefore an ordinary attended run started by a clock.
+
+Approval prompts never blocked in `AUTO_APPROVE` - the callback is `ApprovalCallback.AUTO_APPROVE`,
+which answers on the calling thread - so `askUser` was the one thing that could park an unattended
+run. See `doc/scheduled-agent.md`.
+
 ### Key Classes
 
-- **`ChatProcessor`** – Static utility: background thread pool, orchestrator execution, state sync
+- **`ChatProcessor`** – Static utility: orchestrator execution, state sync, and the two pre-checks a send passes before anything is written down (pool room, per-account run cap)
+- **`ChatRunExecutor`** – The pool the chat's agent runs execute on. Unbounded unless `<run-limits>` on `LLMService` (tl-ai-core) names a `chat-workers` ceiling, so an installation sets all its ceilings in one place; with a ceiling a send that finds every worker busy waits, and it is refused only where `chat-queue` bounds the waiting room. See `tl-ai-core/doc/run-limits.md`
 - **`TaskProgressTracker`** – Session-scoped chat state, manages processing states and session metadata
 - **`ChatEventHandler`** – The contract a chat UI implements to observe a run: the `AgentEvent` stream plus the
   final-message and provider-error notifications `ChatProcessor` produces itself
 - **`ChatEventHandlerRegistry`** – Interface-typed lookup of the chat UI observing a `TaskProgressTracker`;
-  `ChatProcessor` resolves the handler here per event, so a UI other than the SSE servlet can register
+  `ChatProcessor` resolves the handler here per event, so a UI other than the SSE servlet can register.
+  `findOthers` is the account-wide direction: every *other* window of one account, for news that is
+  the account's rather than one run's
+- **`PendingInteractionRegistry`** – The runs currently able to ask a human, keyed by task id and named
+  by the account waiting on them. What lets any window of that account answer a request the window that
+  started the run is parked on - see "a pending interaction belongs to the account"
 - **`ChatSSEHandler`** – Push-based SSE implementation of `ChatEventHandler`
 - **`Chat`** – Thread-safe in-memory container using `CopyOnWriteArrayList<ChatMessage>` (max 500)
 - **`ChatSessionManager`** – Manages per-session in-memory state (Chat + ConversationMemory + ConversationLog) with LRU caching (max 5 sessions). Handles session switching with persist/load/rebuild cycle.
 - **`ChatHistoryService`** – Static access to persistent `AgentSession` objects (kind CHAT) via `AgentExecutionStore` (tl-ai-core). Conversations are stored as one transcript per `AgentExecution` (written by `AgentRunner` at run end) and merged in run order on load.
 - **`LegacyChatSessionMigration`** – Startup service migrating legacy `tl.ai.chat:ChatSession` blobs to `AgentSession`s eagerly. The legacy model has been removed (tl-ai-core migration `Issue_230_remove_module_tl_ai_chat`), so the service is a no-op now; it is kept until every deployment is known to have run it.
-- **`ChatSessionRegistry`** – Bridges `WindowScope` (a chat control) and `HttpSession` (`ChatServlet`). Published API: the classic control in `tl-chat-classic` and `Consulting`'s own control register here from outside this module.
-- **`ChatViewBinding`** – Once per (sub-session, `chat-id`): tracker and user. `AgentChatControl` and the split elements (`<chat-conversation>`, `<chat-rail>`) delegate to it so several controls do not bind the window several times. The tracker stays one per window. The layout preference is the exception: it is read whenever `writeLayoutState` is asked for it, which every chat control does from `onBeforeWrite` - see "where the chat's state lives". It is also where every join is tallied for `ChatJoinLog`.
-- **`AgentViewRefreshService`** – Makes a model-bound element beside the transcript follow a running agent. A run commits from a background thread, and a window only sees model changes when its `GlobalModelEventForwarder` is asked to synthesize them - on a browser command or on the 30 s SSE heartbeat. The service listens on `AgentExecutionStore.ChangeListener`, coalesces a burst of writes (200 ms) and synthesizes per window, in that window's sub-session and **under the window's request lock** (a `ReactControl`'s state map is a plain `HashMap`; the heartbeat path skips the lock, and this deliberately does not copy that). Windows are registered by `ChatViewBinding` while a chat renders, which is a fork: the engine offers no way to enumerate an account's live windows.
+- **`AgentTask`** (`…chat.sched`) – The scheduler task above. Not to be confused with
+  `tl.ai.execution:AgentTask`, which is one entry of the plan an agent writes while it works
+- **`ChatSessionRegistry`** – Bridges `WindowScope` (a chat control) and `HttpSession` (`ChatServlet`), keyed by `(sub-session, conversation)`: a window showing a page's chat beside a `<chat-dock>`'s, or two `<agent-chat>` elements, has a `TaskProgressTracker` for each (#502). A caller that names no conversation registers and resolves the window's unnamed one, which is what the classic client has. Published API: the classic control in `tl-chat-classic` and `Consulting`'s own control register here from outside this module.
+- **`ChatViewBinding`** – Once per (sub-session, conversation): tracker, user, and the channels the agent may write there. `AgentChatControl` and the split elements (`<chat-conversation>`, `<chat-rail>`) delegate to it so several controls do not bind the window several times. The conversation is the `chat-id` for the split elements and the control's own id for `<agent-chat>` (`bindOwn`), whose layout key stays empty. The layout preference is the exception: it is read whenever `writeLayoutState` is asked for it, which every chat control does from `onBeforeWrite` - see "where the chat's state lives". It is also where every join is tallied for `ChatJoinLog`.
+- **`AgentViewRefreshService`** – Makes a model-bound element beside the transcript follow a running agent. A run commits from a background thread, and a window only sees model changes when its `GlobalModelEventForwarder` is asked to synthesize them - on a browser command or on the 30 s SSE heartbeat. The service listens on `AgentExecutionStore.ChangeListener`, coalesces a burst of writes (200 ms) and synthesizes per window, in that window's sub-session and **under the window's request lock** (a `ReactControl`'s state map is a plain `HashMap`; the heartbeat path skips the lock, and this deliberately does not copy that). **Coalescing never forgets a change**: a pass takes as long as it takes to enter every registered window and wait for its lock, and a change that arrives while one is running is carried into the next pass rather than dropped - `PendingRefreshes` is the whole of that rule, and `TestAgentViewRefresh` is what holds it (#497). A window is registered with the account it is logged in as, read where a context is bound, because the pass runs on a scheduler thread that has none. Windows are registered by `ChatViewBinding` while a chat renders, which is a fork: the engine offers no way to enumerate an account's live windows. The same register and the same lock serve the write direction: `inWindow` runs a caller's action in the window's sub-session under its lock (after synthesizing, so the window knows the run's objects), and `hasWindow` is what lets a tool tell "this run is headless" from "this page allows nothing". A write waits longer for the lock than a refresh does (`write-timeout-millis`, 5 s): a refresh that gives up loses nothing, a write has no second chance.
+- **`PresentTool`** – The `present` tool (`com.top_logic.ai.chat.tools`): the agent puts model objects onto a channel of the page it is on, and the page renders them however it likes. Registered from this module's own configuration, so every application that depends on `tl-chat` has the tool; **which** channel it may write is the page's decision (`<chat-conversation present="…">`, deny by default). See "the agent writes a channel" below.
 - **`ChatScope` / `ChatScopeElement`** – The `<chat>` container and the ambient value it puts into the child `ViewContext`. An element's conversation is its own `chat-id`, else the enclosing `<chat>`, else `default`.
 - **`ChatJoinLog`** – Per render, which element joined which chat id; logged when the interaction ends, with a WARN for an element that joined nobody while another id has several.
 
@@ -111,12 +200,13 @@ the React chat. Session state the classic control reads - `Chat`, `ChatProcessor
 | Sources | `ui/src` (TypeScript, `.tsx`, `jsx: "react"` - the classic runtime, because React comes from the host) |
 | Bundler | Vite library build, entries `ui/src/main.tsx` (`tl-chat-ui.js`) and `ui/src/index.ts` (`tl-chat-seams.js`) |
 | Output | `src/main/webapp/script/tl-chat-ui.js`, `tl-chat-ui.css`, `tl-chat-seams.js` - **git-ignored build output, never commit it** |
-| Node | installed by `frontend-maven-plugin` into `ui/node/` (v20.10.0); a local Node 20 works too |
+| Node | installed by `frontend-maven-plugin` into `ui/node/` (v20.20.2 - 20.19 or newer, because jsdom 29 reaches `@exodus/bytes` through a `require()` of an ES module); a local Node 20.19+ works too. After a version bump, delete `ui/node/` once: the plugin swaps the binary but keeps the old bundled npm, which then fails with "Class extends value undefined is not a constructor or null". |
 | Dependencies | `marked` (MIT) + `dompurify` (Apache-2.0 or MPL-2.0) for markdown, `highlight.js` (BSD-3-Clause) for code blocks - core plus 13 registered grammars. All three are bundled into `tl-chat-ui.js`, so their licences travel with the WAR. |
 
 `mvn -pl tl-chat install` runs, in `generate-resources`: `npm install`, then `npm run typecheck`
-(`tsc --noEmit`), then `vitest run`, then `npm run build`. The type check is a build step of its own
-because the Vite library build strips types without checking them.
+(`tsc --noEmit`), then `npm run build`. The type check is a build step of its own because the Vite
+library build strips types without checking them. `vitest run` comes later, in the `test` phase -
+see below.
 
 `tl-react-bridge` is the host's module: the build keeps it external and the browser resolves it
 through a `<module-script specifier=…>`, so there is nothing in `node_modules` for a test run to
@@ -128,11 +218,35 @@ marker element in place of a mounted child control. React must still never be im
 in `ui/src` - it is the host's instance, and a second copy breaks every hook; `chat-rail.test.ts`
 pins that, which is what the missing dependency used to do.
 
-All four sit in `generate-resources` on purpose, so `-DskipTests` still runs the JS tests: that flag
-is for the Java suites, whose KB setup is what makes a build slow, while the whole vitest run is a
-second or two. Keeping it there means the bundle that goes into the WAR was never built from code
-its own tests reject - including on a `-DskipTests` build, which is how this module is usually
-built.
+The install, the type check and the bundle sit in `generate-resources`, because the bundle that goes
+into the WAR must not be built from code that does not compile. **The `vitest run` does not** - it
+is bound to the `test` phase, behind surefire (#450). Bound before `compile`, one broken frontend
+test aborted the module, and the state of its ~190 Java tests was then not merely unreported but
+unproduced: no `target/surefire-reports` directory existed at all. Behind surefire, a build always
+has both answers, and a failing JS test still fails the build before `package`, so nothing that its
+own tests reject is ever packaged or installed.
+
+`-DskipTests` still runs the JS tests. The execution pins `skipTests` to `false` for that: the
+frontend plugin honours `${skipTests}` for an execution in a testing phase, so without the pin the
+move would have switched the JS tests off in every build that does not say `-DskipTests=false`,
+which in this repository is the default. The flag is for the Java suites, whose KB setup is what
+makes a build slow, while the whole vitest run is a second or two. What switches the frontend steps
+off is `-Dskip.npm=true`.
+
+`composer.test.tsx` is the one suite that mounts a component into a live DOM - `jsdom`, asked for by
+that file's `@vitest-environment` docblock and by nothing else. It has to: what it guards only
+exists between a real commit and the passive effects that follow it, and `react-dom/server` performs
+neither. That is what the dependency buys, and it is why the run now takes ~3 s rather than ~2 s.
+
+**The composer writes no state per keystroke.** A keystroke is a discrete event, so React commits it
+on the microtask that follows; a `setState` that runs *after* that commit - from a passive effect,
+typically - is a nested update, and fifty in a row with no idle frame in between is React's
+"maximum update depth exceeded" (the minified error #185). A driver typing at zero delay, a paste,
+an IME burst and a held key all produce exactly that cadence, so an effect of the composer's that
+writes state on every `text` change makes the chat throw at the fifty-first character (#419). State
+that follows the draft is therefore **derived** at render time, not stored and re-synchronised by an
+effect; an effect may arm a timer, and the timer's own write is fine because it lands on an idle
+frame. `composer.test.tsx` holds that line for typing, paste, composition and the "@" picker.
 
 ### Dev loop
 
@@ -148,10 +262,11 @@ only after `mvn -pl tl-chat -am -DskipTests install` and a restart of the applic
 
 ### Embedding in the React view layer
 
-`view/AgentChatElement` is the `<agent-chat/>` view element (`trace-mode`, `prompt-improver-agent`);
-`view/AgentChatControl` is the `ReactControl` behind it. It registers the per-window
+`view/AgentChatElement` is the `<agent-chat/>` view element (`trace-mode`, `prompt-improver-agent`,
+`placeholder`); `view/AgentChatControl` is the `ReactControl` behind it. It registers the per-window
 `TaskProgressTracker` through `ChatViewBinding` and pushes the bootstrap state (`windowId`,
-`userName`, `welcomeName`, `traceMode`, `promptImprovementEnabled`) the browser component reads.
+`userName`, `welcomeName`, `traceMode`, `promptImprovementEnabled`, `placeholder`) the browser
+component reads.
 The component itself is registered as `TLAgentChat` in `ui/src/main.tsx`.
 
 The session list is no element of this module's own: it is a `<data-list>` of
@@ -264,6 +379,59 @@ the theme the app-bar's `<set-theme>` buttons select. Tokens the shipped themes 
 are aliased once at the top of the file with a fallback that is correct in both themes; add new ones
 there rather than hard-coding a colour.
 
+### An element measures itself, not the window
+
+Every responsive rule in `ui/src/styles.css` that is about *how much room the chat has* is a
+`@container` query, not a `@media` one (Issue #427). A chat placed by an application almost never
+owns the window - a shell's navigation and the page gutters take their share first - so a viewport
+query asks a box the chat does not have: it stayed wide while the conversation was 234 px, and the
+narrow layout arrived hundreds of pixels late or never.
+
+Two containers carry all of it:
+
+| Container | On | What it decides |
+|--|--|--|
+| `chat-shell` | `.tl-cockpit` - App's root, i.e. `<agent-chat>` | Session rail: column or drawer over the thread (≤ 1100 px). Artefact pane: column or sheet, and the icon strip (≤ 1279.98 px). |
+| `chat-stage` | `.stage` - the transcript plus the composer, in App **and** in a composed `<chat-conversation/>` | Thread gutters (≤ 1080 px), Enter hint long/short (≤ 26 rem), the auto-approve label (≤ 19 rem), the model name on its picker (≤ 18 rem), and whether the composer's controls wrap (≤ 16 rem). |
+
+Rules to know when touching this:
+
+- **The stage, not the cockpit, is what the composer measures.** The cockpit stays as wide as ever
+  while the rail and the artefact pane take their columns. Two class hacks used to stand in for that
+  width - `.tl-cockpit.has-pane` (short Enter hint) and `.tl-cockpit.has-document` (no auto-approve
+  label) - and neither ever reached a composed `<chat-conversation/>`, which has no cockpit at all.
+  Both are gone; `has-document` survives only for the one rule that is about a document being open
+  rather than about a width.
+- **`.tl-chat-rail`, `.tl-data-list` and `.tl-chat-dock__body` are deliberately not containers.** The
+  rail is as wide as its own strip plus column, so inline-size containment - which is what
+  `container-type` applies - would leave its contents contributing nothing and collapse it to 0 px.
+  The other two have nothing to ask: a list is as wide as the column it was placed in, and what the
+  dock's card size has to reach is the conversation inside it, which measures itself through
+  `.stage`.
+- **One number, one measurement, for the sheet.** `SHEET_MAX` in `side-pane.tsx` (1279.98) and the
+  `chat-shell` container query are the two halves of the same decision, because whether the pane is
+  a sheet is partly React state (the scrim, the splitter, the pane's own width). `App` measures its
+  root with a `ResizeObserver` and hands `narrow` down to `SidePane`; nothing in the bundle reads
+  `window.matchMedia` any more. Keep it that way - a JS half that asks the window and a CSS half
+  that asks the element disagree at every width where it matters.
+- **What stays a media query, and why.** `@media (hover: none)` and
+  `@media (prefers-reduced-motion: reduce)` are about the person's input device and their
+  preference, not about a box. `@media (max-width: 1100px)` on `.plus-popover` / `.model-popover` /
+  `.context-popover` / `.activity-panel` makes them full-bleed sheets on the bottom edge, which is a
+  phone idiom and so genuinely the screen's business - note only that `position: fixed` there now
+  resolves against `.stage`, because a query container is the containing block of its fixed
+  descendants, which is what puts the popover over the chat rather than over the application.
+- **Sizing inside a container query uses `cqi`, not `vw`** - the drawer's `min(20rem, 88cqi)` is 88 %
+  of the chat, which is the width it is spilling out of.
+
+**Browser support.** `container-type`, `@container` and the container query units (`cqi`) are
+Baseline **Widely available**, across browsers since **February 2023** (MDN). They raise no floor
+this product did not already have: the engine's React layer and this application's own shell are
+written with `:has()` - `.tlStack:has(> .tlPanel--fill)`, `button:has(.bi-moon-stars)` - which is
+Baseline Widely available only since **December 2023**, ten months later. The repo's own browser
+tests run current Chromium (`tools/web`, Playwright); there is no listed minimum browser beyond
+that.
+
 ### What the agent picker shows, and what it filters
 
 Two fields of the agent definition are written for a person and are the only ones the UI shows:
@@ -276,6 +444,24 @@ instruction addressed to a model and never reaches the browser.
 
 The summary is rendered **as authored**, on one line, cut off with an ellipsis where it does not fit.
 A summary that has to fit is shortened where it is written, not here.
+
+**Where an installation changes them (#403).** For the agents this product ships, both texts are
+configuration, and the place to change them is *Administration → Development → Service Editor →
+TopLogic-Agents and Skills*: each agent's entry now begins with **Display name** and **Summary**,
+above the model-facing description, with a field per language and the shipped text already in it.
+The technical `name` above them is not editable there, and that is the point of having a display
+name at all: other configuration, the skills, the security policy and every persisted session name
+the agent by its identifier, so renaming that is a migration while renaming the display name is a
+setting. Two things about the mechanism are worth knowing before using it. A saved change reaches
+users only when the service is restarted - *Administration → System → Services → Restart*, or the
+next application start; saving alone changes nothing a running agent does. And the editor saves the
+configuration of **every** agent as it currently reads, into
+`WEB-INF/autoconf/com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions.config.xml`, so from then
+on the installation carries its own copy of the shipped prompts and tool lists too; *Reset
+configuration* in the same editor deletes that file and gives the shipped texts back at the next
+restart. An installation that wants to change two texts and keep receiving the rest of every release
+writes that overlay file by hand instead, naming only the two properties it replaces - which is what
+the configuration overlay merge is for, and what `TestShippedAgentOverride` pins.
 
 `GET /chat/capabilities` is filtered by the acting account (#392): the agents and the MCP servers it
 lists are exactly what a run of that account accepts. The **models** are the one thing a single
@@ -341,7 +527,7 @@ Every field of `ChatExtensions` is optional.
 |--|--|--|
 | `railSections` | Fortschritt (this session's `createTask` / `updateTask` store, plus an open approval) and Kontext (language, agent, model, chat) | Extra sections between them, in array order. `accent` tints with `--button-primary` / `--layer-selected`; `icon` is what the 56 px strip shows. |
 | `contextFacts` | language, agent, model, chat | Extra lines in the Kontext section. |
-| `composerAddons` | none | `referenceCandidates(query)` is what typing **@** offers, and `extraMenuItems` adds rows to the `+` menu (their `action` gets the `ComposerApi`). |
+| `composerAddons` | none | `referenceCandidates(query)` is what typing **@** offers, `extraMenuItems` adds rows to the `+` menu (their `action` gets the `ComposerApi`), and `placeholder` is the host's own invitation for the empty field - see below. |
 | `messageAnnotations.render` | web-link popover | May call `openInPane` (invoice kind in the demo). |
 | `messageActions` | copy / rate / regenerate | Extra buttons under an answer. |
 | `contextHook` | none | `header` in the thread bar; `contextTag` prepended as `<context>…</context>` on send and regenerate. |
@@ -362,6 +548,32 @@ header the host fills (`title`, `version`, `actions`, close). The workspace is a
 pane narrows the thread rather than covering it; the splitter is draggable and arrow-key operable,
 and a width dragged in one mode is not imposed on the other. **Below** 1280 px both modes are a
 sheet over the thread.
+
+### The composer's invitation
+
+The empty field says "Frag mich etwas …", which is informal; an application whose every other
+surface addresses the user with *Sie* then has one "du" on its most-read control (#420). Both paths
+into the chat state their own sentence, and both feed one `Composer` prop:
+
+| Path | How |
+|--|--|
+| `<chat-conversation>` / `<agent-chat>` | `<placeholder><en>…</en><de>…</de></placeholder>`, or the key of a text in the application's bundle. The control resolves it in the acting account's language (`ChatViewBinding.resolveText`) and pushes the words, never the key. |
+| A host composing `App` | `extensions.composerAddons.placeholder`, already localised. |
+
+A configured `<agent-chat placeholder>` wins over the seam: it is the installation's decision, the
+seam is the host code's default.
+
+Two rules about it:
+
+- **It is the idle invitation only.** While the agent works the field keeps saying "Nächste
+  Nachricht schreiben …", because that sentence is about the run rather than about the application,
+  and a host that replaced it would be inviting the user to start what is already under way.
+- **It replaces both framework variants**, the one that offers `@` included. A host that wants its
+  sentence to mention `@` writes that into its own text.
+
+Before this the only way in was CSS - a host put its own text in front of
+`.token-input.is-empty::before { content: attr(data-placeholder) }` with a custom property. That was
+a host reaching into a framework pseudo-element; there is no reason to do it any more.
 
 ### The composer's reference tokens
 
@@ -395,10 +607,18 @@ you have takes such an id" applies.
 ### What an answer's citations look like
 
 A marker is a small grey number after the sentence. Hovering (or focusing) it shows the source's
-label, where it comes from, and the excerpt of the source with the cited passage highlighted -
-`cite`'s `passage` argument, kept only when the turn's own tool results really contain it. Clicking
-opens the source: `messageAnnotations.render` decides that for a host kind (returning nothing leaves
-the web default, which opens the page).
+kind icon and label, where it comes from and which one it is (the page's path, or the record's id),
+and what the source says: prose with the cited passage highlighted - `cite`'s `passage` argument,
+kept only when the turn's own tool results really contain it - or, for a kind declared
+`passage="false"`, the record's fields as a field list. Clicking opens the source:
+`messageAnnotations.render` decides that for a host kind (returning nothing leaves the web default,
+which opens the page).
+
+**The number the model writes is the conversation's, not the run's.** `CitationMarkers` continues
+the numbering across the sends of one chat (`resumeFrom(log)`), because the model reads its own
+earlier answers back and a counter restarting at 1 handed out a number that already meant another
+source - which the validator then deleted, and with it every citation of every later answer (#495).
+What the reader sees is renumbered per answer regardless.
 
 **Kinds are declared, not invented.** The framework knows `web`; a host declares its own kinds once
 through the `CitationKinds` service (name, one-line description, where the id comes from, whether a
@@ -411,6 +631,10 @@ Under an answer sits a collapsed `Quellen · n zitiert` pill with that answer's 
 `Quellen` section is the session-wide list: every source cited in this chat, with the marker numbers
 that point at it - a number scrolls to its answer, the row opens the source, and a filter appears
 once the list is long. `sourceTabs` puts a host list beside it as further tabs.
+
+Its **badge** is not the length of that list: it counts what the *newest answer* cited
+(`latestAnswerSources`). A badge over a list that only grows sat on the Quellen icon for the rest of
+the conversation and could not be dismissed (#495); an answer that cited nothing now carries none.
 
 Layout preferences (`railOpen`, `paneWidth`, `badgeSeen`, the per-section collapse) are bootstrapped
 from PersonalConfiguration via `ChatViewBinding.writeLayoutState` and written through
@@ -519,7 +743,7 @@ the input almost always sit together, so they are one placeable box, while the s
 rail stay separate because those genuinely want independent placement. It honours its configuration
 flags as render guards on the existing `Thread` and `Composer` props.
 
-#### The six channels of `<chat-conversation>`
+#### The eight channels of `<chat-conversation>`
 
 | Channel | Direction | Value |
 |--|--|--|
@@ -529,6 +753,11 @@ flags as render guards on the existing `Thread` and `Composer` props.
 | `model` | two-way | The model's **name** (`String`). |
 | `effort` | two-way | The effort level (`String`), one of the levels the selected model offers; empty for none. |
 | `mcp-servers` | two-way | The attached servers' **names**, a `Collection<String>` (one name on its own is read as a set of one). |
+| `draft` | two-way | The text standing unsent in the composer (`String`, or a `ResKey` on the way in). |
+| `reference` | in | A model object, inserted into the draft as one atomic reference token. |
+
+`present` is not a seventh: it is a *list* of channels this element opens to the agent rather than
+a channel the element itself reads or writes - see "the agent writes a channel" below.
 
 The four turn settings carry **names**, not model objects, and that is a fact about this product
 rather than a shortcut: only an agent an installation authored in the knowledge base is a
@@ -554,6 +783,116 @@ own setting is written back onto the channel - so the channel never claims a set
 not showing, and the next send cannot be answered 403 for something the user never chose.
 `TestChatTurnChannels` pins it against the shipped defaults, beside `TestChatRunAccess`.
 
+#### The agent writes a channel: `present`
+
+`present` is the only way an agent reaches the page it is on, and the page decides how much of
+itself to offer:
+
+```xml
+<chat-conversation input="chatSession" present="paneObject"/>
+```
+
+| | |
+|--|--|
+| The tool | `present(ids, channel)` - `com.top_logic.ai.chat.tools.PresentTool`, registered as `present.present` from `tl-chat.conf.config.xml`, so every host of this module has it. Classified READ / `interaction`: it reads business data and changes page state, not the knowledge base, so there is nothing to approve - and the approval card would sit in the very page it is filling. |
+| The ids | The identifiers tool results carry as `label [id:TID]` (`ReadFilter.withId`, read back by `TidResolver.objectId`). One id puts the object on the channel as itself; several put a `List`. All or nothing - one unreadable id refuses the whole call, because a page showing three of four objects is a page that lies about what the user is looking at. |
+| The rights | Every id resolves through `TidResolver` with the **acting user's** `ModelSecurity`. An object they may not read is refused exactly like one that does not exist. A tool never exceeds its user. |
+| The allow list | **Deny by default.** `ChatConversationControl` resolves each `present="…"` entry and registers it on the `ChatViewBinding` of its (window, chat-id); the tool looks the name up across the bindings of that *window* - which is what a run knows about itself, the chat id being something the tool layer is never told. **So a window's allow list is the union of its chats' lists**: a page and a `<chat-dock>` that each name a channel means a run in either may write both, and a host that needs them kept apart gives them separate windows. A name nobody registered is refused with the list of names that exist. The registration ends with the control, so a view that is gone is not writable. |
+| The window | The value is written in the window's sub-session, **under its request lock**, through `AgentViewRefreshService.inWindow` - a `ReactControl`'s state map is a plain `HashMap`. A run with no window (headless, TL-Script, the scheduler) says "no page is attached" and does nothing; that is a fact about the run, and is deliberately a different sentence from "this page allows nothing". |
+
+Which channel a host names is the whole configuration surface: the agent points at data, and what
+that data *looks like* is whatever element reads that channel. `TestPresentTool` drives the real
+path - a registered window, a registered channel, a listener standing in for the page.
+
+#### The draft as a channel (#440)
+
+A page button could not put text into the chat, so consulting built a view action that found the
+chat control, reached the browser and typed into the composer with a DOM hack (`SendToCopilotAction`,
+issue #414). One element changing another element's editable state is what a channel is for, and
+`draft` is that channel:
+
+```xml
+<generic-command image="css:bi bi-chat-left-text" input="invoice">
+    <label><en>Ask about this</en><de>Dazu fragen</de></label>
+    <execute-script><![CDATA[i -> {"en": "Please explain …", "de": "Bitte erkläre …"}.internationalize()]]></execute-script>
+    <write-channel name="chatDraft"/>
+</generic-command>
+```
+
+Two existing engine actions, no new class. What to know about it:
+
+- **Out** the composer reports its text on a typing pause (300 ms, `createDraftReporter` in
+  `ui/src/draft.ts`), when the field loses the focus, and immediately before a send. A channel write
+  is a round trip and a keystroke is not worth one; blur and send do not wait, because those are the
+  moments a host acts on what it reads.
+- **In** a write replaces the whole draft, focuses the field and puts the caret behind the text. The
+  user still presses send - there is no `send` mode, deliberately: reading the sentence before it
+  goes is worth one keystroke.
+- A write may be a `ResKey`, because `{"en": …, "de": …}.internationalize()` is the obvious way to
+  build a sentence in TL-Script; the control resolves it in the user's language
+  (`ChatConversationControl.draftText`). `null` - what an unwritten channel holds - says nothing and
+  leaves the composer alone; the empty string clears the draft.
+- It follows a **write**, not the standing value, the same way the turn settings do, and for the
+  same reason. The echo is recognised in the browser: what this element last published is
+  remembered, so a report of "Was" arriving back two keystrokes later does not put the composer back
+  two keystrokes. The one place the standing value *is* applied is `onAttach` - a host may have
+  written the draft while this element was on another page of the shell and its browser component
+  was gone.
+- `reference` is the "quote this" half: a model object written to it becomes one atomic reference
+  token at the caret, the same token the `@` picker inserts, so it serialises to the same
+  `<quote/>` on send. The token carries the object's label and its stable id, and the quoted text a
+  nested `<mention>`'s `text` expression computes - without a `<mention>` the label is the quoted
+  text too, because the element has nothing else to say about the object. It is read only: the
+  tokens are part of the draft `draft` already carries.
+- A channel notifies nobody when it is written the value it already holds, so writing the **same**
+  object to `reference` twice in a row inserts one token. (A, B, A does insert three: the control
+  numbers its writes so the browser can tell the third from the first.)
+
+`TestChatConversationConfig` holds the two options, `draft.test.ts` the debounce, and the
+`chat-store.test.ts` "composer seam" block the two calls a write turns into.
+
+#### Writing a channel across a view boundary
+
+The dock case of #440 - a button on one page writing the draft of a chat that lives in another view -
+comes down to two questions about the engine. Both are answered, with the code:
+
+1. **Can a nested `<view-ref>` view write a channel of the enclosing view?** Yes, but only through
+   an explicit `<bind>`. `ReferenceElement.createControl` calls `parentContext.withIsolatedChannels()`
+   (`ReferenceElement.java:118`), which is a `DefaultViewContext` with a **fresh** channel map
+   (`DefaultViewContext.java:207-211`), so `resolveChannel` in the child cannot find a parent channel
+   by name and throws "Unknown channel" (`DefaultViewContext.java:228-236`). Each `<bind channel="x"
+   to="y"/>` then registers the *parent's* channel instance under the child's name
+   (`ReferenceElement.java:121-124`), and `ViewElement.createControl` skips creating a local one for
+   a name that is already there (`ViewElement.java:139-142`) - so the child view may declare the
+   channel for its standalone case and still get the parent's instance inside the shell. Both sides
+   hold the same object, so the write travels in either direction.
+2. **Can `<app-shell>`'s view declare channels that its pages see?** Directly, yes: `AppShellElement`
+   never isolates - its header, content and footer contexts come from `withErrorSink` / `withScope` /
+   `withContextMenuOpener` / `withChildSlotPath` (`AppShellElement.java:144-163`), each of which
+   passes the **same** `_channels` map on, as does `childContext` (`DefaultViewContext.java:104-109`).
+   `<sidebar>` is no different (`SidebarElement.java:441`). So an element written straight into the
+   shell's own view - the `<chat-dock>` in the footer, for instance - shares the shell's channels with
+   everything else in that file. What does *not* see them is a page, because a page is reached through
+   `<view-ref>`, and that is question 1 again.
+
+The demo shows all three positions on one channel. `app.view.xml` declares `chatDraft`; the dock's
+`<chat-conversation draft="chatDraft"/>` names it with **no** `<bind>`, because the dock is in that
+same file, while the chat page and the Belege page each get it through one `<bind>` on their
+`<view-ref>`. The Belege page's "Dazu fragen" then reaches both: open the dock on that page and the
+question is in its composer; switch to the Chat page instead and it is in that one's.
+
+Two conversations on one draft channel work here only because the two are **never mounted at once** -
+a dock unmounts its content while a `<chat-conversation/>` of its chat id is on the page (see
+`chat-dock.tsx`). A composer holds its own text and reports it, so two that are mounted together
+would overwrite each other's drafts; that is a property of the channel, not of the dock. The one that
+mounts applies what stands on the channel (`onAttach`), which is what makes the draft follow the user
+from the dock to the page and back.
+
+So there is no engine gap for the dock case: a dock in `<app-shell><footer>` reaches the shell's
+channels with no binding at all, and a page reaches them with one `<bind>` per `<view-ref>`. What the
+engine has no answer for is *opening* the dock from the page - that is a second channel and a dock
+element that follows one, not a channel-scope question.
+
 #### Configuring `<chat-conversation>` - easy vs advanced
 
 An application configures this element in the design view. Its options fall into three tiers:
@@ -563,8 +902,9 @@ An application configures this element in the design view. Its options fall into
   trace picker), `citations` (markers *and* the per-answer sources pill - off removes the whole
   citation surface from the transcript), the nested `<actions>` (`copy`/`rate`/`regenerate`/
   `timestamp`), the nested `<controls>` pickers, `placeholder`, `prompt-improver-agent` (an agent
-  dropdown), `chat-id`, and the six channels (`input`, `busy`, `agent`, `model`, `effort`,
-  `mcp-servers`). The transcript's rail badge button is *not*
+  dropdown), `chat-id`, the eight channels (`input`, `busy`, `agent`, `model`, `effort`,
+  `mcp-servers`, `draft`, `reference`), and `present` - the channels the agent may write, deny by
+  default. The transcript's rail badge button is *not*
   configured: it appears exactly when a `<chat-rail>` with the same `chat-id` is mounted, which the
   rail announces to the shared store (`railMounted`), so a rail that mounts after the conversation
   still makes the button appear.
@@ -580,7 +920,119 @@ An application configures this element in the design view. Its options fall into
   set shaped as the browser's `ReferenceCandidate`, and the existing `@` picker filters it client-side.
   A `<mention>` wins over `reference-source`. Each mention carries the object's stable id; the framework
   ships no tool that resolves it, so a host that wants the id to mean more gives its agent such a tool
-  (see the `<reference>` prompt fragment).
+  (see the `<reference>` prompt fragment). The nested `<context>` binding is the same skill again -
+  see below.
+
+#### What a page states about the situation: `<context>`
+
+```xml
+<chat-conversation input="chatSession">
+    <context>
+        <inputs><input channel="project"/></inputs>
+        <fact name="Project" stable="true"><value>p -> $p.label()</value></fact>
+        <fact name="Selection" stable="false"><value>p -> ifElse(isEmpty($p), "nothing", $p.label())</value></fact>
+    </context>
+</chat-conversation>
+```
+
+Bound the way `<data-list>` binds its rows: the `<inputs>` are channels of this page and their
+current values are the **leading arguments** of every fact expression. `ChatConversationControl`
+evaluates them on the server, in the acting user's context, and re-evaluates them whenever an input
+changes; the browser carries them back with `POST /chat/send` and `POST /chat/regenerate`, and
+`ChatProcessor.sendMessage` binds them for the run (`RunFactsBinding`), which is what also reaches a
+delegate and a subagent.
+
+**This is the seam that replaces a context header on the message text** (#406, #428): the user's
+text stays exactly what the user wrote, in the bubble, in the log and in the request.
+
+**`stable` decides where a fact is rendered, and nothing else does.**
+
+`stable="true"` (the default) means the value holds for the whole conversation: it goes into the
+`{{context}}` section of the run's environment block, in the system prompt. That block sits in front
+of every request of the conversation and has to stay byte-identical, or the provider's prompt cache
+misses on every turn - which is why nothing that changes may be in it.
+
+`stable="false"` means the value changes while the user talks - the open object, the selected row,
+the section being read. Such a fact goes into the per-turn `<turn-context>` block, which travels in
+the turn itself as its own content block of the user message, ahead of the user's text:
+
+```
+<turn-context>
+Turn: 3
+Time: 14:32 (Europe/Berlin)
+Open invoice: RE-2026-0042
+</turn-context>
+```
+
+The turn number and the time of day are added by the framework; they change per turn by nature,
+which is exactly why the environment block states the date at day granularity and no time at all.
+The block is composed per run (`TurnContext`, from the same facts), attached by `AgentLoop` where the
+request is built - so a compaction cannot lose the newest one - and stored on the turn
+(`Turn#turnContext`), apart from the user's text: the bubble shows what the user wrote, the
+transcript and the run detail show both. A page that states no per-turn fact gets no block at all.
+See `tl-ai-core/doc/environment-block.md`.
+
+A fact that throws is sent empty with a WARN rather than taking the page down - the user is in the
+middle of a sentence.
+
+#### The one line for the selection: `<selection/>`
+
+The question a user asks a chat beside a page is almost always about what they have open, and
+expressing that as `<fact>`s means knowing how this product spells an object identifier. It is one
+line instead (#494):
+
+```xml
+<chat-conversation input="chatSession">
+    <selection channel="selectedInvoice"/>
+</chat-conversation>
+```
+
+which states, as a per-turn fact of the `<turn-context>` block:
+
+```
+Selected object: Hosting August [type:tl.ai.demo.imageclassification:Invoice] [id:GenericObject:12345]
+```
+
+| | |
+|--|--|
+| `channel` | Mandatory. The channel holding what the user has selected - one object, several, or nothing. A channel of *this* view; a page of a shell hands its selection to a dock in the footer with a `<bind>` on the `<view-ref>`, exactly the way it hands over the draft. |
+| `name` | What the fact is called in front of the model. Default `Selected object`; name what the page actually holds where that says more. |
+| `<label>` | TL-Script naming one object. Empty uses the application's own label - which is what the user sees on their screen, and therefore the right answer to a question about it. |
+
+**Three things, not one**, and each is load-bearing (`ChatSelection`): the label answers "which one
+do I have open?", the qualified type name says what kind of thing it is, and the identifier is the
+same `label [id:TID]` form every tool result writes, so the model feeds it straight into the next
+tool call and `TidResolver` reads it back. A label alone leaves the agent searching for the object
+the user is looking at, which is the state #494 was filed about.
+
+Never stable, and it cannot be configured to be: a selection is the value that changes most often in
+a conversation. Nothing selected says `none` rather than nothing at all, and a selection of more than
+`ChatSelection.MAX_NAMED` (20) objects names that many and counts the rest - a stray Ctrl+A on a
+table must not put ten thousand identifiers in front of the model. The selection is stated **before**
+the `<context>` facts, because the block is read top down.
+
+**A dock states it too, and should.** `<chat-dock>` has no `<selection>` of its own - it frames a
+`<chat-conversation>`, and that is where the line goes. The dock is where a user asks about the page
+*behind* it, so the page has to hand its selection over: in `tl-ai-demo` the shell declares a
+`pageSelection` channel, the Belege page's `<view-ref>` binds its own `selectedInvoice` onto it, and
+the dock's conversation states that channel. Where a shell has no channel naming the active page -
+which is where the engine stands today - name the fact after the list it reads (`Selected invoice`)
+rather than after "the selection", because the value survives the user navigating away.
+
+**State them from every place one conversation is reachable from.** A page that declares a
+`<context>` and a dock over the same conversation that declares none flips the environment block
+between the turns of one chat: the stable facts *and* the `{{turn_context}}` sentence are part of
+the system prompt, and a prompt that changes mid-conversation misses every provider's prompt cache.
+The demo's dock therefore repeats the page's `Application` fact word for word.
+
+**What the agent remembers about the user** (#439) rides in the same block, under its own heading,
+and is read **once per conversation** for the same prompt-cache reason: `ChatProcessor.sendMessage`
+asks `ChatSessionManager.getActiveMemories` when the first message of a conversation is sent, keeps
+the answer on the session state and binds it for every run of that conversation
+(`UserMemoryBinding`). A memory the agent writes in turn 3 therefore shows up in the user's memory
+list at once, and in the agent's block in the *next* conversation. The rail section that lists them
+is an ordinary `<data-list>` over `tl.ai.execution:UserMemory` filtered by `owner == currentUser()`,
+with a Forget command that calls `aiMemoryDelete`. See `tl-ai-core/doc/environment-block.md`.
 
 Coupling to know: elements share one conversation only when they agree on a chat id - which is what
 the enclosing `<chat>` is for - and a session list feeds the conversation over a **two-way** channel — `<data-list selection>` ↔
@@ -603,7 +1055,14 @@ the pane's chrome, and every section's body is a view element the application co
         <label><en>Invoices</en><de>Rechnungen</de></label>
         <data-list selection="paneObject" …/>
     </section>
-    <pane><form input="paneObject"/></pane>
+    <pane><form input="paneInvoice"/></pane>
+    <list-pane>
+        <table types="my.module:Invoice" selection="paneObject">
+            <columns><column attribute="date"/><column attribute="description"/>…</columns>
+            <inputs><input channel="paneInvoices"/></inputs>
+            <rows>shown -> $shown</rows>
+        </table>
+    </list-pane>
 </chat-rail>
 ```
 
@@ -614,9 +1073,30 @@ produced or a live view of its browser without this element learning about any o
 `registerRailSection` is gone, replaced by nesting). `@` sources, `+` menu items, citation renderers
 and message actions are still registered from TypeScript and referenced by name from XML.
 
-The `input` channel is the rail's second face: while it holds an object the `<pane>` replaces the
-section column, with the object available to the element inside over the same channel; closing the
-pane writes `null` back. Every child stays mounted - a collapsed section and an unopened pane are
+The `input` channel is the rail's second face: while it holds something the pane replaces the
+section column, with the value available to the element inside over the same channel; closing the
+pane writes `null` back. **One** object shows the `<pane>`, **several** show the `<list-pane>` - a
+record is a form and a set of records is a list, and no one element renders both (`<form>` resolves
+its input to one object). A rail that configured only one of the two uses it for whatever stands
+there. The pane's title is the object's label, or the count for a set.
+
+**Make the `<list-pane>` a `<table>`, not a list of labels** (Issue #493). The set that lands there
+is what the agent `present`ed, and the answer beside it says what those objects *are* - so a pane
+that only repeats their labels says less about them than the transcript does. Two things the
+element needs, and both are about *when* the pane is built:
+
+- **Name the row type** (`types=`) or write explicit `<column>`s. `<table>` resolves its columns
+  once, when the control is built, from `types` or else from the rows present at that moment - and
+  the rail builds both pane children **up front**, while the channel is still empty, so a `<table>`
+  naming neither fails at page build with *"A `<table>` requires either explicit `<column>`s or a
+  resolvable row type to derive them from"*. Naming the type is also what gives the columns their
+  model labels and offers the type's remaining attributes in the column selection.
+- **Name a `selection` channel** - the pane's own `input` channel - if a row click should open that
+  object: one object on that channel is what switches the pane to the `<pane>` beside it. The
+  drill-down is one-way; closing the pane returns to the sections, not to the table.
+
+A pane whose objects are **not** of one type has no table to build: keep the `<data-list>` there,
+which renders any object by its label. Every child stays mounted - a collapsed section and an unopened pane are
 hidden, not dropped - so a section keeps reporting its badge while the rail is closed, which is
 exactly when the badge matters. Below 1280 px the composed rail stays a column (it has no workspace
 grid to spread a sheet over); `App`'s sheet is unaffected. Two rails on one `chat-id` are not
@@ -638,31 +1118,38 @@ a mounting point, nothing more: the dock is `position: fixed`, so it takes no ro
 | `<label>` | ResKey | The launcher's tooltip and accessible name; empty falls back to the chat's own wording. |
 | `open` | boolean, default `false` | First-load state, and nothing more. Not remembered, no channel. |
 
-**One conversation per window, and that is the transport talking.** Every `/chat/*` call carries a
-`windowId` and nothing else: `ChatServlet` resolves one `TaskProgressTracker` per window, holding
-one active session and one processing state, and `ChatEventHandlerRegistry` addresses one handler
-per tracker. Two chat ids that each mount a `<chat-conversation>` in one window therefore attach to
-the same run - each send switches the window's active session, and each transcript renders the
-other's tokens. Three things follow, and all three are in this PR:
+**A window carries as many conversations as it shows (#502).** Every `/chat/*` call names its
+window **and** its conversation (`windowId` + `conversation`, the browser's own chat id), and
+`ChatSessionRegistry` holds a `TaskProgressTracker` - one active session, one processing state - for
+each of them; `ChatEventHandlerRegistry` is keyed by tracker, so each conversation gets its own SSE
+handler by construction. Until #502 the tracker was one per window: two chat ids that each mounted a
+`<chat-conversation>` attached to the same run, each send switched the window's active session, the
+second conversation to send took the first one's stream, and the first waited for an answer that
+never arrived. `TestChatConversationRouting` pins the new shape, including that a request naming a
+conversation the window does not show is answered `stale_window` rather than served from another
+one.
 
-- **A dock joins the page's chat id, it does not invent one.** `tl-ai-demo` writes `chat-id="chat"`
-  on the dock *and* on the `<chat>` inside it, so the dock is a second **place** for the one
-  conversation rather than a second conversation.
-- **The dock stands down while a page shows that conversation.** `<chat-conversation>` registers
-  itself with the store (`registerConversation`, `insideDock` from `ChatDockScope`), and a dock
-  whose `conversationsOutsideDock > 0` renders nothing at all - no panel, no launcher - and
-  *unmounts* its content, so the rail inside it stops competing with the page's for the one
-  remembered layout.
-- **`ChatJoinLog` names the shape.** Two chat ids each mounting a `<chat-conversation>` in one
-  window is a WARN, whatever the spelling: "the chat transport is one conversation per window".
+Two keys travel, and they are **not** the same string: `conversation` is which chat of the window is
+asking, and `chatId` on `PUT /chat/preferences` is the key a *layout* is stored under. They agree
+for every element of a named chat; for `<agent-chat>` the layout key is empty (the one-element
+chat's own place) while the conversation is the control's id, which is exactly how the browser keys
+its store. Two `<agent-chat>` elements in one window are therefore two conversations on the server
+as well as two stores in the browser.
 
-Two guards sit behind that rule rather than in place of it: `eventBelongsToChat` drops a
-run-scoped SSE frame that names a session other than the open one (inert while the server stamps
-none, which is most of them today), and both the remembered session (`tl-chat-session:<chat-id>` in
-`sessionStorage`) and the run snapshot the context ring reads (`ChatHandle.runs`) are per chat id.
-The module-level `runStore` export is still written, as the single-chat host seam it has always
-been; nothing in this bundle renders from it. **Making the transport itself per `(window, chat-id)`
-is a ticket of its own** - until it lands, a window shows one conversation.
+**The dock still stands down while a page shows its conversation** - but for a different reason now.
+`tl-ai-demo` writes `chat-id="chat"` on the dock *and* on the `<chat>` inside it, so the two are the
+**same** conversation in two places; showing both at once would give one `draft` channel two
+composers and one remembered layout two rails. `<chat-conversation>` registers itself with the store
+(`registerConversation`, `insideDock` from `ChatDockScope`), and a dock whose
+`conversationsOutsideDock > 0` renders nothing at all - no panel, no launcher - and *unmounts* its
+content. A dock on a chat id of its own needs none of that.
+
+Two guards sit beside it: `eventBelongsToChat` drops a run-scoped SSE frame that names a session
+other than the open one - a run this conversation has since moved away from (inert while the server
+stamps none, which is most of them today) - and both the remembered session
+(`tl-chat-session:<chat-id>` in `sessionStorage`) and the run snapshot the context ring reads
+(`ChatHandle.runs`) are per chat id. The module-level `runStore` export is still written, as the
+single-chat host seam it has always been; nothing in this bundle renders from it.
 
 Three things are load-bearing:
 
@@ -699,4 +1186,4 @@ number in the answer alone.
 
 - Active chat state lives in session memory; completed sessions persisted to KnowledgeBase
 - SSE connections have no timeout; stay open until client disconnects
-- Background AI tasks run in cached thread pool (`ChatProcessor.BACKGROUND_EXECUTOR`)
+- Background AI tasks run in `ChatRunExecutor`, which carries as many as arrive unless `<run-limits chat-workers>` bounds it and queues behind a ceiling it has; a send with no room - only reachable with a bounded `chat-queue` or a per-account cap - is answered **429** with `{"status":"rejected","reason":"…"}`, which the React client throws as a `RefusedError` and the composer shows in the notice strip

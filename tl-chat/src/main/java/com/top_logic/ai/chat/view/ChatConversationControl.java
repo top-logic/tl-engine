@@ -17,8 +17,12 @@ import java.util.function.Consumer;
 
 import com.top_logic.ai.chat.view.ChatConversationElement.Actions;
 import com.top_logic.ai.chat.view.ChatConversationElement.Config;
+import com.top_logic.ai.chat.view.ChatConversationElement.Context;
 import com.top_logic.ai.chat.view.ChatConversationElement.Controls;
+import com.top_logic.ai.chat.view.ChatConversationElement.Fact;
 import com.top_logic.ai.chat.view.ChatConversationElement.Mention;
+import com.top_logic.ai.chat.view.ChatConversationElement.Selection;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.provider.MetaLabelProvider;
@@ -54,6 +58,19 @@ import com.top_logic.util.TLContext;
  * account may not be given is refused by {@link ChatTurnChannels} and the composer's own value is
  * written back, so the channel never claims a setting the composer is not showing.
  * </p>
+ *
+ * <p>
+ * The {@code present} option goes the other way: the channels it names are registered on the
+ * binding, which is what makes them reachable from an agent run in this window
+ * ({@link com.top_logic.ai.chat.tools.PresentTool}). Deny by default, and the registration ends
+ * with this control.
+ * </p>
+ *
+ * <p>
+ * The {@code draft} channel carries the composer's unsent text the same way, debounced in the
+ * browser; {@code reference} is read-only and turns a written model object into one atomic reference
+ * token in that draft.
+ * </p>
  */
 public class ChatConversationControl extends ReactControl {
 
@@ -71,7 +88,21 @@ public class ChatConversationControl extends ReactControl {
 
 	private final ViewChannel _mcpChannel;
 
+	private final ViewChannel _draftChannel;
+
 	private final boolean[] _applyingFromChannel = { false };
+
+	/**
+	 * How many objects have been written to the {@code reference} channel, so the browser can tell a
+	 * new write from the one it has already inserted.
+	 *
+	 * <p>
+	 * A channel does not notify when it is written the value it already holds, but it does notify for
+	 * A, B, A - and the third write pushes the same token as the first. Without a counter the browser
+	 * would see unchanged state and insert nothing.
+	 * </p>
+	 */
+	private int _referenceWrites;
 
 	/**
 	 * What the composer last reported it is set to, so a channel write can be judged against the
@@ -95,6 +126,16 @@ public class ChatConversationControl extends ReactControl {
 	private QueryExecutor _mentionText;
 
 	private int _mentionLimit;
+
+	/**
+	 * What this page states about the situation, in the order it reaches the model: the
+	 * {@code <selection/>} first, then the {@code <context>} facts as configured. Empty when the
+	 * element states nothing, which is every one of them until it is configured.
+	 */
+	private final List<ContextEntry> _facts = new ArrayList<>();
+
+	/** The channels whose values are the leading arguments of every fact expression. */
+	private final List<ViewChannel> _factInputs = new ArrayList<>();
 
 	/** Creates a {@link ChatConversationControl}. */
 	public ChatConversationControl(ViewContext context, Config config) {
@@ -128,7 +169,7 @@ public class ChatConversationControl extends ReactControl {
 
 		// Composer.
 		putState("promptImprovementEnabled", Boolean.valueOf(configuredImprover != null));
-		putState("placeholder", resolvePlaceholder(config.getPlaceholder()));
+		putState("placeholder", ChatViewBinding.resolveText(config.getPlaceholder()));
 		String referenceSource = blankToNull(config.getReferenceSource());
 		putState("referenceSource", referenceSource == null ? "" : referenceSource);
 		// A model-bound <mention> supplies the @ candidates declaratively and wins over the name above.
@@ -136,6 +177,14 @@ public class ChatConversationControl extends ReactControl {
 		if (mention != null) {
 			setupMention(context, mention);
 		}
+		// What this page states about the situation. Evaluated here - on the server, in the acting
+		// user's context - and pushed to the browser, which sends it back with every message. The
+		// user's own text is never touched by any of this.
+		// The selection first, because it is the one thing the user is most likely asking about, and
+		// the block is read top down.
+		setupSelection(context, config.getSelection());
+		setupContext(context, config.getContext());
+		publishFacts();
 		List<String> menuItems = config.getMenuItems();
 		putState("menuItems", menuItems == null ? List.of() : List.copyOf(menuItems));
 		Controls controls = config.getControls();
@@ -170,6 +219,41 @@ public class ChatConversationControl extends ReactControl {
 		_modelChannel = followTurnChannel(context, config.getModel(), this::applyModelFromChannel);
 		_effortChannel = followTurnChannel(context, config.getEffort(), this::applyEffortFromChannel);
 		_mcpChannel = followTurnChannel(context, config.getMcpServers(), this::applyServersFromChannel);
+
+		allowPresenting(context, config.getPresent());
+
+		// The composer's unsent text, and the objects a host puts into it as reference tokens. Both
+		// follow the same rule as the turn settings: a *write* is what the composer follows.
+		_draftChannel = followTurnChannel(context, config.getDraft(), this::applyDraftFromChannel);
+		// Read-only: a token the composer holds is part of the draft the channel above already
+		// carries, so nothing is ever written back and the channel itself is not kept.
+		followTurnChannel(context, config.getReference(), this::applyReferenceFromChannel);
+	}
+
+	/**
+	 * Opens the configured channels to an agent running in this window - the {@code present} tool's
+	 * allow list.
+	 *
+	 * <p>
+	 * Deny by default: what is not named here cannot be reached from a run, and the registration is
+	 * undone when this control is disposed, so a channel of a view that is gone is not writable
+	 * either. The channels are resolved here, in the view context, because that is the only place
+	 * that has one - the agent thread knows a name and nothing else.
+	 * </p>
+	 */
+	private void allowPresenting(ViewContext context, List<ChannelRef> refs) {
+		if (refs == null || refs.isEmpty()) {
+			return;
+		}
+		for (ChannelRef ref : refs) {
+			if (ref == null) {
+				continue;
+			}
+			String name = ref.getChannelName();
+			ViewChannel channel = context.resolveChannel(ref);
+			_binding.allowPresenting(name, channel);
+			addCleanupAction(() -> _binding.denyPresenting(name, channel));
+		}
 	}
 
 	/**
@@ -218,6 +302,10 @@ public class ChatConversationControl extends ReactControl {
 		reapply(_modelChannel, this::applyModelFromChannel);
 		reapply(_effortChannel, this::applyEffortFromChannel);
 		reapply(_mcpChannel, this::applyServersFromChannel);
+		// Deliberately re-applied: a host may have written the draft while this element was on
+		// another page of the shell and its browser component was gone. The composer's own text is
+		// what stands on the channel by then, so re-applying it is otherwise a no-op.
+		reapply(_draftChannel, this::applyDraftFromChannel);
 	}
 
 	private static void reapply(ViewChannel channel, Consumer<Object> apply) {
@@ -311,6 +399,99 @@ public class ChatConversationControl extends ReactControl {
 		// No field for the effort: no role gates it, so there is never a refusal to correct.
 		setChannel(_effortChannel, stringArg(args, "effort"));
 		setChannel(_mcpChannel, _mcpServers);
+	}
+
+	/**
+	 * Reports the text standing unsent in the composer onto the {@code draft} channel.
+	 *
+	 * <p>
+	 * The browser decides when: on a typing pause, when the field loses the focus, and immediately
+	 * before a send. A channel write is a round trip, and a keystroke is not worth one.
+	 * </p>
+	 *
+	 * @param args
+	 *        {@code text} is the whole draft, references serialised as they are on send.
+	 */
+	@ReactCommandHandler(value = "publishDraft", params = {
+		@ReactParam(name = "text", type = "string", description = "The composer's unsent text.")
+	})
+	public void publishDraft(Map<String, Object> args) {
+		if (_draftChannel == null || _applyingFromChannel[0]) {
+			return;
+		}
+		_draftChannel.set(args == null ? "" : String.valueOf(args.getOrDefault("text", "")));
+	}
+
+	/**
+	 * Pushes a draft written from outside at the composer, which replaces its text with it.
+	 *
+	 * <p>
+	 * {@code null} - what an unwritten channel holds - says nothing and leaves the composer alone. An
+	 * empty string is an instruction: it clears the draft.
+	 * </p>
+	 */
+	private void applyDraftFromChannel(Object value) {
+		if (value == null) {
+			putState("draftText", null);
+			return;
+		}
+		applying(() -> putState("draftText", draftText(value)));
+	}
+
+	/**
+	 * A written value as the text the composer is to show.
+	 *
+	 * <p>
+	 * A {@link ResKey} is resolved rather than printed, because the obvious way to write a sentence
+	 * from TL-Script is {@code {"en": …, "de": …}.internationalize()} and the user is to read their
+	 * own language, not a resource key. Anything else is labelled the way the transcript labels it.
+	 * </p>
+	 */
+	private static String draftText(Object value) {
+		if (value instanceof ResKey key) {
+			return Resources.getInstance().getString(key);
+		}
+		if (value instanceof CharSequence text) {
+			return text.toString();
+		}
+		return label(value);
+	}
+
+	/**
+	 * Turns a model object written to the {@code reference} channel into one atomic reference token
+	 * for the composer to insert at the caret.
+	 *
+	 * <p>
+	 * The token is the same shape the {@code @} picker inserts, so it serialises to the same
+	 * {@code <quote/>} on send. Anything that is not a model object clears the pending write.
+	 * </p>
+	 */
+	private void applyReferenceFromChannel(Object value) {
+		TLObject object = referencedObject(value);
+		if (object == null) {
+			putState("referenceWrite", null);
+			return;
+		}
+		Map<String, Object> fields = tokenOf(object);
+		if (fields.isEmpty()) {
+			putState("referenceWrite", null);
+			return;
+		}
+		Map<String, Object> token = new LinkedHashMap<>(fields);
+		token.put("seq", Integer.valueOf(++_referenceWrites));
+		applying(() -> putState("referenceWrite", token));
+	}
+
+	/** The object a host wrote, also when a selection channel handed over its single row. */
+	private static TLObject referencedObject(Object value) {
+		if (value instanceof TLObject object) {
+			return object;
+		}
+		if (value instanceof Collection<?> many && many.size() == 1) {
+			Object single = many.iterator().next();
+			return single instanceof TLObject object ? object : null;
+		}
+		return null;
 	}
 
 	private void applyAgentFromChannel(Object value) {
@@ -422,6 +603,167 @@ public class ChatConversationControl extends ReactControl {
 	}
 
 	/**
+	 * Compiles the {@code <selection/>} and makes it a per-turn fact.
+	 *
+	 * <p>
+	 * Not {@link Context#getFacts() a fact} the host wrote, but the same thing once it reaches the
+	 * model: one line of the {@code <turn-context>} block, re-evaluated whenever the selection
+	 * channel changes. What it says is {@link ChatSelection}'s to decide, so that every page states
+	 * a selection the same way - label, type and the identifier the tools read back.
+	 * </p>
+	 */
+	private void setupSelection(ViewContext context, Selection selection) {
+		if (selection == null) {
+			return;
+		}
+		ViewChannel channel = context.resolveChannel(selection.getChannel());
+		QueryExecutor naming =
+			selection.getLabel() == null ? null : QueryExecutor.compile(selection.getLabel());
+		_facts.add(new SelectionSpec(selection.getName(), channel, naming));
+		refreshFactsOn(channel);
+	}
+
+	/**
+	 * Compiles the {@code <context>} facts and keeps them current.
+	 *
+	 * <p>
+	 * A fact is re-evaluated whenever one of its input channels changes, so what the browser holds is
+	 * what the page was showing. The harness renders the stable ones into the environment block of
+	 * the system prompt and the rest into the turn; it does not touch the message text.
+	 * </p>
+	 */
+	private void setupContext(ViewContext context, Context facts) {
+		if (facts == null || facts.getFacts().isEmpty()) {
+			// A <context> that states no fact wires no input either: the inputs exist to be the
+			// arguments of expressions there are none of.
+			return;
+		}
+		for (Fact fact : facts.getFacts()) {
+			_facts.add(new FactSpec(fact.getName(), fact.getStable(), QueryExecutor.compile(fact.getValue())));
+		}
+		for (ChannelRef ref : facts.getInputs()) {
+			ViewChannel channel = context.resolveChannel(ref);
+			_factInputs.add(channel);
+			refreshFactsOn(channel);
+		}
+	}
+
+	/** Re-evaluates everything this page states whenever the given channel changes. */
+	private void refreshFactsOn(ViewChannel channel) {
+		ViewChannel.ChannelListener listener = (sender, oldValue, newValue) -> serializeFacts();
+		channel.addListener(listener);
+		addCleanupAction(() -> channel.removeListener(listener));
+	}
+
+	/** Publishes what this page states, once both sources have been compiled. */
+	private void publishFacts() {
+		if (_facts.isEmpty()) {
+			return;
+		}
+		serializeFacts();
+		// A channel written while this control was detached notified nobody, so the values are read
+		// again when it comes back - the same reason the mention candidates are.
+		addAttachListener(this::serializeFacts);
+	}
+
+	/** Evaluates every fact and pushes the result to the browser. */
+	private void serializeFacts() {
+		Object[] arguments = new Object[_factInputs.size()];
+		for (int n = 0; n < arguments.length; n++) {
+			arguments[n] = _factInputs.get(n).get();
+		}
+		List<Map<String, Object>> out = new ArrayList<>(_facts.size());
+		for (ContextEntry fact : _facts) {
+			Map<String, Object> entry = new LinkedHashMap<>();
+			entry.put("name", fact.name());
+			entry.put("value", fact.evaluate(arguments));
+			entry.put("stable", Boolean.valueOf(fact.stable()));
+			out.add(entry);
+		}
+		putState("contextFacts", out);
+	}
+
+	/**
+	 * One line this page states about the situation, whoever wrote it.
+	 *
+	 * <p>
+	 * Two implementations - a host's {@code <fact>} and the {@code <selection/>} - because they are
+	 * one thing to everything downstream: the browser echoes them back with the message and the
+	 * harness sorts them into the system prompt or the turn by {@link #stable()} alone.
+	 * </p>
+	 */
+	private interface ContextEntry {
+
+		/** What the fact is called in front of the model. */
+		String name();
+
+		/** Whether the value holds for the whole conversation. */
+		boolean stable();
+
+		/**
+		 * The value as it stands now.
+		 *
+		 * @param arguments
+		 *        The current values of the {@code <context>} inputs, in configured order.
+		 */
+		String evaluate(Object[] arguments);
+	}
+
+	/**
+	 * One compiled {@code <fact>}.
+	 *
+	 * <p>
+	 * A fact that throws is sent as an empty value rather than taking the page down: a mistyped
+	 * expression costs the agent one line of context, and the user is in the middle of a sentence.
+	 * </p>
+	 */
+	private record FactSpec(String name, boolean stable, QueryExecutor value) implements ContextEntry {
+
+		@Override
+		public String evaluate(Object[] arguments) {
+			try {
+				return label(value.execute(arguments));
+			} catch (RuntimeException ex) {
+				Logger.warn("Chat context fact '" + name + "' could not be evaluated: " + ex.getMessage(),
+					ex, ChatConversationControl.class);
+				return "";
+			}
+		}
+	}
+
+	/**
+	 * The compiled {@code <selection/>}: what stands on the page's selection channel, right now.
+	 *
+	 * <p>
+	 * It reads its own channel rather than an argument, because the channel is its own and not one
+	 * of the {@code <context>} inputs - a page states a selection without writing a {@code <context>}
+	 * at all.
+	 * </p>
+	 */
+	private record SelectionSpec(String name, ViewChannel channel, QueryExecutor naming)
+			implements ContextEntry {
+
+		@Override
+		public boolean stable() {
+			// Never. What the user has selected is the value that changes most often in a
+			// conversation, and the environment block has to stay byte-identical across its turns.
+			return false;
+		}
+
+		@Override
+		public String evaluate(Object[] arguments) {
+			try {
+				return ChatSelection.describe(channel.get(),
+					naming == null ? null : object -> label(naming.execute(object)));
+			} catch (RuntimeException ex) {
+				Logger.warn("The chat could not state the selection '" + name + "': " + ex.getMessage(),
+					ex, ChatConversationControl.class);
+				return "";
+			}
+		}
+	}
+
+	/**
 	 * Compiles the {@code <mention>} expressions, pushes the initial candidate set and keeps it live.
 	 *
 	 * <p>
@@ -466,23 +808,14 @@ public class ChatConversationControl extends ReactControl {
 			if (!(row instanceof TLObject object)) {
 				continue;
 			}
-			String id = idOf(object);
-			if (id.isEmpty()) {
+			Map<String, Object> token = tokenOf(object);
+			if (token.isEmpty()) {
 				continue;
 			}
-			String label = _mentionLabel != null ? label(_mentionLabel.execute(object)) : label(object);
-			String text = _mentionText != null ? label(_mentionText.execute(object)) : label;
-			String kind = object.tType() == null ? "" : object.tType().getName();
-
-			Map<String, Object> token = new LinkedHashMap<>();
-			token.put("kind", kind);
-			token.put("id", id);
-			token.put("label", label);
-			token.put("text", text);
 
 			Map<String, Object> candidate = new LinkedHashMap<>();
-			candidate.put("id", id);
-			candidate.put("label", label);
+			candidate.put("id", token.get("id"));
+			candidate.put("label", token.get("label"));
 			candidate.put("token", token);
 			out.add(candidate);
 			count++;
@@ -513,6 +846,30 @@ public class ChatConversationControl extends ReactControl {
 		return types;
 	}
 
+	/**
+	 * One object as the browser's reference token: what {@code @} inserts and what the
+	 * {@code reference} channel writes.
+	 *
+	 * <p>
+	 * A nested {@code <mention>} says how this application labels an object and what quoted text it
+	 * puts into the message; without one the object's own label is both. Empty for an object with no
+	 * stable id - there would be nothing for a host tool to resolve.
+	 * </p>
+	 */
+	private Map<String, Object> tokenOf(TLObject object) {
+		String id = idOf(object);
+		if (id.isEmpty()) {
+			return Map.of();
+		}
+		String label = _mentionLabel != null ? label(_mentionLabel.execute(object)) : label(object);
+		Map<String, Object> token = new LinkedHashMap<>();
+		token.put("kind", object.tType() == null ? "" : object.tType().getName());
+		token.put("id", id);
+		token.put("label", label);
+		token.put("text", _mentionText != null ? label(_mentionText.execute(object)) : label);
+		return token;
+	}
+
 	/** The browser id of an object: its stable knowledge-object name (the id a mention carries). */
 	private static String idOf(TLObject object) {
 		if (object == null || object.tHandle() == null) {
@@ -536,13 +893,6 @@ public class ChatConversationControl extends ReactControl {
 			return flag.booleanValue();
 		}
 		return value != null && Boolean.parseBoolean(String.valueOf(value));
-	}
-
-	private static String resolvePlaceholder(ResKey key) {
-		if (key == null) {
-			return "";
-		}
-		return Resources.getInstance().getString(key);
 	}
 
 	private static String blankToNull(String value) {

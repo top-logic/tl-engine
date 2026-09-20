@@ -16,11 +16,14 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.model.search.configured.ConfiguredScript;
 import com.top_logic.model.search.configured.ScriptConfiguration;
+import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolMode;
@@ -78,7 +81,9 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 		ScriptConfiguration.PARAMETERS,
 		ScriptToolConfig.MODE,
 		ScriptToolConfig.CONCURRENCY_SAFE,
+		ScriptToolConfig.TRUNCATION_HINT,
 		ScriptConfiguration.IMPLEMENTATION,
+		ScriptToolConfig.SUMMARY,
 	})
 	public interface ScriptToolConfig extends ScriptConfiguration {
 
@@ -97,6 +102,20 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 		String CONCURRENCY_SAFE = "concurrency-safe";
 
 		/**
+		 * Configuration property name for the truncation hint.
+		 *
+		 * @see #getTruncationHint()
+		 */
+		String TRUNCATION_HINT = "truncation-hint";
+
+		/**
+		 * Configuration property name for the summary expression.
+		 *
+		 * @see #getSummary()
+		 */
+		String SUMMARY = "summary";
+
+		/**
 		 * What kind of state change this tool makes. Defaults to {@link ToolMode#DATA_WRITE}.
 		 *
 		 * @see Tool#mode()
@@ -113,6 +132,40 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 		@Name(CONCURRENCY_SAFE)
 		@BooleanDefault(true)
 		boolean isConcurrencySafe();
+
+		/**
+		 * How many characters of this tool's result reach the model before it is cut short.
+		 *
+		 * <p>
+		 * A tool that answers with a long document needs more room than the installation grants by
+		 * default; one that answers with a status word needs far less, and saying so keeps a runaway
+		 * result from crowding the conversation. Unset - zero or less - uses the installation's
+		 * default.
+		 * </p>
+		 */
+		@Name(TRUNCATION_HINT)
+		@IntDefault(-1)
+		int getTruncationHint();
+
+		/**
+		 * What is kept of this tool's result when the conversation is compacted, computed from the
+		 * result.
+		 *
+		 * <p>
+		 * One argument, the value the implementation answered; the expression states the short form
+		 * of it, for example <code>rows -&gt; $rows.size() + " invoices"</code>. Compaction keeps this
+		 * instead of the full result, so a long answer stops costing what it cost when it was fresh.
+		 * Unset keeps the beginning of the result, as before.
+		 * </p>
+		 *
+		 * <p>
+		 * It is disclosed under the same read rights as the result itself, so it may name model
+		 * objects.
+		 * </p>
+		 */
+		@Name(SUMMARY)
+		@Nullable
+		Expr getSummary();
 
 	}
 
@@ -136,6 +189,7 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 			String inputSchema = ToolJsonSchema.build(toolConfig.getParameters());
 			String llmDescription = ToolDescriptions.englishPlainText(toolConfig.getDescription());
 			ToolMode mode = toolConfig.getMode();
+			Expr summary = toolConfig.getSummary();
 
 			_tools.add(new ScriptToolExecutor(
 				toolConfig.getName(),
@@ -144,7 +198,9 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 				executor,
 				new ScriptParamCoercion(toolConfig.getParameters()),
 				mode,
-				toolConfig.isConcurrencySafe()));
+				toolConfig.isConcurrencySafe(),
+				summary == null ? null : QueryExecutor.compile(summary),
+				toolConfig.getTruncationHint()));
 		}
 	}
 

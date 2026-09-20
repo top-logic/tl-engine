@@ -45,6 +45,15 @@ public interface AgentBase extends com.top_logic.model.TLNamed {
 	String DISPLAY_NAME_ATTR = "displayName";
 
 	/**
+	 * Part <code>infrastructure</code> of <code>Agent</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Boolean</code> in configuration.
+	 * </p>
+	 */
+	String INFRASTRUCTURE_ATTR = "infrastructure";
+
+	/**
 	 * Part <code>mcpServers</code> of <code>Agent</code>
 	 * 
 	 * <p>
@@ -153,6 +162,20 @@ public interface AgentBase extends com.top_logic.model.TLNamed {
 	 */
 	default void setDisplayName(String newValue) {
 		tUpdateByName(DISPLAY_NAME_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #INFRASTRUCTURE_ATTR}.
+	 */
+	default boolean getInfrastructure() {
+		return (Boolean) tValueByName(INFRASTRUCTURE_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #INFRASTRUCTURE_ATTR}.
+	 */
+	default void setInfrastructure(boolean newValue) {
+		tUpdateByName(INFRASTRUCTURE_ATTR, newValue);
 	}
 
 	/**

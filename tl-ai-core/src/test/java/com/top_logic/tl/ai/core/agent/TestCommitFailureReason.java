@@ -14,11 +14,14 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
+import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.tl.ai.core.model.TlAiCoreFactory;
+import com.top_logic.util.Resources;
+import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -58,6 +61,10 @@ public class TestCommitFailureReason extends BasicTestCase {
 	/** A {@code {0}}-style placeholder a resolved message left standing. */
 	private static final Pattern UNFILLED_PLACEHOLDER = Pattern.compile("\\{\\d+\\}");
 
+	/** What the engine says when a model constraint refused the commit. */
+	private static final ResKey CONSTRAINTS_VIOLATED =
+		com.top_logic.util.model.I18NConstants.CONSTRAINTS_VIOLATED;
+
 	/**
 	 * A poisoned transaction fails with a sentence, once, naming why.
 	 */
@@ -82,6 +89,50 @@ public class TestCommitFailureReason extends BasicTestCase {
 					+ message, 1, occurrences(message, TransactionScope.COMMIT_FAILED_PREFIX));
 				assertTrue("The reason the nested transaction gave must survive into the message: "
 					+ message, message.contains(VETO));
+			}
+		}
+	}
+
+	/**
+	 * A commit the application's own constraints refuse fails as a {@link TransactionException},
+	 * not as whatever the engine happened to throw.
+	 *
+	 * <p>
+	 * The case of issue #410: a write left a mandatory attribute unset, so
+	 * {@code ModelService.checkCommit} vetoed the commit with the {@link TopLogicException}
+	 * {@code "Cannot store, constraints violated."}. That is an {@link I18NRuntimeException}, and
+	 * the engine rethrows it unwrapped - it is not a {@link KnowledgeBaseException}. A
+	 * {@link TransactionScope#commit()} that caught only the latter therefore let it past, past the
+	 * agent loop's rollback handling, out of the whole run, and into the chat's catch-all, which
+	 * announced it to the browser as {@code provider_error / UNKNOWN} - "the model reported an
+	 * error" for a failure of the application.
+	 * </p>
+	 */
+	public void testVetoedCommitFailsAsATransactionFailure() {
+		try (TransactionScope scope = new TransactionScope()) {
+			scope.begin();
+			// Mandatory per tl.ai.core:Agent#name, and deliberately left unset.
+			TlAiCoreFactory.getInstance().createAgent();
+
+			try {
+				scope.commit();
+				fail("A commit the model constraints veto must not succeed.");
+			} catch (TransactionException ex) {
+				String message = ex.getMessage();
+				String summary = Resources.getInstance().getString(CONSTRAINTS_VIOLATED);
+
+				assertTrue("The reason the application gave must reach the caller: " + message,
+					message.contains(summary));
+				// The summary alone ("Cannot store, constraints violated.") is what a real session
+				// was left with, and it names neither the object nor the attribute to fix. The
+				// engine nests those under it as causes; they are the actionable half.
+				assertTrue("The refused type and attribute must survive into the message: " + message,
+					message.contains("tl.ai.core:Agent"));
+			} catch (RuntimeException ex) {
+				fail("A failed commit must be reported as a transaction failure, not as "
+					+ ex.getClass().getName() + ": " + ex.getMessage());
+			} finally {
+				scope.rollback();
 			}
 		}
 	}

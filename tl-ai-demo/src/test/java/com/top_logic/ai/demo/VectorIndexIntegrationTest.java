@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.runner.RunWith;
+
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -21,6 +23,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.ai.vector.index.VectorIndex;
+import com.top_logic.ai.vector.index.VectorReadFilter;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.knowledge.indexing.ContentObject;
 import com.top_logic.knowledge.indexing.IndexException;
@@ -39,6 +42,10 @@ import com.top_logic.model.search.expr.parser.ParseException;
 import com.top_logic.model.search.expr.parser.SearchExpressionParser;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
+import com.top_logic.tl.ai.core.junit.VectorIndexE2e;
+import com.top_logic.tl.ai.core.security.ModelSecurity;
+import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.util.model.ModelService;
 
 import dev.langchain4j.data.segment.TextSegment;
@@ -46,8 +53,30 @@ import dev.langchain4j.store.embedding.EmbeddingMatch;
 
 /**
  * Integration test for semantic search utilizing the real Mistral model and JVector.
+ *
+ * <p>
+ * Behind {@link VectorIndexE2e}: it embeds with a real Mistral model, so a build without an
+ * embedding key cannot run it and reports it as skipped instead.
+ * </p>
  */
+@RunWith(AssumptionAwareRunner.class)
 public class VectorIndexIntegrationTest extends BasicTestCase {
+
+	/**
+	 * Asks the gate before anything else, including the thread context {@link BasicTestCase} enters
+	 * around a test.
+	 *
+	 * <p>
+	 * With the gate off the suite below is the bare class, so the modules that context needs were
+	 * never started - and the assumption has to be thrown before the attempt, or it never gets to be
+	 * thrown at all.
+	 * </p>
+	 */
+	@Override
+	public void runBare() throws Throwable {
+		VectorIndexE2e.assumeEnabled();
+		super.runBare();
+	}
 
     @Override
     public void setUp() throws Exception {
@@ -109,7 +138,7 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
             }
 
             String query = "classic tomato and cheese italian pizza";
-            List<EmbeddingMatch<TextSegment>> results = index.searchVectorIndex(query);
+            List<EmbeddingMatch<TextSegment>> results = search(index, query);
 
             assertNotNull("Results list should not be null", results);
             assertFalse("Results should not be empty. Results: " + results, results.isEmpty());
@@ -178,7 +207,7 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
 
             // 2. Pre-condition Assert
             String query = "classic tomato and cheese italian pizza";
-            List<EmbeddingMatch<TextSegment>> resultsBefore = index.searchVectorIndex(query);
+            List<EmbeddingMatch<TextSegment>> resultsBefore = search(index, query);
 
             assertNotNull("Results list should not be null", resultsBefore);
             assertFalse("Results should not be empty", resultsBefore.isEmpty());
@@ -212,7 +241,7 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
             }
 
             // 4. Post-condition Assert
-            List<EmbeddingMatch<TextSegment>> resultsAfter = index.searchVectorIndex(query);
+            List<EmbeddingMatch<TextSegment>> resultsAfter = search(index, query);
 
             boolean foundMargheritaAfter = false;
             for (EmbeddingMatch<TextSegment> r : resultsAfter) {
@@ -271,7 +300,7 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
             }
 
             // 2. Verify it's found by original name
-            List<EmbeddingMatch<TextSegment>> initialResults = index.searchVectorIndex("margherita pizza");
+            List<EmbeddingMatch<TextSegment>> initialResults = search(index, "margherita pizza");
             assertTrue("Should find original pizza",
                 initialResults.stream().anyMatch(m -> m.embedded().text().contains("Margherita")));
 
@@ -301,12 +330,12 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
 
             // 4. Verify Post-Update:
             // Searching for "Truffle" should find it
-            List<EmbeddingMatch<TextSegment>> resultsTruffle = index.searchVectorIndex("truffle mushroom pizza");
+            List<EmbeddingMatch<TextSegment>> resultsTruffle = search(index, "truffle mushroom pizza");
             assertTrue("Should find the updated content 'Truffle'. Results: " + resultsTruffle,
                 resultsTruffle.stream().anyMatch(m -> m.embedded().text().contains("Truffle")));
 
             // Searching for "Margherita" should NOT find it in the core text content
-            List<EmbeddingMatch<TextSegment>> resultsMargherita = index.searchVectorIndex("margherita pizza");
+            List<EmbeddingMatch<TextSegment>> resultsMargherita = search(index, "margherita pizza");
             boolean textStillFoundMargherita = false;
             for (EmbeddingMatch<TextSegment> r : resultsMargherita) {
                 String fullJson = r.embedded().text();
@@ -507,8 +536,33 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
 
 	/** */
     public static Test suite() {
+		if (!VectorIndexE2e.enabled()) {
+			// The setup below boots the embedding service, which is the very thing this build has
+			// no key for. Handing back the bare class lets every method reach its assumption and be
+			// reported as skipped, instead of the suite failing before any test starts.
+			return new TestSuite(VectorIndexIntegrationTest.class);
+		}
         return suite(VectorIndexIntegrationTest.class);
     }
+
+	/**
+	 * The store's hits for the given query, as the caller sees them.
+	 *
+	 * <p>
+	 * {@link ModelSecurity#UNCHECKED}, because what is under test here is indexing and retrieval, not
+	 * who may see what - that is {@code SecDemoVectorIndexTest}. There is no unfiltered search to call
+	 * instead: since issue #295 a search names the principal it serves or does not happen.
+	 * </p>
+	 */
+	private static List<EmbeddingMatch<TextSegment>> search(VectorIndex index, String query) {
+		VectorReadFilter.Hits hits =
+			index.searchVectorIndex(query, ReadFilter.forSecurity(ModelSecurity.UNCHECKED));
+		List<EmbeddingMatch<TextSegment>> matches = new ArrayList<>(hits.hits().size());
+		for (VectorReadFilter.Hit hit : hits.hits()) {
+			matches.add(hit.match());
+		}
+		return matches;
+	}
 
 	/** */
     protected static Test suite(Class<? extends Test> test, BasicRuntimeModule<?>... additionalModules) {

@@ -77,8 +77,13 @@
 		result = aiCallTool($p[1], $p[2]);
 		denied = $result.stringStartsWith("Error invoking tool");
 		// One line per probe, so the joined report below stays readable; long
-		// tool results are cut rather than wrapped.
-		summary = $result.split("\n").firstElement();
+		// tool results are cut rather than wrapped. A tool answer that carries
+		// business data opens with the untrusted-content tag, which says nothing
+		// about what was disclosed, so the first line that is not framing is the
+		// one worth showing.
+		summary = $result.split("\n")
+			.filter(line -> !$line.stringStartsWith("<untrusted_"))
+			.firstElement();
 
 		"  " + ($denied ? "DENIED " : "ALLOWED") + "  " + $p[0]
 			+ "  ->  " + $p[1] + "  ::  " + ($summary.length() > 200

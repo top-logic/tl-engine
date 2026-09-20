@@ -19,7 +19,9 @@ public class AnnotatedToolsTest extends TestCase {
     public record Order(String customer, List<Item> items) {}
 
     public static class TestTools {
-        @ToolMethod(description = "Submit an order")
+        // Marking is off here so that these tests assert the coerced arguments and nothing else;
+        // what the framework puts around an answer is TestAnnotatedToolMarking's subject.
+        @ToolMethod(description = "Submit an order", marking = AnswerMarking.NONE)
         public String submit(@P("the order") Order order) {
             return "ok:" + order.customer() + ":" + order.items().size();
         }

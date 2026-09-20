@@ -123,6 +123,43 @@
 					<api-key>YOUR_BRAVE_API_KEY</api-key>
 				</search-engine>
 				-->
+
+				<!-- BROWSING GOVERNANCE (issue #347). Which origins an agent run may reach,
+				     resolved per security role. Nothing is configured here, and that is the
+				     shipped default: with no <browsing> section every origin that passes the
+				     SSRF check stays reachable, exactly as before this layer existed.
+
+				     It is the ceiling for ALL THREE routes out of the application - the browser
+				     tool, webFetch and webSearch - and it composes with the browser tool's own
+				     allowed-domains/blocked-domains below: both have to permit an origin. Neither
+				     can relax UrlSafety, which is the SSRF check and is not configurable at all.
+
+				     A worked example:
+
+				<browsing default="research">
+					<policies>
+						<policy name="open"/>
+						<policy name="research" access="deny">
+							<origins>
+								<origin host="docs.oracle.com"/>
+								<origin host="*.top-logic.com" downloads="deny"/>
+							</origins>
+						</policy>
+					</policies>
+					<roles>
+						<role name="SalesAssistantUser" policy="open"/>
+					</roles>
+				</browsing>
+
+				     access="deny" on a policy makes its <origin> rules the only origins it
+				     reaches; access="allow" (the default) makes them exceptions that forbid.
+				     A rule's host is EXACTLY that host; "*.example.com" is the sub-domains and
+				     not the apex - write both entries to cover a domain and everything under it.
+				     downloads="deny" lets a page be read without letting it hand over a file.
+				     A policy name no <policy> declares is a boot error, deliberately, so that a
+				     typo in a security setting cannot silently hand out "everything".
+
+				     See doc/security/browsing-governance.md. -->
 			</instance>
 		</config>
 
@@ -1566,6 +1603,33 @@ Before calling any tool, briefly tell the user what you're about to do. Never le
 6. **Report:** Lead with the result, not the process. Bullet points, not paragraphs. Fewer than 4 lines unless detail is needed.
 </workflow>
 
+<user_memory>
+You can keep things about this user across conversations with the `remember` tool. What you already
+know is stated in your environment block; `recall` searches further back.
+
+- Store ONLY when the user asked you to in this turn ("remember that ..."), or when you asked with
+  `askUser` whether you should and the user agreed in their answer. NEVER on your own judgement.
+- Noticing something worth keeping is not permission to keep it. Ask: askUser(type="choice",
+  question="Shall I remember that you prefer short answers?", options=["Yes", "No"]). Store only
+  after a yes. A no is final - do not ask again about the same thing.
+- A call without the user's agreement in the same turn is refused by the tool. That refusal is not a
+  bug to work around: ask the user.
+- One short sentence about the USER, in the user's language. Not a summary of the conversation, not
+  something about the application, not something you can look up.
+- Say what you stored, so the user can correct it. They see every memory in a list and can delete
+  any of them.
+</user_memory>
+
+<long_text>
+To change part of a long Text or String attribute - a document body, a system prompt, a stored
+note - read it with `readText`, then change the one passage with `editText`, quoting the passage
+back as an exact anchor. Never re-emit the whole value: it costs the entire text in output tokens
+for a one-sentence change, and every paragraph that passes through you again can come back subtly
+different. Drop the `NNN| ` gutter of the read before you use a line as an anchor, and extend the
+anchor with the lines around it until it is unique. A whole-value `set` is for a value you are
+writing from nothing, not for editing one that exists.
+</long_text>
+
 <core_rules>
 - Call `model-browser.outlineModel` when — and only when — the answer genuinely requires the application's data model: its types, properties, or modules. Questions about what you yourself can do are answered by `listTools`; questions about the TL-Script tool registry or the authoring tools of the whole application by `listScriptToolFactories` / `listScriptTools`. Never by `outlineModel`. Do not call it by default or as orientation.
 - If a tool returns a result, USE it — never repeat the same call with identical arguments
@@ -1618,6 +1682,23 @@ If you loaded a skill but forgot to use its tools — use them now instead of lo
 							<tool name="model-browser.outlineModel"/>
 							<tool name="view-document.viewDocument"/>
 							<tool name="cite.cite"/>
+							<!--
+								Always on the agent, never on a skill: the rule about when they may be
+								called has to be in front of the model before it decides to call one,
+								and a skill is loaded after that decision. An installation that keeps
+								no memories offers neither of them however this list reads - see
+								<user-memory> on LLMService.
+							-->
+							<tool name="user-memory.remember"/>
+							<tool name="user-memory.recall"/>
+							<!--
+								Issue #168. Always on the agent for the same reason the memory tools
+								are: the rule about when a long text is edited rather than rewritten
+								has to be in front of the model before it loads the TL-Script skill
+								and writes a whole-value set.
+							-->
+							<tool name="text-edit.readText"/>
+							<tool name="text-edit.editText"/>
 						</tools>
 						<skills>
 							<skill name="TL_annotationEditing"/>
@@ -1749,6 +1830,24 @@ When the specialist returns:
 
 ---
 
+# USER MEMORY
+
+You can keep things about this user across conversations with the `remember` tool. What you already
+know is stated in your environment block; `recall` searches further back.
+
+- Store ONLY when the user asked you to in this turn ("remember that ..."), or when you asked with
+  `askUser` whether you should and the user agreed in their answer. NEVER on your own judgement.
+- Noticing something worth keeping is not permission to keep it. Ask first, store after a yes. A no
+  is final - do not ask again about the same thing.
+- A call without the user's agreement in the same turn is refused by the tool. That refusal is not a
+  bug to work around: ask the user.
+- One short sentence about the USER, in the user's language. Not a summary of the conversation.
+- Say what you stored, so the user can correct it. They see every memory in a list and can delete
+  any of them.
+- This is yours, not a specialist's: never delegate remembering.
+
+---
+
 # WORK ORDER DISCIPLINE (for every delegation)
 
 - **goal**: One-line intent for this step
@@ -1784,6 +1883,9 @@ Route by the nature of the request:
 							<tool name="task.createTask"/>
 							<tool name="user-interaction.askUser"/>
 							<tool name="html-pages.publishPage"/>
+							<!-- See the same pair on TL_SingleAgent for why they sit on the agent. -->
+							<tool name="user-memory.remember"/>
+							<tool name="user-memory.recall"/>
 						</tools>
 						<skills>
 							<skill name="TL_taskManagement"/>
@@ -1972,6 +2074,9 @@ Treat yourself as having ZERO knowledge about available TLScript functions or th
 ## CONTEXT CONTRACT
 You are a **leaf agent for model discovery** — you do not search, navigate, or browse the model. The TL_Orchestrator provides qualified names (type/part/enum literals) in your `context`. However, you have read-only model-introspection tools for verifying facts about those named entities (`listTypes`, `listTypeParts`, `listClassifiers`). Use them per the procedures defined in your skills. If a name you need is missing from `context`, state what is missing — the orchestrator will resolve it and call you again.
 
+## LONG TEXT VALUES
+Do NOT write a script that `set`s a long Text or String attribute to a value that is mostly the value it already has. Read it with `readText`, then change the one passage with `editText`, quoting that passage back as an exact anchor. A whole-value `set` costs the entire text in output tokens for a one-sentence change, and every paragraph re-emitted can come back subtly different. Drop the `NNN| ` gutter of the read before using a line as an anchor, and extend the anchor with the lines around it until it is unique. `set` remains right for a value written from nothing and for anything that is not a single text.
+
 ## SCRIPT AND CONTEXT RULES
 - **Base explanations on actual TLScript code.** Do not infer or invent logic if no code is available.
 - **Code from context:** Use TLScript code provided in your `context` field. If none was provided and you need it, say so.
@@ -2051,6 +2156,14 @@ B) Choosing `.` vs `..`:
 							<tool name="model-browser.listTypes"/>
 							<tool name="model-browser.listTypeParts"/>
 							<tool name="model-browser.listClassifiers"/>
+							<!--
+								Issue #168. On the agent rather than on a skill, for the reason the
+								memory tools are: the rule about when a long text is edited instead
+								of rewritten has to be in front of the model before it writes the
+								script that rewrites it, and a skill is loaded after that decision.
+							-->
+							<tool name="text-edit.readText"/>
+							<tool name="text-edit.editText"/>
 						</tools>
 						<skills>
 							<skill name="TL_tlScriptInstanceCreation"/>
@@ -2268,8 +2381,15 @@ Do NOT include long explanations. Be concise and factual.]]></system-prompt>
 							<delegation name="TL_TLScriptAgent"/>
 						</delegations>
 					</agent>
+					<!--
+						infrastructure: the chat runs this one *for* the user - it rewrites the draft
+						they are about to send and never answers as a persona. It is therefore offered
+						by no menu and refused wherever a user's own run names it, whatever
+						<agent-access> grants. See doc/security/tool-access-configuration.md.
+					-->
 					<agent name="TL_PromptImprover"
 						description="Rewrite a draft user prompt so it is clearer and ready to send. Returns only the improved prompt text."
+						infrastructure="true"
 					>
 						<display-name>
 							<en>Prompt Improver</en>
@@ -2394,6 +2514,17 @@ Note what the last example does NOT do: it does not say the pattern is wrong, an
 							tool-class="com.top_logic.tl.ai.core.tools.model.ViewDocumentTool"
 						/>
 					</factory>
+					<!--
+						readText / editText (Issue #168): the partial write path for a long Text or
+						String attribute, so that changing one sentence of a document does not cost
+						the whole document in output tokens. Offer both or neither - an anchored edit
+						without the verbatim read it anchors on is a guess.
+					-->
+					<factory name="text-edit">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.text.TextEditTool"
+						/>
+					</factory>
 					<factory name="model-annotation-browser">
 						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.model.ModelAnnotationBrowserTool"
@@ -2476,6 +2607,16 @@ Note what the last example does NOT do: it does not say the pattern is wrong, an
 					<factory name="user-interaction">
 						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.interaction.AskUserTool"
+						/>
+					</factory>
+					<!--
+						remember / recall (Issue #439). Switched off wholesale by
+						<user-memory enabled="false"/> on LLMService, which then also keeps both
+						out of every agent's catalog.
+					-->
+					<factory name="user-memory">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.memory.UserMemoryTool"
 						/>
 					</factory>
 					<factory name="cite">

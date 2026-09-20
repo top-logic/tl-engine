@@ -17,7 +17,7 @@ import { ContextIcon, ContextSection, ProgressIcon, ProgressSection } from './pr
 import { SourcesIcon, SourcesSection, type CitedSource } from './sources'
 import { progressBadge, unseenBadge } from './progress-model'
 import { RailToggle, SideRail, SideStrip } from './rail'
-import { SHEET_MQ, SidePane } from './side-pane'
+import { SHEET_MAX, SidePane } from './side-pane'
 import { Thread } from './thread'
 import {
   type ApprovalRequest,
@@ -27,7 +27,7 @@ import {
   type Citation,
 } from './types'
 
-const { useCallback, useEffect, useMemo, useRef, useState } = React
+const { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } = React
 
 /**
  * The shipped agentic chat: session rail, thread, composer and right rail over one {@link useChat}
@@ -42,9 +42,23 @@ const { useCallback, useEffect, useMemo, useRef, useState } = React
 export function App({ controlId, extensions }: TLCellProps & { extensions?: ChatExtensions }) {
   const state = useTLState()
   const promptImprovementEnabled = state.promptImprovementEnabled === true
+  /**
+   * The composer's idle invitation, from `<agent-chat placeholder="…">` when the installation
+   * configured one, else from the host's own extensions (#420). The configured text wins: it is
+   * the installation's decision, while the seam is the host code's default. Empty falls through to
+   * the framework's wording, which is what an application that configures neither gets.
+   */
+  const placeholder =
+    (typeof state.placeholder === 'string' ? state.placeholder : '') ||
+    extensions?.composerAddons?.placeholder ||
+    ''
   const boot = useMemo(() => readBootstrap(state), [state])
-  const { chat, actions, runs } = useChat(chatIdOf(state, controlId), boot)
+  const chatId = chatIdOf(state, controlId)
+  const { chat, actions, runs } = useChat(chatId, boot)
   const labels = useMemo(() => bundle(chat.language), [chat.language])
+  // Where this chat's requests go. Memoised, because the composer is `React.memo`d and a fresh
+  // object on every render would defeat that.
+  const at = useMemo(() => ({ windowId: chat.windowId, chatId }), [chat.windowId, chatId])
 
   /** Whether the session drawer is open. Below its breakpoint the rail is a drawer, not a column. */
   const [railOpen, setRailOpen] = useState(false)
@@ -58,10 +72,10 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
    */
   const composerBox = useRef<HTMLDivElement | null>(null)
 
+  /** The chat's own root, which is what decides the layout mode - not the window. */
+  const cockpit = useRef<HTMLDivElement | null>(null)
   /** True below 1280, where the rail and the pane are sheets over the thread rather than columns. */
-  const [sheet, setSheet] = useState(() =>
-    typeof window !== 'undefined' ? window.matchMedia(SHEET_MQ).matches : false,
-  )
+  const [sheet, setSheet] = useState(false)
 
   useEffect(() => {
     const workspace = composerBox.current
@@ -75,11 +89,23 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
     return () => observer.disconnect()
   })
 
-  useEffect(() => {
-    const mq = window.matchMedia(SHEET_MQ)
-    const onChange = () => setSheet(mq.matches)
-    mq.addEventListener('change', onChange)
-    return () => mq.removeEventListener('change', onChange)
+  /*
+   * Measured, not asked of the window (Issue #427).
+   *
+   * An `<agent-chat>` placed by an application owns the window almost never: a shell's navigation
+   * and the page gutters take their share first, so a viewport query answered for a box the chat
+   * does not have and the sheet arrived hundreds of pixels late, or never. The stylesheet decides
+   * the same thing from the same element, as a `chat-shell` container query on the same number.
+   */
+  useLayoutEffect(() => {
+    const root = cockpit.current
+    if (!root) return undefined
+    const decide = (width: number) => setSheet(width <= SHEET_MAX)
+    decide(root.getBoundingClientRect().width)
+    if (typeof ResizeObserver === 'undefined') return undefined
+    const observer = new ResizeObserver(([entry]) => decide(entry.contentRect.width))
+    observer.observe(root)
+    return () => observer.disconnect()
   }, [])
 
   useEffect(() => {
@@ -224,7 +250,9 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
       id: 'sources',
       title: labels.sourcesTitle,
       icon: SourcesIcon,
-      count: () => chat.sources.length,
+      // The newest answer's sources, not the chat's running total: a badge over the whole list can
+      // only grow, and would sit on the Quellen icon for the rest of the conversation (#495).
+      count: () => chat.latestSources.length,
       render: (ctx) => (
         <SourcesSection
           sources={chat.sources}
@@ -239,7 +267,7 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
         />
       ),
     }),
-    [labels, chat.sources, openSource, goToAnswer, extensions],
+    [labels, chat.sources, chat.latestSources, openSource, goToAnswer, extensions],
   )
 
   const railSections = useMemo(
@@ -290,12 +318,16 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
   const documentMode = paneOpen && chat.paneOptions?.mode === 'document'
 
   return (
+    // `has-pane` is gone: it was here to tell the composer that its column had shrunk, which the
+    // stage now says itself as a container query (Issue #427) - and says for a composed
+    // conversation too, which never had the class. `has-document` stays, for the one rule that is
+    // about a document being open rather than about a width.
     <div
       id={controlId}
+      ref={cockpit}
       className={
         `tl-cockpit${railCollapsed ? ' is-rail-collapsed' : ''}` +
-        `${chat.sideOpen ? ' has-side' : ''}${paneOpen ? ' has-pane' : ''}` +
-        `${documentMode ? ' has-document' : ''}`
+        `${chat.sideOpen ? ' has-side' : ''}${documentMode ? ' has-document' : ''}`
       }
     >
       <SessionRail
@@ -347,7 +379,7 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
           />
           <Composer
             runs={runs}
-            windowId={chat.windowId}
+            at={at}
             agents={chat.caps.agents}
             models={chat.offeredModels}
             agent={chat.agent}
@@ -384,6 +416,7 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
             onSend={onSend}
             onStop={actions.stop}
             ref={composer}
+            placeholder={placeholder || undefined}
             extraMenuItems={extensions?.composerAddons?.extraMenuItems}
             referenceCandidates={extensions?.composerAddons?.referenceCandidates}
           />
@@ -419,6 +452,7 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
         ) : null}
         {paneOpen ? (
           <SidePane
+            narrow={sheet}
             title={chat.paneOptions?.title ?? ''}
             backLabel={chat.paneOptions?.backLabel}
             tabs={chat.paneOptions?.tabs}

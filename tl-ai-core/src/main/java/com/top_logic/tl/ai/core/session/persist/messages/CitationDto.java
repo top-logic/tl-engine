@@ -27,6 +27,9 @@ public class CitationDto extends de.haumacher.msgbuf.data.AbstractDataObject imp
 	/** @see #getKind() */
 	public static final String KIND__PROP = "kind";
 
+	/** @see #getKindLabel() */
+	public static final String KIND_LABEL__PROP = "kindLabel";
+
 	/** @see #getId() */
 	public static final String ID__PROP = "id";
 
@@ -49,6 +52,8 @@ public class CitationDto extends de.haumacher.msgbuf.data.AbstractDataObject imp
 	private String _toolCallId = "";
 
 	private String _kind = "";
+
+	private String _kindLabel = "";
 
 	private String _id = "";
 
@@ -130,7 +135,7 @@ public class CitationDto extends de.haumacher.msgbuf.data.AbstractDataObject imp
 	}
 
 	/**
-	 * Host kind, e.g. {@code web} or {@code invoice}.
+	 * Host kind, e.g. {@code web} or {@code invoice} - the model's own vocabulary.
 	 */
 	public final String getKind() {
 		return _kind;
@@ -147,6 +152,28 @@ public class CitationDto extends de.haumacher.msgbuf.data.AbstractDataObject imp
 	/** Internal setter for {@link #getKind()} without chain call utility. */
 	protected final void internalSetKind(String value) {
 		_kind = value;
+	}
+
+	/**
+	 * What to call that kind in front of a reader, in the reader's language.
+	 *
+	 * Empty when the host declared no label for the kind; the {@code kind} is then shown instead.
+	 */
+	public final String getKindLabel() {
+		return _kindLabel;
+	}
+
+	/**
+	 * @see #getKindLabel()
+	 */
+	public com.top_logic.tl.ai.core.session.persist.messages.CitationDto setKindLabel(String value) {
+		internalSetKindLabel(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getKindLabel()} without chain call utility. */
+	protected final void internalSetKindLabel(String value) {
+		_kindLabel = value;
 	}
 
 	/**
@@ -261,6 +288,7 @@ public class CitationDto extends de.haumacher.msgbuf.data.AbstractDataObject imp
 			TOOL_NAME__PROP, 
 			TOOL_CALL_ID__PROP, 
 			KIND__PROP, 
+			KIND_LABEL__PROP, 
 			ID__PROP, 
 			LABEL__PROP, 
 			URL__PROP, 
@@ -294,6 +322,7 @@ public class CitationDto extends de.haumacher.msgbuf.data.AbstractDataObject imp
 			case TOOL_NAME__PROP: return getToolName();
 			case TOOL_CALL_ID__PROP: return getToolCallId();
 			case KIND__PROP: return getKind();
+			case KIND_LABEL__PROP: return getKindLabel();
 			case ID__PROP: return getId();
 			case LABEL__PROP: return getLabel();
 			case URL__PROP: return getUrl();
@@ -310,6 +339,7 @@ public class CitationDto extends de.haumacher.msgbuf.data.AbstractDataObject imp
 			case TOOL_NAME__PROP: internalSetToolName((String) value); break;
 			case TOOL_CALL_ID__PROP: internalSetToolCallId((String) value); break;
 			case KIND__PROP: internalSetKind((String) value); break;
+			case KIND_LABEL__PROP: internalSetKindLabel((String) value); break;
 			case ID__PROP: internalSetId((String) value); break;
 			case LABEL__PROP: internalSetLabel((String) value); break;
 			case URL__PROP: internalSetUrl((String) value); break;
@@ -341,6 +371,8 @@ public class CitationDto extends de.haumacher.msgbuf.data.AbstractDataObject imp
 		out.value(getToolCallId());
 		out.name(KIND__PROP);
 		out.value(getKind());
+		out.name(KIND_LABEL__PROP);
+		out.value(getKindLabel());
 		out.name(ID__PROP);
 		out.value(getId());
 		out.name(LABEL__PROP);
@@ -360,6 +392,7 @@ public class CitationDto extends de.haumacher.msgbuf.data.AbstractDataObject imp
 			case TOOL_NAME__PROP: setToolName(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case TOOL_CALL_ID__PROP: setToolCallId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case KIND__PROP: setKind(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case KIND_LABEL__PROP: setKindLabel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case ID__PROP: setId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case LABEL__PROP: setLabel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case URL__PROP: setUrl(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;

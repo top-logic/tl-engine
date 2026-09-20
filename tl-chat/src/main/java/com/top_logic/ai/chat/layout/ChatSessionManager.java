@@ -6,6 +6,7 @@
 package com.top_logic.ai.chat.layout;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
@@ -23,6 +24,8 @@ import com.top_logic.tl.ai.core.provider.LLMService;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogReplay;
+import com.top_logic.tl.ai.core.agent.environment.UserMemories;
+import com.top_logic.tl.ai.core.agent.environment.UserMemoryBinding;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.tools.DynamicToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
@@ -106,6 +109,17 @@ public class ChatSessionManager {
 
 		/** */
 		SubagentJobRegistry _subagentRegistry;
+
+		/**
+		 * The memories the agent was opened with, read once when this conversation's first message
+		 * is sent.
+		 *
+		 * <p>
+		 * {@code null} until then, so "not read yet" and "read, and there were none" stay different
+		 * answers - see {@link UserMemoryBinding}.
+		 * </p>
+		 */
+		List<UserMemories.Entry> _memories;
 
 		/** */
 		SessionState(Chat chat, ConversationMemory conversationMemory) {
@@ -224,6 +238,45 @@ public class ChatSessionManager {
 			}
 			return state._subagentRegistry;
 		}
+	}
+
+	/**
+	 * The memories this conversation was opened with, read from the store on first use and kept for
+	 * the rest of the conversation.
+	 *
+	 * <p>
+	 * Read once and not once per turn, because they go into the environment block of the system
+	 * prompt, which has to stay byte-identical across the turns of one conversation or the
+	 * providers' prompt caches miss on every one of them. A memory written during the conversation
+	 * therefore shows up in the next one - which is also the only place it is needed, the agent
+	 * having just written it.
+	 * </p>
+	 *
+	 * <p>
+	 * A conversation whose in-memory state was dropped (a reload, an eviction from the LRU cache)
+	 * reads afresh. The prompt cache is cold by then anyway.
+	 * </p>
+	 *
+	 * @param owner
+	 *        The account to read for; {@code null} yields an empty list.
+	 */
+	public List<UserMemories.Entry> getActiveMemories(Person owner) {
+		SessionState state;
+		synchronized (_lock) {
+			state = _activeSessionId != null ? _sessions.get(_activeSessionId) : null;
+			if (state != null && state._memories != null) {
+				return state._memories;
+			}
+		}
+		// Read outside the lock: it reaches the database, and this lock also guards the session
+		// switch a second window may be doing at the same moment.
+		List<UserMemories.Entry> memories = UserMemories.load(owner);
+		synchronized (_lock) {
+			if (state != null && state._memories == null) {
+				state._memories = memories;
+			}
+		}
+		return memories;
 	}
 
 	private static void disposeSessionState(SessionState state) {

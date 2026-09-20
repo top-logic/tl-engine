@@ -159,6 +159,13 @@ export interface ComposerApi {
    * where the user put it.
    */
   insertReference: (token: ReferenceToken) => void
+  /**
+   * Replaces the whole draft with `text`, focuses the field and puts the caret behind it.
+   *
+   * What the user is looking at when a host writes the draft: the sentence, ready to be read,
+   * changed and sent. The send itself stays the user's.
+   */
+  setDraft: (text: string) => void
   focus: () => void
 }
 
@@ -182,6 +189,19 @@ export interface ReferenceCandidate {
 
 export interface ComposerAddons {
   extraMenuItems?: ComposerMenuItem[]
+  /**
+   * What the empty field invites the user with, already localised.
+   *
+   * The framework's own wording addresses the user informally in German, which an application
+   * whose every other surface says "Sie" cannot use (#420). A host states its own invitation here;
+   * it replaces both framework variants, the one that mentions "@" included.
+   *
+   * Idle only: while the agent works the field keeps the framework's "type your next message",
+   * which is about the run rather than about the application. An `<agent-chat placeholder="…">`
+   * states the same thing declaratively and wins over this one, being the installation's decision
+   * rather than the host code's default.
+   */
+  placeholder?: string
   /**
    * What typing "@" in the composer offers, filtered by what has been typed after it.
    *

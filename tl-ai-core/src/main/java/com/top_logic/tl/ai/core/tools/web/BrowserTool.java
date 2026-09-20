@@ -25,16 +25,17 @@ import com.top_logic.tl.ai.core.execution.ExecutionHandle;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.screenshots.ScreenshotService;
 import com.top_logic.tl.ai.core.screenshots.model.Screenshot;
-import com.top_logic.tl.ai.core.tools.util.UntrustedEnvelope;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.BlockSignal;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.InteractiveElement;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.PageView;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.ScreenshotCapture;
+import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
+import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
 import com.top_logic.util.TLContext;
 
 /**
@@ -51,15 +52,20 @@ import com.top_logic.util.TLContext;
  * that full page; the interaction verbs ({@code browserClick}, {@code browserType},
  * {@code browserBack}) return only a terse status plus the current refs, so the model calls
  * {@code browserSnapshot} when it needs to read the page. {@code browserScreenshot} additionally
- * captures a PNG of the current page and persists it as a {@code Screenshot} object.
+ * captures a PNG of the current page, persists it as a {@code Screenshot} object and returns the
+ * URL {@link com.top_logic.tl.ai.core.screenshots.ScreenshotServlet} serves it at, so the model can
+ * show the picture in its answer.
  * </p>
  *
  * <p>
  * Every navigation is validated by the layered domain policy held by {@link BrowserToolsService}:
  * SSRF protection always wins, the administrator-owned blocklist always applies, and then the
  * origin must be on the allowlist unless allow-any-domains mode is enabled (which relaxes only the
- * allowlist, never SSRF or the blocklist). Returned page text is attacker-controllable, so it is
- * wrapped in an explicit untrusted-data envelope before it becomes the tool result. A CAPTCHA or
+ * allowlist, never SSRF or the blocklist). On top of those installation-wide lists sits the
+ * {@link BrowsingPolicy} of the acting role, which says which origins <em>this user's</em> agent may
+ * reach at all; it can only narrow what the lists permit. Returned page text is
+ * attacker-controllable, so it is wrapped in an explicit untrusted-data envelope before it becomes
+ * the tool result. A CAPTCHA or
  * human-verification challenge is detected and reported as a hard stop - the tool never attempts
  * to solve one.
  * </p>
@@ -136,7 +142,8 @@ public class BrowserTool {
 		group = ToolGroups.EGRESS,
 		// One browser page per session; not safe to run in parallel with other calls in the run.
 		concurrencySafe = false,
-		truncationHint = PAGE_SNAPSHOT_TRUNCATION_HINT)
+		truncationHint = PAGE_SNAPSHOT_TRUNCATION_HINT,
+		marking = AnswerMarking.TOOL)
 	public String browserNavigate(@P("The absolute http or https URL to open.") String url,
 			ToolExecutionContext context) {
 		if (url == null || url.isBlank()) {
@@ -166,6 +173,14 @@ public class BrowserTool {
 			return "Error: the domain '" + host
 				+ "' is not on the browser allowlist configured by the administrator.";
 		}
+		// The governance layer on top of the installation-wide lists: which origins the ACTING ROLE
+		// may reach. Checked here as well as in the session's filtering proxy, so the agent is told
+		// why in its own vocabulary instead of reading a transport failure.
+		BrowsingPolicy browsing = WebToolsService.policyFor(currentPersonQuietly());
+		String offPolicy = browsing.refuseAccess(host);
+		if (offPolicy != null) {
+			return "Error: " + BrowsingPolicies.audit(browsing, host, offPolicy);
+		}
 		Object sessionKey = sessionKey(context);
 		if (sessionKey == null) {
 			return "Error: no execution context is available for the browser session.";
@@ -190,7 +205,8 @@ public class BrowserTool {
 		mode = ToolMode.READ,
 		group = ToolGroups.EGRESS,
 		concurrencySafe = false,
-		truncationHint = PAGE_SNAPSHOT_TRUNCATION_HINT)
+		truncationHint = PAGE_SNAPSHOT_TRUNCATION_HINT,
+		marking = AnswerMarking.TOOL)
 	public String browserSnapshot(ToolExecutionContext context) {
 		BrowserToolsService service = BrowserToolsService.getInstance();
 		if (service == null) {
@@ -225,7 +241,8 @@ public class BrowserTool {
 		mode = ToolMode.READ,
 		group = ToolGroups.EGRESS,
 		concurrencySafe = false,
-		truncationHint = PAGE_SNAPSHOT_TRUNCATION_HINT)
+		truncationHint = PAGE_SNAPSHOT_TRUNCATION_HINT,
+		marking = AnswerMarking.TOOL)
 	public String browserClick(
 			@P("The ref of the element to click, taken from the latest snapshot (e.g. s1e3).") String ref,
 			ToolExecutionContext context) {
@@ -266,7 +283,8 @@ public class BrowserTool {
 		mode = ToolMode.READ,
 		group = ToolGroups.EGRESS,
 		concurrencySafe = false,
-		truncationHint = PAGE_SNAPSHOT_TRUNCATION_HINT)
+		truncationHint = PAGE_SNAPSHOT_TRUNCATION_HINT,
+		marking = AnswerMarking.TOOL)
 	public String browserType(
 			@P("The ref of the input element, taken from the latest snapshot (e.g. s1e2).") String ref,
 			@P("The text to type into the field.") String text,
@@ -302,7 +320,8 @@ public class BrowserTool {
 		mode = ToolMode.READ,
 		group = ToolGroups.EGRESS,
 		concurrencySafe = false,
-		truncationHint = PAGE_SNAPSHOT_TRUNCATION_HINT)
+		truncationHint = PAGE_SNAPSHOT_TRUNCATION_HINT,
+		marking = AnswerMarking.TOOL)
 	public String browserBack(ToolExecutionContext context) {
 		BrowserToolsService service = BrowserToolsService.getInstance();
 		if (service == null) {
@@ -327,20 +346,22 @@ public class BrowserTool {
 	 *        visible viewport only.
 	 * @param context
 	 *        Injected execution context; identifies the agent session.
-	 * @return A short confirmation with the persisted object's TID and the source URL, or an error
-	 *         string.
+	 * @return A short confirmation with the URL the screenshot can be viewed at, the persisted
+	 *         object's TID and the source URL, or an error string.
 	 */
 	@ToolMethod(
 		description = "Capture a PNG screenshot of this session's current browser page and save it as a "
 			+ "persistent Screenshot object. Optional 'name' sets the filename/label (a sensible "
 			+ "<host>-<timestamp>.png is generated when omitted). 'fullPage' captures the entire scrolling "
-			+ "page when true, or only the visible viewport when false (the default). Returns the saved "
-			+ "object's TID and the source URL so it can be referenced later; it does NOT return the image "
-			+ "bytes or the page text - use browserSnapshot to read the page. Navigate to a page first.",
+			+ "page when true, or only the visible viewport when false (the default). Returns a viewing URL, "
+			+ "the saved object's TID and the source URL; it does NOT return the image bytes or the page text "
+			+ "- use browserSnapshot to read the page. To show the picture to the user, put the returned "
+			+ "viewing URL in your answer as a markdown image: ![name](url). Navigate to a page first.",
 		mode = ToolMode.DATA_WRITE,
 		group = ToolGroups.EGRESS,
 		// One browser page per session; not safe to run in parallel with other calls in the run.
-		concurrencySafe = false)
+		concurrencySafe = false,
+		marking = AnswerMarking.NONE)
 	public String browserScreenshot(
 			@P("Optional filename/label for the screenshot; a <host>-<timestamp>.png name is generated "
 				+ "when omitted.") String name,
@@ -383,8 +404,35 @@ public class BrowserTool {
 		String fileName = (name != null && !name.isBlank()) ? name.trim() : autoName(capture.url());
 		Screenshot saved =
 			screenshots.createScreenshot(fileName, capture.png(), capture.url(), currentPersonQuietly());
-		return "Saved screenshot \"" + fileName + "\" (" + capture.png().length + " bytes) from "
-			+ capture.url() + ". Screenshot object TID: " + saved.tId().asString();
+		return screenshotAnswer(fileName, capture.png().length, capture.url(), saved);
+	}
+
+	/**
+	 * What {@code browserScreenshot} tells the model about the picture it just stored.
+	 *
+	 * <p>
+	 * The viewing URL comes first and the model is told, in the result itself, what to write with
+	 * it. Without that the capture is write-only from the user's point of view (issue #216): a TID
+	 * is all the model can repeat back, and a TID renders as nothing.
+	 * </p>
+	 *
+	 * @param fileName
+	 *        The stored name; also the image's alt text, so a picture that fails to load still says
+	 *        what it was.
+	 * @param byteCount
+	 *        Size of the stored PNG.
+	 * @param sourceUrl
+	 *        The page the picture was taken of.
+	 * @param saved
+	 *        The persisted screenshot.
+	 */
+	static String screenshotAnswer(String fileName, int byteCount, String sourceUrl, Screenshot saved) {
+		String viewUrl = ScreenshotService.viewUrl(saved);
+		return "Saved screenshot \"" + fileName + "\" (" + byteCount + " bytes) from "
+			+ sourceUrl + ". View it at: " + viewUrl
+			+ " - show it to the user by writing exactly this markdown image into your answer: "
+			+ "![" + fileName + "](" + viewUrl + ")"
+			+ ". Screenshot object TID: " + saved.tId().asString();
 	}
 
 	/**
@@ -437,7 +485,8 @@ public class BrowserTool {
 		mode = ToolMode.DATA_WRITE,
 		group = ToolGroups.EGRESS,
 		// One browser page per session; not safe to run in parallel with other calls in the run.
-		concurrencySafe = false)
+		concurrencySafe = false,
+		marking = AnswerMarking.NONE)
 	public String browserSaveCookies(
 			@P("The name of the cookie pool to save this session's login into (private to you unless you "
 				+ "pass shared=true, or that pool is already shared).") String poolName,
@@ -542,7 +591,8 @@ public class BrowserTool {
 		mode = ToolMode.READ,
 		group = ToolGroups.EGRESS,
 		// Rebinds the session's context; not safe to run in parallel with other calls in the run.
-		concurrencySafe = false)
+		concurrencySafe = false,
+		marking = AnswerMarking.NONE)
 	public String browserUseCookies(
 			@P("The name of the cookie pool to start this session from (your own or a shared pool).")
 			String poolName,

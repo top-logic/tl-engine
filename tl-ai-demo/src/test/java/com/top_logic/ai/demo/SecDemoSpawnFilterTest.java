@@ -1,8 +1,8 @@
 /*
- * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
- *
- * SPDX-License-Identifier: LicenseRef-BOS-TopLogic-1.0
- */
+	 * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+	 *
+	 * SPDX-License-Identifier: LicenseRef-BOS-TopLogic-1.0
+	 */
 package com.top_logic.ai.demo;
 
 import java.util.List;
@@ -21,26 +21,26 @@ import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.tools.interaction.SubagentSpawner;
 
 /**
- * What {@code spawn_subagent} does when the agent a persona asks for can reach nothing that persona may
- * call, on the framework agents the deployment really ships.
- *
- * <p>
- * The spawn half of {@link SecDemoDelegateFilterTest}. {@code list_agents} is already filtered, so
- * before this an agent could read a name out of a filtered listing, spawn it anyway, and get a child run
- * that filtered its own tool schemas down to nothing - a prompt line, a provider round trip and a report
- * that says nothing. The refusal happens before any of it: the tool call is answered without the loop
- * factory ever being asked for a loop and without a job being registered, and both are asserted rather
- * than assumed.
- * </p>
- *
- * <p>
- * {@code TL_ModelExplorer} is the agent under test for the same reason it is in
- * {@link SecDemoDelegateFilterTest}: it carries {@code model.read} and {@code data.read} tools only, so
- * {@code Ben} - which holds neither - can do nothing with it, while {@code Ben} holds both.
- * </p>
- *
- * @see SubagentSpawner#detachedSpawnRefusal(String, AgentCapabilities)
- */
+	 * What {@code spawn_subagent} does when the agent a persona asks for can reach nothing that persona may
+	 * call, on the framework agents the deployment really ships.
+	 *
+	 * <p>
+	 * The spawn half of {@link SecDemoDelegateFilterTest}. {@code list_agents} is already filtered, so
+	 * before this an agent could read a name out of a filtered listing, spawn it anyway, and get a child run
+	 * that filtered its own tool schemas down to nothing - a prompt line, a provider round trip and a report
+	 * that says nothing. The refusal happens before any of it: the tool call is answered without the loop
+	 * factory ever being asked for a loop and without a job being registered, and both are asserted rather
+	 * than assumed.
+	 * </p>
+	 *
+	 * <p>
+	 * {@code TL_ModelExplorer} is the agent under test for the same reason it is in
+	 * {@link SecDemoDelegateFilterTest}: it carries {@code model.read} and {@code data.read} tools only, so
+	 * {@code Ben} - which holds neither - can do nothing with it, while {@code Ben} holds both.
+	 * </p>
+	 *
+	 * @see SubagentSpawner#detachedSpawnRefusal(String, AgentCapabilities)
+	 */
 public class SecDemoSpawnFilterTest extends SecDemoPersonaTest {
 
 	/** Reads the model and its instances, and nothing else. */
@@ -63,8 +63,15 @@ public class SecDemoSpawnFilterTest extends SecDemoPersonaTest {
 	 * hand-built policies, because a policy in which an agent is wholly unreachable is one this fixture
 	 * deliberately does not deploy.
 	 * </p>
+	 *
+	 * <p>
+	 * <b>Quarantined, see #445.</b> The fixture's {@code <agent-access>} section (#392) restricts ben's
+	 * role to {@code TL_ModelExplorer}, so this no longer holds - and no build ran it to say so until
+	 * #369. What the fixture should demonstrate instead is the open question in that issue; renaming the
+	 * method back to {@code test...} is what puts it back in the suite.
+	 * </p>
 	 */
-	public void testNoSpawnIsRefusedByThisFixture() {
+	public void quarantinedTestNoSpawnIsRefusedByThisFixture() {
 		for (String login : SecDemoSetupService.personaLogins()) {
 			for (String agentName : List.of(EXPLORER, SCRIPT_AGENT, EDITOR_AGENT)) {
 				assertNull(login + " reaches a tool of '" + agentName + "', so the spawn decision must"

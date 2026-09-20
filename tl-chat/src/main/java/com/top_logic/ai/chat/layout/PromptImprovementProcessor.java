@@ -6,6 +6,8 @@
 package com.top_logic.ai.chat.layout;
 
 import java.time.Instant;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -17,7 +19,6 @@ import java.util.regex.Pattern;
 import com.top_logic.ai.chat.layout.TaskProgressTracker.PromptImprovementState;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.execution.AgentEnvironment;
@@ -25,6 +26,9 @@ import com.top_logic.tl.ai.core.execution.AgentRunner;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.UserMessage;
+import com.top_logic.tl.ai.core.security.RunEntryPoint;
+import com.top_logic.tl.ai.core.security.RunPrincipal;
+import com.top_logic.tl.ai.core.security.RunSecurity;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.tools.task.TaskStore;
@@ -518,14 +522,17 @@ public final class PromptImprovementProcessor {
 		UserInteractionStore interactionStore = new UserInteractionStore();
 		try (TransactionScope transaction = new TransactionScope(cancellationToken);
 				AgentEnvironment environment = AgentEnvironment.open(logListener, taskStore,
-					interactionStore, ConcurrentHashMap.newKeySet(), cancellationToken)) {
+					interactionStore, Collections.synchronizedSet(new LinkedHashSet<>()),
+					cancellationToken)) {
 			// withoutAgentChoice: the user did not pick this agent and cannot pick another. The agent
 			// allowlist decides which persona answers them, and the improver never answers - it
 			// rewrites the draft they are about to send. Gating it would make an administrator grant
 			// an agent the picker deliberately hides, and the button would break for every restricted
 			// role with nothing on screen to say why. Everything else about this run stays decided.
 			ToolContext context = new ToolContext(
-				TopLogicSecurityContext.forRun(TLContext.currentUser(), false).withoutAgentChoice(),
+				RunSecurity.contextFor(
+					new RunPrincipal(TLContext.currentUser(), RunEntryPoint.INTERNAL, false))
+					.withoutAgentChoice(),
 				ApprovalCallback.AUTO_APPROVE, transaction, cancellationToken);
 			return AgentRunner.run(agentName, conversation, null, context, environment.logListener(),
 				null, ephemeralLog, null, null).response();

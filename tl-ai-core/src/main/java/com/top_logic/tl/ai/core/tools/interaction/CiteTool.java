@@ -7,6 +7,7 @@ package com.top_logic.tl.ai.core.tools.interaction;
 
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.citation.CitationMarkers;
+import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
@@ -55,7 +56,8 @@ public class CiteTool {
 			+ "it supports. Cite only ids from this turn; never invent one. For a text source pass "
 			+ "the sentence you read as 'passage', copied verbatim from the tool result; a "
 			+ "structured object has no sentence, so pass none.",
-		mode = ToolMode.READ, group = ToolGroups.INTERACTION)
+		mode = ToolMode.READ, group = ToolGroups.INTERACTION,
+		marking = AnswerMarking.NONE)
 	public String cite(
 			@P("One of the declared kinds, exactly as written there.") String kind,
 			@P("Id the producing tool returned (URL, TID, invoice id, …).") String id,

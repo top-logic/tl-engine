@@ -39,6 +39,9 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 	/** @see #getContextComposition() */
 	public static final String CONTEXT_COMPOSITION__PROP = "contextComposition";
 
+	/** @see #getTurnContext() */
+	public static final String TURN_CONTEXT__PROP = "turnContext";
+
 	/** @see #getUserParts() */
 	public static final String USER_PARTS__PROP = "userParts";
 
@@ -63,6 +66,8 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 	private com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto _lastIterationUsage = null;
 
 	private com.top_logic.tl.ai.core.session.persist.messages.ContextCompositionDto _contextComposition = null;
+
+	private String _turnContext = "";
 
 	private final java.util.List<com.top_logic.tl.ai.core.session.persist.messages.PersistedPart> _userParts = new java.util.ArrayList<>();
 
@@ -274,6 +279,32 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 	}
 
 	/**
+	 * What the host stated about this turn - the facts that change while the conversation runs.
+	 *
+	 * <p>
+	 * Sent to the model beside the user's text and stored apart from it, so a reader of
+	 * {@link #getUserParts()} gets what the user wrote and nothing else. Empty when the host stated
+	 * no per-turn fact, and in transcripts written before this field existed.
+	 * </p>
+	 */
+	public final String getTurnContext() {
+		return _turnContext;
+	}
+
+	/**
+	 * @see #getTurnContext()
+	 */
+	public com.top_logic.tl.ai.core.session.persist.messages.PersistedTurn setTurnContext(String value) {
+		internalSetTurnContext(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getTurnContext()} without chain call utility. */
+	protected final void internalSetTurnContext(String value) {
+		_turnContext = value;
+	}
+
+	/**
 	 * Parts contributed by the user in this turn.
 	 */
 	public final java.util.List<com.top_logic.tl.ai.core.session.persist.messages.PersistedPart> getUserParts() {
@@ -393,6 +424,7 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 			USAGE__PROP, 
 			LAST_ITERATION_USAGE__PROP, 
 			CONTEXT_COMPOSITION__PROP, 
+			TURN_CONTEXT__PROP, 
 			USER_PARTS__PROP, 
 			ASSISTANT_PARTS__PROP, 
 			CONTENT_HTML__PROP);
@@ -428,6 +460,7 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 			case USAGE__PROP: return getUsage();
 			case LAST_ITERATION_USAGE__PROP: return getLastIterationUsage();
 			case CONTEXT_COMPOSITION__PROP: return getContextComposition();
+			case TURN_CONTEXT__PROP: return getTurnContext();
 			case USER_PARTS__PROP: return getUserParts();
 			case ASSISTANT_PARTS__PROP: return getAssistantParts();
 			case CONTENT_HTML__PROP: return getContentHtml();
@@ -446,6 +479,7 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 			case USAGE__PROP: internalSetUsage((com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto) value); break;
 			case LAST_ITERATION_USAGE__PROP: internalSetLastIterationUsage((com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto) value); break;
 			case CONTEXT_COMPOSITION__PROP: internalSetContextComposition((com.top_logic.tl.ai.core.session.persist.messages.ContextCompositionDto) value); break;
+			case TURN_CONTEXT__PROP: internalSetTurnContext((String) value); break;
 			case USER_PARTS__PROP: internalSetUserParts(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.tl.ai.core.session.persist.messages.PersistedPart.class, value)); break;
 			case ASSISTANT_PARTS__PROP: internalSetAssistantParts(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.tl.ai.core.session.persist.messages.PersistedPart.class, value)); break;
 			case CONTENT_HTML__PROP: internalSetContentHtml((String) value); break;
@@ -489,6 +523,8 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 			out.name(CONTEXT_COMPOSITION__PROP);
 			getContextComposition().writeTo(out);
 		}
+		out.name(TURN_CONTEXT__PROP);
+		out.value(getTurnContext());
 		out.name(USER_PARTS__PROP);
 		out.beginArray();
 		for (com.top_logic.tl.ai.core.session.persist.messages.PersistedPart x : getUserParts()) {
@@ -516,6 +552,7 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 			case USAGE__PROP: setUsage(com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto.readTokenUsageDto(in)); break;
 			case LAST_ITERATION_USAGE__PROP: setLastIterationUsage(com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto.readTokenUsageDto(in)); break;
 			case CONTEXT_COMPOSITION__PROP: setContextComposition(com.top_logic.tl.ai.core.session.persist.messages.ContextCompositionDto.readContextCompositionDto(in)); break;
+			case TURN_CONTEXT__PROP: setTurnContext(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case USER_PARTS__PROP: {
 				java.util.List<com.top_logic.tl.ai.core.session.persist.messages.PersistedPart> newValue = new java.util.ArrayList<>();
 				in.beginArray();

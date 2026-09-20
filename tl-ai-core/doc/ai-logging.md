@@ -33,6 +33,7 @@ content. It adds the operational signal that is *not* in the database:
 | Context compaction (`COMPACT_START` / `COMPACT_DONE`)                | The conversation transcript               |
 | Loop-guard blocks - duplicate / oscillation (`LOOP_BLOCK`)           |                                           |
 | Transaction outcomes (`TX_BEGIN` / `TX_COMMIT` / `TX_ROLLBACK`)      |                                           |
+| A refused commit, with its cause - at ERROR, see below               |                                           |
 | Result truncation (`TOOL_TRUNCATED`)                                 |                                           |
 
 Every line carries `runId` so it can be joined back to the persisted `AgentExecution` row for the
@@ -40,8 +41,14 @@ full, authoritative picture (including the payloads that are intentionally absen
 
 ## Levels
 
-There is no TRACE level in the TopLogic `Logger` facade; the two levels in use are:
+There is no TRACE level in the TopLogic `Logger` facade; the three levels in use are:
 
+- **ERROR** - a run that lost data, whatever the log level. Today that is the turn whose commit was
+  refused: `AgentLoop.commitTransaction` writes one line per failure, naming run, turn and cause,
+  because nothing else does. `TransactionScope` wraps the engine's exception without logging it and
+  the rollback that follows is only traced at DEBUG, so a deployment that hit this used to find
+  nothing at all (issue #410). Format:
+  `Agent run <runId> turn <n>: the transaction of the turn could not be committed.`
 - **INFO** - rare, important operational events that are *not* persisted and are worth seeing even
   with debug off: provider retries (`PROVIDER_RETRY`) and reactive, context-overflow compaction
   (`COMPACT_START trigger=reactive`).

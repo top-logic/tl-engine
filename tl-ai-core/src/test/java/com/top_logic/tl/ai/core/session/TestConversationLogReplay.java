@@ -50,6 +50,33 @@ public class TestConversationLogReplay extends TestCase {
 		assertEquals("Hi there!", ((TextContent) am.content().get(0)).text());
 	}
 
+	/**
+	 * A reloaded turn carries what the host stated about it, ahead of the user's text.
+	 *
+	 * <p>
+	 * Exactly where the live run put it, because a reloaded conversation has to be the one the model
+	 * already saw - the compaction sidecars are fingerprinted against this projection.
+	 * </p>
+	 */
+	public void testTheTurnContextIsReplayedBesideTheUsersText() {
+		String block = "<turn-context>\nTurn: 1\nOpen invoice: RE-2026-0042\n</turn-context>";
+		ConversationLog log = new ConversationLog();
+		Turn turn = log.startTurn();
+		turn.setTurnContext(block);
+		turn.setUserParts(List.of(new Part.TextPart("u1", Instant.now(), "Is the payment term okay?")));
+		turn.addAssistantPart(new Part.TextPart("p1", Instant.now(), "Yes."));
+		turn.addUsage(TokenUsage.EMPTY);
+		log.completeTurn();
+
+		Conversation conv = new Conversation();
+		ConversationLogReplay.rebuildMemory(log, conv);
+
+		UserMessage um = (UserMessage) conv.messages().get(0);
+		assertEquals(2, um.content().size());
+		assertEquals(block, ((TextContent) um.content().get(0)).text());
+		assertEquals("Is the payment term okay?", ((TextContent) um.content().get(1)).text());
+	}
+
 	/** Tool calls produce assistant(tool_use) + tool_result pairs. */
 	public void testToolCallReplay() {
 		ConversationLog log = new ConversationLog();

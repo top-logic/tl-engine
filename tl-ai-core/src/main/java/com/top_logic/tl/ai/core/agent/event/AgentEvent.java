@@ -86,6 +86,41 @@ public sealed interface AgentEvent {
 			implements AgentEvent {}
 
 	/**
+	 * What this run told the model about the situation it happens in.
+	 *
+	 * <p>
+	 * Emitted immediately after {@link RunStarted}, and only when the run composed a block at all.
+	 * It is the one place an administrator can see the filled environment: the block is part of the
+	 * system prompt, which is not recorded anywhere else.
+	 * </p>
+	 *
+	 * @param runId agent run identifier
+	 * @param turnNumber 1-based loop iteration; {@code 0}, like {@link RunStarted}
+	 * @param timestamp when the event occurred
+	 * @param environment the composed {@code <environment>} block, as sent
+	 */
+	record EnvironmentComposed(String runId, int turnNumber, Instant timestamp, String environment)
+			implements AgentEvent {}
+
+	/**
+	 * What this run told the model about <em>this turn</em> - the facts that change while the
+	 * conversation runs.
+	 *
+	 * <p>
+	 * Emitted immediately after {@link EnvironmentComposed}, and only when the run composed a block
+	 * at all. The block travels in the turn, beside the user's text, so it is recorded on the turn
+	 * rather than on the run: the user's own text must stay exactly what the user wrote.
+	 * </p>
+	 *
+	 * @param runId agent run identifier
+	 * @param turnNumber 1-based loop iteration; {@code 0}, like {@link RunStarted}
+	 * @param timestamp when the event occurred
+	 * @param turnContext the composed {@code <turn-context>} block, as sent
+	 */
+	record TurnContextComposed(String runId, int turnNumber, Instant timestamp, String turnContext)
+			implements AgentEvent {}
+
+	/**
 	 * Final event of a run. {@code turnNumber} is the last turn reached.
 	 *
 	 * @param runId agent run identifier
@@ -143,17 +178,33 @@ public sealed interface AgentEvent {
 	 *        what the agent read back from the tools it ran, which is usually the part of a
 	 *        conversation that grows fastest and the part a user least expects
 	 * @param toolCount number of tool schemas sent with the request
+	 * @param loadedSkills the skills whose tools this request carried, in the order they were
+	 *        loaded - the part of {@code toolDefinitionTokens} a {@code loadSkill} added, and the
+	 *        only part of the tool array that can still change within the conversation
 	 */
 	record ContextComposition(String runId, int turnNumber, Instant timestamp,
 			int systemPromptTokens, int toolDefinitionTokens, int messageTokens, int toolResultTokens,
-			int toolCount)
+			int toolCount, List<String> loadedSkills)
 			implements AgentEvent {
+
+		/** */
+		public ContextComposition {
+			loadedSkills = loadedSkills == null ? List.of() : List.copyOf(loadedSkills);
+		}
+
+		/** Shape of a composition recorded before the loaded skills were named. */
+		public ContextComposition(String runId, int turnNumber, Instant timestamp,
+				int systemPromptTokens, int toolDefinitionTokens, int messageTokens, int toolResultTokens,
+				int toolCount) {
+			this(runId, turnNumber, timestamp, systemPromptTokens, toolDefinitionTokens, messageTokens,
+				toolResultTokens, toolCount, List.of());
+		}
 
 		/** Legacy shape of a composition recorded before tool results were counted apart. */
 		public ContextComposition(String runId, int turnNumber, Instant timestamp,
 				int systemPromptTokens, int toolDefinitionTokens, int messageTokens, int toolCount) {
 			this(runId, turnNumber, timestamp, systemPromptTokens, toolDefinitionTokens, messageTokens, 0,
-				toolCount);
+				toolCount, List.of());
 		}
 	}
 
@@ -449,6 +500,27 @@ public sealed interface AgentEvent {
 	 */
 	record ProviderError(String runId, int turnNumber, Instant timestamp,
 			String kind, String message) implements AgentEvent {}
+
+	/**
+	 * Emitted when the run moved on to another model, because the one it was using is marked
+	 * unavailable or just failed.
+	 *
+	 * <p>
+	 * The run continues; the new model serves the rest of it. Everything before this event was
+	 * produced by {@code fromModel}, everything after by {@code toModel}, which is what makes the
+	 * pair worth recording rather than only the model the run ended on.
+	 * </p>
+	 *
+	 * @param runId agent run identifier
+	 * @param turnNumber 1-based loop iteration
+	 * @param timestamp when the event occurred
+	 * @param fromModel the model the run was using, qualified by its provider where one was named
+	 * @param toModel the model the run continues with, qualified the same way
+	 * @param reason why {@code fromModel} was left, in one line (the error kind and the provider's
+	 *        own words, or the mark that was already held against it)
+	 */
+	record ModelSwitched(String runId, int turnNumber, Instant timestamp,
+			String fromModel, String toModel, String reason) implements AgentEvent {}
 
 	// ---------- Subagents ----------
 

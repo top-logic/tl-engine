@@ -1,10 +1,12 @@
 import { React, useTLCommand, useTLState } from 'tl-react-bridge'
 import type { TLCellProps } from 'tl-react-bridge'
-import type { ApprovalRequest, Attachment, InteractionRequest } from './types'
+import type { ApprovalRequest, Attachment, ContextFact, InteractionRequest } from './types'
 import { chatIdOf, readBootstrap, useChat } from './chat-store'
 import { Composer, plusMenuVisible } from './composer'
+import { createDraftReporter } from './draft'
 import type { ComposerApi, ReferenceCandidate } from './extensions'
 import { bundle } from './i18n'
+import type { ReferenceToken } from './reference'
 import { RailToggle } from './rail'
 import { unseenBadge } from './progress-model'
 import {
@@ -102,6 +104,29 @@ export function modelBoundSource(raw: unknown): ((query: string) => ReferenceCan
 }
 
 /**
+ * The facts a `<chat-conversation/>` control computed from its `<context>` configuration.
+ *
+ * They are already evaluated - on the server, in the acting user's context - so the browser only
+ * reads them out of the control state and carries them back with the next message.
+ */
+export function readContextFacts(raw: unknown): ContextFact[] {
+  if (!Array.isArray(raw)) return []
+  const facts: ContextFact[] = []
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue
+    const row = item as Record<string, unknown>
+    const name = typeof row.name === 'string' ? row.name : ''
+    if (!name) continue
+    facts.push({
+      name,
+      value: typeof row.value === 'string' ? row.value : '',
+      stable: row.stable !== false,
+    })
+  }
+  return facts
+}
+
+/**
  * What a turn-setting channel said, out of the control state a `<chat-conversation/>` pushed.
  *
  * `undefined` is "the channel says nothing" - it is unwired, empty, or the write was refused - and
@@ -109,6 +134,30 @@ export function modelBoundSource(raw: unknown): ((query: string) => ReferenceCan
  */
 export function channelName(raw: unknown): string | undefined {
   return typeof raw === 'string' ? raw : undefined
+}
+
+/**
+ * One write of the `reference` channel, out of the control state.
+ *
+ * The `seq` is what makes a write a write: a channel notifies for A, B, A, and the third write
+ * carries the same token as the first, which unchanged state could not tell apart from no write at
+ * all. `undefined` means the channel is unwired or holds nothing insertable.
+ */
+export function referenceWrite(raw: unknown): { seq: number; token: ReferenceToken } | undefined {
+  if (!raw || typeof raw !== 'object') return undefined
+  const row = raw as Record<string, unknown>
+  if (typeof row.id !== 'string' || !row.id) return undefined
+  const seq = typeof row.seq === 'number' ? row.seq : Number(row.seq)
+  if (!Number.isFinite(seq)) return undefined
+  return {
+    seq,
+    token: {
+      kind: typeof row.kind === 'string' ? row.kind : '',
+      id: row.id,
+      label: typeof row.label === 'string' ? row.label : '',
+      text: typeof row.text === 'string' ? row.text : '',
+    },
+  }
 }
 
 /** The same for the channel that holds a set of names; an empty array attaches no server at all. */
@@ -135,13 +184,21 @@ export function sameServers(a: string[], b: string[]): boolean {
  * The four turn settings - agent, model, effort and the attached MCP servers - travel over their own
  * two-way channels: a write from outside is applied as if the user had picked it, and what the user
  * picks is reported back with one {@code publishTurnSettings} command.
+ *
+ * The {@code draft} channel carries the unsent text the same way, and {@code reference} puts a
+ * written model object into it as one atomic token. A host that writes both has put a question into
+ * the chat; pressing send is still the user's.
  */
 export function TLChatConversation({ controlId }: TLCellProps) {
   const state = useTLState()
   const command = useTLCommand()
   const boot = useMemo(() => readBootstrap(state), [state])
-  const { chat, actions, runs } = useChat(chatIdOf(state, controlId), boot)
+  const chatId = chatIdOf(state, controlId)
+  const { chat, actions, runs } = useChat(chatId, boot)
   const labels = useMemo(() => bundle(chat.language), [chat.language])
+  // Where this conversation's requests go. Memoised, because the composer is `React.memo`d and a
+  // fresh object on every render would defeat that.
+  const at = useMemo(() => ({ windowId: chat.windowId, chatId }), [chat.windowId, chatId])
   const config = useMemo(() => readThreadConfig(state), [state])
   const controls = useMemo(() => readComposerControls(state), [state])
   const selected = typeof state.selected === 'string' ? state.selected : ''
@@ -159,12 +216,19 @@ export function TLChatConversation({ controlId }: TLCellProps) {
     [state.referenceCandidates, state.referenceSource],
   )
 
-  // Tell the chat a conversation is on the page. A `<chat-dock/>` asks for this: the transport is
-  // one conversation per window, so a dock must not open a second copy of the one the page is
-  // already showing. Its own nested conversation does not count - `insideDock` says which is which,
-  // and comes from the view context rather than from the React tree.
+  // Tell the chat a conversation is on the page. A `<chat-dock/>` asks for this: it must not open a
+  // second copy of the conversation the page is already showing, which would give one draft channel
+  // two composers and one remembered layout two rails. Its own nested conversation does not count -
+  // `insideDock` says which is which, and comes from the view context rather than from the React tree.
   const insideDock = state.insideDock === true
   useEffect(() => actions.registerConversation(insideDock), [actions, insideDock])
+
+  // What this page states about the situation, handed to the store so that it travels with every
+  // message. The store compares by value, so re-pushing an unchanged set costs nothing.
+  const contextFacts = useMemo(() => readContextFacts(state.contextFacts), [state.contextFacts])
+  useEffect(() => {
+    actions.setContextFacts(contextFacts)
+  }, [contextFacts, actions])
 
   // Follow the selection channel. A non-empty value selects that session; clearing it (a transition
   // to empty) means "new chat" - a deselect shows a fresh, empty conversation. The transition guard
@@ -263,6 +327,53 @@ export function TLChatConversation({ controlId }: TLCellProps) {
     void command('publishTurnSettings', settings)
   }, [chat.agent, chat.model, chat.effort, chat.mcp, command])
 
+  // The draft channel, in both directions.
+  //
+  // Out: the composer's text, but not on the keystroke - a channel write is a round trip, so an
+  // ordinary report waits for the pause, while blur and send report at once (`createDraftReporter`).
+  // In: a *write* replaces the draft, focuses the composer and puts the caret at the end. What
+  // comes back from the control is mostly this element's own report travelling the loop, so what
+  // was last published is remembered and recognised - otherwise an echo that arrives two keystrokes
+  // later would put the composer back where it was two keystrokes ago.
+  const publishedDraft = useRef<string | null>(null)
+  const reporter = useMemo(
+    () =>
+      createDraftReporter((text) => {
+        publishedDraft.current = text
+        void command('publishDraft', { text })
+      }),
+    [command],
+  )
+  useEffect(() => reporter.cancel, [reporter])
+  const onDraft = useCallback(
+    (text: string, settled: boolean) => {
+      if (settled) reporter.flush(text)
+      else reporter.report(text)
+    },
+    [reporter],
+  )
+  const channelDraft = channelName(state.draftText)
+  const wroteDraft = useRef<string | undefined>(undefined)
+  useEffect(() => {
+    const written = wroteDraft.current !== channelDraft
+    wroteDraft.current = channelDraft
+    if (!written || channelDraft === undefined) return
+    if (channelDraft === publishedDraft.current) return
+    publishedDraft.current = channelDraft
+    actions.setDraft(channelDraft)
+  }, [channelDraft, actions])
+
+  // The reference channel: an object written to it becomes one atomic token at the caret, exactly
+  // as picking it from the "@" menu does. In only - the token is part of the draft the channel
+  // above already carries.
+  const reference = useMemo(() => referenceWrite(state.referenceWrite), [state.referenceWrite])
+  const insertedReference = useRef<number | null>(null)
+  useEffect(() => {
+    if (!reference || insertedReference.current === reference.seq) return
+    insertedReference.current = reference.seq
+    actions.insertReference(reference.token)
+  }, [reference, actions])
+
   const pendingApprovals = useMemo(
     () =>
       chat.messages.filter(
@@ -349,7 +460,7 @@ export function TLChatConversation({ controlId }: TLCellProps) {
           onOpenSource={() => undefined}
         />
         <Composer
-          windowId={chat.windowId}
+          at={at}
           agents={chat.caps.agents}
           models={chat.offeredModels}
           agent={chat.agent}
@@ -383,6 +494,7 @@ export function TLChatConversation({ controlId }: TLCellProps) {
           onDismissNotice={() => actions.showNotice('')}
           onSend={onSend}
           onStop={actions.stop}
+          onDraft={onDraft}
           placeholder={placeholder || undefined}
           extraMenuItems={extraMenuItems}
           referenceCandidates={referenceCandidates}

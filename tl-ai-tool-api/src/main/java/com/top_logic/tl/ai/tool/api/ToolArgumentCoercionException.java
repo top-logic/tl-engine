@@ -13,7 +13,7 @@ package com.top_logic.tl.ai.tool.api;
  * body may also throw after already producing side effects) knows the tool never ran and the
  * failure is synthetic.</p>
  *
- * @see AnnotatedTools#coerceArg(Object, Class, java.lang.reflect.Type, String)
+ * @see AnnotatedTools#coerceArg(Object, Class, java.lang.reflect.Type, String, ToolExecutionContext)
  */
 public class ToolArgumentCoercionException extends IllegalArgumentException {
 

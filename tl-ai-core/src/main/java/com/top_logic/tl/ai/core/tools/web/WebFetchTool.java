@@ -24,11 +24,12 @@ import org.jsoup.nodes.Element;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.scripting.Converters;
-import com.top_logic.tl.ai.core.tools.util.UntrustedEnvelope;
+import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
+import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
 
 /**
  * Tool that fetches a single web page and returns its main textual content.
@@ -36,6 +37,12 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  * <p>
  * Includes SSRF protection (no internal/private hosts, http(s) only, no credentials in URL),
  * manual redirect handling with per-hop re-validation, and byte/character caps.
+ * </p>
+ *
+ * <p>
+ * Which origins it may reach at all is the acting role's {@link BrowsingPolicy}, configured on
+ * {@link WebToolsService}. It is applied to every hop, so an allowed origin redirecting to a
+ * forbidden one is refused rather than followed.
  * </p>
  *
  * <p>
@@ -84,7 +91,8 @@ public class WebFetchTool {
 			+ "preserving headings, links, lists and tables. "
 			+ "Use after webSearch to read a specific result, or to read a URL the user provided. "
 			+ "Only public http(s) pages are supported.",
-		mode = ToolMode.READ, group = ToolGroups.EGRESS)
+		mode = ToolMode.READ, group = ToolGroups.EGRESS,
+		marking = AnswerMarking.TOOL)
 	public String webFetch(@P("The absolute http or https URL to fetch.") String url) {
 		if (url == null || url.isBlank()) {
 			return "Error: url is required.";
@@ -95,6 +103,8 @@ public class WebFetchTool {
 		int timeoutSeconds = Math.max(1, service != null ? service.getFetchTimeoutSeconds() : 30);
 		int maxBytes = Math.max(1024, service != null ? service.getFetchMaxBytes() : 5_000_000);
 		int maxChars = Math.max(256, service != null ? service.getFetchMaxChars() : 50_000);
+
+		BrowsingPolicy browsing = WebToolsService.currentPolicy();
 
 		String currentUrl = url.trim();
 		try {
@@ -108,6 +118,13 @@ public class WebFetchTool {
 				String validationError = validateUrl(uri);
 				if (validationError != null) {
 					return "Error: " + validationError;
+				}
+				// Re-checked on EVERY hop, exactly as the SSRF check above is: a permitted origin
+				// answering with a redirect to an off-policy one is the whole reason the redirects are
+				// followed by hand here rather than by the HttpClient.
+				String offPolicy = browsing.refuseAccess(uri.getHost());
+				if (offPolicy != null) {
+					return "Error: " + BrowsingPolicies.audit(browsing, uri.getHost(), offPolicy);
 				}
 
 				HttpRequest request = HttpRequest.newBuilder(uri)

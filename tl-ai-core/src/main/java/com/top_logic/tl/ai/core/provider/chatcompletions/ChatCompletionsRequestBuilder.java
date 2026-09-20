@@ -113,9 +113,7 @@ public class ChatCompletionsRequestBuilder {
 			req.setTools(tools);
 		}
 
-		if (request.responseFormat() == ResponseFormat.JSON) {
-			req.setResponseFormat(Map.of("type", "json_object"));
-		}
+		writeResponseFormat(req, request.responseFormat());
 
 		if (toolChoiceOverride != null) {
 			req.setToolChoice(toolChoiceOverride);
@@ -134,6 +132,34 @@ public class ChatCompletionsRequestBuilder {
 			throw new RuntimeException("Failed to serialize ProviderRequest to JSON", e);
 		}
 		return buffer.toString();
+	}
+
+	/**
+	 * Writes the requested {@link ResponseFormat} as the Chat Completions {@code response_format}.
+	 *
+	 * <p>
+	 * The API knows both shapes: {@code json_object} asks for some JSON, {@code json_schema} asks
+	 * for exactly this JSON. The schema is nested under a name, because the provider caches the
+	 * compiled schema under it.
+	 * </p>
+	 */
+	private static void writeResponseFormat(ChatCompletionsRequest req, ResponseFormat format) {
+		if (format == null || format.kind() == ResponseFormat.Kind.TEXT) {
+			return;
+		}
+		if (format.kind() == ResponseFormat.Kind.JSON) {
+			req.setResponseFormat(Map.of("type", "json_object"));
+			return;
+		}
+		Map<String, Object> jsonSchema = new LinkedHashMap<>();
+		jsonSchema.put("name", format.schemaName());
+		jsonSchema.put("strict", Boolean.valueOf(format.strict()));
+		jsonSchema.put("schema", format.schema());
+
+		Map<String, Object> responseFormat = new LinkedHashMap<>();
+		responseFormat.put("type", "json_schema");
+		responseFormat.put("json_schema", jsonSchema);
+		req.setResponseFormat(responseFormat);
 	}
 
 	// --- Message building ---
@@ -229,9 +255,16 @@ public class ChatCompletionsRequestBuilder {
 			}
 			msg.put("content", parts);
 		} else {
+			// This API takes one string for a text-only user message, so the blocks of that message
+			// are joined - with a line break, because they are separate blocks and not fragments of
+			// one sentence. A turn that states its context beside the user's question would otherwise
+			// arrive with the two run together.
 			StringBuilder text = new StringBuilder();
 			for (ContentPart part : user.content()) {
 				if (part instanceof TextContent tc) {
+					if (text.length() > 0) {
+						text.append('\n');
+					}
 					text.append(tc.text());
 				}
 			}

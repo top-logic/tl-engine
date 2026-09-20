@@ -86,7 +86,7 @@ public final class ToolGroups {
 	 */
 	public static final String INTROSPECTION = "introspection";
 
-	/** User-scoped workspace tools: tasks, published pages. */
+	/** User-scoped workspace tools: tasks, published pages, the memories kept about the user. */
 	public static final String WORKSPACE = "workspace";
 
 	/**

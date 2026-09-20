@@ -145,10 +145,37 @@ public class SubagentJobRegistry {
 		return results;
 	}
 
+	/**
+	 * Every job in registration order.
+	 *
+	 * <p>
+	 * Ordered by the counter in the id rather than by the id as a string: {@code "sa-10"} sorts
+	 * before {@code "sa-2"} lexicographically, which would silently reorder results the moment a
+	 * session passes ten subagents - and result delivery to the parent is defined to follow the
+	 * order the parent started them in.
+	 * </p>
+	 */
 	private List<SubagentJob> ordered() {
 		List<SubagentJob> all = new ArrayList<>(_jobs.values());
-		all.sort((x, y) -> x.subagentId().compareTo(y.subagentId()));
+		all.sort((x, y) -> Integer.compare(sequenceOf(x), sequenceOf(y)));
 		return all;
+	}
+
+	/**
+	 * The registration counter encoded in a job's id, or {@link Integer#MAX_VALUE} for an id
+	 * this registry did not mint (which therefore sorts last rather than throwing).
+	 */
+	private static int sequenceOf(SubagentJob job) {
+		String id = job.subagentId();
+		int separator = id.lastIndexOf('-');
+		if (separator < 0) {
+			return Integer.MAX_VALUE;
+		}
+		try {
+			return Integer.parseInt(id.substring(separator + 1));
+		} catch (NumberFormatException ex) {
+			return Integer.MAX_VALUE;
+		}
 	}
 
 	/** Work performed for a subagent job on a background thread. */

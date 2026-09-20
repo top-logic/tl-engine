@@ -8,7 +8,9 @@ package com.top_logic.ai.chat.layout;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -81,11 +83,14 @@ public class TaskProgressTracker {
 	/** Session-scoped approval mode. Persists across messages/processing states. */
 	private volatile ApprovalMode _approvalMode = ApprovalMode.MANUAL;
 
+	/** Whether the runs of this tracker have nobody to ask. Only a scheduled run sets it. */
+	private volatile boolean _unattended = false;
+
 	/** Tools approved for the current session. */
 	private final Set<String> _sessionApprovedTools = ConcurrentHashMap.newKeySet();
 
 	/** Skills loaded via loadSkill() in this session. */
-	private final Set<String> _loadedSkills = ConcurrentHashMap.newKeySet();
+	private final Set<String> _loadedSkills = Collections.synchronizedSet(new LinkedHashSet<>());
 
 	/**
 	 * Answer ratings of the active session, keyed by the zero-based turn index they belong to.
@@ -386,6 +391,37 @@ public class TaskProgressTracker {
 	}
 
 	/**
+	 * Whether the runs started through this tracker have no human who could answer a question.
+	 *
+	 * <p>
+	 * {@code false} for every tracker of a browser window, which is what the chat UI creates: there
+	 * is a person looking at it. It is set by an entry point that has no window at all - the
+	 * scheduler's {@code AgentTask} - and {@code ChatProcessor} carries it into the run's
+	 * {@link com.top_logic.tl.ai.core.agent.ToolContext#attended() tool context} and into its
+	 * security context's background ceiling.
+	 * </p>
+	 *
+	 * <p>
+	 * Deliberately <em>not</em> derived from {@link #getApprovalMode()}. A user can switch their own
+	 * chat to {@link ApprovalMode#AUTO_APPROVE}, and that says they do not want to confirm each tool
+	 * call - not that they have left the room. Only the caller who knows there is no window can
+	 * answer this.
+	 * </p>
+	 */
+	public boolean isUnattended() {
+		return _unattended;
+	}
+
+	/**
+	 * Declares that the runs of this tracker have nobody to ask.
+	 *
+	 * @see #isUnattended()
+	 */
+	public void setUnattended(boolean unattended) {
+		_unattended = unattended;
+	}
+
+	/**
 	 * Returns the active session ID for persistence, or null if no session is selected.
 	 */
 	public String getActiveSessionId() {
@@ -499,9 +535,19 @@ public class TaskProgressTracker {
 		_loadedSkills.add(skillId);
 	}
 
-	/** Returns the set of loaded skill IDs. */
+	/**
+	 * The loaded skill IDs, in the order the session loaded them.
+	 *
+	 * <p>
+	 * Ordered on purpose: this is what the next run restores its tool catalog from, and a catalog
+	 * restored in another order sends the same tools as different bytes - a prompt cache thrown away
+	 * for nothing (Gitea #346).
+	 * </p>
+	 */
 	public Set<String> getLoadedSkills() {
-		return Set.copyOf(_loadedSkills);
+		synchronized (_loadedSkills) {
+			return Collections.unmodifiableSet(new LinkedHashSet<>(_loadedSkills));
+		}
 	}
 
 	/** Loads skill IDs from persisted metadata. */

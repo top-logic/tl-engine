@@ -58,6 +58,8 @@ public class Turn {
 
 	private volatile AgentEvent.ContextComposition _contextComposition;
 
+	private volatile String _turnContext;
+
 	/**
 	 * Creates a new turn.
 	 *
@@ -93,6 +95,28 @@ public class Turn {
 	/** Sets the user-submitted parts for this turn. */
 	public void setUserParts(List<Part> parts) {
 		_userParts = List.copyOf(parts);
+	}
+
+	/**
+	 * What the host stated about this turn - the facts that change while the conversation runs -
+	 * or {@code null} when it stated none.
+	 *
+	 * <p>
+	 * Kept apart from {@link #userParts()} on purpose: the block travels to the model beside the
+	 * user's text, and the user's text is what the bubble shows. A reader that wants the one the
+	 * user wrote asks for the parts; a reader that wants the whole turn as it was sent - the
+	 * transcript, the run detail of the activity monitor - asks for this as well.
+	 * </p>
+	 *
+	 * @see com.top_logic.tl.ai.core.agent.environment.TurnContext
+	 */
+	public String turnContext() {
+		return _turnContext;
+	}
+
+	/** Records what the host stated about this turn. */
+	public void setTurnContext(String turnContext) {
+		_turnContext = turnContext;
 	}
 
 	/** Immutable snapshot of the assistant's response parts. */

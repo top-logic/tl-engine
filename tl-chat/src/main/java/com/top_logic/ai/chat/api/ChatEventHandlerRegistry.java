@@ -5,10 +5,13 @@
  */
 package com.top_logic.ai.chat.api;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
+import com.top_logic.knowledge.wrap.person.Person;
 
 /**
  * The chat UIs currently observing agent runs, keyed by {@link TaskProgressTracker}.
@@ -71,6 +74,43 @@ public final class ChatEventHandlerRegistry {
 			}
 		}
 		return candidate;
+	}
+
+	/**
+	 * The active handlers of every window this account has a chat open in, except the given one.
+	 *
+	 * <p>
+	 * What a run asks its user belongs to the account, so several windows can be showing the same
+	 * pending approval. When one of them answers, the others have to be told; they have no run of
+	 * their own to hear it from. The answering window is excluded because it already knows.
+	 * </p>
+	 *
+	 * <p>
+	 * Which account a chat UI belongs to is the UI's own answer ({@link ChatEventHandler#getAccount()});
+	 * a UI that does not say is left out.
+	 * </p>
+	 *
+	 * @param owner
+	 *        The account; <code>null</code> matches nothing.
+	 * @param except
+	 *        The tracker to leave out, or <code>null</code> to leave out none.
+	 * @return The matching handlers, in no particular order; never <code>null</code>.
+	 */
+	public static List<ChatEventHandler> findOthers(Person owner, TaskProgressTracker except) {
+		List<ChatEventHandler> result = new ArrayList<>();
+		if (owner == null) {
+			return result;
+		}
+		for (ChatEventHandler handler : HANDLERS) {
+			TaskProgressTracker tracker = handler.getTracker();
+			if (tracker == null || tracker == except || !handler.isActive()) {
+				continue;
+			}
+			if (owner.equals(handler.getAccount())) {
+				result.add(handler);
+			}
+		}
+		return result;
 	}
 
 }

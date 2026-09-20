@@ -180,9 +180,9 @@ describe('the rendered dock', () => {
   /**
    * The other case where a dock must not appear: the page is showing this very conversation.
    *
-   * The chat transport is one conversation per window, so a second view of it would take the
-   * page's turns. The content is unmounted rather than hidden, so the rail inside the dock stops
-   * competing with the page's rail for the one remembered layout.
+   * Two views of one conversation give its draft channel two composers and its layout two rails.
+   * The content is unmounted rather than hidden, so the rail inside the dock stops competing with
+   * the page's rail for the one remembered layout.
    */
   it('stands down entirely while a page shows its conversation', () => {
     const { store, release } = seedChat('dock-stand-down')

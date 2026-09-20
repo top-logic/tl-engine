@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -33,9 +34,9 @@ import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentParams;
+import com.top_logic.tl.ai.core.agent.AgentResult;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
@@ -44,8 +45,10 @@ import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.AgentRunner;
 import com.top_logic.tl.ai.core.execution.CancelSignalObserver;
 import com.top_logic.tl.ai.core.execution.ExecutionRecorder;
+import com.top_logic.tl.ai.core.execution.RunInfoBinding;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
+import com.top_logic.tl.ai.core.execution.model.UserMemory;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
@@ -55,6 +58,12 @@ import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.provider.health.ModelAvailability;
+import com.top_logic.tl.ai.core.provider.health.ModelHealthMark;
+import com.top_logic.tl.ai.core.provider.ResponseFormat;
+import com.top_logic.tl.ai.core.security.RunEntryPoint;
+import com.top_logic.tl.ai.core.security.RunPrincipal;
+import com.top_logic.tl.ai.core.security.RunSecurity;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
@@ -62,6 +71,7 @@ import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolExecutions;
 import com.top_logic.tl.ai.core.tools.perception.BinaryPerception;
+import com.top_logic.tl.ai.tool.api.RunInfo;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
@@ -86,6 +96,11 @@ import com.top_logic.util.error.TopLogicException;
  * <pre>
  * aiChat("What is TopLogic?")
  * </pre>
+ *
+ * <p>
+ * What {@code aiChat} can ask a model for, what each provider makes of it, and how a run that never
+ * answered is reported: {@code tl-ai-core/doc/script-chat.md}.
+ * </p>
  */
 @ScriptPrefix("ai")
 public class AIScriptFunctions extends TLScriptFunctions {
@@ -170,6 +185,49 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	}
 
 	/**
+	 * What the agent run the calling code is part of is.
+	 *
+	 * <p>
+	 * Readable from the implementation of a configured script tool, which is executed inside a tool
+	 * call, and from any TL-Script that runs beneath an agent - a script tool's body, a configured
+	 * function it calls, a listener. It is the same record a Java tool reads through its execution
+	 * context.
+	 * </p>
+	 *
+	 * <p>
+	 * The map has these keys, every one of which may be <code>null</code>:
+	 * </p>
+	 * <ul>
+	 * <li>{@code runId} - This run. A new one per chat message.</li>
+	 * <li>{@code conversationId} - The conversation all runs of one chat share.</li>
+	 * <li>{@code agentName} - The agent handling the run.</li>
+	 * <li>{@code model} / {@code provider} - What it talks to.</li>
+	 * <li>{@code executionId} - The persistent execution row of this run, for handing to a service
+	 * that resolves it.</li>
+	 * <li>{@code delegationDepth} - How deep in a delegation chain this run sits; zero at the top.</li>
+	 * </ul>
+	 *
+	 * <p>
+	 * Outside an agent run every value is <code>null</code> and the depth is zero.
+	 * </p>
+	 *
+	 * @return A map with the keys described above; never <code>null</code>.
+	 */
+	public static Map<String, Object> runInfo() {
+		RunInfo run = RunInfoBinding.current();
+
+		Map<String, Object> result = new HashMap<>();
+		result.put("runId", run.runId());
+		result.put("conversationId", run.conversationId());
+		result.put("agentName", run.agentName());
+		result.put("model", run.model());
+		result.put("provider", run.provider());
+		result.put("executionId", run.executionId());
+		result.put("delegationDepth", Integer.valueOf(run.delegationDepth()));
+		return result;
+	}
+
+	/**
 	 * Invokes a tool manually with the given parameters.
 	 *
 	 * <p>
@@ -232,18 +290,29 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *        The model name to use, or {@code null} to use the default model configured in
 	 *        {@link LLMService}.
 	 * @param responseFormat
-	 *        The response format specification. Can be:
+	 *        The response format specification, which reaches the provider's request. Can be:
 	 *        <ul>
 	 *        <li>{@code null}: No specific format requirement</li>
-	 *        <li>String "text" or "json": Simple format type</li>
-	 *        <li>Map with "name" and "schema" fields describing a JSON schema for structured
-	 *        output.</li>
+	 *        <li>String {@code "text"}: the provider default</li>
+	 *        <li>String {@code "json"}: some JSON object, with nothing saying which. Not every
+	 *        provider has such a mode - Anthropic has not - and one that has not refuses the
+	 *        call.</li>
+	 *        <li>Map with {@code "schema"} (the JSON schema the answer must satisfy), and
+	 *        optionally {@code "name"} (what the provider registers the schema under, default
+	 *        {@code "response"}) and {@code "strict"} (whether the provider must reject its own
+	 *        output when it does not validate, default {@code false}). This is the shape worth
+	 *        using: a JSON mode still lets the model choose its own field names.</li>
 	 *        </ul>
 	 * @param tools
 	 *        A collection of qualified tool names to make available to the AI agent (e.g.,
 	 *        {@code ["mytools.calculateSum", "texttools.formatText"]}), or {@code null} to provide
 	 *        no tools.
 	 * @return The assistant's response text.
+	 * @throws TopLogicException
+	 *         If the run did not reach an answer - an HTTP error, a stream error, a refusal, a
+	 *         cancellation or an exhausted turn budget - carrying the provider's error kind and
+	 *         message. It never returns the empty string for a failed call: a caller cannot tell
+	 *         that apart from a model that answered nothing.
 	 */
 	public static String chat(List<Object> messages, String model, Object responseFormat,
 			Collection<String> tools) {
@@ -292,19 +361,17 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		}
 		toolRegistry.freeze();
 
-		// Build model options from response format
-		Map<String, Object> modelOptions = new HashMap<>();
-		if (responseFormat != null) {
-			modelOptions.put("responseFormat", responseFormat);
-		}
-
 		LLMProvider provider = registry.buildProvider(modelName);
 
 		AgentParams config = new AgentParams(
 			modelName, systemPrompt != null ? systemPrompt : "",
-			1, // single turn for chat()
+			// A call without tools is one exchange. A call with tools needs the turns to use them:
+			// the answer comes after the tool results, so a one-turn budget would stop the loop
+			// with the tool calls made and nothing said.
+			toolRegistry.tools().isEmpty() ? 1 : AgentParams.DEFAULT_MAX_TURNS,
 			AgentParams.DEFAULT_MAX_OUTPUT_TOKENS,
-			modelOptions.isEmpty() ? Map.of() : Map.copyOf(modelOptions));
+			Map.of(),
+			toResponseFormat(responseFormat));
 
 		AgentLoop loop = new AgentLoop(config, provider, toolRegistry);
 		ToolContext context = ToolContext.forCurrentUser();
@@ -316,8 +383,9 @@ public class AIScriptFunctions extends TLScriptFunctions {
 				? new ExecutionRecorder(session, "ai.chat", null, context.executionHandle(),
 					NO_LISTENER)
 				: null;
+			AgentResult result;
 			try {
-				loop.run(conversation, context, recorder != null ? recorder : NO_LISTENER);
+				result = loop.run(conversation, context, recorder != null ? recorder : NO_LISTENER);
 			} catch (RuntimeException ex) {
 				if (recorder != null) {
 					recorder.complete(scriptTranscript(env), ex);
@@ -327,10 +395,91 @@ public class AIScriptFunctions extends TLScriptFunctions {
 			if (recorder != null) {
 				recorder.complete(scriptTranscript(env), null);
 			}
+			// The run is recorded before this throws: a failed run is a row an administrator can
+			// look at, and an exception the script cannot mistake for an empty answer.
+			checkRunSucceeded(result);
 			return AgentFactory.extractResponseText(conversation, messageCountBefore);
 		} finally {
 			context.transaction().close();
 		}
+	}
+
+	/**
+	 * Translates the {@code responseFormat} argument of {@link #chat(List, String, Object, Collection)}
+	 * into the typed {@link ResponseFormat} the provider request carries.
+	 *
+	 * @param responseFormat
+	 *        {@code null}, the string {@code "text"} or {@code "json"}, a map describing a JSON
+	 *        schema, or a {@link ResponseFormat} already.
+	 * @return The requested format, or {@code null} when nothing was requested.
+	 * @throws TopLogicException
+	 *         If the argument is neither of those, or a schema map carries no schema. Refused where
+	 *         it is written rather than dropped: a caller that asked for JSON and receives prose has
+	 *         no way to tell that its request was ignored.
+	 */
+	static ResponseFormat toResponseFormat(Object responseFormat) {
+		if (responseFormat == null) {
+			return null;
+		}
+		if (responseFormat instanceof ResponseFormat format) {
+			return format;
+		}
+		if (responseFormat instanceof CharSequence text) {
+			String name = text.toString().trim();
+			if ("text".equalsIgnoreCase(name)) {
+				return ResponseFormat.TEXT;
+			}
+			if ("json".equalsIgnoreCase(name)) {
+				return ResponseFormat.JSON;
+			}
+			throw new TopLogicException(I18NConstants.ERROR_UNKNOWN_RESPONSE_FORMAT__VALUE.fill(name));
+		}
+		if (responseFormat instanceof Map<?, ?> map) {
+			Object schema = map.get("schema");
+			if (!(schema instanceof Map<?, ?> schemaMap)) {
+				throw new TopLogicException(I18NConstants.ERROR_RESPONSE_FORMAT_WITHOUT_SCHEMA);
+			}
+			Object name = map.get("name");
+			Object strict = map.get("strict");
+			return ResponseFormat.jsonSchema(name == null ? null : name.toString(),
+				stringKeyed(schemaMap), Boolean.TRUE.equals(strict) || "true".equals(strict));
+		}
+		throw new TopLogicException(
+			I18NConstants.ERROR_UNKNOWN_RESPONSE_FORMAT__VALUE.fill(responseFormat.toString()));
+	}
+
+	/**
+	 * The given map with {@link String} keys, as JSON has them.
+	 */
+	private static Map<String, Object> stringKeyed(Map<?, ?> map) {
+		Map<String, Object> result = new LinkedHashMap<>();
+		map.forEach((key, value) -> result.put(String.valueOf(key), value));
+		return result;
+	}
+
+	/**
+	 * Fails the script call when the run did not reach an answer.
+	 *
+	 * <p>
+	 * Every stop reason but {@link StopReason#COMPLETE} is a failure here. The response text of
+	 * such a run is the empty string, which a script cannot tell apart from a model that answered
+	 * nothing - so the failure is raised, with the provider's own kind and message where there is
+	 * one (Gitea #389).
+	 * </p>
+	 *
+	 * @param result
+	 *        What the loop reported; {@code null} is accepted as success (no loop ran).
+	 */
+	static void checkRunSucceeded(AgentResult result) {
+		if (result == null || result.isComplete()) {
+			return;
+		}
+		String kind = result.errorKind() != null ? result.errorKind() : result.stopReason().name();
+		if (result.errorMessage() != null && !result.errorMessage().isBlank()) {
+			throw new TopLogicException(
+				I18NConstants.ERROR_RUN_FAILED__KIND_MESSAGE.fill(kind, result.errorMessage()));
+		}
+		throw new TopLogicException(I18NConstants.ERROR_RUN_WITHOUT_ANSWER__REASON.fill(kind));
 	}
 
 	/**
@@ -389,6 +538,9 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * @param userMessage
 	 *        The user message to send to the agent.
 	 * @return The agent's final text response.
+	 * @throws TopLogicException
+	 *         If the run did not reach an answer, carrying the provider's error kind and message -
+	 *         as {@link #chat(List, String, Object, Collection)} does, and for the same reason.
 	 * @see #agentChatAsync(String, Object)
 	 * @see ToolContext#forCurrentUser()
 	 */
@@ -407,6 +559,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 			AgentSession session = createScriptSession("ai.agentChat: " + agentName);
 			AgentRunner.RecordedRun run = AgentRunner.run(agentName, conversation, null, context,
 				NO_LISTENER, null, env.logListener().log(), session, null);
+			checkRunSucceeded(run.result());
 			return run.response();
 		} finally {
 			context.transaction().close();
@@ -558,7 +711,9 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		// an additional ceiling. Auto-approval is exactly the compensating control that allowlist
 		// replaces: a run with nobody to ask must not reach write tools by default.
 		ToolContext context = new ToolContext(
-			TopLogicSecurityContext.forRun(TLContext.currentUser(), true),
+			RunSecurity.contextFor(
+				new RunPrincipal(TLContext.currentUser(), RunEntryPoint.SCRIPT, true,
+					ExecutionRecorder.conversationIdOf(session))),
 			ApprovalCallback.AUTO_APPROVE, new TransactionScope(cancellationToken), cancellationToken);
 
 		// Cluster-safe cancellation: this node runs the job and holds the token, so a listener on
@@ -667,18 +822,32 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * {@link com.top_logic.tl.ai.core.execution.AgentExecutionStore.ExecutionStatus#COMPLETE}.
 	 *
 	 * <p>
-	 * This is symmetric with the synchronous {@link #agentChat(String, Object)}: it returns the
-	 * same final-answer string that {@code agentChat} would have returned for the run - the
-	 * persisted {@link AgentExecution#getResponse() response}, not the transcript. Use
-	 * {@link #agentRunTranscript(Object)} for the full conversation log. Before the run completes -
-	 * or if it ended in any non-{@code COMPLETE} state - this returns {@code null}; use
-	 * {@link #agentRunStatus(Object)} to distinguish the cases.
+	 * This is symmetric with the synchronous {@link #agentChat(String, Object)}, in both
+	 * directions: it returns the same final-answer string that {@code agentChat} would have
+	 * returned for the run - the persisted {@link AgentExecution#getResponse() response}, not the
+	 * transcript - and it raises what {@code agentChat} would have raised. A run that ended in
+	 * {@code ERROR}, {@code CANCELLED} or {@code REJECTED} therefore fails here with the recorded
+	 * error message rather than reading as an absent answer. Use
+	 * {@link #agentRunTranscript(Object)} for the full conversation log.
+	 * </p>
+	 *
+	 * <p>
+	 * {@code null} means only "not finished yet": the handle resolves to no execution (queued, or
+	 * not yet visible in this request's revision) or the run is still {@code RUNNING}. A script
+	 * that wants to handle a failure instead of failing asks {@link #agentRunStatus(Object)} first
+	 * and reads {@link #agentRunError(Object)}; the documented polling shape
+	 * ({@code aiAgentRunStatus($h) == "COMPLETE" ? aiAgentRunResult($h) : null}) never reaches the
+	 * raise.
 	 * </p>
 	 *
 	 * @param handle
 	 *        The string session-id handle returned by {@link #agentChatAsync(String, Object)}, an
 	 *        {@link AgentSession} directly, an {@link AgentExecution} directly, or a run-id string.
-	 * @return The final answer text when the run is {@code COMPLETE}, otherwise {@code null}.
+	 * @return The final answer text when the run is {@code COMPLETE}, or {@code null} while it is
+	 *         not finished.
+	 * @throws TopLogicException
+	 *         If the run ended in a state other than {@code COMPLETE}, carrying the recorded error
+	 *         message.
 	 */
 	public static String agentRunResult(Object handle) {
 		AgentExecution execution = resolveExecution(handle);
@@ -686,11 +855,45 @@ public class AIScriptFunctions extends TLScriptFunctions {
 			return null;
 		}
 		com.top_logic.model.TLClassifier status = execution.getStatus();
-		if (status == null
-			|| !AgentExecutionStore.ExecutionStatus.COMPLETE.name().equals(status.getName())) {
+		String statusName = status != null ? status.getName() : null;
+		if (statusName == null
+			|| AgentExecutionStore.ExecutionStatus.RUNNING.name().equals(statusName)) {
 			return null;
 		}
+		if (!AgentExecutionStore.ExecutionStatus.COMPLETE.name().equals(statusName)) {
+			String message = execution.getErrorMessage();
+			if (message != null && !message.isBlank()) {
+				throw new TopLogicException(
+					I18NConstants.ERROR_RUN_FAILED__KIND_MESSAGE.fill(statusName, message));
+			}
+			throw new TopLogicException(I18NConstants.ERROR_RUN_WITHOUT_ANSWER__REASON.fill(statusName));
+		}
 		return execution.getResponse();
+	}
+
+	/**
+	 * Returns what went wrong in an async agent run, without raising it.
+	 *
+	 * <p>
+	 * This is the error message {@link #agentRunResult(Object)} would raise: the provider's own
+	 * message for a run that failed against the model, the exception message for a run that failed
+	 * before or around it, {@code null} for a run that is still going or that succeeded. Use it
+	 * when the script wants to record or display the failure rather than be stopped by it.
+	 * </p>
+	 *
+	 * @param handle
+	 *        The string session-id handle returned by {@link #agentChatAsync(String, Object)}, an
+	 *        {@link AgentSession} directly, an {@link AgentExecution} directly, or a run-id string.
+	 * @return The recorded error message, or {@code null} if there is none.
+	 * @see #agentRunStatus(Object)
+	 */
+	public static String agentRunError(Object handle) {
+		AgentExecution execution = resolveExecution(handle);
+		if (execution == null) {
+			return null;
+		}
+		String message = execution.getErrorMessage();
+		return message == null || message.isBlank() ? null : message;
 	}
 
 	/**
@@ -810,6 +1013,134 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	public static boolean sessionDelete(Object session) {
 		AgentExecutionStore.getInstance().deleteSession(ownedSession(session));
 		return true;
+	}
+
+	/**
+	 * Deletes one memory the agent kept about a user.
+	 *
+	 * <p>
+	 * The write goes through the {@link AgentExecutionStore}, not through the wrapper: the store
+	 * commits on its writer thread (so this works from a read-only context such as a rendering
+	 * expression) and tells every open window of the owner, which is what drops the row out of the
+	 * memory list without waiting for the next command.
+	 * </p>
+	 *
+	 * <p>
+	 * Refuses a memory the acting account neither owns nor administers. The check is here and not
+	 * only in the view that calls it, for the same reason {@link #sessionDelete(Object)} has it
+	 * here: a command's input is whatever a channel happens to hold, and this function is reachable
+	 * from a scheduler task and the TL-Script console as well.
+	 * </p>
+	 *
+	 * @param memory
+	 *        The {@code tl.ai.execution:UserMemory} to delete.
+	 * @return Always {@code true}; a refusal is a {@link TopLogicException}, not a {@code false}.
+	 * @throws TopLogicException
+	 *         If {@code memory} is not a memory or is someone else's.
+	 */
+	public static boolean memoryDelete(Object memory) {
+		AgentExecutionStore.getInstance().deleteMemory(ownedMemory(memory));
+		return true;
+	}
+
+	/**
+	 * What every model of this installation is currently known to be good for.
+	 *
+	 * <p>
+	 * One map per model that is marked; a model nobody has had trouble with is simply absent, so an
+	 * empty list means every model is healthy. The keys are {@code model}, {@code cause}
+	 * ({@code QUOTA}, {@code CAPACITY} or {@code TRANSIENT}), {@code kind} (the provider error that
+	 * produced the mark), {@code terminal} (whether the model is skipped outright rather than
+	 * getting one attempt per turn), {@code detail} (the provider's own words), {@code markedAt} and
+	 * {@code expiresAt} - the last being absent for a mark that holds until it is reset.
+	 * </p>
+	 *
+	 * <p>
+	 * A read for a monitor, so it takes nothing and needs no permission: which models are currently
+	 * failing is operational state, not anybody's data.
+	 * </p>
+	 *
+	 * @return One map per live mark, the newest first; never <code>null</code>.
+	 */
+	public static List<Map<String, Object>> modelHealth() {
+		if (!LLMService.Module.INSTANCE.isActive()) {
+			return List.of();
+		}
+		List<Map<String, Object>> result = new ArrayList<>();
+		for (ModelHealthMark mark : LLMService.getInstance().modelHealth().marks()) {
+			Map<String, Object> row = new LinkedHashMap<>();
+			row.put("model", mark.model());
+			row.put("cause", mark.cause().name());
+			row.put("kind", mark.kind());
+			row.put("terminal", Boolean.valueOf(mark.terminal()));
+			row.put("detail", mark.detail());
+			row.put("markedAt", mark.markedAt());
+			row.put("expiresAt", mark.expiresAt());
+			result.add(row);
+		}
+		return result;
+	}
+
+	/**
+	 * Clears what is held against a model, so the next run tries it again.
+	 *
+	 * <p>
+	 * The way out of a sticky {@code QUOTA} mark: a rejected key or an exhausted budget is fixed
+	 * outside this application, and nothing in here can notice that it was. An administrator who
+	 * has fixed it says so with this.
+	 * </p>
+	 *
+	 * <p>
+	 * Administrators only. The marks are what keeps a run off a model that is costing money for
+	 * nothing, and clearing them is an operational decision, not a user preference.
+	 * </p>
+	 *
+	 * @param model
+	 *        The model to clear, or <code>null</code>/empty to clear every mark.
+	 * @return How many marks were dropped - {@code 0} when the model was not marked at all.
+	 * @throws TopLogicException
+	 *         If the acting account does not administer the application, or the LLM service is not
+	 *         running.
+	 */
+	public static int modelHealthReset(String model) {
+		Person actor = TLContext.currentUser();
+		if (actor == null || !actor.isAdmin()) {
+			throw new TopLogicException(I18NConstants.ERROR_MODEL_HEALTH_NOT_ADMIN);
+		}
+		if (!LLMService.Module.INSTANCE.isActive()) {
+			throw new TopLogicException(I18NConstants.ERROR_MODEL_HEALTH_UNAVAILABLE);
+		}
+		ModelAvailability health = LLMService.getInstance().modelHealth();
+		if (model == null || model.isBlank()) {
+			return health.resetAll();
+		}
+		return health.reset(model) ? 1 : 0;
+	}
+
+	/**
+	 * The given value as a {@link UserMemory} the acting account may delete.
+	 *
+	 * <p>
+	 * An administrator may delete any of them, which mirrors {@link #ownedSession(Object)} and is
+	 * what makes a {@code <data-list>} over all memories usable as an administration view. Nobody
+	 * else reaches another account's memory: the store's reader filters by owner, so a row of
+	 * somebody else can only arrive here by being guessed, and it is refused.
+	 * </p>
+	 */
+	private static UserMemory ownedMemory(Object memory) {
+		UserMemory resolved = memory instanceof UserMemory found ? found : null;
+		if (resolved == null && memory instanceof Collection<?> many && many.size() == 1) {
+			Object only = many.iterator().next();
+			resolved = only instanceof UserMemory found ? found : null;
+		}
+		if (resolved == null) {
+			throw new TopLogicException(I18NConstants.ERROR_NOT_A_MEMORY);
+		}
+		Person actor = TLContext.currentUser();
+		if (actor == null || (!actor.equals(resolved.getOwner()) && !actor.isAdmin())) {
+			throw new TopLogicException(I18NConstants.ERROR_MEMORY_NOT_OWNED);
+		}
+		return resolved;
 	}
 
 	/**

@@ -18,7 +18,8 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * Error message when an agent or skill name uses the reserved {@code TL_} prefix.
 	 *
-	 * @en The prefix 'TL_' is reserved for TopLogic platform definitions: {0}
+	 * @en The prefix ''TL_'' is reserved for TopLogic platform definitions: {0}
+	 * @de Das Präfix „TL_“ ist für TopLogic-Plattformdefinitionen reserviert: {0}
 	 */
 	public static ResKey1 RESERVED_PREFIX_ERROR__NAME;
 

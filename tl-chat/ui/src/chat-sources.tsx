@@ -11,8 +11,12 @@ const { useCallback, useMemo } = React
  * `<chat-sources/>`: everything this conversation has cited, as a rail section of its own.
  *
  * Session-wide, so a page cited in three answers is one row with three marker numbers. A marker
- * scrolls to its answer; a row with a URL opens it in a new tab. The badge is how many sources
- * there are, which the rail turns into "how many since you last looked".
+ * scrolls to its answer; a row with a URL opens it in a new tab.
+ *
+ * The badge is what the **newest answer** cited, which the rail turns into "how many since you last
+ * looked". Not the length of the list: that only grows, so the badge stayed on the icon for the rest
+ * of the conversation and said nothing about the answer in front of the reader (#495). An answer
+ * that cited nothing carries no badge.
  */
 export function TLChatSources({ controlId }: TLCellProps) {
   const state = useTLState()
@@ -21,7 +25,7 @@ export function TLChatSources({ controlId }: TLCellProps) {
   const { chat } = useChat(chatIdOf(state, controlId), boot)
   const labels = useMemo(() => bundle(chat.language), [chat.language])
 
-  useBadgeChannel(command, state.badge === true, chat.sources.length)
+  useBadgeChannel(command, state.badge === true, chat.latestSources.length)
 
   const openSource = useCallback((source: CitedSource) => {
     const citation = source.citation

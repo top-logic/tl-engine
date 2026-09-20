@@ -29,6 +29,12 @@ let preferenceWrites: unknown[] = []
 /** The `text` of every `POST /chat/send`, in order - what the model would actually receive. */
 let sentTexts: string[] = []
 
+/** The whole body of every `POST /chat/send`, in order. */
+let sentBodies: Record<string, unknown>[] = []
+
+/** Every URL the store asked `fetch` for, in order. */
+let requested: string[] = []
+
 class FakeEventSource {
   static readonly CLOSED = 2
 
@@ -93,6 +99,8 @@ beforeEach(() => {
   streams = []
   preferenceWrites = []
   sentTexts = []
+  sentBodies = []
+  requested = []
   const globals = globalThis as unknown as Record<string, unknown>
   globals.window = {
     location: { pathname: '/app/view/chat' },
@@ -101,6 +109,7 @@ beforeEach(() => {
   }
   globals.EventSource = FakeEventSource
   globals.fetch = vi.fn(async (url: string, init?: { method?: string; body?: string }) => {
+    requested.push(url)
     if (init?.method === 'PUT' && url.includes('/chat/preferences')) {
       preferenceWrites.push(JSON.parse(init.body ?? '{}'))
       return { ok: true, status: 200, json: async () => ({}) }
@@ -109,7 +118,9 @@ beforeEach(() => {
       return { ok: true, status: 200, json: async () => ({ agents: [], models: [], mcpServers: [] }) }
     }
     if (url.includes('/chat/send')) {
-      sentTexts.push(JSON.parse(init?.body ?? '{}').text)
+      const body = JSON.parse(init?.body ?? '{}')
+      sentBodies.push(body)
+      sentTexts.push(body.text)
       return { ok: true, status: 200, json: async () => ({ status: 'processing' }) }
     }
     // A created session, then the load that activates it. The order matters: the id-bearing path
@@ -411,6 +422,63 @@ describe('the host\'s context prefix', () => {
   })
 })
 
+/**
+ * What a page states about the situation travels beside the message, never inside it (#437).
+ *
+ * The facts are computed on the server, out of the chat element's `<context>`; the store only
+ * carries them back with the send, so the harness can render the stable ones into the system prompt.
+ */
+describe('context facts', () => {
+  it('carries the facts with the message and leaves the text alone', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    const facts = [
+      { name: 'Project', value: 'Airport expansion', stable: true },
+      { name: 'Open invoice', value: 'none', stable: false },
+    ]
+
+    store.actions.setContextFacts(facts)
+    await store.actions.send('Was steht an?', [])
+
+    expect(sentTexts).toEqual(['Was steht an?'])
+    expect(sentBodies[0].facts).toEqual(facts)
+
+    await settle()
+    release()
+  })
+
+  it('sends no facts field when the page states nothing', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+
+    await store.actions.send('Was steht an?', [])
+
+    expect(sentBodies[0].facts).toBeUndefined()
+
+    await settle()
+    release()
+  })
+
+  it('ignores a repeated set, so an unchanged page does not re-render the chat', async () => {
+    const store = chatStore('alpha', BOOT)
+    let renders = 0
+    const release = store.subscribe(() => {
+      renders += 1
+    })
+    const facts = [{ name: 'Project', value: 'Airport expansion', stable: true }]
+
+    store.actions.setContextFacts(facts)
+    const afterFirst = renders
+    store.actions.setContextFacts([{ name: 'Project', value: 'Airport expansion', stable: true }])
+
+    expect(renders).toBe(afterFirst)
+    expect(store.getState().contextFacts).toEqual(facts)
+
+    await settle()
+    release()
+  })
+})
+
 describe('the stream', () => {
   it('drives the run state and the transcript', async () => {
     const store = chatStore('alpha', BOOT)
@@ -480,6 +548,87 @@ describe('the stream', () => {
 
     stream.emit('run_started', { runId: 'r2' })
     expect(store.getState().notice).toBe('')
+
+    await settle()
+    release()
+  })
+
+  /**
+   * A failed run leaving its mark in the transcript (#429).
+   *
+   * The notice strip is the composer's and the next send clears it; the thread is the record of the
+   * turn. Reported only in the strip, a turn that failed before any text left the question standing
+   * alone - the same blank thread the ticket is about.
+   */
+  it('writes a provider error into the transcript, not only into the notice strip', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+
+    stream.emit('run_started', { runId: 'r1' })
+    stream.emit('turn_started', {})
+    stream.emit('provider_error', { kind: 'OVERLOADED', errorMessage: 'upstream 529' })
+
+    // Recorded the way a re-opened session records it: the provider's own words and the kind. The
+    // sentence the user reads is derived from the kind when the thread renders it.
+    const error = store.getState().messages.find((m) => m.type === 'error')
+    expect(error).toBeDefined()
+    expect(error && 'message' in error ? error.message : '').toBe('upstream 529')
+    expect(error && 'code' in error ? error.code : '').toBe('OVERLOADED')
+    expect(store.getState().notice).not.toBe('')
+    expect(store.getState().busy).toBe(false)
+
+    await settle()
+    release()
+  })
+
+  /**
+   * A run that lost its model continued somewhere else, and the thread says so where the answer
+   * is. A notice, not an error: nothing failed for the user (#344).
+   */
+  it('writes a model switch into the transcript as a notice', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+
+    stream.emit('run_started', { runId: 'r1' })
+    stream.emit('turn_started', {})
+    stream.emit('model_switched', {
+      fromModel: 'claude-sonnet-5',
+      toModel: 'gpt-5',
+      reason: 'OVERLOADED: upstream 529',
+    })
+
+    const notice = store.getState().messages.find((m) => m.type === 'notice')
+    expect(notice).toBeDefined()
+    // The server's own line, character for character, so the notice reads the same live as it
+    // does after a reload.
+    expect(notice && 'detail' in notice ? notice.detail : '').toBe(
+      'claude-sonnet-5 -> gpt-5: OVERLOADED: upstream 529',
+    )
+    expect(store.getState().messages.some((m) => m.type === 'error')).toBe(false)
+
+    await settle()
+    release()
+  })
+
+  /** A run the user stopped is not a failure, and leaves no error in the transcript. */
+  it('writes no error for the stream the cancel closed', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+
+    stream.emit('run_started', { runId: 'r1' })
+    stream.emit('run_completed', { reason: 'ABORTED' })
+    stream.emit('provider_error', { kind: 'UNKNOWN', errorMessage: 'Stream cancelled.' })
+
+    expect(store.getState().messages.some((m) => m.type === 'error')).toBe(false)
 
     await settle()
     release()
@@ -650,9 +799,9 @@ describe('a mounted rail', () => {
   /**
    * The dock asks this before it shows itself at all.
    *
-   * The transport is one conversation per window, so a dock offering a second view of the
-   * conversation the page already shows would have the two taking each other's turns. Its own
-   * nested conversation must not be what makes it hide, which is what `insideDock` says.
+   * A dock offering a second view of the conversation the page already shows would give one draft
+   * channel two composers and one remembered layout two rails. Its own nested conversation must not
+   * be what makes it hide, which is what `insideDock` says.
    */
   it('counts the conversations mounted outside a dock, and only those', () => {
     const store = chatStore('alpha', BOOT)
@@ -1015,6 +1164,71 @@ describe('recovering a run on boot', () => {
     release()
   })
 
+  /** The recovered card is phrased from the tool's mode, as the live one is (#393). */
+  it('recovers an approval with the mode its sentence is phrased from', async () => {
+    waiting = [
+      {
+        requestId: 'r8',
+        type: 'approval',
+        header: 'executeTLScript',
+        toolMode: 'DATA_WRITE',
+        sessionId: 's1',
+        remainingMs: 40_000,
+      },
+    ]
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+
+    await store.actions.selectSession('s1')
+
+    const card = store
+      .getState()
+      .messages.find((m) => m.type === 'approval_request' && m.approvalRequestId === 'r8')
+    expect(card && card.type === 'approval_request' ? card.toolMode : 'missing').toBe('DATA_WRITE')
+
+    release()
+  })
+
+  /**
+   * Another window of this account answered the card this one is showing (#393).
+   *
+   * A window that only listed the request has no run of its own to hear `approval_resolved` from;
+   * `interaction_resolved` is what stops it from showing a card nobody is waiting on.
+   */
+  it('takes back a card another window answered', async () => {
+    waiting = [
+      {
+        requestId: 'r7',
+        type: 'approval',
+        header: 'writeInvoice',
+        sessionId: 's1',
+        remainingMs: 40_000,
+      },
+    ]
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+
+    await store.actions.selectSession('s1')
+    const shown = store
+      .getState()
+      .messages.find((m) => m.type === 'approval_request' && m.approvalRequestId === 'r7')
+    expect(shown).toBeDefined()
+
+    streams[0].emit('interaction_resolved', { requestId: 'r7', outcome: 'REJECTED:Zu teuer.' })
+    await settle()
+
+    const card = store
+      .getState()
+      .messages.find((m) => m.type === 'approval_request' && m.approvalRequestId === 'r7')
+    expect(card && card.type === 'approval_request' ? card.outcome : 'missing').toBe('REJECTED')
+
+    release()
+  })
+
   /** A chat with nothing in flight comes back exactly as it did before. */
   it('says nothing about a chat whose run has ended', async () => {
     const store = chatStore('alpha', BOOT)
@@ -1170,5 +1384,132 @@ describe('eventBelongsToChat', () => {
   it('drops a named frame while no session is open, and keeps an unnamed one', () => {
     expect(eventBelongsToChat('text_delta', JSON.stringify({ sessionId: '77' }), null)).toBe(false)
     expect(eventBelongsToChat('text_delta', JSON.stringify({ text: 'x' }), null)).toBe(true)
+  })
+})
+
+/**
+ * How a host reaches the composer: through the store, never through the DOM.
+ *
+ * The composer binds itself once it is mounted, and unbinds when it goes. What the `draft` and the
+ * `reference` channels do is exactly these two calls, so the store is where "a write replaces the
+ * text" and "a write inserts a token" can be held without a browser.
+ */
+describe('the composer seam', () => {
+  it('replaces the draft, and the composer is what focuses and moves the caret', () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    const drafts: string[] = []
+    store.actions.bindComposer({
+      insertReference: () => undefined,
+      setDraft: (text) => drafts.push(text),
+      focus: () => undefined,
+    })
+
+    store.actions.setDraft('Bitte erkläre die Rechnung R-2024-014.')
+    store.actions.setDraft('')
+
+    expect(drafts).toEqual(['Bitte erkläre die Rechnung R-2024-014.', ''])
+
+    release()
+  })
+
+  it('inserts a reference token, as picking it from the "@" menu does', () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    const tokens: string[] = []
+    store.actions.bindComposer({
+      insertReference: (token) => tokens.push(token.label),
+      setDraft: () => undefined,
+      focus: () => undefined,
+    })
+
+    store.actions.insertReference({
+      kind: 'Invoice',
+      id: 'aaa-bbb',
+      label: 'Hotelrechnung Berlin',
+      text: 'Hotelrechnung Berlin (1.240,00 €)',
+    })
+
+    expect(tokens).toEqual(['Hotelrechnung Berlin'])
+
+    release()
+  })
+
+  it('does nothing at all while no composer is mounted', () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.actions.bindComposer(null)
+
+    expect(() => store.actions.setDraft('Bitte erkläre die Rechnung.')).not.toThrow()
+
+    release()
+  })
+})
+
+/**
+ * Which conversation a request is for, beside which window it comes from.
+ *
+ * A window can show more than one - a page's chat beside a `<chat-dock>`'s, two `<agent-chat>`
+ * elements - and the server holds an active session, a run and an event stream for each. It used to
+ * hold one per window, so the second conversation to send took the first one's stream and the first
+ * waited for an answer that never came. Every call therefore names its conversation.
+ */
+describe('every request names its conversation', () => {
+  it('puts the chat id on the stream, the capabilities, the sessions and the layout', async () => {
+    const store = chatStore('belege', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    store.actions.toggleSide(0)
+    await settle()
+
+    expect(streams[0].url).toContain('conversation=belege')
+    for (const url of requested) {
+      expect(url).toContain('conversation=belege')
+    }
+    expect(requested.some((url) => url.includes('/chat/capabilities'))).toBe(true)
+    expect(requested.some((url) => url.includes('/chat/preferences'))).toBe(true)
+
+    release()
+  })
+
+  /**
+   * The layout key and the conversation are two different keys on the preferences call.
+   *
+   * `chatId` is where the layout is stored - the empty one for an `<agent-chat>` - while
+   * `conversation` is which chat of the window is asking, which is how the servlet resolves the
+   * request at all.
+   */
+  it('keeps the layout key apart from the conversation', async () => {
+    const boot = { ...BOOT, layoutKey: '' }
+    const store = chatStore('v42', boot)
+    const release = store.subscribe(() => undefined)
+    store.attach(boot)
+    await settle()
+    store.actions.toggleSide(0)
+    await settle()
+
+    const layout = requested.find((url) => url.includes('/chat/preferences'))
+    expect(layout).toContain('chatId=&')
+    expect(layout).toContain('conversation=v42')
+
+    release()
+  })
+
+  it('gives two conversations of one window two different addresses', async () => {
+    const page = chatStore('page', BOOT)
+    const dock = chatStore('dock', BOOT)
+    const releasePage = page.subscribe(() => undefined)
+    const releaseDock = dock.subscribe(() => undefined)
+    page.attach(BOOT)
+    dock.attach(BOOT)
+    await settle()
+
+    expect(streams).toHaveLength(2)
+    expect(streams.map((stream) => stream.url.includes('conversation=page'))).toContain(true)
+    expect(streams.map((stream) => stream.url.includes('conversation=dock'))).toContain(true)
+
+    releasePage()
+    releaseDock()
   })
 })

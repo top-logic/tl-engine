@@ -122,6 +122,26 @@ public class TlAiExecutionFactory extends com.top_logic.element.meta.kbbased.Abs
 	public static final String TIMED_OUT_INTERACTION_STATE_CLASSIFIER = "TIMED_OUT";
 
 	/**
+	 * Name of the enumeration <code>MemoryKind</code> in module {@value #TL_AI_EXECUTION_STRUCTURE}.
+	 */
+	public static final String MEMORY_KIND_ENUM = "MemoryKind";
+
+	/**
+	 * Name of the classifier <code>FACT</code> in enumeration {@value #MEMORY_KIND_ENUM}.
+	 */
+	public static final String FACT_MEMORY_KIND_CLASSIFIER = "FACT";
+
+	/**
+	 * Name of the classifier <code>FEEDBACK</code> in enumeration {@value #MEMORY_KIND_ENUM}.
+	 */
+	public static final String FEEDBACK_MEMORY_KIND_CLASSIFIER = "FEEDBACK";
+
+	/**
+	 * Name of the classifier <code>PREFERENCE</code> in enumeration {@value #MEMORY_KIND_ENUM}.
+	 */
+	public static final String PREFERENCE_MEMORY_KIND_CLASSIFIER = "PREFERENCE";
+
+	/**
 	 * Lookup {@link AgentSession} type.
 	 */
 	public static com.top_logic.model.TLClass getAgentSessionType() {
@@ -493,6 +513,62 @@ public class TlAiExecutionFactory extends com.top_logic.element.meta.kbbased.Abs
 	}
 
 	/**
+	 * Lookup {@link UserMemory} type.
+	 */
+	public static com.top_logic.model.TLClass getUserMemoryType() {
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_AI_EXECUTION_STRUCTURE).getType(UserMemory.USER_MEMORY_TYPE);
+	}
+
+	/**
+	 * Lookup {@link UserMemory#CREATED_AT_ATTR} of {@link UserMemory}.
+	 */
+	public static com.top_logic.model.TLProperty getCreatedAtUserMemoryAttr() {
+		return (com.top_logic.model.TLProperty) getUserMemoryType().getPart(UserMemory.CREATED_AT_ATTR);
+	}
+
+	/**
+	 * Lookup {@link UserMemory#DISPLAY_NAME_ATTR} of {@link UserMemory}.
+	 */
+	public static com.top_logic.model.TLProperty getDisplayNameUserMemoryAttr() {
+		return (com.top_logic.model.TLProperty) getUserMemoryType().getPart(UserMemory.DISPLAY_NAME_ATTR);
+	}
+
+	/**
+	 * Lookup {@link UserMemory#KIND_ATTR} of {@link UserMemory}.
+	 */
+	public static com.top_logic.model.TLReference getKindUserMemoryAttr() {
+		return (com.top_logic.model.TLReference) getUserMemoryType().getPart(UserMemory.KIND_ATTR);
+	}
+
+	/**
+	 * Lookup {@link UserMemory#OWNER_ATTR} of {@link UserMemory}.
+	 */
+	public static com.top_logic.model.TLReference getOwnerUserMemoryAttr() {
+		return (com.top_logic.model.TLReference) getUserMemoryType().getPart(UserMemory.OWNER_ATTR);
+	}
+
+	/**
+	 * Lookup {@link UserMemory#RUN_ID_ATTR} of {@link UserMemory}.
+	 */
+	public static com.top_logic.model.TLProperty getRunIdUserMemoryAttr() {
+		return (com.top_logic.model.TLProperty) getUserMemoryType().getPart(UserMemory.RUN_ID_ATTR);
+	}
+
+	/**
+	 * Lookup {@link UserMemory#SESSION_ATTR} of {@link UserMemory}.
+	 */
+	public static com.top_logic.model.TLReference getSessionUserMemoryAttr() {
+		return (com.top_logic.model.TLReference) getUserMemoryType().getPart(UserMemory.SESSION_ATTR);
+	}
+
+	/**
+	 * Lookup {@link UserMemory#TEXT_ATTR} of {@link UserMemory}.
+	 */
+	public static com.top_logic.model.TLProperty getTextUserMemoryAttr() {
+		return (com.top_logic.model.TLProperty) getUserMemoryType().getPart(UserMemory.TEXT_ATTR);
+	}
+
+	/**
 	 * Lookup {@value #SESSION_KIND_ENUM} enumeration.
 	 */
 	public static com.top_logic.model.TLEnumeration getSessionKindEnum() {
@@ -633,6 +709,34 @@ public class TlAiExecutionFactory extends com.top_logic.element.meta.kbbased.Abs
 	}
 
 	/**
+	 * Lookup {@value #MEMORY_KIND_ENUM} enumeration.
+	 */
+	public static com.top_logic.model.TLEnumeration getMemoryKindEnum() {
+		return (com.top_logic.model.TLEnumeration) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_AI_EXECUTION_STRUCTURE).getType(MEMORY_KIND_ENUM);
+	}
+
+	/**
+	 * Lookup classifier {@value #FACT_MEMORY_KIND_CLASSIFIER} of enumeration {@value #MEMORY_KIND_ENUM}.
+	 */
+	public static com.top_logic.model.TLClassifier getFACTMemoryKindClassifier() {
+		return getMemoryKindEnum().getClassifier(FACT_MEMORY_KIND_CLASSIFIER);
+	}
+
+	/**
+	 * Lookup classifier {@value #FEEDBACK_MEMORY_KIND_CLASSIFIER} of enumeration {@value #MEMORY_KIND_ENUM}.
+	 */
+	public static com.top_logic.model.TLClassifier getFEEDBACKMemoryKindClassifier() {
+		return getMemoryKindEnum().getClassifier(FEEDBACK_MEMORY_KIND_CLASSIFIER);
+	}
+
+	/**
+	 * Lookup classifier {@value #PREFERENCE_MEMORY_KIND_CLASSIFIER} of enumeration {@value #MEMORY_KIND_ENUM}.
+	 */
+	public static com.top_logic.model.TLClassifier getPREFERENCEMemoryKindClassifier() {
+		return getMemoryKindEnum().getClassifier(PREFERENCE_MEMORY_KIND_CLASSIFIER);
+	}
+
+	/**
 	 * Name of type <code>AgentSession</code> in structure {@link #TL_AI_EXECUTION_STRUCTURE}.
 	 * 
 	 * @deprecated Use {@link AgentSession#AGENT_SESSION_TYPE}.
@@ -683,6 +787,19 @@ public class TlAiExecutionFactory extends com.top_logic.element.meta.kbbased.Abs
 	 * Storage table name of {@link #AGENT_TASK_NODE} objects.
 	 */
 	public static final String KO_NAME_AGENT_TASK = "AgentTask";
+
+	/**
+	 * Name of type <code>UserMemory</code> in structure {@link #TL_AI_EXECUTION_STRUCTURE}.
+	 * 
+	 * @deprecated Use {@link UserMemory#USER_MEMORY_TYPE}.
+	 */
+	@Deprecated
+	public static final String USER_MEMORY_NODE = UserMemory.USER_MEMORY_TYPE;
+
+	/**
+	 * Storage table name of {@link #USER_MEMORY_NODE} objects.
+	 */
+	public static final String KO_NAME_USER_MEMORY = "UserMemory";
 
 
 	/**
@@ -739,6 +856,20 @@ public class TlAiExecutionFactory extends com.top_logic.element.meta.kbbased.Abs
 	 */
 	public final AgentTask createAgentTask() {
 		return createAgentTask(null);
+	}
+
+	/**
+	 * Create an instance of {@link UserMemory} type.
+	 */
+	public final UserMemory createUserMemory(com.top_logic.model.TLObject context) {
+		return (UserMemory) createObject(getUserMemoryType(), context);
+	}
+
+	/**
+	 * Create an instance of {@link UserMemory} type.
+	 */
+	public final UserMemory createUserMemory() {
+		return createUserMemory(null);
 	}
 
 	/**

@@ -30,6 +30,16 @@ message ContextCompositionDto {
 
 	/** Number of tool schemas sent with the request. */
 	int toolCount;
+
+	/**
+	 * The skills whose tools this request carried, in the order they were loaded.
+	 *
+	 * <p>
+	 * The part of {@link #toolDefinitionTokens} a {@code loadSkill} added, and the only part of the
+	 * tool array that can still change within a conversation.
+	 * </p>
+	 */
+	repeated string loadedSkills;
 }
 
 /** Token usage breakdown. */
@@ -102,6 +112,17 @@ message PersistedTurn {
 	 */
 	ContextCompositionDto contextComposition;
 
+	/**
+	 * What the host stated about this turn - the facts that change while the conversation runs.
+	 *
+	 * <p>
+	 * Sent to the model beside the user's text and stored apart from it, so a reader of
+	 * {@link #getUserParts()} gets what the user wrote and nothing else. Empty when the host stated
+	 * no per-turn fact, and in transcripts written before this field existed.
+	 * </p>
+	 */
+	string turnContext;
+
 	/** Parts contributed by the user in this turn. */
 	repeated PersistedPart userParts;
 
@@ -165,8 +186,15 @@ message CitationDto {
 	/** Tool call id of that tool, when known. */
 	string toolCallId;
 
-	/** Host kind, e.g. {@code web} or {@code invoice}. */
+	/** Host kind, e.g. {@code web} or {@code invoice} - the model's own vocabulary. */
 	string kind;
+
+	/**
+	 * What to call that kind in front of a reader, in the reader's language.
+	 *
+	 * Empty when the host declared no label for the kind; the {@code kind} is then shown instead.
+	 */
+	string kindLabel;
 
 	/** Id the tool returned (a URL, a TID, …). */
 	string id;

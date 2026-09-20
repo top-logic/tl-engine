@@ -6,6 +6,7 @@
 package test.com.top_logic.ai.chat;
 
 import java.util.List;
+import java.util.Locale;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -13,13 +14,17 @@ import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.ModuleTestSetup;
 
+import com.top_logic.ai.chat.view.AgentChatElement;
 import com.top_logic.ai.chat.view.ChatConversationElement;
 import com.top_logic.ai.chat.view.ChatConversationElement.Config;
 import com.top_logic.ai.chat.view.ChatConversationElement.Trace;
 import com.top_logic.ai.chat.view.ChatSessionIds;
 import com.top_logic.ai.chat.view.ChatTurnChannels;
+import com.top_logic.ai.chat.view.ChatViewBinding;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.util.Resources;
 
 /**
  * Defaults and the nested {@code <actions/>} and {@code <controls/>} groups of
@@ -39,6 +44,8 @@ public class TestChatConversationConfig extends TestCase {
 		assertNull(config.getModel());
 		assertNull(config.getEffort());
 		assertNull(config.getMcpServers());
+		assertNull(config.getDraft());
+		assertNull(config.getReference());
 
 		// Transcript.
 		assertEquals(Trace.SUMMARY, config.getTrace());
@@ -148,6 +155,77 @@ public class TestChatConversationConfig extends TestCase {
 		assertEquals("pickedModel", config.getModel().getChannelName());
 		assertEquals("pickedEffort", config.getEffort().getChannelName());
 		assertEquals("attachedServers", config.getMcpServers().getChannelName());
+	}
+
+	/**
+	 * The composer's two draft channels parse, each naming a channel of its own.
+	 *
+	 * <p>
+	 * {@code draft} is the unsent text, two-way; {@code reference} takes a model object and turns it
+	 * into one atomic token inside that text. Both are wiring: what they carry is pinned by the
+	 * browser's own suite and by the control.
+	 * </p>
+	 */
+	public void testDraftChannelsParse() throws Exception {
+		String xml = "<chat-conversation xmlns:config='http://www.top-logic.com/ns/config/6.0'"
+			+ " config:interface='" + Config.class.getName() + "'"
+			+ " draft='composerDraft' reference='quotedObject'/>";
+		Config config = (Config) TypedConfiguration.parse(CharacterContents.newContent(xml));
+		assertEquals("composerDraft", config.getDraft().getChannelName());
+		assertEquals("quotedObject", config.getReference().getChannelName());
+	}
+
+	/** Neither channel is required: an element that wires none is the ordinary case. */
+	public void testDraftChannelsAreOptional() throws Exception {
+		String xml = "<chat-conversation xmlns:config='http://www.top-logic.com/ns/config/6.0'"
+			+ " config:interface='" + Config.class.getName() + "' draft='composerDraft'/>";
+		Config config = (Config) TypedConfiguration.parse(CharacterContents.newContent(xml));
+		assertEquals("composerDraft", config.getDraft().getChannelName());
+		assertNull("A draft channel alone is enough; the reference one stays unwired.",
+			config.getReference());
+	}
+
+	/**
+	 * The composer's invitation is a text per language, and it reaches the browser resolved.
+	 *
+	 * <p>
+	 * Written as a literal here, which is the form an application uses in its view - the other one
+	 * is the key of a text in its own bundle. What the browser receives is the sentence, never the
+	 * key, because it has no bundle of the application's to look one up in
+	 * ({@link ChatViewBinding#resolveText(ResKey)}).
+	 * </p>
+	 */
+	public void testPlaceholderParsesAndResolves() throws Exception {
+		String xml = "<chat-conversation xmlns:config='http://www.top-logic.com/ns/config/6.0'"
+			+ " config:interface='" + Config.class.getName() + "'>"
+			+ "<placeholder><en>Ask about this project.</en><de>Fragen Sie zu diesem Projekt.</de></placeholder>"
+			+ "</chat-conversation>";
+		Config config = (Config) TypedConfiguration.parse(CharacterContents.newContent(xml));
+		ResKey placeholder = config.getPlaceholder();
+		assertNotNull("The literal parsed.", placeholder);
+		assertEquals("Ask about this project.",
+			Resources.getInstance(Locale.ENGLISH).getString(placeholder));
+		assertEquals("Fragen Sie zu diesem Projekt.",
+			Resources.getInstance(Locale.GERMAN).getString(placeholder));
+	}
+
+	/** An element that configures none pushes the empty string, which is the browser's "not set". */
+	public void testUnsetPlaceholderIsTheEmptyString() {
+		assertEquals("", ChatViewBinding.resolveText(null));
+	}
+
+	/** The one-element {@code <agent-chat/>} form takes the same option, and defaults to none. */
+	public void testAgentChatTakesTheSamePlaceholder() throws Exception {
+		assertNull(TypedConfiguration.newConfigItem(AgentChatElement.Config.class).getPlaceholder());
+
+		String xml = "<agent-chat xmlns:config='http://www.top-logic.com/ns/config/6.0'"
+			+ " config:interface='" + AgentChatElement.Config.class.getName() + "'>"
+			+ "<placeholder><en>Ask about this project.</en></placeholder>"
+			+ "</agent-chat>";
+		AgentChatElement.Config config =
+			(AgentChatElement.Config) TypedConfiguration.parse(CharacterContents.newContent(xml));
+		assertEquals("Ask about this project.",
+			Resources.getInstance(Locale.ENGLISH).getString(config.getPlaceholder()));
 	}
 
 	/** A model-bound {@code <mention>} parses: rows plus the optional label/text and the default limit. */

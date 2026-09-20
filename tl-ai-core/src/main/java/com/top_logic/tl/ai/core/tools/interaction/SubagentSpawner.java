@@ -17,7 +17,6 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ComputationEx2;
-import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.tl.ai.core.agent.AgentCapabilities;
 import com.top_logic.tl.ai.core.agent.AgentDefinition;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
@@ -32,6 +31,7 @@ import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentResult;
 import com.top_logic.tl.ai.core.binding.BindingSnapshot;
+import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.AgentRunner;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
@@ -122,34 +122,19 @@ public class SubagentSpawner {
 		final SubSessionContext userSession = getSubSessionSafe();
 
 		// When the parent run is recorded, record the subagent as its own execution with
-		// parentExecution set — same as the synchronous delegation path — so async runs
+		// parentExecution set - same as the synchronous delegation path - so async runs
 		// appear in the execution history and the parent+children token total stays a KB
-		// query. Resolved on the caller thread (like executeSync), but guarded: recording
-		// is best-effort and must never prevent the spawn.
+		// query. Recording is best-effort and must never prevent the spawn.
 		final AgentExecution parentExecution = toolContext.executionHandle().get();
-		AgentSession parentSession = null;
-		if (parentExecution != null) {
-			// The parent execution row is written by the AgentExecutionStore's committer, which
-			// advances the KB to a revision newer than this (long-running) agent thread's stable
-			// read view. Without catching up, resolving parentExecution.getSession() fails with
-			// "created after access revision N", the recorder is never built, and the child run
-			// gets no recorded transcript (childRunId stays null → the UI shows no transcript).
-			// Advance to the latest revision first — the same catch-up the chat servlet does when
-			// reading store-written rows. See ChatServlet#handleSubagentTranscript.
-			try {
-				HistoryUtils.updateSessionRevision();
-			} catch (RuntimeException ex) {
-				Logger.info("Could not advance the session revision before resolving the parent "
-					+ "execution's session: " + ex.getMessage(), ex, SubagentSpawner.class);
-			}
-			try {
-				parentSession = parentExecution.getSession();
-			} catch (RuntimeException ex) {
-				Logger.warn("Async subagent run will not be recorded: cannot resolve the parent "
-					+ "execution's session: " + ex.getMessage(), ex, SubagentSpawner.class);
-			}
-		}
-		final AgentSession recordingSession = parentSession;
+		// The parent execution row is written by the AgentExecutionStore's writer thread, at a
+		// revision newer than this (long-running) agent thread's stable read view, so resolving
+		// parentExecution.getSession() here would fail with "created after access revision N"
+		// (Gitea #405). The store resolves it on the thread that can see it; this used to advance
+		// the whole sub-session's revision instead, which moved every other read of this thread
+		// along with it. Best-effort: without a session the child run is simply not recorded.
+		final AgentSession recordingSession =
+			parentExecution == null || !AgentExecutionStore.Module.INSTANCE.isActive() ? null
+				: AgentExecutionStore.getInstance().sessionOf(parentExecution);
 
 		CancellationToken childToken = new CancellationToken();
 		SubagentJob job = registry.register(targetAgentName, task, childToken);

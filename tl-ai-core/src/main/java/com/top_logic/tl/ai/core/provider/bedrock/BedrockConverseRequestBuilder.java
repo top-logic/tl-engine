@@ -24,7 +24,9 @@ import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.DataUris;
+import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
+import com.top_logic.tl.ai.core.provider.ResponseFormat;
 import com.top_logic.tl.ai.core.provider.ToolChoice;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 
@@ -62,7 +64,9 @@ public final class BedrockConverseRequestBuilder {
 	 * {@code /model/{modelId}/converse} or {@code /model/{modelId}/converse-stream} endpoint.
 	 * The {@code model} field is intentionally absent — it belongs in the URL, not the body.</p>
 	 */
-	public static String buildRequestJson(ProviderRequest request) {
+	public static String buildRequestJson(ProviderRequest request) throws ProviderException {
+		refuseResponseFormat(request.responseFormat());
+
 		Map<String, Object> body = new LinkedHashMap<>();
 
 		// system: array of text blocks (omitted when empty/null)
@@ -101,6 +105,26 @@ public final class BedrockConverseRequestBuilder {
 	}
 
 	// ---- Private helpers ----
+
+	/**
+	 * Refuses a request the Converse API cannot express.
+	 *
+	 * <p>
+	 * The Converse API has no {@code response_format}: a model is steered to JSON through a tool
+	 * whose input schema is the wanted shape, which is a different request, not a field. Saying so
+	 * is the point - an ignored response format reaches the caller as prose that looked like it was
+	 * going to be JSON.
+	 * </p>
+	 */
+	private static void refuseResponseFormat(ResponseFormat responseFormat) throws ProviderException {
+		if (responseFormat == null || responseFormat.kind() == ResponseFormat.Kind.TEXT) {
+			return;
+		}
+		throw new ProviderException(ProviderException.Kind.INVALID_REQUEST, 0,
+			"The Bedrock Converse API cannot be asked for a JSON response format."
+				+ " Use a provider that supports structured output, or give the model a tool whose"
+				+ " input schema is the wanted shape.");
+	}
 
 	/**
 	 * A Bedrock Converse {@code cachePoint} block: {@code {"cachePoint": {"type": "default"}}}.
@@ -365,9 +389,26 @@ public final class BedrockConverseRequestBuilder {
 		return cfg;
 	}
 
+	/**
+	 * The {@code toolConfig}, with a cache breakpoint where the tool array stops being the same
+	 * bytes.
+	 *
+	 * <p>
+	 * Same reasoning as the Anthropic builder's, in Bedrock's spelling: the tools are rendered in
+	 * front of the system prompt, so the {@code cachePoint} in {@code system} covers them all, and a
+	 * skill loaded mid-conversation moves everything behind the tool it appended. A
+	 * {@code cachePoint} between the agent's own tools and a run's loaded skills keeps the first
+	 * part readable across that load. Only placed when there is something behind it - see #346.
+	 * </p>
+	 */
 	private static Map<String, Object> buildToolConfig(ProviderRequest request) {
+		List<ToolSchema> schemas = request.tools();
+		int stable = request.stableToolCount();
+		boolean breakAfterStable = stable > 0 && stable < schemas.size();
+
 		List<Object> tools = new ArrayList<>();
-		for (ToolSchema schema : request.tools()) {
+		for (int i = 0; i < schemas.size(); i++) {
+			ToolSchema schema = schemas.get(i);
 			Map<String, Object> inputSchema = new LinkedHashMap<>();
 			inputSchema.put("json", parseJson(schema.inputSchemaJson()));
 
@@ -379,6 +420,9 @@ public final class BedrockConverseRequestBuilder {
 			Map<String, Object> toolEntry = new LinkedHashMap<>();
 			toolEntry.put("toolSpec", toolSpec);
 			tools.add(toolEntry);
+			if (breakAfterStable && i == stable - 1) {
+				tools.add(cachePoint());
+			}
 		}
 
 		Map<String, Object> toolConfig = new LinkedHashMap<>();

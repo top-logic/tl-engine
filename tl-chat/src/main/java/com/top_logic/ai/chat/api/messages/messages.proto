@@ -143,6 +143,45 @@ message ChatSendRequest {
 	 * offer is ignored with a logged warning rather than failing the run.
 	 */
 	string effort;
+
+	/**
+	 * What the page states about the situation this message is asked in.
+	 *
+	 * <p>
+	 * Computed on the server from the chat element's <code>&lt;context&gt;</code> configuration and
+	 * echoed back here by the browser, because the run happens on a background thread long after the
+	 * page's channels were read. The harness renders the stable ones into the system prompt; the
+	 * message text is never touched.
+	 * </p>
+	 */
+	repeated FactDto facts;
+}
+
+/**
+ * One fact a page states about the situation a message is sent in.
+ */
+message FactDto {
+	/**
+	 * What the fact is called in front of the model, e.g. "Project".
+	 */
+	string name;
+
+	/**
+	 * The rendered value.
+	 */
+	string value;
+
+	/**
+	 * Whether the value holds for the whole conversation.
+	 *
+	 * <p>
+	 * Only a stable fact reaches the system prompt, which has to stay byte-identical across the turns
+	 * of one conversation or the provider's prompt cache misses on every one of them. A fact that is
+	 * not stable goes into the per-turn context block, which travels in the turn itself, beside the
+	 * user's text.
+	 * </p>
+	 */
+	boolean stable;
 }
 
 /**
@@ -237,6 +276,16 @@ message RegenerateRequest {
 
 	/** How hard the model may think for the new run. */
 	string effort;
+
+	/**
+	 * What the page states about the situation, as for POST /chat/send.
+	 *
+	 * <p>
+	 * Carried here too because a regenerated turn is a new run with a new system prompt: without the
+	 * facts it would be answered with less context than the turn it replaces.
+	 * </p>
+	 */
+	repeated FactDto facts;
 }
 
 /**
@@ -426,6 +475,13 @@ message PendingInteractionDto {
 	 * request it can still answer from one that is only waiting to be cleaned up.
 	 */
 	long remainingMs;
+
+	/**
+	 * For an approval, the tool's mode ("USER_SCOPED", "DATA_WRITE", "STRUCTURAL", "EXTERNAL"), so a
+	 * client can phrase the question in the reader's language rather than repeat the server's
+	 * English reason. Empty when the run that asked is no longer waiting, or for a question.
+	 */
+	string toolMode;
 }
 
 /**
@@ -683,6 +739,16 @@ message ContextCompositionEvent {
 
 	/** Number of tool schemas sent with the request. */
 	int toolCount;
+
+	/**
+	 * The skills whose tools this request carried, in the order they were loaded.
+	 *
+	 * <p>
+	 * The part of {@link #toolDefinitionTokens} a {@code loadSkill} added, and the only part of the
+	 * tool array that can still change within a conversation.
+	 * </p>
+	 */
+	repeated string loadedSkills;
 }
 
 /** SSE event for tool call started. */
@@ -788,6 +854,27 @@ message ApprovalResolvedEvent {
 }
 
 /**
+ * SSE event telling a chat UI that a human-in-the-loop request it may be showing has been answered.
+ *
+ * <p>
+ * Sent to the other windows of the responder's account when one of them answers an approval or a
+ * question. The window the run belongs to learns the same thing from the run's own
+ * {@code approval_resolved} frame; a window that only listed the request - a second tab, a reloaded
+ * page - has no run to hear it from, and would keep showing a card nobody is waiting on.
+ * </p>
+ */
+message InteractionResolvedEvent {
+	/** Correlation id of the approval or question that was answered. */
+	string requestId;
+
+	/**
+	 * What the responder decided: "APPROVED", "APPROVED_FOR_SESSION", "REJECTED", or the answer of
+	 * a question.
+	 */
+	string outcome;
+}
+
+/**
  * SSE wrapper for child-agent events forwarded during delegation.
  *
  * <p>
@@ -855,6 +942,18 @@ message ProviderErrorEvent {
 	string errorMessage;
 }
 
+/** SSE event for a run that continues on another model. */
+message ModelSwitchedEvent {
+	/** The model the run was using, qualified by its provider where one was named. */
+	string fromModel;
+
+	/** The model the run continues with, qualified the same way. */
+	string toModel;
+
+	/** Why the previous model was left, in one line. */
+	string reason;
+}
+
 /** SSE event for compaction started. */
 message CompactionStartedEvent {
 	/** Token count before compaction. */
@@ -889,8 +988,15 @@ message CitationDto {
 	/** Tool call id of that tool, when known. */
 	string toolCallId;
 
-	/** Host kind, e.g. {@code web} or {@code invoice}. */
+	/** Host kind, e.g. {@code web} or {@code invoice} - the model's own vocabulary. */
 	string kind;
+
+	/**
+	 * What to call that kind in front of a reader, in the reader's language.
+	 *
+	 * Empty when the host declared no label for the kind; the {@code kind} is then shown instead.
+	 */
+	string kindLabel;
 
 	/** Id the tool returned (a URL, a TID, …). */
 	string id;

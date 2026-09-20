@@ -43,6 +43,9 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 	/** @see #getRemainingMs() */
 	public static final String REMAINING_MS__PROP = "remainingMs";
 
+	/** @see #getToolMode() */
+	public static final String TOOL_MODE__PROP = "toolMode";
+
 	private String _requestId = "";
 
 	private String _type = "";
@@ -60,6 +63,8 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 	private String _createdAt = "";
 
 	private long _remainingMs = 0L;
+
+	private String _toolMode = "";
 
 	/**
 	 * Creates a {@link PendingInteractionDto} instance.
@@ -254,6 +259,28 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 		_remainingMs = value;
 	}
 
+	/**
+	 * For an approval, the tool's mode ("USER_SCOPED", "DATA_WRITE", "STRUCTURAL", "EXTERNAL"), so a
+	 * client can phrase the question in the reader's language rather than repeat the server's
+	 * English reason. Empty when the run that asked is no longer waiting, or for a question.
+	 */
+	public final String getToolMode() {
+		return _toolMode;
+	}
+
+	/**
+	 * @see #getToolMode()
+	 */
+	public com.top_logic.ai.chat.api.messages.PendingInteractionDto setToolMode(String value) {
+		internalSetToolMode(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getToolMode()} without chain call utility. */
+	protected final void internalSetToolMode(String value) {
+		_toolMode = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return PENDING_INTERACTION_DTO__TYPE;
@@ -270,7 +297,8 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 			SESSION_ID__PROP, 
 			SESSION_TITLE__PROP, 
 			CREATED_AT__PROP, 
-			REMAINING_MS__PROP);
+			REMAINING_MS__PROP, 
+			TOOL_MODE__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -304,6 +332,7 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 			case SESSION_TITLE__PROP: return getSessionTitle();
 			case CREATED_AT__PROP: return getCreatedAt();
 			case REMAINING_MS__PROP: return getRemainingMs();
+			case TOOL_MODE__PROP: return getToolMode();
 			default: return null;
 		}
 	}
@@ -320,6 +349,7 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 			case SESSION_TITLE__PROP: internalSetSessionTitle((String) value); break;
 			case CREATED_AT__PROP: internalSetCreatedAt((String) value); break;
 			case REMAINING_MS__PROP: internalSetRemainingMs((long) value); break;
+			case TOOL_MODE__PROP: internalSetToolMode((String) value); break;
 		}
 	}
 
@@ -356,6 +386,8 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 		out.value(getCreatedAt());
 		out.name(REMAINING_MS__PROP);
 		out.value(getRemainingMs());
+		out.name(TOOL_MODE__PROP);
+		out.value(getToolMode());
 	}
 
 	@Override
@@ -370,6 +402,7 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 			case SESSION_TITLE__PROP: setSessionTitle(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case CREATED_AT__PROP: setCreatedAt(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case REMAINING_MS__PROP: setRemainingMs(in.nextLong()); break;
+			case TOOL_MODE__PROP: setToolMode(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

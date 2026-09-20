@@ -60,6 +60,15 @@
 	  <artifactId>tl-ai-tool-api</artifactId>
 	  <version>${project.version}</version>
 	</dependency>
+	<!--
+	  For ReadFilter / ModelSecurity: what a search hit may disclose is decided by the same
+	  chokepoint the data tools go through, not by a second filter written here (issue #295).
+	-->
+	<dependency>
+	  <groupId>com.top-logic</groupId>
+	  <artifactId>tl-ai-core</artifactId>
+	  <version>${project.version}</version>
+	</dependency>
 	<dependency>
 	  <groupId>io.qdrant</groupId>
 	  <artifactId>client</artifactId>

@@ -11,15 +11,15 @@ import com.top_logic.layout.view.ViewContext;
  * Marks the view context of the elements a {@code <chat-dock/>} frames.
  *
  * <p>
- * <b>The chat transport carries one conversation per window.</b> Every {@code /chat/*} call is keyed
- * by {@code windowId} alone, so the server holds one {@code TaskProgressTracker} - one active
- * session, one processing state - per window, and every chat element of that window attaches to it.
- * A dock that offered a second view of the conversation the page is already showing would therefore
- * have the two of them taking each other's turns.
+ * <b>A dock stands down while a page shows its conversation.</b> Not because the transport could
+ * not carry both - since Gitea #502 every {@code /chat/*} call names its conversation and the
+ * server holds a {@code TaskProgressTracker} for each - but because these two are the <em>same</em>
+ * conversation in two places: two composers on one {@code draft} channel overwrite each other's
+ * text, and two rails on one {@code chat-id} fight over the one remembered layout.
  * </p>
  *
  * <p>
- * So a dock stands down while such a page is open, and the browser needs to tell the two apart: the
+ * The browser needs to tell the two apart, then: the
  * conversation <em>inside</em> the dock must not be what makes the dock hide itself. That is what
  * this scope says - a {@link ChatConversationControl} built under it reports {@code insideDock} and
  * is not counted. It is read from the view context rather than from the React tree, because a

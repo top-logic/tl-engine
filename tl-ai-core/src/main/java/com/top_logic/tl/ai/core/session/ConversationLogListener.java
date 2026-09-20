@@ -127,6 +127,8 @@ public class ConversationLogListener implements AgentEventListener {
 			_textBuffer.append(e.text());
 		} else if (event instanceof AgentEvent.ThinkingDelta e) {
 			_thinkingBuffer.append(e.text());
+		} else if (event instanceof AgentEvent.TurnContextComposed e) {
+			handleTurnContextComposed(e);
 		} else if (event instanceof AgentEvent.ToolCallStarted e) {
 			handleToolCallStarted(e);
 		} else if (event instanceof AgentEvent.ToolCallCompleted e) {
@@ -147,6 +149,8 @@ public class ConversationLogListener implements AgentEventListener {
 			handleCompactionCompleted(e);
 		} else if (event instanceof AgentEvent.ProviderError e) {
 			handleProviderError(e);
+		} else if (event instanceof AgentEvent.ModelSwitched e) {
+			handleModelSwitched(e);
 		} else if (event instanceof AgentEvent.TransactionBegan e) {
 			handleTransactionBegan(e);
 		} else if (event instanceof AgentEvent.TransactionCommitted e) {
@@ -189,6 +193,21 @@ public class ConversationLogListener implements AgentEventListener {
 			flushThinkingBuffer(turn);
 		}
 		_log.completeTurn();
+	}
+
+	/**
+	 * Records what the run told the model about this turn.
+	 *
+	 * <p>
+	 * Written only once per turn. A delegate and a subagent are told the same thing and emit the
+	 * same event into this log, and the first one to arrive is the entry point's own.
+	 * </p>
+	 */
+	private void handleTurnContextComposed(AgentEvent.TurnContextComposed e) {
+		Turn turn = _log.currentTurn();
+		if (turn != null && turn.turnContext() == null) {
+			turn.setTurnContext(e.turnContext());
+		}
 	}
 
 	private void handleContextComposition(AgentEvent.ContextComposition e) {
@@ -392,6 +411,32 @@ public class ConversationLogListener implements AgentEventListener {
 		}
 	}
 
+	/**
+	 * Records that the rest of the run is answered by another model than the one it started on.
+	 *
+	 * <p>
+	 * A {@link Part.SystemEventType#MODEL_CHANGED} part rather than an
+	 * {@link Part.ErrorPart}: the run did not fail, it continued somewhere else, and an operator
+	 * reading the transcript needs to know from which part of it onwards the answers come from a
+	 * different model. The details carry the reason, which is where the models the run passed over
+	 * are named.
+	 * </p>
+	 *
+	 * <p>
+	 * The wording is the one the chat composes from the live event, character for character, so a
+	 * notice reads the same while it happens as it does after a reload - the lesson of #429.
+	 * </p>
+	 */
+	private void handleModelSwitched(AgentEvent.ModelSwitched e) {
+		Turn turn = _log.currentTurn();
+		if (turn != null) {
+			turn.addAssistantPart(new Part.SystemPart(
+				UUID.randomUUID().toString(), e.timestamp(),
+				Part.SystemEventType.MODEL_CHANGED,
+				e.fromModel() + " -> " + e.toModel() + ": " + e.reason()));
+		}
+	}
+
 	// ---- Transactions ----
 
 	private void handleTransactionBegan(AgentEvent.TransactionBegan e) {
@@ -534,6 +579,35 @@ public class ConversationLogListener implements AgentEventListener {
 					ap.resolve(decision, userComment, Instant.now()));
 			}
 		}
+	}
+
+	/**
+	 * Records what the turn-start injection told the model about its finished subagents.
+	 *
+	 * <p>
+	 * Written as a {@link Part.SystemEventType#SUBAGENT_RESULT} part rather than a user part:
+	 * it is not the user's text, so the chat must not draw it as a user bubble, but it <em>is</em>
+	 * conversation content, so the transcript has to hold it and
+	 * {@link ConversationLogReplay} has to put it back on reload.
+	 * </p>
+	 *
+	 * @param text
+	 *        Verbatim the text the model was shown.
+	 *
+	 * @see com.top_logic.tl.ai.core.agent.subagent.SubagentResultDelivery
+	 */
+	public void recordSubagentResultsDelivered(String text) {
+		Turn turn = _log.currentTurn();
+		if (turn == null) {
+			return;
+		}
+		// The injection happens between the model's messages, so whatever the previous turn was
+		// still buffering ends before it - as for any other part that is a message boundary.
+		flushTextBuffer(turn);
+		flushThinkingBuffer(turn);
+		turn.addAssistantPart(new Part.SystemPart(
+			UUID.randomUUID().toString(), Instant.now(),
+			Part.SystemEventType.SUBAGENT_RESULT, text));
 	}
 
 	/** Records a user cancellation as a system event on the current turn. */
@@ -733,7 +807,8 @@ public class ConversationLogListener implements AgentEventListener {
 				forwardToParent(event);
 			} else if (event instanceof AgentEvent.RunStarted
 				|| event instanceof AgentEvent.TurnStarted
-				|| event instanceof AgentEvent.ProviderError) {
+				|| event instanceof AgentEvent.ProviderError
+				|| event instanceof AgentEvent.ModelSwitched) {
 				forwardToParent(event);
 			} else if (event instanceof AgentEvent.RunCompleted) {
 				flushChildBuffers(dp);

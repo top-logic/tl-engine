@@ -149,7 +149,7 @@ public final class ChatTurnChannels {
 		try {
 			RunAuthorization access = AiToolAccessService.effectiveRunAccessFor(owner);
 			String agent = agentName == null || agentName.isBlank()
-				? AgentFactory.defaultAgentFor(access, List.of())
+				? AgentFactory.defaultAgentFor(access)
 				: agentName.trim();
 			if (agent == null) {
 				// An account that may run no agent at all. Nothing it could be given is legal.

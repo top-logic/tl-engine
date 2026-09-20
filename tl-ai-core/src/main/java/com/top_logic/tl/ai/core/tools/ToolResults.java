@@ -81,6 +81,14 @@ public final class ToolResults {
 	 * failure of the work itself, so a broken framing cannot hand the model an unframed payload.
 	 * </p>
 	 *
+	 * <p>
+	 * <b>A tool that frames here declares {@link com.top_logic.tl.ai.tool.api.AnswerMarking#TOOL}.</b>
+	 * The framework marks a {@code @ToolMethod} answer by default, and it marks the whole answer,
+	 * because at the reflective seam a disclosed record and a sentence about a failed call are both
+	 * just a string. Drawing the line between them - and naming a better {@code source} than the tool's
+	 * name - is what this overload is for, and a tool that does it says so on its annotation.
+	 * </p>
+	 *
 	 * @param framing
 	 *        Applied to the serialized success response.
 	 * @see #invoke(Class, String, Map, String, ThrowingSupplier)

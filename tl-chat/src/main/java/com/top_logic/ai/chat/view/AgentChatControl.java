@@ -7,6 +7,7 @@ package com.top_logic.ai.chat.view;
 
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.ai.chat.view.AgentChatElement.TraceMode;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 
@@ -27,21 +28,40 @@ public class AgentChatControl extends ReactControl {
 
 	/** Creates an {@link AgentChatControl}. */
 	public AgentChatControl(ReactContext context, TraceMode traceMode, String promptImproverAgent) {
-		this(context, traceMode, promptImproverAgent, "TLAgentChat");
+		this(context, traceMode, promptImproverAgent, "TLAgentChat", null);
 	}
 
 	/**
 	 * Creates an {@link AgentChatControl} that mounts the named React element.
 	 *
-	 * @param reactElement registered component name, {@code TLAgentChat} when empty
+	 * @param reactElement
+	 *        registered component name, {@code TLAgentChat} when empty
 	 */
 	public AgentChatControl(ReactContext context, TraceMode traceMode, String promptImproverAgent,
 			String reactElement) {
+		this(context, traceMode, promptImproverAgent, reactElement, null);
+	}
+
+	/**
+	 * Creates an {@link AgentChatControl} that mounts the named React element and invites the user
+	 * with the host's own wording.
+	 *
+	 * @param reactElement
+	 *        registered component name, {@code TLAgentChat} when empty
+	 * @param placeholder
+	 *        what the empty prompt field invites the user with, {@code null} for the chat's own
+	 *        wording
+	 */
+	public AgentChatControl(ReactContext context, TraceMode traceMode, String promptImproverAgent,
+			String reactElement, ResKey placeholder) {
 		super(context, null, blankToNull(reactElement) == null ? "TLAgentChat" : reactElement.trim());
 
 		// Empty chat-id: this one-element form stays isolated from the four pieces, which default
-		// to "default". App then keys the browser store by the control id.
-		_binding = ChatViewBinding.bind(context, "");
+		// to "default". App then keys the browser store by the control id - and so does the server,
+		// because the conversation this control shows is its own: two <agent-chat/> elements in one
+		// window are two conversations with a run each, not one they overwrite for each other.
+		_binding = ChatViewBinding.bindOwn(context, getID());
+		putState("chatId", _binding.conversation());
 		TaskProgressTracker tracker = _binding.tracker();
 		String configuredImprover = blankToNull(promptImproverAgent);
 		tracker.setPromptImproverAgentName(configuredImprover);
@@ -49,6 +69,9 @@ public class AgentChatControl extends ReactControl {
 		_binding.writeSharedState(this::putState);
 		putState("traceMode", traceMode.getExternalName());
 		putState("promptImprovementEnabled", Boolean.valueOf(configuredImprover != null));
+		// The composer's idle invitation, in this account's language. Empty means "nothing
+		// configured", which is what makes the browser keep its own wording.
+		putState("placeholder", ChatViewBinding.resolveText(placeholder));
 	}
 
 	/**

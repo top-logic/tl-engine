@@ -65,7 +65,26 @@
   --chat-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 }
 
+/*
+ * The chat measures itself, not the window (Issue #427).
+ *
+ * `<agent-chat>` is placed by an application and almost never owns the window: a shell's navigation
+ * and the page gutters take their share first. A viewport media query therefore asks the wrong box
+ * - it is still wide while the chat is not - and the narrow layout arrived hundreds of pixels too
+ * late, or never. Two containers carry every rule that is about how much room the chat has:
+ *
+ *   chat-shell  - this element: whether the session rail is a column or a drawer over the thread,
+ *                 and whether the artefact pane is a column or a sheet.
+ *   chat-stage  - `.stage` below: the transcript and the composer, which narrow again when the rail
+ *                 and the pane have taken their columns. It exists in a composed
+ *                 `<chat-conversation/>` too, so the same rules reach both.
+ *
+ * What stays a media query is what is genuinely about the screen rather than the chat: the pointer
+ * (`hover: none`), the motion preference, and the popover that goes full-bleed on a phone.
+ */
 .tl-cockpit {
+  container-type: inline-size;
+  container-name: chat-shell;
   display: flex;
   width: 100%;
   height: 100%;
@@ -322,38 +341,18 @@
   box-shadow: none;
 }
 
-/* Win over the chat's mobile-drawer width so the collapsed column stays narrow at every width. */
+/*
+ * The column the host gave it, not the fixed narrow one the App rail collapses to: this list fills
+ * whatever width it was placed in, collapsed or not.
+ *
+ * Six further rules used to stand here, each undoing one line of the App's mobile-drawer query for
+ * a list that is not in a drawer and never was. That query is now scoped to the `chat-shell`
+ * container (Issue #427) and does not reach this element at all, so the base rules apply and the
+ * counter-rules are gone.
+ */
 .tl-data-list .rail.is-collapsed {
   width: 100%;
   flex-basis: auto;
-}
-
-/* Stay an in-flow collapsible rail at every width - not the chat's mobile drawer. */
-.tl-data-list .rail-collapse {
-  display: inline-grid;
-}
-
-.tl-data-list .rail-close {
-  display: none;
-}
-
-.tl-data-list .rail.is-collapsed .rail-header strong,
-.tl-data-list .rail.is-collapsed .rail-new span,
-.tl-data-list .rail.is-collapsed .rail-search,
-.tl-data-list .rail.is-collapsed .rail-list {
-  display: none;
-}
-
-/* Keep the collapsed header/new-button centred at narrow widths (the mobile query left-aligns them). */
-.tl-data-list .rail.is-collapsed .rail-header {
-  justify-content: center;
-  padding-inline: 0.25rem;
-}
-
-.tl-data-list .rail.is-collapsed .rail-new {
-  justify-content: center;
-  margin-inline: 0.5rem;
-  padding-inline: 0;
 }
 
 .tl-data-list .rail-open {
@@ -408,6 +407,11 @@
  * from the shared rule at the top of this file.
  */
 .tl-chat-conversation {
+  /*
+   * No `container-type` here on purpose: `.stage`, its only child, is the box the transcript and the
+   * composer actually get, and it is a container in both App and this element - so one set of rules
+   * serves both. A second container around it would only add a second answer to the same question.
+   */
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -519,6 +523,12 @@
   display: none;
 }
 
+/*
+ * No `container-type` here either: what the card's width has to reach is the conversation's
+ * composer and the lists beside it, and each of those measures itself - the conversation through
+ * `.stage`, the list through the width its column was given. A container on the body would be a
+ * third name for the same question (Issue #427).
+ */
 .tl-chat-dock__body {
   display: flex;
   flex: 1;
@@ -622,6 +632,11 @@
  * turn into an overlay below 1280 px. Inside this element there is no grid to place into and
  * nothing to overlay, so their geometry is re-stated here: laid out in flow, sized by themselves,
  * and a column at every width (`placement="rail"` in side-pane.tsx).
+ *
+ * Not a container either: `flex: 0 0 auto` makes this element as wide as the strip plus the column
+ * it shows, so its width comes from its own contents. `container-type: inline-size` applies
+ * inline-size containment, those contents would then contribute nothing, and the rail would
+ * collapse to 0 px. A pair of fixed-width columns has no width question to ask in any case.
  */
 .tl-chat-rail {
   display: flex;
@@ -965,7 +980,21 @@
 
 /* --- Stage -------------------------------------------------------------- */
 
+/*
+ * The transcript's and the composer's own box, and the container everything inside them measures.
+ *
+ * It is what the rail, the artefact pane and - in a composed `<chat-conversation/>` - the host's
+ * panel have left over, which is the only honest answer to "how wide is the prompt field". The
+ * cockpit is not: it stays as wide as ever while a pane takes half of it, which is why App used to
+ * carry a `.has-pane` class that guessed at the same thing from a state.
+ *
+ * Inline-size containment also makes this the containing block of a `position: fixed` descendant,
+ * which is what the composer's full-bleed popovers now pin themselves to - the chat rather than the
+ * screen. That is the better anchor for an embedded chat, and identical for one that fills the page.
+ */
 .stage {
+  container-type: inline-size;
+  container-name: chat-stage;
   position: relative;
   flex: 1;
   min-width: 0;
@@ -1208,6 +1237,39 @@
   line-height: 1.65;
 }
 
+/*
+ * The answer's place while the run has produced no text yet (#429). The height is the first text
+ * line's, so the answer does not push the thread down when it arrives.
+ */
+.answer.is-pending {
+  display: flex;
+  align-items: center;
+  min-height: 1.55rem;
+}
+
+.answer-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.answer-dots i {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  background: var(--text-secondary);
+  opacity: 0.4;
+  animation: chat-dot 1.2s ease-in-out infinite;
+}
+
+.answer-dots i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.answer-dots i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
 .answer.is-streaming .md > *:last-child::after {
   content: "";
   display: inline-block;
@@ -1369,6 +1431,18 @@
 .md a {
   color: var(--chat-link);
   text-underline-offset: 2px;
+}
+
+/* A picture in an answer - a captured screenshot (/screenshot/<id>), a chart, a web image. It is
+   the width of the column at most, never wider, and keeps its own aspect ratio while it loads. */
+.md img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 0 0.85em;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-1);
+  background: var(--layer);
 }
 
 .md hr {
@@ -1666,6 +1740,32 @@
   border-left: 2px solid var(--chat-danger);
   padding: 0.5rem 0.75rem;
   border-radius: 0 var(--r-1) var(--r-1) 0;
+}
+
+/* The provider's own words under the sentence: available, not shouted (#429). */
+.error-card-detail {
+  margin-top: 0.125rem;
+  font-size: var(--chat-small);
+  opacity: 0.8;
+}
+
+/*
+ * A run that continued on another model (#344). Deliberately quieter than .error-card: nothing
+ * failed for the user, so it sits above the answer as context, in the thread's secondary text
+ * colour rather than in the danger colour.
+ */
+.notice-line {
+  color: var(--text-secondary);
+  border-left: 2px solid var(--border-subtle);
+  padding: 0.25rem 0.75rem;
+  font-size: var(--chat-small);
+}
+
+/* Which model, which model instead, and why - available, not shouted, as under the error card. */
+.notice-line-detail {
+  margin-top: 0.125rem;
+  opacity: 0.8;
+  word-break: break-word;
 }
 
 .jump-latest {
@@ -2857,7 +2957,13 @@
 
 /* --- Responsive --------------------------------------------------------- */
 
-@media (max-width: 1080px) {
+/*
+ * Every query below names a container rather than the viewport - see the note on `.tl-cockpit`.
+ * The numbers are the ones the viewport queries carried; what changed is the box they measure.
+ */
+
+/* Narrow enough that the gutters are worth more to the text than to the margin. */
+@container chat-stage (max-width: 1080px) {
   .thread-column,
   .composer {
     padding-left: 1rem;
@@ -2865,7 +2971,13 @@
   }
 }
 
-@media (max-width: 1100px) {
+/*
+ * The session rail as a drawer over the transcript, because a column beside it would leave the
+ * thread less than it needs. `chat-shell` is App's own root, so none of this reaches a composed
+ * `<data-list>` - which renders the same `.rail` chrome and is sized by the view that placed it.
+ * That element used to need a counter-rule for nearly every line here; it does not any more.
+ */
+@container chat-shell (max-width: 1100px) {
   .rail-scrim {
     display: block;
     position: absolute;
@@ -2887,7 +2999,7 @@
     position: absolute;
     inset: 0 auto 0 0;
     z-index: 21;
-    width: min(20rem, 88vw);
+    width: min(20rem, 88cqi);
     flex-basis: auto;
     transform: translateX(-105%);
     transition: transform 180ms ease;
@@ -2899,7 +3011,7 @@
   }
 
   .rail.is-collapsed {
-    width: min(20rem, 88vw);
+    width: min(20rem, 88cqi);
     flex-basis: auto;
     overflow: visible;
   }
@@ -2929,6 +3041,22 @@
     display: none;
   }
 
+}
+
+/*
+ * What the composer gives up, in the order it gives it up.
+ *
+ * Measured on the stage, because that is the box the prompt field is in: the window says nothing
+ * about it once a rail, an artefact pane or a host's panel has taken its share. These four steps
+ * replace the viewport query that used to switch the Enter hint and the `.tl-cockpit.has-pane` /
+ * `.has-document` class hacks, which read a state and guessed a width from it - and which a
+ * composed `<chat-conversation/>`, having neither class, never got at all.
+ *
+ * The widths are where the German wording stops fitting, that being the longest the product ships.
+ */
+
+/* The long hint and the auto-approve label no longer fit on one line together. */
+@container chat-stage (max-width: 26rem) {
   .composer-hint-long {
     display: none;
   }
@@ -2936,7 +3064,53 @@
   .composer-hint-short {
     display: inline;
   }
+}
 
+/* The switch keeps its track, its tooltip and its accessible name; only the written label goes. */
+@container chat-stage (max-width: 19rem) {
+  .approve-switch-label {
+    display: none;
+  }
+}
+
+/*
+ * The model's name would be cut mid-word. It goes, and the trigger takes the shape of the "+" it
+ * now faces across the row - a round 2 rem target - so that what is left reads as the control it is
+ * rather than as a stray caret. Which model is picked is still on its tooltip and its accessible
+ * name, which a clipped "Cla…" did not say either.
+ */
+@container chat-stage (max-width: 18rem) {
+  .model-trigger span {
+    display: none;
+  }
+
+  .model-trigger {
+    width: 2rem;
+    padding: 0;
+    justify-content: center;
+    border: 1px solid var(--border-subtle);
+    border-radius: 50%;
+  }
+}
+
+/*
+ * Narrower than the controls themselves. They wrap onto a second line rather than overflow the
+ * card they are in - the state a chat in a small dock or a split panel ends up in.
+ */
+@container chat-stage (max-width: 16rem) {
+  .composer-row {
+    flex-wrap: wrap;
+    row-gap: 0.25rem;
+  }
+}
+
+/*
+ * A phone, not a narrow chat: a popover that spans the full width and sits on the bottom edge is a
+ * touch idiom, so this one keeps the viewport as its measure. `position: fixed` now resolves
+ * against the stage (see the containment note there), which is what puts it over the chat rather
+ * than over the application around it.
+ */
+@media (max-width: 1100px) {
   .plus-popover,
   .model-popover,
   .context-popover,
@@ -2972,6 +3146,13 @@
 @keyframes chat-blink {
   50% {
     opacity: 0;
+  }
+}
+
+@keyframes chat-dot {
+  30% {
+    opacity: 1;
+    transform: translateY(-0.125rem);
   }
 }
 
@@ -3234,6 +3415,26 @@
   background: var(--layer);
 }
 
+/*
+ * The strip's 56 px go to the thread once the chat is as short of room as the session rail is.
+ *
+ * This used to go with the sheet, at 1280. Measured on the chat rather than on the window that is
+ * too early: at 1183 px the stage still holds the transcript's 49 rem with room to spare, and the
+ * strip is the only one-click way into a rail section. It belongs with the rail becoming a drawer.
+ * The rail is then reached through the toggle in the thread's header, as it is on a phone.
+ *
+ * Here rather than beside the drawer rules because `.side-strip` above out-ranks nothing and is
+ * beaten by nothing: same specificity, so the later declaration is the one that counts.
+ *
+ * The composed `<chat-rail/>` keeps its own strip at every width and needed a counter-rule for this
+ * one; it does not any more, because it is not inside a `chat-shell` container.
+ */
+@container chat-shell (max-width: 1100px) {
+  .side-strip {
+    display: none;
+  }
+}
+
 .side-strip-item {
   width: 2.5rem;
   height: 2.5rem;
@@ -3380,6 +3581,8 @@
 }
 
 .cite-popover {
+  display: flex;
+  flex-direction: column;
   margin-top: 0;
   padding: 0.6rem 0.75rem;
   border: 1px solid var(--border-subtle);
@@ -3395,29 +3598,19 @@
 }
 
 /*
- * In a document-mode column the footer has about 210 px. The switch keeps its place and its meaning
- * - it stays a labelled control for a screen reader and carries a tooltip - but gives up its
- * written label, so that it and the Enter hint stay on the one line the reader expects them on.
+ * What the footer gives up when a document-mode pane leaves it about 210 px, and what the composer
+ * gives up beside an open pane, are both decided by the `chat-stage` ladder in the responsive
+ * section above: a width, asked for directly, rather than `.has-document` / `.has-pane` standing in
+ * for one. `has-pane` is gone with its rules - a composed conversation never had it, which is why
+ * it kept the long hint in a 234 px column (Issue #427).
  */
-.tl-cockpit.has-document .approve-switch-label {
-  display: none;
-}
 
 /*
- * The composer's Enter hint is switched to its short form by a viewport media query. That reads the
- * wrong width once the pane has taken a column of the stage: the window is still wide while the
- * composer is not. The pane's own state therefore switches it too.
+ * Below 1280, not at it: 1280 itself still fits a column beside the thread. Measured on the chat,
+ * not on the window - an `<agent-chat>` in an application shell owns neither the window's width nor
+ * the room the number is about.
  */
-.tl-cockpit.has-pane .composer-hint-long {
-  display: none;
-}
-
-.tl-cockpit.has-pane .composer-hint-short {
-  display: inline;
-}
-
-/* Below 1280, not at it: 1280 itself still fits a column beside the thread. */
-@media (max-width: 1279.98px) {
+@container chat-shell (max-width: 1279.98px) {
   /*
    * A sheet spans the whole grid, not its own column.
    *
@@ -3444,18 +3637,6 @@
   .side-pane.is-sheet,
   .side-column {
     min-width: 0;
-  }
-
-  .side-strip {
-    display: none;
-  }
-
-  /*
-   * ... but not in the composed rail: App hides the strip because its pane becomes a sheet over
-   * the thread, and this element has no sheet to make room for.
-   */
-  .tl-chat-rail .side-strip {
-    display: flex;
   }
 
   /*
@@ -3487,7 +3668,7 @@
   display: none;
 }
 
-@media (max-width: 1279.98px) {
+@container chat-shell (max-width: 1279.98px) {
   .side-scrim {
     display: block;
   }
@@ -3660,35 +3841,123 @@
 
 /* --- Citation presentation: popover, sources, run summary (Issue #408) --- */
 
+/*
+ * The head reads like a row of the Quellen list - kind icon, title, origin - so that a marker, its
+ * popover and the rail all describe a source the same way.
+ */
+.cite-popover-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+}
+
+.cite-popover-heading {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
 .cite-popover-title {
   margin: 0;
   font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .cite-popover-origin {
   margin: 0.1rem 0 0;
   color: var(--text-secondary);
   font-size: var(--chat-small);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Which page of the site, which record of the kind: the origin alone does not say. */
+.cite-popover-detail::before {
+  content: "·";
+  margin: 0 0.3rem;
+  opacity: 0.6;
+}
+
+/*
+ * A structured source, one field per row: the record as a record. The grid gives every value one
+ * start, which is what a run of `label: value` lines could not do.
+ */
+.cite-popover-fields {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+  gap: 0.1rem 0.5rem;
+  margin: 0.5rem 0 0;
+  padding: 0.4rem 0.5rem;
+  border-inline-start: 2px solid var(--border-subtle);
+  border-radius: 0 var(--r-1) var(--r-1) 0;
+  background: color-mix(in srgb, var(--text-primary) 4%, transparent);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  /* A record with many fields must not make the popover taller than the answer it sits on. */
+  max-height: 12rem;
+  overflow: auto;
+}
+
+.cite-popover-field {
+  display: contents;
+}
+
+.cite-popover-fields dt {
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cite-popover-fields dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 /* The window of the source the fact was read in, with the cited sentence marked inside it. */
 .cite-popover-excerpt {
-  margin: 0.45rem 0 0;
+  margin: 0.5rem 0 0;
+  padding: 0.4rem 0.5rem;
+  border-inline-start: 2px solid var(--border-subtle);
+  border-radius: 0 var(--r-1) var(--r-1) 0;
+  background: color-mix(in srgb, var(--text-primary) 4%, transparent);
   color: var(--text-secondary);
   font-size: 0.8125rem;
   line-height: 1.45;
-  max-height: 6.5rem;
+  /* A structured source's excerpt is one `label: value` per line; collapsed, it is a run-on line. */
+  white-space: pre-wrap;
+  /*
+   * Clamped to whole lines with an ellipsis, not cut by height: `max-height` with `overflow:
+   * hidden` sliced the last line through the middle of its letters.
+   */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  line-clamp: 5;
   overflow: hidden;
 }
 
+/*
+ * The sentence the fact rests on, inside the window it was read in. Marked rather than merely
+ * tinted: it is the one line of the excerpt the reader came for.
+ */
 .cite-passage {
-  background: color-mix(in srgb, var(--button-primary) 16%, transparent);
+  background: color-mix(in srgb, var(--button-primary) 22%, transparent);
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--button-primary) 55%, transparent);
   color: var(--text-primary);
   border-radius: 2px;
   padding: 0 0.1rem;
 }
 
 .cite-popover-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  align-self: start;
   margin-top: 0.5rem;
   padding: 0;
   border: 0;
@@ -3698,6 +3967,12 @@
   font: inherit;
   font-size: 0.8125rem;
 }
+
+.cite-popover-open:hover,
+.cite-popover-open:focus-visible {
+  text-decoration: underline;
+}
+
 
 /* The collapsed pill under an answer: how much of it rests on sources. */
 .answer-sources {

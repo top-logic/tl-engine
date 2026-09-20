@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashSet;
@@ -29,6 +30,7 @@ import com.top_logic.ai.chat.api.messages.ChatSendRequest;
 import com.top_logic.ai.chat.api.messages.ChatSendResponse;
 import com.top_logic.ai.chat.api.messages.ChatPreferencesDto;
 import com.top_logic.ai.chat.api.messages.ContextCompositionEvent;
+import com.top_logic.ai.chat.api.messages.FactDto;
 import com.top_logic.ai.chat.api.messages.MessageFeedbackDto;
 import com.top_logic.ai.chat.api.messages.MessageFeedbackRequest;
 import com.top_logic.ai.chat.api.messages.RegenerateRequest;
@@ -42,6 +44,7 @@ import com.top_logic.ai.chat.api.messages.ChatUpdatesResponse;
 import com.top_logic.ai.chat.api.messages.CreateSessionRequest;
 import com.top_logic.ai.chat.api.messages.ImprovePromptRequest;
 import com.top_logic.ai.chat.api.messages.ImprovePromptResponse;
+import com.top_logic.ai.chat.api.messages.InteractionResolvedEvent;
 import com.top_logic.ai.chat.api.messages.PendingInteractionDto;
 import com.top_logic.ai.chat.api.messages.PendingInteractionsResponse;
 import com.top_logic.ai.chat.api.messages.UpdateTitleRequest;
@@ -49,6 +52,7 @@ import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.Chat;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
+import com.top_logic.ai.chat.layout.PendingInteractionRegistry;
 import com.top_logic.ai.chat.layout.PromptImprovementProcessor;
 import com.top_logic.ai.chat.layout.PromptImprovementProcessor.PromptImprovementException;
 import com.top_logic.ai.chat.layout.PromptImprovementProcessor.Result;
@@ -60,9 +64,14 @@ import com.top_logic.tl.ai.core.message.ImageContent;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
+import com.top_logic.basic.InteractionContext;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.col.TypedAnnotatable;
+import com.top_logic.basic.col.TypedAnnotatable.Property;
+import com.top_logic.tl.ai.core.agent.AgentDefinition;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
+import com.top_logic.tl.ai.core.agent.environment.EnvironmentFact;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Decision;
 import com.top_logic.tl.ai.core.security.RunAuthorization;
@@ -74,6 +83,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService;
+import com.top_logic.tl.ai.core.agent.approval.PendingApproval;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
@@ -143,6 +153,18 @@ public class ChatServlet extends TopLogicServlet {
 	private static final String CONTENT_TYPE_JSON = "application/json; charset=UTF-8";
 
 	/**
+	 * The conversation this request named, put here by {@link #doService} so that the handlers below
+	 * do not each have to read the parameter again.
+	 *
+	 * <p>
+	 * Its default is the window's unnamed conversation, which is both what a request naming none
+	 * addresses and what a handler driven without {@link #doService} - a servlet test - gets.
+	 * </p>
+	 */
+	private static final Property<String> REQUEST_CONVERSATION =
+		TypedAnnotatable.property(String.class, "tl.chat.request.conversation", "");
+
+	/**
 	 * The status of a request the acting account may not make.
 	 *
 	 * <p>
@@ -151,6 +173,25 @@ public class ChatServlet extends TopLogicServlet {
 	 * </p>
 	 */
 	private static final String FORBIDDEN = "forbidden";
+
+	/**
+	 * The {@code status} of a send this installation has no room for right now.
+	 *
+	 * <p>
+	 * Distinct from {@code busy}, which says that <em>this chat</em> is answering something else, and
+	 * from {@code error}, which says that something went wrong. The client shows the {@code reason}
+	 * and lets the user try again.
+	 * </p>
+	 */
+	private static final String REJECTED = "rejected";
+
+	/**
+	 * HTTP 429, which {@code HttpServletResponse} has no constant for.
+	 *
+	 * @see <a href="https://www.rfc-editor.org/rfc/rfc6585#section-4">RFC 6585, section 4</a>
+	 */
+	private static final int SC_TOO_MANY_REQUESTS = 429;
+
 	private static final String CONTENT_TYPE_SSE = "text/event-stream";
 
 	/** The {@link #interactionTypeName(TLClassifier)} of a tool approval. */
@@ -372,12 +413,19 @@ public class ChatServlet extends TopLogicServlet {
 				ChatSendResponse.create().setStatus(FORBIDDEN).setReason(refusal.reason()));
 			return;
 		}
-		ChatProcessor.SendResult result =
-			ChatProcessor.sendMessage(tracker, subSession, userName, messageText, attachments, options);
+		ChatProcessor.SendResult result = ChatProcessor.sendMessage(tracker, subSession, userName,
+			messageText, attachments, options, facts(body.getFacts()));
 
 		resp.setStatus(HttpServletResponse.SC_OK);
 		resp.setContentType(CONTENT_TYPE_JSON);
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+		if (result.isRejected()) {
+			// Neither forbidden nor broken: this installation has no room for the run right now, and
+			// the client shows the sentence rather than a failure.
+			writeRefused(resp, new Refusal(SC_TOO_MANY_REQUESTS, result.getReason()),
+				ChatSendResponse.create().setStatus(REJECTED).setReason(result.getReason()));
+			return;
+		}
 		if (result.getTaskId() == null) {
 			ChatSendResponse sendResponse = ChatSendResponse.create()
 				.setStatus(result.isBusy() ? "busy" : "error");
@@ -388,6 +436,33 @@ public class ChatServlet extends TopLogicServlet {
 			.setTaskId(result.getTaskId())
 			.setStatus("processing");
 		resp.getWriter().write(DtoMapper.toJson(sendResponse));
+	}
+
+	/**
+	 * What the page stated about the situation this message is asked in.
+	 *
+	 * <p>
+	 * The values were computed on the server - {@code ChatConversationControl} evaluates the chat
+	 * element's {@code <context>} expressions in this account's context - and the browser echoes them
+	 * back here, because the run happens on a background thread long after those channels were read.
+	 * A client that sends something else therefore states something about its own page to its own
+	 * agent; it gains no authority by it, because every tool still asks the security context, and it
+	 * cannot reach another account's conversation.
+	 * </p>
+	 */
+	private static List<EnvironmentFact> facts(List<FactDto> dtos) {
+		if (dtos == null || dtos.isEmpty()) {
+			return List.of();
+		}
+		List<EnvironmentFact> facts = new ArrayList<>(dtos.size());
+		for (FactDto dto : dtos) {
+			String name = blankToNull(dto.getName());
+			if (name == null) {
+				continue;
+			}
+			facts.add(new EnvironmentFact(name, dto.getValue(), dto.isStable()));
+		}
+		return List.copyOf(facts);
 	}
 
 	/**
@@ -432,6 +507,15 @@ public class ChatServlet extends TopLogicServlet {
 			return;
 		}
 
+		// Before the turns are dropped: a regenerate refused afterwards would have removed the
+		// answer the user still has and given them nothing in its place.
+		String noRoom = ChatProcessor.noRoomReason(tracker);
+		if (noRoom != null) {
+			writeRefused(resp, new Refusal(SC_TOO_MANY_REQUESTS, noRoom),
+				TruncateResponse.create().setStatus(REJECTED).setReason(noRoom));
+			return;
+		}
+
 		ConversationLog log = tracker.getSessionManager().getOrCreateConversationLog();
 		int turnCount = log.turnCount();
 		if (turnCount == 0) {
@@ -447,11 +531,17 @@ public class ChatServlet extends TopLogicServlet {
 		tracker.setEffort(blankToNull(body.getEffort()));
 		String userName = resolveUserName(req, tracker);
 		ChatProcessor.SendResult result = ChatProcessor.sendMessage(tracker,
-			TLContextManager.getSubSession(), userName, removed.text(), List.of(), options);
+			TLContextManager.getSubSession(), userName, removed.text(), List.of(), options,
+			facts(body.getFacts()));
 
 		TruncateResponse response = TruncateResponse.create()
 			.setRemovedTurns(removed.turns())
 			.setText(removed.text());
+		if (result.isRejected()) {
+			writeRefused(resp, new Refusal(SC_TOO_MANY_REQUESTS, result.getReason()),
+				response.setStatus(REJECTED).setReason(result.getReason()));
+			return;
+		}
 		if (result.getTaskId() == null) {
 			writeTruncateResponse(resp, response.setStatus(result.isBusy() ? "busy" : "error"));
 			return;
@@ -631,6 +721,12 @@ public class ChatServlet extends TopLogicServlet {
 	 */
 	private Refusal runRefusal(Person person, ChatProcessor.ChatRunOptions options) {
 		String named = blankToNull(options.agent());
+		if (named != null) {
+			Refusal notAPersona = personaRefusal(named.trim());
+			if (notAPersona != null) {
+				return notAPersona;
+			}
+		}
 		Refusal denial = policyRefusal(person, options);
 		if (denial != null) {
 			return denial;
@@ -645,6 +741,35 @@ public class ChatServlet extends TopLogicServlet {
 					.fill(named.trim())));
 		}
 		return null;
+	}
+
+	/**
+	 * Why the named agent is nobody's conversation partner, or <code>null</code> if it is one.
+	 *
+	 * <p>
+	 * An {@link AgentDefinition#infrastructure()} agent is one the application runs <em>for</em> the
+	 * user - the prompt improver rewrites their draft. Naming it in a send is refused whatever
+	 * {@code <agent-access>} grants, so this is asked before {@link #policyRefusal} and without the
+	 * policy service: under {@code default="all"} that service permits it, and with the service off
+	 * there is no policy to ask at all (#397). The run itself is refused again where it starts -
+	 * {@code AgentFactory} asks the same question of the run's security context.
+	 * </p>
+	 */
+	private static Refusal personaRefusal(String agentName) {
+		AgentDefinition agentDef;
+		try {
+			agentDef = AgentDefinitionQuery.getInstance().findAgentByName(agentName);
+		} catch (RuntimeException ex) {
+			// Cannot read it, so cannot judge it: leave the request to the run, as before.
+			Logger.warn("Could not check whether '" + agentName + "' is a conversation partner.", ex,
+				ChatServlet.class);
+			return null;
+		}
+		if (agentDef == null || !agentDef.infrastructure()) {
+			return null;
+		}
+		return forbidden(Resources.getInstance().getString(
+			com.top_logic.tl.ai.core.security.I18NConstants.AGENT_NOT_A_PERSONA__AGENT.fill(agentName)));
 	}
 
 	/** Whether this application has an agent of that name, assuming it has while it cannot say. */
@@ -670,7 +795,7 @@ public class ChatServlet extends TopLogicServlet {
 			access = AiToolAccessService.effectiveRunAccessFor(person);
 			agentName = options.agent() != null && !options.agent().isBlank()
 				? options.agent().trim()
-				: AgentFactory.defaultAgentFor(access, hiddenAgents());
+				: AgentFactory.defaultAgentFor(access);
 		} catch (RuntimeException ex) {
 			// A pre-check is a courtesy; a failure in it must not stop a request the run would accept.
 			Logger.warn("Could not pre-check what this account may run.", ex, ChatServlet.class);
@@ -710,13 +835,6 @@ public class ChatServlet extends TopLogicServlet {
 	/** A refusal by the agent security policy. */
 	private static Refusal forbidden(String reason) {
 		return new Refusal(HttpServletResponse.SC_FORBIDDEN, reason);
-	}
-
-	/** The agents this chat runs for itself and never offers as a conversation partner. */
-	private Set<String> hiddenAgents() {
-		TaskProgressTracker tracker = currentTracker();
-		String improver = tracker == null ? null : tracker.getPromptImproverAgentName();
-		return improver == null || improver.isBlank() ? Set.of() : Set.of(improver);
 	}
 
 	/** Answers a send that is refused, with the reason the client shows. */
@@ -852,6 +970,24 @@ public class ChatServlet extends TopLogicServlet {
 		resp.getWriter().write(DtoMapper.toJson(response));
 	}
 
+	/**
+	 * POST /chat/respond - the user's answer to an approval or a question.
+	 *
+	 * <p>
+	 * The request is looked up by its correlation id among the runs <em>this account</em> has
+	 * parked on a human ({@link PendingInteractionRegistry}), not among the runs of the window the
+	 * answer arrives from. That is what lets a second tab, a reloaded page or a new login answer a
+	 * request the first window started (issue #393): the run is parked on a future in its own
+	 * process, and the account - not the window - is who the request is addressed to.
+	 * </p>
+	 *
+	 * <p>
+	 * A request of another account is not found here, and an answer to one is therefore worth
+	 * exactly what an answer to a request that never existed is worth: nothing happens, and the
+	 * caller is told the same thing in both cases, so the answer cannot be used to find out which
+	 * ids exist.
+	 * </p>
+	 */
 	private void handleRespond(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		String jsonBody = new String(req.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
 
@@ -876,31 +1012,34 @@ public class ChatServlet extends TopLogicServlet {
 			return;
 		}
 
-		TaskProgressTracker tracker = currentTracker();
-		ChatProcessor.AIProcessingState state = tracker.getAnyActiveProcessingState();
-		UserInteractionStore store = state == null ? null : state.getUserInteractionStore();
-		if (store == null) {
-			// A late answer to a request whose run already ended (completed, cancelled, or timed
-			// out): the interaction is no longer pending, so there is nothing to resolve. Treat
-			// it as a benign no-op rather than an error - the user must not see a failure for
-			// answering a question that the system already tore down (e.g. after cancelling the
-			// orchestrator, which cancels its subagents' pending questions).
-			Logger.info("Ignoring late interaction response for request " + requestId
-				+ ": no active interaction store.", ChatServlet.class);
+		Person responder = resolveCurrentPerson(req);
+		PendingInteractionRegistry.PendingRun run = PendingInteractionRegistry.find(responder, requestId);
+		if (run == null) {
+			// Either a late answer to a request whose run already ended (completed, cancelled, or
+			// timed out), or a request this account is not the responder of. Both are a benign
+			// no-op rather than an error - the user must not see a failure for answering a question
+			// that the system already tore down (e.g. after cancelling the orchestrator, which
+			// cancels its subagents' pending questions), and the two must not be told apart.
+			Logger.info("Ignoring interaction response for request " + requestId
+				+ ": no run of this account is waiting for it.", ChatServlet.class);
 			resp.setContentType(CONTENT_TYPE_JSON);
 			resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
 			resp.getWriter().write("{\"status\":\"ignored\"}");
 			return;
 		}
+		ChatProcessor.AIProcessingState state = run.state();
+		UserInteractionStore store = state.getUserInteractionStore();
 
 		// Include rejection comment in the response string so the ApprovalCallback receives it
 		String resolvedResponse = response;
 		if ("REJECTED".equals(response) && comment != null && !comment.isEmpty()) {
 			resolvedResponse = "REJECTED:" + comment;
 		}
-		store.resolve(requestId, resolvedResponse);
 
-		// Record the approval decision in the conversation log
+		// Everything the decision changes is written before the waiting thread is let go: resolving
+		// the future unparks the agent mid-turn, and it may call the next tool before this request
+		// has returned. A tool approved "for this session" that the run learns of only afterwards
+		// would be asked about again.
 		ConversationLogListener logListener = state.getLogListener();
 		if (logListener != null) {
 			if ("APPROVED_FOR_SESSION".equals(response)) {
@@ -915,14 +1054,46 @@ public class ChatServlet extends TopLogicServlet {
 			}
 		}
 
+		// Against the run's own window, not the answering one: that is the tracker holding the set
+		// the agent loop consults.
 		if ("APPROVED_FOR_SESSION".equals(response) && toolName != null && !toolName.isEmpty()) {
-			tracker.addSessionApprovedTool(toolName);
+			run.tracker().addSessionApprovedTool(toolName);
 		}
+
+		store.resolve(requestId, resolvedResponse);
+
+		// The run's own window learns the outcome from the run (approval_resolved). Every other
+		// window of this account that listed the request has no run to hear it from.
+		notifyInteractionResolved(responder, run.tracker(), requestId, resolvedResponse);
 
 		resp.setContentType("application/json");
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
 		String safeRequestId = requestId.replace("\\", "\\\\").replace("\"", "\\\"");
 		resp.getWriter().write("{\"status\":\"ok\",\"requestId\":\"" + safeRequestId + "\"}");
+	}
+
+	/**
+	 * Tells the account's other chat windows that a request they may be showing has been answered.
+	 *
+	 * <p>
+	 * Best effort, and deliberately silent about failures: the answer has already reached the run,
+	 * and a window that misses this frame shows a stale card until it next lists what is pending -
+	 * which is what every window did before the frame existed.
+	 * </p>
+	 */
+	private static void notifyInteractionResolved(Person responder, TaskProgressTracker runWindow,
+			String requestId, String outcome) {
+		InteractionResolvedEvent event = InteractionResolvedEvent.create()
+			.setRequestId(requestId)
+			.setOutcome(outcome);
+		for (ChatEventHandler handler : ChatEventHandlerRegistry.findOthers(responder, runWindow)) {
+			try {
+				handler.sendInteractionResolved(event);
+			} catch (RuntimeException ex) {
+				Logger.info("Could not tell a window that interaction " + requestId
+					+ " was answered: " + ex.getMessage(), ChatServlet.class);
+			}
+		}
 	}
 
 	private void handleApprovalMode(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -1064,6 +1235,7 @@ public class ChatServlet extends TopLogicServlet {
 				.setHeader(request.getHeader())
 				.setPrompt(request.getPrompt())
 				.setPayload(request.getPayload())
+				.setToolMode(toolMode(person, request.getRequestId()))
 				.setSessionId(getObjectId(session))
 				.setSessionTitle(session.getTitle());
 			Date createdAt = request.getCreatedAt();
@@ -1094,6 +1266,29 @@ public class ChatServlet extends TopLogicServlet {
 			: InteractionTimeoutService.questionTimeout();
 	}
 
+	/**
+	 * The mode of the tool a still-waiting approval is about, or the empty string.
+	 *
+	 * <p>
+	 * The persisted request records the reason the security context wrote, in English; the mode is
+	 * what lets the client phrase the question in the reader's language, exactly as it does for the
+	 * card the live event drew. It is known only while the run is still waiting - which is also the
+	 * only time a client may still answer.
+	 * </p>
+	 */
+	private static String toolMode(Person responder, String requestId) {
+		PendingInteractionRegistry.PendingRun run = PendingInteractionRegistry.find(responder, requestId);
+		if (run == null) {
+			return "";
+		}
+		UserInteractionStore store = run.state().getUserInteractionStore();
+		PendingApproval approval = store == null ? null : store.pendingApproval(requestId);
+		if (approval == null || approval.request().mode() == null) {
+			return "";
+		}
+		return approval.request().mode().name();
+	}
+
 	/** Lowercased classifier name ("approval"/"question"/"choice") of an interaction type. */
 	private static String interactionTypeName(TLClassifier type) {
 		return type == null ? null : type.getName().toLowerCase(java.util.Locale.ROOT);
@@ -1112,7 +1307,8 @@ public class ChatServlet extends TopLogicServlet {
 		AsyncContext asyncContext = req.startAsync();
 		asyncContext.setTimeout(0); // No timeout - connection stays open until client disconnects
 
-		ChatSSEHandler handler = new ChatSSEHandler(tracker, asyncContext, resp.getWriter());
+		ChatSSEHandler handler =
+			new ChatSSEHandler(tracker, resolveCurrentPerson(req), asyncContext, resp.getWriter());
 		handler.start();
 	}
 
@@ -1457,7 +1653,8 @@ public class ChatServlet extends TopLogicServlet {
 					.setToolDefinitionTokens(composition.getToolDefinitionTokens())
 					.setMessageTokens(composition.getMessageTokens())
 					.setToolResultTokens(composition.getToolResultTokens())
-					.setToolCount(composition.getToolCount()));
+					.setToolCount(composition.getToolCount())
+					.setLoadedSkills(composition.getLoadedSkills()));
 			}
 			String model = turn.getModel();
 			if (model != null && !model.isEmpty()) {
@@ -1528,6 +1725,27 @@ public class ChatServlet extends TopLogicServlet {
 	}
 
 	/**
+	 * The conversation this request addresses, as the client's {@code conversation} parameter.
+	 *
+	 * <p>
+	 * A window can show more than one: a page's chat beside a {@code <chat-dock>}'s, two
+	 * {@code <agent-chat>} elements, a chat in a dialog over the one on the page. A request that
+	 * names none addresses the window's unnamed conversation, which is what the classic
+	 * {@code chat-client.js} has.
+	 * </p>
+	 *
+	 * <p>
+	 * Not {@code chatId}: that parameter is taken, by {@code PUT /chat/preferences}, for the key a
+	 * <em>layout</em> is stored under. The two are the same string for every element of a chat and
+	 * differ for an {@code <agent-chat>}, whose layout is the one-element chat's and whose
+	 * conversation is its own.
+	 * </p>
+	 */
+	private static String conversation(HttpServletRequest req) {
+		return ChatSessionRegistry.key(req.getParameter("conversation"));
+	}
+
+	/**
 	 * Binds the application-window sub-session addressed by the request's {@code windowId} to the
 	 * current thread before dispatching, so every chat endpoint runs in the user's UI context.
 	 *
@@ -1556,7 +1774,8 @@ public class ChatServlet extends TopLogicServlet {
 			throws ServletException, IOException {
 		TLSubSessionContext subSession =
 			ChatSessionRegistry.resolveSubSession(TLContextManager.getSession(), windowId(req));
-		if (subSession == null || subSession.get(ChatSessionRegistry.CHAT_TRACKER) == null) {
+		String conversation = conversation(req);
+		if (ChatSessionRegistry.tracker(subSession, conversation) == null) {
 			sendStaleWindow(resp);
 			return;
 		}
@@ -1566,6 +1785,9 @@ public class ChatServlet extends TopLogicServlet {
 		// so no explicit restore is needed. Going through ThreadContextManager.inContext(...) would
 		// instead log an "Overriding subsession" info on every request.
 		TLContextManager.getInteraction().installSubSessionContext(subSession);
+		// Which conversation of the window this is, read once: the handlers below resolve their
+		// tracker through currentTracker(), which has no request to read the parameter from.
+		TLContextManager.getInteraction().set(REQUEST_CONVERSATION, conversation);
 		// Only now is there a user to ask about: the interaction this request started with carries
 		// no sub-session, and therefore no person.
 		if (TLContext.isAnonymous()) {
@@ -1576,16 +1798,18 @@ public class ChatServlet extends TopLogicServlet {
 	}
 
 	/**
-	 * The {@link TaskProgressTracker} bound to the sub-session of the current request.
+	 * The {@link TaskProgressTracker} of the conversation the current request addresses.
 	 *
 	 * <p>
-	 * Never null inside a handler: {@link #doService} rejects requests whose sub-session or tracker
-	 * cannot be resolved before any handler runs.
+	 * Never null inside a handler: {@link #doService} rejects a request whose sub-session or
+	 * conversation cannot be resolved before any handler runs, and puts what it resolved onto the
+	 * interaction.
 	 * </p>
 	 */
 	private static TaskProgressTracker currentTracker() {
-		TLSubSessionContext subSession = TLContextManager.getSubSession();
-		return subSession == null ? null : subSession.get(ChatSessionRegistry.CHAT_TRACKER);
+		InteractionContext interaction = TLContextManager.getInteraction();
+		String conversation = interaction == null ? "" : interaction.get(REQUEST_CONVERSATION);
+		return ChatSessionRegistry.tracker(TLContextManager.getSubSession(), conversation);
 	}
 
 	/**

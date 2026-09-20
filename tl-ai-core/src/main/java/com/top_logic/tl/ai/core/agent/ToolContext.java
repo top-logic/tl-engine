@@ -9,13 +9,20 @@ import java.util.Objects;
 import java.util.Set;
 
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.citation.CitationMarkers;
 import com.top_logic.tl.ai.core.execution.ExecutionHandle;
+import com.top_logic.tl.ai.core.limits.TokenAllowance;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
+import com.top_logic.tl.ai.core.security.RunEntryPoint;
+import com.top_logic.tl.ai.core.security.RunPrincipal;
+import com.top_logic.tl.ai.core.security.RunSecurity;
+import com.top_logic.tl.ai.core.tools.model.TidResolver;
 import com.top_logic.util.TLContext;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.ProgressReporter;
+import com.top_logic.tl.ai.tool.api.RunInfo;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.core.tools.ToolExecutor;
 
@@ -40,10 +47,31 @@ public class ToolContext implements ToolExecutionContext {
 	 * {@link #forCurrentUser()} and {@code ChatProcessor}, both of which resolve the acting account
 	 * and refuse without one.
 	 * </p>
+	 *
+	 * <p>
+	 * It is a <em>shared</em> instance, and so is its {@link #executionHandle()}. Use it to call a
+	 * tool, never to run an agent loop: a run publishes its identity onto that handle, and two runs
+	 * sharing this constant would overwrite each other's. {@link #unrestricted()} is the same
+	 * context with a handle of its own.
+	 * </p>
 	 */
 	public static final ToolContext EMPTY =
 		new ToolContext(SecurityContext.UNRESTRICTED, ApprovalCallback.AUTO_APPROVE,
 			TransactionScope.NOOP, CancellationToken.UNCANCELLABLE);
+
+	/**
+	 * A fresh context shaped like {@link #EMPTY} - no security restrictions, auto-approval, no-op
+	 * transaction scope - but with an {@link #executionHandle()} of its own.
+	 *
+	 * <p>
+	 * What the entry points that take no context from their caller run with. Each call gets its own
+	 * instance, so concurrent runs do not report each other's run to their tools.
+	 * </p>
+	 */
+	public static ToolContext unrestricted() {
+		return new ToolContext(SecurityContext.UNRESTRICTED, ApprovalCallback.AUTO_APPROVE,
+			TransactionScope.NOOP, CancellationToken.UNCANCELLABLE);
+	}
 
 	/**
 	 * Creates a context acting as the user bound to the calling thread, with a live transaction scope.
@@ -72,7 +100,8 @@ public class ToolContext implements ToolExecutionContext {
 	public static ToolContext forCurrentUser() {
 		CancellationToken cancellationToken = new CancellationToken();
 		return new ToolContext(
-			TopLogicSecurityContext.forRun(TLContext.currentUser(), false),
+			RunSecurity.contextFor(
+				new RunPrincipal(TLContext.currentUser(), RunEntryPoint.SCRIPT, false)),
 			ApprovalCallback.AUTO_APPROVE, new TransactionScope(cancellationToken), cancellationToken);
 	}
 
@@ -107,8 +136,9 @@ public class ToolContext implements ToolExecutionContext {
 	public static ToolContext forBackgroundRun(Person principal) {
 		CancellationToken cancellationToken = new CancellationToken();
 		return new ToolContext(
-			TopLogicSecurityContext.forRun(principal, true),
-			ApprovalCallback.AUTO_APPROVE, new TransactionScope(cancellationToken), cancellationToken);
+			RunSecurity.contextFor(new RunPrincipal(principal, RunEntryPoint.MCP, true)),
+			ApprovalCallback.AUTO_APPROVE, new TransactionScope(cancellationToken), cancellationToken)
+				.unattended();
 	}
 
 	private final SecurityContext _security;
@@ -132,6 +162,10 @@ public class ToolContext implements ToolExecutionContext {
 	private final CitationMarkers _citationMarkers;
 
 	private final String _model;
+
+	private final boolean _attended;
+
+	private final TokenAllowance _tokenAllowance;
 
 	/**
 	 * Creates a context with the given security, approval callback, and transaction scope.
@@ -217,14 +251,16 @@ public class ToolContext implements ToolExecutionContext {
 			int delegationDepth, String toolCallId, CancellationToken cancellationToken,
 			ProgressReporter progressReporter) {
 		this(security, approval, transaction, sessionApprovedTools, delegationDepth, toolCallId,
-			cancellationToken, progressReporter, new ExecutionHandle(), new CitationMarkers(), null);
+			cancellationToken, progressReporter, new ExecutionHandle(), new CitationMarkers(), null,
+			true, TokenAllowance.UNLIMITED);
 	}
 
 	private ToolContext(SecurityContext security, ApprovalCallback approval,
 			TransactionScope transaction, Set<String> sessionApprovedTools,
 			int delegationDepth, String toolCallId, CancellationToken cancellationToken,
 			ProgressReporter progressReporter, ExecutionHandle executionHandle,
-			CitationMarkers citationMarkers, String model) {
+			CitationMarkers citationMarkers, String model, boolean attended,
+			TokenAllowance tokenAllowance) {
 		_security = Objects.requireNonNull(security, "Security context must not be null.");
 		_approval = Objects.requireNonNull(approval, "Approval callback must not be null.");
 		_transaction = Objects.requireNonNull(transaction, "Transaction scope must not be null.");
@@ -236,6 +272,8 @@ public class ToolContext implements ToolExecutionContext {
 		_executionHandle = Objects.requireNonNull(executionHandle, "Execution handle must not be null.");
 		_citationMarkers = Objects.requireNonNull(citationMarkers, "Citation markers must not be null.");
 		_model = model;
+		_attended = attended;
+		_tokenAllowance = Objects.requireNonNull(tokenAllowance, "Token allowance must not be null.");
 	}
 
 	/**
@@ -263,6 +301,20 @@ public class ToolContext implements ToolExecutionContext {
 	 */
 	public ModelSecurity modelSecurity() {
 		return _security.modelSecurity();
+	}
+
+	/**
+	 * The object the given identifier names, read with the rights of this run's principal.
+	 *
+	 * <p>
+	 * The same resolution a script tool's object-typed parameter gets, reached from the context a
+	 * Java tool already holds, so both kinds of tool turn an identifier into an object in the one
+	 * place that runs the read check.
+	 * </p>
+	 */
+	@Override
+	public TLObject resolveObject(String id) {
+		return TidResolver.resolve(id, modelSecurity());
 	}
 
 	/**
@@ -352,6 +404,22 @@ public class ToolContext implements ToolExecutionContext {
 	}
 
 	/**
+	 * Which agent run this tool call belongs to - run id, conversation, agent, model, and the
+	 * delegating run for a sub-agent.
+	 *
+	 * <p>
+	 * Plain data, captured as the run started, so reading it touches no {@code KnowledgeBase} and
+	 * can never throw. This is the accessor a tool uses; {@link #executionHandle()}'s
+	 * {@link ExecutionHandle#get() wrapper} is an opaque token for the execution store, not a
+	 * readable object (Gitea #405).
+	 * </p>
+	 */
+	@Override
+	public RunInfo runInfo() {
+		return _executionHandle.runInfo();
+	}
+
+	/**
 	 * The {@code [n]} marker numbers this run hands out to the cite tool.
 	 *
 	 * <p>
@@ -379,12 +447,74 @@ public class ToolContext implements ToolExecutionContext {
 	}
 
 	/**
+	 * Whether a human is present in this run who could be asked a question.
+	 *
+	 * @see ToolExecutionContext#attended()
+	 * @see #unattended()
+	 */
+	@Override
+	public boolean attended() {
+		return _attended;
+	}
+
+	/**
+	 * A copy of this context for a run that has nobody to ask.
+	 *
+	 * <p>
+	 * What the scheduler's {@code AgentTask} and the MCP endpoint build their context with. It says
+	 * only that no answer can arrive; it authorizes nothing and takes nothing away. Whether such a
+	 * run is additionally bounded by the policy's {@code <background-allowlist>} is the decision of
+	 * its {@link #security() security context}, made where that context is built - the two are
+	 * normally set together, and deliberately remain two statements rather than one, because a run
+	 * can lose its human without any change to what it is allowed to do.
+	 * </p>
+	 */
+	public ToolContext unattended() {
+		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
+			_delegationDepth, _toolCallId, _cancellationToken, _progressReporter, _executionHandle,
+			_citationMarkers, _model, false, _tokenAllowance);
+	}
+
+	/**
+	 * What is left of the principal's token budget for this run, and what the run has spent of it.
+	 *
+	 * <p>
+	 * {@link TokenAllowance#UNLIMITED} unless the installation configured a budget and the run's
+	 * entry point resolved one - which is what {@code RunLimits.admit} does at every run start. The
+	 * loop records each assistant turn into it and stops with
+	 * {@link StopReason#BUDGET_EXHAUSTED} when it runs out.
+	 * </p>
+	 *
+	 * <p>
+	 * A {@link #forDelegation(TransactionScope) delegated} run shares this instance rather than
+	 * getting one of its own: a delegate spends the budget of the run that delegated it.
+	 * </p>
+	 */
+	public TokenAllowance tokenAllowance() {
+		return _tokenAllowance;
+	}
+
+	/**
+	 * Returns a copy of this context carrying the given token allowance.
+	 *
+	 * <p>
+	 * Called once per run, where the run is admitted. The copy is what the loop runs with, so
+	 * everything the run delegates carries the same allowance.
+	 * </p>
+	 */
+	public ToolContext withTokenAllowance(TokenAllowance tokenAllowance) {
+		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
+			_delegationDepth, _toolCallId, _cancellationToken, _progressReporter, _executionHandle,
+			_citationMarkers, _model, _attended, tokenAllowance);
+	}
+
+	/**
 	 * Returns a copy of this context bound to the given model.
 	 */
 	public ToolContext withModel(String model) {
 		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
 			_delegationDepth, _toolCallId, _cancellationToken, _progressReporter, _executionHandle,
-			_citationMarkers, model);
+			_citationMarkers, model, _attended, _tokenAllowance);
 	}
 
 	/**
@@ -393,7 +523,7 @@ public class ToolContext implements ToolExecutionContext {
 	public ToolContext withToolCallId(String toolCallId) {
 		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
 			_delegationDepth, toolCallId, _cancellationToken, _progressReporter, _executionHandle,
-			_citationMarkers, _model);
+			_citationMarkers, _model, _attended, _tokenAllowance);
 	}
 
 	/**
@@ -402,7 +532,7 @@ public class ToolContext implements ToolExecutionContext {
 	public ToolContext withProgressReporter(ProgressReporter progressReporter) {
 		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
 			_delegationDepth, _toolCallId, _cancellationToken, progressReporter, _executionHandle,
-			_citationMarkers, _model);
+			_citationMarkers, _model, _attended, _tokenAllowance);
 	}
 
 	/**
@@ -427,7 +557,7 @@ public class ToolContext implements ToolExecutionContext {
 	public ToolContext forDelegation(TransactionScope childTransaction) {
 		return new ToolContext(_security, _approval, childTransaction, _sessionApprovedTools,
 			_delegationDepth + 1, null, _cancellationToken, ProgressReporter.NOOP,
-			new ExecutionHandle(), new CitationMarkers(), _model);
+			childExecutionHandle(), new CitationMarkers(), _model, _attended, _tokenAllowance);
 	}
 
 	/**
@@ -458,12 +588,35 @@ public class ToolContext implements ToolExecutionContext {
 	 * worth keeping.
 	 * </p>
 	 *
+	 * <p>
+	 * For the same reason the child inherits the parent's {@link #attended()} rather than being made
+	 * unattended along with its security ceiling: the two answer different questions. The ceiling
+	 * asks whether an approval prompt would be <em>shown in time</em> - the parent turn has ended,
+	 * so it would not - while {@link #attended()} asks whether the account is there at all. A
+	 * subagent of a chat run may therefore still ask its question, and any window of that account
+	 * answers it; a subagent of a scheduled run may not, because there was never anybody.
+	 * </p>
+	 *
 	 * @param childTransaction the transaction scope for the subagent run
 	 * @param childToken       the subagent's own cancellation token
 	 */
 	public ToolContext forDetachedSubagent(TransactionScope childTransaction, CancellationToken childToken) {
 		return new ToolContext(_security.withBackgroundCeiling(), _approval, childTransaction,
 			_sessionApprovedTools, _delegationDepth + 1, null, childToken, ProgressReporter.NOOP,
-			new ExecutionHandle(), new CitationMarkers(), _model);
+			childExecutionHandle(), new CitationMarkers(), _model, _attended, _tokenAllowance);
+	}
+
+	/**
+	 * A fresh {@link ExecutionHandle} for a run this one delegates: its own execution, with this
+	 * run named as its {@link RunInfo#parent() parent}.
+	 *
+	 * <p>
+	 * The parent's {@link RunInfo} is plain data, so a child tool can read who delegated it (and,
+	 * through {@link RunInfo#root()}, the whole chain up to the top-level run) with the same
+	 * revision safety as its own facts.
+	 * </p>
+	 */
+	private ExecutionHandle childExecutionHandle() {
+		return new ExecutionHandle(runInfo(), _delegationDepth + 1);
 	}
 }

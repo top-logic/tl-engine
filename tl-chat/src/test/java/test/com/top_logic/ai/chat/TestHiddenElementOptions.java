@@ -11,6 +11,7 @@ import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.ModuleTestSetup;
 
+import com.top_logic.ai.chat.view.AgentChatElement;
 import com.top_logic.ai.chat.view.ChatConversationElement;
 import com.top_logic.ai.chat.view.ChatDockElement;
 import com.top_logic.ai.chat.view.ChatRailElement;
@@ -71,7 +72,18 @@ public class TestHiddenElementOptions extends TestCase {
 		assertVisible(ChatConversationElement.Config.class, ChatConversationElement.Config.MODEL);
 		assertVisible(ChatConversationElement.Config.class, ChatConversationElement.Config.EFFORT);
 		assertVisible(ChatConversationElement.Config.class, ChatConversationElement.Config.MCP_SERVERS);
+		// Wiring a designer does, not a TypeScript name: which channel carries the composer's unsent
+		// text, and which one puts a model object into it as a reference token.
+		assertVisible(ChatConversationElement.Config.class, ChatConversationElement.Config.DRAFT);
+		assertVisible(ChatConversationElement.Config.class, ChatConversationElement.Config.REFERENCE);
 		assertVisible(ChatConversationElement.Actions.class, ChatConversationElement.Actions.COPY);
+		// The composer's invitation is words an administration writes, not a TypeScript name (#420).
+		assertVisible(ChatConversationElement.Config.class, ChatConversationElement.Config.PLACEHOLDER);
+	}
+
+	/** The one-element {@code <agent-chat>} offers its composer's invitation to a designer too. */
+	public void testAgentChatPlaceholderIsADesignerOption() {
+		assertVisible(AgentChatElement.Config.class, AgentChatElement.Config.PLACEHOLDER);
 	}
 
 	/** {@code <chat>} hides only the two engine-inherited options; the id it hands down is visible. */

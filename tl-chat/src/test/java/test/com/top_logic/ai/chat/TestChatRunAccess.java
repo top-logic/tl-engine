@@ -7,6 +7,8 @@ package test.com.top_logic.ai.chat;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
+import java.util.concurrent.Callable;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -79,6 +81,23 @@ public class TestChatRunAccess extends BasicTestCase {
 	/** An agent this product ships, which carries both a display name and a summary. */
 	private static final String FRAMEWORK_AGENT = "TL_ModelExplorer";
 
+	/**
+	 * An agent this product ships as {@code infrastructure}: the chat runs it <em>for</em> the user.
+	 */
+	private static final String INFRASTRUCTURE_AGENT = "TL_PromptImprover";
+
+	/** What the test application's configuration overlay renames {@link #FRAMEWORK_AGENT} to. */
+	private static final String OVERRIDDEN_NAME_EN = "Model Scout";
+
+	/** The same, in German. */
+	private static final String OVERRIDDEN_NAME_DE = "Modell-Späher";
+
+	/** The summary the overlay leaves alone, as this product ships it. */
+	private static final String SHIPPED_SUMMARY_EN = "Explores model and data, changes nothing.";
+
+	/** The same, in German. */
+	private static final String SHIPPED_SUMMARY_DE = "Erkundet Modell und Daten, ändert nichts.";
+
 	private static Person anna;
 
 	private static TLObject annasChat;
@@ -100,7 +119,7 @@ public class TestChatRunAccess extends BasicTestCase {
 
 		TLSubSessionContext subSession = TLContextManager.getSubSession();
 		assertNotNull("The test needs a sub-session to hang the tracker on.", subSession);
-		ChatSessionRegistry.register(subSession, new TaskProgressTracker());
+		ChatSessionRegistry.register(subSession, null, new TaskProgressTracker());
 	}
 
 	/** Precondition: the fixture this test reasons about actually reached the application. */
@@ -137,6 +156,45 @@ public class TestChatRunAccess extends BasicTestCase {
 			agent.contains("\"name\":\"" + FRAMEWORK_AGENT + "\""));
 		assertFalse("A framework agent has a display name: " + agent, agent.contains("\"label\":\"\""));
 		assertFalse("A framework agent has a summary: " + agent, agent.contains("\"summary\":\"\""));
+	}
+
+	/**
+	 * What the menu shows is what the installation configured, not what the product ships (#403).
+	 *
+	 * <p>
+	 * The test application overrides the display name of {@link #FRAMEWORK_AGENT} and says nothing
+	 * about its summary - the shape of an administrator renaming one agent in the service editor of
+	 * <em>TopLogic-Agents and Skills</em>. Both halves are asserted here, because they are what makes
+	 * the setting worth having: the renamed text reaches the client, and the text beside it is still
+	 * the shipped one rather than empty.
+	 * </p>
+	 */
+	public void testCapabilitiesCarriesTheInstallationsOwnDisplayName() throws Exception {
+		String agent = agentEntry(inLocale(Locale.ENGLISH, this::capabilities), FRAMEWORK_AGENT);
+
+		assertEquals("The name the installation configured is the name the menu shows: " + agent,
+			OVERRIDDEN_NAME_EN, valueOf(agent, "label"));
+		assertEquals("The summary nobody overrode is still the shipped one: " + agent,
+			SHIPPED_SUMMARY_EN, valueOf(agent, "summary"));
+		assertTrue("The identifier a request names is not what was renamed: " + agent,
+			agent.contains("\"name\":\"" + FRAMEWORK_AGENT + "\""));
+	}
+
+	/**
+	 * Both texts are answered in the reader's language - the overridden one and the shipped one.
+	 *
+	 * <p>
+	 * They are localized separately, so a German reader gets the installation's German name and the
+	 * product's German summary in the same payload.
+	 * </p>
+	 */
+	public void testCapabilitiesAnswersInTheReadersLanguage() throws Exception {
+		String agent = agentEntry(inLocale(Locale.GERMAN, this::capabilities), FRAMEWORK_AGENT);
+
+		assertEquals("The installation's German name: " + agent,
+			OVERRIDDEN_NAME_DE, valueOf(agent, "label"));
+		assertEquals("The shipped German summary: " + agent,
+			SHIPPED_SUMMARY_DE, valueOf(agent, "summary"));
 	}
 
 	/**
@@ -281,6 +339,90 @@ public class TestChatRunAccess extends BasicTestCase {
 		assertEquals(HttpServletResponse.SC_NOT_FOUND, response._status);
 		assertTrue("The client shows this to the user: " + response._body,
 			response._body.toString().contains("NoSuchAgent"));
+	}
+
+	/**
+	 * An agent the application runs for the user is offered to nobody as a conversation partner.
+	 *
+	 * <p>
+	 * It was dropped from the menu by name before (#392), by the chat that happened to configure it
+	 * as its prompt improver. It is dropped by what it <em>is</em> now, so a second chat that does not
+	 * configure it does not offer it either.
+	 * </p>
+	 */
+	public void testCapabilitiesDoesNotOfferAnInfrastructureAgent() throws Exception {
+		String body = capabilities();
+
+		assertTrue("The fixture needs the shipped framework agents: " + body,
+			body.contains("\"name\":\"" + FRAMEWORK_AGENT + "\""));
+		assertFalse("An agent the application runs for the user is no conversation partner: " + body,
+			body.contains("\"name\":\"" + INFRASTRUCTURE_AGENT + "\""));
+	}
+
+	/**
+	 * Naming an infrastructure agent in a send is refused, although no role forbids it (#397).
+	 *
+	 * <p>
+	 * The reproduction: this application grants every agent to everybody - it configures no
+	 * {@code <agent-access>} at all, which is what {@code default="all"} amounts to - and the request
+	 * was accepted, so the improver answered as a chat persona. The refusal is therefore not the
+	 * policy's: it is what the agent is.
+	 * </p>
+	 */
+	public void testSendNamingAnInfrastructureAgentIsRefused() throws Exception {
+		Recording response = send(anna, "{\"text\":\"Verbessere dich selbst.\",\"agent\":\""
+			+ INFRASTRUCTURE_AGENT + "\"}");
+
+		assertEquals(HttpServletResponse.SC_FORBIDDEN, response._status);
+		String body = response._body.toString();
+		assertTrue(body, body.contains("\"status\":\"forbidden\""));
+		assertTrue("The client shows this to the user, so it names the agent: " + body,
+			body.contains(INFRASTRUCTURE_AGENT));
+	}
+
+	/** The other endpoint that starts a run of a named agent is refused the same way. */
+	public void testRegenerateNamingAnInfrastructureAgentIsRefused() throws Exception {
+		Recording response = post("/regenerate", anna, "{\"sessionId\":\"" + id()
+			+ "\",\"agent\":\"" + INFRASTRUCTURE_AGENT + "\"}");
+
+		assertEquals(HttpServletResponse.SC_FORBIDDEN, response._status);
+		assertTrue(response._body.toString(),
+			response._body.toString().contains("\"status\":\"forbidden\""));
+	}
+
+	/**
+	 * The improve-prompt button is still offered: the rule is about who may <em>talk</em> to it.
+	 *
+	 * <p>
+	 * The feature runs the very same agent, on the product's own call path, which says so by building
+	 * its run with {@code SecurityContext.withoutAgentChoice()}. That the gate lets such a run through
+	 * is pinned in {@code TestAgentGate}; this is the half the client sees.
+	 * </p>
+	 */
+	public void testTheImprovePromptButtonStaysOffered() throws Exception {
+		String body = capabilities();
+
+		assertTrue("The button must not go away with the persona: " + body,
+			body.contains("\"promptImproverAvailable\":true"));
+	}
+
+	/**
+	 * Runs the given call with the session switched to the given language.
+	 *
+	 * <p>
+	 * Through {@code withLocale} rather than by setting the locale, because the bundle a session
+	 * renders with is cached on the session and only that call exchanges it too. Named explicitly in
+	 * both directions, because the test application's own language is neither obvious nor the point.
+	 * </p>
+	 */
+	private static String inLocale(Locale locale, Callable<String> call) {
+		return TLContextManager.getSubSession().withLocale(locale, () -> {
+			try {
+				return call.call();
+			} catch (Exception ex) {
+				throw new RuntimeException(ex);
+			}
+		});
 	}
 
 	/** The capabilities payload of the acting account, as JSON. */

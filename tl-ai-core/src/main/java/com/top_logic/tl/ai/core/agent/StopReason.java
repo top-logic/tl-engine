@@ -28,5 +28,19 @@ public enum StopReason {
 	REJECTED,
 
 	/** Context window exceeded after compaction retries exhausted. */
-	CONTEXT_OVERFLOW
+	CONTEXT_OVERFLOW,
+
+	/**
+	 * The principal's token budget ran out while the run was working.
+	 *
+	 * <p>
+	 * An orderly stop, not a failure: the run keeps everything it had answered up to the turn that
+	 * spent the last of the budget, and the surface that started it says why the answer is
+	 * incomplete. A run whose budget was already spent when it started does not reach the loop at
+	 * all - it is refused where every run enters, with the same sentence.
+	 * </p>
+	 *
+	 * @see com.top_logic.tl.ai.core.limits.TokenAllowance
+	 */
+	BUDGET_EXHAUSTED
 }

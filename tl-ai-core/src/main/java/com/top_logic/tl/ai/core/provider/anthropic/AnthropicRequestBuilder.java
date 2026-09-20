@@ -71,20 +71,10 @@ public final class AnthropicRequestBuilder {
 		req.setMessages(buildMessages(messages, cacheFrom, cacheTtl));
 
 		if (!request.tools().isEmpty()) {
-			List<Object> tools = new ArrayList<>();
-			for (ToolSchema tool : request.tools()) {
-				Map<String, Object> entry = new LinkedHashMap<>();
-				entry.put("name", tool.name());
-				entry.put("description", tool.description());
-				entry.put("input_schema", parseJson(tool.inputSchemaJson()));
-				tools.add(entry);
-			}
-			req.setTools(tools);
+			req.setTools(buildTools(request, cacheTtl));
 		}
 
-		if (request.responseFormat() == ResponseFormat.JSON) {
-			req.setResponseFormat(Map.of("type", "json_object"));
-		}
+		writeResponseFormat(req, request.responseFormat());
 
 		if (request.toolChoice() != null && request.toolChoice() != ToolChoice.AUTO) {
 			String choiceType = request.toolChoice() == ToolChoice.REQUIRED ? "any" : "none";
@@ -102,6 +92,43 @@ public final class AnthropicRequestBuilder {
 	}
 
 	// ---- Private helpers ----
+
+	/**
+	 * The tool definitions, with a cache breakpoint where the array stops being the same bytes.
+	 *
+	 * <p>
+	 * Anthropic renders a request as tools, then system, then messages, and a breakpoint caches
+	 * everything in front of it. The breakpoint on the system block therefore covers the whole tool
+	 * array, which is right until a run loads a skill: one appended tool moves the system block and
+	 * the entire prefix is written again (Gitea #346).
+	 * </p>
+	 *
+	 * <p>
+	 * A second breakpoint on the last tool that <em>cannot</em> move keeps that part readable across
+	 * the load. It is only worth a breakpoint when there is something behind it - with no loaded
+	 * skill the system breakpoint already covers the array, and the four we may place are better
+	 * spent on the conversation.
+	 * </p>
+	 */
+	private static List<Object> buildTools(ProviderRequest request, String cacheTtl) {
+		List<ToolSchema> schemas = request.tools();
+		int stable = request.stableToolCount();
+		boolean breakAfterStable = stable > 0 && stable < schemas.size();
+
+		List<Object> tools = new ArrayList<>();
+		for (int i = 0; i < schemas.size(); i++) {
+			ToolSchema tool = schemas.get(i);
+			Map<String, Object> entry = new LinkedHashMap<>();
+			entry.put("name", tool.name());
+			entry.put("description", tool.description());
+			entry.put("input_schema", parseJson(tool.inputSchemaJson()));
+			if (breakAfterStable && i == stable - 1) {
+				entry.put("cache_control", buildCacheControl(cacheTtl));
+			}
+			tools.add(entry);
+		}
+		return tools;
+	}
 
 	private static int countUserRolePositions(List<Message> messages) {
 		int count = 0;
@@ -301,6 +328,49 @@ public final class AnthropicRequestBuilder {
 		return cc;
 	}
 
+	/**
+	 * Writes the requested {@link ResponseFormat} as Anthropic's structured output.
+	 *
+	 * <p>
+	 * Anthropic states the constraint as {@code output_config.format} with a {@code json_schema}.
+	 * There is no untyped JSON mode - a schema is what the API takes - so a request that asks for
+	 * JSON without saying which JSON is refused here rather than sent and rejected, or worse, sent
+	 * and answered in prose.
+	 * </p>
+	 */
+	private static void writeResponseFormat(AnthropicRequest req, ResponseFormat format)
+			throws ProviderException {
+		if (format == null || format.kind() == ResponseFormat.Kind.TEXT) {
+			return;
+		}
+		if (format.kind() == ResponseFormat.Kind.JSON) {
+			throw new ProviderException(ProviderException.Kind.INVALID_REQUEST, 0,
+				"Anthropic has no untyped JSON mode. Pass a JSON schema as the response format"
+					+ " (a map with a 'schema') to get a structured answer.");
+		}
+		Map<String, Object> jsonSchema = new LinkedHashMap<>();
+		jsonSchema.put("type", "json_schema");
+		jsonSchema.put("schema", format.schema());
+		putOutputConfig(req, "format", jsonSchema);
+	}
+
+	/**
+	 * Adds one entry to the request's {@code output_config}, keeping what is already there.
+	 *
+	 * <p>
+	 * Both the thinking effort and the structured output live in that one object, and they are
+	 * written by different code paths.
+	 * </p>
+	 */
+	private static void putOutputConfig(AnthropicRequest req, String key, Object value) {
+		Map<String, Object> outputConfig = new LinkedHashMap<>();
+		if (req.getOutputConfig() instanceof Map<?, ?> existing) {
+			existing.forEach((k, v) -> outputConfig.put(String.valueOf(k), v));
+		}
+		outputConfig.put(key, value);
+		req.setOutputConfig(outputConfig);
+	}
+
 	private static void writeThinkingParams(AnthropicRequest req, String model, int maxOutputTokens,
 			Map<String, Object> modelOptions) {
 		Object thinkingEffort = modelOptions.get("thinking_effort");
@@ -312,7 +382,7 @@ public final class AnthropicRequestBuilder {
 			req.setThinking(Map.of("type", "enabled", "budget_tokens", budgetTokens));
 		} else {
 			req.setThinking(Map.of("type", "adaptive"));
-			req.setOutputConfig(Map.of("effort", thinkingEffort.toString()));
+			putOutputConfig(req, "effort", thinkingEffort.toString());
 		}
 	}
 

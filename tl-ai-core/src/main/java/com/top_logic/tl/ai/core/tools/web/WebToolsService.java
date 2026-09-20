@@ -5,18 +5,35 @@
  */
 package com.top_logic.tl.ai.core.tools.web;
 
+import java.util.Collection;
+
+import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.knowledge.wrap.person.Person;
 
 /**
  * Service holding configuration for the web tools ({@link WebSearchTool}, {@link WebFetchTool}):
- * the pluggable search engine and the fetch limits.
+ * the pluggable search engine, the fetch limits and the application's browsing governance.
+ *
+ * <p>
+ * The {@link Config#getBrowsing() browsing policy} configured here is the application's answer to
+ * "which origins may this user's agent reach", and it binds every route out of the application: the
+ * browser tool, {@code webFetch} and {@code webSearch}. It sits <em>above</em> {@link UrlSafety},
+ * which answers the different question of whether an address may be connected to at all and is
+ * enforced independently, unconditionally and unconfigurably.
+ * </p>
+ *
+ * @see BrowsingPolicyConfig
+ * @see BrowsingPolicies
  */
 public class WebToolsService extends ConfiguredManagedClass<WebToolsService.Config<?>> {
 
@@ -59,6 +76,13 @@ public class WebToolsService extends ConfiguredManagedClass<WebToolsService.Conf
 		 * @see #getFetchMaxChars()
 		 */
 		String FETCH_MAX_CHARS = "fetch-max-chars";
+
+		/**
+		 * Configuration property name for the browsing policy.
+		 *
+		 * @see #getBrowsing()
+		 */
+		String BROWSING = "browsing";
 
 		/**
 		 * The search engine backing {@code webSearch}. If unset, web search is unavailable.
@@ -104,6 +128,21 @@ public class WebToolsService extends ConfiguredManagedClass<WebToolsService.Conf
 		@Name(FETCH_MAX_CHARS)
 		@IntDefault(50_000)
 		int getFetchMaxChars();
+
+		/**
+		 * Which origins the agents of this application may browse, per security role.
+		 *
+		 * <p>
+		 * Left empty - which is what ships - nothing changes: every origin that passes the SSRF
+		 * check stays reachable. It is the ceiling for all three routes out of the application, so
+		 * a domain list an agent passes to {@code webSearch} can only narrow it, never widen it.
+		 * </p>
+		 *
+		 * @see #BROWSING
+		 */
+		@Name(BROWSING)
+		@ItemDefault
+		BrowsingPolicyConfig getBrowsing();
 	}
 
 	private static volatile WebToolsService _instance;
@@ -111,6 +150,8 @@ public class WebToolsService extends ConfiguredManagedClass<WebToolsService.Conf
 	private final InstantiationContext _context;
 
 	private WebSearchEngine _searchEngine;
+
+	private BrowsingPolicies _browsingPolicies = BrowsingPolicies.unrestricted();
 
 	/**
 	 * Creates a {@link WebToolsService} from configuration.
@@ -130,6 +171,16 @@ public class WebToolsService extends ConfiguredManagedClass<WebToolsService.Conf
 	@Override
 	protected void startUp() {
 		super.startUp();
+		// Resolve the policy BEFORE the instance becomes visible: a half-started service whose
+		// browsing policy is still the unrestricted placeholder would answer one tool call with the
+		// opposite of what an administrator wrote.
+		try {
+			_browsingPolicies = BrowsingPolicies.of(getConfig().getBrowsing());
+		} catch (IllegalArgumentException ex) {
+			// A policy name nobody declared is an administrator's mistake in a security setting, so
+			// it is reported to them as one rather than logged and worked around.
+			throw new ConfigurationError(ResKey.text(ex.getMessage()), ex);
+		}
 		_instance = this;
 		PolymorphicConfiguration<? extends WebSearchEngine> engineConfig = getConfig().getSearchEngine();
 		_searchEngine = engineConfig == null ? null : _context.getInstance(engineConfig);
@@ -137,13 +188,62 @@ public class WebToolsService extends ConfiguredManagedClass<WebToolsService.Conf
 			Logger.info("No web search engine configured; webSearch will be unavailable until one is set.",
 				WebToolsService.class);
 		}
+		Logger.info("Browsing governance: " + _browsingPolicies.describe() + ".", WebToolsService.class);
 	}
 
 	@Override
 	protected void shutDown() {
 		_instance = null;
 		_searchEngine = null;
+		_browsingPolicies = BrowsingPolicies.unrestricted();
 		super.shutDown();
+	}
+
+	/**
+	 * The configured browsing policies; never {@code null}.
+	 */
+	public BrowsingPolicies browsingPolicies() {
+		return _browsingPolicies;
+	}
+
+	/**
+	 * The browsing policy binding a run of the given account.
+	 *
+	 * <p>
+	 * Static and null-safe on purpose: every caller is a tool or a browser session that must keep
+	 * working when this service is not started, and "not started" means "nothing configured", which
+	 * means unrestricted.
+	 * </p>
+	 *
+	 * @param account
+	 *        The acting account, may be {@code null}.
+	 * @return The policy; never {@code null}.
+	 */
+	public static BrowsingPolicy policyFor(Person account) {
+		WebToolsService service = getInstance();
+		return service == null ? BrowsingPolicy.unrestricted() : service.browsingPolicies().forAccount(account);
+	}
+
+	/**
+	 * The browsing policy binding a run whose account holds the given roles.
+	 *
+	 * @param roleNames
+	 *        The roles held on the security root.
+	 * @return The policy; never {@code null}.
+	 */
+	public static BrowsingPolicy policyForRoles(Collection<String> roleNames) {
+		WebToolsService service = getInstance();
+		return service == null ? BrowsingPolicy.unrestricted()
+			: service.browsingPolicies().forRoles(roleNames);
+	}
+
+	/**
+	 * The browsing policy binding the account of the running thread.
+	 *
+	 * @return The policy; never {@code null}.
+	 */
+	public static BrowsingPolicy currentPolicy() {
+		return policyFor(BrowsingPolicies.currentAccountQuietly());
 	}
 
 	/**

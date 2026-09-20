@@ -49,6 +49,7 @@ import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.execution.model.AgentTask;
 import com.top_logic.tl.ai.core.execution.model.InteractionRequest;
 import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
+import com.top_logic.tl.ai.core.execution.model.UserMemory;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedConversationV2;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedTurn;
@@ -56,7 +57,8 @@ import com.top_logic.util.model.ModelService;
 
 /**
  * Service that persists and retrieves the <code>tl.ai.execution</code> model:
- * {@link AgentSession}, {@link AgentExecution}, {@link InteractionRequest} and {@link AgentTask}.
+ * {@link AgentSession}, {@link AgentExecution}, {@link InteractionRequest}, {@link AgentTask} and
+ * {@link UserMemory}.
  *
  * <p>
  * This is the single write path for agent-run persistence. Any entry point that runs an agent
@@ -125,6 +127,49 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	/**
 	 * Kind of human-in-the-loop request. Mirrors the <code>tl.ai.execution:InteractionType</code>
 	 * enumeration.
+	 */
+	/**
+	 * What kind of thing an agent kept about a user.
+	 *
+	 * @see com.top_logic.tl.ai.core.execution.model.UserMemory
+	 */
+	public enum MemoryKind {
+		/** How the user wants to be served. */
+		PREFERENCE,
+
+		/** Something that is the case about the user or their work. */
+		FACT,
+
+		/** A judgement the user passed on the work, to be honoured next time. */
+		FEEDBACK;
+
+		/**
+		 * The kind named by the given string, case-insensitively, or {@code null} when the string
+		 * names none.
+		 *
+		 * <p>
+		 * The argument comes from a model, so it is matched leniently rather than parsed: an
+		 * unrecognised word is answered with {@code null} and refused by the caller with a message
+		 * naming the three, not with an exception the model cannot read.
+		 * </p>
+		 */
+		public static MemoryKind byName(String name) {
+			if (name == null) {
+				return null;
+			}
+			String normalized = name.trim().toUpperCase(java.util.Locale.ROOT);
+			for (MemoryKind kind : values()) {
+				if (kind.name().equals(normalized)) {
+					return kind;
+				}
+			}
+			return null;
+		}
+	}
+
+	/**
+	 * What a run asked a human for. Mirrors the
+	 * <code>tl.ai.execution:InteractionType</code> enumeration.
 	 */
 	public enum InteractionType {
 		/** Tool-call approval. */
@@ -321,11 +366,25 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 * </p>
 	 */
 	private <T> T write(Supplier<T> mutation) {
+		return onWriterThread(mutation);
+	}
+
+	/**
+	 * Runs {@code work} on the dedicated writer thread inside a fresh system interaction, and waits
+	 * for its result.
+	 *
+	 * <p>
+	 * {@link #write} is this for a mutation; {@link #sessionOf} is this for a <em>read</em> of a row
+	 * the calling thread's revision cannot see. Same thread, same fresh interaction, same waiting
+	 * and cancellation behaviour - see {@link #write}.
+	 * </p>
+	 */
+	private <T> T onWriterThread(Supplier<T> work) {
 		if (Thread.currentThread() == _writerThread) {
 			// Defensive: no mutation currently calls another mutator, so this branch is
 			// unreachable. If future code makes it reachable, running directly avoids a
 			// self-submit deadlock (single writer thread waiting on its own queue).
-			return mutation.get();
+			return work.get();
 		}
 		ThreadPoolExecutor writer = _writer;
 		if (writer == null) {
@@ -338,7 +397,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 		}
 		try {
 			return writer.submit(
-				() -> ThreadContextManager.inSystemInteraction(AgentExecutionStore.class, mutation::get))
+				() -> ThreadContextManager.inSystemInteraction(AgentExecutionStore.class, work::get))
 				.get(WRITE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 		} catch (InterruptedException ex) {
 			// Restore the flag before leaving: the interrupt belongs to whoever set it, and code
@@ -625,6 +684,50 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	}
 
 	/**
+	 * Stores what a run told the model about the situation it happens in.
+	 *
+	 * <p>
+	 * Written as the run starts rather than with the rest of the record at the end, so that the
+	 * block is visible while the run is still going and survives a run that never finishes - the two
+	 * cases in which an administrator most wants to read it.
+	 * </p>
+	 */
+	public void saveEnvironment(AgentExecution execution, String environment) {
+		write(() -> {
+			try (Transaction tx = beginTx("Save agent run environment")) {
+				execution.setEnvironment(environment);
+				tx.commit();
+			}
+			return null;
+		});
+	}
+
+	/**
+	 * Stores the model that is actually answering this run.
+	 *
+	 * <p>
+	 * Written when a run fails over to another model (Gitea #344), so that the model column of the
+	 * run monitor names what produced the answer rather than what was configured. Which models the
+	 * run passed over, and why, is in its transcript.
+	 * </p>
+	 *
+	 * @param model
+	 *        The model now serving the run.
+	 * @param provider
+	 *        Its catalog provider ID; may be <code>null</code>.
+	 */
+	public void saveModel(AgentExecution execution, String model, String provider) {
+		write(() -> {
+			try (Transaction tx = beginTx("Save agent run model")) {
+				execution.setModel(model);
+				execution.setProvider(provider);
+				tx.commit();
+			}
+			return null;
+		});
+	}
+
+	/**
 	 * Records the terminal state of an agent-loop invocation without a final answer.
 	 *
 	 * @see #finishExecution(AgentExecution, ExecutionStatus, StopReason, String, TokenUsage,
@@ -740,6 +843,91 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	private boolean isTerminal(AgentExecution execution) {
 		TLClassifier status = execution.getStatus();
 		return status != null && !ExecutionStatus.RUNNING.name().equals(status.getName());
+	}
+
+	/**
+	 * The session an execution belongs to, resolved where that row is visible.
+	 *
+	 * <p>
+	 * This is the sanctioned way for an <em>agent</em> thread to get from the run's
+	 * {@link AgentExecution} to its {@link AgentSession}: the resolution happens on the writer
+	 * thread, in a fresh interaction that reads at the current revision, because the calling
+	 * thread's view is pinned to a revision that predates the row and dereferencing it there throws
+	 * "created after access revision N" (Gitea #405). The returned wrapper is, for the caller,
+	 * another opaque token - hand it back to this service (as {@link #beginExecution}'s
+	 * {@code session}), do not read attributes off it.
+	 * </p>
+	 *
+	 * <p>
+	 * Best-effort: a failure is logged and answered with <code>null</code>, which its callers treat
+	 * as "record nothing", never as a reason to fail the run.
+	 * </p>
+	 *
+	 * @param execution
+	 *        The execution whose session is wanted; <code>null</code> yields <code>null</code>.
+	 */
+	public AgentSession sessionOf(AgentExecution execution) {
+		if (execution == null) {
+			return null;
+		}
+		try {
+			return onWriterThread(() -> execution.getSession());
+		} catch (RuntimeException ex) {
+			Logger.warn("Could not resolve the session of an agent execution: " + ex.getMessage(),
+				ex, AgentExecutionStore.class);
+			return null;
+		}
+	}
+
+	/**
+	 * How many tokens the given account's runs consumed since the given point in time.
+	 *
+	 * <p>
+	 * The figure a token budget is enforced against: everything the provider was asked to read and
+	 * write - prompt including its cached part, output and thinking - summed over every recorded run
+	 * of that account which <em>started</em> within the window.
+	 * </p>
+	 *
+	 * <p>
+	 * Every execution row counts once, including the rows of delegated sub-agents. They carry their
+	 * own usage and belong to the same session as the run that delegated them, so summing the rows
+	 * is the account's true spend - {@link #totalUsageWithChildren(AgentExecution)}, which walks one
+	 * tree, would count a parent's children twice here.
+	 * </p>
+	 *
+	 * <p>
+	 * Read {@link #onWriterThread(Supplier) on the writer thread}, in a fresh interaction at the
+	 * current revision: the caller is a run that is about to start, whose own thread reads at the
+	 * revision its interaction was opened with, and the rows that matter are the newest ones
+	 * (Gitea #405).
+	 * </p>
+	 *
+	 * @param owner
+	 *        The account whose runs are counted; <code>null</code> yields {@code 0}.
+	 * @param since
+	 *        The start of the window; <code>null</code> counts every recorded run.
+	 * @return The token count, never negative.
+	 */
+	public long tokensSpentSince(Person owner, Date since) {
+		if (owner == null) {
+			return 0;
+		}
+		return onWriterThread(() -> {
+			long sum = 0;
+			for (TLObject obj : allInstances(TlAiExecutionFactory.getAgentExecutionType())) {
+				AgentExecution execution = (AgentExecution) obj;
+				Date started = execution.getStartedAt();
+				if (since != null && (started == null || started.before(since))) {
+					continue;
+				}
+				AgentSession session = execution.getSession();
+				if (session == null || !owner.equals(session.getOwner())) {
+					continue;
+				}
+				sum += usageOf(execution).totalTokens();
+			}
+			return Long.valueOf(sum);
+		}).longValue();
 	}
 
 	/**
@@ -1282,6 +1470,139 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 				request.setResolvedAt(now);
 			}
 		}
+	}
+
+	// ---- UserMemory ----
+
+	/**
+	 * Keeps one memory about the given account.
+	 *
+	 * <p>
+	 * Written on the writer thread like every other row of this module, so a tool may write one
+	 * from a read-only context and a rolled-back turn cannot take the memory down with it. The
+	 * owner is told to the listeners afterwards, which is what makes the user's memory list follow
+	 * at once instead of at the next heartbeat.
+	 * </p>
+	 *
+	 * @param owner
+	 *        The account the memory is about; must not be <code>null</code>.
+	 * @param kind
+	 *        What kind of thing is kept; must not be <code>null</code>.
+	 * @param text
+	 *        What is kept; must not be blank.
+	 * @param origin
+	 *        The run it came out of, which is also how it finds its conversation; may be
+	 *        <code>null</code> for a run that is not recorded, and the memory then records no
+	 *        origin. <b>Read on the writer thread</b>, not here: the caller is usually an agent
+	 *        thread whose view of the database predates the execution row the writer created, and
+	 *        dereferencing it there fails with "created after access revision".
+	 * @return The created row.
+	 */
+	public UserMemory createMemory(Person owner, MemoryKind kind, String text,
+			AgentExecution origin) {
+		Objects.requireNonNull(owner, "A memory needs an owner.");
+		Objects.requireNonNull(kind, "A memory needs a kind.");
+		if (text == null || text.isBlank()) {
+			throw new IllegalArgumentException("A memory needs a text.");
+		}
+		UserMemory created = write(() -> {
+		try (Transaction tx = beginTx("Create user memory")) {
+			UserMemory memory = TlAiExecutionFactory.getInstance().createUserMemory();
+			memory.setOwner(owner);
+			memory.setKind(memoryKindClassifier(kind));
+			memory.setText(text.strip());
+			if (origin != null) {
+				// Here, inside the writer's fresh system interaction, which sees HEAD.
+				memory.setSession(origin.getSession());
+				memory.setRunId(origin.getRunId());
+			}
+			memory.setCreatedAt(new Date());
+			tx.commit();
+			return memory;
+		}
+		});
+		// The owner as the caller named it, never read back from the new wrapper: this thread's view
+		// of the database predates the row the writer thread just created.
+		notifyChanged(owner);
+		return created;
+	}
+
+	/**
+	 * The memories of the given account, newest first.
+	 *
+	 * <p>
+	 * The owner filter is the privacy guard, and it is applied here rather than left to the caller:
+	 * every reader of this type - the environment block, the recall tool, a view - goes through
+	 * this method, so no reader can forget it.
+	 * </p>
+	 *
+	 * @param owner
+	 *        The account to read for; <code>null</code> yields an empty list.
+	 * @param limit
+	 *        At most this many rows; a value of {@code 0} or less means all of them.
+	 */
+	public List<UserMemory> memoriesOf(Person owner, int limit) {
+		if (owner == null) {
+			return List.of();
+		}
+		List<UserMemory> result = new ArrayList<>();
+		for (TLObject obj : allInstances(TlAiExecutionFactory.getUserMemoryType())) {
+			UserMemory memory = (UserMemory) obj;
+			if (owner.equals(memory.getOwner())) {
+				result.add(memory);
+			}
+		}
+		result.sort(Comparator.comparing(UserMemory::getCreatedAt,
+			Comparator.nullsLast(Comparator.reverseOrder())));
+		if (limit > 0 && result.size() > limit) {
+			return List.copyOf(result.subList(0, limit));
+		}
+		return result;
+	}
+
+	/**
+	 * Deletes one memory.
+	 *
+	 * <p>
+	 * Says nothing about who may do it - the caller has already established that. See
+	 * {@code AIScriptFunctions.memoryDelete}, which is the one path a user's click takes and which
+	 * refuses a row of somebody else.
+	 * </p>
+	 */
+	public void deleteMemory(UserMemory memory) {
+		if (memory == null) {
+			return;
+		}
+		Person deletedOwner = write(() -> {
+		try (Transaction tx = beginTx("Delete user memory")) {
+			// Read before the delete: afterwards the wrapper has no owner to report any more.
+			Person owner = memory.getOwner();
+			memory.tDelete();
+			tx.commit();
+			return owner;
+		}
+		});
+		notifyChanged(deletedOwner);
+	}
+
+	private static TLClassifier memoryKindClassifier(MemoryKind kind) {
+		switch (kind) {
+			case PREFERENCE:
+				return TlAiExecutionFactory.getPREFERENCEMemoryKindClassifier();
+			case FACT:
+				return TlAiExecutionFactory.getFACTMemoryKindClassifier();
+			case FEEDBACK:
+				return TlAiExecutionFactory.getFEEDBACKMemoryKindClassifier();
+		}
+		throw new IllegalArgumentException("Unknown memory kind: " + kind);
+	}
+
+	/**
+	 * The {@link MemoryKind} the given row carries, or <code>null</code> when it carries none.
+	 */
+	public static MemoryKind memoryKindOf(UserMemory memory) {
+		TLClassifier classifier = memory == null ? null : memory.getKind();
+		return classifier == null ? null : MemoryKind.byName(classifier.getName());
 	}
 
 	private static Transaction beginTx(String message) {

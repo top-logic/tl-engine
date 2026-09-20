@@ -90,6 +90,23 @@ final class BrowserSession {
 	interface DomainPolicy {
 		/** Whether a top-level navigation to {@code host} is permitted (blocklist/allowlist/allow-any). */
 		boolean isNavigationPermitted(String host);
+
+		/**
+		 * Why a file download from {@code host} is refused, or {@code null} when it is permitted.
+		 *
+		 * <p>
+		 * A second axis rather than a second answer to the first question: an origin worth reading is
+		 * not automatically an origin worth accepting a file from, so a policy may permit the
+		 * navigation and refuse the download. The default permits every download, which is what an
+		 * installation that configures no browsing policy has always done.
+		 * </p>
+		 *
+		 * @param host
+		 *        The host the download comes from.
+		 */
+		default String refuseDownload(String host) {
+			return null;
+		}
 	}
 
 	/**
@@ -1019,6 +1036,7 @@ final class BrowserSession {
 			installSecurityRoute(_context);
 			installRedirectGuard(_context);
 			installProxyRefusalGuard(_context);
+			installDownloadGuard(_context);
 			installNavigationObserver(_context);
 			if (_evadeBotDetection) {
 				// Mask the automation fingerprint before any page script runs (applies to every
@@ -2022,6 +2040,58 @@ final class BrowserSession {
 			if (_offPolicyNavigation == null) {
 				_offPolicyNavigation = refusedByPolicyMessage(reason);
 			}
+		});
+	}
+
+	/**
+	 * Installs the download gate of the browsing policy: a download the policy refuses is cancelled
+	 * and whatever was already written is deleted.
+	 *
+	 * <p>
+	 * Cancelling is the only thing a browser can do about a download it has already been offered -
+	 * Chromium starts writing before Playwright hands the event over - so the guarantee is "the file
+	 * does not survive the tool call", not "no byte was ever written". That is still the difference
+	 * between a policy and a note in the documentation, because nothing in this application can reach
+	 * a cancelled download: the temporary file is gone and no verb hands one to the agent.
+	 * </p>
+	 *
+	 * <p>
+	 * Nothing is reported back to the model, because nothing asked: no verb of this tool downloads a
+	 * file, so a download is something a <em>page</em> started. The refusal is an audit line for the
+	 * operator, which is who the policy is written by.
+	 * </p>
+	 *
+	 * <p>
+	 * There is deliberately no upload gate beside it. This browser has no upload path at all - no verb
+	 * sets input files and no file chooser is answered - so an upload cannot happen, and a setting that
+	 * claimed to govern one would be a security control that controls nothing.
+	 * </p>
+	 */
+	private void installDownloadGuard(BrowserContext context) {
+		context.onDownload(download -> {
+			String url = download.url();
+			String host;
+			try {
+				host = URI.create(url).getHost();
+			} catch (RuntimeException ex) {
+				// A download URL this process cannot even parse is not one the policy can clear.
+				host = null;
+			}
+			String refusal = _policy.refuseDownload(host);
+			if (refusal == null) {
+				return;
+			}
+			try {
+				download.cancel();
+				download.delete();
+			} catch (RuntimeException ex) {
+				// The download may have finished before the event arrived; the delete above is the
+				// part that matters and a failure of either must not break the page.
+				Logger.warn("Could not cancel the off-policy download from " + url + ".", ex,
+					BrowserSession.class);
+			}
+			Logger.info("Browser session " + _key + " refused a download from " + url + ": " + refusal,
+				BrowserSession.class);
 		});
 	}
 

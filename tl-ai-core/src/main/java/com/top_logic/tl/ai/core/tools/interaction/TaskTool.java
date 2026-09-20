@@ -21,6 +21,7 @@ import com.top_logic.tl.ai.core.tools.task.TaskStore.AgentTask;
 import com.top_logic.tl.ai.core.tools.task.TaskStore;
 import com.top_logic.tl.ai.core.tools.task.TaskStoreBinding;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
+import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
@@ -78,7 +79,8 @@ public class TaskTool {
 		+ " IMPORTANT: Call listTasks first to avoid creating duplicate tasks."
 		+ " Create your task list once per conversation — on subsequent turns,"
 		+ " update existing tasks rather than recreating."
-		+ " Mark each task completed immediately when done, do not batch completions.", mode = ToolMode.USER_SCOPED, group = ToolGroups.WORKSPACE)
+		+ " Mark each task completed immediately when done, do not batch completions.", mode = ToolMode.USER_SCOPED, group = ToolGroups.WORKSPACE,
+		marking = AnswerMarking.NONE)
 	public String createTask(
 			@P("Brief title for the task") String subject,
 			@P("Detailed description of what needs to be done") String description,
@@ -141,7 +143,8 @@ public class TaskTool {
 		+ " If blocked or encountering errors, keep status as 'in_progress'."
 		+ " Use 'deleted' to remove a task that is no longer needed."
 		+ " After completing a task, call listTasks to find the next one."
-		+ " Mark tasks completed immediately, do not batch completions.", mode = ToolMode.USER_SCOPED, group = ToolGroups.WORKSPACE)
+		+ " Mark tasks completed immediately, do not batch completions.", mode = ToolMode.USER_SCOPED, group = ToolGroups.WORKSPACE,
+		marking = AnswerMarking.NONE)
 	public String updateTask(
 			@P("The ID of the task to update") String taskId,
 			@P("New status (pending, in_progress, completed, deleted)") String status,
@@ -195,7 +198,8 @@ public class TaskTool {
 		+ " Use to see available work, check overall progress, or find the next task after completing one."
 		+ " Prefer working on tasks in ID order (lowest first)."
 		+ " Tasks with non-empty blockedBy cannot be started until their blockers are completed."
-		+ " Call this BEFORE creating new tasks to check what already exists.", mode = ToolMode.READ, group = ToolGroups.WORKSPACE)
+		+ " Call this BEFORE creating new tasks to check what already exists.", mode = ToolMode.READ, group = ToolGroups.WORKSPACE,
+		marking = AnswerMarking.NONE)
 	public String listTasks() {
 
 		Map<String, Object> args = new HashMap<>();

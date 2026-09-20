@@ -12,10 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
@@ -30,6 +28,7 @@ import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
@@ -54,6 +53,16 @@ import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
  * control's state map is a plain {@code HashMap}, so pushing state from two threads at once would
  * corrupt it. (The heartbeat path in the engine skips the lock; this deliberately does not copy
  * that.)
+ * </p>
+ *
+ * <p>
+ * <b>Coalescing never forgets a change.</b> A pass takes time - it enters every registered window's
+ * sub-session and waits for that window's request lock - and the agent writes throughout. A change
+ * that arrives while a pass is running is therefore carried into the next pass rather than folded
+ * into the running one, which has already taken its batch; {@link PendingRefreshes} is the whole of
+ * that rule. Without it such a change was dropped, and the row it was about stood still until an
+ * unrelated event happened to synthesize the window's model events - a browser command, or the 30 s
+ * heartbeat if the window still has one (#497).
  * </p>
  *
  * <p>
@@ -90,6 +99,13 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 		String LOCK_TIMEOUT_MILLIS = "lock-timeout-millis";
 
 		/**
+		 * Configuration property name for the write timeout.
+		 *
+		 * @see #getWriteTimeoutMillis()
+		 */
+		String WRITE_TIMEOUT_MILLIS = "write-timeout-millis";
+
+		/**
 		 * How long changes are collected before the windows are refreshed, in milliseconds.
 		 *
 		 * <p>
@@ -117,6 +133,48 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 		@Name(LOCK_TIMEOUT_MILLIS)
 		@IntDefault(500)
 		int getLockTimeoutMillis();
+
+		/**
+		 * How long a write into a window waits for that window's request lock, in milliseconds.
+		 *
+		 * <p>
+		 * Longer than {@link #getLockTimeoutMillis()}, and for the opposite reason: a refresh that
+		 * gives up loses nothing, because the command holding the lock synthesizes the same events
+		 * when it finishes. A write has no such second chance - nobody else is going to put the
+		 * agent's value on the channel - so giving up means telling the model that the page could
+		 * not be reached.
+		 * </p>
+		 *
+		 * @see #WRITE_TIMEOUT_MILLIS
+		 * @see #inWindow(TLSubSessionContext, Runnable)
+		 */
+		@Name(WRITE_TIMEOUT_MILLIS)
+		@IntDefault(5000)
+		int getWriteTimeoutMillis();
+	}
+
+	/**
+	 * What became of a write a background thread asked to make in a browser window.
+	 *
+	 * @see #inWindow(TLSubSessionContext, Runnable)
+	 */
+	public enum WindowAccess {
+
+		/** The window was reached and the write ran. */
+		DONE,
+
+		/**
+		 * This run has no window: a headless run, a scheduled one, or one whose browser window is
+		 * gone. Nothing was written, and nothing can be.
+		 */
+		NO_WINDOW,
+
+		/**
+		 * The window is there but stayed busy with a browser command for longer than
+		 * {@link Config#getWriteTimeoutMillis()}. Nothing was written; the same write can be tried
+		 * again.
+		 */
+		BUSY;
 	}
 
 	/**
@@ -130,16 +188,32 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 	private final Map<TLSubSessionContext, WindowRef> _windows =
 		Collections.synchronizedMap(new WeakHashMap<>());
 
-	/** Accounts whose data changed since the last refresh. */
-	private final Set<Person> _pending = ConcurrentHashMap.newKeySet();
-
-	/** Whether a change of no particular account is pending, which refreshes every window. */
-	private final AtomicBoolean _pendingAll = new AtomicBoolean();
+	/**
+	 * What still has to be refreshed, and whether a pass is armed for it.
+	 *
+	 * <p>
+	 * Owns the one rule that makes this service dependable: a change that arrives while a pass is
+	 * running is carried into the next pass rather than dropped.
+	 * </p>
+	 */
+	private final PendingRefreshes _pending = new PendingRefreshes();
 
 	/** The scheduled refresh, or <code>null</code> when none is due. */
 	private volatile ScheduledFuture<?> _scheduled;
 
 	private static volatile AgentViewRefreshService _instance;
+
+	/**
+	 * Runs at the end of a refresh pass, before it is closed.
+	 *
+	 * <p>
+	 * Tests replace this to commit while a pass is running, which is the one moment a change used
+	 * to be dropped in and is otherwise not reproducible from the outside.
+	 * </p>
+	 */
+	static Runnable duringPass = () -> {
+		// Nothing in production; see the field comment.
+	};
 
 	/**
 	 * Creates an {@link AgentViewRefreshService} from configuration.
@@ -200,17 +274,109 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 			|| windowName == null || windowName.isEmpty()) {
 			return;
 		}
-		service._windows.put(subSession, new WindowRef(windowName, new WeakReference<>(registry)));
+		// The account is read here, on the rendering request's thread, and kept: the refresh runs on
+		// a scheduler thread with no interaction context of its own, and asking a sub-session for
+		// its account there is a knowledge-base access outside any context. It also cannot change -
+		// a login gets its own sub-session, so an entry is about one account for its whole life.
+		// It may be null (a window nobody is logged into), which then matches no account.
+		service._windows.put(subSession,
+			new WindowRef(windowName, subSession.getPerson(), new WeakReference<>(registry)));
+	}
+
+	/**
+	 * Whether a browser window of {@code subSession} is reachable at all.
+	 *
+	 * <p>
+	 * The question a tool asks before it explains itself: a run with no window is a headless, a
+	 * scripted or a scheduled one, and telling its model that a channel name is not on the allow
+	 * list would blame the application for something that is a fact about the run.
+	 * </p>
+	 *
+	 * @param subSession
+	 *        The run's sub-session. May be <code>null</code>.
+	 * @return Whether {@link #inWindow(TLSubSessionContext, Runnable)} has a window to reach.
+	 */
+	public static boolean hasWindow(TLSubSessionContext subSession) {
+		AgentViewRefreshService service = getInstance();
+		if (service == null || subSession == null) {
+			return false;
+		}
+		WindowRef window = service._windows.get(subSession);
+		return window != null && window.registry().get() != null;
+	}
+
+	/**
+	 * Runs {@code action} in the browser window of {@code subSession}, under that window's request
+	 * lock, with the window's pending model changes applied first.
+	 *
+	 * <p>
+	 * This is the write counterpart of the refresh: same window register, same lock discipline, but
+	 * the caller supplies what happens rather than only asking for a synthesize. It is what lets an
+	 * agent tool put a value onto a view channel of the window the run belongs to - a React
+	 * control's state map is a plain {@code HashMap}, so a write from the agent thread beside a
+	 * browser command would corrupt it.
+	 * </p>
+	 *
+	 * <p>
+	 * The pending model events are synthesized <em>before</em> {@code action} runs, so the window
+	 * sees the objects this run has committed; without it a value written onto a channel could name
+	 * an object the window does not know yet.
+	 * </p>
+	 *
+	 * <p>
+	 * A run with no window - headless, TL-Script, the scheduler, or a browser window that has since
+	 * closed - answers {@link WindowAccess#NO_WINDOW} and runs nothing. That is a fact about the
+	 * run, not a failure: there is no page to write to.
+	 * </p>
+	 *
+	 * @param subSession
+	 *        The window's sub-session; on the agent thread that is the bound one. May be
+	 *        <code>null</code>, which is {@link WindowAccess#NO_WINDOW}.
+	 * @param action
+	 *        What to do in the window. Runs on the calling thread.
+	 * @return What became of it; never <code>null</code>.
+	 */
+	public static WindowAccess inWindow(TLSubSessionContext subSession, Runnable action) {
+		AgentViewRefreshService service = getInstance();
+		if (service == null || subSession == null) {
+			return WindowAccess.NO_WINDOW;
+		}
+		WindowRef window = service._windows.get(subSession);
+		if (window == null) {
+			return WindowAccess.NO_WINDOW;
+		}
+		ReactWindowRegistry registry = window.registry().get();
+		if (registry == null) {
+			return WindowAccess.NO_WINDOW;
+		}
+		return ThreadContextManager.inContext(subSession,
+			(ComputationEx2<WindowAccess, RuntimeException, RuntimeException>) () -> {
+				ReentrantLock lock = registry.getRequestLock();
+				boolean locked;
+				try {
+					locked = lock.tryLock(service.getConfig().getWriteTimeoutMillis(), TimeUnit.MILLISECONDS);
+				} catch (InterruptedException ex) {
+					Thread.currentThread().interrupt();
+					return WindowAccess.BUSY;
+				}
+				if (!locked) {
+					return WindowAccess.BUSY;
+				}
+				try {
+					registry.synthesizeModelEvents(window.windowName());
+					action.run();
+					return WindowAccess.DONE;
+				} finally {
+					lock.unlock();
+				}
+			});
 	}
 
 	@Override
 	public void onAgentDataChanged(Person owner) {
-		if (owner == null) {
-			_pendingAll.set(true);
-		} else {
-			_pending.add(owner);
+		if (_pending.changed(owner)) {
+			arm();
 		}
-		schedule();
 	}
 
 	/**
@@ -227,54 +393,92 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 	public void onSessionDeleted(Person owner, String sessionId) {
 		for (Map.Entry<TLSubSessionContext, WindowRef> entry : snapshot()) {
 			TLSubSessionContext subSession = entry.getKey();
-			if (owner != null && !owner.equals(subSession.getPerson())) {
+			if (owner != null && !owner.equals(entry.getValue().account())) {
 				continue;
 			}
-			TaskProgressTracker tracker = subSession.get(ChatSessionRegistry.CHAT_TRACKER);
-			if (tracker == null) {
-				continue;
-			}
-			try {
-				if (tracker.getSessionManager().forgetSession(sessionId)) {
-					Logger.info("Dropped deleted chat session " + sessionId + " from window '"
-						+ entry.getValue().windowName() + "'.", AgentViewRefreshService.class);
+			// Every conversation of the window, not only one of them: a chat that was deleted is
+			// gone for the page's chat and for the dock's alike.
+			for (TaskProgressTracker tracker : ChatSessionRegistry.trackers(subSession)) {
+				try {
+					if (tracker.getSessionManager().forgetSession(sessionId)) {
+						Logger.info("Dropped deleted chat session " + sessionId + " from window '"
+							+ entry.getValue().windowName() + "'.", AgentViewRefreshService.class);
+					}
+				} catch (RuntimeException ex) {
+					Logger.warn("Could not drop deleted chat session " + sessionId + " from window '"
+						+ entry.getValue().windowName() + "': " + ex.getMessage(), ex,
+						AgentViewRefreshService.class);
 				}
-			} catch (RuntimeException ex) {
-				Logger.warn("Could not drop deleted chat session " + sessionId + " from window '"
-					+ entry.getValue().windowName() + "': " + ex.getMessage(), ex,
-					AgentViewRefreshService.class);
 			}
 		}
 	}
 
-	/** Schedules the refresh unless one is already due, which is what coalesces a burst of writes. */
-	private synchronized void schedule() {
-		ScheduledFuture<?> scheduled = _scheduled;
-		if (scheduled != null && !scheduled.isDone()) {
-			return;
-		}
+	/**
+	 * Arms a refresh pass after the coalescing delay.
+	 *
+	 * <p>
+	 * Only ever called when {@link PendingRefreshes} said one is needed, so this does not decide
+	 * whether to coalesce - that decision is the pending state's, which is the one place that knows
+	 * whether a pass is due, running, or neither.
+	 * </p>
+	 */
+	private void arm() {
 		if (!SchedulerService.Module.INSTANCE.isActive()) {
+			_pending.notArmed();
 			return;
 		}
-		_scheduled = SchedulerService.getInstance().schedule(this::refreshPending,
-			getConfig().getRefreshDelayMillis(), TimeUnit.MILLISECONDS);
+		try {
+			_scheduled = SchedulerService.getInstance().schedule(this::runPass,
+				getConfig().getRefreshDelayMillis(), TimeUnit.MILLISECONDS);
+		} catch (RuntimeException ex) {
+			// A scheduler that refuses the task must not leave the bookkeeping believing a pass is
+			// coming, or nothing would ever arm one again.
+			_pending.notArmed();
+			throw ex;
+		}
 	}
 
-	/** Refreshes the windows of every account that changed since the last run. */
-	private void refreshPending() {
-		boolean all = _pendingAll.getAndSet(false);
-		Set<Person> owners = Set.copyOf(_pending);
-		_pending.removeAll(owners);
-		if (!all && owners.isEmpty()) {
+	/**
+	 * One refresh pass: covers what was pending when it started, and arms another one when a change
+	 * arrived while it worked.
+	 */
+	private void runPass() {
+		try {
+			refreshPending(_pending.start());
+			duringPass.run();
+		} finally {
+			if (_pending.finish()) {
+				arm();
+			}
+		}
+	}
+
+	/** Refreshes the windows of every account the batch names. */
+	private void refreshPending(PendingRefreshes.Batch batch) {
+		if (batch.isEmpty()) {
 			return;
 		}
 		for (Map.Entry<TLSubSessionContext, WindowRef> entry : snapshot()) {
-			TLSubSessionContext subSession = entry.getKey();
-			if (!all && !owners.contains(subSession.getPerson())) {
+			WindowRef window = entry.getValue();
+			if (!batch.all() && !isOwnedBy(window, batch.owners())) {
 				continue;
 			}
-			refresh(subSession, entry.getValue());
+			refresh(entry.getKey(), window);
 		}
+	}
+
+	/**
+	 * Whether the given window shows one of the given accounts.
+	 *
+	 * <p>
+	 * The null check is not defensive: a window nobody is logged into is registered with no
+	 * account, and the batch is an immutable set, which answers {@code contains(null)} with a
+	 * {@link NullPointerException} rather than with <code>false</code> - which would end the pass
+	 * and lose the whole batch, windows further down the register included.
+	 * </p>
+	 */
+	private static boolean isOwnedBy(WindowRef window, Set<Person> owners) {
+		return window.account() != null && owners.contains(window.account());
 	}
 
 	/** A stable copy of the register, so the refresh does not iterate it while a render adds to it. */
@@ -292,6 +496,8 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 	private void refresh(TLSubSessionContext subSession, WindowRef window) {
 		ReactWindowRegistry registry = window.registry().get();
 		if (registry == null) {
+			// The login this window belonged to is gone; nothing will ever reach it again.
+			_windows.remove(subSession);
 			return;
 		}
 		try {
@@ -326,10 +532,14 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 	 *
 	 * @param windowName
 	 *        The window's key in its {@link ReactWindowRegistry}.
+	 * @param account
+	 *        The account the window is logged in as, read where a context was bound - see
+	 *        {@link #registerWindow(TLSubSessionContext, String, ReactWindowRegistry)}.
 	 * @param registry
 	 *        The registry, held weakly - it belongs to the {@code HttpSession}, not to us.
 	 */
-	private record WindowRef(String windowName, WeakReference<ReactWindowRegistry> registry) {
+	private record WindowRef(String windowName, Person account,
+			WeakReference<ReactWindowRegistry> registry) {
 		// A register entry; see the field comment.
 	}
 

@@ -295,4 +295,25 @@
 		/>
 	</metaobject>
 
+	<!-- The memories an agent keeps about a user (Issue #439). The text is a column so the
+	     recall tool can match on it in the database; owner, kind, session and createdAt use
+	     generic flex/association storage like the rest of this module. -->
+	<metaobject
+		object_name="UserMemory"
+		super_class="TLObject"
+	>
+		<mo_attribute
+			att_name="text"
+			att_type="String"
+			db_size="4000"
+			mandatory="true"
+		/>
+		<mo_attribute
+			att_name="runId"
+			att_type="String"
+			db_size="64"
+			mandatory="false"
+		/>
+	</metaobject>
+
 </objectlist>

@@ -29,12 +29,45 @@
     <module>tl-ai-vector-index</module>
     <module>tl-ai-tool-api</module>
     <module>tl-ai-core</module>
+    <module>tl-ai-eval</module>
   </modules>
   <properties>
     <project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
   </properties>
   <dependencies />
   <build>
-    <plugins />
+    <plugins>
+      <!--
+        Which test classes a build runs.
+
+        tl-parent-core configures surefire with the single include "test/TestAll.java". That names
+        the engine's generic suite, which additionally collects everything below
+        src/test/java/test - so a test in the "test" package root runs by itself. This repository
+        keeps most of its tests in packages that mirror the production code instead - a test for
+        com.top_logic.tl.ai.core.agent sits in com.top_logic.tl.ai.core.agent, not in
+        test.com.top_logic.tl.ai.core.agent - and those were invisible to the build until #369.
+
+        The second include picks them up by their location. It has to be a %regex[] pattern: a
+        path pattern like com/**/Test*.java is implicitly prefixed with "**/" by surefire, which
+        would match the engine's own test classes inside the tl-basic test jar named in
+        dependenciesToScan, and would match this repository's own test/com/... classes a second
+        time. A %regex[] include is anchored at the start of the path, so it matches exactly the
+        two package roots this repository owns and nothing else.
+
+        Whether every test file is in fact reachable this way is asserted by
+        TestSuiteReachability, so a test class in a package nobody scans fails the build instead
+        of silently not running.
+      -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <includes>
+            <include>test/TestAll.java</include>
+            <include>%regex[com/top_logic/(ai|tl/ai)/(.*/)?(Test[A-Z0-9][^/$]*|[^/$]*Test)\.class]</include>
+          </includes>
+        </configuration>
+      </plugin>
+    </plugins>
   </build>
 </project>

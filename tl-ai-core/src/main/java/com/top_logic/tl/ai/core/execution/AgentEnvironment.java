@@ -5,8 +5,9 @@
  */
 package com.top_logic.tl.ai.core.execution;
 
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import com.top_logic.tl.ai.core.agent.RunCancellationBinding;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
@@ -111,8 +112,8 @@ public final class AgentEnvironment implements AutoCloseable {
 	 */
 	public static AgentEnvironment openEphemeral() {
 		return new AgentEnvironment(new ConversationLogListener(new ConversationLog()),
-			new TaskStore(), new UserInteractionStore(), ConcurrentHashMap.newKeySet(),
-			CancellationToken.UNCANCELLABLE);
+			new TaskStore(), new UserInteractionStore(),
+			Collections.synchronizedSet(new LinkedHashSet<>()), CancellationToken.UNCANCELLABLE);
 	}
 
 	/** The conversation-log listener bound by this scope. */

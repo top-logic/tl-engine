@@ -10,6 +10,7 @@ import java.util.Objects;
 import java.util.function.Predicate;
 
 import com.top_logic.tl.ai.core.message.AssistantMessage;
+import com.top_logic.tl.ai.core.provider.ResponseFormat;
 import com.top_logic.tl.ai.core.provider.ToolChoice;
 
 /**
@@ -28,6 +29,17 @@ import com.top_logic.tl.ai.core.provider.ToolChoice;
  * @param toolChoice          tool selection behaviour, or {@code null} for provider default
  * @param responseValidator   predicate tested after each LLM response; returning {@code false}
  *                            stops the loop with {@link StopReason#REJECTED}
+ * @param environment         the composed {@code <environment>} block that is part of
+ *                            {@link #systemPrompt()}, kept separately so a run can show an
+ *                            administrator what it told the model about the situation;
+ *                            {@code null} for a run that composed none
+ * @param turnContext         the composed {@code <turn-context>} block this run's turn carries
+ *                            beside the user's text - the facts that change while the conversation
+ *                            runs, which must stay out of {@link #systemPrompt()};
+ *                            {@code null} for a run whose host stated none
+ * @param responseFormat      the format every response of this run must have, or {@code null} for
+ *                            the provider default; a provider that cannot honour it refuses the
+ *                            request rather than answering in another shape
  *
  * @see AgentLoop
  */
@@ -41,7 +53,38 @@ public record AgentParams(
 		int maxRetries,
 		int timeoutSeconds,
 		ToolChoice toolChoice,
-		Predicate<AssistantMessage> responseValidator) {
+		Predicate<AssistantMessage> responseValidator,
+		String environment,
+		String turnContext,
+		ResponseFormat responseFormat) {
+
+	/**
+	 * The same parameters, but for another model.
+	 *
+	 * <p>
+	 * What a run keeps when it fails over to another model (Gitea #344): its prompt, its turn
+	 * budget, its validator, its timeouts - everything that describes the <em>work</em>. What it
+	 * takes from the target instead are the three things that are properties of the model rather
+	 * than of the work: its name, the limits it accepts, and the sampling options its provider
+	 * understands.
+	 * </p>
+	 *
+	 * @param model
+	 *        The model to continue on; must not be <code>null</code>.
+	 * @param maxOutputTokens
+	 *        What to ask the target for at most.
+	 * @param contextWindowTokens
+	 *        The target's context window.
+	 * @param modelOptions
+	 *        The options rebuilt for the target's provider; see
+	 *        {@link com.top_logic.tl.ai.core.provider.health.ModelOptions}.
+	 */
+	public AgentParams withModel(String model, int maxOutputTokens, int contextWindowTokens,
+			Map<String, Object> modelOptions) {
+		return new AgentParams(model, systemPrompt, maxTurns, maxOutputTokens, modelOptions,
+			contextWindowTokens, maxRetries, timeoutSeconds, toolChoice, responseValidator,
+			environment, turnContext, responseFormat);
+	}
 
 	/** Default maximum turns. */
 	public static final int DEFAULT_MAX_TURNS = 25;
@@ -82,6 +125,44 @@ public record AgentParams(
 	}
 
 	/**
+	 * Parameters of a run that states no response format - every caller but the {@code aiChat}
+	 * TL-Script function, which is the one entry point that lets its caller ask for one.
+	 */
+	public AgentParams(String model, String systemPrompt, int maxTurns,
+			int maxOutputTokens, Map<String, Object> modelOptions,
+			int contextWindowTokens, int maxRetries, int timeoutSeconds,
+			ToolChoice toolChoice, Predicate<AssistantMessage> responseValidator,
+			String environment, String turnContext) {
+		this(model, systemPrompt, maxTurns, maxOutputTokens, modelOptions, contextWindowTokens,
+			maxRetries, timeoutSeconds, toolChoice, responseValidator, environment, turnContext, null);
+	}
+
+	/**
+	 * Parameters of a run that composed neither block - every caller that builds an
+	 * {@link AgentLoop} directly rather than through
+	 * {@link AgentFactory#buildConfig(AgentDefinition, com.top_logic.tl.ai.core.provider.AgentModelAssignment, AgentCapabilities)}.
+	 */
+	public AgentParams(String model, String systemPrompt, int maxTurns,
+			int maxOutputTokens, Map<String, Object> modelOptions,
+			int contextWindowTokens, int maxRetries, int timeoutSeconds,
+			ToolChoice toolChoice, Predicate<AssistantMessage> responseValidator) {
+		this(model, systemPrompt, maxTurns, maxOutputTokens, modelOptions, contextWindowTokens,
+			maxRetries, timeoutSeconds, toolChoice, responseValidator, null, null, null);
+	}
+
+	/**
+	 * Parameters of a run that composed an environment block but no per-turn context block.
+	 */
+	public AgentParams(String model, String systemPrompt, int maxTurns,
+			int maxOutputTokens, Map<String, Object> modelOptions,
+			int contextWindowTokens, int maxRetries, int timeoutSeconds,
+			ToolChoice toolChoice, Predicate<AssistantMessage> responseValidator,
+			String environment) {
+		this(model, systemPrompt, maxTurns, maxOutputTokens, modelOptions, contextWindowTokens,
+			maxRetries, timeoutSeconds, toolChoice, responseValidator, environment, null, null);
+	}
+
+	/**
 	 * Convenience constructor without model options or response validator.
 	 */
 	public AgentParams(String model, String systemPrompt, int maxTurns, int maxOutputTokens) {
@@ -98,6 +179,16 @@ public record AgentParams(
 		this(model, systemPrompt, maxTurns, maxOutputTokens, modelOptions,
 			DEFAULT_CONTEXT_WINDOW_TOKENS, DEFAULT_MAX_RETRIES, DEFAULT_TIMEOUT_SECONDS,
 			null, msg -> true);
+	}
+
+	/**
+	 * Convenience constructor with model options and a response format, defaults for the rest.
+	 */
+	public AgentParams(String model, String systemPrompt, int maxTurns,
+			int maxOutputTokens, Map<String, Object> modelOptions, ResponseFormat responseFormat) {
+		this(model, systemPrompt, maxTurns, maxOutputTokens, modelOptions,
+			DEFAULT_CONTEXT_WINDOW_TOKENS, DEFAULT_MAX_RETRIES, DEFAULT_TIMEOUT_SECONDS,
+			null, msg -> true, null, null, responseFormat);
 	}
 
 	/**

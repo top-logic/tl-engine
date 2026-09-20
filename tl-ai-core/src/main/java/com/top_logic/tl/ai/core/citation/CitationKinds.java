@@ -13,9 +13,12 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
-import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.util.Resources;
 
 /**
  * What an answer may cite in this application, declared once.
@@ -58,6 +61,9 @@ public class CitationKinds extends ConfiguredManagedClass<CitationKinds.Config> 
 		/** Configuration property name for {@link #getDescription()}. */
 		String DESCRIPTION = "description";
 
+		/** Configuration property name for {@link #getLabel()}. */
+		String LABEL = "label";
+
 		/** Configuration property name for {@link #getIdSource()}. */
 		String ID_SOURCE = "id-source";
 
@@ -71,6 +77,20 @@ public class CitationKinds extends ConfiguredManagedClass<CitationKinds.Config> 
 		 */
 		@Name(DESCRIPTION)
 		String getDescription();
+
+		/**
+		 * What to call this kind in front of a reader, in the reader's language.
+		 *
+		 * <p>
+		 * The name is the model's vocabulary and stays the same word in every language. This is the
+		 * word the sources rail and the marker popover show instead; without it they show the name.
+		 * </p>
+		 *
+		 * @see #getLabel()
+		 */
+		@Name(LABEL)
+		@Nullable
+		ResKey getLabel();
 
 		/**
 		 * Where the id of such a source comes from, e.g. "the id field an invoice tool returned".
@@ -120,6 +140,22 @@ public class CitationKinds extends ConfiguredManagedClass<CitationKinds.Config> 
 	public boolean isDeclared(String kind) {
 		String name = kind == null || kind.isBlank() ? WEB : kind.trim();
 		return _kinds.containsKey(name);
+	}
+
+	/**
+	 * What to call {@code kind} in front of a reader, in the current account's language.
+	 *
+	 * @return the declared label, or empty when the kind is undeclared or declared without one - the
+	 *         caller then shows the kind name, which is what every installation showed before.
+	 */
+	public String label(String kind) {
+		KindConfig declared = _kinds.get(kind == null || kind.isBlank() ? WEB : kind.trim());
+		ResKey key = declared == null ? null : declared.getLabel();
+		if (key == null) {
+			return "";
+		}
+		String text = Resources.getInstance().getString(key, null);
+		return text == null ? "" : text;
 	}
 
 	/** Whether a source of this kind has a sentence to quote; true for an undeclared one. */

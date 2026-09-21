@@ -153,6 +153,24 @@ public class UserInteractionStore {
 	}
 
 	/**
+	 * The question waiting under the given id, or <code>null</code> if none is.
+	 *
+	 * <p>
+	 * The counterpart of {@link #pendingApproval(String)} for a question, and asked for the same
+	 * reason: the {@link UserInteractionRequest} carries the shape the card is drawn from - whether
+	 * a choice takes one answer or several - and no persisted record of the request holds it. A
+	 * surface that has to rebuild the card without having seen the event that first drew it - a
+	 * reloaded page - reads the shape from here.
+	 * </p>
+	 *
+	 * @param requestId
+	 *        The ID the request was created under.
+	 */
+	public UserInteractionRequest pendingRequest(String requestId) {
+		return requestId == null ? null : _pending.get(requestId);
+	}
+
+	/**
 	 * Returns all currently pending interaction requests, i.e. the questions the agent asked
 	 * through {@link com.top_logic.tl.ai.core.tools.interaction.AskUserTool}.
 	 *

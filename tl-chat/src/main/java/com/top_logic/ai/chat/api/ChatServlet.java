@@ -45,6 +45,7 @@ import com.top_logic.ai.chat.api.messages.ChatUpdatesResponse;
 import com.top_logic.ai.chat.api.messages.CreateSessionRequest;
 import com.top_logic.ai.chat.api.messages.ImprovePromptRequest;
 import com.top_logic.ai.chat.api.messages.ImprovePromptResponse;
+import com.top_logic.ai.chat.api.messages.InteractionOptionDto;
 import com.top_logic.ai.chat.api.messages.InteractionResolvedEvent;
 import com.top_logic.ai.chat.api.messages.PendingInteractionDto;
 import com.top_logic.ai.chat.api.messages.PendingInteractionsResponse;
@@ -85,6 +86,7 @@ import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService;
 import com.top_logic.tl.ai.core.agent.approval.PendingApproval;
+import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
@@ -1286,6 +1288,15 @@ public class ChatServlet extends TopLogicServlet {
 	 * feed drives a badge on chat A's session-list item. Responding still happens via the existing
 	 * /chat/respond once the user switches to that chat.
 	 * </p>
+	 *
+	 * <p>
+	 * It is also what a reloaded page rebuilds an open card from, and a card must offer what the
+	 * agent asked. The persisted row does not hold everything the card is drawn from - an
+	 * approval's tool mode, and whether a choice takes more than one answer - so those are read off
+	 * the run that is still waiting, through {@link PendingInteractionRegistry} (issues #393,
+	 * #466). Nothing about the shape is persisted: it matters only while a request is pending, and
+	 * a request nobody is parked on can no longer be answered.
+	 * </p>
 	 */
 	private void handleInteractions(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		Person person = resolveCurrentPerson(req);
@@ -1308,15 +1319,33 @@ public class ChatServlet extends TopLogicServlet {
 				continue;
 			}
 			String type = interactionTypeName(request.getType());
+			// What the still-waiting run holds and the persisted row does not: an approval's tool
+			// mode, and a question's shape.
+			UserInteractionStore waiting = waitingStore(person, request.getRequestId());
+			boolean approval = TYPE_APPROVAL.equals(type);
+			UserInteractionRequest question = approval || waiting == null
+				? null : waiting.pendingRequest(request.getRequestId());
+			// A question nobody is parked on any more - the run ended, or this is the process after
+			// a restart - is not offered: its shape is unknown, and an answer would reach nothing.
+			// An approval row is kept as it always was, so this feed still badges a chat.
+			if (!approval && question == null) {
+				continue;
+			}
 			PendingInteractionDto dto = PendingInteractionDto.create()
 				.setRequestId(request.getRequestId())
 				.setType(type)
 				.setHeader(request.getHeader())
 				.setPrompt(request.getPrompt())
 				.setPayload(request.getPayload())
-				.setToolMode(toolMode(person, request.getRequestId()))
+				.setToolMode(toolMode(waiting, request.getRequestId()))
 				.setSessionId(getObjectId(session))
 				.setSessionTitle(session.getTitle());
+			if (question != null) {
+				dto.setMultiSelect(question.isMultiSelect());
+				for (InteractionOptionDto option : DtoMapper.parseInteractionOptions(question.getOptions())) {
+					dto.addOption(option);
+				}
+			}
 			Date createdAt = request.getCreatedAt();
 			if (createdAt != null) {
 				dto.setCreatedAt(formatIso(createdAt));
@@ -1346,21 +1375,40 @@ public class ChatServlet extends TopLogicServlet {
 	}
 
 	/**
+	 * The interaction store of the run still parked on the given request, or <code>null</code>.
+	 *
+	 * <p>
+	 * Everything a persisted {@link InteractionRequest} row does not record - an approval's tool
+	 * mode, a question's shape - lives here, and only for as long as the run is waiting, which is
+	 * also the only time a client may still answer.
+	 * </p>
+	 *
+	 * @param responder
+	 *        The account the request is addressed to.
+	 * @param requestId
+	 *        The correlation id of the approval or question.
+	 */
+	private static UserInteractionStore waitingStore(Person responder, String requestId) {
+		PendingInteractionRegistry.PendingRun run = PendingInteractionRegistry.find(responder, requestId);
+		return run == null ? null : run.state().getUserInteractionStore();
+	}
+
+	/**
 	 * The mode of the tool a still-waiting approval is about, or the empty string.
 	 *
 	 * <p>
 	 * The persisted request records the reason the security context wrote, in English; the mode is
 	 * what lets the client phrase the question in the reader's language, exactly as it does for the
-	 * card the live event drew. It is known only while the run is still waiting - which is also the
-	 * only time a client may still answer.
+	 * card the live event drew.
 	 * </p>
+	 *
+	 * @param store
+	 *        The store of the run still waiting, as {@link #waitingStore(Person, String)} found it;
+	 *        <code>null</code> when no run is.
+	 * @param requestId
+	 *        The correlation id of the approval.
 	 */
-	private static String toolMode(Person responder, String requestId) {
-		PendingInteractionRegistry.PendingRun run = PendingInteractionRegistry.find(responder, requestId);
-		if (run == null) {
-			return "";
-		}
-		UserInteractionStore store = run.state().getUserInteractionStore();
+	private static String toolMode(UserInteractionStore store, String requestId) {
 		PendingApproval approval = store == null ? null : store.pendingApproval(requestId);
 		if (approval == null || approval.request().mode() == null) {
 			return "";

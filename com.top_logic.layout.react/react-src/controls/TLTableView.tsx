@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, useStandaloneKeyboardScope, writeDragPayload, readDragPayload, dragTypeAccepted, dropPositionAt, startPointerDrag } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, useStandaloneKeyboardScope, writeDragPayload, readDragPayload, dragTypeAccepted, dropPositionAt, startPointerDrag, useCloseOnOutsidePress } from 'tl-react-bridge';
 import type { TLCellProps, TLDropPosition } from 'tl-react-bridge';
 
 /**
@@ -346,6 +346,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const [contextMenu, setContextMenu] = React.useState<{
     x: number; y: number; colIdx: number;
   } | null>(null);
+  const contextMenuRef = React.useRef<HTMLDivElement>(null);
 
   // -- Frozen column splitter state: the boundary the running drag would drop the frozen area at. --
   const [frozenPreview, setFrozenPreview] = React.useState<{ x: number; count: number } | null>(null);
@@ -1018,13 +1019,10 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     });
   }, [columns, frozenWidth, frozenColumnCount, sendCommand]);
 
-  // Close context menu on outside click; Escape is handled by the shared keyboard dispatcher.
-  React.useEffect(() => {
-    if (!contextMenu) return;
-    const handleMouseDown = () => setContextMenu(null);
-    document.addEventListener('mousedown', handleMouseDown);
-    return () => document.removeEventListener('mousedown', handleMouseDown);
-  }, [contextMenu]);
+  // Close the context menu on a press outside of it; Escape is handled by the shared keyboard
+  // dispatcher. A press inside keeps it, so that the click following the press still reaches the
+  // menu item it started on.
+  useCloseOnOutsidePress(!!contextMenu, [contextMenuRef], () => setContextMenu(null));
   useStandaloneKeyboardScope(!!contextMenu, { ESCAPE: () => setContextMenu(null) });
 
   // -- Filter handler: open the server-side filter dialog for a column. --
@@ -1588,8 +1586,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         <div
           className="tlMenu"
           role="menu"
+          ref={contextMenuRef}
           style={{ position: 'fixed', top: contextMenu.y, left: contextMenu.x, zIndex: 10000 }}
-          onMouseDown={(e) => e.stopPropagation()}
         >
           {contextMenu.colIdx + 1 !== frozenColumnCount
               && !columns[contextMenu.colIdx]?.pinnedEnd && (

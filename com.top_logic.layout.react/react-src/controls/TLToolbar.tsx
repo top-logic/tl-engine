@@ -1,9 +1,9 @@
-import { React, useTLState, TLChild, useStandaloneKeyboardScope, useFocusTrap } from 'tl-react-bridge';
+import { React, useTLState, TLChild, useCloseOnOutsidePress, useStandaloneKeyboardScope, useFocusTrap } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { createPortal } from 'react-dom';
 import { ThemeIcon } from './icon/ThemeIcon';
 
-const { useCallback, useRef, useState, useEffect, useLayoutEffect } = React;
+const { useCallback, useRef, useState, useLayoutEffect } = React;
 
 interface CliqueGroup {
   name: string;
@@ -72,18 +72,9 @@ const MenuGroup: React.FC<{ group: CliqueGroup }> = ({ group }) => {
     };
   }, [open]);
 
-  // Close on outside click.
-  useEffect(() => {
-    if (!open) return;
-    const handleMouseDown = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node) &&
-          triggerRef.current && !triggerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleMouseDown);
-    return () => document.removeEventListener('mousedown', handleMouseDown);
-  }, [open]);
+  // Close on a press outside the dropdown. A press on the trigger is left to the trigger, which
+  // toggles the dropdown on its click.
+  useCloseOnOutsidePress(open, [menuRef, triggerRef], () => setOpen(false));
 
   // Close on Escape (via the shared keyboard dispatcher).
   useStandaloneKeyboardScope(open, { ESCAPE: () => setOpen(false) });

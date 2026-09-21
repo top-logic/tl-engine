@@ -26,6 +26,8 @@ export { writeDragPayload, readDragPayload, dragTypeAccepted, dropPositionAt } f
 export type { TLDragPayload, TLDropPosition } from './bridge/drag-drop';
 export { startPointerDrag, DRAG_SHIELD_CLASS } from './bridge/pointer-drag';
 export type { PointerDragOptions } from './bridge/pointer-drag';
+export { useCloseOnOutsidePress } from './bridge/outside-press';
+export type { InsideRef } from './bridge/outside-press';
 export { useListReorder } from './bridge/list-reorder';
 export type {
   ListReorder,

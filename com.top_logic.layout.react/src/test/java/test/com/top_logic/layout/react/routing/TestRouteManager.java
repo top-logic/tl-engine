@@ -11,6 +11,10 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 
+import test.com.top_logic.layout.react.dirty.UnsavedChanges;
+
+import com.top_logic.layout.react.dirty.ChannelVetoException;
+import com.top_logic.layout.react.dirty.StateHandler;
 import com.top_logic.layout.react.routing.RouteChangeListener;
 import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.routing.RouteMatch;
@@ -1133,5 +1137,134 @@ public class TestRouteManager extends TestCase {
 		List<String> activations() {
 			return _activations;
 		}
+	}
+
+	/**
+	 * A participant that refuses to be left while it holds unsaved changes, as a form displaying
+	 * input the user has not saved does.
+	 */
+	static class VetoingParticipant extends MockParticipant {
+
+		private final StateHandler _changes;
+
+		private boolean _refusing = true;
+
+		VetoingParticipant(List<RoutePattern> routes, StateHandler changes) {
+			super(routes);
+			_changes = changes;
+		}
+
+		@Override
+		public void activateRoute(RouteMatch match) {
+			if (_refusing) {
+				throw new ChannelVetoException(List.of(_changes), () -> {
+					_refusing = false;
+					activateRoute(match);
+				});
+			}
+			super.activateRoute(match);
+		}
+
+		/** Gives up the unsaved changes, which is what saving or discarding them does. */
+		void resolveChanges() {
+			_refusing = false;
+		}
+	}
+
+	/**
+	 * Tests that a URL the client does not show yet is reached and reported as a history entry, and
+	 * that the URL the display composes afterwards is reported in turn - the URL reached is recorded
+	 * as the one the client shows.
+	 */
+	public void testNavigateToUrlIsHistoryEntry() {
+		RouteManager rm = new RouteManager();
+		MockParticipant sidebar = new MockParticipant(List.of(
+			RoutePattern.compile("/a", "a"),
+			RoutePattern.compile("/b", "b")));
+		rm.register(sidebar);
+		sidebar.simulateNavigation("a", Map.of());
+
+		List<String> urls = new ArrayList<>();
+		List<Boolean> replaceFlags = new ArrayList<>();
+		rm.setUrlChangeHandler((url, replace) -> {
+			urls.add(url);
+			replaceFlags.add(replace);
+		});
+
+		rm.navigateToUrl("b");
+
+		assertEquals("b", sidebar.lastActivation().itemId());
+		assertEquals("b", rm.currentUrl());
+		assertEquals("The display reaches the URL, which the user can come back from.",
+			List.of("b"), urls);
+		assertEquals(List.of(Boolean.FALSE), replaceFlags);
+
+		// The URL reached is the one the client shows, so the next change is a change of it.
+		sidebar.simulateNavigation("a", Map.of());
+		assertEquals(List.of("b", "a"), urls);
+		assertEquals(List.of(Boolean.FALSE, Boolean.FALSE), replaceFlags);
+	}
+
+	/**
+	 * Tests that a URL the display refuses leaves the display as it is, reaches the caller, and,
+	 * once the caller has ended the adoption, leaves the next navigation a history entry again.
+	 */
+	public void testRefusedUrlLeavesDisplay() {
+		RouteManager rm = new RouteManager();
+		StateHandler changes = new UnsavedChanges();
+		VetoingParticipant sidebar = new VetoingParticipant(List.of(
+			RoutePattern.compile("/a", "a"),
+			RoutePattern.compile("/b", "b")), changes);
+		rm.register(sidebar);
+		sidebar.simulateNavigation("a", Map.of());
+
+		List<String> urls = new ArrayList<>();
+		List<Boolean> replaceFlags = new ArrayList<>();
+		rm.setUrlChangeHandler((url, replace) -> {
+			urls.add(url);
+			replaceFlags.add(replace);
+		});
+
+		try {
+			rm.navigateToUrl("b");
+			fail("A display holding unsaved changes must refuse the URL.");
+		} catch (ChannelVetoException ex) {
+			assertEquals("The unsaved changes that refused the URL are reported.",
+				List.of(changes), ex.getDirtyHandlers());
+		}
+
+		assertEquals("What the refusal keeps is what the display shows.", "a", rm.currentUrl());
+		assertEquals("The refusal is reported by its caller, together with the address it restores.",
+			List.of(), urls);
+
+		rm.cancelAdoption();
+
+		sidebar.resolveChanges();
+		rm.navigateToUrl("b");
+		assertEquals("b", rm.currentUrl());
+		assertEquals("The navigation after a refused URL is a history entry, not a replacement of "
+			+ "the address the refusal restored.", List.of("b"), urls);
+		assertEquals(List.of(Boolean.FALSE), replaceFlags);
+	}
+
+	/**
+	 * Tests that a URL the display is taken to while the hold lasts is held in turn: the display
+	 * that is not the application resolves nothing and reports nothing.
+	 */
+	public void testNavigateToUrlWhileHeld() {
+		RouteManager rm = new RouteManager();
+		MockParticipant sidebar = new MockParticipant(List.of(
+			RoutePattern.compile("/explore", "explore")));
+		rm.register(sidebar);
+		rm.holdUrl("my-refunds");
+
+		List<String> urls = new ArrayList<>();
+		rm.setUrlChangeHandler((url, replace) -> urls.add(url));
+
+		rm.navigateToUrl("explore");
+
+		assertEquals("explore", rm.currentUrl());
+		assertNull(sidebar.lastActivation());
+		assertEquals(List.of(), urls);
 	}
 }

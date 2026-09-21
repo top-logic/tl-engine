@@ -10,6 +10,36 @@
   - A value of an enumeration or a class is chosen from options: without an `options` expression these are the classifiers respectively the instances of the type (`AttributeOptions.optionsFor(type)`). `options` is a TL-Script function whose arguments are the values of the `<inputs><input channel="…"/></inputs>` channels, in declaration order - the same shape as `<execute-script>` - and the options are recomputed whenever one of those channels changes. Every `inputs` property of the view layer - here, a `<table>`'s `<rows>`, a column declaration, an action - reads both notations: the nested `<inputs><input channel="…"/></inputs>` and the comma-separated attribute `inputs="a, b"` (`Inputs`). `multiple="true"` makes the channel carry a collection instead of a single value; a single-valued selection is unwrapped, so the channel holds the value itself and not a list of one.
   - Further properties: `label` (a `ResKey`; without it the input stands alone, without the label chrome), `label-position` and `readonly`.
   - **An input standing without a visible label** - in an app bar, in a toolbar, above a list - says what it is for in two places. `placeholder` (a `ResKey`) is the text shown inside the input while it is empty: "Search" in a search box, `name@example.com` in a mail address; it disappears with the value entered. It is a property of the field description (`FieldSpec.setPlaceholder(…)`) rather than of one control, so every control `FieldControlService` builds from such a description carries it - the text and number inputs render it, a control that has nothing to show an empty box in ignores it. `label-position="hide-label"` then takes the label out of the display but keeps it as the *name* of the input: the input area is a `label` element holding the label text in a visually hidden span (`.tlVisuallyHidden` in `TLFormField`), so every native input inside takes its accessible name from HTML's implicit label association, and a click anywhere in the area focuses it. An input that keeps its `label` and hides it is named for a screen reader; one that drops the `label` altogether is not. A radio group names its options by `id` / `for` instead (`TLBooleanChoice`), since no label may contain another.
+  - **A search field out of the box.** An input that narrows what a view shows is three properties on top of the submit hook, so an application needs no element of its own: `icon` draws a `ThemeImage` inside the input ahead of what is typed, `clearable="true"` adds the button that empties it (shown only while the input holds something, writing the empty value at once), and `debounce` says how long the input waits after the last keystroke before the typed value reaches the channel, written as a duration (`@Format(MillisFormat.class)`). All three ride on the field description (`FieldSpec.setIcon(…)` / `setClearable(…)` / `setDebounce(…)`) and are applied by `ReactFieldControlProvider.createField(…)`, like the `placeholder`. `TLTextInput` renders icon and clear button - a search field is a text - while `TLNumberInput` and `TLPasswordInput` take only the delay; the icon and the button sit in the same `tlReactTextInput__row` as the link that opens a `url` / `email` / `tel` value, in the order `[icon] input [clear] [link]`.
+    ```xml
+    <view>
+      <channels>
+        <channel name="q"/>
+      </channels>
+      <query-bindings>
+        <bind
+          channel="q"
+          query-param="q"
+        />
+      </query-bindings>
+      <value-input
+        clearable="true"
+        debounce="300ms"
+        icon="css:fa-solid fa-magnifying-glass"
+        label-position="hide-label"
+        type="tl.core:String"
+        value="q"
+      >
+        <label>
+          <en>Search</en>
+        </label>
+        <placeholder>
+          <en>Search tickets</en>
+        </placeholder>
+      </value-input>
+    </view>
+    ```
+    The delay is the span a *typed* value is held back; a value that is picked - a dropdown, a date picker, a checkbox - reaches the channel with the choice and waits for nothing. An input whose value the server rewrites as it stores it (a number, an internationalized text) holds the value back until the input is left (`setSendValueOnBlur(true)`) and ignores the delay altogether - what it costs is server-side feedback while typing, which is the trade that behaviour is for. Without a stated delay a typed input uses the one span every typed input shares, `VALUE_DEBOUNCE_MS` (300 ms) exported from the bridge. The three are rendering-only: `ReactFormFieldControl.scriptingPresentationKeys()` keeps `icon`, `clearable` and `debounceMs` out of the headless projection, while the `placeholder` stays in it, being the text a label-less input names itself by. The three hand-rolled search boxes elsewhere in the layer - the table filter bar, the dropdown search, the icon-select popup - are controls of their own and are unaffected.
   - **Layout: `<fields>`** (`FieldsElement`). A `<value-input>` renders the label-and-input chrome of a field but, standing outside a `<form>`, gets none of the grid a form renders around its fields. `<fields>` is that grid on its own (`ReactFormLayoutControl`, `TLFormLayout`): the `var(--page-inset)` padding content owns in the spacing model, the auto-fit columns (`max-columns`, 3 by default), and the `FormLayoutContext` a `TLFormField` reads to move a label from beside its input to above it when the column is narrower than 320px (`label-position` `auto` by default, or fixed `side` / `top`; the field-level `after` / `hidden` are rejected). A `<form>` needs no `<fields>`, being such a grid already; a `<field>` still needs a `<form>`, since `<fields>` carries no object.
   - **Submit hook**: `<on-submit>` names a `ViewCommand` run over the value the user finishes entering - one input plus one command over what was entered, which is what a search field or a jump-to box is. The value reaches the channel first, then the command as its input, so the command's `<execute-script function="entered -> …">` receives it directly and needs no `input` channel of its own. The property defaults to `GenericViewCommand` (`@ImplementationClassDefault`), so the actions stand inside the element:
     ```xml

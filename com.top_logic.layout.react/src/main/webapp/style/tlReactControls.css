@@ -5119,6 +5119,7 @@ button.tlMenu__item--disabled:hover {
    with it the focus - when a value starts or stops pointing somewhere. Without the link it adds
    nothing: the input stretches over the full row, which takes the input's own height. */
 .tlReactTextInput__row {
+	position: relative;
 	display: flex;
 	align-items: stretch;
 	width: 100%;
@@ -5139,6 +5140,64 @@ button.tlMenu__item--disabled:hover {
 	color: var(--link-primary);
 	text-decoration: none;
 	line-height: 1;
+}
+
+/* The icon an input carries ahead of what is typed - the magnifier of a search box. It is drawn on
+   the left edge of the input, which reserves room for it through --withIcon, so that the icon reads
+   as being inside the field rather than beside it. It answers no pointer: a click goes through to
+   the input under it. */
+.tlReactTextInput__icon {
+	position: absolute;
+	left: var(--spacing-03);
+	top: 50%;
+	transform: translateY(-50%);
+	color: var(--text-helper);
+	pointer-events: none;
+	line-height: 1;
+}
+
+.tlReactTextInput--withIcon {
+	padding-left: calc(var(--spacing-03) + 1.25em);
+}
+
+/* The button that empties the input, drawn over its right edge. It is a button without a button's
+   chrome: the input keeps its own border, and only the icon is seen. --clearable reserves the room
+   it needs, so that text never runs under it. */
+.tlReactTextInput--clearable {
+	padding-right: calc(var(--spacing-03) + 1.25em);
+}
+
+.tlReactTextInput__clear {
+	position: absolute;
+	right: var(--spacing-02);
+	top: 50%;
+	transform: translateY(-50%);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--spacing-01);
+	border: none;
+	border-radius: var(--corner-radius);
+	background: none;
+	color: var(--text-helper);
+	cursor: pointer;
+	line-height: 1;
+}
+
+.tlReactTextInput__clear:hover {
+	background-color: var(--layer-hover);
+	color: var(--icon-primary);
+}
+
+.tlReactTextInput__clear:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: 0;
+	color: var(--icon-primary);
+}
+
+.tlReactTextInput__clear:disabled {
+	opacity: 0.6;
+	cursor: default;
 }
 
 .tlReactTextInput__open:hover,

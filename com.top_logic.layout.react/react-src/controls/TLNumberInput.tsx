@@ -1,10 +1,13 @@
-import { React, useTLFieldValue, useTLSubmitOnEnter, rootClassName } from 'tl-react-bridge';
+import {
+  React,
+  useTLFieldValue,
+  useTLSubmitOnEnter,
+  rootClassName,
+  VALUE_DEBOUNCE_MS,
+} from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback } = React;
-
-/** Debounce for transmitting a typed value to the server (see TLTextInput). */
-const VALUE_DEBOUNCE_MS = 300;
 
 /**
  * A number input field rendered via React.
@@ -28,11 +31,13 @@ const VALUE_DEBOUNCE_MS = 300;
  * can run a command over the number that was entered.
  *
  * state.placeholder holds the text shown while the field is empty, stating what the field is for
- * where no label does.
+ * where no label does. state.debounceMs names the span a typed value is held back before it is
+ * sent, defaulting to VALUE_DEBOUNCE_MS; state.sendValueOnBlur overrides it, and this field sets
+ * it, so the span matters here only where the server turns the blur behaviour off.
  */
 const TLNumberInput: React.FC<TLCellProps> = ({ controlId, state }) => {
   const [value, setValue, flushValue] = useTLFieldValue({
-    debounceMs: VALUE_DEBOUNCE_MS,
+    debounceMs: (state.debounceMs as number) ?? VALUE_DEBOUNCE_MS,
     sendOnBlur: state.sendValueOnBlur === true,
   });
 

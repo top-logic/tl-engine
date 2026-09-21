@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.layout.view.element;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -25,6 +26,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.SimpleSelectFieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
@@ -112,6 +114,36 @@ public class TestValueInputElement extends TestCase {
 	 */
 	private static final String PLACEHOLDER = "placeholder";
 
+	/**
+	 * State key by which the client learns the icon to draw inside the input.
+	 *
+	 * @implNote Restated here because
+	 *           {@link com.top_logic.layout.react.control.form.ReactFormFieldControl} keeps it
+	 *           protected for its subclasses.
+	 */
+	private static final String ICON = "icon";
+
+	/**
+	 * State key by which the client learns to offer a button that empties the input.
+	 *
+	 * @implNote Restated here because
+	 *           {@link com.top_logic.layout.react.control.form.ReactFormFieldControl} keeps it
+	 *           protected for its subclasses.
+	 */
+	private static final String CLEARABLE = "clearable";
+
+	/**
+	 * State key by which the client learns how long to hold a typed value back.
+	 *
+	 * @implNote Restated here because
+	 *           {@link com.top_logic.layout.react.control.form.ReactFormFieldControl} keeps it
+	 *           protected for its subclasses.
+	 */
+	private static final String DEBOUNCE_MS = "debounceMs";
+
+	/** The icon a search box carries, as the test view states it. */
+	private static final String SEARCH_ICON = "css:fa-solid fa-magnifying-glass";
+
 	private TLModelImpl _model;
 
 	private TLModule _module;
@@ -157,6 +189,9 @@ public class TestValueInputElement extends TestCase {
 		assertNull(text.getOptions());
 		assertEquals(Collections.emptyList(), text.getInputs());
 		assertNotNull("A stated placeholder must reach the configuration.", text.getPlaceholder());
+		assertEquals("A stated icon must reach the configuration.", SEARCH_ICON, text.getIcon());
+		assertTrue("A search box states that it can be emptied.", text.getClearable());
+		assertEquals("A duration is read as milliseconds.", Long.valueOf(500), text.getDebounce());
 		assertTrue("Without a command named, the submit hook is a generic command: " + text.getOnSubmit(),
 			text.getOnSubmit() instanceof GenericViewCommand.Config);
 		assertEquals("The actions to run on the submitted value stand inside the element.",
@@ -173,6 +208,11 @@ public class TestValueInputElement extends TestCase {
 
 		assertNull("An input without the hook submits nothing.", config(inputs, 1).getOnSubmit());
 		assertNull("An input that states no placeholder must have none.", config(inputs, 1).getPlaceholder());
+		assertNull("An input that states no icon must have none.", config(inputs, 1).getIcon());
+		assertFalse("An input is emptied by deleting its text unless it says otherwise.",
+			config(inputs, 1).getClearable());
+		assertNull("An input that states no delay waits for the span its control uses by default.",
+			config(inputs, 1).getDebounce());
 
 		ValueInputElement.Config owners = config(inputs, 4);
 		assertTrue("Several owners are chosen at once.", owners.getMultiple());
@@ -407,6 +447,93 @@ public class TestValueInputElement extends TestCase {
 
 		assertNull("An input without a placeholder must leave its text unset.",
 			control.scriptingScalarState().get(PLACEHOLDER));
+	}
+
+	/**
+	 * What turns a plain input into a search field - the icon it carries, the button that empties
+	 * it, and how long it waits before reporting - reaches the control that edits the value.
+	 *
+	 * <p>
+	 * Each of the three is a property of the {@link FieldSpec}, so they are applied wherever a
+	 * control is built from one instead of by the control or its caller.
+	 * </p>
+	 */
+	public void testSearchFieldPropertiesReachTheInput() throws IOException {
+		AbstractFieldModel field = new AbstractFieldModel(null);
+
+		String state = clientState(searchSpec(field), field);
+
+		assertTrue("The icon must reach the client: " + state,
+			state.contains(key(ICON) + "\"" + SEARCH_ICON + "\""));
+		assertTrue("The clear button must reach the client: " + state,
+			state.contains(key(CLEARABLE) + "true"));
+		assertTrue("The delay must reach the client: " + state,
+			state.contains(key(DEBOUNCE_MS) + "250"));
+	}
+
+	/**
+	 * An input that asks for none of the three leaves them unset, so that the client keeps its own
+	 * plain input and its own delay.
+	 */
+	public void testAPlainInputCarriesNoSearchProperties() throws IOException {
+		AbstractFieldModel field = new AbstractFieldModel(null);
+		TLType type = datatype("Plain", Kind.STRING, String.class);
+
+		String state = clientState(FieldControlService.fieldSpec(type, type, LABEL, false, field), field);
+
+		assertFalse("An input without an icon must not send one: " + state, state.contains(key(ICON)));
+		assertFalse("An input emptied by deleting its text must not send a button: " + state,
+			state.contains(key(CLEARABLE)));
+		assertFalse("An input without a stated delay must leave the span to the client: " + state,
+			state.contains(key(DEBOUNCE_MS)));
+	}
+
+	/**
+	 * The three say how the input looks and how fast it reports, not what it holds, so an
+	 * observation of the field leaves them out - while the placeholder, being the text a
+	 * label-less input names itself by, stays.
+	 */
+	public void testSearchFieldPropertiesAreRenderingOnly() {
+		AbstractFieldModel field = new AbstractFieldModel(null);
+
+		Map<String, Object> projection =
+			FieldControlRegistry.getInstance().createControl(_context, searchSpec(field), field)
+				.scriptingScalarState();
+
+		assertFalse("The icon is rendering-only.", projection.containsKey(ICON));
+		assertFalse("The clear button is rendering-only.", projection.containsKey(CLEARABLE));
+		assertFalse("The delay is rendering-only.", projection.containsKey(DEBOUNCE_MS));
+		assertEquals("The text a label-less input names itself by stays observable.",
+			"Search", projection.get(PLACEHOLDER));
+	}
+
+	/** A text field described as a search box: an icon, a clear button and a delay of its own. */
+	private FieldSpec searchSpec(AbstractFieldModel field) {
+		TLType type = datatype("Term", Kind.STRING, String.class);
+		return FieldControlService.fieldSpec(type, type, LABEL, false, field)
+			.setPlaceholder("Search")
+			.setIcon(SEARCH_ICON)
+			.setClearable(true)
+			.setDebounce(Long.valueOf(250));
+	}
+
+	/** The given state key as it is written into the serialized state. */
+	private static String key(String name) {
+		return "\"" + name + "\":";
+	}
+
+	/**
+	 * The state the control built from the given description hands to the client.
+	 *
+	 * @implNote Read from the rendered element, into whose attribute the state is serialized, since
+	 *           the map itself is visible to the control only.
+	 */
+	private String clientState(FieldSpec spec, AbstractFieldModel field) throws IOException {
+		ReactControl control = FieldControlRegistry.getInstance().createControl(_context, spec, field);
+
+		TagWriter out = new TagWriter();
+		control.write(out);
+		return out.toString().replace("&quot;", "\"");
 	}
 
 	/**

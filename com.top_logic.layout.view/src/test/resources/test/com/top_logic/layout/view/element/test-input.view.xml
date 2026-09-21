@@ -12,7 +12,12 @@
 
 	<panel>
 		<children>
-			<value-input value="term">
+			<value-input
+				clearable="true"
+				debounce="500ms"
+				icon="css:fa-solid fa-magnifying-glass"
+				value="term"
+			>
 				<placeholder>
 					<en>Search</en>
 				</placeholder>

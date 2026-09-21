@@ -19,6 +19,7 @@ export {
   useKeyboardBinding,
   useStandaloneKeyboardScope,
   useFocusTrap,
+  VALUE_DEBOUNCE_MS,
 } from './bridge/tl-react-bridge';
 export { ANCHORED_OVERLAY_ATTR, anchoredOverlayProps } from './bridge/focus-trap';
 export { CMD_SUBMIT, CMD_VALUE_CHANGED } from './bridge/command-channel';

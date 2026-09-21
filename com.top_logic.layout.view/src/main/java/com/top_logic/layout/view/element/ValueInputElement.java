@@ -19,6 +19,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
+import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
@@ -122,6 +123,15 @@ public class ValueInputElement implements UIElement {
 		/** Configuration name for {@link #getPlaceholder()}. */
 		String PLACEHOLDER = "placeholder";
 
+		/** Configuration name for {@link #getIcon()}. */
+		String ICON = "icon";
+
+		/** Configuration name for {@link #getClearable()}. */
+		String CLEARABLE = "clearable";
+
+		/** Configuration name for {@link #getDebounce()}. */
+		String DEBOUNCE = "debounce";
+
 		/** Configuration name for {@link #getReadonly()}. */
 		String READONLY = "readonly";
 
@@ -208,6 +218,67 @@ public class ValueInputElement implements UIElement {
 		ResKey getPlaceholder();
 
 		/**
+		 * The icon shown inside the input, ahead of what is typed.
+		 *
+		 * <p>
+		 * What kind of input this is, said as a picture: the magnifier of a search box, the
+		 * envelope of a mail address. The icon is decoration - nothing happens when it is clicked,
+		 * and a screen reader passes over it - so the input is still named by its label or its
+		 * placeholder.
+		 * </p>
+		 *
+		 * <p>
+		 * An icon font class such as {@code css:fa-solid fa-magnifying-glass} or a path to an
+		 * image. Shown by an input over a text; an input over a number, a date, a truth value or a
+		 * selection ignores it.
+		 * </p>
+		 */
+		@Name(ICON)
+		@Nullable
+		String getIcon();
+
+		/**
+		 * Whether the input offers a button that empties it.
+		 *
+		 * <p>
+		 * For a value that is taken back as often as it is given - the term a table is searched by,
+		 * the text a list is narrowed to - where emptying the input is a step of its own rather
+		 * than the accident of deleting every character. The button is shown only while the input
+		 * holds something and while it can be changed, and it writes the empty value at once rather
+		 * than after the delay.
+		 * </p>
+		 *
+		 * <p>
+		 * Offered by an input over a text; an input over a number, a date, a truth value or a
+		 * selection ignores it.
+		 * </p>
+		 */
+		@Name(CLEARABLE)
+		boolean getClearable();
+
+		/**
+		 * How long the input waits after the last keystroke before the typed value reaches the
+		 * channel, written as a duration ({@code 300ms}, {@code 1s}).
+		 *
+		 * <p>
+		 * A shorter wait makes whatever is computed from the value - the rows a search narrows to -
+		 * follow the typing more closely, at the price of one round-trip per pause; a longer one
+		 * waits for the user to stop. Empty for the wait a typed input uses by default.
+		 * </p>
+		 *
+		 * <p>
+		 * Only a value that is typed waits at all; a value that is picked - from a dropdown, a date
+		 * picker, a checkbox - reaches the channel with the choice. An input whose value the server
+		 * rewrites as it is stored, a number for instance, holds the value back until the input is
+		 * left and ignores the wait altogether.
+		 * </p>
+		 */
+		@Name(DEBOUNCE)
+		@Nullable
+		@Format(MillisFormat.class)
+		Long getDebounce();
+
+		/**
 		 * Whether the value is displayed but cannot be changed here.
 		 */
 		@Name(READONLY)
@@ -261,6 +332,12 @@ public class ValueInputElement implements UIElement {
 
 	private final ResKey _placeholder;
 
+	private final String _icon;
+
+	private final boolean _clearable;
+
+	private final Long _debounce;
+
 	private final boolean _readonly;
 
 	private final LabelPosition _labelPosition;
@@ -283,6 +360,9 @@ public class ValueInputElement implements UIElement {
 		_multiple = config.getMultiple();
 		_label = config.getLabel();
 		_placeholder = config.getPlaceholder();
+		_icon = config.getIcon();
+		_clearable = config.getClearable();
+		_debounce = config.getDebounce();
 		_readonly = config.getReadonly();
 		_labelPosition = config.getLabelPosition();
 
@@ -315,6 +395,7 @@ public class ValueInputElement implements UIElement {
 		if (_placeholder != null) {
 			spec.setPlaceholder(resources.getString(_placeholder));
 		}
+		spec.setIcon(_icon).setClearable(_clearable).setDebounce(_debounce);
 		ReactControl input = FieldControlService.getInstance().createFieldControl(context, type, spec, field);
 		input.addCleanupAction(binding::dispose);
 

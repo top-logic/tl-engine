@@ -7,6 +7,7 @@ package com.top_logic.layout.react.control.form;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import com.top_logic.layout.form.model.FieldModel;
@@ -67,6 +68,27 @@ public class ReactFormFieldControl extends ReactControl {
 
 	/** State key for the placeholder shown while the field is empty (edit mode). */
 	protected static final String PLACEHOLDER = "placeholder";
+
+	/**
+	 * State key for the icon shown inside the input, ahead of what is typed.
+	 *
+	 * @see #setIcon(String)
+	 */
+	protected static final String ICON = "icon";
+
+	/**
+	 * State key for whether the input offers a button that empties it.
+	 *
+	 * @see #setClearable(boolean)
+	 */
+	protected static final String CLEARABLE = "clearable";
+
+	/**
+	 * State key for how long a typed value is held back before it is sent, in milliseconds.
+	 *
+	 * @see #setDebounce(Long)
+	 */
+	protected static final String DEBOUNCE_MS = "debounceMs";
 
 	/** State key for whether the text field renders as a multi-line text area. */
 	protected static final String MULTILINE = "multiline";
@@ -276,6 +298,60 @@ public class ReactFormFieldControl extends ReactControl {
 	}
 
 	/**
+	 * Shows the given icon inside the input, ahead of what is typed.
+	 *
+	 * <p>
+	 * What kind of input this is, said as a picture: the magnifier of a search box, the envelope of
+	 * a mail address. The icon is decoration - it answers no click and carries no accessible name -
+	 * so the field is still named by its label or its {@link #setPlaceholder(String) placeholder}.
+	 * </p>
+	 *
+	 * @param icon
+	 *        The encoded form of a {@link com.top_logic.layout.basic.ThemeImage}, or {@code null}
+	 *        for an input without one. Honoured by the single-line text input.
+	 */
+	public void setIcon(String icon) {
+		putState(ICON, icon);
+	}
+
+	/**
+	 * Offers a button that empties the input.
+	 *
+	 * <p>
+	 * The button is shown only while the field holds a value and is
+	 * {@link com.top_logic.layout.form.model.FieldModel#isEditable() editable}, and it writes the
+	 * empty value at once rather than after the {@link #setDebounce(Long) delay}. For a value that
+	 * is taken back as often as it is given - the term a list is searched by - where emptying the
+	 * field is a step of its own. Honoured by the single-line text input.
+	 * </p>
+	 */
+	public void setClearable(boolean clearable) {
+		putState(CLEARABLE, clearable);
+	}
+
+	/**
+	 * Holds a typed value back for the given number of milliseconds before sending it, instead of
+	 * for the span a typed field uses by default.
+	 *
+	 * <p>
+	 * The time after the last keystroke before what is typed reaches the server. A shorter span
+	 * makes an answer computed from the value - the rows a search narrows to - follow the typing
+	 * more closely, at the price of more round-trips; a longer one waits for the user to stop.
+	 * </p>
+	 *
+	 * <p>
+	 * A field that {@link #setSendValueOnBlur(boolean) sends its value on blur} ignores the span
+	 * and holds a typed value back until the field is left.
+	 * </p>
+	 *
+	 * @param debounce
+	 *        The span in milliseconds, or {@code null} for the default of the field.
+	 */
+	public void setDebounce(Long debounce) {
+		putState(DEBOUNCE_MS, debounce);
+	}
+
+	/**
 	 * Renders the field as a multi-line text area with the given number of visible rows.
 	 *
 	 * @param rows
@@ -352,6 +428,22 @@ public class ReactFormFieldControl extends ReactControl {
 	 */
 	public void setSendValueOnBlur(boolean sendOnBlur) {
 		putState(SEND_VALUE_ON_BLUR, sendOnBlur);
+	}
+
+	/**
+	 * The display of a field beyond the value it holds: the icon it carries, whether it offers a
+	 * button that empties it, and how long it waits before sending what is typed.
+	 *
+	 * <p>
+	 * Each of the three is how the input looks and how fast it reports, not what it says. The
+	 * {@link #PLACEHOLDER placeholder} stays in the projection instead, being the text a
+	 * label-less input names itself by, which is what an agent reads to tell one input from
+	 * another.
+	 * </p>
+	 */
+	@Override
+	protected Set<String> scriptingPresentationKeys() {
+		return presentationKeys(super.scriptingPresentationKeys(), ICON, CLEARABLE, DEBOUNCE_MS);
 	}
 
 	/**

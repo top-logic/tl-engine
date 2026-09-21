@@ -243,6 +243,44 @@ public class TestObservableTreeModel extends TestCase {
 	}
 
 	/**
+	 * Tests that a change of the tree is announced to the listeners, and that a change of an object
+	 * that leaves the tree as it is announces nothing.
+	 */
+	public void testStructureChangeIsAnnounced() {
+		startTree(Set.of());
+		int[] announced = { 0 };
+		_observer.addStructureListener(() -> announced[0]++);
+
+		_scope.report(ModelChangeEvent.ChangeType.UPDATED, item("unrelated"));
+		assertEquals("A change that leaves the tree as it is announces nothing.", 0, announced[0]);
+
+		_children.put(_root, new ArrayList<>(List.of(_a)));
+		_scope.report(ModelChangeEvent.ChangeType.UPDATED, _root);
+		assertEquals("The node that is gone is announced.", 1, announced[0]);
+
+		Item otherRoot = item("otherRoot");
+		_children.put(otherRoot, new ArrayList<>(List.of(_a)));
+		_input.set(otherRoot);
+		assertEquals("The tree built anew is announced.", 2, announced[0]);
+	}
+
+	/**
+	 * Tests that a listener dropped again is not announced to any more.
+	 */
+	public void testDroppedStructureListenerIsNotAnnouncedTo() {
+		startTree(Set.of());
+		int[] announced = { 0 };
+		Runnable listener = () -> announced[0]++;
+		_observer.addStructureListener(listener);
+		_observer.removeStructureListener(listener);
+
+		_children.put(_root, new ArrayList<>(List.of(_a)));
+		_scope.report(ModelChangeEvent.ChangeType.UPDATED, _root);
+
+		assertEquals(0, announced[0]);
+	}
+
+	/**
 	 * Builds the tree over the structure the test holds and begins observing it.
 	 *
 	 * @param observedTypes

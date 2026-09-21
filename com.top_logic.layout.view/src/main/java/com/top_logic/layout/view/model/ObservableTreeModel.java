@@ -61,6 +61,12 @@ import com.top_logic.model.listen.ModelScope;
  * </p>
  *
  * <p>
+ * Every change the tree goes through is announced to the
+ * {@link #addStructureListener(Runnable) structure listeners}, which is what a display holding on
+ * to the nodes - a selection, above all - needs to express itself on the tree as it is now.
+ * </p>
+ *
+ * <p>
  * Observation begins with {@link #attach(ModelScope)} and is stopped by {@link #detach()}, which
  * the control calls while it is displayed and when it stops being displayed. Nothing is observed in
  * between, so an observation that begins again reconciles the tree: what the objects in it went
@@ -81,6 +87,9 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 	private final List<ViewChannel> _inputChannels;
 
 	private DefaultTreeUINodeModel _treeModel;
+
+	/** What to run when the tree changed, see {@link #addStructureListener(Runnable)}. */
+	private final List<Runnable> _structureListeners = new ArrayList<>();
 
 	/** The objects a listener is registered for, by their identity. */
 	private Map<ObjectKey, TLObject> _observed = new HashMap<>();
@@ -132,6 +141,43 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 	 */
 	public DefaultTreeUINodeModel getTreeModel() {
 		return _treeModel;
+	}
+
+	/**
+	 * Registers what to run whenever the tree changed: a reconcile that took nodes out or put nodes
+	 * in, and a rebuild, which replaces the tree with another one.
+	 *
+	 * <p>
+	 * The listener runs after the display was told about the change, so the tree it sees is the one
+	 * that is shown.
+	 * </p>
+	 *
+	 * @param listener
+	 *        What to run, see {@link #removeStructureListener(Runnable)}.
+	 */
+	public void addStructureListener(Runnable listener) {
+		_structureListeners.add(listener);
+	}
+
+	/**
+	 * Drops a listener registered by {@link #addStructureListener(Runnable)}.
+	 *
+	 * @param listener
+	 *        The listener to drop.
+	 */
+	public void removeStructureListener(Runnable listener) {
+		_structureListeners.remove(listener);
+	}
+
+	/**
+	 * Announces a change of the tree to the {@link #addStructureListener(Runnable) listeners}.
+	 */
+	private void notifyStructureChanged() {
+		// A listener may register or drop another one, so what is notified is the set of listeners
+		// the change was announced to.
+		for (Runnable listener : new ArrayList<>(_structureListeners)) {
+			listener.run();
+		}
 	}
 
 	/**
@@ -216,6 +262,7 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 		if (changed) {
 			syncObjectListeners();
 			_treeControl.updateVisibleState();
+			notifyStructureChanged();
 		}
 	}
 
@@ -283,6 +330,7 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 		if (changed) {
 			syncObjectListeners();
 			_treeControl.updateVisibleState();
+			notifyStructureChanged();
 		}
 	}
 
@@ -503,6 +551,7 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 
 		_treeControl.setTreeModel(_treeModel);
 		syncObjectListeners();
+		notifyStructureChanged();
 	}
 
 	// --- Listener registration ---

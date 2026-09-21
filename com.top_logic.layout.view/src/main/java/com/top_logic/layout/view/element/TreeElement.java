@@ -43,6 +43,7 @@ import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
+import com.top_logic.layout.view.model.NodeLocator;
 import com.top_logic.layout.view.model.ObservableTreeModel;
 import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.layout.view.model.TreeSelectionBinding;
@@ -60,17 +61,23 @@ import com.top_logic.table.SelectionMode;
  * Declarative {@link UIElement} that wraps a {@link ReactTreeControl}.
  *
  * <p>
- * Input data is provided via {@link ViewChannel}s. The root object and child lists are computed
- * using TL-Script expressions, and the tree structure is built lazily via a custom
- * {@link TreeBuilder}.
+ * The object the tree is built from and the children of a node are computed by TL-Script functions
+ * over the values of the {@link ViewChannel}s the tree reads. A node's children are computed when
+ * somebody opens it, so a tree of any extent costs no more than what is displayed of it, and a node
+ * whose child list is empty is a leaf.
  * </p>
  *
  * <p>
- * Note: The optional config properties {@code isLeaf}, {@code supportsNode},
- * {@code modelForNode}, {@code parents}, and {@code nodesToUpdate} are declared for future use
- * and currently not wired into the runtime. They parse correctly but have no effect. Leaf status
- * is determined by whether {@code children} returns an empty list. Incremental update support
- * will be added when the view system gains model event integration.
+ * The tree follows the model it displays: a deleted object loses its node, an object that appeared
+ * in a child list gets one, and the subtrees the user opened stay open through it. An input naming
+ * another object to build the tree from builds it anew, opening the subtrees that were open again
+ * wherever the new tree holds their objects. See {@link ObservableTreeModel}.
+ * </p>
+ *
+ * <p>
+ * The selection channel is read as well as written, see {@link TreeSelectionBinding}: the tree
+ * reveals and selects the node of an object another writer puts on it - the object a create command
+ * just made, for instance - and writes what the user selects back.
  * </p>
  */
 @InApp
@@ -92,20 +99,8 @@ public class TreeElement implements UIElement {
 		/** Configuration name for {@link #getChildren()}. */
 		String CHILDREN = "children";
 
-		/** Configuration name for {@link #getIsLeaf()}. */
-		String IS_LEAF = "isLeaf";
-
-		/** Configuration name for {@link #getSupportsNode()}. */
-		String SUPPORTS_NODE = "supportsNode";
-
-		/** Configuration name for {@link #getModelForNode()}. */
-		String MODEL_FOR_NODE = "modelForNode";
-
 		/** Configuration name for {@link #getParents()}. */
 		String PARENTS = "parents";
-
-		/** Configuration name for {@link #getNodesToUpdate()}. */
-		String NODES_TO_UPDATE = "nodesToUpdate";
 
 		/** Configuration name for {@link #getCanExpandAll()}. */
 		String CAN_EXPAND_ALL = "canExpandAll";
@@ -152,56 +147,24 @@ public class TreeElement implements UIElement {
 		Expr getChildren();
 
 		/**
-		 * Optional TL-Script function determining whether a node is a leaf.
+		 * Optional TL-Script function computing what holds an object in the tree.
 		 *
 		 * <p>
-		 * Takes the input channel values followed by the node business object as last argument.
-		 * Returns a boolean. If not set, leaf status is determined by whether
-		 * {@link #getChildren()} returns an empty list.
+		 * Takes the input channel values followed by an object as last argument, and returns the
+		 * object whose child list holds it - nothing for the object the tree is built from, and for
+		 * an object belonging to no tree at all.
 		 * </p>
-		 */
-		@Name(IS_LEAF)
-		Expr getIsLeaf();
-
-		/**
-		 * Optional TL-Script function for incremental update decisions.
 		 *
 		 * <p>
-		 * Takes the input channel values followed by a candidate object as last argument.
-		 * </p>
-		 */
-		@Name(SUPPORTS_NODE)
-		Expr getSupportsNode();
-
-		/**
-		 * Optional TL-Script function for reverse model lookup.
-		 *
-		 * <p>
-		 * Takes the input channel values followed by a candidate object as last argument.
-		 * </p>
-		 */
-		@Name(MODEL_FOR_NODE)
-		Expr getModelForNode();
-
-		/**
-		 * Optional TL-Script function computing the parent chain.
-		 *
-		 * <p>
-		 * Takes the input channel values followed by a node object as last argument.
+		 * It is how the node of an object written to the {@link #getSelection() selection channel}
+		 * is found: the tree walks from the object up to the one it is built from and descends along
+		 * that chain, computing only the child lists on the way. Without it the node is searched for,
+		 * which computes the child list of every node passed on the way - affordable for a tree of
+		 * small extent, not for a large or an unbounded one.
 		 * </p>
 		 */
 		@Name(PARENTS)
 		Expr getParents();
-
-		/**
-		 * Optional TL-Script function computing nodes to update on a change.
-		 *
-		 * <p>
-		 * Takes the input channel values followed by a changed object as last argument.
-		 * </p>
-		 */
-		@Name(NODES_TO_UPDATE)
-		Expr getNodesToUpdate();
 
 		/**
 		 * Types to observe for object creation events.
@@ -229,8 +192,13 @@ public class TreeElement implements UIElement {
 		boolean getCanExpandAll();
 
 		/**
-		 * Optional reference to a {@link ViewChannel} to write the selected node's business
-		 * object to.
+		 * Optional reference to the {@link ViewChannel} holding the selection.
+		 *
+		 * <p>
+		 * The business object of the selected node is written to it, and an object another writer
+		 * puts on it is revealed and selected in the tree - an object the tree has no node for
+		 * leaves both the channel and the selection alone.
+		 * </p>
 		 */
 		@Name(SELECTION)
 		@Format(ChannelRefFormat.class)
@@ -298,6 +266,9 @@ public class TreeElement implements UIElement {
 
 	private final QueryExecutor _childrenExecutor;
 
+	/** The compiled {@link Config#getParents()} function, {@code null} without one. */
+	private final QueryExecutor _parentsExecutor;
+
 	private final ReactControlProvider _nodeContentProvider;
 
 	/** The instantiated {@link Config#getOnActivate()} command, {@code null} without one. */
@@ -321,6 +292,7 @@ public class TreeElement implements UIElement {
 
 		_rootExecutor = QueryExecutor.compile(config.getRoot());
 		_childrenExecutor = QueryExecutor.compile(config.getChildren());
+		_parentsExecutor = QueryExecutor.compileOptional(config.getParents());
 
 		ReactControlProvider configuredProvider = context.getInstance(config.getNodeContent());
 		_nodeContentProvider = configuredProvider != null ? configuredProvider : MetaResourceControlProvider.INSTANCE;
@@ -353,20 +325,7 @@ public class TreeElement implements UIElement {
 		ReactTreeControl treeControl = new ReactTreeControl(context, treeModel, selectionModel, _nodeContentProvider);
 		treeControl.setSelectionMode(selectionMode);
 
-		// 6. Wire selection channel.
-		ChannelRef selectionRef = _config.getSelection();
-		if (selectionRef != null) {
-			ViewChannel selectionChannel = context.resolveChannel(selectionRef);
-			selectionModel.addSelectionListener(new TreeSelectionBinding<>(selectionChannel));
-		}
-
-		// 7. Wire the activation command, which runs with the activated node's business object.
-		if (_onActivate != null && _onActivateConfig != null) {
-			ViewCommandModel activation = ViewCommandModel.forCommand(context, _onActivate, _onActivateConfig);
-			treeControl.setActivationHandler(node -> activation.execute(context, businessObject(node)));
-		}
-
-		// 8. Create ObservableTreeModel to forward model changes to the tree control.
+		// 6. Create ObservableTreeModel to forward model changes to the tree control.
 		Set<TLStructuredType> observedTypes = ObservedTypes.resolve(_config.getObservedTypes());
 		QueryExecutor rootExec = _rootExecutor;
 		ObservableTreeModel observableModel = new ObservableTreeModel(
@@ -378,6 +337,28 @@ public class TreeElement implements UIElement {
 			inputChannels
 		);
 
+		// 7. Wire the selection channel, which the tree reads as well as writes. The node of an
+		//    object read from it is looked for in the tree displayed now, which is another one after
+		//    a rebuild, and every change of the tree makes the binding express itself on it again.
+		ChannelRef selectionRef = _config.getSelection();
+		if (selectionRef != null) {
+			ViewChannel selectionChannel = context.resolveChannel(selectionRef);
+			TreeSelectionBinding selectionBinding = new TreeSelectionBinding(treeControl, selectionModel,
+				observableModel::getTreeModel, createNodeLocator(inputChannels), selectionChannel);
+			observableModel.addStructureListener(selectionBinding::structureChanged);
+
+			// The channel and the selection outlive the control, so the binding is dropped with it.
+			// It survives an attach/detach cycle, which only suspends the observation of the model:
+			// a selection written while the tree is off screen is displayed when it returns.
+			treeControl.addCleanupAction(selectionBinding::dispose);
+		}
+
+		// 8. Wire the activation command, which runs with the activated node's business object.
+		if (_onActivate != null && _onActivateConfig != null) {
+			ViewCommandModel activation = ViewCommandModel.forCommand(context, _onActivate, _onActivateConfig);
+			treeControl.setActivationHandler(node -> activation.execute(context, businessObject(node)));
+		}
+
 		// 9. Observe the model only while the tree is displayed.
 		treeControl.addAttachListener(() -> {
 			observableModel.attach(context.getModelScope());
@@ -385,6 +366,38 @@ public class TreeElement implements UIElement {
 		treeControl.addDetachListener(observableModel::detach);
 
 		return treeControl;
+	}
+
+	/**
+	 * How the node of a business object is found in the tree.
+	 *
+	 * @param inputChannels
+	 *        The channels whose values the parent function is called with.
+	 */
+	private NodeLocator createNodeLocator(List<ViewChannel> inputChannels) {
+		if (_parentsExecutor == null) {
+			return NodeLocator.SEARCHING;
+		}
+		return NodeLocator.byParents(businessObject -> parentOf(inputChannels, businessObject));
+	}
+
+	/**
+	 * What holds the given business object in the tree, {@code null} at its root.
+	 */
+	private Object parentOf(List<ViewChannel> inputChannels, Object businessObject) {
+		Object[] args = appendArg(ChannelInputs.arguments(inputChannels), businessObject);
+		return singleObject(_parentsExecutor.execute(args));
+	}
+
+	/**
+	 * The object a function returning a single object yielded, taking the first element of a
+	 * collection the script produced instead and {@code null} from an empty one.
+	 */
+	private static Object singleObject(Object result) {
+		if (result instanceof Collection<?> collection) {
+			return collection.isEmpty() ? null : collection.iterator().next();
+		}
+		return result;
 	}
 
 	private TreeBuilder<DefaultTreeUINode> createTreeBuilder(List<ViewChannel> inputChannels) {

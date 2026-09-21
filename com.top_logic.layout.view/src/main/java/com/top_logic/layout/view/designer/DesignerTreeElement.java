@@ -39,6 +39,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.model.NodeLocator;
 import com.top_logic.layout.view.model.TreeNodes;
 import com.top_logic.layout.view.model.TreeSelectionBinding;
 import com.top_logic.mig.html.DefaultSingleSelectionModel;
@@ -132,27 +133,18 @@ public class DesignerTreeElement implements UIElement {
 			designNodeControlProvider(treeRef, currentModel));
 		treeRef[0] = treeControl;
 
-		// 5. Wire selection: push selected DesignTreeNode to the selection channel.
+		// 5. Wire the selection channel, which the tree reads as well as writes: the selected
+		//    DesignTreeNode is written to it, and a node another writer puts on it - the "select
+		//    view" picker, for instance - is revealed and selected in the tree displayed now.
 		ChannelRef selectionRef = _config.getSelection();
+		TreeSelectionBinding selectionBinding;
 		if (selectionRef != null) {
 			ViewChannel selectionChannel = context.resolveChannel(selectionRef);
-			selectionModel.addSelectionListener(new TreeSelectionBinding<>(selectionChannel));
-
-			// Reflect an externally set selection (e.g. from the "select view" picker) in the tree.
-			selectionChannel.addListener((sender, oldValue, newValue) -> {
-				if (newValue instanceof DesignTreeNode target) {
-					DefaultTreeUINode uiNode = TreeNodes.findNode(currentModel[0].getRoot(), target);
-					if (uiNode != null) {
-						TreeNodes.revealNode(uiNode);
-						selectionModel.setSelected(uiNode, true);
-						// Push the server-side expansion+selection change to the client. Unlike a
-						// client-initiated select/expand (which flows through the control's own
-						// command handlers that rebuild this state), this change is made directly on
-						// the models, so the control's visible node state must be rebuilt explicitly.
-						treeControl.updateVisibleState();
-					}
-				}
-			});
+			selectionBinding = new TreeSelectionBinding(treeControl, selectionModel,
+				() -> currentModel[0], NodeLocator.SEARCHING, selectionChannel);
+			treeControl.addCleanupAction(selectionBinding::dispose);
+		} else {
+			selectionBinding = null;
 		}
 
 		// 6. Wire context menu for structural editing commands.
@@ -168,6 +160,11 @@ public class DesignerTreeElement implements UIElement {
 				newTreeModel.setRootVisible(true);
 				treeControl.setTreeModel(newTreeModel);
 				currentModel[0] = newTreeModel;
+				if (selectionBinding != null) {
+					// The nodes of the tree built anew are other ones, so the selection is expressed
+					// on them.
+					selectionBinding.structureChanged();
+				}
 			}
 		};
 		inputChannel.addListener(rootListener);

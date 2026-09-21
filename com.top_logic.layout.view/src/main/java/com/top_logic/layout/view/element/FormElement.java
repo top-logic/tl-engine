@@ -34,8 +34,10 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
+import com.top_logic.layout.react.control.button.KeyStroke;
 import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.view.ContainerElement;
 import com.top_logic.layout.view.I18NConstants;
@@ -524,6 +526,13 @@ public class FormElement extends ContainerElement {
 	 * access to the form model, even though the toolbar button's click handler passes the panel's
 	 * context.
 	 * </p>
+	 *
+	 * <p>
+	 * Apart from that context, the wrapper is a full delegate: every accessor the
+	 * {@link CommandModel} declares is answered by the inner model. Inheriting one of the
+	 * interface's defaults instead would silently drop what the command states - its keyboard
+	 * gesture, tooltip, clique, presentation - the moment it is offered through a form.
+	 * </p>
 	 */
 	private static class FormScopedCommandModel implements CommandModel {
 
@@ -556,8 +565,18 @@ public class FormElement extends ContainerElement {
 		}
 
 		@Override
+		public String getTooltip() {
+			return _inner.getTooltip();
+		}
+
+		@Override
 		public boolean isExecutable() {
 			return _inner.isExecutable();
+		}
+
+		@Override
+		public boolean isActive() {
+			return _inner.isActive();
 		}
 
 		@Override
@@ -574,6 +593,26 @@ public class FormElement extends ContainerElement {
 		@Override
 		public CommandPlacement getPlacement() {
 			return _inner.getPlacement();
+		}
+
+		@Override
+		public String getClique() {
+			return _inner.getClique();
+		}
+
+		@Override
+		public ButtonDisplayMode getDisplayMode() {
+			return _inner.getDisplayMode();
+		}
+
+		@Override
+		public String getCssClasses() {
+			return _inner.getCssClasses();
+		}
+
+		@Override
+		public KeyStroke getKeyGesture() {
+			return _inner.getKeyGesture();
 		}
 
 		@Override

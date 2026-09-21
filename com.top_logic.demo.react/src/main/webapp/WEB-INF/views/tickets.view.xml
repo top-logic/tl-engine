@@ -11,8 +11,9 @@
 	to no object, and the prefix and the segment leave the address bar again.
 	
 	The Open list carries a filter bar and demonstrates the other half of the address bar. It
-	offers three presets as chips, and the one named by initial= filters the list for a user who
-	has not decided about its filtering themselves, so the list opens showing the tickets the
+	offers four presets as chips - one of them names no criterion and therefore stands for the
+	list with nothing filtered out -, and the one named by initial= filters the list for a user
+	who has not decided about its filtering themselves, so the list opens showing the tickets the
 	logged-in user commented on. The chip the list matches is published on the activeFilter
 	channel and the text it searches its displayed columns for on the searchTerm channel, and
 	<query-bindings> puts the two into the address as filter and q: a list showing a preset is
@@ -39,14 +40,16 @@
 	list reads the status through its <inputs> and narrows its rows by it.
 	
 	The jump-to box in the app bar demonstrates the submit hook: pressing Enter writes the entered
-	text to the jump channel and then runs the <on-submit> command over it, which resolves the
-	ticket of that name and writes it to the ticket channel - so the list shows it selected. A
-	name that matches no ticket leaves the selection as it was: the command branches on the
-	resolved ticket and tells the user in a warning naming the text they entered, which it reads
-	from the jump channel through its <inputs>, and ends the chain there. An empty submission has
-	no name to complain about, so the warning's expression yields nothing and the command changes
-	nothing and says nothing. A text is submitted by Enter; the status dropdown in the page would
-	run such a command on every choice, since a choice is already finished.
+	text to the jump channel and then runs the <on-submit> command over it. The command keeps the
+	entered text as its value and branches on the ticket of that name: there is one, and it is
+	written to the ticket channel - so the list shows it selected -, or there is none, and the
+	list is shown searched for the text. That is what <show-view> does: it brings this very view
+	into view and writes the values its channels receive, the preset all onto activeFilter and the
+	entered text onto searchTerm, so the address reads ?filter=all&q=<text> and the Open list
+	shows every ticket carrying that text, unfiltered otherwise. An empty submission is no name to
+	look up, so the command ends before either branch and changes nothing. A text is submitted by
+	Enter; the status dropdown in the page would run such a command on every choice, since a
+	choice is already finished.
 	
 	That box stands in the app bar of the shell: <slot-content to="appbar-content"> routes it to
 	the <slot> the shell declares, while it keeps reading and writing the channels of this view.
@@ -132,22 +135,27 @@
 						<de>Zu Ticket springen</de>
 					</placeholder>
 					<on-submit>
-						<execute-script function="name -> if($name == null || $name == &quot;&quot;, null, all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#name`) == $name).firstElement())"/>
-						<if test="t -> $t != null">
+						<if test="name -> $name != null &amp;&amp; $name != ''">
 							<then>
-								<write-channel name="ticket"/>
+								<if test="name -> all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#name`) == $name).firstElement() != null">
+									<then>
+										<execute-script function="name -> all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#name`) == $name).firstElement()"/>
+										<write-channel name="ticket"/>
+									</then>
+									<else>
+										<show-view view="tickets.view.xml">
+											<bind
+												channel="activeFilter"
+												expr="term -> 'all'"
+											/>
+											<bind
+												channel="searchTerm"
+												expr="term -> $term"
+											/>
+										</show-view>
+									</else>
+								</if>
 							</then>
-							<else>
-								<notify
-									expr="term -> x -> if($term == null || $term == '', null, #('No ticket {0}.'@en, 'Kein Ticket {0}.'@de).fill($term))"
-									kind="warning"
-									stop="true"
-								>
-									<inputs>
-										<input channel="jump"/>
-									</inputs>
-								</notify>
-							</else>
 						</if>
 					</on-submit>
 				</value-input>
@@ -339,6 +347,12 @@
 									<input channel="status"/>
 								</inputs>
 								<presets initial="mine">
+									<preset name="all">
+										<label>
+											<en>All</en>
+											<de>Alle</de>
+										</label>
+									</preset>
 									<preset name="mine">
 										<label>
 											<en>Commented by me</en>

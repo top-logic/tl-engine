@@ -35,7 +35,6 @@ import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.channel.ChannelConfig;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.util.model.ModelService;
 
@@ -308,16 +307,7 @@ public class DisplayTargetService extends ConfiguredManagedClass<DisplayTargetSe
 			return null;
 		}
 
-		List<ShowStep> shows = new ArrayList<>();
-		for (ShowConfig show : config.getShows()) {
-			List<Binding> bindings = new ArrayList<>();
-			for (BindConfig binding : show.getBindings()) {
-				bindings.add(new Binding(binding.getChannel(), QueryExecutor.compileOptional(binding.getExpr())));
-			}
-			shows.add(new ShowStep(ViewLoader.viewRef(show.getView()), show.isDialog(), show.getLabel(),
-				QueryExecutor.compileOptional(show.getLabelExpr()), bindings));
-		}
-		return new DisplayTarget(type, config.isDefault(), shows);
+		return new DisplayTarget(type, config.isDefault(), ShowStep.fromConfigs(config.getShows()));
 	}
 
 	/**

@@ -56,7 +56,7 @@ import com.top_logic.util.model.ModelService;
  *
  * <p>
  * <b>Reading those bytes is the other question</b>, and the model layer answers it. The shipped
- * default since #227 is the owner plus administrators - the {@code <security-config>} of
+ * default since #227 is the owner plus administrators - the {@code &lt;security-config&gt;} of
  * {@code tl-ai-core.binarySecurity.config.xml}, which {@code viewDocument} asks about through
  * {@code ModelSecurity.canRead}. Sharing a login therefore does not make the stored session state
  * readable: a shared pool saved by an unattended run has no owner and is readable by administrators

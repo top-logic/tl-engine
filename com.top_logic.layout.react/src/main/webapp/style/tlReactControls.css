@@ -2283,8 +2283,11 @@ button.tlDrawerToggle:focus-visible {
    accent background - the account name beside the avatar above all. Re-map
    them to on-accent colors. */
 
-.tlAppBar--primary .tlText {
-	color: var(--layer-accent-text);
+/* The re-mapping reaches the text through the custom property its tone fills, and only where the
+   text follows the default tone: a text that states a tone of its own - an error, a success -
+   keeps it, because the rule does not match its tone class. */
+.tlAppBar--primary .tlText--tone-primary {
+	--tlText-tone: var(--layer-accent-text);
 }
 
 /* A click region hovers with the generic layer-hover, which is a light surface - under the
@@ -2482,6 +2485,8 @@ button.tlBottomBar__item:hover {
 
 /* --- TLDialog (overlay-only) ----------------------------------------------- */
 
+/* The backdrop dims the page with the overlay token and blurs what is behind it by the surface
+   blur of the theme, which is none unless a theme asks for one. */
 .tlDialog__backdrop {
 	position: fixed;
 	inset: 0;
@@ -2490,6 +2495,7 @@ button.tlBottomBar__item:hover {
 	align-items: center;
 	justify-content: center;
 	background: var(--overlay);
+	backdrop-filter: blur(var(--surface-blur));
 	outline: none;
 }
 
@@ -3552,9 +3558,99 @@ button.tlMenu__item--disabled:hover {
 	border-right: none;
 }
 
+/* The text control states how it is drawn as roles rather than as font and color values: what the
+   text is for (the variant), what its color means (the tone), and the shape it takes. Every text
+   carries a class per role, so an application stylesheet and a theme both reach a role as a whole.
+   The color of the tone travels as the custom property --tlText-tone, which the text color is taken
+   from and which a pill without a color of its own is tinted with - one declaration per tone. */
 .tlText {
+	--tlText-tone: var(--text-primary);
+	color: var(--tlText-tone);
+}
+
+/* --- What the text is for -------------------------------------------------- */
+
+.tlText--display {
+	font-family: var(--font-family-display);
+	font-size: var(--display-01-font-size);
+	line-height: var(--display-01-line-height);
+	font-weight: 600;
+	letter-spacing: -0.01em;
+}
+
+.tlText--headline {
+	font-family: var(--font-family-display);
+	font-size: var(--heading-04-font-size);
+	line-height: var(--heading-04-line-height);
+	font-weight: 600;
+}
+
+.tlText--title {
+	font-family: var(--font-family-display);
+	font-size: var(--heading-03-font-size);
+	line-height: var(--heading-03-line-height);
+	font-weight: 600;
+}
+
+.tlText--body {
 	font-size: var(--body-compact-01-font-size);
-	color: var(--text-primary);
+	line-height: var(--body-compact-01-line-height);
+}
+
+.tlText--label {
+	font-size: var(--heading-compact-02-font-size);
+	line-height: var(--heading-compact-02-line-height);
+	letter-spacing: var(--heading-compact-02-letter-spacing);
+	font-weight: 600;
+}
+
+.tlText--caption {
+	font-size: var(--label-01-font-size);
+	line-height: var(--label-01-line-height);
+}
+
+/* --- What the color of the text means -------------------------------------- */
+
+.tlText--tone-primary {
+	--tlText-tone: var(--text-primary);
+}
+
+.tlText--tone-secondary {
+	--tlText-tone: var(--text-secondary);
+}
+
+.tlText--tone-helper {
+	--tlText-tone: var(--text-helper);
+}
+
+.tlText--tone-accent {
+	--tlText-tone: var(--text-accent);
+}
+
+.tlText--tone-success {
+	--tlText-tone: var(--text-success);
+}
+
+.tlText--tone-warning {
+	--tlText-tone: var(--text-warning);
+}
+
+.tlText--tone-error {
+	--tlText-tone: var(--text-error);
+}
+
+.tlText--tone-on-color {
+	--tlText-tone: var(--text-on-color);
+}
+
+/* --- The shape the text takes ---------------------------------------------- */
+
+/* Text drawn as a pill whether or not its value carries a color. The pill of a text that asked for
+   one reads in the size of the text's own role, rather than in the size a pill beside plain text
+   is drawn in. */
+.tlText--pill .tlPill {
+	font-size: inherit;
+	line-height: inherit;
 }
 
 .tlText--placeholder {

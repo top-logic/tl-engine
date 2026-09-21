@@ -80,6 +80,55 @@ On the server, the class travels as one state key of `ReactControl` (`setCssClas
 client, the component composes its root `className` from it with `rootClassName(state, …)`. Both are
 described in [new-ui-element.md](new-ui-element.md), which an element of an application follows.
 
+## Text: variant, tone and appearance
+
+A `<text>` says what it is *for* rather than which font and colour it is drawn in. Three properties
+carry that, each one a role filled from the design tokens of the active theme, so a theme restyles
+every text of a role at once — see
+[react-theme-tokens.md](react-theme-tokens.md#typography-tokens) for the token per variant.
+
+```xml
+<stack>
+	<text
+		label="Quarterly report"
+		variant="headline"
+	/>
+	<text
+		label="Figures as of yesterday."
+		tone="helper"
+		variant="caption"
+	/>
+	<text
+		appearance="pill"
+		label="Overdue"
+		tone="error"
+	/>
+</stack>
+```
+
+- **`variant`** — what the text is for: `body` (the default), `title`, `headline`, `display`,
+  `label`, `caption`. The family, size, line height and weight come from the tokens.
+- **`tone`** — what its colour means: `primary` (the default), `secondary`, `helper`, `accent`,
+  `success`, `warning`, `error`, `on-color`.
+- **`appearance`** — the shape it is drawn in: `text` (the default) or `pill`.
+
+Every text carries a class per role — `tlText--<variant>`, `tlText--tone-<tone>`, and
+`tlText--pill` where the appearance asks for one — beside `tlText` and the element's own
+`css-class`:
+
+```html
+<span class="tlText tlText--caption tlText--tone-helper">Figures as of yesterday.</span>
+```
+
+The classes are a stable contract the stylesheet of the application may read, not something to
+write into a `css-class`: a display option of the element is a property of the element.
+
+The colour of a tone travels as the custom property `--tlText-tone`, which the text colour is taken
+from and which tints a pill that has no colour of its own — one declaration per tone. That is also
+how a text keeps its tone where the surrounding control re-maps the text colour: the primary app bar
+re-maps `.tlAppBar--primary .tlText--tone-primary`, so a text that follows the default tone reads in
+the on-accent colour while a text that states a tone of its own — an error, a success — keeps it.
+
 ## A command is a chain of actions, and the chain can branch
 
 `<generic-command>` (`GenericViewCommand`) runs the `<execute-script>`, `<store-form-state>`, `<confirm>`, `<verify-identity>`, `<with-transaction>`, `<open-dialog>`, `<write-channel>`, … actions written inside it as one chain (`ViewActionChain`): each action's result is the next action's input, the first action gets the command's input. An action that has to wait — `<confirm>`, which opens a dialog — suspends the chain and resumes it from the dialog's answer, or aborts it on cancel; `<verify-identity>` (`VerifyIdentityAction`) is the same shape with the answer being the proof that the person at the keyboard still is the holder of the session's own account, given the way the session was established: a session established at an external identity provider re-authenticates there in a second browser window — the provider's answer returns to the authentication servlet, which completes the pending `IdentityVerifications` entry and resumes the chain in the window that asked (a failure of the resumed chain is shown in that window like any other command failure, through `CommandErrors`, and leaves the confirmed identity itself standing) — while every other session is asked for its password, which the account's `AuthenticationDevice` checks. It fails closed: a cancelled prompt, an account that neither a provider nor a device can confirm, or a context without a dialog all abort; an abort skips the remaining actions and runs the compensations the executed actions registered, newest first, as does a failure. A script over the chain's value takes further arguments from channels: `<inputs><input channel="context"/></inputs>` puts those channel values in front of the chain's value (`ActionScript`, shared by every action that takes a script).
@@ -351,6 +400,15 @@ A value's color is part of the model: two annotations say where it comes from, a
 - **`AnnotationValueColorProvider.INSTANCE`** (a `ValueColorProvider`) answers both: `colorOf(value)` returns the `ValueColor` of a classifier or an object, the color a color value itself is, and `null` for everything the model gives no color to. `ValueColor.cssValue()` is the CSS to apply it with — the fixed color, or `var(--<token>)` against the custom properties `UIThemeService` emits per theme.
 
 A colored value is displayed as a **pill** in its color, an uncolored one as plain text. The color travels as the single state / descriptor field `ReactValueColor.COLOR`, filled by `ReactValueColor.putColor(descriptor, value)` / `cssColorOf(value)`, and the client hands it to the stylesheet as the inline custom property `--tlPill-color` — there is no class per color. One shared presentational component `TLPill` (`react-src/controls/pill/TLPill.tsx`, `.tlPill` in `tlReactControls.css`) draws it everywhere; the tint is composed with `color-mix()` from the color and the `color-surface` / `text-primary` tokens, so one declaration stays legible on a light and a dark theme.
+
+`<text appearance="pill">` asks for a pill whether or not the value carries a colour: a badge, a
+status, a tag written as a text rather than read off the model. The colour then follows a
+precedence — the colour of the value when the model gives it one, and the colour of the element's
+`tone` otherwise — so a status that *is* an enumeration literal keeps the literal's colour, and a
+text that is a badge of the application's own making takes its tone. `appearance="text"` (the
+default) leaves it as it was: a pill for a value with a colour, plain text for one without. A pill
+asked for by the element reads in the size of the text's own `variant`; one the value's colour
+produced reads in the pill's own size.
 
 The sites that fill the field:
 

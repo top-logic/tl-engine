@@ -71,17 +71,20 @@ A `<ref>` takes the kind of the token it names, followed along the chain of refe
 the theme inheritance, so an alias of a colour is a colour. A `<ref>` naming no token, and a cycle
 of references, are reported as errors while the themes are read.
 
-## The two radius tiers
+## The three radius tiers
 
-Rounding comes in exactly two tiers, and every rounded box takes one of them:
+Rounding comes in exactly three tiers, and every rounded box takes one of them:
 
 | Tier | Token | Default | Applies to |
 | --- | --- | --- | --- |
 | Control | `corner-radius` | `0.25rem` | buttons, input fields, drop-down and colour/icon fields, toggles, table and calendar cells, small chips, tree toggles, palette cells, sliders and handles, reset buttons, scrollbar thumbs, drop markers |
 | Surface | `border-radius-02` | `0.5rem` | panels, cards, windows, drawers, menus, drop-down popups, flyouts, the snackbar, colour and icon popups, tooltips, dashboard tiles, form groups |
+| Large surface | `border-radius-03` | `1rem` | a surface large enough for the surface radius to disappear on it: a hero section, a glass card, a full-bleed panel an application styles through its `css-class` |
 
 The rule of thumb: a box the pointer acts *on* is a control, a box that *holds* other boxes is a
-surface.
+surface, and a surface that fills a good part of the viewport is a large one. The engine's own
+controls take the first two tiers; the third is there so an application styling a surface of its own
+rounds it by a token of the theme rather than by a literal of its own.
 
 **A shape is not a rounding.** A circle stays `50%` and a pill stays `999px`, written literally, so
 both keep their shape in a theme that squares every corner off. The same goes for a deliberate
@@ -99,13 +102,47 @@ Drop shadows come in three steps, each a `<text>` token, and a backdrop takes th
 | `shadow-menu` | `0 2px 6px 0 rgba(0,0,0,0.32)` | a popup opened from a control: menus, toolbar drop-downs, sidebar flyouts, option lists, colour and icon palettes, tooltips |
 | `shadow-dialog` | `0 8px 24px rgba(0,0,0,0.2)` | a layer covering the page: windows, drawers, the snackbar, the open sidebar drawer |
 | `overlay` | `rgba(0,0,0,0.5)` | the backdrop such a layer dims the page with: the dialog backdrop, the sidebar backdrop |
+| `surface-blur` | `0` | how far a backdrop blurs the page behind it, consumed as `backdrop-filter: blur(var(--surface-blur))`; the dialog backdrop takes it, and `0` leaves the page sharp |
 
 A shadow that draws a ring rather than an elevation — a focus ring, a button's inset frame, the
 outline of a colour handle — is not part of this scale and keeps its own value.
 
+`shadow-glow` (`none`) stands beside the scale rather than in it: a glow marks a surface as
+highlighted — the active step of a wizard, the card a drag is about to land on — and says nothing
+about how far above the page it sits. A theme that wants one sets it, an application consumes it on
+the surface it styles, and the default leaves every surface without one.
+
+## Typography tokens
+
+The `<text>` element states what a text is for as a
+[variant](react-view-layer.md#text-variant-tone-and-appearance), and the stylesheet fills the role
+from these tokens:
+
+| Variant | Family | Size | Line height | Weight |
+| --- | --- | --- | --- | --- |
+| `display` | `font-family-display` | `display-01-font-size` (`2.5rem`) | `display-01-line-height` (`3rem`) | 600 |
+| `headline` | `font-family-display` | `heading-04-font-size` (`1.75rem`) | `heading-04-line-height` (`2.25rem`) | 600 |
+| `title` | `font-family-display` | `heading-03-font-size` (`1.25rem`) | `heading-03-line-height` (`1.625rem`) | 600 |
+| `body` | `font-family` | `body-compact-01-font-size` (`0.875rem`) | `body-compact-01-line-height` (`1.125rem`) | inherited |
+| `label` | `font-family` | `heading-compact-02-font-size` (`0.875rem`) | `heading-compact-02-line-height` (`1.125rem`) | 600 |
+| `caption` | `font-family` | `label-01-font-size` (`0.75rem`) | `label-01-line-height` (`1rem`) | inherited |
+
+`font-family-display` is a `<ref>` to `font-family`, so the headings read in the body face until a
+theme gives them one of their own — which is the one change a theme needs for a display face.
+
+The weights are literal, as everywhere else in the sheet: a weight is part of what a role *is*, not
+a value a theme retunes.
+
+## The page background
+
+`body` takes `background-color: var(--background)` and `background-image:
+var(--background-image)`. The image token is `none` by default, so the page is a flat colour; a
+theme that wants a gradient or a texture behind the whole application sets it (`linear-gradient(…)`,
+`url(…)`) and leaves the colour as what shows through.
+
 ## Writing a flat theme
 
-A theme that wants square corners and no elevation overrides the two radius tokens and the three
+A theme that wants square corners and no elevation overrides the three radius tokens and the three
 shadow tokens and inherits everything else, the overlay included:
 
 ```xml
@@ -116,11 +153,12 @@ shadow tokens and inherits everything else, the overlay included:
 		<en>Flat</en>
 		<de>Flach</de>
 	</label>
-	<length name="corner-radius" value="0"/>
 	<length name="border-radius-02" value="0"/>
-	<text name="shadow-raised" value="none"/>
-	<text name="shadow-menu" value="none"/>
+	<length name="border-radius-03" value="0"/>
+	<length name="corner-radius" value="0"/>
 	<text name="shadow-dialog" value="none"/>
+	<text name="shadow-menu" value="none"/>
+	<text name="shadow-raised" value="none"/>
 </theme>
 ```
 
@@ -138,7 +176,7 @@ resolved tokens of the `default` theme and fails on
 
 - a `var(--x)` whose `x` is neither a theme token nor a custom property the sheet declares itself,
   and
-- a `border-radius` written as a literal length instead of one of the two radius tokens.
+- a `border-radius` written as a literal length instead of one of the three radius tokens.
 
 `ThemeTokenAudit.SHAPE_RADII` holds the literals that stay literal (`0`, `50%`, `999px`, `9999px`);
 a selector that rounds for a reason of its own is passed in the audit's allow-list.

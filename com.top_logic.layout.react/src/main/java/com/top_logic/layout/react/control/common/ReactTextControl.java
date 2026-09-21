@@ -20,6 +20,13 @@ import com.top_logic.layout.react.control.ReactValueColor;
  * </p>
  *
  * <p>
+ * How the text is drawn is stated as roles rather than as font and color values: a
+ * {@link #setVariant(TextVariant) typographic role}, a {@link #setTone(TextTone) color role} and
+ * the {@link #setAppearance(TextAppearance) shape} it takes. Each role is written as a class on the
+ * rendered element and filled from the design tokens of the active theme.
+ * </p>
+ *
+ * <p>
  * The caller is responsible for converting application objects to display strings, e.g. by using a
  * {@link com.top_logic.layout.LabelProvider}.
  * </p>
@@ -30,6 +37,15 @@ public class ReactTextControl extends ReactControl implements TooltipProvider {
 
 	/** @see #setOverflow(TextOverflow) */
 	private static final String OVERFLOW = "overflow";
+
+	/** @see #setVariant(TextVariant) */
+	private static final String VARIANT = "variant";
+
+	/** @see #setTone(TextTone) */
+	private static final String TONE = "tone";
+
+	/** @see #setAppearance(TextAppearance) */
+	private static final String APPEARANCE = "appearance";
 
 	private static final String ROLE = "role";
 
@@ -123,6 +139,38 @@ public class ReactTextControl extends ReactControl implements TooltipProvider {
 	}
 
 	/**
+	 * Sets the typographic role the text is displayed in.
+	 *
+	 * @param variant
+	 *        What the text is for: running text, a heading, the name of a value, a remark.
+	 */
+	public void setVariant(TextVariant variant) {
+		putState(VARIANT, variant.getExternalName());
+	}
+
+	/**
+	 * Sets the color role the text is displayed in.
+	 *
+	 * @param tone
+	 *        What the color of the text means: the color it is read in, a lesser weight, an
+	 *        explanation, an outcome.
+	 */
+	public void setTone(TextTone tone) {
+		putState(TONE, tone.getExternalName());
+	}
+
+	/**
+	 * Sets the shape the text is drawn in.
+	 *
+	 * @param appearance
+	 *        Plain text, or a pill in the color of the value or of the {@link #setTone(TextTone)
+	 *        tone}.
+	 */
+	public void setAppearance(TextAppearance appearance) {
+		putState(APPEARANCE, appearance.getExternalName());
+	}
+
+	/**
 	 * Sets the ARIA role of the rendered {@code <span>}.
 	 *
 	 * <p>
@@ -169,6 +217,7 @@ public class ReactTextControl extends ReactControl implements TooltipProvider {
 	 */
 	@Override
 	protected java.util.Set<String> scriptingPresentationKeys() {
-		return presentationKeys(super.scriptingPresentationKeys(), OVERFLOW, ReactValueColor.COLOR);
+		return presentationKeys(super.scriptingPresentationKeys(), OVERFLOW, VARIANT, TONE, APPEARANCE,
+			ReactValueColor.COLOR);
 	}
 }

@@ -7,7 +7,7 @@ import type { bundle } from './i18n'
 import type { CitationRender, PaneOpenOptions } from './extensions'
 import type { ChatMessage, Citation } from './types'
 
-const { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } = React
+const { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } = React
 
 type Labels = ReturnType<typeof bundle>
 
@@ -294,6 +294,22 @@ type Rendered = {
   cites: string
 }
 
+/**
+ * The box the answer is written into, rendered exactly once.
+ *
+ * React is given the first render of the answer, so the markup carries it before any effect has run
+ * - a component rendered to a string on a server has no other chance - and is then told to leave
+ * the element alone for good. The comparator is what says that: without it React re-applies
+ * `dangerouslySetInnerHTML` on every render of the parent and wipes the nodes `applyStreamed` put
+ * there, which is not something a React version is obliged to spare us.
+ */
+const Surface = memo(
+  function Surface({ html, forward }: { html: string; forward: React.RefObject<HTMLDivElement | null> }) {
+    return <div className="md" ref={forward} dangerouslySetInnerHTML={{ __html: html }} />
+  },
+  () => true,
+)
+
 /** The nodes `html` parses to, as a fragment that inserts in one DOM mutation. */
 function fragmentOf(html: string): DocumentFragment {
   const template = document.createElement('template')
@@ -346,7 +362,10 @@ function applyStreamed(
     state.labels !== labels ||
     state.cites !== cites ||
     // A regenerated answer is not an extension of the one before it.
-    !prefix.startsWith(state.source)
+    !prefix.startsWith(state.source) ||
+    // Nothing but this function may write the container, but if something did, the record is not a
+    // description of it any more and the committed nodes are rebuilt rather than half-replaced.
+    el.childNodes.length < state.count
   ) {
     el.replaceChildren()
     state.el = el
@@ -646,7 +665,7 @@ export function Markdown({
   }
   return (
     <div className="md-wrap">
-      <div className="md" ref={container} dangerouslySetInnerHTML={{ __html: initial.current }} />
+      <Surface html={initial.current} forward={container} />
       {hovered ? (
         <div
           ref={popover}

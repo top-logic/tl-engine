@@ -378,4 +378,33 @@ describe('a streaming answer', () => {
     expect(container.querySelector('.md')?.innerHTML).toBe(render(answer(deltas)))
     expect(container.querySelectorAll('.md > p')).toHaveLength(deltas)
   })
+
+  /**
+   * Nothing but the component writes that container - but the component is the only thing that
+   * knows it, and the host supplies the React this bundle runs on. A React that re-applies the
+   * element's `dangerouslySetInnerHTML` on every render of the parent wipes the committed nodes,
+   * which is what happened in the browser while the test-run React spared them: the answer then
+   * showed its first block and its last two, and nothing in between.
+   *
+   * `Surface` is what stops it happening, and this is what stops it mattering: a container that is
+   * not what the component recorded is written again from the start.
+   */
+  it('recovers when something else empties the container', async () => {
+    const container = document.createElement('div')
+    document.body.append(container)
+    const root = createRoot(container)
+    mounted = root
+    const answer = (n: number) =>
+      Array.from({ length: n }, (_, i) => `Sentence number ${i + 1} of the answer.`).join('\n\n')
+
+    for (let n = 1; n <= 8; n++) {
+      root.render(React.createElement(Markdown, { text: answer(n), streaming: true, labels }))
+      await settle()
+      // What a React that re-applies the first render would leave behind.
+      container.querySelector('.md')!.replaceChildren()
+    }
+    root.render(React.createElement(Markdown, { text: answer(9), streaming: true, labels }))
+    await settle()
+    expect(container.querySelector('.md')?.innerHTML).toBe(render(answer(9)))
+  })
 })

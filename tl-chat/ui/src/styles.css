@@ -3744,6 +3744,8 @@
   white-space: nowrap;
   vertical-align: baseline;
   user-select: none;
+  /* Never wider than the field it sits in: the label ellipsizes instead of being clipped off. */
+  max-width: 100%;
 }
 
 .ref-token.is-static {
@@ -3765,11 +3767,21 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 18rem;
+  /* Never squeezed away entirely, however long the location beside it is. */
+  min-width: 4ch;
 }
 
+/*
+ * The location ellipsizes like the name rather than holding its full width: a quote token carries
+ * both, and in a narrow field one part keeping everything leaves the other with a few pixels. Both
+ * give way in proportion; the whole of either is still in the tooltip and in the aria-label.
+ */
 .ref-token-location {
   color: var(--text-secondary);
   font-size: 0.85em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 4ch;
 }
 
 .bubble-user-edit.token-input {

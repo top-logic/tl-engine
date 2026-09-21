@@ -68,7 +68,7 @@ addresses one at a time (`windowId` + `conversation` → sub-session → tracker
 
 | | |
 |--|--|
-| Listing what is pending | `GET /chat/interactions` – `AgentExecutionStore.pendingInteractionsFor(person)`, every chat of the account, whatever window asks. The client replays an approval from it after a reload (`recoverRunState`). |
+| Listing what is pending | `GET /chat/interactions` – `AgentExecutionStore.pendingInteractionsFor(person)`, every chat of the account, whatever window asks. The client replays an approval **and a question** from it after a reload (`recoverRunState`). What the persisted row does not record - an approval's `toolMode`, a question's `multiSelect` and its parsed options - is read off the still-waiting run through `PendingInteractionRegistry`, so a rebuilt card asks what the agent asked (#466); nothing about the shape is persisted. A question row whose run is gone is therefore left out of the feed: its shape is unknown and an answer would reach nothing. |
 | Answering | `POST /chat/respond` – the request id is looked up in `PendingInteractionRegistry`, among **this account's** running runs, not in the asking window's tracker. A second tab, a reloaded page and a new login therefore all reach the parked run. |
 | Who may answer | The account named as the run's responder, and nobody else. Another account finds nothing and is told exactly what a caller naming a request that does not exist is told (`{"status":"ignored"}`), so the answer says nothing about which ids exist. |
 | Order of effects | The decision is recorded (`ConversationLogListener.resolveApproval`, "approve for this session" onto the **run's own** tracker) *before* the future is completed. Completing it unparks the agent mid-turn, and it may call the next tool before this request has returned. |
@@ -711,8 +711,9 @@ re-states the same defaults and changes nothing.
 Run state is recovered the same way, but over REST rather than the control state: the SSE stream
 replays nothing, so on restoring or selecting a session the store also reads `GET /chat/updates`
 (the tasks of the open run, and whether it is still processing) and `GET /chat/interactions` (the
-approvals waiting for this user). A reload in mid-run therefore comes back with the Fortschritt
-list, a busy composer and the open approval card.
+approvals and questions waiting for this user). A reload in mid-run therefore comes back with the
+Fortschritt list, a busy composer and the open card - the approval, or the question the agent asked,
+with the options and the single/multi shape it was asked in.
 
 `chat-id` is how elements find each other, and **`<chat>` is where it is written**. A page puts its
 chat elements inside one `<chat chat-id="...">`; each of them inherits that id through the view

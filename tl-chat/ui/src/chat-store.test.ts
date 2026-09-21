@@ -1118,14 +1118,15 @@ describe('recovering a run on boot', () => {
 
   /**
    * Two reasons not to rebuild a card: it belongs to another chat, or its deadline has passed - the
-   * agent has stopped waiting for it, so a card offering that decision leads nowhere. A question is
-   * not rebuilt here either; those re-surface over the stream when the chat is reopened.
+   * agent has stopped waiting for it, so a card offering that decision leads nowhere. Both hold for
+   * a question exactly as for an approval.
    */
-  it('leaves a foreign, an expired and a non-approval request alone', async () => {
+  it('leaves a foreign and an expired request alone', async () => {
     waiting = [
       { requestId: 'r2', type: 'approval', header: 't', sessionId: 's2', remainingMs: 40_000 },
       { requestId: 'r3', type: 'approval', header: 't', sessionId: 's1', remainingMs: 0 },
-      { requestId: 'r4', type: 'question', header: 't', sessionId: 's1', remainingMs: 40_000 },
+      { requestId: 'r4', type: 'question', header: 't', sessionId: 's2', remainingMs: 40_000 },
+      { requestId: 'r4b', type: 'choice', header: 't', sessionId: 's1', remainingMs: 0 },
     ]
     const store = chatStore('alpha', BOOT)
     const release = store.subscribe(() => undefined)
@@ -1134,6 +1135,145 @@ describe('recovering a run on boot', () => {
 
     await store.actions.selectSession('s1')
     expect(store.getState().messages.filter((m) => m.type === 'approval_request')).toHaveLength(0)
+    expect(store.getState().messages.filter((m) => m.type === 'interaction_request')).toHaveLength(0)
+
+    release()
+  })
+
+  /**
+   * The question the agent asked comes back with the shape it was asked in (#466).
+   *
+   * `multiSelect` is persisted nowhere; the feed reads it off the run that is still parked on the
+   * question. A card that turned it into a radio group would take a different answer from the one
+   * the agent asked for.
+   */
+  it('recovers a multi-select question as multi-select', async () => {
+    waiting = [
+      {
+        requestId: 'q1',
+        type: 'choice',
+        header: 'Rechnungen',
+        prompt: 'Welche soll ich verschicken?',
+        payload: '["RE-1","RE-2"]',
+        options: [{ label: 'RE-1' }, { label: 'RE-2', description: 'Vom Montag' }],
+        multiSelect: true,
+        sessionId: 's1',
+        remainingMs: 40_000,
+      },
+    ]
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+
+    await store.actions.selectSession('s1')
+
+    const cards = store.getState().messages.filter((m) => m.type === 'interaction_request')
+    expect(cards).toHaveLength(1)
+    expect(cards[0]).toMatchObject({
+      requestId: 'q1',
+      question: 'Welche soll ich verschicken?',
+      header: 'Rechnungen',
+      interactionType: 'choice',
+      multiSelect: true,
+      answered: false,
+      options: [{ label: 'RE-1' }, { label: 'RE-2', description: 'Vom Montag' }],
+    })
+
+    release()
+  })
+
+  /** A single-select question stays single-select; the shape is read, not assumed. */
+  it('leaves a single-select question single-select', async () => {
+    waiting = [
+      {
+        requestId: 'q2',
+        type: 'choice',
+        header: 'Weiter?',
+        prompt: 'Soll ich fortfahren?',
+        options: [{ label: 'Ja' }, { label: 'Nein' }],
+        multiSelect: false,
+        sessionId: 's1',
+        remainingMs: 40_000,
+      },
+    ]
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+
+    await store.actions.selectSession('s1')
+
+    const card = store
+      .getState()
+      .messages.find((m) => m.type === 'interaction_request' && m.requestId === 'q2')
+    expect(card && card.type === 'interaction_request' ? card.multiSelect : 'missing').toBe(false)
+
+    release()
+  })
+
+  /** A free-text question comes back as a text field, not as an empty choice. */
+  it('recovers a free-text question as a text question', async () => {
+    waiting = [
+      {
+        requestId: 'q3',
+        type: 'question',
+        header: 'Kundennummer',
+        prompt: 'Wie lautet die Kundennummer?',
+        sessionId: 's1',
+        remainingMs: 40_000,
+      },
+    ]
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+
+    await store.actions.selectSession('s1')
+
+    const card = store
+      .getState()
+      .messages.find((m) => m.type === 'interaction_request' && m.requestId === 'q3')
+    expect(card).toMatchObject({ interactionType: 'text', options: undefined, multiSelect: false })
+
+    release()
+  })
+
+  /** The stream and the feed both report the same question; the user must see one card. */
+  it('does not double a question the stream delivered while the feed was in flight', async () => {
+    let openFeed: () => void = () => undefined
+    feedGate = new Promise<void>((resolve) => {
+      openFeed = resolve
+    })
+    waiting = [
+      {
+        requestId: 'q4',
+        type: 'choice',
+        header: 'Weiter?',
+        options: [{ label: 'Ja' }],
+        multiSelect: true,
+        sessionId: 's1',
+        remainingMs: 40_000,
+      },
+    ]
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+
+    const selecting = store.actions.selectSession('s1')
+    await settle()
+    streams[0].emit('user_interaction', {
+      requestId: 'q4',
+      question: 'Soll ich fortfahren?',
+      type: 'choice',
+      options: [{ label: 'Ja' }],
+      multiSelect: true,
+    })
+    openFeed()
+    await selecting
+
+    expect(store.getState().messages.filter((m) => m.type === 'interaction_request')).toHaveLength(1)
 
     release()
   })

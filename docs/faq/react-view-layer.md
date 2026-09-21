@@ -651,7 +651,7 @@ A `<dashboard>` bounds its tiles instead of following them. Its grid has a defin
 
 The hiding sits on a wrapper element the stack renders itself: a frame's content renders its own root element, and a style set on that from the outside is overwritten the next time the content re-renders.
 
-## Object navigation: display targets, the reveal protocol, `<show-object>`
+## Object navigation: display targets, the reveal protocol, `<show-object>` / `<show-view>`
 
 "Show this business object where the application displays objects of its type" is the view-layer counterpart of the classic `GotoHandler` / `LayoutComponent.makeVisible()`. It consists of three generic parts in `com.top_logic.layout.view.navigation`; none of them knows sidebars, tab bars or tile stacks in particular.
 
@@ -692,6 +692,24 @@ Every control that shows one of several children implements `com.top_logic.layou
 ### Entry points
 
 - **`<show-object/>`** (`ShowObjectAction`) in a `<generic-command>` chain shows the chain's input object and passes it on; no input passes through unchanged; a selection of exactly one object shows that object. `<generic-command input="selection"><show-object/></generic-command>` is the whole configuration of a "go to" button. Java code calls `ObjectNavigation.show(context, object, continuation)`.
+- **`<show-view view="…">`** (`ShowViewAction`) brings one view into view and writes the values its channels receive, without a business object being involved. It carries exactly the attributes and `<bind>` children of a display target's `<show>` — `view` (mandatory), `dialog`, `label`, `label-expr` — and each `<bind expr>` is a TL-Script function of the chain's current value (a `<bind>` without `expr` receives that value itself). The view is reached the same way a target's view is: the containers on the way are opened, or it is drilled down to as a frame, or opened as a dialog. The chain continues with the value it had.
+
+  ```xml
+  <show-view view="tickets.view.xml">
+    <bind channel="activeFilter" expr="term -> 'all'"/>
+    <bind channel="searchTerm" expr="term -> $term"/>
+  </show-view>
+  ```
+
+- **`<show-views>`** (`ShowViewsAction`) holds a list of `<show>` entries carried out in **one** request, so each entry is looked for within the view the entry before it displayed — a display target's `<show>` list, written in the command chain instead of declared per type. Java code calls `ObjectNavigation.show(context, shows, value, continuation)` for either.
+
+  ```xml
+  <show-views>
+    <show view="projects/overview.view.xml"><bind channel="project" expr="t -> $t.container()"/></show>
+    <show view="projects/ticket-detail.view.xml"><bind channel="ticket"/></show>
+  </show-views>
+  ```
+
 - **`ReactContext.getObjectNavigator()`** (`com.top_logic.layout.react.navigation.ObjectNavigator`: `canShow(value)`, `show(context, value)`) is the seam for controls in `com.top_logic.layout.react`, which cannot depend on the view layer; the view layer answers it with `DisplayTargetNavigator`. Through it, **object values displayed read-only are links automatically** wherever a target exists for their type: `ReactResourceCellControl` (tree nodes via `MetaResourceControlProvider`, and any cell built with `useLink`), the read-only values of `ReactDropdownSelectControl` (which is what reference attributes in `<table>` cells and view-mode `<form>` fields render as), and `tlObject` anchors in read-only structured text (`ReactWysiwygControl`, command `showObjectLink`, resolved with `TLObjectLinkUtil` like the classic `OpenTLObjectLink`). A tree hands its node content provider the business object a node stands for (`TreeUIModel.getBusinessObject`), which is why a node is a link exactly like the same object in a cell. The TL-Script functions `htmlObjectLink(object, label)`, `htmlSource(content)` and `htmlText(source)` (`HtmlFunctions` in `com.top_logic.layout.wysiwyg`) write such an anchor and read or write the HTML source of a structured-text attribute, e.g. to append an object reference to a comment.
 
 - **The WYSIWYG editor carries configured commands and inserts what they write.** The editor is chosen for a field by `<input-control class="com.top_logic.layout.react.wysiwyg.WysiwygControlProvider">`, which takes `<commands>` — ordinary view commands (`ViewCommand.Config`, e.g. `<generic-command>`) — and an optional `insert-channel`. The commands run in a child `ViewContext` of the field's view context: they see the channels of the surrounding view, so they take their input from it and hand it on to the dialogs they open, and beside those channels they see the insertion channel the editor declares. Markup written to that channel is inserted at the cursor of the editor (`ReactWysiwygControl.insertAtCursor`, state `insert` = `{seq, html}`; the client inserts it once per `seq`, reports the resulting text, and the request is taken back). Commands placed in a toolbar — the default placement — are rendered as a `ReactToolbarControl` in state `toolbar`, which the client renders beside the formatting buttons.

@@ -5238,6 +5238,62 @@ button.tlMenu__item--disabled:hover {
 	outline-offset: 1px;
 }
 
+/* A boolean drawn as a switch: the input itself is the track, its ::before the knob, so the whole
+   shape stays the one focusable element the box is. A pill and a circle keep their shape, which is
+   why both are written literally rather than taken from a radius token. */
+.tlReactCheckbox--switch {
+	appearance: none;
+	-webkit-appearance: none;
+	width: 2.25rem;
+	height: 1.25rem;
+	position: relative;
+	flex: none;
+	padding: 0;
+	border: none;
+	border-radius: 999px;
+	background-color: var(--border-strong);
+	transition: background-color 120ms ease-in-out;
+}
+
+.tlReactCheckbox--switch::before {
+	content: "";
+	position: absolute;
+	top: 0.125rem;
+	left: 0.125rem;
+	width: 1rem;
+	height: 1rem;
+	border-radius: 50%;
+	background-color: var(--icon-on-color);
+	box-shadow: var(--shadow-raised);
+	transition: transform 120ms ease-in-out;
+}
+
+.tlReactCheckbox--switch:checked {
+	background-color: var(--interactive);
+}
+
+/* The knob travels the track less its own width and the inset on both sides. */
+.tlReactCheckbox--switch:checked::before {
+	transform: translateX(1rem);
+}
+
+/* The knob jumps to its position where motion is unwelcome; where it stands still says the same. */
+@media (prefers-reduced-motion: reduce) {
+	.tlReactCheckbox--switch,
+	.tlReactCheckbox--switch::before {
+		transition: none;
+	}
+}
+
+/* A ring rather than an outline, so that the focus outline is still visible on a rejected value. */
+.tlReactCheckbox--switch.tlReactCheckbox--error {
+	box-shadow: 0 0 0 2px var(--support-error);
+}
+
+.tlReactCheckbox--switch.tlReactCheckbox--warning {
+	box-shadow: 0 0 0 2px var(--support-warning);
+}
+
 /* --- TLBooleanChoice -------------------------------------------------------- */
 
 /* A boolean offered as a choice: radio buttons in a row, or a select.

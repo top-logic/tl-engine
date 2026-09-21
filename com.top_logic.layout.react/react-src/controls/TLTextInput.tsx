@@ -159,11 +159,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
       );
     }
     return (
-      <span
-        id={controlId}
-        className={immutableCls}
-        style={multiline ? { whiteSpace: 'pre-wrap' } : undefined}
-      >
+      <span id={controlId} className={immutableCls}>
         {text}
       </span>
     );

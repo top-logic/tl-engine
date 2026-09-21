@@ -1745,3 +1745,230 @@ describe('stopping a run', () => {
     release()
   })
 })
+
+/**
+ * A window that opens a conversation while a run of it is still going (#512).
+ *
+ * The transcript it is handed now contains the open turn - the user's message, what the agent has
+ * said so far, the approval it is parked on - because the server reads it off the run rather than
+ * out of the database, which does not have it until the run ends. This is what the store has to
+ * make of it: one card, in its place under that turn, wearing the shape the waiting run knows.
+ */
+describe('a window opened while the run is in flight', () => {
+  /** What `GET /chat/sessions/{id}` hands back in the test at hand. */
+  let turnsJson: string
+  let runState: { processing: boolean; tasksJson: string }
+  let waiting: Record<string, unknown>[]
+  /** Every `GET /chat/sessions/{id}` the store made, so a reload can be counted. */
+  let loads: number
+
+  /** The in-flight turn as the server serialises it: user text, partial answer, pending approval. */
+  const IN_FLIGHT = JSON.stringify([
+    {
+      id: 't1',
+      turnNumber: 1,
+      timestamp: 1000,
+      userParts: [{ id: 'u1', type: 'text', timestamp: 1000, textData: { text: 'Bitte ändern' } }],
+      assistantParts: [
+        { id: 'a1', type: 'text', timestamp: 1100, textData: { text: 'Dafür brauche ich eine Freigabe.' } },
+        {
+          id: 'r1',
+          type: 'approval',
+          timestamp: 1200,
+          approvalData: {
+            toolCallId: 'tc1',
+            toolName: 'editText',
+            argsJson: '{"objectId":"Invoice:1"}',
+            displayReason: 'Modifies shared application data.',
+            decision: '',
+          },
+        },
+      ],
+    },
+  ])
+
+  beforeEach(() => {
+    turnsJson = ''
+    runState = { processing: true, tasksJson: '' }
+    waiting = []
+    loads = 0
+    const globals = globalThis as unknown as Record<string, unknown>
+    const inner = globals.fetch as (url: string, init?: unknown) => Promise<unknown>
+    globals.fetch = vi.fn(async (url: string, init?: { method?: string; body?: string }) => {
+      if (url.includes('/chat/updates')) {
+        return { ok: true, status: 200, json: async () => runState }
+      }
+      if (url.includes('/chat/interactions')) {
+        return { ok: true, status: 200, json: async () => ({ interactions: waiting }) }
+      }
+      if (/\/chat\/sessions\/[^/?]/.test(url)) {
+        loads++
+        return { ok: true, status: 200, json: async () => ({ id: 's1', turnsJson }) }
+      }
+      return inner(url, init)
+    })
+  })
+
+  /**
+   * The whole of the defect in one assertion: the question the approval is about stands above it.
+   * Before the fix the transcript stopped at the previous turn and the card floated at the end of
+   * whatever was there, which is how a decision came to sit under an unrelated turn.
+   */
+  it('renders the open turn, with the approval inside it', async () => {
+    turnsJson = IN_FLIGHT
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+
+    await store.actions.selectSession('s1')
+
+    const kinds = store.getState().messages.map((m) => m.type)
+    expect(kinds.indexOf('user')).toBe(0)
+    expect(kinds.indexOf('assistant_text')).toBeGreaterThan(0)
+    expect(kinds.indexOf('approval_request')).toBeGreaterThan(kinds.indexOf('assistant_text'))
+    expect(store.getState().busy).toBe(true)
+
+    release()
+  })
+
+  /** A turn that is still being written carries no copy/rate/regenerate row. */
+  it('shows the last answer of a running turn as still streaming', async () => {
+    turnsJson = IN_FLIGHT
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+
+    await store.actions.selectSession('s1')
+
+    const answer = store.getState().messages.find((m) => m.type === 'assistant_text')
+    expect(answer).toMatchObject({ isStreaming: true })
+
+    release()
+  })
+
+  /**
+   * The pending feed completes the restored card rather than appending a second one: only the
+   * waiting run knows the tool's mode and how long is left, and only the transcript knows where the
+   * card belongs.
+   */
+  it('completes the restored card instead of adding one at the end', async () => {
+    turnsJson = IN_FLIGHT
+    waiting = [
+      {
+        requestId: 'r1',
+        type: 'approval',
+        header: 'editText',
+        prompt: 'Modifies shared application data.',
+        payload: '{"objectId":"Invoice:1"}',
+        toolMode: 'DATA_WRITE',
+        sessionId: 's1',
+        remainingMs: 40_000,
+      },
+    ]
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+
+    await store.actions.selectSession('s1')
+
+    const approvals = store.getState().messages.filter((m) => m.type === 'approval_request')
+    expect(approvals).toHaveLength(1)
+    expect(approvals[0]).toMatchObject({
+      approvalRequestId: 'r1',
+      toolMode: 'DATA_WRITE',
+      remainingMs: 40_000,
+      outcome: 'pending',
+    })
+    // Still inside the turn it was asked in, not appended after everything.
+    const messages = store.getState().messages
+    expect(messages[messages.length - 1].type).toBe('approval_request')
+    expect(messages.filter((m) => m.type === 'user')).toHaveLength(1)
+
+    release()
+  })
+
+  /**
+   * A recorded approval says in the reader's language what the agent wanted to do.
+   *
+   * The reason the security context wrote is one English sentence for everybody, so the history
+   * printed "Modifies shared application data." into a German transcript. The tool's mode is what
+   * the live card phrases its own sentence from, and it is now recorded with the approval (#512).
+   */
+  it('carries the recorded tool mode of an approval', async () => {
+    turnsJson = JSON.stringify([
+      {
+        id: 't1',
+        turnNumber: 1,
+        timestamp: 1000,
+        userParts: [{ id: 'u1', type: 'text', timestamp: 1000, textData: { text: 'Bitte ändern' } }],
+        assistantParts: [
+          {
+            id: 'r1',
+            type: 'approval',
+            timestamp: 1200,
+            approvalData: {
+              toolCallId: 'tc1',
+              toolName: 'editText',
+              argsJson: '{}',
+              displayReason: 'Modifies shared application data.',
+              mode: 'DATA_WRITE',
+              decision: 'APPROVED_FOR_SESSION',
+            },
+          },
+        ],
+      },
+    ])
+    runState = { processing: false, tasksJson: '' }
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+
+    await store.actions.selectSession('s1')
+
+    const approval = store.getState().messages.find((m) => m.type === 'approval_request')
+    expect(approval).toMatchObject({ toolMode: 'DATA_WRITE', outcome: 'APPROVED_FOR_SESSION' })
+
+    release()
+  })
+
+  /**
+   * The completion of a run this window did not start: there is no message of ours to write the
+   * answer into, so the conversation is read back and the finished turn replaces the snapshot.
+   */
+  it('reads the conversation back when a completion arrives with no run of its own', async () => {
+    turnsJson = IN_FLIGHT
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+
+    await store.actions.selectSession('s1')
+    const loadsAfterSelect = loads
+
+    turnsJson = JSON.stringify([
+      {
+        id: 't1',
+        turnNumber: 1,
+        timestamp: 1000,
+        userParts: [{ id: 'u1', type: 'text', timestamp: 1000, textData: { text: 'Bitte ändern' } }],
+        assistantParts: [
+          { id: 'a2', type: 'text', timestamp: 1400, textData: { text: 'Erledigt.' } },
+        ],
+      },
+    ])
+    streams[0].emit('message_complete', { contentText: 'Erledigt.' })
+    await settle()
+
+    expect(loads).toBe(loadsAfterSelect + 1)
+    expect(store.getState().busy).toBe(false)
+    const answers = store.getState().messages.filter((m) => m.type === 'assistant_text')
+    expect(answers).toHaveLength(1)
+    expect(answers[0]).toMatchObject({ text: 'Erledigt.' })
+
+    release()
+  })
+})

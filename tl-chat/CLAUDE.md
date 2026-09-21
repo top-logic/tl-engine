@@ -1118,9 +1118,9 @@ with a Forget command that calls `aiMemoryDelete`. See `tl-ai-core/doc/environme
 
 #### The first questions a page offers: `<prompts>` (#529)
 
-An empty conversation is the one screen with nothing to react to, and the page knows better than
-the chat what is worth asking on it. Consulting's Pietro page carried three hand-built `<button>`s
-and three derived channels for exactly that; this is the same thing as configuration:
+A new chat is the one screen with nothing to react to, and the page knows better than the chat what
+is worth asking on it. Consulting's Pietro page carried three hand-built `<button>`s and three
+derived channels for exactly that; this is the same thing as configuration:
 
 ```xml
 <chat-conversation draft="chatDraft" input="chatSession">
@@ -1149,14 +1149,26 @@ browser, clicking one costs no round trip.
 | `<label>` | Mandatory. What the card says, in the user's own language - the short form of the question. One line, elided where it does not fit; the whole sentence is the button's tooltip. |
 | `icon` | A `ThemeImage`, named the way a `<chat-rail>` section names its icon. A card without one shows its label alone. |
 | `<value>` | Mandatory. TL-Script producing the text the click puts into the composer. |
-| `empty-only` | Default `true`: the cards are gone once the conversation has turns. Switch it off for cards that are standing commands ("summarise what we have so far") rather than openers. |
+
+**Where they stand, and when.** Between the greeting and the composer - under "Womit kann ich
+helfen?", over the field - which is the position `tl-chat-classic` gives its own example prompts and
+the order the eye reads them in: what this is, what you could ask, where you type. In the empty
+stage's grid they are a row of their own (`.stage.is-empty .prompt-suggestions`), zero-height for a
+conversation that offers none.
+
+**On a new chat, and nowhere else.** Not "whenever the conversation is empty": a chat the user
+opened from the session list is not short of a first question, whatever it holds, so the rule is the
+session channel - `promptCardsVisible(chat.sessionId, chat.messages.length)` in
+`chat-conversation.tsx`. That is the element's rule and not a page's option; there is nothing to
+switch off. (The `empty-only` flag of the first cut is gone.)
 
 **A click fills the composer; it does not send.** The same rule `draft`, `reference` and `quote`
 follow, and the reason a card may offer a longer and more precise question than anyone would type:
 the user reads the sentence and presses send. It goes in through the same `setDraft` a host writing
 the `draft` channel reaches, so the field takes the focus, the caret lands behind the text, and the
 composer reports the draft back onto that channel the way a typed sentence does. A card therefore
-**replaces** whatever stood in the composer, which is why `empty-only` is on by default.
+**replaces** whatever stood in the composer - which on a new chat is a field the user has not typed
+into yet.
 
 A card whose expression throws is pushed with an empty text and the browser leaves it out, with a
 WARN - the same trade a `<fact>` makes. One card fewer, not a broken page.

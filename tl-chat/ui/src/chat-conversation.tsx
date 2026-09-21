@@ -156,14 +156,21 @@ export function readPromptCards(raw: unknown): PromptCard[] {
 }
 
 /**
- * Whether the cards are shown right now.
+ * Whether the cards are shown right now: on a new chat, and nowhere else.
  *
- * `empty-only` is the configured default and the answer is then the emptiness of the conversation:
- * a first question is what an empty screen is short of, and a conversation under way is not. A host
- * whose cards are standing commands rather than openers switches it off, and they stay.
+ * Two conditions, and both are load-bearing. `sessionId` is what "new chat" means - nothing is
+ * selected in the session list and the first send is what will bring a conversation into being - so
+ * a chat the user opened is never offered openers, whether or not it happens to hold a turn. The
+ * empty transcript is the condition the greeting itself is drawn under (`stage.is-empty`, and
+ * `Thread`'s `messages.length === 0`), and taking it as well is what keeps the cards from ever
+ * standing on a screen that has no greeting over them: they appear under it or not at all.
+ *
+ * The second one is not redundant. A send on a new chat sets the session id one render before the
+ * user's own message is appended, so without it the row would linger for a frame over a screen that
+ * is already a conversation.
  */
-export function promptCardsVisible(raw: unknown, messageCount: number): boolean {
-  return raw === false ? true : messageCount === 0
+export function promptCardsVisible(sessionId: unknown, messageCount: number): boolean {
+  return !sessionId && messageCount === 0
 }
 
 /**
@@ -238,11 +245,14 @@ export function sameServers(a: string[], b: string[]): boolean {
 }
 
 /**
- * The row of first questions a page offers, under the composer.
+ * The row of first questions a page offers, between the greeting and the composer.
  *
- * A click fills the composer and nothing else - the user reads the sentence and presses send, which
- * is the same rule the `draft`, `reference` and `quote` channels follow. `setDraft` focuses the
- * field and puts the caret behind the text, so a user who wants to add a word is already there.
+ * That is where the classic chat put its own example prompts - under "How can I help you today?",
+ * over the field - and it is where they belong: the eye reads the greeting, the offer, and then the
+ * place to type. A click fills the composer and nothing else - the user reads the sentence and
+ * presses send, which is the same rule the `draft`, `reference` and `quote` channels follow.
+ * `setDraft` focuses the field and puts the caret behind the text, so a user who wants to add a word
+ * is already there.
  */
 function PromptCards({
   cards,
@@ -324,9 +334,9 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   const insideDock = state.insideDock === true
   useEffect(() => actions.registerConversation(insideDock), [actions, insideDock])
 
-  // The first questions this page offers. Their texts were evaluated on the server, so a click is
-  // purely local: it writes the composer, which then reports the draft onto the `draft` channel the
-  // way a typed sentence does.
+  // The first questions this page offers, shown on a new chat alone. Their texts were evaluated on
+  // the server, so a click is purely local: it writes the composer, which then reports the draft
+  // onto the `draft` channel the way a typed sentence does.
   const promptCards = useMemo(() => readPromptCards(state.prompts), [state.prompts])
   const onPickPrompt = useCallback((text: string) => actions.setDraft(text), [actions])
 
@@ -581,6 +591,9 @@ export function TLChatConversation({ controlId }: TLCellProps) {
           }
           onOpenSource={() => undefined}
         />
+        {promptCards.length > 0 && promptCardsVisible(chat.sessionId, chat.messages.length) ? (
+          <PromptCards cards={promptCards} label={labels.promptCards} onPick={onPickPrompt} />
+        ) : null}
         <Composer
           at={at}
           agents={chat.caps.agents}
@@ -624,9 +637,6 @@ export function TLChatConversation({ controlId }: TLCellProps) {
           ref={(api: ComposerApi | null) => actions.bindComposer(api)}
           {...controls}
         />
-        {promptCards.length > 0 && promptCardsVisible(state.promptsEmptyOnly, chat.messages.length) ? (
-          <PromptCards cards={promptCards} label={labels.promptCards} onPick={onPickPrompt} />
-        ) : null}
       </div>
     </div>
   )

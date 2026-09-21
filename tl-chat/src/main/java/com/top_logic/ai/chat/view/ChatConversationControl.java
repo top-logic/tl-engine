@@ -812,7 +812,6 @@ public class ChatConversationControl extends ReactControl {
 			channel.addListener(listener);
 			addCleanupAction(() -> channel.removeListener(listener));
 		}
-		putState("promptsEmptyOnly", Boolean.valueOf(prompts.getEmptyOnly()));
 		serializePrompts();
 		// A channel written while this control was detached notified nobody, the same reason the
 		// facts and the mention candidates are read again on the way back.

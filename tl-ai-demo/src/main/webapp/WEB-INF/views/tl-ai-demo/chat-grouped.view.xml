@@ -323,10 +323,11 @@
 					follow, and the reason a card may offer a longer and more precise question than
 					anyone would type.
 
-					Shown while the conversation is empty, which is the one screen with nothing to
-					react to; `empty-only="false"` would keep them under every composer. The third
-					card is the one that is worth having: with an invoice open it asks about that
-					invoice by name, and with none open it asks the question that still makes sense.
+					They stand under the greeting of a NEW chat and nowhere else - the one screen
+					with nothing to react to - and a chat opened from the list on the left never
+					shows them, whatever it holds. The third card is the one that is worth having:
+					with an invoice open it asks about that invoice by name, and with none open it
+					asks the question that still makes sense.
 				-->
 				<prompts>
 					<inputs>

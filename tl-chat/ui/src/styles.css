@@ -1037,8 +1037,8 @@
    */
   grid-template-columns: minmax(0, 1fr);
   /*
-   * Four content rows, not three: the prompt cards sit under the composer, and a conversation that
-   * configures none leaves that row at zero height.
+   * Four content rows, not three: the prompt cards sit between the greeting and the composer, and a
+   * conversation that offers none leaves that row at zero height.
    */
   grid-template-rows: 1fr auto auto auto 1.2fr;
 }
@@ -1049,8 +1049,12 @@
   min-height: 0;
 }
 
-.stage.is-empty .composer {
+.stage.is-empty .prompt-suggestions {
   grid-row: 3;
+}
+
+.stage.is-empty .composer {
+  grid-row: 4;
 }
 
 .stage.is-empty .thread-bar {
@@ -1069,12 +1073,10 @@
   padding: 0 0 1.75rem;
 }
 
-.stage.is-empty .prompt-suggestions {
-  grid-row: 4;
-}
-
 /*
- * The first questions a page offers, under the composer.
+ * The first questions a page offers, between the greeting and the composer - the position the
+ * classic chat gives its example prompts, and the order the eye reads: what this is, what you could
+ * ask, where you type.
  *
  * Same column and same gutters as the composer, so the row lines up with the field it fills rather
  * than with the transcript's wider measure. They wrap: a page may offer three long questions or six

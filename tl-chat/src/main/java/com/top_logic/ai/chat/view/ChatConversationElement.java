@@ -1084,12 +1084,18 @@ public class ChatConversationElement implements UIElement {
 	}
 
 	/**
-	 * The first questions this page offers, as cards standing under the composer.
+	 * The first questions this page offers, as cards standing under the greeting of a new chat.
 	 *
 	 * <p>
-	 * The empty conversation is the one screen where a user has nothing to react to, and a page
-	 * knows better than the chat what is worth asking on it. So a host names the questions here and
-	 * the user clicks one instead of typing it.
+	 * A new chat is the one screen where a user has nothing to react to, and a page knows better
+	 * than the chat what is worth asking on it. So a host names the questions here and the user
+	 * clicks one instead of typing it.
+	 * </p>
+	 *
+	 * <p>
+	 * The cards stand between the greeting and the prompt field, and only there: a conversation the
+	 * user opened from the list is not short of a first question, whether or not it holds a turn.
+	 * That is the rule, not a default - there is nothing to switch off.
 	 * </p>
 	 *
 	 * <p>
@@ -1117,13 +1123,6 @@ public class ChatConversationElement implements UIElement {
 		String INPUTS = "inputs";
 
 		/**
-		 * Configuration property name for {@link #getEmptyOnly()}.
-		 *
-		 * @see #getEmptyOnly()
-		 */
-		String EMPTY_ONLY = "empty-only";
-
-		/**
 		 * Configuration property name for {@link #getCards()}.
 		 *
 		 * @see #getCards()
@@ -1137,25 +1136,6 @@ public class ChatConversationElement implements UIElement {
 		@Name(INPUTS)
 		@ListBinding(format = ChannelRefFormat.class, tag = "input", attribute = "channel")
 		List<ChannelRef> getInputs();
-
-		/**
-		 * Whether the cards are gone once the conversation has something in it.
-		 *
-		 * <p>
-		 * On by default, because a first question is what the empty screen is short of and a
-		 * conversation under way is not: there the transcript is what the user reacts to, and a row
-		 * of unrelated openers under the composer would compete with it.
-		 * </p>
-		 *
-		 * <p>
-		 * Switch it off for a page whose cards are not openers but standing commands - "summarise
-		 * what we have so far" - which are worth having at every point of a conversation.
-		 * </p>
-		 */
-		@Name(EMPTY_ONLY)
-		@Label("Empty only")
-		@BooleanDefault(true)
-		boolean getEmptyOnly();
 
 		/**
 		 * The cards themselves, in the order they are shown.

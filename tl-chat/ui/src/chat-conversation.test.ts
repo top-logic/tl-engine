@@ -1,4 +1,7 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
+import { React } from 'tl-react-bridge'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { resetTLBridge, setTLState } from '../test/tl-react-bridge'
 import { App } from './App'
 import { plusMenuVisible } from './composer'
 import {
@@ -211,16 +214,71 @@ describe('readPromptCards', () => {
   })
 })
 
+/**
+ * When the row is on screen: on a new chat, and nowhere else.
+ *
+ * "New chat" is what the session channel says, not what the transcript says - a conversation the
+ * user opened from the list is not short of a first question, whatever it holds.
+ */
 describe('promptCardsVisible', () => {
-  it('shows the cards on an empty conversation and hides them once it has turns', () => {
+  it('shows the cards on a new chat - nothing selected, nothing said', () => {
+    expect(promptCardsVisible(null, 0)).toBe(true)
     expect(promptCardsVisible(undefined, 0)).toBe(true)
-    expect(promptCardsVisible(true, 0)).toBe(true)
-    expect(promptCardsVisible(true, 2)).toBe(false)
+    // What a send takes back leaves behind, which is a new chat again.
+    expect(promptCardsVisible('', 0)).toBe(true)
   })
 
-  it('keeps them at every point of the conversation when empty-only is switched off', () => {
-    expect(promptCardsVisible(false, 0)).toBe(true)
-    expect(promptCardsVisible(false, 7)).toBe(true)
+  it('hides them in a selected chat, even one with no turn in it', () => {
+    expect(promptCardsVisible('session-7', 0)).toBe(false)
+    expect(promptCardsVisible('session-7', 4)).toBe(false)
+  })
+
+  it('hides them from the first message on, before the session id has landed', () => {
+    // A send on a new chat sets the id one render ahead of the user's own message, and the row must
+    // not linger over a screen that is already a conversation either way round.
+    expect(promptCardsVisible(null, 1)).toBe(false)
+    expect(promptCardsVisible('created-by-this-send', 0)).toBe(false)
+  })
+})
+
+/**
+ * Where the row stands, which is the whole of what the position is worth.
+ *
+ * The cards are an offer of what to ask, so they belong between the greeting that asks the question
+ * and the field that answers it - the order the classic chat's example prompts already had. Asserted
+ * on the rendered markup rather than on the JSX, because the grid rows that place them are written
+ * against that order and a swap here would be invisible in every other test.
+ */
+describe('where the prompt cards are rendered', () => {
+  afterEach(() => resetTLBridge())
+
+  /** Renders a new chat that offers one card, without a browser. */
+  function render(chatId: string): string {
+    const state = {
+      chatId,
+      windowId: 'w1',
+      authenticated: true,
+      language: 'en',
+      prompts: [{ label: 'Summarise', icon: '', text: 'Please summarise the newest invoices.' }],
+    }
+    setTLState(state)
+    return renderToStaticMarkup(React.createElement(TLChatConversation, { controlId: chatId, state }))
+  }
+
+  it('puts the cards under the greeting and above the composer', () => {
+    const markup = render('prompt-order-test')
+    const greeting = markup.indexOf('class="welcome"')
+    const cards = markup.indexOf('class="prompt-suggestions"')
+    const composer = markup.indexOf('class="composer"')
+    expect(greeting).toBeGreaterThanOrEqual(0)
+    expect(cards).toBeGreaterThan(greeting)
+    expect(composer).toBeGreaterThan(cards)
+  })
+
+  it('renders the card as the button a click fills the composer from', () => {
+    const markup = render('prompt-button-test')
+    expect(markup).toContain('Summarise')
+    expect(markup).toContain('title="Please summarise the newest invoices."')
   })
 })
 

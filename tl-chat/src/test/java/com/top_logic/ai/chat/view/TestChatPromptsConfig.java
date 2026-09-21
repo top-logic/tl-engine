@@ -13,6 +13,7 @@ import test.com.top_logic.basic.ModuleTestSetup;
 
 import com.top_logic.ai.chat.view.ChatConversationElement.Prompt;
 import com.top_logic.ai.chat.view.ChatConversationElement.Prompts;
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 
@@ -71,19 +72,23 @@ public class TestChatPromptsConfig extends TestCase {
 	}
 
 	/**
-	 * The cards are gone once the conversation has something in it, unless the page says otherwise.
+	 * When the cards are shown is the element's rule, not the page's option.
 	 *
 	 * <p>
-	 * The safe default: a first question is what an empty screen is short of, and a row of openers
-	 * under the composer of a running conversation would compete with the transcript the user is
-	 * actually reading.
+	 * They stand under the greeting of a new chat and nowhere else, so there is nothing left for a
+	 * flag to say: a conversation the user opened is not short of a first question, and one that is
+	 * under way has its transcript to react to. The {@code empty-only} this section briefly carried
+	 * is therefore gone rather than deprecated, and a page that still writes it is told so instead
+	 * of being quietly ignored.
 	 * </p>
 	 */
-	public void testCardsAreEmptyOnlyByDefault() throws Exception {
-		assertTrue("A page that says nothing offers its cards on the empty conversation alone.",
-			parsePrompts("").getEmptyOnly());
-		assertFalse("A page whose cards are standing commands switches that off.",
-			parsePrompts(" empty-only='false'").getEmptyOnly());
+	public void testWhenTheCardsShowIsNotConfigurable() throws Exception {
+		try {
+			parsePrompts(" empty-only='false'");
+			fail("<prompts> must not accept an option that no longer decides anything.");
+		} catch (ConfigurationException ex) {
+			// Expected: the visibility rule is the element's.
+		}
 	}
 
 	/** A {@code <prompts>} with no {@code <inputs>} holds cards whose expressions take no arguments. */

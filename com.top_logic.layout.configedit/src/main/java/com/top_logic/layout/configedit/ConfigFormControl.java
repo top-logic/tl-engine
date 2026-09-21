@@ -29,7 +29,8 @@ import com.top_logic.util.Resources;
  * {@link ConfigFormModel#cancelEditing() drops} the copy, Apply runs {@link ConfigValidation} and
  * either {@link ConfigFormModel#apply() carries the copy over} or, if a violation was found,
  * leaves edit mode open and puts every violation on the field that caused it - via
- * {@link ConfigValidation#report(List, ConfigFieldIndex)} against the {@link ConfigFieldIndex}
+ * {@link ConfigValidation#report(ConfigValidation.Findings, ConfigFieldIndex)} against the
+ * {@link ConfigFieldIndex}
  * the current editor filled while it was built. Every mode change rebuilds the editor over
  * {@link ConfigFormModel#edited()} - the editor itself never learns which of the two, original or
  * copy, it was handed.
@@ -284,8 +285,8 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 * untouched and this control unrebuilt.
 	 *
 	 * <p>
-	 * Takes back every violation the previous refusal placed before checking anything, via
-	 * {@link ConfigFieldIndex#clearModelErrors()}: a violation still holding is placed again a few
+	 * Takes back every finding the previous refusal placed before checking anything, via
+	 * {@link ConfigFieldIndex#clearFindings()}: a finding still holding is placed again a few
 	 * lines below, one the user has meanwhile fixed is gone. Without that, a violation could
 	 * outlive its own cause - a cross-item constraint is fixed by editing <em>one</em> of the two
 	 * fields it flagged, leaving the other one showing an error nothing will ever clear.
@@ -303,7 +304,8 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 * </p>
 	 *
 	 * <p>
-	 * A violation that {@link ConfigValidation#report(List, ConfigFieldIndex)} could not place -
+	 * A violation that {@link ConfigValidation#report(ConfigValidation.Findings, ConfigFieldIndex)}
+	 * could not place -
 	 * a property the editor renders as no field of its own, e.g. a
 	 * {@link com.top_logic.basic.config.annotation.Hidden @Hidden} one or one named by a
 	 * constraint that reached into another item - is shown at form level instead. Without that,

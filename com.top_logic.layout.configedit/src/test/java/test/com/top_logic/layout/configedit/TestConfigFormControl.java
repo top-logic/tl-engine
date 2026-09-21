@@ -28,6 +28,8 @@ import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.config.constraint.annotation.Comparision;
 import com.top_logic.basic.config.constraint.annotation.ComparisonDependency;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
+import com.top_logic.basic.config.constraint.impl.Positive;
 import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
@@ -81,6 +83,34 @@ public class TestConfigFormControl extends TestCase {
 
 		/** @see #getName() */
 		void setName(String value);
+	}
+
+	/**
+	 * A configuration with a warning-level constraint next to a mandatory property - the shape that
+	 * tells a warning shown apart from a warning that refuses, and lets a refusal be provoked while
+	 * a warning stands.
+	 */
+	public interface WarningConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getName()}. */
+		String NAME = "name";
+
+		/** Property name for {@link #getAmount()}. */
+		String AMOUNT = "amount";
+
+		@Name(NAME)
+		@Mandatory
+		String getName();
+
+		/** @see #getName() */
+		void setName(String value);
+
+		@Name(AMOUNT)
+		@Constraint(value = Positive.class, asWarning = true)
+		int getAmount();
+
+		/** @see #getAmount() */
+		void setAmount(int value);
 	}
 
 	/**
@@ -582,6 +612,46 @@ public class TestConfigFormControl extends TestCase {
 	}
 
 	/**
+	 * A warning is drawn by the same chrome the error is, in its own area: the value is questioned
+	 * where it is entered, while the refusal over the sibling property keeps edit mode open.
+	 */
+	public void testAWarningReachesItsChrome() {
+		WarningConfig config = TypedConfiguration.newConfigItem(WarningConfig.class);
+		config.setName("given");
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		click(findButton(form, label(I18NConstants.EDIT)));
+		fieldOf(form, WarningConfig.NAME).setValue(null);
+		fieldOf(form, WarningConfig.AMOUNT).setValue(Integer.valueOf(-1));
+
+		applyResult(form);
+
+		List<ResKey> warnings = fieldOf(form, WarningConfig.AMOUNT).getWarnings();
+		assertEquals("The constraint has one thing to say about this value.", 1, warnings.size());
+		assertEquals("The warning must be readable under the field it is about.",
+			List.of(label(warnings.get(0))), chromeWarningsOf(form, WarningConfig.AMOUNT));
+	}
+
+	/**
+	 * The warning texts the chrome around the named property's field currently shows, or
+	 * {@code null} if it shows none - the warning counterpart of
+	 * {@link #chromeErrorOf(ReactControl, String)}, reading the same headless projection.
+	 */
+	@SuppressWarnings("unchecked")
+	private List<String> chromeWarningsOf(ReactControl control, String propertyName) {
+		if (control instanceof ReactFormFieldChromeControl chrome
+			&& fieldOf(chrome, propertyName) != null) {
+			return (List<String>) chrome.scriptingScalarState().get("warnings");
+		}
+		for (ReactControl child : control.scriptingChildren()) {
+			List<String> found = chromeWarningsOf(child, propertyName);
+			if (found != null) {
+				return found;
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * The error text the chrome around the named property's field currently shows, or {@code null}
 	 * if it shows none.
 	 */
@@ -721,6 +791,24 @@ public class TestConfigFormControl extends TestCase {
 		click(findButton(form, label(I18NConstants.APPLY)));
 
 		assertEquals("after", config.getName());
+		assertNotNull("Applying returns to view mode.", findButton(form, label(I18NConstants.EDIT)));
+	}
+
+	/**
+	 * A warning is not a refusal: Apply carries the change over and leaves edit mode, with the
+	 * questioned value written to the item like any other.
+	 */
+	public void testApplyProceedsWithNothingButAWarning() {
+		WarningConfig config = TypedConfiguration.newConfigItem(WarningConfig.class);
+		config.setName("given");
+		config.setAmount(1);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		click(findButton(form, label(I18NConstants.EDIT)));
+		fieldOf(form, WarningConfig.AMOUNT).setValue(Integer.valueOf(-1));
+
+		assertNull("A warning refuses nothing.", applyRefusal(form));
+
+		assertEquals("The questioned value must have been carried over.", -1, config.getAmount());
 		assertNotNull("Applying returns to view mode.", findButton(form, label(I18NConstants.EDIT)));
 	}
 

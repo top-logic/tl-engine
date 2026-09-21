@@ -19,7 +19,6 @@ import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.layout.view.job.ChunkedJobBody;
 import com.top_logic.layout.view.job.I18NConstants;
 import com.top_logic.layout.view.job.JobMonitor;
-import com.top_logic.layout.view.job.JobPhase;
 
 /**
  * Tests what a {@link ChunkedJobBody} commits and what it reports: the chunks that are committed
@@ -45,13 +44,13 @@ public class TestChunkedJobBody extends AbstractDBKnowledgeBaseTest {
 	private static final String INIT_FAILURE = "The preparation failed.";
 
 	/** What the job reports to. */
-	private RecordingMonitor _monitor;
+	private RecordingJobMonitor _monitor;
 
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
 
-		_monitor = new RecordingMonitor();
+		_monitor = new RecordingJobMonitor();
 	}
 
 	@Override
@@ -108,7 +107,7 @@ public class TestChunkedJobBody extends AbstractDBKnowledgeBaseTest {
 
 		ResKey summary = I18NConstants.RESULT__PROCESSED_SKIPPED.fill(Integer.valueOf(4), Integer.valueOf(1));
 		assertEquals("The job says how many items it processed and how many it skipped.",
-			summary, lastMessage());
+			summary, _monitor.lastMessage());
 		assertEquals("Without a completion, the result of the job is what it says about its items.",
 			summary, result);
 	}
@@ -158,7 +157,7 @@ public class TestChunkedJobBody extends AbstractDBKnowledgeBaseTest {
 
 		assertEquals("The chunk that was committed is kept, the chunk behind it was not processed.",
 			items.subList(0, 3), committed());
-		assertNull("A cancelled job does not say how many items it processed.", lastMessage());
+		assertNull("A cancelled job does not say how many items it processed.", _monitor.lastMessage());
 	}
 
 	/**
@@ -178,13 +177,13 @@ public class TestChunkedJobBody extends AbstractDBKnowledgeBaseTest {
 		Object result = body.run(_monitor, List.of());
 
 		assertEquals("The job announces the preparation, every pass and the completion.",
-			List.of("init", "step-1", "step-2", "finish"), phaseNames());
+			List.of("init", "step-1", "step-2", "finish"), _monitor.phaseNames());
 		assertEquals("Every announced step carries the text the reader sees.",
 			List.of(I18NConstants.PHASE_INIT,
 				I18NConstants.PHASE_STEP__NUMBER.fill(Integer.valueOf(1)),
 				I18NConstants.PHASE_STEP__NUMBER.fill(Integer.valueOf(2)),
 				I18NConstants.PHASE_FINISH),
-			phaseLabels());
+			_monitor.phaseLabels());
 		assertEquals("The job passes through the steps it announced.",
 			List.of("init", "step-1", "step-2", "finish"), _monitor._entered);
 		assertEquals("A pass begins once the pass before it has worked through every item.",
@@ -193,7 +192,7 @@ public class TestChunkedJobBody extends AbstractDBKnowledgeBaseTest {
 			2, _monitor._indeterminate);
 		assertEquals("The result of the job is what the completion produced.", "produced by state", result);
 		assertEquals("The job ends by saying how many items it processed and how many it skipped.",
-			I18NConstants.RESULT__PROCESSED_SKIPPED.fill(Integer.valueOf(2), Integer.valueOf(0)), lastMessage());
+			I18NConstants.RESULT__PROCESSED_SKIPPED.fill(Integer.valueOf(2), Integer.valueOf(0)), _monitor.lastMessage());
 	}
 
 	/**
@@ -210,7 +209,7 @@ public class TestChunkedJobBody extends AbstractDBKnowledgeBaseTest {
 		body.run(_monitor, List.of("the argument", "another argument"));
 
 		assertEquals("Without a preparation, the job announces its passes alone.",
-			List.of("step-1"), phaseNames());
+			List.of("step-1"), _monitor.phaseNames());
 		assertEquals("The state is the value the job was started with.", List.of("the argument"), states);
 		assertEquals("The state reaches the hook asking for the work items.",
 			List.of("the argument"), body._elementsStates);
@@ -260,7 +259,7 @@ public class TestChunkedJobBody extends AbstractDBKnowledgeBaseTest {
 		body.run(_monitor, List.of());
 
 		assertEquals("The body names every step the reader sees.",
-			List.of(ResKey.text("Reading"), ResKey.text("Writing 0"), ResKey.text("Cleaning up")), phaseLabels());
+			List.of(ResKey.text("Reading"), ResKey.text("Writing 0"), ResKey.text("Cleaning up")), _monitor.phaseLabels());
 	}
 
 	/** The work items {@code e1} to {@code eN}. */
@@ -294,30 +293,6 @@ public class TestChunkedJobBody extends AbstractDBKnowledgeBaseTest {
 		}
 		Collections.sort(result);
 		return result;
-	}
-
-	/** The names of the steps the job announced. */
-	private List<String> phaseNames() {
-		List<String> result = new ArrayList<>();
-		for (JobPhase phase : _monitor._announced) {
-			result.add(phase.name());
-		}
-		return result;
-	}
-
-	/** The texts the reader sees for the steps the job announced. */
-	private List<ResKey> phaseLabels() {
-		List<ResKey> result = new ArrayList<>();
-		for (JobPhase phase : _monitor._announced) {
-			result.add(phase.label());
-		}
-		return result;
-	}
-
-	/** What the job said last about what it is doing, {@code null} for a job that said nothing. */
-	private ResKey lastMessage() {
-		List<ResKey> messages = _monitor._messages;
-		return messages.isEmpty() ? null : messages.get(messages.size() - 1);
 	}
 
 	/** The preparation of a {@link TestBody}. */
@@ -436,79 +411,6 @@ public class TestChunkedJobBody extends AbstractDBKnowledgeBaseTest {
 				return runtime;
 			}
 			return new RuntimeException(failure);
-		}
-
-	}
-
-	/**
-	 * A {@link JobMonitor} recording what the job reports, and telling it that it was cancelled once
-	 * it is asked to.
-	 */
-	private static class RecordingMonitor implements JobMonitor {
-
-		/** The steps the job announced. */
-		final List<JobPhase> _announced = new ArrayList<>();
-
-		/** The names of the steps the job entered, in order. */
-		final List<String> _entered = new ArrayList<>();
-
-		/** What the job reported about its progress, as the ratio it is. */
-		final List<String> _progress = new ArrayList<>();
-
-		/** What the job said about what it is doing, in order. */
-		final List<ResKey> _messages = new ArrayList<>();
-
-		/** How often the job said it does not know how much of its work is done. */
-		int _indeterminate;
-
-		private boolean _cancelled;
-
-		/** Has this monitor tell the job that it was cancelled. */
-		void cancel() {
-			_cancelled = true;
-		}
-
-		@Override
-		public void setPhases(List<JobPhase> phases) {
-			checkCancelled();
-			_announced.clear();
-			_announced.addAll(phases);
-		}
-
-		@Override
-		public void beginPhase(String name) {
-			checkCancelled();
-			_entered.add(name);
-		}
-
-		@Override
-		public void progress(double done, double total) {
-			checkCancelled();
-			_progress.add((long) done + "/" + (long) total);
-		}
-
-		@Override
-		public void fraction(double fraction) {
-			checkCancelled();
-		}
-
-		@Override
-		public void indeterminate() {
-			checkCancelled();
-			_indeterminate++;
-		}
-
-		@Override
-		public void message(ResKey message) {
-			checkCancelled();
-			_messages.add(message);
-		}
-
-		@Override
-		public void checkCancelled() {
-			if (_cancelled) {
-				throw new AbortExecutionException("The job was cancelled.", null);
-			}
 		}
 
 	}

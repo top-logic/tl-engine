@@ -2108,6 +2108,33 @@ button.tlDrawerToggle:focus-visible {
 .tlGrid--gap-default { --tlGrid-gap: var(--spacing-04); gap: var(--tlGrid-gap); }
 .tlGrid--gap-loose   { --tlGrid-gap: var(--spacing-06); gap: var(--tlGrid-gap); }
 
+/* --- TLColumns ------------------------------------------------------------- */
+
+/* A wrapping flex row of columns, each column growing by its weight. The flex basis of a column
+   (set inline, since it computes with the configured breakpoint) is the width the breakpoint
+   leaves over the current container width, scaled up steeply: while the container is at least as
+   wide as the breakpoint that term is negative and therefore clamped to zero, so the row shares
+   its width by the grow factors; once the container is narrower the term turns positive and
+   exceeds the row, so every column wraps onto a line of its own. The columns align at the top and
+   keep the height of their content, so a short side column does not stretch to a long main one. */
+.tlColumns {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	font-family: var(--font-family);
+}
+
+.tlColumns--gap-compact { gap: var(--spacing-02); }
+.tlColumns--gap-default { gap: var(--spacing-04); }
+.tlColumns--gap-loose   { gap: var(--spacing-06); }
+
+/* The minimum keeps wide content (a long word, a table) from claiming more than the weighted
+   share; the maximum clamps the basis of a stacked column to the width of the row. */
+.tlColumns__column {
+	min-width: 0;
+	max-width: 100%;
+}
+
 /* --- TLDeckPane ------------------------------------------------------------ */
 
 /* Shows one child at a time and takes its size from that child: a column flex box that states no

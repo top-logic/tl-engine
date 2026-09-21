@@ -37,7 +37,7 @@ const RESIZE_CURSORS: Record<ResizeDir, string> = {
 };
 
 /**
- * Window chrome: title bar, close button, scrollable body, footer actions, resize handles.
+ * Window chrome: title bar, close button, scrollable body, footer button bar, resize handles.
  *
  * State:
  * - title: string
@@ -45,9 +45,12 @@ const RESIZE_CURSORS: Record<ResizeDir, string> = {
  * - height: string | null
  * - resizable: boolean
  * - child: ChildDescriptor
- * - actions: ChildDescriptor[]
  * - toolbar: ChildDescriptor (clique-grouped TLToolbar for the title bar, may be absent)
- * - buttonBar: ChildDescriptor (clique-grouped TLToolbar for the footer, may be absent)
+ * - footer: ChildDescriptor (the collapsing TLToolbar the footer consists of, may be absent)
+ *
+ * The footer holds that one toolbar and nothing beside it, so the width it is granted is the
+ * footer's and the toolbar gives it up again down to its overflow trigger. A toolbar without a
+ * command renders nothing, which leaves the footer strip empty and the stylesheet hides it.
  */
 const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -60,9 +63,8 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
   const serverMinHeight = (state.minHeight as string | null) ?? null;
   const resizable = state.resizable === true;
   const child = state.child;
-  const actions = (state.actions as unknown[]) ?? [];
   const toolbar = state.toolbar;
-  const buttonBar = state.buttonBar;
+  const footer = state.footer;
 
   // Local dimensions during resize (null = use server values).
   const [localWidth, setLocalWidth] = useState<number | null>(null);
@@ -369,12 +371,9 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
           <TLChild control={child} />
         </FillBarrier>
       </div>
-      {(actions.length > 0 || buttonBar) && (
+      {footer && (
         <div className="tlWindow__footer">
-          {buttonBar && <TLChild control={buttonBar} />}
-          {actions.map((action, i) => (
-            <TLChild key={i} control={action} />
-          ))}
+          <TLChild control={footer} />
         </div>
       )}
       {resizable && !maximized && RESIZE_HANDLES.map(dir => (

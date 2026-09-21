@@ -5,44 +5,57 @@
  */
 package com.top_logic.layout.react.control.nav;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.layout.react.control.ToolbarControl;
+import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 
 /**
- * A {@link ToolbarControl} that renders a top-level application bar via the {@code TLAppBar} React
+ * A {@link ReactControl} that renders a top-level application bar via the {@code TLAppBar} React
  * component.
  *
  * <p>
- * Extends {@link ToolbarControl} so that command scopes can add toolbar buttons to the actions
- * area. The {@code TLAppBar} React component reads actions from the {@code actions} state key —
- * which is aliased to the same list that {@link ToolbarControl} populates via
- * {@code toolbarButtons}.
+ * The React component receives:
  * </p>
+ * <ul>
+ * <li>{@link #TITLE} - the text naming the application</li>
+ * <li>{@link #VARIANT} - the {@link AppBarVariant} the bar is displayed in</li>
+ * <li>{@link #LEADING} - the control opening the bar, ahead of the title (optional)</li>
+ * <li>{@link #CHILDREN} - inline content between the title and the actions</li>
+ * <li>{@link #ACTIONS} - the {@link ReactToolbarControl} of the commands placed in the bar</li>
+ * <li>{@link #TRAILING} - the control closing the bar, right of the actions (optional)</li>
+ * </ul>
  *
  * <p>
- * Either end of the bar takes content of its own: a leading control opens it, ahead of the title,
- * and a trailing one closes it, right of the actions area.
+ * The commands form one toolbar, so those that do not fit the bar fold into its overflow menu
+ * rather than pushing the bar's content out of the window.
  * </p>
  */
-public class ReactAppBarControl extends ToolbarControl {
+public class ReactAppBarControl extends ReactControl {
 
 	private static final String REACT_MODULE = "TLAppBar";
 
-	private static final String TITLE = "title";
+	/** @see #setTitle(String) */
+	public static final String TITLE = "title";
 
-	private static final String LEADING = "leading";
+	/** State key for the control opening the bar, ahead of the title. */
+	public static final String LEADING = "leading";
 
-	private static final String ACTIONS = "actions";
+	/** State key for the toolbar of the commands placed in the bar. */
+	public static final String ACTIONS = "actions";
 
-	private static final String VARIANT = "variant";
+	/** State key for the {@link AppBarVariant} the bar is displayed in. */
+	public static final String VARIANT = "variant";
 
-	private static final String CHILDREN = "children";
+	/** State key for the inline content between the title and the actions. */
+	public static final String CHILDREN = "children";
 
-	private static final String TRAILING = "trailing";
+	/** State key for the control closing the bar, right of the actions. */
+	public static final String TRAILING = "trailing";
 
 	/**
 	 * Visual variant of the app bar.
@@ -67,8 +80,6 @@ public class ReactAppBarControl extends ToolbarControl {
 		}
 	}
 
-	private final List<ReactControl> _children;
-
 	/**
 	 * Creates an app bar with full configuration.
 	 *
@@ -79,7 +90,8 @@ public class ReactAppBarControl extends ToolbarControl {
 	 * @param leading
 	 *        Optional leading control, or {@code null}.
 	 * @param actions
-	 *        Initial trailing action controls (may be empty).
+	 *        The toolbar of the commands placed in the bar; empty while there are none, and
+	 *        filled in place as commands come and go.
 	 * @param children
 	 *        Inline children rendered between the title and the actions area (e.g. a
 	 *        {@code <slot>} placeholder for content projected by descendant views).
@@ -87,10 +99,9 @@ public class ReactAppBarControl extends ToolbarControl {
 	 *        Optional control closing the bar, right of the actions area, or {@code null}.
 	 */
 	public ReactAppBarControl(ReactContext context, String title, AppBarVariant variant,
-			ReactControl leading, List<? extends ReactControl> actions,
+			ReactControl leading, ReactToolbarControl actions,
 			List<? extends ReactControl> children, ReactControl trailing) {
 		super(context, null, REACT_MODULE);
-		_children = new java.util.ArrayList<>(children);
 		setTitle(title);
 		putState(VARIANT, variant.getExternalName());
 		if (leading != null) {
@@ -99,44 +110,8 @@ public class ReactAppBarControl extends ToolbarControl {
 		if (trailing != null) {
 			putState(TRAILING, trailing);
 		}
-
-		// Alias the toolbarButtons list under "actions" so TLAppBar reads the same list.
-		putState(ACTIONS, getState(TOOLBAR_BUTTONS));
-
-		putState(CHILDREN, _children);
-
-		for (ReactControl action : actions) {
-			addToolbarButton(action);
-		}
-	}
-
-	/**
-	 * Creates an app bar that closes with its actions area.
-	 */
-	public ReactAppBarControl(ReactContext context, String title, AppBarVariant variant,
-			ReactControl leading, List<? extends ReactControl> actions,
-			List<? extends ReactControl> children) {
-		this(context, title, variant, leading, actions, children, null);
-	}
-
-	/**
-	 * Creates an app bar without inline children.
-	 */
-	public ReactAppBarControl(ReactContext context, String title, AppBarVariant variant,
-			ReactControl leading, List<? extends ReactControl> actions) {
-		this(context, title, variant, leading, actions, List.of());
-	}
-
-	/**
-	 * Creates a flat app bar with no leading control.
-	 *
-	 * @param title
-	 *        The bar title.
-	 * @param actions
-	 *        Initial trailing action controls.
-	 */
-	public ReactAppBarControl(ReactContext context, String title, List<? extends ReactControl> actions) {
-		this(context, title, AppBarVariant.FLAT, null, actions);
+		putState(ACTIONS, actions);
+		putState(CHILDREN, new ArrayList<>(children));
 	}
 
 	/**
@@ -146,27 +121,11 @@ public class ReactAppBarControl extends ToolbarControl {
 		putState(TITLE, title);
 	}
 
-	@Override
-	public void addToolbarButton(ReactControl button) {
-		super.addToolbarButton(button);
-		putState(ACTIONS, getState(TOOLBAR_BUTTONS));
-	}
-
-	@Override
-	public boolean removeToolbarButton(ReactControl button) {
-		boolean removed = super.removeToolbarButton(button);
-		if (removed) {
-			putState(ACTIONS, getState(TOOLBAR_BUTTONS));
-		}
-		return removed;
-	}
-
-
 	/**
 	 * Rendering-only state keys, omitted from the headless projection.
 	 */
 	@Override
-	protected java.util.Set<String> scriptingPresentationKeys() {
-		return java.util.Set.of("variant");
+	protected Set<String> scriptingPresentationKeys() {
+		return Set.of(VARIANT);
 	}
 }

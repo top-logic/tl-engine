@@ -481,9 +481,20 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 		}
 	}
 
+	/**
+	 * Selects the item the URL names, letting the item being left veto the switch while it holds
+	 * unsaved changes.
+	 *
+	 * <p>
+	 * A URL is refused for the same reason a click on the item is: what the user typed into the page
+	 * being left is not dropped because an address named another page. The
+	 * {@link ChannelVetoException} reaches whoever resolves the URL, which ends its adoption and
+	 * leaves the sidebar showing the item it shows.
+	 * </p>
+	 */
 	@Override
 	public void activateRoute(RouteMatch match) {
-		selectItem(match.itemId());
+		revealChild(match.itemId());
 	}
 
 	@Override
@@ -511,14 +522,24 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	/**
 	 * Selects the navigation item with the given id, letting the item being left veto the switch
 	 * while it holds unsaved changes.
+	 *
+	 * <p>
+	 * Only leaving the item asks about unsaved changes; the item already displayed is selected
+	 * without a question. A URL that stays within that item - a deeper segment it shows, a query
+	 * parameter refining it, a step back between two addresses of the same page - reaches the
+	 * sidebar as the item it displays: nothing here is being left, so nothing is asked, and the
+	 * participant the URL does concern keeps its say.
+	 * </p>
 	 */
 	@Override
 	public void revealChild(String key) {
-		NavigationItem currentItem = findNavItem(_activeItemId, _items);
-		if (currentItem != null) {
-			DirtyChannel dirtyChannel = currentItem.getDirtyChannel();
-			if (dirtyChannel != null && dirtyChannel.hasDirtyHandlers()) {
-				throw new ChannelVetoException(dirtyChannel.getDirtyHandlers(), () -> selectItem(key));
+		if (!key.equals(_activeItemId)) {
+			NavigationItem currentItem = findNavItem(_activeItemId, _items);
+			if (currentItem != null) {
+				DirtyChannel dirtyChannel = currentItem.getDirtyChannel();
+				if (dirtyChannel != null && dirtyChannel.hasDirtyHandlers()) {
+					throw new ChannelVetoException(dirtyChannel.getDirtyHandlers(), () -> selectItem(key));
+				}
 			}
 		}
 

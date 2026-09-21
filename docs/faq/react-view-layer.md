@@ -31,7 +31,25 @@
 
 ## A command is a chain of actions, and the chain can branch
 
-`<generic-command>` (`GenericViewCommand`) runs the `<execute-script>`, `<store-form-state>`, `<confirm>`, `<verify-identity>`, `<with-transaction>`, `<open-dialog>`, `<write-channel>`, … actions written inside it as one chain (`ViewActionChain`): each action's result is the next action's input, the first action gets the command's input. An action that has to wait — `<confirm>`, which opens a dialog — suspends the chain and resumes it from the dialog's answer, or aborts it on cancel; `<verify-identity>` (`VerifyIdentityAction`) is the same shape with the answer being the proof that the person at the keyboard still is the holder of the session's own account, given the way the session was established: a session established at an external identity provider re-authenticates there in a second browser window — the provider's answer returns to the authentication servlet, which completes the pending `IdentityVerifications` entry and resumes the chain in the window that asked (a failure of the resumed chain is shown in that window like any other command failure, through `CommandErrors`, and leaves the confirmed identity itself standing) — while every other session is asked for its password, which the account's `AuthenticationDevice` checks. It fails closed: a cancelled prompt, an account that neither a provider nor a device can confirm, or a context without a dialog all abort; an abort skips the remaining actions and runs the compensations the executed actions registered, newest first, as does a failure. A script over the chain's value takes further arguments from channels: `<inputs><input channel="context"/></inputs>` puts those channel values in front of the chain's value (`ActionScript`, shared by every action that takes a script).
+`<generic-command>` (`GenericViewCommand`) runs the `<execute-script>`, `<store-form-state>`, `<confirm>`, `<notify>`, `<verify-identity>`, `<with-transaction>`, `<open-dialog>`, `<write-channel>`, … actions written inside it as one chain (`ViewActionChain`): each action's result is the next action's input, the first action gets the command's input. An action that has to wait — `<confirm>`, which opens a dialog — suspends the chain and resumes it from the dialog's answer, or aborts it on cancel; `<verify-identity>` (`VerifyIdentityAction`) is the same shape with the answer being the proof that the person at the keyboard still is the holder of the session's own account, given the way the session was established: a session established at an external identity provider re-authenticates there in a second browser window — the provider's answer returns to the authentication servlet, which completes the pending `IdentityVerifications` entry and resumes the chain in the window that asked (a failure of the resumed chain is shown in that window like any other command failure, through `CommandErrors`, and leaves the confirmed identity itself standing) — while every other session is asked for its password, which the account's `AuthenticationDevice` checks. It fails closed: a cancelled prompt, an account that neither a provider nor a device can confirm, or a context without a dialog all abort; an abort skips the remaining actions and runs the compensations the executed actions registered, newest first, as does a failure. A script over the chain's value takes further arguments from channels: `<inputs><input channel="context"/></inputs>` puts those channel values in front of the chain's value (`ActionScript`, shared by every action that takes a script).
+
+`<notify>` (`NotifyAction`) tells the user something from inside the chain. Its `expr` computes the message over the chain's value, with channel values in front of it through `<inputs>`, exactly like every other script of an action; a result of `null` or an empty text is nothing to say, and the chain passes its value on untouched — so the message itself decides whether the user hears anything. `kind="info|warning|error"` (`info` by default) says how serious the notice is, `display="snackbar|dialog"` (`snackbar` by default) where it is read: a snackbar passes by beside the user's work and is shown synchronously, so it may sit inside a `<with-transaction>`, while a dialog is a single-OK message that suspends the chain until it is acknowledged, exactly as a `<confirm>` does, and therefore may not (a chain running headless has no dialog to open and falls back to the snackbar). `stop="true"` ends the chain after the notice: the compensations of the actions before it run, the remaining actions are skipped, and nothing is logged or reported beyond the message — the notice *is* the outcome. That is what separates it from a failure raised by the TL-Script `throw(#('…'@en, '…'@de))` inside an `<execute-script>`, which travels the error path: it is logged and reported through `CommandErrors` like any other failure of the command.
+
+```xml
+<execute-script function="name -> all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#name`) == $name).firstElement()"/>
+<if test="t -> $t != null">
+  <then>
+    <write-channel name="ticket"/>
+  </then>
+  <else>
+    <notify kind="warning" stop="true" expr="term -> x -> #('No ticket {0}.'@en, 'Kein Ticket {0}.'@de).fill($term)">
+      <inputs>
+        <input channel="jump"/>
+      </inputs>
+    </notify>
+  </else>
+</if>
+```
 
 Two actions branch the chain by a TL-Script function over its current value. `<if>` decides between two chains; `<switch>` computes a switch value with its `value` function (the chain's own value when no `value` is configured) and gives it to the `<case>`s, each of which either names the value it stands for with `match` or decides with a `test` predicate:
 
@@ -123,6 +141,57 @@ A form with unsaved input blocks the write of the channel it is bound to: it reg
 ```
 
 The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/repeater-demo.view.xml` with `style/tl-demo-react.css`.
+
+## A page of weighted columns: `<columns>`
+
+`<columns breakpoint="48rem" gap="default">` (`ColumnsElement`) lays a page out in columns of unequal width and reflows it to a single column when the space gets narrow. Each child is a `<column weight="2">` (`ColumnElement`); a column takes a share of the width in proportion to its weight (weight 1 by default), and its own children stand below each other over the full width of the column. Below the breakpoint the columns stack in the order they are written — the main column first, the side column below it.
+
+- **The breakpoint is the width of the element itself**, not the width of the browser window. The same page therefore stacks inside a narrow pane of a wide window exactly as it does on a phone. No measurement is involved: the client gives each column `flex: <weight> 1 calc((<breakpoint> - 100%) * 999)` in a wrapping flex row, so the browser layout decides.
+- **The page scrolls, the columns do not.** A column is as tall as its content and is not stretched to the height of a taller neighbour; the layout is as tall as its tallest column. A long main column beside a short side column reads as one page.
+
+Which of the arrangement elements fits:
+
+| Element | Use it for |
+| --- | --- |
+| `<columns>` | A page of a few columns of *deliberately different* width that folds to one column when narrow. |
+| `<grid>` | Many elements built alike, placed in as many equal columns as fit (`min-column-width`, `max-columns`). |
+| `<stack direction="row">` | A row of elements that neither grow to a share of the width nor wrap. |
+| `<split-panel>` | Panes with splitters the user drags; fills its box, scrolls per pane, and never folds. |
+| `<dashboard>` | Tiles of definite row height whose order the user personalizes. |
+
+```xml
+<columns
+	breakpoint="48rem"
+	gap="default"
+>
+	<column weight="2">
+		<card variant="outlined">
+			<title>
+				<en>Main</en>
+			</title>
+			<text>
+				<label>
+					<en>The wide column.</en>
+				</label>
+			</text>
+		</card>
+	</column>
+	<column>
+		<card variant="outlined">
+			<title>
+				<en>Side</en>
+			</title>
+			<text>
+				<label>
+					<en>Half as wide as the main column.</en>
+				</label>
+			</text>
+		</card>
+	</column>
+</columns>
+```
+
+The client classes an application styles against are `.tlColumns`, `.tlColumns--gap-<gap>` and `.tlColumns__column`. The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/columns-demo.view.xml`.
 
 ## Pictures: `<image>`, `<overlay>`, `<avatar>`
 

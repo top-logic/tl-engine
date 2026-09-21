@@ -15,11 +15,13 @@ import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ToolbarControl;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
+import com.top_logic.layout.react.control.layout.ToolbarGroupDisplay;
+import com.top_logic.layout.react.control.layout.ToolbarOverflow;
 import com.top_logic.layout.table.ConfigKey;
 
 /**
- * Visual window chrome for modal dialogs: title bar, close button, scrollable body, footer actions,
- * and optional resize handles.
+ * Visual window chrome for modal dialogs: title bar, close button, scrollable body, footer button
+ * bar, and optional resize handles.
  *
  * <p>
  * This control provides the visual frame. It is typically placed as the child of a
@@ -27,36 +29,58 @@ import com.top_logic.layout.table.ConfigKey;
  * </p>
  *
  * <p>
+ * The footer is a single collapsing toolbar: the {@link #setActions(List) actions} of the window
+ * lead it as its {@link ReactToolbarControl#setPinnedGroup(String, ToolbarGroupDisplay, List)
+ * pinned group}, followed by the groups of the {@link #setButtonBar(ReactToolbarControl) button
+ * bar}. The footer therefore reads from the dismissing command towards the primary one, and
+ * {@link ToolbarOverflow#LEADING collapses from its leading end}, which keeps the primary command
+ * visible longest - the window can still be dismissed with Escape and the title bar's close
+ * button.
+ * </p>
+ *
+ * <p>
  * State:
  * </p>
  * <ul>
- * <li>{@code title} - the window title</li>
- * <li>{@code width} - the window width (CSS value, e.g. "500px")</li>
- * <li>{@code height} - the window height (CSS value or null for auto)</li>
- * <li>{@code resizable} - whether the window can be resized by dragging</li>
- * <li>{@code child} - the body content control</li>
- * <li>{@code actions} - list of footer action controls</li>
+ * <li>{@link #TITLE} - the window title</li>
+ * <li>{@link #WIDTH} - the window width (CSS value, e.g. "500px")</li>
+ * <li>{@link #HEIGHT} - the window height (CSS value or null for auto)</li>
+ * <li>{@link #RESIZABLE} - whether the window can be resized by dragging</li>
+ * <li>{@link #CHILD} - the body content control</li>
+ * <li>{@link #TOOLBAR} - the title bar's toolbar</li>
+ * <li>{@link #FOOTER} - the footer's toolbar</li>
  * </ul>
  */
 public class ReactWindowControl extends ToolbarControl {
 
 	private static final String REACT_MODULE = "TLWindow";
 
-	private static final String TITLE = "title";
+	/** State key for the window title. */
+	public static final String TITLE = "title";
 
-	private static final String WIDTH = "width";
+	/** State key for the window width. */
+	public static final String WIDTH = "width";
 
-	private static final String HEIGHT = "height";
+	/** State key for the window height. */
+	public static final String HEIGHT = "height";
 
-	private static final String RESIZABLE = "resizable";
+	/** State key for whether the window can be resized by dragging. */
+	public static final String RESIZABLE = "resizable";
 
-	private static final String CHILD = "child";
+	/** State key for the body content control. */
+	public static final String CHILD = "child";
 
-	private static final String ACTIONS = "actions";
+	/** State key for the title bar's toolbar. */
+	public static final String TOOLBAR = "toolbar";
 
-	private static final String TOOLBAR = "toolbar";
+	/** State key for the footer's toolbar. */
+	public static final String FOOTER = "footer";
 
-	private static final String BUTTON_BAR = "buttonBar";
+	/**
+	 * Clique name of the group the {@link #setActions(List) actions} form at the leading end of
+	 * the {@link #FOOTER footer}.
+	 */
+	public static final String ACTIONS_CLIQUE = "actions";
 
 	private static final String CONFIG_KEY_SIZE_SUFFIX = "reactDialogSize";
 
@@ -71,7 +95,11 @@ public class ReactWindowControl extends ToolbarControl {
 
 	private ReactToolbarControl _toolbar;
 
-	private ReactToolbarControl _buttonBar;
+	/**
+	 * The toolbar shown in the footer, or {@code null} while the window has neither actions nor a
+	 * button bar.
+	 */
+	private ReactToolbarControl _footer;
 
 	private Runnable _closeHandler;
 
@@ -157,11 +185,27 @@ public class ReactWindowControl extends ToolbarControl {
 	}
 
 	/**
-	 * Sets the footer action controls.
+	 * Sets the controls that lead the {@link #FOOTER footer}, such as the command dismissing the
+	 * window.
+	 *
+	 * <p>
+	 * They form the {@link ReactToolbarControl#setPinnedGroup(String, ToolbarGroupDisplay, List)
+	 * pinned group} of the footer toolbar, so a rebuild of the
+	 * {@link #setButtonBar(ReactToolbarControl) button bar} keeps them.
+	 * </p>
+	 *
+	 * @param actions
+	 *        The controls to show, in display order.
 	 */
 	public void setActions(List<? extends ReactControl> actions) {
 		_actions = new ArrayList<>(actions);
-		putState(ACTIONS, _actions);
+		if (_footer == null) {
+			if (_actions.isEmpty()) {
+				return;
+			}
+			setFooter(new ReactToolbarControl(getReactContext()));
+		}
+		_footer.setPinnedGroup(ACTIONS_CLIQUE, ToolbarGroupDisplay.INLINE, _actions);
 	}
 
 	/**
@@ -175,13 +219,42 @@ public class ReactWindowControl extends ToolbarControl {
 	}
 
 	/**
-	 * Sets the clique-grouped footer button bar, or {@code null} to remove it.
+	 * Sets the clique-grouped toolbar carrying the window's button-bar commands.
+	 *
+	 * <p>
+	 * It becomes the window's {@link #FOOTER footer}, taking over the
+	 * {@link #setActions(List) actions} as its pinned group, so the footer stays a single
+	 * collapsing toolbar however the two are set.
+	 * </p>
+	 *
+	 * @param buttonBar
+	 *        The toolbar to display, or {@code null} to leave the footer to the actions alone.
 	 */
 	public void setButtonBar(ReactToolbarControl buttonBar) {
-		_buttonBar = buttonBar;
-		if (buttonBar != null) {
-			putState(BUTTON_BAR, buttonBar);
+		if (buttonBar == null) {
+			return;
 		}
+		ReactToolbarControl previous = _footer;
+		setFooter(buttonBar);
+		if (!_actions.isEmpty()) {
+			buttonBar.setPinnedGroup(ACTIONS_CLIQUE, ToolbarGroupDisplay.INLINE, _actions);
+		}
+		if (previous != null && previous != buttonBar) {
+			// The actions are shown by the button bar now: release them from the toolbar that
+			// was built for them alone before that one is dropped, so disposing it leaves the
+			// action controls alone.
+			previous.setPinnedGroup(ACTIONS_CLIQUE, ToolbarGroupDisplay.INLINE, List.of());
+			previous.cleanupTree();
+		}
+	}
+
+	/**
+	 * Shows the given toolbar in the footer, collapsing from its leading end.
+	 */
+	private void setFooter(ReactToolbarControl footer) {
+		_footer = footer;
+		footer.setOverflow(ToolbarOverflow.LEADING);
+		putState(FOOTER, footer);
 	}
 
 	/**

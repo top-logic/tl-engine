@@ -6369,7 +6369,8 @@ button.tlToolbar__menuTrigger:focus-visible {
   position: relative;
   min-width: 0;
   min-height: 0;
-  overflow: hidden;
+  /* The tile has a definite height (grid rows) - what does not fit scrolls. */
+  overflow: auto;
   display: flex;
   flex-direction: column;
   border: 1px solid var(--border-subtle);

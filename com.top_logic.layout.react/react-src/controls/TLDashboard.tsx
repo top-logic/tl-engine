@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, FillBarrier } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback, useEffect, useMemo, useRef, useState } = React;
@@ -80,7 +80,7 @@ function computeLayout(tiles: TileDescriptor[], cols: number): Placement[] {
   };
 
   for (const t of tiles) {
-    const rowSpan = safeCols <= 1 ? 1 : Math.max(1, t.rowSpan || 1);
+    const rowSpan = Math.max(1, t.rowSpan || 1);
     let span = Math.min(itemSpan(t.width, safeCols), safeCols);
 
     while (isOccupied(curRow, curCol)) {
@@ -145,6 +145,7 @@ const TLDashboard: React.FC<TLCellProps> = ({ controlId }) => {
   const sendCommand = useTLCommand();
 
   const minColWidth = (state.minColWidth as string) ?? '16rem';
+  const rowHeight = (state.rowHeight as string) ?? '16rem';
   const tiles = ((state.children as TileDescriptor[]) ?? []).filter(t => t && t.id);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -225,6 +226,7 @@ const TLDashboard: React.FC<TLCellProps> = ({ controlId }) => {
   const gridStyle: React.CSSProperties = {
     display: 'grid',
     gridTemplateColumns: `repeat(${cols}, 1fr)`,
+    gridAutoRows: rowHeight,
     gap: '1rem',
   };
 
@@ -259,7 +261,9 @@ const TLDashboard: React.FC<TLCellProps> = ({ controlId }) => {
               onDrop={e => onDrop(e, tile.id)}
               onDragEnd={onDragEnd}
             >
-              <TLChild control={tile.control} />
+              <FillBarrier>
+                <TLChild control={tile.control} />
+              </FillBarrier>
               {editMode && <div className="tlDashboard__overlay" />}
             </div>
           );

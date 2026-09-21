@@ -22,6 +22,7 @@ import com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder;
 import com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder.PartModel;
 import com.top_logic.layout.configedit.ConfigCollectionValue;
 import com.top_logic.layout.configedit.ConfigFieldIndex;
+import com.top_logic.layout.configedit.ConfigFieldPush;
 import com.top_logic.layout.configedit.ConfigListEditorControl;
 import com.top_logic.layout.configedit.ConfigValidation;
 import com.top_logic.layout.configedit.PolymorphicOptions;

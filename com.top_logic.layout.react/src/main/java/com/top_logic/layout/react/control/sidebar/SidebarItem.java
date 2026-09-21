@@ -30,6 +30,12 @@ public abstract class SidebarItem {
 	/** Item CSS icon class. */
 	static final String ICON = "icon";
 
+	/** Whether the item is withheld from the sidebar UI. */
+	static final String HIDDEN = "hidden";
+
+	/** Whether the item is displayed, but cannot be activated. */
+	static final String DISABLED = "disabled";
+
 	private final String _id;
 
 	/**

@@ -1555,6 +1555,17 @@ button.tlSidebar__item:focus-visible {
 	outline-offset: -2px;
 }
 
+/* An item offered, but out of reach: greyed out and unresponsive to the pointer. */
+.tlSidebar__item--disabled,
+button.tlSidebar__item:disabled,
+button.tlSidebar__item:disabled:hover,
+button.tlSidebar__flyoutItem:disabled,
+button.tlSidebar__flyoutItem:disabled:hover {
+	background: transparent;
+	color: var(--text-disabled);
+	cursor: default;
+}
+
 /* Navigation item */
 .tlSidebar__navItem--active {
 	background: var(--layer-selected);

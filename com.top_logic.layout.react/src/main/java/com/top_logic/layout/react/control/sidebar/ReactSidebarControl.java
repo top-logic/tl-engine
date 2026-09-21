@@ -166,7 +166,7 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 		_footerContent = footerContent;
 		_footerCollapsedContent = footerCollapsedContent;
 
-		// Track group states in memory for pushItemsUpdate().
+		// Track group states in memory for refreshItems().
 		Map<String, Boolean> groupStates =
 			initialGroupStates != null ? initialGroupStates : Collections.emptyMap();
 		_groupStates = new HashMap<>(groupStates);
@@ -356,10 +356,21 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 			return;
 		}
 		navItem.setBadge(badge);
-		pushItemsUpdate();
+		refreshItems();
 	}
 
-	private void pushItemsUpdate() {
+	/**
+	 * Re-serializes the item list - merging the group expansion states tracked here - and pushes it
+	 * to the client.
+	 *
+	 * <p>
+	 * To be called after an item's state was changed through its setters
+	 * ({@link NavigationItem#setBadge(String)}, {@link CommandItem#setHidden(boolean)},
+	 * {@link CommandItem#setDisabled(boolean)}): the items are held as objects and serialized as a
+	 * whole, so a change to one of them reaches the display only with the list it is part of.
+	 * </p>
+	 */
+	public void refreshItems() {
 		List<Map<String, Object>> itemList = new ArrayList<>();
 		for (SidebarItem item : _items) {
 			Map<String, Object> itemMap = item.toStateMap();
@@ -570,12 +581,24 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 
 	/**
 	 * Handles command item execution from the client.
+	 *
+	 * <p>
+	 * Only an item the sidebar actually offers for activation runs its action: a
+	 * {@link CommandItem#isHidden() hidden} item is not displayed and a
+	 * {@link CommandItem#isDisabled() disabled} one is displayed out of reach, so both are refused
+	 * instead of running a command the user interface does not offer. The item's state follows the
+	 * hosted command's executability, which anything that can address this command would otherwise
+	 * bypass.
+	 * </p>
 	 */
 	@ReactCommandHandler(EXECUTE_COMMAND_COMMAND)
 	HandlerResult handleExecuteCommand(ReactContext context, ExecuteCommandArguments args) {
 		String itemId = args.getItemId();
 		CommandItem cmdItem = findCommandItem(itemId, _items);
 		if (cmdItem != null) {
+			if (cmdItem.isHidden() || cmdItem.isDisabled()) {
+				return HandlerResult.error(I18NConstants.ERROR_COMMAND_NOT_EXECUTABLE);
+			}
 			HandlerResult result = cmdItem.getAction().execute(context);
 			closeDrawerIfOpen();
 			return result;

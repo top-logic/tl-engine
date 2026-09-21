@@ -1,58 +1,63 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
+<!--
+	Flow diagram demo, laid out as a dashboard of four tiles over two channels: the
+	selected product (selectedProduct) and the selected build step (selectedNode).
+	
+	The Products tile selects the product whose construction plan the diagram draws.
+	The Construction Plan tile spans two grid rows, so the diagram gets twice the height
+	of the tiles beside it; its <createChart> script builds a tree of the product's build
+	instructions, one node per build step, each showing its marker, its name and the parts
+	it consumes.
+	
+	The Build steps tile lists all build steps flat, with a filter bar above them. There
+	are more steps than fit a one-row tile, which is what the tile shows: the dashboard
+	gives its grid a definite row height, so the table resolves its height against the
+	tile and scrolls inside it instead of growing the page with its rows.
+	
+	The diagram, the Build steps table and the Details form share the selectedNode channel:
+	clicking a node in the diagram marks its row in Build steps and shows it in Details, and
+	picking a row in Build steps shows that step in Details.
+-->
 <view>
 	<channels>
 		<channel name="selectedProduct"/>
 		<channel name="selectedNode"/>
 	</channels>
-	<split-panel
-		orientation="horizontal"
-		resizable="true"
-	>
-		<panes>
-			<pane
-				size="25"
-				unit="%"
-			>
-				<panel>
-					<title>
-						<en>Products</en>
-						<de>Produkte</de>
-					</title>
-					<table
-						selection="selectedProduct"
-						types="test.flowchart:Product"
-					>
-						<columns>
-							<column attribute="name"/>
-						</columns>
-						<rows>all(`test.flowchart:Product`)</rows>
-					</table>
-				</panel>
-			</pane>
-			<pane
-				size="75"
-				unit="%"
-			>
-				<split-panel
-					orientation="vertical"
-					resizable="true"
+	<dashboard id="flow-diagram">
+		<tile id="products"
+			width="third"
+		>
+			<panel fill="true">
+				<title>
+					<en>Products</en>
+					<de>Produkte</de>
+				</title>
+				<table
+					selection="selectedProduct"
+					types="test.flowchart:Product"
 				>
-					<panes>
-						<pane
-							size="70"
-							unit="%"
-						>
-							<panel>
-								<title>
-									<en>Construction Plan</en>
-									<de>Bauplan</de>
-								</title>
-								<flow-diagram selection="selectedNode">
-									<inputs>
-										<input channel="selectedProduct"/>
-									</inputs>
-									<createChart><![CDATA[product -> {
+					<columns>
+						<column attribute="name"/>
+					</columns>
+					<rows>all(`test.flowchart:Product`)</rows>
+				</table>
+			</panel>
+		</tile>
+		<tile id="plan"
+			row-span="2"
+			width="two-thirds"
+		>
+			<panel fill="true">
+				<title>
+					<en>Construction Plan</en>
+					<de>Bauplan</de>
+				</title>
+				<flow-diagram selection="selectedNode">
+					<inputs>
+						<input channel="selectedProduct"/>
+					</inputs>
+					<createChart><![CDATA[product -> {
 parts = $product == null ? list() : $product.get(`test.flowchart:Product#buildInstructions`);
 
 nodes = $parts.map(p -> reactFlowSelection(
@@ -139,28 +144,44 @@ $parts.isEmpty()
         )
     )
 }]]></createChart>
-								</flow-diagram>
-							</panel>
-						</pane>
-						<pane
-							size="30"
-							unit="%"
-						>
-							<panel>
-								<title>
-									<en>Details</en>
-									<de>Details</de>
-								</title>
-								<form input="selectedNode">
-									<field attribute="name"/>
-									<field attribute="marker"/>
-									<field attribute="image"/>
-								</form>
-							</panel>
-						</pane>
-					</panes>
-				</split-panel>
-			</pane>
-		</panes>
-	</split-panel>
+				</flow-diagram>
+			</panel>
+		</tile>
+		<tile id="steps"
+			width="third"
+		>
+			<panel fill="true">
+				<title>
+					<en>Build steps</en>
+					<de>Bauschritte</de>
+				</title>
+				<table
+					filter-bar="true"
+					selection="selectedNode"
+					types="test.flowchart:FlowNode"
+				>
+					<columns>
+						<column attribute="name"/>
+						<column attribute="marker"/>
+					</columns>
+					<rows>all(`test.flowchart:FlowNode`)</rows>
+				</table>
+			</panel>
+		</tile>
+		<tile id="details"
+			width="full"
+		>
+			<panel>
+				<title>
+					<en>Details</en>
+					<de>Details</de>
+				</title>
+				<form input="selectedNode">
+					<field attribute="name"/>
+					<field attribute="marker"/>
+					<field attribute="image"/>
+				</form>
+			</panel>
+		</tile>
+	</dashboard>
 </view>

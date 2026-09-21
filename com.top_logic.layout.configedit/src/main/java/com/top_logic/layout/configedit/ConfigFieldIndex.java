@@ -164,9 +164,9 @@ public final class ConfigFieldIndex {
 	 *
 	 * <p>
 	 * Answers only about input the field itself rejected, never about a violation
-	 * {@link ConfigValidation#report(java.util.List, ConfigFieldIndex)} placed: those go to the
-	 * separate model-validation channel, see {@link #clearModelErrors()}. Were the two to share one
-	 * slot, a violation the user has since fixed elsewhere would keep reading as "an entry cannot
+	 * {@link ConfigValidation#report(ConfigValidation.Findings, ConfigFieldIndex)} placed: those go
+	 * to the separate model-validation channel, see {@link #clearFindings()}. Were the two to share
+	 * one slot, a violation the user has since fixed elsewhere would keep reading as "an entry cannot
 	 * be read" and refuse every further Apply with nothing on screen to correct.
 	 * </p>
 	 *
@@ -184,28 +184,30 @@ public final class ConfigFieldIndex {
 	}
 
 	/**
-	 * Takes back every violation {@link ConfigValidation#report(java.util.List, ConfigFieldIndex)}
-	 * put on a field.
+	 * Takes back everything
+	 * {@link ConfigValidation#report(ConfigValidation.Findings, ConfigFieldIndex)} put on a field -
+	 * both a {@link ConfigValidation.Violation} and a {@link ConfigValidation.Warning}.
 	 *
 	 * <p>
-	 * Run before each re-check, so a violation is shown for exactly as long as it holds: one that
+	 * Run before each re-check, so a finding is shown for exactly as long as it holds: one that
 	 * still holds is placed again by the very next {@code report}, one the user has fixed - possibly
 	 * by editing a different field, which is how a cross-item constraint is fixed - is gone. A
 	 * reported error left behind would otherwise outlive its own cause and make every further Apply
-	 * refuse.
+	 * refuse; a warning left behind would question a value nobody has any reason to look at twice.
 	 * </p>
 	 *
 	 * <p>
-	 * Touches only the model-validation channel, never
+	 * Touches only the two model-validation channels, never
 	 * {@link com.top_logic.layout.form.model.AbstractFieldModel#getInputError() the input error}:
 	 * that one belongs to the input control, is the last thing standing between Apply and silently
 	 * discarding what the user typed, and is nobody's to take back here.
 	 * </p>
 	 */
-	public void clearModelErrors() {
+	public void clearFindings() {
 		for (Map<PropertyDescriptor, ConfigFieldModel> byProperty : _fields.values()) {
 			for (ConfigFieldModel field : byProperty.values()) {
 				field.setModelValidationError(null);
+				field.setModelValidationWarnings(Collections.emptyList());
 			}
 		}
 	}

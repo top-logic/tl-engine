@@ -8,6 +8,7 @@ package com.top_logic.layout.configedit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,6 +42,14 @@ import com.top_logic.layout.form.values.edit.Labels;
  * </p>
  *
  * <p>
+ * Not everything found stands in the way. A constraint declared
+ * {@link com.top_logic.basic.config.constraint.annotation.Constraint#asWarning() as a warning} says
+ * something about a value without refusing it, and is collected as a {@link Warning} next to the
+ * blocking {@link Violation}s: shown at the field it is about, never a reason to refuse
+ * {@link ConfigFormModel#apply()}.
+ * </p>
+ *
+ * <p>
  * {@link #check(ConfigurationItem)} is meant to run on the edited part of a configuration, not on
  * the copied root above it: only the edited part was actually changed by the user, and a violation
  * elsewhere in the tree predates the edit and has no field on screen to show it. A constraint that
@@ -64,32 +73,70 @@ public final class ConfigValidation {
 		// Nothing beyond the components.
 	}
 
+	/**
+	 * One remark about a value that does not stand in the way of applying it, and where it belongs.
+	 *
+	 * <p>
+	 * The same three components a {@link Violation} carries, and a type of its own all the same,
+	 * because what the two are for could not be further apart: a {@link Violation} refuses
+	 * {@link ConfigFormModel#apply()} and is listed in the {@link Refusal}, a {@link Warning} is
+	 * shown next to the value and refuses nothing. A single record with a flag to tell them apart
+	 * would leave every list of them to be read twice - once for what blocks and once for what does
+	 * not - and one forgotten check would turn a remark into a refusal.
+	 * </p>
+	 *
+	 * @param item
+	 *        The configuration item the warning was found on.
+	 * @param property
+	 *        The property of {@link #item()} the warning belongs to.
+	 * @param message
+	 *        The message describing what is worth a second look.
+	 */
+	public record Warning(ConfigurationItem item, PropertyDescriptor property, ResKey message) {
+		// Nothing beyond the components.
+	}
+
+	/**
+	 * Everything {@link #check(ConfigurationItem)} found about a configuration.
+	 *
+	 * @param violations
+	 *        Why the configuration may not be applied, in no particular order. Empty if it may be
+	 *        applied as it stands.
+	 * @param warnings
+	 *        What is worth saying about it anyway, in no particular order. Never a reason to refuse
+	 *        anything.
+	 */
+	public record Findings(List<Violation> violations, List<Warning> warnings) {
+		// Nothing beyond the components.
+	}
+
 	private ConfigValidation() {
 		// Static use only.
 	}
 
 	/**
-	 * Checks the given configuration item, and everything reachable from it, for violations that
-	 * must block {@link ConfigFormModel#apply()}.
+	 * Checks the given configuration item, and everything reachable from it, both for violations
+	 * that must block {@link ConfigFormModel#apply()} and for warnings that must not.
 	 *
 	 * @param item
 	 *        The edited part of the configuration to check.
-	 * @return The violations found, in no particular order. Empty if the item may be applied as
-	 *         it stands.
+	 * @return What was found. {@link Findings#violations()} empty means the item may be applied as
+	 *         it stands, whatever {@link Findings#warnings()} holds.
 	 */
-	public static List<Violation> check(ConfigurationItem item) {
+	public static Findings check(ConfigurationItem item) {
 		List<Violation> violations = new ArrayList<>();
+		List<Warning> warnings = new ArrayList<>();
 		collectMissingMandatory(item, violations, Collections.newSetFromMap(new IdentityHashMap<>()));
-		collectConstraintFailures(item, violations);
-		return violations;
+		collectConstraintFailures(item, violations, warnings);
+		return new Findings(violations, warnings);
 	}
 
 	/**
-	 * Puts every violation on the field that {@link ConfigFieldIndex#register(ConfigurationItem,
+	 * Puts every finding on the field that {@link ConfigFieldIndex#register(ConfigurationItem,
 	 * PropertyDescriptor, ConfigFieldModel) registered} for its item and property.
 	 *
-	 * @param violations
-	 *        The violations to report, typically {@link #check(ConfigurationItem)}'s result.
+	 * @param findings
+	 *        What to report, typically {@link #check(ConfigurationItem)}'s result.
 	 * @param index
 	 *        The index the editor filled while building its fields.
 	 * <p>
@@ -99,20 +146,32 @@ public final class ConfigValidation {
 	 * documented to be the other thing entirely - "not produced by a constraint but by the input
 	 * control", the record that the field could not read what was typed into it. Sharing one slot
 	 * would make the two indistinguishable afterwards, and they must be told apart: a violation is
-	 * taken back before every re-check (see {@link ConfigFieldIndex#clearModelErrors()}), while a
+	 * taken back before every re-check (see {@link ConfigFieldIndex#clearFindings()}), while a
 	 * rejected input is the very thing that must survive to keep Apply from discarding it.
 	 * {@link com.top_logic.layout.form.model.AbstractFieldModel#setRevealed(boolean) Revealing} the
 	 * field goes with it, since pressing Apply is exactly the "attempt to submit" that makes a
 	 * model-level verdict visible.
 	 * </p>
 	 *
-	 * @return Whether every violation found a field to carry it. {@code false} if at least one
-	 *         violation named a property the editor does not render, and was therefore not placed
-	 *         anywhere the user can see.
+	 * <p>
+	 * A {@link Warning} goes to the field's separate warning channel,
+	 * {@link com.top_logic.layout.form.model.AbstractFieldModel#setModelValidationWarnings(List)},
+	 * which holds the field's complete list rather than a single message - so all warnings about
+	 * one field are placed in one call, see {@link #warningsByField(List, ConfigFieldIndex)}.
+	 * Revealing the field goes with it for the same reason it does for a violation: the field is
+	 * where the remark belongs, and Apply is when it is asked for.
+	 * </p>
+	 *
+	 * @return Whether every {@link Findings#violations() violation} found a field to carry it.
+	 *         {@code false} if at least one violation named a property the editor does not render,
+	 *         and was therefore not placed anywhere the user can see. The
+	 *         {@link Findings#warnings() warnings} have no say in this answer: the caller reads it
+	 *         to decide whether a refusal must name what it could not show, and a warning refuses
+	 *         nothing - one that found no field is simply not shown.
 	 */
-	public static boolean report(List<Violation> violations, ConfigFieldIndex index) {
+	public static boolean report(Findings findings, ConfigFieldIndex index) {
 		boolean complete = true;
-		for (Violation violation : violations) {
+		for (Violation violation : findings.violations()) {
 			ConfigFieldModel field = index.lookup(violation.item(), violation.property());
 			if (field == null) {
 				complete = false;
@@ -121,7 +180,40 @@ public final class ConfigValidation {
 				field.setRevealed(true);
 			}
 		}
+		Map<ConfigFieldModel, List<ResKey>> warningsByField = warningsByField(findings.warnings(), index);
+		for (Map.Entry<ConfigFieldModel, List<ResKey>> entry : warningsByField.entrySet()) {
+			ConfigFieldModel field = entry.getKey();
+			field.setModelValidationWarnings(entry.getValue());
+			field.setRevealed(true);
+		}
 		return complete;
+	}
+
+	/**
+	 * Collects the messages of the given warnings per field that displays them, dropping those the
+	 * editor renders no field for.
+	 *
+	 * <p>
+	 * Grouped rather than placed one at a time because
+	 * {@link com.top_logic.layout.form.model.AbstractFieldModel#setModelValidationWarnings(List)}
+	 * replaces the field's whole list: two warnings about the same property - two constraints on it,
+	 * or one constraint reporting on it from either end - would otherwise leave only the last one on
+	 * screen. A {@link LinkedHashMap} keeps the order the checker found them in, so what is read
+	 * under the field does not shuffle from one check to the next; keying it by the field is sound
+	 * because a {@link ConfigFieldModel} is compared by identity, which is also what
+	 * {@link ConfigFieldIndex} relies on.
+	 * </p>
+	 */
+	private static Map<ConfigFieldModel, List<ResKey>> warningsByField(List<Warning> warnings,
+			ConfigFieldIndex index) {
+		Map<ConfigFieldModel, List<ResKey>> byField = new LinkedHashMap<>();
+		for (Warning warning : warnings) {
+			ConfigFieldModel field = index.lookup(warning.item(), warning.property());
+			if (field != null) {
+				byField.computeIfAbsent(field, any -> new ArrayList<>()).add(warning.message());
+			}
+		}
+		return byField;
 	}
 
 	/**
@@ -135,6 +227,66 @@ public final class ConfigValidation {
 	 */
 	public record Refusal(ResKey message, List<ResKey> details) {
 		// Fields only.
+	}
+
+	/**
+	 * Checks an edited configuration again and shows what the check found, without refusing
+	 * anything.
+	 *
+	 * <p>
+	 * What a form runs while the user is still editing, so a value is questioned where it is
+	 * entered rather than only once Apply is pressed. Takes back the previous findings first, via
+	 * {@link ConfigFieldIndex#clearFindings()}, so what is on display is what holds right now: a
+	 * finding that still holds is placed again, one the user has meanwhile fixed - possibly by
+	 * editing the other end of a cross-item constraint - is gone.
+	 * </p>
+	 *
+	 * <p>
+	 * Deliberately blind to the two things {@link #refusalFor(Iterable, ConfigFieldIndex)} refuses
+	 * over. An {@link ConfigFieldIndex#pending() unconfirmed entry} is marked as one to confirm or
+	 * discard only when the user asks for the configuration to be handed over - while editing, an
+	 * entry that was just started is exactly where it is supposed to be, and telling the user off
+	 * for it is telling them off for having begun. An
+	 * {@link ConfigFieldIndex#hasInputError() unreadable input} keeps Apply from discarding what was
+	 * typed, which is nothing this method is in a position to discard; the field that rejected the
+	 * input already says so on its own, and the configuration behind it still holds the last value
+	 * the field accepted, which is what is checked here.
+	 * </p>
+	 *
+	 * @param edited
+	 *        The configuration to check.
+	 * @param index
+	 *        The fields the configuration is rendered in, to report on.
+	 * @return The violations placed, empty if the configuration may be handed over as it stands.
+	 *         The {@link Findings#warnings() warnings} are on their fields either way and are not
+	 *         part of this answer, since they refuse nothing.
+	 */
+	public static List<Violation> recheck(ConfigurationItem edited, ConfigFieldIndex index) {
+		return recheck(Collections.singletonList(edited), index);
+	}
+
+	/**
+	 * The same for several configurations checked as one, where what is edited is a collection
+	 * rather than a single item.
+	 *
+	 * @see #recheck(ConfigurationItem, ConfigFieldIndex)
+	 * @see #refusalFor(Iterable, ConfigFieldIndex)
+	 */
+	public static List<Violation> recheck(Iterable<? extends ConfigurationItem> edited, ConfigFieldIndex index) {
+		index.clearFindings();
+
+		List<Violation> violations = new ArrayList<>();
+		List<Warning> warnings = new ArrayList<>();
+		for (ConfigurationItem item : edited) {
+			Findings findings = check(item);
+			violations.addAll(findings.violations());
+			warnings.addAll(findings.warnings());
+		}
+		// Reported whatever comes of it: a warning is shown at its field and refuses nothing, so a
+		// configuration whose only finding is a warning is handed over with the warning on display
+		// until the form is rebuilt over the applied value.
+		report(new Findings(violations, warnings), index);
+		return violations;
 	}
 
 	/**
@@ -155,11 +307,21 @@ public final class ConfigValidation {
 	 * perfectly well and is merely taken.
 	 * </p>
 	 *
+	 * <p>
+	 * The check itself, and the placing of what it found, is
+	 * {@link #recheck(Iterable, ConfigFieldIndex)} - the very step a form runs while the user is
+	 * still editing. What this adds is only what handing the configuration over may refuse over:
+	 * an unconfirmed entry, an unreadable input, and the refusal a violation amounts to.
+	 * </p>
+	 *
 	 * @param edited
 	 *        The configuration to check.
 	 * @param index
 	 *        The fields the configuration is rendered in, both to report on and to ask about
 	 *        unreadable input and unconfirmed entries.
+	 * @return Why the configuration may not be handed over, or {@code null} if nothing stands in the
+	 *         way. {@code null} is not "nothing was found": the warnings are placed on their fields
+	 *         either way, and only the violations decide the answer.
 	 */
 	public static Refusal refusalFor(ConfigurationItem edited, ConfigFieldIndex index) {
 		return refusalFor(Collections.singletonList(edited), index);
@@ -177,7 +339,9 @@ public final class ConfigValidation {
 	 * </p>
 	 */
 	public static Refusal refusalFor(Iterable<? extends ConfigurationItem> edited, ConfigFieldIndex index) {
-		index.clearModelErrors();
+		// Also cleared here, not only in the recheck further down: the two refusals in between
+		// never reach it, and a finding the previous attempt placed must not outlive them either.
+		index.clearFindings();
 
 		List<ConfigPendingEntries.PendingEntry> pending = index.pending();
 		if (!pending.isEmpty()) {
@@ -189,15 +353,12 @@ public final class ConfigValidation {
 		if (index.hasInputError()) {
 			return new Refusal(I18NConstants.ERROR_INPUT_NOT_READABLE, Collections.emptyList());
 		}
-		List<Violation> violations = new ArrayList<>();
-		for (ConfigurationItem item : edited) {
-			violations.addAll(check(item));
-		}
+		List<Violation> violations = recheck(edited, index);
 		if (!violations.isEmpty()) {
-			report(violations, index);
 			// Every violation is listed, not only those that found no field: the fields are spread
 			// over a form taller than the screen, and the list is what says how many there are and
-			// what they are without hunting for them.
+			// what they are without hunting for them. Only the violations: the Refusal is why the
+			// configuration was not handed over, and a warning is not part of that answer.
 			return new Refusal(I18NConstants.ERROR_CANNOT_APPLY,
 				violations.stream().map(Violation::message).toList());
 		}
@@ -352,8 +513,17 @@ public final class ConfigValidation {
 	}
 
 	/**
-	 * Runs {@link ConstraintChecker} on the given item and adds a {@link Violation} for every
-	 * non-{@link ConstraintFailure#isWarning() warning} failure it finds.
+	 * Runs {@link ConstraintChecker} on the given item, adding a {@link Warning} for every
+	 * {@link ConstraintFailure#isWarning() warning} failure it finds and a {@link Violation} for
+	 * every other one.
+	 *
+	 * <p>
+	 * A warning is kept, not dropped: a constraint declared
+	 * {@link com.top_logic.basic.config.constraint.annotation.Constraint#asWarning() as a warning}
+	 * is one whose author wanted the value questioned rather than refused, and dropping it here
+	 * leaves the field with nothing at all on it - the constraint would then be written, evaluated,
+	 * and silently discarded.
+	 * </p>
 	 *
 	 * <p>
 	 * Uses {@link ConstraintChecker#check(ConfigurationItem)}, not one of the logging overloads:
@@ -372,7 +542,8 @@ public final class ConfigValidation {
 	 * which is where that key comes from in the first place).
 	 * </p>
 	 */
-	private static void collectConstraintFailures(ConfigurationItem item, List<Violation> violations) {
+	private static void collectConstraintFailures(ConfigurationItem item, List<Violation> violations,
+			List<Warning> warnings) {
 		ConstraintChecker checker = new ConstraintChecker();
 		try {
 			checker.check(item);
@@ -383,7 +554,10 @@ public final class ConfigValidation {
 			Logger.error("Cannot check constraints of '" + item + "'.", ex, ConfigValidation.class);
 		}
 		for (ConstraintFailure failure : checker.getFailures()) {
-			if (!failure.isWarning()) {
+			if (failure.isWarning()) {
+				warnings.add(
+					new Warning(failure.getItem(), failure.getContextProperty(), failure.getConstraintName()));
+			} else {
 				violations.add(
 					new Violation(failure.getItem(), failure.getContextProperty(), failure.getConstraintName()));
 			}

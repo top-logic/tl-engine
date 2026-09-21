@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	What an externally authenticated visitor sees for whom this application has no account: their
+	identity is confirmed, but nothing here belongs to them.
+	
+	The external authentication servlet sends them here - it is the unknownAccountPage of the
+	ApplicationPages configuration - and hands over the name they were authenticated under in the
+	"login" query parameter, which the query binding below puts on the login channel. The message
+	names that login; without a name it says the same thing without it.
+	
+	The page is an entry point marked anonymous, so it is shown although the application answers
+	every other URL of a session without an account with its login view. The link leads to the
+	application root, which is where that login view stands.
+-->
+<view>
+	<channels>
+		<!-- The name the external authentication system has authenticated, from the URL. -->
+		<channel name="login"/>
+		<derived-channel name="message"
+			inputs="login"
+		>
+			<expr><![CDATA[login -> if($login == null || $login.isEmpty(),
+	#"class.com.top_logic.base.accesscontrol.I18NConstants.UNKNOWN_ACCOUNT_MESSAGE",
+	#"class.com.top_logic.base.accesscontrol.I18NConstants.UNKNOWN_ACCOUNT_MESSAGE__LOGIN_NAME".fill($login))]]></expr>
+		</derived-channel>
+		<!--
+			Back to the application, where a visitor is offered the login. Absolute below the
+			context path, so the link holds wherever the application is deployed.
+		-->
+		<derived-channel name="loginLink">
+			<expr><![CDATA[{{{<a href="{contextPath() + '/view/'}">{#"class.com.top_logic.base.accesscontrol.I18NConstants.UNKNOWN_ACCOUNT_LOGIN"}</a>}}}]]></expr>
+		</derived-channel>
+	</channels>
+	<query-bindings>
+		<bind
+			channel="login"
+			query-param="login"
+		/>
+	</query-bindings>
+	<inset>
+		<stack align="center">
+			<panel
+				appearance="card"
+				title="class.com.top_logic.base.accesscontrol.I18NConstants.UNKNOWN_ACCOUNT_TITLE"
+				width="380px"
+			>
+				<text input="message"/>
+				<html input="loginLink"/>
+			</panel>
+		</stack>
+	</inset>
+</view>

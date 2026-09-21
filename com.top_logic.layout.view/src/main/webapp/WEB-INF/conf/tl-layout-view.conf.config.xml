@@ -137,6 +137,31 @@
 			<loginPage>/view/</loginPage>
 			<loginRetrySSO>/view/</loginRetrySSO>
 			<logoutPage>/view/</logoutPage>
+			<!--
+				The page explaining to an externally authenticated visitor that this application
+				has no account for them: a view of this UI instead of the stand-alone JSP the
+				core delivers, so an application built on the view layer answers with a page of
+				its own design.
+			-->
+			<unknownAccountPage>/view/unknown-account.view.xml</unknownAccountPage>
+		</config>
+
+		<!--
+			The views a URL may name as the contents of a browser tab, contributed by this module.
+			The list is keyed by the view, so the entry points of an application merge with these.
+		-->
+		<config config:interface="com.top_logic.layout.view.ViewConfig">
+			<entry-points>
+				<!--
+					Shown to a visitor although an application with a login view answers every
+					other URL of a session without an account with that login view: the page is
+					written for exactly such a visitor.
+				-->
+				<entry-point
+					anonymous="true"
+					view="unknown-account.view.xml"
+				/>
+			</entry-points>
 		</config>
 	</configs>
 </application>

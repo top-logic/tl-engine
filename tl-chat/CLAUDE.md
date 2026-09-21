@@ -778,8 +778,9 @@ flags as render guards on the existing `Thread` and `Composer` props.
 | `mcp-servers` | two-way | The attached servers' **names**, a `Collection<String>` (one name on its own is read as a set of one). |
 | `draft` | two-way | The text standing unsent in the composer (`String`, or a `ResKey` on the way in). |
 | `reference` | in | A model object, inserted into the draft as one atomic reference token. |
+| `quote` | in | A marked passage *of* an object, as the token itself: `{id, text}` and optionally `{label, location, kind}`. |
 
-`present` is not a tenth: it is a *list* of channels this element opens to the agent rather than
+`present` is not an eleventh: it is a *list* of channels this element opens to the agent rather than
 a channel the element itself reads or writes - see "the agent writes a channel" below.
 
 ##### `subject` - what a conversation is about (#508)
@@ -883,8 +884,8 @@ Two existing engine actions, no new class. What to know about it:
   goes is worth one keystroke.
 - A write may be a `ResKey`, because `{"en": …, "de": …}.internationalize()` is the obvious way to
   build a sentence in TL-Script; the control resolves it in the user's language
-  (`ChatConversationControl.draftText`). `null` - what an unwritten channel holds - says nothing and
-  leaves the composer alone; the empty string clears the draft.
+  (`ChatQuotes.text`). `null` - what an unwritten channel holds - says nothing and leaves the
+  composer alone; the empty string clears the draft.
 - It follows a **write**, not the standing value, the same way the turn settings do, and for the
   same reason. The echo is recognised in the browser: what this element last published is
   remembered, so a report of "Was" arriving back two keystrokes later does not put the composer back
@@ -897,12 +898,40 @@ Two existing engine actions, no new class. What to know about it:
   nested `<mention>`'s `text` expression computes - without a `<mention>` the label is the quoted
   text too, because the element has nothing else to say about the object. It is read only: the
   tokens are part of the draft `draft` already carries.
+- `quote` is the half `reference` cannot serve (#509): **a passage of an object**, which only the
+  viewer that showed it can name. `reference` takes the object, whose quoted text is everything the
+  element knows about it - the section, when what the reader marked was one paragraph of it. So
+  `quote` takes the token itself, as a map:
+
+  ```xml
+  <chat-conversation quote="chatQuote"/>
+  ```
+
+  ```
+  section -> {"id": $section, "location": "02 Kontext", "text": $marked}
+  ```
+
+  Only `id` and `text` have to be there - there is nothing to quote without the passage, and nothing
+  for a host tool to resolve without the object. `id` is normally the **model object itself**, not a
+  printed identifier: an application has no way of spelling the stable id the `@` menu uses, so the
+  element fills the kind, the id and the label from the object (a `<mention>` having its say in the
+  label) and the write only names the passage. Whatever the map does say wins. Fields may be
+  `ResKey`s, resolved like a draft's text. A map with no `text` inserts nothing, and so does a bare
+  object: that is `reference`'s job, and quoting the whole of a section back is the one thing the
+  agent's instructions tell it not to do. The rule is `ChatQuotes.token`; the inserted token is the
+  same one either way, so it serialises to the same `<quote/>`.
 - A channel notifies nobody when it is written the value it already holds, so writing the **same**
   object to `reference` twice in a row inserts one token. (A, B, A does insert three: the control
-  numbers its writes so the browser can tell the third from the first.)
+  numbers its writes so the browser can tell the third from the first.) Two *passages* of one object
+  are two different maps, so they are two writes and both insert - which is the case `quote` exists
+  for.
+- Two channels, two state slots (`referenceWrite`, `quoteWrite`) and two counters, deliberately: one
+  slot fed by both would lose a token whenever a page cleared one channel in the same request in
+  which it wrote the other. The browser parses both with the one `tokenWrite` in
+  `chat-conversation.tsx` and hands both to the same `insertReference`.
 
-`TestChatConversationConfig` holds the two options, `draft.test.ts` the debounce, and the
-`chat-store.test.ts` "composer seam" block the two calls a write turns into.
+`TestChatConversationConfig` holds the options and the `ChatQuotes` rule, `draft.test.ts` the
+debounce, and the `chat-store.test.ts` "composer seam" block the two calls a write turns into.
 
 #### Writing a channel across a view boundary
 
@@ -955,10 +984,9 @@ An application configures this element in the design view. Its options fall into
   trace picker), `citations` (markers *and* the per-answer sources pill - off removes the whole
   citation surface from the transcript), the nested `<actions>` (`copy`/`rate`/`regenerate`/
   `timestamp`), the nested `<controls>` pickers, `placeholder`, `prompt-improver-agent` (an agent
-  dropdown), `chat-id`, the nine channels (`input`, `subject`, `busy`, `agent`, `model`, `effort`,
-  `mcp-servers`, `draft`, `reference`), and `present` - the channels the agent may write, deny by
-  default. The transcript's rail badge button is *not*
-  configured: it appears exactly when a `<chat-rail>` with the same `chat-id` is mounted, which the
+  dropdown), `chat-id`, the ten channels (`input`, `subject`, `busy`, `agent`, `model`, `effort`,
+  `mcp-servers`, `draft`, `reference`, `quote`), and `present` - the channels the agent may write,
+  deny by default. The transcript's rail badge button is *not* configured: it appears exactly when a `<chat-rail>` with the same `chat-id` is mounted, which the
   rail announces to the shared store (`railMounted`), so a rail that mounts after the conversation
   still makes the button appear.
 - **Points at code (name a component registered in TypeScript; do nothing unless a developer set that

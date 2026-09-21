@@ -40,6 +40,9 @@ public class TestSidebarItemState extends TestCase {
 	/** The wire name of {@link CommandItem#isDisabled()}. */
 	private static final String DISABLED = "disabled";
 
+	/** The wire name of {@link CommandItem#getTooltip()}. */
+	private static final String TOOLTIP = "tooltip";
+
 	/** The state field holding the serialized sidebar items. */
 	private static final String ITEMS = "items";
 
@@ -63,6 +66,7 @@ public class TestSidebarItemState extends TestCase {
 		assertNull("An item that is shown does not report itself as hidden.", state.get(HIDDEN));
 		assertNull("An item that can be activated does not report itself as disabled.",
 			state.get(DISABLED));
+		assertNull("An item with nothing to explain sends no tooltip.", state.get(TOOLTIP));
 	}
 
 	/** Both flags reach the display once set. */
@@ -75,6 +79,27 @@ public class TestSidebarItemState extends TestCase {
 
 		assertEquals(Boolean.TRUE, state.get(HIDDEN));
 		assertEquals(Boolean.TRUE, state.get(DISABLED));
+	}
+
+	/**
+	 * The reason an item is out of reach reaches the client, where the pointer finds it.
+	 */
+	public void testTheTooltipIsSent() {
+		CommandItem item = commandItem();
+		ReactSidebarControl sidebar = sidebar(item);
+
+		item.setDisabled(true);
+		item.setTooltip("No model");
+		sidebar.refreshItems();
+
+		assertEquals("The item is shown out of reach without saying why.",
+			"No model", commandState(sidebar).get(TOOLTIP));
+
+		item.setDisabled(false);
+		item.setTooltip(null);
+		sidebar.refreshItems();
+
+		assertNull("The reason outlived the state it explained.", commandState(sidebar).get(TOOLTIP));
 	}
 
 	/**

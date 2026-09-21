@@ -28,6 +28,8 @@ public class CommandItem extends SidebarItem {
 
 	private boolean _disabled;
 
+	private String _tooltip;
+
 	/**
 	 * Functional interface for the server-side command action.
 	 */
@@ -147,6 +149,37 @@ public class CommandItem extends SidebarItem {
 		return this;
 	}
 
+	/**
+	 * The text explaining this item, shown when the pointer rests on it, or {@code null} for none.
+	 *
+	 * <p>
+	 * While the command the item hosts is shown out of reach, this is the reason its rules gave for
+	 * disabling it: the item says why it cannot be used, as the button of the same command does.
+	 * </p>
+	 */
+	public String getTooltip() {
+		return _tooltip;
+	}
+
+	/**
+	 * @see #getTooltip()
+	 */
+	public void setTooltip(String tooltip) {
+		_tooltip = tooltip;
+	}
+
+	/**
+	 * Sets {@link #getTooltip()}.
+	 *
+	 * @param tooltip
+	 *        The explaining text, or {@code null} for none.
+	 * @return This instance for fluent chaining.
+	 */
+	public CommandItem withTooltip(String tooltip) {
+		setTooltip(tooltip);
+		return this;
+	}
+
 	@Override
 	public String getType() {
 		return TYPE_COMMAND;
@@ -156,8 +189,8 @@ public class CommandItem extends SidebarItem {
 	 * {@inheritDoc}
 	 *
 	 * <p>
-	 * {@link #HIDDEN} and {@link #DISABLED} are written only while set, so an item in its ordinary
-	 * state costs no extra field on the wire.
+	 * {@link #HIDDEN}, {@link #DISABLED} and {@link #TOOLTIP} are written only while set, so an item
+	 * in its ordinary state costs no extra field on the wire.
 	 * </p>
 	 */
 	@Override
@@ -172,6 +205,9 @@ public class CommandItem extends SidebarItem {
 		}
 		if (_disabled) {
 			map.put(DISABLED, Boolean.TRUE);
+		}
+		if (_tooltip != null) {
+			map.put(TOOLTIP, _tooltip);
 		}
 		return map;
 	}

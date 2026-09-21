@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.element;
 
+import java.util.Objects;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -36,7 +38,8 @@ import com.top_logic.layout.view.element.SidebarElement.SidebarItemElement;
  * <p>
  * The item shows what the command's executability rules decide, for as long as the sidebar stands:
  * an item whose command is not offered right now is withheld or shown out of reach, and takes its
- * place back as soon as the rules allow it again.
+ * place back as soon as the rules allow it again. The reason a rule gives for disabling the command
+ * is what the item says while the pointer rests on it.
  * </p>
  */
 public class CommandItemElement implements SidebarItemElement {
@@ -102,6 +105,7 @@ public class CommandItemElement implements SidebarItemElement {
 		model.revalidate();
 		item.setHidden(!model.isVisible());
 		item.setDisabled(!model.isExecutable());
+		item.setTooltip(model.getTooltip());
 
 		site.addBinding(sidebar -> {
 			sidebar.addAttachListener(() -> model.attach(context.getModelScope()));
@@ -110,9 +114,12 @@ public class CommandItemElement implements SidebarItemElement {
 			Runnable stateListener = () -> {
 				boolean hidden = !model.isVisible();
 				boolean disabled = !model.isExecutable();
-				if (hidden != item.isHidden() || disabled != item.isDisabled()) {
+				String tooltip = model.getTooltip();
+				if (hidden != item.isHidden() || disabled != item.isDisabled()
+					|| !Objects.equals(tooltip, item.getTooltip())) {
 					item.setHidden(hidden);
 					item.setDisabled(disabled);
+					item.setTooltip(tooltip);
 					sidebar.refreshItems();
 				}
 			};

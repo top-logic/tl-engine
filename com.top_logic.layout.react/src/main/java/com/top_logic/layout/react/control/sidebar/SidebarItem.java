@@ -36,6 +36,9 @@ public abstract class SidebarItem {
 	/** Whether the item is displayed, but cannot be activated. */
 	static final String DISABLED = "disabled";
 
+	/** Text explaining the item, shown when the pointer rests on it. */
+	static final String TOOLTIP = "tooltip";
+
 	private final String _id;
 
 	/**

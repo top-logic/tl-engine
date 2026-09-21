@@ -102,6 +102,9 @@ public class TestSidebarElement extends BasicTestCase {
 	/** The wire name of an item shown out of reach. */
 	private static final String DISABLED = "disabled";
 
+	/** The wire name of the text explaining an item. */
+	private static final String TOOLTIP = "tooltip";
+
 	/** The wire name of the unfolded state of a group. */
 	private static final String EXPANDED = "expanded";
 
@@ -211,11 +214,18 @@ public class TestSidebarElement extends BasicTestCase {
 		assertEquals("A command whose rules disable it is shown out of reach.",
 			Boolean.TRUE, item(sidebar, "cmdDisabled").get(DISABLED));
 
+		Object reason = item(sidebar, "cmdDisabled").get(TOOLTIP);
+		assertNotNull("An item shown out of reach does not say why: " + item(sidebar, "cmdDisabled"),
+			reason);
+		assertFalse("The reason the rule gave is empty.", ((String) reason).isEmpty());
+
 		_count.set(Integer.valueOf(3));
 
 		assertNull("The input the rules accept brings the item back.", item(sidebar, "cmdHidden").get(HIDDEN));
 		assertNull("The input the rules accept puts the item within reach.",
 			item(sidebar, "cmdDisabled").get(DISABLED));
+		assertNull("The item is within reach, so there is no reason left to explain.",
+			item(sidebar, "cmdDisabled").get(TOOLTIP));
 
 		_count.set(null);
 

@@ -31,6 +31,8 @@ interface CommandItemInfo extends SidebarItemBase {
   hidden?: boolean;
   /** Shown greyed out, not activatable and skipped by keyboard navigation. */
   disabled?: boolean;
+  /** Explaining text, the reason for the disabling where a rule gave one. */
+  tooltip?: string;
 }
 
 interface HeaderItemInfo extends SidebarItemBase {
@@ -135,7 +137,7 @@ const SidebarCommandItem: React.FC<{
     className={'tlSidebar__item tlSidebar__commandItem' + (item.disabled ? ' tlSidebar__item--disabled' : '')}
     onClick={() => onExecute(item.id)}
     disabled={item.disabled}
-    title={collapsed ? item.label : undefined}
+    title={item.tooltip ?? (collapsed ? item.label : undefined)}
     tabIndex={tabIndex}
     ref={itemRef}
     onFocus={() => onFocus(item.id)}
@@ -215,6 +217,7 @@ const SidebarGroupFlyout: React.FC<{
         if (child.type === 'nav' || child.type === 'command') {
           const isActive = child.type === 'nav' && child.id === activeItemId;
           const isDisabled = child.type === 'command' && !!(child as CommandItemInfo).disabled;
+          const tooltip = child.type === 'command' ? (child as CommandItemInfo).tooltip : undefined;
           return (
             <button
               key={child.id}
@@ -222,6 +225,7 @@ const SidebarGroupFlyout: React.FC<{
                 + (isDisabled ? ' tlSidebar__item--disabled' : '')}
               role="menuitem"
               disabled={isDisabled}
+              title={tooltip}
               onClick={() => handleChildClick(child)}
             >
               <SidebarIcon icon={child.icon} />

@@ -38,6 +38,8 @@ public final class FieldSpec {
 
 	private String _tooltip;
 
+	private String _placeholder;
+
 	private boolean _mandatory;
 
 	private boolean _editable = true;
@@ -108,6 +110,30 @@ public final class FieldSpec {
 	 */
 	public FieldSpec setTooltip(String tooltip) {
 		_tooltip = tooltip;
+		return this;
+	}
+
+	/**
+	 * The text shown in the empty input, or {@code null} if it stays empty.
+	 *
+	 * <p>
+	 * What the user is expected to enter, said inside the input itself: "Search" in a search box,
+	 * "name@example.com" in a mail address. It is the place to state the purpose of an input whose
+	 * {@link #getLabel() label} is hidden or stands elsewhere - in a toolbar, above a list - and it
+	 * disappears as soon as a value is entered, so it never replaces a label the field can show.
+	 * </p>
+	 */
+	public String getPlaceholder() {
+		return _placeholder;
+	}
+
+	/**
+	 * Sets the {@link #getPlaceholder() placeholder}.
+	 *
+	 * @return This specification for call chaining.
+	 */
+	public FieldSpec setPlaceholder(String placeholder) {
+		_placeholder = placeholder;
 		return this;
 	}
 
@@ -358,6 +384,7 @@ public final class FieldSpec {
 	public FieldSpec elementSpec() {
 		FieldSpec result = new FieldSpec(_valueType, _label);
 		result._tooltip = _tooltip;
+		result._placeholder = _placeholder;
 		result._mandatory = _mandatory;
 		result._editable = _editable;
 		// The element is one value: it is not several, and a single value has no order to arrange.

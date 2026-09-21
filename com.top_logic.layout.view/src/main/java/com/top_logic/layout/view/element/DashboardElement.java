@@ -57,6 +57,9 @@ public class DashboardElement implements UIElement {
 		/** Config property name for {@link #getMinColWidth()}. */
 		String MIN_COL_WIDTH = "min-col-width";
 
+		/** Config property name for {@link #getRowHeight()}. */
+		String ROW_HEIGHT = "row-height";
+
 		/** Config property name for {@link #getTiles()}. */
 		String TILES = "tiles";
 
@@ -80,6 +83,22 @@ public class DashboardElement implements UIElement {
 		String getMinColWidth();
 
 		/**
+		 * The height of one grid row, as a CSS length.
+		 *
+		 * <p>
+		 * A tile is as many rows tall as the row span of its
+		 * {@link TileElement}, plus the gaps between those rows. Content that
+		 * fills the available height, a panel configured to fill or a table,
+		 * resolves its height against the tile and scrolls inside it; content
+		 * that does not fill and is taller than the tile scrolls inside the
+		 * tile as well.
+		 * </p>
+		 */
+		@Name(ROW_HEIGHT)
+		@StringDefault("16rem")
+		String getRowHeight();
+
+		/**
 		 * The tiles. Represented as polymorphic configurations so that the
 		 * default container (child elements) can hold {@code <tile>} entries.
 		 */
@@ -92,6 +111,8 @@ public class DashboardElement implements UIElement {
 
 	private final String _minColWidth;
 
+	private final String _rowHeight;
+
 	private final List<TileElement> _tiles;
 
 	/**
@@ -101,6 +122,7 @@ public class DashboardElement implements UIElement {
 	public DashboardElement(InstantiationContext context, Config config) {
 		_id = config.getId();
 		_minColWidth = config.getMinColWidth();
+		_rowHeight = config.getRowHeight();
 		_tiles = new ArrayList<>();
 		for (PolymorphicConfiguration<? extends TileElement> tc : config.getTiles()) {
 			TileElement tile = context.getInstance(tc);
@@ -127,7 +149,7 @@ public class DashboardElement implements UIElement {
 			reactTiles.add(new Tile(t.getId(), t.getWidth(), t.getRowSpan(), t.createContentControl(context)));
 		}
 		ReactDashboardControl control =
-			new ReactDashboardControl(context, _minColWidth, reactTiles, this::storePersonalOrder);
+			new ReactDashboardControl(context, _minColWidth, _rowHeight, reactTiles, this::storePersonalOrder);
 
 		contributeEditCommands(context, control);
 

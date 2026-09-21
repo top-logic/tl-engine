@@ -153,6 +153,42 @@ public class TestChannelObjectObserver extends AbstractDBKnowledgeBaseTest {
 	}
 
 	/**
+	 * Tests that an observation resuming after it was stopped reports once, so that a holder
+	 * re-reading the channels catches up on what the objects went through unobserved - and that
+	 * beginning the observation reports nothing.
+	 */
+	public void testResumedObservationIsReported() throws Exception {
+		BObj b1 = create("b1");
+		_input.set(b1);
+		ChannelObjectObserver observer = observer();
+
+		observer.attach(_scope);
+		assertEquals("Beginning an observation reports nothing: the display was just built.", 0, _reported);
+
+		observer.detach();
+		observer.attach(_scope);
+
+		assertEquals("Resuming reports once, so that the holder re-reads the channels.", 1, _reported);
+	}
+
+	/**
+	 * Tests that a holder receiving the change itself hears nothing when the observation resumes:
+	 * there is no event describing what happened unobserved.
+	 */
+	public void testResumingReportsNoEvent() throws Exception {
+		BObj b1 = create("b1");
+		_input.set(b1);
+		ChannelObjectObserver observer =
+			new ChannelObjectObserver(List.of(_input), Set.of(), (ModelChangeEvent event) -> _reported++);
+		observer.attach(_scope);
+		observer.detach();
+
+		observer.attach(_scope);
+
+		assertEquals("A change nobody recorded cannot be handed to anybody.", 0, _reported);
+	}
+
+	/**
 	 * Tests that a channel holding a collection of objects observes every member of it.
 	 */
 	public void testCollectionValueObservesEveryMember() throws Exception {

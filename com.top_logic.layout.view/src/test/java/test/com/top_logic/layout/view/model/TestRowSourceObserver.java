@@ -101,6 +101,24 @@ public class TestRowSourceObserver extends TestCase {
 	}
 
 	/**
+	 * Tests that an observation resuming after it was stopped delivers the elements it reads, even
+	 * where they are the ones the display holds: what those objects went through while nobody
+	 * followed them is unknown, so the display is rebuilt from them.
+	 */
+	public void testResumedObservationDeliversTheElements() {
+		ViewChannel filter = new DefaultViewChannel("filter");
+		RowSourceObserver<String> observer = observer(filter, List.of("a", "ab", "b"));
+		observer.attach(null);
+		observer.detach();
+		_delivered.clear();
+
+		observer.attach(null);
+
+		assertEquals("The unchanged elements are delivered once when the observation resumes.",
+			List.of(List.of("a", "ab", "b")), _delivered);
+	}
+
+	/**
 	 * Tests that an element without a persistent identity is displayed and refreshed like any
 	 * other: a transient object has no changes anyone could be notified of, so the observation
 	 * passes it by instead of asking it for an identity it does not have.

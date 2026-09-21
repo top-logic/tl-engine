@@ -3506,9 +3506,11 @@ button.tlMenu__item--disabled:hover {
 /* A value that points somewhere - a web address, an e-mail address, a phone number - is the link
    there. It ends in an ellipsis like any other value, but it stays as wide as the text it reads
    as: a link stretched over the cell would follow the address on a click anywhere in the cell,
-   where the user is aiming at the row. Being an item of the flex layout the cell is, it is as wide
-   as its text and shrinks with the column on its own, so it takes no width of its own. */
+   where the user is aiming at the row. The text input's full width is therefore given up: as an
+   item of the flex layout the cell is, the link is then as wide as its text and shrinks with the
+   column on its own. */
 .tlTableView__cell > a {
+	width: auto;
 	max-width: 100%;
 	min-width: 0;
 	overflow: hidden;

@@ -7,7 +7,6 @@ package com.top_logic.layout.view.designer;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -40,6 +39,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.model.TreeNodes;
 import com.top_logic.layout.view.model.TreeSelectionBinding;
 import com.top_logic.mig.html.DefaultSingleSelectionModel;
 import com.top_logic.mig.html.SelectionModelOwner;
@@ -141,9 +141,9 @@ public class DesignerTreeElement implements UIElement {
 			// Reflect an externally set selection (e.g. from the "select view" picker) in the tree.
 			selectionChannel.addListener((sender, oldValue, newValue) -> {
 				if (newValue instanceof DesignTreeNode target) {
-					DefaultTreeUINode uiNode = findUINode(currentModel[0].getRoot(), target);
+					DefaultTreeUINode uiNode = TreeNodes.findNode(currentModel[0].getRoot(), target);
 					if (uiNode != null) {
-						revealNode(uiNode);
+						TreeNodes.revealNode(uiNode);
 						selectionModel.setSelected(uiNode, true);
 						// Push the server-side expansion+selection change to the client. Unlike a
 						// client-initiated select/expand (which flows through the control's own
@@ -213,18 +213,18 @@ public class DesignerTreeElement implements UIElement {
 		// Rebuilds the tree after a structural edit and selects the given node, keeping the parts of
 		// the tree the user had opened expanded.
 		Consumer<DesignTreeNode> rebuild = toSelect -> {
-			Set<DesignTreeNode> expanded = collectExpanded(currentModel[0].getRoot());
+			Set<Object> expanded = TreeNodes.collectExpanded(currentModel[0].getRoot());
 
 			DesignTreeNode root = (DesignTreeNode) inputChannel.get();
 			DefaultTreeUINodeModel newTreeModel = new DefaultTreeUINodeModel(builder, root);
 			newTreeModel.setRootVisible(true);
 			treeControl.setTreeModel(newTreeModel);
 			currentModel[0] = newTreeModel;
-			restoreExpansion(newTreeModel.getRoot(), expanded);
+			TreeNodes.restoreExpansion(newTreeModel.getRoot(), expanded);
 
-			DefaultTreeUINode uiNode = toSelect == null ? null : findUINode(newTreeModel.getRoot(), toSelect);
+			DefaultTreeUINode uiNode = toSelect == null ? null : TreeNodes.findNode(newTreeModel.getRoot(), toSelect);
 			if (uiNode != null) {
-				revealNode(uiNode);
+				TreeNodes.revealNode(uiNode);
 				selectionModel.setSelected(uiNode, true);
 			} else {
 				selectionModel.clear();
@@ -340,44 +340,6 @@ public class DesignerTreeElement implements UIElement {
 	}
 
 	/**
-	 * The design nodes whose subtree is currently open, so that a rebuilt tree can be opened the same
-	 * way.
-	 */
-	private static Set<DesignTreeNode> collectExpanded(DefaultTreeUINode node) {
-		Set<DesignTreeNode> expanded = new HashSet<>();
-		collectExpanded(node, expanded);
-		return expanded;
-	}
-
-	private static void collectExpanded(DefaultTreeUINode node, Set<DesignTreeNode> expanded) {
-		if (!node.isExpanded()) {
-			return;
-		}
-		if (node.getBusinessObject() instanceof DesignTreeNode designNode) {
-			expanded.add(designNode);
-		}
-		// Only an expanded node has its children created, so the recursion stops where the tree was
-		// closed anyway.
-		for (DefaultTreeUINode child : node.getChildren()) {
-			collectExpanded(child, expanded);
-		}
-	}
-
-	/**
-	 * Re-opens the subtrees that were open before the tree was rebuilt.
-	 */
-	private static void restoreExpansion(DefaultTreeUINode node, Set<DesignTreeNode> expanded) {
-		if (!(node.getBusinessObject() instanceof DesignTreeNode designNode) || !expanded.contains(designNode)) {
-			return;
-		}
-		node.setExpanded(true);
-		// Expanding creates the children, so they can be visited afterwards.
-		for (DefaultTreeUINode child : node.getChildren()) {
-			restoreExpansion(child, expanded);
-		}
-	}
-
-	/**
 	 * The {@link DesignTreeNode} displayed by the given tree node, or {@code null} if the node does
 	 * not represent one.
 	 */
@@ -386,39 +348,6 @@ public class DesignerTreeElement implements UIElement {
 			return treeNode.getBusinessObject() instanceof DesignTreeNode designNode ? designNode : null;
 		}
 		return node instanceof DesignTreeNode designNode ? designNode : null;
-	}
-
-	/**
-	 * Finds the {@link DefaultTreeUINode} whose business object is {@code target}. Returns
-	 * {@code null} if not found.
-	 *
-	 * <p>
-	 * Does not expand any node: {@link DefaultTreeUINode#getChildren()} materializes children
-	 * lazily regardless of expansion state, so the search does not need to expand anything. Use
-	 * {@link #revealNode(DefaultTreeUINode)} to expand the ancestors of a found node.
-	 * </p>
-	 */
-	private static DefaultTreeUINode findUINode(DefaultTreeUINode node, DesignTreeNode target) {
-		if (node.getBusinessObject() == target) {
-			return node;
-		}
-		for (DefaultTreeUINode child : node.getChildren()) {
-			DefaultTreeUINode found = findUINode(child, target);
-			if (found != null) {
-				return found;
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * Expands all ancestors of the given node so it becomes visible in the tree, without expanding
-	 * the node itself.
-	 */
-	private static void revealNode(DefaultTreeUINode node) {
-		for (DefaultTreeUINode parent = node.getParent(); parent != null; parent = parent.getParent()) {
-			parent.setExpanded(true);
-		}
 	}
 
 	/**
@@ -444,7 +373,7 @@ public class DesignerTreeElement implements UIElement {
 				Runnable labelListener = () -> {
 					ReactTreeControl tree = treeRef[0];
 					if (tree != null) {
-						DefaultTreeUINode uiNode = findUINode(currentModel[0].getRoot(), designNode);
+						DefaultTreeUINode uiNode = TreeNodes.findNode(currentModel[0].getRoot(), designNode);
 						if (uiNode != null) {
 							tree.invalidateNodeControl(uiNode);
 						}

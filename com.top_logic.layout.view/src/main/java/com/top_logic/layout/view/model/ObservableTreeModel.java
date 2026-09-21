@@ -6,13 +6,18 @@
 package com.top_logic.layout.view.model;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import com.top_logic.dob.identifier.ObjectKey;
-import com.top_logic.knowledge.objects.KnowledgeItem;
+import com.top_logic.layout.IndexPosition;
 import com.top_logic.layout.react.control.tree.ReactTreeControl;
 import com.top_logic.layout.tree.model.DefaultTreeUINodeModel;
 import com.top_logic.layout.tree.model.DefaultTreeUINodeModel.DefaultTreeUINode;
@@ -27,35 +32,41 @@ import com.top_logic.model.listen.ModelListener;
 import com.top_logic.model.listen.ModelScope;
 
 /**
- * Companion to a {@link DefaultTreeUINodeModel} + {@link ReactTreeControl} that observes
- * persistent object changes via {@link ModelScope} and input changes via {@link ViewChannel},
- * translating them into tree model updates.
+ * Keeps the {@link DefaultTreeUINodeModel} a {@link ReactTreeControl} displays in sync with the
+ * model behind it: changes of the displayed objects arrive through a {@link ModelScope}, changes of
+ * the input the tree is built from through the {@link ViewChannel}s it reads.
  *
  * <p>
- * This class lives in the view module and bridges the gap between the TopLogic model layer
- * and the model-free React control layer. The wrapped {@link DefaultTreeUINodeModel} and the
- * {@link ReactTreeControl} remain unchanged.
+ * An object change reconciles the tree in place. The child list of every node whose children were
+ * computed already is computed again: a node whose object is still in that list is kept, with the
+ * subtrees the user opened below it and everything the display holds on it, and moved where the
+ * list now has it; an object that appeared gets a node at its place; a node whose object is gone is
+ * removed. A node nobody opened is left alone - its children are computed when somebody opens it,
+ * and computing them to answer a change nobody sees is wasted work.
  * </p>
  *
- * <h3>Two trigger paths:</h3>
- * <ol>
- * <li><b>Channel change</b> (new input data): Re-evaluates the root function with the new input,
- * builds a new {@link DefaultTreeUINodeModel} and calls
- * {@link ReactTreeControl#setTreeModel(com.top_logic.layout.tree.model.TreeUIModel)} on the control,
- * and re-registers object listeners.</li>
- * <li><b>ModelScope event</b> (object changes): Removes nodes whose business objects were deleted
- * directly from the tree model, invalidates individual node content controls for updates via
- * {@link ReactTreeControl#invalidateNodeControl(Object)}, and rebuilds the full tree for creates
- * of observed types. After cache invalidation, a single
- * {@link ReactTreeControl#updateVisibleState()} call rebuilds the visible node state, reusing
- * all unaffected cached controls.</li>
- * </ol>
+ * <p>
+ * Which nodes are reconciled follows the change. A deleted object loses its node, and the node it
+ * hung in is reconciled. An updated object reconciles the children of its node: an object taken out
+ * of a composition is not deleted, it is only no longer a child, and nothing but the child list of
+ * the former container says so. A created object of an observed type reconciles the whole computed
+ * tree, because the function computing the children is opaque: where the new object appears is not
+ * known here.
+ * </p>
  *
- * <h3>Lifecycle:</h3>
- * <ul>
- * <li>{@link #attach(ModelScope)} - registers listeners (called on first render)</li>
- * <li>{@link #detach()} - removes all listeners (called on cleanup)</li>
- * </ul>
+ * <p>
+ * An input change is a different tree: the root object is computed from the new input and the model
+ * is built anew. The subtrees that were open are opened again wherever the new tree holds their
+ * objects.
+ * </p>
+ *
+ * <p>
+ * Observation begins with {@link #attach(ModelScope)} and is stopped by {@link #detach()}, which
+ * the control calls while it is displayed and when it stops being displayed. Nothing is observed in
+ * between, so an observation that begins again reconciles the tree: what the objects in it went
+ * through while nobody followed them is unknown, and so is the input, which may name another root
+ * by now.
+ * </p>
  */
 public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelListener, TreeModelListener {
 
@@ -71,28 +82,37 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 
 	private DefaultTreeUINodeModel _treeModel;
 
-	private Set<ObjectKey> _observedKeys = new HashSet<>();
+	/** The objects a listener is registered for, by their identity. */
+	private Map<ObjectKey, TLObject> _observed = new HashMap<>();
 
 	private ModelScope _modelScope;
 
 	private boolean _attached;
 
+	/** Whether the observation was stopped and has not begun again. */
+	private boolean _suspended;
+
+	/**
+	 * Whether the tree is currently being brought up to date, so that the events of its own changes
+	 * report nothing this class does not know already.
+	 */
+	private boolean _updating;
+
 	/**
 	 * Creates a new {@link ObservableTreeModel}.
 	 *
 	 * @param treeControl
-	 *        The React tree control to update when changes occur.
+	 *        The tree control displaying the given model.
 	 * @param treeModel
-	 *        The initial tree model.
+	 *        The tree model the control was built with.
 	 * @param rootFunction
-	 *        Function that takes channel values and returns the root business object. Used for
-	 *        re-evaluation on channel change and create detection.
+	 *        Computes the root business object from the input channel values.
 	 * @param builder
-	 *        The {@link TreeBuilder} used to rebuild the tree model.
+	 *        Computes the children of a node, and creates the nodes of the tree.
 	 * @param observedTypes
-	 *        Types to observe for create events. Empty means no create detection.
+	 *        Types whose creates reconcile the tree, empty for a tree that expects none.
 	 * @param inputChannels
-	 *        The input channels whose values are passed to the root function.
+	 *        The channels whose values the root function is called with.
 	 */
 	public ObservableTreeModel(ReactTreeControl treeControl, DefaultTreeUINodeModel treeModel,
 			Function<Object[], Object> rootFunction,
@@ -102,20 +122,29 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 		_treeControl = treeControl;
 		_treeModel = treeModel;
 		_rootFunction = rootFunction;
-		_builder = builder;
 		_observedTypes = observedTypes;
+		_builder = builder;
 		_inputChannels = inputChannels;
 	}
 
 	/**
-	 * Registers listeners on the given {@link ModelScope} and input channels.
+	 * The tree model displayed now, which an input change replaces with another one.
+	 */
+	public DefaultTreeUINodeModel getTreeModel() {
+		return _treeModel;
+	}
+
+	/**
+	 * Begins observing on the given {@link ModelScope}, and takes up what happened before.
 	 *
 	 * <p>
-	 * Called while the tree is displayed (via
-	 * {@link com.top_logic.layout.react.control.ReactControl#addAttachListener(Runnable)}), and
-	 * undone by {@link #detach()} when it stops being displayed. Idempotent, so an attach/detach
-	 * cycle registers the listeners exactly once each time.
+	 * Called while the tree is displayed and undone by {@link #detach()} when it stops being
+	 * displayed. Idempotent, so an attach/detach cycle registers the listeners exactly once each
+	 * time.
 	 * </p>
+	 *
+	 * @param scope
+	 *        The scope the model listeners are registered on.
 	 */
 	public void attach(ModelScope scope) {
 		if (_attached) {
@@ -125,9 +154,10 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 		_modelScope = scope;
 
 		_treeModel.addTreeModelListener(this);
-		registerObjectListeners();
+		syncObjectListeners();
 		registerTypeListeners();
 		registerChannelListeners();
+		catchUp();
 	}
 
 	/**
@@ -138,6 +168,7 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 			return;
 		}
 		_attached = false;
+		_suspended = true;
 
 		_treeModel.removeTreeModelListener(this);
 		deregisterObjectListeners();
@@ -145,41 +176,78 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 		deregisterChannelListeners();
 
 		_modelScope = null;
-		_observedKeys.clear();
+	}
+
+	/**
+	 * Takes up what happened while nobody was observing.
+	 *
+	 * <p>
+	 * The input is read in any case: a channel written between the construction of this observation
+	 * and its beginning - a channel bound to the URL taking up the value a deep link carries, for
+	 * instance - reached no listener, so the root the tree was built from may already be the wrong
+	 * one.
+	 * </p>
+	 *
+	 * <p>
+	 * An observation that resumes - one that was stopped by {@link #detach()} - reconciles the tree
+	 * on top of that, because every change of the displayed objects passed unnoticed while the
+	 * display was suspended. An observation beginning for the first time needs none: the tree was
+	 * just built from the objects as they are.
+	 * </p>
+	 */
+	private void catchUp() {
+		boolean resumed = _suspended;
+		_suspended = false;
+
+		if (!rootUpToDate()) {
+			reEvaluateTree();
+			return;
+		}
+		if (!resumed) {
+			return;
+		}
+		boolean changed;
+		boolean before = beginUpdate();
+		try {
+			changed = reconcileSubtree(_treeModel.getRoot());
+		} finally {
+			endUpdate(before);
+		}
+		if (changed) {
+			syncObjectListeners();
+			_treeControl.updateVisibleState();
+		}
+	}
+
+	/**
+	 * Whether the tree is built from the root object the input yields now.
+	 */
+	private boolean rootUpToDate() {
+		Object root = _rootFunction.apply(readChannelValues());
+		return Objects.equals(root, _treeModel.getRoot().getBusinessObject());
 	}
 
 	// --- TreeModelListener ---
 
 	@Override
 	public void handleTreeUIModelEvent(TreeModelEvent evt) {
-		if (_modelScope == null) {
-			return;
-		}
-		Object node = evt.getNode();
-		if (!(node instanceof DefaultTreeUINode treeNode)) {
+		if (_modelScope == null || _updating) {
 			return;
 		}
 		switch (evt.getType()) {
-			case TreeModelEvent.AFTER_NODE_ADD: {
-				// New node appeared (e.g. expansion loaded children). Register listener.
-				Object bo = treeNode.getBusinessObject();
-				if (bo instanceof TLObject tlObj) {
-					ObjectKey key = key(tlObj);
-					if (key != null && _observedKeys.add(key)) {
-						_modelScope.addModelListener(tlObj, this);
-					}
+			case TreeModelEvent.AFTER_EXPAND: {
+				if (evt.getNode() instanceof DefaultTreeUINode node) {
+					// Opening a node computes its children, which are observed like every other
+					// displayed object.
+					node.getChildren();
 				}
+				syncObjectListeners();
 				break;
 			}
-			case TreeModelEvent.BEFORE_NODE_REMOVE: {
-				// Node being removed. Deregister listener.
-				Object bo = treeNode.getBusinessObject();
-				if (bo instanceof TLObject tlObj) {
-					ObjectKey key = key(tlObj);
-					if (key != null && _observedKeys.remove(key)) {
-						_modelScope.removeModelListener(tlObj, this);
-					}
-				}
+			case TreeModelEvent.AFTER_NODE_ADD:
+			case TreeModelEvent.AFTER_NODE_REMOVE:
+			case TreeModelEvent.AFTER_STRUCTURE_CHANGE: {
+				syncObjectListeners();
 				break;
 			}
 			default:
@@ -191,72 +259,93 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 
 	@Override
 	public void notifyChange(ModelChangeEvent event) {
-		handleDeletes(event);
-		handleUpdates(event);
-		handleCreates(event);
-	}
+		Set<DefaultTreeUINode> toReconcile = new LinkedHashSet<>();
+		boolean changed;
 
-	private void handleDeletes(ModelChangeEvent event) {
-		List<TLObject> toRemove = new ArrayList<>();
-		event.getDeleted().forEach(obj -> {
-			ObjectKey key = key(obj);
-			if (key != null && _observedKeys.contains(key)) {
-				toRemove.add(obj);
-				_observedKeys.remove(key);
-				_modelScope.removeModelListener(obj, this);
-			}
-		});
-		if (toRemove.isEmpty()) {
-			return;
-		}
-		// Find and remove nodes for the deleted business objects.
-		boolean anyRemoved = false;
-		for (TLObject deleted : toRemove) {
-			DefaultTreeUINode node = findNode(_treeModel.getRoot(), deleted);
-			if (node != null) {
-				DefaultTreeUINode parent = node.getParent();
-				if (parent != null) {
-					int index = parent.getChildren().indexOf(node);
-					if (index >= 0) {
-						parent.removeChild(index);
-						anyRemoved = true;
-					}
+		boolean before = beginUpdate();
+		try {
+			changed = removeDeleted(event, toReconcile);
+			changed |= invalidateUpdated(event, toReconcile);
+
+			if (hasRelevantCreates(event)) {
+				// Where a created object appears is not known here, so the whole computed tree is
+				// checked.
+				changed |= reconcileSubtree(_treeModel.getRoot());
+			} else {
+				for (DefaultTreeUINode node : toReconcile) {
+					changed |= reconcileChildren(node);
 				}
 			}
+		} finally {
+			endUpdate(before);
 		}
-		if (anyRemoved) {
-			// Rebuild visible state. Controls for removed nodes are cleaned up
-			// automatically by buildFullState() since they no longer appear in the tree.
+
+		if (changed) {
+			syncObjectListeners();
 			_treeControl.updateVisibleState();
 		}
 	}
 
-	private void handleUpdates(ModelChangeEvent event) {
-		boolean anyUpdated = false;
-		List<DefaultTreeUINode> updatedNodes = new ArrayList<>();
-		event.getUpdated().forEach(obj -> {
-			ObjectKey key = key(obj);
-			if (key != null && _observedKeys.contains(key)) {
-				DefaultTreeUINode node = findNode(_treeModel.getRoot(), obj);
-				if (node != null) {
-					updatedNodes.add(node);
-				}
+	/**
+	 * Drops the nodes of the objects the given event reports as deleted, and collects the nodes
+	 * they hung in.
+	 *
+	 * @return Whether the tree changed.
+	 */
+	private boolean removeDeleted(ModelChangeEvent event, Set<DefaultTreeUINode> toReconcile) {
+		boolean changed = false;
+		for (TLObject deleted : observedObjects(event.getDeleted())) {
+			DefaultTreeUINode node = TreeNodes.findComputedNode(_treeModel.getRoot(), deleted);
+			if (node == null) {
+				continue;
 			}
-		});
-		if (updatedNodes.isEmpty()) {
-			return;
+			DefaultTreeUINode parent = node.getParent();
+			if (parent == null) {
+				// The root itself is gone. The tree is rebuilt when the input names another root.
+				continue;
+			}
+			int index = parent.getChildren().indexOf(node);
+			if (index >= 0) {
+				parent.removeChild(index);
+				changed = true;
+			}
+			toReconcile.add(parent);
 		}
-		// Invalidate only the changed nodes' controls, then rebuild state once.
-		for (DefaultTreeUINode node : updatedNodes) {
-			_treeControl.invalidateNodeControl(node);
-		}
-		_treeControl.updateVisibleState();
+		return changed;
 	}
 
-	private void handleCreates(ModelChangeEvent event) {
-		if (hasRelevantCreates(event)) {
-			reEvaluateTree();
+	/**
+	 * Drops what the nodes of the objects the given event reports as updated display, and collects
+	 * those nodes.
+	 *
+	 * @return Whether the display of any node changed.
+	 */
+	private boolean invalidateUpdated(ModelChangeEvent event, Set<DefaultTreeUINode> toReconcile) {
+		boolean changed = false;
+		for (TLObject updated : observedObjects(event.getUpdated())) {
+			DefaultTreeUINode node = TreeNodes.findComputedNode(_treeModel.getRoot(), updated);
+			if (node == null) {
+				continue;
+			}
+			_treeControl.invalidateNodeControl(node);
+			toReconcile.add(node);
+			changed = true;
 		}
+		return changed;
+	}
+
+	/**
+	 * The objects of the given report that are displayed, and therefore observed.
+	 */
+	private List<TLObject> observedObjects(Stream<? extends TLObject> objects) {
+		List<TLObject> result = new ArrayList<>();
+		objects.forEach(object -> {
+			ObjectKey key = key(object);
+			if (key != null && _observed.containsKey(key)) {
+				result.add(object);
+			}
+		});
+		return result;
 	}
 
 	private boolean hasRelevantCreates(ModelChangeEvent event) {
@@ -278,93 +367,194 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 		reEvaluateTree();
 	}
 
-	// --- Re-evaluation ---
-
-	private void reEvaluateTree() {
-		_treeModel.removeTreeModelListener(this);
-		deregisterObjectListeners();
-		Object[] channelValues = readChannelValues();
-		Object newRoot = _rootFunction.apply(channelValues);
-		_treeModel = new DefaultTreeUINodeModel(_builder, newRoot);
-		_treeModel.addTreeModelListener(this);
-		_treeControl.setTreeModel(_treeModel);
-		registerObjectListeners();
-	}
-
-	// --- Node search ---
+	// --- Reconciliation ---
 
 	/**
-	 * Searches the initialized subtree rooted at {@code node} for the node whose business object
-	 * equals the given {@code businessObject}.
+	 * Starts an update of the tree, whose own events report nothing that is not known here.
 	 *
-	 * <p>
-	 * Only visits nodes whose children have been initialized; does not trigger lazy loading.
-	 * </p>
+	 * @return The state to hand to {@link #endUpdate(boolean)} when the update is done.
 	 */
-	private DefaultTreeUINode findNode(DefaultTreeUINode node, Object businessObject) {
-		if (businessObject.equals(node.getBusinessObject())) {
-			return node;
-		}
-		if (!_treeModel.childrenInitialized(node)) {
-			return null;
-		}
-		for (DefaultTreeUINode child : node.getChildren()) {
-			DefaultTreeUINode found = findNode(child, businessObject);
-			if (found != null) {
-				return found;
-			}
-		}
-		return null;
+	private boolean beginUpdate() {
+		boolean before = _updating;
+		_updating = true;
+		return before;
 	}
 
-	// --- Listener registration helpers ---
-
-	private void registerObjectListeners() {
-		_observedKeys.clear();
-		walkInitializedNodes(_treeModel.getRoot());
+	/**
+	 * Ends an update started by {@link #beginUpdate()}.
+	 *
+	 * @param before
+	 *        What {@link #beginUpdate()} returned.
+	 */
+	private void endUpdate(boolean before) {
+		_updating = before;
 	}
 
-	private void walkInitializedNodes(DefaultTreeUINode node) {
-		Object bo = node.getBusinessObject();
-		if (bo instanceof TLObject tlObj) {
-			ObjectKey key = key(tlObj);
-			if (key != null) {
-				_observedKeys.add(key);
-				_modelScope.addModelListener(tlObj, this);
+	/**
+	 * Reconciles the given node and every node below it whose children were computed already.
+	 *
+	 * @return Whether the tree changed.
+	 */
+	private boolean reconcileSubtree(DefaultTreeUINode node) {
+		if (!node.isInitialized()) {
+			return false;
+		}
+		boolean changed = reconcileChildren(node);
+		for (DefaultTreeUINode child : new ArrayList<>(node.getChildren())) {
+			changed |= reconcileSubtree(child);
+		}
+		return changed;
+	}
+
+	/**
+	 * Brings the children of the given node in line with the child list computed for it now, keeping
+	 * the nodes of the objects that are still in that list.
+	 *
+	 * @return Whether the children changed.
+	 */
+	private boolean reconcileChildren(DefaultTreeUINode node) {
+		if (!node.isAlive() || !node.isInitialized()) {
+			return false;
+		}
+		List<Object> expected = childObjects(node);
+		Set<Object> expectedObjects = new HashSet<>(expected);
+		boolean changed = false;
+
+		// The nodes of the objects that are gone.
+		for (int n = node.getChildCount() - 1; n >= 0; n--) {
+			if (!expectedObjects.contains(node.getChildAt(n).getBusinessObject())) {
+				node.removeChild(n);
+				changed = true;
 			}
 		}
-		if (!_treeModel.childrenInitialized(node)) {
+
+		// The nodes that stay, where the child list has them now, and the objects that appeared.
+		for (int n = 0, cnt = expected.size(); n < cnt; n++) {
+			Object businessObject = expected.get(n);
+			int current = indexOfChild(node, businessObject, n);
+			if (current < 0) {
+				node.createChild(IndexPosition.before(n), businessObject);
+				changed = true;
+			} else if (current != n) {
+				node.getChildAt(current).moveTo(node, n);
+				changed = true;
+			}
+		}
+
+		// A child list holding an object once cannot leave two nodes for it behind.
+		while (node.getChildCount() > expected.size()) {
+			node.removeChild(expected.size());
+			changed = true;
+		}
+		return changed;
+	}
+
+	/**
+	 * The index of the child of the given node standing for the given business object, searched
+	 * from the given index on.
+	 *
+	 * @return The index of that child, {@code -1} where there is none.
+	 */
+	private static int indexOfChild(DefaultTreeUINode node, Object businessObject, int fromIndex) {
+		List<DefaultTreeUINode> children = node.getChildren();
+		for (int n = fromIndex, cnt = children.size(); n < cnt; n++) {
+			if (Objects.equals(children.get(n).getBusinessObject(), businessObject)) {
+				return n;
+			}
+		}
+		return -1;
+	}
+
+	/**
+	 * The business objects the child list computed for the given node holds.
+	 *
+	 * @implNote The nodes the {@link TreeBuilder} creates here carry those objects but are not part
+	 *           of the tree: a node that stays is the one the tree has, keeping everything the
+	 *           display holds on it.
+	 */
+	private List<Object> childObjects(DefaultTreeUINode node) {
+		List<DefaultTreeUINode> children = _builder.createChildList(node);
+		List<Object> result = new ArrayList<>(children.size());
+		for (DefaultTreeUINode child : children) {
+			result.add(child.getBusinessObject());
+		}
+		return result;
+	}
+
+	/**
+	 * Builds the tree anew from the root object the input names now, opening the subtrees that were
+	 * open again.
+	 */
+	private void reEvaluateTree() {
+		Set<Object> expanded = TreeNodes.collectExpanded(_treeModel.getRoot());
+
+		_treeModel.removeTreeModelListener(this);
+		deregisterObjectListeners();
+
+		Object newRoot = _rootFunction.apply(readChannelValues());
+		_treeModel = new DefaultTreeUINodeModel(_builder, newRoot);
+		_treeModel.addTreeModelListener(this);
+		boolean before = beginUpdate();
+		try {
+			TreeNodes.restoreExpansion(_treeModel.getRoot(), expanded);
+		} finally {
+			endUpdate(before);
+		}
+
+		_treeControl.setTreeModel(_treeModel);
+		syncObjectListeners();
+	}
+
+	// --- Listener registration ---
+
+	/**
+	 * Registers a listener for every object the tree displays now, and drops the ones registered for
+	 * objects it does not display any more.
+	 */
+	private void syncObjectListeners() {
+		if (_modelScope == null) {
+			return;
+		}
+		Map<ObjectKey, TLObject> displayed = new HashMap<>();
+		collectObjects(_treeModel.getRoot(), displayed);
+
+		for (Map.Entry<ObjectKey, TLObject> entry : _observed.entrySet()) {
+			if (!displayed.containsKey(entry.getKey())) {
+				_modelScope.removeModelListener(entry.getValue(), this);
+			}
+		}
+		for (Map.Entry<ObjectKey, TLObject> entry : displayed.entrySet()) {
+			if (!_observed.containsKey(entry.getKey())) {
+				_modelScope.addModelListener(entry.getValue(), this);
+			}
+		}
+		_observed = displayed;
+	}
+
+	/**
+	 * Collects the objects of the given node and of every node below it whose children were computed
+	 * already.
+	 */
+	private static void collectObjects(DefaultTreeUINode node, Map<ObjectKey, TLObject> objects) {
+		ObjectKey key = key(node.getBusinessObject());
+		if (key != null) {
+			objects.put(key, (TLObject) node.getBusinessObject());
+		}
+		if (!node.isInitialized()) {
 			return;
 		}
 		for (DefaultTreeUINode child : node.getChildren()) {
-			walkInitializedNodes(child);
+			collectObjects(child, objects);
 		}
 	}
 
 	private void deregisterObjectListeners() {
-		if (_modelScope == null) {
-			_observedKeys.clear();
-			return;
+		if (_modelScope != null) {
+			for (TLObject object : _observed.values()) {
+				_modelScope.removeModelListener(object, this);
+			}
 		}
-		// Walk the already-initialized portion of the tree to remove listeners.
-		// We avoid calling getRoot() if possible by checking if we have any keys registered.
-		if (!_observedKeys.isEmpty()) {
-			deregisterObjectListenersRecursive(_treeModel.getRoot());
-		}
-		_observedKeys.clear();
-	}
-
-	private void deregisterObjectListenersRecursive(DefaultTreeUINode node) {
-		Object bo = node.getBusinessObject();
-		if (bo instanceof TLObject tlObj) {
-			_modelScope.removeModelListener(tlObj, this);
-		}
-		if (!_treeModel.childrenInitialized(node)) {
-			return;
-		}
-		for (DefaultTreeUINode child : node.getChildren()) {
-			deregisterObjectListenersRecursive(child);
-		}
+		_observed = new HashMap<>();
 	}
 
 	private void registerTypeListeners() {
@@ -395,15 +585,19 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 
 	private Object[] readChannelValues() {
 		Object[] values = new Object[_inputChannels.size()];
-		for (int i = 0; i < _inputChannels.size(); i++) {
-			values[i] = _inputChannels.get(i).get();
+		for (int n = 0; n < _inputChannels.size(); n++) {
+			values[n] = _inputChannels.get(n).get();
 		}
 		return values;
 	}
 
-	private static ObjectKey key(TLObject obj) {
-		KnowledgeItem item = obj.tHandle();
-		return item != null ? item.tId() : null;
+	/**
+	 * The identity of the given object, {@code null} where it has none: it is no
+	 * {@link TLObject}, or one that lives only in the display holding it and whose changes nobody
+	 * is notified of.
+	 */
+	private static ObjectKey key(Object object) {
+		return object instanceof TLObject model ? model.tId() : null;
 	}
 
 }

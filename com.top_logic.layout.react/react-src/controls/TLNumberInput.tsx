@@ -26,6 +26,9 @@ const VALUE_DEBOUNCE_MS = 300;
  *
  * When state.submitOnEnter is set, Enter sends a 'submit' command carrying the text, so the server
  * can run a command over the number that was entered.
+ *
+ * state.placeholder holds the text shown while the field is empty, stating what the field is for
+ * where no label does.
  */
 const TLNumberInput: React.FC<TLCellProps> = ({ controlId, state }) => {
   const [value, setValue, flushValue] = useTLFieldValue({
@@ -74,6 +77,7 @@ const TLNumberInput: React.FC<TLCellProps> = ({ controlId, state }) => {
         onBlur={handleBlur}
         onKeyDown={handleSubmitKey}
         disabled={state.disabled === true}
+        placeholder={(state.placeholder as string) ?? undefined}
         className={cls}
         aria-invalid={hasError || undefined}
         title={hasError && errorMessage ? errorMessage : undefined}

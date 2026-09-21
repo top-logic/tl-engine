@@ -155,7 +155,9 @@ public class FieldControlRegistry {
 	 * {@link ReactFieldControlProvider#editsCollections() edits one value at a time} is displayed as
 	 * a {@link ReactValueListControl}: one control per element, each created by the given provider
 	 * over the {@link FieldSpec#elementSpec() element specification}. Everything else is handed to
-	 * the provider as it stands.
+	 * the provider as it stands, through
+	 * {@link ReactFieldControlProvider#createField(ReactContext, FieldSpec, FieldModel)}, which
+	 * applies what the specification says about the display of the control.
 	 * </p>
 	 *
 	 * @param context
@@ -173,7 +175,7 @@ public class FieldControlRegistry {
 		if (field.isMultiple() && !provider.editsCollections()) {
 			return new ReactValueListControl(context, model, field, provider);
 		}
-		return provider.createControl(context, field, model);
+		return provider.createField(context, field, model);
 	}
 
 	/**

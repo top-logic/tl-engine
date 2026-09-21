@@ -161,7 +161,7 @@ public class ReactValueListControl extends ReactFormFieldControl {
 	private void createElement(int index, Object value, boolean editable) {
 		ListElementFieldModel elementModel = new ListElementFieldModel(getFieldModel(), index, value);
 		elementModel.setEditable(editable);
-		ReactControl control = _elementProvider.createControl(getReactContext(), _elementSpec, elementModel);
+		ReactControl control = _elementProvider.createField(getReactContext(), _elementSpec, elementModel);
 		_elementModels.add(elementModel);
 		_elementControls.add(control);
 		registerChildControl(control);

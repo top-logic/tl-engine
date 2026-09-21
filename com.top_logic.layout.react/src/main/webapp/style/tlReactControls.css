@@ -97,6 +97,23 @@ html, body {
 	height: 100%;
 }
 
+/* --- Visually hidden text ----------------------------------------------- */
+
+/* Text that names a control for assistive technology without taking up space on screen: it is
+   clipped to a one-pixel box, since "display: none" or "visibility: hidden" would drop it from
+   the accessibility tree as well and it would then name nothing. */
+.tlVisuallyHidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	border: 0;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
 /* --- TLButton ----------------------------------------------------------- */
 
 .tlReactButton {
@@ -420,10 +437,16 @@ button.tlCounter__button:focus {
 	--page-inset: var(--spacing-04);
 }
 
+/* An inset passes the space it is given on to its content: a bounded flex column, so that content
+   which fills resolves its height against the inset - the inset then carries .tlFill and asks its
+   own container for that height (see the fill contract above). Around content of its own size the
+   inset is exactly as high as that content plus the padding, so it does not claim the height of a
+   container it shares with others. */
 .tlInset {
 	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
 	width: 100%;
-	height: 100%;
 	padding: var(--page-inset);
 }
 
@@ -1347,10 +1370,23 @@ button.tlPanel__actionButton:focus-visible {
 	stroke-linejoin: round;
 }
 
+/* The body of a panel is where the fill chain ends (see the fill contract above): it is bounded by
+   the panel - it takes the space the panel has left over and scrolls what does not fit into it -
+   and is therefore the box a filling child resolves its height against. A child can only do that in
+   a flex container, so the body is a column: a child carrying .tlFill takes the height the body
+   offers, and any other child keeps the height of its content. */
 .tlPanel__content {
+	display: flex;
+	flex-direction: column;
 	flex: 1;
 	overflow: auto;
 	position: relative;
+}
+
+/* Content that does not fill keeps the height of what it contains: standing taller than the body it
+   overflows and the body scrolls it, rather than being squeezed into the body and clipping. */
+.tlPanel__content > :not(.tlFill) {
+	flex-shrink: 0;
 }
 
 .tlPanel--fullLine {
@@ -2071,6 +2107,19 @@ button.tlDrawerToggle:focus-visible {
 .tlGrid--gap-compact { --tlGrid-gap: var(--spacing-02); gap: var(--tlGrid-gap); }
 .tlGrid--gap-default { --tlGrid-gap: var(--spacing-04); gap: var(--tlGrid-gap); }
 .tlGrid--gap-loose   { --tlGrid-gap: var(--spacing-06); gap: var(--tlGrid-gap); }
+
+/* --- TLDeckPane ------------------------------------------------------------ */
+
+/* Shows one child at a time and takes its size from that child: a column flex box that states no
+   size of its own, so a deck standing inline - in an app bar, beside a breadcrumb - is as wide and
+   as high as the content it shows. A deck showing a filling child carries .tlFill (see the fill
+   contract above) and is then a bounded flex container the child's height resolves against. */
+.tlDeckPane {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	min-height: 0;
+}
 
 /* --- TLOverlay ------------------------------------------------------------- */
 
@@ -4711,8 +4760,10 @@ button.tlMenu__item--disabled:hover {
 	color: var(--text-primary);
 }
 
-/* Input wrapper */
+/* Input wrapper. It is a "label" element when the field's label is hidden, which lays out as a
+   block like the "div" of a visible-label field, whatever the element's inline default. */
 .tlFormField__input {
+	display: block;
 	min-width: 0;
 }
 
@@ -5023,6 +5074,8 @@ button.tlMenu__item--disabled:hover {
 	white-space: nowrap;
 }
 
+/* One option: a radio and the label naming it, which refers to the radio by id and is therefore a
+   sibling, not a wrapper. The container states its display, being a plain inline element. */
 .tlBooleanChoice__option {
 	display: inline-flex;
 	align-items: center;

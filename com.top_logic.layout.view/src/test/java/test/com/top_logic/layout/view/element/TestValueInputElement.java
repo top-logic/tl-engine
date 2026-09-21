@@ -103,6 +103,15 @@ public class TestValueInputElement extends TestCase {
 	 */
 	private static final String SUBMIT_ON_ENTER = "submitOnEnter";
 
+	/**
+	 * State key by which the client learns the text to show in the empty input.
+	 *
+	 * @implNote Restated here because
+	 *           {@link com.top_logic.layout.react.control.form.ReactFormFieldControl} keeps it
+	 *           protected for its subclasses.
+	 */
+	private static final String PLACEHOLDER = "placeholder";
+
 	private TLModelImpl _model;
 
 	private TLModule _module;
@@ -147,6 +156,7 @@ public class TestValueInputElement extends TestCase {
 		assertFalse(text.getReadonly());
 		assertNull(text.getOptions());
 		assertEquals(Collections.emptyList(), text.getInputs());
+		assertNotNull("A stated placeholder must reach the configuration.", text.getPlaceholder());
 		assertTrue("Without a command named, the submit hook is a generic command: " + text.getOnSubmit(),
 			text.getOnSubmit() instanceof GenericViewCommand.Config);
 		assertEquals("The actions to run on the submitted value stand inside the element.",
@@ -162,6 +172,7 @@ public class TestValueInputElement extends TestCase {
 		assertNotNull("A stated label position must reach the configuration.", state.getLabelPosition());
 
 		assertNull("An input without the hook submits nothing.", config(inputs, 1).getOnSubmit());
+		assertNull("An input that states no placeholder must have none.", config(inputs, 1).getPlaceholder());
 
 		ValueInputElement.Config owners = config(inputs, 4);
 		assertTrue("Several owners are chosen at once.", owners.getMultiple());
@@ -363,6 +374,39 @@ public class TestValueInputElement extends TestCase {
 
 		assertEquals("The input follows the channel.", "written elsewhere", field.getValue());
 		assertNull("Nothing the user did, so nothing to run a command on.", committed.get());
+	}
+
+	/**
+	 * The text stated for the empty input reaches the control that edits the value.
+	 *
+	 * <p>
+	 * The placeholder is a property of the {@link FieldSpec}, so it is applied wherever a control
+	 * is built from one - an input on a channel as well as a field of an attribute - instead of by
+	 * the control or its caller.
+	 * </p>
+	 */
+	public void testPlaceholderReachesTheInput() {
+		AbstractFieldModel field = new AbstractFieldModel(null);
+		TLType type = datatype("Text", Kind.STRING, String.class);
+		FieldSpec spec = FieldControlService.fieldSpec(type, type, LABEL, false, field)
+			.setPlaceholder("Search");
+
+		ReactControl control = FieldControlRegistry.getInstance().createControl(_context, spec, field);
+
+		assertEquals("The text shown in the empty input must reach the client.",
+			"Search", control.scriptingScalarState().get(PLACEHOLDER));
+	}
+
+	/** Without a placeholder the input says nothing, so the client is told about none. */
+	public void testWithoutAPlaceholderTheInputShowsNone() {
+		AbstractFieldModel field = new AbstractFieldModel(null);
+		TLType type = datatype("Plain", Kind.STRING, String.class);
+		FieldSpec spec = FieldControlService.fieldSpec(type, type, LABEL, false, field);
+
+		ReactControl control = FieldControlRegistry.getInstance().createControl(_context, spec, field);
+
+		assertNull("An input without a placeholder must leave its text unset.",
+			control.scriptingScalarState().get(PLACEHOLDER));
 	}
 
 	/**

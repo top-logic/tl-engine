@@ -116,21 +116,21 @@ public class DesignerTreeElement implements UIElement {
 		DefaultSingleSelectionModel<Object> selectionModel =
 			new DefaultSingleSelectionModel<>(SelectionModelOwner.NO_OWNER);
 
-		// 4. Create the ReactTreeControl with a designer-specific label provider that renders each
-		//    DesignTreeNode's display label and JavaDoc tooltip. The provider needs the control it
-		//    renders into to refresh a node whose label changed, so it is handed a holder that is
-		//    filled in right after construction.
-		ReactTreeControl[] treeRef = new ReactTreeControl[1];
-		ReactTreeControl treeControl =
-			new ReactTreeControl(context, treeModel, selectionModel, designNodeControlProvider(treeRef));
-		treeRef[0] = treeControl;
-
 		// Holder for the tree model currently displayed by treeControl. The control itself does not
 		// expose a getter for its current model, and the model is replaced (not mutated) whenever the
 		// tree is rebuilt (e.g. after Revert, see the input-channel listener below, or after a
 		// context-menu structural edit). Listeners that need to search the *currently displayed* tree
 		// must consult this holder instead of a captured local, which would go stale after a rebuild.
 		DefaultTreeUINodeModel[] currentModel = { treeModel };
+
+		// 4. Create the ReactTreeControl with a designer-specific label provider that renders each
+		//    DesignTreeNode's display label and JavaDoc tooltip. The provider needs the control it
+		//    renders into to refresh a node whose label changed, so it is handed a holder that is
+		//    filled in right after construction.
+		ReactTreeControl[] treeRef = new ReactTreeControl[1];
+		ReactTreeControl treeControl = new ReactTreeControl(context, treeModel, selectionModel,
+			designNodeControlProvider(treeRef, currentModel));
+		treeRef[0] = treeControl;
 
 		// 5. Wire selection: push selected DesignTreeNode to the selection channel.
 		ChannelRef selectionRef = _config.getSelection();
@@ -426,10 +426,10 @@ public class DesignerTreeElement implements UIElement {
 	 * node's {@link DesignTreeNode#getDisplayLabel() display label} and
 	 * {@link DesignTreeNode#getTooltipHtml() tooltip HTML}.
 	 */
-	private static ReactControlProvider designNodeControlProvider(ReactTreeControl[] treeRef) {
+	private static ReactControlProvider designNodeControlProvider(ReactTreeControl[] treeRef,
+			DefaultTreeUINodeModel[] currentModel) {
 		return (context, model) -> {
-			Object target = model instanceof DefaultTreeUINode node ? node.getBusinessObject() : model;
-			if (target instanceof DesignTreeNode designNode) {
+			if (model instanceof DesignTreeNode designNode) {
 				String label = designNode.getDisplayLabel();
 				ReactTextControl control = new ReactTextControl(context, label);
 				String tooltip = designNode.getTooltipHtml();
@@ -438,11 +438,16 @@ public class DesignerTreeElement implements UIElement {
 				}
 
 				// Re-render the node when an identifying property is edited in the configuration
-				// form, so that the tree does not keep showing the previous label.
+				// form, so that the tree does not keep showing the previous label. The tree caches
+				// its content controls by UI node, so the node displaying the edited object must be
+				// looked up in the model currently displayed.
 				Runnable labelListener = () -> {
 					ReactTreeControl tree = treeRef[0];
 					if (tree != null) {
-						tree.invalidateNodeControl(model);
+						DefaultTreeUINode uiNode = findUINode(currentModel[0].getRoot(), designNode);
+						if (uiNode != null) {
+							tree.invalidateNodeControl(uiNode);
+						}
 						tree.updateVisibleState();
 					}
 				};

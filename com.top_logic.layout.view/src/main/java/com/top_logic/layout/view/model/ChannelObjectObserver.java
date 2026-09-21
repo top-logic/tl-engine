@@ -46,15 +46,47 @@ import com.top_logic.model.listen.ObservedObjects;
  * container of the channel's object, for instance).
  * </p>
  *
+ * <p>
+ * A deletion is told apart from a change: while one of the objects the channels hold is
+ * {@link TLObject#tValid() invalid}, every received event runs the deletion callback of
+ * {@link #ChannelObjectObserver(List, Set, Consumer, Consumer)} instead of the change one. The
+ * deleting transaction is committed - and its model event delivered - before the channel is
+ * written, so the channel points at the deleted object for the span of that delivery; evaluating an
+ * expression over it would fail. A holder that has nothing to do with a deletion therefore keeps
+ * its display until the channel delivers its next value, which its ordinary channel listener then
+ * displays; a holder that wants the deletion - a link hiding itself once its target is gone -
+ * reacts in the deletion callback.
+ * </p>
+ *
  * @see RowSourceObserver
  */
 public class ChannelObjectObserver implements ModelListener, ViewChannel.ChannelListener {
+
+	/**
+	 * Change callback of a holder that reacts to nothing but the deletion of an observed object.
+	 *
+	 * @see #ChannelObjectObserver(List, Set, Consumer, Consumer)
+	 */
+	public static final Consumer<ModelChangeEvent> IGNORE_CHANGE = event -> {
+		// The holder displays a value of its channel, which writes it whenever it changes.
+	};
+
+	/**
+	 * Deletion callback of a holder that keeps its display until the channel delivers its next
+	 * value.
+	 */
+	private static final Consumer<ModelChangeEvent> IGNORE_DELETION = event -> {
+		// The holder displays what it displayed before; the channel write following the deletion
+		// updates it.
+	};
 
 	private final List<ViewChannel> _channels;
 
 	private final Set<TLStructuredType> _observedTypes;
 
 	private final Consumer<ModelChangeEvent> _onChange;
+
+	private final Consumer<ModelChangeEvent> _onDeleted;
 
 	/**
 	 * The objects the channels currently hold, observed for this listener.
@@ -74,13 +106,36 @@ public class ChannelObjectObserver implements ModelListener, ViewChannel.Channel
 	 *        Types whose object changes are observed in addition to the channels' objects (empty
 	 *        observes just those).
 	 * @param onChange
+	 *        Receives every change of an observed object, as long as all objects the channels hold
+	 *        are {@link TLObject#tValid() valid}.
+	 * @param onDeleted
+	 *        Receives every event that arrives while one of the objects the channels hold is
+	 *        {@link TLObject#tValid() invalid}. Such an event reaches {@code onChange} no more, so
+	 *        a holder evaluating an expression over the channel is spared the deleted object.
+	 */
+	public ChannelObjectObserver(List<ViewChannel> channels, Set<TLStructuredType> observedTypes,
+			Consumer<ModelChangeEvent> onChange, Consumer<ModelChangeEvent> onDeleted) {
+		_channels = channels;
+		_observedTypes = observedTypes;
+		_onChange = onChange;
+		_onDeleted = onDeleted;
+	}
+
+	/**
+	 * Creates a {@link ChannelObjectObserver} for a holder that has nothing to do when an observed
+	 * object is deleted: it keeps its display until the channel delivers its next value.
+	 *
+	 * @param channels
+	 *        The channels whose objects are observed.
+	 * @param observedTypes
+	 *        Types whose object changes are observed in addition to the channels' objects (empty
+	 *        observes just those).
+	 * @param onChange
 	 *        Receives every change of an observed object.
 	 */
 	public ChannelObjectObserver(List<ViewChannel> channels, Set<TLStructuredType> observedTypes,
 			Consumer<ModelChangeEvent> onChange) {
-		_channels = channels;
-		_observedTypes = observedTypes;
-		_onChange = onChange;
+		this(channels, observedTypes, onChange, IGNORE_DELETION);
 	}
 
 	/**
@@ -96,7 +151,7 @@ public class ChannelObjectObserver implements ModelListener, ViewChannel.Channel
 	 *        Run on every change of an observed object.
 	 */
 	public ChannelObjectObserver(List<ViewChannel> channels, Set<TLStructuredType> observedTypes, Runnable onChange) {
-		this(channels, observedTypes, event -> onChange.run());
+		this(channels, observedTypes, event -> onChange.run(), IGNORE_DELETION);
 	}
 
 	/**
@@ -153,9 +208,37 @@ public class ChannelObjectObserver implements ModelListener, ViewChannel.Channel
 		updateObservedObjects();
 	}
 
+	/**
+	 * Reports the event as a change, or as a deletion while one of the objects the channels hold is
+	 * {@link TLObject#tValid() invalid}.
+	 */
 	@Override
 	public void notifyChange(ModelChangeEvent event) {
-		_onChange.accept(event);
+		if (holdsDeletedObject()) {
+			_onDeleted.accept(event);
+		} else {
+			_onChange.accept(event);
+		}
+	}
+
+	/**
+	 * Whether one of the objects the channels currently hold is deleted.
+	 *
+	 * <p>
+	 * The objects themselves are inspected, not what the event reports: an event that names other
+	 * objects - the change of another object of an {@link ObservedTypes observed type}, say -
+	 * arrives at a channel still pointing to the deleted object just as the deletion event does.
+	 * </p>
+	 */
+	private boolean holdsDeletedObject() {
+		for (ViewChannel channel : _channels) {
+			for (TLObject object : objects(channel.get())) {
+				if (!object.tValid()) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	/**

@@ -191,6 +191,32 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey ERROR_IDENTITY_VERIFICATION_UNKNOWN;
 
+	/**
+	 * @en Not registered
+	 */
+	@CalledFromJSP
+	public static ResKey UNKNOWN_ACCOUNT_TITLE;
+
+	/**
+	 * @en Your login as ''{0}'' was successful, but you are not registered for this application.
+	 *     Please contact your administrator.
+	 */
+	@CalledFromJSP
+	public static ResKey1 UNKNOWN_ACCOUNT_MESSAGE__LOGIN_NAME;
+
+	/**
+	 * @en Your login was successful, but you are not registered for this application. Please
+	 *     contact your administrator.
+	 */
+	@CalledFromJSP
+	public static ResKey UNKNOWN_ACCOUNT_MESSAGE;
+
+	/**
+	 * @en To the login
+	 */
+	@CalledFromJSP
+	public static ResKey UNKNOWN_ACCOUNT_LOGIN;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

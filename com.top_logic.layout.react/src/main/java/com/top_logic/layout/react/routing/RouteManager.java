@@ -243,10 +243,11 @@ public final class RouteManager {
 	 *        none.
 	 */
 	public void adoptUrl(String url) {
+		_lastNotifiedUrl = url;
+
 		int queryStart = url == null ? -1 : url.indexOf(QUERY_START);
 		_pendingUrl = queryStart < 0 ? url : url.substring(0, queryStart);
 		_pendingQuery = queryStart < 0 ? Map.of() : parseQuery(url.substring(queryStart + 1));
-		_lastNotifiedUrl = url;
 		_holding = false;
 		_heldUrl = "";
 		_adopting = true;

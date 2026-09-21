@@ -120,6 +120,10 @@
 			The frames a target pushes carry the same channel values and the same labels as the
 			frames the user's own drill-down pushes, so a target leading into a drill-down the user
 			already has leaves it untouched.
+			
+			Each view is looked for within the view shown before it, so a view on a tab of a pushed
+			frame is reached by naming it: the milestone list sits on a tab of the project home and
+			is revealed there, which is also what brings that tab up.
 		-->
 		<config service-class="com.top_logic.layout.view.navigation.DisplayTargetService">
 			<instance>
@@ -144,6 +148,8 @@
 								channel="project"
 								expr="m -> $m.container()"
 							/>
+						</show>
+						<show view="projects/milestone-list.view.xml">
 							<bind channel="milestone"/>
 						</show>
 					</target>
@@ -161,6 +167,12 @@
 							<bind
 								channel="project"
 								expr="t -> $t.container()"
+							/>
+						</show>
+						<show view="projects/milestone-list.view.xml">
+							<bind
+								channel="milestone"
+								expr="t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`)"
 							/>
 						</show>
 						<show

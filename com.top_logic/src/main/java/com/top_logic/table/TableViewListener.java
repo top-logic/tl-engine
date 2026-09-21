@@ -37,6 +37,21 @@ public interface TableViewListener {
 	}
 
 	/**
+	 * The filtering of the table changed: its column filters, its search term, or which
+	 * {@link TableView#namedFilters() named filters} it offers.
+	 *
+	 * <p>
+	 * The {@link TableView#activeNamedFilter() active named filter} is derived from those
+	 * criteria, so it may have changed as well: applying, editing or clearing a filter can make
+	 * another one active, or none at all. When this is called, the {@link TableView} already
+	 * reports the new state.
+	 * </p>
+	 */
+	default void filterChanged() {
+		// Optional.
+	}
+
+	/**
 	 * The selection changed.
 	 */
 	default void selectionChanged() {

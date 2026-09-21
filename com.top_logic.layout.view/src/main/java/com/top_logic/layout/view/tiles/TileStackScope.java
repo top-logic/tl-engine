@@ -14,6 +14,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.navigation.RevealPath;
 
 /**
  * Ambient handle to the surrounding {@link TileStackElement &lt;tile-stack&gt;}.
@@ -38,6 +39,12 @@ import com.top_logic.layout.view.channel.ViewChannel;
  * The scope also carries the {@link #frameRoutes() routes} the stack declares for its frame views:
  * they name a frame that is pushed without a label of its own, and they are what
  * {@link TileFrameRouteParticipant} reflects the path in the URL with and restores it from.
+ * </p>
+ *
+ * <p>
+ * Together with the place of its stack in the display, the scope answers the
+ * {@link #framePlace(int) place of a frame} of the path, so that what a frame contains can be
+ * located and revealed like any other part of the display.
  * </p>
  */
 public class TileStackScope {
@@ -70,12 +77,19 @@ public class TileStackScope {
 
 	private final List<FrameRoute> _frameRoutes;
 
+	/** The place of the stack in the display, {@code null} for a scope created without it. */
+	private final RevealPath _place;
+
+	/** The element a frame of the stack is addressed through, {@code null} without a place. */
+	private final TileStackElement _element;
+
 	private long _restoredAdoption;
 
 	private List<TileFrame> _restoredPath = List.of();
 
 	/**
-	 * Creates a {@link TileStackScope} whose stack declares no frame routes.
+	 * Creates a {@link TileStackScope} whose stack declares no frame routes and whose place in the
+	 * display is unknown, so that {@link #framePlace(int)} answers {@code null}.
 	 *
 	 * @param pathChannel
 	 *        The channel holding the {@code List<TileFrame>} path. Must not be {@code null}.
@@ -85,7 +99,8 @@ public class TileStackScope {
 	}
 
 	/**
-	 * Creates a {@link TileStackScope} backed by the given path channel.
+	 * Creates a {@link TileStackScope} backed by the given path channel, whose place in the display
+	 * is unknown, so that {@link #framePlace(int)} answers {@code null}.
 	 *
 	 * @param pathChannel
 	 *        The channel holding the {@code List<TileFrame>} path. Must not be {@code null}.
@@ -93,8 +108,28 @@ public class TileStackScope {
 	 *        The routes the stack declares for its frame views, in declaration order.
 	 */
 	public TileStackScope(ViewChannel pathChannel, List<FrameRoute> frameRoutes) {
+		this(pathChannel, frameRoutes, null, null);
+	}
+
+	/**
+	 * Creates a {@link TileStackScope} that also knows where its stack sits in the display.
+	 *
+	 * @param pathChannel
+	 *        The channel holding the {@code List<TileFrame>} path. Must not be {@code null}.
+	 * @param frameRoutes
+	 *        The routes the stack declares for its frame views, in declaration order.
+	 * @param place
+	 *        The place of the stack in the display, or {@code null} to leave
+	 *        {@link #framePlace(int)} unanswered.
+	 * @param element
+	 *        The element a frame of the stack is addressed through, the stack itself.
+	 */
+	public TileStackScope(ViewChannel pathChannel, List<FrameRoute> frameRoutes, RevealPath place,
+			TileStackElement element) {
 		_pathChannel = pathChannel;
 		_frameRoutes = List.copyOf(frameRoutes);
+		_place = place;
+		_element = element;
 	}
 
 	/**
@@ -102,6 +137,21 @@ public class TileStackScope {
 	 */
 	public List<TileFrame> getPath() {
 		return readPath();
+	}
+
+	/**
+	 * The place the frame at the given position of the path is displayed at.
+	 *
+	 * @param position
+	 *        Index of the frame in the path, counted as {@link #getPath()} holds it.
+	 * @return The place of that frame in the display, or {@code null} for a scope created without
+	 *         the place of its stack.
+	 */
+	public RevealPath framePlace(int position) {
+		if (_place == null) {
+			return null;
+		}
+		return _place.append(_element, ReactTileStackControl.frameKey(position));
 	}
 
 	/**

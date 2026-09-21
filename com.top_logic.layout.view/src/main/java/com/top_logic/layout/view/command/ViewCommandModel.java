@@ -38,7 +38,10 @@ import com.top_logic.tool.execution.ExecutableState;
  * decide by: the {@link ViewCommand.Config#getInput() input channel} taking a new value, and the
  * object that value points to being edited. A rule testing an attribute of the input object -
  * a workflow command offered only while a ticket is open, say - therefore re-evaluates when that
- * attribute is stored, although the channel keeps pointing to the same object.
+ * attribute is stored, although the channel keeps pointing to the same object. A rule that decides
+ * by more than the input - the step a surrounding wizard displays, the validation state of the form
+ * it sits in - reports its changes itself ({@link ObservableRule}), and the model follows those
+ * reports for as long as it is attached.
  * </p>
  *
  * @see ChannelObjectObserver
@@ -54,6 +57,11 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 	private final ViewExecutabilityRule _rule;
 
 	private final ChannelObjectObserver _inputObserver;
+
+	/**
+	 * Stops the rules reporting changes again, {@code null} while this model is not attached.
+	 */
+	private Runnable _ruleObservation;
 
 	private ExecutableState _executableState;
 
@@ -302,6 +310,9 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 		if (_inputChannel != null) {
 			_inputChannel.addListener(this);
 		}
+		if (_rule instanceof ObservableRule observable) {
+			_ruleObservation = observable.observe(this::updateExecutableState);
+		}
 		_inputObserver.attach(scope);
 		updateExecutableState();
 	}
@@ -320,6 +331,10 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 	public void detach() {
 		if (_inputChannel != null) {
 			_inputChannel.removeListener(this);
+		}
+		if (_ruleObservation != null) {
+			_ruleObservation.run();
+			_ruleObservation = null;
 		}
 		_inputObserver.detach();
 	}

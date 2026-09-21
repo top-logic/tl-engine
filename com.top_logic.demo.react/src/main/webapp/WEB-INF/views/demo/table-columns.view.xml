@@ -133,7 +133,9 @@
 						header reads "Assignee / Name". The remaining attributes of the contributor are
 						offered in the column selection, hidden until the user picks one. The second
 						embedding walks two references, the last of them holding several objects, so its
-						cells collect the titles of all tickets of the ticket's milestone.
+						cells collect the titles of all tickets of the ticket's milestone. The computed
+						column beside it reaches the same titles through an expression and declares that
+						its cells hold several values, so each of them is shown as a value of its own.
 					-->
 					<table
 						observed-types="tl.demo.projectManagement:Ticket"
@@ -151,6 +153,19 @@
 							<embedded-columns reference="milestone.tickets">
 								<column attribute="title"/>
 							</embedded-columns>
+							<computed-column name="milestoneTitles"
+								multiple="true"
+								type="tl.core:String"
+								width="240"
+							>
+								<label>
+									<en>Titles in the milestone</en>
+									<de>Titel im Meilenstein</de>
+								</label>
+								<value><![CDATA[t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`)
+	.get(`tl.demo.projectManagement:Milestone#tickets`)
+	.map(x -> $x.get(`tl.demo.projectManagement:Ticket#title`))]]></value>
+							</computed-column>
 						</columns>
 						<rows><![CDATA[all(`tl.demo.projectManagement:Ticket`)]]></rows>
 					</table>

@@ -56,6 +56,15 @@ import com.top_logic.layout.react.field.ReactFieldControlProvider;
  */
 public class ConfigFieldControlProvider implements ReactFieldControlProvider {
 
+	/**
+	 * A property holding several configurations is edited by the list editor, which adds, removes
+	 * and reorders the entries itself.
+	 */
+	@Override
+	public boolean editsCollections() {
+		return true;
+	}
+
 	@Override
 	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
 		Class<? extends ConfigurationItem> type = configType(field);

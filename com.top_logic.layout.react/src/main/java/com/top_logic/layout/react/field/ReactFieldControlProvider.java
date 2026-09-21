@@ -62,4 +62,20 @@ public interface ReactFieldControlProvider {
 		return control;
 	}
 
+	/**
+	 * Whether the control this provider creates edits the whole collection of values of a
+	 * {@link FieldSpec#isMultiple() multi-valued} field itself.
+	 *
+	 * <p>
+	 * A select over options does: picking several options is one gesture on one control, and the
+	 * value it writes is the collection. An input that takes one value - a text box, a number, a
+	 * date, a checkbox - does not: it edits a single value, and the collection around it is built
+	 * from one such input per element, see
+	 * {@link FieldControlRegistry#createControl(ReactContext, FieldSpec, FieldModel, ReactFieldControlProvider)}.
+	 * </p>
+	 */
+	default boolean editsCollections() {
+		return false;
+	}
+
 }

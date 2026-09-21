@@ -44,10 +44,36 @@ Neither refusal ever delivers the image, and neither delivers the login page *as
 
 A screenshot captured by an unattended run has no owner and is readable by an administrator only.
 
-Issue #227 is the open question of a general read rule for perceivable binaries. When it is
-answered, `ScreenshotService.mayRead` is the one method to change - every path asks it.
-
 `TestScreenshotServlet` pins the four answers; `TestScreenshotService` pins the rule itself.
+
+## The same rule, one layer down
+
+The route is not the only way to a screenshot: `viewDocument` loads any `tl.core:Binary` attribute
+of any object into a model's context, addressed by a TID. That path asks the general model-access
+layer (`ModelSecurity.canRead` -> the engine's `ModelAccessRights`), which is deny-by-default and
+therefore said "administrators only" for a screenshot until somebody configured otherwise. #227
+decided what that configuration is, and `tl-ai-core` now ships it in
+`WEB-INF/conf/tl-ai-core.binarySecurity.config.xml`:
+
+- a technical role `AiBinaryOwner`, meaning "this object belongs to you";
+- two role rules deriving it, per object, from `Screenshot#owner` and `CookiePool#owner` - so an
+  object whose owner is empty has no role holder at all, which is the null-owner rule;
+- a `<security-config>` granting **Read**, and only Read, to that role on both types.
+
+Administrators and code in a system context bypass the check above all of it, which is where the
+"plus administrators" half comes from. So both paths carry the same sentence - **the owner, plus
+administrators; nobody but administrators and the system for an owner-less one** - and
+`TestPerceivableBinaryReadPolicy` pins it for the model layer, against the shipped configuration
+rather than a hand-built policy object.
+
+Two consequences worth knowing:
+
+- An installation that wants a wider rule adds its own role to the grants (or a rule of its own that
+  puts `AiBinaryOwner` where it wants it). That widens `viewDocument`; it does not widen
+  `/screenshot/{id}`, which asks `ScreenshotService.mayRead` and stays at owner-plus-administrator.
+- Write, Delete and Create are not granted to anybody, so they stay with the administrators they
+  were already with. What an owner may do with their own screenshot beyond looking at it is a
+  question #227 did not answer.
 
 ## What the user sees
 

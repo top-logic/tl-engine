@@ -1660,6 +1660,62 @@ Three rules:
   defaults. Build `DefaultSecurityContextFactory.defaultContext(run)`, wrap it in
   `SecurityContextProxy`, and override the one answer that is to differ.
 
+### 4.6 The shipped read policy for perceivable binaries · **implemented** (#227)
+
+Everything above is a seam an application fills. This module fills one of them itself, for the two
+types it stores that are *perceivable*: `tl.ai.screenshots:Screenshot` and
+`tl.ai.cookiepool:CookiePool`. Both are reachable through `viewDocument`, which loads a
+`tl.core:Binary` attribute into a model's context, and neither is business data an application
+models: a screenshot is a picture of a page somebody drove a browser to while logged in somewhere,
+and a cookie pool is that login. "Who may read one" is therefore not a question this module may
+leave to whoever deploys it.
+
+**The policy: the owner, plus administrators.** A binary whose owner cannot be resolved - one an
+unattended run produced, with no `Person` to name - is readable by administrators and by code in a
+system context, and by nobody else.
+
+It is written as configuration, not as code, in
+`tl-ai-core/src/main/webapp/WEB-INF/conf/tl-ai-core.binarySecurity.config.xml`, in three pieces
+that are each the engine's own mechanism:
+
+| Piece | What it does |
+|---|---|
+| `InitialRolesManager` role `AiBinaryOwner` | a technical role meaning "this object belongs to you". Nobody holds it globally. |
+| two `<role-rules>` of `type="reference"` | derive it, per object, from `Screenshot#owner` / `CookiePool#owner`. A path ending at a `Person` resolves to that person's representative group. An empty `owner` produces **no holder**, which is how the null-owner rule is written - as the absence of a holder, not as a denial somebody has to remember to configure. |
+| `<security-config>` `Read` grants | make the role count, per type, and only for `Read`. |
+
+Nothing here is a second check: enforcement stays `ModelSecurity.canRead` ->
+`ModelAccessRights.isAllowed`, exactly as section 3.3 describes it. The "plus administrators" half
+is not granted at all - it is `SecurityConfigurationService.isAllowedBypass`, which answers before
+any role is looked up, and writing a grant for it would be a second place saying the same thing.
+`Write`, `Delete` and `Create` are granted to nobody and therefore stay with the administrators they
+were already with: what an owner may do with their own screenshot beyond looking at it is a question
+#227 did not answer.
+
+Two boundaries worth stating, because both look like gaps and are not:
+
+- **A shared cookie pool is still owner-plus-administrator on the read path.** `CookiePoolService`
+  lets every session *select* a shared pool to drive a browser with, and that path never asks model
+  security. Sharing a login is not the same as letting a model read the stored session state.
+- **`/screenshot/{id}` does not ride this policy.** It serves bytes to a browser, not to a run, and
+  asks `ScreenshotService.mayRead`, which states the same sentence in Java. The two agree by
+  construction; an installation that *widens* the model grant does not widen the route, which is
+  the conservative direction of the two.
+
+An installation that wants a wider rule adds its own role to the grants, or a role rule of its own
+that puts `AiBinaryOwner` on the objects a reporting role is to reach. It never has to narrow
+anything, because nothing shipped grants more than ownership.
+
+Upgrading needs no step: a derived role is computed at commit, so binaries created after the upgrade
+carry it at once, and the ones that existed before it are covered because `ElementAccessManager`
+hashes the configured role rules into `DBProperties` and rebuilds the security storage when that hash
+changes - which adding these two rules does. Nothing becomes less accessible in the meantime either:
+before this configuration existed, model access to both types was deny-by-default, so
+non-administrators read neither.
+
+`TestPerceivableBinaryReadPolicy` pins all of it against the shipped configuration - the accounts,
+the objects and the rules are real, so a passing test is a statement about what this module deploys.
+
 ---
 
 ## 5. Rollout and migration
@@ -1783,6 +1839,7 @@ any more. All new types live in `tl-ai-core/src/main/java/com/top_logic/tl/ai/co
 | `ToolIdentity` - how the policy names a tool | **Implemented.** A grant matches the bare tool name, the configured `{factory}.{tool}` name, or the provider-safe `factory__tool` form, so a correctly spelled grant cannot silently miss |
 | `ModelSecurity` - the typed façade | Implemented. `UNCHECKED` survives only as a test seam; every production context carries `ModelAccessRightsSecurity` |
 | `ModelAccessRightsSecurity` - the `ModelAccessRights`-backed implementation | **Real and unit-tested** (8 cases against a stub rights service). Replaces what was appendix A |
+| The shipped read policy for `Screenshot` and `CookiePool` (4.6) | **Implemented** (#227). `tl-ai-core.binarySecurity.config.xml`: the `AiBinaryOwner` role, two role rules deriving it from each type's `owner`, and `Read` grants naming it. Configuration, not code - enforcement stays `ModelSecurity.canRead`. Pinned by `TestPerceivableBinaryReadPolicy` against the shipped configuration |
 | `ToolSecurityException` - the denial a tool raises | Implemented; raised by `ModelSecurity.requireRead`/`requireWrite`. The read path prefers absence to a denial, so a hidden object produces the "not found" of `TidResolver` rather than this exception - saying "exists but hidden" is the disclosure #289 removed |
 | `ReadFilter` - the disclosure chokepoint | **Implemented and unit-tested** (`TestReadFilter`, 18 cases) and end-to-end against the fixture (`SecDemoReadFilterTest`). Cannot be constructed without a `ModelSecurity`; `TidResolver.resolve` has no form that skips the read check, and `ExecutionResult.toJson` none that skips the filter (#289). **It is a chokepoint for `TLObject`s, not for everything a script can return**: a value TL-Script has already reduced to plain data carries no object to recognise, so a count (#291) and a label reached through string coercion (#296) pass through by design. Both are asserted in `SecDemoReadFilterTest` rather than left implicit - see 3.3.2 |
 | `ModelDigestGenerator` - the whole-model digest | **Scoped** (#295). `generate(model, includeFramework, ModelSecurity)` is the only form; emits `accessibleTypes(READ)` and drops a module whose classes are all inaccessible. End-to-end against the fixture (`SecDemoModelDigestTest`). The bound is types, not objects - see 3.4.2 for the three boundaries it does not claim |

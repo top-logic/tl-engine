@@ -17,6 +17,9 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import com.top_logic.tl.ai.core.mcp.McpServerRegistry;
+import com.top_logic.tl.ai.core.security.RoleAccessPolicy;
+import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Decision;
+import com.top_logic.tl.ai.core.security.RunAuthorization;
 import com.top_logic.tl.ai.core.security.ToolGroupResources;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
@@ -119,6 +122,69 @@ public class AgentCapabilities {
 		 * connected.
 		 */
 		List<Tool> mcpTools(String serverName);
+	}
+
+	/**
+	 * Why an agent can do nothing for the run's principal - the answer of
+	 * {@link AgentCapabilities#unusableReason(AgentDefinition)}.
+	 *
+	 * <p>
+	 * A bare sentence was not enough (#517). Every refusal looked alike to a caller that has to
+	 * <em>compose</em> a message out of it, so {@code spawn_subagent} explained an agent the roles
+	 * withhold by listing the capabilities its tools happen to need - none of which is the reason, and
+	 * granting all of them would have changed nothing. The cause says which sentence is true, and
+	 * {@link #aboutCapabilities()} says whether naming a capability is on the point at all.
+	 * </p>
+	 *
+	 * <p>
+	 * {@link Cause#INFRASTRUCTURE} is a cause of its own rather than a shade of
+	 * {@link Cause#AGENT_WITHHELD} because no role grant lifts it - the application runs such an agent
+	 * <em>for</em> a user, so no other agent hands its work to it either (#397), and a message offering
+	 * an agent grant as the remedy would be as misleading there as a capability list is here.
+	 * </p>
+	 *
+	 * @param cause
+	 *        What refused the agent.
+	 * @param message
+	 *        The refusal in English, for a log line and for a message relayed to the model. The three
+	 *        causes that are not {@link Cause#NO_REACHABLE_TOOL} take it from
+	 *        {@link com.top_logic.tl.ai.core.security.RoleAccessPolicy.Decision.Denied#message()},
+	 *        which names the setting an administrator would change.
+	 */
+	public record Unusable(Cause cause, String message) {
+
+		// The JavaDoc below this line is short on purpose: the build exports a public enum's labels
+		// and tooltips to the message bundles from it, so what a constant means belongs on the
+		// constant and why the split exists belongs on Unusable, which is not exported.
+
+		/** Why an agent is unusable for the principal of a run. */
+		public enum Cause {
+
+			/** No role of the acting account is granted this agent. */
+			AGENT_WITHHELD,
+
+			/** The agent is infrastructure: the application runs it for a user, nobody delegates to it. */
+			INFRASTRUCTURE,
+
+			/** The model the agent is assigned, or a server it declares, is denied to this account. */
+			AGENTS_OWN_DENIED,
+
+			/** The account may run the agent, but no tool the agent reaches is permitted to the run. */
+			NO_REACHABLE_TOOL;
+		}
+
+		/**
+		 * Whether the capability filter is what refused, so that naming capabilities is on the point.
+		 *
+		 * <p>
+		 * False for every other cause, and that is the whole difference: an agent withheld from the
+		 * account is not reached by any capability grant, so a message listing capabilities would name
+		 * exactly the grants that do not help and send the user to their administrator for one of them.
+		 * </p>
+		 */
+		public boolean aboutCapabilities() {
+			return cause == Cause.NO_REACHABLE_TOOL;
+		}
 	}
 
 	/**
@@ -359,32 +425,42 @@ public class AgentCapabilities {
 	 * filtered its own schemas to nothing and failed.
 	 * </p>
 	 *
+	 * <p>
+	 * Unlike the skill and tool forms this answers an {@link Unusable} rather than a sentence, because
+	 * two of its callers compose a message out of it and what they may say depends on <em>which</em>
+	 * of the four things refused - see {@link Unusable} and #517.
+	 * </p>
+	 *
 	 * @param delegate
 	 *        The delegate to judge. <code>null</code> - a delegation naming an agent that does not
 	 *        exist - is usable, for the same reason an unresolvable tool name is: it is not a denial.
-	 * @return The deciding reason, suitable for a log line, or <code>null</code> if the delegate is
-	 *         usable.
+	 * @return The deciding reason, or <code>null</code> if the delegate is usable.
 	 */
-	public String unusableReason(AgentDefinition delegate) {
+	public Unusable unusableReason(AgentDefinition delegate) {
 		if (delegate == null) {
 			return null;
 		}
-		if (!_security.runAuthorization().allowsAgent(delegate.name(), delegate.infrastructure())) {
-			// Asked quietly, like every other filter here: a run that never calls this agent must not
-			// write a denial line per turn. AgentFactory audits the one that is actually attempted.
-			// An infrastructure agent fails this too: the application runs it for a user, so it is
-			// not something another agent hands its work to either (#397).
-			return delegate.infrastructure()
-				? "this agent is infrastructure and is not a delegate"
-				: "the acting account may not run this agent";
+		RunAuthorization authorization = _security.runAuthorization();
+		// Asked quietly, like every other filter here: a run that never calls this agent must not
+		// write a denial line per turn. AgentFactory audits the one that is actually attempted.
+		Decision.Denied agent = authorization.silentAgentRefusal(delegate.name(), delegate.infrastructure());
+		if (agent != null) {
+			// The policy's own sentence, relayed rather than restated: it names the setting an
+			// administrator would change, which is the one thing a caller composing a refusal has to
+			// be able to say (#517).
+			return new Unusable(agent.cause() == RoleAccessPolicy.Cause.INFRASTRUCTURE_AGENT
+				? Unusable.Cause.INFRASTRUCTURE
+				: Unusable.Cause.AGENT_WITHHELD, agent.message());
 		}
-		if (!_security.runAuthorization().allowsAgentsOwn(AgentFactory.assignedModelOf(delegate.name()),
-			delegate.mcpServers())) {
+		Decision.Denied agentsOwn = authorization
+			.agentsOwnRefusal(AgentFactory.assignedModelOf(delegate.name()), delegate.mcpServers());
+		if (agentsOwn != null) {
 			// Its own model or one of its own servers is denied to this account, so the gate refuses
 			// every run of it - see AgentFactory.refusalFor. Offering it would offer a dead end.
-			return "the acting account may not use what this agent runs on";
+			return new Unusable(Unusable.Cause.AGENTS_OWN_DENIED, agentsOwn.message());
 		}
-		return unusableReason(reachableTools(delegate), "reachable tools");
+		String lacking = unusableReason(reachableTools(delegate), "reachable tools");
+		return lacking == null ? null : new Unusable(Unusable.Cause.NO_REACHABLE_TOOL, lacking);
 	}
 
 	/**

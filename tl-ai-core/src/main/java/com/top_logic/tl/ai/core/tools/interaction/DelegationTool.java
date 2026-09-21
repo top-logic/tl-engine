@@ -299,10 +299,15 @@ public class DelegationTool implements Tool {
 	 *
 	 * <p>
 	 * An <b>ordinary tool error</b> rather than an exception, because the model has to be able to relay
-	 * it: the user's answer is a capability grant, and only the user can go and ask for one. It never
-	 * suggests the agent does not exist - it does, and saying otherwise would send the model looking for
-	 * a different name for the same work. An agent that really is unknown is not refused here at all:
-	 * that is not a denial, and the delegation fails where it always did.
+	 * it: the answer is a grant, and only the user can go and ask for one. It never suggests the agent
+	 * does not exist - it does, and saying otherwise would send the model looking for a different name
+	 * for the same work. An agent that really is unknown is not refused here at all: that is not a
+	 * denial, and the delegation fails where it always did.
+	 * </p>
+	 *
+	 * <p>
+	 * Which grant, though, depends on what refused (#517): the capability list below is composed only
+	 * where the capability filter is the cause - see {@link #withheldAgentRefusal} for the rest.
 	 * </p>
 	 *
 	 * <p>
@@ -320,14 +325,17 @@ public class DelegationTool implements Tool {
 	public static String delegationRefusal(String targetAgentName,
 			AgentCapabilities childCapabilities) {
 		AgentDefinition target = childCapabilities.graph().agent(targetAgentName);
-		String reason = childCapabilities.unusableReason(target);
-		if (reason == null) {
+		AgentCapabilities.Unusable unusable = childCapabilities.unusableReason(target);
+		if (unusable == null) {
 			return null;
+		}
+		if (!unusable.aboutCapabilities()) {
+			return withheldAgentRefusal(targetAgentName, unusable);
 		}
 
 		StringBuilder refusal = new StringBuilder();
 		refusal.append("ERROR: Delegation to '").append(targetAgentName).append("' was not started: ")
-			.append(reason).append(".\n\n");
+			.append(unusable.message()).append(".\n\n");
 		Set<String> unreachable = childCapabilities.unreachableCapabilities(target);
 		if (!unreachable.isEmpty()) {
 			// The usual case: the delegate exists and may run, and every tool it can reach needs a
@@ -342,6 +350,32 @@ public class DelegationTool implements Tool {
 		}
 		refusal.append("Say what is missing and continue with what you can do; delegating to it again"
 			+ " will not help.");
+		return refusal.toString();
+	}
+
+	/**
+	 * The refusal for a delegation the capability filter did not refuse: the agent itself is out of
+	 * reach.
+	 *
+	 * <p>
+	 * The synchronous twin of {@code SubagentSpawner.withheldAgentRefusal}, and for the same reason
+	 * (#517): {@code <agent-access>} withholds the agent, or the agent is infrastructure, or what it
+	 * runs on is denied to this account. No capability grant reaches any of the three, so none is
+	 * named; the policy's own sentence, which names the setting an administrator would change, is
+	 * relayed instead.
+	 * </p>
+	 */
+	private static String withheldAgentRefusal(String targetAgentName,
+			AgentCapabilities.Unusable unusable) {
+		StringBuilder refusal = new StringBuilder();
+		refusal.append("ERROR: Delegation to '").append(targetAgentName).append("' was not started. ")
+			.append(unusable.message()).append("\n\n");
+		if (unusable.cause() == AgentCapabilities.Unusable.Cause.AGENT_WITHHELD) {
+			refusal.append("Only a grant of this agent to one of this account's roles lets the"
+				+ " delegation through, and no capability grant does. ");
+		}
+		refusal.append("Say that and continue with what you can do; delegating to it again will not"
+			+ " help.");
 		return refusal.toString();
 	}
 

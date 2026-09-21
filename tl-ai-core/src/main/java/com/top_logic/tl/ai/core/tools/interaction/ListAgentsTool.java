@@ -91,12 +91,12 @@ public class ListAgentsTool implements Tool {
 		StringBuilder json = new StringBuilder("[");
 		boolean first = true;
 		for (AgentDefinition agent : agents) {
-			String unusable = capabilities.unusableReason(agent);
+			AgentCapabilities.Unusable unusable = capabilities.unusableReason(agent);
 			if (unusable != null) {
 				// Capability must not vanish silently: an operator asked why an agent is no longer
 				// offered for spawning must find the answer here.
 				Logger.info("Agent '" + agent.name() + "' is not offered for spawning to the current"
-					+ " user - " + unusable, ListAgentsTool.class);
+					+ " user - " + unusable.message(), ListAgentsTool.class);
 				continue;
 			}
 			if (!first) {

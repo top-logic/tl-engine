@@ -611,6 +611,18 @@ Six code fixes and one piece of prompt text address that:
   ever says or implies that the agent does not exist - it does, and a model told otherwise looks for
   another name for the same work. An agent that really is unknown is not refused here either: that is
   not a denial, and the run fails where it always did.
+
+  **Which grant to ask for depends on what refused** (#517). Both messages used to be composed out of
+  capability names whatever the cause, and three of the four causes are not capability problems at all:
+  `<agent-access>` withholding the agent, the agent being `infrastructure`, and the model or MCP server
+  the agent itself uses being denied. Naming a capability there is worse than saying nothing - the model
+  is told to relay it, and the user takes it to an administrator whose grant leaves the run refused.
+  `AgentCapabilities.unusableReason(AgentDefinition)` therefore answers an `Unusable` - a cause plus the
+  message - rather than a bare sentence, and the two refusals compose the capability text only for
+  `NO_REACHABLE_TOOL`. For the other three they relay `RoleAccessPolicy.Decision.Denied#message()`, which
+  names the setting an administrator would change, and add no capability list. Pinned by
+  `TestSpawnFilter`, `TestAgentGate` and - on the deployed policy, where `<agent-access>` is what
+  refuses - `SecDemoSpawnFilterTest`.
 - **`loadSkill` no longer advertises tools the principal cannot call** (`SkillTool.addSkillTools`).
   It used to register and announce every resolvable tool of a skill; the next turn's schema filter
   then removed exactly the denied ones, so an authoritative tool result contradicted the tool list.

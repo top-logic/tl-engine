@@ -195,11 +195,7 @@ public class RunAuthorization {
 	 * @return The refusal, or <code>null</code> if the agent is permitted.
 	 */
 	public Decision.Denied agentRefusal(String agentName, boolean infrastructure) {
-		if (infrastructure && !_productChosenAgent) {
-			return audit(new Decision.Denied(RoleAccessPolicy.Dimension.AGENT, agentName, null,
-				RoleAccessPolicy.Cause.INFRASTRUCTURE_AGENT));
-		}
-		return audit(decide(_agents, agentName, Set.of()));
+		return audit(silentAgentRefusal(agentName, infrastructure));
 	}
 
 	/**
@@ -336,12 +332,36 @@ public class RunAuthorization {
 	 * @param infrastructure
 	 *        Whether that agent is marked {@code AgentDefinition#infrastructure()}.
 	 * @see #agentRefusal(String, boolean)
+	 * @see #silentAgentRefusal(String, boolean)
 	 */
 	public boolean allowsAgent(String agentName, boolean infrastructure) {
+		return silentAgentRefusal(agentName, infrastructure) == null;
+	}
+
+	/**
+	 * Why the run's principal may not run the named agent, without logging a refusal.
+	 *
+	 * <p>
+	 * The same question {@link #allowsAgent} answers, for a caller that has to <em>say</em> why - a
+	 * delegate filter tells the model that this agent is out of reach, and saying so by naming
+	 * capabilities that are not the reason sends the user to their administrator for a grant that
+	 * changes nothing (#517). Silent on purpose, like {@link #agentsOwnRefusal}: a filter asked once
+	 * per agent per turn is not a refused call, and one audit line per row would drown the ones that
+	 * are. The run that is actually attempted is audited by {@link #agentRefusal}.
+	 * </p>
+	 *
+	 * @param agentName
+	 *        The agent in question.
+	 * @param infrastructure
+	 *        Whether that agent is marked {@code AgentDefinition#infrastructure()}.
+	 * @return The refusal, or <code>null</code> if the agent is permitted.
+	 */
+	public Decision.Denied silentAgentRefusal(String agentName, boolean infrastructure) {
 		if (infrastructure && !_productChosenAgent) {
-			return false;
+			return new Decision.Denied(RoleAccessPolicy.Dimension.AGENT, agentName, null,
+				RoleAccessPolicy.Cause.INFRASTRUCTURE_AGENT);
 		}
-		return decide(_agents, agentName, Set.of()) == null;
+		return decide(_agents, agentName, Set.of());
 	}
 
 	/**

@@ -1378,7 +1378,8 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 			// Silent capability loss is the failure mode this filter must not have: an operator asked
 			// why the agent "stopped handing work to X" must find the answer here.
 			Logger.info("Agent '" + agentName + "': delegate '" + offer.targetName()
-				+ "' is not offered to the current user - " + offer.unusableReason(), AgentFactory.class);
+				+ "' is not offered to the current user - " + offer.unusableReason().message(),
+				AgentFactory.class);
 		}
 		if (offered.isEmpty()) {
 			return "";
@@ -1498,7 +1499,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 *        The capabilities some of the delegate's tools need and the principal does not hold.
 	 */
 	record DelegateOffer(String targetName, String toolName, String description,
-			String unusableReason, Set<String> unreachableCapabilities) {
+			AgentCapabilities.Unusable unusableReason, Set<String> unreachableCapabilities) {
 
 		/** Whether the delegate is offered to the run at all. */
 		boolean offered() {

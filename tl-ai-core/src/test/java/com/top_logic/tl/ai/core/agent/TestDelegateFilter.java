@@ -19,6 +19,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.listener.Listener;
 import com.top_logic.basic.logging.Level;
 import com.top_logic.tl.ai.core.agent.AgentCapabilities.AgentGraph;
+import com.top_logic.tl.ai.core.agent.AgentCapabilities.Unusable;
 import com.top_logic.tl.ai.core.agent.AgentFactory.DelegateOffer;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolStubs;
@@ -104,11 +105,13 @@ public class TestDelegateFilter extends TestCase {
 
 	/** A delegate every one of whose tools is denied is dropped, with a reason worth logging. */
 	public void testFullyDeniedDelegateIsDropped() {
-		String reason = readOnlyPrincipal().unusableReason(agent(WRITER_DELEGATE));
+		Unusable reason = readOnlyPrincipal().unusableReason(agent(WRITER_DELEGATE));
 
 		assertNotNull(reason);
-		assertTrue("The reason must name the capability an operator has to grant: " + reason,
-			reason.contains(ToolGroups.DATA_WRITE));
+		assertEquals("The capability filter is what dropped it, and nothing else.",
+			Unusable.Cause.NO_REACHABLE_TOOL, reason.cause());
+		assertTrue("The reason must name the capability an operator has to grant: " + reason.message(),
+			reason.message().contains(ToolGroups.DATA_WRITE));
 	}
 
 	/** One usable tool keeps the delegate: it can still do that part of its job. */
@@ -142,7 +145,7 @@ public class TestDelegateFilter extends TestCase {
 		assertNull("It reaches the reader's data.read tool, so it can do something.",
 			readOnlyPrincipal().unusableReason(agent(ROUTER_DELEGATE)));
 
-		String reason = capabilities(Set.of()).unusableReason(agent(ROUTER_DELEGATE));
+		Unusable reason = capabilities(Set.of()).unusableReason(agent(ROUTER_DELEGATE));
 		assertNotNull("With everything its delegates reach denied, it can do nothing.", reason);
 	}
 

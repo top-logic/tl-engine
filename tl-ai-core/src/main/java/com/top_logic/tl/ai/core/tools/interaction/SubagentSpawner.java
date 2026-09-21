@@ -278,10 +278,17 @@ public class SubagentSpawner {
 	 *
 	 * <p>
 	 * An <b>ordinary tool error</b> rather than an exception, because the model has to be able to relay
-	 * it: the user's answer is a capability grant, and only the user can go and ask for one. It never
-	 * suggests the agent does not exist - it does, and saying otherwise would send the model looking for
-	 * a different name for the same work. An agent that really is unknown is not refused here at all:
-	 * that is not a denial, and the spawn fails where it always did.
+	 * it: the answer is a grant, and only the user can go and ask for one. It never suggests the agent
+	 * does not exist - it does, and saying otherwise would send the model looking for a different name
+	 * for the same work. An agent that really is unknown is not refused here at all: that is not a
+	 * denial, and the spawn fails where it always did.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>Which grant, though, depends on what refused</b> (#517). The capability text below is composed
+	 * only where the capability filter is the cause; an agent {@code <agent-access>} withholds gets the
+	 * policy's own sentence and no capability list, because listing them would name exactly the grants
+	 * that do not help - see {@link AgentCapabilities.Unusable} and {@link #withheldAgentRefusal}.
 	 * </p>
 	 *
 	 * @param targetAgentName
@@ -293,8 +300,12 @@ public class SubagentSpawner {
 	public static String detachedSpawnRefusal(String targetAgentName,
 			AgentCapabilities childCapabilities) {
 		AgentDefinition target = childCapabilities.graph().agent(targetAgentName);
-		if (childCapabilities.unusableReason(target) == null) {
+		AgentCapabilities.Unusable unusable = childCapabilities.unusableReason(target);
+		if (unusable == null) {
 			return null;
+		}
+		if (!unusable.aboutCapabilities()) {
+			return withheldAgentRefusal(targetAgentName, unusable);
 		}
 
 		Set<String> required = childCapabilities.unreachableCapabilities(target);
@@ -320,6 +331,29 @@ public class SubagentSpawner {
 		}
 		refusal.append("Say which capability is missing and continue with what you can do; spawning it"
 			+ " again will not help.");
+		return refusal.toString();
+	}
+
+	/**
+	 * The refusal for a spawn the capability filter did not refuse: the agent itself is out of reach.
+	 *
+	 * <p>
+	 * Names no capability, on purpose (#517). {@code <agent-access>} withholds the agent, or the agent
+	 * is infrastructure, or what it runs on is denied to this account - and every capability grant in
+	 * the deployment leaves all three exactly where they are. The message the policy wrote already
+	 * names the setting an administrator would change, so it is relayed rather than restated, and the
+	 * closing line sends the user after that setting instead of after a capability.
+	 * </p>
+	 */
+	private static String withheldAgentRefusal(String targetAgentName, AgentCapabilities.Unusable unusable) {
+		StringBuilder refusal = new StringBuilder();
+		refusal.append("ERROR: Subagent '").append(targetAgentName).append("' was not started. ")
+			.append(unusable.message()).append("\n\n");
+		if (unusable.cause() == AgentCapabilities.Unusable.Cause.AGENT_WITHHELD) {
+			refusal.append("Only a grant of this agent to one of this account's roles lets the spawn"
+				+ " through, and no capability grant does. ");
+		}
+		refusal.append("Say that and continue with what you can do; spawning it again will not help.");
 		return refusal.toString();
 	}
 

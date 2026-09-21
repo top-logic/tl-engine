@@ -1,4 +1,4 @@
-import { React, useTLState, useTLUpload, useI18N } from 'tl-react-bridge';
+import { React, useTLState, useTLUpload, useI18N, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -72,7 +72,7 @@ const TLFileUpload: React.FC<TLCellProps> = ({ controlId }) => {
   return (
     <div
       id={controlId}
-      className={`tlFileUpload${isDragOver ? ' tlFileUpload--dragover' : ''}`}
+      className={rootClassName(state, `tlFileUpload${isDragOver ? ' tlFileUpload--dragover' : ''}`)}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}

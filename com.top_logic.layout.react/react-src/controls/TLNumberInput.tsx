@@ -1,4 +1,4 @@
-import { React, useTLFieldValue, useTLSubmitOnEnter } from 'tl-react-bridge';
+import { React, useTLFieldValue, useTLSubmitOnEnter, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback } = React;
@@ -52,7 +52,7 @@ const TLNumberInput: React.FC<TLCellProps> = ({ controlId, state }) => {
 
   if (state.editable === false) {
     return (
-      <span id={controlId} className="tlReactNumberInput tlReactNumberInput--immutable">
+      <span id={controlId} className={rootClassName(state, 'tlReactNumberInput tlReactNumberInput--immutable')}>
         {text}
       </span>
     );
@@ -78,7 +78,7 @@ const TLNumberInput: React.FC<TLCellProps> = ({ controlId, state }) => {
         onKeyDown={handleSubmitKey}
         disabled={state.disabled === true}
         placeholder={(state.placeholder as string) ?? undefined}
-        className={cls}
+        className={rootClassName(state, cls)}
         aria-invalid={hasError || undefined}
         title={hasError && errorMessage ? errorMessage : undefined}
       />

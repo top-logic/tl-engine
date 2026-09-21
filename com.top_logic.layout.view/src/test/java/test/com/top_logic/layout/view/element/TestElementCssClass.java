@@ -33,6 +33,7 @@ import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
+import com.top_logic.layout.view.channel.DefaultViewChannel;
 
 /**
  * Tests that the {@link UIElement.Config#getCssClass() CSS class} configured for an element reaches
@@ -40,9 +41,15 @@ import com.top_logic.layout.view.ViewLoader;
  *
  * <p>
  * The property is declared once for all elements, so the test exercises elements of different kinds
- * - a container, a piece of text, a picture - through the one seam they share: a view read the way
- * the application reads it, a control created for a view context, and the client state that control
- * publishes.
+ * - a container, a piece of text, a picture, a panel, a card, a grid, a button, an avatar, a tab bar
+ * - through the one seam they share: a view read the way the application reads it, a control created
+ * for a view context, and the client state that control publishes.
+ * </p>
+ *
+ * <p>
+ * Kinds that need the application model to be built - a {@code <value-input>} resolving the type of
+ * its value, a {@code <table>} computing its rows - are exercised where that model is available, not
+ * here.
  * </p>
  */
 public class TestElementCssClass extends TestCase {
@@ -51,6 +58,9 @@ public class TestElementCssClass extends TestCase {
 
 	/** The view the elements under test are read from. */
 	private static final String VIEW = "test-css-class.view.xml";
+
+	/** Name of the channel the avatar of the test view reads its account from. */
+	private static final String ACCOUNT_CHANNEL = "account";
 
 	/**
 	 * State key holding the children of a layout container.
@@ -103,6 +113,36 @@ public class TestElementCssClass extends TestCase {
 		assertEquals("tlDemoImage", child(3).get(ReactControl.CSS_CLASS));
 	}
 
+	/** The class of a panel reaches the control framing its content. */
+	public void testPanelCssClass() {
+		assertEquals("tlDemoPanel", child(4).get(ReactControl.CSS_CLASS));
+	}
+
+	/** The class of a card reaches the control drawing it. */
+	public void testCardCssClass() {
+		assertEquals("tlDemoCard", child(5).get(ReactControl.CSS_CLASS));
+	}
+
+	/** The class of a grid reaches the control laying out its cells. */
+	public void testGridCssClass() {
+		assertEquals("tlDemoGrid", child(6).get(ReactControl.CSS_CLASS));
+	}
+
+	/** The class of a button reaches the control the command is triggered with. */
+	public void testButtonCssClass() {
+		assertEquals("tlDemoButton", child(7).get(ReactControl.CSS_CLASS));
+	}
+
+	/** The class of an avatar reaches the control showing the account. */
+	public void testAvatarCssClass() {
+		assertEquals("tlDemoAvatar", child(8).get(ReactControl.CSS_CLASS));
+	}
+
+	/** The class of a tab bar reaches the control switching between its tabs. */
+	public void testTabBarCssClass() {
+		assertEquals("tlDemoTabs", child(9).get(ReactControl.CSS_CLASS));
+	}
+
 	/** An element that states no class has none, rather than an empty one. */
 	public void testWithoutTheProperty() {
 		assertNull("An element without the property must leave the class unset.",
@@ -146,6 +186,7 @@ public class TestElementCssClass extends TestCase {
 
 		ViewContext viewContext = new DefaultViewContext(new DefaultReactContext(CONTEXT_PATH, "test",
 			new SSEUpdateQueue(), new ReactWindowRegistry("test")));
+		viewContext.registerChannel(ACCOUNT_CHANNEL, new DefaultViewChannel(ACCOUNT_CHANNEL));
 
 		return (ReactControl) element.createControl(viewContext);
 	}

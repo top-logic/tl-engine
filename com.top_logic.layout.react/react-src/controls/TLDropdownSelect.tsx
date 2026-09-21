@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, CMD_VALUE_CHANGED } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, CMD_VALUE_CHANGED, rootClassName } from 'tl-react-bridge';
 import { createPortal } from 'react-dom';
 import type { TLCellProps } from 'tl-react-bridge';
 import { ThemeIcon } from './icon/ThemeIcon';
@@ -593,7 +593,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
 
   if (!editable) {
     return (
-      <div id={controlId} className="tlDropdownSelect tlDropdownSelect--immutable">
+      <div id={controlId} className={rootClassName(state, 'tlDropdownSelect tlDropdownSelect--immutable')}>
         {value.map((v) => (
           <ReadonlyValue key={v.value} option={v} onGoto={goto} />
         ))}
@@ -681,11 +681,9 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
       <div
         id={controlId}
         ref={containerRef}
-        className={
-          'tlDropdownSelect' +
+        className={rootClassName(state, 'tlDropdownSelect' +
           (isOpen ? ' tlDropdownSelect--open' : '') +
-          (disabled ? ' tlDropdownSelect--disabled' : '')
-        }
+          (disabled ? ' tlDropdownSelect--disabled' : ''))}
         role="combobox"
         aria-expanded={isOpen}
         aria-haspopup="listbox"

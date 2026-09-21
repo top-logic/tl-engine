@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback, useEffect, useRef, useState } = React;
@@ -59,7 +59,7 @@ const TLSnackbar: React.FC<TLCellProps> = ({ controlId }) => {
   if (!visible && !exiting) return null;
 
   return (
-    <div id={controlId} className={`tlSnackbar tlSnackbar--${variant}${exiting ? ' tlSnackbar--exiting' : ''}`}
+    <div id={controlId} className={rootClassName(state, `tlSnackbar tlSnackbar--${variant}${exiting ? ' tlSnackbar--exiting' : ''}`)}
       role="status" aria-live="polite"
       onMouseEnter={() => { wasHovered.current = true; setHovered(true); }}
       onMouseLeave={() => setHovered(false)}>

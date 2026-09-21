@@ -44,7 +44,7 @@ const TLImage: React.FC<TLCellProps> = ({ controlId }) => {
   }
 
   return (
-    <div id={controlId} className={className} style={style}>
+    <div id={controlId} className={rootClassName(state, className)} style={style}>
       {src ? (
         <img
           className="tlImage__image"

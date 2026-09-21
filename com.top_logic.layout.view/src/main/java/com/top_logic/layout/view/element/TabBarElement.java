@@ -155,6 +155,8 @@ public class TabBarElement implements UIElement {
 
 	private final String _activeTab;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link TabBarElement} from configuration.
 	 */
@@ -170,6 +172,7 @@ public class TabBarElement implements UIElement {
 				tabConfig.getAccessControl(), children));
 		}
 		_activeTab = config.getActiveTab();
+		_cssClass = config.getCssClass();
 	}
 
 	/**
@@ -218,6 +221,7 @@ public class TabBarElement implements UIElement {
 		}
 		String activeTab = _activeTab != null && !_activeTab.isEmpty() ? _activeTab : null;
 		ReactTabBarControl tabBar = new ReactTabBarControl(context, null, tabDefs, activeTab);
+		tabBar.setCssClass(_cssClass);
 
 		RevealRegistry registry = context.getRevealRegistry();
 		if (registry != null) {

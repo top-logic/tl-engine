@@ -199,6 +199,7 @@ public class FlowDiagramElement implements UIElement {
 
 		// 3. Create FlowDiagramControl.
 		FlowDiagramControl control = new FlowDiagramControl(context, diagram);
+		control.setCssClass(_config.getCssClass());
 
 		// 4. Listen for input channel changes and rebuild diagram.
 		ViewChannel.ChannelListener listener = (sender, oldValue, newValue) -> {

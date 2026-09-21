@@ -1,4 +1,4 @@
-import { React, useTLFieldValue, useTLCommand, useTLSubmitOnEnter, useI18N } from 'tl-react-bridge';
+import { React, useTLFieldValue, useTLCommand, useTLSubmitOnEnter, useI18N, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import FontIcon from './FontIcon';
 
@@ -149,7 +149,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
       return (
         <a
           id={controlId}
-          className={immutableCls + ' tlReactTextInput--link'}
+          className={rootClassName(state, immutableCls + ' tlReactTextInput--link')}
           href={href}
           target="_blank"
           rel="noopener noreferrer"
@@ -161,7 +161,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
     return (
       <span
         id={controlId}
-        className={immutableCls}
+        className={rootClassName(state, immutableCls)}
         style={multiline ? { whiteSpace: 'pre-wrap' } : undefined}
       >
         {text}
@@ -188,7 +188,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
           onChange={handleChange}
           onBlur={handleBlur}
           disabled={state.disabled === true}
-          className={cls}
+          className={rootClassName(state, cls)}
           aria-invalid={hasError || undefined}
           title={hasError && errorMessage ? errorMessage : undefined}
         />
@@ -205,7 +205,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
       onBlur={handleBlur}
       onKeyDown={submitKey === undefined ? undefined : handleSubmitKey}
       disabled={state.disabled === true}
-      className={cls}
+      className={rootClassName(state, cls)}
       aria-invalid={hasError || undefined}
       title={hasError && errorMessage ? errorMessage : undefined}
     />

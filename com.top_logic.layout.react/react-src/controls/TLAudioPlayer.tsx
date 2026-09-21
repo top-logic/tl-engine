@@ -1,4 +1,4 @@
-import { React, useTLState, useTLDataUrl, useI18N } from 'tl-react-bridge';
+import { React, useTLState, useTLDataUrl, useI18N, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -141,7 +141,7 @@ const TLAudioPlayer: React.FC<TLCellProps> = ({ controlId }) => {
   if (status === 'loading') buttonClasses.push('tlAudioPlayer__button--loading');
 
   return (
-    <div id={controlId} className="tlAudioPlayer">
+    <div id={controlId} className={rootClassName(state, 'tlAudioPlayer')}>
       <button
         type="button"
         className={buttonClasses.join(' ')}

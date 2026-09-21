@@ -1,4 +1,4 @@
-import { React, useTLCommand, useTLFieldValue, useI18N } from 'tl-react-bridge';
+import { React, useTLCommand, useTLFieldValue, useI18N, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import ColorPopup from './color/ColorPopup';
 
@@ -57,10 +57,8 @@ const TLColorInput: React.FC<TLCellProps> = ({ controlId, state }) => {
     return (
       <span
         id={controlId}
-        className={
-          'tlColorInput tlColorInput--immutable' +
-          (value == null ? ' tlColorInput--noColor' : '')
-        }
+        className={rootClassName(state, 'tlColorInput tlColorInput--immutable' +
+          (value == null ? ' tlColorInput--noColor' : ''))}
         style={value != null ? { backgroundColor: value } : undefined}
         title={value ?? ''}
       />
@@ -68,7 +66,7 @@ const TLColorInput: React.FC<TLCellProps> = ({ controlId, state }) => {
   }
 
   return (
-    <span id={controlId} className="tlColorInput">
+    <span id={controlId} className={rootClassName(state, 'tlColorInput')}>
       <button
         ref={swatchRef}
         className={

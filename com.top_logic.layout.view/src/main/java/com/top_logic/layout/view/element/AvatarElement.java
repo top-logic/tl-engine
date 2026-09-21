@@ -101,6 +101,7 @@ public class AvatarElement implements UIElement {
 		ViewChannel channel = context.resolveChannel(_config.getInput());
 		ReactAvatarControl control = new ReactAvatarControl(context, label(channel.get()));
 		control.setSize(_config.getSize());
+		control.setCssClass(_config.getCssClass());
 
 		ChannelListener listener = (sender, oldValue, newValue) -> control.setName(label(newValue));
 		channel.addListener(listener);

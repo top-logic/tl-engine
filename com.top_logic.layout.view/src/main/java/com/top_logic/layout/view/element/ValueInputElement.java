@@ -269,6 +269,8 @@ public class ValueInputElement implements UIElement {
 
 	private final ViewCommand.Config _submitCommandConfig;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link ValueInputElement} from configuration.
 	 */
@@ -287,6 +289,7 @@ public class ValueInputElement implements UIElement {
 		PolymorphicConfiguration<? extends ViewCommand> submitConfig = config.getOnSubmit();
 		_submitCommandConfig = submitConfig instanceof ViewCommand.Config commandConfig ? commandConfig : null;
 		_submitCommand = _submitCommandConfig == null ? null : context.getInstance(submitConfig);
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -324,10 +327,14 @@ public class ValueInputElement implements UIElement {
 		}
 
 		if (_label == null && _labelPosition == null) {
+			input.setCssClass(_cssClass);
 			return input;
 		}
-		return new ReactFormFieldChromeControl(context, label, field.isMandatory(), false, null, null,
-			AttributeFieldControl.wirePosition(_labelPosition, !_readonly), false, true, input);
+		ReactFormFieldChromeControl chrome =
+			new ReactFormFieldChromeControl(context, label, field.isMandatory(), false, null, null,
+				AttributeFieldControl.wirePosition(_labelPosition, !_readonly), false, true, input);
+		chrome.setCssClass(_cssClass);
+		return chrome;
 	}
 
 	/**

@@ -68,12 +68,15 @@ public class ThreadTable implements UIElement {
 
 	private final ChannelRef _selectionRef;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link ThreadTable} from configuration.
 	 */
 	@CalledByReflection
 	public ThreadTable(InstantiationContext context, Config config) {
 		_selectionRef = config.getSelection();
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -103,6 +106,7 @@ public class ThreadTable implements UIElement {
 			control.addSelectionListener(keys -> selection.set(keys.size() == 1 ? keys.iterator().next() : null));
 		}
 
+		control.setCssClass(_cssClass);
 		return control;
 	}
 

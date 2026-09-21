@@ -3,7 +3,7 @@
 // IMPORTANT: React is imported from 'tl-react-bridge' (not 'react') to share the single React
 // instance. The CodeMirror runtime is shared from 'tl-code-editor'; this control adds only the
 // TL-Script-specific parts — the language grammar and the server-backed completion/diagnostics.
-import { React, useTLState, useTLCommand } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { CodeEditor } from 'tl-code-editor';
 import type { CodeEditorDiagnostic } from 'tl-code-editor';
@@ -162,7 +162,7 @@ const TLScriptEditor: React.FC<TLCellProps> = ({ controlId, state }) => {
       completionSource={completionSource}
       diagnostics={diagnostics}
       onChange={handleChange}
-      className="tlScriptEditor"
+      className={rootClassName(state, 'tlScriptEditor')}
     />
   );
 };

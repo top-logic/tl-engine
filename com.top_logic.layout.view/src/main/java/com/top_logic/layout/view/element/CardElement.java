@@ -80,6 +80,8 @@ public class CardElement extends ContainerElement {
 
 	private final CardPadding _padding;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link CardElement} from configuration.
 	 */
@@ -89,6 +91,7 @@ public class CardElement extends ContainerElement {
 		_title = config.getTitle();
 		_variant = config.getVariant();
 		_padding = config.getPadding();
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -98,6 +101,8 @@ public class CardElement extends ContainerElement {
 		ReactControl content = ContentControls.combine(context, childControls);
 
 		String title = _title != null ? Resources.getInstance().getString(_title) : null;
-		return new ReactCardControl(context, title, _variant, _padding, List.of(), content);
+		ReactCardControl result = new ReactCardControl(context, title, _variant, _padding, List.of(), content);
+		result.setCssClass(_cssClass);
+		return result;
 	}
 }

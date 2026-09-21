@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, useListReorder } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, useListReorder, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -84,7 +84,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
   const searchable = entries.length > 10;
 
   return (
-    <div id={controlId} className="tlColumnSelect" {...reorder.containerProps}>
+    <div id={controlId} className={rootClassName(state, 'tlColumnSelect')} {...reorder.containerProps}>
       {searchable && (
         <div className="tlColumnSelect__search">
           <i className="bi bi-search" aria-hidden="true" />

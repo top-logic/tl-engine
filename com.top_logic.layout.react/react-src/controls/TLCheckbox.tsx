@@ -1,4 +1,4 @@
-import { React, useTLFieldValue } from 'tl-react-bridge';
+import { React, useTLFieldValue, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback, useRef, useEffect } = React;
@@ -41,7 +41,7 @@ const TLCheckbox: React.FC<TLCellProps> = ({ controlId, state }) => {
         ref={boxRef}
         checked={value === true}
         disabled
-        className="tlReactCheckbox tlReactCheckbox--immutable"
+        className={rootClassName(state, 'tlReactCheckbox tlReactCheckbox--immutable')}
       />
     );
   }
@@ -62,7 +62,7 @@ const TLCheckbox: React.FC<TLCellProps> = ({ controlId, state }) => {
       checked={value === true}
       onChange={handleChange}
       disabled={state.disabled === true}
-      className={cls}
+      className={rootClassName(state, cls)}
       aria-invalid={hasError || undefined}
       aria-checked={triState && value !== true && value !== false ? 'mixed' : value === true}
     />

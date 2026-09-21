@@ -88,7 +88,7 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
 
   if (error) {
     return (
-      <div id={controlId} className="tlHtml tlHtml__error" role="alert">{error}</div>
+      <div id={controlId} className={rootClassName(state, 'tlHtml tlHtml__error')} role="alert">{error}</div>
     );
   }
 
@@ -96,7 +96,7 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
 
   if (display === 'document') {
     return (
-      <div id={controlId} className={className}>
+      <div id={controlId} className={rootClassName(state, className)}>
         <iframe
           ref={frameRef}
           className="tlHtml__frame"
@@ -127,7 +127,7 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
       <div
         id={controlId}
         ref={boxRef}
-        className={className}
+        className={rootClassName(state, className)}
         style={{ aspectRatio: `${thumbnailWidth} / ${thumbnailHeight}` }}
       >
         <iframe
@@ -152,13 +152,13 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
   }
 
   if (display !== 'inline') {
-    return <div id={controlId} className={className}/>;
+    return <div id={controlId} className={rootClassName(state, className)}/>;
   }
 
   return (
     <div
       id={controlId}
-      className={className}
+      className={rootClassName(state, className)}
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );

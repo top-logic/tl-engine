@@ -1,4 +1,4 @@
-import { React, useTLState, TLChild, useFillHost, FillProvider } from 'tl-react-bridge';
+import { React, useTLState, TLChild, useFillHost, FillProvider, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps, ChildDescriptor } from 'tl-react-bridge';
 
 /**
@@ -48,7 +48,7 @@ const TLTileStack: React.FC<TLCellProps> = ({ controlId }) => {
 
   return (
     <FillProvider host={fillHost}>
-      <div id={controlId} className={fillClass ? 'tlTileStack ' + fillClass : 'tlTileStack'}>
+      <div id={controlId} className={rootClassName(state, fillClass ? 'tlTileStack ' + fillClass : 'tlTileStack')}>
         {frames.map((frame, i) => (
           <TileFrame key={frame.controlId} frame={frame} covered={i !== activeIndex} />
         ))}

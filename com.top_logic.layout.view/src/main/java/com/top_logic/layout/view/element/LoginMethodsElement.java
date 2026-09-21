@@ -53,12 +53,14 @@ public class LoginMethodsElement implements UIElement {
 		Class<? extends UIElement> getImplementationClass();
 	}
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link LoginMethodsElement} from configuration.
 	 */
 	@CalledByReflection
 	public LoginMethodsElement(InstantiationContext context, Config config) {
-		// No configuration needed.
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -78,8 +80,10 @@ public class LoginMethodsElement implements UIElement {
 			}
 			buttons.add(button);
 		}
-		return new ReactStackControl(context, StackDirection.COLUMN, StackGap.COMPACT, StackAlign.STRETCH, false,
-			buttons);
+		ReactStackControl result = new ReactStackControl(context, StackDirection.COLUMN, StackGap.COMPACT,
+			StackAlign.STRETCH, false, buttons);
+		result.setCssClass(_cssClass);
+		return result;
 	}
 
 	/**

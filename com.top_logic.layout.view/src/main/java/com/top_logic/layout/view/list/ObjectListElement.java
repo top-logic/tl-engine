@@ -403,6 +403,7 @@ public class ObjectListElement implements UIElement {
 			items::showElements);
 
 		ReactLayoutControl display = items.display();
+		display.setCssClass(_config.getCssClass());
 		display.addAttachListener(() -> observer.attach(context.getModelScope()));
 		display.addDetachListener(observer::detach);
 

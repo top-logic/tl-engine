@@ -371,6 +371,8 @@ public class SidebarElement implements UIElement {
 
 	private final String _drawerOpenSlotName;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link SidebarElement} from configuration.
 	 */
@@ -383,6 +385,7 @@ public class SidebarElement implements UIElement {
 		_activeItem = config.getActiveItem();
 		_collapsed = config.getCollapsed();
 		_drawerOpenSlotName = config.getDrawerOpenSlotName();
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -434,6 +437,8 @@ public class SidebarElement implements UIElement {
 				context.getSlotPath(), context.getSlotRegistry(), List.of(toggleButton));
 			sidebar.setDrawerToggleContribution(drawerToggleSlot);
 		}
+
+		sidebar.setCssClass(_cssClass);
 
 		RevealRegistry registry = context.getRevealRegistry();
 		if (registry != null) {

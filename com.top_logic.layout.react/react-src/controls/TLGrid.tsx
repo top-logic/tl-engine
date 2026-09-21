@@ -1,4 +1,4 @@
-import { React, useTLState } from 'tl-react-bridge';
+import { React, useTLState, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { renderItems } from './items';
 
@@ -42,7 +42,7 @@ const TLGrid: React.FC<TLCellProps> = ({ controlId }) => {
   }
 
   return (
-    <div id={controlId} className={`tlGrid tlGrid--gap-${gap}`} style={style}>
+    <div id={controlId} className={rootClassName(state, `tlGrid tlGrid--gap-${gap}`)} style={style}>
       {renderItems(children, itemClass)}
     </div>
   );

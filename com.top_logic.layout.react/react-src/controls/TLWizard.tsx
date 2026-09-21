@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useFillHost, FillProvider } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useFillHost, FillProvider, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps, ChildDescriptor } from 'tl-react-bridge';
 import { ThemeIcon } from './icon/ThemeIcon';
 
@@ -169,7 +169,7 @@ const TLWizard: React.FC<TLCellProps> = ({ controlId }) => {
 
   return (
     <FillProvider host={fillHost}>
-      <div id={controlId} className={rootClass}>
+      <div id={controlId} className={rootClassName(state, rootClass)}>
         {hasHeader && (
           <div className="tlWizard__header">
             {showCounter && (

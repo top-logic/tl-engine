@@ -1,5 +1,6 @@
 import {
   React, useTLState, useTLCommand, TLChild, useI18N, useStandaloneKeyboardScope, FillBarrier,
+  rootClassName,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
@@ -45,7 +46,7 @@ const TLDrawer: React.FC<TLCellProps> = ({ controlId }) => {
   ].filter(Boolean).join(' ');
 
   return (
-    <aside id={controlId} className={className} aria-hidden={!open}>
+    <aside id={controlId} className={rootClassName(state, className)} aria-hidden={!open}>
       {title !== null && (
         <div className="tlDrawer__header">
           <span className="tlDrawer__title">{title}</span>

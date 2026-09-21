@@ -1,6 +1,6 @@
 import {
   React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding,
-  useFocusTrap, FillBarrier,
+  useFocusTrap, FillBarrier, rootClassName,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
@@ -280,7 +280,7 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
       <EscapeToClose onClose={handleClose} />
       <div
       id={controlId}
-      className="tlWindow"
+      className={rootClassName(state, 'tlWindow')}
       style={style}
       ref={windowRef}
       role="dialog"

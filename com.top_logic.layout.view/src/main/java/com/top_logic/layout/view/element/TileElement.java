@@ -105,6 +105,8 @@ public class TileElement implements UIElement {
 
 	private final UIElement _content;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link TileElement} from configuration.
 	 */
@@ -115,6 +117,7 @@ public class TileElement implements UIElement {
 		_rowSpan = Math.max(1, config.getRowSpan());
 		_accessControl = config.getAccessControl();
 		_content = context.getInstance(config.getContent());
+		_cssClass = config.getCssClass();
 	}
 
 	/**
@@ -149,8 +152,14 @@ public class TileElement implements UIElement {
 	public ReactControl createContentControl(ViewContext context) {
 		SecurityScope scope = AccessChecks.resolveScope(_accessControl);
 		ViewContext contentContext = scope != null ? context.withScope(SecurityScope.class, scope) : context;
-		IReactControl inner = _content.createControl(contentContext);
-		return (ReactControl) inner;
+		ReactControl inner = (ReactControl) _content.createControl(contentContext);
+		if (_cssClass != null) {
+			// A tile displays itself through its content, so the class of the tile goes on the control
+			// of that content. It is written only when the tile declares one, so that the content
+			// element keeps the class it declares itself.
+			inner.setCssClass(_cssClass);
+		}
+		return inner;
 	}
 
 	@Override

@@ -1,4 +1,4 @@
-import { React, useTLState, TLChild, useStandaloneKeyboardScope, useFocusTrap } from 'tl-react-bridge';
+import { React, useTLState, TLChild, useStandaloneKeyboardScope, useFocusTrap, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { createPortal } from 'react-dom';
 import { ThemeIcon } from './icon/ThemeIcon';
@@ -192,7 +192,7 @@ const TLToolbar: React.FC<TLCellProps> = ({ controlId }) => {
   if (visibleGroups.length === 0) return null;
 
   return (
-    <div id={controlId} className="tlToolbar" role="toolbar">
+    <div id={controlId} className={rootClassName(state, 'tlToolbar')} role="toolbar">
       {visibleGroups.map((group, i) => (
         <React.Fragment key={group.name}>
           {i > 0 && <span className="tlToolbar__separator" aria-hidden="true" />}

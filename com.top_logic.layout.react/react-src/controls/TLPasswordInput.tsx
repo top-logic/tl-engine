@@ -1,4 +1,4 @@
-import { React, useTLFieldValue } from 'tl-react-bridge';
+import { React, useTLFieldValue, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback } = React;
@@ -25,7 +25,7 @@ const TLPasswordInput: React.FC<TLCellProps> = ({ controlId, state }) => {
   const handleBlur = useCallback(() => { void flushValue(); }, [flushValue]);
 
   if (state.editable === false) {
-    return <span id={controlId} className="tlReactTextInput tlReactTextInput--immutable">••••••••</span>;
+    return <span id={controlId} className={rootClassName(state, 'tlReactTextInput tlReactTextInput--immutable')}>••••••••</span>;
   }
 
   const hasError = state.hasError === true;
@@ -45,7 +45,7 @@ const TLPasswordInput: React.FC<TLCellProps> = ({ controlId, state }) => {
         onChange={handleChange}
         onBlur={handleBlur}
         disabled={state.disabled === true}
-        className={cls}
+        className={rootClassName(state, cls)}
         aria-invalid={hasError || undefined}
         title={hasError && errorMessage ? errorMessage : undefined}
       />

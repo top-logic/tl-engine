@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useKeyboardBinding } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useKeyboardBinding, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { ThemeIcon } from './icon/ThemeIcon';
 
@@ -117,14 +117,14 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
       id={controlId}
       onClick={handleClick}
       disabled={resolvedDisabled}
-      className={'tlReactButton' + (iconOnly ? ' tlReactButton--iconOnly' : '')
+      className={rootClassName(state, 'tlReactButton' + (iconOnly ? ' tlReactButton--iconOnly' : '')
         + (resolvedMode === 'label-only' ? ' tlReactButton--labelOnly' : '')
         + (appearance === 'link' ? ' tlReactButton--link' : '')
         + (appearance === 'primary' ? ' tlReactButton--primary' : '')
         + (size === 'small' ? ' tlReactButton--small' : '')
         + (size === 'large' ? ' tlReactButton--large' : '')
         + (resolvedActive ? ' tlReactButton--active' : '')
-        + (cssClasses ? ' ' + cssClasses : '')}
+        + (cssClasses ? ' ' + cssClasses : ''))}
       data-tooltip={tooltipAttr}
       aria-pressed={resolvedActive ? true : undefined}
       aria-label={resolvedImage || iconOnly ? resolvedLabel : undefined}

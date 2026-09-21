@@ -352,6 +352,7 @@ public class TreeElement implements UIElement {
 		// 5. Create ReactTreeControl.
 		ReactTreeControl treeControl = new ReactTreeControl(context, treeModel, selectionModel, _nodeContentProvider);
 		treeControl.setSelectionMode(selectionMode);
+		treeControl.setCssClass(_config.getCssClass());
 
 		// 6. Wire selection channel.
 		ChannelRef selectionRef = _config.getSelection();

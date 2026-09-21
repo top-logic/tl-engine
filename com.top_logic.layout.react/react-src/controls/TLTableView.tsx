@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, useStandaloneKeyboardScope, writeDragPayload, readDragPayload, dragTypeAccepted, dropPositionAt } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, useStandaloneKeyboardScope, writeDragPayload, readDragPayload, dragTypeAccepted, dropPositionAt, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps, TLDropPosition } from 'tl-react-bridge';
 
 /**
@@ -1146,7 +1146,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       onActivate={handleActivateCursor}
     />
     <div ref={rootRef} id={controlId}
-      className={'tlTableView' + (dropState && dropState.row === null ? ' tlTableView--dragover' : '')}
+      className={rootClassName(state, 'tlTableView' + (dropState && dropState.row === null ? ' tlTableView--dragover' : ''))}
       data-tooltip="dynamic"
       onDragOver={handleRootDragOver}
       onDragLeave={handleRootDragLeave}

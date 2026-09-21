@@ -108,7 +108,9 @@ public class ButtonElement implements UIElement {
 	public IReactControl createControl(ViewContext context) {
 		if (_command == null || _commandConfig == null) {
 			// No command configured - render a static button.
-			return new ReactButtonControl(context, "", ctx -> HandlerResult.DEFAULT_RESULT);
+			ReactButtonControl button = new ReactButtonControl(context, "", ctx -> HandlerResult.DEFAULT_RESULT);
+			button.setCssClass(_config.getCssClass());
+			return button;
 		}
 
 		// Create model and button. The button reads label/disabled from the model internally.
@@ -120,6 +122,7 @@ public class ButtonElement implements UIElement {
 		}
 		control.setAppearance(_config.getAppearance());
 		control.setSize(_config.getSize());
+		control.setCssClass(_config.getCssClass());
 		control.addAttachListener(() -> model.attach(context.getModelScope()));
 		control.addDetachListener(model::detach);
 		return control;

@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useTLUpload, useTLDataUrl, useI18N } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useTLUpload, useTLDataUrl, useI18N, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -139,7 +139,7 @@ const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
   return (
     <div
       id={controlId}
-      className={className}
+      className={rootClassName(state, className)}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}

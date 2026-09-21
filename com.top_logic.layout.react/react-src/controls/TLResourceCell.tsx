@@ -55,7 +55,7 @@ const TLResourceCell: React.FC<TLCellProps> = ({ controlId }) => {
     return (
       <a
         id={controlId}
-        className={className}
+        className={rootClassName(state, className)}
         href="#"
         onClick={handleClick}
         data-tooltip={tooltipAttr}
@@ -66,7 +66,7 @@ const TLResourceCell: React.FC<TLCellProps> = ({ controlId }) => {
   }
 
   return (
-    <span id={controlId} className={className} data-tooltip={tooltipAttr}>
+    <span id={controlId} className={rootClassName(state, className)} data-tooltip={tooltipAttr}>
       {content}
     </span>
   );

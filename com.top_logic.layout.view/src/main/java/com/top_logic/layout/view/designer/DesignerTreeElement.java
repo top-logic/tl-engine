@@ -124,6 +124,7 @@ public class DesignerTreeElement implements UIElement {
 		ReactTreeControl treeControl =
 			new ReactTreeControl(context, treeModel, selectionModel, designNodeControlProvider(treeRef));
 		treeRef[0] = treeControl;
+		treeControl.setCssClass(_config.getCssClass());
 
 		// Holder for the tree model currently displayed by treeControl. The control itself does not
 		// expose a getter for its current model, and the model is replaced (not mutated) whenever the

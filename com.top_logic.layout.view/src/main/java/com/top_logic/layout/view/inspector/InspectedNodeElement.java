@@ -119,6 +119,8 @@ public class InspectedNodeElement implements UIElement {
 
 	private final ChannelRef _selectionRef;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link InspectedNodeElement} from configuration.
 	 */
@@ -126,6 +128,7 @@ public class InspectedNodeElement implements UIElement {
 	public InspectedNodeElement(InstantiationContext context, Config config) {
 		_nodeRef = config.getNode();
 		_selectionRef = config.getSelection();
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -163,6 +166,7 @@ public class InspectedNodeElement implements UIElement {
 
 		ReactStackControl result = new ReactStackControl(context,
 			List.<ReactControl> of(addressText, descriptionText, stateTable, actionTable));
+		result.setCssClass(_cssClass);
 
 		ChannelListener listener = (sender, oldValue, newValue) -> {
 			InspectedNode current = node(nodeChannel);

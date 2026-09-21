@@ -29,6 +29,57 @@
 - **Standalone form-field controls bind to a `FieldModel`.** For a standalone field control (e.g. a checkbox cell), use the concrete `com.top_logic.layout.form.model.AbstractFieldModel` + `FieldModelListener` — not `FormContext` / `FormField` / `FormFieldAdapter`, which are legacy-compat shims. `AbstractFieldModel` is editable by default, needs no `FormContext` parent, and triggers no label resource lookup in `ReactFormFieldControl`.
 - Modifying persistent state from a control's value listener needs a transaction; the listener has no ambient one, so open `beginTransaction()` there (or buffer changes and apply them under one transaction on save).
 
+## Styling a single element: `css-class`
+
+Every element of a view takes a `css-class`, because the property is declared once on
+`UIElement.Config` and thereby inherited by every element configuration — a `<stack>`, a `<panel>`,
+a `<table>`, a `<button>`, an element an application brings itself. The class is written on the root
+element of the control displaying that element, beside the classes the control's kind brings itself:
+
+```xml
+<stack css-class="tlDemoHero">
+	<text
+		css-class="tlDemoHeroTitle"
+		label="Welcome"
+	/>
+</stack>
+```
+
+```html
+<div class="tlStack tlStack--column tlStack--gap-normal tlDemoHero">
+  <span class="tlText tlDemoHeroTitle">Welcome</span>
+</div>
+```
+
+Several classes are written separated by spaces, as in HTML.
+
+The stylesheet the classes are defined in belongs to the application and is announced through the
+`ClientResources` service, next to the application's own bundles:
+
+```xml
+<config service-class="com.top_logic.layout.react.resource.ClientResources">
+  <instance class="com.top_logic.layout.react.resource.ClientResources">
+    <resources>
+      <stylesheet name="tl-demo-react-css"
+        resource="/style/tl-demo-react.css"
+      />
+    </resources>
+  </instance>
+</config>
+```
+
+A modifier class of a kind — `tlText--ellipsis`, `tlCard--outlined` — is not the way to reach one
+element. Those classes are what a control writes for the display options of its own kind, so writing
+one in `css-class` styles that element by a rule the engine owns and may change; and it reaches the
+one element only by accident, since the engine writes the same class on every element that carries
+that option. A display option that is part of the element is a configuration property of its own —
+`<text overflow="ellipsis">` is such a property, not a class — and everything else is an application
+class of the application's own naming.
+
+On the server, the class travels as one state key of `ReactControl` (`setCssClass(String)`); on the
+client, the component composes its root `className` from it with `rootClassName(state, …)`. Both are
+described in [new-ui-element.md](new-ui-element.md), which an element of an application follows.
+
 ## A command is a chain of actions, and the chain can branch
 
 `<generic-command>` (`GenericViewCommand`) runs the `<execute-script>`, `<store-form-state>`, `<confirm>`, `<verify-identity>`, `<with-transaction>`, `<open-dialog>`, `<write-channel>`, … actions written inside it as one chain (`ViewActionChain`): each action's result is the next action's input, the first action gets the command's input. An action that has to wait — `<confirm>`, which opens a dialog — suspends the chain and resumes it from the dialog's answer, or aborts it on cancel; `<verify-identity>` (`VerifyIdentityAction`) is the same shape with the answer being the proof that the person at the keyboard still is the holder of the session's own account, given the way the session was established: a session established at an external identity provider re-authenticates there in a second browser window — the provider's answer returns to the authentication servlet, which completes the pending `IdentityVerifications` entry and resumes the chain in the window that asked (a failure of the resumed chain is shown in that window like any other command failure, through `CommandErrors`, and leaves the confirmed identity itself standing) — while every other session is asked for its password, which the account's `AuthenticationDevice` checks. It fails closed: a cancelled prompt, an account that neither a provider nor a device can confirm, or a context without a dialog all abort; an abort skips the remaining actions and runs the compensations the executed actions registered, newest first, as does a failure. A script over the chain's value takes further arguments from channels: `<inputs><input channel="context"/></inputs>` puts those channel values in front of the chain's value (`ActionScript`, shared by every action that takes a script).

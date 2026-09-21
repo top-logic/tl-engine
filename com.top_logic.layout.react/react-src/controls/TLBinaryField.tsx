@@ -1,4 +1,4 @@
-import { React, useTLState, useTLUpload, useTLDataUrl, useI18N } from 'tl-react-bridge';
+import { React, useTLState, useTLUpload, useTLDataUrl, useI18N, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -138,13 +138,13 @@ const TLBinaryField: React.FC<TLCellProps> = ({ controlId, state: propState }) =
   if (!editable) {
     if (!hasData) {
       return (
-        <div id={controlId} className="tlBinaryField tlDownload tlDownload--empty">
+        <div id={controlId} className={rootClassName(state, 'tlBinaryField tlDownload tlDownload--empty')}>
           <span className="tlDownload__fileName tlDownload__fileName--empty">{t['js.download.noFile']}</span>
         </div>
       );
     }
     return (
-      <div id={controlId} className="tlBinaryField tlBinaryField--view">
+      <div id={controlId} className={rootClassName(state, 'tlBinaryField tlBinaryField--view')}>
         {downloadLink}
       </div>
     );
@@ -157,7 +157,7 @@ const TLBinaryField: React.FC<TLCellProps> = ({ controlId, state: propState }) =
   return (
     <div
       id={controlId}
-      className={`tlBinaryField tlFileUpload${isDragOver ? ' tlFileUpload--dragover' : ''}`}
+      className={rootClassName(state, `tlBinaryField tlFileUpload${isDragOver ? ' tlFileUpload--dragover' : ''}`)}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}

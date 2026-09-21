@@ -77,12 +77,15 @@ public abstract class CommandScopeElement extends CommandCarrierElement {
 
 	private final ButtonDisplayMode _commandDisplay;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link CommandScopeElement}.
 	 */
 	protected CommandScopeElement(InstantiationContext context, Config config) {
 		super(context, config);
 		_commandDisplay = config.getCommandDisplay();
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -108,6 +111,7 @@ public abstract class CommandScopeElement extends CommandCarrierElement {
 
 		// Phase 5: Let subclass create the chrome control.
 		ToolbarControl chrome = createChromeControl(derivedContext, content, toolbar, buttonBar);
+		chrome.setCssClass(_cssClass);
 
 		// Phase 6: Rebuild toolbars when implicit commands change. Groups are replaced in place so
 		// the existing toolbar controls keep their SSE registration.

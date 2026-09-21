@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useFill, FillBarrier } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useFill, FillBarrier, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback, useRef } = React;
@@ -199,7 +199,7 @@ const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
     <div
       ref={containerRef}
       id={controlId}
-      className={`tlSplitPanel tlSplitPanel--${orientation}${allCollapsed ? ' tlSplitPanel--allCollapsed' : ''} ${fillClass}`}
+      className={rootClassName(state, `tlSplitPanel tlSplitPanel--${orientation}${allCollapsed ? ' tlSplitPanel--allCollapsed' : ''} ${fillClass}`)}
       style={{
         display: 'flex',
         flexDirection: effectiveHorizontal ? 'row' : 'column',

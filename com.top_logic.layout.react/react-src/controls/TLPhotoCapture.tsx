@@ -1,4 +1,4 @@
-import { React, useTLState, useTLUpload, useI18N, useStandaloneKeyboardScope } from 'tl-react-bridge';
+import { React, useTLState, useTLUpload, useI18N, useStandaloneKeyboardScope, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -171,7 +171,7 @@ const TLPhotoCapture: React.FC<TLCellProps> = ({ controlId }) => {
   if (mirrored) mirrorBtnClasses.push('tlPhotoCapture__mirrorBtn--active');
 
   return (
-    <div id={controlId} className="tlPhotoCapture">
+    <div id={controlId} className={rootClassName(state, 'tlPhotoCapture')}>
       <div className="tlPhotoCapture__controls">
         <button
           type="button"

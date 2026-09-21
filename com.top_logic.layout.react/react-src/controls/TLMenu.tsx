@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useFocusTrap } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useFocusTrap, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { ThemeIcon } from './icon/ThemeIcon';
 
@@ -136,7 +136,7 @@ const TLMenu: React.FC<TLCellProps> = ({ controlId }) => {
   return (
     <div
       id={controlId}
-      className="tlMenu"
+      className={rootClassName(state, 'tlMenu')}
       role="menu"
       ref={menuRef}
       tabIndex={-1}

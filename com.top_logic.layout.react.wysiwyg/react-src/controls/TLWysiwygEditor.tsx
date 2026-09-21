@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useTLUpload, useTLDataUrl } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useTLUpload, useTLDataUrl, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { useEditor, EditorContent } from '@tiptap/react';
 import type { Editor } from '@tiptap/react';
@@ -180,7 +180,7 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
 
   if (!editable) {
     return (
-      <div className="tlWysiwygEditor tlWysiwygEditor--immutable">
+      <div className={rootClassName(state, 'tlWysiwygEditor tlWysiwygEditor--immutable')}>
         <div
           className="tlWysiwygEditor__immutableContent ProseMirror"
           onClick={handleContentClick}
@@ -193,7 +193,7 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
   const cssClass = 'tlWysiwygEditor' + (hasError ? ' tlWysiwygEditor--error' : '');
 
   return (
-    <div className={cssClass}>
+    <div className={rootClassName(state, cssClass)}>
       <WysiwygToolbar
         editor={editor}
         onImageUpload={handleImageUpload}

@@ -132,6 +132,8 @@ public class ViewElement implements UIElement {
 
 	private String _viewRef;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link ViewElement} from configuration.
 	 */
@@ -149,6 +151,7 @@ public class ViewElement implements UIElement {
 		} else {
 			_content = context.getInstance(contentConfig);
 		}
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -228,6 +231,12 @@ public class ViewElement implements UIElement {
 		// attach/detach — the participants register/unregister with the RouteManager, the channels
 		// observe the objects their inputs hold only while the view is on screen.
 		if (rootControl instanceof ReactControl rc) {
+			if (_cssClass != null) {
+				// The view displays itself through its content, so the class of the view goes on the
+				// control of that content. It is written only when the view declares one, so that the
+				// content element keeps the class it declares itself.
+				rc.setCssClass(_cssClass);
+			}
 			RouteManager rm = context.getRouteManager();
 			if (!participants.isEmpty() && rm != null) {
 				for (RoutingParticipant participant : participants) {

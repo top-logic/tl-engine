@@ -141,6 +141,8 @@ public class SplitPanelElement implements UIElement {
 
 	private final List<PaneEntry> _panes;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link SplitPanelElement} from configuration.
 	 */
@@ -157,6 +159,7 @@ public class SplitPanelElement implements UIElement {
 					paneConfig.getMinSize(), children);
 			})
 			.collect(Collectors.toList());
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -183,6 +186,7 @@ public class SplitPanelElement implements UIElement {
 		ReactSplitPanelControl splitPanel = new ReactSplitPanelControl(context, _orientation, _resizable,
 			sizes -> savePaneSizes(key, sizes, configSignature),
 			(idx, collapsed) -> saveCollapseState(key, idx, collapsed));
+		splitPanel.setCssClass(_cssClass);
 
 		for (int i = 0; i < _panes.size(); i++) {
 			PaneEntry pane = _panes.get(i);

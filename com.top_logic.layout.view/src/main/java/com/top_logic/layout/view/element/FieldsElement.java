@@ -94,6 +94,8 @@ public class FieldsElement extends ContainerElement {
 
 	private final LabelPosition _labelPosition;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link FieldsElement} from configuration.
 	 */
@@ -103,6 +105,7 @@ public class FieldsElement extends ContainerElement {
 
 		_maxColumns = config.getMaxColumns();
 		_labelPosition = layoutPosition(context, config.getLabelPosition());
+		_cssClass = config.getCssClass();
 	}
 
 	/**
@@ -132,6 +135,8 @@ public class FieldsElement extends ContainerElement {
 
 		// Whether a value can be changed is the field's own business - a value input marks itself
 		// read-only - so the grid displays whatever state its fields are in.
-		return new ReactFormLayoutControl(context, _maxColumns, _labelPosition, false, fields);
+		ReactFormLayoutControl result = new ReactFormLayoutControl(context, _maxColumns, _labelPosition, false, fields);
+		result.setCssClass(_cssClass);
+		return result;
 	}
 }

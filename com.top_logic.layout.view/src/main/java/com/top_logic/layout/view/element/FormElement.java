@@ -343,6 +343,7 @@ public class FormElement extends ContainerElement {
 
 		// 4. Create FormControl with initial object.
 		FormControl formControl = new FormControl(context, initialObject, noModelMessage, _lockHandler);
+		formControl.setCssClass(_config.getCssClass());
 
 		// 5. Wire channels and the edit guard.
 		formControl.setInputChannel(inputChannel);

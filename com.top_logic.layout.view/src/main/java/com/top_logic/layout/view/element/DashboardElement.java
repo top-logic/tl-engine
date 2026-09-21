@@ -94,6 +94,8 @@ public class DashboardElement implements UIElement {
 
 	private final List<TileElement> _tiles;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link DashboardElement} from configuration.
 	 */
@@ -108,6 +110,7 @@ public class DashboardElement implements UIElement {
 				_tiles.add(tile);
 			}
 		}
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -128,6 +131,8 @@ public class DashboardElement implements UIElement {
 		}
 		ReactDashboardControl control =
 			new ReactDashboardControl(context, _minColWidth, reactTiles, this::storePersonalOrder);
+
+		control.setCssClass(_cssClass);
 
 		contributeEditCommands(context, control);
 

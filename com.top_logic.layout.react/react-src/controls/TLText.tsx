@@ -23,7 +23,7 @@ const TLText: React.FC<TLCellProps> = ({ controlId }) => {
   return (
     <span
       id={controlId}
-      className={className}
+      className={rootClassName(state, className)}
       role={role}
       data-tooltip={hasTooltip ? 'key:tooltip' : undefined}
     >{color ? <TLPill color={color}>{text}</TLPill> : text}</span>

@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 interface Crumb {
@@ -26,7 +26,7 @@ const TLAdaptiveDetail: React.FC<TLCellProps> = ({ controlId }) => {
   const breadcrumb = (state.breadcrumb as Crumb[] | null) ?? null;
 
   return (
-    <div id={controlId} className="tlAdaptiveDetail">
+    <div id={controlId} className={rootClassName(state, 'tlAdaptiveDetail')}>
       {breadcrumb && breadcrumb.length > 0 && (
         <nav className="tlAdaptiveDetail__breadcrumb" aria-label="Breadcrumb">
           {breadcrumb.map((crumb, index) => {

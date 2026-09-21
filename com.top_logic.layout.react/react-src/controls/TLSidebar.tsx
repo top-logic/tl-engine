@@ -1,5 +1,6 @@
 import {
   React, useTLState, useTLCommand, TLChild, useI18N, useStandaloneKeyboardScope, FillBarrier,
+  rootClassName,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { ThemeIcon } from './icon/ThemeIcon';
@@ -589,7 +590,7 @@ const TLSidebar: React.FC<TLCellProps> = ({ controlId }) => {
     + (drawerOpen ? ' tlSidebar--drawerOpen' : '');
 
   return (
-    <div id={controlId} className={rootClass}>
+    <div id={controlId} className={rootClassName(state, rootClass)}>
       {state.drawerToggleContribution && (
         <TLChild control={state.drawerToggleContribution} />
       )}

@@ -1,4 +1,4 @@
-import { React, useTLState, TLChild } from 'tl-react-bridge';
+import { React, useTLState, TLChild, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useEffect, useRef } = React;
@@ -26,7 +26,7 @@ const TLDialogManager: React.FC<TLCellProps> = ({ controlId }) => {
   if (dialogs.length === 0) return null;
 
   return (
-    <div id={controlId} className="tlDialogManager">
+    <div id={controlId} className={rootClassName(state, 'tlDialogManager')}>
       {dialogs.map((dialog: any) => (
         <TLChild key={dialog.controlId} control={dialog} />
       ))}

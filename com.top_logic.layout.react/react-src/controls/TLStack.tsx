@@ -43,7 +43,7 @@ const TLStack: React.FC<TLCellProps> = ({ controlId }) => {
 
   return (
     <FillProvider host={fillHost}>
-      <div id={controlId} className={className}>
+      <div id={controlId} className={rootClassName(state, className)}>
         {renderItems(children, itemClass)}
       </div>
     </FillProvider>

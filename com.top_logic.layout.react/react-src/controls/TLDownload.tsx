@@ -1,4 +1,4 @@
-import { React, useTLState, useTLDataUrl, useTLCommand, useI18N } from 'tl-react-bridge';
+import { React, useTLState, useTLDataUrl, useTLCommand, useI18N, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -63,7 +63,7 @@ const TLDownload: React.FC<TLCellProps> = ({ controlId }) => {
 
   if (!hasData) {
     return (
-      <div id={controlId} className="tlDownload tlDownload--empty">
+      <div id={controlId} className={rootClassName(state, 'tlDownload tlDownload--empty')}>
         <span className="tlDownload__fileName tlDownload__fileName--empty">{t['js.download.noFile']}</span>
       </div>
     );
@@ -74,7 +74,7 @@ const TLDownload: React.FC<TLCellProps> = ({ controlId }) => {
     : t['js.download.file'].replace('{0}', fileName);
 
   return (
-    <div id={controlId} className="tlDownload">
+    <div id={controlId} className={rootClassName(state, 'tlDownload')}>
       <button
         type="button"
         className={'tlDownload__downloadBtn' + (downloading ? ' tlDownload__downloadBtn--downloading' : '')}

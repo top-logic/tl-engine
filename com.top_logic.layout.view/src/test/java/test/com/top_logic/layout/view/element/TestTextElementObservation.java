@@ -44,6 +44,7 @@ import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.ui.AnnotationValueColorProvider;
 import com.top_logic.model.annotate.ui.TLColor;
 import com.top_logic.model.annotate.ui.TLDynamicColor;
@@ -239,6 +240,28 @@ public class TestTextElementObservation extends BasicTestCase {
 	}
 
 	/**
+	 * Tests that the deletion of the displayed object leaves the display alone: the channel still
+	 * points to the deleted object, which must not be read, and the next channel value is what the
+	 * display shows next.
+	 */
+	public void testDeletedObjectKeepsTheDisplay() {
+		IdentifiedObject ticket = ticket(_open);
+		_ticket.set(ticket);
+		ReactTextControl control = attachedControl();
+
+		ticket.delete();
+		_scope.reportDeletion(ticket);
+
+		assertEquals("A deleted object is not read, so the display keeps what it showed.",
+			color(OPEN_TOKEN), displayedColor(control));
+
+		_ticket.set(ticket(_closed));
+
+		assertEquals("The value the channel delivers next is displayed.",
+			color(CLOSED_TOKEN), displayedColor(control));
+	}
+
+	/**
 	 * The control of a {@code <text>} over {@link #TICKET_CHANNEL}, attached as a displayed control
 	 * is.
 	 */
@@ -275,7 +298,7 @@ public class TestTextElementObservation extends BasicTestCase {
 	/**
 	 * A ticket with the given status, identified so that it can be observed.
 	 */
-	private TLObject ticket(TLClassifier status) {
+	private IdentifiedObject ticket(TLClassifier status) {
 		IdentifiedObject result = new IdentifiedObject(_ticketType);
 		result.tUpdateByName(STATUS_ATTRIBUTE, status);
 		return result;
@@ -306,6 +329,11 @@ public class TestTextElementObservation extends BasicTestCase {
 
 	/**
 	 * Transient object with an identity, which is what an observation registers a listener for.
+	 *
+	 * <p>
+	 * Reading a {@link #delete() deleted} object fails, as it does for a persistent object whose
+	 * item was dropped by the deleting commit.
+	 * </p>
 	 */
 	private static class IdentifiedObject extends TransientTLObjectImpl {
 
@@ -316,6 +344,8 @@ public class TestTextElementObservation extends BasicTestCase {
 		private final ObjectKey _id =
 			new DefaultObjectKey(1, Revision.CURRENT_REV, TABLE, LongID.valueOf(_nextId++));
 
+		private boolean _deleted;
+
 		IdentifiedObject(TLStructuredType type) {
 			super(type, null);
 		}
@@ -323,6 +353,26 @@ public class TestTextElementObservation extends BasicTestCase {
 		@Override
 		public ObjectKey tId() {
 			return _id;
+		}
+
+		/**
+		 * Drops this object, as the commit of a deleting transaction does.
+		 */
+		void delete() {
+			_deleted = true;
+		}
+
+		@Override
+		public boolean tValid() {
+			return !_deleted && super.tValid();
+		}
+
+		@Override
+		public Object tValue(TLStructuredTypePart part) {
+			if (_deleted) {
+				throw new IllegalStateException("Target object is deleted: " + _id);
+			}
+			return super.tValue(part);
 		}
 	}
 
@@ -374,7 +424,17 @@ public class TestTextElementObservation extends BasicTestCase {
 		 * Reports the given object as updated to everybody listening for it.
 		 */
 		void reportUpdate(TLObject object) {
-			ModelChangeEvent event = new UpdateOf(object);
+			report(object, new UpdateOf(object));
+		}
+
+		/**
+		 * Reports the given object as deleted to everybody listening for it.
+		 */
+		void reportDeletion(TLObject object) {
+			report(object, new DeletionOf(object));
+		}
+
+		private void report(TLObject object, ModelChangeEvent event) {
 			for (ModelListener listener : Set.copyOf(listeners(object))) {
 				listener.notifyChange(event);
 			}
@@ -430,6 +490,50 @@ public class TestTextElementObservation extends BasicTestCase {
 		@Override
 		public Stream<? extends TLObject> getDeleted(TLStructuredType type) {
 			return Stream.empty();
+		}
+	}
+
+	/**
+	 * The deletion of a single object, as a {@link ModelScope} reports it.
+	 *
+	 * @param object
+	 *        The object that was deleted.
+	 */
+	private record DeletionOf(TLObject object) implements ModelChangeEvent {
+
+		@Override
+		public ChangeType getChange(TLObject existingObject) {
+			return existingObject == object ? ChangeType.DELETED : ChangeType.NONE;
+		}
+
+		@Override
+		public Stream<? extends TLObject> getUpdated() {
+			return Stream.empty();
+		}
+
+		@Override
+		public Stream<? extends TLObject> getUpdated(TLStructuredType type) {
+			return Stream.empty();
+		}
+
+		@Override
+		public Stream<? extends TLObject> getCreated() {
+			return Stream.empty();
+		}
+
+		@Override
+		public Stream<? extends TLObject> getCreated(TLStructuredType type) {
+			return Stream.empty();
+		}
+
+		@Override
+		public Stream<? extends TLObject> getDeleted() {
+			return Stream.of(object);
+		}
+
+		@Override
+		public Stream<? extends TLObject> getDeleted(TLStructuredType type) {
+			return object.tType() == type ? getDeleted() : Stream.empty();
 		}
 	}
 

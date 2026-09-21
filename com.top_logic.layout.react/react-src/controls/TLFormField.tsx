@@ -10,6 +10,12 @@ const { useContext, useState, useCallback } = React;
  * help icon, error message, warning messages, help text, and dirty
  * indicator around any field input control.
  *
+ * A hidden label ("hidden" label position, either declared by the field or inherited from the
+ * form layout) is kept off the screen but still names the input: the input area is then a
+ * `label` element holding the label text in a visually hidden span, so every native input
+ * control inside it takes its accessible name from HTML's implicit label association, and a
+ * click anywhere in the area focuses the input.
+ *
  * State:
  * - label: string
  * - required: boolean
@@ -85,9 +91,16 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
           )}
         </div>
       )}
-      <div className="tlFormField__input">
-        <TLChild control={field} />
-      </div>
+      {labelHidden ? (
+        <label className="tlFormField__input">
+          {label !== '' && <span className="tlVisuallyHidden">{label}</span>}
+          <TLChild control={field} />
+        </label>
+      ) : (
+        <div className="tlFormField__input">
+          <TLChild control={field} />
+        </div>
+      )}
       {!readOnly && hasError && (
         <div className="tlFormField__error" role="alert">
           <FontIcon image={errorIcon} className="tlFormField__errorIcon" />

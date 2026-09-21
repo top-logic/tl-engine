@@ -13,6 +13,10 @@ interface BooleanOption {
  *
  * The server states which presentation the attribute asks for and supplies the labelled options; a
  * tri-state field has a third option for "no value".
+ *
+ * A radio option's text names its radio through a `label` that refers to it by id instead of
+ * wrapping it: the control itself may sit inside a `label` — the form field renders its input area
+ * as one when the field's own label is hidden — and a `label` may not contain another one.
  */
 const TLBooleanChoice: React.FC<TLCellProps> = ({ controlId, state }) => {
   const [value, setValue] = useTLFieldValue();
@@ -69,18 +73,22 @@ const TLBooleanChoice: React.FC<TLCellProps> = ({ controlId, state }) => {
   return (
     <span id={controlId} className={cls + ' tlBooleanChoice--radio'} role="radiogroup"
       aria-invalid={hasError || undefined}>
-      {options.map((option, index) => (
-        <label key={index} className="tlBooleanChoice__option">
-          <input
-            type="radio"
-            name={controlId}
-            checked={current === index}
-            disabled={disabled}
-            onChange={() => handleSelect(index)}
-          />
-          <span className="tlBooleanChoice__label">{option.label}</span>
-        </label>
-      ))}
+      {options.map((option, index) => {
+        const optionId = `${controlId}-option-${index}`;
+        return (
+          <span key={index} className="tlBooleanChoice__option">
+            <input
+              id={optionId}
+              type="radio"
+              name={controlId}
+              checked={current === index}
+              disabled={disabled}
+              onChange={() => handleSelect(index)}
+            />
+            <label htmlFor={optionId} className="tlBooleanChoice__label">{option.label}</label>
+          </span>
+        );
+      })}
     </span>
   );
 };

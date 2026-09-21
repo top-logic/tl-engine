@@ -119,6 +119,9 @@ public class ValueInputElement implements UIElement {
 		/** Configuration name for {@link #getLabel()}. */
 		String LABEL = "label";
 
+		/** Configuration name for {@link #getPlaceholder()}. */
+		String PLACEHOLDER = "placeholder";
+
 		/** Configuration name for {@link #getReadonly()}. */
 		String READONLY = "readonly";
 
@@ -191,6 +194,20 @@ public class ValueInputElement implements UIElement {
 		ResKey getLabel();
 
 		/**
+		 * The text shown in the input while it is empty.
+		 *
+		 * <p>
+		 * What the user is expected to enter, said inside the input itself: "Search" in a search
+		 * box, "name@example.com" in a mail address. It states the purpose of an input that stands
+		 * without a visible label - in a toolbar, above a list - and it disappears as soon as a
+		 * value is entered.
+		 * </p>
+		 */
+		@Name(PLACEHOLDER)
+		@Nullable
+		ResKey getPlaceholder();
+
+		/**
 		 * Whether the value is displayed but cannot be changed here.
 		 */
 		@Name(READONLY)
@@ -242,6 +259,8 @@ public class ValueInputElement implements UIElement {
 
 	private final ResKey _label;
 
+	private final ResKey _placeholder;
+
 	private final boolean _readonly;
 
 	private final LabelPosition _labelPosition;
@@ -261,6 +280,7 @@ public class ValueInputElement implements UIElement {
 		_inputRefs = config.getInputs();
 		_multiple = config.getMultiple();
 		_label = config.getLabel();
+		_placeholder = config.getPlaceholder();
 		_readonly = config.getReadonly();
 		_labelPosition = config.getLabelPosition();
 
@@ -286,8 +306,12 @@ public class ValueInputElement implements UIElement {
 		ChannelFieldBinding binding = ChannelFieldBinding.bind(context.resolveChannel(_valueRef), field,
 			options != null, _multiple);
 
-		String label = _label == null ? null : Resources.getInstance().getString(_label);
+		Resources resources = Resources.getInstance();
+		String label = _label == null ? null : resources.getString(_label);
 		FieldSpec spec = FieldControlService.fieldSpec(type, type, label, _multiple, field);
+		if (_placeholder != null) {
+			spec.setPlaceholder(resources.getString(_placeholder));
+		}
 		ReactControl input = FieldControlService.getInstance().createFieldControl(context, type, spec, field);
 		input.addCleanupAction(binding::dispose);
 

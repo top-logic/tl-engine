@@ -8,6 +8,7 @@ package com.top_logic.layout.react.field;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 
 /**
  * Creates the control that edits a value of a certain type.
@@ -33,6 +34,33 @@ public interface ReactFieldControlProvider {
 	 * @return The control to display.
 	 */
 	ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model);
+
+	/**
+	 * The control editing the given value, displayed as the {@link FieldSpec} asks for.
+	 *
+	 * <p>
+	 * What a caller calls: {@link #createControl(ReactContext, FieldSpec, FieldModel)} produces the
+	 * control, and this method applies the display properties of the specification that the
+	 * produced control does not read itself. A property that every field control understands is
+	 * applied here once, so that neither a provider nor a caller has to pass it on.
+	 * </p>
+	 *
+	 * @param context
+	 *        The context to create the control in.
+	 * @param field
+	 *        What is being edited.
+	 * @param model
+	 *        Holds the edited value.
+	 * @return The control to display.
+	 */
+	default ReactControl createField(ReactContext context, FieldSpec field, FieldModel model) {
+		ReactControl control = createControl(context, field, model);
+		String placeholder = field.getPlaceholder();
+		if (placeholder != null && control instanceof ReactFormFieldControl fieldControl) {
+			fieldControl.setPlaceholder(placeholder);
+		}
+		return control;
+	}
 
 	/**
 	 * Whether the control this provider creates edits the whole collection of values of a

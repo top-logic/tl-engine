@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
@@ -325,7 +326,10 @@ public class TreeElement implements UIElement {
 		ReactTreeControl treeControl = new ReactTreeControl(context, treeModel, selectionModel, _nodeContentProvider);
 		treeControl.setSelectionMode(selectionMode);
 
-		// 6. Create ObservableTreeModel to forward model changes to the tree control.
+		// 6. Create ObservableTreeModel to forward model changes to the tree control. The function
+		//    saying what holds an object serves the observation (where an object that moved went)
+		//    and the selection (which node an object of the channel has).
+		Function<Object, Object> parentFunction = createParentFunction(inputChannels);
 		Set<TLStructuredType> observedTypes = ObservedTypes.resolve(_config.getObservedTypes());
 		QueryExecutor rootExec = _rootExecutor;
 		ObservableTreeModel observableModel = new ObservableTreeModel(
@@ -333,6 +337,7 @@ public class TreeElement implements UIElement {
 			treeModel,
 			args -> rootExec.execute(args),
 			builder,
+			parentFunction,
 			observedTypes,
 			inputChannels
 		);
@@ -344,7 +349,7 @@ public class TreeElement implements UIElement {
 		if (selectionRef != null) {
 			ViewChannel selectionChannel = context.resolveChannel(selectionRef);
 			TreeSelectionBinding selectionBinding = new TreeSelectionBinding(treeControl, selectionModel,
-				observableModel::getTreeModel, createNodeLocator(inputChannels), selectionChannel);
+				observableModel::getTreeModel, nodeLocator(parentFunction), selectionChannel);
 			observableModel.addStructureListener(selectionBinding::structureChanged);
 
 			// The channel and the selection outlive the control, so the binding is dropped with it.
@@ -369,24 +374,28 @@ public class TreeElement implements UIElement {
 	}
 
 	/**
-	 * How the node of a business object is found in the tree.
+	 * What holds a business object in the tree, {@code null} without a {@link Config#getParents()}
+	 * function.
 	 *
 	 * @param inputChannels
-	 *        The channels whose values the parent function is called with.
+	 *        The channels whose values the function is called with, followed by the object.
 	 */
-	private NodeLocator createNodeLocator(List<ViewChannel> inputChannels) {
+	private Function<Object, Object> createParentFunction(List<ViewChannel> inputChannels) {
 		if (_parentsExecutor == null) {
-			return NodeLocator.SEARCHING;
+			return null;
 		}
-		return NodeLocator.byParents(businessObject -> parentOf(inputChannels, businessObject));
+		return businessObject -> singleObject(
+			_parentsExecutor.execute(appendArg(ChannelInputs.arguments(inputChannels), businessObject)));
 	}
 
 	/**
-	 * What holds the given business object in the tree, {@code null} at its root.
+	 * How the node of a business object is found in the tree.
+	 *
+	 * @param parentFunction
+	 *        What holds an object in the tree, {@code null} where the tree does not say.
 	 */
-	private Object parentOf(List<ViewChannel> inputChannels, Object businessObject) {
-		Object[] args = appendArg(ChannelInputs.arguments(inputChannels), businessObject);
-		return singleObject(_parentsExecutor.execute(args));
+	private static NodeLocator nodeLocator(Function<Object, Object> parentFunction) {
+		return parentFunction == null ? NodeLocator.SEARCHING : NodeLocator.byParents(parentFunction);
 	}
 
 	/**

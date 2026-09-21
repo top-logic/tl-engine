@@ -38,6 +38,7 @@ import com.top_logic.mig.html.DefaultMultiSelectionModel;
 import com.top_logic.mig.html.DefaultSingleSelectionModel;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.SelectionModelOwner;
+import com.top_logic.model.impl.TransientTLObjectImpl;
 
 /**
  * Tests that the selection of a tree and a {@link ViewChannel} follow each other.
@@ -81,7 +82,7 @@ public class TestTreeSelectionBinding extends TestCase {
 	private static final String FOREIGN = "foreign";
 
 	/** The children of each object, as the tree computes them. */
-	private final Map<Object, List<String>> _children = new HashMap<>();
+	private final Map<Object, List<Object>> _children = new HashMap<>();
 
 	/** How often a child list was computed, to see which parts of the tree were touched. */
 	private int _childListCalls;
@@ -341,6 +342,96 @@ public class TestTreeSelectionBinding extends TestCase {
 	}
 
 	/**
+	 * Tests that a deleted object of the selection is not handed to the locator - nothing can be
+	 * computed over an object that is gone - and that what is left of the selection takes its place
+	 * on the channel.
+	 */
+	public void testDeletedObjectIsNotLookedFor() {
+		Item survivor = new Item("survivor");
+		Item deleted = new Item("deleted");
+		_children.put(ROOT, new ArrayList<>(List.of(survivor, deleted)));
+		List<Object> lookedFor = new ArrayList<>();
+		bind(true, recordingLocator(lookedFor));
+		_selectionModel.setSelection(Set.of(node(survivor), node(deleted)));
+		assertEquals(Set.of(survivor, deleted), _channel.get());
+
+		deleted.markDeleted();
+		removeChild(root(), deleted);
+		lookedFor.clear();
+		_binding.structureChanged();
+
+		assertFalse("A deleted object is nowhere in the tree and is not computed over.",
+			lookedFor.contains(deleted));
+		assertEquals("What is left of the selection replaces the value naming the deleted object.",
+			survivor, _channel.get());
+		assertEquals(Set.of(node(survivor)), _selectionModel.getSelection());
+	}
+
+	/**
+	 * Tests that a selection of which nothing but a deleted object is left clears the channel,
+	 * instead of leaving the deleted object on it for everybody reading it to fail over.
+	 */
+	public void testDeletedSelectionClearsTheChannel() {
+		Item item = new Item("item");
+		_children.put(ROOT, new ArrayList<>(List.of(item)));
+		bind(false, recordingLocator(new ArrayList<>()));
+		_selectionModel.setSelected(node(item), true);
+		assertEquals(item, _channel.get());
+
+		item.markDeleted();
+		removeChild(root(), item);
+		_binding.structureChanged();
+
+		assertNull("Nothing of the selection is left.", _channel.get());
+		assertTrue(_selectionModel.getSelection().isEmpty());
+	}
+
+	/**
+	 * A locator that records what it was asked for, and refuses an object that is gone, as a
+	 * locator computing over the object does.
+	 */
+	private static NodeLocator recordingLocator(List<Object> lookedFor) {
+		return (root, businessObject) -> {
+			assertTrue("Nothing can be computed over a deleted object.",
+				!(businessObject instanceof Item item) || item.tValid());
+			lookedFor.add(businessObject);
+			return NodeLocator.SEARCHING.locate(root, businessObject);
+		};
+	}
+
+	/**
+	 * Object of the displayed structure that can be deleted.
+	 */
+	private static class Item extends TransientTLObjectImpl {
+
+		private final String _name;
+
+		private boolean _deleted;
+
+		Item(String name) {
+			super(null, null);
+			_name = name;
+		}
+
+		/**
+		 * Makes this object one that was deleted.
+		 */
+		void markDeleted() {
+			_deleted = true;
+		}
+
+		@Override
+		public boolean tValid() {
+			return !_deleted;
+		}
+
+		@Override
+		public String toString() {
+			return _name;
+		}
+	}
+
+	/**
 	 * Builds the tree, its display and the binding under test.
 	 *
 	 * @param multi
@@ -376,7 +467,7 @@ public class TestTreeSelectionBinding extends TestCase {
 			public List<DefaultTreeUINode> createChildList(DefaultTreeUINode node) {
 				_childListCalls++;
 				List<DefaultTreeUINode> children = new ArrayList<>();
-				for (String child : _children.getOrDefault(node.getBusinessObject(), List.of())) {
+				for (Object child : _children.getOrDefault(node.getBusinessObject(), List.of())) {
 					children.add(createNode(node.getModel(), node, child));
 				}
 				return children;
@@ -394,7 +485,7 @@ public class TestTreeSelectionBinding extends TestCase {
 	 * an object it does not hold at all.
 	 */
 	private Object parentOf(Object businessObject) {
-		for (Map.Entry<Object, List<String>> entry : _children.entrySet()) {
+		for (Map.Entry<Object, List<Object>> entry : _children.entrySet()) {
 			if (entry.getValue().contains(businessObject)) {
 				return entry.getKey();
 			}

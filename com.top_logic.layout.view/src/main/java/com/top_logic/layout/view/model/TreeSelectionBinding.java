@@ -21,6 +21,7 @@ import com.top_logic.layout.tree.model.TLTreeModelUtil;
 import com.top_logic.layout.tree.model.TLTreeNode;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.mig.html.SelectionModel;
+import com.top_logic.model.TLObject;
 
 /**
  * Two-way binding between the selection of a {@link ReactTreeControl} and a {@link ViewChannel}.
@@ -55,10 +56,11 @@ import com.top_logic.mig.html.SelectionModel;
  * </p>
  *
  * <p>
- * A value the tree has no node for means no more than "no node selected here": the tree leaves the
- * channel alone, and leaves its own selection where it is. Clearing the channel would destroy what
- * another writer put there - the object a second display over other objects selected, or the object
- * a create command wrote before this tree caught up with it.
+ * A value the tree has no node for - and a deleted object, which is nowhere at all - means no more
+ * than "no node selected here": the tree leaves the channel alone, and leaves its own selection
+ * where it is. Clearing the channel would destroy what another writer put there - the object a
+ * second display over other objects selected, or the object a create command wrote before this tree
+ * caught up with it.
  * </p>
  *
  * <p>
@@ -292,9 +294,19 @@ public class TreeSelectionBinding {
 
 	/**
 	 * The node standing for the given object, {@code null} where the tree holds none.
+	 *
+	 * <p>
+	 * A deleted object is nowhere in the tree, and it is not handed to the {@link NodeLocator}:
+	 * nothing can be computed over an object that is gone, so a locator walking up from it - asking
+	 * what holds it - fails on the spot. It is therefore no survivor of a change, and the selection
+	 * that is left takes its place on the channel.
+	 * </p>
 	 */
 	private DefaultTreeUINode locate(Object businessObject) {
 		if (businessObject == null) {
+			return null;
+		}
+		if (businessObject instanceof TLObject model && !model.tValid()) {
 			return null;
 		}
 		DefaultTreeUINodeModel treeModel = _treeModel.get();

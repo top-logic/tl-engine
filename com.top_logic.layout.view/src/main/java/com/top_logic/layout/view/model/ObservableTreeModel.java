@@ -47,11 +47,14 @@ import com.top_logic.model.listen.ModelScope;
  *
  * <p>
  * Which nodes are reconciled follows the change. A deleted object loses its node, and the node it
- * hung in is reconciled. An updated object reconciles the children of its node: an object taken out
- * of a composition is not deleted, it is only no longer a child, and nothing but the child list of
- * the former container says so. A created object of an observed type reconciles the whole computed
- * tree, because the function computing the children is opaque: where the new object appears is not
- * known here.
+ * hung in is reconciled. An updated object reconciles the children of its own node and the child
+ * list of the node it hangs in: an object taken out of a composition is not deleted, it is only no
+ * longer a child, and nothing but the child list of the node it hung in says so - and that node is
+ * reported as changed by nobody, since the change was made on the object. Where the tree says what
+ * holds an object, the node of what holds it now is reconciled as well, so an object that moved
+ * appears where it went. A created object of an observed type reconciles the whole computed tree,
+ * because the function computing the children is opaque: where the new object appears is not known
+ * here.
  * </p>
  *
  * <p>
@@ -81,6 +84,9 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 	private final Function<Object[], Object> _rootFunction;
 
 	private final TreeBuilder<DefaultTreeUINode> _builder;
+
+	/** What holds an object in the tree, {@code null} where the tree does not say. */
+	private final Function<Object, Object> _parentFunction;
 
 	private final Set<TLStructuredType> _observedTypes;
 
@@ -118,6 +124,9 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 	 *        Computes the root business object from the input channel values.
 	 * @param builder
 	 *        Computes the children of a node, and creates the nodes of the tree.
+	 * @param parentFunction
+	 *        What holds a business object in the tree, {@code null} where the tree does not say. It
+	 *        is what tells where an object that moved went, see {@link NodeLocator#byParents(Function)}.
 	 * @param observedTypes
 	 *        Types whose creates reconcile the tree, empty for a tree that expects none.
 	 * @param inputChannels
@@ -126,6 +135,7 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 	public ObservableTreeModel(ReactTreeControl treeControl, DefaultTreeUINodeModel treeModel,
 			Function<Object[], Object> rootFunction,
 			TreeBuilder<DefaultTreeUINode> builder,
+			Function<Object, Object> parentFunction,
 			Set<TLStructuredType> observedTypes,
 			List<ViewChannel> inputChannels) {
 		_treeControl = treeControl;
@@ -133,6 +143,7 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 		_rootFunction = rootFunction;
 		_observedTypes = observedTypes;
 		_builder = builder;
+		_parentFunction = parentFunction;
 		_inputChannels = inputChannels;
 	}
 
@@ -364,22 +375,56 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 
 	/**
 	 * Drops what the nodes of the objects the given event reports as updated display, and collects
-	 * those nodes.
+	 * those nodes, the nodes they hang in, and the nodes holding them now.
 	 *
 	 * @return Whether the display of any node changed.
 	 */
 	private boolean invalidateUpdated(ModelChangeEvent event, Set<DefaultTreeUINode> toReconcile) {
 		boolean changed = false;
 		for (TLObject updated : observedObjects(event.getUpdated())) {
+			if (!updated.tValid()) {
+				// What happened to an object that is gone is told by the report of its deletion,
+				// and nothing can be computed over it any more.
+				continue;
+			}
 			DefaultTreeUINode node = TreeNodes.findComputedNode(_treeModel.getRoot(), updated);
 			if (node == null) {
 				continue;
 			}
 			_treeControl.invalidateNodeControl(node);
 			toReconcile.add(node);
+
+			DefaultTreeUINode parent = node.getParent();
+			if (parent != null) {
+				// The change may have taken the object out of the list it hung in, or moved it
+				// inside that list - the list of the node it hangs in is the only thing that says
+				// so, and nobody reports that node as changed.
+				toReconcile.add(parent);
+			}
+			collectNewParent(updated, toReconcile);
 			changed = true;
 		}
 		return changed;
+	}
+
+	/**
+	 * Collects the node of what holds the given object now, so that an object that moved appears
+	 * where it went.
+	 */
+	private void collectNewParent(TLObject updated, Set<DefaultTreeUINode> toReconcile) {
+		if (_parentFunction == null) {
+			// Without a function saying what holds an object, where it went is unknown; the node it
+			// came from loses it, and the place it went to is computed when somebody opens it.
+			return;
+		}
+		Object parentObject = _parentFunction.apply(updated);
+		if (parentObject == null) {
+			return;
+		}
+		DefaultTreeUINode parentNode = TreeNodes.findComputedNode(_treeModel.getRoot(), parentObject);
+		if (parentNode != null) {
+			toReconcile.add(parentNode);
+		}
 	}
 
 	/**

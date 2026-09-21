@@ -11,6 +11,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import junit.framework.Test;
@@ -71,8 +72,8 @@ public class TestObservableTreeModel extends TestCase {
 	/** The children of each object, as the tree computes them. */
 	private final Map<TLObject, List<TLObject>> _children = new HashMap<>();
 
-	/** How often a child list was computed, to see which parts of the tree were touched. */
-	private int _childListCalls;
+	/** The objects a child list was computed for, to see which parts of the tree were touched. */
+	private final List<Object> _childListsComputed = new ArrayList<>();
 
 	private TLClass _itemType;
 
@@ -125,6 +126,7 @@ public class TestObservableTreeModel extends TestCase {
 		_scope = null;
 		_input = null;
 		_children.clear();
+		_childListsComputed.clear();
 
 		super.tearDown();
 	}
@@ -233,12 +235,12 @@ public class TestObservableTreeModel extends TestCase {
 	public void testUnrelatedChangeIsIgnored() {
 		startTree(Set.of(_itemType));
 		expand(_a);
-		int callsBefore = _childListCalls;
+		int callsBefore = _childListsComputed.size();
 
 		_scope.report(ModelChangeEvent.ChangeType.UPDATED, item("unrelated"));
 
 		assertEquals("Nothing was computed again for an object nobody displays.",
-			callsBefore, _childListCalls);
+			callsBefore, _childListsComputed.size());
 		assertEquals(List.of(_a, _b), childObjects(root()));
 	}
 
@@ -281,12 +283,84 @@ public class TestObservableTreeModel extends TestCase {
 	}
 
 	/**
+	 * Tests that an object reporting its own change loses its node where the list it hung in does
+	 * not hold it any more - the object holding it is not reported as changed at all, which is what
+	 * a change over the backwards side of a reference looks like.
+	 */
+	public void testUpdatedObjectLeavingTheListItHungIn() {
+		startTree(Set.of());
+		DefaultTreeUINode nodeA = expand(_a);
+
+		_children.put(_a, new ArrayList<>(List.of(_a2)));
+		_scope.report(ModelChangeEvent.ChangeType.UPDATED, _a1);
+
+		assertNull("The node of the object that is no longer a child is gone.", node(_a1));
+		assertEquals("What is left of the child list is displayed.", List.of(_a2), childObjects(nodeA));
+		assertTrue("The node it hung in stays open.", nodeA.isExpanded());
+	}
+
+	/**
+	 * Tests that an object that moved appears where it went, where the tree says what holds an
+	 * object.
+	 */
+	public void testUpdatedObjectMovedToAnotherNode() {
+		Item b1 = item("b1");
+		_children.put(_b, new ArrayList<>(List.of(b1)));
+		startTree(Set.of(), this::parentOf);
+		DefaultTreeUINode nodeA = expand(_a);
+		DefaultTreeUINode nodeB = expand(_b);
+
+		move(_a1, _b);
+		_scope.report(ModelChangeEvent.ChangeType.UPDATED, _a1);
+
+		assertEquals("The object is gone from the node it came from.",
+			List.of(_a2), childObjects(nodeA));
+		assertEquals("The object is displayed where it went.",
+			List.of(b1, _a1), childObjects(nodeB));
+	}
+
+	/**
+	 * Tests that a tree that does not say what holds an object still loses the node of an object
+	 * that moved away, while the node it went to is not computed again.
+	 */
+	public void testUpdatedObjectMovedWithoutAParentFunction() {
+		Item b1 = item("b1");
+		_children.put(_b, new ArrayList<>(List.of(b1)));
+		startTree(Set.of());
+		DefaultTreeUINode nodeA = expand(_a);
+		DefaultTreeUINode nodeB = expand(_b);
+
+		move(_a1, _b);
+		int computedBefore = _childListsComputed.size();
+		_scope.report(ModelChangeEvent.ChangeType.UPDATED, _a1);
+
+		assertNull("The node of the object that left is gone.", node(_a1));
+		assertEquals(List.of(_a2), childObjects(nodeA));
+		assertEquals("The node the object went to is not computed again.",
+			List.of(b1), childObjects(nodeB));
+		assertFalse("The list of a node nothing was reported about is not computed again.",
+			_childListsComputed.subList(computedBefore, _childListsComputed.size()).contains(_b));
+	}
+
+	/**
 	 * Builds the tree over the structure the test holds and begins observing it.
 	 *
 	 * @param observedTypes
 	 *        The types whose creates the tree expects.
 	 */
 	private void startTree(Set<TLStructuredType> observedTypes) {
+		startTree(observedTypes, null);
+	}
+
+	/**
+	 * Builds the tree over the structure the test holds and begins observing it.
+	 *
+	 * @param observedTypes
+	 *        The types whose creates the tree expects.
+	 * @param parentFunction
+	 *        What holds an object in the structure, {@code null} for a tree that does not say.
+	 */
+	private void startTree(Set<TLStructuredType> observedTypes, Function<Object, Object> parentFunction) {
 		ReactContext reactContext =
 			new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
 		TreeBuilder<DefaultTreeUINode> builder = builder();
@@ -296,7 +370,7 @@ public class TestObservableTreeModel extends TestCase {
 			(context, model) -> new ReactTextControl(context, String.valueOf(model)));
 
 		_observer = new ObservableTreeModel(_treeControl, treeModel, args -> args[0], builder,
-			observedTypes, List.of(_input));
+			parentFunction, observedTypes, List.of(_input));
 		_observer.attach(_scope);
 	}
 
@@ -313,7 +387,7 @@ public class TestObservableTreeModel extends TestCase {
 
 			@Override
 			public List<DefaultTreeUINode> createChildList(DefaultTreeUINode node) {
-				_childListCalls++;
+				_childListsComputed.add(node.getBusinessObject());
 				List<DefaultTreeUINode> children = new ArrayList<>();
 				for (TLObject child : _children.getOrDefault(node.getBusinessObject(), List.of())) {
 					children.add(createNode(node.getModel(), node, child));
@@ -326,6 +400,30 @@ public class TestObservableTreeModel extends TestCase {
 				return true;
 			}
 		};
+	}
+
+	/**
+	 * Moves the given object out of the list it is in and into the list of the given object, as a
+	 * command changing what holds it does.
+	 */
+	private void move(TLObject businessObject, TLObject newParent) {
+		for (List<TLObject> children : _children.values()) {
+			children.remove(businessObject);
+		}
+		_children.computeIfAbsent(newParent, key -> new ArrayList<>()).add(businessObject);
+	}
+
+	/**
+	 * What holds the given object in the structure the test holds, {@code null} at its root and for
+	 * an object it does not hold at all.
+	 */
+	private Object parentOf(Object businessObject) {
+		for (Map.Entry<TLObject, List<TLObject>> entry : _children.entrySet()) {
+			if (entry.getValue().contains(businessObject)) {
+				return entry.getKey();
+			}
+		}
+		return null;
 	}
 
 	/**

@@ -70,6 +70,20 @@ html, body {
 	min-height: 0;
 }
 
+/* --- Bounded width ------------------------------------------------------ */
+
+/* A layout container (a stack, a grid) limited to a maximum width, which travels as an inline
+   length because it is a value rather than a kind of layout. The container takes the width its
+   own container offers - without the explicit width, the auto margins would shrink it to its
+   content instead of stretching it - up to that maximum, and the space left over is split between
+   its two sides. Only the width is bounded: the container keeps taking part in the fill contract,
+   whose classes decide its height. */
+.tlBounded {
+	box-sizing: border-box;
+	width: 100%;
+	margin-inline: auto;
+}
+
 /* --- Repeated items ----------------------------------------------------- */
 
 /* Wrapper a container (a stack, a grid) puts around each of its children while it repeats them,
@@ -1864,6 +1878,14 @@ button.tlDrawerToggle:focus-visible {
 .tlStack--align-center  { align-items: center; }
 .tlStack--align-end     { align-items: flex-end; }
 .tlStack--align-stretch { align-items: stretch; }
+
+/* Distribution of the free space along the direction of the stack. */
+.tlStack--justify-start         { justify-content: flex-start; }
+.tlStack--justify-center        { justify-content: center; }
+.tlStack--justify-end           { justify-content: flex-end; }
+.tlStack--justify-space-between { justify-content: space-between; }
+.tlStack--justify-space-around  { justify-content: space-around; }
+.tlStack--justify-space-evenly  { justify-content: space-evenly; }
 
 .tlStack--wrap { flex-wrap: wrap; }
 

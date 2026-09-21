@@ -159,8 +159,8 @@ public class ObjectListElement implements UIElement {
 		 * @param context
 		 *        The context the control is created in.
 		 * @param options
-		 *        The options of the arrangement; only the space between the elements applies to a
-		 *        list.
+		 *        The options of the arrangement; of those, a list takes the space between the
+		 *        elements and the width they are bounded to, the column options being a grid's.
 		 */
 		public ReactLayoutControl createContainer(ReactContext context, GridOptions options) {
 			ReactLayoutControl result = switch (this) {
@@ -170,6 +170,7 @@ public class ObjectListElement implements UIElement {
 					StackAlign.STRETCH, false, List.of());
 			};
 			result.setItemClass(ITEM_CSS_CLASS);
+			result.setMaxWidth(options.getMaxWidth());
 			return result;
 		}
 	}

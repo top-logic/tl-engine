@@ -48,6 +48,8 @@ public class GridElement extends ContainerElement {
 
 	private final StackGap _gap;
 
+	private final String _maxWidth;
+
 	private final String _cssClass;
 
 	/**
@@ -59,6 +61,7 @@ public class GridElement extends ContainerElement {
 		_minColumnWidth = config.getMinColumnWidth();
 		_maxColumns = config.getMaxColumns();
 		_gap = config.getGap();
+		_maxWidth = config.getMaxWidth();
 		_cssClass = config.getCssClass();
 	}
 
@@ -69,6 +72,7 @@ public class GridElement extends ContainerElement {
 			.collect(Collectors.toList());
 
 		ReactGridControl result = new ReactGridControl(context, _minColumnWidth, _maxColumns, _gap, children);
+		result.setMaxWidth(_maxWidth);
 		result.setCssClass(_cssClass);
 		return result;
 	}

@@ -10,6 +10,8 @@ import { renderItems } from './items';
  * - minColumnWidth: string  (e.g. "16rem", triggers auto-fit)
  * - maxColumns: number  (upper bound for the auto-fit column count, default: null - unbounded)
  * - gap: "compact" | "default" | "loose"  (default: "default")
+ * - maxWidth: string  (CSS length the grid is bounded to, centered in its container; default:
+ *   null - the width the container offers)
  * - itemClass: string  (CSS class of a wrapper around each child, default: null - no wrapper)
  * - children: ChildDescriptor[]
  */
@@ -20,6 +22,7 @@ const TLGrid: React.FC<TLCellProps> = ({ controlId }) => {
   const minColumnWidth = state.minColumnWidth as string | null;
   const maxColumns = state.maxColumns as number | null;
   const gap = (state.gap as string) ?? 'default';
+  const maxWidth = (state.maxWidth as string) ?? null;
   const itemClass = (state.itemClass as string) ?? null;
   const children = (state.children as unknown[]) ?? [];
 
@@ -40,9 +43,15 @@ const TLGrid: React.FC<TLCellProps> = ({ controlId }) => {
   } else if (columns) {
     style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
   }
+  if (maxWidth) {
+    // Only the bound itself is a length; that it is centered is the rule the class carries.
+    style.maxWidth = maxWidth;
+  }
+
+  const className = rootClassName(state, 'tlGrid', `tlGrid--gap-${gap}`, maxWidth && 'tlBounded');
 
   return (
-    <div id={controlId} className={rootClassName(state, `tlGrid tlGrid--gap-${gap}`)} style={style}>
+    <div id={controlId} className={className} style={style}>
       {renderItems(children, itemClass)}
     </div>
   );

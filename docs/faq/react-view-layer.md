@@ -129,6 +129,81 @@ how a text keeps its tone where the surrounding control re-maps the text colour:
 re-maps `.tlAppBar--primary .tlText--tone-primary`, so a text that follows the default tone reads in
 the on-accent colour while a text that states a tone of its own — an error, a success — keeps it.
 
+## Layout: stack and grid
+
+Two elements arrange content, and between them they cover the layouts an application would otherwise
+write CSS for: a centered content column, a row spread across its width, a row of chips that falls
+into further lines on a narrow screen.
+
+**`<stack>`** (`StackElement`, `ReactStackControl`, `TLStack`) puts its children in one line:
+
+- **`direction`** — `column` (the default) or `row`.
+- **`gap`** — `default`, `compact` or `loose`; the space between the children, taken from the
+  spacing tokens rather than given as a length.
+- **`align`** — across the direction: `stretch` (the default), `start`, `center`, `end`.
+- **`justify`** — along the direction, which is to say what happens with the space left over where
+  the children together are smaller than the stack: `start` (the default), `center`, `end`,
+  `space-between`, `space-around`, `space-evenly`.
+- **`wrap`** — `true` lets the children flow into further lines once they no longer fit next to
+  each other, instead of shrinking them into one line.
+- **`max-width`** — a CSS length the stack is bounded to; see below.
+
+**`<grid>`** (`GridElement`) places its children in as many columns as fit and reflows them with the
+available width. Its options are `GridOptions`, which `<object-list layout="grid">` shares:
+
+- **`min-column-width`** — the width a column must have at least (`16rem` by default); the number of
+  columns follows from it and the available width.
+- **`max-columns`** — the largest number of columns to place, so a handful of elements does not
+  spread into a thin row on a wide screen. A bounded grid still drops columns as it narrows.
+- **`gap`** — as on the stack.
+- **`max-width`** — a CSS length the grid is bounded to; see below.
+
+A content column that stays readable on a wide screen is a bounded stack:
+
+```xml
+<stack
+	gap="loose"
+	max-width="60rem"
+>
+	<text
+		label="Quarterly report"
+		variant="headline"
+	/>
+	<text label="Figures as of yesterday."/>
+</stack>
+```
+
+A row that spreads a title and the actions belonging to it to the opposite ends, and falls into
+further lines where the screen is too narrow for them:
+
+```xml
+<stack
+	align="center"
+	direction="row"
+	justify="space-between"
+	wrap="true"
+>
+	<text
+		label="Open tickets"
+		variant="title"
+	/>
+	<button .../>
+</stack>
+```
+
+**A bounded container is centered.** `max-width` says the largest width the container takes; the
+space left over is split between its two sides, so the content sits in the middle of the page rather
+than against its left edge. Below the bound nothing changes, so the same element still fills a phone
+screen. The bound travels as an inline `max-width` — it is a value, not a kind of layout — while the
+centering is the shared class `tlBounded` (`width: 100%; margin-inline: auto`), which a stack and a
+grid carry alike. The explicit width is what keeps the auto margins from shrinking the container to
+its content.
+
+Bounding the width leaves the **fill contract** (see below) alone: `max-width` and the auto margins
+work across the direction of a column, while filling is about the height a container takes from its
+own container. A bounded stack that hosts a filling child still carries `tlFill` and still reports
+filling upwards, so a table inside a centered content column keeps bounding its own scroll viewport.
+
 ## A command is a chain of actions, and the chain can branch
 
 `<generic-command>` (`GenericViewCommand`) runs the `<execute-script>`, `<store-form-state>`, `<confirm>`, `<verify-identity>`, `<with-transaction>`, `<open-dialog>`, `<write-channel>`, … actions written inside it as one chain (`ViewActionChain`): each action's result is the next action's input, the first action gets the command's input. An action that has to wait — `<confirm>`, which opens a dialog — suspends the chain and resumes it from the dialog's answer, or aborts it on cancel; `<verify-identity>` (`VerifyIdentityAction`) is the same shape with the answer being the proof that the person at the keyboard still is the holder of the session's own account, given the way the session was established: a session established at an external identity provider re-authenticates there in a second browser window — the provider's answer returns to the authentication servlet, which completes the pending `IdentityVerifications` entry and resumes the chain in the window that asked (a failure of the resumed chain is shown in that window like any other command failure, through `CommandErrors`, and leaves the confirmed identity itself standing) — while every other session is asked for its password, which the account's `AuthenticationDevice` checks. It fails closed: a cancelled prompt, an account that neither a provider nor a device can confirm, or a context without a dialog all abort; an abort skips the remaining actions and runs the compensations the executed actions registered, newest first, as does a failure. A script over the chain's value takes further arguments from channels: `<inputs><input channel="context"/></inputs>` puts those channel values in front of the chain's value (`ActionScript`, shared by every action that takes a script).
@@ -179,7 +254,7 @@ A form with unsaved input blocks the write of the channel it is bound to: it reg
 
 - **Inputs.** `inputs` names the channels the functions read, either as the comma-separated attribute `inputs="catalogue, term"` or as nested `<inputs><input channel="catalogue"/></inputs>` (`Inputs`, the same notation every `inputs` property of the view layer takes). Their values are the leading positional arguments, in declaration order: `items` is `...inputs -> elements`, `link` and `remove` are `...inputs -> element -> ...`, the element coming last. A list with no inputs is a repeater over a plain query — `items="all(\`test.flowchart:FlowNode\`)"` — and follows the model through its `observed-types`.
 - **With and without a container.** A read-only list configures `items` alone. A list that composes objects adds `element-type` plus the `<new-element>` content bound to `new-element-channel`, whose command chain persists the draft with `<link-element>`, and `<remove-element>` inside the `<item>` content detaches one. The composer appears only while *every* input holds a value, because an element is composed to be attached somewhere; `link` is what attaches it, so any containment style works — a composite reference, a back-reference, an association.
-- **Arrangement.** `layout="list"` (the default) stacks the elements in a column; `layout="grid"` places as many next to each other as fit, taking the shared grid options `min-column-width` (16rem by default), `max-columns` and `gap` — the same options `<grid>` takes. `gap` applies to either arrangement, the other two to a grid.
+- **Arrangement.** `layout="list"` (the default) stacks the elements in a column; `layout="grid"` places as many next to each other as fit, taking the shared grid options `min-column-width` (16rem by default), `max-columns`, `gap` and `max-width` — the same options `<grid>` takes (see [Layout: stack and grid](#layout-stack-and-grid)). `gap` and `max-width` apply to either arrangement, the column options to a grid.
 - **Item wrapper and staggered entrance.** The client wraps every element in `<div class="tlItem tlObjectList__item" style="--tl-item-index: 0">` carrying the 0-based position (`ObjectListElement.ITEM_CSS_CLASS`). The engine ships the position, not the animation: an application composes a per-item delay from it. The arrangement is what an application's rule addresses next to that class — a grid puts its items into a `.tlGrid`, a list into a `.tlStack` — so an entrance can be given to the cards of a grid while the rows of a list keep appearing at once. Items are reused by key, so an element that stays through a change of the inputs keeps its DOM node and does not animate again — only the ones that appear do.
 
 ```xml

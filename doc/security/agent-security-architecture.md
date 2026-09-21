@@ -933,34 +933,71 @@ Still outstanding, and out of #289's scope:
 | `VectorIndexSearchTool` | **Done** (#295): filtered at query time through `VectorReadFilter`, and what it reports is the live object through `ReadFilter` rather than the indexed chunk. Section 3.4.3 |
 | `McpTool` (all remote tools) | Cannot be introspected and declares no group, so it is ungrouped and therefore denied until an administrator classifies it in `<tool-groups>`. Same for `ScriptToolExecutor`, i.e. every TL-Script tool authored in the running application. Classification stays with the administrator on purpose - a self-declared group would let whoever authors a tool choose which capability it costs to call (see 3.2.8) |
 
-#### 3.3.3 Declared types - designed, not built
+#### 3.3.3 Declared types - L1b
 
-> **Not implemented.** A `types` member existed on `@ToolMethod` with no reader anywhere, sitting next
-> to the enforced `group` on a public annotation, where it read as protection that did not exist. It is
-> **removed**; this section keeps the design so that whoever implements it implements it whole -
-> annotation member *and* the three uses below, in one change. Tracked as **#258**.
-
-A `types` declaration would let a tool name the qualified model types it touches:
+A tool names the qualified model types it works on, and the names are checked against the acting
+principal's READ rights before the tool runs (**#258**):
 
 ```java
 @ToolMethod(description = "...", mode = ToolMode.READ,
             group = "data.read", types = { "myapp:Customer", "myapp:Contract" })
 ```
 
-It would be **not** an enforcement mechanism - a tool can lie, and generic tools (`listInstances`,
-`executeTLScript`) legitimately cannot declare anything. It buys three concrete things:
+**The rule.** A tool that declares types is refused when the principal may read **none** of them, and
+is left out of the tool schemas the provider request carries for the same reason. Not "one of them is
+unreadable": a tool naming `Customer` and `Contract` can still do the customer half of its job for a
+user who may read customers, and refusing it would take away work that user is allowed to do. Gate and
+schema filter are the same predicate on purpose - a rule that refused on one unreadable type while the
+filter dropped only fully unreadable tools would advertise a tool that every call to it refuses, which
+the model can only discover by spending a turn on it.
 
-1. **Pre-flight denial with a useful reason.** If the user cannot READ any declared type, deny at L1b
-   with "you have no read access to Customer" instead of returning an empty result the model then
-   misinterprets as "there are no customers".
-2. **Better schema filtering.** A tool whose declared types are all inaccessible is dropped from the
-   provider request - the model does not waste turns on it.
-3. **Reviewability.** A reviewer can see which tools claim to touch which types, and a tool whose
-   declaration is empty *and* whose group is not `model.read`/`agent.meta` is a review finding.
+`DeclaredTypeAccess` decides, `ToolPermissionFilter` asks it - the one seam both the schema filter
+(`AgentLoop.callProviderOnce`) and the invocation gate (`AgentLoop.executeWithSecurityCheck`, and
+`McpToolAdapter` for the server side) already go through. The refusal is an ordinary tool error:
+flagged `is_error`, excluded from the turn's rollback decision like every other denial, and logged at
+`info` rather than `warn`, because an account without a read right is a configured state and not an
+operator's problem.
 
-Where declarations are absent - which today is everywhere - L2 and L4 still apply in full. Declared
-types would be an optimisation and a documentation aid, never a substitute for a check, which is why
-their absence costs no security.
+**What it buys**, which is what #258 asked for:
+
+1. **A pre-flight refusal with a reason.** "you have no read access to `myapp:Customer`" instead of an
+   empty result the model reports to the user as "there are no customers". The sentence also says that
+   a *model access* right and not a tool permission is the cause, so nobody goes looking in
+   `<tool-access>` for an entry that is already correct.
+2. **Schema filtering.** The tool is not offered, so the model does not plan around it.
+3. **Reviewability.** A reviewer reads off which tools claim which types.
+
+**It reads roles on the security root**, through `ModelSecurity.accessibleTypes(READ)` - the same
+computation the model digest and the read filter use (#295). It is an L1 check and has L1's scope, so
+section 3.3.4's tier/scope distinction decides which types may be declared at all:
+
+> **Declare a type only where its READ grant goes to a role held on the security root.** A type whose
+> read right is derived *per object* must **not** be declared. `tl.ai.screenshots:Screenshot` grants
+> Read to `AiBinaryOwner`, which a `<rule type="reference">` derives from the screenshot's own owner
+> (section 4.6): nobody holds that role on the root, so declaring the type would refuse the owner
+> their own screenshot. Where you cannot tell, declare nothing.
+
+That is why **no tool shipped in this repository declares a type**. tl-ai's own model types are either
+owner-derived (`Screenshot`, `CookiePool`) or carry no `<security-config>` at all
+(`tl.ai.execution:UserMemory`, `AgentSession`, `tl.ai.core:Agent`), and model access is deny-by-default
+- so a declaration on any of them would refuse the tool to every non-administrator. Declaring is a
+statement an *application* makes about its own tier grants; the mechanism, the rule and the two
+outcomes are exercised end to end by the test bed's `secdemo-projects.listProjects` /
+`listProjectsUndeclared` pair (`SecDemoDeclaredTypesTest`), which differ in the declaration and in
+nothing else.
+
+**Tools that cannot declare anything.** Instance browsing (`listInstances`, `getInstance`), TL-Script
+execution and the search tools take their type from an *argument*, so there is nothing fixed to name.
+They declare nothing and are never refused on this ground; what governs them is the per-object
+checks that apply to every tool regardless - `ModelSecurity.canRead` on each object, `TidResolver` on
+each identifier, the read filtering of the results (3.4) and the pre-commit guard (3.5). The same
+holds for every tool that has no annotation to carry a declaration: a TL-Script tool and a remote MCP
+tool declare nothing by construction.
+
+**Still not a substitute for a check.** A tool can declare a type it does not touch, or touch one it
+did not declare, so L2 and L4 apply in full whatever the declaration says. A declaration makes a
+refusal *legible*; it never makes a check unnecessary, which is also why a name that resolves to no
+type of the application model is skipped with a warning rather than treated as a denial.
 
 #### 3.3.4 How RBAC and ABAC combine
 
@@ -1865,7 +1902,7 @@ any more. All new types live in `tl-ai-core/src/main/java/com/top_logic/tl/ai/co
 | `SecurityContext.restrictedTo(...)` / `ToolContext.restrictedTo(...)` | **Removed** (#288). There is no per-run mode left to compose |
 | `PreCommitGuard` + `ModelSecurityPreCommitGuard` + `ToolChangeSet` - the L4 guard | **Implemented and wired** (#259). Called once per turn from `AgentLoop.commitTransaction`, only when a transaction is active; reads the change set from the engine's transaction bookkeeping; rolls the turn back through the existing failed-tool-call route. Unit-tested (`TestPreCommitGuard`, `TestAgentLoop`) and end-to-end against the fixture (`SecDemoPreCommitGuardTest`) |
 | `@ToolMethod(group = ...)` in `tl-ai-tool-api` | **Enforced.** All 75 registered tools carry a group; `Tool.group()` is the runtime seam |
-| `@ToolMethod(types = ...)` | **Removed** (#258). Design in 3.3.3; no code |
+| `@ToolMethod(types = ...)` | **Implemented** (#258). `DeclaredTypeAccess` refuses a declared tool whose declared types the principal may read none of, and `ToolPermissionFilter` drops it from the provider request for the same reason. Section 3.3.3; no shipped tool declares one, and that section says why |
 | Per-agent `security-mode` (4.2) | Built (#260) and **removed again** (#288), together with the model attribute, the service-editor selector and `SecDemoAgentFloorTest` |
 | Per-agent `required-groups` (4.2) | **Dropped** (#392). A self-imposed narrowing an agent's own author could remove; replaced by `<agent-access>`, `<model-access>` and `<mcp-access>`, which are keyed by role |
 | `<agent-access>` / `<model-access>` / `<mcp-access>` (4.2) | **Implemented** (#392). `RoleAccessPolicy` decides all three; `RunAuthorization` carries the decision on the security context; `AgentFactory` enforces it before the run starts; `/chat/capabilities` filters and `/chat/send` answers 403 |

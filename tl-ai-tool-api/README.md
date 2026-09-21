@@ -150,6 +150,35 @@ a `ToolArgumentCoercionException`. That matters beyond the wording: the agent lo
 this existed, every Java tool resolved the string itself, which meant one resolver and one read check
 per application, and a forgotten one leaked (Gitea #381).
 
+### Declaring the types a tool works on
+
+A tool whose type is fixed can name it, and the name is enforced:
+
+```java
+@ToolMethod(description = "Lists the customers of a region.", mode = ToolMode.READ,
+    group = ToolGroups.DATA_READ, types = "myapp:Customer")
+public String listCustomers(@P("The region") String region) {
+    ...
+}
+```
+
+Before the tool runs, the acting account's READ rights are asked for every declared type. An account
+that may read **none** of them is refused with a sentence naming the type, and the tool is left out of
+the tool schemas the model is sent - so the model gets "you have no read access to `myapp:Customer`"
+rather than an empty list it reports to the user as "there are no customers". One readable declaration
+is enough: a tool naming two types still does the half of its job the account is entitled to.
+
+Declaring is optional and costs nothing when left out - a tool that declares nothing is offered and
+runs as before, and `listInstances`, the TL-Script tool and the search tools legitimately declare
+nothing because their type comes from an argument. What protects the data is the per-object check
+either way.
+
+**Declare a type only where its `Read` grant in `<security-config>` goes to a role accounts hold on
+the security root.** This check reads roles there, like every other tool-level check. A type whose read
+right is derived *per object* - as `tl.ai.screenshots:Screenshot` derives `AiBinaryOwner` from the
+screenshot's own owner - must not be declared, or the owner is refused their own object. Where you
+cannot tell, declare nothing. See `doc/security/agent-security-architecture.md`, section 3.3.3.
+
 ## What your answer claims
 
 A tool answer is text the model reads next to its own instructions, so it has to say which of the

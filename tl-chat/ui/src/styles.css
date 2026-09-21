@@ -2279,13 +2279,19 @@
 
 /*
  * What the tool will be given (#511). Plain text, never rendered: `<pre>` is the whole point - the
- * payload is model output and the reader has to see what it really says.
+ * payload is model output and the reader has to see what it really says. The approval card and the
+ * detailed trace's entry for the same call render the one block, so it is styled once.
  */
-.prompt-args {
-  margin: 0 0 0.5rem;
+.tool-args {
+  margin: 0;
 }
 
-.prompt-args-label {
+/* The card stacks its blocks with margins; the trace entry's body has a gap of its own. */
+.prompt-card .tool-args {
+  margin-bottom: 0.5rem;
+}
+
+.tool-args-label {
   color: var(--text-secondary);
   font-size: 0.6875rem;
   font-weight: 600;
@@ -2300,10 +2306,10 @@
  * card's width, and the card then took the whole conversation. What does not fit scrolls inside the
  * block; the expander below it adds what the head cut off, and never makes the card taller.
  */
-.prompt-args-text {
-  --prompt-args-rows: 8;
+.tool-args-text {
+  --tool-args-rows: 8;
   margin: 0;
-  max-height: calc(var(--prompt-args-rows) * 1.5em + 1rem);
+  max-height: calc(var(--tool-args-rows) * 1.5em + 1rem);
   overflow: auto;
   padding: 0.5rem 0.625rem;
   border-radius: var(--r-1);
@@ -2315,13 +2321,13 @@
   overflow-wrap: anywhere;
 }
 
-.prompt-args-more {
+.tool-args-more {
   margin-top: 0.25rem;
   color: var(--chat-link);
   font-size: 0.6875rem;
 }
 
-.prompt-args-more:hover {
+.tool-args-more:hover {
   text-decoration: underline;
 }
 

@@ -60,9 +60,12 @@ async function openTrace(actions: ChatAction[], language: Language): Promise<str
     } as never),
   )
   await settle()
-  for (const head of container.querySelectorAll('.trace-panel-head, .trace-entry-head')) {
-    ;(head as HTMLElement).click()
-    await settle()
+  /* The panel renders its entries only once it is open, so the entry heads are clicked afterwards. */
+  for (const selector of ['.trace-panel-head', '.trace-entry-head']) {
+    for (const head of container.querySelectorAll(selector)) {
+      ;(head as HTMLElement).click()
+      await settle()
+    }
   }
   return container.innerHTML
 }
@@ -105,5 +108,54 @@ describe('the recorded approval', () => {
       { type: 'END_RUN', runId: 'r1' },
     ]
     expect(await openTrace(denied, 'de')).toContain('abgelehnt')
+  })
+})
+
+/** A recorded turn whose one tool call was given `input`. */
+function callWith(input: unknown): ChatAction[] {
+  return [
+    { type: 'ADD_USER', id: 'u1', text: 'Schreib das auf' },
+    { type: 'START_RUN', runId: 'r1' },
+    { type: 'ADD_TOOL', toolUseId: 't1', name: 'consulting.recordStatement', input },
+    { type: 'ADD_TOOL_RESULT', toolUseId: 't1', output: 'ok' },
+    { type: 'UPDATE_TOOL', toolUseId: 't1', status: 'done', durationMs: 12 },
+    { type: 'END_RUN', runId: 'r1' },
+  ]
+}
+
+/**
+ * What the trace says a tool was given, once a reader opens the entry.
+ *
+ * It printed `JSON.stringify` of the call's input, directly under the approval card that had shown
+ * the same arguments as lines since #511 - so the payload the reader most needs to judge, the body
+ * of a section the agent is about to write, arrived as one run-on line of `\n` escapes. Card and
+ * trace entry now render the one component.
+ */
+describe('the recorded tool call', () => {
+  it('shows a value that spans lines as lines', async () => {
+    const html = await openTrace(callWith({ section: 'Konzept', body: 'Erste Zeile\nZweite Zeile' }), 'de')
+    expect(html).toContain('section: Konzept')
+    expect(html).toContain('body:\nErste Zeile\nZweite Zeile')
+    expect(html).not.toContain('\\n')
+  })
+
+  it('reads the same arguments out of the JSON string the stream carried', async () => {
+    const html = await openTrace(callWith('{"text":"Erste Zeile\\nZweite Zeile"}'), 'de')
+    expect(html).toContain('text:\nErste Zeile\nZweite Zeile')
+    expect(html).toContain('Argumente')
+  })
+
+  it('clamps a long payload and offers the rest', async () => {
+    const html = await openTrace(callWith({ lines: Array.from({ length: 40 }, (_, i) => `Zeile ${i}`) }), 'de')
+    expect(html).toContain('tool-args-more')
+    expect(html).toContain('…')
+    expect(html).not.toContain('Zeile 39')
+  })
+
+  /* The payload is model output: whatever it says is shown, and nothing in it is markup. */
+  it('shows markup inside an argument as text', async () => {
+    const html = await openTrace(callWith({ text: '<b>fett</b>' }), 'de')
+    expect(html).toContain('&lt;b&gt;fett&lt;/b&gt;')
+    expect(html).not.toContain('<b>fett</b>')
   })
 })

@@ -48,7 +48,7 @@ describe('the approval card', () => {
   it('shows what the tool will be given', () => {
     const html = card(approval())
     expect(html).toContain('FACT-004 Das Service-Center hat 19 VZ')
-    expect(html).toContain('prompt-args')
+    expect(html).toContain('tool-args')
   })
 
   it('shows the arguments as text, never as markup', () => {
@@ -75,15 +75,15 @@ describe('the approval card', () => {
   })
 
   it('has no arguments block when the call carries none', () => {
-    expect(card(approval({ argsJson: '{}' }))).not.toContain('prompt-args')
-    expect(card(approval({ argsJson: '' }))).not.toContain('prompt-args')
+    expect(card(approval({ argsJson: '{}' }))).not.toContain('tool-args')
+    expect(card(approval({ argsJson: '' }))).not.toContain('tool-args')
   })
 
   /* The card sits over the composer: a payload of any length must not grow it into the page. */
   it('clamps a long payload and offers the rest', () => {
     const long = JSON.stringify({ lines: Array.from({ length: 40 }, (_, i) => `Zeile ${i}`) })
     const html = card(approval({ argsJson: long }))
-    expect(html).toContain('prompt-args-more')
+    expect(html).toContain('tool-args-more')
     expect(html).toContain('…')
     expect(html).not.toContain('Zeile 39')
   })
@@ -108,16 +108,16 @@ describe('the approval card', () => {
     )
     const settle = () => new Promise((resolve) => setTimeout(resolve, 20))
     await settle()
-    const pre = () => container.querySelector('.prompt-args pre')!
-    const more = () => container.querySelector<HTMLButtonElement>('.prompt-args-more')!
+    const pre = () => container.querySelector('.tool-args pre')!
+    const more = () => container.querySelector<HTMLButtonElement>('.tool-args-more')!
     try {
-      expect(pre().className).toBe('prompt-args-text')
+      expect(pre().className).toBe('tool-args-text')
       expect(pre().textContent).not.toContain(tail)
       expect(more().getAttribute('aria-expanded')).toBe('false')
 
       more().click()
       await settle()
-      expect(pre().className).toBe('prompt-args-text')
+      expect(pre().className).toBe('tool-args-text')
       expect(pre().textContent).toContain(tail)
       expect(more().getAttribute('aria-expanded')).toBe('true')
       expect(more().textContent).toBe('Weniger anzeigen')
@@ -133,7 +133,7 @@ describe('the approval card', () => {
   })
 
   it('offers no expander for a payload that fits', () => {
-    expect(card(approval())).not.toContain('prompt-args-more')
+    expect(card(approval())).not.toContain('tool-args-more')
   })
 
   it('says which tool approving for the chat will cover', () => {

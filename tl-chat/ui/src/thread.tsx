@@ -6,7 +6,7 @@ import { parseDraft, referenceSummary, withoutContextPrefix, type ReferenceToken
 import { TokenInput, type TokenInputHandle } from './token-input'
 import { bundle, formatTimestamp, providerErrorText, type Language } from './i18n'
 import { effortLabel } from './models'
-import { approvalOutcomeText, approvalReason } from './prompts'
+import { approvalOutcomeText, approvalReason, ToolArguments } from './prompts'
 import type {
   ApprovalRequest,
   AssistantText,
@@ -34,21 +34,6 @@ function formatDuration(ms?: number): string {
   const m = Math.floor(ms / 60_000)
   const s = Math.round((ms % 60_000) / 1000)
   return s ? `${m}m ${s}s` : `${m}m`
-}
-
-function pretty(value: unknown): string {
-  if (typeof value === 'string') {
-    try {
-      return JSON.stringify(JSON.parse(value), null, 2)
-    } catch {
-      return value
-    }
-  }
-  try {
-    return JSON.stringify(value, null, 2)
-  } catch {
-    return String(value)
-  }
 }
 
 function skillIdFrom(call: ToolCall): string | null {
@@ -708,7 +693,7 @@ function TraceEvent({
           meta={item.status === 'running' ? labels.running : formatDuration(item.durationMs)}
           danger={item.status === 'error' || result?.isError}
         >
-          <TraceBlock label={labels.argumentsLabel} text={pretty(item.input)} labels={labels} />
+          <ToolArguments args={item.input} labels={labels} />
           {result ? (
             <TraceBlock
               label={result.isError ? labels.error : labels.result}

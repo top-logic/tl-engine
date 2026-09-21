@@ -395,6 +395,14 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.panel.popOut")
 	public static ResKey JS_PANEL_POP_OUT;
 
+	// -- Toolbar client-side i18n keys --
+
+	/**
+	 * @en More actions
+	 */
+	@CustomKey("js.toolbar.overflow")
+	public static ResKey JS_TOOLBAR_OVERFLOW;
+
 	/**
 	 * @en Microphone requires a secure connection (HTTPS).
 	 */

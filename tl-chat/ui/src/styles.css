@@ -1107,7 +1107,7 @@
 
 .prompt-suggestion:hover {
   background: var(--layer-hover);
-  border-color: var(--border-strong, var(--border-subtle));
+  border-color: var(--border-interactive);
 }
 
 .prompt-suggestion__icon {
@@ -3303,10 +3303,28 @@
   }
 }
 
+/*
+ * Every chat element is a root of its own, so this list is the same one the top of this file
+ * carries: a composed `<chat-conversation/>`, `<chat-rail/>` or rail section is placed by a view
+ * outside the cockpit, where a rule naming only `.tl-cockpit` reaches nothing and the person who
+ * asked for less motion still gets it.
+ */
 @media (prefers-reduced-motion: reduce) {
   .tl-cockpit *,
   .tl-cockpit *::before,
   .tl-cockpit *::after,
+  .tl-chat-conversation *,
+  .tl-chat-conversation *::before,
+  .tl-chat-conversation *::after,
+  .tl-chat-rail *,
+  .tl-chat-rail *::before,
+  .tl-chat-rail *::after,
+  .tl-chat-section *,
+  .tl-chat-section *::before,
+  .tl-chat-section *::after,
+  .tl-data-list *,
+  .tl-data-list *::before,
+  .tl-data-list *::after,
   .tl-chat-dock *,
   .tl-chat-dock *::before,
   .tl-chat-dock *::after {

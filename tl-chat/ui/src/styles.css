@@ -3143,9 +3143,16 @@
  * The numbers are the ones the viewport queries carried; what changed is the box they measure.
  */
 
-/* Narrow enough that the gutters are worth more to the text than to the margin. */
+/*
+ * Narrow enough that the gutters are worth more to the text than to the margin.
+ *
+ * The prompt cards are in the list because they stand directly over the composer: a row that kept
+ * the wide gutter here would start four pixels inside the field it fills, which reads as a
+ * misalignment rather than as a margin.
+ */
 @container chat-stage (max-width: 1080px) {
   .thread-column,
+  .prompt-suggestions,
   .composer {
     padding-left: 1rem;
     padding-right: 1rem;

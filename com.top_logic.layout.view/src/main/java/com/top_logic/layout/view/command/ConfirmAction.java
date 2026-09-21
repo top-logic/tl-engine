@@ -119,7 +119,7 @@ public class ConfirmAction extends InterruptibleViewAction {
 
 	@Override
 	public void execute(ReactContext context, Object input, Continuation continuation) {
-		ResKey message = evaluateMessage(context, input);
+		ResKey message = _expr.message(context, input);
 		if (message == null) {
 			continuation.resume(input);
 			return;
@@ -143,17 +143,5 @@ public class ConfirmAction extends InterruptibleViewAction {
 			cancelLabel,
 			() -> continuation.resume(input),
 			() -> continuation.abort());
-	}
-
-	private ResKey evaluateMessage(ReactContext context, Object input) {
-		Object result = _expr.execute(context, input);
-		if (result == null) {
-			return null;
-		}
-		if (result instanceof ResKey) {
-			return (ResKey) result;
-		}
-		String text = result.toString();
-		return text.isEmpty() ? null : ResKey.text(text);
 	}
 }

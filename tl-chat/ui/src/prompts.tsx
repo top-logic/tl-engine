@@ -4,7 +4,7 @@ import type { ChatAddress } from './api'
 import type { bundle } from './i18n'
 import { toolLabel } from './models'
 import type { ChatAction } from './reducer'
-import type { ApprovalRequest, InteractionRequest } from './types'
+import type { ApprovalOutcome, ApprovalRequest, InteractionRequest } from './types'
 
 const { useEffect, useState } = React
 
@@ -146,7 +146,7 @@ function OverlayCard({
  * responsibility for something. An event from before the mode was carried falls back to the wording
  * it does have.
  */
-function approvalReason(item: ApprovalRequest, labels: Labels): string {
+export function approvalReason(item: ApprovalRequest, labels: Labels): string {
   switch (item.toolMode) {
     case 'USER_SCOPED':
       return labels.approvalUserScoped
@@ -158,6 +158,28 @@ function approvalReason(item: ApprovalRequest, labels: Labels): string {
       return labels.approvalExternal
     default:
       return item.displayReason || labels.approvalGeneric
+  }
+}
+
+/**
+ * How a recorded approval ended, in the reader's language.
+ *
+ * The wire word is an enum constant, and printing it with its underscores rubbed out put
+ * "approved for session" into a German transcript (#512). Everything a reader sees about an
+ * approval - live card and history alike - is phrased from this file.
+ */
+export function approvalOutcomeText(outcome: ApprovalOutcome, labels: Labels): string {
+  switch (outcome) {
+    case 'APPROVED':
+      return labels.approvalOutcomeApproved
+    case 'APPROVED_FOR_SESSION':
+      return labels.approvalOutcomeSession
+    case 'REJECTED':
+      return labels.approvalOutcomeRejected
+    case 'TIMED_OUT':
+      return labels.approvalOutcomeTimedOut
+    default:
+      return labels.waiting
   }
 }
 

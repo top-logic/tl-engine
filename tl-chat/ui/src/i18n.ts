@@ -172,6 +172,11 @@ const EN = {
   running: 'running',
   waiting: 'waiting',
   answered: 'answered',
+  /** How a recorded approval ended, in the reader's language (#512). */
+  approvalOutcomeApproved: 'approved once',
+  approvalOutcomeSession: 'approved for this chat',
+  approvalOutcomeRejected: 'denied',
+  approvalOutcomeTimedOut: 'timed out',
   showLess: 'Show less',
   showMore: (chars: number) => `Show ${chars} more characters`,
 
@@ -395,6 +400,10 @@ const DE: Bundle = {
   running: 'läuft',
   waiting: 'wartet',
   answered: 'beantwortet',
+  approvalOutcomeApproved: 'einmal freigegeben',
+  approvalOutcomeSession: 'für diesen Chat freigegeben',
+  approvalOutcomeRejected: 'abgelehnt',
+  approvalOutcomeTimedOut: 'Zeit abgelaufen',
   showLess: 'Weniger anzeigen',
   showMore: (chars: number) => `${chars} weitere Zeichen anzeigen`,
 

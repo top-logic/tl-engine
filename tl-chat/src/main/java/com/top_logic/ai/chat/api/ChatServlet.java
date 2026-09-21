@@ -106,6 +106,7 @@ import com.top_logic.tl.ai.core.session.Turn;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedConversationV2;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedPart;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedTurn;
+import com.top_logic.tl.ai.core.session.persist.messages.TextPartDto;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.TopLogicServlet;
@@ -1261,8 +1262,20 @@ public class ChatServlet extends TopLogicServlet {
 			Chat stateChat = state.getChat();
 			ChatProcessor.applyPollUpdates(state, stateChat != null ? stateChat : tracker.getChat(), tracker);
 		}
-		boolean processing = tracker.hasActiveProcessingStateFor(tracker.getActiveSessionId());
+		String activeSessionId = tracker.getActiveSessionId();
+		boolean processing = tracker.hasActiveProcessingStateFor(activeSessionId);
 		String currentTaskId = ChatProcessor.getCurrentTaskId(tracker);
+		if (!processing) {
+			// Whether the chat is working is a fact about the chat, not about this window: the run
+			// may have been started in a tab that is now closed, and a window that says the
+			// conversation is idle offers a composer for a turn that is already under way and no
+			// way to stop it (issue #512).
+			ChatProcessor.AIProcessingState elsewhere = runInFlight(resolveCurrentPerson(req), activeSessionId);
+			if (elsewhere != null) {
+				processing = true;
+				currentTaskId = elsewhere.getCurrentTaskId();
+			}
+		}
 
 		ChatUpdatesResponse response = DtoMapper.toUpdatesResponse(tracker, processing, currentTaskId);
 
@@ -1270,6 +1283,63 @@ public class ChatServlet extends TopLogicServlet {
 		resp.setContentType(CONTENT_TYPE_JSON);
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
 		resp.getWriter().write(DtoMapper.toJson(response));
+	}
+
+	/**
+	 * The state of the run this account has in flight in the given chat, or <code>null</code>.
+	 *
+	 * <p>
+	 * A run belongs to a conversation, not to the window it was started in, and everything about a
+	 * turn that is still being worked on lives in memory until the run ends. Asked through
+	 * {@link PendingInteractionRegistry}, so a second tab, a reloaded page and a new login find the
+	 * run exactly as the window that started it does - and an account that has no run there, or is
+	 * looking at somebody else's chat, finds nothing.
+	 * </p>
+	 *
+	 * @param owner
+	 *        The acting account; <code>null</code> finds nothing.
+	 * @param sessionId
+	 *        The id of the chat; <code>null</code> finds nothing.
+	 */
+	private static ChatProcessor.AIProcessingState runInFlight(Person owner, String sessionId) {
+		PendingInteractionRegistry.PendingRun run = PendingInteractionRegistry.findBySession(owner, sessionId);
+		if (run == null || !run.state().isProcessing()) {
+			return null;
+		}
+		return run.state();
+	}
+
+	/**
+	 * Adds the paragraph the running turn is in the middle of writing to the last turn.
+	 *
+	 * <p>
+	 * The log records streamed text at message boundaries, so between them it holds everything the
+	 * turn has said except its unfinished last sentence. A window opening the chat mid-stream has to
+	 * be shown that sentence too, or it renders a turn that stops earlier than the one the reader
+	 * was watching. It is appended to the snapshot that is about to be sent and never written into
+	 * the log - recording it is the agent's own business.
+	 * </p>
+	 *
+	 * @param conv
+	 *        The snapshot being sent; a no-op when it has no turn.
+	 * @param running
+	 *        The run in flight, or <code>null</code> when the conversation has none.
+	 */
+	private static void appendStreamedText(PersistedConversationV2 conv, ChatProcessor.AIProcessingState running) {
+		if (running == null || conv.getTurns().isEmpty()) {
+			return;
+		}
+		ConversationLogListener listener = running.getLogListener();
+		String pending = listener == null ? "" : listener.bufferedText();
+		if (pending.isEmpty()) {
+			return;
+		}
+		PersistedTurn last = conv.getTurns().get(conv.getTurns().size() - 1);
+		last.addAssistantPart(PersistedPart.create()
+			.setId("streaming-" + last.getId())
+			.setType("text")
+			.setTimestamp(System.currentTimeMillis())
+			.setTextData(TextPartDto.create().setText(pending)));
 	}
 
 	/**
@@ -1483,12 +1553,26 @@ public class ChatServlet extends TopLogicServlet {
 				.setId(sessionId)
 				.setTitle(ChatHistoryService.getTitle(session));
 
-			// Prefer the live ConversationLog of the now-active session: it includes the
-			// open turn of an in-flight run, whose transcript is only persisted at run end.
-			// Only sessions without server-side state fall back to the persisted
-			// per-execution transcripts.
+			// What this conversation looks like right now, in three descending preferences.
+			//
+			// A run in flight is the first of them, and it is the only one that can answer for a
+			// window other than the one that started the run: the open turn - the user's message,
+			// what the agent has said so far, its steps, the approval it is parked on - lives in
+			// the ConversationLog of the run's own window, and is written to the database only when
+			// the run ends. A second tab, a reloaded page and a new login all load the conversation
+			// from what is persisted, which stops at the previous turn, and were then shown a
+			// transcript that ended before the question they were looking at (issue #512).
+			ChatProcessor.AIProcessingState running = runInFlight(person, sessionId);
 			String messagesJson = null;
-			if (tracker != null) {
+			if (running != null) {
+				ConversationLog runLog = running.getConversationLog();
+				if (runLog != null && runLog.turnCount() > 0) {
+					messagesJson = ConversationLogSerializer.toJson(runLog);
+				}
+			}
+			if (messagesJson == null && tracker != null) {
+				// The live log of the now-active session: this window's own, which holds the open
+				// turn when the run was started here.
 				ConversationLog convLog = tracker.getSessionManager().getOrCreateConversationLog();
 				if (convLog.turnCount() > 0) {
 					messagesJson = ConversationLogSerializer.toJson(convLog);
@@ -1501,6 +1585,7 @@ public class ChatServlet extends TopLogicServlet {
 				response.setMessagesJson(messagesJson);
 				PersistedConversationV2 conv = PersistedConversationV2.readPersistedConversationV2(
 					new JsonReader(new StringR(messagesJson)));
+				appendStreamedText(conv, running);
 				for (PersistedTurn turn : conv.getTurns()) {
 					computeContentHtml(turn);
 				}

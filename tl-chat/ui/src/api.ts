@@ -479,6 +479,8 @@ interface PersistedPart {
     toolName: string
     argsJson: string
     displayReason: string
+    /** The `ToolMode` the approval was asked for; empty for a turn recorded before #512. */
+    mode?: string
     decision: string
   }
   interactionData?: {
@@ -630,6 +632,9 @@ export function turnsJsonToMessages(turnsJson: string | undefined): ChatMessage[
             toolName: d.toolName,
             argsJson: d.argsJson,
             displayReason: d.displayReason,
+            // What lets the recorded entry be phrased in the reader's language, the way the live
+            // card is: the reason the security context wrote is English for everyone (#512).
+            toolMode: d.mode ? d.mode : undefined,
             outcome: mapApprovalDecision(d.decision),
             timestamp: part.timestamp,
           })

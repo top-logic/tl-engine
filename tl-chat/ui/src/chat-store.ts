@@ -1407,6 +1407,13 @@ export class ChatStore {
         const target = this.assistantId ?? this.lastAssistantId
         if (target && data.contentText) {
           this.dispatch({ type: 'SET_TEXT', id: target, text: data.contentText, citations: data.citations })
+        } else {
+          // No message of ours to write it into: this window did not start the run, it only has the
+          // conversation open, and what it is showing is the snapshot it was restored with (#512).
+          // The turn is recorded before this frame is sent, so reading the conversation back is what
+          // puts the finished turn on screen - answer, steps and the approval under it - rather than
+          // leaving a run that has ended still looking like it is working.
+          void this.reloadTranscript()
         }
         finish()
       })
@@ -1531,6 +1538,12 @@ export class ChatStore {
     if (this.state.sessionId !== sessionId) return
     if (snapshot) {
       this.patch({ busy: snapshot.processing, tasks: parseTasksJson(snapshot.tasksJson) })
+      if (snapshot.processing) {
+        // The last answer of a restored transcript is the paragraph the agent is still writing, not
+        // a finished one, so it is shown as streaming and carries no answer actions (#512).
+        const open = [...this.state.messages].reverse().find((m) => m.type === 'assistant_text')
+        if (open) this.dispatch({ type: 'RESUME_TEXT', id: open.id })
+      }
     }
     for (const item of pending) {
       if (item.sessionId !== sessionId) continue
@@ -1539,11 +1552,10 @@ export class ChatStore {
       // nowhere.
       if (item.remainingMs <= 0) continue
       if (item.type === 'approval') {
-        const known = this.state.messages.some(
-          (message) =>
-            message.type === 'approval_request' && message.approvalRequestId === item.requestId,
-        )
-        if (known) continue
+        // Dispatched even when the restored transcript already carries the card: the reducer
+        // completes that one in its place under the turn that asked for it, rather than appending
+        // a second (#512). What it adds is what only the waiting run knows - the tool's mode, and
+        // how long is left to answer.
         this.dispatch({
           type: 'ADD_APPROVAL',
           approvalRequestId: item.requestId,
@@ -1557,10 +1569,6 @@ export class ChatStore {
         continue
       }
       if (item.type !== 'question' && item.type !== 'choice') continue
-      const asked = this.state.messages.some(
-        (message) => message.type === 'interaction_request' && message.requestId === item.requestId,
-      )
-      if (asked) continue
       // The card is rebuilt with the shape the agent asked in, not with a default: a multi-select
       // question drawn as a radio group would take a different answer from the one it asked for
       // (#466). The shape comes off the waiting run, so an item that reaches here has one.
@@ -1574,6 +1582,29 @@ export class ChatStore {
         multiSelect: item.multiSelect,
         remainingMs: item.remainingMs,
       })
+    }
+  }
+
+  /**
+   * Reads the open conversation back from the server, keeping everything else as it is.
+   *
+   * A window that is only watching a conversation has no stream of its own to build the turn from:
+   * the run's events go to the window that started it. When such a run ends, the recorded turn is
+   * the whole of what this window knows, so it is fetched once rather than left as the snapshot the
+   * window was restored with. Best effort - a failure leaves the transcript standing, which is what
+   * a window that never asked would have shown.
+   */
+  private async reloadTranscript(): Promise<void> {
+    const at = this.at
+    const sessionId = this.state.sessionId
+    if (!sessionId) return
+    try {
+      const detail = await loadSession(at, sessionId)
+      // The user may have moved to another chat while this was in flight.
+      if (this.state.sessionId !== sessionId) return
+      this.dispatch({ type: 'REPLACE', messages: turnsJsonToMessages(detail.turnsJson) })
+    } catch {
+      // Best effort: what is on screen is a turn of this conversation either way.
     }
   }
 

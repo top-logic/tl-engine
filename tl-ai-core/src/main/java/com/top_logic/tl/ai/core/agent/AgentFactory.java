@@ -1456,10 +1456,14 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		List<DelegateOffer> offers = new ArrayList<>();
 		for (String targetName : agent.delegations()) {
 			AgentDefinition target = capabilities.graph().agent(targetName);
+			AgentCapabilities.Unusable unusable = capabilities.unusableReason(target);
+			// Only an offered delegate can carry a "limited for this user" line, and computing the set
+			// walks the delegate's whole transitive reachable-tool graph - so a dropped one does not
+			// pay for an answer nothing reads. Its own refusal sentence is on the Unusable (#517).
+			Set<String> unreachable =
+				unusable == null ? capabilities.unreachableCapabilities(target) : Set.of();
 			offers.add(new DelegateOffer(targetName, delegationToolName(targetName),
-				target != null ? target.description() : null,
-				capabilities.unusableReason(target),
-				capabilities.unreachableCapabilities(target)));
+				target != null ? target.description() : null, unusable, unreachable));
 		}
 		return offers;
 	}
@@ -1496,7 +1500,9 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 *        Why the delegate can do nothing for the principal, or <code>null</code> if it can do
 	 *        something.
 	 * @param unreachableCapabilities
-	 *        The capabilities some of the delegate's tools need and the principal does not hold.
+	 *        The capabilities some of the delegate's tools need and the principal does not hold. Empty
+	 *        for a delegate that is not {@link #offered()}: only {@link #limited()} reads it, and
+	 *        computing it walks the delegate's whole transitive reachable-tool graph.
 	 */
 	record DelegateOffer(String targetName, String toolName, String description,
 			AgentCapabilities.Unusable unusableReason, Set<String> unreachableCapabilities) {

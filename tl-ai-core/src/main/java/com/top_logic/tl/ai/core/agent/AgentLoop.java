@@ -345,9 +345,12 @@ public class AgentLoop {
 	 * </p>
 	 *
 	 * <p>
-	 * Per-turn context (#438) attaches its block to the turn's user message. If that lands, this
-	 * delivery becomes a block of it rather than a message of its own; until then the two do not
-	 * overlap, because nothing here touches the user's message.
+	 * Per-turn context (#438) has since landed, and this delivery stayed a message of its own:
+	 * {@link #ensureTurnContext(Conversation)} prepends its block to the newest {@link UserMessage}
+	 * instead of merging the two, and it runs later in the same turn than this does. On a turn that
+	 * opens with a delivery - a subagent of an earlier run of the session finishing - the newest user
+	 * message is therefore this one, and the block sits in front of the delivery text. Either way
+	 * nothing here touches what the user wrote.
 	 * </p>
 	 */
 	static void injectSubagentResults(Conversation conversation) {

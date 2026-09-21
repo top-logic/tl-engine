@@ -474,9 +474,11 @@ public class AgentCapabilities {
 	 * </p>
 	 *
 	 * <p>
-	 * A delegate that is {@link #unusableReason(AgentDefinition) dropped entirely} has every one of its
-	 * capabilities in here, which is what the drop's log line reports. The prompt never asks: a dropped
-	 * delegate has no line to annotate.
+	 * Nothing asks this about a delegate that is {@link #unusableReason(AgentDefinition) dropped
+	 * entirely}. The prompt has no line to annotate there, and since #517 the drop's log line reports
+	 * the {@link Unusable#message() refusal sentence} rather than a capability list - naming
+	 * capabilities is only on the point where {@link Unusable#aboutCapabilities()} says so.
+	 * {@code AgentFactory.delegateOffers} therefore does not compute it for a dropped delegate.
 	 * </p>
 	 *
 	 * @param delegate

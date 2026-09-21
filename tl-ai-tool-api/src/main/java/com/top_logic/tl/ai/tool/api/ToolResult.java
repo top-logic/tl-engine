@@ -82,6 +82,15 @@ public record ToolResult(String text, String summary, int truncationHint,
 	 * </p>
 	 *
 	 * <p>
+	 * The text is still <b>bounded</b>: a failure stays in the conversation for every later request
+	 * of the run exactly as a success does, so the agent loop cuts it to the installation's
+	 * {@code max-tool-result-chars} ceiling and reports that it did. Having no truncation hint here
+	 * is the decision, not an omission - a tool must not be able to lift the ceiling off its own
+	 * error path, and most failures (a thrown exception, a remote server's error body) never pass a
+	 * {@link ToolResult} at all, so a hint would bound only some of them.
+	 * </p>
+	 *
+	 * <p>
 	 * <b>A failure reported this way does not roll the turn back.</b> It is recorded as a synthetic
 	 * failure, so the writes other tools of the same turn made are still committed. A tool whose own
 	 * partial writes must be taken back throws instead - that is what an exception out of a tool

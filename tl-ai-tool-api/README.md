@@ -220,6 +220,22 @@ answer are configured beside the implementation:
 | `truncation-hint` | How many characters of the result reach the model before it is cut. Unset uses the installation's default. |
 | `summary` | One argument - the value the body answered - and the short form compaction keeps in place of the result. Unset keeps the beginning of the result. It is disclosed under the same read rights as the result, so it may name objects. |
 
+### What bounds a failure
+
+`truncation-hint` - and `truncationHint` on a Java `ToolResult` - bounds an answer the tool
+**succeeded** with. A failure is bounded too, but only by the installation's ceiling
+(`max-tool-result-chars` on `LLMService`, per agent or as the default): the agent loop cuts a
+`ToolState.Failed` text to the same budget, keeping head and tail and naming the dropped middle, and
+emits the same `ToolCallResultTruncated` event an operator sees for a success. The failed flag the
+providers send as `is_error` survives the cut, so a truncated failure still arrives as a failure.
+
+There is deliberately no per-tool hint for the error path. `ToolResult.failure(...)` carries none,
+and the failures that are hardest to bound never pass a `ToolResult` at all - an exception out of a
+Java tool or a TL-Script body, or the error body a remote MCP server answered with, whose length is
+not this application's to choose. A hint would bound only the smallest of those three and would let
+a tool lift the ceiling off its own error path, which is the cost the ceiling exists for: an
+oversized answer is paid again on every later request of the run.
+
 Which run the call belongs to is `aiRunInfo()` inside the body: the same facts `runInfo()` gives a
 Java tool, as a map with the keys `runId`, `conversationId`, `agentName`, `model`, `provider`,
 `executionId` and `delegationDepth`. Outside an agent run every value is empty.

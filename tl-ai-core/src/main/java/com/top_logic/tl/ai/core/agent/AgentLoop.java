@@ -1461,11 +1461,42 @@ public class AgentLoop {
 		return truncateIfNeeded(result, listener, runId, turn);
 	}
 
+	/**
+	 * Bounds a tool answer by the installation's character budget, whatever its outcome.
+	 *
+	 * <p>
+	 * A failure costs the same as a success: both stay in the conversation for every later request
+	 * of the run, so both are cut to the budget and both report it with the same
+	 * {@link AgentEvent.ToolCallResultTruncated} event. What a failure does <em>not</em> have is a
+	 * per-tool budget of its own: {@link com.top_logic.tl.ai.tool.api.ToolResult#failure(String)}
+	 * carries no {@code truncationHint}, and the failures that matter most here - a thrown
+	 * exception, a remote MCP error body, an exception out of a TL-Script body - never pass a
+	 * {@code ToolResult} at all. The installation default is therefore the only budget for a
+	 * failure, deliberately: a tool must not be able to exempt its own error path from the ceiling
+	 * the way a browser verb exempts a rendered page.
+	 * </p>
+	 *
+	 * <p>
+	 * Truncation keeps the head and the tail and names the gap between them
+	 * ({@link #truncateToBudget}); the notice says only how much was dropped, so it never reads as
+	 * an outcome and a cut failure still reads as a failure. The bits beside the text - the failed
+	 * flag the providers send as {@code is_error} and the {@code synthetic} bit the end-of-turn
+	 * rollback asks - travel unchanged.
+	 * </p>
+	 */
 	private ToolResultMessage truncateIfNeeded(ToolResultMessage result,
 			AgentEventListener listener, String runId, int turn) {
-		if (!(result.state() instanceof ToolState.Completed completed)) {
-			return result;
+		if (result.state() instanceof ToolState.Completed completed) {
+			return truncateCompleted(result, completed, listener, runId, turn);
 		}
+		if (result.state() instanceof ToolState.Failed failed) {
+			return truncateFailed(result, failed, listener, runId, turn);
+		}
+		return result;
+	}
+
+	private ToolResultMessage truncateCompleted(ToolResultMessage result, ToolState.Completed completed,
+			AgentEventListener listener, String runId, int turn) {
 		String text = completed.result();
 		int limit = completed.truncationHint() > 0 ? completed.truncationHint() : _maxResultChars;
 		if (text.length() <= limit) {
@@ -1481,6 +1512,23 @@ public class AgentLoop {
 			result.id(), result.timestamp(), result.toolCallId(), result.toolName(),
 			new ToolState.Completed(truncated, completed.startTime(), completed.endTime(),
 				false, completed.summary(), -1, truncateTextParts(completed.content(), limit)));
+	}
+
+	private ToolResultMessage truncateFailed(ToolResultMessage result, ToolState.Failed failed,
+			AgentEventListener listener, String runId, int turn) {
+		String text = failed.error();
+		if (text.length() <= _maxResultChars) {
+			return result;
+		}
+
+		String truncated = truncateToBudget(text, _maxResultChars);
+
+		emit(listener, new AgentEvent.ToolCallResultTruncated(runId, turn, now(),
+			result.toolCallId(), result.toolName(), text.length(), truncated.length()));
+
+		return new ToolResultMessage(
+			result.id(), result.timestamp(), result.toolCallId(), result.toolName(),
+			new ToolState.Failed(truncated, failed.startTime(), failed.endTime(), failed.synthetic()));
 	}
 
 	/**

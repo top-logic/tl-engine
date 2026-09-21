@@ -21,6 +21,8 @@ import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.lang.reflect.Array;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -155,6 +157,8 @@ public class TLDoclet implements Doclet {
 
 	private String _targetMessages = "";
 
+	private String _messagesMarker = "";
+
 	private String _knownBugsResource = "";
 
 	private boolean _createBaseLine = false;
@@ -274,6 +278,8 @@ public class TLDoclet implements Doclet {
 				}
 
 				_configDoc.saveAs(messages);
+
+				writeMessageGenerationMarker(messages);
 			}
 		}
 
@@ -334,6 +340,33 @@ public class TLDoclet implements Doclet {
 		for (String acronym : _acronymTokens) {
 			_acronyms.setProperty(acronym.toLowerCase(), _acronyms.getProperty(acronym));
 		}
+	}
+
+	/**
+	 * Announces that the given message resources have been generated in the running build.
+	 *
+	 * <p>
+	 * The marker file named by the option <code>-messagesMarker</code> is written at the location
+	 * where the translation step of the build looks for it and names the generated message
+	 * resources. It tells the translation that the base line it compares the generated resources
+	 * with was written in the same build.
+	 * </p>
+	 *
+	 * @param messages
+	 *        The message resources that have been generated.
+	 */
+	private void writeMessageGenerationMarker(File messages) throws IOException {
+		if (_messagesMarker.isEmpty()) {
+			return;
+		}
+
+		File marker = new File(_messagesMarker);
+		File markerDir = marker.getParentFile();
+		if (markerDir != null) {
+			markerDir.mkdirs();
+		}
+		Files.writeString(marker.toPath(), messages.getAbsolutePath() + System.lineSeparator(),
+			StandardCharsets.UTF_8);
 	}
 
 	private void writeSettings() throws IOException {
@@ -973,6 +1006,11 @@ public class TLDoclet implements Doclet {
 				.argumentCount(1)
 				.addName("-targetMessages")
 				.processArguments(args -> _targetMessages = args.get(0))
+				.build(),
+			new OptionBuilder()
+				.argumentCount(1)
+				.addName("-messagesMarker")
+				.processArguments(args -> _messagesMarker = args.get(0))
 				.build(),
 			new OptionBuilder()
 				.argumentCount(1)

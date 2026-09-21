@@ -125,6 +125,20 @@ public class ResourceTranslator extends AbstractTranslateMojo {
 	private String ignoreTags = "";
 
 	/**
+	 * The marker file that the JavaDoc doclet writes after it has generated {@link #sourcePath}.
+	 * 
+	 * <p>
+	 * Translation is performed only if this file exists, showing that the doclet has generated
+	 * {@link #sourcePath} in the running build and hence that {@link #referencePath} is the base
+	 * line for its current contents. The marker is consumed, so that a later build without the
+	 * doclet does not translate against an outdated base line. Without this file name, translation
+	 * is performed unconditionally.
+	 * </p>
+	 */
+	@Parameter(property = "generationMarker")
+	private File generationMarker;
+
+	/**
 	 * Glossary names to use for translation directions.
 	 * 
 	 * <p>
@@ -139,8 +153,16 @@ public class ResourceTranslator extends AbstractTranslateMojo {
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
+		boolean sourceGenerated = consumeGenerationMarker();
+
 		if (skip) {
 			getLog().info("Skipped translation.");
+			return;
+		}
+
+		if (!sourceGenerated) {
+			getLog().info("Skipping translation: The doclet did not run in this build, therefore " + referencePath
+				+ " is no reference for " + sourcePath + ".");
 			return;
 		}
 
@@ -203,6 +225,27 @@ public class ResourceTranslator extends AbstractTranslateMojo {
 			// Translate to a single file.
 			translate(resolvePath(targetPath), targetLanguages);
 		}
+	}
+
+	/**
+	 * Whether the JavaDoc doclet has generated {@link #sourcePath} in the running build, see
+	 * {@link #generationMarker}.
+	 * 
+	 * <p>
+	 * The marker must not outlive the build that has written it, therefore it is deleted here even
+	 * if the translation itself is {@link #skip skipped}.
+	 * </p>
+	 */
+	private boolean consumeGenerationMarker() {
+		if (generationMarker == null) {
+			return true;
+		}
+
+		if (!generationMarker.exists()) {
+			return false;
+		}
+		generationMarker.delete();
+		return true;
 	}
 
 	private File resolvePath(String path) {

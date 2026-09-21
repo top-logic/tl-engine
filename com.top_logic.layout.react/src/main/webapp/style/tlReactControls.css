@@ -2115,10 +2115,12 @@ button.tlDrawerToggle:focus-visible {
    leaves over the current container width, scaled up steeply: while the container is at least as
    wide as the breakpoint that term is negative and therefore clamped to zero, so the row shares
    its width by the grow factors; once the container is narrower the term turns positive and
-   exceeds the row, so every column wraps onto a line of its own. */
+   exceeds the row, so every column wraps onto a line of its own. The columns align at the top and
+   keep the height of their content, so a short side column does not stretch to a long main one. */
 .tlColumns {
 	display: flex;
 	flex-wrap: wrap;
+	align-items: flex-start;
 	font-family: var(--font-family);
 }
 

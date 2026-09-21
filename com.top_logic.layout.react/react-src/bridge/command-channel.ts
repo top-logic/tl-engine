@@ -41,6 +41,14 @@ const STALE_UI_RELOAD_TIME_KEY = 'tlReactStaleUiReloadTime';
 /** Minimum time between two stale-UI reloads. */
 const STALE_UI_RELOAD_GUARD_MS = 10_000;
 
+/**
+ * Parsed JSON body a command is answered with.
+ *
+ * <p>Every answer carries {@code success}; a command that reports back beyond that adds its own
+ * fields, which the caller reads by the name both sides agree on.</p>
+ */
+export type CommandResponse = Record<string, unknown>;
+
 /** JSON payload of a control command POST. */
 export interface CommandPayload {
   controlId: string;
@@ -53,7 +61,7 @@ export interface CommandPayload {
  * Tail of the strict FIFO command chain. Each enqueued command awaits its predecessor's
  * response before being sent; {@link post} never rejects, so the chain never breaks.
  */
-let _chain: Promise<void> = Promise.resolve();
+let _chain: Promise<unknown> = Promise.resolve();
 
 /**
  * Flush callbacks of fields currently holding a debounced value that has not been sent yet.
@@ -61,24 +69,42 @@ let _chain: Promise<void> = Promise.resolve();
  */
 const _pendingFlushes = new Set<() => Promise<void>>();
 
-/** Sends one command POST, reporting failures to the console without throwing. */
-async function post(url: string, payload: CommandPayload): Promise<void> {
+/**
+ * Sends one command POST, reporting failures to the console without throwing.
+ *
+ * @returns the answer of a successful command, or {@code undefined} when the command failed or
+ *          was answered with something other than a JSON object.
+ */
+async function post(url: string, payload: CommandPayload): Promise<CommandResponse | undefined> {
   try {
     const resp = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
+    const body = await resp.text();
     if (!resp.ok) {
-      const body = await resp.text();
       if (isStaleUiError(body)) {
         reloadOnStaleUi();
-        return;
+        return undefined;
       }
       console.error('[TLReact] Command failed:', resp.status, body);
+      return undefined;
     }
+    return parseResponse(body);
   } catch (e) {
     console.error('[TLReact] Command error:', e);
+    return undefined;
+  }
+}
+
+/** The answer of a command as a JSON object, or {@code undefined} if it is not one. */
+function parseResponse(body: string): CommandResponse | undefined {
+  try {
+    const parsed: unknown = JSON.parse(body);
+    return typeof parsed === 'object' && parsed !== null ? (parsed as CommandResponse) : undefined;
+  } catch {
+    return undefined;
   }
 }
 
@@ -118,10 +144,11 @@ function reloadOnStaleUi(): void {
  * synchronously, so they precede the action in the chain and are processed by the server before
  * the action runs.</p>
  *
- * @returns a promise resolving when this command's server response has arrived; it never
- *          rejects (transport failures are logged).
+ * @returns a promise resolving with this command's answer once it has arrived, or with
+ *          {@code undefined} when the command failed; it never rejects (transport failures are
+ *          logged).
  */
-export function enqueueCommand(url: string, payload: CommandPayload): Promise<void> {
+export function enqueueCommand(url: string, payload: CommandPayload): Promise<CommandResponse | undefined> {
   if (payload.command !== CMD_VALUE_CHANGED) {
     void flushPendingFieldValues();
   }

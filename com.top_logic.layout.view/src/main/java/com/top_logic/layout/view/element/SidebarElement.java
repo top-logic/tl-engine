@@ -284,7 +284,9 @@ public class SidebarElement implements UIElement {
 				return null;
 			}
 			String label = Resources.getInstance().getString(_label);
-			DirtyChannel dirtyChannel = new DirtyChannel();
+			// The item lies within the scope enclosing the sidebar, so what a form of the item
+			// holds unsaved is held unsaved there as well.
+			DirtyChannel dirtyChannel = new DirtyChannel(context.getDirtyChannel());
 			SecurityScope scope = AccessChecks.resolveScope(_accessControl);
 			NavigationItem item = new NavigationItem(_id, label, _icon,
 				() -> createContent(_children, context, dirtyChannel, scope), dirtyChannel);

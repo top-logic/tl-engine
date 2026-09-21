@@ -170,6 +170,25 @@ public class TestTextElementObservation extends BasicTestCase {
 	}
 
 	/**
+	 * Tests that a display returning on screen shows the object as it is now: the change it missed
+	 * while it was detached reaches it when it is attached again.
+	 */
+	public void testReattachedControlCatchesUp() {
+		TLObject ticket = ticket(_open);
+		_ticket.set(ticket);
+		ReactTextControl control = attachedControl();
+		control.detach();
+
+		ticket.tUpdateByName(STATUS_ATTRIBUTE, _closed);
+		_scope.reportUpdate(ticket);
+
+		control.attach();
+
+		assertEquals("The display resuming shows the status the ticket has now.",
+			color(CLOSED_TOKEN), displayedColor(control));
+	}
+
+	/**
 	 * Tests that a change of an object the channel never held leaves the display alone.
 	 */
 	public void testUnrelatedObjectChangeDoesNotRecompute() {

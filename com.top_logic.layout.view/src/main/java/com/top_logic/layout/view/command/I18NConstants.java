@@ -20,6 +20,21 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey CONFIRM_TITLE;
 
 	/**
+	 * @en Information
+	 */
+	public static ResKey NOTIFY_TITLE_INFO;
+
+	/**
+	 * @en Warning
+	 */
+	public static ResKey NOTIFY_TITLE_WARNING;
+
+	/**
+	 * @en Error
+	 */
+	public static ResKey NOTIFY_TITLE_ERROR;
+
+	/**
 	 * @en Language
 	 */
 	public static ResKey LANGUAGE_GROUP;

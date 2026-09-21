@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useFill, FillBarrier } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useFill, FillBarrier, startPointerDrag } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback, useRef } = React;
@@ -80,7 +80,7 @@ const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
     return style;
   }, [isHorizontal, allCollapsed, someCollapsed, effectiveHorizontal]);
 
-  const handleMouseDown = useCallback((e: React.MouseEvent, splitterIndex: number) => {
+  const handlePointerDown = useCallback((e: React.PointerEvent, splitterIndex: number) => {
     e.preventDefault();
     const container = containerRef.current;
     if (!container) return;
@@ -96,6 +96,13 @@ const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
     });
     localSizes.current = sizes;
 
+    // The proportional sizing the panes are rendered with, to fall back on when the gesture is
+    // cancelled: the drag writes pixel sizes onto the elements, past the React rendering.
+    const elBeforeAtStart = childElements[splitterIndex] as HTMLElement | undefined;
+    const elAfterAtStart = childElements[splitterIndex + 1] as HTMLElement | undefined;
+    const flexBefore = elBeforeAtStart?.style.flex ?? '';
+    const flexAfter = elAfterAtStart?.style.flex ?? '';
+
     dragState.current = {
       splitterIndex,
       startPos: isHorizontal ? e.clientX : e.clientY,
@@ -105,65 +112,71 @@ const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
       childAfter,
     };
 
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      const ds = dragState.current;
-      if (!ds || !localSizes.current) return;
+    startPointerDrag(e, {
+      cursor: isHorizontal ? 'col-resize' : 'row-resize',
 
-      const currentPos = isHorizontal ? moveEvent.clientX : moveEvent.clientY;
-      const delta = currentPos - ds.startPos;
+      onMove: (moveEvent) => {
+        const ds = dragState.current;
+        if (!ds || !localSizes.current) return;
 
-      const minBefore = ds.childBefore.minSize || 0;
-      const minAfter = ds.childAfter.minSize || 0;
+        const currentPos = isHorizontal ? moveEvent.clientX : moveEvent.clientY;
+        const delta = currentPos - ds.startPos;
 
-      let newBefore = ds.startSizeBefore + delta;
-      let newAfter = ds.startSizeAfter - delta;
+        const minBefore = ds.childBefore.minSize || 0;
+        const minAfter = ds.childAfter.minSize || 0;
 
-      // Enforce minimums.
-      if (newBefore < minBefore) {
-        newAfter += (newBefore - minBefore);
-        newBefore = minBefore;
-      }
-      if (newAfter < minAfter) {
-        newBefore += (newAfter - minAfter);
-        newAfter = minAfter;
-      }
+        let newBefore = ds.startSizeBefore + delta;
+        let newAfter = ds.startSizeAfter - delta;
 
-      localSizes.current[ds.splitterIndex] = newBefore;
-      localSizes.current[ds.splitterIndex + 1] = newAfter;
+        // Enforce minimums.
+        if (newBefore < minBefore) {
+          newAfter += (newBefore - minBefore);
+          newBefore = minBefore;
+        }
+        if (newAfter < minAfter) {
+          newBefore += (newAfter - minAfter);
+          newAfter = minAfter;
+        }
 
-      // Force re-render by updating the container's child styles directly for performance.
-      const childElements = container.querySelectorAll(':scope > .tlSplitPanel__child');
-      const elBefore = childElements[ds.splitterIndex] as HTMLElement;
-      const elAfter = childElements[ds.splitterIndex + 1] as HTMLElement;
-      if (elBefore) elBefore.style.flex = `0 0 ${newBefore}px`;
-      if (elAfter) elAfter.style.flex = `0 0 ${newAfter}px`;
-    };
+        localSizes.current[ds.splitterIndex] = newBefore;
+        localSizes.current[ds.splitterIndex + 1] = newAfter;
 
-    const handleMouseUp = () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
+        // Force re-render by updating the container's child styles directly for performance.
+        const childElements = container.querySelectorAll(':scope > .tlSplitPanel__child');
+        const elBefore = childElements[ds.splitterIndex] as HTMLElement;
+        const elAfter = childElements[ds.splitterIndex + 1] as HTMLElement;
+        if (elBefore) elBefore.style.flex = `0 0 ${newBefore}px`;
+        if (elAfter) elAfter.style.flex = `0 0 ${newAfter}px`;
+      },
 
-      // Send updated sizes to the server.
-      if (localSizes.current) {
-        const sizes: Record<string, number> = {};
-        children.forEach((child, i) => {
-          const ctrl = child.control as { controlId: string };
-          if (ctrl?.controlId && localSizes.current) {
-            sizes[ctrl.controlId] = localSizes.current[i];
-          }
-        });
-        sendCommand('updateSizes', { sizes });
-      }
-      localSizes.current = null;
-      dragState.current = null;
-    };
+      onEnd: (_event, dragged) => {
+        // Send updated sizes to the server. A press that stayed where it was leaves the panes
+        // alone: it would turn the proportional sizes the panes are kept at into pixel sizes.
+        if (dragged && localSizes.current) {
+          const sizes: Record<string, number> = {};
+          children.forEach((child, i) => {
+            const ctrl = child.control as { controlId: string };
+            if (ctrl?.controlId && localSizes.current) {
+              sizes[ctrl.controlId] = localSizes.current[i];
+            }
+          });
+          sendCommand('updateSizes', { sizes });
+        }
+        localSizes.current = null;
+        dragState.current = null;
+      },
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-    document.body.style.cursor = isHorizontal ? 'col-resize' : 'row-resize';
-    document.body.style.userSelect = 'none';
+      onCancel: () => {
+        // Put the two panes back to the sizes they had before the gesture, since nothing is sent.
+        const childElements = container.querySelectorAll(':scope > .tlSplitPanel__child');
+        const elBefore = childElements[splitterIndex] as HTMLElement | undefined;
+        const elAfter = childElements[splitterIndex + 1] as HTMLElement | undefined;
+        if (elBefore) elBefore.style.flex = flexBefore;
+        if (elAfter) elAfter.style.flex = flexAfter;
+        localSizes.current = null;
+        dragState.current = null;
+      },
+    });
   }, [children, isHorizontal, sendCommand]);
 
   const elements: React.ReactElement[] = [];
@@ -188,7 +201,7 @@ const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
           <div
             key={`splitter-${i}`}
             className={`tlSplitPanel__splitter tlSplitPanel__splitter--${orientation}`}
-            onMouseDown={e => handleMouseDown(e, i)}
+            onPointerDown={e => handlePointerDown(e, i)}
           />
         );
       }

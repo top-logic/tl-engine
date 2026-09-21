@@ -114,6 +114,20 @@ html, body {
 	white-space: nowrap;
 }
 
+/* --- Drag shield -------------------------------------------------------- */
+
+/* Covers the viewport from the moment a drag gesture moves until the pointer is released (see the
+   bridge's startPointerDrag). It carries the cursor of the gesture, so the cursor keeps naming the
+   drag wherever the pointer goes, and it keeps hover effects and text selection off the page. The
+   gesture itself is routed to its handle by pointer capture, not by this element. Above every
+   other layer (dialog backdrop and menus at 10000, snackbar at 11000). */
+.tlDragShield {
+	position: fixed;
+	inset: 0;
+	z-index: 12000;
+	user-select: none;
+}
+
 /* --- TLButton ----------------------------------------------------------- */
 
 .tlReactButton {
@@ -1414,7 +1428,8 @@ button.tlPanel__actionButton:focus-visible {
 	cursor: row-resize;
 }
 
-.tlSplitPanel__splitter:hover {
+.tlSplitPanel__splitter:hover,
+.tlSplitPanel__splitter:active {
 	background: var(--border-interactive);
 }
 

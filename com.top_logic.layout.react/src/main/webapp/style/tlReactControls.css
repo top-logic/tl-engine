@@ -1296,6 +1296,8 @@ div.tlValueList {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+	flex: 0 1 auto;
+	min-width: 0;
 }
 
 .tlPanel__titleContent {
@@ -1334,6 +1336,17 @@ div.tlValueList {
 	gap: var(--spacing-01);
 	flex-shrink: 0;
 	margin-left: auto;
+}
+
+/* Who gives way when the header is too narrow: a toolbar that can collapse absorbs the shrink
+   (it drops button labels and folds commands into its overflow menu), and the title truncates
+   only once the toolbar is down to its overflow trigger. A toolbar that cannot collapse keeps
+   its width, as before, so the title yields first. */
+.tlPanel__header:has(> .tlPanel__toolbar > .tlToolbar--collapsible) > .tlPanel__toolbar {
+	flex-shrink: 1000;
+	/* Stated explicitly: the automatic minimum size would be the toolbar's natural width, which
+	   is exactly the width the toolbar is meant to give up again. */
+	min-width: var(--tl-toolbar-trigger-size);
 }
 
 .tlPanel__actionButton {
@@ -5116,6 +5129,40 @@ button.tlMenu__item--disabled:hover {
 	flex-shrink: 0;
 }
 
+:root {
+	/* Width of an icon-only toolbar trigger, such as the overflow menu's "...". A collapsing
+	   toolbar never shrinks below it, so its overflow menu stays reachable. */
+	--tl-toolbar-trigger-size: 2rem;
+}
+
+/* A toolbar that collapses states its full natural width (as an inline style set by TLToolbar),
+   which is what its host sizes itself from, and gives that width up again down to its overflow
+   trigger. The content sits at the end the toolbar collapses towards, so the space it has given
+   up is at the far end from what is still visible. */
+.tlToolbar--collapsible {
+	flex-shrink: 1;
+	min-width: var(--tl-toolbar-trigger-size);
+	justify-content: flex-end;
+}
+
+/* Compact presentation: a labeled command button collapses to its icon, which is also its
+   accessible name and tooltip. Buttons without an icon keep their label. The dropdown of a menu
+   group is portaled out of the toolbar, so its entries keep their labels. */
+.tlToolbar--compact .tlReactButton:has(> .tlReactButton__image) {
+	width: 2rem;
+	flex-shrink: 0;
+	padding: 0;
+	box-shadow: none;
+}
+
+.tlToolbar--compact .tlReactButton:has(> .tlReactButton__image) > .tlReactButton__image {
+	display: inline-block;
+}
+
+.tlToolbar--compact .tlReactButton:has(> .tlReactButton__image) > .tlReactButton__label {
+	display: none;
+}
+
 .tlToolbar__separator {
 	display: block;
 	width: 1px;
@@ -5170,7 +5217,7 @@ button.tlToolbar__menuTrigger:focus-visible {
 /* Compact, square icon-only trigger (e.g. the burger overflow menu). */
 .tlToolbar__menuTrigger--icon {
 	gap: 0;
-	width: 2rem;
+	width: var(--tl-toolbar-trigger-size);
 	padding: 0;
 	justify-content: center;
 }
@@ -6426,6 +6473,12 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 
 .tlToolbar__dropdownItem {
 	display: flex;
+}
+
+/* An entry whose button is currently hidden renders empty - drop it, so the menu does not offer
+   (and a screen reader does not announce) blank entries. */
+.tlToolbar__dropdownItem:empty {
+	display: none;
 }
 
 /* Dropdown opens over a light surface — reset the inverse colors that

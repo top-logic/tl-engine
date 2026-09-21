@@ -20,8 +20,10 @@ import com.top_logic.layout.react.control.ReactControl;
  * The React component {@code TLToolbar} receives:
  * </p>
  * <ul>
- * <li>{@code groups} - ordered list of clique groups, each with display mode and child
+ * <li>{@link #GROUPS} - ordered list of clique groups, each with display mode and child
  * controls</li>
+ * <li>{@link #OVERFLOW} - the {@link ToolbarOverflow} end at which commands that do not fit
+ * collapse</li>
  * </ul>
  */
 public class ReactToolbarControl extends ReactControl {
@@ -30,9 +32,13 @@ public class ReactToolbarControl extends ReactControl {
 
 	private static final String GROUPS = "groups";
 
+	private static final String OVERFLOW = "overflow";
+
 	private final List<ReactControl> _allChildren = new ArrayList<>();
 
 	private final List<Object> _groups = new ArrayList<>();
+
+	private ToolbarOverflow _overflow = ToolbarOverflow.NONE;
 
 	/**
 	 * Creates a new empty {@link ReactToolbarControl}.
@@ -43,6 +49,25 @@ public class ReactToolbarControl extends ReactControl {
 	public ReactToolbarControl(ReactContext context) {
 		super(context, null, REACT_MODULE);
 		putState(GROUPS, _groups);
+		putState(OVERFLOW, _overflow.getExternalName());
+	}
+
+	/**
+	 * The end at which this toolbar collapses when its commands do not fit.
+	 */
+	public ToolbarOverflow getOverflow() {
+		return _overflow;
+	}
+
+	/**
+	 * Sets the end at which this toolbar collapses when its commands do not fit.
+	 *
+	 * @param overflow
+	 *        The collapsing behavior, published to the client as {@link #OVERFLOW}.
+	 */
+	public void setOverflow(ToolbarOverflow overflow) {
+		_overflow = overflow;
+		putState(OVERFLOW, overflow.getExternalName());
 	}
 
 	/**
@@ -111,6 +136,10 @@ public class ReactToolbarControl extends ReactControl {
 
 		// Push full groups state to client.
 		putState(GROUPS, _groups);
+
+		// The rebuilt toolbar was built for the same placement, so it carries the collapsing
+		// behavior this one must keep displaying with.
+		setOverflow(newToolbar._overflow);
 	}
 
 }

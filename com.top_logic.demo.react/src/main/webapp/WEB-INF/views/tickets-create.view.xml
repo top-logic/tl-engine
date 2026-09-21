@@ -17,7 +17,9 @@
 		>
 			<field attribute="name"/>
 			<commands>
-				<generic-command placement="BUTTON_BAR">
+				<generic-command key="ENTER"
+					placement="BUTTON_BAR"
+				>
 					<label>
 						<en>Create</en>
 						<de>Anlegen</de>
@@ -25,6 +27,18 @@
 					<store-form-state/>
 					<with-transaction>
 						<execute-script function="obj -> $obj.copy(transient: false)"/>
+					</with-transaction>
+					<write-channel name="selection"/>
+					<close-dialog/>
+				</generic-command>
+				<generic-command placement="BUTTON_BAR">
+					<label>
+						<en>Create closed</en>
+						<de>Geschlossen anlegen</de>
+					</label>
+					<store-form-state/>
+					<with-transaction>
+						<execute-script function="obj -> { created = $obj.copy(transient: false); $created.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`); $created; }"/>
 					</with-transaction>
 					<write-channel name="selection"/>
 					<close-dialog/>

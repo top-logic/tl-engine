@@ -30,9 +30,11 @@ public class ReactToolbarControl extends ReactControl {
 
 	private static final String REACT_MODULE = "TLToolbar";
 
-	private static final String GROUPS = "groups";
+	/** State key for the ordered clique groups, each with its display mode and child controls. */
+	public static final String GROUPS = "groups";
 
-	private static final String OVERFLOW = "overflow";
+	/** @see #getOverflow() */
+	public static final String OVERFLOW = "overflow";
 
 	private final List<ReactControl> _allChildren = new ArrayList<>();
 

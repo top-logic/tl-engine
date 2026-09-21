@@ -1341,9 +1341,9 @@ div.tlValueList {
 /* Who gives way when the header is too narrow: a toolbar that can collapse absorbs the shrink
    (it drops button labels and folds commands into its overflow menu), and the title truncates
    only once the toolbar is down to its overflow trigger. A toolbar that cannot collapse keeps
-   its width, as before, so the title yields first. */
+   its width, so there the title yields first. */
 .tlPanel__header:has(> .tlPanel__toolbar > .tlToolbar--collapsible) > .tlPanel__toolbar {
-	flex-shrink: 1000;
+	flex-shrink: var(--tl-toolbar-shrink-priority);
 	/* Stated explicitly: the automatic minimum size would be the toolbar's natural width, which
 	   is exactly the width the toolbar is meant to give up again. */
 	min-width: var(--tl-toolbar-trigger-size);
@@ -2275,6 +2275,22 @@ button.tlDrawerToggle:focus-visible {
 	margin-left: auto;
 }
 
+/* Without a command the actions toolbar renders nothing. The wrapper then leaves the bar alone
+   instead of contributing a gap between the content and the bar's trailing end. */
+.tlAppBar__actions:empty {
+	display: none;
+}
+
+/* Who gives way when the bar is too narrow: a toolbar that can collapse absorbs the shrink (it
+   drops button labels and folds commands into its overflow menu), and the title truncates only
+   once the toolbar is down to its overflow trigger. */
+.tlAppBar__actions:has(> .tlToolbar--collapsible) {
+	flex-shrink: var(--tl-toolbar-shrink-priority);
+	/* Stated explicitly: the automatic minimum size would be the toolbar's natural width, which
+	   is exactly the width the toolbar is meant to give up again. */
+	min-width: var(--tl-toolbar-trigger-size);
+}
+
 .tlAppBar__trailing {
 	display: flex;
 	align-items: center;
@@ -2284,8 +2300,9 @@ button.tlDrawerToggle:focus-visible {
 }
 
 /* An actions area ahead of the trailing one has already claimed the free space; a second automatic
-   margin would split it between the two and strand the actions mid-bar. */
-.tlAppBar__actions + .tlAppBar__trailing {
+   margin would split it between the two and strand the actions mid-bar. A wrapper showing nothing
+   claims nothing, so the trailing area keeps its own margin then. */
+.tlAppBar__actions:not(:empty) + .tlAppBar__trailing {
 	margin-left: 0;
 }
 
@@ -2339,31 +2356,6 @@ button.tlDrawerToggle:focus-visible {
 
 .tlAppBar--primary .tlReactButton--link {
 	color: var(--layer-accent-text);
-}
-
-/* --- Responsive: compact app bar at small viewports ------------------------- */
-
-@media (max-width: 768px) {
-	/* Labeled command buttons collapse to their icon so the bar never grows wider
-	   than the device. Buttons without an icon keep their label. */
-	.tlAppBar .tlReactButton:has(> .tlReactButton__image) {
-		width: 2rem;
-		flex-shrink: 0;
-		padding: 0;
-		box-shadow: none;
-	}
-
-	.tlAppBar .tlReactButton:has(> .tlReactButton__image) > .tlReactButton__image {
-		display: inline-block;
-	}
-
-	.tlAppBar .tlReactButton:has(> .tlReactButton__image) > .tlReactButton__label {
-		display: none;
-	}
-
-	.tlAppBar__actions {
-		min-width: 0;
-	}
 }
 
 /* --- TLBreadcrumb ---------------------------------------------------------- */
@@ -5133,6 +5125,15 @@ button.tlMenu__item--disabled:hover {
 	/* Width of an icon-only toolbar trigger, such as the overflow menu's "...". A collapsing
 	   toolbar never shrinks below it, so its overflow menu stays reachable. */
 	--tl-toolbar-trigger-size: 2rem;
+
+	/* Weight with which the wrapper of a collapsing toolbar takes a shrink, so that the toolbar
+	   gives way before the title beside it. The share of a shrink an item takes is proportional
+	   to its flex shrink factor times its flex base size, so the title beside the toolbar keeps a
+	   share of its own; at this weight that share stays below Chrome's layout unit of 1/64 px for
+	   any bar or header up to a few thousand pixels wide, and a title is cut only once the
+	   toolbar is down to its trigger. (A single layout unit of overflow already costs a whole
+	   character, because an ellipsis replaces the last character that no longer fits.) */
+	--tl-toolbar-shrink-priority: 100000;
 }
 
 /* A toolbar that collapses states its full natural width (as an inline style set by TLToolbar),

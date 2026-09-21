@@ -53,6 +53,7 @@
     </fields>
     ```
     Another command is `<on-submit class="fq.MyCommand" .../>`. What counts as a submit depends on the control: a field the user *types* in (`ReactTextInputControl` single-line, `ReactNumberInputControl`) reports `ReactFormFieldControl.hasSubmitGesture() == true` and submits on **Enter** - the client sends the `submit` command (`FieldSubmitArguments`, carrying the text, so one recorded step both stores and submits it) from the shared `useTLSubmitOnEnter()` bridge hook, enabled by the `submitOnEnter` state the server sets in `setSubmitListener(…)`. A field that is *picked* from - a dropdown, a date picker, a checkbox - has no such gesture, so **every choice is a submit**; there the element follows `ChannelFieldBinding.setCommitListener(…)`, which reports only values the user produced (a value pushed in from the channel is not a commit). A multi-line text area has no submit gesture at all, since Enter is part of the text.
+  - **`input-control`** names the control the value is entered in, overriding the one the type leads to - the same property `<field>` carries, resolved by the same chain: `<value-input type="demo:Priority" value="p"><input-control class="com.top_logic.layout.view.form.SelectControlProvider" display="segmented"/></value-input>`. It reaches `FieldControlService.createFieldControl(context, type, spec, model, control)`, whose first step builds the named provider and skips the type-based resolution entirely. See "Display variants of input fields" below.
   - The tag is `value-input`, not `input`: `input` is the name of the channel property ~21 element configs declare, and a content tag that shadows a property name of the same config makes that config invalid outright - "Ambiguous content tag name 'input': May either represent the property getInput(), or a content element of the default container" - which would take out `<form>`, `<anchor>`, `<switch>` and every other element that has both an `input` channel and children.
 - **Dialogs** open a `.view.xml` via `<open-dialog dialog-view="…">`; close via `CancelDialogCommand` / `DialogManager.closeTopDialog`. `currentUser()` is a TL-Script function usable in `<derived-channel expr="…">`.
 - **Referencing a `UIElement` impl by `class=` in view content.** View content lists resolve entries by `@TagName`, so an app-specific element that should not claim a global tag is placed via the content property's *entry tag* plus `class=`. The `children` content property (`ContainerElement.Config`) is `@EntryTag("child")`, so write `<child class="fq.MyElement"/>` inside a `<panel>` / container. If a cell provider is reusable, make it public rather than justifying a separate element; justify a separate element by genuinely different data / behavior.
@@ -233,6 +234,85 @@ Bounding the width leaves the **fill contract** (see below) alone: `max-width` a
 work across the direction of a column, while filling is about the height a container takes from its
 own container. A bounded stack that hosts a filling child still carries `tlFill` and still reports
 filling upwards, so a table inside a centered content column keeps bounding its own scroll viewport.
+
+## Display variants of input fields
+
+A control provider takes options, so the same value is entered in a different shape without a new
+element and without a new control: a selection as a cloud of toggles or as a bar of segments, a
+number as a handle on a track, a truth value as a switch.
+
+**A selection** — `SelectControlProvider`, option `display` (`SelectDisplay`): `dropdown` (the
+default) offers the options in a list that opens on demand and is searched by typing, `chips` draws
+every option as a toggle, `segmented` draws them as a bar of segments with a marker sliding to the
+chosen one. One server control (`ReactDropdownSelectControl`) serves all three - it keeps the option
+index and the value protocol and names the client component to draw the shape with
+(`TLDropdownSelect`, `TLOptionChips`, `TLSegmentedChoice`) - so a shape showing every option is
+handed the complete option list right away, having nothing to open at which it could ask for it. The
+shapes showing every option suit a handful of options; a long list belongs in a dropdown.
+
+```xml
+<field attribute="priority">
+	<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
+		display="segmented"
+	/>
+</field>
+```
+
+**A number** — `NumberInputControlProvider`, option `display` (`NumberDisplay`): `input` (the
+default) takes any number the format of the field reads, `slider` drags a handle along a track
+between `min` and `max`, snapping to `step` (whole numbers where nothing is stated). A slider needs
+its bounds, which `@MandatoryIf(other = @Ref(DISPLAY), value = NumberDisplay.SLIDER_NAME)` demands of
+the configuration - `min` and `max` are mandatory as soon as `display` is `slider` and ignored
+otherwise - and `@ComparisonDependency` keeps `min` below `max`. The slider exchanges its value as a
+number rather than as formatted text, so no locale format reads it.
+
+```xml
+<value-input
+	type="tl.core:Integer"
+	value="level"
+>
+	<input-control class="com.top_logic.layout.view.form.NumberInputControlProvider"
+		display="slider"
+		max="10.0"
+		min="0.0"
+		step="1.0"
+	/>
+</value-input>
+```
+
+**A truth value** — `BooleanControlProvider`, option `display` (`BooleanPresentation`): the box that
+is ticked by default, `switch` for a handle sliding between the two states, `radio` and `select` for
+a choice between labelled values. `switch` is also a presentation of the model, so an attribute that
+is a switch everywhere says so once:
+
+```xml
+<property name="active"
+	type="tl.core:Boolean"
+>
+	<annotations>
+		<boolean-display presentation="switch"/>
+	</annotations>
+</property>
+```
+
+A value that may also be unknown (`tl.core:Tristate`, a tri-state field) stays a checkbox even where
+a switch is asked for: a switch has no third position for "no value".
+
+**Three ways to choose the provider**, in the order `FieldControlService` tries them:
+
+1. `<input-control class="…Provider" …/>` inside a `<field>` (`FieldElement.Config.getInputControl()`)
+   or inside a `<value-input>` (`ValueInputElement.Config.getInputControl()`) — the view decides, for
+   this one place in the user interface.
+2. The `<input-control>` annotation of the model attribute — the model decides, for every place the
+   attribute is shown. `<boolean-display presentation="switch"/>` is the same decision said in the
+   model's own vocabulary: it reaches the field description as
+   `FieldSpec.getBooleanPresentation()`, which `BooleanControlProvider` follows where its own
+   `display` says nothing.
+3. The type map of `FieldControlService` and, failing that, the `FieldControlRegistry` entry for the
+   kind of value the type holds.
+
+The display is how the field looks, not what it says: it is a rendering-only state key, kept out of
+the headless projection, so a scripted test reads the same options and the same value in every shape.
 
 ## A command is a chain of actions, and the chain can branch
 

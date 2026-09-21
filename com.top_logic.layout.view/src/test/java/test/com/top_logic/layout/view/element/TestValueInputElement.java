@@ -22,6 +22,7 @@ import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
@@ -32,10 +33,14 @@ import com.top_logic.layout.form.model.SimpleSelectFieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.form.NumberDisplay;
 import com.top_logic.layout.react.control.form.ReactCheckboxControl;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
+import com.top_logic.layout.react.control.form.ReactSliderControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
+import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
+import com.top_logic.layout.react.control.select.SelectDisplay;
 import com.top_logic.layout.react.field.FieldControlRegistry;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
@@ -49,8 +54,11 @@ import com.top_logic.layout.view.command.GenericViewCommand;
 import com.top_logic.layout.view.element.ValueInputElement;
 import com.top_logic.layout.view.element.PanelElement;
 import com.top_logic.layout.view.form.AttributeOptions;
+import com.top_logic.layout.view.form.BooleanControlProvider;
 import com.top_logic.layout.view.form.ChannelFieldBinding;
 import com.top_logic.layout.view.form.FieldControlService;
+import com.top_logic.layout.view.form.NumberInputControlProvider;
+import com.top_logic.layout.view.form.SelectControlProvider;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
@@ -60,6 +68,7 @@ import com.top_logic.model.TLPrimitive.Kind;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.access.StorageMapping;
+import com.top_logic.model.annotate.ui.BooleanPresentation;
 import com.top_logic.model.annotate.util.AttributeSettings;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.util.TLModelUtil;
@@ -178,7 +187,7 @@ public class TestValueInputElement extends TestCase {
 	 */
 	public void testParseInputs() throws Exception {
 		List<PolymorphicConfiguration<? extends UIElement>> inputs = parseInputs();
-		assertEquals("Every input of the test view must be parsed.", 5, inputs.size());
+		assertEquals("Every input of the test view must be parsed.", 8, inputs.size());
 
 		ValueInputElement.Config text = config(inputs, 0);
 		assertEquals("term", text.getValue().getChannelName());
@@ -213,6 +222,8 @@ public class TestValueInputElement extends TestCase {
 			config(inputs, 1).getClearable());
 		assertNull("An input that states no delay waits for the span its control uses by default.",
 			config(inputs, 1).getDebounce());
+		assertNull("An input that names no control leaves the choice to the type of its value.",
+			config(inputs, 1).getInputControl());
 
 		ValueInputElement.Config owners = config(inputs, 4);
 		assertTrue("Several owners are chosen at once.", owners.getMultiple());
@@ -534,6 +545,143 @@ public class TestValueInputElement extends TestCase {
 		TagWriter out = new TagWriter();
 		control.write(out);
 		return out.toString().replace("&quot;", "\"");
+	}
+
+	/**
+	 * An input names the control the value is entered in, in the shape a {@code <field>} names it.
+	 */
+	public void testParseInputControl() throws Exception {
+		List<PolymorphicConfiguration<? extends UIElement>> inputs = parseInputs();
+
+		SelectControlProvider.Config chosen = inputControl(inputs, 5, SelectControlProvider.Config.class);
+		assertEquals(SelectControlProvider.class, chosen.getImplementationClass());
+		assertEquals("The shape the options are offered in must reach the configuration.",
+			SelectDisplay.SEGMENTED, chosen.getDisplay());
+
+		NumberInputControlProvider.Config dragged =
+			inputControl(inputs, 6, NumberInputControlProvider.Config.class);
+		assertEquals(NumberDisplay.SLIDER, dragged.getDisplay());
+		assertEquals("The bounds of the range must reach the configuration.",
+			Double.valueOf(0.0), dragged.getMin());
+		assertEquals(Double.valueOf(10.0), dragged.getMax());
+		assertEquals(Double.valueOf(1.0), dragged.getStep());
+
+		BooleanControlProvider.Config flipped =
+			inputControl(inputs, 7, BooleanControlProvider.Config.class);
+		assertEquals(BooleanPresentation.SWITCH, flipped.getDisplay());
+	}
+
+	/**
+	 * The control an input names edits the value, whatever control the type of that value would
+	 * lead to.
+	 */
+	public void testTheNamedControlEditsTheValue() {
+		TLEnumeration status = _model.addEnumeration(_module, _module, "Choice");
+		TLModelUtil.addClassifier(status, "open");
+		TLModelUtil.addClassifier(status, "closed");
+		SimpleSelectFieldModel chosen =
+			new SimpleSelectFieldModel(null, AttributeOptions.optionsFor(status), false);
+
+		ReactControl control = entered(status, chosen, selectDisplay(SelectDisplay.SEGMENTED));
+
+		assertTrue("A selection is made on a select control, but is made on " + control.getClass(),
+			control instanceof ReactDropdownSelectControl);
+		assertEquals("The named control must be built in the shape it was configured for.",
+			SelectDisplay.SEGMENTED, ((ReactDropdownSelectControl) control).getDisplay());
+	}
+
+	/** Without a control named, the value is entered in the one its type leads to. */
+	public void testWithoutANamedControlTheTypeDecides() {
+		TLEnumeration status = _model.addEnumeration(_module, _module, "Plain");
+		TLModelUtil.addClassifier(status, "open");
+		SimpleSelectFieldModel chosen =
+			new SimpleSelectFieldModel(null, AttributeOptions.optionsFor(status), false);
+
+		ReactControl control = entered(status, chosen, null);
+
+		assertEquals("A selection is offered in a list that opens on demand unless stated otherwise.",
+			SelectDisplay.DROPDOWN, ((ReactDropdownSelectControl) control).getDisplay());
+	}
+
+	/** A number is dragged along a track where the input names a slider. */
+	public void testANumberIsDraggedWhereASliderIsNamed() {
+		TLType number = datatype("Amount", Kind.INT, Integer.class);
+		AbstractFieldModel field = new AbstractFieldModel(null);
+
+		assertEquals(ReactSliderControl.class, entered(number, field, sliderDisplay()).getClass());
+	}
+
+	/** A truth value is flipped on a switch where the input names one. */
+	public void testATruthValueIsFlippedWhereASwitchIsNamed() {
+		TLType flag = datatype("Switched", Kind.BOOLEAN, Boolean.class);
+		AbstractFieldModel field = new AbstractFieldModel(null);
+
+		ReactControl control = entered(flag, field, switchDisplay());
+
+		assertEquals(BooleanPresentation.SWITCH, ((ReactCheckboxControl) control).getPresentation());
+	}
+
+	/**
+	 * The control a value of the given type is entered in, with the given control named by the
+	 * input or {@code null} to let the type decide.
+	 */
+	private ReactControl entered(TLType type, AbstractFieldModel field,
+			PolymorphicConfiguration<? extends ReactFieldControlProvider> control) {
+		FieldSpec spec = FieldControlService.fieldSpec(type, type, LABEL, false, field);
+		return controlService().createFieldControl(_context, type, spec, field, control);
+	}
+
+	/** A select control offering its options in the given shape. */
+	private static PolymorphicConfiguration<? extends ReactFieldControlProvider> selectDisplay(
+			SelectDisplay display) {
+		SelectControlProvider.Config config =
+			TypedConfiguration.newConfigItem(SelectControlProvider.Config.class);
+		config.update(config.descriptor().getProperty(SelectControlProvider.Config.DISPLAY), display);
+		return config;
+	}
+
+	/** A number control dragging its value along a track of a small range. */
+	private static PolymorphicConfiguration<? extends ReactFieldControlProvider> sliderDisplay() {
+		NumberInputControlProvider.Config config =
+			TypedConfiguration.newConfigItem(NumberInputControlProvider.Config.class);
+		config.update(config.descriptor().getProperty(NumberInputControlProvider.Config.DISPLAY),
+			NumberDisplay.SLIDER);
+		config.update(config.descriptor().getProperty(NumberInputControlProvider.Config.MIN),
+			Double.valueOf(0.0));
+		config.update(config.descriptor().getProperty(NumberInputControlProvider.Config.MAX),
+			Double.valueOf(10.0));
+		return config;
+	}
+
+	/** A boolean control flipping its value on a switch. */
+	private static PolymorphicConfiguration<? extends ReactFieldControlProvider> switchDisplay() {
+		BooleanControlProvider.Config config =
+			TypedConfiguration.newConfigItem(BooleanControlProvider.Config.class);
+		config.update(config.descriptor().getProperty(BooleanControlProvider.Config.DISPLAY),
+			BooleanPresentation.SWITCH);
+		return config;
+	}
+
+	/**
+	 * A {@link FieldControlService} resolving the controls, built without the service module: the
+	 * resolution under test reads nothing the startup of the service fills.
+	 */
+	private static FieldControlService controlService() {
+		FieldControlService.Config config = TypedConfiguration.newConfigItem(FieldControlService.Config.class);
+		config.setImplementationClass(FieldControlService.class);
+		return (FieldControlService) SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY
+			.getInstance(config);
+	}
+
+	/** The control configuration the input at the given position names. */
+	private static <C extends PolymorphicConfiguration<? extends ReactFieldControlProvider>> C inputControl(
+			List<PolymorphicConfiguration<? extends UIElement>> inputs, int index, Class<C> expected) {
+		PolymorphicConfiguration<? extends ReactFieldControlProvider> control =
+			config(inputs, index).getInputControl();
+		assertNotNull("Input " + index + " must name a control.", control);
+		assertTrue("Input " + index + " must name a " + expected.getName() + ", but names " + control,
+			expected.isInstance(control));
+		return expected.cast(control);
 	}
 
 	/**

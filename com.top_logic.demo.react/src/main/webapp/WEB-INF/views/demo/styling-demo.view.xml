@@ -27,11 +27,26 @@
 	The fourth section is a search field: the magnifier ahead of what is typed, the button that
 	empties it, and the delay the typed value is held back for before it reaches the channel the
 	text below reads.
+	
+	The fifth section shows the display variants of an input: a selection as a cloud of toggle
+	chips or as a bar of segments, a number as a handle dragged along a track, a truth value as a
+	switch. Each is a control provider named where the value is displayed - by the input-control of
+	a field, which overrides what the attribute says, and by the input-control of a value-input,
+	which overrides what the type of the value leads to. The four values bound to a channel are
+	echoed beside their input, so what reaches the channel is read as it is written.
 -->
 <view>
 	<channels>
 		<channel name="q"/>
 		<channel name="status"/>
+		<channel name="choice"/>
+		<channel name="chosen"/>
+		<channel name="level"/>
+		<channel name="switched"/>
+		<!-- The object the form of the last section edits, held by the view and stored nowhere. -->
+		<derived-channel name="obj"
+			expr="new(`demo.react:Demo`, transient: true)"
+		/>
 	</channels>
 
 	<panel>
@@ -475,6 +490,145 @@
 			<text
 				css-class="tlDemoTyped"
 				input="q"
+				tone="helper"
+			/>
+		</stack>
+
+		<text variant="title">
+			<label>
+				<en>Display variants of an input</en>
+				<de>Darstellungsvarianten einer Eingabe</de>
+			</label>
+		</text>
+		<text>
+			<label>
+				<en>A selection is offered as a cloud of toggles or as a bar of segments instead of a list that opens on demand, a number is dragged along a track instead of typed, and a truth value is flipped on a switch instead of ticked in a box. Each variant is the control the value is entered in, named by the input-control of the field - which overrides what the attribute of the model says.</en>
+				<de>Eine Auswahl wird als Wolke von Umschaltern oder als Leiste von Segmenten angeboten statt als Liste, die sich bei Bedarf öffnet, eine Zahl wird entlang einer Leiste gezogen statt eingegeben, und ein Wahrheitswert wird auf einem Schalter umgelegt statt in einem Kästchen angekreuzt. Jede Variante ist das Steuerelement, in dem der Wert eingegeben wird, benannt durch das input-control des Feldes - das überschreibt, was das Attribut des Modells sagt.</de>
+			</label>
+		</text>
+		<form
+			initial-edit-mode="true"
+			input="obj"
+			mode-switch="false"
+		>
+			<field attribute="tags">
+				<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
+					display="chips"
+				/>
+			</field>
+			<field attribute="priority">
+				<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
+					display="segmented"
+				/>
+			</field>
+			<field attribute="ratio">
+				<input-control class="com.top_logic.layout.view.form.NumberInputControlProvider"
+					display="slider"
+					max="100.0"
+					min="0.0"
+					step="5.0"
+				/>
+			</field>
+			<field attribute="count">
+				<input-control class="com.top_logic.layout.view.form.NumberInputControlProvider"
+					display="slider"
+					max="10.0"
+					min="0.0"
+					step="1.0"
+				/>
+			</field>
+			<field attribute="active">
+				<input-control class="com.top_logic.layout.view.form.BooleanControlProvider"
+					display="switch"
+				/>
+			</field>
+		</form>
+
+		<text>
+			<label>
+				<en>A value that belongs to the view and to no object names its control the same way: the input-control of a value-input overrides the control the type of the value leads to. The text beside each input reads the channel it writes.</en>
+				<de>Ein Wert, der zur Ansicht und zu keinem Objekt gehört, benennt sein Steuerelement auf dieselbe Weise: Das input-control eines value-input überschreibt das Steuerelement, auf das der Typ des Werts hinweist. Der Text neben jeder Eingabe liest den Kanal, den sie schreibt.</de>
+			</label>
+		</text>
+		<fields>
+			<value-input
+				type="demo.react:Priority"
+				value="choice"
+			>
+				<label>
+					<en>Priority (segments)</en>
+					<de>Priorität (Segmente)</de>
+				</label>
+				<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
+					display="segmented"
+				/>
+			</value-input>
+			<value-input
+				multiple="true"
+				type="demo.react:Priority"
+				value="chosen"
+			>
+				<label>
+					<en>Priorities (chips)</en>
+					<de>Prioritäten (Chips)</de>
+				</label>
+				<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
+					display="chips"
+				/>
+			</value-input>
+			<value-input
+				type="tl.core:Integer"
+				value="level"
+			>
+				<label>
+					<en>Level (slider)</en>
+					<de>Stufe (Regler)</de>
+				</label>
+				<input-control class="com.top_logic.layout.view.form.NumberInputControlProvider"
+					display="slider"
+					max="10.0"
+					min="0.0"
+					step="1.0"
+				/>
+			</value-input>
+			<value-input
+				type="tl.core:Boolean"
+				value="switched"
+			>
+				<label>
+					<en>Alert (switch)</en>
+					<de>Alarm (Schalter)</de>
+				</label>
+				<input-control class="com.top_logic.layout.view.form.BooleanControlProvider"
+					display="switch"
+				/>
+			</value-input>
+		</fields>
+		<stack
+			direction="row"
+			gap="default"
+			wrap="true"
+		>
+			<text variant="label">
+				<label>
+					<en>On the channels:</en>
+					<de>Auf den Kanälen:</de>
+				</label>
+			</text>
+			<text
+				input="choice"
+				tone="helper"
+			/>
+			<text
+				input="chosen"
+				tone="helper"
+			/>
+			<text
+				input="level"
+				tone="helper"
+			/>
+			<text
+				input="switched"
 				tone="helper"
 			/>
 		</stack>

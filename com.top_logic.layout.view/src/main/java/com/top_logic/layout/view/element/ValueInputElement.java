@@ -31,6 +31,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.field.FieldSpec;
+import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelInputs;
@@ -140,6 +141,9 @@ public class ValueInputElement implements UIElement {
 
 		/** Configuration name for {@link #getOnSubmit()}. */
 		String ON_SUBMIT = "on-submit";
+
+		/** Configuration name for {@link #getInputControl()}. */
+		String INPUT_CONTROL = "input-control";
 
 		/**
 		 * The channel carrying the value the user enters.
@@ -316,6 +320,25 @@ public class ValueInputElement implements UIElement {
 		@ImplementationClassDefault(GenericViewCommand.class)
 		@Options(fun = AllInAppImplementations.class)
 		PolymorphicConfiguration<? extends ViewCommand> getOnSubmit();
+
+		/**
+		 * The control the value is entered in, overriding the one its type implies.
+		 *
+		 * <p>
+		 * The same choice a {@code <field>} makes for the attribute it displays, made for a value
+		 * that belongs to the view instead: a selection offered as a cloud of toggles rather than
+		 * as a list that opens on demand, a number dragged along a track rather than typed, a truth
+		 * value flipped on a switch rather than ticked in a box.
+		 * </p>
+		 *
+		 * <p>
+		 * Left unset, the control is the one the {@link #getType() type} of the value leads to.
+		 * </p>
+		 */
+		@Name(INPUT_CONTROL)
+		@Nullable
+		@Options(fun = AllInAppImplementations.class)
+		PolymorphicConfiguration<? extends ReactFieldControlProvider> getInputControl();
 	}
 
 	private final ChannelRef _valueRef;
@@ -346,6 +369,8 @@ public class ValueInputElement implements UIElement {
 
 	private final ViewCommand.Config _submitCommandConfig;
 
+	private final PolymorphicConfiguration<? extends ReactFieldControlProvider> _inputControl;
+
 	private final String _cssClass;
 
 	/**
@@ -369,6 +394,7 @@ public class ValueInputElement implements UIElement {
 		PolymorphicConfiguration<? extends ViewCommand> submitConfig = config.getOnSubmit();
 		_submitCommandConfig = submitConfig instanceof ViewCommand.Config commandConfig ? commandConfig : null;
 		_submitCommand = _submitCommandConfig == null ? null : context.getInstance(submitConfig);
+		_inputControl = config.getInputControl();
 		_cssClass = config.getCssClass();
 	}
 
@@ -396,7 +422,8 @@ public class ValueInputElement implements UIElement {
 			spec.setPlaceholder(resources.getString(_placeholder));
 		}
 		spec.setIcon(_icon).setClearable(_clearable).setDebounce(_debounce);
-		ReactControl input = FieldControlService.getInstance().createFieldControl(context, type, spec, field);
+		ReactControl input =
+			FieldControlService.getInstance().createFieldControl(context, type, spec, field, _inputControl);
 		input.addCleanupAction(binding::dispose);
 
 		if (_options != null && !optionInputs.isEmpty()) {

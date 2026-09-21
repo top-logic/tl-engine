@@ -8,6 +8,9 @@
 		<channel name="state"/>
 		<channel name="owners"/>
 		<channel name="project"/>
+		<channel name="choice"/>
+		<channel name="amount"/>
+		<channel name="switched"/>
 	</channels>
 
 	<panel>
@@ -53,6 +56,33 @@
 				<inputs>
 					<input channel="project"/>
 				</inputs>
+			</value-input>
+			<value-input
+				type="test.input:Status"
+				value="choice"
+			>
+				<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
+					display="segmented"
+				/>
+			</value-input>
+			<value-input
+				type="tl.core:Integer"
+				value="amount"
+			>
+				<input-control class="com.top_logic.layout.view.form.NumberInputControlProvider"
+					display="slider"
+					max="10.0"
+					min="0.0"
+					step="1.0"
+				/>
+			</value-input>
+			<value-input
+				type="tl.core:Boolean"
+				value="switched"
+			>
+				<input-control class="com.top_logic.layout.view.form.BooleanControlProvider"
+					display="switch"
+				/>
 			</value-input>
 		</children>
 	</panel>

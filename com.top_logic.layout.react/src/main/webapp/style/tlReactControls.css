@@ -4350,6 +4350,21 @@ button.tlMenu__item--disabled:hover {
 	height: 100%;
 }
 
+/* A form hosting a filling region is a column: the filling child takes the height the form is
+   offered (the form itself carries .tlFill and asks its own container for it - see the fill
+   contract above), while every other child keeps the height of its content. The form drops its page
+   inset here, exactly as in the flush case, because a filling region manages its own layout and
+   would otherwise be framed twice. */
+.tlFormLayout--fill {
+	display: flex;
+	flex-direction: column;
+	padding: 0;
+}
+
+.tlFormLayout--fill > :not(.tlFill) {
+	flex-shrink: 0;
+}
+
 .tlFormLayout__noModel {
 	color: var(--text-secondary);
 	font-style: italic;

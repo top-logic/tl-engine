@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<!--
+		A form spanning the page: the right pane holds one <form> around a nested <split-panel>, so
+		the form takes part in the fill contract and the inner panes are sized by the frame instead
+		of by the fields they hold. The whole right side is edited with the single Edit/Save/Cancel
+		set the form contributes to the toolbar of the panel around it.
+	-->
+	<channels>
+		<channel name="selected"/>
+		<!--
+			The selection while it consists of exactly one object: the form shows one object and the
+			table beside it selects one row at a time.
+		-->
+		<derived-channel name="selectedSingle"
+			expr="sel -> if($sel.size() == 1, $sel.singleElement(), null)"
+			inputs="selected"
+		/>
+	</channels>
+	<split-panel
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane
+				min-size="220"
+				size="30"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Demo objects</en>
+						<de>Demo-Objekte</de>
+					</title>
+					<table
+						observed-types="demo.react:Demo"
+						selection="selected"
+						types="demo.react:Demo"
+					>
+						<columns>
+							<column
+								attribute="name"
+								sort="ASC"
+							/>
+							<column attribute="priority"/>
+						</columns>
+						<rows>all(`demo.react:Demo`)</rows>
+					</table>
+				</panel>
+			</pane>
+			<pane
+				size="70"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Details</en>
+						<de>Details</de>
+					</title>
+					<form input="selectedSingle">
+						<split-panel
+							orientation="horizontal"
+							resizable="true"
+						>
+							<panes>
+								<pane
+									size="50"
+									unit="%"
+								>
+									<panel>
+										<title>
+											<en>Description</en>
+											<de>Beschreibung</de>
+										</title>
+										<field attribute="name"/>
+										<field attribute="string"/>
+										<field attribute="multiLine"/>
+									</panel>
+								</pane>
+								<pane
+									size="50"
+									unit="%"
+								>
+									<panel>
+										<title>
+											<en>Key figures</en>
+											<de>Kennzahlen</de>
+										</title>
+										<field attribute="count"/>
+										<field attribute="amount"/>
+										<field attribute="date"/>
+										<field attribute="priority"/>
+									</panel>
+								</pane>
+							</panes>
+						</split-panel>
+					</form>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

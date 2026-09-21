@@ -36,6 +36,7 @@ import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
+import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.view.ContainerElement;
 import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.UIElement;
@@ -78,7 +79,7 @@ public class FormElement extends ContainerElement {
 	 * Configuration for {@link FormElement}.
 	 */
 	@TagName("form")
-	public interface Config extends ContainerElement.Config {
+	public interface Config extends ContainerElement.Config, FormLayoutOptions {
 
 		/** Configuration name for {@link #getInput()}. */
 		String INPUT = "input";
@@ -277,6 +278,10 @@ public class FormElement extends ContainerElement {
 
 	private final Config _config;
 
+	private final int _maxColumns;
+
+	private final LabelPosition _labelPosition;
+
 	private final LockHandler _lockHandler;
 
 	private final List<ViewCommand> _formCommands;
@@ -294,6 +299,8 @@ public class FormElement extends ContainerElement {
 	public FormElement(InstantiationContext context, Config config) {
 		super(context, config);
 		_config = config;
+		_maxColumns = config.getMaxColumns();
+		_labelPosition = FormLayoutOptions.layoutPosition(context, config.getLabelPosition());
 		_lockHandler = createLockHandler(context, config);
 
 		_formCommands = new ArrayList<>();
@@ -343,6 +350,7 @@ public class FormElement extends ContainerElement {
 
 		// 4. Create FormControl with initial object.
 		FormControl formControl = new FormControl(context, initialObject, noModelMessage, _lockHandler);
+		formControl.setLayout(_maxColumns, _labelPosition);
 
 		// 5. Wire channels and the edit guard.
 		formControl.setInputChannel(inputChannel);

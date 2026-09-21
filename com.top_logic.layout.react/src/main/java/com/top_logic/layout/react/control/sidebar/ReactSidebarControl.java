@@ -174,20 +174,7 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 		// Determine initial active item.
 		_activeItemId = initialActiveItemId != null ? initialActiveItemId : findFirstNavItemId(items);
 
-		// Build serialized item list, merging pre-loaded group states.
-		List<Map<String, Object>> itemList = new ArrayList<>();
-		for (SidebarItem item : _items) {
-			Map<String, Object> itemMap = item.toStateMap();
-			if (item instanceof GroupItem) {
-				Boolean persisted = groupStates.get(item.getId());
-				if (persisted != null) {
-					itemMap.put(GroupItem.EXPANDED, persisted);
-				}
-			}
-			itemList.add(itemMap);
-		}
-
-		putState(ITEMS, itemList);
+		putState(ITEMS, serializeItems(_items));
 		putState(ACTIVE_ITEM_ID, _activeItemId);
 		putState(COLLAPSED, Boolean.valueOf(_collapsed));
 		putState(DRAWER_OPEN, Boolean.valueOf(_drawerOpen));
@@ -371,19 +358,38 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	 * </p>
 	 */
 	public void refreshItems() {
+		putState(ITEMS, serializeItems(_items));
+	}
+
+	/**
+	 * Serializes the given items for the client, applying the expansion state tracked in
+	 * {@link #handleToggleGroup(ToggleGroupArguments)} to every {@link GroupItem} it names.
+	 *
+	 * <p>
+	 * A group nested in a group is as much a group as one at the top, so the descent follows
+	 * {@link GroupItem#getChildren()} all the way down: the state the user last chose is applied
+	 * wherever the group sits, and the sidebar comes back as it was left rather than snapping the
+	 * inner groups back to their configured default.
+	 * </p>
+	 *
+	 * @param items
+	 *        The items to serialize.
+	 * @return The item list as the client receives it.
+	 */
+	private List<Map<String, Object>> serializeItems(List<SidebarItem> items) {
 		List<Map<String, Object>> itemList = new ArrayList<>();
-		for (SidebarItem item : _items) {
+		for (SidebarItem item : items) {
 			Map<String, Object> itemMap = item.toStateMap();
 			if (item instanceof GroupItem) {
 				Boolean tracked = _groupStates.get(item.getId());
 				if (tracked != null) {
 					itemMap.put(GroupItem.EXPANDED, tracked);
 				}
+				itemMap.put(GroupItem.CHILDREN, serializeItems(((GroupItem) item).getChildren()));
 			}
 			itemList.add(itemMap);
 		}
-
-		putState(ITEMS, itemList);
+		return itemList;
 	}
 
 	/**

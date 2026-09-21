@@ -8,6 +8,8 @@ package com.top_logic.tl.ai.core.agent;
 
 import junit.framework.TestCase;
 
+import com.top_logic.tl.ai.core.security.DeclaredTypeAccess;
+import com.top_logic.tl.ai.core.security.DeclaredTypeAccess.Verdict;
 import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolMode;
@@ -104,6 +106,73 @@ public class TestToolPermissionFilter extends TestCase {
 		assertNotNull(reason);
 		assertTrue(reason.contains("secret"));
 		assertTrue(reason.contains("Permission denied"));
+	}
+
+	/**
+	 * A tool whose declared types are all unreadable is dropped from the schemas <em>and</em> refused
+	 * at the gate, with the same reason (issue #258).
+	 *
+	 * <p>
+	 * The two halves are asserted together because their agreeing is the property: a tool the model
+	 * is offered and every call to which is refused would cost a turn to discover.
+	 * </p>
+	 */
+	public void testDeclaredTypesWithoutReadAccessWithholdTheTool() {
+		ToolPermissionFilter filter = new ToolPermissionFilter(contextWithMode(ExecutionMode.DEVELOPMENT),
+			new DeclaredTypeAccess(name -> Verdict.UNREADABLE));
+		Tool tool = ToolStubs.onTypes("listCustomers", "myapp:Customer");
+
+		assertFalse("A tool whose declared types are out of reach must not be offered.",
+			filter.test(tool));
+		String reason = filter.denialReason(tool);
+		assertNotNull(reason);
+		assertTrue("The reason must name the type rather than a capability: " + reason,
+			reason.contains("myapp:Customer"));
+	}
+
+	/** The same tool for a principal who may read the declared type: offered and allowed. */
+	public void testDeclaredTypesWithReadAccessKeepTheTool() {
+		ToolPermissionFilter filter = new ToolPermissionFilter(contextWithMode(ExecutionMode.DEVELOPMENT),
+			new DeclaredTypeAccess(name -> Verdict.READABLE));
+		Tool tool = ToolStubs.onTypes("listCustomers", "myapp:Customer");
+
+		assertTrue(filter.test(tool));
+		assertNull(filter.denialReason(tool));
+	}
+
+	/**
+	 * The capability gate decides before the declared types do.
+	 *
+	 * <p>
+	 * A tool the user may not use at all must be explained by the capability it costs; naming a type
+	 * instead would send them to the {@code <security-config>} while the {@code <tool-access>} policy
+	 * is what refused them.
+	 * </p>
+	 */
+	public void testTheCapabilityGateAnswersBeforeTheDeclaredTypes() {
+		SecurityContext denied = new SecurityContext() {
+			@Override
+			public boolean hasToolPermission(Tool t) {
+				return false;
+			}
+
+			@Override
+			public String toolDenialReason(Tool t) {
+				return "Permission denied: tool 'listCustomers' needs the 'data.read' capability.";
+			}
+
+			@Override
+			public ExecutionMode executionMode() {
+				return ExecutionMode.DEVELOPMENT;
+			}
+		};
+		ToolPermissionFilter filter = new ToolPermissionFilter(denied,
+			new DeclaredTypeAccess(name -> Verdict.UNREADABLE));
+
+		String reason = filter.denialReason(ToolStubs.onTypes("listCustomers", "myapp:Customer"));
+		assertTrue("The capability must be named: " + reason, reason.contains("data.read"));
+		assertFalse("The type must not be named where the capability decided: " + reason,
+			reason.contains("myapp:Customer"));
 	}
 
 	private static SecurityContext contextWithMode(ExecutionMode mode) {

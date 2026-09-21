@@ -5,6 +5,7 @@
  */
 package com.top_logic.tl.ai.core.tools;
 
+import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 
@@ -59,6 +60,11 @@ public final class ToolStubs {
 		return builder(name).mode(mode).group(group).build();
 	}
 
+	/** A {@link ToolMode#READ} stub declaring the given qualified model types. */
+	public static Tool onTypes(String name, String... types) {
+		return builder(name).mode(ToolMode.READ).types(List.of(types)).build();
+	}
+
 	/**
 	 * A stub for a test that does care what the tool does - one that throws, records its arguments
 	 * or reads its {@link ToolExecutionContext}.
@@ -75,6 +81,8 @@ public final class ToolStubs {
 		private String _description;
 
 		private String _group = "";
+
+		private List<String> _types = List.of();
 
 		private ToolSchema _schema;
 
@@ -108,6 +116,12 @@ public final class ToolStubs {
 			return this;
 		}
 
+		/** The model types the stub declares it works on. Defaults to none, i.e. no claim. */
+		public Builder types(List<String> types) {
+			_types = types;
+			return this;
+		}
+
 		/** What kind of state change the stub claims to make. Defaults to {@link ToolMode#READ}. */
 		public Builder mode(ToolMode mode) {
 			_mode = mode;
@@ -136,6 +150,7 @@ public final class ToolStubs {
 			String name = _name;
 			String description = _description;
 			String group = _group;
+			List<String> types = _types;
 			ToolMode mode = _mode;
 			boolean concurrencySafe = _concurrencySafe;
 			BiFunction<Map<String, Object>, ToolExecutionContext, ToolResult> execute = _execute;
@@ -161,6 +176,11 @@ public final class ToolStubs {
 				@Override
 				public String group() {
 					return group;
+				}
+
+				@Override
+				public List<String> types() {
+					return types;
 				}
 
 				@Override

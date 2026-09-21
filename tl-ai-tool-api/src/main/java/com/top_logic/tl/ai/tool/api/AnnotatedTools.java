@@ -94,7 +94,8 @@ public final class AnnotatedTools {
 		ToolSchema schema = generateSchema(toolName, description, method);
 
 		return new ReflectiveTool(toolName, description, schema, mode, concurrencySafe,
-			truncationHint, annotation.group(), annotation.marking(), provider, method);
+			truncationHint, annotation.group(), List.of(annotation.types()), annotation.marking(),
+			provider, method);
 	}
 
 	private static ToolSchema generateSchema(String toolName, String description, Method method) {
@@ -493,6 +494,8 @@ public final class AnnotatedTools {
 
 		private final String _group;
 
+		private final List<String> _types;
+
 		private final AnswerMarking _marking;
 
 		private final Object _provider;
@@ -501,7 +504,7 @@ public final class AnnotatedTools {
 
 		ReflectiveTool(String name, String description, ToolSchema schema,
 				ToolMode mode, boolean concurrencySafe, int truncationHint, String group,
-				AnswerMarking marking, Object provider, Method method) {
+				List<String> types, AnswerMarking marking, Object provider, Method method) {
 			_name = name;
 			_description = description;
 			_schema = schema;
@@ -509,6 +512,7 @@ public final class AnnotatedTools {
 			_concurrencySafe = concurrencySafe;
 			_truncationHint = truncationHint;
 			_group = group;
+			_types = types;
 			_marking = marking;
 			_provider = provider;
 			_method = method;
@@ -542,6 +546,11 @@ public final class AnnotatedTools {
 		@Override
 		public String group() {
 			return _group;
+		}
+
+		@Override
+		public List<String> types() {
+			return _types;
 		}
 
 		@Override

@@ -5294,6 +5294,162 @@ button.tlMenu__item--disabled:hover {
 	box-shadow: 0 0 0 2px var(--support-warning);
 }
 
+/* --- TLSlider ----------------------------------------------------------- */
+
+/* A number set by dragging a handle along a track, with the value written beside it: the two read
+   as one field, so the track takes the room the text leaves. */
+.tlSlider {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-03);
+	width: 100%;
+}
+
+/* The track, drawn by the pseudo elements below; the input itself only carries the room they need
+   and the focus the whole control takes. */
+.tlSlider__input {
+	appearance: none;
+	-webkit-appearance: none;
+	flex: 1 1 auto;
+	min-width: 0;
+	height: 1rem;
+	margin: 0;
+	padding: 0;
+	background-color: transparent;
+	cursor: pointer;
+}
+
+.tlSlider__input:disabled {
+	cursor: default;
+}
+
+/* The value as text. Figures of the same width, so that the text does not jump while the handle
+   travels. */
+.tlSlider__value {
+	flex: none;
+	color: var(--text-primary);
+	font-size: var(--body-compact-01-font-size);
+	line-height: var(--body-compact-01-line-height);
+	font-variant-numeric: tabular-nums;
+	text-align: right;
+	min-width: 3ch;
+}
+
+/* A field that is only read shows the value alone: there is nothing to drag. */
+.tlSlider--immutable {
+	color: var(--text-primary);
+	font-size: var(--body-compact-01-font-size);
+	line-height: var(--body-compact-01-line-height);
+}
+
+/* The track. A capsule keeps its shape in a theme that squares every corner off, which is why the
+   radius is written literally rather than taken from a radius token. */
+.tlSlider__input::-webkit-slider-runnable-track {
+	height: 0.25rem;
+	border-radius: 999px;
+	background-color: var(--border-subtle);
+}
+
+.tlSlider__input::-moz-range-track {
+	height: 0.25rem;
+	border-radius: 999px;
+	background-color: var(--border-subtle);
+}
+
+/* The handle, a circle standing on the middle of the track: the offset is half the handle less
+   half the track. */
+.tlSlider__input::-webkit-slider-thumb {
+	appearance: none;
+	-webkit-appearance: none;
+	width: 1rem;
+	height: 1rem;
+	margin-top: -0.375rem;
+	border: none;
+	border-radius: 50%;
+	background-color: var(--interactive);
+	box-shadow: var(--shadow-raised);
+	transition: box-shadow 120ms ease-in-out;
+}
+
+.tlSlider__input::-moz-range-thumb {
+	width: 1rem;
+	height: 1rem;
+	border: none;
+	border-radius: 50%;
+	background-color: var(--interactive);
+	box-shadow: var(--shadow-raised);
+	transition: box-shadow 120ms ease-in-out;
+}
+
+/* The focus is shown on the handle, the part the keyboard moves. */
+.tlSlider__input:focus-visible {
+	outline: none;
+}
+
+.tlSlider__input:focus-visible::-webkit-slider-thumb {
+	outline: 2px solid var(--focus);
+	outline-offset: 1px;
+}
+
+.tlSlider__input:focus-visible::-moz-range-thumb {
+	outline: 2px solid var(--focus);
+	outline-offset: 1px;
+}
+
+.tlSlider__input:disabled::-webkit-slider-runnable-track {
+	background-color: var(--field-disabled);
+}
+
+.tlSlider__input:disabled::-moz-range-track {
+	background-color: var(--field-disabled);
+}
+
+.tlSlider__input:disabled::-webkit-slider-thumb {
+	background-color: var(--button-disabled);
+	box-shadow: none;
+}
+
+.tlSlider__input:disabled::-moz-range-thumb {
+	background-color: var(--button-disabled);
+	box-shadow: none;
+}
+
+/* A rejected value is marked on the handle and on the text, the two parts that carry it. */
+.tlSlider--error .tlSlider__input::-webkit-slider-thumb {
+	background-color: var(--support-error);
+}
+
+.tlSlider--error .tlSlider__input::-moz-range-thumb {
+	background-color: var(--support-error);
+}
+
+.tlSlider--error .tlSlider__value {
+	color: var(--text-error);
+}
+
+.tlSlider--warning .tlSlider__input::-webkit-slider-thumb {
+	background-color: var(--support-warning);
+}
+
+.tlSlider--warning .tlSlider__input::-moz-range-thumb {
+	background-color: var(--support-warning);
+}
+
+.tlSlider--warning .tlSlider__value {
+	color: var(--text-warning);
+}
+
+/* The handle takes its state at once where motion is unwelcome; where it stands says the same. */
+@media (prefers-reduced-motion: reduce) {
+	.tlSlider__input::-webkit-slider-thumb {
+		transition: none;
+	}
+
+	.tlSlider__input::-moz-range-thumb {
+		transition: none;
+	}
+}
+
 /* --- TLBooleanChoice -------------------------------------------------------- */
 
 /* A boolean offered as a choice: radio buttons in a row, or a select.

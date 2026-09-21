@@ -166,8 +166,8 @@
 					>
 						<view-ref view="demo/error-handling-demo.view.xml"/>
 						<label>
-							<en>Error Handling</en>
-							<de>Fehlerbehandlung</de>
+							<en>Errors and Notices</en>
+							<de>Fehler und Hinweise</de>
 						</label>
 					</nav-item>
 					<nav-item id="switch-demo"

@@ -7,6 +7,8 @@ package com.top_logic.build.maven.translate;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,6 +27,7 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
+import com.top_logic.tools.resources.FileDigest;
 import com.top_logic.tools.resources.ResourceFile;
 import com.top_logic.tools.resources.translate.deepl.DeepLTranslator;
 
@@ -125,14 +128,15 @@ public class ResourceTranslator extends AbstractTranslateMojo {
 	private String ignoreTags = "";
 
 	/**
-	 * The marker file that the JavaDoc doclet writes after it has generated {@link #sourcePath}.
+	 * The marker file that the JavaDoc doclet writes after it has generated {@link #sourcePath},
+	 * containing the digest of the generated bundle.
 	 * 
 	 * <p>
-	 * Translation is performed only if this file exists, showing that the doclet has generated
-	 * {@link #sourcePath} in the running build and hence that {@link #referencePath} is the base
-	 * line for its current contents. The marker is consumed, so that a later build without the
-	 * doclet does not translate against an outdated base line. Without this file name, translation
-	 * is performed unconditionally.
+	 * Translation is performed only if this file exists and its digest is the digest of
+	 * {@link #sourcePath}. Both together show that the doclet has generated the bundle that is
+	 * translated here in the running build and hence that {@link #referencePath} is the base line
+	 * for its contents. The marker is consumed in any case, so that it cannot vouch for a later
+	 * build. Without this file name, translation is performed unconditionally.
 	 * </p>
 	 */
 	@Parameter(property = "generationMarker")
@@ -153,16 +157,10 @@ public class ResourceTranslator extends AbstractTranslateMojo {
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
-		boolean sourceGenerated = consumeGenerationMarker();
+		String generatedDigest = consumeGenerationMarker();
 
 		if (skip) {
 			getLog().info("Skipped translation.");
-			return;
-		}
-
-		if (!sourceGenerated) {
-			getLog().info("Skipping translation: The doclet did not run in this build, therefore " + referencePath
-				+ " is no reference for " + sourcePath + ".");
 			return;
 		}
 
@@ -174,6 +172,10 @@ public class ResourceTranslator extends AbstractTranslateMojo {
 		_sourceFile = resolvePath(sourcePath);
 		if (!_sourceFile.exists()) {
 			getLog().info("Nothing to translate, does not exist: " + _sourceFile);
+			return;
+		}
+
+		if (!isGeneratedSource(generatedDigest)) {
 			return;
 		}
 		
@@ -228,23 +230,71 @@ public class ResourceTranslator extends AbstractTranslateMojo {
 	}
 
 	/**
-	 * Whether the JavaDoc doclet has generated {@link #sourcePath} in the running build, see
-	 * {@link #generationMarker}.
+	 * Reads the {@link #generationMarker} and deletes it.
 	 * 
 	 * <p>
-	 * The marker must not outlive the build that has written it, therefore it is deleted here even
-	 * if the translation itself is {@link #skip skipped}.
+	 * The marker must not outlive the build that has written it, therefore it is deleted even if
+	 * the translation itself is {@link #skip skipped}.
 	 * </p>
+	 * 
+	 * @return The digest of the bundle that the JavaDoc doclet has generated, or
+	 *         <code>null</code>, if there is no marker.
 	 */
-	private boolean consumeGenerationMarker() {
+	private String consumeGenerationMarker() {
+		if (generationMarker == null || !generationMarker.exists()) {
+			return null;
+		}
+
+		String digest;
+		try {
+			digest = Files.readAllLines(generationMarker.toPath(), StandardCharsets.UTF_8)
+				.stream()
+				.findFirst()
+				.orElse(null);
+		} catch (IOException ex) {
+			getLog().warn("Cannot read generation marker: " + generationMarker, ex);
+			digest = null;
+		}
+		generationMarker.delete();
+		return digest;
+	}
+
+	/**
+	 * Whether {@link #sourcePath} is the bundle that the JavaDoc doclet has generated in the
+	 * running build, see {@link #generationMarker}.
+	 * 
+	 * <p>
+	 * The reason for a rejected translation is logged.
+	 * </p>
+	 * 
+	 * @param generatedDigest
+	 *        The digest taken from the marker, see {@link #consumeGenerationMarker()}.
+	 */
+	private boolean isGeneratedSource(String generatedDigest) throws MojoExecutionException {
 		if (generationMarker == null) {
 			return true;
 		}
 
-		if (!generationMarker.exists()) {
+		if (generatedDigest == null) {
+			getLog().info("Skipping translation: The doclet did not run in this build, therefore " + referencePath
+				+ " is no reference for " + sourcePath + ".");
 			return false;
 		}
-		generationMarker.delete();
+
+		String sourceDigest;
+		try {
+			sourceDigest = FileDigest.sha256Hex(_sourceFile);
+		} catch (IOException ex) {
+			throw new MojoExecutionException("Cannot compute digest of: " + _sourceFile, ex);
+		}
+
+		if (!generatedDigest.equals(sourceDigest)) {
+			getLog().info("Skipping translation: " + sourcePath
+				+ " changed since the doclet generated it (the marker names another content), therefore "
+				+ referencePath + " is no reference for it.");
+			return false;
+		}
+
 		return true;
 	}
 

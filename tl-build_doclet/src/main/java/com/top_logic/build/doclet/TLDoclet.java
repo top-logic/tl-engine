@@ -117,6 +117,7 @@ import com.sun.source.util.DocTreePathScanner;
 import com.sun.source.util.DocTrees;
 import com.sun.source.util.TreePath;
 
+import com.top_logic.tools.resources.FileDigest;
 import com.top_logic.tools.resources.ResourceFile;
 
 import jdk.javadoc.doclet.Doclet;
@@ -347,9 +348,9 @@ public class TLDoclet implements Doclet {
 	 *
 	 * <p>
 	 * The marker file named by the option <code>-messagesMarker</code> is written at the location
-	 * where the translation step of the build looks for it and names the generated message
-	 * resources. It tells the translation that the base line it compares the generated resources
-	 * with was written in the same build.
+	 * where the translation step of the build looks for it and carries the digest of the generated
+	 * bundle. The translation thereby sees both that the base line it compares the bundle with was
+	 * written in the same build, and that the bundle it reads is the generated one.
 	 * </p>
 	 *
 	 * @param messages
@@ -365,7 +366,7 @@ public class TLDoclet implements Doclet {
 		if (markerDir != null) {
 			markerDir.mkdirs();
 		}
-		Files.writeString(marker.toPath(), messages.getAbsolutePath() + System.lineSeparator(),
+		Files.writeString(marker.toPath(), FileDigest.sha256Hex(messages) + System.lineSeparator(),
 			StandardCharsets.UTF_8);
 	}
 

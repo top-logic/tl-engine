@@ -43,13 +43,15 @@
 		<channel name="sourcesBadge"/>
 		<channel name="memoriesBadge"/>
 		<!--
-			The composer's unsent text, and the object a command puts into it as a reference token.
+			The composer's unsent text, the object a command puts into it as a reference token, and
+			the passage of one a command quotes into it.
 			Declared here so this page works on its own; app.view.xml binds its own "chatDraft" over
 			this one (<view-ref><bind/></view-ref>), which is what lets the Belege page write it too -
 			see "Writing a channel across a view boundary" in tl-chat/CLAUDE.md.
 		-->
 		<channel name="chatDraft"/>
 		<channel name="chatReference"/>
+		<channel name="chatQuote"/>
 	</channels>
 	<chat chat-id="chat"
 		direction="row"
@@ -247,6 +249,7 @@
 				input="chatSession"
 				present="paneObject"
 				prompt-improver-agent="TL_PromptImprover"
+				quote="chatQuote"
 				reference="chatReference"
 				subject="paneInvoice"
 				trace="summary"
@@ -427,12 +430,22 @@
 						<de>Noch keine Belege</de>
 					</empty-text>
 					<!--
-						What issue #440 is about: two ordinary view commands put a question about this
+						What issue #440 is about: ordinary view commands put a question about this
 						row into the composer, with no chat-specific code and no new command class.
 						The first writes a whole German sentence to the "chatDraft" channel; the
 						second writes the invoice itself to "chatReference", which the composer turns
 						into one atomic reference token at the caret - what picking it with "@" does.
 						Neither sends: the user reads the sentence and presses send.
+
+						The last two are issue #509: a passage *of* the invoice rather than the
+						invoice. "chatQuote" takes the token itself, so the command says which piece
+						the user marked - here the description, there the amount - and the composer
+						inserts the same atomic token with that text and that location. Two commands
+						rather than one, because that is the case the channel exists for: two
+						passages of the SAME object, each inserting at the caret, which a channel
+						carrying only the object could not tell apart. The location is written as a
+						text per language, the way the sentence above is, and the control resolves it
+						in the user's own.
 					-->
 					<row-commands>
 						<generic-command
@@ -464,6 +477,40 @@
 								<de>In die Nachricht übernehmen</de>
 							</label>
 							<write-channel name="chatReference"/>
+						</generic-command>
+						<generic-command
+							image="css:bi bi-card-text"
+							input="invoice"
+						>
+							<label>
+								<en>Quote the description</en>
+								<de>Beschreibung zitieren</de>
+							</label>
+							<execute-script>
+								<function><![CDATA[i -> {
+									"id": $i,
+									"location": {"en": "Description", "de": "Beschreibung"}.internationalize(),
+									"text": $i.get(`tl.ai.demo.imageclassification:Invoice#description`)
+								}]]></function>
+							</execute-script>
+							<write-channel name="chatQuote"/>
+						</generic-command>
+						<generic-command
+							image="css:bi bi-currency-euro"
+							input="invoice"
+						>
+							<label>
+								<en>Quote the amount</en>
+								<de>Betrag zitieren</de>
+							</label>
+							<execute-script>
+								<function><![CDATA[i -> {
+									"id": $i,
+									"location": {"en": "Amount", "de": "Betrag"}.internationalize(),
+									"text": $i.get(`tl.ai.demo.imageclassification:Invoice#amountLabel`)
+								}]]></function>
+							</execute-script>
+							<write-channel name="chatQuote"/>
 						</generic-command>
 					</row-commands>
 					<lines>

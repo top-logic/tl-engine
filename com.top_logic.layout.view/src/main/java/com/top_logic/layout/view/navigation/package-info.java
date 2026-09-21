@@ -45,5 +45,14 @@
  * {@link com.top_logic.layout.view.navigation.ShowObjectAction &lt;show-object&gt;} action offers
  * all of this to a configured command.
  * </p>
+ *
+ * <p>
+ * A command can also name the views itself, for a display that no business object stands behind:
+ * {@link com.top_logic.layout.view.navigation.ShowViewAction &lt;show-view&gt;} displays one view,
+ * {@link com.top_logic.layout.view.navigation.ShowViewsAction &lt;show-views&gt;} a list of them in
+ * one request. They carry the attributes and the bindings a display target's view carries, applied
+ * to the value the command chain holds rather than to an object, and hand that value on to what
+ * follows them in the chain.
+ * </p>
  */
 package com.top_logic.layout.view.navigation;

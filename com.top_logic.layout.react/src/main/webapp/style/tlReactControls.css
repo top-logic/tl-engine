@@ -1920,6 +1920,17 @@ button.tlDrawerToggle:focus-visible {
 	visibility: hidden;
 }
 
+/* The frame change as a transition an application animates: the frame pushed carries
+   `tlTileStack__frame--entering` while it arrives, a copy of the frame popped carries
+   `tlTileStack__frame--exiting` while it leaves, and the root says which way the stack moved
+   (`tlTileStack--forward` / `tlTileStack--backward`). The engine only places the copy - a picture
+   over the stack, taking no place in the layout and no input; the movement is the application's. */
+.tlTileStack__frame--exiting {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+}
+
 /* --- TLWizard -------------------------------------------------------------- */
 
 /* A multi-step flow: the indicator pinned above, the step content below it. */
@@ -2101,19 +2112,6 @@ button.tlDrawerToggle:focus-visible {
 @keyframes tlWizardLeaveBackward {
 	from { opacity: 1; transform: translateX(0); }
 	to   { opacity: 0; transform: translateX(12px); }
-}
-
-/* A viewer who asked for less movement gets the step change without one; the copy of the step
-   leaving is dropped by the component's own fallback instead of by an animation ending. */
-@media (prefers-reduced-motion: reduce) {
-	.tlWizard__step--entering,
-	.tlWizard__step--exiting {
-		animation: none;
-	}
-
-	.tlWizard__step--exiting {
-		opacity: 0;
-	}
 }
 
 /* --- TLGrid ---------------------------------------------------------------- */
@@ -2519,6 +2517,16 @@ button.tlBottomBar__item:hover {
 	background: var(--overlay);
 	backdrop-filter: blur(var(--surface-blur));
 	outline: none;
+}
+
+/* The dialog change as a transition an application animates: the backdrop of a dialog opening
+   carries `tlDialog__backdrop--entering` while it arrives, and a copy of the backdrop of a dialog
+   closed carries `tlDialog__backdrop--exiting` while it leaves. The copy keeps the fixed position
+   of what it copies and therefore covers the page, so it has to let everything through: the page
+   stays usable while it fades, and a dialog still open below it keeps its input. The engine ships
+   no animation for either class. */
+.tlDialog__backdrop--exiting {
+	pointer-events: none;
 }
 
 /* --- TLDialogManager ------------------------------------------------------- */

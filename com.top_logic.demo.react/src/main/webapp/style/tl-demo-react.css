@@ -109,3 +109,68 @@
 	box-shadow: var(--shadow-glow);
 	backdrop-filter: blur(var(--surface-blur));
 }
+
+/*
+ * Dialogs and drill-down frames of this application fade and slide, by animating the state classes
+ * the engine sets while one arrives or leaves. The engine sets the classes and places the copy of
+ * what left; how the change looks is decided here, and a viewer who asked for reduced motion gets
+ * neither class, so nothing below runs for them.
+ */
+.tlDialog__backdrop--entering {
+	animation: tlDemoDialogIn 150ms ease-out;
+}
+
+.tlDialog__backdrop--exiting {
+	animation: tlDemoDialogOut 150ms ease-in forwards;
+}
+
+@keyframes tlDemoDialogIn {
+	from { opacity: 0; }
+	to   { opacity: 1; }
+}
+
+@keyframes tlDemoDialogOut {
+	from { opacity: 1; }
+	to   { opacity: 0; }
+}
+
+/*
+ * A frame arrives from the side the stack moved towards, and the frame left behind leaves towards
+ * the other: drilling in pulls the new frame in from the right, going back brings the frame
+ * returned to in from the left.
+ */
+.tlTileStack__frame--entering {
+	animation: tlDemoTileInForward 200ms ease-out;
+}
+
+.tlTileStack--backward .tlTileStack__frame--entering {
+	animation-name: tlDemoTileInBackward;
+}
+
+.tlTileStack__frame--exiting {
+	animation: tlDemoTileOutForward 200ms ease-in forwards;
+}
+
+.tlTileStack--backward .tlTileStack__frame--exiting {
+	animation-name: tlDemoTileOutBackward;
+}
+
+@keyframes tlDemoTileInForward {
+	from { opacity: 0; transform: translateX(24px); }
+	to   { opacity: 1; transform: none; }
+}
+
+@keyframes tlDemoTileInBackward {
+	from { opacity: 0; transform: translateX(-24px); }
+	to   { opacity: 1; transform: none; }
+}
+
+@keyframes tlDemoTileOutForward {
+	from { opacity: 1; transform: none; }
+	to   { opacity: 0; transform: translateX(-24px); }
+}
+
+@keyframes tlDemoTileOutBackward {
+	from { opacity: 1; transform: none; }
+	to   { opacity: 0; transform: translateX(24px); }
+}

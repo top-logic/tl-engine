@@ -41,6 +41,8 @@ export type { TLCellProps } from './bridge/types';
 export { useI18N } from './bridge/i18n';
 export { scrollToAnchor } from './bridge/scroll';
 export { rootClassName } from './bridge/css';
+export { useKeyedTransition, TRANSITION_FALLBACK_MS } from './bridge/transition';
+export type { KeyedTransitionOptions } from './bridge/transition';
 export { FILL_CLASS, useFill, useFillHost, FillProvider, FillBarrier } from './bridge/fill';
 export type { FillHost } from './bridge/fill';
 export { default as TLChild } from './bridge/TLChild';

@@ -25,6 +25,14 @@ import com.top_logic.layout.react.control.ReactControl;
  * <li>{@link #OVERFLOW} - the {@link ToolbarOverflow} end at which commands that do not fit
  * collapse</li>
  * </ul>
+ *
+ * <p>
+ * A toolbar holds two kinds of groups: the ones {@link #addGroup(String, ToolbarGroupDisplay,
+ * String, String, List) added} for the commands it was built from, which
+ * {@link #replaceGroups(ReactToolbarControl)} swaps as a whole, and a single
+ * {@link #setPinnedGroup(String, ToolbarGroupDisplay, List) pinned group} that a rebuild keeps.
+ * The pinned group leads the {@link #GROUPS} the client receives.
+ * </p>
  */
 public class ReactToolbarControl extends ReactControl {
 
@@ -36,9 +44,34 @@ public class ReactToolbarControl extends ReactControl {
 	/** @see #getOverflow() */
 	public static final String OVERFLOW = "overflow";
 
+	/** Key of a group's clique name within a {@link #GROUPS} entry. */
+	public static final String GROUP_NAME = "name";
+
+	/** Key of a group's {@link ToolbarGroupDisplay} within a {@link #GROUPS} entry. */
+	public static final String GROUP_DISPLAY = "display";
+
+	/** Key of the menu trigger label within a {@link #GROUPS} entry. */
+	public static final String GROUP_LABEL = "label";
+
+	/** Key of the menu trigger icon within a {@link #GROUPS} entry. */
+	public static final String GROUP_ICON = "icon";
+
+	/** Key of a group's child controls within a {@link #GROUPS} entry. */
+	public static final String GROUP_ITEMS = "items";
+
 	private final List<ReactControl> _allChildren = new ArrayList<>();
 
 	private final List<Object> _groups = new ArrayList<>();
+
+	/**
+	 * The group a {@link #replaceGroups(ReactToolbarControl) rebuild} keeps, or {@code null} while
+	 * there is none.
+	 *
+	 * @see #setPinnedGroup(String, ToolbarGroupDisplay, List)
+	 */
+	private Map<String, Object> _pinnedGroup;
+
+	private final List<ReactControl> _pinnedChildren = new ArrayList<>();
 
 	private ToolbarOverflow _overflow = ToolbarOverflow.NONE;
 
@@ -50,7 +83,7 @@ public class ReactToolbarControl extends ReactControl {
 	 */
 	public ReactToolbarControl(ReactContext context) {
 		super(context, null, REACT_MODULE);
-		putState(GROUPS, _groups);
+		publishGroups();
 		putState(OVERFLOW, _overflow.getExternalName());
 	}
 
@@ -90,42 +123,68 @@ public class ReactToolbarControl extends ReactControl {
 	 */
 	public void addGroup(String name, ToolbarGroupDisplay display, String label, String icon,
 			List<ReactControl> items) {
-		Map<String, Object> group = new LinkedHashMap<>();
-		group.put("name", name);
-		group.put("display", display.getExternalName());
-		if (label != null) {
-			group.put("label", label);
-		}
-		if (icon != null) {
-			group.put("icon", icon);
-		}
-		group.put("items", new ArrayList<>(items));
-		_groups.add(group);
-		putState(GROUPS, _groups);
+		_groups.add(group(name, display, label, icon, items));
 		_allChildren.addAll(items);
+		publishGroups();
+	}
+
+	/**
+	 * Sets the group that leads this toolbar and stays through a rebuild.
+	 *
+	 * <p>
+	 * The pinned group belongs to whoever composes the toolbar, not to the commands it was built
+	 * from: {@link #replaceGroups(ReactToolbarControl)} swaps the
+	 * {@link #addGroup(String, ToolbarGroupDisplay, String, String, List) added groups} and keeps
+	 * this one, so a composer can hand its own controls to a toolbar that rebuilds itself
+	 * whenever its command scope changes.
+	 * </p>
+	 *
+	 * <p>
+	 * A toolbar has at most one pinned group; a further call replaces it. Empty items leave the
+	 * toolbar with none.
+	 * </p>
+	 *
+	 * @param name
+	 *        The clique name of the group.
+	 * @param display
+	 *        Display mode of the group.
+	 * @param items
+	 *        The child controls in this group.
+	 */
+	public void setPinnedGroup(String name, ToolbarGroupDisplay display, List<? extends ReactControl> items) {
+		_pinnedChildren.clear();
+		if (items.isEmpty()) {
+			_pinnedGroup = null;
+		} else {
+			_pinnedGroup = group(name, display, null, null, items);
+			_pinnedChildren.addAll(items);
+		}
+		publishGroups();
 	}
 
 	/**
 	 * Whether this toolbar has any groups with items.
 	 */
 	public boolean isEmpty() {
-		return _allChildren.isEmpty();
+		return _allChildren.isEmpty() && _pinnedChildren.isEmpty();
 	}
 
 	/**
-	 * Replaces all groups with the groups from another toolbar.
+	 * Replaces the added groups with the groups from another toolbar.
 	 *
 	 * <p>
 	 * Used for reactive toolbar rebuilds when the command scope changes (implicit commands
-	 * added/removed). Cleans up old children, adopts the new groups, and pushes the updated
-	 * state to the client via SSE.
+	 * added/removed). Cleans up the children of the replaced groups, adopts the new groups, and
+	 * pushes the updated state to the client via SSE. The
+	 * {@link #setPinnedGroup(String, ToolbarGroupDisplay, List) pinned group} is kept and still
+	 * leads the groups afterwards.
 	 * </p>
 	 *
 	 * @param newToolbar
 	 *        The newly built toolbar whose groups should replace the current ones.
 	 */
 	public void replaceGroups(ReactToolbarControl newToolbar) {
-		// Clean up old children.
+		// Clean up the children of the groups being replaced.
 		for (ReactControl child : _allChildren) {
 			child.cleanupTree();
 		}
@@ -137,11 +196,38 @@ public class ReactToolbarControl extends ReactControl {
 		_groups.addAll(newToolbar._groups);
 
 		// Push full groups state to client.
-		putState(GROUPS, _groups);
+		publishGroups();
 
 		// The rebuilt toolbar was built for the same placement, so it carries the collapsing
 		// behavior this one must keep displaying with.
 		setOverflow(newToolbar._overflow);
+	}
+
+	private static Map<String, Object> group(String name, ToolbarGroupDisplay display, String label, String icon,
+			List<? extends ReactControl> items) {
+		Map<String, Object> group = new LinkedHashMap<>();
+		group.put(GROUP_NAME, name);
+		group.put(GROUP_DISPLAY, display.getExternalName());
+		if (label != null) {
+			group.put(GROUP_LABEL, label);
+		}
+		if (icon != null) {
+			group.put(GROUP_ICON, icon);
+		}
+		group.put(GROUP_ITEMS, new ArrayList<>(items));
+		return group;
+	}
+
+	/**
+	 * Publishes the pinned group followed by the added ones as the {@link #GROUPS} state.
+	 */
+	private void publishGroups() {
+		List<Object> published = new ArrayList<>(_groups.size() + 1);
+		if (_pinnedGroup != null) {
+			published.add(_pinnedGroup);
+		}
+		published.addAll(_groups);
+		putState(GROUPS, published);
 	}
 
 }

@@ -603,11 +603,14 @@ Six code fixes and one piece of prompt text address that:
   would send them to their administrator for the wrong change; the split is
   `AgentCapabilities.lostToBackgroundCeiling`, the same one the capability notice uses.
 
-  A **synchronous** delegation is untouched. It inherits the parent's context unchanged and completes
-  inside the parent turn, so nothing about it is filtered here. The refusal never says or implies that
-  the agent does not exist - it does, and a model told otherwise looks for another name for the same
-  work. An agent that really is unknown is not refused here either: that is not a denial, and the spawn
-  fails where it always did.
+  A **synchronous** delegation refuses the same way, in `DelegationTool.delegationRefusal` (#348), and
+  for the same reason: the catalog filter in front of it is a filter, and a `delegate_to_*` the model
+  can still call would contradict it. It is asked of the parent turn's own context, which is what the
+  child inherits, and carries no unattended wording: a synchronous delegation completes inside the
+  parent turn and loses nothing to the allowlist that the parent had not lost already. Neither refusal
+  ever says or implies that the agent does not exist - it does, and a model told otherwise looks for
+  another name for the same work. An agent that really is unknown is not refused here either: that is
+  not a denial, and the run fails where it always did.
 - **`loadSkill` no longer advertises tools the principal cannot call** (`SkillTool.addSkillTools`).
   It used to register and announce every resolvable tool of a skill; the next turn's schema filter
   then removed exactly the denied ones, so an authoritative tool result contradicted the tool list.

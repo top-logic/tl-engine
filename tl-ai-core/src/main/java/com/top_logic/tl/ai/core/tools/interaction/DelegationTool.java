@@ -9,9 +9,12 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.tl.ai.core.agent.AgentCapabilities;
+import com.top_logic.tl.ai.core.agent.AgentDefinition;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentResult;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
@@ -163,6 +166,14 @@ public class DelegationTool implements Tool {
 	}
 
 	private ToolResult executeSync(ToolContext toolContext, String task, String contextStr) {
+		// Before anything is recorded: a delegate that can reach no tool this run may call would burn
+		// a provider round trip and come back with nothing. The synchronous counterpart of
+		// SubagentSpawner#detachedSpawnRefusal (#348).
+		String refusal = refusalFor(toolContext.security());
+		if (refusal != null) {
+			return ToolResult.of(refusal);
+		}
+
 		String userPromptStr = buildUserPrompt(task, contextStr);
 
 		ConversationLogListener logListener = ConversationLogListener.current();
@@ -248,6 +259,90 @@ public class DelegationTool implements Tool {
 			Logger.error("Delegation to " + _targetAgentName + " failed.", e, DelegationTool.class);
 			return ToolResult.of("ERROR: Delegation to " + _targetAgentName + " failed: " + e.getMessage());
 		}
+	}
+
+	/**
+	 * {@link #delegationRefusal} over the deployed agent graph, or <code>null</code> when the
+	 * predicate cannot be evaluated at all.
+	 *
+	 * <p>
+	 * Diagnostic, not a gate - see {@link AgentCapabilities}. The gate is the child's own schema filter
+	 * and the invocation gate in {@code AgentLoop}, neither of which this can weaken, so a graph or a
+	 * registry that cannot be reached lets the delegation proceed rather than taking it down: refusing
+	 * a run because the <em>explanation</em> for refusing it could not be computed would be the wrong
+	 * trade.
+	 * </p>
+	 *
+	 * @param security
+	 *        The authority of this run, which a synchronous delegate inherits unchanged.
+	 */
+	private String refusalFor(SecurityContext security) {
+		try {
+			return delegationRefusal(_targetAgentName, AgentCapabilities.forRun(security));
+		} catch (RuntimeException ex) {
+			Logger.warn("Cannot judge whether delegating to '" + _targetAgentName + "' is worth it;"
+				+ " letting the delegation proceed.", ex, DelegationTool.class);
+			return null;
+		}
+	}
+
+	/**
+	 * The tool error refusing a synchronous delegation, or <code>null</code> if it is worth running.
+	 *
+	 * <p>
+	 * The synchronous counterpart of {@link SubagentSpawner#detachedSpawnRefusal}, and for the same
+	 * reason: {@code list_agents} and the prompt's delegate catalog already leave out an agent that can
+	 * reach no tool the run may call, and a {@code delegate_to_*} the model can still call would
+	 * contradict them. What it saves is a child run, a provider round trip and a result that says
+	 * nothing.
+	 * </p>
+	 *
+	 * <p>
+	 * An <b>ordinary tool error</b> rather than an exception, because the model has to be able to relay
+	 * it: the user's answer is a capability grant, and only the user can go and ask for one. It never
+	 * suggests the agent does not exist - it does, and saying otherwise would send the model looking for
+	 * a different name for the same work. An agent that really is unknown is not refused here at all:
+	 * that is not a denial, and the delegation fails where it always did.
+	 * </p>
+	 *
+	 * <p>
+	 * Unlike the spawn counterpart it carries no unattended wording, and it is asked of the parent
+	 * turn's own context rather than of a narrowed one. A synchronous delegation completes inside the
+	 * parent turn, so it inherits that context unchanged and loses nothing to the
+	 * {@code <background-allowlist>} that the parent had not lost already.
+	 * </p>
+	 *
+	 * @param targetAgentName
+	 *        Name of the agent the model asked for.
+	 * @param childCapabilities
+	 *        The capability view of the run the child will be.
+	 */
+	public static String delegationRefusal(String targetAgentName,
+			AgentCapabilities childCapabilities) {
+		AgentDefinition target = childCapabilities.graph().agent(targetAgentName);
+		String reason = childCapabilities.unusableReason(target);
+		if (reason == null) {
+			return null;
+		}
+
+		StringBuilder refusal = new StringBuilder();
+		refusal.append("ERROR: Delegation to '").append(targetAgentName).append("' was not started: ")
+			.append(reason).append(".\n\n");
+		Set<String> unreachable = childCapabilities.unreachableCapabilities(target);
+		if (!unreachable.isEmpty()) {
+			// The usual case: the delegate exists and may run, and every tool it can reach needs a
+			// capability this run does not have. Name them - the user's answer is a capability grant.
+			refusal.append("It could only have come back empty-handed. This run cannot reach the"
+				+ " capabilities its tools require:\n");
+			for (String capability : unreachable) {
+				refusal.append("- ").append(AgentCapabilities.describeCapability(capability))
+					.append("\n");
+			}
+			refusal.append("\n");
+		}
+		refusal.append("Say what is missing and continue with what you can do; delegating to it again"
+			+ " will not help.");
+		return refusal.toString();
 	}
 
 	private ToolResult executeAsync(SubagentJobRegistry registry, ToolContext toolContext,

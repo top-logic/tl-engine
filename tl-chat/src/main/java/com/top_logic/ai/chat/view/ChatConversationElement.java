@@ -134,6 +134,13 @@ public class ChatConversationElement implements UIElement {
 		String INPUT = "input";
 
 		/**
+		 * Configuration property name for {@link #getSubject()}.
+		 *
+		 * @see #getSubject()
+		 */
+		String SUBJECT = "subject";
+
+		/**
 		 * Configuration property name for {@link #getBusy()}.
 		 *
 		 * @see #getBusy()
@@ -326,6 +333,44 @@ public class ChatConversationElement implements UIElement {
 		@Format(ChannelRefFormat.class)
 		@Nullable
 		ChannelRef getInput();
+
+		/**
+		 * Optional channel naming the object a conversation started here is about.
+		 *
+		 * <p>
+		 * What stands on this channel when the user's first message creates the conversation is
+		 * written onto that session as {@code tl.ai.execution:AgentSession#subject}, and stays
+		 * there. A page that is about one object at a time - a project, an invoice, a contract -
+		 * thereby gets one conversation per object without remembering anything itself:
+		 * </p>
+		 *
+		 * <pre>
+		 * &lt;chat-conversation input="chatSession" subject="project"/&gt;
+		 * </pre>
+		 *
+		 * <p>
+		 * Only on the way out. Which conversation is shown stays the {@code input} channel's
+		 * business, and which conversations a user may pick from stays the {@code <data-list>}'s -
+		 * scoped by asking the object for the sessions that refer to it:
+		 * </p>
+		 *
+		 * <pre>
+		 * &lt;rows&gt;project -&gt; ifElse(isEmpty($project), list(),
+		 *     $project.referers(`tl.ai.execution:AgentSession#subject`)
+		 *         .filter(s -&gt; $s.get(`tl.ai.execution:AgentSession#owner`) == currentUser()))&lt;/rows&gt;
+		 * </pre>
+		 *
+		 * <p>
+		 * A conversation is stamped once, when it comes into being: opening an older one while
+		 * another object stands here does not move it, and a conversation started while the channel
+		 * was empty keeps no subject rather than being given one later.
+		 * </p>
+		 */
+		@Name(SUBJECT)
+		@Label("Subject")
+		@Format(ChannelRefFormat.class)
+		@Nullable
+		ChannelRef getSubject();
 
 		/**
 		 * Optional output channel written {@code true} while the agent is working.

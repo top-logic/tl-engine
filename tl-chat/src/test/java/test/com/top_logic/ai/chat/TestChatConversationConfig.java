@@ -38,6 +38,7 @@ public class TestChatConversationConfig extends TestCase {
 		assertNull("No id of its own: the enclosing <chat> names it, else it is the default chat.",
 			config.getChatId());
 		assertNull(config.getInput());
+		assertNull("A conversation is about nothing until a page says what.", config.getSubject());
 		assertNull(config.getBusy());
 		assertNull(config.getAgent());
 		assertNull(config.getModel());
@@ -172,6 +173,42 @@ public class TestChatConversationConfig extends TestCase {
 		Config config = (Config) TypedConfiguration.parse(CharacterContents.newContent(xml));
 		assertEquals("composerDraft", config.getDraft().getChannelName());
 		assertEquals("quotedObject", config.getReference().getChannelName());
+	}
+
+	/**
+	 * The two channels of a per-object chat parse: which conversation is shown, and what a new one
+	 * is about.
+	 *
+	 * <p>
+	 * They are independent halves of one page's rule (Issue #508). {@code input} is the conversation
+	 * the page shows - written by the {@code <data-list>} that scoped its rows by the same object -
+	 * and {@code subject} is what a conversation started here is stamped with. Nothing on the way
+	 * in: picking a session stays the list's job.
+	 * </p>
+	 */
+	public void testSubjectChannelParses() throws Exception {
+		String xml = "<chat-conversation xmlns:config='http://www.top-logic.com/ns/config/6.0'"
+			+ " config:interface='" + Config.class.getName() + "'"
+			+ " input='chatSession' subject='project'/>";
+		Config config = (Config) TypedConfiguration.parse(CharacterContents.newContent(xml));
+		assertEquals("chatSession", config.getInput().getChannelName());
+		assertEquals("project", config.getSubject().getChannelName());
+	}
+
+	/**
+	 * A subject needs no session list: an element may stamp what it creates and show nothing else.
+	 *
+	 * <p>
+	 * The two are configured apart because they answer different questions, and a page that scopes
+	 * its list elsewhere - a rail section, another view - still wants its conversations stamped.
+	 * </p>
+	 */
+	public void testSubjectChannelIsIndependentOfTheInputChannel() throws Exception {
+		String xml = "<chat-conversation xmlns:config='http://www.top-logic.com/ns/config/6.0'"
+			+ " config:interface='" + Config.class.getName() + "' subject='project'/>";
+		Config config = (Config) TypedConfiguration.parse(CharacterContents.newContent(xml));
+		assertEquals("project", config.getSubject().getChannelName());
+		assertNull("No session list on this page.", config.getInput());
 	}
 
 	/** Neither channel is required: an element that wires none is the ordinary case. */

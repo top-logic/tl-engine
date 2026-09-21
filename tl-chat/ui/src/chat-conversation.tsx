@@ -137,6 +137,24 @@ export function channelName(raw: unknown): string | undefined {
 }
 
 /**
+ * What a `publishSession` report says: which chat is open here, and whether this window is what
+ * brought it into being.
+ *
+ * `created` is the half the server cannot work out for itself. It sees a session id arrive either
+ * way, and a reload re-opens the chat this window had, so "the session has no subject yet" is not
+ * the same question: a conversation started elsewhere and opened here must keep the subject it was
+ * started with, and one that never had a subject must not be given the page's current one
+ * (#508).
+ */
+export function sessionReport(
+  sessionId: string | null,
+  createdSessionId: string | null,
+): { id: string; created: boolean } {
+  const id = sessionId ?? ''
+  return { id, created: id !== '' && id === createdSessionId }
+}
+
+/**
  * One write of the `reference` channel, out of the control state.
  *
  * The `seq` is what makes a write a write: a channel notifies for A, B, A, and the third write
@@ -203,6 +221,9 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   const controls = useMemo(() => readComposerControls(state), [state])
   const selected = typeof state.selected === 'string' ? state.selected : ''
   const hasInput = state.hasInput === true
+  // Whether the element names a subject channel. The server needs the session id of a chat created
+  // here even when nothing else on the page follows the selection, so this publishes it too.
+  const hasSubject = state.hasSubject === true
   const placeholder = typeof state.placeholder === 'string' ? state.placeholder : ''
   const promptImprovementEnabled = state.promptImprovementEnabled === true
   const extraMenuItems = useMemo(
@@ -250,14 +271,18 @@ export function TLChatConversation({ controlId }: TLCellProps) {
 
   // Write-back: publish the store's own session onto the channel (two-way), so a session list
   // highlights it after the store creates one on first send or restores one on reload.
+  //
+  // `created` is the other half: the server stamps a conversation with what the page is about only
+  // when this window is what brought it into being. It cannot tell that from the id alone - a reload
+  // re-opens the chat this window had, and that one must keep the subject it was started with.
   const published = useRef<string | null>(null)
   useEffect(() => {
-    if (!hasInput) return
-    const id = chat.sessionId ?? ''
-    if (published.current === id) return
-    published.current = id
-    void command('publishSession', { id })
-  }, [hasInput, chat.sessionId, command])
+    if (!hasInput && !hasSubject) return
+    const report = sessionReport(chat.sessionId, chat.createdSessionId)
+    if (published.current === report.id) return
+    published.current = report.id
+    void command('publishSession', report)
+  }, [hasInput, hasSubject, chat.sessionId, chat.createdSessionId, command])
 
   useEffect(() => {
     void command('setBusy', { busy: chat.busy })

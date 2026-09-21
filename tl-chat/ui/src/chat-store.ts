@@ -300,6 +300,15 @@ export interface ChatState {
   sessionsLoading: boolean
   sessionsError: string
   sessionId: string | null
+  /**
+   * The chat this window brought into being, as opposed to one it opened.
+   *
+   * Only the browser knows which of the two a chat is: the server sees a session id arrive either
+   * way, and a reload re-opens what this window had. A host that stamps a new conversation with what
+   * the page is about (`<chat-conversation subject>`) needs the difference, and this is where it is
+   * known. Never cleared - ids are unique, and it says what happened to this one id.
+   */
+  createdSessionId: string | null
   sessionTitle: string
 
   // Turn settings.
@@ -719,6 +728,7 @@ export class ChatStore {
       sessionsLoading: true,
       sessionsError: '',
       sessionId: null,
+      createdSessionId: null,
       sessionTitle: '',
       agent: '',
       model: '',
@@ -1687,7 +1697,7 @@ export class ChatStore {
           await loadSession(at, created.id)
           active = created.id
           createdHere = true
-          this.patch({ sessionId: active })
+          this.patch({ sessionId: active, createdSessionId: active })
           await this.refreshSessions()
         }
         this.showNotice('')

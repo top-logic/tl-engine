@@ -1403,6 +1403,43 @@ describe('eventBelongsToChat', () => {
  * `reference` channels do is exactly these two calls, so the store is where "a write replaces the
  * text" and "a write inserts a token" can be held without a browser.
  */
+/**
+ * Which chat this window brought into being (#508).
+ *
+ * A host that stamps a new conversation with what its page is about needs that difference, and only
+ * the browser has it: the first send is what creates a chat, while selecting one and restoring one
+ * after a reload both open a chat that was started somewhere else.
+ */
+describe('the chat this window created', () => {
+  it('records the chat the first send brought into being', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+
+    expect(store.getState().createdSessionId).toBeNull()
+
+    await store.actions.send('allererste Frage', [])
+
+    expect(store.getState().sessionId).toBe('s1')
+    expect(store.getState().createdSessionId).toBe('s1')
+
+    await settle()
+    release()
+  })
+
+  it('records nothing for a chat that was only opened', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+
+    await store.actions.selectSession('s1')
+
+    expect(store.getState().sessionId).toBe('s1')
+    expect(store.getState().createdSessionId).toBeNull()
+
+    await settle()
+    release()
+  })
+})
+
 describe('the composer seam', () => {
   it('replaces the draft, and the composer is what focuses and moves the caret', () => {
     const store = chatStore('alpha', BOOT)

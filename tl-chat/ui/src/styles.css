@@ -45,6 +45,7 @@
   --chat-column: 49rem;
   --chat-sidebar: 16.5rem;
   --chat-rail-narrow: 3.25rem;
+  --chat-conversation-min-width: 20rem;
   --r-1: calc(var(--corner-radius, 0.25rem) * 1.5);
   --r-2: calc(var(--corner-radius, 0.25rem) * 2.5);
   --r-3: calc(var(--corner-radius, 0.25rem) * 4);
@@ -414,7 +415,24 @@
    */
   display: flex;
   flex-direction: column;
-  min-width: 0;
+  /*
+   * A floor, but never wider than the window.
+   *
+   * `min-width: 0` alone let a host squeeze the element to the width of its own scrollbar - 22 px,
+   * a slit with a composer in it (Consulting #234). Measured in the demo at a 320 px window, the
+   * conversation was 32 px while the page beside it had room to spare.
+   *
+   * The second measure is `100vw` and deliberately **not** `100%`: the box this element is placed
+   * in is the one being squeezed, so a percentage tracks the squeeze instead of resisting it - a
+   * `min(20rem, 100%)` resolved to 32 px in exactly the case this rule exists for. What the window
+   * is, on the other hand, nothing in the page can shrink. So a host with room stops squeezing at
+   * the floor, and a window narrower than the floor is simply filled rather than overflowed.
+   *
+   * The floor is the width below which the composer's controls have nowhere left to go; the
+   * `chat-stage` queries further down still take the layout from there. A theme that wants another
+   * floor redeclares the token.
+   */
+  min-width: min(var(--chat-conversation-min-width), 100vw);
   height: 100%;
   color: var(--text-primary);
   background: var(--background);

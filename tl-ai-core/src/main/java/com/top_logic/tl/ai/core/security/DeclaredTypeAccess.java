@@ -6,6 +6,7 @@
 package com.top_logic.tl.ai.core.security;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -146,7 +147,45 @@ public class DeclaredTypeAccess {
 	 * @return Whether the declared types permit the tool.
 	 */
 	public boolean permits(Tool tool) {
-		return decide(tool) == null;
+		return unreadableTypes(tool).isEmpty();
+	}
+
+	/**
+	 * The types the given tool declares and the run's principal may not read, without logging.
+	 *
+	 * <p>
+	 * The same decision {@link #permits(Tool)} makes, for a caller that has to <em>name</em> what
+	 * stands in the way rather than only know that something does - the capability view composes a
+	 * skill's and an agent's refusal out of the types of all its tools. Empty means permitted, and
+	 * that includes the two cases the rule deliberately lets pass: one readable declared type is
+	 * enough, and a declaration this application's model does not know is not a denial.
+	 * </p>
+	 *
+	 * @param tool
+	 *        The tool to check.
+	 * @return The unreadable declared type names, in declaration order; empty if the tool is
+	 *         permitted.
+	 */
+	public List<String> unreadableTypes(Tool tool) {
+		List<String> declared = tool.types();
+		if (declared == null || declared.isEmpty()) {
+			return List.of();
+		}
+		List<String> unreadable = new ArrayList<>(declared.size());
+		for (String name : declared) {
+			Verdict verdict = _access.readAccess(name);
+			if (verdict == Verdict.READABLE) {
+				return List.of();
+			}
+			if (verdict == Verdict.UNREADABLE) {
+				unreadable.add(name);
+			} else {
+				report(tool, name);
+			}
+		}
+		// An empty list here means every declared name was unresolvable: the tool declares nothing
+		// this application knows, which leaves it exactly as unrestricted as declaring nothing would.
+		return unreadable;
 	}
 
 	/**
@@ -175,28 +214,8 @@ public class DeclaredTypeAccess {
 	 * The refusal for the given tool, or <code>null</code> if it is permitted. No side effect.
 	 */
 	private String decide(Tool tool) {
-		List<String> declared = tool.types();
-		if (declared == null || declared.isEmpty()) {
-			return null;
-		}
-		List<String> unreadable = new ArrayList<>(declared.size());
-		for (String name : declared) {
-			Verdict verdict = _access.readAccess(name);
-			if (verdict == Verdict.READABLE) {
-				return null;
-			}
-			if (verdict == Verdict.UNREADABLE) {
-				unreadable.add(name);
-			} else {
-				report(tool, name);
-			}
-		}
-		if (unreadable.isEmpty()) {
-			// Every declared name was unresolvable: the tool declares nothing this application knows,
-			// which leaves it exactly as unrestricted as declaring nothing would.
-			return null;
-		}
-		return refusal(tool, unreadable);
+		List<String> unreadable = unreadableTypes(tool);
+		return unreadable.isEmpty() ? null : refusal(tool, unreadable);
 	}
 
 	/**
@@ -225,6 +244,23 @@ public class DeclaredTypeAccess {
 				+ " touch is decided per object, as for a tool that declares nothing.",
 				DeclaredTypeAccess.class);
 		}
+	}
+
+	/**
+	 * The declared type names as they read inside a sentence: quoted, comma-separated, the last two
+	 * joined by "and".
+	 *
+	 * <p>
+	 * Public because the refusal of a skill or an agent is composed elsewhere - see
+	 * {@code AgentCapabilities} - and two spellings of the same list would read as two different
+	 * rules.
+	 * </p>
+	 *
+	 * @param names
+	 *        The type names to list. Never empty.
+	 */
+	public static String namedTypes(Collection<String> names) {
+		return quoted(new ArrayList<>(names));
 	}
 
 	private static String quoted(List<String> names) {

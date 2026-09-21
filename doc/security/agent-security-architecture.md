@@ -623,6 +623,11 @@ Six code fixes and one piece of prompt text address that:
   names the setting an administrator would change, and add no capability list. Pinned by
   `TestSpawnFilter`, `TestAgentGate` and - on the deployed policy, where `<agent-access>` is what
   refuses - `SecDemoSpawnFilterTest`.
+
+  **A fifth cause, and the same reasoning** (#258 follow-up): every tool the thing reaches works on
+  model types the account may not read. `Unusable.Cause.TYPE_UNREADABLE` is also not about
+  capabilities, and the remedy it names is a Read grant on the type - see section 3.3.3, which also
+  says why the skill and the per-tool forms answer it too. Pinned by `TestCapabilityDeclaredTypes`.
 - **`loadSkill` no longer advertises tools the principal cannot call** (`SkillTool.addSkillTools`).
   It used to register and announce every resolvable tool of a skill; the next turn's schema filter
   then removed exactly the denied ones, so an authoritative tool result contradicted the tool list.
@@ -957,6 +962,22 @@ the model can only discover by spending a turn on it.
 flagged `is_error`, excluded from the turn's rollback decision like every other denial, and logged at
 `info` rather than `warn`, because an account without a read right is a configured state and not an
 operator's problem.
+
+**And `AgentCapabilities` asks the same check**, over a `DeclaredTypeAccess` built from the very
+`SecurityContext.modelSecurity()` the filter uses - one rule, asked where it is needed, never two.
+That is what keeps the surfaces of section 3.2.7 honest: `listTools` would otherwise advertise a
+declared tool the schema filter drops, a skill whose only tool is type-withheld would count as usable,
+and every one of those refusals would have blamed a capability. The last is the wrong-remedy defect of
+#517 one layer down, and one step worse: the capability a type-withheld tool costs is one the acting
+account **holds**, so naming it sends an administrator looking for a grant that is already there.
+
+A tool, skill or agent that nothing but its declared types withheld therefore answers
+`Unusable.Cause.TYPE_UNREADABLE`, whose `aboutCapabilities()` is false, and `SubagentSpawner`,
+`DelegationTool` and `listTools` relay the sentence naming the type and list no capability. One
+capability-denied tool in the set is enough to make the cause `NO_REACHABLE_TOOL` again - a capability
+grant then really does reach something - and the message names the types as well, so that the grant is
+not expected to reach the rest. `TestCapabilityDeclaredTypes` pins all of it on the `TypeReadAccess`
+seam; `SecDemoDeclaredTypesTest` pins what the real model rights answer.
 
 **What it buys**, which is what #258 asked for:
 
@@ -1902,7 +1923,7 @@ any more. All new types live in `tl-ai-core/src/main/java/com/top_logic/tl/ai/co
 | `SecurityContext.restrictedTo(...)` / `ToolContext.restrictedTo(...)` | **Removed** (#288). There is no per-run mode left to compose |
 | `PreCommitGuard` + `ModelSecurityPreCommitGuard` + `ToolChangeSet` - the L4 guard | **Implemented and wired** (#259). Called once per turn from `AgentLoop.commitTransaction`, only when a transaction is active; reads the change set from the engine's transaction bookkeeping; rolls the turn back through the existing failed-tool-call route. Unit-tested (`TestPreCommitGuard`, `TestAgentLoop`) and end-to-end against the fixture (`SecDemoPreCommitGuardTest`) |
 | `@ToolMethod(group = ...)` in `tl-ai-tool-api` | **Enforced.** All 75 registered tools carry a group; `Tool.group()` is the runtime seam |
-| `@ToolMethod(types = ...)` | **Implemented** (#258). `DeclaredTypeAccess` refuses a declared tool whose declared types the principal may read none of, and `ToolPermissionFilter` drops it from the provider request for the same reason. Section 3.3.3; no shipped tool declares one, and that section says why |
+| `@ToolMethod(types = ...)` | **Implemented** (#258). `DeclaredTypeAccess` refuses a declared tool whose declared types the principal may read none of, and `ToolPermissionFilter` drops it from the provider request for the same reason, and `AgentCapabilities` applies it to the catalog, skill and delegate surfaces. Section 3.3.3; no shipped tool declares one, and that section says why |
 | Per-agent `security-mode` (4.2) | Built (#260) and **removed again** (#288), together with the model attribute, the service-editor selector and `SecDemoAgentFloorTest` |
 | Per-agent `required-groups` (4.2) | **Dropped** (#392). A self-imposed narrowing an agent's own author could remove; replaced by `<agent-access>`, `<model-access>` and `<mcp-access>`, which are keyed by role |
 | `<agent-access>` / `<model-access>` / `<mcp-access>` (4.2) | **Implemented** (#392). `RoleAccessPolicy` decides all three; `RunAuthorization` carries the decision on the security context; `AgentFactory` enforces it before the run starts; `/chat/capabilities` filters and `/chat/send` answers 403 |

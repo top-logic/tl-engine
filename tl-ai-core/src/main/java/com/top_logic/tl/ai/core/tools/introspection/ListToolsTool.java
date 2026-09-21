@@ -227,8 +227,10 @@ public class ListToolsTool implements Tool {
 				appendSkillTools(out, skill, capabilities);
 				continue;
 			}
-			if (capabilities.unusableReason(skill) != null) {
-				out.append("[withheld] - ").append(withheldSkill(skill, capabilities)).append("\n");
+			AgentCapabilities.Unusable unusable = capabilities.unusableReason(skill);
+			if (unusable != null) {
+				out.append("[withheld] - ").append(withheldSkill(skill, capabilities, unusable))
+					.append("\n");
 				continue;
 			}
 			out.append("[not loadable] - this agent declares it and nothing withholds it, so its"
@@ -282,12 +284,18 @@ public class ListToolsTool implements Tool {
 	 * Why a declared skill is not offered, naming the capabilities it needs.
 	 *
 	 * <p>
-	 * The same two remedies {@code AgentCapabilities} tells apart everywhere else: an unattended run
-	 * lost the skill to the {@code <background-allowlist>}, which no role grant changes, and an
-	 * attended one lost it to the acting user's roles.
+	 * The same three remedies {@code AgentCapabilities} tells apart everywhere else: an unattended run
+	 * lost the skill to the {@code <background-allowlist>}, which no role grant changes; an attended
+	 * one lost it to the acting user's roles; or every tool in it works on model types the user may
+	 * not read, which is a Read grant on a type and not a capability at all (#258). The third names no
+	 * capability, because the one its tools cost is one this user already holds.
 	 * </p>
 	 */
-	private static String withheldSkill(SkillDefinition skill, AgentCapabilities capabilities) {
+	private static String withheldSkill(SkillDefinition skill, AgentCapabilities capabilities,
+			AgentCapabilities.Unusable unusable) {
+		if (!unusable.aboutCapabilities()) {
+			return unusable.message() + ". Loading it would hand over nothing, so it is not offered.";
+		}
 		Set<String> lacking = capabilities.lacking(skill.tools());
 		String needs = lacking.isEmpty()
 			? "every tool in it belongs to no capability, so no grant reaches it"

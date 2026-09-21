@@ -1305,12 +1305,15 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 					continue;
 				}
 				declared.add(sd);
-				String unusable = capabilities.unusableReason(sd);
+				AgentCapabilities.Unusable unusable = capabilities.unusableReason(sd);
 				if (unusable != null) {
 					// Silent capability loss is the failure mode this filter must not have: an
 					// operator asked why the agent "forgot how to do X" must find the answer here.
+					// The cause is in the line too, so that a Read grant on a type is not read as a
+					// capability the account is short of.
 					Logger.info("Agent '" + agentName + "': skill '" + sd.name()
-						+ "' is not offered to the current user - " + unusable, AgentFactory.class);
+						+ "' is not offered to the current user (" + unusable.cause() + ") - "
+						+ unusable.message(), AgentFactory.class);
 					continue;
 				}
 				catalog.append("- `").append(sd.name()).append("`: ");

@@ -1036,7 +1036,11 @@
    * pushed its own composer out under the pane instead of narrowing with the stage.
    */
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: 1fr auto auto 1.2fr;
+  /*
+   * Four content rows, not three: the prompt cards sit under the composer, and a conversation that
+   * configures none leaves that row at zero height.
+   */
+  grid-template-rows: 1fr auto auto auto 1.2fr;
 }
 
 .stage.is-empty .thread-shell {
@@ -1063,6 +1067,76 @@
 .stage.is-empty .welcome {
   margin: 0;
   padding: 0 0 1.75rem;
+}
+
+.stage.is-empty .prompt-suggestions {
+  grid-row: 4;
+}
+
+/*
+ * The first questions a page offers, under the composer.
+ *
+ * Same column and same gutters as the composer, so the row lines up with the field it fills rather
+ * than with the transcript's wider measure. They wrap: a page may offer three long questions or six
+ * short ones, and neither should introduce a horizontal scrollbar.
+ */
+.prompt-suggestions {
+  width: min(100%, var(--chat-column));
+  margin: 0 auto;
+  padding: 0 1.25rem 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.prompt-suggestion {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  background: var(--layer);
+  color: var(--text-primary);
+  font-size: var(--chat-small);
+  text-align: left;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.prompt-suggestion:hover {
+  background: var(--layer-hover);
+  border-color: var(--border-strong, var(--border-subtle));
+}
+
+.prompt-suggestion__icon {
+  flex: none;
+  color: var(--text-secondary);
+}
+
+.prompt-suggestion:hover .prompt-suggestion__icon {
+  color: var(--button-primary);
+}
+
+/*
+ * One line, elided. The label is the short form of the question; the whole sentence is the button's
+ * title and, one click later, the composer's text.
+ */
+.prompt-suggestion__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * Narrow: one card per row, so a long label is read rather than elided to three words.
+ */
+@container chat-stage (max-width: 26rem) {
+  .prompt-suggestion {
+    width: 100%;
+  }
 }
 
 .thread-shell {

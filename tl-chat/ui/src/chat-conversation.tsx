@@ -15,6 +15,7 @@ import {
   resolveMenuItems,
   resolveMessageActions,
 } from './registry'
+import { ThemeIcon } from './theme-icon'
 import { Thread } from './thread'
 
 const { useCallback, useEffect, useMemo, useRef } = React
@@ -126,6 +127,45 @@ export function readContextFacts(raw: unknown): ContextFact[] {
   return facts
 }
 
+export interface PromptCard {
+  label: string
+  icon: string
+  text: string
+}
+
+/**
+ * The prompt cards a `<chat-conversation/>` control computed from its `<prompts>` configuration.
+ *
+ * Like the context facts, the texts are already evaluated - on the server, in the acting user's
+ * context - so clicking a card costs no round trip. A card with nothing to say is dropped here
+ * rather than rendered as a button that would empty the composer: a label with no text is an
+ * expression that threw, and the user should see one card fewer, not a broken one.
+ */
+export function readPromptCards(raw: unknown): PromptCard[] {
+  if (!Array.isArray(raw)) return []
+  const cards: PromptCard[] = []
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue
+    const row = item as Record<string, unknown>
+    const label = typeof row.label === 'string' ? row.label : ''
+    const text = typeof row.text === 'string' ? row.text : ''
+    if (!label || !text) continue
+    cards.push({ label, icon: typeof row.icon === 'string' ? row.icon : '', text })
+  }
+  return cards
+}
+
+/**
+ * Whether the cards are shown right now.
+ *
+ * `empty-only` is the configured default and the answer is then the emptiness of the conversation:
+ * a first question is what an empty screen is short of, and a conversation under way is not. A host
+ * whose cards are standing commands rather than openers switches it off, and they stay.
+ */
+export function promptCardsVisible(raw: unknown, messageCount: number): boolean {
+  return raw === false ? true : messageCount === 0
+}
+
 /**
  * What a turn-setting channel said, out of the control state a `<chat-conversation/>` pushed.
  *
@@ -198,6 +238,40 @@ export function sameServers(a: string[], b: string[]): boolean {
 }
 
 /**
+ * The row of first questions a page offers, under the composer.
+ *
+ * A click fills the composer and nothing else - the user reads the sentence and presses send, which
+ * is the same rule the `draft`, `reference` and `quote` channels follow. `setDraft` focuses the
+ * field and puts the caret behind the text, so a user who wants to add a word is already there.
+ */
+function PromptCards({
+  cards,
+  label,
+  onPick,
+}: {
+  cards: PromptCard[]
+  label: string
+  onPick: (text: string) => void
+}) {
+  return (
+    <div className="prompt-suggestions" role="group" aria-label={label}>
+      {cards.map((card, index) => (
+        <button
+          key={`${card.label}-${index}`}
+          type="button"
+          className="prompt-suggestion"
+          title={card.text}
+          onClick={() => onPick(card.text)}
+        >
+          {card.icon ? <ThemeIcon encoded={card.icon} className="prompt-suggestion__icon" /> : null}
+          <span className="prompt-suggestion__label">{card.label}</span>
+        </button>
+      ))}
+    </div>
+  )
+}
+
+/**
  * The transcript and the prompt field as one view element.
  *
  * It joins the chat through {@code chat-id}. A configured {@code input} channel selects the
@@ -249,6 +323,12 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   // `insideDock` says which is which, and comes from the view context rather than from the React tree.
   const insideDock = state.insideDock === true
   useEffect(() => actions.registerConversation(insideDock), [actions, insideDock])
+
+  // The first questions this page offers. Their texts were evaluated on the server, so a click is
+  // purely local: it writes the composer, which then reports the draft onto the `draft` channel the
+  // way a typed sentence does.
+  const promptCards = useMemo(() => readPromptCards(state.prompts), [state.prompts])
+  const onPickPrompt = useCallback((text: string) => actions.setDraft(text), [actions])
 
   // What this page states about the situation, handed to the store so that it travels with every
   // message. The store compares by value, so re-pushing an unchanged set costs nothing.
@@ -544,6 +624,9 @@ export function TLChatConversation({ controlId }: TLCellProps) {
           ref={(api: ComposerApi | null) => actions.bindComposer(api)}
           {...controls}
         />
+        {promptCards.length > 0 && promptCardsVisible(state.promptsEmptyOnly, chat.messages.length) ? (
+          <PromptCards cards={promptCards} label={labels.promptCards} onPick={onPickPrompt} />
+        ) : null}
       </div>
     </div>
   )

@@ -1001,8 +1001,8 @@ An application configures this element in the design view. Its options fall into
   set shaped as the browser's `ReferenceCandidate`, and the existing `@` picker filters it client-side.
   A `<mention>` wins over `reference-source`. Each mention carries the object's stable id; the framework
   ships no tool that resolves it, so a host that wants the id to mean more gives its agent such a tool
-  (see the `<reference>` prompt fragment). The nested `<context>` binding is the same skill again -
-  see below.
+  (see the `<reference>` prompt fragment). The nested `<context>` and `<prompts>` bindings are the
+  same skill again - see below.
 
 #### What a page states about the situation: `<context>`
 
@@ -1114,6 +1114,54 @@ the answer on the session state and binds it for every run of that conversation
 list at once, and in the agent's block in the *next* conversation. The rail section that lists them
 is an ordinary `<data-list>` over `tl.ai.execution:UserMemory` filtered by `owner == currentUser()`,
 with a Forget command that calls `aiMemoryDelete`. See `tl-ai-core/doc/environment-block.md`.
+
+#### The first questions a page offers: `<prompts>` (#529)
+
+An empty conversation is the one screen with nothing to react to, and the page knows better than
+the chat what is worth asking on it. Consulting's Pietro page carried three hand-built `<button>`s
+and three derived channels for exactly that; this is the same thing as configuration:
+
+```xml
+<chat-conversation draft="chatDraft" input="chatSession">
+    <prompts>
+        <inputs><input channel="paneInvoice"/></inputs>
+        <prompt icon="css:bi bi-receipt">
+            <label><en>Summarise the newest invoices</en><de>Die neuesten Belege zusammenfassen</de></label>
+            <value>open -> "Please summarise the three newest invoices."</value>
+        </prompt>
+        <prompt icon="css:bi bi-question-circle">
+            <label><en>Explain the open invoice</en><de>Den geöffneten Beleg erklären</de></label>
+            <value>open -> ifElse(isEmpty($open), "…", "Please explain " + $open.label() + ".")</value>
+        </prompt>
+    </prompts>
+</chat-conversation>
+```
+
+Bound exactly the way `<context>` is: the `<inputs>` are channels of this page and their current
+values are the **leading arguments** of every card's `value`, evaluated on the server in the acting
+user's context and re-evaluated whenever an input changes. So a card names what the page is showing
+rather than only a fixed sentence - and, because the text is already evaluated when it reaches the
+browser, clicking one costs no round trip.
+
+| | |
+|--|--|
+| `<label>` | Mandatory. What the card says, in the user's own language - the short form of the question. One line, elided where it does not fit; the whole sentence is the button's tooltip. |
+| `icon` | A `ThemeImage`, named the way a `<chat-rail>` section names its icon. A card without one shows its label alone. |
+| `<value>` | Mandatory. TL-Script producing the text the click puts into the composer. |
+| `empty-only` | Default `true`: the cards are gone once the conversation has turns. Switch it off for cards that are standing commands ("summarise what we have so far") rather than openers. |
+
+**A click fills the composer; it does not send.** The same rule `draft`, `reference` and `quote`
+follow, and the reason a card may offer a longer and more precise question than anyone would type:
+the user reads the sentence and presses send. It goes in through the same `setDraft` a host writing
+the `draft` channel reaches, so the field takes the focus, the caret lands behind the text, and the
+composer reports the draft back onto that channel the way a typed sentence does. A card therefore
+**replaces** whatever stood in the composer, which is why `empty-only` is on by default.
+
+A card whose expression throws is pushed with an empty text and the browser leaves it out, with a
+WARN - the same trade a `<fact>` makes. One card fewer, not a broken page.
+
+`TestChatPromptsConfig` holds the configuration shape; `readPromptCards` / `promptCardsVisible` in
+`chat-conversation.test.ts` hold what the browser does with it.
 
 Coupling to know: elements share one conversation only when they agree on a chat id - which is what
 the enclosing `<chat>` is for - and a session list feeds the conversation over a **two-way** channel — `<data-list selection>` ↔

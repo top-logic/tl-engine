@@ -31,6 +31,7 @@ import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.UIElement;
@@ -280,6 +281,13 @@ public class ChatConversationElement implements UIElement {
 		 * @see #getSelection()
 		 */
 		String SELECTION = "selection";
+
+		/**
+		 * Configuration property name for {@link #getPrompts()}.
+		 *
+		 * @see #getPrompts()
+		 */
+		String PROMPTS = "prompts";
 
 		/**
 		 * Configuration property name for {@link #getMenuItems()}.
@@ -701,6 +709,23 @@ public class ChatConversationElement implements UIElement {
 		Selection getSelection();
 
 		/**
+		 * The first questions this page offers, as cards the user clicks instead of typing.
+		 *
+		 * <p>
+		 * A click fills the composer; it does not send. The user reads the sentence and presses
+		 * send - the same rule {@link #getDraft() draft}, {@link #getReference() reference} and
+		 * {@link #getQuote() quote} follow, and the reason a card may put a long, precise question
+		 * there that nobody would type.
+		 * </p>
+		 *
+		 * @see Prompts
+		 */
+		@Name(PROMPTS)
+		@Label("Prompts")
+		@Nullable
+		Prompts getPrompts();
+
+		/**
 		 * Registered composer-menu-item names.
 		 *
 		 * Hidden in the layout editor: the values must match registrations in {@code TypeScript}.
@@ -1056,6 +1081,160 @@ public class ChatConversationElement implements UIElement {
 		@Label("Stable")
 		@BooleanDefault(true)
 		boolean getStable();
+	}
+
+	/**
+	 * The first questions this page offers, as cards standing under the composer.
+	 *
+	 * <p>
+	 * The empty conversation is the one screen where a user has nothing to react to, and a page
+	 * knows better than the chat what is worth asking on it. So a host names the questions here and
+	 * the user clicks one instead of typing it.
+	 * </p>
+	 *
+	 * <p>
+	 * Bound with TL-Script the way {@link Context} binds its facts: the {@link #getInputs() inputs}
+	 * are channels of this page whose current values become the leading arguments of every card's
+	 * {@link Prompt#getValue() value} expression, evaluated on the server in the acting user's
+	 * context and re-evaluated whenever an input changes. A card can therefore name what the page is
+	 * showing - "summarise <em>this</em> invoice" - rather than only a fixed sentence.
+	 * </p>
+	 *
+	 * <p>
+	 * Clicking one writes the evaluated text into the composer, exactly as a host writing the
+	 * {@link Config#getDraft() draft} channel does, and the composer reports it back onto that
+	 * channel. Nothing is sent.
+	 * </p>
+	 */
+	@TagName("prompts")
+	public interface Prompts extends ConfigurationItem {
+
+		/**
+		 * Configuration property name for {@link #getInputs()}.
+		 *
+		 * @see #getInputs()
+		 */
+		String INPUTS = "inputs";
+
+		/**
+		 * Configuration property name for {@link #getEmptyOnly()}.
+		 *
+		 * @see #getEmptyOnly()
+		 */
+		String EMPTY_ONLY = "empty-only";
+
+		/**
+		 * Configuration property name for {@link #getCards()}.
+		 *
+		 * @see #getCards()
+		 */
+		String CARDS = "cards";
+
+		/**
+		 * References to channels whose values become the leading positional arguments of every card
+		 * expression, in the order they are listed.
+		 */
+		@Name(INPUTS)
+		@ListBinding(format = ChannelRefFormat.class, tag = "input", attribute = "channel")
+		List<ChannelRef> getInputs();
+
+		/**
+		 * Whether the cards are gone once the conversation has something in it.
+		 *
+		 * <p>
+		 * On by default, because a first question is what the empty screen is short of and a
+		 * conversation under way is not: there the transcript is what the user reacts to, and a row
+		 * of unrelated openers under the composer would compete with it.
+		 * </p>
+		 *
+		 * <p>
+		 * Switch it off for a page whose cards are not openers but standing commands - "summarise
+		 * what we have so far" - which are worth having at every point of a conversation.
+		 * </p>
+		 */
+		@Name(EMPTY_ONLY)
+		@Label("Empty only")
+		@BooleanDefault(true)
+		boolean getEmptyOnly();
+
+		/**
+		 * The cards themselves, in the order they are shown.
+		 *
+		 * <p>
+		 * The default container, so a card is written as a direct child of the section rather than
+		 * inside a wrapper element of its own.
+		 * </p>
+		 */
+		@Name(CARDS)
+		@DefaultContainer
+		@EntryTag("prompt")
+		List<Prompt> getCards();
+	}
+
+	/**
+	 * One question this page offers the user.
+	 *
+	 * @see Prompts
+	 */
+	@TagName("prompt")
+	public interface Prompt extends ConfigurationItem {
+
+		/**
+		 * Configuration property name for {@link #getLabel()}.
+		 *
+		 * @see #getLabel()
+		 */
+		String LABEL = "label";
+
+		/**
+		 * Configuration property name for {@link #getIcon()}.
+		 *
+		 * @see #getIcon()
+		 */
+		String ICON = "icon";
+
+		/**
+		 * Configuration property name for {@link #getValue()}.
+		 *
+		 * @see #getValue()
+		 */
+		String VALUE = "value";
+
+		/**
+		 * What the card says, in the user's own language.
+		 *
+		 * <p>
+		 * The short form of the question, not the question itself: the card has one line, while the
+		 * {@link #getValue() value} it fills in may be a paragraph.
+		 * </p>
+		 */
+		@Name(LABEL)
+		@Label("Label")
+		@Mandatory
+		ResKey getLabel();
+
+		/**
+		 * The icon on the card, e.g. {@code css:bi bi-receipt}.
+		 *
+		 * <p>
+		 * Named the way a {@code <chat-rail/>} section names its icon. Cards without one show their
+		 * label alone, which is what a set of cards that say nothing an icon could add should do.
+		 * </p>
+		 */
+		@Name(ICON)
+		@Label("Icon")
+		@Nullable
+		ThemeImage getIcon();
+
+		/**
+		 * TL-Script computing the text the click puts into the composer, taking the enclosing
+		 * {@link Prompts#getInputs() inputs} as its leading arguments.
+		 */
+		@Name(VALUE)
+		@Label("Value")
+		@Mandatory
+		@NonNullable
+		Expr getValue();
 	}
 
 	/**

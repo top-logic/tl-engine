@@ -47,6 +47,8 @@ const EN = {
   stopRun: 'Stop the run',
   generating: 'Generating a response',
   jumpToLatest: 'Jump to latest',
+  /** Names the row of configured prompt cards for a screen reader; the cards say the rest. */
+  promptCards: 'Suggested questions',
 
   workedFor: (duration: string) => `Worked for ${duration}`,
   working: 'Working…',
@@ -286,6 +288,7 @@ const DE: Bundle = {
   stopRun: 'Lauf abbrechen',
   generating: 'Antwort wird erzeugt',
   jumpToLatest: 'Zum Ende springen',
+  promptCards: 'Vorgeschlagene Fragen',
 
   workedFor: (duration: string) => `${duration} gearbeitet`,
   working: 'Arbeitet …',

@@ -313,6 +313,66 @@
 					</fact>
 				</context>
 				<!--
+					The first questions this page offers (Issue #529). The same binding as the
+					<context> above - the <inputs> are the leading arguments of every card's
+					expression, evaluated on the server and re-evaluated when the pane changes - so a
+					card can name the invoice the user has open rather than only a fixed sentence.
+
+					A click FILLS the composer and stops there. The user reads the sentence and
+					presses send, which is the rule the draft, reference and quote channels already
+					follow, and the reason a card may offer a longer and more precise question than
+					anyone would type.
+
+					Shown while the conversation is empty, which is the one screen with nothing to
+					react to; `empty-only="false"` would keep them under every composer. The third
+					card is the one that is worth having: with an invoice open it asks about that
+					invoice by name, and with none open it asks the question that still makes sense.
+				-->
+				<prompts>
+					<inputs>
+						<input channel="paneInvoice"/>
+					</inputs>
+					<prompt icon="css:bi bi-receipt">
+						<label>
+							<en>Summarise the newest invoices</en>
+							<de>Die neuesten Belege zusammenfassen</de>
+						</label>
+						<value><![CDATA[open -> {
+							"en": "Please summarise the three newest invoices with their amounts.",
+							"de": "Bitte fasse die drei neuesten Belege mit ihren Beträgen zusammen."
+						}.internationalize()]]></value>
+					</prompt>
+					<prompt icon="css:bi bi-currency-euro">
+						<label>
+							<en>What did I spend this year?</en>
+							<de>Was habe ich dieses Jahr ausgegeben?</de>
+						</label>
+						<value><![CDATA[open -> {
+							"en": "What is the total of all invoices of this year, and which month was the most expensive?",
+							"de": "Wie hoch ist die Summe aller Belege dieses Jahres, und welcher Monat war der teuerste?"
+						}.internationalize()]]></value>
+					</prompt>
+					<prompt icon="css:bi bi-question-circle">
+						<label>
+							<en>Explain the open invoice</en>
+							<de>Den geöffneten Beleg erklären</de>
+						</label>
+						<value><![CDATA[open -> ifElse(isEmpty($open),
+							{
+								"en": "Open the most expensive invoice and explain what it is for.",
+								"de": "Öffne den teuersten Beleg und erkläre, wofür er ist."
+							}.internationalize(),
+							{
+								"en": "Please explain the invoice “",
+								"de": "Bitte erkläre den Beleg „"
+							}.internationalize()
+								+ $open.get(`tl.ai.demo.imageclassification:Invoice#description`)
+								+ {"en": "” over ", "de": "“ über "}.internationalize()
+								+ $open.get(`tl.ai.demo.imageclassification:Invoice#amountLabel`)
+								+ ".")]]></value>
+					</prompt>
+				</prompts>
+				<!--
 					And the one line that says WHICH object the user is looking at (Issue #494). It
 					states the same channel the pane renders - label, type and the identifier every
 					tool reads back - so "what have I selected?" is answered and "change its date" is

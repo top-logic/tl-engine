@@ -6,7 +6,9 @@ import {
   channelNames,
   modelBoundSource,
   readComposerControls,
+  promptCardsVisible,
   readContextFacts,
+  readPromptCards,
   readThreadConfig,
   tokenWrite,
   sameServers,
@@ -171,6 +173,54 @@ describe('readContextFacts', () => {
     expect(readContextFacts([{ name: 'Project' }])).toEqual([
       { name: 'Project', value: '', stable: true },
     ])
+  })
+})
+
+/**
+ * The prompt cards a page offers, and when they are shown.
+ *
+ * The texts arrive already evaluated - the server did that, in the acting user's context - so what
+ * the browser owns is only which of them are worth a button and whether the row belongs on screen.
+ */
+describe('readPromptCards', () => {
+  it('reads what the control computed from its <prompts> cards', () => {
+    expect(
+      readPromptCards([
+        { label: 'Summarise', icon: 'css:bi bi-receipt', text: 'Please summarise the newest invoices.' },
+        { label: 'Who sent it?', icon: '', text: 'Who is this invoice from?' },
+      ]),
+    ).toEqual([
+      { label: 'Summarise', icon: 'css:bi bi-receipt', text: 'Please summarise the newest invoices.' },
+      { label: 'Who sent it?', icon: '', text: 'Who is this invoice from?' },
+    ])
+  })
+
+  it('is empty when the element configured no prompts', () => {
+    expect(readPromptCards(undefined)).toEqual([])
+    expect(readPromptCards('x')).toEqual([])
+    expect(readPromptCards([])).toEqual([])
+  })
+
+  it('drops a card with no text, which would empty the composer instead of filling it', () => {
+    expect(readPromptCards([{ label: 'Broken', icon: '', text: '' }, null, { label: 'Ask', text: 'Ask this.' }]))
+      .toEqual([{ label: 'Ask', icon: '', text: 'Ask this.' }])
+  })
+
+  it('drops a card with no label, which would be a button nobody can read', () => {
+    expect(readPromptCards([{ text: 'Ask this.' }])).toEqual([])
+  })
+})
+
+describe('promptCardsVisible', () => {
+  it('shows the cards on an empty conversation and hides them once it has turns', () => {
+    expect(promptCardsVisible(undefined, 0)).toBe(true)
+    expect(promptCardsVisible(true, 0)).toBe(true)
+    expect(promptCardsVisible(true, 2)).toBe(false)
+  })
+
+  it('keeps them at every point of the conversation when empty-only is switched off', () => {
+    expect(promptCardsVisible(false, 0)).toBe(true)
+    expect(promptCardsVisible(false, 7)).toBe(true)
   })
 })
 

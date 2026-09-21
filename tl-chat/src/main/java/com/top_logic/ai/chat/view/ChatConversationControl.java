@@ -21,9 +21,12 @@ import com.top_logic.ai.chat.view.ChatConversationElement.Context;
 import com.top_logic.ai.chat.view.ChatConversationElement.Controls;
 import com.top_logic.ai.chat.view.ChatConversationElement.Fact;
 import com.top_logic.ai.chat.view.ChatConversationElement.Mention;
+import com.top_logic.ai.chat.view.ChatConversationElement.Prompt;
+import com.top_logic.ai.chat.view.ChatConversationElement.Prompts;
 import com.top_logic.ai.chat.view.ChatConversationElement.Selection;
 import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
@@ -157,6 +160,15 @@ public class ChatConversationControl extends ReactControl {
 	/** The channels whose values are the leading arguments of every fact expression. */
 	private final List<ViewChannel> _factInputs = new ArrayList<>();
 
+	/**
+	 * The first questions this page offers, in the order they are shown. Empty when the element
+	 * configures no {@code <prompts>}.
+	 */
+	private final List<PromptSpec> _prompts = new ArrayList<>();
+
+	/** The channels whose values are the leading arguments of every prompt expression. */
+	private final List<ViewChannel> _promptInputs = new ArrayList<>();
+
 	/** Creates a {@link ChatConversationControl}. */
 	public ChatConversationControl(ViewContext context, Config config) {
 		super(context, null, blankToDefault(config.getReactElement(), "TLChatConversation"));
@@ -205,6 +217,10 @@ public class ChatConversationControl extends ReactControl {
 		setupSelection(context, config.getSelection());
 		setupContext(context, config.getContext());
 		publishFacts();
+		// The other direction: what this page offers the user to ask, evaluated the same way and for
+		// the same reason - a card that names the open invoice has to be re-evaluated when another
+		// one is opened.
+		setupPrompts(context, config.getPrompts());
 		List<String> menuItems = config.getMenuItems();
 		putState("menuItems", menuItems == null ? List.of() : List.copyOf(menuItems));
 		Controls controls = config.getControls();
@@ -770,6 +786,87 @@ public class ChatConversationControl extends ReactControl {
 	}
 
 	/**
+	 * Compiles the {@code <prompts>} cards and keeps their texts current.
+	 *
+	 * <p>
+	 * A card's text is evaluated here rather than on the click, for the same reason a
+	 * {@code <fact>} is: the expression reads the page's channels, and the page is the server's to
+	 * read. The browser then holds a finished sentence, so clicking a card costs no round trip -
+	 * the composer is filled in the same tick as the caret moves.
+	 * </p>
+	 */
+	private void setupPrompts(ViewContext context, Prompts prompts) {
+		if (prompts == null || prompts.getCards().isEmpty()) {
+			// A <prompts> that offers no card wires no input either: the inputs exist to be the
+			// arguments of expressions there are none of.
+			return;
+		}
+		for (Prompt prompt : prompts.getCards()) {
+			_prompts.add(new PromptSpec(ChatViewBinding.resolveText(prompt.getLabel()),
+				icon(prompt.getIcon()), QueryExecutor.compile(prompt.getValue())));
+		}
+		for (ChannelRef ref : prompts.getInputs()) {
+			ViewChannel channel = context.resolveChannel(ref);
+			_promptInputs.add(channel);
+			ViewChannel.ChannelListener listener = (sender, oldValue, newValue) -> serializePrompts();
+			channel.addListener(listener);
+			addCleanupAction(() -> channel.removeListener(listener));
+		}
+		putState("promptsEmptyOnly", Boolean.valueOf(prompts.getEmptyOnly()));
+		serializePrompts();
+		// A channel written while this control was detached notified nobody, the same reason the
+		// facts and the mention candidates are read again on the way back.
+		addAttachListener(this::serializePrompts);
+	}
+
+	/** Evaluates every card's text and pushes the set to the browser. */
+	private void serializePrompts() {
+		Object[] arguments = new Object[_promptInputs.size()];
+		for (int n = 0; n < arguments.length; n++) {
+			arguments[n] = _promptInputs.get(n).get();
+		}
+		List<Map<String, Object>> out = new ArrayList<>(_prompts.size());
+		for (PromptSpec prompt : _prompts) {
+			Map<String, Object> entry = new LinkedHashMap<>();
+			entry.put("label", prompt.label());
+			entry.put("icon", prompt.icon());
+			entry.put("text", prompt.evaluate(arguments));
+			out.add(entry);
+		}
+		putState("prompts", out);
+	}
+
+	/**
+	 * One compiled {@code <prompt>}: its label and icon, which the configuration fixed, and the
+	 * expression that says what clicking it puts into the composer.
+	 *
+	 * <p>
+	 * A card whose expression throws is pushed with an empty text and the browser leaves it out -
+	 * the same trade the facts make. A mistyped expression costs the user one card; it does not
+	 * cost them the page they were reading.
+	 * </p>
+	 */
+	private record PromptSpec(String label, String icon, QueryExecutor value) {
+
+		/**
+		 * The text as it stands now.
+		 *
+		 * @param arguments
+		 *        The current values of the {@code <prompts>} inputs, in configured order.
+		 */
+		String evaluate(Object[] arguments) {
+			try {
+				// Qualified: the record's own `label` component would otherwise shadow the helper.
+				return ChatConversationControl.label(value.execute(arguments));
+			} catch (RuntimeException ex) {
+				Logger.warn("Chat prompt card '" + label + "' could not be evaluated: " + ex.getMessage(),
+					ex, ChatConversationControl.class);
+				return "";
+			}
+		}
+	}
+
+	/**
 	 * One line this page states about the situation, whoever wrote it.
 	 *
 	 * <p>
@@ -970,6 +1067,11 @@ public class ChatConversationControl extends ReactControl {
 			return "";
 		}
 		return object.tHandle().getObjectName().toExternalForm();
+	}
+
+	/** A {@link ThemeImage} in the encoded form the browser's {@code ThemeIcon} renders. */
+	private static String icon(ThemeImage image) {
+		return image == null ? "" : image.resolve().toEncodedForm();
 	}
 
 	/** A display label for an expression result (formats dates, objects and text uniformly). */

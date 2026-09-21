@@ -91,6 +91,18 @@ public class SidebarElement implements UIElement {
 		/** Configuration name for {@link #getDrawerOpenSlotName()}. */
 		String DRAWER_OPEN_SLOT_NAME = "drawer-open-slot-name";
 
+		/** Configuration name for {@link #getHeader()}. */
+		String HEADER = "header";
+
+		/** Configuration name for {@link #getHeaderCollapsed()}. */
+		String HEADER_COLLAPSED = "header-collapsed";
+
+		/** Configuration name for {@link #getFooter()}. */
+		String FOOTER = "footer";
+
+		/** Configuration name for {@link #getFooterCollapsed()}. */
+		String FOOTER_COLLAPSED = "footer-collapsed";
+
 		/**
 		 * The sidebar items.
 		 *
@@ -135,6 +147,71 @@ public class SidebarElement implements UIElement {
 		 */
 		@Name(DRAWER_OPEN_SLOT_NAME)
 		String getDrawerOpenSlotName();
+
+		/**
+		 * What the rail shows above its items: a product logo, the name of the application, a
+		 * search field.
+		 *
+		 * <p>
+		 * The content stands at the top of the rail, outside the list of items, and is shown for as
+		 * long as the sidebar is on screen. Left empty, the rail begins with its first item.
+		 * </p>
+		 *
+		 * @implNote Created eagerly with the sidebar and handed to {@link ReactSidebarControl} as
+		 *           its header content.
+		 */
+		@Name(HEADER)
+		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
+		List<PolymorphicConfiguration<? extends UIElement>> getHeader();
+
+		/**
+		 * What the rail shows above its items while it is folded to a narrow strip.
+		 *
+		 * <p>
+		 * A folded rail offers room for an icon, not for a name and a search field, so it shows this
+		 * in place of the header. Left empty, the folded rail has no header.
+		 * </p>
+		 *
+		 * @implNote Created eagerly with the sidebar and handed to {@link ReactSidebarControl} as
+		 *           its collapsed header content.
+		 */
+		@Name(HEADER_COLLAPSED)
+		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
+		List<PolymorphicConfiguration<? extends UIElement>> getHeaderCollapsed();
+
+		/**
+		 * What the rail shows below its items: the account area, a version note, a help link.
+		 *
+		 * <p>
+		 * The content stands at the bottom of the rail, outside the list of items, and is shown for
+		 * as long as the sidebar is on screen. Left empty, the rail ends with its last item.
+		 * </p>
+		 *
+		 * @implNote Created eagerly with the sidebar and handed to {@link ReactSidebarControl} as
+		 *           its footer content.
+		 */
+		@Name(FOOTER)
+		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
+		List<PolymorphicConfiguration<? extends UIElement>> getFooter();
+
+		/**
+		 * What the rail shows below its items while it is folded to a narrow strip.
+		 *
+		 * <p>
+		 * A folded rail offers room for an avatar, not for a name beside it, so it shows this in
+		 * place of the footer. Left empty, the folded rail has no footer.
+		 * </p>
+		 *
+		 * @implNote Created eagerly with the sidebar and handed to {@link ReactSidebarControl} as
+		 *           its collapsed footer content.
+		 */
+		@Name(FOOTER_COLLAPSED)
+		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
+		List<PolymorphicConfiguration<? extends UIElement>> getFooterCollapsed();
 	}
 
 	/**
@@ -487,6 +564,14 @@ public class SidebarElement implements UIElement {
 
 	private final String _drawerOpenSlotName;
 
+	private final List<UIElement> _header;
+
+	private final List<UIElement> _headerCollapsed;
+
+	private final List<UIElement> _footer;
+
+	private final List<UIElement> _footerCollapsed;
+
 	/**
 	 * Creates a new {@link SidebarElement} from configuration.
 	 */
@@ -499,15 +584,41 @@ public class SidebarElement implements UIElement {
 		_activeItem = config.getActiveItem();
 		_collapsed = config.getCollapsed();
 		_drawerOpenSlotName = config.getDrawerOpenSlotName();
+		_header = createElements(context, config.getHeader());
+		_headerCollapsed = createElements(context, config.getHeaderCollapsed());
+		_footer = createElements(context, config.getFooter());
+		_footerCollapsed = createElements(context, config.getFooterCollapsed());
+	}
+
+	private static List<UIElement> createElements(InstantiationContext context,
+			List<PolymorphicConfiguration<? extends UIElement>> configs) {
+		List<UIElement> result = new ArrayList<>(configs.size());
+		for (PolymorphicConfiguration<? extends UIElement> elementConfig : configs) {
+			result.add(context.getInstance(elementConfig));
+		}
+		return result;
 	}
 
 	@Override
 	public List<ChildGroup> getChildGroups() {
 		List<ChildGroup> result = new ArrayList<>();
+		// The chrome of the rail is shown for as long as the sidebar is, so it is addressed at the
+		// sidebar without a key: whoever reaches a view written there reaches it by opening the
+		// sidebar and nothing else.
+		addChrome(result, _header);
+		addChrome(result, _headerCollapsed);
 		for (SidebarItemElement item : _items) {
 			result.addAll(item.getChildGroups());
 		}
+		addChrome(result, _footer);
+		addChrome(result, _footerCollapsed);
 		return result;
+	}
+
+	private static void addChrome(List<ChildGroup> result, List<UIElement> elements) {
+		if (!elements.isEmpty()) {
+			result.add(ChildGroup.elements(elements));
+		}
 	}
 
 	/**
@@ -568,7 +679,10 @@ public class SidebarElement implements UIElement {
 			collapsed, groupStates,
 			c -> PersonalizingExpandable.saveCollapsed(key + ".collapsed", c, _collapsed),
 			(gid, exp) -> saveGroupState(key, gid, exp),
-			null, null, null, null);
+			createChrome(_header, context, "sidebar-header"),
+			createChrome(_headerCollapsed, context, "sidebar-header-collapsed"),
+			createChrome(_footer, context, "sidebar-footer"),
+			createChrome(_footerCollapsed, context, "sidebar-footer-collapsed"));
 
 		for (Consumer<ReactSidebarControl> binding : bindings) {
 			binding.accept(sidebar);
@@ -631,6 +745,25 @@ public class SidebarElement implements UIElement {
 		} else {
 			pc.setJSONValue(key + ".groups", states);
 		}
+	}
+
+	/**
+	 * Builds one of the contents standing outside the item list, or {@code null} for a rail that is
+	 * written without it.
+	 *
+	 * @param elements
+	 *        The elements written for this part of the rail.
+	 * @param context
+	 *        The context the sidebar is built in.
+	 * @param segment
+	 *        Names this part of the rail in the context its content is built in.
+	 * @return The control displaying that content, or {@code null} for nothing to display.
+	 */
+	private static ReactControl createChrome(List<UIElement> elements, ViewContext context, String segment) {
+		if (elements.isEmpty()) {
+			return null;
+		}
+		return ContentControls.toControl(elements, context.childContext(segment));
 	}
 
 	private static ReactControl createContent(List<UIElement> elements, ViewContext context,

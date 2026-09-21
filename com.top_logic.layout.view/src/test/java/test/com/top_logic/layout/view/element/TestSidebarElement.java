@@ -50,7 +50,9 @@ import com.top_logic.layout.view.security.SecurityScopeService;
  * to is displayed where the sidebar displays everything, so the way there names the sidebar and the
  * item, and nothing in between. What an item shows, on the other hand, follows the application
  * while the sidebar stands: a badge follows the channel it displays, and a command item follows the
- * executability of the command it hosts.
+ * executability of the command it hosts. Above and below the items the rail carries content of its
+ * own - a header and a footer, each with a shape of its own for the folded rail - which is shown for
+ * as long as the sidebar stands.
  * </p>
  */
 public class TestSidebarElement extends BasicTestCase {
@@ -64,11 +66,26 @@ public class TestSidebarElement extends BasicTestCase {
 	/** A view whose group is guarded by a scope the session has no role on. */
 	private static final String DENIED_FIXTURE = "sidebar-denied-group.view.xml";
 
+	/** A view whose sidebar is written with content above and below its items. */
+	private static final String CHROME_FIXTURE = "sidebar-chrome.view.xml";
+
 	/** Name of the channel the badge and the command items read. */
 	private static final String COUNT_CHANNEL = "count";
 
 	/** The state field holding the serialized sidebar items. */
 	private static final String ITEMS = "items";
+
+	/** The state field holding the content shown above the items. */
+	private static final String HEADER_CONTENT = "headerContent";
+
+	/** The state field holding the content shown above the items while the rail is folded. */
+	private static final String HEADER_COLLAPSED_CONTENT = "headerCollapsedContent";
+
+	/** The state field holding the content shown below the items. */
+	private static final String FOOTER_CONTENT = "footerContent";
+
+	/** The state field holding the content shown below the items while the rail is folded. */
+	private static final String FOOTER_COLLAPSED_CONTENT = "footerCollapsedContent";
 
 	/** The wire name of an item's id. */
 	private static final String ID = "id";
@@ -220,6 +237,49 @@ public class TestSidebarElement extends BasicTestCase {
 	}
 
 	/**
+	 * Tests that the content written above and below the items reaches the client as part of the
+	 * sidebar, in both the unfolded and the folded shape of the rail.
+	 */
+	public void testTheChromeReachesTheClient() {
+		Map<?, ?> state = state(sidebar(CHROME_FIXTURE));
+
+		assertNotNull("The rail shows what is written above its items.", state.get(HEADER_CONTENT));
+		assertNotNull("The folded rail shows what is written for it above the items.",
+			state.get(HEADER_COLLAPSED_CONTENT));
+		assertNotNull("The rail shows what is written below its items.", state.get(FOOTER_CONTENT));
+		assertNotNull("The folded rail shows what is written for it below the items.",
+			state.get(FOOTER_COLLAPSED_CONTENT));
+	}
+
+	/**
+	 * Tests that a sidebar written with items alone offers no chrome around them.
+	 */
+	public void testASidebarWithoutChromeShowsNone() {
+		Map<?, ?> state = state(sidebar(FIXTURE));
+
+		assertFalse("Nothing is written above the items: " + state, state.containsKey(HEADER_CONTENT));
+		assertFalse("Nothing is written above the items of the folded rail: " + state,
+			state.containsKey(HEADER_COLLAPSED_CONTENT));
+		assertFalse("Nothing is written below the items: " + state, state.containsKey(FOOTER_CONTENT));
+		assertFalse("Nothing is written below the items of the folded rail: " + state,
+			state.containsKey(FOOTER_COLLAPSED_CONTENT));
+	}
+
+	/**
+	 * Tests that a view written into the rail's footer is displayed as soon as the sidebar is: the
+	 * way there names no item, because the sidebar does not choose between its chrome and anything
+	 * else.
+	 */
+	public void testTheChromeAddsNoStepOnTheWay() {
+		ViewMounts mounts = ViewMounts.scan(CHROME_FIXTURE, new FixtureViews(TestSidebarElement.class));
+
+		List<MountPath> paths = mounts.getMounts(CONTENT_VIEW);
+		assertEquals("The view is reached through the footer that references it.", 1, paths.size());
+		assertEquals("The footer is shown whenever the sidebar is: " + paths.get(0).steps(),
+			List.of(), paths.get(0).steps());
+	}
+
+	/**
 	 * The attached sidebar control of the given view, as a session displays it.
 	 */
 	private ReactSidebarControl sidebar(String viewRef) {
@@ -285,9 +345,15 @@ public class TestSidebarElement extends BasicTestCase {
 	 * The items of the given sidebar, as the client holds them.
 	 */
 	private static List<Map<String, Object>> items(ReactSidebarControl sidebar) {
+		return maps((List<?>) state(sidebar).get(ITEMS));
+	}
+
+	/**
+	 * The state of the given sidebar, as the client holds it.
+	 */
+	private static Map<?, ?> state(ReactSidebarControl sidebar) {
 		try {
-			Map<?, ?> state = (Map<?, ?>) JSON.fromString(sidebar.stateAsJSON());
-			return maps((List<?>) state.get(ITEMS));
+			return (Map<?, ?>) JSON.fromString(sidebar.stateAsJSON());
 		} catch (JSON.ParseException ex) {
 			throw new AssertionError("The state sent to the client is not JSON.", ex);
 		}

@@ -183,6 +183,87 @@ export function approvalOutcomeText(outcome: ApprovalOutcome, labels: Labels): s
   }
 }
 
+/** Nothing worth a block: no arguments at all, or an empty object. */
+function isEmptyArguments(value: unknown): boolean {
+  if (value == null || value === '') return true
+  return typeof value === 'object' && Object.keys(value as object).length === 0
+}
+
+/** One argument's value: a string as the tool will really receive it, anything else as JSON. */
+function valueText(value: unknown): string {
+  return typeof value === 'string' ? value : JSON.stringify(value, null, 2)
+}
+
+/**
+ * The call's arguments as text.
+ *
+ * A named argument per line, and **not** the JSON as it came: `JSON.stringify` writes a newline
+ * inside a string as the two characters `\n`, so the one payload the reader most needs to judge -
+ * the body of a section the agent is about to write - arrived as a single run-on line of escapes.
+ * A value that spans lines therefore starts under its name and keeps the lines it has.
+ *
+ * What does not parse is shown exactly as it arrived: a payload the card cannot read is still a
+ * payload the reader may recognise, and silently dropping it would put the card back where #511
+ * found it.
+ */
+function argumentsText(argsJson: string | undefined): string {
+  const raw = (argsJson ?? '').trim()
+  if (!raw) return ''
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(raw)
+  } catch {
+    return raw
+  }
+  if (isEmptyArguments(parsed)) return ''
+  if (typeof parsed !== 'object' || Array.isArray(parsed)) return valueText(parsed)
+  return Object.entries(parsed as Record<string, unknown>)
+    .map(([name, value]) => {
+      const text = valueText(value)
+      return text.includes('\n') ? `${name}:\n${text}` : `${name}: ${text}`
+    })
+    .join('\n')
+}
+
+/** How much of the payload the card shows before the reader asks for the rest. */
+const ARGS_LINES = 12
+
+/** The same ceiling for a payload that is few lines but long ones. */
+const ARGS_CHARS = 700
+
+/** The head of the payload: whichever limit it reaches first, and the whole of it if neither. */
+function clampArguments(text: string): string {
+  const lines = text.split('\n')
+  const head = lines.length > ARGS_LINES ? lines.slice(0, ARGS_LINES).join('\n') : text
+  return head.length > ARGS_CHARS ? head.slice(0, ARGS_CHARS) : head
+}
+
+/**
+ * What the tool will be given, so the card can be answered on the merits (#511).
+ *
+ * Plain text in a `<pre>`, never Markdown and never HTML: this is the model's own payload, and the
+ * one job of this block is to show what it really says. A long one is cut to a readable head with
+ * an expander, because the card sits over the composer and must not grow into the page.
+ */
+function ApprovalArguments({ argsJson, labels }: { argsJson: string; labels: Labels }) {
+  const [open, setOpen] = useState(false)
+  const text = argumentsText(argsJson)
+  if (!text) return null
+  const head = clampArguments(text)
+  const long = head.length < text.length
+  return (
+    <div className={`prompt-args${long && open ? ' is-open' : ''}`}>
+      <div className="prompt-args-label">{labels.argumentsLabel}</div>
+      <pre>{!long || open ? text : `${head}\n…`}</pre>
+      {long ? (
+        <button type="button" className="prompt-args-more" onClick={() => setOpen((value) => !value)}>
+          {open ? labels.showLess : labels.showMore(text.length - head.length)}
+        </button>
+      ) : null}
+    </div>
+  )
+}
+
 function ApprovalCard({
   item,
   at,
@@ -218,13 +299,22 @@ function ApprovalCard({
           <button type="button" className="text-button" onClick={() => void send('APPROVED_FOR_SESSION')}>
             {labels.allowThisChat}
           </button>
-          <button type="button" className="prompt-continue" onClick={() => void send('APPROVED')}>
+          {/*
+           * Outlined, not the accented `prompt-continue` the question card uses: letting a tool
+           * write is a decision, not the obvious way on, and an accented button is answered by
+           * reflex (#511). The reader is meant to have read the payload above it.
+           */}
+          <button type="button" className="prompt-decide" onClick={() => void send('APPROVED')}>
             {labels.allowOnce}
           </button>
         </>
       }
     >
       <p className="prompt-card-body">{approvalReason(item, labels)}</p>
+      <ApprovalArguments argsJson={item.argsJson} labels={labels} />
+      {item.toolName ? (
+        <p className="prompt-card-note">{labels.allowThisChatHint(toolLabel(item.toolName))}</p>
+      ) : null}
     </OverlayCard>
   )
 }

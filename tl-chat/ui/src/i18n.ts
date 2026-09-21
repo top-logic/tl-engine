@@ -150,6 +150,15 @@ const EN = {
   approvalGeneric: 'Needs your approval before it runs.',
   deny: 'Deny',
   allowThisChat: 'Allow this chat',
+  /**
+   * What approving for the chat actually covers.
+   *
+   * Named on the card rather than left to be found out: the decision is remembered per tool name,
+   * so a turn that calls two writing tools stops twice and this button answers for only one of
+   * them (#511).
+   */
+  allowThisChatHint: (tool: string) =>
+    `Covers every further call of ${tool} in this chat - no other tool of this turn.`,
   allowOnce: 'Allow once',
   skip: 'Skip',
   continueLabel: 'Continue',
@@ -378,6 +387,8 @@ const DE: Bundle = {
   approvalGeneric: 'Braucht deine Freigabe, bevor es ausgeführt wird.',
   deny: 'Ablehnen',
   allowThisChat: 'In diesem Chat erlauben',
+  allowThisChatHint: (tool: string) =>
+    `Gilt für jeden weiteren Aufruf von ${tool} in diesem Chat - für kein anderes Werkzeug dieses Zuges.`,
   allowOnce: 'Einmal erlauben',
   skip: 'Überspringen',
   continueLabel: 'Weiter',

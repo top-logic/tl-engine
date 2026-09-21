@@ -27,6 +27,11 @@
 	interrupts the worker, so the sleep ends at once and the job ends at the next point it reports
 	from. Both start buttons take the job channel as their input and are disabled while a job runs.
 	
+	The third button runs the same job inside a dialog. A command that is suspended waiting for a
+	job keeps the dialog it belongs to open: while the job runs, the close button of the dialog, the
+	Escape key, the backdrop and the Close button of the dialog all refuse, and the dialog closes
+	again once the job has ended - by its result, its failure or its cancellation.
+	
 	The bar at the bottom is a standalone <progress> whose fraction answers nothing at all: the
 	indeterminate display of the same bar, without any job behind it. Its label is an
 	internationalized literal, which the bar displays as the text it stands for.
@@ -156,6 +161,18 @@
 }]]></function>
 				</start-job>
 				<write-channel name="report"/>
+			</action>
+		</button>
+
+		<button>
+			<action class="com.top_logic.layout.view.command.GenericViewCommand"
+				image="css:bi bi-window-stack"
+			>
+				<label>
+					<en>Start job in dialog</en>
+					<de>Auftrag im Dialog starten</de>
+				</label>
+				<open-dialog dialog-view="demo/long-job-dialog.view.xml"/>
 			</action>
 		</button>
 

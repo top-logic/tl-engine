@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { TLPill } from './pill/TLPill';
 
@@ -12,7 +12,6 @@ const CMD_GOTO = 'goto';
  * - label?: string      - display text
  * - iconCss?: string    - CSS icon class (e.g. "bi bi-person-fill")
  * - iconSrc?: string    - image URL for non-CSS icons
- * - cssClass?: string   - type-specific CSS class
  * - hasTooltip: boolean - whether the server provides a rich tooltip (fetched lazily)
  * - hasLink: boolean    - whether clicking navigates to the object
  * - color?: string      - CSS color the object carries in the model; shown as a pill
@@ -24,7 +23,6 @@ const TLResourceCell: React.FC<TLCellProps> = ({ controlId }) => {
   const iconCss = state.iconCss as string | undefined;
   const iconSrc = state.iconSrc as string | undefined;
   const label = state.label as string | undefined;
-  const cssClass = state.cssClass as string | undefined;
   const hasTooltip = state.hasTooltip === true;
   const hasLink = state.hasLink as boolean;
   const color = (state.color as string) || undefined;
@@ -50,7 +48,7 @@ const TLResourceCell: React.FC<TLCellProps> = ({ controlId }) => {
     sendCommand(CMD_GOTO, {});
   }, [sendCommand]);
 
-  const className = ['tlResourceCell', cssClass].filter(Boolean).join(' ');
+  const className = rootClassName(state, 'tlResourceCell');
   const tooltipAttr = hasTooltip ? 'key:tooltip' : undefined;
 
   if (hasLink) {

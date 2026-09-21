@@ -15,8 +15,8 @@ import com.top_logic.layout.react.control.ReactValueColor;
  * A simple read-only control that displays a text value as a {@code <span>}.
  *
  * <p>
- * Renders as a {@code TLText} React component. An optional CSS class can be appended to the
- * default {@code tlText} class for custom styling.
+ * Renders as a {@code TLText} React component. Text longer than the available width is wrapped
+ * onto several lines, or truncated on a single one, as {@link #setOverflow(TextOverflow)} says.
  * </p>
  *
  * <p>
@@ -28,7 +28,8 @@ public class ReactTextControl extends ReactControl implements TooltipProvider {
 
 	private static final String TEXT = "text";
 
-	private static final String CSS_CLASS = "cssClass";
+	/** @see #setOverflow(TextOverflow) */
+	private static final String OVERFLOW = "overflow";
 
 	private static final String ROLE = "role";
 
@@ -61,9 +62,7 @@ public class ReactTextControl extends ReactControl implements TooltipProvider {
 	public ReactTextControl(ReactContext context, String text, String cssClass) {
 		super(context, null, "TLText");
 		putState(TEXT, text != null ? text : "");
-		if (cssClass != null) {
-			putState(CSS_CLASS, cssClass);
-		}
+		setCssClass(cssClass);
 	}
 
 	/**
@@ -114,13 +113,13 @@ public class ReactTextControl extends ReactControl implements TooltipProvider {
 	}
 
 	/**
-	 * Updates the additional CSS class.
+	 * Sets how text longer than the available width is displayed.
 	 *
-	 * @param cssClass
-	 *        Additional CSS class to append, or {@code null} to clear.
+	 * @param overflow
+	 *        Whether the text wraps onto several lines or is truncated on a single one.
 	 */
-	public void setCssClass(String cssClass) {
-		putState(CSS_CLASS, cssClass != null ? cssClass : "");
+	public void setOverflow(TextOverflow overflow) {
+		putState(OVERFLOW, overflow.getExternalName());
 	}
 
 	/**
@@ -170,6 +169,6 @@ public class ReactTextControl extends ReactControl implements TooltipProvider {
 	 */
 	@Override
 	protected java.util.Set<String> scriptingPresentationKeys() {
-		return java.util.Set.of(CSS_CLASS, ReactValueColor.COLOR);
+		return presentationKeys(super.scriptingPresentationKeys(), OVERFLOW, ReactValueColor.COLOR);
 	}
 }

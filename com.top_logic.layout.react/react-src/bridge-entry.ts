@@ -39,6 +39,7 @@ export type {
 export type { TLCellProps } from './bridge/types';
 export { useI18N } from './bridge/i18n';
 export { scrollToAnchor } from './bridge/scroll';
+export { rootClassName } from './bridge/css';
 export { FILL_CLASS, useFill, useFillHost, FillProvider, FillBarrier } from './bridge/fill';
 export type { FillHost } from './bridge/fill';
 export { default as TLChild } from './bridge/TLChild';

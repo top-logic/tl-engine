@@ -66,9 +66,6 @@ public class ChartElement implements UIElement {
 		/** Configuration name for {@link #getZoomEnabled()}. */
 		String ZOOM_ENABLED = "zoomEnabled";
 
-		/** Configuration name for {@link #getCSSClass()}. */
-		String CSS_CLASS = "cssClass";
-
 		/** Configuration name for {@link #getNoDataMessage()}. */
 		String NO_DATA_MESSAGE = "noDataMessage";
 
@@ -110,13 +107,6 @@ public class ChartElement implements UIElement {
 		boolean getZoomEnabled();
 
 		/**
-		 * Additional CSS class for the chart container element.
-		 */
-		@Name(CSS_CLASS)
-		@Nullable
-		String getCSSClass();
-
-		/**
 		 * Message shown when the chart has no data. If {@code null}, an empty chart is shown.
 		 */
 		@Name(NO_DATA_MESSAGE)
@@ -146,7 +136,7 @@ public class ChartElement implements UIElement {
 		_dataFun = QueryExecutor.compile(config.getData());
 		_inputs = config.getInputs();
 		_zoomEnabled = config.getZoomEnabled();
-		_cssClass = config.getCSSClass();
+		_cssClass = config.getCssClass();
 		_noDataMessage = config.getNoDataMessage();
 
 		_handlers = new HashMap<>();

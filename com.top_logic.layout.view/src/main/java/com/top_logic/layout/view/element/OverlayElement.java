@@ -11,8 +11,6 @@ import java.util.List;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
@@ -55,19 +53,9 @@ public class OverlayElement extends ContainerElement {
 	@TagName("overlay")
 	public interface Config extends ContainerElement.Config {
 
-		/** Configuration name for {@link #getCssClass()}. */
-		String CSS_CLASS = "css-class";
-
 		@Override
 		@ClassDefault(OverlayElement.class)
 		Class<? extends UIElement> getImplementationClass();
-
-		/**
-		 * Additional CSS class appended to the classes of the overlay.
-		 */
-		@Name(CSS_CLASS)
-		@Nullable
-		String getCssClass();
 	}
 
 	private final String _cssClass;

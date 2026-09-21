@@ -21,6 +21,7 @@ import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactValueColor;
 import com.top_logic.layout.react.control.common.ReactTextControl;
+import com.top_logic.layout.react.control.common.TextOverflow;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
@@ -69,9 +70,6 @@ public class TextElement implements UIElement {
 		/** Configuration name for {@link #getInput()}. */
 		String INPUT = "input";
 
-		/** Configuration name for {@link #getCssClass()}. */
-		String CSS_CLASS = "css-class";
-
 		/** Configuration name for {@link #getOverflow()}. */
 		String OVERFLOW = "overflow";
 
@@ -91,13 +89,6 @@ public class TextElement implements UIElement {
 		ChannelRef getInput();
 
 		/**
-		 * Optional additional CSS class appended to the default {@code tlText} class.
-		 */
-		@Name(CSS_CLASS)
-		@Nullable
-		String getCssClass();
-
-		/**
 		 * How text longer than the available width is handled: {@link TextOverflow#WRAP wrapped}
 		 * onto multiple lines (the default) or truncated on a single line with an
 		 * {@link TextOverflow#ELLIPSIS ellipsis}.
@@ -112,6 +103,8 @@ public class TextElement implements UIElement {
 
 	private final String _cssClass;
 
+	private final TextOverflow _overflow;
+
 	/**
 	 * Creates a new {@link TextElement} from configuration.
 	 */
@@ -119,16 +112,8 @@ public class TextElement implements UIElement {
 	public TextElement(InstantiationContext context, Config config) {
 		_label = config.getLabel();
 		_inputRef = config.getInput();
-		_cssClass = cssClass(config);
-	}
-
-	private static String cssClass(Config config) {
-		String userClass = config.getCssClass();
-		if (config.getOverflow() != TextOverflow.ELLIPSIS) {
-			return userClass;
-		}
-		String ellipsis = "tlText--ellipsis";
-		return userClass == null || userClass.isEmpty() ? ellipsis : ellipsis + " " + userClass;
+		_cssClass = config.getCssClass();
+		_overflow = config.getOverflow();
 	}
 
 	@Override
@@ -136,7 +121,7 @@ public class TextElement implements UIElement {
 		if (_inputRef != null) {
 			ViewChannel channel = context.resolveChannel(_inputRef);
 			Object value = channel.get();
-			ReactTextControl control = new ReactTextControl(context, label(value), _cssClass);
+			ReactTextControl control = text(context, label(value));
 			control.setColor(ReactValueColor.cssColorOf(value));
 
 			Runnable update = () -> {
@@ -154,8 +139,16 @@ public class TextElement implements UIElement {
 
 			return control;
 		}
-		String text = _label != null ? Resources.getInstance().getString(_label) : "";
-		return new ReactTextControl(context, text, _cssClass);
+		return text(context, _label != null ? Resources.getInstance().getString(_label) : "");
+	}
+
+	/**
+	 * The control displaying the given text with the configured styling.
+	 */
+	private ReactTextControl text(ViewContext context, String text) {
+		ReactTextControl result = new ReactTextControl(context, text, _cssClass);
+		result.setOverflow(_overflow);
+		return result;
 	}
 
 	private static String label(Object value) {

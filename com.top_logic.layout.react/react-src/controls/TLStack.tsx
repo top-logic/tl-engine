@@ -1,4 +1,4 @@
-import { React, useTLState, useFillHost, FillProvider } from 'tl-react-bridge';
+import { React, useTLState, useFillHost, FillProvider, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { renderItems } from './items';
 
@@ -11,7 +11,6 @@ import { renderItems } from './items';
  * - align: "start" | "center" | "end" | "stretch"  (default: "stretch")
  * - wrap: boolean  (default: false)
  * - growFirst: boolean  (default: false) — first child fills the main axis
- * - cssClass: string - optional additional CSS class appended to the layout classes
  * - itemClass: string - CSS class of a wrapper around each child (default: null - no wrapper)
  * - children: ChildDescriptor[]
  *
@@ -31,16 +30,16 @@ const TLStack: React.FC<TLCellProps> = ({ controlId }) => {
 
   const [fillClass, fillHost] = useFillHost();
 
-  const className = [
+  const className = rootClassName(
+    state,
     'tlStack',
     `tlStack--${direction}`,
     `tlStack--gap-${gap}`,
     `tlStack--align-${align}`,
-    wrap ? 'tlStack--wrap' : '',
-    growFirst ? 'tlStack--grow-first' : '',
+    wrap && 'tlStack--wrap',
+    growFirst && 'tlStack--grow-first',
     fillClass,
-    (state.cssClass as string) ?? '',
-  ].filter(Boolean).join(' ');
+  );
 
   return (
     <FillProvider host={fillHost}>

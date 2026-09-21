@@ -1,4 +1,4 @@
-import { React, useTLState, useI18N } from 'tl-react-bridge';
+import { React, useTLState, useI18N, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { useImageSrc } from './imageSource';
 
@@ -23,7 +23,6 @@ const I18N_KEYS = {
  * - width: string | null
  * - height: string | null
  * - lazy: boolean
- * - cssClass: string | null
  */
 const TLImage: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -31,8 +30,7 @@ const TLImage: React.FC<TLCellProps> = ({ controlId }) => {
   const t = useI18N(I18N_KEYS);
 
   const fit = (state.fit as string) ?? 'cover';
-  const cssClass = (state.cssClass as string) ?? '';
-  const className = ['tlImage', `tlImage--fit-${fit}`, cssClass].filter(Boolean).join(' ');
+  const className = rootClassName(state, 'tlImage', `tlImage--fit-${fit}`);
 
   const style: React.CSSProperties = {};
   if (state.aspectRatio) {

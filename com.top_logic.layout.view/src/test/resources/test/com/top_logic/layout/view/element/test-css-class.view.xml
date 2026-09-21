@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<stack css-class="tlDemoStack">
+		<text label="Plain"/>
+		<text
+			css-class="tlDemoText"
+			label="Styled"
+		/>
+		<text
+			css-class="tlDemoEllipsis"
+			label="Truncated"
+			overflow="ellipsis"
+		/>
+		<image
+			css-class="tlDemoImage"
+			resource="/logo.svg"
+		/>
+	</stack>
+</view>

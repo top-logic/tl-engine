@@ -79,6 +79,8 @@ public class StackElement extends ContainerElement {
 
 	private final StackAlign _align;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link StackElement} from configuration.
 	 */
@@ -88,6 +90,7 @@ public class StackElement extends ContainerElement {
 		_direction = config.getDirection();
 		_gap = config.getGap();
 		_align = config.getAlign();
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -98,6 +101,8 @@ public class StackElement extends ContainerElement {
 			.map(c -> (ReactControl) c)
 			.collect(Collectors.toList());
 
-		return new ReactStackControl(context, _direction, _gap, _align, false, reactChildren);
+		ReactStackControl result = new ReactStackControl(context, _direction, _gap, _align, false, reactChildren);
+		result.setCssClass(_cssClass);
+		return result;
 	}
 }

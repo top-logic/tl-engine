@@ -104,7 +104,7 @@ public abstract class ReactLayoutControl extends ReactControl {
 	 */
 	@Override
 	protected Set<String> scriptingPresentationKeys() {
-		return Set.of(ITEM_CLASS);
+		return presentationKeys(super.scriptingPresentationKeys(), ITEM_CLASS);
 	}
 
 }

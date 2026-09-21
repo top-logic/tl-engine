@@ -3,12 +3,12 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.view.element;
+package com.top_logic.layout.react.control.common;
 
 import com.top_logic.basic.config.ExternallyNamed;
 
 /**
- * How a {@link TextElement} handles text that is longer than the available width.
+ * How a {@link ReactTextControl} handles text that is longer than the available width.
  */
 public enum TextOverflow implements ExternallyNamed {
 

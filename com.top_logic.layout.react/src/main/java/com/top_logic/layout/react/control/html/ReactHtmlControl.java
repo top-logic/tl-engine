@@ -64,9 +64,6 @@ public class ReactHtmlControl extends ReactControl implements DataProvider {
 	/** State key holding the message shown instead of a fragment that cannot be displayed. */
 	public static final String ERROR = "error";
 
-	/** State key holding the additional CSS class of the rendered element. */
-	public static final String CSS_CLASS = "cssClass";
-
 	/** State key whose value changes each time the displayed content is replaced. */
 	public static final String DATA_REVISION = "dataRevision";
 
@@ -125,9 +122,7 @@ public class ReactHtmlControl extends ReactControl implements DataProvider {
 		putState(PRINT, print);
 		putState(THUMBNAIL_WIDTH, thumbnailWidth);
 		putState(THUMBNAIL_HEIGHT, thumbnailHeight);
-		if (cssClass != null) {
-			putState(CSS_CLASS, cssClass);
-		}
+		setCssClass(cssClass);
 	}
 
 	/**

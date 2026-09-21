@@ -1,4 +1,4 @@
-import { React, useTLState, useTLDataUrl, useI18N, useFill } from 'tl-react-bridge';
+import { React, useTLState, useTLDataUrl, useI18N, useFill, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -21,7 +21,6 @@ const I18N_KEYS = {
  * - print: boolean - whether a document is shown with a button that prints it
  * - thumbnailWidth, thumbnailHeight: number - the size in CSS pixels a thumbnail lays its page out
  *   at before scaling it down; their ratio is the ratio of the preview box
- * - cssClass: string - optional additional CSS class appended to the default "tlHtml" class
  *
  * An inline fragment is inserted as it stands. What may be inserted is decided on the server: the
  * html state carries only fragments that passed its check, a rejected one arrives as error instead.
@@ -46,7 +45,6 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
   const display = (state.display as string) || 'inline';
   const html = (state.html as string) ?? '';
   const error = (state.error as string) || null;
-  const extra = (state.cssClass as string) ?? '';
   const dataRevision: number = (state.dataRevision as number) ?? 0;
   const print = state.print === true;
   const thumbnailWidth: number = (state.thumbnailWidth as number) || 800;
@@ -94,7 +92,7 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
     );
   }
 
-  const className = ['tlHtml', `tlHtml--${display}`, fillClass, extra].filter(Boolean).join(' ');
+  const className = rootClassName(state, 'tlHtml', `tlHtml--${display}`, fillClass);
 
   if (display === 'document') {
     return (

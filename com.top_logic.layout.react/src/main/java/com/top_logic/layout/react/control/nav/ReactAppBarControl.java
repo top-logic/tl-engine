@@ -167,6 +167,6 @@ public class ReactAppBarControl extends ToolbarControl {
 	 */
 	@Override
 	protected java.util.Set<String> scriptingPresentationKeys() {
-		return java.util.Set.of("variant");
+		return presentationKeys(super.scriptingPresentationKeys(), "variant");
 	}
 }

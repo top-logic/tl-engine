@@ -6,7 +6,6 @@
 package com.top_logic.layout.react.control.layout;
 
 import java.util.List;
-import java.util.Set;
 
 import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.layout.react.ReactContext;
@@ -29,9 +28,6 @@ public class ReactStackControl extends ReactLayoutControl {
 	private static final String WRAP = "wrap";
 
 	private static final String GROW_FIRST = "growFirst";
-
-	/** @see #setCssClass(String) */
-	private static final String CSS_CLASS = "cssClass";
 
 	/**
 	 * Flex direction.
@@ -142,24 +138,6 @@ public class ReactStackControl extends ReactLayoutControl {
 		putState(GAP, gap.getExternalName());
 		putState(ALIGN, align.getExternalName());
 		putState(WRAP, Boolean.valueOf(wrap));
-	}
-
-	/**
-	 * Sets an additional CSS class, appended to the layout classes of the stack.
-	 *
-	 * @param cssClass
-	 *        The CSS class, or {@code null} for none.
-	 */
-	public void setCssClass(String cssClass) {
-		putState(CSS_CLASS, cssClass != null ? cssClass : "");
-	}
-
-	/**
-	 * Rendering-only state keys, omitted from the headless projection.
-	 */
-	@Override
-	protected Set<String> scriptingPresentationKeys() {
-		return Set.of(CSS_CLASS, ITEM_CLASS);
 	}
 
 	/**

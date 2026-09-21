@@ -36,7 +36,9 @@ public interface RoutingParticipant {
 	 * {@link com.top_logic.layout.react.dirty.ChannelVetoException} while what the participant
 	 * displays holds unsaved changes: a URL takes the user off a page no more silently than a click
 	 * does. The state the URL describes is then not reached, and the caller ends the adoption with
-	 * {@link RouteManager#cancelAdoption()}, which leaves the display as the refusal keeps it.
+	 * {@link RouteManager#cancelAdoption()}, which leaves the display as the refusal keeps it. What
+	 * is to become of the changes is put to the user, and the URL reaches this participant again
+	 * once they answered.
 	 * </p>
 	 *
 	 * @param match

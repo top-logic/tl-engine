@@ -244,24 +244,7 @@ public final class RouteManager {
 	 */
 	public void adoptUrl(String url) {
 		_lastNotifiedUrl = url;
-		beginAdoption(url);
-	}
 
-	/**
-	 * Begins an adoption of the given URL, leaving the URL the client shows recorded as it is.
-	 *
-	 * <p>
-	 * Splits the query string off, queues the path for resolution and opens the adoption. Whether
-	 * the URL is one the client already shows - {@link #adoptUrl(String)} - or one the display is
-	 * taken to - {@link #navigateToUrl(String)} - is what the caller decides by recording it as
-	 * shown or leaving that record alone, and it is what the end of the adoption reports or keeps
-	 * silent.
-	 * </p>
-	 *
-	 * @param url
-	 *        The URL to adopt (without leading slash, with its query string), empty for none.
-	 */
-	private void beginAdoption(String url) {
 		int queryStart = url == null ? -1 : url.indexOf(QUERY_START);
 		_pendingUrl = queryStart < 0 ? url : url.substring(0, queryStart);
 		_pendingQuery = queryStart < 0 ? Map.of() : parseQuery(url.substring(queryStart + 1));
@@ -423,48 +406,6 @@ public final class RouteManager {
 		}
 		adoptUrl(url);
 		resolvePending();
-	}
-
-	/**
-	 * Takes the display to the given URL and reports the URL it reaches as a history entry.
-	 *
-	 * <p>
-	 * The client does not show this URL yet - it is the address of a view the application sends the
-	 * user to - so arriving there is a navigation: the user gets an entry to come back from, and it
-	 * names what the display composes once it has settled, which is not necessarily what was asked
-	 * for, because a segment the display cannot reproduce is dropped on the way. Contrast
-	 * {@link #navigateToRoute(String)}, which takes up a URL the client already shows - the address
-	 * the browser moved to by itself, over the back button - and therefore reports nothing.
-	 * </p>
-	 *
-	 * <p>
-	 * The whole adoption happens here, so the caller has nothing left to end - except where the
-	 * display refuses the URL: a
-	 * {@link com.top_logic.layout.react.dirty.ChannelVetoException} a participant raises over
-	 * unsaved changes reaches the caller, which ends the adoption with {@link #cancelAdoption()},
-	 * leaving the display as the refusal keeps it.
-	 * </p>
-	 *
-	 * @param url
-	 *        The target URL (without leading slash, with its query string).
-	 */
-	public void navigateToUrl(String url) {
-		if (_holding) {
-			// The display is not the application, so the URL is not resolved against it: it is
-			// retained exactly like the one the hold began with, and nothing composed by the display
-			// that holds it reaches the address bar.
-			holdUrl(url);
-			return;
-		}
-
-		// Not recorded as the URL the client shows: the client shows the one it is on until the
-		// display has settled into the new one, which is what makes arriving there a navigation the
-		// client is told about.
-		navigate(() -> {
-			beginAdoption(url);
-			resolvePending();
-			finishAdoption();
-		});
 	}
 
 	/**

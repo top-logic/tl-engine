@@ -16,7 +16,6 @@ import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.layout.ReactInsetControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
-import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.layout.react.dirty.StateHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
@@ -31,45 +30,6 @@ import com.top_logic.util.Resources;
  * </p>
  */
 public class DirtyConfirmDialogControl {
-
-	/**
-	 * Applies a change of the display that unsaved changes may refuse, asking the user about them
-	 * and applying it again once they answered.
-	 *
-	 * <p>
-	 * A change the user has to be asked about is carried out in two goes: the first one ends in the
-	 * {@link ChannelVetoException} that names the unsaved changes standing in its way, and the
-	 * second one - run from the dialog button the user pressed - finds them saved or discarded and
-	 * goes through. What refuses the second go is another form deeper in the display, which is asked
-	 * about exactly like the first one.
-	 * </p>
-	 *
-	 * @param context
-	 *        The context the dialog is opened in.
-	 * @param dialogManager
-	 *        Where the question is put to the user, or {@code null} where nothing can ask.
-	 * @param step
-	 *        The change to apply. Leaves the display consistent where it is refused, because what it
-	 *        lets through is a question to the user, not a half-applied change.
-	 * @param onRefusedWithoutDialog
-	 *        Run instead of asking when there is no {@link DialogManager}, so that the caller can
-	 *        give up what the refused change was part of. May be {@code null}.
-	 */
-	public static void guard(ReactContext context, DialogManager dialogManager, Runnable step,
-			Runnable onRefusedWithoutDialog) {
-		try {
-			step.run();
-		} catch (ChannelVetoException veto) {
-			if (context == null || dialogManager == null) {
-				if (onRefusedWithoutDialog != null) {
-					onRefusedWithoutDialog.run();
-				}
-				return;
-			}
-			openDialog(context, dialogManager, veto.getDirtyHandlers(),
-				() -> guard(context, dialogManager, step, onRefusedWithoutDialog), veto.getRollback());
-		}
-	}
 
 	/**
 	 * Opens a dirty-check confirmation dialog.

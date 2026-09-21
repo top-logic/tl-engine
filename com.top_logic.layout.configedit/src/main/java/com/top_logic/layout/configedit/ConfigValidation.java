@@ -230,6 +230,66 @@ public final class ConfigValidation {
 	}
 
 	/**
+	 * Checks an edited configuration again and shows what the check found, without refusing
+	 * anything.
+	 *
+	 * <p>
+	 * What a form runs while the user is still editing, so a value is questioned where it is
+	 * entered rather than only once Apply is pressed. Takes back the previous findings first, via
+	 * {@link ConfigFieldIndex#clearFindings()}, so what is on display is what holds right now: a
+	 * finding that still holds is placed again, one the user has meanwhile fixed - possibly by
+	 * editing the other end of a cross-item constraint - is gone.
+	 * </p>
+	 *
+	 * <p>
+	 * Deliberately blind to the two things {@link #refusalFor(Iterable, ConfigFieldIndex)} refuses
+	 * over. An {@link ConfigFieldIndex#pending() unconfirmed entry} is marked as one to confirm or
+	 * discard only when the user asks for the configuration to be handed over - while editing, an
+	 * entry that was just started is exactly where it is supposed to be, and telling the user off
+	 * for it is telling them off for having begun. An
+	 * {@link ConfigFieldIndex#hasInputError() unreadable input} keeps Apply from discarding what was
+	 * typed, which is nothing this method is in a position to discard; the field that rejected the
+	 * input already says so on its own, and the configuration behind it still holds the last value
+	 * the field accepted, which is what is checked here.
+	 * </p>
+	 *
+	 * @param edited
+	 *        The configuration to check.
+	 * @param index
+	 *        The fields the configuration is rendered in, to report on.
+	 * @return The violations placed, empty if the configuration may be handed over as it stands.
+	 *         The {@link Findings#warnings() warnings} are on their fields either way and are not
+	 *         part of this answer, since they refuse nothing.
+	 */
+	public static List<Violation> recheck(ConfigurationItem edited, ConfigFieldIndex index) {
+		return recheck(Collections.singletonList(edited), index);
+	}
+
+	/**
+	 * The same for several configurations checked as one, where what is edited is a collection
+	 * rather than a single item.
+	 *
+	 * @see #recheck(ConfigurationItem, ConfigFieldIndex)
+	 * @see #refusalFor(Iterable, ConfigFieldIndex)
+	 */
+	public static List<Violation> recheck(Iterable<? extends ConfigurationItem> edited, ConfigFieldIndex index) {
+		index.clearFindings();
+
+		List<Violation> violations = new ArrayList<>();
+		List<Warning> warnings = new ArrayList<>();
+		for (ConfigurationItem item : edited) {
+			Findings findings = check(item);
+			violations.addAll(findings.violations());
+			warnings.addAll(findings.warnings());
+		}
+		// Reported whatever comes of it: a warning is shown at its field and refuses nothing, so a
+		// configuration whose only finding is a warning is handed over with the warning on display
+		// until the form is rebuilt over the applied value.
+		report(new Findings(violations, warnings), index);
+		return violations;
+	}
+
+	/**
 	 * Runs every check that stands between an edited configuration and being handed over, and puts
 	 * what it finds on the fields that caused it.
 	 *
@@ -245,6 +305,13 @@ public final class ConfigValidation {
 	 * The order matters. An unconfirmed entry whose key is already spoken for carries an input
 	 * error of its own, and "an entry could not be read" would then be said about a key that reads
 	 * perfectly well and is merely taken.
+	 * </p>
+	 *
+	 * <p>
+	 * The check itself, and the placing of what it found, is
+	 * {@link #recheck(Iterable, ConfigFieldIndex)} - the very step a form runs while the user is
+	 * still editing. What this adds is only what handing the configuration over may refuse over:
+	 * an unconfirmed entry, an unreadable input, and the refusal a violation amounts to.
 	 * </p>
 	 *
 	 * @param edited
@@ -272,6 +339,8 @@ public final class ConfigValidation {
 	 * </p>
 	 */
 	public static Refusal refusalFor(Iterable<? extends ConfigurationItem> edited, ConfigFieldIndex index) {
+		// Also cleared here, not only in the recheck further down: the two refusals in between
+		// never reach it, and a finding the previous attempt placed must not outlive them either.
 		index.clearFindings();
 
 		List<ConfigPendingEntries.PendingEntry> pending = index.pending();
@@ -284,17 +353,7 @@ public final class ConfigValidation {
 		if (index.hasInputError()) {
 			return new Refusal(I18NConstants.ERROR_INPUT_NOT_READABLE, Collections.emptyList());
 		}
-		List<Violation> violations = new ArrayList<>();
-		List<Warning> warnings = new ArrayList<>();
-		for (ConfigurationItem item : edited) {
-			Findings findings = check(item);
-			violations.addAll(findings.violations());
-			warnings.addAll(findings.warnings());
-		}
-		// Reported whatever comes of it: a warning is shown at its field and refuses nothing, so a
-		// configuration whose only finding is a warning is handed over with the warning on display
-		// until the form is rebuilt over the applied value.
-		report(new Findings(violations, warnings), index);
+		List<Violation> violations = recheck(edited, index);
 		if (!violations.isEmpty()) {
 			// Every violation is listed, not only those that found no field: the fields are spread
 			// over a form taller than the screen, and the list is what says how many there are and

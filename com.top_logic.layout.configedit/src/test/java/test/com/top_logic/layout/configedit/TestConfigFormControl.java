@@ -675,6 +675,147 @@ public class TestConfigFormControl extends TestCase {
 	}
 
 	/**
+	 * A warning is read while the value is being entered, not only once Apply is pressed.
+	 *
+	 * <p>
+	 * Apply refuses over a violation and over nothing else, so a configuration whose only finding
+	 * is a warning is applied - which leaves edit mode and rebuilds the form. A warning placed only
+	 * by Apply would therefore be on screen for as long as some other finding happens to keep the
+	 * form open, and never otherwise.
+	 * </p>
+	 */
+	public void testAWarningIsShownWhileEditing() {
+		WarningConfig config = TypedConfiguration.newConfigItem(WarningConfig.class);
+		config.setName("given");
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		click(findButton(form, label(I18NConstants.EDIT)));
+
+		fieldOf(form, WarningConfig.AMOUNT).setValue(Integer.valueOf(-1));
+
+		List<ResKey> warnings = fieldOf(form, WarningConfig.AMOUNT).getWarnings();
+		assertEquals("The constraint has one thing to say about the value just entered.", 1, warnings.size());
+		assertEquals("The warning must be readable under the field without pressing Apply.",
+			List.of(label(warnings.get(0))), chromeWarningsOf(form, WarningConfig.AMOUNT));
+		assertNotNull("Nothing was applied: the form is still being edited.",
+			findButton(form, label(I18NConstants.APPLY)));
+	}
+
+	/**
+	 * A violation likewise. It keeps Apply from going through when Apply is pressed, but what it is
+	 * about is the value the user just entered, and that is when it has something to say.
+	 */
+	public void testAViolationIsShownWhileEditing() {
+		MandatoryConfig config = TypedConfiguration.newConfigItem(MandatoryConfig.class);
+		config.setName("given");
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		click(findButton(form, label(I18NConstants.EDIT)));
+
+		fieldOf(form, MandatoryConfig.NAME).setValue(null);
+
+		assertNotNull("Clearing a mandatory value must say so at the field it was cleared in.",
+			fieldOf(form, MandatoryConfig.NAME).getError());
+		assertEquals("And the chrome around that field must show it.",
+			label(fieldOf(form, MandatoryConfig.NAME).getError()), chromeErrorOf(form, MandatoryConfig.NAME));
+		assertNotNull("A finding is not a refusal: edit mode stays open, nothing was refused.",
+			findButton(form, label(I18NConstants.APPLY)));
+	}
+
+	/**
+	 * And it goes away again once the value it was about is corrected, without Apply.
+	 *
+	 * <p>
+	 * The field takes its own verdict back the moment it is given a different value - a verdict
+	 * describes the value it was passed. What this says is that the check that follows does not put
+	 * it straight back: the warning is gone because it no longer holds, not because nobody looked.
+	 * </p>
+	 */
+	public void testAWarningLeavesAgainWhileEditing() {
+		WarningConfig config = TypedConfiguration.newConfigItem(WarningConfig.class);
+		config.setName("given");
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		click(findButton(form, label(I18NConstants.EDIT)));
+		fieldOf(form, WarningConfig.AMOUNT).setValue(Integer.valueOf(-1));
+
+		fieldOf(form, WarningConfig.AMOUNT).setValue(Integer.valueOf(1));
+
+		assertTrue("A corrected value must not keep the old remark.",
+			fieldOf(form, WarningConfig.AMOUNT).getWarnings().isEmpty());
+		assertNull("Nor must the chrome around it.", chromeWarningsOf(form, WarningConfig.AMOUNT));
+	}
+
+	/**
+	 * A constraint reaching into another item flags both ends while editing, and fixing the other
+	 * end clears the flag on the first one.
+	 *
+	 * <p>
+	 * The field that carries the flag is not the field that is corrected here, so the field cannot
+	 * take its own verdict back - only the check that runs over the whole configuration afterwards
+	 * can. Left behind, it would be an error pointing at a value nothing is wrong with.
+	 * </p>
+	 */
+	public void testTheOtherEndOfACrossItemConstraintIsClearedWhileEditing() {
+		CrossRefConfig config = TypedConfiguration.newConfigItem(CrossRefConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		click(findButton(form, label(I18NConstants.EDIT)));
+
+		fieldOf(form, CrossRefConfig.AMOUNT).setValue(Integer.valueOf(10));
+		assertNotNull("The value exceeds the limit, which must be said at the field entering it.",
+			fieldOf(form, CrossRefConfig.AMOUNT).getError());
+		assertNotNull("And at the referenced end, inside the other item.",
+			fieldOf(form, LimitConfig.MAX).getError());
+
+		fieldOf(form, LimitConfig.MAX).setValue(Integer.valueOf(20));
+
+		assertNull("Raising the limit settles the constraint, so the flag at the other end must go.",
+			fieldOf(form, CrossRefConfig.AMOUNT).getError());
+		assertNull("Along with the one at the end that was corrected.",
+			fieldOf(form, LimitConfig.MAX).getError());
+		assertNotNull("None of this was an Apply: the form is still being edited.",
+			findButton(form, label(I18NConstants.APPLY)));
+	}
+
+	/**
+	 * Entering edit mode flags nothing. A finding is a verdict on what the user did, and a form
+	 * opened over a configuration whose mandatory value is empty must not turn red before it has
+	 * been touched - that is a form telling the user off for opening it.
+	 */
+	public void testEnteringEditModeFlagsNothingYet() {
+		MandatoryConfig config = TypedConfiguration.newConfigItem(MandatoryConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+
+		click(findButton(form, label(I18NConstants.EDIT)));
+
+		assertNull("The empty mandatory value must not be complained about yet.",
+			fieldOf(form, MandatoryConfig.NAME).getError());
+		assertNull("Nor by the chrome around the field.", chromeErrorOf(form, MandatoryConfig.NAME));
+	}
+
+	/**
+	 * An entry that is still being filled in is not yet an entry to be told to confirm or discard.
+	 *
+	 * <p>
+	 * Only asking for the configuration to be handed over - Apply - marks it, because only then is
+	 * it about to be dropped. Marking it while the user is still typing its key would be a
+	 * complaint about having begun.
+	 * </p>
+	 */
+	public void testALiveCheckDoesNotMarkAnUnconfirmedEntry() {
+		KeyedCollectionConfig config = TypedConfiguration.newConfigItem(KeyedCollectionConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		click(findButton(form, label(I18NConstants.EDIT)));
+		click(findAddButton(form));
+
+		fieldOf(form, ListEntry.TITLE).setValue("still typing");
+
+		assertNull("An entry being filled in must not be complained about.",
+			fieldOf(form, ListEntry.TITLE).getError());
+
+		assertEquals(I18NConstants.ERROR_ENTRY_NOT_CONFIRMED, applyRefusal(form));
+		assertNotNull("Asking for it to be handed over is what says the entry has to be confirmed.",
+			fieldOf(form, ListEntry.TITLE).getError());
+	}
+
+	/**
 	 * An entry the user started but never confirmed blocks Apply, rather than being thrown away
 	 * without a word.
 	 *

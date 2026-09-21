@@ -37,6 +37,12 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
+ * While edit mode is open, every change to a field checks the copy again and shows what the check
+ * found, see {@link #recheck()} - so a value is questioned where it is entered, rather than only
+ * when the user asks for the copy to be carried over.
+ * </p>
+ *
+ * <p>
  * A refused Apply reports itself as a failed {@link HandlerResult}, so the application's own error
  * notification carries it - a violation naming a property the editor renders as no field of its
  * own has nowhere else to go, and Apply must never look like a button that did nothing.
@@ -106,6 +112,18 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	private final ConfigFieldIndex _index = new ConfigFieldIndex();
 
 	/**
+	 * Runs {@link #recheck()} whenever a field of the current editor changes.
+	 *
+	 * <p>
+	 * Installed on the {@link ConfigFieldIndex} once, in the constructor: an observer survives
+	 * {@link ConfigFieldIndex#clear()}, so it keeps watching the fields of every editor built
+	 * afterwards, while a second one per rebuild would leave the editors' worth of listeners behind
+	 * that came before.
+	 * </p>
+	 */
+	private final ConfigFieldPush _onFieldChange = new ConfigFieldPush(this::recheck);
+
+	/**
 	 * The {@link ConfigFormModel} listener that rebuilds this control on every mode change,
 	 * registered in the constructor and removed in {@link #onCleanup()}. Kept in a field, not
 	 * created afresh at each of those two call sites, so {@link ConfigFormModel#removeListener(Runnable)}
@@ -159,6 +177,7 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 		_commands = commands;
 		_toolbarCommands = commands == Commands.TOOLBAR ? createCommands() : Collections.emptyList();
 		_model.addListener(_onModeChange);
+		_index.observeFields(_onFieldChange::watch);
 		rebuild();
 	}
 
@@ -225,6 +244,8 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 * </p>
 	 */
 	private void rebuild() {
+		_onFieldChange.disarmed();
+
 		for (ReactControl child : getChildren()) {
 			child.cleanupTree();
 		}
@@ -248,6 +269,48 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 		for (ConfigFormCommand command : _toolbarCommands) {
 			command.notifyStateChanged();
 		}
+
+		_onFieldChange.armed();
+	}
+
+	/**
+	 * Checks {@link ConfigFormModel#edited()} again and shows what the check found, run whenever a
+	 * field of the editor changes.
+	 *
+	 * <p>
+	 * A value is questioned where it is entered, not only once Apply is pressed. Without this, a
+	 * warning would never be read at all in a form of this kind: Apply refuses over a violation and
+	 * nothing else, so a successful Apply leaves edit mode and rebuilds the editor over the applied
+	 * value, and a warning would be on screen only for as long as some <em>other</em> finding keeps
+	 * refusing.
+	 * </p>
+	 *
+	 * <p>
+	 * Only while editing. In view mode the editor accepts nothing, so there is nothing to check
+	 * anything about, and marking what is merely being looked at would be noise; with
+	 * {@link Commands#NONE} there is no mode at all and the editor writes straight through to the
+	 * item, which is a caller that asked for no verdict of any kind.
+	 * </p>
+	 *
+	 * <p>
+	 * {@link ConfigValidation#recheck(ConfigurationItem, ConfigFieldIndex)}, not
+	 * {@link ConfigValidation#refusalFor(ConfigurationItem, ConfigFieldIndex)}: an entry the user
+	 * has just started is not yet something to be told to confirm or discard, and an input a field
+	 * rejected is nothing this is about to discard - both are Apply's to refuse over, when the user
+	 * asks for the configuration to be handed over.
+	 * </p>
+	 *
+	 * <p>
+	 * Nothing runs this when edit mode is entered: a finding is a verdict on what the user did, and
+	 * a form opened over a configuration whose mandatory properties are empty must not turn red
+	 * before it has been touched.
+	 * </p>
+	 */
+	private void recheck() {
+		if (!_model.isEditMode()) {
+			return;
+		}
+		ConfigValidation.recheck(_model.edited(), _index);
 	}
 
 	/**

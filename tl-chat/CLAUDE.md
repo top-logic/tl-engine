@@ -765,11 +765,12 @@ the input almost always sit together, so they are one placeable box, while the s
 rail stay separate because those genuinely want independent placement. It honours its configuration
 flags as render guards on the existing `Thread` and `Composer` props.
 
-#### The eight channels of `<chat-conversation>`
+#### The nine channels of `<chat-conversation>`
 
 | Channel | Direction | Value |
 |--|--|--|
 | `input` | two-way | The open `tl.ai.execution:AgentSession`, as the object. Empty means a fresh conversation, so "new chat" is the list clearing it. |
+| `subject` | in | The object a conversation *created here* is about, written onto it as `AgentSession#subject` - see below. |
 | `busy` | out | `Boolean`, `true` while the agent works. |
 | `agent` | two-way | The agent's **name** (`String`). |
 | `model` | two-way | The model's **name** (`String`). |
@@ -778,8 +779,38 @@ flags as render guards on the existing `Thread` and `Composer` props.
 | `draft` | two-way | The text standing unsent in the composer (`String`, or a `ResKey` on the way in). |
 | `reference` | in | A model object, inserted into the draft as one atomic reference token. |
 
-`present` is not a seventh: it is a *list* of channels this element opens to the agent rather than
+`present` is not a tenth: it is a *list* of channels this element opens to the agent rather than
 a channel the element itself reads or writes - see "the agent writes a channel" below.
+
+##### `subject` - what a conversation is about (#508)
+
+A host whose page is about one object at a time - a project, an invoice, a contract - wants one
+conversation per object, and before #508 it had to remember which conversation that was somewhere
+of its own. `tl.ai.execution:AgentSession#subject` is where that now stands, and this channel is
+what writes it:
+
+```xml
+<chat-conversation input="chatSession" subject="project"/>
+```
+
+| | |
+|--|--|
+| When | Once, when the user's first message brings a conversation into being. Which of the two a reported session is - created here, or opened - is the **browser's** answer (`sessionReport` in `chat-conversation.tsx`, carried as `created` on `publishSession`): the server sees an id arrive either way, and a reload re-opens what this window had. |
+| Never | On the way in. Which conversation is shown stays `input`'s business, and which ones the user may pick stays the `<data-list>`'s. A conversation opened beside another object is not moved there, and one started while the channel was empty is not given a subject later - `AgentExecutionStore.setSubject` refuses a session that already has one, and no path backfills the rest. |
+| What counts | One model object, or a one-row selection. Several objects name no single subject, and nothing on the channel means the page was showing nothing; both stamp nothing (`ChatConversationControl.subjectFor`). |
+| Scoping the list | The `<data-list>`'s own `rows`, by navigating back - which is the point of a reference rather than a remembered id (see below). `referers` is not a security boundary, so the owner filter stays. |
+| A deleted subject | Clears the reference (the default deletion policy): the conversation outlives the object it was about, and it drops out of that object's list. **But navigating back from the deleted object itself throws** - `TLObject.tReferers`, which TL-Script's `referers` calls, refuses a lookup from a deleted object, and TL-Script has no "is this still there" to guard with. So the expression below answers while the channel is empty and while it holds a live object, and fails in the window where it still holds one that was deleted meanwhile. That window is not this feature's: a `<form>` or a `<table>` over the same channel is in the same position, and a page that must survive it asks the sessions (`all(...).filter(s -> $s.get(...) == $x)`) instead of the object. `TestSessionSubject` pins both halves. |
+
+```xml
+<rows>project -> ifElse(isEmpty($project), list(),
+    $project.referers(`tl.ai.execution:AgentSession#subject`)
+        .filter(s -> $s.get(`tl.ai.execution:AgentSession#owner`) == currentUser())
+        .sort((s -> $s.get(`tl.ai.execution:AgentSession#lastUpdated`)).comparator().desc()))</rows>
+```
+
+`tl-ai-demo/chat-grouped.view.xml` configures both halves: the conversation stamps what it creates
+with the invoice the rail's pane is showing, and the session list on the left offers that invoice's
+chats while one is open, and every chat of the account while none is.
 
 The four turn settings carry **names**, not model objects, and that is a fact about this product
 rather than a shortcut: only an agent an installation authored in the knowledge base is a
@@ -924,7 +955,7 @@ An application configures this element in the design view. Its options fall into
   trace picker), `citations` (markers *and* the per-answer sources pill - off removes the whole
   citation surface from the transcript), the nested `<actions>` (`copy`/`rate`/`regenerate`/
   `timestamp`), the nested `<controls>` pickers, `placeholder`, `prompt-improver-agent` (an agent
-  dropdown), `chat-id`, the eight channels (`input`, `busy`, `agent`, `model`, `effort`,
+  dropdown), `chat-id`, the nine channels (`input`, `subject`, `busy`, `agent`, `model`, `effort`,
   `mcp-servers`, `draft`, `reference`), and `present` - the channels the agent may write, deny by
   default. The transcript's rail badge button is *not*
   configured: it appears exactly when a `<chat-rail>` with the same `chat-id` is mounted, which the

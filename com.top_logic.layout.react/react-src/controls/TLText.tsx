@@ -46,7 +46,9 @@ const TLText: React.FC<TLCellProps> = ({ controlId }) => {
     pill && 'tlText--pill',
     state.overflow === 'ellipsis' && 'tlText--ellipsis',
   );
-  const pillColor = pill ? color ?? TONE_COLOR : color;
+  // A pill is drawn around content only: a value without a label - an empty channel, a value not
+  // yet chosen - shows nothing rather than an empty tinted box.
+  const pillColor = text === '' ? undefined : pill ? color ?? TONE_COLOR : color;
 
   return (
     <span

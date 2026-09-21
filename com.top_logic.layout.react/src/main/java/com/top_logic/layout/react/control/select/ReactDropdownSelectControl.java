@@ -14,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.layout.DisplayContext;
@@ -45,12 +46,21 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
 /**
- * A {@link ReactFormFieldControl} that renders a dropdown select with search-as-you-type filtering
- * via the {@code TLDropdownSelect} React component.
+ * A {@link ReactFormFieldControl} editing a value that is picked from a set of options.
+ *
+ * <p>
+ * One control serves every {@link SelectDisplay shape} the options are offered in - a list that
+ * opens on demand and filters as the user types, a cloud of toggles, or a bar of segments. All
+ * three hold the same option index, exchange the same value, and present an option by the same
+ * descriptor; they differ in the React component drawing them and in when they are handed the
+ * option list: a list that opens on demand fetches it on first open through the
+ * {@link #CMD_LOAD_OPTIONS} command, while a shape {@link SelectDisplay#showsAllOptions() showing
+ * every option} is handed it right away.
+ * </p>
  *
  * <p>
  * Supports single and multi-selection, chip/tag display for selected values, and image-rich option
- * rendering. Options are loaded lazily on first dropdown open via the {@code loadOptions} command.
+ * rendering.
  * </p>
  *
  * <p>
@@ -65,6 +75,21 @@ import com.top_logic.util.Resources;
  * </p>
  */
 public class ReactDropdownSelectControl extends ReactFormFieldControl {
+
+	/** The React component drawing a list that opens on demand. */
+	private static final String MODULE_DROPDOWN = "TLDropdownSelect";
+
+	/** The React component drawing every option as a toggle of its own. */
+	private static final String MODULE_CHIPS = "TLOptionChips";
+
+	/** The React component drawing the options as the segments of one bar. */
+	private static final String MODULE_SEGMENTED = "TLSegmentedChoice";
+
+	/**
+	 * State key naming the shape the options are offered in, the external name of the
+	 * {@link #getDisplay() display}. Absent for the list that opens on demand.
+	 */
+	private static final String DISPLAY = "display";
 
 	private static final String OPTIONS = "options";
 
@@ -111,10 +136,12 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 
 	private final boolean _customOrder;
 
+	private final SelectDisplay _display;
+
 	/**
 	 * Maps option ID strings to the original option objects. Used by
 	 * {@link #handleValueChanged(Map)} to resolve client-sent IDs back to model objects. Populated
-	 * by {@link #handleLoadOptions()} and incrementally by {@link #toOptionDescriptors(List)} when
+	 * by {@link #loadOptions()} and incrementally by {@link #toOptionDescriptors(List)} when
 	 * fresh IDs are allocated before the full option list has been loaded.
 	 */
 	private Map<String, Object> _optionIndex = new HashMap<>();
@@ -155,14 +182,31 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 *        Comparator for sorting options in the dropdown. Pass {@code null} for natural order.
 	 * @param customOrder
 	 *        Whether the user can reorder selected values (drag chips to reorder).
+	 * @see #ReactDropdownSelectControl(ReactContext, SelectFieldModel, LabelProvider, Comparator,
+	 *      boolean, SelectDisplay)
 	 */
 	public ReactDropdownSelectControl(ReactContext context, SelectFieldModel model,
 			LabelProvider labelProvider, Comparator<?> optionComparator, boolean customOrder) {
-		super(context, model, "TLDropdownSelect");
+		this(context, model, labelProvider, optionComparator, customOrder, SelectDisplay.DROPDOWN);
+	}
+
+	/**
+	 * Creates a {@link ReactDropdownSelectControl} offering its options in the given shape.
+	 *
+	 * @param display
+	 *        The shape the options are offered in, see {@link #getDisplay()}.
+	 * @see #ReactDropdownSelectControl(ReactContext, SelectFieldModel, LabelProvider, Comparator,
+	 *      boolean)
+	 */
+	public ReactDropdownSelectControl(ReactContext context, SelectFieldModel model,
+			LabelProvider labelProvider, Comparator<?> optionComparator, boolean customOrder,
+			SelectDisplay display) {
+		super(context, model, module(display));
 		_selectModel = model;
 		_labelProvider = labelProvider;
 		_optionComparator = optionComparator;
 		_customOrder = customOrder;
+		_display = display;
 		initSelectState();
 		_displayedObjects.observeValue(model.getValue());
 		addAttachListener(() -> _displayedObjects.attach(modelScope()));
@@ -170,17 +214,38 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	}
 
 	/**
+	 * The React component drawing the given shape.
+	 */
+	private static String module(SelectDisplay display) {
+		switch (display) {
+			case CHIPS:
+				return MODULE_CHIPS;
+			case SEGMENTED:
+				return MODULE_SEGMENTED;
+			default:
+				return MODULE_DROPDOWN;
+		}
+	}
+
+	/**
+	 * The shape the options are offered in.
+	 */
+	public SelectDisplay getDisplay() {
+		return _display;
+	}
+
+	/**
 	 * Re-describes the displayed value after one of the objects it consists of has changed.
 	 *
 	 * <p>
-	 * The option list carries the labels of those objects as well, so it is dropped: the client
-	 * loads it again the next time the dropdown is opened.
+	 * The option list carries the labels of those objects as well, so it goes stale with them, see
+	 * {@link #invalidateOptions()}.
 	 * </p>
 	 */
 	private void refreshDisplay() {
 		Object tx = beginUpdate();
 		updateValueState();
-		setOptionsLoaded(false);
+		invalidateOptions();
 		commitUpdate(tx);
 	}
 
@@ -195,7 +260,65 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		putState(MULTI_SELECT, _selectModel.isMultiple());
 		putState(CUSTOM_ORDER, _customOrder);
 		putState(EMPTY_OPTION_LABEL, resources.getString(I18NConstants.JS_DROPDOWN_SELECT_EMPTY));
-		setOptionsLoaded(false);
+		if (_display != SelectDisplay.DROPDOWN) {
+			putState(DISPLAY, _display.getExternalName());
+		}
+		invalidateOptions();
+	}
+
+	/**
+	 * Brings the option list the client holds up to date.
+	 *
+	 * <p>
+	 * A display {@link SelectDisplay#showsAllOptions() showing every option} is handed the current
+	 * list, having nothing to open at which it could ask for it. A list that opens on demand is
+	 * told that what it holds is outdated and asks for the list again the next time it is opened,
+	 * so an option list that is expensive to build is built only where it is read.
+	 * </p>
+	 */
+	private void invalidateOptions() {
+		if (_display.showsAllOptions()) {
+			publishOptions();
+		} else {
+			setOptionsLoaded(false);
+		}
+	}
+
+	/**
+	 * Sends the current option list to the client, reporting a failure to build it rather than
+	 * throwing.
+	 *
+	 * @return Whether the list could be built.
+	 */
+	private boolean publishOptions() {
+		try {
+			loadOptions();
+			return true;
+		} catch (Exception ex) {
+			Logger.error("Failed to load the options of a select field.", ex, this);
+			setOptionsLoaded(false);
+			return false;
+		}
+	}
+
+	/**
+	 * Builds the option list, indexes it, and sends it to the client together with the value
+	 * expressed in the ids of that list.
+	 */
+	private void loadOptions() {
+		List<?> options = sortedOptions();
+		Map<String, Object> newIndex = new HashMap<>();
+		Map<Object, String> newReverse = new IdentityHashMap<>();
+		List<Map<String, Object>> descriptors = buildOptionDescriptors(options, newIndex, newReverse);
+		_optionIndex = newIndex;
+		_optionIdByObject = newReverse;
+
+		Object tx = beginUpdate();
+		putState(OPTIONS, descriptors);
+		setOptionsLoaded(true);
+		// Re-send value with IDs consistent with the new option index.
+		updateValueState();
+		commitUpdate(tx);
 	}
 
 	private void updateValueState() {
@@ -232,6 +355,15 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		return result;
 	}
 
+	/**
+	 * The shape the options are offered in is how the field looks, not what it says: every shape
+	 * reports the same options and the same value.
+	 */
+	@Override
+	protected Set<String> scriptingPresentationKeys() {
+		return presentationKeys(super.scriptingPresentationKeys(), DISPLAY);
+	}
+
 	private void setOptionsLoaded(boolean loaded) {
 		putState(OPTIONS_LOADED, loaded);
 	}
@@ -246,13 +378,13 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		_displayedObjects.observeValue(newValue);
 		if (!_updatingFromClient) {
 			updateValueState();
-			// Invalidate cached options so the client reloads them on next open.
-			setOptionsLoaded(false);
+			// The option list carries the labels of the value as well, so it goes stale with it.
+			invalidateOptions();
 		}
 	}
 
 	/**
-	 * Handles the {@code loadOptions} command from the React client.
+	 * Handles the {@link #CMD_LOAD_OPTIONS} command from the React client.
 	 *
 	 * <p>
 	 * Sends the full option list as a state patch via SSE. Builds an internal index mapping
@@ -261,22 +393,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 */
 	@ReactCommandHandler(CMD_LOAD_OPTIONS)
 	HandlerResult handleLoadOptions() {
-		try {
-			List<?> options = sortedOptions();
-			Map<String, Object> newIndex = new HashMap<>();
-			Map<Object, String> newReverse = new IdentityHashMap<>();
-			List<Map<String, Object>> descriptors = buildOptionDescriptors(options, newIndex, newReverse);
-			_optionIndex = newIndex;
-			_optionIdByObject = newReverse;
-
-			Object tx = beginUpdate();
-			putState(OPTIONS, descriptors);
-			setOptionsLoaded(true);
-			// Re-send value with IDs consistent with the new option index.
-			updateValueState();
-			commitUpdate(tx);
-		} catch (Exception ex) {
-			Logger.error("Failed to load options for dropdown select control.", ex, this);
+		if (!publishOptions()) {
 			return HandlerResult.error(I18NConstants.JS_DROPDOWN_SELECT_ERROR);
 		}
 		return HandlerResult.DEFAULT_RESULT;

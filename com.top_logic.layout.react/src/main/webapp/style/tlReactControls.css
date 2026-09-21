@@ -5630,7 +5630,7 @@ button.tlToolbar__menuTrigger:focus-visible {
 }
 
 /* Read-only value */
-.tlDropdownSelect__readonlyValue {
+.tlOptionValue {
 	display: inline-flex;
 	align-items: center;
 	gap: var(--spacing-02);
@@ -5703,14 +5703,14 @@ button.tlToolbar__menuTrigger:focus-visible {
 }
 
 /* Option image / icon */
-.tlDropdownSelect__optionImage {
+.tlOptionImage {
 	width: 20px;
 	height: 20px;
 	flex-shrink: 0;
 	object-fit: contain;
 }
 
-.tlDropdownSelect__optionIcon {
+.tlOptionIcon {
 	font-size: 20px;
 	width: 20px;
 	height: 20px;
@@ -5788,6 +5788,176 @@ button.tlToolbar__menuTrigger:focus-visible {
 /* Drop indicator: right border highlight */
 .tlDropdownSelect__chip--dropAfter {
 	box-shadow: 2px 0 0 0 var(--interactive);
+}
+
+/* --- TLOptionChips ------------------------------------------------------ */
+
+/* A cloud of toggles: every option is on screen and wraps onto as many lines as it needs. */
+.tlOptionChips {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--spacing-02);
+}
+
+/* One option, switched on and off by a click. A pill keeps its shape in a theme that squares
+   every corner off, so the radius is a literal rather than one of the radius tokens. */
+.tlOptionChips__chip {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	max-width: 100%;
+	padding: 2px var(--spacing-03);
+	border: 1px solid var(--border-subtle);
+	border-radius: 999px;
+	background-color: var(--layer);
+	color: var(--text-primary);
+	font-family: inherit;
+	font-size: var(--label-01-font-size);
+	line-height: 1.5;
+	cursor: pointer;
+}
+
+.tlOptionChips__chip:not(:disabled):hover {
+	background-color: var(--layer-hover);
+}
+
+.tlOptionChips__chip:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: 1px;
+}
+
+/* An option that is on is filled, so that on and off are told apart by more than a border. */
+.tlOptionChips__chip--selected {
+	border-color: var(--interactive);
+	background-color: var(--interactive);
+	color: var(--text-on-color);
+}
+
+.tlOptionChips__chip--selected:not(:disabled):hover {
+	background-color: var(--interactive);
+}
+
+.tlOptionChips__chip:disabled {
+	border-color: var(--button-disabled);
+	background-color: var(--button-disabled);
+	color: var(--text-disabled);
+	cursor: default;
+}
+
+.tlOptionChips__chipLabel {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* A rejected value is marked on the cloud as a whole: no single option is at fault. */
+.tlOptionChips--error {
+	box-shadow: 0 0 0 2px var(--support-error);
+}
+
+.tlOptionChips--warning {
+	box-shadow: 0 0 0 2px var(--support-warning);
+}
+
+/* --- TLSegmentedChoice -------------------------------------------------- */
+
+/* A bar of segments reading as one control: the marker stands under the selected segment, so the
+   bar is positioned inline and the segments sit above the marker. */
+.tlSegmentedChoice {
+	position: relative;
+	display: inline-flex;
+	align-items: stretch;
+	max-width: 100%;
+	padding: 2px;
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--corner-radius);
+	background-color: var(--layer);
+}
+
+/* The slider marking the selected segment. Its offset and width are measured from that segment, so
+   only the transition between the two positions is stated here. */
+.tlSegmentedChoice__marker {
+	position: absolute;
+	top: 2px;
+	bottom: 2px;
+	border-radius: var(--corner-radius);
+	background-color: var(--interactive);
+	box-shadow: var(--shadow-raised);
+	transition: left 160ms ease-in-out, width 160ms ease-in-out;
+	pointer-events: none;
+}
+
+/* The marker jumps to its position where motion is unwelcome; where it stands says the same. */
+@media (prefers-reduced-motion: reduce) {
+	.tlSegmentedChoice__marker {
+		transition: none;
+	}
+}
+
+.tlSegmentedChoice__segment {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--spacing-02);
+	padding: var(--spacing-01) var(--spacing-03);
+	border: none;
+	border-radius: var(--corner-radius);
+	background-color: transparent;
+	color: var(--text-secondary);
+	font-family: inherit;
+	font-size: var(--label-01-font-size);
+	line-height: 1.5;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.tlSegmentedChoice__segment:not(:disabled):hover {
+	color: var(--text-primary);
+}
+
+.tlSegmentedChoice__segment:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+/* The selected segment reads on the marker below it. A field taking several values has no marker,
+   so its selected segments carry the fill themselves. */
+.tlSegmentedChoice__segment--selected {
+	color: var(--text-on-color);
+}
+
+.tlSegmentedChoice[role="group"] .tlSegmentedChoice__segment--selected {
+	background-color: var(--interactive);
+}
+
+.tlSegmentedChoice__segment:disabled {
+	color: var(--text-disabled);
+	cursor: default;
+}
+
+.tlSegmentedChoice__segmentLabel {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.tlSegmentedChoice--error {
+	box-shadow: 0 0 0 2px var(--support-error);
+}
+
+.tlSegmentedChoice--warning {
+	box-shadow: 0 0 0 2px var(--support-warning);
+}
+
+/* A field that only displays its value is the label it holds, with no bar around it. */
+.tlSegmentedChoice--immutable {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	padding: 0;
+	border: none;
+	background: none;
 }
 
 /* --- TLColorInput ------------------------------------------------------ */

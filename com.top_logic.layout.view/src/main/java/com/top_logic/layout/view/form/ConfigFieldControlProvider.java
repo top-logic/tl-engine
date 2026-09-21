@@ -15,6 +15,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.layout.configedit.ConfigEditorControl;
 import com.top_logic.layout.configedit.ConfigFieldIndex;
 import com.top_logic.layout.configedit.ConfigFieldModel;
+import com.top_logic.layout.configedit.ConfigFieldPush;
 import com.top_logic.layout.configedit.ConfigListEditorControl;
 import com.top_logic.layout.configedit.FieldCollectionValue;
 import com.top_logic.layout.configedit.PolymorphicOptions;

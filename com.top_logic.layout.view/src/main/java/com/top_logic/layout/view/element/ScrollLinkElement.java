@@ -27,8 +27,6 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.layout.view.model.ChannelObjectObserver;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.listen.ModelChangeEvent;
-import com.top_logic.model.listen.ModelChangeEvent.ChangeType;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
@@ -111,8 +109,8 @@ public class ScrollLinkElement implements UIElement {
 		channel.addListener(listener);
 		control.addCleanupAction(() -> channel.removeListener(listener));
 
-		ChannelObjectObserver observer =
-			new ChannelObjectObserver(List.of(channel), Set.of(), event -> hideDeletedTarget(control, channel, event));
+		ChannelObjectObserver observer = new ChannelObjectObserver(List.of(channel), Set.of(),
+			ChannelObjectObserver.IGNORE_CHANGE, event -> hideDeletedTarget(control, channel));
 		control.addAttachListener(() -> observer.attach(context.getModelScope()));
 		control.addDetachListener(observer::detach);
 		return control;
@@ -122,10 +120,11 @@ public class ScrollLinkElement implements UIElement {
 	 * Hides the link when its target object is deleted: the anchor to scroll to is then no longer
 	 * rendered, so the link would go nowhere.
 	 */
-	private static void hideDeletedTarget(ScrollLinkControl control, ViewChannel channel, ModelChangeEvent event) {
+	private static void hideDeletedTarget(ScrollLinkControl control, ViewChannel channel) {
 		for (TLObject target : ChannelObjectObserver.objects(channel.get())) {
-			if (event.getChange(target) == ChangeType.DELETED) {
+			if (!target.tValid()) {
 				control.setValue(null, "");
+				return;
 			}
 		}
 	}

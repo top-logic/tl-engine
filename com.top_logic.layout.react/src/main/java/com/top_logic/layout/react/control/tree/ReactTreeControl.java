@@ -27,8 +27,12 @@ import com.top_logic.tool.boundsec.HandlerResult;
  *
  * <p>
  * The tree is flattened into a list of visible nodes, each annotated with its depth. Node content
- * is delegated to child {@link ReactControl}s created by a {@link ReactControlProvider}. Expansion,
- * collapse, selection and activation are handled server-side via commands.
+ * is delegated to child {@link ReactControl}s created by a {@link ReactControlProvider}, which
+ * receives the business object a node stands for
+ * ({@link TreeUIModel#getBusinessObject(Object)}), not the node itself. A node therefore displays
+ * its object exactly as any other place displaying the same object does, down to being a link to
+ * where the application shows it. Expansion, collapse, selection and activation are handled
+ * server-side via commands.
  * </p>
  */
 public class ReactTreeControl extends ReactControl {
@@ -186,7 +190,8 @@ public class ReactTreeControl extends ReactControl {
 	 * @param selectionModel
 	 *        The selection model.
 	 * @param contentProvider
-	 *        Provider for creating node content controls.
+	 *        Provider for creating node content controls. It is called with the business object a
+	 *        node stands for, see {@link TreeUIModel#getBusinessObject(Object)}.
 	 */
 	@SuppressWarnings("unchecked")
 	public ReactTreeControl(ReactContext context, TreeUIModel<?> treeModel, SelectionModel<?> selectionModel,
@@ -400,7 +405,7 @@ public class ReactTreeControl extends ReactControl {
 	private ReactControl getOrCreateNodeControl(Object node) {
 		ReactControl control = _nodeControlCache.get(node);
 		if (control == null) {
-			control = _contentProvider.createControl(getReactContext(), node);
+			control = _contentProvider.createControl(getReactContext(), _treeModel.getBusinessObject(node));
 			_nodeControlCache.put(node, control);
 			registerChildControl(control);
 		}

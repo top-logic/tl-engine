@@ -161,6 +161,15 @@
 							<de>Responsive Master-Detail-Demo</de>
 						</label>
 					</nav-item>
+					<nav-item id="columns-demo"
+						icon="css:bi bi-layout-split"
+					>
+						<view-ref view="demo/columns-demo.view.xml"/>
+						<label>
+							<en>Columns Demo</en>
+							<de>Spalten-Demo</de>
+						</label>
+					</nav-item>
 					<nav-item id="errors"
 						icon="css:bi bi-exclamation-triangle"
 					>

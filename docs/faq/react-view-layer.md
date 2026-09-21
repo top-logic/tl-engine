@@ -124,6 +124,57 @@ A form with unsaved input blocks the write of the channel it is bound to: it reg
 
 The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/repeater-demo.view.xml` with `style/tl-demo-react.css`.
 
+## A page of weighted columns: `<columns>`
+
+`<columns breakpoint="48rem" gap="default">` (`ColumnsElement`) lays a page out in columns of unequal width and reflows it to a single column when the space gets narrow. Each child is a `<column weight="2">` (`ColumnElement`); a column takes a share of the width in proportion to its weight (weight 1 by default), and its own children stand below each other over the full width of the column. Below the breakpoint the columns stack in the order they are written — the main column first, the side column below it.
+
+- **The breakpoint is the width of the element itself**, not the width of the browser window. The same page therefore stacks inside a narrow pane of a wide window exactly as it does on a phone. No measurement is involved: the client gives each column `flex: <weight> 1 calc((<breakpoint> - 100%) * 999)` in a wrapping flex row, so the browser layout decides.
+- **The page scrolls, the columns do not.** A column is as tall as its content and is not stretched to the height of a taller neighbour; the layout is as tall as its tallest column. A long main column beside a short side column reads as one page.
+
+Which of the arrangement elements fits:
+
+| Element | Use it for |
+| --- | --- |
+| `<columns>` | A page of a few columns of *deliberately different* width that folds to one column when narrow. |
+| `<grid>` | Many elements built alike, placed in as many equal columns as fit (`min-column-width`, `max-columns`). |
+| `<stack direction="row">` | A row of elements that neither grow to a share of the width nor wrap. |
+| `<split-panel>` | Panes with splitters the user drags; fills its box, scrolls per pane, and never folds. |
+| `<dashboard>` | Tiles of definite row height whose order the user personalizes. |
+
+```xml
+<columns
+	breakpoint="48rem"
+	gap="default"
+>
+	<column weight="2">
+		<card variant="outlined">
+			<title>
+				<en>Main</en>
+			</title>
+			<text>
+				<label>
+					<en>The wide column.</en>
+				</label>
+			</text>
+		</card>
+	</column>
+	<column>
+		<card variant="outlined">
+			<title>
+				<en>Side</en>
+			</title>
+			<text>
+				<label>
+					<en>Half as wide as the main column.</en>
+				</label>
+			</text>
+		</card>
+	</column>
+</columns>
+```
+
+The client classes an application styles against are `.tlColumns`, `.tlColumns--gap-<gap>` and `.tlColumns__column`. The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/columns-demo.view.xml`.
+
 ## Pictures: `<image>`, `<overlay>`, `<avatar>`
 
 `<image>` (`ImageElement`) shows one picture, and it takes that picture from either of two places.

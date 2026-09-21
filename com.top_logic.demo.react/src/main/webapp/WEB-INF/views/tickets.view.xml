@@ -40,9 +40,13 @@
 	
 	The jump-to box in the app bar demonstrates the submit hook: pressing Enter writes the entered
 	text to the jump channel and then runs the <on-submit> command over it, which resolves the
-	ticket of that name and writes it to the ticket channel - so the list shows it selected. A text
-	is submitted by Enter; the status dropdown in the page would run such a command on every choice,
-	since a choice is already finished.
+	ticket of that name and writes it to the ticket channel - so the list shows it selected. A
+	name that matches no ticket leaves the selection as it was: the command branches on the
+	resolved ticket and tells the user in a warning naming the text they entered, which it reads
+	from the jump channel through its <inputs>, and ends the chain there. An empty submission has
+	no name to complain about, so the warning's expression yields nothing and the command changes
+	nothing and says nothing. A text is submitted by Enter; the status dropdown in the page would
+	run such a command on every choice, since a choice is already finished.
 	
 	That box stands in the app bar of the shell: <slot-content to="appbar-content"> routes it to
 	the <slot> the shell declares, while it keeps reading and writing the channels of this view.
@@ -129,7 +133,22 @@
 					</placeholder>
 					<on-submit>
 						<execute-script function="name -> if($name == null || $name == &quot;&quot;, null, all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#name`) == $name).firstElement())"/>
-						<write-channel name="ticket"/>
+						<if test="t -> $t != null">
+							<then>
+								<write-channel name="ticket"/>
+							</then>
+							<else>
+								<notify
+									expr="term -> x -> if($term == null || $term == '', null, #('No ticket {0}.'@en, 'Kein Ticket {0}.'@de).fill($term))"
+									kind="warning"
+									stop="true"
+								>
+									<inputs>
+										<input channel="jump"/>
+									</inputs>
+								</notify>
+							</else>
+						</if>
 					</on-submit>
 				</value-input>
 				<visible-if

@@ -17,6 +17,7 @@ import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.view.ViewContext;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -70,14 +71,106 @@ public class GenericViewCommand implements ViewCommand {
 		_actions = ViewActions.instantiate(context, config.getActions());
 	}
 
+	/**
+	 * Creates a {@link GenericViewCommand} running the given actions.
+	 *
+	 * @param actions
+	 *        The chain to run, each action's result becoming the input of the next one.
+	 */
+	public GenericViewCommand(List<ViewAction> actions) {
+		_actions = List.copyOf(actions);
+	}
+
 	@Override
 	public boolean appliesFormState() {
 		return ViewActions.appliesFormState(_actions);
 	}
 
+	/**
+	 * Runs the configured chain, counting this command among the
+	 * {@link SuspendedCommands suspended commands} of its region for as long as the chain is held
+	 * by an action that has not settled it.
+	 *
+	 * @implNote The chain reports its end through
+	 *           {@link ViewActionChain#run(ReactContext, java.util.List, Object, java.util.function.Consumer, Runnable)},
+	 *           which for a synchronous chain happens before {@code run} returns; the handshake
+	 *           then finds the chain settled and leaves the region untouched.
+	 */
 	@Override
 	public HandlerResult execute(ReactContext context, Object input) {
-		ViewActionChain.run(context, _actions, input, null);
+		SuspendedCommands region = region(context);
+		if (region == null) {
+			ViewActionChain.run(context, _actions, input, null);
+			return HandlerResult.DEFAULT_RESULT;
+		}
+
+		Suspension suspension = new Suspension(region);
+		ViewActionChain.run(context, _actions, input, null, suspension::settled);
+		suspension.returned();
 		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * The commands of the region this one runs in, {@code null} where nothing follows them.
+	 */
+	private static SuspendedCommands region(ReactContext context) {
+		if (context instanceof ViewContext viewContext) {
+			return viewContext.getScope(SuspendedCommands.class);
+		}
+		return null;
+	}
+
+	/**
+	 * Keeps a command counted among the suspended ones of its region exactly while its chain is
+	 * held.
+	 *
+	 * <p>
+	 * The two things it reconciles happen in either order: the chain settles, and the call that
+	 * started it returns. A chain held over to another interaction may settle on the thread of that
+	 * interaction, so both are recorded under the same lock and only the transition that is left
+	 * reaches the region.
+	 * </p>
+	 */
+	private static final class Suspension {
+
+		private final SuspendedCommands _region;
+
+		private boolean _settled;
+
+		private boolean _suspended;
+
+		Suspension(SuspendedCommands region) {
+			_region = region;
+		}
+
+		/**
+		 * Records that the call running the chain has returned, suspending the command when the
+		 * chain is still held.
+		 */
+		void returned() {
+			boolean suspend;
+			synchronized (this) {
+				suspend = !_settled;
+				_suspended = suspend;
+			}
+			if (suspend) {
+				_region.suspend();
+			}
+		}
+
+		/**
+		 * Records that the chain has settled, releasing the command when it was suspended.
+		 */
+		void settled() {
+			boolean release;
+			synchronized (this) {
+				_settled = true;
+				release = _suspended;
+				_suspended = false;
+			}
+			if (release) {
+				_region.settle();
+			}
+		}
 	}
 }

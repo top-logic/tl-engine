@@ -61,7 +61,7 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.util.Resources;
 
 /*
- * Issue #297.
+ * PR #306 ("Explain the agent tool access policy in an administration view"). No issue tracks it.
  *
  * The class comment below is exported to META-INF/messages_*.properties by the build's doclet and shown
  * as this component's tooltip in the layout editor, so it is written for an administrator and stays

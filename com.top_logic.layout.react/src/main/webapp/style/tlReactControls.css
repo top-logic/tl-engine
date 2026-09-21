@@ -1171,6 +1171,13 @@ button.tlPhotoCapture__overlayCaptureBtn:active .tlPhotoCapture__overlayCaptureI
 	display: block;
 }
 
+/* Each value stands on a line of its own, so the line break is what separates them and the
+   separator text is not read. The separator is written out all the same, so that a display which
+   squeezes such a list into one line - a table cell - has it to show. */
+.tlValueList--block .tlValueList__separator {
+	display: none;
+}
+
 .tlValueList__separator {
 	color: var(--text-secondary);
 	white-space: pre;
@@ -1296,6 +1303,8 @@ div.tlValueList {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+	flex: 0 1 auto;
+	min-width: 0;
 }
 
 .tlPanel__titleContent {
@@ -1334,6 +1343,17 @@ div.tlValueList {
 	gap: var(--spacing-01);
 	flex-shrink: 0;
 	margin-left: auto;
+}
+
+/* Who gives way when the header is too narrow: a toolbar that can collapse absorbs the shrink
+   (it drops button labels and folds commands into its overflow menu), and the title truncates
+   only once the toolbar is down to its overflow trigger. A toolbar that cannot collapse keeps
+   its width, so there the title yields first. */
+.tlPanel__header:has(> .tlPanel__toolbar > .tlToolbar--collapsible) > .tlPanel__toolbar {
+	flex-shrink: var(--tl-toolbar-shrink-priority);
+	/* Stated explicitly: the automatic minimum size would be the toolbar's natural width, which
+	   is exactly the width the toolbar is meant to give up again. */
+	min-width: var(--tl-toolbar-trigger-size);
 }
 
 .tlPanel__actionButton {
@@ -2289,6 +2309,22 @@ button.tlDrawerToggle:focus-visible {
 	margin-left: auto;
 }
 
+/* Without a command the actions toolbar renders nothing. The wrapper then leaves the bar alone
+   instead of contributing a gap between the content and the bar's trailing end. */
+.tlAppBar__actions:empty {
+	display: none;
+}
+
+/* Who gives way when the bar is too narrow: a toolbar that can collapse absorbs the shrink (it
+   drops button labels and folds commands into its overflow menu), and the title truncates only
+   once the toolbar is down to its overflow trigger. */
+.tlAppBar__actions:has(> .tlToolbar--collapsible) {
+	flex-shrink: var(--tl-toolbar-shrink-priority);
+	/* Stated explicitly: the automatic minimum size would be the toolbar's natural width, which
+	   is exactly the width the toolbar is meant to give up again. */
+	min-width: var(--tl-toolbar-trigger-size);
+}
+
 .tlAppBar__trailing {
 	display: flex;
 	align-items: center;
@@ -2298,8 +2334,9 @@ button.tlDrawerToggle:focus-visible {
 }
 
 /* An actions area ahead of the trailing one has already claimed the free space; a second automatic
-   margin would split it between the two and strand the actions mid-bar. */
-.tlAppBar__actions + .tlAppBar__trailing {
+   margin would split it between the two and strand the actions mid-bar. A wrapper showing nothing
+   claims nothing, so the trailing area keeps its own margin then. */
+.tlAppBar__actions:not(:empty) + .tlAppBar__trailing {
 	margin-left: 0;
 }
 
@@ -2353,31 +2390,6 @@ button.tlDrawerToggle:focus-visible {
 
 .tlAppBar--primary .tlReactButton--link {
 	color: var(--layer-accent-text);
-}
-
-/* --- Responsive: compact app bar at small viewports ------------------------- */
-
-@media (max-width: 768px) {
-	/* Labeled command buttons collapse to their icon so the bar never grows wider
-	   than the device. Buttons without an icon keep their label. */
-	.tlAppBar .tlReactButton:has(> .tlReactButton__image) {
-		width: 2rem;
-		flex-shrink: 0;
-		padding: 0;
-		box-shadow: none;
-	}
-
-	.tlAppBar .tlReactButton:has(> .tlReactButton__image) > .tlReactButton__image {
-		display: inline-block;
-	}
-
-	.tlAppBar .tlReactButton:has(> .tlReactButton__image) > .tlReactButton__label {
-		display: none;
-	}
-
-	.tlAppBar__actions {
-		min-width: 0;
-	}
 }
 
 /* --- TLBreadcrumb ---------------------------------------------------------- */
@@ -2664,13 +2676,22 @@ button.tlWindow__maximizeBtn:focus-visible {
 	   form, or a <padding> around explanatory text). */
 }
 
+/* The footer consists of a single collapsing toolbar, which states its natural width and gives
+   it up again down to its overflow trigger. Nothing else competes for the width, so the toolbar
+   takes the whole shrink and the footer never overflows. */
 .tlWindow__footer {
 	display: flex;
 	justify-content: flex-end;
-	gap: var(--spacing-03);
 	padding: var(--spacing-03) var(--spacing-04);
 	border-top: 1px solid var(--border-subtle);
 	flex-shrink: 0;
+	min-width: 0;
+}
+
+/* A toolbar without a command renders nothing, leaving the strip empty: a window whose footer
+   carries neither an action nor a button-bar command shows no footer at all. */
+.tlWindow__footer:empty {
+	display: none;
 }
 
 /* Resize handles */
@@ -3513,13 +3534,74 @@ button.tlMenu__item--disabled:hover {
 	min-width: 0;
 	box-sizing: border-box;
 	border-right: 1px solid var(--border-subtle);
+	/* A cell reads as one line: the row is of a fixed height, so a value that wrapped would be cut
+	   through the middle of its letters. The display controls within the cell inherit this. */
+	white-space: nowrap;
 }
 
-/* Ensure control wrapper spans (generated by React bridge) fill the cell */
+/* The root element of a read-only value control spans the cell, so a value wider than its column
+   is cut off at the column edge and ends in an ellipsis that says so. */
 .tlTableView__cell > span {
 	display: block;
 	width: 100%;
 	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* A value that points somewhere - a web address, an e-mail address, a phone number - is the link
+   there. It ends in an ellipsis like any other value, but it stays as wide as the text it reads
+   as: a link stretched over the cell would follow the address on a click anywhere in the cell,
+   where the user is aiming at the row. The text input's full width is therefore given up: as an
+   item of the flex layout the cell is, the link is then as wide as its text and shrinks with the
+   column on its own. */
+.tlTableView__cell > a {
+	width: auto;
+	max-width: 100%;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* A value shown beside an adornment - the language button of an internationalized text - sits in a
+   row with it. The row follows the width of the column instead of the width its content asks for,
+   so that the value within it is the part that gives way. */
+.tlTableView__cell > .tlStack--row {
+	width: 100%;
+	min-width: 0;
+}
+
+.tlTableView__cell > .tlStack--grow-first.tlStack--row > *:first-child {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* A text of several lines is written with its line breaks where there is the height for them; in a
+   cell it reads as the one line the row is high. The control carries the wrapping as a class of
+   its own, which the white space inherited from the cell does not reach. */
+.tlTableView__cell .tlReactTextInput--immutable.tlReactTextInput--multiline {
+	white-space: nowrap;
+}
+
+/* The chips of a multi-valued selection follow each other in one row and are cut off at the column
+   edge, rather than wrapping into lines the row has no height for. */
+.tlTableView__cell > .tlDropdownSelect--immutable {
+	flex-wrap: nowrap;
+	overflow: hidden;
+	width: 100%;
+}
+
+/* Each chip keeps the width its label asks for, so a row of them is cut off at the column edge
+   instead of every chip being squeezed to nothing. */
+.tlTableView__cell > .tlDropdownSelect--immutable > * {
+	flex-shrink: 0;
+}
+
+/* A multi-valued text of several lines stands one value per line where there is the height for it;
+   in a cell the values read as one line with the separator between them. */
+.tlTableView__cell .tlValueList--block .tlValueList__item,
+.tlTableView__cell .tlValueList--block .tlValueList__separator {
+	display: inline;
 }
 
 /* Remove cell padding when it contains an editable input — the input provides its own.
@@ -5028,6 +5110,13 @@ button.tlMenu__item--disabled:hover {
 	font-size: var(--body-compact-01-font-size);
 }
 
+/* A read-only text of several lines keeps the line breaks and the indentation it was written with.
+   The display carries this as a rule of its own rather than as a style on the element, so that a
+   context which grants a value only one line - a table cell - can say so. */
+.tlReactTextInput--immutable.tlReactTextInput--multiline {
+	white-space: pre-wrap;
+}
+
 /* A single-line input, with room beside it for the link that opens what it holds (url, e-mail,
    phone). The row is there whether or not the link is, so that the input keeps its place - and
    with it the focus - when a value starts or stops pointing somewhere. Without the link it adds
@@ -5148,6 +5237,49 @@ button.tlMenu__item--disabled:hover {
 	flex-shrink: 0;
 }
 
+:root {
+	/* Width of an icon-only toolbar trigger, such as the overflow menu's "...". A collapsing
+	   toolbar never shrinks below it, so its overflow menu stays reachable. */
+	--tl-toolbar-trigger-size: 2rem;
+
+	/* Weight with which the wrapper of a collapsing toolbar takes a shrink, so that the toolbar
+	   gives way before the title beside it. The share of a shrink an item takes is proportional
+	   to its flex shrink factor times its flex base size, so the title beside the toolbar keeps a
+	   share of its own; at this weight that share stays below Chrome's layout unit of 1/64 px for
+	   any bar or header up to a few thousand pixels wide, and a title is cut only once the
+	   toolbar is down to its trigger. (A single layout unit of overflow already costs a whole
+	   character, because an ellipsis replaces the last character that no longer fits.) */
+	--tl-toolbar-shrink-priority: 100000;
+}
+
+/* A toolbar that collapses states its full natural width (as an inline style set by TLToolbar),
+   which is what its host sizes itself from, and gives that width up again down to its overflow
+   trigger. The content sits at the end the toolbar collapses towards, so the space it has given
+   up is at the far end from what is still visible. */
+.tlToolbar--collapsible {
+	flex-shrink: 1;
+	min-width: var(--tl-toolbar-trigger-size);
+	justify-content: flex-end;
+}
+
+/* Compact presentation: a labeled command button collapses to its icon, which is also its
+   accessible name and tooltip. Buttons without an icon keep their label. The dropdown of a menu
+   group is portaled out of the toolbar, so its entries keep their labels. */
+.tlToolbar--compact .tlReactButton:has(> .tlReactButton__image) {
+	width: 2rem;
+	flex-shrink: 0;
+	padding: 0;
+	box-shadow: none;
+}
+
+.tlToolbar--compact .tlReactButton:has(> .tlReactButton__image) > .tlReactButton__image {
+	display: inline-block;
+}
+
+.tlToolbar--compact .tlReactButton:has(> .tlReactButton__image) > .tlReactButton__label {
+	display: none;
+}
+
 .tlToolbar__separator {
 	display: block;
 	width: 1px;
@@ -5202,7 +5334,7 @@ button.tlToolbar__menuTrigger:focus-visible {
 /* Compact, square icon-only trigger (e.g. the burger overflow menu). */
 .tlToolbar__menuTrigger--icon {
 	gap: 0;
-	width: 2rem;
+	width: var(--tl-toolbar-trigger-size);
 	padding: 0;
 	justify-content: center;
 }
@@ -6459,6 +6591,12 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 
 .tlToolbar__dropdownItem {
 	display: flex;
+}
+
+/* An entry whose button is currently hidden renders empty - drop it, so the menu does not offer
+   (and a screen reader does not announce) blank entries. */
+.tlToolbar__dropdownItem:empty {
+	display: none;
 }
 
 /* Dropdown opens over a light surface — reset the inverse colors that

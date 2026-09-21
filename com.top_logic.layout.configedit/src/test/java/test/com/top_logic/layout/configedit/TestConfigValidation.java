@@ -25,13 +25,16 @@ import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.constraint.annotation.Comparision;
 import com.top_logic.basic.config.constraint.annotation.ComparisonDependency;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
+import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.basic.config.constraint.impl.Positive;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.layout.configedit.ConfigFieldIndex;
 import com.top_logic.layout.configedit.ConfigFieldModel;
 import com.top_logic.layout.configedit.ConfigValidation;
+import com.top_logic.layout.configedit.ConfigValidation.Findings;
 import com.top_logic.layout.configedit.ConfigValidation.Violation;
+import com.top_logic.layout.configedit.ConfigValidation.Warning;
 
 /**
  * Tests for {@link ConfigValidation}.
@@ -162,6 +165,24 @@ public class TestConfigValidation extends TestCase {
 		void setPositiveWarning(int value);
 	}
 
+	/**
+	 * Test configuration whose single property breaks two warning-level constraints at once - the
+	 * shape that tells "every warning about a property is shown" apart from "the last one wins".
+	 */
+	public interface TwoWarningsConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getAmount()}. */
+		String AMOUNT = "amount";
+
+		@Name(AMOUNT)
+		@Constraint(value = Positive.class, asWarning = true)
+		@Constraint(value = NonNegative.class, asWarning = true)
+		int getAmount();
+
+		/** @see #getAmount() */
+		void setAmount(int value);
+	}
+
 	/** The item a {@link CrossRefConfig}'s constraint reaches into. */
 	public interface LimitConfig extends ConfigurationItem {
 
@@ -206,7 +227,7 @@ public class TestConfigValidation extends TestCase {
 	public void testAnEmptyMandatoryPropertyIsAViolation() {
 		MandatoryConfig config = TypedConfiguration.newConfigItem(MandatoryConfig.class);
 
-		List<Violation> violations = ConfigValidation.check(config);
+		List<Violation> violations = ConfigValidation.check(config).violations();
 
 		assertEquals(1, violations.size());
 		assertSame(config, violations.get(0).item());
@@ -218,7 +239,7 @@ public class TestConfigValidation extends TestCase {
 		MandatoryConfig config = TypedConfiguration.newConfigItem(MandatoryConfig.class);
 		config.setName("given");
 
-		assertEquals(Collections.emptyList(), ConfigValidation.check(config));
+		assertEquals(Collections.emptyList(), ConfigValidation.check(config).violations());
 	}
 
 	/** The check reaches into a nested item. */
@@ -227,7 +248,7 @@ public class TestConfigValidation extends TestCase {
 		MandatoryConfig inner = TypedConfiguration.newConfigItem(MandatoryConfig.class);
 		config.setInner(inner);
 
-		List<Violation> violations = ConfigValidation.check(config);
+		List<Violation> violations = ConfigValidation.check(config).violations();
 
 		assertEquals(1, violations.size());
 		assertSame("The violation belongs to the inner item, not the outer one.",
@@ -244,7 +265,7 @@ public class TestConfigValidation extends TestCase {
 		config.setFirst(inner);
 		config.setSecond(inner);
 
-		List<Violation> violations = ConfigValidation.check(config);
+		List<Violation> violations = ConfigValidation.check(config).violations();
 
 		assertEquals("The item reached twice must be checked once.", 1, violations.size());
 		assertSame(inner, violations.get(0).item());
@@ -259,7 +280,7 @@ public class TestConfigValidation extends TestCase {
 		CollectionConfig config = TypedConfiguration.newConfigItem(CollectionConfig.class);
 		config.setPart(TypedConfiguration.newConfigItem(Entry.class));
 
-		assertEquals(Collections.emptyList(), ConfigValidation.check(config));
+		assertEquals(Collections.emptyList(), ConfigValidation.check(config).violations());
 	}
 
 	/**
@@ -271,6 +292,7 @@ public class TestConfigValidation extends TestCase {
 	 * to a live collection marks the property set. It is here for the rule - a collection is never
 	 * flagged - not for the ordering; the empty case above is what pins that.
 	 * </p>
+	 */
 	public void testAFilledMandatoryCollectionIsNoViolation() {
 		CollectionConfig config = TypedConfiguration.newConfigItem(CollectionConfig.class);
 		config.setPart(TypedConfiguration.newConfigItem(Entry.class));
@@ -282,7 +304,7 @@ public class TestConfigValidation extends TestCase {
 		config.getIndex().put(indexed.getTitle(), indexed);
 
 		assertEquals("Neither list nor map may be flagged once entries were added in place.",
-			Collections.emptyList(), ConfigValidation.check(config));
+			Collections.emptyList(), ConfigValidation.check(config).violations());
 	}
 
 	/**
@@ -292,7 +314,7 @@ public class TestConfigValidation extends TestCase {
 	public void testAnUnsetMandatoryItemIsNoViolation() {
 		CollectionConfig config = TypedConfiguration.newConfigItem(CollectionConfig.class);
 
-		assertEquals(Collections.emptyList(), ConfigValidation.check(config));
+		assertEquals(Collections.emptyList(), ConfigValidation.check(config).violations());
 	}
 
 	/** A violation is put on the field that edits the offending property. */
@@ -330,7 +352,7 @@ public class TestConfigValidation extends TestCase {
 		config.setPositive(-1);
 		config.setPositiveWarning(1);
 
-		List<Violation> violations = ConfigValidation.check(config);
+		List<Violation> violations = ConfigValidation.check(config).violations();
 
 		assertEquals(1, violations.size());
 		assertSame(config, violations.get(0).item());
@@ -347,7 +369,7 @@ public class TestConfigValidation extends TestCase {
 		config.setPositive(-1);
 		config.setPositiveWarning(1);
 
-		List<Violation> violations = ConfigValidation.check(config);
+		List<Violation> violations = ConfigValidation.check(config).violations();
 
 		assertEquals(1, violations.size());
 		assertEquals("The constraint's own message, not the log wording around it.",
@@ -368,7 +390,7 @@ public class TestConfigValidation extends TestCase {
 		config.setLimit(limit);
 		config.setAmount(10);
 
-		List<Violation> violations = ConfigValidation.check(config);
+		List<Violation> violations = ConfigValidation.check(config).violations();
 
 		assertEquals("The dependency is symmetric: both ends are reported.", 2, violations.size());
 		Violation onAmount = violationOf(violations, CrossRefConfig.AMOUNT);
@@ -418,13 +440,131 @@ public class TestConfigValidation extends TestCase {
 		return model;
 	}
 
-	/** A constraint failure marked as a warning must not block Apply. */
-	public void testAWarningIsNotAViolation() {
+	/**
+	 * A constraint failure marked as a warning is found as a {@link Warning}, never as a
+	 * {@link Violation}: what its author wanted said about the value, not a reason to refuse it.
+	 */
+	public void testAWarningIsAWarningAndNotAViolation() {
 		ConstrainedConfig config = TypedConfiguration.newConfigItem(ConstrainedConfig.class);
 		config.setPositive(1);
 		config.setPositiveWarning(-1);
 
-		assertEquals(Collections.emptyList(), ConfigValidation.check(config));
+		Findings findings = ConfigValidation.check(config);
+
+		assertEquals("A warning must not block Apply.", Collections.emptyList(), findings.violations());
+		assertEquals(1, findings.warnings().size());
+		Warning warning = findings.warnings().get(0);
+		assertSame(config, warning.item());
+		assertEquals(ConstrainedConfig.POSITIVE_WARNING, warning.property().getPropertyName());
+		assertEquals("The constraint's own message, the same one a violation carries.",
+			com.top_logic.basic.config.constraint.impl.I18NConstants.POSITIVE_VALUE_EXPECTED, warning.message());
+	}
+
+	/**
+	 * Both kinds are placed in one report, each in its own channel: the warning is read as a warning
+	 * at its field, the violation on the sibling property as that field's error. Neither is read out
+	 * of the other's slot, which is what keeps a remark from refusing an Apply.
+	 */
+	public void testAWarningAndAViolationEachReachTheirOwnField() {
+		ConstrainedConfig config = TypedConfiguration.newConfigItem(ConstrainedConfig.class);
+		config.setPositive(-1);
+		config.setPositiveWarning(-1);
+		ConfigFieldIndex index = new ConfigFieldIndex();
+		ConfigFieldModel violating = register(index, config, ConstrainedConfig.POSITIVE);
+		ConfigFieldModel warned = register(index, config, ConstrainedConfig.POSITIVE_WARNING);
+
+		boolean complete = ConfigValidation.report(ConfigValidation.check(config), index);
+
+		assertTrue("The violation had a field to go to.", complete);
+		assertNotNull("The violation must be the field's error.", violating.getError());
+		assertFalse("A violation is no warning.", violating.hasWarnings());
+		assertTrue("The warning must be readable at its own field.", warned.hasWarnings());
+		assertEquals(List.of(com.top_logic.basic.config.constraint.impl.I18NConstants.POSITIVE_VALUE_EXPECTED),
+			warned.getWarnings());
+		assertNull("A warning is no error.", warned.getError());
+	}
+
+	/**
+	 * Every warning about one property is shown, not the last one alone - the field's warning
+	 * channel holds a list, and placing them one at a time would overwrite it each time.
+	 */
+	public void testEveryWarningAboutOnePropertyIsShown() {
+		TwoWarningsConfig config = TypedConfiguration.newConfigItem(TwoWarningsConfig.class);
+		config.setAmount(-1);
+		ConfigFieldIndex index = new ConfigFieldIndex();
+		ConfigFieldModel warned = register(index, config, TwoWarningsConfig.AMOUNT);
+
+		ConfigValidation.report(ConfigValidation.check(config), index);
+
+		assertEquals("Both constraints have something to say about this value.",
+			2, ConfigValidation.check(config).warnings().size());
+		assertEquals("Both must reach the field.", 2, warned.getWarnings().size());
+		assertTrue(warned.getWarnings()
+			.contains(com.top_logic.basic.config.constraint.impl.I18NConstants.POSITIVE_VALUE_EXPECTED));
+		assertTrue(warned.getWarnings()
+			.contains(com.top_logic.basic.config.constraint.impl.I18NConstants.NON_NEGATIVE_VALUE_EXPECTED));
+	}
+
+	/**
+	 * A warning the editor renders no field for is simply not shown, and does not make the report
+	 * incomplete: that answer exists so a refusal can name what it could not show, and a warning
+	 * refuses nothing.
+	 */
+	public void testAWarningWithoutAFieldLeavesTheReportComplete() {
+		ConstrainedConfig config = TypedConfiguration.newConfigItem(ConstrainedConfig.class);
+		config.setPositive(1);
+		config.setPositiveWarning(-1);
+
+		boolean complete = ConfigValidation.report(ConfigValidation.check(config), new ConfigFieldIndex());
+
+		assertTrue("A warning nobody shows is still nothing to refuse over.", complete);
+	}
+
+	/**
+	 * A configuration whose only finding is a warning is handed over - and the warning is placed on
+	 * its field all the same, so it is on display next to the value it is about.
+	 */
+	public void testWarningsAlonePlaceThemselvesWithoutRefusing() {
+		ConstrainedConfig config = TypedConfiguration.newConfigItem(ConstrainedConfig.class);
+		config.setPositive(1);
+		config.setPositiveWarning(-1);
+		ConfigFieldIndex index = new ConfigFieldIndex();
+		ConfigFieldModel warned = register(index, config, ConstrainedConfig.POSITIVE_WARNING);
+
+		assertNull("A warning refuses nothing.", ConfigValidation.refusalFor(config, index));
+		assertTrue("The warning must be shown even though nothing was refused.", warned.hasWarnings());
+	}
+
+	/** A warning is taken back before the next check, like every other placed finding. */
+	public void testClearingTakesBackAWarning() {
+		ConstrainedConfig config = TypedConfiguration.newConfigItem(ConstrainedConfig.class);
+		config.setPositive(1);
+		config.setPositiveWarning(-1);
+		ConfigFieldIndex index = new ConfigFieldIndex();
+		ConfigFieldModel warned = register(index, config, ConstrainedConfig.POSITIVE_WARNING);
+		ConfigValidation.report(ConfigValidation.check(config), index);
+
+		index.clearFindings();
+
+		assertFalse("Nothing placed may outlive the check that placed it.", warned.hasWarnings());
+		assertEquals(Collections.emptyList(), warned.getWarnings());
+	}
+
+	/**
+	 * Entering another value takes the warning with it: it was said about the value the field no
+	 * longer holds, and the next check speaks for the new one.
+	 */
+	public void testAnotherValueDropsTheWarningAboutTheOldOne() {
+		ConstrainedConfig config = TypedConfiguration.newConfigItem(ConstrainedConfig.class);
+		config.setPositive(1);
+		config.setPositiveWarning(-1);
+		ConfigFieldIndex index = new ConfigFieldIndex();
+		ConfigFieldModel warned = register(index, config, ConstrainedConfig.POSITIVE_WARNING);
+		ConfigValidation.report(ConfigValidation.check(config), index);
+
+		warned.setValue(Integer.valueOf(1));
+
+		assertFalse("The remark was about the value that is gone.", warned.hasWarnings());
 	}
 
 	/**

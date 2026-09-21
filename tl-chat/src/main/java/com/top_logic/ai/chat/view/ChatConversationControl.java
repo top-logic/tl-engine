@@ -23,7 +23,6 @@ import com.top_logic.ai.chat.view.ChatConversationElement.Fact;
 import com.top_logic.ai.chat.view.ChatConversationElement.Mention;
 import com.top_logic.ai.chat.view.ChatConversationElement.Selection;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.ReactCommandHandler;
@@ -39,7 +38,6 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
-import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 
 /**
@@ -113,6 +111,18 @@ public class ChatConversationControl extends ReactControl {
 	 * </p>
 	 */
 	private int _referenceWrites;
+
+	/**
+	 * The same count for the {@code quote} channel, kept apart from the reference one so that a
+	 * write of either channel is a write of its own.
+	 *
+	 * <p>
+	 * Two counters and two state slots, because one slot fed by two channels would lose a token: a
+	 * page that clears its quote channel in the same request in which it writes a reference would
+	 * overwrite the pending write before the browser ever saw it.
+	 * </p>
+	 */
+	private int _quoteWrites;
 
 	/**
 	 * What the composer last reported it is set to, so a channel write can be judged against the
@@ -245,6 +255,8 @@ public class ChatConversationControl extends ReactControl {
 		// Read-only: a token the composer holds is part of the draft the channel above already
 		// carries, so nothing is ever written back and the channel itself is not kept.
 		followTurnChannel(context, config.getReference(), this::applyReferenceFromChannel);
+		// The same, for a passage of an object rather than the object: read-only for the same reason.
+		followTurnChannel(context, config.getQuote(), this::applyQuoteFromChannel);
 	}
 
 	/**
@@ -505,26 +517,7 @@ public class ChatConversationControl extends ReactControl {
 			putState("draftText", null);
 			return;
 		}
-		applying(() -> putState("draftText", draftText(value)));
-	}
-
-	/**
-	 * A written value as the text the composer is to show.
-	 *
-	 * <p>
-	 * A {@link ResKey} is resolved rather than printed, because the obvious way to write a sentence
-	 * from TL-Script is {@code {"en": …, "de": …}.internationalize()} and the user is to read their
-	 * own language, not a resource key. Anything else is labelled the way the transcript labels it.
-	 * </p>
-	 */
-	private static String draftText(Object value) {
-		if (value instanceof ResKey key) {
-			return Resources.getInstance().getString(key);
-		}
-		if (value instanceof CharSequence text) {
-			return text.toString();
-		}
-		return label(value);
+		applying(() -> putState("draftText", ChatQuotes.text(value)));
 	}
 
 	/**
@@ -550,6 +543,29 @@ public class ChatConversationControl extends ReactControl {
 		Map<String, Object> token = new LinkedHashMap<>(fields);
 		token.put("seq", Integer.valueOf(++_referenceWrites));
 		applying(() -> putState("referenceWrite", token));
+	}
+
+	/**
+	 * Turns a passage written to the {@code quote} channel into one atomic reference token for the
+	 * composer to insert at the caret.
+	 *
+	 * <p>
+	 * The sibling of {@link #applyReferenceFromChannel(Object)} for the case it cannot serve: the
+	 * user marked a <em>piece</em> of an object in the host's own viewer, and only the host knows
+	 * which. The token is the same shape either way, so it serialises to the same {@code <quote/>}
+	 * on send - what differs is that its quoted text and its location come from the write rather
+	 * than from the element's {@code <mention>} expressions. Anything that carries no passage clears
+	 * the pending write; see {@link ChatQuotes#token}.
+	 * </p>
+	 */
+	private void applyQuoteFromChannel(Object value) {
+		Map<String, Object> token = ChatQuotes.token(value, this::objectToken);
+		if (token == null) {
+			putState("quoteWrite", null);
+			return;
+		}
+		token.put("seq", Integer.valueOf(++_quoteWrites));
+		applying(() -> putState("quoteWrite", token));
 	}
 
 	/** The object a host wrote, also when a selection channel handed over its single row. */
@@ -938,6 +954,14 @@ public class ChatConversationControl extends ReactControl {
 		token.put("label", label);
 		token.put("text", _mentionText != null ? label(_mentionText.execute(object)) : label);
 		return token;
+	}
+
+	/**
+	 * The same for a value a channel handed over, which is a model object or nothing this element
+	 * can make a token of.
+	 */
+	private Map<String, Object> objectToken(Object value) {
+		return value instanceof TLObject object ? tokenOf(object) : Map.of();
 	}
 
 	/** The browser id of an object: its stable knowledge-object name (the id a mention carries). */

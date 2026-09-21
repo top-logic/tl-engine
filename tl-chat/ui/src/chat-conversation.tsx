@@ -155,13 +155,18 @@ export function sessionReport(
 }
 
 /**
- * One write of the `reference` channel, out of the control state.
+ * One write of the `reference` or the `quote` channel, out of the control state.
+ *
+ * Both carry the same thing - a token for the composer to insert at the caret - and differ only in
+ * who said what it quotes: the element's own `<mention>` expressions, or the host that showed the
+ * passage the reader marked. So one parser serves both state slots; each slot counts its own
+ * writes.
  *
  * The `seq` is what makes a write a write: a channel notifies for A, B, A, and the third write
  * carries the same token as the first, which unchanged state could not tell apart from no write at
  * all. `undefined` means the channel is unwired or holds nothing insertable.
  */
-export function referenceWrite(raw: unknown): { seq: number; token: ReferenceToken } | undefined {
+export function tokenWrite(raw: unknown): { seq: number; token: ReferenceToken } | undefined {
   if (!raw || typeof raw !== 'object') return undefined
   const row = raw as Record<string, unknown>
   if (typeof row.id !== 'string' || !row.id) return undefined
@@ -173,6 +178,7 @@ export function referenceWrite(raw: unknown): { seq: number; token: ReferenceTok
       kind: typeof row.kind === 'string' ? row.kind : '',
       id: row.id,
       label: typeof row.label === 'string' ? row.label : '',
+      location: typeof row.location === 'string' ? row.location : '',
       text: typeof row.text === 'string' ? row.text : '',
     },
   }
@@ -391,13 +397,24 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   // The reference channel: an object written to it becomes one atomic token at the caret, exactly
   // as picking it from the "@" menu does. In only - the token is part of the draft the channel
   // above already carries.
-  const reference = useMemo(() => referenceWrite(state.referenceWrite), [state.referenceWrite])
+  const reference = useMemo(() => tokenWrite(state.referenceWrite), [state.referenceWrite])
   const insertedReference = useRef<number | null>(null)
   useEffect(() => {
     if (!reference || insertedReference.current === reference.seq) return
     insertedReference.current = reference.seq
     actions.insertReference(reference.token)
   }, [reference, actions])
+
+  // The quote channel: the same insert for a passage *of* an object, whose quoted text and
+  // location the host wrote. A slot and a counter of its own, so a write of one channel is never
+  // lost to a write of the other.
+  const quote = useMemo(() => tokenWrite(state.quoteWrite), [state.quoteWrite])
+  const insertedQuote = useRef<number | null>(null)
+  useEffect(() => {
+    if (!quote || insertedQuote.current === quote.seq) return
+    insertedQuote.current = quote.seq
+    actions.insertReference(quote.token)
+  }, [quote, actions])
 
   const pendingApprovals = useMemo(
     () =>

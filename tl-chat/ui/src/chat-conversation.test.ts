@@ -8,7 +8,7 @@ import {
   readComposerControls,
   readContextFacts,
   readThreadConfig,
-  referenceWrite,
+  tokenWrite,
   sameServers,
   sessionReport,
   TLChatConversation,
@@ -259,15 +259,15 @@ describe('the session report', () => {
 })
 
 /**
- * What the `reference` channel says.
+ * What the `reference` and the `quote` channel say.
  *
  * The sequence number is what makes a write a write: a channel notifies for A, B, A, and the third
  * write carries the token of the first, which unchanged state alone could not tell from no write.
  */
-describe('the reference channel', () => {
+describe('the token channels', () => {
   it('reads the token the control built out of the written object', () => {
     expect(
-      referenceWrite({
+      tokenWrite({
         seq: 3,
         kind: 'Invoice',
         id: 'aaa-bbb',
@@ -280,26 +280,56 @@ describe('the reference channel', () => {
         kind: 'Invoice',
         id: 'aaa-bbb',
         label: 'Hotelrechnung Berlin',
+        location: '',
         text: 'Hotelrechnung Berlin (1.240,00 €)',
       },
     })
   })
 
+  it('carries the location a quote write names, which is what makes it a passage', () => {
+    expect(
+      tokenWrite({
+        seq: 1,
+        kind: 'GenericObject',
+        id: 'aaa-bbb',
+        label: 'Angebot Alpha',
+        location: '02 Kontext',
+        text: 'the marked passage',
+      })?.token,
+    ).toEqual({
+      kind: 'GenericObject',
+      id: 'aaa-bbb',
+      label: 'Angebot Alpha',
+      location: '02 Kontext',
+      text: 'the marked passage',
+    })
+  })
+
+  it('numbers two passages of the same object apart, so both insert', () => {
+    const object = { kind: 'GenericObject', id: 'aaa-bbb', label: 'Angebot Alpha' }
+    const first = tokenWrite({ ...object, seq: 7, location: '02 Kontext', text: 'first passage' })
+    const second = tokenWrite({ ...object, seq: 8, location: '03 Ziele', text: 'second passage' })
+    expect(first?.seq).toBe(7)
+    expect(second?.seq).toBe(8)
+    expect(first?.token.text).not.toBe(second?.token.text)
+  })
+
   it('defaults the fields the control left out, but insists on the id', () => {
-    expect(referenceWrite({ seq: 1, id: 'aaa-bbb' })?.token).toEqual({
+    expect(tokenWrite({ seq: 1, id: 'aaa-bbb' })?.token).toEqual({
       kind: '',
       id: 'aaa-bbb',
       label: '',
+      location: '',
       text: '',
     })
-    expect(referenceWrite({ seq: 1, id: '' })).toBeUndefined()
-    expect(referenceWrite({ seq: 1 })).toBeUndefined()
+    expect(tokenWrite({ seq: 1, id: '' })).toBeUndefined()
+    expect(tokenWrite({ seq: 1 })).toBeUndefined()
   })
 
   it('says nothing for an unwired channel or a write with no sequence', () => {
-    expect(referenceWrite(null)).toBeUndefined()
-    expect(referenceWrite(undefined)).toBeUndefined()
-    expect(referenceWrite('an-id')).toBeUndefined()
-    expect(referenceWrite({ id: 'aaa-bbb' })).toBeUndefined()
+    expect(tokenWrite(null)).toBeUndefined()
+    expect(tokenWrite(undefined)).toBeUndefined()
+    expect(tokenWrite('an-id')).toBeUndefined()
+    expect(tokenWrite({ id: 'aaa-bbb' })).toBeUndefined()
   })
 })

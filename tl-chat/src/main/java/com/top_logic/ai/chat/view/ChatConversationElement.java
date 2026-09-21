@@ -75,11 +75,12 @@ import com.top_logic.tl.ai.core.provider.LLMService.AllAgentNameOptions;
  * </p>
  *
  * <p>
- * Two more carry the composer's unsent text: {@code draft} is the text itself, two-way, and
- * {@code reference} turns a written model object into one atomic reference token inside it. Together
- * they are what lets a button anywhere on the page put a question into the chat without a line of
- * code - an {@code <execute-script>} that builds the sentence and a {@code <write-channel>} that
- * writes it.
+ * Three more carry the composer's unsent text: {@code draft} is the text itself, two-way;
+ * {@code reference} turns a written model object into one atomic reference token inside it; and
+ * {@code quote} does the same for a passage <em>of</em> an object, which only the viewer that showed
+ * it can name. Together they are what lets a button anywhere on the page put a question into the
+ * chat without a line of code - an {@code <execute-script>} that builds the sentence or the passage
+ * and a {@code <write-channel>} that writes it.
  * </p>
  */
 public class ChatConversationElement implements UIElement {
@@ -195,6 +196,13 @@ public class ChatConversationElement implements UIElement {
 		 * @see #getReference()
 		 */
 		String REFERENCE = "reference";
+
+		/**
+		 * Configuration property name for {@link #getQuote()}.
+		 *
+		 * @see #getQuote()
+		 */
+		String QUOTE = "quote";
 
 		/**
 		 * Configuration property name for {@link #getTrace()}.
@@ -504,6 +512,45 @@ public class ChatConversationElement implements UIElement {
 		@Format(ChannelRefFormat.class)
 		@Nullable
 		ChannelRef getReference();
+
+		/**
+		 * Optional input channel: a marked passage of an object becomes one atomic reference token
+		 * in the draft, written as a map of what the token carries.
+		 *
+		 * <p>
+		 * What {@link #getReference() reference} cannot say. That channel takes an object, whose
+		 * quoted text is everything this element knows about it; a reader who marked one paragraph
+		 * in the host's own viewer wants that paragraph quoted, and only the viewer that showed it
+		 * knows which one. So this channel takes the token itself - the object the passage is from,
+		 * the passage, and optionally a label, a location and a kind:
+		 * </p>
+		 *
+		 * <pre>
+		 * &lt;chat-conversation quote="chatQuote"/&gt;
+		 * </pre>
+		 *
+		 * <p>
+		 * A write is a map, which is what a TL-Script expression produces:
+		 * </p>
+		 *
+		 * <pre>
+		 * section -&gt; {"id": $section, "location": "02 Kontext", "text": $marked}
+		 * </pre>
+		 *
+		 * <p>
+		 * {@code id} is normally the model object itself rather than a printed identifier: the
+		 * element then fills the kind, the stable id and the label from it - a nested
+		 * {@code <mention>} having its say in the label - and the write only has to name the
+		 * passage. A map with no {@code text} says nothing, because an object without a passage is
+		 * what {@link #getReference() reference} is for. Like it, this channel is read and never
+		 * written.
+		 * </p>
+		 */
+		@Name(QUOTE)
+		@Label("Quote")
+		@Format(ChannelRefFormat.class)
+		@Nullable
+		ChannelRef getQuote();
 
 		/**
 		 * How much of the agent's execution the transcript shows: nothing, a collapsed summary, or

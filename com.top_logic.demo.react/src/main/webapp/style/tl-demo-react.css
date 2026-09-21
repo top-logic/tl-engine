@@ -73,3 +73,39 @@
 	background: linear-gradient(to bottom, transparent, var(--overlay));
 	color: var(--text-on-color);
 }
+
+/*
+ * The colour a text on a filled surface is read in, shown on such a surface: the row of tones
+ * stands on the page background, where the on-color tone would be invisible without one.
+ */
+.tlDemoOnColor {
+	padding: var(--spacing-01) var(--spacing-03);
+	border-radius: var(--corner-radius);
+	background: var(--background-inverse);
+}
+
+/*
+ * Hero section of the styling demo: a band across the page in a gradient running from the
+ * interactive colour into the one a success is reported in, rounded by the radius a large surface
+ * takes.
+ */
+.tlDemoHero {
+	padding: var(--spacing-06);
+	border-radius: var(--border-radius-03);
+	background-image: linear-gradient(135deg, var(--interactive), var(--support-success));
+}
+
+/*
+ * Glass card standing on the hero: translucent, so the gradient shows through; blurred, so what
+ * shows through is not read as content; and surrounded by the glow of the theme.
+ *
+ * The blur and the glow are the tokens a theme turns on - both are without effect in the shipped
+ * themes, and the "Glass" theme of this application sets them.
+ */
+.tlDemoGlass {
+	border: 1px solid rgba(255, 255, 255, 0.35);
+	border-radius: var(--border-radius-03);
+	background: rgba(255, 255, 255, 0.18);
+	box-shadow: var(--shadow-glow);
+	backdrop-filter: blur(var(--surface-blur));
+}

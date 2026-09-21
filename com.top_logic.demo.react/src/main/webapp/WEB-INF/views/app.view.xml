@@ -224,6 +224,15 @@
 							<de>Kalender</de>
 						</label>
 					</nav-item>
+					<nav-item id="styling-demo"
+						icon="css:bi bi-palette"
+					>
+						<view-ref view="demo/styling-demo.view.xml"/>
+						<label>
+							<en>Styling</en>
+							<de>Gestaltung</de>
+						</label>
+					</nav-item>
 					<separator/>
 					<nav-item id="administration"
 						icon="css:bi bi-shield-lock"

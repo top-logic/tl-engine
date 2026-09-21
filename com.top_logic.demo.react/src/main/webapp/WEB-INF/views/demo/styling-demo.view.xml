@@ -1,0 +1,482 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	How an application styles a view: by stating the role of a text, by arranging elements with a
+	stack and a grid, by reaching a single element through its css-class, and by restyling the
+	tokens all of that is filled from in a theme of its own.
+	
+	The first section shows the typography: one text per variant, naming the variant it is drawn
+	in, one per tone, naming the tone, and the pill appearance - as a tone and as a value that
+	carries a colour in the model. The status picked in the dropdown decides the colour of the
+	pill beside it: the colour of the classifier beats the tone the text states, which is what
+	makes a status read the same wherever it appears.
+	
+	The second section reaches two elements of its own: the hero stack and the glass card inside
+	it carry a css-class that style/tl-demo-react.css paints - the gradient, the large radius, the
+	translucent surface, the blur behind it and the glow around it, each taken from a design token.
+	Two of those tokens are without effect in the shipped themes: surface-blur is 0 and shadow-glow
+	is none there, so the "Glass" theme of this application sets them, along with a display font
+	family for the headings. Switching the theme in the user menu turns both on.
+	
+	The third section arranges: a row of chips that spreads across the width and falls into further
+	lines where the screen is too narrow, a row of buttons centered in it, a column of running text
+	bounded to a readable width and therefore centered in the page, and a grid of cards bounded the
+	same way. The buttons write the search term of the last section, which is where a value bounded
+	to no object goes.
+	
+	The fourth section is a search field: the magnifier ahead of what is typed, the button that
+	empties it, and the delay the typed value is held back for before it reaches the channel the
+	text below reads.
+-->
+<view>
+	<channels>
+		<channel name="q"/>
+		<channel name="status"/>
+	</channels>
+
+	<panel>
+		<title>
+			<en>Styling</en>
+			<de>Gestaltung</de>
+		</title>
+
+		<text variant="title">
+			<label>
+				<en>Typography</en>
+				<de>Typografie</de>
+			</label>
+		</text>
+		<text>
+			<label>
+				<en>A text says what it is for, not which font it is drawn in: the variant names the role, and the family, size, line height and weight of that role come from the tokens of the active theme.</en>
+				<de>Ein Text sagt, wofür er da ist, nicht in welcher Schrift er gesetzt wird: Die Variante benennt die Rolle, und Familie, Größe, Zeilenhöhe und Schnitt dieser Rolle kommen aus den Token des aktiven Themes.</de>
+			</label>
+		</text>
+		<stack gap="compact">
+			<text variant="display">
+				<label>
+					<en>display</en>
+					<de>display</de>
+				</label>
+			</text>
+			<text variant="headline">
+				<label>
+					<en>headline</en>
+					<de>headline</de>
+				</label>
+			</text>
+			<text variant="title">
+				<label>
+					<en>title</en>
+					<de>title</de>
+				</label>
+			</text>
+			<text variant="body">
+				<label>
+					<en>body</en>
+					<de>body</de>
+				</label>
+			</text>
+			<text variant="label">
+				<label>
+					<en>label</en>
+					<de>label</de>
+				</label>
+			</text>
+			<text variant="caption">
+				<label>
+					<en>caption</en>
+					<de>caption</de>
+				</label>
+			</text>
+		</stack>
+
+		<text>
+			<label>
+				<en>The tone says what the colour of a text means. The last one is the colour a text is read in on a filled surface, so it is shown on one.</en>
+				<de>Der Ton sagt, was die Farbe eines Textes bedeutet. Der letzte ist die Farbe, in der ein Text auf einer gefüllten Fläche gelesen wird, und steht darum auf einer solchen.</de>
+			</label>
+		</text>
+		<stack
+			direction="row"
+			gap="default"
+			wrap="true"
+		>
+			<text tone="primary">
+				<label>
+					<en>primary</en>
+					<de>primary</de>
+				</label>
+			</text>
+			<text tone="secondary">
+				<label>
+					<en>secondary</en>
+					<de>secondary</de>
+				</label>
+			</text>
+			<text tone="helper">
+				<label>
+					<en>helper</en>
+					<de>helper</de>
+				</label>
+			</text>
+			<text tone="accent">
+				<label>
+					<en>accent</en>
+					<de>accent</de>
+				</label>
+			</text>
+			<text tone="success">
+				<label>
+					<en>success</en>
+					<de>success</de>
+				</label>
+			</text>
+			<text tone="warning">
+				<label>
+					<en>warning</en>
+					<de>warning</de>
+				</label>
+			</text>
+			<text tone="error">
+				<label>
+					<en>error</en>
+					<de>error</de>
+				</label>
+			</text>
+			<text
+				css-class="tlDemoOnColor"
+				tone="on-color"
+			>
+				<label>
+					<en>on-color</en>
+					<de>on-color</de>
+				</label>
+			</text>
+		</stack>
+
+		<text>
+			<label>
+				<en>The pill appearance draws the text in a tinted box. A pill without a colour of its own is tinted by its tone; a value that carries a colour in the model is tinted by that colour, whatever tone the text states - the three pills below are drawn from the tone, the fourth one from the classifier chosen beside it.</en>
+				<de>Die Pillen-Darstellung zeichnet den Text in ein eingefärbtes Feld. Eine Pille ohne eigene Farbe wird von ihrem Ton eingefärbt; ein Wert, der im Modell eine Farbe trägt, von dieser Farbe, gleich welchen Ton der Text angibt - die drei Pillen unten stammen aus dem Ton, die vierte aus dem daneben gewählten Klassifikator.</de>
+			</label>
+		</text>
+		<stack
+			align="center"
+			direction="row"
+			gap="default"
+			wrap="true"
+		>
+			<text
+				appearance="pill"
+				tone="success"
+			>
+				<label>
+					<en>Done</en>
+					<de>Erledigt</de>
+				</label>
+			</text>
+			<text
+				appearance="pill"
+				tone="warning"
+			>
+				<label>
+					<en>Pending</en>
+					<de>Offen</de>
+				</label>
+			</text>
+			<text
+				appearance="pill"
+				tone="error"
+			>
+				<label>
+					<en>Overdue</en>
+					<de>Überfällig</de>
+				</label>
+			</text>
+			<text
+				appearance="pill"
+				input="status"
+				tone="error"
+			/>
+		</stack>
+		<fields>
+			<value-input
+				type="demo.tickets:TicketStatus"
+				value="status"
+			>
+				<label>
+					<en>Status of the fourth pill</en>
+					<de>Status der vierten Pille</de>
+				</label>
+			</value-input>
+		</fields>
+
+		<text variant="title">
+			<label>
+				<en>A stylesheet of the application: css-class</en>
+				<de>Ein Stylesheet der Anwendung: css-class</de>
+			</label>
+		</text>
+		<text>
+			<label>
+				<en>Every element takes a css-class, written on the root element of its control, so a rule of the application reaches exactly that element. The two below are tlDemoHero and tlDemoGlass; both rules take their radius, their blur, their glow and their colours from theme tokens, so they follow a theme switch like everything the engine draws.</en>
+				<de>Jedes Element nimmt eine css-class, die auf das Wurzelelement seines Controls geschrieben wird, sodass eine Regel der Anwendung genau dieses Element erreicht. Die beiden unten sind tlDemoHero und tlDemoGlass; beide Regeln nehmen Radius, Weichzeichnung, Schein und Farben aus Theme-Token und folgen damit einem Theme-Wechsel wie alles, was die Engine zeichnet.</de>
+			</label>
+		</text>
+		<stack
+			css-class="tlDemoHero"
+			gap="default"
+		>
+			<card css-class="tlDemoGlass">
+				<stack gap="compact">
+					<text
+						tone="on-color"
+						variant="headline"
+					>
+						<label>
+							<en>Everything from a token</en>
+							<de>Alles aus einem Token</de>
+						</label>
+					</text>
+					<text tone="on-color">
+						<label>
+							<en>The card is translucent, blurs the gradient behind it and carries a glow around it. Blur and glow are switched off in the shipped themes; the Glass theme of this application turns them on, and gives the headings a display face of their own.</en>
+							<de>Die Karte ist durchscheinend, zeichnet den Verlauf hinter sich weich und trägt einen Schein um sich. Weichzeichnung und Schein sind in den ausgelieferten Themes abgeschaltet; das Theme "Glas" dieser Anwendung schaltet sie ein und gibt den Überschriften eine eigene Auszeichnungsschrift.</de>
+						</label>
+					</text>
+				</stack>
+			</card>
+		</stack>
+
+		<text variant="title">
+			<label>
+				<en>Arrangement: stack and grid</en>
+				<de>Anordnung: Stack und Grid</de>
+			</label>
+		</text>
+		<text>
+			<label>
+				<en>A row that spreads its children across the available width and lets them fall into further lines where the screen is too narrow for them.</en>
+				<de>Eine Zeile, die ihre Kinder über die verfügbare Breite verteilt und sie in weitere Zeilen umbrechen lässt, wo der Bildschirm zu schmal für sie ist.</de>
+			</label>
+		</text>
+		<stack
+			css-class="tlDemoChips"
+			direction="row"
+			gap="default"
+			justify="space-between"
+			wrap="true"
+		>
+			<text appearance="pill">
+				<label>
+					<en>Layout</en>
+					<de>Layout</de>
+				</label>
+			</text>
+			<text appearance="pill">
+				<label>
+					<en>Typography</en>
+					<de>Typografie</de>
+				</label>
+			</text>
+			<text appearance="pill">
+				<label>
+					<en>Colour</en>
+					<de>Farbe</de>
+				</label>
+			</text>
+			<text appearance="pill">
+				<label>
+					<en>Spacing</en>
+					<de>Abstände</de>
+				</label>
+			</text>
+			<text appearance="pill">
+				<label>
+					<en>Elevation</en>
+					<de>Erhebung</de>
+				</label>
+			</text>
+			<text appearance="pill">
+				<label>
+					<en>Motion</en>
+					<de>Bewegung</de>
+				</label>
+			</text>
+		</stack>
+
+		<text>
+			<label>
+				<en>A row that keeps its children together in the middle of the space it has. Both buttons write the term the search field at the end of the page reads.</en>
+				<de>Eine Zeile, die ihre Kinder in der Mitte des Raums zusammenhält, den sie hat. Beide Schaltflächen schreiben den Begriff, den das Suchfeld am Ende der Seite liest.</de>
+			</label>
+		</text>
+		<stack
+			css-class="tlDemoActions"
+			direction="row"
+			gap="default"
+			justify="center"
+		>
+			<button>
+				<action class="com.top_logic.layout.view.command.GenericViewCommand"
+					image="css:bi bi-search"
+				>
+					<label>
+						<en>Search for "token"</en>
+						<de>Nach "Token" suchen</de>
+					</label>
+					<execute-script function="x -> 'token'"/>
+					<write-channel name="q"/>
+				</action>
+			</button>
+			<button>
+				<action class="com.top_logic.layout.view.command.GenericViewCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Empty the search field</en>
+						<de>Suchfeld leeren</de>
+					</label>
+					<execute-script function="x -> ''"/>
+					<write-channel name="q"/>
+				</action>
+			</button>
+		</stack>
+
+		<text>
+			<label>
+				<en>A column bounded to a width running text stays readable at: below the bound it fills the page, above it the space left over is split between its two sides, so the column stands in the middle.</en>
+				<de>Eine Spalte, begrenzt auf eine Breite, bei der Fließtext lesbar bleibt: Unterhalb der Grenze füllt sie die Seite, oberhalb wird der übrige Raum auf ihre beiden Seiten verteilt, sodass die Spalte in der Mitte steht.</de>
+			</label>
+		</text>
+		<stack
+			css-class="tlDemoProse"
+			gap="default"
+			max-width="40rem"
+		>
+			<text variant="headline">
+				<label>
+					<en>A readable column</en>
+					<de>Eine lesbare Spalte</de>
+				</label>
+			</text>
+			<text>
+				<label>
+					<en>A line of running text is read comfortably at some sixty to eighty characters. A column that follows the width of a wide screen leaves the reader searching for the beginning of the next line; a bound is what keeps the measure where the eye finds it again. The bound is a value, not a kind of layout, so the same column still fills a phone screen unchanged.</en>
+					<de>Eine Zeile Fließtext liest sich bei etwa sechzig bis achtzig Zeichen bequem. Eine Spalte, die der Breite eines weiten Bildschirms folgt, lässt den Leser den Anfang der nächsten Zeile suchen; eine Begrenzung hält das Maß dort, wo das Auge ihn wiederfindet. Die Begrenzung ist ein Wert, keine Art des Layouts, sodass dieselbe Spalte einen Telefonbildschirm unverändert ausfüllt.</de>
+				</label>
+			</text>
+		</stack>
+
+		<text>
+			<label>
+				<en>A grid places as many columns as fit into the width it is bounded to, and reflows them as that width changes.</en>
+				<de>Ein Grid legt so viele Spalten an, wie in die Breite passen, auf die es begrenzt ist, und bricht sie um, wenn sich diese Breite ändert.</de>
+			</label>
+		</text>
+		<grid
+			css-class="tlDemoCards"
+			gap="default"
+			max-width="48rem"
+			min-column-width="12rem"
+		>
+			<card>
+				<title>
+					<en>Tokens</en>
+					<de>Token</de>
+				</title>
+				<text tone="secondary">
+					<label>
+						<en>A colour, a length or a shadow the theme decides.</en>
+						<de>Eine Farbe, eine Länge oder ein Schatten, über die das Theme entscheidet.</de>
+					</label>
+				</text>
+			</card>
+			<card>
+				<title>
+					<en>Roles</en>
+					<de>Rollen</de>
+				</title>
+				<text tone="secondary">
+					<label>
+						<en>What a text is for, filled from the tokens of the role.</en>
+						<de>Wofür ein Text da ist, gefüllt aus den Token der Rolle.</de>
+					</label>
+				</text>
+			</card>
+			<card>
+				<title>
+					<en>Arrangement</en>
+					<de>Anordnung</de>
+				</title>
+				<text tone="secondary">
+					<label>
+						<en>Direction, gap, wrapping and the width a container is bounded to.</en>
+						<de>Richtung, Abstand, Umbruch und die Breite, auf die ein Container begrenzt ist.</de>
+					</label>
+				</text>
+			</card>
+			<card>
+				<title>
+					<en>Classes</en>
+					<de>Klassen</de>
+				</title>
+				<text tone="secondary">
+					<label>
+						<en>The one element a rule of the application reaches.</en>
+						<de>Das eine Element, das eine Regel der Anwendung erreicht.</de>
+					</label>
+				</text>
+			</card>
+		</grid>
+
+		<text variant="title">
+			<label>
+				<en>A search field</en>
+				<de>Ein Suchfeld</de>
+			</label>
+		</text>
+		<text>
+			<label>
+				<en>An input that narrows what a view shows needs no element of its own: the icon is drawn ahead of what is typed, the button that empties it appears while it holds something, and the delay says how long the typed value is held back before it reaches the channel. The text below reads that channel, so it follows the typing by the delay the field states.</en>
+				<de>Eine Eingabe, die einschränkt, was eine Ansicht zeigt, braucht kein eigenes Element: Das Symbol wird vor dem Getippten gezeichnet, die Schaltfläche zum Leeren erscheint, solange etwas darin steht, und die Verzögerung sagt, wie lange der getippte Wert zurückgehalten wird, bevor er den Kanal erreicht. Der Text darunter liest diesen Kanal und folgt der Eingabe damit um die angegebene Verzögerung versetzt.</de>
+			</label>
+		</text>
+		<fields>
+			<value-input
+				clearable="true"
+				debounce="300ms"
+				icon="css:bi bi-search"
+				type="tl.core:String"
+				value="q"
+			>
+				<label>
+					<en>Search</en>
+					<de>Suche</de>
+				</label>
+				<placeholder>
+					<en>Search…</en>
+					<de>Suchen…</de>
+				</placeholder>
+			</value-input>
+		</fields>
+		<stack
+			align="center"
+			direction="row"
+			gap="compact"
+		>
+			<text variant="label">
+				<label>
+					<en>You typed:</en>
+					<de>Eingegeben:</de>
+				</label>
+			</text>
+			<text
+				css-class="tlDemoTyped"
+				input="q"
+				tone="helper"
+			/>
+		</stack>
+	</panel>
+</view>

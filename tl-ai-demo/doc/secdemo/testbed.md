@@ -699,8 +699,11 @@ principal and the deny-by-default of an empty policy, `TestPreCommitGuard` and t
 - **`STRUCTURAL` tools are also blocked by the execution mode.** In a deployed application the model
   editor and the agent-authoring tools stay out of the request whatever the policy says, and the denial
   names *production mode* rather than a capability. `SecDemoSchemaFilterTest` pins the distinction.
-- **Every account also holds `SecurityStructure.user`** on the security root, which is why a denial log
-  line shows more roles than the matrix names. Granting against that name grants every account.
+- **Every account of this demo also holds `SecurityStructure.user`** on the security root, which is why
+  a denial log line shows more roles than the matrix names. Granting against that name grants every
+  account here. It comes from `tl-bpe-app`, which the demo builds on and which ships the role, the
+  `user` group and the `<singleton-rule target="SecurityStructure#ROOT">` binding them - not from the
+  framework: an application on `tl-core`/`tl-element` alone has no such role.
 - **Approval will interrupt you - but only in the chat.** A tool that changes anything asks the user to
   confirm before it runs, whatever the policy grants, and the call times out after two minutes. The
   console does not ask: `aiCallTool` and `aiAgentChat` run with automatic approval. There is deliberately

@@ -87,11 +87,14 @@ public class SecDemoToolAccessTest extends SecDemoPersonaTest {
 	 * administrator.
 	 *
 	 * <p>
-	 * Note what else each of them holds: the engine gives every account
+	 * Note what else each of them holds: in this demo every account also has
 	 * {@code SecurityStructure.user} on the security root. It is not a defect and not something this
-	 * layer adds - it is simply another role name a {@code <tool-access>} entry may be written
+	 * layer adds - it comes from {@code tl-bpe-app}, which the demo builds on and which ships the
+	 * role, the {@code user} group and the {@code <singleton-rule target="SecurityStructure#ROOT">}
+	 * binding them. It is simply another role name a {@code <tool-access>} entry may be written
 	 * against, and the closest thing to an "every authenticated account" row short of the policy's
-	 * own {@code <baseline>}. An administrator who grants it is granting every account.
+	 * own {@code <baseline>}. An administrator who grants it is granting every account of an
+	 * application that has it; one built on {@code tl-core}/{@code tl-element} alone has not.
 	 * </p>
 	 */
 	public void testEveryPersonaHoldsTheRolesTheMatrixClaims() {

@@ -766,8 +766,13 @@ Two things to know when reading the roles in a denial:
 - Roles are read **on the security root**, not on any business object: "may this account use the model
   editor at all" is a global question. Which *objects* it may then touch is the separate model-access
   layer.
-- Every account holds `SecurityStructure.user` there in addition to its own roles. It is a role name
-  you can write a `<tool-access>` entry against, and granting it grants every account.
+- **In an application built on `tl-bpe-app`** - the archetype, and what the shipped demo uses - every
+  account holds `SecurityStructure.user` there in addition to its own roles: that module ships the
+  role, the `user` group and the `<singleton-rule target="SecurityStructure#ROOT">` binding the two,
+  so it is a role name you can write a `<tool-access>` entry against and granting it grants every
+  account. **An application on `tl-core`/`tl-element` alone does not have it** - those ship only
+  `navigation` and `selection` - and a policy row naming a role the application does not have refuses
+  to boot (`AiToolAccessService.refusals()`). Check your own archetype before writing a row against it.
 
 ---
 

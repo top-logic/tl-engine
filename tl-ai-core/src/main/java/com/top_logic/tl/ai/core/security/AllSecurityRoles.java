@@ -29,8 +29,12 @@ import com.top_logic.tool.boundsec.wrap.BoundedRole;
  *
  * <p>
  * Roles are listed whatever their scope, because {@link AiToolAccessService#heldRoleNames} reads the
- * roles a person holds on the security root and a module-scoped role can be granted there too -
- * {@code SecurityStructure.user}, which every account holds, is exactly such a role.
+ * roles a person holds on the security root and a module-scoped role can be granted there too. In an
+ * application built on {@code tl-bpe-app} - the archetype - {@code SecurityStructure.user} is exactly
+ * such a role: that module ships the role, the {@code user} group it binds and the
+ * {@code <singleton-rule target="SecurityStructure#ROOT">} that puts every account in it. An
+ * application on {@code tl-core}/{@code tl-element} alone has neither the role nor the binding, which
+ * is the other reason this function offers the policy's own names too.
  * </p>
  *
  * @see AiToolAccessService#unknownRoles(ToolAccessPolicy, java.util.function.Predicate)

@@ -81,6 +81,15 @@ public interface AgentSessionBase extends com.top_logic.model.TLObject {
 	String STATUS_ATTR = "status";
 
 	/**
+	 * Part <code>subject</code> of <code>AgentSession</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.model:TLObject</code> in configuration.
+	 * </p>
+	 */
+	String SUBJECT_ATTR = "subject";
+
+	/**
 	 * Part <code>title</code> of <code>AgentSession</code>
 	 * 
 	 * <p>
@@ -178,6 +187,20 @@ public interface AgentSessionBase extends com.top_logic.model.TLObject {
 	 */
 	default void setStatus(String newValue) {
 		tUpdateByName(STATUS_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #SUBJECT_ATTR}.
+	 */
+	default com.top_logic.model.TLObject getSubject() {
+		return (com.top_logic.model.TLObject) tValueByName(SUBJECT_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #SUBJECT_ATTR}.
+	 */
+	default void setSubject(com.top_logic.model.TLObject newValue) {
+		tUpdateByName(SUBJECT_ATTR, newValue);
 	}
 
 	/**

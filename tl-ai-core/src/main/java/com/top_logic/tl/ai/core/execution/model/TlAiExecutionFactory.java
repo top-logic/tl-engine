@@ -198,6 +198,13 @@ public class TlAiExecutionFactory extends com.top_logic.element.meta.kbbased.Abs
 	}
 
 	/**
+	 * Lookup {@link AgentSession#SUBJECT_ATTR} of {@link AgentSession}.
+	 */
+	public static com.top_logic.model.TLReference getSubjectAgentSessionAttr() {
+		return (com.top_logic.model.TLReference) getAgentSessionType().getPart(AgentSession.SUBJECT_ATTR);
+	}
+
+	/**
 	 * Lookup {@link AgentSession#TITLE_ATTR} of {@link AgentSession}.
 	 */
 	public static com.top_logic.model.TLProperty getTitleAgentSessionAttr() {

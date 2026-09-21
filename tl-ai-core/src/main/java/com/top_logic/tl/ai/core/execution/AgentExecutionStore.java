@@ -615,6 +615,57 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	}
 
 	/**
+	 * Records what the conversation is about (Issue #508).
+	 *
+	 * <p>
+	 * Written once, by whoever started the conversation with an object in hand - the chat element
+	 * whose {@code subject} channel held one. Any model object may be the subject: which object a
+	 * conversation belongs to is the host's question, not this module's.
+	 * </p>
+	 *
+	 * <p>
+	 * Does nothing when the session already has a subject: a conversation is about the object it was
+	 * started from, and re-opening it beside another object does not move it there.
+	 * </p>
+	 *
+	 * <p>
+	 * Deleting the subject clears the reference and leaves the conversation, which is the default
+	 * deletion policy and is what this feature wants - a conversation outlives the object it was
+	 * about.
+	 * </p>
+	 *
+	 * @param session
+	 *        The session to stamp; must not be <code>null</code>.
+	 * @param subject
+	 *        The object the conversation is about. <code>null</code> stamps nothing.
+	 * @return Whether the subject was written.
+	 */
+	public boolean setSubject(AgentSession session, TLObject subject) {
+		if (subject == null) {
+			return false;
+		}
+		// Both the check and the owner are read on the writer thread, like every other write here:
+		// the calling thread's view of the database may predate the session it is stamping.
+		boolean[] written = new boolean[1];
+		Person owner = write(() -> {
+			if (session.getSubject() != null) {
+				return null;
+			}
+			try (Transaction tx = beginTx("Set agent session subject")) {
+				session.setSubject(subject);
+				tx.commit();
+			}
+			written[0] = true;
+			return session.getOwner();
+		});
+		if (!written[0]) {
+			return false;
+		}
+		notifyChanged(owner);
+		return true;
+	}
+
+	/**
 	 * Updates the session title.
 	 */
 	public void updateTitle(AgentSession session, String title) {

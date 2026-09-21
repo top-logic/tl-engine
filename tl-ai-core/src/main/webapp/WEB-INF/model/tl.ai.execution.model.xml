@@ -95,6 +95,28 @@
 					<reference name="owner"
 						type="tl.accounts:Person"
 					/>
+					<!--
+						What the conversation is about (Issue #508).
+
+						Any model object, because the host decides what a conversation belongs to -
+						a project, an invoice, a contract. It is what lets a page scope its session
+						list to the object the user has open:
+
+							$subject.referers(`tl.ai.execution:AgentSession#subject`)
+
+						Written once, when the element that opened the conversation had an object on
+						its subject channel; a session that was started without one keeps none, and
+						is simply not in any scoped list. Deleting the object only clears this
+						reference (the default deletion policy) - the conversation about a project
+						outlives the project, and drops out of that project's list.
+
+						Navigating back from the deleted object itself is another matter, and is
+						the engine's rather than this attribute's: referers() refuses a lookup from
+						a deleted object. See TestSessionSubject.
+					-->
+					<reference name="subject"
+						type="tl.model:TLObject"
+					/>
 					<property name="title"
 						type="tl.core:String"
 					/>

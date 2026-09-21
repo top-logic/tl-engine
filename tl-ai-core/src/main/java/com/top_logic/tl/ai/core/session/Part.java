@@ -195,29 +195,38 @@ public sealed interface Part {
 	 * @param toolName name of the tool requiring approval
 	 * @param argsJson tool arguments as JSON
 	 * @param displayReason human-readable reason shown to user
+	 * @param mode what the tool was classified as, or {@code null} if it was not recorded
 	 * @param decision user's decision, or {@code null} if pending
 	 * @param userComment optional user comment
 	 * @param resolvedAt when the decision was made, or {@code null}
 	 */
 	record ApprovalPart(
 			String id, Instant timestamp, String toolCallId,
-			String toolName, String argsJson, String displayReason,
+			String toolName, String argsJson, String displayReason, ToolMode mode,
 			ApprovalDecision decision, String userComment, Instant resolvedAt
 	) implements Part {
 
-		/** Creates a pending approval request awaiting user decision. */
+		/**
+		 * Creates a pending approval request awaiting user decision.
+		 *
+		 * @param mode
+		 *        What the tool was classified as; {@code null} when the caller does not know. It is
+		 *        recorded because {@code displayReason} is the security context's English sentence
+		 *        and the mode is what lets a reader be told in their own language - in the live card
+		 *        and in the recorded history alike (issue #512).
+		 */
 		public static ApprovalPart pending(String id, Instant timestamp,
 				String toolCallId, String toolName, String argsJson,
-				String displayReason) {
+				String displayReason, ToolMode mode) {
 			return new ApprovalPart(id, timestamp, toolCallId, toolName,
-				argsJson, displayReason, null, null, null);
+				argsJson, displayReason, mode, null, null, null);
 		}
 
 		/** Records the user's approval decision. */
 		public ApprovalPart resolve(ApprovalDecision choice,
 				String comment, Instant resolvedTime) {
 			return new ApprovalPart(id, timestamp, toolCallId, toolName,
-				argsJson, displayReason, choice, comment, resolvedTime);
+				argsJson, displayReason, mode, choice, comment, resolvedTime);
 		}
 	}
 

@@ -27,6 +27,9 @@ public class ApprovalPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 	/** @see #getDisplayReason() */
 	public static final String DISPLAY_REASON__PROP = "displayReason";
 
+	/** @see #getMode() */
+	public static final String MODE__PROP = "mode";
+
 	/** @see #getDecision() */
 	public static final String DECISION__PROP = "decision";
 
@@ -43,6 +46,8 @@ public class ApprovalPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 	private String _argsJson = "";
 
 	private String _displayReason = "";
+
+	private String _mode = "";
 
 	private String _decision = "";
 
@@ -140,6 +145,33 @@ public class ApprovalPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 	}
 
 	/**
+	 * The {@code ToolMode} the approval was asked for, or empty when it was not recorded.
+	 *
+	 * <p>
+	 * What lets a reader be told in their own language what the agent wanted to do. The reason
+	 * above is the security context's sentence, in English, because it is the same for everyone;
+	 * the mode is the key the chat phrases its own sentence from, live and in the recorded
+	 * history alike.
+	 * </p>
+	 */
+	public final String getMode() {
+		return _mode;
+	}
+
+	/**
+	 * @see #getMode()
+	 */
+	public com.top_logic.tl.ai.core.session.persist.messages.ApprovalPartDto setMode(String value) {
+		internalSetMode(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getMode()} without chain call utility. */
+	protected final void internalSetMode(String value) {
+		_mode = value;
+	}
+
+	/**
 	 * The user's decision.
 	 */
 	public final String getDecision() {
@@ -211,6 +243,7 @@ public class ApprovalPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 			TOOL_NAME__PROP, 
 			ARGS_JSON__PROP, 
 			DISPLAY_REASON__PROP, 
+			MODE__PROP, 
 			DECISION__PROP, 
 			USER_COMMENT__PROP, 
 			RESOLVED_AT__PROP);
@@ -242,6 +275,7 @@ public class ApprovalPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 			case TOOL_NAME__PROP: return getToolName();
 			case ARGS_JSON__PROP: return getArgsJson();
 			case DISPLAY_REASON__PROP: return getDisplayReason();
+			case MODE__PROP: return getMode();
 			case DECISION__PROP: return getDecision();
 			case USER_COMMENT__PROP: return getUserComment();
 			case RESOLVED_AT__PROP: return getResolvedAt();
@@ -256,6 +290,7 @@ public class ApprovalPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 			case TOOL_NAME__PROP: internalSetToolName((String) value); break;
 			case ARGS_JSON__PROP: internalSetArgsJson((String) value); break;
 			case DISPLAY_REASON__PROP: internalSetDisplayReason((String) value); break;
+			case MODE__PROP: internalSetMode((String) value); break;
 			case DECISION__PROP: internalSetDecision((String) value); break;
 			case USER_COMMENT__PROP: internalSetUserComment((String) value); break;
 			case RESOLVED_AT__PROP: internalSetResolvedAt((long) value); break;
@@ -285,6 +320,8 @@ public class ApprovalPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 		out.value(getArgsJson());
 		out.name(DISPLAY_REASON__PROP);
 		out.value(getDisplayReason());
+		out.name(MODE__PROP);
+		out.value(getMode());
 		out.name(DECISION__PROP);
 		out.value(getDecision());
 		out.name(USER_COMMENT__PROP);
@@ -300,6 +337,7 @@ public class ApprovalPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 			case TOOL_NAME__PROP: setToolName(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case ARGS_JSON__PROP: setArgsJson(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case DISPLAY_REASON__PROP: setDisplayReason(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case MODE__PROP: setMode(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case DECISION__PROP: setDecision(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case USER_COMMENT__PROP: setUserComment(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case RESOLVED_AT__PROP: setResolvedAt(in.nextLong()); break;

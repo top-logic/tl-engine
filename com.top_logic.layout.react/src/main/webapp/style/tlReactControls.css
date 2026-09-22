@@ -3021,9 +3021,11 @@ button.tlDrawer__closeBtn:focus-visible {
 	height: 100%;
 	min-height: 0;
 	/* The anchor a drawer presentation positions its detail in, and the clip that keeps the
-	   drawer's closed state off the screen. */
+	   drawer's closed state off the screen. The clip forbids scrolling altogether (unlike
+	   overflow: hidden, which still scrolls programmatically), so the parked drawer, which lies
+	   outside this box, can never be scrolled into view - e.g. by a focus moving into it. */
 	position: relative;
-	overflow: hidden;
+	overflow: clip;
 }
 
 .tlAdaptiveDetail__content {

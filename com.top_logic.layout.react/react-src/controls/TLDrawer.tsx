@@ -59,7 +59,9 @@ const TLDrawer: React.FC<TLCellProps> = ({ controlId }) => {
     restoreRef.current = previous && previous !== document.body ? previous : null;
     const target = firstFocusable(root) ?? root;
     if (target !== document.activeElement) {
-      target.focus();
+      // The drawer is still parked outside the clipped box of the area it is anchored in while it
+      // slides in, so a scrolling focus would drag the whole area sideways to reveal it.
+      target.focus({ preventScroll: true });
     }
     return () => {
       const back = restoreRef.current;

@@ -69,20 +69,32 @@ import com.top_logic.util.TLContext;
  *
  * <p>
  * Every member of the hull must be deleted. An object that is still alive blocks the operation and
- * is reported with the reference that pulled it into the hull. An optional reference from a living
- * object is no obstacle, because it is cleared.
+ * is reported with the reference that pulled it into the hull; a blocked run changes nothing and
+ * answers the blockers instead of failing. An optional reference from a living object is no
+ * obstacle, because it is cleared. An object of the hull that has no row at all is simply gone
+ * already and blocks nothing.
  * </p>
  *
  * <p>
  * {@link #analyze(Collection, Log) Analyzing} a set of seeds computes the hull, checks that
  * precondition and counts the rows that would be erased and the reference values that would be
- * cleared, without changing anything.
+ * cleared, without changing anything. Both run over the same predicates, so the numbers of the
+ * analysis are the numbers of the {@link #purge(Collection, Log) purge} on the same database state.
+ * </p>
+ *
+ * <p>
+ * The purge first erases the rows and then clears the references pointing at them. Each step
+ * commits on its own and each step is idempotent, so an aborted run can simply be repeated and a
+ * second purge of the same seeds finds nothing left to do. In that order the database never holds a
+ * link whose end was cleared: a link is a member of the hull itself and is erased with it.
  * </p>
  *
  * <p>
  * The operation works with plain SQL on the connection pool of the {@link KnowledgeBase}, not
- * through a {@link KnowledgeBase} transaction. A {@link KnowledgeBase} instance that was running
- * while its database was purged keeps the removed objects in its caches and must be restarted.
+ * through a {@link KnowledgeBase} transaction. Rows are physically deleted, so the operation must
+ * not run while another node of a cluster still reads them, and a {@link KnowledgeBase} instance
+ * that was running while its database was purged keeps the removed objects in its caches and must
+ * be restarted.
  * </p>
  *
  * @see HistoryCompaction Collapsing the history below a revision.
@@ -91,6 +103,13 @@ import com.top_logic.util.TLContext;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class DeletedObjectPurge {
+
+	/**
+	 * Default number of objects whose rows are deleted within a single transaction.
+	 *
+	 * @see #setDeleteChunkSize(int)
+	 */
+	public static final int DEFAULT_DELETE_CHUNK_SIZE = 1000;
 
 	private static final String PARAM_IDS = "ids";
 
@@ -177,6 +196,8 @@ public class DeletedObjectPurge {
 
 	private final CompiledStatement _selectBranchSwitch;
 
+	private int _deleteChunkSize = DEFAULT_DELETE_CHUNK_SIZE;
+
 	/**
 	 * Creates a {@link DeletedObjectPurge}.
 	 *
@@ -222,6 +243,35 @@ public class DeletedObjectPurge {
 	}
 
 	/**
+	 * Number of objects whose rows are deleted within a single transaction.
+	 *
+	 * @see #DEFAULT_DELETE_CHUNK_SIZE
+	 */
+	public int getDeleteChunkSize() {
+		return _deleteChunkSize;
+	}
+
+	/**
+	 * Setter for {@link #getDeleteChunkSize()}.
+	 *
+	 * <p>
+	 * Deleting the rows of a large hull in a single statement can make the commit of the deleting
+	 * transaction run for hours. The delete therefore advances in chunks over the objects of a
+	 * table, committing after each chunk. A chunk never spans more objects than a single
+	 * {@link DBHelper#getMaxSetSize() set} can hold.
+	 * </p>
+	 *
+	 * @param chunkSize
+	 *        The number of objects to process per transaction, must be positive.
+	 */
+	public void setDeleteChunkSize(int chunkSize) {
+		if (chunkSize < 1) {
+			throw new IllegalArgumentException("A delete chunk must span at least one object: " + chunkSize);
+		}
+		_deleteChunkSize = chunkSize;
+	}
+
+	/**
 	 * The tables processed by this operation.
 	 */
 	public ItemTables getTables() {
@@ -238,6 +288,11 @@ public class DeletedObjectPurge {
 	/**
 	 * Computes what purging the given objects would remove, without changing anything.
 	 *
+	 * <p>
+	 * The numbers are the ones the corresponding {@link #purge(Collection, Log) purge} reports when
+	 * run on the same database state.
+	 * </p>
+	 *
 	 * @param seeds
 	 *        The objects to remove. The history context of a key is ignored, an object is removed in
 	 *        all of its revisions. The type of a key must be one of the
@@ -248,17 +303,43 @@ public class DeletedObjectPurge {
 	 *         the operation.
 	 */
 	public Report analyze(Collection<ObjectKey> seeds, Log log) throws SQLException {
-		Report report = new Report();
-		PooledConnection connection = _pool.borrowReadConnection();
+		return run(seeds, log, true);
+	}
+
+	/**
+	 * Removes the given objects and their hull from the database.
+	 *
+	 * <p>
+	 * A run that is {@link Report#isBlocked() blocked} changes nothing; the report then names the
+	 * objects that are not deleted.
+	 * </p>
+	 *
+	 * @param seeds
+	 *        The objects to remove, see {@link #analyze(Collection, Log)}.
+	 * @param log
+	 *        Receives progress information.
+	 * @return What was removed.
+	 */
+	public Report purge(Collection<ObjectKey> seeds, Log log) throws SQLException {
+		return run(seeds, log, false);
+	}
+
+	private Report run(Collection<ObjectKey> seeds, Log log, boolean dryRun) throws SQLException {
+		Report report = new Report(dryRun);
+		PooledConnection connection = _pool.borrowWriteConnection();
 		try {
 			BranchMapping branches = readBranchMapping(connection);
 			computeHull(connection, report, seeds, branches, log);
 			findBlockers(connection, report, log);
-			countErasedRows(connection, report, log);
-			countClearedReferences(connection, report, branches, log);
+			if (report.isBlocked()) {
+				log.info(report.toString());
+				return report;
+			}
+			eraseRows(connection, report, dryRun, log);
+			clearReferences(connection, report, branches, dryRun, log);
 			log.info(report.toString());
 		} finally {
-			_pool.releaseReadConnection(connection);
+			_pool.releaseWriteConnection(connection);
 		}
 		return report;
 	}
@@ -411,19 +492,33 @@ public class DeletedObjectPurge {
 	}
 
 	/**
-	 * Counts the rows of the hull in the item tables and in the table of dynamic values.
+	 * Erases the rows of the hull from the item tables and from the table of dynamic values.
+	 *
+	 * <p>
+	 * The rows are deleted in chunks of {@link #getDeleteChunkSize() objects} with a commit after
+	 * each chunk, because a single delete over a large hull can make the commit of the deleting
+	 * transaction run for hours.
+	 * </p>
 	 */
-	private void countErasedRows(PooledConnection connection, Report report, Log log) throws SQLException {
+	private void eraseRows(PooledConnection connection, Report report, boolean dryRun, Log log) throws SQLException {
 		for (Group group : groupByTypeAndBranch(report.getHull())) {
 			ItemTables.Table table = group.getTable();
-			TableAccess access = _tableAccessByType.get(table.getType().getName());
+			String typeName = table.getType().getName();
+			TableAccess access = _tableAccessByType.get(typeName);
 			long rows = 0;
 			long flexRows = 0;
-			for (List<TLID> chunk : chunks(group.getIds())) {
-				rows += access.countRows(connection, group.getBranch(), chunk);
-				if (_flexDataAccess != null) {
-					flexRows +=
-						_flexDataAccess.countRows(connection, group.getBranch(), table.getType().getName(), chunk);
+			for (List<TLID> chunk : deleteChunks(group.getIds())) {
+				if (dryRun) {
+					rows += access.countRows(connection, group.getBranch(), chunk);
+					if (_flexDataAccess != null) {
+						flexRows += _flexDataAccess.countRows(connection, group.getBranch(), typeName, chunk);
+					}
+				} else {
+					rows += access.deleteRows(connection, group.getBranch(), chunk);
+					if (_flexDataAccess != null) {
+						flexRows += _flexDataAccess.deleteRows(connection, group.getBranch(), typeName, chunk);
+					}
+					connection.commit();
 				}
 			}
 			if (rows > 0) {
@@ -432,15 +527,27 @@ public class DeletedObjectPurge {
 			if (flexRows > 0) {
 				report.table(_flexDataAccess.getTable().getDBName()).addErasedRows(flexRows);
 			}
+			if (!dryRun && rows > 0) {
+				log.info("Erased " + rows + " rows of '" + table.getDBName() + "' and " + flexRows
+					+ " dynamic values of " + group.getIds().size() + " objects.", Log.VERBOSE);
+			}
 		}
 		log.info("The purge erases " + report.getErasedRows() + " rows.", Log.VERBOSE);
 	}
 
 	/**
-	 * Counts the optional reference values that point into the hull from a row that survives.
+	 * Resets every optional reference of a surviving row that points into the hull to the value of a
+	 * reference without a target.
+	 *
+	 * <p>
+	 * In the dry run the rows of the hull are still there and are excluded explicitly; in the run
+	 * they are already erased, so the same predicate hits exactly the rows that survive.
+	 * </p>
+	 *
+	 * @see NullReference
 	 */
-	private void countClearedReferences(PooledConnection connection, Report report, BranchMapping branches, Log log)
-			throws SQLException {
+	private void clearReferences(PooledConnection connection, Report report, BranchMapping branches, boolean dryRun,
+			Log log) throws SQLException {
 		for (Group group : groupByTypeAndBranch(report.getHull())) {
 			MetaObject targetType = group.getTable().getType();
 			List<Long> viewBranches = branches.viewBranches(targetType.getName(), group.getBranch());
@@ -451,14 +558,25 @@ public class DeletedObjectPurge {
 					if (!reference.acceptsTarget(targetType, viewBranches)) {
 						continue;
 					}
-					reference.selectReferers(connection, group.getIds(), targetType.getName(), viewBranches,
-						(branch, id, targetId) -> {
-							if (report.isMember(new ObjectBranchId(branch, refererType, id))) {
-								// The row is erased, there is nothing left to clear.
-								return;
-							}
-							report.table(tableName).addClearedReference(reference.getName());
-						});
+					long cleared;
+					if (dryRun) {
+						long[] surviving = new long[1];
+						reference.selectReferers(connection, group.getIds(), targetType.getName(), viewBranches,
+							(branch, id, targetId) -> {
+								if (report.isMember(new ObjectBranchId(branch, refererType, id))) {
+									// The row is erased, there is nothing left to clear.
+									return;
+								}
+								surviving[0]++;
+							});
+						cleared = surviving[0];
+					} else {
+						cleared = reference.clearReferers(connection, group.getIds(), targetType.getName(),
+							viewBranches);
+					}
+					if (cleared > 0) {
+						report.table(tableName).addClearedReferences(reference.getName(), cleared);
+					}
 				}
 			}
 		}
@@ -492,16 +610,28 @@ public class DeletedObjectPurge {
 	 * @see DBHelper#getMaxSetSize()
 	 */
 	private List<List<TLID>> chunks(List<TLID> values) {
+		return chunks(values, _sqlDialect.getMaxSetSize());
+	}
+
+	/**
+	 * The parts a delete advances in, at most one {@code IN} set wide.
+	 *
+	 * @see #getDeleteChunkSize()
+	 */
+	private List<List<TLID>> deleteChunks(List<TLID> values) {
+		return chunks(values, Math.min(_deleteChunkSize, _sqlDialect.getMaxSetSize()));
+	}
+
+	private static List<List<TLID>> chunks(List<TLID> values, int chunkSize) {
 		if (values.isEmpty()) {
 			return Collections.emptyList();
 		}
-		int maxSetSize = _sqlDialect.getMaxSetSize();
-		if (values.size() <= maxSetSize) {
+		if (values.size() <= chunkSize) {
 			return Collections.singletonList(values);
 		}
 		List<List<TLID>> result = new ArrayList<>();
-		for (int start = 0, size = values.size(); start < size; start += maxSetSize) {
-			result.add(values.subList(start, Math.min(start + maxSetSize, size)));
+		for (int start = 0, size = values.size(); start < size; start += chunkSize) {
+			result.add(values.subList(start, Math.min(start + chunkSize, size)));
 		}
 		return result;
 	}
@@ -619,6 +749,8 @@ public class DeletedObjectPurge {
 
 		private final CompiledStatement _countRows;
 
+		private final CompiledStatement _deleteRows;
+
 		private final CompiledStatement _rowRevisions;
 
 		private final List<ReferenceAccess> _mandatoryReferences = new ArrayList<>();
@@ -630,6 +762,7 @@ public class DeletedObjectPurge {
 		TableAccess(ItemTables.Table table) {
 			_table = table;
 			_countRows = createCountRows(table);
+			_deleteRows = createDeleteRows(table);
 			_rowRevisions = createRowRevisions(table);
 			for (ItemTables.Reference reference : table.getReferences()) {
 				ReferenceAccess access = new ReferenceAccess(table, reference);
@@ -668,6 +801,15 @@ public class DeletedObjectPurge {
 		}
 
 		/**
+		 * Deletes all rows of the given objects from this table, over all revisions.
+		 *
+		 * @return The number of rows deleted.
+		 */
+		long deleteRows(PooledConnection connection, long branch, List<TLID> ids) throws SQLException {
+			return _deleteRows.executeUpdate(connection, arguments(_table.hasBranchColumn(), branch, ids));
+		}
+
+		/**
 		 * The last revision a row of each of the given objects is valid in.
 		 */
 		Map<TLID, Long> lastRevisions(PooledConnection connection, long branch, List<TLID> ids) throws SQLException {
@@ -702,6 +844,8 @@ public class DeletedObjectPurge {
 
 		private final CompiledStatement _selectReferers;
 
+		private final CompiledStatement _clearReferers;
+
 		private final CompiledStatement _selectContents;
 
 		ReferenceAccess(ItemTables.Table table, ItemTables.Reference reference) {
@@ -710,6 +854,7 @@ public class DeletedObjectPurge {
 			_typeFiltered = reference.getTypeColumn() != null;
 			_branchFiltered = reference.getBranchColumn() != null || table.hasBranchColumn();
 			_selectReferers = createSelectReferers(table, reference, _typeFiltered, _branchFiltered);
+			_clearReferers = createClearReferers(table, reference, _typeFiltered, _branchFiltered);
 			_selectContents = reference.isContainer() ? createSelectContents(table, reference) : null;
 		}
 
@@ -753,15 +898,8 @@ public class DeletedObjectPurge {
 		void selectReferers(PooledConnection connection, List<TLID> targetIds, String targetType,
 				List<Long> viewBranches, RefererHandler handler) throws SQLException {
 			for (List<TLID> chunk : chunks(targetIds)) {
-				List<Object> arguments = new ArrayList<>();
-				arguments.add(chunk);
-				if (_typeFiltered) {
-					arguments.add(targetType);
-				}
-				if (_branchFiltered) {
-					arguments.add(viewBranches);
-				}
-				try (ResultSet dbResult = _selectReferers.executeQuery(connection, arguments.toArray())) {
+				try (ResultSet dbResult =
+					_selectReferers.executeQuery(connection, hitArguments(chunk, targetType, viewBranches))) {
 					while (dbResult.next()) {
 						handler.handle(
 							dbResult.getLong(REFERER_RESULT_BRANCH),
@@ -770,6 +908,39 @@ public class DeletedObjectPurge {
 					}
 				}
 			}
+		}
+
+		/**
+		 * Resets every value of this reference that is one of the given objects, see
+		 * {@link #selectReferers(PooledConnection, List, String, List, RefererHandler)} for the
+		 * arguments.
+		 *
+		 * @return The number of values cleared.
+		 */
+		long clearReferers(PooledConnection connection, List<TLID> targetIds, String targetType,
+				List<Long> viewBranches) throws SQLException {
+			long result = 0;
+			for (List<TLID> chunk : chunks(targetIds)) {
+				result += _clearReferers.executeUpdate(connection, hitArguments(chunk, targetType, viewBranches));
+				connection.commit();
+			}
+			return result;
+		}
+
+		/**
+		 * The arguments of the statements that address the rows whose value of this reference is one
+		 * of the given objects.
+		 */
+		private Object[] hitArguments(List<TLID> targetIds, String targetType, List<Long> viewBranches) {
+			List<Object> result = new ArrayList<>();
+			result.add(targetIds);
+			if (_typeFiltered) {
+				result.add(targetType);
+			}
+			if (_branchFiltered) {
+				result.add(viewBranches);
+			}
+			return result.toArray();
 		}
 
 		/**
@@ -828,9 +999,12 @@ public class DeletedObjectPurge {
 
 		private final CompiledStatement _countRows;
 
+		private final CompiledStatement _deleteRows;
+
 		FlexDataAccess(ItemTables.Table table) {
 			_table = table;
 			_countRows = createCountFlexRows(table);
+			_deleteRows = createDeleteFlexRows(table);
 		}
 
 		ItemTables.Table getTable() {
@@ -838,13 +1012,26 @@ public class DeletedObjectPurge {
 		}
 
 		long countRows(PooledConnection connection, long branch, String type, List<TLID> ids) throws SQLException {
-			List<Object> arguments = new ArrayList<>();
+			return queryCount(connection, _countRows, flexArguments(branch, type, ids));
+		}
+
+		/**
+		 * Deletes all dynamic values of the given objects, over all revisions.
+		 *
+		 * @return The number of rows deleted.
+		 */
+		long deleteRows(PooledConnection connection, long branch, String type, List<TLID> ids) throws SQLException {
+			return _deleteRows.executeUpdate(connection, flexArguments(branch, type, ids));
+		}
+
+		private Object[] flexArguments(long branch, String type, List<TLID> ids) {
+			List<Object> result = new ArrayList<>();
 			if (_table.hasBranchColumn()) {
-				arguments.add(Long.valueOf(branch));
+				result.add(Long.valueOf(branch));
 			}
-			arguments.add(type);
-			arguments.add(ids);
-			return queryCount(connection, _countRows, arguments.toArray());
+			result.add(type);
+			result.add(ids);
+			return result.toArray();
 		}
 	}
 
@@ -881,22 +1068,54 @@ public class DeletedObjectPurge {
 	}
 
 	/**
+	 * {@code DELETE FROM t WHERE BRANCH = branch AND IDENTIFIER IN (ids)}
+	 */
+	private CompiledStatement createDeleteRows(ItemTables.Table table) {
+		List<Parameter> parameters = new ArrayList<>();
+		List<SQLExpression> conditions = new ArrayList<>();
+		addBranchCondition(table, parameters, conditions);
+		addIdCondition(table, parameters, conditions);
+		return query(parameters,
+			delete(
+				table(table.getType(), NO_TABLE_ALIAS),
+				and(conditions.toArray(new SQLExpression[conditions.size()])))).toSql(_sqlDialect);
+	}
+
+	/**
 	 * {@code SELECT count(1) FROM FLEX_DATA WHERE BRANCH = branch AND TYPE = type AND IDENTIFIER IN
 	 * (ids)}
 	 */
 	private CompiledStatement createCountFlexRows(ItemTables.Table table) {
-		DBAttribute typeColumn = flexTypeColumn(table);
 		List<Parameter> parameters = new ArrayList<>();
 		List<SQLExpression> conditions = new ArrayList<>();
-		addBranchCondition(table, parameters, conditions);
-		parameters.add(parameterDef(typeColumn, PARAM_TYPE));
-		conditions.add(eq(column(NO_TABLE_ALIAS, typeColumn, NOT_NULL), parameter(typeColumn, PARAM_TYPE)));
-		addIdCondition(table, parameters, conditions);
+		addFlexConditions(table, parameters, conditions);
 		return query(parameters,
 			select(
 				Collections.singletonList(columnDef(count(literalInteger(1)), RESULT_COUNT)),
 				table(table.getType(), NO_TABLE_ALIAS),
 				and(conditions.toArray(new SQLExpression[conditions.size()])))).toSql(_sqlDialect);
+	}
+
+	/**
+	 * {@code DELETE FROM FLEX_DATA WHERE BRANCH = branch AND TYPE = type AND IDENTIFIER IN (ids)}
+	 */
+	private CompiledStatement createDeleteFlexRows(ItemTables.Table table) {
+		List<Parameter> parameters = new ArrayList<>();
+		List<SQLExpression> conditions = new ArrayList<>();
+		addFlexConditions(table, parameters, conditions);
+		return query(parameters,
+			delete(
+				table(table.getType(), NO_TABLE_ALIAS),
+				and(conditions.toArray(new SQLExpression[conditions.size()])))).toSql(_sqlDialect);
+	}
+
+	private void addFlexConditions(ItemTables.Table table, List<Parameter> parameters,
+			List<SQLExpression> conditions) {
+		DBAttribute typeColumn = flexTypeColumn(table);
+		addBranchCondition(table, parameters, conditions);
+		parameters.add(parameterDef(typeColumn, PARAM_TYPE));
+		conditions.add(eq(column(NO_TABLE_ALIAS, typeColumn, NOT_NULL), parameter(typeColumn, PARAM_TYPE)));
+		addIdCondition(table, parameters, conditions);
 	}
 
 	private static DBAttribute flexTypeColumn(ItemTables.Table table) {
@@ -925,16 +1144,64 @@ public class DeletedObjectPurge {
 	 * {@code SELECT BRANCH, IDENTIFIER, R_ID FROM t WHERE R_ID IN (targetIds) AND R_TYPE = type AND
 	 * R_BRC IN (branches)}
 	 *
+	 * @see #referenceHit(ItemTables.Table, ItemTables.Reference, boolean, boolean, List) The
+	 *      condition.
+	 */
+	private CompiledStatement createSelectReferers(ItemTables.Table table, ItemTables.Reference reference,
+			boolean typeFiltered, boolean branchFiltered) {
+		List<Parameter> parameters = new ArrayList<>();
+		SQLExpression hit = referenceHit(table, reference, typeFiltered, branchFiltered, parameters);
+		return query(parameters,
+			select(
+				columns(
+					columnDef(table.branchExpression(), RESULT_BRANCH),
+					columnDef(column(NO_TABLE_ALIAS, table.getIdentifier(), NOT_NULL), RESULT_ID),
+					columnDef(column(NO_TABLE_ALIAS, reference.getIdColumn(), NOT_NULL), RESULT_TARGET_ID)),
+				table(table.getType(), NO_TABLE_ALIAS),
+				hit)).toSql(_sqlDialect);
+	}
+
+	/**
+	 * {@code UPDATE t SET R_ID = <null id>, R_TYPE = NULL, R_REV = 0, R_BRC = 0 WHERE R_ID IN
+	 * (targetIds) AND R_TYPE = type AND R_BRC IN (branches)}
+	 *
+	 * <p>
+	 * The rows of the removed objects are erased before this statement runs, so it only hits rows
+	 * that survive the purge.
+	 * </p>
+	 *
+	 * @see NullReference
+	 * @see #createSelectReferers(ItemTables.Table, ItemTables.Reference, boolean, boolean) The same
+	 *      predicate, used to count the values in the dry run.
+	 */
+	private CompiledStatement createClearReferers(ItemTables.Table table, ItemTables.Reference reference,
+			boolean typeFiltered, boolean branchFiltered) {
+		NullReference nullValue = NullReference.create(reference);
+		List<Parameter> parameters = new ArrayList<>();
+		SQLExpression hit = referenceHit(table, reference, typeFiltered, branchFiltered, parameters);
+		return query(parameters,
+			update(
+				table(table.getType(), NO_TABLE_ALIAS),
+				hit,
+				nullValue.getColumnNames(),
+				nullValue.getValues())).toSql(_sqlDialect);
+	}
+
+	/**
+	 * {@code R_ID IN (targetIds) AND R_TYPE = type AND R_BRC IN (branches)}
+	 *
 	 * <p>
 	 * The type condition is dropped for a monomorphic reference, which has no type column, and the
 	 * branch condition for a branch local reference of a table without a branch column, whose value
 	 * constantly refers to the trunk.
 	 * </p>
+	 *
+	 * @param parameters
+	 *        Receives the parameters of the condition, in the order they are passed as arguments.
 	 */
-	private CompiledStatement createSelectReferers(ItemTables.Table table, ItemTables.Reference reference,
-			boolean typeFiltered, boolean branchFiltered) {
+	private static SQLExpression referenceHit(ItemTables.Table table, ItemTables.Reference reference,
+			boolean typeFiltered, boolean branchFiltered, List<Parameter> parameters) {
 		DBAttribute idColumn = reference.getIdColumn();
-		List<Parameter> parameters = new ArrayList<>();
 		List<SQLExpression> conditions = new ArrayList<>();
 		parameters.add(setParameterDef(PARAM_TARGET_IDS, idColumn.getSQLType()));
 		conditions.add(inSet(column(NO_TABLE_ALIAS, idColumn, NOT_NULL),
@@ -950,14 +1217,7 @@ public class DeletedObjectPurge {
 			conditions.add(inSet(table.viewBranchExpression(reference),
 				setParameter(PARAM_BRANCHES, DBType.LONG)));
 		}
-		return query(parameters,
-			select(
-				columns(
-					columnDef(table.branchExpression(), RESULT_BRANCH),
-					columnDef(column(NO_TABLE_ALIAS, table.getIdentifier(), NOT_NULL), RESULT_ID),
-					columnDef(column(NO_TABLE_ALIAS, idColumn, NOT_NULL), RESULT_TARGET_ID)),
-				table(table.getType(), NO_TABLE_ALIAS),
-				and(conditions.toArray(new SQLExpression[conditions.size()])))).toSql(_sqlDialect);
+		return and(conditions.toArray(new SQLExpression[conditions.size()]));
 	}
 
 	/**
@@ -1275,14 +1535,23 @@ public class DeletedObjectPurge {
 	 */
 	public static final class Report {
 
+		private final boolean _dryRun;
+
 		private final Map<ObjectBranchId, Origin> _hull = new LinkedHashMap<>();
 
 		private final Map<String, TableReport> _tables = new LinkedHashMap<>();
 
 		private final List<Blocker> _blockers = new ArrayList<>();
 
-		Report() {
-			super();
+		Report(boolean dryRun) {
+			_dryRun = dryRun;
+		}
+
+		/**
+		 * Whether the run only counted rows instead of removing them.
+		 */
+		public boolean isDryRun() {
+			return _dryRun;
 		}
 
 		/**
@@ -1378,7 +1647,7 @@ public class DeletedObjectPurge {
 		@Override
 		public String toString() {
 			StringBuilder buffer = new StringBuilder();
-			buffer.append("Purge of ");
+			buffer.append(_dryRun ? "Analysis of purging " : "Purged ");
 			buffer.append(_hull.size());
 			buffer.append(" objects: ");
 			buffer.append(getErasedRows());
@@ -1453,8 +1722,8 @@ public class DeletedObjectPurge {
 			return result;
 		}
 
-		void addClearedReference(String referenceName) {
-			_clearedReferences.merge(referenceName, Long.valueOf(1), (before, one) -> before + one);
+		void addClearedReferences(String referenceName, long count) {
+			_clearedReferences.merge(referenceName, Long.valueOf(count), (before, added) -> before + added);
 		}
 
 		@Override

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Detail drawer demo: the drawer presentation of <adaptive-detail>.
+	
+	One configuration, rendered differently per display class:
+	- REGULAR (wide): the ticket table keeps the full width, the detail of the selected ticket
+	overlays it from the right edge in a 420px drawer anchored inside the element, so the
+	surrounding panel chrome stays visible.
+	- COMPACT (narrow): step-by-step drill-in - the table is replaced by the detail, with a
+	breadcrumb back to the ticket list.
+	
+	The drawer follows the selection: closing it (close button or Escape) clears the selection,
+	which lets the same row open it again; selecting another row swaps the content while open.
+-->
+<view>
+	<channels>
+		<channel name="selectedTicket"/>
+	</channels>
+
+	<panel>
+		<title>
+			<en>Detail Drawer Demo</en>
+			<de>Detail-Schublade-Demo</de>
+		</title>
+
+		<adaptive-detail
+			detail-display="drawer"
+			detail-size="420"
+			selection="selectedTicket"
+		>
+			<home-label>
+				<en>Tickets</en>
+				<de>Tickets</de>
+			</home-label>
+			<selector>
+				<table
+					observed-types="tl.demo.projectManagement:Ticket"
+					selection="selectedTicket"
+					types="tl.demo.projectManagement:Ticket"
+				>
+					<columns>
+						<column attribute="title"/>
+						<column attribute="description"/>
+						<column attribute="milestone"/>
+						<column attribute="assignee"/>
+					</columns>
+					<rows>all(`tl.demo.projectManagement:Ticket`)</rows>
+				</table>
+			</selector>
+			<detail>
+				<form
+					input="selectedTicket"
+					label-position="side"
+					max-columns="1"
+				>
+					<field attribute="title"/>
+					<field attribute="description"/>
+					<field attribute="milestone"/>
+					<field attribute="assignee"/>
+				</form>
+			</detail>
+		</adaptive-detail>
+	</panel>
+</view>

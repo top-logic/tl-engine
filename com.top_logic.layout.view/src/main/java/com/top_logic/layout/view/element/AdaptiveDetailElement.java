@@ -21,6 +21,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.ChildGroup;
@@ -39,10 +40,18 @@ import com.top_logic.util.Resources;
  * <p>
  * The element holds a {@code <selector>} (the master, e.g. a table or tree that writes the
  * {@link Config#SELECTION selection} channel) and a {@code <detail>} (bound to the same channel) exactly
- * once. On a wide ({@code REGULAR}) viewport it renders both side by side in a draggable split; on a
- * narrow ({@code COMPACT}) viewport it shows the selector full-bleed and replaces it with the detail
- * once something is selected (with a back affordance to clear the selection).
+ * once, and presents the two in one of three ways:
  * </p>
+ * <ul>
+ * <li>On a wide ({@code REGULAR}) viewport with a {@link DetailDisplay#SPLIT} display, both stand
+ * side by side in a draggable split.</li>
+ * <li>On a wide viewport with a {@link DetailDisplay#DRAWER} display, the selector keeps the full
+ * width and the detail overlays it from the right edge, in a panel as wide as
+ * {@value Config#DETAIL_SIZE} says, appearing with the selection and dismissed by clearing it.</li>
+ * <li>On a narrow ({@code COMPACT}) viewport, whichever display is configured, the selector is shown
+ * full-bleed and is replaced by the detail once something is selected (with a back affordance to
+ * clear the selection).</li>
+ * </ul>
  *
  * <p>
  * Because a {@code <detail>} may itself contain another {@code <adaptive-detail>}, multi-step
@@ -75,6 +84,15 @@ public class AdaptiveDetailElement implements UIElement {
 
 		/** Configuration name for {@link #getHomeLabel()}. */
 		String HOME_LABEL = "home-label";
+
+		/** Configuration name for {@link #getDetailDisplay()}. */
+		String DETAIL_DISPLAY = "detail-display";
+
+		/** Configuration name for {@link #getDetailSize()}. */
+		String DETAIL_SIZE = "detail-size";
+
+		/** Default value of {@link #getDetailSize()}. */
+		int DEFAULT_DETAIL_SIZE = 420;
 
 		@Override
 		@ClassDefault(AdaptiveDetailElement.class)
@@ -136,6 +154,32 @@ public class AdaptiveDetailElement implements UIElement {
 		 */
 		@Name(HOME_LABEL)
 		ResKey getHomeLabel();
+
+		/**
+		 * How the detail is presented beside the selector on a wide viewport: dividing the width
+		 * with it in a {@link DetailDisplay#SPLIT split}, or overlaying it in a
+		 * {@link DetailDisplay#DRAWER drawer} that leaves the selector at full width.
+		 *
+		 * <p>
+		 * On a narrow viewport the detail replaces the selector either way.
+		 * </p>
+		 */
+		@Name(DETAIL_DISPLAY)
+		DetailDisplay getDetailDisplay();
+
+		/**
+		 * The width in pixels of the {@link DetailDisplay#DRAWER drawer} the detail is displayed
+		 * in.
+		 *
+		 * <p>
+		 * The drawer never grows wider than the element it overlays, so a value exceeding the
+		 * available width yields a drawer covering the selector completely. Without a
+		 * {@link #getDetailDisplay() drawer display} the value has no effect.
+		 * </p>
+		 */
+		@Name(DETAIL_SIZE)
+		@IntDefault(DEFAULT_DETAIL_SIZE)
+		int getDetailSize();
 	}
 
 	private final ChannelRef _selectionRef;
@@ -147,6 +191,10 @@ public class AdaptiveDetailElement implements UIElement {
 	private final List<ChannelRef> _resetOnRefs;
 
 	private final ResKey _homeLabel;
+
+	private final DetailDisplay _detailDisplay;
+
+	private final int _detailSize;
 
 	/**
 	 * Whether this element is nested inside another {@code <adaptive-detail>}'s detail. Set by the
@@ -167,6 +215,8 @@ public class AdaptiveDetailElement implements UIElement {
 		_detail = config.getDetail().stream().map(context::getInstance).collect(Collectors.toList());
 		_resetOnRefs = config.getResetOn();
 		_homeLabel = config.getHomeLabel();
+		_detailDisplay = config.getDetailDisplay();
+		_detailSize = config.getDetailSize();
 
 		AdaptiveDetailElement nested = firstNestedAdaptiveDetail();
 		if (nested != null) {
@@ -215,7 +265,7 @@ public class AdaptiveDetailElement implements UIElement {
 		}
 
 		ReactAdaptiveDetailControl result = new ReactAdaptiveDetailControl(context, this, _selector, _detail,
-			selectionChannel, resetOn, coordinator, chain, homeLabel);
+			selectionChannel, resetOn, coordinator, chain, homeLabel, _detailDisplay, _detailSize);
 		result.setCssClass(_cssClass);
 		return result;
 	}

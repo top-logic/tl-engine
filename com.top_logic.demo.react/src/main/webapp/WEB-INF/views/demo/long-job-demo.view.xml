@@ -25,7 +25,20 @@
 	
 	A cancelable job may be asked to stop, which the display offers while it runs. The request
 	interrupts the worker, so the sleep ends at once and the job ends at the next point it reports
-	from. Both start buttons take the job channel as their input and are disabled while a job runs.
+	from. Every start button takes the job channel as its input and is disabled while a job runs.
+	
+	The two buttons after them start a job that writes to the database, which a body running outside
+	any transaction cannot do on its own: their <body> is a ChunkedScriptJobBody, the transactional
+	frame that walks the work items in chunks and commits every chunk for itself. It announces its
+	own steps - the preparation, every pass, the completion - so these jobs declare no <phases>. The
+	import prepares the state, a map holding the name prefix of the run and how many tickets to
+	create, which every later script receives; its first pass creates the tickets and its second one
+	closes every second of them, looking them up by that prefix and thereby seeing what the first
+	pass committed. Every 97th number throws, so its chunk is retried item by item and only that one
+	number is skipped, reported and counted. The completion counts the tickets of the run, and that
+	count is the result of the job. The removal job has neither preparation nor completion: its work
+	items are the tickets of every run, its single pass deletes them, and its result is the text
+	saying how many items it processed and how many it skipped.
 	
 	The third button runs the same job inside a dialog. A command that is suspended waiting for a
 	job keeps the dialog it belongs to open: while the job runs, the close button of the dialog, the
@@ -159,6 +172,132 @@
 	sleep(800);
 	throw(#('The source could not be read.'@en, 'Die Quelle konnte nicht gelesen werden.'@de));
 }]]></function>
+				</start-job>
+				<write-channel name="report"/>
+			</action>
+		</button>
+
+		<text>
+			<label>
+				<en>The two jobs below write to the database, so their body is a chunked one: it walks the work items in chunks of fifty and commits every chunk on its own, retries a failed chunk item by item and skips the items that cannot be processed. The import creates five hundred tickets in a first pass and closes every second one of them in a second pass, which sees what the first pass committed; every 97th number refuses to be created, so the run also shows how a skipped item is reported and counted.</en>
+				<de>Die beiden Aufträge unten schreiben in die Datenbank, ihr Rumpf ist daher ein blockweiser: Er durchläuft die Arbeitselemente in Blöcken zu fünfzig und schreibt jeden Block für sich fest, wiederholt einen fehlgeschlagenen Block Element für Element und überspringt die Elemente, die nicht verarbeitet werden können. Der Import legt in einem ersten Durchgang fünfhundert Tickets an und schließt in einem zweiten jedes zweite davon, der also sieht, was der erste festgeschrieben hat; jede 97. Nummer verweigert die Anlage, so dass der Lauf auch zeigt, wie ein übersprungenes Element gemeldet und gezählt wird.</de>
+			</label>
+		</text>
+
+		<button>
+			<action class="com.top_logic.layout.view.command.GenericViewCommand"
+				image="css:bi bi-box-arrow-in-down"
+				input="job"
+			>
+				<label>
+					<en>Import 500 tickets in chunks</en>
+					<de>500 Tickets blockweise importieren</de>
+				</label>
+				<executability>
+					<disabled-if expr="s -> if(jobIsRunning($s), #('A job is already running.'@en, 'Es läuft bereits ein Auftrag.'@de), null)"/>
+				</executability>
+				<start-job
+					cancelable="true"
+					job="job"
+					update-interval="200"
+				>
+					<body class="com.top_logic.layout.view.job.ChunkedScriptJobBody"
+						chunk-size="50"
+					>
+						<init-label>
+							<en>Name the run</en>
+							<de>Lauf benennen</de>
+						</init-label>
+						<init><![CDATA[job -> x -> {
+	$job.jobMessage(#('Naming the run.'@en, 'Der Lauf wird benannt.'@de));
+	{'prefix': 'Bulk ' + dateFormat('HH:mm:ss').format(now()), 'count': 500};
+}]]></init>
+						<elements><![CDATA[job -> state -> count(1, $state['count'] + 1)]]></elements>
+						<steps>
+							<step>
+								<label>
+									<en>Create tickets</en>
+									<de>Tickets anlegen</de>
+								</label>
+								<expr><![CDATA[job -> chunk -> state -> {
+	$job.jobMessage(#('Creating the tickets {0} to {1}.'@en, 'Die Tickets {0} bis {1} werden angelegt.'@de)
+		.fill($chunk[0], $chunk[$chunk.size() - 1]));
+	sleep(4 * $chunk.size());
+	$chunk.foreach(n -> {
+		if($n % 97 == 0, throw(#('Ticket {0} cannot be created.'@en, 'Ticket {0} kann nicht angelegt werden.'@de).fill($n)), null);
+		ticket = new(`demo.tickets:Ticket`);
+		$ticket.set(`demo.tickets:Ticket#name`, $state['prefix'] + ' #' + $n);
+	});
+}]]></expr>
+							</step>
+							<step>
+								<label>
+									<en>Close every other ticket</en>
+									<de>Jedes zweite Ticket schließen</de>
+								</label>
+								<expr><![CDATA[job -> chunk -> state -> {
+	$job.jobMessage(#('Closing the tickets {0} to {1}.'@en, 'Die Tickets {0} bis {1} werden geschlossen.'@de)
+		.fill($chunk[0], $chunk[$chunk.size() - 1]));
+	sleep(4 * $chunk.size());
+	names = $chunk.filter(n -> $n % 2 == 0).map(n -> $state['prefix'] + ' #' + $n);
+	all(`demo.tickets:Ticket`)
+		.filter(t -> $names.containsElement($t.get(`demo.tickets:Ticket#name`)))
+		.foreach(t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`));
+}]]></expr>
+							</step>
+						</steps>
+						<finish-label>
+							<en>Count the imported tickets</en>
+							<de>Importierte Tickets zählen</de>
+						</finish-label>
+						<finish><![CDATA[job -> state -> {
+	$job.jobMessage(#('Counting the imported tickets.'@en, 'Die importierten Tickets werden gezählt.'@de));
+	imported = all(`demo.tickets:Ticket`)
+		.filter(t -> $t.get(`demo.tickets:Ticket#name`).stringStartsWith($state['prefix']))
+		.size();
+	#('{0} tickets carry the name "{1}".'@en, '{0} Tickets tragen den Namen „{1}“.'@de).fill($imported, $state['prefix']);
+}]]></finish>
+					</body>
+				</start-job>
+				<write-channel name="report"/>
+			</action>
+		</button>
+
+		<button>
+			<action class="com.top_logic.layout.view.command.GenericViewCommand"
+				image="css:bi bi-trash"
+				input="job"
+			>
+				<label>
+					<en>Remove bulk tickets in chunks</en>
+					<de>Bulk-Tickets blockweise entfernen</de>
+				</label>
+				<executability>
+					<disabled-if expr="s -> if(jobIsRunning($s), #('A job is already running.'@en, 'Es läuft bereits ein Auftrag.'@de), null)"/>
+				</executability>
+				<start-job
+					cancelable="true"
+					job="job"
+					update-interval="200"
+				>
+					<body class="com.top_logic.layout.view.job.ChunkedScriptJobBody"
+						chunk-size="50"
+					>
+						<elements><![CDATA[job -> state -> all(`demo.tickets:Ticket`)
+	.filter(t -> $t.get(`demo.tickets:Ticket#name`).stringStartsWith('Bulk '))]]></elements>
+						<steps>
+							<step>
+								<label>
+									<en>Delete tickets</en>
+									<de>Tickets löschen</de>
+								</label>
+								<expr><![CDATA[job -> chunk -> state -> {
+	$job.jobMessage(#('Deleting {0} tickets.'@en, '{0} Tickets werden gelöscht.'@de).fill($chunk.size()));
+	$chunk.delete();
+}]]></expr>
+							</step>
+						</steps>
+					</body>
 				</start-job>
 				<write-channel name="report"/>
 			</action>

@@ -230,13 +230,18 @@ public class JobRunner implements JobControl, JobMonitor {
 	/**
 	 * Whether the given failure says that the work was abandoned rather than that it failed.
 	 *
+	 * <p>
+	 * How a body that catches failures of its own tells the two apart: work that was abandoned is
+	 * passed on, a failure is dealt with.
+	 * </p>
+	 *
 	 * @param failure
 	 *        What the body threw.
 	 * @return Whether an {@link AbortExecutionException} or an {@link InterruptedException} stands
 	 *         anywhere in the chain of causes, which is where it ends up once a layer above wraps
 	 *         it into a failure of its own.
 	 */
-	private static boolean isAbort(Throwable failure) {
+	public static boolean isAbort(Throwable failure) {
 		for (Throwable cause = failure; cause != null; cause = cause.getCause()) {
 			if (cause instanceof AbortExecutionException || cause instanceof InterruptedException) {
 				return true;

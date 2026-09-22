@@ -10,6 +10,7 @@
 				<generalization type="tl.model:TLObject"/>
 			</generalizations>
 			<annotations>
+				<instance-presentation icon="css:bi bi-flag"/>
 				<main-properties properties="name, dueDate"/>
 				<form-definition>
 					<form>
@@ -122,6 +123,9 @@
 			<generalizations>
 				<generalization type="tl.model:TLObject"/>
 			</generalizations>
+			<annotations>
+				<instance-presentation icon="css:bi bi-folder2"/>
+			</annotations>
 			<attributes>
 				<property name="name"
 					mandatory="true"
@@ -162,6 +166,7 @@
 				<generalization type="tl.model:TLObject"/>
 			</generalizations>
 			<annotations>
+				<instance-presentation icon="css:bi bi-ticket-perforated"/>
 				<id-column value="title"/>
 				<form-definition>
 					<form>

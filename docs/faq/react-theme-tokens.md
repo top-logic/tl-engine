@@ -181,6 +181,10 @@ resolved tokens of the `default` theme and fails on
 `ThemeTokenAudit.SHAPE_RADII` holds the literals that stay literal (`0`, `50%`, `999px`, `9999px`);
 a selector that rounds for a reason of its own is passed in the audit's allow-list.
 
+Besides the theme tokens, the audit accepts the tokens the design system's token sheet declares
+(`/style/tl-design-system/tokens.css`, the `--tl-*` namespace), which a module's test names in
+`tokenStylesheets()`. A sheet audited here reads those tokens; it never declares them.
+
 The audit is written against a theme configuration and a stylesheet handed to it, both loaded from
 web application resources (`ThemeTokenAudit.themeTokens`, `ThemeTokenAudit.stylesheet`), so an
 application module runs it over its own sheets and its own theme through the test-jar of
@@ -190,7 +194,8 @@ A module audits its own sheets by subclassing
 `test.com.top_logic.layout.react.theme.AbstractStylesheetTokenTest`, which carries the audit and
 the theme it runs against. The subclass supplies the resource paths its sheets are served under
 (`stylesheets()`), a selector that rounds for a reason of its own (`allowedLiteralSelectors()`,
-empty by default) and a one-line suite:
+empty by default), the sheets declaring the design system's tokens (`tokenStylesheets()`, empty by
+default) and a one-line suite:
 
 ```java
 public class TestMyStylesheetTokens extends AbstractStylesheetTokenTest {

@@ -15,6 +15,8 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.layout.LabelPosition;
+import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
 import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.layout.view.channel.DirtyChannel;
@@ -130,6 +132,22 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		putState(EDIT_MODE, Boolean.FALSE);
 		putState(DIRTY, Boolean.FALSE);
 		updateNoModelMessage();
+	}
+
+	/**
+	 * Lays the fields of this form out in the given grid.
+	 *
+	 * @param maxColumns
+	 *        The greatest number of columns the fields are distributed over, written as
+	 *        {@link ReactFormLayoutControl#MAX_COLUMNS}. How many of them are actually filled
+	 *        follows the available width.
+	 * @param labelPosition
+	 *        Where the fields render their labels relative to their inputs, written as
+	 *        {@link ReactFormLayoutControl#LABEL_POSITION}.
+	 */
+	public void setLayout(int maxColumns, LabelPosition labelPosition) {
+		putState(ReactFormLayoutControl.MAX_COLUMNS, Integer.valueOf(maxColumns));
+		putState(ReactFormLayoutControl.LABEL_POSITION, labelPosition.getExternalName());
 	}
 
 	@Override

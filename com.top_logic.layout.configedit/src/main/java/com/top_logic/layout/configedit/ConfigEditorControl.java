@@ -25,6 +25,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
+import com.top_logic.layout.react.control.layout.ReactFormGroupControl.GroupBorder;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
 
 /**
@@ -220,7 +221,7 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 					if (nested != null) {
 						ConfigEditorControl nestedEditor = createNestedEditor(context, nested);
 						ReactFormGroupControl group = new ReactFormGroupControl(
-							context, null, true, false, "subtle", true,
+							context, null, true, false, GroupBorder.SUBTLE, true,
 							List.of(), List.of(nestedEditor));
 						group.setHeader(createGroupHeader(context, property));
 						addChild(group);
@@ -238,7 +239,7 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 				// row is not a place to put a form. It also keeps a collection recognizable as one
 				// section rather than as a column of the surrounding grid.
 				ReactFormGroupControl listGroup = new ReactFormGroupControl(
-					context, null, true, false, "default", true,
+					context, null, true, false, GroupBorder.SUBTLE, true,
 					List.of(), List.of(listEditor));
 				listGroup.setHeader(createGroupHeader(context, property));
 				addChild(listGroup);

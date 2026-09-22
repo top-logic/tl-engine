@@ -23,6 +23,7 @@ import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
+import com.top_logic.layout.react.control.layout.ReactFormGroupControl.GroupBorder;
 
 /**
  * A control that renders a type selector dropdown and a nested {@link ConfigEditorControl} for
@@ -85,7 +86,7 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 	public PolymorphicItemControl(ReactContext context, String label, ConfigurationItem parentConfig,
 			PropertyDescriptor property,
 			BiFunction<ReactContext, ConfigurationItem, ConfigEditorControl> editorFactory, boolean editable) {
-		super(context, label, true, false, "subtle", true, List.of(), List.of());
+		super(context, label, true, false, GroupBorder.SUBTLE, true, List.of(), List.of());
 		_context = context;
 		_parentConfig = parentConfig;
 		_property = property;

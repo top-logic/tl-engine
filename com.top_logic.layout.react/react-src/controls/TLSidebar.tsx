@@ -1,6 +1,6 @@
 import {
-  React, useTLState, useTLCommand, TLChild, useI18N, useStandaloneKeyboardScope, FillBarrier,
-  rootClassName,
+  React, useTLState, useTLCommand, TLChild, useI18N, useStandaloneKeyboardScope,
+  useCloseOnOutsidePress, FillBarrier, rootClassName,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { ThemeIcon } from './icon/ThemeIcon';
@@ -171,23 +171,16 @@ const SidebarGroupFlyout: React.FC<{
   item: GroupItemInfo;
   activeItemId: string;
   anchorRect: DOMRect | null;
+  triggerRef: React.RefObject<HTMLButtonElement | null>;
   onSelect: (id: string) => void;
   onExecute: (id: string) => void;
   onClose: () => void;
-}> = ({ item, activeItemId, anchorRect, onSelect, onExecute, onClose }) => {
+}> = ({ item, activeItemId, anchorRect, triggerRef, onSelect, onExecute, onClose }) => {
   const flyoutRef = useRef<HTMLDivElement>(null);
 
-  // Close on outside click.
-  useEffect(() => {
-    const handleMouseDown = (e: MouseEvent) => {
-      if (flyoutRef.current && !flyoutRef.current.contains(e.target as Node)) {
-        // Use setTimeout to avoid closing immediately when the group icon triggers the flyout.
-        setTimeout(() => onClose(), 0);
-      }
-    };
-    document.addEventListener('mousedown', handleMouseDown);
-    return () => document.removeEventListener('mousedown', handleMouseDown);
-  }, [onClose]);
+  // Close on a press outside the flyout. A press on the group icon the flyout hangs off is left to
+  // that icon, which toggles the flyout on its click.
+  useCloseOnOutsidePress(true, [flyoutRef, triggerRef], onClose);
 
   // Close on Escape (via the shared keyboard dispatcher).
   useStandaloneKeyboardScope(true, { ESCAPE: onClose });
@@ -329,6 +322,7 @@ const SidebarGroup: React.FC<{
           item={item}
           activeItemId={activeItemId}
           anchorRect={anchorRect}
+          triggerRef={headerBtnRef}
           onSelect={onSelect}
           onExecute={onExecute}
           onClose={onCloseFlyout}

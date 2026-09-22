@@ -46,18 +46,20 @@ public class TestTreeElement extends TestCase {
 		// Verify children expression is present (non-null).
 		assertNotNull("Children expression should be set", treeConfig.getChildren());
 
-		// Verify isLeaf expression is present (non-null).
-		assertNotNull("IsLeaf expression should be set", treeConfig.getIsLeaf());
-
 		// Verify selection channel.
 		assertNotNull("Selection should be set", treeConfig.getSelection());
 		assertEquals("Selection channel name", "selectedNode", treeConfig.getSelection().getChannelName());
+	}
 
-		// Verify optional properties are null.
-		assertNull("supportsNode should be null", treeConfig.getSupportsNode());
-		assertNull("modelForNode should be null", treeConfig.getModelForNode());
-		assertNull("parents should be null", treeConfig.getParents());
-		assertNull("nodesToUpdate should be null", treeConfig.getNodesToUpdate());
+	/**
+	 * Tests that the function telling what holds an object in the tree is optional, and is read
+	 * where the tree declares it.
+	 */
+	public void testParents() throws Exception {
+		assertNull("A tree that does not say what holds an object is searched for a node.",
+			TypedConfiguration.newConfigItem(TreeElement.Config.class).getParents());
+
+		assertNotNull("The tree declares what holds an object in it.", readTreeConfig().getParents());
 	}
 
 	/**

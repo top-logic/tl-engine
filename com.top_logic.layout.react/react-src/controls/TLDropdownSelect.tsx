@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, CMD_VALUE_CHANGED, rootClassName } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, useCloseOnOutsidePress, CMD_VALUE_CHANGED, rootClassName } from 'tl-react-bridge';
 import { createPortal } from 'react-dom';
 import type { TLCellProps } from 'tl-react-bridge';
 import {
@@ -242,23 +242,11 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
     }
   }, [value]);
 
-  // Close dropdown on outside click
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleOutsideClick = (e: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(e.target as Node) &&
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
-        setIsOpen(false);
-        setSearchTerm('');
-      }
-    };
-    document.addEventListener('mousedown', handleOutsideClick);
-    return () => document.removeEventListener('mousedown', handleOutsideClick);
-  }, [isOpen]);
+  // Close the dropdown on a press outside the control and its (portalled) list.
+  useCloseOnOutsidePress(isOpen, [containerRef, dropdownRef], () => {
+    setIsOpen(false);
+    setSearchTerm('');
+  });
 
   // Position the dropdown when it opens
   useEffect(() => {

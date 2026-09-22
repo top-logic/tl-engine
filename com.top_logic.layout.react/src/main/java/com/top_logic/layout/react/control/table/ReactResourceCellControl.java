@@ -15,6 +15,7 @@ import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ReactValueColor;
 import com.top_logic.layout.react.navigation.ObjectNavigator;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.listen.ObservedObjects;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -138,8 +139,17 @@ public class ReactResourceCellControl extends ReactControl implements TooltipPro
 
 	/**
 	 * Resolves the display of the value again after the object it names has changed.
+	 *
+	 * <p>
+	 * A deleted object is left alone: it has no type any more, so neither its label, its icon nor
+	 * the color of its value can be resolved from it. The cell keeps what it shows until the display
+	 * holding it drops it, which is what the deletion makes that display do.
+	 * </p>
 	 */
 	private void refreshDisplay() {
+		if (_rowObject instanceof TLObject model && !model.tValid()) {
+			return;
+		}
 		Object tx = beginUpdate();
 		resolveState(_rowObject);
 		commitUpdate(tx);

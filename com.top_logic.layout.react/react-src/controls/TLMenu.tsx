@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useFocusTrap, rootClassName } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useCloseOnOutsidePress, useFocusTrap, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { ThemeIcon } from './icon/ThemeIcon';
 
@@ -92,17 +92,8 @@ const TLMenu: React.FC<TLCellProps> = ({ controlId }) => {
     sendCommand('selectItem', { itemId });
   }, [sendCommand]);
 
-  // Close on outside click.
-  useEffect(() => {
-    if (!open) return;
-    const handleMouseDown = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        handleClose();
-      }
-    };
-    document.addEventListener('mousedown', handleMouseDown);
-    return () => document.removeEventListener('mousedown', handleMouseDown);
-  }, [open, handleClose]);
+  // Close on a press outside the menu.
+  useCloseOnOutsidePress(open, [menuRef], handleClose);
 
   // Keyboard navigation.
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {

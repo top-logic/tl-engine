@@ -25,6 +25,10 @@ export { ANCHORED_OVERLAY_ATTR, anchoredOverlayProps } from './bridge/focus-trap
 export { CMD_SUBMIT, CMD_VALUE_CHANGED } from './bridge/command-channel';
 export { writeDragPayload, readDragPayload, dragTypeAccepted, dropPositionAt } from './bridge/drag-drop';
 export type { TLDragPayload, TLDropPosition } from './bridge/drag-drop';
+export { startPointerDrag, DRAG_SHIELD_CLASS } from './bridge/pointer-drag';
+export type { PointerDragOptions } from './bridge/pointer-drag';
+export { useCloseOnOutsidePress, pressClosedSurface } from './bridge/outside-press';
+export type { InsideRef } from './bridge/outside-press';
 export { useListReorder } from './bridge/list-reorder';
 export type {
   ListReorder,
@@ -98,3 +102,8 @@ initElementPicker();
 // Install the single document-level focus-trap listener (confines focus to modal surfaces).
 import { initFocusTrap } from './bridge/focus-trap';
 initFocusTrap();
+
+// Install the document listener that marks the start of a press gesture, ahead of the listeners
+// with which the open surfaces close themselves on an outside press.
+import { initOutsidePress } from './bridge/outside-press';
+initOutsidePress();

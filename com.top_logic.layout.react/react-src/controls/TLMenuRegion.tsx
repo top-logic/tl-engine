@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, rootClassName } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, pressClosedSurface, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback, useRef } = React;
@@ -43,6 +43,10 @@ const TLMenuRegion: React.FC<TLCellProps> = ({ controlId }) => {
   const handleClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    // The press of this click has closed the menu this region opens: leave it closed.
+    if (pressClosedSurface()) {
+      return;
+    }
     openBelowRegion();
   }, [openBelowRegion]);
 

@@ -96,14 +96,28 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 	 * Creates the {@link ViewCommandModel} matching the given command, choosing a specialized model
 	 * for commands that need one (e.g. a {@link ViewUploadCommandModel} for an {@link UploadCommand},
 	 * whose button uploads files instead of dispatching a click command).
+	 *
+	 * <p>
+	 * Every model is built here, so that the rule a command
+	 * {@link ViewCommand#getIntrinsicRule() brings of its own} is taken into account whichever way
+	 * the model was asked for.
+	 * </p>
+	 *
+	 * @param context
+	 *        The build-time context of the hosting element, binding a rule that needs it;
+	 *        {@code null} for a command built outside a view.
+	 * @param rule
+	 *        The rule built from the command's configuration, possibly extended by the hosting
+	 *        element.
 	 */
-	public static ViewCommandModel create(ViewCommand command, ViewCommand.Config config, ViewChannel inputChannel,
-			ViewExecutabilityRule rule) {
+	public static ViewCommandModel create(ViewContext context, ViewCommand command, ViewCommand.Config config,
+			ViewChannel inputChannel, ViewExecutabilityRule rule) {
+		ViewExecutabilityRule deciding = ViewExecutabilityRules.withIntrinsicRule(context, command, rule);
 		if (config instanceof UploadCommand.Config) {
 			return new ViewUploadCommandModel((UploadCommand) command, (UploadCommand.Config) config, inputChannel,
-				rule);
+				deciding);
 		}
-		return new ViewCommandModel(command, config, inputChannel, rule);
+		return new ViewCommandModel(command, config, inputChannel, deciding);
 	}
 
 	/**
@@ -115,8 +129,8 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 	 * This is the one construction path for a configured command, shared by every element that
 	 * hosts commands. An element that has to interfere with the rule - the form, which additionally
 	 * disables the commands its validation would reject - builds the model from
-	 * {@link #create(ViewCommand, ViewCommand.Config, ViewChannel, ViewExecutabilityRule)} with the
-	 * rule it composed.
+	 * {@link #create(ViewContext, ViewCommand, ViewCommand.Config, ViewChannel, ViewExecutabilityRule)}
+	 * with the rule it composed.
 	 * </p>
 	 *
 	 * @param context
@@ -132,7 +146,7 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 		ChannelRef inputRef = config.getInput();
 		ViewChannel inputChannel = inputRef != null ? context.resolveChannel(inputRef) : null;
 		ViewExecutabilityRule rule = ViewExecutabilityRules.build(config.getExecutability(), context);
-		return create(command, config, inputChannel, rule);
+		return create(context, command, config, inputChannel, rule);
 	}
 
 	/**

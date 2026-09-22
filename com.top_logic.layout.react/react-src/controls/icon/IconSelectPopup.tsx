@@ -1,4 +1,4 @@
-import { React, useI18N, useStandaloneKeyboardScope } from 'tl-react-bridge';
+import { React, useI18N, useCloseOnOutsidePress, useStandaloneKeyboardScope } from 'tl-react-bridge';
 
 const { useState, useCallback, useEffect, useRef, useLayoutEffect, useMemo } = React;
 
@@ -97,19 +97,8 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
   // Close on Escape (via the shared keyboard dispatcher).
   useStandaloneKeyboardScope(true, { ESCAPE: onCancel });
 
-  // Close on click outside
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
-        onCancel();
-      }
-    };
-    const timer = setTimeout(() => document.addEventListener('mousedown', handler), 0);
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener('mousedown', handler);
-    };
-  }, [onCancel]);
+  // Close on a press outside the popup.
+  useCloseOnOutsidePress(true, [popupRef], onCancel);
 
   // Filter icons by search term
   const filteredIcons = useMemo(() => {

@@ -19,10 +19,10 @@ import com.top_logic.basic.util.ResKey;
  * </p>
  *
  * <p>
- * Implementations are configured on the {@link UploadSecurityService} and invoked from every
- * upload-accepting control. A virus scanner talking to a scanning daemon (see {@link ClamAvScanner})
- * is one implementation; applications may contribute their own (e.g. an ICAP or command-line
- * backend).
+ * Implementations are configured on the {@link UploadSecurityService}, which the
+ * {@link UploadGuardRequest} of a servlet receiving uploads consults for every uploaded file. A
+ * virus scanner talking to a scanning daemon (see {@link ClamAvScanner}) is one implementation;
+ * applications may contribute their own (e.g. an ICAP or command-line backend).
  * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>

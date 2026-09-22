@@ -23,10 +23,10 @@ import com.top_logic.basic.util.ResKey;
  * {@link UploadContentChecker}s.
  *
  * <p>
- * The service is consulted from every upload-accepting control. It runs the configured checkers in
- * order and reports the first rejection. When the service is inactive or has no checkers, uploads
- * pass unchanged, so enabling upload scanning is a pure deployment decision with no effect on other
- * installations.
+ * The service is consulted by the {@link UploadGuardRequest} of a servlet receiving uploads, once
+ * for every uploaded file. It runs the configured checkers in order and reports the first
+ * rejection. When the service is inactive or has no checkers, uploads pass unchanged, so enabling
+ * upload scanning is a pure deployment decision with no effect on other installations.
  * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -97,8 +97,8 @@ public class UploadSecurityService extends ConfiguredManagedClass<UploadSecurity
 	 * Checks the given uploaded content against the active {@link UploadSecurityService}.
 	 *
 	 * <p>
-	 * Convenience for call sites in upload-accepting controls: when the {@link Module} is not active,
-	 * the content is accepted without any check, so callers need no service-availability guard.
+	 * Convenience for the {@link UploadGuardRequest}: when the {@link Module} is not active, the
+	 * content is accepted without any check, so callers need no service-availability guard.
 	 * </p>
 	 *
 	 * @param data

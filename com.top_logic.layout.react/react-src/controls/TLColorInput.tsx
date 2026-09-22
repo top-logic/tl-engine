@@ -1,4 +1,4 @@
-import { React, useTLCommand, useTLFieldValue, useI18N } from 'tl-react-bridge';
+import { React, useTLCommand, useTLFieldValue, useI18N, pressClosedSurface } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import ColorPopup from './color/ColorPopup';
 
@@ -30,6 +30,10 @@ const TLColorInput: React.FC<TLCellProps> = ({ controlId, state }) => {
   const defaultPalette = (state.defaultPalette as (string | null)[]) ?? palette;
 
   const handleClick = useCallback(() => {
+    // The press of this click has closed the popup this swatch opens: leave it closed.
+    if (pressClosedSurface()) {
+      return;
+    }
     if (editable) setOpen(true);
   }, [editable]);
 

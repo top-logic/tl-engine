@@ -1,4 +1,4 @@
-import { React, useI18N, useStandaloneKeyboardScope } from 'tl-react-bridge';
+import { React, useI18N, useCloseOnOutsidePress, useStandaloneKeyboardScope } from 'tl-react-bridge';
 import ColorPalette, { COLOR_DRAG_TYPE } from './ColorPalette';
 import ColorMixer from './ColorMixer';
 import { hexToRgb, rgbToHex, isValidHex, clampByte } from './colorUtils';
@@ -97,20 +97,8 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
   // Close on Escape (via the shared keyboard dispatcher).
   useStandaloneKeyboardScope(true, { ESCAPE: onCancel });
 
-  // Close on click outside
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
-        onCancel();
-      }
-    };
-    // Delay to avoid catching the opening click
-    const timer = setTimeout(() => document.addEventListener('mousedown', handler), 0);
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener('mousedown', handler);
-    };
-  }, [onCancel]);
+  // Close on a press outside the popup.
+  useCloseOnOutsidePress(true, [popupRef], onCancel);
 
   const handleRgbChange = useCallback(
     (channel: 'r' | 'g' | 'b') => (e: React.ChangeEvent<HTMLInputElement>) => {

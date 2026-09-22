@@ -114,6 +114,20 @@ html, body {
 	white-space: nowrap;
 }
 
+/* --- Drag shield -------------------------------------------------------- */
+
+/* Covers the viewport from the moment a drag gesture moves until the pointer is released (see the
+   bridge's startPointerDrag). It carries the cursor of the gesture, so the cursor keeps naming the
+   drag wherever the pointer goes, and it keeps hover effects and text selection off the page. The
+   gesture itself is routed to its handle by pointer capture, not by this element. Above every
+   other layer (dialog backdrop and menus at 10000, snackbar at 11000). */
+.tlDragShield {
+	position: fixed;
+	inset: 0;
+	z-index: 12000;
+	user-select: none;
+}
+
 /* --- TLButton ----------------------------------------------------------- */
 
 .tlReactButton {
@@ -1434,7 +1448,8 @@ button.tlPanel__actionButton:focus-visible {
 	cursor: row-resize;
 }
 
-.tlSplitPanel__splitter:hover {
+.tlSplitPanel__splitter:hover,
+.tlSplitPanel__splitter:active {
 	background: var(--border-interactive);
 }
 
@@ -4100,8 +4115,11 @@ button.tlMenu__item--disabled:hover {
 }
 
 /* The heading in front of the first pinned one keeps its handle inside the cell: the pinned
-   heading sticks above it (z-index 2) and would swallow the 2px reaching across the border. */
-.tlTableView__headerCell:has(+ .tlTableView__headerCell--pinnedEndFirst) .tlTableView__resizeHandle {
+   heading sticks above it (z-index 2) and would swallow the 2px reaching across the border. The
+   last frozen heading keeps its handle inside for the same reason: the grip of the frozen boundary
+   lies on that border above it (z-index 3) and would swallow the part reaching across. */
+.tlTableView__headerCell:has(+ .tlTableView__headerCell--pinnedEndFirst) .tlTableView__resizeHandle,
+.tlTableView__headerCell--frozenLast .tlTableView__resizeHandle {
 	right: 0;
 }
 
@@ -4241,16 +4259,16 @@ button.tlMenu__item--disabled:hover {
 }
 
 /* Grip to drag the boundary of the frozen area to another column. Sits above the sticky header cells
-   (z-index 2) and stops at the header's bottom border, so the line below it stays unbroken. When no
-   column is frozen, the grip waits at the left edge of the table, where it can pull a frozen area
-   out. */
+   (z-index 2) and stops at the header's bottom border, so the line below it stays unbroken. It
+   reaches to the right of the boundary only, leaving the border-side resize handle of the last
+   frozen column to that column. When no column is frozen, the grip waits at the left edge of the
+   table, where it can pull a frozen area out. */
 .tlTableView__frozenSplitter {
 	position: absolute;
 	top: 0;
 	bottom: 2px;
 	z-index: 3;
 	width: 7px;
-	margin-left: -3px;
 	cursor: col-resize;
 }
 
@@ -4259,7 +4277,7 @@ button.tlMenu__item--disabled:hover {
 	position: absolute;
 	top: 0;
 	bottom: 0;
-	left: 3px;
+	left: 0;
 	width: 1px;
 	background: var(--interactive);
 	opacity: 0;

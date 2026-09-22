@@ -1,4 +1,4 @@
-import { React, useTLCommand, useTLFieldValue, useI18N } from 'tl-react-bridge';
+import { React, useTLCommand, useTLFieldValue, useI18N, pressClosedSurface } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import IconSelectPopup, { IconPreview } from './icon/IconSelectPopup';
 import type { IconEntry } from './icon/IconSelectPopup';
@@ -30,6 +30,10 @@ const TLIconSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
   const iconsLoaded = state.iconsLoaded === true;
 
   const handleClick = useCallback(() => {
+    // The press of this click has closed the popup this swatch opens: leave it closed.
+    if (pressClosedSurface()) {
+      return;
+    }
     if (editable && !disabled) setOpen(true);
   }, [editable, disabled]);
 

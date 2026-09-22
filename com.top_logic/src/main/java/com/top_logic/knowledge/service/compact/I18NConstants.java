@@ -7,6 +7,7 @@ package com.top_logic.knowledge.service.compact;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
+import com.top_logic.basic.util.ResKey5;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -115,6 +116,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Compacting the history failed.
 	 */
 	public static ResKey ERROR_COMPACTION_FAILED;
+
+	/**
+	 * @en The history was collapsed into revision {0}: {1} rows deleted, {2} rows rewritten, {3}
+	 *     references re-pinned, {4} references cleared.
+	 */
+	public static ResKey5 TASK_COMPACTION_DONE__REVISION_DELETED_REWRITTEN_REPINNED_CLEARED;
 
 	static {
 		initConstants(I18NConstants.class);

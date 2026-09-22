@@ -1357,6 +1357,11 @@ div.tlValueList {
 	gap: var(--spacing-01);
 	flex-shrink: 0;
 	margin-left: auto;
+	/* The slot reserves the height of one control row - the height a toolbar button is sized
+	   by - whether or not it holds a command. A header is therefore equally tall in either
+	   case: the headers of neighbouring panels line up, and a command that becomes executable
+	   does not move the header it appears in. */
+	min-height: var(--tl-size-control);
 }
 
 /* Who gives way when the header is too narrow: a toolbar that can collapse absorbs the shrink
@@ -2802,6 +2807,23 @@ button.tlWindow__maximizeBtn:focus-visible {
 .tlDrawer--bottom.tlDrawer--medium { width: auto; height: 24rem; max-height: 100vh; }
 .tlDrawer--bottom.tlDrawer--wide   { width: auto; height: 36rem; max-height: 100vh; }
 
+/* Anchored in the element it is rendered in instead of the viewport: the drawer covers only that
+   element, leaving the surrounding chrome (app bar, sidebar, the title of the enclosing panel)
+   visible. Its layer lies above the container's own content - including a sticky table header -
+   and below the window, dialog and snackbar layers, which keep covering the page as a whole. */
+.tlDrawer--container {
+	position: absolute;
+	z-index: 10;
+}
+
+/* The extent is capped at the container, not at the viewport. */
+.tlDrawer--container.tlDrawer--narrow,
+.tlDrawer--container.tlDrawer--medium,
+.tlDrawer--container.tlDrawer--wide { max-width: 100%; }
+.tlDrawer--container.tlDrawer--bottom.tlDrawer--narrow,
+.tlDrawer--container.tlDrawer--bottom.tlDrawer--medium,
+.tlDrawer--container.tlDrawer--bottom.tlDrawer--wide { max-height: 100%; }
+
 .tlDrawer__header {
 	display: flex;
 	align-items: center;
@@ -3003,6 +3025,12 @@ button.tlDrawer__closeBtn:focus-visible {
 	width: 100%;
 	height: 100%;
 	min-height: 0;
+	/* The anchor a drawer presentation positions its detail in, and the clip that keeps the
+	   drawer's closed state off the screen. The clip forbids scrolling altogether (unlike
+	   overflow: hidden, which still scrolls programmatically), so the parked drawer, which lies
+	   outside this box, can never be scrolled into view - e.g. by a focus moving into it. */
+	position: relative;
+	overflow: clip;
 }
 
 .tlAdaptiveDetail__content {
@@ -3595,6 +3623,14 @@ button.tlMenu__item--disabled:hover {
 	text-overflow: ellipsis;
 }
 
+/* A business object shown with its icon is a flex row of its own. In a cell it is the block-level
+   one the rule for the cell's root span asks for - that rule is the more specific of the two and
+   would otherwise decide the display - so the object spans the column and its label is cut off at
+   the column edge. */
+.tlTableView__cell > .tlResourceCell {
+	display: flex;
+}
+
 /* A value shown beside an adornment - the language button of an internationalized text - sits in a
    row with it. The row follows the width of the column instead of the width its content asks for,
    so that the value within it is the part that gives way. */
@@ -3752,6 +3788,29 @@ button.tlMenu__item--disabled:hover {
 		background-color: color-mix(in srgb, var(--tlPill-color) 16%, var(--color-surface));
 		color: color-mix(in srgb, var(--tlPill-color) 72%, var(--text-primary));
 	}
+}
+
+/* --- TLResourceCell --------------------------------------------------------- */
+
+/* A business object drawn as its icon followed by its label. The two belong together and read as
+   one line, with the icon centered on the text and held off it by a gap. The object gives way to
+   whatever holds it - a tree node, a table cell, a pill - instead of pushing it wider. */
+.tlResourceCell {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	max-width: 100%;
+	min-width: 0;
+}
+
+/* The label is the part of the object that gives way: the ellipsis of the surroundings - the tree
+   node content, the pill - ends at the flex row the object is, so the label carries the cut-off
+   itself. The white space is the one inherited from tree, table or pill, so a place that wraps
+   keeps wrapping. */
+.tlResourceLabel {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 /* --- TLHtml ---------------------------------------------------------------- */

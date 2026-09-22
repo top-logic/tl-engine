@@ -43,6 +43,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.react.flow.callback.DiagramHandler;
 import com.top_logic.react.flow.data.Box;
 import com.top_logic.react.flow.data.Diagram;
+import com.top_logic.react.flow.server.control.DiagramSelectionBinding;
 import com.top_logic.react.flow.server.control.FlowDiagramControl;
 import com.top_logic.util.model.ModelService;
 
@@ -119,12 +120,21 @@ public class FlowDiagramElement implements UIElement {
 		Map<String, HandlerDefinition<? extends DiagramHandler>> getHandlers();
 
 		/**
-		 * Optional reference to a {@link ViewChannel} to write the selected node's user object to.
+		 * Optional reference to the {@link ViewChannel} holding the selection the diagram shares
+		 * with the other elements of the view.
 		 *
 		 * <p>
-		 * When a node is selected in the diagram, its user object is written to the referenced
-		 * channel. Other view elements (forms, tables) can observe this channel to react to
-		 * selection changes.
+		 * The diagram follows the channel in both directions. A selection made in the diagram
+		 * becomes the value: one selected node as its user object, several as the set of them, none
+		 * as no value at all. A value written by another element marks the nodes carrying it as
+		 * user object - a single object, or each of the objects of a set in a diagram that shows
+		 * several selected nodes.
+		 * </p>
+		 *
+		 * <p>
+		 * A value no node of this diagram carries is shown as no selection and left alone: it is
+		 * the selection of whoever wrote it, an object of a different set of elements, which this
+		 * diagram simply has nothing to mark for.
 		 * </p>
 		 */
 		@Name(SELECTION)
@@ -213,7 +223,8 @@ public class FlowDiagramElement implements UIElement {
 		ChannelRef selectionRef = _config.getSelection();
 		if (selectionRef != null) {
 			ViewChannel selectionChannel = context.resolveChannel(selectionRef);
-			control.setSelectionChannel(selectionChannel);
+			DiagramSelectionBinding selectionBinding = new DiagramSelectionBinding(control, selectionChannel);
+			control.addCleanupAction(selectionBinding::dispose);
 
 			// Rebuilding the diagram drops the selection, so the unsaved changes blocking the
 			// selection are reported when an input is asked, before the input is written.

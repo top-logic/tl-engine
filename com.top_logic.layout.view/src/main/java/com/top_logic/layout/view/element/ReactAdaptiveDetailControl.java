@@ -16,6 +16,10 @@ import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.ReactSplitPanelControl;
 import com.top_logic.layout.react.control.layout.ReactSplitPanelControl.ChildConstraint;
+import com.top_logic.layout.react.control.overlay.ReactDrawerControl;
+import com.top_logic.layout.react.control.overlay.ReactDrawerControl.Anchor;
+import com.top_logic.layout.react.control.overlay.ReactDrawerControl.Position;
+import com.top_logic.layout.react.control.overlay.ReactDrawerControl.Size;
 import com.top_logic.layout.react.reveal.ChildRevealer;
 import com.top_logic.layout.responsive.DisplayClass;
 import com.top_logic.layout.responsive.DisplayClassModel;
@@ -35,15 +39,27 @@ import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
  * Server-side control of {@link AdaptiveDetailElement}.
  *
  * <p>
- * Renders one of two presentations of the shared {@code <selector>}/{@code <detail>} configuration,
- * chosen from the subsession's {@link DisplayClassModel}:
+ * Renders one of three presentations of the shared {@code <selector>}/{@code <detail>}
+ * configuration, chosen from the subsession's {@link DisplayClassModel} and the element's
+ * {@link DetailDisplay}:
  * </p>
  * <ul>
- * <li>{@link DisplayClass#REGULAR} - a horizontal {@link ReactSplitPanelControl split} with the
- * selector and the detail side by side.</li>
+ * <li>{@link DisplayClass#REGULAR} with {@link DetailDisplay#SPLIT} - a horizontal
+ * {@link ReactSplitPanelControl split} with the selector and the detail side by side.</li>
+ * <li>{@link DisplayClass#REGULAR} with {@link DetailDisplay#DRAWER} - the selector at full width,
+ * overlaid by a {@link ReactDrawerControl drawer} holding the detail. The drawer is anchored in
+ * this control's own area, so the surrounding chrome stays visible; it opens while the selection
+ * channel holds a value, carries that value's label as its title, and clears the selection when it
+ * is dismissed.</li>
  * <li>{@link DisplayClass#COMPACT} - the selector full-bleed, replaced by the detail while the
  * selection channel holds a value.</li>
  * </ul>
+ *
+ * <p>
+ * A presentation builds its selector and its detail once and keeps them across selection changes:
+ * both are bound to the selection channel and follow it themselves. Only the compact presentation,
+ * which exchanges one for the other, rebuilds.
+ * </p>
  *
  * <p>
  * In compact mode the <em>outermost</em> (coordinator) control renders a single breadcrumb spanning
@@ -58,6 +74,8 @@ public class ReactAdaptiveDetailControl extends ReactControl implements ChildRev
 	private static final String REACT_MODULE = "TLAdaptiveDetail";
 
 	private static final String CONTENT = "content";
+
+	private static final String OVERLAY = "overlay";
 
 	private static final String BREADCRUMB = "breadcrumb";
 
@@ -89,7 +107,14 @@ public class ReactAdaptiveDetailControl extends ReactControl implements ChildRev
 
 	private final String _homeLabel;
 
+	private final DetailDisplay _detailDisplay;
+
+	private final int _detailSize;
+
 	private ReactControl _currentChild;
+
+	/** The drawer holding the detail, while the drawer presentation is displayed. */
+	private ReactDrawerControl _drawer;
 
 	private boolean _disposed;
 
@@ -117,11 +142,15 @@ public class ReactAdaptiveDetailControl extends ReactControl implements ChildRev
 	 *        for a coordinator, otherwise {@code null}.
 	 * @param homeLabel
 	 *        Label of the breadcrumb's home crumb, or {@code null} for a default.
+	 * @param detailDisplay
+	 *        How the detail is presented beside the selector on a wide viewport.
+	 * @param detailSize
+	 *        The width in pixels of the drawer the detail is displayed in.
 	 */
 	public ReactAdaptiveDetailControl(ViewContext context, AdaptiveDetailElement element,
 			List<UIElement> selector, List<UIElement> detail,
 			ViewChannel selectionChannel, List<ViewChannel> resetOn, boolean coordinator, List<ViewChannel> chain,
-			String homeLabel) {
+			String homeLabel, DetailDisplay detailDisplay, int detailSize) {
 		super(context, null, REACT_MODULE);
 		_context = context;
 		RevealPath here = RevealPath.of(context);
@@ -133,6 +162,8 @@ public class ReactAdaptiveDetailControl extends ReactControl implements ChildRev
 		_coordinator = coordinator;
 		_chain = chain;
 		_homeLabel = homeLabel;
+		_detailDisplay = detailDisplay;
+		_detailSize = detailSize;
 		_displayModel = DisplayClassModel.forCurrentSubSession();
 
 		_displayListener = (sender, oldValue, newValue) -> renderPresentation();
@@ -180,9 +211,10 @@ public class ReactAdaptiveDetailControl extends ReactControl implements ChildRev
 	 * Brings the selector or the detail side into view.
 	 *
 	 * <p>
-	 * Side by side on a wide viewport, both are displayed anyway. On a narrow one the selector
-	 * returns by dropping the selection, exactly as the breadcrumb's home crumb does, while the
-	 * detail appears as soon as the selection channel holds the object it displays.
+	 * On a wide viewport the selector is displayed anyway, beside the detail or underneath its
+	 * drawer. On a narrow one the selector returns by dropping the selection, exactly as the
+	 * breadcrumb's home crumb does. The detail, in every presentation, appears as soon as the
+	 * selection channel holds the object it displays.
 	 * </p>
 	 */
 	@Override
@@ -197,10 +229,35 @@ public class ReactAdaptiveDetailControl extends ReactControl implements ChildRev
 	}
 
 	private void onSelectionChanged() {
-		// In REGULAR the split's detail reacts to the channel itself; only COMPACT toggles selector
-		// vs. detail and therefore needs a rebuild.
+		// In REGULAR the detail reacts to the channel itself; only COMPACT toggles selector vs.
+		// detail and therefore needs a rebuild. A drawer presentation keeps its detail as well and
+		// only follows the selection with the panel it is shown in.
 		if (_displayModel.getDisplayClass() == DisplayClass.COMPACT) {
 			renderPresentation();
+		} else if (_drawer != null) {
+			updateDrawer(_drawer);
+		}
+	}
+
+	/**
+	 * Opens the given drawer on the object now selected (titled with its label) and closes it when
+	 * the selection is dropped.
+	 *
+	 * <p>
+	 * The title of a closing drawer is left untouched: it stays readable while the panel slides
+	 * out, and the next opening replaces it.
+	 * </p>
+	 *
+	 * @param drawer
+	 *        The drawer to bring in line with the selection.
+	 */
+	private void updateDrawer(ReactDrawerControl drawer) {
+		Object selection = _selectionChannel.get();
+		if (selection == null) {
+			drawer.close();
+		} else {
+			drawer.setTitle(MetaLabelProvider.INSTANCE.getLabel(selection));
+			drawer.open();
 		}
 	}
 
@@ -214,22 +271,36 @@ public class ReactAdaptiveDetailControl extends ReactControl implements ChildRev
 		boolean hasSelection = _selectionChannel.get() != null;
 
 		ReactControl built;
+		ReactDrawerControl drawer;
 		if (compact && hasSelection) {
 			built = buildDetail();
+			drawer = null;
 		} else if (compact) {
 			built = buildSelector();
+			drawer = null;
+		} else if (_detailDisplay == DetailDisplay.DRAWER) {
+			built = buildSelector();
+			drawer = buildDetailDrawer();
 		} else {
 			built = buildRegularSplit();
+			drawer = null;
 		}
 
-		ReactControl old = _currentChild;
+		ReactControl oldContent = _currentChild;
+		ReactDrawerControl oldDrawer = _drawer;
 		_currentChild = built;
+		_drawer = drawer;
 		Object token = beginUpdate();
 		putState(CONTENT, built);
+		putState(OVERLAY, drawer);
 		putState(BREADCRUMB, buildBreadcrumb());
 		commitUpdate(token);
-		if (old != null && old != built) {
-			ContentControls.retire(old);
+		if (oldContent != null && oldContent != built) {
+			ContentControls.retire(oldContent);
+		}
+		if (oldDrawer != null && oldDrawer != drawer) {
+			// The drawer owns the detail it holds, so retiring it retires the detail with it.
+			ContentControls.retire(oldDrawer);
 		}
 	}
 
@@ -274,6 +345,24 @@ public class ReactAdaptiveDetailControl extends ReactControl implements ChildRev
 		split.addChild(buildSelector(), new ChildConstraint(32f, DisplayUnit.PERCENT, 240, Scrolling.AUTO));
 		split.addChild(buildDetail(), new ChildConstraint(68f, DisplayUnit.PERCENT, 320, Scrolling.AUTO));
 		return split;
+	}
+
+	/**
+	 * Builds the drawer the detail is displayed in, showing the object currently selected.
+	 *
+	 * <p>
+	 * Dismissing the drawer drops the selection, which is what closes it - and what lets the same
+	 * object be selected again to bring it back. A detail refusing to be left (unsaved changes)
+	 * vetoes that channel write, and the drawer stays open.
+	 * </p>
+	 */
+	private ReactDrawerControl buildDetailDrawer() {
+		ReactDrawerControl drawer = new ReactDrawerControl(_context, null, Position.RIGHT, Size.MEDIUM,
+			Anchor.CONTAINER, () -> _selectionChannel.set(null));
+		drawer.setWidth(_detailSize);
+		drawer.setChild(buildDetail());
+		updateDrawer(drawer);
+		return drawer;
 	}
 
 	private ReactControl buildSelector() {

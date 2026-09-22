@@ -436,11 +436,16 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     let lastClientX = event.clientX;
     let autoScrollOffset = 0;
 
+    // Whole pixels: the server takes an integer width, and pointer coordinates as well as scroll
+    // positions are fractional under browser zoom and fractional display scaling. Rounding here as
+    // well as at the end of the drag shows exactly the width the drag reports.
+    const widthAt = (clientX: number, info: { startX: number; startWidth: number }) =>
+      Math.round(Math.max(MIN_COL_WIDTH, info.startWidth + (clientX - info.startX) + autoScrollOffset));
+
     const updateWidth = () => {
       const info = resizeRef.current;
       if (!info) return;
-      const newWidth = Math.max(MIN_COL_WIDTH, info.startWidth + (lastClientX - info.startX) + autoScrollOffset);
-      setColumnWidthOverrides((prev) => ({ ...prev, [info.column]: newWidth }));
+      setColumnWidthOverrides((prev) => ({ ...prev, [info.column]: widthAt(lastClientX, info) }));
     };
 
     const stopAutoScroll = () => {
@@ -488,7 +493,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         const info = resizeRef.current;
         resizeRef.current = null;
         if (info && dragged) {
-          const finalWidth = Math.max(MIN_COL_WIDTH, info.startWidth + (e.clientX - info.startX) + autoScrollOffset);
+          const finalWidth = widthAt(e.clientX, info);
           sendCommand('columnResize', { column: info.column, width: finalWidth });
           justResizedRef.current = true;
           requestAnimationFrame(() => { justResizedRef.current = false; });

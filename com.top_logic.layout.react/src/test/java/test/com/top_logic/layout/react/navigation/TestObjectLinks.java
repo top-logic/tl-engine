@@ -12,8 +12,8 @@ import java.util.Map;
 import junit.framework.Test;
 import junit.framework.TestCase;
 
-import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
@@ -312,12 +312,13 @@ public class TestObjectLinks extends TestCase {
 
 	/**
 	 * Test suite requiring the session resources a select field labels its empty selection with, and
-	 * the service that resolves how an object is displayed.
+	 * the service that resolves how an object is displayed. That service builds on the application
+	 * model, which lives in a knowledge base, so the suite runs on one.
 	 */
 	public static Test suite() {
-		return ModuleTestSetup.setupModule(
-			ServiceTestSetup.createSetup(TestObjectLinks.class, ThreadContextManager.Module.INSTANCE,
-				LabelProviderService.Module.INSTANCE));
+		return KBSetup.getSingleKBTest(TestObjectLinks.class,
+			ServiceTestSetup.createStarterFactoryForModules(
+				ThreadContextManager.Module.INSTANCE, LabelProviderService.Module.INSTANCE));
 	}
 
 }

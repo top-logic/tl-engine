@@ -116,6 +116,9 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		/** Configuration name for {@link #isWithoutSecurity()}. */
 		String WITHOUT_SECURITY = "without-security";
 
+		/** Configuration name for {@link #isInternal()}. */
+		String INTERNAL = "internal";
+
 		/**
 		 * Whether the configured types are excluded from access control.
 		 *
@@ -134,6 +137,26 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		 */
 		@Name(WITHOUT_SECURITY)
 		boolean isWithoutSecurity();
+
+		/**
+		 * Whether objects of the configured types are used by the application's own code only.
+		 *
+		 * <p>
+		 * An internal type is never accessed on behalf of a user: its objects are transient, or
+		 * they are read and written in a context that bypasses the access check. No user is
+		 * expected to hold a role on them, so an internal type needs neither a grant, nor a role
+		 * rule, nor a security parent, and a check of the access definition does not report the
+		 * missing ones. The access check itself is not changed: a user asking for such an object is
+		 * denied, since no role is granted.
+		 * </p>
+		 *
+		 * <p>
+		 * A specialization of an internal type is internal, too. Declaring a {@link TLModule}
+		 * internal therefore marks every class of that module and all their specializations.
+		 * </p>
+		 */
+		@Name(INTERNAL)
+		boolean isInternal();
 
 		/**
 		 * @see #isWithoutSecurity() The grants of a type without security are not displayed, since
@@ -212,6 +235,8 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 
 	private Set<TLClass> _typesWithoutSecurity = new HashSet<>();
 
+	private Set<TLClass> _internalTypes = new HashSet<>();
+
 	private CommandGroupRegistry _commandGroups;
 
 	private TLModel _applicationModel;
@@ -256,6 +281,9 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		if (config.isWithoutSecurity()) {
 			module.getClasses().forEach(this::markWithoutSecurity);
 		}
+		if (config.isInternal()) {
+			module.getClasses().forEach(this::markInternal);
+		}
 		moduleRules.computeIfAbsent(module, unused -> new ArrayList<>()).addAll(resolveRules(context, config));
 	}
 
@@ -288,6 +316,9 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		if (config.isWithoutSecurity()) {
 			markWithoutSecurity(clazz);
 		}
+		if (config.isInternal()) {
+			markInternal(clazz);
+		}
 		classRules.computeIfAbsent(clazz, unused -> new ArrayList<>()).addAll(resolveRules(context, config));
 	}
 
@@ -302,6 +333,24 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 				markWithoutSecurity(specialization);
 			}
 		}
+	}
+
+	/**
+	 * Marks the given type and all its specializations as used by the application's code only.
+	 *
+	 * @see TypeBasedAccessRights#isInternal()
+	 */
+	private void markInternal(TLClass type) {
+		if (_internalTypes.add(type)) {
+			for (TLClass specialization : type.getSpecializations()) {
+				markInternal(specialization);
+			}
+		}
+	}
+
+	@Override
+	public boolean isInternal(TLClass type) {
+		return _internalTypes.contains(type);
 	}
 
 	/**

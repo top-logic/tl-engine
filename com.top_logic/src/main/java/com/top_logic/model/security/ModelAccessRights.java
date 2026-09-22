@@ -61,6 +61,18 @@ public interface ModelAccessRights {
 	}
 
 	/**
+	 * Whether objects of the given type are used by the application's own code only, so that no
+	 * user is expected to hold a role on them and their access definition is deliberately empty.
+	 *
+	 * @param type
+	 *        The type to check.
+	 * @return Whether the type is declared internal, see the configuration of the access rights.
+	 */
+	default boolean isInternal(TLClass type) {
+		return false;
+	}
+
+	/**
 	 * Returns the roles of which the user must hold at least one <em>in addition</em> to the
 	 * object-level rights to perform the given command group on the given attribute. Relevant for
 	 * READ and WRITE command groups to implement attribute-level access restrictions.

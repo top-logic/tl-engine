@@ -103,12 +103,22 @@ public class AttributeOptions {
 		if (AttributeOperations.getOptions(part) != null) {
 			return true;
 		}
-		TLType type = part.getType();
+		return isStructuralSelect(part.getType());
+	}
+
+	/**
+	 * Whether values of the given type are chosen from a set of options: an enumeration, a class
+	 * (its instances are referenced), or an enum datatype.
+	 *
+	 * @param type
+	 *        The type of the values.
+	 */
+	public static boolean isStructuralSelect(TLType type) {
 		if (type instanceof TLEnumeration || type instanceof TLClass) {
 			return true;
 		}
-		if (type instanceof TLPrimitive) {
-			return isEnumDatatype((TLPrimitive) type);
+		if (type instanceof TLPrimitive primitive) {
+			return isEnumDatatype(primitive);
 		}
 		return false;
 	}

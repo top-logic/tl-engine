@@ -23,6 +23,9 @@ import com.top_logic.tool.boundsec.wrap.BoundedRole;
  *        The concrete type this result describes.
  * @param withoutSecurity
  *        Whether the type is excluded from access control. Such a type never has a finding.
+ * @param internal
+ *        Whether the type is used by the application's code only and never accessed on behalf of a
+ *        user. Such a type never has a finding.
  * @param readRoles
  *        The roles granted {@link SimpleBoundCommandGroup#READ} on the type.
  * @param roleRules
@@ -35,13 +38,16 @@ import com.top_logic.tool.boundsec.wrap.BoundedRole;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public record TypeCoverage(TLClass type, boolean withoutSecurity, Set<BoundedRole> readRoles,
+public record TypeCoverage(TLClass type, boolean withoutSecurity, boolean internal, Set<BoundedRole> readRoles,
 		List<RoleProvider> roleRules, List<NavigationRule> securityParentRules, List<CoverageFinding> findings) {
 
 	/**
 	 * The overall result for {@link #type()}.
 	 */
 	public CoverageStatus status() {
+		if (withoutSecurity || internal) {
+			return CoverageStatus.EXEMPT;
+		}
 		return findings.isEmpty() ? CoverageStatus.COVERED : CoverageStatus.INCOMPLETE;
 	}
 

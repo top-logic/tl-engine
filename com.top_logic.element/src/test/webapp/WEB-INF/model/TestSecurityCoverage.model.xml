@@ -73,6 +73,9 @@
 
 				<!-- Excluded from access control: no finding despite the missing definitions. -->
 				<class name="Unsecured"/>
+
+				<!-- Used by the application's code only: no finding despite the missing definitions. -->
+				<class name="Internal"/>
 			</types>
 		</module>
 

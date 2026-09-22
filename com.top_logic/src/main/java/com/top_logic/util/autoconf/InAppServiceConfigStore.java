@@ -7,15 +7,12 @@ package com.top_logic.util.autoconf;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.StringWriter;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.XMLProperties;
@@ -24,7 +21,6 @@ import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationReader;
-import com.top_logic.basic.config.ConfigurationSchemaConstants;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -35,7 +31,6 @@ import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ManagedClass.ServiceConfiguration;
 import com.top_logic.basic.module.TypedRuntimeModule.ModuleConfiguration;
 import com.top_logic.basic.xml.XMLPrettyPrinter;
-import com.top_logic.basic.xml.XMLStreamUtil;
 import com.top_logic.gui.ThemeUtil;
 
 /**
@@ -45,8 +40,8 @@ import com.top_logic.gui.ThemeUtil;
  * Each service keeps its configuration in a file of its own, named after the service class. The
  * content of such a file is an application configuration holding a single service entry. An entry
  * written as an override replaces the whole service configuration of the underlying configuration
- * layers, an entry written without the override marker is layered onto them: a keyed list such as
- * the security parent rules of the access manager is then merged by the key of its entries.
+ * layers, an entry written without the override marker is layered onto them: a keyed list is then
+ * merged by the key of its entries.
  * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -113,47 +108,6 @@ public final class InAppServiceConfigStore {
 		ConfigurationReader reader = new ConfigurationReader(context, descriptors);
 		reader.setSource(BinaryDataFactory.createBinaryData(file));
 		return (ApplicationConfig.Config) reader.read();
-	}
-
-	/**
-	 * Whether the given file marks its contents as replacing the underlying configuration layers.
-	 *
-	 * @param file
-	 *        The file to inspect.
-	 * @return Whether an override marker is found, <code>false</code> for a file that does not
-	 *         exist.
-	 * @throws IOException
-	 *         When the file cannot be read.
-	 *
-	 * @implNote The override marker is an instruction to the
-	 *           {@link ConfigurationReader#read() reader} and is not kept in the resulting
-	 *           configuration, so it is looked up in the stored XML.
-	 */
-	public static boolean isOverriding(File file) throws IOException {
-		if (!file.exists()) {
-			return false;
-		}
-		try (InputStream in = BinaryDataFactory.createBinaryData(file).getStream()) {
-			XMLStreamReader reader = XMLStreamUtil.getDefaultInputFactory().createXMLStreamReader(in);
-			try {
-				while (reader.hasNext()) {
-					if (reader.next() == XMLStreamConstants.START_ELEMENT && hasOverrideMarker(reader)) {
-						return true;
-					}
-				}
-			} finally {
-				reader.close();
-			}
-		} catch (XMLStreamException ex) {
-			throw new IOException("Cannot inspect '" + file.getAbsolutePath() + "'.", ex);
-		}
-		return false;
-	}
-
-	private static boolean hasOverrideMarker(XMLStreamReader reader) {
-		String value = reader.getAttributeValue(ConfigurationSchemaConstants.CONFIG_NS,
-			ConfigurationSchemaConstants.CONFIG_OVERLOADING_OVERRIDE);
-		return Boolean.parseBoolean(value);
 	}
 
 	/**

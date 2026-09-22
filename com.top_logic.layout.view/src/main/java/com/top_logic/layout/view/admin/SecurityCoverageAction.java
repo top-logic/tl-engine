@@ -5,19 +5,15 @@
  */
 package com.top_logic.layout.view.admin;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.element.boundsec.manager.coverage.SecurityCoverageCheck;
 import com.top_logic.element.boundsec.manager.coverage.SecurityParentsGenerator;
@@ -25,21 +21,19 @@ import com.top_logic.element.boundsec.manager.coverage.TypeCoverage;
 import com.top_logic.element.boundsec.manager.rule.config.SecurityParentsConfig;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.ViewMessages;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.command.ViewAction;
 
 /**
  * {@link ViewAction} serving the security coverage display: it analyses the model based access
- * definition, renders the security parent rules proposed by that analysis, and stores them in the
- * configuration of the application.
+ * definition and renders the security parent rules proposed by that analysis.
  *
  * <p>
  * App-specific action, referenced by {@code class=} in the coverage view rather than claiming a
  * global {@code @TagName}. What the action does is decided by its {@link Config#getMode() mode}: it
  * either returns the analyzed types ({@code List<TypeCoverage>}) to write to the channel feeding
- * the {@link SecurityCoverageTable}, or the proposed rules as the HTML a display shows - the whole
- * configuration, or the rule of the single type handed to the action as its input.
+ * the {@link SecurityCoverageTable}, or the proposed rules of all of them as the HTML a display
+ * shows. The rule of a single type is rendered the same way for the table's detail channel.
  * </p>
  *
  * <p>
@@ -62,16 +56,8 @@ public class SecurityCoverageAction implements ViewAction {
 		REFRESH,
 
 		/** Return the proposed security parents configuration of the analyzed types. */
-		CONFIGURATION,
+		CONFIGURATION;
 
-		/** Return the security parent rule proposed for the type handed in as the action input. */
-		RULE_OF_SELECTION,
-
-		/**
-		 * Store the proposed security parents in the configuration of the application and return
-		 * the refreshed analysis.
-		 */
-		WRITE_AUTOCONF;
 	}
 
 	/**
@@ -123,11 +109,6 @@ public class SecurityCoverageAction implements ViewAction {
 		return switch (_mode) {
 			case REFRESH -> analyze();
 			case CONFIGURATION -> configurationHtml(rows(context));
-			case RULE_OF_SELECTION -> input instanceof TypeCoverage coverage ? ruleHtml(coverage) : "";
-			case WRITE_AUTOCONF -> {
-				writeToAutoconf(context, rows(context));
-				yield analyze();
-			}
 		};
 	}
 
@@ -160,21 +141,6 @@ public class SecurityCoverageAction implements ViewAction {
 	 */
 	private static String html(String xml) {
 		return "<pre><code>" + TagUtil.encodeXML(xml) + "</code></pre>";
-	}
-
-	/**
-	 * Stores the security parents proposed for the given types in the configuration of the
-	 * application, telling the user where they were written or what stood in the way.
-	 */
-	private void writeToAutoconf(ReactContext context, List<TypeCoverage> coverage) {
-		SecurityParentsGenerator generator = new SecurityParentsGenerator();
-		try {
-			File file = generator.writeToAutoconf(generator.collect(coverage));
-			ViewMessages.info(context, I18NConstants.COVERAGE_CONFIGURATION_WRITTEN__FILE.fill(file.getPath()));
-		} catch (IOException | ConfigurationException | RuntimeException ex) {
-			ViewMessages.error(context, I18NConstants.ERROR_COVERAGE_CONFIGURATION_WRITE,
-				ResKey.text(ex.getMessage()));
-		}
 	}
 
 	/**

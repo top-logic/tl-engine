@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	Shows the security parents proposed by the coverage analysis for all analyzed types, as the XML
-	that belongs into the access manager configuration. The content channel receives the rendered
-	rules from the command that opens the dialog.
+	Shows the security parent rule proposed by the coverage analysis for one type, as the XML that
+	belongs into the access manager configuration. The content channel receives the rendered rule
+	from the command that opens the dialog.
 -->
 <view>
 	<channels>
@@ -11,8 +11,8 @@
 	</channels>
 	<window width="800px">
 		<title>
-			<en>Proposed configuration</en>
-			<de>Vorgeschlagene Konfiguration</de>
+			<en>Proposed rule</en>
+			<de>Vorgeschlagene Regel</de>
 		</title>
 		<html input="content"/>
 		<actions>

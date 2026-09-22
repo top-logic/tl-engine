@@ -176,9 +176,10 @@ public class SecurityCoverageAnalysis {
 		List<NavigationRule> parentRules = List.copyOf(_accessManager.getSecurityParentRules(type));
 		Set<BoundedRole> readRoles = Set.copyOf(_accessRights.getAllowedRoles(type, SimpleBoundCommandGroup.READ));
 		boolean withoutSecurity = _accessRights.isWithoutSecurity(type);
+		boolean internal = _accessRights.isInternal(type);
 
 		List<CoverageFinding> findings = new ArrayList<>();
-		if (!withoutSecurity) {
+		if (!withoutSecurity && !internal) {
 			if (roleRules.isEmpty() && parentRules.isEmpty()) {
 				findings.add(CoverageFinding.noRoleSource(type, _rootFallbackActive));
 				addContainerFinding(type, findings);
@@ -188,7 +189,7 @@ public class SecurityCoverageAnalysis {
 			}
 			addDeadGrantFindings(type, findings);
 		}
-		return new TypeCoverage(type, withoutSecurity, readRoles, roleRules, parentRules,
+		return new TypeCoverage(type, withoutSecurity, internal, readRoles, roleRules, parentRules,
 			Collections.unmodifiableList(findings));
 	}
 

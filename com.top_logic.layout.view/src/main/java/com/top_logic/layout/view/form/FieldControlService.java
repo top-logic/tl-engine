@@ -767,10 +767,29 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 		if (type == null) {
 			return new ReactTextControl(context, MetaLabelProvider.INSTANCE.getLabel(value));
 		}
-		AbstractFieldModel model = new AbstractFieldModel(value);
+		AbstractFieldModel model = displayModel(type, columnType.multiple(), value);
 		model.setEditable(false);
 		FieldSpec field = fieldSpec(type, columnType.annotations(), null, columnType.multiple(), model);
 		return createFieldControl(context, type, field, model);
+	}
+
+	/**
+	 * The field holding a displayed value of the given type that no attribute declares: an
+	 * option-less select model where values of the type are chosen from options, so that objects
+	 * and classifiers render with the select control's read-only representation (label and icon),
+	 * and a plain field otherwise.
+	 *
+	 * @param multiple
+	 *        Whether the field holds a collection of values rather than a single one.
+	 */
+	private AbstractFieldModel displayModel(TLType type, boolean multiple, Object value) {
+		ReactFieldControlProvider mapped = byType(type);
+		boolean select =
+			mapped != null ? mapped instanceof SelectControlProvider : AttributeOptions.isStructuralSelect(type);
+		if (!select) {
+			return new AbstractFieldModel(value);
+		}
+		return new SimpleSelectFieldModel(selection(multiple, value), Collections.emptyList(), multiple);
 	}
 
 	/**

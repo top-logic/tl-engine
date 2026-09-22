@@ -5,8 +5,9 @@
 	type. The SecurityCoverageTable analyses the definition itself when the view is opened and
 	rebuilds from the rows channel after a command; it writes the selected row to the selection
 	channel and the parts of it the detail shows to the selectedType / selectedFindings /
-	selectedRule channels. "Show configuration" and "Show rule" hand the rendered security parents
-	to the same dialog, "Write to autoconf" stores them in the configuration of the application.
+	selectedRule channels. "Show configuration" hands the rendered security parents of all types
+	to a dialog, "Show rule" the rule of the selected type (it is hidden while the selected type
+	has none); both are copied into the application configuration by the developer.
 -->
 <view>
 	<channels>
@@ -62,22 +63,6 @@
 								dialog-view="admin/access-control/coverage-configuration.view.xml"
 							/>
 						</generic-command>
-						<generic-command
-							clique="more"
-							image="css:bi bi-save"
-							placement="TOOLBAR"
-						>
-							<label>
-								<en>Write to autoconf</en>
-								<de>In Autoconf schreiben</de>
-							</label>
-							<confirm expr="x -> #('The proposed security parents are written into the autoconf folder of the application. They take effect after a restart.'@en, 'Die vorgeschlagenen Sicherheitsväter werden in den Autoconf-Ordner der Anwendung geschrieben. Sie werden nach einem Neustart wirksam.'@de)"/>
-							<action class="com.top_logic.layout.view.admin.SecurityCoverageAction"
-								mode="WRITE_AUTOCONF"
-								rows="rows"
-							/>
-							<write-channel name="rows"/>
-						</generic-command>
 					</commands>
 					<child class="com.top_logic.layout.view.admin.SecurityCoverageTable"
 						input="rows"
@@ -100,7 +85,7 @@
 					<commands>
 						<generic-command
 							image="css:bi bi-code-square"
-							input="selection"
+							input="selectedRule"
 							placement="TOOLBAR"
 						>
 							<label>
@@ -108,14 +93,11 @@
 								<de>Regel anzeigen</de>
 							</label>
 							<executability>
-								<null-input-disabled/>
+								<visible-if expr="rule -> $rule != null"/>
 							</executability>
-							<action class="com.top_logic.layout.view.admin.SecurityCoverageAction"
-								mode="RULE_OF_SELECTION"
-							/>
 							<open-dialog
 								bind-input-to="content"
-								dialog-view="admin/access-control/coverage-configuration.view.xml"
+								dialog-view="admin/access-control/coverage-rule.view.xml"
 							/>
 						</generic-command>
 					</commands>
@@ -149,7 +131,7 @@
 									<text>
 										<label>
 											<en>Proposed security parent rule</en>
-											<de>Vorgeschlagene Sicherheitsvater-Regel</de>
+											<de>Vorgeschlagene Regel für das übergeordnete Sicherheitsobjekt</de>
 										</label>
 									</text>
 									<html input="selectedRule"/>

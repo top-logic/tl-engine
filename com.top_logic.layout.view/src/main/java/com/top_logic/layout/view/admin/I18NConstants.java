@@ -50,19 +50,14 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey MATRIX_GROUP_COLUMN;
 
 	/**
-	 * @en Complete
-	 */
-	public static ResKey COVERAGE_STATUS_COVERED;
-
-	/**
-	 * @en Incomplete
-	 */
-	public static ResKey COVERAGE_STATUS_INCOMPLETE;
-
-	/**
 	 * @en Type
 	 */
 	public static ResKey COVERAGE_COLUMN_TYPE;
+
+	/**
+	 * @en Module
+	 */
+	public static ResKey COVERAGE_COLUMN_MODULE;
 
 	/**
 	 * @en Status
@@ -88,18 +83,6 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Findings
 	 */
 	public static ResKey COVERAGE_COLUMN_FINDINGS;
-
-	/**
-	 * @en The proposed security parents were written to "{0}". They take effect after a restart of
-	 *     the application.
-	 */
-	public static ResKey1 COVERAGE_CONFIGURATION_WRITTEN__FILE;
-
-	/**
-	 * @en The proposed security parents could not be written to the configuration of the
-	 *     application.
-	 */
-	public static ResKey ERROR_COVERAGE_CONFIGURATION_WRITE;
 
 	static {
 		initConstants(I18NConstants.class);

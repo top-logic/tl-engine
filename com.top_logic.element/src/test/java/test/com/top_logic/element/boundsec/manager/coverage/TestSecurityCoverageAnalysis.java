@@ -75,6 +75,9 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 	/** Type excluded from access control. */
 	private static final String UNSECURED = MODULE + ":Unsecured";
 
+	/** Type used by the application's code only. */
+	private static final String INTERNAL = MODULE + ":Internal";
+
 	/** The only type of {@link #EXCLUDED_MODULE}. */
 	private static final String IGNORED = EXCLUDED_MODULE + ":Ignored";
 
@@ -191,7 +194,15 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 	public void testTypeWithoutSecurityHasNoFinding() {
 		TypeCoverage coverage = coverage(UNSECURED);
 		assertTrue("The type is excluded from access control.", coverage.withoutSecurity());
-		assertEquals(coverage.toString(), CoverageStatus.COVERED, coverage.status());
+		assertEquals(coverage.toString(), CoverageStatus.EXEMPT, coverage.status());
+		assertTrue(coverage.toString(), coverage.findings().isEmpty());
+	}
+
+	public void testInternalTypeHasNoFinding() {
+		TypeCoverage coverage = coverage(INTERNAL);
+		assertTrue("The type is used by the application's code only.", coverage.internal());
+		assertFalse("An internal type is access controlled.", coverage.withoutSecurity());
+		assertEquals(coverage.toString(), CoverageStatus.EXEMPT, coverage.status());
 		assertTrue(coverage.toString(), coverage.findings().isEmpty());
 	}
 

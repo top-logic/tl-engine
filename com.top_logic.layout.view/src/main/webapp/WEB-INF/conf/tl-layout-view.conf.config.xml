@@ -2,6 +2,21 @@
 
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<services>
+		<!--
+			The login model holds the transient form objects of the login views (credentials,
+			password change, one-time password, forgotten password, password reset). They are
+			handled by the login code only and never on behalf of a signed-in user, so they carry no
+			access definition on purpose.
+		-->
+		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+			<instance>
+				<security-config>
+					<module name="tl.login"
+						internal="true"
+					/>
+				</security-config>
+			</instance>
+		</config>
 		<config service-class="com.top_logic.basic.module.ModuleSystem">
 			<instance class="com.top_logic.basic.module.ModuleSystem">
 				<modules>

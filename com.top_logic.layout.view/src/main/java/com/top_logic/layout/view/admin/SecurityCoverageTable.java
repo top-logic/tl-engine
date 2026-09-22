@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -32,26 +33,39 @@ import com.top_logic.element.boundsec.manager.rule.PathElement;
 import com.top_logic.element.boundsec.manager.rule.PathNavigation;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
 import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.react.control.table.CellControlFactory;
 import com.top_logic.layout.react.control.table.TableViewControl;
+import com.top_logic.layout.react.controlprovider.MetaResourceControlProvider;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
+import com.top_logic.layout.view.table.ColumnProviderService;
+import com.top_logic.layout.view.table.ColumnType;
+import com.top_logic.model.TLClass;
+import com.top_logic.model.TLModule;
+import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
+import com.top_logic.table.GroupSpec;
+import com.top_logic.table.SortSpec;
+import com.top_logic.table.TableViewState;
 import com.top_logic.table.filter.TextColumnFilter;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
+import com.top_logic.table.impl.DelegatingColumn;
 import com.top_logic.table.impl.ListRowSource;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.util.Resources;
 
 /**
  * Table of the model based access definition, one row per analyzed type with the roles that may
- * read it, the rules that deliver a role on it and the gaps found in its definition.
+ * read it, the rules that deliver a role on it and the gaps found in its definition. The rows are
+ * grouped by the module of the type when the table is opened; the user regroups or ungroups it from
+ * a column header.
  *
  * <p>
  * App-specific admin widget (referenced by {@code class=}, not a reusable {@code @TagName} element).
@@ -65,15 +79,44 @@ import com.top_logic.util.Resources;
  *
  * @implNote The rows come from {@link SecurityCoverageCheck#analyze()}; a row is keyed by the
  *           qualified name of its type, since every analysis yields fresh {@link TypeCoverage}
- *           instances and the selection is to survive a refresh.
+ *           instances and the selection is to survive a refresh. The type, module and role columns
+ *           are built by the {@link ColumnProviderService} from the model types of their values, so
+ *           they show, sort and filter those objects exactly as a table over model attributes does.
  */
 public class SecurityCoverageTable implements UIElement {
 
-	/** Separator between the entries of a list rendered into a cell. */
-	private static final String VALUE_SEPARATOR = ", ";
+	/** Id of the column showing the analyzed type. */
+	public static final String COLUMN_TYPE = "type";
+
+	/** Id of the column showing the module of the analyzed type, the initial grouping column. */
+	public static final String COLUMN_MODULE = "module";
+
+	/** Id of the column showing the {@link CoverageStatus} of the analyzed type. */
+	public static final String COLUMN_STATUS = "status";
+
+	/** Id of the column showing the roles that may read the analyzed type. */
+	public static final String COLUMN_READ_ROLES = "readRoles";
+
+	/** Id of the column showing the role rules applying to the analyzed type. */
+	public static final String COLUMN_ROLE_RULES = "roleRules";
+
+	/** Id of the column showing the security parent rules applying to the analyzed type. */
+	public static final String COLUMN_SECURITY_PARENTS = "securityParents";
+
+	/** Id of the column showing the findings reported for the analyzed type. */
+	public static final String COLUMN_FINDINGS = "findings";
+
+	/** Qualified name of the model type of the values in the {@link #COLUMN_TYPE} column. */
+	private static final String TL_CLASS_TYPE = "tl.model:TLClass";
+
+	/** Qualified name of the model type of the values in the {@link #COLUMN_MODULE} column. */
+	private static final String TL_MODULE_TYPE = "tl.model:TLModule";
 
 	/** Separator between the rules rendered into a cell. */
 	private static final String RULE_SEPARATOR = "; ";
+
+	/** Separator between the entries of a list rendered into a cell. */
+	private static final String VALUE_SEPARATOR = ", ";
 
 	/** Separator between the steps of a rendered navigation path. */
 	private static final String STEP_SEPARATOR = " / ";
@@ -124,7 +167,7 @@ public class SecurityCoverageTable implements UIElement {
 		ChannelRef getSelection();
 
 		/**
-		 * Channel the qualified name of the selected type is written to.
+		 * Channel the selected type is written to.
 		 */
 		@Name(SELECTED_TYPE)
 		@Nullable
@@ -174,36 +217,33 @@ public class SecurityCoverageTable implements UIElement {
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		Resources resources = Resources.getInstance();
-		String covered = resources.getString(I18NConstants.COVERAGE_STATUS_COVERED);
-		String incomplete = resources.getString(I18NConstants.COVERAGE_STATUS_INCOMPLETE);
-
-		List<Column<TypeCoverage, ?>> columns = new ArrayList<>();
-		columns.add(textColumn("type", I18NConstants.COVERAGE_COLUMN_TYPE, SecurityCoverageTable::typeName, 320));
-		columns.add(textColumn("status", I18NConstants.COVERAGE_COLUMN_STATUS,
-			coverage -> coverage.status() == CoverageStatus.COVERED ? covered : incomplete, 120));
-		columns.add(textColumn("readRoles", I18NConstants.COVERAGE_COLUMN_READ_ROLES,
-			SecurityCoverageTable::readRoles, 200));
-		columns.add(textColumn("roleRules", I18NConstants.COVERAGE_COLUMN_ROLE_RULES,
+		List<Column<Object, ?>> columns = new ArrayList<>();
+		columns.add(objectColumn(COLUMN_TYPE, I18NConstants.COVERAGE_COLUMN_TYPE, TL_CLASS_TYPE, false,
+			row -> coverage(row).type(), 260));
+		columns.add(objectColumn(COLUMN_MODULE, I18NConstants.COVERAGE_COLUMN_MODULE, TL_MODULE_TYPE, false,
+			row -> coverage(row).type().getModule(), 200));
+		columns.add(statusColumn());
+		columns.add(objectColumn(COLUMN_READ_ROLES, I18NConstants.COVERAGE_COLUMN_READ_ROLES, BoundedRole.ROLE_TYPE,
+			true, row -> readRoles(coverage(row)), 280));
+		columns.add(textColumn(COLUMN_ROLE_RULES, I18NConstants.COVERAGE_COLUMN_ROLE_RULES,
 			SecurityCoverageTable::roleRules, 220));
-		columns.add(textColumn("securityParents", I18NConstants.COVERAGE_COLUMN_SECURITY_PARENTS,
+		columns.add(textColumn(COLUMN_SECURITY_PARENTS, I18NConstants.COVERAGE_COLUMN_SECURITY_PARENTS,
 			SecurityCoverageTable::securityParents, 300));
-		columns.add(textColumn("findings", I18NConstants.COVERAGE_COLUMN_FINDINGS,
+		columns.add(textColumn(COLUMN_FINDINGS, I18NConstants.COVERAGE_COLUMN_FINDINGS,
 			SecurityCoverageTable::findings, 460));
 
 		ViewChannel dataChannel = _inputRef != null ? context.resolveChannel(_inputRef) : null;
-
-		List<TypeCoverage> initialRows = rows(dataChannel == null ? null : dataChannel.get());
+		List<Object> initialRows = rows(dataChannel == null ? null : dataChannel.get());
 		Map<Object, TypeCoverage> rowByKey = new HashMap<>(index(initialRows));
-
-		ListRowSource<TypeCoverage> source =
-			new ListRowSource<>(initialRows, columns, SecurityCoverageTable::typeName);
-		DefaultTableView<TypeCoverage> view = DefaultTableView.create(columns, source);
-		TableViewControl<TypeCoverage> control = new TableViewControl<>(context, view, false);
+		ListRowSource<Object> source = new ListRowSource<>(initialRows, columns, SecurityCoverageTable::rowKey);
+		TableViewState initialState = DefaultTableView.initialState(columns, SortSpec.NONE, Set.of());
+		initialState.setGrouping(new GroupSpec(List.of(COLUMN_MODULE)));
+		DefaultTableView<Object> view = new DefaultTableView<>(columns, source, initialState);
+		TableViewControl<Object> control = new TableViewControl<>(context, view, false);
 
 		if (dataChannel != null) {
 			ChannelListener listener = (sender, oldValue, newValue) -> {
-				List<TypeCoverage> newRows = rows(newValue);
+				List<Object> newRows = rows(newValue);
 				rowByKey.clear();
 				rowByKey.putAll(index(newRows));
 				source.setElements(newRows);
@@ -225,7 +265,7 @@ public class SecurityCoverageTable implements UIElement {
 					selection.set(row);
 				}
 				if (selectedType != null) {
-					selectedType.set(row == null ? null : typeName(row));
+					selectedType.set(row == null ? null : row.type());
 				}
 				if (selectedFindings != null) {
 					selectedFindings.set(row == null ? null : findings(row));
@@ -236,54 +276,56 @@ public class SecurityCoverageTable implements UIElement {
 				}
 			});
 		}
-
 		return control;
 	}
 
 	/**
 	 * The analyzed types held by the channel value, or a fresh analysis when the channel is unset.
 	 */
-	@SuppressWarnings("unchecked")
-	private static List<TypeCoverage> rows(Object value) {
-		if (value instanceof List<?> list) {
-			return (List<TypeCoverage>) list;
-		}
-		return SecurityCoverageCheck.getInstance().analyze();
+	private static List<Object> rows(Object value) {
+		List<?> rows = value instanceof List<?> list ? list : SecurityCoverageCheck.getInstance().analyze();
+		return new ArrayList<>(rows);
 	}
 
 	/**
 	 * The given rows by their row key.
 	 */
-	private static Map<Object, TypeCoverage> index(List<TypeCoverage> rows) {
+	private static Map<Object, TypeCoverage> index(List<Object> rows) {
 		Map<Object, TypeCoverage> result = new LinkedHashMap<>();
-		for (TypeCoverage row : rows) {
-			result.put(typeName(row), row);
+		for (Object row : rows) {
+			result.put(rowKey(row), coverage(row));
 		}
 		return result;
 	}
 
 	/**
-	 * The qualified name of the analyzed type, which is also the row key.
+	 * The row as the analyzed type it holds.
 	 */
-	private static String typeName(TypeCoverage coverage) {
-		return TLModelUtil.qualifiedName(coverage.type());
+	private static TypeCoverage coverage(Object row) {
+		return (TypeCoverage) row;
 	}
 
 	/**
-	 * The names of the roles that may read the type.
+	 * The qualified name of the analyzed type, which is the row key.
 	 */
-	private static String readRoles(TypeCoverage coverage) {
+	private static String rowKey(Object row) {
+		return TLModelUtil.qualifiedName(coverage(row).type());
+	}
+
+	/**
+	 * The roles that may read the type, ordered by name.
+	 */
+	private static List<BoundedRole> readRoles(TypeCoverage coverage) {
 		return coverage.readRoles().stream()
-			.map(BoundedRole::getName)
-			.sorted()
-			.collect(Collectors.joining(VALUE_SEPARATOR));
+			.sorted(Comparator.comparing(BoundedRole::getName))
+			.toList();
 	}
 
 	/**
 	 * The ids of the rules delivering a role on the type.
 	 */
-	private static String roleRules(TypeCoverage coverage) {
-		return coverage.roleRules().stream()
+	private static String roleRules(Object row) {
+		return coverage(row).roleRules().stream()
 			.map(RoleProvider::getId)
 			.collect(Collectors.joining(VALUE_SEPARATOR));
 	}
@@ -291,8 +333,8 @@ public class SecurityCoverageTable implements UIElement {
 	/**
 	 * The paths of the security parent rules applying to the type.
 	 */
-	private static String securityParents(TypeCoverage coverage) {
-		return coverage.securityParentRules().stream()
+	private static String securityParents(Object row) {
+		return coverage(row).securityParentRules().stream()
 			.map(SecurityCoverageTable::path)
 			.collect(Collectors.joining(RULE_SEPARATOR));
 	}
@@ -327,25 +369,61 @@ public class SecurityCoverageTable implements UIElement {
 	/**
 	 * The messages of the findings reported for the type, in the language of the user.
 	 */
-	private static String findings(TypeCoverage coverage) {
+	private static String findings(Object row) {
 		Resources resources = Resources.getInstance();
-		return coverage.findings().stream()
+		return coverage(row).findings().stream()
 			.map(CoverageFinding::getMessage)
 			.map(resources::getString)
 			.collect(Collectors.joining(RULE_SEPARATOR));
 	}
 
 	/**
+	 * A column over objects of the given model type, built the way a table over model attributes
+	 * builds its columns: the objects are shown with their icon and label, sorted and filtered by
+	 * that label.
+	 *
+	 * @param typeName
+	 *        The qualified name of the model type of the column's values.
+	 * @param multiple
+	 *        Whether a cell holds a collection of values.
+	 */
+	private static Column<Object, ?> objectColumn(String id, ResKey label, String typeName, boolean multiple,
+			Function<Object, Object> value, int width) {
+		TLType type = TLModelUtil.findType(typeName);
+		Column<Object, ?> column =
+			ColumnProviderService.getInstance().createColumn(id, label, ColumnType.of(type, multiple), value);
+		return DelegatingColumn.withDefaultWidth(column, width);
+	}
+
+	/**
+	 * The column showing the {@link CoverageStatus} of a type with its icon and label, sorted by
+	 * the order of the status constants and filtered by the label.
+	 */
+	private static Column<Object, CoverageStatus> statusColumn() {
+		Resources resources = Resources.getInstance();
+		Function<CoverageStatus, String> text = status -> resources.getString(ResKey.forEnum(status));
+		return DefaultColumn.<Object, CoverageStatus> builder(COLUMN_STATUS, row -> coverage(row).status())
+			.label(I18NConstants.COVERAGE_COLUMN_STATUS)
+			.renderer(status -> new CellContent.Raw(
+				(CellControlFactory) context -> MetaResourceControlProvider.INSTANCE.createControl(context, status)))
+			.sort(() -> Comparator.<CoverageStatus> naturalOrder())
+			.filter(new TextColumnFilter<>(text))
+			.width(160)
+			.build();
+	}
+
+	/**
 	 * A sortable, text-filterable column reading one {@link String} property of an analyzed type.
 	 */
-	private static Column<TypeCoverage, String> textColumn(String id, ResKey label,
-			Function<? super TypeCoverage, String> value, int width) {
-		return DefaultColumn.<TypeCoverage, String> builder(id, value)
+	private static Column<Object, String> textColumn(String id, ResKey label, Function<Object, String> value,
+			int width) {
+		return DefaultColumn.<Object, String> builder(id, value)
 			.label(label)
 			.renderer(CellContent::text)
 			.sort(() -> Comparator.<String> naturalOrder())
-			.filter(new TextColumnFilter<>(text -> text))
+			.filter(new TextColumnFilter<>(t -> t))
 			.width(width)
 			.build();
 	}
+
 }

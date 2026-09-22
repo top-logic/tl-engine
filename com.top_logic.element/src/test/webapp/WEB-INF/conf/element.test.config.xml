@@ -124,6 +124,9 @@
 					<class name="TestSecurityCoverage:Unsecured"
 						without-security="true"
 					/>
+					<class name="TestSecurityCoverage:Internal"
+						internal="true"
+					/>
 				</security-config>
 			</instance>
 		</config>

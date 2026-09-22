@@ -1513,6 +1513,9 @@ button.tlPanel__actionButton:focus-visible {
 .tlSidebar__headerSlot,
 .tlSidebar__footerSlot {
 	flex-shrink: 0;
+	/* Inset like the items below, so the rail chrome lines up with the item labels
+	   instead of sitting against the rail edge. */
+	padding: var(--spacing-03) var(--spacing-04);
 	border-bottom: 1px solid var(--border-subtle);
 	overflow: hidden;
 }
@@ -1527,6 +1530,9 @@ button.tlPanel__actionButton:focus-visible {
 	display: flex;
 	justify-content: center;
 	align-items: center;
+	/* The rail is icon width: a child that takes the full width centres its own content
+	   as well, so the chrome sits under the item icons whatever control fills the slot. */
+	text-align: center;
 	padding: var(--spacing-02);
 	overflow: hidden;
 }
@@ -1566,6 +1572,17 @@ button.tlSidebar__item:hover {
 button.tlSidebar__item:focus-visible {
 	outline: 2px solid var(--focus);
 	outline-offset: -2px;
+}
+
+/* An item offered, but out of reach: greyed out and unresponsive to the pointer. */
+.tlSidebar__item--disabled,
+button.tlSidebar__item:disabled,
+button.tlSidebar__item:disabled:hover,
+button.tlSidebar__flyoutItem:disabled,
+button.tlSidebar__flyoutItem:disabled:hover {
+	background: transparent;
+	color: var(--text-disabled);
+	cursor: default;
 }
 
 /* Navigation item */

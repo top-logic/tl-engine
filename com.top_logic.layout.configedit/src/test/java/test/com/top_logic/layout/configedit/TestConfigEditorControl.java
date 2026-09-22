@@ -1301,8 +1301,8 @@ public class TestConfigEditorControl extends TestCase {
 		for (ReactControl child : editor.scriptingChildren()) {
 			if (child instanceof ReactFormGroupControl) {
 				groups++;
-				assertEquals("Group '" + child.scriptingScalarState().get("header") + "' must take the whole row.",
-					Boolean.TRUE, child.scriptingScalarState().get("fullLine"));
+				assertEquals("Group must take the whole row: " + child,
+					Boolean.TRUE, child.scriptingScalarState().get(ReactFormGroupControl.FULL_LINE));
 			}
 		}
 		assertTrue("Expected the nested item group and the collection groups.", groups >= 2);

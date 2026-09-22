@@ -1,54 +1,168 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	Second frame of the project drill-down: the milestones of the project the frame was opened
-	for. Opening one pushes its tickets, announced with the milestone's name.
+	Second frame of the project drill-down: the cockpit of the project the frame was opened for.
+	
+	The cockpit is a dashboard of three tiles. The Project tile displays the project and nothing
+	else. The Milestones and Notes tiles are entry points: pressing one pushes the frame listing
+	that collection, announced by a label of its own. The engine marks such a tile only by how it
+	answers the user, so each of the two cards draws the chevron itself, in the header slot at the
+	right of its title.
+	
+	The Notes tile is refused while the project has no notes and gives that as its reason; creating
+	the first note through the card's own button lifts the refusal, because the action observes the
+	project. The create buttons inside the cards answer a press themselves, so they open their
+	dialog instead of pushing the list behind the tile.
+	
+	The milestone channel carries what the create dialog reports back: the milestone it created,
+	which the milestone list picks up when the Milestones tile is pressed.
 -->
 <view>
 	<channels>
 		<channel name="project"/>
 		<channel name="milestone"/>
+		<derived-channel name="milestoneCount"
+			expr="p -> if($p == null, 0, $p.get(`tl.demo.projectManagement:ProjectScope#milestones`).size())"
+			inputs="project"
+		/>
+		<derived-channel name="noteCount"
+			expr="p -> if($p == null, 0, $p.get(`tl.demo.projectManagement:ProjectScope#notes`).size())"
+			inputs="project"
+		/>
 	</channels>
 
 	<panel>
 		<title>
-			<en>Milestones</en>
-			<de>Meilensteine</de>
+			<en>Cockpit</en>
+			<de>Cockpit</de>
 		</title>
-		<commands>
-			<command class="com.top_logic.layout.view.tiles.NavigatePushCommand"
-				bind-input-to="milestone"
-				image="css:bi bi-box-arrow-in-right"
-				input="milestone"
-				placement="TOOLBAR"
-				view="projects/tickets.view.xml"
+		<dashboard id="project-cockpit">
+			<tile id="project"
+				width="half"
 			>
-				<label>
-					<en>Open</en>
-					<de>Öffnen</de>
-				</label>
-				<executability>
-					<null-input-disabled/>
-				</executability>
-				<frame-label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
-					expr="m -> $m.get(`tl.demo.projectManagement:Milestone#name`)"
-					inputs="milestone"
-				/>
-			</command>
-		</commands>
-		<table
-			observed-types="tl.demo.projectManagement:Milestone"
-			selection="milestone"
-			types="tl.demo.projectManagement:Milestone"
-		>
-			<columns>
-				<column attribute="name"/>
-				<column attribute="dueDate"/>
-			</columns>
-			<inputs>
-				<input channel="project"/>
-			</inputs>
-			<rows>p -&gt; if($p == null, list(), $p.get(`tl.demo.projectManagement:ProjectScope#milestones`))</rows>
-		</table>
+				<panel>
+					<title>
+						<en>Project</en>
+						<de>Projekt</de>
+					</title>
+					<form input="project">
+						<field attribute="name"/>
+						<field attribute="description"/>
+					</form>
+				</panel>
+			</tile>
+			<tile id="milestones"
+				width="quarter"
+			>
+				<card>
+					<title>
+						<en>Milestones</en>
+						<de>Meilensteine</de>
+					</title>
+					<header-content>
+						<theme-icon image="css:bi bi-chevron-right"/>
+					</header-content>
+					<text input="milestoneCount"/>
+					<button>
+						<action class="com.top_logic.layout.view.command.GenericViewCommand"
+							image="css:bi bi-plus-lg"
+							input="project"
+						>
+							<label>
+								<en>New Milestone</en>
+								<de>Neuer Meilenstein</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<execute-script function="x -> new(`tl.demo.projectManagement:Milestone`, transient: true)"/>
+							<open-dialog
+								bind-input-to="model"
+								dialog-view="demo/create-milestone.view.xml"
+							>
+								<bind
+									channel="container"
+									to="project"
+								/>
+								<bind
+									channel="selection"
+									to="milestone"
+								/>
+							</open-dialog>
+						</action>
+					</button>
+				</card>
+				<action class="com.top_logic.layout.view.tiles.NavigatePushCommand"
+					bind-input-to="project"
+					input="project"
+					observed-types="tl.demo.projectManagement:ProjectScope"
+					view="projects/milestone-list.view.xml"
+				>
+					<executability>
+						<null-input-disabled/>
+					</executability>
+					<frame-label class="com.top_logic.layout.view.tiles.StaticTileLabel">
+						<value>
+							<en>Milestones</en>
+							<de>Meilensteine</de>
+						</value>
+					</frame-label>
+				</action>
+			</tile>
+			<tile id="notes"
+				width="quarter"
+			>
+				<card>
+					<title>
+						<en>Notes</en>
+						<de>Notizen</de>
+					</title>
+					<header-content>
+						<theme-icon image="css:bi bi-chevron-right"/>
+					</header-content>
+					<text input="noteCount"/>
+					<button>
+						<action class="com.top_logic.layout.view.command.GenericViewCommand"
+							image="css:bi bi-plus-lg"
+							input="project"
+						>
+							<label>
+								<en>New Note</en>
+								<de>Neue Notiz</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<execute-script function="x -> new(`tl.demo.projectManagement:Note`, transient: true)"/>
+							<open-dialog
+								bind-input-to="model"
+								dialog-view="demo/create-note.view.xml"
+							>
+								<bind
+									channel="container"
+									to="project"
+								/>
+							</open-dialog>
+						</action>
+					</button>
+				</card>
+				<action class="com.top_logic.layout.view.tiles.NavigatePushCommand"
+					bind-input-to="project"
+					input="project"
+					observed-types="tl.demo.projectManagement:ProjectScope"
+					view="projects/notes.view.xml"
+				>
+					<executability>
+						<disabled-if expr="p -> if($p == null || $p.get(`tl.demo.projectManagement:ProjectScope#notes`).isEmpty(), #('The project has no notes.'@en, 'Das Projekt hat keine Notizen.'@de))"/>
+					</executability>
+					<frame-label class="com.top_logic.layout.view.tiles.StaticTileLabel">
+						<value>
+							<en>Notes</en>
+							<de>Notizen</de>
+						</value>
+					</frame-label>
+				</action>
+			</tile>
+		</dashboard>
 	</panel>
 </view>

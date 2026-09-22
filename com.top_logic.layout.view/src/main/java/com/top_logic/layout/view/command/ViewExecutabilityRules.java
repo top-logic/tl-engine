@@ -46,12 +46,49 @@ public class ViewExecutabilityRules {
 		for (PolymorphicConfiguration<? extends ViewExecutabilityRule> ruleConfig : ruleConfigs) {
 			ViewExecutabilityRule rule = instantiation.getInstance(ruleConfig);
 			if (rule != null) {
-				if (rule instanceof ContextDependentRule contextDependent) {
-					contextDependent.bind(context);
-				}
+				bind(rule, context);
 				rules.add(rule);
 			}
 		}
 		return CombinedViewExecutabilityRule.combine(rules);
+	}
+
+	/**
+	 * Puts the rule a command {@link ViewCommand#getIntrinsicRule() brings of its own} in front of
+	 * the rules built for its use site.
+	 *
+	 * <p>
+	 * The command's own rule is bound to the same context as the configured ones, so both decide
+	 * from the place the command is displayed in.
+	 * </p>
+	 *
+	 * @param context
+	 *        The build-time context of the guarded command, {@code null} for a command built
+	 *        outside a view (its own rule is then left unbound).
+	 * @param command
+	 *        The command contributing a rule of its own.
+	 * @param configured
+	 *        The rule built from the command's configuration.
+	 * @return The rule deciding over the command, both parts taken into account.
+	 */
+	public static ViewExecutabilityRule withIntrinsicRule(ViewContext context, ViewCommand command,
+			ViewExecutabilityRule configured) {
+		ViewExecutabilityRule intrinsic = command.getIntrinsicRule();
+		if (intrinsic == ViewExecutabilityRule.ALWAYS_EXECUTABLE) {
+			return configured;
+		}
+		if (context != null) {
+			bind(intrinsic, context);
+		}
+		if (configured == ViewExecutabilityRule.ALWAYS_EXECUTABLE) {
+			return intrinsic;
+		}
+		return CombinedViewExecutabilityRule.combine(List.of(intrinsic, configured));
+	}
+
+	private static void bind(ViewExecutabilityRule rule, ViewContext context) {
+		if (rule instanceof ContextDependentRule contextDependent) {
+			contextDependent.bind(context);
+		}
 	}
 }

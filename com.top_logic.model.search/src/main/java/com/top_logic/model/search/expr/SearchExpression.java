@@ -268,7 +268,23 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	 * @see #filterSecurity(Person, Object)
 	 */
 	public static Object filterSecurity(Object value) {
-		return filterSecurity(TLContext.currentUser(), value);
+		return filterSecurity(TLContext.currentUser(), value, null);
+	}
+
+	/**
+	 * Filters the given value such that the result contains only elements that the current user is
+	 * allowed to see, recording the removed objects in the given report.
+	 *
+	 * @param value
+	 *        The value to filter for security. May be null.
+	 * @param report
+	 *        The report collecting the removed objects. May be <code>null</code>, then nothing is
+	 *        recorded.
+	 *
+	 * @see #filterSecurity(Person, Object, SecurityFilterReport)
+	 */
+	public static Object filterSecurity(Object value, SecurityFilterReport report) {
+		return filterSecurity(TLContext.currentUser(), value, report);
 	}
 
 	/**
@@ -301,6 +317,30 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	 *         the given value is returned.
 	 */
 	public static Object filterSecurity(Person user, Object value) {
+		return filterSecurity(user, value, null);
+	}
+
+	/**
+	 * Filters the given value such that the result contains only elements that the given user is
+	 * allowed to see, recording the removed objects in the given report.
+	 *
+	 * <p>
+	 * Which values are filtered and which are kept is described at
+	 * {@link #filterSecurity(Person, Object)}.
+	 * </p>
+	 *
+	 * @param user
+	 *        The user whose read rights decide.
+	 * @param value
+	 *        The value to filter for security. May be null.
+	 * @param report
+	 *        The report collecting the removed objects. May be <code>null</code>, then nothing is
+	 *        recorded.
+	 *
+	 * @return A value containing only allowed elements. When the value is (recursively) allowed,
+	 *         the given value is returned.
+	 */
+	public static Object filterSecurity(Person user, Object value, SecurityFilterReport report) {
 		if (value == null) {
 			return null;
 		}
@@ -309,30 +349,33 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 			return value;
 		}
 		if (value instanceof TLObject object) {
-			return filterSecurityTLObject(user, object);
+			return filterSecurityTLObject(user, object, report);
 		}
 		if (value instanceof ReflectiveDataObject) {
 			// A structured value, not a container of business objects, see above.
 			return value;
 		}
 		if (value instanceof Collection collectionValue) {
-			return filterSecurityCollection(user, collectionValue);
+			return filterSecurityCollection(user, collectionValue, report);
 		}
 		if (value instanceof Map<?, ?> mapValue) {
-			return filterSecurityMap(user, mapValue);
+			return filterSecurityMap(user, mapValue, report);
 		}
 		return value;
 	}
 
-	private static Object filterSecurityTLObject(Person user, TLObject value) {
+	private static Object filterSecurityTLObject(Person user, TLObject value, SecurityFilterReport report) {
 		if (ModelAccessRights.getInstance().isReadAllowed(user, value)) {
 			return value;
 		} else {
+			if (report != null) {
+				report.dropped(value);
+			}
 			return null;
 		}
 	}
 
-	private static Object filterSecurityCollection(Person user, Collection<?> value) {
+	private static Object filterSecurityCollection(Person user, Collection<?> value, SecurityFilterReport report) {
 		if (value.isEmpty()) {
 			return value;
 		}
@@ -343,7 +386,7 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 			filtered = new ArrayList<>();
 			for (int i = 0, size = list.size(); i < size; i++) {
 				Object elt = list.get(i);
-				Object filteredValue = filterSecurity(user, elt);
+				Object filteredValue = filterSecurity(user, elt, report);
 				if (filteredValue == elt) {
 					// elt (recursively) allowed
 					filtered.add(elt);
@@ -366,7 +409,7 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 				filtered = new ArrayList<>();
 			}
 			for (Object elt : value) {
-				Object filteredValue = filterSecurity(user, elt);
+				Object filteredValue = filterSecurity(user, elt, report);
 				if (filteredValue == elt) {
 					// elt (recursively) allowed
 					filtered.add(elt);
@@ -389,7 +432,7 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 		}
 	}
 
-	private static Object filterSecurityMap(Person user, Map<?, ?> value) {
+	private static Object filterSecurityMap(Person user, Map<?, ?> value, SecurityFilterReport report) {
 		if (value.isEmpty()) {
 			return value;
 		}
@@ -402,9 +445,9 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 		}
 		for (Entry<?, ?> entry : value.entrySet()) {
 			Object key = entry.getKey();
-			Object filteredKey = filterSecurity(user, key);
+			Object filteredKey = filterSecurity(user, key, report);
 			Object elt = entry.getValue();
-			Object filteredValue = filterSecurity(user, elt);
+			Object filteredValue = filterSecurity(user, elt, report);
 			if (filteredKey == key) {
 				if (filteredValue == elt) {
 					// key and elt (recursively) allowed

@@ -1,5 +1,6 @@
-import { React, useTLState, TLChild, useFillHost, FillProvider } from 'tl-react-bridge';
+import { React, useTLState, useFillHost, FillProvider } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { renderItems } from './items';
 
 /**
  * A flexbox container that arranges children with consistent spacing.
@@ -11,6 +12,7 @@ import type { TLCellProps } from 'tl-react-bridge';
  * - wrap: boolean  (default: false)
  * - growFirst: boolean  (default: false) — first child fills the main axis
  * - cssClass: string - optional additional CSS class appended to the layout classes
+ * - itemClass: string - CSS class of a wrapper around each child (default: null - no wrapper)
  * - children: ChildDescriptor[]
  *
  * Takes part in the fill contract as a container: a stack hosting a filling child fills its own
@@ -24,6 +26,7 @@ const TLStack: React.FC<TLCellProps> = ({ controlId }) => {
   const align = (state.align as string) ?? 'stretch';
   const wrap = state.wrap === true;
   const growFirst = state.growFirst === true;
+  const itemClass = (state.itemClass as string) ?? null;
   const children = (state.children as unknown[]) ?? [];
 
   const [fillClass, fillHost] = useFillHost();
@@ -42,9 +45,7 @@ const TLStack: React.FC<TLCellProps> = ({ controlId }) => {
   return (
     <FillProvider host={fillHost}>
       <div id={controlId} className={className}>
-        {children.map((child, i) => (
-          <TLChild key={i} control={child} />
-        ))}
+        {renderItems(children, itemClass)}
       </div>
     </FillProvider>
   );

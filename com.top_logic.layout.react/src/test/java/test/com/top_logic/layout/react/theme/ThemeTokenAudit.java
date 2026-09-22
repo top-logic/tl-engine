@@ -144,10 +144,28 @@ public class ThemeTokenAudit {
 	 */
 	public static Map<String, String> themeTokens(String resource, String themeId)
 			throws IOException, ConfigurationException {
+		return theme(resource, themeId).getTokens();
+	}
+
+	/**
+	 * One resolved theme of a {@link UIThemeService} configuration.
+	 *
+	 * @param resource
+	 *        Web application resource path of the application configuration declaring the themes,
+	 *        e.g. {@code /WEB-INF/conf/tl-react-theme.config.xml}.
+	 * @param themeId
+	 *        The id of the theme to resolve.
+	 * @return The theme, with its token values and their kinds resolved.
+	 * @throws IOException
+	 *         If the resource cannot be read.
+	 * @throws ConfigurationException
+	 *         If the configuration cannot be parsed, or declares no such theme.
+	 */
+	public static UITheme theme(String resource, String themeId) throws IOException, ConfigurationException {
 		UIThemeService service = themeService(resource);
 		for (UITheme theme : service.getThemes()) {
 			if (themeId.equals(theme.getId())) {
-				return theme.getTokens();
+				return theme;
 			}
 		}
 		throw new ConfigurationException("No theme '" + themeId + "' configured in '" + resource + "'.");
@@ -218,12 +236,31 @@ public class ThemeTokenAudit {
 		return result;
 	}
 
+	/**
+	 * The names (without the leading dashes) of the custom properties the given stylesheet
+	 * declares.
+	 *
+	 * <p>
+	 * The declarations of a sheet carrying nothing but tokens - the generated token sheet of the
+	 * design system package, say - are the tokens a sheet audited against it may read.
+	 * </p>
+	 *
+	 * @param css
+	 *        The text of the stylesheet.
+	 * @return The declared property names, empty if the sheet declares none.
+	 */
+	public static Set<String> declaredProperties(String css) {
+		Set<String> result = new HashSet<>();
+		Matcher declaration = PROPERTY_DECLARATION.matcher(stripComments(css));
+		while (declaration.find()) {
+			result.add(declaration.group(1));
+		}
+		return result;
+	}
+
 	private static void reportUndefinedReferences(Set<String> tokens, String css, List<String> problems) {
 		Set<String> defined = new HashSet<>(tokens);
-		Matcher declaration = PROPERTY_DECLARATION.matcher(css);
-		while (declaration.find()) {
-			defined.add(declaration.group(1));
-		}
+		defined.addAll(declaredProperties(css));
 
 		Matcher reference = VAR_REFERENCE.matcher(css);
 		while (reference.find()) {

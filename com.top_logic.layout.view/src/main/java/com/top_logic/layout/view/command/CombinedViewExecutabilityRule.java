@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.command;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.top_logic.tool.execution.ExecutableState;
@@ -18,7 +19,7 @@ import com.top_logic.tool.execution.ExecutableState;
  * {@link ExecutableState#EXECUTABLE}.
  * </p>
  */
-public class CombinedViewExecutabilityRule implements ViewExecutabilityRule {
+public class CombinedViewExecutabilityRule implements ViewExecutabilityRule, ObservableRule {
 
 	private final List<ViewExecutabilityRule> _rules;
 
@@ -52,6 +53,21 @@ public class CombinedViewExecutabilityRule implements ViewExecutabilityRule {
 			return rules.get(0);
 		}
 		return new CombinedViewExecutabilityRule(rules);
+	}
+
+	/**
+	 * Follows every combined rule that reports changes, so that a command following the combined
+	 * rule hears from all of them.
+	 */
+	@Override
+	public Runnable observe(Runnable revalidate) {
+		List<Runnable> stops = new ArrayList<>();
+		for (ViewExecutabilityRule rule : _rules) {
+			if (rule instanceof ObservableRule observable) {
+				stops.add(observable.observe(revalidate));
+			}
+		}
+		return () -> stops.forEach(Runnable::run);
 	}
 
 	@Override

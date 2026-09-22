@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="state"/>
+	</channels>
+
+	<visible-if
+		expr="x -> $x == 'shown'"
+		input="state"
+	>
+		<inset/>
+	</visible-if>
+</view>

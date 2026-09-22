@@ -11,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.objects.KnowledgeItem;
@@ -101,6 +102,22 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	@Override
 	public TLReference tContainerReference() {
 		return _base.tContainerReference();
+	}
+
+	/**
+	 * The objects referring to the {@link #getEditedObject() edited object} through the given
+	 * reference.
+	 *
+	 * <p>
+	 * The overlay stands for the object it wraps, and who refers to that object is answered by the
+	 * database: an edit pending in the form changes what the object holds, not what holds it. An
+	 * options or constraint expression navigating backwards from the edited object therefore sees
+	 * the same referrers here as it would see on the object itself.
+	 * </p>
+	 */
+	@Override
+	public Set<? extends TLObject> tReferers(TLReference ref) {
+		return _base.tReferers(ref);
 	}
 
 	@Override

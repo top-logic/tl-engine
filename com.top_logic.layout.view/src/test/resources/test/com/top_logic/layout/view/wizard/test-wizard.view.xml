@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="currentStep"/>
+	</channels>
+	<panel title="Wizard Test">
+		<wizard
+			current-step="currentStep"
+			step-list="true"
+		>
+			<step id="contact"
+				icon="css:fa-solid fa-user"
+				label="wizard.contact"
+			>
+				<panel title="Contact">
+					<commands>
+						<wizard-back name="backCommand">
+							<executability>
+								<wizard-has-back/>
+							</executability>
+						</wizard-back>
+						<wizard-next name="nextCommand">
+							<executability>
+								<wizard-has-next/>
+							</executability>
+						</wizard-next>
+						<wizard-goto name="gotoCommand"
+							step="summary"
+						/>
+						<generic-command name="finish">
+							<wizard-goto step="summary"/>
+						</generic-command>
+					</commands>
+					<text label="wizard.contact.text"/>
+				</panel>
+			</step>
+			<step id="payment"
+				auto-advance="2s"
+				label="wizard.payment"
+			/>
+			<step id="summary"/>
+		</wizard>
+	</panel>
+</view>

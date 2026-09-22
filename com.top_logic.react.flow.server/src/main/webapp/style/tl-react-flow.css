@@ -21,3 +21,24 @@
 .tlSelected .tlSelectionFill { fill: var(--layer-selected); }
 /* Edge selection: highlight the visible edge stroke (not the transparent click target). */
 g.tlSelected > path[stroke]:not([stroke="transparent"]) { stroke: var(--focus); stroke-width: 2; }
+/* Marking a chart draws for its own selection: shown on the selected element, hidden elsewhere. */
+.tlSelected .tlSelectionMarker { display: initial; }
+
+/*
+ * The zoom indicator the diagram control shows while zooming. An HTML element overlaying the
+ * diagram, not part of the SVG.
+ */
+.zoomDisplay {
+	position: absolute;
+	top: 0;
+	right: 0;
+	padding: var(--spacing-02);
+	background-color: var(--background-inverse);
+	color: var(--text-inverse);
+	border-bottom-left-radius: var(--border-radius-02);
+}
+
+/* The indicator hides itself once the zoom level has been shown for a moment. */
+.zoomDisplay.invisible {
+	display: none;
+}

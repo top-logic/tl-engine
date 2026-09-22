@@ -159,7 +159,8 @@ public class TextElement implements UIElement {
 	}
 
 	private static String label(Object value) {
-		return value == null ? "" : MetaLabelProvider.INSTANCE.getLabel(value);
+		String text = ValueLabel.label(value);
+		return text == null ? "" : text;
 	}
 
 }

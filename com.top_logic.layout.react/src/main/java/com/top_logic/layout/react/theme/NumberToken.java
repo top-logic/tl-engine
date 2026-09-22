@@ -10,6 +10,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.gui.DesignTokenKind;
 
 /**
  * A {@link ThemeToken} holding a unit-less number.
@@ -49,6 +50,11 @@ public final class NumberToken extends ThemeToken<NumberToken.Config> {
 			return Long.toString((long) value);
 		}
 		return Double.toString(value);
+	}
+
+	@Override
+	public DesignTokenKind kind() {
+		return DesignTokenKind.NUMBER;
 	}
 
 }

@@ -1,0 +1,75 @@
+/*
+ * Stylesheet of the React demo application.
+ *
+ * Registered as a client resource in WEB-INF/conf/demoReactConf.config.xml, behind the
+ * stylesheets of the React controls, so that it overrides them.
+ */
+
+/*
+ * Entrance of a repeated item: it rises into place while it fades in.
+ */
+@keyframes tlDemoRepeaterFadeUp {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+/*
+ * Staggered entrance of the cards of a repeater grid.
+ *
+ * <object-list> wraps every element in an item carrying its 0-based position as the custom
+ * property --tl-item-index; the delay of the animation is composed from that position, so each
+ * card starts 60ms after the one before it. Items are reused by key, so a card that survives a
+ * change of the inputs keeps its element and does not animate again.
+ *
+ * The rule addresses the items of a grid arrangement, the cards this application wants to see
+ * appear one after the other. An object list arranged as a list puts its items in a stack
+ * instead, where an entrance per item would read as the page assembling itself, so those items
+ * are left alone.
+ */
+.tlGrid > .tlObjectList__item {
+	animation: tlDemoRepeaterFadeUp 300ms ease-out both;
+	animation-delay: calc(var(--tl-item-index) * 60ms);
+}
+
+/*
+ * A viewer who asked for reduced motion sees the items in place.
+ */
+@media (prefers-reduced-motion: reduce) {
+	.tlGrid > .tlObjectList__item {
+		animation: none;
+	}
+}
+
+/*
+ * Badge of a layer anchored in a corner of an overlay: a small pill holding a word over the
+ * picture below it.
+ *
+ * The <layer> decides where the badge sits; this rule decides how it looks. The margin is what
+ * keeps it off the edge the layer anchors it to.
+ */
+.tlDemoBadge > * {
+	margin: var(--spacing-03);
+	padding: var(--spacing-01) var(--spacing-03);
+	border-radius: var(--corner-radius);
+	background: var(--overlay);
+	color: var(--text-on-color);
+	font-size: var(--label-01-font-size);
+}
+
+/*
+ * Caption of a layer anchored along the lower edge of an overlay: the full width of the picture,
+ * with the scrim that carries the text fading into the picture above it.
+ */
+.tlDemoCaption > * {
+	width: 100%;
+	padding: var(--spacing-04) var(--spacing-03) var(--spacing-02);
+	background: linear-gradient(to bottom, transparent, var(--overlay));
+	color: var(--text-on-color);
+}

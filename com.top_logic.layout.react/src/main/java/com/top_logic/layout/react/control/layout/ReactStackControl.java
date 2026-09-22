@@ -5,17 +5,18 @@
  */
 package com.top_logic.layout.react.control.layout;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
- * A {@link ReactControl} that renders a flexbox container via the {@code TLStack} React component.
+ * A {@link ReactLayoutControl} that renders a flexbox container via the {@code TLStack} React
+ * component.
  */
-public class ReactStackControl extends ReactControl {
+public class ReactStackControl extends ReactLayoutControl {
 
 	private static final String REACT_MODULE = "TLStack";
 
@@ -28,8 +29,6 @@ public class ReactStackControl extends ReactControl {
 	private static final String WRAP = "wrap";
 
 	private static final String GROW_FIRST = "growFirst";
-
-	private static final String CHILDREN = "children";
 
 	/** @see #setCssClass(String) */
 	private static final String CSS_CLASS = "cssClass";
@@ -112,8 +111,6 @@ public class ReactStackControl extends ReactControl {
 		}
 	}
 
-	private final List<ReactControl> _children;
-
 	/**
 	 * Creates a vertical stack with default gap.
 	 *
@@ -140,13 +137,11 @@ public class ReactStackControl extends ReactControl {
 	 */
 	public ReactStackControl(ReactContext context, StackDirection direction, StackGap gap, StackAlign align,
 			boolean wrap, List<? extends ReactControl> children) {
-		super(context, null, REACT_MODULE);
-		_children = new ArrayList<>(children);
+		super(context, REACT_MODULE, children);
 		putState(DIRECTION, direction.getExternalName());
 		putState(GAP, gap.getExternalName());
 		putState(ALIGN, align.getExternalName());
 		putState(WRAP, Boolean.valueOf(wrap));
-		putState(CHILDREN, _children);
 	}
 
 	/**
@@ -163,26 +158,8 @@ public class ReactStackControl extends ReactControl {
 	 * Rendering-only state keys, omitted from the headless projection.
 	 */
 	@Override
-	protected java.util.Set<String> scriptingPresentationKeys() {
-		return java.util.Set.of(CSS_CLASS);
-	}
-
-	/**
-	 * Replaces the displayed children.
-	 *
-	 * <p>
-	 * A dropped child is not cleaned up automatically, since callers may re-add it later (e.g. an
-	 * unchanged item in a refreshed list). Callers that remove a child for good must call
-	 * {@link #cleanupTree()} on it themselves.
-	 * </p>
-	 *
-	 * @param children
-	 *        The new child controls, replacing the current ones.
-	 */
-	public void setChildren(List<? extends ReactControl> children) {
-		_children.clear();
-		_children.addAll(children);
-		putState(CHILDREN, new ArrayList<>(_children));
+	protected Set<String> scriptingPresentationKeys() {
+		return Set.of(CSS_CLASS, ITEM_CLASS);
 	}
 
 	/**

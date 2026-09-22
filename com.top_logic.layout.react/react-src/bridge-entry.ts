@@ -20,10 +20,26 @@ export {
   useStandaloneKeyboardScope,
   useFocusTrap,
 } from './bridge/tl-react-bridge';
-export { ANCHORED_OVERLAY_ATTR, anchoredOverlayProps } from './bridge/focus-trap';
+export { ANCHORED_OVERLAY_ATTR, anchoredOverlayProps, firstFocusable } from './bridge/focus-trap';
 export { CMD_SUBMIT, CMD_VALUE_CHANGED } from './bridge/command-channel';
 export { writeDragPayload, readDragPayload, dragTypeAccepted, dropPositionAt } from './bridge/drag-drop';
 export type { TLDragPayload, TLDropPosition } from './bridge/drag-drop';
+export { startPointerDrag, DRAG_SHIELD_CLASS } from './bridge/pointer-drag';
+export type { PointerDragOptions } from './bridge/pointer-drag';
+export { useCloseOnOutsidePress, pressClosedSurface } from './bridge/outside-press';
+export type { InsideRef } from './bridge/outside-press';
+export { useListReorder } from './bridge/list-reorder';
+export type {
+  ListReorder,
+  ListReorderOptions,
+  ReorderAxis,
+  ReorderContainerProps,
+  ReorderDropTarget,
+  ReorderHandleProps,
+  ReorderItemProps,
+  ReorderItemState,
+  ReorderSide,
+} from './bridge/list-reorder';
 export type { TLCellProps } from './bridge/types';
 export { useI18N } from './bridge/i18n';
 export { scrollToAnchor } from './bridge/scroll';
@@ -76,9 +92,14 @@ import { initKeyboardDispatcher } from './bridge/keyboard-dispatcher';
 initKeyboardDispatcher();
 
 // Initialize the "select view" picker (cross-window pick mode for the View Designer).
-import { initViewPicker } from './bridge/view-picker';
-initViewPicker();
+import { initElementPicker } from './bridge/element-picker';
+initElementPicker();
 
 // Install the single document-level focus-trap listener (confines focus to modal surfaces).
 import { initFocusTrap } from './bridge/focus-trap';
 initFocusTrap();
+
+// Install the document listener that marks the start of a press gesture, ahead of the listeners
+// with which the open surfaces close themselves on an outside press.
+import { initOutsidePress } from './bridge/outside-press';
+initOutsidePress();

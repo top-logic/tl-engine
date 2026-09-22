@@ -7,7 +7,6 @@ package com.top_logic.layout.view.designer;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -40,6 +39,8 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.model.NodeLocator;
+import com.top_logic.layout.view.model.TreeNodes;
 import com.top_logic.layout.view.model.TreeSelectionBinding;
 import com.top_logic.mig.html.DefaultSingleSelectionModel;
 import com.top_logic.mig.html.SelectionModelOwner;
@@ -116,15 +117,6 @@ public class DesignerTreeElement implements UIElement {
 		DefaultSingleSelectionModel<Object> selectionModel =
 			new DefaultSingleSelectionModel<>(SelectionModelOwner.NO_OWNER);
 
-		// 4. Create the ReactTreeControl with a designer-specific label provider that renders each
-		//    DesignTreeNode's display label and JavaDoc tooltip. The provider needs the control it
-		//    renders into to refresh a node whose label changed, so it is handed a holder that is
-		//    filled in right after construction.
-		ReactTreeControl[] treeRef = new ReactTreeControl[1];
-		ReactTreeControl treeControl =
-			new ReactTreeControl(context, treeModel, selectionModel, designNodeControlProvider(treeRef));
-		treeRef[0] = treeControl;
-
 		// Holder for the tree model currently displayed by treeControl. The control itself does not
 		// expose a getter for its current model, and the model is replaced (not mutated) whenever the
 		// tree is rebuilt (e.g. after Revert, see the input-channel listener below, or after a
@@ -132,27 +124,27 @@ public class DesignerTreeElement implements UIElement {
 		// must consult this holder instead of a captured local, which would go stale after a rebuild.
 		DefaultTreeUINodeModel[] currentModel = { treeModel };
 
-		// 5. Wire selection: push selected DesignTreeNode to the selection channel.
+		// 4. Create the ReactTreeControl with a designer-specific label provider that renders each
+		//    DesignTreeNode's display label and JavaDoc tooltip. The provider needs the control it
+		//    renders into to refresh a node whose label changed, so it is handed a holder that is
+		//    filled in right after construction.
+		ReactTreeControl[] treeRef = new ReactTreeControl[1];
+		ReactTreeControl treeControl = new ReactTreeControl(context, treeModel, selectionModel,
+			designNodeControlProvider(treeRef, currentModel));
+		treeRef[0] = treeControl;
+
+		// 5. Wire the selection channel, which the tree reads as well as writes: the selected
+		//    DesignTreeNode is written to it, and a node another writer puts on it - the "select
+		//    view" picker, for instance - is revealed and selected in the tree displayed now.
 		ChannelRef selectionRef = _config.getSelection();
+		TreeSelectionBinding selectionBinding;
 		if (selectionRef != null) {
 			ViewChannel selectionChannel = context.resolveChannel(selectionRef);
-			selectionModel.addSelectionListener(new TreeSelectionBinding<>(selectionChannel));
-
-			// Reflect an externally set selection (e.g. from the "select view" picker) in the tree.
-			selectionChannel.addListener((sender, oldValue, newValue) -> {
-				if (newValue instanceof DesignTreeNode target) {
-					DefaultTreeUINode uiNode = findUINode(currentModel[0].getRoot(), target);
-					if (uiNode != null) {
-						revealNode(uiNode);
-						selectionModel.setSelected(uiNode, true);
-						// Push the server-side expansion+selection change to the client. Unlike a
-						// client-initiated select/expand (which flows through the control's own
-						// command handlers that rebuild this state), this change is made directly on
-						// the models, so the control's visible node state must be rebuilt explicitly.
-						treeControl.updateVisibleState();
-					}
-				}
-			});
+			selectionBinding = new TreeSelectionBinding(treeControl, selectionModel,
+				() -> currentModel[0], NodeLocator.SEARCHING, selectionChannel);
+			treeControl.addCleanupAction(selectionBinding::dispose);
+		} else {
+			selectionBinding = null;
 		}
 
 		// 6. Wire context menu for structural editing commands.
@@ -168,6 +160,11 @@ public class DesignerTreeElement implements UIElement {
 				newTreeModel.setRootVisible(true);
 				treeControl.setTreeModel(newTreeModel);
 				currentModel[0] = newTreeModel;
+				if (selectionBinding != null) {
+					// The nodes of the tree built anew are other ones, so the selection is expressed
+					// on them.
+					selectionBinding.structureChanged();
+				}
 			}
 		};
 		inputChannel.addListener(rootListener);
@@ -213,18 +210,18 @@ public class DesignerTreeElement implements UIElement {
 		// Rebuilds the tree after a structural edit and selects the given node, keeping the parts of
 		// the tree the user had opened expanded.
 		Consumer<DesignTreeNode> rebuild = toSelect -> {
-			Set<DesignTreeNode> expanded = collectExpanded(currentModel[0].getRoot());
+			Set<Object> expanded = TreeNodes.collectExpanded(currentModel[0].getRoot());
 
 			DesignTreeNode root = (DesignTreeNode) inputChannel.get();
 			DefaultTreeUINodeModel newTreeModel = new DefaultTreeUINodeModel(builder, root);
 			newTreeModel.setRootVisible(true);
 			treeControl.setTreeModel(newTreeModel);
 			currentModel[0] = newTreeModel;
-			restoreExpansion(newTreeModel.getRoot(), expanded);
+			TreeNodes.restoreExpansion(newTreeModel.getRoot(), expanded);
 
-			DefaultTreeUINode uiNode = toSelect == null ? null : findUINode(newTreeModel.getRoot(), toSelect);
+			DefaultTreeUINode uiNode = toSelect == null ? null : TreeNodes.findNode(newTreeModel.getRoot(), toSelect);
 			if (uiNode != null) {
-				revealNode(uiNode);
+				TreeNodes.revealNode(uiNode);
 				selectionModel.setSelected(uiNode, true);
 			} else {
 				selectionModel.clear();
@@ -340,44 +337,6 @@ public class DesignerTreeElement implements UIElement {
 	}
 
 	/**
-	 * The design nodes whose subtree is currently open, so that a rebuilt tree can be opened the same
-	 * way.
-	 */
-	private static Set<DesignTreeNode> collectExpanded(DefaultTreeUINode node) {
-		Set<DesignTreeNode> expanded = new HashSet<>();
-		collectExpanded(node, expanded);
-		return expanded;
-	}
-
-	private static void collectExpanded(DefaultTreeUINode node, Set<DesignTreeNode> expanded) {
-		if (!node.isExpanded()) {
-			return;
-		}
-		if (node.getBusinessObject() instanceof DesignTreeNode designNode) {
-			expanded.add(designNode);
-		}
-		// Only an expanded node has its children created, so the recursion stops where the tree was
-		// closed anyway.
-		for (DefaultTreeUINode child : node.getChildren()) {
-			collectExpanded(child, expanded);
-		}
-	}
-
-	/**
-	 * Re-opens the subtrees that were open before the tree was rebuilt.
-	 */
-	private static void restoreExpansion(DefaultTreeUINode node, Set<DesignTreeNode> expanded) {
-		if (!(node.getBusinessObject() instanceof DesignTreeNode designNode) || !expanded.contains(designNode)) {
-			return;
-		}
-		node.setExpanded(true);
-		// Expanding creates the children, so they can be visited afterwards.
-		for (DefaultTreeUINode child : node.getChildren()) {
-			restoreExpansion(child, expanded);
-		}
-	}
-
-	/**
 	 * The {@link DesignTreeNode} displayed by the given tree node, or {@code null} if the node does
 	 * not represent one.
 	 */
@@ -389,47 +348,14 @@ public class DesignerTreeElement implements UIElement {
 	}
 
 	/**
-	 * Finds the {@link DefaultTreeUINode} whose business object is {@code target}. Returns
-	 * {@code null} if not found.
-	 *
-	 * <p>
-	 * Does not expand any node: {@link DefaultTreeUINode#getChildren()} materializes children
-	 * lazily regardless of expansion state, so the search does not need to expand anything. Use
-	 * {@link #revealNode(DefaultTreeUINode)} to expand the ancestors of a found node.
-	 * </p>
-	 */
-	private static DefaultTreeUINode findUINode(DefaultTreeUINode node, DesignTreeNode target) {
-		if (node.getBusinessObject() == target) {
-			return node;
-		}
-		for (DefaultTreeUINode child : node.getChildren()) {
-			DefaultTreeUINode found = findUINode(child, target);
-			if (found != null) {
-				return found;
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * Expands all ancestors of the given node so it becomes visible in the tree, without expanding
-	 * the node itself.
-	 */
-	private static void revealNode(DefaultTreeUINode node) {
-		for (DefaultTreeUINode parent = node.getParent(); parent != null; parent = parent.getParent()) {
-			parent.setExpanded(true);
-		}
-	}
-
-	/**
 	 * Provider that renders a {@link DesignTreeNode} as a {@link ReactTextControl}, using the
 	 * node's {@link DesignTreeNode#getDisplayLabel() display label} and
 	 * {@link DesignTreeNode#getTooltipHtml() tooltip HTML}.
 	 */
-	private static ReactControlProvider designNodeControlProvider(ReactTreeControl[] treeRef) {
+	private static ReactControlProvider designNodeControlProvider(ReactTreeControl[] treeRef,
+			DefaultTreeUINodeModel[] currentModel) {
 		return (context, model) -> {
-			Object target = model instanceof DefaultTreeUINode node ? node.getBusinessObject() : model;
-			if (target instanceof DesignTreeNode designNode) {
+			if (model instanceof DesignTreeNode designNode) {
 				String label = designNode.getDisplayLabel();
 				ReactTextControl control = new ReactTextControl(context, label);
 				String tooltip = designNode.getTooltipHtml();
@@ -438,11 +364,16 @@ public class DesignerTreeElement implements UIElement {
 				}
 
 				// Re-render the node when an identifying property is edited in the configuration
-				// form, so that the tree does not keep showing the previous label.
+				// form, so that the tree does not keep showing the previous label. The tree caches
+				// its content controls by UI node, so the node displaying the edited object must be
+				// looked up in the model currently displayed.
 				Runnable labelListener = () -> {
 					ReactTreeControl tree = treeRef[0];
 					if (tree != null) {
-						tree.invalidateNodeControl(model);
+						DefaultTreeUINode uiNode = TreeNodes.findNode(currentModel[0].getRoot(), designNode);
+						if (uiNode != null) {
+							tree.invalidateNodeControl(uiNode);
+						}
 						tree.updateVisibleState();
 					}
 				};

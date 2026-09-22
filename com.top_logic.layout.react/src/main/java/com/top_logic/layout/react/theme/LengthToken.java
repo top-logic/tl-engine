@@ -10,6 +10,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.gui.DesignTokenKind;
 import com.top_logic.basic.config.constraint.annotation.RegexpConstraint;
 
 /**
@@ -51,6 +52,11 @@ public final class LengthToken extends ThemeToken<LengthToken.Config> {
 	@Override
 	public String cssValue() {
 		return getConfig().getValue();
+	}
+
+	@Override
+	public DesignTokenKind kind() {
+		return DesignTokenKind.LENGTH;
 	}
 
 }

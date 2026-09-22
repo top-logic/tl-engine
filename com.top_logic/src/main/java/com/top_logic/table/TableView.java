@@ -111,10 +111,19 @@ public interface TableView<R> {
 	 * {@code null} if it is filtered by none of them.
 	 *
 	 * <p>
-	 * The result is derived from the live filter state, not remembered: it is the first named
-	 * filter {@link NamedFilter#matches(java.util.Map, TextFilterState) matching} the current
-	 * column filters and search term, so it is found as well when the user reached those criteria
-	 * through the filter editors, and it is gone as soon as they change any of them.
+	 * The result is derived from the live filter state, not remembered: it is a named filter
+	 * {@link NamedFilter#matches(java.util.Map, TextFilterState) matching} the current column
+	 * filters and search term, so it is found as well when the user reached those criteria through
+	 * the filter editors, and it is gone as soon as they change a criterion that filter is made of.
+	 * A text searched for on top of a filter that names none of its own is no such criterion: it
+	 * narrows the rows that filter selects, which goes on being the active one.
+	 * </p>
+	 *
+	 * <p>
+	 * Where several filters match - one naming the searched term, one saying nothing about the
+	 * search - the one naming the term is the result: it describes the displayed rows completely,
+	 * the other only their columns. Among equally specific matches the {@link #namedFilters()
+	 * offered order} decides.
 	 * </p>
 	 */
 	NamedFilter activeNamedFilter();

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<app-shell>
+		<content>
+			<sidebar active-item="first">
+				<items>
+					<nav-item id="first">
+						<view-ref view="slot-first.view.xml"/>
+						<label>
+							<en>First</en>
+						</label>
+					</nav-item>
+					<nav-item id="second">
+						<view-ref view="slot-second.view.xml"/>
+						<label>
+							<en>Second</en>
+						</label>
+					</nav-item>
+				</items>
+			</sidebar>
+		</content>
+		<header>
+			<app-bar>
+				<children>
+					<slot name="appbar-content"/>
+				</children>
+			</app-bar>
+		</header>
+	</app-shell>
+</view>

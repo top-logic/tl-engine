@@ -13,20 +13,26 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
+import com.top_logic.base.accesscontrol.IdentityVerifications.Outcome;
 import com.top_logic.base.accesscontrol.Login.InMaintenanceModeException;
 import com.top_logic.base.accesscontrol.Login.LoginDeniedException;
 import com.top_logic.base.accesscontrol.Login.LoginFailedException;
+import com.top_logic.base.accesscontrol.loginmethod.LoginMethod;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.basic.DebugHelper;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.SessionContext;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.StopWatch;
+import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
+import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.util.DeferredBootUtil;
 import com.top_logic.util.NoContextServlet;
 import com.top_logic.util.Resources;
@@ -77,6 +83,21 @@ public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 	public static class BreakCheckRequestException extends RuntimeException {
 		/* Nothing needed */
 	}
+
+	/**
+	 * Name of the request parameter naming the {@link PendingIdentityVerification} that a request
+	 * completes.
+	 *
+	 * <p>
+	 * A request carrying it is not a login: it brings back the proof that the user of the running
+	 * session has authenticated again, and the session it arrives in is the one it confirms. The
+	 * token is issued by {@link IdentityVerifications#register(Person, Runnable)} and travels to the
+	 * external authentication and back.
+	 * </p>
+	 *
+	 * @see LoginMethod#getReauthenticationUrl(String)
+	 */
+	public static final String VERIFICATION_PARAM = "verification";
 
 	private static final TypedAnnotatable.Property<UserTokens> TOKENS =
 		TypedAnnotatable.property(UserTokens.class, "userTokens");
@@ -171,6 +192,11 @@ public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 			throw new LoginDeniedException(message);
 		}
 		LoginCredentials credentials = retrieveLoginCredentials(request, response);
+		String verificationToken = getVerificationToken(request);
+		if (verificationToken != null) {
+			completeIdentityVerification(verificationToken, credentials, request, response);
+			return;
+		}
 		checkLoginCredentials(credentials, request, response);
 		if (reuseSession) {
 			HttpSession existingSession = SessionService.getInstance().getSession(request);
@@ -190,6 +216,123 @@ public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 		}
 		loginUser(credentials.getPerson(), request, response);
 		redirectToStartPage(request, response);
+	}
+
+	/**
+	 * The token of the {@link PendingIdentityVerification} that the given request completes, or
+	 * <code>null</code> if the request is an ordinary login.
+	 *
+	 * <p>
+	 * The single place that decides where the token is read from, so that an authentication
+	 * mechanism which cannot carry it in {@link #VERIFICATION_PARAM} can put it elsewhere and say so
+	 * here.
+	 * </p>
+	 */
+	protected String getVerificationToken(HttpServletRequest request) {
+		return StringServices.nonEmpty(request.getParameter(VERIFICATION_PARAM));
+	}
+
+	/**
+	 * Completes the identity verification the given request brings the answer for and reports the
+	 * result to the browser window it arrived in.
+	 *
+	 * <p>
+	 * Deliberately none of the login steps: the session is already established and stays as it is.
+	 * Logging in here would replace the HTTP session, which is right for a login and wrong for a
+	 * confirmation - every window of the session would lose its ground.
+	 * </p>
+	 *
+	 * @param token
+	 *        The token from {@link #getVerificationToken(HttpServletRequest)}.
+	 * @param credentials
+	 *        What the external authentication produced, naming the account that just authenticated.
+	 *
+	 * @throws LoginDeniedException
+	 *         If there is no authenticated session the confirmation could belong to.
+	 */
+	protected void completeIdentityVerification(String token, LoginCredentials credentials,
+			HttpServletRequest request, HttpServletResponse response) throws IOException, LoginDeniedException {
+		HttpSession existingSession = SessionService.getInstance().getSession(request);
+		if (existingSession == null || !isAuthenticatedSession(existingSession)) {
+			throw new LoginDeniedException(
+				"Identity confirmation for user '" + credentials.getUsername() + "' without an authenticated session.");
+		}
+		Outcome outcome = IdentityVerifications.forCurrentSession().complete(token, credentials.getPerson());
+		Logger.debug("Identity confirmation for user '" + credentials.getUsername() + "': " + outcome,
+			ExternalAuthenticationServlet.class);
+		writeVerificationResult(response, outcome);
+	}
+
+	/**
+	 * Writes the page the window that carried the confirmation ends on.
+	 *
+	 * <p>
+	 * A page of its own, with nothing to click and nowhere to go: the work the confirmation unblocks
+	 * continues in the window that asked for it. The page tries to close itself, and reads as a
+	 * complete answer where the browser refuses to close a window the user opened.
+	 * </p>
+	 */
+	protected void writeVerificationResult(HttpServletResponse response, Outcome outcome) throws IOException {
+		response.setCharacterEncoding(StringServices.UTF8);
+		response.setContentType(HTMLConstants.CONTENT_TYPE_TEXT_HTML);
+
+		Resources resources = Resources.getInstance();
+		String title = resources.getString(I18NConstants.IDENTITY_VERIFICATION_TITLE);
+		String message = resources.getString(verificationMessage(outcome));
+
+		TagWriter out = new TagWriter(response.getWriter());
+		out.writeContent(HTMLConstants.DOCTYPE_HTML);
+		out.beginTag(HTMLConstants.HTML);
+		{
+			out.beginTag(HTMLConstants.HEAD);
+			{
+				out.beginBeginTag(HTMLConstants.META);
+				out.writeAttribute(HTMLConstants.CHARSET_ATTR, StringServices.UTF8);
+				out.endEmptyTag();
+
+				out.beginTag(HTMLConstants.TITLE);
+				out.writeText(title);
+				out.endTag(HTMLConstants.TITLE);
+			}
+			out.endTag(HTMLConstants.HEAD);
+
+			out.beginTag(HTMLConstants.BODY);
+			{
+				out.beginTag(HTMLConstants.H1);
+				out.writeText(title);
+				out.endTag(HTMLConstants.H1);
+
+				out.beginTag(HTMLConstants.PARAGRAPH);
+				out.writeText(message);
+				out.endTag(HTMLConstants.PARAGRAPH);
+
+				if (outcome == Outcome.VERIFIED) {
+					out.beginScript();
+					out.append("window.close();");
+					out.endScript();
+				}
+			}
+			out.endTag(HTMLConstants.BODY);
+		}
+		out.endTag(HTMLConstants.HTML);
+		out.flush();
+	}
+
+	/**
+	 * What the page written by
+	 * {@link #writeVerificationResult(HttpServletResponse, Outcome) the result page} says about the
+	 * given outcome.
+	 */
+	private static ResKey verificationMessage(Outcome outcome) {
+		switch (outcome) {
+			case VERIFIED:
+				return I18NConstants.IDENTITY_VERIFIED;
+			case MISMATCH:
+				return I18NConstants.ERROR_IDENTITY_MISMATCH;
+			case UNKNOWN:
+				return I18NConstants.ERROR_IDENTITY_VERIFICATION_UNKNOWN;
+		}
+		throw new UnreachableAssertion("No such outcome: " + outcome);
 	}
 
 	/**

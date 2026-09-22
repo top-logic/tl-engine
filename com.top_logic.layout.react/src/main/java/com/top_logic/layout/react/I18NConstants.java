@@ -324,16 +324,28 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_PHOTO_CAPTURE_CAPTURE;
 
 	/**
-	 * @en Captured photo
+	 * @en Image
 	 */
-	@CustomKey("js.photoViewer.alt")
-	public static ResKey JS_PHOTO_VIEWER_ALT;
+	@CustomKey("js.image.alt")
+	public static ResKey JS_IMAGE_ALT;
 
 	/**
 	 * @en PDF document
 	 */
 	@CustomKey("js.pdfViewer.title")
 	public static ResKey JS_PDF_VIEWER_TITLE;
+
+	/**
+	 * @en HTML document
+	 */
+	@CustomKey("js.html.document")
+	public static ResKey JS_HTML_DOCUMENT;
+
+	/**
+	 * @en Print
+	 */
+	@CustomKey("js.html.print")
+	public static ResKey JS_HTML_PRINT;
 
 	/**
 	 * @en No document available
@@ -383,6 +395,14 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.panel.popOut")
 	public static ResKey JS_PANEL_POP_OUT;
 
+	// -- Toolbar client-side i18n keys --
+
+	/**
+	 * @en More actions
+	 */
+	@CustomKey("js.toolbar.overflow")
+	public static ResKey JS_TOOLBAR_OVERFLOW;
+
 	/**
 	 * @en Microphone requires a secure connection (HTTPS).
 	 */
@@ -417,6 +437,26 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CustomKey("js.textInput.open")
 	public static ResKey JS_TEXT_INPUT_OPEN;
+
+	// -- Value list client-side i18n keys --
+
+	/**
+	 * @en Add a value
+	 */
+	@CustomKey("js.valueList.add")
+	public static ResKey JS_VALUE_LIST_ADD;
+
+	/**
+	 * @en Remove this value
+	 */
+	@CustomKey("js.valueList.remove")
+	public static ResKey JS_VALUE_LIST_REMOVE;
+
+	/**
+	 * @en Move this value
+	 */
+	@CustomKey("js.valueList.move")
+	public static ResKey JS_VALUE_LIST_MOVE;
 
 	/**
 	 * @en No value
@@ -913,6 +953,44 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CustomKey("js.calendar.more")
 	public static ResKey JS_CALENDAR_MORE;
+
+	// -- Job status client-side i18n keys --
+
+	/**
+	 * @en Running
+	 */
+	@CustomKey("js.jobStatus.running")
+	public static ResKey JS_JOB_STATUS_RUNNING;
+
+	/**
+	 * @en Completed
+	 */
+	@CustomKey("js.jobStatus.completed")
+	public static ResKey JS_JOB_STATUS_COMPLETED;
+
+	/**
+	 * @en Failed
+	 */
+	@CustomKey("js.jobStatus.failed")
+	public static ResKey JS_JOB_STATUS_FAILED;
+
+	/**
+	 * @en Cancelled
+	 */
+	@CustomKey("js.jobStatus.cancelled")
+	public static ResKey JS_JOB_STATUS_CANCELLED;
+
+	/**
+	 * @en Elapsed time
+	 */
+	@CustomKey("js.jobStatus.elapsed")
+	public static ResKey JS_JOB_STATUS_ELAPSED;
+
+	/**
+	 * @en Cancel
+	 */
+	@CustomKey("js.jobStatus.cancel")
+	public static ResKey JS_JOB_STATUS_CANCEL;
 
 	static {
 		initConstants(I18NConstants.class);

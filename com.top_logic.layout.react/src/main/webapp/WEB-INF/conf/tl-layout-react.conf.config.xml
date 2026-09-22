@@ -59,9 +59,20 @@
 					<stylesheet name="tl-react-icons-flags"
 						resource="webjar:org.webjars.npm/flag-icons:/webjars/flag-icons:css/flag-icons.min.css"
 					/>
+					<stylesheet name="tl-design-system-primitives"
+						resource="/style/tl-design-system/primitives.css"
+					/>
+					<stylesheet name="tl-design-system-tokens"
+						resource="/style/tl-design-system/tokens.css"
+						requires="tl-design-system-primitives"
+					/>
+					<stylesheet name="tl-design-system-base"
+						resource="/style/tl-design-system/base.css"
+						requires="tl-design-system-tokens,tl-react-fonts-inter"
+					/>
 					<stylesheet name="tl-react-base"
 						resource="/style/tlReactBase.css"
-						requires="tl-react-fonts-inter"
+						requires="tl-react-fonts-inter,tl-design-system-base"
 					/>
 					<stylesheet name="tl-react-controls-css"
 						resource="/style/tlReactControls.css"

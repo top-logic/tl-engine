@@ -32,8 +32,8 @@ import com.top_logic.util.TLContextManager;
  * side-window, or for any server-side command into a sibling React window of the same session.
  *
  * <p>
- * The target window has its own subsession and {@link SSEUpdateQueue}, so {@link #act} installs the
- * target's subsession, runs the command under the session-wide
+ * The target window has its own subsession and {@link SSEUpdateQueue}, so {@link #inWindow} installs
+ * the target's subsession, runs the action under the session-wide
  * {@link ReactWindowRegistry#beginInteraction() interaction} and settles derived state, then restores
  * the caller's subsession. The command's control updates enqueue to the target window's queue, which
  * flushes them to that window's SSE connection — the effect appears in the target browser window.
@@ -77,6 +77,52 @@ public final class ReactWindowReplay {
 	}
 
 	/**
+	 * Runs the given action against the control tree of the given window: in that window's
+	 * subsession, as one {@link Interaction}, with the derived state settled afterwards.
+	 *
+	 * <p>
+	 * The way into a window from a thread that is serving another one - a command replayed from a
+	 * side-window, a request returning from an external site, an event of the session - so that
+	 * what the action changes reaches that window's browser page. Everything the action touches is
+	 * seen in the target window's subsession, its locale included; the caller's subsession is
+	 * restored afterwards.
+	 * </p>
+	 *
+	 * @param registry
+	 *        The session's window registry.
+	 * @param windowName
+	 *        The target window.
+	 * @param action
+	 *        What to do in that window. Run on the calling thread.
+	 * @return Whether the action ran. A window whose page is gone - no queue is held for it any
+	 *         longer - is not acted on.
+	 */
+	public static boolean inWindow(ReactWindowRegistry registry, String windowName, Runnable action) {
+		if (registry == null || registry.getQueue(windowName) == null) {
+			return false;
+		}
+		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
+		TLSubSessionContext callerSubSession = displayContext.getSubSessionContext();
+		SubsessionHandler rootHandler = installSubSession(displayContext, windowName);
+		try (Interaction interaction = registry.beginInteraction()) {
+			boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
+			try {
+				action.run();
+				registry.synthesizeModelEvents(windowName);
+			} finally {
+				if (rootHandler != null) {
+					rootHandler.enableUpdate(updateBefore);
+				}
+			}
+		} finally {
+			if (callerSubSession != null) {
+				displayContext.installSubSessionContext(callerSubSession);
+			}
+		}
+		return true;
+	}
+
+	/**
 	 * Replays the given recorded step in the given window, in that window's subsession and as one
 	 * {@link Interaction}, settling derived state afterwards. An {@link AssertCommand assertion}
 	 * step is verified against the window's current state; any other step is dispatched to the
@@ -93,34 +139,22 @@ public final class ReactWindowReplay {
 	 *         If the window has no rendered tree or the step's address does not resolve.
 	 */
 	public static HandlerResult act(ReactWindowRegistry registry, String windowName, ReactCommand step) {
-		SSEUpdateQueue queue = registry.getQueue(windowName);
+		SSEUpdateQueue queue = registry == null ? null : registry.getQueue(windowName);
 		ReactControl root = queue == null ? null : queue.getRootControl();
-
-		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
-		TLSubSessionContext callerSubSession = displayContext.getSubSessionContext();
-		SubsessionHandler rootHandler = installSubSession(displayContext, windowName);
-		try (Interaction interaction = registry.beginInteraction()) {
-			boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
-			try {
-				ScriptingSession session = ScriptingSession.forRoot(root);
-				HandlerResult result;
-				if (step instanceof AssertCommand assertion) {
-					result = verify(session, assertion);
-				} else {
-					result = session.act(step.getAddress(), step.getName(), ReactCommands.arguments(step));
-				}
-				registry.synthesizeModelEvents(windowName);
-				return result;
-			} finally {
-				if (rootHandler != null) {
-					rootHandler.enableUpdate(updateBefore);
-				}
-			}
-		} finally {
-			if (callerSubSession != null) {
-				displayContext.installSubSessionContext(callerSubSession);
-			}
+		if (root == null) {
+			throw new IllegalArgumentException("Window '" + windowName + "' has no rendered control tree.");
 		}
+
+		HandlerResult[] result = new HandlerResult[1];
+		inWindow(registry, windowName, () -> {
+			ScriptingSession session = ScriptingSession.forRoot(root);
+			if (step instanceof AssertCommand assertion) {
+				result[0] = verify(session, assertion);
+			} else {
+				result[0] = session.act(step.getAddress(), step.getName(), ReactCommands.arguments(step));
+			}
+		});
+		return result[0];
 	}
 
 	/**

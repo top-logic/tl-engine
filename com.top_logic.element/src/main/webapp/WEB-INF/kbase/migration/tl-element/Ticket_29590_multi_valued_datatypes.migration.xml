@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29590_multi_valued_datatypes"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29492_enlarge_layout_key"
+			module="tl"
+		/>
+		<dependency name="Ticket_29548_create_email_phone"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<!-- Date and boolean values can be stored in a multi-valued attribute, therefore the corresponding data types offer the multiplicity option. -->
+		<add-annotations name="tl.core:Boolean">
+			<annotations>
+				<supports-multiple/>
+			</annotations>
+		</add-annotations>
+		<add-annotations name="tl.core:Date">
+			<annotations>
+				<supports-multiple/>
+			</annotations>
+		</add-annotations>
+		<add-annotations name="tl.core:Day">
+			<annotations>
+				<supports-multiple/>
+			</annotations>
+		</add-annotations>
+		<add-annotations name="tl.core:Time">
+			<annotations>
+				<supports-multiple/>
+			</annotations>
+		</add-annotations>
+		<add-annotations name="tl.core:DateTime">
+			<annotations>
+				<supports-multiple/>
+			</annotations>
+		</add-annotations>
+	</processors>
+	<post-processors/>
+</migration>

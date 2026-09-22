@@ -14,7 +14,6 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
-import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
@@ -27,8 +26,10 @@ import com.top_logic.layout.react.control.calendar.CalendarViewControl;
 import com.top_logic.layout.react.control.calendar.CalendarViewControl.Granularity;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.ExpressionCalendarModel.EventExprs;
 import com.top_logic.layout.view.model.ObservedTypes;
@@ -55,14 +56,11 @@ public class CalendarElement implements UIElement {
 	 * Configuration for {@link CalendarElement}.
 	 */
 	@TagName("calendar")
-	public interface Config extends UIElement.Config {
+	public interface Config extends UIElement.Config, Inputs {
 
 		@Override
 		@ClassDefault(CalendarElement.class)
 		Class<? extends UIElement> getImplementationClass();
-
-		/** Configuration name for {@link #getInputs()}. */
-		String INPUTS = "inputs";
 
 		/** Configuration name for {@link #getObjects()}. */
 		String OBJECTS = "objects";
@@ -104,15 +102,11 @@ public class CalendarElement implements UIElement {
 		String ON_CREATE = "on-create";
 
 		/**
-		 * References to {@link ViewChannel}s whose values become positional arguments to
-		 * {@link #getObjects()}.
-		 */
-		@Name(INPUTS)
-		@ListBinding(format = ChannelRefFormat.class, tag = "input", attribute = "channel")
-		List<ChannelRef> getInputs();
-
-		/**
 		 * TL-Script function computing the business objects shown as events (a {@link Collection}).
+		 *
+		 * <p>
+		 * The values of the declared inputs come first, in declaration order.
+		 * </p>
 		 */
 		@Name(OBJECTS)
 		@Mandatory
@@ -339,11 +333,8 @@ public class CalendarElement implements UIElement {
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		List<ViewChannel> inputChannels = new ArrayList<>();
-		for (ChannelRef ref : _config.getInputs()) {
-			inputChannels.add(context.resolveChannel(ref));
-		}
-		Collection<?> objects = executeObjectsQuery(_objectsExecutor, readChannelValues(inputChannels));
+		List<ViewChannel> inputChannels = ChannelInputs.resolve(context, _config.getInputs());
+		Collection<?> objects = executeObjectsQuery(_objectsExecutor, ChannelInputs.arguments(inputChannels));
 
 		ExpressionCalendarModel model =
 			new ExpressionCalendarModel(objects, _eventExprs, _onMove, _onResize, _onCreate);
@@ -417,14 +408,6 @@ public class CalendarElement implements UIElement {
 		}
 
 		return control;
-	}
-
-	private static Object[] readChannelValues(List<ViewChannel> channels) {
-		Object[] values = new Object[channels.size()];
-		for (int n = 0; n < channels.size(); n++) {
-			values[n] = channels.get(n).get();
-		}
-		return values;
 	}
 
 	private static Collection<?> executeObjectsQuery(QueryExecutor objectsExecutor, Object[] channelValues) {

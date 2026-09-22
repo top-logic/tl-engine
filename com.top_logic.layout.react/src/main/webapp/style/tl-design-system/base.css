@@ -1,0 +1,140 @@
+/* Erzeugt aus src/ mit tools/generate.mjs. Nicht von Hand ändern.
+   Begründung zu jedem Wert: docs/skalen.md */
+
+/* Grundklassen. Jede liest nur Variablen. */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--tl-surface-base);
+  color: var(--tl-text-primary);
+  font-family: var(--tl-font-family-sans);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* Typografie: eine Größe ist keine Klasse. Die Klasse legt alles fest. */
+.tl-type-display {
+  font-family: var(--tl-font-family-sans);
+  font-size: var(--tl-font-size-display);
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+.tl-type-heading-lg {
+  font-family: var(--tl-font-family-sans);
+  font-size: var(--tl-font-size-heading-lg);
+  font-weight: 600;
+  line-height: 1.3333;
+  letter-spacing: -0.005em;
+}
+
+.tl-type-heading-md {
+  font-family: var(--tl-font-family-sans);
+  font-size: var(--tl-font-size-heading-md);
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0;
+}
+
+.tl-type-heading-sm {
+  font-family: var(--tl-font-family-sans);
+  font-size: var(--tl-font-size-heading-sm);
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
+.tl-type-body {
+  font-family: var(--tl-font-family-sans);
+  font-size: var(--tl-font-size-body);
+  font-weight: 400;
+  line-height: 1.4286;
+  letter-spacing: 0;
+}
+
+.tl-type-body-strong {
+  font-family: var(--tl-font-family-sans);
+  font-size: var(--tl-font-size-body);
+  font-weight: 600;
+  line-height: 1.4286;
+  letter-spacing: 0;
+}
+
+.tl-type-label {
+  font-family: var(--tl-font-family-sans);
+  font-size: var(--tl-font-size-label);
+  font-weight: 400;
+  line-height: 1.3333;
+  letter-spacing: 0.01em;
+}
+
+.tl-type-label-strong {
+  font-family: var(--tl-font-family-sans);
+  font-size: var(--tl-font-size-label);
+  font-weight: 600;
+  line-height: 1.3333;
+  letter-spacing: 0.01em;
+}
+
+.tl-type-code {
+  font-family: var(--tl-font-family-mono);
+  font-size: var(--tl-font-size-body);
+  font-weight: 400;
+  line-height: 1.4286;
+  letter-spacing: 0;
+}
+
+/* Zahlen in Spalten fluchten nur mit tabellarischen Ziffern. Pflicht, nicht Option. */
+.tl-nums {
+  font-feature-settings: "tnum" 1, "zero" 1;
+  font-variant-numeric: tabular-nums slashed-zero;
+}
+
+/* Der Ring gehört der Tastatur. Ein Mechanismus, außen, nur beim Tastaturfokus. */
+:where(a, button, input, select, textarea, summary, [tabindex], [contenteditable]):focus-visible {
+  outline: var(--tl-focus-width) solid var(--tl-focus-ring);
+  outline-offset: var(--tl-focus-offset);
+}
+
+/* Wer Bewegung abbestellt hat, hat sie abbestellt. 0.01ms statt 0, sonst feuert transitionend nie. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Druck: rem hat im Druck keine Wurzel. Eigene Leiter in pt. */
+@media print {
+  .tl-print-title {
+    font-size: 18pt;
+    font-weight: 600;
+    line-height: 1.25;
+  }
+  .tl-print-heading {
+    font-size: 12pt;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+  .tl-print-body {
+    font-size: 10pt;
+    font-weight: 400;
+    line-height: 1.4;
+  }
+  .tl-print-caption {
+    font-size: 8pt;
+    font-weight: 400;
+    line-height: 1.35;
+  }
+  .tl-print-title, .tl-print-heading, .tl-print-body, .tl-print-caption {
+    font-variant-numeric: tabular-nums;
+  }
+}

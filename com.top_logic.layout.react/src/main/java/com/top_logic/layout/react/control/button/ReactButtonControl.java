@@ -61,6 +61,9 @@ public class ReactButtonControl extends ReactControl {
 	/** State key for a direct client-side navigation target (bypasses the server command). */
 	private static final String NAVIGATE_URL = "navigateUrl";
 
+	/** State key for the flag opening {@link #NAVIGATE_URL} in a browser window of its own. */
+	private static final String NAVIGATE_NEW_WINDOW = "navigateNewWindow";
+
 	/** State key for the keyboard gesture that triggers this button (e.g. "ENTER", "Ctrl+S"). */
 	private static final String KEY_GESTURE = "keyGesture";
 
@@ -293,6 +296,22 @@ public class ReactButtonControl extends ReactControl {
 	 */
 	public void setNavigateUrl(String url) {
 		putState(NAVIGATE_URL, url);
+	}
+
+	/**
+	 * Whether the {@link #setNavigateUrl(String) navigation target} is opened in a browser window of
+	 * its own instead of replacing the page the button is on.
+	 *
+	 * <p>
+	 * For a destination the user comes back from - an external authentication, a document to look at
+	 * - where the page that sent them there keeps running and is waiting for them to return. The
+	 * window is opened from the click itself, which is what lets a browser distinguish it from a
+	 * pop-up nobody asked for, and it is a window of the page that opened it, so the page shown in it
+	 * can close it once its work is done.
+	 * </p>
+	 */
+	public void setNavigateNewWindow(boolean newWindow) {
+		putState(NAVIGATE_NEW_WINDOW, newWindow ? Boolean.TRUE : null);
 	}
 
 	private void putImageState(ThemeImage image) {

@@ -9,7 +9,9 @@ import java.util.List;
 
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.model.access.StorageMapping;
 
@@ -21,6 +23,11 @@ import com.top_logic.model.access.StorageMapping;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public interface AttributeValueConf extends ConfigurationItem {
+
+	/**
+	 * @see #getValue()
+	 */
+	String VALUE = "value";
 
 	/**
 	 * Name of the attribute to import.
@@ -37,15 +44,21 @@ public interface AttributeValueConf extends ConfigurationItem {
 	 * Textual representation of a primitive attribute's value.
 	 * 
 	 * <p>
-	 * The value must be a serialized variant of the value stored in the database compatible with
-	 * {@link StorageMapping#getBusinessObject(Object) the storage mapping} of the attribute's type.
+	 * If the application type of the attribute type's {@link StorageMapping} declares a
+	 * {@link Format}, the value is given in that format. Otherwise, the value is a serialized
+	 * variant of the value stored in the database.
 	 * </p>
 	 * 
 	 * <p>
 	 * For a reference attribute, {@link #getCollectionValue()} must be set instead.
 	 * </p>
+	 * 
+	 * @implNote Without a {@link Format} annotation at the
+	 *           {@link StorageMapping#getApplicationType() application type}, the value is
+	 *           converted by {@link StorageMapping#getBusinessObject(Object)}.
 	 */
 	@Nullable
+	@Name(VALUE)
 	String getValue();
 
 	/**

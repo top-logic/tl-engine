@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.react.field;
 
+import java.text.DateFormat;
 import java.text.Format;
 import java.text.NumberFormat;
 import java.util.List;
@@ -37,11 +38,15 @@ public final class FieldSpec {
 
 	private String _tooltip;
 
+	private String _placeholder;
+
 	private boolean _mandatory;
 
 	private boolean _editable = true;
 
 	private boolean _multiple;
+
+	private boolean _ordered;
 
 	private int _multilineRows;
 
@@ -52,6 +57,8 @@ public final class FieldSpec {
 	private ReactDatePickerControl.Kind _dateKind = ReactDatePickerControl.Kind.DATE;
 
 	private Format _numberFormat;
+
+	private DateFormat _dateFormat;
 
 	private List<?> _options;
 
@@ -103,6 +110,30 @@ public final class FieldSpec {
 	 */
 	public FieldSpec setTooltip(String tooltip) {
 		_tooltip = tooltip;
+		return this;
+	}
+
+	/**
+	 * The text shown in the empty input, or {@code null} if it stays empty.
+	 *
+	 * <p>
+	 * What the user is expected to enter, said inside the input itself: "Search" in a search box,
+	 * "name@example.com" in a mail address. It is the place to state the purpose of an input whose
+	 * {@link #getLabel() label} is hidden or stands elsewhere - in a toolbar, above a list - and it
+	 * disappears as soon as a value is entered, so it never replaces a label the field can show.
+	 * </p>
+	 */
+	public String getPlaceholder() {
+		return _placeholder;
+	}
+
+	/**
+	 * Sets the {@link #getPlaceholder() placeholder}.
+	 *
+	 * @return This specification for call chaining.
+	 */
+	public FieldSpec setPlaceholder(String placeholder) {
+		_placeholder = placeholder;
 		return this;
 	}
 
@@ -164,6 +195,30 @@ public final class FieldSpec {
 	 */
 	public FieldSpec setMultiple(boolean multiple) {
 		_multiple = multiple;
+		return this;
+	}
+
+	/**
+	 * Whether the order of the values of a {@link #isMultiple() multi-valued} field is part of the
+	 * value, so that the user may arrange them.
+	 *
+	 * <p>
+	 * A field whose values form a set has no such order: its values are displayed in some order,
+	 * but moving one of them would change nothing. Only where the order is stored with the values
+	 * is arranging them offered.
+	 * </p>
+	 */
+	public boolean isOrdered() {
+		return _ordered;
+	}
+
+	/**
+	 * Sets whether the values of the field are {@link #isOrdered() ordered}.
+	 *
+	 * @return This specification for call chaining.
+	 */
+	public FieldSpec setOrdered(boolean ordered) {
+		_ordered = ordered;
 		return this;
 	}
 
@@ -262,6 +317,30 @@ public final class FieldSpec {
 	}
 
 	/**
+	 * The format a point in time is displayed in when the field is read-only, or {@code null} to
+	 * use the default format of its {@link #getDateKind() kind}.
+	 *
+	 * <p>
+	 * The attribute's annotated format where it has one: an application chooses whether a point in
+	 * time reads as {@code 17.09.26, 10:23} or {@code 17.09.2026, 10:23:45}, and the same format
+	 * writes the value in a form field, in a table cell, and in the bounds of that column's filter.
+	 * </p>
+	 */
+	public DateFormat getDateFormat() {
+		return _dateFormat;
+	}
+
+	/**
+	 * Sets the {@link #getDateFormat() date format}.
+	 *
+	 * @return This specification for call chaining.
+	 */
+	public FieldSpec setDateFormat(DateFormat dateFormat) {
+		_dateFormat = dateFormat;
+		return this;
+	}
+
+	/**
 	 * The values to choose from, or {@code null} if the value is entered freely.
 	 */
 	public List<?> getOptions() {
@@ -288,6 +367,38 @@ public final class FieldSpec {
 		_options = options;
 		_optionLabels = optionLabels;
 		return this;
+	}
+
+	/**
+	 * This specification describing a single one of the values of a
+	 * {@link #isMultiple() multi-valued} field.
+	 *
+	 * <p>
+	 * The element is described like the field itself - same value type, same label, same display
+	 * hints - except that it holds one value. That is what a control editing a single value is
+	 * created with, while the collection around it is built from one such control per element.
+	 * </p>
+	 *
+	 * @return A specification of one element, independent of this one.
+	 */
+	public FieldSpec elementSpec() {
+		FieldSpec result = new FieldSpec(_valueType, _label);
+		result._tooltip = _tooltip;
+		result._placeholder = _placeholder;
+		result._mandatory = _mandatory;
+		result._editable = _editable;
+		// The element is one value: it is not several, and a single value has no order to arrange.
+		result._multiple = false;
+		result._ordered = false;
+		result._multilineRows = _multilineRows;
+		result._booleanPresentation = _booleanPresentation;
+		result._triState = _triState;
+		result._dateKind = _dateKind;
+		result._numberFormat = _numberFormat;
+		result._dateFormat = _dateFormat;
+		result._options = _options;
+		result._optionLabels = _optionLabels;
+		return result;
 	}
 
 	@Override

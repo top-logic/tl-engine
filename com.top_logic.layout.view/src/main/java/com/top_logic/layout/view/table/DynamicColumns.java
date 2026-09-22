@@ -14,7 +14,6 @@ import java.util.function.Predicate;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
@@ -25,8 +24,7 @@ import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
-import com.top_logic.layout.view.channel.ChannelRef;
-import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -76,7 +74,7 @@ public class DynamicColumns implements ColumnDeclaration {
 	 * Configuration of a {@link DynamicColumns}.
 	 */
 	@TagName(TAG_NAME)
-	public interface Config extends ColumnDeclaration.Config<DynamicColumns> {
+	public interface Config extends ColumnDeclaration.Config<DynamicColumns>, Inputs {
 
 		/** Configuration name for {@link #getName()}. */
 		String NAME = "name";
@@ -116,9 +114,6 @@ public class DynamicColumns implements ColumnDeclaration {
 
 		/** Configuration name for {@link #getAggregate()}. */
 		String AGGREGATE = "aggregate";
-
-		/** Configuration name for {@link #getInputs()}. */
-		String INPUTS = "inputs";
 
 		@Override
 		@ClassDefault(DynamicColumns.class)
@@ -286,14 +281,6 @@ public class DynamicColumns implements ColumnDeclaration {
 		@Name(AGGREGATE)
 		@Nullable
 		Expr getAggregate();
-
-		/**
-		 * References to channels whose values become the leading arguments of every function of
-		 * this declaration.
-		 */
-		@Name(INPUTS)
-		@ListBinding(format = ChannelRefFormat.class, tag = "input", attribute = "channel")
-		List<ChannelRef> getInputs();
 
 	}
 

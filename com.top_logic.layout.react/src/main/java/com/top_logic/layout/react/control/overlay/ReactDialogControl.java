@@ -24,6 +24,12 @@ public class ReactDialogControl extends ReactControl {
 
 	private static final String CLOSE_ON_BACKDROP = "closeOnBackdrop";
 
+	/** Client state field telling whether the user can dismiss this dialog. */
+	public static final String CLOSABLE = "closable";
+
+	/** The {@link ReactCommandHandler} dismissing this dialog. */
+	public static final String CLOSE_COMMAND = "close";
+
 	private static final String OPEN = "open";
 
 	private static final String CHILD = "child";
@@ -33,6 +39,8 @@ public class ReactDialogControl extends ReactControl {
 	private ReactControl _child;
 
 	private boolean _open;
+
+	private boolean _closable = true;
 
 	/**
 	 * Creates a dialog overlay control.
@@ -49,6 +57,7 @@ public class ReactDialogControl extends ReactControl {
 		_closeHandler = closeHandler;
 		putState(CLOSE_ON_BACKDROP, closeOnBackdrop);
 		putState(OPEN, false);
+		putState(CLOSABLE, _closable);
 	}
 
 	/**
@@ -97,10 +106,46 @@ public class ReactDialogControl extends ReactControl {
 	}
 
 	/**
-	 * Handles the close command sent when the dialog overlay is dismissed.
+	 * Whether this dialog can be closed.
+	 *
+	 * @see #setClosable(boolean)
 	 */
-	@ReactCommandHandler("close")
+	public boolean isClosable() {
+		return _closable;
+	}
+
+	/**
+	 * Sets whether this dialog can be closed.
+	 *
+	 * <p>
+	 * A dialog that is not closable stays on screen: the client neither dismisses it on Escape nor
+	 * on a backdrop click, {@link #CLOSE_COMMAND} is ignored, and the {@link DialogManager} refuses
+	 * every close of it. A dialog is closable unless marked otherwise.
+	 * </p>
+	 *
+	 * @param closable
+	 *        Whether the dialog may be closed.
+	 */
+	public void setClosable(boolean closable) {
+		if (closable == _closable) {
+			return;
+		}
+		_closable = closable;
+		putState(CLOSABLE, closable);
+	}
+
+	/**
+	 * Handles the close command sent when the dialog overlay is dismissed.
+	 *
+	 * <p>
+	 * The command is ignored while the dialog is not {@link #isClosable() closable}.
+	 * </p>
+	 */
+	@ReactCommandHandler(CLOSE_COMMAND)
 	void handleClose() {
+		if (!_closable) {
+			return;
+		}
 		close();
 		_closeHandler.run();
 	}

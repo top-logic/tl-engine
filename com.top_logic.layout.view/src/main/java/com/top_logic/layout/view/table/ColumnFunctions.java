@@ -10,6 +10,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.search.expr.SearchExpression;
@@ -78,7 +79,7 @@ public class ColumnFunctions {
 	 *        What the column is resolved against, holding the session the channels belong to.
 	 */
 	public Resolved resolve(ColumnResolution scope) {
-		return new Resolved(ColumnInputs.resolve(scope, _inputs));
+		return new Resolved(ChannelInputs.resolve(scope.context(), _inputs));
 	}
 
 	/**
@@ -174,7 +175,7 @@ public class ColumnFunctions {
 			trailing[0] = row;
 			System.arraycopy(bound, 0, trailing, 1, bound.length);
 			System.arraycopy(appended, 0, trailing, 1 + bound.length, appended.length);
-			return ColumnInputs.arguments(_channels, trailing);
+			return ChannelInputs.arguments(_channels, trailing);
 		}
 
 		/**
@@ -184,7 +185,7 @@ public class ColumnFunctions {
 		 *        The arguments behind the inputs, in the order the function takes them.
 		 */
 		public Object[] inputs(Object... trailing) {
-			return ColumnInputs.arguments(_channels, trailing);
+			return ChannelInputs.arguments(_channels, trailing);
 		}
 
 	}

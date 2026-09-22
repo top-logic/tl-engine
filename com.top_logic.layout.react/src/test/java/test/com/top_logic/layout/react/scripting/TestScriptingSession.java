@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.layout.react.scripting;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -12,6 +13,7 @@ import junit.framework.TestCase;
 
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactCommand;
@@ -44,6 +46,9 @@ import com.top_logic.model.listen.ModelScope;
  * </p>
  */
 public class TestScriptingSession extends TestCase {
+
+	/** A diagnostic name, as {@code TableElement} declares it for the rows it dropped. */
+	private static final String HIDDEN_BY_ACCESS = "hiddenByAccess";
 
 	private SSEUpdateQueue _queue;
 
@@ -191,6 +196,73 @@ public class TestScriptingSession extends TestCase {
 		assertEquals("/a/counter[X]", step.getAddress());
 		assertTrue("Round trip through canonical JSON preserves the expectation.",
 			AssertCommand.mismatchingKeys(Map.of("count", 4), step.stateEntries()).isEmpty());
+	}
+
+	/**
+	 * A nested expectation is matched entry by entry: an assertion recorded for one diagnostic entry
+	 * keeps holding when a sibling entry of the same group changes, and a mismatch inside the group is
+	 * reported by its dotted path.
+	 */
+	public void testNestedAssertionSubsetMatch() {
+		Map<String, Object> actual = Map.of(ReactControl.DIAGNOSTICS,
+			Map.of("hiddenByAccess", Map.of("count", 3), "other", "noise"));
+
+		assertTrue(AssertCommand.mismatchingKeys(
+			Map.of(ReactControl.DIAGNOSTICS, Map.of("hiddenByAccess", Map.of("count", 3))), actual).isEmpty());
+
+		assertEquals(List.of("diagnostics.hiddenByAccess.count"), AssertCommand.mismatchingKeys(
+			Map.of(ReactControl.DIAGNOSTICS, Map.of("hiddenByAccess", Map.of("count", 2))), actual));
+		assertEquals(List.of("diagnostics.missing"), AssertCommand.mismatchingKeys(
+			Map.of(ReactControl.DIAGNOSTICS, Map.of("missing", "x")), actual));
+
+		// The path reads the reported values back out of both sides.
+		Map<String, Object> expected = Map.of(ReactControl.DIAGNOSTICS, Map.of("hiddenByAccess", Map.of("count", 2)));
+		String path = single(AssertCommand.mismatchingKeys(expected, actual));
+		assertEquals(Integer.valueOf(2), AssertCommand.valueAt(expected, path));
+		assertEquals(Integer.valueOf(3), AssertCommand.valueAt(actual, path));
+
+		// A recorded step round trips through canonical JSON with its nested expectation intact.
+		AssertCommand step = AssertCommand.create("/a/table[Tasks]", expected);
+		assertEquals(List.of("diagnostics.hiddenByAccess.count"),
+			AssertCommand.mismatchingKeys(step.stateEntries(), actual));
+		assertTrue(AssertCommand.mismatchingKeys(step.stateEntries(),
+			Map.of(ReactControl.DIAGNOSTICS, Map.of("hiddenByAccess", Map.of("count", 2, "byType", Map.of())))).isEmpty());
+	}
+
+	/**
+	 * A diagnostic is server-only: it appears in the headless projection under
+	 * {@link ReactControl#DIAGNOSTICS}, while the state rendered for the browser knows nothing about
+	 * it. A control without diagnostics carries no such key at all.
+	 */
+	public void testDiagnosticsAreProjectedButNotSentToTheClient() throws IOException {
+		DemoButtonControl button = new DemoButtonControl(new TestReactContext(new SSEUpdateQueue()), "Go");
+
+		assertFalse("A control without diagnostics must not carry the key.",
+			ScriptingTreeProjector.nodeState(button).containsKey(ReactControl.DIAGNOSTICS));
+		assertEquals(Map.of(), button.diagnostics());
+
+		button.putDiagnostic(HIDDEN_BY_ACCESS, Map.of("count", Integer.valueOf(3)));
+
+		Map<?, ?> diagnostics = (Map<?, ?>) ScriptingTreeProjector.nodeState(button).get(ReactControl.DIAGNOSTICS);
+		assertEquals(Map.of("count", Integer.valueOf(3)), diagnostics.get(HIDDEN_BY_ACCESS));
+
+		// The same entry is part of what an observation shows for that node.
+		ScriptingNodeView view = single(ScriptingSession.forRoot(button).observe().children());
+		assertEquals(diagnostics, view.state().get(ReactControl.DIAGNOSTICS));
+
+		// What the browser receives is the rendered state - free of the diagnostic.
+		TagWriter out = new TagWriter();
+		button.write(out);
+		String rendered = out.toString();
+		assertTrue("The client state is rendered at all.", rendered.contains("data-react-state"));
+		assertTrue("The client state holds the regular state.", rendered.contains("clicks"));
+		assertFalse("Diagnostics must not reach the client: " + rendered,
+			rendered.contains(ReactControl.DIAGNOSTICS));
+		assertFalse("Diagnostics must not reach the client: " + rendered, rendered.contains(HIDDEN_BY_ACCESS));
+
+		// Dropping the only entry removes the key from the projection again.
+		button.putDiagnostic(HIDDEN_BY_ACCESS, null);
+		assertFalse(ScriptingTreeProjector.nodeState(button).containsKey(ReactControl.DIAGNOSTICS));
 	}
 
 	/**

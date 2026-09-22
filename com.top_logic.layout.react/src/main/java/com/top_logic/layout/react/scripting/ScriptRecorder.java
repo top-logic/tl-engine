@@ -7,6 +7,7 @@ package com.top_logic.layout.react.scripting;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.top_logic.basic.Logger;
@@ -140,6 +141,27 @@ public final class ScriptRecorder {
 			&& last.getAddress().equals(step.getAddress())
 			&& last.getName() != null
 			&& last.getName().equals(step.getName());
+	}
+
+	/**
+	 * Captures an {@link AssertCommand assertion} on the node at the given address if
+	 * {@link #isRecording() recording}; a no-op otherwise.
+	 *
+	 * <p>
+	 * The single place an assertion step is built, so that every recorder of one - the agent
+	 * endpoint marking "the state here is the expected state", the UI inspector recording the state
+	 * entries a user selected - captures the same step. An assertion never coalesces with its
+	 * predecessor: two assertions on one address are two checks of that node, taken at two points of
+	 * the script, not an edit superseding an earlier one.
+	 * </p>
+	 *
+	 * @param address
+	 *        The semantic address of the node to verify.
+	 * @param expectedState
+	 *        The state entries that must match on replay, a subset of the node's projected state.
+	 */
+	public void recordAssertion(String address, Map<String, Object> expectedState) {
+		record(AssertCommand.create(address, expectedState));
 	}
 
 	/**

@@ -13,15 +13,15 @@ import java.util.function.Function;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.I18NConstants;
+import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.ChannelRef;
-import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
@@ -74,7 +74,7 @@ public class EmbeddedColumns implements ColumnDeclaration {
 	 * Configuration of an {@link EmbeddedColumns}.
 	 */
 	@TagName(TAG_NAME)
-	public interface Config extends ColumnDeclaration.Config<EmbeddedColumns>, ColumnsConfig {
+	public interface Config extends ColumnDeclaration.Config<EmbeddedColumns>, ColumnsConfig, Inputs {
 
 		/** Configuration name for {@link #getReference()}. */
 		String REFERENCE = "reference";
@@ -93,9 +93,6 @@ public class EmbeddedColumns implements ColumnDeclaration {
 
 		/** Configuration name for {@link #getLabel()}. */
 		String LABEL = "label";
-
-		/** Configuration name for {@link #getInputs()}. */
-		String INPUTS = "inputs";
 
 		@Override
 		@ClassDefault(EmbeddedColumns.class)
@@ -182,14 +179,6 @@ public class EmbeddedColumns implements ColumnDeclaration {
 		 */
 		@Name(LABEL)
 		ResKey getLabel();
-
-		/**
-		 * References to channels whose values become the leading arguments of the
-		 * {@link #getObject()} function, ahead of the row.
-		 */
-		@Name(INPUTS)
-		@ListBinding(format = ChannelRefFormat.class, tag = "input", attribute = "channel")
-		List<ChannelRef> getInputs();
 
 	}
 
@@ -467,10 +456,10 @@ public class EmbeddedColumns implements ColumnDeclaration {
 			throw new IllegalStateException("The embedded columns of '" + _name + "' declare the type "
 				+ type + ", which holds no columns.");
 		}
-		List<ViewChannel> inputs = ColumnInputs.resolve(scope, _inputs);
+		List<ViewChannel> inputs = ChannelInputs.resolve(scope.context(), _inputs);
 		QueryExecutor object = _object;
 		Function<Object, Object> navigation =
-			object == null ? row -> null : row -> object.execute(ColumnInputs.arguments(inputs, row));
+			object == null ? row -> null : row -> object.execute(ChannelInputs.arguments(inputs, row));
 		return new Target((TLStructuredType) type, navigation, _multiple, _label);
 	}
 

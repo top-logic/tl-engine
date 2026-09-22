@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.configedit;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -136,7 +137,9 @@ public class ConfigFieldModel extends AbstractFieldModel implements Configuratio
 		}
 		// A validation verdict describes the value it was passed. This is a different value, so the
 		// verdict no longer describes anything on display; the next check speaks for the new one.
+		// The warnings go with it: they were said about the value the field no longer holds.
 		setModelValidationError(null);
+		setModelValidationWarnings(Collections.emptyList());
 		_config.update(_property, value);
 		// The ConfigurationListener callback (onChange) fires the FieldModelListener notification.
 	}

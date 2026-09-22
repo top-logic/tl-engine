@@ -21,9 +21,11 @@ import com.top_logic.basic.LongID;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationReader;
+import com.top_logic.basic.config.ConfigurationValueProvider;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.XmlDateTimeFormat;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.basic.io.Content;
@@ -43,6 +45,7 @@ import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.access.StorageMapping;
 import com.top_logic.model.factory.TLFactory;
 import com.top_logic.model.instance.exporter.Resolvers;
 import com.top_logic.model.instance.exporter.XMLInstanceExporter;
@@ -599,7 +602,14 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	}
 
 	/**
-	 * Parses a serialized primitive type value.
+	 * Parses a primitive type value given in its plain textual form.
+	 *
+	 * <p>
+	 * If the application type of the given type's {@link StorageMapping} declares a {@link Format},
+	 * the value is read with that format. Otherwise, the value is the serialized form of the value
+	 * stored in the database and is converted to a business object by the {@link StorageMapping} of
+	 * the given type.
+	 * </p>
 	 *
 	 * <p>
 	 * A binary value is either a data URI keeping content type and file name, see
@@ -607,10 +617,23 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	 * {@link BinaryData} with content type {@link BinaryData#CONTENT_TYPE_OCTET_STREAM} and no name.
 	 * </p>
 	 *
+	 * @return The parsed value, or <code>null</code>, if the value cannot be parsed. A parse
+	 *         failure is reported to the given log.
+	 *
 	 * @see XMLInstanceExporter#serialize(TLPrimitive, Object)
 	 */
 	public static Object parse(I18NLog log, TLPrimitive type, String value) {
 		if (value == null || value.trim().isEmpty()) {
+			return null;
+		}
+		try {
+			ConfigurationValueProvider<?> format = Resolvers.format(type);
+			if (format != null) {
+				return format.getValue(AttributeValueConf.VALUE, value);
+			}
+		} catch (ConfigurationException ex) {
+			log.error(I18NConstants.INVALID_VALUE_FORMAT__VAL_TYPE_MSG
+				.fill(value, TLModelUtil.qualifiedName(type), ex.getMessage()), ex);
 			return null;
 		}
 		return type.getStorageMapping().getBusinessObject(parseStorageValue(log, type.getDBType(), value));

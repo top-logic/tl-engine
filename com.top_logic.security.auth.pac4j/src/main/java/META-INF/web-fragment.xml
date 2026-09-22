@@ -22,6 +22,16 @@
 	<filter>
 		<filter-name>Pac4jCallbackFilter</filter-name>
 		<filter-class>org.pac4j.jee.filter.CallbackFilter</filter-class>
+		<!--
+		    The answer of the identity provider returns into the session it was asked from. An
+		    identity confirmation belongs to that session, whose windows would lose their ground
+		    under a new session identifier, and a login creates a session of its own as soon as the
+		    account is known.
+		-->
+		<init-param>
+			<param-name>renewSession</param-name>
+			<param-value>false</param-value>
+		</init-param>
 	</filter>
 
 	<filter-mapping>

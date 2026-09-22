@@ -25,11 +25,16 @@
 				</bundles>
 			</instance>
 		</config>
-		<!-- The role that may open the administration area, granted in security.xml. -->
+		<!--
+			The roles of this application: the administrator role that may open the administration
+			area, granted in security.xml, and the account reader role that makes accounts and
+			groups visible, granted by the role rules below.
+		-->
 		<config service-class="com.top_logic.base.services.InitialRolesManager">
 			<instance>
 				<roles>
 					<role name="demo.react.Administrator"/>
+					<role name="demo.react.AccountReader"/>
 				</roles>
 			</instance>
 		</config>
@@ -60,6 +65,54 @@
 			</instance>
 		</config>
 		<!--
+			Every member of the "users" group reads every account and every group, so that the
+			deputy settings can offer the other accounts and show who stands in for whom. This is a
+			decision of this demo; a real application decides for itself whether and which accounts
+			a user may see. The engine grants an account read access to its own account only.
+		-->
+		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+			<instance>
+				<security-config>
+					<class name="tl.accounts:Person">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="demo.react.AccountReader"
+						/>
+					</class>
+					<class name="tl.accounts:Group">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="demo.react.AccountReader"
+						/>
+					</class>
+				</security-config>
+			</instance>
+		</config>
+		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
+			<instance>
+				<role-rules>
+					<rules>
+						<rule id="AccountsReadableByUsers"
+							inherit="true"
+							meta-element="tl.accounts:Person"
+							role="demo.react.AccountReader"
+						>
+							<group-with-name name="users"/>
+						</rule>
+						<rule id="GroupsReadableByUsers"
+							inherit="true"
+							meta-element="tl.accounts:Group"
+							role="demo.react.AccountReader"
+						>
+							<group-with-name name="users"/>
+						</rule>
+					</rules>
+				</role-rules>
+			</instance>
+		</config>
+		<!--
 			Where this application displays its business objects. A read-only value whose type is
 			listed here is offered as a link; following it reveals the views below in order and
 			hands each of them the values its bindings compute.
@@ -67,6 +120,11 @@
 			The frames a target pushes carry the same channel values and the same labels as the
 			frames the user's own drill-down pushes, so a target leading into a drill-down the user
 			already has leaves it untouched.
+			
+			Each view is looked for within the view shown before it, and a view that the drill-down
+			reaches by pushing a frame is named as its own step: the milestone list sits behind the
+			Milestones tile of the project cockpit, so it is a frame after the cockpit frame, and
+			its label is the one that tile pushes with.
 		-->
 		<config service-class="com.top_logic.layout.view.navigation.DisplayTargetService">
 			<instance>
@@ -91,6 +149,15 @@
 								channel="project"
 								expr="m -> $m.container()"
 							/>
+						</show>
+						<show
+							label-expr="m -> #('Milestones'@en, 'Meilensteine'@de)"
+							view="projects/milestone-list.view.xml"
+						>
+							<bind
+								channel="project"
+								expr="m -> $m.container()"
+							/>
 							<bind channel="milestone"/>
 						</show>
 					</target>
@@ -108,6 +175,19 @@
 							<bind
 								channel="project"
 								expr="t -> $t.container()"
+							/>
+						</show>
+						<show
+							label-expr="t -> #('Milestones'@en, 'Meilensteine'@de)"
+							view="projects/milestone-list.view.xml"
+						>
+							<bind
+								channel="project"
+								expr="t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`).container()"
+							/>
+							<bind
+								channel="milestone"
+								expr="t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`)"
 							/>
 						</show>
 						<show
@@ -175,6 +255,21 @@
 						<text name="shadow-raised" value="none"/>
 					</theme>
 				</themes>
+			</instance>
+		</config>
+		<!--
+			The stylesheet of this application, contributed to the client resources of the React UI
+			behind the stylesheets of the controls, so that it overrides them. It holds the
+			staggered entrance of the repeater demo's items.
+		-->
+		<config service-class="com.top_logic.layout.react.resource.ClientResources">
+			<instance class="com.top_logic.layout.react.resource.ClientResources">
+				<resources>
+					<stylesheet name="tl-demo-react-css"
+						requires="tl-react-controls-css"
+						resource="/style/tl-demo-react.css"
+					/>
+				</resources>
 			</instance>
 		</config>
 	</services>

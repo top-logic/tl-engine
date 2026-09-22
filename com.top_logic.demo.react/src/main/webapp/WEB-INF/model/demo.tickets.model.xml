@@ -9,6 +9,11 @@
 						<color token="support-warning"/>
 					</annotations>
 				</classifier>
+				<classifier name="inProgress">
+					<annotations>
+						<color token="support-info"/>
+					</annotations>
+				</classifier>
 				<classifier name="closed">
 					<annotations>
 						<color token="support-success"/>
@@ -37,6 +42,17 @@
 							</default-value>
 						</annotations>
 					</reference>
+					<property name="statusLabel"
+						type="tl.core:String"
+					>
+						<annotations>
+							<storage-algorithm>
+								<query>
+									<expr>t -&gt; label($t.get(`demo.tickets:Ticket#status`))</expr>
+								</query>
+							</storage-algorithm>
+						</annotations>
+					</property>
 					<reference name="comments"
 						composite="true"
 						kind="forwards"

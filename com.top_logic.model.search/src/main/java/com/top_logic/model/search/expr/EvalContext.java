@@ -43,6 +43,8 @@ public final class EvalContext {
 
 	private boolean _interactive;
 
+	private SecurityFilterReport _securityReport;
+
 	/**
 	 * Creates a {@link EvalContext}.
 	 * 
@@ -196,6 +198,32 @@ public final class EvalContext {
 	}
 
 	/**
+	 * The report collecting the objects that the security filter removes from the result of an
+	 * execution.
+	 *
+	 * <p>
+	 * The value is <code>null</code> unless a caller {@link #setSecurityReport(SecurityFilterReport)
+	 * attaches} a report.
+	 * </p>
+	 *
+	 * @see SecurityFilterReport
+	 */
+	public SecurityFilterReport getSecurityReport() {
+		return _securityReport;
+	}
+
+	/**
+	 * Updates the value of {@link #getSecurityReport()}.
+	 *
+	 * @param securityReport
+	 *        The report to fill while filtering the result of an execution that uses this context.
+	 *        <code>null</code> switches the recording off.
+	 */
+	public void setSecurityReport(SecurityFilterReport securityReport) {
+		_securityReport = securityReport;
+	}
+
+	/**
 	 * The {@link KnowledgeBase} to search in.
 	 */
 	public KnowledgeBase getKnowledgeBase() {
@@ -217,6 +245,7 @@ public final class EvalContext {
 		EvalContext result = new EvalContext(_interactive, _kb, _model, null, null);
 		result._vars.putAll(_vars);
 		result._renderer = _renderer;
+		result._securityReport = _securityReport;
 		return result;
 	}
 

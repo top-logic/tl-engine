@@ -18,6 +18,8 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.button.CommandModel;
+import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * A {@link ReactControl} that renders a responsive dashboard grid of
@@ -35,6 +37,8 @@ public class ReactDashboardControl extends ReactControl {
 
 	private static final String MIN_COL_WIDTH = "minColWidth";
 
+	private static final String ROW_HEIGHT = "rowHeight";
+
 	private static final String CHILDREN = "children";
 
 	private static final String EDIT_MODE = "editMode";
@@ -43,6 +47,52 @@ public class ReactDashboardControl extends ReactControl {
 	public static final String REORDER_COMMAND = "reorder";
 
 	private static final String ORDER_ARG = "order";
+
+	/**
+	 * The {@link ReactCommandHandler} that runs the action of the tile the user activated.
+	 *
+	 * @see ActivateTileArguments
+	 */
+	public static final String ACTIVATE_COMMAND = "activate";
+
+	/** Descriptor key holding a tile's {@link Tile#getId() id}. */
+	private static final String TILE_ID = "id";
+
+	/** Descriptor key holding a tile's relative {@link TileWidth width}. */
+	private static final String TILE_WIDTH = "width";
+
+	/** Descriptor key holding the number of grid rows a tile occupies. */
+	private static final String TILE_ROW_SPAN = "rowSpan";
+
+	/** Descriptor key holding the control rendered inside a tile. */
+	private static final String TILE_CONTROL = "control";
+
+	/** Descriptor key holding a tile's {@link TileAction action}, {@code null} without one. */
+	private static final String TILE_ACTION = "action";
+
+	/** Action descriptor key holding the name the action is offered under. */
+	private static final String ACTION_LABEL = "label";
+
+	/** Action descriptor key telling whether the action is currently refused. */
+	private static final String ACTION_DISABLED = "disabled";
+
+	/** Action descriptor key holding the text explaining the action, e.g. why it is refused. */
+	private static final String ACTION_TOOLTIP = "tooltip";
+
+	/**
+	 * What a tile runs when the user activates it.
+	 *
+	 * @param model
+	 *        The command the activation runs. Its state decides whether the tile is offered as an
+	 *        entry point at all ({@link CommandModel#isVisible()}) and whether the activation is
+	 *        currently accepted ({@link CommandModel#isExecutable()}).
+	 * @param label
+	 *        The name the action is offered under - what the tile is announced as. {@code null} to
+	 *        use the {@link CommandModel#getLabel() model's own label}.
+	 */
+	public record TileAction(CommandModel model, String label) {
+		// Pure data.
+	}
 
 	/**
 	 * A single tile of the dashboard.
@@ -57,8 +107,10 @@ public class ReactDashboardControl extends ReactControl {
 
 		private final ReactControl _control;
 
+		private final TileAction _action;
+
 		/**
-		 * Creates a new {@link Tile}.
+		 * Creates a {@link Tile} that only displays its content.
 		 *
 		 * @param id
 		 *        Stable tile id, used as persistence key for reordering.
@@ -70,10 +122,24 @@ public class ReactDashboardControl extends ReactControl {
 		 *        The control rendered inside the tile.
 		 */
 		public Tile(String id, TileWidth width, int rowSpan, ReactControl control) {
+			this(id, width, rowSpan, control, null);
+		}
+
+		/**
+		 * Creates a {@link Tile} the user can activate.
+		 *
+		 * @param action
+		 *        What activating the tile runs, {@code null} for a tile that only displays its
+		 *        content.
+		 *
+		 * @see #Tile(String, TileWidth, int, ReactControl)
+		 */
+		public Tile(String id, TileWidth width, int rowSpan, ReactControl control, TileAction action) {
 			_id = id;
 			_width = width;
 			_rowSpan = Math.max(1, rowSpan);
 			_control = control;
+			_action = action;
 		}
 
 		/** The stable id of this tile. */
@@ -85,6 +151,11 @@ public class ReactDashboardControl extends ReactControl {
 		public ReactControl getControl() {
 			return _control;
 		}
+
+		/** What activating this tile runs, {@code null} for a tile that only displays content. */
+		public TileAction getAction() {
+			return _action;
+		}
 	}
 
 	private final List<Tile> _tiles;
@@ -95,23 +166,35 @@ public class ReactDashboardControl extends ReactControl {
 
 	private final List<Runnable> _editModeListeners = new CopyOnWriteArrayList<>();
 
+	private final Runnable _actionChangeHandler = this::handleActionChange;
+
 	/**
 	 * Creates a new {@link ReactDashboardControl}.
 	 *
 	 * @param minColWidth
 	 *        CSS length used to decide column count (e.g. {@code "16rem"}).
+	 * @param rowHeight
+	 *        CSS length of a single grid row (e.g. {@code "16rem"}). A tile is
+	 *        as tall as the rows it spans, plus the gaps between them.
 	 * @param tiles
 	 *        Tiles in the order they should appear initially.
 	 * @param onReorder
 	 *        Callback invoked with the new tile-id order after the user
 	 *        reordered tiles. May be {@code null}.
 	 */
-	public ReactDashboardControl(ReactContext context, String minColWidth, List<Tile> tiles,
+	public ReactDashboardControl(ReactContext context, String minColWidth, String rowHeight, List<Tile> tiles,
 			Consumer<List<String>> onReorder) {
 		super(context, null, REACT_MODULE);
 		_tiles = new ArrayList<>(tiles);
 		_onReorder = onReorder;
+		for (Tile tile : _tiles) {
+			TileAction action = tile.getAction();
+			if (action != null) {
+				action.model().addStateChangeListener(_actionChangeHandler);
+			}
+		}
 		putState(MIN_COL_WIDTH, minColWidth);
+		putState(ROW_HEIGHT, rowHeight);
 		putState(CHILDREN, buildDescriptors());
 		putState(EDIT_MODE, Boolean.FALSE);
 	}
@@ -120,13 +203,57 @@ public class ReactDashboardControl extends ReactControl {
 		List<Map<String, Object>> list = new ArrayList<>(_tiles.size());
 		for (Tile t : _tiles) {
 			Map<String, Object> d = new LinkedHashMap<>();
-			d.put("id", t._id);
-			d.put("width", t._width.getExternalName());
-			d.put("rowSpan", Integer.valueOf(t._rowSpan));
-			d.put("control", t._control);
+			d.put(TILE_ID, t._id);
+			d.put(TILE_WIDTH, t._width.getExternalName());
+			d.put(TILE_ROW_SPAN, Integer.valueOf(t._rowSpan));
+			d.put(TILE_CONTROL, t._control);
+			d.put(TILE_ACTION, actionDescriptor(t.getAction()));
 			list.add(d);
 		}
 		return list;
+	}
+
+	/**
+	 * What the client needs to offer the tile as an entry point, {@code null} for a tile that only
+	 * displays its content.
+	 *
+	 * <p>
+	 * A command that is currently hidden yields {@code null} as well: the tile then shows what it
+	 * always shows, with nothing to activate.
+	 * </p>
+	 */
+	private static Map<String, Object> actionDescriptor(TileAction action) {
+		if (action == null) {
+			return null;
+		}
+		CommandModel model = action.model();
+		if (!model.isVisible()) {
+			return null;
+		}
+		Map<String, Object> d = new LinkedHashMap<>();
+		String label = action.label();
+		d.put(ACTION_LABEL, label == null || label.isEmpty() ? model.getLabel() : label);
+		d.put(ACTION_DISABLED, Boolean.valueOf(!model.isExecutable()));
+		d.put(ACTION_TOOLTIP, model.getTooltip());
+		return d;
+	}
+
+	/**
+	 * Republishes the tile descriptors, so that a tile whose action has become available, refused
+	 * or hidden is offered accordingly.
+	 */
+	private void handleActionChange() {
+		putState(CHILDREN, buildDescriptors());
+	}
+
+	@Override
+	protected void onCleanup() {
+		for (Tile tile : _tiles) {
+			TileAction action = tile.getAction();
+			if (action != null) {
+				action.model().removeStateChangeListener(_actionChangeHandler);
+			}
+		}
 	}
 
 	/**
@@ -193,6 +320,38 @@ public class ReactDashboardControl extends ReactControl {
 		if (_onReorder != null) {
 			_onReorder.accept(Collections.unmodifiableList(new ArrayList<>(newOrder)));
 		}
+	}
+
+	/**
+	 * Handles the {@code activate} command the React client sends when the user opens a tile.
+	 *
+	 * <p>
+	 * The tile's action decides for itself: an activation of a tile without one, of an unknown
+	 * tile, or of a tile whose command currently refuses to run does nothing.
+	 * </p>
+	 *
+	 * @param args
+	 *        Names the tile the user activated, see {@link ActivateTileArguments#getTileId()}.
+	 */
+	@ReactCommandHandler(ACTIVATE_COMMAND)
+	@FrameworkInternal
+	HandlerResult handleActivate(ActivateTileArguments args) {
+		String tileId = args.getTileId();
+		for (Tile tile : _tiles) {
+			if (!tile.getId().equals(tileId)) {
+				continue;
+			}
+			TileAction action = tile.getAction();
+			if (action == null) {
+				return HandlerResult.DEFAULT_RESULT;
+			}
+			CommandModel model = action.model();
+			if (!model.isVisible() || !model.isExecutable()) {
+				return HandlerResult.DEFAULT_RESULT;
+			}
+			return model.executeCommand(getReactContext());
+		}
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	private void reorderTiles(List<String> newOrder) {

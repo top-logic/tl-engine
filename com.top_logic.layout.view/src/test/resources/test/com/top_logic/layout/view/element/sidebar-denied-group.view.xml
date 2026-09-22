@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<sidebar>
+		<group id="guarded"
+			label="Guarded"
+		>
+			<access-control scope="administration"/>
+			<nav-item id="withheld"
+				label="Withheld"
+			>
+				<panel/>
+			</nav-item>
+		</group>
+		<nav-item id="open"
+			label="Open"
+		>
+			<panel/>
+		</nav-item>
+	</sidebar>
+</view>

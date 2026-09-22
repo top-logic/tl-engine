@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Pictures in a view: where a picture comes from, how it is fitted into a box, and how content is
+	stacked over it.
+	
+	The first section takes the picture from a channel: the table selects a flow node, the "photo"
+	channel maps it onto the binary attribute holding its PNG, and the <image> beside the table
+	shows it. Its resource is the placeholder that fills the box while nothing is selected. The
+	overlay around it stacks a badge in the upper corner and a caption along the lower edge over the
+	same picture; both layers take their position from the <layer>, and their look from the
+	application stylesheet (style/tl-demo-react.css). The avatar reads the same photo channel and
+	crops it into a circle; the avatar beside it reads no picture channel and therefore stays at the
+	initials of the selected node. The second picture shows the same data fitted into the box
+	instead of cropped to fill it.
+	
+	The second section shows a resource of the web application alone - the file under /images, with
+	no channel behind it.
+	
+	The third section loads the address that is typed into the field. The channel starts out at this
+	application's own landscape, so the section shows a picture at once; the field writes through to
+	it, and an empty field answers that address again.
+-->
+<view>
+	<channels>
+		<channel name="node"/>
+		<derived-channel name="photo"
+			expr="n -> $n.get(`test.flowchart:FlowNode#image`)"
+			inputs="node"
+		/>
+		<!--
+			What the user typed, and the address shown for it: the derived channel answers the
+			application's own picture while nothing is typed and writes what is typed back, so the
+			input field and the picture share one value.
+		-->
+		<channel name="urlInput"/>
+		<derived-channel name="url"
+			expr="u -> if($u == null || $u.isEmpty(), contextPath() + '/images/demo-landscape.svg', $u)"
+			inputs="urlInput"
+			reverse="u -> $u"
+		/>
+	</channels>
+
+	<panel>
+		<title>
+			<en>Images</en>
+			<de>Bilder</de>
+		</title>
+
+		<text>
+			<label>
+				<en>A picture from a channel</en>
+				<de>Ein Bild aus einem Kanal</de>
+			</label>
+		</text>
+		<text>
+			<label>
+				<en>Select a flow node: its picture appears in the box beside the table, with a badge in the corner and a caption along the lower edge stacked over it. Without a selection the box shows the placeholder resource. The two boxes have the same proportions; the upper one crops the picture to fill them, the lower one fits the whole picture into them. The left avatar shows the same picture in a circle, the right one the initials it falls back to without a picture.</en>
+				<de>Wählen Sie einen Flow-Knoten: Sein Bild erscheint im Rahmen neben der Tabelle, darüber ein Abzeichen in der Ecke und eine Bildunterschrift an der Unterkante. Ohne Auswahl zeigt der Rahmen die Platzhalter-Ressource. Beide Rahmen haben dieselben Proportionen; der obere beschneidet das Bild, der untere zeigt es vollständig. Der linke Avatar zeigt dasselbe Bild im Kreis, der rechte die Initialen, auf die er ohne Bild zurückfällt.</de>
+			</label>
+		</text>
+
+		<grid
+			gap="default"
+			max-columns="2"
+			min-column-width="20rem"
+		>
+			<table
+				observed-types="test.flowchart:FlowNode"
+				selection="node"
+				types="test.flowchart:FlowNode"
+			>
+				<columns>
+					<column attribute="name"/>
+				</columns>
+				<rows>all(`test.flowchart:FlowNode`)</rows>
+			</table>
+			<!--
+				The column does not stretch its children: an overlay stretched past its base would
+				anchor its layers to the free space beside the picture rather than to the picture.
+			-->
+			<stack
+				align="start"
+				direction="column"
+				gap="default"
+			>
+				<overlay>
+					<image
+						aspect-ratio="4/3"
+						fit="cover"
+						input="photo"
+						resource="/images/no-picture.svg"
+						width="20rem"
+					>
+						<alt>
+							<en>The picture of the selected flow node.</en>
+							<de>Das Bild des gewählten Flow-Knotens.</de>
+						</alt>
+					</image>
+					<layer
+						css-class="tlDemoBadge"
+						position="top-left"
+					>
+						<text>
+							<label>
+								<en>Preview</en>
+								<de>Vorschau</de>
+							</label>
+						</text>
+					</layer>
+					<layer
+						css-class="tlDemoCaption"
+						position="bottom"
+					>
+						<text input="node"/>
+					</layer>
+				</overlay>
+				<stack
+					align="center"
+					direction="row"
+					gap="default"
+				>
+					<avatar
+						image="photo"
+						input="node"
+						size="x-large"
+					/>
+					<avatar
+						input="node"
+						size="x-large"
+					/>
+					<image
+						aspect-ratio="4/3"
+						fit="contain"
+						input="photo"
+						width="20rem"
+					/>
+				</stack>
+			</stack>
+		</grid>
+
+		<text>
+			<label>
+				<en>A resource of the web application</en>
+				<de>Eine Ressource der Web-Anwendung</de>
+			</label>
+		</text>
+		<text>
+			<label>
+				<en>The file /images/demo-landscape.svg, shown without any channel behind it. The path is resolved against the context path of the application.</en>
+				<de>Die Datei /images/demo-landscape.svg, ohne Kanal dahinter. Der Pfad wird gegen den Kontextpfad der Anwendung aufgelöst.</de>
+			</label>
+		</text>
+		<image
+			resource="/images/demo-landscape.svg"
+			width="16rem"
+		>
+			<alt>
+				<en>A landscape of a few shapes.</en>
+				<de>Eine Landschaft aus wenigen Formen.</de>
+			</alt>
+		</image>
+
+		<text>
+			<label>
+				<en>An address the user enters</en>
+				<de>Eine eingegebene Adresse</de>
+			</label>
+		</text>
+		<text>
+			<label>
+				<en>The picture is loaded by the browser from the address on the channel; the box keeps its proportions whatever the picture measures, and the browser postpones the loading until the box comes into view.</en>
+				<de>Das Bild wird vom Browser von der Adresse aus dem Kanal geladen; der Rahmen behält seine Proportionen, gleich welche Maße das Bild hat, und der Browser lädt es erst, wenn der Rahmen in Sichtweite kommt.</de>
+			</label>
+		</text>
+		<fields>
+			<value-input
+				type="tl.core:String"
+				value="url"
+			>
+				<label>
+					<en>Image URL</en>
+					<de>Bildadresse</de>
+				</label>
+			</value-input>
+		</fields>
+		<image
+			aspect-ratio="16/9"
+			fit="contain"
+			input="url"
+			lazy="true"
+			width="24rem"
+		/>
+	</panel>
+</view>

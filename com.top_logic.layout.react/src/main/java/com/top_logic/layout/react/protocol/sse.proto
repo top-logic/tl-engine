@@ -155,14 +155,21 @@ message WindowCloseEvent extends SSEEvent {
 }
 
 /**
- * Instructs the target (main) window to enter "select view" pick mode.
+ * Instructs the target window to enter pick mode: the user clicks an element there and the client
+ * reports what was hit back to the server.
  */
-message ViewPickEvent extends SSEEvent {
+message PickEvent extends SSEEvent {
 	/** Correlation token identifying the pending pick registration on the server. */
 	string token;
 
-	/** The window ID that should enter pick mode (the designer's opener / main window). */
+	/** The window ID that should enter pick mode. */
 	string targetWindowId;
+
+	/**
+	 * What the click is resolved to, as the external name of a {@code PickKind}: a view source
+	 * ("view") or a mounted control ("control").
+	 */
+	string kind;
 }
 
 /**
@@ -189,10 +196,10 @@ message RouteChangeEvent extends SSEEvent {
 }
 
 /**
- * Tells the client to correct the URL after a vetoed back-navigation.
- * Sent when a dirty-channel veto prevents the requested navigation.
+ * Tells the client that the history move to this URL, refused over unsaved changes, may now be
+ * made: the changes are resolved.
  */
-message RouteVetoEvent extends SSEEvent {
-	/** The current (correct) URL to restore in the address bar. */
-	string currentUrl;
+message RouteResumeEvent extends SSEEvent {
+	/** The URL of the refused move (relative to view base). */
+	string url;
 }

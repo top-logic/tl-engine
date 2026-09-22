@@ -17,6 +17,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.overlay.ConfirmDialogControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
+import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.util.Resources;
 
@@ -47,7 +48,7 @@ public class ConfirmAction extends InterruptibleViewAction {
 	 * Configuration for {@link ConfirmAction}.
 	 */
 	@TagName("confirm")
-	public interface Config extends PolymorphicConfiguration<ConfirmAction>, ActionScript.Inputs {
+	public interface Config extends PolymorphicConfiguration<ConfirmAction>, Inputs {
 
 		@Override
 		@ClassDefault(ConfirmAction.class)
@@ -118,7 +119,7 @@ public class ConfirmAction extends InterruptibleViewAction {
 
 	@Override
 	public void execute(ReactContext context, Object input, Continuation continuation) {
-		ResKey message = evaluateMessage(context, input);
+		ResKey message = _expr.message(context, input);
 		if (message == null) {
 			continuation.resume(input);
 			return;
@@ -142,17 +143,5 @@ public class ConfirmAction extends InterruptibleViewAction {
 			cancelLabel,
 			() -> continuation.resume(input),
 			() -> continuation.abort());
-	}
-
-	private ResKey evaluateMessage(ReactContext context, Object input) {
-		Object result = _expr.execute(context, input);
-		if (result == null) {
-			return null;
-		}
-		if (result instanceof ResKey) {
-			return (ResKey) result;
-		}
-		String text = result.toString();
-		return text.isEmpty() ? null : ResKey.text(text);
 	}
 }

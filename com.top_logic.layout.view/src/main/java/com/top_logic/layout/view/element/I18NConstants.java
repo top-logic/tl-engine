@@ -49,6 +49,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey TABLE_ACTIVATE_ROW;
 
+	/**
+	 * @en Open {0}
+	 */
+	public static ResKey1 TILE_ACTIVATE__TITLE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

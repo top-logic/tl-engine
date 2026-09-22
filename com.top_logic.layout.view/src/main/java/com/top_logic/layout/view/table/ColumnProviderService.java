@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.table;
 
+import java.text.DateFormat;
 import java.text.Format;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -32,6 +33,8 @@ import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.type.PrimitiveTypeUtil;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.LabelProvider;
+import com.top_logic.layout.provider.CollectionLabelProvider;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.layout.react.ReactContext;
@@ -105,6 +108,9 @@ import com.top_logic.table.impl.DefaultColumn;
  */
 @Label("Table columns")
 public class ColumnProviderService extends ConfiguredManagedClass<ColumnProviderService.Config> {
+
+	/** What separates the values a cell holding several of them shows. */
+	private static final String VALUE_SEPARATOR = ", ";
 
 	/**
 	 * Configuration of the {@link ColumnProviderService}.
@@ -307,27 +313,31 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	/**
 	 * Builds a column whose filter is an application-defined override matching against the cell's
 	 * display text, used when a {@code <column>} configures its own filter. The cell display and
-	 * the label-based sort are the same as in
+	 * the text-based sort are the same as in
 	 * {@link #createColumn(String, ResKey, ColumnType, Function)}; only the filter differs.
 	 */
 	public Column<Object, ?> createColumn(String name, ResKey label, ColumnType type, Function<Object, Object> value,
 			ColumnFilter<String> customFilter) {
+		Function<Object, String> text = displayText(type);
 		return valueColumn(name, label, type, defaultWidth(type), value)
-			.sort(() -> Comparator.comparing(ColumnProviderService::label))
-			.filter(byLabel(customFilter))
+			.sort(() -> Comparator.comparing(text))
+			.filter(byText(customFilter, text))
 			.build();
 	}
 
 	/**
 	 * Adapts a filter over the cell's display text to a column holding raw values: the predicate and
-	 * facet keys see the value's display label, everything else delegates unchanged.
+	 * facet keys see the text the cell shows, everything else delegates unchanged.
 	 *
 	 * <p>
 	 * A declared criterion value is passed on untouched: which value shapes a filter accepts is
-	 * part of its own contract, and a facet key or an option value is not a display label.
+	 * part of its own contract, and a facet key or an option value is not a display text.
 	 * </p>
+	 *
+	 * @param text
+	 *        The text a value is shown as, see {@link #displayText(ColumnType)}.
 	 */
-	private static ColumnFilter<Object> byLabel(ColumnFilter<String> filter) {
+	private static ColumnFilter<Object> byText(ColumnFilter<String> filter, Function<Object, String> text) {
 		return new ColumnFilter<>() {
 			@Override
 			public FilterInput input() {
@@ -337,7 +347,7 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 			@Override
 			public Predicate<Object> predicate(FilterState state) {
 				Predicate<String> inner = filter.predicate(state);
-				return value -> inner.test(label(value));
+				return value -> inner.test(text.apply(value));
 			}
 
 			@Override
@@ -372,7 +382,7 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 
 			@Override
 			public Collection<Object> facetKeys(Object value) {
-				return filter.facetKeys(label(value));
+				return filter.facetKeys(text.apply(value));
 			}
 		};
 	}
@@ -400,13 +410,12 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 					new ComparableColumnFilter<>(Comparator.comparingDouble(Number::doubleValue),
 						BoundCodec.numbers(numberFormat)));
 			case DATE:
-				// Which part of a point in time the column holds decides the format a filter bound
-				// is entered in.
-				ReactDatePickerControl.Kind temporalKind = temporalKind(type);
+				// A bound is typed the way the column writes its values: in the annotated format
+				// of the attribute, or the default one for the part of a point in time it holds.
 				return typedColumn(name, label, type, width, value, Date.class,
 					Comparator.<Date> naturalOrder(),
 					new ComparableColumnFilter<>(Comparator.<Date> naturalOrder(),
-						BoundCodec.dates(temporalKind.inputFormats(), temporalKind.parsePatterns())));
+						BoundCodec.dates(dateInputFormats(type), temporalKind(type).parsePatterns())));
 			case STRING:
 				return typedColumn(name, label, type, width, value, String.class,
 					Comparator.<String> naturalOrder(), TextColumnFilter.forStrings());
@@ -418,10 +427,26 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	}
 
 	/**
-	 * The format the column's values are written in, or {@code null} if it holds no single number.
+	 * The format one of the column's values is written in, or {@code null} if it holds no numbers.
 	 */
 	private static Format numberFormat(ColumnType type) {
-		return FieldControlService.numberFormat(type.annotations(), type.type(), type.multiple());
+		return FieldControlService.numberFormat(type.annotations(), type.type());
+	}
+
+	/**
+	 * The format one of the column's points in time is written in, or {@code null} if it holds no
+	 * points in time.
+	 */
+	private static DateFormat dateFormat(ColumnType type) {
+		return FieldControlService.dateFormat(type.annotations(), type.type());
+	}
+
+	/**
+	 * The formats a bound of the column's filter may be typed in, see
+	 * {@link FieldControlService#dateInputFormats(AnnotationLookup, TLType)}.
+	 */
+	private static List<DateFormat> dateInputFormats(ColumnType type) {
+		return FieldControlService.dateInputFormats(type.annotations(), type.type());
 	}
 
 	/**
@@ -610,13 +635,15 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	}
 
 	/**
-	 * The fallback column: sorts and text-filters by the cell's display label.
+	 * The fallback column: sorts and text-filters by the text the cell shows, which for a cell
+	 * holding several values is the text of all of them.
 	 */
 	private static Column<Object, Object> labelColumn(String name, ResKey label, ColumnType type, int width,
 			Function<Object, Object> value) {
+		Function<Object, String> text = displayText(type);
 		return valueColumn(name, label, type, width, value)
-			.sort(() -> Comparator.comparing(ColumnProviderService::label))
-			.filter(new TextColumnFilter<>(ColumnProviderService::label))
+			.sort(() -> Comparator.comparing(text))
+			.filter(new TextColumnFilter<>(text))
 			.build();
 	}
 
@@ -644,25 +671,50 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 			.label(label)
 			.width(width)
 			.renderer(cellValue -> displayContent(type, cellValue))
-			.searchText(searchText(type));
+			.searchText(displayText(type));
 	}
 
 	/**
-	 * The text a cell of the described values is searched by: the text its display shows.
+	 * The text a cell of the described values shows, and is therefore searched, sorted and filtered
+	 * by.
 	 *
 	 * <p>
-	 * A number is written by its {@link FieldControlService#numberFormat(AnnotationLookup, TLType, boolean)
-	 * number format}, the same one the cell's display control writes it with - so a search matches
-	 * against the text the user reads, be that the digits and separators of a locale or the words of
-	 * a duration. Every other value is searched by its display label.
+	 * A cell holding several values writes each of them as {@link #elementText(ColumnType) one
+	 * value} is written and joins them with {@value #VALUE_SEPARATOR}, exactly as the value list
+	 * displaying them does.
 	 * </p>
 	 */
-	private static Function<Object, String> searchText(ColumnType type) {
-		Format numberFormat = numberFormat(type);
-		if (numberFormat == null) {
-			return ColumnProviderService::label;
+	private static Function<Object, String> displayText(ColumnType type) {
+		Function<Object, String> elementText = elementText(type);
+		if (!type.multiple()) {
+			return elementText;
 		}
-		return value -> value instanceof Number ? numberFormat.format(value) : label(value);
+		LabelProvider elements = new CollectionLabelProvider(elementText::apply, VALUE_SEPARATOR);
+		return value -> value instanceof Collection<?> ? elements.getLabel(value) : elementText.apply(value);
+	}
+
+	/**
+	 * The text one of the described values is written as.
+	 *
+	 * <p>
+	 * A number is written by its {@link FieldControlService#numberFormat(AnnotationLookup, TLType)
+	 * number format} and a point in time by its
+	 * {@link FieldControlService#dateFormat(AnnotationLookup, TLType) date format}, the same ones
+	 * the cell's display control writes them with - so a search matches against the text the user
+	 * reads, be that the digits and separators of a locale, the words of a duration, or the time of
+	 * day a date is shown with. Every other value is written by its display label.
+	 * </p>
+	 */
+	private static Function<Object, String> elementText(ColumnType type) {
+		Format numberFormat = numberFormat(type);
+		if (numberFormat != null) {
+			return value -> value instanceof Number ? numberFormat.format(value) : label(value);
+		}
+		DateFormat dateFormat = dateFormat(type);
+		if (dateFormat != null) {
+			return value -> value instanceof Date ? dateFormat.format(value) : label(value);
+		}
+		return ColumnProviderService::label;
 	}
 
 	/**

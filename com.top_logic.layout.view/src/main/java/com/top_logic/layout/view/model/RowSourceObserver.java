@@ -57,6 +57,9 @@ public class RowSourceObserver<R> implements ModelListener, ViewChannel.ChannelL
 
 	private boolean _attached;
 
+	/** Whether the observation was stopped and has not begun again. */
+	private boolean _suspended;
+
 	/**
 	 * Creates a {@link RowSourceObserver} pushing fresh elements into a {@link ListRowSource}.
 	 *
@@ -111,10 +114,14 @@ public class RowSourceObserver<R> implements ModelListener, ViewChannel.ChannelL
 	 * The elements are re-read because what happened before the observation began is unknown here: an
 	 * object created, an input channel written - a channel bound to the URL taking up the value a
 	 * deep link carries, for instance - between the construction of the observer and this call
-	 * reached no listener, so the elements at hand describe a state that may already be gone. The
-	 * same holds for an element list that was observed before and stopped being observed: a display
-	 * that is not looked at ignores every change, and the way back into the display is where it
-	 * catches up.
+	 * reached no listener, so the elements at hand describe a state that may already be gone.
+	 * </p>
+	 *
+	 * <p>
+	 * An observation that resumes - one that was stopped by {@link #detach()} - delivers the elements
+	 * it read in any case, even where they are the ones at hand: the objects in that list are the
+	 * ones nobody followed while the display was suspended, so what they carry is unknown and the
+	 * display rebuilds from them.
 	 * </p>
 	 *
 	 * @param scope
@@ -140,6 +147,7 @@ public class RowSourceObserver<R> implements ModelListener, ViewChannel.ChannelL
 			return;
 		}
 		_attached = false;
+		_suspended = true;
 		deregisterObjectListeners();
 		deregisterTypeListeners();
 		deregisterChannelListeners();
@@ -164,16 +172,21 @@ public class RowSourceObserver<R> implements ModelListener, ViewChannel.ChannelL
 	}
 
 	/**
-	 * Re-reads the elements and delivers them where they differ from the ones at hand.
+	 * Re-reads the elements and delivers them where they differ from the ones at hand, and in any case
+	 * where the observation resumes.
 	 *
 	 * <p>
-	 * Silent where they do not: nothing was missed then, and a display that shows the elements
-	 * already has nothing to rebuild.
+	 * Silent for an observation beginning on an unchanged list: nothing was missed then, and a display
+	 * that was just built from those elements has nothing to rebuild. A resumed observation says
+	 * nothing about the objects in the list, though - every change they saw while nobody followed them
+	 * passed unnoticed - so their list is delivered as it is read.
 	 * </p>
 	 */
 	private void catchUp() {
+		boolean resumed = _suspended;
+		_suspended = false;
 		List<R> elements = readElements();
-		if (elements.equals(_elements)) {
+		if (!resumed && elements.equals(_elements)) {
 			return;
 		}
 		replaceElements(elements);

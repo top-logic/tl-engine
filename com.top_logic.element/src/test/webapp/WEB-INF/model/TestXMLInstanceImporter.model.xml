@@ -52,6 +52,7 @@
 						<property name="int" type="tl.core:Integer" />
 						<property name="double" type="tl.core:Double" />
 						<property name="item" type="ConfigValue" />
+						<property name="label" type="tl.model.i18n:I18NString" />
 						<reference name="other" type="A" multiple="false"/>
 						<reference name="others" type="A" multiple="true" ordered="true"/>
 						<reference name="any" type="tl.model:TLObject" multiple="true" ordered="true"/>

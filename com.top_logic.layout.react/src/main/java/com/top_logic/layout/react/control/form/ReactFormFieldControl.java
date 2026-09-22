@@ -264,8 +264,14 @@ public class ReactFormFieldControl extends ReactControl {
 
 	/**
 	 * Updates the placeholder shown while the field is empty (edit mode).
+	 *
+	 * <p>
+	 * Set from the {@link com.top_logic.layout.react.field.FieldSpec} describing the field, so that
+	 * every side building a field control can state one, and by a control that computes a
+	 * placeholder of its own from the value it displays.
+	 * </p>
 	 */
-	protected void setPlaceholder(String placeholder) {
+	public void setPlaceholder(String placeholder) {
 		putState(PLACEHOLDER, placeholder);
 	}
 

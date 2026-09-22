@@ -1,5 +1,6 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, useStandaloneKeyboardScope, writeDragPayload, readDragPayload, dragTypeAccepted, dropPositionAt } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, useStandaloneKeyboardScope, writeDragPayload, readDragPayload, dragTypeAccepted, dropPositionAt, startPointerDrag, useCloseOnOutsidePress } from 'tl-react-bridge';
 import type { TLCellProps, TLDropPosition } from 'tl-react-bridge';
+import { isInteractiveTarget } from './interactive';
 
 /**
  * Registers the table's keyboard row-navigation bindings into the enclosing (focus-gated) scope.
@@ -165,28 +166,6 @@ const measureColumnContentWidth = (root: HTMLElement, columnName: string): numbe
  * multi-selection with checkbox column, and column resize.
  */
 /**
- * Elements that handle a click themselves: the native form controls, and the controls that carry
- * their role through ARIA instead of an element name — a dropdown, for one, is a `div` with
- * `role="combobox"`, so leaving those out made a click on it look like a click on plain cell text.
- */
-const INTERACTIVE_SELECTOR =
-  'input, textarea, select, button, a, [contenteditable="true"], '
-  + '[role="combobox"], [role="listbox"], [role="option"], [role="button"], [role="link"], '
-  + '[role="checkbox"], [role="radio"], [role="switch"], [role="textbox"], [role="spinbutton"], '
-  + '[role="slider"], [role="menu"], [role="menuitem"]';
-
-/**
- * Whether the event originates from an interactive element inside a cell (input, button, link,
- * editor, dropdown). Row-level gestures must leave such clicks alone: neither steal the element's
- * focus for the table's keyboard scope, nor suppress its default mouse handling (e.g. double-click
- * word selection in a text input), nor read them as a row selection.
- */
-function isInteractiveTarget(event: React.SyntheticEvent): boolean {
-  const target = event.target as Element | null;
-  return !!target?.closest?.(INTERACTIVE_SELECTOR);
-}
-
-/**
  * Elements that accept text/edit focus inside an editable cell. Disabled/read-only controls are
  * excluded: a read-only row still renders its boolean columns as a disabled checkbox {@code
  * <input>}, which must not count as "this row is editable".
@@ -346,6 +325,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const [contextMenu, setContextMenu] = React.useState<{
     x: number; y: number; colIdx: number;
   } | null>(null);
+  const contextMenuRef = React.useRef<HTMLDivElement>(null);
 
   // -- Frozen column splitter state: the boundary the running drag would drop the frozen area at. --
   const [frozenPreview, setFrozenPreview] = React.useState<{ x: number; count: number } | null>(null);
@@ -434,14 +414,11 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // -- Resize handlers --
   const resizeAutoScrollRef = React.useRef<number | null>(null);
 
-  const handleResizeStart = React.useCallback((columnName: string, colWidth: number, event: React.MouseEvent) => {
+  const handleResizeStart = React.useCallback((columnName: string, colWidth: number, event: React.PointerEvent) => {
+    // The default of the press is prevented, which keeps the heading - a drag source for column
+    // reordering - from starting that drag on the resize handle, and the text selection with it.
     event.preventDefault();
     event.stopPropagation();
-    if (event.detail > 1) {
-      // The second click of a double click fits the column to its content. A drag started here
-      // would end on the same mouse up and report the width the fit is about to replace.
-      return;
-    }
     // The rendered width, not the configured one: the last column grows into the space the others
     // leave over, and starting from its configured width would snap it back the moment the drag
     // begins. The handle sits in the heading whose width is wanted.
@@ -449,15 +426,27 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     const startWidth = heading ? Math.round(heading.getBoundingClientRect().width) : colWidth;
     resizeRef.current = { column: columnName, startX: event.clientX, startWidth };
 
-    // Track latest mouse position and cumulative auto-scroll offset.
+    // Track latest pointer position and cumulative auto-scroll offset.
     let lastClientX = event.clientX;
     let autoScrollOffset = 0;
+
+    // Whole pixels: the server takes an integer width, and pointer coordinates as well as scroll
+    // positions are fractional under browser zoom and fractional display scaling. Rounding here as
+    // well as at the end of the drag shows exactly the width the drag reports.
+    const widthAt = (clientX: number, info: { startX: number; startWidth: number }) =>
+      Math.round(Math.max(MIN_COL_WIDTH, info.startWidth + (clientX - info.startX) + autoScrollOffset));
 
     const updateWidth = () => {
       const info = resizeRef.current;
       if (!info) return;
-      const newWidth = Math.max(MIN_COL_WIDTH, info.startWidth + (lastClientX - info.startX) + autoScrollOffset);
-      setColumnWidthOverrides((prev) => ({ ...prev, [info.column]: newWidth }));
+      setColumnWidthOverrides((prev) => ({ ...prev, [info.column]: widthAt(lastClientX, info) }));
+    };
+
+    const stopAutoScroll = () => {
+      if (resizeAutoScrollRef.current !== null) {
+        cancelAnimationFrame(resizeAutoScrollRef.current);
+        resizeAutoScrollRef.current = null;
+      }
     };
 
     const autoScroll = () => {
@@ -477,7 +466,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       if (actualDelta !== 0) {
         if (header) header.scrollLeft = body.scrollLeft;
         // Widen/narrow the column by the scroll amount so the resize
-        // continues even when the mouse is stuck at the screen edge.
+        // continues even when the pointer is stuck at the screen edge.
         autoScrollOffset += actualDelta;
         updateWidth();
       }
@@ -485,30 +474,38 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     };
     resizeAutoScrollRef.current = requestAnimationFrame(autoScroll);
 
-    const onMouseMove = (e: MouseEvent) => {
-      lastClientX = e.clientX;
-      updateWidth();
-    };
+    startPointerDrag(event, {
+      cursor: 'col-resize',
 
-    const onMouseUp = (e: MouseEvent) => {
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
-      if (resizeAutoScrollRef.current !== null) {
-        cancelAnimationFrame(resizeAutoScrollRef.current);
-        resizeAutoScrollRef.current = null;
-      }
-      const info = resizeRef.current;
-      if (info) {
-        const finalWidth = Math.max(MIN_COL_WIDTH, info.startWidth + (e.clientX - info.startX) + autoScrollOffset);
-        sendCommand('columnResize', { column: info.column, width: finalWidth });
+      onMove: (e) => {
+        lastClientX = e.clientX;
+        updateWidth();
+      },
+
+      onEnd: (e, dragged) => {
+        stopAutoScroll();
+        const info = resizeRef.current;
         resizeRef.current = null;
-        justResizedRef.current = true;
-        requestAnimationFrame(() => { justResizedRef.current = false; });
-      }
-    };
+        if (info && dragged) {
+          const finalWidth = widthAt(e.clientX, info);
+          sendCommand('columnResize', { column: info.column, width: finalWidth });
+          justResizedRef.current = true;
+          requestAnimationFrame(() => { justResizedRef.current = false; });
+        }
+        // A press that stayed where it was reports no width: it is a click on the handle, and the
+        // double click it may belong to fits the column to its content (see onDoubleClick).
+      },
 
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
+      onCancel: () => {
+        stopAutoScroll();
+        const info = resizeRef.current;
+        if (info) {
+          // Nothing is reported, so the column shows the width it had when the drag began again.
+          setColumnWidthOverrides((prev) => ({ ...prev, [info.column]: info.startWidth }));
+          resizeRef.current = null;
+        }
+      },
+    });
   }, [sendCommand]);
 
   // Give the column the width its content needs, from the header context menu and from a double
@@ -954,7 +951,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   }, [sendCommand]);
 
   // -- Frozen column splitter: drag the boundary of the frozen area onto another column border. --
-  const handleFrozenSplitStart = React.useCallback((event: React.MouseEvent) => {
+  const handleFrozenSplitStart = React.useCallback((event: React.PointerEvent) => {
     event.preventDefault();
     event.stopPropagation();
     const area = headerAreaRef.current;
@@ -982,31 +979,34 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     });
 
     let target = { x: frozenWidth, count: frozenColumnCount };
-    const move = (e: MouseEvent) => {
-      const x = e.clientX - area.getBoundingClientRect().left;
-      target = options.reduce(
-        (best, option) => (Math.abs(option.x - x) < Math.abs(best.x - x) ? option : best), options[0]);
-      setFrozenPreview(target);
-    };
-    const up = () => {
-      document.removeEventListener('mousemove', move);
-      document.removeEventListener('mouseup', up);
-      setFrozenPreview(null);
-      if (target.count !== frozenColumnCount) {
-        sendCommand('setFrozenColumnCount', { count: target.count });
-      }
-    };
-    document.addEventListener('mousemove', move);
-    document.addEventListener('mouseup', up);
+    startPointerDrag(event, {
+      cursor: 'col-resize',
+
+      onMove: (e) => {
+        const x = e.clientX - area.getBoundingClientRect().left;
+        target = options.reduce(
+          (best, option) => (Math.abs(option.x - x) < Math.abs(best.x - x) ? option : best), options[0]);
+        setFrozenPreview(target);
+      },
+
+      onEnd: () => {
+        setFrozenPreview(null);
+        if (target.count !== frozenColumnCount) {
+          sendCommand('setFrozenColumnCount', { count: target.count });
+        }
+      },
+
+      onCancel: () => {
+        // The boundary the preview shows is not reported: the frozen area stays as it is.
+        setFrozenPreview(null);
+      },
+    });
   }, [columns, frozenWidth, frozenColumnCount, sendCommand]);
 
-  // Close context menu on outside click; Escape is handled by the shared keyboard dispatcher.
-  React.useEffect(() => {
-    if (!contextMenu) return;
-    const handleMouseDown = () => setContextMenu(null);
-    document.addEventListener('mousedown', handleMouseDown);
-    return () => document.removeEventListener('mousedown', handleMouseDown);
-  }, [contextMenu]);
+  // Close the context menu on a press outside of it; Escape is handled by the shared keyboard
+  // dispatcher. A press inside keeps it, so that the click following the press still reaches the
+  // menu item it started on.
+  useCloseOnOutsidePress(!!contextMenu, [contextMenuRef], () => setContextMenu(null));
   useStandaloneKeyboardScope(!!contextMenu, { ESCAPE: () => setContextMenu(null) });
 
   // -- Filter handler: open the server-side filter dialog for a column. --
@@ -1374,7 +1374,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 {!isPinned && (
                   <div
                     className="tlTableView__resizeHandle"
-                    onMouseDown={(e) => handleResizeStart(col.name, w, e)}
+                    onPointerDown={(e) => handleResizeStart(col.name, w, e)}
                     onClick={(e) => e.stopPropagation()}
                     onDoubleClick={(e) => {
                       e.stopPropagation();
@@ -1410,7 +1410,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
             + (frozenPreview ? ' tlTableView__frozenSplitter--active' : '')}
           style={{ left: frozenWidth }}
           title={i18n['js.table.freezeSplitter']}
-          onMouseDown={handleFrozenSplitStart}
+          onPointerDown={handleFrozenSplitStart}
         />
         {columnSelect && !cogInHeaderCell && (
           <ColumnsButton title={i18n['js.table.columns']} onClick={handleOpenColumnSelect} />
@@ -1570,8 +1570,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         <div
           className="tlMenu"
           role="menu"
+          ref={contextMenuRef}
           style={{ position: 'fixed', top: contextMenu.y, left: contextMenu.x, zIndex: 10000 }}
-          onMouseDown={(e) => e.stopPropagation()}
         >
           {contextMenu.colIdx + 1 !== frozenColumnCount
               && !columns[contextMenu.colIdx]?.pinnedEnd && (

@@ -21,7 +21,6 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
-import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.TagName;
@@ -30,8 +29,10 @@ import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.VetoForwarder;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.search.expr.SearchExpression;
@@ -42,6 +43,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.react.flow.callback.DiagramHandler;
 import com.top_logic.react.flow.data.Box;
 import com.top_logic.react.flow.data.Diagram;
+import com.top_logic.react.flow.server.control.DiagramSelectionBinding;
 import com.top_logic.react.flow.server.control.FlowDiagramControl;
 import com.top_logic.util.model.ModelService;
 
@@ -61,14 +63,11 @@ public class FlowDiagramElement implements UIElement {
 	 * Configuration for {@link FlowDiagramElement}.
 	 */
 	@TagName("flow-diagram")
-	public interface Config extends UIElement.Config {
+	public interface Config extends UIElement.Config, Inputs {
 
 		@Override
 		@ClassDefault(FlowDiagramElement.class)
 		Class<? extends UIElement> getImplementationClass();
-
-		/** Configuration name for {@link #getInputs()}. */
-		String INPUTS = "inputs";
 
 		/** Configuration name for {@link #getCreateChart()}. */
 		String CREATE_CHART = "createChart";
@@ -81,14 +80,6 @@ public class FlowDiagramElement implements UIElement {
 
 		/** Configuration name for {@link #getSelection()}. */
 		String SELECTION = "selection";
-
-		/**
-		 * References to {@link ViewChannel}s whose current values become positional arguments to
-		 * the {@link #getCreateChart()} expression.
-		 */
-		@Name(INPUTS)
-		@ListBinding(format = ChannelRefFormat.class, tag = "input", attribute = "channel")
-		List<ChannelRef> getInputs();
 
 		/**
 		 * TL-Script expression that creates a {@link Diagram}.
@@ -129,12 +120,21 @@ public class FlowDiagramElement implements UIElement {
 		Map<String, HandlerDefinition<? extends DiagramHandler>> getHandlers();
 
 		/**
-		 * Optional reference to a {@link ViewChannel} to write the selected node's user object to.
+		 * Optional reference to the {@link ViewChannel} holding the selection the diagram shares
+		 * with the other elements of the view.
 		 *
 		 * <p>
-		 * When a node is selected in the diagram, its user object is written to the referenced
-		 * channel. Other view elements (forms, tables) can observe this channel to react to
-		 * selection changes.
+		 * The diagram follows the channel in both directions. A selection made in the diagram
+		 * becomes the value: one selected node as its user object, several as the set of them, none
+		 * as no value at all. A value written by another element marks the nodes carrying it as
+		 * user object - a single object, or each of the objects of a set in a diagram that shows
+		 * several selected nodes.
+		 * </p>
+		 *
+		 * <p>
+		 * A value no node of this diagram carries is shown as no selection and left alone: it is
+		 * the selection of whoever wrote it, an object of a different set of elements, which this
+		 * diagram simply has nothing to mark for.
 		 * </p>
 		 */
 		@Name(SELECTION)
@@ -202,11 +202,7 @@ public class FlowDiagramElement implements UIElement {
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		// 1. Resolve input channels.
-		List<ChannelRef> inputRefs = _config.getInputs();
-		List<ViewChannel> inputChannels = new ArrayList<>(inputRefs.size());
-		for (ChannelRef ref : inputRefs) {
-			inputChannels.add(context.resolveChannel(ref));
-		}
+		List<ViewChannel> inputChannels = ChannelInputs.resolve(context, _config.getInputs());
 
 		// 2. Build initial diagram from current channel values.
 		Diagram diagram = buildDiagram(inputChannels);
@@ -227,7 +223,8 @@ public class FlowDiagramElement implements UIElement {
 		ChannelRef selectionRef = _config.getSelection();
 		if (selectionRef != null) {
 			ViewChannel selectionChannel = context.resolveChannel(selectionRef);
-			control.setSelectionChannel(selectionChannel);
+			DiagramSelectionBinding selectionBinding = new DiagramSelectionBinding(control, selectionChannel);
+			control.addCleanupAction(selectionBinding::dispose);
 
 			// Rebuilding the diagram drops the selection, so the unsaved changes blocking the
 			// selection are reported when an input is asked, before the input is written.
@@ -240,7 +237,7 @@ public class FlowDiagramElement implements UIElement {
 	}
 
 	private Diagram buildDiagram(List<ViewChannel> inputChannels) {
-		Object[] channelValues = readChannelValues(inputChannels);
+		Object[] channelValues = ChannelInputs.arguments(inputChannels);
 
 		Args args = Args.some(channelValues);
 		for (DiagramHandler handler : _handlers) {
@@ -255,14 +252,6 @@ public class FlowDiagramElement implements UIElement {
 			return Diagram.create().setRoot((Box) result);
 		}
 		return Diagram.create();
-	}
-
-	private static Object[] readChannelValues(List<ViewChannel> channels) {
-		Object[] values = new Object[channels.size()];
-		for (int i = 0; i < channels.size(); i++) {
-			values[i] = channels.get(i).get();
-		}
-		return values;
 	}
 
 }

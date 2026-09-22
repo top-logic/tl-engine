@@ -5,7 +5,6 @@
  */
 package com.top_logic.layout.view.element;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
@@ -13,7 +12,6 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
-import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -34,8 +32,10 @@ import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.layout.view.command.GenericViewCommand;
@@ -98,7 +98,7 @@ public class ValueInputElement implements UIElement {
 	 * Configuration for {@link ValueInputElement}.
 	 */
 	@TagName("value-input")
-	public interface Config extends UIElement.Config {
+	public interface Config extends UIElement.Config, Inputs {
 
 		@Override
 		@ClassDefault(ValueInputElement.class)
@@ -113,14 +113,14 @@ public class ValueInputElement implements UIElement {
 		/** Configuration name for {@link #getOptions()}. */
 		String OPTIONS = "options";
 
-		/** Configuration name for {@link #getInputs()}. */
-		String INPUTS = "inputs";
-
 		/** Configuration name for {@link #getMultiple()}. */
 		String MULTIPLE = "multiple";
 
 		/** Configuration name for {@link #getLabel()}. */
 		String LABEL = "label";
+
+		/** Configuration name for {@link #getPlaceholder()}. */
+		String PLACEHOLDER = "placeholder";
 
 		/** Configuration name for {@link #getReadonly()}. */
 		String READONLY = "readonly";
@@ -166,22 +166,14 @@ public class ValueInputElement implements UIElement {
 		 * enumeration, the instances of a class. A value of a primitive type is then entered rather
 		 * than chosen.
 		 * </p>
+		 *
+		 * <p>
+		 * The options are computed again whenever one of the input channels changes.
+		 * </p>
 		 */
 		@Name(OPTIONS)
 		@Nullable
 		Expr getOptions();
-
-		/**
-		 * References to the {@link ViewChannel}s whose current values become the arguments of
-		 * {@link #getOptions()}, in declaration order.
-		 *
-		 * <p>
-		 * The options are computed again whenever one of these channels changes.
-		 * </p>
-		 */
-		@Name(INPUTS)
-		@ListBinding(format = ChannelRefFormat.class, tag = "input", attribute = "channel")
-		List<ChannelRef> getInputs();
 
 		/**
 		 * Whether the channel holds a collection of values rather than a single one.
@@ -200,6 +192,20 @@ public class ValueInputElement implements UIElement {
 		@Name(LABEL)
 		@Nullable
 		ResKey getLabel();
+
+		/**
+		 * The text shown in the input while it is empty.
+		 *
+		 * <p>
+		 * What the user is expected to enter, said inside the input itself: "Search" in a search
+		 * box, "name@example.com" in a mail address. It states the purpose of an input that stands
+		 * without a visible label - in a toolbar, above a list - and it disappears as soon as a
+		 * value is entered.
+		 * </p>
+		 */
+		@Name(PLACEHOLDER)
+		@Nullable
+		ResKey getPlaceholder();
 
 		/**
 		 * Whether the value is displayed but cannot be changed here.
@@ -253,6 +259,8 @@ public class ValueInputElement implements UIElement {
 
 	private final ResKey _label;
 
+	private final ResKey _placeholder;
+
 	private final boolean _readonly;
 
 	private final LabelPosition _labelPosition;
@@ -272,6 +280,7 @@ public class ValueInputElement implements UIElement {
 		_inputRefs = config.getInputs();
 		_multiple = config.getMultiple();
 		_label = config.getLabel();
+		_placeholder = config.getPlaceholder();
 		_readonly = config.getReadonly();
 		_labelPosition = config.getLabelPosition();
 
@@ -284,10 +293,7 @@ public class ValueInputElement implements UIElement {
 	public IReactControl createControl(ViewContext context) {
 		TLType type = _typeRef.resolveType();
 
-		List<ViewChannel> optionInputs = new ArrayList<>(_inputRefs.size());
-		for (ChannelRef ref : _inputRefs) {
-			optionInputs.add(context.resolveChannel(ref));
-		}
+		List<ViewChannel> optionInputs = ChannelInputs.resolve(context, _inputRefs);
 		List<?> options = options(type, optionInputs);
 
 		AbstractFieldModel field = options == null
@@ -300,8 +306,12 @@ public class ValueInputElement implements UIElement {
 		ChannelFieldBinding binding = ChannelFieldBinding.bind(context.resolveChannel(_valueRef), field,
 			options != null, _multiple);
 
-		String label = _label == null ? null : Resources.getInstance().getString(_label);
+		Resources resources = Resources.getInstance();
+		String label = _label == null ? null : resources.getString(_label);
 		FieldSpec spec = FieldControlService.fieldSpec(type, type, label, _multiple, field);
+		if (_placeholder != null) {
+			spec.setPlaceholder(resources.getString(_placeholder));
+		}
 		ReactControl input = FieldControlService.getInstance().createFieldControl(context, type, spec, field);
 		input.addCleanupAction(binding::dispose);
 

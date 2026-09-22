@@ -264,6 +264,8 @@ This runs `com.top_logic.basic.xml.XMLPrettyPrinter` on layout directories.
 
 ### Migration Tools
 
+For upgrading an application from TL 7.11 to 8.0, see [docs/faq/upgrade-7.11-to-8.0.md](docs/faq/upgrade-7.11-to-8.0.md).
+
 For layout migrations after API changes:
 
 ```bash

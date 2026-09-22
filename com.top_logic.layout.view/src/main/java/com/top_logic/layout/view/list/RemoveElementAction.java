@@ -15,12 +15,12 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.command.ViewAction;
 
 /**
- * {@link ViewAction} that removes the chain's current input value from the enclosing
- * {@link ObjectListElement &lt;object-list&gt;}'s container.
+ * {@link ViewAction} that removes the chain's current input value through the enclosing
+ * {@link ObjectListElement &lt;object-list&gt;}.
  *
  * <p>
- * Runs the list's configured remove function with the container and the input value in a
- * transaction. Typical usage in an item template, with the item channel as command input:
+ * Runs the list's configured remove function with the values of the list's inputs and the element
+ * in a transaction. Typical usage in an item template, with the item channel as command input:
  * </p>
  *
  * <pre>

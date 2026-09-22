@@ -5,7 +5,6 @@
  */
 package com.top_logic.layout.view.table;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
@@ -14,14 +13,14 @@ import java.util.function.Predicate;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.table.TableViewControl;
+import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.ChannelRef;
-import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.EvalContext;
@@ -69,16 +68,13 @@ public class ScriptedFilter implements ColumnFilter<ScriptedCell>, ColumnBinding
 	/**
 	 * Configuration of a {@link ScriptedFilter}.
 	 */
-	public interface Config extends PolymorphicConfiguration<ScriptedFilter> {
+	public interface Config extends PolymorphicConfiguration<ScriptedFilter>, Inputs {
 
 		/** Configuration name of {@link #getModel()}. */
 		String MODEL = "model";
 
 		/** Configuration name of {@link #getMatch()}. */
 		String MATCH = "match";
-
-		/** Configuration name of {@link #getInputs()}. */
-		String INPUTS = "inputs";
 
 		/** Configuration name of {@link #getLabel()}. */
 		String LABEL = "label";
@@ -98,14 +94,6 @@ public class ScriptedFilter implements ColumnFilter<ScriptedCell>, ColumnBinding
 		@Mandatory
 		@NonNullable
 		Expr getMatch();
-
-		/**
-		 * References to channels whose values are passed to the match function after the parameter
-		 * object, to pull additional context into the filter.
-		 */
-		@Name(INPUTS)
-		@ListBinding(format = ChannelRefFormat.class, tag = "input", attribute = "channel")
-		List<ChannelRef> getInputs();
 
 		/**
 		 * The dialog title / column-filter label.
@@ -163,10 +151,7 @@ public class ScriptedFilter implements ColumnFilter<ScriptedCell>, ColumnBinding
 
 	@Override
 	public void installUI(ColumnSetup setup, TableViewControl<?> control) {
-		List<ViewChannel> inputChannels = new ArrayList<>();
-		for (ChannelRef ref : _inputs) {
-			inputChannels.add(setup.viewContext().resolveChannel(ref));
-		}
+		List<ViewChannel> inputChannels = ChannelInputs.resolve(setup.viewContext(), _inputs);
 		control.setFilterUI(setup.name(), new ScriptedFilterUI(this, inputChannels));
 	}
 

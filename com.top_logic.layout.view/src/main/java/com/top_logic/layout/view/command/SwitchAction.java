@@ -25,6 +25,7 @@ import com.top_logic.basic.config.constraint.impl.OnlySetIfUnset;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.model.search.expr.IsEqual;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -96,7 +97,7 @@ public class SwitchAction extends InterruptibleViewAction {
 	 * Configuration for {@link SwitchAction}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config extends PolymorphicConfiguration<SwitchAction>, ActionScript.Inputs {
+	public interface Config extends PolymorphicConfiguration<SwitchAction>, Inputs {
 
 		/** Configuration tag of a {@link SwitchAction}. */
 		String TAG_NAME = "switch";

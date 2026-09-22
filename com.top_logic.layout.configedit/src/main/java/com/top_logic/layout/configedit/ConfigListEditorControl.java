@@ -33,6 +33,7 @@ import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
 import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
+import com.top_logic.layout.react.control.layout.ReactFormGroupControl.GroupBorder;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
@@ -360,7 +361,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		List<ReactControl> bodyChildren = createBodyChildren(item, keyProperty, null);
 
 		ReactFormGroupControl group = new ReactFormGroupControl(
-			_context, null, true, !expanded, "subtle", true,
+			_context, null, true, !expanded, GroupBorder.SUBTLE, true,
 			headerActions, bodyChildren);
 		ReactControl header = createEntryHeader(item, keyProperty, null, label);
 		group.setHeader(header);
@@ -432,7 +433,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		}
 
 		ReactFormGroupControl group = new ReactFormGroupControl(
-			_context, null, true, false, "subtle", true,
+			_context, null, true, false, GroupBorder.SUBTLE, true,
 			headerActions, bodyChildren);
 		ReactControl header = createEntryHeader(entry, keyProperty, pending, label);
 		group.setHeader(header);

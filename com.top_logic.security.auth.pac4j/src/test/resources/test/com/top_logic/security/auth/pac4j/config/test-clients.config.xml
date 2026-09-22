@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config callback-url="/servlet/callback">
+	<clients>
+		<client name="test-oidc"
+			client-id="the-client-id"
+			secret="unencrypted:the-secret"
+			discovery-uri="https://provider.test/.well-known/openid-configuration"
+		/>
+		<client name="test-anonymous"
+			class="test.com.top_logic.security.auth.pac4j.config.AnonymousClientConfigurator"
+		/>
+	</clients>
+</config>

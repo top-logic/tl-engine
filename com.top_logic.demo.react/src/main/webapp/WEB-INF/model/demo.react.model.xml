@@ -54,6 +54,23 @@
 						</annotations>
 					</property>
 
+					<property name="aliases"
+						bag="true"
+						multiple="true"
+						ordered="true"
+						type="tl.core:String"
+					/>
+					<property name="notes"
+						bag="true"
+						multiple="true"
+						ordered="true"
+						type="tl.core:String"
+					>
+						<annotations>
+							<multi-line rows="3"/>
+						</annotations>
+					</property>
+
 					<!-- Source code -->
 					<property name="xmlSource"
 						type="tl.core:Text"
@@ -163,6 +180,25 @@
 						</annotations>
 					</property>
 
+					<property name="scores"
+						bag="true"
+						multiple="true"
+						ordered="true"
+						type="tl.core:Integer"
+					/>
+					<property name="ratios"
+						bag="true"
+						multiple="true"
+						ordered="true"
+						type="tl.core:Double"
+					>
+						<annotations>
+							<format>
+								<decimal pattern="#,##0.00"/>
+							</format>
+						</annotations>
+					</property>
+
 					<!-- Boolean / Tristate -->
 					<property name="active"
 						type="tl.core:Boolean"
@@ -185,6 +221,13 @@
 						</annotations>
 					</property>
 
+					<property name="flags"
+						bag="true"
+						multiple="true"
+						ordered="true"
+						type="tl.core:Boolean"
+					/>
+
 					<!-- Date / Time -->
 					<property name="date"
 						type="tl.core:Date"
@@ -192,11 +235,30 @@
 					<property name="dateTime"
 						type="tl.core:DateTime"
 					/>
+					<property name="dateTimeShort"
+						type="tl.core:DateTime"
+					>
+						<annotations>
+							<format>
+								<date-time
+									date-style="short"
+									time-style="short"
+								/>
+							</format>
+						</annotations>
+					</property>
 					<property name="time"
 						type="tl.core:Time"
 					/>
 					<property name="duration"
 						type="tl.core:Duration"
+					/>
+
+					<property name="deadlines"
+						bag="true"
+						multiple="true"
+						ordered="true"
+						type="tl.core:Date"
 					/>
 
 					<!-- Visual / complex value types -->

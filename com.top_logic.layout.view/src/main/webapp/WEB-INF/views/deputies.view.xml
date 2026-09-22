@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Naming the accounts that may act in the name of the account, opened from the security tab of the
+	settings dialog (settings-tabs.view.xml).
+
+	The model is the representative group of the account; its members are its deputies, so the
+	dialog is the ordinary form over that one reference. What makes it a dialog of its own is what
+	the reference means: a member of this group acts with every role of the account, which is why
+	the password is asked for and the change is confirmed before it is stored.
+-->
+<view>
+	<channels>
+		<!-- The representative group of the account, whose members are its deputies. -->
+		<channel name="model"/>
+	</channels>
+	<window resizable="false"
+		width="420px"
+	>
+		<title>
+			<en>Name deputies</en>
+			<de>Stellvertreter benennen</de>
+		</title>
+		<form
+			initial-edit-mode="true"
+			input="model"
+			mode-switch="false"
+		>
+			<!-- What is handed over, said before the choice is made rather than in the confirmation alone. -->
+			<text>
+				<label>
+					<en>A deputy acts with every right of your account.</en>
+					<de>Ein Stellvertreter handelt mit allen Rechten Ihres Kontos.</de>
+				</label>
+			</text>
+			<field attribute="members">
+				<label>
+					<en>Deputies</en>
+					<de>Stellvertreter</de>
+				</label>
+			</field>
+			<commands>
+				<generic-command image="css:bi bi-check-lg"
+					placement="BUTTON_BAR"
+				>
+					<label>
+						<en>Apply</en>
+						<de>Übernehmen</de>
+					</label>
+					<!--
+						Both guards ask before anything is written: the identity check says the account
+						holder is at the keyboard, the confirmation says they meant this. They stand
+						outside the transaction, which no dialog may be waiting in.
+					-->
+					<verify-identity>
+						<message>
+							<en>Enter your password to change who may act in your name.</en>
+							<de>Geben Sie Ihr Passwort ein, um zu ändern, wer in Ihrem Namen handeln darf.</de>
+						</message>
+					</verify-identity>
+					<confirm expr="group -> #('Grant the selected accounts every right of your account?'@en, 'Den ausgewählten Konten alle Rechte Ihres Kontos einräumen?'@de)"/>
+					<with-transaction>
+						<store-form-state/>
+					</with-transaction>
+					<close-dialog/>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

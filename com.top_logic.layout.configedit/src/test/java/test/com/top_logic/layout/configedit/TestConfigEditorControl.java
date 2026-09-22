@@ -23,6 +23,7 @@ import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.config.AbstractConfigurationValueBinding;
+import com.top_logic.basic.config.AbstractConfigurationValueProvider;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
@@ -31,6 +32,7 @@ import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Binding;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -98,6 +100,117 @@ public class TestConfigEditorControl extends TestCase {
 				throws XMLStreamException, ConfigurationException {
 			throw new UnsupportedOperationException("Not exercised by these tests.");
 		}
+	}
+
+	/**
+	 * A parsing-only format over a {@link HandlerConfig}: it reads a handler's name into a
+	 * configuration, but has no normative way to write one back, and therefore accepts no value.
+	 *
+	 * <p>
+	 * The shape of {@code ExpressionEvaluationAlgorithm.Config.LocatorFormat}, whose configuration a
+	 * single expression cannot be recovered from.
+	 * </p>
+	 */
+	public static class ParseOnlyHandlerFormat extends AbstractConfigurationValueProvider<HandlerConfig> {
+
+		/** Creates a {@link ParseOnlyHandlerFormat}. */
+		public ParseOnlyHandlerFormat() {
+			super(HandlerConfig.class);
+		}
+
+		@Override
+		protected HandlerConfig getValueNonEmpty(String propertyName, CharSequence propertyValue) {
+			HandlerAConfig result = TypedConfiguration.newConfigItem(HandlerAConfig.class);
+			result.setNameA(propertyValue.toString());
+			return result;
+		}
+
+		@Override
+		protected String getSpecificationNonNull(HandlerConfig configValue) {
+			throw new UnsupportedOperationException("There is no normative way to serialize this value.");
+		}
+
+		@Override
+		public boolean isLegalValue(Object value) {
+			// Parsing only format.
+			return false;
+		}
+	}
+
+	/** {@link ParseOnlyHandlerFormat}'s counterpart for a non-polymorphic {@link InnerConfig}. */
+	public static class ParseOnlyInnerFormat extends AbstractConfigurationValueProvider<InnerConfig> {
+
+		/** Creates a {@link ParseOnlyInnerFormat}. */
+		public ParseOnlyInnerFormat() {
+			super(InnerConfig.class);
+		}
+
+		@Override
+		protected InnerConfig getValueNonEmpty(String propertyName, CharSequence propertyValue) {
+			InnerConfig result = TypedConfiguration.newConfigItem(InnerConfig.class);
+			result.setTitle(propertyValue.toString());
+			return result;
+		}
+
+		@Override
+		protected String getSpecificationNonNull(InnerConfig configValue) {
+			throw new UnsupportedOperationException("There is no normative way to serialize this value.");
+		}
+
+		@Override
+		public boolean isLegalValue(Object value) {
+			// Parsing only format.
+			return false;
+		}
+	}
+
+	/**
+	 * Test configuration whose properties carry formats that cannot express every value.
+	 *
+	 * <p>
+	 * Kept apart from {@link TestConfig} so that its properties do not shift the child counts the
+	 * tests over that configuration compare.
+	 * </p>
+	 */
+	public interface ParseOnlyTestConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getParseOnlyHandler()}. */
+		String PARSE_ONLY_HANDLER = "parseOnlyHandler";
+
+		/** Property name for {@link #getParseOnlyInner()}. */
+		String PARSE_ONLY_INNER = "parseOnlyInner";
+
+		/** Property name for {@link #getCommaList()}. */
+		String COMMA_LIST = "commaList";
+
+		/**
+		 * A polymorphic {@link PropertyKind#ITEM} property whose format can write no value - the
+		 * shape of an attribute locator's configuration.
+		 */
+		@Name(PARSE_ONLY_HANDLER)
+		@Format(ParseOnlyHandlerFormat.class)
+		HandlerConfig getParseOnlyHandler();
+
+		void setParseOnlyHandler(HandlerConfig value);
+
+		/** The same, over a plain sub-configuration rather than a polymorphic one. */
+		@Name(PARSE_ONLY_INNER)
+		@Format(ParseOnlyInnerFormat.class)
+		InnerConfig getParseOnlyInner();
+
+		void setParseOnlyInner(InnerConfig value);
+
+		/**
+		 * A {@link PropertyKind#COMPLEX} property (a value binding decides the kind) whose format
+		 * ({@link TestConfigControlService.CommaSeparatedFormat}) can express some of its values and
+		 * not others.
+		 */
+		@Name(COMMA_LIST)
+		@Binding(NoFormatBinding.class)
+		@Format(TestConfigControlService.CommaSeparatedFormat.class)
+		List<String> getCommaList();
+
+		void setCommaList(List<String> value);
 	}
 
 	/** Test configuration with a mix of property types. */
@@ -1966,6 +2079,71 @@ public class TestConfigEditorControl extends TestCase {
 		TestableConfigEditorControl editor = new TestableConfigEditorControl(createTestContext(), config);
 
 		assertFalse("The editor must still render its fields.", editor.getChildrenList().isEmpty());
+	}
+
+	/**
+	 * A polymorphic {@link PropertyKind#ITEM} property whose format cannot write its value gets the
+	 * type selector and a nested editor over the chosen implementation - the same rendering an item
+	 * without a format at all gets, since there is no text a field could show.
+	 */
+	public void testPolymorphicItemWithParseOnlyFormatGetsTypeSelector() {
+		ParseOnlyTestConfig config = TypedConfiguration.newConfigItem(ParseOnlyTestConfig.class);
+		HandlerAConfig handler = TypedConfiguration.newConfigItem(HandlerAConfig.class);
+		handler.setNameA("a");
+		config.setParseOnlyHandler(handler);
+		ConfigFieldIndex index = new ConfigFieldIndex();
+
+		TestableConfigEditorControl editor =
+			new TestableConfigEditorControl(createTestContext(), config, Collections.emptySet(), false, index);
+
+		assertNotNull("An item whose format cannot write its value gets the type selector.",
+			findPolymorphicControl(editor));
+		assertNotNull("The chosen implementation's own properties must be editable, which only a "
+			+ "nested editor offers.",
+			index.lookup(handler, handler.descriptor().getProperty(HandlerAConfig.NAME_A)));
+	}
+
+	/**
+	 * The same for a plain sub-configuration: it gets the nested editor over its own properties,
+	 * not a text field.
+	 */
+	public void testItemWithParseOnlyFormatGetsNestedEditor() {
+		ParseOnlyTestConfig config = TypedConfiguration.newConfigItem(ParseOnlyTestConfig.class);
+		InnerConfig inner = TypedConfiguration.newConfigItem(InnerConfig.class);
+		inner.setTitle("t");
+		config.setParseOnlyInner(inner);
+		ConfigFieldIndex index = new ConfigFieldIndex();
+
+		new TestableConfigEditorControl(createTestContext(), config, Collections.emptySet(), false, index);
+
+		assertNotNull("The item's own field must be editable, which only a nested editor offers.",
+			index.lookup(inner, inner.descriptor().getProperty(InnerConfig.TITLE)));
+		assertNull("No field may stand for the item itself - its format can write no text.",
+			index.lookup(config, config.descriptor().getProperty(ParseOnlyTestConfig.PARSE_ONLY_INNER)));
+	}
+
+	/**
+	 * A {@link PropertyKind#COMPLEX} property holding a value its format can write is rendered as
+	 * that text.
+	 */
+	public void testComplexPropertyWhoseFormatAcceptsItsValueIsDisplayed() {
+		ParseOnlyTestConfig config = TypedConfiguration.newConfigItem(ParseOnlyTestConfig.class);
+		config.setCommaList(Arrays.asList("red", "green"));
+
+		assertTrue("A value the format can write must be rendered, not skipped.",
+			rendersProperty(config, ParseOnlyTestConfig.COMMA_LIST));
+	}
+
+	/**
+	 * The very same property holding a value its format cannot write is skipped - rendering it
+	 * would hand the service a property it rejects.
+	 */
+	public void testComplexPropertyWhoseFormatRejectsItsValueIsSkipped() {
+		ParseOnlyTestConfig config = TypedConfiguration.newConfigItem(ParseOnlyTestConfig.class);
+		config.setCommaList(Arrays.asList("red,green"));
+
+		assertFalse("A value the format cannot write has no text form and must stay skipped.",
+			rendersProperty(config, ParseOnlyTestConfig.COMMA_LIST));
 	}
 
 	/**

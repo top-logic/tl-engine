@@ -2299,6 +2299,7 @@ button.tlDrawerToggle:focus-visible {
 	align-items: center;
 	gap: var(--spacing-01);
 	flex-shrink: 0;
+	margin-left: auto;
 }
 
 .tlCard__body--pad-none    { padding: 0; }
@@ -3863,6 +3864,13 @@ button.tlMenu__item--disabled:hover {
 .tlText--pill .tlPill {
 	font-size: inherit;
 	line-height: inherit;
+}
+
+/* A theme icon shown on its own, sitting on the text baseline of what it accompanies. */
+.tlIcon {
+	display: inline-flex;
+	align-items: center;
+	line-height: 1;
 }
 
 .tlText--placeholder {
@@ -7187,11 +7195,39 @@ button.tlToolbar__menuTrigger:focus-visible {
   border-radius: var(--border-radius-02);
   background: var(--layer-01);
 }
-.tlDashboard__tile > *:not(.tlDashboard__overlay) {
+.tlDashboard__tile > *:not(.tlDashboard__overlay, .tlDashboard__tileAction) {
   flex: 1 1 auto;
   min-height: 0;
   min-width: 0;
 }
+/* The name and the keyboard operation of a tile that is an entry point: out of sight, in the tab
+   order. The pointer is answered by the tile around it, so the button stays out of its way. */
+.tlDashboard__tileAction {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  margin: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  opacity: 0;
+  white-space: nowrap;
+  pointer-events: none;
+}
+/* The whole tile is the surface the user presses. */
+.tlDashboard__tile--action { cursor: pointer; }
+.tlDashboard:not(.tlDashboard--edit) .tlDashboard__tile--action:not(.tlDashboard__tile--disabled):hover {
+  border-color: var(--border-interactive);
+  box-shadow: var(--shadow-raised);
+}
+.tlDashboard__tile--action:has(> .tlDashboard__tileAction:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+/* A tile whose action is refused keeps its resting look - what it shows stays readable. */
+.tlDashboard__tile--disabled { cursor: default; }
 .tlDashboard--edit .tlDashboard__tile { cursor: move; }
 .tlDashboard__tile--dragging { opacity: 0.4; }
 .tlDashboard__overlay {

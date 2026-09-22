@@ -3,8 +3,9 @@
 <!--
 	Third frame of the project drill-down: the tickets of the milestone the frame was opened for.
 	The assignee cell is a link to the contributor, because the application declares a display
-	target for contributors. Opening a ticket pushes its detail, announced with the ticket's
-	title.
+	target for contributors. Activating a row - a double-click, Enter on the row carrying the
+	keyboard cursor, or its chevron button - pushes the ticket's detail, announced with the
+	ticket's title.
 -->
 <view>
 	<channels>
@@ -17,27 +18,6 @@
 			<en>Tickets</en>
 			<de>Tickets</de>
 		</title>
-		<commands>
-			<command class="com.top_logic.layout.view.tiles.NavigatePushCommand"
-				bind-input-to="ticket"
-				image="css:bi bi-box-arrow-in-right"
-				input="ticket"
-				placement="TOOLBAR"
-				view="projects/ticket-detail.view.xml"
-			>
-				<label>
-					<en>Open</en>
-					<de>Öffnen</de>
-				</label>
-				<executability>
-					<null-input-disabled/>
-				</executability>
-				<frame-label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
-					expr="t -> $t.get(`tl.demo.projectManagement:Ticket#title`)"
-					inputs="ticket"
-				/>
-			</command>
-		</commands>
 		<table
 			observed-types="tl.demo.projectManagement:Ticket"
 			selection="ticket"
@@ -50,7 +30,16 @@
 			<inputs>
 				<input channel="milestone"/>
 			</inputs>
-			<rows>m -&gt; if($m == null, list(), $m.get(`tl.demo.projectManagement:Milestone#tickets`))</rows>
+			<rows>m -&gt; if($m == null, [], $m.get(`tl.demo.projectManagement:Milestone#tickets`))</rows>
+			<on-activate class="com.top_logic.layout.view.tiles.NavigatePushCommand"
+				bind-input-to="ticket"
+				view="projects/ticket-detail.view.xml"
+			>
+				<frame-label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
+					expr="t -> $t.get(`tl.demo.projectManagement:Ticket#title`)"
+					inputs="ticket"
+				/>
+			</on-activate>
 		</table>
 	</panel>
 </view>

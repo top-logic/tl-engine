@@ -7,13 +7,13 @@
 	The Products tile selects the product whose construction plan the diagram draws.
 	The Construction Plan tile spans two grid rows, so the diagram gets twice the height
 	of the tiles beside it; its <createChart> script builds a tree of the product's build
-	instructions, one node per build step, each showing its marker, its name and the parts
-	it consumes.
+	instructions, one node per build step, each showing its marker, its name, the parts
+	it consumes and its image.
 	
-	The Build steps tile lists all build steps flat, with a filter bar above them. There
-	are more steps than fit a one-row tile, which is what the tile shows: the dashboard
-	gives its grid a definite row height, so the table resolves its height against the
-	tile and scrolls inside it instead of growing the page with its rows.
+	The Build steps tile lists all build steps flat. There are more steps than fit a
+	one-row tile, which is what the tile shows: the dashboard gives its grid a definite
+	row height, so the table resolves its height against the tile and scrolls inside it
+	instead of growing the page with its rows.
 	
 	The diagram, the Build steps table and the Details form share the selectedNode channel:
 	clicking a node in the diagram marks its row in Build steps and shows it in Details, and
@@ -121,7 +121,15 @@ nodes = $parts.map(p -> reactFlowSelection(
                                     content: reactFlowPadding(all: 3, content: reactFlowText($usages))))
                     }
                 ])
-            ))
+            )),
+
+            $p.get(`test.flowchart:FlowNode#image`).with(image ->
+                $image == null
+                    ? reactFlowEmpty()
+                    : reactFlowPadding(
+                        top: 8,
+                        content: reactFlowBorder(reactFlowImage($image)))
+            )
         ]))))
     )
 );
@@ -158,7 +166,6 @@ $parts.isEmpty()
 					<de>Bauschritte</de>
 				</title>
 				<table
-					filter-bar="true"
 					selection="selectedNode"
 					types="test.flowchart:FlowNode"
 				>

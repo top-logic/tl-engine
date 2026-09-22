@@ -5,11 +5,17 @@
  */
 package com.top_logic.knowledge.service.db2;
 
+import static com.top_logic.basic.db.sql.SQLFactory.*;
+import static com.top_logic.dob.sql.SQLFactory.column;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import com.top_logic.basic.db.sql.SQLExpression;
 import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.meta.MOClass;
@@ -19,8 +25,10 @@ import com.top_logic.dob.meta.MOReference.ReferencePart;
 import com.top_logic.dob.meta.MORepository;
 import com.top_logic.dob.sql.DBAttribute;
 import com.top_logic.dob.util.MetaObjectUtils;
+import com.top_logic.knowledge.KnowledgeReferenceStorageImpl;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.BasicTypes;
+import com.top_logic.util.TLContext;
 
 /**
  * The database tables of a {@link MORepository} that store rows with a revision range.
@@ -39,7 +47,9 @@ import com.top_logic.knowledge.service.BasicTypes;
  * {@link BasicTypes#REV_MIN_ATTRIBUTE_NAME}, {@link BasicTypes#REV_MAX_ATTRIBUTE_NAME} and
  * {@link BasicTypes#REV_CREATE_ATTRIBUTE_NAME} attributes. Both
  * {@link MOClass#isVersioned() versioned} and unversioned item tables are reported, because both
- * store their rows with a revision range.
+ * store their rows with a revision range. An association table is an item table like any other: its
+ * {@code source} and {@code dest} columns are the {@link Table#getReferences() references} of that
+ * table.
  * </p>
  *
  * <p>
@@ -74,17 +84,37 @@ public class ItemTables {
 
 		private final DBAttribute _branch;
 
-		private final List<MOReference> _pinnedReferences;
+		private final List<Reference> _references;
+
+		private final List<Reference> _pinnedReferences;
 
 		Table(MOKnowledgeItem type, DBAttribute revMin, DBAttribute revMax, DBAttribute revCreate,
-				DBAttribute identifier, DBAttribute branch, List<MOReference> pinnedReferences) {
+				DBAttribute identifier, DBAttribute branch, List<Reference> references) {
 			_type = type;
 			_revMin = revMin;
 			_revMax = revMax;
 			_revCreate = revCreate;
 			_identifier = identifier;
 			_branch = branch;
-			_pinnedReferences = pinnedReferences;
+			_references = references;
+			_pinnedReferences = pinned(references);
+		}
+
+		private static List<Reference> pinned(List<Reference> references) {
+			List<Reference> result = null;
+			for (Reference reference : references) {
+				if (!reference.isPinned()) {
+					continue;
+				}
+				if (result == null) {
+					result = new ArrayList<>();
+				}
+				result.add(reference);
+			}
+			if (result == null) {
+				return Collections.emptyList();
+			}
+			return Collections.unmodifiableList(result);
 		}
 
 		/**
@@ -131,7 +161,7 @@ public class ItemTables {
 
 		/**
 		 * The column holding the identity of the object a row belongs to.
-		 * 
+		 *
 		 * @see BasicTypes#IDENTIFIER_ATTRIBUTE_NAME
 		 */
 		public DBAttribute getIdentifier() {
@@ -141,11 +171,11 @@ public class ItemTables {
 		/**
 		 * The column holding the branch a row belongs to, or <code>null</code> if this table has no
 		 * such column.
-		 * 
+		 *
 		 * <p>
 		 * Without branch support the branch is constantly the trunk and no column is written.
 		 * </p>
-		 * 
+		 *
 		 * @see BasicTypes#BRANCH_ATTRIBUTE_NAME
 		 */
 		public DBAttribute getBranch() {
@@ -160,18 +190,67 @@ public class ItemTables {
 		}
 
 		/**
-		 * The reference attributes that pin their target to a certain revision.
-		 * 
-		 * <p>
-		 * One entry per {@link MOReference} of {@link MOReference#getHistoryType() history type}
-		 * {@link HistoryType#HISTORIC} or {@link HistoryType#MIXED}. Such a reference has a
-		 * {@link ReferencePart#revision revision column}, see
-		 * {@link MOReference#getColumn(ReferencePart)}. The list is empty for a table without such
-		 * references.
-		 * </p>
+		 * All reference attributes of this table, in the order of their declaration.
+		 *
+		 * @see Reference
 		 */
-		public List<MOReference> getPinnedReferences() {
+		public List<Reference> getReferences() {
+			return _references;
+		}
+
+		/**
+		 * The reference attributes that pin their target to a certain revision.
+		 *
+		 * <p>
+		 * The {@link #getReferences() references} of {@link MOReference#getHistoryType() history
+		 * type} {@link HistoryType#HISTORIC} or {@link HistoryType#MIXED}. Such a reference has a
+		 * {@link ReferencePart#revision revision column}. The list is empty for a table without
+		 * such references.
+		 * </p>
+		 *
+		 * @see Reference#isPinned()
+		 */
+		public List<Reference> getPinnedReferences() {
 			return _pinnedReferences;
+		}
+
+		/**
+		 * The branch a row of this table belongs to, the trunk when the table has no
+		 * {@link #getBranch() branch column}.
+		 */
+		public SQLExpression branchExpression() {
+			if (_branch == null) {
+				return literalLong(TLContext.TRUNK_ID);
+			}
+			return column(NO_TABLE_ALIAS, _branch, NOT_NULL);
+		}
+
+		/**
+		 * The branch a value of the given reference refers to.
+		 *
+		 * <p>
+		 * A {@link MOReference#isBranchGlobal() branch global} reference stores that branch in a
+		 * column of its own. A branch local reference refers to the
+		 * {@link #branchExpression() branch of the row} that holds it; it has a branch column only
+		 * to name the branch of a historic target and stores
+		 * {@link KnowledgeReferenceStorageImpl#DUMMY_BRANCH_VALUE} there while it holds a current
+		 * one.
+		 * </p>
+		 *
+		 * @param reference
+		 *        A reference of this table.
+		 */
+		public SQLExpression viewBranchExpression(Reference reference) {
+			DBAttribute branchColumn = reference.getBranchColumn();
+			if (branchColumn == null) {
+				return branchExpression();
+			}
+			SQLExpression stored = column(NO_TABLE_ALIAS, branchColumn, NOT_NULL);
+			if (reference.getReference().isBranchGlobal()) {
+				return stored;
+			}
+			return sqlCase(eq(stored, literalLong(KnowledgeReferenceStorageImpl.DUMMY_BRANCH_VALUE)),
+				branchExpression(), stored);
 		}
 
 		@Override
@@ -180,9 +259,177 @@ public class ItemTables {
 		}
 	}
 
+	/**
+	 * A reference attribute of an item {@link Table}, with the columns it is stored in.
+	 *
+	 * <p>
+	 * The value of a reference is composed of up to four columns: the
+	 * {@link #getIdColumn() identifier} of the target object, the {@link #getTypeColumn() type} of
+	 * the target object (absent for a {@link #getMonomorphicTargetType() monomorphic} reference),
+	 * the {@link #getBranchColumn() branch} the target is looked up in (absent for a branch local
+	 * reference) and the {@link #getRevisionColumn() revision} the target is pinned to (absent for
+	 * a reference that always refers to the current state).
+	 * </p>
+	 *
+	 * @see Table#getReferences()
+	 */
+	public static final class Reference {
+
+		private final MOReference _reference;
+
+		private final DBAttribute _id;
+
+		private final DBAttribute _type;
+
+		private final DBAttribute _branch;
+
+		private final DBAttribute _revision;
+
+		private final String _monomorphicTargetType;
+
+		Reference(MOReference reference) {
+			_reference = reference;
+			_id = reference.getColumn(ReferencePart.name);
+			_type = reference.getColumn(ReferencePart.type);
+			_branch = reference.getColumn(ReferencePart.branch);
+			_revision = reference.getColumn(ReferencePart.revision);
+			_monomorphicTargetType =
+				reference.isMonomorphic() ? reference.getMetaObject().getName() : null;
+		}
+
+		/**
+		 * The attribute this reference describes.
+		 */
+		public MOReference getReference() {
+			return _reference;
+		}
+
+		/**
+		 * The name of the reference attribute.
+		 */
+		public String getName() {
+			return _reference.getName();
+		}
+
+		/**
+		 * The column holding the identifier of the target object.
+		 */
+		public DBAttribute getIdColumn() {
+			return _id;
+		}
+
+		/**
+		 * The column holding the concrete type of the target object, or <code>null</code> for a
+		 * {@link #getMonomorphicTargetType() monomorphic} reference.
+		 */
+		public DBAttribute getTypeColumn() {
+			return _type;
+		}
+
+		/**
+		 * The column holding the branch the target object is looked up in, or <code>null</code> for
+		 * a branch local reference.
+		 *
+		 * @see MOReference#isBranchGlobal()
+		 */
+		public DBAttribute getBranchColumn() {
+			return _branch;
+		}
+
+		/**
+		 * The column holding the revision the target object is pinned to, or <code>null</code> for
+		 * a reference that always refers to the current state.
+		 *
+		 * @see MOReference#getHistoryType()
+		 */
+		public DBAttribute getRevisionColumn() {
+			return _revision;
+		}
+
+		/**
+		 * Whether this reference pins its target to a certain revision.
+		 *
+		 * @see #getRevisionColumn()
+		 */
+		public boolean isPinned() {
+			return _revision != null;
+		}
+
+		/**
+		 * Whether a value must be assigned to this reference.
+		 *
+		 * @see MOAttribute#isMandatory()
+		 */
+		public boolean isMandatory() {
+			return _reference.isMandatory();
+		}
+
+		/**
+		 * Whether the referring object is the container of the referenced object.
+		 *
+		 * @see MOReference#isContainer()
+		 */
+		public boolean isContainer() {
+			return _reference.isContainer();
+		}
+
+		/**
+		 * The history context values of this reference.
+		 *
+		 * @see MOReference#getHistoryType()
+		 */
+		public HistoryType getHistoryType() {
+			return _reference.getHistoryType();
+		}
+
+		/**
+		 * The declared type of the target object.
+		 *
+		 * <p>
+		 * A polymorphic reference also accepts subtypes thereof and names the concrete type of its
+		 * target in its {@link #getTypeColumn() type column}.
+		 * </p>
+		 *
+		 * @see MOReference#getMetaObject()
+		 */
+		public MetaObject getTargetType() {
+			return _reference.getMetaObject();
+		}
+
+		/**
+		 * The name of the only type this reference can refer to, or <code>null</code> if it is
+		 * polymorphic and names the type of its target in its {@link #getTypeColumn() type column}.
+		 *
+		 * @see MOReference#isMonomorphic()
+		 */
+		public String getMonomorphicTargetType() {
+			return _monomorphicTargetType;
+		}
+
+		/**
+		 * Whether a value of this reference can refer to an object of the given type.
+		 *
+		 * @param targetType
+		 *        The concrete type of a potential target object.
+		 */
+		public boolean acceptsTarget(MetaObject targetType) {
+			if (_monomorphicTargetType != null) {
+				return _monomorphicTargetType.equals(targetType.getName());
+			}
+			return targetType.isSubtypeOf(getTargetType());
+		}
+
+		@Override
+		public String toString() {
+			return _reference.toString();
+		}
+	}
+
 	private final MORepository _repository;
 
 	private final List<Table> _itemTables;
+
+	private final Map<String, Table> _itemTableByTypeName;
 
 	private final Table _flexData;
 
@@ -195,6 +442,11 @@ public class ItemTables {
 	public ItemTables(MORepository repository) {
 		_repository = repository;
 		_itemTables = Collections.unmodifiableList(lookupItemTables(repository));
+		Map<String, Table> tableByTypeName = new HashMap<>();
+		for (Table table : _itemTables) {
+			tableByTypeName.put(table.getType().getName(), table);
+		}
+		_itemTableByTypeName = tableByTypeName;
 		_flexData = lookupFlexData(repository);
 	}
 
@@ -226,7 +478,7 @@ public class ItemTables {
 			}
 			result.add(new Table(table, revMin, revMax,
 				dbColumn(table, BasicTypes.REV_CREATE_ATTRIBUTE_NAME), identifier,
-				dbColumn(table, BasicTypes.BRANCH_ATTRIBUTE_NAME), pinnedReferences(table)));
+				dbColumn(table, BasicTypes.BRANCH_ATTRIBUTE_NAME), references(table)));
 		}
 		result.sort(Comparator.comparing(Table::getDBName));
 		return result;
@@ -247,22 +499,16 @@ public class ItemTables {
 			dbColumn(table, AbstractFlexDataManager.BRANCH), Collections.emptyList());
 	}
 
-	private static List<MOReference> pinnedReferences(MOKnowledgeItem table) {
-		List<MOReference> result = null;
+	private static List<Reference> references(MOKnowledgeItem table) {
+		List<Reference> result = null;
 		for (MOAttribute attribute : table.getAttributes()) {
 			if (!(attribute instanceof MOReference)) {
-				continue;
-			}
-			MOReference reference = (MOReference) attribute;
-			if (reference.getColumn(ReferencePart.revision) == null) {
-				// A reference of history type CURRENT always points to the current object and is
-				// therefore not pinned to a revision.
 				continue;
 			}
 			if (result == null) {
 				result = new ArrayList<>();
 			}
-			result.add(reference);
+			result.add(new Reference((MOReference) attribute));
 		}
 		if (result == null) {
 			return Collections.emptyList();
@@ -295,6 +541,17 @@ public class ItemTables {
 	 */
 	public List<Table> getItemTables() {
 		return _itemTables;
+	}
+
+	/**
+	 * The item table storing objects of the given type, or <code>null</code> if the type is none of
+	 * the {@link #getItemTables() item tables}.
+	 *
+	 * @param typeName
+	 *        The {@link MetaObject#getName() name} of the type to look up.
+	 */
+	public Table getItemTable(String typeName) {
+		return _itemTableByTypeName.get(typeName);
 	}
 
 	/**

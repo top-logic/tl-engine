@@ -41,9 +41,7 @@ import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.meta.MOClass;
-import com.top_logic.dob.meta.MOReference;
 import com.top_logic.dob.meta.MOReference.HistoryType;
-import com.top_logic.dob.meta.MOReference.ReferencePart;
 import com.top_logic.dob.meta.MORepository;
 import com.top_logic.dob.sql.DBAttribute;
 import com.top_logic.dob.sql.DBTableMetaObject;
@@ -601,7 +599,7 @@ public class HistoryCompaction {
 		TableAccess(ItemTables.Table table) {
 			_table = table;
 			DBTableMetaObject type = table.getType();
-			List<MOReference> references = table.getPinnedReferences();
+			List<ItemTables.Reference> references = table.getPinnedReferences();
 			_pins = new PinAccess[references.size()];
 			for (int n = 0, cnt = references.size(); n < cnt; n++) {
 				_pins[n] = new PinAccess(table, references.get(n));
@@ -727,7 +725,7 @@ public class HistoryCompaction {
 
 		private final ItemTables.Table _table;
 
-		private final MOReference _reference;
+		private final ItemTables.Reference _reference;
 
 		private final String _monomorphicTarget;
 
@@ -739,11 +737,11 @@ public class HistoryCompaction {
 
 		private final CompiledStatement _clear;
 
-		PinAccess(ItemTables.Table table, MOReference reference) {
+		PinAccess(ItemTables.Table table, ItemTables.Reference reference) {
 			_table = table;
 			_reference = reference;
-			_monomorphicTarget = reference.isMonomorphic() ? reference.getMetaObject().getName() : null;
-			DBAttribute revColumn = reference.getColumn(ReferencePart.revision);
+			_monomorphicTarget = reference.getMonomorphicTargetType();
+			DBAttribute revColumn = reference.getRevisionColumn();
 			_raise = createRaiseRevision(table.getType(), revColumn);
 			_countRaise = createCountInRange(table.getType(), revColumn);
 			_selectCandidates = createSelectPinCandidates(table, reference);
@@ -940,17 +938,15 @@ public class HistoryCompaction {
 	 * and is deleted.
 	 * </p>
 	 */
-	private CompiledStatement createSelectPinCandidates(ItemTables.Table table, MOReference reference) {
-		DBAttribute revColumn = reference.getColumn(ReferencePart.revision);
-		DBAttribute targetBranch = reference.getColumn(ReferencePart.branch);
-		DBAttribute targetType = reference.getColumn(ReferencePart.type);
+	private CompiledStatement createSelectPinCandidates(ItemTables.Table table, ItemTables.Reference reference) {
+		DBAttribute revColumn = reference.getRevisionColumn();
+		DBAttribute targetType = reference.getTypeColumn();
 		List<SQLColumnDefinition> columns = new ArrayList<>();
-		columns.add(columnDef(branchExpression(table), RESULT_BRANCH));
+		columns.add(columnDef(table.branchExpression(), RESULT_BRANCH));
 		columns.add(columnDef(column(NO_TABLE_ALIAS, table.getIdentifier(), NOT_NULL), RESULT_ID));
 		columns.add(columnDef(column(NO_TABLE_ALIAS, table.getRevMax(), NOT_NULL), RESULT_REV_MAX));
-		columns.add(columnDef(targetBranch == null ? branchExpression(table)
-			: column(NO_TABLE_ALIAS, targetBranch, NOT_NULL), RESULT_TARGET_BRANCH));
-		columns.add(columnDef(column(NO_TABLE_ALIAS, reference.getColumn(ReferencePart.name), NOT_NULL),
+		columns.add(columnDef(table.viewBranchExpression(reference), RESULT_TARGET_BRANCH));
+		columns.add(columnDef(column(NO_TABLE_ALIAS, reference.getIdColumn(), NOT_NULL),
 			RESULT_TARGET_ID));
 		if (targetType != null) {
 			columns.add(columnDef(column(NO_TABLE_ALIAS, targetType, !NOT_NULL), RESULT_TARGET_TYPE));
@@ -977,29 +973,15 @@ public class HistoryCompaction {
 	 * branch AND IDENTIFIER = id AND REV_MAX = revMax}
 	 * 
 	 * <p>
-	 * The values written are the ones {@link KnowledgeReferenceStorageImpl} writes for a reference
-	 * without a value.
+	 * The values written are the ones a reference without a value holds.
 	 * </p>
+	 *
+	 * @see NullReference
 	 */
-	private CompiledStatement createClearPin(ItemTables.Table table, MOReference reference) {
-		DBAttribute idColumn = reference.getColumn(ReferencePart.name);
-		DBAttribute revColumn = reference.getColumn(ReferencePart.revision);
-		DBAttribute typeColumn = reference.getColumn(ReferencePart.type);
-		DBAttribute branchColumn = reference.getColumn(ReferencePart.branch);
-		List<String> columnNames = new ArrayList<>();
-		List<SQLExpression> values = new ArrayList<>();
-		columnNames.add(idColumn.getDBName());
-		values.add(literalID(IdentifierUtil.nullIdForMandatoryDatabaseColumns()));
-		if (typeColumn != null) {
-			columnNames.add(typeColumn.getDBName());
-			values.add(literalNull(typeColumn.getSQLType()));
-		}
-		columnNames.add(revColumn.getDBName());
-		values.add(literal(revColumn.getSQLType(), KnowledgeReferenceStorageImpl.NULL_REPLACEMENT));
-		if (branchColumn != null) {
-			columnNames.add(branchColumn.getDBName());
-			values.add(literal(branchColumn.getSQLType(), KnowledgeReferenceStorageImpl.NULL_REPLACEMENT));
-		}
+	private CompiledStatement createClearPin(ItemTables.Table table, ItemTables.Reference reference) {
+		NullReference nullValue = NullReference.create(reference);
+		List<String> columnNames = nullValue.getColumnNames();
+		List<SQLExpression> values = nullValue.getValues();
 
 		DBAttribute identifier = table.getIdentifier();
 		DBAttribute revMax = table.getRevMax();
@@ -1032,7 +1014,7 @@ public class HistoryCompaction {
 		return query(parameters,
 			select(
 				columns(
-					columnDef(branchExpression(table), RESULT_BRANCH),
+					columnDef(table.branchExpression(), RESULT_BRANCH),
 					columnDef(column(NO_TABLE_ALIAS, identifier, NOT_NULL), RESULT_ID)),
 				table(table.getType(), NO_TABLE_ALIAS),
 				and(
@@ -1043,18 +1025,6 @@ public class HistoryCompaction {
 						ge(column(NO_TABLE_ALIAS, revMax, NOT_NULL), parameter(revMin, PARAM_UPPER))))))
 							.toSql(_sqlDialect);
 	}
-
-	/**
-	 * The branch a row of the given table belongs to, the trunk when the table has no branch column.
-	 */
-	private static SQLExpression branchExpression(ItemTables.Table table) {
-		DBAttribute branch = table.getBranch();
-		if (branch == null) {
-			return literalLong(TLContext.TRUNK_ID);
-		}
-		return column(NO_TABLE_ALIAS, branch, NOT_NULL);
-	}
-
 
 	/**
 	 * {@code UPDATE t SET col = upper WHERE col > lower AND col < upper}

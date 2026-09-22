@@ -335,7 +335,12 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	 */
 	public static final String CMD_COLUMN_RESIZE = "columnResize";
 
-	private static final String CMD_COLUMN_REORDER = "columnReorder";
+	/**
+	 * The command the client sends to move a column to another position.
+	 *
+	 * @see ColumnReorderArguments
+	 */
+	public static final String CMD_COLUMN_REORDER = "columnReorder";
 
 	/** The command the client sends to expand or collapse a tree node or a group header. */
 	public static final String CMD_EXPAND = "expand";

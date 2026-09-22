@@ -1,4 +1,7 @@
-import { React, useTLState, useTLCommand, useKeyboardBinding } from 'tl-react-bridge';
+import {
+  React, useTLState, useTLCommand, useKeyboardBinding,
+  TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED,
+} from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { ThemeIcon } from './icon/ThemeIcon';
 
@@ -27,9 +30,16 @@ export interface TLButtonProps {
  * prop):</p>
  * <ul>
  *   <li>{@code icon-only} — only the theme icon is shown, the label serves as tooltip.</li>
- *   <li>{@code icon-label} — theme icon and label side by side.</li>
- *   <li>{@code label-only} — plain text button.</li>
+ *   <li>{@code icon-label} — theme icon and label side by side, the label serves as tooltip while
+ *       it is clipped or hidden.</li>
+ *   <li>{@code label-only} — plain text button, the label serves as tooltip while it is clipped or
+ *       hidden.</li>
  * </ul>
+ *
+ * <p>An explicit tooltip from {@code state.tooltip} wins over all of this and is shown whatever
+ * the button displays. The conditional label tooltip is declared with {@link WHEN_TRUNCATED}, so a
+ * button whose label a compact toolbar drops keeps naming itself, while a button reading out its
+ * label offers no tooltip that merely repeats it.</p>
  *
  * <p>The icon is supplied as a {@code ThemeImage} encoded form via {@code state.image} and
  * rendered through {@link ThemeIcon}. The icon element is present in the DOM whenever an image
@@ -99,10 +109,18 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
   const showLabel = resolvedMode === 'label-only' || resolvedMode === 'icon-label'
     || (iconOnly && !resolvedImage);
 
-  // Prefer an explicit tooltip; on icon-only buttons fall back to the label so it stays
-  // discoverable when the visible button carries no text.
-  const tooltipText = tooltip ?? (iconOnly ? resolvedLabel : undefined);
-  const tooltipAttr = tooltipText ? `text:${tooltipText}` : undefined;
+  // An explicit tooltip is shown as it is. Otherwise the label serves as tooltip wherever the
+  // button does not read it out: in icon-only mode always, and in the other modes whenever the
+  // label is clipped or hidden - a toolbar drops the labels of its buttons by CSS once it runs out
+  // of room, and the tooltip is what names such a button then.
+  const tooltipText = tooltip ?? resolvedLabel;
+  const tooltipProps: Record<string, string> = {};
+  if (tooltipText) {
+    tooltipProps[TOOLTIP_ATTR] = `text:${tooltipText}`;
+    if (!tooltip && !iconOnly) {
+      tooltipProps[TOOLTIP_WHEN_ATTR] = WHEN_TRUNCATED;
+    }
+  }
 
   // A hidden button renders nothing: its empty wrapper (e.g. a toolbar item) can then collapse,
   // so the visible buttons stay flush with the toolbar edge. The keyboard binding above stays
@@ -125,7 +143,7 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
         + (size === 'large' ? ' tlReactButton--large' : '')
         + (resolvedActive ? ' tlReactButton--active' : '')
         + (cssClasses ? ' ' + cssClasses : '')}
-      data-tooltip={tooltipAttr}
+      {...tooltipProps}
       aria-pressed={resolvedActive ? true : undefined}
       aria-label={resolvedImage || iconOnly ? resolvedLabel : undefined}
     >

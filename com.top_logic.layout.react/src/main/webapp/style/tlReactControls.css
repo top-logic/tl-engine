@@ -4407,6 +4407,19 @@ button.tlMenu__item--disabled:hover {
 	flex-shrink: 0;
 }
 
+/* The value of a tree column's cell, sharing the cell with the expand toggle and the indent: it
+   ends in an ellipsis where the column runs out of room, exactly as the value of any other cell
+   does. Being the box the value is clipped in is also what lets the tooltip tell that the value is
+   not fully readable, and what keeps the toggle's glyph out of that tooltip. */
+.tlTableView__treeValue {
+	/* Shrinks with the column, but never grows: what follows it in a group header row - the size of
+	   the group - stays next to the value instead of being pushed to the cell's edge. */
+	flex: 0 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
 /* A group header row: the group value, its size, and the columns' aggregates. */
 .tlTableView__row--group {
 	background-color: var(--layer);

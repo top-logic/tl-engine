@@ -1,4 +1,4 @@
-import { React, useTLState, useTLDataUrl, useI18N } from 'tl-react-bridge';
+import { React, useTLState, useTLDataUrl, useI18N, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -147,8 +147,8 @@ const TLAudioPlayer: React.FC<TLCellProps> = ({ controlId }) => {
         className={buttonClasses.join(' ')}
         onClick={handleClick}
         disabled={isDisabled}
-        title={ariaLabel}
         aria-label={ariaLabel}
+        {...tooltipProps(ariaLabel)}
       >
         <span className={`tlAudioPlayer__icon${status === 'playing' ? ' tlAudioPlayer__icon--pause' : ''}`} />
       </button>

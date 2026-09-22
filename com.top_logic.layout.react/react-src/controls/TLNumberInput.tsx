@@ -1,4 +1,4 @@
-import { React, useTLFieldValue, useTLSubmitOnEnter } from 'tl-react-bridge';
+import { React, useTLFieldValue, useTLSubmitOnEnter, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback } = React;
@@ -80,7 +80,7 @@ const TLNumberInput: React.FC<TLCellProps> = ({ controlId, state }) => {
         placeholder={(state.placeholder as string) ?? undefined}
         className={cls}
         aria-invalid={hasError || undefined}
-        title={hasError && errorMessage ? errorMessage : undefined}
+        {...tooltipProps(hasError ? errorMessage : undefined)}
       />
     </span>
   );

@@ -44,7 +44,6 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.element.DashboardElement;
 import com.top_logic.layout.view.element.I18NConstants;
-import com.top_logic.layout.view.element.Icons;
 import com.top_logic.layout.view.element.TileElement;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
@@ -85,9 +84,6 @@ public class TestDashboardElement extends BasicTestCase {
 
 	/** Action descriptor key holding the text explaining the action. */
 	private static final String ACTION_TOOLTIP = "tooltip";
-
-	/** Action descriptor key holding the icon marking the tile as an entry point. */
-	private static final String ACTION_IMAGE = "image";
 
 	/** Id of the tile that only displays its content. */
 	private static final String DISPLAY_TILE = "display";
@@ -195,8 +191,6 @@ public class TestDashboardElement extends BasicTestCase {
 		Map<String, Object> offered = action(dashboard, OPENING_TILE);
 		assertEquals("The action is offered for the selected input.", Boolean.FALSE,
 			offered.get(ACTION_DISABLED));
-		assertEquals("A command without an image of its own marks the tile with the entry-point icon.",
-			Icons.TILE_ACTIVATE.resolve().toEncodedForm(), offered.get(ACTION_IMAGE));
 	}
 
 	/**

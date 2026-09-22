@@ -1,17 +1,15 @@
 import { React, useTLState, useTLCommand, TLChild, FillBarrier } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { ThemeIcon } from './icon/ThemeIcon';
 import { isInteractiveTarget } from './interactive';
 
 const { useCallback, useEffect, useMemo, useRef, useState } = React;
 
 /**
- * What activating a tile offers: the name the tile is announced under, the icon marking it as an
- * entry point, whether the activation is currently refused and the text explaining it.
+ * What activating a tile offers: the name the tile is announced under, whether the activation is
+ * currently refused and the text explaining it.
  */
 interface TileAction {
   label: string;
-  image?: string | null;
   disabled: boolean;
   tooltip?: string | null;
 }
@@ -317,11 +315,6 @@ const TLDashboard: React.FC<TLCellProps> = ({ controlId }) => {
               <FillBarrier>
                 <TLChild control={tile.control} />
               </FillBarrier>
-              {action && action.image && (
-                <span className="tlDashboard__tileMarker" aria-hidden="true">
-                  <ThemeIcon encoded={action.image} />
-                </span>
-              )}
               {editMode && <div className="tlDashboard__overlay" />}
             </div>
           );

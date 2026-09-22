@@ -14,7 +14,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 import com.top_logic.basic.annotation.FrameworkInternal;
-import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactParam;
@@ -74,9 +73,6 @@ public class ReactDashboardControl extends ReactControl {
 	/** Action descriptor key holding the name the action is offered under. */
 	private static final String ACTION_LABEL = "label";
 
-	/** Action descriptor key holding the encoded icon marking the tile as an entry point. */
-	private static final String ACTION_IMAGE = "image";
-
 	/** Action descriptor key telling whether the action is currently refused. */
 	private static final String ACTION_DISABLED = "disabled";
 
@@ -93,11 +89,8 @@ public class ReactDashboardControl extends ReactControl {
 	 * @param label
 	 *        The name the action is offered under - what the tile is announced as. {@code null} to
 	 *        use the {@link CommandModel#getLabel() model's own label}.
-	 * @param marker
-	 *        The icon marking the tile as an entry point, shown where the command carries no
-	 *        {@link CommandModel#getImage() image} of its own. {@code null} to show none.
 	 */
-	public record TileAction(CommandModel model, String label, ThemeImage marker) {
+	public record TileAction(CommandModel model, String label) {
 		// Pure data.
 	}
 
@@ -240,8 +233,6 @@ public class ReactDashboardControl extends ReactControl {
 		Map<String, Object> d = new LinkedHashMap<>();
 		String label = action.label();
 		d.put(ACTION_LABEL, label == null || label.isEmpty() ? model.getLabel() : label);
-		ThemeImage image = model.getImage() != null ? model.getImage() : action.marker();
-		d.put(ACTION_IMAGE, image == null ? null : image.resolve().toEncodedForm());
 		d.put(ACTION_DISABLED, Boolean.valueOf(!model.isExecutable()));
 		d.put(ACTION_TOOLTIP, model.getTooltip());
 		return d;

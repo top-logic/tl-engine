@@ -2274,6 +2274,7 @@ button.tlDrawerToggle:focus-visible {
 	align-items: center;
 	gap: var(--spacing-01);
 	flex-shrink: 0;
+	margin-left: auto;
 }
 
 .tlCard__body--pad-none    { padding: 0; }
@@ -3701,6 +3702,13 @@ button.tlMenu__item--disabled:hover {
 .tlText {
 	font-size: var(--body-compact-01-font-size);
 	color: var(--text-primary);
+}
+
+/* A theme icon shown on its own, sitting on the text baseline of what it accompanies. */
+.tlIcon {
+	display: inline-flex;
+	align-items: center;
+	line-height: 1;
 }
 
 .tlText--placeholder {
@@ -6561,7 +6569,7 @@ button.tlToolbar__menuTrigger:focus-visible {
   border-radius: var(--border-radius-02);
   background: var(--layer-01);
 }
-.tlDashboard__tile > *:not(.tlDashboard__overlay, .tlDashboard__tileAction, .tlDashboard__tileMarker) {
+.tlDashboard__tile > *:not(.tlDashboard__overlay, .tlDashboard__tileAction) {
   flex: 1 1 auto;
   min-height: 0;
   min-width: 0;
@@ -6594,18 +6602,6 @@ button.tlToolbar__menuTrigger:focus-visible {
 }
 /* A tile whose action is refused keeps its resting look - what it shows stays readable. */
 .tlDashboard__tile--disabled { cursor: default; }
-.tlDashboard__tile--disabled .tlDashboard__tileMarker { color: var(--text-disabled); }
-/* The mark that the tile leads somewhere, drawn over its content in the upper corner. */
-.tlDashboard__tileMarker {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  z-index: 4;
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-  line-height: 1;
-  pointer-events: none;
-}
 .tlDashboard--edit .tlDashboard__tile { cursor: move; }
 .tlDashboard__tile--dragging { opacity: 0.4; }
 .tlDashboard__overlay {

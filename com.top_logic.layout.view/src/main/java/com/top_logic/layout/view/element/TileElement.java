@@ -48,7 +48,9 @@ import java.util.List;
  * <p>
  * A tile with an {@link Config#getAction() action} is an entry point: the whole tile is the
  * surface the user activates, and the tile is announced by the action's label, or by the title of
- * its content where the action carries no label of its own.
+ * its content where the action carries no label of its own. The tile is marked as an entry point
+ * by how it answers the user - the pointer, the raise under it, the focus ring around it - and by
+ * its name.
  * </p>
  */
 @InApp
@@ -118,6 +120,10 @@ public class TileElement implements UIElement {
 		 * executability rules decide, so a tile whose command is refused says so instead of
 		 * leading nowhere, and one whose command is hidden is a tile that only displays its
 		 * content.
+		 * </p>
+		 *
+		 * <p>
+		 * A visible mark is placed by the tile's content, e.g. in the header of a card.
 		 * </p>
 		 *
 		 * <p>
@@ -215,7 +221,7 @@ public class TileElement implements UIElement {
 	 * What the given model offers as the tile's action, {@code null} for no model.
 	 */
 	public TileAction toAction(ViewCommandModel model) {
-		return model == null ? null : new TileAction(model, actionName(), Icons.TILE_ACTIVATE);
+		return model == null ? null : new TileAction(model, actionName());
 	}
 
 	/**

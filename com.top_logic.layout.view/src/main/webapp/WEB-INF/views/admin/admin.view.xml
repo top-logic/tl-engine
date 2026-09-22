@@ -46,6 +46,13 @@
 							</label>
 							<view-ref view="admin/access-control/permissions.view.xml"/>
 						</tab>
+						<tab id="coverage">
+							<label>
+								<en>Coverage</en>
+								<de>Abdeckung</de>
+							</label>
+							<view-ref view="admin/access-control/coverage.view.xml"/>
+						</tab>
 					</tabs>
 				</tab-bar>
 			</tab>

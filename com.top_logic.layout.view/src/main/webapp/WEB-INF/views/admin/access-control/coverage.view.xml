@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Security coverage: the completeness of the model based access definition, one row per analyzed
+	type. The SecurityCoverageTable analyses the definition itself when the view is opened and
+	rebuilds from the rows channel after a command; it writes the selected row to the selection
+	channel and the parts of it the detail shows to the selectedType / selectedFindings /
+	selectedRule channels. "Show configuration" and "Show rule" hand the rendered security parents
+	to the same dialog, "Write to autoconf" stores them in the configuration of the application.
+-->
+<view>
+	<channels>
+		<channel name="rows"/>
+		<channel name="selection"/>
+		<channel name="selectedType"/>
+		<channel name="selectedFindings"/>
+		<channel name="selectedRule"/>
+	</channels>
+	<split-panel
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane
+				min-size="300"
+				size="65"
+				unit="%"
+			>
+				<panel fill="true">
+					<title>
+						<en>Coverage</en>
+						<de>Abdeckung</de>
+					</title>
+					<commands>
+						<generic-command
+							image="css:bi bi-arrow-clockwise"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Refresh</en>
+								<de>Aktualisieren</de>
+							</label>
+							<action class="com.top_logic.layout.view.admin.SecurityCoverageAction"
+								mode="REFRESH"
+							/>
+							<write-channel name="rows"/>
+						</generic-command>
+						<generic-command
+							image="css:bi bi-file-earmark-code"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Show configuration</en>
+								<de>Konfiguration anzeigen</de>
+							</label>
+							<action class="com.top_logic.layout.view.admin.SecurityCoverageAction"
+								mode="CONFIGURATION"
+								rows="rows"
+							/>
+							<open-dialog
+								bind-input-to="content"
+								dialog-view="admin/access-control/coverage-configuration.view.xml"
+							/>
+						</generic-command>
+						<generic-command
+							clique="more"
+							image="css:bi bi-save"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Write to autoconf</en>
+								<de>In Autoconf schreiben</de>
+							</label>
+							<confirm expr="x -> #('The proposed security parents are written into the autoconf folder of the application. They take effect after a restart.'@en, 'Die vorgeschlagenen Sicherheitsväter werden in den Autoconf-Ordner der Anwendung geschrieben. Sie werden nach einem Neustart wirksam.'@de)"/>
+							<action class="com.top_logic.layout.view.admin.SecurityCoverageAction"
+								mode="WRITE_AUTOCONF"
+								rows="rows"
+							/>
+							<write-channel name="rows"/>
+						</generic-command>
+					</commands>
+					<child class="com.top_logic.layout.view.admin.SecurityCoverageTable"
+						input="rows"
+						selected-findings="selectedFindings"
+						selected-rule="selectedRule"
+						selected-type="selectedType"
+						selection="selection"
+					/>
+				</panel>
+			</pane>
+			<pane
+				size="35"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Type</en>
+						<de>Typ</de>
+					</title>
+					<commands>
+						<generic-command
+							image="css:bi bi-code-square"
+							input="selection"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Show rule</en>
+								<de>Regel anzeigen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<action class="com.top_logic.layout.view.admin.SecurityCoverageAction"
+								mode="RULE_OF_SELECTION"
+							/>
+							<open-dialog
+								bind-input-to="content"
+								dialog-view="admin/access-control/coverage-configuration.view.xml"
+							/>
+						</generic-command>
+					</commands>
+					<visible-if
+						expr="selected -> $selected != null"
+						input="selection"
+					>
+						<stack
+							direction="column"
+							gap="default"
+						>
+							<text
+								css-class="tlText--strong"
+								input="selectedType"
+							/>
+							<text>
+								<label>
+									<en>Findings</en>
+									<de>Befunde</de>
+								</label>
+							</text>
+							<text input="selectedFindings"/>
+							<visible-if
+								expr="rule -> $rule != null"
+								input="selectedRule"
+							>
+								<stack
+									direction="column"
+									gap="compact"
+								>
+									<text>
+										<label>
+											<en>Proposed security parent rule</en>
+											<de>Vorgeschlagene Sicherheitsvater-Regel</de>
+										</label>
+									</text>
+									<html input="selectedRule"/>
+								</stack>
+							</visible-if>
+						</stack>
+					</visible-if>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

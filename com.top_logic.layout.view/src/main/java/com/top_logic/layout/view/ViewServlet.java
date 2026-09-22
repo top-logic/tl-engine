@@ -168,17 +168,26 @@ public class ViewServlet extends TopLogicServlet {
 
 		// A reload renders the tree the window still holds instead of replacing it: everything the tree
 		// holds - a table's selection, its scroll position and expansion, the input of a form, the
-		// position of a pager - is state the user produced, and a rebuild throws all of it away.
+		// position of a pager - is state the user produced, and a rebuild throws all of it away. Only a
+		// window that asks to be rebuilt is an exception: what its tree was built from is gone, so the
+		// tree goes with it.
 		ReactControl displayed = windowEntry.getRootControl();
+		boolean rebuildRequested = windowEntry.isRebuildRequested();
 
 		// A programmatically opened window brings its own control provider instead of a view file.
 		ReactControlProvider controlProvider = windowEntry.getControlProvider();
 		if (controlProvider != null) {
 			// The provider and the model of a window never change, so a tree it already has always
 			// fits - unlike a view, which has to be the same one.
-			if (displayed != null) {
+			if (displayed != null && !rebuildRequested) {
 				renderAgain(request, response, displayed, sseQueue, routePath, false);
 				return;
+			}
+			if (displayed != null) {
+				// A rebuild was asked for: the old tree is never rendered again, so release the model
+				// listeners its controls hold.
+				displayed.detach();
+				displayed.cleanupTree();
 			}
 
 			ReactContext baseContext = new DefaultReactContext(
@@ -223,14 +232,15 @@ public class ViewServlet extends TopLogicServlet {
 		// Reuse is correct only for the same view in the same language.
 		Locale locale = Resources.getCurrentLocale();
 		RenderedView rendered = RenderedView.lookup(subSession);
-		if (displayed != null && rendered != null && rendered.matches(viewPath, view, locale)) {
+		if (displayed != null && !rebuildRequested && rendered != null
+			&& rendered.matches(viewPath, view, locale)) {
 			renderAgain(request, response, displayed, sseQueue, routePath, loginView);
 			return;
 		}
 		if (displayed != null) {
-			// Another view, a view file edited in the meantime, or a language the tree was not built
-			// in: the old tree is never rendered again, so release the model listeners its controls
-			// hold.
+			// Another view, a view file edited in the meantime, a language the tree was not built in,
+			// or a rebuild asked for because what the tree was built from is gone: the old tree is
+			// never rendered again, so release the model listeners its controls hold.
 			displayed.detach();
 			displayed.cleanupTree();
 		}

@@ -899,6 +899,131 @@ Such a page is linkable: `/view/tickets?filter=discussed` opens the list filtere
 - **Auto-advance.** A step can carry its own time: `<step id="ready" auto-advance="2s">` (a duration in the usual `MillisFormat` notation) for an interstitial the user only watches, and `<dynamic-steps auto-advance="q -> …">` for one computed per element — an element the function answers nothing for is a step the user leaves. It reaches the runtime as `WizardStep.autoAdvanceMillis()` and the client as the state key `autoAdvance` of the step displayed, where it becomes a timer; the timer is cleared whenever the step changes. When it fires it reports back naming the step it belongs to, and the wizard moves on **only while that step is still the one displayed** — the user may have moved on themselves in the meantime, and a timer that outlived its step must not carry the display past what they chose. The time runs while the flow *leads through* the step: it is started for a step entered going forward, and not for one the user came back to — a Back out of the step behind an interstitial would otherwise be answered by being sent forward again. A re-expansion that carries the displayed step along does not restart it either; it keeps counting.
 - The demo is `demo/wizard-demo.view.xml` in `com.top_logic.demo.react` (sidebar **Wizard** / **Assistent**, `/view/wizard`): an onboarding flow whose written-out Welcome, Profile and Summary steps enclose a `<dynamic-steps>` over a `questions` channel that grows while the flow is walked, with the Back/Next footer raised out of every step into one slot.
 
+## The sidebar: item kinds, badges and the rail chrome
+
+`<sidebar>` (`SidebarElement`) is the navigation rail of an application shell. It holds a list of items and the chrome of the rail itself; the items are keyed by their `id`, so a configuration fragment of another module adds, repositions (`config:position`) or overrides a single item.
+
+Five kinds of item:
+
+- `<nav-item id icon route badge hidden>` leads to a page. Its content — written directly inside it, usually a `<view-ref>` — is built when the item is first selected, and its `id` is the route segment it contributes (see [URL routing](#url-routing-what-ends-up-in-the-address-bar)).
+- `<group id icon expanded>` gathers further items under a heading the user folds away. A group holds items, not content: the navigation items inside it lead to the same places and are addressed at the sidebar itself, so a group nests inside a group without changing where anything is displayed. Whether it is folded is remembered per user under the group's `id` (`PersonalizingExpandable`, the states stored as one JSON map beside the rail's own collapsed state), and applied to a group at any depth when the item list is pushed. On a folded rail a group opens as a flyout listing its items.
+- `<header-item id icon>` is a caption naming the items that follow it. It leads nowhere and cannot be activated; it divides a long navigation into named sections that all stay visible, where a group would fold them away.
+- `<command-item id>` runs a command instead of leading somewhere. The `<action>` it hosts is a `ViewCommand`, whose label and image the item displays, so the item reads like the button of the same command elsewhere. The item follows the command's executability for as long as the rail stands: invisible is not displayed, not executable is displayed out of reach (greyed), and the item takes its place back as soon as the rules allow it. The reason a rule gives for disabling the command (the text of a `<disabled-if>` expression, say) is what the item shows when the pointer rests on it, as the button of the same command does. The control refuses an activation of an item in either state, so a client addressing the command directly does not bypass the rules.
+- `<separator/>` draws a line between items. It is the one entry that usually carries no `id`, and at most one such anonymous entry may occur — give separators explicit ids where more than one is needed.
+
+`<nav-item>` and `<group>` take an `<access-control scope="…"/>`: an item the current user may not reach is not built at all, and a group whose access is denied withholds everything inside it.
+
+```xml
+<sidebar active-item="attributes">
+    <header>
+        <text>
+            <label>
+                <en>Application</en>
+                <de>Anwendung</de>
+            </label>
+        </text>
+    </header>
+    <header-collapsed>
+        <text>
+            <label>
+                <en>A</en>
+                <de>A</de>
+            </label>
+        </text>
+    </header-collapsed>
+    <items>
+        <header-item id="data">
+            <label>
+                <en>Data</en>
+                <de>Daten</de>
+            </label>
+        </header-item>
+        <nav-item id="attributes" icon="css:bi bi-card-list">
+            <view-ref view="attributes.view.xml"/>
+            <label>
+                <en>Attributes</en>
+                <de>Attribute</de>
+            </label>
+        </nav-item>
+        <nav-item id="tickets" badge="ticketCount" icon="css:bi bi-chat-left-text">
+            <view-ref view="tickets.view.xml"/>
+            <label>
+                <en>Tickets</en>
+                <de>Tickets</de>
+            </label>
+        </nav-item>
+        <group id="demos" expanded="false" icon="css:bi bi-collection">
+            <label>
+                <en>Demos</en>
+                <de>Demos</de>
+            </label>
+            <nav-item id="charts" icon="css:bi bi-bar-chart-line">
+                <view-ref view="demo/chart-demo.view.xml"/>
+                <label>
+                    <en>Charts</en>
+                    <de>Diagramme</de>
+                </label>
+            </nav-item>
+        </group>
+        <nav-item id="print-view" hidden="true">
+            <view-ref view="print.view.xml"/>
+            <label>
+                <en>Print view</en>
+                <de>Druckansicht</de>
+            </label>
+        </nav-item>
+        <separator/>
+        <command-item id="about">
+            <action class="com.top_logic.layout.view.command.GenericViewCommand"
+                image="css:bi bi-info-circle" input="ticketCount"
+            >
+                <label>
+                    <en>About</en>
+                    <de>Info</de>
+                </label>
+                <executability>
+                    <null-input-disabled/>
+                </executability>
+                <notify expr="count -> #('{0} tickets.'@en, '{0} Tickets.'@de).fill($count)"/>
+            </action>
+        </command-item>
+    </items>
+    <footer>
+        <view-ref view="user-menu.view.xml"/>
+    </footer>
+    <footer-collapsed>
+        <text>
+            <label>
+                <en>A</en>
+                <de>A</de>
+            </label>
+        </text>
+    </footer-collapsed>
+</sidebar>
+```
+
+A label is written as a `<label><en>…</en><de>…</de></label>` child; the `label="…"` attribute of the same property names a resource *key*, which an application that keeps its texts in the view file does not have — such a key shows up in the rail as `[TL]`.
+
+**`hidden`** withholds a `<nav-item>` from the rail while leaving it reachable by its route: the page a URL leads to directly, which has no place of its own in the navigation. Routing, content creation and `getChildGroups()` are untouched by it, so a deep link and `<show-object>` reach such a page exactly as they reach a listed one; what is refused is a *selection* sent by the client, which would otherwise switch to a view the user interface does not present.
+
+**`badge`** names a channel whose value is displayed beside the item's label — the number of things waiting in the page it leads to. The value is named as the model names it (`MetaLabelProvider`); nothing and an empty text show no badge at all, which is how a count answers "nothing to report" with a `null` rather than a zero. The badge follows a new value on the channel *and* a change of the object that value points to, so a count computed from an edited object is up to date without the channel being written anew. A count over a whole type reads no channel at all, and therefore names the type it counts as an `observed-types` of its `<derived-channel>` — without that, a channel with no inputs is computed once when the view is built and never again:
+
+```xml
+<derived-channel name="ticketCount"
+    expr="{ tickets = all(`demo.tickets:Ticket`).size(); if($tickets == 0, null, $tickets); }"
+    observed-types="demo.tickets:Ticket"
+/>
+```
+
+**The chrome of the rail** is four lists of view elements outside the item list: `<header>` and `<footer>` stand above and below the items for as long as the rail is on screen, and `<header-collapsed>` / `<footer-collapsed>` replace them while the rail is folded to a narrow strip — room for an abbreviation or an avatar, not for a name and a search field. Each list is created eagerly with the sidebar and may hold any element, a `<view-ref>` included; the views written there are addressed at the sidebar without a key, since whoever reaches them reaches them by opening the rail and nothing else. Left empty, the rail begins with its first item and ends with its last.
+
+**`SidebarItemElement` is the extension point** for an item kind the configuration does not cover — items computed from the model, say, one per project of the current user. An implementation answers two things:
+
+- `createSidebarItem(ViewContext, ItemSite)` builds the `SidebarItem` (`NavigationItem`, `GroupItem`, `HeaderItem`, `CommandItem`, `SeparatorItem`), or `null` for an item that must be omitted, e.g. because access is denied. The item is built *before* the control that displays it exists, so whatever the item has to say to that control — a badge to keep up to date, an executability to follow — is registered through `ItemSite.addBinding(Consumer<ReactSidebarControl>)` and run as soon as the control is there. Inside such a binding, `addAttachListener` / `addDetachListener` start and stop model observation, `addCleanupAction` removes listeners again, and `updateBadge(id, text)` / `refreshItems()` push a changed item list to the client (items are held as objects and serialized as a whole, so a change to one of them reaches the display only with the list it belongs to). The content of a navigation item is built later still, in `ItemSite.contentContext(context, key)` — the context that says where that content will sit, which is what makes an item's page revealable before it has ever been selected.
+- `getChildGroups()` reports the content the item holds, keyed by the id of the item displaying it. An item displaying no content of its own holds nothing; an item holding further items (a group) answers what those hold, so that every navigation item of a sidebar — nested or not — is addressed at the sidebar itself. An element that holds content and does not report it hides every view below it from navigation (see [Where a view is mounted is known statically](#where-a-view-is-mounted-is-known-statically)).
+
+Build the items of a nested list with `SidebarElement.createItems(elements, context, site)`, passing the site on unchanged: an item then behaves the same wherever it is written.
+
 ## URL routing: what ends up in the address bar
 
 **What a URL may load: the entry points.** `/view/<windowName>/some.view.xml` names the view a browser tab displays, and only a view the application declares as an entry point can be named there: the `default-view` of `ViewConfig` (implicitly) or one of its `<entry-points><entry-point view="demo/pdf-demo.view.xml"/></entry-points>` (keyed by the view, so the registrations of several modules merge). Every other view file is a fragment of a display — a dialog, a menu, a page of a tab — which the view enclosing it supplies with the channels it reads, and which alone in a tab shows nothing or fails; `ViewServlet.resolveViewPath` answers such a URL with 404. A remainder that does not end in `.view.xml` is a route, not a view, and loads the default view with the route resolved inside it (see below).

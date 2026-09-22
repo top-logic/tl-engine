@@ -3595,6 +3595,14 @@ button.tlMenu__item--disabled:hover {
 	text-overflow: ellipsis;
 }
 
+/* A business object shown with its icon is a flex row of its own. In a cell it is the block-level
+   one the rule for the cell's root span asks for - that rule is the more specific of the two and
+   would otherwise decide the display - so the object spans the column and its label is cut off at
+   the column edge. */
+.tlTableView__cell > .tlResourceCell {
+	display: flex;
+}
+
 /* A value shown beside an adornment - the language button of an internationalized text - sits in a
    row with it. The row follows the width of the column instead of the width its content asks for,
    so that the value within it is the part that gives way. */
@@ -3752,6 +3760,29 @@ button.tlMenu__item--disabled:hover {
 		background-color: color-mix(in srgb, var(--tlPill-color) 16%, var(--color-surface));
 		color: color-mix(in srgb, var(--tlPill-color) 72%, var(--text-primary));
 	}
+}
+
+/* --- TLResourceCell --------------------------------------------------------- */
+
+/* A business object drawn as its icon followed by its label. The two belong together and read as
+   one line, with the icon centered on the text and held off it by a gap. The object gives way to
+   whatever holds it - a tree node, a table cell, a pill - instead of pushing it wider. */
+.tlResourceCell {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	max-width: 100%;
+	min-width: 0;
+}
+
+/* The label is the part of the object that gives way: the ellipsis of the surroundings - the tree
+   node content, the pill - ends at the flex row the object is, so the label carries the cut-off
+   itself. The white space is the one inherited from tree, table or pill, so a place that wraps
+   keeps wrapping. */
+.tlResourceLabel {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 /* --- TLHtml ---------------------------------------------------------------- */

@@ -27,6 +27,13 @@ public class TestReactStylesheetTokens extends AbstractStylesheetTokenTest {
 		List.of("/style/tlReactBase.css", "/style/tlReactControls.css");
 
 	/**
+	 * The token sheet of the design system package: the only place the {@code --tl} namespace is
+	 * declared. Rules of the audited sheets read these tokens; the primitives of the package are
+	 * not read outside of it.
+	 */
+	private static final List<String> DESIGN_SYSTEM_TOKENS = List.of("/style/tl-design-system/tokens.css");
+
+	/**
 	 * Selectors rounding for a reason of their own: an icon is drawn out of a box whose corners
 	 * belong to the glyph, not to a control.
 	 */
@@ -41,6 +48,25 @@ public class TestReactStylesheetTokens extends AbstractStylesheetTokenTest {
 	@Override
 	protected Set<String> allowedLiteralSelectors() {
 		return ICON_GLYPHS;
+	}
+
+	@Override
+	protected List<String> tokenStylesheets() {
+		return DESIGN_SYSTEM_TOKENS;
+	}
+
+	/**
+	 * The token sheet of the design system package declares the roles the audited sheets read, and
+	 * only those: a primitive is not a role.
+	 */
+	public void testDesignSystemTokensAreDeclared() throws Exception {
+		Set<String> tokens =
+			ThemeTokenAudit.declaredProperties(ThemeTokenAudit.stylesheet(DESIGN_SYSTEM_TOKENS.get(0)));
+
+		assertTrue(tokens.toString(), tokens.contains("tl-surface-layer"));
+		assertTrue(tokens.toString(), tokens.contains("tl-text-primary"));
+		assertTrue(tokens.toString(), tokens.contains("tl-size-control"));
+		assertFalse("Primitives are not roles: " + tokens, tokens.contains("tl-blue-49"));
 	}
 
 	/**

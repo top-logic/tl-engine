@@ -1357,6 +1357,11 @@ div.tlValueList {
 	gap: var(--spacing-01);
 	flex-shrink: 0;
 	margin-left: auto;
+	/* The slot reserves the height of one control row - the height a toolbar button is sized
+	   by - whether or not it holds a command. A header is therefore equally tall in either
+	   case: the headers of neighbouring panels line up, and a command that becomes executable
+	   does not move the header it appears in. */
+	min-height: var(--tl-size-control);
 }
 
 /* Who gives way when the header is too narrow: a toolbar that can collapse absorbs the shrink

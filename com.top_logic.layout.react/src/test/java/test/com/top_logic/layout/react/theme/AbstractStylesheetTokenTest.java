@@ -6,6 +6,7 @@
 package test.com.top_logic.layout.react.theme;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -23,8 +24,9 @@ import com.top_logic.layout.react.theme.UIThemeService;
  * {@link UIThemeService} themes.
  *
  * <p>
- * A subclass supplies the sheets it is responsible for in {@link #stylesheets()}, and a selector
- * that rounds for a reason of its own in {@link #allowedLiteralSelectors()}. Its own
+ * A subclass supplies the sheets it is responsible for in {@link #stylesheets()}, a selector that
+ * rounds for a reason of its own in {@link #allowedLiteralSelectors()}, and the sheets declaring
+ * the tokens of the design system package in {@link #tokenStylesheets()}. Its own
  * {@code suite()} is a single call to {@link #suite(Class)}:
  * </p>
  *
@@ -65,12 +67,29 @@ public abstract class AbstractStylesheetTokenTest extends TestCase {
 	}
 
 	/**
+	 * Stylesheets whose custom property declarations are design tokens the audited sheets may read,
+	 * in addition to the tokens of the {@link #DEFAULT_THEME} theme.
+	 *
+	 * <p>
+	 * The design system package ({@code tl-design-system}) declares its tokens in the {@code --tl}
+	 * namespace in a generated sheet of its own. A sheet audited here reads them but never declares
+	 * them, the namespace belongs to the package.
+	 * </p>
+	 */
+	protected List<String> tokenStylesheets() {
+		return Collections.emptyList();
+	}
+
+	/**
 	 * Every {@code var()} of the {@link #stylesheets()} answers a token of the
-	 * {@link #DEFAULT_THEME} theme or a declaration of the sheet itself, and every corner rounding
-	 * reads a radius token.
+	 * {@link #DEFAULT_THEME} theme, a token declared in one of the {@link #tokenStylesheets()}, or
+	 * a declaration of the sheet itself, and every corner rounding reads a radius token.
 	 */
 	public void testStylesheetsKeepTheTokenContract() throws Exception {
-		Set<String> tokens = ThemeTokenAudit.themeTokens(THEME_CONFIG, DEFAULT_THEME).keySet();
+		Set<String> tokens = new HashSet<>(ThemeTokenAudit.themeTokens(THEME_CONFIG, DEFAULT_THEME).keySet());
+		for (String tokenSheet : tokenStylesheets()) {
+			tokens.addAll(ThemeTokenAudit.declaredProperties(ThemeTokenAudit.stylesheet(tokenSheet)));
+		}
 		Set<String> allowed = allowedLiteralSelectors();
 
 		for (String stylesheet : stylesheets()) {

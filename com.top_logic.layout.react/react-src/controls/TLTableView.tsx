@@ -1,5 +1,6 @@
 import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, useStandaloneKeyboardScope, writeDragPayload, readDragPayload, dragTypeAccepted, dropPositionAt, startPointerDrag, useCloseOnOutsidePress } from 'tl-react-bridge';
 import type { TLCellProps, TLDropPosition } from 'tl-react-bridge';
+import { isInteractiveTarget } from './interactive';
 
 /**
  * Registers the table's keyboard row-navigation bindings into the enclosing (focus-gated) scope.
@@ -164,28 +165,6 @@ const measureColumnContentWidth = (root: HTMLElement, columnName: string): numbe
  * React table component with virtual scrolling, server-driven cell controls,
  * multi-selection with checkbox column, and column resize.
  */
-/**
- * Elements that handle a click themselves: the native form controls, and the controls that carry
- * their role through ARIA instead of an element name — a dropdown, for one, is a `div` with
- * `role="combobox"`, so leaving those out made a click on it look like a click on plain cell text.
- */
-const INTERACTIVE_SELECTOR =
-  'input, textarea, select, button, a, [contenteditable="true"], '
-  + '[role="combobox"], [role="listbox"], [role="option"], [role="button"], [role="link"], '
-  + '[role="checkbox"], [role="radio"], [role="switch"], [role="textbox"], [role="spinbutton"], '
-  + '[role="slider"], [role="menu"], [role="menuitem"]';
-
-/**
- * Whether the event originates from an interactive element inside a cell (input, button, link,
- * editor, dropdown). Row-level gestures must leave such clicks alone: neither steal the element's
- * focus for the table's keyboard scope, nor suppress its default mouse handling (e.g. double-click
- * word selection in a text input), nor read them as a row selection.
- */
-function isInteractiveTarget(event: React.SyntheticEvent): boolean {
-  const target = event.target as Element | null;
-  return !!target?.closest?.(INTERACTIVE_SELECTOR);
-}
-
 /**
  * Elements that accept text/edit focus inside an editable cell. Disabled/read-only controls are
  * excluded: a read-only row still renders its boolean columns as a disabled checkbox {@code
@@ -451,11 +430,16 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     let lastClientX = event.clientX;
     let autoScrollOffset = 0;
 
+    // Whole pixels: the server takes an integer width, and pointer coordinates as well as scroll
+    // positions are fractional under browser zoom and fractional display scaling. Rounding here as
+    // well as at the end of the drag shows exactly the width the drag reports.
+    const widthAt = (clientX: number, info: { startX: number; startWidth: number }) =>
+      Math.round(Math.max(MIN_COL_WIDTH, info.startWidth + (clientX - info.startX) + autoScrollOffset));
+
     const updateWidth = () => {
       const info = resizeRef.current;
       if (!info) return;
-      const newWidth = Math.max(MIN_COL_WIDTH, info.startWidth + (lastClientX - info.startX) + autoScrollOffset);
-      setColumnWidthOverrides((prev) => ({ ...prev, [info.column]: newWidth }));
+      setColumnWidthOverrides((prev) => ({ ...prev, [info.column]: widthAt(lastClientX, info) }));
     };
 
     const stopAutoScroll = () => {
@@ -503,7 +487,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         const info = resizeRef.current;
         resizeRef.current = null;
         if (info && dragged) {
-          const finalWidth = Math.max(MIN_COL_WIDTH, info.startWidth + (e.clientX - info.startX) + autoScrollOffset);
+          const finalWidth = widthAt(e.clientX, info);
           sendCommand('columnResize', { column: info.column, width: finalWidth });
           justResizedRef.current = true;
           requestAnimationFrame(() => { justResizedRef.current = false; });

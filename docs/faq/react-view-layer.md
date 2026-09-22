@@ -445,7 +445,40 @@ Work that takes longer than a request may take does not belong in the request. `
 - **Cancellation is cooperative.** `cancelable="true"` offers the reader a cancel button; pressing it marks the job and interrupts the worker. `sleep()` keeps the interrupt it was woken by, so a sleeping job wakes at once and ends at the next point it *reports* from — which is what makes a loop of `sleep` + `jobProgress` stop within one step. Every report a Java body makes on its `JobMonitor` checks the same way, and `JobMonitor.checkCancelled()` is that check on its own for a stretch of work that reports nothing. Only declare it for work that may be given up half-done: a cancelled job has done part of what it was started for.
 - **`<job-status input="job"/>`** (`JobStatusElement` → `ReactJobStatusControl` / `TLJobStatus`) is the display, bound to the channel alone and holding no state of its own. It shows the status, the declared steps as done / active / pending, the bar (determinate or indeterminate), the message, the elapsed time — counted in the browser, so it ticks without a server round trip and freezes when the job ends — and at the end the result or the error. A channel holding anything that is not a job state displays nothing. Every text is resolved for the reader on the server: the phases and the message by their `ResKey`, the result through `MetaLabelProvider`, so a body returning an i18n literal `#('…'@en, '…'@de)` is displayed in the reader's language.
 - **CSS hooks**: the BEM block `tlJobStatus` with the status modifier `tlJobStatus--running|completed|failed|cancelled` and the elements `__header`, `__state`, `__elapsed`, `__cancel`, `__phases`, `__phase` (`--done`, `--active`, `--pending`), `__bar`, `__message`, `__error`, `__result` (`tlReactControls.css`). An application restyles the display through these classes; the bar inside it is the shared `tlProgress` block.
-- **Demo**: `com.top_logic.demo.react/…/views/demo/long-job-demo.view.xml` — a three-phase job with a determinate loop, an indeterminate phase and a result written to a second channel, a failing job, and a standalone indeterminate `<progress>`.
+- **Demo**: `com.top_logic.demo.react/…/views/demo/long-job-demo.view.xml` — a three-phase job with a determinate loop, an indeterminate phase and a result written to a second channel, a failing job, and a standalone indeterminate `<progress>`, plus a chunked import creating 500 tickets in one pass and closing every second of them in a next one, and the chunked removal of what it created.
+
+### Committing in chunks: `ChunkedScriptJobBody`
+
+A job that *creates persistent objects* runs outside any transaction and TL-Script opens none, so the body needs a transactional frame. `<body class="com.top_logic.layout.view.job.ChunkedScriptJobBody" chunk-size="200">` is that frame written in configuration; `ChunkedJobBody` is the same frame for a body written in Java, with the hooks `hasInit()/init`, `elements`, `stepCount()/step` and `hasFinish()/finish`:
+
+```xml
+<start-job job="importState" cancelable="true">
+  <body class="com.top_logic.layout.view.job.ChunkedScriptJobBody" chunk-size="200">
+    <init-label><en>Reading the file</en><de>Datei einlesen</de></init-label>
+    <init><![CDATA[job -> file -> { s = new(`my:Import`, transient: true); $s.set(`my:Import#rows`, $file.parse()); $s; }]]></init>
+    <elements><![CDATA[job -> state -> $state.get(`my:Import#rows`)]]></elements>
+    <steps>
+      <step>
+        <label><en>Creating the records</en><de>Datensätze anlegen</de></label>
+        <expr><![CDATA[job -> chunk -> state -> $chunk.foreach(r -> $state.get(`my:Import#target`).create($r))]]></expr>
+      </step>
+      <step>
+        <expr><![CDATA[job -> chunk -> state -> $chunk.foreach(r -> $r.resolveReferences())]]></expr>
+      </step>
+    </steps>
+    <finish><![CDATA[job -> state -> $state.get(`my:Import#created`)]]></finish>
+  </body>
+</start-job>
+```
+
+- **Every script is called with the monitor of the job first**, exactly like the `function=` body: `init` as `job -> a -> b -> …` (the values the job was started with), `elements` as `job -> state -> …`, a `<step>` as `job -> chunk -> state -> …` and `finish` as `job -> state -> …`. So every one of them reports with `$job.jobMessage(…)`, `$job.jobProgress(…)` and friends.
+- **The state ties the scripts together.** What `init` returns is what `elements`, every pass and `finish` receive; without an `<init>` the state is the *first value the job was started with* (the first `inputs` channel, or the command's value where there is none). For a state that has to change while the job runs, make it a transient object — `new(\`my:Import\`, transient: true)` — whose attributes the passes set; several objects the passes need are a map literal `{'target': $t, 'index': $byKey}`.
+- **`elements` is evaluated once, read-only and outside any transaction**, against the state. A collection is the list of work items, any other value is the single item it stands for, nothing at all is no items. The whole list is held for the run, so what it selects has to fit in memory — the chunking bounds the *transactions*, not the list.
+- **Every `<step>` is a full pass over that list**, applied to successive chunks of `chunk-size` items (200 by default), each chunk in a transaction of its own. A pass begins once the pass before it has committed every chunk, which is what makes a *second* pass the place for work that needs all the items of the first one — resolving cross references between them, for instance.
+- **A chunk that fails is retried item by item**, each item in a transaction of its own; only the items that genuinely cannot be processed are skipped, each of them logged and reported as a message naming the item and the failure, and counted. A step script therefore has to be **repeatable for an item it already saw** in the failed chunk. A failure in `init` or in `finish` is *not* caught: it ends the job with its own message, and its transaction is given up with it.
+- **Cancellation takes effect between two committed chunks**, and at once at a report from *inside* a chunk: the chunk in progress is rolled back, the chunks that committed stay, and the job ends as cancelled rather than counting the item as one that could not be processed.
+- **The phases are the steps of the job**: `init` where there is one, `step-1` … `step-n`, `finish` where there is one — announced by the body itself, so `<start-job>` needs no `<phases>` for it. `<init-label>`, a `<step>`'s `<label>` and `<finish-label>` name them for the reader; unnamed, a pass is shown as its number. The progress within a pass counts its chunks.
+- **The result of the job is what `finish` returns**; a body without a `<finish>` ends with the text saying how many items it processed and how many it skipped — which the job reports as its last message either way.
 
 ## Drag and drop of table rows
 
@@ -598,6 +631,34 @@ Such a page is linkable: `/view/tickets?filter=discussed` opens the list filtere
 - `TableViewControl` pushes the flag as the per-column `pinnedEnd` state. The client (`TLTableView.tsx`) renders such a cell `position: sticky` with a `right` offset of the widths of the pinned columns behind it plus the reserve the row ends with — in the header the measured scrollbar width, which the header has no vertical scrollbar of its own for, and where the table does not end in a pinned column the column button's width in header and body alike. A table ending in a pinned column has a heading without a label there, so the column selector's cog sits in that heading and the pinned column reaches the right edge. Rows and header row fill the table when the columns are narrower than it; the last *unpinned* column grows into the space left over, in the heading exactly as in the rows. A pinned cell keeps its width, offers no resize handle and no drag, and the header menu offers it neither the freeze boundary, nor a grouping, nor the fit to content.
 - `Column.cssClass()` (`DefaultColumn.Builder.cssClass(String)`) names a class the client puts on every cell of the column, its heading included — how the column presents its cells, as opposed to the per-row `cssClass(R row)`. `RowCommandColumn` uses it to drop the text padding and center its frameless button.
 - Every unpinned column can be fitted to its content: "Fit width to content" in the header menu, or a double-click on the column's resize handle, sets the width the heading and the rendered cells need and persists it through the same `columnResize` command a drag ends with. Only the rows currently in the DOM are measured, so the fit follows what is displayed, as the virtual scroller renders it.
+
+## Master-detail that adapts to the viewport: `<adaptive-detail>`
+
+`<adaptive-detail selection="selectedTicket">` (`AdaptiveDetailElement`) holds a `<selector>` (the master — a table or tree writing the `selection` channel) and a `<detail>` (bound to the same channel) exactly once, and presents the pair in one of three ways, chosen from the subsession's `DisplayClass` and the element's `detail-display`:
+
+| Viewport | `detail-display` | Presentation |
+| --- | --- | --- |
+| `REGULAR` (wide) | `split` (the default) | Selector and detail side by side in a draggable `ReactSplitPanelControl`. |
+| `REGULAR` (wide) | `drawer` | The selector keeps the full width; the detail overlays it from the right edge in a drawer of `detail-size` pixels. |
+| `COMPACT` (narrow) | either | Drill-in: the selector full-bleed, replaced by the detail while something is selected, with a breadcrumb back to it. |
+
+```xml
+<adaptive-detail
+	detail-display="drawer"
+	detail-size="420"
+	selection="selectedTicket"
+>
+	<selector><table selection="selectedTicket" types="…:Ticket">…</table></selector>
+	<detail><form input="selectedTicket" label-position="side" max-columns="1">…</form></detail>
+</adaptive-detail>
+```
+
+- **The two properties.** `detail-display` picks the wide-viewport presentation (`split` | `drawer`); `detail-size` is the width in pixels of the drawer (420 by default) and has no effect without `drawer`. The drawer never grows wider than the element it overlays, so a value exceeding the available width covers the selector completely.
+- **The drawer follows the selection channel, and only that.** It opens when the channel takes a value, carries that value's label as its title, and closes when the channel is cleared. Selecting another row swaps what the drawer shows without closing it: the detail is built once and follows the channel itself, opening and closing being a transform of the panel rather than an exchange of its contents.
+- **Dismissing clears the selection.** The drawer's close button and Escape write `null` to the selection channel, and *that* is what closes the drawer — which is also what lets the same row be selected again to bring it back. A detail with unsaved changes vetoes that channel write (see "Unsaved changes are asked before a channel write"), and the drawer stays open.
+- **The drawer is anchored inside the element** (`ReactDrawerControl.Anchor.CONTAINER`), not in the viewport: it slides in over the selector within the element's own area, so the enclosing panel's title bar, toolbar and the rest of the page chrome stay visible and interactive. There is no backdrop; the selector underneath keeps taking input.
+- **The compact fallback is the drill-in either way.** On a narrow viewport a `drawer` element renders exactly like a `split` one — selector, then detail, with the breadcrumb whose home crumb (`<home-label>`) clears the selection. A drawer as wide as a phone is a full-screen panel, which is what the drill-in already is, done with the breadcrumb the nested levels share.
+- Both demos live in `com.top_logic.demo.react`: `demo/responsive-md-demo.view.xml` (the split presentation, nested scopes → milestones) and `demo/detail-drawer-demo.view.xml` (the drawer presentation over a full-width ticket table).
 
 ## Drill-down navigation with `<tile-stack>`
 

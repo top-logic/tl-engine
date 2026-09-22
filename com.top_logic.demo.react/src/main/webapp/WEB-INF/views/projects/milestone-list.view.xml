@@ -1,11 +1,15 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	The milestones of a project, shown on a tab of the project home. Opening one pushes its
-	tickets, announced with the milestone's name.
+	The milestones of a project, pushed by the Milestones tile of the project cockpit. Activating a
+	row - a double-click, Enter on the row carrying the keyboard cursor, or its chevron button -
+	pushes the milestone's tickets, announced with the milestone's name.
 	
-	This view sits on a tab of a frame and is reachable from no root view, so a display target
-	revealing a milestone finds it within the frame the target pushed before it.
+	The toolbar creates a milestone in the project and deletes the selected one; the table observes
+	milestones, so both are reflected in the rows without a reload.
+	
+	This view is reachable from no root view, so a display target revealing a milestone finds it
+	within the frame the target pushed before it.
 -->
 <view>
 	<channels>
@@ -19,25 +23,51 @@
 			<de>Meilensteine</de>
 		</title>
 		<commands>
-			<command class="com.top_logic.layout.view.tiles.NavigatePushCommand"
-				bind-input-to="milestone"
-				image="css:bi bi-box-arrow-in-right"
-				input="milestone"
+			<generic-command
+				image="css:bi bi-plus-lg"
+				input="project"
 				placement="TOOLBAR"
-				view="projects/tickets.view.xml"
 			>
 				<label>
-					<en>Open</en>
-					<de>Öffnen</de>
+					<en>New Milestone</en>
+					<de>Neuer Meilenstein</de>
 				</label>
 				<executability>
 					<null-input-disabled/>
 				</executability>
-				<frame-label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
-					expr="m -> $m.get(`tl.demo.projectManagement:Milestone#name`)"
-					inputs="milestone"
-				/>
-			</command>
+				<execute-script function="x -> new(`tl.demo.projectManagement:Milestone`, transient: true)"/>
+				<open-dialog
+					bind-input-to="model"
+					dialog-view="demo/create-milestone.view.xml"
+				>
+					<bind
+						channel="container"
+						to="project"
+					/>
+					<bind
+						channel="selection"
+						to="milestone"
+					/>
+				</open-dialog>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-trash"
+				input="milestone"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Delete</en>
+					<de>Löschen</de>
+				</label>
+				<executability>
+					<null-input-disabled/>
+				</executability>
+				<confirm expr="m -> #('Delete milestone {0}?'@en, 'Meilenstein {0} löschen?'@de).fill($m.get(`tl.demo.projectManagement:Milestone#name`))"/>
+				<with-transaction>
+					<execute-script function="m -> { $m.delete(); null; }"/>
+				</with-transaction>
+				<write-channel name="milestone"/>
+			</generic-command>
 		</commands>
 		<table
 			observed-types="tl.demo.projectManagement:Milestone"
@@ -51,7 +81,16 @@
 			<inputs>
 				<input channel="project"/>
 			</inputs>
-			<rows>p -&gt; if($p == null, list(), $p.get(`tl.demo.projectManagement:ProjectScope#milestones`))</rows>
+			<rows>p -&gt; if($p == null, [], $p.get(`tl.demo.projectManagement:ProjectScope#milestones`))</rows>
+			<on-activate class="com.top_logic.layout.view.tiles.NavigatePushCommand"
+				bind-input-to="milestone"
+				view="projects/tickets.view.xml"
+			>
+				<frame-label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
+					expr="m -> $m.get(`tl.demo.projectManagement:Milestone#name`)"
+					inputs="milestone"
+				/>
+			</on-activate>
 		</table>
 	</panel>
 </view>

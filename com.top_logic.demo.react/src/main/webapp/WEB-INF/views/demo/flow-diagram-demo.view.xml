@@ -17,7 +17,9 @@
 	
 	The diagram, the Build steps table and the Details form share the selectedNode channel:
 	clicking a node in the diagram marks its row in Build steps and shows it in Details, and
-	picking a row in Build steps shows that step in Details.
+	picking a row in Build steps shows that step in Details and marks its node in the diagram
+	- when the step belongs to the product the diagram draws; a step of another product is
+	shown in Details while the diagram has no node to mark for it.
 -->
 <view>
 	<channels>

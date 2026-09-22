@@ -1,3 +1,7 @@
+// HTTP status with which the server answers an upload that it refuses. The body of such a
+// response is the rejection message rendered as an info service item.
+var UNPROCESSABLE_CONTENT = 422;
+
 CKEDITOR.plugins.add('imageUploader', {
 	requires: 'filetools',
 	beforeInit: function(editor) {
@@ -273,6 +277,17 @@ function uploadImg(editor, extensions, uploadUrl, file, replaceClass) {
 	
 		loader.on('error', function(evt) {
 			img.$ && img.$.remove();
+
+			// A refused upload is reported by the server itself: the response body is the
+			// rejection message rendered as an info service item, which is displayed in the info
+			// area of the top level window. The upload is finished with that message, so that no
+			// further message about the same refusal is shown.
+			var xhr = loader.xhr;
+			if (xhr && xhr.status == UNPROCESSABLE_CONTENT && xhr.responseText != '') {
+				showInfoArea(xhr.responseText);
+				return resolve();
+			}
+
 			return reject(editor.lang.imageUploader.error(fileName, evt.sender.message));
 		});
 	

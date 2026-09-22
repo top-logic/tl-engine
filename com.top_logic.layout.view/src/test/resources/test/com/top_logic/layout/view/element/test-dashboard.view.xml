@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<dashboard id="test-dashboard">
+		<tile id="display"
+			width="half"
+		>
+			<card>
+				<title>
+					<en>Revenue</en>
+					<de>Revenue</de>
+				</title>
+			</card>
+		</tile>
+		<tile id="opening"
+			width="half"
+		>
+			<card>
+				<title>
+					<en>Tickets</en>
+					<de>Tickets</de>
+				</title>
+			</card>
+			<action class="test.com.top_logic.layout.view.element.TestDashboardElement$OpeningCommand"
+				input="ch"
+			>
+				<executability>
+					<null-input-disabled/>
+				</executability>
+			</action>
+		</tile>
+		<tile id="labeled"
+			width="half"
+		>
+			<card>
+				<title>
+					<en>Tickets</en>
+					<de>Tickets</de>
+				</title>
+			</card>
+			<action class="test.com.top_logic.layout.view.element.TestDashboardElement$OpeningCommand">
+				<label>
+					<en>Details</en>
+					<de>Details</de>
+				</label>
+			</action>
+		</tile>
+		<tile id="untitled"
+			width="half"
+		>
+			<card/>
+			<action class="test.com.top_logic.layout.view.element.TestDashboardElement$OpeningCommand"/>
+		</tile>
+	</dashboard>
+</view>

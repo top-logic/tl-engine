@@ -84,12 +84,18 @@ public interface NavigationRuleConfig extends ConfigurationItem {
 	@ControlProvider(SelectionControlProvider.class)
 	String getMetaElement();
 
+	/** @see #getMetaElement() */
+	void setMetaElement(String metaElement);
+
 	/**
 	 * Whether this {@link NavigationRuleConfig} should also be applied to all sub types of
 	 * {@link #getMetaElement()}.
 	 */
 	@Name(NavigationRuleConfig.XML_ATTRIBUTE_INHERIT)
 	boolean isInherit();
+
+	/** @see #isInherit() */
+	void setInherit(boolean inherit);
 
 	/**
 	 * The configuration of the steps to get from the source object to the target object.

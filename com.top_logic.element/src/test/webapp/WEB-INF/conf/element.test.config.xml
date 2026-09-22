@@ -53,6 +53,78 @@
 		            <meta-element name="prodElement.ProductType" role-root="prodElement"/>
 		            <meta-element name="prodElement.ProductVersion" role-root="prodElement"/>
 	            </meta-elements>
+
+				<!-- Role sources analyzed by TestSecurityCoverageAnalysis. -->
+				<role-rules>
+					<rules>
+						<rule
+							id="TestSecurityCoverage_covered"
+							inherit="true"
+							meta-element="TestSecurityCoverage:Covered"
+							role="TestSecurityCoverage.Reader"
+						>
+							<path>
+								<step attribute="TestSecurityCoverage:Covered#owner"/>
+							</path>
+						</rule>
+						<rule
+							id="TestSecurityCoverage_deadGrant"
+							meta-element="TestSecurityCoverage:DeadGrant"
+							role="TestSecurityCoverage.Reader"
+						>
+							<path>
+								<step attribute="TestSecurityCoverage:DeadGrant#owner"/>
+							</path>
+						</rule>
+					</rules>
+				</role-rules>
+
+				<security-parents>
+					<rules>
+						<rule
+							id="TestSecurityCoverage_childOfCovered"
+							inherit="true"
+							meta-element="TestSecurityCoverage:ChildOfCovered"
+						>
+							<path>
+								<step
+									attribute="TestSecurityCoverage:Covered#children"
+									inverse="true"
+								/>
+							</path>
+						</rule>
+					</rules>
+				</security-parents>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+			<instance>
+				<security-config>
+					<class name="TestSecurityCoverage:Covered">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="TestSecurityCoverage.Reader"
+						/>
+					</class>
+					<class name="TestSecurityCoverage:ChildOfCovered">
+						<grant
+							operation="Read"
+							roles="TestSecurityCoverage.Reader"
+						/>
+					</class>
+					<class name="TestSecurityCoverage:DeadGrant">
+						<!-- The ghost role is delivered by no rule on this type. -->
+						<grant
+							operation="Read"
+							roles="TestSecurityCoverage.Reader, TestSecurityCoverage.Ghost"
+						/>
+					</class>
+					<class name="TestSecurityCoverage:Unsecured"
+						without-security="true"
+					/>
+				</security-config>
 			</instance>
 		</config>
 
@@ -66,6 +138,8 @@
 					<role name="projElement.Hauptbenutzer"/>
 					<role name="projElement.Beobachter"/>
 					<role name="projElement.Projektbeobachter"/>
+					<role name="TestSecurityCoverage.Reader"/>
+					<role name="TestSecurityCoverage.Ghost"/>
 				</roles>
 			</instance>
 		</config>
@@ -80,6 +154,7 @@
 					<declaration file="/WEB-INF/model/TestTypes.model.xml"/>
 					<declaration file="/WEB-INF/model/ticket28519.model.xml"/>
 					<declaration file="/WEB-INF/model/TestXMLInstanceImporter.model.xml"/>
+					<declaration file="/WEB-INF/model/TestSecurityCoverage.model.xml"/>
 				</declarations>
 				<settings>
 					<module name="TestXMLInstanceImporter" enabled="true">

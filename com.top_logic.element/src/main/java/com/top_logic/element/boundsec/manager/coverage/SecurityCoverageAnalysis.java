@@ -1,0 +1,371 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+
+package com.top_logic.element.boundsec.manager.coverage;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.element.boundsec.ElementBoundHelper;
+import com.top_logic.element.boundsec.manager.ElementAccessManager;
+import com.top_logic.element.boundsec.manager.rule.IdentityPathElement;
+import com.top_logic.element.boundsec.manager.rule.NavigationRule;
+import com.top_logic.element.boundsec.manager.rule.PathElement;
+import com.top_logic.element.boundsec.manager.rule.PathNavigation;
+import com.top_logic.element.boundsec.manager.rule.RoleProvider;
+import com.top_logic.element.boundsec.manager.rule.SingletonPathElement;
+import com.top_logic.element.boundsec.manager.rule.config.NavigationRuleConfig;
+import com.top_logic.element.boundsec.manager.rule.config.PathElementConfig;
+import com.top_logic.model.TLClass;
+import com.top_logic.model.TLModel;
+import com.top_logic.model.TLModule;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
+import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.TLType;
+import com.top_logic.model.security.ModelAccessRights;
+import com.top_logic.model.util.TLModelPartRef;
+import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tool.boundsec.BoundCommandGroup;
+import com.top_logic.tool.boundsec.BoundHelper;
+import com.top_logic.tool.boundsec.BoundObject;
+import com.top_logic.tool.boundsec.manager.AccessManager;
+import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
+import com.top_logic.tool.boundsec.wrap.BoundedRole;
+import com.top_logic.util.model.ModelService;
+
+/**
+ * Checks the model-based access definition of an application for completeness.
+ *
+ * <p>
+ * For every concrete global type the analysis answers the two questions that decide whether a user
+ * can ever see an object of that type: does a rule deliver a role on it, and is a role granted the
+ * read operation on it? Each gap is reported as a {@link CoverageFinding}; a type without a role
+ * source that is contained in exactly one composition additionally gets a security parent rule
+ * proposed.
+ * </p>
+ *
+ * <p>
+ * The analysis is a pure computation over the definitions that are in effect: it neither changes
+ * them nor writes anything to the log. A proposed rule is handed to the caller for the developer to
+ * apply explicitly.
+ * </p>
+ *
+ * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
+ */
+public class SecurityCoverageAnalysis {
+
+	/**
+	 * Suffix appended to the type name to build the {@link NavigationRuleConfig#getId() id} of a
+	 * proposed security parent rule.
+	 */
+	public static final String SUGGESTED_RULE_ID_SUFFIX = "_securityParent";
+
+	private final TLModel _model;
+
+	private final ElementAccessManager _accessManager;
+
+	private final ModelAccessRights _accessRights;
+
+	private final Set<String> _excludedModules;
+
+	private final boolean _rootFallbackActive;
+
+	private final TLClass _securityRootType;
+
+	private final List<BoundCommandGroup> _operations;
+
+	private final List<TLReference> _compositeReferences;
+
+	/**
+	 * Creates a {@link SecurityCoverageAnalysis}.
+	 *
+	 * @param model
+	 *        The application model whose types are analyzed.
+	 * @param accessManager
+	 *        The access manager holding the role rules and the security parent rules.
+	 * @param accessRights
+	 *        The configured grants.
+	 * @param excludedModules
+	 *        Names of the modules whose types are not analyzed. Must not be <code>null</code>.
+	 */
+	public SecurityCoverageAnalysis(TLModel model, ElementAccessManager accessManager, ModelAccessRights accessRights,
+			Set<String> excludedModules) {
+		_model = Objects.requireNonNull(model);
+		_accessManager = Objects.requireNonNull(accessManager);
+		_accessRights = Objects.requireNonNull(accessRights);
+		_excludedModules = Set.copyOf(excludedModules);
+
+		BoundHelper boundHelper = BoundHelper.getInstance();
+		_rootFallbackActive = boundHelper.useDefaultObject();
+		// The security root is only relevant as the fallback security parent, so it is not
+		// resolved in an application that does not use it.
+		_securityRootType = _rootFallbackActive ? securityRootType(boundHelper) : null;
+
+		_operations = new ArrayList<>(CommandGroupRegistry.getInstance().getAllCommandGroups());
+		_operations.sort(Comparator.comparing(BoundCommandGroup::getID));
+
+		_compositeReferences = compositeReferences(model);
+	}
+
+	/**
+	 * Creates a {@link SecurityCoverageAnalysis} for the running application.
+	 *
+	 * @param excludedModules
+	 *        Names of the modules whose types are not analyzed.
+	 * @return The analysis over the application model and the started security services.
+	 */
+	public static SecurityCoverageAnalysis newInstance(Set<String> excludedModules) {
+		return new SecurityCoverageAnalysis(ModelService.getApplicationModel(),
+			(ElementAccessManager) AccessManager.getInstance(), ModelAccessRights.getInstance(), excludedModules);
+	}
+
+	/**
+	 * The coverage of every analyzed type, ordered by the qualified type name.
+	 */
+	public List<TypeCoverage> analyze() {
+		List<TypeCoverage> result = new ArrayList<>();
+		for (TLClass type : TLModelUtil.getAllGlobalClasses(_model)) {
+			if (isAnalyzed(type)) {
+				result.add(analyze(type));
+			}
+		}
+		result.sort(Comparator.comparing(coverage -> TLModelUtil.qualifiedName(coverage.type())));
+		return result;
+	}
+
+	/**
+	 * Whether the given type is part of the {@link #analyze() analysis result}.
+	 *
+	 * <p>
+	 * An abstract type is skipped, since no object has it. A type of an excluded module is skipped,
+	 * since its access definition is not maintained by the analyzed application.
+	 * </p>
+	 *
+	 * @param type
+	 *        The type to check.
+	 */
+	public boolean isAnalyzed(TLClass type) {
+		return !type.isAbstract() && !_excludedModules.contains(type.getModule().getName());
+	}
+
+	/**
+	 * Analyzes the access definition of a single type.
+	 *
+	 * @param type
+	 *        The type to analyze. Typically a type {@link #isAnalyzed(TLClass) selected} by the
+	 *        analysis.
+	 * @return The coverage of the given type.
+	 */
+	public TypeCoverage analyze(TLClass type) {
+		List<RoleProvider> roleRules = List.copyOf(_accessManager.getRules(type));
+		List<NavigationRule> parentRules = List.copyOf(_accessManager.getSecurityParentRules(type));
+		Set<BoundedRole> readRoles = Set.copyOf(_accessRights.getAllowedRoles(type, SimpleBoundCommandGroup.READ));
+		boolean withoutSecurity = _accessRights.isWithoutSecurity(type);
+
+		List<CoverageFinding> findings = new ArrayList<>();
+		if (!withoutSecurity) {
+			if (roleRules.isEmpty() && parentRules.isEmpty()) {
+				findings.add(CoverageFinding.noRoleSource(type, _rootFallbackActive));
+				addContainerFinding(type, findings);
+			}
+			if (readRoles.isEmpty()) {
+				findings.add(CoverageFinding.noReadGrant(type));
+			}
+			addDeadGrantFindings(type, findings);
+		}
+		return new TypeCoverage(type, withoutSecurity, readRoles, roleRules, parentRules,
+			Collections.unmodifiableList(findings));
+	}
+
+	/**
+	 * Proposes a security parent for a type without a role source, or reports that the container
+	 * cannot be derived.
+	 */
+	private void addContainerFinding(TLClass type, List<CoverageFinding> findings) {
+		List<TLReference> containers = containerReferences(type);
+		if (containers.size() == 1) {
+			TLReference container = containers.get(0);
+			findings.add(CoverageFinding.suggestedParent(type, container, suggestedRule(type, container)));
+		} else if (containers.size() > 1) {
+			findings.add(CoverageFinding.ambiguousParent(type, containers));
+		}
+	}
+
+	/**
+	 * The compositions an object of the given type can be contained in.
+	 */
+	private List<TLReference> containerReferences(TLClass type) {
+		return _compositeReferences.stream()
+			.filter(reference -> TLModelUtil.isCompatibleType(reference.getType(), type))
+			.toList();
+	}
+
+	/**
+	 * Builds the security parent rule that navigates the given composition backwards.
+	 */
+	private NavigationRuleConfig suggestedRule(TLClass type, TLReference container) {
+		NavigationRuleConfig rule = TypedConfiguration.newConfigItem(NavigationRuleConfig.class);
+		rule.setId(type.getName() + SUGGESTED_RULE_ID_SUFFIX);
+		rule.setMetaElement(TLModelUtil.qualifiedName(type));
+		rule.setInherit(true);
+
+		PathElementConfig step = TypedConfiguration.newConfigItem(PathElementConfig.class);
+		step.setAttribute(TLModelPartRef.ref(container));
+		step.setInverse(true);
+		rule.getPathElements().add(step);
+
+		return rule;
+	}
+
+	/**
+	 * Reports every operation whose grant names a role that cannot be delivered on the given type.
+	 */
+	private void addDeadGrantFindings(TLClass type, List<CoverageFinding> findings) {
+		for (BoundCommandGroup operation : _operations) {
+			Set<BoundedRole> granted = _accessRights.getAllowedRoles(type, operation);
+			if (granted.isEmpty()) {
+				continue;
+			}
+			Set<BoundedRole> dead = new LinkedHashSet<>();
+			for (BoundedRole role : granted) {
+				if (!canDeliver(type, role, new HashSet<>())) {
+					dead.add(role);
+				}
+			}
+			if (!dead.isEmpty()) {
+				findings.add(CoverageFinding.deadGrant(type, operation, dead));
+			}
+		}
+	}
+
+	/**
+	 * Whether a user can hold the given role on an object of the given type, either on the object
+	 * itself or on one of its security parents.
+	 *
+	 * @param visited
+	 *        The types already inspected along the security parent chain, guarding against cycles.
+	 * @return Also <code>true</code> when the end of a security parent path cannot be determined
+	 *         statically, so that an undecidable path never produces a finding.
+	 */
+	private boolean canDeliver(TLClass type, BoundedRole role, Set<TLClass> visited) {
+		if (!visited.add(type)) {
+			return false;
+		}
+		if (_accessManager.canHaveRole(type, role)) {
+			return true;
+		}
+		Collection<NavigationRule> parentRules = _accessManager.getSecurityParentRules(type);
+		if (parentRules.isEmpty()) {
+			return _rootFallbackActive && _securityRootType != null
+				&& _accessManager.canHaveRole(_securityRootType, role);
+		}
+		for (NavigationRule rule : parentRules) {
+			TLType endType = endType(rule);
+			if (!(endType instanceof TLClass endClass)) {
+				// The security parents of the path cannot be determined statically.
+				return true;
+			}
+			if (canDeliver(endClass, role, visited)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * The type of the objects a security parent rule navigates to.
+	 *
+	 * @return <code>null</code> when the path cannot be followed statically.
+	 */
+	private TLType endType(NavigationRule rule) {
+		TLType current = rule.getMetaElement();
+		for (PathElement step : rule.getPath()) {
+			if (step instanceof PathNavigation navigation) {
+				TLReference reference = navigation.getReference();
+				current = navigation.isInverse() ? reference.getOwner() : reference.getType();
+			} else if (step instanceof SingletonPathElement singleton) {
+				TLObject value = singleton(singleton.getConfig());
+				current = value == null ? null : value.tType();
+			} else if (step instanceof IdentityPathElement) {
+				// The identity step stays on the current object, so the type does not change.
+			} else {
+				return null;
+			}
+			if (current == null) {
+				return null;
+			}
+		}
+		return current;
+	}
+
+	/**
+	 * Resolves the module singleton a {@link SingletonPathElement} navigates to.
+	 */
+	private TLObject singleton(SingletonPathElement.Config config) {
+		TLModule module = _model.getModule(config.getModule());
+		return module == null ? null : module.getSingleton(config.getSingletonName());
+	}
+
+	/**
+	 * The type of the security root, whose roles every object inherits when the global default
+	 * security parent is active.
+	 *
+	 * @return <code>null</code> when the application has no security root.
+	 */
+	private static TLClass securityRootType(BoundHelper boundHelper) {
+		if (!(boundHelper instanceof ElementBoundHelper elementBoundHelper)) {
+			return null;
+		}
+		BoundObject root = elementBoundHelper.securityRoot();
+		if (root != null && root.tType() instanceof TLClass rootType) {
+			return rootType;
+		}
+		return null;
+	}
+
+	/**
+	 * All compositions of the model, indexed by the part they are defined by so that an override
+	 * does not count as a second container.
+	 */
+	private static List<TLReference> compositeReferences(TLModel model) {
+		Map<TLStructuredTypePart, TLReference> byDefinition = new LinkedHashMap<>();
+		for (TLClass owner : TLModelUtil.getAllGlobalClasses(model)) {
+			for (TLStructuredTypePart part : owner.getLocalParts()) {
+				if (!(part instanceof TLReference reference) || !reference.isComposite()) {
+					continue;
+				}
+				TLStructuredTypePart definition = reference.getDefinition();
+				TLReference clash = byDefinition.get(definition);
+				if (clash == null || (clash.isDerived() && !reference.isDerived())) {
+					byDefinition.put(definition, reference);
+				}
+			}
+		}
+		List<TLReference> result = new ArrayList<>();
+		for (TLReference reference : byDefinition.values()) {
+			if (!reference.isDerived()) {
+				// A derived reference cannot be navigated by a security parent rule, since it does
+				// not fire the change notifications the rule invalidation relies on.
+				result.add(reference);
+			}
+		}
+		result.sort(Comparator.comparing(TLModelUtil::qualifiedName));
+		return result;
+	}
+
+}

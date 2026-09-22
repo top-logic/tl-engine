@@ -640,12 +640,33 @@ public class ElementAccessManager extends AccessManager {
         }
     }
 
+	/**
+	 * The resolved security-parent rules that apply to objects of the given type.
+	 *
+	 * <p>
+	 * The result already respects the {@link NavigationRule#isInherit() inheritance} of the
+	 * configured rules: a rule declared on a generalization with inheritance enabled is contained
+	 * in the result of each of its specializations. An abstract type never carries a rule, since no
+	 * object has an abstract type.
+	 * </p>
+	 *
+	 * @param type
+	 *        The type to look up the rules for.
+	 * @return The rules applying to objects of the given type, an empty collection if the type has
+	 *         no security parent. The result must not be modified.
+	 *
+	 * @see Config#getSecurityParents()
+	 */
+	public Collection<NavigationRule> getSecurityParentRules(TLClass type) {
+		return _resolvedSecurityParents.getOrDefault(type, Collections.emptyList());
+	}
+
 	@Override
 	public Collection<? extends BoundObject> getSecurityParents(BoundObject object) {
 		Set<TLObject> out = new HashSet<>();
-		_resolvedSecurityParents
-			.getOrDefault(object.tType(), Collections.emptyList())
-			.forEach(rule -> rule.getContent(object, out));
+		if (object.tType() instanceof TLClass type) {
+			getSecurityParentRules(type).forEach(rule -> rule.getContent(object, out));
+		}
 		return out.stream()
 			.filter(BoundObject.class::isInstance)
 			.map(BoundObject.class::cast)

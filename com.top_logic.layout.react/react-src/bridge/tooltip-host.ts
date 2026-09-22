@@ -84,6 +84,8 @@ type Spec =
   | { kind: 'content'; el: Element };
 
 interface Active {
+  /** Number of this activation, distinct from every earlier one. */
+  id: number;
   anchor: Element;
   data: TooltipData;
 }
@@ -94,6 +96,7 @@ let _root: Root | null = null;
 let _openTimer: number | null = null;
 let _closeTimer: number | null = null;
 let _active: Active | null = null;
+let _activations = 0;
 
 export function initTooltipHost(): void {
   if (_hostDiv) return;
@@ -295,7 +298,7 @@ function scheduleOpen(anchor: Element, pending: Promise<TooltipData | null>): vo
       renderActive();
       return;
     }
-    _active = { anchor, data };
+    _active = { id: ++_activations, anchor, data };
     renderActive();
   }, HOVER_DELAY_MS);
 }
@@ -320,9 +323,13 @@ function cancelClose(): void {
 function renderActive(): void {
   if (!_root || !_hostDiv) return;
   if (!_active) { _root.render(null); return; }
-  const { anchor, data } = _active;
+  const { id, anchor, data } = _active;
+  // Each activation mounts a popover of its own: the floating hook positions against the anchor
+  // it was mounted with, so a tooltip taking over from one still open - the pointer moved on to
+  // the next button before the first closed - must not reuse the first popover's instance.
   _root.render(
     React.createElement(TooltipPopover, {
+      key: id,
       anchor, data,
       portalRoot: _hostDiv,
       onClose: () => { _active = null; renderActive(); },

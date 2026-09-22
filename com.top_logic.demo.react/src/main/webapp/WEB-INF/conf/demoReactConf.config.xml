@@ -27,14 +27,16 @@
 		</config>
 		<!--
 			The roles of this application: the administrator role that may open the administration
-			area, granted in security.xml, and the account reader role that makes accounts and
-			groups visible, granted by the role rules below.
+			area, granted in security.xml, the account reader role that makes accounts and groups
+			visible, and the project reader role that makes the projects and the tickets visible.
+			The latter two are granted by the role rules below.
 		-->
 		<config service-class="com.top_logic.base.services.InitialRolesManager">
 			<instance>
 				<roles>
 					<role name="demo.react.Administrator"/>
 					<role name="demo.react.AccountReader"/>
+					<role name="demo.react.ProjectReader"/>
 				</roles>
 			</instance>
 		</config>
@@ -69,6 +71,11 @@
 			deputy settings can offer the other accounts and show who stands in for whom. This is a
 			decision of this demo; a real application decides for itself whether and which accounts
 			a user may see. The engine grants an account read access to its own account only.
+
+			The project reader reads and writes everything of the project management module and of
+			the ticket module. The role rules below grant the role on the two root types; the
+			contained objects inherit it through the security parents that the coverage analysis
+			generated.
 		-->
 		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
 			<instance>
@@ -87,6 +94,30 @@
 							roles="demo.react.AccountReader"
 						/>
 					</class>
+					<module name="tl.demo.projectManagement">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="demo.react.ProjectReader"
+						/>
+						<grant
+							inherit="true"
+							operation="Write"
+							roles="demo.react.ProjectReader"
+						/>
+					</module>
+					<module name="demo.tickets">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="demo.react.ProjectReader"
+						/>
+						<grant
+							inherit="true"
+							operation="Write"
+							roles="demo.react.ProjectReader"
+						/>
+					</module>
 				</security-config>
 			</instance>
 		</config>
@@ -108,8 +139,88 @@
 						>
 							<group-with-name name="users"/>
 						</rule>
+						<!--
+							Every member of the "users" group reads and writes the projects of this
+							demo. The role is granted on the project scope only; the milestones,
+							tickets and notes it contains reach it through the security parents
+							below.
+						-->
+						<rule id="ProjectsReadableByUsers"
+							inherit="true"
+							meta-element="tl.demo.projectManagement:ProjectScope"
+							role="demo.react.ProjectReader"
+						>
+							<group-with-name name="users"/>
+						</rule>
+						<!--
+							The same for the tickets of the ticket module, whose comments and
+							attachments reach the role through the security parents below.
+						-->
+						<rule id="TicketsReadableByUsers"
+							inherit="true"
+							meta-element="demo.tickets:Ticket"
+							role="demo.react.ProjectReader"
+						>
+							<group-with-name name="users"/>
+						</rule>
 					</rules>
 				</role-rules>
+				<!--
+					The rules below are the output of the coverage analysis: the "Show
+					configuration" command of the administration area (Access control, Coverage)
+					proposed them for every type that has no role source of its own and is
+					contained in exactly one composition, and they are taken over unchanged,
+					including their generated ids.
+				-->
+				<security-parents>
+					<rules>
+						<rule id="Attachment_securityParent"
+							inherit="true"
+							meta-element="demo.tickets:Attachment"
+						>
+							<step
+								attribute="demo.tickets:Comment#attachments"
+								inverse="true"
+							/>
+						</rule>
+						<rule id="Comment_securityParent"
+							inherit="true"
+							meta-element="demo.tickets:Comment"
+						>
+							<step
+								attribute="demo.tickets:Ticket#comments"
+								inverse="true"
+							/>
+						</rule>
+						<rule id="Milestone_securityParent"
+							inherit="true"
+							meta-element="tl.demo.projectManagement:Milestone"
+						>
+							<step
+								attribute="tl.demo.projectManagement:ProjectScope#milestones"
+								inverse="true"
+							/>
+						</rule>
+						<rule id="Note_securityParent"
+							inherit="true"
+							meta-element="tl.demo.projectManagement:Note"
+						>
+							<step
+								attribute="tl.demo.projectManagement:ProjectScope#notes"
+								inverse="true"
+							/>
+						</rule>
+						<rule id="Ticket_securityParent"
+							inherit="true"
+							meta-element="tl.demo.projectManagement:Ticket"
+						>
+							<step
+								attribute="tl.demo.projectManagement:ProjectScope#tickets"
+								inverse="true"
+							/>
+						</rule>
+					</rules>
+				</security-parents>
 			</instance>
 		</config>
 		<!--

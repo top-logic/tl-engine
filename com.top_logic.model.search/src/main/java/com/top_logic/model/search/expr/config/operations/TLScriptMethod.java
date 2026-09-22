@@ -120,7 +120,17 @@ public class TLScriptMethod extends GenericMethodWithSecurity {
 		}
 		try {
 			return _java.invoke(null, parameters(arguments));
-		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+		} catch (InvocationTargetException ex) {
+			// The function itself failed: report its failure, not the reflective call.
+			Throwable cause = ex.getCause();
+			if (cause instanceof RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			if (cause instanceof Error error) {
+				throw error;
+			}
+			throw new RuntimeException(cause);
+		} catch (IllegalAccessException | IllegalArgumentException ex) {
 			throw new RuntimeException(ex);
 		}
 	}

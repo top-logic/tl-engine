@@ -6,7 +6,6 @@
 package com.top_logic.knowledge.service.compact;
 
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKeyN;
 import com.top_logic.layout.I18NConstantsBase;
 
@@ -78,28 +77,6 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     report is closed, the persistency layer is restarted and all sessions are terminated.
 	 */
 	public static ResKey CONFIRM_COMPACT;
-
-	/**
-	 * @en The compaction requires an active maintenance window.
-	 */
-	public static ResKey ERROR_NO_MAINTENANCE_WINDOW;
-
-	/**
-	 * @en The compaction requires this node to be the only active node of the cluster, but {0}
-	 *     nodes are active.
-	 */
-	public static ResKey1 ERROR_CLUSTER_NODES_ACTIVE__COUNT;
-
-	/**
-	 * @en The state of the cluster cannot be determined.
-	 */
-	public static ResKey ERROR_CLUSTER_STATE_UNAVAILABLE;
-
-	/**
-	 * @en The history of this application cannot be compacted, because its persistency layer does
-	 *     not store the history in a database.
-	 */
-	public static ResKey ERROR_UNSUPPORTED_KNOWLEDGE_BASE;
 
 	/**
 	 * @en Closing this report restarts the persistency layer and ends your session. The maintenance

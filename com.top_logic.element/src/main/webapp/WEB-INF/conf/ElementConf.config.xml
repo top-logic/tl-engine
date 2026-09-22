@@ -11,6 +11,7 @@
 		           <module key="com.top_logic.element.structured.util.NumberHandlerFactory$Module" value="true"/>
 			       <module key="com.top_logic.util.model.CompatibilityService$Module" value="true" />
 			       <module key="com.top_logic.element.boundsec.attribute.AttributeClassifierManager$Module" value="true" />
+			       <module key="com.top_logic.element.boundsec.manager.coverage.SecurityCoverageCheck$Module" value="true" />
 				</modules>
 			</instance>
 		</config>
@@ -172,6 +173,10 @@
 
 		<config service-class="com.top_logic.element.structured.util.NumberHandlerFactory">
 			<instance class="com.top_logic.element.structured.util.NumberHandlerFactory" />
+		</config>
+		
+		<config service-class="com.top_logic.element.boundsec.manager.coverage.SecurityCoverageCheck">
+			<instance class="com.top_logic.element.boundsec.manager.coverage.SecurityCoverageCheck" />
 		</config>
 		
 		<config service-class="com.top_logic.util.model.CompatibilityService">

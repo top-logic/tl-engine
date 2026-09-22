@@ -7,6 +7,7 @@ package test.com.top_logic.layout.view.model;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -17,12 +18,14 @@ import junit.framework.TestCase;
 import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.tree.ReactTreeControl;
+import com.top_logic.layout.react.control.tree.SelectNodeArguments;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.tree.model.AbstractMutableTLTreeModel;
@@ -39,6 +42,7 @@ import com.top_logic.mig.html.DefaultSingleSelectionModel;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.SelectionModelOwner;
 import com.top_logic.model.impl.TransientTLObjectImpl;
+import com.top_logic.table.SelectionMode;
 
 /**
  * Tests that the selection of a tree and a {@link ViewChannel} follow each other.
@@ -387,6 +391,39 @@ public class TestTreeSelectionBinding extends TestCase {
 	}
 
 	/**
+	 * Tests that a click on a node writes the object of that node to the channel and nothing else:
+	 * a display bound to the channel goes straight from one clicked node to the next, without the
+	 * empty selection in between that giving the former one up would show.
+	 */
+	public void testClickWritesTheSelectedObjectOnly() {
+		bind(false, NodeLocator.SEARCHING);
+		Map<Object, String> nodeIds = nodeIds();
+		List<Object> written = new ArrayList<>();
+		_channel.addListener((sender, oldValue, newValue) -> written.add(newValue));
+
+		click(nodeIds, A, false);
+		click(nodeIds, B, false);
+
+		assertEquals("Each click writes the object of the node it hit, once.", List.of(A, B), written);
+	}
+
+	/**
+	 * Tests that a {@code Shift} click on a tree selecting any number of nodes writes the whole
+	 * range to the channel as one value.
+	 */
+	public void testShiftClickWritesTheRangeOnce() {
+		bind(true, NodeLocator.SEARCHING);
+		Map<Object, String> nodeIds = nodeIds();
+		click(nodeIds, A, false);
+		List<Object> written = new ArrayList<>();
+		_channel.addListener((sender, oldValue, newValue) -> written.add(newValue));
+
+		click(nodeIds, C, true);
+
+		assertEquals("The range reaches the channel as one value.", List.of(Set.of(A, B, C)), written);
+	}
+
+	/**
 	 * A locator that records what it was asked for, and refuses an object that is gone, as a
 	 * locator computing over the object does.
 	 */
@@ -432,6 +469,61 @@ public class TestTreeSelectionBinding extends TestCase {
 	}
 
 	/**
+	 * Sends the click on the node of the given business object, the way the client sends it.
+	 *
+	 * @param nodeIds
+	 *        The ids the tree gave its nodes, see {@link #nodeIds()}.
+	 * @param businessObject
+	 *        The object whose node is clicked.
+	 * @param shiftKey
+	 *        Whether the click extends the selection as a range from the node clicked before.
+	 */
+	private void click(Map<Object, String> nodeIds, Object businessObject, boolean shiftKey) {
+		Map<String, Object> arguments = new LinkedHashMap<>();
+		arguments.put(SelectNodeArguments.NODE_ID, nodeIds.get(businessObject));
+		arguments.put(SelectNodeArguments.CTRL_KEY, Boolean.FALSE);
+		arguments.put(SelectNodeArguments.SHIFT_KEY, Boolean.valueOf(shiftKey));
+		_treeControl.executeCommand(ReactTreeControl.SELECT_COMMAND, arguments);
+	}
+
+	/**
+	 * The id the tree gave each displayed node, keyed by the node's business object.
+	 *
+	 * <p>
+	 * Read from the state the tree sends to the client, which is where the client takes the id it
+	 * sends back with a gesture from.
+	 * </p>
+	 */
+	private Map<Object, String> nodeIds() {
+		_tree.setExpanded(root(), true);
+		_treeControl.updateVisibleState();
+
+		List<?> nodeStates;
+		try {
+			Map<?, ?> state = (Map<?, ?>) JSON.fromString(_treeControl.stateAsJSON());
+			nodeStates = (List<?>) state.get(ReactTreeControl.NODES);
+		} catch (JSON.ParseException ex) {
+			throw new AssertionError("The state sent to the client is not JSON.", ex);
+		}
+
+		List<DefaultTreeUINode> nodes = new ArrayList<>();
+		if (_tree.isRootVisible()) {
+			nodes.add(root());
+		}
+		nodes.addAll(root().getChildren());
+		assertEquals("The tree displays the nodes below its root, and the root where it shows it.",
+			nodes.size(), nodeStates.size());
+
+		Map<Object, String> result = new LinkedHashMap<>();
+		for (int n = 0, cnt = nodes.size(); n < cnt; n++) {
+			Map<?, ?> nodeState = (Map<?, ?>) nodeStates.get(n);
+			result.put(nodes.get(n).getBusinessObject(),
+				(String) nodeState.get(ReactTreeControl.NODE_ID));
+		}
+		return result;
+	}
+
+	/**
 	 * Builds the tree, its display and the binding under test.
 	 *
 	 * @param multi
@@ -448,6 +540,9 @@ public class TestTreeSelectionBinding extends TestCase {
 			: new DefaultSingleSelectionModel<>(SelectionModelOwner.NO_OWNER);
 		_treeControl = new ReactTreeControl(reactContext, _tree, _selectionModel,
 			(context, model) -> new ReactTextControl(context, String.valueOf(model)));
+		if (multi) {
+			_treeControl.setSelectionMode(SelectionMode.MULTI);
+		}
 
 		_binding = new TreeSelectionBinding(_treeControl, _selectionModel, () -> _tree, locator, _channel);
 	}

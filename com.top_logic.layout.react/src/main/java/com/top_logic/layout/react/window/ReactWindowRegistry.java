@@ -545,6 +545,28 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	}
 
 	/**
+	 * Rebuilds every window of this session from scratch.
+	 *
+	 * <p>
+	 * Called when everything the displayed trees were built from has changed - the personal
+	 * configuration was discarded, say. A tree holds what it read from that state in its controls and
+	 * writes it out again as the user works, so none of the trees may be rendered again: each window
+	 * is {@link WindowEntry#requestRebuild() marked} and told to reload, and the reload builds it
+	 * anew from the state as it now is.
+	 * </p>
+	 *
+	 * @implNote The trees are kept until the reload arrives, which is when they are disposed and
+	 *           replaced. The caller is a command running inside one of them, and the command's own
+	 *           post-processing continues on the tree that triggered it.
+	 */
+	public void rebuildWindows() {
+		for (WindowEntry entry : _windows.values()) {
+			entry.requestRebuild();
+			requestReload(entry.getQueue());
+		}
+	}
+
+	/**
 	 * Tells every window of the identified session to reload.
 	 *
 	 * <p>
@@ -568,30 +590,30 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	}
 
 	/**
-	 * Tells the browser of the given window to reload, so that it does not keep displaying a page
-	 * belonging to a session that no longer exists.
+	 * Tells the browser of the given window to reload, so that it does not keep displaying a page the
+	 * server no longer stands behind.
 	 *
 	 * <p>
-	 * A session can end without the browser doing anything: an administrator terminates it, or the
-	 * maintenance mode starts and logs out everybody who may not stay. The page then still shows the
-	 * previous user and their content, while the first interaction merely establishes a fresh
-	 * anonymous session behind the scenes and appears to do nothing at all. Reloading brings the
-	 * browser back as the anonymous user, showing the login and whatever the application announces
-	 * to it.
+	 * A page becomes obsolete without the browser doing anything. Its session ends because an
+	 * administrator terminates it or the maintenance mode logs out everybody who may not stay: the
+	 * page then still shows the previous user and their content, while the first interaction merely
+	 * establishes a fresh anonymous session behind the scenes and appears to do nothing at all.
+	 * Or what the displayed tree was built from is discarded, as in {@link #rebuildWindows()}.
+	 * Reloading brings the browser back with a page that shows the state as it now is.
 	 * </p>
 	 *
-	 * @implNote Enqueued before the queue is shut down, because {@link SSEUpdateQueue#enqueue} writes
-	 *           through immediately while {@link SSEUpdateQueue#shutdown()} closes the connection and
-	 *           discards whatever is still pending. A window whose browser is already gone simply has
-	 *           no connection to write to.
+	 * @implNote A caller that also shuts the queue down enqueues first, because
+	 *           {@link SSEUpdateQueue#enqueue} writes through immediately while
+	 *           {@link SSEUpdateQueue#shutdown()} closes the connection and discards whatever is
+	 *           still pending. A window whose browser is already gone simply has no connection to
+	 *           write to.
 	 */
 	private static void requestReload(SSEUpdateQueue queue) {
 		try {
 			queue.enqueue(JSSnipplet.create().setCode("window.location.reload();"));
 		} catch (RuntimeException ex) {
-			// The session is ending either way: a window that cannot be reached must not keep the
-			// remaining ones from being told.
-			Logger.error("Failed to request a reload of a window whose session ended.", ex,
+			// A window that cannot be reached must not keep the remaining ones from being told.
+			Logger.error("Failed to request a reload of a window.", ex,
 				ReactWindowRegistry.class);
 		}
 	}

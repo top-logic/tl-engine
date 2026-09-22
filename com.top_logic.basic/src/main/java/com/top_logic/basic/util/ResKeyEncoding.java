@@ -292,9 +292,21 @@ public class ResKeyEncoding {
 
 	static final String QUOTED_SPECIAL = "\\\\'|\\\\\"|\\\\\\\\";
 
+	/**
+	 * A quoted translation value, either single-quoted or double-quoted.
+	 *
+	 * <p>
+	 * The alternation of both quote styles is enclosed in a non-capturing group, so that whatever
+	 * follows the literal in an embedding pattern (such as {@link #LANGTAG}) applies to both quote
+	 * styles. The literal contributes exactly two capture groups: the contents of the single-quoted
+	 * form and the contents of the double-quoted form.
+	 * </p>
+	 */
 	static final String LITERAL =
-		"'" + "(" + "(?:" + "[^\\']*" + "|" + QUOTED_SPECIAL + ")*" + ")" + "'" + "|" +
-		"\"" + "(" + "(?:" + "[^\\\"]*" + "|" + QUOTED_SPECIAL + ")*" + ")" + "\"";
+		"(?:" +
+			"'" + "(" + "(?:" + "[^\\']*" + "|" + QUOTED_SPECIAL + ")*" + ")" + "'" + "|" +
+			"\"" + "(" + "(?:" + "[^\\\"]*" + "|" + QUOTED_SPECIAL + ")*" + ")" + "\"" +
+			")";
 
 	private static final String NAME = "[a-zA-Z][a-zA-Z0-9]*(?:-[a-zA-Z][a-zA-Z0-9]*)*";
 

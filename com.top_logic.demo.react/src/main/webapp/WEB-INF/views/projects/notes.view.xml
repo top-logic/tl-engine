@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The notes of a project, pushed by the Notes tile of the project cockpit.
+	
+	The view sits behind a tile of the cockpit and is reachable from no root view, so it is shown
+	within the frame the tile pushed.
+-->
+<view>
+	<channels>
+		<channel name="project"/>
+	</channels>
+
+	<panel>
+		<title>
+			<en>Notes</en>
+			<de>Notizen</de>
+		</title>
+		<table
+			observed-types="tl.demo.projectManagement:Note"
+			types="tl.demo.projectManagement:Note"
+		>
+			<columns>
+				<column attribute="text"/>
+			</columns>
+			<inputs>
+				<input channel="project"/>
+			</inputs>
+			<rows>p -&gt; if($p == null, [], $p.get(`tl.demo.projectManagement:ProjectScope#notes`))</rows>
+		</table>
+	</panel>
+</view>

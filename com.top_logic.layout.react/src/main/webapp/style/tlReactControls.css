@@ -6561,10 +6561,50 @@ button.tlToolbar__menuTrigger:focus-visible {
   border-radius: var(--border-radius-02);
   background: var(--layer-01);
 }
-.tlDashboard__tile > *:not(.tlDashboard__overlay) {
+.tlDashboard__tile > *:not(.tlDashboard__overlay, .tlDashboard__tileAction, .tlDashboard__tileMarker) {
   flex: 1 1 auto;
   min-height: 0;
   min-width: 0;
+}
+/* The name and the keyboard operation of a tile that is an entry point: out of sight, in the tab
+   order. The pointer is answered by the tile around it, so the button stays out of its way. */
+.tlDashboard__tileAction {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  margin: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  opacity: 0;
+  white-space: nowrap;
+  pointer-events: none;
+}
+/* The whole tile is the surface the user presses. */
+.tlDashboard__tile--action { cursor: pointer; }
+.tlDashboard:not(.tlDashboard--edit) .tlDashboard__tile--action:not(.tlDashboard__tile--disabled):hover {
+  border-color: var(--border-interactive);
+  box-shadow: var(--shadow-raised);
+}
+.tlDashboard__tile--action:has(> .tlDashboard__tileAction:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+/* A tile whose action is refused keeps its resting look - what it shows stays readable. */
+.tlDashboard__tile--disabled { cursor: default; }
+.tlDashboard__tile--disabled .tlDashboard__tileMarker { color: var(--text-disabled); }
+/* The mark that the tile leads somewhere, drawn over its content in the upper corner. */
+.tlDashboard__tileMarker {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 4;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1;
+  pointer-events: none;
 }
 .tlDashboard--edit .tlDashboard__tile { cursor: move; }
 .tlDashboard__tile--dragging { opacity: 0.4; }

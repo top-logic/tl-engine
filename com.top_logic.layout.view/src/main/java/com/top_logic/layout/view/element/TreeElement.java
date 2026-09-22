@@ -258,18 +258,43 @@ public class TreeElement implements UIElement {
 		 * How a node of the tree is displayed.
 		 *
 		 * <p>
-		 * By default, a node shows the icon and the label of the object it stands for, and a click
-		 * on it selects that node. A tree whose nodes should lead to the object they display
-		 * switches the link on:
+		 * By default, a node shows the icon and the label of the object it stands for and a click
+		 * on it selects that node, see {@link NodeDisplay}. A node content configured explicitly is
+		 * the general display of an object, which leads to the place the application shows that
+		 * object at:
 		 * </p>
 		 *
 		 * <pre>
-		 * &lt;nodeContent class="com.top_logic.layout.react.controlprovider.MetaResourceControlProvider" link="true"/&gt;
+		 * &lt;nodeContent class="com.top_logic.layout.react.controlprovider.MetaResourceControlProvider"/&gt;
 		 * </pre>
 		 */
 		@Name(NODE_CONTENT)
-		@ItemDefault(MetaResourceControlProvider.Config.class)
+		@ItemDefault(NodeDisplay.class)
 		PolymorphicConfiguration<ReactControlProvider> getNodeContent();
+	}
+
+	/**
+	 * The display a node of a tree gets unless the tree configures another one.
+	 *
+	 * <p>
+	 * A node shows the icon and the label of the object it stands for.
+	 * </p>
+	 */
+	public interface NodeDisplay extends MetaResourceControlProvider.Config {
+
+		/**
+		 * Whether the node leads to the place the application shows its object at.
+		 *
+		 * <p>
+		 * A node is the object's own place in the view, and a click on it selects the object. A
+		 * link leaving the tree on that click is in the way, so a node is plain unless the tree
+		 * asks for the link. Opening the object a node stands for is what {@link Config#getOnActivate()}
+		 * is for.
+		 * </p>
+		 */
+		@Override
+		@BooleanDefault(false)
+		boolean getLink();
 	}
 
 	private final Config _config;

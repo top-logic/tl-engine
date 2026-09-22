@@ -87,18 +87,19 @@ public class MetaResourceControlProvider implements ReactControlProvider {
 		 * Whether the display leads to the place the application shows the object at.
 		 *
 		 * <p>
-		 * A link is off by default, because the display of an object is commonly the object's own
-		 * place in the view - a node of a tree - and there a click selects it. A link that leaves
-		 * the view on that click is in the way.
+		 * A display of an object is normally a value pointing at it, and such a value is a link to
+		 * the place the object is shown at, so that the user reaches the object from wherever it is
+		 * mentioned.
 		 * </p>
 		 *
 		 * <p>
-		 * Where the display is a value pointing at an object shown elsewhere, this option turns the
-		 * value into a link to it.
+		 * A display that is the object's own place in the view - a node of a tree - switches the
+		 * link off: a click there selects the object, and a link leaving the view on that click is
+		 * in the way.
 		 * </p>
 		 */
 		@Name(LINK)
-		@BooleanDefault(false)
+		@BooleanDefault(true)
 		boolean getLink();
 
 		/** @see #getLink() */

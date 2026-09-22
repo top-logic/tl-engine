@@ -94,20 +94,28 @@ public class TestTreeElement extends TestCase {
 	 * tree, and that a tree saying nothing about its node display gets exactly that.
 	 */
 	public void testNodeContent() throws Exception {
-		assertDefaultNodeContent("A tree displays its nodes this way unless it says otherwise.",
+		assertNodeDisplay("A tree displays its nodes this way unless it says otherwise.",
 			TypedConfiguration.newConfigItem(TreeElement.Config.class));
 
-		assertDefaultNodeContent("The test tree says nothing about its node display.", readTreeConfig());
+		assertNodeDisplay("The test tree says nothing about its node display.", readTreeConfig());
 	}
 
-	private void assertDefaultNodeContent(String message, TreeElement.Config treeConfig) {
+	/**
+	 * Tests that a display of an object leads to it wherever the application shows it, so that the
+	 * tree is the only place dropping that link.
+	 */
+	public void testAConfiguredNodeContentLeadsToItsObject() {
+		assertTrue("A display of an object leads to the place the application shows it at.",
+			TypedConfiguration.newConfigItem(MetaResourceControlProvider.Config.class).getLink());
+	}
+
+	private void assertNodeDisplay(String message, TreeElement.Config treeConfig) {
 		PolymorphicConfiguration<?> nodeContent = treeConfig.getNodeContent();
 
 		assertNotNull(message, nodeContent);
-		assertTrue(message + " Node content: " + nodeContent,
-			nodeContent instanceof MetaResourceControlProvider.Config);
+		assertTrue(message + " Node content: " + nodeContent, nodeContent instanceof TreeElement.NodeDisplay);
 
-		MetaResourceControlProvider.Config display = (MetaResourceControlProvider.Config) nodeContent;
+		TreeElement.NodeDisplay display = (TreeElement.NodeDisplay) nodeContent;
 		assertTrue("A node shows the icon of its object.", display.getImage());
 		assertTrue("A node shows the label of its object.", display.getLabel());
 		assertFalse("A click on a node selects it instead of leading away from the tree.",

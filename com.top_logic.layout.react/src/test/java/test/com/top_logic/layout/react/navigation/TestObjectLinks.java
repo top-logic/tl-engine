@@ -237,19 +237,19 @@ public class TestObjectLinks extends TestCase {
 		assertTrue(state.contains("\"label\":\"" + UNSHOWN + "\""));
 	}
 
-	/** The display an object gets by default stands for the object, so it does not lead away. */
-	public void testTheDefaultDisplayOfAnObjectIsNoLink() {
-		assertFalse(display(TypedConfiguration.newConfigItem(MetaResourceControlProvider.Config.class))
+	/** The display an object gets by default leads to the place the application shows it at. */
+	public void testTheDefaultDisplayOfAnObjectLeadsToIt() {
+		assertTrue(display(TypedConfiguration.newConfigItem(MetaResourceControlProvider.Config.class))
 			.stateAsJSON().contains(HAS_LINK));
 	}
 
-	/** A display configured to lead to the object is a link wherever the object is shown. */
-	public void testAConfiguredLinkLeadsToTheObject() {
+	/** A display that stands for the object where it is can drop the link. */
+	public void testADisplayWithoutTheLinkLeadsNowhere() {
 		MetaResourceControlProvider.Config config =
 			TypedConfiguration.newConfigItem(MetaResourceControlProvider.Config.class);
-		config.setLink(true);
+		config.setLink(false);
 
-		assertTrue(display(config).stateAsJSON().contains(HAS_LINK));
+		assertFalse(display(config).stateAsJSON().contains(HAS_LINK));
 	}
 
 	/** A display without the label shows the object by its icon alone. */

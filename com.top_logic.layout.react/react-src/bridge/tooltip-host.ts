@@ -10,8 +10,8 @@
  *   <li>{@code key:<key>} - rich content fetched from the server for the enclosing mounted
  *       control, which answers the key.</li>
  *   <li>{@code dynamic} - the declaring element resolves key or content itself, asked through a
- *       {@code tl-tooltip-resolve} DOM event that carries the hovered element (a table resolving
- *       the tooltip of the cell under the pointer).</li>
+ *       {@code tl-tooltip-resolve} DOM event that carries the hovered element (a container
+ *       answering for whichever of its parts the pointer rests on).</li>
  *   <li>{@code content} - the element's own text, whitespace collapsed; an element without text
  *       has no tooltip.</li>
  * </ul>
@@ -96,8 +96,8 @@ function onPointerOver(e: PointerEvent): void {
 
   const pending = resolveSpec(spec, target);
   if (!pending) {
-    // A declaration that yields nothing - an empty cell of a table resolving its tooltips
-    // dynamically, a host declining - leaves the pointer on an element without a tooltip, which
+    // A declaration that yields nothing - an element whose own text is empty, a host declining
+    // to answer - leaves the pointer on an element without a tooltip, which
     // closes what is open. The pointer arriving here suppressed the close its pointerout would
     // otherwise have scheduled, so the close is scheduled here instead.
     cancelOpen();

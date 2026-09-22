@@ -67,9 +67,35 @@ public sealed interface CellContent {
 	 *
 	 * @param payload
 	 *        The UI-tier-specific rendering payload.
+	 * @param tooltip
+	 *        Optional tooltip text, or {@code null}.
 	 */
-	record Raw(Object payload) implements CellContent {
-		// Pure value type.
+	record Raw(Object payload, String tooltip) implements CellContent {
+
+		/**
+		 * Creates a {@link Raw} cell without a {@link #tooltip()}.
+		 *
+		 * @param payload
+		 *        The UI-tier-specific rendering payload.
+		 */
+		public Raw(Object payload) {
+			this(payload, null);
+		}
+
+	}
+
+	/**
+	 * A tooltip distinct from the cell's text, or {@code null}.
+	 *
+	 * <p>
+	 * What the cell says over and above what it displays: the text a cell whose value is an icon or
+	 * a button reads as, the full text of a value the cell abbreviates. A cell that has nothing to
+	 * add answers {@code null} - the displayed text is then what the UI tier offers where it does
+	 * not fit.
+	 * </p>
+	 */
+	default String tooltip() {
+		return null;
 	}
 
 	/** Shared {@link Empty} instance. */

@@ -233,6 +233,7 @@ const RUN_SCOPED_EVENTS = new Set([
   'message_complete',
   'provider_error',
   'model_switched',
+  'tx_rollback',
   'delegation_event',
 ])
 
@@ -1430,6 +1431,23 @@ export class ChatStore {
         // sentence the user reads is the renderer's, from the kind.
         this.dispatch({ type: 'ADD_ERROR', message: data.errorMessage ?? '', code: data.kind })
         finish(text, data.errorMessage ?? '')
+      })
+
+      on('tx_rollback', (e) => {
+        // The turn wrote something and none of it was kept. Nobody else says so: the model is told
+        // in a tool result and may still answer "done", and the answer is all the user sees. So a
+        // notice in this turn, under its steps - not an error card, because the run itself went on,
+        // and not the composer's strip, because the next send wipes that and this is part of what
+        // happened here (#429).
+        //
+        // The reason is the server's own line, verbatim, which is what the recorded transaction
+        // part carries too - so the notice reads the same live as after a reload.
+        const data = parseJson<{ reason?: string }>(e.data, {})
+        this.dispatch({
+          type: 'ADD_NOTICE',
+          kind: 'transaction_rolled_back',
+          detail: data.reason ?? '',
+        })
       })
 
       on('model_switched', (e) => {

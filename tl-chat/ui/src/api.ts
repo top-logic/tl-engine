@@ -492,6 +492,7 @@ interface PersistedPart {
     userResponse?: string
   }
   errorData?: { kind?: string; errorMessage: string }
+  transactionData?: { type?: string; revisionNumber?: number; reason?: string }
   systemData?: { eventType?: string; details?: string }
 }
 
@@ -664,6 +665,21 @@ export function turnsJsonToMessages(turnsJson: string | undefined): ChatMessage[
               id: part.id,
               code: part.errorData.kind,
               message: part.errorData.errorMessage,
+              timestamp: part.timestamp,
+            })
+          }
+          break
+        case 'transaction':
+          // Only the rollback. `BEGAN` and `COMMITTED` are the normal course of a turn that wrote
+          // something, and the chat has never drawn them; a rollback is the one that changes what
+          // the reader may believe about the answer above it, so the restored turn says it too -
+          // the live notice would otherwise be gone the moment the page is reloaded (#512).
+          if (part.transactionData?.type === 'ROLLED_BACK') {
+            msgs.push({
+              type: 'notice',
+              id: part.id,
+              kind: 'transaction_rolled_back',
+              detail: part.transactionData.reason ?? '',
               timestamp: part.timestamp,
             })
           }

@@ -209,6 +209,69 @@ describe('a running turn', () => {
     expect(html).not.toContain('error-card')
   })
 
+  /**
+   * The defect of this change: the guard rolled the turn back, the model answered anyway, and the
+   * thread showed the answer alone. The notice belongs in the turn, under its steps, so the reader
+   * sees it while reading what the agent claims to have done.
+   */
+  it('shows a rolled-back turn as a warning notice inside that turn', () => {
+    const html = render(
+      build([
+        ...TURN_STARTED,
+        { type: 'ADD_TOOL', toolUseId: 'tc1', name: 'browserScreenshot', input: {} },
+        { type: 'UPDATE_TOOL', toolUseId: 'tc1', status: 'done' },
+        {
+          type: 'ADD_NOTICE',
+          kind: 'transaction_rolled_back',
+          detail: 'Pre-commit security check failed',
+        },
+        { type: 'APPEND_TEXT', id: 'a1', delta: 'Screenshot gespeichert.' },
+        { type: 'END_RUN', runId: 'r1' },
+      ]),
+      false,
+    )
+    expect(html).toContain('notice-line is-warning')
+    expect(html).toContain(labels.transactionRolledBack)
+    expect(html).toContain(`${labels.reason}: Pre-commit security check failed`)
+    // Not a failed run: the danger card is what a turn that produced nothing wears.
+    expect(html).not.toContain('error-card')
+    // And not a step either - the rollback is not work the agent did.
+    expect(html).toContain(labels.runSteps(1))
+  })
+
+  /** A model switch keeps the quiet line it had: nothing the reader has to act on (#344). */
+  it('keeps the model-switch notice free of the warning accent', () => {
+    const html = render(
+      build([
+        ...TURN_STARTED,
+        { type: 'ADD_NOTICE', kind: 'model_switched', detail: 'a -> b: OVERLOADED' },
+        { type: 'END_RUN', runId: 'r1' },
+      ]),
+      false,
+    )
+    expect(html).toContain('notice-line')
+    expect(html).not.toContain('is-warning')
+  })
+
+  /**
+   * A commit failure may report a reason of any length, and a notice that pushed the answer off
+   * the screen would be worse than none. Cut to a head with an expander, as tool arguments are.
+   */
+  it('clamps a very long rollback reason', () => {
+    const reason = 'x'.repeat(500)
+    const html = render(
+      build([
+        ...TURN_STARTED,
+        { type: 'ADD_NOTICE', kind: 'transaction_rolled_back', detail: reason },
+        { type: 'END_RUN', runId: 'r1' },
+      ]),
+      false,
+    )
+    expect(html).not.toContain(reason)
+    expect(html).toContain('x'.repeat(300))
+    expect(html).toContain(labels.showMore(200))
+  })
+
   it('reports the duration once the run has ended', () => {
     const html = render(build([...FIRST_DELTA, { type: 'END_RUN', runId: 'r1' }]), false)
     expect(html).toContain('Worked for')

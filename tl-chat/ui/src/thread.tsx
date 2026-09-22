@@ -113,8 +113,9 @@ function runMetaOf(events: ChatMessage[]): RunMeta | null {
 /**
  * The turn's notices of one kind.
  *
- * A model switch explains the answer that follows it, so it stands above the answer; a cancel says
- * why the answer stops where it does, so it stands under it.
+ * A model switch explains the answer that follows it, and a rollback corrects it - the answer may
+ * well say "done" over writes that were thrown away - so both stand above the answer, under the
+ * turn's steps; a cancel says why the answer stops where it does, so it stands under it.
  */
 function notices(events: ChatMessage[], kind: NoticeKind): NoticeMessage[] {
   return events.filter((item): item is NoticeMessage => item.type === 'notice' && item.kind === kind)
@@ -849,20 +850,45 @@ function ErrorCard({ item, language }: { item: ErrorMessage; language: Language 
   )
 }
 
+/** How much of a notice's detail is shown before the reader asks for the rest. */
+const NOTICE_DETAIL_CHARS = 300
+
 /**
- * A run that continued on another model than it started on, or that the user stopped.
+ * Something that happened around the turn rather than in it: a model switch, a rollback, a cancel.
  *
- * Quieter than an {@link ErrorCard} on purpose: nothing failed for the user, so this is a line of
- * context, not a card demanding attention. The sentence is translated and comes from the notice's
- * kind; for a model switch the server's own line - which model, which model instead, and why - sits
- * under it, exactly as the error card keeps the provider's words (#429).
+ * Quieter than an {@link ErrorCard} on purpose: the run itself did not fail, so this is a line of
+ * context under the turn's steps, not a card demanding attention. The sentence is translated and
+ * comes from the notice's kind; the server's own line sits under it, exactly as the error card
+ * keeps the provider's words (#429).
+ *
+ * A rollback wears the warning accent, because there the answer above it may well say the work is
+ * done while none of it was saved - a model switch changes nothing the reader has to act on. Still
+ * an accent and not a red wall: what happened is that a change did not happen.
+ *
+ * The detail is the server's plain text, never markdown, and a long one is cut to a readable head
+ * with an expander, the way a tool's arguments are: a commit failure can report a reason of any
+ * length, and a notice must not push the answer off the screen.
  */
 function NoticeLine({ item, language }: { item: NoticeMessage; language: Language }) {
   const labels = bundle(language)
+  const [open, setOpen] = useState(false)
+  const warning = item.kind === 'transaction_rolled_back'
+  const detail = item.detail.trim()
+  const long = detail.length > NOTICE_DETAIL_CHARS
+  const shown = !long || open ? detail : `${detail.slice(0, NOTICE_DETAIL_CHARS)}…`
   return (
-    <div className="notice-line">
-      <div>{item.kind === 'cancelled' ? labels.cancelled : labels.modelSwitched}</div>
-      {item.detail ? <div className="notice-line-detail">{item.detail}</div> : null}
+    <div className={`notice-line${warning ? ' is-warning' : ''}`} role={warning ? 'status' : undefined}>
+      <div>
+        {warning ? labels.transactionRolledBack : item.kind === 'cancelled' ? labels.cancelled : labels.modelSwitched}
+      </div>
+      {detail ? (
+        <div className="notice-line-detail">{warning ? `${labels.reason}: ${shown}` : shown}</div>
+      ) : null}
+      {long ? (
+        <button type="button" className="notice-line-more" onClick={() => setOpen((value) => !value)}>
+          {open ? labels.showLess : labels.showMore(detail.length - NOTICE_DETAIL_CHARS)}
+        </button>
+      ) : null}
     </div>
   )
 }
@@ -990,6 +1016,9 @@ function AgentRun({
         <DetailedTrace events={events} results={results} labels={labels} effort={effort} model={''} />
       ) : null}
       {notices(turn.events, 'model_switched').map((item) => (
+        <NoticeLine key={item.id} item={item} language={language} />
+      ))}
+      {notices(turn.events, 'transaction_rolled_back').map((item) => (
         <NoticeLine key={item.id} item={item} language={language} />
       ))}
       {pending ? <PendingAnswer /> : null}

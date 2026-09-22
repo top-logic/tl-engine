@@ -626,6 +626,56 @@ describe('the stream', () => {
   })
 
   /**
+   * The turn wrote something and none of it was kept (#410). Nobody else tells the user: the model
+   * is told in a tool result and may still answer "done", and the answer is all the chat shows.
+   */
+  it('writes a rolled-back transaction into the transcript as a notice', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+
+    stream.emit('run_started', { runId: 'r1' })
+    stream.emit('turn_started', {})
+    stream.emit('tx_began', {})
+    stream.emit('tx_rollback', { reason: 'Pre-commit security check failed' })
+
+    const notices = store.getState().messages.filter((m) => m.type === 'notice')
+    expect(notices).toHaveLength(1)
+    // The server's own line, character for character - what the recorded transaction part carries,
+    // so the notice reads the same live as after a reload.
+    expect(notices[0] && 'detail' in notices[0] ? notices[0].detail : '').toBe(
+      'Pre-commit security check failed',
+    )
+    expect(notices[0] && 'kind' in notices[0] ? notices[0].kind : '').toBe('transaction_rolled_back')
+    // The run itself did not fail; an error card would say it did.
+    expect(store.getState().messages.some((m) => m.type === 'error')).toBe(false)
+
+    await settle()
+    release()
+  })
+
+  /** A committed turn is the normal course of things and says nothing. */
+  it('writes no notice for a transaction that committed', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+
+    stream.emit('run_started', { runId: 'r1' })
+    stream.emit('turn_started', {})
+    stream.emit('tx_began', {})
+    stream.emit('tx_committed', { revisionNumber: 42 })
+
+    expect(store.getState().messages.some((m) => m.type === 'notice')).toBe(false)
+
+    await settle()
+    release()
+  })
+
+  /**
    * A run the user stopped is not a failure (#549).
    *
    * The frames in the order the server sends them for a cancel mid-answer: what was streamed, the

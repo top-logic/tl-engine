@@ -58,6 +58,10 @@
     color-mix(in srgb, var(--support-error, #d3181b) 12%, transparent)
   );
   --chat-warn: var(--text-warning, var(--support-warning, #d3a118));
+  --chat-warn-soft: var(
+    --background-warning--lighter,
+    color-mix(in srgb, var(--support-warning, #d3a118) 12%, transparent)
+  );
   --chat-link: var(--link, var(--link-primary, var(--button-primary, #2968c8)));
   --chat-small: var(--body-01-font-size, 0.75rem);
   --chat-heading: var(--heading-04-font-size, 1.5rem);
@@ -1846,7 +1850,7 @@
 
 /*
  * A run that continued on another model (#344). Deliberately quieter than .error-card: nothing
- * failed for the user, so it sits above the answer as context, in the thread's secondary text
+ * failed for the user, so it sits under the turn's steps as context, in the thread's secondary text
  * colour rather than in the danger colour.
  */
 .notice-line {
@@ -1856,11 +1860,39 @@
   font-size: var(--chat-small);
 }
 
-/* Which model, which model instead, and why - available, not shouted, as under the error card. */
+/*
+ * A turn whose data changes were thrown away. It reads in the thread's own text colour over the
+ * warning tint, because the answer above it may claim the work is done - so this line has to be
+ * read, not merely available. It is still not .error-card: the run did not fail, and the danger
+ * colour is kept for the turn that produced nothing at all.
+ *
+ * Both tokens carry their own fallback at the top of this file, so the tint is correct in the light
+ * and the dark theme without a rule per theme.
+ */
+.notice-line.is-warning {
+  color: var(--text-primary);
+  background: var(--chat-warn-soft);
+  border-left-color: var(--chat-warn);
+  border-radius: 0 var(--r-1) var(--r-1) 0;
+}
+
+/* The server's own line - which model instead and why, or why the turn was rolled back. */
 .notice-line-detail {
   margin-top: 0.125rem;
   opacity: 0.8;
   word-break: break-word;
+}
+
+/* The notice's own expander, matching .trace-more rather than inventing a second look. */
+.notice-line-more {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--chat-link);
+  font-size: 0.6875rem;
+}
+
+.notice-line-more:hover {
+  text-decoration: underline;
 }
 
 .jump-latest {

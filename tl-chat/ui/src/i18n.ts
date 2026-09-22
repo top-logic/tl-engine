@@ -217,6 +217,8 @@ const EN = {
   agentLabel: 'Agent',
   providerError: 'The model returned an error. The attempt was discarded; you can send again.',
   modelSwitched: 'The configured model could not answer. The rest of this reply comes from another one.',
+  transactionRolledBack:
+    'The data changes of this reply were discarded. Nothing of what the agent wrote in this step was saved.',
   providerErrorRateLimited: 'The model is being asked too often just now. Try again in a moment.',
   providerErrorBilling: 'The model account cannot be billed. Please tell your administrator.',
   providerErrorOverloaded: 'The model is overloaded just now. Try again in a moment.',
@@ -451,6 +453,8 @@ const DE: Bundle = {
   agentLabel: 'Agent',
   providerError: 'Das Modell hat einen Fehler gemeldet. Der Versuch wurde verworfen, du kannst erneut senden.',
   modelSwitched: 'Das eingestellte Modell konnte nicht antworten. Der Rest dieser Antwort kommt von einem anderen.',
+  transactionRolledBack:
+    'Die Datenänderungen dieser Antwort wurden verworfen. Nichts von dem, was der Agent in diesem Schritt geschrieben hat, wurde gespeichert.',
   providerErrorRateLimited: 'Das Modell wird gerade zu oft angefragt. Versuche es gleich noch einmal.',
   providerErrorBilling: 'Das Modellkonto kann nicht abgerechnet werden. Bitte wende dich an deine Administration.',
   providerErrorOverloaded: 'Das Modell ist gerade überlastet. Versuche es gleich noch einmal.',

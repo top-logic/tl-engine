@@ -81,9 +81,10 @@ import com.top_logic.util.TLContext;
  * 
  * <p>
  * A reference pinned to a discarded revision is moved to the compaction revision. When its target
- * object has no state there, because it was deleted within the compacted range, the reference is
- * cleared to the value a reference without a target has. Reading such an attribute then answers
- * nothing instead of failing.
+ * object has no state there, because it was deleted within the compacted range, an optional
+ * reference is cleared to the value a reference without a target has, so that reading the attribute
+ * answers nothing instead of failing. A row whose <em>mandatory</em> reference points nowhere
+ * cannot say that and is deleted instead, even when it holds the current state.
  * </p>
  *
  * @see HistoryCleanup Dropping the complete history of unversioned tables.
@@ -600,9 +601,10 @@ public class HistoryCompaction {
 			_table = table;
 			DBTableMetaObject type = table.getType();
 			List<ItemTables.Reference> references = table.getPinnedReferences();
+			CompiledStatement deleteRow = references.isEmpty() ? null : createDeletePinnedRow(table);
 			_pins = new PinAccess[references.size()];
 			for (int n = 0, cnt = references.size(); n < cnt; n++) {
-				_pins[n] = new PinAccess(table, references.get(n));
+				_pins[n] = new PinAccess(table, references.get(n), deleteRow);
 			}
 			_targetExists = createTargetExists(table);
 			_deleteWindow = createDeleteWindow(table);
@@ -621,8 +623,22 @@ public class HistoryCompaction {
 		}
 
 		/**
-		 * Moves references pinned to a discarded revision to the compaction revision and clears
+		 * Moves references pinned to a discarded revision to the compaction revision and resolves
 		 * those that then point to an object that does not exist there.
+		 *
+		 * <p>
+		 * An optional reference is cleared, a row whose mandatory reference dangles is deleted. The
+		 * row may well be the current one: an object whose mandatory reference is pinned to a
+		 * revision that the compaction discards, and whose target was deleted within that range, is
+		 * gone from the current state afterwards, because the state it describes cannot be
+		 * expressed any more.
+		 * </p>
+		 *
+		 * <p>
+		 * The mandatory references are resolved first, so that a row a dangling mandatory pin
+		 * deletes is not counted again as a row with a cleared optional pin. Both orders produce
+		 * the same database, but only this one makes the dry run count what the run does.
+		 * </p>
 		 *
 		 * <p>
 		 * The markers that a pin column can hold besides a revision number lie outside of every
@@ -649,8 +665,19 @@ public class HistoryCompaction {
 					tableReport.addRewrittenPins(pin.raise().executeUpdate(connection, lowerArg, upperArg));
 				}
 			}
+			Set<RowKey> deletedRows = new HashSet<>();
 			for (PinAccess pin : _pins) {
-				tableReport.addClearedPins(pin.clearDangling(connection, lower, upper, dryRun, log));
+				if (!pin.isMandatory()) {
+					continue;
+				}
+				tableReport.addRowsDeletedForDanglingPins(
+					pin.resolveDangling(connection, lower, upper, dryRun, deletedRows, log));
+			}
+			for (PinAccess pin : _pins) {
+				if (pin.isMandatory()) {
+					continue;
+				}
+				tableReport.addClearedPins(pin.resolveDangling(connection, lower, upper, dryRun, deletedRows, log));
 			}
 			if (!dryRun) {
 				connection.commit();
@@ -737,7 +764,9 @@ public class HistoryCompaction {
 
 		private final CompiledStatement _clear;
 
-		PinAccess(ItemTables.Table table, ItemTables.Reference reference) {
+		private final CompiledStatement _deleteRow;
+
+		PinAccess(ItemTables.Table table, ItemTables.Reference reference, CompiledStatement deleteRow) {
 			_table = table;
 			_reference = reference;
 			_monomorphicTarget = reference.getMonomorphicTargetType();
@@ -746,6 +775,7 @@ public class HistoryCompaction {
 			_countRaise = createCountInRange(table.getType(), revColumn);
 			_selectCandidates = createSelectPinCandidates(table, reference);
 			_clear = createClearPin(table, reference);
+			_deleteRow = deleteRow;
 		}
 
 		CompiledStatement raise() {
@@ -757,8 +787,18 @@ public class HistoryCompaction {
 		}
 
 		/**
-		 * Clears the pins of the surviving rows that point to an object without a state in the
-		 * compaction revision.
+		 * Whether a row of this table must have a value in this reference.
+		 *
+		 * @see ItemTables.Reference#isMandatory()
+		 */
+		boolean isMandatory() {
+			return _reference.isMandatory();
+		}
+
+		/**
+		 * Resolves the pins of the surviving rows that point to an object without a state in the
+		 * compaction revision: an optional pin is cleared, a row with a dangling mandatory pin is
+		 * deleted.
 		 * 
 		 * <p>
 		 * Rows that lie completely inside the compacted range are left alone, because the delete
@@ -772,21 +812,35 @@ public class HistoryCompaction {
 		 * there.
 		 * </p>
 		 * 
-		 * @return The number of pins that were (or would be) cleared.
+		 * @param deletedRows
+		 *        The rows a dangling mandatory pin deletes. Rows already listed are skipped, rows
+		 *        this call deletes are added.
+		 * @return The number of rows that were (or would be) deleted or cleared.
 		 */
-		int clearDangling(PooledConnection connection, long lower, long upper, boolean dryRun, Log log)
-				throws SQLException {
+		int resolveDangling(PooledConnection connection, long lower, long upper, boolean dryRun,
+				Set<RowKey> deletedRows, Log log) throws SQLException {
 			List<PinCandidate> candidates = fetchCandidates(connection, lower, upper);
 			if (candidates.isEmpty()) {
 				return 0;
 			}
 			List<PinCandidate> dangling = selectDangling(connection, candidates, upper, log);
-			if (dangling.isEmpty() || dryRun) {
+			if (!deletedRows.isEmpty()) {
+				dangling.removeIf(candidate -> deletedRows.contains(candidate.rowKey()));
+			}
+			if (dangling.isEmpty()) {
+				return 0;
+			}
+			if (isMandatory()) {
+				for (PinCandidate candidate : dangling) {
+					deletedRows.add(candidate.rowKey());
+				}
+			}
+			if (dryRun) {
 				return dangling.size();
 			}
-			clear(connection, dangling);
-			log.info("Cleared " + dangling.size() + " dangling values of '" + _reference.getName() + "' in '"
-				+ _table.getDBName() + "'.", Log.VERBOSE);
+			apply(connection, isMandatory() ? _deleteRow : _clear, dangling);
+			log.info((isMandatory() ? "Deleted " : "Cleared ") + dangling.size() + " rows with a dangling value of '"
+				+ _reference.getName() + "' in '" + _table.getDBName() + "'.", Log.VERBOSE);
 			return dangling.size();
 		}
 
@@ -852,10 +906,14 @@ public class HistoryCompaction {
 			return result;
 		}
 
-		private void clear(PooledConnection connection, List<PinCandidate> dangling) throws SQLException {
+		/**
+		 * Executes the given statement, which addresses a row by its key, for every dangling row.
+		 */
+		private void apply(PooledConnection connection, CompiledStatement statement, List<PinCandidate> dangling)
+				throws SQLException {
 			boolean withBranch = _table.hasBranchColumn();
 			int maxBatchSize = _sqlDialect.getMaxBatchSize(withBranch ? 3 : 2);
-			try (Batch batch = _clear.createBatch(connection)) {
+			try (Batch batch = statement.createBatch(connection)) {
 				int pending = 0;
 				for (PinCandidate candidate : dangling) {
 					if (withBranch) {
@@ -926,6 +984,55 @@ public class HistoryCompaction {
 		String getTargetType() {
 			return _targetType;
 		}
+
+		/**
+		 * The key that addresses the row of this candidate.
+		 */
+		RowKey rowKey() {
+			return new RowKey(_branch, _id, _revMax);
+		}
+	}
+
+	/**
+	 * The key a row of an item table is addressed by while its pins are resolved.
+	 *
+	 * @see PinCandidate#rowKey()
+	 */
+	private static final class RowKey {
+
+		private final long _branch;
+
+		private final TLID _id;
+
+		private final long _revMax;
+
+		RowKey(long branch, TLID id, long revMax) {
+			_branch = branch;
+			_id = id;
+			_revMax = revMax;
+		}
+
+		@Override
+		public int hashCode() {
+			return Long.hashCode(_branch) + 16661 * _id.hashCode() + 44641 * Long.hashCode(_revMax);
+		}
+
+		@Override
+		public boolean equals(Object other) {
+			if (this == other) {
+				return true;
+			}
+			if (!(other instanceof RowKey)) {
+				return false;
+			}
+			RowKey otherKey = (RowKey) other;
+			return _branch == otherKey._branch && _revMax == otherKey._revMax && _id.equals(otherKey._id);
+		}
+
+		@Override
+		public String toString() {
+			return _id + "-" + _branch + "@" + _revMax;
+		}
 	}
 
 	/**
@@ -980,13 +1087,37 @@ public class HistoryCompaction {
 	 */
 	private CompiledStatement createClearPin(ItemTables.Table table, ItemTables.Reference reference) {
 		NullReference nullValue = NullReference.create(reference);
-		List<String> columnNames = nullValue.getColumnNames();
-		List<SQLExpression> values = nullValue.getValues();
+		List<Parameter> parameters = new ArrayList<>();
+		SQLExpression key = pinnedRowKey(table, parameters);
+		return query(parameters,
+			update(table(table.getType(), NO_TABLE_ALIAS), key, nullValue.getColumnNames(), nullValue.getValues()))
+				.toSql(_sqlDialect);
+	}
 
+	/**
+	 * {@code DELETE FROM t WHERE BRANCH = branch AND IDENTIFIER = id AND REV_MAX = revMax}
+	 *
+	 * <p>
+	 * The row of a dangling mandatory reference: its value cannot be cleared, because the row must
+	 * have one.
+	 * </p>
+	 */
+	private CompiledStatement createDeletePinnedRow(ItemTables.Table table) {
+		List<Parameter> parameters = new ArrayList<>();
+		SQLExpression key = pinnedRowKey(table, parameters);
+		return query(parameters, delete(table(table.getType(), NO_TABLE_ALIAS), key)).toSql(_sqlDialect);
+	}
+
+	/**
+	 * {@code BRANCH = branch AND IDENTIFIER = id AND REV_MAX = revMax}
+	 *
+	 * @param parameters
+	 *        Receives the parameters of the condition, in the order they are passed as arguments.
+	 */
+	private static SQLExpression pinnedRowKey(ItemTables.Table table, List<Parameter> parameters) {
 		DBAttribute identifier = table.getIdentifier();
 		DBAttribute revMax = table.getRevMax();
 		DBAttribute branch = table.getBranch();
-		List<Parameter> parameters = new ArrayList<>();
 		SQLExpression key = and(
 			eq(column(NO_TABLE_ALIAS, identifier, NOT_NULL), parameter(identifier, PARAM_ID)),
 			eq(column(NO_TABLE_ALIAS, revMax, NOT_NULL), parameter(revMax, PARAM_REV_MAX)));
@@ -996,8 +1127,7 @@ public class HistoryCompaction {
 		}
 		parameters.add(parameterDef(identifier, PARAM_ID));
 		parameters.add(parameterDef(revMax, PARAM_REV_MAX));
-		return query(parameters, update(table(table.getType(), NO_TABLE_ALIAS), key, columnNames, values))
-			.toSql(_sqlDialect);
+		return key;
 	}
 
 	/**
@@ -1398,6 +1528,20 @@ public class HistoryCompaction {
 		}
 
 		/**
+		 * Total number of rows deleted because a mandatory reference of theirs has no target in the
+		 * compaction revision.
+		 *
+		 * <p>
+		 * Counted separately from the {@link #getDeletedRows() rows} the compaction discards
+		 * because they lie inside the compacted range: these rows describe a state that survives
+		 * the compaction and disappear nevertheless.
+		 * </p>
+		 */
+		public long getRowsDeletedForDanglingPins() {
+			return _tables.stream().mapToLong(TableReport::getRowsDeletedForDanglingPins).sum();
+		}
+
+		/**
 		 * Number of cross reference rows written for the compaction revision.
 		 *
 		 * <p>
@@ -1420,7 +1564,7 @@ public class HistoryCompaction {
 		 */
 		public boolean isEmpty() {
 			return getDeletedRows() == 0 && getRewrittenRows() == 0 && getRewrittenPins() == 0
-				&& getClearedPins() == 0;
+				&& getClearedPins() == 0 && getRowsDeletedForDanglingPins() == 0;
 		}
 
 		@Override
@@ -1440,6 +1584,8 @@ public class HistoryCompaction {
 			buffer.append(" references re-pinned, ");
 			buffer.append(getClearedPins());
 			buffer.append(" references cleared, ");
+			buffer.append(getRowsDeletedForDanglingPins());
+			buffer.append(" rows without a mandatory target deleted, ");
 			buffer.append(getXrefRowsRebuilt());
 			buffer.append(" cross reference rows rebuilt.");
 			for (TableReport table : _tables) {
@@ -1467,6 +1613,8 @@ public class HistoryCompaction {
 		private long _rewrittenPins;
 
 		private long _clearedPins;
+
+		private long _rowsDeletedForDanglingPins;
 
 		TableReport(String tableName) {
 			_tableName = tableName;
@@ -1525,16 +1673,32 @@ public class HistoryCompaction {
 		}
 
 		/**
+		 * Number of rows deleted because a mandatory reference of theirs has no target in the
+		 * compaction revision.
+		 *
+		 * @see Report#getRowsDeletedForDanglingPins()
+		 */
+		public long getRowsDeletedForDanglingPins() {
+			return _rowsDeletedForDanglingPins;
+		}
+
+		void addRowsDeletedForDanglingPins(long rows) {
+			_rowsDeletedForDanglingPins += rows;
+		}
+
+		/**
 		 * Whether this table was not touched at all.
 		 */
 		public boolean isEmpty() {
-			return _deletedRows == 0 && _rewrittenRows == 0 && _rewrittenPins == 0 && _clearedPins == 0;
+			return _deletedRows == 0 && _rewrittenRows == 0 && _rewrittenPins == 0 && _clearedPins == 0
+				&& _rowsDeletedForDanglingPins == 0;
 		}
 
 		@Override
 		public String toString() {
 			return _tableName + ": " + _deletedRows + " deleted, " + _rewrittenRows + " rewritten, "
-				+ _rewrittenPins + " re-pinned, " + _clearedPins + " cleared";
+				+ _rewrittenPins + " re-pinned, " + _clearedPins + " cleared, " + _rowsDeletedForDanglingPins
+				+ " dropped";
 		}
 	}
 

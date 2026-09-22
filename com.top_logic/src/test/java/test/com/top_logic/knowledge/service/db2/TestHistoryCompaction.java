@@ -8,17 +8,22 @@ package test.com.top_logic.knowledge.service.db2;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import junit.framework.Test;
 
 import test.com.top_logic.KBTestUtils;
+import test.com.top_logic.LocalTestSetup;
 import test.com.top_logic.basic.AssertProtocol;
 
 import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.TLID;
+import com.top_logic.basic.UnreachableAssertion;
+import com.top_logic.basic.db.schema.setup.config.TypeProvider;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.PooledConnection;
@@ -27,11 +32,15 @@ import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.meta.MOReference;
+import com.top_logic.dob.ex.DuplicateAttributeException;
+import com.top_logic.dob.meta.DeferredMetaObject;
+import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.dob.meta.MOReference.ReferencePart;
 import com.top_logic.dob.sql.DBAttribute;
 import com.top_logic.dob.sql.DBTableMetaObject;
 import com.top_logic.knowledge.KnowledgeReferenceStorageImpl;
+import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.BasicTypes;
@@ -42,6 +51,8 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.db2.AbstractFlexDataManager;
 import com.top_logic.knowledge.service.db2.BranchSupport;
 import com.top_logic.knowledge.service.db2.HistoryCompaction;
+import com.top_logic.knowledge.service.db2.HistoryCompaction.TableReport;
+import com.top_logic.knowledge.service.db2.MOKnowledgeItemImpl;
 import com.top_logic.knowledge.service.db2.ItemTables;
 import com.top_logic.knowledge.service.db2.HistoryCompaction.Report;
 import com.top_logic.knowledge.service.db2.I18NConstants;
@@ -62,7 +73,56 @@ public class TestHistoryCompaction extends AbstractDBKnowledgeBaseTest {
 
 	private static final boolean BRANCH_GLOBAL = true;
 
+	/**
+	 * Association with a mandatory reference that is pinned to a revision, which the shared test
+	 * types have nowhere.
+	 */
+	private static final String PINNED_LINK_NAME = "PinnedLink";
+
+	/**
+	 * Mandatory reference of {@link #PINNED_LINK_NAME} that keeps the state its target had when
+	 * that target was deleted.
+	 */
+	private static final String PINNED_TARGET_NAME = "pinnedTarget";
+
 	private Log _log;
+
+	/**
+	 * Creates the {@link #PINNED_LINK_NAME} type.
+	 *
+	 * <p>
+	 * Its {@link #PINNED_TARGET_NAME} keeps the state its target had when that target was deleted,
+	 * so a link survives the deletion of the object it points to and holds a pin to a revision that
+	 * object lived in. The canonical ends of an association are current references and cannot be
+	 * pinned, so the pinned reference is one of its own.
+	 * </p>
+	 */
+	private static MOKnowledgeItemImpl createPinnedLinkType() {
+		MOKnowledgeItemImpl result = new MOKnowledgeItemImpl(PINNED_LINK_NAME);
+		result.setAbstract(false);
+		result.setSuperclass(new DeferredMetaObject(BasicTypes.ASSOCIATION_TYPE_NAME));
+		MOReference pinnedTarget = KnowledgeBaseTestScenarioImpl.newReferenceById(PINNED_TARGET_NAME,
+			new DeferredMetaObject(REFERENCE_TYPE_NAME), !MONOMORPHIC, HistoryType.MIXED, BRANCH_GLOBAL);
+		pinnedTarget.setMandatory(true);
+		pinnedTarget.setDeletionPolicy(DeletionPolicy.STABILISE_REFERENCE);
+		try {
+			result.addAttribute(pinnedTarget);
+		} catch (DuplicateAttributeException ex) {
+			throw new UnreachableAssertion(ex);
+		}
+		return result;
+	}
+
+	@Override
+	protected LocalTestSetup createSetup(Test self) {
+		return new DBKnowledgeBaseTestSetup(self, TestHistoryCompaction::testTypes);
+	}
+
+	private static List<TypeProvider> testTypes() {
+		List<TypeProvider> result = new ArrayList<>(KnowledgeBaseTestScenarioImpl.INSTANCE.getTestTypes());
+		result.add(KnowledgeBaseTestScenarioImpl.newCopyProvider(createPinnedLinkType()));
+		return result;
+	}
 
 	@Override
 	protected void setUp() throws Exception {
@@ -431,6 +491,73 @@ public class TestHistoryCompaction extends AbstractDBKnowledgeBaseTest {
 		Report result = compaction.compactHistory(cutDate, _log);
 		assertEquals(resolved, result.getCompactionRevision());
 		assertEquals("Revisions below the compaction revision are deleted.", 0, countRevisionsBelow(resolved));
+	}
+
+	/**
+	 * A link whose destination was deleted before the compaction revision loses the revision its
+	 * destination lived in, so its row is deleted instead of being left without a destination.
+	 */
+	public void testDanglingMandatoryPinDeletesTheRow() throws Exception {
+		Transaction tx = begin();
+		KnowledgeObject source = newD("source");
+		KnowledgeObject dest = newD("dest");
+		KnowledgeObject target = newD("target");
+		KnowledgeObject untouched = newD("untouched");
+		KnowledgeAssociation link = kb().createAssociation(source, dest, PINNED_LINK_NAME);
+		link.setAttributeValue(PINNED_TARGET_NAME, target);
+		commit(tx);
+
+		tx = begin();
+		// The pinned reference is stabilized to the state the target had before its deletion.
+		target.delete();
+		commit(tx);
+
+		tx = begin();
+		setA1(source, "source-at-cut");
+		setA1(dest, "dest-at-cut");
+		setA1(untouched, "untouched-at-cut");
+		commit(tx);
+		long cut = tx.getCommitRevision().getCommitNumber();
+
+		TLID linkId = link.getObjectName();
+		ObjectKey sourceKey = source.tId();
+		ObjectKey destKey = dest.tId();
+		ObjectKey untouchedKey = untouched.tId();
+		DBTableMetaObject linkTable = (DBTableMetaObject) type(PINNED_LINK_NAME);
+		assertTrue("The link survives the deletion of its destination.", countRowsOf(linkTable, linkId) > 0);
+
+		Report analysis = newCompaction().analyzeRevisions(0, cut, _log);
+		Report result = newCompaction().compactRevisions(0, cut, _log);
+		assertEquals("The link row is deleted, not cleared.", 1, result.getRowsDeletedForDanglingPins());
+		assertEquals("The dry run predicts the deleted rows.", analysis.getRowsDeletedForDanglingPins(),
+			result.getRowsDeletedForDanglingPins());
+		assertEquals("A mandatory reference is never cleared.", 0, clearedPins(result, linkTable.getDBName()));
+		assertEquals("No row of the link is left.", 0, countRowsOf(linkTable, linkId));
+
+		KBTestUtils.clearCache(kb());
+		KnowledgeItem reloadedSource = kb().resolveObjectKey(sourceKey);
+		assertEquals("The object at the source end is unchanged.", "source-at-cut",
+			reloadedSource.getAttributeValue(A1_NAME));
+		assertEquals("The object at the source end is unchanged at the compaction revision.", "source-at-cut",
+			inRevision(kb().getRevision(cut), reloadedSource).getAttributeValue(A1_NAME));
+		KnowledgeItem reloadedDest = kb().resolveObjectKey(destKey);
+		assertEquals("The object at the destination end is unchanged.", "dest-at-cut",
+			reloadedDest.getAttributeValue(A1_NAME));
+		KnowledgeItem reloadedUntouched = kb().resolveObjectKey(untouchedKey);
+		assertEquals("An unrelated object is unchanged.", "untouched-at-cut",
+			reloadedUntouched.getAttributeValue(A1_NAME));
+	}
+
+	/**
+	 * The pins the given table reports as cleared.
+	 */
+	private static long clearedPins(Report report, String tableName) {
+		for (TableReport table : report.getTables()) {
+			if (table.getTableName().equals(tableName)) {
+				return table.getClearedPins();
+			}
+		}
+		return 0;
 	}
 
 	private MOClass branchType() {

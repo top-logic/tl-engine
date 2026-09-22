@@ -445,7 +445,40 @@ Work that takes longer than a request may take does not belong in the request. `
 - **Cancellation is cooperative.** `cancelable="true"` offers the reader a cancel button; pressing it marks the job and interrupts the worker. `sleep()` keeps the interrupt it was woken by, so a sleeping job wakes at once and ends at the next point it *reports* from — which is what makes a loop of `sleep` + `jobProgress` stop within one step. Every report a Java body makes on its `JobMonitor` checks the same way, and `JobMonitor.checkCancelled()` is that check on its own for a stretch of work that reports nothing. Only declare it for work that may be given up half-done: a cancelled job has done part of what it was started for.
 - **`<job-status input="job"/>`** (`JobStatusElement` → `ReactJobStatusControl` / `TLJobStatus`) is the display, bound to the channel alone and holding no state of its own. It shows the status, the declared steps as done / active / pending, the bar (determinate or indeterminate), the message, the elapsed time — counted in the browser, so it ticks without a server round trip and freezes when the job ends — and at the end the result or the error. A channel holding anything that is not a job state displays nothing. Every text is resolved for the reader on the server: the phases and the message by their `ResKey`, the result through `MetaLabelProvider`, so a body returning an i18n literal `#('…'@en, '…'@de)` is displayed in the reader's language.
 - **CSS hooks**: the BEM block `tlJobStatus` with the status modifier `tlJobStatus--running|completed|failed|cancelled` and the elements `__header`, `__state`, `__elapsed`, `__cancel`, `__phases`, `__phase` (`--done`, `--active`, `--pending`), `__bar`, `__message`, `__error`, `__result` (`tlReactControls.css`). An application restyles the display through these classes; the bar inside it is the shared `tlProgress` block.
-- **Demo**: `com.top_logic.demo.react/…/views/demo/long-job-demo.view.xml` — a three-phase job with a determinate loop, an indeterminate phase and a result written to a second channel, a failing job, and a standalone indeterminate `<progress>`.
+- **Demo**: `com.top_logic.demo.react/…/views/demo/long-job-demo.view.xml` — a three-phase job with a determinate loop, an indeterminate phase and a result written to a second channel, a failing job, and a standalone indeterminate `<progress>`, plus a chunked import creating 500 tickets in one pass and closing every second of them in a next one, and the chunked removal of what it created.
+
+### Committing in chunks: `ChunkedScriptJobBody`
+
+A job that *creates persistent objects* runs outside any transaction and TL-Script opens none, so the body needs a transactional frame. `<body class="com.top_logic.layout.view.job.ChunkedScriptJobBody" chunk-size="200">` is that frame written in configuration; `ChunkedJobBody` is the same frame for a body written in Java, with the hooks `hasInit()/init`, `elements`, `stepCount()/step` and `hasFinish()/finish`:
+
+```xml
+<start-job job="importState" cancelable="true">
+  <body class="com.top_logic.layout.view.job.ChunkedScriptJobBody" chunk-size="200">
+    <init-label><en>Reading the file</en><de>Datei einlesen</de></init-label>
+    <init><![CDATA[job -> file -> { s = new(`my:Import`, transient: true); $s.set(`my:Import#rows`, $file.parse()); $s; }]]></init>
+    <elements><![CDATA[job -> state -> $state.get(`my:Import#rows`)]]></elements>
+    <steps>
+      <step>
+        <label><en>Creating the records</en><de>Datensätze anlegen</de></label>
+        <expr><![CDATA[job -> chunk -> state -> $chunk.foreach(r -> $state.get(`my:Import#target`).create($r))]]></expr>
+      </step>
+      <step>
+        <expr><![CDATA[job -> chunk -> state -> $chunk.foreach(r -> $r.resolveReferences())]]></expr>
+      </step>
+    </steps>
+    <finish><![CDATA[job -> state -> $state.get(`my:Import#created`)]]></finish>
+  </body>
+</start-job>
+```
+
+- **Every script is called with the monitor of the job first**, exactly like the `function=` body: `init` as `job -> a -> b -> …` (the values the job was started with), `elements` as `job -> state -> …`, a `<step>` as `job -> chunk -> state -> …` and `finish` as `job -> state -> …`. So every one of them reports with `$job.jobMessage(…)`, `$job.jobProgress(…)` and friends.
+- **The state ties the scripts together.** What `init` returns is what `elements`, every pass and `finish` receive; without an `<init>` the state is the *first value the job was started with* (the first `inputs` channel, or the command's value where there is none). For a state that has to change while the job runs, make it a transient object — `new(\`my:Import\`, transient: true)` — whose attributes the passes set; several objects the passes need are a map literal `{'target': $t, 'index': $byKey}`.
+- **`elements` is evaluated once, read-only and outside any transaction**, against the state. A collection is the list of work items, any other value is the single item it stands for, nothing at all is no items. The whole list is held for the run, so what it selects has to fit in memory — the chunking bounds the *transactions*, not the list.
+- **Every `<step>` is a full pass over that list**, applied to successive chunks of `chunk-size` items (200 by default), each chunk in a transaction of its own. A pass begins once the pass before it has committed every chunk, which is what makes a *second* pass the place for work that needs all the items of the first one — resolving cross references between them, for instance.
+- **A chunk that fails is retried item by item**, each item in a transaction of its own; only the items that genuinely cannot be processed are skipped, each of them logged and reported as a message naming the item and the failure, and counted. A step script therefore has to be **repeatable for an item it already saw** in the failed chunk. A failure in `init` or in `finish` is *not* caught: it ends the job with its own message, and its transaction is given up with it.
+- **Cancellation takes effect between two committed chunks**, and at once at a report from *inside* a chunk: the chunk in progress is rolled back, the chunks that committed stay, and the job ends as cancelled rather than counting the item as one that could not be processed.
+- **The phases are the steps of the job**: `init` where there is one, `step-1` … `step-n`, `finish` where there is one — announced by the body itself, so `<start-job>` needs no `<phases>` for it. `<init-label>`, a `<step>`'s `<label>` and `<finish-label>` name them for the reader; unnamed, a pass is shown as its number. The progress within a pass counts its chunks.
+- **The result of the job is what `finish` returns**; a body without a `<finish>` ends with the text saying how many items it processed and how many it skipped — which the job reports as its last message either way.
 
 ## Drag and drop of table rows
 

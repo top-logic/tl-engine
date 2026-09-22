@@ -35,6 +35,8 @@ const TLFileUpload: React.FC<TLCellProps> = ({ controlId }) => {
     if (file) {
       doUpload(file);
     }
+    // Reset so picking the same file again still fires a change event.
+    e.target.value = '';
   }, [doUpload]);
 
   const handleButtonClick = React.useCallback(() => {

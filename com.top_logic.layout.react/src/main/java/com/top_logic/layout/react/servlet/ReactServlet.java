@@ -38,6 +38,8 @@ import com.top_logic.base.services.simpleajax.PropertyUpdate;
 import com.top_logic.base.services.simpleajax.RangeReplacement;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.scan.UploadGuardRequest;
+import com.top_logic.basic.io.binary.scan.UploadRejectedException;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
@@ -873,6 +875,20 @@ public class ReactServlet extends TopLogicServlet {
 		}
 	}
 
+	/**
+	 * Delivers the uploaded files of a multipart request to the addressed {@link UploadHandler}
+	 * control.
+	 *
+	 * <p>
+	 * The request is wrapped into an {@link UploadGuardRequest} by {@link TopLogicServlet}, so the
+	 * uploaded files are inspected when the parts are requested here. A file refused by a content
+	 * checker makes {@link HttpServletRequest#getParts()} throw an
+	 * {@link UploadRejectedException}, which is answered like the refusal of an upload exceeding
+	 * {@link UploadSupport#maxUploadSize()}: the message is shown in the window of the addressed
+	 * control and the request is answered with an error status, see
+	 * {@link #rejectUpload(HttpServletResponse, ReactCommandTarget, int, ResKey, String)}.
+	 * </p>
+	 */
 	private void handleUpload(HttpServletRequest request, HttpServletResponse response, HttpSession session)
 			throws IOException, ServletException {
 		String controlId = request.getParameter("controlId");
@@ -919,6 +935,11 @@ public class ReactServlet extends TopLogicServlet {
 				Collection<Part> parts;
 				try {
 					parts = request.getParts();
+				} catch (UploadRejectedException ex) {
+					// A content checker of the upload guard refused one of the uploaded files.
+					rejectUpload(response, control, TopLogicServlet.SC_UNPROCESSABLE_CONTENT, ex.getErrorKey(),
+						"content check failed: " + Resources.getInstance().getString(ex.getErrorKey()));
+					return;
 				} catch (IllegalStateException ex) {
 					if (limit <= 0) {
 						// Uploads are unlimited, so the container refused the body for another
@@ -990,28 +1011,54 @@ public class ReactServlet extends TopLogicServlet {
 	 */
 	private void rejectTooLarge(HttpServletResponse response, ReactCommandTarget control, long limit, String cause)
 			throws IOException {
-		Logger.info("Upload refused, larger than the configured limit of " + limit + " bytes: " + cause,
-			ReactServlet.class);
-		showUploadTooLarge(control, limit);
-		sendError(response, HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE,
-			"Upload exceeds the limit of " + limit + " bytes.");
+		rejectUpload(response, control, HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE, uploadTooLarge(limit),
+			"larger than the configured limit of " + limit + " bytes: " + cause);
 	}
 
 	/**
-	 * Shows the notice naming the upload size limit in the window of the given control.
+	 * Refuses an upload: tells the user why and answers the request with the given error status.
 	 *
 	 * <p>
-	 * A refused upload is not a malfunction, so the notice is shown as the plain message it is,
+	 * A refused upload is not a malfunction of the application but a regular outcome of the
+	 * request, so it is logged at info level and the notice is shown as the plain message it is,
 	 * rather than as the report of a failed command.
 	 * </p>
 	 *
 	 * @param control
-	 *        The control the refused upload was meant for.
+	 *        The control the upload was sent for, whose window shows the notice.
+	 * @param status
+	 *        The HTTP status the request is answered with.
+	 * @param message
+	 *        Why the upload is refused, shown to the user.
+	 * @param cause
+	 *        Why the upload is refused, for the log entry.
+	 */
+	private void rejectUpload(HttpServletResponse response, ReactCommandTarget control, int status, ResKey message,
+			String cause) throws IOException {
+		Logger.info("Upload refused, " + cause, ReactServlet.class);
+		showUploadNotice(control, message);
+		sendError(response, status, Resources.getInstance().getString(message));
+	}
+
+	/**
+	 * The message naming the upload size limit that was exceeded.
+	 *
 	 * @param limit
 	 *        The limit in bytes that was exceeded.
 	 */
-	private void showUploadTooLarge(ReactCommandTarget control, long limit) {
-		ResKey message = I18NConstants.ERROR_UPLOAD_TOO_LARGE__LIMIT.fill(UploadSupport.sizeLabel(limit));
+	private static ResKey uploadTooLarge(long limit) {
+		return I18NConstants.ERROR_UPLOAD_TOO_LARGE__LIMIT.fill(UploadSupport.sizeLabel(limit));
+	}
+
+	/**
+	 * Shows the given notice about a refused upload in the window of the given control.
+	 *
+	 * @param control
+	 *        The control the refused upload was meant for.
+	 * @param message
+	 *        Why the upload was refused.
+	 */
+	private void showUploadNotice(ReactCommandTarget control, ResKey message) {
 		ErrorSink sink = errorSink(control);
 		if (sink == null) {
 			Logger.warn("No ErrorSink available to show upload notice: " + message, ReactServlet.class);
@@ -1040,7 +1087,7 @@ public class ReactServlet extends TopLogicServlet {
 			+ "configured limit.", ReactServlet.class);
 
 		try (Interaction interaction = ReactWindowRegistry.forSession(session).beginInteraction()) {
-			showUploadTooLarge(control, UploadSupport.maxUploadSize());
+			showUploadNotice(control, uploadTooLarge(UploadSupport.maxUploadSize()));
 		}
 		sendSuccess(response);
 	}

@@ -146,14 +146,6 @@ public class ReactBinaryFieldControl extends ReactFormFieldControl implements Up
 			}
 
 			BinaryData data = BinaryDataFactory.createBinaryData(fileData, contentType, fileName);
-
-			String scanError = UploadSupport.checkContent(data);
-			if (scanError != null) {
-				putState(ERROR, scanError);
-				putState(STATUS, "idle");
-				return HandlerResult.DEFAULT_RESULT;
-			}
-
 			getFieldModel().setValue(data);
 
 			putState(ERROR, null);

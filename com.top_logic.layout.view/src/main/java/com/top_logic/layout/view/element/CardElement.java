@@ -33,7 +33,7 @@ import com.top_logic.util.Resources;
  * </p>
  */
 @InApp
-public class CardElement extends ContainerElement {
+public class CardElement extends ContainerElement implements TitledElement {
 
 	/**
 	 * Configuration for {@link CardElement}.
@@ -89,6 +89,11 @@ public class CardElement extends ContainerElement {
 		_title = config.getTitle();
 		_variant = config.getVariant();
 		_padding = config.getPadding();
+	}
+
+	@Override
+	public ResKey getTitle() {
+		return _title;
 	}
 
 	@Override

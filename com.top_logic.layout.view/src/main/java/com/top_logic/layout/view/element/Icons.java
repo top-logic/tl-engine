@@ -26,4 +26,7 @@ public class Icons extends IconsBase {
 	@DefaultValue("css:fas fa-chevron-right")
 	public static ThemeImage TABLE_ACTIVATE_ROW;
 
+	@DefaultValue("css:fas fa-chevron-right")
+	public static ThemeImage TILE_ACTIVATE;
+
 }

@@ -44,6 +44,7 @@ const RESIZE_CURSORS: Record<ResizeDir, string> = {
  * - width: string (CSS value, e.g. "500px")
  * - height: string | null
  * - resizable: boolean
+ * - closable: boolean (default: true)
  * - child: ChildDescriptor
  * - toolbar: ChildDescriptor (clique-grouped TLToolbar for the title bar, may be absent)
  * - footer: ChildDescriptor (the collapsing TLToolbar the footer consists of, may be absent)
@@ -62,6 +63,9 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
   const serverHeight = (state.height as string | null) ?? null;
   const serverMinHeight = (state.minHeight as string | null) ?? null;
   const resizable = state.resizable === true;
+  // A window held open by ongoing work: Escape is left to the enclosing scope and the close
+  // button stays visible, but disabled.
+  const closable = state.closable !== false;
   const child = state.child;
   const toolbar = state.toolbar;
   const footer = state.footer;
@@ -309,7 +313,7 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
 
   return (
     <KeyboardScopeProvider modal>
-      <EscapeToClose onClose={handleClose} />
+      {closable && <EscapeToClose onClose={handleClose} />}
       <div
       id={controlId}
       className="tlWindow"
@@ -356,6 +360,7 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
           type="button"
           className="tlWindow__closeBtn"
           onClick={handleClose}
+          disabled={!closable}
           title={i18n['js.window.close']}
         >
           <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">

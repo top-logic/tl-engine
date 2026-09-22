@@ -100,6 +100,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_UPLOAD_FAILED__FILE;
 
+	/**
+	 * @en A command of this dialog is still running.
+	 */
+	public static ResKey ERROR_DIALOG_COMMAND_RUNNING;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

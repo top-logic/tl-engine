@@ -46,6 +46,7 @@ import com.top_logic.layout.table.ConfigKey;
  * <li>{@link #WIDTH} - the window width (CSS value, e.g. "500px")</li>
  * <li>{@link #HEIGHT} - the window height (CSS value or null for auto)</li>
  * <li>{@link #RESIZABLE} - whether the window can be resized by dragging</li>
+ * <li>{@link #CLOSABLE} - whether the close button is enabled and Escape closes the window</li>
  * <li>{@link #CHILD} - the body content control</li>
  * <li>{@link #TOOLBAR} - the title bar's toolbar</li>
  * <li>{@link #FOOTER} - the footer's toolbar</li>
@@ -86,8 +87,14 @@ public class ReactWindowControl extends ToolbarControl {
 
 	private static final String MIN_HEIGHT = "minHeight";
 
+	/** Client state field telling whether the user can close this window. */
+	public static final String CLOSABLE = "closable";
+
 	/** The {@link ReactCommandHandler} that records a window resize. */
 	public static final String RESIZE_COMMAND = "resize";
+
+	/** The {@link ReactCommandHandler} that closes this window. */
+	public static final String CLOSE_COMMAND = "close";
 
 	private ReactControl _child;
 
@@ -104,6 +111,8 @@ public class ReactWindowControl extends ToolbarControl {
 	private Runnable _closeHandler;
 
 	private ConfigKey _configKey;
+
+	private boolean _closable = true;
 
 	/**
 	 * Creates a window control.
@@ -125,6 +134,7 @@ public class ReactWindowControl extends ToolbarControl {
 		setWidth(width);
 		setResizable(true);
 		setActions(List.of());
+		putState(CLOSABLE, _closable);
 	}
 
 	/**
@@ -258,10 +268,46 @@ public class ReactWindowControl extends ToolbarControl {
 	}
 
 	/**
-	 * Handles the close button click.
+	 * Whether this window can be closed.
+	 *
+	 * @see #setClosable(boolean)
 	 */
-	@ReactCommandHandler("close")
+	public boolean isClosable() {
+		return _closable;
+	}
+
+	/**
+	 * Sets whether this window can be closed.
+	 *
+	 * <p>
+	 * While the window is not closable, the client shows its close button disabled and leaves
+	 * Escape to the enclosing scope, and {@link #CLOSE_COMMAND} is ignored. A window is closable
+	 * unless marked otherwise.
+	 * </p>
+	 *
+	 * @param closable
+	 *        Whether the window may be closed.
+	 */
+	public void setClosable(boolean closable) {
+		if (closable == _closable) {
+			return;
+		}
+		_closable = closable;
+		putState(CLOSABLE, closable);
+	}
+
+	/**
+	 * Handles the close button click.
+	 *
+	 * <p>
+	 * The command is ignored while the window is not {@link #isClosable() closable}.
+	 * </p>
+	 */
+	@ReactCommandHandler(CLOSE_COMMAND)
 	void handleClose() {
+		if (!_closable) {
+			return;
+		}
 		_closeHandler.run();
 	}
 

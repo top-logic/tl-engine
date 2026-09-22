@@ -25,14 +25,15 @@ import com.top_logic.layout.react.control.ReactControl;
  * State:
  * </p>
  * <ul>
- * <li>{@code dialogs} - list of dialog child descriptors (managed internally)</li>
+ * <li>{@link #DIALOGS} - list of dialog child descriptors (managed internally)</li>
  * </ul>
  */
 public class ReactDialogManagerControl extends ReactControl implements DialogManager {
 
 	private static final String REACT_MODULE = "TLDialogManager";
 
-	private static final String DIALOGS = "dialogs";
+	/** Client state field holding the stack of open dialogs, bottom-most first. */
+	public static final String DIALOGS = "dialogs";
 
 	private final List<DialogEntry> _stack = new ArrayList<>();
 
@@ -80,6 +81,14 @@ public class ReactDialogManagerControl extends ReactControl implements DialogMan
 		closeDialog(_stack.get(_stack.size() - 1), result);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The dialogs above are closed top-down, stopping at the first one that is not
+	 * {@link DialogHandle#isClosable() closable}: that dialog and everything it hides stay open.
+	 * </p>
+	 */
 	@Override
 	public void closeDialogsAbove(DialogHandle dialog) {
 		int index = _stack.indexOf(dialog);
@@ -87,16 +96,38 @@ public class ReactDialogManagerControl extends ReactControl implements DialogMan
 			return;
 		}
 		while (_stack.size() > index + 1) {
-			DialogEntry top = _stack.remove(_stack.size() - 1);
+			DialogEntry top = _stack.get(_stack.size() - 1);
+			if (!top.isClosable()) {
+				break;
+			}
+			_stack.remove(_stack.size() - 1);
 			top.dialog().cleanupTree();
 			top.handler().onResult(DialogResult.cancelled());
 		}
 		patchDialogsState();
 	}
 
+	/**
+	 * Closes the given dialog together with all dialogs stacked on top of it.
+	 *
+	 * <p>
+	 * The close is refused as a whole while the given dialog or any dialog above it is not
+	 * {@link DialogHandle#isClosable() closable}: nothing is closed and no result handler is called.
+	 * A dialog is only ever closed together with everything covering it, so a dialog that must stay
+	 * open also keeps the ones below it open.
+	 * </p>
+	 *
+	 * @param entry
+	 *        The dialog to close.
+	 * @param result
+	 *        The result to pass to the dialog's handler.
+	 */
 	private void closeDialog(DialogEntry entry, DialogResult<Void> result) {
 		int index = _stack.indexOf(entry);
 		if (index < 0) {
+			return;
+		}
+		if (!allClosableFrom(index)) {
 			return;
 		}
 
@@ -112,6 +143,19 @@ public class ReactDialogManagerControl extends ReactControl implements DialogMan
 		entry.dialog().cleanupTree();
 		patchDialogsState();
 		entry.handler().onResult(result);
+	}
+
+	/**
+	 * Whether the dialog at the given stack position and every dialog above it is
+	 * {@link DialogHandle#isClosable() closable}.
+	 */
+	private boolean allClosableFrom(int index) {
+		for (int n = index, size = _stack.size(); n < size; n++) {
+			if (!_stack.get(n).isClosable()) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private void patchDialogsState() {
@@ -152,6 +196,16 @@ public class ReactDialogManagerControl extends ReactControl implements DialogMan
 		@Override
 		public void close(DialogResult<Void> result) {
 			closeDialog(this, result);
+		}
+
+		@Override
+		public void setClosable(boolean closable) {
+			_dialog.setClosable(closable);
+		}
+
+		@Override
+		public boolean isClosable() {
+			return _dialog.isClosable();
 		}
 	}
 

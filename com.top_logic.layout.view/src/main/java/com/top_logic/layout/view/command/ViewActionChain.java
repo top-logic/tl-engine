@@ -42,11 +42,35 @@ public class ViewActionChain {
 	 */
 	public static void run(ReactContext context, List<ViewAction> actions, Object input,
 			Consumer<Object> onComplete) {
+		run(context, actions, input, onComplete, null);
+	}
+
+	/**
+	 * Runs {@code actions} starting with {@code input}, telling the caller when the chain has come
+	 * to an end whichever way it ended.
+	 *
+	 * @param onComplete
+	 *        Invoked when the chain settles normally, see
+	 *        {@link #run(ReactContext, List, Object, Consumer)}.
+	 * @param onSettled
+	 *        Invoked exactly once as soon as the chain cannot continue any more: it completed, it
+	 *        was aborted, or an action threw. Invoked before the call returns for a chain that
+	 *        settles within it, and from whatever interaction hands the chain back otherwise - a
+	 *        caller that has to tell the two apart marks the call and inspects the mark after it
+	 *        returned. May be {@code null}.
+	 */
+	public static void run(ReactContext context, List<ViewAction> actions, Object input,
+			Consumer<Object> onComplete, Runnable onSettled) {
+		Settlement settlement = new Settlement(onSettled);
 		Deque<Runnable> compensations = new ArrayDeque<>();
-		runFrom(context, actions, 0, input, compensations,
-			value -> settled(onComplete, value),
+		runFrom(context, actions, 0, input, compensations, settlement,
+			value -> {
+				settlement.settle();
+				settled(onComplete, value);
+			},
 			() -> {
 				runCompensations(compensations);
+				settlement.settle();
 				settled(onComplete, null);
 			});
 	}
@@ -71,7 +95,7 @@ public class ViewActionChain {
 			Continuation continuation) {
 		Deque<Runnable> compensations = new ArrayDeque<>();
 		continuation.onAbort(() -> runCompensations(compensations));
-		runFrom(context, actions, 0, input, compensations,
+		runFrom(context, actions, 0, input, compensations, settlementOf(continuation),
 			continuation::resume,
 			() -> {
 				runCompensations(compensations);
@@ -79,47 +103,32 @@ public class ViewActionChain {
 			});
 	}
 
+	/**
+	 * The settlement of the chain the given continuation belongs to, so that a chain nested in it
+	 * reports a failure to the caller that started the outermost chain.
+	 */
+	private static Settlement settlementOf(Continuation continuation) {
+		if (continuation instanceof ChainContinuation chained) {
+			return chained.settlement();
+		}
+		return new Settlement(null);
+	}
+
 	private static void runFrom(ReactContext context, List<ViewAction> actions, int index, Object input,
-			Deque<Runnable> compensations, Consumer<Object> onComplete, Runnable onAbort) {
+			Deque<Runnable> compensations, Settlement settlement, Consumer<Object> onComplete, Runnable onAbort) {
 		if (index >= actions.size()) {
 			onComplete.accept(input);
 			return;
 		}
 		ViewAction action = actions.get(index);
-		Continuation continuation = new Continuation() {
-			private boolean _spent;
-
-			@Override
-			public void resume(Object value) {
-				spend();
-				runFrom(context, actions, index + 1, value, compensations, onComplete, onAbort);
-			}
-
-			@Override
-			public void abort() {
-				spend();
-				onAbort.run();
-			}
-
-			@Override
-			public void onAbort(Runnable compensation) {
-				if (_spent) {
-					throw new IllegalStateException("onAbort() after the action already continued.");
-				}
-				compensations.push(compensation);
-			}
-
-			private void spend() {
-				if (_spent) {
-					throw new IllegalStateException("Continuation already used (resume/abort called twice).");
-				}
-				_spent = true;
-			}
-		};
+		ChainContinuation continuation = new ChainContinuation(settlement, compensations,
+			value -> runFrom(context, actions, index + 1, value, compensations, settlement, onComplete, onAbort),
+			onAbort);
 		try {
 			action.execute(context, input, continuation);
 		} catch (RuntimeException failure) {
 			runCompensations(compensations);
+			settlement.settle();
 			throw failure;
 		}
 	}
@@ -137,6 +146,105 @@ public class ViewActionChain {
 	private static void runCompensations(Deque<Runnable> compensations) {
 		while (!compensations.isEmpty()) {
 			compensations.pop().run();
+		}
+	}
+
+	/**
+	 * The {@link Continuation} of an action running in a chain.
+	 *
+	 * <p>
+	 * Carries the {@link Settlement} of the chain it drives, so that a chain nested into it reaches
+	 * the same settlement and the outermost caller hears of an end reached deep inside.
+	 * </p>
+	 */
+	private static final class ChainContinuation implements Continuation {
+
+		private final Settlement _settlement;
+
+		private final Deque<Runnable> _compensations;
+
+		private final Consumer<Object> _onResume;
+
+		private final Runnable _onAbort;
+
+		private boolean _spent;
+
+		ChainContinuation(Settlement settlement, Deque<Runnable> compensations, Consumer<Object> onResume,
+				Runnable onAbort) {
+			_settlement = settlement;
+			_compensations = compensations;
+			_onResume = onResume;
+			_onAbort = onAbort;
+		}
+
+		/**
+		 * The settlement of the chain this continuation drives.
+		 */
+		Settlement settlement() {
+			return _settlement;
+		}
+
+		@Override
+		public void resume(Object value) {
+			spend();
+			_onResume.accept(value);
+		}
+
+		@Override
+		public void abort() {
+			spend();
+			_onAbort.run();
+		}
+
+		@Override
+		public void onAbort(Runnable compensation) {
+			if (_spent) {
+				throw new IllegalStateException("onAbort() after the action already continued.");
+			}
+			_compensations.push(compensation);
+		}
+
+		private void spend() {
+			if (_spent) {
+				throw new IllegalStateException("Continuation already used (resume/abort called twice).");
+			}
+			_spent = true;
+		}
+	}
+
+	/**
+	 * Tells the caller of a chain, once, that the chain has come to an end.
+	 *
+	 * <p>
+	 * Every outcome passes through here - completion, abort and the failure unwind, which runs at
+	 * each level of the chain it propagates through - so the notification is guarded to happen only
+	 * the first time. The guard holds across interactions, since the end may be reached by a thread
+	 * other than the one that started the chain.
+	 * </p>
+	 */
+	private static final class Settlement {
+
+		private final Runnable _onSettled;
+
+		private boolean _settled;
+
+		Settlement(Runnable onSettled) {
+			_onSettled = onSettled;
+		}
+
+		/**
+		 * Reports the chain settled, unless that was already reported.
+		 */
+		void settle() {
+			synchronized (this) {
+				if (_settled) {
+					return;
+				}
+				_settled = true;
+			}
+			if (_onSettled != null) {
+				_onSettled.run();
+			}
 		}
 	}
 }

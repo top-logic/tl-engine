@@ -2654,9 +2654,14 @@ button.tlBottomBar__item:hover {
 	flex-shrink: 0;
 }
 
-button.tlWindow__closeBtn:hover {
+button.tlWindow__closeBtn:not(:disabled):hover {
 	background: var(--layer-hover);
 	color: var(--text-primary);
+}
+
+button.tlWindow__closeBtn:disabled {
+	opacity: 0.4;
+	cursor: default;
 }
 
 button.tlWindow__closeBtn:focus-visible {

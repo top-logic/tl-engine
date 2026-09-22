@@ -41,6 +41,25 @@
     ```
     The delay is the span a *typed* value is held back; a value that is picked - a dropdown, a date picker, a checkbox - reaches the channel with the choice and waits for nothing. An input whose value the server rewrites as it stores it (a number, an internationalized text) holds the value back until the input is left (`setSendValueOnBlur(true)`) and ignores the delay altogether - what it costs is server-side feedback while typing, which is the trade that behaviour is for. Without a stated delay a typed input uses the one span every typed input shares, `VALUE_DEBOUNCE_MS` (300 ms) exported from the bridge. The three are rendering-only: `ReactFormFieldControl.scriptingPresentationKeys()` keeps `icon`, `clearable` and `debounceMs` out of the headless projection, while the `placeholder` stays in it, being the text a label-less input names itself by. The three hand-rolled search boxes elsewhere in the layer - the table filter bar, the dropdown search, the icon-select popup - are controls of their own and are unaffected.
   - **Layout: `<fields>`** (`FieldsElement`). A `<value-input>` renders the label-and-input chrome of a field but, standing outside a `<form>`, gets none of the grid a form renders around its fields. `<fields>` is that grid on its own (`ReactFormLayoutControl`, `TLFormLayout`): the `var(--page-inset)` padding content owns in the spacing model, the auto-fit columns (`max-columns`, 3 by default), and the `FormLayoutContext` a `TLFormField` reads to move a label from beside its input to above it when the column is narrower than 320px (`label-position` `auto` by default, or fixed `side` / `top`; the field-level `after` / `hidden` are rejected). A `<form>` needs no `<fields>`, being such a grid already; a `<field>` still needs a `<form>`, since `<fields>` carries no object.
+  - **The same grid options on `<form>`** (`FormLayoutOptions`, shared by `FormElement.Config` and `FieldsElement.Config`). A `<form max-columns="1" label-position="side">` states the greatest number of columns its fields are laid out in and where their labels stand, exactly as `<fields>` does — `max-columns` is a ceiling, not a count, so a narrow display still shows fewer columns and a phone a single one. This is what a detail pane narrower than the three columns of the default asks for: left to itself it fills the width it has with two columns whose labels sit above the inputs, while `max-columns="1"` plus `label-position="side"` keeps one column with the labels beside the inputs at every width. A `<field>` stating a `label-position` of its own keeps it.
+    ```xml
+    <form input="selectedMilestone" label-position="side" max-columns="1">
+      <field attribute="name"/>
+      <field attribute="dueDate"/>
+    </form>
+    ```
+  - **Sections: `<group>`** (`GroupElement` → `ReactFormGroupControl`, `TLFormGroup`). A group gathers the fields that belong together under a heading of its own — Text, Numbers, References — and takes part in the grid of the enclosing `<form>` or `<fields>` instead of opening a grid of its own, so the fields inside a section line up with the fields outside it, column for column. `<label><en>…</en><de>…</de></label>` is the heading; a group without one is set apart by its frame alone. `border` draws that frame (`none` by default, `subtle` a thin line in the subtle border color, `outlined` one in the strong border color), `collapsible="true"` lets the user fold the section away from its heading and `collapsed="true"` starts it folded. `full-line` (`true` by default) spans the section over the whole width of the grid and distributes its fields over the columns; `full-line="false"` confines it to a single column, where its content stacks one item below the other. A group holds any view content — fields, texts, further groups — so sections nest.
+    ```xml
+    <group border="subtle" collapsible="true" collapsed="true">
+      <label>
+        <en>Source code</en>
+        <de>Quelltext</de>
+      </label>
+      <field attribute="xmlSource"/>
+      <field attribute="jsonSource"/>
+    </group>
+    ```
+    The demo is the "Edit demo object" dialog of `com.top_logic.demo.react`'s Attributes page (`WEB-INF/views/attributes-detail.view.xml`), whose fifty fields stand in eight sections.
   - **Submit hook**: `<on-submit>` names a `ViewCommand` run over the value the user finishes entering - one input plus one command over what was entered, which is what a search field or a jump-to box is. The value reaches the channel first, then the command as its input, so the command's `<execute-script function="entered -> …">` receives it directly and needs no `input` channel of its own. The property defaults to `GenericViewCommand` (`@ImplementationClassDefault`), so the actions stand inside the element:
     ```xml
     <fields>
@@ -440,6 +459,7 @@ Which of the arrangement elements fits:
 | --- | --- |
 | `<columns>` | A page of a few columns of *deliberately different* width that folds to one column when narrow. |
 | `<grid>` | Many elements built alike, placed in as many equal columns as fit (`min-column-width`, `max-columns`). |
+| `<group>` | A section of the fields of a `<form>` or `<fields>`, under a heading and optionally folded away; it keeps the columns of that grid. |
 | `<stack direction="row">` | A row of elements that neither grow to a share of the width nor wrap. |
 | `<split-panel>` | Panes with splitters the user drags; fills its box, scrolls per pane, and never folds. |
 | `<dashboard>` | Tiles of definite row height whose order the user personalizes. |

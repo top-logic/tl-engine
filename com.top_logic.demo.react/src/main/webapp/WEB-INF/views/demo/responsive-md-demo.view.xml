@@ -123,7 +123,11 @@
 						</panel>
 					</selector>
 					<detail>
-						<form input="selectedMilestone">
+						<form
+							input="selectedMilestone"
+							label-position="side"
+							max-columns="1"
+						>
 							<field attribute="name"/>
 							<field attribute="dueDate"/>
 						</form>

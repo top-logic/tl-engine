@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="selectedSplit"/>
+		<channel name="selectedDrawer"/>
+	</channels>
+
+	<panel title="Adaptive Detail Test">
+		<!-- Nothing said about the detail display: the detail divides the width with the selector. -->
+		<adaptive-detail selection="selectedSplit">
+			<selector>
+				<panel title="Selector"/>
+			</selector>
+			<detail>
+				<panel title="Detail"/>
+			</detail>
+		</adaptive-detail>
+
+		<!-- The detail overlays the selector in a drawer 360 pixels wide. -->
+		<adaptive-detail
+			detail-display="drawer"
+			detail-size="360"
+			selection="selectedDrawer"
+		>
+			<selector>
+				<panel title="Selector"/>
+			</selector>
+			<detail>
+				<panel title="Detail"/>
+			</detail>
+		</adaptive-detail>
+	</panel>
+</view>

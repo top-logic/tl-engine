@@ -38,10 +38,21 @@
  * {@link com.top_logic.layout.view.navigation.RevealPath place} it is displayed at, so the request
  * can walk from the root display down to the mount of the target's view - asking each container on
  * the way to reveal the child leading further down - and write the object into the channels of the
- * instance it finds there. A view no mount reaches is displayed anew: as a frame drilled down to on
- * a stack, or as a dialog. The
+ * instance it finds there. Each view of a target is looked for within the view displayed before it
+ * first, so that a view sitting inside a frame drilled down to on a stack is found there, and only
+ * then within the window as a whole. A view neither of the two reaches is displayed anew: as a frame
+ * drilled down to on a stack, or as a dialog. The
  * {@link com.top_logic.layout.view.navigation.ShowObjectAction &lt;show-object&gt;} action offers
  * all of this to a configured command.
+ * </p>
+ *
+ * <p>
+ * A command can also name the views itself, for a display that no business object stands behind:
+ * {@link com.top_logic.layout.view.navigation.ShowViewAction &lt;show-view&gt;} displays one view,
+ * {@link com.top_logic.layout.view.navigation.ShowViewsAction &lt;show-views&gt;} a list of them in
+ * one request. They carry the attributes and the bindings a display target's view carries, applied
+ * to the value the command chain holds rather than to an object, and hand that value on to what
+ * follows them in the chain.
  * </p>
  */
 package com.top_logic.layout.view.navigation;

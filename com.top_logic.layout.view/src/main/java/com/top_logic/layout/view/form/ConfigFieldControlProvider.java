@@ -15,6 +15,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.layout.configedit.ConfigEditorControl;
 import com.top_logic.layout.configedit.ConfigFieldIndex;
 import com.top_logic.layout.configedit.ConfigFieldModel;
+import com.top_logic.layout.configedit.ConfigFieldPush;
 import com.top_logic.layout.configedit.ConfigListEditorControl;
 import com.top_logic.layout.configedit.FieldCollectionValue;
 import com.top_logic.layout.configedit.PolymorphicOptions;
@@ -55,6 +56,15 @@ import com.top_logic.layout.react.field.ReactFieldControlProvider;
  * </p>
  */
 public class ConfigFieldControlProvider implements ReactFieldControlProvider {
+
+	/**
+	 * A property holding several configurations is edited by the list editor, which adds, removes
+	 * and reorders the entries itself.
+	 */
+	@Override
+	public boolean editsCollections() {
+		return true;
+	}
 
 	@Override
 	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {

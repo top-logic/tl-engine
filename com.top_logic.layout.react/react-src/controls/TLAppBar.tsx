@@ -1,6 +1,5 @@
 import { React, useTLState, TLChild } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { AppShellContext } from './TLAppShell';
 import { ButtonDefaults } from './button/ButtonDefaults';
 
 /**
@@ -10,20 +9,21 @@ import { ButtonDefaults } from './button/ButtonDefaults';
  * - title: string
  * - leading: ChildDescriptor | null
  * - children: ChildDescriptor[]  (inline content between title and actions, e.g. a <slot>)
- * - actions: ChildDescriptor[]
+ * - actions: ChildDescriptor  (the toolbar of the commands placed in the bar; it renders nothing
+ *   while there is no command, and folds the ones that do not fit into its overflow menu; the
+ *   bar renders its buttons ghost, the toolbar collapses them to their icons when short of room)
  * - trailing: ChildDescriptor | null  (closes the bar, right of the actions)
  * - variant: "flat" | "elevated"  (default: "flat")
  * - color: "primary" | "surface"  (default: "primary")
  */
 const TLAppBar: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
-  const { compact } = React.useContext(AppShellContext);
 
   const title = (state.title as string) ?? '';
   const leading = state.leading;
   const trailing = state.trailing;
   const children = (state.children as unknown[]) ?? [];
-  const actions = (state.actions as unknown[]) ?? [];
+  const actions = state.actions;
   const variant = (state.variant as string) ?? 'flat';
   const color = (state.color as string) ?? 'primary';
 
@@ -48,12 +48,10 @@ const TLAppBar: React.FC<TLCellProps> = ({ controlId }) => {
           ))}
         </div>
       )}
-      {actions.length > 0 && (
-        <ButtonDefaults appearance="ghost" collapseToIcon={compact}>
+      {actions != null && (
+        <ButtonDefaults appearance="ghost">
           <div className="tlAppBar__actions">
-            {actions.map((action, i) => (
-              <TLChild key={i} control={action} />
-            ))}
+            <TLChild control={actions} />
           </div>
         </ButtonDefaults>
       )}

@@ -22,6 +22,7 @@ import com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder;
 import com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder.PartModel;
 import com.top_logic.layout.configedit.ConfigCollectionValue;
 import com.top_logic.layout.configedit.ConfigFieldIndex;
+import com.top_logic.layout.configedit.ConfigFieldPush;
 import com.top_logic.layout.configedit.ConfigListEditorControl;
 import com.top_logic.layout.configedit.ConfigValidation;
 import com.top_logic.layout.configedit.PolymorphicOptions;
@@ -96,6 +97,15 @@ import com.top_logic.util.error.TopLogicException;
  * </p>
  */
 public class AnnotationsFieldControlProvider implements ReactFieldControlProvider {
+
+	/**
+	 * The annotations of a model element are edited as a whole: the editor offers the kinds of
+	 * annotation the element accepts and writes the resulting list back in one go.
+	 */
+	@Override
+	public boolean editsCollections() {
+		return true;
+	}
 
 	@Override
 	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {

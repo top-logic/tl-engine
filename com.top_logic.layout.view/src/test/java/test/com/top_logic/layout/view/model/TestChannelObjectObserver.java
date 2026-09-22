@@ -11,6 +11,7 @@ import java.util.Set;
 
 import junit.framework.Test;
 
+import test.com.top_logic.basic.AssertNoErrorLogListener;
 import test.com.top_logic.basic.AssertProtocol;
 import test.com.top_logic.knowledge.service.db2.AbstractDBKnowledgeBaseTest;
 import test.com.top_logic.knowledge.wrap.SimpleWrapperFactoryTestScenario.BObj;
@@ -48,12 +49,20 @@ public class TestChannelObjectObserver extends AbstractDBKnowledgeBaseTest {
 	/** The number of changes the observer reported. */
 	private int _reported;
 
+	/** The number of deletions the observer reported. */
+	private int _deleted;
+
+	/** Collects the errors logged while the events are delivered. */
+	private AssertNoErrorLogListener _errors;
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
 
 		_input = new DefaultViewChannel("input");
 		_reported = 0;
+		_deleted = 0;
+		_errors = new AssertNoErrorLogListener(false);
 
 		UpdateChain updates = kb().getUpdateChain();
 		Protocol log = new AssertProtocol(getName());
@@ -65,6 +74,8 @@ public class TestChannelObjectObserver extends AbstractDBKnowledgeBaseTest {
 
 	@Override
 	protected void tearDown() throws Exception {
+		_errors.deactivate();
+		_errors = null;
 		_scope = null;
 		_input = null;
 
@@ -153,6 +164,42 @@ public class TestChannelObjectObserver extends AbstractDBKnowledgeBaseTest {
 	}
 
 	/**
+	 * Tests that an observation resuming after it was stopped reports once, so that a holder
+	 * re-reading the channels catches up on what the objects went through unobserved - and that
+	 * beginning the observation reports nothing.
+	 */
+	public void testResumedObservationIsReported() throws Exception {
+		BObj b1 = create("b1");
+		_input.set(b1);
+		ChannelObjectObserver observer = observer();
+
+		observer.attach(_scope);
+		assertEquals("Beginning an observation reports nothing: the display was just built.", 0, _reported);
+
+		observer.detach();
+		observer.attach(_scope);
+
+		assertEquals("Resuming reports once, so that the holder re-reads the channels.", 1, _reported);
+	}
+
+	/**
+	 * Tests that a holder receiving the change itself hears nothing when the observation resumes:
+	 * there is no event describing what happened unobserved.
+	 */
+	public void testResumingReportsNoEvent() throws Exception {
+		BObj b1 = create("b1");
+		_input.set(b1);
+		ChannelObjectObserver observer =
+			new ChannelObjectObserver(List.of(_input), Set.of(), (ModelChangeEvent event) -> _reported++);
+		observer.attach(_scope);
+		observer.detach();
+
+		observer.attach(_scope);
+
+		assertEquals("A change nobody recorded cannot be handed to anybody.", 0, _reported);
+	}
+
+	/**
 	 * Tests that a channel holding a collection of objects observes every member of it.
 	 */
 	public void testCollectionValueObservesEveryMember() throws Exception {
@@ -170,10 +217,95 @@ public class TestChannelObjectObserver extends AbstractDBKnowledgeBaseTest {
 	}
 
 	/**
+	 * Tests that deleting the object on the channel is reported as a deletion, not as a change: the
+	 * channel still points to the deleted object, over which an expression cannot be evaluated.
+	 */
+	public void testDeletionIsReportedAsDeletion() throws Exception {
+		BObj b1 = create("b1");
+		_input.set(b1);
+		ChannelObjectObserver observer = observingDeletion();
+		observer.attach(_scope);
+
+		delete(b1);
+
+		assertEquals("Deleting the object on the channel is no change.", 0, _reported);
+		assertEquals("Deleting the object on the channel is reported as a deletion.", 1, _deleted);
+		_errors.assertNoErrorLogged("Delivering a deletion must not fail a listener.");
+	}
+
+	/**
+	 * Tests that deleting a member of a collection value is reported as a deletion, and that a
+	 * change of a member is a change again once the channel holds the remaining objects.
+	 */
+	public void testDeletedMemberOfCollectionValue() throws Exception {
+		BObj b1 = create("b1");
+		BObj b2 = create("b2");
+		_input.set(List.of(b1, b2));
+		ChannelObjectObserver observer = observingDeletion();
+		observer.attach(_scope);
+
+		delete(b2);
+		assertEquals("A deleted member of the value is no change.", 0, _reported);
+		assertEquals("A deleted member of the value is a deletion.", 1, _deleted);
+
+		_input.set(List.of(b1));
+
+		change(b1, "b1 updated");
+		assertEquals("A value holding valid objects reports changes again.", 1, _reported);
+		assertEquals("Changing a valid object is no deletion.", 1, _deleted);
+		_errors.assertNoErrorLogged("Delivering a deletion must not fail a listener.");
+	}
+
+	/**
+	 * Tests that an event arriving while the channel still holds a deleted object is reported as a
+	 * deletion, although the event names a different, valid object.
+	 */
+	public void testChangeWhileHoldingADeletedObject() throws Exception {
+		BObj b1 = create("b1");
+		BObj b2 = create("b2");
+		_input.set(List.of(b1, b2));
+		ChannelObjectObserver observer = observingDeletion();
+		observer.attach(_scope);
+
+		delete(b1);
+		assertEquals("The deletion is reported as a deletion.", 1, _deleted);
+
+		change(b2, "b2 updated");
+
+		assertEquals("A value holding a deleted object reports no change.", 0, _reported);
+		assertEquals("A value holding a deleted object reports a deletion.", 2, _deleted);
+		_errors.assertNoErrorLogged("Delivering a change over a deleted value must not fail a listener.");
+	}
+
+	/**
+	 * Tests that a holder not interested in deletions is left alone: a deletion reaches its change
+	 * callback no more, and delivering it fails nothing.
+	 */
+	public void testDeletionIsNotReportedToAChangeOnlyHolder() throws Exception {
+		BObj b1 = create("b1");
+		_input.set(b1);
+		ChannelObjectObserver observer = observer();
+		observer.attach(_scope);
+
+		delete(b1);
+
+		assertEquals("A deletion is no change.", 0, _reported);
+		_errors.assertNoErrorLogged("Delivering a deletion must not fail a listener.");
+	}
+
+	/**
 	 * An observer over {@link #_input} counting the changes it reports in {@link #_reported}.
 	 */
 	private ChannelObjectObserver observer() {
 		return new ChannelObjectObserver(List.of(_input), Set.of(), () -> _reported++);
+	}
+
+	/**
+	 * An observer over {@link #_input} counting the changes it reports in {@link #_reported} and
+	 * the deletions in {@link #_deleted}.
+	 */
+	private ChannelObjectObserver observingDeletion() {
+		return new ChannelObjectObserver(List.of(_input), Set.of(), event -> _reported++, event -> _deleted++);
 	}
 
 	/**
@@ -200,6 +332,21 @@ public class TestChannelObjectObserver extends AbstractDBKnowledgeBaseTest {
 		Transaction tx = begin();
 		try {
 			object.setA1(name);
+			tx.commit();
+		} finally {
+			tx.rollback();
+		}
+		deliverChanges();
+	}
+
+	/**
+	 * Deletes the given object and delivers the resulting change, leaving the channel pointing to
+	 * the deleted object as the deleting command does.
+	 */
+	private void delete(BObj object) throws Exception {
+		Transaction tx = begin();
+		try {
+			object.tDelete();
 			tx.commit();
 		} finally {
 			tx.rollback();

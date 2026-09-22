@@ -95,6 +95,20 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 		return _optionProvider;
 	}
 
+	/**
+	 * A selection is made on one control, however many options it accepts.
+	 *
+	 * <p>
+	 * The selected values are the value of the {@link SelectFieldModel} the control is bound to, so
+	 * a multi-valued field is picked from in one dropdown rather than through one dropdown per
+	 * value.
+	 * </p>
+	 */
+	@Override
+	public boolean editsCollections() {
+		return true;
+	}
+
 	@Override
 	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
 		SelectFieldModel selectModel = (SelectFieldModel) model;
@@ -104,7 +118,9 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 		// so a type registered only for its label is labelled exactly as before.
 		LabelProvider labels = MetaResourceProvider.INSTANCE;
 		Comparator<?> optionOrder = LabelComparator.newCachingInstance(labels);
-		return new ReactDropdownSelectControl(context, selectModel, labels, optionOrder, false);
+		// An ordered attribute keeps the order the user gives its selection; an unordered one is
+		// shown in the order of the options.
+		return new ReactDropdownSelectControl(context, selectModel, labels, optionOrder, field.isOrdered());
 	}
 
 }

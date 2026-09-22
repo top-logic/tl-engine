@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.overlay.DialogManager;
@@ -28,13 +29,21 @@ import com.top_logic.model.TLType;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * Displays a business object where the application shows objects of its type.
+ * Displays a business object where the application shows objects of its type, or a named list of
+ * views with the values a request carries.
  *
  * <p>
  * The {@link DisplayTarget} of the object's type decides which views display it. Each of them is
  * brought into view in turn - by opening the containers on the way to the place it is mounted at, by
  * drilling down into a stack of frames, or by opening a dialog - and then receives the values its
- * {@link ShowStep#bindings() bindings} compute from the object.
+ * {@link ShowStep#bindings() bindings} compute from the object. A request that names the views
+ * itself is carried out the same way, with whatever value the bindings are applied to.
+ * </p>
+ *
+ * <p>
+ * A view is looked for within the view displayed before it, and only then within the window as a
+ * whole. A tab of a frame that the preceding view pushed onto a stack is thereby revealed like any
+ * other place, although the frame itself is part of no statically scanned {@link MountPath}.
  * </p>
  *
  * <p>
@@ -81,13 +90,78 @@ public final class ObjectNavigation {
 	 */
 	public static void show(ReactContext context, DisplayTargets targets, Object object,
 			Continuation continuation) {
-		if (!(context instanceof ViewContext viewContext)) {
-			throw new TopLogicException(I18NConstants.ERROR_CANNOT_DISPLAY_HERE);
-		}
+		ViewContext origin = viewContext(context);
 		if (!(object instanceof TLObject shown)) {
 			throw new TopLogicException(I18NConstants.ERROR_NOT_A_MODEL_OBJECT__VALUE.fill(object));
 		}
-		new Display(viewContext, targets, shown, continuation).start();
+		MountPath hint = hint(origin);
+		TLType type = shown.tType();
+		DisplayTarget target = targets.resolveBest(type, hint);
+		if (target == null) {
+			throw new TopLogicException(I18NConstants.ERROR_NO_DISPLAY_TARGET__TYPE.fill(type));
+		}
+		new Display(origin, hint, targets::getMounts, target.shows(), shown, continuation).start();
+	}
+
+	/**
+	 * Displays the given views in turn, each with the values its bindings compute from the given
+	 * value.
+	 *
+	 * <p>
+	 * The views are brought into view the same way a target's views are, so a view is looked for
+	 * within the view the show before it displayed first, and only then within the window as a
+	 * whole. The value takes the place the object takes when a target is displayed: it is what the
+	 * bindings and the label expressions are applied to, and what the continuation is resumed with.
+	 * Any value does, a business object as well as a text a filter is set to.
+	 * </p>
+	 *
+	 * @param context
+	 *        Where the request comes from; decides which of several places is the nearest one.
+	 * @param shows
+	 *        The views to display, outermost first.
+	 * @param value
+	 *        What the bindings compute their values from.
+	 * @param continuation
+	 *        Resumed with the value once the views are displayed, aborted when the user declined to
+	 *        give up unsaved changes on the way.
+	 * @throws TopLogicException
+	 *         If one of the views cannot be reached.
+	 */
+	public static void show(ReactContext context, List<ShowStep> shows, Object value,
+			Continuation continuation) {
+		ViewContext origin = viewContext(context);
+		new Display(origin, hint(origin), windowMounts(origin), shows, value, continuation).start();
+	}
+
+	/**
+	 * The view context the request is carried out in.
+	 */
+	private static ViewContext viewContext(ReactContext context) {
+		if (!(context instanceof ViewContext result)) {
+			throw new TopLogicException(I18NConstants.ERROR_CANNOT_DISPLAY_HERE);
+		}
+		return result;
+	}
+
+	/**
+	 * The place the request comes from, deciding which of several declared or mounted places is the
+	 * nearest one.
+	 */
+	private static MountPath hint(ViewContext origin) {
+		RevealRegistry registry = origin.getRevealRegistry();
+		RevealPath here = RevealPath.of(origin);
+		String viewRef = registry == null ? null : registry.viewAt(here);
+		return here.toMountPath(viewRef == null ? "" : viewRef);
+	}
+
+	/**
+	 * The places the views are displayed at, as seen from the root of the window the request comes
+	 * from.
+	 */
+	private static Supplier<ViewMounts> windowMounts(ViewContext origin) {
+		RevealRegistry registry = origin.getRevealRegistry();
+		String rootView = registry == null ? null : registry.getRootView();
+		return () -> rootView == null ? null : ViewMounts.forRootView(rootView);
 	}
 
 	/**
@@ -98,9 +172,13 @@ public final class ObjectNavigation {
 
 		private final ViewContext _origin;
 
-		private final DisplayTargets _targets;
+		/**
+		 * The places the views are declared to be displayed at, asked once and only when a view is
+		 * not found within the view displayed before it.
+		 */
+		private final Supplier<ViewMounts> _declaredMounts;
 
-		private final TLObject _object;
+		private final Object _value;
 
 		private final Continuation _continuation;
 
@@ -118,7 +196,13 @@ public final class ObjectNavigation {
 		 */
 		private ViewContext _current;
 
-		private List<ShowStep> _shows;
+		/**
+		 * Path of the view file {@link #_current} displays, within which the view of the next
+		 * {@link ShowStep} is looked for. {@code null} until a view was displayed.
+		 */
+		private String _currentView;
+
+		private final List<ShowStep> _shows;
 
 		/**
 		 * The frames the drill-down is to end up with, in the order they were computed.
@@ -129,26 +213,19 @@ public final class ObjectNavigation {
 
 		private boolean _mountsResolved;
 
-		Display(ViewContext origin, DisplayTargets targets, TLObject object, Continuation continuation) {
+		Display(ViewContext origin, MountPath hint, Supplier<ViewMounts> declaredMounts, List<ShowStep> shows,
+				Object value, Continuation continuation) {
 			_origin = origin;
-			_targets = targets;
-			_object = object;
+			_hint = hint;
+			_declaredMounts = declaredMounts;
+			_shows = shows;
+			_value = value;
 			_continuation = continuation;
 			_current = origin;
 			_registry = origin.getRevealRegistry();
-
-			RevealPath here = RevealPath.of(origin);
-			String viewRef = _registry == null ? null : _registry.viewAt(here);
-			_hint = here.toMountPath(viewRef == null ? "" : viewRef);
 		}
 
 		void start() {
-			TLType type = _object.tType();
-			DisplayTarget target = _targets.resolveBest(type, _hint);
-			if (target == null) {
-				throw new TopLogicException(I18NConstants.ERROR_NO_DISPLAY_TARGET__TYPE.fill(type));
-			}
-			_shows = target.shows();
 			step(0);
 		}
 
@@ -157,7 +234,7 @@ public final class ObjectNavigation {
 		 */
 		private void step(int index) {
 			if (index >= _shows.size()) {
-				_continuation.resume(_object);
+				_continuation.resume(_value);
 				return;
 			}
 
@@ -171,14 +248,39 @@ public final class ObjectNavigation {
 				return;
 			}
 
-			ViewMounts mounts = mounts();
-			List<MountPath> places = mounts == null ? List.of() : mounts.getMounts(show.viewRef());
+			List<Place> places = places(show);
 			if (places.isEmpty()) {
 				drillDown(show, index);
 				return;
 			}
-			MountPath mount = nearest(places);
-			reveal(show, mount.steps(), 0, RevealPath.ROOT, () -> display(show, mount, index));
+			Place place = nearest(places);
+			reveal(show, place.steps(), 0, place.start(), () -> display(show, place, index));
+		}
+
+		/**
+		 * The places the given view is displayed at: those within the view displayed before it, or
+		 * else those within the window as a whole.
+		 *
+		 * @return The candidates to pick the nearest one from, empty for a view that is displayed
+		 *         neither within the one before it nor anywhere in the window.
+		 */
+		private List<Place> places(ShowStep show) {
+			if (_currentView != null && !_currentView.equals(show.viewRef())) {
+				// A view's own scan reports the view itself, so a show repeating the view displayed
+				// last is located in the window instead of staying where it is.
+				RevealPath start = RevealPath.of(_current);
+				List<MountPath> within = ViewMounts.forRootView(_currentView).getMounts(show.viewRef());
+				if (!within.isEmpty()) {
+					return within.stream().map(mount -> new Place(start, mount.steps())).toList();
+				}
+			}
+			ViewMounts mounts = mounts();
+			if (mounts == null) {
+				return List.of();
+			}
+			return mounts.getMounts(show.viewRef()).stream()
+				.map(mount -> new Place(RevealPath.ROOT, mount.steps()))
+				.toList();
 		}
 
 		/**
@@ -201,22 +303,27 @@ public final class ObjectNavigation {
 		}
 
 		/**
-		 * Writes the object into the channels of the view instance displayed at the given mount,
-		 * then continues with the view after it.
+		 * Writes the value into the channels of the view instance displayed at the given place, then
+		 * continues with the view after it.
 		 */
-		private void display(ShowStep show, MountPath mount, int index) {
-			RevealPath path = RevealPath.ROOT;
-			for (MountStep step : mount.steps()) {
-				path = path.append(step.container(), step.key());
-			}
-			ViewContext instance = _registry == null ? null : _registry.getView(show.viewRef(), path);
+		private void display(ShowStep show, Place place, int index) {
+			ViewContext instance = _registry == null ? null : _registry.getView(show.viewRef(), place.path());
 			if (instance == null) {
 				throw new TopLogicException(I18NConstants.ERROR_VIEW_NOT_DISPLAYED__VIEW.fill(show.viewRef()));
 			}
 			bind(show, instance, 0, () -> {
-				_current = instance;
+				displayed(show.viewRef(), instance);
 				step(index + 1);
 			});
+		}
+
+		/**
+		 * Remembers the view a {@link ShowStep} brought into view, within which the show after it is
+		 * looked for.
+		 */
+		private void displayed(String viewRef, ViewContext instance) {
+			_current = instance;
+			_currentView = viewRef;
 		}
 
 		/**
@@ -234,7 +341,7 @@ public final class ObjectNavigation {
 					.fill(binding.channel(), show.viewRef()));
 			}
 			ViewChannel channel = instance.resolveChannel(new ChannelRef(binding.channel()));
-			Object value = binding.evaluate(_object);
+			Object value = binding.evaluate(_value);
 			guarded(() -> channel.set(value), () -> bind(show, instance, index + 1, onDone));
 		}
 
@@ -255,12 +362,13 @@ public final class ObjectNavigation {
 
 			Map<String, Object> params = new LinkedHashMap<>();
 			for (Binding binding : show.bindings()) {
-				params.put(binding.channel(), binding.evaluate(_object));
+				params.put(binding.channel(), binding.evaluate(_value));
 			}
-			_frames.add(new TileFrame(show.viewRef(), show.labelFor(_object), params));
+			_frames.add(new TileFrame(show.viewRef(), show.labelFor(_value), params));
 
 			List<TileFrame> current = stack.getPath();
 			if (current.size() >= _frames.size() && current.subList(0, _frames.size()).equals(_frames)) {
+				enterFrame(stack, show);
 				step(index + 1);
 				return;
 			}
@@ -271,7 +379,30 @@ public final class ObjectNavigation {
 					TileFrame frame = _frames.get(n);
 					stack.push(frame.getViewRef(), frame.getLabel(), frame.getParams());
 				}
-			}, () -> step(index + 1));
+			}, () -> {
+				enterFrame(stack, show);
+				step(index + 1);
+			});
+		}
+
+		/**
+		 * Continues within the frame the given view was drilled down to, so that the show after it
+		 * is looked for inside that frame.
+		 *
+		 * <p>
+		 * The view displayed so far stays the one to continue from while the stack does not say
+		 * where its frames sit, or while the frame has not announced itself.
+		 * </p>
+		 */
+		private void enterFrame(TileStackScope stack, ShowStep show) {
+			RevealPath place = stack.framePlace(_frames.size() - 1);
+			if (place == null || _registry == null) {
+				return;
+			}
+			ViewContext frame = _registry.getView(show.viewRef(), place);
+			if (frame != null) {
+				displayed(show.viewRef(), frame);
+			}
 		}
 
 		/**
@@ -280,7 +411,7 @@ public final class ObjectNavigation {
 		private void openDialog(ShowStep show) {
 			Map<String, Object> channelValues = new LinkedHashMap<>();
 			for (Binding binding : show.bindings()) {
-				channelValues.put(binding.channel(), binding.evaluate(_object));
+				channelValues.put(binding.channel(), binding.evaluate(_value));
 			}
 			OpenDialogAction.openDialog(_current, ViewLoader.fullPath(show.viewRef()),
 				OpenDialogAction.Config.CLOSE_ON_BACKDROP_DEFAULT, channelValues, List.of());
@@ -325,11 +456,11 @@ public final class ObjectNavigation {
 		 * The place among the given ones that shares the longest way with where the request comes
 		 * from.
 		 */
-		private MountPath nearest(List<MountPath> mounts) {
-			MountPath result = mounts.get(0);
-			int best = commonPrefixLength(result.steps(), _hint.steps());
-			for (MountPath candidate : mounts.subList(1, mounts.size())) {
-				int shared = commonPrefixLength(candidate.steps(), _hint.steps());
+		private Place nearest(List<Place> places) {
+			Place result = places.get(0);
+			int best = commonPrefixLength(result.path().mountSteps(), _hint.steps());
+			for (Place candidate : places.subList(1, places.size())) {
+				int shared = commonPrefixLength(candidate.path().mountSteps(), _hint.steps());
 				if (shared > best) {
 					best = shared;
 					result = candidate;
@@ -353,7 +484,7 @@ public final class ObjectNavigation {
 		}
 
 		private ViewMounts resolveMounts() {
-			ViewMounts declared = _targets.getMounts();
+			ViewMounts declared = _declaredMounts.get();
 			String rootView = _registry == null ? null : _registry.getRootView();
 			if (rootView == null || declared == null || rootView.equals(declared.getRootView())) {
 				return declared;
@@ -370,6 +501,30 @@ public final class ObjectNavigation {
 				result++;
 			}
 			return result;
+		}
+
+		/**
+		 * Where the view of a {@link ShowStep} is displayed: the place it is reached from, and the
+		 * containers to ask from there on.
+		 *
+		 * @param start
+		 *        The place the first container is asked at, {@link RevealPath#ROOT} for a view
+		 *        located within the window as a whole.
+		 * @param steps
+		 *        The containers to ask, outermost first.
+		 */
+		private record Place(RevealPath start, List<MountStep> steps) {
+
+			/**
+			 * The place the view itself is displayed at.
+			 */
+			RevealPath path() {
+				RevealPath result = start;
+				for (MountStep step : steps) {
+					result = result.append(step.container(), step.key());
+				}
+				return result;
+			}
 		}
 	}
 }

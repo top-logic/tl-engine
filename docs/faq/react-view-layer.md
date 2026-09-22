@@ -9,6 +9,7 @@
   - `type` is a `TLModelPartRef` and decides the input; it defaults to `tl.core:String`. The control is resolved by `FieldControlService.createFieldControl(context, type, spec, model)` - the same chain that picks the control for a `<field>` over an attribute of that type, which only adds the lookup of the attribute's own `<input-control>` annotation. So `tl.core:Integer` is a number input, `tl.core:Date` a date picker, `tl.core:Boolean` a checkbox, `tl.core:Text` a text area, and an enumeration or a class a dropdown.
   - A value of an enumeration or a class is chosen from options: without an `options` expression these are the classifiers respectively the instances of the type (`AttributeOptions.optionsFor(type)`). `options` is a TL-Script function whose arguments are the values of the `<inputs><input channel="…"/></inputs>` channels, in declaration order - the same shape as `<execute-script>` - and the options are recomputed whenever one of those channels changes. Every `inputs` property of the view layer - here, a `<table>`'s `<rows>`, a column declaration, an action - reads both notations: the nested `<inputs><input channel="…"/></inputs>` and the comma-separated attribute `inputs="a, b"` (`Inputs`). `multiple="true"` makes the channel carry a collection instead of a single value; a single-valued selection is unwrapped, so the channel holds the value itself and not a list of one.
   - Further properties: `label` (a `ResKey`; without it the input stands alone, without the label chrome), `label-position` and `readonly`.
+  - **An input standing without a visible label** - in an app bar, in a toolbar, above a list - says what it is for in two places. `placeholder` (a `ResKey`) is the text shown inside the input while it is empty: "Search" in a search box, `name@example.com` in a mail address; it disappears with the value entered. It is a property of the field description (`FieldSpec.setPlaceholder(…)`) rather than of one control, so every control `FieldControlService` builds from such a description carries it - the text and number inputs render it, a control that has nothing to show an empty box in ignores it. `label-position="hide-label"` then takes the label out of the display but keeps it as the *name* of the input: the input area is a `label` element holding the label text in a visually hidden span (`.tlVisuallyHidden` in `TLFormField`), so every native input inside takes its accessible name from HTML's implicit label association, and a click anywhere in the area focuses it. An input that keeps its `label` and hides it is named for a screen reader; one that drops the `label` altogether is not. A radio group names its options by `id` / `for` instead (`TLBooleanChoice`), since no label may contain another.
   - **Layout: `<fields>`** (`FieldsElement`). A `<value-input>` renders the label-and-input chrome of a field but, standing outside a `<form>`, gets none of the grid a form renders around its fields. `<fields>` is that grid on its own (`ReactFormLayoutControl`, `TLFormLayout`): the `var(--page-inset)` padding content owns in the spacing model, the auto-fit columns (`max-columns`, 3 by default), and the `FormLayoutContext` a `TLFormField` reads to move a label from beside its input to above it when the column is narrower than 320px (`label-position` `auto` by default, or fixed `side` / `top`; the field-level `after` / `hidden` are rejected). A `<form>` needs no `<fields>`, being such a grid already; a `<field>` still needs a `<form>`, since `<fields>` carries no object.
   - **Submit hook**: `<on-submit>` names a `ViewCommand` run over the value the user finishes entering - one input plus one command over what was entered, which is what a search field or a jump-to box is. The value reaches the channel first, then the command as its input, so the command's `<execute-script function="entered -> …">` receives it directly and needs no `input` channel of its own. The property defaults to `GenericViewCommand` (`@ImplementationClassDefault`), so the actions stand inside the element:
     ```xml
@@ -30,7 +31,25 @@
 
 ## A command is a chain of actions, and the chain can branch
 
-`<generic-command>` (`GenericViewCommand`) runs the `<execute-script>`, `<store-form-state>`, `<confirm>`, `<verify-identity>`, `<with-transaction>`, `<open-dialog>`, `<write-channel>`, … actions written inside it as one chain (`ViewActionChain`): each action's result is the next action's input, the first action gets the command's input. An action that has to wait — `<confirm>`, which opens a dialog — suspends the chain and resumes it from the dialog's answer, or aborts it on cancel; `<verify-identity>` (`VerifyIdentityAction`) is the same shape with the answer being the proof that the person at the keyboard still is the holder of the session's own account, given the way the session was established: a session established at an external identity provider re-authenticates there in a second browser window — the provider's answer returns to the authentication servlet, which completes the pending `IdentityVerifications` entry and resumes the chain in the window that asked (a failure of the resumed chain is shown in that window like any other command failure, through `CommandErrors`, and leaves the confirmed identity itself standing) — while every other session is asked for its password, which the account's `AuthenticationDevice` checks. It fails closed: a cancelled prompt, an account that neither a provider nor a device can confirm, or a context without a dialog all abort; an abort skips the remaining actions and runs the compensations the executed actions registered, newest first, as does a failure. A script over the chain's value takes further arguments from channels: `<inputs><input channel="context"/></inputs>` puts those channel values in front of the chain's value (`ActionScript`, shared by every action that takes a script).
+`<generic-command>` (`GenericViewCommand`) runs the `<execute-script>`, `<store-form-state>`, `<confirm>`, `<notify>`, `<verify-identity>`, `<with-transaction>`, `<open-dialog>`, `<write-channel>`, … actions written inside it as one chain (`ViewActionChain`): each action's result is the next action's input, the first action gets the command's input. An action that has to wait — `<confirm>`, which opens a dialog — suspends the chain and resumes it from the dialog's answer, or aborts it on cancel; `<verify-identity>` (`VerifyIdentityAction`) is the same shape with the answer being the proof that the person at the keyboard still is the holder of the session's own account, given the way the session was established: a session established at an external identity provider re-authenticates there in a second browser window — the provider's answer returns to the authentication servlet, which completes the pending `IdentityVerifications` entry and resumes the chain in the window that asked (a failure of the resumed chain is shown in that window like any other command failure, through `CommandErrors`, and leaves the confirmed identity itself standing) — while every other session is asked for its password, which the account's `AuthenticationDevice` checks. It fails closed: a cancelled prompt, an account that neither a provider nor a device can confirm, or a context without a dialog all abort; an abort skips the remaining actions and runs the compensations the executed actions registered, newest first, as does a failure. A script over the chain's value takes further arguments from channels: `<inputs><input channel="context"/></inputs>` puts those channel values in front of the chain's value (`ActionScript`, shared by every action that takes a script).
+
+`<notify>` (`NotifyAction`) tells the user something from inside the chain. Its `expr` computes the message over the chain's value, with channel values in front of it through `<inputs>`, exactly like every other script of an action; a result of `null` or an empty text is nothing to say, and the chain passes its value on untouched — so the message itself decides whether the user hears anything. `kind="info|warning|error"` (`info` by default) says how serious the notice is, `display="snackbar|dialog"` (`snackbar` by default) where it is read: a snackbar passes by beside the user's work and is shown synchronously, so it may sit inside a `<with-transaction>`, while a dialog is a single-OK message that suspends the chain until it is acknowledged, exactly as a `<confirm>` does, and therefore may not (a chain running headless has no dialog to open and falls back to the snackbar). `stop="true"` ends the chain after the notice: the compensations of the actions before it run, the remaining actions are skipped, and nothing is logged or reported beyond the message — the notice *is* the outcome. That is what separates it from a failure raised by the TL-Script `throw(#('…'@en, '…'@de))` inside an `<execute-script>`, which travels the error path: it is logged and reported through `CommandErrors` like any other failure of the command.
+
+```xml
+<execute-script function="name -> all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#name`) == $name).firstElement()"/>
+<if test="t -> $t != null">
+  <then>
+    <write-channel name="ticket"/>
+  </then>
+  <else>
+    <notify kind="warning" stop="true" expr="term -> x -> #('No ticket {0}.'@en, 'Kein Ticket {0}.'@de).fill($term)">
+      <inputs>
+        <input channel="jump"/>
+      </inputs>
+    </notify>
+  </else>
+</if>
+```
 
 Two actions branch the chain by a TL-Script function over its current value. `<if>` decides between two chains; `<switch>` computes a switch value with its `value` function (the chain's own value when no `value` is configured) and gives it to the `<case>`s, each of which either names the value it stands for with `match` or decides with a `test` predicate:
 
@@ -123,6 +142,198 @@ A form with unsaved input blocks the write of the channel it is bound to: it reg
 
 The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/repeater-demo.view.xml` with `style/tl-demo-react.css`.
 
+## A page of weighted columns: `<columns>`
+
+`<columns breakpoint="48rem" gap="default">` (`ColumnsElement`) lays a page out in columns of unequal width and reflows it to a single column when the space gets narrow. Each child is a `<column weight="2">` (`ColumnElement`); a column takes a share of the width in proportion to its weight (weight 1 by default), and its own children stand below each other over the full width of the column. Below the breakpoint the columns stack in the order they are written — the main column first, the side column below it.
+
+- **The breakpoint is the width of the element itself**, not the width of the browser window. The same page therefore stacks inside a narrow pane of a wide window exactly as it does on a phone. No measurement is involved: the client gives each column `flex: <weight> 1 calc((<breakpoint> - 100%) * 999)` in a wrapping flex row, so the browser layout decides.
+- **The page scrolls, the columns do not.** A column is as tall as its content and is not stretched to the height of a taller neighbour; the layout is as tall as its tallest column. A long main column beside a short side column reads as one page.
+
+Which of the arrangement elements fits:
+
+| Element | Use it for |
+| --- | --- |
+| `<columns>` | A page of a few columns of *deliberately different* width that folds to one column when narrow. |
+| `<grid>` | Many elements built alike, placed in as many equal columns as fit (`min-column-width`, `max-columns`). |
+| `<stack direction="row">` | A row of elements that neither grow to a share of the width nor wrap. |
+| `<split-panel>` | Panes with splitters the user drags; fills its box, scrolls per pane, and never folds. |
+| `<dashboard>` | Tiles of definite row height whose order the user personalizes. |
+
+```xml
+<columns
+	breakpoint="48rem"
+	gap="default"
+>
+	<column weight="2">
+		<card variant="outlined">
+			<title>
+				<en>Main</en>
+			</title>
+			<text>
+				<label>
+					<en>The wide column.</en>
+				</label>
+			</text>
+		</card>
+	</column>
+	<column>
+		<card variant="outlined">
+			<title>
+				<en>Side</en>
+			</title>
+			<text>
+				<label>
+					<en>Half as wide as the main column.</en>
+				</label>
+			</text>
+		</card>
+	</column>
+</columns>
+```
+
+The client classes an application styles against are `.tlColumns`, `.tlColumns--gap-<gap>` and `.tlColumns__column`. The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/columns-demo.view.xml`.
+
+## Pictures: `<image>`, `<overlay>`, `<avatar>`
+
+`<image>` (`ImageElement`) shows one picture, and it takes that picture from either of two places.
+
+- **From a channel** (`input`). The channel value is either **picture data** — a `BinaryData` whose content type starts with `image/`, e.g. the binary attribute of a model object or the result of an upload — or a **text naming an address**. Who serves the bytes differs: picture data is served by the control itself through its data endpoint (`ImageSource`, `hasData` plus a `dataRevision` the client appends so a replaced picture is not taken from the browser cache), while an address is loaded by the browser directly. Any other value — no value, binary data that is no picture, an unrelated object — shows no picture.
+- **From a resource of the web application** (`resource`, e.g. `/images/logo.svg`, resolved against the context path). On its own it *is* the picture; together with `input` it is the placeholder shown as long as the channel holds no picture.
+
+The box the picture is shown in is described by `aspect-ratio` (`16/9`, so a row of pictures of differing originals stays even), `width` and `height` (CSS lengths); with none of them the box takes the size of the picture, limited to the width available. `fit` decides what a picture whose proportions differ from the box does with it: `cover` (the default) crops it to fill the box, `contain` fits the whole picture into it. `lazy="true"` lets the browser postpone the loading until the box comes close to the visible part of the page — right for the thumbnails of a long card grid, wrong for a picture the user sees at once. `alt` says what the picture shows for a reader who cannot see it, and `css-class` adds a class to the box.
+
+`<overlay>` stacks content over a base: its **first child is the base**, every further child is a layer over it. The base gives the overlay its height; its width is what the surrounding layout grants, and a base sized relative to it (`width="100%"`) fills it. A base of fixed width wants a container that does not stretch its items (`<stack align="start">`), or the overlay is stretched past the base and anchors its layers to the free space beside it. A `<layer position="fill|top-left|top|top-right|left|center|right|bottom-left|bottom|bottom-right" css-class="…">` brings the position its content takes and a class of its own; a child written without a layer covers the base as a whole. A layer passes the pointer through wherever it shows nothing (`.tlOverlay__layer` is `pointer-events: none`, its content `auto`), so the base stays usable below the free space of a layer that only anchors a badge. Placement comes from the element, the look from application CSS on the layer's class — a badge pill, a caption scrim.
+
+`<avatar input="ch" image="photoCh" size="small|default|large|x-large"/>` shows the picture of the `image` channel circle-cropped, and the initials of the `input` value's label over a color derived from it while there is none. The picture follows its channel, so a photo replaced elsewhere appears without the avatar being built anew.
+
+```xml
+<overlay>
+	<image
+		aspect-ratio="4/3"
+		fit="cover"
+		input="photo"
+		resource="/images/no-picture.svg"
+		width="20rem"
+	/>
+	<layer
+		css-class="tlDemoBadge"
+		position="top-left"
+	>
+		<text>
+			<label>
+				<en>Preview</en>
+			</label>
+		</text>
+	</layer>
+	<layer
+		css-class="tlDemoCaption"
+		position="bottom"
+	>
+		<text input="node"/>
+	</layer>
+</overlay>
+```
+
+The client classes an application styles against are `.tlImage` / `.tlImage__image`, `.tlOverlay` / `.tlOverlay__layer` / `.tlOverlay__layer--<anchor>` and `.tlAvatar--<size>` / `.tlAvatar__image`. The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/image-demo.view.xml` with `style/tl-demo-react.css`.
+
+## Content shown under one condition: `<visible-if>`
+
+`<visible-if input="ch" expr="x -> …">` (`VisibleIfElement`) shows its children while a TL-Script predicate over the value of the `input` channel holds, and nothing while it does not. It is the short form of a `<switch>` with a single case and no default, and it is that literally: the element builds the `ReactSwitchControl` of such a switch, so the re-evaluation, the observation and the disposal are the ones of a `<switch>`. Several alternatives of which one is shown at a time stay a `<switch>`.
+
+- The condition is re-evaluated on a new channel value and on a change of the object the channel holds - a condition usually decides by an attribute of that object, which is edited without the channel value changing. A condition reaching beyond the input object (deciding by an attribute of its container, say) names the types it navigates to in `observed-types`, since a change of another object is invisible to the input's own observation.
+- Content that is hidden is disposed rather than kept alive, so it leaves no contributions - a form's edit / save / cancel commands, a slot contribution - behind in the enclosing scope. While the condition keeps holding, the content stays as it is and follows its own channels.
+- Not to be confused with the `<visible-if>` inside a command's `<executability>` (`com.top_logic.layout.view.command.VisibleIf`), which carries the same tag name and decides whether a *command* is offered for its input.
+
+**Conditional content takes the size of what it shows.** A `<switch>` and a `<visible-if>` render through the deck pane (`TLDeckPane`, `.tlDeckPane`), a column flex box that states no size of its own: a deck showing content of its own size is exactly as wide and as high as that content, so conditional content stands inline - in an app bar, beside a breadcrumb, in a row of buttons - instead of claiming the box around it. A deck whose content fills takes part in the fill contract as a container (see below) and is then the bounded box the child's height resolves against.
+
+The app bar of `com.top_logic.demo.react` shows both this and the two ways an unlabelled input says what it is for. `WEB-INF/views/tickets.view.xml` raises its jump-to box into the shell's app bar with `<slot-content to="appbar-content">` - the contribution belongs to the view that owns the `ticket` channel, and the shell knows nothing of it - and puts the name of the selected ticket beside it, shown only while a ticket is selected:
+
+```xml
+<slot-content to="appbar-content">
+	<stack
+		align="center"
+		direction="row"
+		gap="compact"
+	>
+		<value-input
+			label-position="hide-label"
+			value="jump"
+		>
+			<label>
+				<en>Jump to ticket</en>
+			</label>
+			<placeholder>
+				<en>Jump to ticket</en>
+			</placeholder>
+			<on-submit>
+				<execute-script function="name -> all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#name`) == $name).firstElement()"/>
+				<write-channel name="ticket"/>
+			</on-submit>
+		</value-input>
+		<visible-if
+			expr="t -> $t != null"
+			input="ticket"
+		>
+			<text
+				input="ticket"
+				overflow="ellipsis"
+			/>
+		</visible-if>
+	</stack>
+</slot-content>
+```
+
+## Ready-made HTML: `<html>`
+
+`<html input="ch">` (`HtmlElement`) displays HTML the application did not compose itself — the answer of an agent, a generated exposé, an imported page. The channel carries that content in one of three shapes, and `HtmlValues` reduces all of them to the source text to display:
+
+- a `String` holding the source,
+- an `HTMLFragment` — what an HTML literal `{{{ … }}}` of a script expression evaluates to — rendered to its source,
+- a `BinaryData` of content type `text/html`, read with the charset that content type declares. `binary('expose.html', $source, 'text/html')` builds one in TL-Script, and an uploaded file arrives as one anyway.
+
+A value of any other type has no HTML representation; the element reports that in its place, the same way it reports content a check refuses. Nothing on the channel is no content and no failure.
+
+`display` decides how the content is shown, and with it what stands between it and the reader.
+
+**`inline`** (the default) inserts the fragment into the page where the element stands, after `SafeHTML` has checked it against the application's whitelist — a script, an attribute carrying one, anything else the check refuses is not inserted, and the message of the check takes its place. The fragment brings its structure and the page gives it typography: the stylesheet gives `.tlHtml--inline` the theme's text color and font and spaces the elements a fragment is made of, so an answer reads as a section of the page it lands in. `css-class` adds a class of the application's own beside it.
+
+```xml
+<html input="answer"/>
+```
+
+**`document`** shows the content as a page of its own, in a sandboxed frame filling the space the element is given. The frame is not handed the source: it fetches it from the control's data endpoint (`ReactHtmlControl` is the `DataProvider`), with the current `dataRevision` in its URL, so the document crosses the wire once and a replaced one is fetched rather than taken from the browser cache. The sandbox runs no script, which is why a document needs no whitelist check — it keeps the styles it brings along and takes none of the page's. `print="true"` puts a button on it that hands the frame to the browser's print dialog, which is also where the browser offers saving the document as a PDF file, with the document's own styles.
+
+```xml
+<html
+	display="document"
+	input="current"
+	print="true"
+/>
+```
+
+**`thumbnail`** shows that same isolated document as a picture of itself: a card-sized preview for a grid of documents. The frame is laid out at `thumbnail-width` × `thumbnail-height` CSS pixels — 800 × 1130 by default, a portrait page at that width — and scaled down to the width the preview box measures (a `ResizeObserver` on the box, `transform: scale(…)` from its top left corner), so the document appears in its own proportions instead of being reflowed into a small one. The box keeps the aspect ratio of the two sizes and cuts off what is taller, as a page does. A preview is looked at rather than used: it takes no clicks, no focus and no print button, and it is fetched only once it comes near the viewport, so a grid loads the previews the reader actually reaches. Selecting one is therefore the business of whatever carries it — a button in the card writing the element to a channel, for instance.
+
+```xml
+<object-list inputs="exposes" items="exposes -> $exposes" layout="grid" max-columns="3">
+	<item>
+		<card padding="compact">
+			<html display="thumbnail" input="element"/>
+			<text css-class="tlText--strong" input="element"/>
+			<button appearance="link">
+				<action class="com.top_logic.layout.view.command.GenericViewCommand" input="element">
+					<label><en>Show</en></label>
+					<write-channel name="expose"/>
+				</action>
+			</button>
+		</card>
+	</item>
+</object-list>
+```
+
+The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/html-demo.view.xml`: an inline agent answer and a refused fragment above, the three exposés as a grid of previews beside the selected one below.
+
+**PDF, server-side.** The print dialog is the reader's way to a PDF. An application that produces the file itself — to store it, mail it, attach it — converts the HTML in TL-Script instead: `pdfFile($html, name: "expose.pdf")` yields a `BinaryData` that `<pdf input="ch"/>` displays and a download hands out. That conversion is Flying Saucer rather than a browser, so it takes well-formed XHTML and CSS 2.1 and renders a document written for it, not any page a browser shows.
+
 ## `TableViewControl` is the sole React table control
 
 `TableViewControl` / `com.top_logic.table.TableView` (#29108) is the only React table control. Everything renders through this stack: the `<table>` element (`TableElement`; sort, per-column `<filter>`, type-derived default columns, width personalization, shared `ColumnsConfig` / `ColumnConfig`), the access-control permission matrix (`SecurityMatrixElement`), the in-form `<composition-table>` (`CompositionTableControl`), and the technical React-table demo (`DemoReactTableComponent`: flat `ListRowSource` + `TreeRowSource` tree).
@@ -172,11 +383,49 @@ A fraction between 0 and 1 is displayed as a bar with an optional label beside i
 `<progress>` (`ProgressElement`) states the bar one of two ways, never both:
 
 - `<progress input="ch" fraction="x -> …"/>` — the filled part directly. Such a bar carries no label unless `label="x -> …"` gives it one.
+  A fraction expression that answers nothing at all leaves the bar without a share: the client sweeps a partial fill over the track (`tlProgress--indeterminate`) instead of filling a share of it, which is how a bar over an operation that does not know how far it has come is written — and an operation that learns its share later switches between the two displays by reporting a number again.
 - `<progress input="ch" done="x -> …" total="x -> …"/>` — the two counts the fraction is the ratio of, which are also the label (`3 / 7`) unless `label=` replaces it. A total of zero leaves the bar empty.
 
 Every expression is called with the current value of the `input` channel, which is optional: a bar counting the model as a whole needs none. The bar recomputes on a new channel value, on a change of the object the channel holds, and on a create / change / delete of an `observed-types` type — the last is what a bar counting all objects of a type needs, since no channel value changes when one is added. The observation is the shared `ChannelObjectObserver`, attached and detached with the control.
 
 A table cell needs nothing new: a `CellRenderer` yields `new CellContent.Raw((CellControlFactory) ctx -> new ReactProgressControl(ctx, fraction, label))`, the escape hatch `CellContentReactAdapter` already resolves.
+
+## Long-running jobs: `<start-job>` and `<job-status>`
+
+Work that takes longer than a request may take does not belong in the request. `<start-job>` (`StartJobAction`) is the action that hands it to a worker thread, publishes what it reports on a channel, and **suspends the command** until the work has ended — the same suspension a `<confirm>` uses, so the chain simply continues afterwards:
+
+```xml
+<action class="com.top_logic.layout.view.command.GenericViewCommand" input="job">
+  <executability>
+    <disabled-if expr="s -> if(jobIsRunning($s), #('A job is already running.'@en), null)"/>
+  </executability>
+  <start-job job="job" cancelable="true" update-interval="200">
+    <phases>
+      <phase name="read"><label><en>Reading</en><de>Lesen</de></label></phase>
+      <phase name="check"><label><en>Checking</en><de>Prüfen</de></label></phase>
+    </phases>
+    <function><![CDATA[job -> x -> {
+	$job.jobPhase('read');
+	$job.jobMessage(#('Reading the records.'@en));
+	count(1, 6).foreach(i -> { sleep(400); $job.jobProgress($i, 5); });
+	$job.jobPhase('check');
+	$job.jobIndeterminate();
+	sleep(1500);
+	#('5 records processed.'@en);
+}]]></function>
+  </start-job>
+  <write-channel name="report"/>
+</action>
+```
+
+- **The channel carries immutable snapshots.** The `job` channel holds a `JobState` from the moment the job starts, and a *new* one on every report, so nothing a display would have to observe ever changes. `update-interval` is the shortest time in milliseconds between two published snapshots: a job counting thousands of items is followed at that pace instead of flooding the browser, the last report of a burst is never lost, and the snapshot that ends the job is always delivered. The body runs in the sub-session of the starting request and publishes under the window's interaction, so the channel write, the controls updating from it and the updates reaching the browser are serialized against the requests of the same session exactly like a command is.
+- **The work runs outside any transaction, on a thread that serves no request.** Persisting what the job produced is the business of the actions *after* it: the command continues where it left off with the job's result as its value, so a `<with-transaction><execute-script .../></with-transaction>` or a `<write-channel>` behind the `<start-job>` is where the result lands. A job that fails or is cancelled **aborts** the command instead — the remaining actions are skipped, the compensations of the ones before it run, and the failure stays visible in the last state of the job rather than in a snackbar.
+- **The body is a TL-Script `function=` or a Java `<body class="…"/>`**, exactly one of the two. The function is called with the **monitor of the job as its first argument**, followed by the `inputs` channel values in declaration order and the command's own value last. It reports with `$job.jobPhase('name')` (entering a step marks the steps passed over as done; naming a step that was never declared ends the job with an error), `$job.jobPhases([…])` or `$job.jobPhases({name: label})` for a job that learns its steps only while running, `$job.jobProgress(done, total)`, `$job.jobIndeterminate()` and `$job.jobMessage(text)`. What the function returns is the result of the job.
+- **Reading a snapshot** is `jobIsRunning($s)`, `jobIsFinished($s)`, `jobStatus($s)` (the texts `running`, `completed`, `failed`, `cancelled`, so a `<switch><case match="'completed'">` decides on it), `jobResult($s)` and `jobError($s)`. Each of them answers over no job at all as well, which is what the channel holds before the first start — so a start button guards itself with `input="job"` plus `<disabled-if expr="s -> jobIsRunning($s)"/>` and needs no case of its own for the time before the first run.
+- **Cancellation is cooperative.** `cancelable="true"` offers the reader a cancel button; pressing it marks the job and interrupts the worker. `sleep()` keeps the interrupt it was woken by, so a sleeping job wakes at once and ends at the next point it *reports* from — which is what makes a loop of `sleep` + `jobProgress` stop within one step. Every report a Java body makes on its `JobMonitor` checks the same way, and `JobMonitor.checkCancelled()` is that check on its own for a stretch of work that reports nothing. Only declare it for work that may be given up half-done: a cancelled job has done part of what it was started for.
+- **`<job-status input="job"/>`** (`JobStatusElement` → `ReactJobStatusControl` / `TLJobStatus`) is the display, bound to the channel alone and holding no state of its own. It shows the status, the declared steps as done / active / pending, the bar (determinate or indeterminate), the message, the elapsed time — counted in the browser, so it ticks without a server round trip and freezes when the job ends — and at the end the result or the error. A channel holding anything that is not a job state displays nothing. Every text is resolved for the reader on the server: the phases and the message by their `ResKey`, the result through `MetaLabelProvider`, so a body returning an i18n literal `#('…'@en, '…'@de)` is displayed in the reader's language.
+- **CSS hooks**: the BEM block `tlJobStatus` with the status modifier `tlJobStatus--running|completed|failed|cancelled` and the elements `__header`, `__state`, `__elapsed`, `__cancel`, `__phases`, `__phase` (`--done`, `--active`, `--pending`), `__bar`, `__message`, `__error`, `__result` (`tlReactControls.css`). An application restyles the display through these classes; the bar inside it is the shared `tlProgress` block.
+- **Demo**: `com.top_logic.demo.react/…/views/demo/long-job-demo.view.xml` — a three-phase job with a determinate loop, an indeterminate phase and a result written to a second channel, a failing job, and a standalone indeterminate `<progress>`.
 
 ## Drag and drop of table rows
 
@@ -263,6 +512,61 @@ A `<table>` buckets its rows by the value of one column: one collapsible header 
 - Grouping is offered for the columns the user may choose at all (the `columnOptions()`, i.e. the selectable ones): an action column carries the row itself and would yield one group per row.
 - Demo: *Object list* (`tickets.view.xml`) groups its first ticket list by status and leaves the second flat; *Attributes → Table* starts ungrouped and is grouped from the header menu.
 
+## Filtering: the filter bar and its presets
+
+`<table filter-bar="true">` puts a bar above the table: the named filters it offers as chips, a search field examining the displayed columns, and saving the criteria the table currently shows under a name of the user's own. A table declaring `<presets>` shows the bar in any case — that is where the presets are offered.
+
+```xml
+<view>
+    <channels>
+        <channel name="activeFilter"/>
+        <channel name="searchTerm"/>
+    </channels>
+    <query-bindings>
+        <bind channel="activeFilter" query-param="filter"/>
+        <bind channel="searchTerm" query-param="q"/>
+    </query-bindings>
+    <panel>
+        <fields>
+            <value-input type="tl.core:String" value="searchTerm">
+                <label><en>Search</en></label>
+            </value-input>
+        </fields>
+        <table active-preset="activeFilter" search-term="searchTerm"
+            personalization-key="demo-tickets-open" types="demo.tickets:Ticket"
+        >
+            <presets initial="mine">
+                <preset name="mine">
+                    <label><en>Commented by me</en></label>
+                    <criterion column="commentedByMe" expr="true"/>
+                </preset>
+                <preset name="discussed">
+                    <label><en>Discussed</en></label>
+                    <criterion column="comments"><range operator="GT" primary="0"/></criterion>
+                </preset>
+            </presets>
+            <columns>…</columns>
+            <rows>all(`demo.tickets:Ticket`)</rows>
+        </table>
+    </panel>
+</view>
+```
+
+Such a page is linkable: `/view/tickets?filter=discussed` opens the list filtered by that preset, `?q=login` opens it searched for that text, and `?filter=discussed&q=login` opens it filtered by the preset *and* searched within it — the two parameters describe the displayed rows together, so every address the page leaves behind opens the rows it was taken from.
+
+- **What the bar filters by.** The search is a plain case-insensitive substring over the **displayed** columns (`TableView.search`, `SearchSpec` over `TableViewState.getColumnOrder()`), so it finds what the user sees — a column they hide is no longer searched, one they show is — and it narrows the rows in addition to the per-column `<filter>`s. The matching flags of a column's own text filter stay that column's business.
+- **`<presets>`** is a list of `<preset name="mine">` entries, each with a `<label>` and one `<criterion>` per column. `name` is the technical identity the user's choice is remembered — and linked — under, so it must not change once the table is in use. A criterion says what it selects in one of two ways, never both: `expr="currentUser()"` names a **value** the column's own filter translates (a text filter matches its text, a selection filter takes one value or a list of them, a boolean filter `true` / `false`, a range filter a single value as an exact match or a list of two as inclusive bounds), or it is written in the **form of that filter** — `<text pattern="'^Value [135]$'" regexp="true" case-sensitive="true" whole-field="true"/>`, `<range operator="GT" primary="0"/>`, `<options selected="sel -> $sel.get(\`demo.react:Demo#priority\`)"/>`, `<boolean accept="true"/>` — which is how a criterion says what a single value cannot. `inverted="true"` makes the column accept exactly the rows the criterion does not select.
+- **Criteria follow the inputs.** Every value expression is evaluated with the table's `<inputs>` as its arguments, the same ones the rows are computed from, and re-evaluated whenever one of them changes (`TableElement` then calls `DefaultTableView.setDeclaredFilters`) — so `currentUser()` yields a preset that means something different to every user, and an expression over an input yields one that follows what is displayed elsewhere. A chip the user has applied goes on being the active one and filters by what it now means.
+- **A criterion that does not materialize** — an unknown column, a column that cannot be filtered, a form of another kind than the column's filter, a value the filter cannot express, a selected option the column does not offer — is a declaration error (`DeclaredFilters`): it is reported and *the whole preset* is not offered, rather than offered filtering by less than its name says. A criterion selecting **nothing** is no error but no criterion either (an input nothing is selected in leaves its column unfiltered); a preset whose every criterion selects nothing is withheld and offered again as soon as its inputs select something.
+- **`initial="mine"`** on the `<presets>` container names the preset the table starts out filtered by. It is part of the table's *initial state*, like the sort order and the grouping, so it takes effect only as long as no personalization is stored for this table (`DefaultTableView.restore()`): a user who applied other criteria keeps them, one who cleared the filter keeps the table unfiltered — and so does one who merely resized a column, since the persisted state replaces the initial one as a whole. Applying it persists nothing itself, so it is what every fresh session of an unpersonalized table shows. A name none of the declared presets carries is a configuration error at startup; a preset that is withheld at runtime leaves the table unfiltered instead of failing. A table offering presets should carry a `personalization-key`, so that the choices made about it survive an edit of its columns.
+- **`active-preset="ch"`** publishes the `NamedFilter.id()` of the named filter the table matches, and nothing while it matches none. That is a declared preset's `name` as well as the generated identifier (a UUID) of a filter the user saved on the bar, so a saved filter is linkable exactly like a preset. Which one is active is not a flag the table keeps but a comparison of its live criteria with the offered filters (`TableView.activeNamedFilter()`), so the channel follows every filter the user applies, edits or clears — from the bar, from a column's own filter dialog, or from the channel — and it follows a change of the filters the table *offers* as well.
+- **`search-term="ch"`** publishes the text the table searches for, and nothing while it searches for none. The search narrows the rows *within* whatever the table is filtered by and says nothing about that filtering, so a preset the table matches stays the active one while the user searches — the chip keeps its mark, and `filter` and `q` stand in the address side by side.
+- **Both are two-way** (`TableFilterBinding`). An identifier written to `active-preset` filters the table by that filter; a text written to `search-term` is searched for. What no offered filter carries leaves the table unfiltered, and the state the table ends up in is written back — so a stale link, a mistyped identifier, or a preset that has since been removed corrects itself instead of describing something nobody sees. At creation a channel holding nothing takes the table's state rather than unfiltering it (the `initial` preset survives a page that binds the channel), while a channel that does hold a value describes the table someone asked for and is applied.
+- **A write to either channel applies both.** Every writer sets one channel at a time — `QueryBindingParticipant` writes one bound parameter after the other, in the order the `<bind>` elements are declared in — and applying a named filter replaces the whole filtering, the search term included. The binding therefore brings the table to what *both* channels say on every write: the preset first, then the term. That is order-independent and repeatable, so `?filter=mine&q=Export` opens the same rows whichever parameter is bound first; applying only the channel that changed would let the term be wiped by a preset arriving after it. Once the table and the channels are together, nothing on `active-preset` means "by no named filter" and leaves the term in effect, and nothing on `search-term` means "searched for nothing" and leaves the preset applied. A filter the user saved *with* a term is named by the two channels together, which is exactly what the binding publishes when it is applied.
+- **Which term is compared** (`NamedFilter.matches`): a named filter's search term takes part in the match only when the filter *defines* one. A `<preset>` never does — `DeclaredFilters` builds every declaration with no term — so it matches on its column criteria alone and survives a search. A filter the *user* saved on the bar captures the text that was searched when they saved it, and therefore matches only while exactly that text is searched for again: the term is one of the things it was saved as. Both can match at once — saving "the preset, searched for X" yields a filter whose columns are the preset's — and then the one naming the term wins, because it describes the displayed rows completely while the preset describes only their columns; among equally specific matches the offered order decides, so a preset still wins over a saved filter with the same criteria and no term. The other way round, picking a preset replaces the whole filtering, the search term included — which for a preset means the search field is cleared. A preset declaring no criterion at all (the "All" chip) matches exactly while no column is filtered, whether or not a search is running.
+- **The binding follows the `TableView`, not the bar**, so both channels work for a table that displays no bar at all: an input elsewhere — a `<value-input value="searchTerm" type="tl.core:String"/>` — searches it, and several tables bound to one search channel are searched together.
+- Demo: *Object list* (`views/tickets.view.xml` in `com.top_logic.demo.react`) — the Open list declares three presets over its computed `comments` / `commentedByMe` columns, opens filtered by `initial="mine"`, and binds both channels to the query parameters `filter` and `q`; the Closed list beside it shows no bar and is searched through the same channel. *Attributes → Table* (`views/attributes.view.xml`) shows the criterion forms: a value, a case-sensitive regular expression, an inverted range, and a selection following the table's own selection channel.
+
 ## Pinned columns
 
 `Column.pinnedEnd()` keeps a column at the end of the table: it is rendered behind every other column and stays fixed to the right edge while the table scrolls horizontally — the place for what acts on a row (the per-row buttons) rather than for what the row *is*. `DefaultColumn.builder(name, value).pinnedEnd(true)` is how a column author asks for it; there is no `.view.xml` attribute.
@@ -286,6 +590,146 @@ A `<table>` buckets its rows by the value of one column: one collapsible header 
 - **Restoring, and coming back out**: opening such an address restores the path frame by frame — the participant takes up the route of the next frame, puts it on the path, and is offered the rest of the URL again for the frame above it (`TileFrameRouteParticipant`, one per stack, anchored at the stack's control, so that the path enters the URL where the stack sits in the display). A route naming something that cannot be displayed — a deleted object, a mistyped identifier — restores no frame, and the address bar is corrected to the path that could be restored; a frame view without a `<frame>` declaration has no address, and neither has anything drilled into from it. A URL that names fewer frames than the display shows — the back button out of a drill-down, or a bookmark of the bare view — returns the stack to the view it started in (`RoutingParticipant.resetRoute`). Drilling down and coming back out are one history entry each, whatever the exchanged frames bring and take with them.
 - Both demos live in `com.top_logic.demo.react`: `demo/tiles-demo.view.xml` (accounts overview, drill-down to a person detail) and `demo/tiles-multi-demo.view.xml` (one stack per tab, on the channels `navPathA` / `navPathB`). Both stacks bind their path as `navPath`, declare the person frame's route and label, and the two shared frame views carry the depth-guarded Back command. A push is the frame view's row activation: the account table holds the `NavigatePushCommand` as its `<on-activate>`, so a double-click, `Enter`, or the row's chevron button drills into that person.
 
+## Multi-step flows with `<wizard>`
+
+`com.top_logic.layout.view.wizard` leads through a sequence of steps and displays one of them at a time. `<wizard current-step="currentStep" step-list="true">` holds the sources the sequence is built from; the channel referenced by `current-step` holds the **key of the step displayed** and is the single source of truth: every move is a write to it, and a value no step carries — `null` included — displays the first step, so a flow starts at its beginning without anyone writing the channel first.
+
+- **The sources.** The sequence is the concatenation of what the wizard's children contribute, in configuration order, and the two kinds mix in one wizard. A `<step id="welcome" label="…" icon="css:bi bi-flag">…</step>` (`StaticStepSource`) contributes exactly the one step it is written as, keyed by its `id`. A `<dynamic-steps steps="questions" element-channel="question" label="q -> …" icon="q -> …">…</dynamic-steps>` (`DynamicStepsSource`) contributes one step per element of the list its `steps` channel holds, keyed by the element itself, with the content template instantiated per displayed step and the element published on the `element-channel` (default `element`) — so the template typically is a `<switch input="element">` choosing the display by the kind of element. Without a `label` function an element names its step the way it is named everywhere else (`MetaLabelProvider`). Extending the set is a matter of implementing `WizardStepSource`: `steps(ViewContext)` answers the steps of one source, `observedChannels(ViewContext)` names what it decides by, `childGroups()` reports its content to the designer.
+- **The sequence is live.** The wizard follows every channel its sources name and expands the sequence anew whenever one takes a new value — *inside* that channel notification, so an action chain that writes such a channel and then moves on already sees the step it created: `<generic-command><execute-script inputs="questions" function="qs -> x -> …"/><write-channel name="questions"/><wizard-next/></generic-command>` appends an element and goes to the step it became, in one command. What the user is looking at survives a re-expansion where its key is still in the sequence: the content control is kept as it is and only its position is corrected; a step whose key has gone falls back to the first step, and its content is disposed.
+- **Moving.** `<wizard-next/>`, `<wizard-back/>` and `<wizard-goto step="summary"/>` are each a `ViewCommand` *and*, under the same tag, a `ViewAction`, exactly like the tile stack's `<navigate-pop/>`: the same element names the command in a `<commands>` list or a `<button>`'s `<action>`, and the action inside a `<generic-command>` chain. The actions pass the chain's object through, so storing what was entered and then moving on is one command. `<wizard-goto>` without a `step` takes the chain value (the command's input) as the key. A key no step carries leaves the wizard where it is.
+- **Guarding.** `<wizard-has-next/>` and `<wizard-has-back/>` are executability rules that hide a command where the move would do nothing — a Back button is absent on the first step and appears again after the first Next. They find the wizard the same way the commands do and report every move through `ObservableRule` — the mix-in by which a rule deciding by more than the command's own input says when its answer may have changed, so the command's `ViewCommandModel` re-evaluates it (the same mix-in carries `<form-valid/>`, which reports the form's validation state changing).
+- **Where the buttons live.** The wizard renders the indicator and the content of the step and *no navigation buttons of its own*: which buttons a flow offers, and where, is composed in the view. They have to sit **inside a step's content**, because that is where the wizard installs the `WizardScope` that the commands and rules resolve. To get one footer below the whole wizard rather than a button bar per step, put a `<slot name="wizard-actions"/>` beside the `<wizard>` (a sibling in the enclosing `<stack>`) and let every step raise its own buttons with `<slot-content to="wizard-actions">` — slot routing is by tree distance, so a sibling slot is the nearest match from inside a step. Placing the contribution inside the step's `<form>` additionally lets `<form-valid/>` resolve that form, which is how a Next is disabled while a mandatory field is empty.
+- **The indicator.** Three independent options on the element: `counter` (default on) writes the position against the total, zero-padded (`02 — 05`); `progress` (default on) renders a `ReactProgressControl` filled to `(index + 1) / total`; `step-list` (default off) lists the steps by name, marking each one done, current or upcoming. A step already done is a button that jumps back to it; a step still ahead is not, because the way there leads through the steps in between. The control registers itself as a container of the reveal protocol (`ChildRevealer`, keyed by step), so bringing a step into view is available to whoever displays something nested in it.
+- **The step in the URL.** Nothing special: `<param-bindings><bind channel="currentStep" route-param="step"/></param-bindings>` on the `<view>` binds the step channel to one path segment like any other channel, yielding `/view/wizard/profile`. The segment is the channel value's text, and the value a deep link writes back is that text, so a step whose key is a **string** round-trips — which is why keying dynamic steps by strings makes them addressable too (`/view/wizard/phone` in the demo). A key that is a model object puts its `toString()` into the segment and does not resolve back, so such a link displays the first step; bind a bidirectional `<derived-channel>` (`expr` to an identifier, `reverse` back to the object, as for any other object in the URL) where those steps should be addressable. A deep link into a dynamic step also needs the list that produced it: in a fresh session the list is empty, so the wizard has no such step yet and shows its first one.
+- **Transitions.** A step change is drawn by the stylesheet; the component only says what is happening. `ReactWizardControl` publishes the way the display moved (state key `direction`), which the root carries as `tlWizard--forward` / `tlWizard--backward`; the step arriving carries `tlWizard__step--entering` until its animation ends, and over it lies an inert copy of the step left behind, `tlWizard__step--exiting`, removed when its animation ends. The copy is DOM rather than a control, because the control of the step left behind is disposed on the server the moment the wizard moves — a picture is what is still there to animate out. It is `aria-hidden`, `inert`, takes no pointer input, carries no ids of what it copied, and is positioned absolutely inside `.tlWizard__body`, so the step arriving already sits where it will stay. Only one copy exists at a time; a second move replaces it. The engine ships a subtle default — fade plus a 12px slide in the direction moved, 200ms — and an application restyles the change by redefining `.tlWizard__step--entering`, `.tlWizard__step--exiting` and their `.tlWizard--backward` variants. `@media (prefers-reduced-motion: reduce)` turns the animation off, and because nothing then reports an `animationend`, the component drops both classes on a one-second fallback timer instead.
+- **Auto-advance.** A step can carry its own time: `<step id="ready" auto-advance="2s">` (a duration in the usual `MillisFormat` notation) for an interstitial the user only watches, and `<dynamic-steps auto-advance="q -> …">` for one computed per element — an element the function answers nothing for is a step the user leaves. It reaches the runtime as `WizardStep.autoAdvanceMillis()` and the client as the state key `autoAdvance` of the step displayed, where it becomes a timer; the timer is cleared whenever the step changes. When it fires it reports back naming the step it belongs to, and the wizard moves on **only while that step is still the one displayed** — the user may have moved on themselves in the meantime, and a timer that outlived its step must not carry the display past what they chose. The time runs while the flow *leads through* the step: it is started for a step entered going forward, and not for one the user came back to — a Back out of the step behind an interstitial would otherwise be answered by being sent forward again. A re-expansion that carries the displayed step along does not restart it either; it keeps counting.
+- The demo is `demo/wizard-demo.view.xml` in `com.top_logic.demo.react` (sidebar **Wizard** / **Assistent**, `/view/wizard`): an onboarding flow whose written-out Welcome, Profile and Summary steps enclose a `<dynamic-steps>` over a `questions` channel that grows while the flow is walked, with the Back/Next footer raised out of every step into one slot.
+
+## The sidebar: item kinds, badges and the rail chrome
+
+`<sidebar>` (`SidebarElement`) is the navigation rail of an application shell. It holds a list of items and the chrome of the rail itself; the items are keyed by their `id`, so a configuration fragment of another module adds, repositions (`config:position`) or overrides a single item.
+
+Five kinds of item:
+
+- `<nav-item id icon route badge hidden>` leads to a page. Its content — written directly inside it, usually a `<view-ref>` — is built when the item is first selected, and its `id` is the route segment it contributes (see [URL routing](#url-routing-what-ends-up-in-the-address-bar)).
+- `<group id icon expanded>` gathers further items under a heading the user folds away. A group holds items, not content: the navigation items inside it lead to the same places and are addressed at the sidebar itself, so a group nests inside a group without changing where anything is displayed. Whether it is folded is remembered per user under the group's `id` (`PersonalizingExpandable`, the states stored as one JSON map beside the rail's own collapsed state), and applied to a group at any depth when the item list is pushed. On a folded rail a group opens as a flyout listing its items.
+- `<header-item id icon>` is a caption naming the items that follow it. It leads nowhere and cannot be activated; it divides a long navigation into named sections that all stay visible, where a group would fold them away.
+- `<command-item id>` runs a command instead of leading somewhere. The `<action>` it hosts is a `ViewCommand`, whose label and image the item displays, so the item reads like the button of the same command elsewhere. The item follows the command's executability for as long as the rail stands: invisible is not displayed, not executable is displayed out of reach (greyed), and the item takes its place back as soon as the rules allow it. The reason a rule gives for disabling the command (the text of a `<disabled-if>` expression, say) is what the item shows when the pointer rests on it, as the button of the same command does. The control refuses an activation of an item in either state, so a client addressing the command directly does not bypass the rules.
+- `<separator/>` draws a line between items. It is the one entry that usually carries no `id`, and at most one such anonymous entry may occur — give separators explicit ids where more than one is needed.
+
+`<nav-item>` and `<group>` take an `<access-control scope="…"/>`: an item the current user may not reach is not built at all, and a group whose access is denied withholds everything inside it.
+
+```xml
+<sidebar active-item="attributes">
+    <header>
+        <text>
+            <label>
+                <en>Application</en>
+                <de>Anwendung</de>
+            </label>
+        </text>
+    </header>
+    <header-collapsed>
+        <text>
+            <label>
+                <en>A</en>
+                <de>A</de>
+            </label>
+        </text>
+    </header-collapsed>
+    <items>
+        <header-item id="data">
+            <label>
+                <en>Data</en>
+                <de>Daten</de>
+            </label>
+        </header-item>
+        <nav-item id="attributes" icon="css:bi bi-card-list">
+            <view-ref view="attributes.view.xml"/>
+            <label>
+                <en>Attributes</en>
+                <de>Attribute</de>
+            </label>
+        </nav-item>
+        <nav-item id="tickets" badge="ticketCount" icon="css:bi bi-chat-left-text">
+            <view-ref view="tickets.view.xml"/>
+            <label>
+                <en>Tickets</en>
+                <de>Tickets</de>
+            </label>
+        </nav-item>
+        <group id="demos" expanded="false" icon="css:bi bi-collection">
+            <label>
+                <en>Demos</en>
+                <de>Demos</de>
+            </label>
+            <nav-item id="charts" icon="css:bi bi-bar-chart-line">
+                <view-ref view="demo/chart-demo.view.xml"/>
+                <label>
+                    <en>Charts</en>
+                    <de>Diagramme</de>
+                </label>
+            </nav-item>
+        </group>
+        <nav-item id="print-view" hidden="true">
+            <view-ref view="print.view.xml"/>
+            <label>
+                <en>Print view</en>
+                <de>Druckansicht</de>
+            </label>
+        </nav-item>
+        <separator/>
+        <command-item id="about">
+            <action class="com.top_logic.layout.view.command.GenericViewCommand"
+                image="css:bi bi-info-circle" input="ticketCount"
+            >
+                <label>
+                    <en>About</en>
+                    <de>Info</de>
+                </label>
+                <executability>
+                    <null-input-disabled/>
+                </executability>
+                <notify expr="count -> #('{0} tickets.'@en, '{0} Tickets.'@de).fill($count)"/>
+            </action>
+        </command-item>
+    </items>
+    <footer>
+        <view-ref view="user-menu.view.xml"/>
+    </footer>
+    <footer-collapsed>
+        <text>
+            <label>
+                <en>A</en>
+                <de>A</de>
+            </label>
+        </text>
+    </footer-collapsed>
+</sidebar>
+```
+
+A label is written as a `<label><en>…</en><de>…</de></label>` child; the `label="…"` attribute of the same property names a resource *key*, which an application that keeps its texts in the view file does not have — such a key shows up in the rail as `[TL]`.
+
+**`hidden`** withholds a `<nav-item>` from the rail while leaving it reachable by its route: the page a URL leads to directly, which has no place of its own in the navigation. Routing, content creation and `getChildGroups()` are untouched by it, so a deep link and `<show-object>` reach such a page exactly as they reach a listed one; what is refused is a *selection* sent by the client, which would otherwise switch to a view the user interface does not present.
+
+**`badge`** names a channel whose value is displayed beside the item's label — the number of things waiting in the page it leads to. The value is named as the model names it (`MetaLabelProvider`); nothing and an empty text show no badge at all, which is how a count answers "nothing to report" with a `null` rather than a zero. The badge follows a new value on the channel *and* a change of the object that value points to, so a count computed from an edited object is up to date without the channel being written anew. A count over a whole type reads no channel at all, and therefore names the type it counts as an `observed-types` of its `<derived-channel>` — without that, a channel with no inputs is computed once when the view is built and never again:
+
+```xml
+<derived-channel name="ticketCount"
+    expr="{ tickets = all(`demo.tickets:Ticket`).size(); if($tickets == 0, null, $tickets); }"
+    observed-types="demo.tickets:Ticket"
+/>
+```
+
+**The chrome of the rail** is four lists of view elements outside the item list: `<header>` and `<footer>` stand above and below the items for as long as the rail is on screen, and `<header-collapsed>` / `<footer-collapsed>` replace them while the rail is folded to a narrow strip — room for an abbreviation or an avatar, not for a name and a search field. Each list is created eagerly with the sidebar and may hold any element, a `<view-ref>` included; the views written there are addressed at the sidebar without a key, since whoever reaches them reaches them by opening the rail and nothing else. Left empty, the rail begins with its first item and ends with its last.
+
+**`SidebarItemElement` is the extension point** for an item kind the configuration does not cover — items computed from the model, say, one per project of the current user. An implementation answers two things:
+
+- `createSidebarItem(ViewContext, ItemSite)` builds the `SidebarItem` (`NavigationItem`, `GroupItem`, `HeaderItem`, `CommandItem`, `SeparatorItem`), or `null` for an item that must be omitted, e.g. because access is denied. The item is built *before* the control that displays it exists, so whatever the item has to say to that control — a badge to keep up to date, an executability to follow — is registered through `ItemSite.addBinding(Consumer<ReactSidebarControl>)` and run as soon as the control is there. Inside such a binding, `addAttachListener` / `addDetachListener` start and stop model observation, `addCleanupAction` removes listeners again, and `updateBadge(id, text)` / `refreshItems()` push a changed item list to the client (items are held as objects and serialized as a whole, so a change to one of them reaches the display only with the list it belongs to). The content of a navigation item is built later still, in `ItemSite.contentContext(context, key)` — the context that says where that content will sit, which is what makes an item's page revealable before it has ever been selected.
+- `getChildGroups()` reports the content the item holds, keyed by the id of the item displaying it. An item displaying no content of its own holds nothing; an item holding further items (a group) answers what those hold, so that every navigation item of a sidebar — nested or not — is addressed at the sidebar itself. An element that holds content and does not report it hides every view below it from navigation (see [Where a view is mounted is known statically](#where-a-view-is-mounted-is-known-statically)).
+
+Build the items of a nested list with `SidebarElement.createItems(elements, context, site)`, passing the site on unchanged: an item then behaves the same wherever it is written.
+
 ## URL routing: what ends up in the address bar
 
 **What a URL may load: the entry points.** `/view/<windowName>/some.view.xml` names the view a browser tab displays, and only a view the application declares as an entry point can be named there: the `default-view` of `ViewConfig` (implicitly) or one of its `<entry-points><entry-point view="demo/pdf-demo.view.xml"/></entry-points>` (keyed by the view, so the registrations of several modules merge). Every other view file is a fragment of a display — a dialog, a menu, a page of a tab — which the view enclosing it supplies with the channels it reads, and which alone in a tab shows nothing or fails; `ViewServlet.resolveViewPath` answers such a URL with 404. A remainder that does not end in `.view.xml` is a route, not a view, and loads the default view with the route resolved inside it (see below).
@@ -298,7 +742,7 @@ Adopting a URL — a deep link, a reload, a back navigation — works in two ste
 - **Tabs**: `ReactTabBarControl` contributes the active tab. A tab bar shown for one case of a `<switch>` removes its segment again when the case changes (via `replaceState`, so the disappearance is not a history step of its own).
 - **Tile stack**: the drill-down path of a `<tile-stack>`, one route per frame, for every frame view the stack declares a `<frame>` for (see above). It is the one participant that takes up route after route of a single URL (`RoutingParticipant.acceptsRouteSequence`) and the one that has a state without a route to return to (`resetRoute` empties the path). Give a frame route a static prefix (`person/:person`, not `:person`): a bare parameter pattern matches any single segment and would take up whatever follows the stack in the URL.
 - **Route parameters**: `<param-bindings><bind channel="ticketKey" route-param="ticket"/></param-bindings>` on `<view>` binds a channel to one path segment: a channel change writes the segment, a deep link writes the segment's value into the channel. The segment is always the value the channel holds, so a link naming an object that does not exist leaves no segment behind. A URL without the segment says nothing about the value rather than saying there is none: the view keeps what it establishes itself — a default selection, or the selection the session still holds — and the address bar is completed with it, as a replacement rather than a history entry. The value is a string, so a model object is bound through a bidirectional derived channel: `expr="t -> objectId($t)"` maps the object onto its identifier, `reverse="id -> objectResolve(\`mod:Type\`, $id)"` maps the identifier back to the object (`views/tickets.view.xml` in `com.top_logic.demo.react` shows this). `objectId` yields nothing for a transient object and `objectResolve` nothing for an identifier no object of that type carries, so an unusable link simply leaves no segment. A business key works the same way where the URL should be readable — `expr` to the attribute, `reverse` a lookup over `all(...)` — at the price of the uniqueness and URL-safety the key then has to have. An optional `prefix` puts static segments in front of the value — `<bind channel="ticketId" prefix="ticket" route-param="ticket"/>` compiles to `ticket/:ticket` and yields `/view/tickets/ticket/<id>` — which names what the value identifies; without a prefix the compiled pattern is a bare `:param` matching any single segment, and the position of the binding in the URL is what identifies it. The prefix appears exactly when the value does, and a URL carrying the prefix alone matches nothing, so it says nothing about the value. Values are percent-encoded as path segments (`RouteEncoding`, applied by `RoutePattern.produce` and undone by `RoutePattern.match`), so a value containing a slash, a space or a `%` stays the one segment it was written into; static segments of a pattern are used verbatim. Both entry points therefore deliver the route encoded: the client sends `window.location.pathname` on `popstate`, and `ViewServlet` reads the route from the raw request URI rather than from the container-decoded path info.
-- **Query parameters**: `<query-bindings><bind channel="filter" query-param="q"/></query-bindings>` on `<view>` binds a channel to one query parameter (`QueryBindingParticipant`). It works like a route parameter, with two differences that follow from the query naming its parameters instead of placing them: the binding occupies no path segment, so it neither depends on nor disturbs the position of anything else in the URL and simply disappears when the channel holds nothing; and the query of an adopted URL is offered to *every* participant (`RoutingParticipant.activateQuery`), each taking the parameters it declares. A change that leaves the path as it is and alters only the query is always reported with `replaceState`, whatever the participant asked for: refining what a page shows - narrowing a filter, picking a sorting - stays on that page, so the back button leaves it rather than walking the terms typed on it. A URL without the parameter says nothing about the value, exactly as for a route parameter: the view keeps what it establishes and the address bar is completed with it. A displayed element list bound to such a channel (a `<table>`'s `<rows>` over its `<inputs>`, an `<object-list>`, a `<calendar>`) is re-read when it starts observing (`RowSourceObserver.attach`), because the URL writes the channel while the display is still being attached - and equally when a display comes back after being detached, which ignored every change meanwhile. Keys and values are `application/x-www-form-urlencoded` (UTF-8), and the parameters follow the display order of the participants contributing them. The value is text, so a `<value-input value="filter" type="tl.core:String"/>` writes it and a `<table>` reads it through an `<inputs><input channel="filter"/></inputs>` of its `<rows>` expression - `views/tickets.view.xml` in `com.top_logic.demo.react` shows this as `/view/tickets/ticket/<id>?q=<term>`.
+- **Query parameters**: `<query-bindings><bind channel="filter" query-param="q"/></query-bindings>` on `<view>` binds a channel to one query parameter (`QueryBindingParticipant`). It works like a route parameter, with two differences that follow from the query naming its parameters instead of placing them: the binding occupies no path segment, so it neither depends on nor disturbs the position of anything else in the URL and simply disappears when the channel holds nothing; and the query of an adopted URL is offered to *every* participant (`RoutingParticipant.activateQuery`), each taking the parameters it declares. A change that leaves the path as it is and alters only the query is always reported with `replaceState`, whatever the participant asked for: refining what a page shows - narrowing a filter, picking a sorting - stays on that page, so the back button leaves it rather than walking the terms typed on it. A URL without the parameter says nothing about the value, exactly as for a route parameter: the view keeps what it establishes and the address bar is completed with it. A displayed element list bound to such a channel (a `<table>`'s `<rows>` over its `<inputs>`, an `<object-list>`, a `<calendar>`) is re-read when it starts observing (`RowSourceObserver.attach`), because the URL writes the channel while the display is still being attached - and equally when a display comes back after being detached, which ignored every change meanwhile. Keys and values are `application/x-www-form-urlencoded` (UTF-8), and the parameters follow the display order of the participants contributing them. The value is text, so a `<value-input value="searchTerm" type="tl.core:String"/>` writes it, a `<table>` reads it through an `<inputs><input channel="status"/></inputs>` of its `<rows>` expression, and a `<table>` bound with `active-preset` / `search-term` publishes its own filtering on such a channel (see [Filtering](#filtering-the-filter-bar-and-its-presets)) - `views/tickets.view.xml` in `com.top_logic.demo.react` binds both as `/view/tickets/ticket/<id>?filter=<preset>&q=<term>`.
 
 An encoded slash (`%2F`) in a route value needs a servlet container that accepts such a path — containers reject it by default, as "ambiguous". The embedded Jetty of `tl-ide-jetty` does accept it: `Bootstrap` allows `UriCompliance.Violation.AMBIGUOUS_PATH_SEPARATOR` on the connector's `HttpConfiguration` and sets `ServletHandler.setDecodeAmbiguousURIs(true)`. A standalone Jetty needs the same two settings (`jetty.httpConfig.uriCompliance`, `jetty.servlet.decodeAmbiguousURIs`), a Tomcat 10.1 `encodedSolidusHandling="decode"` on its `<Connector>` (the default `reject` answers 400). Object identifiers never contain a slash, so this concerns bindings on a business key only.
 
@@ -324,13 +768,15 @@ A container component therefore declares how it takes part:
 
 A container that declares nothing is opaque: a filling control inside it does not grow it, so a new container element that lays out vertical space adds its declaration.
 
+A `<dashboard>` bounds its tiles instead of following them. Its grid has a definite row unit - `row-height`, a CSS length defaulting to `16rem` - and a tile is as many of those units tall as its `row-span`, plus the gaps between them. Each tile is a barrier: a panel that fills or a table inside it resolves its height against the tile and scrolls there, and the request reaches neither the dashboard nor whatever hosts it. Content that does not fill and is taller than its tile scrolls inside the tile as well.
+
 ## A tile-stack frame is kept, not rebuilt
 
 `<tile-stack>` holds one frame per stack position (`ReactTileStackControl`): the `initial` view, followed by the frames of the path channel. The frame at the end of the path is the displayed one; the frames it covers keep their control tree and their layout box (`.tlTileStack__frame--covered` takes them out of the flow at the size of the stack and makes them invisible). Returning to a frame - a breadcrumb click, a `<navigate-pop>` - therefore shows it as the user left it: the selected tab, the selected table row, the values being edited and the scroll offsets included. A path change keeps the frames of the longest common prefix and disposes the ones it drops, so a path reconstructed from a URL keeps the frames it names (`TileFrame` compares by view, label and params). A covered frame is rendered but not seen, and the stack reports only the active frame as `visibleChildren()`: the URL is composed from the participants below the visible children, and only those take up a route of an adopted URL, so a tab bar inside a covered frame neither names its tab in the address nor is offered the segment meant for the tab bar of the frame on top.
 
 The hiding sits on a wrapper element the stack renders itself: a frame's content renders its own root element, and a style set on that from the outside is overwritten the next time the content re-renders.
 
-## Object navigation: display targets, the reveal protocol, `<show-object>`
+## Object navigation: display targets, the reveal protocol, `<show-object>` / `<show-view>`
 
 "Show this business object where the application displays objects of its type" is the view-layer counterpart of the classic `GotoHandler` / `LayoutComponent.makeVisible()`. It consists of three generic parts in `com.top_logic.layout.view.navigation`; none of them knows sidebars, tab bars or tile stacks in particular.
 
@@ -340,8 +786,9 @@ The hiding sits on a wrapper element the stack renders itself: a frame's content
 
 ```xml
 <target type="tl.demo.projectManagement:Ticket">
-  <show view="projects/overview.view.xml"><bind channel="project" expr="t -> $t.get(`…:Ticket#milestone`).container()"/></show>
-  <show view="projects/milestones.view.xml"><bind channel="milestone" expr="t -> $t.get(`…:Ticket#milestone`)"/></show>
+  <show view="projects/overview.view.xml"><bind channel="project" expr="t -> $t.container()"/></show>
+  <show view="projects/milestones.view.xml"><bind channel="project" expr="t -> $t.container()"/></show>
+  <show view="projects/milestone-list.view.xml"><bind channel="milestone" expr="t -> $t.get(`…:Ticket#milestone`)"/></show>
   <show view="projects/ticket-detail.view.xml"><bind channel="ticket"/></show>
 </target>
 <target type="tl.demo.projectManagement:Contributor">
@@ -349,11 +796,13 @@ The hiding sits on a wrapper element the stack renders itself: a frame's content
 </target>
 ```
 
-A `<show>` entry is carried out in one of three ways, decided by how its view is reached:
+A `<show>` entry is carried out in one of three ways, decided by how its view is reached. Where it is looked for is decided first: **within the view the show before it displayed**, and only if it sits nowhere in there, within the window as a whole. A frame the preceding show pushed onto a tile stack is therefore descended into, although the frame itself is part of no statically scanned mount path.
 
-- **Mounted view** (reachable from the root view through sidebar items, tabs, `<view-ref>`, `<adaptive-detail>` panes or the initial view of a `<tile-stack>`): the mount is revealed and the bindings are written to the view's channels in declared order.
+- **Mounted view** (reachable through sidebar items, tabs, `<view-ref>`, `<adaptive-detail>` panes or the initial view of a `<tile-stack>` — from the view the show before it displayed, or else from the root view): the mount is revealed and the bindings are written to the view's channels in declared order.
 - **Unmounted view**: it is a drill-down frame, pushed onto the tile stack that hosts the previously shown view (the bindings become the frame's channel values, exactly like `<navigate-push bind-input-to=…>`). A chain of such entries rebuilds a drill-down path; frames already on the stack with the same view and values are kept (pop to the longest matching prefix, push the rest), so the frames a target pushes must use the same view refs and channel names as the user's own drill-down.
 - **`dialog="true"`**: the view is opened as a dialog with the bindings as initial channel values (the same seam as `<open-dialog>`). It must be the last entry.
+
+A reveal can show views and write channels and nothing else, so revealing a tab — or any other keyed place — inside a frame a preceding show pushed works by naming a view that sits on it: the content of the tab gets a view file of its own, and a `<show>` for that file both brings the tab up and receives the bindings. That file is reachable from no root view, which is exactly why it is found within the frame.
 
 A `<bind expr>` is a TL-Script function of the object being shown and defaults to the object itself. A frame entry carries its breadcrumb label as `<label>` or, computed from the shown object, as `label-expr` — the same expression the drill-down's `<frame-label>` uses, because `TileFrame` equality includes the label. Resolution (`DisplayTargets.resolve`): the most specific type wins (an exact class beats a generalization, following `TLClass.getGeneralizations()`); among targets for the same type, the one whose first view is mounted **nearest** to the view that triggered the navigation (longest common mount prefix), then the one flagged `default="true"`, then the first declared. `hasTarget(type)` is the question "can objects of this type be shown at all?" — it decides whether a value is rendered as a link. At startup the service checks every `<bind channel>` against the channels the view declares and logs a configuration error for a mismatch (a typo in a channel name is found without clicking through the app).
 
@@ -368,7 +817,25 @@ Every control that shows one of several children implements `com.top_logic.layou
 ### Entry points
 
 - **`<show-object/>`** (`ShowObjectAction`) in a `<generic-command>` chain shows the chain's input object and passes it on; no input passes through unchanged; a selection of exactly one object shows that object. `<generic-command input="selection"><show-object/></generic-command>` is the whole configuration of a "go to" button. Java code calls `ObjectNavigation.show(context, object, continuation)`.
-- **`ReactContext.getObjectNavigator()`** (`com.top_logic.layout.react.navigation.ObjectNavigator`: `canShow(value)`, `show(context, value)`) is the seam for controls in `com.top_logic.layout.react`, which cannot depend on the view layer; the view layer answers it with `DisplayTargetNavigator`. Through it, **object values displayed read-only are links automatically** wherever a target exists for their type: `ReactResourceCellControl` (tree nodes via `MetaResourceControlProvider`, and any cell built with `useLink`), the read-only values of `ReactDropdownSelectControl` (which is what reference attributes in `<table>` cells and view-mode `<form>` fields render as), and `tlObject` anchors in read-only structured text (`ReactWysiwygControl`, command `showObjectLink`, resolved with `TLObjectLinkUtil` like the classic `OpenTLObjectLink`). The TL-Script functions `htmlObjectLink(object, label)`, `htmlSource(content)` and `htmlText(source)` (`HtmlFunctions` in `com.top_logic.layout.wysiwyg`) write such an anchor and read or write the HTML source of a structured-text attribute, e.g. to append an object reference to a comment.
+- **`<show-view view="…">`** (`ShowViewAction`) brings one view into view and writes the values its channels receive, without a business object being involved. It carries exactly the attributes and `<bind>` children of a display target's `<show>` — `view` (mandatory), `dialog`, `label`, `label-expr` — and each `<bind expr>` is a TL-Script function of the chain's current value (a `<bind>` without `expr` receives that value itself). The view is reached the same way a target's view is: the containers on the way are opened, or it is drilled down to as a frame, or opened as a dialog. The chain continues with the value it had.
+
+  ```xml
+  <show-view view="tickets.view.xml">
+    <bind channel="activeFilter" expr="term -> 'all'"/>
+    <bind channel="searchTerm" expr="term -> $term"/>
+  </show-view>
+  ```
+
+- **`<show-views>`** (`ShowViewsAction`) holds a list of `<show>` entries carried out in **one** request, so each entry is looked for within the view the entry before it displayed — a display target's `<show>` list, written in the command chain instead of declared per type. Java code calls `ObjectNavigation.show(context, shows, value, continuation)` for either.
+
+  ```xml
+  <show-views>
+    <show view="projects/overview.view.xml"><bind channel="project" expr="t -> $t.container()"/></show>
+    <show view="projects/ticket-detail.view.xml"><bind channel="ticket"/></show>
+  </show-views>
+  ```
+
+- **`ReactContext.getObjectNavigator()`** (`com.top_logic.layout.react.navigation.ObjectNavigator`: `canShow(value)`, `show(context, value)`) is the seam for controls in `com.top_logic.layout.react`, which cannot depend on the view layer; the view layer answers it with `DisplayTargetNavigator`. Through it, **object values displayed read-only are links automatically** wherever a target exists for their type: `ReactResourceCellControl` (tree nodes via `MetaResourceControlProvider`, and any cell built with `useLink`), the read-only values of `ReactDropdownSelectControl` (which is what reference attributes in `<table>` cells and view-mode `<form>` fields render as), and `tlObject` anchors in read-only structured text (`ReactWysiwygControl`, command `showObjectLink`, resolved with `TLObjectLinkUtil` like the classic `OpenTLObjectLink`). A tree hands its node content provider the business object a node stands for (`TreeUIModel.getBusinessObject`), which is why a node is a link exactly like the same object in a cell. The TL-Script functions `htmlObjectLink(object, label)`, `htmlSource(content)` and `htmlText(source)` (`HtmlFunctions` in `com.top_logic.layout.wysiwyg`) write such an anchor and read or write the HTML source of a structured-text attribute, e.g. to append an object reference to a comment.
 
 - **The WYSIWYG editor carries configured commands and inserts what they write.** The editor is chosen for a field by `<input-control class="com.top_logic.layout.react.wysiwyg.WysiwygControlProvider">`, which takes `<commands>` — ordinary view commands (`ViewCommand.Config`, e.g. `<generic-command>`) — and an optional `insert-channel`. The commands run in a child `ViewContext` of the field's view context: they see the channels of the surrounding view, so they take their input from it and hand it on to the dialogs they open, and beside those channels they see the insertion channel the editor declares. Markup written to that channel is inserted at the cursor of the editor (`ReactWysiwygControl.insertAtCursor`, state `insert` = `{seq, html}`; the client inserts it once per `seq`, reports the resulting text, and the request is taken back). Commands placed in a toolbar — the default placement — are rendered as a `ReactToolbarControl` in state `toolbar`, which the client renders beside the formatting buttons.
 
@@ -393,7 +860,7 @@ Every control that shows one of several children implements `com.top_logic.layou
 
   The dialog picks whatever it likes in whatever way it likes (a table, a search, a tree) and publishes the markup on its result channel: `<generic-command input="ticket"><execute-script function="t -> htmlObjectLink($t)"/><write-channel name="result"/><close-dialog/></generic-command>` is the whole contract, and `context` gives it the object the text is written for. Nothing about the editor knows what an object link is: it inserts the markup it is handed.
 
-The demo (`com.top_logic.demo.react`): the *Projects* drill-down (project → milestone → ticket → detail) with targets for its types in `demoReactConf.config.xml`, the contributor dialog target, `tl.accounts:Person` shown in the tiles demo, and the object-list comments, whose editor offers a "Reference ticket…" command opening `tickets/reference-ticket.view.xml`.
+The demo (`com.top_logic.demo.react`): the *Projects* drill-down (project → milestone → ticket → detail) with targets for its types in `demoReactConf.config.xml`, the contributor dialog target, `tl.accounts:Person` shown in the tiles demo, and the object-list comments, whose editor offers a "Reference ticket…" command opening `tickets/reference-ticket.view.xml`. The drill-down's second frame is the project home, a tab bar over the project's own data and its milestones; the milestone tab holds `projects/milestone-list.view.xml`, and a milestone target names that file to have the tab revealed inside the frame it pushed.
 
 ## UI inspector, diagnostics and assertions
 

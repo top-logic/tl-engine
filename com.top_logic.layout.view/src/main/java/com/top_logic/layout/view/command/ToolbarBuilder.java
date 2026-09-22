@@ -20,6 +20,7 @@ import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.button.ReactUploadButtonControl;
 import com.top_logic.layout.react.control.button.UploadCommandModel;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
+import com.top_logic.layout.react.control.layout.ToolbarOverflow;
 import com.top_logic.layout.view.command.CliqueRegistry.CliqueInfo;
 
 /**
@@ -56,7 +57,12 @@ public class ToolbarBuilder {
 	public static ReactToolbarControl buildOrEmpty(ReactContext context, CommandScope scope,
 			CommandPlacement placement, CliqueRegistry registry, ButtonDisplayMode defaultDisplay) {
 		ReactToolbarControl result = build(context, scope, placement, registry, defaultDisplay);
-		return result != null ? result : new ReactToolbarControl(context);
+		if (result != null) {
+			return result;
+		}
+		ReactToolbarControl empty = new ReactToolbarControl(context);
+		empty.setOverflow(overflowOf(placement));
+		return empty;
 	}
 
 	/**
@@ -118,6 +124,7 @@ public class ToolbarBuilder {
 
 		// Build toolbar control.
 		ReactToolbarControl toolbar = new ReactToolbarControl(context);
+		toolbar.setOverflow(overflowOf(placement));
 
 		for (Map.Entry<String, List<CommandModel>> entry : sortedGroups) {
 			String cliqueName = entry.getKey();
@@ -134,6 +141,23 @@ public class ToolbarBuilder {
 		}
 
 		return toolbar;
+	}
+
+	/**
+	 * The end at which a toolbar of the given placement collapses when its commands do not fit.
+	 */
+	private static ToolbarOverflow overflowOf(CommandPlacement placement) {
+		switch (placement) {
+			case TOOLBAR:
+				// A toolbar reads from the left, so the leading commands are the ones to keep.
+				return ToolbarOverflow.TRAILING;
+			case BUTTON_BAR:
+				// A button bar ends with the action that commits the form, which stays reachable
+				// longest.
+				return ToolbarOverflow.LEADING;
+			default:
+				return ToolbarOverflow.NONE;
+		}
 	}
 
 	private static ReactButtonControl createButton(ReactContext context, CommandModel model,

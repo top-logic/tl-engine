@@ -44,7 +44,7 @@
 								<de>Beispiele erzeugen</de>
 							</label>
 							<with-transaction>
-								<execute-script function="x -> count(6).foreach(i -> { o = new(`demo.react:Demo`, transient: false); $o.set(`demo.react:Demo#name`, if($i % 3 == 0, 'Part ', if($i % 3 == 1, 'Tool ', 'Usage ')) + ($i + 1)); $o.set(`demo.react:Demo#string`, 'Value ' + ($i + 1)); $o.set(`demo.react:Demo#active`, $i % 2 == 0); $o.set(`demo.react:Demo#count`, ($i + 1) * 100); $o.set(`demo.react:Demo#amount`, ($i + 1) * 12.5); $o.set(`demo.react:Demo#date`, date(2026, ($i % 12) + 1, ($i % 28) + 1)); $o.set(`demo.react:Demo#priority`, if($i % 3 == 0, `demo.react:Priority#low`, if($i % 3 == 1, `demo.react:Priority#medium`, `demo.react:Priority#high`))); $o.set(`demo.react:Demo#owner`, if($i % 2 == 0, currentUser(), null)); $o; })"/>
+								<execute-script function="x -> count(6).foreach(i -> { o = new(`demo.react:Demo`, transient: false); $o.set(`demo.react:Demo#name`, if($i % 3 == 0, 'Part ', if($i % 3 == 1, 'Tool ', 'Usage ')) + ($i + 1)); $o.set(`demo.react:Demo#string`, 'Value ' + ($i + 1)); $o.set(`demo.react:Demo#active`, $i % 2 == 0); $o.set(`demo.react:Demo#count`, ($i + 1) * 100); $o.set(`demo.react:Demo#amount`, ($i + 1) * 12.5); $o.set(`demo.react:Demo#date`, date(2026, ($i % 12) + 1, ($i % 28) + 1)); $o.set(`demo.react:Demo#priority`, if($i % 3 == 0, `demo.react:Priority#low`, if($i % 3 == 1, `demo.react:Priority#medium`, `demo.react:Priority#high`))); $o.set(`demo.react:Demo#owner`, if($i % 2 == 0, currentUser(), null)); $o.set(`demo.react:Demo#aliases`, ['Alpha ' + ($i + 1), 'Bravo ' + ($i + 1), 'Charlie ' + ($i + 1)]); $o.set(`demo.react:Demo#notes`, ['Checked on site.', 'Waiting for the supplier.']); $o.set(`demo.react:Demo#scores`, [$i + 1, $i + 3, $i + 5]); $o.set(`demo.react:Demo#ratios`, [($i + 1) * 1.5, ($i + 1) * 2.25]); $o.set(`demo.react:Demo#deadlines`, [date(2026, ($i % 12) + 1, 10), date(2026, ($i % 12) + 1, 24)]); $o.set(`demo.react:Demo#flags`, [$i % 2 == 0, $i % 3 == 0]); $o; })"/>
 							</with-transaction>
 						</generic-command>
 						<generic-command
@@ -228,6 +228,9 @@
 								attribute="string"
 								width="200"
 							/>
+							<column attribute="multiLine"/>
+							<column attribute="i18n"/>
+							<column attribute="i18nMultiline"/>
 							<column attribute="priority"/>
 							<column attribute="active"/>
 							<column attribute="count">
@@ -255,6 +258,12 @@
 							<column attribute="amount"/>
 							<column attribute="date"/>
 							<column attribute="dateTimeShort"/>
+							<column attribute="aliases"/>
+							<column attribute="notes"/>
+							<column attribute="scores"/>
+							<column attribute="ratios"/>
+							<column attribute="deadlines"/>
+							<column attribute="flags"/>
 							<column attribute="owner"/>
 							<column attribute="url"/>
 							<column attribute="email"/>
@@ -378,20 +387,26 @@
 									<field attribute="i18nMultiline"/>
 									<field attribute="i18nHtml"/>
 									<field attribute="password"/>
+									<field attribute="aliases"/>
+									<field attribute="notes"/>
 									<field attribute="count"/>
 									<field attribute="size"/>
 									<field attribute="amount"/>
 									<field attribute="price"/>
 									<field attribute="ratio"/>
+									<field attribute="scores"/>
+									<field attribute="ratios"/>
 									<field attribute="active"/>
 									<field attribute="tri"/>
 									<field attribute="activeRadio"/>
 									<field attribute="activeSelect"/>
+									<field attribute="flags"/>
 									<field attribute="date"/>
 									<field attribute="dateTime"/>
 									<field attribute="dateTimeShort"/>
 									<field attribute="time"/>
 									<field attribute="duration"/>
+									<field attribute="deadlines"/>
 									<field attribute="icon"/>
 									<field attribute="color"/>
 									<field attribute="country"/>
@@ -438,6 +453,8 @@
 							<columns>
 								<column attribute="name"/>
 								<column attribute="string"/>
+								<column attribute="aliases"/>
+								<column attribute="scores"/>
 								<column attribute="priority"/>
 								<column attribute="active"/>
 								<column attribute="amount"/>

@@ -39,7 +39,7 @@ export interface TLButtonProps {
  *
  * <p>The icon is supplied as a {@code ThemeImage} encoded form via {@code state.image} and
  * rendered through {@link ThemeIcon}. In {@code label-only} mode the icon is not rendered. A
- * compact app bar asks for the icon presentation through {@code ButtonDefaults.collapseToIcon}.
+ * collapsing toolbar hides the label of a button that carries an icon through its stylesheet.
  * The label always provides the accessible name via {@code aria-label} when the icon is present,
  * so hiding the label text keeps the button named for assistive technology.</p>
  */
@@ -61,9 +61,7 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
     ?? (state.appearance as ButtonAppearance | undefined)
     ?? defaults.appearance ?? 'secondary';
   const resolvedDanger = danger ?? state.tone === 'danger';
-  const requestedMode = displayMode ?? (state.displayMode as string | undefined) ?? 'label-only';
-  // A compact app bar collapses labeled buttons that carry an icon to their icon.
-  const resolvedMode = defaults.collapseToIcon && resolvedImage ? 'icon-only' : requestedMode;
+  const resolvedMode = displayMode ?? (state.displayMode as string | undefined) ?? 'label-only';
   const small = state.size === 'small' && resolvedMode === 'icon-only';
   // Additional CSS classes declared on the command this button renders, e.g. to mark a
   // destructive action.

@@ -97,6 +97,23 @@ html, body {
 	height: 100%;
 }
 
+/* --- Visually hidden text ----------------------------------------------- */
+
+/* Text that names a control for assistive technology without taking up space on screen: it is
+   clipped to a one-pixel box, since "display: none" or "visibility: hidden" would drop it from
+   the accessibility tree as well and it would then name nothing. */
+.tlVisuallyHidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	border: 0;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
 /* --- TLCounter ---------------------------------------------------------- */
 
 .tlCounter {
@@ -245,10 +262,16 @@ button.tlCounter__button:focus {
 	--page-inset: var(--spacing-04);
 }
 
+/* An inset passes the space it is given on to its content: a bounded flex column, so that content
+   which fills resolves its height against the inset - the inset then carries .tlFill and asks its
+   own container for that height (see the fill contract above). Around content of its own size the
+   inset is exactly as high as that content plus the padding, so it does not claim the height of a
+   container it shares with others. */
 .tlInset {
 	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
 	width: 100%;
-	height: 100%;
 	padding: var(--page-inset);
 }
 
@@ -874,23 +897,36 @@ button.tlPhotoCapture__overlayCaptureBtn:active .tlPhotoCapture__overlayCaptureI
 	color: var(--text-error);
 }
 
-/* --- TLPhotoViewer ----------------------------------------------------- */
+/* --- TLImage ----------------------------------------------------------- */
 
-.tlPhotoViewer {
-	display: inline-flex;
-	align-items: center;
-	font-family: var(--font-family);
+/* The box is as wide as the picture unless a size option says otherwise, and never wider than the
+   space available. */
+.tlImage {
+	display: block;
+	position: relative;
+	width: fit-content;
+	max-width: 100%;
 }
 
-.tlPhotoViewer__image {
-	max-width: 320px;
+.tlImage__image {
+	display: block;
+	width: 100%;
+	height: 100%;
 	border-radius: var(--corner-radius);
+}
+
+.tlImage--fit-cover .tlImage__image {
 	object-fit: cover;
 }
 
-.tlPhotoViewer__placeholder {
-	width: 320px;
-	height: 0;
+.tlImage--fit-contain .tlImage__image {
+	object-fit: contain;
+}
+
+/* Holds the space a size option reserves while there is no picture to show. */
+.tlImage__placeholder {
+	width: 100%;
+	height: 100%;
 }
 
 /* --- TLPdfViewer ------------------------------------------------------- */
@@ -941,6 +977,123 @@ button.tlPhotoCapture__overlayCaptureBtn:active .tlPhotoCapture__overlayCaptureI
 	border-bottom: 1px solid var(--border-subtle-01);
 }
 
+/* --- TLValueList ------------------------------------------------------- */
+
+/* The values of a multi-valued field. Read-only they read as one text - the separator between them
+   is written out, so that what is on screen is what is copied - or as one value per line where a
+   value is a text of several lines. Edited, each value takes a row with the button that removes it. */
+.tlValueList {
+	font-family: var(--font-family);
+	color: var(--text-primary);
+	min-width: 0;
+}
+
+.tlValueList--inline {
+	display: inline;
+}
+
+.tlValueList--block .tlValueList__item {
+	display: block;
+}
+
+/* Each value stands on a line of its own, so the line break is what separates them and the
+   separator text is not read. The separator is written out all the same, so that a display which
+   squeezes such a list into one line - a table cell - has it to show. */
+.tlValueList--block .tlValueList__separator {
+	display: none;
+}
+
+.tlValueList__separator {
+	color: var(--text-secondary);
+	white-space: pre;
+}
+
+/* Edit mode: the rows and the button appending a value follow each other vertically. The edited
+   list is a block container while the displayed one is inline text, so the element itself carries
+   the distinction and the layout modifier keeps its one meaning - how the values read. */
+div.tlValueList {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--spacing-02);
+	width: 100%;
+}
+
+.tlValueList__row {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	width: 100%;
+	min-width: 0;
+	/* The drop indicator of a dragged value is drawn as a border, so reserve its space on both edges
+	   to keep the rows from jumping while a value is dragged across them. */
+	border-top: 2px solid transparent;
+	border-bottom: 2px solid transparent;
+}
+
+.tlValueList__row--dragging {
+	opacity: 0.4;
+}
+
+.tlValueList__row--dragOver-before {
+	border-top-color: var(--interactive);
+}
+
+.tlValueList__row--dragOver-after {
+	border-bottom-color: var(--interactive);
+}
+
+.tlValueList__row > .tlValueList__item {
+	display: block;
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.tlValueList__handle,
+.tlValueList__remove,
+.tlValueList__add {
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	border: none;
+	border-radius: var(--corner-radius);
+	background: none;
+	padding: var(--spacing-01) var(--spacing-02);
+	min-height: 1.5rem;
+	color: var(--icon-primary);
+	font-size: var(--body-compact-01-font-size);
+	line-height: 1;
+	cursor: pointer;
+}
+
+.tlValueList__handle:hover,
+.tlValueList__remove:hover,
+.tlValueList__add:hover {
+	background-color: var(--layer-hover);
+}
+
+.tlValueList__handle:focus-visible,
+.tlValueList__remove:focus-visible,
+.tlValueList__add:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -1px;
+}
+
+.tlValueList__remove:hover {
+	color: var(--support-error);
+}
+
+/* The grip the value is dragged by; the arrow keys move the value while it has the focus. */
+.tlValueList__handle {
+	color: var(--text-secondary);
+	cursor: grab;
+}
+
+.tlValueList__handle:active {
+	cursor: grabbing;
+}
+
 /* --- TLPanel ----------------------------------------------------------- */
 
 .tlPanel {
@@ -975,6 +1128,8 @@ button.tlPhotoCapture__overlayCaptureBtn:active .tlPhotoCapture__overlayCaptureI
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+	flex: 0 1 auto;
+	min-width: 0;
 }
 
 .tlPanel__titleContent {
@@ -1015,6 +1170,17 @@ button.tlPhotoCapture__overlayCaptureBtn:active .tlPhotoCapture__overlayCaptureI
 	margin-left: auto;
 }
 
+/* Who gives way when the header is too narrow: a toolbar that can collapse absorbs the shrink
+   (it drops button labels and folds commands into its overflow menu), and the title truncates
+   only once the toolbar is down to its overflow trigger. A toolbar that cannot collapse keeps
+   its width, so there the title yields first. */
+.tlPanel__header:has(> .tlPanel__toolbar > .tlToolbar--collapsible) > .tlPanel__toolbar {
+	flex-shrink: var(--tl-toolbar-shrink-priority);
+	/* Stated explicitly: the automatic minimum size would be the toolbar's natural width, which
+	   is exactly the width the toolbar is meant to give up again. */
+	min-width: var(--tl-toolbar-trigger-size);
+}
+
 .tlPanel__actionButton {
 	display: inline-flex;
 	justify-content: center;
@@ -1049,10 +1215,23 @@ button.tlPanel__actionButton:focus-visible {
 	stroke-linejoin: round;
 }
 
+/* The body of a panel is where the fill chain ends (see the fill contract above): it is bounded by
+   the panel - it takes the space the panel has left over and scrolls what does not fit into it -
+   and is therefore the box a filling child resolves its height against. A child can only do that in
+   a flex container, so the body is a column: a child carrying .tlFill takes the height the body
+   offers, and any other child keeps the height of its content. */
 .tlPanel__content {
+	display: flex;
+	flex-direction: column;
 	flex: 1;
 	overflow: auto;
 	position: relative;
+}
+
+/* Content that does not fill keeps the height of what it contains: standing taller than the body it
+   overflows and the body scrolls it, rather than being squeezed into the body and clipping. */
+.tlPanel__content > :not(.tlFill) {
+	flex-shrink: 0;
 }
 
 .tlPanel--fullLine {
@@ -1159,6 +1338,9 @@ button.tlPanel__actionButton:focus-visible {
 .tlSidebar__headerSlot,
 .tlSidebar__footerSlot {
 	flex-shrink: 0;
+	/* Inset like the items below, so the rail chrome lines up with the item labels
+	   instead of sitting against the rail edge. */
+	padding: var(--spacing-03) var(--spacing-04);
 	border-bottom: 1px solid var(--border-subtle);
 	overflow: hidden;
 }
@@ -1173,6 +1355,9 @@ button.tlPanel__actionButton:focus-visible {
 	display: flex;
 	justify-content: center;
 	align-items: center;
+	/* The rail is icon width: a child that takes the full width centres its own content
+	   as well, so the chrome sits under the item icons whatever control fills the slot. */
+	text-align: center;
 	padding: var(--spacing-02);
 	overflow: hidden;
 }
@@ -1212,6 +1397,17 @@ button.tlSidebar__item:hover {
 button.tlSidebar__item:focus-visible {
 	outline: 2px solid var(--focus);
 	outline-offset: -2px;
+}
+
+/* An item offered, but out of reach: greyed out and unresponsive to the pointer. */
+.tlSidebar__item--disabled,
+button.tlSidebar__item:disabled,
+button.tlSidebar__item:disabled:hover,
+button.tlSidebar__flyoutItem:disabled,
+button.tlSidebar__flyoutItem:disabled:hover {
+	background: transparent;
+	color: var(--text-disabled);
+	cursor: default;
 }
 
 /* Navigation item */
@@ -1564,6 +1760,202 @@ button.tlDrawerToggle:focus-visible {
 	visibility: hidden;
 }
 
+/* --- TLWizard -------------------------------------------------------------- */
+
+/* A multi-step flow: the indicator pinned above, the step content below it. */
+.tlWizard {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	width: 100%;
+	font-family: var(--font-family);
+}
+
+.tlWizard__header {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-03);
+	padding: var(--spacing-04);
+	/* Keep the indicator in place while the step content scrolls. */
+	flex-shrink: 0;
+	border-bottom: 1px solid var(--border-subtle-01);
+}
+
+.tlWizard__counter {
+	color: var(--text-secondary);
+	font-size: var(--label-01-font-size);
+	font-variant-numeric: tabular-nums;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+/* The bar stands for a length walked, so it is given one instead of taking the width of the page. */
+.tlWizard__progress {
+	display: flex;
+	max-width: 24rem;
+}
+
+.tlWizard__progress > * {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.tlWizard__steps {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--spacing-02) var(--spacing-05);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	counter-reset: tlWizardStep;
+}
+
+.tlWizard__stepItem {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	counter-increment: tlWizardStep;
+	font-size: var(--body-compact-01-font-size);
+}
+
+/* The position of the step, drawn as a disc in front of its name. */
+.tlWizard__stepItem::before {
+	content: counter(tlWizardStep);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	width: 1.5rem;
+	height: 1.5rem;
+	border-radius: 999px;
+	background-color: var(--layer-active);
+	color: var(--text-secondary);
+	font-size: var(--label-01-font-size);
+	font-variant-numeric: tabular-nums;
+}
+
+.tlWizard__stepItem--done::before {
+	background-color: var(--interactive);
+	color: var(--text-on-color);
+}
+
+.tlWizard__stepItem--current::before {
+	background-color: var(--button-primary);
+	color: var(--text-on-color);
+}
+
+.tlWizard__stepName,
+.tlWizard__stepButton {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	font-family: var(--font-family);
+	font-size: inherit;
+	white-space: nowrap;
+}
+
+.tlWizard__stepName {
+	color: var(--text-secondary);
+}
+
+.tlWizard__stepItem--current .tlWizard__stepName {
+	color: var(--text-primary);
+	font-weight: bold;
+}
+
+.tlWizard__stepButton {
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: var(--link-primary);
+	cursor: pointer;
+}
+
+.tlWizard__stepButton:hover {
+	text-decoration: underline;
+}
+
+.tlWizard__stepButton:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: 2px;
+}
+
+/* The region holding the step content, bounded so that a filling step resolves its height here. It
+   positions the copy of the step leaving, which lies over the one arriving while it fades out. */
+.tlWizard__body {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
+.tlWizard__step {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
+/* The step change, as the engine draws it by default: the arriving step slides in from the side the
+   wizard moved towards, the one left behind fades out over it. An application restyles the change by
+   redefining these four rules; the classes (and the direction modifier on the root) are what it
+   addresses, so it can also drop the movement and keep only the fade, or animate something else
+   entirely. */
+.tlWizard__step--entering {
+	animation: tlWizardEnterForward 0.2s ease-out;
+}
+
+.tlWizard--backward .tlWizard__step--entering {
+	animation-name: tlWizardEnterBackward;
+}
+
+/* A picture of the step left behind: it neither takes input nor is read out, and it takes no place
+   in the layout, so the step arriving sits where it will stay. */
+.tlWizard__step--exiting {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	animation: tlWizardLeaveForward 0.2s ease-out forwards;
+}
+
+.tlWizard--backward .tlWizard__step--exiting {
+	animation-name: tlWizardLeaveBackward;
+}
+
+@keyframes tlWizardEnterForward {
+	from { opacity: 0; transform: translateX(12px); }
+	to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes tlWizardEnterBackward {
+	from { opacity: 0; transform: translateX(-12px); }
+	to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes tlWizardLeaveForward {
+	from { opacity: 1; transform: translateX(0); }
+	to   { opacity: 0; transform: translateX(-12px); }
+}
+
+@keyframes tlWizardLeaveBackward {
+	from { opacity: 1; transform: translateX(0); }
+	to   { opacity: 0; transform: translateX(12px); }
+}
+
+/* A viewer who asked for less movement gets the step change without one; the copy of the step
+   leaving is dropped by the component's own fallback instead of by an animation ending. */
+@media (prefers-reduced-motion: reduce) {
+	.tlWizard__step--entering,
+	.tlWizard__step--exiting {
+		animation: none;
+	}
+
+	.tlWizard__step--exiting {
+		opacity: 0;
+	}
+}
+
 /* --- TLGrid ---------------------------------------------------------------- */
 
 .tlGrid {
@@ -1577,6 +1969,80 @@ button.tlDrawerToggle:focus-visible {
 .tlGrid--gap-compact { --tlGrid-gap: var(--spacing-02); gap: var(--tlGrid-gap); }
 .tlGrid--gap-default { --tlGrid-gap: var(--spacing-04); gap: var(--tlGrid-gap); }
 .tlGrid--gap-loose   { --tlGrid-gap: var(--spacing-06); gap: var(--tlGrid-gap); }
+
+/* --- TLColumns ------------------------------------------------------------- */
+
+/* A wrapping flex row of columns, each column growing by its weight. The flex basis of a column
+   (set inline, since it computes with the configured breakpoint) is the width the breakpoint
+   leaves over the current container width, scaled up steeply: while the container is at least as
+   wide as the breakpoint that term is negative and therefore clamped to zero, so the row shares
+   its width by the grow factors; once the container is narrower the term turns positive and
+   exceeds the row, so every column wraps onto a line of its own. The columns align at the top and
+   keep the height of their content, so a short side column does not stretch to a long main one. */
+.tlColumns {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	font-family: var(--font-family);
+}
+
+.tlColumns--gap-compact { gap: var(--spacing-02); }
+.tlColumns--gap-default { gap: var(--spacing-04); }
+.tlColumns--gap-loose   { gap: var(--spacing-06); }
+
+/* The minimum keeps wide content (a long word, a table) from claiming more than the weighted
+   share; the maximum clamps the basis of a stacked column to the width of the row. */
+.tlColumns__column {
+	min-width: 0;
+	max-width: 100%;
+}
+
+/* --- TLDeckPane ------------------------------------------------------------ */
+
+/* Shows one child at a time and takes its size from that child: a column flex box that states no
+   size of its own, so a deck standing inline - in an app bar, beside a breadcrumb - is as wide and
+   as high as the content it shows. A deck showing a filling child carries .tlFill (see the fill
+   contract above) and is then a bounded flex container the child's height resolves against. */
+.tlDeckPane {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	min-height: 0;
+}
+
+/* --- TLOverlay ------------------------------------------------------------- */
+
+/* The base gives the overlay its height and the surrounding layout its width; every layer covers
+   exactly that area. */
+.tlOverlay {
+	position: relative;
+	display: inline-block;
+	max-width: 100%;
+}
+
+.tlOverlay__layer {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	/* The free space of a layer belongs to the base below it; what the layer shows takes the
+	   pointer back. */
+	pointer-events: none;
+}
+
+.tlOverlay__layer > * {
+	pointer-events: auto;
+}
+
+.tlOverlay__layer--fill { align-items: stretch; justify-content: stretch; }
+.tlOverlay__layer--top-left { align-items: flex-start; justify-content: flex-start; }
+.tlOverlay__layer--top { align-items: flex-start; justify-content: center; }
+.tlOverlay__layer--top-right { align-items: flex-start; justify-content: flex-end; }
+.tlOverlay__layer--left { align-items: center; justify-content: flex-start; }
+.tlOverlay__layer--center { align-items: center; justify-content: center; }
+.tlOverlay__layer--right { align-items: center; justify-content: flex-end; }
+.tlOverlay__layer--bottom-left { align-items: flex-end; justify-content: flex-start; }
+.tlOverlay__layer--bottom { align-items: flex-end; justify-content: center; }
+.tlOverlay__layer--bottom-right { align-items: flex-end; justify-content: flex-end; }
 
 /* --- TLCard ---------------------------------------------------------------- */
 
@@ -1683,6 +2149,22 @@ button.tlDrawerToggle:focus-visible {
 	margin-left: auto;
 }
 
+/* Without a command the actions toolbar renders nothing. The wrapper then leaves the bar alone
+   instead of contributing a gap between the content and the bar's trailing end. */
+.tlAppBar__actions:empty {
+	display: none;
+}
+
+/* Who gives way when the bar is too narrow: a toolbar that can collapse absorbs the shrink (it
+   drops button labels and folds commands into its overflow menu), and the title truncates only
+   once the toolbar is down to its overflow trigger. */
+.tlAppBar__actions:has(> .tlToolbar--collapsible) {
+	flex-shrink: var(--tl-toolbar-shrink-priority);
+	/* Stated explicitly: the automatic minimum size would be the toolbar's natural width, which
+	   is exactly the width the toolbar is meant to give up again. */
+	min-width: var(--tl-toolbar-trigger-size);
+}
+
 .tlAppBar__trailing {
 	display: flex;
 	align-items: center;
@@ -1692,8 +2174,9 @@ button.tlDrawerToggle:focus-visible {
 }
 
 /* An actions area ahead of the trailing one has already claimed the free space; a second automatic
-   margin would split it between the two and strand the actions mid-bar. */
-.tlAppBar__actions + .tlAppBar__trailing {
+   margin would split it between the two and strand the actions mid-bar. A wrapper showing nothing
+   claims nothing, so the trailing area keeps its own margin then. */
+.tlAppBar__actions:not(:empty) + .tlAppBar__trailing {
 	margin-left: 0;
 }
 
@@ -1717,14 +2200,6 @@ button.tlDrawerToggle:focus-visible {
 
 .tlAppBar--primary .tlMenuRegion--click[aria-expanded="true"] {
 	background: var(--tl-surface-interactive-active);
-}
-
-/* --- Responsive: compact app bar at small viewports ------------------------- */
-
-@media (max-width: 768px) {
-	.tlAppBar__actions {
-		min-width: 0;
-	}
 }
 
 /* --- TLBreadcrumb ---------------------------------------------------------- */
@@ -1988,13 +2463,22 @@ button.tlWindow__maximizeBtn:focus-visible {
 	   form, or a <padding> around explanatory text). */
 }
 
+/* The footer consists of a single collapsing toolbar, which states its natural width and gives
+   it up again down to its overflow trigger. Nothing else competes for the width, so the toolbar
+   takes the whole shrink and the footer never overflows. */
 .tlWindow__footer {
 	display: flex;
 	justify-content: flex-end;
-	gap: var(--spacing-03);
 	padding: var(--spacing-03) var(--spacing-04);
 	border-top: 1px solid var(--border-subtle);
 	flex-shrink: 0;
+	min-width: 0;
+}
+
+/* A toolbar without a command renders nothing, leaving the strip empty: a window whose footer
+   carries neither an action nor a button-bar command shows no footer at all. */
+.tlWindow__footer:empty {
+	display: none;
 }
 
 /* Resize handles */
@@ -2837,13 +3321,74 @@ button.tlMenu__item--disabled:hover {
 	min-width: 0;
 	box-sizing: border-box;
 	border-right: 1px solid var(--border-subtle);
+	/* A cell reads as one line: the row is of a fixed height, so a value that wrapped would be cut
+	   through the middle of its letters. The display controls within the cell inherit this. */
+	white-space: nowrap;
 }
 
-/* Ensure control wrapper spans (generated by React bridge) fill the cell */
+/* The root element of a read-only value control spans the cell, so a value wider than its column
+   is cut off at the column edge and ends in an ellipsis that says so. */
 .tlTableView__cell > span {
 	display: block;
 	width: 100%;
 	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* A value that points somewhere - a web address, an e-mail address, a phone number - is the link
+   there. It ends in an ellipsis like any other value, but it stays as wide as the text it reads
+   as: a link stretched over the cell would follow the address on a click anywhere in the cell,
+   where the user is aiming at the row. The text input's full width is therefore given up: as an
+   item of the flex layout the cell is, the link is then as wide as its text and shrinks with the
+   column on its own. */
+.tlTableView__cell > a {
+	width: auto;
+	max-width: 100%;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* A value shown beside an adornment - the language button of an internationalized text - sits in a
+   row with it. The row follows the width of the column instead of the width its content asks for,
+   so that the value within it is the part that gives way. */
+.tlTableView__cell > .tlStack--row {
+	width: 100%;
+	min-width: 0;
+}
+
+.tlTableView__cell > .tlStack--grow-first.tlStack--row > *:first-child {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* A text of several lines is written with its line breaks where there is the height for them; in a
+   cell it reads as the one line the row is high. The control carries the wrapping as a class of
+   its own, which the white space inherited from the cell does not reach. */
+.tlTableView__cell .tlReactTextInput--immutable.tlReactTextInput--multiline {
+	white-space: nowrap;
+}
+
+/* The chips of a multi-valued selection follow each other in one row and are cut off at the column
+   edge, rather than wrapping into lines the row has no height for. */
+.tlTableView__cell > .tlDropdownSelect--immutable {
+	flex-wrap: nowrap;
+	overflow: hidden;
+	width: 100%;
+}
+
+/* Each chip keeps the width its label asks for, so a row of them is cut off at the column edge
+   instead of every chip being squeezed to nothing. */
+.tlTableView__cell > .tlDropdownSelect--immutable > * {
+	flex-shrink: 0;
+}
+
+/* A multi-valued text of several lines stands one value per line where there is the height for it;
+   in a cell the values read as one line with the separator between them. */
+.tlTableView__cell .tlValueList--block .tlValueList__item,
+.tlTableView__cell .tlValueList--block .tlValueList__separator {
+	display: inline;
 }
 
 /* Remove cell padding when it contains an editable input — the input provides its own.
@@ -2964,6 +3509,170 @@ button.tlMenu__item--disabled:hover {
 	}
 }
 
+/* --- TLHtml ---------------------------------------------------------------- */
+
+/* Ready-made HTML - an agent answer, a generated report - inserted into the page around it. The
+   fragment brings its own structure but no typography, so the block gives it the theme's text
+   color and font and spaces the elements a fragment is made of. The margins at its edges are
+   dropped, so the content aligns with whatever stands above and below it. */
+.tlHtml--inline {
+	color: var(--text-primary);
+	font-size: var(--body-compact-01-font-size);
+	line-height: 1.5;
+	overflow-wrap: break-word;
+}
+
+.tlHtml--inline > :first-child {
+	margin-top: 0;
+}
+
+.tlHtml--inline > :last-child {
+	margin-bottom: 0;
+}
+
+.tlHtml--inline p {
+	margin: var(--spacing-03) 0;
+}
+
+.tlHtml--inline h1,
+.tlHtml--inline h2,
+.tlHtml--inline h3,
+.tlHtml--inline h4,
+.tlHtml--inline h5,
+.tlHtml--inline h6 {
+	margin: var(--spacing-05) 0 var(--spacing-03) 0;
+	line-height: 1.3;
+	font-weight: 600;
+}
+
+.tlHtml--inline ul,
+.tlHtml--inline ol {
+	margin: var(--spacing-03) 0;
+	padding-left: var(--spacing-06);
+}
+
+.tlHtml--inline li {
+	margin: var(--spacing-01) 0;
+}
+
+.tlHtml--inline a {
+	color: var(--link-primary);
+	text-decoration: underline;
+}
+
+/* A picture wider than the column it stands in is scaled down rather than pushing the page sideways. */
+.tlHtml--inline img {
+	max-width: 100%;
+	height: auto;
+}
+
+.tlHtml--inline table {
+	margin: var(--spacing-03) 0;
+	border-collapse: collapse;
+}
+
+.tlHtml--inline td,
+.tlHtml--inline th {
+	padding: var(--spacing-02) var(--spacing-03);
+	border: 1px solid var(--border-subtle);
+	text-align: left;
+}
+
+.tlHtml--inline th {
+	background: var(--layer);
+	font-weight: 600;
+}
+
+.tlHtml--inline code {
+	padding: 0 var(--spacing-02);
+	border-radius: var(--corner-radius);
+	background: var(--layer);
+	font-family: var(--font-family-mono);
+	font-size: 0.9em;
+}
+
+.tlHtml--inline pre {
+	padding: var(--spacing-03) var(--spacing-05);
+	border-radius: var(--border-radius-02);
+	background: var(--layer);
+	overflow-x: auto;
+}
+
+.tlHtml--inline blockquote {
+	margin-left: 0;
+	padding-left: var(--spacing-05);
+	border-left: 3px solid var(--border-interactive);
+	color: var(--text-secondary);
+}
+
+/* A document is read on a page of its own: it fills the space the element is given, keeps the
+   styles it brings along, and stands on the white surface those styles assume. The minimum height
+   keeps it readable where the space is not measured out but flows with the page. */
+.tlHtml--document {
+	position: relative;
+	display: flex;
+	width: 100%;
+	height: 100%;
+	min-height: 24rem;
+	overflow: hidden;
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--border-radius-02);
+	background: #ffffff;
+}
+
+.tlHtml__frame {
+	flex: 1 1 auto;
+	width: 100%;
+	height: 100%;
+	min-height: 0;
+	border: none;
+}
+
+/* The print button stands on the document rather than beside it, so the frame keeps the whole
+   space; its own surface lifts it off whatever the document shows underneath. */
+.tlHtml__print {
+	position: absolute;
+	top: var(--spacing-03);
+	right: var(--spacing-03);
+	background: var(--layer-01);
+	box-shadow: var(--shadow-raised);
+}
+
+/* A thumbnail is a picture of a document: a box in the proportions the page is laid out in, with
+   the page scaled down into it. The ratio arrives as an inline style from the configured page size,
+   and the overflow keeps a page taller than the box inside it, cut off at the bottom as paper is.
+   The surface is the white a document's own styles assume, like the one a document is read on. */
+.tlHtml--thumbnail {
+	position: relative;
+	display: block;
+	width: 100%;
+	overflow: hidden;
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--border-radius-02);
+	background: #ffffff;
+}
+
+/* The page inside a thumbnail keeps the size it is written for and is scaled from its top left
+   corner, both set as inline styles from the configured size and the measured box. It is looked at
+   rather than used, so a click on it reaches whatever carries the preview. */
+.tlHtml__page {
+	position: absolute;
+	top: 0;
+	left: 0;
+	border: none;
+	pointer-events: none;
+}
+
+/* A fragment that is not shown says why in its place, in the box a failed view is reported in. */
+.tlHtml__error {
+	padding: var(--spacing-03) var(--spacing-05);
+	border: 1px solid var(--support-error);
+	border-left-width: var(--spacing-03);
+	border-radius: var(--border-radius-02);
+	background: var(--layer-01);
+	color: var(--support-error);
+}
+
 /* A fraction displayed as a bar with an optional label beside it. The track carries the theme's
    layer color, the filled part the interactive color, so the bar reads on a light and a dark
    theme from the same declaration. */
@@ -2997,6 +3706,150 @@ button.tlMenu__item--disabled:hover {
 	font-size: var(--label-01-font-size);
 	font-variant-numeric: tabular-nums;
 	white-space: nowrap;
+}
+
+/* A bar that says something is going on without saying how far it has come: a partial fill sweeps
+   across the track instead of standing for a share of it. */
+.tlProgress--indeterminate .tlProgress__fill {
+	width: 40%;
+	transition: none;
+	animation: tlProgressSweep 1.4s ease-in-out infinite;
+}
+
+@keyframes tlProgressSweep {
+	from {
+		transform: translateX(-100%);
+	}
+
+	to {
+		transform: translateX(250%);
+	}
+}
+
+/* Without motion the bar still reads as busy: the fill rests in the middle of the track rather
+   than travelling over it. */
+@media (prefers-reduced-motion: reduce) {
+	.tlProgress--indeterminate .tlProgress__fill {
+		animation: none;
+		transform: translateX(75%);
+	}
+}
+
+/* --- TLJobStatus (what a long-running job reports) ------------------------- */
+
+.tlJobStatus {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-02);
+	min-width: 0;
+	font-family: var(--font-family);
+	font-size: var(--body-compact-01-font-size);
+	color: var(--text-primary);
+}
+
+.tlJobStatus__header {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03);
+}
+
+.tlJobStatus__state {
+	font-weight: 600;
+}
+
+/* Tabular figures keep the elapsed time from jittering as its digits change every second. */
+.tlJobStatus__elapsed {
+	color: var(--text-secondary);
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+/* The request to stop stands at the end of the header line, apart from what the job reports. */
+.tlJobStatus__cancel {
+	margin-left: auto;
+	padding: var(--spacing-01) var(--spacing-03);
+	border: 1px solid var(--border-strong);
+	border-radius: var(--corner-radius);
+	background: transparent;
+	color: var(--text-primary);
+	font-family: inherit;
+	font-size: var(--label-01-font-size);
+	cursor: pointer;
+}
+
+.tlJobStatus__cancel:hover {
+	background: var(--layer-hover);
+}
+
+.tlJobStatus__phases {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-01);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.tlJobStatus__phase {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	font-size: var(--label-01-font-size);
+}
+
+/* Every step carries a marker saying where it stands. The states are the engine's, the symbols a
+   default an application replaces with its own. */
+.tlJobStatus__phase::before {
+	content: '';
+	flex: 0 0 auto;
+	width: 0.5rem;
+	height: 0.5rem;
+	border-radius: 50%;
+	background-color: var(--border-strong);
+}
+
+.tlJobStatus__phase--done::before {
+	background-color: var(--support-success);
+}
+
+.tlJobStatus__phase--active::before {
+	background-color: var(--interactive);
+	animation: tlJobStatusPulse 1.4s ease-in-out infinite;
+}
+
+/* A step the job has not reached recedes, so the eye finds the one it is at. */
+.tlJobStatus__phase--pending {
+	color: var(--text-secondary);
+}
+
+.tlJobStatus__phase--pending::before {
+	background-color: var(--border-subtle);
+}
+
+@keyframes tlJobStatusPulse {
+	0%, 100% {
+		opacity: 1;
+	}
+
+	50% {
+		opacity: 0.4;
+	}
+}
+
+/* Without motion the marker of the active step simply stands in its color. */
+@media (prefers-reduced-motion: reduce) {
+	.tlJobStatus__phase--active::before {
+		animation: none;
+	}
+}
+
+.tlJobStatus__message {
+	color: var(--text-secondary);
+	font-size: var(--label-01-font-size);
+}
+
+.tlJobStatus__error {
+	color: var(--text-error);
 }
 
 .tlTableView__checkboxCell {
@@ -3322,11 +4175,11 @@ button.tlMenu__item--disabled:hover {
 	background: var(--layer-hover);
 }
 
-.tlColumnSelect__row--dragOver-top {
+.tlColumnSelect__row--dragOver-before {
 	border-top-color: var(--interactive);
 }
 
-.tlColumnSelect__row--dragOver-bottom {
+.tlColumnSelect__row--dragOver-after {
 	border-bottom-color: var(--interactive);
 }
 
@@ -3520,6 +4373,18 @@ button.tlMenu__item--disabled:hover {
 	background: var(--layer-accent);
 	border: 1px solid var(--border-subtle);
 }
+
+/* The picture of the one the avatar represents, cropped to the circle. */
+.tlAvatar__image {
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+.tlAvatar--small { width: 1.5rem; height: 1.5rem; font-size: 0.5625rem; }
+.tlAvatar--large { width: 3rem; height: 3rem; font-size: 1.125rem; }
+.tlAvatar--x-large { width: 4rem; height: 4rem; font-size: 1.5rem; }
 
 /* --- TLRelativeTime ---------------------------------------------------- */
 
@@ -3776,8 +4641,10 @@ button.tlMenu__item--disabled:hover {
 	color: var(--text-primary);
 }
 
-/* Input wrapper */
+/* Input wrapper. It is a "label" element when the field's label is hidden, which lays out as a
+   block like the "div" of a visible-label field, whatever the element's inline default. */
 .tlFormField__input {
+	display: block;
 	min-width: 0;
 }
 
@@ -4010,6 +4877,13 @@ button.tlMenu__item--disabled:hover {
 	font-size: var(--body-compact-01-font-size);
 }
 
+/* A read-only text of several lines keeps the line breaks and the indentation it was written with.
+   The display carries this as a rule of its own rather than as a style on the element, so that a
+   context which grants a value only one line - a table cell - can say so. */
+.tlReactTextInput--immutable.tlReactTextInput--multiline {
+	white-space: pre-wrap;
+}
+
 /* A single-line input, with room beside it for the link that opens what it holds (url, e-mail,
    phone). The row is there whether or not the link is, so that the input keeps its place - and
    with it the focus - when a value starts or stops pointing somewhere. Without the link it adds
@@ -4088,6 +4962,8 @@ button.tlMenu__item--disabled:hover {
 	white-space: nowrap;
 }
 
+/* One option: a radio and the label naming it, which refers to the radio by id and is therefore a
+   sibling, not a wrapper. The container states its display, being a plain inline element. */
 .tlBooleanChoice__option {
 	display: inline-flex;
 	align-items: center;
@@ -4126,6 +5002,45 @@ button.tlMenu__item--disabled:hover {
 	align-items: center;
 	gap: var(--spacing-02);
 	flex-shrink: 0;
+}
+
+:root {
+	/* Width of an icon-only toolbar trigger, such as the overflow menu's "...". A collapsing
+	   toolbar never shrinks below it, so its overflow menu stays reachable. */
+	--tl-toolbar-trigger-size: 2rem;
+
+	/* Weight with which the wrapper of a collapsing toolbar takes a shrink, so that the toolbar
+	   gives way before the title beside it. The share of a shrink an item takes is proportional
+	   to its flex shrink factor times its flex base size, so the title beside the toolbar keeps a
+	   share of its own; at this weight that share stays below Chrome's layout unit of 1/64 px for
+	   any bar or header up to a few thousand pixels wide, and a title is cut only once the
+	   toolbar is down to its trigger. (A single layout unit of overflow already costs a whole
+	   character, because an ellipsis replaces the last character that no longer fits.) */
+	--tl-toolbar-shrink-priority: 100000;
+}
+
+/* A toolbar that collapses states its full natural width (as an inline style set by TLToolbar),
+   which is what its host sizes itself from, and gives that width up again down to its overflow
+   trigger. The content sits at the end the toolbar collapses towards, so the space it has given
+   up is at the far end from what is still visible. */
+.tlToolbar--collapsible {
+	flex-shrink: 1;
+	min-width: var(--tl-toolbar-trigger-size);
+	justify-content: flex-end;
+}
+
+/* Compact presentation: a labeled command button collapses to its icon, which is also its
+   accessible name and tooltip. Buttons without an icon keep their label. The dropdown of a menu
+   group is portaled out of the toolbar, so its entries keep their labels.
+   Übergang bis Welle 3 (Toolbar): die Regel liest die Klassen der Paket-Komponente tl-button. */
+.tlToolbar--compact .tl-button:has(> .tl-button__icon) {
+	width: var(--tl-size-control);
+	flex-shrink: 0;
+	padding: 0;
+}
+
+.tlToolbar--compact .tl-button:has(> .tl-button__icon) > .tl-button__label {
+	display: none;
 }
 
 .tlToolbar__separator {
@@ -4182,7 +5097,7 @@ button.tlToolbar__menuTrigger:focus-visible {
 /* Compact, square icon-only trigger (e.g. the burger overflow menu). */
 .tlToolbar__menuTrigger--icon {
 	gap: 0;
-	width: 2rem;
+	width: var(--tl-toolbar-trigger-size);
 	padding: 0;
 	justify-content: center;
 }
@@ -5366,7 +6281,8 @@ button.tlToolbar__menuTrigger:focus-visible {
   position: relative;
   min-width: 0;
   min-height: 0;
-  overflow: hidden;
+  /* The tile has a definite height (grid rows) - what does not fit scrolls. */
+  overflow: auto;
   display: flex;
   flex-direction: column;
   border: 1px solid var(--border-subtle);
@@ -5441,8 +6357,18 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 	display: grid;
 }
 
-/* Übergang bis Welle 3 (Menu): ein Menüeintrag ist linksbündig; die Menu-Komponente ersetzt den Button hier. */
-.tlToolbar__dropdownItem > .tl-button { justify-content: flex-start; }
+/* An entry whose button is currently hidden renders empty - drop it, so the menu does not offer
+   (and a screen reader does not announce) blank entries. */
+.tlToolbar__dropdownItem:empty {
+	display: none;
+}
+
+/* Übergang bis Welle 3 (Menu): ein Menüeintrag füllt seine Zeile und ist linksbündig; die
+   Menu-Komponente ersetzt den Button hier. Farben und Zustände trägt der Button selbst (ghost). */
+.tlToolbar__dropdownItem > .tl-button {
+	width: 100%;
+	justify-content: flex-start;
+}
 
 .tlToolbar__dropdownSeparator {
 	border: none;

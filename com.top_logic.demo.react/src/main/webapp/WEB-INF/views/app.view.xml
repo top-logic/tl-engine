@@ -1,6 +1,20 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <view>
+	<!--
+		The number of tickets: the badge of the "tickets" item, and what the "About" item asks whether
+		it is within reach. The expression reads no channel, so the type it counts is named as an
+		observed type - a ticket created or deleted while the page stands recomputes the count, and the
+		badge follows it. An empty ticket list is nothing worth a badge, so the expression answers
+		nothing rather than a zero, which is also what puts the "About" item out of reach.
+	-->
+	<channels>
+		<derived-channel name="ticketCount"
+			expr="{ tickets = all(`demo.tickets:Ticket`).size(); if($tickets == 0, null, $tickets); }"
+			observed-types="demo.tickets:Ticket"
+		/>
+	</channels>
+
 	<app-shell>
 		<!--
 			System-wide notices, shown between app bar and content. Each element decides for itself
@@ -16,7 +30,51 @@
 				active-item="attributes"
 				drawer-open-slot-name="appbar-leading"
 			>
+				<!--
+					The chrome of the rail itself: what stands above and below the items, outside
+					the list. The folded rail has room for an abbreviation, not for a name, so it
+					shows the collapsed variants instead.
+				-->
+				<header>
+					<text>
+						<label>
+							<en>TL Demo</en>
+							<de>TL Demo</de>
+						</label>
+					</text>
+				</header>
+				<header-collapsed>
+					<text>
+						<label>
+							<en>TL</en>
+							<de>TL</de>
+						</label>
+					</text>
+				</header-collapsed>
+				<footer>
+					<text>
+						<label>
+							<en>TopLogic · Demo</en>
+							<de>TopLogic · Demo</de>
+						</label>
+					</text>
+				</footer>
+				<footer-collapsed>
+					<text>
+						<label>
+							<en>TL</en>
+							<de>TL</de>
+						</label>
+					</text>
+				</footer-collapsed>
 				<items>
+					<!-- A caption naming the section that follows it; it leads nowhere. -->
+					<header-item id="data">
+						<label>
+							<en>Data</en>
+							<de>Daten</de>
+						</label>
+					</header-item>
 					<nav-item id="attributes"
 						icon="css:bi bi-card-list"
 					>
@@ -27,6 +85,7 @@
 						</label>
 					</nav-item>
 					<nav-item id="tickets"
+						badge="ticketCount"
 						icon="css:bi bi-chat-left-text"
 					>
 						<view-ref view="tickets.view.xml"/>
@@ -44,150 +103,210 @@
 							<de>Projekte</de>
 						</label>
 					</nav-item>
-					<nav-item id="table-columns"
-						icon="css:bi bi-layout-three-columns"
+					<!--
+						The technical demo pages, folded away under one heading. A group holds
+						items, not content: the pages inside it are reached and addressed exactly as
+						they are at the top level of the rail. Whether it is folded is remembered
+						per user under the group id.
+					-->
+					<group id="demos"
+						expanded="false"
+						icon="css:bi bi-collection"
 					>
-						<view-ref view="demo/table-columns.view.xml"/>
 						<label>
-							<en>Table columns</en>
-							<de>Tabellenspalten</de>
+							<en>Demos</en>
+							<de>Demos</de>
 						</label>
-					</nav-item>
-					<nav-item id="tree-demo"
-						icon="css:bi bi-diagram-2"
-					>
-						<view-ref view="demo/tree-demo.view.xml"/>
-						<label>
-							<en>Tree Demo</en>
-							<de>Baum-Demo</de>
-						</label>
-					</nav-item>
-					<nav-item id="charts"
-						icon="css:bi bi-bar-chart-line"
-					>
-						<view-ref view="demo/chart-demo.view.xml"/>
-						<label>
-							<en>Chart Demo</en>
-							<de>Diagramm-Demo</de>
-						</label>
-					</nav-item>
-					<nav-item id="flow-diagram"
-						icon="css:bi bi-diagram-3"
-					>
-						<view-ref view="demo/flow-diagram-demo.view.xml"/>
-						<label>
-							<en>Flow Diagram</en>
-							<de>Flow-Diagramm</de>
-						</label>
-					</nav-item>
-					<nav-item id="gantt-demo"
-						icon="css:bi bi-bar-chart-steps"
-					>
-						<view-ref view="demo/gantt-demo.view.xml"/>
-						<label>
-							<en>Gantt Demo</en>
-							<de>Gantt-Demo</de>
-						</label>
-					</nav-item>
-					<nav-item id="pdf"
-						icon="css:bi bi-file-earmark-pdf"
-					>
-						<view-ref view="demo/pdf-demo.view.xml"/>
-						<label>
-							<en>Document Viewer</en>
-							<de>Dokumentanzeige</de>
-						</label>
-					</nav-item>
-					<nav-item id="config-editor"
-						icon="css:bi bi-sliders"
-					>
-						<view-ref view="demo/config-editor-demo.view.xml"/>
-						<label>
-							<en>Config Editor</en>
-							<de>Konfigurationseditor</de>
-						</label>
-					</nav-item>
-					<nav-item id="tlscript"
-						icon="css:bi bi-code-square"
-					>
-						<view-ref view="demo/tlscript-editor-demo.view.xml"/>
-						<label>
-							<en>TL-Script Editor</en>
-							<de>TL-Script-Editor</de>
-						</label>
-					</nav-item>
-					<nav-item id="constraints"
-						icon="css:bi bi-check-circle"
-					>
-						<view-ref view="demo/constraint-test.view.xml"/>
-						<label>
-							<en>Constraint Test</en>
-							<de>Constraint-Test</de>
-						</label>
-					</nav-item>
-					<nav-item id="tiles-demo"
-						icon="css:bi bi-layers"
-					>
-						<view-ref view="demo/tiles-demo.view.xml"/>
-						<label>
-							<en>Tiles Demo</en>
-							<de>Tiles-Demo</de>
-						</label>
-					</nav-item>
-					<nav-item id="tiles-multi-demo"
-						icon="css:bi bi-columns-gap"
-					>
-						<view-ref view="demo/tiles-multi-demo.view.xml"/>
-						<label>
-							<en>Tiles Multi-Tab Demo</en>
-							<de>Tiles Mehr-Tab-Demo</de>
-						</label>
-					</nav-item>
-					<nav-item id="responsive-md-demo"
-						icon="css:bi bi-layout-sidebar-inset"
-					>
-						<view-ref view="demo/responsive-md-demo.view.xml"/>
-						<label>
-							<en>Responsive Master-Detail Demo</en>
-							<de>Responsive Master-Detail-Demo</de>
-						</label>
-					</nav-item>
-					<nav-item id="errors"
-						icon="css:bi bi-exclamation-triangle"
-					>
-						<view-ref view="demo/error-handling-demo.view.xml"/>
-						<label>
-							<en>Error Handling</en>
-							<de>Fehlerbehandlung</de>
-						</label>
-					</nav-item>
-					<nav-item id="switch-demo"
-						icon="css:bi bi-signpost-split"
-					>
-						<view-ref view="switch-demo.view.xml"/>
-						<label>
-							<en>Switch demo</en>
-							<de>Switch-Demo</de>
-						</label>
-					</nav-item>
-					<nav-item id="repeater"
-						icon="css:bi bi-grid-3x3-gap"
-					>
-						<view-ref view="demo/repeater-demo.view.xml"/>
-						<label>
-							<en>Repeater</en>
-							<de>Repeater</de>
-						</label>
-					</nav-item>
-					<nav-item id="calendar"
-						icon="css:bi bi-calendar3"
-					>
-						<view-ref view="demo/calendar.view.xml"/>
-						<label>
-							<en>Calendar</en>
-							<de>Kalender</de>
-						</label>
-					</nav-item>
+						<nav-item id="table-columns"
+							icon="css:bi bi-layout-three-columns"
+						>
+							<view-ref view="demo/table-columns.view.xml"/>
+							<label>
+								<en>Table columns</en>
+								<de>Tabellenspalten</de>
+							</label>
+						</nav-item>
+						<nav-item id="tree-demo"
+							icon="css:bi bi-diagram-2"
+						>
+							<view-ref view="demo/tree-demo.view.xml"/>
+							<label>
+								<en>Tree Demo</en>
+								<de>Baum-Demo</de>
+							</label>
+						</nav-item>
+						<nav-item id="charts"
+							icon="css:bi bi-bar-chart-line"
+						>
+							<view-ref view="demo/chart-demo.view.xml"/>
+							<label>
+								<en>Chart Demo</en>
+								<de>Diagramm-Demo</de>
+							</label>
+						</nav-item>
+						<nav-item id="flow-diagram"
+							icon="css:bi bi-diagram-3"
+						>
+							<view-ref view="demo/flow-diagram-demo.view.xml"/>
+							<label>
+								<en>Flow Diagram</en>
+								<de>Flow-Diagramm</de>
+							</label>
+						</nav-item>
+						<nav-item id="gantt-demo"
+							icon="css:bi bi-bar-chart-steps"
+						>
+							<view-ref view="demo/gantt-demo.view.xml"/>
+							<label>
+								<en>Gantt Demo</en>
+								<de>Gantt-Demo</de>
+							</label>
+						</nav-item>
+						<nav-item id="pdf"
+							icon="css:bi bi-file-earmark-pdf"
+						>
+							<view-ref view="demo/pdf-demo.view.xml"/>
+							<label>
+								<en>Document Viewer</en>
+								<de>Dokumentanzeige</de>
+							</label>
+						</nav-item>
+						<nav-item id="html"
+							icon="css:bi bi-filetype-html"
+						>
+							<view-ref view="demo/html-demo.view.xml"/>
+							<label>
+								<en>HTML content</en>
+								<de>HTML-Inhalte</de>
+							</label>
+						</nav-item>
+						<nav-item id="config-editor"
+							icon="css:bi bi-sliders"
+						>
+							<view-ref view="demo/config-editor-demo.view.xml"/>
+							<label>
+								<en>Config Editor</en>
+								<de>Konfigurationseditor</de>
+							</label>
+						</nav-item>
+						<nav-item id="tlscript"
+							icon="css:bi bi-code-square"
+						>
+							<view-ref view="demo/tlscript-editor-demo.view.xml"/>
+							<label>
+								<en>TL-Script Editor</en>
+								<de>TL-Script-Editor</de>
+							</label>
+						</nav-item>
+						<nav-item id="constraints"
+							icon="css:bi bi-check-circle"
+						>
+							<view-ref view="demo/constraint-test.view.xml"/>
+							<label>
+								<en>Constraint Test</en>
+								<de>Constraint-Test</de>
+							</label>
+						</nav-item>
+						<nav-item id="tiles-demo"
+							icon="css:bi bi-layers"
+						>
+							<view-ref view="demo/tiles-demo.view.xml"/>
+							<label>
+								<en>Tiles Demo</en>
+								<de>Tiles-Demo</de>
+							</label>
+						</nav-item>
+						<nav-item id="tiles-multi-demo"
+							icon="css:bi bi-columns-gap"
+						>
+							<view-ref view="demo/tiles-multi-demo.view.xml"/>
+							<label>
+								<en>Tiles Multi-Tab Demo</en>
+								<de>Tiles Mehr-Tab-Demo</de>
+							</label>
+						</nav-item>
+						<nav-item id="responsive-md-demo"
+							icon="css:bi bi-layout-sidebar-inset"
+						>
+							<view-ref view="demo/responsive-md-demo.view.xml"/>
+							<label>
+								<en>Responsive Master-Detail Demo</en>
+								<de>Responsive Master-Detail-Demo</de>
+							</label>
+						</nav-item>
+						<nav-item id="columns-demo"
+							icon="css:bi bi-layout-split"
+						>
+							<view-ref view="demo/columns-demo.view.xml"/>
+							<label>
+								<en>Columns Demo</en>
+								<de>Spalten-Demo</de>
+							</label>
+						</nav-item>
+						<nav-item id="errors"
+							icon="css:bi bi-exclamation-triangle"
+						>
+							<view-ref view="demo/error-handling-demo.view.xml"/>
+							<label>
+								<en>Errors and Notices</en>
+								<de>Fehler und Hinweise</de>
+							</label>
+						</nav-item>
+						<nav-item id="switch-demo"
+							icon="css:bi bi-signpost-split"
+						>
+							<view-ref view="switch-demo.view.xml"/>
+							<label>
+								<en>Switch demo</en>
+								<de>Switch-Demo</de>
+							</label>
+						</nav-item>
+						<nav-item id="repeater"
+							icon="css:bi bi-grid-3x3-gap"
+						>
+							<view-ref view="demo/repeater-demo.view.xml"/>
+							<label>
+								<en>Repeater</en>
+								<de>Repeater</de>
+							</label>
+						</nav-item>
+						<nav-item id="images"
+							icon="css:bi bi-image"
+						>
+							<view-ref view="demo/image-demo.view.xml"/>
+							<label>
+								<en>Images</en>
+								<de>Bilder</de>
+							</label>
+						</nav-item>
+						<nav-item id="long-job"
+							icon="css:bi bi-hourglass-split"
+						>
+							<view-ref view="demo/long-job-demo.view.xml"/>
+							<label>
+								<en>Long-running job</en>
+								<de>Lang laufender Auftrag</de>
+							</label>
+						</nav-item>
+						<nav-item id="wizard"
+							icon="css:bi bi-signpost-2"
+						>
+							<view-ref view="demo/wizard-demo.view.xml"/>
+							<label>
+								<en>Wizard</en>
+								<de>Assistent</de>
+							</label>
+						</nav-item>
+						<nav-item id="calendar"
+							icon="css:bi bi-calendar3"
+						>
+							<view-ref view="demo/calendar.view.xml"/>
+							<label>
+								<en>Calendar</en>
+								<de>Kalender</de>
+							</label>
+						</nav-item>
+					</group>
 					<separator/>
 					<nav-item id="administration"
 						icon="css:bi bi-shield-lock"
@@ -200,6 +319,28 @@
 							<de>Administration</de>
 						</label>
 					</nav-item>
+
+					<!--
+						An item that runs a command instead of leading to a page. Label and icon are
+						the ones the command carries, and the item follows what the command's
+						executability rules decide: without a ticket the count is nothing, so the
+						item is shown out of reach until the ticket page generates its samples.
+					-->
+					<command-item id="about">
+						<action class="com.top_logic.layout.view.command.GenericViewCommand"
+							image="css:bi bi-info-circle"
+							input="ticketCount"
+						>
+							<label>
+								<en>About</en>
+								<de>Info</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<notify expr="count -> #('TopLogic React demo, {0} tickets.'@en, 'TopLogic React Demo, {0} Tickets.'@de).fill($count)"/>
+						</action>
+					</command-item>
 				</items>
 			</sidebar>
 		</content>

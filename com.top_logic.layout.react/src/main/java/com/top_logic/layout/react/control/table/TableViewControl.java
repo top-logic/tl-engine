@@ -697,6 +697,20 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		_filterUIs.put(column, ui);
 	}
 
+	/**
+	 * The table this control displays.
+	 *
+	 * <p>
+	 * What the table is - its columns, its rows, what it is filtered and sorted by - is the view's
+	 * business; this control renders it and turns the user's gestures into calls on it. A caller
+	 * reads the view to learn the displayed state and observes it to follow a change of that state,
+	 * but changes it through this control, so that what the client displays follows.
+	 * </p>
+	 */
+	public TableView<R> getView() {
+		return _view;
+	}
+
 	// -- State building --
 
 	private void buildFullState() {
@@ -1664,28 +1678,73 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	 * filters} the bar offers.
 	 *
 	 * <p>
-	 * The named filter replaces the whole filter, so what the bar displays as active is what the
-	 * table is filtered by - a column the filter does not mention ends up unfiltered.
+	 * The named filter replaces the whole filter, the search term included, so what the bar displays
+	 * as active is what the table is filtered by - a column the filter does not mention ends up
+	 * unfiltered, and a filter that names no term of its own leaves the table searching for nothing.
 	 * </p>
 	 */
 	@ReactCommandHandler(CMD_APPLY_NAMED_FILTER)
 	void handleApplyNamedFilter(ApplyNamedFilterArguments args) {
-		_view.applyNamedFilter(args.getId());
+		applyNamedFilter(args.getId());
+	}
+
+	/**
+	 * Filters the table by the criteria of one of the {@link TableView#namedFilters() named filters}
+	 * it offers, and re-renders it.
+	 *
+	 * <p>
+	 * The named filter replaces the whole filter, so what the bar displays as active is what the
+	 * table is filtered by - a column the filter does not mention ends up unfiltered.
+	 * </p>
+	 *
+	 * <p>
+	 * No filter carries the given identifier - it is empty, or it names one this table does not (or
+	 * no longer) offer - leaves the table {@link #clearFilter() unfiltered}: a name nothing carries
+	 * selects nothing, and the table shows every row instead of keeping criteria that belong to no
+	 * name.
+	 * </p>
+	 *
+	 * @param id
+	 *        The {@link NamedFilter#id() identifier} of the filter to apply, {@code null} to
+	 *        unfilter the table.
+	 */
+	public void applyNamedFilter(String id) {
+		if (id == null || id.isEmpty() || namedFilter(id) == null) {
+			clearFilter();
+			return;
+		}
+		_view.applyNamedFilter(id);
 		rebuildAfterRowChange();
 	}
 
 	/**
-	 * Unfilters the table: clears every column filter and the search term.
-	 *
-	 * <p>
-	 * This is what clicking the active chip in the filter bar does. While a chip is active, the
-	 * table's criteria are exactly that chip's own, so clearing them all clears exactly what the
-	 * chip applied - the chip acts as a toggle, and a second click leaves the table showing every
-	 * row again.
-	 * </p>
+	 * The offered {@link NamedFilter} carrying the given {@link NamedFilter#id() identifier},
+	 * {@code null} when none does.
 	 */
+	private NamedFilter namedFilter(String id) {
+		for (NamedFilter filter : _view.namedFilters()) {
+			if (id.equals(filter.id())) {
+				return filter;
+			}
+		}
+		return null;
+	}
+
 	@ReactCommandHandler(CMD_CLEAR_FILTER)
 	void handleClearFilter() {
+		clearFilter();
+	}
+
+	/**
+	 * Unfilters the table - clears every column filter and the search term - and re-renders it.
+	 *
+	 * <p>
+	 * This is what clicking the active chip in the filter bar does: the chip acts as a toggle, and a
+	 * second click leaves the table showing every row again. It withdraws the criteria of the chip
+	 * together with a text searched for on top of them, which is what the user sees the chip select.
+	 * </p>
+	 */
+	public void clearFilter() {
 		for (String column : new ArrayList<>(_view.state().getFilters().keySet())) {
 			_view.filter(column, null);
 		}
@@ -1693,18 +1752,31 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		rebuildAfterRowChange();
 	}
 
+	@ReactCommandHandler(CMD_SEARCH)
+	void handleSearch(SearchArguments args) {
+		search(args.getTerm());
+	}
+
 	/**
-	 * Searches the table's displayed columns for a text, or clears the search when the term is
-	 * empty.
+	 * Searches the table's displayed columns for a text - or clears the search when the term is
+	 * empty - and re-renders it.
 	 *
 	 * <p>
 	 * The bar searches for a plain {@link TextFilterState#contains(String) case-insensitive
 	 * substring}; the matching flags of a column's own text filter stay that column's business.
 	 * </p>
+	 *
+	 * <p>
+	 * The search narrows the rows within whatever the table is filtered by, and leaves that
+	 * filtering alone: a {@link NamedFilter} the table matches goes on being the
+	 * {@link TableView#activeNamedFilter() active} one while the text is searched for, so the bar
+	 * keeps its chip marked and the table shows the rows of that filter holding the text.
+	 * </p>
+	 *
+	 * @param term
+	 *        The text to search for, {@code null} or empty to search for nothing.
 	 */
-	@ReactCommandHandler(CMD_SEARCH)
-	void handleSearch(SearchArguments args) {
-		String term = args.getTerm();
+	public void search(String term) {
 		_view.search(term == null || term.isEmpty() ? null : TextFilterState.contains(term));
 		rebuildAfterRowChange();
 	}

@@ -290,13 +290,14 @@ export function useTLCommand(): (command: string, args?: Record<string, unknown>
   const windowName = ctx.windowName;
 
   return useCallback(
-    (command: string, args?: Record<string, unknown>) =>
-      enqueueCommand(getApiBase() + 'react-api/command', {
+    async (command: string, args?: Record<string, unknown>) => {
+      await enqueueCommand(getApiBase() + 'react-api/command', {
         controlId,
         command,
         windowName,
         arguments: args ?? {},
-      }),
+      });
+    },
     [controlId, windowName]
   );
 }
@@ -360,7 +361,7 @@ export function useTLUpload(): (formData: FormData) => Promise<void> {
         const oversized = oversizedFile(formData, limit);
         const total = totalFileSize(formData);
         if (oversized !== null || total > limit) {
-          return enqueueCommand(getApiBase() + 'react-api/command', {
+          await enqueueCommand(getApiBase() + 'react-api/command', {
             controlId,
             command: CMD_UPLOAD_REJECTED,
             windowName,
@@ -369,6 +370,7 @@ export function useTLUpload(): (formData: FormData) => Promise<void> {
               size: oversized !== null ? oversized.size : total,
             },
           });
+          return;
         }
       }
 

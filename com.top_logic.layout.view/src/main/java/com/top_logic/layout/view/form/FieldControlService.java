@@ -71,11 +71,24 @@ import com.top_logic.util.model.ModelService;
  * Resolution chain:
  * </p>
  * <ol>
+ * <li>The control the display asks for.</li>
  * <li>{@link TLInputControl} annotation on the attribute or its type (via
  * {@link com.top_logic.model.annotate.DefaultStrategy.Strategy#VALUE_TYPE}).</li>
  * <li>Global type-to-provider map configured in this service.</li>
  * <li>Built-in fallback based on {@link com.top_logic.model.TLPrimitive.Kind}.</li>
  * </ol>
+ *
+ * <p>
+ * Only <em>which</em> provider edits a value is decided here. How many values the field holds is
+ * realized by the {@link FieldControlRegistry}, whichever step of the chain found the provider: a
+ * field holding several values whose provider edits one value at a time is displayed as a list of
+ * element controls, one per value.
+ * </p>
+ *
+ * @implNote Every step ends in
+ *           {@link FieldControlRegistry#createControl(ReactContext, FieldSpec, FieldModel, ReactFieldControlProvider)},
+ *           never in {@link ReactFieldControlProvider#createControl(ReactContext, FieldSpec, FieldModel)}
+ *           itself, which is what keeps type and multiplicity decided in one place.
  */
 @Label("Form field controls")
 @ServiceDependencies({
@@ -159,7 +172,8 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 
 	private final InstantiationContext _context;
 
-	private Map<String, ReactFieldControlProvider> _providerByQualifiedType;
+	/** The controls configured for a model type, by the qualified name of that type. */
+	private final Map<String, ReactFieldControlProvider> _providerByQualifiedType = new HashMap<>();
 
 	private final ReactFieldControlProvider _selectProvider = new SelectControlProvider();
 
@@ -176,7 +190,6 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	protected void startUp() {
 		super.startUp();
 
-		_providerByQualifiedType = new HashMap<>();
 		for (ProviderMapping mapping : getConfig().getProviders().values()) {
 			TLModelPartRef typeRef = mapping.getType();
 			if (typeRef != null) {
@@ -259,18 +272,32 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 */
 	public ReactControl createFieldControl(ReactContext context, TLStructuredTypePart part, FieldModel model,
 			PolymorphicConfiguration<? extends ReactFieldControlProvider> control) {
-		FieldSpec field = fieldSpec(part, model);
+		return createFieldControl(context, part, fieldSpec(part, model), model, control);
+	}
 
+	/**
+	 * Creates the input control for the given attribute, described by the given specification.
+	 *
+	 * <p>
+	 * How many values the field holds is part of that specification and need not be what the
+	 * attribute says: a column may collect the values of a single-valued attribute over several
+	 * objects and show all of them in one cell.
+	 * </p>
+	 *
+	 * @param field
+	 *        What is being edited, describing the given attribute.
+	 */
+	private ReactControl createFieldControl(ReactContext context, TLStructuredTypePart part, FieldSpec field,
+			FieldModel model, PolymorphicConfiguration<? extends ReactFieldControlProvider> control) {
 		// 0. The control the display asks for.
 		if (control != null) {
-			return _context.getInstance(control).createControl(context, field, model);
+			return createControl(context, field, model, _context.getInstance(control));
 		}
 
 		// 1. Annotation on attribute (includes type-level default via VALUE_TYPE strategy).
 		TLInputControl annotation = part.getAnnotation(TLInputControl.class);
 		if (annotation != null) {
-			ReactFieldControlProvider provider = _context.getInstance(annotation.getImpl());
-			return provider.createControl(context, field, model);
+			return createControl(context, field, model, _context.getInstance(annotation.getImpl()));
 		}
 
 		return createFieldControl(context, part.getType(), field, model);
@@ -300,13 +327,13 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	public ReactControl createFieldControl(ReactContext context, TLType type, FieldSpec field, FieldModel model) {
 		// 1. Option-based values use a select control.
 		if (model instanceof SelectFieldModel) {
-			return _selectProvider.createControl(context, field, model);
+			return createControl(context, field, model, _selectProvider);
 		}
 
 		// 2. Configured control by type.
 		ReactFieldControlProvider mapped = byType(type);
 		if (mapped != null) {
-			return mapped.createControl(context, field, model);
+			return createControl(context, field, model, mapped);
 		}
 
 		// 3. The control registered for the kind of value the type holds. The same registry
@@ -315,10 +342,54 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	}
 
 	/**
+	 * Creates the control the given provider builds for the given field.
+	 *
+	 * <p>
+	 * Where a resolution step ends: the registry decides how the
+	 * {@link FieldSpec#isMultiple() multiplicity} of the field is realized, so that a value list is
+	 * built around a provider that edits one value at a time no matter which step found that
+	 * provider.
+	 * </p>
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param field
+	 *        What is being edited.
+	 * @param model
+	 *        The field model providing value, editability, and change notifications.
+	 * @param provider
+	 *        The resolved control provider.
+	 */
+	private static ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model,
+			ReactFieldControlProvider provider) {
+		return FieldControlRegistry.getInstance().createControl(context, field, model, provider);
+	}
+
+	/**
 	 * Describes the given attribute for the control that edits it.
 	 */
 	private static FieldSpec fieldSpec(TLStructuredTypePart part, FieldModel model) {
-		return fieldSpec(part.getType(), part, MetaLabelProvider.INSTANCE.getLabel(part), part.isMultiple(), model);
+		return fieldSpec(part, part.isMultiple(), model);
+	}
+
+	/**
+	 * Describes a value of the given attribute for the control that edits it, holding as many
+	 * values as stated.
+	 *
+	 * <p>
+	 * The attribute decides whether the order of the values is part of the value: a field holding
+	 * several values of an {@link TLStructuredTypePart#isOrdered() ordered} attribute is
+	 * {@link FieldSpec#isOrdered() arranged} by the user, while a single value has no order to
+	 * arrange.
+	 * </p>
+	 *
+	 * @param multiple
+	 *        Whether the described field holds a collection of the attribute's values rather than
+	 *        a single one, see {@link ColumnType#collected()}.
+	 */
+	private static FieldSpec fieldSpec(TLStructuredTypePart part, boolean multiple, FieldModel model) {
+		return fieldSpec(part.getType(), part, MetaLabelProvider.INSTANCE.getLabel(part), multiple, model)
+			.setOrdered(multiple && part.isOrdered());
 	}
 
 	/**
@@ -336,7 +407,9 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 *        Whether the value is a collection of values rather than a single one.
 	 * @param model
 	 *        The field model holding the value.
-	 * @return The description to pass to {@link ReactFieldControlProvider#createControl}.
+	 * @return The description to pass to {@link ReactFieldControlProvider#createControl}. Its values
+	 *         are not {@link FieldSpec#isOrdered() ordered}: with no attribute holding them, nothing
+	 *         stores an order the user could arrange.
 	 */
 	public static FieldSpec fieldSpec(TLType type, AnnotationLookup annotations, String label, boolean multiple,
 			FieldModel model) {
@@ -348,13 +421,13 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 			.setBooleanPresentation(booleanPresentation(annotations, type))
 			.setTriState(isTriState(type))
 			.setDateKind(DatePickerControlProvider.kind(annotations, type))
-			.setDateFormat(dateFormat(annotations, type, multiple))
-			.setNumberFormat(numberFormat(annotations, type, multiple));
+			.setDateFormat(dateFormat(annotations, type))
+			.setNumberFormat(numberFormat(annotations, type));
 	}
 
 	/**
 	 * The format a numeric attribute is displayed in and entered in, or {@code null} if the attribute
-	 * does not hold a single number.
+	 * holds no numbers.
 	 *
 	 * <p>
 	 * The attribute's {@code format} annotation where it has one, the user's default format for
@@ -375,24 +448,24 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 		if (part == null) {
 			return null;
 		}
-		return numberFormat(part, part.getType(), part.isMultiple());
+		return numberFormat(part, part.getType());
 	}
 
 	/**
-	 * The format a numeric value is displayed in and entered in, or {@code null} if the value is no
-	 * single number.
+	 * The format a numeric value is displayed in and entered in, or {@code null} if the type holds
+	 * no numbers.
+	 *
+	 * <p>
+	 * The format of <em>one</em> number, which is also what a field holding several of them writes
+	 * each of its values in.
+	 * </p>
 	 *
 	 * @param annotations
 	 *        Where the {@code format} annotation is read from.
 	 * @param type
 	 *        The model type of the value.
-	 * @param multiple
-	 *        Whether the value is a collection of numbers rather than a single one.
 	 */
-	public static Format numberFormat(AnnotationLookup annotations, TLType type, boolean multiple) {
-		if (multiple) {
-			return null;
-		}
+	public static Format numberFormat(AnnotationLookup annotations, TLType type) {
 		Class<?> valueType = PrimitiveTypeUtil.asNonPrimitive(valueType(type));
 		if (!Number.class.isAssignableFrom(valueType)) {
 			return null;
@@ -430,7 +503,7 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 
 	/**
 	 * The format a point in time held by the given attribute is displayed in, or {@code null} if
-	 * the attribute does not hold a single point in time.
+	 * the attribute holds no points in time.
 	 *
 	 * <p>
 	 * The attribute's {@code format} annotation where it has one, the one of its type otherwise,
@@ -447,22 +520,25 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 		if (part == null) {
 			return null;
 		}
-		return dateFormat(part, part.getType(), part.isMultiple());
+		return dateFormat(part, part.getType());
 	}
 
 	/**
-	 * The format a point in time is displayed in, or {@code null} if the value is no single point
-	 * in time.
+	 * The format a point in time is displayed in, or {@code null} if the type holds no points in
+	 * time.
+	 *
+	 * <p>
+	 * The format of <em>one</em> point in time, which is also what a field holding several of them
+	 * writes each of its values in.
+	 * </p>
 	 *
 	 * @param annotations
 	 *        Where the {@code format} annotation is read from.
 	 * @param type
 	 *        The model type of the value.
-	 * @param multiple
-	 *        Whether the value is a collection of points in time rather than a single one.
 	 */
-	public static DateFormat dateFormat(AnnotationLookup annotations, TLType type, boolean multiple) {
-		if (multiple || !Date.class.isAssignableFrom(PrimitiveTypeUtil.asNonPrimitive(valueType(type)))) {
+	public static DateFormat dateFormat(AnnotationLookup annotations, TLType type) {
+		if (!Date.class.isAssignableFrom(PrimitiveTypeUtil.asNonPrimitive(valueType(type)))) {
 			return null;
 		}
 		return dateFormat(annotations, type, DatePickerControlProvider.kind(annotations, type));
@@ -470,18 +546,18 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 
 	/**
 	 * The formats a point in time may be typed in, e.g. as the bound of a table filter, or
-	 * {@code null} if the value is no single point in time.
+	 * {@code null} if the type holds no points in time.
 	 *
 	 * <p>
-	 * The {@link #dateFormat(AnnotationLookup, TLType, boolean) display format} first, which also
-	 * writes the value, then the default formats of the kind of value: a value is accepted the way
-	 * it is shown and in the way a person is used to type it.
+	 * The {@link #dateFormat(AnnotationLookup, TLType) display format} first, which also writes the
+	 * value, then the default formats of the kind of value: a value is accepted the way it is shown
+	 * and in the way a person is used to type it.
 	 * </p>
 	 *
-	 * @see #dateFormat(AnnotationLookup, TLType, boolean)
+	 * @see #dateFormat(AnnotationLookup, TLType)
 	 */
-	public static List<DateFormat> dateInputFormats(AnnotationLookup annotations, TLType type, boolean multiple) {
-		DateFormat displayFormat = dateFormat(annotations, type, multiple);
+	public static List<DateFormat> dateInputFormats(AnnotationLookup annotations, TLType type) {
+		DateFormat displayFormat = dateFormat(annotations, type);
 		if (displayFormat == null) {
 			return null;
 		}
@@ -632,9 +708,29 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 *        The attribute value to display, may be {@code null}.
 	 */
 	public ReactControl createDisplayControl(ReactContext context, TLStructuredTypePart part, Object value) {
-		AbstractFieldModel model = displayModel(part, value);
+		return createDisplayControl(context, part, part.isMultiple(), value);
+	}
+
+	/**
+	 * Creates a read-only control displaying the given value of the given attribute, the field
+	 * holding as many values as stated.
+	 *
+	 * <p>
+	 * The attribute decides everything but how many values there are: its annotations, its options
+	 * and its own control annotation shape the display, while the multiplicity is the one of the
+	 * field, which a column reaching the attribute over a multi-valued step answers for itself, see
+	 * {@link ColumnType#collected()}.
+	 * </p>
+	 *
+	 * @param multiple
+	 *        Whether the displayed value is a collection of the attribute's values rather than a
+	 *        single one.
+	 */
+	private ReactControl createDisplayControl(ReactContext context, TLStructuredTypePart part, boolean multiple,
+			Object value) {
+		AbstractFieldModel model = displayModel(part, multiple, value);
 		model.setEditable(false);
-		return createFieldControl(context, part, model);
+		return createFieldControl(context, part, fieldSpec(part, multiple, model), model, null);
 	}
 
 	/**
@@ -646,7 +742,9 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * ({@link ColumnType#type()}, {@link ColumnType#multiple()}) and where its display annotations
 	 * come from ({@link ColumnType#annotations()}) is all the display needs. Where an attribute
 	 * <em>does</em> hold the value ({@link ColumnType#part()}), that attribute decides the display,
-	 * so its options and its own annotations keep shaping the cell.
+	 * so its options and its own annotations keep shaping the cell - all but how many values the
+	 * cell holds, which is the column's answer ({@link ColumnType#multiple()}): a column reaching a
+	 * single-valued attribute over a multi-valued step shows all the values it collected.
 	 * </p>
 	 *
 	 * <p>
@@ -663,7 +761,7 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	public ReactControl createDisplayControl(ReactContext context, ColumnType columnType, Object value) {
 		TLStructuredTypePart part = columnType.part();
 		if (part != null) {
-			return createDisplayControl(context, part, value);
+			return createDisplayControl(context, part, columnType.multiple(), value);
 		}
 		TLType type = columnType.type();
 		if (type == null) {
@@ -675,19 +773,29 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 		return createFieldControl(context, type, field, model);
 	}
 
-	private AbstractFieldModel displayModel(TLStructuredTypePart part, Object value) {
+	/**
+	 * The field holding the displayed value of an attribute: an option-less select model where the
+	 * attribute is edited by selecting from options, so that its values render with the select
+	 * control's read-only representation, and a plain field otherwise.
+	 *
+	 * @param multiple
+	 *        Whether the field holds a collection of the attribute's values rather than a single
+	 *        one.
+	 */
+	private AbstractFieldModel displayModel(TLStructuredTypePart part, boolean multiple, Object value) {
 		if (selectOptionSource(part) == null) {
 			return new AbstractFieldModel(value);
 		}
-		return new SimpleSelectFieldModel(selection(part, value), Collections.emptyList(), part.isMultiple());
+		return new SimpleSelectFieldModel(selection(multiple, value), Collections.emptyList(), multiple);
 	}
 
 	/**
 	 * Normalizes an attribute value to the selection representation expected by the select
-	 * control: a {@link java.util.List} for multi-valued attributes, the raw value otherwise.
+	 * control: a {@link java.util.List} for a field holding several values, the raw value
+	 * otherwise.
 	 */
-	private static Object selection(TLStructuredTypePart part, Object value) {
-		if (!part.isMultiple()) {
+	private static Object selection(boolean multiple, Object value) {
+		if (!multiple) {
 			return value;
 		}
 		if (value instanceof Collection<?> collection) {

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="edited"/>
+	</channels>
+
+	<sidebar active-item="first">
+		<items>
+			<nav-item id="first">
+				<label>
+					<en>First</en>
+				</label>
+				<tab-bar active-tab="alpha">
+					<tabs>
+						<tab id="alpha">
+							<label>
+								<en>Alpha</en>
+							</label>
+							<form input="edited"/>
+						</tab>
+						<tab id="beta">
+							<label>
+								<en>Beta</en>
+							</label>
+							<panel title="Beta"/>
+						</tab>
+					</tabs>
+				</tab-bar>
+			</nav-item>
+			<nav-item id="second">
+				<label>
+					<en>Second</en>
+				</label>
+				<panel title="Second"/>
+			</nav-item>
+		</items>
+	</sidebar>
+</view>

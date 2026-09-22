@@ -18,6 +18,11 @@
 	survives a change of the term keeps its DOM node and does not animate again - only the cards
 	that actually appear do.
 	
+	Each card is a view of its own (demo/repeater-card.view.xml), bound to the element the repeater
+	publishes. It needs one, because a card derives the picture of its flow node from that element
+	and a channel is declared per view. The thumbnail it stacks its name over is loaded lazily, so
+	the browser fetches the pictures of the cards that come into view.
+	
 	The lower list is the same repeater without any input: its items function takes no arguments
 	and names the objects outright. It arranges them as a list, one below the other, which is
 	also what a repeater does when no layout is configured. A list stacks its items rather than
@@ -63,12 +68,12 @@
 			observed-types="test.flowchart:FlowNode"
 		>
 			<item>
-				<card>
-					<text
-						css-class="tlText--strong"
-						input="element"
+				<view-ref view="demo/repeater-card.view.xml">
+					<bind
+						channel="element"
+						to="element"
 					/>
-				</card>
+				</view-ref>
 			</item>
 			<empty-text>
 				<en>No flow node matches the search.</en>

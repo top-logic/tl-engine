@@ -21,9 +21,9 @@ import {
 } from './window-manager';
 import {
   handleRouteChangeEvent,
-  handleRouteVetoEvent,
+  handleRouteResumeEvent,
   type RouteChangeEventData,
-  type RouteVetoEventData,
+  type RouteResumeEventData,
 } from './route-sync';
 import { handlePick, type PickEventData } from './element-picker';
 
@@ -220,8 +220,8 @@ function dispatch(data: unknown): void {
     case 'RouteChangeEvent':
       handleRouteChangeEvent(payload as unknown as RouteChangeEventData);
       break;
-    case 'RouteVetoEvent':
-      handleRouteVetoEvent(payload as unknown as RouteVetoEventData);
+    case 'RouteResumeEvent':
+      handleRouteResumeEvent(payload as unknown as RouteResumeEventData);
       break;
     case 'PickEvent':
       handlePick(payload as unknown as PickEventData);

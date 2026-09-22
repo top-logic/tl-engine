@@ -7,18 +7,16 @@ export type ButtonAppearance = 'primary' | 'secondary' | 'ghost' | 'link';
  * defaults; the defaults win over the built-in default (`secondary`).
  *
  * - `appearance`: a toolbar says `ghost`, a dialog's button bar says `secondary`.
- * - `collapseToIcon`: a compact app bar shows labeled buttons that carry an icon as icon-only.
  */
 export interface ButtonDefaultsValue {
   appearance?: ButtonAppearance;
-  collapseToIcon?: boolean;
 }
 
 const Context = React.createContext<ButtonDefaultsValue>({});
 
 export function ButtonDefaults({ children, ...value }: React.PropsWithChildren<ButtonDefaultsValue>) {
   const parent = React.useContext(Context);
-  const merged = React.useMemo(() => ({ ...parent, ...value }), [parent, value.appearance, value.collapseToIcon]);
+  const merged = React.useMemo(() => ({ ...parent, ...value }), [parent, value.appearance]);
   return <Context.Provider value={merged}>{children}</Context.Provider>;
 }
 

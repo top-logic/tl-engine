@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.table;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -706,9 +707,66 @@ public class TestDefaultTableView extends TestCase {
 
 		view.filter("name", null);
 		assertEquals("Undoing the edit brings the named filter back.", OLDER, view.activeNamedFilter().id());
+	}
+
+	/**
+	 * Tests that a text searched for on top of a named filter that names no term of its own narrows
+	 * the rows that filter selects, and leaves it the active one.
+	 */
+	public void testSearchNarrowsWithinTheActiveNamedFilter() {
+		TableView<Person> view = newFilterBarView(null, null);
+		view.applyNamedFilter(OLDER);
+		assertEquals(List.of("Charlie", "Bob"), names(view));
+
+		view.search(TextFilterState.contains("li"));
+
+		assertEquals("The filter says nothing about the search, so the search does not end it.",
+			OLDER, view.activeNamedFilter().id());
+		assertEquals("The search narrows the rows the filter selects.", List.of("Charlie"), names(view));
+
+		view.filter("name", TextFilterState.contains("Bob"));
+		assertNull("A criterion the filter is made of does end the match.", view.activeNamedFilter());
+	}
+
+	/**
+	 * Tests that a filter the user saved while searching carries that term, so it is the active one
+	 * only while exactly that text is searched for.
+	 */
+	public void testSavedFilterMatchesOnlyWithItsOwnTerm() {
+		TableView<Person> view = newFilterBarView(new MapNamedFilterStore(), new TableId("t-saved-term"));
+		view.filter("name", TextFilterState.contains("li"));
+		view.search(TextFilterState.contains("3"));
+		NamedFilter saved = view.saveNamedFilter("Mine");
+		assertEquals(saved.id(), view.activeNamedFilter().id());
+
+		view.search(TextFilterState.contains("li"));
+		assertNull("The term is one of the things the filter was saved as.", view.activeNamedFilter());
 
 		view.search(TextFilterState.contains("3"));
-		assertNull("Editing the search leaves no named filter active either.", view.activeNamedFilter());
+		assertEquals("Searching for the saved term again brings the filter back.",
+			saved.id(), view.activeNamedFilter().id());
+	}
+
+	/**
+	 * Tests that a named filter without any criterion - the "all rows" chip - is the active one
+	 * exactly while no column is filtered, whether or not the user is searching.
+	 */
+	public void testFilterWithoutCriteriaMatchesWhileSearching() {
+		List<Column<Person, ?>> columns = filterableColumns();
+		TableView<Person> view = DefaultTableView.create(columns, new ListRowSource<>(people(), columns), null,
+			null, SortSpec.NONE, List.of(),
+			List.of(NamedFilter.declared("all", ResKey.text("All rows"), Map.of(), null)), null);
+		assertEquals("all", view.activeNamedFilter().id());
+
+		view.search(TextFilterState.contains("li"));
+
+		assertEquals("A filter by nothing goes on being active while the user searches.",
+			"all", view.activeNamedFilter().id());
+		assertEquals(List.of("Charlie", "alice"), names(view));
+
+		view.filter("age", RangeFilterState.between(Integer.valueOf(26), Integer.valueOf(50)));
+		assertNull("A column filter is a criterion the filter by nothing does not carry.",
+			view.activeNamedFilter());
 	}
 
 	/**
@@ -787,6 +845,44 @@ public class TestDefaultTableView extends TestCase {
 		view.filter("age", null);
 		view.search(TextFilterState.contains("li"));
 		assertEquals(HOLDS_LI, view.activeNamedFilter().id());
+	}
+
+	/**
+	 * Tests that a filter the user saved while searching within a preset is the active one, although
+	 * the preset - which says nothing about the search - is offered first and matches as well.
+	 */
+	public void testFilterNamingTheSearchedTermWinsOverTheSearchAgnosticOne() {
+		TableView<Person> view = newFilterBarView(new MapNamedFilterStore(), new TableId("t-more-specific"));
+		view.applyNamedFilter(OLDER);
+		view.search(TextFilterState.contains("li"));
+		assertEquals(List.of("Charlie"), names(view));
+
+		NamedFilter saved = view.saveNamedFilter("Mine");
+
+		assertEquals("The filter naming the searched term describes the rows completely.",
+			saved.id(), view.activeNamedFilter().id());
+
+		view.search(TextFilterState.contains("3"));
+		assertEquals("The saved filter no longer matches, the preset behind it still does.",
+			OLDER, view.activeNamedFilter().id());
+
+		view.search(TextFilterState.contains("li"));
+		assertEquals("Searching for the saved term again makes the saved filter the active one.",
+			saved.id(), view.activeNamedFilter().id());
+	}
+
+	/**
+	 * Tests that the offered order still decides between matches that are equally specific: a
+	 * declared filter wins over a saved one carrying the same criteria and no term either.
+	 */
+	public void testDeclaredFilterWinsOverASavedOneWithTheSameCriteria() {
+		TableView<Person> view = newFilterBarView(new MapNamedFilterStore(), new TableId("t-same-criteria"));
+		view.applyNamedFilter(OLDER);
+
+		view.saveNamedFilter("Mine");
+
+		assertEquals("Neither of the two names a term, so the offered order decides.",
+			OLDER, view.activeNamedFilter().id());
 	}
 
 	public void testSaveCapturesFiltersAndSearch() {
@@ -900,6 +996,145 @@ public class TestDefaultTableView extends TestCase {
 
 		view.applyNamedFilter(OLDER);
 		assertEquals("The declared filters work without a store.", List.of("Charlie", "Bob"), names(view));
+	}
+
+	// ---- initially active named filter ----
+
+	/**
+	 * Creates a view offering the {@link #declaredFilters() declared filters} and starting out
+	 * filtered by the named filter with the given identifier.
+	 */
+	private TableView<Person> newPresetView(ViewStateStore store, NamedFilterStore filterStore, TableId id,
+			String initialFilter) {
+		List<Column<Person, ?>> columns = filterableColumns();
+		return DefaultTableView.create(columns, new ListRowSource<>(people(), columns), store, id, SortSpec.NONE,
+			List.of(), declaredFilters(), filterStore, initialFilter);
+	}
+
+	public void testInitialFilterAppliedWithoutPersonalization() {
+		TableView<Person> view = newPresetView(new MapViewStateStore(), null, new TableId("t-preset"), OLDER);
+		assertEquals(OLDER, view.activeNamedFilter().id());
+		assertEquals(List.of("Charlie", "Bob"), names(view));
+
+		// A table that persists nothing at all has no personalization either.
+		TableView<Person> transientView = newPresetView(null, null, null, OLDER);
+		assertEquals(OLDER, transientView.activeNamedFilter().id());
+		assertEquals(List.of("Charlie", "Bob"), names(transientView));
+	}
+
+	public void testInitialFilterMayNameASavedFilter() {
+		MapNamedFilterStore filterStore = new MapNamedFilterStore();
+		TableId id = new TableId("t-preset-saved");
+
+		TableView<Person> view = newFilterBarView(filterStore, id);
+		view.filter("name", TextFilterState.contains("li"));
+		NamedFilter saved = view.saveNamedFilter("Mine");
+
+		TableView<Person> other = newPresetView(null, filterStore, id, saved.id());
+		assertEquals("The filters the user saved are offered before the initial one is looked up.",
+			saved.id(), other.activeNamedFilter().id());
+		assertEquals(List.of("Charlie", "alice"), names(other));
+	}
+
+	public void testInitialFilterYieldsToPersonalization() {
+		MapViewStateStore store = new MapViewStateStore();
+		TableId id = new TableId("t-preset-chosen");
+
+		TableView<Person> first = newPresetView(store, null, id, OLDER);
+		first.applyNamedFilter(HOLDS_LI);
+
+		TableView<Person> second = newPresetView(store, null, id, OLDER);
+		assertEquals("The filter the user chose wins over the initial one.", HOLDS_LI,
+			second.activeNamedFilter().id());
+		assertEquals(List.of("Charlie", "alice"), names(second));
+	}
+
+	public void testInitialFilterYieldsToAClearedFilter() {
+		MapViewStateStore store = new MapViewStateStore();
+		TableId id = new TableId("t-preset-cleared");
+
+		TableView<Person> first = newPresetView(store, null, id, OLDER);
+		assertEquals(List.of("Charlie", "Bob"), names(first));
+		// The user clears the criteria the table started with.
+		first.filter("age", null);
+		assertEquals(3, first.rowCount());
+
+		TableView<Person> second = newPresetView(store, null, id, OLDER);
+		assertNull("A user who cleared the filter must not get the initial one back.",
+			second.activeNamedFilter());
+		assertEquals(3, second.rowCount());
+	}
+
+	public void testUnknownInitialFilterLeavesTheTableUnfiltered() {
+		TableView<Person> view =
+			newPresetView(new MapViewStateStore(), null, new TableId("t-preset-missing"), "missing");
+		assertNull("A filter that is not offered is no reason to fail.", view.activeNamedFilter());
+		assertEquals(3, view.rowCount());
+	}
+
+	// ---- filter change notification ----
+
+	/** The identifier recorded when the table is filtered by no named filter at all. */
+	private static final String NO_FILTER = "<none>";
+
+	/**
+	 * A {@link TableViewListener} recording what the view reports each time it announces a
+	 * {@link TableViewListener#filterChanged() filter change}.
+	 */
+	private static final class FilterRecorder implements TableViewListener {
+
+		private final TableView<?> _view;
+
+		final List<String> _activeFilters = new ArrayList<>();
+
+		final List<TextFilterState> _searchTerms = new ArrayList<>();
+
+		FilterRecorder(TableView<?> view) {
+			_view = view;
+		}
+
+		@Override
+		public void filterChanged() {
+			NamedFilter active = _view.activeNamedFilter();
+			_activeFilters.add(active == null ? NO_FILTER : active.id());
+			_searchTerms.add(_view.state().getSearch());
+		}
+	}
+
+	public void testFilterChangeIsAnnounced() {
+		TableView<Person> view = newFilterBarView(null, null);
+		FilterRecorder recorder = new FilterRecorder(view);
+		view.addListener(recorder);
+
+		view.applyNamedFilter(OLDER);
+		view.filter("age", null);
+		view.search(TextFilterState.contains("li"));
+
+		assertEquals("Every change of the criteria is announced, the outcome already in effect.",
+			List.of(OLDER, NO_FILTER, HOLDS_LI), recorder._activeFilters);
+		assertEquals("The search reaching the criteria of a named filter makes that one active.",
+			TextFilterState.contains("li"), recorder._searchTerms.get(2));
+	}
+
+	public void testRedefinedDeclaredFilterIsAnnounced() {
+		List<Column<Person, ?>> columns = filterableColumns();
+		DefaultTableView<Person> view = DefaultTableView.create(columns, new ListRowSource<>(people(), columns),
+			null, null, SortSpec.NONE, List.of(), declaredFilters(), null);
+		FilterRecorder recorder = new FilterRecorder(view);
+		view.addListener(recorder);
+
+		view.applyNamedFilter(HOLDS_LI);
+		// The same chip, now standing for other criteria.
+		view.setDeclaredFilters(List.of(NamedFilter.declared(HOLDS_LI, ResKey.text("Holds ob"), Map.of(),
+			TextFilterState.contains("ob"))));
+		assertEquals(List.of("Bob"), names(view));
+		assertEquals(List.of(HOLDS_LI, HOLDS_LI), recorder._activeFilters);
+		assertEquals(TextFilterState.contains("ob"), recorder._searchTerms.get(1));
+
+		// A declared filter that is no longer offered leaves its criteria under no name.
+		view.setDeclaredFilters(List.of());
+		assertEquals(List.of(HOLDS_LI, HOLDS_LI, NO_FILTER), recorder._activeFilters);
+		assertEquals("The criteria of a withdrawn filter stay in effect.", List.of("Bob"), names(view));
 	}
 
 }

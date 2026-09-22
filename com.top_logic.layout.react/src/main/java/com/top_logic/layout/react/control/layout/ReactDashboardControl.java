@@ -35,6 +35,8 @@ public class ReactDashboardControl extends ReactControl {
 
 	private static final String MIN_COL_WIDTH = "minColWidth";
 
+	private static final String ROW_HEIGHT = "rowHeight";
+
 	private static final String CHILDREN = "children";
 
 	private static final String EDIT_MODE = "editMode";
@@ -100,18 +102,22 @@ public class ReactDashboardControl extends ReactControl {
 	 *
 	 * @param minColWidth
 	 *        CSS length used to decide column count (e.g. {@code "16rem"}).
+	 * @param rowHeight
+	 *        CSS length of a single grid row (e.g. {@code "16rem"}). A tile is
+	 *        as tall as the rows it spans, plus the gaps between them.
 	 * @param tiles
 	 *        Tiles in the order they should appear initially.
 	 * @param onReorder
 	 *        Callback invoked with the new tile-id order after the user
 	 *        reordered tiles. May be {@code null}.
 	 */
-	public ReactDashboardControl(ReactContext context, String minColWidth, List<Tile> tiles,
+	public ReactDashboardControl(ReactContext context, String minColWidth, String rowHeight, List<Tile> tiles,
 			Consumer<List<String>> onReorder) {
 		super(context, null, REACT_MODULE);
 		_tiles = new ArrayList<>(tiles);
 		_onReorder = onReorder;
 		putState(MIN_COL_WIDTH, minColWidth);
+		putState(ROW_HEIGHT, rowHeight);
 		putState(CHILDREN, buildDescriptors());
 		putState(EDIT_MODE, Boolean.FALSE);
 	}

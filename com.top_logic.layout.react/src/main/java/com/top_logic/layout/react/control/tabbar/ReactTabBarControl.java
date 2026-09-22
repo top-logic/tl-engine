@@ -281,9 +281,20 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 		return routes;
 	}
 
+	/**
+	 * Activates the tab the URL names, letting the tab being left veto the switch while it holds
+	 * unsaved changes.
+	 *
+	 * <p>
+	 * A URL is refused for the same reason a click on the tab is: what the user typed into the tab
+	 * being left is not dropped because an address named another tab. The
+	 * {@link ChannelVetoException} reaches whoever resolves the URL, which ends its adoption and
+	 * leaves the tab bar showing the tab it shows.
+	 * </p>
+	 */
 	@Override
 	public void activateRoute(RouteMatch match) {
-		selectTab(match.itemId());
+		revealChild(match.itemId());
 	}
 
 	@Override
@@ -311,13 +322,23 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 	/**
 	 * Activates the tab with the given id, letting the tab being left veto the switch while it holds
 	 * unsaved changes.
+	 *
+	 * <p>
+	 * Only leaving the tab asks about unsaved changes; the tab already displayed is activated
+	 * without a question. A URL that stays within that tab - a deeper segment it shows, a query
+	 * parameter refining it, a step back between two addresses of the same page - reaches the tab
+	 * bar as the tab it displays: nothing here is being left, so nothing is asked, and the
+	 * participant the URL does concern keeps its say.
+	 * </p>
 	 */
 	@Override
 	public void revealChild(String key) {
-		TabDefinition currentTab = findTab(_activeTabId);
-		DirtyChannel dirtyChannel = currentTab.getDirtyChannel();
-		if (dirtyChannel != null && dirtyChannel.hasDirtyHandlers()) {
-			throw new ChannelVetoException(dirtyChannel.getDirtyHandlers(), () -> selectTab(key));
+		if (!key.equals(_activeTabId)) {
+			TabDefinition currentTab = findTab(_activeTabId);
+			DirtyChannel dirtyChannel = currentTab.getDirtyChannel();
+			if (dirtyChannel != null && dirtyChannel.hasDirtyHandlers()) {
+				throw new ChannelVetoException(dirtyChannel.getDirtyHandlers(), () -> selectTab(key));
+			}
 		}
 
 		selectTab(key);

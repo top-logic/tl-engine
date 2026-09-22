@@ -40,6 +40,13 @@ import com.top_logic.model.util.TLModelPartRef;
  * </p>
  *
  * <p>
+ * A fraction that answers nothing at all is the indeterminate bar: it says that something is going
+ * on without saying how far it has come, and the client sweeps it instead of filling a share of it.
+ * A bar following an operation that learns its share only later therefore switches between the two
+ * displays as the operation reports.
+ * </p>
+ *
+ * <p>
  * Every expression is called with the current value of the {@link Config#getInput() input} channel,
  * and the bar is recomputed whenever that value changes, whenever the object on it changes, and
  * whenever an object of an {@link Config#getObservedTypes() observed type} is created, changed or
@@ -96,7 +103,9 @@ public class ProgressElement implements UIElement {
 		 * TL-Script expression answering the filled part of the bar, a number between 0 and 1.
 		 *
 		 * <p>
-		 * Excludes the two counts, which state the same thing as a ratio.
+		 * Excludes the two counts, which state the same thing as a ratio. An expression that
+		 * answers nothing at all - a bar over an operation that does not know how far it has come -
+		 * leaves the bar without a share, which the client sweeps rather than fills.
 		 * </p>
 		 */
 		@Name(FRACTION)
@@ -156,11 +165,12 @@ public class ProgressElement implements UIElement {
 	 * What a {@link ProgressElement} displays.
 	 *
 	 * @param fraction
-	 *        The filled part of the bar, between 0 and 1.
+	 *        The filled part of the bar, between 0 and 1, or {@code null} for a bar without a
+	 *        share, which the client sweeps rather than fills.
 	 * @param label
 	 *        The text beside the bar, or {@code null} for a bar without one.
 	 */
-	public record Progress(double fraction, String label) {
+	public record Progress(Double fraction, String label) {
 		// Pure value type.
 	}
 
@@ -200,6 +210,37 @@ public class ProgressElement implements UIElement {
 		}
 	}
 
+	/**
+	 * Creates a {@link ProgressElement}.
+	 *
+	 * @param input
+	 *        The channel every expression is called with, {@code null} for a bar computed from the
+	 *        model as a whole.
+	 * @param fraction
+	 *        The expression answering the filled part of the bar, {@code null} for a bar stated as
+	 *        two counts.
+	 * @param done
+	 *        The expression answering how much is done, {@code null} for a bar stated as a
+	 *        fraction.
+	 * @param total
+	 *        The expression answering how much there is in all, {@code null} for a bar stated as a
+	 *        fraction.
+	 * @param label
+	 *        The expression answering the text beside the bar, {@code null} to leave the label to
+	 *        what the bar is stated as.
+	 * @param observedTypes
+	 *        The types whose object changes recompute the bar.
+	 */
+	public ProgressElement(ChannelRef input, QueryExecutor fraction, QueryExecutor done, QueryExecutor total,
+			QueryExecutor label, List<TLModelPartRef> observedTypes) {
+		_inputRef = input;
+		_fraction = fraction;
+		_done = done;
+		_total = total;
+		_label = label;
+		_observedTypeRefs = observedTypes;
+	}
+
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		ViewChannel input = _inputRef == null ? null : context.resolveChannel(_inputRef);
@@ -234,9 +275,9 @@ public class ProgressElement implements UIElement {
 	 * @return The fraction and the label of the bar.
 	 */
 	public Progress progressOf(Object input) {
-		String label = _label == null ? null : text(_label.execute(input));
+		String label = _label == null ? null : ValueLabel.label(_label.execute(input));
 		if (_fraction != null) {
-			return new Progress(number(_fraction.execute(input)), label);
+			return new Progress(fraction(_fraction.execute(input)), label);
 		}
 		return counted(number(_done.execute(input)), number(_total.execute(input)), label);
 	}
@@ -256,7 +297,20 @@ public class ProgressElement implements UIElement {
 	 */
 	public static Progress counted(double done, double total, String label) {
 		double fraction = total > 0 ? done / total : 0d;
-		return new Progress(fraction, label != null ? label : number(done) + " / " + number(total));
+		return new Progress(Double.valueOf(fraction),
+			label != null ? label : number(done) + " / " + number(total));
+	}
+
+	/**
+	 * The share of the bar the given expression result states.
+	 *
+	 * @param value
+	 *        What the fraction expression answered.
+	 * @return The filled part of the bar, or {@code null} for anything that is no number - a bar
+	 *         whose share is unknown, which the client sweeps rather than fills.
+	 */
+	public static Double fraction(Object value) {
+		return value instanceof Number number ? Double.valueOf(number.doubleValue()) : null;
 	}
 
 	/**
@@ -264,13 +318,6 @@ public class ProgressElement implements UIElement {
 	 */
 	private static double number(Object value) {
 		return value instanceof Number number ? number.doubleValue() : 0d;
-	}
-
-	/**
-	 * The given expression result as the text it contributes, {@code null} for no result at all.
-	 */
-	private static String text(Object value) {
-		return value == null ? null : value.toString();
 	}
 
 	/**

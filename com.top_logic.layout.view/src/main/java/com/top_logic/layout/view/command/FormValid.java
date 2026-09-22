@@ -12,6 +12,7 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.FormModel;
+import com.top_logic.layout.view.form.FormModelListener;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
@@ -30,7 +31,7 @@ import com.top_logic.tool.execution.ExecutableState;
  * through some other action.
  * </p>
  */
-public class FormValid implements ViewExecutabilityRule, ContextDependentRule {
+public class FormValid implements ViewExecutabilityRule, ContextDependentRule, ObservableRule {
 
 	/**
 	 * Configuration for {@link FormValid}.
@@ -66,6 +67,33 @@ public class FormValid implements ViewExecutabilityRule, ContextDependentRule {
 		if (formModel instanceof FormControl form) {
 			_form = form;
 		}
+	}
+
+	/**
+	 * Follows the form: the errors becoming visible is what turns the command off, and fixing them
+	 * is what turns it on again.
+	 */
+	@Override
+	public Runnable observe(Runnable revalidate) {
+		if (_form == null) {
+			return () -> {
+				// No form to follow.
+			};
+		}
+		FormControl form = _form;
+		FormModelListener listener = new FormModelListener() {
+			@Override
+			public void onFormStateChanged(FormModel source) {
+				revalidate.run();
+			}
+
+			@Override
+			public void onValidityChanged(FormModel source) {
+				revalidate.run();
+			}
+		};
+		form.addFormModelListener(listener);
+		return () -> form.removeFormModelListener(listener);
 	}
 
 	@Override

@@ -14,24 +14,34 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 
 /**
- * The runs currently parked on a human, so that any window of the responder's account can answer
- * them - not only the one that started the run.
+ * The chat runs currently in flight, so that any window of the owning account can reach one - not
+ * only the window that started it.
  *
  * <p>
- * A run that asks for an approval, or asks the user a question, parks its thread on a future in the
- * {@link UserInteractionStore} of its own {@link ChatProcessor.AIProcessingState}, and that state
- * hangs on the {@link TaskProgressTracker} of one browser window. Without this register the future
- * is reachable only through that window: a second window, a reloaded page whose window is a new one,
- * or the same account signing in again could see the pending request - {@code GET /chat/interactions}
- * reads it from the persisted {@code InteractionRequest} rows and is account-scoped - but had no way
- * to answer it, and the run stayed parked until its timeout (issue #393).
+ * A run hangs on the {@link ChatProcessor.AIProcessingState} of one browser window's
+ * {@link TaskProgressTracker}, and both things a user does to a running run reach it from there.
+ * Without this register they reach it only from that one window:
  * </p>
+ *
+ * <ul>
+ * <li><em>Answering</em> what the run asks: a run that asks for an approval, or asks the user a
+ * question, parks its thread on a future in the {@link UserInteractionStore} of its state. A second
+ * window, a reloaded page whose window is a new one, or the same account signing in again could see
+ * the pending request - {@code GET /chat/interactions} reads it from the persisted
+ * {@code InteractionRequest} rows and is account-scoped - but had no way to answer it, and the run
+ * stayed parked until its timeout (issue #393). {@link #find(Person, String)} finds it by the
+ * request id.</li>
+ * <li><em>Stopping</em> it: the same window barrier made the stop button of a second tab, or of the
+ * page after a reload, silently do nothing, and the run went on spending the account's tokens until
+ * it finished by itself (issue #465). {@link #findBySession(Person, String)} finds it by the chat
+ * the user is watching.</li>
+ * </ul>
  *
  * <p>
  * The register is process-wide and keyed by the run's task id, and every entry names the
- * <em>account</em> the run is waiting on. That account is the whole access rule:
- * {@link #find(Person, String)} answers only for the responder, so another account asking the same
- * request id is told exactly what it is told about a request that does not exist - nothing.
+ * <em>account</em> the run belongs to. That account is the whole access rule: both lookups answer
+ * only for that account, so another account naming the same request or the same chat is told
+ * exactly what it is told about one that does not exist - nothing.
  * </p>
  *
  * <p>
@@ -70,13 +80,12 @@ public final class PendingInteractionRegistry {
 	}
 
 	/**
-	 * Announces a run whose human-in-the-loop requests the given account may answer from any of its
-	 * windows.
+	 * Announces a run that the given account may answer and stop from any of its windows.
 	 *
 	 * <p>
-	 * A no-op when the responder is unknown: a run nobody is named as the responder of must not
-	 * become answerable by everybody. Such a run keeps the behaviour it had before this register
-	 * existed - only the window it runs in can answer it.
+	 * A no-op when the responder is unknown: a run nobody is named as the owner of must not become
+	 * answerable and stoppable by everybody. Such a run keeps the behaviour it had before this
+	 * register existed - only the window it runs in reaches it.
 	 * </p>
 	 *
 	 * @param taskId
@@ -142,6 +151,47 @@ public final class PendingInteractionRegistry {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * The run this account has in the given chat, whichever window started it.
+	 *
+	 * <p>
+	 * What {@code POST /chat/cancel} stops. The chat is what the user is looking at when they press
+	 * stop, and it is the account's own chat by the time this is asked - the window it runs in is
+	 * not something the user can be expected to have kept.
+	 * </p>
+	 *
+	 * <p>
+	 * A chat runs one run at a time, so the first match is the answer; a state that has stopped
+	 * processing but is not yet unregistered is taken only when nothing live matches, so a dying run
+	 * cannot shadow the live one the user means.
+	 * </p>
+	 *
+	 * @param owner
+	 *        The account that wants to stop the run; may be <code>null</code>, which finds nothing.
+	 * @param sessionId
+	 *        The id of the chat the run belongs to; may be <code>null</code>, which finds nothing.
+	 * @return The run of that chat, or <code>null</code> when this account has none there -
+	 *         including when the chat is somebody else's.
+	 */
+	public static PendingRun findBySession(Person owner, String sessionId) {
+		if (owner == null || sessionId == null) {
+			return null;
+		}
+		PendingRun ending = null;
+		for (PendingRun run : RUNS.values()) {
+			if (!owner.equals(run.responder()) || !sessionId.equals(run.state().getSessionId())) {
+				continue;
+			}
+			if (run.state().isProcessing()) {
+				return run;
+			}
+			if (ending == null) {
+				ending = run;
+			}
+		}
+		return ending;
 	}
 
 	/** How many runs are currently registered. For tests and diagnostics. */

@@ -308,6 +308,14 @@ export interface PendingInteraction {
    * from, so a recovered card reads in the user's language as the live one does. Empty otherwise.
    */
   toolMode: string
+  /**
+   * For a question of type `choice`, whether it takes more than one answer. Read off the waiting
+   * run, like `toolMode`: a rebuilt card that turned a multi-select question into a single-select
+   * one would ask something the agent did not (#466).
+   */
+  multiSelect: boolean
+  /** For a question of type `choice`, the options to offer, in the order the agent gave them. */
+  options: InteractionOption[]
   sessionId: string
   /** How long the requester is still waiting; zero or less means nobody is listening any more. */
   remainingMs: number
@@ -316,7 +324,8 @@ export interface PendingInteraction {
 /**
  * Every approval and question waiting for this user, across their chats.
  *
- * Approvals have no server poll of their own, so this is what lets a reloaded page put the card
+ * Neither has a server poll of its own that a new window hears - the stream re-emits a pending
+ * question only into the window whose run it is - so this is what lets a reloaded page put the card
  * back in front of the user instead of a composer that is locked for no visible reason.
  */
 export async function fetchPendingInteractions(at: ChatAddress): Promise<PendingInteraction[]> {
@@ -330,13 +339,28 @@ export async function fetchPendingInteractions(at: ChatAddress): Promise<Pending
     prompt: item.prompt ?? '',
     payload: item.payload ?? '',
     toolMode: item.toolMode ?? '',
+    multiSelect: item.multiSelect === true,
+    options: item.options ?? [],
     sessionId: item.sessionId ?? '',
     remainingMs: typeof item.remainingMs === 'number' ? item.remainingMs : 0,
   }))
 }
 
-export async function cancelRun(at: ChatAddress): Promise<void> {
-  await fetch(withWindow('/chat/cancel', at), { method: 'POST', credentials: 'include' })
+/**
+ * Stops the run of the given chat.
+ *
+ * The chat is named rather than left to the server, so the stop reaches the run wherever it is:
+ * the run's state hangs on the window that started it, and a second tab or a reloaded page is a
+ * different window (issue #465). A stop without a chat still works and stops whatever this window
+ * is running.
+ */
+export async function cancelRun(at: ChatAddress, sessionId?: string | null): Promise<void> {
+  await fetch(withWindow('/chat/cancel', at), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ sessionId: sessionId ?? '' }),
+  })
 }
 
 export async function respond(at: ChatAddress, body: Record<string, unknown>): Promise<void> {

@@ -93,9 +93,13 @@ public sealed interface ToolState
 	 * @param error     error message
 	 * @param startTime when execution started
 	 * @param endTime   when the failure was recorded
-	 * @param synthetic {@code true} if the tool's body never ran (e.g. unresolvable arguments,
-	 *                  unknown tool) — such a failure cannot have produced side effects, so it
-	 *                  must not by itself trigger an end-of-turn transaction rollback
+	 * @param synthetic {@code true} if this failure has nothing for the turn's transaction to take
+	 *                  back, so that it must not by itself trigger an end-of-turn rollback. Two
+	 *                  kinds of failure qualify: one whose tool body never ran (unresolvable
+	 *                  arguments, unknown tool, a denied call), and one a tool
+	 *                  {@link com.top_logic.tl.ai.tool.api.ToolResult#failure(String) reported}
+	 *                  instead of throwing, which is how a tool says the call failed without
+	 *                  claiming that the turn's other writes are now wrong
 	 */
 	record Failed(String error, Instant startTime, Instant endTime, boolean synthetic) implements ToolState {
 		public Failed {

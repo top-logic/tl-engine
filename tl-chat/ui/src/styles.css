@@ -45,6 +45,7 @@
   --chat-column: 49rem;
   --chat-sidebar: 16.5rem;
   --chat-rail-narrow: 3.25rem;
+  --chat-conversation-min-width: 20rem;
   --r-1: calc(var(--corner-radius, 0.25rem) * 1.5);
   --r-2: calc(var(--corner-radius, 0.25rem) * 2.5);
   --r-3: calc(var(--corner-radius, 0.25rem) * 4);
@@ -414,7 +415,24 @@
    */
   display: flex;
   flex-direction: column;
-  min-width: 0;
+  /*
+   * A floor, but never wider than the window.
+   *
+   * `min-width: 0` alone let a host squeeze the element to the width of its own scrollbar - 22 px,
+   * a slit with a composer in it (Consulting #234). Measured in the demo at a 320 px window, the
+   * conversation was 32 px while the page beside it had room to spare.
+   *
+   * The second measure is `100vw` and deliberately **not** `100%`: the box this element is placed
+   * in is the one being squeezed, so a percentage tracks the squeeze instead of resisting it - a
+   * `min(20rem, 100%)` resolved to 32 px in exactly the case this rule exists for. What the window
+   * is, on the other hand, nothing in the page can shrink. So a host with room stops squeezing at
+   * the floor, and a window narrower than the floor is simply filled rather than overflowed.
+   *
+   * The floor is the width below which the composer's controls have nowhere left to go; the
+   * `chat-stage` queries further down still take the layout from there. A theme that wants another
+   * floor redeclares the token.
+   */
+  min-width: min(var(--chat-conversation-min-width), 100vw);
   height: 100%;
   color: var(--text-primary);
   background: var(--background);
@@ -1018,7 +1036,11 @@
    * pushed its own composer out under the pane instead of narrowing with the stage.
    */
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: 1fr auto auto 1.2fr;
+  /*
+   * Four content rows, not three: the prompt cards sit between the greeting and the composer, and a
+   * conversation that offers none leaves that row at zero height.
+   */
+  grid-template-rows: 1fr auto auto auto 1.2fr;
 }
 
 .stage.is-empty .thread-shell {
@@ -1027,8 +1049,12 @@
   min-height: 0;
 }
 
-.stage.is-empty .composer {
+.stage.is-empty .prompt-suggestions {
   grid-row: 3;
+}
+
+.stage.is-empty .composer {
+  grid-row: 4;
 }
 
 .stage.is-empty .thread-bar {
@@ -1045,6 +1071,74 @@
 .stage.is-empty .welcome {
   margin: 0;
   padding: 0 0 1.75rem;
+}
+
+/*
+ * The first questions a page offers, between the greeting and the composer - the position the
+ * classic chat gives its example prompts, and the order the eye reads: what this is, what you could
+ * ask, where you type.
+ *
+ * Same column and same gutters as the composer, so the row lines up with the field it fills rather
+ * than with the transcript's wider measure. They wrap: a page may offer three long questions or six
+ * short ones, and neither should introduce a horizontal scrollbar.
+ */
+.prompt-suggestions {
+  width: min(100%, var(--chat-column));
+  margin: 0 auto;
+  padding: 0 1.25rem 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.prompt-suggestion {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  background: var(--layer);
+  color: var(--text-primary);
+  font-size: var(--chat-small);
+  text-align: left;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.prompt-suggestion:hover {
+  background: var(--layer-hover);
+  border-color: var(--border-interactive);
+}
+
+.prompt-suggestion__icon {
+  flex: none;
+  color: var(--text-secondary);
+}
+
+.prompt-suggestion:hover .prompt-suggestion__icon {
+  color: var(--button-primary);
+}
+
+/*
+ * One line, elided. The label is the short form of the question; the whole sentence is the button's
+ * title and, one click later, the composer's text.
+ */
+.prompt-suggestion__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * Narrow: one card per row, so a long label is read rather than elided to three words.
+ */
+@container chat-stage (max-width: 26rem) {
+  .prompt-suggestion {
+    width: 100%;
+  }
 }
 
 .thread-shell {
@@ -2182,6 +2276,64 @@
   overflow-wrap: anywhere;
 }
 
+/*
+ * What the tool will be given (#511). Plain text, never rendered: `<pre>` is the whole point - the
+ * payload is model output and the reader has to see what it really says.
+ */
+.prompt-args {
+  margin: 0 0 0.5rem;
+}
+
+.prompt-args-label {
+  color: var(--text-secondary);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+
+/*
+ * Collapsed it is not scrollable and does not need to be: the head is already cut to twelve lines,
+ * and a scrollbar beside a "show more" link offers the same thing twice. Expanded, the ceiling is
+ * what keeps a long payload from pushing the card's buttons off the screen.
+ */
+.prompt-args pre {
+  margin: 0;
+  overflow: hidden;
+  padding: 0.5rem 0.625rem;
+  border-radius: var(--r-1);
+  background: var(--field, var(--layer));
+  font-family: var(--chat-mono);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.prompt-args.is-open pre {
+  max-height: 14rem;
+  overflow: auto;
+}
+
+.prompt-args-more {
+  margin-top: 0.25rem;
+  color: var(--chat-link);
+  font-size: 0.6875rem;
+}
+
+.prompt-args-more:hover {
+  text-decoration: underline;
+}
+
+/* What "allow this chat" will cover, said on the card rather than found out afterwards. */
+.prompt-card-note {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  overflow-wrap: anywhere;
+}
+
 .prompt-card-bar {
   display: block;
   width: 100%;
@@ -2247,12 +2399,41 @@
   border-color: var(--border-interactive, var(--button-primary));
 }
 
+/*
+ * The answers wrap onto a second line rather than into their own words. Three labels do not fit
+ * across a chat in a narrow dock or a split panel, and a shrinking flex item breaks its text: "In
+ * diesem Chat erlauben" came out as four stacked words beside two buttons it had run into.
+ */
 .prompt-card-footer {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   align-items: center;
   gap: 0.375rem;
   margin-top: 0.625rem;
+}
+
+.prompt-card-footer > button {
+  white-space: nowrap;
+}
+
+/*
+ * Letting a tool write is a decision, not the obvious way on, so the approval card's affirmative
+ * button is outlined rather than filled (#511): an accented button is the one a reader answers
+ * without looking, and the payload above it is there to be looked at. `.prompt-continue` keeps the
+ * accent for the question card, where continuing really is the expected answer.
+ */
+.prompt-decide {
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--border-strong, var(--border-subtle));
+  border-radius: var(--r-pill);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.prompt-decide:hover {
+  background: var(--layer-hover);
+  border-color: var(--border-interactive, var(--button-primary));
 }
 
 .prompt-continue {
@@ -2962,9 +3143,16 @@
  * The numbers are the ones the viewport queries carried; what changed is the box they measure.
  */
 
-/* Narrow enough that the gutters are worth more to the text than to the margin. */
+/*
+ * Narrow enough that the gutters are worth more to the text than to the margin.
+ *
+ * The prompt cards are in the list because they stand directly over the composer: a row that kept
+ * the wide gutter here would start four pixels inside the field it fills, which reads as a
+ * misalignment rather than as a margin.
+ */
 @container chat-stage (max-width: 1080px) {
   .thread-column,
+  .prompt-suggestions,
   .composer {
     padding-left: 1rem;
     padding-right: 1rem;
@@ -3124,10 +3312,28 @@
   }
 }
 
+/*
+ * Every chat element is a root of its own, so this list is the same one the top of this file
+ * carries: a composed `<chat-conversation/>`, `<chat-rail/>` or rail section is placed by a view
+ * outside the cockpit, where a rule naming only `.tl-cockpit` reaches nothing and the person who
+ * asked for less motion still gets it.
+ */
 @media (prefers-reduced-motion: reduce) {
   .tl-cockpit *,
   .tl-cockpit *::before,
   .tl-cockpit *::after,
+  .tl-chat-conversation *,
+  .tl-chat-conversation *::before,
+  .tl-chat-conversation *::after,
+  .tl-chat-rail *,
+  .tl-chat-rail *::before,
+  .tl-chat-rail *::after,
+  .tl-chat-section *,
+  .tl-chat-section *::before,
+  .tl-chat-section *::after,
+  .tl-data-list *,
+  .tl-data-list *::before,
+  .tl-data-list *::after,
   .tl-chat-dock *,
   .tl-chat-dock *::before,
   .tl-chat-dock *::after {
@@ -3744,6 +3950,8 @@
   white-space: nowrap;
   vertical-align: baseline;
   user-select: none;
+  /* Never wider than the field it sits in: the label ellipsizes instead of being clipped off. */
+  max-width: 100%;
 }
 
 .ref-token.is-static {
@@ -3765,11 +3973,21 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 18rem;
+  /* Never squeezed away entirely, however long the location beside it is. */
+  min-width: 4ch;
 }
 
+/*
+ * The location ellipsizes like the name rather than holding its full width: a quote token carries
+ * both, and in a narrow field one part keeping everything leaves the other with a few pixels. Both
+ * give way in proportion; the whole of either is still in the tooltip and in the aria-label.
+ */
 .ref-token-location {
   color: var(--text-secondary);
   font-size: 0.85em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 4ch;
 }
 
 .bubble-user-edit.token-input {

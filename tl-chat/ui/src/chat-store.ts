@@ -300,6 +300,15 @@ export interface ChatState {
   sessionsLoading: boolean
   sessionsError: string
   sessionId: string | null
+  /**
+   * The chat this window brought into being, as opposed to one it opened.
+   *
+   * Only the browser knows which of the two a chat is: the server sees a session id arrive either
+   * way, and a reload re-opens what this window had. A host that stamps a new conversation with what
+   * the page is about (`<chat-conversation subject>`) needs the difference, and this is where it is
+   * known. Never cleared - ids are unique, and it says what happened to this one id.
+   */
+  createdSessionId: string | null
   sessionTitle: string
 
   // Turn settings.
@@ -719,6 +728,7 @@ export class ChatStore {
       sessionsLoading: true,
       sessionsError: '',
       sessionId: null,
+      createdSessionId: null,
       sessionTitle: '',
       agent: '',
       model: '',
@@ -1516,11 +1526,11 @@ export class ChatStore {
    * Puts the run this chat may still be in back on screen.
    *
    * The transcript travels with the session, but the stream replays nothing: after a reload the
-   * progress list is empty, the composer is idle and an open approval card is gone, while the agent
-   * is still working. `GET /chat/updates` says whether it is and what it has got through;
-   * `GET /chat/interactions` says what is waiting for this user. Both are best effort - a chat that
-   * shows only what the transcript says is what a failure here leaves behind, which is what every
-   * reload used to look like.
+   * progress list is empty, the composer is idle and the open card - an approval, or a question the
+   * agent asked - is gone, while the agent is still parked on it. `GET /chat/updates` says whether
+   * the run is working and what it has got through; `GET /chat/interactions` says what is waiting
+   * for this user. Both are best effort - a chat that shows only what the transcript says is what a
+   * failure here leaves behind, which is what every reload used to look like.
    */
   private async recoverRunState(sessionId: string): Promise<void> {
     const at = this.at
@@ -1534,24 +1544,45 @@ export class ChatStore {
       this.patch({ busy: snapshot.processing, tasks: parseTasksJson(snapshot.tasksJson) })
     }
     for (const item of pending) {
-      if (item.type !== 'approval' || item.sessionId !== sessionId) continue
-      // An approval past its deadline can no longer be answered: the agent has stopped waiting for
+      if (item.sessionId !== sessionId) continue
+      // A request past its deadline can no longer be answered: the agent has stopped waiting for
       // it, and a card nobody is listening to would lock the composer behind a decision that leads
       // nowhere.
       if (item.remainingMs <= 0) continue
-      const known = this.state.messages.some(
-        (message) =>
-          message.type === 'approval_request' && message.approvalRequestId === item.requestId,
+      if (item.type === 'approval') {
+        const known = this.state.messages.some(
+          (message) =>
+            message.type === 'approval_request' && message.approvalRequestId === item.requestId,
+        )
+        if (known) continue
+        this.dispatch({
+          type: 'ADD_APPROVAL',
+          approvalRequestId: item.requestId,
+          toolCallId: '',
+          toolName: item.header,
+          argsJson: item.payload,
+          displayReason: item.prompt,
+          toolMode: item.toolMode,
+          remainingMs: item.remainingMs,
+        })
+        continue
+      }
+      if (item.type !== 'question' && item.type !== 'choice') continue
+      const asked = this.state.messages.some(
+        (message) => message.type === 'interaction_request' && message.requestId === item.requestId,
       )
-      if (known) continue
+      if (asked) continue
+      // The card is rebuilt with the shape the agent asked in, not with a default: a multi-select
+      // question drawn as a radio group would take a different answer from the one it asked for
+      // (#466). The shape comes off the waiting run, so an item that reaches here has one.
       this.dispatch({
-        type: 'ADD_APPROVAL',
-        approvalRequestId: item.requestId,
-        toolCallId: '',
-        toolName: item.header,
-        argsJson: item.payload,
-        displayReason: item.prompt,
-        toolMode: item.toolMode,
+        type: 'ADD_INTERACTION',
+        requestId: item.requestId,
+        question: item.prompt,
+        header: item.header,
+        interactionType: item.type === 'choice' ? 'choice' : 'text',
+        options: item.options.length > 0 ? item.options : undefined,
+        multiSelect: item.multiSelect,
         remainingMs: item.remainingMs,
       })
     }
@@ -1687,7 +1718,7 @@ export class ChatStore {
           await loadSession(at, created.id)
           active = created.id
           createdHere = true
-          this.patch({ sessionId: active })
+          this.patch({ sessionId: active, createdSessionId: active })
           await this.refreshSessions()
         }
         this.showNotice('')
@@ -1859,7 +1890,8 @@ export class ChatStore {
       },
 
       stop: () => {
-        void cancelRun(this.at)
+        // Named, so that the stop reaches the run even when this is not the window that started it.
+        void cancelRun(this.at, this.state.sessionId)
       },
 
       selectAgent: (name: string) => this.applyAgent(name, this.state.caps.agents),

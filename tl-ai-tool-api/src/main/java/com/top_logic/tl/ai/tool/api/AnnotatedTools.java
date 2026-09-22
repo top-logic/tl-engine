@@ -570,11 +570,12 @@ public final class AnnotatedTools {
 					return new ToolResult("null", null, _truncationHint);
 				}
 				if (result instanceof ToolResult toolResult) {
-					// A tool that returns the structured result speaks for itself: keep its summary
-					// and content, and only fill in the truncation hint it did not specify.
+					// A tool that returns the structured result speaks for itself: keep its summary,
+					// its content and whether it reports a failure, and only fill in the truncation
+					// hint it did not specify.
 					ToolResult hinted = toolResult.truncationHint() < 0
 						? new ToolResult(toolResult.text(), toolResult.summary(), _truncationHint,
-							toolResult.content())
+							toolResult.content(), toolResult.failed())
 						: toolResult;
 					return marked(hinted);
 				}
@@ -623,7 +624,8 @@ public final class AnnotatedTools {
 					? new ToolContent.Text(mark(textPart.text()))
 					: part);
 			}
-			return new ToolResult(text, result.summary(), result.truncationHint(), markedContent);
+			return new ToolResult(text, result.summary(), result.truncationHint(), markedContent,
+				result.failed());
 		}
 
 		/**

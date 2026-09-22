@@ -1,4 +1,7 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
+import { React } from 'tl-react-bridge'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { resetTLBridge, setTLState } from '../test/tl-react-bridge'
 import { App } from './App'
 import { plusMenuVisible } from './composer'
 import {
@@ -6,10 +9,13 @@ import {
   channelNames,
   modelBoundSource,
   readComposerControls,
+  promptCardsVisible,
   readContextFacts,
+  readPromptCards,
   readThreadConfig,
-  referenceWrite,
+  tokenWrite,
   sameServers,
+  sessionReport,
   TLChatConversation,
 } from './chat-conversation'
 
@@ -173,6 +179,109 @@ describe('readContextFacts', () => {
   })
 })
 
+/**
+ * The prompt cards a page offers, and when they are shown.
+ *
+ * The texts arrive already evaluated - the server did that, in the acting user's context - so what
+ * the browser owns is only which of them are worth a button and whether the row belongs on screen.
+ */
+describe('readPromptCards', () => {
+  it('reads what the control computed from its <prompts> cards', () => {
+    expect(
+      readPromptCards([
+        { label: 'Summarise', icon: 'css:bi bi-receipt', text: 'Please summarise the newest invoices.' },
+        { label: 'Who sent it?', icon: '', text: 'Who is this invoice from?' },
+      ]),
+    ).toEqual([
+      { label: 'Summarise', icon: 'css:bi bi-receipt', text: 'Please summarise the newest invoices.' },
+      { label: 'Who sent it?', icon: '', text: 'Who is this invoice from?' },
+    ])
+  })
+
+  it('is empty when the element configured no prompts', () => {
+    expect(readPromptCards(undefined)).toEqual([])
+    expect(readPromptCards('x')).toEqual([])
+    expect(readPromptCards([])).toEqual([])
+  })
+
+  it('drops a card with no text, which would empty the composer instead of filling it', () => {
+    expect(readPromptCards([{ label: 'Broken', icon: '', text: '' }, null, { label: 'Ask', text: 'Ask this.' }]))
+      .toEqual([{ label: 'Ask', icon: '', text: 'Ask this.' }])
+  })
+
+  it('drops a card with no label, which would be a button nobody can read', () => {
+    expect(readPromptCards([{ text: 'Ask this.' }])).toEqual([])
+  })
+})
+
+/**
+ * When the row is on screen: on a new chat, and nowhere else.
+ *
+ * "New chat" is what the session channel says, not what the transcript says - a conversation the
+ * user opened from the list is not short of a first question, whatever it holds.
+ */
+describe('promptCardsVisible', () => {
+  it('shows the cards on a new chat - nothing selected, nothing said', () => {
+    expect(promptCardsVisible(null, 0)).toBe(true)
+    expect(promptCardsVisible(undefined, 0)).toBe(true)
+    // What a send takes back leaves behind, which is a new chat again.
+    expect(promptCardsVisible('', 0)).toBe(true)
+  })
+
+  it('hides them in a selected chat, even one with no turn in it', () => {
+    expect(promptCardsVisible('session-7', 0)).toBe(false)
+    expect(promptCardsVisible('session-7', 4)).toBe(false)
+  })
+
+  it('hides them from the first message on, before the session id has landed', () => {
+    // A send on a new chat sets the id one render ahead of the user's own message, and the row must
+    // not linger over a screen that is already a conversation either way round.
+    expect(promptCardsVisible(null, 1)).toBe(false)
+    expect(promptCardsVisible('created-by-this-send', 0)).toBe(false)
+  })
+})
+
+/**
+ * Where the row stands, which is the whole of what the position is worth.
+ *
+ * The cards are an offer of what to ask, so they belong between the greeting that asks the question
+ * and the field that answers it - the order the classic chat's example prompts already had. Asserted
+ * on the rendered markup rather than on the JSX, because the grid rows that place them are written
+ * against that order and a swap here would be invisible in every other test.
+ */
+describe('where the prompt cards are rendered', () => {
+  afterEach(() => resetTLBridge())
+
+  /** Renders a new chat that offers one card, without a browser. */
+  function render(chatId: string): string {
+    const state = {
+      chatId,
+      windowId: 'w1',
+      authenticated: true,
+      language: 'en',
+      prompts: [{ label: 'Summarise', icon: '', text: 'Please summarise the newest invoices.' }],
+    }
+    setTLState(state)
+    return renderToStaticMarkup(React.createElement(TLChatConversation, { controlId: chatId, state }))
+  }
+
+  it('puts the cards under the greeting and above the composer', () => {
+    const markup = render('prompt-order-test')
+    const greeting = markup.indexOf('class="welcome"')
+    const cards = markup.indexOf('class="prompt-suggestions"')
+    const composer = markup.indexOf('class="composer"')
+    expect(greeting).toBeGreaterThanOrEqual(0)
+    expect(cards).toBeGreaterThan(greeting)
+    expect(composer).toBeGreaterThan(cards)
+  })
+
+  it('renders the card as the button a click fills the composer from', () => {
+    const markup = render('prompt-button-test')
+    expect(markup).toContain('Summarise')
+    expect(markup).toContain('title="Please summarise the newest invoices."')
+  })
+})
+
 describe('TLChatConversation and App', () => {
   it('are functions over the same store API', () => {
     expect(typeof TLChatConversation).toBe('function')
@@ -235,15 +344,38 @@ describe('the draft channel', () => {
 })
 
 /**
- * What the `reference` channel says.
+ * What the element reports about the open chat, and what the `subject` channel does with it (#508).
+ *
+ * Only a chat this window created is stamped with what the page is about. The server cannot tell
+ * that from the id: a reload re-opens the chat this window had, and a chat picked from a list was
+ * started somewhere else. Both have to keep the subject they were started with - or none.
+ */
+describe('the session report', () => {
+  it('marks the chat this window created', () => {
+    expect(sessionReport('s1', 's1')).toEqual({ id: 's1', created: true })
+  })
+
+  it('does not mark a chat that was opened rather than created', () => {
+    expect(sessionReport('s2', 's1')).toEqual({ id: 's2', created: false })
+    expect(sessionReport('s1', null)).toEqual({ id: 's1', created: false })
+  })
+
+  it('clears the channel with an empty id, which creates nothing', () => {
+    expect(sessionReport(null, null)).toEqual({ id: '', created: false })
+    expect(sessionReport(null, 's1')).toEqual({ id: '', created: false })
+  })
+})
+
+/**
+ * What the `reference` and the `quote` channel say.
  *
  * The sequence number is what makes a write a write: a channel notifies for A, B, A, and the third
  * write carries the token of the first, which unchanged state alone could not tell from no write.
  */
-describe('the reference channel', () => {
+describe('the token channels', () => {
   it('reads the token the control built out of the written object', () => {
     expect(
-      referenceWrite({
+      tokenWrite({
         seq: 3,
         kind: 'Invoice',
         id: 'aaa-bbb',
@@ -256,26 +388,56 @@ describe('the reference channel', () => {
         kind: 'Invoice',
         id: 'aaa-bbb',
         label: 'Hotelrechnung Berlin',
+        location: '',
         text: 'Hotelrechnung Berlin (1.240,00 €)',
       },
     })
   })
 
+  it('carries the location a quote write names, which is what makes it a passage', () => {
+    expect(
+      tokenWrite({
+        seq: 1,
+        kind: 'GenericObject',
+        id: 'aaa-bbb',
+        label: 'Angebot Alpha',
+        location: '02 Kontext',
+        text: 'the marked passage',
+      })?.token,
+    ).toEqual({
+      kind: 'GenericObject',
+      id: 'aaa-bbb',
+      label: 'Angebot Alpha',
+      location: '02 Kontext',
+      text: 'the marked passage',
+    })
+  })
+
+  it('numbers two passages of the same object apart, so both insert', () => {
+    const object = { kind: 'GenericObject', id: 'aaa-bbb', label: 'Angebot Alpha' }
+    const first = tokenWrite({ ...object, seq: 7, location: '02 Kontext', text: 'first passage' })
+    const second = tokenWrite({ ...object, seq: 8, location: '03 Ziele', text: 'second passage' })
+    expect(first?.seq).toBe(7)
+    expect(second?.seq).toBe(8)
+    expect(first?.token.text).not.toBe(second?.token.text)
+  })
+
   it('defaults the fields the control left out, but insists on the id', () => {
-    expect(referenceWrite({ seq: 1, id: 'aaa-bbb' })?.token).toEqual({
+    expect(tokenWrite({ seq: 1, id: 'aaa-bbb' })?.token).toEqual({
       kind: '',
       id: 'aaa-bbb',
       label: '',
+      location: '',
       text: '',
     })
-    expect(referenceWrite({ seq: 1, id: '' })).toBeUndefined()
-    expect(referenceWrite({ seq: 1 })).toBeUndefined()
+    expect(tokenWrite({ seq: 1, id: '' })).toBeUndefined()
+    expect(tokenWrite({ seq: 1 })).toBeUndefined()
   })
 
   it('says nothing for an unwired channel or a write with no sequence', () => {
-    expect(referenceWrite(null)).toBeUndefined()
-    expect(referenceWrite(undefined)).toBeUndefined()
-    expect(referenceWrite('an-id')).toBeUndefined()
-    expect(referenceWrite({ id: 'aaa-bbb' })).toBeUndefined()
+    expect(tokenWrite(null)).toBeUndefined()
+    expect(tokenWrite(undefined)).toBeUndefined()
+    expect(tokenWrite('an-id')).toBeUndefined()
+    expect(tokenWrite({ id: 'aaa-bbb' })).toBeUndefined()
   })
 })

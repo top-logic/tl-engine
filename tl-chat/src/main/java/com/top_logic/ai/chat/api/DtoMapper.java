@@ -8,6 +8,7 @@ package com.top_logic.ai.chat.api;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -133,9 +134,8 @@ public final class DtoMapper {
 			.setMultiSelect(req.isMultiSelect())
 			.setRemainingMs(remainingMs(req.getCreatedAt(),
 				InteractionTimeoutService.questionTimeout()));
-		String options = req.getOptions();
-		if (options != null && !options.isEmpty()) {
-			parseInteractionOptions(options, event);
+		for (InteractionOptionDto option : parseInteractionOptions(req.getOptions())) {
+			event.addOption(option);
 		}
 		return event;
 	}
@@ -154,7 +154,7 @@ public final class DtoMapper {
 	}
 
 	/**
-	 * Parses a JSON array of choice options and adds them to the event.
+	 * Parses a JSON array of choice options.
 	 *
 	 * <p>
 	 * Both element shapes the model may emit are accepted: bare strings
@@ -162,8 +162,22 @@ public final class DtoMapper {
 	 * ({@code [{"label":"Approve","description":"..."}]}, the form documented on the tool). A bare
 	 * string becomes the option label. Mixing the two shapes in one array is tolerated.
 	 * </p>
+	 *
+	 * <p>
+	 * Shared by the live {@code user_interaction} frame and by {@code GET /chat/interactions},
+	 * which hands a reloaded page the same options: a card the user answers must offer the same
+	 * choices however it was drawn.
+	 * </p>
+	 *
+	 * @param optionsJson
+	 *        The options as the model wrote them; may be <code>null</code> or empty.
+	 * @return The parsed options, empty when there are none or the JSON is malformed.
 	 */
-	private static void parseInteractionOptions(String optionsJson, UserInteractionEvent event) {
+	public static List<InteractionOptionDto> parseInteractionOptions(String optionsJson) {
+		if (optionsJson == null || optionsJson.isEmpty()) {
+			return Collections.emptyList();
+		}
+		List<InteractionOptionDto> result = new ArrayList<>();
 		try {
 			try (JsonReader reader = new JsonReader(new StringR(optionsJson))) {
 			reader.beginArray();
@@ -189,13 +203,14 @@ public final class DtoMapper {
 					}
 					reader.endObject();
 				}
-				event.addOption(option);
+				result.add(option);
 			}
 			reader.endArray();
 			}
 		} catch (Exception ex) {
 			// Silently ignore malformed options JSON from LLM output.
 		}
+		return result;
 	}
 
 	/**

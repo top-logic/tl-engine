@@ -82,6 +82,54 @@ public class TestMcpTool extends TestCase {
 			McpTool.formatResult("mcp__srv__t", result));
 	}
 
+	/**
+	 * A server that said the call failed produces a <em>failed</em> answer, not a successful one whose
+	 * text begins with "Error:".
+	 *
+	 * <p>
+	 * That word is read by a model; the flag is read by everything else - the provider's
+	 * {@code is_error}, the transcript, the run detail. Before Gitea #387 only the word existed, so a
+	 * remote tool that failed was recorded as a tool call that worked.
+	 * </p>
+	 */
+	public void testAFailingRemoteCallIsFlagged() {
+		McpSchema.CallToolResult result = McpSchema.CallToolResult.builder()
+			.content(List.of(new McpSchema.TextContent("Something went wrong")))
+			.isError(true)
+			.build();
+
+		ToolResult answer = McpTool.answer("mcp__srv__t", result);
+
+		assertTrue("The server said the call failed, so the answer must say so: " + answer,
+			answer.failed());
+		assertEquals("Error: " + wrapped("mcp__srv__t", "Something went wrong"), answer.text());
+	}
+
+	/** A server that answered normally produces a successful answer, flag unset. */
+	public void testASuccessfulRemoteCallIsNotFlagged() {
+		McpSchema.CallToolResult result = McpSchema.CallToolResult.builder()
+			.content(List.of(new McpSchema.TextContent("Ticket 7 is open.")))
+			.build();
+
+		ToolResult answer = McpTool.answer("mcp__srv__t", result);
+
+		assertFalse("Nothing said this call failed: " + answer, answer.failed());
+		assertEquals(wrapped("mcp__srv__t", "Ticket 7 is open."), answer.text());
+	}
+
+	/** An empty error result carries no text of the server's, and is still a failure. */
+	public void testAnEmptyFailingRemoteCallIsFlagged() {
+		McpSchema.CallToolResult result = McpSchema.CallToolResult.builder()
+			.content(List.of())
+			.isError(true)
+			.build();
+
+		ToolResult answer = McpTool.answer("mcp__srv__t", result);
+
+		assertTrue(answer.toString(), answer.failed());
+		assertEquals("Error: unknown", answer.text());
+	}
+
 	/** Nothing came back, so there is nothing of the server's to mark. */
 	public void testFormatEmptyResult() {
 		McpSchema.CallToolResult result = McpSchema.CallToolResult.builder()

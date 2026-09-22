@@ -5,16 +5,22 @@
  */
 package com.top_logic.tl.ai.core.tools;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import junit.framework.TestCase;
 
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.listener.Listener;
+import com.top_logic.basic.logging.Level;
 import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.tools.model.messages.InstanceListResponse;
 
 /**
  * Tests where {@link ToolResults} puts a caller's framing, which decides what the marking on a
- * model-data result actually claims.
+ * model-data result actually claims, and at which level it reports a call that produced no
+ * response.
  */
 public class TestToolResults extends TestCase {
 
@@ -68,6 +74,81 @@ public class TestToolResults extends TestCase {
 
 		assertFalse(json, json.contains("untrusted_"));
 		assertTrue(json, json.contains("\"module\":\"pm\""));
+	}
+
+	// ===== What the operational log is told (Gitea #387) =====
+
+	/**
+	 * A refusal is logged at info and without a stack trace.
+	 *
+	 * <p>
+	 * The model named a type this application does not have. Nothing is wrong with the installation,
+	 * so nothing in this belongs in the stream an operator watches for faults - and the trace would
+	 * only point back at the line that composed the sentence the model is about to read.
+	 * </p>
+	 */
+	public void testARefusalIsLoggedAtInfoWithoutATrace() {
+		List<Logger.LogEntry> entries = recorded(() -> ToolResults.invoke(TestToolResults.class,
+			"listInstances()", Map.of(), "Error accessing instances: ",
+			() -> {
+				throw new IllegalArgumentException("Type 'Nope' not found in module 'pm'");
+			}));
+
+		List<Logger.LogEntry> errors = atLevel(entries, Level.ERROR);
+		assertTrue("A wrong type name is not a fault of this application: " + errors,
+			errors.isEmpty());
+
+		List<Logger.LogEntry> infos = atLevel(entries, Level.INFO);
+		assertEquals("The refusal must still be visible: " + entries, 1, infos.size());
+		Logger.LogEntry refusal = infos.get(0);
+		assertTrue(refusal.getMessage(), refusal.getMessage().contains("Type 'Nope' not found"));
+		assertFalse("A refusal carries no stack trace.", refusal.getException().hasValue());
+	}
+
+	/** A fault of this application keeps its ERROR line and its stack trace. */
+	public void testACrashIsStillLoggedAsAnErrorWithItsTrace() {
+		IllegalStateException crash = new IllegalStateException("No TaskStore bound to the thread.");
+		List<Logger.LogEntry> entries = recorded(() -> ToolResults.invoke(TestToolResults.class,
+			"listInstances()", Map.of(), "Error accessing instances: ",
+			() -> {
+				throw crash;
+			}));
+
+		List<Logger.LogEntry> errors = atLevel(entries, Level.ERROR);
+		assertEquals("An operator has to see this one: " + entries, 1, errors.size());
+		assertSame("and has to see where it came from.", crash,
+			errors.get(0).getException().get());
+	}
+
+	/** A call that produced a response says nothing at all. */
+	public void testASuccessfulCallIsNotLogged() {
+		List<Logger.LogEntry> entries = recorded(() -> ToolResults.invoke(TestToolResults.class,
+			"listInstances()", Map.of(), "Error accessing instances: ", () -> listing()));
+
+		assertTrue("Nothing failed, so there is nothing to report: " + entries,
+			atLevel(entries, Level.ERROR).isEmpty() && atLevel(entries, Level.INFO).isEmpty());
+	}
+
+	private static List<Logger.LogEntry> recorded(Runnable work) {
+		List<Logger.LogEntry> entries = new ArrayList<>();
+		Listener<Logger.LogEntry> listener = entries::add;
+		Logger.getListenerRegistry().register(listener);
+		try {
+			work.run();
+		} finally {
+			Logger.getListenerRegistry().unregister(listener);
+		}
+		return entries;
+	}
+
+	private static List<Logger.LogEntry> atLevel(List<Logger.LogEntry> entries, Level level) {
+		List<Logger.LogEntry> result = new ArrayList<>();
+		for (Logger.LogEntry entry : entries) {
+			if (entry.getPriority() == level) {
+				result.add(entry);
+			}
+		}
+		return result;
 	}
 
 	private static InstanceListResponse listing() {

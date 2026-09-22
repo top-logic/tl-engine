@@ -15,6 +15,7 @@ import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TimeZone;
 
@@ -44,6 +45,7 @@ import com.top_logic.ai.chat.api.messages.ChatUpdatesResponse;
 import com.top_logic.ai.chat.api.messages.CreateSessionRequest;
 import com.top_logic.ai.chat.api.messages.ImprovePromptRequest;
 import com.top_logic.ai.chat.api.messages.ImprovePromptResponse;
+import com.top_logic.ai.chat.api.messages.InteractionOptionDto;
 import com.top_logic.ai.chat.api.messages.InteractionResolvedEvent;
 import com.top_logic.ai.chat.api.messages.PendingInteractionDto;
 import com.top_logic.ai.chat.api.messages.PendingInteractionsResponse;
@@ -84,6 +86,7 @@ import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService;
 import com.top_logic.tl.ai.core.agent.approval.PendingApproval;
+import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
@@ -1130,9 +1133,51 @@ public class ChatServlet extends TopLogicServlet {
 		resp.getWriter().write("{\"status\":\"ok\",\"mode\":\"" + approvalMode.name() + "\"}");
 	}
 
+	/**
+	 * POST /chat/cancel - stop the run the user is watching.
+	 *
+	 * <p>
+	 * The body names the chat the stop button was pressed in ({@code sessionId}); a body naming
+	 * none is a client from before issue #465 and is answered as it always was, with whatever run
+	 * the asking window holds.
+	 * </p>
+	 *
+	 * <p>
+	 * A named chat is looked up among the runs of <em>this account</em>
+	 * ({@link PendingInteractionRegistry#findBySession}), not among the runs of the window the stop
+	 * arrives from. That is what lets a second tab, a reloaded page or a new login stop a run the
+	 * first window started: the run's state hangs on that window's tracker, which the user has no
+	 * way to get back to, while the run goes on spending the account's tokens (issue #465). It is
+	 * also what makes the stop hit the chat the user is looking at rather than whatever else that
+	 * window happens to be running.
+	 * </p>
+	 *
+	 * <p>
+	 * A chat of another account is not found here, and neither is one that does not exist: both
+	 * answer {@code {"cancelled":false}}, so the answer cannot be used to find out which chats
+	 * exist or which of them are running.
+	 * </p>
+	 */
 	private void handleCancel(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		TaskProgressTracker tracker = currentTracker();
 		ChatProcessor.AIProcessingState state = tracker.getAnyActiveProcessingState();
+		TaskProgressTracker runWindow = tracker;
+
+		String sessionId = cancelledSessionId(req);
+		if (sessionId != null) {
+			PendingInteractionRegistry.PendingRun run =
+				PendingInteractionRegistry.findBySession(resolveCurrentPerson(req), sessionId);
+			if (run != null) {
+				state = run.state();
+				runWindow = run.tracker();
+			} else if (state != null && !sessionId.equals(state.getSessionId())) {
+				// This window is running something, but not the chat the user pressed stop in -
+				// and the account has no run there. Stopping the other one would stop a chat the
+				// user is not even looking at.
+				state = null;
+			}
+		}
+
 		if (state == null) {
 			resp.setContentType(CONTENT_TYPE_JSON);
 			resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
@@ -1151,7 +1196,13 @@ public class ChatServlet extends TopLogicServlet {
 		// subagent's cancellation token also unblocks a subagent parked on a user question, so
 		// its ask-user wait ends (and its pending interaction is resolved) rather than hanging
 		// until the interaction timeout.
-		SubagentJobRegistry subagentRegistry = tracker.getActiveSubagentRegistry();
+		//
+		// The registry belongs to a window's *active* chat, which is the only one a tracker hands
+		// out; the run's window may have moved on to another chat since. Asked only while the two
+		// are the same chat, because cancelling the subagents of a chat nobody asked about would
+		// be worse than leaving this one's running until they finish.
+		SubagentJobRegistry subagentRegistry = holdsRunsChat(runWindow, state)
+			? runWindow.getActiveSubagentRegistry() : null;
 		if (subagentRegistry != null) {
 			int cancelledSubagents = subagentRegistry.cancelAll();
 			if (cancelledSubagents > 0) {
@@ -1174,6 +1225,36 @@ public class ChatServlet extends TopLogicServlet {
 		resp.setContentType(CONTENT_TYPE_JSON);
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
 		resp.getWriter().write("{\"cancelled\":true}");
+	}
+
+	/**
+	 * The chat a {@code POST /chat/cancel} names, or <code>null</code> when it names none.
+	 *
+	 * <p>
+	 * Unreadable is the same as unnamed here, and deliberately not an error: the stop button is the
+	 * way out of a run that is going wrong, and a client whose body this servlet cannot read must
+	 * still get the stop it had before the body existed.
+	 * </p>
+	 */
+	private static String cancelledSessionId(HttpServletRequest req) throws IOException {
+		String body = new String(req.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
+		if (body.isEmpty()) {
+			return null;
+		}
+		try {
+			@SuppressWarnings("unchecked")
+			Map<String, Object> parsed = (Map<String, Object>) com.top_logic.basic.json.JSON.fromString(body);
+			return blankToNull((String) parsed.get("sessionId"));
+		} catch (Exception ex) {
+			Logger.info("Ignoring an unreadable body of a cancel request: " + ex.getMessage(),
+				ChatServlet.class);
+			return null;
+		}
+	}
+
+	/** Whether the given window is still on the chat the given run belongs to. */
+	private static boolean holdsRunsChat(TaskProgressTracker window, ChatProcessor.AIProcessingState run) {
+		return Objects.equals(run.getSessionId(), window.getActiveSessionId());
 	}
 
 	private void handleUpdates(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -1207,6 +1288,15 @@ public class ChatServlet extends TopLogicServlet {
 	 * feed drives a badge on chat A's session-list item. Responding still happens via the existing
 	 * /chat/respond once the user switches to that chat.
 	 * </p>
+	 *
+	 * <p>
+	 * It is also what a reloaded page rebuilds an open card from, and a card must offer what the
+	 * agent asked. The persisted row does not hold everything the card is drawn from - an
+	 * approval's tool mode, and whether a choice takes more than one answer - so those are read off
+	 * the run that is still waiting, through {@link PendingInteractionRegistry} (issues #393,
+	 * #466). Nothing about the shape is persisted: it matters only while a request is pending, and
+	 * a request nobody is parked on can no longer be answered.
+	 * </p>
 	 */
 	private void handleInteractions(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		Person person = resolveCurrentPerson(req);
@@ -1229,15 +1319,33 @@ public class ChatServlet extends TopLogicServlet {
 				continue;
 			}
 			String type = interactionTypeName(request.getType());
+			// What the still-waiting run holds and the persisted row does not: an approval's tool
+			// mode, and a question's shape.
+			UserInteractionStore waiting = waitingStore(person, request.getRequestId());
+			boolean approval = TYPE_APPROVAL.equals(type);
+			UserInteractionRequest question = approval || waiting == null
+				? null : waiting.pendingRequest(request.getRequestId());
+			// A question nobody is parked on any more - the run ended, or this is the process after
+			// a restart - is not offered: its shape is unknown, and an answer would reach nothing.
+			// An approval row is kept as it always was, so this feed still badges a chat.
+			if (!approval && question == null) {
+				continue;
+			}
 			PendingInteractionDto dto = PendingInteractionDto.create()
 				.setRequestId(request.getRequestId())
 				.setType(type)
 				.setHeader(request.getHeader())
 				.setPrompt(request.getPrompt())
 				.setPayload(request.getPayload())
-				.setToolMode(toolMode(person, request.getRequestId()))
+				.setToolMode(toolMode(waiting, request.getRequestId()))
 				.setSessionId(getObjectId(session))
 				.setSessionTitle(session.getTitle());
+			if (question != null) {
+				dto.setMultiSelect(question.isMultiSelect());
+				for (InteractionOptionDto option : DtoMapper.parseInteractionOptions(question.getOptions())) {
+					dto.addOption(option);
+				}
+			}
 			Date createdAt = request.getCreatedAt();
 			if (createdAt != null) {
 				dto.setCreatedAt(formatIso(createdAt));
@@ -1267,21 +1375,40 @@ public class ChatServlet extends TopLogicServlet {
 	}
 
 	/**
+	 * The interaction store of the run still parked on the given request, or <code>null</code>.
+	 *
+	 * <p>
+	 * Everything a persisted {@link InteractionRequest} row does not record - an approval's tool
+	 * mode, a question's shape - lives here, and only for as long as the run is waiting, which is
+	 * also the only time a client may still answer.
+	 * </p>
+	 *
+	 * @param responder
+	 *        The account the request is addressed to.
+	 * @param requestId
+	 *        The correlation id of the approval or question.
+	 */
+	private static UserInteractionStore waitingStore(Person responder, String requestId) {
+		PendingInteractionRegistry.PendingRun run = PendingInteractionRegistry.find(responder, requestId);
+		return run == null ? null : run.state().getUserInteractionStore();
+	}
+
+	/**
 	 * The mode of the tool a still-waiting approval is about, or the empty string.
 	 *
 	 * <p>
 	 * The persisted request records the reason the security context wrote, in English; the mode is
 	 * what lets the client phrase the question in the reader's language, exactly as it does for the
-	 * card the live event drew. It is known only while the run is still waiting - which is also the
-	 * only time a client may still answer.
+	 * card the live event drew.
 	 * </p>
+	 *
+	 * @param store
+	 *        The store of the run still waiting, as {@link #waitingStore(Person, String)} found it;
+	 *        <code>null</code> when no run is.
+	 * @param requestId
+	 *        The correlation id of the approval.
 	 */
-	private static String toolMode(Person responder, String requestId) {
-		PendingInteractionRegistry.PendingRun run = PendingInteractionRegistry.find(responder, requestId);
-		if (run == null) {
-			return "";
-		}
-		UserInteractionStore store = run.state().getUserInteractionStore();
+	private static String toolMode(UserInteractionStore store, String requestId) {
 		PendingApproval approval = store == null ? null : store.pendingApproval(requestId);
 		if (approval == null || approval.request().mode() == null) {
 			return "";

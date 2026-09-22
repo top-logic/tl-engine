@@ -68,21 +68,42 @@ addresses one at a time (`windowId` + `conversation` → sub-session → tracker
 
 | | |
 |--|--|
-| Listing what is pending | `GET /chat/interactions` – `AgentExecutionStore.pendingInteractionsFor(person)`, every chat of the account, whatever window asks. The client replays an approval from it after a reload (`recoverRunState`). |
+| Listing what is pending | `GET /chat/interactions` – `AgentExecutionStore.pendingInteractionsFor(person)`, every chat of the account, whatever window asks. The client replays an approval **and a question** from it after a reload (`recoverRunState`). What the persisted row does not record - an approval's `toolMode`, a question's `multiSelect` and its parsed options - is read off the still-waiting run through `PendingInteractionRegistry`, so a rebuilt card asks what the agent asked (#466); nothing about the shape is persisted. A question row whose run is gone is therefore left out of the feed: its shape is unknown and an answer would reach nothing. |
 | Answering | `POST /chat/respond` – the request id is looked up in `PendingInteractionRegistry`, among **this account's** running runs, not in the asking window's tracker. A second tab, a reloaded page and a new login therefore all reach the parked run. |
 | Who may answer | The account named as the run's responder, and nobody else. Another account finds nothing and is told exactly what a caller naming a request that does not exist is told (`{"status":"ignored"}`), so the answer says nothing about which ids exist. |
 | Order of effects | The decision is recorded (`ConversationLogListener.resolveApproval`, "approve for this session" onto the **run's own** tracker) *before* the future is completed. Completing it unparks the agent mid-turn, and it may call the next tool before this request has returned. |
 | Telling the other windows | `interaction_resolved`, pushed to the account's other live chat UIs (`ChatEventHandlerRegistry.findOthers`). The run's own window is left out: it hears `approval_resolved` from the run itself. A chat UI says which account it is (`ChatEventHandler.getAccount()`) and takes the frame (`sendInteractionResolved`); both have no-op defaults, so a UI that never lists another window's requests is unaffected. |
 | Timeouts | Unchanged, and still the backstop: `InteractionTimeoutService` bounds both waits (30 min by default), and `AgentExecutionStore` cancels every still-pending row at startup, because no run survives a restart. |
 
-`PendingInteractionRegistry` is a process-wide register of the runs currently able to ask a human.
-`ChatProcessor` puts a run in when it creates the run's interaction store and takes it out in the
-same `finally` that unbinds the store, so its entries are bounded by the runs in flight. It is
-**not** what keeps a window alive - the run's own background task already holds its tracker while it
-works.
+`PendingInteractionRegistry` is a process-wide register of the chat runs in flight, keyed by task id
+and named by the account each run belongs to. `ChatProcessor` puts a run in when it creates the
+run's interaction store and takes it out in the same `finally` that unbinds the store, so its
+entries are bounded by the runs in flight. It is **not** what keeps a window alive - the run's own
+background task already holds its tracker while it works. Its name is older than its second use
+(#465, below), which is stopping a run rather than answering it.
 
-Not fixed by this: `POST /chat/cancel` still acts on the asking window's own tracker, so a run
-cannot be cancelled from another window.
+### Stopping a run belongs to the account too (#465)
+
+The same window barrier held for `POST /chat/cancel`, which started from the asking window's own
+tracker: the stop button of a second tab, and of the page after a reload, silently did nothing while
+the run went on spending the account's tokens to the end of its turns.
+
+The client now names the chat it is stopping (`cancelRun(at, sessionId)` → `{"sessionId":…}`), and
+the run is looked up by that chat among **this account's** runs
+(`PendingInteractionRegistry.findBySession`). Three consequences:
+
+- any window of the account stops the run, and the run's own state - its cancellation token, its
+  thread, its log listener - is reached through the register rather than through the window;
+- the stop hits the chat the user is looking at, not whatever else the asking window happens to be
+  running;
+- a chat of another account, and a chat with no run, answer the same `{"cancelled":false}`, so the
+  answer says nothing about which chats exist or which of them are running.
+
+A client that names no chat is answered exactly as before - whatever the asking window is running -
+and so is a client whose body cannot be read: the stop button is the way out of a run that is going
+wrong, and must not start refusing requests. The subagents of the run are cancelled through the run
+window's `SubagentJobRegistry`, which a tracker only hands out for its *active* chat, so that step is
+skipped when the run's window has moved on to another chat.
 
 ### Running an agent on a schedule (#384)
 
@@ -128,9 +149,10 @@ run. See `doc/scheduled-agent.md`.
   `ChatProcessor` resolves the handler here per event, so a UI other than the SSE servlet can register.
   `findOthers` is the account-wide direction: every *other* window of one account, for news that is
   the account's rather than one run's
-- **`PendingInteractionRegistry`** – The runs currently able to ask a human, keyed by task id and named
-  by the account waiting on them. What lets any window of that account answer a request the window that
-  started the run is parked on - see "a pending interaction belongs to the account"
+- **`PendingInteractionRegistry`** – The chat runs in flight, keyed by task id and named by the account
+  they belong to. What lets any window of that account answer a request the window that started the run
+  is parked on, and stop the run itself - see "a pending interaction belongs to the account" and
+  "stopping a run belongs to the account too"
 - **`ChatSSEHandler`** – Push-based SSE implementation of `ChatEventHandler`
 - **`Chat`** – Thread-safe in-memory container using `CopyOnWriteArrayList<ChatMessage>` (max 500)
 - **`ChatSessionManager`** – Manages per-session in-memory state (Chat + ConversationMemory + ConversationLog) with LRU caching (max 5 sessions). Handles session switching with persist/load/rebuild cycle.
@@ -689,8 +711,9 @@ re-states the same defaults and changes nothing.
 Run state is recovered the same way, but over REST rather than the control state: the SSE stream
 replays nothing, so on restoring or selecting a session the store also reads `GET /chat/updates`
 (the tasks of the open run, and whether it is still processing) and `GET /chat/interactions` (the
-approvals waiting for this user). A reload in mid-run therefore comes back with the Fortschritt
-list, a busy composer and the open approval card.
+approvals and questions waiting for this user). A reload in mid-run therefore comes back with the
+Fortschritt list, a busy composer and the open card - the approval, or the question the agent asked,
+with the options and the single/multi shape it was asked in.
 
 `chat-id` is how elements find each other, and **`<chat>` is where it is written**. A page puts its
 chat elements inside one `<chat chat-id="...">`; each of them inherits that id through the view
@@ -743,11 +766,12 @@ the input almost always sit together, so they are one placeable box, while the s
 rail stay separate because those genuinely want independent placement. It honours its configuration
 flags as render guards on the existing `Thread` and `Composer` props.
 
-#### The eight channels of `<chat-conversation>`
+#### The nine channels of `<chat-conversation>`
 
 | Channel | Direction | Value |
 |--|--|--|
 | `input` | two-way | The open `tl.ai.execution:AgentSession`, as the object. Empty means a fresh conversation, so "new chat" is the list clearing it. |
+| `subject` | in | The object a conversation *created here* is about, written onto it as `AgentSession#subject` - see below. |
 | `busy` | out | `Boolean`, `true` while the agent works. |
 | `agent` | two-way | The agent's **name** (`String`). |
 | `model` | two-way | The model's **name** (`String`). |
@@ -755,9 +779,40 @@ flags as render guards on the existing `Thread` and `Composer` props.
 | `mcp-servers` | two-way | The attached servers' **names**, a `Collection<String>` (one name on its own is read as a set of one). |
 | `draft` | two-way | The text standing unsent in the composer (`String`, or a `ResKey` on the way in). |
 | `reference` | in | A model object, inserted into the draft as one atomic reference token. |
+| `quote` | in | A marked passage *of* an object, as the token itself: `{id, text}` and optionally `{label, location, kind}`. |
 
-`present` is not a seventh: it is a *list* of channels this element opens to the agent rather than
+`present` is not an eleventh: it is a *list* of channels this element opens to the agent rather than
 a channel the element itself reads or writes - see "the agent writes a channel" below.
+
+##### `subject` - what a conversation is about (#508)
+
+A host whose page is about one object at a time - a project, an invoice, a contract - wants one
+conversation per object, and before #508 it had to remember which conversation that was somewhere
+of its own. `tl.ai.execution:AgentSession#subject` is where that now stands, and this channel is
+what writes it:
+
+```xml
+<chat-conversation input="chatSession" subject="project"/>
+```
+
+| | |
+|--|--|
+| When | Once, when the user's first message brings a conversation into being. Which of the two a reported session is - created here, or opened - is the **browser's** answer (`sessionReport` in `chat-conversation.tsx`, carried as `created` on `publishSession`): the server sees an id arrive either way, and a reload re-opens what this window had. |
+| Never | On the way in. Which conversation is shown stays `input`'s business, and which ones the user may pick stays the `<data-list>`'s. A conversation opened beside another object is not moved there, and one started while the channel was empty is not given a subject later - `AgentExecutionStore.setSubject` refuses a session that already has one, and no path backfills the rest. |
+| What counts | One model object, or a one-row selection. Several objects name no single subject, and nothing on the channel means the page was showing nothing; both stamp nothing (`ChatConversationControl.subjectFor`). |
+| Scoping the list | The `<data-list>`'s own `rows`, by navigating back - which is the point of a reference rather than a remembered id (see below). `referers` is not a security boundary, so the owner filter stays. |
+| A deleted subject | Clears the reference (the default deletion policy): the conversation outlives the object it was about, and it drops out of that object's list. **But navigating back from the deleted object itself throws** - `TLObject.tReferers`, which TL-Script's `referers` calls, refuses a lookup from a deleted object, and TL-Script has no "is this still there" to guard with. So the expression below answers while the channel is empty and while it holds a live object, and fails in the window where it still holds one that was deleted meanwhile. That window is not this feature's: a `<form>` or a `<table>` over the same channel is in the same position, and a page that must survive it asks the sessions (`all(...).filter(s -> $s.get(...) == $x)`) instead of the object. `TestSessionSubject` pins both halves. |
+
+```xml
+<rows>project -> ifElse(isEmpty($project), list(),
+    $project.referers(`tl.ai.execution:AgentSession#subject`)
+        .filter(s -> $s.get(`tl.ai.execution:AgentSession#owner`) == currentUser())
+        .sort((s -> $s.get(`tl.ai.execution:AgentSession#lastUpdated`)).comparator().desc()))</rows>
+```
+
+`tl-ai-demo/chat-grouped.view.xml` configures both halves: the conversation stamps what it creates
+with the invoice the rail's pane is showing, and the session list on the left offers that invoice's
+chats while one is open, and every chat of the account while none is.
 
 The four turn settings carry **names**, not model objects, and that is a fact about this product
 rather than a shortcut: only an agent an installation authored in the knowledge base is a
@@ -830,8 +885,8 @@ Two existing engine actions, no new class. What to know about it:
   goes is worth one keystroke.
 - A write may be a `ResKey`, because `{"en": …, "de": …}.internationalize()` is the obvious way to
   build a sentence in TL-Script; the control resolves it in the user's language
-  (`ChatConversationControl.draftText`). `null` - what an unwritten channel holds - says nothing and
-  leaves the composer alone; the empty string clears the draft.
+  (`ChatQuotes.text`). `null` - what an unwritten channel holds - says nothing and leaves the
+  composer alone; the empty string clears the draft.
 - It follows a **write**, not the standing value, the same way the turn settings do, and for the
   same reason. The echo is recognised in the browser: what this element last published is
   remembered, so a report of "Was" arriving back two keystrokes later does not put the composer back
@@ -844,12 +899,40 @@ Two existing engine actions, no new class. What to know about it:
   nested `<mention>`'s `text` expression computes - without a `<mention>` the label is the quoted
   text too, because the element has nothing else to say about the object. It is read only: the
   tokens are part of the draft `draft` already carries.
+- `quote` is the half `reference` cannot serve (#509): **a passage of an object**, which only the
+  viewer that showed it can name. `reference` takes the object, whose quoted text is everything the
+  element knows about it - the section, when what the reader marked was one paragraph of it. So
+  `quote` takes the token itself, as a map:
+
+  ```xml
+  <chat-conversation quote="chatQuote"/>
+  ```
+
+  ```
+  section -> {"id": $section, "location": "02 Kontext", "text": $marked}
+  ```
+
+  Only `id` and `text` have to be there - there is nothing to quote without the passage, and nothing
+  for a host tool to resolve without the object. `id` is normally the **model object itself**, not a
+  printed identifier: an application has no way of spelling the stable id the `@` menu uses, so the
+  element fills the kind, the id and the label from the object (a `<mention>` having its say in the
+  label) and the write only names the passage. Whatever the map does say wins. Fields may be
+  `ResKey`s, resolved like a draft's text. A map with no `text` inserts nothing, and so does a bare
+  object: that is `reference`'s job, and quoting the whole of a section back is the one thing the
+  agent's instructions tell it not to do. The rule is `ChatQuotes.token`; the inserted token is the
+  same one either way, so it serialises to the same `<quote/>`.
 - A channel notifies nobody when it is written the value it already holds, so writing the **same**
   object to `reference` twice in a row inserts one token. (A, B, A does insert three: the control
-  numbers its writes so the browser can tell the third from the first.)
+  numbers its writes so the browser can tell the third from the first.) Two *passages* of one object
+  are two different maps, so they are two writes and both insert - which is the case `quote` exists
+  for.
+- Two channels, two state slots (`referenceWrite`, `quoteWrite`) and two counters, deliberately: one
+  slot fed by both would lose a token whenever a page cleared one channel in the same request in
+  which it wrote the other. The browser parses both with the one `tokenWrite` in
+  `chat-conversation.tsx` and hands both to the same `insertReference`.
 
-`TestChatConversationConfig` holds the two options, `draft.test.ts` the debounce, and the
-`chat-store.test.ts` "composer seam" block the two calls a write turns into.
+`TestChatConversationConfig` holds the options and the `ChatQuotes` rule, `draft.test.ts` the
+debounce, and the `chat-store.test.ts` "composer seam" block the two calls a write turns into.
 
 #### Writing a channel across a view boundary
 
@@ -902,10 +985,9 @@ An application configures this element in the design view. Its options fall into
   trace picker), `citations` (markers *and* the per-answer sources pill - off removes the whole
   citation surface from the transcript), the nested `<actions>` (`copy`/`rate`/`regenerate`/
   `timestamp`), the nested `<controls>` pickers, `placeholder`, `prompt-improver-agent` (an agent
-  dropdown), `chat-id`, the eight channels (`input`, `busy`, `agent`, `model`, `effort`,
-  `mcp-servers`, `draft`, `reference`), and `present` - the channels the agent may write, deny by
-  default. The transcript's rail badge button is *not*
-  configured: it appears exactly when a `<chat-rail>` with the same `chat-id` is mounted, which the
+  dropdown), `chat-id`, the ten channels (`input`, `subject`, `busy`, `agent`, `model`, `effort`,
+  `mcp-servers`, `draft`, `reference`, `quote`), and `present` - the channels the agent may write,
+  deny by default. The transcript's rail badge button is *not* configured: it appears exactly when a `<chat-rail>` with the same `chat-id` is mounted, which the
   rail announces to the shared store (`railMounted`), so a rail that mounts after the conversation
   still makes the button appear.
 - **Points at code (name a component registered in TypeScript; do nothing unless a developer set that
@@ -920,8 +1002,8 @@ An application configures this element in the design view. Its options fall into
   set shaped as the browser's `ReferenceCandidate`, and the existing `@` picker filters it client-side.
   A `<mention>` wins over `reference-source`. Each mention carries the object's stable id; the framework
   ships no tool that resolves it, so a host that wants the id to mean more gives its agent such a tool
-  (see the `<reference>` prompt fragment). The nested `<context>` binding is the same skill again -
-  see below.
+  (see the `<reference>` prompt fragment). The nested `<context>` and `<prompts>` bindings are the
+  same skill again - see below.
 
 #### What a page states about the situation: `<context>`
 
@@ -1033,6 +1115,66 @@ the answer on the session state and binds it for every run of that conversation
 list at once, and in the agent's block in the *next* conversation. The rail section that lists them
 is an ordinary `<data-list>` over `tl.ai.execution:UserMemory` filtered by `owner == currentUser()`,
 with a Forget command that calls `aiMemoryDelete`. See `tl-ai-core/doc/environment-block.md`.
+
+#### The first questions a page offers: `<prompts>` (#529)
+
+A new chat is the one screen with nothing to react to, and the page knows better than the chat what
+is worth asking on it. Consulting's Pietro page carried three hand-built `<button>`s and three
+derived channels for exactly that; this is the same thing as configuration:
+
+```xml
+<chat-conversation draft="chatDraft" input="chatSession">
+    <prompts>
+        <inputs><input channel="paneInvoice"/></inputs>
+        <prompt icon="css:bi bi-receipt">
+            <label><en>Summarise the newest invoices</en><de>Die neuesten Belege zusammenfassen</de></label>
+            <value>open -> "Please summarise the three newest invoices."</value>
+        </prompt>
+        <prompt icon="css:bi bi-question-circle">
+            <label><en>Explain the open invoice</en><de>Den geöffneten Beleg erklären</de></label>
+            <value>open -> ifElse(isEmpty($open), "…", "Please explain " + $open.label() + ".")</value>
+        </prompt>
+    </prompts>
+</chat-conversation>
+```
+
+Bound exactly the way `<context>` is: the `<inputs>` are channels of this page and their current
+values are the **leading arguments** of every card's `value`, evaluated on the server in the acting
+user's context and re-evaluated whenever an input changes. So a card names what the page is showing
+rather than only a fixed sentence - and, because the text is already evaluated when it reaches the
+browser, clicking one costs no round trip.
+
+| | |
+|--|--|
+| `<label>` | Mandatory. What the card says, in the user's own language - the short form of the question. One line, elided where it does not fit; the whole sentence is the button's tooltip. |
+| `icon` | A `ThemeImage`, named the way a `<chat-rail>` section names its icon. A card without one shows its label alone. |
+| `<value>` | Mandatory. TL-Script producing the text the click puts into the composer. |
+
+**Where they stand, and when.** Between the greeting and the composer - under "Womit kann ich
+helfen?", over the field - which is the position `tl-chat-classic` gives its own example prompts and
+the order the eye reads them in: what this is, what you could ask, where you type. In the empty
+stage's grid they are a row of their own (`.stage.is-empty .prompt-suggestions`), zero-height for a
+conversation that offers none.
+
+**On a new chat, and nowhere else.** Not "whenever the conversation is empty": a chat the user
+opened from the session list is not short of a first question, whatever it holds, so the rule is the
+session channel - `promptCardsVisible(chat.sessionId, chat.messages.length)` in
+`chat-conversation.tsx`. That is the element's rule and not a page's option; there is nothing to
+switch off. (The `empty-only` flag of the first cut is gone.)
+
+**A click fills the composer; it does not send.** The same rule `draft`, `reference` and `quote`
+follow, and the reason a card may offer a longer and more precise question than anyone would type:
+the user reads the sentence and presses send. It goes in through the same `setDraft` a host writing
+the `draft` channel reaches, so the field takes the focus, the caret lands behind the text, and the
+composer reports the draft back onto that channel the way a typed sentence does. A card therefore
+**replaces** whatever stood in the composer - which on a new chat is a field the user has not typed
+into yet.
+
+A card whose expression throws is pushed with an empty text and the browser leaves it out, with a
+WARN - the same trade a `<fact>` makes. One card fewer, not a broken page.
+
+`TestChatPromptsConfig` holds the configuration shape; `readPromptCards` / `promptCardsVisible` in
+`chat-conversation.test.ts` hold what the browser does with it.
 
 Coupling to know: elements share one conversation only when they agree on a chat id - which is what
 the enclosing `<chat>` is for - and a session list feeds the conversation over a **two-way** channel — `<data-list selection>` ↔

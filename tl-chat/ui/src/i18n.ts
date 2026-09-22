@@ -47,6 +47,8 @@ const EN = {
   stopRun: 'Stop the run',
   generating: 'Generating a response',
   jumpToLatest: 'Jump to latest',
+  /** Names the row of configured prompt cards for a screen reader; the cards say the rest. */
+  promptCards: 'Suggested questions',
 
   workedFor: (duration: string) => `Worked for ${duration}`,
   working: 'Working…',
@@ -150,6 +152,15 @@ const EN = {
   approvalGeneric: 'Needs your approval before it runs.',
   deny: 'Deny',
   allowThisChat: 'Allow this chat',
+  /**
+   * What approving for the chat actually covers.
+   *
+   * Named on the card rather than left to be found out: the decision is remembered per tool name,
+   * so a turn that calls two writing tools stops twice and this button answers for only one of
+   * them (#511).
+   */
+  allowThisChatHint: (tool: string) =>
+    `Covers every further call of ${tool} in this chat - no other tool of this turn.`,
   allowOnce: 'Allow once',
   skip: 'Skip',
   continueLabel: 'Continue',
@@ -172,6 +183,11 @@ const EN = {
   running: 'running',
   waiting: 'waiting',
   answered: 'answered',
+  /** How a recorded approval ended, in the reader's language (#512). */
+  approvalOutcomeApproved: 'approved once',
+  approvalOutcomeSession: 'approved for this chat',
+  approvalOutcomeRejected: 'denied',
+  approvalOutcomeTimedOut: 'timed out',
   showLess: 'Show less',
   showMore: (chars: number) => `Show ${chars} more characters`,
 
@@ -272,6 +288,7 @@ const DE: Bundle = {
   stopRun: 'Lauf abbrechen',
   generating: 'Antwort wird erzeugt',
   jumpToLatest: 'Zum Ende springen',
+  promptCards: 'Vorgeschlagene Fragen',
 
   workedFor: (duration: string) => `${duration} gearbeitet`,
   working: 'Arbeitet …',
@@ -373,6 +390,8 @@ const DE: Bundle = {
   approvalGeneric: 'Braucht deine Freigabe, bevor es ausgeführt wird.',
   deny: 'Ablehnen',
   allowThisChat: 'In diesem Chat erlauben',
+  allowThisChatHint: (tool: string) =>
+    `Gilt für jeden weiteren Aufruf von ${tool} in diesem Chat - für kein anderes Werkzeug dieses Zuges.`,
   allowOnce: 'Einmal erlauben',
   skip: 'Überspringen',
   continueLabel: 'Weiter',
@@ -395,6 +414,10 @@ const DE: Bundle = {
   running: 'läuft',
   waiting: 'wartet',
   answered: 'beantwortet',
+  approvalOutcomeApproved: 'einmal freigegeben',
+  approvalOutcomeSession: 'für diesen Chat freigegeben',
+  approvalOutcomeRejected: 'abgelehnt',
+  approvalOutcomeTimedOut: 'Zeit abgelaufen',
   showLess: 'Weniger anzeigen',
   showMore: (chars: number) => `${chars} weitere Zeichen anzeigen`,
 

@@ -462,6 +462,51 @@ public class TestToolCatalog extends TestCase {
 		assertTrue(completed.content().get(1) instanceof PdfContent);
 	}
 
+	/**
+	 * A tool that reports a failure is recorded as a failed call, so the provider is told
+	 * {@code is_error} instead of being handed a success whose text reads like an error (Gitea #387).
+	 */
+	public void testAReportedFailureBecomesAFailedResult() {
+		ToolCatalog catalog = new ToolCatalog();
+		Tool refuser = ToolStubs.builder("refuser").description("Reports a failure")
+			.execute((args, ctx) -> ToolResult.failure("Error: no such ticket.")).build();
+		catalog.register(refuser);
+
+		ToolResultMessage result = catalog.execute(new ToolCall("call-1", "refuser", "{}"),
+			ToolContext.EMPTY);
+
+		assertInstanceOf(ToolState.Failed.class, result.state());
+		ToolState.Failed failed = (ToolState.Failed) result.state();
+		assertEquals("Error: no such ticket.", failed.error());
+	}
+
+	/**
+	 * And it is synthetic, so it does not take the turn's other writes down with it.
+	 *
+	 * <p>
+	 * That is the whole difference between reporting a failure and throwing one: a tool that returns
+	 * has nothing for the transaction to take back, while an exception out of a tool body may leave a
+	 * half-finished write behind and therefore still rolls the turn back.
+	 * </p>
+	 */
+	public void testAReportedFailureDoesNotRollTheTurnBack() {
+		ToolCatalog catalog = new ToolCatalog();
+		catalog.register(ToolStubs.builder("refuser").description("Reports a failure")
+			.execute((args, ctx) -> ToolResult.failure("No such ticket.")).build());
+		catalog.register(ToolStubs.builder("thrower").description("Throws")
+			.execute((args, ctx) -> {
+				throw new IllegalArgumentException("broken");
+			}).build());
+
+		ToolState.Failed reported = (ToolState.Failed) catalog
+			.execute(new ToolCall("call-1", "refuser", "{}"), ToolContext.EMPTY).state();
+		ToolState.Failed thrown = (ToolState.Failed) catalog
+			.execute(new ToolCall("call-2", "thrower", "{}"), ToolContext.EMPTY).state();
+
+		assertTrue("A reported failure must not roll the turn back.", reported.synthetic());
+		assertFalse("A thrown failure still rolls the turn back.", thrown.synthetic());
+	}
+
 	/** ToolResult with truncationHint -> ToolState.Completed carries it. */
 	public void testExecutePropagatesTruncationHint() {
 		ToolCatalog catalog = new ToolCatalog();

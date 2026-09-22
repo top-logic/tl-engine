@@ -21,10 +21,12 @@ import com.top_logic.ai.chat.view.ChatConversationElement.Context;
 import com.top_logic.ai.chat.view.ChatConversationElement.Controls;
 import com.top_logic.ai.chat.view.ChatConversationElement.Fact;
 import com.top_logic.ai.chat.view.ChatConversationElement.Mention;
+import com.top_logic.ai.chat.view.ChatConversationElement.Prompt;
+import com.top_logic.ai.chat.view.ChatConversationElement.Prompts;
 import com.top_logic.ai.chat.view.ChatConversationElement.Selection;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
@@ -37,7 +39,8 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
-import com.top_logic.util.Resources;
+import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.util.TLContext;
 
 /**
@@ -78,6 +81,14 @@ public class ChatConversationControl extends ReactControl {
 
 	private final ViewChannel _inputChannel;
 
+	/**
+	 * The channel naming what a conversation started here is about, or <code>null</code> when the
+	 * element names none.
+	 *
+	 * @see Config#getSubject()
+	 */
+	private final ViewChannel _subjectChannel;
+
 	private final ViewChannel _busyChannel;
 
 	private final ViewChannel _agentChannel;
@@ -103,6 +114,18 @@ public class ChatConversationControl extends ReactControl {
 	 * </p>
 	 */
 	private int _referenceWrites;
+
+	/**
+	 * The same count for the {@code quote} channel, kept apart from the reference one so that a
+	 * write of either channel is a write of its own.
+	 *
+	 * <p>
+	 * Two counters and two state slots, because one slot fed by two channels would lose a token: a
+	 * page that clears its quote channel in the same request in which it writes a reference would
+	 * overwrite the pending write before the browser ever saw it.
+	 * </p>
+	 */
+	private int _quoteWrites;
 
 	/**
 	 * What the composer last reported it is set to, so a channel write can be judged against the
@@ -136,6 +159,15 @@ public class ChatConversationControl extends ReactControl {
 
 	/** The channels whose values are the leading arguments of every fact expression. */
 	private final List<ViewChannel> _factInputs = new ArrayList<>();
+
+	/**
+	 * The first questions this page offers, in the order they are shown. Empty when the element
+	 * configures no {@code <prompts>}.
+	 */
+	private final List<PromptSpec> _prompts = new ArrayList<>();
+
+	/** The channels whose values are the leading arguments of every prompt expression. */
+	private final List<ViewChannel> _promptInputs = new ArrayList<>();
 
 	/** Creates a {@link ChatConversationControl}. */
 	public ChatConversationControl(ViewContext context, Config config) {
@@ -185,6 +217,10 @@ public class ChatConversationControl extends ReactControl {
 		setupSelection(context, config.getSelection());
 		setupContext(context, config.getContext());
 		publishFacts();
+		// The other direction: what this page offers the user to ask, evaluated the same way and for
+		// the same reason - a card that names the open invoice has to be re-evaluated when another
+		// one is opened.
+		setupPrompts(context, config.getPrompts());
 		List<String> menuItems = config.getMenuItems();
 		putState("menuItems", menuItems == null ? List.of() : List.copyOf(menuItems));
 		Controls controls = config.getControls();
@@ -212,6 +248,13 @@ public class ChatConversationControl extends ReactControl {
 			applyFromChannel(_inputChannel.get());
 		}
 
+		// What a conversation started here is about. Read only when one comes into being, so the
+		// browser has to report that - which it does through publishSession, whether or not this
+		// element also wires an input channel.
+		ChannelRef subjectRef = config.getSubject();
+		_subjectChannel = subjectRef == null ? null : context.resolveChannel(subjectRef);
+		putState("hasSubject", Boolean.valueOf(_subjectChannel != null));
+
 		ChannelRef busyRef = config.getBusy();
 		_busyChannel = busyRef == null ? null : context.resolveChannel(busyRef);
 
@@ -228,6 +271,8 @@ public class ChatConversationControl extends ReactControl {
 		// Read-only: a token the composer holds is part of the draft the channel above already
 		// carries, so nothing is ever written back and the channel itself is not kept.
 		followTurnChannel(context, config.getReference(), this::applyReferenceFromChannel);
+		// The same, for a passage of an object rather than the object: read-only for the same reason.
+		followTurnChannel(context, config.getQuote(), this::applyQuoteFromChannel);
 	}
 
 	/**
@@ -340,20 +385,73 @@ public class ChatConversationControl extends ReactControl {
 	 * that has not persisted a session yet.
 	 * </p>
 	 *
+	 * <p>
+	 * It is also where a conversation learns what it is about: a session the browser reports as
+	 * <em>created</em> here is stamped with the {@code subject} channel's object. The browser has to
+	 * say which of the two this is, because the server cannot tell a first send from a restore - a
+	 * reload re-opens what this window had, and re-opening a conversation must not move it to
+	 * whatever the page is showing now.
+	 * </p>
+	 *
 	 * @param args
-	 *        {@code id} is the owned chat session id, or empty to clear.
+	 *        {@code id} is the owned chat session id, or empty to clear; {@code created} says
+	 *        whether that session is the one this send brought into being.
 	 */
 	@ReactCommandHandler(value = "publishSession", params = {
-		@ReactParam(name = "id", type = "string", description = "Owned chat session id, or empty to clear.")
+		@ReactParam(name = "id", type = "string", description = "Owned chat session id, or empty to clear."),
+		@ReactParam(name = "created", type = "boolean",
+			description = "Whether the chat was created by this window, rather than opened.")
 	})
 	public void publishSession(Map<String, Object> args) {
+		String id = args == null ? "" : String.valueOf(args.getOrDefault("id", "")).trim();
+		TLObject session = id.isEmpty() ? null : ChatSessionIds.ownedSession(id, currentPerson());
+		stampSubject(session, truthy(args == null ? null : args.get("created")));
 		if (_inputChannel == null || _applyingFromChannel[0]) {
 			return;
 		}
-		String id = args == null ? "" : String.valueOf(args.getOrDefault("id", "")).trim();
-		TLObject session = id.isEmpty() ? null : ChatSessionIds.ownedSession(id, currentPerson());
 		_inputChannel.set(session);
 		putState("selected", session == null ? "" : ChatSessionIds.idOf(session));
+	}
+
+	/**
+	 * Writes what this page is about onto a conversation that has just come into being.
+	 *
+	 * <p>
+	 * Only on the way out, and only once: the store refuses a session that is already about
+	 * something.
+	 * </p>
+	 */
+	private void stampSubject(TLObject session, boolean created) {
+		if (_subjectChannel == null || !(session instanceof AgentSession conversation)) {
+			return;
+		}
+		TLObject subject = subjectFor(_subjectChannel.get(), created);
+		if (subject == null) {
+			return;
+		}
+		AgentExecutionStore.getInstance().setSubject(conversation, subject);
+	}
+
+	/**
+	 * What a conversation the browser has just reported is about, or <code>null</code> to stamp
+	 * nothing.
+	 *
+	 * <p>
+	 * Three ways to stamp nothing, and each is the honest answer rather than a fallback: a
+	 * conversation that was <em>opened</em> rather than created keeps the subject it was started
+	 * with, an empty channel means the page was showing nothing, and several objects on it name no
+	 * single thing the conversation could be about. A conversation with no subject is simply in no
+	 * scoped list.
+	 * </p>
+	 *
+	 * @param channelValue
+	 *        What stands on the {@code subject} channel: one object, a one-row selection, several,
+	 *        or nothing.
+	 * @param created
+	 *        Whether this window is what brought the conversation into being.
+	 */
+	static TLObject subjectFor(Object channelValue, boolean created) {
+		return created ? referencedObject(channelValue) : null;
 	}
 
 	private void applyFromChannel(Object value) {
@@ -435,26 +533,7 @@ public class ChatConversationControl extends ReactControl {
 			putState("draftText", null);
 			return;
 		}
-		applying(() -> putState("draftText", draftText(value)));
-	}
-
-	/**
-	 * A written value as the text the composer is to show.
-	 *
-	 * <p>
-	 * A {@link ResKey} is resolved rather than printed, because the obvious way to write a sentence
-	 * from TL-Script is {@code {"en": …, "de": …}.internationalize()} and the user is to read their
-	 * own language, not a resource key. Anything else is labelled the way the transcript labels it.
-	 * </p>
-	 */
-	private static String draftText(Object value) {
-		if (value instanceof ResKey key) {
-			return Resources.getInstance().getString(key);
-		}
-		if (value instanceof CharSequence text) {
-			return text.toString();
-		}
-		return label(value);
+		applying(() -> putState("draftText", ChatQuotes.text(value)));
 	}
 
 	/**
@@ -480,6 +559,29 @@ public class ChatConversationControl extends ReactControl {
 		Map<String, Object> token = new LinkedHashMap<>(fields);
 		token.put("seq", Integer.valueOf(++_referenceWrites));
 		applying(() -> putState("referenceWrite", token));
+	}
+
+	/**
+	 * Turns a passage written to the {@code quote} channel into one atomic reference token for the
+	 * composer to insert at the caret.
+	 *
+	 * <p>
+	 * The sibling of {@link #applyReferenceFromChannel(Object)} for the case it cannot serve: the
+	 * user marked a <em>piece</em> of an object in the host's own viewer, and only the host knows
+	 * which. The token is the same shape either way, so it serialises to the same {@code <quote/>}
+	 * on send - what differs is that its quoted text and its location come from the write rather
+	 * than from the element's {@code <mention>} expressions. Anything that carries no passage clears
+	 * the pending write; see {@link ChatQuotes#token}.
+	 * </p>
+	 */
+	private void applyQuoteFromChannel(Object value) {
+		Map<String, Object> token = ChatQuotes.token(value, this::objectToken);
+		if (token == null) {
+			putState("quoteWrite", null);
+			return;
+		}
+		token.put("seq", Integer.valueOf(++_quoteWrites));
+		applying(() -> putState("quoteWrite", token));
 	}
 
 	/** The object a host wrote, also when a selection channel handed over its single row. */
@@ -684,6 +786,86 @@ public class ChatConversationControl extends ReactControl {
 	}
 
 	/**
+	 * Compiles the {@code <prompts>} cards and keeps their texts current.
+	 *
+	 * <p>
+	 * A card's text is evaluated here rather than on the click, for the same reason a
+	 * {@code <fact>} is: the expression reads the page's channels, and the page is the server's to
+	 * read. The browser then holds a finished sentence, so clicking a card costs no round trip -
+	 * the composer is filled in the same tick as the caret moves.
+	 * </p>
+	 */
+	private void setupPrompts(ViewContext context, Prompts prompts) {
+		if (prompts == null || prompts.getCards().isEmpty()) {
+			// A <prompts> that offers no card wires no input either: the inputs exist to be the
+			// arguments of expressions there are none of.
+			return;
+		}
+		for (Prompt prompt : prompts.getCards()) {
+			_prompts.add(new PromptSpec(ChatViewBinding.resolveText(prompt.getLabel()),
+				icon(prompt.getIcon()), QueryExecutor.compile(prompt.getValue())));
+		}
+		for (ChannelRef ref : prompts.getInputs()) {
+			ViewChannel channel = context.resolveChannel(ref);
+			_promptInputs.add(channel);
+			ViewChannel.ChannelListener listener = (sender, oldValue, newValue) -> serializePrompts();
+			channel.addListener(listener);
+			addCleanupAction(() -> channel.removeListener(listener));
+		}
+		serializePrompts();
+		// A channel written while this control was detached notified nobody, the same reason the
+		// facts and the mention candidates are read again on the way back.
+		addAttachListener(this::serializePrompts);
+	}
+
+	/** Evaluates every card's text and pushes the set to the browser. */
+	private void serializePrompts() {
+		Object[] arguments = new Object[_promptInputs.size()];
+		for (int n = 0; n < arguments.length; n++) {
+			arguments[n] = _promptInputs.get(n).get();
+		}
+		List<Map<String, Object>> out = new ArrayList<>(_prompts.size());
+		for (PromptSpec prompt : _prompts) {
+			Map<String, Object> entry = new LinkedHashMap<>();
+			entry.put("label", prompt.label());
+			entry.put("icon", prompt.icon());
+			entry.put("text", prompt.evaluate(arguments));
+			out.add(entry);
+		}
+		putState("prompts", out);
+	}
+
+	/**
+	 * One compiled {@code <prompt>}: its label and icon, which the configuration fixed, and the
+	 * expression that says what clicking it puts into the composer.
+	 *
+	 * <p>
+	 * A card whose expression throws is pushed with an empty text and the browser leaves it out -
+	 * the same trade the facts make. A mistyped expression costs the user one card; it does not
+	 * cost them the page they were reading.
+	 * </p>
+	 */
+	private record PromptSpec(String label, String icon, QueryExecutor value) {
+
+		/**
+		 * The text as it stands now.
+		 *
+		 * @param arguments
+		 *        The current values of the {@code <prompts>} inputs, in configured order.
+		 */
+		String evaluate(Object[] arguments) {
+			try {
+				// Qualified: the record's own `label` component would otherwise shadow the helper.
+				return ChatConversationControl.label(value.execute(arguments));
+			} catch (RuntimeException ex) {
+				Logger.warn("Chat prompt card '" + label + "' could not be evaluated: " + ex.getMessage(),
+					ex, ChatConversationControl.class);
+				return "";
+			}
+		}
+	}
+
+	/**
 	 * One line this page states about the situation, whoever wrote it.
 	 *
 	 * <p>
@@ -870,12 +1052,25 @@ public class ChatConversationControl extends ReactControl {
 		return token;
 	}
 
+	/**
+	 * The same for a value a channel handed over, which is a model object or nothing this element
+	 * can make a token of.
+	 */
+	private Map<String, Object> objectToken(Object value) {
+		return value instanceof TLObject object ? tokenOf(object) : Map.of();
+	}
+
 	/** The browser id of an object: its stable knowledge-object name (the id a mention carries). */
 	private static String idOf(TLObject object) {
 		if (object == null || object.tHandle() == null) {
 			return "";
 		}
 		return object.tHandle().getObjectName().toExternalForm();
+	}
+
+	/** A {@link ThemeImage} in the encoded form the browser's {@code ThemeIcon} renders. */
+	private static String icon(ThemeImage image) {
+		return image == null ? "" : image.resolve().toEncodedForm();
 	}
 
 	/** A display label for an expression result (formats dates, objects and text uniformly). */

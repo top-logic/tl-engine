@@ -15,6 +15,7 @@ import {
   resolveMenuItems,
   resolveMessageActions,
 } from './registry'
+import { ThemeIcon } from './theme-icon'
 import { Thread } from './thread'
 
 const { useCallback, useEffect, useMemo, useRef } = React
@@ -126,6 +127,52 @@ export function readContextFacts(raw: unknown): ContextFact[] {
   return facts
 }
 
+export interface PromptCard {
+  label: string
+  icon: string
+  text: string
+}
+
+/**
+ * The prompt cards a `<chat-conversation/>` control computed from its `<prompts>` configuration.
+ *
+ * Like the context facts, the texts are already evaluated - on the server, in the acting user's
+ * context - so clicking a card costs no round trip. A card with nothing to say is dropped here
+ * rather than rendered as a button that would empty the composer: a label with no text is an
+ * expression that threw, and the user should see one card fewer, not a broken one.
+ */
+export function readPromptCards(raw: unknown): PromptCard[] {
+  if (!Array.isArray(raw)) return []
+  const cards: PromptCard[] = []
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue
+    const row = item as Record<string, unknown>
+    const label = typeof row.label === 'string' ? row.label : ''
+    const text = typeof row.text === 'string' ? row.text : ''
+    if (!label || !text) continue
+    cards.push({ label, icon: typeof row.icon === 'string' ? row.icon : '', text })
+  }
+  return cards
+}
+
+/**
+ * Whether the cards are shown right now: on a new chat, and nowhere else.
+ *
+ * Two conditions, and both are load-bearing. `sessionId` is what "new chat" means - nothing is
+ * selected in the session list and the first send is what will bring a conversation into being - so
+ * a chat the user opened is never offered openers, whether or not it happens to hold a turn. The
+ * empty transcript is the condition the greeting itself is drawn under (`stage.is-empty`, and
+ * `Thread`'s `messages.length === 0`), and taking it as well is what keeps the cards from ever
+ * standing on a screen that has no greeting over them: they appear under it or not at all.
+ *
+ * The second one is not redundant. A send on a new chat sets the session id one render before the
+ * user's own message is appended, so without it the row would linger for a frame over a screen that
+ * is already a conversation.
+ */
+export function promptCardsVisible(sessionId: unknown, messageCount: number): boolean {
+  return !sessionId && messageCount === 0
+}
+
 /**
  * What a turn-setting channel said, out of the control state a `<chat-conversation/>` pushed.
  *
@@ -137,13 +184,36 @@ export function channelName(raw: unknown): string | undefined {
 }
 
 /**
- * One write of the `reference` channel, out of the control state.
+ * What a `publishSession` report says: which chat is open here, and whether this window is what
+ * brought it into being.
+ *
+ * `created` is the half the server cannot work out for itself. It sees a session id arrive either
+ * way, and a reload re-opens the chat this window had, so "the session has no subject yet" is not
+ * the same question: a conversation started elsewhere and opened here must keep the subject it was
+ * started with, and one that never had a subject must not be given the page's current one
+ * (#508).
+ */
+export function sessionReport(
+  sessionId: string | null,
+  createdSessionId: string | null,
+): { id: string; created: boolean } {
+  const id = sessionId ?? ''
+  return { id, created: id !== '' && id === createdSessionId }
+}
+
+/**
+ * One write of the `reference` or the `quote` channel, out of the control state.
+ *
+ * Both carry the same thing - a token for the composer to insert at the caret - and differ only in
+ * who said what it quotes: the element's own `<mention>` expressions, or the host that showed the
+ * passage the reader marked. So one parser serves both state slots; each slot counts its own
+ * writes.
  *
  * The `seq` is what makes a write a write: a channel notifies for A, B, A, and the third write
  * carries the same token as the first, which unchanged state could not tell apart from no write at
  * all. `undefined` means the channel is unwired or holds nothing insertable.
  */
-export function referenceWrite(raw: unknown): { seq: number; token: ReferenceToken } | undefined {
+export function tokenWrite(raw: unknown): { seq: number; token: ReferenceToken } | undefined {
   if (!raw || typeof raw !== 'object') return undefined
   const row = raw as Record<string, unknown>
   if (typeof row.id !== 'string' || !row.id) return undefined
@@ -155,6 +225,7 @@ export function referenceWrite(raw: unknown): { seq: number; token: ReferenceTok
       kind: typeof row.kind === 'string' ? row.kind : '',
       id: row.id,
       label: typeof row.label === 'string' ? row.label : '',
+      location: typeof row.location === 'string' ? row.location : '',
       text: typeof row.text === 'string' ? row.text : '',
     },
   }
@@ -171,6 +242,43 @@ export function sameServers(a: string[], b: string[]): boolean {
   const left = [...a].sort()
   const right = [...b].sort()
   return left.every((name, index) => name === right[index])
+}
+
+/**
+ * The row of first questions a page offers, between the greeting and the composer.
+ *
+ * That is where the classic chat put its own example prompts - under "How can I help you today?",
+ * over the field - and it is where they belong: the eye reads the greeting, the offer, and then the
+ * place to type. A click fills the composer and nothing else - the user reads the sentence and
+ * presses send, which is the same rule the `draft`, `reference` and `quote` channels follow.
+ * `setDraft` focuses the field and puts the caret behind the text, so a user who wants to add a word
+ * is already there.
+ */
+function PromptCards({
+  cards,
+  label,
+  onPick,
+}: {
+  cards: PromptCard[]
+  label: string
+  onPick: (text: string) => void
+}) {
+  return (
+    <div className="prompt-suggestions" role="group" aria-label={label}>
+      {cards.map((card, index) => (
+        <button
+          key={`${card.label}-${index}`}
+          type="button"
+          className="prompt-suggestion"
+          title={card.text}
+          onClick={() => onPick(card.text)}
+        >
+          {card.icon ? <ThemeIcon encoded={card.icon} className="prompt-suggestion__icon" /> : null}
+          <span className="prompt-suggestion__label">{card.label}</span>
+        </button>
+      ))}
+    </div>
+  )
 }
 
 /**
@@ -203,6 +311,9 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   const controls = useMemo(() => readComposerControls(state), [state])
   const selected = typeof state.selected === 'string' ? state.selected : ''
   const hasInput = state.hasInput === true
+  // Whether the element names a subject channel. The server needs the session id of a chat created
+  // here even when nothing else on the page follows the selection, so this publishes it too.
+  const hasSubject = state.hasSubject === true
   const placeholder = typeof state.placeholder === 'string' ? state.placeholder : ''
   const promptImprovementEnabled = state.promptImprovementEnabled === true
   const extraMenuItems = useMemo(
@@ -222,6 +333,12 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   // `insideDock` says which is which, and comes from the view context rather than from the React tree.
   const insideDock = state.insideDock === true
   useEffect(() => actions.registerConversation(insideDock), [actions, insideDock])
+
+  // The first questions this page offers, shown on a new chat alone. Their texts were evaluated on
+  // the server, so a click is purely local: it writes the composer, which then reports the draft
+  // onto the `draft` channel the way a typed sentence does.
+  const promptCards = useMemo(() => readPromptCards(state.prompts), [state.prompts])
+  const onPickPrompt = useCallback((text: string) => actions.setDraft(text), [actions])
 
   // What this page states about the situation, handed to the store so that it travels with every
   // message. The store compares by value, so re-pushing an unchanged set costs nothing.
@@ -250,14 +367,18 @@ export function TLChatConversation({ controlId }: TLCellProps) {
 
   // Write-back: publish the store's own session onto the channel (two-way), so a session list
   // highlights it after the store creates one on first send or restores one on reload.
+  //
+  // `created` is the other half: the server stamps a conversation with what the page is about only
+  // when this window is what brought it into being. It cannot tell that from the id alone - a reload
+  // re-opens the chat this window had, and that one must keep the subject it was started with.
   const published = useRef<string | null>(null)
   useEffect(() => {
-    if (!hasInput) return
-    const id = chat.sessionId ?? ''
-    if (published.current === id) return
-    published.current = id
-    void command('publishSession', { id })
-  }, [hasInput, chat.sessionId, command])
+    if (!hasInput && !hasSubject) return
+    const report = sessionReport(chat.sessionId, chat.createdSessionId)
+    if (published.current === report.id) return
+    published.current = report.id
+    void command('publishSession', report)
+  }, [hasInput, hasSubject, chat.sessionId, chat.createdSessionId, command])
 
   useEffect(() => {
     void command('setBusy', { busy: chat.busy })
@@ -366,13 +487,24 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   // The reference channel: an object written to it becomes one atomic token at the caret, exactly
   // as picking it from the "@" menu does. In only - the token is part of the draft the channel
   // above already carries.
-  const reference = useMemo(() => referenceWrite(state.referenceWrite), [state.referenceWrite])
+  const reference = useMemo(() => tokenWrite(state.referenceWrite), [state.referenceWrite])
   const insertedReference = useRef<number | null>(null)
   useEffect(() => {
     if (!reference || insertedReference.current === reference.seq) return
     insertedReference.current = reference.seq
     actions.insertReference(reference.token)
   }, [reference, actions])
+
+  // The quote channel: the same insert for a passage *of* an object, whose quoted text and
+  // location the host wrote. A slot and a counter of its own, so a write of one channel is never
+  // lost to a write of the other.
+  const quote = useMemo(() => tokenWrite(state.quoteWrite), [state.quoteWrite])
+  const insertedQuote = useRef<number | null>(null)
+  useEffect(() => {
+    if (!quote || insertedQuote.current === quote.seq) return
+    insertedQuote.current = quote.seq
+    actions.insertReference(quote.token)
+  }, [quote, actions])
 
   const pendingApprovals = useMemo(
     () =>
@@ -459,6 +591,9 @@ export function TLChatConversation({ controlId }: TLCellProps) {
           }
           onOpenSource={() => undefined}
         />
+        {promptCards.length > 0 && promptCardsVisible(chat.sessionId, chat.messages.length) ? (
+          <PromptCards cards={promptCards} label={labels.promptCards} onPick={onPickPrompt} />
+        ) : null}
         <Composer
           at={at}
           agents={chat.caps.agents}

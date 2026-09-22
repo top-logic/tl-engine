@@ -28,6 +28,7 @@ import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Baseline;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
 import com.top_logic.tl.ai.core.security.ToolAuthorization;
+import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
 import com.top_logic.tl.ai.core.tools.interaction.SubagentSpawner;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.Tool;
@@ -57,7 +58,15 @@ import com.top_logic.tl.ai.tool.api.ToolSchema;
  * application; the deployed wiring is asserted in {@code SecDemoSpawnFilterTest}.
  * </p>
  *
+ * <p>
+ * Since #348 the synchronous side has a refusal of its own
+ * ({@link DelegationTool#delegationRefusal(String, AgentCapabilities)}), asked of the parent turn's
+ * own context rather than of a background-bounded one, and it is asserted here beside the spawn's so
+ * the two cannot drift apart.
+ * </p>
+ *
  * @see SubagentSpawner#detachedSpawnRefusal(String, AgentCapabilities)
+ * @see DelegationTool#delegationRefusal(String, AgentCapabilities)
  */
 public class TestSpawnFilter extends TestCase {
 
@@ -167,11 +176,11 @@ public class TestSpawnFilter extends TestCase {
 	}
 
 	/**
-	 * A synchronous delegation to that same agent is untouched.
+	 * A synchronous delegation to that same agent still works: it keeps the parent's reach.
 	 *
 	 * <p>
 	 * It completes inside the parent turn, where the human who could answer an approval prompt still is,
-	 * so it keeps the parent's reach and nothing about it is filtered.
+	 * so the allowlist takes nothing away from it that the parent had not lost already.
 	 * </p>
 	 */
 	public void testSynchronousDelegationToTheSameAgentStillWorks() {
@@ -180,6 +189,65 @@ public class TestSpawnFilter extends TestCase {
 		assertFalse("A synchronous delegate is attended.", delegate.isBackgroundRun());
 		assertNull("It keeps the parent's data.write, so the agent can do its whole job.",
 			capabilities(delegate).unusableReason(agent(WRITER)));
+		assertNull("...and is therefore not refused either.", delegateAs(CLERK, WRITER));
+	}
+
+	// ===== The synchronous refusal (#348) =====
+
+	/**
+	 * A delegation to an agent every one of whose tools this run is denied is refused, by capability
+	 * name - the same fail-closed answer the spawn path gives.
+	 */
+	public void testFullyDeniedAgentIsNotDelegatedTo() {
+		String refusal = delegateAs(VIEWER, WRITER);
+
+		assertNotNull("A delegate that could only come back empty-handed must not be started.", refusal);
+		assertTrue("The user's answer is a capability grant, so the capability must be named: " + refusal,
+			refusal.contains(ToolGroups.DATA_WRITE));
+		assertTrue("The refusal must name the agent the model asked for: " + refusal,
+			refusal.contains("'" + WRITER + "'"));
+		assertTrue("The model must be told to stop rather than to try again: " + refusal,
+			refusal.contains("again will not help"));
+	}
+
+	/** The refusal is an ordinary tool error and never suggests the agent is not there. */
+	public void testDelegationRefusalDoesNotDenyTheAgentsExistence() {
+		String refusal = delegateAs(VIEWER, WRITER);
+
+		assertFalse(refusal, refusal.toLowerCase().contains("does not exist"));
+		assertFalse(refusal, refusal.toLowerCase().contains("unknown agent"));
+		assertFalse(refusal, refusal.toLowerCase().contains("not found"));
+	}
+
+	/**
+	 * It says nothing about being unattended, because a synchronous delegate is not.
+	 *
+	 * <p>
+	 * The spawn's wording exists to stop a user being sent to an administrator for a right they hold.
+	 * Repeating it here would be the same mistake in the other direction: the allowlist is not what
+	 * withheld anything from an attended run.
+	 * </p>
+	 */
+	public void testDelegationRefusalNeverBlamesTheBackgroundAllowlist() {
+		String refusal = delegateAs(VIEWER, WRITER);
+
+		assertFalse(refusal, refusal.contains("background allowlist"));
+		assertFalse(refusal, refusal.contains("unattended"));
+	}
+
+	/** One reachable tool is enough, and an agent that reaches nothing is not a denial. */
+	public void testPartlyReachableAgentIsDelegatedTo() {
+		assertNull("The read half of its tools is permitted, so the delegate has work it can do.",
+			delegateAs(VIEWER, MIXED));
+		assertNull(delegateAs(VIEWER, READER));
+		assertNull("All zero of its tools are denied is vacuously true.",
+			delegateAs(VIEWER, TOOLLESS));
+	}
+
+	/** An agent that does not exist is not refused here either: that is not a denial. */
+	public void testUnknownDelegateIsNotRefusedHere() {
+		assertNull("The delegation must fail where it always did, not with a capability message.",
+			delegateAs(VIEWER, "noSuchAgent"));
 	}
 
 	/** What the allowlist does admit is spawnable, so the ceiling is not a wall. */
@@ -227,6 +295,21 @@ public class TestSpawnFilter extends TestCase {
 	private static String spawnAs(String role, String targetAgentName) {
 		SecurityContext child = detachedChild(parentTurn(role)).security();
 		return SubagentSpawner.detachedSpawnRefusal(targetAgentName, capabilities(child));
+	}
+
+	/**
+	 * The refusal a run of the given role gets when it delegates to the named agent synchronously, or
+	 * <code>null</code> if the delegation goes ahead.
+	 *
+	 * <p>
+	 * Asked of the context {@code DelegationTool} builds for the child, which is the parent turn's own
+	 * - that is exactly what makes the contrast with {@link #spawnAs} the contrast between attended
+	 * and unattended, and nothing else.
+	 * </p>
+	 */
+	private static String delegateAs(String role, String targetAgentName) {
+		SecurityContext child = parentTurn(role).forDelegation(TransactionScope.NOOP).security();
+		return DelegationTool.delegationRefusal(targetAgentName, capabilities(child));
 	}
 
 	/** The detached child of the given parent turn, exactly as {@link SubagentSpawner} builds it. */

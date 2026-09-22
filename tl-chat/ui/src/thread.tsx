@@ -6,6 +6,7 @@ import { parseDraft, referenceSummary, withoutContextPrefix, type ReferenceToken
 import { TokenInput, type TokenInputHandle } from './token-input'
 import { bundle, formatTimestamp, providerErrorText, type Language } from './i18n'
 import { effortLabel } from './models'
+import { approvalOutcomeText, approvalReason } from './prompts'
 import type {
   ApprovalRequest,
   AssistantText,
@@ -661,8 +662,15 @@ function interactionPreview(item: InteractionRequest): string {
   return (item.header || item.question).replace(/\s+/g, ' ').slice(0, 80)
 }
 
-function approvalPreview(item: ApprovalRequest): string {
-  return (item.displayReason || item.toolName).replace(/\s+/g, ' ').slice(0, 80)
+/**
+ * What the recorded approval was about, in the reader's language.
+ *
+ * The same sentence the live card showed, from the same function: the history used to print the
+ * server's English `displayReason`, so a German chat recorded "Modifies shared application
+ * data." under a card that had said "Ändert gemeinsame Anwendungsdaten." (#512).
+ */
+function approvalPreview(item: ApprovalRequest, labels: Labels): string {
+  return approvalReason(item, labels).replace(/\s+/g, ' ').slice(0, 80)
 }
 
 function TraceEvent({
@@ -728,11 +736,11 @@ function TraceEvent({
       return (
         <TraceEntry
           title={labels.approval}
-          meta={item.outcome === 'pending' ? labels.waiting : item.outcome.replace(/_/g, ' ').toLowerCase()}
-          preview={approvalPreview(item)}
+          meta={approvalOutcomeText(item.outcome, labels)}
+          preview={approvalPreview(item, labels)}
         >
           <TraceBlock label={labels.tool} text={item.toolName} labels={labels} />
-          {item.displayReason ? <TraceBlock label={labels.reason} text={item.displayReason} labels={labels} /> : null}
+          <TraceBlock label={labels.reason} text={approvalReason(item, labels)} labels={labels} />
         </TraceEntry>
       )
     case 'error':

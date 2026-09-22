@@ -148,7 +148,12 @@ public class ScriptToolExecutor implements Tool {
 		} catch (Exception ex) {
 			Logger.error("Error executing script tool '" + _name + "': " + ex.getMessage(), ex,
 				ScriptToolExecutor.class);
-			return ToolResult.of("Error executing tool: " + ex.getMessage());
+			// Reported as a failure, not as a result that reads like one: a script tool authored in
+			// the running application would otherwise fail invisibly, because only a thrown exception
+			// ever set the flag the provider carries beside the text (Gitea #387). It stays a failure
+			// the turn is not rolled back for - which is what this catch already decided by returning
+			// rather than rethrowing.
+			return ToolResult.failure("Error executing tool: " + ex.getMessage());
 		}
 	}
 

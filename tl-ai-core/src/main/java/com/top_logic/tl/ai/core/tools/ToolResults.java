@@ -25,9 +25,11 @@ import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
  *
  * <ul>
  * <li>Success: {@code DataClassSerializer.toJson(result, toolClass, operationName, args)}.</li>
- * <li>Failure: {@code Logger.error(operationName + " error: " + ex.getMessage(), ex, toolClass)}
- * followed by {@code DataClassSerializer.errorToJson(errorPrefix + ex.getMessage(), toolClass,
- * operationName, args)}.</li>
+ * <li>Failure: one log line, at {@code error} with the stack trace for a fault of this
+ * application and at {@code info} without one for a refusal (an
+ * {@link IllegalArgumentException}), followed by
+ * {@code DataClassSerializer.errorToJson(errorPrefix + ex.getMessage(), toolClass, operationName,
+ * args)}.</li>
  * </ul>
  */
 public final class ToolResults {
@@ -100,9 +102,30 @@ public final class ToolResults {
 			T result = work.get();
 			return framing.apply(DataClassSerializer.toJson(result, toolClass, operationName, args));
 		} catch (Exception ex) {
-			Logger.error(operationName + " error: " + ex.getMessage(), ex, toolClass);
+			logFailure(toolClass, operationName, ex);
 			return DataClassSerializer.errorToJson(errorPrefix + ex.getMessage(), toolClass,
 				operationName, args);
+		}
+	}
+
+	/**
+	 * Writes the operational log line for a call that did not produce a response.
+	 *
+	 * <p>
+	 * Two different things end up here and they are not equally interesting to an operator. An
+	 * {@link IllegalArgumentException} is how these tools refuse: the model named a module, a type or
+	 * an identifier this application does not have, and the sentence it carries is the answer to that.
+	 * Nothing is wrong with the installation, so it is logged at info and without a stack trace - the
+	 * trace would only point back at the line that composed the refusal. Every other exception is a
+	 * fault of this application and keeps {@code Logger.error} with its trace, which is what an
+	 * operator is watching the log for (Gitea #387).
+	 * </p>
+	 */
+	private static void logFailure(Class<?> toolClass, String operationName, Exception ex) {
+		if (ex instanceof IllegalArgumentException) {
+			Logger.info(operationName + " refused: " + ex.getMessage(), toolClass);
+		} else {
+			Logger.error(operationName + " error: " + ex.getMessage(), ex, toolClass);
 		}
 	}
 }

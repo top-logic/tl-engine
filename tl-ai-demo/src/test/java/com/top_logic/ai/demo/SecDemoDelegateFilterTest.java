@@ -29,6 +29,14 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
 	 * ships.
 	 *
 	 * <p>
+	 * Two independent filters decide it, and the fixture deploys both. The {@code <agent-access>} section
+	 * (#392) says which agents the acting account may run at all, and it is asked first; the capability
+	 * filter then asks whether an agent the account may run could reach a tool it may call. So a delegate
+	 * can be withheld from a persona whose capabilities would have reached every one of its tools, and the
+	 * assertions below are therefore <em>per persona</em> rather than one set for all of them (#445).
+	 * </p>
+	 *
+	 * <p>
 	 * The delegate half of {@link SecDemoCapabilityNoticeTest}, and user experience for the same reason: a
 	 * child run inherits the parent's security context unchanged, so no delegate could ever have done more
 	 * than its caller. What the filter buys is that a delegate whose every tool is denied is not offered at
@@ -45,13 +53,14 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
 	 * compared.</li>
 	 * <li>{@code TL_ModelExplorer} carries {@code model.read} and {@code data.read} tools only, so it is
 	 * the delegate that disappears for a persona holding neither and is <em>limited</em> for one holding
-	 * just the first.</li>
+	 * just the first. It is also the single agent {@code secdemo.config.xml} grants
+	 * {@link #RESTRICTED_ROLE}, and therefore the only delegate a persona holding that role keeps.</li>
 	 * <li>{@code TL_TLScriptAgent} carries {@code script}, {@code workspace}, {@code model.read},
 	 * {@code data.read} and - since the text edit was offered to the agents that write instance data
 	 * (#168) - {@code data.write} tools.</li>
 	 * <li>{@code TL_ModelEditor} carries {@code user-interaction.askUser}, and {@code interaction} is
-	 * granted implicitly to every role, so it survives for everyone - which is what keeps this test from
-	 * passing by deleting everything.</li>
+	 * granted implicitly to every role, so no capability filter ever drops it - which is what keeps this
+	 * test from passing by deleting everything.</li>
 	 * </ul>
 	 *
 	 * @see AgentCapabilities#unusableReason(AgentDefinition)
@@ -70,6 +79,19 @@ public class SecDemoDelegateFilterTest extends SecDemoPersonaTest {
 	/** Changes the model - and asks questions, which every persona may do. */
 	private static final String EDITOR_AGENT = "TL_ModelEditor";
 
+	/**
+	 * The one role the fixture's {@code <agent-access>} section names, and which it grants
+	 * {@link #EXPLORER} alone.
+	 *
+	 * <p>
+	 * Written out rather than read back from the policy, so that this test states what
+	 * {@code secdemo.config.xml} is meant to configure instead of restating what it happens to say.
+	 * Which personas hold it is looked up ({@link SecDemoSetupService#personaRoles()}), because a
+	 * persona added to the aspect must be covered without an edit here.
+	 * </p>
+	 */
+	private static final String RESTRICTED_ROLE = "ticketReader";
+
 	/** Precondition: the agents this test reasons about have the shape it assumes. */
 	public void testFixtureAgentsHaveTheAssumedShape() {
 		assertEquals("TL_Orchestrator is the delegating agent of the shipped wiring.",
@@ -82,29 +104,54 @@ public class SecDemoDelegateFilterTest extends SecDemoPersonaTest {
 	}
 
 	/**
-	 * Every persona of this fixture reaches a tool of every delegate, so every delegate is offered.
+	 * Which delegates a persona is offered is decided by the role it holds, not by the tools it can
+	 * reach.
 	 *
 	 * <p>
-	 * The load-bearing half of the filter, and the one that is easy to break: a filter that dropped too
-	 * much would fail here. The complementary half - a delegate <em>dropped</em> because the persona
-	 * can reach none of its tools, with a reason naming the capabilities - needs a role holding nothing
-	 * but {@code interaction}, which this fixture deliberately does not have. {@code TestDelegateFilter}
-	 * in {@code tl-ai-core} covers it against a hand-built policy.
+	 * The load-bearing half of the filter, and the one that is easy to break in both directions. Every
+	 * persona of this fixture reaches a tool of every delegate, so the capability filter alone would
+	 * offer all three to all of them - and a filter that dropped one would fail here. What it offers
+	 * instead is what {@code <agent-access>} leaves: a persona holding {@link #RESTRICTED_ROLE} keeps
+	 * {@link #EXPLORER} and nothing else, and one holding no role that section names keeps the lot.
 	 * </p>
 	 *
 	 * <p>
-	 * <b>Quarantined, see #445.</b> The fixture's {@code <agent-access>} section (#392) restricts ben's
-	 * role to {@code TL_ModelExplorer}, so this no longer holds - and no build ran it to say so until
-	 * #369. What the fixture should demonstrate instead is the open question in that issue; renaming the
-	 * method back to {@code test...} is what puts it back in the suite.
+	 * The contrast is the point of the fixture rather than an accident of it, which is why both halves
+	 * are asserted to occur: a change that gave every persona the restricted role would otherwise leave
+	 * this test passing while demonstrating half of what it claims.
+	 * </p>
+	 *
+	 * <p>
+	 * The complementary case - a delegate <em>dropped</em> because the persona can reach none of its
+	 * tools, with a reason naming the capabilities - needs a role holding nothing but
+	 * {@code interaction}, which this fixture deliberately does not have. {@code TestDelegateFilter} in
+	 * {@code tl-ai-core} covers it against a hand-built policy.
 	 * </p>
 	 */
-	public void quarantinedTestEveryDelegateIsOfferedToEveryPersona() {
-		for (String login : SecDemoSetupService.personaLogins()) {
-			assertEquals(login + " holds both read capabilities and script, which reach a tool of each"
-				+ " delegate.", List.of(SCRIPT_AGENT, EDITOR_AGENT, EXPLORER),
-				offeredDelegatesOf(login));
+	public void testDelegatesAreOfferedAsAgentAccessLeavesThem() {
+		int restrictedPersonas = 0;
+		for (Map.Entry<String, List<String>> persona : SecDemoSetupService.personaRoles().entrySet()) {
+			String login = persona.getKey();
+			boolean restricted = persona.getValue().contains(RESTRICTED_ROLE);
+
+			if (restricted) {
+				restrictedPersonas++;
+				assertEquals(login + " holds '" + RESTRICTED_ROLE + "', which <agent-access> grants"
+					+ " one agent, so that is the only delegate left - although its capabilities"
+					+ " reach a tool of each of the three.", List.of(EXPLORER),
+					offeredDelegatesOf(login));
+			} else {
+				assertEquals(login + " holds no role <agent-access> names, so the section default"
+					+ " applies and every delegate whose tools it reaches is offered.",
+					List.of(SCRIPT_AGENT, EDITOR_AGENT, EXPLORER), offeredDelegatesOf(login));
+			}
 		}
+
+		assertTrue("The fixture must restrict at least one persona, otherwise <agent-access> is not"
+			+ " demonstrated at all.", restrictedPersonas > 0);
+		assertTrue("The fixture must leave at least one persona unrestricted, otherwise nothing shows"
+			+ " that the restriction is what makes the difference.",
+			restrictedPersonas < SecDemoSetupService.personaLogins().size());
 	}
 
 	/** An unenforced run keeps every declared delegate, whatever its principal may do. */
@@ -145,48 +192,59 @@ public class SecDemoDelegateFilterTest extends SecDemoPersonaTest {
 	}
 
 	/**
-	 * A delegate whose every tool is denied is absent from {@code list_agents} too, and a reachable one
-	 * is present.
+	 * An agent a persona may not run is absent from {@code list_agents} too, and the ones it may run are
+	 * present.
 	 *
 	 * <p>
-	 * The third surface. Filtering the prompt alone would be cosmetic: {@code list_agents} is how an
-	 * agent finds a name to spawn, and a name it finds there is a name it will use.
+	 * The third surface, and the one that matters most: {@code list_agents} is how an agent finds a name
+	 * to spawn, and a name it finds there is a name it will use. Filtering the prompt catalog alone
+	 * would leave the restriction cosmetic.
 	 * </p>
 	 *
 	 * <p>
-	 * <b>Quarantined, see #445.</b> The fixture's {@code <agent-access>} section (#392) restricts ben's
-	 * role to {@code TL_ModelExplorer}, so this no longer holds - and no build ran it to say so until
-	 * #369. What the fixture should demonstrate instead is the open question in that issue; renaming the
-	 * method back to {@code test...} is what puts it back in the suite.
+	 * Per persona, because that is what the listing is: ben's role is granted {@link #EXPLORER} alone,
+	 * so the other two must not appear for him, while anna, whose role {@code <agent-access>} does not
+	 * name, sees all three.
 	 * </p>
 	 */
-	public void quarantinedTestListAgentsCarriesTheSameFilter() {
-		String benSees = listAgentsAs(BEN);
+	public void testListAgentsCarriesTheSameFilter() {
+		String annaSees = listAgentsAs(ANNA);
+		for (String agentName : List.of(SCRIPT_AGENT, EDITOR_AGENT, EXPLORER)) {
+			assertTrue("anna may run '" + agentName + "', so it must be listed to her: " + annaSees,
+				isListed(annaSees, agentName));
+		}
 
-		assertTrue("Every delegate this persona reaches must be listed: " + benSees,
-			benSees.contains("\"" + EDITOR_AGENT + "\"") && benSees.contains("\"" + EXPLORER + "\"")
-				&& benSees.contains("\"" + SCRIPT_AGENT + "\""));
-		assertFalse("An agent nothing could come of must not be listed - and the fixture has none, so"
-			+ " what this pins is that the listing is filtered at all rather than that it is empty: "
-			+ benSees, benSees.contains("\"no-such-agent\""));
+		String benSees = listAgentsAs(BEN);
+		assertTrue("The one agent ben's role is granted must be listed: " + benSees,
+			isListed(benSees, EXPLORER));
+		for (String agentName : List.of(SCRIPT_AGENT, EDITOR_AGENT)) {
+			assertFalse("ben may not run '" + agentName + "', so a listing that named it would hand"
+				+ " him a name to spawn: " + benSees, isListed(benSees, agentName));
+		}
 	}
 
 	/**
-	 * {@code list_agents} names what a listed agent cannot use, as the prompt catalog does.
+	 * {@code list_agents} names what a listed agent cannot use, as the prompt catalog does - and names
+	 * nothing where there is nothing to say.
 	 *
 	 * <p>
-	 * <b>Quarantined, see #445.</b> The fixture's {@code <agent-access>} section (#392) restricts ben's
-	 * role to {@code TL_ModelExplorer}, so this no longer holds - and no build ran it to say so until
-	 * #369. What the fixture should demonstrate instead is the open question in that issue; renaming the
-	 * method back to {@code test...} is what puts it back in the suite.
+	 * Per persona for the same reason as the listing itself, and the pair is what tells the two filters
+	 * apart: anna is offered {@link #SCRIPT_AGENT} and told it cannot keep a task, while ben is left one
+	 * agent and reaches every tool of it, so his listing carries no limit at all. A limit reported to
+	 * him would be about an agent he is not offered.
 	 * </p>
 	 */
-	public void quarantinedTestListAgentsNamesTheUnreachableCapabilities() {
+	public void testListAgentsNamesTheUnreachableCapabilities() {
+		String annaSees = listAgentsAs(ANNA);
+
+		assertTrue("The task tools TL_TLScriptAgent cannot use must be named: " + annaSees,
+			annaSees.contains("\"cannotUse\""));
+		assertTrue(annaSees, annaSees.contains("\"" + ToolGroups.WORKSPACE + "\""));
+
 		String benSees = listAgentsAs(BEN);
 
-		assertTrue("The task tools TL_TLScriptAgent cannot use must be named: " + benSees,
-			benSees.contains("\"cannotUse\""));
-		assertTrue(benSees, benSees.contains("\"" + ToolGroups.WORKSPACE + "\""));
+		assertFalse("ben is left one agent and reaches both of its capabilities, so nothing is"
+			+ " limited for him: " + benSees, benSees.contains("\"cannotUse\""));
 	}
 
 	/** Outside an enforcing run the listing is what it was before this filter existed. */
@@ -199,6 +257,11 @@ public class SecDemoDelegateFilterTest extends SecDemoPersonaTest {
 		}
 		assertFalse("Nothing is limited when nothing is enforced: " + listing,
 			listing.contains("\"cannotUse\""));
+	}
+
+	/** Whether the given {@code list_agents} result names the given agent. */
+	private static boolean isListed(String listing, String agentName) {
+		return listing.contains("\"name\":\"" + agentName + "\"");
 	}
 
 	/** The delegates the given persona's runs are offered, in declaration order. */

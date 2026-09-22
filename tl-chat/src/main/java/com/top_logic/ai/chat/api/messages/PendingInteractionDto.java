@@ -46,6 +46,12 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 	/** @see #getToolMode() */
 	public static final String TOOL_MODE__PROP = "toolMode";
 
+	/** @see #isMultiSelect() */
+	public static final String MULTI_SELECT__PROP = "multiSelect";
+
+	/** @see #getOptions() */
+	public static final String OPTIONS__PROP = "options";
+
 	private String _requestId = "";
 
 	private String _type = "";
@@ -65,6 +71,10 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 	private long _remainingMs = 0L;
 
 	private String _toolMode = "";
+
+	private boolean _multiSelect = false;
+
+	private final java.util.List<com.top_logic.ai.chat.api.messages.InteractionOptionDto> _options = new java.util.ArrayList<>();
 
 	/**
 	 * Creates a {@link PendingInteractionDto} instance.
@@ -281,6 +291,76 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 		_toolMode = value;
 	}
 
+	/**
+	 * For a question of type "choice", whether it takes more than one answer, so a rebuilt card
+	 * offers the checkboxes the live one offered rather than silently asking a different question.
+	 * Read off the run that is still waiting; never <code>true</code> for an approval.
+	 */
+	public final boolean isMultiSelect() {
+		return _multiSelect;
+	}
+
+	/**
+	 * @see #isMultiSelect()
+	 */
+	public com.top_logic.ai.chat.api.messages.PendingInteractionDto setMultiSelect(boolean value) {
+		internalSetMultiSelect(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #isMultiSelect()} without chain call utility. */
+	protected final void internalSetMultiSelect(boolean value) {
+		_multiSelect = value;
+	}
+
+	/**
+	 * For a question of type "choice", the options to offer, in the order the agent gave them.
+	 *
+	 * <p>
+	 * The same options {@link #getPayload()} holds as the raw JSON the model wrote, parsed here so that
+	 * a client rebuilding the card does not have to know the two element shapes that JSON may
+	 * have. Empty for an approval and for a free-text question.
+	 * </p>
+	 */
+	public final java.util.List<com.top_logic.ai.chat.api.messages.InteractionOptionDto> getOptions() {
+		return _options;
+	}
+
+	/**
+	 * @see #getOptions()
+	 */
+	public com.top_logic.ai.chat.api.messages.PendingInteractionDto setOptions(java.util.List<? extends com.top_logic.ai.chat.api.messages.InteractionOptionDto> value) {
+		internalSetOptions(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getOptions()} without chain call utility. */
+	protected final void internalSetOptions(java.util.List<? extends com.top_logic.ai.chat.api.messages.InteractionOptionDto> value) {
+		if (value == null) throw new IllegalArgumentException("Property 'options' cannot be null.");
+		_options.clear();
+		_options.addAll(value);
+	}
+
+	/**
+	 * Adds a value to the {@link #getOptions()} list.
+	 */
+	public com.top_logic.ai.chat.api.messages.PendingInteractionDto addOption(com.top_logic.ai.chat.api.messages.InteractionOptionDto value) {
+		internalAddOption(value);
+		return this;
+	}
+
+	/** Implementation of {@link #addOption(com.top_logic.ai.chat.api.messages.InteractionOptionDto)} without chain call utility. */
+	protected final void internalAddOption(com.top_logic.ai.chat.api.messages.InteractionOptionDto value) {
+		_options.add(value);
+	}
+
+	/**
+	 * Removes a value from the {@link #getOptions()} list.
+	 */
+	public final void removeOption(com.top_logic.ai.chat.api.messages.InteractionOptionDto value) {
+		_options.remove(value);
+	}
+
 	@Override
 	public String jsonType() {
 		return PENDING_INTERACTION_DTO__TYPE;
@@ -298,7 +378,9 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 			SESSION_TITLE__PROP, 
 			CREATED_AT__PROP, 
 			REMAINING_MS__PROP, 
-			TOOL_MODE__PROP);
+			TOOL_MODE__PROP, 
+			MULTI_SELECT__PROP, 
+			OPTIONS__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -333,6 +415,8 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 			case CREATED_AT__PROP: return getCreatedAt();
 			case REMAINING_MS__PROP: return getRemainingMs();
 			case TOOL_MODE__PROP: return getToolMode();
+			case MULTI_SELECT__PROP: return isMultiSelect();
+			case OPTIONS__PROP: return getOptions();
 			default: return null;
 		}
 	}
@@ -350,6 +434,8 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 			case CREATED_AT__PROP: internalSetCreatedAt((String) value); break;
 			case REMAINING_MS__PROP: internalSetRemainingMs((long) value); break;
 			case TOOL_MODE__PROP: internalSetToolMode((String) value); break;
+			case MULTI_SELECT__PROP: internalSetMultiSelect((boolean) value); break;
+			case OPTIONS__PROP: internalSetOptions(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.InteractionOptionDto.class, value)); break;
 		}
 	}
 
@@ -388,6 +474,14 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 		out.value(getRemainingMs());
 		out.name(TOOL_MODE__PROP);
 		out.value(getToolMode());
+		out.name(MULTI_SELECT__PROP);
+		out.value(isMultiSelect());
+		out.name(OPTIONS__PROP);
+		out.beginArray();
+		for (com.top_logic.ai.chat.api.messages.InteractionOptionDto x : getOptions()) {
+			x.writeTo(out);
+		}
+		out.endArray();
 	}
 
 	@Override
@@ -403,6 +497,17 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 			case CREATED_AT__PROP: setCreatedAt(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case REMAINING_MS__PROP: setRemainingMs(in.nextLong()); break;
 			case TOOL_MODE__PROP: setToolMode(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case MULTI_SELECT__PROP: setMultiSelect(in.nextBoolean()); break;
+			case OPTIONS__PROP: {
+				java.util.List<com.top_logic.ai.chat.api.messages.InteractionOptionDto> newValue = new java.util.ArrayList<>();
+				in.beginArray();
+				while (in.hasNext()) {
+					newValue.add(com.top_logic.ai.chat.api.messages.InteractionOptionDto.readInteractionOptionDto(in));
+				}
+				in.endArray();
+				setOptions(newValue);
+			}
+			break;
 			default: super.readField(in, field);
 		}
 	}

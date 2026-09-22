@@ -49,9 +49,18 @@ import com.top_logic.util.model.ModelService;
  * false}, and is selectable only by its owner. A pool with {@code shared = true} - an explicit
  * choice at save time, or an administrator's edit, never a fallback - is selectable by any session,
  * including an unattended one: the intended shared-login use case. Selection therefore returns the
- * caller's own pools plus shared pools; this owner/shared filter is enforced explicitly here rather
- * than left to {@code SecurityContext.modelSecurity()}, which grants everything in a run whose mode
- * does not enforce model access - which is the default - and therefore cannot carry this isolation.
+ * caller's own pools plus shared pools, and that filter is enforced here, on the selection path,
+ * which never asks model security: selecting a pool drives a browser with a stored login, it hands
+ * the stored bytes to nobody.
+ * </p>
+ *
+ * <p>
+ * <b>Reading those bytes is the other question</b>, and the model layer answers it. The shipped
+ * default since #227 is the owner plus administrators - the {@code &lt;security-config&gt;} of
+ * {@code tl-ai-core.binarySecurity.config.xml}, which {@code viewDocument} asks about through
+ * {@code ModelSecurity.canRead}. Sharing a login therefore does not make the stored session state
+ * readable: a shared pool saved by an unattended run has no owner and is readable by administrators
+ * and the system only.
  * </p>
  *
  * <p>

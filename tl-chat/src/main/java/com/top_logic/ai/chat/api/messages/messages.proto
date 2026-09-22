@@ -482,6 +482,24 @@ message PendingInteractionDto {
 	 * English reason. Empty when the run that asked is no longer waiting, or for a question.
 	 */
 	string toolMode;
+
+	/**
+	 * For a question of type "choice", whether it takes more than one answer, so a rebuilt card
+	 * offers the checkboxes the live one offered rather than silently asking a different question.
+	 * Read off the run that is still waiting; never <code>true</code> for an approval.
+	 */
+	boolean multiSelect;
+
+	/**
+	 * For a question of type "choice", the options to offer, in the order the agent gave them.
+	 *
+	 * <p>
+	 * The same options {@link #payload} holds as the raw JSON the model wrote, parsed here so that
+	 * a client rebuilding the card does not have to know the two element shapes that JSON may
+	 * have. Empty for an approval and for a free-text question.
+	 * </p>
+	 */
+	repeated InteractionOptionDto options;
 }
 
 /**

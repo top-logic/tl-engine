@@ -161,13 +161,23 @@ public class ScreenshotService extends ConfiguredManagedClass<ScreenshotService.
 	 * browser to while logged in somewhere; it can show another system's inbox, another system's
 	 * customer record, or a login form with a name in it. That is the capturing user's own
 	 * material, so nobody else reads it, and an installation that wants a wider rule states one
-	 * rather than inherits it. Issue #227 is where a general read rule for perceivable binaries is
-	 * being discussed; until it exists this is the rule, and it is the narrow one.
+	 * rather than inherits it.
 	 * </p>
 	 *
 	 * <p>
 	 * A screenshot captured by an unattended run has no owner. It is readable by an administrator
 	 * only - the safe direction, not an oversight.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>The same rule is the shipped model policy</b> since #227: the {@code <security-config>} of
+	 * {@code tl-ai-core.binarySecurity.config.xml} grants Read on a screenshot to the account its
+	 * {@code owner} names, which is what {@code viewDocument} asks about through
+	 * {@code ModelSecurity.canRead}. This method is the same statement for the {@code /screenshot/}
+	 * route, which serves bytes to a browser rather than to a model and is therefore not asked
+	 * through a run's security context. The two agree by construction; an installation that
+	 * <em>widens</em> the model grant does not widen this route, which is the conservative
+	 * direction of the two.
 	 * </p>
 	 *
 	 * @param screenshot

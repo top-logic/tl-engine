@@ -31,6 +31,7 @@ import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.UIElement;
@@ -75,11 +76,12 @@ import com.top_logic.tl.ai.core.provider.LLMService.AllAgentNameOptions;
  * </p>
  *
  * <p>
- * Two more carry the composer's unsent text: {@code draft} is the text itself, two-way, and
- * {@code reference} turns a written model object into one atomic reference token inside it. Together
- * they are what lets a button anywhere on the page put a question into the chat without a line of
- * code - an {@code <execute-script>} that builds the sentence and a {@code <write-channel>} that
- * writes it.
+ * Three more carry the composer's unsent text: {@code draft} is the text itself, two-way;
+ * {@code reference} turns a written model object into one atomic reference token inside it; and
+ * {@code quote} does the same for a passage <em>of</em> an object, which only the viewer that showed
+ * it can name. Together they are what lets a button anywhere on the page put a question into the
+ * chat without a line of code - an {@code <execute-script>} that builds the sentence or the passage
+ * and a {@code <write-channel>} that writes it.
  * </p>
  */
 public class ChatConversationElement implements UIElement {
@@ -132,6 +134,13 @@ public class ChatConversationElement implements UIElement {
 		 * @see #getInput()
 		 */
 		String INPUT = "input";
+
+		/**
+		 * Configuration property name for {@link #getSubject()}.
+		 *
+		 * @see #getSubject()
+		 */
+		String SUBJECT = "subject";
 
 		/**
 		 * Configuration property name for {@link #getBusy()}.
@@ -188,6 +197,13 @@ public class ChatConversationElement implements UIElement {
 		 * @see #getReference()
 		 */
 		String REFERENCE = "reference";
+
+		/**
+		 * Configuration property name for {@link #getQuote()}.
+		 *
+		 * @see #getQuote()
+		 */
+		String QUOTE = "quote";
 
 		/**
 		 * Configuration property name for {@link #getTrace()}.
@@ -267,6 +283,13 @@ public class ChatConversationElement implements UIElement {
 		String SELECTION = "selection";
 
 		/**
+		 * Configuration property name for {@link #getPrompts()}.
+		 *
+		 * @see #getPrompts()
+		 */
+		String PROMPTS = "prompts";
+
+		/**
 		 * Configuration property name for {@link #getMenuItems()}.
 		 *
 		 * @see #getMenuItems()
@@ -326,6 +349,44 @@ public class ChatConversationElement implements UIElement {
 		@Format(ChannelRefFormat.class)
 		@Nullable
 		ChannelRef getInput();
+
+		/**
+		 * Optional channel naming the object a conversation started here is about.
+		 *
+		 * <p>
+		 * What stands on this channel when the user's first message creates the conversation is
+		 * written onto that session as {@code tl.ai.execution:AgentSession#subject}, and stays
+		 * there. A page that is about one object at a time - a project, an invoice, a contract -
+		 * thereby gets one conversation per object without remembering anything itself:
+		 * </p>
+		 *
+		 * <pre>
+		 * &lt;chat-conversation input="chatSession" subject="project"/&gt;
+		 * </pre>
+		 *
+		 * <p>
+		 * Only on the way out. Which conversation is shown stays the {@code input} channel's
+		 * business, and which conversations a user may pick from stays the {@code <data-list>}'s -
+		 * scoped by asking the object for the sessions that refer to it:
+		 * </p>
+		 *
+		 * <pre>
+		 * &lt;rows&gt;project -&gt; ifElse(isEmpty($project), list(),
+		 *     $project.referers(`tl.ai.execution:AgentSession#subject`)
+		 *         .filter(s -&gt; $s.get(`tl.ai.execution:AgentSession#owner`) == currentUser()))&lt;/rows&gt;
+		 * </pre>
+		 *
+		 * <p>
+		 * A conversation is stamped once, when it comes into being: opening an older one while
+		 * another object stands here does not move it, and a conversation started while the channel
+		 * was empty keeps no subject rather than being given one later.
+		 * </p>
+		 */
+		@Name(SUBJECT)
+		@Label("Subject")
+		@Format(ChannelRefFormat.class)
+		@Nullable
+		ChannelRef getSubject();
 
 		/**
 		 * Optional output channel written {@code true} while the agent is working.
@@ -459,6 +520,45 @@ public class ChatConversationElement implements UIElement {
 		@Format(ChannelRefFormat.class)
 		@Nullable
 		ChannelRef getReference();
+
+		/**
+		 * Optional input channel: a marked passage of an object becomes one atomic reference token
+		 * in the draft, written as a map of what the token carries.
+		 *
+		 * <p>
+		 * What {@link #getReference() reference} cannot say. That channel takes an object, whose
+		 * quoted text is everything this element knows about it; a reader who marked one paragraph
+		 * in the host's own viewer wants that paragraph quoted, and only the viewer that showed it
+		 * knows which one. So this channel takes the token itself - the object the passage is from,
+		 * the passage, and optionally a label, a location and a kind:
+		 * </p>
+		 *
+		 * <pre>
+		 * &lt;chat-conversation quote="chatQuote"/&gt;
+		 * </pre>
+		 *
+		 * <p>
+		 * A write is a map, which is what a TL-Script expression produces:
+		 * </p>
+		 *
+		 * <pre>
+		 * section -&gt; {"id": $section, "location": "02 Kontext", "text": $marked}
+		 * </pre>
+		 *
+		 * <p>
+		 * {@code id} is normally the model object itself rather than a printed identifier: the
+		 * element then fills the kind, the stable id and the label from it - a nested
+		 * {@code <mention>} having its say in the label - and the write only has to name the
+		 * passage. A map with no {@code text} says nothing, because an object without a passage is
+		 * what {@link #getReference() reference} is for. Like it, this channel is read and never
+		 * written.
+		 * </p>
+		 */
+		@Name(QUOTE)
+		@Label("Quote")
+		@Format(ChannelRefFormat.class)
+		@Nullable
+		ChannelRef getQuote();
 
 		/**
 		 * How much of the agent's execution the transcript shows: nothing, a collapsed summary, or
@@ -607,6 +707,23 @@ public class ChatConversationElement implements UIElement {
 		@Label("Selection")
 		@Nullable
 		Selection getSelection();
+
+		/**
+		 * The first questions this page offers, as cards the user clicks instead of typing.
+		 *
+		 * <p>
+		 * A click fills the composer; it does not send. The user reads the sentence and presses
+		 * send - the same rule {@link #getDraft() draft}, {@link #getReference() reference} and
+		 * {@link #getQuote() quote} follow, and the reason a card may put a long, precise question
+		 * there that nobody would type.
+		 * </p>
+		 *
+		 * @see Prompts
+		 */
+		@Name(PROMPTS)
+		@Label("Prompts")
+		@Nullable
+		Prompts getPrompts();
 
 		/**
 		 * Registered composer-menu-item names.
@@ -964,6 +1081,140 @@ public class ChatConversationElement implements UIElement {
 		@Label("Stable")
 		@BooleanDefault(true)
 		boolean getStable();
+	}
+
+	/**
+	 * The first questions this page offers, as cards standing under the greeting of a new chat.
+	 *
+	 * <p>
+	 * A new chat is the one screen where a user has nothing to react to, and a page knows better
+	 * than the chat what is worth asking on it. So a host names the questions here and the user
+	 * clicks one instead of typing it.
+	 * </p>
+	 *
+	 * <p>
+	 * The cards stand between the greeting and the prompt field, and only there: a conversation the
+	 * user opened from the list is not short of a first question, whether or not it holds a turn.
+	 * That is the rule, not a default - there is nothing to switch off.
+	 * </p>
+	 *
+	 * <p>
+	 * Bound with TL-Script the way {@link Context} binds its facts: the {@link #getInputs() inputs}
+	 * are channels of this page whose current values become the leading arguments of every card's
+	 * {@link Prompt#getValue() value} expression, evaluated on the server in the acting user's
+	 * context and re-evaluated whenever an input changes. A card can therefore name what the page is
+	 * showing - "summarise <em>this</em> invoice" - rather than only a fixed sentence.
+	 * </p>
+	 *
+	 * <p>
+	 * Clicking one writes the evaluated text into the composer, exactly as a host writing the
+	 * {@link Config#getDraft() draft} channel does, and the composer reports it back onto that
+	 * channel. Nothing is sent.
+	 * </p>
+	 */
+	@TagName("prompts")
+	public interface Prompts extends ConfigurationItem {
+
+		/**
+		 * Configuration property name for {@link #getInputs()}.
+		 *
+		 * @see #getInputs()
+		 */
+		String INPUTS = "inputs";
+
+		/**
+		 * Configuration property name for {@link #getCards()}.
+		 *
+		 * @see #getCards()
+		 */
+		String CARDS = "cards";
+
+		/**
+		 * References to channels whose values become the leading positional arguments of every card
+		 * expression, in the order they are listed.
+		 */
+		@Name(INPUTS)
+		@ListBinding(format = ChannelRefFormat.class, tag = "input", attribute = "channel")
+		List<ChannelRef> getInputs();
+
+		/**
+		 * The cards themselves, in the order they are shown.
+		 *
+		 * <p>
+		 * The default container, so a card is written as a direct child of the section rather than
+		 * inside a wrapper element of its own.
+		 * </p>
+		 */
+		@Name(CARDS)
+		@DefaultContainer
+		@EntryTag("prompt")
+		List<Prompt> getCards();
+	}
+
+	/**
+	 * One question this page offers the user.
+	 *
+	 * @see Prompts
+	 */
+	@TagName("prompt")
+	public interface Prompt extends ConfigurationItem {
+
+		/**
+		 * Configuration property name for {@link #getLabel()}.
+		 *
+		 * @see #getLabel()
+		 */
+		String LABEL = "label";
+
+		/**
+		 * Configuration property name for {@link #getIcon()}.
+		 *
+		 * @see #getIcon()
+		 */
+		String ICON = "icon";
+
+		/**
+		 * Configuration property name for {@link #getValue()}.
+		 *
+		 * @see #getValue()
+		 */
+		String VALUE = "value";
+
+		/**
+		 * What the card says, in the user's own language.
+		 *
+		 * <p>
+		 * The short form of the question, not the question itself: the card has one line, while the
+		 * {@link #getValue() value} it fills in may be a paragraph.
+		 * </p>
+		 */
+		@Name(LABEL)
+		@Label("Label")
+		@Mandatory
+		ResKey getLabel();
+
+		/**
+		 * The icon on the card, e.g. {@code css:bi bi-receipt}.
+		 *
+		 * <p>
+		 * Named the way a {@code <chat-rail/>} section names its icon. Cards without one show their
+		 * label alone, which is what a set of cards that say nothing an icon could add should do.
+		 * </p>
+		 */
+		@Name(ICON)
+		@Label("Icon")
+		@Nullable
+		ThemeImage getIcon();
+
+		/**
+		 * TL-Script computing the text the click puts into the composer, taking the enclosing
+		 * {@link Prompts#getInputs() inputs} as its leading arguments.
+		 */
+		@Name(VALUE)
+		@Label("Value")
+		@Mandatory
+		@NonNullable
+		Expr getValue();
 	}
 
 	/**

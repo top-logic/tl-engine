@@ -1,6 +1,6 @@
 import {
   React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding,
-  useFocusTrap, FillBarrier, startPointerDrag,
+  useFocusTrap, FillBarrier, startPointerDrag, tooltipProps,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
@@ -311,6 +311,8 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
 
   const titleId = controlId + '-title';
 
+  const maximizeLabel = maximized ? i18n['js.window.restore'] : i18n['js.window.maximize'];
+
   return (
     <KeyboardScopeProvider modal>
       {closable && <EscapeToClose onClose={handleClose} />}
@@ -340,7 +342,8 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
           type="button"
           className="tlWindow__maximizeBtn"
           onClick={handleToggleMaximize}
-          title={maximized ? i18n['js.window.restore'] : i18n['js.window.maximize']}
+          aria-label={maximizeLabel}
+          {...tooltipProps(maximizeLabel)}
         >
           {maximized ? (
             // Restore icon: two overlapping squares.
@@ -361,7 +364,8 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
           className="tlWindow__closeBtn"
           onClick={handleClose}
           disabled={!closable}
-          title={i18n['js.window.close']}
+          aria-label={i18n['js.window.close']}
+          {...tooltipProps(i18n['js.window.close'])}
         >
           <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
             <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2"

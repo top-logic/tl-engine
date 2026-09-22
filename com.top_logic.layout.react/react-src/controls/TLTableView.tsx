@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, useStandaloneKeyboardScope, writeDragPayload, readDragPayload, dragTypeAccepted, dropPositionAt, startPointerDrag, useCloseOnOutsidePress, TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, useStandaloneKeyboardScope, writeDragPayload, readDragPayload, dragTypeAccepted, dropPositionAt, startPointerDrag, useCloseOnOutsidePress, tooltipProps, TOOLTIP_WHEN_CLIPPED } from 'tl-react-bridge';
 import type { TLCellProps, TLDropPosition } from 'tl-react-bridge';
 
 /**
@@ -118,22 +118,6 @@ interface RowState {
 }
 
 const MIN_COL_WIDTH = 50;
-
-/**
- * Declares the given text as the tooltip of the element the result is spread onto.
- */
-function tooltipOf(text: string): Record<string, string> {
-  return { [TOOLTIP_ATTR]: `text:${text}` };
-}
-
-/**
- * Declares an element's own text as its tooltip, offered only while that text is clipped - so the
- * tooltip says what the element cannot show, and nothing where the text is readable as it stands.
- */
-const TOOLTIP_WHEN_CLIPPED: Record<string, string> = {
-  [TOOLTIP_ATTR]: 'content',
-  [TOOLTIP_WHEN_ATTR]: WHEN_TRUNCATED,
-};
 
 /**
  * The width the column needs for the content it shows right now: its heading and the cells of the
@@ -271,7 +255,7 @@ const ColumnsButton: React.FC<{
   <button
     type="button"
     className={'tlTableView__columnsButton' + (inCell ? ' tlTableView__columnsButton--inCell' : '')}
-    {...tooltipOf(label)}
+    {...tooltipProps(label)}
     aria-label={label}
     // In a heading, the gestures of the heading itself (sorting, dragging) are none of the
     // button's business.
@@ -1186,7 +1170,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                       type="button"
                       className="tlTableView__chipLabel"
                       aria-pressed={isActive}
-                      {...tooltipOf(isActive ? i18n['js.table.clearFilter'] : named.label)}
+                      {...tooltipProps(isActive ? i18n['js.table.clearFilter'] : named.label)}
                       onClick={() => handleNamedFilter(named.id)}
                     >
                       {named.label}
@@ -1197,7 +1181,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                       <button
                         type="button"
                         className="tlTableView__chipRemove"
-                        {...tooltipOf(i18n['js.table.deleteFilter'])}
+                        {...tooltipProps(i18n['js.table.deleteFilter'])}
                         aria-label={i18n['js.table.deleteFilter']}
                         onClick={(e) => handleDeleteNamedFilter(named.id, e)}
                       >
@@ -1209,7 +1193,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               })}
             </div>
           )}
-          <div className="tlTableView__search" {...tooltipOf(i18n['js.table.searchHint'])}>
+          <div className="tlTableView__search" {...tooltipProps(i18n['js.table.searchHint'])}>
             <i className="bi bi-search" aria-hidden="true" />
             <input
               type="search"
@@ -1225,7 +1209,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
             <button
               type="button"
               className="tlTableView__barButton"
-              {...tooltipOf(i18n['js.table.saveFilter'])}
+              {...tooltipProps(i18n['js.table.saveFilter'])}
               aria-label={i18n['js.table.saveFilter']}
               onClick={() => setSaveName('')}
             >
@@ -1246,7 +1230,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               <button
                 type="button"
                 className="tlTableView__barButton"
-                {...tooltipOf(i18n['js.table.saveFilter'])}
+                {...tooltipProps(i18n['js.table.saveFilter'])}
                 aria-label={i18n['js.table.saveFilter']}
                 disabled={!saveName.trim()}
                 onClick={handleSaveSubmit}
@@ -1256,7 +1240,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               <button
                 type="button"
                 className="tlTableView__barButton"
-                {...tooltipOf(i18n['js.table.cancelSave'])}
+                {...tooltipProps(i18n['js.table.cancelSave'])}
                 aria-label={i18n['js.table.cancelSave']}
                 onClick={() => setSaveName(null)}
               >
@@ -1356,17 +1340,17 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 onDragEnd={handleDragEnd}
               >
                 <span className="tlTableView__headerLabel"
-                  {...(col.tooltip ? tooltipOf(col.tooltip) : TOOLTIP_WHEN_CLIPPED)}>{col.label}</span>
+                  {...(col.tooltip ? tooltipProps(col.tooltip) : TOOLTIP_WHEN_CLIPPED)}>{col.label}</span>
                 {col.name === grouping && (
                   <i className="tlTableView__groupMark bi bi-collection"
-                    {...tooltipOf(i18n['js.table.grouped'])} aria-hidden="true" />
+                    {...tooltipProps(i18n['js.table.grouped'])} aria-hidden="true" />
                 )}
                 {col.filterable && (
                   <button
                     type="button"
                     className={'tlTableView__filterButton'
                       + (col.filterActive ? ' tlTableView__filterButton--active' : '')}
-                    {...tooltipOf(i18n['js.table.filter'])}
+                    {...tooltipProps(i18n['js.table.filter'])}
                     aria-label={i18n['js.table.filter']}
                     style={{
                       border: 'none', background: 'transparent', cursor: 'pointer', padding: '0 4px',
@@ -1427,7 +1411,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           className={'tlTableView__frozenSplitter'
             + (frozenPreview ? ' tlTableView__frozenSplitter--active' : '')}
           style={{ left: frozenWidth }}
-          {...tooltipOf(i18n['js.table.freezeSplitter'])}
+          {...tooltipProps(i18n['js.table.freezeSplitter'])}
           aria-label={i18n['js.table.freezeSplitter']}
           onPointerDown={handleFrozenSplitStart}
         />
@@ -1529,7 +1513,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 // declaration sits on the value, so the expand toggle and the group size - which
                 // are the cell's text as much as the value is - stay out of it.
                 const cellTooltip = row.tooltips?.[col.name];
-                const cellTooltipProps = cellTooltip ? tooltipOf(cellTooltip) : TOOLTIP_WHEN_CLIPPED;
+                const cellTooltipProps = cellTooltip ? tooltipProps(cellTooltip) : TOOLTIP_WHEN_CLIPPED;
                 return (
                   <div
                     key={col.name}

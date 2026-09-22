@@ -52,6 +52,25 @@ const MODE_DYNAMIC = 'dynamic';
 /** {@link TOOLTIP_ATTR} value taking the tooltip from the declaring element's own text. */
 const MODE_CONTENT = 'content';
 
+/**
+ * Declares the given text as the tooltip of the element the result is spread onto.
+ *
+ * <p>Text that is empty or absent yields no attributes at all, so the result can be spread
+ * unconditionally onto an element whose tooltip is optional.</p>
+ */
+export function tooltipProps(text?: string | null): Record<string, string> {
+  return text ? { [TOOLTIP_ATTR]: `text:${text}` } : {};
+}
+
+/**
+ * Declares an element's own text as its tooltip, offered only while that text is clipped - so the
+ * tooltip says what the element cannot show, and nothing where the text is readable as it stands.
+ */
+export const TOOLTIP_WHEN_CLIPPED: Record<string, string> = {
+  [TOOLTIP_ATTR]: MODE_CONTENT,
+  [TOOLTIP_WHEN_ATTR]: WHEN_TRUNCATED,
+};
+
 export interface TooltipResolveDetail {
   target: Element;
   resolved: { key: string } | { inline: TooltipData } | null;

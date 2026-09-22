@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { TICK_MS, formatDuration } from './duration';
 
@@ -100,7 +100,7 @@ const TLNoticeBar: React.FC<TLCellProps> = ({ controlId }) => {
       className={`tlNoticeBar tlNoticeBar--${severity}${clickable ? ' tlNoticeBar--clickable' : ''}`}
       role={clickable ? 'button' : 'status'} aria-live="polite"
       tabIndex={clickable ? 0 : undefined}
-      title={actionLabel ?? undefined}
+      {...tooltipProps(actionLabel)}
       aria-label={clickable ? `${text} ${actionLabel}` : undefined}
       onClick={clickable ? handleAction : undefined}
       onKeyDown={clickable

@@ -1,9 +1,13 @@
-import { React, useTLState, TLChild, TOOLTIP_ATTR } from 'tl-react-bridge';
+import { React, useTLState, TLChild, useI18N, tooltipProps, TOOLTIP_ATTR } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import FontIcon from './FontIcon';
 import { FormLayoutContext } from './FormLayoutContext';
 
 const { useContext, useState, useCallback } = React;
+
+const I18N_KEYS = {
+  'js.formField.help': 'Help',
+};
 
 /**
  * Form field chrome wrapper that renders label, required indicator,
@@ -34,6 +38,7 @@ const { useContext, useState, useCallback } = React;
 const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const ctx = useContext(FormLayoutContext);
+  const i18n = useI18N(I18N_KEYS);
 
   const label = (state.label as string) ?? '';
   const required = state.required === true;
@@ -90,7 +95,7 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
           {dirty && <span className="tlFormField__dirtyDot" />}
           {helpText && !readOnly && (
             <button type="button" className="tlFormField__helpIcon" onClick={toggleHelp}
-              aria-label="Help">
+              aria-label={i18n['js.formField.help']} {...tooltipProps(i18n['js.formField.help'])}>
               <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
                 <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" strokeWidth="1.5" />
                 <text x="8" y="12" textAnchor="middle" fontSize="10"

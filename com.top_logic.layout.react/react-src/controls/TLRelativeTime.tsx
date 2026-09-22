@@ -1,4 +1,4 @@
-import { React, useTLState } from 'tl-react-bridge';
+import { React, useTLState, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 /** How often the displayed relative text is recomputed. */
@@ -51,7 +51,7 @@ const TLRelativeTime: React.FC<TLCellProps> = ({ controlId }) => {
   }
 
   return (
-    <span id={controlId} className="tlRelativeTime" title={label}>
+    <span id={controlId} className="tlRelativeTime" {...tooltipProps(label)}>
       {formatRelative(timestamp, locale)}
     </span>
   );

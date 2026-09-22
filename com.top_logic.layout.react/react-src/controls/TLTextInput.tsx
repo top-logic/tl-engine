@@ -1,4 +1,4 @@
-import { React, useTLFieldValue, useTLCommand, useTLSubmitOnEnter, useI18N } from 'tl-react-bridge';
+import { React, useTLFieldValue, useTLCommand, useTLSubmitOnEnter, useI18N, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import FontIcon from './FontIcon';
 
@@ -186,7 +186,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
           disabled={state.disabled === true}
           className={cls}
           aria-invalid={hasError || undefined}
-          title={hasError && errorMessage ? errorMessage : undefined}
+          {...tooltipProps(hasError ? errorMessage : undefined)}
         />
       </span>
     );
@@ -203,7 +203,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
       disabled={state.disabled === true}
       className={cls}
       aria-invalid={hasError || undefined}
-      title={hasError && errorMessage ? errorMessage : undefined}
+      {...tooltipProps(hasError ? errorMessage : undefined)}
     />
   );
 
@@ -217,8 +217,8 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            title={text}
             aria-label={t['js.textInput.open']}
+            {...tooltipProps(text)}
           >
             <FontIcon image={OPEN_ICON} />
           </a>

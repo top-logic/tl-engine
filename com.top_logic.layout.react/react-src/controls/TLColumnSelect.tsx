@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, useListReorder } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, useListReorder, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -105,6 +105,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
         // Keep the table from losing its last column: there would be nothing left to click.
         const lastVisible = entry.visible && visibleCount <= 1;
         const dragState = reorder.itemState(index);
+        const groupByLabel = entry.grouped ? i18n['js.table.ungroup'] : i18n['js.table.groupBy'];
         let cls = 'tlColumnSelect__row';
         if (dragState.dropBefore) {
           cls += ' tlColumnSelect__row--dragOver-before';
@@ -123,7 +124,8 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
               type="button"
               className={'tlColumnSelect__groupBy'
                 + (entry.grouped ? ' tlColumnSelect__groupBy--active' : '')}
-              title={entry.grouped ? i18n['js.table.ungroup'] : i18n['js.table.groupBy']}
+              aria-label={groupByLabel}
+              {...tooltipProps(groupByLabel)}
               aria-pressed={entry.grouped}
               onClick={() => handleGroupBy(entry.name)}
             >

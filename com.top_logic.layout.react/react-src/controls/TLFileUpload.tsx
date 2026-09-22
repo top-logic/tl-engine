@@ -1,4 +1,4 @@
-import { React, useTLState, useTLUpload, useI18N } from 'tl-react-bridge';
+import { React, useTLState, useTLUpload, useI18N, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -89,8 +89,8 @@ const TLFileUpload: React.FC<TLCellProps> = ({ controlId }) => {
         className={'tlFileUpload__button' + (effectiveStatus === 'uploading' ? ' tlFileUpload__button--uploading' : '')}
         onClick={handleButtonClick}
         disabled={isDisabled}
-        title={buttonLabel}
         aria-label={buttonLabel}
+        {...tooltipProps(buttonLabel)}
       >
         <svg className="tlFileUpload__icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
           <path d="M8 10V1m0 0L4.5 4.5M8 1l3.5 3.5M2 13h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />

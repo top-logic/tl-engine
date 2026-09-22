@@ -305,8 +305,12 @@ public class HistoryCompaction {
 
 	/**
 	 * Creates a {@link HistoryCompaction} for the given {@link KnowledgeBase}.
+	 *
+	 * @param kb
+	 *        The {@link KnowledgeBase} whose connection pool, SQL dialect and types the operation
+	 *        works on.
 	 */
-	static HistoryCompaction newInstance(DBKnowledgeBase kb) {
+	public static HistoryCompaction newInstance(DBKnowledgeBase kb) {
 		return new HistoryCompaction(kb.dbHelper, kb.getConnectionPool(), kb.getMORepository());
 	}
 

@@ -198,13 +198,14 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 			FieldControlService.getInstance().createFieldControl(_context, part, _model, _inputControl);
 
 		String label = resolveLabel();
-		String helpText = resolveHelpText(part);
+		String description = resolveDescription(part);
 		boolean dirty = _model.isDirty();
 		boolean fullLine = resolveFullLine(part);
 
 		_chrome = new ReactFormFieldChromeControl(_context, label, part.isMandatory(),
-			dirty, null, helpText, null, fullLine, true, _innerControl);
+			dirty, null, description, null, fullLine, true, _innerControl);
 		_chrome.setAgentName(_attributeName);
+		_chrome.setTooltipText(description);
 
 		setupMode(part);
 		applyMode(_formModel.isEditMode());
@@ -251,8 +252,10 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 			_innerControl =
 			FieldControlService.getInstance().createFieldControl(_context, part, _model, _inputControl);
 
+			String description = resolveDescription(part);
 			_chrome.setLabel(resolveLabel());
-			_chrome.setHelpText(resolveHelpText(part));
+			_chrome.setHelpText(description);
+			_chrome.setTooltipText(description);
 			_chrome.setFullLine(resolveFullLine(part));
 			_chrome.setField(_innerControl);
 			_chrome.setDirty(false);
@@ -584,7 +587,16 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 		return _attributeName;
 	}
 
-	private String resolveHelpText(TLStructuredTypePart part) {
+	/**
+	 * What the attribute's label says about itself over and above its own text, {@code null} when
+	 * the label has none.
+	 *
+	 * <p>
+	 * The description is offered twice: as the tooltip of the field label, where the reader looks
+	 * for it, and as the text the help icon unfolds.
+	 * </p>
+	 */
+	private String resolveDescription(TLStructuredTypePart part) {
 		ResKey labelKey = TLModelI18N.getI18NKey(part);
 		return Resources.getInstance().getString(labelKey.tooltipOptional());
 	}

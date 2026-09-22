@@ -1,4 +1,4 @@
-import { React, useTLState, TLChild } from 'tl-react-bridge';
+import { React, useTLState, TLChild, TOOLTIP_ATTR } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import FontIcon from './FontIcon';
 import { FormLayoutContext } from './FormLayoutContext';
@@ -24,6 +24,7 @@ const { useContext, useState, useCallback } = React;
  * - warnings: string[] | null
  * - warningIcon: string (encoded theme icon displayed in front of each warning message)
  * - helpText: string | null
+ * - tooltipText: string | null (plain text offered on the label; the rich `hasTooltip` wins)
  * - dirty: boolean
  * - labelPosition: "side" | "top" | "after" | "hidden" | null  (null = inherit from context)
  * - fullLine: boolean
@@ -46,6 +47,7 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
   const fullLine = state.fullLine === true;
   const visible = state.visible !== false;
   const hasTooltip = state.hasTooltip === true;
+  const tooltipText = state.tooltipText as string | null;
   const field = state.field;
   const readOnly = ctx.readOnly;
 
@@ -55,6 +57,16 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
   const labelHidden = labelPos === 'hidden';
   const hasError = error != null;
   const hasWarnings = warnings != null && warnings.length > 0;
+
+  // What the label says about itself: the rich content the server holds under the tooltip key,
+  // or - the common case of a one-sentence description - the text the state already carries, so
+  // that hovering the label costs no round trip. Offered in view mode as well as in edit mode.
+  const labelTooltip: Record<string, string> = {};
+  if (hasTooltip) {
+    labelTooltip[TOOLTIP_ATTR] = 'key:tooltip';
+  } else if (tooltipText) {
+    labelTooltip[TOOLTIP_ATTR] = `text:${tooltipText}`;
+  }
 
   const className = [
     'tlFormField',
@@ -73,10 +85,7 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
     <div id={controlId} className={className} style={visible ? undefined : { display: 'none' }}>
       {!labelHidden && (
         <div className="tlFormField__label">
-          <span
-            className="tlFormField__labelText"
-            data-tooltip={hasTooltip ? 'key:tooltip' : undefined}
-          >{label}</span>
+          <span className="tlFormField__labelText" {...labelTooltip}>{label}</span>
           {required && !readOnly && <span className="tlFormField__required">*</span>}
           {dirty && <span className="tlFormField__dirtyDot" />}
           {helpText && !readOnly && (

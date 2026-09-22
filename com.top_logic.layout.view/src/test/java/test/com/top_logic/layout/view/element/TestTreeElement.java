@@ -16,10 +16,12 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.layout.react.controlprovider.MetaResourceControlProvider;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.element.TreeElement;
@@ -85,6 +87,31 @@ public class TestTreeElement extends TestCase {
 
 		assertEquals("The tree configures the selection of any number of nodes.",
 			SelectionMode.MULTI, readTreeConfig().getSelectionMode());
+	}
+
+	/**
+	 * Tests that a node of a tree displays the object it stands for without leading away from the
+	 * tree, and that a tree saying nothing about its node display gets exactly that.
+	 */
+	public void testNodeContent() throws Exception {
+		assertDefaultNodeContent("A tree displays its nodes this way unless it says otherwise.",
+			TypedConfiguration.newConfigItem(TreeElement.Config.class));
+
+		assertDefaultNodeContent("The test tree says nothing about its node display.", readTreeConfig());
+	}
+
+	private void assertDefaultNodeContent(String message, TreeElement.Config treeConfig) {
+		PolymorphicConfiguration<?> nodeContent = treeConfig.getNodeContent();
+
+		assertNotNull(message, nodeContent);
+		assertTrue(message + " Node content: " + nodeContent,
+			nodeContent instanceof MetaResourceControlProvider.Config);
+
+		MetaResourceControlProvider.Config display = (MetaResourceControlProvider.Config) nodeContent;
+		assertTrue("A node shows the icon of its object.", display.getImage());
+		assertTrue("A node shows the label of its object.", display.getLabel());
+		assertFalse("A click on a node selects it instead of leading away from the tree.",
+			display.getLink());
 	}
 
 	/**

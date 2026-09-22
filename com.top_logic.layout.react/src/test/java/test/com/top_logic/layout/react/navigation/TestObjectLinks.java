@@ -15,16 +15,21 @@ import junit.framework.TestCase;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.layout.AbstractResourceProvider;
 import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.form.model.SimpleSelectFieldModel;
+import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ForwardingReactContext;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
 import com.top_logic.layout.react.control.table.ReactResourceCellControl;
 import com.top_logic.layout.react.control.tree.ReactTreeControl;
+import com.top_logic.layout.react.controlprovider.MetaResourceControlProvider;
 import com.top_logic.layout.react.navigation.ObjectNavigator;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
@@ -53,6 +58,9 @@ public class TestObjectLinks extends TestCase {
 	private static final String ROOT = "root";
 
 	private static final String HAS_LINK = "\"hasLink\":true";
+
+	/** The state key a display puts the label of its object into. */
+	private static final String LABEL_STATE = "\"label\":";
 
 	private static final String OPTION_LINK = "\"link\":true";
 
@@ -229,6 +237,37 @@ public class TestObjectLinks extends TestCase {
 		assertTrue(state.contains("\"label\":\"" + UNSHOWN + "\""));
 	}
 
+	/** The display an object gets by default stands for the object, so it does not lead away. */
+	public void testTheDefaultDisplayOfAnObjectIsNoLink() {
+		assertFalse(display(TypedConfiguration.newConfigItem(MetaResourceControlProvider.Config.class))
+			.stateAsJSON().contains(HAS_LINK));
+	}
+
+	/** A display configured to lead to the object is a link wherever the object is shown. */
+	public void testAConfiguredLinkLeadsToTheObject() {
+		MetaResourceControlProvider.Config config =
+			TypedConfiguration.newConfigItem(MetaResourceControlProvider.Config.class);
+		config.setLink(true);
+
+		assertTrue(display(config).stateAsJSON().contains(HAS_LINK));
+	}
+
+	/** A display without the label shows the object by its icon alone. */
+	public void testADisplayWithoutTheLabelShowsNoLabel() {
+		MetaResourceControlProvider.Config config =
+			TypedConfiguration.newConfigItem(MetaResourceControlProvider.Config.class);
+		config.setLabel(false);
+
+		assertFalse(display(config).stateAsJSON().contains(LABEL_STATE));
+		assertTrue(display(TypedConfiguration.newConfigItem(MetaResourceControlProvider.Config.class))
+			.stateAsJSON().contains(LABEL_STATE));
+	}
+
+	/** The display the given configuration gives to {@link #SHOWN}. */
+	private ReactControl display(MetaResourceControlProvider.Config config) {
+		return TypedConfigUtil.createInstance(config).createControl(_context, SHOWN);
+	}
+
 	/**
 	 * A tree displaying the given objects as the children of its visible root, with resource cells
 	 * as node content.
@@ -272,11 +311,13 @@ public class TestObjectLinks extends TestCase {
 	}
 
 	/**
-	 * Test suite requiring the session resources a select field labels its empty selection with.
+	 * Test suite requiring the session resources a select field labels its empty selection with, and
+	 * the service that resolves how an object is displayed.
 	 */
 	public static Test suite() {
 		return ModuleTestSetup.setupModule(
-			ServiceTestSetup.createSetup(TestObjectLinks.class, ThreadContextManager.Module.INSTANCE));
+			ServiceTestSetup.createSetup(TestObjectLinks.class, ThreadContextManager.Module.INSTANCE,
+				LabelProviderService.Module.INSTANCE));
 	}
 
 }

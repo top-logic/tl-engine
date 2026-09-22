@@ -25,6 +25,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.control.IReactControl;
@@ -254,10 +255,20 @@ public class TreeElement implements UIElement {
 		PolymorphicConfiguration<? extends ViewCommand> getOnActivate();
 
 		/**
-		 * Optional provider for custom node content controls. If not set, nodes are rendered
-		 * using a simple text label.
+		 * How a node of the tree is displayed.
+		 *
+		 * <p>
+		 * By default, a node shows the icon and the label of the object it stands for, and a click
+		 * on it selects that node. A tree whose nodes should lead to the object they display
+		 * switches the link on:
+		 * </p>
+		 *
+		 * <pre>
+		 * &lt;nodeContent class="com.top_logic.layout.react.controlprovider.MetaResourceControlProvider" link="true"/&gt;
+		 * </pre>
 		 */
 		@Name(NODE_CONTENT)
+		@ItemDefault(MetaResourceControlProvider.Config.class)
 		PolymorphicConfiguration<ReactControlProvider> getNodeContent();
 	}
 
@@ -295,8 +306,7 @@ public class TreeElement implements UIElement {
 		_childrenExecutor = QueryExecutor.compile(config.getChildren());
 		_parentsExecutor = QueryExecutor.compileOptional(config.getParents());
 
-		ReactControlProvider configuredProvider = context.getInstance(config.getNodeContent());
-		_nodeContentProvider = configuredProvider != null ? configuredProvider : MetaResourceControlProvider.INSTANCE;
+		_nodeContentProvider = context.getInstance(config.getNodeContent());
 
 		PolymorphicConfiguration<? extends ViewCommand> onActivate = config.getOnActivate();
 		_onActivateConfig = onActivate instanceof ViewCommand.Config activateConfig ? activateConfig : null;

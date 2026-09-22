@@ -233,6 +233,11 @@ public class OpenDialogAction extends InterruptibleViewAction {
 		dialogContext = dialogContext.withScope(RevealPath.class,
 			opener.append(null, ViewLoader.viewRef(dialogViewPath)));
 
+		// Established before the dialog's content is built, so that every command inside the dialog
+		// is counted here while an action holds its chain.
+		SuspendedCommands suspended = new SuspendedCommands();
+		dialogContext = dialogContext.withScope(SuspendedCommands.class, suspended);
+
 		if (context instanceof ViewContext) {
 			ViewContext parentViewContext = (ViewContext) context;
 			ErrorSink parentErrorSink = parentViewContext.getErrorSink();
@@ -265,6 +270,14 @@ public class OpenDialogAction extends InterruptibleViewAction {
 		DialogHandle handle = mgr.openDialog(closeOnBackdrop, dialogControl, result -> {
 			// Dialog closed.
 		});
+
+		if (handle != null) {
+			// A dialog whose command is still running has nothing to show the work in once it is
+			// gone, and no way to stop it: it stays until the command has settled.
+			handle.setClosable(!suspended.hasSuspended());
+			dialogControl.addCleanupAction(
+				suspended.observe(() -> handle.setClosable(!suspended.hasSuspended())));
+		}
 
 		RevealRegistry registry = dialogContext.getRevealRegistry();
 		if (registry != null) {

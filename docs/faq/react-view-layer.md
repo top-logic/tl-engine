@@ -506,9 +506,11 @@ A `<table>` and a `<tree>` write what the user selects to the channel named by `
 - **A `single` table** replaces the selection with every click, and a click with `Ctrl` on the selected row gives it up again. **A `multi` table** puts a checkbox in front of every row and one in the header selecting and deselecting all of them; a click with `Ctrl` adds a row to the selection or takes it out again, a click with `Shift` selects the range from the row selected last, and `Ctrl+A` selects every row.
 - **In a `multi` tree** a plain click still replaces the selection, a click with `Ctrl` adds a node or takes it out again, and a click with `Shift` selects the range from the node the selection started at; the keyboard gestures are described under [Row activation](#row-activation), where the cursor is.
 - **The channel holds the selection, never a wrapper around it**: the selected object while exactly one row or node is selected, the `Set` of the selected objects while there are several, and `null` while there is none. A display or a command bound to the channel therefore works with either mode, and only one that is to show or process several objects at once has to expect a set. A tree writes the *business objects* of the selected nodes, not the nodes (`TreeSelectionBinding`).
-- **A table also reads its channel** (`TableSelectionBinding`), and how it answers a collection depends on its mode: a `multi` table selects the rows it has for those objects, a `single` table cannot display such a value at all and shows no selection. Either way a value the table has no row for is "nothing selected here" and is **left alone** — clearing it would destroy what another writer put there, the row a second table over a different row set selected or the object a create command wrote before this table's rows caught up. **A tree does not read the channel**: the binding writes it.
+- **A table also reads its channel** (`TableSelectionBinding`), and how it answers a collection depends on its mode: a `multi` table selects the rows it has for those objects, a `single` table cannot display such a value at all and shows no selection. Either way a value the table has no row for is "nothing selected here" and is **left alone** — clearing it would destroy what another writer put there, the row a second table over a different row set selected or the object a create command wrote before this table's rows caught up.
+- **A tree reads its channel too** (`TreeSelectionBinding`): the node of an object another writer puts on it is looked for, the subtrees above it are opened so that it is visible, and it becomes the selection. A collection is answered by mode as in a table — a `multi` tree selects the nodes it has for those objects, a `single` tree cannot display such a value and shows no selection — and an object the tree has no node for is "nothing selected here": the channel **and** the tree's own selection are left alone, since that object may well get a node in a moment. Finding the node means searching the tree, which computes the child list of every node it passes; a large or unbounded tree therefore declares `parents` — `<tree parents="input -> node -> $node.get(\`my:Type#parent\`)">` — and the tree walks from the object up to its root and descends along that chain instead, computing only the child lists on the way.
+- **A tree follows the model it displays** (`ObservableTreeModel`, the tree's counterpart of the row observation a `<table>` does over its `observed-types`): a change reconciles the child lists in place, so a node whose object is still there is the node the display was working with and the subtrees the user opened stay open, a deleted object loses its node, and an object that appeared gets one. Creates need the type in `observed-types`, since no channel value changes when an object is added. The selection is re-applied after every such change, which is what a create command needs: it writes the new object to the selection channel before the tree has a node for it, and the object is revealed and selected as soon as the node exists. An input naming another root builds the tree anew and opens the subtrees that were open again.
 - **A command working on one object binds to a derived channel rather than to the selection**, since the selection may be several: `<derived-channel name="selectedSingle" inputs="selected" expr="sel -> if($sel.size() == 1, $sel.singleElement(), null)"/>` is the selection while it consists of exactly one object and nothing otherwise — `size()` counts nothing as zero, a single object as one and a set as the number of its elements. With `<null-input-disabled/>` that is the whole of "enabled for one selected object". A command working on the whole selection needs nothing: `delete()` and the other collection-valued script functions accept a single object as well as a set of them.
-- Demos in `com.top_logic.demo.react`: the *Attributes* table (`views/attributes.view.xml`) selects several rows — Delete works on all of them, Edit on the single selection through such a derived channel — and *Tree Demo* (`views/demo/tree-demo.view.xml`) shows the selected nodes and the activated one side by side.
+- Demos in `com.top_logic.demo.react`: the *Attributes* table (`views/attributes.view.xml`) selects several rows — Delete works on all of them, Edit on the single selection through such a derived channel — and *Tree Demo* (`views/demo/tree-demo.view.xml`) shows the selected nodes and the activated one side by side, and creates, detaches and deletes nodes in place: a milestone created through a dialog and a ticket created without one are revealed and selected as soon as their node exists, detaching a ticket from its milestone takes the node out of the child list without deleting anything, and a delete works on the whole selection - in each case the opened subtrees stay open.
 
 ## Row activation
 
@@ -638,6 +640,131 @@ Such a page is linkable: `/view/tickets?filter=discussed` opens the list filtere
 - **Auto-advance.** A step can carry its own time: `<step id="ready" auto-advance="2s">` (a duration in the usual `MillisFormat` notation) for an interstitial the user only watches, and `<dynamic-steps auto-advance="q -> …">` for one computed per element — an element the function answers nothing for is a step the user leaves. It reaches the runtime as `WizardStep.autoAdvanceMillis()` and the client as the state key `autoAdvance` of the step displayed, where it becomes a timer; the timer is cleared whenever the step changes. When it fires it reports back naming the step it belongs to, and the wizard moves on **only while that step is still the one displayed** — the user may have moved on themselves in the meantime, and a timer that outlived its step must not carry the display past what they chose. The time runs while the flow *leads through* the step: it is started for a step entered going forward, and not for one the user came back to — a Back out of the step behind an interstitial would otherwise be answered by being sent forward again. A re-expansion that carries the displayed step along does not restart it either; it keeps counting.
 - The demo is `demo/wizard-demo.view.xml` in `com.top_logic.demo.react` (sidebar **Wizard** / **Assistent**, `/view/wizard`): an onboarding flow whose written-out Welcome, Profile and Summary steps enclose a `<dynamic-steps>` over a `questions` channel that grows while the flow is walked, with the Back/Next footer raised out of every step into one slot.
 
+## The sidebar: item kinds, badges and the rail chrome
+
+`<sidebar>` (`SidebarElement`) is the navigation rail of an application shell. It holds a list of items and the chrome of the rail itself; the items are keyed by their `id`, so a configuration fragment of another module adds, repositions (`config:position`) or overrides a single item.
+
+Five kinds of item:
+
+- `<nav-item id icon route badge hidden>` leads to a page. Its content — written directly inside it, usually a `<view-ref>` — is built when the item is first selected, and its `id` is the route segment it contributes (see [URL routing](#url-routing-what-ends-up-in-the-address-bar)).
+- `<group id icon expanded>` gathers further items under a heading the user folds away. A group holds items, not content: the navigation items inside it lead to the same places and are addressed at the sidebar itself, so a group nests inside a group without changing where anything is displayed. Whether it is folded is remembered per user under the group's `id` (`PersonalizingExpandable`, the states stored as one JSON map beside the rail's own collapsed state), and applied to a group at any depth when the item list is pushed. On a folded rail a group opens as a flyout listing its items.
+- `<header-item id icon>` is a caption naming the items that follow it. It leads nowhere and cannot be activated; it divides a long navigation into named sections that all stay visible, where a group would fold them away.
+- `<command-item id>` runs a command instead of leading somewhere. The `<action>` it hosts is a `ViewCommand`, whose label and image the item displays, so the item reads like the button of the same command elsewhere. The item follows the command's executability for as long as the rail stands: invisible is not displayed, not executable is displayed out of reach (greyed), and the item takes its place back as soon as the rules allow it. The reason a rule gives for disabling the command (the text of a `<disabled-if>` expression, say) is what the item shows when the pointer rests on it, as the button of the same command does. The control refuses an activation of an item in either state, so a client addressing the command directly does not bypass the rules.
+- `<separator/>` draws a line between items. It is the one entry that usually carries no `id`, and at most one such anonymous entry may occur — give separators explicit ids where more than one is needed.
+
+`<nav-item>` and `<group>` take an `<access-control scope="…"/>`: an item the current user may not reach is not built at all, and a group whose access is denied withholds everything inside it.
+
+```xml
+<sidebar active-item="attributes">
+    <header>
+        <text>
+            <label>
+                <en>Application</en>
+                <de>Anwendung</de>
+            </label>
+        </text>
+    </header>
+    <header-collapsed>
+        <text>
+            <label>
+                <en>A</en>
+                <de>A</de>
+            </label>
+        </text>
+    </header-collapsed>
+    <items>
+        <header-item id="data">
+            <label>
+                <en>Data</en>
+                <de>Daten</de>
+            </label>
+        </header-item>
+        <nav-item id="attributes" icon="css:bi bi-card-list">
+            <view-ref view="attributes.view.xml"/>
+            <label>
+                <en>Attributes</en>
+                <de>Attribute</de>
+            </label>
+        </nav-item>
+        <nav-item id="tickets" badge="ticketCount" icon="css:bi bi-chat-left-text">
+            <view-ref view="tickets.view.xml"/>
+            <label>
+                <en>Tickets</en>
+                <de>Tickets</de>
+            </label>
+        </nav-item>
+        <group id="demos" expanded="false" icon="css:bi bi-collection">
+            <label>
+                <en>Demos</en>
+                <de>Demos</de>
+            </label>
+            <nav-item id="charts" icon="css:bi bi-bar-chart-line">
+                <view-ref view="demo/chart-demo.view.xml"/>
+                <label>
+                    <en>Charts</en>
+                    <de>Diagramme</de>
+                </label>
+            </nav-item>
+        </group>
+        <nav-item id="print-view" hidden="true">
+            <view-ref view="print.view.xml"/>
+            <label>
+                <en>Print view</en>
+                <de>Druckansicht</de>
+            </label>
+        </nav-item>
+        <separator/>
+        <command-item id="about">
+            <action class="com.top_logic.layout.view.command.GenericViewCommand"
+                image="css:bi bi-info-circle" input="ticketCount"
+            >
+                <label>
+                    <en>About</en>
+                    <de>Info</de>
+                </label>
+                <executability>
+                    <null-input-disabled/>
+                </executability>
+                <notify expr="count -> #('{0} tickets.'@en, '{0} Tickets.'@de).fill($count)"/>
+            </action>
+        </command-item>
+    </items>
+    <footer>
+        <view-ref view="user-menu.view.xml"/>
+    </footer>
+    <footer-collapsed>
+        <text>
+            <label>
+                <en>A</en>
+                <de>A</de>
+            </label>
+        </text>
+    </footer-collapsed>
+</sidebar>
+```
+
+A label is written as a `<label><en>…</en><de>…</de></label>` child; the `label="…"` attribute of the same property names a resource *key*, which an application that keeps its texts in the view file does not have — such a key shows up in the rail as `[TL]`.
+
+**`hidden`** withholds a `<nav-item>` from the rail while leaving it reachable by its route: the page a URL leads to directly, which has no place of its own in the navigation. Routing, content creation and `getChildGroups()` are untouched by it, so a deep link and `<show-object>` reach such a page exactly as they reach a listed one; what is refused is a *selection* sent by the client, which would otherwise switch to a view the user interface does not present.
+
+**`badge`** names a channel whose value is displayed beside the item's label — the number of things waiting in the page it leads to. The value is named as the model names it (`MetaLabelProvider`); nothing and an empty text show no badge at all, which is how a count answers "nothing to report" with a `null` rather than a zero. The badge follows a new value on the channel *and* a change of the object that value points to, so a count computed from an edited object is up to date without the channel being written anew. A count over a whole type reads no channel at all, and therefore names the type it counts as an `observed-types` of its `<derived-channel>` — without that, a channel with no inputs is computed once when the view is built and never again:
+
+```xml
+<derived-channel name="ticketCount"
+    expr="{ tickets = all(`demo.tickets:Ticket`).size(); if($tickets == 0, null, $tickets); }"
+    observed-types="demo.tickets:Ticket"
+/>
+```
+
+**The chrome of the rail** is four lists of view elements outside the item list: `<header>` and `<footer>` stand above and below the items for as long as the rail is on screen, and `<header-collapsed>` / `<footer-collapsed>` replace them while the rail is folded to a narrow strip — room for an abbreviation or an avatar, not for a name and a search field. Each list is created eagerly with the sidebar and may hold any element, a `<view-ref>` included; the views written there are addressed at the sidebar without a key, since whoever reaches them reaches them by opening the rail and nothing else. Left empty, the rail begins with its first item and ends with its last.
+
+**`SidebarItemElement` is the extension point** for an item kind the configuration does not cover — items computed from the model, say, one per project of the current user. An implementation answers two things:
+
+- `createSidebarItem(ViewContext, ItemSite)` builds the `SidebarItem` (`NavigationItem`, `GroupItem`, `HeaderItem`, `CommandItem`, `SeparatorItem`), or `null` for an item that must be omitted, e.g. because access is denied. The item is built *before* the control that displays it exists, so whatever the item has to say to that control — a badge to keep up to date, an executability to follow — is registered through `ItemSite.addBinding(Consumer<ReactSidebarControl>)` and run as soon as the control is there. Inside such a binding, `addAttachListener` / `addDetachListener` start and stop model observation, `addCleanupAction` removes listeners again, and `updateBadge(id, text)` / `refreshItems()` push a changed item list to the client (items are held as objects and serialized as a whole, so a change to one of them reaches the display only with the list it belongs to). The content of a navigation item is built later still, in `ItemSite.contentContext(context, key)` — the context that says where that content will sit, which is what makes an item's page revealable before it has ever been selected.
+- `getChildGroups()` reports the content the item holds, keyed by the id of the item displaying it. An item displaying no content of its own holds nothing; an item holding further items (a group) answers what those hold, so that every navigation item of a sidebar — nested or not — is addressed at the sidebar itself. An element that holds content and does not report it hides every view below it from navigation (see [Where a view is mounted is known statically](#where-a-view-is-mounted-is-known-statically)).
+
+Build the items of a nested list with `SidebarElement.createItems(elements, context, site)`, passing the site on unchanged: an item then behaves the same wherever it is written.
+
 ## URL routing: what ends up in the address bar
 
 **What a URL may load: the entry points.** `/view/<windowName>/some.view.xml` names the view a browser tab displays, and only a view the application declares as an entry point can be named there: the `default-view` of `ViewConfig` (implicitly) or one of its `<entry-points><entry-point view="demo/pdf-demo.view.xml"/></entry-points>` (keyed by the view, so the registrations of several modules merge). Every other view file is a fragment of a display — a dialog, a menu, a page of a tab — which the view enclosing it supplies with the channels it reads, and which alone in a tab shows nothing or fails; `ViewServlet.resolveViewPath` answers such a URL with 404. A remainder that does not end in `.view.xml` is a route, not a view, and loads the default view with the route resolved inside it (see below).
@@ -684,7 +811,7 @@ A `<dashboard>` bounds its tiles instead of following them. Its grid has a defin
 
 The hiding sits on a wrapper element the stack renders itself: a frame's content renders its own root element, and a style set on that from the outside is overwritten the next time the content re-renders.
 
-## Object navigation: display targets, the reveal protocol, `<show-object>`
+## Object navigation: display targets, the reveal protocol, `<show-object>` / `<show-view>`
 
 "Show this business object where the application displays objects of its type" is the view-layer counterpart of the classic `GotoHandler` / `LayoutComponent.makeVisible()`. It consists of three generic parts in `com.top_logic.layout.view.navigation`; none of them knows sidebars, tab bars or tile stacks in particular.
 
@@ -725,6 +852,24 @@ Every control that shows one of several children implements `com.top_logic.layou
 ### Entry points
 
 - **`<show-object/>`** (`ShowObjectAction`) in a `<generic-command>` chain shows the chain's input object and passes it on; no input passes through unchanged; a selection of exactly one object shows that object. `<generic-command input="selection"><show-object/></generic-command>` is the whole configuration of a "go to" button. Java code calls `ObjectNavigation.show(context, object, continuation)`.
+- **`<show-view view="…">`** (`ShowViewAction`) brings one view into view and writes the values its channels receive, without a business object being involved. It carries exactly the attributes and `<bind>` children of a display target's `<show>` — `view` (mandatory), `dialog`, `label`, `label-expr` — and each `<bind expr>` is a TL-Script function of the chain's current value (a `<bind>` without `expr` receives that value itself). The view is reached the same way a target's view is: the containers on the way are opened, or it is drilled down to as a frame, or opened as a dialog. The chain continues with the value it had.
+
+  ```xml
+  <show-view view="tickets.view.xml">
+    <bind channel="activeFilter" expr="term -> 'all'"/>
+    <bind channel="searchTerm" expr="term -> $term"/>
+  </show-view>
+  ```
+
+- **`<show-views>`** (`ShowViewsAction`) holds a list of `<show>` entries carried out in **one** request, so each entry is looked for within the view the entry before it displayed — a display target's `<show>` list, written in the command chain instead of declared per type. Java code calls `ObjectNavigation.show(context, shows, value, continuation)` for either.
+
+  ```xml
+  <show-views>
+    <show view="projects/overview.view.xml"><bind channel="project" expr="t -> $t.container()"/></show>
+    <show view="projects/ticket-detail.view.xml"><bind channel="ticket"/></show>
+  </show-views>
+  ```
+
 - **`ReactContext.getObjectNavigator()`** (`com.top_logic.layout.react.navigation.ObjectNavigator`: `canShow(value)`, `show(context, value)`) is the seam for controls in `com.top_logic.layout.react`, which cannot depend on the view layer; the view layer answers it with `DisplayTargetNavigator`. Through it, **object values displayed read-only are links automatically** wherever a target exists for their type: `ReactResourceCellControl` (tree nodes via `MetaResourceControlProvider`, and any cell built with `useLink`), the read-only values of `ReactDropdownSelectControl` (which is what reference attributes in `<table>` cells and view-mode `<form>` fields render as), and `tlObject` anchors in read-only structured text (`ReactWysiwygControl`, command `showObjectLink`, resolved with `TLObjectLinkUtil` like the classic `OpenTLObjectLink`). A tree hands its node content provider the business object a node stands for (`TreeUIModel.getBusinessObject`), which is why a node is a link exactly like the same object in a cell. The TL-Script functions `htmlObjectLink(object, label)`, `htmlSource(content)` and `htmlText(source)` (`HtmlFunctions` in `com.top_logic.layout.wysiwyg`) write such an anchor and read or write the HTML source of a structured-text attribute, e.g. to append an object reference to a comment.
 
 - **The WYSIWYG editor carries configured commands and inserts what they write.** The editor is chosen for a field by `<input-control class="com.top_logic.layout.react.wysiwyg.WysiwygControlProvider">`, which takes `<commands>` — ordinary view commands (`ViewCommand.Config`, e.g. `<generic-command>`) — and an optional `insert-channel`. The commands run in a child `ViewContext` of the field's view context: they see the channels of the surrounding view, so they take their input from it and hand it on to the dialogs they open, and beside those channels they see the insertion channel the editor declares. Markup written to that channel is inserted at the cursor of the editor (`ReactWysiwygControl.insertAtCursor`, state `insert` = `{seq, html}`; the client inserts it once per `seq`, reports the resulting text, and the request is taken back). Commands placed in a toolbar — the default placement — are rendered as a `ReactToolbarControl` in state `toolbar`, which the client renders beside the formatting buttons.

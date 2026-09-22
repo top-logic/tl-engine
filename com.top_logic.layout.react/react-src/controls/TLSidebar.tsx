@@ -1,5 +1,6 @@
 import {
-  React, useTLState, useTLCommand, TLChild, useI18N, useStandaloneKeyboardScope, FillBarrier,
+  React, useTLState, useTLCommand, TLChild, useI18N, useStandaloneKeyboardScope,
+  useCloseOnOutsidePress, FillBarrier,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { ThemeIcon } from './icon/ThemeIcon';
@@ -27,6 +28,12 @@ interface NavItem extends SidebarItemBase {
 
 interface CommandItemInfo extends SidebarItemBase {
   type: 'command';
+  /** Withheld from the rail and the flyout, and not reachable by keyboard. */
+  hidden?: boolean;
+  /** Shown greyed out, not activatable and skipped by keyboard navigation. */
+  disabled?: boolean;
+  /** Explaining text, the reason for the disabling where a rule gave one. */
+  tooltip?: string;
 }
 
 interface HeaderItemInfo extends SidebarItemBase {
@@ -65,6 +72,10 @@ function collectFocusable(
       if ((item as NavItem).hidden) continue;
       result.push({ id: item.id, type: 'nav', groupId: parentGroupId });
     } else if (item.type === 'command') {
+      const command = item as CommandItemInfo;
+      // An item that is not offered, or offered out of reach, is nothing the roving tabindex
+      // may come to rest on.
+      if (command.hidden || command.disabled) continue;
       result.push({ id: item.id, type: 'command', groupId: parentGroupId });
     } else if (item.type === 'group') {
       result.push({ id: item.id, type: 'group' });
@@ -124,9 +135,10 @@ const SidebarCommandItem: React.FC<{
   onFocus: (id: string) => void;
 }> = ({ item, collapsed, onExecute, tabIndex, itemRef, onFocus }) => (
   <button
-    className="tlSidebar__item tlSidebar__commandItem"
+    className={'tlSidebar__item tlSidebar__commandItem' + (item.disabled ? ' tlSidebar__item--disabled' : '')}
     onClick={() => onExecute(item.id)}
-    title={collapsed ? item.label : undefined}
+    disabled={item.disabled}
+    title={item.tooltip ?? (collapsed ? item.label : undefined)}
     tabIndex={tabIndex}
     ref={itemRef}
     onFocus={() => onFocus(item.id)}
@@ -159,23 +171,16 @@ const SidebarGroupFlyout: React.FC<{
   item: GroupItemInfo;
   activeItemId: string;
   anchorRect: DOMRect | null;
+  triggerRef: React.RefObject<HTMLButtonElement | null>;
   onSelect: (id: string) => void;
   onExecute: (id: string) => void;
   onClose: () => void;
-}> = ({ item, activeItemId, anchorRect, onSelect, onExecute, onClose }) => {
+}> = ({ item, activeItemId, anchorRect, triggerRef, onSelect, onExecute, onClose }) => {
   const flyoutRef = useRef<HTMLDivElement>(null);
 
-  // Close on outside click.
-  useEffect(() => {
-    const handleMouseDown = (e: MouseEvent) => {
-      if (flyoutRef.current && !flyoutRef.current.contains(e.target as Node)) {
-        // Use setTimeout to avoid closing immediately when the group icon triggers the flyout.
-        setTimeout(() => onClose(), 0);
-      }
-    };
-    document.addEventListener('mousedown', handleMouseDown);
-    return () => document.removeEventListener('mousedown', handleMouseDown);
-  }, [onClose]);
+  // Close on a press outside the flyout. A press on the group icon the flyout hangs off is left to
+  // that icon, which toggles the flyout on its click.
+  useCloseOnOutsidePress(true, [flyoutRef, triggerRef], onClose);
 
   // Close on Escape (via the shared keyboard dispatcher).
   useStandaloneKeyboardScope(true, { ESCAPE: onClose });
@@ -202,13 +207,19 @@ const SidebarGroupFlyout: React.FC<{
       <div className="tlSidebar__flyoutHeader">{item.label}</div>
       {item.children.map(child => {
         if (child.type === 'nav' && (child as NavItem).hidden) return null;
+        if (child.type === 'command' && (child as CommandItemInfo).hidden) return null;
         if (child.type === 'nav' || child.type === 'command') {
           const isActive = child.type === 'nav' && child.id === activeItemId;
+          const isDisabled = child.type === 'command' && !!(child as CommandItemInfo).disabled;
+          const tooltip = child.type === 'command' ? (child as CommandItemInfo).tooltip : undefined;
           return (
             <button
               key={child.id}
-              className={'tlSidebar__flyoutItem' + (isActive ? ' tlSidebar__flyoutItem--active' : '')}
+              className={'tlSidebar__flyoutItem' + (isActive ? ' tlSidebar__flyoutItem--active' : '')
+                + (isDisabled ? ' tlSidebar__item--disabled' : '')}
               role="menuitem"
+              disabled={isDisabled}
+              title={tooltip}
               onClick={() => handleChildClick(child)}
             >
               <SidebarIcon icon={child.icon} />
@@ -311,6 +322,7 @@ const SidebarGroup: React.FC<{
           item={item}
           activeItemId={activeItemId}
           anchorRect={anchorRect}
+          triggerRef={headerBtnRef}
           onSelect={onSelect}
           onExecute={onExecute}
           onClose={onCloseFlyout}
@@ -367,6 +379,7 @@ const SidebarItemRenderer: React.FC<{
         tabIndex={focusedId === item.id ? 0 : -1}
         itemRef={setItemRef(item.id)} onFocus={onItemFocus} />;
     case 'command':
+      if ((item as CommandItemInfo).hidden) return null;
       return <SidebarCommandItem item={item} collapsed={collapsed} onExecute={onExecute}
         tabIndex={focusedId === item.id ? 0 : -1}
         itemRef={setItemRef(item.id)} onFocus={onItemFocus} />;
@@ -512,7 +525,16 @@ const TLSidebar: React.FC<TLCellProps> = ({ controlId }) => {
     if (focusable.length === 0) return;
 
     const idx = focusable.findIndex(f => f.id === focusedId);
-    if (idx < 0) return;
+    if (idx < 0) {
+      // The item the roving tabindex rested on was withdrawn while the sidebar stood - a command
+      // that reported itself unexecutable, say. Keyboard navigation resumes at the top instead of
+      // stalling on an item that is no longer there.
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Home' || e.key === 'End') {
+        e.preventDefault();
+        moveFocus(focusable[0].id);
+      }
+      return;
+    }
 
     const current = focusable[idx];
 

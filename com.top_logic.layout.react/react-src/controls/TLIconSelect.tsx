@@ -1,4 +1,4 @@
-import { React, useTLCommand, useTLFieldValue, useI18N, pressClosedSurface, rootClassName } from 'tl-react-bridge';
+import { React, useTLCommand, useTLFieldValue, useI18N, pressClosedSurface, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import IconSelectPopup, { IconPreview } from './icon/IconSelectPopup';
 import type { IconEntry } from './icon/IconSelectPopup';
@@ -73,8 +73,8 @@ const TLIconSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
         }
         onClick={handleClick}
         disabled={disabled}
-        title={value ?? ''}
         aria-label={i18n['js.iconSelect.chooseIcon']}
+        {...tooltipProps(value ?? i18n['js.iconSelect.chooseIcon'])}
       >
         {value ? (
           <IconPreview encoded={value} />

@@ -504,6 +504,28 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey REACT_FORM_GROUP_TOGGLE_COLLAPSE;
 
+	// -- Form field client-side i18n keys --
+
+	/**
+	 * @en Help
+	 */
+	@CustomKey("js.formField.help")
+	public static ResKey JS_FORM_FIELD_HELP;
+
+	// -- Tree client-side i18n keys --
+
+	/**
+	 * @en Expand
+	 */
+	@CustomKey("js.treeView.expand")
+	public static ResKey JS_TREE_VIEW_EXPAND;
+
+	/**
+	 * @en Collapse
+	 */
+	@CustomKey("js.treeView.collapse")
+	public static ResKey JS_TREE_VIEW_COLLAPSE;
+
 	// -- Form group client-side i18n keys --
 
 	/**

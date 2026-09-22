@@ -1,4 +1,4 @@
-import { React, useTLState, TLChild, useCloseOnOutsidePress, useStandaloneKeyboardScope, useFocusTrap, useI18N, rootClassName } from 'tl-react-bridge';
+import { React, useTLState, TLChild, useCloseOnOutsidePress, useStandaloneKeyboardScope, useFocusTrap, useI18N, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { createPortal } from 'react-dom';
 import { ThemeIcon } from './icon/ThemeIcon';
@@ -201,7 +201,7 @@ const MenuGroup: React.FC<{ group: CliqueGroup; align?: 'start' | 'end'; unitInd
         aria-expanded={open}
         aria-haspopup="true"
         aria-label={iconOnly ? label : undefined}
-        title={iconOnly ? label : undefined}
+        {...tooltipProps(iconOnly ? label : undefined)}
       >
         {iconOnly
           ? <ThemeIcon encoded={group.icon!} className="tlToolbar__menuIcon" />

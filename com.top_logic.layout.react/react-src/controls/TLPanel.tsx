@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, useFill, FillBarrier, rootClassName } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, useFill, FillBarrier, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import FontIcon from './FontIcon';
 
@@ -135,6 +135,9 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
   const hasHeader =
     (!!title && title.trim() !== '') || !!state.titleContent || !!state.toolbar || hasActionButtons;
 
+  const minimizeLabel = isMinimized ? i18n['js.panel.restore'] : i18n['js.panel.minimize'];
+  const maximizeLabel = isMaximized ? i18n['js.panel.restore'] : i18n['js.panel.maximize'];
+
   return (
     <div
       id={controlId}
@@ -156,7 +159,8 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
               type="button"
               className="tlPanel__actionButton"
               onClick={handleMinimize}
-              title={isMinimized ? i18n['js.panel.restore'] : i18n['js.panel.minimize']}
+              aria-label={minimizeLabel}
+              {...tooltipProps(minimizeLabel)}
             >
               {isMinimized ? <IconRestoreFromMin /> : <IconMinimize />}
             </button>
@@ -166,7 +170,8 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
               type="button"
               className="tlPanel__actionButton"
               onClick={handleMaximize}
-              title={isMaximized ? i18n['js.panel.restore'] : i18n['js.panel.maximize']}
+              aria-label={maximizeLabel}
+              {...tooltipProps(maximizeLabel)}
             >
               {isMaximized ? <IconRestoreFromMax /> : <IconMaximize />}
             </button>
@@ -176,7 +181,8 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
               type="button"
               className="tlPanel__actionButton"
               onClick={handlePopOut}
-              title={i18n['js.panel.popOut']}
+              aria-label={i18n['js.panel.popOut']}
+              {...tooltipProps(i18n['js.panel.popOut'])}
             >
               <IconPopOut />
             </button>

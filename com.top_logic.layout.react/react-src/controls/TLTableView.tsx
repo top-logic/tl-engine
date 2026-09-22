@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, useStandaloneKeyboardScope, writeDragPayload, readDragPayload, dragTypeAccepted, dropPositionAt, startPointerDrag, useCloseOnOutsidePress, rootClassName } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, useStandaloneKeyboardScope, writeDragPayload, readDragPayload, dragTypeAccepted, dropPositionAt, startPointerDrag, useCloseOnOutsidePress, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED } from 'tl-react-bridge';
 import type { TLCellProps, TLDropPosition } from 'tl-react-bridge';
 import { isInteractiveTarget } from './interactive';
 
@@ -87,6 +87,11 @@ interface ColumnState {
    * cells, e.g. a column holding a button instead of text.
    */
   cssClass?: string;
+  /**
+   * What the column's label says about itself over and above its text, offered on the heading.
+   * Absent for a label that describes itself.
+   */
+  tooltip?: string;
 }
 
 /** One of the filter criteria the table offers under a name, displayed as a chip in the filter bar. */
@@ -101,6 +106,11 @@ interface RowState {
   index: number;
   selected: boolean;
   cells: Record<string, unknown>;
+  /**
+   * The tooltip of the cells that say more than they display, by column name. A cell named here
+   * offers this text; the others offer their own text while it does not fit.
+   */
+  tooltips?: Record<string, string>;
   treeDepth?: number;
   expandable?: boolean;
   expanded?: boolean;
@@ -217,15 +227,15 @@ function editableInRow(
  * column — that heading carries no label, so the button takes no room from the columns there.
  */
 const ColumnsButton: React.FC<{
-  title: string;
+  label: string;
   inCell?: boolean;
   onClick: (event: React.MouseEvent) => void;
-}> = ({ title, inCell, onClick }) => (
+}> = ({ label, inCell, onClick }) => (
   <button
     type="button"
     className={'tlTableView__columnsButton' + (inCell ? ' tlTableView__columnsButton--inCell' : '')}
-    title={title}
-    aria-label={title}
+    {...tooltipProps(label)}
+    aria-label={label}
     // In a heading, the gestures of the heading itself (sorting, dragging) are none of the
     // button's business.
     onMouseDown={(e) => e.stopPropagation()}
@@ -240,31 +250,6 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
   const rootRef = React.useRef<HTMLDivElement>(null);
-
-  // Tooltip resolver: look upwards from the hovered target for a cell carrying
-  // data-row / data-col, and turn that into an opaque key for ReactTableControl.
-  React.useEffect(() => {
-    const node = rootRef.current;
-    if (!node) return;
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail as {
-        target: Element;
-        resolved: { key: string } | { inline: unknown } | null;
-      };
-      let el: Element | null = detail.target;
-      while (el && el !== node) {
-        const rowId = (el as HTMLElement).dataset.row;
-        const colName = (el as HTMLElement).dataset.col;
-        if (rowId != null && colName != null) {
-          detail.resolved = { key: rowId + '|' + colName };
-          return;
-        }
-        el = el.parentElement;
-      }
-    };
-    node.addEventListener('tl-tooltip-resolve', handler as EventListener);
-    return () => node.removeEventListener('tl-tooltip-resolve', handler as EventListener);
-  }, []);
 
   const columns = (state.columns as ColumnState[]) ?? [];
   const totalRowCount = (state.totalRowCount as number) ?? 0;
@@ -1147,7 +1132,6 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     />
     <div ref={rootRef} id={controlId}
       className={rootClassName(state, 'tlTableView' + (dropState && dropState.row === null ? ' tlTableView--dragover' : ''))}
-      data-tooltip="dynamic"
       onDragOver={handleRootDragOver}
       onDragLeave={handleRootDragLeave}
       onDrop={handleRootDrop}
@@ -1170,7 +1154,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                       type="button"
                       className="tlTableView__chipLabel"
                       aria-pressed={isActive}
-                      title={isActive ? i18n['js.table.clearFilter'] : named.label}
+                      {...tooltipProps(isActive ? i18n['js.table.clearFilter'] : named.label)}
                       onClick={() => handleNamedFilter(named.id)}
                     >
                       {named.label}
@@ -1181,7 +1165,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                       <button
                         type="button"
                         className="tlTableView__chipRemove"
-                        title={i18n['js.table.deleteFilter']}
+                        {...tooltipProps(i18n['js.table.deleteFilter'])}
                         aria-label={i18n['js.table.deleteFilter']}
                         onClick={(e) => handleDeleteNamedFilter(named.id, e)}
                       >
@@ -1193,7 +1177,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               })}
             </div>
           )}
-          <div className="tlTableView__search" title={i18n['js.table.searchHint']}>
+          <div className="tlTableView__search" {...tooltipProps(i18n['js.table.searchHint'])}>
             <i className="bi bi-search" aria-hidden="true" />
             <input
               type="search"
@@ -1209,7 +1193,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
             <button
               type="button"
               className="tlTableView__barButton"
-              title={i18n['js.table.saveFilter']}
+              {...tooltipProps(i18n['js.table.saveFilter'])}
               aria-label={i18n['js.table.saveFilter']}
               onClick={() => setSaveName('')}
             >
@@ -1230,7 +1214,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               <button
                 type="button"
                 className="tlTableView__barButton"
-                title={i18n['js.table.saveFilter']}
+                {...tooltipProps(i18n['js.table.saveFilter'])}
                 aria-label={i18n['js.table.saveFilter']}
                 disabled={!saveName.trim()}
                 onClick={handleSaveSubmit}
@@ -1240,7 +1224,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               <button
                 type="button"
                 className="tlTableView__barButton"
-                title={i18n['js.table.cancelSave']}
+                {...tooltipProps(i18n['js.table.cancelSave'])}
                 aria-label={i18n['js.table.cancelSave']}
                 onClick={() => setSaveName(null)}
               >
@@ -1339,17 +1323,19 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 onDrop={handleDrop}
                 onDragEnd={handleDragEnd}
               >
-                <span className="tlTableView__headerLabel">{col.label}</span>
+                <span className="tlTableView__headerLabel"
+                  {...(col.tooltip ? tooltipProps(col.tooltip) : TOOLTIP_WHEN_CLIPPED)}>{col.label}</span>
                 {col.name === grouping && (
                   <i className="tlTableView__groupMark bi bi-collection"
-                    title={i18n['js.table.grouped']} aria-hidden="true" />
+                    {...tooltipProps(i18n['js.table.grouped'])} aria-hidden="true" />
                 )}
                 {col.filterable && (
                   <button
                     type="button"
                     className={'tlTableView__filterButton'
                       + (col.filterActive ? ' tlTableView__filterButton--active' : '')}
-                    title={i18n['js.table.filter']}
+                    {...tooltipProps(i18n['js.table.filter'])}
+                    aria-label={i18n['js.table.filter']}
                     style={{
                       border: 'none', background: 'transparent', cursor: 'pointer', padding: '0 4px',
                       color: col.filterActive ? '#1565c0' : 'inherit',
@@ -1369,7 +1355,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                   </span>
                 )}
                 {cogInHeaderCell && colIdx === columns.length - 1 && (
-                  <ColumnsButton title={i18n['js.table.columns']} inCell onClick={handleOpenColumnSelect} />
+                  <ColumnsButton label={i18n['js.table.columns']} inCell onClick={handleOpenColumnSelect} />
                 )}
                 {!isPinned && (
                   <div
@@ -1409,11 +1395,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           className={'tlTableView__frozenSplitter'
             + (frozenPreview ? ' tlTableView__frozenSplitter--active' : '')}
           style={{ left: frozenWidth }}
-          title={i18n['js.table.freezeSplitter']}
+          {...tooltipProps(i18n['js.table.freezeSplitter'])}
+          aria-label={i18n['js.table.freezeSplitter']}
           onPointerDown={handleFrozenSplitStart}
         />
         {columnSelect && !cogInHeaderCell && (
-          <ColumnsButton title={i18n['js.table.columns']} onClick={handleOpenColumnSelect} />
+          <ColumnsButton label={i18n['js.table.columns']} onClick={handleOpenColumnSelect} />
         )}
       </div>
 
@@ -1505,12 +1492,19 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 if (col.cssClass) cellClass += ' ' + col.cssClass;
                 const isTreeColumn = treeMode && colIdx === 0;
                 const treeDepth = row.treeDepth ?? 0;
+                // What the cell says: the tooltip of its content where it has one, its own text
+                // while the column is too narrow to read it otherwise. In the tree column the
+                // declaration sits on the value, so the expand toggle and the group size - which
+                // are the cell's text as much as the value is - stay out of it.
+                const cellTooltip = row.tooltips?.[col.name];
+                const cellTooltipProps = cellTooltip ? tooltipProps(cellTooltip) : TOOLTIP_WHEN_CLIPPED;
                 return (
                   <div
                     key={col.name}
                     className={cellClass}
                     data-row={row.id}
                     data-col={col.name}
+                    {...(isTreeColumn ? {} : cellTooltipProps)}
                     style={{
                       // The last column the user arranges takes the space left over; a pinned
                       // column keeps its width, so the space stays in front of it. The configured
@@ -1543,7 +1537,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                         )}
                         {/* A row that predates the current columns has no control for a newly shown
                             column yet \u2014 leave that cell empty rather than tearing down the table. */}
-                        {row.cells[col.name] && <TLChild control={row.cells[col.name]} />}
+                        <span className="tlTableView__treeValue" {...cellTooltipProps}>
+                          {row.cells[col.name] && <TLChild control={row.cells[col.name]} />}
+                        </span>
                         {row.groupCount != null && (
                           <span className="tlTableView__groupCount">({row.groupCount})</span>
                         )}

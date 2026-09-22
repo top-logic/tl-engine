@@ -1,4 +1,4 @@
-import { React } from 'tl-react-bridge';
+import { React, tooltipProps } from 'tl-react-bridge';
 
 const { useCallback, useRef } = React;
 
@@ -76,7 +76,7 @@ const ColorPalette: React.FC<ColorPaletteProps> = ({
             (hex == null ? ' tlColorInput__paletteCell--empty' : '')
           }
           style={hex != null ? { backgroundColor: hex } : undefined}
-          title={hex ?? ''}
+          {...tooltipProps(hex)}
           draggable={hex != null}
           onClick={hex != null ? () => onSelect(hex) : undefined}
           onDoubleClick={hex != null ? () => onConfirm(hex) : undefined}

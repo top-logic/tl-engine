@@ -1,4 +1,4 @@
-import { React, useTLState, useTLUpload, useI18N, useStandaloneKeyboardScope, rootClassName } from 'tl-react-bridge';
+import { React, useTLState, useTLUpload, useI18N, useStandaloneKeyboardScope, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -178,8 +178,8 @@ const TLPhotoCapture: React.FC<TLCellProps> = ({ controlId }) => {
           className={cameraBtnClasses.join(' ')}
           onClick={handleCameraClick}
           disabled={localStatus === 'uploading'}
-          title={cameraLabel}
           aria-label={cameraLabel}
+          {...tooltipProps(cameraLabel)}
         >
           <span className="tlPhotoCapture__cameraIcon" />
         </button>
@@ -220,8 +220,8 @@ const TLPhotoCapture: React.FC<TLCellProps> = ({ controlId }) => {
                 type="button"
                 className={mirrorBtnClasses.join(' ')}
                 onClick={() => setMirrored(m => !m)}
-                title={t['js.photoCapture.mirror']}
                 aria-label={t['js.photoCapture.mirror']}
+                {...tooltipProps(t['js.photoCapture.mirror'])}
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="7 8 3 12 7 16" />
@@ -233,8 +233,8 @@ const TLPhotoCapture: React.FC<TLCellProps> = ({ controlId }) => {
                 type="button"
                 className="tlPhotoCapture__overlayCaptureBtn"
                 onClick={handleCapture}
-                title={t['js.photoCapture.capture']}
                 aria-label={t['js.photoCapture.capture']}
+                {...tooltipProps(t['js.photoCapture.capture'])}
               >
                 <span className="tlPhotoCapture__overlayCaptureIcon" />
               </button>
@@ -242,8 +242,8 @@ const TLPhotoCapture: React.FC<TLCellProps> = ({ controlId }) => {
                 type="button"
                 className="tlPhotoCapture__overlayCloseBtn"
                 onClick={closeOverlay}
-                title={t['js.photoCapture.close']}
                 aria-label={t['js.photoCapture.close']}
+                {...tooltipProps(t['js.photoCapture.close'])}
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="6" y1="6" x2="18" y2="18" />

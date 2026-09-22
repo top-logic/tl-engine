@@ -1,4 +1,4 @@
-import { React, useTLState, rootClassName } from 'tl-react-bridge';
+import { React, useTLState, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { useImageSrc } from './imageSource';
 
@@ -45,7 +45,7 @@ const TLAvatar: React.FC<TLCellProps> = ({ controlId }) => {
       <span
         id={controlId}
         className={rootClassName(state, ['tlAvatar', sizeClass].filter(Boolean).join(' '))}
-        title={name ?? undefined}
+        {...tooltipProps(name)}
       >
         <img className="tlAvatar__image" src={src} alt={name ?? ''} />
       </span>
@@ -61,8 +61,8 @@ const TLAvatar: React.FC<TLCellProps> = ({ controlId }) => {
       id={controlId}
       className={rootClassName(state, ['tlAvatar', sizeClass].filter(Boolean).join(' '))}
       style={{ backgroundColor: `hsl(${hue(name)}, 45%, 45%)` }}
-      title={name}
       aria-label={name}
+      {...tooltipProps(name)}
     >
       {initials(name)}
     </span>

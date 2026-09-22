@@ -31,8 +31,6 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.TooltipContent;
-import com.top_logic.layout.react.TooltipProvider;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.react.control.ReactCommandHandler;
@@ -119,7 +117,7 @@ import com.top_logic.util.Resources;
  * @param <R>
  *        The row business object type.
  */
-public class TableViewControl<R> extends ReactControl implements TooltipProvider, DragSourceControl {
+public class TableViewControl<R> extends ReactControl implements DragSourceControl {
 
 	/**
 	 * Notified when the set of selected row keys changes.
@@ -195,9 +193,9 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	 * Prefix of a row's {@link #ROW_ID id}, followed by the row's {@link #ROW_INDEX index}.
 	 *
 	 * <p>
-	 * This is the identity the client refers to a row by - in a tooltip request, and as the key of a
-	 * dragged or dropped-on row. It designates a row for as long as the client's row window is the
-	 * one the server sent, which is what a gesture on a displayed row rests on anyway.
+	 * This is the identity the client refers to a row by - the key of a dragged or dropped-on row.
+	 * It designates a row for as long as the client's row window is the one the server sent, which
+	 * is what a gesture on a displayed row rests on anyway.
 	 * </p>
 	 *
 	 * @see #rowIndex(String)
@@ -209,6 +207,18 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	private static final String ROW_SELECTED = "selected";
 
 	private static final String ROW_CELLS = "cells";
+
+	/**
+	 * Per-row state key holding the tooltip of the row's cells, by column name.
+	 *
+	 * <p>
+	 * Holds an entry for the cells whose {@link CellContent#tooltip()} says something the cell does
+	 * not display; the client shows that text where the cell is. A row whose cells all display what
+	 * they have to say is sent without the key - the client then offers the cell's own text where it
+	 * does not fit.
+	 * </p>
+	 */
+	private static final String ROW_TOOLTIPS = "tooltips";
 
 	private static final String TREE_DEPTH = "treeDepth";
 
@@ -249,6 +259,12 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	 * every cell of that column, its heading included. Absent for a column declaring none.
 	 */
 	private static final String COLUMN_CSS_CLASS = "cssClass";
+
+	/**
+	 * Per-column state key holding the description of the column's {@link ColumnView#label() label},
+	 * which the client offers on the heading. Absent for a column whose label has none.
+	 */
+	private static final String COLUMN_TOOLTIP = "tooltip";
 
 	/** State key telling the client whether to display the filter bar. */
 	private static final String FILTER_BAR = "filterBar";
@@ -432,8 +448,8 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	/** What a row activation runs, {@code null} for a table whose rows cannot be opened. */
 	private ActivationHandler<R> _activationHandler;
 
-	/** Cell controls for currently buffered rows, keyed by row key then column name. */
-	private final Map<Object, Map<String, ReactControl>> _cellCache = new LinkedHashMap<>();
+	/** What is rendered in the cells of the currently buffered rows, keyed by row key. */
+	private final Map<Object, RowCells> _cellCache = new LinkedHashMap<>();
 
 	/** View-supplied custom filter UIs, keyed by column name. */
 	private final Map<String, ColumnFilterUI> _filterUIs = new LinkedHashMap<>();
@@ -626,9 +642,9 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	public void invalidateRowCells(Collection<Object> rowKeys) {
 		boolean changed = false;
 		for (Object key : rowKeys) {
-			Map<String, ReactControl> cells = _cellCache.remove(key);
+			RowCells cells = _cellCache.remove(key);
 			if (cells != null) {
-				cells.values().forEach(ReactControl::cleanupTree);
+				cells.dispose();
 				changed = true;
 			}
 		}
@@ -753,6 +769,10 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 			if (column.cssClass() != null) {
 				columnState.put(COLUMN_CSS_CLASS, column.cssClass());
 			}
+			String tooltip = description(resources, column.label());
+			if (!StringServices.isEmpty(tooltip)) {
+				columnState.put(COLUMN_TOOLTIP, tooltip);
+			}
 			columns.add(columnState);
 		}
 		putState(COLUMNS, columns);
@@ -808,6 +828,18 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		return key == null ? "" : resources.getString(key);
 	}
 
+	/**
+	 * The description belonging to the given label, {@code null} when the label has none.
+	 *
+	 * <p>
+	 * What a label says about itself over and above its own text, resolved from
+	 * {@link ResKey#tooltipOptional()} - the same description a form field offers on its label.
+	 * </p>
+	 */
+	private static String description(Resources resources, ResKey key) {
+		return key == null ? null : resources.getString(key.tooltipOptional());
+	}
+
 	private void updateViewport(int start, int count) {
 		int total = _view.rowCount();
 		int bufferedStart = Math.max(0, start - PREFETCH_ROWS);
@@ -822,9 +854,9 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		// Drop cell controls for rows that left the buffer.
 		for (Object cached : new ArrayList<>(_cellCache.keySet())) {
 			if (!bufferedKeys.contains(cached)) {
-				Map<String, ReactControl> cells = _cellCache.remove(cached);
+				RowCells cells = _cellCache.remove(cached);
 				if (cells != null) {
-					cells.values().forEach(ReactControl::cleanupTree);
+					cells.dispose();
 				}
 			}
 		}
@@ -832,7 +864,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		List<Map<String, Object>> rowStates = new ArrayList<>();
 		int index = bufferedStart;
 		for (Row<R> row : rows) {
-			Map<String, ReactControl> cells = _cellCache.computeIfAbsent(row.key(), key -> createCells(row));
+			RowCells cells = _cellCache.computeIfAbsent(row.key(), key -> createCells(row));
 
 			Map<String, Object> rowState = new LinkedHashMap<>();
 			rowState.put(ROW_ID, ROW_ID_PREFIX + index);
@@ -848,7 +880,10 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 			if (row.kind() == RowKind.GROUP_HEADER) {
 				rowState.put(ROW_GROUP_COUNT, Integer.valueOf(row.group().size()));
 			}
-			rowState.put(ROW_CELLS, cells);
+			rowState.put(ROW_CELLS, cells.controls());
+			if (!cells.tooltips().isEmpty()) {
+				rowState.put(ROW_TOOLTIPS, cells.tooltips());
+			}
 			rowStates.add(rowState);
 			index++;
 		}
@@ -935,14 +970,44 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		return "";
 	}
 
-	private Map<String, ReactControl> createCells(Row<R> row) {
-		Map<String, ReactControl> cells = new LinkedHashMap<>();
+	private RowCells createCells(Row<R> row) {
+		Map<String, ReactControl> controls = new LinkedHashMap<>();
+		Map<String, String> tooltips = new LinkedHashMap<>();
 		for (ColumnView column : _view.columns()) {
-			ReactControl cell = CellContentReactAdapter.toControl(getReactContext(), _view.cell(row, column.name()));
+			CellContent content = _view.cell(row, column.name());
+			ReactControl cell = CellContentReactAdapter.toControl(getReactContext(), content);
 			registerChildControl(cell);
-			cells.put(column.name(), cell);
+			controls.put(column.name(), cell);
+			String tooltip = content.tooltip();
+			if (!StringServices.isEmpty(tooltip)) {
+				tooltips.put(column.name(), tooltip);
+			}
 		}
-		return cells;
+		return new RowCells(controls, tooltips);
+	}
+
+	/**
+	 * What is rendered in the cells of one row: the cell controls and, for the cells that say more
+	 * than they display, their tooltips.
+	 *
+	 * <p>
+	 * Both are built from the same {@link CellContent}, so the row is rendered once however often
+	 * its state is pushed.
+	 * </p>
+	 *
+	 * @param controls
+	 *        The cell control of each column, by column name.
+	 * @param tooltips
+	 *        The {@link CellContent#tooltip() tooltip} of a cell that has one, by column name;
+	 *        empty when no cell of the row has one.
+	 */
+	private record RowCells(Map<String, ReactControl> controls, Map<String, String> tooltips) {
+
+		/** Disposes the cell controls. */
+		void dispose() {
+			controls().values().forEach(ReactControl::cleanupTree);
+		}
+
 	}
 
 	/**
@@ -952,8 +1017,8 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	@Override
 	protected void cleanupChildren() {
 		super.cleanupChildren();
-		for (Map<String, ReactControl> cells : _cellCache.values()) {
-			cells.values().forEach(ReactControl::cleanupTree);
+		for (RowCells cells : _cellCache.values()) {
+			cells.dispose();
 		}
 		_cellCache.clear();
 	}
@@ -1165,8 +1230,8 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	}
 
 	private void clearCells() {
-		for (Map<String, ReactControl> cells : _cellCache.values()) {
-			cells.values().forEach(ReactControl::cleanupTree);
+		for (RowCells cells : _cellCache.values()) {
+			cells.dispose();
 		}
 		_cellCache.clear();
 	}
@@ -2100,27 +2165,6 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 			start = target - _viewportCount + 1;
 		}
 		updateViewport(Math.max(0, start), _viewportCount);
-	}
-
-	@Override
-	public TooltipContent getTooltipContent(String key) {
-		if (key == null) {
-			return null;
-		}
-		int separator = key.indexOf('|');
-		if (separator < 0) {
-			return null;
-		}
-		Row<R> row = rowById(key.substring(0, separator));
-		if (row == null) {
-			return null;
-		}
-		CellContent content = _view.cell(row, key.substring(separator + 1));
-		if (content instanceof CellContent.Labeled labeled
-				&& labeled.tooltip() != null && !labeled.tooltip().isEmpty()) {
-			return new TooltipContent(labeled.tooltip(), null);
-		}
-		return null;
 	}
 
 	/**

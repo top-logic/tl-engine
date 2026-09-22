@@ -1,4 +1,4 @@
-import { React, useTLState, useTLDataUrl, useI18N, useFill, rootClassName } from 'tl-react-bridge';
+import { React, useTLState, useTLDataUrl, useI18N, useFill, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -111,8 +111,8 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
           <button
             type="button"
             className="tlReactButton tlReactButton--icon tlHtml__print"
-            title={t['js.html.print']}
             aria-label={t['js.html.print']}
+            {...tooltipProps(t['js.html.print'])}
             onClick={handlePrint}
           >
             <i className="bi bi-printer" aria-hidden="true" />

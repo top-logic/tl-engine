@@ -1,3 +1,30 @@
+/**
+ * Tooltip delegation for the whole document: a single pair of hover listeners resolves the tooltip
+ * of whatever the pointer rests on and renders it through one {@link TooltipPopover} portal.
+ *
+ * <p>An element declares its tooltip with the {@link TOOLTIP_ATTR} attribute, whose value names
+ * the mode:</p>
+ * <ul>
+ *   <li>{@code text:<text>} - the plain text following the prefix.</li>
+ *   <li>{@code html:<markup>} - the markup following the prefix.</li>
+ *   <li>{@code key:<key>} - rich content fetched from the server for the enclosing mounted
+ *       control, which answers the key.</li>
+ *   <li>{@code dynamic} - the declaring element resolves key or content itself, asked through a
+ *       {@code tl-tooltip-resolve} DOM event that carries the hovered element (a container
+ *       answering for whichever of its parts the pointer rests on).</li>
+ *   <li>{@code content} - the element's own text, whitespace collapsed; an element without text
+ *       has no tooltip.</li>
+ * </ul>
+ *
+ * <p>Resolution walks up from the hovered element, so the closest declaration wins. On the way an
+ * element may attach a condition with {@link TOOLTIP_WHEN_ATTR}; the closest one between the
+ * hovered element and the declaring element - that element included - decides.
+ * {@link WHEN_TRUNCATED} holds the tooltip back while the condition element's text is fully
+ * readable and yields it once that text is clipped or hidden, so the tooltip says what the element
+ * itself cannot show. A condition that is not met yields no tooltip at all: the walk stops at the
+ * declaration that declined instead of falling through to an enclosing one. An unknown condition
+ * imposes no restriction.</p>
+ */
 import React from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { isMountedControl, getApiBase } from './tl-react-bridge';
@@ -6,6 +33,43 @@ import { TooltipPopover, TooltipData } from './TooltipPopover';
 const HOVER_DELAY_MS = 400;
 const CLOSE_DELAY_MS_PASSIVE = 150;
 const CLOSE_DELAY_MS_INTERACTIVE = 400;
+
+/** Attribute with which an element declares its tooltip, see the mode list above. */
+export const TOOLTIP_ATTR = 'data-tooltip';
+
+/** Attribute with which an element restricts when the declared tooltip is shown. */
+export const TOOLTIP_WHEN_ATTR = 'data-tooltip-when';
+
+/**
+ * {@link TOOLTIP_WHEN_ATTR} value showing the tooltip only while the element's text is not fully
+ * readable, because it is clipped or hidden.
+ */
+export const WHEN_TRUNCATED = 'truncated';
+
+/** {@link TOOLTIP_ATTR} value letting the declaring element resolve its tooltip on demand. */
+const MODE_DYNAMIC = 'dynamic';
+
+/** {@link TOOLTIP_ATTR} value taking the tooltip from the declaring element's own text. */
+const MODE_CONTENT = 'content';
+
+/**
+ * Declares the given text as the tooltip of the element the result is spread onto.
+ *
+ * <p>Text that is empty or absent yields no attributes at all, so the result can be spread
+ * unconditionally onto an element whose tooltip is optional.</p>
+ */
+export function tooltipProps(text?: string | null): Record<string, string> {
+  return text ? { [TOOLTIP_ATTR]: `text:${text}` } : {};
+}
+
+/**
+ * Declares an element's own text as its tooltip, offered only while that text is clipped - so the
+ * tooltip says what the element cannot show, and nothing where the text is readable as it stands.
+ */
+export const TOOLTIP_WHEN_CLIPPED: Record<string, string> = {
+  [TOOLTIP_ATTR]: MODE_CONTENT,
+  [TOOLTIP_WHEN_ATTR]: WHEN_TRUNCATED,
+};
 
 export interface TooltipResolveDetail {
   target: Element;
@@ -16,9 +80,12 @@ type Spec =
   | { kind: 'text'; text: string; el: Element }
   | { kind: 'html'; html: string; el: Element }
   | { kind: 'key'; controlId: string; key: string; el: Element }
-  | { kind: 'dynamic'; host: Element };
+  | { kind: 'dynamic'; host: Element }
+  | { kind: 'content'; el: Element };
 
 interface Active {
+  /** Number of this activation, distinct from every earlier one. */
+  id: number;
   anchor: Element;
   data: TooltipData;
 }
@@ -29,6 +96,7 @@ let _root: Root | null = null;
 let _openTimer: number | null = null;
 let _closeTimer: number | null = null;
 let _active: Active | null = null;
+let _activations = 0;
 
 export function initTooltipHost(): void {
   if (_hostDiv) return;
@@ -48,11 +116,19 @@ function onPointerOver(e: PointerEvent): void {
   const spec = findSpec(target);
   if (!spec) return;
 
+  const pending = resolveSpec(spec, target);
+  if (!pending) {
+    // A declaration that yields nothing - an element whose own text is empty, a host declining
+    // to answer - leaves the pointer on an element without a tooltip, which
+    // closes what is open. The pointer arriving here suppressed the close its pointerout would
+    // otherwise have scheduled, so the close is scheduled here instead.
+    cancelOpen();
+    scheduleClose();
+    return;
+  }
+
   cancelClose();
   cancelOpen();
-
-  const pending = resolveSpec(spec, target);
-  if (!pending) return;
 
   const anchor = spec.kind === 'dynamic' ? target : spec.el;
   scheduleOpen(anchor, pending);
@@ -67,21 +143,80 @@ function onPointerOut(e: PointerEvent): void {
   scheduleClose();
 }
 
+/**
+ * The tooltip declared for the given element, looked up along its ancestors.
+ *
+ * <p>The first {@link TOOLTIP_ATTR} met decides. A {@link TOOLTIP_WHEN_ATTR} passed on the way -
+ * the closest one, which is the one met first - restricts it: when its condition does not hold,
+ * that declaration declines and no enclosing one takes over.</p>
+ */
 function findSpec(start: Element | null): Spec | null {
   let el: Element | null = start;
+  let condition: { value: string; el: Element } | null = null;
   while (el) {
-    const raw = el.getAttribute?.('data-tooltip');
+    if (!condition) {
+      const when = el.getAttribute?.(TOOLTIP_WHEN_ATTR);
+      if (when != null) condition = { value: when, el };
+    }
+    const raw = el.getAttribute?.(TOOLTIP_ATTR);
     if (raw != null) {
       const parsed = parseAttr(raw, el);
-      if (parsed) return parsed;
+      if (parsed) {
+        if (condition && !conditionMet(condition.value, condition.el)) return null;
+        return parsed;
+      }
     }
     el = el.parentElement;
   }
   return null;
 }
 
+const _unknownConditions = new Set<string>();
+
+function conditionMet(condition: string, el: Element): boolean {
+  if (condition === WHEN_TRUNCATED) return isTruncated(el);
+  if (!_unknownConditions.has(condition)) {
+    _unknownConditions.add(condition);
+    console.warn(`Unknown ${TOOLTIP_WHEN_ATTR} value "${condition}", tooltip shown unconditionally.`);
+  }
+  return true;
+}
+
+/**
+ * Whether the text of the given element is not fully readable.
+ *
+ * <p>Text is unreadable when it does not fit its box - the element's own or that of a descendant,
+ * which is where a clipped label sits - or when the element showing it has no layout box at all,
+ * as a label a compact layout sets to {@code display: none} has. Only descendants are checked for
+ * that, since the element itself is under the pointer and therefore laid out.</p>
+ */
+function isTruncated(el: Element): boolean {
+  if (isClipped(el)) return true;
+  const descendants = el.querySelectorAll('*');
+  for (let n = 0; n < descendants.length; n++) {
+    const descendant = descendants[n];
+    if (isClipped(descendant)) return true;
+    if (hasOwnText(descendant) && descendant.getClientRects().length === 0) return true;
+  }
+  return false;
+}
+
+/** Whether the element's content is wider than the box showing it. */
+function isClipped(el: Element): boolean {
+  return el.scrollWidth > el.clientWidth;
+}
+
+/** Whether the element shows text of its own, as opposed to only the text of nested elements. */
+function hasOwnText(el: Element): boolean {
+  for (let child = el.firstChild; child; child = child.nextSibling) {
+    if (child.nodeType === Node.TEXT_NODE && (child.nodeValue ?? '').trim() !== '') return true;
+  }
+  return false;
+}
+
 function parseAttr(raw: string, el: Element): Spec | null {
-  if (raw === 'dynamic') return { kind: 'dynamic', host: el };
+  if (raw === MODE_DYNAMIC) return { kind: 'dynamic', host: el };
+  if (raw === MODE_CONTENT) return { kind: 'content', el };
   const idx = raw.indexOf(':');
   if (idx < 0) return null;
   const prefix = raw.substring(0, idx);
@@ -113,6 +248,12 @@ function resolveSpec(spec: Spec, target: Element): Promise<TooltipData | null> |
   switch (spec.kind) {
     case 'text': return Promise.resolve({ text: spec.text });
     case 'html': return Promise.resolve({ html: spec.html });
+    case 'content': {
+      // The rendered text, read as one line: the tooltip repeats what the element says, not how
+      // its markup happens to lay it out.
+      const text = (spec.el.textContent ?? '').replace(/\s+/g, ' ').trim();
+      return text ? Promise.resolve({ text }) : null;
+    }
     case 'key': {
       const cacheKey = spec.controlId + '\u0000' + spec.key;
       let p = _cache.get(cacheKey);
@@ -144,10 +285,20 @@ function resolveSpec(spec: Spec, target: Element): Promise<TooltipData | null> |
 function scheduleOpen(anchor: Element, pending: Promise<TooltipData | null>): void {
   _openTimer = window.setTimeout(async () => {
     _openTimer = null;
-    const data = await pending;
-    if (!data) return;
-    if (!document.contains(anchor)) return;
-    _active = { anchor, data };
+    let data: TooltipData | null = null;
+    try {
+      data = await pending;
+    } catch (problem) {
+      console.warn('Tooltip resolution failed.', problem);
+    }
+    // A resolution arriving empty or failing, and an anchor gone from the document, leave the
+    // pointer on an element without a tooltip: whatever is open goes with it.
+    if (!data || !document.contains(anchor)) {
+      _active = null;
+      renderActive();
+      return;
+    }
+    _active = { id: ++_activations, anchor, data };
     renderActive();
   }, HOVER_DELAY_MS);
 }
@@ -172,9 +323,13 @@ function cancelClose(): void {
 function renderActive(): void {
   if (!_root || !_hostDiv) return;
   if (!_active) { _root.render(null); return; }
-  const { anchor, data } = _active;
+  const { id, anchor, data } = _active;
+  // Each activation mounts a popover of its own: the floating hook positions against the anchor
+  // it was mounted with, so a tooltip taking over from one still open - the pointer moved on to
+  // the next button before the first closed - must not reuse the first popover's instance.
   _root.render(
     React.createElement(TooltipPopover, {
+      key: id,
       anchor, data,
       portalRoot: _hostDiv,
       onClose: () => { _active = null; renderActive(); },

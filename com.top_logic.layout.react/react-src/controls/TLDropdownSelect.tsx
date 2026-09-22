@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, useCloseOnOutsidePress, CMD_VALUE_CHANGED, rootClassName } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, useCloseOnOutsidePress, CMD_VALUE_CHANGED, rootClassName, tooltipProps } from 'tl-react-bridge';
 import { createPortal } from 'react-dom';
 import type { TLCellProps } from 'tl-react-bridge';
 import {
@@ -70,6 +70,7 @@ function Chip({
           className="tlDropdownSelect__chipRemove"
           onClick={handleRemove}
           aria-label={removeLabel}
+          {...tooltipProps(removeLabel)}
         >
           &times;
         </button>
@@ -654,6 +655,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
               className="tlDropdownSelect__clearAll"
               onClick={clearAll}
               aria-label={i18n['js.dropdownSelect.clear']}
+              {...tooltipProps(i18n['js.dropdownSelect.clear'])}
             >
               &times;
             </button>

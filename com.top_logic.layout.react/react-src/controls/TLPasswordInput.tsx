@@ -1,4 +1,4 @@
-import { React, useTLFieldValue, rootClassName, VALUE_DEBOUNCE_MS } from 'tl-react-bridge';
+import { React, useTLFieldValue, rootClassName, VALUE_DEBOUNCE_MS, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback } = React;
@@ -47,7 +47,7 @@ const TLPasswordInput: React.FC<TLCellProps> = ({ controlId, state }) => {
         disabled={state.disabled === true}
         className={rootClassName(state, cls)}
         aria-invalid={hasError || undefined}
-        title={hasError && errorMessage ? errorMessage : undefined}
+        {...tooltipProps(hasError ? errorMessage : undefined)}
       />
     </span>
   );

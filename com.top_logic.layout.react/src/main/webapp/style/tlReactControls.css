@@ -2807,6 +2807,23 @@ button.tlWindow__maximizeBtn:focus-visible {
 .tlDrawer--bottom.tlDrawer--medium { width: auto; height: 24rem; max-height: 100vh; }
 .tlDrawer--bottom.tlDrawer--wide   { width: auto; height: 36rem; max-height: 100vh; }
 
+/* Anchored in the element it is rendered in instead of the viewport: the drawer covers only that
+   element, leaving the surrounding chrome (app bar, sidebar, the title of the enclosing panel)
+   visible. Its layer lies above the container's own content - including a sticky table header -
+   and below the window, dialog and snackbar layers, which keep covering the page as a whole. */
+.tlDrawer--container {
+	position: absolute;
+	z-index: 10;
+}
+
+/* The extent is capped at the container, not at the viewport. */
+.tlDrawer--container.tlDrawer--narrow,
+.tlDrawer--container.tlDrawer--medium,
+.tlDrawer--container.tlDrawer--wide { max-width: 100%; }
+.tlDrawer--container.tlDrawer--bottom.tlDrawer--narrow,
+.tlDrawer--container.tlDrawer--bottom.tlDrawer--medium,
+.tlDrawer--container.tlDrawer--bottom.tlDrawer--wide { max-height: 100%; }
+
 .tlDrawer__header {
 	display: flex;
 	align-items: center;
@@ -3008,6 +3025,12 @@ button.tlDrawer__closeBtn:focus-visible {
 	width: 100%;
 	height: 100%;
 	min-height: 0;
+	/* The anchor a drawer presentation positions its detail in, and the clip that keeps the
+	   drawer's closed state off the screen. The clip forbids scrolling altogether (unlike
+	   overflow: hidden, which still scrolls programmatically), so the parked drawer, which lies
+	   outside this box, can never be scrolled into view - e.g. by a focus moving into it. */
+	position: relative;
+	overflow: clip;
 }
 
 .tlAdaptiveDetail__content {

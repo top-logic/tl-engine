@@ -632,6 +632,34 @@ Such a page is linkable: `/view/tickets?filter=discussed` opens the list filtere
 - `Column.cssClass()` (`DefaultColumn.Builder.cssClass(String)`) names a class the client puts on every cell of the column, its heading included — how the column presents its cells, as opposed to the per-row `cssClass(R row)`. `RowCommandColumn` uses it to drop the text padding and center its frameless button.
 - Every unpinned column can be fitted to its content: "Fit width to content" in the header menu, or a double-click on the column's resize handle, sets the width the heading and the rendered cells need and persists it through the same `columnResize` command a drag ends with. Only the rows currently in the DOM are measured, so the fit follows what is displayed, as the virtual scroller renders it.
 
+## Master-detail that adapts to the viewport: `<adaptive-detail>`
+
+`<adaptive-detail selection="selectedTicket">` (`AdaptiveDetailElement`) holds a `<selector>` (the master — a table or tree writing the `selection` channel) and a `<detail>` (bound to the same channel) exactly once, and presents the pair in one of three ways, chosen from the subsession's `DisplayClass` and the element's `detail-display`:
+
+| Viewport | `detail-display` | Presentation |
+| --- | --- | --- |
+| `REGULAR` (wide) | `split` (the default) | Selector and detail side by side in a draggable `ReactSplitPanelControl`. |
+| `REGULAR` (wide) | `drawer` | The selector keeps the full width; the detail overlays it from the right edge in a drawer of `detail-size` pixels. |
+| `COMPACT` (narrow) | either | Drill-in: the selector full-bleed, replaced by the detail while something is selected, with a breadcrumb back to it. |
+
+```xml
+<adaptive-detail
+	detail-display="drawer"
+	detail-size="420"
+	selection="selectedTicket"
+>
+	<selector><table selection="selectedTicket" types="…:Ticket">…</table></selector>
+	<detail><form input="selectedTicket" label-position="side" max-columns="1">…</form></detail>
+</adaptive-detail>
+```
+
+- **The two properties.** `detail-display` picks the wide-viewport presentation (`split` | `drawer`); `detail-size` is the width in pixels of the drawer (420 by default) and has no effect without `drawer`. The drawer never grows wider than the element it overlays, so a value exceeding the available width covers the selector completely.
+- **The drawer follows the selection channel, and only that.** It opens when the channel takes a value, carries that value's label as its title, and closes when the channel is cleared. Selecting another row swaps what the drawer shows without closing it: the detail is built once and follows the channel itself, opening and closing being a transform of the panel rather than an exchange of its contents.
+- **Dismissing clears the selection.** The drawer's close button and Escape write `null` to the selection channel, and *that* is what closes the drawer — which is also what lets the same row be selected again to bring it back. A detail with unsaved changes vetoes that channel write (see "Unsaved changes are asked before a channel write"), and the drawer stays open.
+- **The drawer is anchored inside the element** (`ReactDrawerControl.Anchor.CONTAINER`), not in the viewport: it slides in over the selector within the element's own area, so the enclosing panel's title bar, toolbar and the rest of the page chrome stay visible and interactive. There is no backdrop; the selector underneath keeps taking input.
+- **The compact fallback is the drill-in either way.** On a narrow viewport a `drawer` element renders exactly like a `split` one — selector, then detail, with the breadcrumb whose home crumb (`<home-label>`) clears the selection. A drawer as wide as a phone is a full-screen panel, which is what the drill-in already is, done with the breadcrumb the nested levels share.
+- Both demos live in `com.top_logic.demo.react`: `demo/responsive-md-demo.view.xml` (the split presentation, nested scopes → milestones) and `demo/detail-drawer-demo.view.xml` (the drawer presentation over a full-width ticket table).
+
 ## Drill-down navigation with `<tile-stack>`
 
 `com.top_logic.layout.view.tiles` provides drill-down navigation. A `<tile-stack path="navPath" initial="products/overview.view.xml"/>` displays the last frame of a path of `TileFrame`s, the `initial` view when the path is empty, and keeps the frames the displayed one covers (see below). The path itself lives on a normal channel of the enclosing view (`List<TileFrame>`), which is the single source of truth: every navigation is a write to that channel.

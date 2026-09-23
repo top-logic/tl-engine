@@ -45,8 +45,20 @@
 				title="class.com.top_logic.base.accesscontrol.I18NConstants.UNKNOWN_ACCOUNT_TITLE"
 				width="380px"
 			>
-				<text input="message"/>
-				<html input="loginLink"/>
+				<!--
+					A card is flush with its content; the message and the link are text, which brings
+					no breathing room of its own, so the inset keeps them off the border.
+				-->
+				<inset>
+					<stack
+						align="stretch"
+						direction="column"
+						gap="compact"
+					>
+						<text input="message"/>
+						<html input="loginLink"/>
+					</stack>
+				</inset>
 			</panel>
 		</stack>
 	</inset>

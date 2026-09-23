@@ -2294,13 +2294,16 @@
 }
 
 /*
- * Collapsed it is not scrollable and does not need to be: the head is already cut to twelve lines,
- * and a scrollbar beside a "show more" link offers the same thing twice. Expanded, the ceiling is
- * what keeps a long payload from pushing the card's buttons off the screen.
+ * Bounded in rendered rows, collapsed and expanded alike (#551). The character and line budget of
+ * the head cannot bound its height: one long line of 700 characters wraps into twenty rows at the
+ * card's width, and the card then took the whole conversation. What does not fit scrolls inside the
+ * block; the expander below it adds what the head cut off, and never makes the card taller.
  */
-.prompt-args pre {
+.prompt-args-text {
+  --prompt-args-rows: 8;
   margin: 0;
-  overflow: hidden;
+  max-height: calc(var(--prompt-args-rows) * 1.5em + 1rem);
+  overflow: auto;
   padding: 0.5rem 0.625rem;
   border-radius: var(--r-1);
   background: var(--field, var(--layer));
@@ -2309,11 +2312,6 @@
   line-height: 1.5;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-}
-
-.prompt-args.is-open pre {
-  max-height: 14rem;
-  overflow: auto;
 }
 
 .prompt-args-more {

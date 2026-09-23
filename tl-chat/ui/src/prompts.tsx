@@ -242,8 +242,9 @@ function clampArguments(text: string): string {
  * What the tool will be given, so the card can be answered on the merits (#511).
  *
  * Plain text in a `<pre>`, never Markdown and never HTML: this is the model's own payload, and the
- * one job of this block is to show what it really says. A long one is cut to a readable head with
- * an expander, because the card sits over the composer and must not grow into the page.
+ * one job of this block is to show what it really says. The card sits over the composer and must not
+ * grow into the page, so the block is bounded in rendered rows and scrolls (#551); a long payload is
+ * in addition cut to a head, and the expander puts the rest into the same bounded block.
  */
 function ApprovalArguments({ argsJson, labels }: { argsJson: string; labels: Labels }) {
   const [open, setOpen] = useState(false)
@@ -252,11 +253,16 @@ function ApprovalArguments({ argsJson, labels }: { argsJson: string; labels: Lab
   const head = clampArguments(text)
   const long = head.length < text.length
   return (
-    <div className={`prompt-args${long && open ? ' is-open' : ''}`}>
+    <div className="prompt-args">
       <div className="prompt-args-label">{labels.argumentsLabel}</div>
-      <pre>{!long || open ? text : `${head}\n…`}</pre>
+      <pre className="prompt-args-text">{!long || open ? text : `${head}\n…`}</pre>
       {long ? (
-        <button type="button" className="prompt-args-more" onClick={() => setOpen((value) => !value)}>
+        <button
+          type="button"
+          className="prompt-args-more"
+          aria-expanded={open}
+          onClick={() => setOpen((value) => !value)}
+        >
           {open ? labels.showLess : labels.showMore(text.length - head.length)}
         </button>
       ) : null}

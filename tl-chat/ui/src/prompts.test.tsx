@@ -1,6 +1,8 @@
+// @vitest-environment jsdom
 import { describe, expect, it } from 'vitest'
 import { React } from 'tl-react-bridge'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { createRoot } from 'react-dom/client'
 import { PromptStack } from './prompts'
 import { bundle, type Language } from './i18n'
 import type { ApprovalRequest } from './types'
@@ -84,6 +86,50 @@ describe('the approval card', () => {
     expect(html).toContain('prompt-args-more')
     expect(html).toContain('…')
     expect(html).not.toContain('Zeile 39')
+  })
+
+  /*
+   * One line of 800 characters passes the line budget and wraps into twenty rows at the card's width
+   * (#551): the block is bounded in rendered rows by its class, and opening it must not lift that.
+   */
+  it('keeps the block bounded while the expander shows the rest', async () => {
+    const tail = 'ENDE-DES-TEXTES'
+    const container = document.createElement('div')
+    document.body.append(container)
+    const root = createRoot(container)
+    root.render(
+      React.createElement(PromptStack, {
+        approvals: [approval({ argsJson: JSON.stringify({ newText: 'weiterer Text. '.repeat(55) + tail }) })],
+        questions: [],
+        at: 'w1',
+        labels: bundle('de'),
+        dispatch: () => undefined,
+      }),
+    )
+    const settle = () => new Promise((resolve) => setTimeout(resolve, 20))
+    await settle()
+    const pre = () => container.querySelector('.prompt-args pre')!
+    const more = () => container.querySelector<HTMLButtonElement>('.prompt-args-more')!
+    try {
+      expect(pre().className).toBe('prompt-args-text')
+      expect(pre().textContent).not.toContain(tail)
+      expect(more().getAttribute('aria-expanded')).toBe('false')
+
+      more().click()
+      await settle()
+      expect(pre().className).toBe('prompt-args-text')
+      expect(pre().textContent).toContain(tail)
+      expect(more().getAttribute('aria-expanded')).toBe('true')
+      expect(more().textContent).toBe('Weniger anzeigen')
+
+      more().click()
+      await settle()
+      expect(pre().textContent).not.toContain(tail)
+      expect(more().getAttribute('aria-expanded')).toBe('false')
+    } finally {
+      root.unmount()
+      container.remove()
+    }
   })
 
   it('offers no expander for a payload that fits', () => {

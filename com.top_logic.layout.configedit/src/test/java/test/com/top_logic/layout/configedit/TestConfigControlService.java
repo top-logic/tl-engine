@@ -23,6 +23,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.config.AbstractConfigurationValueBinding;
 import com.top_logic.basic.config.AbstractConfigurationValueProvider;
+import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
@@ -52,7 +53,10 @@ import com.top_logic.layout.configedit.ConfigSelectFieldModel;
 import com.top_logic.layout.configedit.DatePickerFormatProvider;
 import com.top_logic.layout.configedit.I18NStringFormatProvider;
 import com.top_logic.layout.form.format.ColorConfigFormat;
+import com.top_logic.layout.form.template.SelectionControlProvider;
+import com.top_logic.layout.form.values.edit.IdentityOptionMapping;
 import com.top_logic.layout.form.values.edit.OptionMapping;
+import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
@@ -66,6 +70,7 @@ import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.control.form.ReactIconSelectControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
+import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 
@@ -323,6 +328,30 @@ public class TestConfigControlService extends TestCase {
 	}
 
 	/**
+	 * Non-identity {@link OptionMapping} translating a {@link Shape} option into the plain name a
+	 * {@link TestConfig#SHAPE_NAME} (or {@link TestConfig#SHAPE_NAMES}) property stores for it, and
+	 * back - the same shape {@code TLModelPartMapping} has for a model part stored as its qualified
+	 * name, and {@code RoleNameMapping} for a role stored as its name.
+	 */
+	public static class ShapeNameMapping implements OptionMapping {
+
+		@Override
+		public Object toSelection(Object option) {
+			return ((Shape) option).getName();
+		}
+
+		@Override
+		public Object asOption(Iterable<?> allOptions, Object selection) {
+			for (Object option : allOptions) {
+				if (((Shape) option).getName().equals(selection)) {
+					return option;
+				}
+			}
+			return null;
+		}
+	}
+
+	/**
 	 * A format for {@link ShapeRef} - parses and formats a {@link ShapeRef} by its plain name, so
 	 * a property using it can round-trip correctly through the format text field once
 	 * {@code isSelect} correctly falls through to it.
@@ -547,6 +576,12 @@ public class TestConfigControlService extends TestCase {
 
 		/** Property name for {@link #getShapeRef()}. */
 		String SHAPE_REF = "shapeRef";
+
+		/** Property name for {@link #getShapeName()}. */
+		String SHAPE_NAME = "shapeName";
+
+		/** Property name for {@link #getShapeNames()}. */
+		String SHAPE_NAMES = "shapeNames";
 
 		/** A mode to choose from. */
 		enum Mode {
@@ -818,6 +853,39 @@ public class TestConfigControlService extends TestCase {
 		@Format(ShapeRefFormat.class)
 		@Options(fun = Shapes.class, mapping = ShapeMapping.class)
 		ShapeRef getShapeRef();
+
+		/**
+		 * A {@link String} property whose options ({@link Shape}) are objects it only stores the
+		 * name of, through {@link ShapeNameMapping} - the shape
+		 * {@code RoleRuleConfig#getSourceMetaElement()} has, whose options are model classes and
+		 * whose value is the qualified name of one.
+		 *
+		 * <p>
+		 * Also carries the classic form's {@link ControlProvider @ControlProvider} annotation, as
+		 * those properties do: it names a control of the classic UI, which says nothing about how
+		 * this service edits the property.
+		 * </p>
+		 */
+		@Name(SHAPE_NAME)
+		@Options(fun = Shapes.class, mapping = ShapeNameMapping.class)
+		@ControlProvider(SelectionControlProvider.class)
+		String getShapeName();
+
+		/** @see #getShapeName() */
+		void setShapeName(String value);
+
+		/**
+		 * The multi-valued form of {@link #getShapeName()}: several shapes, stored as the comma
+		 * separated text of their names - the shape {@code RoleRuleConfig#getRole()} has.
+		 */
+		@Name(SHAPE_NAMES)
+		@Format(CommaSeparatedStrings.class)
+		@Options(fun = Shapes.class, mapping = ShapeNameMapping.class)
+		@ControlProvider(SelectionControlProvider.class)
+		List<String> getShapeNames();
+
+		/** @see #getShapeNames() */
+		void setShapeNames(List<String> value);
 	}
 
 	private TestConfig _config;
@@ -1208,38 +1276,163 @@ public class TestConfigControlService extends TestCase {
 
 	/**
 	 * A property whose {@code @Options} mapping is not the identity ({@link ShapeMapping}, the
-	 * same shape {@link com.top_logic.model.util.TLModelPartRef.PartMapping} has) must not be
-	 * edited by selecting: the option ({@link Shape}) and the stored value ({@link ShapeRef}) are
-	 * different Java types, so a select control could only send back an option's
-	 * {@link Object#toString()}, which nothing here would translate back into a {@link ShapeRef}.
-	 * Before the fix, {@code isSelect} only checked whether the property had options at all, so
-	 * this property got {@link ConfigSelectFieldModel} regardless of the mapping - and a client
-	 * round-trip through {@link ConfigSelectFieldModel#setValue(Object)} would throw an uncaught
-	 * {@link IllegalArgumentException} instead of failing gracefully as a field error. The fix
-	 * falls through to the format text field instead, which already round-trips the value
-	 * correctly through {@link ShapeRefFormat}.
+	 * same shape {@code TLModelPartRef.PartMapping} has) is edited by selecting all the same: the
+	 * option ({@link Shape}) and the stored value ({@link ShapeRef}) are different Java types, and
+	 * {@link ConfigSelectFieldModel} is what translates between them.
+	 *
+	 * <p>
+	 * The control is the dropdown rather than the plain HTML select: an option that is not the
+	 * value stored for it has to be addressed by an identity of its own, which is what the dropdown
+	 * allocates - the plain select would have to name it by its {@link Object#toString()}, which
+	 * names nothing the server could resolve back.
+	 * </p>
 	 */
-	public void testOptionMappingNotIdentityFallsThroughToFormatField() {
-		assertFalse("A property whose option mapping is not the identity must not be edited by "
-			+ "selecting - the option and the stored value are different types.",
+	public void testOptionMappingNotIdentityIsEditedBySelecting() {
+		assertTrue("A property whose option mapping is not the identity is edited by selecting - "
+			+ "the model translates between the option and the stored value.",
 			model(TestConfig.SHAPE_REF) instanceof ConfigSelectFieldModel);
-		assertTrue("It must fall through to the format text field instead, which already knows "
-			+ "how to parse and format the stored value.",
-			model(TestConfig.SHAPE_REF) instanceof ConfigFormatFieldModel);
 
 		ReactControl control = control(TestConfig.SHAPE_REF);
-		assertTrue("Must be edited as text through its own format.",
-			control instanceof ReactTextInputControl);
-		assertFalse("Must not be edited by selecting: the option mapping would be silently ignored, "
-			+ "the same defect TLModelPartRef has.", control instanceof ReactSelectFormFieldControl);
+		assertTrue("An option that is not its own stored value must be addressed by an identity of "
+			+ "its own.", control instanceof ReactDropdownSelectControl);
+	}
 
-		// The format text field must actually round-trip the value correctly - the improvement
-		// over both the old raw-string write and today's exception.
-		ConfigFormatFieldModel model = (ConfigFormatFieldModel) model(TestConfig.SHAPE_REF);
-		model.setValue("circle");
-		assertEquals("circle", _config.getShapeRef().getName());
-		assertEquals("circle", model.getValue());
-		assertNull("A well-formed shape name must not be rejected.", model.getInputError());
+	/**
+	 * The value such a field hands out is the option the stored value stands for, not the stored
+	 * value itself - that is what a select control displays and offers as selected.
+	 */
+	public void testMappedFieldShowsTheOptionTheStoredValueStandsFor() {
+		set(_config, TestConfig.SHAPE_REF, new ShapeRef("square"));
+
+		ConfigSelectFieldModel model = (ConfigSelectFieldModel) model(TestConfig.SHAPE_REF);
+
+		Object value = model.getValue();
+		assertTrue("The value must be an option, not the stored reference.", value instanceof Shape);
+		assertEquals("square", ((Shape) value).getName());
+		assertSame("The value must be one of the offered options, so a control can mark it as the "
+			+ "selected one.", model.getOptions().get(1), value);
+	}
+
+	/** Setting an option stores what the mapping says that option stands for. */
+	public void testSettingAMappedOptionStoresWhatItStandsFor() {
+		ConfigSelectFieldModel model = (ConfigSelectFieldModel) model(TestConfig.SHAPE_REF);
+
+		model.setValue(model.getOptions().get(0));
+
+		assertEquals("The configuration must hold the reference the option stands for.",
+			"circle", _config.getShapeRef().getName());
+		assertEquals("circle", ((Shape) model.getValue()).getName());
+		assertNull("Picking an offered option must not be rejected.", model.getInputError());
+	}
+
+	/**
+	 * A select control reports its selection as a list whether or not the field takes more than one
+	 * value, so a single-valued property takes the one element of that list.
+	 */
+	public void testASingleValuedMappedFieldTakesTheSelectionAsAList() {
+		ConfigSelectFieldModel model = (ConfigSelectFieldModel) model(TestConfig.SHAPE_REF);
+
+		model.setValue(Collections.singletonList(model.getOptions().get(1)));
+		assertEquals("square", _config.getShapeRef().getName());
+
+		model.setValue(Collections.emptyList());
+		assertNull("An empty selection clears the property.", _config.getShapeRef());
+	}
+
+	/**
+	 * The same translation for a {@link String} property whose options are objects - the shape
+	 * {@code RoleRuleConfig#getSourceMetaElement()} has.
+	 */
+	public void testAStringPropertyWithMappedOptionsIsEditedBySelecting() {
+		_config.setShapeName("square");
+
+		ConfigFieldModel model = model(TestConfig.SHAPE_NAME);
+		assertTrue("A string property whose options are objects is edited by selecting.",
+			model instanceof ConfigSelectFieldModel);
+		assertFalse("A select field is not a multi-selection unless the property holds a collection.",
+			((ConfigSelectFieldModel) model).isMultiple());
+		assertEquals("square", ((Shape) model.getValue()).getName());
+
+		model.setValue(((ConfigSelectFieldModel) model).getOptions().get(0));
+		assertEquals("The property stores the option's name, not the option.",
+			"circle", _config.getShapeName());
+	}
+
+	/**
+	 * The classic form's {@link ControlProvider @ControlProvider} annotation names a control of the
+	 * classic UI and says nothing about this service, which resolves its controls through
+	 * {@link ConfigControl} instead. A property carrying it is therefore still edited by selecting.
+	 */
+	public void testTheClassicControlProviderAnnotationDoesNotPreventSelecting() {
+		assertTrue("The classic UI's control annotation must not keep a property with options out "
+			+ "of a select.", model(TestConfig.SHAPE_NAME) instanceof ConfigSelectFieldModel);
+	}
+
+	/**
+	 * A collection property with a {@code @Format} of its own and an option list is a multiple
+	 * selection: the options say what may be picked, the format only says how the picked values are
+	 * written - the shape {@code RoleRuleConfig#getRole()} has.
+	 */
+	public void testACollectionPropertyWithOptionsIsAMultipleSelection() {
+		ConfigFieldModel model = model(TestConfig.SHAPE_NAMES);
+
+		assertTrue("The options win over the format: the property is picked from, not typed into.",
+			model instanceof ConfigSelectFieldModel);
+		assertTrue("A property holding a collection takes more than one of its options.",
+			((ConfigSelectFieldModel) model).isMultiple());
+		assertTrue("A multiple selection needs a control that takes more than one option.",
+			control(TestConfig.SHAPE_NAMES) instanceof ReactDropdownSelectControl);
+	}
+
+	/** Both directions of the translation for a multiple selection, element by element. */
+	public void testAMultipleSelectionTranslatesEveryElement() {
+		_config.setShapeNames(Arrays.asList("square", "circle"));
+
+		ConfigSelectFieldModel model = (ConfigSelectFieldModel) model(TestConfig.SHAPE_NAMES);
+
+		List<?> value = (List<?>) model.getValue();
+		assertEquals(2, value.size());
+		assertEquals("square", ((Shape) value.get(0)).getName());
+		assertEquals("circle", ((Shape) value.get(1)).getName());
+
+		model.setValue(Collections.singletonList(model.getOptions().get(0)));
+		assertEquals("Every picked option is stored as what it stands for.",
+			Arrays.asList("circle"), _config.getShapeNames());
+
+		model.setValue(Collections.emptyList());
+		assertEquals("An empty selection stores no entries.",
+			Collections.emptyList(), _config.getShapeNames());
+	}
+
+	/**
+	 * A stored value none of the options stands for has no option to be displayed as, and is left
+	 * out of the selection - the same the classic declarative form does. The configuration keeps it
+	 * until the user changes the selection.
+	 */
+	public void testAValueNoOptionStandsForIsNotDisplayed() {
+		_config.setShapeName("triangle");
+
+		ConfigSelectFieldModel model = (ConfigSelectFieldModel) model(TestConfig.SHAPE_NAME);
+
+		assertNull("There is no option to display it as.", model.getValue());
+		assertEquals("The configuration still holds it.", "triangle", _config.getShapeName());
+	}
+
+	/**
+	 * The identity mapping changes nothing: the option is the stored value, and the plain select
+	 * (which knows an option by the text it carries) still edits it.
+	 */
+	public void testAnIdentityMappingStoresTheOptionItself() {
+		ConfigFieldModel model = model(TestConfig.COLOR);
+		assertTrue(model instanceof ConfigSelectFieldModel);
+		assertSame("Nothing to translate where the option is the value.",
+			IdentityOptionMapping.INSTANCE, ((ConfigSelectFieldModel) model).getOptionMapping());
+
+		model.setValue("green");
+		assertEquals("The option itself is what is stored.", "green", _config.getColor());
+		assertEquals("green", model.getValue());
+		assertTrue("The plain select is enough for an option that is its own value.",
+			control(TestConfig.COLOR) instanceof ReactSelectFormFieldControl);
 	}
 
 	/** Sets the named property of the given item, bypassing the need for a declared setter. */

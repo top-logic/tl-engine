@@ -6,6 +6,7 @@
 package com.top_logic.layout.configedit;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -25,10 +26,13 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.layout.LabelComparator;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.values.DerivedProperty;
 import com.top_logic.layout.form.values.Fields;
 import com.top_logic.layout.form.values.edit.IdentityOptionMapping;
+import com.top_logic.layout.form.values.edit.OptionMapping;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
@@ -38,6 +42,7 @@ import com.top_logic.layout.react.control.form.ReactNumberInputControl;
 import com.top_logic.layout.react.control.form.ReactPasswordInputControl;
 import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
+import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
 import com.top_logic.mig.html.HTMLFormatter;
 
 /**
@@ -61,7 +66,9 @@ import com.top_logic.mig.html.HTMLFormatter;
  * <li>An encrypted property always gets the password field, deliberately ahead of every other
  * step.</li>
  * <li>{@link ConfigControl} annotation on the property or on its value type.</li>
- * <li>A property edited by selecting from a fixed set of options gets a select.</li>
+ * <li>A property edited by selecting from a fixed set of options gets a select - the plain one
+ * where its options are the values it stores, and the dropdown addressing each option by an
+ * identity of its own where they are not, or where more than one option is taken at a time.</li>
  * <li>The value-type-to-provider map configured in this service ({@link Config#getProviders()}).</li>
  * <li>The value-provider-to-provider map configured in this service ({@link Config#getFormats()}) -
  * claims a property whose {@link PropertyDescriptor#getValueProvider() value provider} (or one of
@@ -280,8 +287,7 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 		checkSupportedKind(property);
 
 		// Resolved once and passed to every step below that would otherwise resolve it again
-		// (isSpecialized, isSelect, selectOptions) - this is also where the mapping check
-		// belongs, see isSelect's own JavaDoc.
+		// (isSpecialized, isSelect, selectOptions).
 		DerivedProperty<? extends Iterable<?>> optionProvider =
 			ConfigPropertyOptions.optionProvider(formModel, property);
 		ConfigControlProvider formatProvider = formatProvider(property);
@@ -291,7 +297,8 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 		}
 		if (isSelect(property, optionProvider)) {
 			ConfigSelectFieldModel selectModel =
-				new ConfigSelectFieldModel(config, property, selectOptions(config, property, optionProvider), false);
+				new ConfigSelectFieldModel(config, property, selectOptions(config, property, optionProvider),
+					isMultiple(property), optionMapping(optionProvider));
 			if (optionProvider != null) {
 				// An option function may be computed from other properties, and then its result
 				// changes while the user edits those - see ConfigSelectFieldModel#trackOptions.
@@ -367,8 +374,16 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 
 		// 3. Edited by selecting.
 		if (model instanceof ConfigSelectFieldModel selectModel) {
-			return new ReactSelectFormFieldControl(context, selectModel,
-				selectLabels(selectModel.getFormModel(), property));
+			LabelProvider labels = selectLabels(selectModel.getFormModel(), property);
+			if (needsOptionIdentity(selectModel)) {
+				// Sorted by label rather than left in the order the option function produced, and
+				// without a custom order of the selection: an option list the user picks a type or
+				// a role from is read, and a list of a few hundred model parts is unreadable
+				// unordered.
+				return new ReactDropdownSelectControl(context, selectModel, labels,
+					LabelComparator.newCachingInstance(labels), false);
+			}
+			return new ReactSelectFormFieldControl(context, selectModel, labels);
 		}
 
 		// 4. Configured provider by value type.
@@ -518,18 +533,21 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * </p>
 	 *
 	 * <p>
-	 * A non-{@code null} option provider is not enough on its own:
-	 * {@link Fields#optionMapping(DerivedProperty)} must also answer
-	 * {@link IdentityOptionMapping#INSTANCE}, i.e. the option itself <em>is</em>
-	 * the value to store, not something that must first be translated into it. A property such as
-	 * {@link com.top_logic.model.util.TLModelPartRef} declares {@code @Options} with a non-identity
-	 * mapping (its options are model parts, the stored value is the ref that names one) - handing
-	 * such a property to the select model regardless would offer options the client can only send
-	 * back as {@code toString()} text, which {@link ConfigSelectFieldModel#setValue(Object)} cannot
-	 * parse back into anything meaningful and would reject with an uncaught
-	 * {@code IllegalArgumentException} instead of a field error. Such a property falls through
-	 * to the generic format text field instead, which already round-trips its value correctly
-	 * through the property's own value provider.
+	 * Options resolve for more than a value list: {@link ConfigPropertyOptions#optionProvider} also
+	 * answers the implementation types a polymorphic property may be given, which the type selector
+	 * offers, not a field. The {@code @Options} annotation is what tells the two apart - it is the
+	 * declaration that the property's own <em>value</em> comes from a fixed set.
+	 * </p>
+	 *
+	 * <p>
+	 * The option a property offers and the value it stores need not be the same thing: a property
+	 * such as {@link com.top_logic.model.util.TLModelPartRef} offers model parts and stores the ref
+	 * that names one, and the {@link Fields#optionMapping(DerivedProperty) option mapping} declared
+	 * with the {@code @Options} annotation is the translation between the two. Such a property is
+	 * edited by selecting all the same: {@link ConfigSelectFieldModel} applies that mapping in both
+	 * directions, and the control such a model is paired with addresses an option by an identity of
+	 * its own instead of by the text {@link Object#toString()} would make of it - see
+	 * {@link #needsOptionIdentity(ConfigSelectFieldModel)}.
 	 * </p>
 	 *
 	 * @param optionProvider
@@ -554,10 +572,73 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 		if (optionProvider == null) {
 			return false;
 		}
-		// The narrow fix: an option whose mapping is not the identity cannot be sent to the
-		// client and parsed back without translation this service does not perform - see this
-		// method's own doc comment.
-		return Fields.optionMapping(optionProvider) == IdentityOptionMapping.INSTANCE;
+		// An option provider without an @Options annotation offers the implementation types of a
+		// polymorphic property, not values of it - see this method's own doc comment.
+		return property.getAnnotation(Options.class) != null;
+	}
+
+	/**
+	 * Whether the given select field takes more than one of its options.
+	 *
+	 * <p>
+	 * Read from the property's Java type, not from its {@link PropertyKind}: a collection property
+	 * with a {@link Format @Format} of its own (e.g. a {@code List<String>} written as comma
+	 * separated text) is a {@link PropertyKind#PLAIN} property, and it is exactly such a property
+	 * that gets here - {@link #checkSupportedKind(PropertyDescriptor)} has already rejected the
+	 * {@link PropertyKind#LIST}, {@link PropertyKind#ARRAY} and {@link PropertyKind#MAP} kinds,
+	 * which belong to the collection editor rather than to a field.
+	 * </p>
+	 *
+	 * <p>
+	 * The options win over the format: the property is edited by picking from what it offers, and
+	 * the format is what the configuration writes the picked values as. This is the multi-valued
+	 * reading of the priority this class's own JavaDoc already states for a single value.
+	 * </p>
+	 */
+	private static boolean isMultiple(PropertyDescriptor property) {
+		return Collection.class.isAssignableFrom(property.getType());
+	}
+
+	/**
+	 * The translation between an option of the given provider and the value the property stores for
+	 * it, or {@link IdentityOptionMapping#INSTANCE} where there is nothing to translate.
+	 *
+	 * @param optionProvider
+	 *        The property's option provider, or {@code null} for a plain enum, whose constants are
+	 *        both its options and its values.
+	 */
+	private static OptionMapping optionMapping(DerivedProperty<? extends Iterable<?>> optionProvider) {
+		if (optionProvider == null) {
+			return IdentityOptionMapping.INSTANCE;
+		}
+		OptionMapping mapping = Fields.optionMapping(optionProvider);
+		return mapping == null ? IdentityOptionMapping.INSTANCE : mapping;
+	}
+
+	/**
+	 * Whether the given select field needs a control that addresses each option by an identity of
+	 * its own.
+	 *
+	 * <p>
+	 * {@link ReactSelectFormFieldControl} renders the plain HTML select, which knows an option only
+	 * by the text it carries and gives back exactly that text. That is enough as long as the option
+	 * <em>is</em> the stored value and the property's own format can parse it back - an enum
+	 * constant, or a plain string from an option function. It is not enough for an option the
+	 * property only stores something else for (a model part stored as its qualified name, a role
+	 * stored as its name): the text such an option would carry is whatever
+	 * {@link Object#toString()} makes of it, which names nothing the server could resolve back.
+	 * Nor does a plain select take more than one value at a time.
+	 * </p>
+	 *
+	 * <p>
+	 * Both cases go to {@link ReactDropdownSelectControl}, which allocates an id per option and
+	 * resolves the ids the client sends back to the options themselves, and which takes a
+	 * multiple selection. The translation from those options to what the property stores is the
+	 * field model's, not the control's.
+	 * </p>
+	 */
+	private static boolean needsOptionIdentity(ConfigSelectFieldModel model) {
+		return model.isMultiple() || model.getOptionMapping() != IdentityOptionMapping.INSTANCE;
 	}
 
 	/**
@@ -641,9 +722,8 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * @param optionProvider
 	 *        The property's option provider, as resolved once by the caller via
 	 *        {@link ConfigPropertyOptions#optionProvider(PropertyDescriptor)}, or {@code null} if
-	 *        it has none. Deliberately not narrowed to {@code isSelect}'s identity-mapping check:
-	 *        an {@code @Options} annotation with any mapping still states that the value domain is
-	 *        options, not the type-specific widget's raw value.
+	 *        it has none. Whatever mapping it carries: an {@code @Options} annotation states that
+	 *        the value domain is options, not the type-specific widget's raw value.
 	 * @param formatProvider
 	 *        The property's {@link #formatProvider(PropertyDescriptor) claimed control provider},
 	 *        as resolved once by the caller, or {@code null} if none claims it.

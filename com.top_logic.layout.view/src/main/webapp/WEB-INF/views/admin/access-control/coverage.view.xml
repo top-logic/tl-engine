@@ -5,23 +5,36 @@
 	type. The SecurityCoverageTable analyses the definition itself when the view is opened and
 	rebuilds from the rows channel after a command; it writes the selected row to the selection
 	channel, the type of it to the selectedType channel and the parts of it the detail shows to the
-	selectedFindings / selectedRule channels (the detail shows the findings of the selected type and
-	its proposed rule; the module and findings columns start hidden, the table being grouped by
-	module). "Show
-	configuration" hands the rendered security parents of all types to a dialog, "Show rule" the
-	rule of the selected type (it is hidden while the selected type has none).
+	selectedFindings, selectedRule and selectedRules channels (the module and findings columns start
+	hidden, the table being grouped by module). Those channels are written again whenever the rows
+	are, so the detail describes the analysis the table shows. "Show configuration" hands the
+	rendered security parents of all types to a dialog, "Show rule" the rule of the selected type
+	(it is hidden while the selected type has none).
+	
+	The detail side holds two panels, one above the other: the findings of the selected type with
+	the rule proposed for it, and the rules in effect for it. Each is a panel of its own because
+	each shows a filling child - the rendered proposal and the rule table - and a panel bounds the
+	height of a single one.
 	
 	The commands of the findings panel edit the definition: "Accept proposal" stores the proposed
 	security parent rule, "Security parent…" and "Role rule…" open a dialog editing a rule of the
 	selected type, and "Access rights…" one editing the grants and marks the application adds for
-	it. The overflow clique holds the same dialog for the module of the selected type and the two
-	marks that exempt a type from the check ("Mark internal") or from access control ("Without
-	access control"), each asking for confirmation with the selected type named - which is what the
-	selectedType channel carries. All of them write to the application configuration rather than to
-	the running application, so the pending channel marks that the files and the running definition
-	differ until "Apply configuration" reads the files again and restarts the access services. That
-	marker is shown in the findings panel rather than above the table, a filling panel bounding the
-	height of a single scrolling child only.
+	it. The overflow clique holds the access rights dialog for the module of the selected type and
+	the two marks that exempt a type from the check ("Mark internal") or from access control
+	("Without access control"), each asking for confirmation with the selected type named - which is
+	what the selectedType channel carries.
+	
+	The rules panel lists one entry per rule in effect and writes the picked one to the
+	selectedRuleEntry channel; "Edit rule…" opens the dialog belonging to the kind of that entry
+	with the rule prefilled, and "Delete rule" drops it from the application configuration - it is
+	shown only for an entry that configuration defines, a rule of the layers underneath being
+	overridable but not removable.
+	
+	All of these write to the application configuration rather than to the running application, so
+	the pending channel marks that the files and the running definition differ until "Apply
+	configuration" reads the files again and restarts the access services. That marker is shown in
+	the findings panel rather than above the table, a filling panel bounding the height of a single
+	scrolling child only.
 -->
 <view>
 	<channels>
@@ -30,6 +43,8 @@
 		<channel name="selectedType"/>
 		<channel name="selectedFindings"/>
 		<channel name="selectedRule"/>
+		<channel name="selectedRules"/>
+		<channel name="selectedRuleEntry"/>
 		<channel name="pending"/>
 	</channels>
 	<split-panel
@@ -99,6 +114,7 @@
 						input="rows"
 						selected-findings="selectedFindings"
 						selected-rule="selectedRule"
+						selected-rules="selectedRules"
 						selected-type="selectedType"
 						selection="selection"
 					/>
@@ -108,237 +124,384 @@
 				size="35"
 				unit="%"
 			>
-				<panel>
-					<title>
-						<en>Findings</en>
-						<de>Befunde</de>
-					</title>
-					<commands>
-						<generic-command
-							image="css:bi bi-code-square"
-							input="selectedRule"
-							placement="TOOLBAR"
+				<split-panel
+					orientation="vertical"
+					resizable="true"
+				>
+					<panes>
+						<pane
+							size="60"
+							unit="%"
 						>
-							<label>
-								<en>Show rule</en>
-								<de>Regel anzeigen</de>
-							</label>
-							<executability>
-								<visible-if expr="rule -> $rule != null"/>
-							</executability>
-							<open-dialog
-								bind-input-to="content"
-								dialog-view="admin/access-control/coverage-rule.view.xml"
-							/>
-						</generic-command>
-						<generic-command
-							image="css:bi bi-check2-square"
-							input="selectedRule"
-							placement="TOOLBAR"
-						>
-							<label>
-								<en>Accept proposal</en>
-								<de>Vorschlag übernehmen</de>
-							</label>
-							<executability>
-								<visible-if expr="rule -> $rule != null"/>
-							</executability>
-							<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
-								mode="ACCEPT_PROPOSAL"
-								selection="selection"
-							/>
-							<write-channel name="pending"/>
-						</generic-command>
-						<generic-command
-							image="css:bi bi-diagram-2"
-							input="selection"
-							placement="TOOLBAR"
-						>
-							<label>
-								<en>Security parent…</en>
-								<de>Übergeordnetes Sicherheitsobjekt…</de>
-							</label>
-							<executability>
-								<null-input-disabled/>
-							</executability>
-							<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
-								mode="NEW_SECURITY_PARENT_RULE"
-							/>
-							<open-dialog
-								bind-input-to="rule"
-								dialog-view="admin/access-control/coverage-security-parent-rule.view.xml"
-							>
-								<bind
-									channel="pending"
-									to="pending"
-								/>
-							</open-dialog>
-						</generic-command>
-						<generic-command
-							image="css:bi bi-person-badge"
-							input="selection"
-							placement="TOOLBAR"
-						>
-							<label>
-								<en>Role rule…</en>
-								<de>Rollenregel…</de>
-							</label>
-							<executability>
-								<null-input-disabled/>
-							</executability>
-							<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
-								mode="NEW_ROLE_RULE"
-							/>
-							<open-dialog
-								bind-input-to="rule"
-								dialog-view="admin/access-control/coverage-role-rule.view.xml"
-							>
-								<bind
-									channel="pending"
-									to="pending"
-								/>
-							</open-dialog>
-						</generic-command>
-						<generic-command
-							image="css:bi bi-shield-check"
-							input="selection"
-							placement="TOOLBAR"
-						>
-							<label>
-								<en>Access rights…</en>
-								<de>Zugriffsrechte…</de>
-							</label>
-							<executability>
-								<null-input-disabled/>
-							</executability>
-							<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
-								mode="EDIT_ACCESS_RIGHTS"
-							/>
-							<open-dialog
-								bind-input-to="rights"
-								dialog-view="admin/access-control/coverage-access-rights.view.xml"
-							>
-								<bind
-									channel="pending"
-									to="pending"
-								/>
-							</open-dialog>
-						</generic-command>
-						<generic-command
-							clique="more"
-							image="css:bi bi-shield-shaded"
-							input="selection"
-							placement="TOOLBAR"
-						>
-							<label>
-								<en>Module access rights…</en>
-								<de>Zugriffsrechte des Moduls…</de>
-							</label>
-							<executability>
-								<null-input-disabled/>
-							</executability>
-							<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
-								mode="EDIT_MODULE_ACCESS_RIGHTS"
-							/>
-							<open-dialog
-								bind-input-to="rights"
-								dialog-view="admin/access-control/coverage-access-rights.view.xml"
-							>
-								<bind
-									channel="pending"
-									to="pending"
-								/>
-							</open-dialog>
-						</generic-command>
-						<generic-command
-							clique="more"
-							image="css:bi bi-gear"
-							input="selection"
-							placement="TOOLBAR"
-						>
-							<label>
-								<en>Mark internal</en>
-								<de>Als intern kennzeichnen</de>
-							</label>
-							<executability>
-								<null-input-disabled/>
-							</executability>
-							<confirm
-								expr="type -> x -> #('Mark {0} as internal? An internal type is used by the application code alone, so it is exempt from the check and no user gets access to its objects.'@en, '{0} als intern kennzeichnen? Ein interner Typ wird nur vom Anwendungscode verwendet, ist deshalb von der Prüfung ausgenommen, und kein Benutzer erhält Zugriff auf seine Objekte.'@de).fill(label($type))"
-								inputs="selectedType"
-							/>
-							<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
-								mode="TOGGLE_INTERNAL"
-							/>
-							<write-channel name="pending"/>
-						</generic-command>
-						<generic-command
-							clique="more"
-							image="css:bi bi-unlock"
-							input="selection"
-							placement="TOOLBAR"
-						>
-							<label>
-								<en>Without access control</en>
-								<de>Ohne Zugriffskontrolle</de>
-							</label>
-							<executability>
-								<null-input-disabled/>
-							</executability>
-							<confirm
-								expr="type -> x -> #('Exclude {0} from access control? Every user may then access its objects, no matter which roles the user holds on them.'@en, '{0} von der Zugriffskontrolle ausnehmen? Jeder Benutzer darf dann auf seine Objekte zugreifen, unabhängig von seinen Rollen darauf.'@de).fill(label($type))"
-								inputs="selectedType"
-							/>
-							<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
-								mode="TOGGLE_WITHOUT_SECURITY"
-							/>
-							<write-channel name="pending"/>
-						</generic-command>
-					</commands>
-					<visible-if
-						expr="p -> $p != null"
-						input="pending"
-					>
-						<inset>
-							<text css-class="tlText--strong">
-								<label>
-									<en>There are saved changes that are not applied yet.</en>
-									<de>Es gibt gespeicherte, noch nicht angewendete Änderungen.</de>
-								</label>
-							</text>
-						</inset>
-					</visible-if>
-					<visible-if
-						expr="selected -> $selected != null"
-						input="selection"
-					>
-						<inset>
-							<stack
-								direction="column"
-								gap="default"
-							>
-								<text input="selectedFindings"/>
-								<visible-if
-									expr="rule -> $rule != null"
-									input="selectedRule"
-								>
-									<stack
-										direction="column"
-										gap="compact"
+							<panel>
+								<title>
+									<en>Findings</en>
+									<de>Befunde</de>
+								</title>
+								<commands>
+									<generic-command
+										image="css:bi bi-code-square"
+										input="selectedRule"
+										placement="TOOLBAR"
 									>
+										<label>
+											<en>Show rule</en>
+											<de>Regel anzeigen</de>
+										</label>
+										<executability>
+											<visible-if expr="rule -> $rule != null"/>
+										</executability>
+										<open-dialog
+											bind-input-to="content"
+											dialog-view="admin/access-control/coverage-rule.view.xml"
+										/>
+									</generic-command>
+									<generic-command
+										image="css:bi bi-check2-square"
+										input="selectedRule"
+										placement="TOOLBAR"
+									>
+										<label>
+											<en>Accept proposal</en>
+											<de>Vorschlag übernehmen</de>
+										</label>
+										<executability>
+											<visible-if expr="rule -> $rule != null"/>
+										</executability>
+										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+											mode="ACCEPT_PROPOSAL"
+											selection="selection"
+										/>
+										<write-channel name="pending"/>
+									</generic-command>
+									<generic-command
+										image="css:bi bi-diagram-2"
+										input="selection"
+										placement="TOOLBAR"
+									>
+										<label>
+											<en>Security parent…</en>
+											<de>Übergeordnetes Sicherheitsobjekt…</de>
+										</label>
+										<executability>
+											<null-input-disabled/>
+										</executability>
+										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+											mode="NEW_SECURITY_PARENT_RULE"
+										/>
+										<open-dialog
+											bind-input-to="rule"
+											dialog-view="admin/access-control/coverage-security-parent-rule.view.xml"
+										>
+											<bind
+												channel="pending"
+												to="pending"
+											/>
+										</open-dialog>
+									</generic-command>
+									<generic-command
+										image="css:bi bi-person-badge"
+										input="selection"
+										placement="TOOLBAR"
+									>
+										<label>
+											<en>Role rule…</en>
+											<de>Rollenregel…</de>
+										</label>
+										<executability>
+											<null-input-disabled/>
+										</executability>
+										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+											mode="NEW_ROLE_RULE"
+										/>
+										<open-dialog
+											bind-input-to="rule"
+											dialog-view="admin/access-control/coverage-role-rule.view.xml"
+										>
+											<bind
+												channel="pending"
+												to="pending"
+											/>
+										</open-dialog>
+									</generic-command>
+									<generic-command
+										image="css:bi bi-shield-check"
+										input="selection"
+										placement="TOOLBAR"
+									>
+										<label>
+											<en>Access rights…</en>
+											<de>Zugriffsrechte…</de>
+										</label>
+										<executability>
+											<null-input-disabled/>
+										</executability>
+										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+											mode="EDIT_ACCESS_RIGHTS"
+										/>
+										<open-dialog
+											bind-input-to="rights"
+											dialog-view="admin/access-control/coverage-access-rights.view.xml"
+										>
+											<bind
+												channel="pending"
+												to="pending"
+											/>
+										</open-dialog>
+									</generic-command>
+									<generic-command
+										clique="more"
+										image="css:bi bi-shield-shaded"
+										input="selection"
+										placement="TOOLBAR"
+									>
+										<label>
+											<en>Module access rights…</en>
+											<de>Zugriffsrechte des Moduls…</de>
+										</label>
+										<executability>
+											<null-input-disabled/>
+										</executability>
+										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+											mode="EDIT_MODULE_ACCESS_RIGHTS"
+										/>
+										<open-dialog
+											bind-input-to="rights"
+											dialog-view="admin/access-control/coverage-access-rights.view.xml"
+										>
+											<bind
+												channel="pending"
+												to="pending"
+											/>
+										</open-dialog>
+									</generic-command>
+									<generic-command
+										clique="more"
+										image="css:bi bi-gear"
+										input="selection"
+										placement="TOOLBAR"
+									>
+										<label>
+											<en>Mark internal</en>
+											<de>Als intern kennzeichnen</de>
+										</label>
+										<executability>
+											<null-input-disabled/>
+										</executability>
+										<confirm
+											expr="type -> x -> #('Mark {0} as internal? An internal type is used by the application code alone, so it is exempt from the check and no user gets access to its objects.'@en, '{0} als intern kennzeichnen? Ein interner Typ wird nur vom Anwendungscode verwendet, ist deshalb von der Prüfung ausgenommen, und kein Benutzer erhält Zugriff auf seine Objekte.'@de).fill(label($type))"
+											inputs="selectedType"
+										/>
+										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+											mode="TOGGLE_INTERNAL"
+										/>
+										<write-channel name="pending"/>
+									</generic-command>
+									<generic-command
+										clique="more"
+										image="css:bi bi-unlock"
+										input="selection"
+										placement="TOOLBAR"
+									>
+										<label>
+											<en>Without access control</en>
+											<de>Ohne Zugriffskontrolle</de>
+										</label>
+										<executability>
+											<null-input-disabled/>
+										</executability>
+										<confirm
+											expr="type -> x -> #('Exclude {0} from access control? Every user may then access its objects, no matter which roles the user holds on them.'@en, '{0} von der Zugriffskontrolle ausnehmen? Jeder Benutzer darf dann auf seine Objekte zugreifen, unabhängig von seinen Rollen darauf.'@de).fill(label($type))"
+											inputs="selectedType"
+										/>
+										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+											mode="TOGGLE_WITHOUT_SECURITY"
+										/>
+										<write-channel name="pending"/>
+									</generic-command>
+								</commands>
+								<visible-if
+									expr="p -> $p != null"
+									input="pending"
+								>
+									<inset>
 										<text css-class="tlText--strong">
 											<label>
-												<en>Proposed security parent rule</en>
-												<de>Vorgeschlagene Regel für das übergeordnete Sicherheitsobjekt</de>
+												<en>There are saved changes that are not applied yet.</en>
+												<de>Es gibt gespeicherte, noch nicht angewendete Änderungen.</de>
 											</label>
 										</text>
-										<html input="selectedRule"/>
-									</stack>
+									</inset>
 								</visible-if>
-							</stack>
-						</inset>
-					</visible-if>
-				</panel>
+								<visible-if
+									expr="selected -> $selected != null"
+									input="selection"
+								>
+									<inset>
+										<stack
+											direction="column"
+											gap="default"
+										>
+											<text input="selectedFindings"/>
+											<visible-if
+												expr="rule -> $rule != null"
+												input="selectedRule"
+											>
+												<stack
+													direction="column"
+													gap="compact"
+												>
+													<text css-class="tlText--strong">
+														<label>
+															<en>Proposed security parent rule</en>
+															<de>Vorgeschlagene Regel für das übergeordnete Sicherheitsobjekt</de>
+														</label>
+													</text>
+													<html input="selectedRule"/>
+												</stack>
+											</visible-if>
+										</stack>
+									</inset>
+								</visible-if>
+							</panel>
+						</pane>
+						<pane
+							size="40"
+							unit="%"
+						>
+							<panel fill="true">
+								<title>
+									<en>Rules in effect</en>
+									<de>Geltende Regeln</de>
+								</title>
+								<commands>
+									<generic-command
+										image="css:bi bi-pencil"
+										input="selectedRuleEntry"
+										placement="TOOLBAR"
+									>
+										<label>
+											<en>Edit rule…</en>
+											<de>Regel bearbeiten…</de>
+										</label>
+										<executability>
+											<null-input-disabled/>
+										</executability>
+										<switch value="entry -> $entry['kind']">
+											<case match="'securityParent'">
+												<execute-script function="entry -> $entry['id']"/>
+												<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+													mode="EDIT_SECURITY_PARENT_RULE"
+												/>
+												<open-dialog
+													bind-input-to="rule"
+													dialog-view="admin/access-control/coverage-security-parent-rule.view.xml"
+												>
+													<bind
+														channel="pending"
+														to="pending"
+													/>
+												</open-dialog>
+											</case>
+											<case match="'roleRule'">
+												<execute-script function="entry -> $entry['id']"/>
+												<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+													mode="EDIT_ROLE_RULE"
+												/>
+												<open-dialog
+													bind-input-to="rule"
+													dialog-view="admin/access-control/coverage-role-rule.view.xml"
+												>
+													<bind
+														channel="pending"
+														to="pending"
+													/>
+												</open-dialog>
+											</case>
+										</switch>
+									</generic-command>
+									<generic-command
+										image="css:bi bi-trash"
+										input="selectedRuleEntry"
+										placement="TOOLBAR"
+									>
+										<label>
+											<en>Delete rule</en>
+											<de>Regel löschen</de>
+										</label>
+										<executability>
+											<visible-if expr="entry -> $entry != null &amp;&amp; $entry['stored']"/>
+										</executability>
+										<confirm expr="entry -> #('Delete the rule {0} from the application configuration?'@en, 'Die Regel {0} aus der Anwendungskonfiguration löschen?'@de).fill($entry['id'])"/>
+										<switch value="entry -> $entry['kind']">
+											<case match="'securityParent'">
+												<execute-script function="entry -> $entry['id']"/>
+												<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+													mode="REMOVE_SECURITY_PARENT_RULE"
+												/>
+											</case>
+											<case match="'roleRule'">
+												<execute-script function="entry -> $entry['id']"/>
+												<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+													mode="REMOVE_ROLE_RULE"
+												/>
+											</case>
+										</switch>
+										<write-channel name="pending"/>
+									</generic-command>
+								</commands>
+								<table selection="selectedRuleEntry">
+									<inputs>
+										<input channel="selectedRules"/>
+									</inputs>
+									<columns>
+										<computed-column name="kind"
+											type="tl.core:String"
+											width="230"
+										>
+											<label>
+												<en>Kind</en>
+												<de>Art</de>
+											</label>
+											<value><![CDATA[row -> $row["kindLabel"]]]></value>
+										</computed-column>
+										<computed-column name="id"
+											type="tl.core:String"
+											width="200"
+										>
+											<label>
+												<en>Id</en>
+												<de>Id</de>
+											</label>
+											<value><![CDATA[row -> $row["id"]]]></value>
+										</computed-column>
+										<computed-column name="description"
+											type="tl.core:String"
+											width="320"
+										>
+											<label>
+												<en>Description</en>
+												<de>Beschreibung</de>
+											</label>
+											<value><![CDATA[row -> $row["description"]]]></value>
+										</computed-column>
+										<computed-column name="stored"
+											type="tl.core:Boolean"
+											width="120"
+										>
+											<label>
+												<en>Stored</en>
+												<de>Gespeichert</de>
+											</label>
+											<value><![CDATA[row -> $row["stored"]]]></value>
+										</computed-column>
+									</columns>
+									<rows><![CDATA[rules -> $rules]]></rows>
+								</table>
+							</panel>
+						</pane>
+					</panes>
+				</split-panel>
 			</pane>
 		</panes>
 	</split-panel>

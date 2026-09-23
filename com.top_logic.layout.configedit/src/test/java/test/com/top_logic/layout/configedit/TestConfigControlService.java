@@ -475,6 +475,88 @@ public class TestConfigControlService extends TestCase {
 		}
 	}
 
+	/**
+	 * A value class that declares once, for every property ever typed with it, that its instances
+	 * come from a fixed set - the shape {@link com.top_logic.tool.boundsec.CommandGroupReference}
+	 * has, whose {@link Options @Options} sits on the class and not on the properties naming an
+	 * operation.
+	 */
+	@Format(OperationFormat.class)
+	@Options(fun = Operations.class, mapping = OperationMapping.class)
+	public static class Operation {
+
+		private final String _name;
+
+		/** Creates an {@link Operation} of the given name. */
+		public Operation(String name) {
+			_name = name;
+		}
+
+		/** The name this operation is written as. */
+		public String getName() {
+			return _name;
+		}
+
+		@Override
+		public boolean equals(Object other) {
+			return other instanceof Operation operation && _name.equals(operation._name);
+		}
+
+		@Override
+		public int hashCode() {
+			return _name.hashCode();
+		}
+
+		@Override
+		public String toString() {
+			return _name;
+		}
+	}
+
+	/** The options {@link Operation} offers. */
+	public static class Operations extends Function0<List<String>> {
+		@Override
+		public List<String> apply() {
+			return Arrays.asList("Read", "Write");
+		}
+	}
+
+	/**
+	 * Translates an option of {@link Operations} into the {@link Operation} a property stores, and
+	 * back - the shape {@code ToCommandGroupReference} has.
+	 */
+	public static class OperationMapping implements OptionMapping {
+
+		@Override
+		public Object toSelection(Object option) {
+			return new Operation((String) option);
+		}
+
+		@Override
+		public Object asOption(Iterable<?> allOptions, Object selection) {
+			return ((Operation) selection).getName();
+		}
+	}
+
+	/** The format of {@link Operation}, writing it as its name. */
+	public static class OperationFormat extends AbstractConfigurationValueProvider<Operation> {
+
+		/** Creates an {@link OperationFormat}. */
+		public OperationFormat() {
+			super(Operation.class);
+		}
+
+		@Override
+		protected Operation getValueNonEmpty(String propertyName, CharSequence propertyValue) {
+			return new Operation(propertyValue.toString());
+		}
+
+		@Override
+		protected String getSpecificationNonNull(Operation configValue) {
+			return configValue.getName();
+		}
+	}
+
 	/** Configuration covering every value type the fallback distinguishes. */
 	public interface TestConfig extends ConfigurationItem {
 
@@ -573,6 +655,9 @@ public class TestConfigControlService extends TestCase {
 
 		/** Property name for {@link #getBindingOnly()}. */
 		String BINDING_ONLY = "bindingOnly";
+
+		/** Property name for {@link #getOperation()}. */
+		String OPERATION = "operation";
 
 		/** Property name for {@link #getShapeRef()}. */
 		String SHAPE_REF = "shapeRef";
@@ -886,6 +971,17 @@ public class TestConfigControlService extends TestCase {
 
 		/** @see #getShapeNames() */
 		void setShapeNames(List<String> value);
+
+		/**
+		 * A property that carries no {@link Options @Options} annotation of its own: its
+		 * {@link Operation} value type declares the option set, exactly as the operation of an
+		 * access rule does.
+		 */
+		@Name(OPERATION)
+		Operation getOperation();
+
+		/** @see #getOperation() */
+		void setOperation(Operation value);
 	}
 
 	private TestConfig _config;
@@ -1682,6 +1778,29 @@ public class TestConfigControlService extends TestCase {
 
 		assertTrue("A formatted item is typed, not chosen from options.",
 			control(TestConfig.FORMATTED_ITEM) instanceof ReactTextInputControl);
+	}
+
+	/**
+	 * A property whose <em>value type</em> carries the {@link Options @Options} annotation is
+	 * edited by selecting, although the property itself declares nothing: an operation of an access
+	 * rule is picked from the command groups, not typed.
+	 *
+	 * <p>
+	 * The annotation is where the classic form editor looks for it too, which is why the option
+	 * provider was found for such a property all along - only the decision to offer a select was
+	 * made on the property alone.
+	 * </p>
+	 */
+	public void testOptionsOnTheValueTypeAreEditedBySelecting() {
+		ConfigFieldModel model = model(TestConfig.OPERATION);
+		assertTrue("A value type declaring its option set makes the property a select.",
+			model instanceof ConfigSelectFieldModel);
+		assertEquals("The options are the ones the value type's annotation names.",
+			Arrays.asList("Read", "Write"), ((ConfigSelectFieldModel) model).getOptions());
+
+		model.setValue(((ConfigSelectFieldModel) model).getOptions().get(1));
+		assertEquals("The picked option must be stored as the value it stands for.",
+			new Operation("Write"), _config.value(_config.descriptor().getProperty(TestConfig.OPERATION)));
 	}
 
 	/**

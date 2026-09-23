@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import com.top_logic.element.boundsec.manager.rule.config.NavigationRuleConfig;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 
@@ -28,6 +29,9 @@ import com.top_logic.model.TLObject;
  */
 public class NavigationRule {
 
+	/** The id of the configuration this rule was created from */
+	private final String _id;
+
 	/** The meta element type of objects the role applies to */
 	private final TLClass _type;
 
@@ -42,6 +46,8 @@ public class NavigationRule {
 	/**
 	 * Creates a {@link NavigationRule}.
 	 *
+	 * @param id
+	 *        See {@link #getId()}.
 	 * @param type
 	 *        The type of objects this rule applies to. Must not be <code>null</code>.
 	 * @param inherit
@@ -49,10 +55,23 @@ public class NavigationRule {
 	 * @param path
 	 *        The sequence of steps to navigate from the source to the target objects.
 	 */
-	public NavigationRule(TLClass type, boolean inherit, List<PathElement> path) {
+	public NavigationRule(String id, TLClass type, boolean inherit, List<PathElement> path) {
+		_id = id;
 		_type = Objects.requireNonNull(type);
 		_inherit = inherit;
 		_path = path;
+	}
+
+	/**
+	 * The {@link NavigationRuleConfig#getId() id} of the configuration this rule was created from.
+	 *
+	 * <p>
+	 * It names the rule within the configuration declaring it, so it is what an editor of the
+	 * access definition addresses the rule by.
+	 * </p>
+	 */
+	public String getId() {
+		return _id;
 	}
 
 	/**

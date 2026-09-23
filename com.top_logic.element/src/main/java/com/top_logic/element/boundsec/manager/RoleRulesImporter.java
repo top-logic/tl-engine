@@ -194,16 +194,16 @@ public class RoleRulesImporter {
 				return;
 			}
 			for (BoundedRole role : roles) {
-				addRule(new SingletonRule(singleton, role, path, _resKey, composeId(configId, role, null)));
+				addRule(new SingletonRule(singleton, role, path, _resKey, composeId(configId, role, null), configId));
 			}
 		} else {
 			for (BoundedRole role : roles) {
 				if (Type.inheritance.equals(roleRuleConfig.getType())) {
 					addRule(new DefaultRoleRule(_metaElement, _sourceMetaElement, _inherit, role, sourceRole, path,
-						Type.inheritance, _resKey, composeId(configId, role, sourceRole)));
+						Type.inheritance, _resKey, composeId(configId, role, sourceRole), configId));
 				} else {
 					addRule(new DefaultRoleRule(_metaElement, null, _inherit, role, null, path, Type.reference,
-						_resKey, composeId(configId, role, null)));
+						_resKey, composeId(configId, role, null), configId));
 				}
 			}
 		}

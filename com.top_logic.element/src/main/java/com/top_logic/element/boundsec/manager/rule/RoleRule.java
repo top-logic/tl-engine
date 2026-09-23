@@ -53,21 +53,30 @@ public abstract class RoleRule implements RoleProvider {
 
     private String id;
 
+	/** The id of the configuration this rule was created from. */
+	private final String _configId;
+
     /**
      * Constructor with all attributes
      */
-	protected RoleRule(BoundRole aRole, List<PathElement> aPath, ResKey aResourceKey, String id) {
+	protected RoleRule(BoundRole aRole, List<PathElement> aPath, ResKey aResourceKey, String id, String configId) {
 		super();
 		this.role = aRole;
 		this.path = aPath;
 		this.resourceKey = aResourceKey;
 		this.id = id;
+		_configId = configId;
 	}
 
     @Override
 	public String getId() {
         return this.id;
     }
+
+	@Override
+	public String getConfigId() {
+		return _configId;
+	}
 
     /**
 	 * <code>true</code> if the rule is applicable to the given item
@@ -110,9 +119,7 @@ public abstract class RoleRule implements RoleProvider {
         return (this.resourceKey);
     }
 
-    /**
-     * Getter
-     */
+    @Override
     public List<PathElement> getPath() {
         return (path);
     }

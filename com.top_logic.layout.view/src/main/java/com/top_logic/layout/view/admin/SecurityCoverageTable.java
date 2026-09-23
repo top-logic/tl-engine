@@ -18,6 +18,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
@@ -27,11 +29,13 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.boundsec.manager.coverage.CoverageFinding;
 import com.top_logic.element.boundsec.manager.coverage.CoverageStatus;
 import com.top_logic.element.boundsec.manager.coverage.SecurityCoverageCheck;
+import com.top_logic.element.boundsec.manager.coverage.SecurityDefinitionEditor;
 import com.top_logic.element.boundsec.manager.coverage.TypeCoverage;
 import com.top_logic.element.boundsec.manager.rule.NavigationRule;
 import com.top_logic.element.boundsec.manager.rule.PathElement;
 import com.top_logic.element.boundsec.manager.rule.PathNavigation;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
+import com.top_logic.element.boundsec.manager.rule.config.NavigationRuleConfig;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.table.CellControlFactory;
 import com.top_logic.layout.react.control.table.TableViewControl;
@@ -58,6 +62,7 @@ import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.DelegatingColumn;
 import com.top_logic.table.impl.ListRowSource;
+import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.util.Resources;
 
@@ -74,9 +79,11 @@ import com.top_logic.util.Resources;
  * {@link Config#getInput() input channel} after a command. The selected row is written to the
  * {@link Config#getSelection() selection channel} (so a command can act on it); the type of it goes
  * to the {@link Config#getSelectedType() type channel} (so a command names it), and the parts of it
- * a detail display shows go to the {@link Config#getSelectedFindings() findings} and the
- * {@link Config#getSelectedRule() rule channel}, all cleared to {@code null} when the selection is
- * empty.
+ * a detail display shows go to the {@link Config#getSelectedFindings() findings}, the
+ * {@link Config#getSelectedRule() proposed rule} and the {@link Config#getSelectedRules() rules in
+ * effect}, all cleared when the selection is empty. The channels are pushed again once the rows
+ * were replaced, so the detail of the row that stays selected describes the analysis the table now
+ * shows.
  * </p>
  *
  * @implNote The rows come from {@link SecurityCoverageCheck#analyze()}; a row is keyed by the
@@ -108,6 +115,27 @@ public class SecurityCoverageTable implements UIElement {
 	/** Id of the column showing the findings reported for the analyzed type. */
 	public static final String COLUMN_FINDINGS = "findings";
 
+	/** Key of the kind of a rule entry, one of {@link #KIND_SECURITY_PARENT} / {@link #KIND_ROLE_RULE}. */
+	public static final String RULE_KIND = "kind";
+
+	/** Key of the localized name of the {@link #RULE_KIND kind} of a rule entry. */
+	public static final String RULE_KIND_LABEL = "kindLabel";
+
+	/** Key of the id a rule entry is stored and edited under. */
+	public static final String RULE_ID = "id";
+
+	/** Key of the text describing what a rule entry does. */
+	public static final String RULE_DESCRIPTION = "description";
+
+	/** Key of the flag telling whether the application's configuration defines a rule entry. */
+	public static final String RULE_STORED = "stored";
+
+	/** {@link #RULE_KIND} of an entry standing for a security parent rule. */
+	public static final String KIND_SECURITY_PARENT = "securityParent";
+
+	/** {@link #RULE_KIND} of an entry standing for a role rule. */
+	public static final String KIND_ROLE_RULE = "roleRule";
+
 	/** Qualified name of the model type of the values in the {@link #COLUMN_TYPE} column. */
 	private static final String TL_CLASS_TYPE = "tl.model:TLClass";
 
@@ -125,6 +153,9 @@ public class SecurityCoverageTable implements UIElement {
 
 	/** Marker in front of a path step that navigates its reference backwards. */
 	private static final String INVERSE_MARKER = "^";
+
+	/** Separator between the parts a rule is described by. */
+	private static final String DESCRIPTION_SEPARATOR = " \u2192 ";
 
 	/**
 	 * Configuration for {@link SecurityCoverageTable}.
@@ -145,6 +176,9 @@ public class SecurityCoverageTable implements UIElement {
 
 		/** Configuration name for {@link #getSelectedRule()}. */
 		String SELECTED_RULE = "selected-rule";
+
+		/** Configuration name for {@link #getSelectedRules()}. */
+		String SELECTED_RULES = "selected-rules";
 
 		@Override
 		@ClassDefault(SecurityCoverageTable.class)
@@ -194,6 +228,22 @@ public class SecurityCoverageTable implements UIElement {
 		@Nullable
 		@Format(ChannelRefFormat.class)
 		ChannelRef getSelectedRule();
+
+		/**
+		 * Channel the rules in effect for the selected type are written to, one entry per rule.
+		 *
+		 * <p>
+		 * An entry is a dictionary keyed by {@link SecurityCoverageTable#RULE_KIND},
+		 * {@link SecurityCoverageTable#RULE_KIND_LABEL}, {@link SecurityCoverageTable#RULE_ID},
+		 * {@link SecurityCoverageTable#RULE_DESCRIPTION} and
+		 * {@link SecurityCoverageTable#RULE_STORED}, so a display shows the entries in a table of
+		 * computed columns and a command works on the entry the user picks.
+		 * </p>
+		 */
+		@Name(SELECTED_RULES)
+		@Nullable
+		@Format(ChannelRefFormat.class)
+		ChannelRef getSelectedRules();
 	}
 
 	private final ChannelRef _inputRef;
@@ -206,6 +256,8 @@ public class SecurityCoverageTable implements UIElement {
 
 	private final ChannelRef _selectedRuleRef;
 
+	private final ChannelRef _selectedRulesRef;
+
 	/**
 	 * Creates a new {@link SecurityCoverageTable} from configuration.
 	 */
@@ -216,6 +268,7 @@ public class SecurityCoverageTable implements UIElement {
 		_selectedTypeRef = config.getSelectedType();
 		_selectedFindingsRef = config.getSelectedFindings();
 		_selectedRuleRef = config.getSelectedRule();
+		_selectedRulesRef = config.getSelectedRules();
 	}
 
 	@Override
@@ -245,6 +298,20 @@ public class SecurityCoverageTable implements UIElement {
 		DefaultTableView<Object> view = new DefaultTableView<>(columns, source, initialState);
 		TableViewControl<Object> control = new TableViewControl<>(context, view, false);
 
+		Detail detail = new Detail(
+			_selectionRef == null ? null : context.resolveChannel(_selectionRef),
+			_selectedTypeRef == null ? null : context.resolveChannel(_selectedTypeRef),
+			_selectedFindingsRef == null ? null : context.resolveChannel(_selectedFindingsRef),
+			_selectedRuleRef == null ? null : context.resolveChannel(_selectedRuleRef),
+			_selectedRulesRef == null ? null : context.resolveChannel(_selectedRulesRef));
+		if (detail.isBound()) {
+			control.addSelectionListener(keys -> {
+				Object key = keys.size() == 1 ? keys.iterator().next() : null;
+				detail.setKey(key);
+				detail.show(key == null ? null : rowByKey.get(key));
+			});
+		}
+
 		if (dataChannel != null) {
 			ChannelListener listener = (sender, oldValue, newValue) -> {
 				List<Object> newRows = rows(newValue);
@@ -252,35 +319,200 @@ public class SecurityCoverageTable implements UIElement {
 				rowByKey.putAll(index(newRows));
 				source.setElements(newRows);
 				control.refreshData();
+				if (detail.isBound()) {
+					// The rows are fresh instances, so the display of the row that stays selected
+					// would otherwise keep describing the analysis that was replaced.
+					detail.show(rowByKey.get(detail.getKey()));
+				}
 			};
 			dataChannel.addListener(listener);
 			control.addCleanupAction(() -> dataChannel.removeListener(listener));
 		}
-
-		ViewChannel selection = _selectionRef != null ? context.resolveChannel(_selectionRef) : null;
-		ViewChannel selectedType = _selectedTypeRef != null ? context.resolveChannel(_selectedTypeRef) : null;
-		ViewChannel selectedFindings =
-			_selectedFindingsRef != null ? context.resolveChannel(_selectedFindingsRef) : null;
-		ViewChannel selectedRule = _selectedRuleRef != null ? context.resolveChannel(_selectedRuleRef) : null;
-		if (selection != null || selectedType != null || selectedFindings != null || selectedRule != null) {
-			control.addSelectionListener(keys -> {
-				TypeCoverage row = keys.size() == 1 ? rowByKey.get(keys.iterator().next()) : null;
-				if (selection != null) {
-					selection.set(row);
-				}
-				if (selectedType != null) {
-					selectedType.set(row == null ? null : row.type());
-				}
-				if (selectedFindings != null) {
-					selectedFindings.set(row == null ? null : findings(row));
-				}
-				if (selectedRule != null) {
-					String rule = row == null ? null : SecurityCoverageAction.ruleHtml(row);
-					selectedRule.set(rule == null || rule.isEmpty() ? null : rule);
-				}
-			});
-		}
 		return control;
+	}
+
+	/**
+	 * The channels describing the selected row, and the key of the row they describe.
+	 *
+	 * <p>
+	 * The key is remembered because the rows are replaced as a whole whenever the analysis is
+	 * repeated: the row that stays selected is a different {@link TypeCoverage} instance afterwards,
+	 * and the channels are pushed again for it without the user having to select it anew.
+	 * </p>
+	 */
+	private static final class Detail {
+
+		private final ViewChannel _selection;
+
+		private final ViewChannel _type;
+
+		private final ViewChannel _findings;
+
+		private final ViewChannel _proposedRule;
+
+		private final ViewChannel _rules;
+
+		private Object _key;
+
+		/**
+		 * Creates a {@link Detail} over the channels the table is configured with, each of them
+		 * <code>null</code> where the configuration names none.
+		 */
+		Detail(ViewChannel selection, ViewChannel type, ViewChannel findings, ViewChannel proposedRule,
+				ViewChannel rules) {
+			_selection = selection;
+			_type = type;
+			_findings = findings;
+			_proposedRule = proposedRule;
+			_rules = rules;
+		}
+
+		/**
+		 * Whether any channel is bound at all.
+		 */
+		boolean isBound() {
+			return _selection != null || _type != null || _findings != null || _proposedRule != null
+				|| _rules != null;
+		}
+
+		/**
+		 * The key of the row being described, <code>null</code> while nothing is selected.
+		 */
+		Object getKey() {
+			return _key;
+		}
+
+		/**
+		 * @see #getKey()
+		 */
+		void setKey(Object key) {
+			_key = key;
+		}
+
+		/**
+		 * Writes what the given row is described by to the bound channels, clearing them all for
+		 * <code>null</code>.
+		 */
+		void show(TypeCoverage row) {
+			if (_selection != null) {
+				_selection.set(row);
+			}
+			if (_type != null) {
+				_type.set(row == null ? null : row.type());
+			}
+			if (_findings != null) {
+				_findings.set(row == null ? null : findings(row));
+			}
+			if (_proposedRule != null) {
+				String rule = row == null ? null : SecurityCoverageAction.ruleHtml(row);
+				_proposedRule.set(rule == null || rule.isEmpty() ? null : rule);
+			}
+			if (_rules != null) {
+				_rules.set(row == null ? List.of() : ruleEntries(row));
+			}
+		}
+	}
+
+	/**
+	 * The rules in effect for the given type, the security parent rules first, each as the
+	 * dictionary a display shows and a command works on.
+	 *
+	 * @see Config#getSelectedRules()
+	 */
+	private static List<Map<String, Object>> ruleEntries(TypeCoverage coverage) {
+		SecurityDefinitionEditor editor = new SecurityDefinitionEditor();
+		Set<String> storedParents = storedIds(editor::storedSecurityParentRules);
+		Set<String> storedRoleRules = storedIds(editor::storedRoleRules);
+		Resources resources = Resources.getInstance();
+		String parentKind = resources.getString(I18NConstants.COVERAGE_RULE_KIND_SECURITY_PARENT);
+		String roleKind = resources.getString(I18NConstants.COVERAGE_RULE_KIND_ROLE_RULE);
+
+		List<Map<String, Object>> result = new ArrayList<>();
+		for (NavigationRule rule : coverage.securityParentRules()) {
+			String id = rule.getId();
+			result.add(ruleEntry(KIND_SECURITY_PARENT, parentKind, id, path(rule.getPath()),
+				storedParents.contains(id)));
+		}
+		for (Map.Entry<String, List<RoleProvider>> group : roleRulesByConfigId(coverage).entrySet()) {
+			String id = group.getKey();
+			result.add(ruleEntry(KIND_ROLE_RULE, roleKind, id, roleRuleDescription(group.getValue()),
+				storedRoleRules.contains(id)));
+		}
+		return result;
+	}
+
+	/**
+	 * One entry of {@link Config#getSelectedRules()}.
+	 */
+	private static Map<String, Object> ruleEntry(String kind, String kindLabel, String id, String description,
+			boolean stored) {
+		Map<String, Object> entry = new LinkedHashMap<>();
+		entry.put(RULE_KIND, kind);
+		entry.put(RULE_KIND_LABEL, kindLabel);
+		entry.put(RULE_ID, id);
+		entry.put(RULE_DESCRIPTION, description);
+		entry.put(RULE_STORED, Boolean.valueOf(stored));
+		return entry;
+	}
+
+	/**
+	 * The ids of the rules the given query of the stored configuration answers, empty when that
+	 * configuration cannot be read.
+	 *
+	 * <p>
+	 * A configuration that cannot be read means that no rule can be shown as stored, hence that
+	 * none is offered for deletion - which is the safe answer, the file being the only place a rule
+	 * can be deleted from.
+	 * </p>
+	 */
+	private static Set<String> storedIds(StoredRulesQuery query) {
+		try {
+			return query.run().stream().map(NavigationRuleConfig::getId).collect(Collectors.toSet());
+		} catch (ConfigurationException ex) {
+			Logger.error("Cannot read the stored access definition.", ex, SecurityCoverageTable.class);
+			return Set.of();
+		}
+	}
+
+	/**
+	 * The role rules applying to the given type, grouped by the id of the configuration they were
+	 * created from.
+	 *
+	 * <p>
+	 * One configured rule grants each of the roles it names, so it appears as one
+	 * {@link RoleProvider} per role - the rule the user edits and deletes is the configured one.
+	 * </p>
+	 */
+	private static Map<String, List<RoleProvider>> roleRulesByConfigId(TypeCoverage coverage) {
+		Map<String, List<RoleProvider>> result = new LinkedHashMap<>();
+		for (RoleProvider rule : coverage.roleRules()) {
+			result.computeIfAbsent(rule.getConfigId(), id -> new ArrayList<>()).add(rule);
+		}
+		return result;
+	}
+
+	/**
+	 * The roles the given rules grant and the path leading to the objects granting them.
+	 */
+	private static String roleRuleDescription(List<RoleProvider> rules) {
+		String roles = rules.stream()
+			.map(RoleProvider::getRole)
+			.map(BoundRole::getName)
+			.distinct()
+			.collect(Collectors.joining(VALUE_SEPARATOR));
+		String path = path(rules.get(0).getPath());
+		return path.isEmpty() ? roles : roles + DESCRIPTION_SEPARATOR + path;
+	}
+
+	/**
+	 * A query for the rules the stored configuration defines.
+	 */
+	private interface StoredRulesQuery {
+
+		/**
+		 * Answers the query.
+		 */
+		List<? extends NavigationRuleConfig> run() throws ConfigurationException;
 	}
 
 	/**
@@ -327,10 +559,14 @@ public class SecurityCoverageTable implements UIElement {
 
 	/**
 	 * The ids of the rules delivering a role on the type.
+	 *
+	 * <p>
+	 * The id of the configured rule, not of the one provider per role it is applied as, so that the
+	 * cell names the rules the way the rule list and the editing commands do.
+	 * </p>
 	 */
 	private static String roleRules(Object row) {
-		return coverage(row).roleRules().stream()
-			.map(RoleProvider::getId)
+		return roleRulesByConfigId(coverage(row)).keySet().stream()
 			.collect(Collectors.joining(VALUE_SEPARATOR));
 	}
 
@@ -339,15 +575,15 @@ public class SecurityCoverageTable implements UIElement {
 	 */
 	private static String securityParents(Object row) {
 		return coverage(row).securityParentRules().stream()
-			.map(SecurityCoverageTable::path)
+			.map(rule -> path(rule.getPath()))
 			.collect(Collectors.joining(RULE_SEPARATOR));
 	}
 
 	/**
-	 * The navigation path of the given rule, one entry per step.
+	 * The given navigation path, one entry per step.
 	 */
-	private static String path(NavigationRule rule) {
-		return rule.getPath().stream()
+	private static String path(List<PathElement> steps) {
+		return steps.stream()
 			.map(SecurityCoverageTable::step)
 			.collect(Collectors.joining(STEP_SEPARATOR));
 	}

@@ -107,6 +107,12 @@ public class SecurityDefinitionAction implements ViewAction {
 		/** Store the edited role rule. */
 		SAVE_ROLE_RULE,
 
+		/** Drop the security parent rule with the input id from the stored configuration. */
+		REMOVE_SECURITY_PARENT_RULE,
+
+		/** Drop the role rule with the input id from the stored configuration. */
+		REMOVE_ROLE_RULE,
+
 		/** Fetch the access rights of the selected type for editing. */
 		EDIT_ACCESS_RIGHTS,
 
@@ -182,6 +188,8 @@ public class SecurityDefinitionAction implements ViewAction {
 			case EDIT_ROLE_RULE -> editRoleRule(ruleId(input));
 			case SAVE_SECURITY_PARENT_RULE -> saveSecurityParentRule(rule(input, NavigationRuleConfig.class));
 			case SAVE_ROLE_RULE -> saveRoleRule(rule(input, RoleRuleConfig.class));
+			case REMOVE_SECURITY_PARENT_RULE -> removeSecurityParentRule(ruleId(input));
+			case REMOVE_ROLE_RULE -> removeRoleRule(ruleId(input));
 			case EDIT_ACCESS_RIGHTS -> editAccessRights(coverage(context, input));
 			case EDIT_MODULE_ACCESS_RIGHTS -> editModuleAccessRights(coverage(context, input));
 			case SAVE_ACCESS_RIGHTS -> saveAccessRights(accessRights(input));
@@ -278,6 +286,44 @@ public class SecurityDefinitionAction implements ViewAction {
 		}
 		store(() -> editor().putRoleRule(rule));
 		return Boolean.TRUE;
+	}
+
+	/**
+	 * Drops the security parent rule with the given id from the stored configuration.
+	 */
+	private Object removeSecurityParentRule(String id) {
+		remove(() -> editor().removeSecurityParentRule(id), id);
+		return Boolean.TRUE;
+	}
+
+	/**
+	 * Drops the role rule with the given id from the stored configuration.
+	 */
+	private Object removeRoleRule(String id) {
+		remove(() -> editor().removeRoleRule(id), id);
+		return Boolean.TRUE;
+	}
+
+	/**
+	 * Runs the given removal, reporting a rule the stored configuration does not define as one the
+	 * base configuration declares.
+	 *
+	 * <p>
+	 * Layering a file onto the configuration underneath can add a rule and replace one, but it
+	 * cannot take one away: a rule the application's own file does not define is removed where it
+	 * is declared, or overridden by an edited rule of the same id.
+	 * </p>
+	 */
+	private void remove(FileRemoval removal, String id) {
+		boolean removed;
+		try {
+			removed = removal.run();
+		} catch (IOException | ConfigurationException ex) {
+			throw new TopLogicException(errorWritingFile(editor().getAccessManagerFile()), ex);
+		}
+		if (!removed) {
+			throw new TopLogicException(I18NConstants.ERROR_BASE_RULE_NOT_REMOVABLE__ID.fill(id));
+		}
 	}
 
 	/**
@@ -523,6 +569,19 @@ public class SecurityDefinitionAction implements ViewAction {
 		 * Performs the operation.
 		 */
 		void run() throws IOException, ConfigurationException;
+	}
+
+	/**
+	 * An operation of the editor that drops something from a file.
+	 */
+	private interface FileRemoval {
+
+		/**
+		 * Performs the operation.
+		 *
+		 * @return Whether the stored configuration defined what was to be dropped.
+		 */
+		boolean run() throws IOException, ConfigurationException;
 	}
 
 	/**

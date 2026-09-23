@@ -535,8 +535,12 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * <p>
 	 * Options resolve for more than a value list: {@link ConfigPropertyOptions#optionProvider} also
 	 * answers the implementation types a polymorphic property may be given, which the type selector
-	 * offers, not a field. The {@code @Options} annotation is what tells the two apart - it is the
-	 * declaration that the property's own <em>value</em> comes from a fixed set.
+	 * offers, not a field. The {@link Options @Options} annotation is what tells the two apart - it
+	 * is the declaration that the property's own <em>value</em> comes from a fixed set. It is looked up
+	 * with {@link ConfigPropertyOptions#optionsAnnotation(PropertyDescriptor)}, so a value class
+	 * that declares the set for every property typed with it - a command group reference, a model
+	 * part reference - is offered as a select exactly like a property carrying the annotation
+	 * itself.
 	 * </p>
 	 *
 	 * <p>
@@ -574,7 +578,7 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 		}
 		// An option provider without an @Options annotation offers the implementation types of a
 		// polymorphic property, not values of it - see this method's own doc comment.
-		return property.getAnnotation(Options.class) != null;
+		return ConfigPropertyOptions.optionsAnnotation(property) != null;
 	}
 
 	/**

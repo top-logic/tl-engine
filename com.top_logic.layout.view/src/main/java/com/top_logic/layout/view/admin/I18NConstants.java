@@ -85,6 +85,22 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COVERAGE_COLUMN_FINDINGS;
 
 	/**
+	 * @en Security parent
+	 */
+	public static ResKey COVERAGE_RULE_KIND_SECURITY_PARENT;
+
+	/**
+	 * @en Role rule
+	 */
+	public static ResKey COVERAGE_RULE_KIND_ROLE_RULE;
+
+	/**
+	 * @en The rule "{0}" is defined by the base configuration. It can be overridden by a rule of
+	 *     the same id, but not removed.
+	 */
+	public static ResKey1 ERROR_BASE_RULE_NOT_REMOVABLE__ID;
+
+	/**
 	 * @en Please select the type to edit the access definition of.
 	 */
 	public static ResKey ERROR_NO_TYPE_SELECTED;

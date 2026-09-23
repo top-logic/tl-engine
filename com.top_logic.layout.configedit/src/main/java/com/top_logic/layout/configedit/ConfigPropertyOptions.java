@@ -173,6 +173,28 @@ public class ConfigPropertyOptions extends LazyTypedAnnotatable implements Decla
 	}
 
 	/**
+	 * The {@link Options} annotation declaring that the given property's own value is picked from
+	 * a fixed set, or {@code null} if it has none.
+	 *
+	 * <p>
+	 * Looked up the way {@link Fields#optionProvider(DeclarativeFormOptions)} looks it up when it
+	 * builds the provider, which is what makes the two answers agree: the annotation counts when it
+	 * sits on the property, and equally when it sits on the type of the property's value - a value
+	 * class such as {@link com.top_logic.tool.boundsec.CommandGroupReference} declares once, for
+	 * every property ever typed with it, that its instances come from a fixed set.
+	 * </p>
+	 *
+	 * <p>
+	 * A property without such an annotation may still have an option provider, namely the
+	 * implementation types of a polymorphic property - see
+	 * {@link #optionProvider(PropertyDescriptor)}. The annotation is what tells the two apart.
+	 * </p>
+	 */
+	public static Options optionsAnnotation(PropertyDescriptor property) {
+		return NO_CUSTOMIZATIONS.getAnnotation(property, Options.class);
+	}
+
+	/**
 	 * The {@link LabelProvider} for the options of the given property, or {@code null} for the
 	 * default labels.
 	 */

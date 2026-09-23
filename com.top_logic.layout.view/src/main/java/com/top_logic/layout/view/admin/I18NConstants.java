@@ -130,9 +130,29 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_MISSING_RULE_ROLE;
 
 	/**
+	 * @en There are no access rights to store.
+	 */
+	public static ResKey ERROR_NO_ACCESS_RIGHTS_SELECTED;
+
+	/**
+	 * @en Please select the model element the access rights apply to.
+	 */
+	public static ResKey ERROR_MISSING_ACCESS_RIGHTS_NAME;
+
+	/**
+	 * @en Please select the operation each rule applies to.
+	 */
+	public static ResKey ERROR_MISSING_GRANT_OPERATION;
+
+	/**
 	 * @en The access definition could not be written to the file "{0}".
 	 */
 	public static ResKey1 ERROR_WRITING_ACCESS_DEFINITION__FILE;
+
+	/**
+	 * @en The access definition could not be read from the file "{0}".
+	 */
+	public static ResKey1 ERROR_READING_ACCESS_DEFINITION__FILE;
 
 	static {
 		initConstants(I18NConstants.class);

@@ -72,9 +72,10 @@ import com.top_logic.util.Resources;
  * App-specific admin widget (referenced by {@code class=}, not a reusable {@code @TagName} element).
  * The table shows a fresh analysis when opened and rebuilds from the configured
  * {@link Config#getInput() input channel} after a command. The selected row is written to the
- * {@link Config#getSelection() selection channel} (so a command can act on it); the parts of it a
- * detail display shows go to the {@link Config#getSelectedFindings() findings} and the
- * {@link Config#getSelectedRule() rule channel}, both cleared to {@code null} when the selection is
+ * {@link Config#getSelection() selection channel} (so a command can act on it); the type of it goes
+ * to the {@link Config#getSelectedType() type channel} (so a command names it), and the parts of it
+ * a detail display shows go to the {@link Config#getSelectedFindings() findings} and the
+ * {@link Config#getSelectedRule() rule channel}, all cleared to {@code null} when the selection is
  * empty.
  * </p>
  *
@@ -136,6 +137,9 @@ public class SecurityCoverageTable implements UIElement {
 		/** Configuration name for {@link #getSelection()}. */
 		String SELECTION = "selection";
 
+		/** Configuration name for {@link #getSelectedType()}. */
+		String SELECTED_TYPE = "selected-type";
+
 		/** Configuration name for {@link #getSelectedFindings()}. */
 		String SELECTED_FINDINGS = "selected-findings";
 
@@ -165,6 +169,15 @@ public class SecurityCoverageTable implements UIElement {
 		ChannelRef getSelection();
 
 		/**
+		 * Channel the selected type itself is written to, so that a command names it in the text it
+		 * shows to the user.
+		 */
+		@Name(SELECTED_TYPE)
+		@Nullable
+		@Format(ChannelRefFormat.class)
+		ChannelRef getSelectedType();
+
+		/**
 		 * Channel the findings of the selected type are written to, as the text a detail display
 		 * shows.
 		 */
@@ -187,6 +200,8 @@ public class SecurityCoverageTable implements UIElement {
 
 	private final ChannelRef _selectionRef;
 
+	private final ChannelRef _selectedTypeRef;
+
 	private final ChannelRef _selectedFindingsRef;
 
 	private final ChannelRef _selectedRuleRef;
@@ -198,6 +213,7 @@ public class SecurityCoverageTable implements UIElement {
 	public SecurityCoverageTable(InstantiationContext context, Config config) {
 		_inputRef = config.getInput();
 		_selectionRef = config.getSelection();
+		_selectedTypeRef = config.getSelectedType();
 		_selectedFindingsRef = config.getSelectedFindings();
 		_selectedRuleRef = config.getSelectedRule();
 	}
@@ -242,14 +258,18 @@ public class SecurityCoverageTable implements UIElement {
 		}
 
 		ViewChannel selection = _selectionRef != null ? context.resolveChannel(_selectionRef) : null;
+		ViewChannel selectedType = _selectedTypeRef != null ? context.resolveChannel(_selectedTypeRef) : null;
 		ViewChannel selectedFindings =
 			_selectedFindingsRef != null ? context.resolveChannel(_selectedFindingsRef) : null;
 		ViewChannel selectedRule = _selectedRuleRef != null ? context.resolveChannel(_selectedRuleRef) : null;
-		if (selection != null || selectedFindings != null || selectedRule != null) {
+		if (selection != null || selectedType != null || selectedFindings != null || selectedRule != null) {
 			control.addSelectionListener(keys -> {
 				TypeCoverage row = keys.size() == 1 ? rowByKey.get(keys.iterator().next()) : null;
 				if (selection != null) {
 					selection.set(row);
+				}
+				if (selectedType != null) {
+					selectedType.set(row == null ? null : row.type());
 				}
 				if (selectedFindings != null) {
 					selectedFindings.set(row == null ? null : findings(row));

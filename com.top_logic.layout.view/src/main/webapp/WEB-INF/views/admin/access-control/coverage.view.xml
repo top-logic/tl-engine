@@ -4,24 +4,30 @@
 	Security coverage: the completeness of the model based access definition, one row per analyzed
 	type. The SecurityCoverageTable analyses the definition itself when the view is opened and
 	rebuilds from the rows channel after a command; it writes the selected row to the selection
-	channel and the parts of it the detail shows to the selectedType / selectedFindings /
-	selectedRule channels (the detail shows the findings of the selected type and its proposed rule;
-	the module and findings columns start hidden, the table being grouped by module). "Show
+	channel, the type of it to the selectedType channel and the parts of it the detail shows to the
+	selectedFindings / selectedRule channels (the detail shows the findings of the selected type and
+	its proposed rule; the module and findings columns start hidden, the table being grouped by
+	module). "Show
 	configuration" hands the rendered security parents of all types to a dialog, "Show rule" the
 	rule of the selected type (it is hidden while the selected type has none).
 	
 	The commands of the findings panel edit the definition: "Accept proposal" stores the proposed
 	security parent rule, "Security parent…" and "Role rule…" open a dialog editing a rule of the
-	selected type. All of them write to the application configuration rather than to the running
-	application, so the pending channel marks that the files and the running definition differ until
-	"Apply configuration" reads the files again and restarts the access services. That marker is
-	shown in the findings panel rather than above the table, a filling panel bounding the height of
-	a single scrolling child only.
+	selected type, and "Access rights…" one editing the grants and marks the application adds for
+	it. The overflow clique holds the same dialog for the module of the selected type and the two
+	marks that exempt a type from the check ("Mark internal") or from access control ("Without
+	access control"), each asking for confirmation with the selected type named - which is what the
+	selectedType channel carries. All of them write to the application configuration rather than to
+	the running application, so the pending channel marks that the files and the running definition
+	differ until "Apply configuration" reads the files again and restarts the access services. That
+	marker is shown in the findings panel rather than above the table, a filling panel bounding the
+	height of a single scrolling child only.
 -->
 <view>
 	<channels>
 		<channel name="rows"/>
 		<channel name="selection"/>
+		<channel name="selectedType"/>
 		<channel name="selectedFindings"/>
 		<channel name="selectedRule"/>
 		<channel name="pending"/>
@@ -93,6 +99,7 @@
 						input="rows"
 						selected-findings="selectedFindings"
 						selected-rule="selectedRule"
+						selected-type="selectedType"
 						selection="selection"
 					/>
 				</panel>
@@ -191,6 +198,101 @@
 									to="pending"
 								/>
 							</open-dialog>
+						</generic-command>
+						<generic-command
+							image="css:bi bi-shield-check"
+							input="selection"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Access rights…</en>
+								<de>Zugriffsrechte…</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+								mode="EDIT_ACCESS_RIGHTS"
+							/>
+							<open-dialog
+								bind-input-to="rights"
+								dialog-view="admin/access-control/coverage-access-rights.view.xml"
+							>
+								<bind
+									channel="pending"
+									to="pending"
+								/>
+							</open-dialog>
+						</generic-command>
+						<generic-command
+							clique="more"
+							image="css:bi bi-shield-shaded"
+							input="selection"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Module access rights…</en>
+								<de>Zugriffsrechte des Moduls…</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+								mode="EDIT_MODULE_ACCESS_RIGHTS"
+							/>
+							<open-dialog
+								bind-input-to="rights"
+								dialog-view="admin/access-control/coverage-access-rights.view.xml"
+							>
+								<bind
+									channel="pending"
+									to="pending"
+								/>
+							</open-dialog>
+						</generic-command>
+						<generic-command
+							clique="more"
+							image="css:bi bi-gear"
+							input="selection"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Mark internal</en>
+								<de>Als intern kennzeichnen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<confirm
+								expr="type -> x -> #('Mark {0} as internal? An internal type is used by the application code alone, so it is exempt from the check and no user gets access to its objects.'@en, '{0} als intern kennzeichnen? Ein interner Typ wird nur vom Anwendungscode verwendet, ist deshalb von der Prüfung ausgenommen, und kein Benutzer erhält Zugriff auf seine Objekte.'@de).fill(label($type))"
+								inputs="selectedType"
+							/>
+							<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+								mode="TOGGLE_INTERNAL"
+							/>
+							<write-channel name="pending"/>
+						</generic-command>
+						<generic-command
+							clique="more"
+							image="css:bi bi-unlock"
+							input="selection"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Without access control</en>
+								<de>Ohne Zugriffskontrolle</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<confirm
+								expr="type -> x -> #('Exclude {0} from access control? Every user may then access its objects, no matter which roles the user holds on them.'@en, '{0} von der Zugriffskontrolle ausnehmen? Jeder Benutzer darf dann auf seine Objekte zugreifen, unabhängig von seinen Rollen darauf.'@de).fill(label($type))"
+								inputs="selectedType"
+							/>
+							<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+								mode="TOGGLE_WITHOUT_SECURITY"
+							/>
+							<write-channel name="pending"/>
 						</generic-command>
 					</commands>
 					<visible-if

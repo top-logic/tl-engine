@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.admin;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -28,21 +29,31 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.command.ViewAction;
+import com.top_logic.model.TLClass;
+import com.top_logic.model.annotate.security.AccessRule;
+import com.top_logic.model.security.SecurityConfigurationService.ModelAccessRights;
+import com.top_logic.model.security.SecurityConfigurationService.TLClassAccessRights;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link ViewAction} editing the model based access definition from the security coverage display:
- * it creates, prefills, validates and stores the rules the analysis reports about, and makes the
- * stored definition effective.
+ * it creates, prefills, validates and stores the rules and the access rights the analysis reports
+ * about, and makes the stored definition effective.
  *
  * <p>
  * App-specific action, referenced by {@code class=} in the coverage views rather than claiming a
  * global {@code @TagName}. What the action does is decided by its {@link Config#getMode() mode}: it
- * either produces the rule a dialog edits, stores the edited rule, or applies everything stored so
- * far. A mode that stores something returns the marker a channel carries to tell the user that the
- * files and the running definition differ; applying clears that marker and returns the rows of a
- * fresh analysis.
+ * produces the rule or the access rights a dialog edits, stores what the dialog hands back, flips
+ * one of the marks a type carries, or applies everything stored so far. A mode that stores
+ * something returns the marker a channel carries to tell the user that the files and the running
+ * definition differ; applying clears that marker and returns the rows of a fresh analysis.
+ * </p>
+ *
+ * <p>
+ * What a dialog edits are the additions the application makes for a type, not the rights that are
+ * in effect: the stored grants are appended to the grants of the underlying configuration layers,
+ * and the stored marks override the ones those layers set.
  * </p>
  *
  * <p>
@@ -95,6 +106,21 @@ public class SecurityDefinitionAction implements ViewAction {
 
 		/** Store the edited role rule. */
 		SAVE_ROLE_RULE,
+
+		/** Fetch the access rights of the selected type for editing. */
+		EDIT_ACCESS_RIGHTS,
+
+		/** Fetch the access rights of the module of the selected type for editing. */
+		EDIT_MODULE_ACCESS_RIGHTS,
+
+		/** Store the edited access rights. */
+		SAVE_ACCESS_RIGHTS,
+
+		/** Flip the internal mark of the selected type. */
+		TOGGLE_INTERNAL,
+
+		/** Flip the exclusion of the selected type from access control. */
+		TOGGLE_WITHOUT_SECURITY,
 
 		/** Make the stored definition effective and analyze it again. */
 		APPLY;
@@ -156,6 +182,11 @@ public class SecurityDefinitionAction implements ViewAction {
 			case EDIT_ROLE_RULE -> editRoleRule(ruleId(input));
 			case SAVE_SECURITY_PARENT_RULE -> saveSecurityParentRule(rule(input, NavigationRuleConfig.class));
 			case SAVE_ROLE_RULE -> saveRoleRule(rule(input, RoleRuleConfig.class));
+			case EDIT_ACCESS_RIGHTS -> editAccessRights(coverage(context, input));
+			case EDIT_MODULE_ACCESS_RIGHTS -> editModuleAccessRights(coverage(context, input));
+			case SAVE_ACCESS_RIGHTS -> saveAccessRights(accessRights(input));
+			case TOGGLE_INTERNAL -> toggleInternal(coverage(context, input));
+			case TOGGLE_WITHOUT_SECURITY -> toggleWithoutSecurity(coverage(context, input));
 			case APPLY -> apply();
 		};
 	}
@@ -264,6 +295,88 @@ public class SecurityDefinitionAction implements ViewAction {
 	}
 
 	/**
+	 * The access rights stored for the given type, as a copy to edit.
+	 *
+	 * <p>
+	 * The copy holds the additions the application makes for the type, not the rights that are in
+	 * effect: its grants are appended to the grants of the underlying configuration layers when it
+	 * is applied.
+	 * </p>
+	 */
+	private Object editAccessRights(TypeCoverage coverage) {
+		return load(() -> editor().editableAccessRights(coverage.type()));
+	}
+
+	/**
+	 * The access rights stored for the module of the given type, as a copy to edit.
+	 *
+	 * <p>
+	 * They apply to every class of that module, in the same additive way the rights of a single
+	 * type do.
+	 * </p>
+	 */
+	private Object editModuleAccessRights(TypeCoverage coverage) {
+		return load(() -> editor().editableAccessRights(coverage.type().getModule()));
+	}
+
+	/**
+	 * Stores the given access rights after checking that they name the model element they apply to
+	 * and that every rule of them names an operation.
+	 */
+	private Object saveAccessRights(ModelAccessRights entry) {
+		String name = entry.getName();
+		if (name == null || name.isBlank()) {
+			throw new TopLogicException(I18NConstants.ERROR_MISSING_ACCESS_RIGHTS_NAME);
+		}
+		for (AccessRule grant : entry.getGrants()) {
+			if (grant.getOperation() == null) {
+				throw new TopLogicException(I18NConstants.ERROR_MISSING_GRANT_OPERATION);
+			}
+		}
+		store(() -> editor().putAccessRights(entry), grantsFile());
+		return Boolean.TRUE;
+	}
+
+	/**
+	 * Marks the given type as used by the application's own code only, or drops that mark.
+	 *
+	 * <p>
+	 * The new value is the opposite of what the stored access rights hold, not of what the analysis
+	 * reports: the files may already carry a change that is not applied yet, and the flip continues
+	 * from what was stored last.
+	 * </p>
+	 */
+	private Object toggleInternal(TypeCoverage coverage) {
+		TLClass type = coverage.type();
+		boolean value = !storedAccessRights(type).isInternal();
+		store(() -> editor().setInternal(type, value), grantsFile());
+		return Boolean.TRUE;
+	}
+
+	/**
+	 * Excludes the given type from access control, or drops that exclusion.
+	 *
+	 * <p>
+	 * The new value is the opposite of what the stored access rights hold, not of what the analysis
+	 * reports: the files may already carry a change that is not applied yet, and the flip continues
+	 * from what was stored last.
+	 * </p>
+	 */
+	private Object toggleWithoutSecurity(TypeCoverage coverage) {
+		TLClass type = coverage.type();
+		boolean value = !storedAccessRights(type).isWithoutSecurity();
+		store(() -> editor().setWithoutSecurity(type, value), grantsFile());
+		return Boolean.TRUE;
+	}
+
+	/**
+	 * The access rights the files hold for the given type.
+	 */
+	private TLClassAccessRights storedAccessRights(TLClass type) {
+		return load(() -> editor().editableAccessRights(type));
+	}
+
+	/**
 	 * Makes the stored definition effective and returns the rows of a fresh analysis.
 	 */
 	private Object apply() {
@@ -307,6 +420,16 @@ public class SecurityDefinitionAction implements ViewAction {
 	}
 
 	/**
+	 * The edited access rights the dialog hands over.
+	 */
+	private static ModelAccessRights accessRights(Object input) {
+		if (input instanceof ModelAccessRights entry) {
+			return entry;
+		}
+		throw new TopLogicException(I18NConstants.ERROR_NO_ACCESS_RIGHTS_SELECTED);
+	}
+
+	/**
 	 * The value of the channel with the given name, or <code>null</code> when the view has no such
 	 * channel.
 	 */
@@ -332,22 +455,56 @@ public class SecurityDefinitionAction implements ViewAction {
 	}
 
 	/**
-	 * Runs the given file operation, reporting its failure as a message naming the file.
+	 * Runs the given operation on the file holding the rules, reporting its failure as a message
+	 * naming that file.
 	 */
 	private void store(FileOperation operation) {
+		store(operation, editor().getAccessManagerFile());
+	}
+
+	/**
+	 * Runs the given operation on the given file, reporting its failure as a message naming that
+	 * file.
+	 */
+	private static void store(FileOperation operation, File file) {
 		try {
 			operation.run();
 		} catch (IOException | ConfigurationException ex) {
-			throw new TopLogicException(errorWritingFile(), ex);
+			throw new TopLogicException(errorWritingFile(file), ex);
 		}
+	}
+
+	/**
+	 * Answers the given query about the file holding the grants, reporting its failure as a message
+	 * naming that file.
+	 */
+	private <T> T load(FileQuery<T> query) {
+		try {
+			return query.run();
+		} catch (ConfigurationException ex) {
+			throw new TopLogicException(errorReadingFile(grantsFile()), ex);
+		}
+	}
+
+	/**
+	 * The file holding the grants.
+	 */
+	private File grantsFile() {
+		return editor().getGrantsFile();
 	}
 
 	/**
 	 * The message telling the user which file could not be written.
 	 */
-	private ResKey errorWritingFile() {
-		return I18NConstants.ERROR_WRITING_ACCESS_DEFINITION__FILE
-			.fill(editor().getAccessManagerFile().getAbsolutePath());
+	private static ResKey errorWritingFile(File file) {
+		return I18NConstants.ERROR_WRITING_ACCESS_DEFINITION__FILE.fill(file.getAbsolutePath());
+	}
+
+	/**
+	 * The message telling the user which file could not be read.
+	 */
+	private static ResKey errorReadingFile(File file) {
+		return I18NConstants.ERROR_READING_ACCESS_DEFINITION__FILE.fill(file.getAbsolutePath());
 	}
 
 	/**
@@ -366,5 +523,16 @@ public class SecurityDefinitionAction implements ViewAction {
 		 * Performs the operation.
 		 */
 		void run() throws IOException, ConfigurationException;
+	}
+
+	/**
+	 * An operation of the editor that reads a file.
+	 */
+	private interface FileQuery<T> {
+
+		/**
+		 * Performs the operation.
+		 */
+		T run() throws ConfigurationException;
 	}
 }

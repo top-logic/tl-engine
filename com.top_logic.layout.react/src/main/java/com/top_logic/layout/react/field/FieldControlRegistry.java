@@ -179,20 +179,22 @@ public class FieldControlRegistry {
 	}
 
 	/**
-	 * Edits a boolean value as a checkbox, or as radio buttons or a select when it
+	 * Edits a boolean value as a checkbox, or as a switch, radio buttons or a select when it
 	 * {@link FieldSpec#getBooleanPresentation() asks} for it.
 	 *
 	 * <p>
-	 * A {@link FieldSpec#isTriState() tri-state} value keeps a state for "no value": the checkbox
-	 * gets a third state, the choice a third option.
+	 * A checkbox and a switch show the value in place, while radio buttons and a select offer it as
+	 * a choice between labelled values. A {@link FieldSpec#isTriState() tri-state} value keeps a
+	 * state for "no value": the checkbox gets a third state, the choice a third option, and a
+	 * switch - having no third position - stays a checkbox.
 	 * </p>
 	 */
 	private static ReactControl createBooleanControl(ReactContext context, FieldSpec field, FieldModel model) {
 		BooleanPresentation presentation = field.getBooleanPresentation();
-		if (presentation == BooleanPresentation.CHECKBOX) {
-			return new ReactCheckboxControl(context, model, field.isTriState());
+		if (presentation == BooleanPresentation.RADIO || presentation == BooleanPresentation.SELECT) {
+			return new ReactBooleanChoiceControl(context, model, presentation, field.isTriState());
 		}
-		return new ReactBooleanChoiceControl(context, model, presentation, field.isTriState());
+		return new ReactCheckboxControl(context, model, presentation, field.isTriState());
 	}
 
 	/**

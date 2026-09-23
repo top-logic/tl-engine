@@ -31,6 +31,9 @@ public abstract class ReactLayoutControl extends ReactControl {
 	/** @see #setItemClass(String) */
 	protected static final String ITEM_CLASS = "itemClass";
 
+	/** @see #setMaxWidth(String) */
+	protected static final String MAX_WIDTH = "maxWidth";
+
 	private final List<ReactControl> _children;
 
 	/**
@@ -85,6 +88,23 @@ public abstract class ReactLayoutControl extends ReactControl {
 	}
 
 	/**
+	 * Limits the container to the given width and centers it in the space it is given.
+	 *
+	 * <p>
+	 * The bound is what keeps a column of running text readable on a wide screen: the container
+	 * takes the width offered up to the bound, and the space left over is split between its two
+	 * sides. Below the bound nothing changes, so the same container still fills a narrow screen.
+	 * </p>
+	 *
+	 * @param maxWidth
+	 *        The largest width the container takes, as a CSS length such as {@code "60rem"}, or
+	 *        {@code null} for the width its container offers.
+	 */
+	public void setMaxWidth(String maxWidth) {
+		putState(MAX_WIDTH, maxWidth);
+	}
+
+	/**
 	 * Registers a child control that was created after this container, so that it receives state
 	 * updates and dispatches its commands.
 	 *
@@ -104,7 +124,7 @@ public abstract class ReactLayoutControl extends ReactControl {
 	 */
 	@Override
 	protected Set<String> scriptingPresentationKeys() {
-		return Set.of(ITEM_CLASS);
+		return presentationKeys(super.scriptingPresentationKeys(), ITEM_CLASS, MAX_WIDTH);
 	}
 
 }

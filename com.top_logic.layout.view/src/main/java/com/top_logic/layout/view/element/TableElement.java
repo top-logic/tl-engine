@@ -1171,6 +1171,7 @@ public class TableElement implements UIElement {
 			declaredFilters(columns, inputValues), filterStore(), _initialFilter);
 
 		TableViewControl<Object> control = new TableViewControl<>(context, view, false);
+		control.setCssClass(_config.getCssClass());
 		applyRowDiagnostics(control, initialRows.securityReport());
 		control.setFilterBar(filterBar());
 		if (_dragType != null) {
@@ -1327,6 +1328,7 @@ public class TableElement implements UIElement {
 		RowSetTableControl control =
 			new RowSetTableControl(context, formControl, binding, columns(rowType), _config.getRowEdit());
 		diagnosticsTarget[0] = control;
+		control.setCssClass(_config.getCssClass());
 		applyRowDiagnostics(control, initialRows.securityReport());
 		control.setFramed(false);
 		control.setPersonalization(PersonalConfigViewStateStore.INSTANCE, tableId());

@@ -73,6 +73,6 @@ public class ReactGridControl extends ReactLayoutControl {
 	 */
 	@Override
 	protected Set<String> scriptingPresentationKeys() {
-		return Set.of(GAP, MIN_COLUMN_WIDTH, MAX_COLUMNS, ITEM_CLASS);
+		return presentationKeys(super.scriptingPresentationKeys(), GAP, MIN_COLUMN_WIDTH, MAX_COLUMNS, ITEM_CLASS);
 	}
 }

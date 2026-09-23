@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="selectedItem"/>
+	</channels>
+
+	<panel>
+		<children>
+			<!-- A form saying nothing about its grid. -->
+			<form input="selectedItem"/>
+
+			<!-- A form of a stated width, with every label beside its input. -->
+			<form
+				input="selectedItem"
+				label-position="side"
+				max-columns="1"
+			/>
+
+			<!-- A label position only a single field can take. -->
+			<form
+				input="selectedItem"
+				label-position="after"
+			/>
+		</children>
+	</panel>
+</view>

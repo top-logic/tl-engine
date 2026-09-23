@@ -34,6 +34,7 @@ import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.command.SuspendedCommands;
 import com.top_logic.util.Resources;
 
 /**
@@ -182,6 +183,15 @@ public class WindowElement extends CommandScopeElement {
 		window.setChild(content);
 		window.setToolbar(toolbar);
 		window.setButtonBar(buttonBar);
+
+		SuspendedCommands suspended = context.getScope(SuspendedCommands.class);
+		if (suspended != null) {
+			// A window whose command is still running keeps the user from leaving the work behind
+			// with nothing left to follow or stop it.
+			window.setClosable(!suspended.hasSuspended());
+			window.addCleanupAction(
+				suspended.observe(() -> window.setClosable(!suspended.hasSuspended())));
+		}
 
 		if (!_actions.isEmpty()) {
 			List<ReactControl> actionControls = _actions.stream()

@@ -22,6 +22,7 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
+import com.top_logic.layout.react.control.common.TextOverflow;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.react.scripting.ScriptingAction;
@@ -78,11 +79,8 @@ public class InspectedNodeElement implements UIElement {
 	 */
 	private static final String DESCRIPTION_SEPARATOR = " · ";
 
-	/**
-	 * Display of the address: emphasized, and cut off with an ellipsis instead of overflowing the
-	 * window, since an address has no spaces to wrap at.
-	 */
-	private static final String ADDRESS_CSS_CLASS = "tlText--strong tlText--ellipsis";
+	/** Display of the address: emphasized. */
+	private static final String ADDRESS_CSS_CLASS = "tlText--strong";
 
 	/**
 	 * Configuration for {@link InspectedNodeElement}.
@@ -121,6 +119,8 @@ public class InspectedNodeElement implements UIElement {
 
 	private final ChannelRef _selectionRef;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link InspectedNodeElement} from configuration.
 	 */
@@ -128,6 +128,7 @@ public class InspectedNodeElement implements UIElement {
 	public InspectedNodeElement(InstantiationContext context, Config config) {
 		_nodeRef = config.getNode();
 		_selectionRef = config.getSelection();
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -136,6 +137,8 @@ public class InspectedNodeElement implements UIElement {
 		InspectedNode node = node(nodeChannel);
 
 		ReactTextControl addressText = new ReactTextControl(context, address(node), ADDRESS_CSS_CLASS);
+		// An address has no spaces to wrap at, so it is cut off instead of overflowing the window.
+		addressText.setOverflow(TextOverflow.ELLIPSIS);
 		showFullAddress(addressText, node);
 		ReactTextControl descriptionText = new ReactTextControl(context, description(node), null);
 
@@ -163,6 +166,7 @@ public class InspectedNodeElement implements UIElement {
 
 		ReactStackControl result = new ReactStackControl(context,
 			List.<ReactControl> of(addressText, descriptionText, stateTable, actionTable));
+		result.setCssClass(_cssClass);
 
 		ChannelListener listener = (sender, oldValue, newValue) -> {
 			InspectedNode current = node(nodeChannel);

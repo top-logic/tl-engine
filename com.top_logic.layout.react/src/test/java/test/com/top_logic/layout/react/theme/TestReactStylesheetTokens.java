@@ -28,8 +28,8 @@ public class TestReactStylesheetTokens extends AbstractStylesheetTokenTest {
 
 	/**
 	 * The token sheet of the design system package: the only place the {@code --tl} namespace is
-	 * declared. Transitional rules of the audited sheets read these tokens until their wave rewrites
-	 * them; the primitives of the package are not read outside of it.
+	 * declared. Rules of the audited sheets read these tokens; the primitives of the package are
+	 * not read outside of it.
 	 */
 	private static final List<String> DESIGN_SYSTEM_TOKENS = List.of("/style/tl-design-system/tokens.css");
 
@@ -56,15 +56,16 @@ public class TestReactStylesheetTokens extends AbstractStylesheetTokenTest {
 	}
 
 	/**
-	 * The token sheet of the design system package declares its roles, so a transitional rule
-	 * reading {@code --tl-surface-layer} passes the audit; a primitive of the package is no role
-	 * and stays unknown to the audited sheets.
+	 * The token sheet of the design system package declares the roles the audited sheets read, and
+	 * only those: a primitive is not a role.
 	 */
 	public void testDesignSystemTokensAreDeclared() throws Exception {
-		Set<String> tokens = ThemeTokenAudit.declaredProperties(ThemeTokenAudit.stylesheet(DESIGN_SYSTEM_TOKENS.get(0)));
+		Set<String> tokens =
+			ThemeTokenAudit.declaredProperties(ThemeTokenAudit.stylesheet(DESIGN_SYSTEM_TOKENS.get(0)));
 
 		assertTrue(tokens.toString(), tokens.contains("tl-surface-layer"));
 		assertTrue(tokens.toString(), tokens.contains("tl-text-primary"));
+		assertTrue(tokens.toString(), tokens.contains("tl-size-control"));
 		assertFalse("Primitives are not roles: " + tokens, tokens.contains("tl-blue-49"));
 	}
 

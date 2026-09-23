@@ -103,6 +103,7 @@ public class ScrollLinkElement implements UIElement {
 		Object target = channel.get();
 
 		ScrollLinkControl control = new ScrollLinkControl(context, target, label(target));
+		control.setCssClass(_config.getCssClass());
 
 		ChannelListener listener = (sender, oldValue, newValue) -> control.setValue(newValue, label(newValue));
 		channel.addListener(listener);

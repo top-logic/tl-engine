@@ -41,8 +41,6 @@ public class ReactChartJsControl extends ReactControl {
 
 	private static final String ZOOM_ENABLED = "zoomEnabled";
 
-	private static final String CSS_CLASS = "cssClass";
-
 	private static final String ERROR = "error";
 
 	private static final String NO_DATA_MESSAGE = "noDataMessage";
@@ -109,9 +107,7 @@ public class ReactChartJsControl extends ReactControl {
 		_noDataMessage = noDataMessage;
 
 		putState(ZOOM_ENABLED, zoomEnabled);
-		if (cssClass != null) {
-			putState(CSS_CLASS, cssClass);
-		}
+		setCssClass(cssClass);
 
 		putState(THEME_COLORS, Icons.getChartThemeColors());
 

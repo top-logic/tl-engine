@@ -164,6 +164,8 @@ public class WizardElement implements UIElement {
 
 	private final boolean _stepList;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link WizardElement} from configuration.
 	 */
@@ -176,6 +178,7 @@ public class WizardElement implements UIElement {
 		_counter = config.getCounter();
 		_progress = config.getProgress();
 		_stepList = config.getStepList();
+		_cssClass = config.getCssClass();
 	}
 
 	/**
@@ -218,6 +221,8 @@ public class WizardElement implements UIElement {
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		ViewChannel stepChannel = context.resolveChannel(_stepRef);
-		return new ReactWizardControl(context, this, stepChannel);
+		ReactWizardControl result = new ReactWizardControl(context, this, stepChannel);
+		result.setCssClass(_cssClass);
+		return result;
 	}
 }

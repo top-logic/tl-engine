@@ -31,6 +31,8 @@ import com.top_logic.util.Resources;
  * <li>{@code errorIcon} - encoded theme icon displayed in front of the error message</li>
  * <li>{@code warningIcon} - encoded theme icon displayed in front of each warning message</li>
  * <li>{@code helpText} - help/description text, or {@code null}</li>
+ * <li>{@value #TOOLTIP_TEXT} - plain text offered as the label's tooltip, or {@code null}; the
+ * rich tooltip set by {@link #setTooltip(String, String, boolean)} takes precedence over it</li>
  * <li>{@code dirty} - whether the field has been modified</li>
  * <li>{@code labelPosition} - a {@link LabelPosition}, or {@code null} (inherit from layout)</li>
  * <li>{@code fullLine} - whether the field spans the full grid row</li>
@@ -67,6 +69,8 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 	private static final String FIELD = "field";
 
 	private static final String HAS_TOOLTIP = "hasTooltip";
+
+	private static final String TOOLTIP_TEXT = "tooltipText";
 
 	/** Key expected by {@link #getTooltipContent(String)}. */
 	private static final String TOOLTIP_KEY = "tooltip";
@@ -363,6 +367,23 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 		_tooltipCaption = caption;
 		_tooltipInteractive = interactive;
 		putState(HAS_TOOLTIP, _tooltipHtml != null);
+	}
+
+	/**
+	 * Sets the plain text offered as the tooltip of the field label, in view mode as well as in
+	 * edit mode.
+	 *
+	 * <p>
+	 * A one-sentence description of what the field holds is shown from this text alone, without
+	 * the round trip {@link #setTooltip(String, String, boolean)} takes to fetch its markup. A
+	 * rich tooltip set there wins wherever both are given.
+	 * </p>
+	 *
+	 * @param text
+	 *        The description of the field, or {@code null} to clear.
+	 */
+	public void setTooltipText(String text) {
+		putState(TOOLTIP_TEXT, (text == null || text.isEmpty()) ? null : text);
 	}
 
 	@Override

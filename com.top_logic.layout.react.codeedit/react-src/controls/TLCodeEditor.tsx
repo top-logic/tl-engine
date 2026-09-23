@@ -3,7 +3,7 @@
 // IMPORTANT: React is imported from 'tl-react-bridge' (not 'react') to share the single React
 // instance. Language packages are imported directly because this component lives in the same
 // bundle as CodeEditor, i.e. shares this bundle's single CodeMirror runtime.
-import { React, useTLFieldValue } from 'tl-react-bridge';
+import { React, useTLFieldValue, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import type { Extension } from '@codemirror/state';
 import { LanguageSupport } from '@codemirror/language';
@@ -112,7 +112,7 @@ const TLCodeEditor: React.FC<TLCellProps> = ({ controlId, state }) => {
       languageSupport={binding.support}
       extraExtensions={binding.extras}
       onChange={setValue}
-      className={cls}
+      className={rootClassName(state, cls)}
     />
   );
 };

@@ -1,4 +1,4 @@
-import { React, useTLState, TLChild, useStandaloneKeyboardScope, useFocusTrap, useI18N } from 'tl-react-bridge';
+import { React, useTLState, TLChild, useCloseOnOutsidePress, useStandaloneKeyboardScope, useFocusTrap, useI18N, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { createPortal } from 'react-dom';
 import { ThemeIcon } from './icon/ThemeIcon';
@@ -153,18 +153,9 @@ const MenuGroup: React.FC<{ group: CliqueGroup; align?: 'start' | 'end'; unitInd
     };
   }, [open, align]);
 
-  // Close on outside click.
-  useEffect(() => {
-    if (!open) return;
-    const handleMouseDown = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node) &&
-          triggerRef.current && !triggerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleMouseDown);
-    return () => document.removeEventListener('mousedown', handleMouseDown);
-  }, [open]);
+  // Close on a press outside the dropdown. A press on the trigger is left to the trigger, which
+  // toggles the dropdown on its click.
+  useCloseOnOutsidePress(open, [menuRef, triggerRef], () => setOpen(false));
 
   // Close on Escape (via the shared keyboard dispatcher).
   useStandaloneKeyboardScope(open, { ESCAPE: () => setOpen(false) });
@@ -211,7 +202,7 @@ const MenuGroup: React.FC<{ group: CliqueGroup; align?: 'start' | 'end'; unitInd
         aria-expanded={open}
         aria-haspopup="true"
         aria-label={iconOnly ? label : undefined}
-        title={iconOnly ? label : undefined}
+        {...tooltipProps(iconOnly ? label : undefined)}
       >
         {iconOnly
           ? <ThemeIcon encoded={group.icon!} className="tlToolbar__menuIcon" />
@@ -448,8 +439,9 @@ const TLToolbar: React.FC<TLCellProps> = ({ controlId }) => {
     ? <MenuGroup group={overflowGroup} align={overflowEnd === 'leading' ? 'start' : 'end'} />
     : null;
 
-  const className = 'tlToolbar' + (collapsible ? ' tlToolbar--collapsible' : '')
-    + (compact ? ' ' + COMPACT_CLASS : '');
+  const className = rootClassName(state, 'tlToolbar',
+    collapsible && 'tlToolbar--collapsible',
+    compact && COMPACT_CLASS);
 
   // While measuring, the toolbar takes the width it needs, so that the widths read from it are
   // the natural ones of its units. Afterwards it states that natural width as its own width and

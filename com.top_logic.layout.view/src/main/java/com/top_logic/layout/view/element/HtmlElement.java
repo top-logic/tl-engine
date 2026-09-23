@@ -12,7 +12,6 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
@@ -68,9 +67,6 @@ public class HtmlElement implements UIElement {
 		/** Configuration name for {@link #getPrint()}. */
 		String PRINT = "print";
 
-		/** Configuration name for {@link #getCssClass()}. */
-		String CSS_CLASS = "css-class";
-
 		/** Configuration name for {@link #getThumbnailWidth()}. */
 		String THUMBNAIL_WIDTH = "thumbnail-width";
 
@@ -112,13 +108,6 @@ public class HtmlElement implements UIElement {
 		 */
 		@Name(PRINT)
 		boolean getPrint();
-
-		/**
-		 * Optional additional CSS class appended to the default {@code tlHtml} class.
-		 */
-		@Name(CSS_CLASS)
-		@Nullable
-		String getCssClass();
 
 		/**
 		 * The width in CSS pixels a thumbnail lays its content out at.

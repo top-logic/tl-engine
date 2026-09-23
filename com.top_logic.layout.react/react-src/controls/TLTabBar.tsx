@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useFill, FillBarrier } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useFill, FillBarrier, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { ThemeIcon } from './icon/ThemeIcon';
 
@@ -31,7 +31,7 @@ const TLTabBar: React.FC<TLCellProps> = ({ controlId }) => {
   }, [sendCommand, activeTabId]);
 
   return (
-    <div id={controlId} className={'tlReactTabBar ' + fillClass}>
+    <div id={controlId} className={rootClassName(state, 'tlReactTabBar ' + fillClass)}>
       <div className="tlReactTabBar__tabs" role="tablist">
         {tabs.map(tab => (
           <button

@@ -234,6 +234,15 @@
 								<de>Responsive Master-Detail-Demo</de>
 							</label>
 						</nav-item>
+						<nav-item id="detail-drawer-demo"
+							icon="css:bi bi-layout-sidebar-inset-reverse"
+						>
+							<view-ref view="demo/detail-drawer-demo.view.xml"/>
+							<label>
+								<en>Detail Drawer Demo</en>
+								<de>Detail-Schublade-Demo</de>
+							</label>
+						</nav-item>
 						<nav-item id="columns-demo"
 							icon="css:bi bi-layout-split"
 						>
@@ -304,6 +313,15 @@
 							<label>
 								<en>Calendar</en>
 								<de>Kalender</de>
+							</label>
+						</nav-item>
+						<nav-item id="styling-demo"
+							icon="css:bi bi-palette"
+						>
+							<view-ref view="demo/styling-demo.view.xml"/>
+							<label>
+								<en>Styling</en>
+								<de>Gestaltung</de>
 							</label>
 						</nav-item>
 					</group>

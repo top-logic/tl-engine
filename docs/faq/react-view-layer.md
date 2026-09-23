@@ -10,7 +10,56 @@
   - A value of an enumeration or a class is chosen from options: without an `options` expression these are the classifiers respectively the instances of the type (`AttributeOptions.optionsFor(type)`). `options` is a TL-Script function whose arguments are the values of the `<inputs><input channel="…"/></inputs>` channels, in declaration order - the same shape as `<execute-script>` - and the options are recomputed whenever one of those channels changes. Every `inputs` property of the view layer - here, a `<table>`'s `<rows>`, a column declaration, an action - reads both notations: the nested `<inputs><input channel="…"/></inputs>` and the comma-separated attribute `inputs="a, b"` (`Inputs`). `multiple="true"` makes the channel carry a collection instead of a single value; a single-valued selection is unwrapped, so the channel holds the value itself and not a list of one.
   - Further properties: `label` (a `ResKey`; without it the input stands alone, without the label chrome), `label-position` and `readonly`.
   - **An input standing without a visible label** - in an app bar, in a toolbar, above a list - says what it is for in two places. `placeholder` (a `ResKey`) is the text shown inside the input while it is empty: "Search" in a search box, `name@example.com` in a mail address; it disappears with the value entered. It is a property of the field description (`FieldSpec.setPlaceholder(…)`) rather than of one control, so every control `FieldControlService` builds from such a description carries it - the text and number inputs render it, a control that has nothing to show an empty box in ignores it. `label-position="hide-label"` then takes the label out of the display but keeps it as the *name* of the input: the input area is a `label` element holding the label text in a visually hidden span (`.tlVisuallyHidden` in `TLFormField`), so every native input inside takes its accessible name from HTML's implicit label association, and a click anywhere in the area focuses it. An input that keeps its `label` and hides it is named for a screen reader; one that drops the `label` altogether is not. A radio group names its options by `id` / `for` instead (`TLBooleanChoice`), since no label may contain another.
+  - **A search field out of the box.** An input that narrows what a view shows is three properties on top of the submit hook, so an application needs no element of its own: `icon` draws a `ThemeImage` inside the input ahead of what is typed, `clearable="true"` adds the button that empties it (shown only while the input holds something, writing the empty value at once), and `debounce` says how long the input waits after the last keystroke before the typed value reaches the channel, written as a duration (`@Format(MillisFormat.class)`). All three ride on the field description (`FieldSpec.setIcon(…)` / `setClearable(…)` / `setDebounce(…)`) and are applied by `ReactFieldControlProvider.createField(…)`, like the `placeholder`. `TLTextInput` renders icon and clear button - a search field is a text - while `TLNumberInput` and `TLPasswordInput` take only the delay; the icon and the button sit in the same `tlReactTextInput__row` as the link that opens a `url` / `email` / `tel` value, in the order `[icon] input [clear] [link]`.
+    ```xml
+    <view>
+      <channels>
+        <channel name="q"/>
+      </channels>
+      <query-bindings>
+        <bind
+          channel="q"
+          query-param="q"
+        />
+      </query-bindings>
+      <value-input
+        clearable="true"
+        debounce="300ms"
+        icon="css:fa-solid fa-magnifying-glass"
+        label-position="hide-label"
+        type="tl.core:String"
+        value="q"
+      >
+        <label>
+          <en>Search</en>
+        </label>
+        <placeholder>
+          <en>Search tickets</en>
+        </placeholder>
+      </value-input>
+    </view>
+    ```
+    The delay is the span a *typed* value is held back; a value that is picked - a dropdown, a date picker, a checkbox - reaches the channel with the choice and waits for nothing. An input whose value the server rewrites as it stores it (a number, an internationalized text) holds the value back until the input is left (`setSendValueOnBlur(true)`) and ignores the delay altogether - what it costs is server-side feedback while typing, which is the trade that behaviour is for. Without a stated delay a typed input uses the one span every typed input shares, `VALUE_DEBOUNCE_MS` (300 ms) exported from the bridge. The three are rendering-only: `ReactFormFieldControl.scriptingPresentationKeys()` keeps `icon`, `clearable` and `debounceMs` out of the headless projection, while the `placeholder` stays in it, being the text a label-less input names itself by. The three hand-rolled search boxes elsewhere in the layer - the table filter bar, the dropdown search, the icon-select popup - are controls of their own and are unaffected.
   - **Layout: `<fields>`** (`FieldsElement`). A `<value-input>` renders the label-and-input chrome of a field but, standing outside a `<form>`, gets none of the grid a form renders around its fields. `<fields>` is that grid on its own (`ReactFormLayoutControl`, `TLFormLayout`): the `var(--page-inset)` padding content owns in the spacing model, the auto-fit columns (`max-columns`, 3 by default), and the `FormLayoutContext` a `TLFormField` reads to move a label from beside its input to above it when the column is narrower than 320px (`label-position` `auto` by default, or fixed `side` / `top`; the field-level `after` / `hidden` are rejected). A `<form>` needs no `<fields>`, being such a grid already; a `<field>` still needs a `<form>`, since `<fields>` carries no object.
+  - **The same grid options on `<form>`** (`FormLayoutOptions`, shared by `FormElement.Config` and `FieldsElement.Config`). A `<form max-columns="1" label-position="side">` states the greatest number of columns its fields are laid out in and where their labels stand, exactly as `<fields>` does — `max-columns` is a ceiling, not a count, so a narrow display still shows fewer columns and a phone a single one. This is what a detail pane narrower than the three columns of the default asks for: left to itself it fills the width it has with two columns whose labels sit above the inputs, while `max-columns="1"` plus `label-position="side"` keeps one column with the labels beside the inputs at every width. A `<field>` stating a `label-position` of its own keeps it.
+    ```xml
+    <form input="selectedMilestone" label-position="side" max-columns="1">
+      <field attribute="name"/>
+      <field attribute="dueDate"/>
+    </form>
+    ```
+  - **Sections: `<group>`** (`GroupElement` → `ReactFormGroupControl`, `TLFormGroup`). A group gathers the fields that belong together under a heading of its own — Text, Numbers, References — and takes part in the grid of the enclosing `<form>` or `<fields>` instead of opening a grid of its own, so the fields inside a section line up with the fields outside it, column for column. `<label><en>…</en><de>…</de></label>` is the heading; a group without one is set apart by its frame alone. `border` draws that frame (`none` by default, `subtle` a thin line in the subtle border color, `outlined` one in the strong border color), `collapsible="true"` lets the user fold the section away from its heading and `collapsed="true"` starts it folded. `full-line` (`true` by default) spans the section over the whole width of the grid and distributes its fields over the columns; `full-line="false"` confines it to a single column, where its content stacks one item below the other. A group holds any view content — fields, texts, further groups — so sections nest.
+    ```xml
+    <group border="subtle" collapsible="true" collapsed="true">
+      <label>
+        <en>Source code</en>
+        <de>Quelltext</de>
+      </label>
+      <field attribute="xmlSource"/>
+      <field attribute="jsonSource"/>
+    </group>
+    ```
+    The demo is the "Edit demo object" dialog of `com.top_logic.demo.react`'s Attributes page (`WEB-INF/views/attributes-detail.view.xml`), whose fifty fields stand in eight sections.
   - **Submit hook**: `<on-submit>` names a `ViewCommand` run over the value the user finishes entering - one input plus one command over what was entered, which is what a search field or a jump-to box is. The value reaches the channel first, then the command as its input, so the command's `<execute-script function="entered -> …">` receives it directly and needs no `input` channel of its own. The property defaults to `GenericViewCommand` (`@ImplementationClassDefault`), so the actions stand inside the element:
     ```xml
     <fields>
@@ -23,11 +72,266 @@
     </fields>
     ```
     Another command is `<on-submit class="fq.MyCommand" .../>`. What counts as a submit depends on the control: a field the user *types* in (`ReactTextInputControl` single-line, `ReactNumberInputControl`) reports `ReactFormFieldControl.hasSubmitGesture() == true` and submits on **Enter** - the client sends the `submit` command (`FieldSubmitArguments`, carrying the text, so one recorded step both stores and submits it) from the shared `useTLSubmitOnEnter()` bridge hook, enabled by the `submitOnEnter` state the server sets in `setSubmitListener(…)`. A field that is *picked* from - a dropdown, a date picker, a checkbox - has no such gesture, so **every choice is a submit**; there the element follows `ChannelFieldBinding.setCommitListener(…)`, which reports only values the user produced (a value pushed in from the channel is not a commit). A multi-line text area has no submit gesture at all, since Enter is part of the text.
+  - **`input-control`** names the control the value is entered in, overriding the one the type leads to - the same property `<field>` carries, resolved by the same chain: `<value-input type="demo:Priority" value="p"><input-control class="com.top_logic.layout.view.form.SelectControlProvider" display="segmented"/></value-input>`. It reaches `FieldControlService.createFieldControl(context, type, spec, model, control)`, whose first step builds the named provider and skips the type-based resolution entirely. See "Display variants of input fields" below.
   - The tag is `value-input`, not `input`: `input` is the name of the channel property ~21 element configs declare, and a content tag that shadows a property name of the same config makes that config invalid outright - "Ambiguous content tag name 'input': May either represent the property getInput(), or a content element of the default container" - which would take out `<form>`, `<anchor>`, `<switch>` and every other element that has both an `input` channel and children.
 - **Dialogs** open a `.view.xml` via `<open-dialog dialog-view="…">`; close via `CancelDialogCommand` / `DialogManager.closeTopDialog`. `currentUser()` is a TL-Script function usable in `<derived-channel expr="…">`.
 - **Referencing a `UIElement` impl by `class=` in view content.** View content lists resolve entries by `@TagName`, so an app-specific element that should not claim a global tag is placed via the content property's *entry tag* plus `class=`. The `children` content property (`ContainerElement.Config`) is `@EntryTag("child")`, so write `<child class="fq.MyElement"/>` inside a `<panel>` / container. If a cell provider is reusable, make it public rather than justifying a separate element; justify a separate element by genuinely different data / behavior.
 - **Standalone form-field controls bind to a `FieldModel`.** For a standalone field control (e.g. a checkbox cell), use the concrete `com.top_logic.layout.form.model.AbstractFieldModel` + `FieldModelListener` — not `FormContext` / `FormField` / `FormFieldAdapter`, which are legacy-compat shims. `AbstractFieldModel` is editable by default, needs no `FormContext` parent, and triggers no label resource lookup in `ReactFormFieldControl`.
 - Modifying persistent state from a control's value listener needs a transaction; the listener has no ambient one, so open `beginTransaction()` there (or buffer changes and apply them under one transaction on save).
+
+## Styling a single element: `css-class`
+
+Every element of a view takes a `css-class`, because the property is declared once on
+`UIElement.Config` and thereby inherited by every element configuration — a `<stack>`, a `<panel>`,
+a `<table>`, a `<button>`, an element an application brings itself. The class is written on the root
+element of the control displaying that element, beside the classes the control's kind brings itself:
+
+```xml
+<stack css-class="tlDemoHero">
+	<text
+		css-class="tlDemoHeroTitle"
+		label="Welcome"
+	/>
+</stack>
+```
+
+```html
+<div class="tlStack tlStack--column tlStack--gap-normal tlDemoHero">
+  <span class="tlText tlDemoHeroTitle">Welcome</span>
+</div>
+```
+
+Several classes are written separated by spaces, as in HTML.
+
+The stylesheet the classes are defined in belongs to the application and is announced through the
+`ClientResources` service, next to the application's own bundles:
+
+```xml
+<config service-class="com.top_logic.layout.react.resource.ClientResources">
+  <instance class="com.top_logic.layout.react.resource.ClientResources">
+    <resources>
+      <stylesheet name="tl-demo-react-css"
+        resource="/style/tl-demo-react.css"
+      />
+    </resources>
+  </instance>
+</config>
+```
+
+A modifier class of a kind — `tlText--ellipsis`, `tlCard--outlined` — is not the way to reach one
+element. Those classes are what a control writes for the display options of its own kind, so writing
+one in `css-class` styles that element by a rule the engine owns and may change; and it reaches the
+one element only by accident, since the engine writes the same class on every element that carries
+that option. A display option that is part of the element is a configuration property of its own —
+`<text overflow="ellipsis">` is such a property, not a class — and everything else is an application
+class of the application's own naming.
+
+On the server, the class travels as one state key of `ReactControl` (`setCssClass(String)`); on the
+client, the component composes its root `className` from it with `rootClassName(state, …)`. Both are
+described in [new-ui-element.md](new-ui-element.md), which an element of an application follows.
+
+## Text: variant, tone and appearance
+
+A `<text>` says what it is *for* rather than which font and colour it is drawn in. Three properties
+carry that, each one a role filled from the design tokens of the active theme, so a theme restyles
+every text of a role at once — see
+[react-theme-tokens.md](react-theme-tokens.md#typography-tokens) for the token per variant.
+
+```xml
+<stack>
+	<text
+		label="Quarterly report"
+		variant="headline"
+	/>
+	<text
+		label="Figures as of yesterday."
+		tone="helper"
+		variant="caption"
+	/>
+	<text
+		appearance="pill"
+		label="Overdue"
+		tone="error"
+	/>
+</stack>
+```
+
+- **`variant`** — what the text is for: `body` (the default), `title`, `headline`, `display`,
+  `label`, `caption`. The family, size, line height and weight come from the tokens.
+- **`tone`** — what its colour means: `primary` (the default), `secondary`, `helper`, `accent`,
+  `success`, `warning`, `error`, `on-color`.
+- **`appearance`** — the shape it is drawn in: `text` (the default) or `pill`.
+
+Every text carries a class per role — `tlText--<variant>`, `tlText--tone-<tone>`, and
+`tlText--pill` where the appearance asks for one — beside `tlText` and the element's own
+`css-class`:
+
+```html
+<span class="tlText tlText--caption tlText--tone-helper">Figures as of yesterday.</span>
+```
+
+The classes are a stable contract the stylesheet of the application may read, not something to
+write into a `css-class`: a display option of the element is a property of the element.
+
+The colour of a tone travels as the custom property `--tlText-tone`, which the text colour is taken
+from and which tints a pill that has no colour of its own — one declaration per tone. That is also
+how a text keeps its tone where the surrounding control re-maps the text colour: the primary app bar
+re-maps `.tlAppBar--primary .tlText--tone-primary`, so a text that follows the default tone reads in
+the on-accent colour while a text that states a tone of its own — an error, a success — keeps it.
+
+## Layout: stack and grid
+
+Two elements arrange content, and between them they cover the layouts an application would otherwise
+write CSS for: a centered content column, a row spread across its width, a row of chips that falls
+into further lines on a narrow screen.
+
+**`<stack>`** (`StackElement`, `ReactStackControl`, `TLStack`) puts its children in one line:
+
+- **`direction`** — `column` (the default) or `row`.
+- **`gap`** — `default`, `compact` or `loose`; the space between the children, taken from the
+  spacing tokens rather than given as a length.
+- **`align`** — across the direction: `stretch` (the default), `start`, `center`, `end`.
+- **`justify`** — along the direction, which is to say what happens with the space left over where
+  the children together are smaller than the stack: `start` (the default), `center`, `end`,
+  `space-between`, `space-around`, `space-evenly`.
+- **`wrap`** — `true` lets the children flow into further lines once they no longer fit next to
+  each other, instead of shrinking them into one line.
+- **`max-width`** — a CSS length the stack is bounded to; see below.
+
+**`<grid>`** (`GridElement`) places its children in as many columns as fit and reflows them with the
+available width. Its options are `GridOptions`, which `<object-list layout="grid">` shares:
+
+- **`min-column-width`** — the width a column must have at least (`16rem` by default); the number of
+  columns follows from it and the available width.
+- **`max-columns`** — the largest number of columns to place, so a handful of elements does not
+  spread into a thin row on a wide screen. A bounded grid still drops columns as it narrows.
+- **`gap`** — as on the stack.
+- **`max-width`** — a CSS length the grid is bounded to; see below.
+
+A content column that stays readable on a wide screen is a bounded stack:
+
+```xml
+<stack
+	gap="loose"
+	max-width="60rem"
+>
+	<text
+		label="Quarterly report"
+		variant="headline"
+	/>
+	<text label="Figures as of yesterday."/>
+</stack>
+```
+
+A row that spreads a title and the actions belonging to it to the opposite ends, and falls into
+further lines where the screen is too narrow for them:
+
+```xml
+<stack
+	align="center"
+	direction="row"
+	justify="space-between"
+	wrap="true"
+>
+	<text
+		label="Open tickets"
+		variant="title"
+	/>
+	<button .../>
+</stack>
+```
+
+**A bounded container is centered.** `max-width` says the largest width the container takes; the
+space left over is split between its two sides, so the content sits in the middle of the page rather
+than against its left edge. Below the bound nothing changes, so the same element still fills a phone
+screen. The bound travels as an inline `max-width` — it is a value, not a kind of layout — while the
+centering is the shared class `tlBounded` (`width: 100%; margin-inline: auto`), which a stack and a
+grid carry alike. The explicit width is what keeps the auto margins from shrinking the container to
+its content.
+
+Bounding the width leaves the **fill contract** (see below) alone: `max-width` and the auto margins
+work across the direction of a column, while filling is about the height a container takes from its
+own container. A bounded stack that hosts a filling child still carries `tlFill` and still reports
+filling upwards, so a table inside a centered content column keeps bounding its own scroll viewport.
+
+## Display variants of input fields
+
+A control provider takes options, so the same value is entered in a different shape without a new
+element and without a new control: a selection as a cloud of toggles or as a bar of segments, a
+number as a handle on a track, a truth value as a switch.
+
+**A selection** — `SelectControlProvider`, option `display` (`SelectDisplay`): `dropdown` (the
+default) offers the options in a list that opens on demand and is searched by typing, `chips` draws
+every option as a toggle, `segmented` draws them as a bar of segments with a marker sliding to the
+chosen one. One server control (`ReactDropdownSelectControl`) serves all three - it keeps the option
+index and the value protocol and names the client component to draw the shape with
+(`TLDropdownSelect`, `TLOptionChips`, `TLSegmentedChoice`) - so a shape showing every option is
+handed the complete option list right away, having nothing to open at which it could ask for it. The
+shapes showing every option suit a handful of options; a long list belongs in a dropdown.
+
+```xml
+<field attribute="priority">
+	<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
+		display="segmented"
+	/>
+</field>
+```
+
+**A number** — `NumberInputControlProvider`, option `display` (`NumberDisplay`): `input` (the
+default) takes any number the format of the field reads, `slider` drags a handle along a track
+between `min` and `max`, snapping to `step` (whole numbers where nothing is stated). A slider needs
+its bounds, which `@MandatoryIf(other = @Ref(DISPLAY), value = NumberDisplay.SLIDER_NAME)` demands of
+the configuration - `min` and `max` are mandatory as soon as `display` is `slider` and ignored
+otherwise - and `@ComparisonDependency` keeps `min` below `max`. The slider exchanges its value as a
+number rather than as formatted text, so no locale format reads it.
+
+```xml
+<value-input
+	type="tl.core:Integer"
+	value="level"
+>
+	<input-control class="com.top_logic.layout.view.form.NumberInputControlProvider"
+		display="slider"
+		max="10.0"
+		min="0.0"
+		step="1.0"
+	/>
+</value-input>
+```
+
+**A truth value** — `BooleanControlProvider`, option `display` (`BooleanPresentation`): the box that
+is ticked by default, `switch` for a handle sliding between the two states, `radio` and `select` for
+a choice between labelled values. `switch` is also a presentation of the model, so an attribute that
+is a switch everywhere says so once:
+
+```xml
+<property name="active"
+	type="tl.core:Boolean"
+>
+	<annotations>
+		<boolean-display presentation="switch"/>
+	</annotations>
+</property>
+```
+
+A value that may also be unknown (`tl.core:Tristate`, a tri-state field) stays a checkbox even where
+a switch is asked for: a switch has no third position for "no value".
+
+**Three ways to choose the provider**, in the order `FieldControlService` tries them:
+
+1. `<input-control class="…Provider" …/>` inside a `<field>` (`FieldElement.Config.getInputControl()`)
+   or inside a `<value-input>` (`ValueInputElement.Config.getInputControl()`) — the view decides, for
+   this one place in the user interface.
+2. The `<input-control>` annotation of the model attribute — the model decides, for every place the
+   attribute is shown. `<boolean-display presentation="switch"/>` is the same decision said in the
+   model's own vocabulary: it reaches the field description as
+   `FieldSpec.getBooleanPresentation()`, which `BooleanControlProvider` follows where its own
+   `display` says nothing.
+3. The type map of `FieldControlService` and, failing that, the `FieldControlRegistry` entry for the
+   kind of value the type holds.
+
+The display is how the field looks, not what it says: it is a rendering-only state key, kept out of
+the headless projection, so a scripted test reads the same options and the same value in every shape.
 
 ## A command is a chain of actions, and the chain can branch
 
@@ -97,7 +401,7 @@ A form with unsaved input blocks the write of the channel it is bound to: it reg
 
 - **Inputs.** `inputs` names the channels the functions read, either as the comma-separated attribute `inputs="catalogue, term"` or as nested `<inputs><input channel="catalogue"/></inputs>` (`Inputs`, the same notation every `inputs` property of the view layer takes). Their values are the leading positional arguments, in declaration order: `items` is `...inputs -> elements`, `link` and `remove` are `...inputs -> element -> ...`, the element coming last. A list with no inputs is a repeater over a plain query — `items="all(\`test.flowchart:FlowNode\`)"` — and follows the model through its `observed-types`.
 - **With and without a container.** A read-only list configures `items` alone. A list that composes objects adds `element-type` plus the `<new-element>` content bound to `new-element-channel`, whose command chain persists the draft with `<link-element>`, and `<remove-element>` inside the `<item>` content detaches one. The composer appears only while *every* input holds a value, because an element is composed to be attached somewhere; `link` is what attaches it, so any containment style works — a composite reference, a back-reference, an association.
-- **Arrangement.** `layout="list"` (the default) stacks the elements in a column; `layout="grid"` places as many next to each other as fit, taking the shared grid options `min-column-width` (16rem by default), `max-columns` and `gap` — the same options `<grid>` takes. `gap` applies to either arrangement, the other two to a grid.
+- **Arrangement.** `layout="list"` (the default) stacks the elements in a column; `layout="grid"` places as many next to each other as fit, taking the shared grid options `min-column-width` (16rem by default), `max-columns`, `gap` and `max-width` — the same options `<grid>` takes (see [Layout: stack and grid](#layout-stack-and-grid)). `gap` and `max-width` apply to either arrangement, the column options to a grid.
 - **Item wrapper and staggered entrance.** The client wraps every element in `<div class="tlItem tlObjectList__item" style="--tl-item-index: 0">` carrying the 0-based position (`ObjectListElement.ITEM_CSS_CLASS`). The engine ships the position, not the animation: an application composes a per-item delay from it. The arrangement is what an application's rule addresses next to that class — a grid puts its items into a `.tlGrid`, a list into a `.tlStack` — so an entrance can be given to the cards of a grid while the rows of a list keep appearing at once. Items are reused by key, so an element that stays through a change of the inputs keeps its DOM node and does not animate again — only the ones that appear do.
 
 ```xml
@@ -155,6 +459,7 @@ Which of the arrangement elements fits:
 | --- | --- |
 | `<columns>` | A page of a few columns of *deliberately different* width that folds to one column when narrow. |
 | `<grid>` | Many elements built alike, placed in as many equal columns as fit (`min-column-width`, `max-columns`). |
+| `<group>` | A section of the fields of a `<form>` or `<fields>`, under a heading and optionally folded away; it keeps the columns of that grid. |
 | `<stack direction="row">` | A row of elements that neither grow to a share of the width nor wrap. |
 | `<split-panel>` | Panes with splitters the user drags; fills its box, scrolls per pane, and never folds. |
 | `<dashboard>` | Tiles of definite row height whose order the user personalizes. |
@@ -370,6 +675,15 @@ A value's color is part of the model: two annotations say where it comes from, a
 
 A colored value is displayed as a **pill** in its color, an uncolored one as plain text. The color travels as the single state / descriptor field `ReactValueColor.COLOR`, filled by `ReactValueColor.putColor(descriptor, value)` / `cssColorOf(value)`, and the client hands it to the stylesheet as the inline custom property `--tlPill-color` — there is no class per color. One shared presentational component `TLPill` (`react-src/controls/pill/TLPill.tsx`, `.tlPill` in `tlReactControls.css`) draws it everywhere; the tint is composed with `color-mix()` from the color and the `color-surface` / `text-primary` tokens, so one declaration stays legible on a light and a dark theme.
 
+`<text appearance="pill">` asks for a pill whether or not the value carries a colour: a badge, a
+status, a tag written as a text rather than read off the model. The colour then follows a
+precedence — the colour of the value when the model gives it one, and the colour of the element's
+`tone` otherwise — so a status that *is* an enumeration literal keeps the literal's colour, and a
+text that is a badge of the application's own making takes its tone. `appearance="text"` (the
+default) leaves it as it was: a pill for a value with a colour, plain text for one without. A pill
+asked for by the element reads in the size of the text's own `variant`; one the value's colour
+produced reads in the pill's own size.
+
 The sites that fill the field:
 
 - **`ReactDropdownSelectControl`** — every option and every selected value passes through its one descriptor factory, so the pill appears in the read-only display of a reference or enumeration attribute (a `<table>` cell, a view-mode `<form>` field), on the chips of the selection while editing, and on the rows of the open dropdown.
@@ -425,7 +739,40 @@ Work that takes longer than a request may take does not belong in the request. `
 - **Cancellation is cooperative.** `cancelable="true"` offers the reader a cancel button; pressing it marks the job and interrupts the worker. `sleep()` keeps the interrupt it was woken by, so a sleeping job wakes at once and ends at the next point it *reports* from — which is what makes a loop of `sleep` + `jobProgress` stop within one step. Every report a Java body makes on its `JobMonitor` checks the same way, and `JobMonitor.checkCancelled()` is that check on its own for a stretch of work that reports nothing. Only declare it for work that may be given up half-done: a cancelled job has done part of what it was started for.
 - **`<job-status input="job"/>`** (`JobStatusElement` → `ReactJobStatusControl` / `TLJobStatus`) is the display, bound to the channel alone and holding no state of its own. It shows the status, the declared steps as done / active / pending, the bar (determinate or indeterminate), the message, the elapsed time — counted in the browser, so it ticks without a server round trip and freezes when the job ends — and at the end the result or the error. A channel holding anything that is not a job state displays nothing. Every text is resolved for the reader on the server: the phases and the message by their `ResKey`, the result through `MetaLabelProvider`, so a body returning an i18n literal `#('…'@en, '…'@de)` is displayed in the reader's language.
 - **CSS hooks**: the BEM block `tlJobStatus` with the status modifier `tlJobStatus--running|completed|failed|cancelled` and the elements `__header`, `__state`, `__elapsed`, `__cancel`, `__phases`, `__phase` (`--done`, `--active`, `--pending`), `__bar`, `__message`, `__error`, `__result` (`tlReactControls.css`). An application restyles the display through these classes; the bar inside it is the shared `tlProgress` block.
-- **Demo**: `com.top_logic.demo.react/…/views/demo/long-job-demo.view.xml` — a three-phase job with a determinate loop, an indeterminate phase and a result written to a second channel, a failing job, and a standalone indeterminate `<progress>`.
+- **Demo**: `com.top_logic.demo.react/…/views/demo/long-job-demo.view.xml` — a three-phase job with a determinate loop, an indeterminate phase and a result written to a second channel, a failing job, and a standalone indeterminate `<progress>`, plus a chunked import creating 500 tickets in one pass and closing every second of them in a next one, and the chunked removal of what it created.
+
+### Committing in chunks: `ChunkedScriptJobBody`
+
+A job that *creates persistent objects* runs outside any transaction and TL-Script opens none, so the body needs a transactional frame. `<body class="com.top_logic.layout.view.job.ChunkedScriptJobBody" chunk-size="200">` is that frame written in configuration; `ChunkedJobBody` is the same frame for a body written in Java, with the hooks `hasInit()/init`, `elements`, `stepCount()/step` and `hasFinish()/finish`:
+
+```xml
+<start-job job="importState" cancelable="true">
+  <body class="com.top_logic.layout.view.job.ChunkedScriptJobBody" chunk-size="200">
+    <init-label><en>Reading the file</en><de>Datei einlesen</de></init-label>
+    <init><![CDATA[job -> file -> { s = new(`my:Import`, transient: true); $s.set(`my:Import#rows`, $file.parse()); $s; }]]></init>
+    <elements><![CDATA[job -> state -> $state.get(`my:Import#rows`)]]></elements>
+    <steps>
+      <step>
+        <label><en>Creating the records</en><de>Datensätze anlegen</de></label>
+        <expr><![CDATA[job -> chunk -> state -> $chunk.foreach(r -> $state.get(`my:Import#target`).create($r))]]></expr>
+      </step>
+      <step>
+        <expr><![CDATA[job -> chunk -> state -> $chunk.foreach(r -> $r.resolveReferences())]]></expr>
+      </step>
+    </steps>
+    <finish><![CDATA[job -> state -> $state.get(`my:Import#created`)]]></finish>
+  </body>
+</start-job>
+```
+
+- **Every script is called with the monitor of the job first**, exactly like the `function=` body: `init` as `job -> a -> b -> …` (the values the job was started with), `elements` as `job -> state -> …`, a `<step>` as `job -> chunk -> state -> …` and `finish` as `job -> state -> …`. So every one of them reports with `$job.jobMessage(…)`, `$job.jobProgress(…)` and friends.
+- **The state ties the scripts together.** What `init` returns is what `elements`, every pass and `finish` receive; without an `<init>` the state is the *first value the job was started with* (the first `inputs` channel, or the command's value where there is none). For a state that has to change while the job runs, make it a transient object — `new(\`my:Import\`, transient: true)` — whose attributes the passes set; several objects the passes need are a map literal `{'target': $t, 'index': $byKey}`.
+- **`elements` is evaluated once, read-only and outside any transaction**, against the state. A collection is the list of work items, any other value is the single item it stands for, nothing at all is no items. The whole list is held for the run, so what it selects has to fit in memory — the chunking bounds the *transactions*, not the list.
+- **Every `<step>` is a full pass over that list**, applied to successive chunks of `chunk-size` items (200 by default), each chunk in a transaction of its own. A pass begins once the pass before it has committed every chunk, which is what makes a *second* pass the place for work that needs all the items of the first one — resolving cross references between them, for instance.
+- **A chunk that fails is retried item by item**, each item in a transaction of its own; only the items that genuinely cannot be processed are skipped, each of them logged and reported as a message naming the item and the failure, and counted. A step script therefore has to be **repeatable for an item it already saw** in the failed chunk. A failure in `init` or in `finish` is *not* caught: it ends the job with its own message, and its transaction is given up with it.
+- **Cancellation takes effect between two committed chunks**, and at once at a report from *inside* a chunk: the chunk in progress is rolled back, the chunks that committed stay, and the job ends as cancelled rather than counting the item as one that could not be processed.
+- **The phases are the steps of the job**: `init` where there is one, `step-1` … `step-n`, `finish` where there is one — announced by the body itself, so `<start-job>` needs no `<phases>` for it. `<init-label>`, a `<step>`'s `<label>` and `<finish-label>` name them for the reader; unnamed, a pass is shown as its number. The progress within a pass counts its chunks.
+- **The result of the job is what `finish` returns**; a body without a `<finish>` ends with the text saying how many items it processed and how many it skipped — which the job reports as its last message either way.
 
 ## Drag and drop of table rows
 
@@ -473,9 +820,11 @@ A `<table>` and a `<tree>` write what the user selects to the channel named by `
 - **A `single` table** replaces the selection with every click, and a click with `Ctrl` on the selected row gives it up again. **A `multi` table** puts a checkbox in front of every row and one in the header selecting and deselecting all of them; a click with `Ctrl` adds a row to the selection or takes it out again, a click with `Shift` selects the range from the row selected last, and `Ctrl+A` selects every row.
 - **In a `multi` tree** a plain click still replaces the selection, a click with `Ctrl` adds a node or takes it out again, and a click with `Shift` selects the range from the node the selection started at; the keyboard gestures are described under [Row activation](#row-activation), where the cursor is.
 - **The channel holds the selection, never a wrapper around it**: the selected object while exactly one row or node is selected, the `Set` of the selected objects while there are several, and `null` while there is none. A display or a command bound to the channel therefore works with either mode, and only one that is to show or process several objects at once has to expect a set. A tree writes the *business objects* of the selected nodes, not the nodes (`TreeSelectionBinding`).
-- **A table also reads its channel** (`TableSelectionBinding`), and how it answers a collection depends on its mode: a `multi` table selects the rows it has for those objects, a `single` table cannot display such a value at all and shows no selection. Either way a value the table has no row for is "nothing selected here" and is **left alone** — clearing it would destroy what another writer put there, the row a second table over a different row set selected or the object a create command wrote before this table's rows caught up. **A tree does not read the channel**: the binding writes it.
+- **A table also reads its channel** (`TableSelectionBinding`), and how it answers a collection depends on its mode: a `multi` table selects the rows it has for those objects, a `single` table cannot display such a value at all and shows no selection. Either way a value the table has no row for is "nothing selected here" and is **left alone** — clearing it would destroy what another writer put there, the row a second table over a different row set selected or the object a create command wrote before this table's rows caught up.
+- **A tree reads its channel too** (`TreeSelectionBinding`): the node of an object another writer puts on it is looked for, the subtrees above it are opened so that it is visible, and it becomes the selection. A collection is answered by mode as in a table — a `multi` tree selects the nodes it has for those objects, a `single` tree cannot display such a value and shows no selection — and an object the tree has no node for is "nothing selected here": the channel **and** the tree's own selection are left alone, since that object may well get a node in a moment. Finding the node means searching the tree, which computes the child list of every node it passes; a large or unbounded tree therefore declares `parents` — `<tree parents="input -> node -> $node.get(\`my:Type#parent\`)">` — and the tree walks from the object up to its root and descends along that chain instead, computing only the child lists on the way.
+- **A tree follows the model it displays** (`ObservableTreeModel`, the tree's counterpart of the row observation a `<table>` does over its `observed-types`): a change reconciles the child lists in place, so a node whose object is still there is the node the display was working with and the subtrees the user opened stay open, a deleted object loses its node, and an object that appeared gets one. Creates need the type in `observed-types`, since no channel value changes when an object is added. The selection is re-applied after every such change, which is what a create command needs: it writes the new object to the selection channel before the tree has a node for it, and the object is revealed and selected as soon as the node exists. An input naming another root builds the tree anew and opens the subtrees that were open again.
 - **A command working on one object binds to a derived channel rather than to the selection**, since the selection may be several: `<derived-channel name="selectedSingle" inputs="selected" expr="sel -> if($sel.size() == 1, $sel.singleElement(), null)"/>` is the selection while it consists of exactly one object and nothing otherwise — `size()` counts nothing as zero, a single object as one and a set as the number of its elements. With `<null-input-disabled/>` that is the whole of "enabled for one selected object". A command working on the whole selection needs nothing: `delete()` and the other collection-valued script functions accept a single object as well as a set of them.
-- Demos in `com.top_logic.demo.react`: the *Attributes* table (`views/attributes.view.xml`) selects several rows — Delete works on all of them, Edit on the single selection through such a derived channel — and *Tree Demo* (`views/demo/tree-demo.view.xml`) shows the selected nodes and the activated one side by side.
+- Demos in `com.top_logic.demo.react`: the *Attributes* table (`views/attributes.view.xml`) selects several rows — Delete works on all of them, Edit on the single selection through such a derived channel — and *Tree Demo* (`views/demo/tree-demo.view.xml`) shows the selected nodes and the activated one side by side, and creates, detaches and deletes nodes in place: a milestone created through a dialog and a ticket created without one are revealed and selected as soon as their node exists, detaching a ticket from its milestone takes the node out of the child list without deleting anything, and a delete works on the whole selection - in each case the opened subtrees stay open.
 
 ## Row activation
 
@@ -577,6 +926,34 @@ Such a page is linkable: `/view/tickets?filter=discussed` opens the list filtere
 - `Column.cssClass()` (`DefaultColumn.Builder.cssClass(String)`) names a class the client puts on every cell of the column, its heading included — how the column presents its cells, as opposed to the per-row `cssClass(R row)`. `RowCommandColumn` uses it to drop the text padding and center its frameless button.
 - Every unpinned column can be fitted to its content: "Fit width to content" in the header menu, or a double-click on the column's resize handle, sets the width the heading and the rendered cells need and persists it through the same `columnResize` command a drag ends with. Only the rows currently in the DOM are measured, so the fit follows what is displayed, as the virtual scroller renders it.
 
+## Master-detail that adapts to the viewport: `<adaptive-detail>`
+
+`<adaptive-detail selection="selectedTicket">` (`AdaptiveDetailElement`) holds a `<selector>` (the master — a table or tree writing the `selection` channel) and a `<detail>` (bound to the same channel) exactly once, and presents the pair in one of three ways, chosen from the subsession's `DisplayClass` and the element's `detail-display`:
+
+| Viewport | `detail-display` | Presentation |
+| --- | --- | --- |
+| `REGULAR` (wide) | `split` (the default) | Selector and detail side by side in a draggable `ReactSplitPanelControl`. |
+| `REGULAR` (wide) | `drawer` | The selector keeps the full width; the detail overlays it from the right edge in a drawer of `detail-size` pixels. |
+| `COMPACT` (narrow) | either | Drill-in: the selector full-bleed, replaced by the detail while something is selected, with a breadcrumb back to it. |
+
+```xml
+<adaptive-detail
+	detail-display="drawer"
+	detail-size="420"
+	selection="selectedTicket"
+>
+	<selector><table selection="selectedTicket" types="…:Ticket">…</table></selector>
+	<detail><form input="selectedTicket" label-position="side" max-columns="1">…</form></detail>
+</adaptive-detail>
+```
+
+- **The two properties.** `detail-display` picks the wide-viewport presentation (`split` | `drawer`); `detail-size` is the width in pixels of the drawer (420 by default) and has no effect without `drawer`. The drawer never grows wider than the element it overlays, so a value exceeding the available width covers the selector completely.
+- **The drawer follows the selection channel, and only that.** It opens when the channel takes a value, carries that value's label as its title, and closes when the channel is cleared. Selecting another row swaps what the drawer shows without closing it: the detail is built once and follows the channel itself, opening and closing being a transform of the panel rather than an exchange of its contents.
+- **Dismissing clears the selection.** The drawer's close button and Escape write `null` to the selection channel, and *that* is what closes the drawer — which is also what lets the same row be selected again to bring it back. A detail with unsaved changes vetoes that channel write (see "Unsaved changes are asked before a channel write"), and the drawer stays open.
+- **The drawer is anchored inside the element** (`ReactDrawerControl.Anchor.CONTAINER`), not in the viewport: it slides in over the selector within the element's own area, so the enclosing panel's title bar, toolbar and the rest of the page chrome stay visible and interactive. There is no backdrop; the selector underneath keeps taking input.
+- **The compact fallback is the drill-in either way.** On a narrow viewport a `drawer` element renders exactly like a `split` one — selector, then detail, with the breadcrumb whose home crumb (`<home-label>`) clears the selection. A drawer as wide as a phone is a full-screen panel, which is what the drill-in already is, done with the breadcrumb the nested levels share.
+- Both demos live in `com.top_logic.demo.react`: `demo/responsive-md-demo.view.xml` (the split presentation, nested scopes → milestones) and `demo/detail-drawer-demo.view.xml` (the drawer presentation over a full-width ticket table).
+
 ## Drill-down navigation with `<tile-stack>`
 
 `com.top_logic.layout.view.tiles` provides drill-down navigation. A `<tile-stack path="navPath" initial="products/overview.view.xml"/>` displays the last frame of a path of `TileFrame`s, the `initial` view when the path is empty, and keeps the frames the displayed one covers (see below). The path itself lives on a normal channel of the enclosing view (`List<TileFrame>`), which is the single source of truth: every navigation is a write to that channel.
@@ -601,7 +978,7 @@ Such a page is linkable: `/view/tickets?filter=discussed` opens the list filtere
 - **Where the buttons live.** The wizard renders the indicator and the content of the step and *no navigation buttons of its own*: which buttons a flow offers, and where, is composed in the view. They have to sit **inside a step's content**, because that is where the wizard installs the `WizardScope` that the commands and rules resolve. To get one footer below the whole wizard rather than a button bar per step, put a `<slot name="wizard-actions"/>` beside the `<wizard>` (a sibling in the enclosing `<stack>`) and let every step raise its own buttons with `<slot-content to="wizard-actions">` — slot routing is by tree distance, so a sibling slot is the nearest match from inside a step. Placing the contribution inside the step's `<form>` additionally lets `<form-valid/>` resolve that form, which is how a Next is disabled while a mandatory field is empty.
 - **The indicator.** Three independent options on the element: `counter` (default on) writes the position against the total, zero-padded (`02 — 05`); `progress` (default on) renders a `ReactProgressControl` filled to `(index + 1) / total`; `step-list` (default off) lists the steps by name, marking each one done, current or upcoming. A step already done is a button that jumps back to it; a step still ahead is not, because the way there leads through the steps in between. The control registers itself as a container of the reveal protocol (`ChildRevealer`, keyed by step), so bringing a step into view is available to whoever displays something nested in it.
 - **The step in the URL.** Nothing special: `<param-bindings><bind channel="currentStep" route-param="step"/></param-bindings>` on the `<view>` binds the step channel to one path segment like any other channel, yielding `/view/wizard/profile`. The segment is the channel value's text, and the value a deep link writes back is that text, so a step whose key is a **string** round-trips — which is why keying dynamic steps by strings makes them addressable too (`/view/wizard/phone` in the demo). A key that is a model object puts its `toString()` into the segment and does not resolve back, so such a link displays the first step; bind a bidirectional `<derived-channel>` (`expr` to an identifier, `reverse` back to the object, as for any other object in the URL) where those steps should be addressable. A deep link into a dynamic step also needs the list that produced it: in a fresh session the list is empty, so the wizard has no such step yet and shows its first one.
-- **Transitions.** A step change is drawn by the stylesheet; the component only says what is happening. `ReactWizardControl` publishes the way the display moved (state key `direction`), which the root carries as `tlWizard--forward` / `tlWizard--backward`; the step arriving carries `tlWizard__step--entering` until its animation ends, and over it lies an inert copy of the step left behind, `tlWizard__step--exiting`, removed when its animation ends. The copy is DOM rather than a control, because the control of the step left behind is disposed on the server the moment the wizard moves — a picture is what is still there to animate out. It is `aria-hidden`, `inert`, takes no pointer input, carries no ids of what it copied, and is positioned absolutely inside `.tlWizard__body`, so the step arriving already sits where it will stay. Only one copy exists at a time; a second move replaces it. The engine ships a subtle default — fade plus a 12px slide in the direction moved, 200ms — and an application restyles the change by redefining `.tlWizard__step--entering`, `.tlWizard__step--exiting` and their `.tlWizard--backward` variants. `@media (prefers-reduced-motion: reduce)` turns the animation off, and because nothing then reports an `animationend`, the component drops both classes on a one-second fallback timer instead.
+- **Transitions.** A step change is drawn by the stylesheet; the component only says what is happening. `ReactWizardControl` publishes the way the display moved (state key `direction`), which the root carries as `tlWizard--forward` / `tlWizard--backward`; the step arriving carries `tlWizard__step--entering`, and over it lies an inert copy of the step left behind, `tlWizard__step--exiting`, positioned absolutely inside `.tlWizard__body` so that the step arriving already sits where it will stay. The wizard is the one display the engine ships a default animation for — fade plus a 12px slide in the direction moved, 200ms — which an application restyles by redefining those two classes and their `.tlWizard--backward` variants. The contract behind all this is the same for the dialog and the tile stack; see **Transitions: the state classes an application animates**.
 - **Auto-advance.** A step can carry its own time: `<step id="ready" auto-advance="2s">` (a duration in the usual `MillisFormat` notation) for an interstitial the user only watches, and `<dynamic-steps auto-advance="q -> …">` for one computed per element — an element the function answers nothing for is a step the user leaves. It reaches the runtime as `WizardStep.autoAdvanceMillis()` and the client as the state key `autoAdvance` of the step displayed, where it becomes a timer; the timer is cleared whenever the step changes. When it fires it reports back naming the step it belongs to, and the wizard moves on **only while that step is still the one displayed** — the user may have moved on themselves in the meantime, and a timer that outlived its step must not carry the display past what they chose. The time runs while the flow *leads through* the step: it is started for a step entered going forward, and not for one the user came back to — a Back out of the step behind an interstitial would otherwise be answered by being sent forward again. A re-expansion that carries the displayed step along does not restart it either; it keeps counting.
 - The demo is `demo/wizard-demo.view.xml` in `com.top_logic.demo.react` (sidebar **Wizard** / **Assistent**, `/view/wizard`): an onboarding flow whose written-out Welcome, Profile and Summary steps enclose a `<dynamic-steps>` over a `questions` channel that grows while the flow is walked, with the Back/Next footer raised out of every step into one slot.
 
@@ -775,6 +1152,26 @@ A `<dashboard>` bounds its tiles instead of following them. Its grid has a defin
 `<tile-stack>` holds one frame per stack position (`ReactTileStackControl`): the `initial` view, followed by the frames of the path channel. The frame at the end of the path is the displayed one; the frames it covers keep their control tree and their layout box (`.tlTileStack__frame--covered` takes them out of the flow at the size of the stack and makes them invisible). Returning to a frame - a breadcrumb click, a `<navigate-pop>` - therefore shows it as the user left it: the selected tab, the selected table row, the values being edited and the scroll offsets included. A path change keeps the frames of the longest common prefix and disposes the ones it drops, so a path reconstructed from a URL keeps the frames it names (`TileFrame` compares by view, label and params). A covered frame is rendered but not seen, and the stack reports only the active frame as `visibleChildren()`: the URL is composed from the participants below the visible children, and only those take up a route of an adopted URL, so a tab bar inside a covered frame neither names its tab in the address nor is offered the segment meant for the tab bar of the frame on top.
 
 The hiding sits on a wrapper element the stack renders itself: a frame's content renders its own root element, and a style set on that from the outside is overwritten the next time the content re-renders.
+
+## Transitions: the state classes an application animates
+
+Three displays change what they show rather than only how it looks: a wizard moves to another step, a dialog opens and closes, a tile stack pushes and pops a frame. Each change is marked in the DOM with state classes, and which animation runs — or whether one runs at all — is the application stylesheet's decision. The classes are the API; the engine ships a default animation for the wizard only.
+
+| Display | While it arrives | While it leaves | Direction on the root |
+| --- | --- | --- | --- |
+| `<wizard>` | `tlWizard__step--entering` | `tlWizard__step--exiting` | `tlWizard--forward` / `tlWizard--backward` |
+| dialog | `tlDialog__backdrop--entering` | `tlDialog__backdrop--exiting` | — |
+| `<tile-stack>` | `tlTileStack__frame--entering` | `tlTileStack__frame--exiting` | `tlTileStack--forward` / `tlTileStack--backward` |
+
+The wizard takes its direction from the server (state key `direction`); the tile stack derives it from the position it displays, deeper into the stack being forward.
+
+**What leaves is a copy.** The control of a step left behind, of a dialog closed or of a frame popped is disposed on the server the moment the display moves, so there is nothing left to render — what can still be animated out is a picture of it. The `--exiting` element is therefore an inert `cloneNode` copy of what left: `aria-hidden`, `inert`, without the ids of what it copied (so that nothing addresses it) and without pointer input. There is one copy per key at a time, and a copy is dropped when its `animationend` or `transitionend` arrives, when the same key is displayed again, or — where the stylesheet animates nothing — after a one-second fallback. The engine places the copy and ships only the structural rules that make it a picture: absolutely positioned over the stack for a tile frame, `pointer-events: none` for the dialog backdrop, whose copy covers the page and therefore has to let both the page and a dialog still open below it through.
+
+**Reduced motion is decided before the stylesheet.** Where `(prefers-reduced-motion: reduce)` matches, no class is set and no copy is made at all, so the change is instantaneous whatever an application animates. Neither the engine stylesheet nor an application's needs a `prefers-reduced-motion` block for these classes.
+
+**One hook does this for all three.** `useKeyedTransition` (`com.top_logic.layout.react/react-src/bridge/transition.ts`, exported from `tl-react-bridge`) takes the keys of what is displayed now, a way to resolve the element of a key, the container the copies are shown in, and the two class names; it notices which keys appeared and which disappeared, marks the DOM before the browser paints, and takes the marks away again. It writes the classes onto the DOM rather than handing them back for rendering, so the element marked may be rendered anywhere below the component that notices the change — a dialog's backdrop belongs to the dialog, while its opening and closing is the dialog manager's news. A display that newly wants a transition uses this hook rather than a mechanism of its own.
+
+**An example stylesheet.** `com.top_logic.demo.react/src/main/webapp/style/tl-demo-react.css` animates the anchors the engine leaves free: a 150ms opacity fade for the dialog backdrop and a 200ms fade-and-slide for the tile frames, the slide following `tlTileStack--forward` / `tlTileStack--backward`.
 
 ## Object navigation: display targets, the reveal protocol, `<show-object>` / `<show-view>`
 

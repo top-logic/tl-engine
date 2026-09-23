@@ -70,6 +70,9 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	/** State key for whether the control is hidden on the client. */
 	private static final String HIDDEN = "hidden";
 
+	/** @see #setCssClass(String) */
+	public static final String CSS_CLASS = "cssClass";
+
 	/**
 	 * Key under which the {@link #diagnostics() diagnostic observations} appear in the
 	 * {@link #scriptingScalarState() headless projection}.
@@ -565,10 +568,26 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 * are dropped automatically and need not be listed.
 	 * </p>
 	 *
-	 * @return The rendering-only state keys; empty by default.
+	 * @return The rendering-only state keys; the {@link #setCssClass(String) CSS class} every
+	 *         control carries.
 	 */
 	protected Set<String> scriptingPresentationKeys() {
-		return Set.of();
+		return Set.of(CSS_CLASS);
+	}
+
+	/**
+	 * The {@link #scriptingPresentationKeys() presentation keys} of a control that declares some of
+	 * its own: the keys it inherits together with the given ones.
+	 *
+	 * @param inherited
+	 *        The keys of the super class, i.e. {@code super.scriptingPresentationKeys()}.
+	 * @param own
+	 *        The keys the control renders with beyond those.
+	 */
+	protected static Set<String> presentationKeys(Set<String> inherited, String... own) {
+		Set<String> result = new LinkedHashSet<>(inherited);
+		Collections.addAll(result, own);
+		return Collections.unmodifiableSet(result);
 	}
 
 	/**
@@ -895,6 +914,30 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 */
 	public boolean isHidden() {
 		return Boolean.TRUE.equals(getState(HIDDEN));
+	}
+
+	/**
+	 * Sets an additional CSS class the client puts on the root element of this control.
+	 *
+	 * <p>
+	 * The class stands beside the classes the component brings itself, so a stylesheet of the
+	 * application reaches a single control without overriding the styling of its kind.
+	 * </p>
+	 *
+	 * @param cssClass
+	 *        The CSS class, or {@code null} for none.
+	 */
+	public void setCssClass(String cssClass) {
+		putState(CSS_CLASS, cssClass);
+	}
+
+	/**
+	 * The additional CSS class of this control, or {@code null} for none.
+	 *
+	 * @see #setCssClass(String)
+	 */
+	public String getCssClass() {
+		return (String) getState(CSS_CLASS);
 	}
 
 	/**

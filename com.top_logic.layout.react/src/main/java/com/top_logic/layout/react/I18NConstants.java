@@ -438,6 +438,12 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.textInput.open")
 	public static ResKey JS_TEXT_INPUT_OPEN;
 
+	/**
+	 * @en Clear the input
+	 */
+	@CustomKey("js.textInput.clear")
+	public static ResKey JS_TEXT_INPUT_CLEAR;
+
 	// -- Value list client-side i18n keys --
 
 	/**
@@ -497,6 +503,28 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Form group collapse toggled.
 	 */
 	public static ResKey REACT_FORM_GROUP_TOGGLE_COLLAPSE;
+
+	// -- Form field client-side i18n keys --
+
+	/**
+	 * @en Help
+	 */
+	@CustomKey("js.formField.help")
+	public static ResKey JS_FORM_FIELD_HELP;
+
+	// -- Tree client-side i18n keys --
+
+	/**
+	 * @en Expand
+	 */
+	@CustomKey("js.treeView.expand")
+	public static ResKey JS_TREE_VIEW_EXPAND;
+
+	/**
+	 * @en Collapse
+	 */
+	@CustomKey("js.treeView.collapse")
+	public static ResKey JS_TREE_VIEW_COLLAPSE;
 
 	// -- Form group client-side i18n keys --
 

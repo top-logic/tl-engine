@@ -1,4 +1,4 @@
-import { React, useTLState, scrollToAnchor } from 'tl-react-bridge';
+import { React, useTLState, scrollToAnchor, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 /**
@@ -17,7 +17,7 @@ const TLScrollLink: React.FC<TLCellProps> = ({ controlId }) => {
   const label = (state.label as string | null) ?? '';
 
   if (target == null) {
-    return <span id={controlId} className="tlScrollLink tlScrollLink--empty" />;
+    return <span id={controlId} className={rootClassName(state, 'tlScrollLink tlScrollLink--empty')} />;
   }
 
   const onClick = (event: React.MouseEvent) => {
@@ -26,7 +26,7 @@ const TLScrollLink: React.FC<TLCellProps> = ({ controlId }) => {
   };
 
   return (
-    <a id={controlId} className="tlScrollLink" href="#" onClick={onClick}>
+    <a id={controlId} className={rootClassName(state, 'tlScrollLink')} href="#" onClick={onClick}>
       {label}
     </a>
   );

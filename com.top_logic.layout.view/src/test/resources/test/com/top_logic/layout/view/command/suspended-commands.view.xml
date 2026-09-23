@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<window width="400px">
+		<title>
+			<en>Work</en>
+		</title>
+		<panel title="Work"/>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand">
+					<label>
+						<en>Cancel</en>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

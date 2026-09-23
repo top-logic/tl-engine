@@ -237,8 +237,8 @@ public class ThemeTokenAudit {
 	}
 
 	/**
-	 * The names (without the leading dashes) of every custom property the given stylesheet
-	 * declares, comments ignored.
+	 * The names (without the leading dashes) of the custom properties the given stylesheet
+	 * declares.
 	 *
 	 * <p>
 	 * The declarations of a sheet carrying nothing but tokens - the generated token sheet of the
@@ -247,6 +247,7 @@ public class ThemeTokenAudit {
 	 *
 	 * @param css
 	 *        The text of the stylesheet.
+	 * @return The declared property names, empty if the sheet declares none.
 	 */
 	public static Set<String> declaredProperties(String css) {
 		Set<String> result = new HashSet<>();

@@ -24,9 +24,9 @@ import com.top_logic.layout.react.theme.UIThemeService;
  * {@link UIThemeService} themes.
  *
  * <p>
- * A subclass supplies the sheets it is responsible for in {@link #stylesheets()}, a selector
- * that rounds for a reason of its own in {@link #allowedLiteralSelectors()}, and the sheets
- * declaring the tokens of the design system package in {@link #tokenStylesheets()}. Its own
+ * A subclass supplies the sheets it is responsible for in {@link #stylesheets()}, a selector that
+ * rounds for a reason of its own in {@link #allowedLiteralSelectors()}, and the sheets declaring
+ * the tokens of the design system package in {@link #tokenStylesheets()}. Its own
  * {@code suite()} is a single call to {@link #suite(Class)}:
  * </p>
  *
@@ -72,8 +72,8 @@ public abstract class AbstractStylesheetTokenTest extends TestCase {
 	 *
 	 * <p>
 	 * The design system package ({@code tl-design-system}) declares its tokens in the {@code --tl}
-	 * namespace in a generated sheet of its own. A sheet audited here reads them, but never
-	 * declares them: the namespace belongs to the package.
+	 * namespace in a generated sheet of its own. A sheet audited here reads them but never declares
+	 * them, the namespace belongs to the package.
 	 * </p>
 	 */
 	protected List<String> tokenStylesheets() {
@@ -87,8 +87,8 @@ public abstract class AbstractStylesheetTokenTest extends TestCase {
 	 */
 	public void testStylesheetsKeepTheTokenContract() throws Exception {
 		Set<String> tokens = new HashSet<>(ThemeTokenAudit.themeTokens(THEME_CONFIG, DEFAULT_THEME).keySet());
-		for (String tokenStylesheet : tokenStylesheets()) {
-			tokens.addAll(ThemeTokenAudit.declaredProperties(ThemeTokenAudit.stylesheet(tokenStylesheet)));
+		for (String tokenSheet : tokenStylesheets()) {
+			tokens.addAll(ThemeTokenAudit.declaredProperties(ThemeTokenAudit.stylesheet(tokenSheet)));
 		}
 		Set<String> allowed = allowedLiteralSelectors();
 

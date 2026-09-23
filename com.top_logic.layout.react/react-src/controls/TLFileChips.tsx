@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useTLUpload, useTLDataUrl, useI18N } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useTLUpload, useTLDataUrl, useI18N, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -139,7 +139,7 @@ const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
   return (
     <div
       id={controlId}
-      className={className}
+      className={rootClassName(state, className)}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -154,7 +154,7 @@ const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
               className="tlFileChip__main"
               onClick={() => doDownload(chip)}
               disabled={!chip.hasData}
-              title={chip.hasData ? downloadLabel : chip.name}
+              {...tooltipProps(chip.hasData ? downloadLabel : chip.name)}
             >
               <svg className="tlFileChip__icon" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
                 <path d="M9.5 1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5L9.5 1z"
@@ -172,8 +172,8 @@ const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
                 type="button"
                 className="tlFileChip__remove"
                 onClick={() => sendCommand('removeChip', { key: chip.key })}
-                title={removeLabel}
                 aria-label={removeLabel}
+                {...tooltipProps(removeLabel)}
               >
                 <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
                   <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5"
@@ -198,7 +198,7 @@ const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
             className={'tlFileChips__add' + (uploading ? ' tlFileChips__add--uploading' : '')}
             onClick={handleAddClick}
             disabled={uploading}
-            title={uploading ? t['js.uploading'] : t['js.fileChips.add']}
+            {...tooltipProps(uploading ? t['js.uploading'] : t['js.fileChips.add'])}
           >
             <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
               <path d="M13.5 7.5l-5.6 5.6a3.3 3.3 0 0 1-4.7-4.7l6-6a2.2 2.2 0 0 1 3.1 3.1l-5.8 5.8a1.1 1.1 0 0 1-1.6-1.6l5.2-5.2"

@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { buttonClassName, useButtonDefaults } from './button/ButtonDefaults';
 
@@ -51,7 +51,7 @@ const TLToggleButton: React.FC<TLCellProps & TLToggleButtonProps> = ({ controlId
       onClick={handleClick}
       disabled={resolvedDisabled}
       aria-pressed={resolvedActive ? true : undefined}
-      className={buttonClassName({ appearance: defaults.appearance ?? 'secondary' })}
+      className={rootClassName(state, buttonClassName({ appearance: defaults.appearance ?? 'secondary' }))}
     >
       <span className="tl-button__label">{resolvedLabel}</span>
     </button>

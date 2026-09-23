@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	Initial frame of the project drill-down: all projects. Opening one pushes its milestones,
+	Initial frame of the project drill-down: all projects. Activating a row - a double-click, Enter
+	on the row carrying the keyboard cursor, or its chevron button - pushes the project's cockpit,
 	announced with the project's name.
+	
+	The toolbar creates a project and deletes the selected one; the table observes projects, so
+	both are reflected in the rows without a reload.
 -->
 <view>
 	<channels>
@@ -15,25 +19,43 @@
 			<de>Projekte</de>
 		</title>
 		<commands>
-			<command class="com.top_logic.layout.view.tiles.NavigatePushCommand"
-				bind-input-to="project"
-				image="css:bi bi-box-arrow-in-right"
-				input="project"
+			<generic-command
+				image="css:bi bi-plus-lg"
 				placement="TOOLBAR"
-				view="projects/milestones.view.xml"
 			>
 				<label>
-					<en>Open</en>
-					<de>Öffnen</de>
+					<en>New Project</en>
+					<de>Neues Projekt</de>
+				</label>
+				<execute-script function="x -> new(`tl.demo.projectManagement:ProjectScope`, transient: true)"/>
+				<open-dialog
+					bind-input-to="model"
+					dialog-view="demo/create-project-scope.view.xml"
+				>
+					<bind
+						channel="selection"
+						to="project"
+					/>
+				</open-dialog>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-trash"
+				input="project"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Delete</en>
+					<de>Löschen</de>
 				</label>
 				<executability>
 					<null-input-disabled/>
 				</executability>
-				<frame-label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
-					expr="p -> $p.get(`tl.demo.projectManagement:ProjectScope#name`)"
-					inputs="project"
-				/>
-			</command>
+				<confirm expr="p -> #('Delete project {0}?'@en, 'Projekt {0} löschen?'@de).fill($p.get(`tl.demo.projectManagement:ProjectScope#name`))"/>
+				<with-transaction>
+					<execute-script function="p -> { $p.delete(); null; }"/>
+				</with-transaction>
+				<write-channel name="project"/>
+			</generic-command>
 		</commands>
 		<table
 			observed-types="tl.demo.projectManagement:ProjectScope"
@@ -45,6 +67,15 @@
 				<column attribute="description"/>
 			</columns>
 			<rows>all(`tl.demo.projectManagement:ProjectScope`)</rows>
+			<on-activate class="com.top_logic.layout.view.tiles.NavigatePushCommand"
+				bind-input-to="project"
+				view="projects/milestones.view.xml"
+			>
+				<frame-label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
+					expr="p -> $p.get(`tl.demo.projectManagement:ProjectScope#name`)"
+					inputs="project"
+				/>
+			</on-activate>
 		</table>
 	</panel>
 </view>

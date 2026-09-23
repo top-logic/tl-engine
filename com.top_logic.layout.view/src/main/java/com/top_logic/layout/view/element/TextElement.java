@@ -21,6 +21,10 @@ import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactValueColor;
 import com.top_logic.layout.react.control.common.ReactTextControl;
+import com.top_logic.layout.react.control.common.TextAppearance;
+import com.top_logic.layout.react.control.common.TextOverflow;
+import com.top_logic.layout.react.control.common.TextTone;
+import com.top_logic.layout.react.control.common.TextVariant;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
@@ -42,6 +46,13 @@ import com.top_logic.util.Resources;
  * <p>
  * A channel value the model gives a color - an enumeration literal, an object whose type computes
  * the color of its instances - is displayed as a pill in that color.
+ * </p>
+ *
+ * <p>
+ * How the text is drawn is stated as roles: a {@link Config#getVariant() typographic role}, a
+ * {@link Config#getTone() color role} and the {@link Config#getAppearance() shape} it takes. Each
+ * role is filled from the design tokens of the active theme, so an application theme restyles every
+ * text of a role at once.
  * </p>
  *
  * <p>
@@ -69,11 +80,17 @@ public class TextElement implements UIElement {
 		/** Configuration name for {@link #getInput()}. */
 		String INPUT = "input";
 
-		/** Configuration name for {@link #getCssClass()}. */
-		String CSS_CLASS = "css-class";
-
 		/** Configuration name for {@link #getOverflow()}. */
 		String OVERFLOW = "overflow";
+
+		/** Configuration name for {@link #getVariant()}. */
+		String VARIANT = "variant";
+
+		/** Configuration name for {@link #getTone()}. */
+		String TONE = "tone";
+
+		/** Configuration name for {@link #getAppearance()}. */
+		String APPEARANCE = "appearance";
 
 		/**
 		 * Static text to display. Ignored when an {@link #getInput() input channel} is set.
@@ -91,19 +108,49 @@ public class TextElement implements UIElement {
 		ChannelRef getInput();
 
 		/**
-		 * Optional additional CSS class appended to the default {@code tlText} class.
-		 */
-		@Name(CSS_CLASS)
-		@Nullable
-		String getCssClass();
-
-		/**
 		 * How text longer than the available width is handled: {@link TextOverflow#WRAP wrapped}
 		 * onto multiple lines (the default) or truncated on a single line with an
 		 * {@link TextOverflow#ELLIPSIS ellipsis}.
 		 */
 		@Name(OVERFLOW)
 		TextOverflow getOverflow();
+
+		/**
+		 * What the text is for: {@link TextVariant#BODY running text} (the default), a
+		 * {@link TextVariant#TITLE title}, a {@link TextVariant#HEADLINE headline}, a
+		 * {@link TextVariant#DISPLAY display} statement, the {@link TextVariant#LABEL label} of a
+		 * value or a {@link TextVariant#CAPTION caption}.
+		 *
+		 * <p>
+		 * The font family, size, line height and weight of the role come from the design tokens of
+		 * the active theme.
+		 * </p>
+		 */
+		@Name(VARIANT)
+		TextVariant getVariant();
+
+		/**
+		 * What the color of the text means: the {@link TextTone#PRIMARY color it is read in} (the
+		 * default), a {@link TextTone#SECONDARY lesser weight}, an explaining
+		 * {@link TextTone#HELPER hint}, an {@link TextTone#ACCENT accent}, or an outcome
+		 * ({@link TextTone#SUCCESS success}, {@link TextTone#WARNING warning},
+		 * {@link TextTone#ERROR error}); {@link TextTone#ON_COLOR on-color} for text on a filled
+		 * surface.
+		 *
+		 * <p>
+		 * The color of the role comes from the design tokens of the active theme.
+		 * </p>
+		 */
+		@Name(TONE)
+		TextTone getTone();
+
+		/**
+		 * The shape the text is drawn in: {@link TextAppearance#TEXT plain text} (the default), or a
+		 * {@link TextAppearance#PILL pill} whether or not the displayed value carries a color of its
+		 * own.
+		 */
+		@Name(APPEARANCE)
+		TextAppearance getAppearance();
 	}
 
 	private final ResKey _label;
@@ -112,6 +159,14 @@ public class TextElement implements UIElement {
 
 	private final String _cssClass;
 
+	private final TextOverflow _overflow;
+
+	private final TextVariant _variant;
+
+	private final TextTone _tone;
+
+	private final TextAppearance _appearance;
+
 	/**
 	 * Creates a new {@link TextElement} from configuration.
 	 */
@@ -119,16 +174,11 @@ public class TextElement implements UIElement {
 	public TextElement(InstantiationContext context, Config config) {
 		_label = config.getLabel();
 		_inputRef = config.getInput();
-		_cssClass = cssClass(config);
-	}
-
-	private static String cssClass(Config config) {
-		String userClass = config.getCssClass();
-		if (config.getOverflow() != TextOverflow.ELLIPSIS) {
-			return userClass;
-		}
-		String ellipsis = "tlText--ellipsis";
-		return userClass == null || userClass.isEmpty() ? ellipsis : ellipsis + " " + userClass;
+		_cssClass = config.getCssClass();
+		_overflow = config.getOverflow();
+		_variant = config.getVariant();
+		_tone = config.getTone();
+		_appearance = config.getAppearance();
 	}
 
 	@Override
@@ -136,7 +186,7 @@ public class TextElement implements UIElement {
 		if (_inputRef != null) {
 			ViewChannel channel = context.resolveChannel(_inputRef);
 			Object value = channel.get();
-			ReactTextControl control = new ReactTextControl(context, label(value), _cssClass);
+			ReactTextControl control = text(context, label(value));
 			control.setColor(ReactValueColor.cssColorOf(value));
 
 			Runnable update = () -> {
@@ -154,8 +204,19 @@ public class TextElement implements UIElement {
 
 			return control;
 		}
-		String text = _label != null ? Resources.getInstance().getString(_label) : "";
-		return new ReactTextControl(context, text, _cssClass);
+		return text(context, _label != null ? Resources.getInstance().getString(_label) : "");
+	}
+
+	/**
+	 * The control displaying the given text with the configured styling.
+	 */
+	private ReactTextControl text(ViewContext context, String text) {
+		ReactTextControl result = new ReactTextControl(context, text, _cssClass);
+		result.setOverflow(_overflow);
+		result.setVariant(_variant);
+		result.setTone(_tone);
+		result.setAppearance(_appearance);
+		return result;
 	}
 
 	private static String label(Object value) {

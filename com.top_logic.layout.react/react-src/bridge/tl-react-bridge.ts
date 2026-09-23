@@ -405,6 +405,17 @@ export function useTLDataUrl(): string {
 }
 
 /**
+ * The span a field the user types in holds a typed value back before sending it, unless the server
+ * names another one (`state.debounceMs`): long enough to coalesce a burst of keystrokes into one
+ * round-trip, short enough that server-side validation can surface while the user pauses. The final
+ * value is always sent on blur regardless.
+ *
+ * <p>One span for every typed input, so that a text, a number and a password field report at the
+ * same pace.</p>
+ */
+export const VALUE_DEBOUNCE_MS = 300;
+
+/**
  * Options for {@link useTLFieldValue}.
  */
 export interface TLFieldValueOptions {

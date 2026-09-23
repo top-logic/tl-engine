@@ -192,32 +192,6 @@
 }
 
 /* ===================================================================
-   Tooltip
-   =================================================================== */
-
-.tlWysiwygToolbar__tooltip {
-  padding: 4px 10px;
-  font-size: 12px;
-  line-height: 1.4;
-  color: var(--text-inverse);
-  background: var(--background-inverse);
-  border-radius: var(--border-radius-02);
-  box-shadow: var(--shadow-menu);
-  z-index: 10000;
-  animation: tlTooltipFadeIn 0.15s ease;
-  user-select: none;
-}
-
-.tlWysiwygToolbar__tooltipArrow {
-  fill: var(--background-inverse);
-}
-
-@keyframes tlTooltipFadeIn {
-  from { opacity: 0; transform: translateY(2px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-/* ===================================================================
    Dropdown Menu (Radix)
    =================================================================== */
 

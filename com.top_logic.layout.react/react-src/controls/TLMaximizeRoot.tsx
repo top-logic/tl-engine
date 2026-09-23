@@ -1,4 +1,4 @@
-import { React, useTLState, TLChild } from 'tl-react-bridge';
+import { React, useTLState, TLChild, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 /**
@@ -17,7 +17,7 @@ const TLMaximizeRoot: React.FC<TLCellProps> = ({ controlId }) => {
   return (
     <div
       id={controlId}
-      className={`tlMaximizeRoot${state.maximized === true ? ' tlMaximizeRoot--maximized' : ''}`}
+      className={rootClassName(state, `tlMaximizeRoot${state.maximized === true ? ' tlMaximizeRoot--maximized' : ''}`)}
       style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}
     >
       <TLChild control={state.child} />

@@ -234,8 +234,14 @@
 			</instance>
 		</config>
 		<!--
-			A theme without rounding and without elevation, demonstrating that the React controls take
-			their corners and their shadows from the theme alone.
+			The themes of this application, each restyling the tokens the React controls and the
+			application stylesheet are drawn from.
+			
+			"Flat" takes rounding and elevation away, demonstrating that the React controls take
+			their corners and their shadows from the theme alone. "Glass" turns on the two tokens
+			the shipped themes leave without effect - the blur behind a translucent surface and the
+			glow around a highlighted one, both consumed by the glass card of the styling demo - and
+			gives the headings a display face of their own.
 		-->
 		<config service-class="com.top_logic.layout.react.theme.UIThemeService">
 			<instance>
@@ -253,6 +259,18 @@
 						<text name="shadow-dialog" value="none"/>
 						<text name="shadow-menu" value="none"/>
 						<text name="shadow-raised" value="none"/>
+					</theme>
+					<theme name="glass"
+						extends="default"
+						icon="css:bi bi-droplet-half"
+					>
+						<label>
+							<en>Glass</en>
+							<de>Glas</de>
+						</label>
+						<text name="font-family-display" value="Georgia, serif"/>
+						<text name="shadow-glow" value="0 0 24px rgba(41,104,200,0.45)"/>
+						<length name="surface-blur" value="12px"/>
 					</theme>
 				</themes>
 			</instance>

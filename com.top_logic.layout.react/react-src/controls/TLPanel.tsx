@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, useFill, FillBarrier, tooltipProps } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, useFill, FillBarrier, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import FontIcon from './FontIcon';
 
@@ -141,7 +141,7 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
   return (
     <div
       id={controlId}
-      className={`tlPanel tlPanel--${expansionState.toLowerCase()}${fullLine ? ' tlPanel--fullLine' : ''}${fillClass ? ' ' + fillClass : ''}${hoverActions ? ' tlPanel--hoverActions' : ''}${card ? ' tlPanel--card' : ''}`}
+      className={rootClassName(state, `tlPanel tlPanel--${expansionState.toLowerCase()}${fullLine ? ' tlPanel--fullLine' : ''}${fillClass ? ' ' + fillClass : ''}${hoverActions ? ' tlPanel--hoverActions' : ''}${card ? ' tlPanel--card' : ''}`)}
       style={panelStyle}
     >
       {hasHeader && (

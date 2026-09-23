@@ -438,6 +438,12 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.textInput.open")
 	public static ResKey JS_TEXT_INPUT_OPEN;
 
+	/**
+	 * @en Clear the input
+	 */
+	@CustomKey("js.textInput.clear")
+	public static ResKey JS_TEXT_INPUT_CLEAR;
+
 	// -- Value list client-side i18n keys --
 
 	/**

@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, useListReorder, TLChild, tooltipProps } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, useListReorder, TLChild, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import FontIcon from './FontIcon';
 
@@ -98,7 +98,7 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
 
   if (!editable) {
     return (
-      <span id={controlId} className={cls}>
+      <span id={controlId} className={rootClassName(state, cls)}>
         {elements.map((element, index) => (
           <React.Fragment key={index}>
             {index > 0 && <span className="tlValueList__separator">{SEPARATOR}</span>}
@@ -112,7 +112,7 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
   }
 
   return (
-    <div id={controlId} className={cls} {...reorder.containerProps}>
+    <div id={controlId} className={rootClassName(state, cls)} {...reorder.containerProps}>
       {elements.map((element, index) => {
         const dragState = reorder.itemState(index);
         let rowCls = 'tlValueList__row';

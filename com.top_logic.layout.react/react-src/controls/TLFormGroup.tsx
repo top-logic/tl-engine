@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, tooltipProps } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback } = React;
@@ -50,7 +50,7 @@ const TLFormGroup: React.FC<TLCellProps> = ({ controlId }) => {
   ].filter(Boolean).join(' ');
 
   return (
-    <div id={controlId} className={className}>
+    <div id={controlId} className={rootClassName(state, className)}>
       {hasHeader && (
         <div className="tlFormGroup__header">
           {collapsible && (

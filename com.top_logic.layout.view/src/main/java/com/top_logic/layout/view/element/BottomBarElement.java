@@ -102,6 +102,8 @@ public class BottomBarElement implements UIElement {
 
 	private final String _activeItem;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link BottomBarElement} from configuration.
 	 */
@@ -112,6 +114,7 @@ public class BottomBarElement implements UIElement {
 		// view first happened to ask in.
 		_items = new ArrayList<>(config.getItems());
 		_activeItem = config.getActiveItem();
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -124,8 +127,10 @@ public class BottomBarElement implements UIElement {
 		String activeItem = _activeItem != null && !_activeItem.isEmpty()
 			? _activeItem
 			: (!_items.isEmpty() ? _items.get(0).getId() : "");
-		return new ReactBottomBarControl(context, entries, activeItem, itemId -> {
+		ReactBottomBarControl result = new ReactBottomBarControl(context, entries, activeItem, itemId -> {
 			// Visual-only selection in the declarative view; no server-side handler.
 		});
+		result.setCssClass(_cssClass);
+		return result;
 	}
 }

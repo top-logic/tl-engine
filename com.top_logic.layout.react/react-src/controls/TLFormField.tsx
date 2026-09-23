@@ -1,4 +1,4 @@
-import { React, useTLState, TLChild, useI18N, tooltipProps, TOOLTIP_ATTR } from 'tl-react-bridge';
+import { React, useTLState, TLChild, rootClassName, useI18N, tooltipProps, TOOLTIP_ATTR } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import FontIcon from './FontIcon';
 import { FormLayoutContext } from './FormLayoutContext';
@@ -87,7 +87,7 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
   // control would drop its SSE subscription, so state patches arriving while hidden (e.g.
   // editable toggling with the form mode) would be lost until a full re-serialization.
   return (
-    <div id={controlId} className={className} style={visible ? undefined : { display: 'none' }}>
+    <div id={controlId} className={rootClassName(state, className)} style={visible ? undefined : { display: 'none' }}>
       {!labelHidden && (
         <div className="tlFormField__label">
           <span className="tlFormField__labelText" {...labelTooltip}>{label}</span>

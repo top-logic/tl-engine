@@ -53,17 +53,22 @@ public class SlotElement implements UIElement {
 
 	private final String _name;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link SlotElement} from configuration.
 	 */
 	@CalledByReflection
 	public SlotElement(InstantiationContext context, Config config) {
 		_name = config.getName();
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		return new SlotPlaceholderControl(context, _name, context.getSlotPath(),
+		SlotPlaceholderControl result = new SlotPlaceholderControl(context, _name, context.getSlotPath(),
 			context.getSlotRegistry());
+		result.setCssClass(_cssClass);
+		return result;
 	}
 }

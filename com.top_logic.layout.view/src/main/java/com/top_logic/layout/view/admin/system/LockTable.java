@@ -91,6 +91,8 @@ public class LockTable implements UIElement {
 
 	private final ChannelRef _selectionRef;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link LockTable} from configuration.
 	 */
@@ -98,6 +100,7 @@ public class LockTable implements UIElement {
 	public LockTable(InstantiationContext context, Config config) {
 		_inputRef = config.getInput();
 		_selectionRef = config.getSelection();
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -143,6 +146,7 @@ public class LockTable implements UIElement {
 			control.addSelectionListener(keys -> selection.set(keys.size() == 1 ? keys.iterator().next() : null));
 		}
 
+		control.setCssClass(_cssClass);
 		return control;
 	}
 

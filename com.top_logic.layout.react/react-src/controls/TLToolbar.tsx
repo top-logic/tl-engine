@@ -1,4 +1,4 @@
-import { React, useTLState, TLChild, useCloseOnOutsidePress, useStandaloneKeyboardScope, useFocusTrap, useI18N, tooltipProps } from 'tl-react-bridge';
+import { React, useTLState, TLChild, useCloseOnOutsidePress, useStandaloneKeyboardScope, useFocusTrap, useI18N, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { createPortal } from 'react-dom';
 import { ThemeIcon } from './icon/ThemeIcon';
@@ -433,8 +433,9 @@ const TLToolbar: React.FC<TLCellProps> = ({ controlId }) => {
     ? <MenuGroup group={overflowGroup} align={overflowEnd === 'leading' ? 'start' : 'end'} />
     : null;
 
-  const className = 'tlToolbar' + (collapsible ? ' tlToolbar--collapsible' : '')
-    + (compact ? ' ' + COMPACT_CLASS : '');
+  const className = rootClassName(state, 'tlToolbar',
+    collapsible && 'tlToolbar--collapsible',
+    compact && COMPACT_CLASS);
 
   // While measuring, the toolbar takes the width it needs, so that the widths read from it are
   // the natural ones of its units. Afterwards it states that natural width as its own width and

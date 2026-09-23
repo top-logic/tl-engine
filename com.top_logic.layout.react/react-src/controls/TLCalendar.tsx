@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, startPointerDrag, tooltipProps } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, startPointerDrag, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useState, useRef, useCallback, useMemo, useEffect } = React;
@@ -916,7 +916,7 @@ const TLCalendar: React.FC<TLCellProps> = ({ controlId }) => {
   };
 
   return (
-    <div id={controlId} className="tlCalendar">
+    <div id={controlId} className={rootClassName(state, 'tlCalendar')}>
       <Toolbar title={title} granularity={granularity} i18n={i18n} send={send} />
       <div className="tlCalBody">
         {granularity === 'MONTH' ? (

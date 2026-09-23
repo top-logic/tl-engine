@@ -1,6 +1,6 @@
 import {
   React, useTLState, useTLCommand, TLChild, useI18N, useStandaloneKeyboardScope, FillBarrier,
-  tooltipProps, firstFocusable,
+  rootClassName, firstFocusable, tooltipProps,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
@@ -88,7 +88,7 @@ const TLDrawer: React.FC<TLCellProps> = ({ controlId }) => {
   return (
     <aside
       id={controlId}
-      className={className}
+      className={rootClassName(state, className)}
       aria-hidden={!open}
       tabIndex={-1}
       ref={rootRef}

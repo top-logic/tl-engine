@@ -1,6 +1,6 @@
 import {
   React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding,
-  useFocusTrap, FillBarrier, startPointerDrag, tooltipProps,
+  useFocusTrap, FillBarrier, startPointerDrag, rootClassName, tooltipProps,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
@@ -318,7 +318,7 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
       {closable && <EscapeToClose onClose={handleClose} />}
       <div
       id={controlId}
-      className="tlWindow"
+      className={rootClassName(state, 'tlWindow')}
       style={style}
       ref={windowRef}
       role="dialog"

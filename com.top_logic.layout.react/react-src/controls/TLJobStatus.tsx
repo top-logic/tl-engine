@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, tooltipProps } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { TICK_MS, formatDuration } from './duration';
 import { ProgressBar } from './TLProgress';
@@ -92,7 +92,7 @@ const TLJobStatus: React.FC<TLCellProps> = ({ controlId }) => {
   const showBar = running || fraction != null;
 
   return (
-    <div id={controlId} className={`tlJobStatus tlJobStatus--${status}`} role="status" aria-live="polite">
+    <div id={controlId} className={rootClassName(state, `tlJobStatus tlJobStatus--${status}`)} role="status" aria-live="polite">
       <div className="tlJobStatus__header">
         <span className="tlJobStatus__state">{i18n[`js.jobStatus.${status}`] ?? status}</span>
         {elapsed !== null && (

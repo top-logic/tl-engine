@@ -97,6 +97,8 @@ public class CardElement extends ContainerElement implements TitledElement {
 
 	private final CardPadding _padding;
 
+	private final String _cssClass;
+
 	private final List<UIElement> _headerContent;
 
 	/**
@@ -108,6 +110,7 @@ public class CardElement extends ContainerElement implements TitledElement {
 		_title = config.getTitle();
 		_variant = config.getVariant();
 		_padding = config.getPadding();
+		_cssClass = config.getCssClass();
 		_headerContent = config.getHeaderContent().stream()
 			.map(context::getInstance)
 			.collect(Collectors.toList());
@@ -142,6 +145,9 @@ public class CardElement extends ContainerElement implements TitledElement {
 		ReactControl content = ContentControls.combine(context, childControls);
 
 		String title = _title != null ? Resources.getInstance().getString(_title) : null;
-		return new ReactCardControl(context, title, _variant, _padding, createHeaderControls(context), content);
+		ReactCardControl result =
+			new ReactCardControl(context, title, _variant, _padding, createHeaderControls(context), content);
+		result.setCssClass(_cssClass);
+		return result;
 	}
 }

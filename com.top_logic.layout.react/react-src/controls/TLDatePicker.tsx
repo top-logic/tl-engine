@@ -1,4 +1,4 @@
-import { React, useTLFieldValue } from 'tl-react-bridge';
+import { React, useTLFieldValue, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback } = React;
@@ -24,7 +24,7 @@ const TLDatePicker: React.FC<TLCellProps> = ({ controlId, state }) => {
     // back to the ISO value if no localized form was emitted.
     const display = (state.displayValue as string) ?? (value as string) ?? '';
     return (
-      <span id={controlId} className="tlReactDatePicker tlReactDatePicker--immutable">
+      <span id={controlId} className={rootClassName(state, 'tlReactDatePicker tlReactDatePicker--immutable')}>
         {display}
       </span>
     );
@@ -45,7 +45,7 @@ const TLDatePicker: React.FC<TLCellProps> = ({ controlId, state }) => {
         value={(value as string) ?? ''}
         onChange={handleChange}
         disabled={state.disabled === true}
-        className={cls}
+        className={rootClassName(state, cls)}
         aria-invalid={hasError || undefined}
       />
     </span>

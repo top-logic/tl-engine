@@ -1,52 +1,18 @@
-import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, useCloseOnOutsidePress, CMD_VALUE_CHANGED, tooltipProps } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, useCloseOnOutsidePress, CMD_VALUE_CHANGED, rootClassName, tooltipProps } from 'tl-react-bridge';
 import { createPortal } from 'react-dom';
 import type { TLCellProps } from 'tl-react-bridge';
-import { ThemeIcon } from './icon/ThemeIcon';
-import { TLPill } from './pill/TLPill';
+import {
+  ARG_OPTION,
+  CMD_GOTO,
+  OptionImage,
+  ReadonlyValue,
+  withPill,
+} from './selectOptions';
+import type { OptionDescriptor } from './selectOptions';
 
 const { useState, useCallback, useRef, useEffect, useMemo } = React;
 
-// -- Types --
-
-interface OptionDescriptor {
-  value: string;
-  label: string;
-  image?: string;
-  /** The CSS color the value carries in the model, if any. */
-  color?: string;
-  /** Whether the option leads to the place the application displays it at. */
-  link?: boolean;
-}
-
-/** Command sent when the user follows the link of a displayed option. */
-const CMD_GOTO = 'goto';
-
-/** Argument of {@link CMD_GOTO}: the value of the option to display. */
-const ARG_OPTION = 'option';
-
 // -- Sub-components --
-
-/**
- * Wraps a value's presentation in a pill when the model gives that value a color.
- *
- * <p>
- * Used for every presentation of an option - the rows of the open dropdown, the chips of the
- * selection while editing, and the read-only display - so a colored value looks the same wherever
- * the control shows it.
- * </p>
- */
-function withPill(color: string | undefined, content: React.ReactNode) {
-  return color ? <TLPill color={color}>{content}</TLPill> : content;
-}
-
-/** Renders an option's image, whatever encoded form it arrives in. */
-function OptionImage({ image }: { image?: string }) {
-  if (!image) return null;
-  if (image.startsWith('/')) {
-    return <img src={image} alt="" className="tlDropdownSelect__optionImage" />;
-  }
-  return <ThemeIcon encoded={image} className="tlDropdownSelect__optionIcon" />;
-}
 
 /** Renders a selected value as a chip/tag */
 function Chip({
@@ -111,44 +77,6 @@ function Chip({
       )}
     </span>
   );
-}
-
-/**
- * Renders a selected value of a field that only displays its value.
- *
- * <p>A value the application displays somewhere is a link there, and wears the same look as the
- * linked value of a table cell.</p>
- */
-function ReadonlyValue({
-  option,
-  onGoto,
-}: {
-  option: OptionDescriptor;
-  onGoto: (value: string) => void;
-}) {
-  const handleClick = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      onGoto(option.value);
-    },
-    [onGoto, option.value]
-  );
-
-  const content = withPill(option.color, (
-    <>
-      <OptionImage image={option.image} />
-      <span>{option.label}</span>
-    </>
-  ));
-
-  if (option.link) {
-    return (
-      <a className="tlDropdownSelect__readonlyValue tlResourceCell" href="#" onClick={handleClick}>
-        {content}
-      </a>
-    );
-  }
-  return <span className="tlDropdownSelect__readonlyValue">{content}</span>;
 }
 
 /** Renders a single option row in the dropdown, with match highlighting */
@@ -582,7 +510,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
 
   if (!editable) {
     return (
-      <div id={controlId} className="tlDropdownSelect tlDropdownSelect--immutable">
+      <div id={controlId} className={rootClassName(state, 'tlDropdownSelect tlDropdownSelect--immutable')}>
         {value.map((v) => (
           <ReadonlyValue key={v.value} option={v} onGoto={goto} />
         ))}
@@ -670,11 +598,9 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
       <div
         id={controlId}
         ref={containerRef}
-        className={
-          'tlDropdownSelect' +
+        className={rootClassName(state, 'tlDropdownSelect' +
           (isOpen ? ' tlDropdownSelect--open' : '') +
-          (disabled ? ' tlDropdownSelect--disabled' : '')
-        }
+          (disabled ? ' tlDropdownSelect--disabled' : ''))}
         role="combobox"
         aria-expanded={isOpen}
         aria-haspopup="listbox"

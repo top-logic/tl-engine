@@ -1,5 +1,6 @@
 import {
   React, useTLState, useTLCommand, TLChild, KeyboardScopeProvider, useKeyboardBinding, FillBarrier,
+  rootClassName,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
@@ -56,7 +57,7 @@ const TLDialog: React.FC<TLCellProps> = ({ controlId }) => {
       {closable && <EscapeToClose onClose={handleClose} />}
       <div
         id={controlId}
-        className="tlDialog__backdrop"
+        className={rootClassName(state, 'tlDialog__backdrop')}
         onClick={handleBackdropClick}
         ref={backdropRef}
         tabIndex={-1}

@@ -53,17 +53,22 @@ public class ScriptResultTable implements UIElement {
 
 	private final ChannelRef _inputRef;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link ScriptResultTable} from configuration.
 	 */
 	@CalledByReflection
 	public ScriptResultTable(InstantiationContext context, Config config) {
 		_inputRef = config.getInput();
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		ViewChannel dataChannel = _inputRef != null ? context.resolveChannel(_inputRef) : null;
-		return new ScriptResultControl(context, dataChannel);
+		ScriptResultControl result = new ScriptResultControl(context, dataChannel);
+		result.setCssClass(_cssClass);
+		return result;
 	}
 }

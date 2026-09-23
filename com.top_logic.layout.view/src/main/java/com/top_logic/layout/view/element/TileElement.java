@@ -146,6 +146,8 @@ public class TileElement implements UIElement {
 
 	private final UIElement _content;
 
+	private final String _cssClass;
+
 	private final ViewCommand _action;
 
 	/** The configuration {@link #_action} was instantiated from, {@code null} without one. */
@@ -161,6 +163,7 @@ public class TileElement implements UIElement {
 		_rowSpan = Math.max(1, config.getRowSpan());
 		_accessControl = config.getAccessControl();
 		_content = context.getInstance(config.getContent());
+		_cssClass = config.getCssClass();
 		PolymorphicConfiguration<? extends ViewCommand> actionConfig = config.getAction();
 		_actionConfig = actionConfig instanceof ViewCommand.Config typed ? typed : null;
 		_action = context.getInstance(actionConfig);
@@ -198,8 +201,14 @@ public class TileElement implements UIElement {
 	public ReactControl createContentControl(ViewContext context) {
 		SecurityScope scope = AccessChecks.resolveScope(_accessControl);
 		ViewContext contentContext = scope != null ? context.withScope(SecurityScope.class, scope) : context;
-		IReactControl inner = _content.createControl(contentContext);
-		return (ReactControl) inner;
+		ReactControl inner = (ReactControl) _content.createControl(contentContext);
+		if (_cssClass != null) {
+			// A tile displays itself through its content, so the class of the tile goes on the control
+			// of that content. It is written only when the tile declares one, so that the content
+			// element keeps the class it declares itself.
+			inner.setCssClass(_cssClass);
+		}
+		return inner;
 	}
 
 	/**

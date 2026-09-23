@@ -132,6 +132,7 @@ public class DesignerTreeElement implements UIElement {
 		ReactTreeControl treeControl = new ReactTreeControl(context, treeModel, selectionModel,
 			designNodeControlProvider(treeRef, currentModel));
 		treeRef[0] = treeControl;
+		treeControl.setCssClass(_config.getCssClass());
 
 		// 5. Wire the selection channel, which the tree reads as well as writes: the selected
 		//    DesignTreeNode is written to it, and a node another writer puts on it - the "select

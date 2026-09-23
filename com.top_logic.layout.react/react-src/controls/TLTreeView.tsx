@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, tooltipProps } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, rootClassName, useI18N, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 interface NodeState {
@@ -279,7 +279,7 @@ const TLTreeView: React.FC<TLCellProps> = () => {
     <ul
       ref={listRef}
       role="tree"
-      className="tlTreeView"
+      className={rootClassName(state, 'tlTreeView')}
       tabIndex={0}
       onKeyDown={handleKeyDown}
     >

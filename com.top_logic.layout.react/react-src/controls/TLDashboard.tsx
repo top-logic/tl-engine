@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, FillBarrier } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, FillBarrier, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { isInteractiveTarget } from './interactive';
 
@@ -265,7 +265,7 @@ const TLDashboard: React.FC<TLCellProps> = ({ controlId }) => {
     <div
       id={controlId}
       ref={containerRef}
-      className={'tlDashboard' + (editMode ? ' tlDashboard--edit' : '')}
+      className={rootClassName(state, 'tlDashboard' + (editMode ? ' tlDashboard--edit' : ''))}
     >
       <div className="tlDashboard__grid" style={gridStyle}>
         {tiles.map(tile => {

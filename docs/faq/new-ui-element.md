@@ -83,7 +83,9 @@ public class MyElement implements UIElement {
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		return new MyControl(context, _config.getLabel(), _config.getStart());
+		MyControl result = new MyControl(context, _config.getLabel(), _config.getStart());
+		result.setCssClass(_config.getCssClass());
+		return result;
 	}
 }
 ```
@@ -101,6 +103,12 @@ public class MyElement implements UIElement {
   changes belongs in the control.
 - An element that should not claim a global tag can be placed by `class=` instead — see
   [react-view-layer.md](react-view-layer.md).
+- **Every element inherits `css-class`** from `UIElement.Config`, so the configuration declares
+  nothing for it. The element passes the configured class to the control it returns —
+  `result.setCssClass(_config.getCssClass())` — and the control writes it on the root element of its
+  display (step 3.1). An element that hands out a control it did not create itself (a wrapper
+  returning the control of the element it wraps) writes the class only when one is configured, so
+  that the wrapped element keeps its own.
 
 ## 2. The control
 
@@ -134,13 +142,16 @@ public class MyControl extends ReactControl {
 - A command handler is found by `@ReactCommandHandler` alone. Any visibility works; the method may
   take the client's arguments as a `Map<String, Object>` or as a typed `ReactCommand` subtype.
 - The second argument is the control's model (`null` when there is none).
+- `setCssClass(String)` comes from `ReactControl`: it publishes the class under the state key every
+  control shares, so the control itself needs no property for it. The class is rendering-only state,
+  which the base already lists among its `scriptingPresentationKeys()`.
 
 ## 3. The client component
 
 ### 3.1 The component
 
 ```tsx
-import { React, useTLState, useTLCommand } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const MyWidget: React.FC<TLCellProps> = ({ controlId }) => {
@@ -149,7 +160,7 @@ const MyWidget: React.FC<TLCellProps> = ({ controlId }) => {
   const value = (state.value as number) ?? 0;
 
   return (
-    <div id={controlId} className="myWidget">
+    <div id={controlId} className={rootClassName(state, 'myWidget')}>
       <span className="myWidget__value">{value}</span>
       <button type="button" onClick={() => sendCommand('increment')}>+</button>
     </div>
@@ -164,6 +175,11 @@ second React copy, and the hooks fail at runtime with “useState is null”. Re
 server publishes; do not keep a second copy of it in the component.
 
 Put the element's id on the outermost node (`id={controlId}`), the way the other controls do.
+
+**Build the root element's `className` with `rootClassName(state, …)`.** The helper takes the classes
+the component brings itself — falsy entries, such as a modifier that does not apply, are dropped —
+and appends the class the server configured for this one control. A component that renders several
+alternative roots (an error state, an empty state, the normal one) uses it on each of them.
 
 ### 3.2 The bundle entry
 

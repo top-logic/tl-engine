@@ -1,19 +1,19 @@
-import { React, useTLFieldValue, tooltipProps } from 'tl-react-bridge';
+import { React, useTLFieldValue, rootClassName, VALUE_DEBOUNCE_MS, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback } = React;
-
-/** Debounce for transmitting a typed value to the server (see TLTextInput). */
-const VALUE_DEBOUNCE_MS = 300;
 
 /**
  * A masked password input field rendered via React.
  *
  * Mirrors {@link TLTextInput} but renders an {@code <input type="password">}: typing updates the
  * local value immediately while the server `valueChanged` is debounced and flushed on blur.
+ * state.debounceMs names the span the value is held back, defaulting to VALUE_DEBOUNCE_MS.
  */
 const TLPasswordInput: React.FC<TLCellProps> = ({ controlId, state }) => {
-  const [value, setValue, flushValue] = useTLFieldValue({ debounceMs: VALUE_DEBOUNCE_MS });
+  const [value, setValue, flushValue] = useTLFieldValue({
+    debounceMs: (state.debounceMs as number) ?? VALUE_DEBOUNCE_MS,
+  });
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -25,7 +25,7 @@ const TLPasswordInput: React.FC<TLCellProps> = ({ controlId, state }) => {
   const handleBlur = useCallback(() => { void flushValue(); }, [flushValue]);
 
   if (state.editable === false) {
-    return <span id={controlId} className="tlReactTextInput tlReactTextInput--immutable">••••••••</span>;
+    return <span id={controlId} className={rootClassName(state, 'tlReactTextInput tlReactTextInput--immutable')}>••••••••</span>;
   }
 
   const hasError = state.hasError === true;
@@ -45,7 +45,7 @@ const TLPasswordInput: React.FC<TLCellProps> = ({ controlId, state }) => {
         onChange={handleChange}
         onBlur={handleBlur}
         disabled={state.disabled === true}
-        className={cls}
+        className={rootClassName(state, cls)}
         aria-invalid={hasError || undefined}
         {...tooltipProps(hasError ? errorMessage : undefined)}
       />

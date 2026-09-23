@@ -101,7 +101,7 @@ public class TestOverlayElement extends TestCase {
 		Map<?, ?> badge = layers().get(0);
 
 		assertEquals(LayerAnchor.TOP_LEFT.getExternalName(), badge.get(ReactOverlayControl.ANCHOR));
-		assertEquals("tlBadge", badge.get(ReactOverlayControl.CSS_CLASS));
+		assertEquals("tlBadge", badge.get(ReactOverlayControl.LAYER_CSS_CLASS));
 	}
 
 	/** A child that is no layer element covers the base as a whole. */
@@ -109,12 +109,12 @@ public class TestOverlayElement extends TestCase {
 		Map<?, ?> scrim = layers().get(1);
 
 		assertEquals(LayerAnchor.FILL.getExternalName(), scrim.get(ReactOverlayControl.ANCHOR));
-		assertNull("A child that is no layer brings no CSS class.", scrim.get(ReactOverlayControl.CSS_CLASS));
+		assertNull("A child that is no layer brings no CSS class.", scrim.get(ReactOverlayControl.LAYER_CSS_CLASS));
 	}
 
 	/** The CSS class of the overlay itself reaches the client. */
 	public void testOverlayCssClass() {
-		assertEquals("tlHero", _state.get(ReactOverlayControl.CSS_CLASS));
+		assertEquals("tlHero", _state.get(ReactControl.CSS_CLASS));
 	}
 
 	/** A layer without a position of its own covers the base as a whole. */
@@ -134,7 +134,7 @@ public class TestOverlayElement extends TestCase {
 
 		assertEquals(LayerAnchor.FILL.getExternalName(), caption.get(ReactOverlayControl.ANCHOR));
 		assertNull("Without configuration a layer brings no CSS class.",
-			caption.get(ReactOverlayControl.CSS_CLASS));
+			caption.get(ReactOverlayControl.LAYER_CSS_CLASS));
 	}
 
 	/** An overlay with a base and nothing over it is a base. */

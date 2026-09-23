@@ -1,4 +1,4 @@
-import { React, useTLCommand, useTLFieldValue, useI18N, pressClosedSurface, tooltipProps } from 'tl-react-bridge';
+import { React, useTLCommand, useTLFieldValue, useI18N, pressClosedSurface, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import IconSelectPopup, { IconPreview } from './icon/IconSelectPopup';
 import type { IconEntry } from './icon/IconSelectPopup';
@@ -56,7 +56,7 @@ const TLIconSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
   // Immutable rendering
   if (!editable) {
     return (
-      <span id={controlId} className="tlIconSelect tlIconSelect--immutable">
+      <span id={controlId} className={rootClassName(state, 'tlIconSelect tlIconSelect--immutable')}>
         <span className="tlIconSelect__swatch">
           {value ? <IconPreview encoded={value} /> : null}
         </span>
@@ -65,7 +65,7 @@ const TLIconSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
   }
 
   return (
-    <span id={controlId} className="tlIconSelect">
+    <span id={controlId} className={rootClassName(state, 'tlIconSelect')}>
       <button
         ref={swatchRef}
         className={

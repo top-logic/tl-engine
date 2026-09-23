@@ -49,9 +49,6 @@ public class ReactImageControl extends ReactControl implements DataProvider {
 	/** @see #setLazy(boolean) */
 	public static final String LAZY = "lazy";
 
-	/** @see #setCssClass(String) */
-	public static final String CSS_CLASS = "cssClass";
-
 	private final ImageSource _image = new ImageSource(this::putState);
 
 	/**
@@ -144,16 +141,6 @@ public class ReactImageControl extends ReactControl implements DataProvider {
 		putState(LAZY, Boolean.valueOf(lazy));
 	}
 
-	/**
-	 * Sets an additional CSS class, appended to the classes of the picture's box.
-	 *
-	 * @param cssClass
-	 *        The CSS class, or {@code null} for none.
-	 */
-	public void setCssClass(String cssClass) {
-		putState(CSS_CLASS, cssClass);
-	}
-
 	@Override
 	public BinaryData getDownloadData(String key) {
 		return _image.getData();
@@ -164,7 +151,8 @@ public class ReactImageControl extends ReactControl implements DataProvider {
 	 */
 	@Override
 	protected Set<String> scriptingPresentationKeys() {
-		return Set.of(FIT, ASPECT_RATIO, WIDTH, HEIGHT, LAZY, CSS_CLASS, ImageSource.DATA_REVISION);
+		return presentationKeys(super.scriptingPresentationKeys(), FIT, ASPECT_RATIO, WIDTH, HEIGHT, LAZY,
+			ImageSource.DATA_REVISION);
 	}
 
 }

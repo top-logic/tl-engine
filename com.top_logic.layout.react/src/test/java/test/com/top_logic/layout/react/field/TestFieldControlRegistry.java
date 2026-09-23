@@ -34,6 +34,9 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
  */
 public class TestFieldControlRegistry extends TestCase {
 
+	/** An icon a search box carries. */
+	private static final String SEARCH_ICON = "css:fa-solid fa-magnifying-glass";
+
 	private FieldControlRegistry _registry;
 
 	@Override
@@ -154,7 +157,10 @@ public class TestFieldControlRegistry extends TestCase {
 		FieldSpec field = FieldSpec.of(String.class, "Names")
 			.setMultiple(true)
 			.setMultilineRows(4)
-			.setTooltip("What they are called");
+			.setTooltip("What they are called")
+			.setIcon(SEARCH_ICON)
+			.setClearable(true)
+			.setDebounce(Long.valueOf(250));
 
 		FieldSpec element = field.elementSpec();
 
@@ -163,7 +169,25 @@ public class TestFieldControlRegistry extends TestCase {
 		assertEquals("Names", element.getLabel());
 		assertEquals(4, element.getMultilineRows());
 		assertEquals("What they are called", element.getTooltip());
+		assertEquals("An element is displayed like the field", SEARCH_ICON, element.getIcon());
+		assertTrue("An element is displayed like the field", element.isClearable());
+		assertEquals("An element reports at the pace of the field", Long.valueOf(250),
+			element.getDebounce());
 		assertTrue("The field itself is untouched", field.isMultiple());
+	}
+
+	/**
+	 * A description that states none of the search-field properties leaves the control with the
+	 * plain input and the delay it has by default.
+	 */
+	public void testAPlainFieldAsksForNoSearchAffordances() {
+		FieldSpec field = FieldSpec.of(String.class, "Name");
+
+		assertNull("A field carries no icon unless it states one", field.getIcon());
+		assertFalse("A field is emptied by deleting its text unless it states otherwise",
+			field.isClearable());
+		assertNull("A field reports at the pace of its control unless it states a span",
+			field.getDebounce());
 	}
 
 	private static ReactControl createControl(FieldSpec field, ReactFieldControlProvider provider) {

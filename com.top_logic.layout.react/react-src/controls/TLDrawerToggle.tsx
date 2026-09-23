@@ -1,4 +1,4 @@
-import { React, useTLCommand, useI18N, tooltipProps } from 'tl-react-bridge';
+import { React, useTLCommand, useI18N, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -12,7 +12,7 @@ const I18N_KEYS = {
  * button is hidden at desktop breakpoints by CSS so it only appears when the sidebar is in
  * mobile drawer mode.
  */
-const TLDrawerToggle: React.FC<TLCellProps> = ({ controlId }) => {
+const TLDrawerToggle: React.FC<TLCellProps> = ({ controlId, state }) => {
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
 
@@ -20,7 +20,7 @@ const TLDrawerToggle: React.FC<TLCellProps> = ({ controlId }) => {
     <button
       id={controlId}
       type="button"
-      className="tlDrawerToggle"
+      className={rootClassName(state, 'tlDrawerToggle')}
       aria-label={i18n['js.sidebar.openDrawer']}
       {...tooltipProps(i18n['js.sidebar.openDrawer'])}
       onClick={() => sendCommand('toggle', {})}

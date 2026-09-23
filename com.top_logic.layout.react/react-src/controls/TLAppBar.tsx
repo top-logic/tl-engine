@@ -1,4 +1,4 @@
-import { React, useTLState, TLChild } from 'tl-react-bridge';
+import { React, useTLState, TLChild, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 /**
@@ -32,7 +32,7 @@ const TLAppBar: React.FC<TLCellProps> = ({ controlId }) => {
   ].filter(Boolean).join(' ');
 
   return (
-    <header id={controlId} className={className}>
+    <header id={controlId} className={rootClassName(state, className)}>
       {leading && (
         <div className="tlAppBar__leading">
           <TLChild control={leading} />

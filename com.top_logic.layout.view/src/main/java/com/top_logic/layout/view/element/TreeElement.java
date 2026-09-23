@@ -325,6 +325,7 @@ public class TreeElement implements UIElement {
 		// 5. Create ReactTreeControl.
 		ReactTreeControl treeControl = new ReactTreeControl(context, treeModel, selectionModel, _nodeContentProvider);
 		treeControl.setSelectionMode(selectionMode);
+		treeControl.setCssClass(_config.getCssClass());
 
 		// 6. Create ObservableTreeModel to forward model changes to the tree control. The function
 		//    saying what holds an object serves the observation (where an object that moved went)

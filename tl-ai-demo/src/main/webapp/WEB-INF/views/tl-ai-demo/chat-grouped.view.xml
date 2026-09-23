@@ -88,13 +88,18 @@
 				<en>No chats yet</en>
 				<de>Noch keine Chats</de>
 			</empty-text>
+			<!--
+				isDateEqual and isDateGreater compare dates: handed a calendar, they compare nothing
+				and every chat lands under "Today". So the calendar is only for the day arithmetic,
+				and each bound goes back to a date with toDate().
+			-->
 			<group-by><![CDATA[s -> {
-				d = $s.get(`tl.ai.execution:AgentSession#lastUpdated`).toSystemCalendar();
+				d = $s.get(`tl.ai.execution:AgentSession#lastUpdated`);
 				t = today().toSystemCalendar();
 				switch {
-					$d.isDateEqual($t): #("Today"@en, "Heute"@de);
-					$d.isDateEqual($t.withDayAdded(-1)): #("Yesterday"@en, "Gestern"@de);
-					$d.isDateGreater($t.withDayAdded(-7)): #("Previous 7 days"@en, "Letzte 7 Tage"@de);
+					$d.isDateEqual($t.toDate()): #("Today"@en, "Heute"@de);
+					$d.isDateEqual($t.withDayAdded(-1).toDate()): #("Yesterday"@en, "Gestern"@de);
+					$d.isDateGreater($t.withDayAdded(-7).toDate()): #("Previous 7 days"@en, "Letzte 7 Tage"@de);
 					default: #("Older"@en, "Älter"@de);
 				}
 			}]]></group-by>

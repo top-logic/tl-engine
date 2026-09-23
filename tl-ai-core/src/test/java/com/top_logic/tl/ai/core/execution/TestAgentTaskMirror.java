@@ -6,6 +6,7 @@
 package com.top_logic.tl.ai.core.execution;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -16,9 +17,15 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.HistoryUtils;
+import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.tl.ai.core.agent.StopReason;
+import com.top_logic.tl.ai.core.execution.AgentExecutionStore.ExecutionStatus;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore.SessionKind;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore.TaskState;
+import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.execution.model.AgentTask;
 import com.top_logic.tl.ai.core.tools.task.TaskStore;
@@ -37,7 +44,8 @@ import com.top_logic.util.model.ModelService;
  *
  * <p>
  * Also that every committed change is announced on
- * {@link AgentExecutionStore.ChangeListener} - the seam the browser push rides on.
+ * {@link AgentExecutionStore.ChangeListener} - the seam the browser push rides on, and which of
+ * those changes count as activity in the conversation.
  * </p>
  */
 public class TestAgentTaskMirror extends BasicTestCase {
@@ -165,6 +173,36 @@ public class TestAgentTaskMirror extends BasicTestCase {
 		} finally {
 			store.removeChangeListener(listener);
 		}
+	}
+
+	/**
+	 * Saving the metadata bag is not activity in the conversation; a run is (Issue #557).
+	 *
+	 * <p>
+	 * The chat saves the bag whenever a conversation is opened or switched to. A rail grouped by
+	 * {@code lastUpdated} would otherwise show every conversation somebody merely looked at under
+	 * "today".
+	 * </p>
+	 */
+	public void testSavingMetadataIsNoActivityButARunIs() {
+		AgentExecutionStore store = AgentExecutionStore.getInstance();
+		AgentSession session = newSession("mirror-last-updated");
+		Date yesterday = new Date(System.currentTimeMillis() - 24 * 60 * 60 * 1000L);
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(ResKey.text("Backdate"))) {
+			session.setLastUpdated(yesterday);
+			tx.commit();
+		}
+
+		store.saveMetadata(session, "{\"approvalMode\":\"ask\"}");
+		store.saveMetadata(session, "{\"approvalMode\":\"auto\"}");
+		HistoryUtils.updateSessionRevision();
+		assertEquals("Opening the conversation twice leaves it where it was.",
+			yesterday, session.getLastUpdated());
+
+		AgentExecution run = store.beginExecution(session, "run-last-updated", "orchestrator", "test-model", null, null);
+		store.finishExecution(run, ExecutionStatus.COMPLETE, StopReason.COMPLETE, null, null, null);
+		HistoryUtils.updateSessionRevision();
+		assertTrue("A run moves the conversation to now.", session.getLastUpdated().after(yesterday));
 	}
 
 	/**

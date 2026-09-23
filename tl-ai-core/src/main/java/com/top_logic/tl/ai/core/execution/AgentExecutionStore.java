@@ -602,12 +602,18 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 
 	/**
 	 * Stores the session metadata bag (approved tools, approval mode, loaded skills, ...).
+	 *
+	 * <p>
+	 * Leaves {@link AgentSession#getLastUpdated()} alone: the chat saves this bag whenever a
+	 * conversation is opened or switched to, and opening a conversation is not activity in it. A
+	 * list grouped by that date would otherwise move every conversation somebody looked at under
+	 * "today" (Issue #557).
+	 * </p>
 	 */
 	public void saveMetadata(AgentSession session, String metadataJson) {
 		notifyChanged(write(() -> {
 			try (Transaction tx = beginTx("Save agent session metadata")) {
 				session.setMetadata(metadataJson);
-				session.setLastUpdated(new Date());
 				tx.commit();
 			}
 			return session.getOwner();

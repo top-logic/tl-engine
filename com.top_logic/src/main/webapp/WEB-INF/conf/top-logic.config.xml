@@ -1902,6 +1902,7 @@
 			<logoutPage>/servlet/LayoutServlet</logoutPage>
 			<buzzyPage>/jsp/main/buzzyPage.jsp</buzzyPage>
 			<noCookiePage>/jsp/main/LoginErrorPage_noCookies.jsp</noCookiePage>
+			<unknownAccountPage>/jsp/main/LoginErrorPage_unknownAccount.jsp</unknownAccountPage>
 			<startPage>/servlet/LayoutServlet</startPage>
 			<layout>/servlet/LayoutServlet</layout>
 		</config>

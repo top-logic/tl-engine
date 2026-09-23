@@ -6,7 +6,8 @@
 // primitives re-exported from this bundle's entry point.
 import { React } from 'tl-react-bridge';
 import {
-  EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter,
+  EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter, hoverTooltip,
+  ViewPlugin,
 } from '@codemirror/view';
 import { EditorState, Compartment } from '@codemirror/state';
 import type { Extension } from '@codemirror/state';
@@ -37,6 +38,65 @@ export interface CodeEditorDiagnostic {
   message: string;
 }
 
+/** The content of a hover tooltip, anchored at a document range. */
+export interface CodeEditorHover {
+  /** Start of the document range the tooltip describes. */
+  from: number;
+  /** End of the document range the tooltip describes; defaults to {@link from}. */
+  to?: number;
+  /** The tooltip content. */
+  dom: HTMLElement;
+}
+
+/**
+ * Supplies the hover tooltip for a document position.
+ *
+ * @param view The editor view.
+ * @param pos The document position under the mouse pointer.
+ * @param side Whether the pointer is before (-1) or after (1) the position.
+ * @returns The tooltip content, or null when the position has nothing to show.
+ */
+export type CodeEditorHoverSource =
+  (view: EditorView, pos: number, side: -1 | 1) => Promise<CodeEditorHover | null>;
+
+/** Delay in milliseconds the pointer rests on a position before the hover tooltip is requested. */
+const HOVER_TIME_MS = 500;
+
+/** Class of CodeMirror's documentation panel shown next to the completion option list. */
+const COMPLETION_INFO_CLASS = 'cm-completionInfo';
+
+/**
+ * Keeps the focus in the editor on a mousedown inside the completion info panel.
+ *
+ * <p>
+ * CodeMirror closes an open completion when the editor loses the focus. The option list prevents
+ * the default action of its own mousedown, the info panel does not; without this guard a click
+ * into the panel (or a drag of its scrollbar) blurs the editor and thereby closes the completion
+ * the panel belongs to. The listener sits on the editor root in the capture phase, because the
+ * tooltips are children of the root but not of the content element that
+ * {@code EditorView.domEventHandlers} listens on.
+ * </p>
+ */
+const keepFocusOnCompletionInfo = ViewPlugin.fromClass(class {
+  private readonly _dom: HTMLElement;
+
+  constructor(view: EditorView) {
+    this._dom = view.dom;
+    this._dom.addEventListener('mousedown', this.onMouseDown, true);
+  }
+
+  private readonly onMouseDown = (event: MouseEvent) => {
+    const target = event.target as Element | null;
+    if (target?.closest?.('.' + COMPLETION_INFO_CLASS)) {
+      event.preventDefault();
+    }
+  };
+
+  destroy() {
+    this._dom.removeEventListener('mousedown', this.onMouseDown, true);
+  }
+});
+
 /** Props of the reusable {@link CodeEditor}. */
 export interface CodeEditorProps {
   /** DOM id for the editor container (the mount-point of the host control). */
@@ -51,6 +111,8 @@ export interface CodeEditorProps {
   extraExtensions?: Extension[];
   /** Completion source for server- or client-backed autocompletion. */
   completionSource?: CompletionSource;
+  /** Source of hover tooltips (e.g. documentation of the symbol under the mouse pointer). */
+  hoverSource?: CodeEditorHoverSource;
   /** Diagnostics to render as markers, in 1-based line/column coordinates. */
   diagnostics?: CodeEditorDiagnostic[];
   /** Called (debounced) with the full text whenever the document changes. */
@@ -79,7 +141,7 @@ function toEditorDiagnostic(view: EditorView, d: CodeEditorDiagnostic): Diagnost
  */
 const CodeEditor: React.FC<CodeEditorProps> = (props) => {
   const {
-    controlId, value, readOnly, languageSupport, extraExtensions, completionSource,
+    controlId, value, readOnly, languageSupport, extraExtensions, completionSource, hoverSource,
     diagnostics, debounceMs = 300, className,
   } = props;
 
@@ -119,7 +181,14 @@ const CodeEditor: React.FC<CodeEditorProps> = (props) => {
       extensions.push(languageSupport);
     }
     if (completionSource) {
-      extensions.push(autocompletion({ override: [completionSource] }));
+      extensions.push(autocompletion({ override: [completionSource] }), keepFocusOnCompletionInfo);
+    }
+    if (hoverSource) {
+      extensions.push(hoverTooltip(async (view, pos, side) => {
+        const hover = await hoverSource(view, pos, side);
+        if (!hover) return null;
+        return { pos: hover.from, end: hover.to, above: false, create: () => ({ dom: hover.dom }) };
+      }, { hoverTime: HOVER_TIME_MS, hideOnChange: true }));
     }
     if (extraExtensions) {
       extensions.push(...extraExtensions);
@@ -145,9 +214,28 @@ const CodeEditor: React.FC<CodeEditorProps> = (props) => {
     const view = viewRef.current;
     if (!view) return;
     const current = view.state.doc.toString();
-    if (value !== current) {
-      view.dispatch({ changes: { from: 0, to: current.length, insert: value } });
+    if (value === current) return;
+
+    // Only the differing middle part is replaced: CodeMirror maps the selection through the change,
+    // so a cursor before or after the changed range keeps its position in the text.
+    const maxPrefix = Math.min(current.length, value.length);
+    let prefixLen = 0;
+    while (prefixLen < maxPrefix && current.charCodeAt(prefixLen) === value.charCodeAt(prefixLen)) {
+      prefixLen++;
     }
+    const maxSuffix = maxPrefix - prefixLen;
+    let suffixLen = 0;
+    while (suffixLen < maxSuffix
+        && current.charCodeAt(current.length - 1 - suffixLen) === value.charCodeAt(value.length - 1 - suffixLen)) {
+      suffixLen++;
+    }
+    view.dispatch({
+      changes: {
+        from: prefixLen,
+        to: current.length - suffixLen,
+        insert: value.slice(prefixLen, value.length - suffixLen),
+      },
+    });
   }, [value]);
 
   // --- Reflect readOnly changes via the editable compartment ---

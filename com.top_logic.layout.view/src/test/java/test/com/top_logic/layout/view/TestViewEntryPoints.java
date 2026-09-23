@@ -14,6 +14,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.layout.view.ViewConfig;
 import com.top_logic.layout.view.ViewServlet;
+import com.top_logic.layout.view.ViewServlet.ViewResolution;
 
 /**
  * Tests that a URL can only name the default view or a registered entry point as the contents of a
@@ -29,6 +30,10 @@ public class TestViewEntryPoints extends TestCase {
 
 	private static final String LOGIN_VIEW_PATH = "/WEB-INF/views/login-page.view.xml";
 
+	private static final String VISITOR_VIEW = "unknown-account.view.xml";
+
+	private static final String VISITOR_VIEW_PATH = "/WEB-INF/views/unknown-account.view.xml";
+
 	/** A session that belongs to an account. */
 	private static final boolean NAMED = false;
 
@@ -41,9 +46,9 @@ public class TestViewEntryPoints extends TestCase {
 	public void testRouteDisplaysDefaultView() {
 		ViewConfig config = newConfig();
 
-		assertEquals(DEFAULT_VIEW_PATH, ViewServlet.resolveViewPath(config, "/w1/", NAMED));
-		assertEquals(DEFAULT_VIEW_PATH, ViewServlet.resolveViewPath(config, "/w1", NAMED));
-		assertEquals(DEFAULT_VIEW_PATH, ViewServlet.resolveViewPath(config, "/w1/some/route", NAMED));
+		assertEquals(DEFAULT_VIEW_PATH, viewPath(config, "/w1/", NAMED));
+		assertEquals(DEFAULT_VIEW_PATH, viewPath(config, "/w1", NAMED));
+		assertEquals(DEFAULT_VIEW_PATH, viewPath(config, "/w1/some/route", NAMED));
 	}
 
 	/**
@@ -52,7 +57,7 @@ public class TestViewEntryPoints extends TestCase {
 	public void testDefaultViewIsEntryPoint() {
 		ViewConfig config = newConfig();
 
-		assertEquals(DEFAULT_VIEW_PATH, ViewServlet.resolveViewPath(config, "/w1/app.view.xml", NAMED));
+		assertEquals(DEFAULT_VIEW_PATH, viewPath(config, "/w1/app.view.xml", NAMED));
 	}
 
 	/**
@@ -61,8 +66,7 @@ public class TestViewEntryPoints extends TestCase {
 	public void testRegisteredEntryPoint() {
 		ViewConfig config = newConfig("demo/x.view.xml");
 
-		assertEquals("/WEB-INF/views/demo/x.view.xml",
-			ViewServlet.resolveViewPath(config, "/w1/demo/x.view.xml", NAMED));
+		assertEquals("/WEB-INF/views/demo/x.view.xml", viewPath(config, "/w1/demo/x.view.xml", NAMED));
 	}
 
 	/**
@@ -71,7 +75,7 @@ public class TestViewEntryPoints extends TestCase {
 	public void testUnregisteredViewRefused() {
 		ViewConfig config = newConfig("demo/x.view.xml");
 
-		assertNull(ViewServlet.resolveViewPath(config, "/w1/login.view.xml", NAMED));
+		assertNull(viewPath(config, "/w1/login.view.xml", NAMED));
 	}
 
 	/**
@@ -80,7 +84,7 @@ public class TestViewEntryPoints extends TestCase {
 	public void testNoEntryPointsRegistered() {
 		ViewConfig config = newConfig();
 
-		assertNull(ViewServlet.resolveViewPath(config, "/w1/demo/x.view.xml", NAMED));
+		assertNull(viewPath(config, "/w1/demo/x.view.xml", NAMED));
 	}
 
 	/**
@@ -89,10 +93,21 @@ public class TestViewEntryPoints extends TestCase {
 	public void testAnonymousSeesLoginView() {
 		ViewConfig config = withLoginView(newConfig("demo/x.view.xml"));
 
-		assertEquals(LOGIN_VIEW_PATH, ViewServlet.resolveViewPath(config, "/w1/some/route", ANONYMOUS));
-		assertEquals(LOGIN_VIEW_PATH, ViewServlet.resolveViewPath(config, "/w1/", ANONYMOUS));
-		assertEquals(LOGIN_VIEW_PATH, ViewServlet.resolveViewPath(config, "/w1/app.view.xml", ANONYMOUS));
-		assertEquals(LOGIN_VIEW_PATH, ViewServlet.resolveViewPath(config, "/w1/demo/x.view.xml", ANONYMOUS));
+		assertEquals(LOGIN_VIEW_PATH, viewPath(config, "/w1/some/route", ANONYMOUS));
+		assertEquals(LOGIN_VIEW_PATH, viewPath(config, "/w1/", ANONYMOUS));
+		assertEquals(LOGIN_VIEW_PATH, viewPath(config, "/w1/app.view.xml", ANONYMOUS));
+		assertEquals(LOGIN_VIEW_PATH, viewPath(config, "/w1/demo/x.view.xml", ANONYMOUS));
+	}
+
+	/**
+	 * The login view is marked as such, so that the requested URL is held rather than adopted.
+	 */
+	public void testLoginViewIsReported() {
+		ViewConfig config = withLoginView(newConfig("demo/x.view.xml"));
+
+		assertTrue(ViewServlet.resolveView(config, "/w1/some/route", ANONYMOUS).loginView());
+		assertTrue(ViewServlet.resolveView(config, "/w1/demo/x.view.xml", ANONYMOUS).loginView());
+		assertFalse(ViewServlet.resolveView(config, "/w1/some/route", NAMED).loginView());
 	}
 
 	/**
@@ -102,7 +117,47 @@ public class TestViewEntryPoints extends TestCase {
 	public void testAnonymousSeesLoginViewForUnregisteredView() {
 		ViewConfig config = withLoginView(newConfig());
 
-		assertEquals(LOGIN_VIEW_PATH, ViewServlet.resolveViewPath(config, "/w1/demo/x.view.xml", ANONYMOUS));
+		assertEquals(LOGIN_VIEW_PATH, viewPath(config, "/w1/demo/x.view.xml", ANONYMOUS));
+	}
+
+	/**
+	 * An entry point written for a visitor is shown to a visitor, although a login view is
+	 * configured.
+	 */
+	public void testAnonymousEntryPoint() {
+		ViewConfig config = withLoginView(newConfig("demo/x.view.xml"));
+		addEntryPoint(config, VISITOR_VIEW, true);
+
+		ViewResolution resolution = ViewServlet.resolveView(config, "/w1/" + VISITOR_VIEW, ANONYMOUS);
+		assertEquals(VISITOR_VIEW_PATH, resolution.viewPath());
+		// The page is the one the URL names, so its address is taken up rather than held.
+		assertFalse(resolution.loginView());
+	}
+
+	/**
+	 * Only the URL naming the anonymous entry point shows it: everything else a visitor asks for is
+	 * still answered with the login view.
+	 */
+	public void testAnonymousEntryPointOnlyWhereNamed() {
+		ViewConfig config = withLoginView(newConfig("demo/x.view.xml"));
+		addEntryPoint(config, VISITOR_VIEW, true);
+
+		assertEquals(LOGIN_VIEW_PATH, viewPath(config, "/w1/demo/x.view.xml", ANONYMOUS));
+		assertEquals(LOGIN_VIEW_PATH, viewPath(config, "/w1/app.view.xml", ANONYMOUS));
+		assertEquals(LOGIN_VIEW_PATH, viewPath(config, "/w1/some/route", ANONYMOUS));
+		assertEquals(LOGIN_VIEW_PATH, viewPath(config, "/w1/", ANONYMOUS));
+	}
+
+	/**
+	 * An account of their own reaches an anonymous entry point like any other.
+	 */
+	public void testAnonymousEntryPointForAccount() {
+		ViewConfig config = withLoginView(newConfig());
+		addEntryPoint(config, VISITOR_VIEW, true);
+
+		ViewResolution resolution = ViewServlet.resolveView(config, "/w1/" + VISITOR_VIEW, NAMED);
+		assertEquals(VISITOR_VIEW_PATH, resolution.viewPath());
+		assertFalse(resolution.loginView());
 	}
 
 	/**
@@ -111,9 +166,8 @@ public class TestViewEntryPoints extends TestCase {
 	public void testLoggedInSkipsLoginView() {
 		ViewConfig config = withLoginView(newConfig("demo/x.view.xml"));
 
-		assertEquals(DEFAULT_VIEW_PATH, ViewServlet.resolveViewPath(config, "/w1/some/route", NAMED));
-		assertEquals("/WEB-INF/views/demo/x.view.xml",
-			ViewServlet.resolveViewPath(config, "/w1/demo/x.view.xml", NAMED));
+		assertEquals(DEFAULT_VIEW_PATH, viewPath(config, "/w1/some/route", NAMED));
+		assertEquals("/WEB-INF/views/demo/x.view.xml", viewPath(config, "/w1/demo/x.view.xml", NAMED));
 	}
 
 	/**
@@ -122,10 +176,13 @@ public class TestViewEntryPoints extends TestCase {
 	public void testAnonymousWithoutLoginView() {
 		ViewConfig config = newConfig("demo/x.view.xml");
 
-		assertEquals(DEFAULT_VIEW_PATH, ViewServlet.resolveViewPath(config, "/w1/some/route", ANONYMOUS));
-		assertEquals("/WEB-INF/views/demo/x.view.xml",
-			ViewServlet.resolveViewPath(config, "/w1/demo/x.view.xml", ANONYMOUS));
-		assertNull(ViewServlet.resolveViewPath(config, "/w1/other.view.xml", ANONYMOUS));
+		assertEquals(DEFAULT_VIEW_PATH, viewPath(config, "/w1/some/route", ANONYMOUS));
+		assertEquals("/WEB-INF/views/demo/x.view.xml", viewPath(config, "/w1/demo/x.view.xml", ANONYMOUS));
+		assertNull(viewPath(config, "/w1/other.view.xml", ANONYMOUS));
+	}
+
+	private static String viewPath(ViewConfig config, String pathInfo, boolean anonymous) {
+		return ViewServlet.resolveView(config, pathInfo, anonymous).viewPath();
 	}
 
 	private ViewConfig withLoginView(ViewConfig config) {
@@ -138,14 +195,22 @@ public class TestViewEntryPoints extends TestCase {
 	private ViewConfig newConfig(String... entryPoints) {
 		ViewConfig result = TypedConfiguration.newConfigItem(ViewConfig.class);
 		for (String view : entryPoints) {
-			ViewConfig.EntryPoint entryPoint = TypedConfiguration.newConfigItem(ViewConfig.EntryPoint.class);
-			entryPoint.update(
-				TypedConfiguration.getConfigurationDescriptor(ViewConfig.EntryPoint.class)
-					.getProperty(ViewConfig.EntryPoint.VIEW),
-				view);
-			result.getEntryPoints().add(entryPoint);
+			addEntryPoint(result, view, false);
 		}
 		return result;
+	}
+
+	private void addEntryPoint(ViewConfig config, String view, boolean anonymous) {
+		ViewConfig.EntryPoint entryPoint = TypedConfiguration.newConfigItem(ViewConfig.EntryPoint.class);
+		entryPoint.update(
+			TypedConfiguration.getConfigurationDescriptor(ViewConfig.EntryPoint.class)
+				.getProperty(ViewConfig.EntryPoint.VIEW),
+			view);
+		entryPoint.update(
+			TypedConfiguration.getConfigurationDescriptor(ViewConfig.EntryPoint.class)
+				.getProperty(ViewConfig.EntryPoint.ANONYMOUS),
+			Boolean.valueOf(anonymous));
+		config.getEntryPoints().add(entryPoint);
 	}
 
 	/**

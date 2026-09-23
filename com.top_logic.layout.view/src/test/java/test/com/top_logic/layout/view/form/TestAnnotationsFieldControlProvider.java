@@ -10,10 +10,10 @@ import java.util.Collections;
 import java.util.List;
 
 import junit.framework.Test;
-import junit.framework.TestCase;
 
-import test.com.top_logic.ModuleLicenceTestSetup;
+import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -28,6 +28,7 @@ import com.top_logic.element.config.ReferenceConfig;
 import com.top_logic.layout.configedit.ConfigControlService;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
@@ -55,12 +56,13 @@ import com.top_logic.model.config.FullQualifiedName;
 import com.top_logic.model.config.TypeRef;
 import com.top_logic.model.config.EnumConfig;
 import com.top_logic.model.config.JavaPackage;
+import com.top_logic.util.model.ModelService;
 
 /**
  * Tests for {@link AnnotationsFieldControlProvider} - the annotations of a model element, edited in
  * a container built for them.
  */
-public class TestAnnotationsFieldControlProvider extends TestCase {
+public class TestAnnotationsFieldControlProvider extends BasicTestCase {
 
 	private ReactContext _context;
 
@@ -485,11 +487,19 @@ public class TestAnnotationsFieldControlProvider extends TestCase {
 		}
 	}
 
-	/** Suite requiring the services the configuration editor builds its fields with. */
+	/**
+	 * Suite requiring the services the configuration editor builds its fields with.
+	 *
+	 * <p>
+	 * An option function of an edited property may reach into the model, as the type of a singleton
+	 * does, so the model service and the knowledge base it needs are part of the setup.
+	 * </p>
+	 */
 	public static Test suite() {
-		return ModuleLicenceTestSetup.setupModule(
-			ServiceTestSetup.createSetup(TestAnnotationsFieldControlProvider.class,
+		return KBSetup.getSingleKBTest(TestAnnotationsFieldControlProvider.class,
+			ServiceTestSetup.createStarterFactoryForModules(
 				ThreadContextManager.Module.INSTANCE, TypeIndex.Module.INSTANCE,
+				ModelService.Module.INSTANCE, LabelProviderService.Module.INSTANCE,
 				ConfigControlService.Module.INSTANCE));
 	}
 }

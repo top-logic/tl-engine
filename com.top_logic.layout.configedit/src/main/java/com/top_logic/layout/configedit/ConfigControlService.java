@@ -48,10 +48,13 @@ import com.top_logic.mig.html.HTMLFormatter;
  * ({@code String}, {@code boolean}, a numeric type, or {@code Date}), by selecting from a fixed
  * set of options (an option list, or an enum), or as text through a
  * {@link PropertyDescriptor#getValueProvider() value provider} that can turn the value into text
- * and back. A property that fits none of those is rejected outright, not silently rendered by a
- * control that would mishandle its value. Such a property (a structure, a collection, or a
- * {@link PropertyKind#COMPLEX} property with only a value binding and no format) is rendered by a
- * dedicated nested editor or type selector before this service is ever asked.
+ * and back. Whether a format can do that is decided for the value the property currently holds: a
+ * format that does not accept the value - a parsing-only one accepts nothing - leaves the property
+ * without a text form. A property that fits none of those is rejected outright, not silently
+ * rendered by a control that would mishandle its value. Such a property (a structure, a collection, a
+ * {@link PropertyKind#COMPLEX} property with only a value binding and no format, or one whose
+ * format cannot express its value) is rendered by a dedicated nested editor or type selector
+ * before this service is ever asked.
  * </p>
  *
  * <p>
@@ -84,6 +87,13 @@ import com.top_logic.mig.html.HTMLFormatter;
  *           property edited by selecting gets a {@link ConfigSelectFieldModel}; everything else
  *           with a {@link PropertyDescriptor#getValueProvider() value provider} gets the
  *           format-aware {@link ConfigFormatFieldModel} (text).
+ *           <p>
+ *           Whether a value has a text form at all is decided by
+ *           {@link #hasTextForm(ConfigurationItem, PropertyDescriptor)}, by the very rule
+ *           {@link com.top_logic.basic.config.ConfigurationWriter} applies when it decides how to
+ *           write a property: a format that accepts the value writes it as attribute text, and a
+ *           value no format accepts is written in structured form - and edited by a nested editor
+ *           or a type selector here.
  *           <p>
  *           {@code @Encrypted} runs before the {@link ConfigControl} annotation, not just before
  *           the built-in steps: a module may override the control for a property, but it must
@@ -246,11 +256,11 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * @param property
 	 *        The property to bind to. Must be a {@link PropertyKind#PLAIN} or
 	 *        {@link PropertyKind#REF} property, or a {@link PropertyKind#COMPLEX} or
-	 *        {@link PropertyKind#ITEM} one that has a
-	 *        {@link PropertyDescriptor#getValueProvider() value provider}.
+	 *        {@link PropertyKind#ITEM} one whose current value
+	 *        {@link #hasTextForm(ConfigurationItem, PropertyDescriptor) has a text form}.
 	 * @throws IllegalArgumentException
 	 *         If {@code property} is none of those, see
-	 *         {@link #checkSupportedKind(PropertyDescriptor)}.
+	 *         {@link #checkSupportedKind(ConfigurationItem, PropertyDescriptor)}.
 	 */
 	public ConfigFieldModel createModel(ConfigurationItem config, PropertyDescriptor property) {
 		return createModel(config, property, config);
@@ -277,7 +287,7 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 */
 	public ConfigFieldModel createModel(ConfigurationItem config, PropertyDescriptor property,
 			ConfigurationItem formModel) {
-		checkSupportedKind(property);
+		checkSupportedKind(config, property);
 
 		// Resolved once and passed to every step below that would otherwise resolve it again
 		// (isSpecialized, isSelect, selectOptions) - this is also where the mapping check
@@ -327,6 +337,10 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 			return withFormModel(new ConfigFieldModel(config, property), formModel);
 		}
 		if (property.getValueProvider() != null) {
+			// The format is the value's serialization here: a COMPLEX or ITEM property only reaches
+			// this line when checkSupportedKind found a text form for its current value, and a PLAIN
+			// property's format is how the configuration writes it by definition - ConfigurationWriter
+			// has nothing else to fall back to for such a property.
 			return withFormModel(new ConfigFormatFieldModel(config, property), formModel);
 		}
 		return withFormModel(new ConfigFieldModel(config, property), formModel);
@@ -341,15 +355,15 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 *        The field model, created by {@link #createModel(ConfigurationItem, PropertyDescriptor)}.
 	 *        Its {@link ConfigFieldModel#getProperty() property} must be a
 	 *        {@link PropertyKind#PLAIN} or {@link PropertyKind#REF} property, or a
-	 *        {@link PropertyKind#COMPLEX} or {@link PropertyKind#ITEM} one that has a
-	 *        {@link PropertyDescriptor#getValueProvider() value provider}.
+	 *        {@link PropertyKind#COMPLEX} or {@link PropertyKind#ITEM} one whose current value
+	 *        {@link #hasTextForm(ConfigurationItem, PropertyDescriptor) has a text form}.
 	 * @throws IllegalArgumentException
 	 *         If the model's property is none of those, see
-	 *         {@link #checkSupportedKind(PropertyDescriptor)}.
+	 *         {@link #checkSupportedKind(ConfigurationItem, PropertyDescriptor)}.
 	 */
 	public ReactControl createControl(ReactContext context, ConfigFieldModel model) {
 		PropertyDescriptor property = model.getProperty();
-		checkSupportedKind(property);
+		checkSupportedKind(model.getConfig(), property);
 
 		// 1. Encrypted always wins, deliberately ahead of every other step including an explicit
 		// ConfigControl annotation: a module may override the control for a property, but it must
@@ -393,6 +407,37 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	}
 
 	/**
+	 * Whether the value the given property currently holds can be written as text, and can therefore
+	 * be edited in a single text field.
+	 *
+	 * <p>
+	 * This is the rule {@link com.top_logic.basic.config.ConfigurationWriter} itself applies when it
+	 * decides how to write a property: a
+	 * {@link PropertyDescriptor#getValueProvider() value provider} that
+	 * {@link ConfigurationValueProvider#isLegalValue(Object) accepts} the value turns it into
+	 * attribute text, and a value the provider does not accept is written in structured form
+	 * instead. A parsing-only format - one that reads text into a value but has no normative way to
+	 * write a value back - accepts nothing, so a property carrying it belongs to a nested editor or
+	 * a type selector, not to a text field that could not produce its content.
+	 * </p>
+	 *
+	 * <p>
+	 * The answer is about the value, not about the format class: a provider may accept some values
+	 * and reject others, so the same property can have a text form for one value and none for the
+	 * next.
+	 * </p>
+	 *
+	 * @param config
+	 *        The configuration item holding the property.
+	 * @param property
+	 *        The property to decide for.
+	 */
+	public static boolean hasTextForm(ConfigurationItem config, PropertyDescriptor property) {
+		ConfigurationValueProvider<?> valueProvider = property.getValueProvider();
+		return valueProvider != null && valueProvider.isLegalValue(config.value(property));
+	}
+
+	/**
 	 * Ensures the given property is one this service can actually put into a single widget.
 	 *
 	 * <p>
@@ -407,8 +452,8 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 *
 	 * <p>
 	 * Concretely: {@link PropertyKind#PLAIN} and {@link PropertyKind#REF} always qualify.
-	 * {@link PropertyKind#COMPLEX} qualifies only when the property also has a
-	 * {@link PropertyDescriptor#getValueProvider() value provider} - a type such as
+	 * {@link PropertyKind#COMPLEX} qualifies only when the property's current value
+	 * {@link #hasTextForm(ConfigurationItem, PropertyDescriptor) has a text form} - a type such as
 	 * {@link com.top_logic.basic.util.ResKey}, annotated with both {@code @Format} and a
 	 * {@code ConfigurationValueBinding}, is classified {@code COMPLEX} rather than {@code PLAIN}
 	 * (see {@code PropertyDescriptorImpl#initKind}: a value binding wins the kind decision
@@ -421,19 +466,23 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * {@link PropertyKind#ARRAY}, or {@link PropertyKind#MAP} property. An
 	 * {@link PropertyKind#ITEM} property qualifies under the very same rule as {@code COMPLEX}: a
 	 * sub-configuration is a nested form and is rejected, but one the configuration writes as text
-	 * - a TL-Script expression, whose {@code Expr} type carries a {@code @Format} - has a value
-	 * provider and is edited as that text, exactly like a {@code PLAIN} property with a format.
+	 * - a TL-Script expression, whose {@code Expr} type carries a {@code @Format} - is edited as
+	 * that text, exactly like a {@code PLAIN} property with a format.
 	 * A {@link PropertyKind#DERIVED} property is rejected as well, by the same rule read from the
 	 * other side: its value is computed from other properties, so there is nothing to write back -
 	 * it is displayed rather than edited, and a widget bound to it would offer an input that cannot
 	 * take effect.
 	 * </p>
+	 *
+	 * @param config
+	 *        The configuration item holding the property - the text form is decided for the value
+	 *        the property currently holds, not for the property in the abstract.
 	 */
-	private static void checkSupportedKind(PropertyDescriptor property) {
+	private static void checkSupportedKind(ConfigurationItem config, PropertyDescriptor property) {
 		PropertyKind kind = property.kind();
 		boolean supported = kind == PropertyKind.PLAIN || kind == PropertyKind.REF
 			|| ((kind == PropertyKind.COMPLEX || kind == PropertyKind.ITEM)
-				&& property.getValueProvider() != null);
+				&& hasTextForm(config, property));
 		if (!supported) {
 			throw new IllegalArgumentException(
 				"ConfigControlService cannot edit property '" + property.getPropertyName() + "' (kind "

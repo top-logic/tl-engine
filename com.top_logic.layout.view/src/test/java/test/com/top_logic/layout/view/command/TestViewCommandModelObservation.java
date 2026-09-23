@@ -162,7 +162,7 @@ public class TestViewCommandModelObservation extends AbstractDBKnowledgeBaseTest
 	 * </p>
 	 */
 	private ViewCommandModel attachedModel() {
-		ViewCommandModel model = ViewCommandModel.create((context, input) -> HandlerResult.DEFAULT_RESULT,
+		ViewCommandModel model = ViewCommandModel.create(null, (context, input) -> HandlerResult.DEFAULT_RESULT,
 			TypedConfiguration.newConfigItem(ViewCommand.Config.class), _input, openObjects());
 		model.attach(_scope);
 		model.addStateChangeListener(() -> _reported++);

@@ -290,13 +290,14 @@ export function useTLCommand(): (command: string, args?: Record<string, unknown>
   const windowName = ctx.windowName;
 
   return useCallback(
-    (command: string, args?: Record<string, unknown>) =>
-      enqueueCommand(getApiBase() + 'react-api/command', {
+    async (command: string, args?: Record<string, unknown>) => {
+      await enqueueCommand(getApiBase() + 'react-api/command', {
         controlId,
         command,
         windowName,
         arguments: args ?? {},
-      }),
+      });
+    },
     [controlId, windowName]
   );
 }
@@ -360,7 +361,7 @@ export function useTLUpload(): (formData: FormData) => Promise<void> {
         const oversized = oversizedFile(formData, limit);
         const total = totalFileSize(formData);
         if (oversized !== null || total > limit) {
-          return enqueueCommand(getApiBase() + 'react-api/command', {
+          await enqueueCommand(getApiBase() + 'react-api/command', {
             controlId,
             command: CMD_UPLOAD_REJECTED,
             windowName,
@@ -369,6 +370,7 @@ export function useTLUpload(): (formData: FormData) => Promise<void> {
               size: oversized !== null ? oversized.size : total,
             },
           });
+          return;
         }
       }
 
@@ -401,6 +403,17 @@ export function useTLDataUrl(): string {
   return getApiBase() + 'react-api/data?controlId=' + encodeURIComponent(ctx.controlId)
     + '&windowName=' + encodeURIComponent(ctx.windowName);
 }
+
+/**
+ * The span a field the user types in holds a typed value back before sending it, unless the server
+ * names another one (`state.debounceMs`): long enough to coalesce a burst of keystrokes into one
+ * round-trip, short enough that server-side validation can surface while the user pauses. The final
+ * value is always sent on blur regardless.
+ *
+ * <p>One span for every typed input, so that a text, a number and a password field report at the
+ * same pace.</p>
+ */
+export const VALUE_DEBOUNCE_MS = 300;
 
 /**
  * Options for {@link useTLFieldValue}.

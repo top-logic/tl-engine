@@ -32,6 +32,19 @@ public class SelectionUtil {
 	}
 
 	/**
+	 * Whether the given widget can be selected at all.
+	 *
+	 * <p>
+	 * Only a widget that can be selected carries a selection: {@link #setSelected(Widget, boolean)}
+	 * has nothing to write on any other, and {@link #isSelected(Widget)} answers
+	 * <code>false</code> for it whatever the diagram's selection says.
+	 * </p>
+	 */
+	public static boolean isSelectable(Widget widget) {
+		return widget instanceof SelectableBox || widget instanceof GraphEdge;
+	}
+
+	/**
 	 * Returns whether the given widget is currently selected.
 	 */
 	public static boolean isSelected(Widget widget) {

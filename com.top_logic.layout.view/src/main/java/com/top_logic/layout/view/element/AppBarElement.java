@@ -6,9 +6,7 @@
 package com.top_logic.layout.view.element;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.layout.form.values.edit.annotation.Options;
@@ -25,19 +23,20 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
-import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackAlign;
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackDirection;
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackGap;
+import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.react.control.nav.ReactAppBarControl;
 import com.top_logic.layout.react.control.nav.ReactAppBarControl.AppBarVariant;
 import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.command.CliqueRegistry;
 import com.top_logic.layout.view.command.CommandScope;
+import com.top_logic.layout.view.command.ToolbarBuilder;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.util.Resources;
@@ -48,7 +47,8 @@ import com.top_logic.util.Resources;
  * <p>
  * Renders a top-level application bar with a title and optional variant/color configuration.
  * Commands configured in the {@code <commands>} section with {@link CommandPlacement#TOOLBAR
- * TOOLBAR} placement are automatically rendered as trailing action buttons in the app bar.
+ * TOOLBAR} placement form the bar's actions toolbar, which folds the commands that do not fit
+ * into an overflow menu at its trailing end.
  * </p>
  */
 @InApp
@@ -96,11 +96,13 @@ public class AppBarElement implements UIElement {
 		AppBarVariant getVariant();
 
 		/**
-		 * Commands to render as trailing action buttons in the app bar.
+		 * Commands to render in the app bar's actions area.
 		 *
 		 * <p>
-		 * Commands with {@link CommandPlacement#TOOLBAR TOOLBAR} placement are rendered as
-		 * icon/text buttons in the app bar's trailing actions area.
+		 * Commands with {@link CommandPlacement#TOOLBAR TOOLBAR} placement become the buttons of
+		 * the bar's actions toolbar, grouped by clique. The toolbar shows icon and label side by
+		 * side while the bar is wide enough, drops the labels when it is not, and folds the
+		 * commands that still do not fit into an overflow menu.
 		 * </p>
 		 */
 		@Name(COMMANDS)
@@ -165,6 +167,8 @@ public class AppBarElement implements UIElement {
 
 	private final List<UIElement> _trailing;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link AppBarElement} from configuration.
 	 */
@@ -199,6 +203,7 @@ public class AppBarElement implements UIElement {
 		for (PolymorphicConfiguration<? extends UIElement> trailingConfig : config.getTrailing()) {
 			_trailing.add(context.getInstance(trailingConfig));
 		}
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -244,14 +249,21 @@ public class AppBarElement implements UIElement {
 		ReactControl leadingControl = buildBarEnd(derivedContext, _leading, "leading");
 		ReactControl trailingControl = buildBarEnd(derivedContext, _trailing, "trailing");
 
+		// Build the bar's actions as one toolbar, so that the commands that do not fit fold into
+		// its overflow menu. The control is created even while there is no command, so that a
+		// command contributed later has a target for the reactive rebuild.
+		CliqueRegistry registry = new CliqueRegistry();
+		ReactToolbarControl actions = buildActions(derivedContext, scope, registry);
+
 		// Create the app bar control.
 		ReactAppBarControl appBar = new ReactAppBarControl(derivedContext, title, _variant, leadingControl,
-			List.of(), childControls, trailingControl);
+			actions, childControls, trailingControl);
+		appBar.setCssClass(_cssClass);
 
-		// Sync toolbar-placed commands as action buttons.
-		Map<CommandModel, ReactButtonControl> actionButtons = new HashMap<>();
-		syncActionButtons(appBar, derivedContext, scope, actionButtons);
-		scope.addListener(() -> syncActionButtons(appBar, derivedContext, scope, actionButtons));
+		// Rebuild the actions when the commands of the scope change (commands contributed by
+		// descendants come and go). Groups are replaced in place, so the toolbar on display keeps
+		// its SSE registration.
+		scope.addListener(() -> actions.replaceGroups(buildActions(derivedContext, scope, registry)));
 
 		// Register cleanup for command model lifecycle. When using a shared scope,
 		// also remove our contributed commands.
@@ -313,25 +325,16 @@ public class AppBarElement implements UIElement {
 		return models;
 	}
 
-	private static void syncActionButtons(ReactAppBarControl appBar, ViewContext context,
-			CommandScope scope, Map<CommandModel, ReactButtonControl> actionButtons) {
-		List<CommandModel> currentCommands = scope.getAllCommands();
-
-		actionButtons.entrySet().removeIf(entry -> {
-			if (!currentCommands.contains(entry.getKey())) {
-				appBar.removeToolbarButton(entry.getValue());
-				return true;
-			}
-			return false;
-		});
-
-		for (CommandModel model : currentCommands) {
-			if (!actionButtons.containsKey(model)
-				&& model.getPlacement() == CommandPlacement.TOOLBAR) {
-				ReactButtonControl button = new ReactButtonControl(context, model);
-				appBar.addToolbarButton(button);
-				actionButtons.put(model, button);
-			}
-		}
+	/**
+	 * The toolbar of the commands the given scope places in the bar.
+	 *
+	 * <p>
+	 * The bar shows icon and label side by side; the toolbar drops the labels itself once the bar
+	 * grows too narrow for them, so no display mode of its own is imposed on the buttons.
+	 * </p>
+	 */
+	private static ReactToolbarControl buildActions(ViewContext context, CommandScope scope,
+			CliqueRegistry registry) {
+		return ToolbarBuilder.buildOrEmpty(context, scope, CommandPlacement.TOOLBAR, registry, null);
 	}
 }

@@ -30,6 +30,36 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey ERROR_NO_JOB_TO_REPORT_TO;
 
+	/**
+	 * @en Preparation
+	 */
+	public static ResKey PHASE_INIT;
+
+	/**
+	 * @en Pass {0}
+	 */
+	public static ResKey1 PHASE_STEP__NUMBER;
+
+	/**
+	 * @en Completion
+	 */
+	public static ResKey PHASE_FINISH;
+
+	/**
+	 * @en {0} elements processed, {1} skipped.
+	 */
+	public static ResKey2 RESULT__PROCESSED_SKIPPED;
+
+	/**
+	 * @en Skipped an element that cannot be processed: {0} ({1})
+	 */
+	public static ResKey2 SKIPPED_ELEMENT__ELEMENT_CAUSE;
+
+	/**
+	 * @en Background job
+	 */
+	public static ResKey COMMIT_JOB;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

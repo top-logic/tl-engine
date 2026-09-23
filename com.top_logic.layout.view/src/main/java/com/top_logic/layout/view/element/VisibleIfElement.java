@@ -141,6 +141,8 @@ public class VisibleIfElement implements UIElement {
 
 	private final List<TLModelPartRef> _observedTypeRefs;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link VisibleIfElement} from configuration.
 	 */
@@ -154,6 +156,7 @@ public class VisibleIfElement implements UIElement {
 			.map(context::getInstance)
 			.collect(Collectors.toList());
 		_case = new SwitchCase(test, content);
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -164,7 +167,9 @@ public class VisibleIfElement implements UIElement {
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		ViewChannel input = context.resolveChannel(_inputRef);
-		return new ReactSwitchControl(context, input, List.of(_case), List.of(),
+		ReactSwitchControl result = new ReactSwitchControl(context, input, List.of(_case), List.of(),
 			ObservedTypes.resolve(_observedTypeRefs));
+		result.setCssClass(_cssClass);
+		return result;
 	}
 }

@@ -1,4 +1,13 @@
-import { React, useTLFieldValue, useTLCommand, useTLSubmitOnEnter, useI18N } from 'tl-react-bridge';
+import {
+  React,
+  useTLFieldValue,
+  useTLCommand,
+  useTLSubmitOnEnter,
+  useI18N,
+  rootClassName,
+  VALUE_DEBOUNCE_MS,
+  tooltipProps,
+} from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import FontIcon from './FontIcon';
 
@@ -6,17 +15,14 @@ const { useCallback, useRef } = React;
 
 const I18N_KEYS = {
   'js.textInput.open': 'Open in a new tab',
+  'js.textInput.clear': 'Clear the input',
 };
-
-/**
- * Debounce for transmitting a typed value to the server: long enough to coalesce a burst of
- * keystrokes into one round-trip, short enough that server-side validation can surface while the
- * user pauses (and the final value is always sent on blur). See {@link handleBlur}.
- */
-const VALUE_DEBOUNCE_MS = 300;
 
 /** The icon of the link that opens what the field holds. */
 const OPEN_ICON = 'css:fa-solid fa-arrow-up-right-from-square';
+
+/** The icon of the button that empties the input. */
+const CLEAR_ICON = 'css:fa-solid fa-xmark';
 
 /** A text naming its scheme is an address a browser can follow on its own. */
 const SCHEME = /^[A-Za-z][A-Za-z0-9+.-]*:/;
@@ -77,15 +83,26 @@ const normalizeUrl = (value: string): string => {
  * Enter, so that a typed bare host is stored as an address a browser can follow; a value naming its
  * own scheme ('mailto:', 'ftp:') is left as typed. The server holds such a field back until it is
  * left (state.sendValueOnBlur), so that the half-typed address in between is never judged.
+ *
+ * Three further states turn the single-line input into a search field. state.icon draws a
+ * ThemeImage inside the input ahead of what is typed - the magnifier of a search box - as
+ * decoration hidden from assistive technology, so the field is still named by its label or its
+ * placeholder. state.clearable adds a button that empties the input, shown only while the input
+ * holds something, which writes the empty value at once instead of after the debounce and hands
+ * the focus back to the input. state.debounceMs names the span a typed value is held back,
+ * defaulting to VALUE_DEBOUNCE_MS and overridden by state.sendValueOnBlur, which holds a value
+ * back entirely. Icon and clear button live in the same row as the link that opens what the field
+ * holds, in the order [icon] input [clear] [link].
  */
 const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
   const [value, setValue, flushValue] = useTLFieldValue({
-    debounceMs: VALUE_DEBOUNCE_MS,
+    debounceMs: (state.debounceMs as number) ?? VALUE_DEBOUNCE_MS,
     sendOnBlur: state.sendValueOnBlur === true,
   });
   const sendCommand = useTLCommand();
   const t = useI18N(I18N_KEYS);
   const dirtyRef = useRef(false);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -137,6 +154,13 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
     [submitKey, inputType, setValue]
   );
 
+  const handleClear = useCallback(async () => {
+    setValue('');
+    // The gesture is the whole edit, so it is reported at once rather than after the debounce.
+    await flushValue();
+    inputRef.current?.focus();
+  }, [setValue, flushValue]);
+
   const multiline = state.multiline === true;
   const hasError = state.hasError === true;
   const href = hasError || multiline ? null : linkHref(inputType, text);
@@ -149,7 +173,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
       return (
         <a
           id={controlId}
-          className={immutableCls + ' tlReactTextInput--link'}
+          className={rootClassName(state, immutableCls + ' tlReactTextInput--link')}
           href={href}
           target="_blank"
           rel="noopener noreferrer"
@@ -159,11 +183,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
       );
     }
     return (
-      <span
-        id={controlId}
-        className={immutableCls}
-        style={multiline ? { whiteSpace: 'pre-wrap' } : undefined}
-      >
+      <span id={controlId} className={rootClassName(state, immutableCls)}>
         {text}
       </span>
     );
@@ -171,9 +191,14 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
 
   const hasWarnings = state.hasWarnings === true;
   const errorMessage = state.errorMessage as string | undefined;
+  const icon = state.icon as string | undefined;
+  const hasIcon = !multiline && !!icon && icon !== 'none';
+  const clearable = !multiline && state.clearable === true && text !== '';
   const cls = [
     'tlReactTextInput',
     multiline ? 'tlReactTextInput--multiline' : '',
+    hasIcon ? 'tlReactTextInput--withIcon' : '',
+    clearable ? 'tlReactTextInput--clearable' : '',
     hasError ? 'tlReactTextInput--error' : '',
     !hasError && hasWarnings ? 'tlReactTextInput--warning' : '',
   ].filter(Boolean).join(' ');
@@ -188,9 +213,9 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
           onChange={handleChange}
           onBlur={handleBlur}
           disabled={state.disabled === true}
-          className={cls}
+          className={rootClassName(state, cls)}
           aria-invalid={hasError || undefined}
-          title={hasError && errorMessage ? errorMessage : undefined}
+          {...tooltipProps(hasError ? errorMessage : undefined)}
         />
       </span>
     );
@@ -198,6 +223,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
 
   const input = (
     <input
+      ref={inputRef}
       type={inputType}
       value={text}
       placeholder={(state.placeholder as string) ?? undefined}
@@ -205,24 +231,37 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
       onBlur={handleBlur}
       onKeyDown={submitKey === undefined ? undefined : handleSubmitKey}
       disabled={state.disabled === true}
-      className={cls}
+      className={rootClassName(state, cls)}
       aria-invalid={hasError || undefined}
-      title={hasError && errorMessage ? errorMessage : undefined}
+      {...tooltipProps(hasError ? errorMessage : undefined)}
     />
   );
 
   return (
     <span id={controlId}>
       <span className="tlReactTextInput__row">
+        {hasIcon && <FontIcon image={icon} className="tlReactTextInput__icon" />}
         {input}
+        {clearable && (
+          <button
+            type="button"
+            className="tlReactTextInput__clear"
+            onClick={handleClear}
+            disabled={state.disabled === true}
+            aria-label={t['js.textInput.clear']}
+            title={t['js.textInput.clear']}
+          >
+            <FontIcon image={CLEAR_ICON} />
+          </button>
+        )}
         {href !== null && (
           <a
             className="tlReactTextInput__open"
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            title={text}
             aria-label={t['js.textInput.open']}
+            {...tooltipProps(text)}
           >
             <FontIcon image={OPEN_ICON} />
           </a>

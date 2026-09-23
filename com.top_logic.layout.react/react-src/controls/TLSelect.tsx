@@ -1,4 +1,4 @@
-import { React, useTLFieldValue } from 'tl-react-bridge';
+import { React, useTLFieldValue, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback } = React;
@@ -26,7 +26,7 @@ const TLSelect: React.FC<TLCellProps> = ({ controlId, state, config }) => {
   if (state.editable === false) {
     const selectedLabel = options.find((opt) => opt.value === value)?.label ?? '';
     return (
-      <span id={controlId} className="tlReactSelect tlReactSelect--immutable">
+      <span id={controlId} className={rootClassName(state, 'tlReactSelect tlReactSelect--immutable')}>
         {selectedLabel}
       </span>
     );
@@ -46,7 +46,7 @@ const TLSelect: React.FC<TLCellProps> = ({ controlId, state, config }) => {
         value={(value as string) ?? ''}
         onChange={handleChange}
         disabled={state.disabled === true}
-        className={cls}
+        className={rootClassName(state, cls)}
         aria-invalid={hasError || undefined}
       >
         {state.nullable !== false && <option value=""></option>}

@@ -5,6 +5,10 @@
  */
 package com.top_logic.layout.view.navigation;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.top_logic.layout.view.navigation.DisplayTargetService.BindConfig;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
 /**
@@ -32,6 +36,32 @@ public record Binding(String channel, QueryExecutor expr) {
 	 */
 	public Object evaluate(Object shownObject) {
 		return expr == null ? shownObject : expr.execute(shownObject);
+	}
+
+	/**
+	 * The {@link Binding} the given configuration describes.
+	 *
+	 * @param config
+	 *        The configured value of one channel.
+	 * @return The binding writing that value.
+	 */
+	public static Binding fromConfig(BindConfig config) {
+		return new Binding(config.getChannel(), QueryExecutor.compileOptional(config.getExpr()));
+	}
+
+	/**
+	 * The {@link Binding}s the given configurations describe, in configuration order.
+	 *
+	 * @param configs
+	 *        The configured values of the channels of one view.
+	 * @return The bindings writing those values.
+	 */
+	public static List<Binding> fromConfigs(List<? extends BindConfig> configs) {
+		List<Binding> result = new ArrayList<>(configs.size());
+		for (BindConfig config : configs) {
+			result.add(fromConfig(config));
+		}
+		return result;
 	}
 
 	@Override

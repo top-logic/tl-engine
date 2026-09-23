@@ -1,4 +1,4 @@
-import { React } from 'tl-react-bridge';
+import { React, startPointerDrag } from 'tl-react-bridge';
 import { hsvToHex, hexToHsv } from './colorUtils';
 
 const { useCallback, useRef } = React;
@@ -42,16 +42,13 @@ const ColorMixer: React.FC<ColorMixerProps> = ({ color, onColorChange }) => {
   const onSVDown = useCallback(
     (e: React.PointerEvent) => {
       e.preventDefault();
-      (e.target as HTMLElement).setPointerCapture(e.pointerId);
       handleSVPointer(e.clientX, e.clientY);
-    },
-    [handleSVPointer]
-  );
-
-  const onSVMove = useCallback(
-    (e: React.PointerEvent) => {
-      if (e.buttons === 0) return;
-      handleSVPointer(e.clientX, e.clientY);
+      // Every move has already reported its color, so neither the release nor a cancelled gesture
+      // has anything left to do: the color is the one the pointer last stood on.
+      startPointerDrag(e, {
+        cursor: 'crosshair',
+        onMove: (ev) => handleSVPointer(ev.clientX, ev.clientY),
+      });
     },
     [handleSVPointer]
   );
@@ -71,16 +68,11 @@ const ColorMixer: React.FC<ColorMixerProps> = ({ color, onColorChange }) => {
   const onHueDown = useCallback(
     (e: React.PointerEvent) => {
       e.preventDefault();
-      (e.target as HTMLElement).setPointerCapture(e.pointerId);
       handleHuePointer(e.clientY);
-    },
-    [handleHuePointer]
-  );
-
-  const onHueMove = useCallback(
-    (e: React.PointerEvent) => {
-      if (e.buttons === 0) return;
-      handleHuePointer(e.clientY);
+      startPointerDrag(e, {
+        cursor: 'pointer',
+        onMove: (ev) => handleHuePointer(ev.clientY),
+      });
     },
     [handleHuePointer]
   );
@@ -95,7 +87,6 @@ const ColorMixer: React.FC<ColorMixerProps> = ({ color, onColorChange }) => {
         className="tlColorInput__svField"
         style={{ backgroundColor: pureHue }}
         onPointerDown={onSVDown}
-        onPointerMove={onSVMove}
       >
         <div
           className="tlColorInput__svHandle"
@@ -108,7 +99,6 @@ const ColorMixer: React.FC<ColorMixerProps> = ({ color, onColorChange }) => {
         ref={hueRef}
         className="tlColorInput__hueSlider"
         onPointerDown={onHueDown}
-        onPointerMove={onHueMove}
       >
         <div
           className="tlColorInput__hueHandle"

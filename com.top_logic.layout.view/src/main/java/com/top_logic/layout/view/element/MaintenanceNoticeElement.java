@@ -93,12 +93,14 @@ public class MaintenanceNoticeElement implements UIElement {
 
 	}
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link MaintenanceNoticeElement} from configuration.
 	 */
 	@CalledByReflection
 	public MaintenanceNoticeElement(InstantiationContext context, Config config) {
-		// No configuration needed.
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -116,6 +118,7 @@ public class MaintenanceNoticeElement implements UIElement {
 		manager.addMaintenanceStateListener(listener);
 		control.addCleanupAction(() -> manager.removeMaintenanceStateListener(listener));
 
+		control.setCssClass(_cssClass);
 		return control;
 	}
 

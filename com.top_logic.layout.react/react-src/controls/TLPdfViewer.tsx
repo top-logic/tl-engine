@@ -1,4 +1,4 @@
-import { React, useTLState, useTLDataUrl, useI18N, useFill } from 'tl-react-bridge';
+import { React, useTLState, useTLDataUrl, useI18N, useFill, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -44,14 +44,14 @@ const TLPdfViewer: React.FC<TLCellProps> = ({ controlId }) => {
 
   if (!hasPdf) {
     return (
-      <div id={controlId} className={'tlPdfViewer ' + fillClass}>
+      <div id={controlId} className={rootClassName(state, 'tlPdfViewer ' + fillClass)}>
         <div className="tlPdfViewer__placeholder">{t['js.pdfViewer.noDocument']}</div>
       </div>
     );
   }
 
   return (
-    <div id={controlId} className={'tlPdfViewer ' + fillClass}>
+    <div id={controlId} className={rootClassName(state, 'tlPdfViewer ' + fillClass)}>
       <iframe
         className="tlPdfViewer__frame"
         src={viewerUrl}

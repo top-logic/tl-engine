@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useFill, FillBarrier } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useFill, FillBarrier, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 /**
@@ -48,7 +48,7 @@ const TLAppShell: React.FC<TLCellProps> = ({ controlId }) => {
   const snackbar = state.snackbar as unknown;
 
   return (
-    <div id={controlId} className={'tlAppShell ' + fillClass}>
+    <div id={controlId} className={rootClassName(state, 'tlAppShell ' + fillClass)}>
       {header && (
         <div className="tlAppShell__header">
           <TLChild control={header} />

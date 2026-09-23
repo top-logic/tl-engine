@@ -111,6 +111,57 @@ public class TestReactWindowRegistry extends TestCase {
 			openerQueue.getControl(builtControl.getID()));
 	}
 
+	/**
+	 * A rebuild marks every window of the session and tells each of them to reload.
+	 */
+	public void testRebuildWindows() {
+		ReactWindowRegistry registry = new ReactWindowRegistry(SESSION_ID);
+
+		// The tab the user is working in, and a window opened from it.
+		SSEUpdateQueue openerQueue = registry.getOrCreateQueue("vOpener");
+		WindowEntry opener = registry.getWindow("vOpener");
+		ReactContext openerCtx = new DefaultReactContext("", "vOpener", openerQueue, registry);
+		String openedId = registry.openWindow(openerCtx, new WindowOptions());
+		WindowEntry opened = registry.getWindow(openedId);
+		SSEUpdateQueue openedQueue = opened.getQueue();
+
+		// The tab displays a tree; the opened window is rendered only once its browser asks.
+		opener.setRootControl(new ReactControl(openerCtx, null, "Demo"));
+		int openerBefore = openerQueue.pendingEventCount();
+		int openedBefore = openedQueue.pendingEventCount();
+		assertFalse(opener.isRebuildRequested());
+		assertFalse(opened.isRebuildRequested());
+
+		registry.rebuildWindows();
+
+		assertTrue("The tab must be rebuilt.", opener.isRebuildRequested());
+		assertTrue("The opened window must be rebuilt.", opened.isRebuildRequested());
+		assertEquals("One reload for the tab.", openerBefore + 1, openerQueue.pendingEventCount());
+		assertEquals("One reload for the opened window.", openedBefore + 1,
+			openedQueue.pendingEventCount());
+		assertNotNull("The tree is disposed by the render the reload brings, not here.",
+			opener.getRootControl());
+	}
+
+	/**
+	 * A window that displays nothing yet is marked like any other, and a session without windows has
+	 * nothing to rebuild.
+	 */
+	public void testRebuildWindowsWithoutTree() {
+		ReactWindowRegistry registry = new ReactWindowRegistry(SESSION_ID);
+
+		// Nothing registered at all: must not fail.
+		registry.rebuildWindows();
+
+		WindowEntry entry = registry.getOrCreateWindow("vTab");
+		assertNull(entry.getRootControl());
+
+		registry.rebuildWindows();
+
+		assertTrue(entry.isRebuildRequested());
+		assertEquals(1, entry.getQueue().pendingEventCount());
+	}
+
 	public static Test suite() {
 		return ServiceTestSetup.createSetup(TestReactWindowRegistry.class,
 			TypeIndex.Module.INSTANCE);

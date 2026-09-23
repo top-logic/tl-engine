@@ -181,7 +181,7 @@ public class TestImageElement extends TestCase {
 		assertNull("The box takes its height from the picture.", state(_image, ReactImageControl.HEIGHT));
 		assertEquals("The picture is loaded right away.",
 			Boolean.FALSE, state(_image, ReactImageControl.LAZY));
-		assertNull("No CSS class is added.", state(_image, ReactImageControl.CSS_CLASS));
+		assertNull("No CSS class is added.", state(_image, ReactControl.CSS_CLASS));
 	}
 
 	/** Every configured display option reaches the client. */
@@ -201,7 +201,7 @@ public class TestImageElement extends TestCase {
 		assertEquals("12rem", state(image, ReactImageControl.WIDTH));
 		assertEquals("8rem", state(image, ReactImageControl.HEIGHT));
 		assertEquals(Boolean.TRUE, state(image, ReactImageControl.LAZY));
-		assertEquals("tlHero", state(image, ReactImageControl.CSS_CLASS));
+		assertEquals("tlHero", state(image, ReactControl.CSS_CLASS));
 	}
 
 	/** Proportions are two numbers separated by a slash; anything else fails the view load. */

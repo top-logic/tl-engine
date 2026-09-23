@@ -55,9 +55,22 @@ public interface ReactFieldControlProvider {
 	 */
 	default ReactControl createField(ReactContext context, FieldSpec field, FieldModel model) {
 		ReactControl control = createControl(context, field, model);
-		String placeholder = field.getPlaceholder();
-		if (placeholder != null && control instanceof ReactFormFieldControl fieldControl) {
-			fieldControl.setPlaceholder(placeholder);
+		if (control instanceof ReactFormFieldControl fieldControl) {
+			String placeholder = field.getPlaceholder();
+			if (placeholder != null) {
+				fieldControl.setPlaceholder(placeholder);
+			}
+			String icon = field.getIcon();
+			if (icon != null) {
+				fieldControl.setIcon(icon);
+			}
+			if (field.isClearable()) {
+				fieldControl.setClearable(true);
+			}
+			Long debounce = field.getDebounce();
+			if (debounce != null) {
+				fieldControl.setDebounce(debounce);
+			}
 		}
 		return control;
 	}

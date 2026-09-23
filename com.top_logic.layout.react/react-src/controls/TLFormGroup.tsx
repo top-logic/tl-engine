@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback } = React;
@@ -40,6 +40,8 @@ const TLFormGroup: React.FC<TLCellProps> = ({ controlId }) => {
     sendCommand('toggleCollapse');
   }, [sendCommand]);
 
+  const toggleLabel = collapsed ? i18n['js.formGroup.expand'] : i18n['js.formGroup.collapse'];
+
   const className = [
     'tlFormGroup',
     `tlFormGroup--border-${border}`,
@@ -48,14 +50,15 @@ const TLFormGroup: React.FC<TLCellProps> = ({ controlId }) => {
   ].filter(Boolean).join(' ');
 
   return (
-    <div id={controlId} className={className}>
+    <div id={controlId} className={rootClassName(state, className)}>
       {hasHeader && (
         <div className="tlFormGroup__header">
           {collapsible && (
             <button type="button" className="tlFormGroup__collapseToggle"
               onClick={handleToggle}
               aria-expanded={!collapsed}
-              title={collapsed ? i18n['js.formGroup.expand'] : i18n['js.formGroup.collapse']}>
+              aria-label={toggleLabel}
+              {...tooltipProps(toggleLabel)}>
               <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"
                 className={collapsed ? 'tlFormGroup__chevron--collapsed' : 'tlFormGroup__chevron'}>
                 <polyline points="4,6 8,10 12,6" fill="none" stroke="currentColor"

@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	Tree demo: the two gestures a tree node answers, kept apart.
+	Tree demo: what a tree node answers to a gesture, and how the tree follows the model it shows.
+	
+	The tree is rooted at the ProjectScope type and shows its instances, their milestones and the
+	tickets of each milestone.
 	
 	A click selects a node and writes it to the "selected" channel. A double-click - or Enter on
 	the node carrying the keyboard cursor - activates it: the node becomes the selection and the
@@ -22,25 +25,152 @@
 	nothing while there is none. An activation names one node, so the "activated" channel always
 	holds the single node the gesture opened.
 	
-	The tree is rooted at the ProjectScope type and shows its instances, their milestones and the
-	tickets of each milestone.
+	The tree follows the objects it displays: the types in observed-types announce a create, and a
+	change reconciles the child lists in place, so the subtrees the user opened stay open. The
+	"parents" expression says what holds an object in the tree - the milestone of a ticket, the
+	scope of a milestone, the type the tree is built from for a scope - so the node of an object
+	written to "selected" is found by walking up from it instead of searching the whole tree.
+	
+	The four commands show that in the four shapes a model change takes:
+	- "New milestone" creates a milestone in the selected scope through a dialog and writes it to
+	"selected". The tree has no node for it while the dialog closes, and reveals and selects it
+	as soon as the create arrives.
+	- "New ticket" creates a ticket in the selected milestone without a dialog and writes it to
+	"selected", so the node appears under the still-open milestone and is selected.
+	- "Detach from milestone" takes the milestone off the selected ticket. Nothing is deleted, yet
+	the ticket leaves the child list it hung in: its node goes, the milestone stays open, and the
+	tree writes what is left of the selection back to the channel.
+	- "Delete" deletes whatever is selected, one object or several.
+	
+	A command works on the selection through a derived channel naming what it can process: the
+	selection while it is a single object, and that object while it is a scope, a milestone or a
+	ticket. With <null-input-disabled/> that is the whole of "enabled for such a selection".
 -->
 <view>
 	<channels>
 		<channel name="selected"/>
 		<channel name="activated"/>
+		<!--
+			The selection while it consists of exactly one object, and nothing while nothing or
+			several objects are selected: size() counts a missing value as zero, a single object as
+			one and a set as the number of its elements.
+		-->
+		<derived-channel name="selectedSingle"
+			expr="sel -> if($sel.size() == 1, $sel.singleElement(), null)"
+			inputs="selected"
+		/>
+		<!-- The single selection while it is a scope, a milestone, a ticket - nothing otherwise. -->
+		<derived-channel name="selectedScope"
+			expr="sel -> if($sel.instanceOf(`tl.demo.projectManagement:ProjectScope`), $sel, null)"
+			inputs="selectedSingle"
+		/>
+		<derived-channel name="selectedMilestone"
+			expr="sel -> if($sel.instanceOf(`tl.demo.projectManagement:Milestone`), $sel, null)"
+			inputs="selectedSingle"
+		/>
+		<derived-channel name="selectedTicket"
+			expr="sel -> if($sel.instanceOf(`tl.demo.projectManagement:Ticket`), $sel, null)"
+			inputs="selectedSingle"
+		/>
 	</channels>
 	<panel>
 		<title>
 			<en>Tree Demo</en>
 			<de>Baum-Demo</de>
 		</title>
+		<commands>
+			<generic-command
+				image="css:bi bi-plus-lg"
+				input="selectedScope"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>New milestone</en>
+					<de>Neuer Meilenstein</de>
+				</label>
+				<executability>
+					<null-input-disabled/>
+				</executability>
+				<execute-script function="x -> new(`tl.demo.projectManagement:Milestone`, transient: true)"/>
+				<open-dialog
+					bind-input-to="model"
+					dialog-view="demo/create-milestone.view.xml"
+				>
+					<bind
+						channel="container"
+						to="selectedScope"
+					/>
+					<bind
+						channel="selection"
+						to="selected"
+					/>
+				</open-dialog>
+			</generic-command>
+			<!--
+				The ticket is created without a dialog, so the script gets the milestone as the
+				command's input. A ticket hangs in the scope's composition and names its milestone;
+				the milestone's ticket list is the backwards side of that reference and is not
+				written to.
+			-->
+			<generic-command
+				image="css:bi bi-ticket-perforated"
+				input="selectedMilestone"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>New ticket</en>
+					<de>Neues Ticket</de>
+				</label>
+				<executability>
+					<null-input-disabled/>
+				</executability>
+				<with-transaction>
+					<execute-script function="milestone -> { scope = $milestone.container(); ticket = new(`tl.demo.projectManagement:Ticket`, transient: false); $ticket.set(`tl.demo.projectManagement:Ticket#title`, 'Ticket ' + ($scope.get(`tl.demo.projectManagement:ProjectScope#tickets`).size() + 1)); $scope.add(`tl.demo.projectManagement:ProjectScope#tickets`, $ticket); $ticket.set(`tl.demo.projectManagement:Ticket#milestone`, $milestone); $ticket; }"/>
+				</with-transaction>
+				<write-channel name="selected"/>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-box-arrow-up"
+				input="selectedTicket"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Detach from milestone</en>
+					<de>Von Meilenstein lösen</de>
+				</label>
+				<executability>
+					<null-input-disabled/>
+				</executability>
+				<with-transaction>
+					<execute-script function="ticket -> { $ticket.set(`tl.demo.projectManagement:Ticket#milestone`, null); null; }"/>
+				</with-transaction>
+			</generic-command>
+			<!-- delete() accepts a single object as well as a set of them. -->
+			<generic-command
+				image="css:bi bi-trash"
+				input="selected"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Delete</en>
+					<de>Löschen</de>
+				</label>
+				<executability>
+					<null-input-disabled/>
+				</executability>
+				<with-transaction>
+					<execute-script function="objs -> { $objs.delete(); null; }"/>
+				</with-transaction>
+			</generic-command>
+		</commands>
 		<tree
+			observed-types="tl.demo.projectManagement:ProjectScope,tl.demo.projectManagement:Milestone,tl.demo.projectManagement:Ticket"
 			selection="selected"
 			selection-mode="multi"
 		>
 			<root>`tl.demo.projectManagement:ProjectScope`</root>
-			<children>node -&gt; if($node == `tl.demo.projectManagement:ProjectScope`, all(`tl.demo.projectManagement:ProjectScope`), if($node.instanceOf(`tl.demo.projectManagement:ProjectScope`), $node.get(`tl.demo.projectManagement:ProjectScope#milestones`), if($node.instanceOf(`tl.demo.projectManagement:Milestone`), $node.get(`tl.demo.projectManagement:Milestone#tickets`), list())))</children>
+			<children>node -&gt; if($node == `tl.demo.projectManagement:ProjectScope`, all(`tl.demo.projectManagement:ProjectScope`), if($node.instanceOf(`tl.demo.projectManagement:ProjectScope`), $node.get(`tl.demo.projectManagement:ProjectScope#milestones`), if($node.instanceOf(`tl.demo.projectManagement:Milestone`), $node.get(`tl.demo.projectManagement:Milestone#tickets`), [])))</children>
+			<parents>node -&gt; if($node.instanceOf(`tl.demo.projectManagement:Ticket`), $node.get(`tl.demo.projectManagement:Ticket#milestone`), if($node.instanceOf(`tl.demo.projectManagement:Milestone`), $node.container(), if($node.instanceOf(`tl.demo.projectManagement:ProjectScope`), `tl.demo.projectManagement:ProjectScope`, null)))</parents>
 			<on-activate class="com.top_logic.layout.view.command.GenericViewCommand">
 				<write-channel name="activated"/>
 			</on-activate>

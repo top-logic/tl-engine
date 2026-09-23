@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<stack>
+		<stack/>
+		<stack
+			direction="row"
+			justify="space-between"
+			wrap="true"
+		/>
+		<stack
+			justify="center"
+			max-width="60rem"
+		/>
+		<grid max-width="48rem"/>
+	</stack>
+</view>

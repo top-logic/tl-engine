@@ -110,6 +110,8 @@ public class AppShellElement implements UIElement {
 
 	private final List<UIElement> _footer;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link AppShellElement} from configuration.
 	 */
@@ -123,6 +125,7 @@ public class AppShellElement implements UIElement {
 		if (_content.isEmpty()) {
 			context.error("AppShell element must have a content element.");
 		}
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -166,6 +169,7 @@ public class AppShellElement implements UIElement {
 
 		ReactAppShellControl shellControl =
 			new ReactAppShellControl(context, header, notices, content, footer, snackbar, errorSink);
+		shellControl.setCssClass(_cssClass);
 		shellControl.attach();
 		return shellControl;
 	}

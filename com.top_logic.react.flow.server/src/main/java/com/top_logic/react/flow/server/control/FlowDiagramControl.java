@@ -7,11 +7,14 @@ package com.top_logic.react.flow.server.control;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CollectionUtil;
@@ -22,7 +25,6 @@ import com.top_logic.layout.basic.contextmenu.menu.Menu;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.react.flow.callback.ClickHandler;
 import com.top_logic.react.flow.data.ClickTarget;
 import com.top_logic.react.flow.data.ContextMenu;
@@ -30,8 +32,9 @@ import com.top_logic.react.flow.data.Diagram;
 import com.top_logic.react.flow.data.DropRegion;
 import com.top_logic.react.flow.data.MouseButton;
 import com.top_logic.react.flow.data.SelectableBox;
-import com.top_logic.react.flow.operations.SelectionUtil;
 import com.top_logic.react.flow.data.Widget;
+import com.top_logic.react.flow.operations.SelectionUtil;
+import com.top_logic.react.flow.operations.WidgetTraversal;
 import com.top_logic.react.flow.server.handler.DiagramContextMenuProviderSPI;
 import com.top_logic.react.flow.server.handler.ServerDropHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -57,13 +60,64 @@ public class FlowDiagramControl extends ReactControl {
 	/** The React module identifier for the flow diagram component. */
 	public static final String REACT_MODULE = "TLFlowDiagram";
 
+	/** Name of the command the client sends its changes to the displayed diagram with. */
+	public static final String CMD_UPDATE = "update";
+
+	/** Name of the {@link #CMD_UPDATE} argument holding the msgbuf patch of those changes. */
+	public static final String ARG_PATCH = "patch";
+
+	/** State key holding the serialized {@link Diagram} the client mounts on. */
+	private static final String DIAGRAM_STATE = "diagram";
+
+	/** State key holding a msgbuf patch of the server-side changes to the displayed diagram. */
+	private static final String DIAGRAM_PATCH_STATE = "diagramPatch";
+
+	/**
+	 * Notified when the user objects of the selected diagram elements change.
+	 */
+	public interface SelectionListener {
+
+		/**
+		 * Called after the selection changed, with the user objects of the elements now selected.
+		 *
+		 * <p>
+		 * A listener refuses the change by throwing a
+		 * {@link com.top_logic.layout.view.channel.ChannelVetoException} - the unsaved changes of a
+		 * form the selection would replace block it. The refusal unwinds through whoever changed
+		 * the selection; the diagram keeps what the client displays.
+		 * </p>
+		 */
+		void selectionChanged(Set<Object> userObjects);
+	}
+
+	/**
+	 * Notified when the displayed {@link Diagram} was replaced.
+	 */
+	public interface ModelListener {
+
+		/**
+		 * Called after {@link FlowDiagramControl#setModel(Diagram)} carried the selection over to
+		 * the new diagram, and before that diagram is serialized for the client.
+		 *
+		 * <p>
+		 * The new diagram is the control's {@link FlowDiagramControl#getModel() model}, and what is
+		 * left of the selection is its {@link FlowDiagramControl#getSelectedUserObjects() selected
+		 * user objects}. A listener may select further elements; the selection it leaves behind is
+		 * the one the client is served.
+		 * </p>
+		 */
+		void modelReplaced();
+	}
+
 	private Diagram _diagram;
 
 	private DefaultScope _graphScope;
 
 	private ContextMenuProvider _contextMenuProvider = NoContextMenuProvider.INSTANCE;
 
-	private ViewChannel _selectionChannel;
+	private final List<SelectionListener> _selectionListeners = new CopyOnWriteArrayList<>();
+
+	private final List<ModelListener> _modelListeners = new CopyOnWriteArrayList<>();
 
 	/**
 	 * Creates a {@link FlowDiagramControl}.
@@ -102,20 +156,173 @@ public class FlowDiagramControl extends ReactControl {
 	}
 
 	/**
-	 * Sets a new {@link Diagram} to display.
+	 * Displays the given {@link Diagram} instead of the one displayed so far.
 	 *
 	 * <p>
-	 * The selection channel follows, because a selection belongs to the diagram showing it. A new
-	 * diagram brings its own - normally none at all - and a channel left untouched would go on
-	 * publishing a node of the diagram just replaced: everything bound to it would keep showing an
-	 * element that is no longer displayed anywhere, and no click could correct it, since the node
-	 * that would have to be deselected is gone.
+	 * The selection is carried over: the elements of the new diagram that carry a user object
+	 * selected in the old one are selected, and a user object the new diagram has no element for is
+	 * simply not displayed as selected any more. What that means for a selection published
+	 * elsewhere is the {@link ModelListener}'s to decide - it is told after the carry-over and
+	 * before the new diagram is serialized, so that the elements it selects reach the client with
+	 * that diagram rather than as a patch racing the remount it triggers.
 	 * </p>
+	 *
+	 * @param diagram
+	 *        The diagram to display, may be <code>null</code> to display nothing.
 	 */
 	public void setModel(Diagram diagram) {
+		Set<Object> selectedUserObjects = getSelectedUserObjects();
+
 		_diagram = diagram;
+		// The scope belongs to the diagram it serialized, which nothing displays any more: the
+		// markings below are part of the new diagram's serialization, not of a patch to the old
+		// one.
+		_graphScope = null;
+
+		markSelection(selectedUserObjects);
+		notifyModelReplaced();
+
 		initDiagramState();
-		updateSelectionChannel();
+	}
+
+	/**
+	 * The user objects of the currently selected diagram elements, in selection order.
+	 */
+	public Set<Object> getSelectedUserObjects() {
+		if (_diagram == null) {
+			return Set.of();
+		}
+		Set<Object> result = new LinkedHashSet<>();
+		for (Widget widget : _diagram.getSelection()) {
+			if (!SelectionUtil.isSelected(widget)) {
+				continue;
+			}
+			Object userObject = widget.getUserObject();
+			if (userObject != null) {
+				result.add(userObject);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Selects exactly the diagram elements carrying one of the given user objects, deselects every
+	 * other one, and shows the result.
+	 *
+	 * <p>
+	 * A user object no element carries selects nothing - it is not part of this diagram, and
+	 * nothing can be marked for it. The {@link SelectionListener}s are told what the diagram
+	 * displays afterwards.
+	 * </p>
+	 *
+	 * @param userObjects
+	 *        The user objects to select the elements of, empty to select nothing.
+	 */
+	public void selectUserObjects(Set<?> userObjects) {
+		if (_diagram == null) {
+			return;
+		}
+		markSelection(userObjects);
+		pushDiagramChanges();
+
+		notifySelectionChanged();
+	}
+
+	/**
+	 * Whether the diagram lets the user select more than one element at a time.
+	 */
+	public boolean isMultiSelect() {
+		return _diagram != null && _diagram.isMultiSelect();
+	}
+
+	/**
+	 * Registers a listener notified on selection changes.
+	 *
+	 * @param listener
+	 *        The listener to notify.
+	 *
+	 * @see #removeSelectionListener(SelectionListener)
+	 */
+	public void addSelectionListener(SelectionListener listener) {
+		_selectionListeners.add(listener);
+	}
+
+	/**
+	 * Unregisters a listener added through {@link #addSelectionListener(SelectionListener)}.
+	 *
+	 * @param listener
+	 *        The listener to stop notifying.
+	 */
+	public void removeSelectionListener(SelectionListener listener) {
+		_selectionListeners.remove(listener);
+	}
+
+	/**
+	 * Registers a listener notified when the displayed {@link Diagram} is replaced.
+	 *
+	 * @param listener
+	 *        The listener to notify.
+	 *
+	 * @see #removeModelListener(ModelListener)
+	 */
+	public void addModelListener(ModelListener listener) {
+		_modelListeners.add(listener);
+	}
+
+	/**
+	 * Unregisters a listener added through {@link #addModelListener(ModelListener)}.
+	 *
+	 * @param listener
+	 *        The listener to stop notifying.
+	 */
+	public void removeModelListener(ModelListener listener) {
+		_modelListeners.remove(listener);
+	}
+
+	/**
+	 * Marks the diagram elements carrying one of the given user objects as selected and every other
+	 * one as unselected, without telling anybody about it.
+	 */
+	private void markSelection(Set<?> userObjects) {
+		if (_diagram == null) {
+			return;
+		}
+		List<Widget> selected = new ArrayList<>();
+		WidgetTraversal.visitAll(_diagram, widget -> {
+			Object userObject = widget.getUserObject();
+			boolean select =
+				userObject != null && SelectionUtil.isSelectable(widget) && userObjects.contains(userObject);
+			if (select) {
+				selected.add(widget);
+			}
+			if (SelectionUtil.isSelected(widget) != select) {
+				// Only a widget whose marking actually changes is written, so that the patch
+				// carries the elements that change their appearance and no others.
+				SelectionUtil.setSelected(widget, select);
+			}
+		});
+		if (!selected.equals(_diagram.getSelection())) {
+			_diagram.setSelection(selected);
+		}
+	}
+
+	/**
+	 * Tells the {@link SelectionListener}s what the diagram displays as selected.
+	 */
+	private void notifySelectionChanged() {
+		Set<Object> userObjects = getSelectedUserObjects();
+		for (SelectionListener listener : _selectionListeners) {
+			listener.selectionChanged(userObjects);
+		}
+	}
+
+	/**
+	 * Tells the {@link ModelListener}s that the displayed diagram was replaced.
+	 */
+	private void notifyModelReplaced() {
+		for (ModelListener listener : _modelListeners) {
+			listener.modelReplaced();
+		}
 	}
 
 	/**
@@ -130,17 +337,6 @@ public class FlowDiagramControl extends ReactControl {
 	 */
 	public void setContextMenuProvider(ContextMenuProvider contextMenuProvider) {
 		_contextMenuProvider = contextMenuProvider;
-	}
-
-	/**
-	 * Sets the {@link ViewChannel} to write the selected node's user object to when the diagram
-	 * selection changes.
-	 *
-	 * @param channel
-	 *        The channel to write selections to, or {@code null} to disable selection publishing.
-	 */
-	public void setSelectionChannel(ViewChannel channel) {
-		_selectionChannel = channel;
 	}
 
 	@Override
@@ -162,7 +358,7 @@ public class FlowDiagramControl extends ReactControl {
 	 */
 	private void initDiagramState() {
 		if (_diagram == null) {
-			putState("diagram", "");
+			putState(DIAGRAM_STATE, "");
 			return;
 		}
 
@@ -173,7 +369,7 @@ public class FlowDiagramControl extends ReactControl {
 		} catch (IOException ex) {
 			throw new UncheckedIOException(ex);
 		}
-		putState("diagram", out.toString());
+		putState(DIAGRAM_STATE, out.toString());
 	}
 
 	/**
@@ -181,7 +377,8 @@ public class FlowDiagramControl extends ReactControl {
 	 *
 	 * <p>
 	 * Call this method after making server-side changes to the diagram model. The msgbuf patch is
-	 * serialized and sent as a {@code "diagramPatch"} state update.
+	 * serialized and sent as the {@link #DIAGRAM_PATCH_STATE} state update. Nothing is sent while
+	 * the diagram has not been serialized yet, or after the control was disposed.
 	 * </p>
 	 */
 	public void pushDiagramChanges() {
@@ -192,16 +389,16 @@ public class FlowDiagramControl extends ReactControl {
 			} catch (IOException ex) {
 				throw new UncheckedIOException(ex);
 			}
-			putState("diagramPatch", out.toString());
+			putState(DIAGRAM_PATCH_STATE, out.toString());
 		}
 	}
 
 	/**
 	 * Handles msgbuf patch updates sent from the client.
 	 */
-	@ReactCommandHandler("update")
+	@ReactCommandHandler(CMD_UPDATE)
 	public HandlerResult handleUpdate(ReactContext context, Map<String, Object> args) {
-		String patch = (String) args.get("patch");
+		String patch = (String) args.get(ARG_PATCH);
 		try {
 			processUpdate(patch);
 		} catch (IOException ex) {
@@ -245,46 +442,6 @@ public class FlowDiagramControl extends ReactControl {
 		if (menu != null) {
 			// TODO: Send context menu to client via SSE state update.
 		}
-		return HandlerResult.DEFAULT_RESULT;
-	}
-
-	/**
-	 * Handles selection changes sent from the client.
-	 *
-	 * <p>
-	 * The client sends the IDs of the currently selected nodes. The server resolves each ID to its
-	 * {@link Widget} and extracts the user object from the {@link SelectableBox}. The result is
-	 * written to the configured selection channel.
-	 * </p>
-	 */
-	@ReactCommandHandler("selection")
-	public HandlerResult handleSelection(ReactContext context, Map<String, Object> args) {
-		if (_selectionChannel == null || _graphScope == null) {
-			return HandlerResult.DEFAULT_RESULT;
-		}
-
-		@SuppressWarnings("unchecked")
-		List<Number> nodeIds = (List<Number>) args.get("nodeIds");
-		if (nodeIds == null || nodeIds.isEmpty()) {
-			_selectionChannel.set(null);
-			return HandlerResult.DEFAULT_RESULT;
-		}
-
-		List<Object> selectedUserObjects = nodeIds.stream()
-			.map(id -> _graphScope.resolveOrFail(id.intValue()))
-			.filter(node -> node instanceof Widget)
-			.map(node -> ((Widget) node).getUserObject())
-			.filter(Objects::nonNull)
-			.toList();
-
-		if (selectedUserObjects.isEmpty()) {
-			_selectionChannel.set(null);
-		} else if (selectedUserObjects.size() == 1) {
-			_selectionChannel.set(selectedUserObjects.get(0));
-		} else {
-			_selectionChannel.set(selectedUserObjects);
-		}
-
 		return HandlerResult.DEFAULT_RESULT;
 	}
 
@@ -333,31 +490,18 @@ public class FlowDiagramControl extends ReactControl {
 		return _contextMenuProvider.getContextMenu(node, userObject);
 	}
 
+	/**
+	 * Applies the changes the client made to the diagram, among them the selection it displays.
+	 */
 	void processUpdate(String patch) throws IOException {
+		if (_graphScope == null) {
+			// The diagram the patch was made against is not displayed any more.
+			return;
+		}
 		JsonReader json = new JsonReader(new StringR(patch));
 		_graphScope.applyChanges(json);
 
-		updateSelectionChannel();
-	}
-
-	private void updateSelectionChannel() {
-		if (_selectionChannel == null || _diagram == null) {
-			return;
-		}
-
-		List<Object> selectedUserObjects = _diagram.getSelection().stream()
-			.filter(w -> SelectionUtil.isSelected(w))
-			.map(Widget::getUserObject)
-			.filter(Objects::nonNull)
-			.toList();
-
-		if (selectedUserObjects.isEmpty()) {
-			_selectionChannel.set(null);
-		} else if (selectedUserObjects.size() == 1) {
-			_selectionChannel.set(selectedUserObjects.get(0));
-		} else {
-			_selectionChannel.set(selectedUserObjects);
-		}
+		notifySelectionChanged();
 	}
 
 	/**

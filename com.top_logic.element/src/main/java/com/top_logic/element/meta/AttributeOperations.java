@@ -1520,7 +1520,10 @@ public class AttributeOperations {
 		}
 
 		if (isBooleanAttribute(attribute) || isTristateAttribute(attribute)) {
-			if (getBooleanDisplay(attribute) == BooleanPresentation.CHECKBOX) {
+			BooleanPresentation booleanDisplay = getBooleanDisplay(attribute);
+			// A check box and a switch are small enough to stand before the text naming them,
+			// while a choice between labelled options is a field like any other.
+			if (booleanDisplay == BooleanPresentation.CHECKBOX || booleanDisplay == BooleanPresentation.SWITCH) {
 				return LabelPosition.AFTER_VALUE;
 			}
 		}

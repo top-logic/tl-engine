@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback } = React;
@@ -25,7 +25,7 @@ const TLBreadcrumb: React.FC<TLCellProps> = ({ controlId }) => {
   }, [sendCommand]);
 
   return (
-    <nav id={controlId} className="tlBreadcrumb" aria-label="Breadcrumb">
+    <nav id={controlId} className={rootClassName(state, 'tlBreadcrumb')} aria-label="Breadcrumb">
       <ol className="tlBreadcrumb__list">
         {items.map((item, index) => {
           const isLast = index === items.length - 1;

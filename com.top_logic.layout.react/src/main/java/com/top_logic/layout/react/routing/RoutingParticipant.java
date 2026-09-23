@@ -23,11 +23,28 @@ public interface RoutingParticipant {
      */
     List<RoutePattern> declaredRoutes();
 
-    /**
-     * Activate the matching child route. May trigger lazy materialization.
-     * Called by {@link RouteManager} during deep-link resolution or back-navigation.
-     */
-    void activateRoute(RouteMatch match);
+	/**
+	 * Displays what the matched route names, materializing it where it is created lazily.
+	 *
+	 * <p>
+	 * Called by the {@link RouteManager} while it resolves a URL - a link followed into the
+	 * application, an address the browser moved to over the back button, or one entered by hand.
+	 * </p>
+	 *
+	 * <p>
+	 * The activation may be refused with a
+	 * {@link com.top_logic.layout.react.dirty.ChannelVetoException} while what the participant
+	 * displays holds unsaved changes: a URL takes the user off a page no more silently than a click
+	 * does. The state the URL describes is then not reached, and the caller ends the adoption with
+	 * {@link RouteManager#cancelAdoption()}, which leaves the display as the refusal keeps it. What
+	 * is to become of the changes is put to the user, and the URL reaches this participant again
+	 * once they answered.
+	 * </p>
+	 *
+	 * @param match
+	 *        The route to display, with the parameters the URL carried for it.
+	 */
+	void activateRoute(RouteMatch match);
 
     /**
      * Currently active route segment, or {@code null} if no route-forming

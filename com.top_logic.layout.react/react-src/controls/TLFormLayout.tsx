@@ -1,4 +1,4 @@
-import { React, useTLState, TLChild, useFillHost, FillProvider } from 'tl-react-bridge';
+import { React, useTLState, TLChild, rootClassName, useFillHost, FillProvider } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { FormLayoutContext } from './FormLayoutContext';
 
@@ -104,7 +104,7 @@ const TLFormLayout: React.FC<TLCellProps> = ({ controlId }) => {
 
   if (noModelMessage) {
     return (
-      <div id={controlId} className="tlFormLayout tlFormLayout--empty" ref={containerRef}>
+      <div id={controlId} className={rootClassName(state, 'tlFormLayout tlFormLayout--empty')} ref={containerRef}>
         <p className="tlFormLayout__noModel">{noModelMessage}</p>
       </div>
     );
@@ -113,7 +113,7 @@ const TLFormLayout: React.FC<TLCellProps> = ({ controlId }) => {
   return (
     <FormLayoutContext.Provider value={ctxValue}>
       <FillProvider host={fillHost}>
-        <div id={controlId} className={className} style={style} ref={containerRef}>
+        <div id={controlId} className={rootClassName(state, className)} style={style} ref={containerRef}>
           {children.map((child, i) => (
             <TLChild key={i} control={child} />
           ))}

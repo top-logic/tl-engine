@@ -1,4 +1,4 @@
-import { React, useTLState } from 'tl-react-bridge';
+import { React, useTLState, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 /**
@@ -63,7 +63,7 @@ const TLProgress: React.FC<TLCellProps> = ({ controlId }) => {
   const fraction = typeof state.fraction === 'number' ? state.fraction : null;
   const label = (state.label as string) || undefined;
 
-  return <ProgressBar id={controlId} fraction={fraction} label={label} />;
+  return <ProgressBar id={controlId} fraction={fraction} label={label} className={rootClassName(state)} />;
 };
 
 export default TLProgress;

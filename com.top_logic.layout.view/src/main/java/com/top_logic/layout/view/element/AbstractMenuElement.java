@@ -231,6 +231,7 @@ public abstract class AbstractMenuElement extends CommandCarrierElement {
 
 		MenuRegionControl region = new MenuRegionControl(context, content, contributions, targetSupplier,
 			opener, getTrigger());
+		region.setCssClass(_config.getCssClass());
 
 		// Lazy attach on render, cleanup on dispose. The grouped entries are commands of this
 		// element like the ungrouped ones, so their models follow the same lifecycle.

@@ -48,6 +48,10 @@ public class GridElement extends ContainerElement {
 
 	private final StackGap _gap;
 
+	private final String _maxWidth;
+
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link GridElement} from configuration.
 	 */
@@ -57,6 +61,8 @@ public class GridElement extends ContainerElement {
 		_minColumnWidth = config.getMinColumnWidth();
 		_maxColumns = config.getMaxColumns();
 		_gap = config.getGap();
+		_maxWidth = config.getMaxWidth();
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -65,6 +71,9 @@ public class GridElement extends ContainerElement {
 			.map(c -> (ReactControl) c)
 			.collect(Collectors.toList());
 
-		return new ReactGridControl(context, _minColumnWidth, _maxColumns, _gap, children);
+		ReactGridControl result = new ReactGridControl(context, _minColumnWidth, _maxColumns, _gap, children);
+		result.setMaxWidth(_maxWidth);
+		result.setCssClass(_cssClass);
+		return result;
 	}
 }

@@ -344,6 +344,7 @@ public class CalendarElement implements UIElement {
 		control.setGranularity(granularity != null ? granularity : Granularity.WEEK);
 		control.setEditable(_config.isEditable());
 		control.setWorkingHours(_config.getDayStartHour(), _config.getDayEndHour());
+		control.setCssClass(_config.getCssClass());
 
 		// Reflects the selection channel's current value as the calendar's selection; re-applied after
 		// data refreshes so a just-created object still gets selected.

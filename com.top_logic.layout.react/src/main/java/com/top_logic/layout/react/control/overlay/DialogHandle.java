@@ -18,12 +18,35 @@ public interface DialogHandle {
 	 *
 	 * <p>
 	 * If this dialog is not the topmost dialog, all dialogs above it are cascade-closed with
-	 * {@link DialogResult#cancelled()}.
+	 * {@link DialogResult#cancelled()}. The close is refused while this dialog or any dialog above
+	 * it is not {@link #isClosable() closable}.
 	 * </p>
 	 *
 	 * @param result
 	 *        The result to pass to the dialog's handler.
 	 */
 	void close(DialogResult<Void> result);
+
+	/**
+	 * Sets whether this dialog can be closed.
+	 *
+	 * <p>
+	 * While a dialog is not closable, every close of it is refused: Escape, the close button, a
+	 * backdrop click, {@link #close(DialogResult)} and the cascade of closing a dialog below it. A
+	 * dialog is closable unless marked otherwise, so an opener that suspends its dialog on some
+	 * ongoing work marks it closable again when that work has settled.
+	 * </p>
+	 *
+	 * @param closable
+	 *        Whether the dialog may be closed.
+	 */
+	void setClosable(boolean closable);
+
+	/**
+	 * Whether this dialog can be closed.
+	 *
+	 * @see #setClosable(boolean)
+	 */
+	boolean isClosable();
 
 }

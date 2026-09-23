@@ -19,13 +19,14 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.layout.ReactGridControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackGap;
+import com.top_logic.layout.react.control.layout.ReactStackControl.StackJustify;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 
 /**
- * Tests the state a {@link ReactGridControl} hands its React component: the column bound and the
- * item class the client needs to lay the grid out, and that neither of them reaches the headless
- * projection an agent reads.
+ * Tests the state a {@link ReactGridControl} hands its React component: the column bound, the width
+ * bound and the item class the client needs to lay the grid out, and that none of them reaches the
+ * headless projection an agent reads.
  */
 public class TestReactGridControl extends TestCase {
 
@@ -82,16 +83,30 @@ public class TestReactGridControl extends TestCase {
 	}
 
 	/**
+	 * The width bound reaches the client, and is unset until one is given.
+	 */
+	public void testMaxWidthIsSent() {
+		GridProbe grid = createGrid(null);
+
+		assertNull("A grid spans its container until it is bounded.", grid.state("maxWidth"));
+
+		grid.setMaxWidth("60rem");
+		assertEquals("60rem", grid.state("maxWidth"));
+	}
+
+	/**
 	 * The column bound and the item class are rendering-only: they describe how the grid looks, not
 	 * what it displays, so an agent reading the headless projection does not see them.
 	 */
 	public void testLayoutStateIsNotProjected() {
 		GridProbe grid = createGrid(Integer.valueOf(2));
 		grid.setItemClass("demoCard");
+		grid.setMaxWidth("60rem");
 
 		Map<String, Object> projection = grid.scriptingScalarState();
 
 		assertFalse("The column bound is rendering-only.", projection.containsKey("maxColumns"));
+		assertFalse("The width bound is rendering-only.", projection.containsKey("maxWidth"));
 		assertFalse("The item class is rendering-only.", projection.containsKey("itemClass"));
 		assertFalse("The minimum column width is rendering-only.", projection.containsKey("minColumnWidth"));
 		assertFalse("The gap is rendering-only.", projection.containsKey("gap"));
@@ -101,13 +116,38 @@ public class TestReactGridControl extends TestCase {
 	 * A stack wraps its children only once an item class is set, and the class is rendering-only.
 	 */
 	public void testStackItemClass() {
-		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue(),
-			new ReactWindowRegistry("test"));
-		ReactStackControl stack = new ReactStackControl(context, List.of());
+		ReactStackControl stack = createStack();
 
 		stack.setItemClass("demoCard");
 
 		assertFalse("The item class is rendering-only.", stack.scriptingScalarState().containsKey("itemClass"));
+	}
+
+	/**
+	 * How a stack arranges its children says nothing about what they display, so none of the
+	 * arrangement reaches the headless projection - not even where the stack fills a named slot of
+	 * its container and is therefore kept rather than elided.
+	 */
+	public void testStackLayoutStateIsNotProjected() {
+		ReactStackControl stack = createStack();
+
+		stack.setJustify(StackJustify.SPACE_BETWEEN);
+		stack.setWrap(true);
+		stack.setMaxWidth("60rem");
+		stack.setGrowFirst(true);
+
+		Map<String, Object> projection = stack.scriptingScalarState();
+
+		for (String key : List.of("direction", "gap", "align", "justify", "wrap", "maxWidth", "growFirst")) {
+			assertFalse("The arrangement is rendering-only, but '" + key + "' is projected.",
+				projection.containsKey(key));
+		}
+	}
+
+	private ReactStackControl createStack() {
+		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue(),
+			new ReactWindowRegistry("test"));
+		return new ReactStackControl(context, List.of());
 	}
 
 	/**

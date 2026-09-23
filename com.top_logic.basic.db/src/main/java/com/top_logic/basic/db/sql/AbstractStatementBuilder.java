@@ -1045,6 +1045,7 @@ abstract class AbstractStatementBuilder<E extends SimpleSQLBuffer> implements SQ
 			break;
 		}
 
+		case count:
 		case greatest:
 		case least:
 		case min:

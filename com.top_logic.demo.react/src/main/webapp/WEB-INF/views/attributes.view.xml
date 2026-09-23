@@ -228,6 +228,9 @@
 								attribute="string"
 								width="200"
 							/>
+							<column attribute="multiLine"/>
+							<column attribute="i18n"/>
+							<column attribute="i18nMultiline"/>
 							<column attribute="priority"/>
 							<column attribute="active"/>
 							<column attribute="count">

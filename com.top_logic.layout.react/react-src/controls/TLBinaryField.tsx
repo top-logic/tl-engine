@@ -1,4 +1,4 @@
-import { React, useTLState, useTLUpload, useTLDataUrl, useI18N } from 'tl-react-bridge';
+import { React, useTLState, useTLUpload, useTLDataUrl, useI18N, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -123,14 +123,14 @@ const TLBinaryField: React.FC<TLCellProps> = ({ controlId, state: propState }) =
         className={'tlDownload__downloadBtn' + (downloading ? ' tlDownload__downloadBtn--downloading' : '')}
         onClick={doDownload}
         disabled={downloading}
-        title={downloadLabel}
         aria-label={downloadLabel}
+        {...tooltipProps(downloadLabel)}
       >
         <svg className="tlDownload__downloadIcon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
           <path d="M8 1v9m0 0L4.5 6.5M8 10l3.5-3.5M2 13h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
         </svg>
       </button>
-      <span className="tlDownload__fileName" title={fileName}>{fileName}</span>
+      <span className="tlDownload__fileName" {...TOOLTIP_WHEN_CLIPPED}>{fileName}</span>
     </span>
   );
 
@@ -138,13 +138,13 @@ const TLBinaryField: React.FC<TLCellProps> = ({ controlId, state: propState }) =
   if (!editable) {
     if (!hasData) {
       return (
-        <div id={controlId} className="tlBinaryField tlDownload tlDownload--empty">
+        <div id={controlId} className={rootClassName(state, 'tlBinaryField tlDownload tlDownload--empty')}>
           <span className="tlDownload__fileName tlDownload__fileName--empty">{t['js.download.noFile']}</span>
         </div>
       );
     }
     return (
-      <div id={controlId} className="tlBinaryField tlBinaryField--view">
+      <div id={controlId} className={rootClassName(state, 'tlBinaryField tlBinaryField--view')}>
         {downloadLink}
       </div>
     );
@@ -157,7 +157,7 @@ const TLBinaryField: React.FC<TLCellProps> = ({ controlId, state: propState }) =
   return (
     <div
       id={controlId}
-      className={`tlBinaryField tlFileUpload${isDragOver ? ' tlFileUpload--dragover' : ''}`}
+      className={rootClassName(state, `tlBinaryField tlFileUpload${isDragOver ? ' tlFileUpload--dragover' : ''}`)}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -174,8 +174,8 @@ const TLBinaryField: React.FC<TLCellProps> = ({ controlId, state: propState }) =
         className={'tlFileUpload__button' + (isDisabled ? ' tlFileUpload__button--uploading' : '')}
         onClick={handleButtonClick}
         disabled={isDisabled}
-        title={buttonLabel}
         aria-label={buttonLabel}
+        {...tooltipProps(buttonLabel)}
       >
         <svg className="tlFileUpload__icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
           <path d="M8 10V1m0 0L4.5 4.5M8 1l3.5 3.5M2 13h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />

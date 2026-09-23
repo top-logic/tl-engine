@@ -28,6 +28,7 @@ import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.command.CommandScope;
+import com.top_logic.layout.view.command.ViewCommandModel;
 
 /**
  * A UI element that renders a responsive dashboard grid of {@link TileElement
@@ -57,6 +58,9 @@ public class DashboardElement implements UIElement {
 		/** Config property name for {@link #getMinColWidth()}. */
 		String MIN_COL_WIDTH = "min-col-width";
 
+		/** Config property name for {@link #getRowHeight()}. */
+		String ROW_HEIGHT = "row-height";
+
 		/** Config property name for {@link #getTiles()}. */
 		String TILES = "tiles";
 
@@ -80,6 +84,22 @@ public class DashboardElement implements UIElement {
 		String getMinColWidth();
 
 		/**
+		 * The height of one grid row, as a CSS length.
+		 *
+		 * <p>
+		 * A tile is as many rows tall as the row span of its
+		 * {@link TileElement}, plus the gaps between those rows. Content that
+		 * fills the available height, a panel configured to fill or a table,
+		 * resolves its height against the tile and scrolls inside it; content
+		 * that does not fill and is taller than the tile scrolls inside the
+		 * tile as well.
+		 * </p>
+		 */
+		@Name(ROW_HEIGHT)
+		@StringDefault("16rem")
+		String getRowHeight();
+
+		/**
 		 * The tiles. Represented as polymorphic configurations so that the
 		 * default container (child elements) can hold {@code <tile>} entries.
 		 */
@@ -92,7 +112,11 @@ public class DashboardElement implements UIElement {
 
 	private final String _minColWidth;
 
+	private final String _rowHeight;
+
 	private final List<TileElement> _tiles;
+
+	private final String _cssClass;
 
 	/**
 	 * Creates a new {@link DashboardElement} from configuration.
@@ -101,6 +125,7 @@ public class DashboardElement implements UIElement {
 	public DashboardElement(InstantiationContext context, Config config) {
 		_id = config.getId();
 		_minColWidth = config.getMinColWidth();
+		_rowHeight = config.getRowHeight();
 		_tiles = new ArrayList<>();
 		for (PolymorphicConfiguration<? extends TileElement> tc : config.getTiles()) {
 			TileElement tile = context.getInstance(tc);
@@ -108,6 +133,7 @@ public class DashboardElement implements UIElement {
 				_tiles.add(tile);
 			}
 		}
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -119,19 +145,41 @@ public class DashboardElement implements UIElement {
 	public IReactControl createControl(ViewContext context) {
 		List<TileElement> ordered = applyPersonalOrder(_tiles);
 		List<Tile> reactTiles = new ArrayList<>(ordered.size());
+		List<ViewCommandModel> actions = new ArrayList<>();
 		for (TileElement t : ordered) {
 			if (!t.isAccessible()) {
 				// Access denied for the current user: omit the tile entirely.
 				continue;
 			}
-			reactTiles.add(new Tile(t.getId(), t.getWidth(), t.getRowSpan(), t.createContentControl(context)));
+			ViewCommandModel action = t.createActionModel(context);
+			if (action != null) {
+				actions.add(action);
+			}
+			reactTiles.add(new Tile(t.getId(), t.getWidth(), t.getRowSpan(), t.createContentControl(context),
+				t.toAction(action)));
 		}
 		ReactDashboardControl control =
-			new ReactDashboardControl(context, _minColWidth, reactTiles, this::storePersonalOrder);
+			new ReactDashboardControl(context, _minColWidth, _rowHeight, reactTiles, this::storePersonalOrder);
 
+		control.setCssClass(_cssClass);
+		followTileActions(context, control, actions);
 		contributeEditCommands(context, control);
 
 		return control;
+	}
+
+	/**
+	 * Lets the models of the tile actions follow their input for as long as the dashboard is
+	 * displayed, so that a tile is offered, refused or hidden according to what its command says
+	 * about the current input.
+	 */
+	private static void followTileActions(ViewContext context, ReactDashboardControl control,
+			List<ViewCommandModel> actions) {
+		if (actions.isEmpty()) {
+			return;
+		}
+		control.addAttachListener(() -> actions.forEach(action -> action.attach(context.getModelScope())));
+		control.addDetachListener(() -> actions.forEach(ViewCommandModel::detach));
 	}
 
 	private void contributeEditCommands(ViewContext context, ReactDashboardControl control) {

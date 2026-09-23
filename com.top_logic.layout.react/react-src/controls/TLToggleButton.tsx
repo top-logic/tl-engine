@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback } = React;
@@ -49,7 +49,7 @@ const TLToggleButton: React.FC<TLCellProps & TLToggleButtonProps> = ({ controlId
       onClick={handleClick}
       disabled={resolvedDisabled}
       aria-pressed={resolvedActive ? true : undefined}
-      className={'tlReactButton' + (resolvedActive ? ' tlReactButton--active' : '')}
+      className={rootClassName(state, 'tlReactButton' + (resolvedActive ? ' tlReactButton--active' : ''))}
     >
       {resolvedLabel}
     </button>

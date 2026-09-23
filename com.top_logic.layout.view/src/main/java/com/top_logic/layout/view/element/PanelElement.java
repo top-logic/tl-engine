@@ -44,7 +44,7 @@ import com.top_logic.util.Resources;
  * </p>
  */
 @InApp
-public class PanelElement extends CommandScopeElement {
+public class PanelElement extends CommandScopeElement implements TitledElement {
 
 	/**
 	 * Configuration for {@link PanelElement}.
@@ -180,6 +180,11 @@ public class PanelElement extends CommandScopeElement {
 		_hoverActions = config.getHoverActions();
 		_appearance = config.getAppearance();
 		_width = config.getWidth();
+	}
+
+	@Override
+	public ResKey getTitle() {
+		return _title;
 	}
 
 	@Override

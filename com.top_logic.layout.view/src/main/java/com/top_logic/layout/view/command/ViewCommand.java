@@ -227,4 +227,25 @@ public interface ViewCommand {
 	default boolean appliesFormState() {
 		return false;
 	}
+
+	/**
+	 * The executability this command brings of its own, decided by what the command knows about
+	 * itself rather than by what its use site configured.
+	 *
+	 * <p>
+	 * A command that cannot be carried out in certain circumstances - a dialog's cancel while the
+	 * dialog holds a running command, say - says so here, and its button gives that reason instead
+	 * of doing nothing when pressed. The rule is combined with the
+	 * {@link Config#getExecutability() configured rules} and takes part in the same way: it is
+	 * {@link ContextDependentRule#bind(com.top_logic.layout.view.ViewContext) bound} to the
+	 * context of the command and {@link ObservableRule observed} while its button is attached.
+	 * </p>
+	 *
+	 * @return A rule of this command's own, {@link ViewExecutabilityRule#ALWAYS_EXECUTABLE} for a
+	 *         command that leaves the decision to its use site. A fresh instance per call, since a
+	 *         bound rule belongs to the one command model it was built for.
+	 */
+	default ViewExecutabilityRule getIntrinsicRule() {
+		return ViewExecutabilityRule.ALWAYS_EXECUTABLE;
+	}
 }

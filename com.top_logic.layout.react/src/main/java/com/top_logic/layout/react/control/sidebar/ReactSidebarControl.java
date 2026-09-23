@@ -166,7 +166,7 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 		_footerContent = footerContent;
 		_footerCollapsedContent = footerCollapsedContent;
 
-		// Track group states in memory for pushItemsUpdate().
+		// Track group states in memory for refreshItems().
 		Map<String, Boolean> groupStates =
 			initialGroupStates != null ? initialGroupStates : Collections.emptyMap();
 		_groupStates = new HashMap<>(groupStates);
@@ -174,20 +174,7 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 		// Determine initial active item.
 		_activeItemId = initialActiveItemId != null ? initialActiveItemId : findFirstNavItemId(items);
 
-		// Build serialized item list, merging pre-loaded group states.
-		List<Map<String, Object>> itemList = new ArrayList<>();
-		for (SidebarItem item : _items) {
-			Map<String, Object> itemMap = item.toStateMap();
-			if (item instanceof GroupItem) {
-				Boolean persisted = groupStates.get(item.getId());
-				if (persisted != null) {
-					itemMap.put(GroupItem.EXPANDED, persisted);
-				}
-			}
-			itemList.add(itemMap);
-		}
-
-		putState(ITEMS, itemList);
+		putState(ITEMS, serializeItems(_items));
 		putState(ACTIVE_ITEM_ID, _activeItemId);
 		putState(COLLAPSED, Boolean.valueOf(_collapsed));
 		putState(DRAWER_OPEN, Boolean.valueOf(_drawerOpen));
@@ -356,23 +343,53 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 			return;
 		}
 		navItem.setBadge(badge);
-		pushItemsUpdate();
+		refreshItems();
 	}
 
-	private void pushItemsUpdate() {
+	/**
+	 * Re-serializes the item list - merging the group expansion states tracked here - and pushes it
+	 * to the client.
+	 *
+	 * <p>
+	 * To be called after an item's state was changed through its setters
+	 * ({@link NavigationItem#setBadge(String)}, {@link CommandItem#setHidden(boolean)},
+	 * {@link CommandItem#setDisabled(boolean)}): the items are held as objects and serialized as a
+	 * whole, so a change to one of them reaches the display only with the list it is part of.
+	 * </p>
+	 */
+	public void refreshItems() {
+		putState(ITEMS, serializeItems(_items));
+	}
+
+	/**
+	 * Serializes the given items for the client, applying the expansion state tracked in
+	 * {@link #handleToggleGroup(ToggleGroupArguments)} to every {@link GroupItem} it names.
+	 *
+	 * <p>
+	 * A group nested in a group is as much a group as one at the top, so the descent follows
+	 * {@link GroupItem#getChildren()} all the way down: the state the user last chose is applied
+	 * wherever the group sits, and the sidebar comes back as it was left rather than snapping the
+	 * inner groups back to their configured default.
+	 * </p>
+	 *
+	 * @param items
+	 *        The items to serialize.
+	 * @return The item list as the client receives it.
+	 */
+	private List<Map<String, Object>> serializeItems(List<SidebarItem> items) {
 		List<Map<String, Object>> itemList = new ArrayList<>();
-		for (SidebarItem item : _items) {
+		for (SidebarItem item : items) {
 			Map<String, Object> itemMap = item.toStateMap();
 			if (item instanceof GroupItem) {
 				Boolean tracked = _groupStates.get(item.getId());
 				if (tracked != null) {
 					itemMap.put(GroupItem.EXPANDED, tracked);
 				}
+				itemMap.put(GroupItem.CHILDREN, serializeItems(((GroupItem) item).getChildren()));
 			}
 			itemList.add(itemMap);
 		}
-
-		putState(ITEMS, itemList);
+		return itemList;
 	}
 
 	/**
@@ -481,9 +498,20 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 		}
 	}
 
+	/**
+	 * Selects the item the URL names, letting the item being left veto the switch while it holds
+	 * unsaved changes.
+	 *
+	 * <p>
+	 * A URL is refused for the same reason a click on the item is: what the user typed into the page
+	 * being left is not dropped because an address named another page. The
+	 * {@link ChannelVetoException} reaches whoever resolves the URL, which ends its adoption and
+	 * leaves the sidebar showing the item it shows.
+	 * </p>
+	 */
 	@Override
 	public void activateRoute(RouteMatch match) {
-		selectItem(match.itemId());
+		revealChild(match.itemId());
 	}
 
 	@Override
@@ -511,14 +539,24 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	/**
 	 * Selects the navigation item with the given id, letting the item being left veto the switch
 	 * while it holds unsaved changes.
+	 *
+	 * <p>
+	 * Only leaving the item asks about unsaved changes; the item already displayed is selected
+	 * without a question. A URL that stays within that item - a deeper segment it shows, a query
+	 * parameter refining it, a step back between two addresses of the same page - reaches the
+	 * sidebar as the item it displays: nothing here is being left, so nothing is asked, and the
+	 * participant the URL does concern keeps its say.
+	 * </p>
 	 */
 	@Override
 	public void revealChild(String key) {
-		NavigationItem currentItem = findNavItem(_activeItemId, _items);
-		if (currentItem != null) {
-			DirtyChannel dirtyChannel = currentItem.getDirtyChannel();
-			if (dirtyChannel != null && dirtyChannel.hasDirtyHandlers()) {
-				throw new ChannelVetoException(dirtyChannel.getDirtyHandlers(), () -> selectItem(key));
+		if (!key.equals(_activeItemId)) {
+			NavigationItem currentItem = findNavItem(_activeItemId, _items);
+			if (currentItem != null) {
+				DirtyChannel dirtyChannel = currentItem.getDirtyChannel();
+				if (dirtyChannel != null && dirtyChannel.hasDirtyHandlers()) {
+					throw new ChannelVetoException(dirtyChannel.getDirtyHandlers(), () -> selectItem(key));
+				}
 			}
 		}
 
@@ -549,12 +587,24 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 
 	/**
 	 * Handles command item execution from the client.
+	 *
+	 * <p>
+	 * Only an item the sidebar actually offers for activation runs its action: a
+	 * {@link CommandItem#isHidden() hidden} item is not displayed and a
+	 * {@link CommandItem#isDisabled() disabled} one is displayed out of reach, so both are refused
+	 * instead of running a command the user interface does not offer. The item's state follows the
+	 * hosted command's executability, which anything that can address this command would otherwise
+	 * bypass.
+	 * </p>
 	 */
 	@ReactCommandHandler(EXECUTE_COMMAND_COMMAND)
 	HandlerResult handleExecuteCommand(ReactContext context, ExecuteCommandArguments args) {
 		String itemId = args.getItemId();
 		CommandItem cmdItem = findCommandItem(itemId, _items);
 		if (cmdItem != null) {
+			if (cmdItem.isHidden() || cmdItem.isDisabled()) {
+				return HandlerResult.error(I18NConstants.ERROR_COMMAND_NOT_EXECUTABLE);
+			}
 			HandlerResult result = cmdItem.getAction().execute(context);
 			closeDrawerIfOpen();
 			return result;

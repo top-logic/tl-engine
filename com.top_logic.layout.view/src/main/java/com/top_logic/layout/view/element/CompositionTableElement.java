@@ -171,6 +171,7 @@ public class CompositionTableElement implements UIElement {
 			context, formControl, new AttributeRowSetBinding(attribute), _columns, RowEditPolicy.ALL);
 		control.setFallbackTitle(attribute);
 		control.setDetailDialog(_config.getDetailDialog());
+		control.setCssClass(_config.getCssClass());
 		control.init();
 		return control;
 	}

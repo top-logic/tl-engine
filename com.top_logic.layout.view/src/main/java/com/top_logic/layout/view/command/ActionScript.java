@@ -7,6 +7,7 @@ package com.top_logic.layout.view.command;
 
 import java.util.List;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelInputs;
@@ -38,6 +39,33 @@ public interface ActionScript {
 	 * @return The function's result.
 	 */
 	Object execute(ReactContext context, Object input);
+
+	/**
+	 * Calls the function the way {@link #execute(ReactContext, Object)} does and reads its result as
+	 * the message to show to the user.
+	 *
+	 * <p>
+	 * A {@link ResKey} is the message itself; any other value is the message it reads as. Nothing -
+	 * no result, or one whose text is empty - is nothing to say.
+	 * </p>
+	 *
+	 * @param context
+	 *        The context the action executes in.
+	 * @param input
+	 *        The current value of the action chain, passed as the last argument.
+	 * @return The message to show, or {@code null} when there is nothing to say.
+	 */
+	default ResKey message(ReactContext context, Object input) {
+		Object result = execute(context, input);
+		if (result == null) {
+			return null;
+		}
+		if (result instanceof ResKey) {
+			return (ResKey) result;
+		}
+		String text = result.toString();
+		return text.isEmpty() ? null : ResKey.text(text);
+	}
 
 	/**
 	 * Compiles the TL-Script function of an action, called with the values of the given channels as

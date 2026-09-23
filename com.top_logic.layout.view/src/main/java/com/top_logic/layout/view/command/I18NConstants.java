@@ -20,6 +20,21 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey CONFIRM_TITLE;
 
 	/**
+	 * @en Information
+	 */
+	public static ResKey NOTIFY_TITLE_INFO;
+
+	/**
+	 * @en Warning
+	 */
+	public static ResKey NOTIFY_TITLE_WARNING;
+
+	/**
+	 * @en Error
+	 */
+	public static ResKey NOTIFY_TITLE_ERROR;
+
+	/**
 	 * @en Language
 	 */
 	public static ResKey LANGUAGE_GROUP;
@@ -84,6 +99,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Upload of "{0}" failed.
 	 */
 	public static ResKey1 ERROR_UPLOAD_FAILED__FILE;
+
+	/**
+	 * @en A command of this dialog is still running.
+	 */
+	public static ResKey ERROR_DIALOG_COMMAND_RUNNING;
 
 	static {
 		initConstants(I18NConstants.class);

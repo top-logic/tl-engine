@@ -389,6 +389,7 @@ public class ReactButtonControl extends ReactControl {
 	 */
 	@Override
 	protected java.util.Set<String> scriptingPresentationKeys() {
-		return java.util.Set.of(APPEARANCE, SIZE, KEY_GESTURE, IMAGE, DISPLAY_MODE, CSS_CLASSES);
+		return presentationKeys(super.scriptingPresentationKeys(), APPEARANCE, SIZE, KEY_GESTURE, IMAGE, DISPLAY_MODE,
+			CSS_CLASSES);
 	}
 }

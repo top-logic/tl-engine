@@ -1,4 +1,4 @@
-import { React, useTLState, useTLDataUrl, useI18N, useFill } from 'tl-react-bridge';
+import { React, useTLState, useTLDataUrl, useI18N, useFill, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -21,7 +21,6 @@ const I18N_KEYS = {
  * - print: boolean - whether a document is shown with a button that prints it
  * - thumbnailWidth, thumbnailHeight: number - the size in CSS pixels a thumbnail lays its page out
  *   at before scaling it down; their ratio is the ratio of the preview box
- * - cssClass: string - optional additional CSS class appended to the default "tlHtml" class
  *
  * An inline fragment is inserted as it stands. What may be inserted is decided on the server: the
  * html state carries only fragments that passed its check, a rejected one arrives as error instead.
@@ -46,7 +45,6 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
   const display = (state.display as string) || 'inline';
   const html = (state.html as string) ?? '';
   const error = (state.error as string) || null;
-  const extra = (state.cssClass as string) ?? '';
   const dataRevision: number = (state.dataRevision as number) ?? 0;
   const print = state.print === true;
   const thumbnailWidth: number = (state.thumbnailWidth as number) || 800;
@@ -90,15 +88,15 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
 
   if (error) {
     return (
-      <div id={controlId} className="tlHtml tlHtml__error" role="alert">{error}</div>
+      <div id={controlId} className={rootClassName(state, 'tlHtml tlHtml__error')} role="alert">{error}</div>
     );
   }
 
-  const className = ['tlHtml', `tlHtml--${display}`, fillClass, extra].filter(Boolean).join(' ');
+  const className = rootClassName(state, 'tlHtml', `tlHtml--${display}`, fillClass);
 
   if (display === 'document') {
     return (
-      <div id={controlId} className={className}>
+      <div id={controlId} className={rootClassName(state, className)}>
         <iframe
           ref={frameRef}
           className="tlHtml__frame"
@@ -113,8 +111,8 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
           <button
             type="button"
             className="tlReactButton tlReactButton--icon tlHtml__print"
-            title={t['js.html.print']}
             aria-label={t['js.html.print']}
+            {...tooltipProps(t['js.html.print'])}
             onClick={handlePrint}
           >
             <i className="bi bi-printer" aria-hidden="true" />
@@ -129,7 +127,7 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
       <div
         id={controlId}
         ref={boxRef}
-        className={className}
+        className={rootClassName(state, className)}
         style={{ aspectRatio: `${thumbnailWidth} / ${thumbnailHeight}` }}
       >
         <iframe
@@ -154,13 +152,13 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
   }
 
   if (display !== 'inline') {
-    return <div id={controlId} className={className}/>;
+    return <div id={controlId} className={rootClassName(state, className)}/>;
   }
 
   return (
     <div
       id={controlId}
-      className={className}
+      className={rootClassName(state, className)}
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );

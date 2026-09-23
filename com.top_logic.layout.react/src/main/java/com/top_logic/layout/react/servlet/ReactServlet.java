@@ -53,6 +53,7 @@ import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.internal.SubsessionHandler;
 import com.top_logic.layout.react.DataProvider;
 import com.top_logic.layout.react.I18NConstants;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.TooltipContent;
 import com.top_logic.layout.react.TooltipProvider;
 import com.top_logic.layout.react.UploadHandler;
@@ -62,14 +63,17 @@ import com.top_logic.layout.react.control.ReactCommandTarget;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
+import com.top_logic.layout.react.control.overlay.DialogManager;
+import com.top_logic.layout.react.control.overlay.DirtyConfirmDialogControl;
 import com.top_logic.layout.react.control.upload.UploadSupport;
+import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.layout.react.scripting.ScriptingSession;
 import com.top_logic.layout.react.scripting.ReactWindowReplay;
 import com.top_logic.layout.react.scripting.ScriptRecorder;
 import com.top_logic.layout.react.protocol.FunctionCall;
 import com.top_logic.layout.react.protocol.JSSnipplet;
 import com.top_logic.layout.react.protocol.Property;
-import com.top_logic.layout.react.protocol.RouteVetoEvent;
+import com.top_logic.layout.react.protocol.RouteResumeEvent;
 import com.top_logic.layout.react.protocol.SSEEvent;
 import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.window.ElementPicker;
@@ -121,6 +125,25 @@ public class ReactServlet extends TopLogicServlet {
 
 	/** Name of the {@link #CMD_NAVIGATE_TO_ROUTE} argument holding the URL to adopt. */
 	private static final String ARG_URL = "url";
+
+	/**
+	 * Name of the {@link #CMD_NAVIGATE_TO_ROUTE} answer field that is set when the display does not
+	 * take up the URL.
+	 *
+	 * <p>
+	 * The client-side counterpart of this constant is {@code FIELD_REFUSED} in
+	 * {@code route-sync.ts}, which answers a refusal by taking the browser back to the history
+	 * entry the display belongs to.
+	 * </p>
+	 */
+	private static final String FIELD_REFUSED = "refused";
+
+	/**
+	 * Name of the {@link #CMD_NAVIGATE_TO_ROUTE} answer field holding the URL of the page the
+	 * display is left on, sent alongside {@link #FIELD_REFUSED}. The client-side counterpart of
+	 * this constant is {@code FIELD_CURRENT_URL} in {@code route-sync.ts}.
+	 */
+	private static final String FIELD_CURRENT_URL = "currentUrl";
 
 	/**
 	 * Name of the global command the client sends when it refused a selected file because it
@@ -638,14 +661,35 @@ public class ReactServlet extends TopLogicServlet {
 	}
 
 	/**
-	 * Handles the {@code navigateToRoute} global command sent by the client when the browser's
-	 * popstate event fires (e.g. when the user presses Back/Forward).
+	 * Handles the {@link #CMD_NAVIGATE_TO_ROUTE} global command the client sends for a URL the
+	 * browser moved to by itself - over the back and forward buttons, or over an address the user
+	 * typed.
 	 *
 	 * <p>
-	 * Looks up the {@link RouteManager} from the {@link SSEUpdateQueue} and calls
-	 * {@link RouteManager#navigateToRoute(String)}. If a veto exception is thrown (e.g. dirty
-	 * channel prevents navigation), a {@link RouteVetoEvent} is sent via SSE to restore the
-	 * browser URL.
+	 * The URL is resolved against the display by {@link RouteManager#navigateToRoute(String)}. A
+	 * page holding unsaved changes refuses to be left, and the refusal is complete before anything
+	 * is asked: the display keeps the page, and the command is answered with
+	 * {@link #FIELD_REFUSED} and the address of the page that is kept, which takes the browser back
+	 * to the history entry that page belongs to. The user is then asked what is to become of the
+	 * changes, and once they answered the client is told to make the move again by a
+	 * {@link RouteResumeEvent} - the move is the user's own, and only the browser can travel it
+	 * without leaving a duplicate of the page ahead of it.
+	 * </p>
+	 *
+	 * <p>
+	 * The resumed move arrives here as an ordinary command again, so a form deeper in the display
+	 * refusing it in turn is asked about exactly like the first one.
+	 * </p>
+	 *
+	 * <p>
+	 * A failure of any other kind is answered in the same way and is logged, without a question the
+	 * user could answer.
+	 * </p>
+	 *
+	 * <p>
+	 * The refusal travels in the answer to this very command, so the client can attribute it to the
+	 * history entry it asked about. An update sent through the {@link SSEUpdateQueue} could not:
+	 * its events are flushed when the interaction closes, which is after this response was written.
 	 * </p>
 	 */
 	private void handleNavigateToRoute(HttpServletRequest request, HttpServletResponse response,
@@ -664,10 +708,8 @@ public class ReactServlet extends TopLogicServlet {
 			return;
 		}
 
-		String url = arguments != null ? (String) arguments.get(ARG_URL) : null;
-		if (url == null) {
-			url = "";
-		}
+		String requested = arguments != null ? (String) arguments.get(ARG_URL) : null;
+		String url = requested != null ? requested : "";
 
 		// Adopting a URL changes the display like any other command does, and needs the same context
 		// for it: the subsession the controls belong to, which the window resolution above installs -
@@ -677,8 +719,8 @@ public class ReactServlet extends TopLogicServlet {
 		SubsessionHandler rootHandler = window.rootHandler();
 
 		try (Interaction interaction = ReactWindowRegistry.forSession(session).beginInteraction()) {
+			boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
 			try {
-				boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
 				try {
 					routeManager.navigateToRoute(url);
 
@@ -686,26 +728,76 @@ public class ReactServlet extends TopLogicServlet {
 					// dropped, and what the display adds from here on is a navigation again.
 					routeManager.finishAdoption();
 					sendSuccess(response);
-				} finally {
-					if (rootHandler != null) {
-						rootHandler.enableUpdate(updateBefore);
-					}
+				} catch (ChannelVetoException veto) {
+					Logger.info("Route navigation refused by unsaved changes for url '" + url + "'.",
+						ReactServlet.class);
+
+					// The refusal is complete before the question is put: display and address bar agree
+					// on the page that is kept, so the user stays on it whatever they answer.
+					sendRefused(response, restoreUrl(routeManager));
+
+					askAndResume(queue, url, veto);
+				} catch (Exception ex) {
+					Logger.info("Route navigation failed for url '" + url + "': " + ex.getMessage(),
+						ReactServlet.class);
+
+					sendRefused(response, restoreUrl(routeManager));
 				}
-			} catch (Exception ex) {
-				Logger.info("Route navigation vetoed for url '" + url + "': " + ex.getMessage(),
-					ReactServlet.class);
-
-				// The URL is not reached, so its adoption ends here: the display stays as the veto keeps
-				// it, and the address the client is restored to below is the one it shows from now on -
-				// without which the user's next navigation would be reported as a replacement of it.
-				routeManager.cancelAdoption();
-
-				RouteVetoEvent veto = RouteVetoEvent.create()
-					.setCurrentUrl(routeManager.currentUrl());
-				queue.enqueue(veto);
-				sendSuccess(response);
+			} finally {
+				if (rootHandler != null) {
+					rootHandler.enableUpdate(updateBefore);
+				}
 			}
 		}
+	}
+
+	/**
+	 * Ends the adoption of a URL the display does not take up, and answers with the URL of the page
+	 * the display is left on.
+	 *
+	 * <p>
+	 * The client shows the URL that was not reached - the browser moved there by itself - so it is
+	 * told the address of the page it is left on instead. That address is what the
+	 * {@link RouteManager} records as shown from now on, without which the user's next navigation
+	 * would be reported as a replacement of it rather than as a history entry.
+	 * </p>
+	 *
+	 * @return The URL of the page the display keeps.
+	 */
+	private String restoreUrl(RouteManager routeManager) {
+		routeManager.cancelAdoption();
+
+		return routeManager.currentUrl();
+	}
+
+	/**
+	 * Asks the user about the unsaved changes that refused a URL, and lets the client make the
+	 * refused move again once they answered.
+	 *
+	 * <p>
+	 * The move belongs to the browser's history: the client is on the page it keeps and travels
+	 * back to the entry it came from, which the display then takes up like any other move of the
+	 * user. Reaching the URL from here instead would leave a second entry for a page the history
+	 * already holds, and the entry the user moved away from unreachable by the forward button.
+	 * </p>
+	 *
+	 * <p>
+	 * The {@link RouteResumeEvent} is enqueued from the dialog button the user pressed and reaches
+	 * the client when that command's interaction closes.
+	 * </p>
+	 */
+	private void askAndResume(SSEUpdateQueue queue, String url, ChannelVetoException veto) {
+		DialogManager dialogManager = queue.getDialogManager();
+		ReactControl root = queue.getRootControl();
+		ReactContext context = root != null ? root.getReactContext() : null;
+		if (dialogManager == null || context == null) {
+			Logger.warn("Nothing can ask about the unsaved changes refusing url '" + url
+				+ "', which is therefore not reached.", ReactServlet.class);
+			return;
+		}
+
+		DirtyConfirmDialogControl.openDialog(context, dialogManager, veto.getDirtyHandlers(),
+			() -> queue.enqueue(RouteResumeEvent.create().setUrl(url)), null);
 	}
 
 	/**
@@ -1068,6 +1160,20 @@ public class ReactServlet extends TopLogicServlet {
 	private void sendSuccess(HttpServletResponse response) throws IOException {
 		PrintWriter writer = response.getWriter();
 		writer.write("{\"success\":true}");
+		writer.flush();
+	}
+
+	/**
+	 * Answers a {@link #CMD_NAVIGATE_TO_ROUTE} command whose URL the display does not take up,
+	 * naming the page the display is left on.
+	 *
+	 * @param currentUrl
+	 *        The URL of that page, as {@link RouteManager#currentUrl()} composes it.
+	 */
+	private void sendRefused(HttpServletResponse response, String currentUrl) throws IOException {
+		PrintWriter writer = response.getWriter();
+		writer.write("{\"success\":true,\"" + FIELD_REFUSED + "\":true,\"" + FIELD_CURRENT_URL + "\":"
+			+ JSON.toString(currentUrl) + "}");
 		writer.flush();
 	}
 

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="count"/>
+	</channels>
+
+	<sidebar>
+		<header-item id="section"
+			label="Section"
+		/>
+		<group id="g"
+			expanded="false"
+			label="Group"
+		>
+			<nav-item id="inner"
+				badge="count"
+				label="Inner"
+			>
+				<view-ref view="sidebar-item-content.view.xml"/>
+			</nav-item>
+			<header-item id="innerSection"
+				label="Inner section"
+			/>
+		</group>
+		<nav-item id="top"
+			hidden="true"
+			label="Top"
+		>
+			<panel/>
+		</nav-item>
+		<separator id="sep"/>
+		<command-item id="cmdHidden">
+			<action class="com.top_logic.layout.view.command.GenericViewCommand"
+				input="count"
+				label="Without input not offered"
+			>
+				<executability>
+					<null-input-hidden/>
+				</executability>
+			</action>
+		</command-item>
+		<command-item id="cmdDisabled">
+			<action class="com.top_logic.layout.view.command.GenericViewCommand"
+				input="count"
+				label="Without input out of reach"
+			>
+				<executability>
+					<null-input-disabled/>
+				</executability>
+			</action>
+		</command-item>
+	</sidebar>
+</view>

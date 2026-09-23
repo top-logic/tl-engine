@@ -1,4 +1,4 @@
-import { React, useTLFieldValue } from 'tl-react-bridge';
+import { React, useTLFieldValue, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback } = React;
@@ -40,7 +40,7 @@ const TLBooleanChoice: React.FC<TLCellProps> = ({ controlId, state }) => {
 
   if (state.editable === false) {
     return (
-      <span id={controlId} className="tlBooleanChoice tlBooleanChoice--immutable">
+      <span id={controlId} className={rootClassName(state, 'tlBooleanChoice tlBooleanChoice--immutable')}>
         {current >= 0 ? options[current].label : ''}
       </span>
     );
@@ -56,7 +56,7 @@ const TLBooleanChoice: React.FC<TLCellProps> = ({ controlId, state }) => {
     return (
       <select
         id={controlId}
-        className={cls + ' tlReactSelect'}
+        className={rootClassName(state, cls + ' tlReactSelect')}
         value={current >= 0 ? String(current) : ''}
         disabled={disabled}
         aria-invalid={hasError || undefined}
@@ -71,7 +71,7 @@ const TLBooleanChoice: React.FC<TLCellProps> = ({ controlId, state }) => {
   }
 
   return (
-    <span id={controlId} className={cls + ' tlBooleanChoice--radio'} role="radiogroup"
+    <span id={controlId} className={rootClassName(state, cls + ' tlBooleanChoice--radio')} role="radiogroup"
       aria-invalid={hasError || undefined}>
       {options.map((option, index) => {
         const optionId = `${controlId}-option-${index}`;

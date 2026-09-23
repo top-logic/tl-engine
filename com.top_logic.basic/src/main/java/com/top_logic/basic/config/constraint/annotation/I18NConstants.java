@@ -25,6 +25,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey2 ERROR_REGEXP_CONSTRAINT_VIOLATED__PATTERN_INPUT;
 
+	/**
+	 * @en Must be set, because {0} is "{1}".
+	 */
+	public static ResKey2 MUST_BE_SET_IF_OTHER_HAS_VALUE__OTHER_VALUE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

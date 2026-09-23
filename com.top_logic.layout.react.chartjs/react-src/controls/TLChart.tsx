@@ -1,5 +1,5 @@
 // react-src/controls/TLChart.tsx
-import { React } from 'tl-react-bridge';
+import { React, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import {
   Chart as ChartJS,
@@ -22,7 +22,6 @@ ChartJS.register(...registerables, zoomPlugin);
  *  - interactions: any       - Interaction descriptor per dataset
  *  - themeColors: any        - Theme palette and color defaults
  *  - zoomEnabled: boolean    - Whether zoom/pan is enabled
- *  - cssClass: string | null - Additional CSS class for the container
  *  - error: string | null    - Error message to display instead of chart
  *  - noDataMessage: string | null - Message when no datasets
  *  - tooltipContent: any     - Server-provided tooltip HTML + position info
@@ -34,7 +33,6 @@ const TLChart: React.FC<TLCellProps> = ({ controlId, state }) => {
   const interactions = state.interactions as any;
   const themeColors = state.themeColors as any;
   const zoomEnabled = state.zoomEnabled as boolean;
-  const cssClass = state.cssClass as string | null;
   const error = state.error as string | null;
   const noDataMessage = state.noDataMessage as string | null;
   const tooltipContent = state.tooltipContent as any;
@@ -105,7 +103,7 @@ const TLChart: React.FC<TLCellProps> = ({ controlId, state }) => {
   // Error state.
   if (error) {
     return (
-      <div id={controlId} className={'tlReactChart tlReactChart--error ' + (cssClass || '')}>
+      <div id={controlId} className={rootClassName(state, 'tlReactChart', 'tlReactChart--error')}>
         <div className="tlReactChart__error">{error}</div>
       </div>
     );
@@ -114,7 +112,7 @@ const TLChart: React.FC<TLCellProps> = ({ controlId, state }) => {
   // No data.
   if (!themedConfig?.data?.datasets?.length && noDataMessage) {
     return (
-      <div id={controlId} className={'tlReactChart tlReactChart--noData ' + (cssClass || '')}>
+      <div id={controlId} className={rootClassName(state, 'tlReactChart', 'tlReactChart--noData')}>
         <div className="tlReactChart__noData">{noDataMessage}</div>
       </div>
     );
@@ -122,11 +120,11 @@ const TLChart: React.FC<TLCellProps> = ({ controlId, state }) => {
 
   // No config yet.
   if (!themedConfig) {
-    return <div id={controlId} className={'tlReactChart ' + (cssClass || '')} />;
+    return <div id={controlId} className={rootClassName(state, 'tlReactChart')} />;
   }
 
   return (
-    <div id={controlId} className={'tlReactChart ' + (cssClass || '')} aria-label={`${themedConfig.type} chart`}>
+    <div id={controlId} className={rootClassName(state, 'tlReactChart')} aria-label={`${themedConfig.type} chart`}>
       <Chart
         ref={chartRef}
         type={themedConfig.type}

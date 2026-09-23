@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.layout.view.element;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -21,19 +22,25 @@ import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.SimpleSelectFieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.form.NumberDisplay;
 import com.top_logic.layout.react.control.form.ReactCheckboxControl;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
+import com.top_logic.layout.react.control.form.ReactSliderControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
+import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
+import com.top_logic.layout.react.control.select.SelectDisplay;
 import com.top_logic.layout.react.field.FieldControlRegistry;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
@@ -47,8 +54,11 @@ import com.top_logic.layout.view.command.GenericViewCommand;
 import com.top_logic.layout.view.element.ValueInputElement;
 import com.top_logic.layout.view.element.PanelElement;
 import com.top_logic.layout.view.form.AttributeOptions;
+import com.top_logic.layout.view.form.BooleanControlProvider;
 import com.top_logic.layout.view.form.ChannelFieldBinding;
 import com.top_logic.layout.view.form.FieldControlService;
+import com.top_logic.layout.view.form.NumberInputControlProvider;
+import com.top_logic.layout.view.form.SelectControlProvider;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
@@ -58,6 +68,7 @@ import com.top_logic.model.TLPrimitive.Kind;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.access.StorageMapping;
+import com.top_logic.model.annotate.ui.BooleanPresentation;
 import com.top_logic.model.annotate.util.AttributeSettings;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.util.TLModelUtil;
@@ -112,6 +123,36 @@ public class TestValueInputElement extends TestCase {
 	 */
 	private static final String PLACEHOLDER = "placeholder";
 
+	/**
+	 * State key by which the client learns the icon to draw inside the input.
+	 *
+	 * @implNote Restated here because
+	 *           {@link com.top_logic.layout.react.control.form.ReactFormFieldControl} keeps it
+	 *           protected for its subclasses.
+	 */
+	private static final String ICON = "icon";
+
+	/**
+	 * State key by which the client learns to offer a button that empties the input.
+	 *
+	 * @implNote Restated here because
+	 *           {@link com.top_logic.layout.react.control.form.ReactFormFieldControl} keeps it
+	 *           protected for its subclasses.
+	 */
+	private static final String CLEARABLE = "clearable";
+
+	/**
+	 * State key by which the client learns how long to hold a typed value back.
+	 *
+	 * @implNote Restated here because
+	 *           {@link com.top_logic.layout.react.control.form.ReactFormFieldControl} keeps it
+	 *           protected for its subclasses.
+	 */
+	private static final String DEBOUNCE_MS = "debounceMs";
+
+	/** The icon a search box carries, as the test view states it. */
+	private static final String SEARCH_ICON = "css:fa-solid fa-magnifying-glass";
+
 	private TLModelImpl _model;
 
 	private TLModule _module;
@@ -146,7 +187,7 @@ public class TestValueInputElement extends TestCase {
 	 */
 	public void testParseInputs() throws Exception {
 		List<PolymorphicConfiguration<? extends UIElement>> inputs = parseInputs();
-		assertEquals("Every input of the test view must be parsed.", 5, inputs.size());
+		assertEquals("Every input of the test view must be parsed.", 8, inputs.size());
 
 		ValueInputElement.Config text = config(inputs, 0);
 		assertEquals("term", text.getValue().getChannelName());
@@ -157,6 +198,9 @@ public class TestValueInputElement extends TestCase {
 		assertNull(text.getOptions());
 		assertEquals(Collections.emptyList(), text.getInputs());
 		assertNotNull("A stated placeholder must reach the configuration.", text.getPlaceholder());
+		assertEquals("A stated icon must reach the configuration.", SEARCH_ICON, text.getIcon());
+		assertTrue("A search box states that it can be emptied.", text.getClearable());
+		assertEquals("A duration is read as milliseconds.", Long.valueOf(500), text.getDebounce());
 		assertTrue("Without a command named, the submit hook is a generic command: " + text.getOnSubmit(),
 			text.getOnSubmit() instanceof GenericViewCommand.Config);
 		assertEquals("The actions to run on the submitted value stand inside the element.",
@@ -173,6 +217,13 @@ public class TestValueInputElement extends TestCase {
 
 		assertNull("An input without the hook submits nothing.", config(inputs, 1).getOnSubmit());
 		assertNull("An input that states no placeholder must have none.", config(inputs, 1).getPlaceholder());
+		assertNull("An input that states no icon must have none.", config(inputs, 1).getIcon());
+		assertFalse("An input is emptied by deleting its text unless it says otherwise.",
+			config(inputs, 1).getClearable());
+		assertNull("An input that states no delay waits for the span its control uses by default.",
+			config(inputs, 1).getDebounce());
+		assertNull("An input that names no control leaves the choice to the type of its value.",
+			config(inputs, 1).getInputControl());
 
 		ValueInputElement.Config owners = config(inputs, 4);
 		assertTrue("Several owners are chosen at once.", owners.getMultiple());
@@ -407,6 +458,230 @@ public class TestValueInputElement extends TestCase {
 
 		assertNull("An input without a placeholder must leave its text unset.",
 			control.scriptingScalarState().get(PLACEHOLDER));
+	}
+
+	/**
+	 * What turns a plain input into a search field - the icon it carries, the button that empties
+	 * it, and how long it waits before reporting - reaches the control that edits the value.
+	 *
+	 * <p>
+	 * Each of the three is a property of the {@link FieldSpec}, so they are applied wherever a
+	 * control is built from one instead of by the control or its caller.
+	 * </p>
+	 */
+	public void testSearchFieldPropertiesReachTheInput() throws IOException {
+		AbstractFieldModel field = new AbstractFieldModel(null);
+
+		String state = clientState(searchSpec(field), field);
+
+		assertTrue("The icon must reach the client: " + state,
+			state.contains(key(ICON) + "\"" + SEARCH_ICON + "\""));
+		assertTrue("The clear button must reach the client: " + state,
+			state.contains(key(CLEARABLE) + "true"));
+		assertTrue("The delay must reach the client: " + state,
+			state.contains(key(DEBOUNCE_MS) + "250"));
+	}
+
+	/**
+	 * An input that asks for none of the three leaves them unset, so that the client keeps its own
+	 * plain input and its own delay.
+	 */
+	public void testAPlainInputCarriesNoSearchProperties() throws IOException {
+		AbstractFieldModel field = new AbstractFieldModel(null);
+		TLType type = datatype("Plain", Kind.STRING, String.class);
+
+		String state = clientState(FieldControlService.fieldSpec(type, type, LABEL, false, field), field);
+
+		assertFalse("An input without an icon must not send one: " + state, state.contains(key(ICON)));
+		assertFalse("An input emptied by deleting its text must not send a button: " + state,
+			state.contains(key(CLEARABLE)));
+		assertFalse("An input without a stated delay must leave the span to the client: " + state,
+			state.contains(key(DEBOUNCE_MS)));
+	}
+
+	/**
+	 * The three say how the input looks and how fast it reports, not what it holds, so an
+	 * observation of the field leaves them out - while the placeholder, being the text a
+	 * label-less input names itself by, stays.
+	 */
+	public void testSearchFieldPropertiesAreRenderingOnly() {
+		AbstractFieldModel field = new AbstractFieldModel(null);
+
+		Map<String, Object> projection =
+			FieldControlRegistry.getInstance().createControl(_context, searchSpec(field), field)
+				.scriptingScalarState();
+
+		assertFalse("The icon is rendering-only.", projection.containsKey(ICON));
+		assertFalse("The clear button is rendering-only.", projection.containsKey(CLEARABLE));
+		assertFalse("The delay is rendering-only.", projection.containsKey(DEBOUNCE_MS));
+		assertEquals("The text a label-less input names itself by stays observable.",
+			"Search", projection.get(PLACEHOLDER));
+	}
+
+	/** A text field described as a search box: an icon, a clear button and a delay of its own. */
+	private FieldSpec searchSpec(AbstractFieldModel field) {
+		TLType type = datatype("Term", Kind.STRING, String.class);
+		return FieldControlService.fieldSpec(type, type, LABEL, false, field)
+			.setPlaceholder("Search")
+			.setIcon(SEARCH_ICON)
+			.setClearable(true)
+			.setDebounce(Long.valueOf(250));
+	}
+
+	/** The given state key as it is written into the serialized state. */
+	private static String key(String name) {
+		return "\"" + name + "\":";
+	}
+
+	/**
+	 * The state the control built from the given description hands to the client.
+	 *
+	 * @implNote Read from the rendered element, into whose attribute the state is serialized, since
+	 *           the map itself is visible to the control only.
+	 */
+	private String clientState(FieldSpec spec, AbstractFieldModel field) throws IOException {
+		ReactControl control = FieldControlRegistry.getInstance().createControl(_context, spec, field);
+
+		TagWriter out = new TagWriter();
+		control.write(out);
+		return out.toString().replace("&quot;", "\"");
+	}
+
+	/**
+	 * An input names the control the value is entered in, in the shape a {@code <field>} names it.
+	 */
+	public void testParseInputControl() throws Exception {
+		List<PolymorphicConfiguration<? extends UIElement>> inputs = parseInputs();
+
+		SelectControlProvider.Config chosen = inputControl(inputs, 5, SelectControlProvider.Config.class);
+		assertEquals(SelectControlProvider.class, chosen.getImplementationClass());
+		assertEquals("The shape the options are offered in must reach the configuration.",
+			SelectDisplay.SEGMENTED, chosen.getDisplay());
+
+		NumberInputControlProvider.Config dragged =
+			inputControl(inputs, 6, NumberInputControlProvider.Config.class);
+		assertEquals(NumberDisplay.SLIDER, dragged.getDisplay());
+		assertEquals("The bounds of the range must reach the configuration.",
+			Double.valueOf(0.0), dragged.getMin());
+		assertEquals(Double.valueOf(10.0), dragged.getMax());
+		assertEquals(Double.valueOf(1.0), dragged.getStep());
+
+		BooleanControlProvider.Config flipped =
+			inputControl(inputs, 7, BooleanControlProvider.Config.class);
+		assertEquals(BooleanPresentation.SWITCH, flipped.getDisplay());
+	}
+
+	/**
+	 * The control an input names edits the value, whatever control the type of that value would
+	 * lead to.
+	 */
+	public void testTheNamedControlEditsTheValue() {
+		TLEnumeration status = _model.addEnumeration(_module, _module, "Choice");
+		TLModelUtil.addClassifier(status, "open");
+		TLModelUtil.addClassifier(status, "closed");
+		SimpleSelectFieldModel chosen =
+			new SimpleSelectFieldModel(null, AttributeOptions.optionsFor(status), false);
+
+		ReactControl control = entered(status, chosen, selectDisplay(SelectDisplay.SEGMENTED));
+
+		assertTrue("A selection is made on a select control, but is made on " + control.getClass(),
+			control instanceof ReactDropdownSelectControl);
+		assertEquals("The named control must be built in the shape it was configured for.",
+			SelectDisplay.SEGMENTED, ((ReactDropdownSelectControl) control).getDisplay());
+	}
+
+	/** Without a control named, the value is entered in the one its type leads to. */
+	public void testWithoutANamedControlTheTypeDecides() {
+		TLEnumeration status = _model.addEnumeration(_module, _module, "Plain");
+		TLModelUtil.addClassifier(status, "open");
+		SimpleSelectFieldModel chosen =
+			new SimpleSelectFieldModel(null, AttributeOptions.optionsFor(status), false);
+
+		ReactControl control = entered(status, chosen, null);
+
+		assertEquals("A selection is offered in a list that opens on demand unless stated otherwise.",
+			SelectDisplay.DROPDOWN, ((ReactDropdownSelectControl) control).getDisplay());
+	}
+
+	/** A number is dragged along a track where the input names a slider. */
+	public void testANumberIsDraggedWhereASliderIsNamed() {
+		TLType number = datatype("Amount", Kind.INT, Integer.class);
+		AbstractFieldModel field = new AbstractFieldModel(null);
+
+		assertEquals(ReactSliderControl.class, entered(number, field, sliderDisplay()).getClass());
+	}
+
+	/** A truth value is flipped on a switch where the input names one. */
+	public void testATruthValueIsFlippedWhereASwitchIsNamed() {
+		TLType flag = datatype("Switched", Kind.BOOLEAN, Boolean.class);
+		AbstractFieldModel field = new AbstractFieldModel(null);
+
+		ReactControl control = entered(flag, field, switchDisplay());
+
+		assertEquals(BooleanPresentation.SWITCH, ((ReactCheckboxControl) control).getPresentation());
+	}
+
+	/**
+	 * The control a value of the given type is entered in, with the given control named by the
+	 * input or {@code null} to let the type decide.
+	 */
+	private ReactControl entered(TLType type, AbstractFieldModel field,
+			PolymorphicConfiguration<? extends ReactFieldControlProvider> control) {
+		FieldSpec spec = FieldControlService.fieldSpec(type, type, LABEL, false, field);
+		return controlService().createFieldControl(_context, type, spec, field, control);
+	}
+
+	/** A select control offering its options in the given shape. */
+	private static PolymorphicConfiguration<? extends ReactFieldControlProvider> selectDisplay(
+			SelectDisplay display) {
+		SelectControlProvider.Config config =
+			TypedConfiguration.newConfigItem(SelectControlProvider.Config.class);
+		config.update(config.descriptor().getProperty(SelectControlProvider.Config.DISPLAY), display);
+		return config;
+	}
+
+	/** A number control dragging its value along a track of a small range. */
+	private static PolymorphicConfiguration<? extends ReactFieldControlProvider> sliderDisplay() {
+		NumberInputControlProvider.Config config =
+			TypedConfiguration.newConfigItem(NumberInputControlProvider.Config.class);
+		config.update(config.descriptor().getProperty(NumberInputControlProvider.Config.DISPLAY),
+			NumberDisplay.SLIDER);
+		config.update(config.descriptor().getProperty(NumberInputControlProvider.Config.MIN),
+			Double.valueOf(0.0));
+		config.update(config.descriptor().getProperty(NumberInputControlProvider.Config.MAX),
+			Double.valueOf(10.0));
+		return config;
+	}
+
+	/** A boolean control flipping its value on a switch. */
+	private static PolymorphicConfiguration<? extends ReactFieldControlProvider> switchDisplay() {
+		BooleanControlProvider.Config config =
+			TypedConfiguration.newConfigItem(BooleanControlProvider.Config.class);
+		config.update(config.descriptor().getProperty(BooleanControlProvider.Config.DISPLAY),
+			BooleanPresentation.SWITCH);
+		return config;
+	}
+
+	/**
+	 * A {@link FieldControlService} resolving the controls, built without the service module: the
+	 * resolution under test reads nothing the startup of the service fills.
+	 */
+	private static FieldControlService controlService() {
+		FieldControlService.Config config = TypedConfiguration.newConfigItem(FieldControlService.Config.class);
+		config.setImplementationClass(FieldControlService.class);
+		return (FieldControlService) SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY
+			.getInstance(config);
+	}
+
+	/** The control configuration the input at the given position names. */
+	private static <C extends PolymorphicConfiguration<? extends ReactFieldControlProvider>> C inputControl(
+			List<PolymorphicConfiguration<? extends UIElement>> inputs, int index, Class<C> expected) {
+		PolymorphicConfiguration<? extends ReactFieldControlProvider> control =
+			config(inputs, index).getInputControl();
+		assertNotNull("Input " + index + " must name a control.", control);
+		assertTrue("Input " + index + " must name a " + expected.getName() + ", but names " + control,
+			expected.isInstance(control));
+		return expected.cast(control);
 	}
 
 	/**

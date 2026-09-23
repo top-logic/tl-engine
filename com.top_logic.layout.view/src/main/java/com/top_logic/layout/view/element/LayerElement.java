@@ -9,7 +9,6 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
@@ -45,9 +44,6 @@ public class LayerElement extends ContainerElement {
 		/** Configuration name for {@link #getPosition()}. */
 		String POSITION = "position";
 
-		/** Configuration name for {@link #getCssClass()}. */
-		String CSS_CLASS = "css-class";
-
 		@Override
 		@ClassDefault(LayerElement.class)
 		Class<? extends UIElement> getImplementationClass();
@@ -58,13 +54,6 @@ public class LayerElement extends ContainerElement {
 		 */
 		@Name(POSITION)
 		LayerAnchor getPosition();
-
-		/**
-		 * Additional CSS class appended to the classes of the layer.
-		 */
-		@Name(CSS_CLASS)
-		@Nullable
-		String getCssClass();
 	}
 
 	private final LayerAnchor _position;
@@ -89,7 +78,9 @@ public class LayerElement extends ContainerElement {
 	}
 
 	/**
-	 * The additional CSS class of this layer, or {@code null} for none.
+	 * The CSS class this layer is displayed with, or {@code null} for none.
+	 *
+	 * @see Config#getCssClass()
 	 */
 	public String getCssClass() {
 		return _cssClass;

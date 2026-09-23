@@ -8,7 +8,6 @@ package com.top_logic.layout.react.control.layout;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
@@ -50,8 +49,13 @@ public class ReactOverlayControl extends ReactControl {
 	/** State key for the position a layer is anchored at. */
 	public static final String ANCHOR = "anchor";
 
-	/** @see #setCssClass(String) */
-	public static final String CSS_CLASS = "cssClass";
+	/**
+	 * State key for the CSS class of a layer, which a layer descriptor carries as a control carries
+	 * its own.
+	 *
+	 * @see ReactControl#CSS_CLASS
+	 */
+	public static final String LAYER_CSS_CLASS = CSS_CLASS;
 
 	/**
 	 * Content placed over the base of a {@link ReactOverlayControl}.
@@ -98,26 +102,9 @@ public class ReactOverlayControl extends ReactControl {
 		Map<String, Object> result = new LinkedHashMap<>();
 		result.put(CONTENT, layer.content());
 		result.put(ANCHOR, layer.anchor().getExternalName());
-		result.put(CSS_CLASS, layer.cssClass());
+		result.put(LAYER_CSS_CLASS, layer.cssClass());
+
 		return result;
-	}
-
-	/**
-	 * Sets an additional CSS class, appended to the classes of the overlay.
-	 *
-	 * @param cssClass
-	 *        The CSS class, or {@code null} for none.
-	 */
-	public void setCssClass(String cssClass) {
-		putState(CSS_CLASS, cssClass);
-	}
-
-	/**
-	 * Rendering-only state keys, omitted from the headless projection.
-	 */
-	@Override
-	protected Set<String> scriptingPresentationKeys() {
-		return Set.of(CSS_CLASS);
 	}
 
 	/**

@@ -1,4 +1,4 @@
-import { React, useTLState, useTLUpload } from 'tl-react-bridge';
+import { React, useTLState, useTLUpload, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { ThemeIcon } from './icon/ThemeIcon';
 
@@ -68,10 +68,11 @@ const TLUploadButton: React.FC<TLCellProps> = ({ controlId }) => {
         onClick={handleClick}
         disabled={isDisabled}
         style={hidden ? { display: 'none' } : undefined}
-        className={'tlReactButton' + (iconOnly ? ' tlReactButton--iconOnly' : '')
+        className={rootClassName(state, 'tlReactButton' + (iconOnly ? ' tlReactButton--iconOnly' : '')
           + (appearance === 'link' ? ' tlReactButton--link' : '')
-          + (appearance === 'primary' ? ' tlReactButton--primary' : '')}
+          + (appearance === 'primary' ? ' tlReactButton--primary' : ''))}
         aria-label={iconOnly ? label : undefined}
+        {...(iconOnly ? tooltipProps(label) : TOOLTIP_WHEN_CLIPPED)}
       >
         {showIcon && image && <ThemeIcon encoded={image} className="tlReactButton__image" />}
         {showLabel && <span className="tlReactButton__label">{label}</span>}

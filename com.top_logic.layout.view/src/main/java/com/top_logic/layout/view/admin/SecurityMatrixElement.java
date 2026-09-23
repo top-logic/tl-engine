@@ -72,12 +72,14 @@ public class SecurityMatrixElement implements UIElement {
 		Class<? extends UIElement> getImplementationClass();
 	}
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link SecurityMatrixElement} from configuration.
 	 */
 	@CalledByReflection
 	public SecurityMatrixElement(InstantiationContext context, Config config) {
-		// No configuration needed.
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -124,7 +126,9 @@ public class SecurityMatrixElement implements UIElement {
 		DefaultTableView<Row> view =
 			DefaultTableView.create(columns, source, PersonalConfigViewStateStore.INSTANCE, TABLE_ID);
 
-		return new TableViewControl<>(context, view, false);
+		TableViewControl<Row> control = new TableViewControl<>(context, view, false);
+		control.setCssClass(_cssClass);
+		return control;
 	}
 
 	/**

@@ -12,21 +12,33 @@ import java.util.Map;
 import junit.framework.Test;
 import junit.framework.TestCase;
 
-import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.knowledge.KBSetup;
 
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.layout.AbstractResourceProvider;
 import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.form.model.SimpleSelectFieldModel;
+import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ForwardingReactContext;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
 import com.top_logic.layout.react.control.table.ReactResourceCellControl;
+import com.top_logic.layout.react.control.tree.ReactTreeControl;
+import com.top_logic.layout.react.controlprovider.MetaResourceControlProvider;
 import com.top_logic.layout.react.navigation.ObjectNavigator;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.layout.tree.model.DefaultTreeUINodeModel;
+import com.top_logic.layout.tree.model.DefaultTreeUINodeModel.DefaultTreeUIBuilder;
+import com.top_logic.layout.tree.model.DefaultTreeUINodeModel.DefaultTreeUINode;
+import com.top_logic.mig.html.DefaultSingleSelectionModel;
+import com.top_logic.mig.html.SelectionModelOwner;
+import com.top_logic.model.listen.ModelScope;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -42,7 +54,13 @@ public class TestObjectLinks extends TestCase {
 	/** The value it displays nowhere. */
 	private static final String UNSHOWN = "unshown";
 
+	/** The business object of the root of the test tree. */
+	private static final String ROOT = "root";
+
 	private static final String HAS_LINK = "\"hasLink\":true";
+
+	/** The state key a display puts the label of its object into. */
+	private static final String LABEL_STATE = "\"label\":";
 
 	private static final String OPTION_LINK = "\"link\":true";
 
@@ -95,6 +113,13 @@ public class TestObjectLinks extends TestCase {
 			@Override
 			public ObjectNavigator getObjectNavigator() {
 				return _navigator;
+			}
+
+			@Override
+			public ModelScope getModelScope() {
+				// Outside a browser window, nothing observes object changes, see
+				// ReactControl#modelScope().
+				return null;
 			}
 		};
 	}
@@ -195,6 +220,71 @@ public class TestObjectLinks extends TestCase {
 		assertEquals(List.of(), _navigator.shown());
 	}
 
+	/** A tree node stands for a displayed object, so it is a link like any other display of it. */
+	public void testATreeNodeOfADisplayedObjectIsALink() {
+		String state = tree(SHOWN).stateAsJSON();
+
+		assertTrue(state.contains(HAS_LINK));
+		assertTrue("The node content displays the business object, not the tree node.",
+			state.contains("\"label\":\"" + SHOWN + "\""));
+	}
+
+	/** A node standing for an object the application displays nowhere is plain text. */
+	public void testATreeNodeOfAnUndisplayedObjectIsNoLink() {
+		String state = tree(UNSHOWN).stateAsJSON();
+
+		assertFalse(state.contains(HAS_LINK));
+		assertTrue(state.contains("\"label\":\"" + UNSHOWN + "\""));
+	}
+
+	/** The display an object gets by default leads to the place the application shows it at. */
+	public void testTheDefaultDisplayOfAnObjectLeadsToIt() {
+		assertTrue(display(TypedConfiguration.newConfigItem(MetaResourceControlProvider.Config.class))
+			.stateAsJSON().contains(HAS_LINK));
+	}
+
+	/** A display that stands for the object where it is can drop the link. */
+	public void testADisplayWithoutTheLinkLeadsNowhere() {
+		MetaResourceControlProvider.Config config =
+			TypedConfiguration.newConfigItem(MetaResourceControlProvider.Config.class);
+		config.setLink(false);
+
+		assertFalse(display(config).stateAsJSON().contains(HAS_LINK));
+	}
+
+	/** A display without the label shows the object by its icon alone. */
+	public void testADisplayWithoutTheLabelShowsNoLabel() {
+		MetaResourceControlProvider.Config config =
+			TypedConfiguration.newConfigItem(MetaResourceControlProvider.Config.class);
+		config.setLabel(false);
+
+		assertFalse(display(config).stateAsJSON().contains(LABEL_STATE));
+		assertTrue(display(TypedConfiguration.newConfigItem(MetaResourceControlProvider.Config.class))
+			.stateAsJSON().contains(LABEL_STATE));
+	}
+
+	/** The display the given configuration gives to {@link #SHOWN}. */
+	private ReactControl display(MetaResourceControlProvider.Config config) {
+		return TypedConfigUtil.createInstance(config).createControl(_context, SHOWN);
+	}
+
+	/**
+	 * A tree displaying the given objects as the children of its visible root, with resource cells
+	 * as node content.
+	 */
+	private ReactTreeControl tree(Object... businessObjects) {
+		DefaultTreeUINodeModel treeModel = new DefaultTreeUINodeModel(new DefaultTreeUIBuilder(), ROOT);
+		treeModel.setRootVisible(true);
+		DefaultTreeUINode root = treeModel.getRoot();
+		for (Object businessObject : businessObjects) {
+			root.createChild(businessObject);
+		}
+		root.setExpanded(true);
+
+		return new ReactTreeControl(_context, treeModel, new DefaultSingleSelectionModel<>(SelectionModelOwner.NO_OWNER),
+			(context, value) -> new ReactResourceCellControl(context, value, LABELS, false, true, true));
+	}
+
 	private ReactResourceCellControl cell(ReactContext context, Object value, boolean useLink) {
 		return new ReactResourceCellControl(context, value, LABELS, false, true, useLink);
 	}
@@ -221,11 +311,14 @@ public class TestObjectLinks extends TestCase {
 	}
 
 	/**
-	 * Test suite requiring the session resources a select field labels its empty selection with.
+	 * Test suite requiring the session resources a select field labels its empty selection with, and
+	 * the service that resolves how an object is displayed. That service builds on the application
+	 * model, which lives in a knowledge base, so the suite runs on one.
 	 */
 	public static Test suite() {
-		return ModuleTestSetup.setupModule(
-			ServiceTestSetup.createSetup(TestObjectLinks.class, ThreadContextManager.Module.INSTANCE));
+		return KBSetup.getSingleKBTest(TestObjectLinks.class,
+			ServiceTestSetup.createStarterFactoryForModules(
+				ThreadContextManager.Module.INSTANCE, LabelProviderService.Module.INSTANCE));
 	}
 
 }

@@ -1,4 +1,4 @@
-import { React, useTLState, TLChild } from 'tl-react-bridge';
+import { React, useTLState, TLChild, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 interface LayerDescriptor {
@@ -17,17 +17,15 @@ interface LayerDescriptor {
  * State:
  * - base: ChildDescriptor
  * - layers: { control: ChildDescriptor, anchor: string, cssClass: string | null }[]
- * - cssClass: string | null
  */
 const TLOverlay: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
 
   const base = state.base;
   const layers = (state.layers as LayerDescriptor[]) ?? [];
-  const cssClass = (state.cssClass as string) ?? '';
 
   return (
-    <div id={controlId} className={['tlOverlay', cssClass].filter(Boolean).join(' ')}>
+    <div id={controlId} className={rootClassName(state, 'tlOverlay')}>
       <div className="tlOverlay__base">
         <TLChild control={base} />
       </div>

@@ -76,9 +76,6 @@ public class ImageElement implements UIElement {
 		/** Configuration name for {@link #getLazy()}. */
 		String LAZY = "lazy";
 
-		/** Configuration name for {@link #getCssClass()}. */
-		String CSS_CLASS = "css-class";
-
 		/**
 		 * Pattern a value of {@link #getAspectRatio()} matches: two numbers separated by a slash.
 		 */
@@ -181,12 +178,6 @@ public class ImageElement implements UIElement {
 		@BooleanDefault(false)
 		boolean getLazy();
 
-		/**
-		 * Additional CSS class appended to the classes of the picture's box.
-		 */
-		@Name(CSS_CLASS)
-		@Nullable
-		String getCssClass();
 	}
 
 	private final Config _config;

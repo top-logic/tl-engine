@@ -12,14 +12,17 @@ import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * Minimal base {@link CommandModel} stub used by context-menu tests. Subclasses override behavior
- * as required.
+ * Minimal base {@link CommandModel} stub for tests that need a command without a command
+ * implementation behind it. Subclasses override behavior as required.
  */
-class FakeCommandModelBase implements CommandModel {
+public class FakeCommandModelBase implements CommandModel {
 
 	private final String _name;
 
-	FakeCommandModelBase(String name) {
+	/**
+	 * Creates a {@link FakeCommandModelBase} answering with the given name and label.
+	 */
+	public FakeCommandModelBase(String name) {
 		_name = name;
 	}
 

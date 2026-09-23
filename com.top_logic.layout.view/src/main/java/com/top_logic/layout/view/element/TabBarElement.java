@@ -155,6 +155,8 @@ public class TabBarElement implements UIElement {
 
 	private final String _activeTab;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link TabBarElement} from configuration.
 	 */
@@ -170,6 +172,7 @@ public class TabBarElement implements UIElement {
 				tabConfig.getAccessControl(), children));
 		}
 		_activeTab = config.getActiveTab();
+		_cssClass = config.getCssClass();
 	}
 
 	/**
@@ -201,7 +204,9 @@ public class TabBarElement implements UIElement {
 				// Access denied for the current user: omit the tab entirely.
 				continue;
 			}
-			DirtyChannel dirtyChannel = new DirtyChannel();
+			// The tab lies within the scope enclosing the tab bar (a sidebar item, say), so what a
+			// form of the tab holds unsaved is held unsaved there as well.
+			DirtyChannel dirtyChannel = new DirtyChannel(context.getDirtyChannel());
 			// The content of a tab is created only when the tab is first activated, so the tab's
 			// context must already say where that content will sit.
 			ViewContext tabContext = context.withScope(RevealPath.class, here.append(this, entry._id));
@@ -218,6 +223,7 @@ public class TabBarElement implements UIElement {
 		}
 		String activeTab = _activeTab != null && !_activeTab.isEmpty() ? _activeTab : null;
 		ReactTabBarControl tabBar = new ReactTabBarControl(context, null, tabDefs, activeTab);
+		tabBar.setCssClass(_cssClass);
 
 		RevealRegistry registry = context.getRevealRegistry();
 		if (registry != null) {

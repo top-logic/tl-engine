@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<stack>
+		<text label="Plain"/>
+		<text
+			appearance="pill"
+			label="Styled"
+			tone="on-color"
+			variant="headline"
+		/>
+		<text
+			label="Truncated"
+			overflow="ellipsis"
+			tone="error"
+		/>
+	</stack>
+</view>

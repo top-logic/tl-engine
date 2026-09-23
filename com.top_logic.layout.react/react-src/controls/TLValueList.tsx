@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, useListReorder, TLChild } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, useListReorder, TLChild, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import FontIcon from './FontIcon';
 
@@ -28,8 +28,9 @@ const REMOVE_ICON = 'css:fa-solid fa-xmark';
 const HANDLE_ICON = 'css:fa-solid fa-grip-vertical';
 
 /**
- * The text between two values read in one line. It is written out rather than drawn by the style
- * sheet, so that the values can be copied and searched as the text they read as.
+ * The text between two values. It is written out rather than drawn by the style sheet, so that the
+ * values can be copied and searched as the text they read as. Where the values stand on lines of
+ * their own, the line break separates them and the style sheet hides this text.
  */
 const SEPARATOR = ', ';
 
@@ -44,8 +45,10 @@ const SEPARATOR = ', ';
  *
  * While the field is only displayed, the values follow each other with a separator between them
  * ('inline') or each on a line of its own ('block', for a value that is a text of several lines).
- * While it is edited, every value takes a row with the button that removes it, and a further button
- * below appends an empty value.
+ * The separator is written between two values in either layout; which of the two is read - the
+ * separator or the line break - the style sheet decides, so that a display granting the list a
+ * single line can fall back on the separator. While the field is edited, every value takes a row
+ * with the button that removes it, and a further button below appends an empty value.
  *
  * Where the order is part of the value, each row starts with a handle that moves the value: by
  * dragging the row by that handle to where the value belongs, or with the arrow keys while the handle
@@ -95,10 +98,10 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
 
   if (!editable) {
     return (
-      <span id={controlId} className={cls}>
+      <span id={controlId} className={rootClassName(state, cls)}>
         {elements.map((element, index) => (
           <React.Fragment key={index}>
-            {index > 0 && !block && <span className="tlValueList__separator">{SEPARATOR}</span>}
+            {index > 0 && <span className="tlValueList__separator">{SEPARATOR}</span>}
             <span className="tlValueList__item">
               <TLChild control={element} />
             </span>
@@ -109,7 +112,7 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
   }
 
   return (
-    <div id={controlId} className={cls} {...reorder.containerProps}>
+    <div id={controlId} className={rootClassName(state, cls)} {...reorder.containerProps}>
       {elements.map((element, index) => {
         const dragState = reorder.itemState(index);
         let rowCls = 'tlValueList__row';
@@ -128,8 +131,8 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
               <button
                 type="button"
                 className="tlValueList__handle"
-                title={t['js.valueList.move']}
                 aria-label={t['js.valueList.move']}
+                {...tooltipProps(t['js.valueList.move'])}
                 ref={(handle) => {
                   handles.current[index] = handle;
                 }}
@@ -145,8 +148,8 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
             <button
               type="button"
               className="tlValueList__remove"
-              title={t['js.valueList.remove']}
               aria-label={t['js.valueList.remove']}
+              {...tooltipProps(t['js.valueList.remove'])}
               onClick={() => sendCommand(CMD_REMOVE_ELEMENT, { [ARG_INDEX]: index })}
             >
               <FontIcon image={REMOVE_ICON} />
@@ -157,8 +160,8 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
       <button
         type="button"
         className="tlValueList__add"
-        title={t['js.valueList.add']}
         aria-label={t['js.valueList.add']}
+        {...tooltipProps(t['js.valueList.add'])}
         onClick={() => sendCommand(CMD_ADD_ELEMENT)}
       >
         <FontIcon image={ADD_ICON} />

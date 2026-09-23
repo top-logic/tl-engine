@@ -112,6 +112,8 @@ public class ServiceTable implements UIElement {
 
 	private final ChannelRef _stateRef;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link ServiceTable} from configuration.
 	 */
@@ -120,6 +122,7 @@ public class ServiceTable implements UIElement {
 		_inputRef = config.getInput();
 		_selectionRef = config.getSelection();
 		_stateRef = config.getState();
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -167,6 +170,7 @@ public class ServiceTable implements UIElement {
 			});
 		}
 
+		control.setCssClass(_cssClass);
 		return control;
 	}
 

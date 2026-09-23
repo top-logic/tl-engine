@@ -16,7 +16,9 @@ register('TLCodeEditor', TLCodeEditor);
 
 // Reusable surface for specialized editors.
 export { default as CodeEditor } from './controls/CodeEditor';
-export type { CodeEditorProps, CodeEditorDiagnostic } from './controls/CodeEditor';
+export type {
+  CodeEditorProps, CodeEditorDiagnostic, CodeEditorHover, CodeEditorHoverSource,
+} from './controls/CodeEditor';
 
 // Shared runtime primitives (single instance owned by this bundle).
 export { LRLanguage, LanguageSupport } from '@codemirror/language';

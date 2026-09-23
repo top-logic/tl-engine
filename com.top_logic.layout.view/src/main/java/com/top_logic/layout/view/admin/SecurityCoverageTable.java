@@ -21,6 +21,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -129,6 +130,13 @@ public class SecurityCoverageTable implements UIElement {
 
 	/** Key of the flag telling whether the application's configuration defines a rule entry. */
 	public static final String RULE_STORED = "stored";
+
+	/**
+	 * Renders a {@link CoverageStatus} with its icon and label through the default
+	 * {@link MetaResourceControlProvider} configuration.
+	 */
+	private static final MetaResourceControlProvider STATUS_DISPLAY =
+		TypedConfigUtil.createInstance(MetaResourceControlProvider.Config.class);
 
 	/** {@link #RULE_KIND} of an entry standing for a security parent rule. */
 	public static final String KIND_SECURITY_PARENT = "securityParent";
@@ -645,7 +653,7 @@ public class SecurityCoverageTable implements UIElement {
 		return DefaultColumn.<Object, CoverageStatus> builder(COLUMN_STATUS, row -> coverage(row).status())
 			.label(I18NConstants.COVERAGE_COLUMN_STATUS)
 			.renderer(status -> new CellContent.Raw(
-				(CellControlFactory) context -> MetaResourceControlProvider.INSTANCE.createControl(context, status)))
+				(CellControlFactory) context -> STATUS_DISPLAY.createControl(context, status)))
 			.sort(() -> Comparator.<CoverageStatus> naturalOrder())
 			.filter(new TextColumnFilter<>(text))
 			.width(150)

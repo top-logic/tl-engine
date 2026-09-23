@@ -306,6 +306,15 @@
 								<de>Assistent</de>
 							</label>
 						</nav-item>
+						<nav-item id="form-fill"
+							icon="css:bi bi-layout-text-window-reverse"
+						>
+							<view-ref view="demo/form-fill-demo.view.xml"/>
+							<label>
+								<en>Page form</en>
+								<de>Seitenformular</de>
+							</label>
+						</nav-item>
 						<nav-item id="calendar"
 							icon="css:bi bi-calendar3"
 						>

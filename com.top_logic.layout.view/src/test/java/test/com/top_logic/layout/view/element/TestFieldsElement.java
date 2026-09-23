@@ -37,9 +37,15 @@ import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
+import com.top_logic.layout.view.channel.DefaultViewChannel;
+import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.FieldsElement;
+import com.top_logic.layout.view.element.FormElement;
 import com.top_logic.layout.view.element.PanelElement;
 import com.top_logic.layout.view.element.ValueInputElement;
+import com.top_logic.layout.view.form.FormControl;
+import com.top_logic.model.TransientObject;
+import com.top_logic.model.listen.ModelScope;
 
 /**
  * Tests for {@link FieldsElement} - the {@code <fields>} element laying its content out as the
@@ -49,6 +55,7 @@ import com.top_logic.layout.view.element.ValueInputElement;
  * What the element decides is the grid: how many columns the fields are distributed over and where
  * their labels stand. The fields themselves are whatever the view puts inside - the inputs a view
  * owns are the case the element exists for - and reach the grid in the order they are written in.
+ * Inside a form, the grid displays the form's edit mode.
  * </p>
  */
 public class TestFieldsElement extends TestCase {
@@ -65,13 +72,16 @@ public class TestFieldsElement extends TestCase {
 	/** The {@code <fields>} taking a label position only a single field can take. */
 	private static final int FIELD_LEVEL_POSITION = 3;
 
+	/** The channel the form of the form test view displays its object from. */
+	private static final String DISPLAYED_OBJECT = "displayed";
+
 	private ViewContext _context;
 
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
 
-		_context = new DefaultViewContext(new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test")));
+		_context = new DefaultViewContext(new HeadlessReactContext());
 	}
 
 	@Override
@@ -142,6 +152,69 @@ public class TestFieldsElement extends TestCase {
 			errors.contains(LabelPosition.AUTO.getExternalName()));
 	}
 
+	/**
+	 * A grid standing inside a form lays out a part of the form's fields and displays the form's
+	 * edit mode: read-only while the form is not being edited.
+	 */
+	public void testAGridInAFormFollowsTheEditModeOfTheForm() throws Exception {
+		ViewChannel displayed = new DefaultViewChannel(DISPLAYED_OBJECT);
+		displayed.set(new TransientObject() {
+			// Object to display; no attribute of it is read.
+		});
+		_context.registerChannel(DISPLAYED_OBJECT, displayed);
+
+		FormControl form = formInView();
+		List<ReactControl> children = form.scriptingChildren();
+		assertEquals("The grid is the only content of the form.", 1, children.size());
+		assertTrue("The content of the form must be a field grid, but is " + children.get(0),
+			children.get(0) instanceof ReactFormLayoutControl);
+		ReactFormLayoutControl grid = (ReactFormLayoutControl) children.get(0);
+
+		assertEquals("A form not being edited displays its fields read-only, in every grid.",
+			Boolean.TRUE, readOnly(grid));
+
+		form.enterEditMode();
+		assertEquals("A form being edited offers its fields for editing, in every grid.",
+			Boolean.FALSE, readOnly(grid));
+
+		form.executeCancel();
+		assertEquals("Leaving edit mode displays the fields read-only again.",
+			Boolean.TRUE, readOnly(grid));
+	}
+
+	/** A grid outside a form has no edit mode to follow and is never read-only. */
+	public void testAGridOutsideAFormIsNotReadOnly() throws Exception {
+		assertEquals(Boolean.FALSE, readOnly(grid(DEFAULT_GRID)));
+	}
+
+	private static Object readOnly(ReactFormLayoutControl grid) {
+		return grid.scriptingScalarState().get(ReactFormLayoutControl.READ_ONLY);
+	}
+
+	/** The control the {@code <form>} of the form test view builds. */
+	private FormControl formInView() throws Exception {
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestFieldsElement.class);
+
+		Map<String, ConfigurationDescriptor> descriptors = Collections.singletonMap(
+			"view", TypedConfiguration.getConfigurationDescriptor(ViewElement.Config.class));
+
+		BinaryContent source = new ClassRelativeBinaryContent(TestFieldsElement.class, "test-fields-in-form.view.xml");
+
+		ConfigurationReader reader = new ConfigurationReader(context, descriptors);
+		reader.setSource(source);
+		ViewElement.Config config = (ViewElement.Config) reader.read();
+		context.checkErrors();
+
+		assertTrue("The content of the view is a form.", config.getContent() instanceof FormElement.Config);
+		FormElement element = (FormElement) context.getInstance(config.getContent());
+		context.checkErrors();
+
+		IReactControl control = element.createControl(_context);
+		assertTrue("A " + FormElement.class.getSimpleName() + " must build a form, but is " + control,
+			control instanceof FormControl);
+		return (FormControl) control;
+	}
+
 	/** The layout the {@code <fields>} at the given position builds. */
 	private ReactFormLayoutControl grid(int index) throws Exception {
 		DefaultInstantiationContext context = new DefaultInstantiationContext(TestFieldsElement.class);
@@ -197,8 +270,24 @@ public class TestFieldsElement extends TestCase {
 	}
 
 	/**
+	 * React context of a test that displays no persistent object, and therefore has no
+	 * {@link ModelScope} to observe one in.
+	 */
+	private static final class HeadlessReactContext extends DefaultReactContext {
+
+		HeadlessReactContext() {
+			super("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
+		}
+
+		@Override
+		public ModelScope getModelScope() {
+			return null;
+		}
+	}
+
+	/**
 	 * Test suite requiring the {@link TypeIndex} module for resolving the element tags, and the
-	 * services a displayed text resolves its label with.
+	 * services a displayed text resolves its label and a form its no-model message with.
 	 */
 	public static Test suite() {
 		return ModuleLicenceTestSetup.setupModule(

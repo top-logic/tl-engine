@@ -820,7 +820,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	}
 
 	private void fireFormStateChanged() {
-		for (FormModelListener listener : _formModelListeners) {
+		// A listener may deregister while being notified, e.g. a field grid disposed by the change.
+		for (FormModelListener listener : new ArrayList<>(_formModelListeners)) {
 			listener.onFormStateChanged(this);
 		}
 		// The participants have rebuilt themselves, so what the user sees may differ from before.

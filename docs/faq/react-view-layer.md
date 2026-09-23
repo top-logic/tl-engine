@@ -40,7 +40,7 @@
     </view>
     ```
     The delay is the span a *typed* value is held back; a value that is picked - a dropdown, a date picker, a checkbox - reaches the channel with the choice and waits for nothing. An input whose value the server rewrites as it stores it (a number, an internationalized text) holds the value back until the input is left (`setSendValueOnBlur(true)`) and ignores the delay altogether - what it costs is server-side feedback while typing, which is the trade that behaviour is for. Without a stated delay a typed input uses the one span every typed input shares, `VALUE_DEBOUNCE_MS` (300 ms) exported from the bridge. The three are rendering-only: `ReactFormFieldControl.scriptingPresentationKeys()` keeps `icon`, `clearable` and `debounceMs` out of the headless projection, while the `placeholder` stays in it, being the text a label-less input names itself by. The three hand-rolled search boxes elsewhere in the layer - the table filter bar, the dropdown search, the icon-select popup - are controls of their own and are unaffected.
-  - **Layout: `<fields>`** (`FieldsElement`). A `<value-input>` renders the label-and-input chrome of a field but, standing outside a `<form>`, gets none of the grid a form renders around its fields. `<fields>` is that grid on its own (`ReactFormLayoutControl`, `TLFormLayout`): the `var(--page-inset)` padding content owns in the spacing model, the auto-fit columns (`max-columns`, 3 by default), and the `FormLayoutContext` a `TLFormField` reads to move a label from beside its input to above it when the column is narrower than 320px (`label-position` `auto` by default, or fixed `side` / `top`; the field-level `after` / `hidden` are rejected). A `<form>` needs no `<fields>`, being such a grid already; a `<field>` still needs a `<form>`, since `<fields>` carries no object.
+  - **Layout: `<fields>`** (`FieldsElement`). A `<value-input>` renders the label-and-input chrome of a field but, standing outside a `<form>`, gets none of the grid a form renders around its fields. `<fields>` is that grid on its own (`ReactFormLayoutControl`, `TLFormLayout`): the `var(--page-inset)` padding content owns in the spacing model, the auto-fit columns (`max-columns`, 3 by default), and the `FormLayoutContext` a `TLFormField` reads to move a label from beside its input to above it when the column is narrower than 320px (`label-position` `auto` by default, or fixed `side` / `top`; the field-level `after` / `hidden` are rejected). A `<fields>` also stands inside a `<form>`: it lays out the fields of one area of a form whose areas are panels or split panes, and then follows the form's edit mode (the grid is read-only while the form is not being edited, so its fields show the read-only chrome; `FormLayoutEditModeBinding`). A plain `<form>` needs no `<fields>`, being such a grid already; a `<field>` still needs a `<form>`, since `<fields>` carries no object.
   - **The same grid options on `<form>`** (`FormLayoutOptions`, shared by `FormElement.Config` and `FieldsElement.Config`). A `<form max-columns="1" label-position="side">` states the greatest number of columns its fields are laid out in and where their labels stand, exactly as `<fields>` does — `max-columns` is a ceiling, not a count, so a narrow display still shows fewer columns and a phone a single one. This is what a detail pane narrower than the three columns of the default asks for: left to itself it fills the width it has with two columns whose labels sit above the inputs, while `max-columns="1"` plus `label-position="side"` keeps one column with the labels beside the inputs at every width. A `<field>` stating a `label-position` of its own keeps it.
     ```xml
     <form input="selectedMilestone" label-position="side" max-columns="1">
@@ -1146,6 +1146,24 @@ A container component therefore declares how it takes part:
 - `<FillBarrier>` — ends the chain: a region bounded on its own that scrolls what does not fit (a panel body, a tab content area), or a surface laid out apart from the page (a dialog, a window, a drawer). A filling control inside resolves its height against that region, and nothing outside reacts to it.
 
 A container that declares nothing is opaque: a filling control inside it does not grow it, so a new container element that lays out vertical space adds its declaration.
+
+**A `<form>` takes part as a fill-following container.** A `<split-panel>` or a `<panel fill="true">` inside a form fills the frame the form sits in, and the form asks its own container for that height in turn; around content of its own size the form is exactly as high as that content. A page-spanning `<form>` around a split panel is therefore the way to get a single Edit/Save/Cancel set for a whole page over one object: the panes are sized proportionally by the frame, not by the fields they hold. While it hosts a filling region the form lays itself out as a column and drops its page inset, because that region brings its own layout (`.tlFormLayout--fill`).
+
+The areas inside such a page-spanning form therefore put their fields in `<fields>` grids: the form is flush around the filling child and a panel does not pad its content, so the grid is what insets the fields of an area and lays them out responsively, following the form's edit mode.
+
+```xml
+<form input="selected">
+  <split-panel orientation="horizontal"><panes>
+    <pane size="50" unit="%"><panel><title>…</title>
+      <fields>
+        <field attribute="name"/>
+        <field attribute="description"/>
+      </fields>
+    </panel></pane>
+    …
+  </panes></split-panel>
+</form>
+```
 
 A `<dashboard>` bounds its tiles instead of following them. Its grid has a definite row unit - `row-height`, a CSS length defaulting to `16rem` - and a tile is as many of those units tall as its `row-span`, plus the gaps between them. Each tile is a barrier: a panel that fills or a table inside it resolves its height against the tile and scrolls there, and the request reaches neither the dashboard nor whatever hosts it. Content that does not fill and is taller than its tile scrolls inside the tile as well.
 

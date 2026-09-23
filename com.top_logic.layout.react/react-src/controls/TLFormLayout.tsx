@@ -1,4 +1,4 @@
-import { React, useTLState, TLChild, rootClassName } from 'tl-react-bridge';
+import { React, useTLState, TLChild, rootClassName, useFillHost, FillProvider } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { FormLayoutContext } from './FormLayoutContext';
 
@@ -21,9 +21,15 @@ const PANEL_MODULE = 'TLPanel';
  * - labelPosition: "side" | "top" | "auto"
  * - readOnly: boolean
  * - children: ChildDescriptor[]
+ *
+ * Takes part in the fill contract as a container: a form hosting a filling child - a split panel, a
+ * panel that fills - fills its own container in turn, so that the child's height resolves against
+ * the height the form is offered instead of against its content. A form around content of its own
+ * size stays as high as that content.
  */
 const TLFormLayout: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
+  const [fillClass, fillHost] = useFillHost();
 
   const maxColumns = (state.maxColumns as number) ?? 3;
   const labelPosition = (state.labelPosition as string) ?? 'auto';
@@ -92,6 +98,8 @@ const TLFormLayout: React.FC<TLCellProps> = ({ controlId }) => {
     'tlFormLayout',
     readOnly ? 'tlFormLayout--readonly' : '',
     isFullBleedOnly ? 'tlFormLayout--flush' : '',
+    fillClass ? 'tlFormLayout--fill' : '',
+    fillClass,
   ].filter(Boolean).join(' ');
 
   if (noModelMessage) {
@@ -104,11 +112,13 @@ const TLFormLayout: React.FC<TLCellProps> = ({ controlId }) => {
 
   return (
     <FormLayoutContext.Provider value={ctxValue}>
-      <div id={controlId} className={rootClassName(state, className)} style={style} ref={containerRef}>
-        {children.map((child, i) => (
-          <TLChild key={i} control={child} />
-        ))}
-      </div>
+      <FillProvider host={fillHost}>
+        <div id={controlId} className={rootClassName(state, className)} style={style} ref={containerRef}>
+          {children.map((child, i) => (
+            <TLChild key={i} control={child} />
+          ))}
+        </div>
+      </FillProvider>
     </FormLayoutContext.Provider>
   );
 };

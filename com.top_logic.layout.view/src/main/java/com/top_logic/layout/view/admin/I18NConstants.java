@@ -84,6 +84,56 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey COVERAGE_COLUMN_FINDINGS;
 
+	/**
+	 * @en Please select the type to edit the access definition of.
+	 */
+	public static ResKey ERROR_NO_TYPE_SELECTED;
+
+	/**
+	 * @en The analysis proposes no security parent rule for the selected type.
+	 */
+	public static ResKey ERROR_NO_PROPOSED_RULE;
+
+	/**
+	 * @en There is no rule to work on.
+	 */
+	public static ResKey ERROR_NO_RULE_SELECTED;
+
+	/**
+	 * @en There is no security parent rule with the id "{0}".
+	 */
+	public static ResKey1 ERROR_UNKNOWN_SECURITY_PARENT_RULE__ID;
+
+	/**
+	 * @en There is no role rule with the id "{0}".
+	 */
+	public static ResKey1 ERROR_UNKNOWN_ROLE_RULE__ID;
+
+	/**
+	 * @en Please enter an id naming the rule.
+	 */
+	public static ResKey ERROR_MISSING_RULE_ID;
+
+	/**
+	 * @en Please select the type the rule applies to.
+	 */
+	public static ResKey ERROR_MISSING_RULE_TYPE;
+
+	/**
+	 * @en Please enter at least one step leading to the security parent.
+	 */
+	public static ResKey ERROR_MISSING_RULE_PATH;
+
+	/**
+	 * @en Please select at least one role the rule grants.
+	 */
+	public static ResKey ERROR_MISSING_RULE_ROLE;
+
+	/**
+	 * @en The access definition could not be written to the file "{0}".
+	 */
+	public static ResKey1 ERROR_WRITING_ACCESS_DEFINITION__FILE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

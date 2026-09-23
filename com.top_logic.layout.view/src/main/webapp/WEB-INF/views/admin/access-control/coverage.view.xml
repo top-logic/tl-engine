@@ -7,9 +7,16 @@
 	channel and the parts of it the detail shows to the selectedType / selectedFindings /
 	selectedRule channels (the detail shows the findings of the selected type and its proposed rule;
 	the module and findings columns start hidden, the table being grouped by module). "Show
-	configuration" hands the rendered security parents of all types
-	to a dialog, "Show rule" the rule of the selected type (it is hidden while the selected type
-	has none); both are copied into the application configuration by the developer.
+	configuration" hands the rendered security parents of all types to a dialog, "Show rule" the
+	rule of the selected type (it is hidden while the selected type has none).
+	
+	The commands of the findings panel edit the definition: "Accept proposal" stores the proposed
+	security parent rule, "Security parent…" and "Role rule…" open a dialog editing a rule of the
+	selected type. All of them write to the application configuration rather than to the running
+	application, so the pending channel marks that the files and the running definition differ until
+	"Apply configuration" reads the files again and restarts the access services. That marker is
+	shown in the findings panel rather than above the table, a filling panel bounding the height of
+	a single scrolling child only.
 -->
 <view>
 	<channels>
@@ -17,6 +24,7 @@
 		<channel name="selection"/>
 		<channel name="selectedFindings"/>
 		<channel name="selectedRule"/>
+		<channel name="pending"/>
 	</channels>
 	<split-panel
 		orientation="horizontal"
@@ -64,6 +72,22 @@
 								dialog-view="admin/access-control/coverage-configuration.view.xml"
 							/>
 						</generic-command>
+						<generic-command
+							image="css:bi bi-arrow-repeat"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Apply configuration</en>
+								<de>Konfiguration anwenden</de>
+							</label>
+							<confirm expr="x -> #('The configuration files are read again and the access services are restarted. This takes a moment.'@en, 'Die Konfigurationsdateien werden neu gelesen und die Zugriffsdienste neu gestartet. Das dauert einen Moment.'@de)"/>
+							<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+								mode="APPLY"
+							/>
+							<write-channel name="rows"/>
+							<execute-script function="x -> null"/>
+							<write-channel name="pending"/>
+						</generic-command>
 					</commands>
 					<child class="com.top_logic.layout.view.admin.SecurityCoverageTable"
 						input="rows"
@@ -100,7 +124,88 @@
 								dialog-view="admin/access-control/coverage-rule.view.xml"
 							/>
 						</generic-command>
+						<generic-command
+							image="css:bi bi-check2-square"
+							input="selectedRule"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Accept proposal</en>
+								<de>Vorschlag übernehmen</de>
+							</label>
+							<executability>
+								<visible-if expr="rule -> $rule != null"/>
+							</executability>
+							<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+								mode="ACCEPT_PROPOSAL"
+								selection="selection"
+							/>
+							<write-channel name="pending"/>
+						</generic-command>
+						<generic-command
+							image="css:bi bi-diagram-2"
+							input="selection"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Security parent…</en>
+								<de>Übergeordnetes Sicherheitsobjekt…</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+								mode="NEW_SECURITY_PARENT_RULE"
+							/>
+							<open-dialog
+								bind-input-to="rule"
+								dialog-view="admin/access-control/coverage-security-parent-rule.view.xml"
+							>
+								<bind
+									channel="pending"
+									to="pending"
+								/>
+							</open-dialog>
+						</generic-command>
+						<generic-command
+							image="css:bi bi-person-badge"
+							input="selection"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Role rule…</en>
+								<de>Rollenregel…</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+								mode="NEW_ROLE_RULE"
+							/>
+							<open-dialog
+								bind-input-to="rule"
+								dialog-view="admin/access-control/coverage-role-rule.view.xml"
+							>
+								<bind
+									channel="pending"
+									to="pending"
+								/>
+							</open-dialog>
+						</generic-command>
 					</commands>
+					<visible-if
+						expr="p -> $p != null"
+						input="pending"
+					>
+						<inset>
+							<text css-class="tlText--strong">
+								<label>
+									<en>There are saved changes that are not applied yet.</en>
+									<de>Es gibt gespeicherte, noch nicht angewendete Änderungen.</de>
+								</label>
+							</text>
+						</inset>
+					</visible-if>
 					<visible-if
 						expr="selected -> $selected != null"
 						input="selection"

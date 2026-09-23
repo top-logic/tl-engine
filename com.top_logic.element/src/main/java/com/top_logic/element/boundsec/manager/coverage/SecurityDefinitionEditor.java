@@ -8,8 +8,10 @@ package com.top_logic.element.boundsec.manager.coverage;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
@@ -387,6 +389,12 @@ public class SecurityDefinitionEditor {
 	/**
 	 * Marks the given type as used by the application's own code only, or drops that mark.
 	 *
+	 * <p>
+	 * An internal type is not excluded from access control at the same time, the two marks
+	 * contradicting each other, so setting the mark drops an exclusion the stored configuration
+	 * holds.
+	 * </p>
+	 *
 	 * @param type
 	 *        The type to mark.
 	 * @param value
@@ -399,11 +407,19 @@ public class SecurityDefinitionEditor {
 	public void setInternal(TLClass type, boolean value) throws IOException, ConfigurationException {
 		TLClassAccessRights entry = editableAccessRights(type);
 		entry.setInternal(value);
+		if (value) {
+			entry.setWithoutSecurity(false);
+		}
 		putAccessRights(entry);
 	}
 
 	/**
 	 * Excludes the given type from access control, or drops that exclusion.
+	 *
+	 * <p>
+	 * A type without access control is not internal at the same time, the two marks contradicting
+	 * each other, so excluding the type drops an internal mark the stored configuration holds.
+	 * </p>
 	 *
 	 * @param type
 	 *        The type to exclude.
@@ -417,6 +433,9 @@ public class SecurityDefinitionEditor {
 	public void setWithoutSecurity(TLClass type, boolean value) throws IOException, ConfigurationException {
 		TLClassAccessRights entry = editableAccessRights(type);
 		entry.setWithoutSecurity(value);
+		if (value) {
+			entry.setInternal(false);
+		}
 		putAccessRights(entry);
 	}
 
@@ -455,11 +474,38 @@ public class SecurityDefinitionEditor {
 	 * @see #proposedRule(TypeCoverage)
 	 */
 	public void acceptProposal(TypeCoverage coverage) throws IOException, ConfigurationException {
-		NavigationRuleConfig rule = proposedRule(coverage);
-		if (rule == null) {
+		acceptProposals(List.of(coverage));
+	}
+
+	/**
+	 * Stores the security parent rules the analysis proposes for the given types, writing the file
+	 * once.
+	 *
+	 * <p>
+	 * A type the analysis has no proposal for is left alone.
+	 * </p>
+	 *
+	 * @param coverage
+	 *        Entries of the result of {@link SecurityCoverageCheck#analyze()}.
+	 * @throws IOException
+	 *         When the file cannot be written.
+	 * @throws ConfigurationException
+	 *         When the stored configuration cannot be parsed.
+	 */
+	public void acceptProposals(Collection<TypeCoverage> coverage) throws IOException, ConfigurationException {
+		List<NavigationRuleConfig> rules = coverage.stream()
+			.map(this::proposedRule)
+			.filter(Objects::nonNull)
+			.toList();
+		if (rules.isEmpty()) {
 			return;
 		}
-		putSecurityParentRule(rule);
+		ApplicationConfig.Config appConfig = readAccessManagerFile();
+		List<NavigationRuleConfig> stored = accessManagerConfig(appConfig).getSecurityParents().getRules();
+		for (NavigationRuleConfig rule : rules) {
+			putRule(stored, rule);
+		}
+		writeAccessManagerFile(appConfig);
 	}
 
 	/**

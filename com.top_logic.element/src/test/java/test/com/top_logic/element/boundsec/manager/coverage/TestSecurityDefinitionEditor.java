@@ -235,8 +235,15 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 		_editor.setWithoutSecurity(orphan, true);
 		stored = _editor.editableAccessRights(orphan);
 		assertTrue(stored.isWithoutSecurity());
-		assertTrue("Both flags are stored on the same entry.", stored.isInternal());
+		assertFalse("Excluding the type from access control drops the internal mark, the two contradicting each other.",
+			stored.isInternal());
 		assertEquals("The entry is replaced by name, not appended.", 1, _editor.storedAccessRightsCount());
+
+		_editor.setInternal(orphan, true);
+		stored = _editor.editableAccessRights(orphan);
+		assertTrue(stored.isInternal());
+		assertFalse("Marking the type internal drops the exclusion from access control.", stored.isWithoutSecurity());
+		assertEquals("Storing the marks keeps the grants of the entry.", 1, stored.getGrants().size());
 
 		ModelAccessRights onlyEntry = _editor.storedAccessRights().get(0);
 		assertEquals(ORPHAN, onlyEntry.getName());

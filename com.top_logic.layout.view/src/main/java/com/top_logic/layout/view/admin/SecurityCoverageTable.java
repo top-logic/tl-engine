@@ -22,14 +22,16 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.element.boundsec.manager.coverage.CoverageFinding;
 import com.top_logic.element.boundsec.manager.coverage.CoverageStatus;
+import com.top_logic.element.boundsec.manager.coverage.FindingKind;
 import com.top_logic.element.boundsec.manager.coverage.SecurityCoverageCheck;
 import com.top_logic.element.boundsec.manager.coverage.SecurityDefinitionEditor;
 import com.top_logic.element.boundsec.manager.coverage.TypeCoverage;
@@ -38,6 +40,7 @@ import com.top_logic.element.boundsec.manager.rule.PathElement;
 import com.top_logic.element.boundsec.manager.rule.PathNavigation;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
 import com.top_logic.element.boundsec.manager.rule.config.NavigationRuleConfig;
+import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.table.CellControlFactory;
 import com.top_logic.layout.react.control.table.TableViewControl;
@@ -81,8 +84,10 @@ import com.top_logic.util.Resources;
  * The table shows a fresh analysis when opened and rebuilds from the configured
  * {@link Config#getInput() input channel} after a command. The selected row is written to the
  * {@link Config#getSelection() selection channel} (so a command can act on it); the type of it goes
- * to the {@link Config#getSelectedType() type channel} (so a command names it), and the parts of it
- * a detail display shows go to the {@link Config#getSelectedFindings() findings}, the
+ * to the {@link Config#getSelectedType() type channel} (so a command names it), its marks to the
+ * {@link Config#getSelectedInternal() internal} and {@link Config#getSelectedWithoutSecurity()
+ * without-security channels} (so a command offers the mark the type does not carry yet), and the
+ * parts of it a detail display shows go to the {@link Config#getSelectedFindings() findings}, the
  * {@link Config#getSelectedRule() proposed rule} and the {@link Config#getSelectedRules() rules in
  * effect}, all cleared when the selection is empty. The channels are pushed again once the rows
  * were replaced, so the detail of the row that stays selected describes the analysis the table now
@@ -180,6 +185,12 @@ public class SecurityCoverageTable implements UIElement {
 		/** Configuration name for {@link #getSelectedType()}. */
 		String SELECTED_TYPE = "selected-type";
 
+		/** Configuration name for {@link #getSelectedInternal()}. */
+		String SELECTED_INTERNAL = "selected-internal";
+
+		/** Configuration name for {@link #getSelectedWithoutSecurity()}. */
+		String SELECTED_WITHOUT_SECURITY = "selected-without-security";
+
 		/** Configuration name for {@link #getSelectedFindings()}. */
 		String SELECTED_FINDINGS = "selected-findings";
 
@@ -221,8 +232,27 @@ public class SecurityCoverageTable implements UIElement {
 		ChannelRef getSelectedType();
 
 		/**
-		 * Channel the findings of the selected type are written to, as the text a detail display
-		 * shows.
+		 * Channel receiving whether the selected type is internal to the application code, as the
+		 * analysis reports it; <code>null</code> while nothing is selected.
+		 */
+		@Name(SELECTED_INTERNAL)
+		@Nullable
+		@Format(ChannelRefFormat.class)
+		ChannelRef getSelectedInternal();
+
+		/**
+		 * Channel receiving whether the selected type is excluded from access control, as the
+		 * analysis reports it; <code>null</code> while nothing is selected.
+		 */
+		@Name(SELECTED_WITHOUT_SECURITY)
+		@Nullable
+		@Format(ChannelRefFormat.class)
+		ChannelRef getSelectedWithoutSecurity();
+
+		/**
+		 * Channel the findings of the selected type are written to, as the HTML a detail display
+		 * shows: a list with one entry per problem, the ways to solve it nested underneath; for an
+		 * exempt type, a paragraph naming the mark exempting it.
 		 */
 		@Name(SELECTED_FINDINGS)
 		@Nullable
@@ -261,6 +291,10 @@ public class SecurityCoverageTable implements UIElement {
 
 	private final ChannelRef _selectedTypeRef;
 
+	private final ChannelRef _selectedInternalRef;
+
+	private final ChannelRef _selectedWithoutSecurityRef;
+
 	private final ChannelRef _selectedFindingsRef;
 
 	private final ChannelRef _selectedRuleRef;
@@ -275,6 +309,8 @@ public class SecurityCoverageTable implements UIElement {
 		_inputRef = config.getInput();
 		_selectionRef = config.getSelection();
 		_selectedTypeRef = config.getSelectedType();
+		_selectedInternalRef = config.getSelectedInternal();
+		_selectedWithoutSecurityRef = config.getSelectedWithoutSecurity();
 		_selectedFindingsRef = config.getSelectedFindings();
 		_selectedRuleRef = config.getSelectedRule();
 		_selectedRulesRef = config.getSelectedRules();
@@ -310,6 +346,8 @@ public class SecurityCoverageTable implements UIElement {
 		Detail detail = new Detail(
 			_selectionRef == null ? null : context.resolveChannel(_selectionRef),
 			_selectedTypeRef == null ? null : context.resolveChannel(_selectedTypeRef),
+			_selectedInternalRef == null ? null : context.resolveChannel(_selectedInternalRef),
+			_selectedWithoutSecurityRef == null ? null : context.resolveChannel(_selectedWithoutSecurityRef),
 			_selectedFindingsRef == null ? null : context.resolveChannel(_selectedFindingsRef),
 			_selectedRuleRef == null ? null : context.resolveChannel(_selectedRuleRef),
 			_selectedRulesRef == null ? null : context.resolveChannel(_selectedRulesRef));
@@ -355,6 +393,10 @@ public class SecurityCoverageTable implements UIElement {
 
 		private final ViewChannel _type;
 
+		private final ViewChannel _internal;
+
+		private final ViewChannel _withoutSecurity;
+
 		private final ViewChannel _findings;
 
 		private final ViewChannel _proposedRule;
@@ -367,10 +409,12 @@ public class SecurityCoverageTable implements UIElement {
 		 * Creates a {@link Detail} over the channels the table is configured with, each of them
 		 * <code>null</code> where the configuration names none.
 		 */
-		Detail(ViewChannel selection, ViewChannel type, ViewChannel findings, ViewChannel proposedRule,
-				ViewChannel rules) {
+		Detail(ViewChannel selection, ViewChannel type, ViewChannel internal, ViewChannel withoutSecurity,
+				ViewChannel findings, ViewChannel proposedRule, ViewChannel rules) {
 			_selection = selection;
 			_type = type;
+			_internal = internal;
+			_withoutSecurity = withoutSecurity;
 			_findings = findings;
 			_proposedRule = proposedRule;
 			_rules = rules;
@@ -380,8 +424,8 @@ public class SecurityCoverageTable implements UIElement {
 		 * Whether any channel is bound at all.
 		 */
 		boolean isBound() {
-			return _selection != null || _type != null || _findings != null || _proposedRule != null
-				|| _rules != null;
+			return _selection != null || _type != null || _internal != null || _withoutSecurity != null
+				|| _findings != null || _proposedRule != null || _rules != null;
 		}
 
 		/**
@@ -409,8 +453,14 @@ public class SecurityCoverageTable implements UIElement {
 			if (_type != null) {
 				_type.set(row == null ? null : row.type());
 			}
+			if (_internal != null) {
+				_internal.set(row == null ? null : row.internal());
+			}
+			if (_withoutSecurity != null) {
+				_withoutSecurity.set(row == null ? null : row.withoutSecurity());
+			}
 			if (_findings != null) {
-				_findings.set(row == null ? null : findings(row));
+				_findings.set(row == null ? null : findingsHtml(row));
 			}
 			if (_proposedRule != null) {
 				String rule = row == null ? null : SecurityCoverageAction.ruleHtml(row);
@@ -620,10 +670,127 @@ public class SecurityCoverageTable implements UIElement {
 	 */
 	private static String findings(Object row) {
 		Resources resources = Resources.getInstance();
-		return coverage(row).findings().stream()
+		TypeCoverage coverage = coverage(row);
+		ResKey exemption = exemption(coverage);
+		if (exemption != null) {
+			return resources.getString(exemption);
+		}
+		return coverage.findings().stream()
 			.map(CoverageFinding::getMessage)
 			.map(resources::getString)
 			.collect(Collectors.joining(RULE_SEPARATOR));
+	}
+
+	/**
+	 * The mark exempting the given type from the check, <code>null</code> when it is checked.
+	 */
+	private static ResKey exemption(TypeCoverage coverage) {
+		if (coverage.internal()) {
+			return I18NConstants.COVERAGE_EXEMPT_INTERNAL;
+		}
+		if (coverage.withoutSecurity()) {
+			return I18NConstants.COVERAGE_EXEMPT_WITHOUT_SECURITY;
+		}
+		return null;
+	}
+
+	/**
+	 * The findings of the given type as the HTML a detail display shows: a list with one entry per
+	 * problem, the ways to solve it nested underneath.
+	 *
+	 * <p>
+	 * A {@link FindingKind#SUGGESTED_PARENT proposed} or {@link FindingKind#AMBIGUOUS_PARENT
+	 * ambiguous} container is not a problem of its own but a way to solve the
+	 * {@link FindingKind#NO_ROLE_SOURCE missing role source}, so it is listed underneath that
+	 * problem, first.
+	 * </p>
+	 */
+	private static String findingsHtml(TypeCoverage coverage) {
+		Resources resources = Resources.getInstance();
+		ResKey exemption = exemption(coverage);
+		if (exemption != null) {
+			return "<p>" + TagUtil.encodeXML(resources.getString(exemption)) + "</p>";
+		}
+		StringBuilder html = new StringBuilder();
+		html.append("<ul>");
+		for (CoverageFinding finding : coverage.findings()) {
+			ResKey problem = problem(finding);
+			if (problem == null) {
+				continue;
+			}
+			html.append("<li>");
+			html.append(TagUtil.encodeXML(resources.getString(problem)));
+			html.append("<ul>");
+			for (ResKey solution : solutions(coverage, finding)) {
+				html.append("<li>").append(TagUtil.encodeXML(resources.getString(solution))).append("</li>");
+			}
+			html.append("</ul>");
+			html.append("</li>");
+		}
+		html.append("</ul>");
+		return html.toString();
+	}
+
+	/**
+	 * The short description of the problem the given finding reports, <code>null</code> for a
+	 * finding that is a way to solve another one.
+	 */
+	private static ResKey problem(CoverageFinding finding) {
+		return switch (finding.getKind()) {
+			case NO_ROLE_SOURCE -> finding.isRootFallbackActive()
+				? I18NConstants.COVERAGE_PROBLEM_NO_ROLE_SOURCE_ROOT_FALLBACK
+				: I18NConstants.COVERAGE_PROBLEM_NO_ROLE_SOURCE;
+			case NO_READ_GRANT -> I18NConstants.COVERAGE_PROBLEM_NO_READ_GRANT;
+			case DEAD_GRANT -> I18NConstants.COVERAGE_PROBLEM_DEAD_GRANT__OPERATION_ROLES.fill(
+				finding.getOperation().getID(),
+				finding.getRoles().stream().map(BoundedRole::getName).sorted().collect(Collectors.joining(VALUE_SEPARATOR)));
+			case SUGGESTED_PARENT, AMBIGUOUS_PARENT -> null;
+		};
+	}
+
+	/**
+	 * The ways to solve the problem the given finding reports, the most specific one first.
+	 */
+	private static List<ResKey> solutions(TypeCoverage coverage, CoverageFinding finding) {
+		List<ResKey> solutions = new ArrayList<>();
+		switch (finding.getKind()) {
+			case NO_ROLE_SOURCE -> {
+				for (CoverageFinding proposal : coverage.findings(FindingKind.SUGGESTED_PARENT)) {
+					solutions.add(I18NConstants.COVERAGE_SOLUTION_ACCEPT_PROPOSAL__REFERENCE
+						.fill(references(proposal)));
+				}
+				for (CoverageFinding ambiguity : coverage.findings(FindingKind.AMBIGUOUS_PARENT)) {
+					solutions.add(I18NConstants.COVERAGE_SOLUTION_CHOOSE_PARENT__REFERENCES
+						.fill(references(ambiguity)));
+				}
+				solutions.add(I18NConstants.COVERAGE_SOLUTION_SECURITY_PARENT_RULE);
+				solutions.add(I18NConstants.COVERAGE_SOLUTION_ROLE_RULE);
+				solutions.add(I18NConstants.COVERAGE_SOLUTION_MARK_INTERNAL);
+			}
+			case NO_READ_GRANT -> {
+				solutions.add(I18NConstants.COVERAGE_SOLUTION_READ_GRANT);
+				solutions.add(I18NConstants.COVERAGE_SOLUTION_MARK_INTERNAL);
+			}
+			case DEAD_GRANT -> {
+				solutions.add(I18NConstants.COVERAGE_SOLUTION_DELIVER_ROLE);
+				solutions.add(I18NConstants.COVERAGE_SOLUTION_CHANGE_GRANT);
+			}
+			case SUGGESTED_PARENT, AMBIGUOUS_PARENT -> {
+				// Listed as solutions of the missing role source.
+			}
+		}
+		return solutions;
+	}
+
+	/**
+	 * The compositions the given finding names, each as the label of its owner and its own label,
+	 * quoted.
+	 */
+	private static String references(CoverageFinding finding) {
+		return finding.getContainerReferences().stream()
+			.map(reference -> "\"" + MetaResourceProvider.INSTANCE.getLabel(reference.getOwner()) + STEP_SEPARATOR
+				+ MetaResourceProvider.INSTANCE.getLabel(reference) + "\"")
+			.collect(Collectors.joining(VALUE_SEPARATOR));
 	}
 
 	/**

@@ -7,7 +7,9 @@ package com.top_logic.layout.view.admin;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationException;
@@ -18,6 +20,9 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.constraint.check.ConstraintChecker;
+import com.top_logic.basic.i18n.log.BufferingI18NLog;
+import com.top_logic.basic.logging.Level;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.boundsec.manager.coverage.SecurityCoverageAnalysis;
 import com.top_logic.element.boundsec.manager.coverage.SecurityCoverageCheck;
@@ -32,7 +37,6 @@ import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.annotate.security.AccessRule;
 import com.top_logic.model.security.SecurityConfigurationService.ModelAccessRights;
-import com.top_logic.model.security.SecurityConfigurationService.TLClassAccessRights;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.error.TopLogicException;
 
@@ -89,6 +93,12 @@ public class SecurityDefinitionAction implements ViewAction {
 		/** Store the security parent rule the analysis proposes for the selected type. */
 		ACCEPT_PROPOSAL,
 
+		/**
+		 * Store the security parent rules of the proposal entries given as input, a single entry or
+		 * a collection of them as a table's selection holds them.
+		 */
+		ACCEPT_PROPOSALS,
+
 		/** Create the security parent rule to edit for the selected type. */
 		NEW_SECURITY_PARENT_RULE,
 
@@ -122,11 +132,17 @@ public class SecurityDefinitionAction implements ViewAction {
 		/** Store the edited access rights. */
 		SAVE_ACCESS_RIGHTS,
 
-		/** Flip the internal mark of the selected type. */
-		TOGGLE_INTERNAL,
+		/** Mark the selected type as used by the application code alone. */
+		MARK_INTERNAL,
 
-		/** Flip the exclusion of the selected type from access control. */
-		TOGGLE_WITHOUT_SECURITY,
+		/** Drop the internal mark of the selected type. */
+		UNMARK_INTERNAL,
+
+		/** Exclude the selected type from access control. */
+		MARK_WITHOUT_SECURITY,
+
+		/** Put the selected type under access control again. */
+		UNMARK_WITHOUT_SECURITY,
 
 		/** Make the stored definition effective and analyze it again. */
 		APPLY;
@@ -182,6 +198,7 @@ public class SecurityDefinitionAction implements ViewAction {
 	public Object execute(ReactContext context, Object input) {
 		return switch (_mode) {
 			case ACCEPT_PROPOSAL -> acceptProposal(coverage(context, input));
+			case ACCEPT_PROPOSALS -> acceptProposals(input);
 			case NEW_SECURITY_PARENT_RULE -> newSecurityParentRule(coverage(context, input));
 			case NEW_ROLE_RULE -> newRoleRule(coverage(context, input));
 			case EDIT_SECURITY_PARENT_RULE -> editSecurityParentRule(ruleId(input));
@@ -193,8 +210,10 @@ public class SecurityDefinitionAction implements ViewAction {
 			case EDIT_ACCESS_RIGHTS -> editAccessRights(coverage(context, input));
 			case EDIT_MODULE_ACCESS_RIGHTS -> editModuleAccessRights(coverage(context, input));
 			case SAVE_ACCESS_RIGHTS -> saveAccessRights(accessRights(input));
-			case TOGGLE_INTERNAL -> toggleInternal(coverage(context, input));
-			case TOGGLE_WITHOUT_SECURITY -> toggleWithoutSecurity(coverage(context, input));
+			case MARK_INTERNAL -> setInternal(coverage(context, input), true);
+			case UNMARK_INTERNAL -> setInternal(coverage(context, input), false);
+			case MARK_WITHOUT_SECURITY -> setWithoutSecurity(coverage(context, input), true);
+			case UNMARK_WITHOUT_SECURITY -> setWithoutSecurity(coverage(context, input), false);
 			case APPLY -> apply();
 		};
 	}
@@ -207,6 +226,25 @@ public class SecurityDefinitionAction implements ViewAction {
 			throw new TopLogicException(I18NConstants.ERROR_NO_PROPOSED_RULE);
 		}
 		store(() -> editor().acceptProposal(coverage));
+		return Boolean.TRUE;
+	}
+
+	/**
+	 * Stores the proposed rules of the given proposal entries, see
+	 * {@link SecurityCoverageAction#PROPOSAL_COVERAGE}.
+	 */
+	private Object acceptProposals(Object input) {
+		Collection<?> entries = input instanceof Collection<?> collection ? collection : List.of(input);
+		List<TypeCoverage> coverage = entries.stream()
+			.filter(Map.class::isInstance)
+			.map(entry -> ((Map<?, ?>) entry).get(SecurityCoverageAction.PROPOSAL_COVERAGE))
+			.filter(TypeCoverage.class::isInstance)
+			.map(TypeCoverage.class::cast)
+			.toList();
+		if (coverage.isEmpty()) {
+			throw new TopLogicException(I18NConstants.ERROR_NO_PROPOSED_RULE);
+		}
+		store(() -> editor().acceptProposals(coverage));
 		return Boolean.TRUE;
 	}
 
@@ -379,22 +417,38 @@ public class SecurityDefinitionAction implements ViewAction {
 				throw new TopLogicException(I18NConstants.ERROR_MISSING_GRANT_OPERATION);
 			}
 		}
+		checkConstraints(entry);
 		store(() -> editor().putAccessRights(entry), grantsFile());
 		return Boolean.TRUE;
+	}
+
+	/**
+	 * Rejects access rights violating a constraint of their configuration, such as the two marks
+	 * of a type set together.
+	 */
+	private static void checkConstraints(ModelAccessRights entry) {
+		BufferingI18NLog log = new BufferingI18NLog();
+		new ConstraintChecker().check(log, entry);
+		ResKey[] errors = log.getEntries().stream()
+			.filter(event -> event.getLevel() == Level.ERROR)
+			.map(BufferingI18NLog.Entry::getMessage)
+			.toArray(ResKey[]::new);
+		if (errors.length > 0) {
+			throw new TopLogicException(I18NConstants.ERROR_ACCESS_RIGHTS_INVALID__ERRORS.fill(errors));
+		}
 	}
 
 	/**
 	 * Marks the given type as used by the application's own code only, or drops that mark.
 	 *
 	 * <p>
-	 * The new value is the opposite of what the stored access rights hold, not of what the analysis
-	 * reports: the files may already carry a change that is not applied yet, and the flip continues
-	 * from what was stored last.
+	 * The value is stored as given, whatever the files held before: the command offering the mark
+	 * is chosen by what the analysis reports for the type, so the user asks for the state the
+	 * table does not show yet.
 	 * </p>
 	 */
-	private Object toggleInternal(TypeCoverage coverage) {
+	private Object setInternal(TypeCoverage coverage, boolean value) {
 		TLClass type = coverage.type();
-		boolean value = !storedAccessRights(type).isInternal();
 		store(() -> editor().setInternal(type, value), grantsFile());
 		return Boolean.TRUE;
 	}
@@ -402,24 +456,12 @@ public class SecurityDefinitionAction implements ViewAction {
 	/**
 	 * Excludes the given type from access control, or drops that exclusion.
 	 *
-	 * <p>
-	 * The new value is the opposite of what the stored access rights hold, not of what the analysis
-	 * reports: the files may already carry a change that is not applied yet, and the flip continues
-	 * from what was stored last.
-	 * </p>
+	 * @see #setInternal(TypeCoverage, boolean)
 	 */
-	private Object toggleWithoutSecurity(TypeCoverage coverage) {
+	private Object setWithoutSecurity(TypeCoverage coverage, boolean value) {
 		TLClass type = coverage.type();
-		boolean value = !storedAccessRights(type).isWithoutSecurity();
 		store(() -> editor().setWithoutSecurity(type, value), grantsFile());
 		return Boolean.TRUE;
-	}
-
-	/**
-	 * The access rights the files hold for the given type.
-	 */
-	private TLClassAccessRights storedAccessRights(TLClass type) {
-		return load(() -> editor().editableAccessRights(type));
 	}
 
 	/**

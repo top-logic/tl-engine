@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Lists the security parent rules the coverage analysis proposes, one row per proposal, and
+	stores the ones the user picks. The proposals channel receives the entries from the command
+	that opens the dialog (see SecurityCoverageAction); each names the type, the container that
+	becomes its security parent and the composition the rule navigates backwards, so the user reads
+	what a rule does without seeing its XML. The table selects any number of rows; "Store selected"
+	hands the selection to the editor, which writes the rules to the application configuration, and
+	marks the pending channel: the rules take effect once the coverage display applies the
+	configuration.
+-->
+<view>
+	<channels>
+		<channel name="proposals"/>
+		<channel name="selected"/>
+		<channel name="pending"/>
+	</channels>
+	<window width="960px">
+		<title>
+			<en>Proposed security parent rules</en>
+			<de>Vorgeschlagene Regeln für übergeordnete Sicherheitsobjekte</de>
+		</title>
+		<commands>
+			<generic-command
+				image="css:bi bi-check2-square"
+				input="selected"
+				placement="BUTTON_BAR"
+			>
+				<label>
+					<en>Store selected</en>
+					<de>Ausgewählte speichern</de>
+				</label>
+				<tooltip>
+					<en>Stores a security parent rule for each selected proposal in the application configuration. The rules take effect with "Apply configuration".</en>
+					<de>Speichert für jeden ausgewählten Vorschlag eine Regel für das übergeordnete Sicherheitsobjekt in der Anwendungskonfiguration. Die Regeln werden mit „Konfiguration anwenden“ wirksam.</de>
+				</tooltip>
+				<executability>
+					<null-input-disabled/>
+				</executability>
+				<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+					mode="ACCEPT_PROPOSALS"
+				/>
+				<write-channel name="pending"/>
+				<close-dialog/>
+			</generic-command>
+		</commands>
+		<text>
+			<label>
+				<en>Each proposal makes the object holding an object of the type through the composition its security parent, so the object inherits the roles of its container. Select the proposals to store as rules.</en>
+				<de>Jeder Vorschlag macht das Objekt, das ein Objekt des Typs über die Komposition enthält, zu dessen übergeordnetem Sicherheitsobjekt, sodass das Objekt die Rollen seines Containers erbt. Wählen Sie die Vorschläge aus, die als Regeln gespeichert werden sollen.</de>
+			</label>
+		</text>
+		<table
+			selection="selected"
+			selection-mode="multi"
+		>
+			<inputs>
+				<input channel="proposals"/>
+			</inputs>
+			<columns>
+				<computed-column name="type"
+					type="tl.model:TLClass"
+					width="220"
+				>
+					<label>
+						<en>Type</en>
+						<de>Typ</de>
+					</label>
+					<value><![CDATA[row -> $row["type"]]]></value>
+				</computed-column>
+				<computed-column name="container"
+					type="tl.model:TLClass"
+					width="220"
+				>
+					<label>
+						<en>Security parent</en>
+						<de>Übergeordnetes Sicherheitsobjekt</de>
+					</label>
+					<value><![CDATA[row -> $row["container"]]]></value>
+				</computed-column>
+				<computed-column name="reference"
+					type="tl.model:TLReference"
+					width="220"
+				>
+					<label>
+						<en>Composition</en>
+						<de>Komposition</de>
+					</label>
+					<value><![CDATA[row -> $row["reference"]]]></value>
+				</computed-column>
+				<computed-column name="id"
+					type="tl.core:String"
+					width="200"
+				>
+					<label>
+						<en>Rule id</en>
+						<de>Regel-Id</de>
+					</label>
+					<value><![CDATA[row -> $row["id"]]]></value>
+				</computed-column>
+			</columns>
+			<rows><![CDATA[proposals -> $proposals]]></rows>
+		</table>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

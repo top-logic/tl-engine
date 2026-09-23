@@ -23,6 +23,8 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
+import com.top_logic.basic.config.constraint.impl.NotBothTrue;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
@@ -134,8 +136,15 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		 * {@link TLModule} without security therefore excludes every class of that module and all
 		 * their specializations from access control.
 		 * </p>
+		 *
+		 * <p>
+		 * A type without security is not {@link #isInternal() internal} at the same time: the one
+		 * mark opens its objects to every user, the other says no user needs them, so a configuration
+		 * setting both is rejected.
+		 * </p>
 		 */
 		@Name(WITHOUT_SECURITY)
+		@Constraint(value = NotBothTrue.class, args = { @Ref(INTERNAL) })
 		boolean isWithoutSecurity();
 
 		/**
@@ -161,6 +170,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		 * </p>
 		 */
 		@Name(INTERNAL)
+		@Constraint(value = NotBothTrue.class, args = { @Ref(WITHOUT_SECURITY) })
 		boolean isInternal();
 
 		/**

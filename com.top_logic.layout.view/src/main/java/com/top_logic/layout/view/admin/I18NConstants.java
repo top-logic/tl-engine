@@ -7,6 +7,7 @@ package com.top_logic.layout.view.admin;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
+import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -159,6 +160,95 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Please select the operation each rule applies to.
 	 */
 	public static ResKey ERROR_MISSING_GRANT_OPERATION;
+
+	/**
+	 * @en The access rights cannot be stored: {0}
+	 */
+	public static ResKey1 ERROR_ACCESS_RIGHTS_INVALID__ERRORS;
+
+	/**
+	 * @en No role source: neither a role rule nor a security parent rule applies to the type, so
+	 *     no user can hold a role on its objects and every access is denied.
+	 */
+	public static ResKey COVERAGE_PROBLEM_NO_ROLE_SOURCE;
+
+	/**
+	 * @en No role source: neither a role rule nor a security parent rule applies to the type, so
+	 *     its objects inherit the roles of the security root only, the global default security
+	 *     parent being active.
+	 */
+	public static ResKey COVERAGE_PROBLEM_NO_ROLE_SOURCE_ROOT_FALLBACK;
+
+	/**
+	 * @en No read grant: no role is granted the read operation on the type, so its objects are
+	 *     inaccessible to every user.
+	 */
+	public static ResKey COVERAGE_PROBLEM_NO_READ_GRANT;
+
+	/**
+	 * @en Dead grant: the operation "{0}" is granted to the roles {1}, but no rule delivers any of
+	 *     them on the type or on its security parents, so the grant never takes effect.
+	 */
+	public static ResKey2 COVERAGE_PROBLEM_DEAD_GRANT__OPERATION_ROLES;
+
+	/**
+	 * @en Accept the proposal: the object containing an object of the type through the composition
+	 *     {0} becomes its security parent ("Accept proposal").
+	 */
+	public static ResKey1 COVERAGE_SOLUTION_ACCEPT_PROPOSAL__REFERENCE;
+
+	/**
+	 * @en Choose the container: the type is contained through several compositions, {0}; a security
+	 *     parent rule must name the one to navigate ("Security parent…").
+	 */
+	public static ResKey1 COVERAGE_SOLUTION_CHOOSE_PARENT__REFERENCES;
+
+	/**
+	 * @en Define a security parent rule, so that the objects inherit the roles of the object the
+	 *     rule leads to ("Security parent…").
+	 */
+	public static ResKey COVERAGE_SOLUTION_SECURITY_PARENT_RULE;
+
+	/**
+	 * @en Define a role rule assigning users a role on the objects directly ("Role rule…").
+	 */
+	public static ResKey COVERAGE_SOLUTION_ROLE_RULE;
+
+	/**
+	 * @en Mark the type internal, if the application code alone uses it and no user needs access
+	 *     to its objects ("Mark internal").
+	 */
+	public static ResKey COVERAGE_SOLUTION_MARK_INTERNAL;
+
+	/**
+	 * @en Grant the read operation to a role on the type or on its module ("Access rights…",
+	 *     "Module access rights…").
+	 */
+	public static ResKey COVERAGE_SOLUTION_READ_GRANT;
+
+	/**
+	 * @en Add a rule delivering one of the granted roles on the type or on its security parent
+	 *     ("Role rule…", "Security parent…").
+	 */
+	public static ResKey COVERAGE_SOLUTION_DELIVER_ROLE;
+
+	/**
+	 * @en Grant the operation to a role that is delivered on the type instead, or drop the grant
+	 *     ("Access rights…").
+	 */
+	public static ResKey COVERAGE_SOLUTION_CHANGE_GRANT;
+
+	/**
+	 * @en The type is marked as internal: it is used by the application code alone, so it is exempt
+	 *     from the check and no user gets access to its objects.
+	 */
+	public static ResKey COVERAGE_EXEMPT_INTERNAL;
+
+	/**
+	 * @en The type is excluded from access control: every user may access its objects, so it is
+	 *     exempt from the check.
+	 */
+	public static ResKey COVERAGE_EXEMPT_WITHOUT_SECURITY;
 
 	/**
 	 * @en The access definition could not be written to the file "{0}".

@@ -5,11 +5,12 @@
 	type. The SecurityCoverageTable analyses the definition itself when the view is opened and
 	rebuilds from the rows channel after a command; it writes the selected row to the selection
 	channel, the type of it to the selectedType channel and the parts of it the detail shows to the
-	selectedFindings, selectedRule and selectedRules channels (the module and findings columns start
+	selectedFindings, selectedRule and selectedRules channels and its two marks to the
+	selectedInternal and selectedWithoutSecurity channels (the module and findings columns start
 	hidden, the table being grouped by module). Those channels are written again whenever the rows
-	are, so the detail describes the analysis the table shows. "Show configuration" hands the
-	rendered security parents of all types to a dialog, "Show rule" the rule of the selected type
-	(it is hidden while the selected type has none).
+	are, so the detail describes the analysis the table shows. "Proposals" hands one entry per
+	security parent rule proposed for any type to a dialog that stores the picked ones, "Show rule"
+	the rule proposed for the selected type as XML (it is hidden while the selected type has none).
 	
 	The detail side holds two panels, one above the other: the findings of the selected type with
 	the rule proposed for it, and the rules in effect for it. Each is a panel of its own because
@@ -22,7 +23,10 @@
 	it. The overflow clique holds the access rights dialog for the module of the selected type and
 	the two marks that exempt a type from the check ("Mark internal") or from access control
 	("Without access control"), each asking for confirmation with the selected type named - which is
-	what the selectedType channel carries.
+	what the selectedType channel carries. Each mark is a pair of commands, one setting and one
+	dropping it, of which the one applying to the selected type is visible: the mark channels
+	carry what the analysis reports, so the visible command asks for the state the table does not
+	show yet, and setting one mark drops the other, the two contradicting each other.
 	
 	The rules panel lists one entry per rule in effect and writes the picked one to the
 	selectedRuleEntry channel; "Edit rule…" opens the dialog belonging to the kind of that entry
@@ -34,13 +38,17 @@
 	the pending channel marks that the files and the running definition differ until "Apply
 	configuration" reads the files again and restarts the access services. That marker is shown in
 	the findings panel rather than above the table, a filling panel bounding the height of a single
-	scrolling child only.
+	scrolling child only, and it says that the table keeps showing the running definition, since a
+	change that leaves the table unchanged looks like no change at all. Every command whose effect
+	is not obvious from its label carries a tooltip saying what it does and when it takes effect.
 -->
 <view>
 	<channels>
 		<channel name="rows"/>
 		<channel name="selection"/>
 		<channel name="selectedType"/>
+		<channel name="selectedInternal"/>
+		<channel name="selectedWithoutSecurity"/>
 		<channel name="selectedFindings"/>
 		<channel name="selectedRule"/>
 		<channel name="selectedRules"/>
@@ -71,27 +79,40 @@
 								<en>Refresh</en>
 								<de>Aktualisieren</de>
 							</label>
+							<tooltip>
+								<en>Analyzes the access definition in effect again and rebuilds the table. Saved changes that are not applied yet are not taken into account.</en>
+								<de>Analysiert die geltende Zugriffsdefinition erneut und baut die Tabelle neu auf. Gespeicherte, noch nicht angewendete Änderungen bleiben dabei unberücksichtigt.</de>
+							</tooltip>
 							<action class="com.top_logic.layout.view.admin.SecurityCoverageAction"
 								mode="REFRESH"
 							/>
 							<write-channel name="rows"/>
 						</generic-command>
 						<generic-command
-							image="css:bi bi-file-earmark-code"
+							image="css:bi bi-lightbulb"
 							placement="TOOLBAR"
 						>
 							<label>
-								<en>Show configuration</en>
-								<de>Konfiguration anzeigen</de>
+								<en>Proposals…</en>
+								<de>Vorschläge…</de>
 							</label>
+							<tooltip>
+								<en>Lists the security parent rules the analysis proposes for all types, to pick the ones to store in the application configuration. They take effect with "Apply configuration".</en>
+								<de>Listet die Regeln für übergeordnete Sicherheitsobjekte, die die Analyse für alle Typen vorschlägt, zur Auswahl derer auf, die in der Anwendungskonfiguration gespeichert werden sollen. Sie werden mit „Konfiguration anwenden“ wirksam.</de>
+							</tooltip>
 							<action class="com.top_logic.layout.view.admin.SecurityCoverageAction"
-								mode="CONFIGURATION"
+								mode="PROPOSALS"
 								rows="rows"
 							/>
 							<open-dialog
-								bind-input-to="content"
-								dialog-view="admin/access-control/coverage-configuration.view.xml"
-							/>
+								bind-input-to="proposals"
+								dialog-view="admin/access-control/coverage-proposals.view.xml"
+							>
+								<bind
+									channel="pending"
+									to="pending"
+								/>
+							</open-dialog>
 						</generic-command>
 						<generic-command
 							image="css:bi bi-arrow-repeat"
@@ -101,6 +122,10 @@
 								<en>Apply configuration</en>
 								<de>Konfiguration anwenden</de>
 							</label>
+							<tooltip>
+								<en>Reads the stored access definition again, restarts the access services and analyzes the definition anew. Only then does the table show the saved changes.</en>
+								<de>Liest die gespeicherte Zugriffsdefinition neu ein, startet die Zugriffsdienste neu und analysiert die Definition erneut. Erst danach zeigt die Tabelle die gespeicherten Änderungen.</de>
+							</tooltip>
 							<confirm expr="x -> #('The configuration files are read again and the access services are restarted. This takes a moment.'@en, 'Die Konfigurationsdateien werden neu gelesen und die Zugriffsdienste neu gestartet. Das dauert einen Moment.'@de)"/>
 							<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
 								mode="APPLY"
@@ -113,9 +138,11 @@
 					<child class="com.top_logic.layout.view.admin.SecurityCoverageTable"
 						input="rows"
 						selected-findings="selectedFindings"
+						selected-internal="selectedInternal"
 						selected-rule="selectedRule"
 						selected-rules="selectedRules"
 						selected-type="selectedType"
+						selected-without-security="selectedWithoutSecurity"
 						selection="selection"
 					/>
 				</panel>
@@ -148,6 +175,10 @@
 											<en>Show rule</en>
 											<de>Regel anzeigen</de>
 										</label>
+										<tooltip>
+											<en>Shows the security parent rule proposed for the selected type as XML. Nothing is changed.</en>
+											<de>Zeigt die für den ausgewählten Typ vorgeschlagene Regel für das übergeordnete Sicherheitsobjekt als XML. Es wird nichts geändert.</de>
+										</tooltip>
 										<executability>
 											<visible-if expr="rule -> $rule != null"/>
 										</executability>
@@ -165,6 +196,10 @@
 											<en>Accept proposal</en>
 											<de>Vorschlag übernehmen</de>
 										</label>
+										<tooltip>
+											<en>Stores the proposed security parent rule in the application configuration. It takes effect with "Apply configuration".</en>
+											<de>Speichert die vorgeschlagene Regel für das übergeordnete Sicherheitsobjekt in der Anwendungskonfiguration. Sie wird mit „Konfiguration anwenden“ wirksam.</de>
+										</tooltip>
 										<executability>
 											<visible-if expr="rule -> $rule != null"/>
 										</executability>
@@ -183,6 +218,10 @@
 											<en>Security parent…</en>
 											<de>Übergeordnetes Sicherheitsobjekt…</de>
 										</label>
+										<tooltip>
+											<en>Creates a rule determining the security parent of objects of the selected type, the object whose roles they inherit. The rule is stored in the application configuration and takes effect with "Apply configuration".</en>
+											<de>Legt eine Regel an, die das übergeordnete Sicherheitsobjekt von Objekten des ausgewählten Typs bestimmt, also das Objekt, dessen Rollen sie erben. Die Regel wird in der Anwendungskonfiguration gespeichert und mit „Konfiguration anwenden“ wirksam.</de>
+										</tooltip>
 										<executability>
 											<null-input-disabled/>
 										</executability>
@@ -208,6 +247,10 @@
 											<en>Role rule…</en>
 											<de>Rollenregel…</de>
 										</label>
+										<tooltip>
+											<en>Creates a rule assigning users a role on objects of the selected type. The rule is stored in the application configuration and takes effect with "Apply configuration".</en>
+											<de>Legt eine Regel an, die Benutzern eine Rolle auf Objekten des ausgewählten Typs zuweist. Die Regel wird in der Anwendungskonfiguration gespeichert und mit „Konfiguration anwenden“ wirksam.</de>
+										</tooltip>
 										<executability>
 											<null-input-disabled/>
 										</executability>
@@ -233,6 +276,10 @@
 											<en>Access rights…</en>
 											<de>Zugriffsrechte…</de>
 										</label>
+										<tooltip>
+											<en>Edits the rights the application grants roles on the selected type, and its marks. The changes are stored in the application configuration and take effect with "Apply configuration".</en>
+											<de>Bearbeitet die Rechte, die die Anwendung Rollen am ausgewählten Typ gewährt, sowie dessen Kennzeichnungen. Die Änderungen werden in der Anwendungskonfiguration gespeichert und mit „Konfiguration anwenden“ wirksam.</de>
+										</tooltip>
 										<executability>
 											<null-input-disabled/>
 										</executability>
@@ -259,6 +306,10 @@
 											<en>Module access rights…</en>
 											<de>Zugriffsrechte des Moduls…</de>
 										</label>
+										<tooltip>
+											<en>Edits the rights the application grants roles on all types of the module of the selected type, and the marks of the module. The changes are stored in the application configuration and take effect with "Apply configuration".</en>
+											<de>Bearbeitet die Rechte, die die Anwendung Rollen an allen Typen des Moduls des ausgewählten Typs gewährt, sowie die Kennzeichnungen des Moduls. Die Änderungen werden in der Anwendungskonfiguration gespeichert und mit „Konfiguration anwenden“ wirksam.</de>
+										</tooltip>
 										<executability>
 											<null-input-disabled/>
 										</executability>
@@ -278,44 +329,110 @@
 									<generic-command
 										clique="more"
 										image="css:bi bi-gear"
-										input="selection"
+										input="selectedInternal"
 										placement="TOOLBAR"
 									>
 										<label>
 											<en>Mark internal</en>
 											<de>Als intern kennzeichnen</de>
 										</label>
+										<tooltip>
+											<en>Marks the selected type as used by the application code alone: it is exempt from the check, and no user gets access to its objects. An exclusion from access control is dropped. The mark is stored in the application configuration and takes effect with "Apply configuration".</en>
+											<de>Kennzeichnet den ausgewählten Typ als nur vom Anwendungscode verwendet: Er ist von der Prüfung ausgenommen, und kein Benutzer erhält Zugriff auf seine Objekte. Eine Ausnahme von der Zugriffskontrolle wird aufgehoben. Die Kennzeichnung wird in der Anwendungskonfiguration gespeichert und mit „Konfiguration anwenden“ wirksam.</de>
+										</tooltip>
 										<executability>
 											<null-input-disabled/>
+											<visible-if expr="internal -> $internal != true"/>
 										</executability>
 										<confirm
-											expr="type -> x -> #('Mark {0} as internal? An internal type is used by the application code alone, so it is exempt from the check and no user gets access to its objects.'@en, '{0} als intern kennzeichnen? Ein interner Typ wird nur vom Anwendungscode verwendet, ist deshalb von der Prüfung ausgenommen, und kein Benutzer erhält Zugriff auf seine Objekte.'@de).fill(label($type))"
+											expr="type -> x -> #('Mark {0} as internal? An internal type is used by the application code alone, so it is exempt from the check and no user gets access to its objects. The mark is stored and takes effect with &quot;Apply configuration&quot;.'@en, '{0} als intern kennzeichnen? Ein interner Typ wird nur vom Anwendungscode verwendet, ist deshalb von der Prüfung ausgenommen, und kein Benutzer erhält Zugriff auf seine Objekte. Die Kennzeichnung wird gespeichert und mit „Konfiguration anwenden“ wirksam.'@de).fill(label($type))"
 											inputs="selectedType"
 										/>
 										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
-											mode="TOGGLE_INTERNAL"
+											mode="MARK_INTERNAL"
+											selection="selection"
+										/>
+										<write-channel name="pending"/>
+									</generic-command>
+									<generic-command
+										clique="more"
+										image="css:bi bi-gear"
+										input="selectedInternal"
+										placement="TOOLBAR"
+									>
+										<label>
+											<en>Unmark internal</en>
+											<de>Kennzeichnung als intern aufheben</de>
+										</label>
+										<tooltip>
+											<en>Drops the internal mark of the selected type, so that it is checked again. The change is stored in the application configuration and takes effect with "Apply configuration".</en>
+											<de>Hebt die Kennzeichnung des ausgewählten Typs als intern auf, sodass er wieder geprüft wird. Die Änderung wird in der Anwendungskonfiguration gespeichert und mit „Konfiguration anwenden“ wirksam.</de>
+										</tooltip>
+										<executability>
+											<visible-if expr="internal -> $internal == true"/>
+										</executability>
+										<confirm
+											expr="type -> x -> #('Drop the internal mark of {0}? The type is checked again, and its objects need a role source and a read grant. The change is stored and takes effect with &quot;Apply configuration&quot;.'@en, 'Kennzeichnung von {0} als intern aufheben? Der Typ wird wieder geprüft, und seine Objekte brauchen eine Rollenquelle und ein Leserecht. Die Änderung wird gespeichert und mit „Konfiguration anwenden“ wirksam.'@de).fill(label($type))"
+											inputs="selectedType"
+										/>
+										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+											mode="UNMARK_INTERNAL"
+											selection="selection"
 										/>
 										<write-channel name="pending"/>
 									</generic-command>
 									<generic-command
 										clique="more"
 										image="css:bi bi-unlock"
-										input="selection"
+										input="selectedWithoutSecurity"
 										placement="TOOLBAR"
 									>
 										<label>
 											<en>Without access control</en>
 											<de>Ohne Zugriffskontrolle</de>
 										</label>
+										<tooltip>
+											<en>Excludes the selected type from access control: every user may access its objects, no matter which roles the user holds on them, and the type is exempt from the check. An internal mark is dropped. The exclusion is stored in the application configuration and takes effect with "Apply configuration".</en>
+											<de>Nimmt den ausgewählten Typ von der Zugriffskontrolle aus: Jeder Benutzer darf auf seine Objekte zugreifen, unabhängig von seinen Rollen darauf, und der Typ ist von der Prüfung ausgenommen. Eine Kennzeichnung als intern wird aufgehoben. Die Ausnahme wird in der Anwendungskonfiguration gespeichert und mit „Konfiguration anwenden“ wirksam.</de>
+										</tooltip>
 										<executability>
 											<null-input-disabled/>
+											<visible-if expr="withoutSecurity -> $withoutSecurity != true"/>
 										</executability>
 										<confirm
-											expr="type -> x -> #('Exclude {0} from access control? Every user may then access its objects, no matter which roles the user holds on them.'@en, '{0} von der Zugriffskontrolle ausnehmen? Jeder Benutzer darf dann auf seine Objekte zugreifen, unabhängig von seinen Rollen darauf.'@de).fill(label($type))"
+											expr="type -> x -> #('Exclude {0} from access control? Every user may then access its objects, no matter which roles the user holds on them. The exclusion is stored and takes effect with &quot;Apply configuration&quot;.'@en, '{0} von der Zugriffskontrolle ausnehmen? Jeder Benutzer darf dann auf seine Objekte zugreifen, gleich welche Rollen er auf ihnen hat. Die Ausnahme wird gespeichert und mit „Konfiguration anwenden“ wirksam.'@de).fill(label($type))"
 											inputs="selectedType"
 										/>
 										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
-											mode="TOGGLE_WITHOUT_SECURITY"
+											mode="MARK_WITHOUT_SECURITY"
+											selection="selection"
+										/>
+										<write-channel name="pending"/>
+									</generic-command>
+									<generic-command
+										clique="more"
+										image="css:bi bi-lock"
+										input="selectedWithoutSecurity"
+										placement="TOOLBAR"
+									>
+										<label>
+											<en>With access control</en>
+											<de>Mit Zugriffskontrolle</de>
+										</label>
+										<tooltip>
+											<en>Puts the selected type under access control again, so that a user needs a role on its objects and the type is checked. The change is stored in the application configuration and takes effect with "Apply configuration".</en>
+											<de>Unterstellt den ausgewählten Typ wieder der Zugriffskontrolle, sodass ein Benutzer eine Rolle auf seinen Objekten braucht und der Typ geprüft wird. Die Änderung wird in der Anwendungskonfiguration gespeichert und mit „Konfiguration anwenden“ wirksam.</de>
+										</tooltip>
+										<executability>
+											<visible-if expr="withoutSecurity -> $withoutSecurity == true"/>
+										</executability>
+										<confirm
+											expr="type -> x -> #('Put {0} under access control again? A user then needs a role on its objects, and the type is checked. The change is stored and takes effect with &quot;Apply configuration&quot;.'@en, '{0} wieder der Zugriffskontrolle unterstellen? Ein Benutzer braucht dann eine Rolle auf seinen Objekten, und der Typ wird geprüft. Die Änderung wird gespeichert und mit „Konfiguration anwenden“ wirksam.'@de).fill(label($type))"
+											inputs="selectedType"
+										/>
+										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+											mode="UNMARK_WITHOUT_SECURITY"
+											selection="selection"
 										/>
 										<write-channel name="pending"/>
 									</generic-command>
@@ -327,8 +444,8 @@
 									<inset>
 										<text css-class="tlText--strong">
 											<label>
-												<en>There are saved changes that are not applied yet.</en>
-												<de>Es gibt gespeicherte, noch nicht angewendete Änderungen.</de>
+												<en>There are saved changes that are not applied yet. The table keeps showing the access definition in effect until "Apply configuration" makes them effective.</en>
+												<de>Es gibt gespeicherte, noch nicht angewendete Änderungen. Die Tabelle zeigt weiterhin die geltende Zugriffsdefinition, bis „Konfiguration anwenden“ sie wirksam macht.</de>
 											</label>
 										</text>
 									</inset>
@@ -342,7 +459,7 @@
 											direction="column"
 											gap="default"
 										>
-											<text input="selectedFindings"/>
+											<html input="selectedFindings"/>
 											<visible-if
 												expr="rule -> $rule != null"
 												input="selectedRule"
@@ -384,6 +501,10 @@
 											<en>Edit rule…</en>
 											<de>Regel bearbeiten…</de>
 										</label>
+										<tooltip>
+											<en>Opens the selected rule for editing. The edited rule is stored in the application configuration, overriding a rule of the layers underneath, and takes effect with "Apply configuration".</en>
+											<de>Öffnet die ausgewählte Regel zum Bearbeiten. Die geänderte Regel wird in der Anwendungskonfiguration gespeichert, überschreibt dort eine Regel der darunterliegenden Schichten und wird mit „Konfiguration anwenden“ wirksam.</de>
+										</tooltip>
 										<executability>
 											<null-input-disabled/>
 										</executability>
@@ -429,6 +550,10 @@
 											<en>Delete rule</en>
 											<de>Regel löschen</de>
 										</label>
+										<tooltip>
+											<en>Deletes the selected rule from the application configuration; a rule of the layers underneath cannot be deleted. The change takes effect with "Apply configuration".</en>
+											<de>Löscht die ausgewählte Regel aus der Anwendungskonfiguration; eine Regel der darunterliegenden Schichten kann nicht gelöscht werden. Die Änderung wird mit „Konfiguration anwenden“ wirksam.</de>
+										</tooltip>
 										<executability>
 											<visible-if expr="entry -> $entry != null &amp;&amp; $entry['stored']"/>
 										</executability>

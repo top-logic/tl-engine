@@ -64,17 +64,18 @@ import com.top_logic.util.Resources;
 /**
  * Table of the model based access definition, one row per analyzed type with the roles that may
  * read it, the rules that deliver a role on it and the gaps found in its definition. The rows are
- * grouped by the module of the type when the table is opened; the user regroups or ungroups it from
- * a column header.
+ * grouped by the module of the type when the table is opened, so the module column itself and the
+ * findings column, whose text a detail display shows, start hidden; the user shows them from the
+ * column selection and regroups or ungroups the table from a column header.
  *
  * <p>
  * App-specific admin widget (referenced by {@code class=}, not a reusable {@code @TagName} element).
  * The table shows a fresh analysis when opened and rebuilds from the configured
  * {@link Config#getInput() input channel} after a command. The selected row is written to the
  * {@link Config#getSelection() selection channel} (so a command can act on it); the parts of it a
- * detail display shows go to the {@link Config#getSelectedType() type}, the
- * {@link Config#getSelectedFindings() findings} and the {@link Config#getSelectedRule() rule
- * channel}, all cleared to {@code null} when the selection is empty.
+ * detail display shows go to the {@link Config#getSelectedFindings() findings} and the
+ * {@link Config#getSelectedRule() rule channel}, both cleared to {@code null} when the selection is
+ * empty.
  * </p>
  *
  * @implNote The rows come from {@link SecurityCoverageCheck#analyze()}; a row is keyed by the
@@ -135,9 +136,6 @@ public class SecurityCoverageTable implements UIElement {
 		/** Configuration name for {@link #getSelection()}. */
 		String SELECTION = "selection";
 
-		/** Configuration name for {@link #getSelectedType()}. */
-		String SELECTED_TYPE = "selected-type";
-
 		/** Configuration name for {@link #getSelectedFindings()}. */
 		String SELECTED_FINDINGS = "selected-findings";
 
@@ -167,14 +165,6 @@ public class SecurityCoverageTable implements UIElement {
 		ChannelRef getSelection();
 
 		/**
-		 * Channel the selected type is written to.
-		 */
-		@Name(SELECTED_TYPE)
-		@Nullable
-		@Format(ChannelRefFormat.class)
-		ChannelRef getSelectedType();
-
-		/**
 		 * Channel the findings of the selected type are written to, as the text a detail display
 		 * shows.
 		 */
@@ -197,8 +187,6 @@ public class SecurityCoverageTable implements UIElement {
 
 	private final ChannelRef _selectionRef;
 
-	private final ChannelRef _selectedTypeRef;
-
 	private final ChannelRef _selectedFindingsRef;
 
 	private final ChannelRef _selectedRuleRef;
@@ -210,7 +198,6 @@ public class SecurityCoverageTable implements UIElement {
 	public SecurityCoverageTable(InstantiationContext context, Config config) {
 		_inputRef = config.getInput();
 		_selectionRef = config.getSelection();
-		_selectedTypeRef = config.getSelectedType();
 		_selectedFindingsRef = config.getSelectedFindings();
 		_selectedRuleRef = config.getSelectedRule();
 	}
@@ -219,16 +206,16 @@ public class SecurityCoverageTable implements UIElement {
 	public IReactControl createControl(ViewContext context) {
 		List<Column<Object, ?>> columns = new ArrayList<>();
 		columns.add(objectColumn(COLUMN_TYPE, I18NConstants.COVERAGE_COLUMN_TYPE, TL_CLASS_TYPE, false,
-			row -> coverage(row).type(), 260));
+			row -> coverage(row).type(), 240));
 		columns.add(objectColumn(COLUMN_MODULE, I18NConstants.COVERAGE_COLUMN_MODULE, TL_MODULE_TYPE, false,
 			row -> coverage(row).type().getModule(), 200));
 		columns.add(statusColumn());
 		columns.add(objectColumn(COLUMN_READ_ROLES, I18NConstants.COVERAGE_COLUMN_READ_ROLES, BoundedRole.ROLE_TYPE,
-			true, row -> readRoles(coverage(row)), 280));
+			true, row -> readRoles(coverage(row)), 230));
 		columns.add(textColumn(COLUMN_ROLE_RULES, I18NConstants.COVERAGE_COLUMN_ROLE_RULES,
-			SecurityCoverageTable::roleRules, 220));
+			SecurityCoverageTable::roleRules, 200));
 		columns.add(textColumn(COLUMN_SECURITY_PARENTS, I18NConstants.COVERAGE_COLUMN_SECURITY_PARENTS,
-			SecurityCoverageTable::securityParents, 300));
+			SecurityCoverageTable::securityParents, 260));
 		columns.add(textColumn(COLUMN_FINDINGS, I18NConstants.COVERAGE_COLUMN_FINDINGS,
 			SecurityCoverageTable::findings, 460));
 
@@ -236,7 +223,8 @@ public class SecurityCoverageTable implements UIElement {
 		List<Object> initialRows = rows(dataChannel == null ? null : dataChannel.get());
 		Map<Object, TypeCoverage> rowByKey = new HashMap<>(index(initialRows));
 		ListRowSource<Object> source = new ListRowSource<>(initialRows, columns, SecurityCoverageTable::rowKey);
-		TableViewState initialState = DefaultTableView.initialState(columns, SortSpec.NONE, Set.of());
+		Set<String> hiddenByDefault = Set.of(COLUMN_MODULE, COLUMN_FINDINGS);
+		TableViewState initialState = DefaultTableView.initialState(columns, SortSpec.NONE, hiddenByDefault);
 		initialState.setGrouping(new GroupSpec(List.of(COLUMN_MODULE)));
 		DefaultTableView<Object> view = new DefaultTableView<>(columns, source, initialState);
 		TableViewControl<Object> control = new TableViewControl<>(context, view, false);
@@ -254,18 +242,14 @@ public class SecurityCoverageTable implements UIElement {
 		}
 
 		ViewChannel selection = _selectionRef != null ? context.resolveChannel(_selectionRef) : null;
-		ViewChannel selectedType = _selectedTypeRef != null ? context.resolveChannel(_selectedTypeRef) : null;
 		ViewChannel selectedFindings =
 			_selectedFindingsRef != null ? context.resolveChannel(_selectedFindingsRef) : null;
 		ViewChannel selectedRule = _selectedRuleRef != null ? context.resolveChannel(_selectedRuleRef) : null;
-		if (selection != null || selectedType != null || selectedFindings != null || selectedRule != null) {
+		if (selection != null || selectedFindings != null || selectedRule != null) {
 			control.addSelectionListener(keys -> {
 				TypeCoverage row = keys.size() == 1 ? rowByKey.get(keys.iterator().next()) : null;
 				if (selection != null) {
 					selection.set(row);
-				}
-				if (selectedType != null) {
-					selectedType.set(row == null ? null : row.type());
 				}
 				if (selectedFindings != null) {
 					selectedFindings.set(row == null ? null : findings(row));
@@ -408,7 +392,7 @@ public class SecurityCoverageTable implements UIElement {
 				(CellControlFactory) context -> MetaResourceControlProvider.INSTANCE.createControl(context, status)))
 			.sort(() -> Comparator.<CoverageStatus> naturalOrder())
 			.filter(new TextColumnFilter<>(text))
-			.width(160)
+			.width(150)
 			.build();
 	}
 

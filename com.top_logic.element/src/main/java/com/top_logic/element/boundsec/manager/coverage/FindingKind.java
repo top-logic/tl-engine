@@ -28,8 +28,8 @@ public enum FindingKind {
 	NO_ROLE_SOURCE,
 
 	/**
-	 * No role is granted the read operation on the type, so its objects are invisible for every
-	 * user that does not bypass the access check.
+	 * No role is granted the read operation on the type, so its objects are inaccessible to every
+	 * user. A type that the application's code alone uses is declared internal instead.
 	 *
 	 * @see SimpleBoundCommandGroup#READ
 	 * @see ModelAccessRights#getAllowedRoles(com.top_logic.model.TLClass,

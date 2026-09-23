@@ -242,6 +242,25 @@
 			</instance>
 		</config>
 		
+		<!--
+			The change log and the image gallery models are maintained by the engine's own code
+			(the change log is written on commit, the gallery images are handled by the gallery
+			control) and never on behalf of a user through the access check, so they carry no
+			access definition on purpose.
+		-->
+		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+			<instance class="com.top_logic.model.security.SecurityConfigurationService">
+				<security-config>
+					<module name="tl.changelog"
+						internal="true"
+					/>
+					<module name="tl.imagegallery"
+						internal="true"
+					/>
+				</security-config>
+			</instance>
+		</config>
+
 		<config service-class="com.top_logic.element.meta.kbbased.filtergen.GeneratorFactory">
 			<instance class="com.top_logic.element.meta.kbbased.filtergen.GeneratorFactory">
 				<generator-spis>

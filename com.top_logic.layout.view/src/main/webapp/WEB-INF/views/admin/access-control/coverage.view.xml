@@ -5,7 +5,9 @@
 	type. The SecurityCoverageTable analyses the definition itself when the view is opened and
 	rebuilds from the rows channel after a command; it writes the selected row to the selection
 	channel and the parts of it the detail shows to the selectedType / selectedFindings /
-	selectedRule channels. "Show configuration" hands the rendered security parents of all types
+	selectedRule channels (the detail shows the findings of the selected type and its proposed rule;
+	the module and findings columns start hidden, the table being grouped by module). "Show
+	configuration" hands the rendered security parents of all types
 	to a dialog, "Show rule" the rule of the selected type (it is hidden while the selected type
 	has none); both are copied into the application configuration by the developer.
 -->
@@ -13,7 +15,6 @@
 	<channels>
 		<channel name="rows"/>
 		<channel name="selection"/>
-		<channel name="selectedType"/>
 		<channel name="selectedFindings"/>
 		<channel name="selectedRule"/>
 	</channels>
@@ -68,7 +69,6 @@
 						input="rows"
 						selected-findings="selectedFindings"
 						selected-rule="selectedRule"
-						selected-type="selectedType"
 						selection="selection"
 					/>
 				</panel>
@@ -79,8 +79,8 @@
 			>
 				<panel>
 					<title>
-						<en>Type</en>
-						<de>Typ</de>
+						<en>Findings</en>
+						<de>Befunde</de>
 					</title>
 					<commands>
 						<generic-command
@@ -105,39 +105,31 @@
 						expr="selected -> $selected != null"
 						input="selection"
 					>
-						<stack
-							direction="column"
-							gap="default"
-						>
-							<text
-								css-class="tlText--strong"
-								input="selectedType"
-							/>
-							<text>
-								<label>
-									<en>Findings</en>
-									<de>Befunde</de>
-								</label>
-							</text>
-							<text input="selectedFindings"/>
-							<visible-if
-								expr="rule -> $rule != null"
-								input="selectedRule"
+						<inset>
+							<stack
+								direction="column"
+								gap="default"
 							>
-								<stack
-									direction="column"
-									gap="compact"
+								<text input="selectedFindings"/>
+								<visible-if
+									expr="rule -> $rule != null"
+									input="selectedRule"
 								>
-									<text>
-										<label>
-											<en>Proposed security parent rule</en>
-											<de>Vorgeschlagene Regel für das übergeordnete Sicherheitsobjekt</de>
-										</label>
-									</text>
-									<html input="selectedRule"/>
-								</stack>
-							</visible-if>
-						</stack>
+									<stack
+										direction="column"
+										gap="compact"
+									>
+										<text css-class="tlText--strong">
+											<label>
+												<en>Proposed security parent rule</en>
+												<de>Vorgeschlagene Regel für das übergeordnete Sicherheitsobjekt</de>
+											</label>
+										</text>
+										<html input="selectedRule"/>
+									</stack>
+								</visible-if>
+							</stack>
+						</inset>
 					</visible-if>
 				</panel>
 			</pane>

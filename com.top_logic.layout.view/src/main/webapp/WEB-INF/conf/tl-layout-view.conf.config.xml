@@ -4,14 +4,18 @@
 	<services>
 		<!--
 			The login model holds the transient form objects of the login views (credentials,
-			password change, one-time password, forgotten password, password reset). They are
-			handled by the login code only and never on behalf of a signed-in user, so they carry no
+			password change, one-time password, forgotten password, password reset), the admin
+			model the transient form objects of the administration views. They are handled by the
+			view code only and never on behalf of a user through the access check, so they carry no
 			access definition on purpose.
 		-->
 		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
 			<instance>
 				<security-config>
 					<module name="tl.login"
+						internal="true"
+					/>
+					<module name="tl.admin"
 						internal="true"
 					/>
 				</security-config>

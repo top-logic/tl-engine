@@ -29,8 +29,9 @@ import com.top_logic.model.util.TLModelUtil;
  * <p>
  * The service is configured in {@code element.test.config.xml} with the module
  * {@code TestSecurityCoverageExcluded} excluded and with the startup logging switched off, so the
- * element test application starts without the warnings the test model provokes; the logging is
- * exercised by an explicit call.
+ * element test application starts without the findings the test model provokes; the logging is
+ * exercised by an explicit call. The findings are written at the informational level, because they
+ * report the state of the access definition rather than a failure.
  * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -69,7 +70,7 @@ public class TestSecurityCoverageCheck extends BasicTestCase {
 	}
 
 	public void testLogFindings() {
-		CollectingLogListener listener = new CollectingLogListener(Set.of(Level.WARN), true);
+		CollectingLogListener listener = new CollectingLogListener(Set.of(Level.INFO), true);
 		List<String> messages;
 		try {
 			SecurityCoverageCheck check = SecurityCoverageCheck.getInstance();
@@ -85,13 +86,13 @@ public class TestSecurityCoverageCheck extends BasicTestCase {
 		assertLogged(messages, DOUBLE_CONTAINED);
 		assertLogged(messages, DEAD_GRANT);
 
-		assertFalse("A covered type produces no warning: " + COVERED, hasFindingFor(messages, COVERED));
+		assertFalse("A covered type produces no finding: " + COVERED, hasFindingFor(messages, COVERED));
 		assertTrue("The summary of the analysis is logged: " + messages,
 			messages.stream().anyMatch(message -> message.contains(SUMMARY)));
 	}
 
 	private static void assertLogged(List<String> messages, String qualifiedTypeName) {
-		assertTrue("Expected a warning for '" + qualifiedTypeName + "' in " + messages,
+		assertTrue("Expected a finding for '" + qualifiedTypeName + "' in " + messages,
 			hasFindingFor(messages, qualifiedTypeName));
 	}
 

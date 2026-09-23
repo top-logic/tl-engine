@@ -71,6 +71,10 @@
 					</attributes>
 				</class>
 
+				<!-- Read is granted to a role that no rule delivers, but that a test assigns
+					directly on an object of this type. -->
+				<class name="DirectlyAssigned"/>
+
 				<!-- Excluded from access control: no finding despite the missing definitions. -->
 				<class name="Unsecured"/>
 

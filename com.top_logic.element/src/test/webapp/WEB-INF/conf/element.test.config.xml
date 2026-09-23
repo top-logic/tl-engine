@@ -121,6 +121,13 @@
 							roles="TestSecurityCoverage.Reader, TestSecurityCoverage.Ghost"
 						/>
 					</class>
+					<class name="TestSecurityCoverage:DirectlyAssigned">
+						<!-- The direct role is delivered by no rule, only by a role assignment. -->
+						<grant
+							operation="Read"
+							roles="TestSecurityCoverage.Direct"
+						/>
+					</class>
 					<class name="TestSecurityCoverage:Unsecured"
 						without-security="true"
 					/>
@@ -150,6 +157,7 @@
 					<role name="projElement.Projektbeobachter"/>
 					<role name="TestSecurityCoverage.Reader"/>
 					<role name="TestSecurityCoverage.Ghost"/>
+					<role name="TestSecurityCoverage.Direct"/>
 				</roles>
 			</instance>
 		</config>

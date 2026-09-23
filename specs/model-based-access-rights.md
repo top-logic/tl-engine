@@ -522,7 +522,7 @@ Role check for instance I:
 
 **Fallback to the global security root**
 
-If no security parent rule is configured for a type, the global **security root** is used as the sole security parent -- provided `use-default-security-parent` is enabled (the default). The security root is the application's default security object (`BoundHelper.getDefaultObject()`); in a running application (`ElementBoundHelper`) it is the `ROOT` singleton of the `SecurityStructure` module.
+If no security parent rule is configured for a type, the global **security root** is used as the sole security parent -- provided `use-default-security-parent` is enabled (it is disabled by default). The security root is the application's default security object (`BoundHelper.getDefaultObject()`); in a running application (`ElementBoundHelper`) it is the `ROOT` singleton of the `SecurityStructure` module.
 
 `AbstractBoundWrapper.getSecurityParents()` implements this as follows:
 

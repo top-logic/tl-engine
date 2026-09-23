@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -29,6 +30,10 @@ import com.top_logic.element.boundsec.manager.rule.RoleProvider;
 import com.top_logic.element.boundsec.manager.rule.SingletonPathElement;
 import com.top_logic.element.boundsec.manager.rule.config.NavigationRuleConfig;
 import com.top_logic.element.boundsec.manager.rule.config.PathElementConfig;
+import com.top_logic.knowledge.objects.KnowledgeItem;
+import com.top_logic.knowledge.objects.KnowledgeObject;
+import com.top_logic.knowledge.service.KnowledgeBase;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModule;
@@ -57,6 +62,14 @@ import com.top_logic.util.model.ModelService;
  * read operation on it? Each gap is reported as a {@link CoverageFinding}; a type without a role
  * source that is contained in exactly one composition additionally gets a security parent rule
  * proposed.
+ * </p>
+ *
+ * <p>
+ * A role reaches an object either through a rule that computes it or through a role assignment that
+ * names the object. The analysis reads the role assignments of the knowledge base once, so that a
+ * grant to a role an application assigns by hand is not mistaken for a dead grant. A role source,
+ * in contrast, must be a rule: an assignment on a single object says nothing about the objects
+ * created next.
  * </p>
  *
  * <p>
@@ -91,6 +104,8 @@ public class SecurityCoverageAnalysis {
 
 	private final List<TLReference> _compositeReferences;
 
+	private final Map<TLClass, Set<BoundedRole>> _directlyAssignedRoles;
+
 	/**
 	 * Creates a {@link SecurityCoverageAnalysis}.
 	 *
@@ -120,6 +135,8 @@ public class SecurityCoverageAnalysis {
 		_operations.sort(Comparator.comparing(BoundCommandGroup::getID));
 
 		_compositeReferences = compositeReferences(model);
+
+		_directlyAssignedRoles = directlyAssignedRoles();
 	}
 
 	/**
@@ -258,6 +275,12 @@ public class SecurityCoverageAnalysis {
 	 * Whether a user can hold the given role on an object of the given type, either on the object
 	 * itself or on one of its security parents.
 	 *
+	 * <p>
+	 * A role reaches an object through a rule that computes it, or through a role assignment that
+	 * names the object explicitly. Both count, otherwise every role that an application assigns by
+	 * hand would look undeliverable.
+	 * </p>
+	 *
 	 * @param visited
 	 *        The types already inspected along the security parent chain, guarding against cycles.
 	 * @return Also <code>true</code> when the end of a security parent path cannot be determined
@@ -267,13 +290,14 @@ public class SecurityCoverageAnalysis {
 		if (!visited.add(type)) {
 			return false;
 		}
-		if (_accessManager.canHaveRole(type, role)) {
+		if (_accessManager.canHaveRole(type, role) || isAssignedDirectly(type, role)) {
 			return true;
 		}
 		Collection<NavigationRule> parentRules = _accessManager.getSecurityParentRules(type);
 		if (parentRules.isEmpty()) {
 			return _rootFallbackActive && _securityRootType != null
-				&& _accessManager.canHaveRole(_securityRootType, role);
+				&& (_accessManager.canHaveRole(_securityRootType, role)
+					|| isAssignedDirectly(_securityRootType, role));
 		}
 		for (NavigationRule rule : parentRules) {
 			TLType endType = endType(rule);
@@ -286,6 +310,56 @@ public class SecurityCoverageAnalysis {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Whether the given role is assigned on an object of the given type without a rule computing
+	 * it.
+	 *
+	 * @see #directlyAssignedRoles()
+	 */
+	private boolean isAssignedDirectly(TLClass type, BoundedRole role) {
+		return _directlyAssignedRoles.getOrDefault(type, Collections.emptySet()).contains(role);
+	}
+
+	/**
+	 * The roles held through a role assignment, indexed by every type an object carrying such an
+	 * assignment has.
+	 *
+	 * <p>
+	 * The assignments are read once, so that the analysis of a model with many types does not
+	 * query the knowledge base per type. An assignment is indexed under the type of its object and
+	 * under all generalizations of that type, because an object of a specialization is an object of
+	 * its generalizations as well.
+	 * </p>
+	 */
+	private static Map<TLClass, Set<BoundedRole>> directlyAssignedRoles() {
+		Map<TLClass, Set<BoundedRole>> result = new HashMap<>();
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		for (KnowledgeObject assignment : kb.getAllKnowledgeObjects(BoundedRole.ROLE_ASSIGNMENT_OBJECT_NAME)) {
+			TLObject object = reference(assignment, BoundedRole.ATTRIBUTE_OBJECT);
+			TLObject role = reference(assignment, BoundedRole.ATTRIBUTE_ROLE);
+			if (!(object != null && role instanceof BoundedRole assignedRole)) {
+				continue;
+			}
+			if (!(object.tType() instanceof TLClass objectType)) {
+				continue;
+			}
+			for (TLClass generalization : TLModelUtil.getReflexiveTransitiveGeneralizations(objectType)) {
+				result.computeIfAbsent(generalization, ignored -> new HashSet<>()).add(assignedRole);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * The object a reference of a role assignment points to.
+	 *
+	 * @return <code>null</code> when the reference is not filled.
+	 */
+	private static TLObject reference(KnowledgeObject assignment, String attribute) {
+		Object value = assignment.getAttributeValue(attribute);
+		return value instanceof KnowledgeItem item ? item.getWrapper() : null;
 	}
 
 	/**

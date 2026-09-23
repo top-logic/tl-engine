@@ -11,6 +11,7 @@ import com.top_logic.element.boundsec.manager.rule.NavigationRule;
 import com.top_logic.element.boundsec.manager.rule.RoleRule;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
+import com.top_logic.tool.boundsec.wrap.BoundedRole;
 
 /**
  * Classification of a {@link CoverageFinding}.
@@ -22,6 +23,12 @@ public enum FindingKind {
 	/**
 	 * Neither a {@link RoleRule} nor a {@link NavigationRule security parent rule} applies to the
 	 * type, so no user can ever hold a role on its objects.
+	 *
+	 * <p>
+	 * Only rules count as a role source. A role that is assigned on a single object is data, not a
+	 * definition: it says nothing about the objects that are created next, so a type whose access
+	 * depends on such an assignment alone is still reported.
+	 * </p>
 	 *
 	 * @see CoverageFinding#isRootFallbackActive()
 	 */
@@ -38,8 +45,14 @@ public enum FindingKind {
 	NO_READ_GRANT,
 
 	/**
-	 * An operation is granted to a role that no rule can deliver on the type, neither on the type
+	 * An operation is granted to a role that cannot be delivered on the type, neither on the type
 	 * itself nor on any of its security parents. The grant therefore never takes effect.
+	 *
+	 * <p>
+	 * A role is delivered by a rule that computes it, and equally by a {@link BoundedRole role
+	 * assignment} that names an object of the type explicitly. An application that assigns a role
+	 * by hand instead of computing it therefore produces no finding.
+	 * </p>
 	 *
 	 * @see CoverageFinding#getOperation()
 	 * @see CoverageFinding#getRoles()

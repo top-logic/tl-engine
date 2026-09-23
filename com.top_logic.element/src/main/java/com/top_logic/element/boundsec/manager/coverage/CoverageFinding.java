@@ -99,6 +99,12 @@ public final class CoverageFinding {
 	/**
 	 * Creates a {@link FindingKind#DEAD_GRANT} finding.
 	 *
+	 * <p>
+	 * A role counts as deliverable when a rule computes it on the type or on one of its security
+	 * parents, and equally when it is assigned directly on an object of one of those types. Only a
+	 * role that neither a rule nor an assignment can put on an object belongs into this finding.
+	 * </p>
+	 *
 	 * @param type
 	 *        The type carrying the grant.
 	 * @param operation
@@ -184,7 +190,8 @@ public final class CoverageFinding {
 	}
 
 	/**
-	 * The granted roles that cannot be delivered on {@link #getType()}.
+	 * The granted roles that cannot be delivered on {@link #getType()}, neither by a rule nor by a
+	 * direct role assignment.
 	 *
 	 * @return An empty set for a finding other than {@link FindingKind#DEAD_GRANT}.
 	 */

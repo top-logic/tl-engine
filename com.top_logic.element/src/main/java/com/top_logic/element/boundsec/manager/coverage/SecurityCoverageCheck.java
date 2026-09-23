@@ -18,6 +18,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
+import com.top_logic.basic.module.ServiceExtensionPoint;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.model.security.SecurityConfigurationService;
@@ -33,9 +34,15 @@ import com.top_logic.util.model.ModelService;
  * For every concrete type the check answers the two questions that decide whether a user can ever
  * see an object of that type: does a rule deliver a role on it, and is a role granted the read
  * operation on it? A type that fails one of the two is invisible for every user, and a grant to a
- * role that no rule delivers on the type never takes effect. Every gap found is written to the
- * application log during startup. For a type whose container can be derived from the model, the
- * security parent rule that would close the gap is proposed.
+ * role that no rule delivers on the type never takes effect. For a type whose container can be
+ * derived from the model, the security parent rule that would close the gap is proposed.
+ * </p>
+ *
+ * <p>
+ * Every gap found is written to the application log during startup as an informational message. An
+ * application decides which of the gaps it accepts, so the log is a report, not an alarm: the
+ * coverage tab of the security administration shows the same findings interactively, and a test
+ * that must not tolerate a gap asserts on them.
  * </p>
  *
  * <p>
@@ -44,17 +51,21 @@ import com.top_logic.util.model.ModelService;
  * a proposed rule is written to the log for the developer to apply explicitly.
  * </p>
  *
+ * @implNote The check is an extension of the {@link AccessManager} and therefore starts with it and
+ *           only with it, so that a test setup with a minimal type system, which does not start the
+ *           access manager, is not dragged into starting the whole model stack.
  * @implNote The result is computed by {@link SecurityCoverageAnalysis} and handed to the caller of
  *           {@link #analyze()}, so that the log, a user interface and a test all see the same
- *           findings under the same configured exclusions.
+ *           findings under the same configured exclusions. The reusable test is
+ *           {@code test.com.top_logic.element.boundsec.manager.coverage.TestSecurityCoverage}.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @ServiceDependencies({
-	AccessManager.Module.class,
 	SecurityConfigurationService.Module.class,
 	ModelService.Module.class,
 })
+@ServiceExtensionPoint(AccessManager.Module.class)
 @Label("Security coverage check")
 public class SecurityCoverageCheck extends ConfiguredManagedClass<SecurityCoverageCheck.Config> {
 
@@ -85,6 +96,13 @@ public class SecurityCoverageCheck extends ConfiguredManagedClass<SecurityCovera
 
 		/**
 		 * Whether the findings are written to the application log during startup.
+		 *
+		 * <p>
+		 * The findings are informational: they report which types the access definition leaves
+		 * open, they do not mark the startup as faulty. Switching the log off does not switch the
+		 * analysis off; the coverage tab of the security administration and a test asserting on the
+		 * findings work either way.
+		 * </p>
 		 */
 		@Name(LOG_FINDINGS)
 		@BooleanDefault(true)
@@ -124,8 +142,14 @@ public class SecurityCoverageCheck extends ConfiguredManagedClass<SecurityCovera
 	}
 
 	/**
-	 * Writes the given coverage to the application log: a warning per finding, followed by a
-	 * summary of the analyzed types.
+	 * Writes the given coverage to the application log: an informational message per finding,
+	 * followed by a summary of the analyzed types.
+	 *
+	 * <p>
+	 * The findings report the state of the access definition, they do not report an error: which
+	 * gaps an application accepts is its own decision. The log therefore stays at the informational
+	 * level, so that a test asserting a clean startup log is not broken by a reported gap.
+	 * </p>
 	 *
 	 * @param coverage
 	 *        The result of {@link #analyze()}.
@@ -138,16 +162,12 @@ public class SecurityCoverageCheck extends ConfiguredManagedClass<SecurityCovera
 			}
 			incomplete++;
 			for (CoverageFinding finding : typeCoverage.findings()) {
-				Logger.warn(describe(finding), SecurityCoverageCheck.class);
+				Logger.info(describe(finding), SecurityCoverageCheck.class);
 			}
 		}
 
-		String summary = coverage.size() + " types analysed, " + incomplete + " with findings.";
-		if (incomplete == 0) {
-			Logger.info(summary, SecurityCoverageCheck.class);
-		} else {
-			Logger.warn(summary, SecurityCoverageCheck.class);
-		}
+		Logger.info(coverage.size() + " types analysed, " + incomplete + " with findings.",
+			SecurityCoverageCheck.class);
 	}
 
 	/**

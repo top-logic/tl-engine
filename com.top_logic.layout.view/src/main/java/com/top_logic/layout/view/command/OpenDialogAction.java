@@ -112,6 +112,14 @@ public class OpenDialogAction extends InterruptibleViewAction {
 		List<ChannelBindingConfig> getBindings();
 	}
 
+	/**
+	 * Personalization path segment below which the elements of a dialog store their state, followed
+	 * by the reference of the dialog's view.
+	 *
+	 * @see ViewContext#getPersonalizationKey()
+	 */
+	private static final String DIALOG_SEGMENT = "dialog";
+
 	private final String _dialogViewPath;
 
 	private final boolean _closeOnBackdrop;
@@ -225,7 +233,12 @@ public class OpenDialogAction extends InterruptibleViewAction {
 			throw new RuntimeException("Failed to load dialog view: " + dialogViewPath, ex);
 		}
 
-		ViewContext dialogContext = new DefaultViewContext(context);
+		// Each dialog view personalizes its elements under a path of its own, so that the state one
+		// dialog stores (e.g. its window size) is neither shared with other dialogs nor with the
+		// view the dialog was opened from.
+		ViewContext dialogContext = new DefaultViewContext(context)
+			.childContext(DIALOG_SEGMENT)
+			.childContext(ViewLoader.viewRef(dialogViewPath));
 
 		// A dialog is displayed on top of everything, so its content sits one step below whatever
 		// opened it - a step no configured container accounts for.

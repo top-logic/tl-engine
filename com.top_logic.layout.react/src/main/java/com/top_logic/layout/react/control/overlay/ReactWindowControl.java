@@ -45,6 +45,7 @@ import com.top_logic.layout.table.ConfigKey;
  * <li>{@link #TITLE} - the window title</li>
  * <li>{@link #WIDTH} - the window width (CSS value, e.g. "500px")</li>
  * <li>{@link #HEIGHT} - the window height (CSS value or null for auto)</li>
+ * <li>{@link #CUSTOM_WIDTH}, {@link #CUSTOM_HEIGHT} - the remembered size in pixels, if any</li>
  * <li>{@link #RESIZABLE} - whether the window can be resized by dragging</li>
  * <li>{@link #CLOSABLE} - whether the close button is enabled and Escape closes the window</li>
  * <li>{@link #CHILD} - the body content control</li>
@@ -85,7 +86,23 @@ public class ReactWindowControl extends ToolbarControl {
 
 	private static final String CONFIG_KEY_SIZE_SUFFIX = "reactDialogSize";
 
-	private static final String MIN_HEIGHT = "minHeight";
+	/**
+	 * State key for the width the user gave the window when it was last resized, or absent.
+	 *
+	 * <p>
+	 * Together with {@link #CUSTOM_HEIGHT}, the remembered size replaces the configured
+	 * {@link #WIDTH} and the automatic height, but only while it fits into the browser window: the
+	 * client decides this, as only it knows the size of the browser window.
+	 * </p>
+	 */
+	public static final String CUSTOM_WIDTH = "customWidth";
+
+	/**
+	 * State key for the height the user gave the window when it was last resized, or absent.
+	 *
+	 * @see #CUSTOM_WIDTH
+	 */
+	public static final String CUSTOM_HEIGHT = "customHeight";
 
 	/** Client state field telling whether the user can close this window. */
 	public static final String CLOSABLE = "closable";
@@ -321,10 +338,10 @@ public class ReactWindowControl extends ToolbarControl {
 		// The client performed the resize itself; no echo needed.
 		updateStateSilently(() -> {
 			if (w != null) {
-				putState(WIDTH, w + "px");
+				putState(CUSTOM_WIDTH, w);
 			}
 			if (h != null) {
-				putState(HEIGHT, h + "px");
+				putState(CUSTOM_HEIGHT, h);
 			}
 		});
 		saveCustomizedSize(w, h);
@@ -345,8 +362,13 @@ public class ReactWindowControl extends ToolbarControl {
 		}
 		int width = ((Number) list.get(0)).intValue();
 		int height = ((Number) list.get(1)).intValue();
-		putState(WIDTH, width + "px");
-		putState(MIN_HEIGHT, height + "px");
+		if (width <= 0 || height <= 0) {
+			return;
+		}
+		// Sent beside the configured width instead of replacing it, so that the client falls back
+		// to the configured size where the remembered one does not fit.
+		putState(CUSTOM_WIDTH, width);
+		putState(CUSTOM_HEIGHT, height);
 	}
 
 	private void saveCustomizedSize(Integer widthValue, Integer heightValue) {

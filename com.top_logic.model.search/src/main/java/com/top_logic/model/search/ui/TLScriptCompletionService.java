@@ -20,6 +20,7 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.model.TLAssociation;
 import com.top_logic.model.TLEnumeration;
+import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLNamed;
 import com.top_logic.model.TLStructuredType;
@@ -35,8 +36,8 @@ import com.top_logic.util.regex.TLRegexBuilder;
  * Reusable service for computing TL-Script code completions.
  *
  * <p>
- * Extracted from {@link TLScriptAutoCompletionCommand} so that both the legacy Ace editor and the
- * new <code>CodeMirror</code> 6 editor can share the same completion logic.
+ * Shared by {@link TLScriptAutoCompletionCommand} (the Ace editor) and the <code>CodeMirror</code> 6
+ * editor. Completions carry their documentation, see {@link TLScriptDocumentation}.
  * </p>
  */
 public class TLScriptCompletionService implements TLScriptConstants {
@@ -47,7 +48,8 @@ public class TLScriptCompletionService implements TLScriptConstants {
 	 * Computes completions for the given line and prefix.
 	 *
 	 * @param context
-	 *        The display context (needed for locale-aware documentation).
+	 *        The display context providing the locale of function documentation, or
+	 *        <code>null</code> to compute completions without function documentation.
 	 * @param line
 	 *        The full text of the current line.
 	 * @param prefix
@@ -65,7 +67,8 @@ public class TLScriptCompletionService implements TLScriptConstants {
 	 * Computes completions for the given line and prefix.
 	 *
 	 * @param context
-	 *        The display context (needed for locale-aware documentation).
+	 *        The display context providing the locale of function documentation, or
+	 *        <code>null</code> to compute completions without function documentation.
 	 * @param line
 	 *        The full text of the current line.
 	 * @param prefix
@@ -271,16 +274,9 @@ public class TLScriptCompletionService implements TLScriptConstants {
 		completion.setValue(functionName);
 		completion.setSnippet(functionName + "($1)$2");
 
-		getDocHTML(context, functionName).ifPresent(doc -> completion.setDocHTML(doc));
+		TLScriptDocumentation.functionDocumentation(context, functionName).ifPresent(completion::setDocHTML);
 
 		return completion;
-	}
-
-	private static Optional<String> getDocHTML(DisplayContext context, String name) {
-		if (context == null) {
-			return Optional.empty();
-		}
-		return SearchBuilder.getInstance().getDocumentation(context, name);
 	}
 
 	private static CodeCompletion createCodeCompletion(TLNamed modelPart, ModelPartMatch matcher,
@@ -293,6 +289,9 @@ public class TLScriptCompletionService implements TLScriptConstants {
 		completion.setName(name);
 		completion.setValue(name);
 		completion.setSnippet(getTLModelPartCompletionSnippet(name, matcher.getLastNotEmptyMatch()));
+		if (modelPart instanceof TLModelPart part) {
+			TLScriptDocumentation.modelPartDocumentation(part).ifPresent(completion::setDocHTML);
+		}
 
 		return completion;
 	}

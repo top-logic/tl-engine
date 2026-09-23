@@ -21,7 +21,6 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -45,7 +44,6 @@ import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.table.CellControlFactory;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.react.controlprovider.MetaResourceControlProvider;
-import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
@@ -138,6 +136,13 @@ public class SecurityCoverageTable implements UIElement {
 	/** Key of the flag telling whether the application's configuration defines a rule entry. */
 	public static final String RULE_STORED = "stored";
 
+	/**
+	 * Renders a {@link CoverageStatus} with its icon and label through the default
+	 * {@link MetaResourceControlProvider} configuration.
+	 */
+	private static final MetaResourceControlProvider STATUS_DISPLAY =
+		TypedConfigUtil.createInstance(MetaResourceControlProvider.Config.class);
+
 	/** {@link #RULE_KIND} of an entry standing for a security parent rule. */
 	public static final String KIND_SECURITY_PARENT = "securityParent";
 
@@ -164,12 +169,6 @@ public class SecurityCoverageTable implements UIElement {
 
 	/** Separator between the parts a rule is described by. */
 	private static final String DESCRIPTION_SEPARATOR = " \u2192 ";
-
-	/**
-	 * The display of a {@link CoverageStatus} in the status column: its icon and its label.
-	 */
-	private static final ReactControlProvider STATUS_DISPLAY =
-		TypedConfigUtil.createInstance(TypedConfiguration.newConfigItem(MetaResourceControlProvider.Config.class));
 
 	/**
 	 * Configuration for {@link SecurityCoverageTable}.

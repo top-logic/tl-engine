@@ -14,6 +14,7 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 
 /**
@@ -87,6 +88,12 @@ public interface ViewConfig extends ConfigurationItem {
 	 * </p>
 	 *
 	 * <p>
+	 * The exception is an entry point marked {@link EntryPoint#isAnonymous() anonymous}: a URL
+	 * naming such a view shows it, because it is a page written for a visitor who has no account
+	 * here.
+	 * </p>
+	 *
+	 * <p>
 	 * Unset for an application that shows itself to visitors, which then reaches its login through
 	 * the display it renders for them.
 	 * </p>
@@ -107,6 +114,9 @@ public interface ViewConfig extends ConfigurationItem {
 		/** Configuration name for {@link #getView()}. */
 		String VIEW = "view";
 
+		/** Configuration name for {@link #isAnonymous()}. */
+		String ANONYMOUS = "anonymous";
+
 		/**
 		 * The view file, relative to {@code /WEB-INF/views/} in the webapp, e.g.
 		 * {@code demo/pdf-demo.view.xml}.
@@ -114,5 +124,24 @@ public interface ViewConfig extends ConfigurationItem {
 		@Name(VIEW)
 		@Mandatory
 		String getView();
+
+		/**
+		 * Whether the view is shown to a session that belongs to no account as well.
+		 *
+		 * <p>
+		 * An application with a {@link ViewConfig#getLoginView() login view} shows that view to
+		 * every anonymous session in place of whatever the URL names; an entry point marked here is
+		 * the exception - a URL naming it shows it, e.g. a page that explains something to a
+		 * visitor before they can log in.
+		 * </p>
+		 *
+		 * <p>
+		 * An application without a login view shows a visitor what the URL names anyway, so the
+		 * setting says nothing there.
+		 * </p>
+		 */
+		@Name(ANONYMOUS)
+		@BooleanDefault(false)
+		boolean isAnonymous();
 	}
 }

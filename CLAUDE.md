@@ -140,6 +140,10 @@ TopLogic uses a typed configuration system: config classes are annotated `Config
 
 Objects are read/written through `PersistencyLayer.getKnowledgeBase()`. Wrap every mutation in a transaction: `kb.beginTransaction()`, perform the changes, `tx.commit()`, with `tx.rollback()` in a `finally` (a no-op after a successful commit).
 
+### Access Control
+
+Whether a user may perform an operation on an object is decided by two independent definitions: the grants of the object's type (`SecurityConfigurationService`) and the roles the user holds on the object (rules of the `AccessManager`). A security parent inherits roles, not grants. See [docs/faq/access-configuration.md](docs/faq/access-configuration.md) for the check, the configuration syntax, the `internal` / `without-security` marks and the coverage check.
+
 ### Layout Components
 
 UI is assembled declaratively in `*.layout.xml` files under `WEB-INF/layouts/`. See the `tl-layout` skill for the template-call pattern, channel binding, and the component catalog.

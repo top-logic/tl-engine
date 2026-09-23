@@ -117,6 +117,7 @@ public class FileListElement implements UIElement {
 			_config.getAttribute(), false, false, null, null,
 			AttributeFieldControl.wirePosition(_config.getLabelPosition(), false), true, true, control);
 		chrome.setAgentName(_config.getAttribute());
+		chrome.setCssClass(_config.getCssClass());
 		control.setChrome(chrome);
 
 		control.init();

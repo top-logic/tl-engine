@@ -186,6 +186,8 @@ public class ProgressElement implements UIElement {
 
 	private final List<TLModelPartRef> _observedTypeRefs;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link ProgressElement} from configuration.
 	 */
@@ -208,6 +210,7 @@ public class ProgressElement implements UIElement {
 			context.error("A <progress> requires either '" + Config.FRACTION + "' or both '" + Config.DONE
 				+ "' and '" + Config.TOTAL + "'.");
 		}
+		_cssClass = config.getCssClass();
 	}
 
 	/**
@@ -239,6 +242,7 @@ public class ProgressElement implements UIElement {
 		_total = total;
 		_label = label;
 		_observedTypeRefs = observedTypes;
+		_cssClass = null;
 	}
 
 	@Override
@@ -264,6 +268,7 @@ public class ProgressElement implements UIElement {
 		control.addAttachListener(() -> observer.attach(context.getModelScope()));
 		control.addDetachListener(observer::detach);
 
+		control.setCssClass(_cssClass);
 		return control;
 	}
 

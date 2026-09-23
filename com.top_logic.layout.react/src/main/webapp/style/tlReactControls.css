@@ -70,6 +70,20 @@ html, body {
 	min-height: 0;
 }
 
+/* --- Bounded width ------------------------------------------------------ */
+
+/* A layout container (a stack, a grid) limited to a maximum width, which travels as an inline
+   length because it is a value rather than a kind of layout. The container takes the width its
+   own container offers - without the explicit width, the auto margins would shrink it to its
+   content instead of stretching it - up to that maximum, and the space left over is split between
+   its two sides. Only the width is bounded: the container keeps taking part in the fill contract,
+   whose classes decide its height. */
+.tlBounded {
+	box-sizing: border-box;
+	width: 100%;
+	margin-inline: auto;
+}
+
 /* --- Repeated items ----------------------------------------------------- */
 
 /* Wrapper a container (a stack, a grid) puts around each of its children while it repeats them,
@@ -126,181 +140,6 @@ html, body {
 	inset: 0;
 	z-index: 12000;
 	user-select: none;
-}
-
-/* --- TLButton ----------------------------------------------------------- */
-
-.tlReactButton {
-	display: inline-flex;
-	justify-content: center;
-	align-items: center;
-	gap: var(--spacing-02);
-	height: 2rem;
-	padding: 0 var(--spacing-03);
-	border: none;
-	border-radius: var(--corner-radius);
-	font-family: var(--font-family);
-	font-weight: bold;
-	font-size: var(--heading-compact-02-font-size);
-	line-height: var(--heading-compact-02-line-height);
-	letter-spacing: var(--heading-compact-02-letter-spacing);
-	cursor: pointer;
-	background: transparent;
-	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
-	color: var(--button-secondary);
-	white-space: nowrap;
-}
-
-button.tlReactButton:not(:disabled):hover {
-	background: var(--layer-hover);
-}
-
-button.tlReactButton:focus-visible {
-	outline: 2px solid var(--focus);
-	outline-offset: 1px;
-}
-
-button.tlReactButton:not(:disabled):active {
-	background: var(--button-secondary-active);
-	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
-	color: var(--text-on-color);
-}
-
-button.tlReactButton:disabled {
-	cursor: default;
-	background: none;
-	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
-	color: var(--text-disabled);
-}
-
-/* --- TLButton link variant: render the button as an inline text link ---- */
-
-.tlReactButton--link,
-button.tlReactButton--link {
-	height: auto;
-	padding: 0;
-	border: none;
-	box-shadow: none;
-	background: transparent;
-	font-weight: normal;
-	color: var(--link-primary);
-	text-decoration: underline;
-}
-
-button.tlReactButton--link:not(:disabled):hover,
-button.tlReactButton--link:not(:disabled):active {
-	background: transparent;
-	box-shadow: none;
-	color: var(--link-primary-hover);
-}
-
-/* --- TLButton primary variant: emphasized (filled) dialog action -------- */
-
-.tlReactButton--primary,
-button.tlReactButton--primary {
-	background: var(--button-primary);
-	box-shadow: inset 0px 0px 0px 2px var(--button-primary);
-	color: var(--text-on-color);
-}
-
-button.tlReactButton--primary:not(:disabled):hover {
-	background: var(--button-primary-hover);
-	box-shadow: inset 0px 0px 0px 2px var(--button-primary-hover);
-	color: var(--text-on-color);
-}
-
-button.tlReactButton--primary:focus-visible {
-	box-shadow: inset 0px 0px 0px 2px var(--button-primary), 0 0 0 2px var(--focus-inset);
-	outline: 2px solid var(--focus);
-	outline-offset: 2px;
-}
-
-button.tlReactButton--primary:not(:disabled):active {
-	background: var(--button-primary-active);
-	box-shadow: inset 0px 0px 0px 2px var(--button-primary-active);
-	color: var(--text-on-color);
-}
-
-/* --- TLButton small size (independent of appearance) -------------------- */
-
-.tlReactButton--small,
-button.tlReactButton--small {
-	height: 1.5rem;
-	padding: 0 var(--spacing-02);
-	font-size: var(--label-01-font-size);
-}
-
-.tlReactButton--large,
-button.tlReactButton--large {
-	height: 2.5rem;
-	padding: 0 var(--spacing-05);
-	font-size: var(--heading-compact-03-font-size);
-}
-
-/* A link keeps its inline layout regardless of size; only the font size differs. */
-button.tlReactButton--small.tlReactButton--link,
-button.tlReactButton--large.tlReactButton--link {
-	height: auto;
-	padding: 0;
-}
-
-/* --- TLButton icon-only variant ----------------------------------------- */
-
-.tlReactButton--icon {
-	box-shadow: none;
-	background: none;
-	padding: var(--spacing-01);
-	min-height: 0;
-	line-height: 1;
-	color: var(--icon-primary);
-}
-
-button.tlReactButton--icon:not(:disabled):hover {
-	background: var(--layer-hover);
-	color: var(--icon-primary);
-}
-
-button.tlReactButton--icon:disabled {
-	box-shadow: none;
-	color: var(--icon-disabled);
-}
-
-/* The panel-toolbar buttons inherit the default (secondary) button styling:
-   the panel header is now a light surface, so no on-accent inversion is needed. */
-
-/* --- Active button: a pressed toggle, or the chosen alternative --------- */
-
-.tlReactButton.tlReactButton--active {
-	background: var(--button-primary);
-	box-shadow: inset 0px 0px 0px 2px var(--button-primary);
-	color: var(--text-on-color);
-}
-
-button.tlReactButton.tlReactButton--active:hover {
-	background: var(--button-primary-hover);
-	box-shadow: inset 0px 0px 0px 2px var(--button-primary-hover);
-	color: var(--text-on-color);
-}
-
-button.tlReactButton.tlReactButton--active:focus {
-	color: var(--text-on-color);
-}
-
-button.tlReactButton.tlReactButton--active:focus-visible {
-	box-shadow: inset 0px 0px 0px 2px var(--button-primary), 0 0 0 2px var(--focus-inset);
-	outline: 2px solid var(--focus);
-	outline-offset: 2px;
-}
-
-button.tlReactButton.tlReactButton--active:active {
-	background: var(--button-primary-active);
-	color: var(--text-on-color);
-}
-
-button.tlReactButton.tlReactButton--active:disabled {
-	background: var(--button-disabled);
-	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
-	color: var(--text-on-color-disabled);
 }
 
 /* --- TLCounter ---------------------------------------------------------- */
@@ -1922,6 +1761,14 @@ button.tlDrawerToggle:focus-visible {
 .tlStack--align-end     { align-items: flex-end; }
 .tlStack--align-stretch { align-items: stretch; }
 
+/* Distribution of the free space along the direction of the stack. */
+.tlStack--justify-start         { justify-content: flex-start; }
+.tlStack--justify-center        { justify-content: center; }
+.tlStack--justify-end           { justify-content: flex-end; }
+.tlStack--justify-space-between { justify-content: space-between; }
+.tlStack--justify-space-around  { justify-content: space-around; }
+.tlStack--justify-space-evenly  { justify-content: space-evenly; }
+
 .tlStack--wrap { flex-wrap: wrap; }
 
 /* First child fills the remaining main-axis space (input-with-adornment row). */
@@ -1953,6 +1800,17 @@ button.tlDrawerToggle:focus-visible {
 	position: absolute;
 	inset: 0;
 	visibility: hidden;
+}
+
+/* The frame change as a transition an application animates: the frame pushed carries
+   `tlTileStack__frame--entering` while it arrives, a copy of the frame popped carries
+   `tlTileStack__frame--exiting` while it leaves, and the root says which way the stack moved
+   (`tlTileStack--forward` / `tlTileStack--backward`). The engine only places the copy - a picture
+   over the stack, taking no place in the layout and no input; the movement is the application's. */
+.tlTileStack__frame--exiting {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
 }
 
 /* --- TLWizard -------------------------------------------------------------- */
@@ -2138,19 +1996,6 @@ button.tlDrawerToggle:focus-visible {
 	to   { opacity: 0; transform: translateX(12px); }
 }
 
-/* A viewer who asked for less movement gets the step change without one; the copy of the step
-   leaving is dropped by the component's own fallback instead of by an animation ending. */
-@media (prefers-reduced-motion: reduce) {
-	.tlWizard__step--entering,
-	.tlWizard__step--exiting {
-		animation: none;
-	}
-
-	.tlWizard__step--exiting {
-		opacity: 0;
-	}
-}
-
 /* --- TLGrid ---------------------------------------------------------------- */
 
 .tlGrid {
@@ -2279,6 +2124,7 @@ button.tlDrawerToggle:focus-visible {
 	align-items: center;
 	gap: var(--spacing-01);
 	flex-shrink: 0;
+	margin-left: auto;
 }
 
 .tlCard__body--pad-none    { padding: 0; }
@@ -2298,10 +2144,8 @@ button.tlDrawerToggle:focus-visible {
 	box-sizing: border-box;
 }
 
-.tlAppBar--primary {
-	background: var(--layer-accent);
-	color: var(--layer-accent-text);
-}
+/* Übergang bis Welle 4 (Shell): die AppBar ist keine Markenfläche, sie liest die Flächen des Design Systems. */
+.tlAppBar--primary { background: var(--tl-surface-layer); color: var(--tl-text-primary); }
 
 .tlAppBar--surface {
 	background: var(--layer-01);
@@ -2384,49 +2228,22 @@ button.tlDrawerToggle:focus-visible {
    accent background - the account name beside the avatar above all. Re-map
    them to on-accent colors. */
 
-.tlAppBar--primary .tlText {
-	color: var(--layer-accent-text);
+/* The re-mapping reaches the text through the custom property its tone fills, and only where the
+   text follows the default tone: a text that states a tone of its own - an error, a success -
+   keeps it, because the rule does not match its tone class. */
+.tlAppBar--primary .tlText--tone-primary {
+	--tlText-tone: var(--tl-text-primary);
 }
 
 /* A click region hovers with the generic layer-hover, which is a light surface - under the
    on-accent text above it that leaves nothing to read. On the accent bar it hovers and opens in the
    accent's own darker shades instead. */
 .tlAppBar--primary .tlMenuRegion--click:hover {
-	background: var(--layer-accent-hover);
+	background: var(--tl-surface-interactive-hover);
 }
 
 .tlAppBar--primary .tlMenuRegion--click[aria-expanded="true"] {
-	background: var(--layer-accent-active);
-}
-
-.tlAppBar--primary .tlReactButton {
-	color: var(--layer-accent-text);
-	box-shadow: inset 0px 0px 0px 2px var(--layer-accent-text);
-}
-
-.tlAppBar--primary button.tlReactButton:not(:disabled):hover {
-	background: rgba(255, 255, 255, 0.16);
-}
-
-.tlAppBar--primary button.tlReactButton:not(:disabled):active {
-	background: rgba(255, 255, 255, 0.24);
-	color: var(--layer-accent-text);
-	box-shadow: inset 0px 0px 0px 2px var(--layer-accent-text);
-}
-
-.tlAppBar--primary button.tlReactButton:disabled {
-	background: none;
-	color: rgba(255, 255, 255, 0.5);
-	box-shadow: inset 0px 0px 0px 2px rgba(255, 255, 255, 0.4);
-}
-
-.tlAppBar--primary .tlReactButton--icon {
-	box-shadow: none;
-	color: var(--icon-on-color);
-}
-
-.tlAppBar--primary .tlReactButton--link {
-	color: var(--layer-accent-text);
+	background: var(--tl-surface-interactive-active);
 }
 
 /* --- TLBreadcrumb ---------------------------------------------------------- */
@@ -2558,6 +2375,8 @@ button.tlBottomBar__item:hover {
 
 /* --- TLDialog (overlay-only) ----------------------------------------------- */
 
+/* The backdrop dims the page with the overlay token and blurs what is behind it by the surface
+   blur of the theme, which is none unless a theme asks for one. */
 .tlDialog__backdrop {
 	position: fixed;
 	inset: 0;
@@ -2566,7 +2385,18 @@ button.tlBottomBar__item:hover {
 	align-items: center;
 	justify-content: center;
 	background: var(--overlay);
+	backdrop-filter: blur(var(--surface-blur));
 	outline: none;
+}
+
+/* The dialog change as a transition an application animates: the backdrop of a dialog opening
+   carries `tlDialog__backdrop--entering` while it arrives, and a copy of the backdrop of a dialog
+   closed carries `tlDialog__backdrop--exiting` while it leaves. The copy keeps the fixed position
+   of what it copies and therefore covers the page, so it has to let everything through: the page
+   stays usable while it fades, and a dialog still open below it keeps its input. The engine ships
+   no animation for either class. */
+.tlDialog__backdrop--exiting {
+	pointer-events: none;
 }
 
 /* --- TLDialogManager ------------------------------------------------------- */
@@ -2624,24 +2454,6 @@ button.tlBottomBar__item:hover {
 	display: flex;
 	align-items: center;
 	gap: var(--spacing-02);
-}
-
-.tlWindow__toolbar .tlReactButton {
-	box-shadow: none;
-	background: none;
-	color: var(--text-secondary);
-	font-weight: normal;
-}
-
-.tlWindow__toolbar button.tlReactButton:not(:disabled):hover {
-	background: var(--layer-hover);
-	color: var(--text-primary);
-}
-
-.tlWindow__toolbar button.tlReactButton:not(:disabled):active {
-	background: var(--layer-active);
-	box-shadow: none;
-	color: var(--text-primary);
 }
 
 .tlWindow__closeBtn {
@@ -3734,9 +3546,106 @@ button.tlMenu__item--disabled:hover {
 	border-right: none;
 }
 
+/* The text control states how it is drawn as roles rather than as font and color values: what the
+   text is for (the variant), what its color means (the tone), and the shape it takes. Every text
+   carries a class per role, so an application stylesheet and a theme both reach a role as a whole.
+   The color of the tone travels as the custom property --tlText-tone, which the text color is taken
+   from and which a pill without a color of its own is tinted with - one declaration per tone. */
 .tlText {
+	--tlText-tone: var(--text-primary);
+	color: var(--tlText-tone);
+}
+
+/* --- What the text is for -------------------------------------------------- */
+
+.tlText--display {
+	font-family: var(--font-family-display);
+	font-size: var(--display-01-font-size);
+	line-height: var(--display-01-line-height);
+	font-weight: 600;
+	letter-spacing: -0.01em;
+}
+
+.tlText--headline {
+	font-family: var(--font-family-display);
+	font-size: var(--heading-04-font-size);
+	line-height: var(--heading-04-line-height);
+	font-weight: 600;
+}
+
+.tlText--title {
+	font-family: var(--font-family-display);
+	font-size: var(--heading-03-font-size);
+	line-height: var(--heading-03-line-height);
+	font-weight: 600;
+}
+
+.tlText--body {
 	font-size: var(--body-compact-01-font-size);
-	color: var(--text-primary);
+	line-height: var(--body-compact-01-line-height);
+}
+
+.tlText--label {
+	font-size: var(--heading-compact-02-font-size);
+	line-height: var(--heading-compact-02-line-height);
+	letter-spacing: var(--heading-compact-02-letter-spacing);
+	font-weight: 600;
+}
+
+.tlText--caption {
+	font-size: var(--label-01-font-size);
+	line-height: var(--label-01-line-height);
+}
+
+/* --- What the color of the text means -------------------------------------- */
+
+.tlText--tone-primary {
+	--tlText-tone: var(--text-primary);
+}
+
+.tlText--tone-secondary {
+	--tlText-tone: var(--text-secondary);
+}
+
+.tlText--tone-helper {
+	--tlText-tone: var(--text-helper);
+}
+
+.tlText--tone-accent {
+	--tlText-tone: var(--text-accent);
+}
+
+.tlText--tone-success {
+	--tlText-tone: var(--text-success);
+}
+
+.tlText--tone-warning {
+	--tlText-tone: var(--text-warning);
+}
+
+.tlText--tone-error {
+	--tlText-tone: var(--text-error);
+}
+
+.tlText--tone-on-color {
+	--tlText-tone: var(--text-on-color);
+}
+
+/* --- The shape the text takes ---------------------------------------------- */
+
+/* Text drawn as a pill whether or not its value carries a color. The pill of a text that asked for
+   one reads in the size of the text's own role, rather than in the size a pill beside plain text
+   is drawn in. */
+.tlText--pill .tlPill {
+	font-size: inherit;
+	line-height: inherit;
+}
+
+/* A theme icon shown on its own, sitting on the text baseline of what it accompanies. */
+.tlIcon {
+	display: inline-flex;
+	align-items: center;
+	line-height: 1;
 }
 
 .tlText--placeholder {
@@ -4293,33 +4202,13 @@ button.tlMenu__item--disabled:hover {
 	clip-path: inset(0 0 0 -4px);
 }
 
-/* -- A column offering a command on every row --
-   Its cells hold a button instead of text, so they drop the padding a text cell needs and center
-   the button in the column's width. The button goes without its frame - a column of framed buttons
-   would read as a second table beside the rows - and takes it up under the pointer and the keyboard
-   focus, where it marks what a click hits. */
+/* -- A column offering a command on every row: the button is ghost and small, carrying its own
+   frame under the pointer and keyboard focus, so the column needs none of its own. */
 
 .tlTableView__cell.tlRowCommandCell,
 .tlTableView__headerCell.tlRowCommandCell {
 	padding: 0;
 	justify-content: center;
-}
-
-.tlTableView__cell.tlRowCommandCell .tlReactButton {
-	box-shadow: none;
-	background: transparent;
-	color: var(--icon-primary);
-}
-
-.tlTableView__cell.tlRowCommandCell button.tlReactButton:not(:disabled):hover {
-	background: var(--layer-hover);
-	box-shadow: inset 0 0 0 2px var(--button-secondary);
-}
-
-.tlTableView__cell.tlRowCommandCell button.tlReactButton:disabled {
-	background: transparent;
-	box-shadow: none;
-	color: var(--icon-disabled);
 }
 
 /* Grip to drag the boundary of the frozen area to another column. Sits above the sticky header cells
@@ -4397,6 +4286,19 @@ button.tlMenu__item--disabled:hover {
 	display: inline-block;
 	width: 20px;
 	flex-shrink: 0;
+}
+
+/* The value of a tree column's cell, sharing the cell with the expand toggle and the indent: it
+   ends in an ellipsis where the column runs out of room, exactly as the value of any other cell
+   does. Being the box the value is clipped in is also what lets the tooltip tell that the value is
+   not fully readable, and what keeps the toggle's glyph out of that tooltip. */
+.tlTableView__treeValue {
+	/* Shrinks with the column, but never grows: what follows it in a group header row - the size of
+	   the group - stays next to the value instead of being pushed to the cell's edge. */
+	flex: 0 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 /* A group header row: the group value, its size, and the columns' aggregates. */
@@ -5216,6 +5118,7 @@ button.tlMenu__item--disabled:hover {
    with it the focus - when a value starts or stops pointing somewhere. Without the link it adds
    nothing: the input stretches over the full row, which takes the input's own height. */
 .tlReactTextInput__row {
+	position: relative;
 	display: flex;
 	align-items: stretch;
 	width: 100%;
@@ -5236,6 +5139,64 @@ button.tlMenu__item--disabled:hover {
 	color: var(--link-primary);
 	text-decoration: none;
 	line-height: 1;
+}
+
+/* The icon an input carries ahead of what is typed - the magnifier of a search box. It is drawn on
+   the left edge of the input, which reserves room for it through --withIcon, so that the icon reads
+   as being inside the field rather than beside it. It answers no pointer: a click goes through to
+   the input under it. */
+.tlReactTextInput__icon {
+	position: absolute;
+	left: var(--spacing-03);
+	top: 50%;
+	transform: translateY(-50%);
+	color: var(--text-helper);
+	pointer-events: none;
+	line-height: 1;
+}
+
+.tlReactTextInput--withIcon {
+	padding-left: calc(var(--spacing-03) + 1.25em);
+}
+
+/* The button that empties the input, drawn over its right edge. It is a button without a button's
+   chrome: the input keeps its own border, and only the icon is seen. --clearable reserves the room
+   it needs, so that text never runs under it. */
+.tlReactTextInput--clearable {
+	padding-right: calc(var(--spacing-03) + 1.25em);
+}
+
+.tlReactTextInput__clear {
+	position: absolute;
+	right: var(--spacing-02);
+	top: 50%;
+	transform: translateY(-50%);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--spacing-01);
+	border: none;
+	border-radius: var(--corner-radius);
+	background: none;
+	color: var(--text-helper);
+	cursor: pointer;
+	line-height: 1;
+}
+
+.tlReactTextInput__clear:hover {
+	background-color: var(--layer-hover);
+	color: var(--icon-primary);
+}
+
+.tlReactTextInput__clear:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: 0;
+	color: var(--icon-primary);
+}
+
+.tlReactTextInput__clear:disabled {
+	opacity: 0.6;
+	cursor: default;
 }
 
 .tlReactTextInput__open:hover,
@@ -5274,6 +5235,218 @@ button.tlMenu__item--disabled:hover {
 .tlReactCheckbox:focus-visible {
 	outline: 2px solid var(--focus);
 	outline-offset: 1px;
+}
+
+/* A boolean drawn as a switch: the input itself is the track, its ::before the knob, so the whole
+   shape stays the one focusable element the box is. A pill and a circle keep their shape, which is
+   why both are written literally rather than taken from a radius token. */
+.tlReactCheckbox--switch {
+	appearance: none;
+	-webkit-appearance: none;
+	width: 2.25rem;
+	height: 1.25rem;
+	position: relative;
+	flex: none;
+	padding: 0;
+	border: none;
+	border-radius: 999px;
+	background-color: var(--border-strong);
+	transition: background-color 120ms ease-in-out;
+}
+
+.tlReactCheckbox--switch::before {
+	content: "";
+	position: absolute;
+	top: 0.125rem;
+	left: 0.125rem;
+	width: 1rem;
+	height: 1rem;
+	border-radius: 50%;
+	background-color: var(--icon-on-color);
+	box-shadow: var(--shadow-raised);
+	transition: transform 120ms ease-in-out;
+}
+
+.tlReactCheckbox--switch:checked {
+	background-color: var(--interactive);
+}
+
+/* The knob travels the track less its own width and the inset on both sides. */
+.tlReactCheckbox--switch:checked::before {
+	transform: translateX(1rem);
+}
+
+/* The knob jumps to its position where motion is unwelcome; where it stands still says the same. */
+@media (prefers-reduced-motion: reduce) {
+	.tlReactCheckbox--switch,
+	.tlReactCheckbox--switch::before {
+		transition: none;
+	}
+}
+
+/* A ring rather than an outline, so that the focus outline is still visible on a rejected value. */
+.tlReactCheckbox--switch.tlReactCheckbox--error {
+	box-shadow: 0 0 0 2px var(--support-error);
+}
+
+.tlReactCheckbox--switch.tlReactCheckbox--warning {
+	box-shadow: 0 0 0 2px var(--support-warning);
+}
+
+/* --- TLSlider ----------------------------------------------------------- */
+
+/* A number set by dragging a handle along a track, with the value written beside it: the two read
+   as one field, so the track takes the room the text leaves. */
+.tlSlider {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-03);
+	width: 100%;
+}
+
+/* The track, drawn by the pseudo elements below; the input itself only carries the room they need
+   and the focus the whole control takes. */
+.tlSlider__input {
+	appearance: none;
+	-webkit-appearance: none;
+	flex: 1 1 auto;
+	min-width: 0;
+	height: 1rem;
+	margin: 0;
+	padding: 0;
+	background-color: transparent;
+	cursor: pointer;
+}
+
+.tlSlider__input:disabled {
+	cursor: default;
+}
+
+/* The value as text. Figures of the same width, so that the text does not jump while the handle
+   travels. */
+.tlSlider__value {
+	flex: none;
+	color: var(--text-primary);
+	font-size: var(--body-compact-01-font-size);
+	line-height: var(--body-compact-01-line-height);
+	font-variant-numeric: tabular-nums;
+	text-align: right;
+	min-width: 3ch;
+}
+
+/* A field that is only read shows the value alone: there is nothing to drag. */
+.tlSlider--immutable {
+	color: var(--text-primary);
+	font-size: var(--body-compact-01-font-size);
+	line-height: var(--body-compact-01-line-height);
+}
+
+/* The track. A capsule keeps its shape in a theme that squares every corner off, which is why the
+   radius is written literally rather than taken from a radius token. */
+.tlSlider__input::-webkit-slider-runnable-track {
+	height: 0.25rem;
+	border-radius: 999px;
+	background-color: var(--border-subtle);
+}
+
+.tlSlider__input::-moz-range-track {
+	height: 0.25rem;
+	border-radius: 999px;
+	background-color: var(--border-subtle);
+}
+
+/* The handle, a circle standing on the middle of the track: the offset is half the handle less
+   half the track. */
+.tlSlider__input::-webkit-slider-thumb {
+	appearance: none;
+	-webkit-appearance: none;
+	width: 1rem;
+	height: 1rem;
+	margin-top: -0.375rem;
+	border: none;
+	border-radius: 50%;
+	background-color: var(--interactive);
+	box-shadow: var(--shadow-raised);
+	transition: box-shadow 120ms ease-in-out;
+}
+
+.tlSlider__input::-moz-range-thumb {
+	width: 1rem;
+	height: 1rem;
+	border: none;
+	border-radius: 50%;
+	background-color: var(--interactive);
+	box-shadow: var(--shadow-raised);
+	transition: box-shadow 120ms ease-in-out;
+}
+
+/* The focus is shown on the handle, the part the keyboard moves. */
+.tlSlider__input:focus-visible {
+	outline: none;
+}
+
+.tlSlider__input:focus-visible::-webkit-slider-thumb {
+	outline: 2px solid var(--focus);
+	outline-offset: 1px;
+}
+
+.tlSlider__input:focus-visible::-moz-range-thumb {
+	outline: 2px solid var(--focus);
+	outline-offset: 1px;
+}
+
+.tlSlider__input:disabled::-webkit-slider-runnable-track {
+	background-color: var(--field-disabled);
+}
+
+.tlSlider__input:disabled::-moz-range-track {
+	background-color: var(--field-disabled);
+}
+
+.tlSlider__input:disabled::-webkit-slider-thumb {
+	background-color: var(--button-disabled);
+	box-shadow: none;
+}
+
+.tlSlider__input:disabled::-moz-range-thumb {
+	background-color: var(--button-disabled);
+	box-shadow: none;
+}
+
+/* A rejected value is marked on the handle and on the text, the two parts that carry it. */
+.tlSlider--error .tlSlider__input::-webkit-slider-thumb {
+	background-color: var(--support-error);
+}
+
+.tlSlider--error .tlSlider__input::-moz-range-thumb {
+	background-color: var(--support-error);
+}
+
+.tlSlider--error .tlSlider__value {
+	color: var(--text-error);
+}
+
+.tlSlider--warning .tlSlider__input::-webkit-slider-thumb {
+	background-color: var(--support-warning);
+}
+
+.tlSlider--warning .tlSlider__input::-moz-range-thumb {
+	background-color: var(--support-warning);
+}
+
+.tlSlider--warning .tlSlider__value {
+	color: var(--text-warning);
+}
+
+/* The handle takes its state at once where motion is unwelcome; where it stands says the same. */
+@media (prefers-reduced-motion: reduce) {
+	.tlSlider__input::-webkit-slider-thumb {
+		transition: none;
+	}
+
+	.tlSlider__input::-moz-range-thumb {
+		transition: none;
+	}
 }
 
 /* --- TLBooleanChoice -------------------------------------------------------- */
@@ -5358,19 +5531,15 @@ button.tlMenu__item--disabled:hover {
 
 /* Compact presentation: a labeled command button collapses to its icon, which is also its
    accessible name and tooltip. Buttons without an icon keep their label. The dropdown of a menu
-   group is portaled out of the toolbar, so its entries keep their labels. */
-.tlToolbar--compact .tlReactButton:has(> .tlReactButton__image) {
-	width: 2rem;
+   group is portaled out of the toolbar, so its entries keep their labels.
+   Übergang bis Welle 3 (Toolbar): die Regel liest die Klassen der Paket-Komponente tl-button. */
+.tlToolbar--compact .tl-button:has(> .tl-button__icon) {
+	width: var(--tl-size-control);
 	flex-shrink: 0;
 	padding: 0;
-	box-shadow: none;
 }
 
-.tlToolbar--compact .tlReactButton:has(> .tlReactButton__image) > .tlReactButton__image {
-	display: inline-block;
-}
-
-.tlToolbar--compact .tlReactButton:has(> .tlReactButton__image) > .tlReactButton__label {
+.tlToolbar--compact .tl-button:has(> .tl-button__icon) > .tl-button__label {
 	display: none;
 }
 
@@ -5445,16 +5614,16 @@ button.tlToolbar__menuTrigger:focus-visible {
    otherwise its accent-blue text/outline is unreadable on the accent background.
    (Panel toolbars are now light surfaces and use the default secondary styling.) */
 .tlAppBar--primary .tlToolbar__menuTrigger {
-	color: var(--layer-accent-icon);
-	box-shadow: inset 0px 0px 0px 2px var(--layer-accent-icon);
+	color: var(--tl-text-primary);
+	box-shadow: inset 0px 0px 0px 2px var(--tl-text-primary);
 }
 
 .tlAppBar--primary button.tlToolbar__menuTrigger:not(:disabled):hover {
-	background: var(--layer-accent-hover);
+	background: var(--tl-surface-interactive-hover);
 }
 
 .tlAppBar--primary button.tlToolbar__menuTrigger[aria-expanded="true"] {
-	background: var(--layer-accent-active);
+	background: var(--tl-surface-interactive-active);
 }
 
 /* The icon-only burger is a plain icon button: no outline box, on any surface. */
@@ -5655,7 +5824,7 @@ button.tlToolbar__menuTrigger:focus-visible {
 }
 
 /* Read-only value */
-.tlDropdownSelect__readonlyValue {
+.tlOptionValue {
 	display: inline-flex;
 	align-items: center;
 	gap: var(--spacing-02);
@@ -5728,14 +5897,14 @@ button.tlToolbar__menuTrigger:focus-visible {
 }
 
 /* Option image / icon */
-.tlDropdownSelect__optionImage {
+.tlOptionImage {
 	width: 20px;
 	height: 20px;
 	flex-shrink: 0;
 	object-fit: contain;
 }
 
-.tlDropdownSelect__optionIcon {
+.tlOptionIcon {
 	font-size: 20px;
 	width: 20px;
 	height: 20px;
@@ -5813,6 +5982,176 @@ button.tlToolbar__menuTrigger:focus-visible {
 /* Drop indicator: right border highlight */
 .tlDropdownSelect__chip--dropAfter {
 	box-shadow: 2px 0 0 0 var(--interactive);
+}
+
+/* --- TLOptionChips ------------------------------------------------------ */
+
+/* A cloud of toggles: every option is on screen and wraps onto as many lines as it needs. */
+.tlOptionChips {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--spacing-02);
+}
+
+/* One option, switched on and off by a click. A pill keeps its shape in a theme that squares
+   every corner off, so the radius is a literal rather than one of the radius tokens. */
+.tlOptionChips__chip {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	max-width: 100%;
+	padding: 2px var(--spacing-03);
+	border: 1px solid var(--border-subtle);
+	border-radius: 999px;
+	background-color: var(--layer);
+	color: var(--text-primary);
+	font-family: inherit;
+	font-size: var(--label-01-font-size);
+	line-height: 1.5;
+	cursor: pointer;
+}
+
+.tlOptionChips__chip:not(:disabled):hover {
+	background-color: var(--layer-hover);
+}
+
+.tlOptionChips__chip:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: 1px;
+}
+
+/* An option that is on is filled, so that on and off are told apart by more than a border. */
+.tlOptionChips__chip--selected {
+	border-color: var(--interactive);
+	background-color: var(--interactive);
+	color: var(--text-on-color);
+}
+
+.tlOptionChips__chip--selected:not(:disabled):hover {
+	background-color: var(--interactive);
+}
+
+.tlOptionChips__chip:disabled {
+	border-color: var(--button-disabled);
+	background-color: var(--button-disabled);
+	color: var(--text-disabled);
+	cursor: default;
+}
+
+.tlOptionChips__chipLabel {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* A rejected value is marked on the cloud as a whole: no single option is at fault. */
+.tlOptionChips--error {
+	box-shadow: 0 0 0 2px var(--support-error);
+}
+
+.tlOptionChips--warning {
+	box-shadow: 0 0 0 2px var(--support-warning);
+}
+
+/* --- TLSegmentedChoice -------------------------------------------------- */
+
+/* A bar of segments reading as one control: the marker stands under the selected segment, so the
+   bar is positioned inline and the segments sit above the marker. */
+.tlSegmentedChoice {
+	position: relative;
+	display: inline-flex;
+	align-items: stretch;
+	max-width: 100%;
+	padding: 2px;
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--corner-radius);
+	background-color: var(--layer);
+}
+
+/* The slider marking the selected segment. Its offset and width are measured from that segment, so
+   only the transition between the two positions is stated here. */
+.tlSegmentedChoice__marker {
+	position: absolute;
+	top: 2px;
+	bottom: 2px;
+	border-radius: var(--corner-radius);
+	background-color: var(--interactive);
+	box-shadow: var(--shadow-raised);
+	transition: left 160ms ease-in-out, width 160ms ease-in-out;
+	pointer-events: none;
+}
+
+/* The marker jumps to its position where motion is unwelcome; where it stands says the same. */
+@media (prefers-reduced-motion: reduce) {
+	.tlSegmentedChoice__marker {
+		transition: none;
+	}
+}
+
+.tlSegmentedChoice__segment {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--spacing-02);
+	padding: var(--spacing-01) var(--spacing-03);
+	border: none;
+	border-radius: var(--corner-radius);
+	background-color: transparent;
+	color: var(--text-secondary);
+	font-family: inherit;
+	font-size: var(--label-01-font-size);
+	line-height: 1.5;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.tlSegmentedChoice__segment:not(:disabled):hover {
+	color: var(--text-primary);
+}
+
+.tlSegmentedChoice__segment:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+/* The selected segment reads on the marker below it. A field taking several values has no marker,
+   so its selected segments carry the fill themselves. */
+.tlSegmentedChoice__segment--selected {
+	color: var(--text-on-color);
+}
+
+.tlSegmentedChoice[role="group"] .tlSegmentedChoice__segment--selected {
+	background-color: var(--interactive);
+}
+
+.tlSegmentedChoice__segment:disabled {
+	color: var(--text-disabled);
+	cursor: default;
+}
+
+.tlSegmentedChoice__segmentLabel {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.tlSegmentedChoice--error {
+	box-shadow: 0 0 0 2px var(--support-error);
+}
+
+.tlSegmentedChoice--warning {
+	box-shadow: 0 0 0 2px var(--support-warning);
+}
+
+/* A field that only displays its value is the label it holds, with no bar around it. */
+.tlSegmentedChoice--immutable {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	padding: 0;
+	border: none;
+	background: none;
 }
 
 /* --- TLColorInput ------------------------------------------------------ */
@@ -6620,11 +6959,39 @@ button.tlToolbar__menuTrigger:focus-visible {
   border-radius: var(--border-radius-02);
   background: var(--layer-01);
 }
-.tlDashboard__tile > *:not(.tlDashboard__overlay) {
+.tlDashboard__tile > *:not(.tlDashboard__overlay, .tlDashboard__tileAction) {
   flex: 1 1 auto;
   min-height: 0;
   min-width: 0;
 }
+/* The name and the keyboard operation of a tile that is an entry point: out of sight, in the tab
+   order. The pointer is answered by the tile around it, so the button stays out of its way. */
+.tlDashboard__tileAction {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  margin: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  opacity: 0;
+  white-space: nowrap;
+  pointer-events: none;
+}
+/* The whole tile is the surface the user presses. */
+.tlDashboard__tile--action { cursor: pointer; }
+.tlDashboard:not(.tlDashboard--edit) .tlDashboard__tile--action:not(.tlDashboard__tile--disabled):hover {
+  border-color: var(--border-interactive);
+  box-shadow: var(--shadow-raised);
+}
+.tlDashboard__tile--action:has(> .tlDashboard__tileAction:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+/* A tile whose action is refused keeps its resting look - what it shows stays readable. */
+.tlDashboard__tile--disabled { cursor: default; }
 .tlDashboard--edit .tlDashboard__tile { cursor: move; }
 .tlDashboard__tile--dragging { opacity: 0.4; }
 .tlDashboard__overlay {
@@ -6683,8 +7050,9 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 	padding: var(--spacing-02) 0;
 }
 
+/* Ein Menüeintrag füllt seine Zeile; der Button darin ist ghost und streckt sich. */
 .tlToolbar__dropdownItem {
-	display: flex;
+	display: grid;
 }
 
 /* An entry whose button is currently hidden renders empty - drop it, so the menu does not offer
@@ -6693,74 +7061,17 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 	display: none;
 }
 
-/* Dropdown opens over a light surface — reset the inverse colors that
-   buttons inherit when the toolbar lives inside a dark panel header,
-   and let buttons fill the row so the dropdown reads as a clean list. */
-.tlToolbar__dropdown .tlReactButton {
-	box-shadow: none;
-	border-radius: 0;
-	background: transparent;
-	color: var(--text-primary);
+/* Übergang bis Welle 3 (Menu): ein Menüeintrag füllt seine Zeile und ist linksbündig; die
+   Menu-Komponente ersetzt den Button hier. Farben und Zustände trägt der Button selbst (ghost). */
+.tlToolbar__dropdownItem > .tl-button {
 	width: 100%;
 	justify-content: flex-start;
-	font-weight: normal;
-	padding: var(--spacing-02) var(--spacing-04);
-}
-
-.tlToolbar__dropdown button.tlReactButton:not(:disabled):hover {
-	background: var(--layer-hover);
-	color: var(--text-primary);
-}
-
-/* A disabled menu entry is plain greyed text, never an outlined box. The base
-   button:disabled rule re-adds an inset 2px outline (higher specificity than the
-   dropdown reset above), so stacked disabled items otherwise look like a series of
-   framed rows ("horizontal lines"). Override it here. */
-.tlToolbar__dropdown button.tlReactButton:disabled {
-	box-shadow: none;
-	background: transparent;
-	color: var(--text-disabled);
-}
-
-.tlToolbar__dropdown .tlReactButton--icon {
-	color: var(--icon-primary);
 }
 
 .tlToolbar__dropdownSeparator {
 	border: none;
 	border-top: 1px solid var(--border-subtle);
 	margin: var(--spacing-02) var(--spacing-04);
-}
-
-/* --- TLButton enhancements ------------------------------------------------- */
-
-.tlReactButton--iconOnly {
-	width: 2rem;
-	padding: 0;
-}
-
-/* A label-only button still carries its icon element in the DOM when an image is set,
-   so responsive containers can swap it to the icon presentation with a media query
-   (see the compact app bar rules). By default only the label is visible. */
-.tlReactButton--labelOnly > .tlReactButton__image {
-	display: none;
-}
-
-.tlReactButton__image {
-	font-size: 1rem;
-	line-height: 1;
-	flex-shrink: 0;
-}
-
-.tlReactButton__label {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-/* Icon + label gap */
-.tlReactButton__image + .tlReactButton__label {
-	margin-left: var(--spacing-02);
 }
 
 /* --- TLPanel button bar ---------------------------------------------------- */

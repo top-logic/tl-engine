@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
@@ -45,11 +46,13 @@ public class ReactTreeControl extends ReactControl {
 	/** @see #handleCollapse(CollapseNodeArguments) */
 	private static final String COLLAPSE_COMMAND = "collapse";
 
-	/** @see #handleSelect(SelectNodeArguments) */
-	private static final String SELECT_COMMAND = "select";
+	/** Id of the command a click on a node sends, see {@link #handleSelect(SelectNodeArguments)}. */
+	public static final String SELECT_COMMAND = "select";
 
-	/** @see #handleActivate(ActivateNodeArguments) */
-	private static final String ACTIVATE_COMMAND = "activate";
+	/**
+	 * Id of the command opening a node sends, see {@link #handleActivate(ActivateNodeArguments)}.
+	 */
+	public static final String ACTIVATE_COMMAND = "activate";
 
 	/** @see #handleContextMenu(ContextMenuArguments) */
 	private static final String CONTEXT_MENU_COMMAND = "contextMenu";
@@ -62,8 +65,8 @@ public class ReactTreeControl extends ReactControl {
 
 	// -- State keys --
 
-	/** @see #buildFullState() */
-	private static final String NODES = "nodes";
+	/** State key of the list of the displayed nodes, in display order. */
+	public static final String NODES = "nodes";
 
 	/** @see #setSelectionMode(SelectionMode) */
 	private static final String SELECTION_MODE = "selectionMode";
@@ -82,8 +85,8 @@ public class ReactTreeControl extends ReactControl {
 
 	// -- Node state keys (used in {@link #addNodeState}) --
 
-	/** Unique node identifier. */
-	private static final String NODE_ID = "id";
+	/** Node state key of the id the client sends back with a gesture on that node. */
+	public static final String NODE_ID = "id";
 
 	/** Nesting depth (0 for top-level visible nodes). */
 	private static final String NODE_DEPTH = "depth";
@@ -575,11 +578,19 @@ public class ReactTreeControl extends ReactControl {
 				if (clickedIndex >= 0) {
 					int from = Math.min(_selectionAnchor, clickedIndex);
 					int to = Math.max(_selectionAnchor, clickedIndex);
+					List<Object> rangeNodes = new ArrayList<>();
 					for (int i = from; i <= to; i++) {
 						Object rangeNode = visibleNodes.get(i);
 						if (_selectionModel.isSelectable(rangeNode)) {
-							_selectionModel.setSelected(rangeNode, _anchorAdded);
+							rangeNodes.add(rangeNode);
 						}
+					}
+					// The whole range is applied in one step, so that a single SelectionEvent
+					// carries it to everything following the selection.
+					if (_anchorAdded) {
+						_selectionModel.addToSelection(rangeNodes);
+					} else {
+						_selectionModel.removeFromSelection(rangeNodes);
 					}
 				}
 			} else if (ctrlKey) {
@@ -629,11 +640,17 @@ public class ReactTreeControl extends ReactControl {
 
 	/**
 	 * Makes the given node the sole selection and the range anchor.
+	 *
+	 * <p>
+	 * {@link SelectionModel#setSelection(Set)} replaces the selection in one step, so that a single
+	 * {@link SelectionEvent} carries the new selection. Everything following the selection - a
+	 * display, a command's executability, a channel the selection is written to - therefore moves
+	 * straight from the former selection to this node.
+	 * </p>
 	 */
 	@SuppressWarnings("unchecked")
 	private void selectOnly(Object node) {
-		_selectionModel.clear();
-		_selectionModel.setSelected(node, true);
+		_selectionModel.setSelection(Set.of(node));
 		_anchorAdded = true;
 		_selectionAnchor = collectVisibleNodes().indexOf(node);
 	}

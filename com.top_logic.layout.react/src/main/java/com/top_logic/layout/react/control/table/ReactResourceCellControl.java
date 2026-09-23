@@ -63,8 +63,6 @@ public class ReactResourceCellControl extends ReactControl implements TooltipPro
 
 	private static final String ICON_SRC = "iconSrc";
 
-	private static final String CSS_CLASS = "cssClass";
-
 	private static final String HAS_TOOLTIP = "hasTooltip";
 
 	/** Key expected by {@link #getTooltipContent(String)}. */
@@ -199,7 +197,7 @@ public class ReactResourceCellControl extends ReactControl implements TooltipPro
 		if (value != null) {
 			String cssClass = _provider.getCssClass(value);
 			if (cssClass != null) {
-				putState(CSS_CLASS, cssClass);
+				setCssClass(cssClass);
 			}
 
 			String tooltip = _provider.getTooltip(value);

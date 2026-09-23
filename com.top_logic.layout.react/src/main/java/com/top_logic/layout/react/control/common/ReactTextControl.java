@@ -15,8 +15,15 @@ import com.top_logic.layout.react.control.ReactValueColor;
  * A simple read-only control that displays a text value as a {@code <span>}.
  *
  * <p>
- * Renders as a {@code TLText} React component. An optional CSS class can be appended to the
- * default {@code tlText} class for custom styling.
+ * Renders as a {@code TLText} React component. Text longer than the available width is wrapped
+ * onto several lines, or truncated on a single one, as {@link #setOverflow(TextOverflow)} says.
+ * </p>
+ *
+ * <p>
+ * How the text is drawn is stated as roles rather than as font and color values: a
+ * {@link #setVariant(TextVariant) typographic role}, a {@link #setTone(TextTone) color role} and
+ * the {@link #setAppearance(TextAppearance) shape} it takes. Each role is written as a class on the
+ * rendered element and filled from the design tokens of the active theme.
  * </p>
  *
  * <p>
@@ -28,7 +35,17 @@ public class ReactTextControl extends ReactControl implements TooltipProvider {
 
 	private static final String TEXT = "text";
 
-	private static final String CSS_CLASS = "cssClass";
+	/** @see #setOverflow(TextOverflow) */
+	private static final String OVERFLOW = "overflow";
+
+	/** @see #setVariant(TextVariant) */
+	private static final String VARIANT = "variant";
+
+	/** @see #setTone(TextTone) */
+	private static final String TONE = "tone";
+
+	/** @see #setAppearance(TextAppearance) */
+	private static final String APPEARANCE = "appearance";
 
 	private static final String ROLE = "role";
 
@@ -61,9 +78,7 @@ public class ReactTextControl extends ReactControl implements TooltipProvider {
 	public ReactTextControl(ReactContext context, String text, String cssClass) {
 		super(context, null, "TLText");
 		putState(TEXT, text != null ? text : "");
-		if (cssClass != null) {
-			putState(CSS_CLASS, cssClass);
-		}
+		setCssClass(cssClass);
 	}
 
 	/**
@@ -114,13 +129,45 @@ public class ReactTextControl extends ReactControl implements TooltipProvider {
 	}
 
 	/**
-	 * Updates the additional CSS class.
+	 * Sets how text longer than the available width is displayed.
 	 *
-	 * @param cssClass
-	 *        Additional CSS class to append, or {@code null} to clear.
+	 * @param overflow
+	 *        Whether the text wraps onto several lines or is truncated on a single one.
 	 */
-	public void setCssClass(String cssClass) {
-		putState(CSS_CLASS, cssClass != null ? cssClass : "");
+	public void setOverflow(TextOverflow overflow) {
+		putState(OVERFLOW, overflow.getExternalName());
+	}
+
+	/**
+	 * Sets the typographic role the text is displayed in.
+	 *
+	 * @param variant
+	 *        What the text is for: running text, a heading, the name of a value, a remark.
+	 */
+	public void setVariant(TextVariant variant) {
+		putState(VARIANT, variant.getExternalName());
+	}
+
+	/**
+	 * Sets the color role the text is displayed in.
+	 *
+	 * @param tone
+	 *        What the color of the text means: the color it is read in, a lesser weight, an
+	 *        explanation, an outcome.
+	 */
+	public void setTone(TextTone tone) {
+		putState(TONE, tone.getExternalName());
+	}
+
+	/**
+	 * Sets the shape the text is drawn in.
+	 *
+	 * @param appearance
+	 *        Plain text, or a pill in the color of the value or of the {@link #setTone(TextTone)
+	 *        tone}.
+	 */
+	public void setAppearance(TextAppearance appearance) {
+		putState(APPEARANCE, appearance.getExternalName());
 	}
 
 	/**
@@ -170,6 +217,7 @@ public class ReactTextControl extends ReactControl implements TooltipProvider {
 	 */
 	@Override
 	protected java.util.Set<String> scriptingPresentationKeys() {
-		return java.util.Set.of(CSS_CLASS, ReactValueColor.COLOR);
+		return presentationKeys(super.scriptingPresentationKeys(), OVERFLOW, VARIANT, TONE, APPEARANCE,
+			ReactValueColor.COLOR);
 	}
 }

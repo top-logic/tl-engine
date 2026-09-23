@@ -325,6 +325,40 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * @return A React control for the field input widget.
 	 */
 	public ReactControl createFieldControl(ReactContext context, TLType type, FieldSpec field, FieldModel model) {
+		return createFieldControl(context, type, field, model, null);
+	}
+
+	/**
+	 * Creates the input control for a value of the given model type, with the display deciding
+	 * which control that is.
+	 *
+	 * <p>
+	 * A display naming a control gets that control, whatever the type says: the rule that options
+	 * are selected from a list and the control configured for the type both step back. Where the
+	 * display names none, the control is resolved from the type as it is for every other value.
+	 * </p>
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param type
+	 *        The model type of the edited value.
+	 * @param field
+	 *        The description of what is edited, see
+	 *        {@link #fieldSpec(TLType, AnnotationLookup, String, boolean, FieldModel)}.
+	 * @param model
+	 *        The field model providing value, editability, and change notifications. A
+	 *        {@link SelectFieldModel} makes the value one chosen from its options.
+	 * @param control
+	 *        The control the display asks for, or {@code null} to let the type decide.
+	 * @return A React control for the field input widget.
+	 */
+	public ReactControl createFieldControl(ReactContext context, TLType type, FieldSpec field, FieldModel model,
+			PolymorphicConfiguration<? extends ReactFieldControlProvider> control) {
+		// 0. The control the display asks for.
+		if (control != null) {
+			return createControl(context, field, model, _context.getInstance(control));
+		}
+
 		// 1. Option-based values use a select control.
 		if (model instanceof SelectFieldModel) {
 			return createControl(context, field, model, _selectProvider);

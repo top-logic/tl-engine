@@ -1,4 +1,4 @@
-import { React, useTLState, TLChild, useFillHost, FillProvider } from 'tl-react-bridge';
+import { React, useTLState, TLChild, useFillHost, FillProvider, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 /**
@@ -20,7 +20,7 @@ const TLDeckPane: React.FC<TLCellProps> = ({ controlId }) => {
 
   return (
     <FillProvider host={fillHost}>
-      <div id={controlId} className={fillClass ? 'tlDeckPane ' + fillClass : 'tlDeckPane'}>
+      <div id={controlId} className={rootClassName(state, fillClass ? 'tlDeckPane ' + fillClass : 'tlDeckPane')}>
         {state.activeChild && <TLChild control={state.activeChild} />}
       </div>
     </FillProvider>

@@ -160,6 +160,8 @@ public class SwitchElement implements UIElement {
 
 	private final List<TLModelPartRef> _observedTypeRefs;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link SwitchElement} from configuration.
 	 */
@@ -178,6 +180,7 @@ public class SwitchElement implements UIElement {
 		_default = config.getDefault().stream()
 			.map(context::getInstance)
 			.collect(Collectors.toList());
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -193,7 +196,10 @@ public class SwitchElement implements UIElement {
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		ViewChannel input = context.resolveChannel(_inputRef);
-		return new ReactSwitchControl(context, input, _cases, _default, ObservedTypes.resolve(_observedTypeRefs));
+		ReactSwitchControl result =
+			new ReactSwitchControl(context, input, _cases, _default, ObservedTypes.resolve(_observedTypeRefs));
+		result.setCssClass(_cssClass);
+		return result;
 	}
 
 	/**

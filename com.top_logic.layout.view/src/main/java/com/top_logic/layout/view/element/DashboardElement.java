@@ -28,6 +28,7 @@ import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.command.CommandScope;
+import com.top_logic.layout.view.command.ViewCommandModel;
 
 /**
  * A UI element that renders a responsive dashboard grid of {@link TileElement
@@ -115,6 +116,8 @@ public class DashboardElement implements UIElement {
 
 	private final List<TileElement> _tiles;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link DashboardElement} from configuration.
 	 */
@@ -130,6 +133,7 @@ public class DashboardElement implements UIElement {
 				_tiles.add(tile);
 			}
 		}
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -141,19 +145,41 @@ public class DashboardElement implements UIElement {
 	public IReactControl createControl(ViewContext context) {
 		List<TileElement> ordered = applyPersonalOrder(_tiles);
 		List<Tile> reactTiles = new ArrayList<>(ordered.size());
+		List<ViewCommandModel> actions = new ArrayList<>();
 		for (TileElement t : ordered) {
 			if (!t.isAccessible()) {
 				// Access denied for the current user: omit the tile entirely.
 				continue;
 			}
-			reactTiles.add(new Tile(t.getId(), t.getWidth(), t.getRowSpan(), t.createContentControl(context)));
+			ViewCommandModel action = t.createActionModel(context);
+			if (action != null) {
+				actions.add(action);
+			}
+			reactTiles.add(new Tile(t.getId(), t.getWidth(), t.getRowSpan(), t.createContentControl(context),
+				t.toAction(action)));
 		}
 		ReactDashboardControl control =
 			new ReactDashboardControl(context, _minColWidth, _rowHeight, reactTiles, this::storePersonalOrder);
 
+		control.setCssClass(_cssClass);
+		followTileActions(context, control, actions);
 		contributeEditCommands(context, control);
 
 		return control;
+	}
+
+	/**
+	 * Lets the models of the tile actions follow their input for as long as the dashboard is
+	 * displayed, so that a tile is offered, refused or hidden according to what its command says
+	 * about the current input.
+	 */
+	private static void followTileActions(ViewContext context, ReactDashboardControl control,
+			List<ViewCommandModel> actions) {
+		if (actions.isEmpty()) {
+			return;
+		}
+		control.addAttachListener(() -> actions.forEach(action -> action.attach(context.getModelScope())));
+		control.addDetachListener(() -> actions.forEach(ViewCommandModel::detach));
 	}
 
 	private void contributeEditCommands(ViewContext context, ReactDashboardControl control) {

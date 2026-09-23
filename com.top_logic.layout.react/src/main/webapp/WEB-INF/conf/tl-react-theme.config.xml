@@ -25,6 +25,7 @@
 							<de>Hell</de>
 						</label>
 					<color name="background" value="#FFFFFF"/>
+					<text name="background-image" value="none"/>
 					<color name="background-inverse" value="#393C40"/>
 					<color name="background-selected" value="#F0F1F2"/>
 					<length name="body-02-font-size" value=".875rem"/>
@@ -34,6 +35,7 @@
 					<ref name="border-color" ref="border-subtle"/>
 					<color name="border-interactive" value="#2968C8"/>
 					<length name="border-radius-02" value=".5rem"/>
+					<length name="border-radius-03" value="1rem"/>
 					<color name="border-strong" value="#878D96"/>
 					<color name="border-subtle" value="#C4C7CC"/>
 					<ref name="border-subtle-01" ref="border-subtle"/>
@@ -50,13 +52,19 @@
 					<text name="color-drop-zone" value="rgba(41,104,200,0.08)"/>
 					<color name="color-surface" value="#FFFFFF"/>
 					<length name="corner-radius" value="0.25rem"/>
+					<length name="display-01-font-size" value="2.5rem"/>
+					<length name="display-01-line-height" value="3rem"/>
 					<color name="field" value="#F0F1F2"/>
 					<color name="field-disabled" value="#F0F1F2"/>
 					<color name="focus" value="#2968C8"/>
 					<color name="focus-inset" value="#FFFFFF"/>
 					<text name="font-family" value="'Inter'"/>
+					<ref name="font-family-display" ref="font-family"/>
 					<text name="font-family-mono" value="monospace"/>
 					<length name="heading-03-font-size" value="1.25rem"/>
+					<length name="heading-03-line-height" value="1.625rem"/>
+					<length name="heading-04-font-size" value="1.75rem"/>
+					<length name="heading-04-line-height" value="2.25rem"/>
 					<length name="heading-compact-02-font-size" value=".875rem"/>
 					<length name="heading-compact-02-letter-spacing" value=".15px"/>
 					<length name="heading-compact-02-line-height" value="1.125rem"/>
@@ -66,6 +74,7 @@
 					<color name="icon-primary" value="#101113"/>
 					<color name="interactive" value="#2968C8"/>
 					<length name="label-01-font-size" value=".75rem"/>
+					<length name="label-01-line-height" value="1rem"/>
 					<color name="layer" value="#F0F1F2"/>
 					<color name="layer-01" value="#FFFFFF"/>
 					<color name="layer-02" value="#FFFFFF"/>
@@ -84,6 +93,7 @@
 					<text name="overlay" value="rgba(0,0,0,0.5)"/>
 					<color name="script-editor-text-highlight" value="#D6E3F7"/>
 					<text name="shadow-dialog" value="0 8px 24px rgba(0,0,0,0.2)"/>
+					<text name="shadow-glow" value="none"/>
 					<text name="shadow-menu" value="0 2px 6px 0 rgba(0,0,0,0.32)"/>
 					<text name="shadow-raised" value="0 0 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08)"/>
 					<length name="spacing-01" value=".25rem"/>
@@ -96,6 +106,8 @@
 					<color name="support-info" value="#2968C8"/>
 					<color name="support-success" value="#04A38D"/>
 					<color name="support-warning" value="#D3A118"/>
+					<length name="surface-blur" value="0"/>
+					<ref name="text-accent" ref="interactive"/>
 					<color name="text-disabled" value="#C4C7CC"/>
 					<color name="text-error" value="#D3181B"/>
 					<color name="text-helper" value="#676B72"/>
@@ -106,6 +118,8 @@
 					<color name="text-placeholder" value="#A7ABB2"/>
 					<color name="text-primary" value="#101113"/>
 					<color name="text-secondary" value="#676B72"/>
+					<ref name="text-success" ref="support-success"/>
+					<ref name="text-warning" ref="support-warning"/>
 					</theme>
 					<theme name="dark"
 						color-scheme="dark"

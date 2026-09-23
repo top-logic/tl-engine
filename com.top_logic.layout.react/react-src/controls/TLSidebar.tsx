@@ -1,6 +1,6 @@
 import {
   React, useTLState, useTLCommand, TLChild, useI18N, useStandaloneKeyboardScope,
-  useCloseOnOutsidePress, FillBarrier,
+  useCloseOnOutsidePress, FillBarrier, rootClassName, tooltipProps,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { ThemeIcon } from './icon/ThemeIcon';
@@ -108,7 +108,8 @@ const SidebarNavItem: React.FC<{
   <button
     className={'tlSidebar__item tlSidebar__navItem' + (active ? ' tlSidebar__navItem--active' : '')}
     onClick={() => onSelect(item.id)}
-    title={collapsed ? item.label : undefined}
+    aria-label={collapsed ? item.label : undefined}
+    {...tooltipProps(collapsed ? item.label : undefined)}
     tabIndex={tabIndex}
     ref={itemRef}
     onFocus={() => onFocus(item.id)}
@@ -138,7 +139,8 @@ const SidebarCommandItem: React.FC<{
     className={'tlSidebar__item tlSidebar__commandItem' + (item.disabled ? ' tlSidebar__item--disabled' : '')}
     onClick={() => onExecute(item.id)}
     disabled={item.disabled}
-    title={item.tooltip ?? (collapsed ? item.label : undefined)}
+    aria-label={collapsed ? item.label : undefined}
+    {...tooltipProps(item.tooltip ?? (collapsed ? item.label : undefined))}
     tabIndex={tabIndex}
     ref={itemRef}
     onFocus={() => onFocus(item.id)}
@@ -154,7 +156,7 @@ const SidebarHeaderItem: React.FC<{
 }> = ({ item, collapsed }) => {
   if (collapsed && !item.icon) return null;
   return (
-    <div className="tlSidebar__headerItem" title={collapsed ? item.label : undefined}>
+    <div className="tlSidebar__headerItem" {...tooltipProps(collapsed ? item.label : undefined)}>
       <SidebarIcon icon={item.icon} />
       {!collapsed && <span className="tlSidebar__label">{item.label}</span>}
     </div>
@@ -219,7 +221,7 @@ const SidebarGroupFlyout: React.FC<{
                 + (isDisabled ? ' tlSidebar__item--disabled' : '')}
               role="menuitem"
               disabled={isDisabled}
-              title={tooltip}
+              {...tooltipProps(tooltip)}
               onClick={() => handleChildClick(child)}
             >
               <SidebarIcon icon={child.icon} />
@@ -301,7 +303,8 @@ const SidebarGroup: React.FC<{
       <button
         className="tlSidebar__item tlSidebar__groupHeader"
         onClick={handleClick}
-        title={collapsed ? item.label : undefined}
+        aria-label={collapsed ? item.label : undefined}
+        {...tooltipProps(collapsed ? item.label : undefined)}
         aria-expanded={collapsed ? showFlyout : expanded}
         tabIndex={tabIndex}
         ref={combinedRef}
@@ -606,12 +609,14 @@ const TLSidebar: React.FC<TLCellProps> = ({ controlId }) => {
   }, [items, collapsed, groupStates, focusedId, flyoutGroupId, moveFocus,
       handleSelect, handleExecute, handleToggleGroup, handleOpenFlyout, handleCloseFlyout]);
 
+  const collapseLabel = collapsed ? i18n['js.sidebar.expand'] : i18n['js.sidebar.collapse'];
+
   const rootClass = 'tlSidebar'
     + (collapsed ? ' tlSidebar--collapsed' : '')
     + (drawerOpen ? ' tlSidebar--drawerOpen' : '');
 
   return (
-    <div id={controlId} className={rootClass}>
+    <div id={controlId} className={rootClassName(state, rootClass)}>
       {state.drawerToggleContribution && (
         <TLChild control={state.drawerToggleContribution} />
       )}
@@ -669,7 +674,7 @@ const TLSidebar: React.FC<TLCellProps> = ({ controlId }) => {
         )}
 
         <button className="tlSidebar__collapseBtn" onClick={handleToggleCollapse}
-          title={collapsed ? i18n['js.sidebar.expand'] : i18n['js.sidebar.collapse']}>
+          aria-label={collapseLabel} {...tooltipProps(collapseLabel)}>
           <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
             <path d={collapsed ? 'M6 4l4 4-4 4' : 'M10 4l-4 4 4 4'}
               fill="none" stroke="currentColor" strokeWidth="2"

@@ -126,6 +126,6 @@ public class ReactAppBarControl extends ReactControl {
 	 */
 	@Override
 	protected Set<String> scriptingPresentationKeys() {
-		return Set.of(VARIANT);
+		return presentationKeys(super.scriptingPresentationKeys(), VARIANT);
 	}
 }

@@ -81,12 +81,15 @@ public class JobStatusElement implements UIElement {
 
 	private final ChannelRef _inputRef;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link JobStatusElement} from configuration.
 	 */
 	@CalledByReflection
 	public JobStatusElement(InstantiationContext context, Config config) {
 		_inputRef = config.getInput();
+		_cssClass = config.getCssClass();
 	}
 
 	/**
@@ -97,6 +100,7 @@ public class JobStatusElement implements UIElement {
 	 */
 	public JobStatusElement(ChannelRef input) {
 		_inputRef = input;
+		_cssClass = null;
 	}
 
 	@Override
@@ -108,6 +112,7 @@ public class JobStatusElement implements UIElement {
 		channel.addListener(listener);
 		control.addCleanupAction(() -> channel.removeListener(listener));
 
+		control.setCssClass(_cssClass);
 		return control;
 	}
 

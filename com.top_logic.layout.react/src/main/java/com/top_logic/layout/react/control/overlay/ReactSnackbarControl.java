@@ -296,7 +296,7 @@ public class ReactSnackbarControl extends ReactControl {
 	 */
 	@Override
 	protected Set<String> scriptingPresentationKeys() {
-		return Set.of(DURATION, GENERATION, VARIANT);
+		return presentationKeys(super.scriptingPresentationKeys(), DURATION, GENERATION, VARIANT);
 	}
 
 	/**

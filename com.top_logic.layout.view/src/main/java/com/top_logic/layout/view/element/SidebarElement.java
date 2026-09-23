@@ -564,6 +564,8 @@ public class SidebarElement implements UIElement {
 
 	private final String _drawerOpenSlotName;
 
+	private final String _cssClass;
+
 	private final List<UIElement> _header;
 
 	private final List<UIElement> _headerCollapsed;
@@ -584,6 +586,7 @@ public class SidebarElement implements UIElement {
 		_activeItem = config.getActiveItem();
 		_collapsed = config.getCollapsed();
 		_drawerOpenSlotName = config.getDrawerOpenSlotName();
+		_cssClass = config.getCssClass();
 		_header = createElements(context, config.getHeader());
 		_headerCollapsed = createElements(context, config.getHeaderCollapsed());
 		_footer = createElements(context, config.getFooter());
@@ -697,6 +700,8 @@ public class SidebarElement implements UIElement {
 				context.getSlotPath(), context.getSlotRegistry(), List.of(toggleButton));
 			sidebar.setDrawerToggleContribution(drawerToggleSlot);
 		}
+
+		sidebar.setCssClass(_cssClass);
 
 		RevealRegistry registry = context.getRevealRegistry();
 		if (registry != null) {

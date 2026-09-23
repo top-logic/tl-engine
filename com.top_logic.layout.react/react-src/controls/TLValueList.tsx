@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, useListReorder, TLChild } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, useListReorder, TLChild, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import FontIcon from './FontIcon';
 
@@ -98,7 +98,7 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
 
   if (!editable) {
     return (
-      <span id={controlId} className={cls}>
+      <span id={controlId} className={rootClassName(state, cls)}>
         {elements.map((element, index) => (
           <React.Fragment key={index}>
             {index > 0 && <span className="tlValueList__separator">{SEPARATOR}</span>}
@@ -112,7 +112,7 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
   }
 
   return (
-    <div id={controlId} className={cls} {...reorder.containerProps}>
+    <div id={controlId} className={rootClassName(state, cls)} {...reorder.containerProps}>
       {elements.map((element, index) => {
         const dragState = reorder.itemState(index);
         let rowCls = 'tlValueList__row';
@@ -131,8 +131,8 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
               <button
                 type="button"
                 className="tlValueList__handle"
-                title={t['js.valueList.move']}
                 aria-label={t['js.valueList.move']}
+                {...tooltipProps(t['js.valueList.move'])}
                 ref={(handle) => {
                   handles.current[index] = handle;
                 }}
@@ -148,8 +148,8 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
             <button
               type="button"
               className="tlValueList__remove"
-              title={t['js.valueList.remove']}
               aria-label={t['js.valueList.remove']}
+              {...tooltipProps(t['js.valueList.remove'])}
               onClick={() => sendCommand(CMD_REMOVE_ELEMENT, { [ARG_INDEX]: index })}
             >
               <FontIcon image={REMOVE_ICON} />
@@ -160,8 +160,8 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
       <button
         type="button"
         className="tlValueList__add"
-        title={t['js.valueList.add']}
         aria-label={t['js.valueList.add']}
+        {...tooltipProps(t['js.valueList.add'])}
         onClick={() => sendCommand(CMD_ADD_ELEMENT)}
       >
         <FontIcon image={ADD_ICON} />

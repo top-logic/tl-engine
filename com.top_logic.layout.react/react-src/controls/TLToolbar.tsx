@@ -1,7 +1,8 @@
-import { React, useTLState, TLChild, useCloseOnOutsidePress, useStandaloneKeyboardScope, useFocusTrap, useI18N } from 'tl-react-bridge';
+import { React, useTLState, TLChild, useCloseOnOutsidePress, useStandaloneKeyboardScope, useFocusTrap, useI18N, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { createPortal } from 'react-dom';
 import { ThemeIcon } from './icon/ThemeIcon';
+import { ButtonDefaults, useButtonDefaults } from './button/ButtonDefaults';
 
 const { useCallback, useRef, useState, useEffect, useLayoutEffect, useMemo } = React;
 
@@ -201,7 +202,7 @@ const MenuGroup: React.FC<{ group: CliqueGroup; align?: 'start' | 'end'; unitInd
         aria-expanded={open}
         aria-haspopup="true"
         aria-label={iconOnly ? label : undefined}
-        title={iconOnly ? label : undefined}
+        {...tooltipProps(iconOnly ? label : undefined)}
       >
         {iconOnly
           ? <ThemeIcon encoded={group.icon!} className="tlToolbar__menuIcon" />
@@ -270,6 +271,11 @@ const TLToolbar: React.FC<TLCellProps> = ({ controlId }) => {
   const overflowEnd = (state.overflow as OverflowEnd) ?? 'none';
   const collapsible = overflowEnd !== 'none';
   const i18n = useI18N(I18N_KEYS);
+
+  // The buttons of a toolbar are ghost unless the container the toolbar sits in has chosen
+  // otherwise: a window footer or a panel button bar says secondary, an app bar says ghost.
+  const inherited = useButtonDefaults();
+  const appearance = inherited.appearance ?? 'ghost';
 
   const rootRef = useRef<HTMLDivElement>(null);
   const metricsRef = useRef<Metrics | null>(null);
@@ -433,8 +439,9 @@ const TLToolbar: React.FC<TLCellProps> = ({ controlId }) => {
     ? <MenuGroup group={overflowGroup} align={overflowEnd === 'leading' ? 'start' : 'end'} />
     : null;
 
-  const className = 'tlToolbar' + (collapsible ? ' tlToolbar--collapsible' : '')
-    + (compact ? ' ' + COMPACT_CLASS : '');
+  const className = rootClassName(state, 'tlToolbar',
+    collapsible && 'tlToolbar--collapsible',
+    compact && COMPACT_CLASS);
 
   // While measuring, the toolbar takes the width it needs, so that the widths read from it are
   // the natural ones of its units. Afterwards it states that natural width as its own width and
@@ -447,25 +454,27 @@ const TLToolbar: React.FC<TLCellProps> = ({ controlId }) => {
   }
 
   return (
-    <div
-      id={controlId}
-      ref={rootRef}
-      className={className}
-      role="toolbar"
-      style={toolbarStyle}
-    >
-      {overflowEnd === 'leading' && trigger}
-      {shownGroups.map((shown, i) => (
-        <React.Fragment key={shown.group.name}>
-          {i > 0 && <span className="tlToolbar__separator" aria-hidden="true" />}
-          {shown.group.display === 'menu'
-            ? <MenuGroup group={shown.group} unitIndex={shown.units[0].index} />
-            : <InlineGroup units={shown.units} />
-          }
-        </React.Fragment>
-      ))}
-      {overflowEnd === 'trailing' && trigger}
-    </div>
+    <ButtonDefaults appearance={appearance}>
+      <div
+        id={controlId}
+        ref={rootRef}
+        className={className}
+        role="toolbar"
+        style={toolbarStyle}
+      >
+        {overflowEnd === 'leading' && trigger}
+        {shownGroups.map((shown, i) => (
+          <React.Fragment key={shown.group.name}>
+            {i > 0 && <span className="tlToolbar__separator" aria-hidden="true" />}
+            {shown.group.display === 'menu'
+              ? <MenuGroup group={shown.group} unitIndex={shown.units[0].index} />
+              : <InlineGroup units={shown.units} />
+            }
+          </React.Fragment>
+        ))}
+        {overflowEnd === 'trailing' && trigger}
+      </div>
+    </ButtonDefaults>
   );
 };
 

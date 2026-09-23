@@ -40,6 +40,12 @@ public final class FieldSpec {
 
 	private String _placeholder;
 
+	private String _icon;
+
+	private boolean _clearable;
+
+	private Long _debounce;
+
 	private boolean _mandatory;
 
 	private boolean _editable = true;
@@ -134,6 +140,99 @@ public final class FieldSpec {
 	 */
 	public FieldSpec setPlaceholder(String placeholder) {
 		_placeholder = placeholder;
+		return this;
+	}
+
+	/**
+	 * The icon shown inside the input, ahead of what is typed, or {@code null} for an input that
+	 * stands on its own.
+	 *
+	 * <p>
+	 * What kind of input this is, said as a picture: the magnifier of a search box, the envelope of
+	 * a mail address. It is decoration rather than a control - nothing happens when it is clicked -
+	 * so the input still needs a {@link #getLabel() label} or a {@link #getPlaceholder()
+	 * placeholder} to be named.
+	 * </p>
+	 *
+	 * <p>
+	 * The encoded form of a {@link com.top_logic.layout.basic.ThemeImage}, an icon font class such
+	 * as {@code css:fa-solid fa-magnifying-glass} or a path to an image. Only a single-line text
+	 * input shows it; a text area, a number and a password input ignore it.
+	 * </p>
+	 */
+	public String getIcon() {
+		return _icon;
+	}
+
+	/**
+	 * Sets the {@link #getIcon() icon}.
+	 *
+	 * @return This specification for call chaining.
+	 */
+	public FieldSpec setIcon(String icon) {
+		_icon = icon;
+		return this;
+	}
+
+	/**
+	 * Whether the input offers a button that empties it.
+	 *
+	 * <p>
+	 * For an input whose value is taken back as often as it is given - the term a list is searched
+	 * by, the text a filter is narrowed to - where emptying it is a step of its own rather than the
+	 * accident of deleting every character. The button appears only while the input holds something
+	 * and while it is {@link #isEditable() editable}, and pressing it writes the empty value at once
+	 * instead of after the {@link #getDebounce() delay}.
+	 * </p>
+	 *
+	 * <p>
+	 * Only a single-line text input offers it; a text area, a number and a password input ignore
+	 * it.
+	 * </p>
+	 */
+	public boolean isClearable() {
+		return _clearable;
+	}
+
+	/**
+	 * Sets whether the input is {@link #isClearable() clearable}.
+	 *
+	 * @return This specification for call chaining.
+	 */
+	public FieldSpec setClearable(boolean clearable) {
+		_clearable = clearable;
+		return this;
+	}
+
+	/**
+	 * How long a typed value is held back before it is sent, in milliseconds, or {@code null} for
+	 * the delay a typed field uses by default.
+	 *
+	 * <p>
+	 * The time after the last keystroke before what is typed reaches the server: long enough that a
+	 * burst of keystrokes costs one round-trip, short enough that an answer computed from the value
+	 * - the rows a search narrows to - follows the typing. A shorter delay makes the answer more
+	 * immediate at the price of more round-trips; a longer one waits for the user to stop.
+	 * </p>
+	 *
+	 * <p>
+	 * Ignored by a field that
+	 * {@link com.top_logic.layout.react.control.form.ReactFormFieldControl#setSendValueOnBlur(boolean)
+	 * sends its value on blur}, which holds a typed value back entirely until the field is left.
+	 * The text, number and password inputs honour it.
+	 * </p>
+	 */
+	public Long getDebounce() {
+		return _debounce;
+	}
+
+	/**
+	 * Sets the {@link #getDebounce() delay} before a typed value is sent.
+	 *
+	 * @return This specification for call chaining.
+	 */
+	public FieldSpec setDebounce(Long debounce) {
+		_debounce = debounce;
 		return this;
 	}
 
@@ -385,6 +484,9 @@ public final class FieldSpec {
 		FieldSpec result = new FieldSpec(_valueType, _label);
 		result._tooltip = _tooltip;
 		result._placeholder = _placeholder;
+		result._icon = _icon;
+		result._clearable = _clearable;
+		result._debounce = _debounce;
 		result._mandatory = _mandatory;
 		result._editable = _editable;
 		// The element is one value: it is not several, and a single value has no order to arrange.

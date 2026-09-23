@@ -53,12 +53,14 @@ public class FailedLoginTable implements UIElement {
 		Class<? extends UIElement> getImplementationClass();
 	}
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link FailedLoginTable} from configuration.
 	 */
 	@CalledByReflection
 	public FailedLoginTable(InstantiationContext context, Config config) {
-		// No configuration needed.
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -78,7 +80,9 @@ public class FailedLoginTable implements UIElement {
 		// unique; no explicit key function is needed.
 		ListRowSource<FailedLogin> source = new ListRowSource<>(rows, columns);
 		DefaultTableView<FailedLogin> view = DefaultTableView.create(columns, source);
-		return new TableViewControl<>(context, view, false);
+		TableViewControl<FailedLogin> control = new TableViewControl<>(context, view, false);
+		control.setCssClass(_cssClass);
+		return control;
 	}
 
 	/**

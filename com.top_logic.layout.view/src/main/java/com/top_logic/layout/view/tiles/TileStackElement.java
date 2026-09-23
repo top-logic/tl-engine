@@ -158,6 +158,8 @@ public class TileStackElement implements UIElement {
 
 	private final List<FrameRoute> _frameRoutes;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link TileStackElement} from configuration.
 	 */
@@ -169,6 +171,7 @@ public class TileStackElement implements UIElement {
 		_frameRoutes = config.getFrames().stream()
 			.map(frame -> FrameRoute.create(context, frame))
 			.collect(Collectors.toList());
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -180,6 +183,9 @@ public class TileStackElement implements UIElement {
 	public IReactControl createControl(ViewContext context) {
 		ViewChannel pathChannel = context.resolveChannel(_pathRef);
 		TileStackScope scope = new TileStackScope(pathChannel, _frameRoutes, RevealPath.of(context), this);
-		return new ReactTileStackControl(context, this, pathChannel, scope, _initialViewRef, _bindPathTo);
+		ReactTileStackControl result =
+			new ReactTileStackControl(context, this, pathChannel, scope, _initialViewRef, _bindPathTo);
+		result.setCssClass(_cssClass);
+		return result;
 	}
 }

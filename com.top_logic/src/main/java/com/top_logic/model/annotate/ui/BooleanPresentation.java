@@ -21,6 +21,17 @@ public enum BooleanPresentation implements ExternallyNamed {
 	CHECKBOX("checkbox"),
 
 	/**
+	 * Display as switch, a toggle sliding between its two states.
+	 *
+	 * <p>
+	 * A value that is either on or off, such as a setting being active: the switch shows which of
+	 * the two it is by the position of its knob and takes a click to move it. A value that may also
+	 * be unknown keeps the check box, whose third state says so.
+	 * </p>
+	 */
+	SWITCH("switch"),
+
+	/**
 	 * Display as yes/no select field.
 	 */
 	SELECT("select"),

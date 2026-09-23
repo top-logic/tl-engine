@@ -67,6 +67,7 @@ public class RelativeTimeElement implements UIElement {
 	public IReactControl createControl(ViewContext context) {
 		ViewChannel channel = context.resolveChannel(_config.getInput());
 		ReactRelativeTimeControl control = new ReactRelativeTimeControl(context, toDate(channel.get()));
+		control.setCssClass(_config.getCssClass());
 		ChannelListener listener =
 			(sender, oldValue, newValue) -> control.setValue(toDate(newValue));
 		channel.addListener(listener);

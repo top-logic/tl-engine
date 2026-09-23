@@ -24,6 +24,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
+import com.top_logic.layout.react.control.select.SelectDisplay;
 
 /**
  * {@link ReactFieldControlProvider} for attributes that are edited by selecting from a set of
@@ -42,6 +43,11 @@ import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
  * the selectable values. Without a configured option provider, options are derived from the
  * attribute itself (enumeration, reference, enum datatype, or a TL-Script options annotation).
  * </p>
+ *
+ * <p>
+ * The options are offered in a list that opens on demand, unless the {@link Config#getDisplay()
+ * display} asks for a shape that shows them all.
+ * </p>
  */
 public class SelectControlProvider implements ReactFieldControlProvider {
 
@@ -52,6 +58,9 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 
 		/** Configuration name for {@link #getOptionProvider()}. */
 		String OPTION_PROVIDER = "option-provider";
+
+		/** Configuration name for {@link #getDisplay()}. */
+		String DISPLAY = "display";
 
 		@Override
 		@ClassDefault(SelectControlProvider.class)
@@ -68,16 +77,33 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 		@Name(OPTION_PROVIDER)
 		@InstanceFormat
 		OptionProvider getOptionProvider();
+
+		/**
+		 * The shape the options are offered in.
+		 *
+		 * <p>
+		 * A list that opens on demand takes the room of one field whatever the number of options
+		 * and is searched by typing, which suits a list of any length. A cloud of toggles and a bar
+		 * of segments show every option at all times, so the value and what else could be chosen
+		 * are read without opening anything - at the price of the room all options take, which
+		 * makes them a choice for a handful of options rather than for a long list.
+		 * </p>
+		 */
+		@Name(DISPLAY)
+		SelectDisplay getDisplay();
 	}
 
 	private final OptionProvider _optionProvider;
 
+	private final SelectDisplay _display;
+
 	/**
 	 * Creates a {@link SelectControlProvider} without a configured option source (options are
-	 * derived from the attribute).
+	 * derived from the attribute), offering them in a list that opens on demand.
 	 */
 	public SelectControlProvider() {
 		_optionProvider = null;
+		_display = SelectDisplay.DROPDOWN;
 	}
 
 	/**
@@ -86,6 +112,7 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 	@CalledByReflection
 	public SelectControlProvider(InstantiationContext context, Config config) {
 		_optionProvider = config.getOptionProvider();
+		_display = config.getDisplay();
 	}
 
 	/**
@@ -93,6 +120,13 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 	 */
 	public OptionProvider getConfiguredOptions() {
 		return _optionProvider;
+	}
+
+	/**
+	 * The shape the options are offered in.
+	 */
+	public SelectDisplay getDisplay() {
+		return _display;
 	}
 
 	/**
@@ -120,7 +154,8 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 		Comparator<?> optionOrder = LabelComparator.newCachingInstance(labels);
 		// An ordered attribute keeps the order the user gives its selection; an unordered one is
 		// shown in the order of the options.
-		return new ReactDropdownSelectControl(context, selectModel, labels, optionOrder, field.isOrdered());
+		return new ReactDropdownSelectControl(context, selectModel, labels, optionOrder, field.isOrdered(),
+			_display);
 	}
 
 }

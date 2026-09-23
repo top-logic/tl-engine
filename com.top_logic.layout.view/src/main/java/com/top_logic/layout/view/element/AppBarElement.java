@@ -167,6 +167,8 @@ public class AppBarElement implements UIElement {
 
 	private final List<UIElement> _trailing;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link AppBarElement} from configuration.
 	 */
@@ -201,6 +203,7 @@ public class AppBarElement implements UIElement {
 		for (PolymorphicConfiguration<? extends UIElement> trailingConfig : config.getTrailing()) {
 			_trailing.add(context.getInstance(trailingConfig));
 		}
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -255,6 +258,7 @@ public class AppBarElement implements UIElement {
 		// Create the app bar control.
 		ReactAppBarControl appBar = new ReactAppBarControl(derivedContext, title, _variant, leadingControl,
 			actions, childControls, trailingControl);
+		appBar.setCssClass(_cssClass);
 
 		// Rebuild the actions when the commands of the scope change (commands contributed by
 		// descendants come and go). Groups are replaced in place, so the toolbar on display keeps

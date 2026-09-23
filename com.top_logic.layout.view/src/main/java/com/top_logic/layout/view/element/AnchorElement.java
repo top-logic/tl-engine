@@ -116,13 +116,16 @@ public class AnchorElement implements UIElement {
 		if (_config.getInput() != null) {
 			ViewChannel channel = context.resolveChannel(_config.getInput());
 			AnchorControl control = new AnchorControl(context, child, AnchorControl.anchorId(channel.get()));
+			control.setCssClass(_config.getCssClass());
 			ChannelListener listener =
 				(sender, oldValue, newValue) -> control.setKey(AnchorControl.anchorId(newValue));
 			channel.addListener(listener);
 			control.addCleanupAction(() -> channel.removeListener(listener));
 			return control;
 		}
-		return new AnchorControl(context, child, _config.getName());
+		AnchorControl result = new AnchorControl(context, child, _config.getName());
+		result.setCssClass(_config.getCssClass());
+		return result;
 	}
 
 }

@@ -138,6 +138,7 @@ public class ConfigFormElement implements UIElement {
 		CommandScope scope = context.getScope(CommandScope.class);
 
 		ReactStackControl holder = new ReactStackControl(context, Collections.emptyList());
+		holder.setCssClass(_config.getCssClass());
 		Display display = new Display(context, holder, scope);
 		display.show(itemOf(input));
 

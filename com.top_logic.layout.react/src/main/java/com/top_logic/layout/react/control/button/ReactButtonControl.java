@@ -55,6 +55,9 @@ public class ReactButtonControl extends ReactControl {
 	/** State key for the {@link ButtonAppearance appearance}. */
 	private static final String APPEARANCE = "appearance";
 
+	/** State key for the {@link ButtonTone tone}. */
+	private static final String TONE = "tone";
+
 	/** State key for the {@link ButtonSize size}. */
 	private static final String SIZE = "size";
 
@@ -284,6 +287,13 @@ public class ReactButtonControl extends ReactControl {
 	}
 
 	/**
+	 * Sets the button {@link ButtonTone tone}; {@link ButtonTone#DEFAULT} leaves the key unset.
+	 */
+	public void setTone(ButtonTone tone) {
+		putState(TONE, tone == null || tone == ButtonTone.DEFAULT ? null : tone.getExternalName());
+	}
+
+	/**
 	 * Sets the button {@link ButtonSize size}.
 	 */
 	public void setSize(ButtonSize size) {
@@ -389,6 +399,7 @@ public class ReactButtonControl extends ReactControl {
 	 */
 	@Override
 	protected java.util.Set<String> scriptingPresentationKeys() {
-		return java.util.Set.of(APPEARANCE, SIZE, KEY_GESTURE, IMAGE, DISPLAY_MODE, CSS_CLASSES);
+		return presentationKeys(super.scriptingPresentationKeys(), APPEARANCE, TONE, SIZE, KEY_GESTURE, IMAGE,
+			DISPLAY_MODE, CSS_CLASSES);
 	}
 }

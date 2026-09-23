@@ -19,8 +19,10 @@ export {
   useKeyboardBinding,
   useStandaloneKeyboardScope,
   useFocusTrap,
+  VALUE_DEBOUNCE_MS,
 } from './bridge/tl-react-bridge';
 export { ANCHORED_OVERLAY_ATTR, anchoredOverlayProps, firstFocusable } from './bridge/focus-trap';
+export { TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED, TOOLTIP_WHEN_CLIPPED, tooltipProps } from './bridge/tooltip-host';
 export { CMD_SUBMIT, CMD_VALUE_CHANGED } from './bridge/command-channel';
 export { writeDragPayload, readDragPayload, dragTypeAccepted, dropPositionAt } from './bridge/drag-drop';
 export type { TLDragPayload, TLDropPosition } from './bridge/drag-drop';
@@ -43,6 +45,9 @@ export type {
 export type { TLCellProps } from './bridge/types';
 export { useI18N } from './bridge/i18n';
 export { scrollToAnchor } from './bridge/scroll';
+export { rootClassName } from './bridge/css';
+export { useKeyedTransition, TRANSITION_FALLBACK_MS } from './bridge/transition';
+export type { KeyedTransitionOptions } from './bridge/transition';
 export { FILL_CLASS, useFill, useFillHost, FillProvider, FillBarrier } from './bridge/fill';
 export type { FillHost } from './bridge/fill';
 export { default as TLChild } from './bridge/TLChild';

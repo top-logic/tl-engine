@@ -16,10 +16,7 @@ public enum ButtonSize implements ExternallyNamed {
 	DEFAULT("default"),
 
 	/** A compact button, e.g. for a secondary inline action. */
-	SMALL("small"),
-
-	/** An emphasized, larger button. */
-	LARGE("large");
+	SMALL("small");
 
 	private final String _externalName;
 

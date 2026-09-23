@@ -232,9 +232,10 @@
 			frames the user's own drill-down pushes, so a target leading into a drill-down the user
 			already has leaves it untouched.
 			
-			Each view is looked for within the view shown before it, so a view on a tab of a pushed
-			frame is reached by naming it: the milestone list sits on a tab of the project home and
-			is revealed there, which is also what brings that tab up.
+			Each view is looked for within the view shown before it, and a view that the drill-down
+			reaches by pushing a frame is named as its own step: the milestone list sits behind the
+			Milestones tile of the project cockpit, so it is a frame after the cockpit frame, and
+			its label is the one that tile pushes with.
 		-->
 		<config service-class="com.top_logic.layout.view.navigation.DisplayTargetService">
 			<instance>
@@ -260,7 +261,14 @@
 								expr="m -> $m.container()"
 							/>
 						</show>
-						<show view="projects/milestone-list.view.xml">
+						<show
+							label-expr="m -> #('Milestones'@en, 'Meilensteine'@de)"
+							view="projects/milestone-list.view.xml"
+						>
+							<bind
+								channel="project"
+								expr="m -> $m.container()"
+							/>
 							<bind channel="milestone"/>
 						</show>
 					</target>
@@ -280,7 +288,14 @@
 								expr="t -> $t.container()"
 							/>
 						</show>
-						<show view="projects/milestone-list.view.xml">
+						<show
+							label-expr="t -> #('Milestones'@en, 'Meilensteine'@de)"
+							view="projects/milestone-list.view.xml"
+						>
+							<bind
+								channel="project"
+								expr="t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`).container()"
+							/>
 							<bind
 								channel="milestone"
 								expr="t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`)"
@@ -330,8 +345,14 @@
 			</instance>
 		</config>
 		<!--
-			A theme without rounding and without elevation, demonstrating that the React controls take
-			their corners and their shadows from the theme alone.
+			The themes of this application, each restyling the tokens the React controls and the
+			application stylesheet are drawn from.
+			
+			"Flat" takes rounding and elevation away, demonstrating that the React controls take
+			their corners and their shadows from the theme alone. "Glass" turns on the two tokens
+			the shipped themes leave without effect - the blur behind a translucent surface and the
+			glow around a highlighted one, both consumed by the glass card of the styling demo - and
+			gives the headings a display face of their own.
 		-->
 		<config service-class="com.top_logic.layout.react.theme.UIThemeService">
 			<instance>
@@ -349,6 +370,18 @@
 						<text name="shadow-dialog" value="none"/>
 						<text name="shadow-menu" value="none"/>
 						<text name="shadow-raised" value="none"/>
+					</theme>
+					<theme name="glass"
+						extends="default"
+						icon="css:bi bi-droplet-half"
+					>
+						<label>
+							<en>Glass</en>
+							<de>Glas</de>
+						</label>
+						<text name="font-family-display" value="Georgia, serif"/>
+						<text name="shadow-glow" value="0 0 24px rgba(41,104,200,0.45)"/>
+						<length name="surface-blur" value="12px"/>
 					</theme>
 				</themes>
 			</instance>

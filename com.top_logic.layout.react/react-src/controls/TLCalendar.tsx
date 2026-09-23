@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, startPointerDrag } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, startPointerDrag, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useState, useRef, useCallback, useMemo, useEffect } = React;
@@ -166,6 +166,7 @@ const Toolbar: React.FC<{
       <button
         className="tlCalBtn tlCalBtn--icon"
         aria-label={i18n['js.calendar.previous']}
+        {...tooltipProps(i18n['js.calendar.previous'])}
         onClick={() => send('navigate', { direction: 'PREV' })}
       >
         <span className="bi bi-chevron-left" />
@@ -173,6 +174,7 @@ const Toolbar: React.FC<{
       <button
         className="tlCalBtn tlCalBtn--icon"
         aria-label={i18n['js.calendar.next']}
+        {...tooltipProps(i18n['js.calendar.next'])}
         onClick={() => send('navigate', { direction: 'NEXT' })}
       >
         <span className="bi bi-chevron-right" />
@@ -545,7 +547,7 @@ const TimeGrid: React.FC<{ ctx: Ctx; rangeStart: number; granularity: Granularit
                 key={ev.id}
                 className={'tlCalAllDayEvent ' + categoryClass(ev.category) + (ev.selected ? ' tlCalEvent--selected' : '')}
                 style={eventStyle(ev)}
-                title={ev.tooltip}
+                {...tooltipProps(ev.tooltip)}
                 onClick={(e) => {
                   e.stopPropagation();
                   send('selectEvent', { eventId: ev.id });
@@ -605,7 +607,7 @@ const TimeGrid: React.FC<{ ctx: Ctx; rangeStart: number; granularity: Granularit
                           left: `${p.col * widthPct}%`,
                           width: `calc(${widthPct}% - 2px)`,
                         })}
-                        title={p.ev.tooltip}
+                        {...tooltipProps(p.ev.tooltip)}
                         onPointerDown={(e) => startMove(e, p.ev, day)}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -756,7 +758,7 @@ const MonthGrid: React.FC<{ ctx: Ctx; rangeStart: number; anchorMonth: number }>
                       })}
                       draggable={editable && ev.movable}
                       onDragStart={(e) => e.dataTransfer.setData('text/plain', ev.id)}
-                      title={ev.tooltip}
+                      {...tooltipProps(ev.tooltip)}
                       onClick={(e) => {
                         e.stopPropagation();
                         send('selectEvent', { eventId: ev.id });
@@ -779,7 +781,7 @@ const MonthGrid: React.FC<{ ctx: Ctx; rangeStart: number; anchorMonth: number }>
                       style={eventStyle(ev, { gridColumn: ci + 1, gridRow: barRows + 1 + k })}
                       draggable={editable && ev.movable}
                       onDragStart={(e) => e.dataTransfer.setData('text/plain', ev.id)}
-                      title={ev.tooltip}
+                      {...tooltipProps(ev.tooltip)}
                       onClick={(e) => {
                         e.stopPropagation();
                         send('selectEvent', { eventId: ev.id });
@@ -914,7 +916,7 @@ const TLCalendar: React.FC<TLCellProps> = ({ controlId }) => {
   };
 
   return (
-    <div id={controlId} className="tlCalendar">
+    <div id={controlId} className={rootClassName(state, 'tlCalendar')}>
       <Toolbar title={title} granularity={granularity} i18n={i18n} send={send} />
       <div className="tlCalBody">
         {granularity === 'MONTH' ? (

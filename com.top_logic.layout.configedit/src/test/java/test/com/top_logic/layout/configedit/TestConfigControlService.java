@@ -521,6 +521,51 @@ public class TestConfigControlService extends TestCase {
 		}
 	}
 
+	/** Common instance type of {@link AlgorithmConfig}. */
+	public interface Algorithm {
+		// Marker interface.
+	}
+
+	/** A polymorphic configuration naming an {@link Algorithm} implementation. */
+	public interface AlgorithmConfig extends PolymorphicConfiguration<Algorithm> {
+		// Marker interface.
+	}
+
+	/**
+	 * A parsing-only format: it reads text into an {@link AlgorithmConfig}, but has no normative way
+	 * to write any value back, and therefore accepts none.
+	 *
+	 * <p>
+	 * The shape of {@code ExpressionEvaluationAlgorithm.Config.LocatorFormat}, which parses a locator
+	 * expression into a configuration whose structure a single expression cannot be recovered from.
+	 * </p>
+	 */
+	public static class ParseOnlyFormat
+			extends AbstractConfigurationValueProvider<PolymorphicConfiguration<? extends Algorithm>> {
+
+		/** Creates a {@link ParseOnlyFormat}. */
+		public ParseOnlyFormat() {
+			super(PolymorphicConfiguration.class);
+		}
+
+		@Override
+		protected PolymorphicConfiguration<? extends Algorithm> getValueNonEmpty(String propertyName,
+				CharSequence propertyValue) {
+			return TypedConfiguration.newConfigItem(AlgorithmConfig.class);
+		}
+
+		@Override
+		protected String getSpecificationNonNull(PolymorphicConfiguration<? extends Algorithm> configValue) {
+			throw new UnsupportedOperationException("There is no normative way to serialize this value.");
+		}
+
+		@Override
+		public boolean isLegalValue(Object value) {
+			// Parsing only format.
+			return false;
+		}
+	}
+
 	/**
 	 * Translates an option of {@link Operations} into the {@link Operation} a property stores, and
 	 * back - the shape {@code ToCommandGroupReference} has.
@@ -554,6 +599,53 @@ public class TestConfigControlService extends TestCase {
 		@Override
 		protected String getSpecificationNonNull(Operation configValue) {
 			return configValue.getName();
+		}
+	}
+
+	/**
+	 * A format writing a list of strings as one comma separated text - it can express a list whose
+	 * elements contain no comma, and nothing else.
+	 *
+	 * <p>
+	 * The shape of a format that answers for the value at hand rather than for itself, e.g.
+	 * {@code ModelSpec.Format}: the same property has a text form for one value and none for the
+	 * next.
+	 * </p>
+	 */
+	public static class CommaSeparatedFormat extends AbstractConfigurationValueProvider<List<String>> {
+
+		/** Creates a {@link CommaSeparatedFormat}. */
+		public CommaSeparatedFormat() {
+			super(List.class);
+		}
+
+		@Override
+		protected List<String> getValueNonEmpty(String propertyName, CharSequence propertyValue) {
+			return Arrays.asList(propertyValue.toString().split(","));
+		}
+
+		@Override
+		protected String getSpecificationNonNull(List<String> configValue) {
+			if (!isLegalValue(configValue)) {
+				throw new UnsupportedOperationException("An element containing a comma cannot be written.");
+			}
+			return String.join(",", configValue);
+		}
+
+		@Override
+		public boolean isLegalValue(Object value) {
+			if (value == null) {
+				return true;
+			}
+			if (!(value instanceof List<?> list)) {
+				return false;
+			}
+			for (Object element : list) {
+				if (element == null || element.toString().indexOf(',') >= 0) {
+					return false;
+				}
+			}
+			return true;
 		}
 	}
 
@@ -658,6 +750,12 @@ public class TestConfigControlService extends TestCase {
 
 		/** Property name for {@link #getOperation()}. */
 		String OPERATION = "operation";
+
+		/** Property name for {@link #getParseOnlyItem()}. */
+		String PARSE_ONLY_ITEM = "parseOnlyItem";
+
+		/** Property name for {@link #getCommaList()}. */
+		String COMMA_LIST = "commaList";
 
 		/** Property name for {@link #getShapeRef()}. */
 		String SHAPE_REF = "shapeRef";
@@ -982,6 +1080,26 @@ public class TestConfigControlService extends TestCase {
 
 		/** @see #getOperation() */
 		void setOperation(Operation value);
+
+		/**
+		 * An {@code ITEM} property whose {@code @Format} ({@link ParseOnlyFormat}) only ever parses:
+		 * it reads text into a value but can write none back. The value is a sub-configuration and
+		 * belongs to a nested editor or a type selector, never to a text field that could not show
+		 * it.
+		 */
+		@Name(PARSE_ONLY_ITEM)
+		@Format(ParseOnlyFormat.class)
+		PolymorphicConfiguration<? extends Algorithm> getParseOnlyItem();
+
+		/**
+		 * A {@code COMPLEX} property (a value binding decides the kind) whose {@code @Format}
+		 * ({@link CommaSeparatedFormat}) can express some of its values and not others - a list
+		 * element containing a comma does not survive comma separated text.
+		 */
+		@Name(COMMA_LIST)
+		@Binding(NoFormatBinding.class)
+		@Format(CommaSeparatedFormat.class)
+		List<String> getCommaList();
 	}
 
 	private TestConfig _config;
@@ -1856,6 +1974,136 @@ public class TestConfigControlService extends TestCase {
 				+ "to a text field over the raw value.");
 		} catch (IllegalArgumentException expected) {
 			// Expected: COMPLEX is only accepted together with a value provider.
+		}
+	}
+
+	/**
+	 * An {@code ITEM} property whose format can write no value at all is rejected by
+	 * {@link ConfigControlService#createModel(ConfigurationItem, PropertyDescriptor)}, exactly like
+	 * an {@code ITEM} property without a format: there is no text for a text field to show, so the
+	 * property belongs to a nested editor or a type selector.
+	 */
+	public void testCreateModelRejectsParseOnlyItem() {
+		PropertyDescriptor property = _config.descriptor().getProperty(TestConfig.PARSE_ONLY_ITEM);
+		set(_config, TestConfig.PARSE_ONLY_ITEM, TypedConfiguration.newConfigItem(AlgorithmConfig.class));
+		assertNotNull("Precondition: the property must have a format for this test to be meaningful.",
+			property.getValueProvider());
+
+		try {
+			ConfigControlService.getInstance().createModel(_config, property);
+			fail("An item whose format cannot write its value must be rejected, not bound to a text field.");
+		} catch (IllegalArgumentException expected) {
+			// Expected: the value has no text form.
+		}
+	}
+
+	/**
+	 * The same property holding {@code null} is rejected as well - a parsing-only format accepts
+	 * nothing, not even the empty value, so there is still no text form to edit.
+	 */
+	public void testCreateModelRejectsParseOnlyItemHoldingNull() {
+		PropertyDescriptor property = _config.descriptor().getProperty(TestConfig.PARSE_ONLY_ITEM);
+		assertNull("Precondition: the property must be unset for this test to be meaningful.",
+			_config.value(property));
+
+		try {
+			ConfigControlService.getInstance().createModel(_config, property);
+			fail("An item whose format accepts no value at all must be rejected for null too.");
+		} catch (IllegalArgumentException expected) {
+			// Expected: the value has no text form.
+		}
+	}
+
+	/**
+	 * {@link ConfigControlService#createControl(ReactContext, ConfigFieldModel)} rejects the same
+	 * property independently - the guarantee must not depend on every caller routing through
+	 * {@code createModel} first. The model is built directly, bypassing {@code createModel}'s own
+	 * check, the same way {@link #testCreateControlRejectsItemKind()} does.
+	 */
+	public void testCreateControlRejectsParseOnlyItem() {
+		PropertyDescriptor property = _config.descriptor().getProperty(TestConfig.PARSE_ONLY_ITEM);
+		set(_config, TestConfig.PARSE_ONLY_ITEM, TypedConfiguration.newConfigItem(AlgorithmConfig.class));
+		ConfigFieldModel model = new ConfigFieldModel(_config, property);
+
+		try {
+			ConfigControlService.getInstance().createControl(context(), model);
+			fail("An item whose format cannot write its value must be rejected, not bound to a text field.");
+		} catch (IllegalArgumentException expected) {
+			// Expected: the value has no text form.
+		}
+	}
+
+	/**
+	 * {@link ConfigControlService#hasTextForm(ConfigurationItem, PropertyDescriptor)} tells the two
+	 * apart: a format that can write the value answers {@code true}, a parsing-only one answers
+	 * {@code false}.
+	 */
+	public void testHasTextForm() {
+		PropertyDescriptor parseOnly = _config.descriptor().getProperty(TestConfig.PARSE_ONLY_ITEM);
+		set(_config, TestConfig.PARSE_ONLY_ITEM, TypedConfiguration.newConfigItem(AlgorithmConfig.class));
+		assertFalse("A parsing-only format can write no value.",
+			ConfigControlService.hasTextForm(_config, parseOnly));
+
+		Formatted formatted = TypedConfiguration.newConfigItem(Formatted.class);
+		formatted.setSource("$x + 1");
+		set(_config, TestConfig.FORMATTED_ITEM, formatted);
+		assertTrue("An item the configuration writes as text has a text form.",
+			ConfigControlService.hasTextForm(_config,
+				_config.descriptor().getProperty(TestConfig.FORMATTED_ITEM)));
+
+		assertTrue("A plain property with a format has a text form.",
+			ConfigControlService.hasTextForm(_config,
+				_config.descriptor().getProperty(TestConfig.OTHER_DATE_FORMAT)));
+		assertTrue("A plain string property has a text form.",
+			ConfigControlService.hasTextForm(_config, _config.descriptor().getProperty(TestConfig.TEXT)));
+	}
+
+	/**
+	 * A property with no format at all has no text form either - the rule subsumes the
+	 * "no value provider" case instead of replacing it.
+	 */
+	public void testNoFormatHasNoTextForm() {
+		assertFalse("A property without a format has no text form.",
+			ConfigControlService.hasTextForm(_config, _config.descriptor().getProperty(TestConfig.BINDING_ONLY)));
+		assertFalse("A sub-configuration without a format has no text form.",
+			ConfigControlService.hasTextForm(_config, _config.descriptor().getProperty(TestConfig.NESTED)));
+	}
+
+	/**
+	 * The decision is made for the value the property currently holds, not for its format class: a
+	 * {@link CommaSeparatedFormat} property holding a value that format can write is edited as that
+	 * text.
+	 */
+	public void testFormatAcceptingItsValueIsEditedAsText() {
+		set(_config, TestConfig.COMMA_LIST, Arrays.asList("red", "green"));
+
+		assertTrue("The format can write this value.",
+			ConfigControlService.hasTextForm(_config, _config.descriptor().getProperty(TestConfig.COMMA_LIST)));
+
+		ConfigFieldModel model = model(TestConfig.COMMA_LIST);
+		assertTrue("A value its format can write is edited through that format, hence as text.",
+			model instanceof ConfigFormatFieldModel);
+		assertEquals("The field must show the text the configuration writes.", "red,green", model.getValue());
+		assertTrue("A formatted value is typed, not chosen from options.",
+			control(TestConfig.COMMA_LIST) instanceof ReactTextInputControl);
+	}
+
+	/**
+	 * The very same property holding a value its format cannot write is rejected instead - proving
+	 * the decision follows the value, not the format class.
+	 */
+	public void testFormatRejectingItsValueIsRejected() {
+		PropertyDescriptor property = _config.descriptor().getProperty(TestConfig.COMMA_LIST);
+		set(_config, TestConfig.COMMA_LIST, Arrays.asList("red,green"));
+
+		assertFalse("The format cannot write an element containing the separator.",
+			ConfigControlService.hasTextForm(_config, property));
+
+		try {
+			ConfigControlService.getInstance().createModel(_config, property);
+			fail("A value the property's format cannot write must be rejected, not bound to a text field.");
+		} catch (IllegalArgumentException expected) {
+			// Expected: the value has no text form.
 		}
 	}
 

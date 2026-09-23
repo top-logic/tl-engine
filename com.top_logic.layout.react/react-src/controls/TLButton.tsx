@@ -1,6 +1,8 @@
-import { React, useTLState, useTLCommand, useKeyboardBinding } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useKeyboardBinding, rootClassName, TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { ThemeIcon } from './icon/ThemeIcon';
+import { useButtonDefaults, buttonClassName } from './button/ButtonDefaults';
+import type { ButtonAppearance } from './button/ButtonDefaults';
 
 const { useCallback } = React;
 
@@ -18,6 +20,10 @@ export interface TLButtonProps {
   disabled?: boolean;
   /** Display mode.  Defaults to state.displayMode or "label-only". */
   displayMode?: 'icon-only' | 'icon-label' | 'label-only';
+  /** Appearance; defaults to state.appearance, then the container's ButtonDefaults, then "secondary". */
+  appearance?: ButtonAppearance;
+  /** Destructive action; defaults to state.tone === "danger". */
+  danger?: boolean;
 }
 
 /**
@@ -27,19 +33,24 @@ export interface TLButtonProps {
  * prop):</p>
  * <ul>
  *   <li>{@code icon-only} — only the theme icon is shown, the label serves as tooltip.</li>
- *   <li>{@code icon-label} — theme icon and label side by side.</li>
- *   <li>{@code label-only} — plain text button.</li>
+ *   <li>{@code icon-label} — theme icon and label side by side, the label serves as tooltip while
+ *       it is clipped or hidden.</li>
+ *   <li>{@code label-only} — plain text button, the label serves as tooltip while it is clipped or
+ *       hidden.</li>
  * </ul>
  *
+ * <p>An explicit tooltip from {@code state.tooltip} wins over all of this and is shown whatever
+ * the button displays. The conditional label tooltip is declared with {@link WHEN_TRUNCATED}, so a
+ * button whose label a compact toolbar drops keeps naming itself, while a button reading out its
+ * label offers no tooltip that merely repeats it.</p>
+ *
  * <p>The icon is supplied as a {@code ThemeImage} encoded form via {@code state.image} and
- * rendered through {@link ThemeIcon}. The icon element is present in the DOM whenever an image
- * is set, independent of the display mode; in {@code label-only} mode CSS hides it. This lets
- * responsive containers (e.g. the app bar at compact viewport widths) swap a labeled button to
- * its icon presentation with a pure CSS media query. The label always provides the accessible
- * name via {@code aria-label} when the icon is present, so hiding the label text keeps the
- * button named for assistive technology.</p>
+ * rendered through {@link ThemeIcon}. In {@code label-only} mode the icon is not rendered. A
+ * collapsing toolbar hides the label of a button that carries an icon through its stylesheet.
+ * The label always provides the accessible name via {@code aria-label} when the icon is present,
+ * so hiding the label text keeps the button named for assistive technology.</p>
  */
-const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, label, image, disabled, displayMode }) => {
+const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, label, image, disabled, displayMode, appearance, danger }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
 
@@ -50,13 +61,15 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
   // The button's command is the alternative currently in force (e.g. the active theme) or a
   // pressed toggle; marked visually and reported to assistive technology as pressed.
   const resolvedActive = state.active === true;
-  const resolvedMode = displayMode ?? (state.displayMode as string | undefined) ?? 'label-only';
   const resolvedHidden = state.hidden === true;
   const tooltip = state.tooltip as string | undefined;
-  // Optional appearance modifier (e.g. "link" renders the button as an inline text link).
-  const appearance = state.appearance as string | undefined;
-  // Optional size modifier ("small" / "large"); absent means the default size.
-  const size = state.size as string | undefined;
+  const defaults = useButtonDefaults();
+  const resolvedAppearance: ButtonAppearance = appearance
+    ?? (state.appearance as ButtonAppearance | undefined)
+    ?? defaults.appearance ?? 'secondary';
+  const resolvedDanger = danger ?? state.tone === 'danger';
+  const resolvedMode = displayMode ?? (state.displayMode as string | undefined) ?? 'label-only';
+  const small = state.size === 'small' && resolvedMode === 'icon-only';
   // Additional CSS classes declared on the command this button renders, e.g. to mark a
   // destructive action.
   const cssClasses = state.cssClasses as string | undefined;
@@ -99,10 +112,18 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
   const showLabel = resolvedMode === 'label-only' || resolvedMode === 'icon-label'
     || (iconOnly && !resolvedImage);
 
-  // Prefer an explicit tooltip; on icon-only buttons fall back to the label so it stays
-  // discoverable when the visible button carries no text.
-  const tooltipText = tooltip ?? (iconOnly ? resolvedLabel : undefined);
-  const tooltipAttr = tooltipText ? `text:${tooltipText}` : undefined;
+  // An explicit tooltip is shown as it is. Otherwise the label serves as tooltip wherever the
+  // button does not read it out: in icon-only mode always, and in the other modes whenever the
+  // label is clipped or hidden - a toolbar drops the labels of its buttons by CSS once it runs out
+  // of room, and the tooltip is what names such a button then.
+  const tooltipText = tooltip ?? resolvedLabel;
+  const tooltipProps: Record<string, string> = {};
+  if (tooltipText) {
+    tooltipProps[TOOLTIP_ATTR] = `text:${tooltipText}`;
+    if (!tooltip && !iconOnly) {
+      tooltipProps[TOOLTIP_WHEN_ATTR] = WHEN_TRUNCATED;
+    }
+  }
 
   // A hidden button renders nothing: its empty wrapper (e.g. a toolbar item) can then collapse,
   // so the visible buttons stay flush with the toolbar edge. The keyboard binding above stays
@@ -117,22 +138,15 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
       id={controlId}
       onClick={handleClick}
       disabled={resolvedDisabled}
-      className={'tlReactButton' + (iconOnly ? ' tlReactButton--iconOnly' : '')
-        + (resolvedMode === 'label-only' ? ' tlReactButton--labelOnly' : '')
-        + (appearance === 'link' ? ' tlReactButton--link' : '')
-        + (appearance === 'primary' ? ' tlReactButton--primary' : '')
-        + (size === 'small' ? ' tlReactButton--small' : '')
-        + (size === 'large' ? ' tlReactButton--large' : '')
-        + (resolvedActive ? ' tlReactButton--active' : '')
-        + (cssClasses ? ' ' + cssClasses : '')}
-      data-tooltip={tooltipAttr}
+      className={rootClassName(state, buttonClassName({ appearance: resolvedAppearance, danger: resolvedDanger, small, extra: cssClasses }))}
+      {...tooltipProps}
       aria-pressed={resolvedActive ? true : undefined}
       aria-label={resolvedImage || iconOnly ? resolvedLabel : undefined}
     >
-      {resolvedImage && (
-        <ThemeIcon encoded={resolvedImage} className="tlReactButton__image" />
+      {resolvedImage && !(resolvedMode === 'label-only') && (
+        <ThemeIcon encoded={resolvedImage} className={'tl-button__icon ' + (showLabel ? 'tl-icon-sm' : 'tl-icon-md')} />
       )}
-      {showLabel && <span className="tlReactButton__label">{resolvedLabel}</span>}
+      {showLabel && <span className="tl-button__label">{resolvedLabel}</span>}
     </button>
   );
 };

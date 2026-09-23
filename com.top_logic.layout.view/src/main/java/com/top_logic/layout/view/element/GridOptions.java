@@ -7,6 +7,7 @@ package com.top_logic.layout.view.element;
 
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.constraint.annotation.Bound;
 import com.top_logic.basic.config.constraint.annotation.Comparision;
@@ -19,7 +20,8 @@ import com.top_logic.layout.react.control.layout.ReactStackControl.StackGap;
  * A grid places its elements in as many columns as fit next to each other and reflows them as the
  * available width changes, so that the same configuration serves a wide screen and a phone. What
  * the configuration fixes is not the number of columns but how wide a column has to be at least,
- * optionally how many columns are wanted at most, and how much space separates them.
+ * optionally how many columns are wanted at most, how much space separates them, and how wide the
+ * grid as a whole may grow.
  * </p>
  */
 public interface GridOptions extends ConfigurationItem {
@@ -32,6 +34,9 @@ public interface GridOptions extends ConfigurationItem {
 
 	/** Configuration name for {@link #getGap()}. */
 	String GAP = "gap";
+
+	/** Configuration name for {@link #getMaxWidth()}. */
+	String MAX_WIDTH = "max-width";
 
 	/**
 	 * The width a column must have at least, as a CSS length such as "16rem".
@@ -64,5 +69,23 @@ public interface GridOptions extends ConfigurationItem {
 	 */
 	@Name(GAP)
 	StackGap getGap();
+
+	/**
+	 * The largest width the elements take together, as a CSS length such as "60rem".
+	 *
+	 * <p>
+	 * Bounded this way, the arrangement is centered in the space it is given, the space left over
+	 * split between its two sides, which keeps a handful of elements together in the middle of a
+	 * wide screen instead of spreading them across it. Below the bound nothing changes, so the
+	 * elements still fill a narrow screen.
+	 * </p>
+	 *
+	 * <p>
+	 * Unset, the elements take the width their container offers.
+	 * </p>
+	 */
+	@Name(MAX_WIDTH)
+	@Nullable
+	String getMaxWidth();
 
 }

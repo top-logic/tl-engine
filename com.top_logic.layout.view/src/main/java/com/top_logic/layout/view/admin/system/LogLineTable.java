@@ -103,6 +103,8 @@ public class LogLineTable implements UIElement {
 
 	private final ChannelRef _reloadRef;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link LogLineTable} from configuration.
 	 */
@@ -110,6 +112,7 @@ public class LogLineTable implements UIElement {
 	public LogLineTable(InstantiationContext context, Config config) {
 		_inputRef = config.getInput();
 		_reloadRef = config.getReload();
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -156,6 +159,7 @@ public class LogLineTable implements UIElement {
 			reload.addListener(listener);
 			control.addCleanupAction(() -> reload.removeListener(listener));
 		}
+		control.setCssClass(_cssClass);
 		return control;
 	}
 

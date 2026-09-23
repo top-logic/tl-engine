@@ -46,12 +46,15 @@ public class InsetElement extends ContainerElement {
 		Class<? extends UIElement> getImplementationClass();
 	}
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link InsetElement} from configuration.
 	 */
 	@CalledByReflection
 	public InsetElement(InstantiationContext context, Config config) {
 		super(context, config);
+		_cssClass = config.getCssClass();
 	}
 
 	@Override
@@ -60,6 +63,8 @@ public class InsetElement extends ContainerElement {
 
 		ReactControl content = ContentControls.combine(context, childControls);
 
-		return new ReactInsetControl(context, content);
+		ReactInsetControl result = new ReactInsetControl(context, content);
+		result.setCssClass(_cssClass);
+		return result;
 	}
 }

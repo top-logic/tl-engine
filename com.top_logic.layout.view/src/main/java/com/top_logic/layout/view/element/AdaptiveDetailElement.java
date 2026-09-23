@@ -203,6 +203,8 @@ public class AdaptiveDetailElement implements UIElement {
 	 */
 	private boolean _nested;
 
+	private final String _cssClass;
+
 	/**
 	 * Creates a new {@link AdaptiveDetailElement} from configuration.
 	 */
@@ -220,6 +222,7 @@ public class AdaptiveDetailElement implements UIElement {
 		if (nested != null) {
 			nested._nested = true;
 		}
+		_cssClass = config.getCssClass();
 	}
 
 	/**
@@ -261,8 +264,10 @@ public class AdaptiveDetailElement implements UIElement {
 			homeLabel = null;
 		}
 
-		return new ReactAdaptiveDetailControl(context, this, _selector, _detail, selectionChannel, resetOn,
-			coordinator, chain, homeLabel, _detailDisplay, _detailSize);
+		ReactAdaptiveDetailControl result = new ReactAdaptiveDetailControl(context, this, _selector, _detail,
+			selectionChannel, resetOn, coordinator, chain, homeLabel, _detailDisplay, _detailSize);
+		result.setCssClass(_cssClass);
+		return result;
 	}
 
 }

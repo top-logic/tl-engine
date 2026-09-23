@@ -25,6 +25,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.control.IReactControl;
@@ -254,11 +255,46 @@ public class TreeElement implements UIElement {
 		PolymorphicConfiguration<? extends ViewCommand> getOnActivate();
 
 		/**
-		 * Optional provider for custom node content controls. If not set, nodes are rendered
-		 * using a simple text label.
+		 * How a node of the tree is displayed.
+		 *
+		 * <p>
+		 * By default, a node shows the icon and the label of the object it stands for and a click
+		 * on it selects that node, see {@link NodeDisplay}. A node content configured explicitly is
+		 * the general display of an object, which leads to the place the application shows that
+		 * object at:
+		 * </p>
+		 *
+		 * <pre>
+		 * &lt;nodeContent class="com.top_logic.layout.react.controlprovider.MetaResourceControlProvider"/&gt;
+		 * </pre>
 		 */
 		@Name(NODE_CONTENT)
+		@ItemDefault(NodeDisplay.class)
 		PolymorphicConfiguration<ReactControlProvider> getNodeContent();
+	}
+
+	/**
+	 * The display a node of a tree gets unless the tree configures another one.
+	 *
+	 * <p>
+	 * A node shows the icon and the label of the object it stands for.
+	 * </p>
+	 */
+	public interface NodeDisplay extends MetaResourceControlProvider.Config {
+
+		/**
+		 * Whether the node leads to the place the application shows its object at.
+		 *
+		 * <p>
+		 * A node is the object's own place in the view, and a click on it selects the object. A
+		 * link leaving the tree on that click is in the way, so a node is plain unless the tree
+		 * asks for the link. Opening the object a node stands for is what {@link Config#getOnActivate()}
+		 * is for.
+		 * </p>
+		 */
+		@Override
+		@BooleanDefault(false)
+		boolean getLink();
 	}
 
 	private final Config _config;
@@ -295,8 +331,7 @@ public class TreeElement implements UIElement {
 		_childrenExecutor = QueryExecutor.compile(config.getChildren());
 		_parentsExecutor = QueryExecutor.compileOptional(config.getParents());
 
-		ReactControlProvider configuredProvider = context.getInstance(config.getNodeContent());
-		_nodeContentProvider = configuredProvider != null ? configuredProvider : MetaResourceControlProvider.INSTANCE;
+		_nodeContentProvider = context.getInstance(config.getNodeContent());
 
 		PolymorphicConfiguration<? extends ViewCommand> onActivate = config.getOnActivate();
 		_onActivateConfig = onActivate instanceof ViewCommand.Config activateConfig ? activateConfig : null;
@@ -325,6 +360,7 @@ public class TreeElement implements UIElement {
 		// 5. Create ReactTreeControl.
 		ReactTreeControl treeControl = new ReactTreeControl(context, treeModel, selectionModel, _nodeContentProvider);
 		treeControl.setSelectionMode(selectionMode);
+		treeControl.setCssClass(_config.getCssClass());
 
 		// 6. Create ObservableTreeModel to forward model changes to the tree control. The function
 		//    saying what holds an object serves the observation (where an object that moved went)

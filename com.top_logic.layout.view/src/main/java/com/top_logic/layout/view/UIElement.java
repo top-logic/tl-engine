@@ -8,6 +8,7 @@ package com.top_logic.layout.view;
 import java.util.List;
 
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.layout.react.control.IReactControl;
 
 /**
@@ -34,6 +35,9 @@ public interface UIElement {
 		/** Configuration name for {@link #getPersonalizationKey()}. */
 		String PERSONALIZATION_KEY = "personalization-key";
 
+		/** Configuration name for {@link #getCssClass()}. */
+		String CSS_CLASS = "css-class";
+
 		/**
 		 * Optional override for the auto-derived personalization key.
 		 *
@@ -46,6 +50,23 @@ public interface UIElement {
 		 */
 		@com.top_logic.basic.config.annotation.Name(PERSONALIZATION_KEY)
 		String getPersonalizationKey();
+
+		/**
+		 * CSS class the element is displayed with, beside the classes its kind brings itself.
+		 *
+		 * <p>
+		 * The class is written on the element the display of this element is rooted in, so that a
+		 * stylesheet of the application styles this one element - a card, a picture, a piece of
+		 * text - without touching every element of its kind.
+		 * </p>
+		 *
+		 * <p>
+		 * Several classes are written separated by spaces, as in HTML.
+		 * </p>
+		 */
+		@com.top_logic.basic.config.annotation.Name(CSS_CLASS)
+		@Nullable
+		String getCssClass();
 	}
 
 	/**

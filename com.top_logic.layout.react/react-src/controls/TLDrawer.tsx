@@ -1,6 +1,6 @@
 import {
   React, useTLState, useTLCommand, TLChild, useI18N, useStandaloneKeyboardScope, FillBarrier,
-  firstFocusable,
+  rootClassName, firstFocusable, tooltipProps,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
@@ -88,7 +88,7 @@ const TLDrawer: React.FC<TLCellProps> = ({ controlId }) => {
   return (
     <aside
       id={controlId}
-      className={className}
+      className={rootClassName(state, className)}
       aria-hidden={!open}
       tabIndex={-1}
       ref={rootRef}
@@ -101,7 +101,8 @@ const TLDrawer: React.FC<TLCellProps> = ({ controlId }) => {
             type="button"
             className="tlDrawer__closeBtn"
             onClick={handleClose}
-            title={i18n['js.drawer.close']}
+            aria-label={i18n['js.drawer.close']}
+            {...tooltipProps(i18n['js.drawer.close'])}
           >
             <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
               <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2"

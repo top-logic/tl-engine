@@ -7,8 +7,10 @@
 		of by the fields they hold. Each inner pane is a <panel> whose fields stand in a <fields>
 		grid: the form is flush around the split panel and a panel does not pad its content, so the
 		grid insets the fields of its area and lays them out responsively, following the edit mode of
-		the form. The whole right side is edited with the single Edit/Save/Cancel set the form
-		contributes to the toolbar of the panel around it.
+		the form. A pane is narrower than the columns of the default grid, so each grid keeps a single
+		column and lets the label position follow the width: beside the input while the pane is wide,
+		above it once it is narrow. The whole right side is edited with the single Edit/Save/Cancel
+		set the form contributes to the toolbar of the panel around it.
 	-->
 	<channels>
 		<channel name="selected"/>
@@ -76,7 +78,7 @@
 											<en>Description</en>
 											<de>Beschreibung</de>
 										</title>
-										<fields>
+										<fields max-columns="1">
 											<field attribute="name"/>
 											<field attribute="string"/>
 											<field attribute="multiLine"/>
@@ -92,7 +94,7 @@
 											<en>Key figures</en>
 											<de>Kennzahlen</de>
 										</title>
-										<fields>
+										<fields max-columns="1">
 											<field attribute="count"/>
 											<field attribute="amount"/>
 											<field attribute="date"/>

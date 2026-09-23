@@ -91,6 +91,11 @@ public class DefaultTableView<R> implements TableView<R> {
 	private final String _initialFilter;
 
 	/**
+	 * The order last handed to the {@link RowSource}, see {@link #pushOrder()}.
+	 */
+	private SortSpec _pushedOrder = SortSpec.NONE;
+
+	/**
 	 * Creates a {@link DefaultTableView} without personalization persistence.
 	 *
 	 * @param columns
@@ -196,9 +201,7 @@ public class DefaultTableView<R> implements TableView<R> {
 		_state.setFrozenCount(frozenPrefix(_state.getFrozenCount()));
 		// Whatever the order and the grouping end up being - the initial default or the user's
 		// persisted choice - the row source has to be told about them.
-		if (!_state.getSort().isEmpty()) {
-			_source.withOrder(new SortSpec(_state.getSort()));
-		}
+		pushOrder();
 		if (!_state.getGrouping().columns().isEmpty()) {
 			_source.withGrouping(_state.getGrouping());
 		}
@@ -541,6 +544,69 @@ public class DefaultTableView<R> implements TableView<R> {
 		return _source.matchCounts(column);
 	}
 
+	/**
+	 * Hands the {@link #effectiveOrder() effective order} to the {@link RowSource}, unless it is
+	 * the order the source already has.
+	 */
+	private void pushOrder() {
+		SortSpec order = effectiveOrder();
+		if (order.equals(_pushedOrder)) {
+			return;
+		}
+		_pushedOrder = order;
+		_source.withOrder(order);
+	}
+
+	/**
+	 * The order the {@link RowSource} applies: the user's {@link TableViewState#getSort() sort},
+	 * extended by the direction of the group order in a grouped table.
+	 *
+	 * <p>
+	 * A grouped table shows the group values in the header rows in its first displayed column,
+	 * and usually hides the grouping column itself. Sorting that first column therefore orders
+	 * the groups in the same direction: when the grouping column is sortable and not sorted
+	 * itself, but the first displayed column is, the grouping column is put in front of the
+	 * user's sort with the direction of the first displayed column. This decides the direction of
+	 * the group order and leaves the order within a group as it is, since all members of a group
+	 * share the grouping value. The {@link TableViewState#getSort() sort of the state} stays the
+	 * user's sort.
+	 * </p>
+	 */
+	private SortSpec effectiveOrder() {
+		List<SortColumn> sort = _state.getSort();
+		List<String> grouping = _state.getGrouping().columns();
+		List<String> order = _state.getColumnOrder();
+		if (grouping.isEmpty() || order.isEmpty()) {
+			return new SortSpec(sort);
+		}
+		String groupColumn = grouping.get(0);
+		Column<R, ?> definition = _columns.get(groupColumn);
+		if (definition == null || definition.sort().isEmpty() || sortEntry(sort, groupColumn) != null) {
+			return new SortSpec(sort);
+		}
+		SortColumn firstColumnSort = sortEntry(sort, order.get(0));
+		if (firstColumnSort == null) {
+			return new SortSpec(sort);
+		}
+		List<SortColumn> result = new ArrayList<>(sort.size() + 1);
+		result.add(new SortColumn(groupColumn, firstColumnSort.ascending()));
+		result.addAll(sort);
+		return new SortSpec(result);
+	}
+
+	/**
+	 * The entry of the given sort for the given column, or {@code null} if the sort does not
+	 * order that column.
+	 */
+	private static SortColumn sortEntry(List<SortColumn> sort, String column) {
+		for (SortColumn sortColumn : sort) {
+			if (sortColumn.column().equals(column)) {
+				return sortColumn;
+			}
+		}
+		return null;
+	}
+
 	private boolean isFirstColumn(String column) {
 		List<String> order = _state.getColumnOrder();
 		return !order.isEmpty() && order.get(0).equals(column);
@@ -551,7 +617,7 @@ public class DefaultTableView<R> implements TableView<R> {
 	@Override
 	public void sort(SortSpec spec) {
 		_state.setSort(new ArrayList<>(spec.columns()));
-		_source.withOrder(spec);
+		pushOrder();
 		persist();
 		fireColumnsChanged();
 	}
@@ -778,6 +844,7 @@ public class DefaultTableView<R> implements TableView<R> {
 			}
 		}
 		_state.setGrouping(spec);
+		pushOrder();
 		_source.withGrouping(spec);
 		persist();
 		fireColumnsChanged();
@@ -794,6 +861,7 @@ public class DefaultTableView<R> implements TableView<R> {
 		// The columns pinned to the end trail the order, and a column moved to the very right lands
 		// in front of them.
 		order.add(Math.min(toIndex, unpinnedCount()), column);
+		pushOrder();
 		persist();
 		fireColumnsChanged();
 	}
@@ -829,6 +897,7 @@ public class DefaultTableView<R> implements TableView<R> {
 		// frozen prefix can never reach beyond the columns that are left.
 		_state.setFrozenCount(frozenPrefix(_state.getFrozenCount()));
 		searchScopeChanged();
+		pushOrder();
 		persist();
 		fireColumnsChanged();
 	}
@@ -907,6 +976,7 @@ public class DefaultTableView<R> implements TableView<R> {
 			return;
 		}
 		searchScopeChanged();
+		pushOrder();
 		persist();
 		fireColumnsChanged();
 	}

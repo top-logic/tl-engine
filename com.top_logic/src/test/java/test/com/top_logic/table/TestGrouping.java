@@ -8,7 +8,9 @@ package test.com.top_logic.table;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import junit.framework.TestCase;
 
@@ -218,6 +220,111 @@ public class TestGrouping extends TestCase {
 		List<Integer> result = new ArrayList<>();
 		boolean inGroup = false;
 		for (Row<Sale> row : source.window(0, source.size())) {
+			if (row.kind() == RowKind.GROUP_HEADER) {
+				inGroup = region.equals(row.group().key().values().get(0));
+			} else if (inGroup) {
+				result.add(row.data().amount());
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Sorting the first displayed column of a table grouped by a hidden column orders the groups
+	 * in that direction, too, and the members within each group; the state keeps only the user's
+	 * sort.
+	 */
+	public void testFirstColumnSortDecidesGroupDirection() {
+		TableView<Sale> view = hiddenGroupingView(true);
+		view.sort(new SortSpec(List.of(new SortColumn("amount", false))));
+
+		assertEquals(List.of("South", "North"), groupValues(view));
+		assertEquals(List.of(2, 1), memberAmounts(view, "South"));
+		assertEquals(List.of(9, 8, 5), memberAmounts(view, "North"));
+		assertEquals(List.of(new SortColumn("amount", false)), view.state().getSort());
+	}
+
+	/**
+	 * Sorting a column other than the first displayed one leaves the groups in ascending order,
+	 * while the members within each group follow the sort.
+	 */
+	public void testOtherColumnSortKeepsGroupsAscending() {
+		TableView<Sale> view = hiddenGroupingView(true);
+		view.sort(new SortSpec(List.of(new SortColumn("label", false))));
+
+		assertEquals(List.of("North", "South"), groupValues(view));
+		assertEquals(List.of(9, 8, 5), memberAmounts(view, "North"));
+		assertEquals(List.of(2, 1), memberAmounts(view, "South"));
+	}
+
+	/**
+	 * Moving another column to the front takes the direction of the group order from the sorted
+	 * column that is no longer first; moving it back to the front restores that direction.
+	 */
+	public void testColumnOrderChangeUpdatesGroupDirection() {
+		TableView<Sale> view = hiddenGroupingView(true);
+		view.sort(new SortSpec(List.of(new SortColumn("amount", false))));
+		assertEquals(List.of("South", "North"), groupValues(view));
+
+		view.moveColumn("label", 0);
+		assertEquals(List.of("North", "South"), groupValues(view));
+		assertEquals(List.of(9, 8, 5), memberAmounts(view, "North"));
+
+		view.moveColumn("amount", 0);
+		assertEquals(List.of("South", "North"), groupValues(view));
+	}
+
+	/**
+	 * Grouping a table whose first displayed column is already sorted descending orders the
+	 * groups descending.
+	 */
+	public void testGroupingAfterSortTakesFirstColumnDirection() {
+		TableView<Sale> view = hiddenGroupingView(false);
+		view.sort(new SortSpec(List.of(new SortColumn("amount", false))));
+		view.group(new GroupSpec(List.of("region")));
+
+		assertEquals(List.of("South", "North"), groupValues(view));
+		assertEquals(List.of(9, 8, 5), memberAmounts(view, "North"));
+		assertEquals(List.of(new SortColumn("amount", false)), view.state().getSort());
+	}
+
+	/**
+	 * A {@link DefaultTableView} over {@link #unorderedSales()} displaying the amount and a label
+	 * column, with the sortable region column hidden.
+	 *
+	 * @param grouped
+	 *        Whether the table starts grouped by the region column.
+	 */
+	private TableView<Sale> hiddenGroupingView(boolean grouped) {
+		List<Column<Sale, ?>> columns = new ArrayList<>(sortableColumns(true));
+		columns.add(DefaultColumn.<Sale, String> builder("label", sale -> sale.region() + " " + sale.amount())
+			.sort(() -> Comparator.<String> naturalOrder())
+			.build());
+		TableViewState state = new TableViewState();
+		state.setColumnOrder(new ArrayList<>(List.of("amount", "label")));
+		Set<String> hidden = new LinkedHashSet<>();
+		hidden.add("region");
+		state.setHiddenColumns(hidden);
+		if (grouped) {
+			state.setGrouping(new GroupSpec(List.of("region")));
+		}
+		return new DefaultTableView<>(columns, new ListRowSource<>(unorderedSales(), columns), state);
+	}
+
+	private static List<String> groupValues(TableView<Sale> view) {
+		List<String> result = new ArrayList<>();
+		for (Row<Sale> row : view.rows(0, view.rowCount())) {
+			if (row.kind() == RowKind.GROUP_HEADER) {
+				result.add((String) row.group().key().values().get(0));
+			}
+		}
+		return result;
+	}
+
+	private static List<Integer> memberAmounts(TableView<Sale> view, String region) {
+		List<Integer> result = new ArrayList<>();
+		boolean inGroup = false;
+		for (Row<Sale> row : view.rows(0, view.rowCount())) {
 			if (row.kind() == RowKind.GROUP_HEADER) {
 				inGroup = region.equals(row.group().key().values().get(0));
 			} else if (inGroup) {

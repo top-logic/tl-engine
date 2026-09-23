@@ -86,6 +86,9 @@ import com.top_logic.util.TopLogicServlet;
  * The display it renders is not the application, so it takes up no URL: the route manager
  * {@link RouteManager#holdUrl(String) holds} the requested route instead of adopting it, which
  * keeps the address the visitor asked for until the page is reloaded under a session of their own.
+ * An entry point marked {@link ViewConfig.EntryPoint#isAnonymous() anonymous} is the exception: a
+ * URL naming it is answered with that view, which is the page the URL addresses and therefore
+ * takes the URL up like any other.
  * </p>
  *
  * <p>
@@ -103,6 +106,11 @@ public class ViewServlet extends TopLogicServlet {
 	 * it.
 	 */
 	public static final String ROOT_PATH = "/view/";
+
+	/**
+	 * The ending by which a path names a view file rather than a route.
+	 */
+	private static final String VIEW_FILE_SUFFIX = ".view.xml";
 
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -140,7 +148,8 @@ public class ViewServlet extends TopLogicServlet {
 		String routePath = extractRoutePath(rawPathInfo(request), windowName);
 		if (routePath == null) {
 			// Entered without naming a page, so the user's own choice of where to begin applies.
-			// A URL that does carry a route asks for that page and is never overridden.
+			// A URL that does name one - a route, or the view file of an entry point - asks for that
+			// page and is never overridden.
 			routePath = StartPage.get();
 		} else {
 			String query = request.getQueryString();
@@ -212,8 +221,9 @@ public class ViewServlet extends TopLogicServlet {
 		// Which account the session belongs to decides what is displayed, so it is read where the
 		// session context is installed and handed to the decision as a value.
 		boolean anonymous = TLContext.isAnonymous();
-		boolean loginView = showsLoginView(viewConfig, anonymous);
-		String viewPath = resolveViewPath(viewConfig, pathInfo, anonymous);
+		ViewResolution resolution = resolveView(viewConfig, pathInfo, anonymous);
+		String viewPath = resolution.viewPath();
+		boolean loginView = resolution.loginView();
 		if (viewPath == null) {
 			response.sendError(HttpServletResponse.SC_NOT_FOUND, "No such entry point.");
 			return;
@@ -455,12 +465,19 @@ public class ViewServlet extends TopLogicServlet {
 	 * (i.e. does not end with {@code .view.xml}).
 	 * </p>
 	 *
+	 * <p>
+	 * A URL naming a view file names the page itself, and the route inside that page is empty: it
+	 * asks for the view it names rather than for the page the user last chose, and the query
+	 * refining what that view shows belongs to it.
+	 * </p>
+	 *
 	 * @param pathInfo
 	 *        The path below the servlet, with its segments percent-encoded - see
 	 *        {@link #rawPathInfo(HttpServletRequest)}.
 	 * @param windowName
 	 *        The window name occupying the first segment.
-	 * @return The route path without leading slash, or {@code null} if no route is present.
+	 * @return The route path without leading slash, empty where the URL names the page by its view
+	 *         file, or {@code null} where the URL names no page at all.
 	 */
 	private String extractRoutePath(String pathInfo, String windowName) {
 		if (pathInfo == null || windowName == null) {
@@ -477,9 +494,9 @@ public class ViewServlet extends TopLogicServlet {
 		if (afterWindow.isEmpty()) {
 			return null;
 		}
-		// If the remainder is a view file name, it is not a route.
-		if (afterWindow.endsWith(".view.xml")) {
-			return null;
+		if (afterWindow.endsWith(VIEW_FILE_SUFFIX)) {
+			// The view file names the page; the route within it is empty.
+			return "";
 		}
 		return afterWindow;
 	}
@@ -594,7 +611,29 @@ public class ViewServlet extends TopLogicServlet {
 	}
 
 	/**
-	 * Resolves the view file path from the request's path info.
+	 * The view a request is answered with.
+	 *
+	 * <p>
+	 * Which view is displayed and whether that view is the application's login view are one
+	 * decision, made by {@link ViewServlet#resolveView(ViewConfig, String, boolean)}: the login
+	 * view stands in for the page the URL names, while every other view <em>is</em> that page -
+	 * which is what decides whether the requested route is
+	 * {@link RouteManager#adoptUrl(String) adopted} or {@link RouteManager#holdUrl(String) held}.
+	 * </p>
+	 *
+	 * @param viewPath
+	 *        The path of the view file to load, below {@link ViewLoader#VIEW_BASE_PATH}, or
+	 *        {@code null} where the URL names a view that is no entry point.
+	 * @param loginView
+	 *        Whether the displayed view is the {@link ViewConfig#getLoginView() login view} shown
+	 *        in place of the page the URL names.
+	 */
+	public record ViewResolution(String viewPath, boolean loginView) {
+		// Pure result of the resolution.
+	}
+
+	/**
+	 * Resolves the view a request displays from its path info.
 	 *
 	 * <p>
 	 * Skips the first path segment (window name) and uses the rest as the view file name. A
@@ -613,7 +652,9 @@ public class ViewServlet extends TopLogicServlet {
 	 * A session that belongs to no account sees the {@link ViewConfig#getLoginView() login view} of
 	 * an application that has one, whatever the URL names: a route, the default view, an entry
 	 * point, or a view that is none - the visitor is shown the login and nothing else. What the URL
-	 * names is not lost with it, because the route is held while the login view is displayed.
+	 * names is not lost with it, because the route is held while the login view is displayed. An
+	 * entry point marked {@link ViewConfig.EntryPoint#isAnonymous() anonymous} is shown to such a
+	 * session as the page it is, because it is written for a visitor without an account.
 	 * </p>
 	 *
 	 * @param config
@@ -622,51 +663,75 @@ public class ViewServlet extends TopLogicServlet {
 	 *        The path below the servlet, its first segment the window name.
 	 * @param anonymous
 	 *        Whether the session belongs to no account.
-	 * @return The path of the view file to load, below {@link ViewLoader#VIEW_BASE_PATH}, or
-	 *         {@code null} if the path names a view that is no entry point.
+	 * @return What the request displays - see {@link ViewResolution}.
 	 */
-	public static String resolveViewPath(ViewConfig config, String pathInfo, boolean anonymous) {
-		if (showsLoginView(config, anonymous)) {
-			return ViewLoader.VIEW_BASE_PATH + config.getLoginView();
+	public static ViewResolution resolveView(ViewConfig config, String pathInfo, boolean anonymous) {
+		String namedView = namedView(pathInfo);
+		if (anonymous && hasLoginView(config) && !isAnonymousEntryPoint(config, namedView)) {
+			return new ViewResolution(ViewLoader.VIEW_BASE_PATH + config.getLoginView(), true);
 		}
+		if (namedView == null) {
+			return new ViewResolution(ViewLoader.VIEW_BASE_PATH + config.getDefaultView(), false);
+		}
+		if (!namedView.equals(config.getDefaultView()) && entryPoint(config, namedView) == null) {
+			return new ViewResolution(null, false);
+		}
+		return new ViewResolution(ViewLoader.VIEW_BASE_PATH + namedView, false);
+	}
 
-		// pathInfo is like /v1a2b3c/ or /v1a2b3c/app.view.xml or /v1a2b3c/config-editor
+	/**
+	 * The view file the given path names, or {@code null} where it names none.
+	 *
+	 * <p>
+	 * Everything after the window name that does not end in {@link #VIEW_FILE_SUFFIX} is a route
+	 * path handled by the {@link RouteManager} and names no view of its own.
+	 * </p>
+	 *
+	 * @param pathInfo
+	 *        The path below the servlet, its first segment the window name, e.g.
+	 *        {@code /v1a2b3c/}, {@code /v1a2b3c/app.view.xml} or {@code /v1a2b3c/config-editor}.
+	 */
+	private static String namedView(String pathInfo) {
 		String path = pathInfo.substring(1);
 		int slashIdx = path.indexOf('/');
-		String defaultView = config.getDefaultView();
-		if (slashIdx >= 0 && slashIdx < path.length() - 1) {
-			String remainder = path.substring(slashIdx + 1);
-			// Only treat the remainder as a view file name if it ends with .view.xml.
-			// Everything else is a route path handled by the RouteManager.
-			if (remainder.endsWith(".view.xml")) {
-				if (!remainder.equals(defaultView) && !isEntryPoint(config, remainder)) {
-					return null;
-				}
-				return ViewLoader.VIEW_BASE_PATH + remainder;
-			}
+		if (slashIdx < 0 || slashIdx >= path.length() - 1) {
+			return null;
 		}
-		return ViewLoader.VIEW_BASE_PATH + defaultView;
+		String remainder = path.substring(slashIdx + 1);
+		return remainder.endsWith(VIEW_FILE_SUFFIX) ? remainder : null;
 	}
 
 	/**
-	 * Whether the application answers the given session with its
+	 * Whether the application answers a session that belongs to no account with a
 	 * {@link ViewConfig#getLoginView() login view} instead of showing itself.
 	 */
-	private static boolean showsLoginView(ViewConfig config, boolean anonymous) {
+	private static boolean hasLoginView(ViewConfig config) {
 		String loginView = config.getLoginView();
-		return anonymous && loginView != null && !loginView.isEmpty();
+		return loginView != null && !loginView.isEmpty();
 	}
 
 	/**
-	 * Whether the given view file is one of the application's registered entry points.
+	 * Whether the given view file is an entry point a session that belongs to no account is shown.
 	 */
-	private static boolean isEntryPoint(ViewConfig config, String view) {
+	private static boolean isAnonymousEntryPoint(ViewConfig config, String view) {
+		if (view == null) {
+			return false;
+		}
+		ViewConfig.EntryPoint entryPoint = entryPoint(config, view);
+		return entryPoint != null && entryPoint.isAnonymous();
+	}
+
+	/**
+	 * The registration of the given view file among the application's entry points, or {@code null}
+	 * where it is none.
+	 */
+	private static ViewConfig.EntryPoint entryPoint(ViewConfig config, String view) {
 		for (ViewConfig.EntryPoint entryPoint : config.getEntryPoints()) {
 			if (view.equals(entryPoint.getView())) {
-				return true;
+				return entryPoint;
 			}
 		}
-		return false;
+		return null;
 	}
 
 	/**

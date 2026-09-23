@@ -17,6 +17,7 @@ import com.top_logic.base.accesscontrol.IdentityVerifications.Outcome;
 import com.top_logic.base.accesscontrol.Login.InMaintenanceModeException;
 import com.top_logic.base.accesscontrol.Login.LoginDeniedException;
 import com.top_logic.base.accesscontrol.Login.LoginFailedException;
+import com.top_logic.base.accesscontrol.Login.UnknownAccountException;
 import com.top_logic.base.accesscontrol.loginmethod.LoginMethod;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.basic.DebugHelper;
@@ -32,6 +33,7 @@ import com.top_logic.basic.util.StopWatch;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
+import com.top_logic.layout.URLPathBuilder;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.util.DeferredBootUtil;
 import com.top_logic.util.NoContextServlet;
@@ -98,6 +100,15 @@ public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 	 * @see LoginMethod#getReauthenticationUrl(String)
 	 */
 	public static final String VERIFICATION_PARAM = "verification";
+
+	/**
+	 * Name of the query parameter under which the
+	 * {@link ApplicationPages.Config#getUnknownAccountPage() unknown account page} receives the
+	 * name that the external authentication system has authenticated.
+	 *
+	 * @see #redirectToUnknownAccountPage(String, HttpServletRequest, HttpServletResponse)
+	 */
+	public static final String LOGIN_NAME_PARAM = "login";
 
 	private static final TypedAnnotatable.Property<UserTokens> TOKENS =
 		TypedAnnotatable.property(UserTokens.class, "userTokens");
@@ -166,6 +177,10 @@ public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 			Logger.debug(message, ExternalAuthenticationServlet.class);
 			request.setAttribute("errorMessage", Login.getI18NedMaintenanceMessage(userName));
 			forwardToSSOLoginFailed(request, response);
+		} catch (UnknownAccountException exception) {
+			Logger.info("No account for externally authenticated user: " + exception.getMessage(),
+				ExternalAuthenticationServlet.class);
+			redirectToUnknownAccountPage(exception.getLoginName(), request, response);
 		} catch (LoginDeniedException exception) {
 			Logger.debug("Access denied: " + exception.getMessage(), exception, ExternalAuthenticationServlet.class);
 			request.setAttribute("errorMessage", Resources.getInstance().getString(I18NConstants.ERROR_NTLM_AUTHEMTICATION_FAILED));
@@ -357,6 +372,30 @@ public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 	protected void forwardToSSOLoginFailed(HttpServletRequest req, HttpServletResponse res)
 			throws IOException, ServletException {
 		forwardToPage(ApplicationPages.getInstance().getLoginRetrySSOPage(), req, res);
+	}
+
+	/**
+	 * Sends the user to the {@link ApplicationPages.Config#getUnknownAccountPage() page} that
+	 * explains that this application has no account for them.
+	 * 
+	 * <p>
+	 * A redirect, not a forward: the address the browser then shows is the page itself, not the URL
+	 * through which the external authentication has delivered its answer, and the page can be
+	 * reloaded without replaying the authentication.
+	 * </p>
+	 * 
+	 * @param loginName
+	 *        The name the external authentication system has authenticated. It is handed to the
+	 *        page in the {@link #LOGIN_NAME_PARAM} parameter.
+	 */
+	protected void redirectToUnknownAccountPage(String loginName, HttpServletRequest request,
+			HttpServletResponse response) throws IOException {
+		URLPathBuilder url = URLPathBuilder.newEmptyBuilder();
+		url.appendRaw(request.getContextPath());
+		url.appendRaw(ApplicationPages.getInstance().getUnknownAccountPage());
+		url.appendParameter(LOGIN_NAME_PARAM, StringServices.nonNull(loginName));
+
+		response.sendRedirect(url.getURL());
 	}
 
 	/**

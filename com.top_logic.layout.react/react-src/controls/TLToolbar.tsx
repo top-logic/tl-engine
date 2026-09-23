@@ -2,6 +2,7 @@ import { React, useTLState, TLChild, useCloseOnOutsidePress, useStandaloneKeyboa
 import type { TLCellProps } from 'tl-react-bridge';
 import { createPortal } from 'react-dom';
 import { ThemeIcon } from './icon/ThemeIcon';
+import { ButtonDefaults, useButtonDefaults } from './button/ButtonDefaults';
 
 const { useCallback, useRef, useState, useEffect, useLayoutEffect, useMemo } = React;
 
@@ -271,6 +272,11 @@ const TLToolbar: React.FC<TLCellProps> = ({ controlId }) => {
   const collapsible = overflowEnd !== 'none';
   const i18n = useI18N(I18N_KEYS);
 
+  // The buttons of a toolbar are ghost unless the container the toolbar sits in has chosen
+  // otherwise: a window footer or a panel button bar says secondary, an app bar says ghost.
+  const inherited = useButtonDefaults();
+  const appearance = inherited.appearance ?? 'ghost';
+
   const rootRef = useRef<HTMLDivElement>(null);
   const metricsRef = useRef<Metrics | null>(null);
   const measuredRef = useRef<CliqueGroup[] | null>(null);
@@ -448,25 +454,27 @@ const TLToolbar: React.FC<TLCellProps> = ({ controlId }) => {
   }
 
   return (
-    <div
-      id={controlId}
-      ref={rootRef}
-      className={className}
-      role="toolbar"
-      style={toolbarStyle}
-    >
-      {overflowEnd === 'leading' && trigger}
-      {shownGroups.map((shown, i) => (
-        <React.Fragment key={shown.group.name}>
-          {i > 0 && <span className="tlToolbar__separator" aria-hidden="true" />}
-          {shown.group.display === 'menu'
-            ? <MenuGroup group={shown.group} unitIndex={shown.units[0].index} />
-            : <InlineGroup units={shown.units} />
-          }
-        </React.Fragment>
-      ))}
-      {overflowEnd === 'trailing' && trigger}
-    </div>
+    <ButtonDefaults appearance={appearance}>
+      <div
+        id={controlId}
+        ref={rootRef}
+        className={className}
+        role="toolbar"
+        style={toolbarStyle}
+      >
+        {overflowEnd === 'leading' && trigger}
+        {shownGroups.map((shown, i) => (
+          <React.Fragment key={shown.group.name}>
+            {i > 0 && <span className="tlToolbar__separator" aria-hidden="true" />}
+            {shown.group.display === 'menu'
+              ? <MenuGroup group={shown.group} unitIndex={shown.units[0].index} />
+              : <InlineGroup units={shown.units} />
+            }
+          </React.Fragment>
+        ))}
+        {overflowEnd === 'trailing' && trigger}
+      </div>
+    </ButtonDefaults>
   );
 };
 

@@ -70,9 +70,13 @@
 						resource="/style/tl-design-system/base.css"
 						requires="tl-design-system-tokens,tl-react-fonts-inter"
 					/>
+					<stylesheet name="tl-design-system-components"
+						resource="/style/tl-design-system/components.css"
+						requires="tl-design-system-base"
+					/>
 					<stylesheet name="tl-react-base"
 						resource="/style/tlReactBase.css"
-						requires="tl-react-fonts-inter,tl-design-system-base"
+						requires="tl-react-fonts-inter,tl-design-system-components"
 					/>
 					<stylesheet name="tl-react-controls-css"
 						resource="/style/tlReactControls.css"

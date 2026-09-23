@@ -3,6 +3,7 @@ import {
   useFocusTrap, FillBarrier, startPointerDrag, rootClassName, tooltipProps,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { ButtonDefaults } from './button/ButtonDefaults';
 
 const { useCallback, useRef, useState } = React;
 
@@ -381,9 +382,11 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
         </FillBarrier>
       </div>
       {footer && (
-        <div className="tlWindow__footer">
-          <TLChild control={footer} />
-        </div>
+        <ButtonDefaults appearance="secondary">
+          <div className="tlWindow__footer">
+            <TLChild control={footer} />
+          </div>
+        </ButtonDefaults>
       )}
       {resizable && !maximized && RESIZE_HANDLES.map(dir => (
         <div

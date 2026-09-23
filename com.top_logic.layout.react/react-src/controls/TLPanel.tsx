@@ -1,6 +1,7 @@
 import { React, useTLState, useTLCommand, TLChild, useI18N, useFill, FillBarrier, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import FontIcon from './FontIcon';
+import { ButtonDefaults } from './button/ButtonDefaults';
 
 const { useCallback } = React;
 
@@ -204,9 +205,11 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
         </div>
       )}
       {!isMinimized && state.buttonBar && (
-        <div className="tlPanel__buttonBar">
-          <TLChild control={state.buttonBar} />
-        </div>
+        <ButtonDefaults appearance="secondary">
+          <div className="tlPanel__buttonBar">
+            <TLChild control={state.buttonBar} />
+          </div>
+        </ButtonDefaults>
       )}
     </div>
   );

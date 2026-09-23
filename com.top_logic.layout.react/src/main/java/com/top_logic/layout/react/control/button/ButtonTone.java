@@ -8,19 +8,20 @@ package com.top_logic.layout.react.control.button;
 import com.top_logic.basic.config.ExternallyNamed;
 
 /**
- * Size of a {@link ReactButtonControl}, independent of its {@link ButtonAppearance appearance}.
+ * Tone of a {@link ReactButtonControl}: whether the action it triggers is destructive.
+ *
+ * <p>The tone recolors the chosen {@link ButtonAppearance}; it is not an appearance of its own.
+ * It is not combined with {@link ButtonAppearance#LINK}.</p>
  */
-public enum ButtonSize implements ExternallyNamed {
-
-	/** The standard button size (the default). */
+public enum ButtonTone implements ExternallyNamed {
+	/** An ordinary action. */
 	DEFAULT("default"),
-
-	/** A compact button, e.g. for a secondary inline action. */
-	SMALL("small");
+	/** A destructive action: delete, discard, revoke. */
+	DANGER("danger");
 
 	private final String _externalName;
 
-	ButtonSize(String externalName) {
+	ButtonTone(String externalName) {
 		_externalName = externalName;
 	}
 

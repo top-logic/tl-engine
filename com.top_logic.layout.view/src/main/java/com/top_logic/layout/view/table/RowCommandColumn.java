@@ -11,7 +11,9 @@ import java.util.List;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.button.ButtonAppearance;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
+import com.top_logic.layout.react.control.button.ButtonSize;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.table.CellControlFactory;
 import com.top_logic.layout.view.command.ViewCommandModel;
@@ -160,6 +162,8 @@ public class RowCommandColumn {
 		button.setImage(image != null ? image : command.image());
 		button.setTooltip(label);
 		button.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
+		button.setAppearance(ButtonAppearance.GHOST);
+		button.setSize(ButtonSize.SMALL);
 		button.setDisabled(!state.isExecutable());
 		return button;
 	}

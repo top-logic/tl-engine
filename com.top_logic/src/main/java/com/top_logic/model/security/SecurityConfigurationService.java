@@ -139,6 +139,11 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		boolean isWithoutSecurity();
 
 		/**
+		 * Setter for {@link #isWithoutSecurity()}.
+		 */
+		void setWithoutSecurity(boolean value);
+
+		/**
 		 * Whether objects of the configured types are used by the application's own code only.
 		 *
 		 * <p>
@@ -157,6 +162,11 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		 */
 		@Name(INTERNAL)
 		boolean isInternal();
+
+		/**
+		 * Setter for {@link #isInternal()}.
+		 */
+		void setInternal(boolean value);
 
 		/**
 		 * @see #isWithoutSecurity() The grants of a type without security are not displayed, since

@@ -67,3 +67,107 @@
 .tlScriptEditor .cm-diagnostic-warning {
 	border-left-color: var(--support-warning);
 }
+
+/*
+ * Documentation popups: the info panel next to the completion options and the hover tooltip. Both
+ * show the help HTML of a function or model element, which is laid out as flowing body text. The
+ * selectors include .cm-editor to outrank the base theme of CodeMirror.
+ */
+.tlScriptEditor .cm-editor .cm-tooltip.cm-completionInfo,
+.tlScriptEditor .cm-editor .cm-tooltip-hover {
+	background: var(--layer);
+	color: var(--text-primary);
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--border-radius-02);
+	box-shadow: var(--shadow-menu);
+	font-family: var(--font-family);
+	font-size: var(--body-compact-01-font-size);
+	line-height: var(--body-compact-01-line-height);
+}
+
+.tlScriptEditor .cm-editor .cm-tooltip.cm-completionInfo,
+.tlScriptEditor .cm-editor .cm-tooltip-hover .tlScriptHover {
+	overflow: auto;
+	white-space: normal;
+	padding: var(--spacing-02) var(--spacing-03);
+}
+
+/* The width of the info panel is set by CodeMirror, which places it next to the option list. */
+.tlScriptEditor .cm-editor .cm-tooltip.cm-completionInfo {
+	max-height: 60vh;
+}
+
+.tlScriptEditor .cm-editor .cm-tooltip-hover .tlScriptHover {
+	max-width: 560px;
+	max-height: 50vh;
+}
+
+.tlScriptEditor .tlScriptDoc h2 {
+	font-size: var(--heading-compact-02-font-size);
+	line-height: var(--heading-compact-02-line-height);
+	letter-spacing: var(--heading-compact-02-letter-spacing);
+	font-weight: bold;
+	margin: var(--spacing-03) 0 var(--spacing-01);
+}
+
+.tlScriptEditor .tlScriptDoc h2:first-child {
+	margin-top: 0;
+}
+
+.tlScriptEditor .tlScriptDoc h3,
+.tlScriptEditor .tlScriptDoc h4 {
+	font-size: var(--body-compact-01-font-size);
+	line-height: var(--body-compact-01-line-height);
+	font-weight: bold;
+	margin: var(--spacing-02) 0 var(--spacing-01);
+}
+
+.tlScriptEditor .tlScriptDoc p {
+	margin: 0 0 var(--spacing-02);
+}
+
+.tlScriptEditor .tlScriptDoc code,
+.tlScriptEditor .tlScriptDoc pre {
+	font-family: var(--font-family-mono);
+}
+
+.tlScriptEditor .tlScriptDoc pre {
+	white-space: pre-wrap;
+	tab-size: 2;
+	margin: 0 0 var(--spacing-02);
+}
+
+.tlScriptEditor .tlScriptDoc a {
+	color: var(--link-primary);
+}
+
+.tlScriptEditor .tlScriptDoc table.tlDocTable {
+	border-collapse: collapse;
+	margin: 0 0 var(--spacing-02);
+}
+
+.tlScriptEditor .tlScriptDoc table.tlDocTable th,
+.tlScriptEditor .tlScriptDoc table.tlDocTable td {
+	font: inherit;
+	text-align: left;
+	vertical-align: top;
+	border: 1px solid var(--border-subtle);
+	padding: var(--spacing-01) var(--spacing-02);
+}
+
+.tlScriptEditor .tlScriptDoc table.tlDocTable th {
+	color: var(--text-primary);
+	font-weight: bold;
+	white-space: nowrap;
+	background: var(--layer-01);
+}
+
+/* Long type names such as "Zahl/Zeichenkette/Wahrheitswert" break to fit the popup width. */
+.tlScriptEditor .tlScriptDoc table.tlDocTable td {
+	color: var(--text-secondary);
+	overflow-wrap: anywhere;
+}
+
+.tlScriptEditor .tlScriptDoc .tlDocReturnType {
+	color: var(--text-accent);
+}

@@ -4,8 +4,11 @@
 	<!--
 		A form spanning the page: the right pane holds one <form> around a nested <split-panel>, so
 		the form takes part in the fill contract and the inner panes are sized by the frame instead
-		of by the fields they hold. The whole right side is edited with the single Edit/Save/Cancel
-		set the form contributes to the toolbar of the panel around it.
+		of by the fields they hold. Each inner pane is a <panel> whose fields stand in a <fields>
+		grid: the form is flush around the split panel and a panel does not pad its content, so the
+		grid insets the fields of its area and lays them out responsively, following the edit mode of
+		the form. The whole right side is edited with the single Edit/Save/Cancel set the form
+		contributes to the toolbar of the panel around it.
 	-->
 	<channels>
 		<channel name="selected"/>
@@ -73,9 +76,11 @@
 											<en>Description</en>
 											<de>Beschreibung</de>
 										</title>
-										<field attribute="name"/>
-										<field attribute="string"/>
-										<field attribute="multiLine"/>
+										<fields>
+											<field attribute="name"/>
+											<field attribute="string"/>
+											<field attribute="multiLine"/>
+										</fields>
 									</panel>
 								</pane>
 								<pane
@@ -87,10 +92,12 @@
 											<en>Key figures</en>
 											<de>Kennzahlen</de>
 										</title>
-										<field attribute="count"/>
-										<field attribute="amount"/>
-										<field attribute="date"/>
-										<field attribute="priority"/>
+										<fields>
+											<field attribute="count"/>
+											<field attribute="amount"/>
+											<field attribute="date"/>
+											<field attribute="priority"/>
+										</fields>
 									</panel>
 								</pane>
 							</panes>

@@ -28,6 +28,7 @@ import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLInteractionContext;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledFromJSP;
 import com.top_logic.basic.DebugHelper;
 import com.top_logic.basic.Logger;
@@ -36,22 +37,54 @@ import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.io.binary.scan.UploadGuardRequest;
+import com.top_logic.basic.io.binary.scan.UploadRejectedException;
 import com.top_logic.basic.logging.LogConfigurator;
 import com.top_logic.basic.thread.InContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.RunnableEx2;
+import com.top_logic.event.infoservice.InfoService;
+import com.top_logic.event.infoservice.InfoServiceXMLStringConverter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ProcessingInfo;
 import com.top_logic.layout.ProcessingKind;
 import com.top_logic.layout.URLPathBuilder;
 import com.top_logic.layout.admin.component.PerformanceMonitor;
+import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.util.filter.CompressionFilter;
 import com.top_logic.util.filter.CompressionServletResponseWrapper;
 
 /**
  * {@link AbstractTopLogicServlet} that checks that a valid session exists for the request.
+ * 
+ * <p>
+ * Every request entering a {@link TopLogicServlet} is wrapped into an {@link UploadGuardRequest},
+ * so that uploaded files are inspected once per request, no matter which servlet or control
+ * consumes them. The wrapped request is the one the {@link DisplayContext} of the interaction hands
+ * out, see {@link DisplayContext#asRequest()}.
+ * </p>
+ * 
+ * <p>
+ * When an upload is rejected, the request is answered with the status
+ * {@link #SC_UNPROCESSABLE_CONTENT} and the rejection message rendered as an info area item by
+ * {@link InfoServiceXMLStringConverter#renderItemBox(DisplayContext, HTMLFragment)}.
+ * The upload clients display that response body in their info area.
+ * </p>
+ * 
+ * @see UploadRejectedException
  */
 public class TopLogicServlet extends AbstractTopLogicServlet {
+
+	/**
+	 * Status code answering a request whose upload was refused.
+	 * 
+	 * <p>
+	 * The request was syntactically well-formed and the content type is supported, but the
+	 * transmitted content could not be processed.
+	 * </p>
+	 */
+	public static final int SC_UNPROCESSABLE_CONTENT = 422;
 
 	/**
 	 * The name of log mark for the session id.
@@ -346,6 +379,8 @@ public class TopLogicServlet extends AbstractTopLogicServlet {
 			// so it is logged here, too
 			Logger.error("Internal error.", ex, TopLogicServlet.class);
 			throw new RuntimeException(ex);
+		} catch (UploadRejectedException ex) {
+			answerUploadRejected(ex, aResponse);
 		} catch (RuntimeException ex) {
 			// so it is logged here, too
 			Logger.error("Internal error.", ex, TopLogicServlet.class);
@@ -357,10 +392,47 @@ public class TopLogicServlet extends AbstractTopLogicServlet {
 		}
 	}
 
+	/**
+	 * Answers a request whose upload was refused by the {@link UploadGuardRequest}.
+	 * 
+	 * <p>
+	 * A refused upload is a regular outcome of a request and not a malfunction of the application,
+	 * therefore it is logged at info level. The response carries the status
+	 * {@link #SC_UNPROCESSABLE_CONTENT} and, as body, the rejection message rendered as an info
+	 * area item, which the upload clients display in the info area of the top-level window.
+	 * </p>
+	 * 
+	 * @param ex
+	 *        The rejection reported by the {@link UploadGuardRequest}.
+	 * @param response
+	 *        The response to the request that transmitted the refused upload.
+	 */
+	private void answerUploadRejected(UploadRejectedException ex, HttpServletResponse response) {
+		Logger.info("Upload refused: " + Resources.getInstance().getString(ex.getErrorKey()), TopLogicServlet.class);
+
+		if (response.isCommitted()) {
+			return;
+		}
+
+		try {
+			response.setStatus(SC_UNPROCESSABLE_CONTENT);
+			response.setContentType(HTMLConstants.CONTENT_TYPE_TEXT_HTML_UTF_8);
+
+			DisplayContext context = DefaultDisplayContext.getDisplayContext();
+			response.getWriter().write(
+				InfoServiceXMLStringConverter.renderItemBox(context, InfoService.errorItem(InfoService.messages(ex))));
+		} catch (IOException problem) {
+			Logger.debug("Problem answering a refused upload.", problem, TopLogicServlet.class);
+		}
+	}
+
 	private void enterContext(final TLSessionContext sessionContext, final HttpServletRequest rawRequest,
 			final HttpServletResponse rawResponse) throws IOException {
 		// The per-thread context has not yet been set up. This is the first hit of the request
 		// to a servlet.
+
+		/* Inspect uploaded files once for the whole request. */
+		final HttpServletRequest request = UploadGuardRequest.guard(rawRequest);
 
 		/* Compress response if configured */
 		final HttpServletResponse wrappedResponse;
@@ -382,14 +454,14 @@ public class TopLogicServlet extends AbstractTopLogicServlet {
 		boolean errorOccurred = true;
 		try {
 			/* Ensure a consistent handling of multi-part and simple requests. */
-			TLContextManager.inInteraction(sessionContext, getServletContext(), rawRequest, wrappedResponse,
+			TLContextManager.inInteraction(sessionContext, getServletContext(), request, wrappedResponse,
 				new InContext() {
 				@Override
 				public void inContext() {
 					long start = System.currentTimeMillis();
-						TopLogicServlet.this.inContext(rawRequest, wrappedResponse);
+						TopLogicServlet.this.inContext(request, wrappedResponse);
 					doPerformanceMeasuring(start, TLContextManager.getInteraction());
-						logTiming(rawRequest, start);
+						logTiming(request, start);
 				}
 			});
 			errorOccurred = false;

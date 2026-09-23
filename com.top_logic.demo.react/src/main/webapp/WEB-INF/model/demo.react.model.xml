@@ -291,7 +291,13 @@
 					/>
 					<property name="image"
 						type="tl.core:Binary"
-					/>
+					>
+						<annotations>
+							<input-control>
+								<impl class="com.top_logic.layout.view.form.BinaryControlProvider"/>
+							</input-control>
+						</annotations>
+					</property>
 
 					<!-- Enumeration / classification -->
 					<reference name="priority"

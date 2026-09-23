@@ -37,7 +37,7 @@ public class InfoServiceXMLStringConverter {
 				isNotFirst = true;
 			}
 			try {
-				builder.append(HTMLUtil.encodeJS(createItemBox(context, htmlFragment)));
+				builder.append(HTMLUtil.encodeJS(renderItemBox(context, htmlFragment)));
 			} catch (IOException ex) {
 				// Ignore
 			}
@@ -46,7 +46,28 @@ public class InfoServiceXMLStringConverter {
 		return builder.toString();
 	}
 
-	private static String createItemBox(DisplayContext context, HTMLFragment htmlFragment) throws IOException {
+	/**
+	 * Renders a single info area item to the HTML that the client-side part of the
+	 * {@link InfoService} displays.
+	 * 
+	 * <p>
+	 * The result is one argument of the client-side <code>showInfoArea</code> function, which
+	 * inserts it into the info area of the top-level window. A response that reports a problem
+	 * outside of an {@link InfoService} update transmits such an item box as its body, so that the
+	 * receiving script can display it in the very same way.
+	 * </p>
+	 * 
+	 * @param context
+	 *        The context of the current rendering.
+	 * @param htmlFragment
+	 *        The item to render, e.g. created by {@link InfoService#errorItem(HTMLFragment)}.
+	 * 
+	 * @return The HTML source of the given item.
+	 * 
+	 * @throws IOException
+	 *         If writing the item fails.
+	 */
+	public static String renderItemBox(DisplayContext context, HTMLFragment htmlFragment) throws IOException {
 		StringWriter buffer = new StringWriter();
 		TagWriter out = new TagWriter(buffer);
 		try {

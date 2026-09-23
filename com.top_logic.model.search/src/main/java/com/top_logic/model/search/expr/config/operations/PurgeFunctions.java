@@ -21,7 +21,6 @@ import com.top_logic.dob.ex.UnknownTypeException;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.identifier.ObjectBranchId;
-import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.DeletedObjectPurge.Blocker;
 import com.top_logic.knowledge.service.db2.DeletedObjectPurge.Origin;
@@ -60,7 +59,8 @@ import com.top_logic.util.error.TopLogicException;
  *
  * @implNote Every public static method here is a TL-Script function named by the
  *           {@link ScriptPrefix} of this class followed by the capitalized method name, so
- *           {@link #analyze(Object)} is called <code>purgeAnalyze</code>.
+ *           {@link #analyze(Object)} is called <code>purgeAnalyze</code>. An object is named to
+ *           these functions by the key {@link ObjectFunctions#key(TLObject)} computes.
  */
 @ScriptPrefix(PurgeFunctions.PREFIX)
 public class PurgeFunctions extends TLScriptFunctions {
@@ -77,10 +77,16 @@ public class PurgeFunctions extends TLScriptFunctions {
 	/** Whether there is nothing to remove. */
 	public static final String KEY_EMPTY = "empty";
 
-	/** All objects that are removed, the named ones among them. */
+	/**
+	 * All objects that are removed, the named ones among them; a list of structures with the entries
+	 * {@link #KEY_KEY}, {@link #KEY_ORIGIN}, {@link #KEY_REFERENCE} and {@link #KEY_CAUSE}.
+	 */
 	public static final String KEY_HULL = "hull";
 
-	/** The objects of the {@link #KEY_HULL} that are not deleted and therefore block the removal. */
+	/**
+	 * The objects of the {@link #KEY_HULL} that are not deleted and therefore block the removal;
+	 * structures like the ones of the {@link #KEY_HULL}.
+	 */
 	public static final String KEY_BLOCKERS = "blockers";
 
 	/** Number of rows that are erased, by the name of the database table holding them. */
@@ -92,46 +98,90 @@ public class PurgeFunctions extends TLScriptFunctions {
 	 */
 	public static final String KEY_CLEARED_REFERENCES = "clearedReferences";
 
-	/** The name of the type of an object of the {@link #KEY_HULL}. */
-	public static final String KEY_TYPE = "type";
+	/**
+	 * The key of an object of the {@link #KEY_HULL}: its table and identifier, and its branch unless
+	 * it is the trunk, in the form {@link ObjectFunctions#key(TLObject)} computes and the functions
+	 * of this class accept.
+	 */
+	public static final String KEY_KEY = "key";
 
-	/** The identifier of an object of the {@link #KEY_HULL}. */
-	public static final String KEY_ID = "id";
-
-	/** The branch an object of the {@link #KEY_HULL} lives on. */
-	public static final String KEY_BRANCH = "branch";
-
-	/** Why an object belongs to the {@link #KEY_HULL}: a seed, a reference or a content. */
+	/**
+	 * Why an object belongs to the {@link #KEY_HULL}: {@link #ORIGIN_SEED}, {@link #ORIGIN_REFERENCE}
+	 * or {@link #ORIGIN_CONTENT}.
+	 */
 	public static final String KEY_ORIGIN = "origin";
 
-	/** The table and the name of the reference an object of the {@link #KEY_HULL} was reached by. */
+	/** The {@link #KEY_ORIGIN} of an object that was named. */
+	public static final String ORIGIN_SEED = "SEED";
+
+	/** The {@link #KEY_ORIGIN} of an object holding a mandatory reference to a member of the hull. */
+	public static final String ORIGIN_REFERENCE = "REFERENCE";
+
+	/**
+	 * The {@link #KEY_ORIGIN} of an object that a member of the hull contained and that was deleted
+	 * together with it.
+	 */
+	public static final String ORIGIN_CONTENT = "CONTENT";
+
+	/**
+	 * The reference an object of the {@link #KEY_HULL} was reached by, as the name of the table
+	 * holding it and the name of the reference; nothing for a named object.
+	 */
 	public static final String KEY_REFERENCE = "reference";
 
-	/** The object of the {@link #KEY_HULL} another one was reached from, as its type and identifier. */
+	/**
+	 * The {@link #KEY_KEY} of the member of the {@link #KEY_HULL} an object was reached from;
+	 * nothing for a named object.
+	 */
 	public static final String KEY_CAUSE = "cause";
-
-	private static final String CAUSE_SEPARATOR = "#";
 
 	/**
 	 * Counts what removing the given objects would erase, without changing anything.
 	 *
 	 * <p>
 	 * The objects are given as a single object or as a list of objects. Each of them is a business
-	 * object - in any revision, since an object is removed from all of them - a knowledge item, an
-	 * object identifier, or the text form of one; anything else ends the function with an error.
+	 * object - in any revision, since an object is removed from all of them - or the key of one as
+	 * the function computing the key of an object delivers it, in particular the key of a deleted
+	 * object read from the history; anything else ends the function with an error.
 	 * </p>
 	 *
 	 * <p>
-	 * The answer is a structure with the entries described by {@link #KEY_HULL},
-	 * {@link #KEY_BLOCKERS}, {@link #KEY_ERASED_ROWS} and {@link #KEY_CLEARED_REFERENCES}, together
-	 * with {@link #KEY_DRY_RUN}, {@link #KEY_BLOCKED} and {@link #KEY_EMPTY}. It is safe to run at
-	 * any time and is the way to see what {@link #deleted(Object)} would do.
+	 * The answer is a structure with these entries:
+	 * </p>
+	 *
+	 * <ul>
+	 * <li>{@link #KEY_DRY_RUN}: whether nothing was changed, which is always so here.</li>
+	 * <li>{@link #KEY_BLOCKED}: whether a living object prevents the removal, see the blockers.</li>
+	 * <li>{@link #KEY_EMPTY}: whether there is nothing to remove.</li>
+	 * <li>{@link #KEY_HULL}: all objects that are removed, the named ones among them. Each is a
+	 * structure with the entries {@link #KEY_KEY}, the key of the object as the function computing
+	 * the key of an object delivers it; {@link #KEY_ORIGIN}, why the object belongs to the hull:
+	 * {@link #ORIGIN_SEED} for an object that was named, {@link #ORIGIN_REFERENCE} for one holding a
+	 * mandatory reference to a member of the hull, {@link #ORIGIN_CONTENT} for one that a member of
+	 * the hull contained and that was deleted together with it; {@link #KEY_REFERENCE}, the reference
+	 * the object was reached by, as the name of the table holding it and the name of the reference,
+	 * for a named object nothing; and {@link #KEY_CAUSE}, the key of the member of the hull the
+	 * object was reached from, for a named object nothing.</li>
+	 * <li>{@link #KEY_BLOCKERS}: the objects of the hull that are not deleted and therefore block
+	 * the removal, as structures like the ones of the hull.</li>
+	 * <li>{@link #KEY_ERASED_ROWS}: the number of rows that are erased, by the name of the database
+	 * table holding them; a table without rows to erase is not listed.</li>
+	 * <li>{@link #KEY_CLEARED_REFERENCES}: the number of reference values that are reset, by the
+	 * name of the database table holding them and, within it, by the name of the reference; a table
+	 * without values to reset is not listed.</li>
+	 * </ul>
+	 *
+	 * <p>
+	 * The function is safe to run at any time and is the way to see what {@link #deleted(Object)}
+	 * would do. The keys of the hull are what {@link #deleted(Object)} takes, so the objects of an
+	 * analysis can be removed as they were counted.
 	 * </p>
 	 *
 	 * <pre>
 	 * {
 	 *   gone = $project.inRevision(revisionAt(dateTime(2026, 1, 1))).get(`my:Project#members`);
-	 *   purgeAnalyze($gone)[`blocked`];
+	 *   report = purgeAnalyze($gone);
+	 *   if ($report[`blocked`], $report[`blockers`], purgeDeleted($report[`hull`].map(m -> $m[`key`])));
 	 * }
 	 * </pre>
 	 *
@@ -204,7 +254,7 @@ public class PurgeFunctions extends TLScriptFunctions {
 		}
 		if (object instanceof String text) {
 			try {
-				return ObjectKey.fromStringObjectKey(KBUtils.typeSystem(PersistencyLayer.getKnowledgeBase()), text);
+				return ObjectFunctions.parseKey(PersistencyLayer.getKnowledgeBase(), text);
 			} catch (UnknownTypeException | IllegalArgumentException ex) {
 				throw new TopLogicException(I18NConstants.ERROR_NOT_AN_OBJECT_TO_REMOVE__VALUE.fill(text), ex);
 			}
@@ -263,23 +313,32 @@ public class PurgeFunctions extends TLScriptFunctions {
 	 */
 	private static Map<String, Object> toScriptValue(ObjectBranchId identity, Origin origin) {
 		Map<String, Object> result = new LinkedHashMap<>();
-		result.put(KEY_TYPE, identity.getObjectType().getName());
-		result.put(KEY_ID, identity.getObjectName().toString());
-		result.put(KEY_BRANCH, SearchExpression.toNumber(identity.getBranchId()));
-		result.put(KEY_ORIGIN, origin == null ? null : origin.getKind().name());
+		result.put(KEY_KEY, key(identity));
+		result.put(KEY_ORIGIN, origin == null ? null : origin(origin.getKind()));
 		result.put(KEY_REFERENCE, origin == null ? null : origin.getReference());
-		result.put(KEY_CAUSE, origin == null ? null : name(origin.getCause()));
+		result.put(KEY_CAUSE, origin == null ? null : key(origin.getCause()));
 		return result;
 	}
 
 	/**
-	 * The given object as the type and identifier a report names it by.
+	 * The script value of the given origin kind.
 	 */
-	private static String name(ObjectBranchId identity) {
+	private static String origin(Origin.Kind kind) {
+		return switch (kind) {
+			case SEED -> ORIGIN_SEED;
+			case REFERENCE -> ORIGIN_REFERENCE;
+			case CONTENT -> ORIGIN_CONTENT;
+		};
+	}
+
+	/**
+	 * The given object as the key a report names it by, see {@link ObjectFunctions#key(TLObject)}.
+	 */
+	private static String key(ObjectBranchId identity) {
 		if (identity == null) {
 			return null;
 		}
-		return identity.getObjectType().getName() + CAUSE_SEPARATOR + identity.getObjectName();
+		return identity.toCurrentObjectKey().asString();
 	}
 
 }

@@ -12,15 +12,12 @@ import junit.framework.Test;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.identifier.ObjectKey;
-import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.knowledge.service.HistoryUtils;
-import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.maintenance.PersistencyMaintenance;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
-import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.search.expr.config.operations.ObjectFunctions;
 import com.top_logic.model.search.expr.config.operations.PurgeFunctions;
-import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -37,8 +34,6 @@ public class TestPurgeFunctions extends AbstractSearchExpressionTest {
 	 */
 	private static final String TYPE = "TestSearchExpression:A";
 
-	private static final String NAME_ATTRIBUTE = "name";
-
 	public void testAnalyzeDeletedObject() throws Exception {
 		TLObject obsolete = newObject("obsolete");
 		ObjectKey key = obsolete.tHandle().tId();
@@ -53,11 +48,10 @@ public class TestPurgeFunctions extends AbstractSearchExpressionTest {
 
 		Map<?, ?> entry = hullEntry(report, key);
 		assertNotNull("The object itself is in the hull: " + report, entry);
-		assertEquals("The object was named, not reached from another one.", "SEED",
+		assertEquals("The object was named, not reached from another one.", PurgeFunctions.ORIGIN_SEED,
 			entry.get(PurgeFunctions.KEY_ORIGIN));
 		assertNull(entry.get(PurgeFunctions.KEY_REFERENCE));
 		assertNull(entry.get(PurgeFunctions.KEY_CAUSE));
-		assertEquals(key.getObjectType().getName(), entry.get(PurgeFunctions.KEY_TYPE));
 
 		Map<?, ?> erasedRows = (Map<?, ?>) report.get(PurgeFunctions.KEY_ERASED_ROWS);
 		assertFalse("The rows of the object are counted: " + report, erasedRows.isEmpty());
@@ -75,8 +69,8 @@ public class TestPurgeFunctions extends AbstractSearchExpressionTest {
 		List<?> blockers = (List<?>) report.get(PurgeFunctions.KEY_BLOCKERS);
 		assertEquals("Exactly the living object blocks: " + report, 1, blockers.size());
 		Map<?, ?> blocker = (Map<?, ?>) blockers.get(0);
-		assertEquals(key.getObjectName().toString(), blocker.get(PurgeFunctions.KEY_ID));
-		assertEquals("SEED", blocker.get(PurgeFunctions.KEY_ORIGIN));
+		assertEquals(key.asString(), blocker.get(PurgeFunctions.KEY_KEY));
+		assertEquals(PurgeFunctions.ORIGIN_SEED, blocker.get(PurgeFunctions.KEY_ORIGIN));
 	}
 
 	public void testAnalyzeList() throws Exception {
@@ -101,6 +95,29 @@ public class TestPurgeFunctions extends AbstractSearchExpressionTest {
 		Map<?, ?> report = (Map<?, ?>) eval("obj -> purgeAnalyze($obj)", historic);
 		assertNotNull("An object is removed from every revision, whichever one names it: " + report,
 			hullEntry(report, key));
+	}
+
+	/**
+	 * The key a script computes for a deleted object read from the history names it to the purge,
+	 * and the keys the report answers name the same objects again.
+	 */
+	public void testAnalyzeByKey() throws Exception {
+		TLObject obsolete = newObject("keyed");
+		ObjectKey key = obsolete.tHandle().tId();
+		TLObject historic = WrapperHistoryUtils.getWrapper(HistoryUtils.getLastRevision(), obsolete);
+		delete(obsolete);
+
+		String keyText = ObjectFunctions.key(historic);
+		assertTrue("The key of a historic object names its revision: " + keyText, keyText.contains("@"));
+		Map<?, ?> report = (Map<?, ?>) eval("obj -> purgeAnalyze(objectKey($obj))", historic);
+		Map<?, ?> entry = hullEntry(report, key);
+		assertNotNull("The key text names the object to remove: " + report, entry);
+		assertEquals("The report names the object by its current key, without a revision.",
+			key.asString(), entry.get(PurgeFunctions.KEY_KEY));
+
+		Map<?, ?> again = (Map<?, ?>) eval("r -> purgeAnalyze($r['hull'].map(m -> $m['key']))", report);
+		assertEquals("The keys of the report name what the report counted.",
+			report.get(PurgeFunctions.KEY_HULL), again.get(PurgeFunctions.KEY_HULL));
 	}
 
 	public void testAnalyzeOfSomethingElse() throws Exception {
@@ -150,28 +167,15 @@ public class TestPurgeFunctions extends AbstractSearchExpressionTest {
 	private static Map<?, ?> hullEntry(Map<?, ?> report, ObjectKey key) {
 		for (Object entry : (List<?>) report.get(PurgeFunctions.KEY_HULL)) {
 			Map<?, ?> member = (Map<?, ?>) entry;
-			if (key.getObjectName().toString().equals(member.get(PurgeFunctions.KEY_ID))) {
+			if (key.asString().equals(member.get(PurgeFunctions.KEY_KEY))) {
 				return member;
 			}
 		}
 		return null;
 	}
 
-	private static TLObject newObject(String name) {
-		TLClass type = (TLClass) TLModelUtil.findType(model(), TYPE);
-		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
-			TLObject result = DynamicModelService.getFactoryFor(type.getModule().getName()).createObject(type);
-			result.tUpdateByName(NAME_ATTRIBUTE, name);
-			tx.commit();
-			return result;
-		}
-	}
-
-	private static void delete(TLObject object) {
-		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
-			object.tDelete();
-			tx.commit();
-		}
+	private TLObject newObject(String name) {
+		return newObject(TYPE, name);
 	}
 
 	public static Test suite() {

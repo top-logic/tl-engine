@@ -2,7 +2,7 @@ import { React, useTLCommand, useTLState } from 'tl-react-bridge'
 import type { TLCellProps } from 'tl-react-bridge'
 import { bundle, toLanguage } from './i18n'
 
-const { useEffect, useMemo, useRef, useState } = React
+const { useEffect, useLayoutEffect, useMemo, useRef, useState } = React
 
 /** One display line of a row: text plus an optional emphasis ('primary' | 'secondary'). */
 interface DataLine {
@@ -107,6 +107,14 @@ function groupRows(rows: DataRow[]): RowGroup[] {
   return order.map((label) => ({ label, rows: groups.get(label)! }))
 }
 
+/** What Tab moves between inside an open drawer; the scrim and the row list itself are left out. */
+const FOCUSABLE = 'button:not([disabled]):not([tabindex="-1"]), input:not([disabled]), [tabindex="0"]'
+
+/** The root font size in px, which is what the `drawer-below` rem value is measured in. */
+function remInPx(): number {
+  return parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
+}
+
 /**
  * Generic, data-bound, styled, grouped, searchable, selectable list - the `<data-list>` element's
  * React side. Reuses the session-rail presentation (the `.rail*` classes) but renders whatever rows
@@ -149,6 +157,94 @@ export function TLDataList({ controlId }: TLCellProps) {
   // own, so this is what every page load starts from.
   const [collapsed, setCollapsed] = useState(state.collapsed === true)
 
+  /*
+   * A drawer where the host has no room for a column of this list (#548).
+   *
+   * The list shares its host with other columns - in a `<chat>` row, the conversation with its
+   * #511 floor and the rail's strip - and none of them gives way, so below the width they need
+   * together the whole row overflowed into the page's scroller: the composer started off-screen and
+   * the chat scrolled in two dimensions. Below `drawerBelow` (rem, measured on the host) a
+   * collapsible list therefore keeps only its strip in the flow, and its expand arrow opens the
+   * list over its neighbour instead of widening the row. The threshold is the view's to state,
+   * because only the view knows what else stands in the row.
+   *
+   * `collapsed` - the user's choice for the column - is neither read nor written while the list is
+   * a drawer, so it is what the list shows again once the host is wide enough. A list that cannot
+   * collapse has no strip to fall back to and is never a drawer.
+   *
+   * Measured before paint, so a narrow page does not first lay out the column it cannot hold.
+   */
+  const drawerBelow = typeof state.drawerBelow === 'number' ? state.drawerBelow : 0
+  const root = useRef<HTMLDivElement | null>(null)
+  const toggle = useRef<HTMLButtonElement | null>(null)
+  const [drawer, setDrawer] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+
+  useLayoutEffect(() => {
+    const host = root.current?.parentElement
+    if (!collapsible || drawerBelow <= 0 || !host) {
+      setDrawer(false)
+      return
+    }
+    const measure = () => setDrawer(host.clientWidth < drawerBelow * remInPx())
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(host)
+    return () => observer.disconnect()
+  }, [collapsible, drawerBelow])
+
+  // A host that grows wide again takes the list back as a column; nothing is left open behind it.
+  useEffect(() => {
+    if (!drawer) setDrawerOpen(false)
+  }, [drawer])
+
+  // Opening moves focus into the drawer: to the row that is open, else the first one.
+  const aside = useRef<HTMLElement | null>(null)
+  useLayoutEffect(() => {
+    if (!drawerOpen) return
+    const panel = aside.current
+    const target =
+      panel?.querySelector<HTMLElement>('.rail-open[aria-current="page"]') ??
+      panel?.querySelector<HTMLElement>('.rail-open') ??
+      listNode.current
+    target?.focus()
+  }, [drawerOpen])
+
+  /** Closes an open drawer and hands focus back to the arrow that opened it. */
+  const closeDrawer = () => {
+    if (!drawerOpen) return
+    setDrawerOpen(false)
+    toggle.current?.focus()
+  }
+
+  /*
+   * Keys while the drawer is open. Escape closes it - unless it is clearing a search field that has
+   * text in it, which is what Escape does there first. Tab wraps inside the drawer, because the
+   * scrim says everything behind it is out of reach for now.
+   */
+  const onDrawerKey = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!drawerOpen) return
+    if (event.key === 'Escape') {
+      const target = event.target as HTMLInputElement
+      if (target.type === 'search' && target.value) return
+      event.preventDefault()
+      closeDrawer()
+      return
+    }
+    if (event.key !== 'Tab' || !aside.current) return
+    const focusable = [...aside.current.querySelectorAll<HTMLElement>(FOCUSABLE)]
+    if (focusable.length === 0) return
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault()
+      last.focus()
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault()
+      first.focus()
+    }
+  }
+
   const groups = useMemo(() => {
     const normalized = search ? query.trim().toLocaleLowerCase() : ''
     const visible = normalized
@@ -185,10 +281,22 @@ export function TLDataList({ controlId }: TLCellProps) {
     else listNode.current?.focus()
   }, [rows])
 
-  const isCollapsed = collapsible && collapsed
+  const isCollapsed = collapsible && (drawer ? !drawerOpen : collapsed)
   return (
-    <div id={controlId} className={`tl-data-list${isCollapsed ? ' is-collapsed' : ''}`}>
+    <div
+      id={controlId}
+      ref={root}
+      className={`tl-data-list${isCollapsed ? ' is-collapsed' : ''}${drawer ? ' is-drawer' : ''}${
+        drawer && drawerOpen ? ' is-drawer-open' : ''
+      }`}
+      onKeyDown={onDrawerKey}
+    >
+      {drawer && drawerOpen ? (
+        // A pointer's way out. Keyboard and screen reader users have the arrow and Escape.
+        <div className="data-list-scrim" aria-hidden="true" onClick={closeDrawer} />
+      ) : null}
       <aside
+        ref={aside}
         className={`rail${isCollapsed ? ' is-collapsed' : ''}`}
         aria-label={title || undefined}
       >
@@ -199,12 +307,17 @@ export function TLDataList({ controlId }: TLCellProps) {
             <button
               type="button"
               className="icon-button rail-collapse"
-              aria-label={collapsed ? labels.expandChatHistory : labels.collapseChatHistory}
-              aria-expanded={!collapsed}
-              onClick={() => setCollapsed((value) => !value)}
+              ref={toggle}
+              aria-label={isCollapsed ? labels.expandChatHistory : labels.collapseChatHistory}
+              aria-expanded={!isCollapsed}
+              onClick={() => {
+                if (!drawer) setCollapsed((value) => !value)
+                else if (drawerOpen) closeDrawer()
+                else setDrawerOpen(true)
+              }}
             >
               <svg viewBox="0 0 16 16" aria-hidden="true">
-                <path d={collapsed ? 'm6.5 3.5 4.5 4.5-4.5 4.5' : 'M9.5 3.5 5 8l4.5 4.5'} />
+                <path d={isCollapsed ? 'm6.5 3.5 4.5 4.5-4.5 4.5' : 'M9.5 3.5 5 8l4.5 4.5'} />
               </svg>
             </button>
           ) : null}
@@ -215,7 +328,10 @@ export function TLDataList({ controlId }: TLCellProps) {
             key={index}
             type="button"
             className="rail-new"
-            onClick={() => void command('button', { index })}
+            onClick={() => {
+              closeDrawer()
+              void command('button', { index })
+            }}
           >
             <ButtonIcon icon={button.icon} />
             <span>{button.label || labels.newChat}</span>
@@ -262,7 +378,10 @@ export function TLDataList({ controlId }: TLCellProps) {
                     className="rail-open"
                     aria-current={row.id === selectedId ? 'page' : undefined}
                     title={row.lines[0]?.text}
-                    onClick={() => void command('select', { id: row.id })}
+                    onClick={() => {
+                      closeDrawer()
+                      void command('select', { id: row.id })
+                    }}
                   >
                     <span className="rail-item-mark" aria-hidden="true" />
                     <span className="rail-open-text">

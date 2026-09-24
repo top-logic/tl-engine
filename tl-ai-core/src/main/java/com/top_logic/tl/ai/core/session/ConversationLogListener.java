@@ -79,6 +79,18 @@ public class ConversationLogListener implements AgentEventListener {
 
 	private final StringBuilder _thinkingBuffer = new StringBuilder();
 
+	/**
+	 * How many characters of text this run has streamed so far, recorded or not.
+	 *
+	 * <p>
+	 * Only ever grows, and grows together with {@link #_textBuffer}, under the same monitor. That is
+	 * what makes it a position in the stream: {@link #streamedText()} reads both at once, so a
+	 * reader knows exactly which of the deltas still to come its snapshot already holds (issue
+	 * #544).
+	 * </p>
+	 */
+	private long _streamedChars;
+
 	private final Map<String, Part.DelegationPart> _activeDelegations = new ConcurrentHashMap<>();
 
 	/**
@@ -139,6 +151,7 @@ public class ConversationLogListener implements AgentEventListener {
 		} else if (event instanceof AgentEvent.TextDelta e) {
 			synchronized (_buffers) {
 				_textBuffer.append(e.text());
+				_streamedChars += e.text().length();
 			}
 		} else if (event instanceof AgentEvent.ThinkingDelta e) {
 			synchronized (_buffers) {
@@ -927,9 +940,50 @@ public class ConversationLogListener implements AgentEventListener {
 	 * @return The unrecorded text, or the empty string when the turn has none pending.
 	 */
 	public String bufferedText() {
+		return streamedText().pending();
+	}
+
+	/**
+	 * {@link #bufferedText()} together with how far the stream had got when it was read.
+	 *
+	 * <p>
+	 * A window that opens the chat mid-run is shown this snapshot and then goes on receiving the
+	 * run's deltas. Which of those deltas the snapshot already holds is not a question of time - the
+	 * snapshot and the stream travel on different connections - but of position:
+	 * {@link StreamedText#end()} is the position of the last character in the snapshot, and every
+	 * delta is sent with the position of its own last character (see {@link #streamedChars()}).
+	 * </p>
+	 */
+	public StreamedText streamedText() {
 		synchronized (_buffers) {
-			return _textBuffer.toString();
+			return new StreamedText(_textBuffer.toString(), _streamedChars);
 		}
+	}
+
+	/**
+	 * How many characters of text this run has streamed so far.
+	 *
+	 * <p>
+	 * Read right after a {@link AgentEvent.TextDelta} has passed this listener, it is the position
+	 * of that delta's last character.
+	 * </p>
+	 */
+	public long streamedChars() {
+		synchronized (_buffers) {
+			return _streamedChars;
+		}
+	}
+
+	/**
+	 * What {@link #streamedText()} answers.
+	 *
+	 * @param pending
+	 *        The text streamed but not yet recorded in the log; never <code>null</code>.
+	 * @param end
+	 *        How many characters the run had streamed when this was read, recorded or not.
+	 */
+	public record StreamedText(String pending, long end) {
+		// Pure data.
 	}
 
 	private static Part.ApprovalDecision mapOutcome(ApprovalOutcome outcome) {

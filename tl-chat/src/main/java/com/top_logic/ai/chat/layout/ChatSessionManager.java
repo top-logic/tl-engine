@@ -359,41 +359,91 @@ public class ChatSessionManager {
 				return true;
 			}
 
-			// Load from database
-			Chat chat = new Chat();
-			ConversationMemory memory = createDefaultMemory();
-			ConversationLog convLog = new ConversationLog();
-			TaskStore loadedTaskStore = new TaskStore();
-
-			try {
-				TLObject session = ChatHistoryService.findOwnedSessionById(sessionId, owner);
-				if (session != null) {
-					String json = ChatHistoryService.loadConversationJson(session);
-					if (json != null && !json.isEmpty()) {
-						convLog = ConversationLogSerializer.fromJson(json);
-						ConversationLogReplay.rebuildMemory(convLog, memory.conversation());
-					}
-
-					if (_tracker != null) {
-						String metadataJson = ChatHistoryService.getMetadataJson(session);
-						DtoMapper.loadMetadata(metadataJson, _tracker);
-						loadedTaskStore = DtoMapper.loadTaskStore(metadataJson);
-					}
-				}
-			} catch (Exception ex) {
-				Logger.error("Failed to load session " + sessionId + ": " + ex.getMessage(), ex,
-					ChatSessionManager.class);
-			}
-
-			SessionState newState = new SessionState(chat, memory);
-			newState._conversationLog = convLog;
-			newState._taskStore = loadedTaskStore;
+			SessionState newState = loadFromDatabase(sessionId, owner);
 			_sessions.put(sessionId, newState);
 			_activeSessionId = sessionId;
 			_activeOwner = owner;
 		}
 		persistOutsideLock(outgoing);
 		return true;
+	}
+
+	/**
+	 * Reads a session back from the database, replacing what this manager holds for it.
+	 *
+	 * <p>
+	 * A manager caches the conversation it loaded, and a run another window of the same account
+	 * started in that conversation writes its turn to the database, not into this cache. When that
+	 * run ends, this window's copy is a turn short: reading the chat back showed the conversation as
+	 * it was before the run, and the next message sent from here would have been answered by a model
+	 * that had never seen that turn (issue #544). The run's own window does not need this - the turn
+	 * was written into its cache while it ran.
+	 * </p>
+	 *
+	 * <p>
+	 * A no-op for a session this manager does not hold. A session held but not active is only
+	 * dropped; it is loaded again when it is next switched to.
+	 * </p>
+	 *
+	 * @param sessionId
+	 *        The session whose turn was written elsewhere; <code>null</code> is a no-op.
+	 */
+	public void reloadSession(String sessionId) {
+		if (sessionId == null) {
+			return;
+		}
+		synchronized (_lock) {
+			SessionState stale = _sessions.remove(sessionId);
+			if (stale == null) {
+				return;
+			}
+			disposeSessionState(stale);
+			if (!sessionId.equals(_activeSessionId)) {
+				return;
+			}
+			// What the session's metadata says is loaded afresh as well, so the tracker's state is
+			// reset first, as a switch does.
+			if (_tracker != null) {
+				_tracker.resetSessionState();
+			}
+			_sessions.put(sessionId, loadFromDatabase(sessionId, _activeOwner));
+		}
+	}
+
+	/**
+	 * Builds the state of a session from what the database holds. Must be called under
+	 * {@link #_lock}.
+	 */
+	private SessionState loadFromDatabase(String sessionId, Person owner) {
+		Chat chat = new Chat();
+		ConversationMemory memory = createDefaultMemory();
+		ConversationLog convLog = new ConversationLog();
+		TaskStore loadedTaskStore = new TaskStore();
+
+		try {
+			TLObject session = ChatHistoryService.findOwnedSessionById(sessionId, owner);
+			if (session != null) {
+				String json = ChatHistoryService.loadConversationJson(session);
+				if (json != null && !json.isEmpty()) {
+					convLog = ConversationLogSerializer.fromJson(json);
+					ConversationLogReplay.rebuildMemory(convLog, memory.conversation());
+				}
+
+				if (_tracker != null) {
+					String metadataJson = ChatHistoryService.getMetadataJson(session);
+					DtoMapper.loadMetadata(metadataJson, _tracker);
+					loadedTaskStore = DtoMapper.loadTaskStore(metadataJson);
+				}
+			}
+		} catch (Exception ex) {
+			Logger.error("Failed to load session " + sessionId + ": " + ex.getMessage(), ex,
+				ChatSessionManager.class);
+		}
+
+		SessionState newState = new SessionState(chat, memory);
+		newState._conversationLog = convLog;
+		newState._taskStore = loadedTaskStore;
+		return newState;
 	}
 
 	/**

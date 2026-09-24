@@ -40,6 +40,7 @@ import com.top_logic.tl.ai.core.agent.AgentResult;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
@@ -306,29 +307,15 @@ public class ChatProcessor {
 			}
 			state.setSseHandler(sseHandler);
 
-			// SSE handler still receives raw AgentEvents for text_delta streaming.
-			// ConversationLogListener handles structured recording via ConversationLog.
-			// The handler is resolved per event, NOT captured once: the browser reopens the
-			// SSE stream on session switches (replacing the handler), and a handler captured
-			// at run start would go stale — the UI would stop updating for the rest of the run.
+			// SSE handlers still receive raw AgentEvents for text_delta streaming.
+			// ConversationLogListener handles structured recording via ConversationLog, and comes
+			// first: the forwarder reads from it where each delta ends.
 			if (sseHandler == null) {
 				Logger.warn("No SSE handler found for tracker — streaming may not reach the browser.",
 					ChatProcessor.class);
 			}
-			String runSessionId = state.getSessionId();
-			AgentEventListener sseForwarder = event -> {
-				// Stream only while this run's session is the one being viewed: with
-				// concurrent runs in different sessions, a background run's events would
-				// otherwise render into the wrong chat. Its progress is recovered from the
-				// live log when the user switches back (reattach path).
-				if (runSessionId != null && !runSessionId.equals(taskTracker.getActiveSessionId())) {
-					return;
-				}
-				ChatEventHandler currentHandler = ChatEventHandlerRegistry.find(taskTracker);
-				if (currentHandler != null) {
-					currentHandler.onEvent(event);
-				}
-			};
+			AgentEventListener sseForwarder =
+				streamForwarder(taskTracker, taskTracker.getSessionOwner(), state.getSessionId(), logListener);
 			AgentEventListener listener =
 				new CompositeAgentEventListener(List.of(logListener, sseForwarder));
 			// Allow sub-agent approval events to bubble up to the SSE handler
@@ -824,7 +811,54 @@ public class ChatProcessor {
 	}
 
 	/**
-	 * Every chat UI that has to be told how this run ended.
+	 * The listener that shows a run in every window showing its conversation.
+	 *
+	 * <p>
+	 * A conversation can be open in more than one window of its account, and each of them shows the
+	 * turn while it is being written - not only the window the message was sent from (issue #544).
+	 * A window showing another chat is not addressed: with concurrent runs in different sessions, a
+	 * background run's events would otherwise render into the wrong chat. Its progress is recovered
+	 * from the live log when the user switches back.
+	 * </p>
+	 *
+	 * <p>
+	 * The windows are looked up per event, never captured: the browser reopens its stream on a
+	 * session switch, and another window may open the conversation at any point of the run.
+	 * </p>
+	 *
+	 * @param startedIn
+	 *        The tracker of the window the run was started in; the run's tokens are counted there.
+	 * @param owner
+	 *        The account the run belongs to.
+	 * @param sessionId
+	 *        The chat the run writes into; <code>null</code> for a run that has none, which is shown
+	 *        in the window it was started in alone.
+	 * @param log
+	 *        The run's log listener. It must see every event before this listener does: it is what
+	 *        says where in the run's text a delta ends.
+	 */
+	public static AgentEventListener streamForwarder(TaskProgressTracker startedIn, Person owner,
+			String sessionId, ConversationLogListener log) {
+		return event -> {
+			if (event instanceof AgentEvent.RunCompleted completed) {
+				// Counted here, once, against the window the run belongs to - not by each window
+				// that shows it.
+				startedIn.addTokenUsage(completed.totalUsage());
+			}
+			for (ChatEventHandler handler : ChatEventHandlerRegistry.findStreamTargets(startedIn, owner,
+				sessionId)) {
+				if (event instanceof AgentEvent.TextDelta delta) {
+					handler.onTextDelta(delta, log.streamedChars());
+				} else {
+					handler.onEvent(event);
+				}
+			}
+		};
+	}
+
+	/**
+	 * Every chat UI that has to be told how this run ended, each with its copy of the conversation
+	 * brought up to date.
 	 *
 	 * <p>
 	 * The answer and the error that replaces it are addressed to the <em>conversation</em>, not to
@@ -837,8 +871,18 @@ public class ChatProcessor {
 	 */
 	private static List<ChatEventHandler> completionTargets(AIProcessingState state,
 			TaskProgressTracker tracker) {
-		return ChatEventHandlerRegistry.findForSession(tracker.getSessionOwner(), state.getSessionId(),
-			state.getSseHandler());
+		List<ChatEventHandler> targets = ChatEventHandlerRegistry.findForSession(tracker.getSessionOwner(),
+			state.getSessionId(), state.getSseHandler());
+		// The turn is recorded now, in the database and in the cache of the run's own window. A
+		// window that only watched the run still holds the conversation as it was when it opened
+		// it; it reads it back as soon as it is told the run has ended (issue #544).
+		for (ChatEventHandler target : targets) {
+			TaskProgressTracker window = target.getTracker();
+			if (window != null && window != tracker) {
+				window.getSessionManager().reloadSession(state.getSessionId());
+			}
+		}
+		return targets;
 	}
 
 	/**

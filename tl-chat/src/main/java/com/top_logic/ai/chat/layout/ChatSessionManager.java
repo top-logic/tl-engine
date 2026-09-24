@@ -8,6 +8,8 @@ package com.top_logic.ai.chat.layout;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
 import com.top_logic.ai.chat.api.DtoMapper;
@@ -63,6 +65,13 @@ public class ChatSessionManager {
 	private volatile TaskProgressTracker _tracker;
 
 	/** LRU cache of per-session state, bounded to {@link #MAX_CACHED_SESSIONS}. */
+	/**
+	 * The cached sessions a run of another window has written a turn into since they were loaded.
+	 *
+	 * @see #markChangedElsewhere(String)
+	 */
+	private final Set<String> _changedElsewhere = ConcurrentHashMap.newKeySet();
+
 	private final Map<String, SessionState> _sessions = new LinkedHashMap<>(16, 0.75f, true) {
 		@Override
 		protected boolean removeEldestEntry(Map.Entry<String, SessionState> eldest) {
@@ -326,7 +335,8 @@ public class ChatSessionManager {
 		if (sessionId == null) {
 			return false;
 		}
-		if (sessionId.equals(_activeSessionId) && owner != null && owner.equals(_activeOwner)) {
+		if (sessionId.equals(_activeSessionId) && owner != null && owner.equals(_activeOwner)
+			&& !_changedElsewhere.contains(sessionId)) {
 			return true;
 		}
 		if (ChatHistoryService.findOwnedSessionById(sessionId, owner) == null) {
@@ -338,6 +348,15 @@ public class ChatSessionManager {
 		synchronized (_lock) {
 			if (sessionId.equals(_activeSessionId)) {
 				_activeOwner = owner;
+				if (_changedElsewhere.remove(sessionId)) {
+					// What the session's metadata says is read afresh as well, so the tracker's
+					// state is reset first, as a switch does.
+					if (_tracker != null) {
+						_tracker.resetSessionState();
+					}
+					disposeSessionState(_sessions.remove(sessionId));
+					_sessions.put(sessionId, loadFromDatabase(sessionId, owner));
+				}
 				return true;
 			}
 
@@ -353,6 +372,10 @@ public class ChatSessionManager {
 
 			// Check LRU cache first
 			SessionState cached = _sessions.get(sessionId);
+			if (cached != null && _changedElsewhere.remove(sessionId)) {
+				disposeSessionState(_sessions.remove(sessionId));
+				cached = null;
+			}
 			if (cached != null) {
 				_activeSessionId = sessionId;
 				_activeOwner = owner;
@@ -369,7 +392,7 @@ public class ChatSessionManager {
 	}
 
 	/**
-	 * Reads a session back from the database, replacing what this manager holds for it.
+	 * Notes that a session this manager holds was written to by a run of another window.
 	 *
 	 * <p>
 	 * A manager caches the conversation it loaded, and a run another window of the same account
@@ -381,32 +404,23 @@ public class ChatSessionManager {
 	 * </p>
 	 *
 	 * <p>
-	 * A no-op for a session this manager does not hold. A session held but not active is only
-	 * dropped; it is loaded again when it is next switched to.
+	 * The session is read back by the next {@link #switchSession(String, Person) switch} to it -
+	 * which every request of the window naming it makes - and not here: this is called from the
+	 * run's thread, whose view of the database predates the turn the run has just recorded.
 	 * </p>
 	 *
 	 * @param sessionId
-	 *        The session whose turn was written elsewhere; <code>null</code> is a no-op.
+	 *        The session whose turn was written elsewhere; <code>null</code> and a session this
+	 *        manager does not hold are a no-op.
 	 */
-	public void reloadSession(String sessionId) {
+	public void markChangedElsewhere(String sessionId) {
 		if (sessionId == null) {
 			return;
 		}
 		synchronized (_lock) {
-			SessionState stale = _sessions.remove(sessionId);
-			if (stale == null) {
-				return;
+			if (_sessions.containsKey(sessionId)) {
+				_changedElsewhere.add(sessionId);
 			}
-			disposeSessionState(stale);
-			if (!sessionId.equals(_activeSessionId)) {
-				return;
-			}
-			// What the session's metadata says is loaded afresh as well, so the tracker's state is
-			// reset first, as a switch does.
-			if (_tracker != null) {
-				_tracker.resetSessionState();
-			}
-			_sessions.put(sessionId, loadFromDatabase(sessionId, _activeOwner));
 		}
 	}
 
@@ -465,6 +479,7 @@ public class ChatSessionManager {
 		}
 		synchronized (_lock) {
 			SessionState state = _sessions.remove(sessionId);
+			_changedElsewhere.remove(sessionId);
 			boolean wasActive = sessionId.equals(_activeSessionId);
 			if (state == null && !wasActive) {
 				return false;

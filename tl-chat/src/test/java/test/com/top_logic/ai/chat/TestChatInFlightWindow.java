@@ -449,7 +449,9 @@ public class TestChatInFlightWindow extends BasicTestCase {
 		stale.setUserParts(List.of(new Part.TextPart(
 			UUID.randomUUID().toString(), Instant.now(), "Nur in diesem Fenster")));
 
-		windowB.getSessionManager().reloadSession(chatId());
+		windowB.getSessionManager().markChangedElsewhere(chatId());
+		// The window's next request - reading the chat back - switches to it again.
+		windowB.getSessionManager().switchSession(chatId(), nina);
 
 		assertEquals("The chat is what the database holds, not what this window had.",
 			recorded, windowB.getSessionManager().getOrCreateConversationLog().turnCount());

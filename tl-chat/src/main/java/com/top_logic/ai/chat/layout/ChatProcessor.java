@@ -875,11 +875,12 @@ public class ChatProcessor {
 			state.getSessionId(), state.getSseHandler());
 		// The turn is recorded now, in the database and in the cache of the run's own window. A
 		// window that only watched the run still holds the conversation as it was when it opened
-		// it; it reads it back as soon as it is told the run has ended (issue #544).
+		// it; it reads it back with the next request it makes, the one that shows the finished
+		// turn (issue #544).
 		for (ChatEventHandler target : targets) {
 			TaskProgressTracker window = target.getTracker();
 			if (window != null && window != tracker) {
-				window.getSessionManager().reloadSession(state.getSessionId());
+				window.getSessionManager().markChangedElsewhere(state.getSessionId());
 			}
 		}
 		return targets;

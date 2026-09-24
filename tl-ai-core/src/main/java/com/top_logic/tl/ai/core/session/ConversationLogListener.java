@@ -63,6 +63,18 @@ public class ConversationLogListener implements AgentEventListener {
 
 	private final ConversationLog _log;
 
+	/**
+	 * Guards {@link #_textBuffer} and {@link #_thinkingBuffer}.
+	 *
+	 * <p>
+	 * The buffers are filled and flushed by the agent thread alone, but {@link #bufferedText()} is
+	 * read from a request thread while that is happening - a window opening the chat asks what the
+	 * running turn has streamed so far. Reading a {@link StringBuilder} another thread is appending
+	 * to is not merely stale, it can fail, so the two operations take the same monitor.
+	 * </p>
+	 */
+	private final Object _buffers = new Object();
+
 	private final StringBuilder _textBuffer = new StringBuilder();
 
 	private final StringBuilder _thinkingBuffer = new StringBuilder();
@@ -125,9 +137,13 @@ public class ConversationLogListener implements AgentEventListener {
 		} else if (event instanceof AgentEvent.TurnCompleted e) {
 			handleTurnCompleted(e);
 		} else if (event instanceof AgentEvent.TextDelta e) {
-			_textBuffer.append(e.text());
+			synchronized (_buffers) {
+				_textBuffer.append(e.text());
+			}
 		} else if (event instanceof AgentEvent.ThinkingDelta e) {
-			_thinkingBuffer.append(e.text());
+			synchronized (_buffers) {
+				_thinkingBuffer.append(e.text());
+			}
 		} else if (event instanceof AgentEvent.TurnContextComposed e) {
 			handleTurnContextComposed(e);
 		} else if (event instanceof AgentEvent.ToolCallStarted e) {
@@ -351,7 +367,7 @@ public class ConversationLogListener implements AgentEventListener {
 		if (turn != null) {
 			Part.ApprovalPart part = Part.ApprovalPart.pending(
 				e.approvalRequestId(), e.timestamp(), e.toolCallId(),
-				e.toolName(), e.argsJson(), e.displayReason());
+				e.toolName(), e.argsJson(), e.displayReason(), e.toolMode());
 			turn.addAssistantPart(part);
 		}
 	}
@@ -866,20 +882,53 @@ public class ConversationLogListener implements AgentEventListener {
 	// ---- Buffer flushing ----
 
 	private void flushTextBuffer(Turn turn) {
-		if (_textBuffer.length() > 0) {
-			turn.addAssistantPart(new Part.TextPart(
-				UUID.randomUUID().toString(), Instant.now(),
-				_textBuffer.toString()));
+		String text;
+		synchronized (_buffers) {
+			if (_textBuffer.length() == 0) {
+				return;
+			}
+			text = _textBuffer.toString();
 			_textBuffer.setLength(0);
 		}
+		turn.addAssistantPart(new Part.TextPart(
+			UUID.randomUUID().toString(), Instant.now(), text));
 	}
 
 	private void flushThinkingBuffer(Turn turn) {
-		if (_thinkingBuffer.length() > 0) {
-			turn.addAssistantPart(new Part.ThinkingPart(
-				UUID.randomUUID().toString(), Instant.now(),
-				_thinkingBuffer.toString(), null));
+		String text;
+		synchronized (_buffers) {
+			if (_thinkingBuffer.length() == 0) {
+				return;
+			}
+			text = _thinkingBuffer.toString();
 			_thinkingBuffer.setLength(0);
+		}
+		turn.addAssistantPart(new Part.ThinkingPart(
+			UUID.randomUUID().toString(), Instant.now(), text, null));
+	}
+
+	/**
+	 * What the running turn has streamed but not yet recorded as a {@link Part.TextPart}.
+	 *
+	 * <p>
+	 * Text arrives as deltas and is written into the turn at the next message boundary - a tool
+	 * call, the end of an iteration, the end of the run - so between those points the log holds
+	 * everything the turn has said except its last, unfinished paragraph. A window that opens the
+	 * chat while the run is going has to show that paragraph as well, or a reader who closed the tab
+	 * mid-sentence is shown a turn that stops earlier than the one they were watching (issue #512).
+	 * </p>
+	 *
+	 * <p>
+	 * A snapshot, and only ever a snapshot: the agent thread goes on appending, and what is returned
+	 * here is what had arrived when it was asked. It is never written into the log - the flush that
+	 * records it is the agent's own.
+	 * </p>
+	 *
+	 * @return The unrecorded text, or the empty string when the turn has none pending.
+	 */
+	public String bufferedText() {
+		synchronized (_buffers) {
+			return _textBuffer.toString();
 		}
 	}
 

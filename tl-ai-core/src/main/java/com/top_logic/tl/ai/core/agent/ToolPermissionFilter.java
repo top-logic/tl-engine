@@ -7,7 +7,9 @@ package com.top_logic.tl.ai.core.agent;
 
 import java.util.function.Predicate;
 
+import com.top_logic.tl.ai.core.security.DeclaredTypeAccess;
 import com.top_logic.tl.ai.tool.api.Tool;
+import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
@@ -16,12 +18,23 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  * <p>Used both for filtering tool schemas sent to the LLM (so it never sees
  * tools it cannot use) and for gating execution (defense in depth).</p>
  *
+ * <p>
+ * Three independent questions, and a tool has to pass all three: may this user use this tool at all
+ * ({@link SecurityContext#hasToolPermission(Tool)}), may <em>anyone</em> use it in the current
+ * {@link ExecutionMode}, and - for a tool that declares the model types it works on - may this user
+ * read any of them ({@link DeclaredTypeAccess}). Keeping them here rather than in three filters is
+ * what makes the schema the model is sent and the gate that stops a call agree by construction.
+ * </p>
+ *
  * @see AgentLoop
  * @see SecurityContext
+ * @see ToolMethod#types()
  */
 public class ToolPermissionFilter implements Predicate<Tool> {
 
 	private final SecurityContext _security;
+
+	private final DeclaredTypeAccess _declaredTypes;
 
 	/**
 	 * Creates a filter for the given security context.
@@ -29,7 +42,22 @@ public class ToolPermissionFilter implements Predicate<Tool> {
 	 * @param security the security context to evaluate against
 	 */
 	public ToolPermissionFilter(SecurityContext security) {
+		this(security, new DeclaredTypeAccess(security.modelSecurity()));
+	}
+
+	/**
+	 * Creates a filter that asks the given declared-type check instead of the one the security
+	 * context's model rights would produce.
+	 *
+	 * <p>
+	 * Package-visible: the seam a test uses to pin that this filter consults the check in both of its
+	 * halves without booting an application model. Production always goes through
+	 * {@link #ToolPermissionFilter(SecurityContext)}.
+	 * </p>
+	 */
+	ToolPermissionFilter(SecurityContext security, DeclaredTypeAccess declaredTypes) {
 		_security = security;
+		_declaredTypes = declaredTypes;
 	}
 
 	/**
@@ -52,7 +80,9 @@ public class ToolPermissionFilter implements Predicate<Tool> {
 				&& _security.executionMode() == ExecutionMode.PRODUCTION) {
 			return false;
 		}
-		return true;
+		// The quiet form: a catalog is enumerated once per request, and a tool nobody called must
+		// not write a log line. denialReason asks the logging form, for a call really made.
+		return _declaredTypes.permits(tool);
 	}
 
 	/**
@@ -78,6 +108,6 @@ public class ToolPermissionFilter implements Predicate<Tool> {
 				+ "application state, which requires maintenance or development mode. "
 				+ "The system is currently in production mode.";
 		}
-		return null;
+		return _declaredTypes.denialReason(tool);
 	}
 }

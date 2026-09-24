@@ -150,6 +150,35 @@ a `ToolArgumentCoercionException`. That matters beyond the wording: the agent lo
 this existed, every Java tool resolved the string itself, which meant one resolver and one read check
 per application, and a forgotten one leaked (Gitea #381).
 
+### Declaring the types a tool works on
+
+A tool whose type is fixed can name it, and the name is enforced:
+
+```java
+@ToolMethod(description = "Lists the customers of a region.", mode = ToolMode.READ,
+    group = ToolGroups.DATA_READ, types = "myapp:Customer")
+public String listCustomers(@P("The region") String region) {
+    ...
+}
+```
+
+Before the tool runs, the acting account's READ rights are asked for every declared type. An account
+that may read **none** of them is refused with a sentence naming the type, and the tool is left out of
+the tool schemas the model is sent - so the model gets "you have no read access to `myapp:Customer`"
+rather than an empty list it reports to the user as "there are no customers". One readable declaration
+is enough: a tool naming two types still does the half of its job the account is entitled to.
+
+Declaring is optional and costs nothing when left out - a tool that declares nothing is offered and
+runs as before, and `listInstances`, the TL-Script tool and the search tools legitimately declare
+nothing because their type comes from an argument. What protects the data is the per-object check
+either way.
+
+**Declare a type only where its `Read` grant in `<security-config>` goes to a role accounts hold on
+the security root.** This check reads roles there, like every other tool-level check. A type whose read
+right is derived *per object* - as `tl.ai.screenshots:Screenshot` derives `AiBinaryOwner` from the
+screenshot's own owner - must not be declared, or the owner is refused their own object. Where you
+cannot tell, declare nothing. See `doc/security/agent-security-architecture.md`, section 3.3.3.
+
 ## What your answer claims
 
 A tool answer is text the model reads next to its own instructions, so it has to say which of the
@@ -219,6 +248,22 @@ answer are configured beside the implementation:
 |--|--|
 | `truncation-hint` | How many characters of the result reach the model before it is cut. Unset uses the installation's default. |
 | `summary` | One argument - the value the body answered - and the short form compaction keeps in place of the result. Unset keeps the beginning of the result. It is disclosed under the same read rights as the result, so it may name objects. |
+
+### What bounds a failure
+
+`truncation-hint` - and `truncationHint` on a Java `ToolResult` - bounds an answer the tool
+**succeeded** with. A failure is bounded too, but only by the installation's ceiling
+(`max-tool-result-chars` on `LLMService`, per agent or as the default): the agent loop cuts a
+`ToolState.Failed` text to the same budget, keeping head and tail and naming the dropped middle, and
+emits the same `ToolCallResultTruncated` event an operator sees for a success. The failed flag the
+providers send as `is_error` survives the cut, so a truncated failure still arrives as a failure.
+
+There is deliberately no per-tool hint for the error path. `ToolResult.failure(...)` carries none,
+and the failures that are hardest to bound never pass a `ToolResult` at all - an exception out of a
+Java tool or a TL-Script body, or the error body a remote MCP server answered with, whose length is
+not this application's to choose. A hint would bound only the smallest of those three and would let
+a tool lift the ceiling off its own error path, which is the cost the ceiling exists for: an
+oversized answer is paid again on every later request of the run.
 
 Which run the call belongs to is `aiRunInfo()` inside the body: the same facts `runInfo()` gives a
 Java tool, as a map with the keys `runId`, `conversationId`, `agentName`, `model`, `provider`,

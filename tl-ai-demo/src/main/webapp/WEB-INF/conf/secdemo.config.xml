@@ -342,6 +342,24 @@
 							</tools>
 						</implementation>
 					</factory>
+					<!--
+						The declared-types pair of issue #258. Java tools, because a declaration is a
+						@ToolMethod member and a TL-Script tool has none - which is also why a script
+						tool is never refused on this ground.
+
+						"listProjects" and "listProjectsUndeclared" have the same body, the same mode
+						and the same group. The only difference is that the first declares
+						types = "pm:Project". For "ticketReader", who holds data.read and no Read
+						right on pm:Project, that difference is the whole point: the declared tool is
+						not offered to the model and refuses a call with a sentence naming the type,
+						while the undeclared one runs and answers "No projects." - true, and read by
+						a model as "this application has no projects".
+					-->
+					<factory name="secdemo-projects">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.ai.demo.secdemo.SecDemoProjectReportTool"
+						/>
+					</factory>
 					<factory name="secdemo-unclassified">
 						<implementation class="com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory">
 							<tools>

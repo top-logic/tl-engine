@@ -189,9 +189,20 @@ function isEmptyArguments(value: unknown): boolean {
   return typeof value === 'object' && Object.keys(value as object).length === 0
 }
 
-/** One argument's value: a string as the tool will really receive it, anything else as JSON. */
+/**
+ * One argument's value: a string as the tool will really receive it, anything else as JSON.
+ *
+ * What cannot be written as JSON is printed as it prints itself. Decoded wire data never is such a
+ * value, but this block is the last thing between a payload and the reader, and it must not be the
+ * reason a transcript fails to render.
+ */
 function valueText(value: unknown): string {
-  return typeof value === 'string' ? value : JSON.stringify(value, null, 2)
+  if (typeof value === 'string') return value
+  try {
+    return JSON.stringify(value, null, 2) ?? String(value)
+  } catch {
+    return String(value)
+  }
 }
 
 /**
@@ -205,15 +216,21 @@ function valueText(value: unknown): string {
  * What does not parse is shown exactly as it arrived: a payload the card cannot read is still a
  * payload the reader may recognise, and silently dropping it would put the card back where #511
  * found it.
+ *
+ * The card is handed the JSON string the server sent, the detailed trace whatever the stream
+ * decoded the call's input to. Both arrive here, because a call has to read the same in the card
+ * and in the transcript the reader opens afterwards.
  */
-function argumentsText(argsJson: string | undefined): string {
-  const raw = (argsJson ?? '').trim()
-  if (!raw) return ''
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(raw)
-  } catch {
-    return raw
+export function argumentsText(args: unknown): string {
+  let parsed: unknown = args
+  if (typeof args === 'string') {
+    const raw = args.trim()
+    if (!raw) return ''
+    try {
+      parsed = JSON.parse(raw)
+    } catch {
+      return raw
+    }
   }
   if (isEmptyArguments(parsed)) return ''
   if (typeof parsed !== 'object' || Array.isArray(parsed)) return valueText(parsed)
@@ -239,27 +256,31 @@ function clampArguments(text: string): string {
 }
 
 /**
- * What the tool will be given, so the card can be answered on the merits (#511).
+ * What the tool will be given, so the call can be judged on the merits (#511).
  *
  * Plain text in a `<pre>`, never Markdown and never HTML: this is the model's own payload, and the
  * one job of this block is to show what it really says. The card sits over the composer and must not
  * grow into the page, so the block is bounded in rendered rows and scrolls (#551); a long payload is
  * in addition cut to a head, and the expander puts the rest into the same bounded block.
+ *
+ * The same block, from the same component, in the detailed trace: the trace entry for the call and
+ * the card that asked about it stand one above the other, and printing the raw JSON in one of them
+ * meant the reader was shown `\n` escapes where the card had shown lines.
  */
-function ApprovalArguments({ argsJson, labels }: { argsJson: string; labels: Labels }) {
+export function ToolArguments({ args, labels }: { args: unknown; labels: Labels }) {
   const [open, setOpen] = useState(false)
-  const text = argumentsText(argsJson)
+  const text = argumentsText(args)
   if (!text) return null
   const head = clampArguments(text)
   const long = head.length < text.length
   return (
-    <div className="prompt-args">
-      <div className="prompt-args-label">{labels.argumentsLabel}</div>
-      <pre className="prompt-args-text">{!long || open ? text : `${head}\n…`}</pre>
+    <div className="tool-args">
+      <div className="tool-args-label">{labels.argumentsLabel}</div>
+      <pre className="tool-args-text">{!long || open ? text : `${head}\n…`}</pre>
       {long ? (
         <button
           type="button"
-          className="prompt-args-more"
+          className="tool-args-more"
           aria-expanded={open}
           onClick={() => setOpen((value) => !value)}
         >
@@ -317,7 +338,7 @@ function ApprovalCard({
       }
     >
       <p className="prompt-card-body">{approvalReason(item, labels)}</p>
-      <ApprovalArguments argsJson={item.argsJson} labels={labels} />
+      <ToolArguments args={item.argsJson} labels={labels} />
       {item.toolName ? (
         <p className="prompt-card-note">{labels.allowThisChatHint(<ToolId id={item.toolName} />)}</p>
       ) : null}

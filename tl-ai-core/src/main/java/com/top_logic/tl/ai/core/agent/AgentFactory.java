@@ -1305,12 +1305,15 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 					continue;
 				}
 				declared.add(sd);
-				String unusable = capabilities.unusableReason(sd);
+				AgentCapabilities.Unusable unusable = capabilities.unusableReason(sd);
 				if (unusable != null) {
 					// Silent capability loss is the failure mode this filter must not have: an
 					// operator asked why the agent "forgot how to do X" must find the answer here.
+					// The cause is in the line too, so that a Read grant on a type is not read as a
+					// capability the account is short of.
 					Logger.info("Agent '" + agentName + "': skill '" + sd.name()
-						+ "' is not offered to the current user - " + unusable, AgentFactory.class);
+						+ "' is not offered to the current user (" + unusable.cause() + ") - "
+						+ unusable.message(), AgentFactory.class);
 					continue;
 				}
 				catalog.append("- `").append(sd.name()).append("`: ");
@@ -1378,7 +1381,8 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 			// Silent capability loss is the failure mode this filter must not have: an operator asked
 			// why the agent "stopped handing work to X" must find the answer here.
 			Logger.info("Agent '" + agentName + "': delegate '" + offer.targetName()
-				+ "' is not offered to the current user - " + offer.unusableReason(), AgentFactory.class);
+				+ "' is not offered to the current user - " + offer.unusableReason().message(),
+				AgentFactory.class);
 		}
 		if (offered.isEmpty()) {
 			return "";
@@ -1455,10 +1459,14 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		List<DelegateOffer> offers = new ArrayList<>();
 		for (String targetName : agent.delegations()) {
 			AgentDefinition target = capabilities.graph().agent(targetName);
+			AgentCapabilities.Unusable unusable = capabilities.unusableReason(target);
+			// Only an offered delegate can carry a "limited for this user" line, and computing the set
+			// walks the delegate's whole transitive reachable-tool graph - so a dropped one does not
+			// pay for an answer nothing reads. Its own refusal sentence is on the Unusable (#517).
+			Set<String> unreachable =
+				unusable == null ? capabilities.unreachableCapabilities(target) : Set.of();
 			offers.add(new DelegateOffer(targetName, delegationToolName(targetName),
-				target != null ? target.description() : null,
-				capabilities.unusableReason(target),
-				capabilities.unreachableCapabilities(target)));
+				target != null ? target.description() : null, unusable, unreachable));
 		}
 		return offers;
 	}
@@ -1495,10 +1503,12 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 *        Why the delegate can do nothing for the principal, or <code>null</code> if it can do
 	 *        something.
 	 * @param unreachableCapabilities
-	 *        The capabilities some of the delegate's tools need and the principal does not hold.
+	 *        The capabilities some of the delegate's tools need and the principal does not hold. Empty
+	 *        for a delegate that is not {@link #offered()}: only {@link #limited()} reads it, and
+	 *        computing it walks the delegate's whole transitive reachable-tool graph.
 	 */
 	record DelegateOffer(String targetName, String toolName, String description,
-			String unusableReason, Set<String> unreachableCapabilities) {
+			AgentCapabilities.Unusable unusableReason, Set<String> unreachableCapabilities) {
 
 		/** Whether the delegate is offered to the run at all. */
 		boolean offered() {

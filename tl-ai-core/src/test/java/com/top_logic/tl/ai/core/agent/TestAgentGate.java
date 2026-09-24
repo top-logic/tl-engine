@@ -16,6 +16,7 @@ import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.tl.ai.core.agent.AgentCapabilities.Unusable;
 import com.top_logic.tl.ai.core.security.RoleAccessPolicy;
 import com.top_logic.tl.ai.core.security.RunAuthorization;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy;
@@ -107,12 +108,56 @@ public class TestAgentGate extends TestCase {
 		AgentDefinition delegate = AgentDefinitionQuery.getInstance().findAgentByName(AGENT);
 		assertNotNull("This module configures " + AGENT + "; the test needs it.", delegate);
 
-		String reason = new AgentCapabilities(name -> null, denying(AGENT)).unusableReason(delegate);
+		Unusable reason = new AgentCapabilities(name -> null, denying(AGENT)).unusableReason(delegate);
 		assertNotNull("An agent the account may not run must not be offered as a delegate.", reason);
-		assertTrue(reason, reason.contains("may not run"));
+		assertEquals("The agent itself is withheld; nothing here is about a capability.",
+			Unusable.Cause.AGENT_WITHHELD, reason.cause());
 
 		assertNull("An agent the account may run stays in the catalogue.",
 			new AgentCapabilities(name -> null, permitting(AGENT)).unusableReason(delegate));
+	}
+
+	/**
+	 * The reason a withheld agent carries is the policy's own sentence, which names the setting (#517).
+	 *
+	 * <p>
+	 * What it is for: a caller that composes a refusal out of this - {@code spawn_subagent},
+	 * {@code delegate_to_*} - has to be able to relay a cause, and the one cause that is true here is
+	 * the {@code <agent-access>} grant. A message invented at the call site named capabilities instead
+	 * and sent the user to their administrator for a grant that would have changed nothing.
+	 * </p>
+	 */
+	public void testTheWithheldAgentsReasonNamesTheSettingAndNoCapability() {
+		AgentDefinition delegate = AgentDefinitionQuery.getInstance().findAgentByName(AGENT);
+
+		Unusable reason = new AgentCapabilities(name -> null, denying(AGENT)).unusableReason(delegate);
+
+		assertFalse("A capability grant does not reach this refusal, so nothing may suggest one.",
+			reason.aboutCapabilities());
+		assertTrue("The refused agent has to be named: " + reason.message(),
+			reason.message().contains(AGENT));
+		assertTrue("...and the role whose deny entry is the setting to change: " + reason.message(),
+			reason.message().contains(ROLE));
+	}
+
+	/**
+	 * An infrastructure agent is told apart from an agent the roles withhold.
+	 *
+	 * <p>
+	 * Both are refused before any capability is looked at, and they have different remedies: a role
+	 * grant lifts the one and nothing lifts the other, which is why they are two causes rather than
+	 * one.
+	 * </p>
+	 */
+	public void testAnInfrastructureAgentIsItsOwnCause() {
+		AgentDefinition improver =
+			AgentDefinitionQuery.getInstance().findAgentByName(INFRASTRUCTURE_AGENT);
+
+		Unusable reason =
+			new AgentCapabilities(name -> null, grantingEveryAgent()).unusableReason(improver);
+
+		assertEquals(Unusable.Cause.INFRASTRUCTURE, reason.cause());
+		assertFalse("No capability grant reaches it either.", reason.aboutCapabilities());
 	}
 
 	/** A run whose agent the product chose is outside the allowlist - the prompt improver's case. */
@@ -182,11 +227,11 @@ public class TestAgentGate extends TestCase {
 		AgentDefinition improver =
 			AgentDefinitionQuery.getInstance().findAgentByName(INFRASTRUCTURE_AGENT);
 
-		String reason = new AgentCapabilities(name -> null, grantingEveryAgent())
+		Unusable reason = new AgentCapabilities(name -> null, grantingEveryAgent())
 			.unusableReason(improver);
 		assertNotNull("An agent the application runs for the user must not be offered as a delegate.",
 			reason);
-		assertTrue(reason, reason.contains("infrastructure"));
+		assertTrue(reason.message(), reason.message().contains("infrastructure"));
 	}
 
 	/** A request that names no agent is never answered with one nobody may talk to. */

@@ -289,6 +289,18 @@ message ApprovalPartDto {
 	/** Reason displayed to the user for the approval request. */
 	string displayReason;
 
+	/**
+	 * The {@code ToolMode} the approval was asked for, or empty when it was not recorded.
+	 *
+	 * <p>
+	 * What lets a reader be told in their own language what the agent wanted to do. The reason
+	 * above is the security context's sentence, in English, because it is the same for everyone;
+	 * the mode is the key the chat phrases its own sentence from, live and in the recorded
+	 * history alike.
+	 * </p>
+	 */
+	string mode;
+
 	/** The user's decision. */
 	string decision;
 

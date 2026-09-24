@@ -61,7 +61,7 @@ public class TestPart extends TestCase {
 		Instant now = Instant.now();
 		Part.ApprovalPart pending = Part.ApprovalPart.pending("a1", now, "tc1",
 			"writeFile", "{\"path\":\"/etc/hosts\"}",
-			"Write access to system file");
+			"Write access to system file", ToolMode.DATA_WRITE);
 		assertNull(pending.decision());
 		assertNull(pending.resolvedAt());
 
@@ -70,6 +70,8 @@ public class TestPart extends TestCase {
 		assertEquals(Part.ApprovalDecision.DENIED, resolved.decision());
 		assertEquals("too dangerous", resolved.userComment());
 		assertNotNull(resolved.resolvedAt());
+		assertEquals("The mode is what a reader is told in their own language from, so a decision "
+			+ "keeps it.", ToolMode.DATA_WRITE, resolved.mode());
 	}
 
 	/** Verify InteractionPart captures askUser exchanges. */

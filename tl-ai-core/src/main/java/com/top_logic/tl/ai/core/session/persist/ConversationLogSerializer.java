@@ -219,6 +219,7 @@ public final class ConversationLogSerializer {
 			data.setToolName(nullToEmpty(ap.toolName()));
 			data.setArgsJson(nullToEmpty(ap.argsJson()));
 			data.setDisplayReason(nullToEmpty(ap.displayReason()));
+			data.setMode(ap.mode() != null ? ap.mode().name() : "");
 			data.setDecision(ap.decision() != null ? ap.decision().name() : "");
 			data.setUserComment(nullToEmpty(ap.userComment()));
 			data.setResolvedAt(ap.resolvedAt() != null ? ap.resolvedAt().toEpochMilli() : 0L);
@@ -331,6 +332,7 @@ public final class ConversationLogSerializer {
 					emptyToNull(data.getToolName()),
 					emptyToNull(data.getArgsJson()),
 					emptyToNull(data.getDisplayReason()),
+					data.getMode().isEmpty() ? null : ToolMode.valueOf(data.getMode()),
 					data.getDecision().isEmpty() ? null
 						: Part.ApprovalDecision.valueOf(data.getDecision()),
 					emptyToNull(data.getUserComment()),

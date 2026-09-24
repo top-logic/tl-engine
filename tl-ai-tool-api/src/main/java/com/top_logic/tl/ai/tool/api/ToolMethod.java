@@ -86,4 +86,53 @@ public @interface ToolMethod {
 	 */
 	String group() default "";
 
+	/**
+	 * The qualified names of the model types this tool works on, e.g. {@code "myapp:Customer"}.
+	 *
+	 * <p>
+	 * <b>Enforced.</b> Before a declared tool runs, the acting principal's READ rights are asked for
+	 * every declared type. A tool whose declared types the principal may read none of is refused
+	 * before it runs - with a reason naming the type - and is left out of the tool schemas the model
+	 * is sent, so it does not plan around a tool it could not use. A tool that declares nothing is
+	 * unaffected: an empty declaration is "this tool makes no claim", never "this tool touches
+	 * nothing".
+	 * </p>
+	 *
+	 * <p>
+	 * What it buys, and in this order: the model gets "you have no read access to Customer" instead
+	 * of an empty result it reports to the user as "there are no customers"; the request carries one
+	 * tool less; and a reviewer can read off which tools claim which types.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>Declare a type only where its READ right is granted to a role held on the security root.</b>
+	 * The check is an L1 check and reads roles there, like every other one - see
+	 * {@code doc/security/agent-security-architecture.md}, section 3.3.4. A type whose read right is
+	 * derived <em>per object</em> instead, as {@code tl.ai.screenshots:Screenshot} derives
+	 * {@code AiBinaryOwner} from the screenshot's own owner, must <b>not</b> be declared: no account
+	 * holds such a role on the root, so declaring it would refuse the owner their own object. Where
+	 * you cannot tell, declare nothing - the per-object checks below are what protects the data
+	 * either way.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>Not every tool can declare, and none has to.</b> Instance browsing, TL-Script execution and
+	 * search take the type from their arguments, so there is nothing fixed to name; they are governed
+	 * by the per-object checks that apply to every tool regardless - {@code ModelSecurity.canRead} on
+	 * each object touched, the read filtering of the results, and the pre-commit guard. A declaration
+	 * is an early, coarse refusal in front of those checks, never a replacement for them, and a tool
+	 * can lie about what it touches while the per-object checks cannot be lied to.
+	 * </p>
+	 *
+	 * <p>
+	 * A name that resolves to no type of the application model is <em>skipped</em>, with a warning:
+	 * a typo is a broken declaration and not a statement about rights, and turning it into a denial
+	 * would take a working tool away from every user for nothing. A tool all of whose declarations
+	 * are unresolvable is treated as declaring nothing.
+	 * </p>
+	 *
+	 * @see Tool#types()
+	 */
+	String[] types() default {};
+
 }

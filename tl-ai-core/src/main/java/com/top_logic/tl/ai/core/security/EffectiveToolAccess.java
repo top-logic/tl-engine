@@ -18,7 +18,8 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /*
- * Issue #297, the query half of the "Agent-Sicherheit" administration view.
+ * PR #306, the query half of the "Agent-Sicherheit" administration view. No issue tracks it; the
+ * PR is the record.
  *
  * Why this is a class of its own rather than more methods on ToolAuthorization: that class is bound to
  * a run - it audits every denial it answers, it is carried on the run's security context, and it

@@ -173,21 +173,22 @@ public class RoleToolAccess {
 	 *       Web fetch and the browser tools send data outward. A default that can exfiltrate is not a
 	 *       read-only default.
 	 *   script
-	 *       TL-Script reaches every type; its enumeration results are the leak of #289; and its own
-	 *       withCommit argument is a path to a persisted write. Never a default.
+	 *       TL-Script reaches every type; its enumeration results were the leak #289 closed; and its
+	 *       own withCommit argument is a path to a persisted write. Never a default.
 	 *
-	 * A word on why data.read is defensible here, and on the ordering hazard that makes the usual
-	 * argument premature. The intended justification is that L1 grants the *ability to ask* and L2
-	 * decides per object what is actually visible - so an application with no <security-config> is
-	 * answered "nothing" by the engine's deny-all rights, and one with a <security-config> gets exactly
-	 * what it configured.
+	 * A word on why data.read is defensible here. The justification is that L1 grants the *ability to
+	 * ask* and L2 decides per object what is actually visible - so an application with no
+	 * <security-config> is answered "nothing" by the engine's deny-all rights, and one with a
+	 * <security-config> gets exactly what it configured.
 	 *
-	 * That argument is not yet true. The data tools do not consult L2: InstanceBrowserTool serializes
-	 * every attribute through unchecked Java access and TLScriptExecutor returns unfiltered results.
-	 * Per-object read filtering arrives with #289. Until then this default means unfiltered reads in an
-	 * application that has written no <security-config>. That is not a regression against the
-	 * permissive mode it replaces - which granted everything, including the write tools - but it is not
-	 * a per-object guarantee either, and nothing in the documentation may claim one.
+	 * That argument holds since #289/#295. The data tools do consult L2: every TLObject they render
+	 * passes ReadFilter, which cannot be constructed without the run's ModelSecurity, and TidResolver
+	 * is itself the read check - so InstanceBrowserTool's identities, counts and attribute values and
+	 * a TL-Script result are all filtered per object and per attribute. What this default still does
+	 * not promise is the two disclosures no output-boundary filter can reach: a cardinality TL-Script
+	 * reduced to a number before the filter saw it (#291) and a label reached through string coercion
+	 * (#296). Both are stated in doc/security/agent-security-architecture.md 3.3.2 and asserted in
+	 * SecDemoReadFilterTest, and nothing in the documentation may claim more than that.
 	 */
 	public static final List<String> DEFAULT_BASELINE =
 		List.of(ToolGroups.MODEL_READ, ToolGroups.DATA_READ);

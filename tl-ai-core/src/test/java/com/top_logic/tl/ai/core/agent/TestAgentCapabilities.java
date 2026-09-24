@@ -102,8 +102,11 @@ public class TestAgentCapabilities extends TestCase {
 	/** A skill none of whose tools the principal may use is dropped, with a reason worth logging. */
 	public void testFullyDeniedSkillIsDropped() {
 		AgentCapabilities capabilities = capabilities(Set.of(READ_TOOL));
-		String reason = capabilities.unusableReason(skill("writing", WRITE_TOOL, SCRIPT_TOOL));
-		assertNotNull(reason);
+		AgentCapabilities.Unusable unusable =
+			capabilities.unusableReason(skill("writing", WRITE_TOOL, SCRIPT_TOOL));
+		assertNotNull(unusable);
+		assertEquals(AgentCapabilities.Unusable.Cause.NO_REACHABLE_TOOL, unusable.cause());
+		String reason = unusable.message();
 		assertTrue(reason, reason.contains(ToolGroups.DATA_WRITE));
 		assertTrue(reason, reason.contains(ToolGroups.SCRIPT));
 	}

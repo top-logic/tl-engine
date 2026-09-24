@@ -98,11 +98,20 @@ export interface ErrorMessage {
 }
 
 /**
+ * What a notice is about.
+ *
+ * `model_switched` - the run lost the model it was configured with and continued on another one.
+ * `transaction_rolled_back` - the data changes this turn made were discarded instead of saved.
+ * `cancelled` - the user stopped the run.
+ */
+export type NoticeKind = 'model_switched' | 'transaction_rolled_back' | 'cancelled'
+
+/**
  * Something that happened around the conversation rather than in it.
  *
- * Two things: the run lost the model it was configured with and continued on another one, or the
- * user stopped the run. Not an {@link ErrorMessage} - nothing failed for the user - and not an
- * assistant message either, because the agent did not say it.
+ * Not an {@link ErrorMessage} - the run itself did not fail - and not an assistant message either,
+ * because the agent did not say it. A rolled-back turn is the sharper case: the model may well write
+ * "done" over writes that were thrown away, so the thread has to say what really happened.
  *
  * The sentence the user reads is the renderer's, from `kind`, so that a notice reads the same live
  * as after a reload (#429) and in the reader's language (#549).
@@ -113,15 +122,12 @@ export interface NoticeMessage {
   /** What the notice is about. */
   kind: NoticeKind
   /**
-   * The server's line under the sentence: `from -> to: reason` for a model switch, empty for a
-   * cancel, which has nothing to add to "stopped".
+   * The server's line under the sentence: `from -> to: reason` for a model switch, the rollback
+   * reason for a rollback, empty for a cancel, which has nothing to add to "stopped".
    */
   detail: string
   timestamp: number
 }
-
-/** What a {@link NoticeMessage} is about. */
-export type NoticeKind = 'model_switched' | 'cancelled'
 
 export interface ApprovalRequest {
   type: 'approval_request'

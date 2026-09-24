@@ -824,6 +824,24 @@ public class ChatProcessor {
 	}
 
 	/**
+	 * Every chat UI that has to be told how this run ended.
+	 *
+	 * <p>
+	 * The answer and the error that replaces it are addressed to the <em>conversation</em>, not to
+	 * the tab that sent the message. That tab is often gone by the time the run finishes - the user
+	 * closed it, reloaded the page, or signed in again somewhere else - while another window of the
+	 * same account has the conversation open and is showing it as still running. Sending only to the
+	 * handler captured at run start left that window spinning for ever and wrote one line into the
+	 * log: "SSE handler closed, no replacement found - dropping message_complete" (issue #512).
+	 * </p>
+	 */
+	private static List<ChatEventHandler> completionTargets(AIProcessingState state,
+			TaskProgressTracker tracker) {
+		return ChatEventHandlerRegistry.findForSession(tracker.getSessionOwner(), state.getSessionId(),
+			state.getSseHandler());
+	}
+
+	/**
 	 * Background task for AI processing with detailed progress tracking.
 	 *
 	 * <p>
@@ -866,18 +884,23 @@ public class ChatProcessor {
 						executeOrchestrator(_taskTracker, state, _conversationMemory, _userMessage, _attachments);
 						state.completeSuccessfully();
 
-						ChatEventHandler handler = state.getSseHandler();
-						if (handler != null) {
-							String responseText = state.getLastAgentResponse();
-							if (responseText != null && !responseText.isEmpty()) {
-								String html = Converters.markdownToHtmlString(responseText);
-								MessageCompleteEvent event = MessageCompleteEvent.create()
-									.setContentHtml(html)
-									.setContentText(responseText);
-								for (Citation citation : state.getLastCitations()) {
-									event.addCitation(toCitationDto(citation));
+						String responseText = state.getLastAgentResponse();
+						if (responseText != null && !responseText.isEmpty()) {
+							String html = Converters.markdownToHtmlString(responseText);
+							MessageCompleteEvent event = MessageCompleteEvent.create()
+								.setContentHtml(html)
+								.setContentText(responseText);
+							for (Citation citation : state.getLastCitations()) {
+								event.addCitation(toCitationDto(citation));
+							}
+							for (ChatEventHandler handler : completionTargets(state, _taskTracker)) {
+								try {
+									handler.sendMessageComplete(event);
+								} catch (RuntimeException ex) {
+									Logger.info("Could not deliver the answer of run "
+										+ state.getCurrentTaskId() + " to a window: " + ex.getMessage(),
+										ChatProcessor.class);
 								}
-								handler.sendMessageComplete(event);
 							}
 						}
 
@@ -919,13 +942,14 @@ public class ChatProcessor {
 			ProviderException provider = providerFailure(ex);
 			String kind = errorKind(ex);
 			String message = provider != null ? provider.getMessage() : ex.getMessage();
-			// Send via SSE if handler is available
-			ChatEventHandler handler = state.getSseHandler();
-			if (handler != null) {
+			// To whoever is looking at this chat, for the reason completionTargets gives: a run
+			// that died after its window closed leaves every other window spinning on a turn that
+			// has ended, exactly as a completed one does.
+			ProviderErrorEvent event = ProviderErrorEvent.create()
+				.setKind(kind)
+				.setErrorMessage(message != null ? message : ex.getClass().getSimpleName());
+			for (ChatEventHandler handler : completionTargets(state, _taskTracker)) {
 				try {
-					ProviderErrorEvent event = ProviderErrorEvent.create()
-						.setKind(kind)
-						.setErrorMessage(message != null ? message : ex.getClass().getSimpleName());
 					handler.sendProviderError(event);
 				} catch (Exception sseEx) {
 					Logger.warn("Failed to send error via SSE: " + sseEx.getMessage(), ChatProcessor.class);

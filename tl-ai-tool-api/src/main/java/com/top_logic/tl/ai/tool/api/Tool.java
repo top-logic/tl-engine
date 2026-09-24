@@ -5,6 +5,7 @@
  */
 package com.top_logic.tl.ai.tool.api;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -73,6 +74,28 @@ public interface Tool {
 	 */
 	default String group() {
 		return "";
+	}
+
+	/**
+	 * The qualified names of the model types this tool declares it works on.
+	 *
+	 * <p>
+	 * Empty means "makes no claim", which is the default and costs nothing: the tool is offered and
+	 * runs, and what it may touch is decided per object as it touches it. A non-empty declaration is
+	 * checked before the tool runs - the acting principal must have READ access to at least one of
+	 * the declared types, or the call is refused and the tool is left out of the model's tool
+	 * schemas.
+	 * </p>
+	 *
+	 * <p>
+	 * Tools that arrive at runtime and have no annotation to carry a declaration - TL-Script tools
+	 * and remote MCP tools - declare nothing and are therefore never refused on this ground.
+	 * </p>
+	 *
+	 * @see ToolMethod#types()
+	 */
+	default List<String> types() {
+		return List.of();
 	}
 
 }

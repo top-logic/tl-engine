@@ -38,10 +38,13 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
  * </ul>
  *
  * <p>
- * What this deliberately does <b>not</b> assert is that a default {@code data.read} is safe. It is
- * not, yet: the data tools do not consult the model-access layer, so per-object read filtering arrives
- * with issue #289. {@link #testTheDefaultIsReadOnly()} pins the one property that does hold today -
- * that nothing in the default can change or export anything.
+ * What this deliberately does <b>not</b> assert is that a default {@code data.read} discloses nothing.
+ * Per-object read filtering shipped with issues #289/#295 - the data tools render every
+ * {@code TLObject} through {@code ReadFilter} - but a cardinality a script reduced to a number (#291)
+ * and a label reached through string coercion (#296) are outside any output-boundary filter, and that
+ * is asserted where it belongs, in {@code TestReadFilter} and {@code SecDemoReadFilterTest}.
+ * {@link #testTheDefaultIsReadOnly()} pins the property this class is about - that nothing in the
+ * default can change or export anything.
  * </p>
  */
 public class TestDefaultBaseline extends TestCase {

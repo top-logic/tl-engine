@@ -18,11 +18,14 @@ import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.agent.AgentCapabilities.AgentGraph;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.security.RoleToolAccess;
 import com.top_logic.tl.ai.core.security.RoleToolAccess.DeclaredGroups;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy.AgentGrant;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy.AgentRoleAccess;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.BackgroundAllowlist;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Baseline;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
@@ -63,6 +66,13 @@ import com.top_logic.tl.ai.tool.api.ToolSchema;
  * ({@link DelegationTool#delegationRefusal(String, AgentCapabilities)}), asked of the parent turn's
  * own context rather than of a background-bounded one, and it is asserted here beside the spawn's so
  * the two cannot drift apart.
+ * </p>
+ *
+ * <p>
+ * Since #517 both are asserted against the <em>cause</em> as well: a refusal the capability filter did
+ * not make must name no capability, because no capability grant answers it. That needs an
+ * {@code <agent-access>} section, so those cases build the security context from a whole
+ * {@link ToolAccessPolicy} rather than from a {@link ToolAuthorization} alone.
  * </p>
  *
  * @see SubagentSpawner#detachedSpawnRefusal(String, AgentCapabilities)
@@ -281,6 +291,88 @@ public class TestSpawnFilter extends TestCase {
 		assertTrue(refusal, refusal.contains(ToolGroups.SCRIPT));
 	}
 
+	// ===== The agent-access refusal (#517) =====
+
+	/**
+	 * A spawn the {@code <agent-access>} section refuses says so, and names no capability.
+	 *
+	 * <p>
+	 * The clerk reaches a tool of {@link #MIXED} even detached - {@code data.read} is on the allowlist
+	 * - so the capability filter refuses nothing here and every capability this run lacks is beside
+	 * the point. Naming one would send the user to their administrator for a grant that leaves the
+	 * spawn exactly where it is: the agent is withheld from the role, and only an agent grant lifts
+	 * that.
+	 * </p>
+	 */
+	public void testAgentAccessRefusalNamesTheAgentGrantAndNoCapability() {
+		assertNull("Precondition: nothing but <agent-access> refuses this spawn.",
+			spawnAs(CLERK, MIXED));
+
+		String refusal = spawnUnder(agentAccess(CLERK, READER), CLERK, MIXED);
+
+		assertNotNull("An agent this role may not run must not be spawned.", refusal);
+		assertTrue("The refusal must name the agent the model asked for: " + refusal,
+			refusal.contains("'" + MIXED + "'"));
+		assertTrue("...and say that the roles are what withhold it: " + refusal,
+			refusal.contains("permitted by none of your roles"));
+		assertTrue("...and send the user after an agent grant: " + refusal,
+			refusal.contains("no capability grant does"));
+		assertNoCapabilityIsBlamed(refusal);
+	}
+
+	/** The synchronous path had the same defect and gets the same answer. */
+	public void testAgentAccessDelegationRefusalNamesNoCapabilityEither() {
+		assertNull("Precondition: nothing but <agent-access> refuses this delegation.",
+			delegateAs(CLERK, MIXED));
+
+		String refusal = delegateUnder(agentAccess(CLERK, READER), CLERK, MIXED);
+
+		assertNotNull("An agent this role may not run must not be delegated to.", refusal);
+		assertTrue("The refusal must name the agent the model asked for: " + refusal,
+			refusal.contains("'" + MIXED + "'"));
+		assertTrue("...and say that the roles are what withhold it: " + refusal,
+			refusal.contains("permitted by none of your roles"));
+		assertNoCapabilityIsBlamed(refusal);
+	}
+
+	/** An agent the section does grant is spawned, so the section is a filter and not a wall. */
+	public void testAgentAccessRefusesOnlyWhatItWithholds() {
+		assertNull("The section grants this one to the clerk's role.",
+			spawnUnder(agentAccess(CLERK, READER), CLERK, READER));
+		assertNull(delegateUnder(agentAccess(CLERK, READER), CLERK, READER));
+	}
+
+	/**
+	 * The capability case keeps its capability list: the two refusals stay different messages.
+	 *
+	 * <p>
+	 * The other half of #517. A message that named no capability anywhere would be just as wrong -
+	 * where the capability filter <em>is</em> what refused, the capability is the one thing the user
+	 * can act on.
+	 * </p>
+	 */
+	public void testTheCapabilityRefusalStillNamesItsCapabilities() {
+		String refusal = spawnUnder(agentAccess(VIEWER, WRITER), VIEWER, WRITER);
+
+		assertNotNull("The viewer holds no data.write, so the agent can do nothing for them.", refusal);
+		assertTrue("Its role is granted the agent, so only the capability is left to say: " + refusal,
+			refusal.contains(ToolGroups.DATA_WRITE));
+		assertTrue(refusal, refusal.contains("does not hold"));
+	}
+
+	/** That a refusal blames no capability, in none of the ways this message could. */
+	private static void assertNoCapabilityIsBlamed(String refusal) {
+		assertFalse("A capability grant would change nothing here: " + refusal,
+			refusal.contains(ToolGroups.DATA_WRITE));
+		assertFalse(refusal, refusal.contains(ToolGroups.DATA_READ));
+		assertFalse("Nothing may suggest the user is missing a right: " + refusal,
+			refusal.contains("does not hold"));
+		assertFalse("...nor that being unattended is what did it: " + refusal,
+			refusal.contains("background allowlist"));
+		assertTrue("The model must be told to stop rather than to try again: " + refusal,
+			refusal.contains("again will not help"));
+	}
+
 	// ===== Helpers =====
 
 	/**
@@ -310,6 +402,51 @@ public class TestSpawnFilter extends TestCase {
 	private static String delegateAs(String role, String targetAgentName) {
 		SecurityContext child = parentTurn(role).forDelegation(TransactionScope.NOOP).security();
 		return DelegationTool.delegationRefusal(targetAgentName, capabilities(child));
+	}
+
+	/**
+	 * {@link #spawnAs} under a policy that also carries an {@code <agent-access>} section.
+	 *
+	 * @param policy
+	 *        The whole deployment policy, tool access and agent access alike - built through
+	 *        {@link TopLogicSecurityContext#forRun(ToolAccessPolicy, Person, Set)} so that both
+	 *        dimensions come from the one policy, as they do in a real run.
+	 */
+	private static String spawnUnder(ToolAccessPolicy policy, String role, String targetAgentName) {
+		SecurityContext child = detachedChild(parentTurnUnder(policy, role)).security();
+		return SubagentSpawner.detachedSpawnRefusal(targetAgentName, capabilities(child));
+	}
+
+	/** {@link #delegateAs} under a policy that also carries an {@code <agent-access>} section. */
+	private static String delegateUnder(ToolAccessPolicy policy, String role, String targetAgentName) {
+		SecurityContext child =
+			parentTurnUnder(policy, role).forDelegation(TransactionScope.NOOP).security();
+		return DelegationTool.delegationRefusal(targetAgentName, capabilities(child));
+	}
+
+	private static ToolContext parentTurnUnder(ToolAccessPolicy policy, String role) {
+		return new ToolContext(TopLogicSecurityContext.forRun(policy, null, Set.of(role)),
+			ApprovalCallback.AUTO_APPROVE, TransactionScope.NOOP);
+	}
+
+	/**
+	 * The fixture policy with an {@code <agent-access>} section granting the role exactly the named
+	 * agents.
+	 *
+	 * <p>
+	 * A role the section names and does not grant an agent reaches none of the others: that is what
+	 * makes the refusal here the agent's own rather than a capability's.
+	 * </p>
+	 */
+	private static ToolAccessPolicy agentAccess(String role, String... grantedAgents) {
+		ToolAccessPolicy policy = fixturePolicy();
+		AgentRoleAccess access = TypedConfiguration.newConfigItem(AgentRoleAccess.class);
+		access.setName(role);
+		AgentGrant grant = TypedConfiguration.newConfigItem(AgentGrant.class);
+		grant.setAgents(List.of(grantedAgents));
+		access.getGrants().add(grant);
+		policy.getAgentAccess().getRoles().put(role, access);
+		return policy;
 	}
 
 	/** The detached child of the given parent turn, exactly as {@link SubagentSpawner} builds it. */

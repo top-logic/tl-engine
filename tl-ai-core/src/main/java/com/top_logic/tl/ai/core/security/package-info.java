@@ -13,9 +13,25 @@
  * unit-tested, {@link com.top_logic.tl.ai.core.security.ModelSecurity} is reachable from every tool
  * through {@code ToolContext.modelSecurity()}, and the
  * {@link com.top_logic.tl.ai.core.security.PreCommitGuard} of section 3.5 runs once per writing turn.
- * What is <b>not</b> here is the rest of the enforcement rollout: apart from {@code ViewDocumentTool},
- * no data tool filters its results through {@link com.top_logic.tl.ai.core.security.ModelSecurity}
- * yet, which is tracked as issue #289.
+ * </p>
+ *
+ * <p>
+ * Read disclosure is a chokepoint rather than per-tool discipline:
+ * {@link com.top_logic.tl.ai.core.security.ReadFilter} is the one place a {@code TLObject} becomes
+ * something a model gets to see, it cannot be constructed without the run's {@code ModelSecurity}, and
+ * the data tools serialize through it - {@code InstanceBrowserTool}, {@code TLScriptExecutor},
+ * {@code ScriptToolExecutor}, {@code TextEditTool} and {@code TidResolver}, which is itself the read
+ * check every identifier passes. {@code ModelDigestGenerator} scopes the model digest by
+ * {@code ModelSecurity.accessibleTypes(READ)}, and the vector index - written under system rights by
+ * its background daemon - is filtered <em>at query time</em> by {@code VectorReadFilter}, which drops
+ * a hit whose source object the principal cannot read.
+ * </p>
+ *
+ * <p>
+ * Two disclosures are outside that chokepoint by construction and say so where they occur: a
+ * cardinality TL-Script has already reduced to a number carries no object left to filter (issue #291),
+ * and an embedding was computed from text the filter only removes from the answer. Both are stated on
+ * {@code ReadFilter} and {@code VectorReadFilter} rather than left implicit.
  * </p>
  *
  * <p>

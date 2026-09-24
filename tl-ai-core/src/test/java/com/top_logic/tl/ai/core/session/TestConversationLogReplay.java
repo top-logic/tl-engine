@@ -178,7 +178,7 @@ public class TestConversationLogReplay extends TestCase {
 		Turn turn = log.startTurn();
 		turn.setUserParts(List.of(new Part.TextPart("u1", Instant.now(), "Write")));
 		turn.addAssistantPart(Part.ApprovalPart.pending("a1", Instant.now(), "tc1",
-			"writeFile", "{}", "Write").resolve(
+			"writeFile", "{}", "Write", ToolMode.DATA_WRITE).resolve(
 				Part.ApprovalDecision.APPROVED, null, Instant.now()));
 		turn.addAssistantPart(new Part.TextPart("p1", Instant.now(), "Done."));
 		turn.addUsage(TokenUsage.EMPTY);

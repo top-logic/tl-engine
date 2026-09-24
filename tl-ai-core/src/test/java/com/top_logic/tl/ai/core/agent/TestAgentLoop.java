@@ -314,6 +314,140 @@ public class TestAgentLoop extends TestCase {
 			events.stream().anyMatch(AgentEvent.ToolCallResultTruncated.class::isInstance));
 	}
 
+	/**
+	 * An over-long <em>failed</em> result costs the same as an over-long successful one - it sits
+	 * in the conversation for every later request of the run - so the same budget bounds it and the
+	 * same event reports that it did. What must survive the cut is the failed flag itself and the
+	 * {@code synthetic} bit the end-of-turn rollback asks.
+	 */
+	public void testOversizedFailureIsTruncated() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Call it."))));
+
+		ToolCall toolCall = new ToolCall("tc1", "failing", "{}");
+		List<List<Message>> requests = new ArrayList<>();
+		LLMProvider provider = recording(requests, mockProvider(
+			List.of(toolCall),
+			List.of(new TextContent("done"))));
+
+		ToolCatalog registry = new ToolCatalog();
+		registry.register(failingTool("failing", OVERSIZED_RESULT));
+		registry.freeze();
+
+		List<AgentEvent> events = new ArrayList<>();
+		AgentLoop loop = new AgentLoop(config(10), provider, registry, SMALL_RESULT_CAP);
+		loop.run(conv, events::add);
+
+		ToolState.Failed failed = firstFailedResult(conv);
+		assertTrue("failure must be shortened", failed.error().length() < OVERSIZED_RESULT.length());
+		assertTrue("the failure must fit the budget plus the notice",
+			failed.error().length() <= SMALL_RESULT_CAP + 64);
+		assertFalse("the middle must be dropped", failed.error().contains(MIDDLE_MARKER));
+		assertTrue("truncation notice present", failed.error().contains("truncated"));
+		assertTrue("a truncation event is emitted",
+			events.stream().anyMatch(AgentEvent.ToolCallResultTruncated.class::isInstance));
+		assertTrue("a tool reporting its own failure stays synthetic", failed.synthetic());
+
+		// What the next request carried is what actually costs tokens.
+		assertEquals("two provider calls", 2, requests.size());
+		ToolState sentBack = sentToolState(requests.get(1), "tc1");
+		assertTrue("the failure reaches the provider as a failure", sentBack instanceof ToolState.Failed);
+		assertEquals("the provider sees the truncated text",
+			failed.error(), ((ToolState.Failed) sentBack).error());
+	}
+
+	/**
+	 * A failure within the budget is passed on byte for byte - no notice appended, no event, and
+	 * still a failure.
+	 */
+	public void testShortFailureIsNotTruncated() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Call it."))));
+
+		String message = "No invoice matches number C-2026-0042.";
+		ToolCall toolCall = new ToolCall("tc1", "failing", "{}");
+		LLMProvider provider = mockProvider(
+			List.of(toolCall),
+			List.of(new TextContent("done")));
+
+		ToolCatalog registry = new ToolCatalog();
+		registry.register(failingTool("failing", message));
+		registry.freeze();
+
+		List<AgentEvent> events = new ArrayList<>();
+		AgentLoop loop = new AgentLoop(config(10), provider, registry, SMALL_RESULT_CAP);
+		loop.run(conv, events::add);
+
+		ToolState.Failed failed = firstFailedResult(conv);
+		assertEquals("a failure within the budget is untouched", message, failed.error());
+		assertFalse("no truncation event for a short failure",
+			events.stream().anyMatch(AgentEvent.ToolCallResultTruncated.class::isInstance));
+		assertTrue("still flagged as a failure", failed.synthetic());
+	}
+
+	/**
+	 * A failure that arrives by <em>throwing</em> is bounded the same way, and stays
+	 * non-synthetic: truncating the sentence must not cost the turn its rollback.
+	 */
+	public void testOversizedThrownFailureKeepsRollbackBit() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Call it."))));
+
+		ToolCall toolCall = new ToolCall("tc1", "throwing", "{}");
+		LLMProvider provider = mockProvider(
+			List.of(toolCall),
+			List.of(new TextContent("done")));
+
+		ToolSchema schema = new ToolSchema("throwing", "Throws", "{}");
+		ToolCatalog registry = new ToolCatalog();
+		registry.register(ToolStubs.builder("throwing").description("").schema(schema)
+			.execute((args, context) -> {
+				throw new IllegalArgumentException(OVERSIZED_RESULT);
+			}).build());
+		registry.freeze();
+
+		List<AgentEvent> events = new ArrayList<>();
+		AgentLoop loop = new AgentLoop(config(10), provider, registry, SMALL_RESULT_CAP);
+		loop.run(conv, events::add);
+
+		ToolState.Failed failed = firstFailedResult(conv);
+		assertTrue("the thrown message must be shortened",
+			failed.error().length() < OVERSIZED_RESULT.length());
+		assertTrue("truncation notice present", failed.error().contains("truncated"));
+		assertTrue("a truncation event is emitted",
+			events.stream().anyMatch(AgentEvent.ToolCallResultTruncated.class::isInstance));
+		assertFalse("a thrown failure still rolls the turn back", failed.synthetic());
+	}
+
+	/** A read tool answering with {@link ToolResult#failure(String)}. */
+	private static Tool failingTool(String name, String text) {
+		ToolSchema schema = new ToolSchema(name, "Reports a failure", "{}");
+		return ToolStubs.builder(name).description("").schema(schema)
+			.execute((args, context) -> ToolResult.failure(text)).build();
+	}
+
+	/** The state of the named tool call as it was sent to the provider. */
+	private static ToolState sentToolState(List<Message> sent, String toolCallId) {
+		return sent.stream()
+			.filter(ToolResultMessage.class::isInstance)
+			.map(ToolResultMessage.class::cast)
+			.filter(m -> toolCallId.equals(m.toolCallId()))
+			.findFirst()
+			.orElseThrow(() -> new AssertionError("tool result " + toolCallId + " not sent"))
+			.state();
+	}
+
+	/** Extracts the single recorded failed tool result from a completed conversation. */
+	private static ToolState.Failed firstFailedResult(Conversation conv) {
+		ToolResultMessage message = conv.messages().stream()
+			.filter(ToolResultMessage.class::isInstance)
+			.map(ToolResultMessage.class::cast)
+			.findFirst()
+			.orElseThrow(() -> new AssertionError("no tool result recorded"));
+		assertTrue("tool result failed", message.state() instanceof ToolState.Failed);
+		return (ToolState.Failed) message.state();
+	}
+
 	/** Extracts the single recorded tool result from a completed conversation. */
 	private static ToolState.Completed firstToolResult(Conversation conv) {
 		ToolResultMessage message = conv.messages().stream()

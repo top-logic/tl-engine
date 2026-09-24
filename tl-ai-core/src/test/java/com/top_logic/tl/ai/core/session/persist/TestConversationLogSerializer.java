@@ -100,7 +100,7 @@ public class TestConversationLogSerializer extends TestCase {
 
 		Part.ApprovalPart approval = Part.ApprovalPart.pending("apr1",
 			Instant.ofEpochMilli(2001), "tc2", "deleteFile", "{\"path\":\"/tmp/test\"}",
-			"Delete file");
+			"Delete file", ToolMode.DATA_WRITE);
 		turn2.addAssistantPart(approval.resolve(Part.ApprovalDecision.DENIED,
 			"too risky", Instant.ofEpochMilli(2002)));
 		turn2.addAssistantPart(new Part.TextPart("p2", Instant.ofEpochMilli(2003),

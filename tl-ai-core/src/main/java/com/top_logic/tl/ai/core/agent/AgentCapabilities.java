@@ -17,6 +17,10 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import com.top_logic.tl.ai.core.mcp.McpServerRegistry;
+import com.top_logic.tl.ai.core.security.DeclaredTypeAccess;
+import com.top_logic.tl.ai.core.security.RoleAccessPolicy;
+import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Decision;
+import com.top_logic.tl.ai.core.security.RunAuthorization;
 import com.top_logic.tl.ai.core.security.ToolGroupResources;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
@@ -58,12 +62,22 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
  * </p>
  *
  * <p>
- * <b>Authorization only, not the execution-mode gate.</b> Everything here asks
- * {@link SecurityContext#hasToolPermission(Tool)}, which is bound once per run and cannot change
- * while it lasts. The {@link ExecutionMode} half of {@link ToolPermissionFilter} is deliberately not
- * consulted: maintenance mode can open and close mid-run, and a tool withheld from the session
- * catalog because of it would stay missing after it opened. That half stays where it belongs, in
- * the per-turn schema filter.
+ * <b>Authorization and declared types, not the execution-mode gate.</b> Everything here asks
+ * {@link SecurityContext#hasToolPermission(Tool)} and {@link DeclaredTypeAccess}, both of which are
+ * bound once per run and cannot change while it lasts. The {@link ExecutionMode} half of
+ * {@link ToolPermissionFilter} is deliberately not consulted: maintenance mode can open and close
+ * mid-run, and a tool withheld from the session catalog because of it would stay missing after it
+ * opened. That half stays where it belongs, in the per-turn schema filter.
+ * </p>
+ *
+ * <p>
+ * <b>The declared-type half is the same rule the schema filter applies</b>, asked of a
+ * {@link DeclaredTypeAccess} built from the same {@link SecurityContext#modelSecurity() model
+ * rights}. Asking only about capabilities was a defect of its own: {@code listTools} advertised a
+ * tool the filter drops, a skill whose only tool is type-withheld counted as usable, and every
+ * refusal blamed a capability where the declared type was the cause - the wrong-remedy defect #517
+ * fixed for agents. A type-withheld thing therefore answers {@link Unusable.Cause#TYPE_UNREADABLE},
+ * whose {@link Unusable#aboutCapabilities()} is false, so no caller lists capabilities for it.
  * </p>
  *
  * <p>
@@ -122,6 +136,82 @@ public class AgentCapabilities {
 	}
 
 	/**
+	 * Why an agent can do nothing for the run's principal - the answer of
+	 * {@link AgentCapabilities#unusableReason(AgentDefinition)}.
+	 *
+	 * <p>
+	 * A bare sentence was not enough (#517). Every refusal looked alike to a caller that has to
+	 * <em>compose</em> a message out of it, so {@code spawn_subagent} explained an agent the roles
+	 * withhold by listing the capabilities its tools happen to need - none of which is the reason, and
+	 * granting all of them would have changed nothing. The cause says which sentence is true, and
+	 * {@link #aboutCapabilities()} says whether naming a capability is on the point at all.
+	 * </p>
+	 *
+	 * <p>
+	 * {@link Cause#INFRASTRUCTURE} is a cause of its own rather than a shade of
+	 * {@link Cause#AGENT_WITHHELD} because no role grant lifts it - the application runs such an agent
+	 * <em>for</em> a user, so no other agent hands its work to it either (#397), and a message offering
+	 * an agent grant as the remedy would be as misleading there as a capability list is here.
+	 * </p>
+	 *
+	 * <p>
+	 * {@link Cause#TYPE_UNREADABLE} is a cause of its own for the same reason (#258): a tool is
+	 * withheld by the model types it declares it works on, which is a Read grant on a type and not a
+	 * capability, so a capability list would again name the grants that do not help.
+	 * </p>
+	 *
+	 * @param cause
+	 *        What refused the agent.
+	 * @param message
+	 *        The refusal in English, for a log line and for a message relayed to the model. The three
+	 *        causes that are about the agent itself take it from
+	 *        {@link com.top_logic.tl.ai.core.security.RoleAccessPolicy.Decision.Denied#message()},
+	 *        which names the setting an administrator would change; the two about its tools are
+	 *        composed here.
+	 */
+	public record Unusable(Cause cause, String message) {
+
+		// The JavaDoc below this line is short on purpose: the build exports a public enum's labels
+		// and tooltips to the message bundles from it, so what a constant means belongs on the
+		// constant and why the split exists belongs on Unusable, which is not exported.
+
+		/** Why an agent is unusable for the principal of a run. */
+		public enum Cause {
+
+			/** No role of the acting account is granted this agent. */
+			AGENT_WITHHELD,
+
+			/** The agent is infrastructure: the application runs it for a user, nobody delegates to it. */
+			INFRASTRUCTURE,
+
+			/** The model the agent is assigned, or a server it declares, is denied to this account. */
+			AGENTS_OWN_DENIED,
+
+			/** The account may run the agent, but no tool the agent reaches is permitted to the run. */
+			NO_REACHABLE_TOOL,
+
+			/** Every tool left works on model types this account may not read. */
+			TYPE_UNREADABLE;
+		}
+
+		/**
+		 * Whether the capability filter is what refused, so that naming capabilities is on the point.
+		 *
+		 * <p>
+		 * False for every other cause, and that is the whole difference: an agent withheld from the
+		 * account is not reached by any capability grant, so a message listing capabilities would name
+		 * exactly the grants that do not help and send the user to their administrator for one of them.
+		 * {@link Cause#TYPE_UNREADABLE} is false for the same reason and one step worse: the capability
+		 * a type-withheld tool needs is one the account already <em>holds</em>, so naming it would send
+		 * the administrator looking for a grant that is already there.
+		 * </p>
+		 */
+		public boolean aboutCapabilities() {
+			return cause == Cause.NO_REACHABLE_TOOL;
+		}
+	}
+
+	/**
 	 * The sentence that closes every message which names a capability, or deliberately names none.
 	 *
 	 * <p>
@@ -146,11 +236,28 @@ public class AgentCapabilities {
 		"These capabilities explain only this skill. Do not present them as the reason any other tool"
 			+ " or skill is unreachable, and do not name a capability this message does not name.";
 
+	/**
+	 * The sentence that closes a refusal which deliberately names no capability, because none is the
+	 * cause.
+	 *
+	 * <p>
+	 * The declared-type twin of {@link #NO_GUESSING}, which cannot be reused verbatim: it opens with
+	 * "These capabilities", and here there are none to point at. What it has to keep is the half that
+	 * matters - the model must not supply a capability of its own to fill the gap, which is the very
+	 * guessing #517 found. See {@code doc/security/agent-security-architecture.md} section 3.3.3.
+	 * </p>
+	 */
+	static final String NO_CAPABILITY_GUESSING =
+		"Do not name a capability as the reason: this is a model access right, and no capability grant"
+			+ " changes it. Do not present it as the reason any other tool or skill is unreachable.";
+
 	private final Function<String, Tool> _toolResolver;
 
 	private final SecurityContext _security;
 
 	private final AgentGraph _graph;
+
+	private final DeclaredTypeAccess _declaredTypes;
 
 	/**
 	 * Creates an {@link AgentCapabilities} view for one run over the
@@ -179,9 +286,27 @@ public class AgentCapabilities {
 	 */
 	public AgentCapabilities(Function<String, Tool> toolResolver, SecurityContext security,
 			AgentGraph graph) {
+		this(toolResolver, security, graph, new DeclaredTypeAccess(security.modelSecurity()));
+	}
+
+	/**
+	 * Creates a view that asks the given declared-type check instead of the one the security
+	 * context's model rights would produce.
+	 *
+	 * <p>
+	 * Package-visible, and the same seam {@link ToolPermissionFilter} has: it lets a test pin that
+	 * this view and the schema filter agree about a declared type without booting an application
+	 * model. Production always goes through the public constructors, which build the check from the
+	 * very {@link SecurityContext#modelSecurity() model rights} the filter uses - one rule, asked
+	 * twice, never two rules.
+	 * </p>
+	 */
+	AgentCapabilities(Function<String, Tool> toolResolver, SecurityContext security, AgentGraph graph,
+			DeclaredTypeAccess declaredTypes) {
 		_toolResolver = toolResolver;
 		_security = security;
 		_graph = graph;
+		_declaredTypes = declaredTypes;
 	}
 
 	/**
@@ -203,9 +328,29 @@ public class AgentCapabilities {
 
 	/**
 	 * Whether the run's principal may use the given tool.
+	 *
+	 * <p>
+	 * Both halves the schema filter asks about the tool itself: the capability the tool costs, and
+	 * the model types it declares it works on (#258). Leaving the second out advertised tools the
+	 * filter drops.
+	 * </p>
 	 */
 	public boolean permits(Tool tool) {
-		return _security.hasToolPermission(tool);
+		return _security.hasToolPermission(tool) && _declaredTypes.permits(tool);
+	}
+
+	/**
+	 * Whether the given tool is out of reach because of the model types it declares, rather than
+	 * because of the capability it costs.
+	 *
+	 * <p>
+	 * The two are mutually exclusive by construction - the capability gate answers first, exactly as
+	 * it does in {@link ToolPermissionFilter#denialReason(Tool)} - so that a user who may not use the
+	 * tool at all is sent after the capability and not after a type.
+	 * </p>
+	 */
+	private boolean withheldByDeclaredTypes(Tool tool) {
+		return _security.hasToolPermission(tool) && !_declaredTypes.permits(tool);
 	}
 
 	/**
@@ -233,6 +378,13 @@ public class AgentCapabilities {
 	 * </p>
 	 *
 	 * <p>
+	 * Three remedies, not two: a tool whose {@link com.top_logic.tl.ai.tool.api.ToolMethod#types()
+	 * declared types} this user may not read names the types instead of a capability (#258). The
+	 * capability it costs is one the user holds, so naming it would be true of the tool and false of
+	 * the refusal.
+	 * </p>
+	 *
+	 * <p>
 	 * The capability is <em>named</em> and not described, unlike {@link #describeCapability(String)}
 	 * elsewhere. A listing repeats the same capability across a dozen entries, and the sentence saying
 	 * what each one covers is already in the run's {@link #notice(Collection, Collection) capability
@@ -248,6 +400,14 @@ public class AgentCapabilities {
 	public String unusableReason(Tool tool) {
 		if (permits(tool)) {
 			return null;
+		}
+		if (withheldByDeclaredTypes(tool)) {
+			// Not a capability: this user holds the one the tool costs, and naming it would send them
+			// to an administrator who has already granted it (#258).
+			return "out of reach because of the data it works on: it is declared for "
+				+ DeclaredTypeAccess.namedTypes(_declaredTypes.unreadableTypes(tool))
+				+ ", which this user may not read. That is a model access right and not a capability,"
+				+ " so no capability grant reaches it";
 		}
 		String capability = _security.toolCapability(tool);
 		if (_security.withheldByBackgroundCeiling(tool)) {
@@ -285,12 +445,20 @@ public class AgentCapabilities {
 	 * unresolvable name is skipped rather than counted as denied.</li>
 	 * </ul>
 	 *
+	 * <p>
+	 * Answers an {@link Unusable} rather than a sentence, for the same reason the delegate form does:
+	 * a caller that composes a message out of it - {@code loadSkill}'s refusal and the
+	 * {@code listTools} entry - may name a capability only where a capability is the cause. A skill
+	 * whose every tool is withheld by its declared types is {@link Unusable.Cause#TYPE_UNREADABLE}
+	 * (#258).
+	 * </p>
+	 *
 	 * @param skill
 	 *        The skill to judge.
 	 * @return The deciding reason, suitable for a log line, or <code>null</code> if the skill is
 	 *         usable.
 	 */
-	public String unusableReason(SkillDefinition skill) {
+	public Unusable unusableReason(SkillDefinition skill) {
 		return unusableReason(resolve(skill.tools()), "known tools");
 	}
 
@@ -359,30 +527,39 @@ public class AgentCapabilities {
 	 * filtered its own schemas to nothing and failed.
 	 * </p>
 	 *
+	 * <p>
+	 * Unlike the skill and tool forms this answers an {@link Unusable} rather than a sentence, because
+	 * two of its callers compose a message out of it and what they may say depends on <em>which</em>
+	 * of the four things refused - see {@link Unusable} and #517.
+	 * </p>
+	 *
 	 * @param delegate
 	 *        The delegate to judge. <code>null</code> - a delegation naming an agent that does not
 	 *        exist - is usable, for the same reason an unresolvable tool name is: it is not a denial.
-	 * @return The deciding reason, suitable for a log line, or <code>null</code> if the delegate is
-	 *         usable.
+	 * @return The deciding reason, or <code>null</code> if the delegate is usable.
 	 */
-	public String unusableReason(AgentDefinition delegate) {
+	public Unusable unusableReason(AgentDefinition delegate) {
 		if (delegate == null) {
 			return null;
 		}
-		if (!_security.runAuthorization().allowsAgent(delegate.name(), delegate.infrastructure())) {
-			// Asked quietly, like every other filter here: a run that never calls this agent must not
-			// write a denial line per turn. AgentFactory audits the one that is actually attempted.
-			// An infrastructure agent fails this too: the application runs it for a user, so it is
-			// not something another agent hands its work to either (#397).
-			return delegate.infrastructure()
-				? "this agent is infrastructure and is not a delegate"
-				: "the acting account may not run this agent";
+		RunAuthorization authorization = _security.runAuthorization();
+		// Asked quietly, like every other filter here: a run that never calls this agent must not
+		// write a denial line per turn. AgentFactory audits the one that is actually attempted.
+		Decision.Denied agent = authorization.silentAgentRefusal(delegate.name(), delegate.infrastructure());
+		if (agent != null) {
+			// The policy's own sentence, relayed rather than restated: it names the setting an
+			// administrator would change, which is the one thing a caller composing a refusal has to
+			// be able to say (#517).
+			return new Unusable(agent.cause() == RoleAccessPolicy.Cause.INFRASTRUCTURE_AGENT
+				? Unusable.Cause.INFRASTRUCTURE
+				: Unusable.Cause.AGENT_WITHHELD, agent.message());
 		}
-		if (!_security.runAuthorization().allowsAgentsOwn(AgentFactory.assignedModelOf(delegate.name()),
-			delegate.mcpServers())) {
+		Decision.Denied agentsOwn = authorization
+			.agentsOwnRefusal(AgentFactory.assignedModelOf(delegate.name()), delegate.mcpServers());
+		if (agentsOwn != null) {
 			// Its own model or one of its own servers is denied to this account, so the gate refuses
 			// every run of it - see AgentFactory.refusalFor. Offering it would offer a dead end.
-			return "the acting account may not use what this agent runs on";
+			return new Unusable(Unusable.Cause.AGENTS_OWN_DENIED, agentsOwn.message());
 		}
 		return unusableReason(reachableTools(delegate), "reachable tools");
 	}
@@ -398,9 +575,11 @@ public class AgentCapabilities {
 	 * </p>
 	 *
 	 * <p>
-	 * A delegate that is {@link #unusableReason(AgentDefinition) dropped entirely} has every one of its
-	 * capabilities in here, which is what the drop's log line reports. The prompt never asks: a dropped
-	 * delegate has no line to annotate.
+	 * Nothing asks this about a delegate that is {@link #unusableReason(AgentDefinition) dropped
+	 * entirely}. The prompt has no line to annotate there, and since #517 the drop's log line reports
+	 * the {@link Unusable#message() refusal sentence} rather than a capability list - naming
+	 * capabilities is only on the point where {@link Unusable#aboutCapabilities()} says so.
+	 * {@code AgentFactory.delegateOffers} therefore does not compute it for a dropped delegate.
 	 * </p>
 	 *
 	 * @param delegate
@@ -480,28 +659,61 @@ public class AgentCapabilities {
 	 * Why none of the given tools can serve the run's principal, or <code>null</code> if one of them
 	 * can.
 	 *
+	 * <p>
+	 * {@link Unusable.Cause#TYPE_UNREADABLE} only when <em>every</em> denied tool was denied by its
+	 * declared types. One tool refused by a capability is enough to make a capability grant the
+	 * remedy that works, so a mixed set stays {@link Unusable.Cause#NO_REACHABLE_TOOL} and names both.
+	 * </p>
+	 *
 	 * @param tools
 	 *        The tools to judge, already resolved - an unresolvable name never reaches here, so it can
 	 *        neither save nor condemn what declared it.
 	 * @param noun
 	 *        What the tools are to the thing being judged, for the log line.
 	 */
-	private String unusableReason(Collection<Tool> tools, String noun) {
+	private Unusable unusableReason(Collection<Tool> tools, String noun) {
 		Set<String> requiredCapabilities = new TreeSet<>();
+		Set<String> unreadableTypes = new TreeSet<>();
 		int denied = 0;
+		int deniedByType = 0;
 		for (Tool tool : tools) {
 			if (permits(tool)) {
 				return null;
 			}
 			denied++;
-			String capability = _security.toolCapability(tool);
-			requiredCapabilities.add(capability == null ? "(ungrouped)" : capability);
+			if (withheldByDeclaredTypes(tool)) {
+				deniedByType++;
+				unreadableTypes.addAll(_declaredTypes.unreadableTypes(tool));
+			} else {
+				String capability = _security.toolCapability(tool);
+				requiredCapabilities.add(capability == null ? "(ungrouped)" : capability);
+			}
 		}
 		if (denied == 0) {
 			// Nothing to filter, rather than everything denied - see the javadoc of the callers.
 			return null;
 		}
-		return "none of its " + denied + " " + noun + " is permitted; they require " + requiredCapabilities;
+		if (deniedByType == denied) {
+			// Not one tool was refused by a capability, so not one capability grant would change
+			// anything here. Naming the types is the only remedy that is true (#258).
+			return new Unusable(Unusable.Cause.TYPE_UNREADABLE,
+				"none of its " + denied + " " + noun + " may be used: they are declared for "
+					+ DeclaredTypeAccess.namedTypes(unreadableTypes) + ", which this user may not"
+					+ " read. That is a model access right and not a tool capability: an administrator"
+					+ " would have to grant Read on one of those types to a role this account holds");
+		}
+		StringBuilder lacking = new StringBuilder();
+		lacking.append("none of its ").append(denied).append(" ").append(noun)
+			.append(" is permitted; they require ").append(requiredCapabilities);
+		if (!unreadableTypes.isEmpty()) {
+			// A mixed set: a capability grant still reaches one of the tools, so the cause stays
+			// NO_REACHABLE_TOOL and the capabilities are named - but the rest is said too, rather than
+			// leaving a grant that turns out to change nothing for those tools.
+			lacking.append(", and some of them are declared for ")
+				.append(DeclaredTypeAccess.namedTypes(unreadableTypes))
+				.append(", which this user may not read");
+		}
+		return new Unusable(Unusable.Cause.NO_REACHABLE_TOOL, lacking.toString());
 	}
 
 	/**
@@ -538,7 +750,8 @@ public class AgentCapabilities {
 	 * Tools that resolve to nothing contribute nothing - there is no capability to name for a tool
 	 * that does not exist. Neither do denied tools that are ungrouped: "you lack the capability of a
 	 * tool that has none" is not actionable, and the deployment's answer to that is a
-	 * {@code <tool-groups>} entry, not a sentence in a prompt.
+	 * {@code <tool-groups>} entry, not a sentence in a prompt. Nor do tools withheld by their
+	 * declared types: their capability is one this user <em>holds</em> (#258).
 	 * </p>
 	 *
 	 * @param toolNames
@@ -553,7 +766,9 @@ public class AgentCapabilities {
 	private Set<String> lackingOf(Collection<Tool> tools) {
 		Set<String> lacking = new TreeSet<>();
 		for (Tool tool : tools) {
-			if (permits(tool)) {
+			if (permits(tool) || withheldByDeclaredTypes(tool)) {
+				// The second is the subtle one: the user holds that tool's capability, and reporting
+				// it as lacking would be false of the account and useless as a remedy (#258).
 				continue;
 			}
 			String capability = _security.toolCapability(tool);
@@ -708,24 +923,32 @@ public class AgentCapabilities {
 				+ " nothing you do here can reach it: an administrator would have to add it to this"
 				+ " agent.";
 		}
-		if (unusableReason(skill) == null) {
+		Unusable unusable = unusableReason(skill);
+		if (unusable == null) {
 			// Declared, usable, and still not loadable - a definition without content, which is logged
 			// as a configuration warning where the skill map is built. No capability is involved.
 			return null;
 		}
-		return withheldSkillReason(skillId, skill);
+		return withheldSkillReason(skillId, skill, unusable);
 	}
 
 	/**
 	 * The reason a declared skill was withheld from this run, naming the capabilities behind it.
 	 *
 	 * <p>
-	 * Two cases, because their remedies are different: the acting user's roles are short of a
-	 * capability, which an administrator grants, or the run is unattended and the policy's
-	 * {@code <background-allowlist>} is the ceiling, which no role grant changes.
+	 * Three cases, because their remedies are different: the acting user's roles are short of a
+	 * capability, which an administrator grants; the run is unattended and the policy's
+	 * {@code <background-allowlist>} is the ceiling, which no role grant changes; or every tool in the
+	 * skill works on model types this user may not read, which is a Read grant on a type and no
+	 * capability at all (#258).
 	 * </p>
 	 */
-	private String withheldSkillReason(String skillId, SkillDefinition skill) {
+	private String withheldSkillReason(String skillId, SkillDefinition skill, Unusable unusable) {
+		if (unusable.cause() == Unusable.Cause.TYPE_UNREADABLE) {
+			return "Skill '" + skillId + "' is carried by this agent but withheld from the current"
+				+ " user: " + unusable.message() + ". Loading it would hand you no tools, so it is not"
+				+ " offered. " + NO_CAPABILITY_GUESSING;
+		}
 		Set<String> lacking = lacking(skill.tools());
 		StringBuilder reason = new StringBuilder();
 		if (withheldByBackgroundCeiling(skill)) {

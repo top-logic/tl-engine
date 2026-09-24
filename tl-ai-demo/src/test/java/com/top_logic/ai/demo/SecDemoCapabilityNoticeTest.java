@@ -96,9 +96,12 @@ public class SecDemoCapabilityNoticeTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testFullyDeniedSkillIsDropped() {
-		String reason = capabilitiesOf(BEN).unusableReason(skill(WORKSPACE_SKILL));
+		AgentCapabilities.Unusable unusable = capabilitiesOf(BEN).unusableReason(skill(WORKSPACE_SKILL));
 
-		assertNotNull("TL_taskManagement must be dropped for a persona without workspace.", reason);
+		assertNotNull("TL_taskManagement must be dropped for a persona without workspace.", unusable);
+		assertEquals("A capability is what withholds it, so a capability is what the message names.",
+			AgentCapabilities.Unusable.Cause.NO_REACHABLE_TOOL, unusable.cause());
+		String reason = unusable.message();
 		assertTrue("The log line must name the capability an operator has to grant: " + reason,
 			reason.contains(ToolGroups.WORKSPACE));
 	}

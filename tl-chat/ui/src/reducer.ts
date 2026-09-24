@@ -1,5 +1,6 @@
 import type {
   ApprovalOutcome,
+  ApprovalRequest,
   AssistantText,
   ChatMessage,
   Citation,
@@ -28,6 +29,7 @@ export type ChatAction =
   | { type: 'APPEND_TEXT'; id: string; delta: string }
   | { type: 'SET_TEXT'; id: string; text: string; citations?: Citation[] }
   | { type: 'FINALIZE_TEXT'; id: string }
+  | { type: 'RESUME_TEXT'; id: string }
   | { type: 'ADD_TOOL'; toolUseId: string; name: string; input: unknown; depth?: number }
   | { type: 'UPDATE_TOOL'; toolUseId: string; status: ToolCallStatus; durationMs?: number }
   | { type: 'ADD_TOOL_RESULT'; toolUseId: string; output: string; isError?: boolean }
@@ -109,6 +111,14 @@ export function chatReducer(messages: ChatMessage[], action: ChatAction): ChatMe
       return messages.map((m) =>
         m.type === 'assistant_text' && m.id === action.id ? { ...m, isStreaming: false } : m,
       )
+    case 'RESUME_TEXT':
+      // The inverse, for a turn that is restored while it is still being written (#512): what came
+      // out of the transcript is a finished answer as far as the reducer is concerned, and a
+      // finished answer carries a copy/rate/regenerate row. Offering "regenerate" for a turn the
+      // agent has not finished is the one thing that row must not do.
+      return messages.map((m) =>
+        m.type === 'assistant_text' && m.id === action.id ? { ...m, isStreaming: true } : m,
+      )
     case 'ADD_TOOL': {
       const msg: ToolCall = {
         type: 'tool_call',
@@ -172,7 +182,29 @@ export function chatReducer(messages: ChatMessage[], action: ChatAction): ChatMe
       }
       return [...messages, msg]
     }
-    case 'ADD_APPROVAL':
+    case 'ADD_APPROVAL': {
+      // A card the transcript already carries is completed, not repeated. A restored conversation
+      // brings the pending approval with it, in its place under the turn that asked for it, and
+      // what only the waiting run knows - the tool's mode, how long is left to answer - arrives
+      // afterwards from `/chat/interactions` (#512). Appending it a second time would put the same
+      // question twice on screen, at the bottom and out of its turn.
+      const shown = messages.find(
+        (m): m is ApprovalRequest =>
+          m.type === 'approval_request' && m.approvalRequestId === action.approvalRequestId,
+      )
+      if (shown) {
+        const completed: ApprovalRequest = {
+          ...shown,
+          toolCallId: shown.toolCallId || action.toolCallId,
+          toolName: shown.toolName || action.toolName,
+          argsJson: shown.argsJson || action.argsJson,
+          displayReason: shown.displayReason || action.displayReason,
+          toolMode: shown.toolMode ?? action.toolMode,
+          remainingMs: action.remainingMs,
+          receivedAt: Date.now(),
+        }
+        return messages.map((m) => (m === shown ? completed : m))
+      }
       return [
         ...messages,
         {
@@ -190,6 +222,7 @@ export function chatReducer(messages: ChatMessage[], action: ChatAction): ChatMe
           receivedAt: Date.now(),
         },
       ]
+    }
     case 'RESOLVE_APPROVAL':
       return messages.map((m) =>
         m.type === 'approval_request' && m.approvalRequestId === action.approvalRequestId
@@ -197,6 +230,23 @@ export function chatReducer(messages: ChatMessage[], action: ChatAction): ChatMe
           : m,
       )
     case 'ADD_INTERACTION': {
+      // Completed rather than repeated, for the reason ADD_APPROVAL gives: a restored in-flight
+      // turn already carries the question, and this is what fills in the shape it was asked in.
+      const asked = messages.find(
+        (m): m is InteractionRequest =>
+          m.type === 'interaction_request' && m.requestId === action.requestId,
+      )
+      if (asked) {
+        const completed: InteractionRequest = {
+          ...asked,
+          interactionType: action.interactionType ?? asked.interactionType,
+          options: action.options ?? asked.options,
+          multiSelect: action.multiSelect ?? asked.multiSelect,
+          remainingMs: action.remainingMs,
+          receivedAt: Date.now(),
+        }
+        return messages.map((m) => (m === asked ? completed : m))
+      }
       const msg: InteractionRequest = {
         type: 'interaction_request',
         id: action.requestId,

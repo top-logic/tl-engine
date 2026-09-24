@@ -50,7 +50,9 @@ public class TestValueColorProvider extends BasicTestCase {
 
 	private static final Color LITERAL = new Color(0x04, 0xA3, 0x8D);
 
-	private static final String TOKEN = "support-success";
+	private static final ValueColor OPEN_ROLE = ValueColor.WARNING;
+
+	private static final ValueColor CLOSED_ROLE = ValueColor.SUCCESS;
 
 	static final String STATUS_ATTRIBUTE = "status";
 
@@ -74,20 +76,25 @@ public class TestValueColorProvider extends BasicTestCase {
 		_module = TLModelUtil.addModule(model, "test");
 		_status = TLModelUtil.addEnumeration(_module, "Status");
 		_open = TLModelUtil.addClassifier(_status, "open");
-		_open.setAnnotation(literalColor(LITERAL));
+		_open.setAnnotation(roleColor(OPEN_ROLE));
 		_closed = TLModelUtil.addClassifier(_status, "closed");
-		_closed.setAnnotation(tokenColor(TOKEN));
+		_closed.setAnnotation(roleColor(CLOSED_ROLE));
 		_unknown = TLModelUtil.addClassifier(_status, "unknown");
 	}
 
-	public void testLiteralColorOfClassifier() {
-		assertEquals(ValueColor.color(LITERAL), colorOf(_open));
-		assertEquals("#04A38D", colorOf(_open).cssValue());
+	public void testRoleOfClassifier() {
+		assertEquals(OPEN_ROLE, colorOf(_open));
+		assertEquals("warning", colorOf(_open).getExternalName());
+		assertEquals(CLOSED_ROLE, colorOf(_closed));
+		assertEquals("success", colorOf(_closed).getExternalName());
 	}
 
-	public void testTokenColorOfClassifier() {
-		assertEquals(ValueColor.themeToken(TOKEN), colorOf(_closed));
-		assertEquals("var(--" + TOKEN + ")", colorOf(_closed).cssValue());
+	public void testRoleByExternalName() {
+		assertEquals(ValueColor.CATEGORY_3, ValueColor.byExternalName("category-3"));
+		assertEquals(ValueColor.NEUTRAL, ValueColor.byExternalName("neutral"));
+		assertNull("A color value is no role.", ValueColor.byExternalName("#04A38D"));
+		assertNull("A token name is no role.", ValueColor.byExternalName("support-success"));
+		assertNull(ValueColor.byExternalName(null));
 	}
 
 	public void testUnannotatedClassifierHasNoColor() {
@@ -99,11 +106,11 @@ public class TestValueColorProvider extends BasicTestCase {
 
 		TLObject ticket1 = newObject(ticket);
 		ticket1.tUpdateByName(STATUS_ATTRIBUTE, _closed);
-		assertEquals(ValueColor.themeToken(TOKEN), colorOf(ticket1));
+		assertEquals(CLOSED_ROLE, colorOf(ticket1));
 
 		TLObject ticket2 = newObject(ticket);
 		ticket2.tUpdateByName(STATUS_ATTRIBUTE, _open);
-		assertEquals(ValueColor.color(LITERAL), colorOf(ticket2));
+		assertEquals(OPEN_ROLE, colorOf(ticket2));
 	}
 
 	public void testProviderAnsweringNoColor() throws ConfigurationException {
@@ -123,7 +130,7 @@ public class TestValueColorProvider extends BasicTestCase {
 
 		TLObject bug1 = newObject(bug);
 		bug1.tUpdateByName(STATUS_ATTRIBUTE, _open);
-		assertEquals(ValueColor.color(LITERAL), colorOf(bug1));
+		assertEquals(OPEN_ROLE, colorOf(bug1));
 	}
 
 	public void testTypeWithoutDynamicColor() {
@@ -138,19 +145,19 @@ public class TestValueColorProvider extends BasicTestCase {
 	public void testClassifierAnnotationSyntax() throws ConfigurationException {
 		ClassifierConfig config = read(ClassifierConfig.class, "classifier",
 			"<classifier name='open'>"
-				+ "<annotations><color token='support-warning'/></annotations>"
+				+ "<annotations><color role='warning'/></annotations>"
 				+ "</classifier>");
-		assertEquals(ValueColor.themeToken("support-warning"), ValueColor.of(config.getAnnotation(TLColor.class)));
+		assertEquals(ValueColor.WARNING, ValueColor.of(config.getAnnotation(TLColor.class)));
 
-		ClassifierConfig literal = read(ClassifierConfig.class, "classifier",
+		ClassifierConfig category = read(ClassifierConfig.class, "classifier",
 			"<classifier name='closed'>"
-				+ "<annotations><color value='#04A38D'/></annotations>"
+				+ "<annotations><color role='category-3'/></annotations>"
 				+ "</classifier>");
-		assertEquals(ValueColor.color(LITERAL), ValueColor.of(literal.getAnnotation(TLColor.class)));
+		assertEquals(ValueColor.CATEGORY_3, ValueColor.of(category.getAnnotation(TLColor.class)));
 	}
 
-	public void testColorValueIsItsOwnColor() {
-		assertEquals(ValueColor.color(LITERAL), colorOf(LITERAL));
+	public void testColorValueHasNoRole() {
+		assertNull("A color value names no role of the design system.", colorOf(LITERAL));
 	}
 
 	public void testValuesWithoutColor() {
@@ -186,15 +193,9 @@ public class TestValueColorProvider extends BasicTestCase {
 		return AnnotationValueColorProvider.INSTANCE.colorOf(value);
 	}
 
-	private static TLColor literalColor(Color color) {
+	private static TLColor roleColor(ValueColor role) {
 		TLColor result = TypedConfiguration.newConfigItem(TLColor.class);
-		result.setValue(color);
-		return result;
-	}
-
-	private static TLColor tokenColor(String token) {
-		TLColor result = TypedConfiguration.newConfigItem(TLColor.class);
-		result.setToken(token);
+		result.setRole(role);
 		return result;
 	}
 

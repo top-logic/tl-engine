@@ -58,7 +58,7 @@ function Chip({
       {draggable && (
         <span className="tlDropdownSelect__dragHandle" aria-hidden="true">&#8942;&#8942;</span>
       )}
-      {withPill(option.color, (
+      {withPill(option.colorRole, (
         <>
           <OptionImage image={option.image} />
           <span className="tlDropdownSelect__chipLabel">{option.label}</span>
@@ -122,7 +122,7 @@ function OptionRow({
       onClick={handleClick}
       onMouseEnter={onMouseEnter}
     >
-      {withPill(option.color, (
+      {withPill(option.colorRole, (
         <>
           <OptionImage image={option.image} />
           <span className="tlDropdownSelect__optionLabel">{labelContent}</span>

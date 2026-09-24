@@ -1,31 +1,29 @@
 import { React } from 'tl-react-bridge';
 
 /**
- * Displays a value that the model gives a color as a pill in that color.
+ * Displays a value the model gives a color role as a pill of that role.
  *
  * <p>
- * The color arrives from the server as the CSS it is applied with - a color value, or a
- * {@code var(--token)} reference to a design token of the active theme - and is handed to the
- * stylesheet as the custom property {@code --tlPill-color}, so the tinted background, the border
- * and the text are all composed from the one color and follow a theme switch. There is no class
- * per color.
+ * The role arrives from the server by its external name - neutral, brand, error, warning, success,
+ * info, category-1 to category-8 - and becomes the modifier class {@code tl-pill--<role>}; how a
+ * role looks is the design system's (pill.css). Nothing but a class is set: no color value, no
+ * custom property. A pill without a role is neutral.
  * </p>
  */
 export function TLPill({
-  color,
+  role,
   className,
   children,
 }: {
-  color: string;
+  role?: string;
   className?: string;
   children?: React.ReactNode;
 }) {
+  const classes = ['tl-pill', role && role !== 'neutral' ? 'tl-pill--' + role : '', className ?? '']
+    .filter(Boolean).join(' ');
   return (
-    <span
-      className={className ? 'tlPill ' + className : 'tlPill'}
-      style={{ ['--tlPill-color' as string]: color } as React.CSSProperties}
-    >
-      {children}
+    <span className={classes}>
+      <span className="tl-pill__label">{children}</span>
     </span>
   );
 }

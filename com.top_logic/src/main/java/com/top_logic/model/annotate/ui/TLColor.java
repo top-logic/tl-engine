@@ -15,8 +15,9 @@ import com.top_logic.model.annotate.TLClassifierAnnotation;
  * The color the annotated enumeration literal is displayed with.
  *
  * <p>
- * A colored literal is what tells a status, a priority or a severity apart at a glance. A literal
- * without this annotation has no color.
+ * A colored literal is what tells a status, a priority or a severity apart at a glance; the color
+ * is a {@link ValueColor role} of the design system, not a color value. A literal without this
+ * annotation has no color.
  * </p>
  *
  * @see ColorSpec
@@ -28,8 +29,7 @@ import com.top_logic.model.annotate.TLClassifierAnnotation;
 @TagName(TLColor.TAG_NAME)
 @InApp
 @DisplayOrder({
-	ColorSpec.VALUE,
-	ColorSpec.TOKEN,
+	ColorSpec.ROLE,
 })
 public interface TLColor extends TLClassifierAnnotation, ColorSpec {
 

@@ -73,7 +73,7 @@ public class TestUIThemeTokenKinds extends TestCase {
 		Map<String, DesignTokenKind> kinds = kinds(DEFAULT_THEME);
 
 		assertEquals(DesignTokenKind.COLOR, kinds.get("support-success"));
-		assertEquals(DesignTokenKind.COLOR, kinds.get("support-info"));
+		assertEquals(DesignTokenKind.COLOR, kinds.get("support-warning"));
 		assertEquals(DesignTokenKind.COLOR, kinds.get("text-primary"));
 	}
 

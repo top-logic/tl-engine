@@ -187,11 +187,11 @@ public class TextElement implements UIElement {
 			ViewChannel channel = context.resolveChannel(_inputRef);
 			Object value = channel.get();
 			ReactTextControl control = text(context, label(value));
-			control.setColor(ReactValueColor.cssColorOf(value));
+			control.setColorRole(ReactValueColor.roleOf(value));
 
 			Runnable update = () -> {
 				Object current = channel.get();
-				control.setText(label(current), ReactValueColor.cssColorOf(current));
+				control.setText(label(current), ReactValueColor.roleOf(current));
 			};
 
 			ChannelListener listener = (sender, oldValue, newValue) -> update.run();

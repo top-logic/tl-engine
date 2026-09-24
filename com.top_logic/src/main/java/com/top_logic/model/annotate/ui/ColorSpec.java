@@ -5,72 +5,47 @@
  */
 package com.top_logic.model.annotate.ui;
 
-import java.awt.Color;
-
 import com.top_logic.basic.config.ConfigurationItem;
-import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
-import com.top_logic.basic.config.constraint.annotation.Constraint;
-import com.top_logic.layout.form.format.ColorConfigFormat;
-import com.top_logic.layout.form.values.edit.annotation.Options;
 
 /**
- * Specification of a color, given either as a literal color value or as the name of a design token
- * of the UI theme.
+ * Specification of the color a value is displayed with, as a {@link ValueColor role} of the design
+ * system.
  *
  * <p>
- * A design token adapts to the active theme, a literal color does not. Where both are given, the
- * literal color wins.
+ * A role adapts to the active theme and mode; how it looks is decided once, in the design system,
+ * for every place a value of that role appears. A literal color value or the name of a design
+ * token is no valid specification.
  * </p>
  *
- * @implNote {@link ValueColor#of(ColorSpec)} resolves the specification to the {@link ValueColor}
- *           the UI displays.
+ * @implNote {@link ValueColor#of(ColorSpec)} resolves the specification to the role the UI
+ *           displays.
  */
 public interface ColorSpec extends ConfigurationItem {
 
-	/** Configuration name of {@link #getValue()}. */
-	String VALUE = "value";
-
-	/** Configuration name of {@link #getToken()}. */
-	String TOKEN = "token";
+	/** Configuration name of {@link #getRole()}. */
+	String ROLE = "role";
 
 	/**
-	 * The literal color to display with, such as <code>#04a38d</code>.
-	 */
-	@Name(VALUE)
-	@Nullable
-	@Format(ColorConfigFormat.class)
-	@Label("Color")
-	Color getValue();
-
-	/**
-	 * @see #getValue()
-	 */
-	void setValue(Color value);
-
-	/**
-	 * The name of the design token holding the color to display with, such as
-	 * <code>support-success</code>.
+	 * The color role to display with: <code>neutral</code>, <code>brand</code>, one of the four
+	 * meanings <code>error</code>, <code>warning</code>, <code>success</code>, <code>info</code>,
+	 * or one of the eight categories <code>category-1</code> to <code>category-8</code>.
 	 *
 	 * <p>
-	 * The token is looked up in the theme the user has active, so the color follows a theme switch.
-	 * The name is one of the color design tokens the application emits, given without the leading
-	 * <code>--</code> of the CSS custom property the token is emitted as. Those tokens are offered
-	 * for selection. A name no theme emits is reported, since it leaves the value without a color.
+	 * A meaning says by its color what the value stands for; a category only tells the value apart
+	 * from others and carries no meaning.
 	 * </p>
 	 */
-	@Name(TOKEN)
+	@Name(ROLE)
 	@Nullable
-	@Label("Design token")
-	@Options(fun = ColorTokenOptions.class)
-	@Constraint(value = ColorTokenConstraint.class, asWarning = true)
-	String getToken();
+	@Label("Color role")
+	ValueColor getRole();
 
 	/**
-	 * @see #getToken()
+	 * @see #getRole()
 	 */
-	void setToken(String value);
+	void setRole(ValueColor value);
 
 }

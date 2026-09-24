@@ -106,7 +106,7 @@ const TLOptionChips: React.FC<TLCellProps> = ({ controlId, state }) => {
             disabled={disabled}
             onClick={() => toggle(option)}
           >
-            {withPill(option.color, (
+            {withPill(option.colorRole, (
               <>
                 <OptionImage image={option.image} />
                 <span className="tlOptionChips__chipLabel">{option.label}</span>

@@ -25,7 +25,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * <p>
  * Resolves label, icon, CSS class, tooltip, and link availability from the provider and sends them
  * as flat state to the {@code TLResourceCell} React component, together with the
- * {@link ReactValueColor#COLOR color} the displayed value carries in the model.
+ * {@link ReactValueColor#ROLE color role} the displayed value carries in the model.
  * </p>
  *
  * <p>
@@ -192,7 +192,7 @@ public class ReactResourceCellControl extends ReactControl implements TooltipPro
 			resolveIcon(value);
 		}
 
-		putState(ReactValueColor.COLOR, ReactValueColor.cssColorOf(value));
+		putState(ReactValueColor.ROLE, ReactValueColor.roleOf(value));
 
 		if (value != null) {
 			String cssClass = _provider.getCssClass(value);

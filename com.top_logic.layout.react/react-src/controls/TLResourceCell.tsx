@@ -14,7 +14,7 @@ const CMD_GOTO = 'goto';
  * - iconSrc?: string    - image URL for non-CSS icons
  * - hasTooltip: boolean - whether the server provides a rich tooltip (fetched lazily)
  * - hasLink: boolean    - whether clicking navigates to the object
- * - color?: string      - CSS color the object carries in the model; shown as a pill
+ * - colorRole?: string  - color role the object carries in the model; shown as a pill of that role
  */
 const TLResourceCell: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -25,7 +25,7 @@ const TLResourceCell: React.FC<TLCellProps> = ({ controlId }) => {
   const label = state.label as string | undefined;
   const hasTooltip = state.hasTooltip === true;
   const hasLink = state.hasLink as boolean;
-  const color = (state.color as string) || undefined;
+  const colorRole = (state.colorRole as string) || undefined;
 
   const icon = iconCss
     ? <i className={iconCss} />
@@ -40,8 +40,8 @@ const TLResourceCell: React.FC<TLCellProps> = ({ controlId }) => {
     </>
   );
 
-  // A colored object is drawn as a pill; one the model gives no color stays plain.
-  const content = color ? <TLPill color={color}>{presentation}</TLPill> : presentation;
+  // A colored object is drawn as a pill; one the model gives no role stays plain.
+  const content = colorRole ? <TLPill role={colorRole}>{presentation}</TLPill> : presentation;
 
   const handleClick = React.useCallback((e: React.MouseEvent) => {
     e.preventDefault();

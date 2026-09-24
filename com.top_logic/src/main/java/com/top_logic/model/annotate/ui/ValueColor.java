@@ -5,128 +5,106 @@
  */
 package com.top_logic.model.annotate.ui;
 
-import java.awt.Color;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import com.top_logic.basic.StringServices;
-import com.top_logic.layout.form.format.ColorFormat;
+import com.top_logic.basic.config.ExternallyNamed;
 
 /**
- * The color a value is displayed with: either a literal CSS color or a reference to a design token
- * of the active theme.
+ * The color role a value is displayed with: wherever the value appears, it is drawn as a pill
+ * tinted in that role.
+ *
+ * <p>
+ * A role names what the color is for, not the color itself; the design system decides how a role
+ * looks, in each theme and each mode. {@link #NEUTRAL}, {@link #BRAND} and the four meanings
+ * {@link #ERROR}, {@link #WARNING}, {@link #SUCCESS} and {@link #INFO} carry a meaning of their own.
+ * The eight categories carry none: they tell values apart that only have to be distinguishable,
+ * such as the projects of a portfolio or the series of a chart, and never say by their color that
+ * something went wrong or well.
+ * </p>
  *
  * @see ValueColorProvider
  */
-public final class ValueColor {
+public enum ValueColor implements ExternallyNamed {
+	/** A value set apart from the text around it, without emphasis. */
+	NEUTRAL("neutral"),
 
-	/** Prefix of the CSS custom property a design token is emitted as. */
-	private static final String CUSTOM_PROPERTY_PREFIX = "--";
+	/** The color of the brand: the value the application points at. */
+	BRAND("brand"),
 
-	private final String _value;
+	/** A failure, a rejection, something that has to be dealt with. */
+	ERROR("error"),
 
-	private final boolean _themeToken;
+	/** A condition to act on before it becomes a failure. */
+	WARNING("warning"),
 
-	private ValueColor(String value, boolean themeToken) {
-		_value = value;
-		_themeToken = themeToken;
+	/** An outcome that went well. */
+	SUCCESS("success"),
+
+	/** A note, neither good nor bad. */
+	INFO("info"),
+
+	/** The first of eight categories without a meaning, for values that only have to be told apart. */
+	CATEGORY_1("category-1"),
+
+	/** The second category without a meaning. */
+	CATEGORY_2("category-2"),
+
+	/** The third category without a meaning. */
+	CATEGORY_3("category-3"),
+
+	/** The fourth category without a meaning. */
+	CATEGORY_4("category-4"),
+
+	/** The fifth category without a meaning. */
+	CATEGORY_5("category-5"),
+
+	/** The sixth category without a meaning. */
+	CATEGORY_6("category-6"),
+
+	/** The seventh category without a meaning. */
+	CATEGORY_7("category-7"),
+
+	/** The eighth category without a meaning. */
+	CATEGORY_8("category-8");
+
+	private static final Map<String, ValueColor> BY_NAME =
+		Stream.of(values()).collect(Collectors.toMap(ValueColor::getExternalName, Function.identity()));
+
+	private final String _externalName;
+
+	ValueColor(String externalName) {
+		_externalName = externalName;
+	}
+
+	@Override
+	public String getExternalName() {
+		return _externalName;
 	}
 
 	/**
-	 * Creates the {@link ValueColor} a {@link ColorSpec} specifies.
+	 * The role the given {@link ColorSpec} names.
 	 *
 	 * @param spec
 	 *        The specification to resolve. May be <code>null</code>.
-	 * @return The specified color, or <code>null</code> if the specification is absent or names
-	 *         neither a literal color nor a design token.
+	 * @return The specified role, or <code>null</code> if the specification is absent or names no
+	 *         role.
 	 */
 	public static ValueColor of(ColorSpec spec) {
-		if (spec == null) {
-			return null;
-		}
-		Color literal = spec.getValue();
-		if (literal != null) {
-			return color(literal);
-		}
-		String token = spec.getToken();
-		if (!StringServices.isEmpty(token)) {
-			return themeToken(token);
-		}
-		return null;
+		return spec == null ? null : spec.getRole();
 	}
 
 	/**
-	 * Creates a {@link ValueColor} displaying the given literal color.
+	 * The role with the given {@link #getExternalName() external name}.
 	 *
-	 * @param color
-	 *        The color to display with.
-	 * @return The {@link ValueColor} for the given color.
+	 * @param name
+	 *        The external name, such as <code>warning</code> or <code>category-3</code>. May be
+	 *        <code>null</code>.
+	 * @return The role of that name, or <code>null</code> if no role has it.
 	 */
-	public static ValueColor color(Color color) {
-		return cssColor(ColorFormat.formatColor(color));
+	public static ValueColor byExternalName(String name) {
+		return name == null ? null : BY_NAME.get(name);
 	}
-
-	/**
-	 * Creates a {@link ValueColor} displaying the given literal CSS color.
-	 *
-	 * @param cssColor
-	 *        A CSS color value such as <code>#04a38d</code>.
-	 * @return The {@link ValueColor} for the given CSS color.
-	 */
-	public static ValueColor cssColor(String cssColor) {
-		return new ValueColor(cssColor, false);
-	}
-
-	/**
-	 * Creates a {@link ValueColor} referencing a design token of the active theme.
-	 *
-	 * @param tokenName
-	 *        The token name, without the {@value #CUSTOM_PROPERTY_PREFIX} prefix of the CSS custom
-	 *        property the token is emitted as.
-	 * @return The {@link ValueColor} for the given token.
-	 */
-	public static ValueColor themeToken(String tokenName) {
-		return new ValueColor(tokenName, true);
-	}
-
-	/**
-	 * Whether {@link #getValue()} names a design token instead of being a literal CSS color.
-	 */
-	public boolean isThemeToken() {
-		return _themeToken;
-	}
-
-	/**
-	 * The literal CSS color, or the name of the design token if {@link #isThemeToken()}.
-	 */
-	public String getValue() {
-		return _value;
-	}
-
-	/**
-	 * The CSS expression yielding this color, usable wherever CSS expects a color.
-	 */
-	public String cssValue() {
-		return _themeToken ? "var(" + CUSTOM_PROPERTY_PREFIX + _value + ")" : _value;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (!(obj instanceof ValueColor other)) {
-			return false;
-		}
-		return _themeToken == other._themeToken && _value.equals(other._value);
-	}
-
-	@Override
-	public int hashCode() {
-		return _value.hashCode() + (_themeToken ? 1 : 0);
-	}
-
-	@Override
-	public String toString() {
-		return cssValue();
-	}
-
 }

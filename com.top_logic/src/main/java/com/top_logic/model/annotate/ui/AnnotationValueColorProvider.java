@@ -5,7 +5,6 @@
  */
 package com.top_logic.model.annotate.ui;
 
-import java.awt.Color;
 
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLObject;
@@ -46,7 +45,7 @@ public class AnnotationValueColorProvider implements ValueColorProvider {
 		if (value instanceof TLObject object) {
 			return dynamicColor(object);
 		}
-		return literalColor(value);
+		return null;
 	}
 
 	/**
@@ -68,11 +67,5 @@ public class AnnotationValueColorProvider implements ValueColorProvider {
 		return ValueColor.of(classifier.getAnnotation(TLColor.class));
 	}
 
-	/**
-	 * The color a value is itself, if it is a color value.
-	 */
-	private ValueColor literalColor(Object value) {
-		return value instanceof Color color ? ValueColor.color(color) : null;
-	}
 
 }

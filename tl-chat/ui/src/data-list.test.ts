@@ -122,8 +122,8 @@ describe('the row action trigger', () => {
 
   /*
    * What a click does - the `rowMenu` command with the row id and the pointer position - and where
-   * focus lands after the row it belonged to is deleted both need a live DOM, and this run renders
-   * to a string (there is no jsdom in the module's test setup and adding one for two assertions is
-   * a heavier dependency than it buys). Both are walked in the browser instead; see the PR.
+   * focus lands after the row it belonged to is deleted both need a live DOM, and this suite renders
+   * to a string. Both are walked in the browser instead; see the PR. The drawer a narrow host turns
+   * the list into is the one part tested under jsdom, in data-list-drawer.test.tsx.
    */
 })

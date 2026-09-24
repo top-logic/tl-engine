@@ -318,6 +318,8 @@ upstream as one clean diff.
 | `selection` | Two-way channel holding the picked row object. |
 | `count` | Channel receiving the number of rows, written with every serialisation - what a rail section's badge reads without asking the browser. |
 | `search` / `collapsible` / `title` / `empty-text` | The list's own chrome. |
+| `collapsed` | First-load state of a collapsible list; not remembered across page loads. |
+| `drawer-below` | Host width in rem (default 44) below which a collapsible list becomes a drawer - see below. 0 keeps a column at every width. |
 | `<commands><command>` | Header buttons above the list. Ordinary `<generic-command>`s. |
 | `<row-commands><command>` | Commands offered on a single row - see below. |
 | `row-channel` | Name of the local channel a row command reads its row from. Default `row`. |
@@ -372,6 +374,33 @@ min-width: 0`, so the title shortens rather than the row reflowing.
 
 When the row whose menu was open disappears - what a Delete in that menu does - focus moves to the
 neighbouring row's trigger (previous, else next, else the list), not to `<body>`.
+
+#### A list in a narrow host (#548)
+
+A `<data-list>` stands in a row beside columns that do not give way - in a `<chat direction="row">`
+the conversation with its 20 rem floor (#511) and the rail's strip, plus the stack's gaps. Below the
+width they need together (688 px in the demo) the row overflowed into the engine's scrolling
+`.tlSidebar__content`: the composer started off-screen and the chat scrolled in two dimensions.
+
+So below `drawer-below` rem of **host** width - the list's parent element, measured by a
+`ResizeObserver`, never the window - a collapsible list is a **drawer** (`.is-drawer`): its strip
+stays in the flow, and the existing expand arrow opens the list over its neighbour with a scrim.
+
+- A row pick, a header command ("Neuer Chat"), a click on the scrim or Escape closes it. Focus moves
+  to the open row (else the first) on open, back to the arrow on close, and Tab wraps inside.
+- The scrim covers the host, not the page: the host becomes the containing block (`:has(> .tl-data-list.is-drawer)`),
+  so the app bar and the page around a dock stay undimmed, and `isolation` keeps the application's
+  menus above an open drawer.
+- The user's column choice (`collapsed`) is not touched while the list is a drawer; a host that
+  grows wide again gets the column back as the user left it.
+- The conversation's floor gives way by `--chat-conversation-floor-reserve` (two strips and two
+  gaps, 10 rem) while a list beside it is a drawer, so a 320 px window reflows instead of
+  scrolling. Beside a list that is a column the #511 floor holds unchanged.
+- `collapsible="false"` (every list inside a rail section) and `drawer-below="0"` are never drawers.
+
+The default 44 rem is the demo row: list 16.5 + floor 20 + rail strip 3.5 + two gaps 3 = 43 rem.
+It is an attribute rather than a constant because only the view knows what else stands in the row;
+a host with less beside the list sets less.
 
 **Tokens.** Anything the element's CSS uses must be declared under **both** roots: `.tl-cockpit …`
 and `.tl-data-list`. A token declared only on the first is silently missing in a standalone list.
@@ -1302,12 +1331,11 @@ Three things are load-bearing:
 - **Opening it marks the badges seen, and only that.** `markBadgesSeen(badgeTotal)` moves the same
   watermark `toggleSide` moves - to the total as it stands, never to zero - without opening the
   rail, which is the other half of `toggleSide` and the wrong half here.
-- **The breakpoint is the window's, not the dock's** (Gitea #427). The chat's responsive rules are
-  plain `@media (max-width: …)`, so a narrow *window* puts the elements inside the dock into their
-  narrow layout however wide the panel is. Below 1100 px the `<data-list>` session list becomes
-  App's off-canvas drawer and disappears from the dock as it does from the page. The panel is sized
-  for the desktop layout (`min(68.75rem, …)`); the real fix is a container query and belongs to
-  #427.
+- **The breakpoints are the dock's, not the window's** (Gitea #427, #548). The conversation inside
+  measures its own `.stage`, and the `<data-list>` session list measures its host row, so a dock
+  sized for the desktop layout (`min(68.75rem, …)`) keeps a column list in a narrow window as long
+  as the panel has room for it, and a panel below the list's `drawer-below` opens the list as a
+  drawer over the conversation instead of squeezing it.
 
 Everything a theme would restyle is a token on `.tl-chat-dock` - `--chat-dock-width`, `-height`,
 `-offset`, `-launcher`, `-gap`, `-radius`, `-shadow`, `-z`.

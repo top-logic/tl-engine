@@ -26,6 +26,7 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.IReactControl;
@@ -163,6 +164,9 @@ public class DataListElement implements UIElement {
 
 		/** Configuration property name for {@link #getCollapsed()}. */
 		String COLLAPSED = "collapsed";
+
+		/** Configuration property name for {@link #getDrawerBelow()}. */
+		String DRAWER_BELOW = "drawer-below";
 
 		/** Configuration property name for {@link #getTitle()}. */
 		String TITLE = "title";
@@ -356,6 +360,21 @@ public class DataListElement implements UIElement {
 		@Label("Collapsed")
 		@BooleanDefault(false)
 		boolean getCollapsed();
+
+		/**
+		 * Width of the surrounding container, in rem, below which the list becomes a drawer.
+		 *
+		 * <p>
+		 * Below it the list keeps only its narrow strip, and its expand arrow opens the list over its
+		 * neighbour instead of taking a column. The default fits a list beside a conversation and a
+		 * chat rail. Set it to what the list and its neighbours need side by side; 0 keeps a column at
+		 * every width. Needs {@link #getCollapsible()}.
+		 * </p>
+		 */
+		@Name(DRAWER_BELOW)
+		@Label("Drawer below")
+		@IntDefault(44)
+		int getDrawerBelow();
 
 		/**
 		 * The header title shown above the list.

@@ -46,6 +46,11 @@
   --chat-sidebar: 16.5rem;
   --chat-rail-narrow: 3.25rem;
   --chat-conversation-min-width: 20rem;
+  /*
+   * What stands beside the conversation once a session list beside it is a drawer (#548): the
+   * list's strip, the rail's strip and the host row's two gaps. The floor gives way by this much.
+   */
+  --chat-conversation-floor-reserve: 10rem;
   --r-1: calc(var(--corner-radius, 0.25rem) * 1.5);
   --r-2: calc(var(--corner-radius, 0.25rem) * 2.5);
   --r-3: calc(var(--corner-radius, 0.25rem) * 4);
@@ -281,9 +286,12 @@
 
 /* --- Composed data list ------------------------------------------------ */
 
-/* <data-list> reuses the App session rail's look; make it fill its host pane and let a
-   row show an optional muted second line. The App rail's overlay drawer below 1100 px is
-   geometry that composition gives up: the host's split panel sizes the column. */
+/*
+ * <data-list> reuses the App session rail's look; make it fill its host pane and let a row show an
+ * optional muted second line. It does not take App's own drawer, which asks the `chat-shell`
+ * container a composed list is not in; a collapsible list has one of its own instead, for a host
+ * narrower than its `drawer-below` (#548, see "A list in a narrow host" below).
+ */
 /*
  * <data-list> renders outside .tl-cockpit, so the chat's button reset and focus ring do not reach it.
  * Without this, the row/new/search <button>s show the browser's default chrome (grey, square, bordered)
@@ -382,6 +390,46 @@
 }
 
 /*
+ * A list in a narrow host (#548).
+ *
+ * Below its `drawer-below` width a collapsible list keeps only its strip in the flow and opens over
+ * its neighbour. data-list.tsx measures the host and sets `.is-drawer`; everything here is geometry.
+ *
+ * The open list is placed against the host, not against the list: the host becomes the containing
+ * block, so the scrim covers exactly the row the list stands in - never the app bar or the page
+ * around a dock - and the panel, which keeps `left: auto`, opens at its static position, i.e. where
+ * the strip is. `isolation` keeps the z-indexes below local to the host: they lift the drawer over
+ * whatever its neighbour stacks inside itself, and the application's own menus and dialogs still
+ * open above it.
+ */
+:has(> .tl-data-list.is-drawer) {
+  position: relative;
+  isolation: isolate;
+}
+
+.tl-data-list.is-drawer {
+  width: var(--chat-rail-narrow);
+}
+
+.tl-data-list.is-drawer-open .rail {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 31;
+  width: min(var(--chat-sidebar), 88vw);
+  height: auto;
+  box-shadow: var(--chat-shadow);
+}
+
+.tl-data-list .data-list-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  /* The engine's own drawer backdrop: dark in both themes, where `--background-inverse` is not. */
+  background: var(--overlay, rgb(0 0 0 / 40%));
+}
+
+/*
  * Row states a `css-class` expression hands out.
  *
  * Which class a row gets is the view's decision; these three are what a list of steps needs and are
@@ -435,6 +483,11 @@
    * The floor is the width below which the composer's controls have nowhere left to go; the
    * `chat-stage` queries further down still take the layout from there. A theme that wants another
    * floor redeclares the token.
+   *
+   * That measure alone still overflowed a phone: beside a 16.5 rem session list, the rail's strip
+   * and two gaps, a 20 rem floor made the row 688 px wide at any window below it (#548). A list that
+   * is a drawer leaves only its strip, and then the floor gives way by what is left beside the
+   * conversation - the rule after this one. Beside a list that is a column the floor holds as it is.
    */
   min-width: min(var(--chat-conversation-min-width), 100vw);
   height: 100%;
@@ -443,6 +496,11 @@
   font-family: var(--font-family, Inter, "Segoe UI", system-ui, sans-serif);
   font-size: var(--body-02-font-size, 0.875rem);
   line-height: var(--body-02-line-height, 1.25rem);
+}
+
+/* The floor beside a list that is a drawer: the window less the strips and gaps still beside it. */
+:has(> .tl-data-list.is-drawer) .tl-chat-conversation {
+  min-width: min(var(--chat-conversation-min-width), 100vw - var(--chat-conversation-floor-reserve));
 }
 
 .tl-chat-conversation .stage {

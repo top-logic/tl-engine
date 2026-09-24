@@ -1,5 +1,6 @@
 import { React } from 'tl-react-bridge'
 import type { bundle } from './i18n'
+import { ToolId } from './tool-id'
 import {
   progressSteps,
   type AgentTask,
@@ -27,22 +28,39 @@ export function ProgressSection({
   }
   return (
     <ol className="progress-list">
-      {steps.map((step) => (
-        <li key={step.id} className={`progress-step is-${step.status}`}>
-          <span className="progress-marker" aria-hidden="true">
-            {marker(step.status)}
-          </span>
-          <span className="progress-label" title={step.label}>
-            {step.label}
-          </span>
-          {step.status === 'approval' ? (
-            <span className="progress-caption" title={step.note}>
-              {labels.progressWaiting}
+      {steps.map((step) => {
+        const tools = step.tools?.join(', ')
+        return (
+          <li key={step.id} className={`progress-step is-${step.status}`}>
+            <span className="progress-marker" aria-hidden="true">
+              {marker(step.status)}
             </span>
-          ) : null}
-        </li>
-      ))}
+            <span className="progress-label" title={step.label || tools}>
+              {step.label || <ToolIds ids={step.tools ?? []} />}
+            </span>
+            {step.status === 'approval' ? (
+              <span className="progress-caption" title={tools}>
+                {labels.progressWaiting}
+              </span>
+            ) : null}
+          </li>
+        )
+      })}
     </ol>
+  )
+}
+
+/** The tools an approval that came before any task is open for, each set as code. */
+function ToolIds({ ids }: { ids: string[] }) {
+  return (
+    <>
+      {ids.map((id, index) => (
+        <React.Fragment key={index}>
+          {index > 0 ? ', ' : null}
+          <ToolId id={id} />
+        </React.Fragment>
+      ))}
+    </>
   )
 }
 

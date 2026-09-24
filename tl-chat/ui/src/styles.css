@@ -1566,7 +1566,8 @@
   font-weight: 600;
 }
 
-.md :not(pre) > code {
+.md :not(pre) > code,
+.tool-id {
   font-family: var(--chat-mono);
   font-size: 0.85em;
   padding: 0.1em 0.32em;

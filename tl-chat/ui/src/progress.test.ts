@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { parseTasksJson, progressBadge, progressSteps, unseenBadge, type AgentTask } from './progress-model'
 import { composeOutboundText } from './send-prefix'
+import { React } from 'tl-react-bridge'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { ProgressSection } from './progress'
+import { bundle } from './i18n'
 
 function task(id: string, status: string, subject = 'Discover model', activeForm?: string): AgentTask {
   return { id, status, subject, activeForm }
@@ -58,13 +62,30 @@ describe('progressSteps', () => {
       [{ id: 'a1', toolName: 'createTask' }],
     )
     expect(steps.map((s) => s.status)).toEqual(['done', 'approval'])
-    expect(steps[1].note).toBe('createTask')
+    expect(steps[1].tools).toEqual(['createTask'])
   })
 
   it('reports an approval that arrived before the agent wrote any task', () => {
     const steps = progressSteps([], [{ id: 'a1', toolName: 'createTask' }])
-    expect(steps).toEqual([{ id: 'approval', label: 'createTask', status: 'approval' }])
+    expect(steps).toEqual([{ id: 'approval', label: '', status: 'approval', tools: ['createTask'] }])
     expect(progressBadge([], [{ id: 'a1', toolName: 'createTask' }])).toBe(1)
+  })
+
+  /* #550: the rail names the tool the way the approval card does - its id, set as code. */
+  it('names the tools it waits for by their ids, as code', () => {
+    const html = renderToStaticMarkup(
+      React.createElement(ProgressSection, {
+        tasks: [],
+        approvals: [
+          { id: 'a1', toolName: 'editText' },
+          { id: 'a2', toolName: 'remember' },
+        ],
+        labels: bundle('de'),
+      }),
+    )
+    expect(html).toContain('<code class="tool-id">editText</code>, <code class="tool-id">remember</code>')
+    expect(html).toContain('title="editText, remember"')
+    expect(html).not.toContain('Edit text')
   })
 })
 

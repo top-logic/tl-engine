@@ -2,8 +2,8 @@ import { React } from 'tl-react-bridge'
 import { respond } from './api'
 import type { ChatAddress } from './api'
 import type { bundle } from './i18n'
-import { toolLabel } from './models'
 import type { ChatAction } from './reducer'
+import { ToolId } from './tool-id'
 import type { ApprovalOutcome, ApprovalRequest, InteractionRequest } from './types'
 
 const { useEffect, useState } = React
@@ -96,7 +96,7 @@ function OverlayCard({
   footer,
 }: {
   kind: string
-  title: string
+  title: React.ReactNode
   titleTooltip?: string
   countdown: React.ReactNode
   labels: Labels
@@ -293,7 +293,7 @@ function ApprovalCard({
   return (
     <OverlayCard
       kind={labels.approval}
-      title={toolLabel(item.toolName)}
+      title={item.toolName ? <ToolId id={item.toolName} /> : null}
       titleTooltip={item.toolName}
       labels={labels}
       countdown={<Countdown remainingMs={item.remainingMs} receivedAt={item.receivedAt} labels={labels} />}
@@ -319,7 +319,7 @@ function ApprovalCard({
       <p className="prompt-card-body">{approvalReason(item, labels)}</p>
       <ApprovalArguments argsJson={item.argsJson} labels={labels} />
       {item.toolName ? (
-        <p className="prompt-card-note">{labels.allowThisChatHint(toolLabel(item.toolName))}</p>
+        <p className="prompt-card-note">{labels.allowThisChatHint(<ToolId id={item.toolName} />)}</p>
       ) : null}
     </OverlayCard>
   )

@@ -41,36 +41,6 @@ function capitalize(word: string): string {
   return word.charAt(0).toUpperCase() + word.slice(1)
 }
 
-/**
- * A tool id written the way a person would say it.
- *
- * Tools have no display name of their own - the registry records an id and an English description
- * written for the model - so the id is read out instead: the factory prefix is dropped and the
- * camel case is broken up, turning `model-modification.createModule` into "Create module". The id
- * stays available as a tooltip, the same way a model id does.
- *
- * A run of capitals survives: it is a name, not a sentence. Folding the whole id to lower case read
- * `executeTLScript` out as "Execute tlscript".
- */
-export function toolLabel(id: string): string {
-  if (!id) return ''
-  const bare = id.includes('.') ? id.slice(id.lastIndexOf('.') + 1) : id
-  const words = bare
-    .replace(/[_-]+/g, ' ')
-    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-  if (!words.length) return id
-  return words
-    .map((word, index) => {
-      if (/[A-Z]{2}/.test(word)) return word
-      const lower = word.toLowerCase()
-      return index === 0 ? lower.charAt(0).toUpperCase() + lower.slice(1) : lower
-    })
-    .join(' ')
-}
-
 /** The effort levels the given model offers, empty when it offers none. */
 export function effortLevelsOf(models: ModelOption[], modelId: string): string[] {
   return models.find((item) => item.id === modelId)?.effortLevels ?? []

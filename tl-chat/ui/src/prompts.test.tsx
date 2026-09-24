@@ -138,8 +138,40 @@ describe('the approval card', () => {
 
   it('says which tool approving for the chat will cover', () => {
     const html = card(approval())
-    expect(html).toContain('Record statement')
     expect(html).toContain('jeden weiteren Aufruf')
+    expect(html).toContain('<code class="tool-id">consulting.recordStatement</code>')
+  })
+
+  /*
+   * #550: the tool is named by its technical id, set as code - never by an English phrase made up
+   * from it ("Edit text"), which the German card showed as if it were German.
+   */
+  it('names the tool by its id, as code, in the title and in the scope sentence', () => {
+    for (const language of ['de', 'en'] as const) {
+      const root = document.createElement('div')
+      root.innerHTML = card(approval({ toolName: 'editText' }), language)
+      const title = root.querySelector('.prompt-card-title')!
+      expect(title.getAttribute('title')).toBe('editText')
+      expect(title.querySelector('code.tool-id')?.textContent).toBe('editText')
+      expect(title.textContent).toBe('editText')
+      const note = root.querySelector('.prompt-card-note')!
+      expect(note.querySelector('code.tool-id')?.textContent).toBe('editText')
+      expect(root.textContent).not.toContain('Edit text')
+    }
+  })
+
+  it('says the scope in the exact wording', () => {
+    const note = (language: Language) => {
+      const root = document.createElement('div')
+      root.innerHTML = card(approval({ toolName: 'editText' }), language)
+      return root.querySelector('.prompt-card-note')!.textContent
+    }
+    expect(note('de')).toBe(
+      'Gilt in diesem Chat für jeden weiteren Aufruf des Werkzeugs editText - für kein anderes Werkzeug dieses Zuges.',
+    )
+    expect(note('en')).toBe(
+      'Covers every further call of the tool editText in this chat - no other tool of this turn.',
+    )
   })
 
   /* An accented button is the one a reader answers without looking at what is above it. */
@@ -147,6 +179,7 @@ describe('the approval card', () => {
   it('says nothing about scope for a request that names no tool', () => {
     const html = card(approval({ toolName: '' }))
     expect(html).not.toContain('prompt-card-note')
+    expect(html).not.toContain('tool-id')
   })
 
   it('accents neither answer', () => {

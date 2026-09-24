@@ -30,6 +30,10 @@
   --tl-size-icon-sm: var(--tl-size-4);
   --tl-size-icon-md: var(--tl-size-5);
   --tl-size-icon-lg: var(--tl-size-6);
+  --tl-size-avatar-sm: var(--tl-size-6);
+  --tl-size-avatar-md: var(--tl-size-7);
+  --tl-size-avatar-lg: var(--tl-size-8);
+  --tl-size-avatar-xl: var(--tl-size-9);
   --tl-border-width-sm: var(--tl-line-1);
   --tl-border-width-md: var(--tl-line-2);
   --tl-border-width-accent: var(--tl-line-3);

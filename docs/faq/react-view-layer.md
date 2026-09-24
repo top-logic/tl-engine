@@ -509,7 +509,7 @@ The box the picture is shown in is described by `aspect-ratio` (`16/9`, so a row
 
 `<overlay>` stacks content over a base: its **first child is the base**, every further child is a layer over it. The base gives the overlay its height; its width is what the surrounding layout grants, and a base sized relative to it (`width="100%"`) fills it. A base of fixed width wants a container that does not stretch its items (`<stack align="start">`), or the overlay is stretched past the base and anchors its layers to the free space beside it. A `<layer position="fill|top-left|top|top-right|left|center|right|bottom-left|bottom|bottom-right" css-class="…">` brings the position its content takes and a class of its own; a child written without a layer covers the base as a whole. A layer passes the pointer through wherever it shows nothing (`.tlOverlay__layer` is `pointer-events: none`, its content `auto`), so the base stays usable below the free space of a layer that only anchors a badge. Placement comes from the element, the look from application CSS on the layer's class — a badge pill, a caption scrim.
 
-`<avatar input="ch" image="photoCh" size="small|default|large|x-large"/>` shows the picture of the `image` channel circle-cropped, and the initials of the `input` value's label over a color derived from it while there is none. The picture follows its channel, so a photo replaced elsewhere appears without the avatar being built anew.
+`<avatar input="ch" image="photoCh" size="sm|md|lg|xl"/>` shows the picture of the `image` channel circle-cropped, and the initials of the `input` value's label while there is none, on one of the eight category roles of the design system (`tl-avatar--category-<n>`, derived from the label, the same two tokens a pill of that category reads). The four sizes are `size-avatar-sm` to `size-avatar-xl` (24/32/48/64 px) and do not follow the density; the initials carry the type class of their size. The picture follows its channel, so a photo replaced elsewhere appears without the avatar being built anew.
 
 ```xml
 <overlay>
@@ -539,7 +539,7 @@ The box the picture is shown in is described by `aspect-ratio` (`16/9`, so a row
 </overlay>
 ```
 
-The client classes an application styles against are `.tlImage` / `.tlImage__image`, `.tlOverlay` / `.tlOverlay__layer` / `.tlOverlay__layer--<anchor>` and `.tlAvatar--<size>` / `.tlAvatar__image`. The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/image-demo.view.xml` with `style/tl-demo-react.css`.
+The client classes an application styles against are `.tlImage` / `.tlImage__image`, `.tlOverlay` / `.tlOverlay__layer` / `.tlOverlay__layer--<anchor>` and `.tl-avatar` / `.tl-avatar--<size>` / `.tl-avatar--category-<n>` / `.tl-avatar__image` (design system, `avatar.css`). The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/image-demo.view.xml` with `style/tl-demo-react.css`.
 
 ## Content shown under one condition: `<visible-if>`
 

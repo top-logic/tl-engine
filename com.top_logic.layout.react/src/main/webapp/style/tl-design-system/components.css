@@ -3,6 +3,54 @@
    https://git.top-logic.com/TopLogic/tl-design-system/wiki */
 /* Components, one section per file under src/components/. */
 
+/* --- avatar/avatar.css --- */
+/* Avatar — docs/skalen.md „Avatar: die Farbe ist eine Kategorie“.
+   Ein Kreis für eine Person oder ein Objekt: das Bild, wo es eines gibt; sonst die Initialen auf
+   einer der acht Kategorien, die der Name bestimmt; ohne Namen die neutrale Fläche. Farbe ist eine
+   Rolle mit denselben zwei Tokens wie die Pill — kein Farbwert aus dem Namen, kein Inline-Style.
+   Vier Größen aus der Maßskala; die Initialen tragen die Typo-Klasse ihrer Größe (von außen). */
+
+.tl-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  box-sizing: border-box;
+  width: var(--tl-size-avatar-md);
+  height: var(--tl-size-avatar-md);
+  border: var(--tl-border-width-sm) solid var(--tl-border-control);
+  border-radius: var(--tl-radius-round);
+  background: var(--tl-surface-interactive-selected);
+  color: var(--tl-text-primary);
+  overflow: hidden;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+/* Das Bild füllt den Kreis und wird beschnitten, nicht verzerrt. */
+.tl-avatar__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* --- Größen ---------------------------------------------------------------- */
+
+.tl-avatar--sm { width: var(--tl-size-avatar-sm); height: var(--tl-size-avatar-sm); }
+.tl-avatar--lg { width: var(--tl-size-avatar-lg); height: var(--tl-size-avatar-lg); }
+.tl-avatar--xl { width: var(--tl-size-avatar-xl); height: var(--tl-size-avatar-xl); }
+
+/* --- Kategorien -------------------------------------------------------------- */
+
+.tl-avatar--category-1 { background: var(--tl-category-1-subtle); border-color: var(--tl-category-1-border); }
+.tl-avatar--category-2 { background: var(--tl-category-2-subtle); border-color: var(--tl-category-2-border); }
+.tl-avatar--category-3 { background: var(--tl-category-3-subtle); border-color: var(--tl-category-3-border); }
+.tl-avatar--category-4 { background: var(--tl-category-4-subtle); border-color: var(--tl-category-4-border); }
+.tl-avatar--category-5 { background: var(--tl-category-5-subtle); border-color: var(--tl-category-5-border); }
+.tl-avatar--category-6 { background: var(--tl-category-6-subtle); border-color: var(--tl-category-6-border); }
+.tl-avatar--category-7 { background: var(--tl-category-7-subtle); border-color: var(--tl-category-7-border); }
+.tl-avatar--category-8 { background: var(--tl-category-8-subtle); border-color: var(--tl-category-8-border); }
+
 /* --- button/button.css --- */
 /* Button — docs/skalen.md „Button: vier Erscheinungen, eine Tönung, keine Größe“.
    Vier Erscheinungen (--primary, --secondary, --ghost, --link), eine Tönung (--danger),

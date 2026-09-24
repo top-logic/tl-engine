@@ -17,7 +17,8 @@ import com.top_logic.layout.react.control.image.ImageSource;
  *
  * <p>
  * The circle shows the picture of the one it represents. Where there is none, the client fills it
- * with the initials of the display name over a background color derived from that name.
+ * with the initials of the display name on one of the eight category roles of the design system, which
+ * the client derives from that name.
  * </p>
  */
 public class ReactAvatarControl extends ReactControl implements DataProvider {
@@ -43,7 +44,7 @@ public class ReactAvatarControl extends ReactControl implements DataProvider {
 	public ReactAvatarControl(ReactContext context, String name) {
 		super(context, null, REACT_MODULE);
 		setName(name);
-		setSize(AvatarSize.DEFAULT);
+		setSize(AvatarSize.MEDIUM);
 	}
 
 	/**

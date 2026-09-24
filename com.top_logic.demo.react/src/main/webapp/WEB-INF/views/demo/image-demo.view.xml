@@ -123,11 +123,11 @@
 					<avatar
 						image="photo"
 						input="node"
-						size="x-large"
+						size="xl"
 					/>
 					<avatar
 						input="node"
-						size="x-large"
+						size="xl"
 					/>
 					<image
 						aspect-ratio="4/3"

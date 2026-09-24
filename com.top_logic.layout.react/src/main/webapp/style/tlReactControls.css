@@ -4551,43 +4551,6 @@ button.tlMenu__item--disabled:hover {
 	grid-template-columns: inherit;
 }
 
-/* --- TLAvatar ---------------------------------------------------------- */
-
-.tlAvatar {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	flex: none;
-	width: 2rem;
-	height: 2rem;
-	border-radius: 50%;
-	color: #fff;
-	font-family: var(--font-family);
-	font-size: 0.75rem;
-	font-weight: 600;
-	letter-spacing: 0.02em;
-	user-select: none;
-}
-
-/* An avatar without a name - an anonymous session, or an empty channel. It keeps its circle and
-   fills it faintly, so that an avatar used as a menu trigger stays visible and clickable. */
-.tlAvatar--empty {
-	background: var(--layer-accent);
-	border: 1px solid var(--border-subtle);
-}
-
-/* The picture of the one the avatar represents, cropped to the circle. */
-.tlAvatar__image {
-	width: 100%;
-	height: 100%;
-	border-radius: 50%;
-	object-fit: cover;
-}
-
-.tlAvatar--small { width: 1.5rem; height: 1.5rem; font-size: 0.5625rem; }
-.tlAvatar--large { width: 3rem; height: 3rem; font-size: 1.125rem; }
-.tlAvatar--x-large { width: 4rem; height: 4rem; font-size: 1.5rem; }
-
 /* --- TLRelativeTime ---------------------------------------------------- */
 
 .tlRelativeTime {

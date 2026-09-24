@@ -58,7 +58,7 @@ public class TestAvatarElement extends TestCase {
 
 		_input = new DefaultViewChannel(INPUT);
 		_image = new DefaultViewChannel(IMAGE);
-		_avatar = createAvatar(AvatarSize.DEFAULT);
+		_avatar = createAvatar(AvatarSize.MEDIUM);
 	}
 
 	/** Without a picture the avatar falls back to the initials of the input value's label. */
@@ -110,16 +110,16 @@ public class TestAvatarElement extends TestCase {
 	public void testInitialPicture() {
 		_image.set(data("image/png"));
 
-		assertTrue("The value the channel already holds is displayed.", hasData(createAvatar(AvatarSize.DEFAULT)));
+		assertTrue("The value the channel already holds is displayed.", hasData(createAvatar(AvatarSize.MEDIUM)));
 	}
 
 	/** The configured diameter reaches the client. */
 	public void testSize() {
 		assertEquals("The avatar takes the standard diameter unless it says otherwise.",
-			AvatarSize.DEFAULT.getExternalName(), state(_avatar, ReactAvatarControl.SIZE));
+			AvatarSize.MEDIUM.getExternalName(), state(_avatar, ReactAvatarControl.SIZE));
 
-		assertEquals(AvatarSize.X_LARGE.getExternalName(),
-			state(createAvatar(AvatarSize.X_LARGE), ReactAvatarControl.SIZE));
+		assertEquals(AvatarSize.EXTRA_LARGE.getExternalName(),
+			state(createAvatar(AvatarSize.EXTRA_LARGE), ReactAvatarControl.SIZE));
 	}
 
 	/** Both channels are let go of when the control is disposed. */

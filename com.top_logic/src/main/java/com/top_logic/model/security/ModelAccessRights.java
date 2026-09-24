@@ -73,6 +73,27 @@ public interface ModelAccessRights {
 	}
 
 	/**
+	 * The relation leading from an object of the given type to the object whose access definition
+	 * decides access to it.
+	 * <p>
+	 * An object of a type with an access parent has no grants and no roles of its own: the access
+	 * checks ({@link #isAllowed(Person, TLObject, BoundCommandGroup)} and its variants) ask its
+	 * access parent instead, which may delegate further. A composition part gets its container as
+	 * access parent by default, unless a rule delivers a role on it or the configuration names
+	 * another parent.
+	 * </p>
+	 * 
+	 * @param type
+	 *        The type of the objects to access.
+	 * @return The relation to the access parent, <code>null</code> for a type deciding for itself.
+	 * @implSpec An implementation without a notion of access parents answers <code>null</code> for
+	 *           every type.
+	 */
+	default AccessParent getAccessParent(TLClass type) {
+		return null;
+	}
+
+	/**
 	 * Returns the roles of which the user must hold at least one <em>in addition</em> to the
 	 * object-level rights to perform the given command group on the given attribute. Relevant for
 	 * READ and WRITE command groups to implement attribute-level access restrictions.

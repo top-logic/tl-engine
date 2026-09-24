@@ -76,9 +76,19 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COVERAGE_COLUMN_ROLE_RULES;
 
 	/**
-	 * @en Security parents
+	 * @en Role parents
 	 */
-	public static ResKey COVERAGE_COLUMN_SECURITY_PARENTS;
+	public static ResKey COVERAGE_COLUMN_ROLE_PARENTS;
+
+	/**
+	 * @en Access parent
+	 */
+	public static ResKey COVERAGE_COLUMN_ACCESS_PARENT;
+
+	/**
+	 * @en container (default)
+	 */
+	public static ResKey COVERAGE_ACCESS_PARENT_DEFAULT;
 
 	/**
 	 * @en Findings
@@ -86,9 +96,9 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COVERAGE_COLUMN_FINDINGS;
 
 	/**
-	 * @en Security parent
+	 * @en Role parent
 	 */
-	public static ResKey COVERAGE_RULE_KIND_SECURITY_PARENT;
+	public static ResKey COVERAGE_RULE_KIND_ROLE_PARENT;
 
 	/**
 	 * @en Role rule
@@ -107,19 +117,14 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_NO_TYPE_SELECTED;
 
 	/**
-	 * @en The analysis proposes no security parent rule for the selected type.
-	 */
-	public static ResKey ERROR_NO_PROPOSED_RULE;
-
-	/**
 	 * @en There is no rule to work on.
 	 */
 	public static ResKey ERROR_NO_RULE_SELECTED;
 
 	/**
-	 * @en There is no security parent rule with the id "{0}".
+	 * @en There is no role parent rule with the id "{0}".
 	 */
-	public static ResKey1 ERROR_UNKNOWN_SECURITY_PARENT_RULE__ID;
+	public static ResKey1 ERROR_UNKNOWN_ROLE_PARENT_RULE__ID;
 
 	/**
 	 * @en There is no role rule with the id "{0}".
@@ -137,7 +142,7 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_MISSING_RULE_TYPE;
 
 	/**
-	 * @en Please enter at least one step leading to the security parent.
+	 * @en Please enter at least one step leading to the role parent.
 	 */
 	public static ResKey ERROR_MISSING_RULE_PATH;
 
@@ -167,15 +172,16 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_ACCESS_RIGHTS_INVALID__ERRORS;
 
 	/**
-	 * @en No role source: neither a role rule nor a security parent rule applies to the type, so
-	 *     no user can hold a role on its objects and every access is denied.
+	 * @en No role source: neither a role rule nor a role parent rule applies to the type, and no
+	 *     composition holds its objects, so no user can hold a role on them and every access is
+	 *     denied.
 	 */
 	public static ResKey COVERAGE_PROBLEM_NO_ROLE_SOURCE;
 
 	/**
-	 * @en No role source: neither a role rule nor a security parent rule applies to the type, so
-	 *     its objects inherit the roles of the security root only, the global default security
-	 *     parent being active.
+	 * @en No role source: neither a role rule nor a role parent rule applies to the type, and no
+	 *     composition holds its objects, so they inherit the roles of the security root only, the
+	 *     global default security parent being active.
 	 */
 	public static ResKey COVERAGE_PROBLEM_NO_ROLE_SOURCE_ROOT_FALLBACK;
 
@@ -187,27 +193,21 @@ public class I18NConstants extends I18NConstantsBase {
 
 	/**
 	 * @en Dead grant: the operation "{0}" is granted to the roles {1}, but no rule delivers any of
-	 *     them on the type or on its security parents, so the grant never takes effect.
+	 *     them on the type or on its role parents, so the grant never takes effect.
 	 */
 	public static ResKey2 COVERAGE_PROBLEM_DEAD_GRANT__OPERATION_ROLES;
 
 	/**
-	 * @en Accept the proposal: the object containing an object of the type through the composition
-	 *     {0} becomes its security parent ("Accept proposal").
+	 * @en Name a to-one reference of the type as its access parent, so that the objects delegate
+	 *     every access decision to the object the reference points to ("Access rights…").
 	 */
-	public static ResKey1 COVERAGE_SOLUTION_ACCEPT_PROPOSAL__REFERENCE;
+	public static ResKey COVERAGE_SOLUTION_ACCESS_PARENT;
 
 	/**
-	 * @en Choose the container: the type is contained through several compositions, {0}; a security
-	 *     parent rule must name the one to navigate ("Security parent…").
+	 * @en Define a role parent rule, so that the objects inherit the roles of the object the
+	 *     rule leads to ("Role parent…").
 	 */
-	public static ResKey1 COVERAGE_SOLUTION_CHOOSE_PARENT__REFERENCES;
-
-	/**
-	 * @en Define a security parent rule, so that the objects inherit the roles of the object the
-	 *     rule leads to ("Security parent…").
-	 */
-	public static ResKey COVERAGE_SOLUTION_SECURITY_PARENT_RULE;
+	public static ResKey COVERAGE_SOLUTION_ROLE_PARENT_RULE;
 
 	/**
 	 * @en Define a role rule assigning users a role on the objects directly ("Role rule…").
@@ -227,8 +227,8 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COVERAGE_SOLUTION_READ_GRANT;
 
 	/**
-	 * @en Add a rule delivering one of the granted roles on the type or on its security parent
-	 *     ("Role rule…", "Security parent…").
+	 * @en Add a rule delivering one of the granted roles on the type or on its role parent
+	 *     ("Role rule…", "Role parent…").
 	 */
 	public static ResKey COVERAGE_SOLUTION_DELIVER_ROLE;
 
@@ -237,6 +237,41 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     ("Access rights…").
 	 */
 	public static ResKey COVERAGE_SOLUTION_CHANGE_GRANT;
+
+	/**
+	 * @en Shadowed rules: the type has an access parent, so the rules {0} applying to it have no
+	 *     effect.
+	 */
+	public static ResKey1 COVERAGE_PROBLEM_SHADOWED_RULES__RULES;
+
+	/**
+	 * @en Delete the shadowed rules, or restrict them to the types that decide for themselves
+	 *     ("Edit rule…", "Delete rule").
+	 */
+	public static ResKey COVERAGE_SOLUTION_REMOVE_SHADOWED_RULES;
+
+	/**
+	 * @en Drop the access parent of the type, so that the rules and its grants decide again
+	 *     ("Access rights…").
+	 */
+	public static ResKey COVERAGE_SOLUTION_REMOVE_ACCESS_PARENT;
+
+	/**
+	 * @en The type delegates every access decision to its access parent, the object reached through
+	 *     {0}: whether a user may read, write or export an object of the type is whether the user
+	 *     may do the same to that object, and creating or deleting one is writing it. The type needs
+	 *     no grants and no roles of its own.
+	 */
+	public static ResKey1 COVERAGE_DELEGATED__PARENT;
+
+	/**
+	 * @en The type delegates every access decision to its container, whichever composition holds
+	 *     the object ({0}): whether a user may read, write or export an object of the type is
+	 *     whether the user may do the same to its container, and creating or deleting one is
+	 *     writing the container. This is the default for a composition part without a role rule
+	 *     and without a role parent rule; the type needs no grants and no roles of its own.
+	 */
+	public static ResKey1 COVERAGE_DELEGATED_DEFAULT__CONTAINERS;
 
 	/**
 	 * @en The type is marked as internal: it is used by the application code alone, so it is exempt

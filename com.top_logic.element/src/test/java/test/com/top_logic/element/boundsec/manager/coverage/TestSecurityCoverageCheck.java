@@ -82,9 +82,12 @@ public class TestSecurityCoverageCheck extends BasicTestCase {
 		}
 
 		assertLogged(messages, ORPHAN);
-		assertLogged(messages, SINGLE_CONTAINED);
-		assertLogged(messages, DOUBLE_CONTAINED);
 		assertLogged(messages, DEAD_GRANT);
+
+		assertFalse("A composition part delegates to its container and produces no finding: " + SINGLE_CONTAINED,
+			hasFindingFor(messages, SINGLE_CONTAINED));
+		assertFalse("A composition part delegates to its container and produces no finding: " + DOUBLE_CONTAINED,
+			hasFindingFor(messages, DOUBLE_CONTAINED));
 
 		assertFalse("A covered type produces no finding: " + COVERED, hasFindingFor(messages, COVERED));
 		assertTrue("The summary of the analysis is logged: " + messages,

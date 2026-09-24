@@ -71,7 +71,7 @@
 			deputy settings can offer the other accounts and show who stands in for whom. This is a
 			decision of this demo; a real application decides for itself whether and which accounts
 			a user may see. The engine grants an account read access to its own account only.
-
+			
 			The project reader reads and writes everything of the project management module and of
 			the ticket module. The role rules below grant the role on the two root types; the
 			contained objects inherit it through the security parents that the coverage analysis
@@ -142,8 +142,8 @@
 						<!--
 							Every member of the "users" group reads and writes the projects of this
 							demo. The role is granted on the project scope only; the milestones,
-							tickets and notes it contains reach it through the security parents
-							below.
+							tickets and notes it contains are composition parts without a role source
+							and therefore delegate every access decision to their container.
 						-->
 						<rule id="ProjectsReadableByUsers"
 							inherit="true"
@@ -154,7 +154,7 @@
 						</rule>
 						<!--
 							The same for the tickets of the ticket module, whose comments and
-							attachments reach the role through the security parents below.
+							attachments delegate to their container the same way.
 						-->
 						<rule id="TicketsReadableByUsers"
 							inherit="true"
@@ -165,62 +165,6 @@
 						</rule>
 					</rules>
 				</role-rules>
-				<!--
-					The rules below are the output of the coverage analysis: the "Show
-					configuration" command of the administration area (Access control, Coverage)
-					proposed them for every type that has no role source of its own and is
-					contained in exactly one composition, and they are taken over unchanged,
-					including their generated ids.
-				-->
-				<security-parents>
-					<rules>
-						<rule id="Attachment_securityParent"
-							inherit="true"
-							meta-element="demo.tickets:Attachment"
-						>
-							<step
-								attribute="demo.tickets:Comment#attachments"
-								inverse="true"
-							/>
-						</rule>
-						<rule id="Comment_securityParent"
-							inherit="true"
-							meta-element="demo.tickets:Comment"
-						>
-							<step
-								attribute="demo.tickets:Ticket#comments"
-								inverse="true"
-							/>
-						</rule>
-						<rule id="Milestone_securityParent"
-							inherit="true"
-							meta-element="tl.demo.projectManagement:Milestone"
-						>
-							<step
-								attribute="tl.demo.projectManagement:ProjectScope#milestones"
-								inverse="true"
-							/>
-						</rule>
-						<rule id="Note_securityParent"
-							inherit="true"
-							meta-element="tl.demo.projectManagement:Note"
-						>
-							<step
-								attribute="tl.demo.projectManagement:ProjectScope#notes"
-								inverse="true"
-							/>
-						</rule>
-						<rule id="Ticket_securityParent"
-							inherit="true"
-							meta-element="tl.demo.projectManagement:Ticket"
-						>
-							<step
-								attribute="tl.demo.projectManagement:ProjectScope#tickets"
-								inverse="true"
-							/>
-						</rule>
-					</rules>
-				</security-parents>
 			</instance>
 		</config>
 		<!--
@@ -365,11 +309,21 @@
 							<en>Flat</en>
 							<de>Flach</de>
 						</label>
-						<length name="border-radius-02" value="0"/>
-						<length name="corner-radius" value="0"/>
-						<text name="shadow-dialog" value="none"/>
-						<text name="shadow-menu" value="none"/>
-						<text name="shadow-raised" value="none"/>
+						<length name="border-radius-02"
+							value="0"
+						/>
+						<length name="corner-radius"
+							value="0"
+						/>
+						<text name="shadow-dialog"
+							value="none"
+						/>
+						<text name="shadow-menu"
+							value="none"
+						/>
+						<text name="shadow-raised"
+							value="none"
+						/>
 					</theme>
 					<theme name="glass"
 						extends="default"
@@ -379,9 +333,15 @@
 							<en>Glass</en>
 							<de>Glas</de>
 						</label>
-						<text name="font-family-display" value="Georgia, serif"/>
-						<text name="shadow-glow" value="0 0 24px rgba(41,104,200,0.45)"/>
-						<length name="surface-blur" value="12px"/>
+						<text name="font-family-display"
+							value="Georgia, serif"
+						/>
+						<text name="shadow-glow"
+							value="0 0 24px rgba(41,104,200,0.45)"
+						/>
+						<length name="surface-blur"
+							value="12px"
+						/>
 					</theme>
 				</themes>
 			</instance>

@@ -34,8 +34,8 @@ import com.top_logic.util.model.ModelService;
  * For every concrete type the check answers the two questions that decide whether a user can ever
  * see an object of that type: does a rule deliver a role on it, and is a role granted the read
  * operation on it? A type that fails one of the two is invisible for every user, and a grant to a
- * role that no rule delivers on the type never takes effect. For a type whose container can be
- * derived from the model, the security parent rule that would close the gap is proposed.
+ * role that no rule delivers on the type never takes effect. A type with an access parent delegates
+ * every decision to another object and needs no definition of its own; it is reported as delegated.
  * </p>
  *
  * <p>
@@ -47,8 +47,7 @@ import com.top_logic.util.model.ModelService;
  *
  * <p>
  * Types of a module that deliberately has no access definition are kept out of the check by naming
- * the module in the excluded modules. The check only reads the definitions, it never changes them:
- * a proposed rule is written to the log for the developer to apply explicitly.
+ * the module in the excluded modules. The check only reads the definitions, it never changes them.
  * </p>
  *
  * @implNote The check is an extension of the {@link AccessManager} and therefore starts with it and

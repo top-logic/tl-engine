@@ -1,64 +1,79 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
+<?xml version="1.0" encoding="utf-8" ?>
 
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
-
 	<services>
 		<config service-class="com.top_logic.basic.module.ModuleSystem">
 			<instance class="com.top_logic.basic.module.ModuleSystem">
 				<modules>
-					<module key="com.top_logic.basic.module.services.ServletContextService$Module" value="false" />
-					<module key="com.top_logic.mig.html.ContainerDetector$Module" value="false" />
+					<module key="com.top_logic.basic.module.services.ServletContextService$Module"
+						value="false"
+					/>
+					<module key="com.top_logic.mig.html.ContainerDetector$Module"
+						value="false"
+					/>
 				</modules>
 			</instance>
 		</config>
-	
+
 		<config service-class="com.top_logic.element.meta.kbbased.filtergen.AttributeValueLocatorFactory">
 			<instance class="com.top_logic.element.meta.kbbased.filtergen.AttributeValueLocatorFactory">
 				<locators>
-					<locator key="SubConfiguredLocator" value="test.com.top_logic.element.meta.expr.parser.TestExpressionParser$SubConfiguredLocator" />
+					<locator key="SubConfiguredLocator"
+						value="test.com.top_logic.element.meta.expr.parser.TestExpressionParser$SubConfiguredLocator"
+					/>
 				</locators>
 			</instance>
 		</config>
-	
+
 		<config service-class="com.top_logic.element.structured.util.NumberHandlerFactory">
 			<instance>
 				<handlers>
 					<handler name="TestConfiguredNumberHandler_testConcurrent"
-						pattern="N-%DATE%-%NUMBER%"
+						date-pattern="yyyy-MM-dd"
 						number-pattern="0000"
-						date-pattern="yyyy-MM-dd" />
-					<custom-handler name="TestConfiguredNumberHandler.Custom"
-						class="test.com.top_logic.element.structured.util.TestConfiguredNumberHandler$NumberHandlerForTest" />
+						pattern="N-%DATE%-%NUMBER%"
+					/>
+					<custom-handler class="test.com.top_logic.element.structured.util.TestConfiguredNumberHandler$NumberHandlerForTest"
+						name="TestConfiguredNumberHandler.Custom"
+					/>
 				</handlers>
 			</instance>
 		</config>
-		
+
 		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
 			<instance class="com.top_logic.element.boundsec.manager.StorageAccessManager">
 				<storage class="com.top_logic.element.boundsec.ElementSecurityStorage"/>
-				
-	            <reset-on-init>true</reset-on-init>
-	            
-	            <group-mapper class="com.top_logic.tool.boundsec.manager.SimpleGroupMapper"/>
-	            
-	            <structures>
-	            	<structure name="projElement"/>
-	            </structures>
-	            
-	            <meta-elements>
-		            <meta-element name="projElement.All" role-root="projElement"/>
-		            <meta-element name="prodElement.RootElement" role-root="prodElement"/>
-		            <meta-element name="prodElement.Product" role-root="prodElement"/>
-		            <meta-element name="prodElement.ProductType" role-root="prodElement"/>
-		            <meta-element name="prodElement.ProductVersion" role-root="prodElement"/>
-	            </meta-elements>
 
-				<!-- Role sources analyzed by TestSecurityCoverageAnalysis. -->
+				<reset-on-init>true</reset-on-init>
+
+				<group-mapper class="com.top_logic.tool.boundsec.manager.SimpleGroupMapper"/>
+
+				<structures>
+					<structure name="projElement"/>
+				</structures>
+
+				<meta-elements>
+					<meta-element name="projElement.All"
+						role-root="projElement"
+					/>
+					<meta-element name="prodElement.RootElement"
+						role-root="prodElement"
+					/>
+					<meta-element name="prodElement.Product"
+						role-root="prodElement"
+					/>
+					<meta-element name="prodElement.ProductType"
+						role-root="prodElement"
+					/>
+					<meta-element name="prodElement.ProductVersion"
+						role-root="prodElement"
+					/>
+				</meta-elements>
+
+				<!-- Role sources analyzed by TestSecurityCoverageAnalysis and TestAccessParentCheck. -->
 				<role-rules>
 					<rules>
-						<rule
-							id="TestSecurityCoverage_covered"
+						<rule id="TestSecurityCoverage_covered"
 							inherit="true"
 							meta-element="TestSecurityCoverage:Covered"
 							role="TestSecurityCoverage.Reader"
@@ -67,8 +82,7 @@
 								<step attribute="TestSecurityCoverage:Covered#owner"/>
 							</path>
 						</rule>
-						<rule
-							id="TestSecurityCoverage_deadGrant"
+						<rule id="TestSecurityCoverage_deadGrant"
 							meta-element="TestSecurityCoverage:DeadGrant"
 							role="TestSecurityCoverage.Reader"
 						>
@@ -76,13 +90,21 @@
 								<step attribute="TestSecurityCoverage:DeadGrant#owner"/>
 							</path>
 						</rule>
+						<!-- Shadowed by the access parent of the type. -->
+						<rule id="TestSecurityCoverage_explicitPart"
+							meta-element="TestSecurityCoverage:ExplicitPart"
+							role="TestSecurityCoverage.Reader"
+						>
+							<path>
+								<step attribute="TestSecurityCoverage:ExplicitPart#owner"/>
+							</path>
+						</rule>
 					</rules>
 				</role-rules>
 
 				<security-parents>
 					<rules>
-						<rule
-							id="TestSecurityCoverage_childOfCovered"
+						<rule id="TestSecurityCoverage_childOfCovered"
 							inherit="true"
 							meta-element="TestSecurityCoverage:ChildOfCovered"
 						>
@@ -107,7 +129,21 @@
 							operation="Read"
 							roles="TestSecurityCoverage.Reader"
 						/>
+						<grant
+							inherit="true"
+							operation="Write"
+							roles="TestSecurityCoverage.Reader"
+						/>
 					</class>
+					<class name="TestSecurityCoverage:ExplicitPart"
+						access-parent="TestSecurityCoverage:Covered#explicitParts"
+					/>
+					<class name="TestSecurityCoverage:Linked"
+						access-parent="TestSecurityCoverage:Linked#target"
+					/>
+					<class name="TestSecurityCoverage:Cyclic"
+						access-parent="TestSecurityCoverage:Cyclic#next"
+					/>
 					<class name="TestSecurityCoverage:ChildOfCovered">
 						<grant
 							operation="Read"
@@ -175,20 +211,32 @@
 					<declaration file="/WEB-INF/model/TestSecurityCoverage.model.xml"/>
 				</declarations>
 				<settings>
-					<module name="TestXMLInstanceImporter" enabled="true">
+					<module name="TestXMLInstanceImporter"
+						enabled="true"
+					>
 						<factory value="com.top_logic.element.model.DefaultModelFactory"/>
 					</module>
-					<module name="TestTypes" enabled="true">
+					<module name="TestTypes"
+						enabled="true"
+					>
 						<factory value="test.com.top_logic.element.structured.model.TestTypesFactory"/>
 					</module>
-					<module name="Benchmark" enabled="true">
+					<module name="Benchmark"
+						enabled="true"
+					>
 						<factory value="test.com.top_logic.element.meta.benchmark.model.BenchmarkFactory"/>
 					</module>
 				</settings>
 				<classifications>
-					<classification name="test.element.checklist" mode="use" />
-					<classification name="test.element.classification.multi" mode="use" />
-					<classification name="test.element.classification.single" mode="use" />
+					<classification name="test.element.checklist"
+						mode="use"
+					/>
+					<classification name="test.element.classification.multi"
+						mode="use"
+					/>
+					<classification name="test.element.classification.single"
+						mode="use"
+					/>
 				</classifications>
 			</instance>
 		</config>
@@ -196,20 +244,24 @@
 		<config service-class="com.top_logic.layout.provider.LabelProviderService">
 			<instance>
 				<label-providers>
-		            <provider kind="MODEL" type="TestTypes:A" implementation="test.com.top_logic.element.layout.provider.TestLabelProviderService$LabelsForA" />
+					<provider
+						implementation="test.com.top_logic.element.layout.provider.TestLabelProviderService$LabelsForA"
+						kind="MODEL"
+						type="TestTypes:A"
+					/>
 				</label-providers>
 			</instance>
 		</config>
-		
+
 		<config service-class="com.top_logic.tool.boundsec.CommandHandlerFactory">
 			<instance>
 				<handlers>
-					<handler id="TestIntrinsicCommands" 
-						class="test.com.top_logic.tool.boundsec.TestAbstractCommandHandler$TestingCommand"/>
+					<handler id="TestIntrinsicCommands"
+						class="test.com.top_logic.tool.boundsec.TestAbstractCommandHandler$TestingCommand"
+					/>
 				</handlers>
 			</instance>
 		</config>
-		
 	</services>
 
 	<configs>
@@ -217,18 +269,20 @@
 			<type-systems>
 				<type-system name="Default">
 					<declarations>
-			            <declaration resource="webinf://kbase/TestElementMeta.xml"/>
-						<declaration resource="webinf://kbase/TestTypesMeta.xml" />
-						<declaration resource="webinf://kbase/TestTicket28519Meta.xml" />
-			        </declarations>
-			    </type-system>
-				<type-system name="TestTypes" class="com.top_logic.knowledge.service.TypeSystemSetup">
+						<declaration resource="webinf://kbase/TestElementMeta.xml"/>
+						<declaration resource="webinf://kbase/TestTypesMeta.xml"/>
+						<declaration resource="webinf://kbase/TestTicket28519Meta.xml"/>
+					</declarations>
+				</type-system>
+				<type-system class="com.top_logic.knowledge.service.TypeSystemSetup"
+					name="TestTypes"
+				>
 					<declarations>
 						<declaration resource="webinf://kbase/BasicMeta.xml"/>
 					</declarations>
 					<providers>
 						<provider name="basic">
-							<impl class="com.top_logic.knowledge.service.db2.BasicTypeProvider" />
+							<impl class="com.top_logic.knowledge.service.db2.BasicTypeProvider"/>
 						</provider>
 					</providers>
 				</type-system>
@@ -237,16 +291,14 @@
 
 		<config config:interface="test.com.top_logic.basic.TestComment$Config">
 			<ignore>
-				<entry value="com.top_logic.element.meta.expr.parser" />
+				<entry value="com.top_logic.element.meta.expr.parser"/>
 			</ignore>
 		</config>
-		
+
 		<config config:interface="test.com.top_logic.basic.TestNameClashClassVsPackage$Config">
 			<ignore>
-				<entry value="com.top_logic.element.meta.form.fieldprovider" />
+				<entry value="com.top_logic.element.meta.form.fieldprovider"/>
 			</ignore>
 		</config>
-		
 	</configs>
-
 </application>

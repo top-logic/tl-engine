@@ -30,8 +30,8 @@ import com.top_logic.basic.module.TypedRuntimeModule.ModuleConfiguration;
 import com.top_logic.element.boundsec.manager.ElementAccessManager;
 import com.top_logic.element.boundsec.manager.coverage.SecurityCoverageCheck;
 import com.top_logic.element.boundsec.manager.coverage.SecurityDefinitionEditor;
-import com.top_logic.element.boundsec.manager.coverage.TypeCoverage;
 import com.top_logic.element.boundsec.manager.rule.config.NavigationRuleConfig;
+import com.top_logic.element.boundsec.manager.rule.config.PathElementConfig;
 import com.top_logic.element.boundsec.manager.rule.config.RoleRuleConfig;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.annotate.security.AccessGrant;
@@ -40,6 +40,7 @@ import com.top_logic.model.annotate.security.RoleConfig;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.security.SecurityConfigurationService.ModelAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService.TLClassAccessRights;
+import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.manager.AccessManager;
@@ -63,19 +64,19 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 	/** Name of the analyzed test model module. */
 	private static final String MODULE = "TestSecurityCoverage";
 
-	/** The only type of the module that is contained in exactly one composition. */
+	/** Type contained in exactly one composition. */
 	private static final String SINGLE_CONTAINED = MODULE + ":SingleContained";
 
 	/** Type without a role source and without a container. */
 	private static final String ORPHAN = MODULE + ":Orphan";
 
-	/** The composition the proposed rule navigates backwards. */
+	/** The composition a role parent rule of this test navigates backwards. */
 	private static final String CONTAINER_REFERENCE = MODULE + ":Container#singles";
 
-	/** Id of the rule proposed for {@link #SINGLE_CONTAINED}. */
-	private static final String PROPOSED_ID = "SingleContained_securityParent";
+	/** Id of the role parent rule this test stores for {@link #SINGLE_CONTAINED}. */
+	private static final String PARENT_RULE_ID = "SingleContained_roleParent";
 
-	/** Id of the security parent rule the test application defines. */
+	/** Id of the role parent rule the test application defines. */
 	private static final String BASE_PARENT_ID = "TestSecurityCoverage_childOfCovered";
 
 	/** The type {@link #BASE_PARENT_ID} applies to. */
@@ -140,58 +141,58 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 	}
 
 	public void testEmptyStore() throws Exception {
-		assertEquals(Collections.emptyList(), _editor.storedSecurityParentRules());
+		assertEquals(Collections.emptyList(), _editor.storedRoleParentRules());
 		assertEquals(Collections.emptyList(), _editor.storedRoleRules());
 		assertEquals(Collections.emptyList(), _editor.storedAccessRights());
 		assertEquals(0, _editor.storedRuleCount());
 		assertEquals(0, _editor.storedAccessRightsCount());
-		assertFalse("Nothing is stored yet.", _editor.isStoredSecurityParentRule(PROPOSED_ID));
+		assertFalse("Nothing is stored yet.", _editor.isStoredRoleParentRule(PARENT_RULE_ID));
 		assertFalse("Nothing is stored yet.", _editor.isStoredRoleRule(BASE_ROLE_RULE_ID));
 	}
 
-	public void testPutReplaceRemoveSecurityParentRule() throws Exception {
-		NavigationRuleConfig rule = proposedRule();
-		_editor.putSecurityParentRule(rule);
+	public void testPutReplaceRemoveRoleParentRule() throws Exception {
+		NavigationRuleConfig rule = newParentRule();
+		_editor.putRoleParentRule(rule);
 
-		assertEquals(List.of(PROPOSED_ID), parentIds());
-		assertTrue(_editor.isStoredSecurityParentRule(PROPOSED_ID));
+		assertEquals(List.of(PARENT_RULE_ID), parentIds());
+		assertTrue(_editor.isStoredRoleParentRule(PARENT_RULE_ID));
 		assertEquals(1, _editor.storedRuleCount());
 
 		rule.setInherit(false);
-		_editor.putSecurityParentRule(rule);
+		_editor.putRoleParentRule(rule);
 		assertEquals("A rule is replaced by its id, not appended a second time.",
-			List.of(PROPOSED_ID), parentIds());
+			List.of(PARENT_RULE_ID), parentIds());
 		assertFalse("The stored rule carries the edited state.",
-			_editor.storedSecurityParentRules().get(0).isInherit());
+			_editor.storedRoleParentRules().get(0).isInherit());
 
-		assertTrue(_editor.removeSecurityParentRule(PROPOSED_ID));
+		assertTrue(_editor.removeRoleParentRule(PARENT_RULE_ID));
 		assertEquals(Collections.emptyList(), parentIds());
 		assertFalse("A rule that is not stored cannot be removed twice.",
-			_editor.removeSecurityParentRule(PROPOSED_ID));
+			_editor.removeRoleParentRule(PARENT_RULE_ID));
 	}
 
 	public void testRemoveBaseRule() throws Exception {
 		assertFalse("A rule of the base configuration is not stored, so it cannot be removed.",
-			_editor.isStoredSecurityParentRule(BASE_PARENT_ID));
+			_editor.isStoredRoleParentRule(BASE_PARENT_ID));
 		assertFalse("A rule of the base configuration cannot be removed by layering.",
-			_editor.removeSecurityParentRule(BASE_PARENT_ID));
+			_editor.removeRoleParentRule(BASE_PARENT_ID));
 		assertFalse("A rule of the base configuration cannot be removed by layering.",
 			_editor.removeRoleRule(BASE_ROLE_RULE_ID));
 	}
 
-	public void testEditBaseSecurityParentRule() throws Exception {
-		NavigationRuleConfig rule = _editor.editableSecurityParentRule(BASE_PARENT_ID);
+	public void testEditBaseRoleParentRule() throws Exception {
+		NavigationRuleConfig rule = _editor.editableRoleParentRule(BASE_PARENT_ID);
 		assertNotNull("The rule of the base configuration is in effect.", rule);
 		assertEquals(CHILD_OF_COVERED, rule.getMetaElement());
 
 		rule.setInherit(false);
-		_editor.putSecurityParentRule(rule);
+		_editor.putRoleParentRule(rule);
 
 		assertEquals("The edited rule replaces the base rule under its id.",
 			List.of(BASE_PARENT_ID), parentIds());
 		assertTrue("Now the rule is stored and can be removed again.",
-			_editor.isStoredSecurityParentRule(BASE_PARENT_ID));
-		assertNull("An unknown rule has no editable copy.", _editor.editableSecurityParentRule("noSuchRule"));
+			_editor.isStoredRoleParentRule(BASE_PARENT_ID));
+		assertNull("An unknown rule has no editable copy.", _editor.editableRoleParentRule("noSuchRule"));
 	}
 
 	public void testEditBaseRoleRule() throws Exception {
@@ -249,16 +250,26 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 		assertEquals(ORPHAN, onlyEntry.getName());
 	}
 
-	public void testAcceptProposal() throws Exception {
-		_editor.acceptProposal(coverage(SINGLE_CONTAINED));
+	public void testAccessParentRoundTrip() throws Exception {
+		TLClass contained = type(SINGLE_CONTAINED);
+		TLClassAccessRights entry = _editor.editableAccessRights(contained);
+		entry.getGrants().add(newGrant(SimpleBoundCommandGroup.READ_NAME, READER_ROLE));
+		entry.setInternal(true);
+		_editor.putAccessRights(entry);
 
-		assertEquals(List.of(PROPOSED_ID), parentIds());
-		NavigationRuleConfig stored = _editor.storedSecurityParentRules().get(0);
-		assertEquals(SINGLE_CONTAINED, stored.getMetaElement());
+		_editor.setAccessParent(contained, TLModelPartRef.ref(CONTAINER_REFERENCE));
+		TLClassAccessRights stored = _editor.editableAccessRights(contained);
+		assertEquals(CONTAINER_REFERENCE, stored.getAccessParent().qualifiedName());
+		assertEquals("A type with an access parent has no grants of its own.", 0, stored.getGrants().size());
+		assertFalse("A type with an access parent has no marks of its own.", stored.isInternal());
 
-		assertNull("A type without a container gets no proposal.", _editor.proposedRule(coverage(ORPHAN)));
-		_editor.acceptProposal(coverage(ORPHAN));
-		assertEquals("A type without a proposal is left alone.", 1, _editor.storedRuleCount());
+		_editor.setInternal(contained, true);
+		stored = _editor.editableAccessRights(contained);
+		assertNull("Marking the type internal drops its access parent.", stored.getAccessParent());
+
+		_editor.setAccessParent(contained, TLModelPartRef.ref(CONTAINER_REFERENCE));
+		_editor.setAccessParent(contained, null);
+		assertNull(_editor.editableAccessRights(contained).getAccessParent());
 	}
 
 	/**
@@ -266,28 +277,34 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 	 * layers its configuration onto the one of the framework.
 	 */
 	public void testLayerOntoBaseConfiguration() throws Exception {
-		_editor.acceptProposal(coverage(SINGLE_CONTAINED));
+		_editor.putRoleParentRule(newParentRule());
 
 		ElementAccessManager.Config merged = accessManagerConfig(overlay(BASE_CONFIG, _editor.getAccessManagerFile()));
 		assertEquals("The implementation class of the base configuration stays in effect.",
 			ACCESS_MANAGER_CLASS, merged.getImplementationClass().getName());
 		assertEquals("The rules of both configuration layers are kept.",
-			List.of(BASE_PARENT_ID, PROPOSED_ID),
+			List.of(BASE_PARENT_ID, PARENT_RULE_ID),
 			merged.getSecurityParents().getRules().stream().map(NavigationRuleConfig::getId).toList());
 	}
 
-	private NavigationRuleConfig proposedRule() {
-		NavigationRuleConfig result = _editor.proposedRule(coverage(SINGLE_CONTAINED));
-		assertNotNull("The type contained in a single composition gets a proposal.", result);
-		assertEquals(SINGLE_CONTAINED, result.getMetaElement());
-		assertEquals(PROPOSED_ID, result.getId());
-		assertEquals("The proposal navigates the single composition " + CONTAINER_REFERENCE + ".",
-			1, result.getPathElements().size());
-		return result;
+	/**
+	 * A role parent rule for {@link #SINGLE_CONTAINED} navigating {@link #CONTAINER_REFERENCE}
+	 * backwards.
+	 */
+	private static NavigationRuleConfig newParentRule() {
+		NavigationRuleConfig rule = TypedConfiguration.newConfigItem(NavigationRuleConfig.class);
+		rule.setId(PARENT_RULE_ID);
+		rule.setMetaElement(SINGLE_CONTAINED);
+		rule.setInherit(true);
+		PathElementConfig step = TypedConfiguration.newConfigItem(PathElementConfig.class);
+		step.setAttribute(TLModelPartRef.ref(CONTAINER_REFERENCE));
+		step.setInverse(true);
+		rule.getPathElements().add(step);
+		return rule;
 	}
 
 	private List<String> parentIds() throws Exception {
-		return _editor.storedSecurityParentRules().stream().map(NavigationRuleConfig::getId).toList();
+		return _editor.storedRoleParentRules().stream().map(NavigationRuleConfig::getId).toList();
 	}
 
 	private List<String> roleRuleIds() throws Exception {
@@ -301,13 +318,6 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 		roleConfig.setName(role);
 		result.getRoles().add(roleConfig);
 		return result;
-	}
-
-	private static TypeCoverage coverage(String qualifiedTypeName) {
-		return SecurityCoverageCheck.getInstance().analyze().stream()
-			.filter(entry -> TLModelUtil.qualifiedName(entry.type()).equals(qualifiedTypeName))
-			.findFirst()
-			.orElseThrow(() -> new AssertionError("The type '" + qualifiedTypeName + "' is not analyzed."));
 	}
 
 	private static TLClass type(String qualifiedTypeName) {

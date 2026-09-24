@@ -23,6 +23,9 @@ public class CoverageStatusResourceProvider extends EnumResourceProvider {
 	/** Icon of {@link CoverageStatus#INCOMPLETE}. */
 	public static final ThemeImage INCOMPLETE_ICON = ThemeImage.cssIcon("bi bi-exclamation-triangle");
 
+	/** Icon of {@link CoverageStatus#DELEGATED}. */
+	public static final ThemeImage DELEGATED_ICON = ThemeImage.cssIcon("bi bi-arrow-up-circle");
+
 	/** Icon of {@link CoverageStatus#EXEMPT}. */
 	public static final ThemeImage EXEMPT_ICON = ThemeImage.cssIcon("bi bi-dash-circle");
 
@@ -42,6 +45,7 @@ public class CoverageStatusResourceProvider extends EnumResourceProvider {
 		if (object instanceof CoverageStatus status) {
 			return switch (status) {
 				case COVERED -> COVERED_ICON;
+				case DELEGATED -> DELEGATED_ICON;
 				case EXEMPT -> EXEMPT_ICON;
 				case INCOMPLETE -> INCOMPLETE_ICON;
 			};

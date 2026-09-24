@@ -16,12 +16,14 @@ import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.base.services.InitialRolesManager;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.NotBothTrue;
@@ -41,9 +43,11 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.mode.HideActiveIf;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
+import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLModuleSingleton;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
@@ -159,8 +163,8 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		 * An internal type is never accessed on behalf of a user: its objects are transient, or
 		 * they are read and written in a context that bypasses the access check. No user is
 		 * expected to hold a role on them, so an internal type needs neither a grant, nor a role
-		 * rule, nor a security parent, and a check of the access definition does not report the
-		 * missing ones. The access check itself is not changed: a user asking for such an object is
+		 * rule, nor a role parent, and a check of the access definition does not report the
+		 * missing ones. An internal type does not delegate to an access parent either. The access check itself is not changed: a user asking for such an object is
 		 * denied, since no role is granted.
 		 * </p>
 		 *
@@ -196,10 +200,46 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	@Label("Class based access rights")
 	public static interface TLClassAccessRights extends TypeBasedAccessRights {
 
+		/** Configuration name for {@link #getAccessParent()}. */
+		String ACCESS_PARENT = "access-parent";
+
 		@Options(fun = AllClasses.class, mapping = TLModelPartMapping.class)
 		@ControlProvider(SelectionControlProvider.class)
 		@Override
 		String getName();
+
+		/**
+		 * The reference leading from an object of the type to its access parent: the object whose
+		 * access definition decides access to the object.
+		 * <p>
+		 * A type with an access parent has no grants, no marks and no roles of its own: whether a
+		 * user may read, write or export one of its objects is whether the user may do the same to
+		 * the access parent, and creating or deleting one of its objects is writing the access
+		 * parent. The reference is either a composition holding objects of the type, navigated
+		 * backwards to the container, or a to-one reference of the type itself, navigated forwards.
+		 * An object whose reference leads nowhere is not accessible.
+		 * </p>
+		 * <p>
+		 * A composition part without an access parent of its own, without a role rule and without
+		 * a role parent rule delegates to its container by default, whichever composition holds it.
+		 * The explicit setting is needed where the default does not apply: for an object reached
+		 * through a to-one reference, or for a type that inherits a role rule but delegates
+		 * nevertheless.
+		 * </p>
+		 * <p>
+		 * The specializations of the type inherit the setting.
+		 * </p>
+		 */
+		@Name(ACCESS_PARENT)
+		@Nullable
+		@Options(fun = AccessParentOptions.class, args = @Ref(NAME_ATTRIBUTE), mapping = TLModelPartRef.PartMapping.class)
+		@Constraint(value = AccessParentStandsAlone.class, args = { @Ref(GRANTS), @Ref(WITHOUT_SECURITY), @Ref(INTERNAL) })
+		TLModelPartRef getAccessParent();
+
+		/**
+		 * Setter for {@link #getAccessParent()}.
+		 */
+		void setAccessParent(TLModelPartRef value);
 
 	}
 
@@ -257,6 +297,12 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 
 	private Set<TLClass> _internalTypes = new HashSet<>();
 
+	/** The explicitly configured access parents, inherited by the specializations of a type. */
+	private Map<TLClass, AccessParent> _accessParents = new HashMap<>();
+
+	/** The types whose objects are held in a composition, indexed to the types of the containers. */
+	private Map<TLClass, Set<TLClass>> _containerTypes = new HashMap<>();
+
 	private CommandGroupRegistry _commandGroups;
 
 	private TLModel _applicationModel;
@@ -274,12 +320,15 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		_commandGroups = CommandGroupRegistry.getInstance();
 		_applicationModel = ModelService.getApplicationModel();
 
+		indexContainerTypes();
+
 		Map<TLClass, List<ResolvedRule>> classRules = new HashMap<>();
 		Map<TLModule, List<ResolvedRule>> moduleRules = new HashMap<>();
+		Map<TLClass, AccessParent> explicitParents = new HashMap<>();
 		for (ModelAccessRights modelConf : config.getSecurityConfig().values()) {
 			TLObject modelPart = TLModelUtil.resolveQualifiedName(_applicationModel, modelConf.getName());
 			if (modelConf instanceof TLClassAccessRights conf) {
-				handleTLClass(context, modelPart, conf, classRules);
+				handleTLClass(context, modelPart, conf, classRules, explicitParents);
 			} else if (modelConf instanceof TLSingletonAccessRights conf) {
 				handleTLSingleton(context, modelPart, conf);
 			} else if (modelConf instanceof TLPartAccessRights conf) {
@@ -290,6 +339,59 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		}
 
 		computeClassRights(classRules, moduleRules);
+		inheritAccessParents(explicitParents);
+	}
+
+	/**
+	 * Indexes every type whose objects a composition holds to the types owning such a composition.
+	 * <p>
+	 * A composition holding a type holds its specializations as well, so each of them is indexed.
+	 * </p>
+	 */
+	private void indexContainerTypes() {
+		for (TLClass owner : TLModelUtil.getAllGlobalClasses(_applicationModel)) {
+			for (TLStructuredTypePart part : owner.getLocalParts()) {
+				if (part instanceof TLReference reference && reference.isComposite()
+					&& reference.getType() instanceof TLClass target) {
+					for (TLClass contained : TLModelUtil.getReflexiveTransitiveSpecializations(target)) {
+						_containerTypes.computeIfAbsent(contained, unused -> new HashSet<>()).add(owner);
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Resolves the access parent of every type: the one configured for it, or else the one its
+	 * generalizations pass on.
+	 */
+	private void inheritAccessParents(Map<TLClass, AccessParent> explicitParents) {
+		for (TLClass type : TLModelUtil.getAllGlobalClasses(_applicationModel)) {
+			inheritAccessParent(type, explicitParents);
+		}
+	}
+
+	/**
+	 * The access parent of the given type, see {@link #inheritAccessParents(Map)}.
+	 */
+	private AccessParent inheritAccessParent(TLClass type, Map<TLClass, AccessParent> explicitParents) {
+		AccessParent resolved = _accessParents.get(type);
+		if (resolved != null) {
+			return resolved;
+		}
+		resolved = explicitParents.get(type);
+		if (resolved == null) {
+			for (TLClass generalization : type.getGeneralizations()) {
+				resolved = inheritAccessParent(generalization, explicitParents);
+				if (resolved != null) {
+					break;
+				}
+			}
+		}
+		if (resolved != null) {
+			_accessParents.put(type, resolved);
+		}
+		return resolved;
 	}
 
 	private void handleTLModule(InstantiationContext context, TLObject part, TLModuleAccessRights config,
@@ -328,7 +430,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	}
 
 	private void handleTLClass(InstantiationContext context, TLObject part, TLClassAccessRights config,
-			Map<TLClass, List<ResolvedRule>> classRules) {
+			Map<TLClass, List<ResolvedRule>> classRules, Map<TLClass, AccessParent> explicitParents) {
 		if (!(part instanceof TLClass clazz)) {
 			context.error("The configured part " + part + " is not a TLClass.");
 			return;
@@ -339,7 +441,52 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		if (config.isInternal()) {
 			markInternal(clazz);
 		}
+		if (config.getAccessParent() != null) {
+			if (!config.getGrants().isEmpty() || config.isWithoutSecurity() || config.isInternal()) {
+				context.error("The type " + config.getName()
+					+ " has an access parent and therefore must have neither grants nor marks of its own.");
+			}
+			AccessParent parent = resolveAccessParent(context, clazz, config.getAccessParent());
+			if (parent != null) {
+				explicitParents.put(clazz, parent);
+			}
+		}
 		classRules.computeIfAbsent(clazz, unused -> new ArrayList<>()).addAll(resolveRules(context, config));
+	}
+
+	/**
+	 * Resolves the configured access parent reference of the given type.
+	 * <p>
+	 * A to-one reference the type owns is navigated forwards, a composition holding objects of the
+	 * type is navigated backwards. Any other reference cannot lead to a single access parent and is
+	 * reported as a configuration error.
+	 * </p>
+	 * 
+	 * @return <code>null</code> when the reference is unusable.
+	 */
+	private AccessParent resolveAccessParent(InstantiationContext context, TLClass type, TLModelPartRef ref) {
+		TLModelPart part;
+		try {
+			part = ref.resolve(_applicationModel);
+		} catch (RuntimeException ex) {
+			context.error("The access parent " + ref + " of " + TLModelUtil.qualifiedName(type)
+				+ " does not exist.", ex);
+			return null;
+		}
+		if (!(part instanceof TLReference reference)) {
+			context.error("The access parent " + ref + " of " + TLModelUtil.qualifiedName(type)
+				+ " is not a reference.");
+			return null;
+		}
+		if (TLModelUtil.isCompatibleType(reference.getOwner(), type) && !reference.isMultiple()) {
+			return AccessParent.forward(reference);
+		}
+		if (reference.isComposite() && TLModelUtil.isCompatibleType(reference.getType(), type)) {
+			return AccessParent.backward(reference);
+		}
+		context.error("The access parent " + ref + " of " + TLModelUtil.qualifiedName(type)
+			+ " is neither a to-one reference of the type nor a composition holding its objects.");
+		return null;
 	}
 
 	/**
@@ -392,6 +539,43 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	@Override
 	public boolean isWithoutSecurity(TLClass type) {
 		return _typesWithoutSecurity.contains(type);
+	}
+
+	/**
+	 * @implNote The configured access parents are resolved once at startup, the default of a
+	 *           composition part is decided per call: whether a rule delivers a role on the type is
+	 *           answered by the {@link AccessManager}, which is loaded after this service and may be
+	 *           reloaded independently of it.
+	 */
+	@Override
+	public AccessParent getAccessParent(TLClass type) {
+		AccessParent explicit = _accessParents.get(type);
+		if (explicit != null) {
+			return explicit;
+		}
+		if (_containerTypes.containsKey(type) && !isWithoutSecurity(type) && !isInternal(type)
+			&& !accessManager().hasRoleSource(type)) {
+			return AccessParent.container();
+		}
+		return null;
+	}
+
+	/**
+	 * The types the objects of the given type may delegate their access decision to.
+	 * 
+	 * @return Empty when the type has no access parent.
+	 * @see #getAccessParent(TLClass)
+	 */
+	public Set<TLClass> getAccessParentTypes(TLClass type) {
+		AccessParent parent = getAccessParent(type);
+		if (parent == null) {
+			return Collections.emptySet();
+		}
+		if (parent.isContainer()) {
+			return _containerTypes.getOrDefault(type, Collections.emptySet());
+		}
+		TLType parentType = parent.inverse() ? parent.reference().getOwner() : parent.reference().getType();
+		return parentType instanceof TLClass parentClass ? Set.of(parentClass) : Collections.emptySet();
 	}
 
 	/**
@@ -600,12 +784,123 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		if (allowedBypass != null) {
 			return allowedBypass;
 		}
+		return decide(decisionCache(), person, instance, commandGroup);
+	}
+
+	/**
+	 * The memo of decisions the current interaction has made for the current revision of the
+	 * knowledge base.
+	 */
+	private AccessDecisionCache decisionCache() {
+		return AccessDecisionCache.current(_applicationModel.tKnowledgeBase().getHistoryManager().getLastRevision());
+	}
+
+	/**
+	 * Decides whether the given person may perform the given operation on the given committed
+	 * object, the bypasses being settled already.
+	 * <p>
+	 * The decision is answered from the memo where the interaction has made it before. Otherwise an
+	 * object of a type without security is accessible, an object with an access parent asks its
+	 * parent, and any other object requires the person to hold a role granted the operation on its
+	 * type.
+	 * </p>
+	 * <p>
+	 * An object whose access parents lead back to itself is denied: the memo marks the decision as
+	 * being computed, and reaching that mark again means that the chain of access parents has a
+	 * cycle.
+	 * </p>
+	 */
+	private boolean decide(AccessDecisionCache cache, Person person, TLObject instance,
+			BoundCommandGroup commandGroup) {
 		if (isWithoutSecurity(instance)) {
 			// An object of a type without security is not access controlled.
 			return true;
 		}
+		AccessDecisionCache.Key key = AccessDecisionCache.key(person, instance, commandGroup);
+		Boolean decision = cache.decision(key);
+		if (decision != null) {
+			return decision.booleanValue();
+		}
+		if (cache.isComputing(key)) {
+			Logger.error("The access parents of " + instance + " form a cycle, access is denied.",
+				SecurityConfigurationService.class);
+			return false;
+		}
+		cache.computing(key);
+		boolean result = compute(cache, person, instance, commandGroup);
+		cache.decided(key, result);
+		return result;
+	}
+
+	/**
+	 * Computes the decision that {@link #decide(AccessDecisionCache, Person, TLObject, BoundCommandGroup)}
+	 * stores.
+	 */
+	private boolean compute(AccessDecisionCache cache, Person person, TLObject instance,
+			BoundCommandGroup commandGroup) {
+		AccessParent parent = accessParentOf(instance);
+		if (parent != null) {
+			TLObject parentObject = parent.resolve(instance);
+			if (parentObject == null) {
+				// The relation leads nowhere: nobody decides for the object, so nobody may access it.
+				return false;
+			}
+			if (!(parentObject instanceof BoundObject) || !isCommitted(parentObject)) {
+				// The parent is not access controlled, or it is being built in the current
+				// transaction and has no computed roles yet (see isAllowed(Person, TLObject,
+				// BoundCommandGroup)): its decision is not meaningful, and the object follows it.
+				return true;
+			}
+			return decide(cache, person, parentObject, operationOnParent(commandGroup));
+		}
 		Set<? extends BoundRole> roles = getRoles(instance, commandGroup);
 		return accessManager().hasRole(person, (BoundObject) instance, roles);
+	}
+
+	/**
+	 * The access parent relation of the type of the given object.
+	 * 
+	 * @return <code>null</code> when the object decides for itself.
+	 */
+	private AccessParent accessParentOf(TLObject instance) {
+		return instance.tType() instanceof TLClass type ? getAccessParent(type) : null;
+	}
+
+	/**
+	 * The operation checked on the access parent in place of the given operation on the delegating
+	 * object.
+	 * <p>
+	 * Creating or deleting a part is a modification of the whole, so both require the write right on
+	 * the parent. Any other operation is checked on the parent as it is.
+	 * </p>
+	 */
+	private static BoundCommandGroup operationOnParent(BoundCommandGroup operation) {
+		if (operation == SimpleBoundCommandGroup.CREATE || operation == SimpleBoundCommandGroup.DELETE) {
+			return SimpleBoundCommandGroup.WRITE;
+		}
+		return operation;
+	}
+
+	/**
+	 * The object whose roles decide access to the given object: the end of its chain of access
+	 * parents, or the object itself when it has none.
+	 * 
+	 * @return <code>null</code> when the chain leads nowhere or runs in a cycle.
+	 */
+	private TLObject roleHolder(TLObject instance) {
+		Set<TLObject> seen = new HashSet<>();
+		TLObject current = instance;
+		while (seen.add(current)) {
+			AccessParent parent = accessParentOf(current);
+			if (parent == null) {
+				return current;
+			}
+			current = parent.resolve(current);
+			if (current == null) {
+				return null;
+			}
+		}
+		return null;
 	}
 
 	@Override
@@ -627,8 +922,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			// nor on its attribute values.
 			return true;
 		}
-		Set<? extends BoundRole> roles = getRoles(instance, commandGroup);
-		boolean allowedOnInstance = accessManager().hasRole(person, (BoundObject) instance, roles);
+		boolean allowedOnInstance = decide(decisionCache(), person, instance, commandGroup);
 		if (!allowedOnInstance) {
 			return false;
 		}
@@ -646,7 +940,13 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			// is already handled above, is unaffected).
 			return false;
 		}
-		return accessManager().hasRole(person, (BoundObject) instance, requiredPartRoles);
+		// An object with an access parent holds no roles itself: the roles the person holds on the
+		// object deciding for it are checked instead.
+		TLObject roleHolder = roleHolder(instance);
+		if (!(roleHolder instanceof BoundObject holder)) {
+			return false;
+		}
+		return accessManager().hasRole(person, holder, requiredPartRoles);
 	}
 
 	private static Boolean isAllowedBypass(Person person, BoundCommandGroup commandGroup) {
@@ -689,6 +989,14 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			// The context is being built in the current transaction (no computed roles yet); its own
 			// creation was already authorized, so creating into it is not checked here.
 			return true;
+		}
+		if (getAccessParent(type) != null) {
+			// Creating an object that delegates its access decision is writing the object it is
+			// created in, which is its access parent by construction for a composition part.
+			if (!(context instanceof BoundObject)) {
+				return false;
+			}
+			return decide(decisionCache(), person, context, SimpleBoundCommandGroup.WRITE);
 		}
 		Set<BoundedRole> roles = getAllowedRoles(type, SimpleBoundCommandGroup.CREATE);
 		return accessManager().hasRole(person, createContext(context), roles);
@@ -736,20 +1044,52 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 				: Collections.emptySet();
 		}
 		BoundObject securityRoot = BoundHelper.getInstance().getDefaultObject();
+		Map<TLClass, Map<BoundCommandGroup, Boolean>> memo = new HashMap<>();
 		Set<TLClass> result = new HashSet<>();
-		for (Map.Entry<TLClass, Map<BoundCommandGroup, Set<BoundedRole>>> entry : _expandedClassRights.entrySet()) {
-			Set<BoundedRole> roles = entry.getValue().getOrDefault(commandGroup, Collections.emptySet());
-			if (roles.isEmpty()) {
-				// Deny-by-default: a type without a grant for the command group is never accessible.
-				continue;
-			}
-			if (accessManager().hasRole(person, securityRoot, roles)) {
-				result.add(entry.getKey());
+		for (TLClass type : TLModelUtil.getAllGlobalClasses(_applicationModel)) {
+			if (isAccessibleType(type, person, commandGroup, securityRoot, memo)) {
+				result.add(type);
 			}
 		}
-		// A type without security is accessible without any role, no matter whether rights are
-		// configured for it.
-		result.addAll(_typesWithoutSecurity);
+		return result;
+	}
+
+	/**
+	 * Whether the given type is accessible on the type level, see
+	 * {@link #getAccessibleTypes(Person, BoundCommandGroup)}.
+	 * <p>
+	 * A type without security is accessible without any role. A type with an access parent is
+	 * accessible when one of the types it may delegate to is. Any other type is accessible when the
+	 * person holds a role on the security root that is granted the operation on the type;
+	 * deny-by-default, a type without such a grant is never accessible.
+	 * </p>
+	 * 
+	 * @param memo
+	 *        The decisions made so far, with a decision being computed stored as
+	 *        <code>null</code>: a chain of access parents reaching it again runs in a cycle and is
+	 *        not accessible.
+	 */
+	private boolean isAccessibleType(TLClass type, Person person, BoundCommandGroup commandGroup,
+			BoundObject securityRoot, Map<TLClass, Map<BoundCommandGroup, Boolean>> memo) {
+		if (isWithoutSecurity(type)) {
+			return true;
+		}
+		Map<BoundCommandGroup, Boolean> decisions = memo.computeIfAbsent(type, unused -> new HashMap<>());
+		if (decisions.containsKey(commandGroup)) {
+			Boolean decision = decisions.get(commandGroup);
+			return decision != null && decision.booleanValue();
+		}
+		decisions.put(commandGroup, null);
+		boolean result;
+		if (getAccessParent(type) != null) {
+			BoundCommandGroup parentOperation = operationOnParent(commandGroup);
+			result = getAccessParentTypes(type).stream()
+				.anyMatch(parentType -> isAccessibleType(parentType, person, parentOperation, securityRoot, memo));
+		} else {
+			Set<BoundedRole> roles = getAllowedRoles(type, commandGroup);
+			result = !roles.isEmpty() && accessManager().hasRole(person, securityRoot, roles);
+		}
+		decisions.put(commandGroup, Boolean.valueOf(result));
 		return result;
 	}
 

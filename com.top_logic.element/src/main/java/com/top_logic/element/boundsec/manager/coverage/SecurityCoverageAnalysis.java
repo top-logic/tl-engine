@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.element.boundsec.ElementBoundHelper;
 import com.top_logic.element.boundsec.manager.ElementAccessManager;
 import com.top_logic.element.boundsec.manager.rule.IdentityPathElement;
@@ -28,8 +27,6 @@ import com.top_logic.element.boundsec.manager.rule.PathElement;
 import com.top_logic.element.boundsec.manager.rule.PathNavigation;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
 import com.top_logic.element.boundsec.manager.rule.SingletonPathElement;
-import com.top_logic.element.boundsec.manager.rule.config.NavigationRuleConfig;
-import com.top_logic.element.boundsec.manager.rule.config.PathElementConfig;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -41,8 +38,8 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.security.AccessParent;
 import com.top_logic.model.security.ModelAccessRights;
-import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundHelper;
@@ -59,9 +56,10 @@ import com.top_logic.util.model.ModelService;
  * <p>
  * For every concrete global type the analysis answers the two questions that decide whether a user
  * can ever see an object of that type: does a rule deliver a role on it, and is a role granted the
- * read operation on it? Each gap is reported as a {@link CoverageFinding}; a type without a role
- * source that is contained in exactly one composition additionally gets a security parent rule
- * proposed.
+ * read operation on it? Each gap is reported as a {@link CoverageFinding}. A type with an
+ * {@link AccessParent access parent} delegates every access decision to another object and needs no
+ * definition of its own; it is reported as delegated, with a finding only where a rule applying to
+ * it is shadowed by the access parent.
  * </p>
  *
  * <p>
@@ -74,19 +72,12 @@ import com.top_logic.util.model.ModelService;
  *
  * <p>
  * The analysis is a pure computation over the definitions that are in effect: it neither changes
- * them nor writes anything to the log. A proposed rule is handed to the caller for the developer to
- * apply explicitly.
+ * them nor writes anything to the log.
  * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class SecurityCoverageAnalysis {
-
-	/**
-	 * Suffix appended to the type name to build the {@link NavigationRuleConfig#getId() id} of a
-	 * proposed security parent rule.
-	 */
-	public static final String SUGGESTED_RULE_ID_SUFFIX = "_securityParent";
 
 	private final TLModel _model;
 
@@ -112,7 +103,7 @@ public class SecurityCoverageAnalysis {
 	 * @param model
 	 *        The application model whose types are analyzed.
 	 * @param accessManager
-	 *        The access manager holding the role rules and the security parent rules.
+	 *        The access manager holding the role rules and the role parent rules.
 	 * @param accessRights
 	 *        The configured grants.
 	 * @param excludedModules
@@ -127,7 +118,7 @@ public class SecurityCoverageAnalysis {
 
 		BoundHelper boundHelper = BoundHelper.getInstance();
 		_rootFallbackActive = boundHelper.useDefaultObject();
-		// The security root is only relevant as the fallback security parent, so it is not
+		// The security root is only relevant as the fallback role parent, so it is not
 		// resolved in an application that does not use it.
 		_securityRootType = _rootFallbackActive ? securityRootType(boundHelper) : null;
 
@@ -190,38 +181,49 @@ public class SecurityCoverageAnalysis {
 	 */
 	public TypeCoverage analyze(TLClass type) {
 		List<RoleProvider> roleRules = List.copyOf(_accessManager.getRules(type));
-		List<NavigationRule> parentRules = List.copyOf(_accessManager.getSecurityParentRules(type));
+		List<NavigationRule> parentRules = List.copyOf(_accessManager.getRoleParentRules(type));
 		Set<BoundedRole> readRoles = Set.copyOf(_accessRights.getAllowedRoles(type, SimpleBoundCommandGroup.READ));
 		boolean withoutSecurity = _accessRights.isWithoutSecurity(type);
 		boolean internal = _accessRights.isInternal(type);
+		AccessParent accessParent = _accessRights.getAccessParent(type);
+		List<TLReference> containers = containerReferences(type);
 
 		List<CoverageFinding> findings = new ArrayList<>();
-		if (!withoutSecurity && !internal) {
+		if (withoutSecurity || internal) {
+			// An exempt type needs no definition.
+		} else if (accessParent != null) {
+			List<String> shadowed = shadowedRules(roleRules, parentRules);
+			if (!shadowed.isEmpty()) {
+				findings.add(CoverageFinding.shadowedRules(type, shadowed));
+			}
+		} else {
 			if (roleRules.isEmpty() && parentRules.isEmpty()) {
 				findings.add(CoverageFinding.noRoleSource(type, _rootFallbackActive));
-				addContainerFinding(type, findings);
 			}
 			if (readRoles.isEmpty()) {
 				findings.add(CoverageFinding.noReadGrant(type));
 			}
 			addDeadGrantFindings(type, findings);
 		}
-		return new TypeCoverage(type, withoutSecurity, internal, readRoles, roleRules, parentRules,
-			Collections.unmodifiableList(findings));
+		return new TypeCoverage(type, withoutSecurity, internal, accessParent, containers, readRoles, roleRules,
+			parentRules, Collections.unmodifiableList(findings));
 	}
 
 	/**
-	 * Proposes a security parent for a type without a role source, or reports that the container
-	 * cannot be derived.
+	 * The ids of the given rules, which an access parent shadows: each role rule once, under the id
+	 * of the configuration it was created from, followed by the role parent rules.
 	 */
-	private void addContainerFinding(TLClass type, List<CoverageFinding> findings) {
-		List<TLReference> containers = containerReferences(type);
-		if (containers.size() == 1) {
-			TLReference container = containers.get(0);
-			findings.add(CoverageFinding.suggestedParent(type, container, suggestedRule(type, container)));
-		} else if (containers.size() > 1) {
-			findings.add(CoverageFinding.ambiguousParent(type, containers));
+	private static List<String> shadowedRules(List<RoleProvider> roleRules, List<NavigationRule> parentRules) {
+		List<String> result = new ArrayList<>();
+		for (RoleProvider rule : roleRules) {
+			if (!result.contains(rule.getConfigId())) {
+				result.add(rule.getConfigId());
+			}
 		}
+		for (NavigationRule rule : parentRules) {
+			result.add(rule.getId());
+		}
+		return result;
 	}
 
 	/**
@@ -231,23 +233,6 @@ public class SecurityCoverageAnalysis {
 		return _compositeReferences.stream()
 			.filter(reference -> TLModelUtil.isCompatibleType(reference.getType(), type))
 			.toList();
-	}
-
-	/**
-	 * Builds the security parent rule that navigates the given composition backwards.
-	 */
-	private NavigationRuleConfig suggestedRule(TLClass type, TLReference container) {
-		NavigationRuleConfig rule = TypedConfiguration.newConfigItem(NavigationRuleConfig.class);
-		rule.setId(type.getName() + SUGGESTED_RULE_ID_SUFFIX);
-		rule.setMetaElement(TLModelUtil.qualifiedName(type));
-		rule.setInherit(true);
-
-		PathElementConfig step = TypedConfiguration.newConfigItem(PathElementConfig.class);
-		step.setAttribute(TLModelPartRef.ref(container));
-		step.setInverse(true);
-		rule.getPathElements().add(step);
-
-		return rule;
 	}
 
 	/**
@@ -273,7 +258,7 @@ public class SecurityCoverageAnalysis {
 
 	/**
 	 * Whether a user can hold the given role on an object of the given type, either on the object
-	 * itself or on one of its security parents.
+	 * itself or on one of its role parents.
 	 *
 	 * <p>
 	 * A role reaches an object through a rule that computes it, or through a role assignment that
@@ -282,8 +267,8 @@ public class SecurityCoverageAnalysis {
 	 * </p>
 	 *
 	 * @param visited
-	 *        The types already inspected along the security parent chain, guarding against cycles.
-	 * @return Also <code>true</code> when the end of a security parent path cannot be determined
+	 *        The types already inspected along the role parent chain, guarding against cycles.
+	 * @return Also <code>true</code> when the end of a role parent path cannot be determined
 	 *         statically, so that an undecidable path never produces a finding.
 	 */
 	private boolean canDeliver(TLClass type, BoundedRole role, Set<TLClass> visited) {
@@ -293,7 +278,7 @@ public class SecurityCoverageAnalysis {
 		if (_accessManager.canHaveRole(type, role) || isAssignedDirectly(type, role)) {
 			return true;
 		}
-		Collection<NavigationRule> parentRules = _accessManager.getSecurityParentRules(type);
+		Collection<NavigationRule> parentRules = _accessManager.getRoleParentRules(type);
 		if (parentRules.isEmpty()) {
 			return _rootFallbackActive && _securityRootType != null
 				&& (_accessManager.canHaveRole(_securityRootType, role)
@@ -302,7 +287,7 @@ public class SecurityCoverageAnalysis {
 		for (NavigationRule rule : parentRules) {
 			TLType endType = endType(rule);
 			if (!(endType instanceof TLClass endClass)) {
-				// The security parents of the path cannot be determined statically.
+				// The role parents of the path cannot be determined statically.
 				return true;
 			}
 			if (canDeliver(endClass, role, visited)) {
@@ -363,7 +348,7 @@ public class SecurityCoverageAnalysis {
 	}
 
 	/**
-	 * The type of the objects a security parent rule navigates to.
+	 * The type of the objects a role parent rule navigates to.
 	 *
 	 * @return <code>null</code> when the path cannot be followed statically.
 	 */
@@ -398,7 +383,7 @@ public class SecurityCoverageAnalysis {
 
 	/**
 	 * The type of the security root, whose roles every object inherits when the global default
-	 * security parent is active.
+	 * role parent is active.
 	 *
 	 * @return <code>null</code> when the application has no security root.
 	 */
@@ -434,7 +419,7 @@ public class SecurityCoverageAnalysis {
 		List<TLReference> result = new ArrayList<>();
 		for (TLReference reference : byDefinition.values()) {
 			if (!reference.isDerived()) {
-				// A derived reference cannot be navigated by a security parent rule, since it does
+				// A derived reference cannot be navigated by a role parent rule, since it does
 				// not fire the change notifications the rule invalidation relies on.
 				result.add(reference);
 			}

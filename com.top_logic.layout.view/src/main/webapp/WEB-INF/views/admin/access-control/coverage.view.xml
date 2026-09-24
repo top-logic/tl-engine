@@ -5,21 +5,18 @@
 	type. The SecurityCoverageTable analyses the definition itself when the view is opened and
 	rebuilds from the rows channel after a command; it writes the selected row to the selection
 	channel, the type of it to the selectedType channel and the parts of it the detail shows to the
-	selectedFindings, selectedRule and selectedRules channels and its two marks to the
-	selectedInternal and selectedWithoutSecurity channels (the module and findings columns start
-	hidden, the table being grouped by module). Those channels are written again whenever the rows
-	are, so the detail describes the analysis the table shows. "Proposals" hands one entry per
-	security parent rule proposed for any type to a dialog that stores the picked ones, "Show rule"
-	the rule proposed for the selected type as XML (it is hidden while the selected type has none).
+	selectedFindings and selectedRules channels and its two marks to the selectedInternal and
+	selectedWithoutSecurity channels (the module and findings columns start hidden, the table being
+	grouped by module). Those channels are written again whenever the rows are, so the detail
+	describes the analysis the table shows.
 	
-	The detail side holds two panels, one above the other: the findings of the selected type with
-	the rule proposed for it, and the rules in effect for it. Each is a panel of its own because
-	each shows a filling child - the rendered proposal and the rule table - and a panel bounds the
-	height of a single one.
+	The detail side holds two panels, one above the other: the findings of the selected type, and
+	the rules in effect for it. Each is a panel of its own because the rule table is a filling
+	child and a panel bounds the height of a single one.
 	
-	The commands of the findings panel edit the definition: "Accept proposal" stores the proposed
-	security parent rule, "Security parent…" and "Role rule…" open a dialog editing a rule of the
-	selected type, and "Access rights…" one editing the grants and marks the application adds for
+	The commands of the findings panel edit the definition: "Role parent…" and "Role rule…" open a
+	dialog editing a rule of the selected type, and "Access rights…" one editing the grants, the
+	marks and the access parent the application sets for
 	it. The overflow clique holds the access rights dialog for the module of the selected type and
 	the two marks that exempt a type from the check ("Mark internal") or from access control
 	("Without access control"), each asking for confirmation with the selected type named - which is
@@ -50,7 +47,6 @@
 		<channel name="selectedInternal"/>
 		<channel name="selectedWithoutSecurity"/>
 		<channel name="selectedFindings"/>
-		<channel name="selectedRule"/>
 		<channel name="selectedRules"/>
 		<channel name="selectedRuleEntry"/>
 		<channel name="pending"/>
@@ -83,36 +79,8 @@
 								<en>Analyzes the access definition in effect again and rebuilds the table. Saved changes that are not applied yet are not taken into account.</en>
 								<de>Analysiert die geltende Zugriffsdefinition erneut und baut die Tabelle neu auf. Gespeicherte, noch nicht angewendete Änderungen bleiben dabei unberücksichtigt.</de>
 							</tooltip>
-							<action class="com.top_logic.layout.view.admin.SecurityCoverageAction"
-								mode="REFRESH"
-							/>
+							<action class="com.top_logic.layout.view.admin.SecurityCoverageAction"/>
 							<write-channel name="rows"/>
-						</generic-command>
-						<generic-command
-							image="css:bi bi-lightbulb"
-							placement="TOOLBAR"
-						>
-							<label>
-								<en>Proposals…</en>
-								<de>Vorschläge…</de>
-							</label>
-							<tooltip>
-								<en>Lists the security parent rules the analysis proposes for all types, to pick the ones to store in the application configuration. They take effect with "Apply configuration".</en>
-								<de>Listet die Regeln für übergeordnete Sicherheitsobjekte, die die Analyse für alle Typen vorschlägt, zur Auswahl derer auf, die in der Anwendungskonfiguration gespeichert werden sollen. Sie werden mit „Konfiguration anwenden“ wirksam.</de>
-							</tooltip>
-							<action class="com.top_logic.layout.view.admin.SecurityCoverageAction"
-								mode="PROPOSALS"
-								rows="rows"
-							/>
-							<open-dialog
-								bind-input-to="proposals"
-								dialog-view="admin/access-control/coverage-proposals.view.xml"
-							>
-								<bind
-									channel="pending"
-									to="pending"
-								/>
-							</open-dialog>
 						</generic-command>
 						<generic-command
 							image="css:bi bi-arrow-repeat"
@@ -139,7 +107,6 @@
 						input="rows"
 						selected-findings="selectedFindings"
 						selected-internal="selectedInternal"
-						selected-rule="selectedRule"
 						selected-rules="selectedRules"
 						selected-type="selectedType"
 						selected-without-security="selectedWithoutSecurity"
@@ -167,70 +134,27 @@
 								</title>
 								<commands>
 									<generic-command
-										image="css:bi bi-code-square"
-										input="selectedRule"
-										placement="TOOLBAR"
-									>
-										<label>
-											<en>Show rule</en>
-											<de>Regel anzeigen</de>
-										</label>
-										<tooltip>
-											<en>Shows the security parent rule proposed for the selected type as XML. Nothing is changed.</en>
-											<de>Zeigt die für den ausgewählten Typ vorgeschlagene Regel für das übergeordnete Sicherheitsobjekt als XML. Es wird nichts geändert.</de>
-										</tooltip>
-										<executability>
-											<visible-if expr="rule -> $rule != null"/>
-										</executability>
-										<open-dialog
-											bind-input-to="content"
-											dialog-view="admin/access-control/coverage-rule.view.xml"
-										/>
-									</generic-command>
-									<generic-command
-										image="css:bi bi-check2-square"
-										input="selectedRule"
-										placement="TOOLBAR"
-									>
-										<label>
-											<en>Accept proposal</en>
-											<de>Vorschlag übernehmen</de>
-										</label>
-										<tooltip>
-											<en>Stores the proposed security parent rule in the application configuration. It takes effect with "Apply configuration".</en>
-											<de>Speichert die vorgeschlagene Regel für das übergeordnete Sicherheitsobjekt in der Anwendungskonfiguration. Sie wird mit „Konfiguration anwenden“ wirksam.</de>
-										</tooltip>
-										<executability>
-											<visible-if expr="rule -> $rule != null"/>
-										</executability>
-										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
-											mode="ACCEPT_PROPOSAL"
-											selection="selection"
-										/>
-										<write-channel name="pending"/>
-									</generic-command>
-									<generic-command
 										image="css:bi bi-diagram-2"
 										input="selection"
 										placement="TOOLBAR"
 									>
 										<label>
-											<en>Security parent…</en>
-											<de>Übergeordnetes Sicherheitsobjekt…</de>
+											<en>Role parent…</en>
+											<de>Rollenelternobjekt…</de>
 										</label>
 										<tooltip>
-											<en>Creates a rule determining the security parent of objects of the selected type, the object whose roles they inherit. The rule is stored in the application configuration and takes effect with "Apply configuration".</en>
-											<de>Legt eine Regel an, die das übergeordnete Sicherheitsobjekt von Objekten des ausgewählten Typs bestimmt, also das Objekt, dessen Rollen sie erben. Die Regel wird in der Anwendungskonfiguration gespeichert und mit „Konfiguration anwenden“ wirksam.</de>
+											<en>Creates a rule determining the role parent of objects of the selected type, the object whose roles they inherit. The rule is stored in the application configuration and takes effect with "Apply configuration".</en>
+											<de>Legt eine Regel an, die das Rollenelternobjekt von Objekten des ausgewählten Typs bestimmt, also das Objekt, dessen Rollen sie erben. Die Regel wird in der Anwendungskonfiguration gespeichert und mit „Konfiguration anwenden“ wirksam.</de>
 										</tooltip>
 										<executability>
 											<null-input-disabled/>
 										</executability>
 										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
-											mode="NEW_SECURITY_PARENT_RULE"
+											mode="NEW_ROLE_PARENT_RULE"
 										/>
 										<open-dialog
 											bind-input-to="rule"
-											dialog-view="admin/access-control/coverage-security-parent-rule.view.xml"
+											dialog-view="admin/access-control/coverage-role-parent-rule.view.xml"
 										>
 											<bind
 												channel="pending"
@@ -277,8 +201,8 @@
 											<de>Zugriffsrechte…</de>
 										</label>
 										<tooltip>
-											<en>Edits the rights the application grants roles on the selected type, and its marks. The changes are stored in the application configuration and take effect with "Apply configuration".</en>
-											<de>Bearbeitet die Rechte, die die Anwendung Rollen am ausgewählten Typ gewährt, sowie dessen Kennzeichnungen. Die Änderungen werden in der Anwendungskonfiguration gespeichert und mit „Konfiguration anwenden“ wirksam.</de>
+											<en>Edits the rights the application grants roles on the selected type, its marks and its access parent. The changes are stored in the application configuration and take effect with "Apply configuration".</en>
+											<de>Bearbeitet die Rechte, die die Anwendung Rollen am ausgewählten Typ gewährt, dessen Kennzeichnungen und dessen Zugriffselternobjekt. Die Änderungen werden in der Anwendungskonfiguration gespeichert und mit „Konfiguration anwenden“ wirksam.</de>
 										</tooltip>
 										<executability>
 											<null-input-disabled/>
@@ -455,29 +379,7 @@
 									input="selection"
 								>
 									<inset>
-										<stack
-											direction="column"
-											gap="default"
-										>
-											<html input="selectedFindings"/>
-											<visible-if
-												expr="rule -> $rule != null"
-												input="selectedRule"
-											>
-												<stack
-													direction="column"
-													gap="compact"
-												>
-													<text css-class="tlText--strong">
-														<label>
-															<en>Proposed security parent rule</en>
-															<de>Vorgeschlagene Regel für das übergeordnete Sicherheitsobjekt</de>
-														</label>
-													</text>
-													<html input="selectedRule"/>
-												</stack>
-											</visible-if>
-										</stack>
+										<html input="selectedFindings"/>
 									</inset>
 								</visible-if>
 							</panel>
@@ -509,14 +411,14 @@
 											<null-input-disabled/>
 										</executability>
 										<switch value="entry -> $entry['kind']">
-											<case match="'securityParent'">
+											<case match="'roleParent'">
 												<execute-script function="entry -> $entry['id']"/>
 												<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
-													mode="EDIT_SECURITY_PARENT_RULE"
+													mode="EDIT_ROLE_PARENT_RULE"
 												/>
 												<open-dialog
 													bind-input-to="rule"
-													dialog-view="admin/access-control/coverage-security-parent-rule.view.xml"
+													dialog-view="admin/access-control/coverage-role-parent-rule.view.xml"
 												>
 													<bind
 														channel="pending"
@@ -559,10 +461,10 @@
 										</executability>
 										<confirm expr="entry -> #('Delete the rule {0} from the application configuration?'@en, 'Die Regel {0} aus der Anwendungskonfiguration löschen?'@de).fill($entry['id'])"/>
 										<switch value="entry -> $entry['kind']">
-											<case match="'securityParent'">
+											<case match="'roleParent'">
 												<execute-script function="entry -> $entry['id']"/>
 												<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
-													mode="REMOVE_SECURITY_PARENT_RULE"
+													mode="REMOVE_ROLE_PARENT_RULE"
 												/>
 											</case>
 											<case match="'roleRule'">

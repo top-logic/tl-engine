@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	Edits one security parent rule of the model based access definition. The rule channel carries
-	the configuration the opening command produced - the proposal of the analysis, an empty rule for
-	the selected type or a copy of a rule already in effect - and the configuration form writes the
-	entries straight into it. Save hands that configuration to the editor, which stores it in the
+	Edits one role parent rule of the model based access definition. The rule channel carries
+	the configuration the opening command produced - an empty rule for the selected type or a copy
+	of a rule already in effect - and the configuration form writes the entries straight into it. Save hands that configuration to the editor, which stores it in the
 	application configuration, and marks the pending channel: the stored definition differs from the
 	running one until the coverage display applies it.
 -->
@@ -15,8 +14,8 @@
 	</channels>
 	<window width="800px">
 		<title>
-			<en>Security parent rule</en>
-			<de>Regel für das übergeordnete Sicherheitsobjekt</de>
+			<en>Role parent rule</en>
+			<de>Regel für das Rollenelternobjekt</de>
 		</title>
 		<commands>
 			<generic-command
@@ -29,7 +28,7 @@
 					<de>Speichern</de>
 				</label>
 				<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
-					mode="SAVE_SECURITY_PARENT_RULE"
+					mode="SAVE_ROLE_PARENT_RULE"
 				/>
 				<write-channel name="pending"/>
 				<close-dialog/>

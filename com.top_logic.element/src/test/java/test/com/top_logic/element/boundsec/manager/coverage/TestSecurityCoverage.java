@@ -42,16 +42,10 @@ import com.top_logic.element.boundsec.manager.coverage.TypeCoverage;
 public class TestSecurityCoverage extends BasicTestCase {
 
 	/**
-	 * The kinds of finding that make the access definition of a type incomplete.
-	 *
-	 * <p>
-	 * {@link FindingKind#SUGGESTED_PARENT} and {@link FindingKind#AMBIGUOUS_PARENT} are detail
-	 * findings of a {@link FindingKind#NO_ROLE_SOURCE}, so they are reported with the type that
-	 * fails, but do not make a type fail on their own.
-	 * </p>
+	 * The kinds of finding that make the access definition of a type incomplete: every kind the
+	 * analysis reports.
 	 */
-	private static final Set<FindingKind> FAILING_KINDS =
-		Set.of(FindingKind.NO_ROLE_SOURCE, FindingKind.NO_READ_GRANT, FindingKind.DEAD_GRANT);
+	private static final Set<FindingKind> FAILING_KINDS = Set.of(FindingKind.values());
 
 	public void testSecurityCoverage() {
 		List<String> problems = new ArrayList<>();

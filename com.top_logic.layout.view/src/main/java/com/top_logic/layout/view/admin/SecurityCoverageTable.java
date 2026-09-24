@@ -30,7 +30,6 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.element.boundsec.manager.coverage.CoverageFinding;
 import com.top_logic.element.boundsec.manager.coverage.CoverageStatus;
-import com.top_logic.element.boundsec.manager.coverage.FindingKind;
 import com.top_logic.element.boundsec.manager.coverage.SecurityCoverageCheck;
 import com.top_logic.element.boundsec.manager.coverage.SecurityDefinitionEditor;
 import com.top_logic.element.boundsec.manager.coverage.TypeCoverage;
@@ -39,7 +38,6 @@ import com.top_logic.element.boundsec.manager.rule.PathElement;
 import com.top_logic.element.boundsec.manager.rule.PathNavigation;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
 import com.top_logic.element.boundsec.manager.rule.config.NavigationRuleConfig;
-import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.table.CellControlFactory;
 import com.top_logic.layout.react.control.table.TableViewControl;
@@ -55,6 +53,7 @@ import com.top_logic.layout.view.table.ColumnType;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLType;
+import com.top_logic.model.security.AccessParent;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
@@ -72,7 +71,8 @@ import com.top_logic.util.Resources;
 
 /**
  * Table of the model based access definition, one row per analyzed type with the roles that may
- * read it, the rules that deliver a role on it and the gaps found in its definition. The rows are
+ * read it, the rules that deliver a role on it, the access parent it delegates to and the gaps
+ * found in its definition. The rows are
  * grouped by the module of the type when the table is opened, so the module column itself and the
  * findings column, whose text a detail display shows, start hidden; the user shows them from the
  * column selection and regroups or ungroups the table from a column header.
@@ -85,9 +85,8 @@ import com.top_logic.util.Resources;
  * to the {@link Config#getSelectedType() type channel} (so a command names it), its marks to the
  * {@link Config#getSelectedInternal() internal} and {@link Config#getSelectedWithoutSecurity()
  * without-security channels} (so a command offers the mark the type does not carry yet), and the
- * parts of it a detail display shows go to the {@link Config#getSelectedFindings() findings}, the
- * {@link Config#getSelectedRule() proposed rule} and the {@link Config#getSelectedRules() rules in
- * effect}, all cleared when the selection is empty. The channels are pushed again once the rows
+ * parts of it a detail display shows go to the {@link Config#getSelectedFindings() findings} and
+ * the {@link Config#getSelectedRules() rules in effect}, all cleared when the selection is empty. The channels are pushed again once the rows
  * were replaced, so the detail of the row that stays selected describes the analysis the table now
  * shows.
  * </p>
@@ -115,13 +114,16 @@ public class SecurityCoverageTable implements UIElement {
 	/** Id of the column showing the role rules applying to the analyzed type. */
 	public static final String COLUMN_ROLE_RULES = "roleRules";
 
-	/** Id of the column showing the security parent rules applying to the analyzed type. */
-	public static final String COLUMN_SECURITY_PARENTS = "securityParents";
+	/** Id of the column showing the role parent rules applying to the analyzed type. */
+	public static final String COLUMN_ROLE_PARENTS = "roleParents";
+
+	/** Id of the column showing the access parent the analyzed type delegates to. */
+	public static final String COLUMN_ACCESS_PARENT = "accessParent";
 
 	/** Id of the column showing the findings reported for the analyzed type. */
 	public static final String COLUMN_FINDINGS = "findings";
 
-	/** Key of the kind of a rule entry, one of {@link #KIND_SECURITY_PARENT} / {@link #KIND_ROLE_RULE}. */
+	/** Key of the kind of a rule entry, one of {@link #KIND_ROLE_PARENT} / {@link #KIND_ROLE_RULE}. */
 	public static final String RULE_KIND = "kind";
 
 	/** Key of the localized name of the {@link #RULE_KIND kind} of a rule entry. */
@@ -143,8 +145,8 @@ public class SecurityCoverageTable implements UIElement {
 	private static final MetaResourceControlProvider STATUS_DISPLAY =
 		TypedConfigUtil.createInstance(MetaResourceControlProvider.Config.class);
 
-	/** {@link #RULE_KIND} of an entry standing for a security parent rule. */
-	public static final String KIND_SECURITY_PARENT = "securityParent";
+	/** {@link #RULE_KIND} of an entry standing for a role parent rule. */
+	public static final String KIND_ROLE_PARENT = "roleParent";
 
 	/** {@link #RULE_KIND} of an entry standing for a role rule. */
 	public static final String KIND_ROLE_RULE = "roleRule";
@@ -192,9 +194,6 @@ public class SecurityCoverageTable implements UIElement {
 
 		/** Configuration name for {@link #getSelectedFindings()}. */
 		String SELECTED_FINDINGS = "selected-findings";
-
-		/** Configuration name for {@link #getSelectedRule()}. */
-		String SELECTED_RULE = "selected-rule";
 
 		/** Configuration name for {@link #getSelectedRules()}. */
 		String SELECTED_RULES = "selected-rules";
@@ -259,15 +258,6 @@ public class SecurityCoverageTable implements UIElement {
 		ChannelRef getSelectedFindings();
 
 		/**
-		 * Channel the security parent rule proposed for the selected type is written to, as the
-		 * HTML a detail display shows, or {@code null} when no rule is proposed for it.
-		 */
-		@Name(SELECTED_RULE)
-		@Nullable
-		@Format(ChannelRefFormat.class)
-		ChannelRef getSelectedRule();
-
-		/**
 		 * Channel the rules in effect for the selected type are written to, one entry per rule.
 		 *
 		 * <p>
@@ -296,8 +286,6 @@ public class SecurityCoverageTable implements UIElement {
 
 	private final ChannelRef _selectedFindingsRef;
 
-	private final ChannelRef _selectedRuleRef;
-
 	private final ChannelRef _selectedRulesRef;
 
 	/**
@@ -311,7 +299,6 @@ public class SecurityCoverageTable implements UIElement {
 		_selectedInternalRef = config.getSelectedInternal();
 		_selectedWithoutSecurityRef = config.getSelectedWithoutSecurity();
 		_selectedFindingsRef = config.getSelectedFindings();
-		_selectedRuleRef = config.getSelectedRule();
 		_selectedRulesRef = config.getSelectedRules();
 	}
 
@@ -327,8 +314,10 @@ public class SecurityCoverageTable implements UIElement {
 			true, row -> readRoles(coverage(row)), 230));
 		columns.add(textColumn(COLUMN_ROLE_RULES, I18NConstants.COVERAGE_COLUMN_ROLE_RULES,
 			SecurityCoverageTable::roleRules, 200));
-		columns.add(textColumn(COLUMN_SECURITY_PARENTS, I18NConstants.COVERAGE_COLUMN_SECURITY_PARENTS,
-			SecurityCoverageTable::securityParents, 260));
+		columns.add(textColumn(COLUMN_ROLE_PARENTS, I18NConstants.COVERAGE_COLUMN_ROLE_PARENTS,
+			SecurityCoverageTable::roleParents, 260));
+		columns.add(textColumn(COLUMN_ACCESS_PARENT, I18NConstants.COVERAGE_COLUMN_ACCESS_PARENT,
+			SecurityCoverageTable::accessParent, 260));
 		columns.add(textColumn(COLUMN_FINDINGS, I18NConstants.COVERAGE_COLUMN_FINDINGS,
 			SecurityCoverageTable::findings, 460));
 
@@ -348,7 +337,6 @@ public class SecurityCoverageTable implements UIElement {
 			_selectedInternalRef == null ? null : context.resolveChannel(_selectedInternalRef),
 			_selectedWithoutSecurityRef == null ? null : context.resolveChannel(_selectedWithoutSecurityRef),
 			_selectedFindingsRef == null ? null : context.resolveChannel(_selectedFindingsRef),
-			_selectedRuleRef == null ? null : context.resolveChannel(_selectedRuleRef),
 			_selectedRulesRef == null ? null : context.resolveChannel(_selectedRulesRef));
 		if (detail.isBound()) {
 			control.addSelectionListener(keys -> {
@@ -398,8 +386,6 @@ public class SecurityCoverageTable implements UIElement {
 
 		private final ViewChannel _findings;
 
-		private final ViewChannel _proposedRule;
-
 		private final ViewChannel _rules;
 
 		private Object _key;
@@ -409,13 +395,12 @@ public class SecurityCoverageTable implements UIElement {
 		 * <code>null</code> where the configuration names none.
 		 */
 		Detail(ViewChannel selection, ViewChannel type, ViewChannel internal, ViewChannel withoutSecurity,
-				ViewChannel findings, ViewChannel proposedRule, ViewChannel rules) {
+				ViewChannel findings, ViewChannel rules) {
 			_selection = selection;
 			_type = type;
 			_internal = internal;
 			_withoutSecurity = withoutSecurity;
 			_findings = findings;
-			_proposedRule = proposedRule;
 			_rules = rules;
 		}
 
@@ -424,7 +409,7 @@ public class SecurityCoverageTable implements UIElement {
 		 */
 		boolean isBound() {
 			return _selection != null || _type != null || _internal != null || _withoutSecurity != null
-				|| _findings != null || _proposedRule != null || _rules != null;
+				|| _findings != null || _rules != null;
 		}
 
 		/**
@@ -461,10 +446,6 @@ public class SecurityCoverageTable implements UIElement {
 			if (_findings != null) {
 				_findings.set(row == null ? null : findingsHtml(row));
 			}
-			if (_proposedRule != null) {
-				String rule = row == null ? null : SecurityCoverageAction.ruleHtml(row);
-				_proposedRule.set(rule == null || rule.isEmpty() ? null : rule);
-			}
 			if (_rules != null) {
 				_rules.set(row == null ? List.of() : ruleEntries(row));
 			}
@@ -472,23 +453,23 @@ public class SecurityCoverageTable implements UIElement {
 	}
 
 	/**
-	 * The rules in effect for the given type, the security parent rules first, each as the
+	 * The rules in effect for the given type, the role parent rules first, each as the
 	 * dictionary a display shows and a command works on.
 	 *
 	 * @see Config#getSelectedRules()
 	 */
 	private static List<Map<String, Object>> ruleEntries(TypeCoverage coverage) {
 		SecurityDefinitionEditor editor = new SecurityDefinitionEditor();
-		Set<String> storedParents = storedIds(editor::storedSecurityParentRules);
+		Set<String> storedParents = storedIds(editor::storedRoleParentRules);
 		Set<String> storedRoleRules = storedIds(editor::storedRoleRules);
 		Resources resources = Resources.getInstance();
-		String parentKind = resources.getString(I18NConstants.COVERAGE_RULE_KIND_SECURITY_PARENT);
+		String parentKind = resources.getString(I18NConstants.COVERAGE_RULE_KIND_ROLE_PARENT);
 		String roleKind = resources.getString(I18NConstants.COVERAGE_RULE_KIND_ROLE_RULE);
 
 		List<Map<String, Object>> result = new ArrayList<>();
-		for (NavigationRule rule : coverage.securityParentRules()) {
+		for (NavigationRule rule : coverage.roleParentRules()) {
 			String id = rule.getId();
-			result.add(ruleEntry(KIND_SECURITY_PARENT, parentKind, id, path(rule.getPath()),
+			result.add(ruleEntry(KIND_ROLE_PARENT, parentKind, id, path(rule.getPath()),
 				storedParents.contains(id)));
 		}
 		for (Map.Entry<String, List<RoleProvider>> group : roleRulesByConfigId(coverage).entrySet()) {
@@ -629,12 +610,29 @@ public class SecurityCoverageTable implements UIElement {
 	}
 
 	/**
-	 * The paths of the security parent rules applying to the type.
+	 * The paths of the role parent rules applying to the type.
 	 */
-	private static String securityParents(Object row) {
-		return coverage(row).securityParentRules().stream()
+	private static String roleParents(Object row) {
+		return coverage(row).roleParentRules().stream()
 			.map(rule -> path(rule.getPath()))
 			.collect(Collectors.joining(RULE_SEPARATOR));
+	}
+
+	/**
+	 * The access parent the type delegates to: the reference navigated, marked with
+	 * {@link #INVERSE_MARKER} when it is navigated backwards, or the container relation a
+	 * composition part gets by default.
+	 */
+	private static String accessParent(Object row) {
+		AccessParent parent = coverage(row).accessParent();
+		if (parent == null) {
+			return "";
+		}
+		if (parent.isContainer()) {
+			return Resources.getInstance().getString(I18NConstants.COVERAGE_ACCESS_PARENT_DEFAULT);
+		}
+		String reference = TLModelUtil.qualifiedName(parent.reference());
+		return parent.inverse() ? INVERSE_MARKER + reference : reference;
 	}
 
 	/**
@@ -695,14 +693,8 @@ public class SecurityCoverageTable implements UIElement {
 
 	/**
 	 * The findings of the given type as the HTML a detail display shows: a list with one entry per
-	 * problem, the ways to solve it nested underneath.
-	 *
-	 * <p>
-	 * A {@link FindingKind#SUGGESTED_PARENT proposed} or {@link FindingKind#AMBIGUOUS_PARENT
-	 * ambiguous} container is not a problem of its own but a way to solve the
-	 * {@link FindingKind#NO_ROLE_SOURCE missing role source}, so it is listed underneath that
-	 * problem, first.
-	 * </p>
+	 * problem, the ways to solve it nested underneath. A type with an access parent is introduced
+	 * by a paragraph saying what it delegates to.
 	 */
 	private static String findingsHtml(TypeCoverage coverage) {
 		Resources resources = Resources.getInstance();
@@ -711,6 +703,10 @@ public class SecurityCoverageTable implements UIElement {
 			return "<p>" + TagUtil.encodeXML(resources.getString(exemption)) + "</p>";
 		}
 		StringBuilder html = new StringBuilder();
+		ResKey delegation = delegation(coverage);
+		if (delegation != null) {
+			html.append("<p>").append(TagUtil.encodeXML(resources.getString(delegation))).append("</p>");
+		}
 		html.append("<ul>");
 		for (CoverageFinding finding : coverage.findings()) {
 			ResKey problem = problem(finding);
@@ -731,8 +727,25 @@ public class SecurityCoverageTable implements UIElement {
 	}
 
 	/**
-	 * The short description of the problem the given finding reports, <code>null</code> for a
-	 * finding that is a way to solve another one.
+	 * The description of the access parent the given type delegates to, <code>null</code> for a
+	 * type deciding for itself.
+	 */
+	private static ResKey delegation(TypeCoverage coverage) {
+		AccessParent parent = coverage.accessParent();
+		if (parent == null) {
+			return null;
+		}
+		if (parent.isContainer()) {
+			String containers = coverage.containerReferences().stream()
+				.map(TLModelUtil::qualifiedName)
+				.collect(Collectors.joining(VALUE_SEPARATOR));
+			return I18NConstants.COVERAGE_DELEGATED_DEFAULT__CONTAINERS.fill(containers);
+		}
+		return I18NConstants.COVERAGE_DELEGATED__PARENT.fill(accessParent(coverage));
+	}
+
+	/**
+	 * The short description of the problem the given finding reports.
 	 */
 	private static ResKey problem(CoverageFinding finding) {
 		return switch (finding.getKind()) {
@@ -743,7 +756,8 @@ public class SecurityCoverageTable implements UIElement {
 			case DEAD_GRANT -> I18NConstants.COVERAGE_PROBLEM_DEAD_GRANT__OPERATION_ROLES.fill(
 				finding.getOperation().getID(),
 				finding.getRoles().stream().map(BoundedRole::getName).sorted().collect(Collectors.joining(VALUE_SEPARATOR)));
-			case SUGGESTED_PARENT, AMBIGUOUS_PARENT -> null;
+			case SHADOWED_RULES -> I18NConstants.COVERAGE_PROBLEM_SHADOWED_RULES__RULES
+				.fill(String.join(VALUE_SEPARATOR, finding.getRuleIds()));
 		};
 	}
 
@@ -754,15 +768,8 @@ public class SecurityCoverageTable implements UIElement {
 		List<ResKey> solutions = new ArrayList<>();
 		switch (finding.getKind()) {
 			case NO_ROLE_SOURCE -> {
-				for (CoverageFinding proposal : coverage.findings(FindingKind.SUGGESTED_PARENT)) {
-					solutions.add(I18NConstants.COVERAGE_SOLUTION_ACCEPT_PROPOSAL__REFERENCE
-						.fill(references(proposal)));
-				}
-				for (CoverageFinding ambiguity : coverage.findings(FindingKind.AMBIGUOUS_PARENT)) {
-					solutions.add(I18NConstants.COVERAGE_SOLUTION_CHOOSE_PARENT__REFERENCES
-						.fill(references(ambiguity)));
-				}
-				solutions.add(I18NConstants.COVERAGE_SOLUTION_SECURITY_PARENT_RULE);
+				solutions.add(I18NConstants.COVERAGE_SOLUTION_ACCESS_PARENT);
+				solutions.add(I18NConstants.COVERAGE_SOLUTION_ROLE_PARENT_RULE);
 				solutions.add(I18NConstants.COVERAGE_SOLUTION_ROLE_RULE);
 				solutions.add(I18NConstants.COVERAGE_SOLUTION_MARK_INTERNAL);
 			}
@@ -774,22 +781,12 @@ public class SecurityCoverageTable implements UIElement {
 				solutions.add(I18NConstants.COVERAGE_SOLUTION_DELIVER_ROLE);
 				solutions.add(I18NConstants.COVERAGE_SOLUTION_CHANGE_GRANT);
 			}
-			case SUGGESTED_PARENT, AMBIGUOUS_PARENT -> {
-				// Listed as solutions of the missing role source.
+			case SHADOWED_RULES -> {
+				solutions.add(I18NConstants.COVERAGE_SOLUTION_REMOVE_SHADOWED_RULES);
+				solutions.add(I18NConstants.COVERAGE_SOLUTION_REMOVE_ACCESS_PARENT);
 			}
 		}
 		return solutions;
-	}
-
-	/**
-	 * The compositions the given finding names, each as the label of its owner and its own label,
-	 * quoted.
-	 */
-	private static String references(CoverageFinding finding) {
-		return finding.getContainerReferences().stream()
-			.map(reference -> "\"" + MetaResourceProvider.INSTANCE.getLabel(reference.getOwner()) + STEP_SEPARATOR
-				+ MetaResourceProvider.INSTANCE.getLabel(reference) + "\"")
-			.collect(Collectors.joining(VALUE_SEPARATOR));
 	}
 
 	/**

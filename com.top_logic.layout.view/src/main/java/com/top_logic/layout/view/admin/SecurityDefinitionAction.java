@@ -7,9 +7,7 @@ package com.top_logic.layout.view.admin;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationException;
@@ -24,7 +22,6 @@ import com.top_logic.basic.config.constraint.check.ConstraintChecker;
 import com.top_logic.basic.i18n.log.BufferingI18NLog;
 import com.top_logic.basic.logging.Level;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.element.boundsec.manager.coverage.SecurityCoverageAnalysis;
 import com.top_logic.element.boundsec.manager.coverage.SecurityCoverageCheck;
 import com.top_logic.element.boundsec.manager.coverage.SecurityDefinitionEditor;
 import com.top_logic.element.boundsec.manager.coverage.TypeCoverage;
@@ -80,45 +77,39 @@ public class SecurityDefinitionAction implements ViewAction {
 	/**
 	 * Suffix of the id proposed for a new role rule, appended to the name of the type it applies
 	 * to.
-	 *
-	 * @see SecurityCoverageAnalysis#SUGGESTED_RULE_ID_SUFFIX The counterpart for a security parent
-	 *      rule.
 	 */
 	public static final String ROLE_RULE_ID_SUFFIX = "_roleRule";
+
+	/**
+	 * Suffix of the id proposed for a new role parent rule, appended to the name of the type it
+	 * applies to.
+	 */
+	public static final String ROLE_PARENT_RULE_ID_SUFFIX = "_roleParent";
 
 	/**
 	 * What a {@link SecurityDefinitionAction} does.
 	 */
 	public enum Mode {
-		/** Store the security parent rule the analysis proposes for the selected type. */
-		ACCEPT_PROPOSAL,
-
-		/**
-		 * Store the security parent rules of the proposal entries given as input, a single entry or
-		 * a collection of them as a table's selection holds them.
-		 */
-		ACCEPT_PROPOSALS,
-
-		/** Create the security parent rule to edit for the selected type. */
-		NEW_SECURITY_PARENT_RULE,
+		/** Create the role parent rule to edit for the selected type. */
+		NEW_ROLE_PARENT_RULE,
 
 		/** Create the role rule to edit for the selected type. */
 		NEW_ROLE_RULE,
 
-		/** Fetch the security parent rule with the input id for editing. */
-		EDIT_SECURITY_PARENT_RULE,
+		/** Fetch the role parent rule with the input id for editing. */
+		EDIT_ROLE_PARENT_RULE,
 
 		/** Fetch the role rule with the input id for editing. */
 		EDIT_ROLE_RULE,
 
-		/** Store the edited security parent rule. */
-		SAVE_SECURITY_PARENT_RULE,
+		/** Store the edited role parent rule. */
+		SAVE_ROLE_PARENT_RULE,
 
 		/** Store the edited role rule. */
 		SAVE_ROLE_RULE,
 
-		/** Drop the security parent rule with the input id from the stored configuration. */
-		REMOVE_SECURITY_PARENT_RULE,
+		/** Drop the role parent rule with the input id from the stored configuration. */
+		REMOVE_ROLE_PARENT_RULE,
 
 		/** Drop the role rule with the input id from the stored configuration. */
 		REMOVE_ROLE_RULE,
@@ -197,15 +188,13 @@ public class SecurityDefinitionAction implements ViewAction {
 	@Override
 	public Object execute(ReactContext context, Object input) {
 		return switch (_mode) {
-			case ACCEPT_PROPOSAL -> acceptProposal(coverage(context, input));
-			case ACCEPT_PROPOSALS -> acceptProposals(input);
-			case NEW_SECURITY_PARENT_RULE -> newSecurityParentRule(coverage(context, input));
+			case NEW_ROLE_PARENT_RULE -> newRoleParentRule(coverage(context, input));
 			case NEW_ROLE_RULE -> newRoleRule(coverage(context, input));
-			case EDIT_SECURITY_PARENT_RULE -> editSecurityParentRule(ruleId(input));
+			case EDIT_ROLE_PARENT_RULE -> editRoleParentRule(ruleId(input));
 			case EDIT_ROLE_RULE -> editRoleRule(ruleId(input));
-			case SAVE_SECURITY_PARENT_RULE -> saveSecurityParentRule(rule(input, NavigationRuleConfig.class));
+			case SAVE_ROLE_PARENT_RULE -> saveRoleParentRule(rule(input, NavigationRuleConfig.class));
 			case SAVE_ROLE_RULE -> saveRoleRule(rule(input, RoleRuleConfig.class));
-			case REMOVE_SECURITY_PARENT_RULE -> removeSecurityParentRule(ruleId(input));
+			case REMOVE_ROLE_PARENT_RULE -> removeRoleParentRule(ruleId(input));
 			case REMOVE_ROLE_RULE -> removeRoleRule(ruleId(input));
 			case EDIT_ACCESS_RIGHTS -> editAccessRights(coverage(context, input));
 			case EDIT_MODULE_ACCESS_RIGHTS -> editModuleAccessRights(coverage(context, input));
@@ -219,46 +208,11 @@ public class SecurityDefinitionAction implements ViewAction {
 	}
 
 	/**
-	 * Stores the security parent rule proposed for the given type.
+	 * An empty role parent rule for the given type.
 	 */
-	private Object acceptProposal(TypeCoverage coverage) {
-		if (editor().proposedRule(coverage) == null) {
-			throw new TopLogicException(I18NConstants.ERROR_NO_PROPOSED_RULE);
-		}
-		store(() -> editor().acceptProposal(coverage));
-		return Boolean.TRUE;
-	}
-
-	/**
-	 * Stores the proposed rules of the given proposal entries, see
-	 * {@link SecurityCoverageAction#PROPOSAL_COVERAGE}.
-	 */
-	private Object acceptProposals(Object input) {
-		Collection<?> entries = input instanceof Collection<?> collection ? collection : List.of(input);
-		List<TypeCoverage> coverage = entries.stream()
-			.filter(Map.class::isInstance)
-			.map(entry -> ((Map<?, ?>) entry).get(SecurityCoverageAction.PROPOSAL_COVERAGE))
-			.filter(TypeCoverage.class::isInstance)
-			.map(TypeCoverage.class::cast)
-			.toList();
-		if (coverage.isEmpty()) {
-			throw new TopLogicException(I18NConstants.ERROR_NO_PROPOSED_RULE);
-		}
-		store(() -> editor().acceptProposals(coverage));
-		return Boolean.TRUE;
-	}
-
-	/**
-	 * The security parent rule to edit for the given type: the proposed one where the analysis has
-	 * a proposal, an empty rule for the type otherwise.
-	 */
-	private Object newSecurityParentRule(TypeCoverage coverage) {
-		NavigationRuleConfig proposal = editor().proposedRule(coverage);
-		if (proposal != null) {
-			return proposal;
-		}
+	private Object newRoleParentRule(TypeCoverage coverage) {
 		NavigationRuleConfig rule = TypedConfiguration.newConfigItem(NavigationRuleConfig.class);
-		prefill(rule, coverage, SecurityCoverageAnalysis.SUGGESTED_RULE_ID_SUFFIX);
+		prefill(rule, coverage, ROLE_PARENT_RULE_ID_SUFFIX);
 		return rule;
 	}
 
@@ -281,12 +235,12 @@ public class SecurityDefinitionAction implements ViewAction {
 	}
 
 	/**
-	 * The security parent rule with the given id, as a copy to edit.
+	 * The role parent rule with the given id, as a copy to edit.
 	 */
-	private Object editSecurityParentRule(String id) {
-		NavigationRuleConfig rule = editor().editableSecurityParentRule(id);
+	private Object editRoleParentRule(String id) {
+		NavigationRuleConfig rule = editor().editableRoleParentRule(id);
 		if (rule == null) {
-			throw new TopLogicException(I18NConstants.ERROR_UNKNOWN_SECURITY_PARENT_RULE__ID.fill(id));
+			throw new TopLogicException(I18NConstants.ERROR_UNKNOWN_ROLE_PARENT_RULE__ID.fill(id));
 		}
 		return rule;
 	}
@@ -303,14 +257,14 @@ public class SecurityDefinitionAction implements ViewAction {
 	}
 
 	/**
-	 * Stores the given security parent rule after checking that it can navigate anywhere.
+	 * Stores the given role parent rule after checking that it can navigate anywhere.
 	 */
-	private Object saveSecurityParentRule(NavigationRuleConfig rule) {
+	private Object saveRoleParentRule(NavigationRuleConfig rule) {
 		checkCommon(rule);
 		if (rule.getPathElements().isEmpty()) {
 			throw new TopLogicException(I18NConstants.ERROR_MISSING_RULE_PATH);
 		}
-		store(() -> editor().putSecurityParentRule(rule));
+		store(() -> editor().putRoleParentRule(rule));
 		return Boolean.TRUE;
 	}
 
@@ -327,10 +281,10 @@ public class SecurityDefinitionAction implements ViewAction {
 	}
 
 	/**
-	 * Drops the security parent rule with the given id from the stored configuration.
+	 * Drops the role parent rule with the given id from the stored configuration.
 	 */
-	private Object removeSecurityParentRule(String id) {
-		remove(() -> editor().removeSecurityParentRule(id), id);
+	private Object removeRoleParentRule(String id) {
+		remove(() -> editor().removeRoleParentRule(id), id);
 		return Boolean.TRUE;
 	}
 

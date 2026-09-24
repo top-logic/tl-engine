@@ -1,14 +1,12 @@
 /*
  * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
- *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-
 package com.top_logic.element.boundsec.manager.coverage;
 
 /**
  * Summary of the {@link SecurityCoverageAnalysis} result for a single type.
- *
+ * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public enum CoverageStatus {
@@ -18,6 +16,13 @@ public enum CoverageStatus {
 	 * one role may read them.
 	 */
 	COVERED,
+
+	/**
+	 * The type has an access parent: its objects delegate every access decision to the object the
+	 * access parent relation leads to, so the type needs no definition of its own. Whether that
+	 * object is accessible is reported with its own type.
+	 */
+	DELEGATED,
 
 	/**
 	 * The type needs no access definition: it is excluded from access control, or it is internal

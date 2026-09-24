@@ -8,10 +8,8 @@ package com.top_logic.element.boundsec.manager.coverage;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
@@ -30,6 +28,7 @@ import com.top_logic.model.security.SecurityConfigurationService.ModelAccessRigh
 import com.top_logic.model.security.SecurityConfigurationService.TLClassAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService.TLModuleAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService.TypeBasedAccessRights;
+import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.util.autoconf.InAppServiceConfigStore;
@@ -38,7 +37,7 @@ import com.top_logic.util.autoconf.InAppServiceConfigStore;
  * Edit access to the model based access definition of the running application.
  *
  * <p>
- * The definition consists of the role rules and security parent rules of the {@link AccessManager}
+ * The definition consists of the role rules and role parent rules of the {@link AccessManager}
  * and of the grants of the {@link SecurityConfigurationService}. Each of the two services keeps its
  * stored configuration in a file of the autoconf folder of the application, and every operation of
  * this editor reads that file, applies the change and writes the file back. The file is layered
@@ -50,8 +49,8 @@ import com.top_logic.util.autoconf.InAppServiceConfigStore;
  * <p>
  * A change becomes effective in the running application with {@link #apply()}, which reloads the
  * application configuration and restarts the two services. Until then the files and the running
- * definition differ: {@link #storedSecurityParentRules()} answers what the files hold,
- * {@link #editableSecurityParentRule(String)} what is currently in effect.
+ * definition differ: {@link #storedRoleParentRules()} answers what the files hold,
+ * {@link #editableRoleParentRule(String)} what is currently in effect.
  * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -90,7 +89,7 @@ public class SecurityDefinitionEditor {
 	/**
 	 * The file holding the stored rules.
 	 *
-	 * @see #storedSecurityParentRules()
+	 * @see #storedRoleParentRules()
 	 * @see #storedRoleRules()
 	 */
 	public File getAccessManagerFile() {
@@ -107,17 +106,17 @@ public class SecurityDefinitionEditor {
 	}
 
 	/**
-	 * The security parent rules the stored configuration defines.
+	 * The role parent rules the stored configuration defines.
 	 *
 	 * @return A snapshot of the rules of {@link #getAccessManagerFile()}, empty when the file
 	 *         defines none.
 	 * @throws ConfigurationException
 	 *         When the stored configuration cannot be parsed.
 	 *
-	 * @see #editableSecurityParentRule(String) The rules that are in effect, which also include the
+	 * @see #editableRoleParentRule(String) The rules that are in effect, which also include the
 	 *      rules of the underlying configuration layers.
 	 */
-	public List<NavigationRuleConfig> storedSecurityParentRules() throws ConfigurationException {
+	public List<NavigationRuleConfig> storedRoleParentRules() throws ConfigurationException {
 		ElementAccessManager.Config config = storedAccessManagerConfig(readAccessManagerFile());
 		return config == null ? Collections.emptyList() : List.copyOf(config.getSecurityParents().getRules());
 	}
@@ -141,7 +140,7 @@ public class SecurityDefinitionEditor {
 	/**
 	 * The number of rules {@link #getAccessManagerFile()} defines.
 	 *
-	 * @return The number of stored security parent rules plus the number of stored role rules.
+	 * @return The number of stored role parent rules plus the number of stored role rules.
 	 * @throws ConfigurationException
 	 *         When the stored configuration cannot be parsed.
 	 */
@@ -154,17 +153,17 @@ public class SecurityDefinitionEditor {
 	}
 
 	/**
-	 * Whether the security parent rule with the given id is defined by the stored configuration.
+	 * Whether the role parent rule with the given id is defined by the stored configuration.
 	 *
 	 * @param id
 	 *        The {@link NavigationRuleConfig#getId()} to look for.
 	 * @throws ConfigurationException
 	 *         When the stored configuration cannot be parsed.
 	 *
-	 * @see #removeSecurityParentRule(String) Only a stored rule can be removed.
+	 * @see #removeRoleParentRule(String) Only a stored rule can be removed.
 	 */
-	public boolean isStoredSecurityParentRule(String id) throws ConfigurationException {
-		return indexOf(storedSecurityParentRules(), id) >= 0;
+	public boolean isStoredRoleParentRule(String id) throws ConfigurationException {
+		return indexOf(storedRoleParentRules(), id) >= 0;
 	}
 
 	/**
@@ -182,7 +181,7 @@ public class SecurityDefinitionEditor {
 	}
 
 	/**
-	 * Stores the given security parent rule, replacing a stored rule of the same id.
+	 * Stores the given role parent rule, replacing a stored rule of the same id.
 	 *
 	 * @param rule
 	 *        The rule to store. A copy is taken, the given configuration is left untouched.
@@ -191,7 +190,7 @@ public class SecurityDefinitionEditor {
 	 * @throws ConfigurationException
 	 *         When the stored configuration cannot be parsed.
 	 */
-	public void putSecurityParentRule(NavigationRuleConfig rule) throws IOException, ConfigurationException {
+	public void putRoleParentRule(NavigationRuleConfig rule) throws IOException, ConfigurationException {
 		ApplicationConfig.Config appConfig = readAccessManagerFile();
 		putRule(accessManagerConfig(appConfig).getSecurityParents().getRules(), rule);
 		writeAccessManagerFile(appConfig);
@@ -214,7 +213,7 @@ public class SecurityDefinitionEditor {
 	}
 
 	/**
-	 * Removes the security parent rule with the given id from the stored configuration.
+	 * Removes the role parent rule with the given id from the stored configuration.
 	 *
 	 * <p>
 	 * A rule of the underlying configuration layers cannot be removed by layering a file onto them,
@@ -230,9 +229,9 @@ public class SecurityDefinitionEditor {
 	 * @throws ConfigurationException
 	 *         When the stored configuration cannot be parsed.
 	 *
-	 * @see #isStoredSecurityParentRule(String)
+	 * @see #isStoredRoleParentRule(String)
 	 */
-	public boolean removeSecurityParentRule(String id) throws IOException, ConfigurationException {
+	public boolean removeRoleParentRule(String id) throws IOException, ConfigurationException {
 		ApplicationConfig.Config appConfig = readAccessManagerFile();
 		ElementAccessManager.Config config = storedAccessManagerConfig(appConfig);
 		if (config == null || !removeRule(config.getSecurityParents().getRules(), id)) {
@@ -272,11 +271,11 @@ public class SecurityDefinitionEditor {
 	}
 
 	/**
-	 * A copy of the security parent rule with the given id, as it is currently in effect.
+	 * A copy of the role parent rule with the given id, as it is currently in effect.
 	 *
 	 * <p>
 	 * The copy is meant to be edited and handed back to
-	 * {@link #putSecurityParentRule(NavigationRuleConfig)}, which stores it under its id. A rule of
+	 * {@link #putRoleParentRule(NavigationRuleConfig)}, which stores it under its id. A rule of
 	 * the underlying configuration layers is thereby replaced by the edited one.
 	 * </p>
 	 *
@@ -284,7 +283,7 @@ public class SecurityDefinitionEditor {
 	 *        The {@link NavigationRuleConfig#getId()} of the rule to edit.
 	 * @return The copy, or <code>null</code> when no such rule is in effect.
 	 */
-	public NavigationRuleConfig editableSecurityParentRule(String id) {
+	public NavigationRuleConfig editableRoleParentRule(String id) {
 		return copyRule(effectiveConfig().getSecurityParents().getRules(), id);
 	}
 
@@ -391,8 +390,8 @@ public class SecurityDefinitionEditor {
 	 *
 	 * <p>
 	 * An internal type is not excluded from access control at the same time, the two marks
-	 * contradicting each other, so setting the mark drops an exclusion the stored configuration
-	 * holds.
+	 * contradicting each other, and it has no access parent, so setting the mark drops an
+	 * exclusion and an access parent the stored configuration holds.
 	 * </p>
 	 *
 	 * @param type
@@ -409,6 +408,7 @@ public class SecurityDefinitionEditor {
 		entry.setInternal(value);
 		if (value) {
 			entry.setWithoutSecurity(false);
+			entry.setAccessParent(null);
 		}
 		putAccessRights(entry);
 	}
@@ -418,7 +418,8 @@ public class SecurityDefinitionEditor {
 	 *
 	 * <p>
 	 * A type without access control is not internal at the same time, the two marks contradicting
-	 * each other, so excluding the type drops an internal mark the stored configuration holds.
+	 * each other, and it has no access parent, so excluding the type drops an internal mark and an
+	 * access parent the stored configuration holds.
 	 * </p>
 	 *
 	 * @param type
@@ -435,77 +436,38 @@ public class SecurityDefinitionEditor {
 		entry.setWithoutSecurity(value);
 		if (value) {
 			entry.setInternal(false);
+			entry.setAccessParent(null);
 		}
 		putAccessRights(entry);
 	}
 
 	/**
-	 * A copy of the security parent rule the analysis proposes for the given type.
-	 *
-	 * @param coverage
-	 *        An entry of the result of {@link SecurityCoverageCheck#analyze()}.
-	 * @return The proposed rule, or <code>null</code> when the type has no
-	 *         {@link FindingKind#SUGGESTED_PARENT} finding.
-	 *
-	 * @see CoverageFinding#getSuggestedRule()
-	 */
-	public NavigationRuleConfig proposedRule(TypeCoverage coverage) {
-		List<CoverageFinding> proposals = coverage.findings(FindingKind.SUGGESTED_PARENT);
-		if (proposals.isEmpty()) {
-			return null;
-		}
-		return TypedConfiguration.copy(proposals.get(0).getSuggestedRule());
-	}
-
-	/**
-	 * Stores the security parent rule the analysis proposes for the given type.
-	 *
+	 * Names the reference leading from objects of the given type to their access parent, or drops
+	 * that setting.
 	 * <p>
-	 * A type the analysis has no proposal for is left alone.
+	 * A type with an access parent has no grants and no marks of its own, so setting the access
+	 * parent drops the grants and marks the stored configuration holds for the type.
 	 * </p>
-	 *
-	 * @param coverage
-	 *        An entry of the result of {@link SecurityCoverageCheck#analyze()}.
-	 * @throws IOException
-	 *         When the file cannot be written.
-	 * @throws ConfigurationException
-	 *         When the stored configuration cannot be parsed.
-	 *
-	 * @see #proposedRule(TypeCoverage)
-	 */
-	public void acceptProposal(TypeCoverage coverage) throws IOException, ConfigurationException {
-		acceptProposals(List.of(coverage));
-	}
-
-	/**
-	 * Stores the security parent rules the analysis proposes for the given types, writing the file
-	 * once.
-	 *
-	 * <p>
-	 * A type the analysis has no proposal for is left alone.
-	 * </p>
-	 *
-	 * @param coverage
-	 *        Entries of the result of {@link SecurityCoverageCheck#analyze()}.
+	 * 
+	 * @param type
+	 *        The type delegating its access decision.
+	 * @param reference
+	 *        The value of {@link TLClassAccessRights#getAccessParent()} to store, <code>null</code>
+	 *        to drop the setting.
 	 * @throws IOException
 	 *         When the file cannot be written.
 	 * @throws ConfigurationException
 	 *         When the stored configuration cannot be parsed.
 	 */
-	public void acceptProposals(Collection<TypeCoverage> coverage) throws IOException, ConfigurationException {
-		List<NavigationRuleConfig> rules = coverage.stream()
-			.map(this::proposedRule)
-			.filter(Objects::nonNull)
-			.toList();
-		if (rules.isEmpty()) {
-			return;
+	public void setAccessParent(TLClass type, TLModelPartRef reference) throws IOException, ConfigurationException {
+		TLClassAccessRights entry = editableAccessRights(type);
+		entry.setAccessParent(reference);
+		if (reference != null) {
+			entry.getGrants().clear();
+			entry.setInternal(false);
+			entry.setWithoutSecurity(false);
 		}
-		ApplicationConfig.Config appConfig = readAccessManagerFile();
-		List<NavigationRuleConfig> stored = accessManagerConfig(appConfig).getSecurityParents().getRules();
-		for (NavigationRuleConfig rule : rules) {
-			putRule(stored, rule);
-		}
-		writeAccessManagerFile(appConfig);
+		putAccessRights(entry);
 	}
 
 	/**

@@ -15,6 +15,66 @@
 							multiple="true"
 							type="ChildOfCovered"
 						/>
+						<reference name="parts"
+							composite="true"
+							multiple="true"
+							type="PartOfCovered"
+						/>
+						<reference name="explicitParts"
+							composite="true"
+							multiple="true"
+							type="ExplicitPart"
+						/>
+					</attributes>
+				</class>
+
+				<!-- Composition part without any definition: delegates to its container by default. -->
+				<class name="PartOfCovered">
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+						<reference name="subs"
+							composite="true"
+							multiple="true"
+							type="SubPart"
+						/>
+					</attributes>
+				</class>
+
+				<!-- Composition part of a composition part: delegates along the chain of containers. -->
+				<class name="SubPart"/>
+
+				<!--
+					Configured access parent: the composition holding it, navigated backwards. A role
+					rule applies to it as well, which the access parent shadows.
+				-->
+				<class name="ExplicitPart">
+					<attributes>
+						<reference name="owner"
+							type="tl.accounts:Person"
+						/>
+					</attributes>
+				</class>
+
+				<!-- Configured access parent: its own to-one reference, navigated forwards. -->
+				<class name="Linked">
+					<attributes>
+						<reference name="target"
+							type="Covered"
+						/>
+					</attributes>
+				</class>
+
+				<!--
+					Configured access parent leading from one object of the type to another: two
+					objects pointing at each other form a cycle.
+				-->
+				<class name="Cyclic">
+					<attributes>
+						<reference name="next"
+							type="Cyclic"
+						/>
 					</attributes>
 				</class>
 
@@ -25,16 +85,16 @@
 					</generalizations>
 				</class>
 
-				<!-- Role source is a security parent rule pointing to the container. -->
+				<!-- Role source is a role parent rule pointing to the container. -->
 				<class name="ChildOfCovered"/>
 
 				<!-- Neither a role source nor a container. -->
 				<class name="Orphan"/>
 
-				<!-- Contained in exactly one composition: a security parent can be proposed. -->
+				<!-- Contained in one composition: delegates to its container by default. -->
 				<class name="SingleContained"/>
 
-				<!-- Contained in two compositions: the security parent is ambiguous. -->
+				<!-- Contained in two compositions: delegates to whichever container holds it. -->
 				<class name="DoubleContained"/>
 
 				<class name="Container">
@@ -71,8 +131,10 @@
 					</attributes>
 				</class>
 
-				<!-- Read is granted to a role that no rule delivers, but that a test assigns
-					directly on an object of this type. -->
+				<!--
+					Read is granted to a role that no rule delivers, but that a test assigns
+					directly on an object of this type.
+				-->
 				<class name="DirectlyAssigned"/>
 
 				<!-- Excluded from access control: no finding despite the missing definitions. -->

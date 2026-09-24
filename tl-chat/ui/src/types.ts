@@ -100,23 +100,28 @@ export interface ErrorMessage {
 /**
  * Something that happened around the conversation rather than in it.
  *
- * Today one thing only: the run lost the model it was configured with and continued on another
- * one. Not an {@link ErrorMessage} - nothing failed for the user, the answer below it simply comes
- * from somewhere else - and not an assistant message either, because the agent did not say it.
+ * Two things: the run lost the model it was configured with and continued on another one, or the
+ * user stopped the run. Not an {@link ErrorMessage} - nothing failed for the user - and not an
+ * assistant message either, because the agent did not say it.
  *
- * The `detail` is the server's own line, in the same wording the reloaded transcript carries, so
- * that a notice reads the same live as after a reload (#429). The sentence around it is the
- * renderer's, from `kind`.
+ * The sentence the user reads is the renderer's, from `kind`, so that a notice reads the same live
+ * as after a reload (#429) and in the reader's language (#549).
  */
 export interface NoticeMessage {
   type: 'notice'
   id: string
   /** What the notice is about. */
-  kind: 'model_switched'
-  /** The server's line: `from -> to: reason`. */
+  kind: NoticeKind
+  /**
+   * The server's line under the sentence: `from -> to: reason` for a model switch, empty for a
+   * cancel, which has nothing to add to "stopped".
+   */
   detail: string
   timestamp: number
 }
+
+/** What a {@link NoticeMessage} is about. */
+export type NoticeKind = 'model_switched' | 'cancelled'
 
 export interface ApprovalRequest {
   type: 'approval_request'

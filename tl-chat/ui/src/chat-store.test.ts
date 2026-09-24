@@ -625,8 +625,15 @@ describe('the stream', () => {
     release()
   })
 
-  /** A run the user stopped is not a failure, and leaves no error in the transcript. */
-  it('writes no error for the stream the cancel closed', async () => {
+  /**
+   * A run the user stopped is not a failure (#549).
+   *
+   * The frames in the order the server sends them for a cancel mid-answer: what was streamed, the
+   * turn's end, `run_completed` with `ABORTED`, and the authoritative text of what was streamed.
+   * The server sends no `provider_error` for it any more; the stop says so once, as a notice under
+   * the partial answer, and not a second time in the composer's strip.
+   */
+  it('writes a cancel into the transcript as one notice, not as an error', async () => {
     const store = chatStore('alpha', BOOT)
     const release = store.subscribe(() => undefined)
     store.attach(BOOT)
@@ -634,10 +641,23 @@ describe('the stream', () => {
     const stream = streams[0]
 
     stream.emit('run_started', { runId: 'r1' })
+    stream.emit('turn_started', {})
+    stream.emit('text_delta', { text: 'Eins, zwei, ' })
+    stream.emit('turn_completed', {})
     stream.emit('run_completed', { reason: 'ABORTED' })
-    stream.emit('provider_error', { kind: 'UNKNOWN', errorMessage: 'Stream cancelled.' })
+    stream.emit('message_complete', { contentText: 'Eins, zwei, ' })
 
-    expect(store.getState().messages.some((m) => m.type === 'error')).toBe(false)
+    const messages = store.getState().messages
+    expect(messages.some((m) => m.type === 'error')).toBe(false)
+    const notices = messages.filter((m) => m.type === 'notice')
+    expect(notices).toHaveLength(1)
+    expect(notices[0]).toMatchObject({ kind: 'cancelled', detail: '' })
+    // Under what was streamed before the stop, which stays.
+    const answer = messages.findIndex((m) => m.type === 'assistant_text' && m.text === 'Eins, zwei, ')
+    expect(answer).toBeGreaterThanOrEqual(0)
+    expect(messages.indexOf(notices[0])).toBeGreaterThan(answer)
+    expect(store.getState().notice).toBe('')
+    expect(store.getState().busy).toBe(false)
 
     await settle()
     release()

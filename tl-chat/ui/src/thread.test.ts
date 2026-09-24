@@ -8,7 +8,8 @@ import { React } from 'tl-react-bridge'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { Thread } from './thread'
 import { chatReducer, type ChatAction } from './reducer'
-import { bundle } from './i18n'
+import { bundle, type Language } from './i18n'
+import { turnsJsonToMessages } from './api'
 import type { ChatMessage, TraceMode } from './types'
 
 const labels = bundle('en')
@@ -20,7 +21,12 @@ function build(actions: ChatAction[]): ChatMessage[] {
 }
 
 /** The transcript as the browser renders it, for one set of messages and one busy state. */
-function render(messages: ChatMessage[], busy: boolean, traceMode: TraceMode = 'summary'): string {
+function render(
+  messages: ChatMessage[],
+  busy: boolean,
+  traceMode: TraceMode = 'summary',
+  language: Language = 'en',
+): string {
   return renderToStaticMarkup(
     React.createElement(Thread, {
       messages,
@@ -29,8 +35,8 @@ function render(messages: ChatMessage[], busy: boolean, traceMode: TraceMode = '
       busy,
       regenerating: false,
       feedback: [],
-      labels,
-      language: 'en' as const,
+      labels: bundle(language),
+      language,
       effort: '',
       onEditSend: async () => true,
       onRegenerate: () => undefined,
@@ -150,6 +156,57 @@ describe('a running turn', () => {
     expect(html).not.toContain('error-card')
     // The switch is not work the agent did: counted as a step it would make the turn claim one.
     expect(html).not.toContain(labels.runSteps(1))
+  })
+
+  /**
+   * A run the user stopped says so under what it streamed, in the reader's language, and is neither
+   * an error nor a step (#549).
+   */
+  it('shows a cancel as a notice under the partial answer', () => {
+    const html = render(
+      build([
+        ...FIRST_DELTA,
+        { type: 'ADD_NOTICE', kind: 'cancelled', detail: '' },
+        { type: 'END_RUN', runId: 'r1' },
+      ]),
+      false,
+    )
+    expect(html).toContain('notice-line')
+    expect(html).toContain(labels.cancelled)
+    expect(html.indexOf(labels.cancelled)).toBeGreaterThan(html.indexOf('Lissabon'))
+    expect(html).not.toContain('notice-line-detail')
+    expect(html).not.toContain('error-card')
+    expect(html).not.toContain(labels.runSteps(1))
+  })
+
+  /**
+   * The same cancel read back from the server - after a reload, or in another window of the
+   * account - reads exactly as it did live: the recorded `CANCELLED` event as the one notice, in the
+   * reader's language, and not the server's English details.
+   */
+  it('shows a reloaded cancel as the same notice, in the reader\'s language', () => {
+    const turns = [
+      {
+        id: 't1',
+        turnNumber: 1,
+        timestamp: 1000,
+        userParts: [{ id: 'u', type: 'text', timestamp: 1000, textData: { text: 'Zähl langsam.' } }],
+        assistantParts: [
+          { id: 'a', type: 'text', timestamp: 2000, textData: { text: 'Eins, zwei, ' } },
+          {
+            id: 'c',
+            type: 'system',
+            timestamp: 3000,
+            systemData: { eventType: 'CANCELLED', details: 'User cancelled processing' },
+          },
+        ],
+      },
+    ]
+    const html = render(turnsJsonToMessages(JSON.stringify(turns)), false, 'summary', 'de')
+    expect(html).toContain(bundle('de').cancelled)
+    expect(html.indexOf(bundle('de').cancelled)).toBeGreaterThan(html.indexOf('Eins, zwei,'))
+    expect(html).not.toContain('User cancelled processing')
+    expect(html).not.toContain('error-card')
   })
 
   it('reports the duration once the run has ended', () => {

@@ -25,51 +25,37 @@ is a defect to fix in the theme. The only custom properties that carry a fallbac
 stylesheet declares itself (`--page-inset`, `--cal-ev-bg`, …), where the fallback is the value of the
 default case rather than a stand-in for a missing token.
 
-## Naming a token in a model configuration
+## Coloring a value in a model configuration
 
-A model configuration names a token where it asks for a design value. The `<color>` annotation of an
-enumeration classifier is such a place:
+A model configuration does not name a token where it asks for the color of a value; it names a
+**role** of the design system. The `<color>` annotation of an enumeration classifier is such a place:
 
 ```xml
 <classifier name="open">
 	<annotations>
-		<color token="support-warning"/>
+		<color role="warning"/>
 	</annotations>
 </classifier>
 ```
 
-The pill a value of that classifier is drawn as takes the token as its colour: the value is sent as
-`var(--support-warning)` and set into the custom property `--tlPill-color`, so the pill follows a
-theme switch.
+The roles are the closed list of `ValueColor`: `neutral`, `brand`, the four meanings `error`,
+`warning`, `success`, `info`, and eight categories `category-1` … `category-8` that carry no meaning
+and only tell values apart. A literal color value or a token name is not a valid specification.
 
-The legal names are the colour tokens of the themes: the union, over the `<theme>` elements of
-`tl-react-theme.config.xml`, of the `<color>` tokens and of the `<ref>` tokens ending in one. A token
-of another kind is not a colour: `spacing-02` is a `<length>`, `shadow-menu` a `<text>`, and neither
-is accepted where a colour is asked for.
+The pill a value of that classifier is drawn as carries the role as a class, `tl-pill tl-pill--warning`,
+and nothing else: the stylesheet of the design system (`style/tl-design-system/components.css`) reads the
+two tokens of the role, its tinted surface and its line (`--tl-status-warning-subtle`,
+`--tl-status-warning-border`), so the pill follows a theme switch without the server sending a color.
+Which tokens a role reads, and why the text on it is `text-primary`, is decided in `docs/skalen.md` of
+the design-system repository, section "Pill: Rolle statt Farbe".
 
-The colour tokens are offered as the options of the annotation, so the model editor shows a
-drop-down of the names the application emits rather than a free-text field. A token the application
-does not emit is kept alongside them: the form shows it, and saving the form writes it back
-unchanged, so an annotation written against a theme the editing application does not install
-survives. A name can therefore be chosen or kept, but not newly typed.
+Because the roles are a Java enum, a misspelled role is a configuration error where it is written; no
+vocabulary has to be asked at run time, and the tokens of `tl-react-theme.config.xml` are not the place a
+model configuration names a color from.
 
-A name no theme emits is reported as a warning naming the token and listing the known names
-(`WARNING_NO_SUCH_COLOR_TOKEN__TOKEN_KNOWN`) in the boot log, where the annotation of a
-`*.model.xml` is read. The warning does not block: the application starts, and the value is
-displayed without a colour.
-
-The vocabulary comes from `DesignTokenService`. An application with the React UI answers it with
-`UIThemeDesignTokens`, the tokens of `UIThemeService`; an application without it with
-`ThemeDesignTokens`, the CSS variable block of the classic `Theme` settings. The two are different
-sets, because a page of the React UI carries the custom properties of the `UIThemeService` themes
-and a classic page those of its `Theme`. A name valid in one is therefore not necessarily valid in
-the other: `support-danger` is a classic theme setting, `support-error` the React token for the same
-job. An application that declares no vocabulary of a kind is not checked for it — there is then
-nothing to tell a valid name from an invalid one.
-
-A `<ref>` takes the kind of the token it names, followed along the chain of references and across
-the theme inheritance, so an alias of a colour is a colour. A `<ref>` naming no token, and a cycle
-of references, are reported as errors while the themes are read.
+A `<ref>` in the theme configuration takes the kind of the token it names, followed along the chain of
+references and across the theme inheritance, so an alias of a colour is a colour. A `<ref>` naming no
+token, and a cycle of references, are reported as errors while the themes are read.
 
 ## The three radius tiers
 

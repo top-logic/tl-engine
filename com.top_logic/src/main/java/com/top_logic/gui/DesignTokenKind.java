@@ -9,12 +9,9 @@ package com.top_logic.gui;
  * The kind of value a design token holds.
  *
  * <p>
- * A configuration naming a design token expects a value of a certain kind — a color annotation
- * accepts a color token and nothing else. The kind therefore selects the part of the token
- * vocabulary such a configuration may choose from.
+ * A theme declares each token with its kind, and an alias takes the kind of the token it names, so
+ * that a value can be checked to be of the kind the place it is used at expects.
  * </p>
- *
- * @see DesignTokenService
  */
 public enum DesignTokenKind {
 

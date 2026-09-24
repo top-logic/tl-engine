@@ -170,9 +170,5 @@
 				</themes>
 			</instance>
 		</config>
-
-		<config service-class="com.top_logic.gui.DesignTokenService">
-			<instance class="com.top_logic.layout.react.theme.UIThemeDesignTokens"/>
-		</config>
 	</services>
 </application>

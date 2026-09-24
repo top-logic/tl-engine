@@ -48,7 +48,6 @@ import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.dob.identifier.ObjectKey;
-import com.top_logic.gui.DesignTokenService;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
@@ -113,7 +112,6 @@ import com.top_logic.util.model.check.StringSizeCheck;
 	Settings.Module.class,
 	AttributeSettings.Module.class,
 	FormatterService.Module.class,
-	DesignTokenService.Module.class,
 })
 @Label("Application model")
 public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>

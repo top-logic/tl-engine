@@ -15,6 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 import com.top_logic.tl.ai.core.agent.AgentResult;
+import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
@@ -115,8 +116,8 @@ public class ConversationLogListener implements AgentEventListener {
 	public void onEvent(AgentEvent event) {
 		if (event instanceof AgentEvent.RunStarted e) {
 			handleRunStarted(e);
-		} else if (event instanceof AgentEvent.RunCompleted) {
-			handleRunCompleted();
+		} else if (event instanceof AgentEvent.RunCompleted e) {
+			handleRunCompleted(e);
 		} else if (event instanceof AgentEvent.TurnStarted) {
 			// AgentLoop internal turn — do NOT create a new ConversationLog Turn
 		} else if (event instanceof AgentEvent.ContextComposition e) {
@@ -186,11 +187,25 @@ public class ConversationLogListener implements AgentEventListener {
 		}
 	}
 
-	private void handleRunCompleted() {
+	/**
+	 * Closes the turn, and says on it when the user stopped the run.
+	 *
+	 * <p>
+	 * The cancel is recorded from the run's own outcome, after what it streamed: a
+	 * {@link StopReason#ABORTED} run is one that did stop on the cancel, which the request to
+	 * cancel alone does not know - the run may have finished in the meantime.
+	 * </p>
+	 */
+	private void handleRunCompleted(AgentEvent.RunCompleted e) {
 		Turn turn = _log.currentTurn();
 		if (turn != null) {
 			flushTextBuffer(turn);
 			flushThinkingBuffer(turn);
+			if (e.reason() == StopReason.ABORTED) {
+				turn.addAssistantPart(new Part.SystemPart(
+					UUID.randomUUID().toString(), e.timestamp(),
+					Part.SystemEventType.CANCELLED, "User cancelled processing"));
+			}
 		}
 		_log.completeTurn();
 	}
@@ -608,16 +623,6 @@ public class ConversationLogListener implements AgentEventListener {
 		turn.addAssistantPart(new Part.SystemPart(
 			UUID.randomUUID().toString(), Instant.now(),
 			Part.SystemEventType.SUBAGENT_RESULT, text));
-	}
-
-	/** Records a user cancellation as a system event on the current turn. */
-	public void recordCancellation() {
-		Turn turn = _log.currentTurn();
-		if (turn != null) {
-			turn.addAssistantPart(new Part.SystemPart(
-				UUID.randomUUID().toString(), Instant.now(),
-				Part.SystemEventType.CANCELLED, "User cancelled processing"));
-		}
 	}
 
 	// ---- Delegation lifecycle ----

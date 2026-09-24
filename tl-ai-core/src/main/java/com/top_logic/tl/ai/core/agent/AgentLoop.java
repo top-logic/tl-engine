@@ -511,14 +511,7 @@ public class AgentLoop {
 					context, listener, runId, turn);
 			} catch (ProviderException e) {
 				rollbackFailedRun(conversation, resumePoint);
-				emit(listener, new AgentEvent.ProviderError(runId, turn, now(), e.kind().name(), e.getMessage()));
-				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), TokenUsage.EMPTY, List.of()));
-				StopReason stopReason = stopReasonFor(e, context);
-				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
-				// The kind and the message travel on the result, not only in the event stream: an
-				// entry point without a listener of its own (the TL-Script functions) must still be
-				// able to tell a failed run from an empty answer, and say why it failed.
-				return new AgentResult(stopReason, turn, totalUsage, e.kind().name(), e.getMessage());
+				return endOnProviderFailure(e, context, listener, runId, turn, totalUsage);
 			}
 
 			conversation.add(assistantMsg);
@@ -625,6 +618,36 @@ public class AgentLoop {
 	}
 
 	/**
+	 * Ends the run on the exception its provider call ended with.
+	 *
+	 * <p>
+	 * A run the user cancelled is not a failed one, whatever the provider made of it: cancelling
+	 * closes the response stream, and the provider reports the closed stream as an
+	 * {@link ProviderException.Kind#UNKNOWN} "Stream cancelled.". Such a run emits no
+	 * {@link AgentEvent.ProviderError} and carries no error on its result - it ends
+	 * {@link StopReason#ABORTED}, which is how every consumer already tells a cancel apart. Passed
+	 * on, the provider's sentence was drawn in the chat as "the model reported an error" and
+	 * persisted into the transcript as one (#549).
+	 * </p>
+	 */
+	private AgentResult endOnProviderFailure(ProviderException e, ToolContext context,
+			AgentEventListener listener, String runId, int turn, TokenUsage totalUsage) {
+		StopReason stopReason = stopReasonFor(e, context);
+		boolean cancelled = stopReason == StopReason.ABORTED;
+		if (!cancelled) {
+			emit(listener, new AgentEvent.ProviderError(runId, turn, now(), e.kind().name(), e.getMessage()));
+		}
+		emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), TokenUsage.EMPTY, List.of()));
+		emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
+		// The kind and the message travel on the result, not only in the event stream: an entry
+		// point without a listener of its own (the TL-Script functions) must still be able to tell
+		// a failed run from an empty answer, and say why it failed.
+		return cancelled
+			? new AgentResult(stopReason, turn, totalUsage)
+			: new AgentResult(stopReason, turn, totalUsage, e.kind().name(), e.getMessage());
+	}
+
+	/**
 	 * Classify a provider failure: a run cancelled by the user is {@link StopReason#ABORTED}
 	 * regardless of the provider error that surfaced it, context overflow is
 	 * {@link StopReason#CONTEXT_OVERFLOW}, everything else is {@link StopReason#ERROR}.
@@ -674,14 +697,7 @@ public class AgentLoop {
 						conversation, context, memory, listener, runId, currentTurn),
 					context, listener, runId, turn);
 			} catch (ProviderException e) {
-				emit(listener, new AgentEvent.ProviderError(runId, turn, now(), e.kind().name(), e.getMessage()));
-				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), TokenUsage.EMPTY, List.of()));
-				StopReason stopReason = stopReasonFor(e, context);
-				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
-				// The kind and the message travel on the result, not only in the event stream: an
-				// entry point without a listener of its own (the TL-Script functions) must still be
-				// able to tell a failed run from an empty answer, and say why it failed.
-				return new AgentResult(stopReason, turn, totalUsage, e.kind().name(), e.getMessage());
+				return endOnProviderFailure(e, context, listener, runId, turn, totalUsage);
 			}
 
 			conversation.add(assistantMsg);

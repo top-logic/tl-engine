@@ -108,6 +108,29 @@ public class TestConversationLogListener extends TestCase {
 		assertTrue("Expected accumulated text part", hasText);
 	}
 
+	/**
+	 * A run that stopped on the user's cancel records the cancel at its end, after what it streamed;
+	 * a run that finished records none (#549).
+	 */
+	public void testOnlyACancelledRunRecordsTheCancel() {
+		Instant now = Instant.now();
+		for (StopReason reason : StopReason.values()) {
+			ConversationLog log = new ConversationLog();
+			ConversationLogListener listener = new ConversationLogListener(log);
+			log.startTurn();
+			listener.onEvent(new AgentEvent.RunStarted("r1", 0, now, "model"));
+			listener.onEvent(new AgentEvent.TurnStarted("r1", 1, now));
+			listener.onEvent(new AgentEvent.TextDelta("r1", 1, now, "One, two, "));
+			listener.onEvent(new AgentEvent.RunCompleted("r1", 1, now, reason, TokenUsage.EMPTY));
+
+			List<Part> parts = log.turns().get(0).assistantParts();
+			boolean cancelled = parts.get(parts.size() - 1) instanceof Part.SystemPart system
+				&& system.eventType() == Part.SystemEventType.CANCELLED;
+			assertEquals(reason.name(), reason == StopReason.ABORTED, cancelled);
+			assertTrue(reason.name(), parts.get(0) instanceof Part.TextPart);
+		}
+	}
+
 	/** Tool call lifecycle: Started then Completed creates and updates a ToolCallPart. */
 	public void testToolCallLifecycle() {
 		Instant now = Instant.now();

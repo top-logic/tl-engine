@@ -72,6 +72,7 @@ import com.top_logic.tl.ai.core.session.Turn;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
 import com.top_logic.tl.ai.core.tools.ToolStubs;
+import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ProgressReporter;
 import com.top_logic.tl.ai.tool.api.Tool;
@@ -3005,5 +3006,89 @@ public class TestAgentLoop extends TestCase {
 			AgentEventAssertions.firstOfType(captured, AgentEvent.RunCompleted.class);
 		assertNotNull("Terminal RunCompleted must be emitted", runCompleted);
 		assertEquals(StopReason.ERROR, runCompleted.reason());
+	}
+
+	/**
+	 * A run the user cancelled mid-stream ends as a cancel, not as a model error.
+	 *
+	 * <p>
+	 * Issue #549. Cancelling closes the provider's response stream, and the provider reports the
+	 * closed stream as {@code ProviderException(UNKNOWN, "Stream cancelled.")} - which the loop
+	 * passed on as a {@link AgentEvent.ProviderError} ahead of the {@link StopReason#ABORTED}
+	 * completion. The chat drew it as a red "the model reported an error" block with the English
+	 * provider sentence, and the transcript persisted it as an {@link Part.ErrorPart}, so a reload
+	 * or a second window showed it again. Nothing failed: the user asked for the stop.
+	 * </p>
+	 */
+	public void testCancelledStreamIsNotAProviderError() {
+		ConversationMemory memory = new ConversationMemory(
+			new Conversation(), new ByteBasedTokenEstimator(), new TruncatingStrategy(2), 100_000, 1_000);
+		memory.conversation().add(new UserMessage("u1", T0, List.of(new TextContent("Count slowly."))));
+
+		CancellationToken token = new CancellationToken();
+		// What AbstractStreamingProvider does when the cancel closes its stream mid-answer.
+		LLMProvider cancelledMidStream = (request, handler) -> {
+			handler.onEvent(new StreamEvent.TextDelta(0, "One, two, "));
+			token.cancel();
+			throw new ProviderException(ProviderException.Kind.UNKNOWN, 0, "Stream cancelled.");
+		};
+
+		ConversationLog log = new ConversationLog();
+		log.startTurn();
+		ConversationLogListener logListener = new ConversationLogListener(log);
+		List<AgentEvent> events = new ArrayList<>();
+		AgentEventListener listener = e -> {
+			events.add(e);
+			logListener.onEvent(e);
+		};
+
+		AgentLoop loop = new AgentLoop(config(), cancelledMidStream, emptyRegistry(), memory);
+		AgentResult result = loop.run(new ToolContext(developmentSecurity(), ApprovalCallback.AUTO_APPROVE,
+			TransactionScope.NOOP, token), listener);
+
+		assertEquals(StopReason.ABORTED, result.stopReason());
+		assertNull("A cancel is no error, so the result names none.", result.errorKind());
+		assertNull("A cancel is no error, so the result names none.", result.errorMessage());
+		assertTrue("A cancel the user asked for must not be announced as a provider error.",
+			events.stream().noneMatch(AgentEvent.ProviderError.class::isInstance));
+		AgentEvent.RunCompleted completed = AgentEventAssertions.firstOfType(events, AgentEvent.RunCompleted.class);
+		assertEquals(StopReason.ABORTED, completed.reason());
+
+		List<Turn> turns = log.turns();
+		List<Part> parts = turns.get(turns.size() - 1).assistantParts();
+		assertTrue("The transcript must not record the cancel as an error, but was: " + parts,
+			parts.stream().noneMatch(Part.ErrorPart.class::isInstance));
+		assertTrue("What was streamed before the cancel stays.",
+			parts.get(0) instanceof Part.TextPart text && text.text().equals("One, two, "));
+		Part last = parts.get(parts.size() - 1);
+		assertTrue("The turn must end with the cancel, after what was streamed, but was: " + parts,
+			last instanceof Part.SystemPart system && system.eventType() == Part.SystemEventType.CANCELLED);
+		assertEquals("The cancel is recorded once.", 1, parts.stream()
+			.filter(p -> p instanceof Part.SystemPart system && system.eventType() == Part.SystemEventType.CANCELLED)
+			.count());
+	}
+
+	/**
+	 * The loop without memory classifies a cancelled stream the same way.
+	 */
+	public void testCancelledStreamIsNotAProviderErrorWithoutMemory() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Count slowly."))));
+
+		CancellationToken token = new CancellationToken();
+		LLMProvider cancelledMidStream = (request, handler) -> {
+			token.cancel();
+			throw new ProviderException(ProviderException.Kind.UNKNOWN, 0, "Stream cancelled.");
+		};
+
+		List<AgentEvent> events = new ArrayList<>();
+		AgentLoop loop = new AgentLoop(config(), cancelledMidStream, emptyRegistry());
+		AgentResult result = loop.run(conv, new ToolContext(developmentSecurity(), ApprovalCallback.AUTO_APPROVE,
+			TransactionScope.NOOP, token), events::add);
+
+		assertEquals(StopReason.ABORTED, result.stopReason());
+		assertNull(result.errorKind());
+		assertTrue("A cancel the user asked for must not be announced as a provider error.",
+			events.stream().noneMatch(AgentEvent.ProviderError.class::isInstance));
 	}
 }

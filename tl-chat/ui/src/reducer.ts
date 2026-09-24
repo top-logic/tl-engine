@@ -6,6 +6,7 @@ import type {
   ErrorMessage,
   InteractionOption,
   InteractionRequest,
+  NoticeKind,
   NoticeMessage,
   RunMeta,
   ThinkingBlock,
@@ -32,7 +33,7 @@ export type ChatAction =
   | { type: 'ADD_TOOL_RESULT'; toolUseId: string; output: string; isError?: boolean }
   | { type: 'APPEND_THINKING'; delta: string }
   | { type: 'ADD_ERROR'; message: string; code?: string }
-  | { type: 'ADD_NOTICE'; kind: 'model_switched'; detail: string }
+  | { type: 'ADD_NOTICE'; kind: NoticeKind; detail: string }
   | {
       type: 'ADD_APPROVAL'
       approvalRequestId: string

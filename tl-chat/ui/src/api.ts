@@ -664,10 +664,9 @@ export function turnsJsonToMessages(turnsJson: string | undefined): ChatMessage[
           }
           break
         case 'system':
-          // Only the one system event the thread draws. The others - a cancellation, an approval
-          // mode change, the text a finished subagent was handed - are either shown by something
-          // else or are not the user's business, and an unknown one is silently skipped rather
-          // than rendered as a nameless line.
+          // Only the system events the thread draws. The others - an approval mode change, the text
+          // a finished subagent was handed - are not the user's business, and an unknown one is
+          // silently skipped rather than rendered as a nameless line.
           if (part.systemData?.eventType === 'MODEL_CHANGED' && part.systemData.details) {
             msgs.push({
               type: 'notice',
@@ -676,6 +675,10 @@ export function turnsJsonToMessages(turnsJson: string | undefined): ChatMessage[
               detail: part.systemData.details,
               timestamp: part.timestamp,
             })
+          } else if (part.systemData?.eventType === 'CANCELLED') {
+            // The server's details are an English line for the operator; the reader gets the
+            // renderer's sentence in their language, exactly as the live cancel draws it (#549).
+            msgs.push({ type: 'notice', id: part.id, kind: 'cancelled', detail: '', timestamp: part.timestamp })
           }
           break
       }

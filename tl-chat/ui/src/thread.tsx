@@ -15,6 +15,7 @@ import type {
   ErrorMessage,
   InteractionRequest,
   MessageFeedback,
+  NoticeKind,
   NoticeMessage,
   Rating,
   RunMeta,
@@ -124,11 +125,21 @@ function runMetaOf(events: ChatMessage[]): RunMeta | null {
   return null
 }
 
+/**
+ * The turn's notices of one kind.
+ *
+ * A model switch explains the answer that follows it, so it stands above the answer; a cancel says
+ * why the answer stops where it does, so it stands under it.
+ */
+function notices(events: ChatMessage[], kind: NoticeKind): NoticeMessage[] {
+  return events.filter((item): item is NoticeMessage => item.type === 'notice' && item.kind === kind)
+}
+
 function traceEvents(events: ChatMessage[]): ChatMessage[] {
   const answer = lastAnswer(events)
   return events.filter((item) => {
     if (item.type === 'run_meta') return false
-    // A notice is not a step the agent took. It has its own line above the answer, and counted as
+    // A notice is not a step the agent took. It has its own line beside the answer, and counted as
     // a step it would make a turn that only switched models claim to have "done" something.
     if (item.type === 'notice') return false
     if (answer && item === answer) return false
@@ -854,18 +865,18 @@ function ErrorCard({ item, language }: { item: ErrorMessage; language: Language 
 }
 
 /**
- * A run that continued on another model than it started on.
+ * A run that continued on another model than it started on, or that the user stopped.
  *
  * Quieter than an {@link ErrorCard} on purpose: nothing failed for the user, so this is a line of
- * context above the answer, not a card demanding attention. The sentence is translated and comes
- * from the notice's kind; the server's own line - which model, which model instead, and why - sits
+ * context, not a card demanding attention. The sentence is translated and comes from the notice's
+ * kind; for a model switch the server's own line - which model, which model instead, and why - sits
  * under it, exactly as the error card keeps the provider's words (#429).
  */
 function NoticeLine({ item, language }: { item: NoticeMessage; language: Language }) {
   const labels = bundle(language)
   return (
     <div className="notice-line">
-      <div>{labels.modelSwitched}</div>
+      <div>{item.kind === 'cancelled' ? labels.cancelled : labels.modelSwitched}</div>
       {item.detail ? <div className="notice-line-detail">{item.detail}</div> : null}
     </div>
   )
@@ -993,11 +1004,9 @@ function AgentRun({
       {traceMode === 'detailed' && events.length > 0 ? (
         <DetailedTrace events={events} results={results} labels={labels} effort={effort} model={''} />
       ) : null}
-      {turn.events
-        .filter((item) => item.type === 'notice')
-        .map((item) =>
-          item.type === 'notice' ? <NoticeLine key={item.id} item={item} language={language} /> : null,
-        )}
+      {notices(turn.events, 'model_switched').map((item) => (
+        <NoticeLine key={item.id} item={item} language={language} />
+      ))}
       {pending ? <PendingAnswer /> : null}
       {answer && !pending ? (
         <AssistantAnswer
@@ -1023,6 +1032,9 @@ function AgentRun({
           showTime={showTimestamp}
         />
       ) : null}
+      {notices(turn.events, 'cancelled').map((item) => (
+        <NoticeLine key={item.id} item={item} language={language} />
+      ))}
       {traceMode !== 'detailed'
         ? turn.events
             .filter((item) => item.type === 'error')

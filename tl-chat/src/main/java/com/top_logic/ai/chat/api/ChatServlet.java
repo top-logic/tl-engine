@@ -1185,12 +1185,6 @@ public class ChatServlet extends TopLogicServlet {
 			return;
 		}
 
-		// Record cancellation in the conversation log before interrupting
-		ConversationLogListener logListener = state.getLogListener();
-		if (logListener != null) {
-			logListener.recordCancellation();
-		}
-
 		// Propagate cancellation to still-running subagents: cancelling the orchestrator must
 		// terminate the work it spawned instead of leaving it running in the background. Each
 		// subagent's cancellation token also unblocks a subagent parked on a user question, so

@@ -345,8 +345,8 @@ export interface ChatState {
   /**
    * Whether the strip reports a failure or merely says what happened.
    *
-   * "Abgebrochen." and "der Chat ist beschäftigt" are outcomes of what the user just did; wearing
-   * the same warning accent as a provider failure made every line read as something going wrong.
+   * "Der Chat ist beschäftigt" is an outcome of what the user just did; wearing the same warning
+   * accent as a provider failure made every line read as something going wrong.
    */
   noticeTone: NoticeTone
 
@@ -598,9 +598,6 @@ export class ChatStore {
   private lastAssistantId: string | null = null
 
   private runId: string | null = null
-
-  /** Set when the run ended because the user stopped it, so the provider error it causes is muted. */
-  private cancelled = false
 
   /** Whether the line now on screen must survive the next run start. */
   private noticeSticky = false
@@ -1041,7 +1038,7 @@ export class ChatStore {
     let reopenTimer = 0
     let connectTimer = 0
 
-    const finish = (error?: string, detail?: string, errorTone: NoticeTone = 'warn') => {
+    const finish = (error?: string, detail?: string) => {
       if (this.assistantId) {
         this.dispatch({ type: 'FINALIZE_TEXT', id: this.assistantId })
         this.assistantId = null
@@ -1050,7 +1047,7 @@ export class ChatStore {
         this.dispatch({ type: 'END_RUN', runId: this.runId })
         this.runId = null
       }
-      if (error) this.showNotice(error, detail ?? '', { tone: errorTone })
+      if (error) this.showNotice(error, detail ?? '', { tone: 'warn' })
       this.patch({ busy: false })
       this.setRun((s) => ({ ...s, busy: false }))
     }
@@ -1114,7 +1111,6 @@ export class ChatStore {
         )
         this.patch({ busy: true })
         this.clearNoticeOnRunStart()
-        this.cancelled = false
         this.runId = data.runId ?? crypto.randomUUID()
         this.dispatch({ type: 'START_RUN', runId: this.runId })
         this.setRun((s) => ({
@@ -1396,14 +1392,13 @@ export class ChatStore {
       })
       on('run_completed', (e) => {
         const data = parseJson<{ reason?: string }>(e.data, {})
-        // A run the user stopped is not a failure: it ends quietly, in their language, and the
-        // provider's own "Stream cancelled." that follows is swallowed below.
+        // A run the user stopped is not a failure, and the server does not report it as one
+        // (#549). It says so once, in the transcript where the answer stops - the same line the
+        // server records for a reload or another window - and not a second time in the strip.
         if (data.reason === 'ABORTED') {
-          this.cancelled = true
-          finish(this.labels.cancelled, '', 'info')
-        } else {
-          finish()
+          this.dispatch({ type: 'ADD_NOTICE', kind: 'cancelled', detail: '' })
         }
+        finish()
       })
       on('message_complete', (e) => {
         // The authoritative answer. The deltas were a live preview of it; applying it here is what
@@ -1416,12 +1411,6 @@ export class ChatStore {
         finish()
       })
       on('provider_error', (e) => {
-        if (this.cancelled) {
-          // The cancel already said what happened; the provider's report of the closed stream adds
-          // nothing and would say it as an error.
-          this.cancelled = false
-          return
-        }
         const data = parseJson<{ errorMessage?: string; kind?: string }>(e.data, {})
         const text = providerErrorText(data.kind, this.state.language)
         // Also into the transcript, not only into the composer's notice strip: a run that ended

@@ -12,8 +12,8 @@ export interface ProgressStep {
   id: string
   label: string
   status: ProgressStatus
-  /** Caption on the right of the row, e.g. the tool an approval is open for. */
-  note?: string
+  /** The ids of the tools an approval is open for, on a row whose status is `approval`. */
+  tools?: string[]
 }
 
 /**
@@ -61,7 +61,7 @@ export interface PendingApproval {
  * that case becomes a step of its own rather than "no tasks yet".
  */
 export function progressSteps(tasks: AgentTask[], approvals: PendingApproval[] = []): ProgressStep[] {
-  const waitingFor = approvals.map((approval) => approval.toolName).filter(Boolean).join(', ')
+  const waitingFor = approvals.map((approval) => approval.toolName).filter(Boolean)
   const steps: ProgressStep[] = tasks.map((task) => ({
     id: task.id,
     label: stepLabel(task),
@@ -70,10 +70,10 @@ export function progressSteps(tasks: AgentTask[], approvals: PendingApproval[] =
   if (approvals.length === 0) return steps
   const running = steps.findIndex((step) => step.status === 'running')
   if (running >= 0) {
-    steps[running] = { ...steps[running], status: 'approval', note: waitingFor }
+    steps[running] = { ...steps[running], status: 'approval', tools: waitingFor }
     return steps
   }
-  return [...steps, { id: 'approval', label: waitingFor, status: 'approval' }]
+  return [...steps, { id: 'approval', label: '', status: 'approval', tools: waitingFor }]
 }
 
 function stepLabel(task: AgentTask): string {

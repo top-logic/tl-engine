@@ -2,7 +2,7 @@ import { React, useTLState } from 'tl-react-bridge'
 import type { TLCellProps } from 'tl-react-bridge'
 import { chatIdOf, readBootstrap, useChat } from './chat-store'
 import { bundle } from './i18n'
-import { agentLabel, modelLabel, toolLabel } from './models'
+import { agentLabel, modelLabel } from './models'
 import { SessionRail } from './chrome'
 import { Composer } from './composer'
 import type {
@@ -171,8 +171,7 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
     () =>
       pendingApprovals.map((request) => ({
         id: request.id,
-        // The same wording the approval card uses, not the raw tool name.
-        toolName: toolLabel(request.toolName),
+        toolName: request.toolName,
       })),
     [pendingApprovals],
   )

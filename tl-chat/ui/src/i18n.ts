@@ -6,7 +6,14 @@
  * Anything the framework renders is already localized by the framework; only the strings this
  * bundle owns live here.
  */
+import { React } from 'tl-react-bridge'
+
 export type Language = 'en' | 'de'
+
+/** Text around a rendered node - a tool id set as code, say - as one node, without keys. */
+function sentence(...parts: React.ReactNode[]): React.ReactNode {
+  return React.createElement(React.Fragment, null, ...parts)
+}
 
 const EN = {
   chats: 'Chats',
@@ -159,8 +166,12 @@ const EN = {
    * so a turn that calls two writing tools stops twice and this button answers for only one of
    * them (#511).
    */
-  allowThisChatHint: (tool: string) =>
-    `Covers every further call of ${tool} in this chat - no other tool of this turn.`,
+  allowThisChatHint: (tool: React.ReactNode): React.ReactNode =>
+    sentence(
+      'Covers every further call of the tool ',
+      tool,
+      ' in this chat - no other tool of this turn.',
+    ),
   allowOnce: 'Allow once',
   skip: 'Skip',
   continueLabel: 'Continue',
@@ -390,8 +401,12 @@ const DE: Bundle = {
   approvalGeneric: 'Braucht deine Freigabe, bevor es ausgeführt wird.',
   deny: 'Ablehnen',
   allowThisChat: 'In diesem Chat erlauben',
-  allowThisChatHint: (tool: string) =>
-    `Gilt für jeden weiteren Aufruf von ${tool} in diesem Chat - für kein anderes Werkzeug dieses Zuges.`,
+  allowThisChatHint: (tool: React.ReactNode): React.ReactNode =>
+    sentence(
+      'Gilt in diesem Chat für jeden weiteren Aufruf des Werkzeugs ',
+      tool,
+      ' - für kein anderes Werkzeug dieses Zuges.',
+    ),
   allowOnce: 'Einmal erlauben',
   skip: 'Überspringen',
   continueLabel: 'Weiter',

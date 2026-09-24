@@ -1,6 +1,6 @@
 import { React, useTLState, useTLCommand, useI18N, useListReorder, TLChild, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import FontIcon from './FontIcon';
+import { ThemeIcon } from './icon/ThemeIcon';
 
 const I18N_KEYS = {
   'js.valueList.add': 'Add a value',
@@ -139,7 +139,7 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
                 onKeyDown={(event) => handleKeyDown(index, event)}
                 {...reorder.handleProps(index)}
               >
-                <FontIcon image={HANDLE_ICON} />
+                <ThemeIcon encoded={HANDLE_ICON} />
               </button>
             )}
             <span className="tlValueList__item">
@@ -152,7 +152,7 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
               {...tooltipProps(t['js.valueList.remove'])}
               onClick={() => sendCommand(CMD_REMOVE_ELEMENT, { [ARG_INDEX]: index })}
             >
-              <FontIcon image={REMOVE_ICON} />
+              <ThemeIcon encoded={REMOVE_ICON} />
             </button>
           </div>
         );
@@ -164,7 +164,7 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
         {...tooltipProps(t['js.valueList.add'])}
         onClick={() => sendCommand(CMD_ADD_ELEMENT)}
       >
-        <FontIcon image={ADD_ICON} />
+        <ThemeIcon encoded={ADD_ICON} />
       </button>
     </div>
   );

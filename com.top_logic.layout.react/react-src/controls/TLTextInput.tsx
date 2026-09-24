@@ -9,7 +9,7 @@ import {
   tooltipProps,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import FontIcon from './FontIcon';
+import { ThemeIcon } from './icon/ThemeIcon';
 
 const { useCallback, useRef } = React;
 
@@ -240,7 +240,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
   return (
     <span id={controlId}>
       <span className="tlReactTextInput__row">
-        {hasIcon && <FontIcon image={icon} className="tlReactTextInput__icon" />}
+        {hasIcon && <ThemeIcon encoded={icon} className="tlReactTextInput__icon" />}
         {input}
         {clearable && (
           <button
@@ -251,7 +251,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
             aria-label={t['js.textInput.clear']}
             title={t['js.textInput.clear']}
           >
-            <FontIcon image={CLEAR_ICON} />
+            <ThemeIcon encoded={CLEAR_ICON} />
           </button>
         )}
         {href !== null && (
@@ -263,7 +263,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
             aria-label={t['js.textInput.open']}
             {...tooltipProps(text)}
           >
-            <FontIcon image={OPEN_ICON} />
+            <ThemeIcon encoded={OPEN_ICON} />
           </a>
         )}
       </span>

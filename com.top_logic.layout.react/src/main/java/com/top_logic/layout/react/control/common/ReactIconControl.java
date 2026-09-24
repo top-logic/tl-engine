@@ -14,7 +14,7 @@ import com.top_logic.layout.react.control.ReactControl;
  *
  * <p>
  * Renders as a {@code TLIcon} React component, which draws a font icon or a picture resource
- * according to the encoded form of the image. An icon without a tooltip decorates what it sits
+ * according to the encoded form of the image, in the size step of its {@link IconSize}. An icon without a tooltip decorates what it sits
  * beside; one with a tooltip carries that text as its name.
  * </p>
  */
@@ -28,8 +28,11 @@ public class ReactIconControl extends ReactControl {
 	/** State key holding the text shown on hover, which also names the icon. */
 	private static final String TOOLTIP = "tooltip";
 
-	/** State key holding the CSS classes appended to the default {@code tlIcon} class. */
+	/** State key holding the CSS classes appended to the size class of the icon. */
 	private static final String CSS_CLASSES = "cssClasses";
+
+	/** State key holding the external name of the {@link IconSize}. */
+	private static final String SIZE = "size";
 
 	/**
 	 * Creates a {@link ReactIconControl}.
@@ -40,6 +43,14 @@ public class ReactIconControl extends ReactControl {
 	public ReactIconControl(ReactContext context, ThemeImage image) {
 		super(context, null, REACT_MODULE);
 		putImageState(image);
+		setSize(IconSize.SMALL);
+	}
+
+	/**
+	 * Sets the size step of the icon: {@code tl-icon-<size>} of the design system.
+	 */
+	public void setSize(IconSize size) {
+		putState(SIZE, size.getExternalName());
 	}
 
 	/**

@@ -3633,13 +3633,6 @@ button.tlMenu__item--disabled:hover {
 
 /* --- The shape the text takes ---------------------------------------------- */
 
-/* A theme icon shown on its own, sitting on the text baseline of what it accompanies. */
-.tlIcon {
-	display: inline-flex;
-	align-items: center;
-	line-height: 1;
-}
-
 .tlText--placeholder {
 	font-style: italic;
 	color: var(--text-helper);

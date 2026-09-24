@@ -39,6 +39,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.form.template.SelectionControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
+import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.mode.HideActiveIf;
 import com.top_logic.model.TLClass;
@@ -57,6 +58,7 @@ import com.top_logic.model.annotate.security.AccessRule;
 import com.top_logic.model.annotate.security.RoleConfig;
 import com.top_logic.model.config.SingletonMapping;
 import com.top_logic.model.config.TLModelPartMapping;
+import com.top_logic.model.resources.TLPartScopedResourceProvider;
 import com.top_logic.model.util.AllAttributes;
 import com.top_logic.model.util.AllClasses;
 import com.top_logic.model.util.AllSingletons;
@@ -233,6 +235,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		@Name(ACCESS_PARENT)
 		@Nullable
 		@Options(fun = AccessParentOptions.class, args = @Ref(NAME_ATTRIBUTE), mapping = TLModelPartRef.PartMapping.class)
+		@OptionLabels(TLPartScopedResourceProvider.class)
 		@Constraint(value = AccessParentStandsAlone.class, args = { @Ref(GRANTS), @Ref(WITHOUT_SECURITY), @Ref(INTERNAL) })
 		TLModelPartRef getAccessParent();
 

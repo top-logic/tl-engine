@@ -139,6 +139,7 @@
   --tl-dur-1: 100ms;
   --tl-dur-2: 150ms;
   --tl-dur-3: 250ms;
+  --tl-dur-4: 1200ms;
   --tl-curve-1: cubic-bezier(0.2, 0, 0.38, 0.9);
   --tl-curve-2: cubic-bezier(0, 0, 0.38, 0.9);
   --tl-curve-3: cubic-bezier(0.2, 0, 1, 0.9);

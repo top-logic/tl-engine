@@ -3844,68 +3844,6 @@ button.tlMenu__item--disabled:hover {
 	color: var(--support-error);
 }
 
-/* A fraction displayed as a bar with an optional label beside it. The track carries the theme's
-   layer color, the filled part the interactive color, so the bar reads on a light and a dark
-   theme from the same declaration. */
-.tlProgress {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-02);
-	min-width: 0;
-}
-
-.tlProgress__track {
-	flex: 1 1 auto;
-	min-width: 2rem;
-	height: 0.5rem;
-	overflow: hidden;
-	border-radius: 999px;
-	background-color: var(--layer-active);
-}
-
-.tlProgress__fill {
-	display: block;
-	height: 100%;
-	border-radius: 999px;
-	background-color: var(--interactive);
-	transition: width 0.2s ease-out;
-}
-
-.tlProgress__label {
-	flex: 0 0 auto;
-	color: var(--text-secondary);
-	font-size: var(--label-01-font-size);
-	font-variant-numeric: tabular-nums;
-	white-space: nowrap;
-}
-
-/* A bar that says something is going on without saying how far it has come: a partial fill sweeps
-   across the track instead of standing for a share of it. */
-.tlProgress--indeterminate .tlProgress__fill {
-	width: 40%;
-	transition: none;
-	animation: tlProgressSweep 1.4s ease-in-out infinite;
-}
-
-@keyframes tlProgressSweep {
-	from {
-		transform: translateX(-100%);
-	}
-
-	to {
-		transform: translateX(250%);
-	}
-}
-
-/* Without motion the bar still reads as busy: the fill rests in the middle of the track rather
-   than travelling over it. */
-@media (prefers-reduced-motion: reduce) {
-	.tlProgress--indeterminate .tlProgress__fill {
-		animation: none;
-		transform: translateX(75%);
-	}
-}
-
 /* --- TLJobStatus (what a long-running job reports) ------------------------- */
 
 .tlJobStatus {

@@ -269,3 +269,58 @@
 .tl-pill--category-6 { background: var(--tl-category-6-subtle); border-color: var(--tl-category-6-border); }
 .tl-pill--category-7 { background: var(--tl-category-7-subtle); border-color: var(--tl-category-7-border); }
 .tl-pill--category-8 { background: var(--tl-category-8-subtle); border-color: var(--tl-category-8-border); }
+
+/* --- progress/progress.css --- */
+/* Progress — docs/skalen.md „Progress: ein Anteil, kein Urteil“.
+   Ein Anteil zwischen 0 und 1 als Balken, daneben optional eine Beschriftung. Die Spur ist die
+   vertiefte Fläche, die Füllung die Marke; eine Tönung gibt es nicht — ob etwas scheiterte, sagt
+   der Text. Die Breite der Füllung ist Daten, kein Gestaltungswert: das Control setzt sie als Anteil
+   in Prozent, das Stylesheet kennt keine Breite. Unbestimmt ist ein Zustand (aria-busy), keine Klasse:
+   die Füllung wandert über die Spur
+   und ruht ohne Bewegung in ihrer Mitte — der globale Reduced-Motion-Schalter beendet die Animation
+   nach einem Durchlauf, und der Fill-Mode lässt sie auf die Ruhelage zurückfallen. */
+
+.tl-progress {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  min-width: 0;
+}
+
+.tl-progress__track {
+  flex: 1 1 auto;
+  min-width: var(--tl-size-control);
+  height: var(--tl-size-progress);
+  overflow: hidden;
+  border-radius: var(--tl-radius-full);
+  background: var(--tl-surface-interactive-selected);
+}
+
+.tl-progress__fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--tl-radius-full);
+  background: var(--tl-surface-brand);
+  transition: width var(--tl-duration-base) var(--tl-easing-standard);
+}
+
+.tl-progress__label {
+  flex: 0 0 auto;
+  color: var(--tl-text-secondary);
+  white-space: nowrap;
+}
+
+/* --- Unbestimmt -------------------------------------------------------------- */
+
+/* Anteile der Spur, keine Maße: die Füllung ist zwei Fünftel breit und ruht bei drei Vierteln. */
+.tl-progress[aria-busy="true"] .tl-progress__fill {
+  width: calc(0.4 * 100%);
+  transform: translateX(calc(0.75 * 100%));
+  transition: none;
+  animation: tl-progress-sweep var(--tl-duration-loop) var(--tl-easing-standard) infinite;
+}
+
+@keyframes tl-progress-sweep {
+  from { transform: translateX(calc(-1 * 100%)); }
+  to { transform: translateX(calc(2.5 * 100%)); }
+}

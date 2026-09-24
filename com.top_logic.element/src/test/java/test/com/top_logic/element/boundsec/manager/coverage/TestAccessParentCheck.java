@@ -174,8 +174,9 @@ public class TestAccessParentCheck extends BasicTestCase {
 		assertTrue("Creating a part in a container is writing the container.",
 			rights().isAllowedCreate(_owner, partType, _covered));
 		assertFalse(rights().isAllowedCreate(_other, partType, _covered));
-		assertFalse("A delegating type cannot be created without a context deciding for it.",
-			rights().isAllowedCreate(_owner, partType, (TLObject) null));
+		assertTrue("Without a context the creation is not restricted: the object is inaccessible until it is put"
+			+ " into a container, which is a write of the container.",
+			rights().isAllowedCreate(_other, partType, (TLObject) null));
 	}
 
 	public void testPartWithoutContainerIsDenied() {

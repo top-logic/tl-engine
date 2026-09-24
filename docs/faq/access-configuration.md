@@ -114,8 +114,10 @@ marks and no roles of its own (an entry combining them is rejected at startup an
 
 - Read, Write and Export on the object are Read, Write and Export on the parent.
 - Create and Delete of the object are **Write** on the parent, since a part is created or deleted
-  by editing the whole. Creating an object of such a type requires Write on the context it is
-  created in.
+  by editing the whole. Creating an object of such a type in a context requires Write on that
+  context; creating one without a context (the transient-then-copy pattern of the view layer) is
+  not restricted, since the object is inaccessible until it is put into a container, which is a
+  write of the container.
 - The parent may delegate further; the chain is followed at runtime. An object whose relation
   leads nowhere is not accessible, and a chain running in a cycle is denied (and logged as an
   error).

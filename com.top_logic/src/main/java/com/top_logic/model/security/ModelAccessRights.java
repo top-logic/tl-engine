@@ -197,6 +197,12 @@ public interface ModelAccessRights {
 	 * CREATE} command group on the type, checked on the given context object. When no context is
 	 * given (<code>null</code>), the check uses the global security root.
 	 * </p>
+	 * <p>
+	 * A type with an {@link #getAccessParent(TLClass) access parent} has no create grants of its
+	 * own: creating one of its objects in a context is writing that context, and creating one
+	 * without a context is not restricted, since the object is inaccessible until it is put into a
+	 * container, which is a write of the container.
+	 * </p>
 	 */
 	boolean isAllowedCreate(Person person, TLClass type, TLObject context);
 

@@ -58,7 +58,7 @@ import com.top_logic.model.annotate.security.AccessRule;
 import com.top_logic.model.annotate.security.RoleConfig;
 import com.top_logic.model.config.SingletonMapping;
 import com.top_logic.model.config.TLModelPartMapping;
-import com.top_logic.model.resources.TLPartScopedResourceProvider;
+import com.top_logic.model.resources.TLPartInOwnerResourceProvider;
 import com.top_logic.model.util.AllAttributes;
 import com.top_logic.model.util.AllClasses;
 import com.top_logic.model.util.AllSingletons;
@@ -235,7 +235,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		@Name(ACCESS_PARENT)
 		@Nullable
 		@Options(fun = AccessParentOptions.class, args = @Ref(NAME_ATTRIBUTE), mapping = TLModelPartRef.PartMapping.class)
-		@OptionLabels(TLPartScopedResourceProvider.class)
+		@OptionLabels(TLPartInOwnerResourceProvider.class)
 		@Constraint(value = AccessParentStandsAlone.class, args = { @Ref(GRANTS), @Ref(WITHOUT_SECURITY), @Ref(INTERNAL) })
 		TLModelPartRef getAccessParent();
 
@@ -996,8 +996,11 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		if (getAccessParent(type) != null) {
 			// Creating an object that delegates its access decision is writing the object it is
 			// created in, which is its access parent by construction for a composition part.
+			// Without a context the object is free-standing: nobody can access it until it is put
+			// into a container, and that is a write of the container checked in its own right, so
+			// the creation itself is not restricted.
 			if (!(context instanceof BoundObject)) {
-				return false;
+				return true;
 			}
 			return decide(decisionCache(), person, context, SimpleBoundCommandGroup.WRITE);
 		}

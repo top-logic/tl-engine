@@ -24,6 +24,7 @@ import {
   truncate,
   turnsJsonToMessages,
   type ChatAddress,
+  type SessionDetail,
 } from './api'
 import type { ComposerApi, PaneOpenOptions } from './extensions'
 import type { ReferenceToken } from './reference'
@@ -600,6 +601,31 @@ export class ChatStore {
 
   private runId: string | null = null
 
+  /**
+   * How far into the running run's text this window's transcript reaches, in the count the
+   * server's `text_delta` frames carry as `end`; `null` when this window has seen the run from its
+   * start and every delta is new to it.
+   *
+   * A window that opens a conversation mid-run is shown a snapshot of the turn, and receives the
+   * deltas on the stream, a different connection - the first of them may already be in the
+   * snapshot, and some may arrive before it. The position is what tells them apart (#544).
+   */
+  private streamMark: number | null = null
+
+  /**
+   * Whether this window joined the running run mid-way, from a snapshot, rather than starting it
+   * or seeing it start. Such a window reads the finished turn back when the run ends: its steps
+   * came partly from the snapshot and partly from the stream, and the recorded turn is the one
+   * version of them that is whole.
+   */
+  private watching = false
+
+  /**
+   * The chat being opened while its transcript is on its way, with the deltas that arrive before
+   * it: they cannot be placed until the snapshot says where it ends.
+   */
+  private opening: { sessionId: string; held: { text: string; end: number }[] } | null = null
+
   /** Whether the line now on screen must survive the next run start. */
   private noticeSticky = false
 
@@ -1086,8 +1112,9 @@ export class ChatStore {
         es.addEventListener(name, ((event: MessageEvent) => {
           markAlive()
           // A frame naming a session other than the open one is a run this conversation has since
-          // moved away from - see `eventBelongsToChat`.
-          if (!eventBelongsToChat(name, event.data, this.state.sessionId)) return
+          // moved away from - see `eventBelongsToChat`. While a chat is being opened, that chat is
+          // the open one: its run's frames are the ones that matter, and the old chat's are not.
+          if (!eventBelongsToChat(name, event.data, this.opening?.sessionId ?? this.state.sessionId)) return
           fn(event)
         }) as EventListener)
 
@@ -1112,6 +1139,9 @@ export class ChatStore {
         )
         this.patch({ busy: true })
         this.clearNoticeOnRunStart()
+        // A run this window sees start is one it sees whole.
+        this.streamMark = null
+        this.watching = false
         this.runId = data.runId ?? crypto.randomUUID()
         this.dispatch({ type: 'START_RUN', runId: this.runId })
         this.setRun((s) => ({
@@ -1148,9 +1178,8 @@ export class ChatStore {
         }))
       })
       on('text_delta', (e) => {
-        if (!this.assistantId) return
-        const data = parseJson<{ text?: string }>(e.data, {})
-        if (data.text) this.dispatch({ type: 'APPEND_TEXT', id: this.assistantId, delta: data.text })
+        const data = parseJson<{ text?: string; end?: number }>(e.data, {})
+        if (data.text) this.appendDelta(data.text, data.end ?? 0)
       })
       on('thinking_delta', (e) => {
         const data = parseJson<{ text?: string }>(e.data, {})
@@ -1408,7 +1437,14 @@ export class ChatStore {
         const target = this.assistantId ?? this.lastAssistantId
         if (target && data.contentText) {
           this.dispatch({ type: 'SET_TEXT', id: target, text: data.contentText, citations: data.citations })
-        } else {
+        }
+        if (this.watching) {
+          // This window joined the run mid-way (#544): the answer is right already, and reading the
+          // turn back makes its steps the recorded ones too.
+          this.watching = false
+          this.streamMark = null
+          void this.reloadTranscript()
+        } else if (!target || !data.contentText) {
           // No message of ours to write it into: this window did not start the run, it only has the
           // conversation open, and what it is showing is the snapshot it was restored with (#512).
           // The turn is recorded before this frame is sent, so reading the conversation back is what
@@ -1546,6 +1582,67 @@ export class ChatStore {
    * for this user. Both are best effort - a chat that shows only what the transcript says is what a
    * failure here leaves behind, which is what every reload used to look like.
    */
+  /**
+   * Adds a piece of the answer to the message being written.
+   *
+   * `end` is where the piece ends in the run's text; zero when the server does not say. A piece
+   * that ends inside what this window already shows is cut to what is new, and dropped when nothing
+   * is (#544).
+   */
+  private appendDelta(text: string, end: number): void {
+    if (this.opening) {
+      this.opening.held.push({ text, end })
+      return
+    }
+    let piece = text
+    if (this.streamMark !== null && end > 0) {
+      if (end <= this.streamMark) return
+      const start = end - text.length
+      if (start < this.streamMark) piece = text.slice(this.streamMark - start)
+      this.streamMark = end
+    }
+    if (!this.assistantId) {
+      // A window that saw the run start has a message from `turn_started`. One that joined it from
+      // a snapshot taken between a step and the next piece of text has none to write into yet.
+      if (!this.watching) return
+      this.assistantId = crypto.randomUUID()
+      this.lastAssistantId = this.assistantId
+      this.dispatch({ type: 'ADD_ASSISTANT', id: this.assistantId, text: '', isStreaming: true })
+    }
+    this.dispatch({ type: 'APPEND_TEXT', id: this.assistantId, delta: piece })
+  }
+
+  /**
+   * Continues the run a snapshot was taken of, from where the snapshot ends (#544).
+   *
+   * The snapshot's last paragraph is the one the agent is still writing, so the stream goes on in it
+   * - unless the turn's last entry is a step, in which case the next text is a new paragraph. The
+   * deltas that arrived while the snapshot was on its way are placed now that its end is known.
+   */
+  private joinRun(inFlight: SessionDetail['inFlight']): void {
+    const held = this.opening?.held ?? []
+    this.opening = null
+    if (!inFlight) return
+    this.watching = true
+    this.streamMark = inFlight.streamedChars ?? 0
+    // The running turn is everything after the last user message. Its "worked for" is not known
+    // yet, so it says it is working, as it does in the window that started it.
+    const messages = this.state.messages
+    const question = messages.map((m) => m.type).lastIndexOf('user')
+    const meta = messages.slice(question + 1).find((m) => m.type === 'run_meta')
+    if (meta?.type === 'run_meta') {
+      this.runId = meta.runId
+      this.dispatch({ type: 'RESUME_RUN', runId: meta.runId })
+    }
+    const last = messages[messages.length - 1]
+    if (last?.type === 'assistant_text') {
+      this.assistantId = last.id
+      this.lastAssistantId = last.id
+      this.dispatch({ type: 'RESUME_TEXT', id: last.id })
+    }
+    for (const delta of held) this.appendDelta(delta.text, delta.end)
+  }
+
   private async recoverRunState(sessionId: string): Promise<void> {
     const at = this.at
     const [snapshot, pending] = await Promise.all([
@@ -1663,6 +1760,8 @@ export class ChatStore {
         const at = this.at
         this.assistantId = null
         this.runId = null
+        this.streamMark = null
+        this.watching = false
         this.patch({
           busy: false,
           subagents: [],
@@ -1676,13 +1775,21 @@ export class ChatStore {
         // The model does not change when the chat does, so its window survives the reset; only what
         // the previous conversation measured is dropped.
         this.setRun((s) => ({ ...EMPTY_RUN, model: s.model, contextWindow: s.contextWindow }))
-        const detail = await loadSession(at, id)
+        this.opening = { sessionId: id, held: [] }
+        let detail: SessionDetail
+        try {
+          detail = await loadSession(at, id)
+        } catch (error) {
+          this.opening = null
+          throw error
+        }
         this.patch({
           sessionId: id,
           messages: turnsJsonToMessages(detail.turnsJson),
           feedback: detail.feedback ?? [],
           ...(detail.lastEffort ? { effort: detail.lastEffort } : {}),
         })
+        this.joinRun(detail.inFlight)
         // A re-opened session shows what its last request really cost, not a fresh estimate.
         this.setRun((snapshot) => ({
           ...snapshot,

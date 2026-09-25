@@ -1716,6 +1716,8 @@ public class TLDoclet implements Doclet {
 				Function<String, String> parameterKey = paramName -> methodKey + ".param." + paramName;
 				Map<String, VariableElement> parametersByName = method.getParameters()
 					.stream()
+					// A parameter receiving the security flag is not a script argument.
+					.filter(p -> !_wellKnown.hasUsesSecurityAnnotation(p))
 					.collect(Collectors.toMap(p -> p.getSimpleName().toString(), Function.identity()));
 
 				// Write label for parameters

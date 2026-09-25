@@ -1,0 +1,139 @@
+/*
+ * Stylesheet of the example component library (react-src/example-lib).
+ *
+ * It styles the library's own class names only and takes its colour from the brand accent the
+ * components set as --brand-accent; it is independent of the TopLogic theme tokens.
+ */
+
+.brand-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.4em;
+	min-height: 2.25rem;
+	padding: 0 1.1rem;
+	border: 2px solid var(--brand-accent);
+	background: transparent;
+	color: var(--brand-accent);
+	font: inherit;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	white-space: nowrap;
+	cursor: pointer;
+	transition: background-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
+}
+
+.brand-button--pill {
+	border-radius: 999px;
+}
+
+.brand-button--square {
+	border-radius: 0;
+}
+
+.brand-button:hover:not(:disabled) {
+	background: color-mix(in srgb, var(--brand-accent) 12%, transparent);
+}
+
+.brand-button:focus-visible {
+	outline: none;
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-accent) 40%, transparent);
+}
+
+.brand-button--primary {
+	background: var(--brand-accent);
+	color: #fff;
+}
+
+.brand-button--primary:hover:not(:disabled) {
+	background: color-mix(in srgb, var(--brand-accent) 85%, #000);
+}
+
+.brand-button--danger {
+	border-color: #b42318;
+	color: #b42318;
+}
+
+.brand-button--danger:hover:not(:disabled) {
+	background: color-mix(in srgb, #b42318 12%, transparent);
+}
+
+.brand-button[aria-pressed="true"] {
+	background: color-mix(in srgb, var(--brand-accent) 22%, transparent);
+}
+
+.brand-button:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+}
+
+.brand-checkbox {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5em;
+	cursor: pointer;
+}
+
+.brand-checkbox__box {
+	appearance: none;
+	display: inline-grid;
+	place-content: center;
+	width: 1.25rem;
+	height: 1.25rem;
+	margin: 0;
+	border: 2px solid var(--brand-accent);
+	background: transparent;
+	cursor: inherit;
+}
+
+.brand-checkbox--pill .brand-checkbox__box {
+	border-radius: 50%;
+}
+
+.brand-checkbox--square .brand-checkbox__box {
+	border-radius: 0;
+}
+
+.brand-checkbox__box:checked {
+	background: var(--brand-accent);
+}
+
+.brand-checkbox__box:checked::after {
+	content: "";
+	width: 0.35rem;
+	height: 0.65rem;
+	margin-top: -0.15rem;
+	border: solid #fff;
+	border-width: 0 2px 2px 0;
+	transform: rotate(45deg);
+}
+
+.brand-checkbox__box:focus-visible {
+	outline: none;
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-accent) 40%, transparent);
+}
+
+.brand-checkbox--invalid .brand-checkbox__box {
+	border-color: #b42318;
+}
+
+.brand-checkbox--readonly {
+	cursor: default;
+}
+
+.brand-checkbox--readonly .brand-checkbox__box:disabled {
+	opacity: 1;
+}
+
+.brand-checkbox__box:disabled {
+	opacity: 0.45;
+}
+
+.brand-error {
+	display: inline-block;
+	padding: 0.1rem 0.4rem;
+	border: 2px dashed #b42318;
+	background: #fee4e2;
+	color: #b42318;
+	font: 600 0.75rem/1.4 monospace;
+}

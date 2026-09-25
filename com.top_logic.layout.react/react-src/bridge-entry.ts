@@ -90,6 +90,13 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 export { React, ReactDOM };
 
+// Re-export the react-dom entry points that controls legitimately need. Without these, a control
+// has no rule-conforming way to create a portal and is forced to `import { createPortal } from
+// 'react-dom'` -- which drags a second copy of React *and* react-dom into tl-react-controls.js,
+// exactly what the note above forbids.
+export const createPortal = ReactDOM.createPortal;
+export const flushSync = ReactDOM.flushSync;
+
 // Expose bridge functions on window so that server-generated inline scripts
 // (e.g. TLReact.mount(...) from ReactControl) and GWT-compiled code
 // (e.g. ReactBridge.subscribe()) can call them.

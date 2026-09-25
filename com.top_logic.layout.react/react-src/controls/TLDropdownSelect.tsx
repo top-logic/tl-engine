@@ -1,5 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, useCloseOnOutsidePress, CMD_VALUE_CHANGED, rootClassName, tooltipProps } from 'tl-react-bridge';
-import { createPortal } from 'react-dom';
+import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, useCloseOnOutsidePress, CMD_VALUE_CHANGED, rootClassName, tooltipProps, createPortal } from 'tl-react-bridge';
 import type { TLCellProps, DropdownSelectState } from 'tl-react-bridge';
 import {
   ARG_OPTION,

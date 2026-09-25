@@ -168,6 +168,134 @@ public class TestScriptPathElement extends BasicTestCase {
 	}
 
 	/**
+	 * Tests the incremental update of a role that is passed on by an inheritance rule whose source
+	 * role is granted by a script-step inheritance rule that can not be navigated backwards.
+	 *
+	 * <p>
+	 * The configured rule {@code Assembly_Writer} passes the writer role of an {@link Assignment}
+	 * to all assemblies with the same plant. For a change of {@link Assignment#getPlant()}, its
+	 * script can not determine the affected assemblies, so the rule is rebuilt completely. The rule
+	 * {@code ZAreaInstance_Writer} passes the writer role of an {@link Assembly} on to its
+	 * {@link ZAreaInstance} and must be rebuilt, too.
+	 * </p>
+	 */
+	public void testChainedInheritanceAfterFullRebuild() {
+		// Expression of the rule "Assembly_Writer" in TestScriptPathElement-test.config.xml.
+		PathByExpression assemblyWriterPath = newPathByExpression("assembly -> all(`TestScriptPathElement:Assignment`)"
+			+ ".filter(assignment -> $assignment.get(`TestScriptPathElement:Assignment#plant`)"
+			+ " == $assembly.get(`TestScriptPathElement:Assembly#plant`))");
+		BoundedRole writerRole = BoundedRole.getRoleByName("TestScriptPathElement.Writer");
+
+		Person writer;
+		Plant plant1;
+		Plant plant2;
+		Assignment assignment;
+		ZAreaInstance areaInstance;
+		Assembly assembly;
+		try (Transaction tx = beginTX()) {
+			plant1 = createPlant("plant1");
+			plant2 = createPlant("plant2");
+			ZArea area = createZArea("z1");
+			assignment = createAssignment("assignment", plant1, area);
+			areaInstance = createZAreaInstance(area);
+			assembly = createAssembly("assembly", areaInstance, plant2);
+
+			writer = TestPerson.createPerson("writer");
+			assignment.addWriter(writer);
+
+			tx.commit();
+		}
+
+		// The script can not be navigated backwards: the change of the assignment's plant
+		// requires a complete rebuild of "Assembly_Writer".
+		assertTrue(assemblyWriterPath.getSources(assignment).isAll());
+		assertPathBaseIsAll(assemblyWriterPath, assignment, TestScriptPathElementFactory.getPlantAssignmentAttr());
+
+		assertTrue(hasRole(writer, writerRole, assignment));
+		assertFalse(hasRole(writer, writerRole, assembly));
+		assertFalse(hasRole(writer, writerRole, areaInstance));
+
+		try (Transaction tx = beginTX()) {
+			assignment.setPlant(plant2);
+			tx.commit();
+		}
+
+		assertTrue(hasRole(writer, writerRole, assembly));
+		assertTrue(hasRole(writer, writerRole, areaInstance));
+
+		try (Transaction tx = beginTX()) {
+			assignment.setPlant(plant1);
+			tx.commit();
+		}
+
+		assertFalse(hasRole(writer, writerRole, assembly));
+		assertFalse(hasRole(writer, writerRole, areaInstance));
+	}
+
+	/**
+	 * Tests the incremental update of a role that a created object receives and passes on over its
+	 * own reference to existing objects.
+	 *
+	 * <p>
+	 * The configured rule {@code Assembly_Viewer} grants the viewer role on each {@link Assembly}
+	 * to the owners of the singleton {@code ROOT1}. Its script reads no attribute, so the role of a
+	 * created assembly is determined only because the assembly is created. The rule
+	 * {@code Plant_Viewer} passes the viewer role of an assembly on to its plant, and the rule
+	 * {@code Assignment_Viewer} passes the viewer role of a plant on to the assignments referencing
+	 * it.
+	 * </p>
+	 */
+	public void testInheritanceFromCreatedObjectOverItsReference() {
+		// Expression of the rule "Assembly_Viewer" in TestScriptPathElement-test.config.xml.
+		PathByExpression assemblyViewerPath = newPathByExpression("assembly -> `TestScriptPathElement#ROOT1`");
+		assertTrue(assemblyViewerPath.getRelevantParts().isEmpty());
+
+		BoundedRole ownerRole = BoundedRole.getRoleByName("TestScriptPathElement.Owner");
+		BoundedRole viewerRole = BoundedRole.getRoleByName("TestScriptPathElement.Viewer");
+
+		// The representative group of the account is created in the transaction creating it.
+		Person owner = TestPerson.createPerson("owner");
+		Plant plant;
+		Plant otherPlant;
+		Assignment assignment;
+		ZAreaInstance areaInstance;
+		try (Transaction tx = beginTX()) {
+			plant = createPlant("viewerPlant");
+			otherPlant = createPlant("otherViewerPlant");
+			ZArea area = createZArea("viewerArea");
+			assignment = createAssignment("viewerAssignment", plant, area);
+			areaInstance = createZAreaInstance(area);
+			BoundedRole.assignRole(_root1, owner, ownerRole);
+			tx.commit();
+		}
+
+		assertTrue(hasRole(owner, ownerRole, _root1));
+		assertFalse(hasRole(owner, viewerRole, plant));
+		assertFalse(hasRole(owner, viewerRole, assignment));
+
+		Assembly assembly;
+		try (Transaction tx = beginTX()) {
+			assembly = createAssembly("viewerAssembly", areaInstance, plant);
+			tx.commit();
+		}
+
+		assertTrue(hasRole(owner, viewerRole, assembly));
+		assertTrue(hasRole(owner, viewerRole, plant));
+		assertTrue(hasRole(owner, viewerRole, assignment));
+		assertFalse(hasRole(owner, viewerRole, otherPlant));
+
+		try (Transaction tx = beginTX()) {
+			assembly.setPlant(otherPlant);
+			tx.commit();
+		}
+
+		assertTrue(hasRole(owner, viewerRole, assembly));
+		assertFalse(hasRole(owner, viewerRole, plant));
+		assertFalse(hasRole(owner, viewerRole, assignment));
+		assertTrue(hasRole(owner, viewerRole, otherPlant));
+	}
+
+	/**
 	 * Tests {@link PathByExpression} where the expression is a simple navigation step.
 	 */
 	public void testSimpleChain() {

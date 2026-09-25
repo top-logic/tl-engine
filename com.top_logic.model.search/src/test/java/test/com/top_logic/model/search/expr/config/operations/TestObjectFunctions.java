@@ -18,11 +18,13 @@ import com.top_logic.base.services.InitialRolesManager;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.knowledge.objects.KnowledgeItem;
+import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.UpdateEvent;
 import com.top_logic.knowledge.service.UpdateListener;
+import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLClass;
@@ -68,6 +70,12 @@ public class TestObjectFunctions extends AbstractSearchExpressionTest {
 	private static final String ROUND_TRIP = "x -> objectId($x).objectResolve(objectTable($x))";
 
 	private static final String RESOLVES = "t -> i -> objectResolve($i, $t) != null";
+
+	private static final String KEY = "x -> objectKey($x)";
+
+	private static final String RESOLVE_KEY = "k -> objectResolveKey($k)";
+
+	private static final String RESOLVES_KEY = "k -> objectResolveKey($k) != null";
 
 	private final Map<ObjectKey, KnowledgeItem> _toDelete = new HashMap<>();
 
@@ -251,6 +259,76 @@ public class TestObjectFunctions extends AbstractSearchExpressionTest {
 		QueryExecutor executor = QueryExecutor.compile(kb(), model(), search(RESOLVE));
 		executor.disableSecurity();
 		assertSame(_employee, executor.execute(EMPLOYEE_TABLE, id));
+	}
+
+	public void testKeyRoundTrip() throws Exception {
+		for (TLObject object : new TLObject[] { _employee, _unsecured, _user }) {
+			String key = (String) eval(KEY, object);
+			assertEquals("The key is the text form of the object's identifier.", object.tId().asString(), key);
+			assertTrue("The key starts with the table storing the object: " + key,
+				key.startsWith(eval(TABLE, object) + ":"));
+			assertFalse("The key of a current object names no revision: " + key, key.contains("@"));
+			assertSame(object, eval(RESOLVE_KEY, key));
+		}
+	}
+
+	public void testKeyOfHistoricObject() throws Exception {
+		TLObject historic = WrapperHistoryUtils.getWrapper(HistoryUtils.getLastRevision(), _unsecured);
+
+		String key = (String) eval(KEY, historic);
+		assertTrue("The key of a historic object names its revision: " + key, key.contains("@"));
+		assertEquals("A key naming a revision finds the object as it was then.", historic,
+			eval(RESOLVE_KEY, key));
+
+		String currentKey = (String) eval(KEY, _unsecured);
+		delete(_unsecured);
+		assertEquals("A deleted object is still found in the revision it lived in.", historic,
+			eval(RESOLVE_KEY, key));
+		assertNull("A deleted object is not found now.", eval(RESOLVE_KEY, currentKey));
+	}
+
+	public void testKeyOfTransientObject() throws Exception {
+		TLClass type = type("UnsecuredData");
+		TLObject transientObject = TransientObjectFactory.INSTANCE.createObject(type);
+		assertNull("A transient object has no key.", eval(KEY, transientObject));
+		assertNull(eval(KEY, (Object) null));
+	}
+
+	public void testResolveNoKey() throws Exception {
+		assertNull(eval(RESOLVE_KEY, "nonsense"));
+		assertNull(eval(RESOLVE_KEY, "NoSuchTable:1"));
+		assertNull(eval(RESOLVE_KEY, UNSECURED_TABLE + ":999999999"));
+		assertNull(eval(RESOLVE_KEY, ""));
+		assertNull(eval(RESOLVE_KEY, (Object) null));
+	}
+
+	public void testNotReadableNotResolvedByKey() throws Exception {
+		String key = (String) eval(KEY, _employee);
+		String historicKey =
+			(String) eval(KEY, WrapperHistoryUtils.getWrapper(HistoryUtils.getLastRevision(), _employee));
+		assertEquals(Boolean.TRUE, eval(RESOLVES_KEY, key));
+		assertEquals(Boolean.TRUE, eval(RESOLVES_KEY, historicKey));
+
+		TLContext.getContext().setCurrentPerson(_user);
+		assertEquals("An object the user may not read must not be found by its key.",
+			Boolean.FALSE, eval(RESOLVES_KEY, key));
+		assertEquals("A historic object the user may not read must not be found by its key.",
+			Boolean.FALSE, eval(RESOLVES_KEY, historicKey));
+		assertEquals("An object the user may read is found by its key.",
+			Boolean.TRUE, eval(RESOLVES_KEY, eval(KEY, _unsecured)));
+	}
+
+	public void testNotReadableResolvedByKeyWithoutSecurity() throws Exception {
+		String key = (String) eval(KEY, _employee);
+		TLContext.getContext().setCurrentPerson(_user);
+
+		SearchExpression expr = search(RESOLVES_KEY);
+		UpdateSecurityVisitor.disableSecurity(expr);
+		assertEquals(Boolean.TRUE, executeCompiled(expr, key));
+
+		QueryExecutor executor = QueryExecutor.compile(kb(), model(), search(RESOLVE_KEY));
+		executor.disableSecurity();
+		assertSame(_employee, executor.execute(key));
 	}
 
 	public static Test suite() {

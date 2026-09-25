@@ -40,8 +40,8 @@ import com.top_logic.util.model.CompatibilityService;
  * ({@link #table(TLObject)}) as well. The key ({@link #key(TLObject)}) names an object on its own:
  * it carries the table the object is stored in, and the branch and the revision the object is seen
  * in when these are not the current ones. A key finds its object again without further information
- * ({@link #resolveKey(String)}), also a historic one, and is what the functions removing deleted
- * objects take.
+ * ({@link #resolveKey(String, boolean)}), also a historic one, and is what the functions removing
+ * deleted objects take. Both functions finding an object find only one the current user may read.
  * </p>
  */
 @ScriptPrefix("object")
@@ -113,9 +113,10 @@ public class ObjectFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * <p>
-	 * Unlike the identifier of an object, the key needs no type to find the object again, and it
-	 * names an object that no longer exists as well: the key of a deleted object read from the
-	 * history is the way to name it to the functions removing deleted objects.
+	 * Unlike the identifier of an object, the key needs neither the type nor the table to find the
+	 * object again ({@code $key.objectResolveKey()}), and it names an object that no longer exists
+	 * as well: the key of a deleted object read from the history is the way to name it to the
+	 * functions removing deleted objects.
 	 * </p>
 	 *
 	 * @param object
@@ -141,15 +142,25 @@ public class ObjectFunctions extends TLScriptFunctions {
 	 * it is now.
 	 * </p>
 	 *
+	 * <p>
+	 * Only an object the current user may read is found: for an object the user has no read access
+	 * to, the result is <code>null</code>, exactly as for a key that names no object. So the result
+	 * does not reveal whether an object exists that the user must not see. When the script is
+	 * evaluated without access checks, every object the key names is found.
+	 * </p>
+	 *
 	 * @param key
 	 *        The key of the object, as delivered by the function computing the key of an object.
+	 * @param usesSecurity
+	 *        Whether the call is evaluated with the access rights of the current user.
 	 * @return The object with that key, or <code>null</code> if there is none - a key that never
 	 *         existed, the key of an object that has been deleted as long as it names no revision
-	 *         the object still lived in, or a text that is no key at all.
+	 *         the object still lived in, a text that is no key at all, or the key of an object the
+	 *         current user may not read.
 	 */
 	@Label("Object with a key")
 	@SideEffectFree
-	public static TLObject resolveKey(@Mandatory String key) {
+	public static TLObject resolveKey(@Mandatory String key, @UsesSecurity boolean usesSecurity) {
 		if (key == null || key.isEmpty()) {
 			return null;
 		}
@@ -164,7 +175,15 @@ public class ObjectFunctions extends TLScriptFunctions {
 		}
 
 		KnowledgeItem item = kb.resolveObjectKey(id);
-		return WrapperFactory.getWrapper(item);
+		if (item == null) {
+			return null;
+		}
+		TLObject result = WrapperFactory.getWrapper(item);
+		if (usesSecurity && !ModelAccessRights.getInstance().isReadAllowed(result)) {
+			// Indistinguishable from a key that names nothing.
+			return null;
+		}
+		return result;
 	}
 
 	/**

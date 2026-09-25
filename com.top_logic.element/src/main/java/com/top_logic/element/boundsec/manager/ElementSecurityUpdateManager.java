@@ -5,8 +5,10 @@
  */
 package com.top_logic.element.boundsec.manager;
 
+import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -549,7 +551,36 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 		// Enhance output map with deleted objects.
 		mergeMaps(rulesToDeletedObjectsMap, rulesToObjectsMap);
 
+		addDependentInvalidRules(invalidRules);
+		rulesToObjectsMap.keySet().removeAll(invalidRules);
     }
+
+	/**
+	 * Closes the given set of rules to rebuild completely over the inheritance rules depending on
+	 * them.
+	 *
+	 * <p>
+	 * For a rule in <code>invalidRules</code>, no base objects are known whose role changed. An
+	 * inheritance rule using the role of such a rule as source role can therefore not determine
+	 * the objects on which it must be re-evaluated, and must be rebuilt completely, too. This
+	 * applies transitively.
+	 * </p>
+	 *
+	 * @param invalidRules
+	 *        The rules to rebuild completely. The inheritance rules depending on these rules are
+	 *        added.
+	 */
+	private void addDependentInvalidRules(Set<RoleProvider> invalidRules) {
+		Deque<RoleProvider> todo = new ArrayDeque<>(invalidRules);
+		while (!todo.isEmpty()) {
+			RoleProvider rule = todo.removeFirst();
+			for (RoleProvider dependent : accessManager.getRulesWithSourceRole(rule.getRole(), Type.inheritance)) {
+				if (invalidRules.add(dependent)) {
+					todo.addLast(dependent);
+				}
+			}
+		}
+	}
 
 	/**
 	 * Finds for a {@link BoundedRole} the inheritance rules with that role as source rule, and

@@ -68,6 +68,31 @@
 								</script-step>
 							</path>
 						</inheritance-rule>
+						<inheritance-rule
+							id="Assembly_Writer"
+							meta-element="TestScriptPathElement:Assembly"
+							role="TestScriptPathElement.Writer"
+						>
+							<path>
+								<script-step>
+									<expr><![CDATA[assembly -> all(`TestScriptPathElement:Assignment`)
+										.filter(assignment -> $assignment.get(`TestScriptPathElement:Assignment#plant`)
+											== $assembly.get(`TestScriptPathElement:Assembly#plant`))]]></expr>
+								</script-step>
+							</path>
+						</inheritance-rule>
+						<inheritance-rule
+							id="ZAreaInstance_Writer"
+							meta-element="TestScriptPathElement:ZAreaInstance"
+							role="TestScriptPathElement.Writer"
+						>
+							<path>
+								<step
+									attribute="TestScriptPathElement:Assembly#area"
+									inverse="true"
+								/>
+							</path>
+						</inheritance-rule>
 					</rules>
 				</role-rules>
 			</instance>

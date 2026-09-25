@@ -3,6 +3,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { flushSync } from 'react-dom';
 import type { TLCellProps } from './types';
 import { getComponent } from './registry';
+import { wrapRoot } from './root-wrapper';
 import { connect, subscribe, unsubscribe } from './sse-client';
 import { setI18NApiBase, setI18NWindowName } from './i18n';
 import { createScope, registerScope, addBinding, pageScope, type GestureHandler, type KeyboardScope } from './keyboard-dispatcher';
@@ -166,7 +167,7 @@ export function mount(
   };
 
   flushSync(() => {
-    root.render(React.createElement(Wrapper));
+    root.render(wrapRoot(React.createElement(Wrapper)));
   });
 }
 

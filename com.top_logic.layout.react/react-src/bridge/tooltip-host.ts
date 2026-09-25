@@ -29,6 +29,7 @@ import React from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { isMountedControl, getApiBase } from './tl-react-bridge';
 import { TooltipPopover, TooltipData } from './TooltipPopover';
+import { wrapRoot } from './root-wrapper';
 
 const HOVER_DELAY_MS = 400;
 const CLOSE_DELAY_MS_PASSIVE = 150;
@@ -327,7 +328,7 @@ function renderActive(): void {
   // Each activation mounts a popover of its own: the floating hook positions against the anchor
   // it was mounted with, so a tooltip taking over from one still open - the pointer moved on to
   // the next button before the first closed - must not reuse the first popover's instance.
-  _root.render(
+  _root.render(wrapRoot(
     React.createElement(TooltipPopover, {
       key: id,
       anchor, data,
@@ -336,7 +337,7 @@ function renderActive(): void {
       onEnter: cancelClose,
       onLeave: scheduleClose,
     })
-  );
+  ));
 }
 
 async function fetchTooltip(controlId: string, key: string): Promise<TooltipData | null> {

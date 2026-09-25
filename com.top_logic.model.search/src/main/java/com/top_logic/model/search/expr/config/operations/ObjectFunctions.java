@@ -13,12 +13,16 @@ import com.top_logic.basic.TLID;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.dob.MetaObject;
+import com.top_logic.dob.ex.UnknownTypeException;
 import com.top_logic.dob.identifier.DefaultObjectKey;
+import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.objects.KnowledgeItem;
+import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.db2.MOKnowledgeItem;
+import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -30,9 +34,14 @@ import com.top_logic.util.model.CompatibilityService;
  * TL-Script functions identifying a persistent object by a text and finding it again.
  *
  * <p>
- * Together the functions make an object addressable from outside the application: its identifier
- * can be put into a URL, a file name or a message, and the object it names can be looked up when
- * such a text comes back - by the type of the object, or by the table storing it.
+ * There are two texts. The identifier ({@link #id(TLObject)}) names an object within its type and
+ * is short enough for a URL, a file name or a message; finding the object again
+ * ({@link #resolve(String, Object, boolean)}) takes the type of the object or the table storing it
+ * ({@link #table(TLObject)}) as well. The key ({@link #key(TLObject)}) names an object on its own:
+ * it carries the table the object is stored in, and the branch and the revision the object is seen
+ * in when these are not the current ones. A key finds its object again without further information
+ * ({@link #resolveKey(String, boolean)}), also a historic one, and is what the functions removing
+ * deleted objects take. Both functions finding an object find only one the current user may read.
  * </p>
  */
 @ScriptPrefix("object")
@@ -89,6 +98,108 @@ public class ObjectFunctions extends TLScriptFunctions {
 			return null;
 		}
 		return IdentifierUtil.toExternalForm(object.tIdLocal());
+	}
+
+	/**
+	 * The key of the given object, as a text naming it on its own.
+	 *
+	 * <p>
+	 * The key consists of the name of the table the object is stored in and its identifier within
+	 * that table, separated by a colon. The branch of the object follows after a <code>#</code>
+	 * unless it is the trunk, and the revision the object is seen in follows after a
+	 * <code>@</code> unless it is the current one. <code>Person:4711</code> is the person with the
+	 * identifier <code>4711</code> as it is now, <code>Person:4711@5000</code> that person as it was
+	 * in revision <code>5000</code>.
+	 * </p>
+	 *
+	 * <p>
+	 * Unlike the identifier of an object, the key needs neither the type nor the table to find the
+	 * object again ({@code $key.objectResolveKey()}), and it names an object that no longer exists
+	 * as well: the key of a deleted object read from the history is the way to name it to the
+	 * functions removing deleted objects.
+	 * </p>
+	 *
+	 * @param object
+	 *        The object to identify.
+	 * @return The key of the object, or <code>null</code> for no object and for one that is only
+	 *         transient - a transient object exists in the current form alone and cannot be found
+	 *         again.
+	 */
+	@Label("Key of an object")
+	@SideEffectFree
+	public static String key(@Mandatory TLObject object) {
+		if (object == null || object.tTransient()) {
+			return null;
+		}
+		return object.tId().asString();
+	}
+
+	/**
+	 * The object with the given key.
+	 *
+	 * <p>
+	 * A key naming a revision yields the object as it was in that revision; otherwise the object as
+	 * it is now.
+	 * </p>
+	 *
+	 * <p>
+	 * Only an object the current user may read is found: for an object the user has no read access
+	 * to, the result is <code>null</code>, exactly as for a key that names no object. So the result
+	 * does not reveal whether an object exists that the user must not see. When the script is
+	 * evaluated without access checks, every object the key names is found.
+	 * </p>
+	 *
+	 * @param key
+	 *        The key of the object, as delivered by the function computing the key of an object.
+	 * @param usesSecurity
+	 *        Whether the call is evaluated with the access rights of the current user.
+	 * @return The object with that key, or <code>null</code> if there is none - a key that never
+	 *         existed, the key of an object that has been deleted as long as it names no revision
+	 *         the object still lived in, a text that is no key at all, or the key of an object the
+	 *         current user may not read.
+	 */
+	@Label("Object with a key")
+	@SideEffectFree
+	public static TLObject resolveKey(@Mandatory String key, @UsesSecurity boolean usesSecurity) {
+		if (key == null || key.isEmpty()) {
+			return null;
+		}
+
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		ObjectKey id;
+		try {
+			id = parseKey(kb, key);
+		} catch (UnknownTypeException | IllegalArgumentException ex) {
+			// Not a key this application produces: nothing it could name.
+			return null;
+		}
+
+		KnowledgeItem item = kb.resolveObjectKey(id);
+		if (item == null) {
+			return null;
+		}
+		TLObject result = WrapperFactory.getWrapper(item);
+		if (usesSecurity && !ModelAccessRights.getInstance().isReadAllowed(result)) {
+			// Indistinguishable from a key that names nothing.
+			return null;
+		}
+		return result;
+	}
+
+	/**
+	 * The key named by the given text, see {@link #key(TLObject)}.
+	 *
+	 * @param kb
+	 *        The knowledge base whose tables the key names one of.
+	 * @param key
+	 *        The text of the key.
+	 * @throws UnknownTypeException
+	 *         If the text names a table the knowledge base does not have.
+	 * @throws IllegalArgumentException
+	 *         If the text is no key.
+	 */
+	static ObjectKey parseKey(KnowledgeBase kb, String key) throws UnknownTypeException, IllegalArgumentException {
+		return ObjectKey.fromStringObjectKey(KBUtils.typeSystem(kb), key);
 	}
 
 	/**

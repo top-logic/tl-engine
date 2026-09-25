@@ -57,6 +57,12 @@ import com.top_logic.util.error.TopLogicException;
  * A parameter of the Java method annotated with {@link UsesSecurity} is not a script argument, but
  * receives the {@link #usesSecurity() security flag} of this expression.
  * </p>
+ *
+ * <p>
+ * A Java method annotated with {@link AdminOnly}, or declared in a class annotated with it, may be
+ * called from an interactively entered script by an administrator only, see
+ * {@link EvalContext#checkAdmin(String)}.
+ * </p>
  */
 public class TLScriptMethod extends GenericMethodWithSecurity {
 
@@ -80,12 +86,19 @@ public class TLScriptMethod extends GenericMethodWithSecurity {
 	private final boolean _canEvaluateAtCompileTime;
 
 	/**
+	 * Whether the Java method is {@link AdminOnly}.
+	 */
+	private final boolean _adminOnly;
+
+	/**
 	 * Creates a {@link TLScriptMethod}.
 	 */
 	protected TLScriptMethod(String name, Method java, boolean sideEffectFree, boolean canEvaluateAtCompileTime,
-			Converter[] conversions, int securityIndex, SearchExpression[] arguments, boolean usesSecurity) {
+			boolean adminOnly, Converter[] conversions, int securityIndex, SearchExpression[] arguments,
+			boolean usesSecurity) {
 		super(name, arguments, usesSecurity);
 		_java = java;
+		_adminOnly = adminOnly;
 		_canEvaluateAtCompileTime = canEvaluateAtCompileTime;
 		_conversions = conversions;
 		_securityIndex = securityIndex;
@@ -94,8 +107,8 @@ public class TLScriptMethod extends GenericMethodWithSecurity {
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new TLScriptMethod(getName(), _java, _sideEffectFree, _canEvaluateAtCompileTime, _conversions,
-			_securityIndex, arguments, usesSecurity());
+		return new TLScriptMethod(getName(), _java, _sideEffectFree, _canEvaluateAtCompileTime, _adminOnly,
+			_conversions, _securityIndex, arguments, usesSecurity());
 	}
 
 	@Override
@@ -115,6 +128,9 @@ public class TLScriptMethod extends GenericMethodWithSecurity {
 
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
+		if (_adminOnly) {
+			definitions.checkAdmin(getName());
+		}
 		for (Converter conversion : _conversions) {
 			conversion.convert(arguments);
 		}
@@ -169,6 +185,8 @@ public class TLScriptMethod extends GenericMethodWithSecurity {
 		private final boolean _sideEffectFree;
 
 		private final boolean _canEvaluateAtCompileTime;
+
+		private final boolean _adminOnly;
 
 		private final List<DocumentationParameter> _documentationParams = new ArrayList<>();
 
@@ -254,12 +272,16 @@ public class TLScriptMethod extends GenericMethodWithSecurity {
 				_conversions = conversions.toArray(new Converter[0]);
 				_securityIndex = securityIndex;
 
+				_adminOnly = _method.getAnnotation(AdminOnly.class) != null
+					|| _method.getDeclaringClass().getAnnotation(AdminOnly.class) != null;
+
 				SideEffectFree sideEffectFree = _method.getAnnotation(SideEffectFree.class);
 				if (sideEffectFree != null) {
 					_sideEffectFree = true;
-					// The result of a function receiving the security flag depends on the current user.
-					_canEvaluateAtCompileTime =
-						sideEffectFree.canEvaluateAtCompileTime() && securityIndex == NO_SECURITY_PARAMETER;
+					// The result of a function receiving the security flag or checking the user's
+					// admin rights depends on the current user.
+					_canEvaluateAtCompileTime = sideEffectFree.canEvaluateAtCompileTime()
+						&& securityIndex == NO_SECURITY_PARAMETER && !_adminOnly;
 				} else {
 					_sideEffectFree = false;
 					_canEvaluateAtCompileTime = false;
@@ -589,8 +611,8 @@ public class TLScriptMethod extends GenericMethodWithSecurity {
 
 		@Override
 		public TLScriptMethod build(Expr expr, SearchExpression[] args) throws ConfigurationException {
-			return new TLScriptMethod(getName(), _method, _sideEffectFree, _canEvaluateAtCompileTime, _conversions,
-				_securityIndex, args, true);
+			return new TLScriptMethod(getName(), _method, _sideEffectFree, _canEvaluateAtCompileTime, _adminOnly,
+				_conversions, _securityIndex, args, true);
 		}
 
 		@Override

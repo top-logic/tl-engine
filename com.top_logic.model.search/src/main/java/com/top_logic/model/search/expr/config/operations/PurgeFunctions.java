@@ -60,9 +60,11 @@ import com.top_logic.util.error.TopLogicException;
  * @implNote Every public static method here is a TL-Script function named by the
  *           {@link ScriptPrefix} of this class followed by the capitalized method name, so
  *           {@link #analyze(Object)} is called <code>purgeAnalyze</code>. An object is named to
- *           these functions by the key {@link ObjectFunctions#key(TLObject)} computes.
+ *           these functions by the key {@link ObjectFunctions#key(TLObject)} computes. All
+ *           functions are {@link AdminOnly}.
  */
 @ScriptPrefix(PurgeFunctions.PREFIX)
+@AdminOnly
 public class PurgeFunctions extends TLScriptFunctions {
 
 	/** Prefix all function names of this class start with. */
@@ -177,6 +179,12 @@ public class PurgeFunctions extends TLScriptFunctions {
 	 * analysis can be removed as they were counted.
 	 * </p>
 	 *
+	 * <p>
+	 * In a script entered interactively, for example in the script console, only an administrator
+	 * may call this function. A script that is part of the application configuration may call it
+	 * for every user.
+	 * </p>
+	 *
 	 * <pre>
 	 * {
 	 *   gone = $project.inRevision(revisionAt(dateTime(2026, 1, 1))).get(`my:Project#members`);
@@ -208,6 +216,12 @@ public class PurgeFunctions extends TLScriptFunctions {
 	 * an active maintenance window and, in a cluster, the single active node. Unless it was blocked
 	 * or found nothing, the persistency layer restarts a few seconds later, which ends every
 	 * session including the one that called the function.
+	 * </p>
+	 *
+	 * <p>
+	 * In a script entered interactively, for example in the script console, only an administrator
+	 * may call this function. A script that is part of the application configuration may call it
+	 * for every user.
 	 * </p>
 	 *
 	 * @param objects

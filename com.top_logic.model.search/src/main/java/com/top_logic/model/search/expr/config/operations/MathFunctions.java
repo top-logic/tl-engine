@@ -26,7 +26,7 @@ public class MathFunctions extends TLScriptFunctions {
 	 * @return The absolute value of the argument.
 	 */
 	@Label("Absolute value of a number")
-	@SideEffectFree
+	@SideEffectFree(canEvaluateAtCompileTime = true)
 	public static double abs(@Mandatory double a) {
 		return Math.abs(a);
 	}
@@ -40,7 +40,7 @@ public class MathFunctions extends TLScriptFunctions {
 	 *         <code>0.0</code> through <code>pi</code>.
 	 */
 	@Label("Arc cosine function")
-	@SideEffectFree
+	@SideEffectFree(canEvaluateAtCompileTime = true)
 	public static double acos(@Mandatory double a) {
 		return Math.acos(a);
 	}
@@ -54,7 +54,7 @@ public class MathFunctions extends TLScriptFunctions {
 	 *         <code>-pi/2</code> through <code>pi/2</code>.
 	 */
 	@Label("Arc sine function")
-	@SideEffectFree
+	@SideEffectFree(canEvaluateAtCompileTime = true)
 	public static double asin(@Mandatory double a) {
 		return Math.asin(a);
 	}
@@ -68,7 +68,7 @@ public class MathFunctions extends TLScriptFunctions {
 	 *         <code>-pi/2</code> through <code>pi/2</code>.
 	 */
 	@Label("Arc tangent function")
-	@SideEffectFree
+	@SideEffectFree(canEvaluateAtCompileTime = true)
 	public static double atan(@Mandatory double a) {
 		return Math.atan(a);
 	}
@@ -83,7 +83,7 @@ public class MathFunctions extends TLScriptFunctions {
 	 * @return The theta component of the point (r, theta) in polar coordinates.
 	 */
 	@Label("Arc tangent of y/x")
-	@SideEffectFree
+	@SideEffectFree(canEvaluateAtCompileTime = true)
 	public static double atan2(@Mandatory double y, @Mandatory double x) {
 		return Math.atan2(y, x);
 	}
@@ -96,7 +96,7 @@ public class MathFunctions extends TLScriptFunctions {
 	 * @return The cube root of <code>a</code>.
 	 */
 	@Label("Cube root")
-	@SideEffectFree
+	@SideEffectFree(canEvaluateAtCompileTime = true)
 	public static double cbrt(@Mandatory double a) {
 		return Math.cbrt(a);
 	}
@@ -113,7 +113,7 @@ public class MathFunctions extends TLScriptFunctions {
 	 * @return The value of <code>magnitude</code> with the sign of <code>sign</code>.
 	 */
 	@Label("Copy Sign")
-	@SideEffectFree
+	@SideEffectFree(canEvaluateAtCompileTime = true)
 	public static double copySign(@Mandatory double magnitude, @Mandatory double sign) {
 		return Math.copySign(magnitude, sign);
 	}
@@ -126,7 +126,7 @@ public class MathFunctions extends TLScriptFunctions {
 	 * @return The cosine of the angle.
 	 */
 	@Label("Cosine function")
-	@SideEffectFree
+	@SideEffectFree(canEvaluateAtCompileTime = true)
 	public static double cos(@Mandatory double a) {
 		return Math.cos(a);
 	}
@@ -139,7 +139,7 @@ public class MathFunctions extends TLScriptFunctions {
 	 * @return The hyperbolic cosine of <code>x</code>.
 	 */
 	@Label("Hyperbolic cosine")
-	@SideEffectFree
+	@SideEffectFree(canEvaluateAtCompileTime = true)
 	public static double cosh(@Mandatory double x) {
 		return Math.cosh(x);
 	}
@@ -152,7 +152,7 @@ public class MathFunctions extends TLScriptFunctions {
 	 * @return The value <code>e^a</code>.
 	 */
 	@Label("Exponential function")
-	@SideEffectFree
+	@SideEffectFree(canEvaluateAtCompileTime = true)
 	public static double exp(@Mandatory double a) {
 		return Math.exp(a);
 	}
@@ -165,7 +165,7 @@ public class MathFunctions extends TLScriptFunctions {
 	 * @return The value <code>e^x - 1</code>.
 	 */
 	@Label("Exponential minus one")
-	@SideEffectFree
+	@SideEffectFree(canEvaluateAtCompileTime = true)
 	public static double expm1(@Mandatory double x) {
 		return Math.expm1(x);
 	}
@@ -178,7 +178,7 @@ public class MathFunctions extends TLScriptFunctions {
 	 * @return The unbiased exponent of the argument
 	 */
 	@Label("Get Binary Exponent")
-	@SideEffectFree
+	@SideEffectFree(canEvaluateAtCompileTime = true)
 	public static double getExponent(@Mandatory double d) {
 		return Math.getExponent(d);
 	}
@@ -193,7 +193,7 @@ public class MathFunctions extends TLScriptFunctions {
 	 * @return The Euclidean distance <code>sqrt(x^2 + y^2)</code>.
 	 */
 	@Label("Euclidean distance")
-	@SideEffectFree
+	@SideEffectFree(canEvaluateAtCompileTime = true)
 	public static double hypot(@Mandatory double x, @Mandatory double y) {
 		return Math.hypot(x, y);
 	}
@@ -208,7 +208,7 @@ public class MathFunctions extends TLScriptFunctions {
 	 * @return The IEEE 754 standard remainder of <code>f1</code> and <code>f2</code>.
 	 */
 	@Label("IEEE 754 Remainder")
-	@SideEffectFree
+	@SideEffectFree(canEvaluateAtCompileTime = true)
 	public static double IEEEremainder(@Mandatory double f1, @Mandatory double f2) {
 		return Math.IEEEremainder(f1, f2);
 	}
@@ -221,7 +221,7 @@ public class MathFunctions extends TLScriptFunctions {
 	 * @return The natural logarithm of <code>a</code>.
 	 */
 	@Label("Natural logarithm")
-	@SideEffectFree
+	@SideEffectFree(canEvaluateAtCompileTime = true)
 	public static double log(@Mandatory double a) {
 		return Math.log(a);
 	}
@@ -234,7 +234,7 @@ public class MathFunctions extends TLScriptFunctions {
 	 * @return The base 10 logarithm of <code>a</code>.
 	 */
 	@Label("Base 10 logarithm")
-	@SideEffectFree
+	@SideEffectFree(canEvaluateAtCompileTime = true)
 	public static double log10(@Mandatory double a) {
 		return Math.log10(a);
 	}
@@ -247,7 +247,7 @@ public class MathFunctions extends TLScriptFunctions {
 	 * @return The value <code>ln(x + 1)</code>.
 	 */
 	@Label("Natural logarithm of x + 1")
-	@SideEffectFree
+	@SideEffectFree(canEvaluateAtCompileTime = true)
 	public static double log1p(@Mandatory double x) {
 		return Math.log1p(x);
 	}
@@ -263,7 +263,7 @@ public class MathFunctions extends TLScriptFunctions {
 	 * @return The adjacent floating-point value.
 	 */
 	@Label("Next floating-point value")
-	@SideEffectFree
+	@SideEffectFree(canEvaluateAtCompileTime = true)
 	public static double nextAfter(@Mandatory double start, @Mandatory double direction) {
 		return Math.nextAfter(start, direction);
 	}
@@ -277,7 +277,7 @@ public class MathFunctions extends TLScriptFunctions {
 	 * @return The adjacent floating-point value toward positive infinity.
 	 */
 	@Label("Next value toward positive infinity")
-	@SideEffectFree
+	@SideEffectFree(canEvaluateAtCompileTime = true)
 	public static double nextUp(@Mandatory double d) {
 		return Math.nextUp(d);
 	}
@@ -291,7 +291,7 @@ public class MathFunctions extends TLScriptFunctions {
 	 * @return The adjacent floating-point value toward negative infinity.
 	 */
 	@Label("Next value toward negative infinity")
-	@SideEffectFree
+	@SideEffectFree(canEvaluateAtCompileTime = true)
 	public static double nextDown(@Mandatory double d) {
 		return Math.nextDown(d);
 	}
@@ -306,7 +306,7 @@ public class MathFunctions extends TLScriptFunctions {
 	 * @return The value <code>a^b</code>.
 	 */
 	@Label("Power function")
-	@SideEffectFree
+	@SideEffectFree(canEvaluateAtCompileTime = true)
 	public static double pow(@Mandatory double a, @Mandatory double b) {
 		return Math.pow(a, b);
 	}
@@ -332,7 +332,7 @@ public class MathFunctions extends TLScriptFunctions {
 	 * @return The closest double value to the argument that is equal to a mathematical integer.
 	 */
 	@Label("Round to nearest integer")
-	@SideEffectFree
+	@SideEffectFree(canEvaluateAtCompileTime = true)
 	public static double rint(@Mandatory double a) {
 		return Math.rint(a);
 	}
@@ -345,7 +345,7 @@ public class MathFunctions extends TLScriptFunctions {
 	 * @return The signum function of the argument.
 	 */
 	@Label("Signum function")
-	@SideEffectFree
+	@SideEffectFree(canEvaluateAtCompileTime = true)
 	public static double signum(@Mandatory double d) {
 		return Math.signum(d);
 	}
@@ -358,7 +358,7 @@ public class MathFunctions extends TLScriptFunctions {
 	 * @return The sine of the angle.
 	 */
 	@Label("Sine function")
-	@SideEffectFree
+	@SideEffectFree(canEvaluateAtCompileTime = true)
 	public static double sin(@Mandatory double a) {
 		return Math.sin(a);
 	}
@@ -371,7 +371,7 @@ public class MathFunctions extends TLScriptFunctions {
 	 * @return The hyperbolic sine of <code>x</code>.
 	 */
 	@Label("Hyperbolic sine")
-	@SideEffectFree
+	@SideEffectFree(canEvaluateAtCompileTime = true)
 	public static double sinh(@Mandatory double x) {
 		return Math.sinh(x);
 	}
@@ -384,7 +384,7 @@ public class MathFunctions extends TLScriptFunctions {
 	 * @return The positive square root of <code>a</code>.
 	 */
 	@Label("Square root")
-	@SideEffectFree
+	@SideEffectFree(canEvaluateAtCompileTime = true)
 	public static double sqrt(@Mandatory double a) {
 		return Math.sqrt(a);
 	}
@@ -397,7 +397,7 @@ public class MathFunctions extends TLScriptFunctions {
 	 * @return The tangent of the angle.
 	 */
 	@Label("Tangent function")
-	@SideEffectFree
+	@SideEffectFree(canEvaluateAtCompileTime = true)
 	public static double tan(@Mandatory double a) {
 		return Math.tan(a);
 	}
@@ -410,7 +410,7 @@ public class MathFunctions extends TLScriptFunctions {
 	 * @return The hyperbolic tangent of <code>x</code>.
 	 */
 	@Label("Hyperbolic tangent")
-	@SideEffectFree
+	@SideEffectFree(canEvaluateAtCompileTime = true)
 	public static double tanh(@Mandatory double x) {
 		return Math.tanh(x);
 	}
@@ -424,7 +424,7 @@ public class MathFunctions extends TLScriptFunctions {
 	 * @return The measurement of the angle <code>angrad</code> in degrees
 	 */
 	@Label("Convert Radians to Degrees")
-	@SideEffectFree
+	@SideEffectFree(canEvaluateAtCompileTime = true)
 	public static double toDegrees(@Mandatory double angrad) {
 		return Math.toDegrees(angrad);
 	}
@@ -438,7 +438,7 @@ public class MathFunctions extends TLScriptFunctions {
 	 * @return the measurement of the angle <code>angdeg</code> radians.
 	 */
 	@Label("Convert Degrees to Radians")
-	@SideEffectFree
+	@SideEffectFree(canEvaluateAtCompileTime = true)
 	public static double toRadians(@Mandatory double angdeg) {
 		return Math.toRadians(angdeg);
 	}
@@ -453,7 +453,7 @@ public class MathFunctions extends TLScriptFunctions {
 	 * @return The size of an ulp of the argument.
 	 */
 	@Label("Unit of least precision")
-	@SideEffectFree
+	@SideEffectFree(canEvaluateAtCompileTime = true)
 	public static double ulp(@Mandatory double d) {
 		return Math.ulp(d);
 	}
@@ -464,7 +464,7 @@ public class MathFunctions extends TLScriptFunctions {
 	 * @return The value of pi (3.141592653589793).
 	 */
 	@Label("Value of pi")
-	@SideEffectFree
+	@SideEffectFree(canEvaluateAtCompileTime = true)
 	public static double pi() {
 		return Math.PI;
 	}
@@ -475,7 +475,7 @@ public class MathFunctions extends TLScriptFunctions {
 	 * @return The value of e (2.718281828459045).
 	 */
 	@Label("Value of e")
-	@SideEffectFree
+	@SideEffectFree(canEvaluateAtCompileTime = true)
 	public static double e() {
 		return Math.E;
 	}

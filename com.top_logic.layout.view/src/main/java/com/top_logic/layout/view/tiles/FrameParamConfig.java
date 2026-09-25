@@ -21,9 +21,9 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  * A URL carries text, a frame parameter typically a business object. The two expressions convert
  * between them: {@link #getExpr() expr} maps the value onto the text that names it,
  * {@link #getReverse() reverse} maps the text back onto the value. For an object identified by its
- * technical identifier this is {@code expr="p -> objectId($p)"} and
- * {@code reverse="id -> objectResolve(`tl.accounts:Person`, $id)"}; a readable URL uses a business
- * key instead, at the price of the uniqueness the key then has to have.
+ * technical identifier within the table storing it this is {@code expr="p -> objectId($p)"} and
+ * {@code reverse="id -> objectResolve('Person', $id)"}; a readable URL uses a business key instead,
+ * at the price of the uniqueness the key then has to have.
  * </p>
  *
  * <p>

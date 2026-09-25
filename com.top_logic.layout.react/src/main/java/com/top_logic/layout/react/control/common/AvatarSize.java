@@ -13,11 +13,11 @@ import com.top_logic.basic.config.ExternallyNamed;
  */
 public enum AvatarSize implements ExternallyNamed {
 
+	/** 32 px: the standard avatar size - the first value, hence the default. */
+	MEDIUM("md"),
+
 	/** 24 px: a compact avatar, e.g. in a table cell or a list row. */
 	SMALL("sm"),
-
-	/** 32 px: the standard avatar size (the default). */
-	MEDIUM("md"),
 
 	/** 48 px: an emphasized avatar, e.g. in the header of a detail view. */
 	LARGE("lg"),

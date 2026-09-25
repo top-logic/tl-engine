@@ -13,6 +13,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
+import com.top_logic.layout.react.state.ButtonState;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -30,45 +31,6 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * </p>
  */
 public class ReactButtonControl extends ReactControl {
-
-	/** State key for the button label. */
-	private static final String LABEL = "label";
-
-	/** State key for the disabled flag. */
-	private static final String DISABLED = "disabled";
-
-	/** State key for the {@link CommandModel#isActive() active} flag. */
-	private static final String ACTIVE = "active";
-
-	/** State key for the ThemeImage encoded form (e.g. "css:fas fa-edit", "/icons/foo.png"). */
-	private static final String IMAGE = "image";
-
-	/** State key for an explicit button tooltip (plain text). */
-	private static final String TOOLTIP = "tooltip";
-
-	/** State key for the button display mode (see {@link ButtonDisplayMode}). */
-	private static final String DISPLAY_MODE = "displayMode";
-
-	/** State key for additional CSS classes appended to the button's class list. */
-	private static final String CSS_CLASSES = "cssClasses";
-
-	/** State key for the {@link ButtonAppearance appearance}. */
-	private static final String APPEARANCE = "appearance";
-
-	/** State key for the {@link ButtonTone tone}. */
-	private static final String TONE = "tone";
-
-	/** State key for the {@link ButtonSize size}. */
-	private static final String SIZE = "size";
-
-	/** State key for a direct client-side navigation target (bypasses the server command). */
-	private static final String NAVIGATE_URL = "navigateUrl";
-
-	/** State key for the flag opening {@link #NAVIGATE_URL} in a browser window of its own. */
-	private static final String NAVIGATE_NEW_WINDOW = "navigateNewWindow";
-
-	/** State key for the keyboard gesture that triggers this button (e.g. "ENTER", "Ctrl+S"). */
-	private static final String KEY_GESTURE = "keyGesture";
 
 	private final ButtonAction _action;
 
@@ -187,7 +149,7 @@ public class ReactButtonControl extends ReactControl {
 	 *        The new label text.
 	 */
 	public void setLabel(String label) {
-		putState(LABEL, label);
+		putState(ButtonState.LABEL__PROP, label);
 	}
 
 	/**
@@ -197,7 +159,7 @@ public class ReactButtonControl extends ReactControl {
 	 *        Whether the button should be disabled.
 	 */
 	public void setDisabled(boolean disabled) {
-		putState(DISABLED, disabled);
+		putState(ButtonState.DISABLED__PROP, disabled);
 	}
 
 	/**
@@ -209,14 +171,14 @@ public class ReactButtonControl extends ReactControl {
 	 * @see CommandModel#isActive()
 	 */
 	public void setActive(boolean active) {
-		putState(ACTIVE, active ? Boolean.TRUE : null);
+		putState(ButtonState.ACTIVE__PROP, active ? Boolean.TRUE : null);
 	}
 
 	/**
 	 * Whether the button is currently marked as {@link #setActive(boolean) active}.
 	 */
 	public boolean isActive() {
-		return Boolean.TRUE.equals(getState(ACTIVE));
+		return Boolean.TRUE.equals(getState(ButtonState.ACTIVE__PROP));
 	}
 
 	/**
@@ -233,7 +195,7 @@ public class ReactButtonControl extends ReactControl {
 	 * Sets the button tooltip text. {@code null} or empty clears the tooltip.
 	 */
 	public void setTooltip(String tooltip) {
-		putState(TOOLTIP, (tooltip == null || tooltip.isEmpty()) ? null : tooltip);
+		putState(ButtonState.TOOLTIP__PROP, (tooltip == null || tooltip.isEmpty()) ? null : tooltip);
 	}
 
 	/**
@@ -241,7 +203,7 @@ public class ReactButtonControl extends ReactControl {
 	 * {@code KeyStroke.of(Key.S).ctrl()}). {@code null} removes the binding.
 	 */
 	public void setKeyGesture(KeyStroke keyGesture) {
-		putState(KEY_GESTURE, keyGesture == null ? null : keyGesture.toString());
+		putState(ButtonState.KEY_GESTURE__PROP, keyGesture == null ? null : keyGesture.toString());
 	}
 
 	/**
@@ -266,7 +228,7 @@ public class ReactButtonControl extends ReactControl {
 	 *        The display mode, or {@code null} to fall back to the React component default.
 	 */
 	public void setDisplayMode(ButtonDisplayMode displayMode) {
-		putState(DISPLAY_MODE, displayMode == null ? null : displayMode.getExternalName());
+		putState(ButtonState.DISPLAY_MODE__PROP, displayMode == null ? null : displayMode.getExternalName());
 	}
 
 	/**
@@ -274,7 +236,7 @@ public class ReactButtonControl extends ReactControl {
 	 * {@code null} or empty removes them.
 	 */
 	public void setCssClasses(String cssClasses) {
-		putState(CSS_CLASSES, (cssClasses == null || cssClasses.isEmpty()) ? null : cssClasses);
+		putState(ButtonState.CSS_CLASSES__PROP, (cssClasses == null || cssClasses.isEmpty()) ? null : cssClasses);
 	}
 
 	/**
@@ -282,7 +244,7 @@ public class ReactButtonControl extends ReactControl {
 	 * render the button as an inline text link).
 	 */
 	public void setAppearance(ButtonAppearance appearance) {
-		putState(APPEARANCE,
+		putState(ButtonState.APPEARANCE__PROP,
 			appearance == null || appearance == ButtonAppearance.DEFAULT ? null : appearance.getExternalName());
 	}
 
@@ -290,14 +252,14 @@ public class ReactButtonControl extends ReactControl {
 	 * Sets the button {@link ButtonTone tone}; {@link ButtonTone#DEFAULT} leaves the key unset.
 	 */
 	public void setTone(ButtonTone tone) {
-		putState(TONE, tone == null || tone == ButtonTone.DEFAULT ? null : tone.getExternalName());
+		putState(ButtonState.TONE__PROP, tone == null || tone == ButtonTone.DEFAULT ? null : tone.getExternalName());
 	}
 
 	/**
 	 * Sets the button {@link ButtonSize size}.
 	 */
 	public void setSize(ButtonSize size) {
-		putState(SIZE, size == null || size == ButtonSize.DEFAULT ? null : size.getExternalName());
+		putState(ButtonState.SIZE__PROP, size == null || size == ButtonSize.DEFAULT ? null : size.getExternalName());
 	}
 
 	/**
@@ -305,7 +267,7 @@ public class ReactButtonControl extends ReactControl {
 	 * a server command (e.g. an external SSO redirect). {@code null} clears it.
 	 */
 	public void setNavigateUrl(String url) {
-		putState(NAVIGATE_URL, url);
+		putState(ButtonState.NAVIGATE_URL__PROP, url);
 	}
 
 	/**
@@ -321,14 +283,14 @@ public class ReactButtonControl extends ReactControl {
 	 * </p>
 	 */
 	public void setNavigateNewWindow(boolean newWindow) {
-		putState(NAVIGATE_NEW_WINDOW, newWindow ? Boolean.TRUE : null);
+		putState(ButtonState.NAVIGATE_NEW_WINDOW__PROP, newWindow ? Boolean.TRUE : null);
 	}
 
 	private void putImageState(ThemeImage image) {
 		if (image != null) {
-			putState(IMAGE, image.resolve().toEncodedForm());
+			putState(ButtonState.IMAGE__PROP, image.resolve().toEncodedForm());
 		} else {
-			putState(IMAGE, null);
+			putState(ButtonState.IMAGE__PROP, null);
 		}
 	}
 
@@ -355,7 +317,7 @@ public class ReactButtonControl extends ReactControl {
 	 */
 	@ReactCommandHandler(CMD_CLICK)
 	HandlerResult handleClick(ReactContext context) {
-		if (isHidden() || Boolean.TRUE.equals(getState(DISABLED))) {
+		if (isHidden() || Boolean.TRUE.equals(getState(ButtonState.DISABLED__PROP))) {
 			return HandlerResult.error(I18NConstants.ERROR_COMMAND_NOT_EXECUTABLE);
 		}
 		if (_model != null && (!_model.isVisible() || !_model.isExecutable())) {
@@ -399,7 +361,8 @@ public class ReactButtonControl extends ReactControl {
 	 */
 	@Override
 	protected java.util.Set<String> scriptingPresentationKeys() {
-		return presentationKeys(super.scriptingPresentationKeys(), APPEARANCE, TONE, SIZE, KEY_GESTURE, IMAGE,
-			DISPLAY_MODE, CSS_CLASSES);
+		return presentationKeys(super.scriptingPresentationKeys(), ButtonState.APPEARANCE__PROP,
+			ButtonState.TONE__PROP, ButtonState.SIZE__PROP, ButtonState.KEY_GESTURE__PROP, ButtonState.IMAGE__PROP,
+			ButtonState.DISPLAY_MODE__PROP, ButtonState.CSS_CLASSES__PROP);
 	}
 }

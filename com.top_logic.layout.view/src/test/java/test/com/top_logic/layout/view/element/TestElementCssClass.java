@@ -27,6 +27,7 @@ import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.common.TextOverflow;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.ControlState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.UIElement;
@@ -100,53 +101,53 @@ public class TestElementCssClass extends TestCase {
 
 	/** The class of a container element reaches the control arranging its children. */
 	public void testContainerCssClass() {
-		assertEquals("tlDemoStack", _stack.get(ReactControl.CSS_CLASS));
+		assertEquals("tlDemoStack", _stack.get(ControlState.CSS_CLASS__PROP));
 	}
 
 	/** The class of a text element reaches the control displaying it. */
 	public void testTextCssClass() {
-		assertEquals("tlDemoText", child(1).get(ReactControl.CSS_CLASS));
+		assertEquals("tlDemoText", child(1).get(ControlState.CSS_CLASS__PROP));
 	}
 
 	/** The class of a picture reaches the control displaying it. */
 	public void testImageCssClass() {
-		assertEquals("tlDemoImage", child(3).get(ReactControl.CSS_CLASS));
+		assertEquals("tlDemoImage", child(3).get(ControlState.CSS_CLASS__PROP));
 	}
 
 	/** The class of a panel reaches the control framing its content. */
 	public void testPanelCssClass() {
-		assertEquals("tlDemoPanel", child(4).get(ReactControl.CSS_CLASS));
+		assertEquals("tlDemoPanel", child(4).get(ControlState.CSS_CLASS__PROP));
 	}
 
 	/** The class of a card reaches the control drawing it. */
 	public void testCardCssClass() {
-		assertEquals("tlDemoCard", child(5).get(ReactControl.CSS_CLASS));
+		assertEquals("tlDemoCard", child(5).get(ControlState.CSS_CLASS__PROP));
 	}
 
 	/** The class of a grid reaches the control laying out its cells. */
 	public void testGridCssClass() {
-		assertEquals("tlDemoGrid", child(6).get(ReactControl.CSS_CLASS));
+		assertEquals("tlDemoGrid", child(6).get(ControlState.CSS_CLASS__PROP));
 	}
 
 	/** The class of a button reaches the control the command is triggered with. */
 	public void testButtonCssClass() {
-		assertEquals("tlDemoButton", child(7).get(ReactControl.CSS_CLASS));
+		assertEquals("tlDemoButton", child(7).get(ControlState.CSS_CLASS__PROP));
 	}
 
 	/** The class of an avatar reaches the control showing the account. */
 	public void testAvatarCssClass() {
-		assertEquals("tlDemoAvatar", child(8).get(ReactControl.CSS_CLASS));
+		assertEquals("tlDemoAvatar", child(8).get(ControlState.CSS_CLASS__PROP));
 	}
 
 	/** The class of a tab bar reaches the control switching between its tabs. */
 	public void testTabBarCssClass() {
-		assertEquals("tlDemoTabs", child(9).get(ReactControl.CSS_CLASS));
+		assertEquals("tlDemoTabs", child(9).get(ControlState.CSS_CLASS__PROP));
 	}
 
 	/** An element that states no class has none, rather than an empty one. */
 	public void testWithoutTheProperty() {
 		assertNull("An element without the property must leave the class unset.",
-			child(0).get(ReactControl.CSS_CLASS));
+			child(0).get(ControlState.CSS_CLASS__PROP));
 	}
 
 	/**
@@ -157,7 +158,7 @@ public class TestElementCssClass extends TestCase {
 		Map<?, ?> truncated = child(2);
 
 		assertEquals("The class must carry nothing but what was configured.",
-			"tlDemoEllipsis", truncated.get(ReactControl.CSS_CLASS));
+			"tlDemoEllipsis", truncated.get(ControlState.CSS_CLASS__PROP));
 		assertEquals("The overflow handling reaches the client as a property of its own.",
 			TextOverflow.ELLIPSIS.getExternalName(), truncated.get(OVERFLOW));
 	}

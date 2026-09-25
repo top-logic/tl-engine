@@ -1,13 +1,11 @@
 import { React, useTLState, useTLCommand, useKeyboardBinding, rootClassName, TOOLTIP_ATTR } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import type { TLCellProps, ButtonState } from 'tl-react-bridge';
 import { BrandButton } from '../example-lib';
-import {
-  APPEARANCE_PRIMARY, CMD_CLICK, STATE_ACTIVE, STATE_APPEARANCE, STATE_CSS_CLASSES, STATE_DISABLED,
-  STATE_HIDDEN, STATE_KEY_GESTURE, STATE_LABEL, STATE_NAVIGATE_NEW_WINDOW, STATE_NAVIGATE_URL,
-  STATE_TONE, STATE_TOOLTIP, TONE_DANGER,
-} from './state-keys';
 
 const { useCallback } = React;
+
+/** Command a button sends when it is clicked. */
+const CMD_CLICK = 'click';
 
 /**
  * Renders the state of a TopLogic button (module name `TLButton`) with the library's
@@ -33,17 +31,17 @@ const { useCallback } = React;
  * buttons.</p>
  */
 const BrandButtonAdapter: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState();
+  const state = useTLState<ButtonState>();
   const sendCommand = useTLCommand();
 
-  const label = state[STATE_LABEL] as string | undefined;
-  const disabled = state[STATE_DISABLED] === true;
-  const hidden = state[STATE_HIDDEN] === true;
-  const tooltip = state[STATE_TOOLTIP] as string | undefined;
-  const navigateUrl = state[STATE_NAVIGATE_URL] as string | undefined;
-  const navigateNewWindow = state[STATE_NAVIGATE_NEW_WINDOW] === true;
-  const variant = state[STATE_TONE] === TONE_DANGER ? 'danger'
-    : state[STATE_APPEARANCE] === APPEARANCE_PRIMARY ? 'primary' : 'secondary';
+  const label = state.label;
+  const disabled = state.disabled === true;
+  const hidden = state.hidden === true;
+  const tooltip = state.tooltip;
+  const navigateUrl = state.navigateUrl;
+  const navigateNewWindow = state.navigateNewWindow === true;
+  const variant = state.tone === 'danger' ? 'danger'
+    : state.appearance === 'primary' ? 'primary' : 'secondary';
 
   const handleClick = useCallback(() => {
     if (navigateUrl) {
@@ -58,7 +56,7 @@ const BrandButtonAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   }, [sendCommand, navigateUrl, navigateNewWindow]);
 
   // A hidden or disabled button declines the gesture, so it falls through to an outer binding.
-  useKeyboardBinding(state[STATE_KEY_GESTURE] as string | undefined, () => {
+  useKeyboardBinding(state.keyGesture, () => {
     if (disabled || hidden) {
       return false;
     }
@@ -76,8 +74,8 @@ const BrandButtonAdapter: React.FC<TLCellProps> = ({ controlId }) => {
       id={controlId}
       variant={variant}
       disabled={disabled}
-      pressed={state[STATE_ACTIVE] === true}
-      className={rootClassName(state, state[STATE_CSS_CLASSES] as string | undefined)}
+      pressed={state.active === true}
+      className={rootClassName(state, state.cssClasses)}
       onClick={handleClick}
       {...tooltipProps}
     >

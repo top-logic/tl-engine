@@ -35,6 +35,7 @@ import com.top_logic.layout.react.protocol.StateEvent;
 import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.routing.RoutingParticipant;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.ControlState;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.model.listen.ModelScope;
 import com.top_logic.model.listen.ObservedObjects;
@@ -66,12 +67,6 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * </p>
  */
 public class ReactControl implements HTMLFragment, IReactControl, ScriptingControl {
-
-	/** State key for whether the control is hidden on the client. */
-	private static final String HIDDEN = "hidden";
-
-	/** @see #setCssClass(String) */
-	public static final String CSS_CLASS = "cssClass";
 
 	/**
 	 * Key under which the {@link #diagnostics() diagnostic observations} appear in the
@@ -572,7 +567,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 *         control carries.
 	 */
 	protected Set<String> scriptingPresentationKeys() {
-		return Set.of(CSS_CLASS);
+		return Set.of(ControlState.CSS_CLASS__PROP);
 	}
 
 	/**
@@ -899,7 +894,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 *        {@code true} to hide, {@code false} to show.
 	 */
 	public void setHidden(boolean hidden) {
-		putState(HIDDEN, Boolean.valueOf(hidden));
+		putState(ControlState.HIDDEN__PROP, Boolean.valueOf(hidden));
 	}
 
 	/**
@@ -913,7 +908,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 * </p>
 	 */
 	public boolean isHidden() {
-		return Boolean.TRUE.equals(getState(HIDDEN));
+		return Boolean.TRUE.equals(getState(ControlState.HIDDEN__PROP));
 	}
 
 	/**
@@ -928,7 +923,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 *        The CSS class, or {@code null} for none.
 	 */
 	public void setCssClass(String cssClass) {
-		putState(CSS_CLASS, cssClass);
+		putState(ControlState.CSS_CLASS__PROP, cssClass);
 	}
 
 	/**
@@ -937,7 +932,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 * @see #setCssClass(String)
 	 */
 	public String getCssClass() {
-		return (String) getState(CSS_CLASS);
+		return (String) getState(ControlState.CSS_CLASS__PROP);
 	}
 
 	/**

@@ -28,6 +28,7 @@ import com.top_logic.layout.react.control.form.FieldValueArguments;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactNumberInputControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 
 /**
@@ -221,7 +222,7 @@ public class TestReactNumberInputControl extends TestCase {
 		}
 
 		Object state() {
-			return getState(VALUE);
+			return getState(FieldState.VALUE__PROP);
 		}
 
 		Object inputMode() {

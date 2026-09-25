@@ -11,6 +11,7 @@ import java.util.Map;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.state.ControlState;
 
 /**
  * A {@link ReactControl} that stacks content over a base control via the {@code TLOverlay} React
@@ -53,9 +54,9 @@ public class ReactOverlayControl extends ReactControl {
 	 * State key for the CSS class of a layer, which a layer descriptor carries as a control carries
 	 * its own.
 	 *
-	 * @see ReactControl#CSS_CLASS
+	 * @see ControlState#CSS_CLASS__PROP
 	 */
-	public static final String LAYER_CSS_CLASS = CSS_CLASS;
+	public static final String LAYER_CSS_CLASS = ControlState.CSS_CLASS__PROP;
 
 	/**
 	 * Content placed over the base of a {@link ReactOverlayControl}.

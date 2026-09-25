@@ -1,5 +1,5 @@
 import { React, useTLState, useTLCommand, useKeyboardBinding, rootClassName, TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import type { TLCellProps, ButtonState } from 'tl-react-bridge';
 import { ThemeIcon } from './icon/ThemeIcon';
 import { useButtonDefaults, buttonClassName } from './button/ButtonDefaults';
 import type { ButtonAppearance } from './button/ButtonDefaults';
@@ -19,7 +19,7 @@ export interface TLButtonProps {
   /** Whether the button is disabled.  Defaults to state.disabled. */
   disabled?: boolean;
   /** Display mode.  Defaults to state.displayMode or "label-only". */
-  displayMode?: 'icon-only' | 'icon-label' | 'label-only';
+  displayMode?: ButtonState.DisplayMode;
   /** Appearance; defaults to state.appearance, then the container's ButtonDefaults, then "secondary". */
   appearance?: ButtonAppearance;
   /** Destructive action; defaults to state.tone === "danger". */
@@ -51,31 +51,31 @@ export interface TLButtonProps {
  * so hiding the label text keeps the button named for assistive technology.</p>
  */
 const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, label, image, disabled, displayMode, appearance, danger }) => {
-  const state = useTLState();
+  const state = useTLState<ButtonState>();
   const sendCommand = useTLCommand();
 
   const resolvedCommand = command ?? 'click';
-  const resolvedLabel = label ?? (state.label as string);
-  const resolvedImage = image ?? (state.image as string | undefined);
+  const resolvedLabel = label ?? state.label;
+  const resolvedImage = image ?? state.image;
   const resolvedDisabled = disabled ?? state.disabled === true;
   // The button's command is the alternative currently in force (e.g. the active theme) or a
   // pressed toggle; marked visually and reported to assistive technology as pressed.
   const resolvedActive = state.active === true;
   const resolvedHidden = state.hidden === true;
-  const tooltip = state.tooltip as string | undefined;
+  const tooltip = state.tooltip;
   const defaults = useButtonDefaults();
   const resolvedAppearance: ButtonAppearance = appearance
-    ?? (state.appearance as ButtonAppearance | undefined)
+    ?? state.appearance
     ?? defaults.appearance ?? 'secondary';
   const resolvedDanger = danger ?? state.tone === 'danger';
-  const resolvedMode = displayMode ?? (state.displayMode as string | undefined) ?? 'label-only';
+  const resolvedMode = displayMode ?? state.displayMode ?? 'label-only';
   const small = state.size === 'small' && resolvedMode === 'icon-only';
   // Additional CSS classes declared on the command this button renders, e.g. to mark a
   // destructive action.
-  const cssClasses = state.cssClasses as string | undefined;
+  const cssClasses = state.cssClasses;
   // When set, clicking navigates the browser directly (e.g. an external SSO redirect) instead of
   // dispatching a server command - this avoids depending on the asynchronous SSE round-trip.
-  const navigateUrl = state.navigateUrl as string | undefined;
+  const navigateUrl = state.navigateUrl;
   // Whether that target gets a window of its own, for a destination the user comes back from while
   // this page keeps running (e.g. a re-authentication at an external provider). The window is opened
   // from the click handler, so it is a window the user asked for and not a blocked pop-up, and it is
@@ -98,7 +98,7 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
 
   // Trigger this button when its declared keyboard gesture fires within the enclosing scope.
   // A hidden or disabled button declines (returns false) so the gesture falls through.
-  const keyGesture = state.keyGesture as string | undefined;
+  const keyGesture = state.keyGesture;
   useKeyboardBinding(keyGesture, () => {
     if (resolvedDisabled || resolvedHidden) {
       return false;

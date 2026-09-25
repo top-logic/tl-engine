@@ -29,6 +29,7 @@ import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.layout.react.control.ScriptingModelKey;
+import com.top_logic.layout.react.control.form.FieldValueArguments;
 import com.top_logic.layout.react.scripting.ReactActionContext;
 import com.top_logic.layout.react.scripting.ReactOptionScope;
 import com.top_logic.layout.react.control.ReactCommandHandler;
@@ -37,6 +38,7 @@ import com.top_logic.layout.react.control.ReactValueColor;
 import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.navigation.ObjectNavigator;
+import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.scripting.recorder.ref.ContextDependent;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
@@ -322,7 +324,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	}
 
 	private void updateValueState() {
-		putState(VALUE, toOptionDescriptors(getSelectionSorted()));
+		putState(FieldState.VALUE__PROP, toOptionDescriptors(getSelectionSorted()));
 	}
 
 	/**
@@ -403,16 +405,16 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 * Handles the {@link #CMD_VALUE_CHANGED} command from the React client.
 	 *
 	 * @param arguments
-	 *        Must contain a {@link #VALUE} entry with a list of option value IDs.
+	 *        Must contain a {@link FieldValueArguments#VALUE} entry with a list of option value IDs.
 	 */
 	// Argument is a string array (selected option value ids). The config-JSON binding does not
 	// support a List of primitives (the reader expects list elements to be objects), so this command
 	// keeps a raw Map with a lightweight @ReactParam schema rather than a typed ConfigurationItem.
 	@SuppressWarnings("unchecked")
-	@ReactCommandHandler(value = CMD_VALUE_CHANGED, params = @ReactParam(name = VALUE, type = "string[]",
+	@ReactCommandHandler(value = CMD_VALUE_CHANGED, params = @ReactParam(name = FieldValueArguments.VALUE, type = "string[]",
 		required = true, description = "List of selected option value ids (from the options descriptors)."))
 	HandlerResult handleValueChanged(Map<String, Object> arguments) {
-		List<String> selectedIds = (List<String>) arguments.get(VALUE);
+		List<String> selectedIds = (List<String>) arguments.get(FieldValueArguments.VALUE);
 		if (selectedIds == null) {
 			selectedIds = Collections.emptyList();
 		}
@@ -485,7 +487,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	@Override
 	public RecordedCommand recordCommand(String command, Map<String, Object> arguments) {
 		if (CMD_VALUE_CHANGED.equals(command) && arguments != null) {
-			List<String> ids = (List<String>) arguments.get(VALUE);
+			List<String> ids = (List<String>) arguments.get(FieldValueArguments.VALUE);
 			if (ids != null) {
 				ReactOptionScope scope =
 					new ReactOptionScope(new ArrayList<>(_selectModel.getOptions()), _labelProvider);

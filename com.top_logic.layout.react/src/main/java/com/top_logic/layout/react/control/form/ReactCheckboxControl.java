@@ -10,6 +10,7 @@ import java.util.Set;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
+import com.top_logic.layout.react.state.CheckboxState;
 import com.top_logic.model.annotate.ui.BooleanPresentation;
 
 /**
@@ -24,15 +25,6 @@ import com.top_logic.model.annotate.ui.BooleanPresentation;
  * </p>
  */
 public class ReactCheckboxControl extends ReactFormFieldControl {
-
-	/** State key telling the client that the checkbox has a third, "no value" state. */
-	private static final String TRI_STATE = "triState";
-
-	/**
-	 * State key naming the shape the client draws, the external name of the
-	 * {@link #getPresentation() presentation}. Absent for the box that is ticked.
-	 */
-	private static final String DISPLAY = "display";
 
 	private final boolean _triState;
 
@@ -83,10 +75,10 @@ public class ReactCheckboxControl extends ReactFormFieldControl {
 			? BooleanPresentation.SWITCH
 			: BooleanPresentation.CHECKBOX;
 		if (triState) {
-			putState(TRI_STATE, Boolean.TRUE);
+			putState(CheckboxState.TRI_STATE__PROP, Boolean.TRUE);
 		}
 		if (_presentation == BooleanPresentation.SWITCH) {
-			putState(DISPLAY, BooleanPresentation.SWITCH.getExternalName());
+			putState(CheckboxState.DISPLAY__PROP, BooleanPresentation.SWITCH.getExternalName());
 		}
 	}
 
@@ -103,7 +95,7 @@ public class ReactCheckboxControl extends ReactFormFieldControl {
 	 */
 	@Override
 	protected Set<String> scriptingPresentationKeys() {
-		return presentationKeys(super.scriptingPresentationKeys(), DISPLAY);
+		return presentationKeys(super.scriptingPresentationKeys(), CheckboxState.DISPLAY__PROP);
 	}
 
 	/**

@@ -13,6 +13,7 @@ import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.state.FieldState;
 
 /**
  * A {@link ReactFormFieldControl} for number input fields.
@@ -23,7 +24,7 @@ import com.top_logic.layout.react.ReactContext;
  * number of digits the attribute or property asks for: a German user sees and types {@code 12,5}
  * where an English user sees and types {@code 12.5}. A format of its own kind writes its own text -
  * a duration in milliseconds reads as {@code 1h 30min} - and the field follows it. The client is
- * handed the formatted text in {@link #VALUE} and sends back the text as typed; it does no
+ * handed the formatted text in {@link FieldState#VALUE__PROP} and sends back the text as typed; it does no
  * conversion of its own, and asks for the on-screen keyboard the format's {@link #INPUT_MODE}
  * names.
  * </p>
@@ -71,7 +72,7 @@ public class ReactNumberInputControl extends ReactFormFieldControl {
 		putState(INPUT_MODE, inputMode(format));
 		// The base constructor seeded the raw number into the value state; re-emit it as the text
 		// the user reads and edits.
-		putState(VALUE, format(model.getValue()));
+		putState(FieldState.VALUE__PROP, format(model.getValue()));
 		setSendValueOnBlur(true);
 	}
 
@@ -140,7 +141,7 @@ public class ReactNumberInputControl extends ReactFormFieldControl {
 
 	@Override
 	protected void handleModelValueChanged(FieldModel source, Object oldValue, Object newValue) {
-		putState(VALUE, format(newValue));
+		putState(FieldState.VALUE__PROP, format(newValue));
 	}
 
 	/**

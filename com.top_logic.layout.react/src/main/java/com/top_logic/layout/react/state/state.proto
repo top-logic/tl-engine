@@ -1,0 +1,266 @@
+/*
+ * The state contract between the server-side controls and the React components rendering them.
+ *
+ * Each message describes the state object a control sends to its component: the property names,
+ * their types and their meaning. A component library replacing a TopLogic component (see
+ * "replace" of 'tl-react-bridge') renders the state described here.
+ *
+ * The message of a replaceable component, by the component name it is registered under:
+ *
+ *   TLButton   - ButtonState
+ *   TLCheckbox - CheckboxState
+ *
+ * The state is a flat JSON object: a property that is absent has its documented default. The
+ * Java side takes the property names from the generated constants, the TypeScript side reads the
+ * state through the generated types (exported from 'tl-react-bridge').
+ */
+package com.top_logic.layout.react.state;
+
+option NoReflection;
+option NoBinary;
+option NoXml;
+option NoListener;
+option NoTypeKind;
+option TypeScript = "../../../react-src/state/control-state.ts";
+
+/**
+ * State properties every control carries.
+ */
+message ControlState {
+	/**
+	 * Whether the control is hidden. A hidden control keeps its component mounted (with its local
+	 * state), the component renders nothing or is styled away.
+	 */
+	bool hidden;
+
+	/**
+	 * An additional CSS class for the root element of the component, standing beside the classes
+	 * the component brings itself.
+	 */
+	string cssClass;
+}
+
+/**
+ * State properties every form field carries.
+ */
+message FieldState extends ControlState {
+	/**
+	 * The value of the field. Its JSON form depends on the kind of the field, see the state of the
+	 * concrete field component.
+	 */
+	json value;
+
+	/**
+	 * Whether the value can be edited. A field that cannot be edited displays its value only.
+	 */
+	bool editable;
+
+	/**
+	 * Whether a value is required.
+	 */
+	bool mandatory;
+
+	/**
+	 * Whether the empty value is a legal value of the field.
+	 */
+	bool nullable;
+
+	/**
+	 * Whether the value of the field is invalid, see {@link #errorMessage}.
+	 */
+	bool hasError;
+
+	/**
+	 * The message describing the error, while {@link #hasError} is set.
+	 */
+	string errorMessage;
+
+	/**
+	 * Whether the value of the field is questionable without being invalid.
+	 */
+	bool hasWarnings;
+
+	/**
+	 * The label of the field.
+	 */
+	string label;
+
+	/**
+	 * The tooltip of the field (plain text).
+	 */
+	string tooltip;
+
+	/**
+	 * The text shown while the field is empty and editable.
+	 */
+	string placeholder;
+
+	/**
+	 * Whether pressing Enter in the field sends the submit command with the value typed.
+	 */
+	bool submitOnEnter;
+}
+
+/**
+ * State of a button, the component {@code TLButton}.
+ *
+ * A click sends the command {@code click} to the server, unless {@link #navigateUrl} is set.
+ */
+message ButtonState extends ControlState {
+
+	/**
+	 * What a button shows of its icon and its label.
+	 */
+	enum DisplayMode {
+		/** Only the icon is shown; the label serves as tooltip and accessible name. */
+		@Name("icon-only")
+		ICON_ONLY;
+
+		/** Icon and label side by side. */
+		@Name("icon-label")
+		ICON_LABEL;
+
+		/** Only the label is shown. */
+		@Name("label-only")
+		LABEL_ONLY;
+	}
+
+	/**
+	 * How a button is drawn. Absent for the standard appearance.
+	 */
+	enum Appearance {
+		/** Emphasized, for the primary action of a dialog. */
+		@Name("primary")
+		PRIMARY;
+
+		/** No frame and no fill until pointed at: for toolbars and icon buttons. */
+		@Name("ghost")
+		GHOST;
+
+		/** An inline text link rather than a button. */
+		@Name("link")
+		LINK;
+	}
+
+	/**
+	 * The kind of action a button stands for. Absent for an ordinary action.
+	 */
+	enum Tone {
+		/** A destructive action: delete, discard, revoke. */
+		@Name("danger")
+		DANGER;
+	}
+
+	/**
+	 * The size of a button. Absent for the standard size.
+	 */
+	enum Size {
+		/** A compact button, e.g. for a secondary inline action. */
+		@Name("small")
+		SMALL;
+	}
+
+	/**
+	 * The label of the button.
+	 */
+	string label;
+
+	/**
+	 * Whether the button cannot be pressed.
+	 */
+	bool disabled;
+
+	/**
+	 * Whether the effect of the button's command is currently in force: the alternative chosen, or
+	 * a pressed toggle. Absent when not.
+	 */
+	bool active;
+
+	/**
+	 * The icon of the button, the encoded form of a theme image (e.g. {@code css:fas fa-edit} for
+	 * an icon font class, or the path of an image file).
+	 */
+	string image;
+
+	/**
+	 * An explicit tooltip (plain text), shown whatever the button displays.
+	 */
+	string tooltip;
+
+	/**
+	 * What the button shows of its {@link #image} and its {@link #label}. Absent: the label only.
+	 */
+	DisplayMode displayMode;
+
+	/**
+	 * Additional CSS classes of the button, separated by spaces.
+	 */
+	string cssClasses;
+
+	/**
+	 * How the button is drawn. Absent: the standard appearance, or the appearance its container
+	 * suggests.
+	 */
+	Appearance appearance;
+
+	/**
+	 * The kind of action the button stands for. Absent: an ordinary action.
+	 */
+	Tone tone;
+
+	/**
+	 * The size of the button. Absent: the standard size.
+	 */
+	Size size;
+
+	/**
+	 * A URL the browser navigates to on a click, instead of sending a command to the server.
+	 */
+	string navigateUrl;
+
+	/**
+	 * Whether {@link #navigateUrl} is opened in a browser window of its own, instead of replacing
+	 * the page the button is on.
+	 */
+	bool navigateNewWindow;
+
+	/**
+	 * The keyboard gesture that triggers the button (e.g. {@code ENTER}, {@code Ctrl+S}).
+	 */
+	string keyGesture;
+}
+
+/**
+ * State of a boolean field drawn as a box that is ticked or a switch that is flipped, the
+ * component {@code TLCheckbox}.
+ *
+ * The {@link #value} is {@code true}, {@code false}, or - for a {@link #triState} field -
+ * {@code null} for "no value". A change is sent as the command {@code valueChanged} with the
+ * new value as argument {@code value}.
+ */
+message CheckboxState extends FieldState {
+
+	/**
+	 * The shape of the field.
+	 */
+	enum Display {
+		/** A box that is ticked. */
+		@Name("checkbox")
+		CHECKBOX;
+
+		/** A switch that is flipped. */
+		@Name("switch")
+		SWITCH;
+	}
+
+	/**
+	 * Whether the field has a third state for "no value". The component then shows an unset
+	 * field as indeterminate and cycles through the states on click: checked, unchecked, unset.
+	 */
+	bool triState;
+
+	/**
+	 * The shape of the field. Absent: a box that is ticked.
+	 */
+	Display display;
+}

@@ -15,6 +15,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.field.FieldControlRegistry;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
+import com.top_logic.layout.react.state.FieldState;
 
 /**
  * A field holding several values, each edited by the control its value type asks for.
@@ -104,7 +105,7 @@ public class ReactValueListControl extends ReactFormFieldControl {
 		_ordered = fieldSpec.isOrdered();
 		_elementProvider = elementProvider;
 		// The values are the element controls; the collection itself is nothing the client draws.
-		putState(VALUE, null);
+		putState(FieldState.VALUE__PROP, null);
 		putState(LAYOUT, _elementSpec.getMultilineRows() > 0 ? LAYOUT_BLOCK : LAYOUT_INLINE);
 		putState(ORDERED, Boolean.valueOf(_ordered));
 		reconcile();

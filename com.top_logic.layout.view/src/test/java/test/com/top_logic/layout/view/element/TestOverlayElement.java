@@ -28,6 +28,7 @@ import com.top_logic.layout.react.control.image.ImageSource;
 import com.top_logic.layout.react.control.layout.LayerAnchor;
 import com.top_logic.layout.react.control.layout.ReactOverlayControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.ControlState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.UIElement;
@@ -114,7 +115,7 @@ public class TestOverlayElement extends TestCase {
 
 	/** The CSS class of the overlay itself reaches the client. */
 	public void testOverlayCssClass() {
-		assertEquals("tlHero", _state.get(ReactControl.CSS_CLASS));
+		assertEquals("tlHero", _state.get(ControlState.CSS_CLASS__PROP));
 	}
 
 	/** A layer without a position of its own covers the base as a whole. */

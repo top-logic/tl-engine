@@ -45,6 +45,9 @@ export type {
   ReorderSide,
 } from './bridge/list-reorder';
 export type { TLCellProps } from './bridge/types';
+// The state contract of the replaceable components, generated from state.proto: one message per
+// component (e.g. ButtonState for TLButton), read with useTLState<ButtonState>().
+export type { ControlState, FieldState, ButtonState, CheckboxState } from './state/control-state';
 export { useI18N } from './bridge/i18n';
 export { scrollToAnchor } from './bridge/scroll';
 export { rootClassName } from './bridge/css';

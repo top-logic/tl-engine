@@ -35,6 +35,7 @@ import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
+import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
@@ -169,7 +170,7 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 			+ "&windowName=" + context.getWindowName() + KEY_PARAM;
 
 		initShadowCopy();
-		putState(VALUE, rewriteImageUrls(extractHtml(_shadowCopy)));
+		putState(FieldState.VALUE__PROP, rewriteImageUrls(extractHtml(_shadowCopy)));
 
 		_insertChannel = insertChannel == null ? null : new DefaultViewChannel(insertChannel);
 		if (_insertChannel != null) {
@@ -259,10 +260,10 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	protected void handleModelValueChanged(FieldModel source, Object oldValue, Object newValue) {
 		if (newValue instanceof StructuredText) {
 			_shadowCopy = ((StructuredText) newValue).copy();
-			putState(VALUE, rewriteImageUrls(extractHtml(_shadowCopy)));
+			putState(FieldState.VALUE__PROP, rewriteImageUrls(extractHtml(_shadowCopy)));
 		} else {
 			_shadowCopy = new StructuredText();
-			putState(VALUE, "");
+			putState(FieldState.VALUE__PROP, "");
 		}
 	}
 

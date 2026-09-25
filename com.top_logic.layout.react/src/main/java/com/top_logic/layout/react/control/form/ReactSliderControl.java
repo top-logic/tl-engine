@@ -12,12 +12,13 @@ import com.top_logic.basic.format.NumberFormats;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
+import com.top_logic.layout.react.state.FieldState;
 
 /**
  * A {@link ReactFormFieldControl} for a number set by dragging a handle along a track.
  *
  * <p>
- * The value travels as a number: the client is handed the number itself in {@link #VALUE} and sends
+ * The value travels as a number: the client is handed the number itself in {@link FieldState#VALUE__PROP} and sends
  * back the number the handle stands on, within the {@link #MIN lower} and {@link #MAX upper} bound
  * and on the grid of the {@link #STEP smallest step}. The text beside the handle is written on the
  * server ({@link #VALUE_LABEL}) with the same {@link Format} the number input uses, so the same

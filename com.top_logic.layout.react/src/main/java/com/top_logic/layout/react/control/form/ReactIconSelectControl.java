@@ -28,6 +28,7 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
+import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -65,9 +66,9 @@ public class ReactIconSelectControl extends ReactFormFieldControl {
 	@Override
 	protected void handleModelValueChanged(FieldModel source, Object oldValue, Object newValue) {
 		if (newValue instanceof ThemeImage) {
-			putState(VALUE, ((ThemeImage) newValue).toEncodedForm());
+			putState(FieldState.VALUE__PROP, ((ThemeImage) newValue).toEncodedForm());
 		} else {
-			putState(VALUE, newValue);
+			putState(FieldState.VALUE__PROP, newValue);
 		}
 	}
 

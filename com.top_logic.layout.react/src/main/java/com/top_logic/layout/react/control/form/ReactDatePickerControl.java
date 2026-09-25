@@ -19,6 +19,7 @@ import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.mig.html.HTMLFormatter;
 
 /**
@@ -36,7 +37,7 @@ import com.top_logic.mig.html.HTMLFormatter;
  * </p>
  *
  * <p>
- * In addition to the ISO {@link #VALUE} (consumed by the edit-mode HTML input), the control emits a
+ * In addition to the ISO {@link FieldState#VALUE__PROP} (consumed by the edit-mode HTML input), the control emits a
  * {@link #DISPLAY_VALUE} holding the value written by the display format - the attribute's annotated
  * format, or the user's default format for the kind of value (via {@link HTMLFormatter}) - in the
  * current user's time zone. The React component shows this localized string in view (read-only) mode,
@@ -172,7 +173,7 @@ public class ReactDatePickerControl extends ReactFormFieldControl {
 		// The base constructor seeded the raw Date into the value state; re-emit it as an ISO
 		// string so the input can display the initial value, plus a localized string for the
 		// read-only (view-mode) display.
-		putState(VALUE, formatIso(model.getValue()));
+		putState(FieldState.VALUE__PROP, formatIso(model.getValue()));
 		putState(DISPLAY_VALUE, formatLocalized(model.getValue()));
 	}
 
@@ -220,7 +221,7 @@ public class ReactDatePickerControl extends ReactFormFieldControl {
 	protected void handleModelValueChanged(FieldModel source, Object oldValue, Object newValue) {
 		// Emit an ISO string so the HTML input can display the value, plus a localized string for
 		// the read-only (view-mode) display.
-		putState(VALUE, formatIso(newValue));
+		putState(FieldState.VALUE__PROP, formatIso(newValue));
 		putState(DISPLAY_VALUE, formatLocalized(newValue));
 	}
 

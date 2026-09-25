@@ -20,9 +20,9 @@ import com.top_logic.basic.config.ExternallyNamed;
  * A role names what the color is for, not the color itself; the design system decides how a role
  * looks, in each theme and each mode. {@link #NEUTRAL}, {@link #BRAND} and the four meanings
  * {@link #ERROR}, {@link #WARNING}, {@link #SUCCESS} and {@link #INFO} carry a meaning of their own.
- * The eight categories carry none: they tell values apart that only have to be distinguishable,
- * such as the projects of a portfolio or the series of a chart, and never say by their color that
- * something went wrong or well.
+ * The eight categories carry a meaning the application defines: they tell values apart that have
+ * to be distinguishable, such as the projects of a portfolio or the series of a chart, and never say
+ * by their color that something went wrong or well.
  * </p>
  *
  * @see ValueColorProvider
@@ -46,28 +46,28 @@ public enum ValueColor implements ExternallyNamed {
 	/** A note, neither good nor bad. */
 	INFO("info"),
 
-	/** The first of eight categories without a meaning, for values that only have to be told apart. */
+	/** The first of eight categories whose meaning the application defines: a project, a division, a series of a chart - values that have to be told apart, and never say by their color that something went wrong or well. */
 	CATEGORY_1("category-1"),
 
-	/** The second category without a meaning. */
+	/** The second category whose meaning the application defines. */
 	CATEGORY_2("category-2"),
 
-	/** The third category without a meaning. */
+	/** The third category whose meaning the application defines. */
 	CATEGORY_3("category-3"),
 
-	/** The fourth category without a meaning. */
+	/** The fourth category whose meaning the application defines. */
 	CATEGORY_4("category-4"),
 
-	/** The fifth category without a meaning. */
+	/** The fifth category whose meaning the application defines. */
 	CATEGORY_5("category-5"),
 
-	/** The sixth category without a meaning. */
+	/** The sixth category whose meaning the application defines. */
 	CATEGORY_6("category-6"),
 
-	/** The seventh category without a meaning. */
+	/** The seventh category whose meaning the application defines. */
 	CATEGORY_7("category-7"),
 
-	/** The eighth category without a meaning. */
+	/** The eighth category whose meaning the application defines. */
 	CATEGORY_8("category-8");
 
 	private static final Map<String, ValueColor> BY_NAME =

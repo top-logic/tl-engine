@@ -28,6 +28,7 @@ import com.top_logic.model.search.expr.Filter;
 import com.top_logic.model.search.expr.Flatten;
 import com.top_logic.model.search.expr.Foreach;
 import com.top_logic.model.search.expr.GenericMethod;
+import com.top_logic.model.search.expr.GenericMethodWithSecurity;
 import com.top_logic.model.search.expr.GetDay;
 import com.top_logic.model.search.expr.IfElse;
 import com.top_logic.model.search.expr.InstanceOf;
@@ -47,6 +48,7 @@ import com.top_logic.model.search.expr.Recursion;
 import com.top_logic.model.search.expr.Referers;
 import com.top_logic.model.search.expr.Round;
 import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.SearchExpressionFactory;
 import com.top_logic.model.search.expr.SingleElement;
 import com.top_logic.model.search.expr.Singleton;
 import com.top_logic.model.search.expr.Size;
@@ -222,12 +224,27 @@ public abstract class GenericDescendingVisitor<R, A> extends AbstractDescendingV
 		return compose(expr, arg, descendParts(expr, arg, expr.getBase(), expr.getFunction()));
 	}
 
+	/**
+	 * Composes the call node from the visited arguments.
+	 * 
+	 * <p>
+	 * For a {@link GenericMethodWithSecurity}, the call node is wrapped into a
+	 * {@link GenericMethodWithSecurity} structure that additionally holds the
+	 * {@link GenericMethodWithSecurity#usesSecurity() security flag}, see
+	 * {@link SearchExpressionFactory#withSecurity(GenericMethodWithSecurity, boolean)}.
+	 * </p>
+	 */
 	@Override
 	public R visitGenericMethod(GenericMethod expr, A arg) {
 		SearchExpression[] arguments = expr.getArguments();
 		List<R> partResults = newResult(arguments.length);
 		List<R> parts = descendParts(partResults, expr, arg, arguments);
-		return compose(expr, arg, parts);
+		R call = compose(expr, arg, parts);
+		if (expr instanceof GenericMethodWithSecurity secured) {
+			return compose(GenericMethodWithSecurity.class, arg,
+				Arrays.asList(call, wrap(secured.usesSecurity())));
+		}
+		return call;
 	}
 
 	@Override

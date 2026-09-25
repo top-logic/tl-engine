@@ -13,6 +13,9 @@ public interface DropdownSelectState extends com.top_logic.layout.react.state.Fi
 
 	/**
 	 * The shape the options are offered in.
+	 *
+	 * The control does not send {@link #DROPDOWN}: an absent display means a list that opens on
+	 * demand.
 	 */
 	public enum Display implements de.haumacher.msgbuf.data.ProtocolEnum {
 
@@ -210,7 +213,8 @@ public interface DropdownSelectState extends com.top_logic.layout.react.state.Fi
 	String EMPTY_OPTION_LABEL__PROP = "emptyOptionLabel";
 
 	/**
-	 * The shape the options are offered in. Absent: a list that opens on demand.
+	 * The shape the options are offered in. Absent means {@link Display#DROPDOWN}, a list that
+	 * opens on demand.
 	 */
 	com.top_logic.layout.react.state.DropdownSelectState.Display getDisplay();
 

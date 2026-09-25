@@ -8,7 +8,6 @@ package test.com.top_logic.layout.react.state;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.text.NumberFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
@@ -199,35 +198,31 @@ public class TestControlStateSchema extends TestCase {
 	}
 
 	/**
-	 * The appearances are sent as the schema spells them; the default is not sent.
+	 * The appearances are spelled as the schema spells them.
 	 */
 	public void testButtonAppearance() {
-		assertSameNames(withoutDefault(ButtonAppearance.values(), ButtonAppearance.DEFAULT),
-			ButtonState.Appearance.values(), ButtonState.Appearance::valueOf);
+		assertSameNames(ButtonAppearance.values(), ButtonState.Appearance.values(), ButtonState.Appearance::valueOf);
 	}
 
 	/**
-	 * The tones are sent as the schema spells them; the default is not sent.
+	 * The tones are spelled as the schema spells them.
 	 */
 	public void testButtonTone() {
-		assertSameNames(withoutDefault(ButtonTone.values(), ButtonTone.DEFAULT), ButtonState.Tone.values(),
-			ButtonState.Tone::valueOf);
+		assertSameNames(ButtonTone.values(), ButtonState.Tone.values(), ButtonState.Tone::valueOf);
 	}
 
 	/**
-	 * The sizes are sent as the schema spells them; the default is not sent.
+	 * The sizes are spelled as the schema spells them.
 	 */
 	public void testButtonSize() {
-		assertSameNames(withoutDefault(ButtonSize.values(), ButtonSize.DEFAULT), ButtonState.Size.values(),
-			ButtonState.Size::valueOf);
+		assertSameNames(ButtonSize.values(), ButtonState.Size.values(), ButtonState.Size::valueOf);
 	}
 
 	/**
-	 * The shapes of a checkbox are sent as the schema spells them.
+	 * The presentations of a boolean field are spelled as the schema spells them.
 	 */
 	public void testCheckboxDisplay() {
-		assertSameNames(new BooleanPresentation[] { BooleanPresentation.CHECKBOX, BooleanPresentation.SWITCH },
-			CheckboxState.Display.values(), CheckboxState.Display::valueOf);
+		assertSameNames(BooleanPresentation.values(), CheckboxState.Display.values(), CheckboxState.Display::valueOf);
 	}
 
 	/**
@@ -480,12 +475,6 @@ public class TestControlStateSchema extends TestCase {
 		assertDeclared((Map<?, ?>) child, ChildControl.class);
 	}
 
-	private static <E extends Enum<E> & ExternallyNamed> List<E> withoutDefault(E[] values, E defaultValue) {
-		List<E> result = new ArrayList<>(Arrays.asList(values));
-		result.remove(defaultValue);
-		return result;
-	}
-
 	private static <E extends Enum<E> & ExternallyNamed, P extends Enum<P> & ProtocolEnum> void assertSameNames(
 			E[] javaValues, P[] protocolValues, Function<String, P> byName) {
 		assertSameNames(Arrays.asList(javaValues), protocolValues, byName);
@@ -498,11 +487,18 @@ public class TestControlStateSchema extends TestCase {
 
 	private static <E extends Enum<E>, P extends Enum<P> & ProtocolEnum> void assertSameNames(List<E> javaValues,
 			Function<? super E, String> externalName, P[] protocolValues, Function<String, P> byName) {
-		assertEquals("Number of values sent.", javaValues.size(), protocolValues.length);
+		Set<String> javaNames = new HashSet<>();
 		for (E value : javaValues) {
+			javaNames.add(externalName.apply(value));
 			P protocolValue = byName.apply(value.name());
 			assertEquals("External name of " + value, protocolValue.protocolName(), externalName.apply(value));
 		}
+		Set<String> protocolNames = new HashSet<>();
+		for (P value : protocolValues) {
+			protocolNames.add(value.protocolName());
+		}
+		assertEquals("The schema declares the values of the Java enumeration, no more and no fewer.", javaNames,
+			protocolNames);
 	}
 
 	/**

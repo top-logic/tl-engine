@@ -19,11 +19,11 @@ public class ButtonState_Impl extends com.top_logic.layout.react.state.impl.Cont
 
 	private String _cssClasses = "";
 
-	private com.top_logic.layout.react.state.ButtonState.Appearance _appearance = com.top_logic.layout.react.state.ButtonState.Appearance.PRIMARY;
+	private com.top_logic.layout.react.state.ButtonState.Appearance _appearance = com.top_logic.layout.react.state.ButtonState.Appearance.DEFAULT;
 
-	private com.top_logic.layout.react.state.ButtonState.Tone _tone = com.top_logic.layout.react.state.ButtonState.Tone.DANGER;
+	private com.top_logic.layout.react.state.ButtonState.Tone _tone = com.top_logic.layout.react.state.ButtonState.Tone.DEFAULT;
 
-	private com.top_logic.layout.react.state.ButtonState.Size _size = com.top_logic.layout.react.state.ButtonState.Size.SMALL;
+	private com.top_logic.layout.react.state.ButtonState.Size _size = com.top_logic.layout.react.state.ButtonState.Size.DEFAULT;
 
 	private String _navigateUrl = "";
 

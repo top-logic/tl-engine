@@ -159,18 +159,19 @@ export interface ButtonState extends ControlState {
 	cssClasses?: string;
 
 	/**
-	 * How the button is drawn. Absent: the standard appearance, or the appearance its container
-	 * suggests.
+	 * How the button is drawn. Absent means `'default'`: the standard appearance, or
+	 * the appearance its container suggests.
 	 */
 	appearance?: ButtonState.Appearance;
 
 	/**
-	 * The kind of action the button stands for. Absent: an ordinary action.
+	 * The kind of action the button stands for. Absent means `'default'`, an ordinary
+	 * action.
 	 */
 	tone?: ButtonState.Tone;
 
 	/**
-	 * The size of the button. Absent: the standard size.
+	 * The size of the button. Absent means `'default'`, the standard size.
 	 */
 	size?: ButtonState.Size;
 
@@ -210,9 +211,15 @@ export namespace ButtonState {
 		| 'label-only';
 
 	/**
-	 * How a button is drawn. Absent for the standard appearance.
+	 * How a button is drawn.
+	 *
+	 * The control does not send `'default'`: an absent appearance means the default.
 	 */
 	export type Appearance =
+		/**
+		 * The standard appearance, or the appearance the container of the button suggests.
+		 */
+		| 'default'
 		/**
 		 * Emphasized, for the primary action of a dialog.
 		 */
@@ -227,18 +234,30 @@ export namespace ButtonState {
 		| 'link';
 
 	/**
-	 * The kind of action a button stands for. Absent for an ordinary action.
+	 * The kind of action a button stands for.
+	 *
+	 * The control does not send `'default'`: an absent tone means the default.
 	 */
 	export type Tone =
+		/**
+		 * An ordinary action.
+		 */
+		| 'default'
 		/**
 		 * A destructive action: delete, discard, revoke.
 		 */
 		| 'danger';
 
 	/**
-	 * The size of a button. Absent for the standard size.
+	 * The size of a button.
+	 *
+	 * The control does not send `'default'`: an absent size means the default.
 	 */
 	export type Size =
+		/**
+		 * The standard size.
+		 */
+		| 'default'
 		/**
 		 * A compact button, e.g. for a secondary inline action.
 		 */
@@ -261,14 +280,19 @@ export interface CheckboxState extends FieldState {
 	triState?: boolean;
 
 	/**
-	 * The shape of the field. Absent: a box that is ticked.
+	 * The shape of the field. Absent means `'checkbox'`, a box that is ticked.
 	 */
 	display?: CheckboxState.Display;
 }
 
 export namespace CheckboxState {
 	/**
-	 * The shape of the field.
+	 * The presentation of a boolean field.
+	 *
+	 * The component draws `'checkbox'` and `'switch'`; the control does not send
+	 * `'checkbox'`, an absent display means a box that is ticked. `'select'` and
+	 * `'radio'` are presentations of a boolean offered as a choice between labelled values,
+	 * which is a component of its own; they are never sent to this component.
 	 */
 	export type Display =
 		/**
@@ -278,7 +302,15 @@ export namespace CheckboxState {
 		/**
 		 * A switch that is flipped.
 		 */
-		| 'switch';
+		| 'switch'
+		/**
+		 * A field choosing between yes and no.
+		 */
+		| 'select'
+		/**
+		 * Radio buttons for yes and no.
+		 */
+		| 'radio';
 }
 
 /**
@@ -529,7 +561,8 @@ export namespace SelectState {
  */
 export interface DropdownSelectState extends FieldState {
 	/**
-	 * The shape the options are offered in. Absent: a list that opens on demand.
+	 * The shape the options are offered in. Absent means `'dropdown'`, a list that
+	 * opens on demand.
 	 */
 	display?: DropdownSelectState.Display;
 
@@ -564,6 +597,9 @@ export interface DropdownSelectState extends FieldState {
 export namespace DropdownSelectState {
 	/**
 	 * The shape the options are offered in.
+	 *
+	 * The control does not send `'dropdown'`: an absent display means a list that opens on
+	 * demand.
 	 */
 	export type Display =
 		/**

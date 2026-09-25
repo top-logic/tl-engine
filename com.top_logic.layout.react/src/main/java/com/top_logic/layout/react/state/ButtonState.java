@@ -88,9 +88,16 @@ public interface ButtonState extends com.top_logic.layout.react.state.ControlSta
 	}
 
 	/**
-	 * How a button is drawn. Absent for the standard appearance.
+	 * How a button is drawn.
+	 *
+	 * The control does not send {@link #DEFAULT}: an absent appearance means the default.
 	 */
 	public enum Appearance implements de.haumacher.msgbuf.data.ProtocolEnum {
+
+		/**
+		 * The standard appearance, or the appearance the container of the button suggests.
+		 */
+		DEFAULT("default"),
 
 		/**
 		 * Emphasized, for the primary action of a dialog.
@@ -129,11 +136,12 @@ public interface ButtonState extends com.top_logic.layout.react.state.ControlSta
 		public static Appearance valueOfProtocol(String protocolName) {
 			if (protocolName == null) { return null; }
 			switch (protocolName) {
+				case "default": return DEFAULT;
 				case "primary": return PRIMARY;
 				case "ghost": return GHOST;
 				case "link": return LINK;
 			}
-			return PRIMARY;
+			return DEFAULT;
 		}
 
 		/** Writes this instance to the given output. */
@@ -149,9 +157,10 @@ public interface ButtonState extends com.top_logic.layout.react.state.ControlSta
 		/** Writes this instance to the given binary output. */
 		public final void writeTo(de.haumacher.msgbuf.binary.DataWriter out) throws java.io.IOException {
 			switch (this) {
-				case PRIMARY: out.value(1); break;
-				case GHOST: out.value(2); break;
-				case LINK: out.value(3); break;
+				case DEFAULT: out.value(1); break;
+				case PRIMARY: out.value(2); break;
+				case GHOST: out.value(3); break;
+				case LINK: out.value(4); break;
 				default: out.value(0);
 			}
 		}
@@ -159,18 +168,26 @@ public interface ButtonState extends com.top_logic.layout.react.state.ControlSta
 		/** Reads a new instance from the given binary reader. */
 		public static Appearance readAppearance(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
 			switch (in.nextInt()) {
-				case 1: return PRIMARY;
-				case 2: return GHOST;
-				case 3: return LINK;
-				default: return PRIMARY;
+				case 1: return DEFAULT;
+				case 2: return PRIMARY;
+				case 3: return GHOST;
+				case 4: return LINK;
+				default: return DEFAULT;
 			}
 		}
 	}
 
 	/**
-	 * The kind of action a button stands for. Absent for an ordinary action.
+	 * The kind of action a button stands for.
+	 *
+	 * The control does not send {@link #DEFAULT}: an absent tone means the default.
 	 */
 	public enum Tone implements de.haumacher.msgbuf.data.ProtocolEnum {
+
+		/**
+		 * An ordinary action.
+		 */
+		DEFAULT("default"),
 
 		/**
 		 * A destructive action: delete, discard, revoke.
@@ -199,9 +216,10 @@ public interface ButtonState extends com.top_logic.layout.react.state.ControlSta
 		public static Tone valueOfProtocol(String protocolName) {
 			if (protocolName == null) { return null; }
 			switch (protocolName) {
+				case "default": return DEFAULT;
 				case "danger": return DANGER;
 			}
-			return DANGER;
+			return DEFAULT;
 		}
 
 		/** Writes this instance to the given output. */
@@ -217,7 +235,8 @@ public interface ButtonState extends com.top_logic.layout.react.state.ControlSta
 		/** Writes this instance to the given binary output. */
 		public final void writeTo(de.haumacher.msgbuf.binary.DataWriter out) throws java.io.IOException {
 			switch (this) {
-				case DANGER: out.value(1); break;
+				case DEFAULT: out.value(1); break;
+				case DANGER: out.value(2); break;
 				default: out.value(0);
 			}
 		}
@@ -225,16 +244,24 @@ public interface ButtonState extends com.top_logic.layout.react.state.ControlSta
 		/** Reads a new instance from the given binary reader. */
 		public static Tone readTone(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
 			switch (in.nextInt()) {
-				case 1: return DANGER;
-				default: return DANGER;
+				case 1: return DEFAULT;
+				case 2: return DANGER;
+				default: return DEFAULT;
 			}
 		}
 	}
 
 	/**
-	 * The size of a button. Absent for the standard size.
+	 * The size of a button.
+	 *
+	 * The control does not send {@link #DEFAULT}: an absent size means the default.
 	 */
 	public enum Size implements de.haumacher.msgbuf.data.ProtocolEnum {
+
+		/**
+		 * The standard size.
+		 */
+		DEFAULT("default"),
 
 		/**
 		 * A compact button, e.g. for a secondary inline action.
@@ -263,9 +290,10 @@ public interface ButtonState extends com.top_logic.layout.react.state.ControlSta
 		public static Size valueOfProtocol(String protocolName) {
 			if (protocolName == null) { return null; }
 			switch (protocolName) {
+				case "default": return DEFAULT;
 				case "small": return SMALL;
 			}
-			return SMALL;
+			return DEFAULT;
 		}
 
 		/** Writes this instance to the given output. */
@@ -281,7 +309,8 @@ public interface ButtonState extends com.top_logic.layout.react.state.ControlSta
 		/** Writes this instance to the given binary output. */
 		public final void writeTo(de.haumacher.msgbuf.binary.DataWriter out) throws java.io.IOException {
 			switch (this) {
-				case SMALL: out.value(1); break;
+				case DEFAULT: out.value(1); break;
+				case SMALL: out.value(2); break;
 				default: out.value(0);
 			}
 		}
@@ -289,8 +318,9 @@ public interface ButtonState extends com.top_logic.layout.react.state.ControlSta
 		/** Reads a new instance from the given binary reader. */
 		public static Size readSize(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
 			switch (in.nextInt()) {
-				case 1: return SMALL;
-				default: return SMALL;
+				case 1: return DEFAULT;
+				case 2: return SMALL;
+				default: return DEFAULT;
 			}
 		}
 	}
@@ -417,8 +447,8 @@ public interface ButtonState extends com.top_logic.layout.react.state.ControlSta
 	com.top_logic.layout.react.state.ButtonState setCssClasses(String value);
 
 	/**
-	 * How the button is drawn. Absent: the standard appearance, or the appearance its container
-	 * suggests.
+	 * How the button is drawn. Absent means {@link Appearance#DEFAULT}: the standard appearance, or
+	 * the appearance its container suggests.
 	 */
 	com.top_logic.layout.react.state.ButtonState.Appearance getAppearance();
 
@@ -428,7 +458,8 @@ public interface ButtonState extends com.top_logic.layout.react.state.ControlSta
 	com.top_logic.layout.react.state.ButtonState setAppearance(com.top_logic.layout.react.state.ButtonState.Appearance value);
 
 	/**
-	 * The kind of action the button stands for. Absent: an ordinary action.
+	 * The kind of action the button stands for. Absent means {@link Tone#DEFAULT}, an ordinary
+	 * action.
 	 */
 	com.top_logic.layout.react.state.ButtonState.Tone getTone();
 
@@ -438,7 +469,7 @@ public interface ButtonState extends com.top_logic.layout.react.state.ControlSta
 	com.top_logic.layout.react.state.ButtonState setTone(com.top_logic.layout.react.state.ButtonState.Tone value);
 
 	/**
-	 * The size of the button. Absent: the standard size.
+	 * The size of the button. Absent means {@link Size#DEFAULT}, the standard size.
 	 */
 	com.top_logic.layout.react.state.ButtonState.Size getSize();
 

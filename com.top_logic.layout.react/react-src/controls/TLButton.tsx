@@ -64,8 +64,10 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
   const resolvedHidden = state.hidden === true;
   const tooltip = state.tooltip;
   const defaults = useButtonDefaults();
+  // The default appearance of the server is the one the container suggests.
+  const serverAppearance = state.appearance === 'default' ? undefined : state.appearance;
   const resolvedAppearance: ButtonAppearance = appearance
-    ?? state.appearance
+    ?? serverAppearance
     ?? defaults.appearance ?? 'secondary';
   const resolvedDanger = danger ?? state.tone === 'danger';
   const resolvedMode = displayMode ?? state.displayMode ?? 'label-only';

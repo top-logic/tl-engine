@@ -142,9 +142,15 @@ message ButtonState extends ControlState {
 	}
 
 	/**
-	 * How a button is drawn. Absent for the standard appearance.
+	 * How a button is drawn.
+	 *
+	 * The control does not send {@link #DEFAULT}: an absent appearance means the default.
 	 */
 	enum Appearance {
+		/** The standard appearance, or the appearance the container of the button suggests. */
+		@Name("default")
+		DEFAULT;
+
 		/** Emphasized, for the primary action of a dialog. */
 		@Name("primary")
 		PRIMARY;
@@ -159,18 +165,30 @@ message ButtonState extends ControlState {
 	}
 
 	/**
-	 * The kind of action a button stands for. Absent for an ordinary action.
+	 * The kind of action a button stands for.
+	 *
+	 * The control does not send {@link #DEFAULT}: an absent tone means the default.
 	 */
 	enum Tone {
+		/** An ordinary action. */
+		@Name("default")
+		DEFAULT;
+
 		/** A destructive action: delete, discard, revoke. */
 		@Name("danger")
 		DANGER;
 	}
 
 	/**
-	 * The size of a button. Absent for the standard size.
+	 * The size of a button.
+	 *
+	 * The control does not send {@link #DEFAULT}: an absent size means the default.
 	 */
 	enum Size {
+		/** The standard size. */
+		@Name("default")
+		DEFAULT;
+
 		/** A compact button, e.g. for a secondary inline action. */
 		@Name("small")
 		SMALL;
@@ -214,18 +232,19 @@ message ButtonState extends ControlState {
 	string cssClasses;
 
 	/**
-	 * How the button is drawn. Absent: the standard appearance, or the appearance its container
-	 * suggests.
+	 * How the button is drawn. Absent means {@link Appearance#DEFAULT}: the standard appearance, or
+	 * the appearance its container suggests.
 	 */
 	Appearance appearance;
 
 	/**
-	 * The kind of action the button stands for. Absent: an ordinary action.
+	 * The kind of action the button stands for. Absent means {@link Tone#DEFAULT}, an ordinary
+	 * action.
 	 */
 	Tone tone;
 
 	/**
-	 * The size of the button. Absent: the standard size.
+	 * The size of the button. Absent means {@link Size#DEFAULT}, the standard size.
 	 */
 	Size size;
 
@@ -257,7 +276,12 @@ message ButtonState extends ControlState {
 message CheckboxState extends FieldState {
 
 	/**
-	 * The shape of the field.
+	 * The presentation of a boolean field.
+	 *
+	 * The component draws {@link #CHECKBOX} and {@link #SWITCH}; the control does not send
+	 * {@link #CHECKBOX}, an absent display means a box that is ticked. {@link #SELECT} and
+	 * {@link #RADIO} are presentations of a boolean offered as a choice between labelled values,
+	 * which is a component of its own; they are never sent to this component.
 	 */
 	enum Display {
 		/** A box that is ticked. */
@@ -267,6 +291,14 @@ message CheckboxState extends FieldState {
 		/** A switch that is flipped. */
 		@Name("switch")
 		SWITCH;
+
+		/** A field choosing between yes and no. */
+		@Name("select")
+		SELECT;
+
+		/** Radio buttons for yes and no. */
+		@Name("radio")
+		RADIO;
 	}
 
 	/**
@@ -276,7 +308,7 @@ message CheckboxState extends FieldState {
 	bool triState;
 
 	/**
-	 * The shape of the field. Absent: a box that is ticked.
+	 * The shape of the field. Absent means {@link Display#CHECKBOX}, a box that is ticked.
 	 */
 	Display display;
 }
@@ -528,6 +560,9 @@ message DropdownSelectState extends FieldState {
 
 	/**
 	 * The shape the options are offered in.
+	 *
+	 * The control does not send {@link #DROPDOWN}: an absent display means a list that opens on
+	 * demand.
 	 */
 	enum Display {
 		/** A list that opens on demand. */
@@ -576,7 +611,8 @@ message DropdownSelectState extends FieldState {
 	}
 
 	/**
-	 * The shape the options are offered in. Absent: a list that opens on demand.
+	 * The shape the options are offered in. Absent means {@link Display#DROPDOWN}, a list that
+	 * opens on demand.
 	 */
 	Display display;
 

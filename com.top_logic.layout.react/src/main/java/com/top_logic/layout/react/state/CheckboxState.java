@@ -11,7 +11,12 @@ package com.top_logic.layout.react.state;
 public interface CheckboxState extends com.top_logic.layout.react.state.FieldState {
 
 	/**
-	 * The shape of the field.
+	 * The presentation of a boolean field.
+	 *
+	 * The component draws {@link #CHECKBOX} and {@link #SWITCH}; the control does not send
+	 * {@link #CHECKBOX}, an absent display means a box that is ticked. {@link #SELECT} and
+	 * {@link #RADIO} are presentations of a boolean offered as a choice between labelled values,
+	 * which is a component of its own; they are never sent to this component.
 	 */
 	public enum Display implements de.haumacher.msgbuf.data.ProtocolEnum {
 
@@ -24,6 +29,16 @@ public interface CheckboxState extends com.top_logic.layout.react.state.FieldSta
 		 * A switch that is flipped.
 		 */
 		SWITCH("switch"),
+
+		/**
+		 * A field choosing between yes and no.
+		 */
+		SELECT("select"),
+
+		/**
+		 * Radio buttons for yes and no.
+		 */
+		RADIO("radio"),
 
 		;
 
@@ -49,6 +64,8 @@ public interface CheckboxState extends com.top_logic.layout.react.state.FieldSta
 			switch (protocolName) {
 				case "checkbox": return CHECKBOX;
 				case "switch": return SWITCH;
+				case "select": return SELECT;
+				case "radio": return RADIO;
 			}
 			return CHECKBOX;
 		}
@@ -68,6 +85,8 @@ public interface CheckboxState extends com.top_logic.layout.react.state.FieldSta
 			switch (this) {
 				case CHECKBOX: out.value(1); break;
 				case SWITCH: out.value(2); break;
+				case SELECT: out.value(3); break;
+				case RADIO: out.value(4); break;
 				default: out.value(0);
 			}
 		}
@@ -77,6 +96,8 @@ public interface CheckboxState extends com.top_logic.layout.react.state.FieldSta
 			switch (in.nextInt()) {
 				case 1: return CHECKBOX;
 				case 2: return SWITCH;
+				case 3: return SELECT;
+				case 4: return RADIO;
 				default: return CHECKBOX;
 			}
 		}
@@ -110,7 +131,7 @@ public interface CheckboxState extends com.top_logic.layout.react.state.FieldSta
 	com.top_logic.layout.react.state.CheckboxState setTriState(boolean value);
 
 	/**
-	 * The shape of the field. Absent: a box that is ticked.
+	 * The shape of the field. Absent means {@link Display#CHECKBOX}, a box that is ticked.
 	 */
 	com.top_logic.layout.react.state.CheckboxState.Display getDisplay();
 

@@ -233,6 +233,69 @@ public class TestScriptPathElement extends BasicTestCase {
 	}
 
 	/**
+	 * Tests the incremental update of a role that a created object receives and passes on over its
+	 * own reference to existing objects.
+	 *
+	 * <p>
+	 * The configured rule {@code Assembly_Viewer} grants the viewer role on each {@link Assembly}
+	 * to the owners of the singleton {@code ROOT1}. Its script reads no attribute, so the role of a
+	 * created assembly is determined only because the assembly is created. The rule
+	 * {@code Plant_Viewer} passes the viewer role of an assembly on to its plant, and the rule
+	 * {@code Assignment_Viewer} passes the viewer role of a plant on to the assignments referencing
+	 * it.
+	 * </p>
+	 */
+	public void testInheritanceFromCreatedObjectOverItsReference() {
+		// Expression of the rule "Assembly_Viewer" in TestScriptPathElement-test.config.xml.
+		PathByExpression assemblyViewerPath = newPathByExpression("assembly -> `TestScriptPathElement#ROOT1`");
+		assertTrue(assemblyViewerPath.getRelevantParts().isEmpty());
+
+		BoundedRole ownerRole = BoundedRole.getRoleByName("TestScriptPathElement.Owner");
+		BoundedRole viewerRole = BoundedRole.getRoleByName("TestScriptPathElement.Viewer");
+
+		// The representative group of the account is created in the transaction creating it.
+		Person owner = TestPerson.createPerson("owner");
+		Plant plant;
+		Plant otherPlant;
+		Assignment assignment;
+		ZAreaInstance areaInstance;
+		try (Transaction tx = beginTX()) {
+			plant = createPlant("viewerPlant");
+			otherPlant = createPlant("otherViewerPlant");
+			ZArea area = createZArea("viewerArea");
+			assignment = createAssignment("viewerAssignment", plant, area);
+			areaInstance = createZAreaInstance(area);
+			BoundedRole.assignRole(_root1, owner, ownerRole);
+			tx.commit();
+		}
+
+		assertTrue(hasRole(owner, ownerRole, _root1));
+		assertFalse(hasRole(owner, viewerRole, plant));
+		assertFalse(hasRole(owner, viewerRole, assignment));
+
+		Assembly assembly;
+		try (Transaction tx = beginTX()) {
+			assembly = createAssembly("viewerAssembly", areaInstance, plant);
+			tx.commit();
+		}
+
+		assertTrue(hasRole(owner, viewerRole, assembly));
+		assertTrue(hasRole(owner, viewerRole, plant));
+		assertTrue(hasRole(owner, viewerRole, assignment));
+		assertFalse(hasRole(owner, viewerRole, otherPlant));
+
+		try (Transaction tx = beginTX()) {
+			assembly.setPlant(otherPlant);
+			tx.commit();
+		}
+
+		assertTrue(hasRole(owner, viewerRole, assembly));
+		assertFalse(hasRole(owner, viewerRole, plant));
+		assertFalse(hasRole(owner, viewerRole, assignment));
+		assertTrue(hasRole(owner, viewerRole, otherPlant));
+	}
+
+	/**
 	 * Tests {@link PathByExpression} where the expression is a simple navigation step.
 	 */
 	public void testSimpleChain() {

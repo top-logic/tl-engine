@@ -7,6 +7,8 @@
 				<roles>
 					<role name="TestScriptPathElement.Reader"/>
 					<role name="TestScriptPathElement.Writer"/>
+					<role name="TestScriptPathElement.Viewer"/>
+					<role name="TestScriptPathElement.Owner"/>
 				</roles>
 			</instance>
 		</config>
@@ -91,6 +93,39 @@
 									attribute="TestScriptPathElement:Assembly#area"
 									inverse="true"
 								/>
+							</path>
+						</inheritance-rule>
+						<inheritance-rule
+							id="Assembly_Viewer"
+							meta-element="TestScriptPathElement:Assembly"
+							role="TestScriptPathElement.Viewer"
+							source-role="TestScriptPathElement.Owner"
+						>
+							<path>
+								<script-step>
+									<expr><![CDATA[assembly -> `TestScriptPathElement#ROOT1`]]></expr>
+								</script-step>
+							</path>
+						</inheritance-rule>
+						<inheritance-rule
+							id="Plant_Viewer"
+							meta-element="TestScriptPathElement:Plant"
+							role="TestScriptPathElement.Viewer"
+						>
+							<path>
+								<step
+									attribute="TestScriptPathElement:Assembly#plant"
+									inverse="true"
+								/>
+							</path>
+						</inheritance-rule>
+						<inheritance-rule
+							id="Assignment_Viewer"
+							meta-element="TestScriptPathElement:Assignment"
+							role="TestScriptPathElement.Viewer"
+						>
+							<path>
+								<step attribute="TestScriptPathElement:Assignment#plant"/>
 							</path>
 						</inheritance-rule>
 					</rules>

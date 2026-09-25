@@ -3,6 +3,41 @@
 // Type definitions for the msgbuf JSON format of the protocol (types only, no runtime code).
 
 /**
+ * The state contract between the server-side controls and the React components rendering them.
+ *
+ * Each message describes the state object a control sends to its component: the property names,
+ * their types and their meaning. A component library replacing a TopLogic component (see
+ * "replace" of 'tl-react-bridge') renders the state described here.
+ *
+ * The message of a replaceable component, by the component name it is registered under:
+ *
+ *   TLButton          - ButtonState
+ *   TLToggleButton    - ToggleButtonState
+ *   TLCheckbox        - CheckboxState
+ *   TLTextInput       - TextInputState
+ *   TLPasswordInput   - PasswordInputState
+ *   TLNumberInput     - NumberInputState
+ *   TLDatePicker      - DatePickerState
+ *   TLSelect          - SelectState
+ *   TLDropdownSelect  - DropdownSelectState
+ *   TLOptionChips     - DropdownSelectState
+ *   TLSegmentedChoice - DropdownSelectState
+ *   TLTabBar          - TabBarState
+ *   TLWindow          - WindowState
+ *   TLDialog          - DialogState
+ *   TLMenu            - MenuState
+ *   TLSnackbar        - SnackbarState
+ *
+ * The state is a JSON object: a property that is absent has its documented default. A property
+ * holding a control of its own (the content of a window, for instance) holds a ChildControl, which
+ * the component renders through TLChild of 'tl-react-bridge'. The
+ * Java side takes the property names from the generated constants, the TypeScript side reads the
+ * state through the generated types (exported from 'tl-react-bridge').
+ *
+ * @packageDocumentation
+ */
+
+/**
  * State properties every control carries.
  */
 export interface ControlState {
@@ -45,12 +80,12 @@ export interface FieldState extends ControlState {
 	nullable?: boolean;
 
 	/**
-	 * Whether the value of the field is invalid, see {@link #errorMessage}.
+	 * Whether the value of the field is invalid, see {@link FieldState.errorMessage}.
 	 */
 	hasError?: boolean;
 
 	/**
-	 * The message describing the error, while {@link #hasError} is set.
+	 * The message describing the error, while {@link FieldState.hasError} is set.
 	 */
 	errorMessage?: string;
 
@@ -81,9 +116,9 @@ export interface FieldState extends ControlState {
 }
 
 /**
- * State of a button, the component {@code TLButton}.
+ * State of a button, the component `TLButton`.
  *
- * A click sends the command {@code click} to the server, unless {@link #navigateUrl} is set.
+ * A click sends the command `click` to the server, unless {@link ButtonState.navigateUrl} is set.
  */
 export interface ButtonState extends ControlState {
 	/**
@@ -103,7 +138,7 @@ export interface ButtonState extends ControlState {
 	active?: boolean;
 
 	/**
-	 * The icon of the button, the encoded form of a theme image (e.g. {@code css:fas fa-edit} for
+	 * The icon of the button, the encoded form of a theme image (e.g. `css:fas fa-edit` for
 	 * an icon font class, or the path of an image file).
 	 */
 	image?: string;
@@ -114,7 +149,7 @@ export interface ButtonState extends ControlState {
 	tooltip?: string;
 
 	/**
-	 * What the button shows of its {@link #image} and its {@link #label}. Absent: the label only.
+	 * What the button shows of its {@link ButtonState.image} and its {@link ButtonState.label}. Absent: the label only.
 	 */
 	displayMode?: ButtonState.DisplayMode;
 
@@ -145,13 +180,13 @@ export interface ButtonState extends ControlState {
 	navigateUrl?: string;
 
 	/**
-	 * Whether {@link #navigateUrl} is opened in a browser window of its own, instead of replacing
+	 * Whether {@link ButtonState.navigateUrl} is opened in a browser window of its own, instead of replacing
 	 * the page the button is on.
 	 */
 	navigateNewWindow?: boolean;
 
 	/**
-	 * The keyboard gesture that triggers the button (e.g. {@code ENTER}, {@code Ctrl+S}).
+	 * The keyboard gesture that triggers the button (e.g. `ENTER`, `Ctrl+S`).
 	 */
 	keyGesture?: string;
 }
@@ -212,11 +247,11 @@ export namespace ButtonState {
 
 /**
  * State of a boolean field drawn as a box that is ticked or a switch that is flipped, the
- * component {@code TLCheckbox}.
+ * component `TLCheckbox`.
  *
- * The {@link #value} is {@code true}, {@code false}, or - for a {@link #triState} field -
- * {@code null} for "no value". A change is sent as the command {@code valueChanged} with the
- * new value as argument {@code value}.
+ * The {@link FieldState.value} is `true`, `false`, or - for a {@link CheckboxState.triState} field -
+ * `null` for "no value". A change is sent as the command `valueChanged` with the
+ * new value as argument `value`.
  */
 export interface CheckboxState extends FieldState {
 	/**
@@ -248,10 +283,10 @@ export namespace CheckboxState {
 
 /**
  * A control embedded in the state of another control, rendered by the component registered
- * under its {@link #module}.
+ * under its {@link ChildControl.module}.
  *
- * The embedding component renders it through {@code TLChild} of 'tl-react-bridge', which mounts
- * the component with the given {@link #state} and keeps it up to date.
+ * The embedding component renders it through `TLChild` of 'tl-react-bridge', which mounts
+ * the component with the given {@link ChildControl.state} and keeps it up to date.
  */
 export interface ChildControl {
 	/**
@@ -260,7 +295,7 @@ export interface ChildControl {
 	controlId?: string;
 
 	/**
-	 * The name of the component rendering the control (e.g. {@code TLButton}).
+	 * The name of the component rendering the control (e.g. `TLButton`).
 	 */
 	module?: string;
 
@@ -278,9 +313,9 @@ export interface ChildControl {
 }
 
 /**
- * State of a toggle button, the component {@code TLToggleButton}.
+ * State of a toggle button, the component `TLToggleButton`.
  *
- * A click sends the command {@code click} to the server.
+ * A click sends the command `click` to the server.
  */
 export interface ToggleButtonState extends ControlState {
 	/**
@@ -306,20 +341,20 @@ export interface TypingFieldState extends FieldState {
 
 	/**
 	 * Whether a typed value is held back until the field loses focus, instead of being sent while
-	 * the user is still typing. Takes precedence over {@link #debounceMs}.
+	 * the user is still typing. Takes precedence over {@link TypingFieldState.debounceMs}.
 	 */
 	sendValueOnBlur?: boolean;
 
 	/**
-	 * Whether the field sends the command {@code commit} when it loses focus.
+	 * Whether the field sends the command `commit` when it loses focus.
 	 */
 	commitOnBlur?: boolean;
 }
 
 /**
- * State of a text field, the component {@code TLTextInput}.
+ * State of a text field, the component `TLTextInput`.
  *
- * The {@link #value} is the text, a string.
+ * The {@link FieldState.value} is the text, a string.
  */
 export interface TextInputState extends TypingFieldState {
 	/**
@@ -338,19 +373,19 @@ export interface TextInputState extends TypingFieldState {
 	clearable?: boolean;
 
 	/**
-	 * Whether the field is a text area of several lines, see {@link #rows}.
+	 * Whether the field is a text area of several lines, see {@link TextInputState.rows}.
 	 */
 	multiline?: boolean;
 
 	/**
-	 * The number of visible rows of a {@link #multiline} field.
+	 * The number of visible rows of a {@link TextInputState.multiline} field.
 	 */
 	rows?: number;
 }
 
 export namespace TextInputState {
 	/**
-	 * The kind of value a text field edits, the {@code type} of the HTML input.
+	 * The kind of value a text field edits, the `type` of the HTML input.
 	 */
 	export type InputType =
 		/**
@@ -376,16 +411,16 @@ export namespace TextInputState {
 }
 
 /**
- * State of a password field, the component {@code TLPasswordInput}.
+ * State of a password field, the component `TLPasswordInput`.
  *
- * The {@link #value} is the password typed, a string.
+ * The {@link FieldState.value} is the password typed, a string.
  */
 export interface PasswordInputState extends TypingFieldState {}
 
 /**
- * State of a number field, the component {@code TLNumberInput}.
+ * State of a number field, the component `TLNumberInput`.
  *
- * The {@link #value} is the number written in the format of the field, a string; the text typed
+ * The {@link FieldState.value} is the number written in the format of the field, a string; the text typed
  * is sent back as it is and parsed by the server.
  */
 export interface NumberInputState extends TypingFieldState {
@@ -415,10 +450,10 @@ export namespace NumberInputState {
 }
 
 /**
- * State of a field for a date, a time of day, or both, the component {@code TLDatePicker}.
+ * State of a field for a date, a time of day, or both, the component `TLDatePicker`.
  *
- * The {@link #value} is the ISO form of the value for the HTML input of the {@link #inputType}, a
- * string (e.g. {@code 2026-06-01}, {@code 14:30}, {@code 2026-06-01T14:30}).
+ * The {@link FieldState.value} is the ISO form of the value for the HTML input of the {@link DatePickerState.inputType}, a
+ * string (e.g. `2026-06-01`, `14:30`, `2026-06-01T14:30`).
  */
 export interface DatePickerState extends FieldState {
 	/**
@@ -435,7 +470,7 @@ export interface DatePickerState extends FieldState {
 
 export namespace DatePickerState {
 	/**
-	 * The part of a point in time a field edits, the {@code type} of the HTML input.
+	 * The part of a point in time a field edits, the `type` of the HTML input.
 	 */
 	export type InputType =
 		/**
@@ -453,9 +488,9 @@ export namespace DatePickerState {
 }
 
 /**
- * State of a field choosing one value from a short list, the component {@code TLSelect}.
+ * State of a field choosing one value from a short list, the component `TLSelect`.
  *
- * The {@link #value} is the chosen value, in the JSON form of the {@link Option#value} of the
+ * The {@link FieldState.value} is the chosen value, in the JSON form of the {@link SelectState.Option.value} of the
  * option naming it.
  */
 export interface SelectState extends FieldState {
@@ -484,13 +519,13 @@ export namespace SelectState {
 }
 
 /**
- * State of a field choosing one or more objects, the components {@code TLDropdownSelect} (a list
- * that opens on demand), {@code TLOptionChips} (every option a toggle of its own) and
- * {@code TLSegmentedChoice} (the options as the segments of one bar).
+ * State of a field choosing one or more objects, the components `TLDropdownSelect` (a list
+ * that opens on demand), `TLOptionChips` (every option a toggle of its own) and
+ * `TLSegmentedChoice` (the options as the segments of one bar).
  *
- * The {@link #value} is the list of the chosen objects, each an {@link Option} (also for a field
- * choosing one object). A change is sent as the command {@code valueChanged} with the list of the
- * {@link Option#value}s of the chosen options as argument {@code value}.
+ * The {@link FieldState.value} is the list of the chosen objects, each an {@link DropdownSelectState.Option} (also for a field
+ * choosing one object). A change is sent as the command `valueChanged` with the list of the
+ * {@link DropdownSelectState.Option.value}s of the chosen options as argument `value`.
  */
 export interface DropdownSelectState extends FieldState {
 	/**
@@ -499,13 +534,13 @@ export interface DropdownSelectState extends FieldState {
 	display?: DropdownSelectState.Display;
 
 	/**
-	 * The objects that can be chosen, valid while {@link #optionsLoaded} is set. A list that opens
-	 * on demand asks for them with the command {@code loadOptions}.
+	 * The objects that can be chosen, valid while {@link DropdownSelectState.optionsLoaded} is set. A list that opens
+	 * on demand asks for them with the command `loadOptions`.
 	 */
 	options?: DropdownSelectState.Option[];
 
 	/**
-	 * Whether {@link #options} is up to date.
+	 * Whether {@link DropdownSelectState.options} is up to date.
 	 */
 	optionsLoaded?: boolean;
 
@@ -570,7 +605,7 @@ export namespace DropdownSelectState {
 
 		/**
 		 * Whether the option leads to the place the application displays the object at, when
-		 * followed: the command {@code goto} with the {@link #value} as argument {@code option}.
+		 * followed: the command `goto` with the {@link DropdownSelectState.Option.value} as argument `option`.
 		 * Only set on the chosen options of a field that is not editable.
 		 */
 		link?: boolean;
@@ -578,10 +613,10 @@ export namespace DropdownSelectState {
 }
 
 /**
- * State of a tab strip above the content of the selected tab, the component {@code TLTabBar}.
+ * State of a tab strip above the content of the selected tab, the component `TLTabBar`.
  *
- * A click on a tab sends the command {@code selectTab} with the {@link Tab#id} as argument
- * {@code tabId}.
+ * A click on a tab sends the command `selectTab` with the {@link TabBarState.Tab.id} as argument
+ * `tabId`.
  */
 export interface TabBarState extends ControlState {
 	/**
@@ -590,7 +625,7 @@ export interface TabBarState extends ControlState {
 	tabs?: TabBarState.Tab[];
 
 	/**
-	 * The {@link Tab#id} of the selected tab.
+	 * The {@link TabBarState.Tab.id} of the selected tab.
 	 */
 	activeTabId?: string;
 
@@ -624,9 +659,9 @@ export namespace TabBarState {
 
 /**
  * State of a window: a frame with a title bar, a body and a footer, the component
- * {@code TLWindow}.
+ * `TLWindow`.
  *
- * Closing the window sends the command {@code close}, resizing it the command {@code resize}.
+ * Closing the window sends the command `close`, resizing it the command `resize`.
  */
 export interface WindowState extends ControlState {
 	/**
@@ -635,7 +670,7 @@ export interface WindowState extends ControlState {
 	title?: string;
 
 	/**
-	 * The width of the window, a CSS length (e.g. {@code 32rem}, {@code 640px}).
+	 * The width of the window, a CSS length (e.g. `32rem`, `640px`).
 	 */
 	width?: string;
 
@@ -681,9 +716,9 @@ export interface WindowState extends ControlState {
 }
 
 /**
- * State of a modal surface over the page, the component {@code TLDialog}.
+ * State of a modal surface over the page, the component `TLDialog`.
  *
- * Dismissing the dialog sends the command {@code close}.
+ * Dismissing the dialog sends the command `close`.
  */
 export interface DialogState extends ControlState {
 	/**
@@ -708,10 +743,10 @@ export interface DialogState extends ControlState {
 }
 
 /**
- * State of a popup menu, the component {@code TLMenu}.
+ * State of a popup menu, the component `TLMenu`.
  *
- * Choosing an item sends the command {@code selectItem} with the {@link Entry#id} as argument
- * {@code itemId}; closing the menu without choosing sends the command {@code close}.
+ * Choosing an item sends the command `selectItem` with the {@link MenuState.Entry.id} as argument
+ * `itemId`; closing the menu without choosing sends the command `close`.
  */
 export interface MenuState extends ControlState {
 	/**
@@ -721,7 +756,7 @@ export interface MenuState extends ControlState {
 
 	/**
 	 * The ID of the element the menu is shown at. Absent while it is shown at
-	 * {@link #anchorX}/{@link #anchorY}.
+	 * {@link MenuState.anchorX}/{@link MenuState.anchorY}.
 	 */
 	anchorId?: string;
 
@@ -802,19 +837,19 @@ export namespace MenuState {
 }
 
 /**
- * State of a short message at the edge of the page, the component {@code TLSnackbar}.
+ * State of a short message at the edge of the page, the component `TLSnackbar`.
  *
- * Dismissing the message sends the command {@code dismiss} with the {@link #generation} of the
- * message as argument {@code generation}.
+ * Dismissing the message sends the command `dismiss` with the {@link SnackbarState.generation} of the
+ * message as argument `generation`.
  */
 export interface SnackbarState extends ControlState {
 	/**
-	 * The message, plain text. Shown where there is no {@link #content}.
+	 * The message, plain text. Shown where there is no {@link SnackbarState.content}.
 	 */
 	message?: string;
 
 	/**
-	 * The message, HTML. Takes precedence over {@link #messageText}.
+	 * The message, HTML. Takes precedence over {@link SnackbarState.message}.
 	 */
 	content?: string;
 

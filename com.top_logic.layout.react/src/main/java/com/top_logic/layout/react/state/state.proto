@@ -1,4 +1,4 @@
-/*
+/**
  * The state contract between the server-side controls and the React components rendering them.
  *
  * Each message describes the state object a control sends to its component: the property names,

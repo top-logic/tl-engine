@@ -44,8 +44,8 @@ import com.top_logic.util.TLContext;
  * The test uses the types of the model <code>TestTLScriptSecurity</code>, whose instances are stored
  * in different tables: <code>Employee</code> in <code>TLSecEmployee</code>, which a
  * non-administrative user may not read, and <code>UnsecuredData</code> in
- * <code>TLSecUnsecuredData</code>, which everybody may read. Accounts are stored in the table
- * <code>Person</code>.
+ * <code>TLSecUnsecuredData</code>, which everybody may read. Both implement the interface
+ * <code>Record</code>. Accounts are stored in the table <code>Person</code>.
  * </p>
  */
 @SuppressWarnings("javadoc")
@@ -63,11 +63,11 @@ public class TestObjectFunctions extends AbstractSearchExpressionTest {
 
 	private static final String ID = "x -> objectId($x)";
 
-	private static final String RESOLVE = "t -> i -> objectResolve($t, $i)";
+	private static final String RESOLVE = "t -> i -> objectResolve($i, $t)";
 
-	private static final String ROUND_TRIP = "x -> objectResolve(objectTable($x), objectId($x))";
+	private static final String ROUND_TRIP = "x -> objectId($x).objectResolve(objectTable($x))";
 
-	private static final String RESOLVES = "t -> i -> objectResolve($t, $i) != null";
+	private static final String RESOLVES = "t -> i -> objectResolve($i, $t) != null";
 
 	private final Map<ObjectKey, KnowledgeItem> _toDelete = new HashMap<>();
 
@@ -171,6 +171,62 @@ public class TestObjectFunctions extends AbstractSearchExpressionTest {
 		assertNull(eval(RESOLVE, UNSECURED_TABLE, eval(ID, _employee)));
 		assertNull(eval(RESOLVE, EMPLOYEE_TABLE, eval(ID, _unsecured)));
 		assertNull(eval(RESOLVE, PERSON_TABLE, eval(ID, _employee)));
+	}
+
+	public void testRoundTripByType() throws Exception {
+		assertSame(_employee, eval(RESOLVE, type("Employee"), eval(ID, _employee)));
+		assertSame(_unsecured, eval(RESOLVE, type("UnsecuredData"), eval(ID, _unsecured)));
+		assertSame(_user, eval("x -> objectId($x).objectResolve(`tl.accounts:Person`)", _user));
+		assertSame(_employee,
+			eval("x -> objectResolve(objectId($x), `TestTLScriptSecurity:Employee`)", _employee));
+	}
+
+	public void testResolveBySupertype() throws Exception {
+		TLClass record = type("Record");
+		assertEquals("Subtypes must be stored in different tables for this test.", 2,
+			TLModelUtil.potentialTables(record, false).size());
+		assertSame(_employee, eval(RESOLVE, record, eval(ID, _employee)));
+		assertSame(_unsecured, eval(RESOLVE, record, eval(ID, _unsecured)));
+	}
+
+	public void testTypeMismatch() throws Exception {
+		// Same table, but not an instance of the requested type.
+		assertNull(eval(RESOLVE, type("UnsecuredDataSub"), eval(ID, _unsecured)));
+		// Another table.
+		assertNull(eval(RESOLVE, type("Employee"), eval(ID, _unsecured)));
+		assertNull(eval(RESOLVE, type("Project"), eval(ID, _employee)));
+	}
+
+	public void testNeitherTypeNorTable() throws Exception {
+		assertNull(eval(RESOLVE, Double.valueOf(1), eval(ID, _unsecured)));
+		assertNull(eval(RESOLVE, _unsecured, eval(ID, _unsecured)));
+	}
+
+	public void testNotReadableNotResolvedByType() throws Exception {
+		String id = (String) eval(ID, _employee);
+		assertEquals(Boolean.TRUE, eval(RESOLVES, type("Employee"), id));
+		assertEquals(Boolean.TRUE, eval(RESOLVES, type("Record"), id));
+
+		TLContext.getContext().setCurrentPerson(_user);
+		assertEquals(Boolean.FALSE, eval(RESOLVES, type("Employee"), id));
+		assertEquals(Boolean.FALSE, eval(RESOLVES, type("Record"), id));
+		assertEquals(Boolean.TRUE, eval(RESOLVES, type("Record"), eval(ID, _unsecured)));
+
+		QueryExecutor executor = QueryExecutor.compile(kb(), model(), search(RESOLVE));
+		executor.disableSecurity();
+		assertSame(_employee, executor.execute(type("Record"), id));
+	}
+
+	public void testArgumentsSwapped() throws Exception {
+		String id = (String) eval(ID, _employee);
+		assertNull("A type in place of the identifier names no object.",
+			eval("i -> objectResolve(`TestTLScriptSecurity:Employee`, $i)", id));
+		assertNull("A table in place of the identifier names no object.",
+			eval("i -> objectResolve('" + EMPLOYEE_TABLE + "', $i)", id));
+	}
+
+	private static TLClass type(String className) {
+		return (TLClass) TLModelUtil.findType(MODULE + ":" + className);
 	}
 
 	public void testNotReadableNotResolved() throws Exception {

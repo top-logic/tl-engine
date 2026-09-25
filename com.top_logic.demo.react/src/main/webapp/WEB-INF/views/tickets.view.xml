@@ -91,7 +91,7 @@
 		<derived-channel name="ticketId"
 			expr="t -> objectId($t)"
 			inputs="ticket"
-			reverse="id -> objectResolve('GenericObject', $id)"
+			reverse="id -> $id.objectResolve(`demo.tickets:Ticket`)"
 		/>
 		<derived-channel name="ticketState"
 			expr="t -> if($t == null, '', if($t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`, 'closed', 'open'))"

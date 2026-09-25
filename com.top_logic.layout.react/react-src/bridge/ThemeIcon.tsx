@@ -1,7 +1,12 @@
-import { React } from 'tl-react-bridge';
+import React from 'react';
+import type { ButtonState } from '../state/control-state';
 
 /**
- * Renders a ThemeImage from its encoded form as an {@code <i>} or {@code <img>} element.
+ * Renders a theme image from its encoded form as an {@code <i>} or {@code <img>} element.
+ *
+ * <p>The encoded form is what a control sends for an image in its state, e.g.
+ * {@link ButtonState.image}. A component that renders a control's state with a component library
+ * passes the element this renders to the library, e.g. as the icon of a library button.</p>
  *
  * <p>Supported encoded formats:</p>
  * <ul>

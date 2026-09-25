@@ -1,6 +1,5 @@
-import { React } from 'tl-react-bridge';
+import { React, ThemeIcon } from 'tl-react-bridge';
 import type { DropdownSelectState } from 'tl-react-bridge';
-import { ThemeIcon } from './icon/ThemeIcon';
 import { TLPill } from './pill/TLPill';
 
 const { useCallback } = React;

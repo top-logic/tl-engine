@@ -1,6 +1,5 @@
-import { React, useTLState, useTLCommand, useKeyboardBinding, rootClassName, TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useKeyboardBinding, rootClassName, TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED, ThemeIcon } from 'tl-react-bridge';
 import type { TLCellProps, ButtonState } from 'tl-react-bridge';
-import { ThemeIcon } from './icon/ThemeIcon';
 import { useButtonDefaults, buttonClassName } from './button/ButtonDefaults';
 import type { ButtonAppearance } from './button/ButtonDefaults';
 

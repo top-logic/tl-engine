@@ -122,6 +122,10 @@ replace('TLCheckbox', BrandCheckboxAdapter);
   component instead of the TopLogic one. The replacement receives the same props (`TLCellProps`) and
   runs in the same control context. The compositions of TopLogic obtain their leaf components through
   the registry (`TLChild`), so a replaced button also appears inside toolbars, dialogs and forms.
+- **`<ThemeIcon encoded={…}/>`** (`bridge/ThemeIcon.tsx`) renders a theme image from the encoded
+  form a control sends in its state (`ButtonState.image`, the icons of menu entries and tabs, …): an
+  icon font class, an image file, or nothing for the invisible image. An adapter passes the element
+  to the library wherever the library takes an icon.
 
 ### An adapter
 
@@ -130,7 +134,7 @@ An adapter reads the typed state with `useTLState<XState>()` — the state types
 `react-src/adapters/BrandButtonAdapter.tsx`):
 
 ```tsx
-import { React, useTLState, useTLCommand, useKeyboardBinding, rootClassName } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useKeyboardBinding, rootClassName, ThemeIcon } from 'tl-react-bridge';
 import type { TLCellProps, ButtonState } from 'tl-react-bridge';
 import { BrandButton } from '../example-lib';
 
@@ -149,17 +153,28 @@ const BrandButtonAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   });
 
   if (state.hidden === true) return null;
+  const mode = state.displayMode ?? 'label-only';
+  const showIcon = !!state.image && mode !== 'label-only';
+  const iconOnly = showIcon && mode === 'icon-only';
   return (
     <BrandButton id={controlId}
       variant={state.tone === 'danger' ? 'danger' : state.appearance === 'primary' ? 'primary' : 'secondary'}
       disabled={disabled} pressed={state.active === true}
+      icon={showIcon ? <ThemeIcon encoded={state.image!} /> : undefined}
+      aria-label={showIcon ? state.label : undefined}   // the full adapter also sets the tooltip
       className={rootClassName(state, state.cssClasses)}
       onClick={click}>
-      {state.label}
+      {iconOnly ? undefined : state.label}
     </BrandButton>
   );
 };
 ```
+
+Theme images reach an adapter in their encoded form (`state.image`); `ThemeIcon` from
+`tl-react-bridge` turns them into an element the library shows as its icon. An icon-only button is
+named by its label: the full adapter sets it as `aria-label` and declares it as tooltip through
+`TOOLTIP_ATTR` — always for an icon-only button, and with `TOOLTIP_WHEN_ATTR` = `WHEN_TRUNCATED`
+(shown only while the label is clipped) otherwise, as `TLButton` does.
 
 A field adapter reads and writes its value through `useTLFieldValue()`, which sends `valueChanged`
 and so makes the library component part of the form's edit and save cycle
@@ -270,8 +285,8 @@ it generic and parameterized by configuration, not tailored to one view.
   be edited (a form in view mode) has `editable: false`. Map that to the library's read-only or
   disabled prop. `disabled` exists for buttons (`ButtonState`) and menu entries only.
 - **A partial adapter is legitimate.** An adapter maps what the library can express and documents
-  what it drops (the example button shows no icon and ignores `size`/`displayMode`; the example
-  checkbox has no tri-state). The server state stays complete regardless.
+  what it drops (the example button ignores the appearance defaults of its container; the example
+  checkbox has no tri-state and no switch presentation). The server state stays complete regardless.
 
 ## Extending the contract (engine developers)
 

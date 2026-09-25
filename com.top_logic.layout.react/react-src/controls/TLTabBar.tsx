@@ -1,6 +1,5 @@
-import { React, useTLState, useTLCommand, TLChild, useFill, FillBarrier, rootClassName } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useFill, FillBarrier, rootClassName, ThemeIcon } from 'tl-react-bridge';
 import type { TLCellProps, TabBarState } from 'tl-react-bridge';
-import { ThemeIcon } from './icon/ThemeIcon';
 
 /** A tab as the server describes it, always with its ID and label. */
 type TabInfo = TabBarState.Tab & Required<Pick<TabBarState.Tab, 'id' | 'label'>>;

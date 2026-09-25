@@ -75,6 +75,7 @@ export type { KeyedTransitionOptions } from './bridge/transition';
 export { FILL_CLASS, useFill, useFillHost, FillProvider, FillBarrier } from './bridge/fill';
 export type { FillHost } from './bridge/fill';
 export { default as TLChild } from './bridge/TLChild';
+export { ThemeIcon } from './bridge/ThemeIcon';
 export type { ChildDescriptor } from './bridge/TLChild';
 
 // Re-export React so that control bundles use the SAME React instance.

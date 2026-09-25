@@ -1,6 +1,5 @@
-import { React, useTLState } from 'tl-react-bridge';
+import { React, useTLState, ThemeIcon } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { ThemeIcon } from './icon/ThemeIcon';
 
 /**
  * A theme icon rendered on its own, as a {@code <span>} around the glyph or picture.

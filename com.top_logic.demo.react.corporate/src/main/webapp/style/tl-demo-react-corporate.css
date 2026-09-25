@@ -8,8 +8,11 @@
 .brand-button {
 	display: inline-flex;
 	align-items: center;
+	vertical-align: middle;
 	justify-content: center;
 	gap: 0.4em;
+	min-width: 0;
+	max-width: 100%;
 	min-height: 2.25rem;
 	padding: 0 1.1rem;
 	border: 2px solid var(--brand-accent);
@@ -70,6 +73,10 @@
 .brand-checkbox {
 	display: inline-flex;
 	align-items: center;
+	/* An inline-flex box takes its baseline from its first item, and the drawn box has one only
+	   while its tick is shown: aligned to the middle, a box sits at the same height whatever its
+	   state. */
+	vertical-align: middle;
 	gap: 0.5em;
 	cursor: pointer;
 }
@@ -136,4 +143,34 @@
 	background: #fee4e2;
 	color: #b42318;
 	font: 600 0.75rem/1.4 monospace;
+}
+
+.brand-button__icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.1em;
+	height: 1.1em;
+	font-size: 1.1em;
+	line-height: 1;
+}
+
+.brand-button__label {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.brand-button--small {
+	min-height: 1.75rem;
+	padding: 0 0.75rem;
+	font-size: 0.875em;
+}
+
+.brand-button--icon-only {
+	width: 2.25rem;
+	padding: 0;
+}
+
+.brand-button--icon-only.brand-button--small {
+	width: 1.75rem;
 }

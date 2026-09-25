@@ -1,6 +1,5 @@
-import { React, useTLState, useTLCommand, useCloseOnOutsidePress, useFocusTrap, rootClassName } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useCloseOnOutsidePress, useFocusTrap, rootClassName, ThemeIcon } from 'tl-react-bridge';
 import type { TLCellProps, MenuState } from 'tl-react-bridge';
-import { ThemeIcon } from './icon/ThemeIcon';
 
 const { useCallback, useEffect, useRef, useState } = React;
 

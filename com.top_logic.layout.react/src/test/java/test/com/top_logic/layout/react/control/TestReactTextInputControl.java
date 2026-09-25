@@ -23,6 +23,8 @@ import com.top_logic.layout.react.control.form.InputType;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.TextInputState;
+import com.top_logic.layout.react.state.TypingFieldState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 
 /**
@@ -186,11 +188,11 @@ public class TestReactTextInputControl extends TestCase {
 		}
 
 		Object inputType() {
-			return getState(INPUT_TYPE);
+			return getState(TextInputState.INPUT_TYPE__PROP);
 		}
 
 		Object sendValueOnBlur() {
-			return getState(SEND_VALUE_ON_BLUR);
+			return getState(TypingFieldState.SEND_VALUE_ON_BLUR__PROP);
 		}
 
 		void type(String text) {

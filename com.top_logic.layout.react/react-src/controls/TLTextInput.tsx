@@ -1,5 +1,6 @@
 import {
   React,
+  useTLState,
   useTLFieldValue,
   useTLCommand,
   useTLSubmitOnEnter,
@@ -8,7 +9,7 @@ import {
   VALUE_DEBOUNCE_MS,
   tooltipProps,
 } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import type { TLCellProps, TextInputState } from 'tl-react-bridge';
 import FontIcon from './FontIcon';
 
 const { useCallback, useRef } = React;
@@ -94,9 +95,10 @@ const normalizeUrl = (value: string): string => {
  * back entirely. Icon and clear button live in the same row as the link that opens what the field
  * holds, in the order [icon] input [clear] [link].
  */
-const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
+const TLTextInput: React.FC<TLCellProps> = ({ controlId }) => {
+  const state = useTLState<TextInputState>();
   const [value, setValue, flushValue] = useTLFieldValue({
-    debounceMs: (state.debounceMs as number) ?? VALUE_DEBOUNCE_MS,
+    debounceMs: state.debounceMs ?? VALUE_DEBOUNCE_MS,
     sendOnBlur: state.sendValueOnBlur === true,
   });
   const sendCommand = useTLCommand();
@@ -113,7 +115,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
   );
 
   const text = (value as string) ?? '';
-  const inputType = (state.inputType as string) ?? 'text';
+  const inputType = state.inputType ?? 'text';
 
   const commitOnBlur = state.commitOnBlur === true;
   const handleBlur = useCallback(async () => {
@@ -190,8 +192,8 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
   }
 
   const hasWarnings = state.hasWarnings === true;
-  const errorMessage = state.errorMessage as string | undefined;
-  const icon = state.icon as string | undefined;
+  const errorMessage = state.errorMessage;
+  const icon = state.icon;
   const hasIcon = !multiline && !!icon && icon !== 'none';
   const clearable = !multiline && state.clearable === true && text !== '';
   const cls = [
@@ -207,12 +209,11 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
     return (
       <span id={controlId}>
         <textarea
-          rows={(state.rows as number) ?? 3}
+          rows={state.rows ?? 3}
           value={text}
-          placeholder={(state.placeholder as string) ?? undefined}
+          placeholder={state.placeholder}
           onChange={handleChange}
           onBlur={handleBlur}
-          disabled={state.disabled === true}
           className={rootClassName(state, cls)}
           aria-invalid={hasError || undefined}
           {...tooltipProps(hasError ? errorMessage : undefined)}
@@ -226,11 +227,10 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
       ref={inputRef}
       type={inputType}
       value={text}
-      placeholder={(state.placeholder as string) ?? undefined}
+      placeholder={state.placeholder}
       onChange={handleChange}
       onBlur={handleBlur}
       onKeyDown={submitKey === undefined ? undefined : handleSubmitKey}
-      disabled={state.disabled === true}
       className={rootClassName(state, cls)}
       aria-invalid={hasError || undefined}
       {...tooltipProps(hasError ? errorMessage : undefined)}
@@ -247,7 +247,6 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
             type="button"
             className="tlReactTextInput__clear"
             onClick={handleClear}
-            disabled={state.disabled === true}
             aria-label={t['js.textInput.clear']}
             title={t['js.textInput.clear']}
           >

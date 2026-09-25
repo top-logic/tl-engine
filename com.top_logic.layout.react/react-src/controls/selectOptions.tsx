@@ -1,4 +1,5 @@
 import { React } from 'tl-react-bridge';
+import type { DropdownSelectState } from 'tl-react-bridge';
 import { ThemeIcon } from './icon/ThemeIcon';
 import { TLPill } from './pill/TLPill';
 
@@ -9,18 +10,11 @@ const { useCallback } = React;
  *
  * <p>
  * The same descriptor carries an option of the list to pick from and a value that is picked, so a
- * value looks the same wherever a control shows it.
+ * value looks the same wherever a control shows it. The server always sends its value and label.
  * </p>
  */
-export interface OptionDescriptor {
-  value: string;
-  label: string;
-  image?: string;
-  /** The CSS color the value carries in the model, if any. */
-  color?: string;
-  /** Whether the option leads to the place the application displays it at. */
-  link?: boolean;
-}
+export type OptionDescriptor = DropdownSelectState.Option
+  & Required<Pick<DropdownSelectState.Option, 'value' | 'label'>>;
 
 /** Command sent when the user follows the link of a displayed option. */
 export const CMD_GOTO = 'goto';

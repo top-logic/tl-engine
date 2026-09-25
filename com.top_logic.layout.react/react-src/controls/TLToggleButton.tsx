@@ -1,5 +1,5 @@
 import { React, useTLState, useTLCommand, rootClassName } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import type { TLCellProps, ToggleButtonState } from 'tl-react-bridge';
 import { buttonClassName, useButtonDefaults } from './button/ButtonDefaults';
 
 const { useCallback } = React;
@@ -17,7 +17,7 @@ export interface TLToggleButtonProps {
   label?: string;
   /** Whether the button is active.  Defaults to {@code state.active}. */
   active?: boolean;
-  /** Whether the button is disabled.  Defaults to {@code state.disabled}. */
+  /** Whether the button is disabled.  Defaults to {@code false}. */
   disabled?: boolean;
 }
 
@@ -31,14 +31,14 @@ export interface TLToggleButtonProps {
  * {@code label}, {@code active}, and {@code disabled} as props to customise behaviour.</p>
  */
 const TLToggleButton: React.FC<TLCellProps & TLToggleButtonProps> = ({ controlId, command, label, active, disabled }) => {
-  const state = useTLState();
+  const state = useTLState<ToggleButtonState>();
   const sendCommand = useTLCommand();
   const defaults = useButtonDefaults();
 
   const resolvedCommand = command ?? 'click';
-  const resolvedLabel = label ?? (state.label as string);
+  const resolvedLabel = label ?? state.label;
   const resolvedActive = active ?? state.active === true;
-  const resolvedDisabled = disabled ?? state.disabled === true;
+  const resolvedDisabled = disabled ?? false;
 
   const handleClick = useCallback(() => {
     sendCommand(resolvedCommand);

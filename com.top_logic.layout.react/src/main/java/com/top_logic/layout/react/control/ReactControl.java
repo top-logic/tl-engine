@@ -35,6 +35,7 @@ import com.top_logic.layout.react.protocol.StateEvent;
 import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.routing.RoutingParticipant;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.ChildControl;
 import com.top_logic.layout.react.state.ControlState;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.model.listen.ModelScope;
@@ -1137,18 +1138,18 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 			// The full state is serialized below; nothing is pending on the client side anymore.
 			_silentChanges = false;
 			writer.beginObject();
-			writer.name("controlId");
+			writer.name(ChildControl.CONTROL_ID__PROP);
 			writer.value(getID());
-			writer.name("module");
+			writer.name(ChildControl.MODULE__PROP);
 			writer.value(_reactModule);
-			writer.name("state");
+			writer.name(ChildControl.STATE__PROP);
 			writeState(writer);
 			if (_viewSource != null) {
 				// Carried in the child descriptor so the client (TLChild) can stamp
 				// data-view-source onto this control's root element; the top-level write() path
 				// emits the same attribute directly, but view-boundary controls are always
 				// serialized here as nested children.
-				writer.name("viewSource");
+				writer.name(ChildControl.VIEW_SOURCE__PROP);
 				writer.value(_viewSource);
 			}
 			writer.endObject();

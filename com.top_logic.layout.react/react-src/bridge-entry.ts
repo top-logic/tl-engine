@@ -47,7 +47,26 @@ export type {
 export type { TLCellProps } from './bridge/types';
 // The state contract of the replaceable components, generated from state.proto: one message per
 // component (e.g. ButtonState for TLButton), read with useTLState<ButtonState>().
-export type { ControlState, FieldState, ButtonState, CheckboxState } from './state/control-state';
+export type {
+  ControlState,
+  FieldState,
+  TypingFieldState,
+  ChildControl,
+  ButtonState,
+  ToggleButtonState,
+  CheckboxState,
+  TextInputState,
+  PasswordInputState,
+  NumberInputState,
+  DatePickerState,
+  SelectState,
+  DropdownSelectState,
+  TabBarState,
+  WindowState,
+  DialogState,
+  MenuState,
+  SnackbarState,
+} from './state/control-state';
 export { useI18N } from './bridge/i18n';
 export { scrollToAnchor } from './bridge/scroll';
 export { rootClassName } from './bridge/css';

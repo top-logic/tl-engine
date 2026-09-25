@@ -13,19 +13,18 @@ import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.state.SelectState;
 
 /**
  * A {@link ReactFormFieldControl} for select fields that includes options in the field state.
  *
  * <p>
- * Options are passed as a list of maps with {@code "value"} and {@code "label"} entries. They are
- * included in the field state under the key {@code "options"} so that the React {@code TLSelect}
- * component can render them.
+ * Options are passed as a list of {@link SelectState.Option} descriptors. They are included in the
+ * field state under {@link SelectState#OPTIONS__PROP} so that the React {@code TLSelect} component
+ * can render them.
  * </p>
  */
 public class ReactSelectFormFieldControl extends ReactFormFieldControl {
-
-	private static final String OPTIONS = "options";
 
 	private final SelectFieldModel _selectModel;
 
@@ -46,9 +45,9 @@ public class ReactSelectFormFieldControl extends ReactFormFieldControl {
 		super(context, model, "TLSelect");
 		_labelProvider = labelProvider;
 		_selectModel = model;
-		putState(OPTIONS, buildOptionsList(model.getOptions()));
+		putState(SelectState.OPTIONS__PROP, buildOptionsList(model.getOptions()));
 		model.addOptionsListener((source, newOptions) ->
-			putState(OPTIONS, buildOptionsList(newOptions)));
+			putState(SelectState.OPTIONS__PROP, buildOptionsList(newOptions)));
 	}
 
 	@Override
@@ -57,7 +56,7 @@ public class ReactSelectFormFieldControl extends ReactFormFieldControl {
 
 		// The value has a say in what is offered, because an option is added for a value none of
 		// the options names - see #buildOptionsList(List). So a new value can change the list.
-		putState(OPTIONS, buildOptionsList(_selectModel.getOptions()));
+		putState(SelectState.OPTIONS__PROP, buildOptionsList(_selectModel.getOptions()));
 	}
 
 	/**
@@ -93,8 +92,8 @@ public class ReactSelectFormFieldControl extends ReactFormFieldControl {
 
 	private Map<String, Object> option(Object option) {
 		return Map.of(
-			"value", option != null ? option : "",
-			"label", _labelProvider.getLabel(option));
+			SelectState.Option.VALUE__PROP, option != null ? option : "",
+			SelectState.Option.LABEL__PROP, _labelProvider.getLabel(option));
 	}
 
 }

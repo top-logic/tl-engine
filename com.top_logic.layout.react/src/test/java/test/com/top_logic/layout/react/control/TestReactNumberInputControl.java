@@ -29,6 +29,8 @@ import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactNumberInputControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.state.FieldState;
+import com.top_logic.layout.react.state.NumberInputState;
+import com.top_logic.layout.react.state.NumberInputState.InputMode;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 
 /**
@@ -196,10 +198,10 @@ public class TestReactNumberInputControl extends TestCase {
 	 * The on-screen keyboard the client asks for follows the field's format.
 	 */
 	public void testInputMode() {
-		assertEquals(ReactNumberInputControl.INPUT_MODE_DECIMAL, control(GERMAN, null).inputMode());
-		assertEquals(ReactNumberInputControl.INPUT_MODE_NUMERIC, control(GERMAN_INTEGER, null).inputMode());
+		assertEquals(InputMode.DECIMAL.protocolName(), control(GERMAN, null).inputMode());
+		assertEquals(InputMode.NUMERIC.protocolName(), control(GERMAN_INTEGER, null).inputMode());
 		assertEquals("A duration is typed as words, so the full keyboard is needed.",
-			ReactNumberInputControl.INPUT_MODE_TEXT, control(DurationFormat.INSTANCE, null).inputMode());
+			InputMode.TEXT.protocolName(), control(DurationFormat.INSTANCE, null).inputMode());
 	}
 
 	private static AbstractFieldModel model(NumberControl field) {
@@ -226,7 +228,7 @@ public class TestReactNumberInputControl extends TestCase {
 		}
 
 		Object inputMode() {
-			return getState(INPUT_MODE);
+			return getState(NumberInputState.INPUT_MODE__PROP);
 		}
 
 		void type(String text) {

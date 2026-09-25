@@ -19,6 +19,7 @@ import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.state.DatePickerState;
 import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.mig.html.HTMLFormatter;
 
@@ -37,10 +38,10 @@ import com.top_logic.mig.html.HTMLFormatter;
  * </p>
  *
  * <p>
- * In addition to the ISO {@link FieldState#VALUE__PROP} (consumed by the edit-mode HTML input), the control emits a
- * {@link #DISPLAY_VALUE} holding the value written by the display format - the attribute's annotated
- * format, or the user's default format for the kind of value (via {@link HTMLFormatter}) - in the
- * current user's time zone. The React component shows this localized string in view (read-only) mode,
+ * In addition to the ISO {@link FieldState#VALUE__PROP} (consumed by the edit-mode HTML input), the
+ * control emits a {@link DatePickerState#DISPLAY_VALUE__PROP} holding the value written by the
+ * display format - the attribute's annotated format, or the user's default format for the kind of
+ * value (via {@link HTMLFormatter}) - in the current user's time zone. The React component shows this localized string in view (read-only) mode,
  * so a date reads as e.g. {@code 01.06.2026} (German) rather than the locale-independent ISO form or
  * the raw Java {@link Date#toString()}. Both forms speak of the same moment: the ISO conversion uses
  * the user's time zone as well, so the value in the input is the one the view mode shows.
@@ -124,12 +125,6 @@ public class ReactDatePickerControl extends ReactFormFieldControl {
 
 	}
 
-	/** State key for the localized, view-mode display string of the value. */
-	private static final String DISPLAY_VALUE = "displayValue";
-
-	/** State key naming the HTML input the client renders. */
-	private static final String INPUT_TYPE = "inputType";
-
 	private final Kind _kind;
 
 	private final DateFormat _displayFormat;
@@ -169,12 +164,12 @@ public class ReactDatePickerControl extends ReactFormFieldControl {
 		super(context, model, "TLDatePicker");
 		_kind = kind;
 		_displayFormat = displayFormat == null ? kind.displayFormat() : displayFormat;
-		putState(INPUT_TYPE, kind.inputType());
+		putState(DatePickerState.INPUT_TYPE__PROP, kind.inputType());
 		// The base constructor seeded the raw Date into the value state; re-emit it as an ISO
 		// string so the input can display the initial value, plus a localized string for the
 		// read-only (view-mode) display.
 		putState(FieldState.VALUE__PROP, formatIso(model.getValue()));
-		putState(DISPLAY_VALUE, formatLocalized(model.getValue()));
+		putState(DatePickerState.DISPLAY_VALUE__PROP, formatLocalized(model.getValue()));
 	}
 
 	@Override
@@ -222,7 +217,7 @@ public class ReactDatePickerControl extends ReactFormFieldControl {
 		// Emit an ISO string so the HTML input can display the value, plus a localized string for
 		// the read-only (view-mode) display.
 		putState(FieldState.VALUE__PROP, formatIso(newValue));
-		putState(DISPLAY_VALUE, formatLocalized(newValue));
+		putState(DatePickerState.DISPLAY_VALUE__PROP, formatLocalized(newValue));
 	}
 
 	private String formatIso(Object value) {

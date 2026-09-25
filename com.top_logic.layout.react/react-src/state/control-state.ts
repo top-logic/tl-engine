@@ -245,3 +245,620 @@ export namespace CheckboxState {
 		 */
 		| 'switch';
 }
+
+/**
+ * A control embedded in the state of another control, rendered by the component registered
+ * under its {@link #module}.
+ *
+ * The embedding component renders it through {@code TLChild} of 'tl-react-bridge', which mounts
+ * the component with the given {@link #state} and keeps it up to date.
+ */
+export interface ChildControl {
+	/**
+	 * The ID of the control, the address of its commands and of the updates of its state.
+	 */
+	controlId?: string;
+
+	/**
+	 * The name of the component rendering the control (e.g. {@code TLButton}).
+	 */
+	module?: string;
+
+	/**
+	 * The initial state of the control, an object as described by the state message of its
+	 * component.
+	 */
+	state?: unknown;
+
+	/**
+	 * The source of the view the control is the root of, for development tools. Absent for a
+	 * control that is no view root.
+	 */
+	viewSource?: string;
+}
+
+/**
+ * State of a toggle button, the component {@code TLToggleButton}.
+ *
+ * A click sends the command {@code click} to the server.
+ */
+export interface ToggleButtonState extends ControlState {
+	/**
+	 * The label of the button.
+	 */
+	label?: string;
+
+	/**
+	 * Whether the button is pressed.
+	 */
+	active?: boolean;
+}
+
+/**
+ * State properties of a field the user types a value into.
+ */
+export interface TypingFieldState extends FieldState {
+	/**
+	 * How long a typed value is held back before it is sent, in milliseconds. Absent: the default
+	 * of the component.
+	 */
+	debounceMs?: number;
+
+	/**
+	 * Whether a typed value is held back until the field loses focus, instead of being sent while
+	 * the user is still typing. Takes precedence over {@link #debounceMs}.
+	 */
+	sendValueOnBlur?: boolean;
+
+	/**
+	 * Whether the field sends the command {@code commit} when it loses focus.
+	 */
+	commitOnBlur?: boolean;
+}
+
+/**
+ * State of a text field, the component {@code TLTextInput}.
+ *
+ * The {@link #value} is the text, a string.
+ */
+export interface TextInputState extends TypingFieldState {
+	/**
+	 * The kind of value the field edits. Absent: plain text.
+	 */
+	inputType?: TextInputState.InputType;
+
+	/**
+	 * An icon shown inside the input ahead of the text, the encoded form of a theme image.
+	 */
+	icon?: string;
+
+	/**
+	 * Whether the input offers a button that empties it, while it holds a value.
+	 */
+	clearable?: boolean;
+
+	/**
+	 * Whether the field is a text area of several lines, see {@link #rows}.
+	 */
+	multiline?: boolean;
+
+	/**
+	 * The number of visible rows of a {@link #multiline} field.
+	 */
+	rows?: number;
+}
+
+export namespace TextInputState {
+	/**
+	 * The kind of value a text field edits, the {@code type} of the HTML input.
+	 */
+	export type InputType =
+		/**
+		 * Plain text.
+		 */
+		| 'text'
+		/**
+		 * A web address.
+		 */
+		| 'url'
+		/**
+		 * An e-mail address.
+		 */
+		| 'email'
+		/**
+		 * A telephone number.
+		 */
+		| 'tel'
+		/**
+		 * A search term.
+		 */
+		| 'search';
+}
+
+/**
+ * State of a password field, the component {@code TLPasswordInput}.
+ *
+ * The {@link #value} is the password typed, a string.
+ */
+export interface PasswordInputState extends TypingFieldState {}
+
+/**
+ * State of a number field, the component {@code TLNumberInput}.
+ *
+ * The {@link #value} is the number written in the format of the field, a string; the text typed
+ * is sent back as it is and parsed by the server.
+ */
+export interface NumberInputState extends TypingFieldState {
+	/**
+	 * The on-screen keyboard the input asks for.
+	 */
+	inputMode?: NumberInputState.InputMode;
+}
+
+export namespace NumberInputState {
+	/**
+	 * The on-screen keyboard a number is typed on.
+	 */
+	export type InputMode =
+		/**
+		 * A whole number: digits and a sign.
+		 */
+		| 'numeric'
+		/**
+		 * A number with a fraction: digits, a sign and a decimal separator.
+		 */
+		| 'decimal'
+		/**
+		 * A number whose format writes words, a duration for instance.
+		 */
+		| 'text';
+}
+
+/**
+ * State of a field for a date, a time of day, or both, the component {@code TLDatePicker}.
+ *
+ * The {@link #value} is the ISO form of the value for the HTML input of the {@link #inputType}, a
+ * string (e.g. {@code 2026-06-01}, {@code 14:30}, {@code 2026-06-01T14:30}).
+ */
+export interface DatePickerState extends FieldState {
+	/**
+	 * The part of a point in time the field edits.
+	 */
+	inputType?: DatePickerState.InputType;
+
+	/**
+	 * The value written in the display format of the current user, shown while the field is not
+	 * editable.
+	 */
+	displayValue?: string;
+}
+
+export namespace DatePickerState {
+	/**
+	 * The part of a point in time a field edits, the {@code type} of the HTML input.
+	 */
+	export type InputType =
+		/**
+		 * A date without a time of day.
+		 */
+		| 'date'
+		/**
+		 * A time of day without a date.
+		 */
+		| 'time'
+		/**
+		 * A date with a time of day.
+		 */
+		| 'datetime-local';
+}
+
+/**
+ * State of a field choosing one value from a short list, the component {@code TLSelect}.
+ *
+ * The {@link #value} is the chosen value, in the JSON form of the {@link Option#value} of the
+ * option naming it.
+ */
+export interface SelectState extends FieldState {
+	/**
+	 * The values that can be chosen. A value the field holds is among them, also where it cannot
+	 * be chosen anew.
+	 */
+	options?: SelectState.Option[];
+}
+
+export namespace SelectState {
+	/**
+	 * A value that can be chosen.
+	 */
+	export interface Option {
+		/**
+		 * The value, in its JSON form.
+		 */
+		value?: unknown;
+
+		/**
+		 * The label of the value.
+		 */
+		label?: string;
+	}
+}
+
+/**
+ * State of a field choosing one or more objects, the components {@code TLDropdownSelect} (a list
+ * that opens on demand), {@code TLOptionChips} (every option a toggle of its own) and
+ * {@code TLSegmentedChoice} (the options as the segments of one bar).
+ *
+ * The {@link #value} is the list of the chosen objects, each an {@link Option} (also for a field
+ * choosing one object). A change is sent as the command {@code valueChanged} with the list of the
+ * {@link Option#value}s of the chosen options as argument {@code value}.
+ */
+export interface DropdownSelectState extends FieldState {
+	/**
+	 * The shape the options are offered in. Absent: a list that opens on demand.
+	 */
+	display?: DropdownSelectState.Display;
+
+	/**
+	 * The objects that can be chosen, valid while {@link #optionsLoaded} is set. A list that opens
+	 * on demand asks for them with the command {@code loadOptions}.
+	 */
+	options?: DropdownSelectState.Option[];
+
+	/**
+	 * Whether {@link #options} is up to date.
+	 */
+	optionsLoaded?: boolean;
+
+	/**
+	 * Whether the chosen objects are kept in the order the user gives them, instead of being
+	 * sorted.
+	 */
+	customOrder?: boolean;
+
+	/**
+	 * Whether more than one object can be chosen.
+	 */
+	multiSelect?: boolean;
+
+	/**
+	 * The label of the choice of no object.
+	 */
+	emptyOptionLabel?: string;
+}
+
+export namespace DropdownSelectState {
+	/**
+	 * The shape the options are offered in.
+	 */
+	export type Display =
+		/**
+		 * A list that opens on demand.
+		 */
+		| 'dropdown'
+		/**
+		 * Every option a toggle of its own.
+		 */
+		| 'chips'
+		/**
+		 * The options as the segments of one bar.
+		 */
+		| 'segmented';
+
+	/**
+	 * An object that can be chosen.
+	 */
+	export interface Option {
+		/**
+		 * The ID of the option, by which the client names it to the server.
+		 */
+		value?: string;
+
+		/**
+		 * The label of the object.
+		 */
+		label?: string;
+
+		/**
+		 * The icon of the object, the encoded form of a theme image.
+		 */
+		image?: string;
+
+		/**
+		 * The CSS color the object carries in the model.
+		 */
+		color?: string;
+
+		/**
+		 * Whether the option leads to the place the application displays the object at, when
+		 * followed: the command {@code goto} with the {@link #value} as argument {@code option}.
+		 * Only set on the chosen options of a field that is not editable.
+		 */
+		link?: boolean;
+	}
+}
+
+/**
+ * State of a tab strip above the content of the selected tab, the component {@code TLTabBar}.
+ *
+ * A click on a tab sends the command {@code selectTab} with the {@link Tab#id} as argument
+ * {@code tabId}.
+ */
+export interface TabBarState extends ControlState {
+	/**
+	 * The tabs, in the order of the strip.
+	 */
+	tabs?: TabBarState.Tab[];
+
+	/**
+	 * The {@link Tab#id} of the selected tab.
+	 */
+	activeTabId?: string;
+
+	/**
+	 * The content of the selected tab.
+	 */
+	activeContent?: ChildControl;
+}
+
+export namespace TabBarState {
+	/**
+	 * A tab of the strip.
+	 */
+	export interface Tab {
+		/**
+		 * The ID of the tab.
+		 */
+		id?: string;
+
+		/**
+		 * The label of the tab.
+		 */
+		label?: string;
+
+		/**
+		 * The icon of the tab, the encoded form of a theme image.
+		 */
+		icon?: string;
+	}
+}
+
+/**
+ * State of a window: a frame with a title bar, a body and a footer, the component
+ * {@code TLWindow}.
+ *
+ * Closing the window sends the command {@code close}, resizing it the command {@code resize}.
+ */
+export interface WindowState extends ControlState {
+	/**
+	 * The title of the window.
+	 */
+	title?: string;
+
+	/**
+	 * The width of the window, a CSS length (e.g. {@code 32rem}, {@code 640px}).
+	 */
+	width?: string;
+
+	/**
+	 * The height of the window, a CSS length. Absent: the height of the content.
+	 */
+	height?: string;
+
+	/**
+	 * The least height of the window, a CSS length. Absent: none.
+	 */
+	minHeight?: string;
+
+	/**
+	 * Whether the user can resize the window by dragging its edges.
+	 */
+	resizable?: boolean;
+
+	/**
+	 * Whether the user can close the window. Absent: closable.
+	 */
+	closable?: boolean;
+
+	/**
+	 * The content of the window body.
+	 */
+	child?: ChildControl;
+
+	/**
+	 * The toolbar of the title bar. Absent: none.
+	 */
+	toolbar?: ChildControl;
+
+	/**
+	 * The toolbar of the footer. Absent: none.
+	 */
+	footer?: ChildControl;
+
+	/**
+	 * Buttons added to the window one by one.
+	 */
+	toolbarButtons?: ChildControl[];
+}
+
+/**
+ * State of a modal surface over the page, the component {@code TLDialog}.
+ *
+ * Dismissing the dialog sends the command {@code close}.
+ */
+export interface DialogState extends ControlState {
+	/**
+	 * Whether the dialog is shown.
+	 */
+	open?: boolean;
+
+	/**
+	 * Whether a click beside the dialog dismisses it. Absent: dismissed.
+	 */
+	closeOnBackdrop?: boolean;
+
+	/**
+	 * Whether the user can dismiss the dialog. Absent: dismissable.
+	 */
+	closable?: boolean;
+
+	/**
+	 * The content of the dialog.
+	 */
+	child?: ChildControl;
+}
+
+/**
+ * State of a popup menu, the component {@code TLMenu}.
+ *
+ * Choosing an item sends the command {@code selectItem} with the {@link Entry#id} as argument
+ * {@code itemId}; closing the menu without choosing sends the command {@code close}.
+ */
+export interface MenuState extends ControlState {
+	/**
+	 * Whether the menu is shown.
+	 */
+	open?: boolean;
+
+	/**
+	 * The ID of the element the menu is shown at. Absent while it is shown at
+	 * {@link #anchorX}/{@link #anchorY}.
+	 */
+	anchorId?: string;
+
+	/**
+	 * The horizontal position in the viewport the menu is shown at, in pixels.
+	 */
+	anchorX?: number;
+
+	/**
+	 * The vertical position in the viewport the menu is shown at, in pixels.
+	 */
+	anchorY?: number;
+
+	/**
+	 * The entries of the menu.
+	 */
+	items?: MenuState.Entry[];
+}
+
+export namespace MenuState {
+	/**
+	 * The kind of an entry.
+	 */
+	export type EntryType =
+		/**
+		 * An item that can be chosen.
+		 */
+		| 'item'
+		/**
+		 * A line between groups of entries.
+		 */
+		| 'separator'
+		/**
+		 * A caption naming the entries that follow it; it can neither be chosen nor focused.
+		 */
+		| 'header';
+
+	/**
+	 * An entry of the menu.
+	 */
+	export interface Entry {
+		/**
+		 * The kind of the entry.
+		 */
+		type?: MenuState.EntryType;
+
+		/**
+		 * The ID of an item.
+		 */
+		id?: string;
+
+		/**
+		 * The label of an item or a header.
+		 */
+		label?: string;
+
+		/**
+		 * The icon of an item, the encoded form of a theme image.
+		 */
+		icon?: string;
+
+		/**
+		 * Whether the item cannot be chosen.
+		 */
+		disabled?: boolean;
+
+		/**
+		 * Whether the effect of the item's command is currently in force, marking the item as the
+		 * chosen one among its alternatives.
+		 */
+		active?: boolean;
+
+		/**
+		 * Additional CSS classes of the item, separated by spaces.
+		 */
+		cssClasses?: string;
+	}
+}
+
+/**
+ * State of a short message at the edge of the page, the component {@code TLSnackbar}.
+ *
+ * Dismissing the message sends the command {@code dismiss} with the {@link #generation} of the
+ * message as argument {@code generation}.
+ */
+export interface SnackbarState extends ControlState {
+	/**
+	 * The message, plain text. Shown where there is no {@link #content}.
+	 */
+	message?: string;
+
+	/**
+	 * The message, HTML. Takes precedence over {@link #messageText}.
+	 */
+	content?: string;
+
+	/**
+	 * The kind of the message.
+	 */
+	variant?: SnackbarState.Variant;
+
+	/**
+	 * The time after which the message is dismissed, in milliseconds; zero for a message that stays
+	 * until it is dismissed.
+	 */
+	duration?: number;
+
+	/**
+	 * Whether a message is shown.
+	 */
+	visible?: boolean;
+
+	/**
+	 * The number of the message shown, counting the messages this control has shown.
+	 */
+	generation?: number;
+}
+
+export namespace SnackbarState {
+	/**
+	 * The kind of a message.
+	 */
+	export type Variant =
+		/**
+		 * An information.
+		 */
+		| 'info'
+		/**
+		 * The report of a success.
+		 */
+		| 'success'
+		/**
+		 * A warning.
+		 */
+		| 'warning'
+		/**
+		 * The report of an error.
+		 */
+		| 'error';
+}

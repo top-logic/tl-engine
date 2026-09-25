@@ -18,6 +18,8 @@ import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.state.FieldState;
+import com.top_logic.layout.react.state.TextInputState;
+import com.top_logic.layout.react.state.TypingFieldState;
 import com.top_logic.util.Resources;
 
 /**
@@ -44,44 +46,6 @@ public class ReactFormFieldControl extends ReactControl {
 
 	/** Command sent by the client when the user has finished entering a value. */
 	public static final String SUBMIT_COMMAND = "submit";
-
-	/** State key telling the client to send {@link #COMMIT_COMMAND} when the field loses focus. */
-	protected static final String COMMIT_ON_BLUR = "commitOnBlur";
-
-	/**
-	 * State key telling the client to hold a typed value back until the field loses focus, instead
-	 * of sending it while the user is still typing.
-	 *
-	 * @see #setSendValueOnBlur(boolean)
-	 */
-	protected static final String SEND_VALUE_ON_BLUR = "sendValueOnBlur";
-
-	/**
-	 * State key for the icon shown inside the input, ahead of what is typed.
-	 *
-	 * @see #setIcon(String)
-	 */
-	protected static final String ICON = "icon";
-
-	/**
-	 * State key for whether the input offers a button that empties it.
-	 *
-	 * @see #setClearable(boolean)
-	 */
-	protected static final String CLEARABLE = "clearable";
-
-	/**
-	 * State key for how long a typed value is held back before it is sent, in milliseconds.
-	 *
-	 * @see #setDebounce(Long)
-	 */
-	protected static final String DEBOUNCE_MS = "debounceMs";
-
-	/** State key for whether the text field renders as a multi-line text area. */
-	protected static final String MULTILINE = "multiline";
-
-	/** State key for the number of visible rows of a multi-line text area. */
-	protected static final String ROWS = "rows";
 
 	private final FieldModel _fieldModel;
 
@@ -271,7 +235,7 @@ public class ReactFormFieldControl extends ReactControl {
 	 *        for an input without one. Honoured by the single-line text input.
 	 */
 	public void setIcon(String icon) {
-		putState(ICON, icon);
+		putState(TextInputState.ICON__PROP, icon);
 	}
 
 	/**
@@ -286,7 +250,7 @@ public class ReactFormFieldControl extends ReactControl {
 	 * </p>
 	 */
 	public void setClearable(boolean clearable) {
-		putState(CLEARABLE, clearable);
+		putState(TextInputState.CLEARABLE__PROP, clearable);
 	}
 
 	/**
@@ -308,7 +272,7 @@ public class ReactFormFieldControl extends ReactControl {
 	 *        The span in milliseconds, or {@code null} for the default of the field.
 	 */
 	public void setDebounce(Long debounce) {
-		putState(DEBOUNCE_MS, debounce);
+		putState(TypingFieldState.DEBOUNCE_MS__PROP, debounce);
 	}
 
 	/**
@@ -319,8 +283,8 @@ public class ReactFormFieldControl extends ReactControl {
 	 */
 	public void setMultiline(int rows) {
 		_multiline = true;
-		putState(MULTILINE, Boolean.TRUE);
-		putState(ROWS, Integer.valueOf(rows));
+		putState(TextInputState.MULTILINE__PROP, Boolean.TRUE);
+		putState(TextInputState.ROWS__PROP, Integer.valueOf(rows));
 	}
 
 	/**
@@ -387,7 +351,7 @@ public class ReactFormFieldControl extends ReactControl {
 	 * </p>
 	 */
 	public void setSendValueOnBlur(boolean sendOnBlur) {
-		putState(SEND_VALUE_ON_BLUR, sendOnBlur);
+		putState(TypingFieldState.SEND_VALUE_ON_BLUR__PROP, sendOnBlur);
 	}
 
 	/**
@@ -403,7 +367,8 @@ public class ReactFormFieldControl extends ReactControl {
 	 */
 	@Override
 	protected Set<String> scriptingPresentationKeys() {
-		return presentationKeys(super.scriptingPresentationKeys(), ICON, CLEARABLE, DEBOUNCE_MS);
+		return presentationKeys(super.scriptingPresentationKeys(), TextInputState.ICON__PROP,
+			TextInputState.CLEARABLE__PROP, TypingFieldState.DEBOUNCE_MS__PROP);
 	}
 
 	/**

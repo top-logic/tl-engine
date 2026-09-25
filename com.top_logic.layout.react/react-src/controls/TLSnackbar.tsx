@@ -1,5 +1,5 @@
 import { React, useTLState, useTLCommand, rootClassName } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import type { TLCellProps, SnackbarState } from 'tl-react-bridge';
 
 const { useCallback, useEffect, useRef, useState } = React;
 
@@ -21,15 +21,15 @@ const FADEOUT_AFTER_HOVER_MS = 250;
  * leaving resumes the fade-out after a short grace period.
  */
 const TLSnackbar: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState();
+  const state = useTLState<SnackbarState>();
   const sendCommand = useTLCommand();
 
-  const message = (state.message as string) ?? '';
-  const content = (state.content as string) ?? '';
-  const variant = (state.variant as string) ?? 'info';
-  const duration = (state.duration as number) ?? 5000;
+  const message = state.message ?? '';
+  const content = state.content ?? '';
+  const variant = state.variant ?? 'info';
+  const duration = state.duration ?? 5000;
   const visible = state.visible === true;
-  const generation = (state.generation as number) ?? 0;
+  const generation = state.generation ?? 0;
 
   const [exiting, setExiting] = useState(false);
   const [hovered, setHovered] = useState(false);

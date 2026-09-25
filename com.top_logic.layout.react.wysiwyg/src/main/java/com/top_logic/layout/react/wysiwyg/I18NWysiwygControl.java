@@ -13,6 +13,7 @@ import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.translation.TranslationService;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.state.TypingFieldState;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
 import com.top_logic.tools.resources.translate.Translator;
 import com.top_logic.util.Resources;
@@ -48,7 +49,7 @@ public class I18NWysiwygControl extends ReactWysiwygControl {
 		_i18nModel = i18nModel;
 		if (TranslationService.isActive()) {
 			// Defer auto-translation to editor commit (blur); see #onCommit.
-			putState(COMMIT_ON_BLUR, Boolean.TRUE);
+			putState(TypingFieldState.COMMIT_ON_BLUR__PROP, Boolean.TRUE);
 		}
 	}
 

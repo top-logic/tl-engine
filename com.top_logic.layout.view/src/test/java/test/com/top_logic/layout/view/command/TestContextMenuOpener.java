@@ -18,6 +18,7 @@ import com.top_logic.layout.react.control.overlay.ContextMenuOpener;
 import com.top_logic.layout.react.control.overlay.ContextMenuOpener.MenuRenderer;
 import com.top_logic.layout.react.control.overlay.ContextMenuOpener.Targeted;
 import com.top_logic.layout.react.control.overlay.ReactMenuControl.MenuEntry;
+import com.top_logic.layout.react.state.MenuState.EntryType;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -51,7 +52,7 @@ public class TestContextMenuOpener extends TestCase {
 		List<MenuEntry> items = renderer.lastItems;
 		assertEquals(4, items.size());
 		assertEquals("0:0", items.get(0).id());
-		assertEquals("separator", items.get(1).type());
+		assertEquals(EntryType.SEPARATOR, items.get(1).type());
 		assertEquals("1:0", items.get(2).id());
 		assertEquals("1:1", items.get(3).id());
 		assertEquals(10, renderer.lastX);

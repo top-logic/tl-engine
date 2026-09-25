@@ -12,6 +12,7 @@ import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.state.TextInputState;
 
 /**
  * A {@link ReactFormFieldControl} for text input fields.
@@ -30,16 +31,6 @@ import com.top_logic.layout.react.ReactContext;
  * </p>
  */
 public class ReactTextInputControl extends ReactFormFieldControl {
-
-	/**
-	 * State key naming the kind of value the field edits, the {@link InputType#htmlType() HTML
-	 * type} of one of the {@link InputType}s.
-	 *
-	 * <p>
-	 * A field without this state edits {@link InputType#TEXT}.
-	 * </p>
-	 */
-	protected static final String INPUT_TYPE = "inputType";
 
 	private InputType _inputType = InputType.TEXT;
 
@@ -79,7 +70,7 @@ public class ReactTextInputControl extends ReactFormFieldControl {
 	 */
 	public void setInputType(InputType inputType) {
 		_inputType = inputType;
-		putState(INPUT_TYPE, inputType.htmlType());
+		putState(TextInputState.INPUT_TYPE__PROP, inputType.htmlType());
 		if (inputType == InputType.URL) {
 			setSendValueOnBlur(true);
 		}

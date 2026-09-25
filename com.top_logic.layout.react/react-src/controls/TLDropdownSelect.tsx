@@ -1,6 +1,6 @@
 import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, useCloseOnOutsidePress, CMD_VALUE_CHANGED, rootClassName, tooltipProps } from 'tl-react-bridge';
 import { createPortal } from 'react-dom';
-import type { TLCellProps } from 'tl-react-bridge';
+import type { TLCellProps, DropdownSelectState } from 'tl-react-bridge';
 import {
   ARG_OPTION,
   CMD_GOTO,
@@ -134,7 +134,8 @@ function OptionRow({
 
 // -- Main component --
 
-const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
+const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
+  const state = useTLState<DropdownSelectState>();
   const sendCommand = useTLCommand();
 
   // Server state
@@ -142,14 +143,13 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
   const multiSelect = state.multiSelect === true;
   const customOrder = state.customOrder === true;
   const mandatory = state.mandatory === true;
-  const disabled = state.disabled === true;
   const editable = state.editable !== false;
   const optionsLoaded = state.optionsLoaded === true;
   const allOptions = (state.options ?? []) as OptionDescriptor[];
-  const emptyOptionLabel = (state.emptyOptionLabel ?? '') as string;
+  const emptyOptionLabel = state.emptyOptionLabel ?? '';
 
   // Drag-and-drop is enabled only for custom-order multi-select editable fields
-  const dragEnabled = customOrder && multiSelect && !disabled && editable;
+  const dragEnabled = customOrder && multiSelect && editable;
 
   // I18N for client-side labels
   const i18n = useI18N({
@@ -269,7 +269,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
   // -- Handlers --
 
   const openDropdown = useCallback(async () => {
-    if (disabled || !editable) return;
+    if (!editable) return;
     setIsOpen(true);
     setSearchTerm('');
     setHighlightedIndex(-1);
@@ -282,7 +282,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
         setLoadError(true);
       }
     }
-  }, [disabled, editable, optionsLoaded, sendCommand]);
+  }, [editable, optionsLoaded, sendCommand]);
 
   const closeDropdown = useCallback(() => {
     setIsOpen(false);
@@ -520,7 +520,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
 
   // -- Editable rendering --
 
-  const showClearButton = !mandatory && value.length > 0 && !disabled;
+  const showClearButton = !mandatory && value.length > 0;
 
   const dropdownContent = isOpen ? (
     <div
@@ -599,13 +599,12 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
         id={controlId}
         ref={containerRef}
         className={rootClassName(state, 'tlDropdownSelect' +
-          (isOpen ? ' tlDropdownSelect--open' : '') +
-          (disabled ? ' tlDropdownSelect--disabled' : ''))}
+          (isOpen ? ' tlDropdownSelect--open' : ''))}
         role="combobox"
         aria-expanded={isOpen}
         aria-haspopup="listbox"
         aria-owns={isOpen ? `${controlId}-listbox` : undefined}
-        tabIndex={disabled ? -1 : 0}
+        tabIndex={0}
         onClick={!isOpen ? openDropdown : undefined}
         onKeyDown={handleKeyDown}
       >
@@ -634,7 +633,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
                 <Chip
                   key={v.value}
                   option={v}
-                  removable={!disabled}
+                  removable
                   onRemove={removeOption}
                   removeLabel={removeChipLabel(v.label)}
                   draggable={dragEnabled}

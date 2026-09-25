@@ -1,12 +1,9 @@
 import { React, useTLState, useTLCommand, TLChild, useFill, FillBarrier, rootClassName } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import type { TLCellProps, TabBarState } from 'tl-react-bridge';
 import { ThemeIcon } from './icon/ThemeIcon';
 
-interface TabInfo {
-  id: string;
-  label: string;
-  icon?: string;
-}
+/** A tab as the server describes it, always with its ID and label. */
+type TabInfo = TabBarState.Tab & Required<Pick<TabBarState.Tab, 'id' | 'label'>>;
 
 const { useCallback } = React;
 
@@ -18,11 +15,11 @@ const { useCallback } = React;
  * resolves its height against the region and scrolls internally.
  */
 const TLTabBar: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState();
+  const state = useTLState<TabBarState>();
   const sendCommand = useTLCommand();
   const fillClass = useFill(true);
-  const tabs = (state.tabs as TabInfo[]) ?? [];
-  const activeTabId = state.activeTabId as string;
+  const tabs = (state.tabs ?? []) as TabInfo[];
+  const activeTabId = state.activeTabId;
 
   const handleTabClick = useCallback((tabId: string) => {
     if (tabId !== activeTabId) {

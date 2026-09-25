@@ -24,7 +24,7 @@ import com.top_logic.layout.react.routing.RoutePattern;
 import com.top_logic.layout.react.routing.RouteSegment;
 import com.top_logic.layout.react.reveal.ChildRevealer;
 import com.top_logic.layout.react.routing.RoutingParticipant;
-
+import com.top_logic.layout.react.state.TabBarState;
 
 /**
  * A {@link ReactControl} that renders a tab bar with lazily created content.
@@ -47,21 +47,6 @@ import com.top_logic.layout.react.routing.RoutingParticipant;
 public class ReactTabBarControl extends ReactControl implements RoutingParticipant, ChildRevealer {
 
 	private static final String REACT_MODULE = "TLTabBar";
-
-	private static final String TABS = "tabs";
-
-	private static final String ACTIVE_TAB_ID = "activeTabId";
-
-	private static final String ACTIVE_CONTENT = "activeContent";
-
-	/** Tab info key for the tab identifier. */
-	private static final String TAB_ID = "id";
-
-	/** Tab info key for the tab display label. */
-	private static final String TAB_LABEL = "label";
-
-	/** Tab info key for the tab CSS icon class. */
-	private static final String TAB_ICON = "icon";
 
 	/** Command argument key for the selected tab ID. */
 	/** The {@link ReactCommandHandler} that activates a tab. */
@@ -94,15 +79,15 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 		List<Map<String, Object>> tabList = new ArrayList<>();
 		for (TabDefinition tab : _tabDefinitions) {
 			Map<String, Object> tabInfo = new HashMap<>();
-			tabInfo.put(TAB_ID, tab.getId());
-			tabInfo.put(TAB_LABEL, tab.getLabel());
+			tabInfo.put(TabBarState.Tab.ID__PROP, tab.getId());
+			tabInfo.put(TabBarState.Tab.LABEL__PROP, tab.getLabel());
 			if (tab.getIcon() != null) {
-				tabInfo.put(TAB_ICON, tab.getIcon());
+				tabInfo.put(TabBarState.Tab.ICON__PROP, tab.getIcon());
 			}
 			tabList.add(tabInfo);
 		}
-		putState(TABS, tabList);
-		putState(ACTIVE_TAB_ID, _activeTabId);
+		putState(TabBarState.TABS__PROP, tabList);
+		putState(TabBarState.ACTIVE_TAB_ID__PROP, _activeTabId);
 		// activeContent is null until this tab bar is attached (or written) - see onAttach().
 	}
 
@@ -136,11 +121,11 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 	 * Creates the active tab's content unless it already exists, and displays it.
 	 */
 	private void materializeActiveContent() {
-		if (getState(ACTIVE_CONTENT) != null) {
+		if (getState(TabBarState.ACTIVE_CONTENT__PROP) != null) {
 			return;
 		}
 		ReactControl activeContent = getOrCreateContent(_activeTabId);
-		putState(ACTIVE_CONTENT, activeContent);
+		putState(TabBarState.ACTIVE_CONTENT__PROP, activeContent);
 		if (isAttached()) {
 			activeContent.attach();
 		}
@@ -187,8 +172,8 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 			// Not yet rendered, so the selection is applied by dropping the content of the tab left
 			// behind: onBeforeWrite() then mounts the content of the selected one, instead of writing
 			// the display of the tab that is no longer active.
-			putState(ACTIVE_TAB_ID, _activeTabId);
-			putState(ACTIVE_CONTENT, null);
+			putState(TabBarState.ACTIVE_TAB_ID__PROP, _activeTabId);
+			putState(TabBarState.ACTIVE_CONTENT__PROP, null);
 			if (previousContent != null) {
 				previousContent.detach();
 			}
@@ -218,8 +203,8 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 		ReactControl content = getOrCreateContent(tabId);
 
 		Object tx = beginUpdate();
-		putState(ACTIVE_TAB_ID, tabId);
-		putState(ACTIVE_CONTENT, content);
+		putState(TabBarState.ACTIVE_TAB_ID__PROP, tabId);
+		putState(TabBarState.ACTIVE_CONTENT__PROP, content);
 		commitUpdate(tx);
 
 		if (previousContent != null) {
@@ -358,7 +343,7 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 	 */
 	@Override
 	public String scriptingChildSlot(ReactControl child) {
-		if (child == getState(ACTIVE_CONTENT)) {
+		if (child == getState(TabBarState.ACTIVE_CONTENT__PROP)) {
 			return ScriptingControl.slotSegment("tab", _activeTabId);
 		}
 		return null;

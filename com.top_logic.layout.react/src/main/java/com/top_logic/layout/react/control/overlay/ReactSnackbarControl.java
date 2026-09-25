@@ -21,6 +21,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.state.SnackbarState;
 
 /**
  * Transient notification message displayed at the bottom of the screen.
@@ -33,32 +34,14 @@ import com.top_logic.layout.react.control.ReactControl;
  * <p>
  * One message is on screen at a time. A message arriving while one is shown waits until that one is
  * dismissed; messages are shown in arrival order, so a burst of notifications is read one after the
- * other instead of overwriting each other. Each message is shown with its own {@link #GENERATION},
- * which restarts the client-side auto-dismiss timer and identifies the message a
- * {@link #DISMISS_COMMAND} refers to.
+ * other instead of overwriting each other. Each message is shown with its own
+ * {@link SnackbarState#GENERATION__PROP}, which restarts the client-side auto-dismiss timer and
+ * identifies the message a {@link #DISMISS_COMMAND} refers to.
  * </p>
  */
 public class ReactSnackbarControl extends ReactControl {
 
 	private static final String REACT_MODULE = "TLSnackbar";
-
-	/** State key holding the plain-text message, displayed when no {@link #CONTENT} is set. */
-	public static final String MESSAGE = "message";
-
-	/** State key holding the HTML content, taking precedence over the {@link #MESSAGE}. */
-	public static final String CONTENT = "content";
-
-	/** State key holding the external name of the displayed {@link Variant}. */
-	public static final String VARIANT = "variant";
-
-	/** State key holding the auto-dismiss delay in milliseconds, zero for a sticky message. */
-	public static final String DURATION = "duration";
-
-	/** State key telling whether a message is currently on screen. */
-	public static final String VISIBLE = "visible";
-
-	/** State key identifying the message currently on screen, see {@link #DISMISS_COMMAND}. */
-	public static final String GENERATION = "generation";
 
 	/** The {@link ReactCommandHandler} that dismisses a shown snackbar. */
 	public static final String DISMISS_COMMAND = "dismiss";
@@ -96,10 +79,10 @@ public class ReactSnackbarControl extends ReactControl {
 	 * A message waiting for its turn on the snackbar.
 	 *
 	 * @param message
-	 *        The plain-text message, see {@link ReactSnackbarControl#MESSAGE}.
+	 *        The plain-text message, see {@link SnackbarState#MESSAGE_TEXT__PROP}.
 	 * @param content
 	 *        The HTML content taking precedence over the message, or <code>null</code> to display
-	 *        the message, see {@link ReactSnackbarControl#CONTENT}.
+	 *        the message, see {@link SnackbarState#CONTENT__PROP}.
 	 * @param variant
 	 *        The visual variant to display the message with.
 	 */
@@ -145,23 +128,23 @@ public class ReactSnackbarControl extends ReactControl {
 		_dismissHandler = dismissHandler;
 		setMessage(message);
 		setVariant(variant);
-		putState(DURATION, duration);
+		putState(SnackbarState.DURATION__PROP, duration);
 		hide();
-		putState(GENERATION, 0);
+		putState(SnackbarState.GENERATION__PROP, 0);
 	}
 
 	/**
 	 * Sets the notification message.
 	 */
 	public void setMessage(String message) {
-		putState(MESSAGE, message);
+		putState(SnackbarState.MESSAGE_TEXT__PROP, message);
 	}
 
 	/**
 	 * Sets the visual variant.
 	 */
 	public void setVariant(Variant variant) {
-		putState(VARIANT, variant.getExternalName());
+		putState(SnackbarState.VARIANT__PROP, variant.getExternalName());
 	}
 
 	/**
@@ -206,29 +189,29 @@ public class ReactSnackbarControl extends ReactControl {
 	}
 
 	/**
-	 * Puts the given message on screen under a {@link #GENERATION} of its own.
+	 * Puts the given message on screen under a {@link SnackbarState#GENERATION__PROP} of its own.
 	 */
 	private void display(Message message) {
 		_generation++;
 		Object tx = beginUpdate();
-		putState(MESSAGE, message.message());
-		putState(CONTENT, message.content());
-		putState(VARIANT, message.variant().getExternalName());
+		putState(SnackbarState.MESSAGE_TEXT__PROP, message.message());
+		putState(SnackbarState.CONTENT__PROP, message.content());
+		putState(SnackbarState.VARIANT__PROP, message.variant().getExternalName());
 		setVisible(true);
-		putState(GENERATION, _generation);
+		putState(SnackbarState.GENERATION__PROP, _generation);
 		commitUpdate(tx);
 	}
 
 	private String currentMessage() {
-		return (String) getState(MESSAGE);
+		return (String) getState(SnackbarState.MESSAGE_TEXT__PROP);
 	}
 
 	private String currentContent() {
-		return (String) getState(CONTENT);
+		return (String) getState(SnackbarState.CONTENT__PROP);
 	}
 
 	private Variant currentVariant() {
-		String externalName = (String) getState(VARIANT);
+		String externalName = (String) getState(SnackbarState.VARIANT__PROP);
 		for (Variant variant : Variant.values()) {
 			if (variant.getExternalName().equals(externalName)) {
 				return variant;
@@ -238,11 +221,11 @@ public class ReactSnackbarControl extends ReactControl {
 	}
 
 	private boolean isVisible() {
-		return Boolean.TRUE.equals(getState(VISIBLE));
+		return Boolean.TRUE.equals(getState(SnackbarState.VISIBLE__PROP));
 	}
 
 	private void setVisible(boolean visible) {
-		putState(VISIBLE, visible);
+		putState(SnackbarState.VISIBLE__PROP, visible);
 	}
 
 	/**
@@ -269,9 +252,9 @@ public class ReactSnackbarControl extends ReactControl {
 	 *
 	 * <p>
 	 * The message waiting next takes the place of the dismissed one right away, under a
-	 * {@link #GENERATION} of its own. The dismiss handler runs only when no message is left: it is
-	 * told that the snackbar has gone off screen, which is not the case while the queue still feeds
-	 * it.
+	 * {@link SnackbarState#GENERATION__PROP} of its own. The dismiss handler runs only when no
+	 * message is left: it is told that the snackbar has gone off screen, which is not the case while
+	 * the queue still feeds it.
 	 * </p>
 	 */
 	@ReactCommandHandler(value = DISMISS_COMMAND, technical = true)
@@ -290,13 +273,13 @@ public class ReactSnackbarControl extends ReactControl {
 		_dismissHandler.run();
 	}
 
-
 	/**
 	 * Rendering-only state keys, omitted from the headless projection.
 	 */
 	@Override
 	protected Set<String> scriptingPresentationKeys() {
-		return presentationKeys(super.scriptingPresentationKeys(), DURATION, GENERATION, VARIANT);
+		return presentationKeys(super.scriptingPresentationKeys(), SnackbarState.DURATION__PROP,
+			SnackbarState.GENERATION__PROP, SnackbarState.VARIANT__PROP);
 	}
 
 	/**

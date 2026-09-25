@@ -7,10 +7,26 @@
  *
  * The message of a replaceable component, by the component name it is registered under:
  *
- *   TLButton   - ButtonState
- *   TLCheckbox - CheckboxState
+ *   TLButton          - ButtonState
+ *   TLToggleButton    - ToggleButtonState
+ *   TLCheckbox        - CheckboxState
+ *   TLTextInput       - TextInputState
+ *   TLPasswordInput   - PasswordInputState
+ *   TLNumberInput     - NumberInputState
+ *   TLDatePicker      - DatePickerState
+ *   TLSelect          - SelectState
+ *   TLDropdownSelect  - DropdownSelectState
+ *   TLOptionChips     - DropdownSelectState
+ *   TLSegmentedChoice - DropdownSelectState
+ *   TLTabBar          - TabBarState
+ *   TLWindow          - WindowState
+ *   TLDialog          - DialogState
+ *   TLMenu            - MenuState
+ *   TLSnackbar        - SnackbarState
  *
- * The state is a flat JSON object: a property that is absent has its documented default. The
+ * The state is a JSON object: a property that is absent has its documented default. A property
+ * holding a control of its own (the content of a window, for instance) holds a ChildControl, which
+ * the component renders through TLChild of 'tl-react-bridge'. The
  * Java side takes the property names from the generated constants, the TypeScript side reads the
  * state through the generated types (exported from 'tl-react-bridge').
  */
@@ -263,4 +279,615 @@ message CheckboxState extends FieldState {
 	 * The shape of the field. Absent: a box that is ticked.
 	 */
 	Display display;
+}
+
+/**
+ * A control embedded in the state of another control, rendered by the component registered
+ * under its {@link #module}.
+ *
+ * The embedding component renders it through {@code TLChild} of 'tl-react-bridge', which mounts
+ * the component with the given {@link #state} and keeps it up to date.
+ */
+message ChildControl {
+	/**
+	 * The ID of the control, the address of its commands and of the updates of its state.
+	 */
+	string controlId;
+
+	/**
+	 * The name of the component rendering the control (e.g. {@code TLButton}).
+	 */
+	string module;
+
+	/**
+	 * The initial state of the control, an object as described by the state message of its
+	 * component.
+	 */
+	json state;
+
+	/**
+	 * The source of the view the control is the root of, for development tools. Absent for a
+	 * control that is no view root.
+	 */
+	string viewSource;
+}
+
+/**
+ * State of a toggle button, the component {@code TLToggleButton}.
+ *
+ * A click sends the command {@code click} to the server.
+ */
+message ToggleButtonState extends ControlState {
+	/**
+	 * The label of the button.
+	 */
+	string label;
+
+	/**
+	 * Whether the button is pressed.
+	 */
+	bool active;
+}
+
+/**
+ * State properties of a field the user types a value into.
+ */
+message TypingFieldState extends FieldState {
+	/**
+	 * How long a typed value is held back before it is sent, in milliseconds. Absent: the default
+	 * of the component.
+	 */
+	int64 debounceMs;
+
+	/**
+	 * Whether a typed value is held back until the field loses focus, instead of being sent while
+	 * the user is still typing. Takes precedence over {@link #debounceMs}.
+	 */
+	bool sendValueOnBlur;
+
+	/**
+	 * Whether the field sends the command {@code commit} when it loses focus.
+	 */
+	bool commitOnBlur;
+}
+
+/**
+ * State of a text field, the component {@code TLTextInput}.
+ *
+ * The {@link #value} is the text, a string.
+ */
+message TextInputState extends TypingFieldState {
+
+	/**
+	 * The kind of value a text field edits, the {@code type} of the HTML input.
+	 */
+	enum InputType {
+		/** Plain text. */
+		@Name("text")
+		TEXT;
+
+		/** A web address. */
+		@Name("url")
+		URL;
+
+		/** An e-mail address. */
+		@Name("email")
+		EMAIL;
+
+		/** A telephone number. */
+		@Name("tel")
+		TEL;
+
+		/** A search term. */
+		@Name("search")
+		SEARCH;
+	}
+
+	/**
+	 * The kind of value the field edits. Absent: plain text.
+	 */
+	InputType inputType;
+
+	/**
+	 * An icon shown inside the input ahead of the text, the encoded form of a theme image.
+	 */
+	string icon;
+
+	/**
+	 * Whether the input offers a button that empties it, while it holds a value.
+	 */
+	bool clearable;
+
+	/**
+	 * Whether the field is a text area of several lines, see {@link #rows}.
+	 */
+	bool multiline;
+
+	/**
+	 * The number of visible rows of a {@link #multiline} field.
+	 */
+	int32 rows;
+}
+
+/**
+ * State of a password field, the component {@code TLPasswordInput}.
+ *
+ * The {@link #value} is the password typed, a string.
+ */
+message PasswordInputState extends TypingFieldState {
+}
+
+/**
+ * State of a number field, the component {@code TLNumberInput}.
+ *
+ * The {@link #value} is the number written in the format of the field, a string; the text typed
+ * is sent back as it is and parsed by the server.
+ */
+message NumberInputState extends TypingFieldState {
+
+	/**
+	 * The on-screen keyboard a number is typed on.
+	 */
+	enum InputMode {
+		/** A whole number: digits and a sign. */
+		@Name("numeric")
+		NUMERIC;
+
+		/** A number with a fraction: digits, a sign and a decimal separator. */
+		@Name("decimal")
+		DECIMAL;
+
+		/** A number whose format writes words, a duration for instance. */
+		@Name("text")
+		TEXT;
+	}
+
+	/**
+	 * The on-screen keyboard the input asks for.
+	 */
+	InputMode inputMode;
+}
+
+/**
+ * State of a field for a date, a time of day, or both, the component {@code TLDatePicker}.
+ *
+ * The {@link #value} is the ISO form of the value for the HTML input of the {@link #inputType}, a
+ * string (e.g. {@code 2026-06-01}, {@code 14:30}, {@code 2026-06-01T14:30}).
+ */
+message DatePickerState extends FieldState {
+
+	/**
+	 * The part of a point in time a field edits, the {@code type} of the HTML input.
+	 */
+	enum InputType {
+		/** A date without a time of day. */
+		@Name("date")
+		DATE;
+
+		/** A time of day without a date. */
+		@Name("time")
+		TIME;
+
+		/** A date with a time of day. */
+		@Name("datetime-local")
+		DATE_TIME;
+	}
+
+	/**
+	 * The part of a point in time the field edits.
+	 */
+	InputType inputType;
+
+	/**
+	 * The value written in the display format of the current user, shown while the field is not
+	 * editable.
+	 */
+	string displayValue;
+}
+
+/**
+ * State of a field choosing one value from a short list, the component {@code TLSelect}.
+ *
+ * The {@link #value} is the chosen value, in the JSON form of the {@link Option#value} of the
+ * option naming it.
+ */
+message SelectState extends FieldState {
+
+	/**
+	 * A value that can be chosen.
+	 */
+	message Option {
+		/**
+		 * The value, in its JSON form.
+		 */
+		json value;
+
+		/**
+		 * The label of the value.
+		 */
+		string label;
+	}
+
+	/**
+	 * The values that can be chosen. A value the field holds is among them, also where it cannot
+	 * be chosen anew.
+	 */
+	repeated Option options;
+}
+
+/**
+ * State of a field choosing one or more objects, the components {@code TLDropdownSelect} (a list
+ * that opens on demand), {@code TLOptionChips} (every option a toggle of its own) and
+ * {@code TLSegmentedChoice} (the options as the segments of one bar).
+ *
+ * The {@link #value} is the list of the chosen objects, each an {@link Option} (also for a field
+ * choosing one object). A change is sent as the command {@code valueChanged} with the list of the
+ * {@link Option#value}s of the chosen options as argument {@code value}.
+ */
+message DropdownSelectState extends FieldState {
+
+	/**
+	 * The shape the options are offered in.
+	 */
+	enum Display {
+		/** A list that opens on demand. */
+		@Name("dropdown")
+		DROPDOWN;
+
+		/** Every option a toggle of its own. */
+		@Name("chips")
+		CHIPS;
+
+		/** The options as the segments of one bar. */
+		@Name("segmented")
+		SEGMENTED;
+	}
+
+	/**
+	 * An object that can be chosen.
+	 */
+	message Option {
+		/**
+		 * The ID of the option, by which the client names it to the server.
+		 */
+		string value;
+
+		/**
+		 * The label of the object.
+		 */
+		string label;
+
+		/**
+		 * The icon of the object, the encoded form of a theme image.
+		 */
+		string image;
+
+		/**
+		 * The CSS color the object carries in the model.
+		 */
+		string color;
+
+		/**
+		 * Whether the option leads to the place the application displays the object at, when
+		 * followed: the command {@code goto} with the {@link #value} as argument {@code option}.
+		 * Only set on the chosen options of a field that is not editable.
+		 */
+		bool link;
+	}
+
+	/**
+	 * The shape the options are offered in. Absent: a list that opens on demand.
+	 */
+	Display display;
+
+	/**
+	 * The objects that can be chosen, valid while {@link #optionsLoaded} is set. A list that opens
+	 * on demand asks for them with the command {@code loadOptions}.
+	 */
+	repeated Option options;
+
+	/**
+	 * Whether {@link #options} is up to date.
+	 */
+	bool optionsLoaded;
+
+	/**
+	 * Whether the chosen objects are kept in the order the user gives them, instead of being
+	 * sorted.
+	 */
+	bool customOrder;
+
+	/**
+	 * Whether more than one object can be chosen.
+	 */
+	bool multiSelect;
+
+	/**
+	 * The label of the choice of no object.
+	 */
+	string emptyOptionLabel;
+}
+
+/**
+ * State of a tab strip above the content of the selected tab, the component {@code TLTabBar}.
+ *
+ * A click on a tab sends the command {@code selectTab} with the {@link Tab#id} as argument
+ * {@code tabId}.
+ */
+message TabBarState extends ControlState {
+
+	/**
+	 * A tab of the strip.
+	 */
+	message Tab {
+		/**
+		 * The ID of the tab.
+		 */
+		string id;
+
+		/**
+		 * The label of the tab.
+		 */
+		string label;
+
+		/**
+		 * The icon of the tab, the encoded form of a theme image.
+		 */
+		string icon;
+	}
+
+	/**
+	 * The tabs, in the order of the strip.
+	 */
+	repeated Tab tabs;
+
+	/**
+	 * The {@link Tab#id} of the selected tab.
+	 */
+	string activeTabId;
+
+	/**
+	 * The content of the selected tab.
+	 */
+	ChildControl activeContent;
+}
+
+/**
+ * State of a window: a frame with a title bar, a body and a footer, the component
+ * {@code TLWindow}.
+ *
+ * Closing the window sends the command {@code close}, resizing it the command {@code resize}.
+ */
+message WindowState extends ControlState {
+	/**
+	 * The title of the window.
+	 */
+	string title;
+
+	/**
+	 * The width of the window, a CSS length (e.g. {@code 32rem}, {@code 640px}).
+	 */
+	string width;
+
+	/**
+	 * The height of the window, a CSS length. Absent: the height of the content.
+	 */
+	string height;
+
+	/**
+	 * The least height of the window, a CSS length. Absent: none.
+	 */
+	string minHeight;
+
+	/**
+	 * Whether the user can resize the window by dragging its edges.
+	 */
+	bool resizable;
+
+	/**
+	 * Whether the user can close the window. Absent: closable.
+	 */
+	bool closable;
+
+	/**
+	 * The content of the window body.
+	 */
+	ChildControl child;
+
+	/**
+	 * The toolbar of the title bar. Absent: none.
+	 */
+	ChildControl toolbar;
+
+	/**
+	 * The toolbar of the footer. Absent: none.
+	 */
+	ChildControl footer;
+
+	/**
+	 * Buttons added to the window one by one.
+	 */
+	repeated ChildControl toolbarButtons;
+}
+
+/**
+ * State of a modal surface over the page, the component {@code TLDialog}.
+ *
+ * Dismissing the dialog sends the command {@code close}.
+ */
+message DialogState extends ControlState {
+	/**
+	 * Whether the dialog is shown.
+	 */
+	bool open;
+
+	/**
+	 * Whether a click beside the dialog dismisses it. Absent: dismissed.
+	 */
+	bool closeOnBackdrop;
+
+	/**
+	 * Whether the user can dismiss the dialog. Absent: dismissable.
+	 */
+	bool closable;
+
+	/**
+	 * The content of the dialog.
+	 */
+	ChildControl child;
+}
+
+/**
+ * State of a popup menu, the component {@code TLMenu}.
+ *
+ * Choosing an item sends the command {@code selectItem} with the {@link Entry#id} as argument
+ * {@code itemId}; closing the menu without choosing sends the command {@code close}.
+ */
+message MenuState extends ControlState {
+
+	/**
+	 * The kind of an entry.
+	 */
+	enum EntryType {
+		/** An item that can be chosen. */
+		@Name("item")
+		ITEM;
+
+		/** A line between groups of entries. */
+		@Name("separator")
+		SEPARATOR;
+
+		/** A caption naming the entries that follow it; it can neither be chosen nor focused. */
+		@Name("header")
+		HEADER;
+	}
+
+	/**
+	 * An entry of the menu.
+	 */
+	message Entry {
+		/**
+		 * The kind of the entry.
+		 */
+		EntryType type;
+
+		/**
+		 * The ID of an item.
+		 */
+		string id;
+
+		/**
+		 * The label of an item or a header.
+		 */
+		string label;
+
+		/**
+		 * The icon of an item, the encoded form of a theme image.
+		 */
+		string icon;
+
+		/**
+		 * Whether the item cannot be chosen.
+		 */
+		bool disabled;
+
+		/**
+		 * Whether the effect of the item's command is currently in force, marking the item as the
+		 * chosen one among its alternatives.
+		 */
+		bool active;
+
+		/**
+		 * Additional CSS classes of the item, separated by spaces.
+		 */
+		string cssClasses;
+	}
+
+	/**
+	 * Whether the menu is shown.
+	 */
+	bool open;
+
+	/**
+	 * The ID of the element the menu is shown at. Absent while it is shown at
+	 * {@link #anchorX}/{@link #anchorY}.
+	 */
+	string anchorId;
+
+	/**
+	 * The horizontal position in the viewport the menu is shown at, in pixels.
+	 */
+	int32 anchorX;
+
+	/**
+	 * The vertical position in the viewport the menu is shown at, in pixels.
+	 */
+	int32 anchorY;
+
+	/**
+	 * The entries of the menu.
+	 */
+	repeated Entry items;
+}
+
+/**
+ * State of a short message at the edge of the page, the component {@code TLSnackbar}.
+ *
+ * Dismissing the message sends the command {@code dismiss} with the {@link #generation} of the
+ * message as argument {@code generation}.
+ */
+message SnackbarState extends ControlState {
+
+	/**
+	 * The kind of a message.
+	 */
+	enum Variant {
+		/** An information. */
+		@Name("info")
+		INFO;
+
+		/** The report of a success. */
+		@Name("success")
+		SUCCESS;
+
+		/** A warning. */
+		@Name("warning")
+		WARNING;
+
+		/** The report of an error. */
+		@Name("error")
+		ERROR;
+	}
+
+	/**
+	 * The message, plain text. Shown where there is no {@link #content}.
+	 */
+	@Name("message")
+	string messageText;
+
+	/**
+	 * The message, HTML. Takes precedence over {@link #messageText}.
+	 */
+	string content;
+
+	/**
+	 * The kind of the message.
+	 */
+	Variant variant;
+
+	/**
+	 * The time after which the message is dismissed, in milliseconds; zero for a message that stays
+	 * until it is dismissed.
+	 */
+	int32 duration;
+
+	/**
+	 * Whether a message is shown.
+	 */
+	bool visible;
+
+	/**
+	 * The number of the message shown, counting the messages this control has shown.
+	 */
+	int32 generation;
 }

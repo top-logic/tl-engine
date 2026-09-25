@@ -38,6 +38,7 @@ import com.top_logic.layout.react.control.ReactValueColor;
 import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.navigation.ObjectNavigator;
+import com.top_logic.layout.react.state.DropdownSelectState;
 import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.scripting.recorder.ref.ContextDependent;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
@@ -87,38 +88,6 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	/** The React component drawing the options as the segments of one bar. */
 	private static final String MODULE_SEGMENTED = "TLSegmentedChoice";
 
-	/**
-	 * State key naming the shape the options are offered in, the external name of the
-	 * {@link #getDisplay() display}. Absent for the list that opens on demand.
-	 */
-	private static final String DISPLAY = "display";
-
-	private static final String OPTIONS = "options";
-
-	private static final String OPTIONS_LOADED = "optionsLoaded";
-
-	private static final String CUSTOM_ORDER = "customOrder";
-
-	private static final String MULTI_SELECT = "multiSelect";
-
-	private static final String EMPTY_OPTION_LABEL = "emptyOptionLabel";
-
-	private static final String OPT_VALUE = "value";
-
-	private static final String OPT_LABEL = "label";
-
-	private static final String OPT_IMAGE = "image";
-
-	/**
-	 * Descriptor field marking an option that leads to the place the application displays it at.
-	 *
-	 * <p>
-	 * Only carried by the options a read-only field displays: while the field is editable, its
-	 * chips are the handle for changing the value, not a way out of the form.
-	 * </p>
-	 */
-	private static final String OPT_LINK = "link";
-
 	// Command names.
 	private static final String CMD_LOAD_OPTIONS = "loadOptions";
 
@@ -127,7 +96,10 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	/** Command sent when the user follows the link of a displayed option. */
 	private static final String CMD_GOTO = "goto";
 
-	/** Argument of {@link #CMD_GOTO}: the {@link #OPT_VALUE} of the option to display. */
+	/**
+	 * Argument of {@link #CMD_GOTO}: the {@link DropdownSelectState.Option#VALUE__PROP} of the option
+	 * to display.
+	 */
 	private static final String ARG_OPTION = "option";
 
 	private final SelectFieldModel _selectModel;
@@ -259,11 +231,12 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		Resources resources = Resources.getInstance();
 
 		updateValueState();
-		putState(MULTI_SELECT, _selectModel.isMultiple());
-		putState(CUSTOM_ORDER, _customOrder);
-		putState(EMPTY_OPTION_LABEL, resources.getString(I18NConstants.JS_DROPDOWN_SELECT_EMPTY));
+		putState(DropdownSelectState.MULTI_SELECT__PROP, _selectModel.isMultiple());
+		putState(DropdownSelectState.CUSTOM_ORDER__PROP, _customOrder);
+		putState(DropdownSelectState.EMPTY_OPTION_LABEL__PROP,
+			resources.getString(I18NConstants.JS_DROPDOWN_SELECT_EMPTY));
 		if (_display != SelectDisplay.DROPDOWN) {
-			putState(DISPLAY, _display.getExternalName());
+			putState(DropdownSelectState.DISPLAY__PROP, _display.getExternalName());
 		}
 		invalidateOptions();
 	}
@@ -316,7 +289,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		_optionIdByObject = newReverse;
 
 		Object tx = beginUpdate();
-		putState(OPTIONS, descriptors);
+		putState(DropdownSelectState.OPTIONS__PROP, descriptors);
 		setOptionsLoaded(true);
 		// Re-send value with IDs consistent with the new option index.
 		updateValueState();
@@ -336,14 +309,15 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	@Override
 	public Map<String, Object> scriptingScalarState() {
 		Map<String, Object> result = super.scriptingScalarState();
-		Object options = result.get(OPTIONS);
+		Object options = result.get(DropdownSelectState.OPTIONS__PROP);
 		if (options instanceof List<?> list && !list.isEmpty()) {
 			ReactOptionScope scope = new ReactOptionScope(new ArrayList<>(_optionIndex.values()), _labelProvider);
 			List<Object> withKeys = new ArrayList<>(list.size());
 			for (Object entry : list) {
 				if (entry instanceof Map<?, ?> descriptor) {
 					Map<String, Object> augmented = new LinkedHashMap<>((Map<String, Object>) descriptor);
-					Object key = ScriptingModelKey.toKey(scope, _optionIndex.get(descriptor.get(OPT_VALUE)));
+					Object key = ScriptingModelKey.toKey(scope,
+						_optionIndex.get(descriptor.get(DropdownSelectState.Option.VALUE__PROP)));
 					if (key != null) {
 						augmented.put("key", key);
 					}
@@ -352,7 +326,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 					withKeys.add(entry);
 				}
 			}
-			result.put(OPTIONS, withKeys);
+			result.put(DropdownSelectState.OPTIONS__PROP, withKeys);
 		}
 		return result;
 	}
@@ -363,11 +337,11 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 */
 	@Override
 	protected Set<String> scriptingPresentationKeys() {
-		return presentationKeys(super.scriptingPresentationKeys(), DISPLAY);
+		return presentationKeys(super.scriptingPresentationKeys(), DropdownSelectState.DISPLAY__PROP);
 	}
 
 	private void setOptionsLoaded(boolean loaded) {
-		putState(OPTIONS_LOADED, loaded);
+		putState(DropdownSelectState.OPTIONS_LOADED__PROP, loaded);
 	}
 
 	/**
@@ -572,7 +546,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 *
 	 * <p>
 	 * These are the options the field displays as its value, so they are the ones that carry
-	 * {@link #OPT_LINK}.
+	 * {@link DropdownSelectState.Option#LINK__PROP}.
 	 * </p>
 	 */
 	private List<Map<String, Object>> toOptionDescriptors(List<?> options) {
@@ -590,7 +564,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 
 			Map<String, Object> descriptor = describe(id, option, resourceProvider);
 			if (navigator != null && navigator.canShow(option)) {
-				descriptor.put(OPT_LINK, Boolean.TRUE);
+				descriptor.put(DropdownSelectState.Option.LINK__PROP, Boolean.TRUE);
 			}
 			descriptors.add(descriptor);
 		}
@@ -618,8 +592,8 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 */
 	private Map<String, Object> describe(String id, Object option, ResourceProvider resourceProvider) {
 		Map<String, Object> descriptor = new HashMap<>();
-		descriptor.put(OPT_VALUE, id);
-		descriptor.put(OPT_LABEL, _labelProvider.getLabel(option));
+		descriptor.put(DropdownSelectState.Option.VALUE__PROP, id);
+		descriptor.put(DropdownSelectState.Option.LABEL__PROP, _labelProvider.getLabel(option));
 
 		if (resourceProvider != null) {
 			putImage(descriptor, resourceProvider.getImage(option, Flavor.DEFAULT));
@@ -698,7 +672,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		if (image == null || image == ThemeImage.none()) {
 			return;
 		}
-		descriptor.put(OPT_IMAGE, image.resolve().toEncodedForm());
+		descriptor.put(DropdownSelectState.Option.IMAGE__PROP, image.resolve().toEncodedForm());
 	}
 
 	private ResourceProvider toResourceProvider(LabelProvider labelProvider) {

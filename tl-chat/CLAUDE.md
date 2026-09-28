@@ -1231,8 +1231,9 @@ the channel when the channel moves, never when the store does**: the store opens
 rail pick, a first send) and reports them, and until the channel answers, `selected` still names the
 chat that was left. **Only the latest choice of chat takes effect**: `selectSession` ignores the chat
 the store already shows or is opening, and an opening that another choice overtook is dropped when
-its transcript arrives. The tab's remembered chat (`sessionStorage`) is restored only into a store
-nothing has chosen a chat for yet, so it never competes with a host's channel.
+its transcript arrives. The tab's remembered chat (`sessionStorage`) is never restored where an
+element wires an `input` channel - there the channel is the whole selection, and empty means a fresh
+conversation - and elsewhere only into a store nothing has chosen a chat for yet (#577).
 
 `<chat-rail>` is a **shell**, not a set of sections: it renders the strip, the section headers and
 the pane's chrome, and every section's body is a view element the application configured there.

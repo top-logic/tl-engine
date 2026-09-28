@@ -510,6 +510,13 @@ export interface ChatActions {
    * reason {@link registerRail} counts.
    */
   registerConversation(insideDock: boolean): () => void
+  /**
+   * Says that a host's `input` channel decides which chat this window shows, an empty channel
+   * included: the tab's remembered chat is then not restored. It named the chat this tab had on the
+   * previous page, which the channel of this page may not want - it showed until the host refused
+   * it (#577).
+   */
+  followChannel(): void
   bindComposer(api: ComposerApi | null): void
   insertReference(token: ReferenceToken): void
   /** Replaces the composer's draft, focuses it and puts the caret at the end. */
@@ -1068,10 +1075,9 @@ export class ChatStore {
     this.restored = true
     const id = this.remembered
     if (!id) return
-    // A chat was already chosen for this window - typically by a host's `input` channel, which
-    // answers the page, not the tab. The remembered one would only compete with it, and a host that
-    // takes a reported chat as its own would take this tab's stale one back from the chat the page
-    // has moved on to (#576).
+    // A chat was already chosen for this window. The remembered one would only compete with it, and
+    // a host that takes a reported chat as its own would take this tab's stale one back from the
+    // chat the page has moved on to (#576).
     if (this.choice > 0) return
     if (!sessions.some((item) => item.id === id)) {
       writeActiveSession(this.chatId, null)
@@ -2292,6 +2298,10 @@ export class ChatStore {
           // count, and a stale total would keep a number on a button that opens nothing.
           this.patch({ railMounted: mounted, badgeTotal: mounted ? this.state.badgeTotal : 0 })
         }
+      },
+
+      followChannel: () => {
+        this.restored = true
       },
 
       registerConversation: (insideDock: boolean) => {

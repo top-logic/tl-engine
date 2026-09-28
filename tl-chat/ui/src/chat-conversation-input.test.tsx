@@ -103,6 +103,47 @@ describe('the input channel of a conversation', () => {
     expect(store.getState().sessionId).toBe('open')
   })
 
+  it('does not reopen the chat this tab had on another page when the channel is empty', async () => {
+    // A signed-in page, so the store lists the sessions and would restore the remembered one.
+    const signedIn = { authenticated: true, windowId: 'w2' }
+    const opened: string[] = []
+    globalThis.fetch = vi.fn(async (url: string) => {
+      const id = /\/chat\/sessions\/([^/?]+)/.exec(url)?.[1]
+      if (id) opened.push(id)
+      const body = id ? { id, turnsJson: '' } : url.includes('/chat/sessions') ? { sessions: [{ id: 'previous-page', title: 'A' }] } : {}
+      return { ok: true, status: 200, json: async () => body }
+    }) as unknown as typeof fetch
+    ;(globalThis as unknown as { EventSource: unknown }).EventSource = class {
+      addEventListener(): void {}
+      close(): void {}
+    }
+    for (const key of Object.keys(window.sessionStorage)) window.sessionStorage.removeItem(key)
+    window.sessionStorage.setItem(`tl-chat-session:${CHAT}-restore`, 'previous-page')
+    const chatId = CHAT + '-restore'
+
+    await render({ ...signedIn, chatId, selected: '' })
+
+    expect(opened).toEqual([])
+    expect(chatStore(chatId, readBootstrap(state({ ...signedIn, chatId }))).getState().sessionId).toBeNull()
+  })
+
+  it('shows no chat when the channel is emptied while the one it named is still loading', async () => {
+    // The reused window names the previous page's chat for a moment, then this page's: none (#577).
+    let arrive: () => void = () => undefined
+    const answer = globalThis.fetch
+    globalThis.fetch = vi.fn(async (url: string, init?: unknown) => {
+      if (url.includes('/chat/sessions/previous-page')) await new Promise<void>((resolve) => (arrive = resolve))
+      return (answer as (url: string, init?: unknown) => Promise<unknown>)(url, init)
+    }) as unknown as typeof fetch
+    await render({ selected: 'previous-page' })
+    await render({ selected: '' })
+    arrive()
+    await render({ selected: '' })
+
+    expect(chatStore(CHAT, readBootstrap(state({}))).getState().sessionId).toBeNull()
+    expect(sessionReports()).not.toContain('previous-page')
+  })
+
   it('stays on its chat when the channel names another one for a moment', async () => {
     await render({ selected: 'this-page' })
     const store = chatStore(CHAT, readBootstrap(state({})))

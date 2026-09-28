@@ -8,6 +8,7 @@ package com.top_logic.layout.react.control.button;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * Model for a command button providing label, executability, and execution.
@@ -87,6 +88,33 @@ public interface CommandModel {
 	 *         hidden.
 	 */
 	boolean isVisible();
+
+	/**
+	 * The state the command's rules assign to it right now.
+	 *
+	 * <p>
+	 * Agrees with {@link #isVisible()} and {@link #isExecutable()}, and in addition carries the
+	 * {@link ExecutableState#getI18NReasonKey() reason} for a refusal: a UI element that refuses to
+	 * run the command reports this state, so that the user learns why.
+	 * </p>
+	 *
+	 * <p>
+	 * By default, the state is derived from {@link #isVisible()} and {@link #isExecutable()} and
+	 * carries only the generic reasons {@link ExecutableState#NOT_EXEC_HIDDEN} and
+	 * {@link ExecutableState#NOT_EXEC_DISABLED}. A model whose rules give a reason of their own
+	 * reports it by overriding this method; a model delegating to another one delegates this
+	 * method as well.
+	 * </p>
+	 */
+	default ExecutableState getExecutableState() {
+		if (!isVisible()) {
+			return ExecutableState.NOT_EXEC_HIDDEN;
+		}
+		if (!isExecutable()) {
+			return ExecutableState.NOT_EXEC_DISABLED;
+		}
+		return ExecutableState.EXECUTABLE;
+	}
 
 	/**
 	 * Executes the command.

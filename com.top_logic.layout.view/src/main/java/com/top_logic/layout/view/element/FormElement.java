@@ -63,6 +63,7 @@ import com.top_logic.layout.view.form.FormModelListener;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
 
 /**
@@ -573,6 +574,11 @@ public class FormElement extends ContainerElement {
 		@Override
 		public boolean isExecutable() {
 			return _inner.isExecutable();
+		}
+
+		@Override
+		public ExecutableState getExecutableState() {
+			return _inner.getExecutableState();
 		}
 
 		@Override

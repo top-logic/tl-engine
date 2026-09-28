@@ -243,8 +243,15 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 	}
 
 	/**
-	 * The current executability state.
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The state the command's rules assign to the current {@link #resolveInput() input}, as last
+	 * evaluated while the model is {@link #attach(ModelScope) attached}, with the reason the
+	 * deciding rule gave.
+	 * </p>
 	 */
+	@Override
 	public ExecutableState getExecutableState() {
 		return _executableState;
 	}
@@ -287,21 +294,21 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 	 * {@link #resolveInput() channel value} - the row a table activation opens, say.
 	 *
 	 * <p>
-	 * The command's executability rules decide over that same input, so a rule that rejects it
-	 * makes the call a no-op.
+	 * The command's executability rules decide over that same input: a rule that rejects it
+	 * keeps the command from running, and the call reports the rule's state as refusal.
 	 * </p>
 	 *
 	 * @param context
 	 *        The context the command executes in.
 	 * @param input
 	 *        The command's input value.
-	 * @return The command's result, {@link HandlerResult#DEFAULT_RESULT} when the rules reject the
-	 *         input.
+	 * @return The command's result, or the {@link HandlerResult#notExecutable(ExecutableState)
+	 *         refusal} carrying the rules' state when they reject the input.
 	 */
 	public HandlerResult execute(ReactContext context, Object input) {
 		ExecutableState state = executability(input);
 		if (!state.isExecutable()) {
-			return HandlerResult.DEFAULT_RESULT;
+			return HandlerResult.notExecutable(state);
 		}
 
 		// TODO: dirty check (DirtyCheckScope from config)

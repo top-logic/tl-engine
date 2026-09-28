@@ -349,25 +349,29 @@ public class ReactButtonControl extends ReactControl {
 	 * </p>
 	 *
 	 * <p>
-	 * Where there is a {@link CommandModel}, it decides as well; a model that grants execution
-	 * unconditionally keeps its behavior.
+	 * Where there is a {@link CommandModel}, it decides first, and a refusal reports the model's
+	 * {@link CommandModel#getExecutableState() state}: a button hidden or disabled by its model is
+	 * so for the reason the command's rules gave, which is what the user is told. Only a button
+	 * the model would run, but that is hidden or disabled on its own account, is refused with the
+	 * generic state. A model that grants execution unconditionally keeps its behavior.
 	 * </p>
+	 *
+	 * @return The result of the button's action, or a {@link HandlerResult#notExecutable(ExecutableState)
+	 *         refusal} if the button is not offered.
 	 */
 	@ReactCommandHandler(CMD_CLICK)
 	HandlerResult handleClick(ReactContext context) {
+		if (_model != null) {
+			ExecutableState state = _model.getExecutableState();
+			if (!state.isExecutable()) {
+				return HandlerResult.notExecutable(state);
+			}
+		}
 		if (isHidden()) {
 			return HandlerResult.notExecutable(ExecutableState.NOT_EXEC_HIDDEN);
 		}
 		if (Boolean.TRUE.equals(getState(DISABLED))) {
 			return HandlerResult.notExecutable(ExecutableState.NOT_EXEC_DISABLED);
-		}
-		if (_model != null) {
-			if (!_model.isVisible()) {
-				return HandlerResult.notExecutable(ExecutableState.NOT_EXEC_HIDDEN);
-			}
-			if (!_model.isExecutable()) {
-				return HandlerResult.notExecutable(ExecutableState.NOT_EXEC_DISABLED);
-			}
 		}
 		return _action.execute(context);
 	}

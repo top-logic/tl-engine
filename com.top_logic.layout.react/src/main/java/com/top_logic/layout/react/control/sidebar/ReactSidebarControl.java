@@ -595,7 +595,8 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	 * {@link CommandItem#isDisabled() disabled} one is displayed out of reach, so both are refused
 	 * instead of running a command the user interface does not offer. The item's state follows the
 	 * hosted command's executability, which anything that can address this command would otherwise
-	 * bypass.
+	 * bypass. The refusal reports the item's {@link CommandItem#getExecutableState() state}, whose
+	 * reason tells the user why the command is not offered.
 	 * </p>
 	 */
 	@ReactCommandHandler(EXECUTE_COMMAND_COMMAND)
@@ -603,11 +604,9 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 		String itemId = args.getItemId();
 		CommandItem cmdItem = findCommandItem(itemId, _items);
 		if (cmdItem != null) {
-			if (cmdItem.isHidden()) {
-				return HandlerResult.notExecutable(ExecutableState.NOT_EXEC_HIDDEN);
-			}
-			if (cmdItem.isDisabled()) {
-				return HandlerResult.notExecutable(ExecutableState.NOT_EXEC_DISABLED);
+			ExecutableState state = cmdItem.getExecutableState();
+			if (!state.isExecutable()) {
+				return HandlerResult.notExecutable(state);
 			}
 			HandlerResult result = cmdItem.getAction().execute(context);
 			closeDrawerIfOpen();

@@ -341,25 +341,6 @@ public class ToolAccessLabels {
 	}
 
 	/**
-	 * The name of one of the templates a role entry can start from.
-	 *
-	 * @param template
-	 *        The template to name. Never <code>null</code>.
-	 */
-	public static ResKey roleTemplate(PolicyDraft.RoleTemplate template) {
-		switch (template) {
-			case READ_ONLY:
-				return I18NConstants.TEMPLATE_READ_ONLY;
-			case CLERK:
-				return I18NConstants.TEMPLATE_CLERK;
-			case DEVELOPER:
-				return I18NConstants.TEMPLATE_DEVELOPER;
-			default:
-				return I18NConstants.TEMPLATE_NONE;
-		}
-	}
-
-	/**
 	 * Where the group of a tool comes from, in words.
 	 *
 	 * @param source

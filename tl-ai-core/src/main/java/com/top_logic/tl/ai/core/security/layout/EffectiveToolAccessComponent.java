@@ -9,7 +9,6 @@ import static com.top_logic.layout.basic.fragments.Fragments.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +18,6 @@ import java.util.function.Supplier;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
@@ -44,9 +42,6 @@ import com.top_logic.layout.tree.model.DefaultTreeTableModel;
 import com.top_logic.layout.tree.model.DefaultTreeTableModel.DefaultTreeTableBuilder;
 import com.top_logic.layout.tree.model.DefaultTreeTableModel.DefaultTreeTableNode;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.tl.ai.core.agent.AgentDefinition;
-import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
-import com.top_logic.tl.ai.core.provider.LLMService;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.security.EffectiveToolAccess;
 import com.top_logic.tl.ai.core.security.EffectiveToolAccess.CapabilityAccess;
@@ -412,6 +407,7 @@ public class EffectiveToolAccessComponent extends FormComponent implements Contr
 			? AiToolAccessService.effectiveRunAccessFor(_account)
 			: AiToolAccessService.effectiveRunAccessForRoles(_role == null ? Set.of() : Set.of(_role));
 
+		AgentFacts facts = AgentFacts.live();
 		List<String> agents = names(Dimension.AGENT);
 		// The agent section is not the only one that can stop an agent: one whose own model, or one of
 		// whose own servers, a role forbids cannot run at all - the chat's menu, the fallback agent and
@@ -423,13 +419,13 @@ public class EffectiveToolAccessComponent extends FormComponent implements Contr
 		Map<String, Decision.Denied> stopped = new LinkedHashMap<>();
 		List<String> allowedAgents = new ArrayList<>();
 		for (String agentName : access.allowedAgents(agents)) {
-			if (isInfrastructure(agentName)) {
+			if (facts.isInfrastructure(agentName)) {
 				stopped.put(agentName, new Decision.Denied(Dimension.AGENT, agentName, null,
 					RoleAccessPolicy.Cause.INFRASTRUCTURE_AGENT));
 				continue;
 			}
 			Decision.Denied own =
-				access.agentsOwnRefusal(assignedModel(agentName), declaredServers(agentName));
+				access.agentsOwnRefusal(facts.assignedModel(agentName), facts.declaredServers(agentName));
 			if (own == null) {
 				allowedAgents.add(agentName);
 			} else {
@@ -441,8 +437,8 @@ public class EffectiveToolAccessComponent extends FormComponent implements Contr
 		Set<String> assignedModels = new TreeSet<>();
 		Set<String> declaredServers = new TreeSet<>();
 		for (String agentName : allowedAgents) {
-			declaredServers.addAll(declaredServers(agentName));
-			String model = assignedModel(agentName);
+			declaredServers.addAll(facts.declaredServers(agentName));
+			String model = facts.assignedModel(agentName);
 			if (model != null) {
 				assignedModels.add(model);
 			}
@@ -489,18 +485,6 @@ public class EffectiveToolAccessComponent extends FormComponent implements Contr
 			.fill(agentName, own.name(), own.byRole()));
 	}
 
-	/** Whether the named agent is one the application runs for a user rather than a persona. */
-	private static boolean isInfrastructure(String agentName) {
-		AgentDefinition agent = AgentDefinitionQuery.getInstance().findAgentByName(agentName);
-		return agent != null && agent.infrastructure();
-	}
-
-	/** The MCP servers the named agent declares, empty if there is no such agent. */
-	private static Collection<String> declaredServers(String agentName) {
-		AgentDefinition agent = AgentDefinitionQuery.getInstance().findAgentByName(agentName);
-		return agent == null ? List.of() : agent.mcpServers();
-	}
-
 	/** The evaluation of one of the three sections of the running policy. */
 	private static RoleAccessPolicy sectionOf(Dimension dimension) {
 		AiToolAccessService service = AiToolAccessService.getInstance();
@@ -518,20 +502,6 @@ public class EffectiveToolAccessComponent extends FormComponent implements Contr
 	private static List<String> names(Dimension dimension) {
 		Set<String> known = AiToolAccessService.knownNames(dimension);
 		return known == null ? List.of() : new ArrayList<>(known);
-	}
-
-	/** The model the named agent is assigned, or <code>null</code> if nothing can say. */
-	private static String assignedModel(String agentName) {
-		if (!LLMService.Module.INSTANCE.isActive()) {
-			return null;
-		}
-		try {
-			return LLMService.getInstance().resolveModelAssignment(agentName).model();
-		} catch (RuntimeException ex) {
-			Logger.debug("No model assignment for '" + agentName + "'.",
-				EffectiveToolAccessComponent.class);
-			return null;
-		}
 	}
 
 	/**

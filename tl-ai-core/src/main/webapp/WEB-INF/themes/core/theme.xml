@@ -3,9 +3,9 @@
 <!--
 	Contributes the stylesheets of the administration views this module adds.
 
-	agentSecurity.css: the Richtlinie tab renders its own control tree rather than a table, so the row
-	structure that makes a capability row readable has to come from a stylesheet - and a library module
-	contributes one the same way tl-chat contributes its own.
+	agentSecurity.css: the cells, column headers and inspector pane of the Richtlinie matrices are
+	controls of this module that no theme knows, so their look has to come from a stylesheet - and a
+	library module contributes one the same way tl-chat contributes its own.
 
 	agentActivity.css: the transcript panel of the agent activity monitor is HTML produced by a
 	TL-Script macro, which no framework control shapes.

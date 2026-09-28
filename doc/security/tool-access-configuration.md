@@ -157,62 +157,71 @@ filters: the filter of the *Gruppe* column offers every group plus `KEINE GRUPPE
 
 The **Richtlinie** tab is the recommended place to write this policy. It stores exactly the XML this
 page describes: a policy written by hand parses unchanged, and opening the tab and applying it
-changes nothing. It is an ordinary TopLogic form, so it looks like the rest of the administration:
-one collapsible section per subject, a label column, and per-field help in the tooltip of the label.
-Each section title carries a summary, so the whole policy fits on one screen no matter how many roles
-it configures.
+changes nothing.
 
-The top level has four sections whatever the policy contains: **Rollen**, **Grundberechtigung für
-jedes Konto**, **Obergrenze für unbeaufsichtigte Läufe** and **Gruppen-Zuordnungen**. *Rollen* holds
-one section per configured role plus *Rolle aufnehmen*, and its title names the roles it holds (a
-count, once there are more names than fit). It opens with the first role open and everything below it
-closed; every section remembers per user whether you left it open.
+It has four sub-tabs - **Agenten**, **Modelle**, **MCP-Server** and **Fähigkeiten** - and each is one
+matrix: a row per role, a column per name, a cell for what that role says about that name (#404). The
+rows are every role of the security structure plus every role the policy names; the columns are
+every name the application has plus every name the policy mentions. A role or a name the policy
+mentions and the application does not have is shown in red, because the next start would refuse it.
+The four sub-tabs edit one draft: *Übernehmen*, *Verwerfen*, *Rückgängig* and *Wiederholen* act on all
+four, whichever sub-tab they are clicked on.
 
 | You decide | The tab shows | It stores |
 |---|---|---|
-| what this role says about a capability | one tri-state row per capability, in the role's own section | no entry, a `<grant group="...">`, or a `<deny group="...">` |
-| a single tool rather than a group | an entry in **Einzelne Tools** with the choice **ganze Gruppe / einzelne Tools** | `<grant group="...">` or `<grant tools="...">`, never both |
-| what everybody gets | **Standard: Modell und Daten lesen / Nichts / Eigene Liste** | no `<baseline>`, `<baseline/>`, or `<baseline>` with entries |
-| what an unattended run may reach | **Nicht festgelegt / Alles, was die Rollen erlauben / Eigene Liste** | no element, `all="true"`, or entries |
-| which tools are in which group | **Gruppen-Zuordnungen**, one row per group | `<tool-groups>` |
+| whether a run section names a role | the row state **nicht genannt / eingeschränkt** | no role entry, or `<role name="...">` |
+| what a named role may use | a cell: empty, ✓, or ✕ | nothing, a grant, or a deny naming it |
+| what a role says about a capability | a cell of the *Fähigkeiten* matrix: empty, ✓, or ✕ | no entry, `<grant group="...">`, or `<deny group="...">` |
+| what a run section admits from a role it does not name | the dropdown in the header of the row-state column | `default="..."` of the section |
+| single tools rather than a group | the **Einzeltools** column, which opens a dialog | `<grant tools="...">` / `<deny tools="...">` |
+| what everybody gets | the first row of *Fähigkeiten*: **Standard / Nichts / Eigene Liste**, and its cells | no `<baseline>`, `<baseline/>`, or `<baseline>` with entries |
+| what an unattended run may reach | the second row: **Nicht festgelegt / Alles / Eigene Liste**, and its cells | no element, `all="true"`, or entries |
+| which tools are in which group | **Gruppen-Zuordnungen**, below the *Fähigkeiten* matrix | `<tool-groups>` |
 
-**A capability is one row with three states**, which are exactly the three things the stored policy
-can say about it. Empty is *this role says nothing*: it writes no entry, and another role of the same
-account or the basic permissions may still grant the capability. Ticked is *granted*, a
-`<grant group="...">`. The third state is *forbidden*, a `<deny group="...">`, and a prohibition beats
-every permission of every other role, the basic permissions, and even the two implicitly granted
-capabilities. Clicking a row cycles through all three, and the row can only ever be in one of them, so
-a permission can never end up next to a prohibition of the same capability. The control is the
-framework's own tri-state, the same one the rest of the administration uses for a value that may be
-unset; only its third state is restyled, to a crossed box in the tab's warning colour, so that the
-loudest answer does not look like "nothing chosen". Each role's section says the three meanings once,
-above the rows.
+**A row of a run section that is not named is locked.** Its cells show, greyed and hatched, what the
+section default gives the role (✓ for *Alle*, *A* for *Zugewiesen* / *Agent*, empty for *Keine*), and
+a click does nothing: a first click would otherwise restrict the role to that one name without saying
+so. Setting the row to *eingeschränkt* writes an empty role entry, which means "may use none", and
+makes its cells clickable. **Emptying the last cell keeps the row restricted**, so nothing ever widens
+by accident; only the row state returns a role to the section default.
 
-A row carries a note only where the state itself cannot say it *and* the note is not on every row
-anyway. Exactly one is left: an empty row reads "wird von *rolle* gewährt" when another configured
-role grants the capability. It is computed from the draft you are editing, so it follows what you
-change in another section before you save, and it is what keeps an empty row from being read as a
-refusal. An empty row without it is a capability no other role grants. Granted and forbidden carry no
-note at all: what a state means is said once by the legend above the rows, and what a capability lets
-an agent do - including that changing business data always asks the acting user to confirm - is the
-row's own tooltip.
+**A click cycles between empty and ✓.** ✕ is a prohibition that beats every permission of every other
+role the account holds, so it is not one accidental click away: it is set and lifted through the
+cell's context menu or through **Auswahl bearbeiten …**, and a ✕ cell does not react to a click. A
+policy written by hand that names the same thing in both lists reads as ✕, because that is what it
+enforces, and is left as it is until somebody changes that cell.
 
-A policy written by hand that names the same capability in both lists reads as forbidden, because that
-is what it enforces, and it is left exactly as it is until you click that row.
+The *Fähigkeiten* matrix has no locked rows: an entry that grants and forbids nothing changes nothing,
+so the first mark gives a role its entry. Its row state *kein Eintrag* removes the role's entry with
+everything in it. `interaction` and `introspection` are not columns: they cannot be withheld by
+omission, so there is nothing to decide.
 
-`interaction` and `introspection` appear as ticked, unchangeable rows: they cannot be withheld by
-omission, so there is nothing to decide. Adding a role offers the templates *Nur-Lese-Assistent*,
-*Sachbearbeiter* and *Entwickler*, which only prefill the granted rows.
+**Auswahl bearbeiten …** grants, forbids or clears chosen columns for every ticked role at once. It
+says before anything happens how many cells change, and a role the section does not name is either
+restricted first or skipped - whichever the dialog says.
 
-Above the sections, the tab lists what this policy does that its author probably did not mean - one
+**Effektiv anzeigen** puts on every cell what a run of that role *on its own* would do, computed from
+the draft: ⊘ where the run refuses what the cell or the default grants (an infrastructure agent, an
+agent whose own model or server the role may not use), and *A* where a model or server is reachable
+only because an agent the role may run uses it. The cell's tooltip gives the reason. The pane on the
+right shows the selected role across all four dimensions, grouped by reason, and says *Grundlage:
+Entwurf*. Accounts that hold several roles, and the running service, are what the **Effektive Rechte**
+tab answers.
+
+The role search and the row filter (*nur eingeschränkte*, *nur nicht genannte*) narrow the rows; a
+page shows 25 of them. The *Rückgängig* history lasts for the editing session and is forgotten by an
+apply, a discard or a restart.
+
+Above the matrix, the tab lists what this policy does that its author probably did not mean - one
 sentence per combination, computed from the whole policy: `script` without `data.write` (and with
 it), `data.read` together with `egress`, `agent.authoring` at all, a role with data capabilities and
 no model access rights, a limit for unattended runs that carries `script`, and an entry for a role
 the framework only uses internally. These never block anything.
 
 **Übernehmen checks before it saves.** The toolbar's *Übernehmen* refuses everything that would stop
-the next application start, with the reason: a role that does not exist, an entry that names neither
-a group nor a tool, and a missing limit for unattended runs. The rule is that nothing you can save
+the next application start, with the sentence the start would log: a role that does not exist, a name
+the application does not have, an entry that names neither a group nor a tool, and a missing limit for
+unattended runs. The rule is that nothing you can save
 here may take down the next start. *Verwerfen*, next to it, throws the unsaved changes away.
 
 **Applying is not yet enforcing.** A successful apply writes

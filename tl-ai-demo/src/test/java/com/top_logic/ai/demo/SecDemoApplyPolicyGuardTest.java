@@ -7,7 +7,6 @@ package com.top_logic.ai.demo;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.List;
@@ -21,11 +20,15 @@ import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.tl.ai.core.security.layout.MatrixDimension;
 import com.top_logic.tl.ai.core.security.layout.PolicyChecks;
 import com.top_logic.tl.ai.core.security.layout.PolicyDraft;
-import com.top_logic.tl.ai.core.security.layout.PolicyDraft.RoleTemplate;
+import com.top_logic.tl.ai.core.security.layout.PolicyDraft.CellState;
+import com.top_logic.tl.ai.core.security.layout.PolicyEditSession;
+import com.top_logic.tl.ai.core.security.layout.PolicyMatrix;
 import com.top_logic.tl.ai.core.security.layout.PolicyStore;
 import com.top_logic.tl.ai.core.security.layout.ToolAccessPolicyComponent;
+import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 
 /**
@@ -46,6 +49,12 @@ public class SecDemoApplyPolicyGuardTest extends SecDemoPersonaTest {
 
 	/** A role name the fixture does not have, so that a draft naming it has to be refused. */
 	private static final String UNKNOWN_ROLE = "supportAgent";
+
+	/** The fixture's role that every run section names. */
+	private static final String READER = "ticketReader";
+
+	/** A model no provider of the fixture lists. */
+	private static final String UNKNOWN_MODEL = "gpt-4-turbo";
 
 	/** The file an apply writes a policy to. */
 	private File _target;
@@ -71,23 +80,51 @@ public class SecDemoApplyPolicyGuardTest extends SecDemoPersonaTest {
 	}
 
 	/**
-	 * A draft the next application start would refuse never reaches the disk.
+	 * A draft naming a role the application does not have never reaches the disk.
 	 */
-	public void testApplyPolicyDoesNotWriteWhenRefusalsExist() throws Exception {
-		PolicyDraft refused = PolicyDraft.ofSavedPolicy();
-		assertNotNull("The saved tool access configuration has to be readable.", refused);
-		refused.addRole(UNKNOWN_ROLE, RoleTemplate.READ_ONLY);
+	public void testApplyPolicyDoesNotWriteAnUnknownRole() throws Exception {
+		PolicyDraft refused = savedDraft();
+		refused.setCapabilityState(UNKNOWN_ROLE, ToolGroups.DATA_READ, CellState.GRANTED);
 
+		assertRefusedAndNotWritten(refused);
+	}
+
+	/**
+	 * A draft naming a model the application does not have never reaches the disk, and the editor says
+	 * why in the words the next start would use.
+	 */
+	public void testApplyPolicyDoesNotWriteAnUnknownName() throws Exception {
+		PolicyDraft refused = savedDraft();
+		new PolicyMatrix(refused, MatrixDimension.MODELS).setCell(READER, UNKNOWN_MODEL, CellState.GRANTED);
+
+		assertRefusedAndNotWritten(refused);
+	}
+
+	private void assertRefusedAndNotWritten(PolicyDraft refused) throws Exception {
 		List<ResKey> refusals = PolicyChecks.refusals(refused.config(), ROLE_EXISTS);
 		assertFalse("The draft this test applies has to be one the next start refuses, otherwise the"
 			+ " apply below would be allowed to write and this test would say nothing.",
 			refusals.isEmpty());
 
-		editorOn(refused).applyPolicy();
+		ToolAccessPolicyComponent editor = editorOn(refused);
+		editor.applyPolicy();
 
 		assertEquals("A refused policy must not be written to " + _target.getAbsolutePath()
 			+ "; the apply saved before it checked. Refused for: " + refusals,
 			_before, contentOf(_target));
+		assertEquals("The editor shows exactly the sentences of the boot check.", keys(refusals),
+			keys(editor.session().refusals()));
+		assertSame("The refused draft is still the one being edited.", refused, editor.session().draft());
+	}
+
+	private static PolicyDraft savedDraft() {
+		PolicyDraft draft = PolicyDraft.ofSavedPolicy();
+		assertNotNull("The saved tool access configuration has to be readable.", draft);
+		return draft;
+	}
+
+	private static List<String> keys(List<ResKey> messages) {
+		return messages.stream().map(ResKey::getKey).toList();
 	}
 
 	/**
@@ -95,24 +132,18 @@ public class SecDemoApplyPolicyGuardTest extends SecDemoPersonaTest {
 	 *
 	 * <p>
 	 * The component is built from a bare configuration rather than from a layout, because a refused
-	 * apply repaints the view and touches nothing that needs a surrounding component tree.
-	 * </p>
-	 *
-	 * <p>
-	 * The draft is injected because the editor takes it from the form it builds, and building the
-	 * form is the part that does need a layout. The alternative - not driving the apply at all -
-	 * would leave the guard this test exists for untested.
+	 * apply repaints the view and touches nothing that needs a surrounding component tree. Without a
+	 * main layout the component keeps its edit session itself, which is where the draft goes.
 	 * </p>
 	 */
 	private static ToolAccessPolicyComponent editorOn(PolicyDraft draft) throws Exception {
 		ToolAccessPolicyComponent.Config config =
 			TypedConfiguration.newConfigItem(ToolAccessPolicyComponent.Config.class);
+		config.update(config.descriptor().getProperty(ToolAccessPolicyComponent.Config.DIMENSION),
+			MatrixDimension.MODELS);
 		ToolAccessPolicyComponent editor =
 			new ToolAccessPolicyComponent(new DefaultInstantiationContext(new AssertProtocol()), config);
-
-		Field draftField = ToolAccessPolicyComponent.class.getDeclaredField("_draft");
-		draftField.setAccessible(true);
-		draftField.set(editor, draft);
+		PolicyEditSession.of(editor).reset(draft);
 		return editor;
 	}
 

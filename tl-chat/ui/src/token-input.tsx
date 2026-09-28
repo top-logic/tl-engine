@@ -11,6 +11,15 @@ const { useCallback, useEffect, useImperativeHandle, useRef } = React
  */
 const TAIL = '​'
 
+/**
+ * The spaces {@link TokenInputHandle.insertReference} put behind a token.
+ *
+ * Nobody typed them, so a Backspace right behind one takes the token with it, the way it takes a
+ * token directly before the caret (#552). A space the user typed is not in here and is deleted like
+ * any other character.
+ */
+const insertedSpaces = new WeakSet<Node>()
+
 /** What a host or the composer itself can do to the editor from the outside. */
 export interface TokenInputHandle {
   focus: () => void
@@ -129,7 +138,9 @@ export const TokenInput = React.forwardRef(function TokenInput(
         const fragment = document.createDocumentFragment()
         fragment.append(tokenElement(token))
         // A space after the token, so the next word is not glued to it.
-        fragment.append(document.createTextNode(' '))
+        const space = document.createTextNode(' ')
+        insertedSpaces.add(space)
+        fragment.append(space)
         range.deleteContents()
         range.insertNode(fragment)
         placeCaretAfterLast(el, range)
@@ -194,6 +205,24 @@ export const TokenInput = React.forwardRef(function TokenInput(
         if (token) {
           event.preventDefault()
           token.remove()
+          ensureTail(el)
+          emit()
+          return
+        }
+        // Behind the space an insertion added, the one press still takes the token: clicked to the
+        // end of the draft, that invisible space is what stands before the caret, and deleting only
+        // it looked like a key that did nothing.
+        const spaced = event.key === 'Backspace' ? tokenBehindInsertedSpace(el) : null
+        if (spaced) {
+          event.preventDefault()
+          const caret = document.createRange()
+          caret.setStartBefore(spaced.token)
+          caret.collapse(true)
+          spaced.token.remove()
+          const rest = (spaced.space.textContent ?? '').replace(' ', '')
+          if (rest) spaced.space.textContent = rest
+          else spaced.space.remove()
+          select(caret)
           ensureTail(el)
           emit()
           return
@@ -435,6 +464,28 @@ function tokenAtCaret(el: HTMLElement, side: 'before' | 'after'): HTMLElement | 
   }
   const children = Array.from(node.childNodes)
   return asToken(side === 'before' ? children[offset - 1] : children[offset])
+}
+
+/**
+ * The token whose inserted space stands directly before the caret, with that space - as long as the
+ * space is all its text node holds, apart from the invisible tail. Once the user typed behind it the
+ * node holds their words too, and a Backspace there deletes a character as usual.
+ */
+function tokenBehindInsertedSpace(el: HTMLElement): { token: HTMLElement; space: Text } | null {
+  const selection = window.getSelection()
+  if (!selection || selection.rangeCount === 0 || !selection.isCollapsed) return null
+  const range = selection.getRangeAt(0)
+  if (!el.contains(range.startContainer)) return null
+  const container = range.startContainer
+  const space =
+    container.nodeType === Node.TEXT_NODE ? container : container.childNodes[range.startOffset - 1]
+  if (!space || space.nodeType !== Node.TEXT_NODE || !insertedSpaces.has(space)) return null
+  if ((space.textContent ?? '').split(TAIL).join('') !== ' ') return null
+  // Inside the node, the caret has to stand behind the space rather than before it.
+  const beforeCaret = (space.textContent ?? '').slice(0, range.startOffset).split(TAIL).join('')
+  if (container === space && beforeCaret !== ' ') return null
+  const token = asToken(space.previousSibling)
+  return token ? { token, space: space as Text } : null
 }
 
 function asToken(node: Node | null | undefined): HTMLElement | null {

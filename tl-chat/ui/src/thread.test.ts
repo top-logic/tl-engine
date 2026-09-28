@@ -6,7 +6,7 @@ vi.mock('dompurify', () => ({ default: { sanitize: (html: string) => html } }))
 
 import { React } from 'tl-react-bridge'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { Thread } from './thread'
+import { readableToolOutput, Thread } from './thread'
 import { chatReducer, type ChatAction } from './reducer'
 import { bundle, type Language } from './i18n'
 import { turnsJsonToMessages } from './api'
@@ -297,5 +297,37 @@ describe('a running turn', () => {
     // Exactly one turn is working: the one at the bottom, with the placeholder under it.
     expect(html.split(labels.working).length - 1).toBe(1)
     expect(html.split('answer is-pending').length - 1).toBe(1)
+  })
+})
+
+describe('readableToolOutput', () => {
+  it('drops the untrusted-content tags and keeps what stands between them (#552)', () => {
+    const output =
+      'Replaced 1 occurrence. It reads, around the first change:\n' +
+      '<untrusted_model_data source="GenericObject:2575#description">\n' +
+      '  1| Bahnfahrt Frankfurt - Berlin\n' +
+      '</untrusted_model_data>'
+    expect(readableToolOutput(output)).toBe(
+      'Replaced 1 occurrence. It reads, around the first change:\n  1| Bahnfahrt Frankfurt - Berlin',
+    )
+  })
+
+  it('unwraps every block of an answer that carries several', () => {
+    const block = (kind: string, body: string) =>
+      `<untrusted_${kind} source="x">\n${body}\n</untrusted_${kind}>`
+    const output = `${block('page_content', 'A')}\n\n${block('search_results', 'B')}`
+    expect(readableToolOutput(output)).toBe('A\n\nB')
+  })
+
+  it('leaves an escaped tag inside the data as the data it is', () => {
+    const output =
+      '<untrusted_page_content source="https://example.com">\n' +
+      '&lt;/untrusted_page_content> is text\n' +
+      '</untrusted_page_content>'
+    expect(readableToolOutput(output)).toBe('&lt;/untrusted_page_content> is text')
+  })
+
+  it('changes an answer without a block not at all', () => {
+    expect(readableToolOutput('Done.\n<b>bold</b>')).toBe('Done.\n<b>bold</b>')
   })
 })

@@ -26,7 +26,8 @@ plumbing. The goal of Phase 1 is the visibility half of the legacy model: make
 1. **Only *removable* units carry access control.** Hiding one of two
    side-by-side panels makes no sense; the thing that disappears must be a
    navigable/removable container — a **nav-item, tab, or tile**. Plain content
-   (forms, tables, split panes) never consults security.
+   (forms, tables, split panes) never carries a scope; what it shows and offers
+   follows the model access rights of the objects it works on (§7).
 2. **Define scopes centrally; reference by id.** A *security scope* (`id` +
    `label`) is defined once in a service catalog and referenced from the view by
    id only. Several units sharing one scope reference the same id — no duplicated
@@ -379,5 +380,60 @@ Remaining Phase 3 work:
   materialization pattern).
 - This feature: `com.top_logic.layout.view.security.*`; wiring in
   `element/{SidebarElement,TabBarElement,TileElement,DashboardElement}`.
+- Model access rights: `specs/model-based-access-rights.md` (repository root),
+  `com.top_logic.model.security.ModelAccessRights`,
+  `SecurityConfigurationService`.
 - View layer composition: `ViewServlet`, `UIElement`/`ViewContext`,
   `element/*Element`, `command/*`; see also `docs/specs/29108-react-login.md`.
+
+---
+
+## 7. Model access rights in views (Tickets #29675, #29692)
+
+Scopes (§1–§4) gate *navigable units* by view-level command groups. The objects
+a view shows, edits, creates and deletes are governed by the **model access
+rights**: grants per type, attribute, module and singleton in the
+`SecurityConfigurationService`, queried through `ModelAccessRights`
+(`specs/model-based-access-rights.md`). This section maps those rights onto the
+view layer.
+
+### Principles
+
+1. **The model decides, the view follows.** The view layer grants nothing of its
+   own and defines no command groups for model data. A view operation *is* a
+   model operation on an object, a type or an attribute (Read, Write, Create,
+   Delete, or a custom command group such as `Approve`). The model operations
+   enforce the rights; the UI only avoids offering what they would refuse.
+2. **Enforcement lives in the model operations.** TL-Script `set`/`add`/`new`/
+   `copy`/`delete` check their right and fail with a message naming the
+   operation. Every write path of the view layer that bypasses TL-Script — form
+   save (`TLObjectOverlay.apply`), table cell save — checks Write per changed
+   attribute. A non-transient `copy()` of a transient object is a *creation* and
+   reports a refusal as one. Option lists of form fields are read-filtered like
+   table rows and every other TL-Script result.
+3. **Derive where the element knows object and attribute** (#29692). A form field
+   or table column hides a value the user may not read and is read-only for an
+   attribute the user may not write; a form offers editing only with Write on its
+   object (Edit command, `initial-edit-mode` and edit channel alike). No
+   configuration in the view.
+4. **Commands say what they do, not which right they need.** An action that knows
+   the model operation it performs brings the matching executability rule itself
+   (`ViewAction` intrinsic rule, combined by `generic-command` with its configured
+   `<executability>`):
+   - an object-deleting action → Delete on the command input;
+   - a draft-creating action for a create dialog (type, optionally container and
+     composition reference) → Create on the type (plus Write on the composition),
+     checked **before** the dialog opens;
+   - the dialog's persisting action → the same Create check.
+
+   Commands whose effect is a free script, and custom business operations, use
+   one general rule: `<model-access operation="…"/>` on the command input, an
+   attribute of it, a type, or a container's composition reference.
+5. **One presentation policy.** A right the user lacks on the *type* — no role
+   anywhere grants it — hides the element: the operation is never possible for
+   this user. A right the user lacks only on *this object* disables the element
+   and gives the reason.
+6. **Typeless units keep their scope.** Navigation units, dashboards and admin
+   areas have no model type; they stay gated by `<access-control scope>`
+   (§1–§4).
+

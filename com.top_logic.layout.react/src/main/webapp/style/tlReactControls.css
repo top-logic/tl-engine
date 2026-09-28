@@ -3633,14 +3633,6 @@ button.tlMenu__item--disabled:hover {
 
 /* --- The shape the text takes ---------------------------------------------- */
 
-/* Text drawn as a pill whether or not its value carries a color. The pill of a text that asked for
-   one reads in the size of the text's own role, rather than in the size a pill beside plain text
-   is drawn in. */
-.tlText--pill .tlPill {
-	font-size: inherit;
-	line-height: inherit;
-}
-
 /* A theme icon shown on its own, sitting on the text baseline of what it accompanies. */
 .tlIcon {
 	display: inline-flex;
@@ -3663,40 +3655,6 @@ button.tlMenu__item--disabled:hover {
 /* Emphasized text, e.g. the author name in a byline (opt-in via css-class="tlText--strong"). */
 .tlText--strong {
 	font-weight: 600;
-}
-
-/* A value the model gives a color, drawn as a pill in that color. The color arrives from the
-   server as the custom property --tlPill-color - a color value, or a var(--token) reference to a
-   design token - so background, border and text are all composed from the one color and follow a
-   theme switch. There is no class per color; without a color from the server the pill draws in
-   the text color around it. */
-.tlPill {
-	--tlPill-color: currentColor;
-	display: inline-flex;
-	align-items: center;
-	gap: var(--spacing-01);
-	max-width: 100%;
-	overflow: hidden;
-	padding: 0 var(--spacing-02);
-	border: 1px solid var(--tlPill-color);
-	border-radius: 999px;
-	background-color: transparent;
-	color: var(--tlPill-color);
-	font-size: var(--label-01-font-size);
-	line-height: 1.5;
-	white-space: nowrap;
-	text-overflow: ellipsis;
-}
-
-/* The tint that makes the pill legible: the color mixed into the surface behind it for the
-   background and the border, and mixed into the text color for the label - which darkens it on a
-   light theme and lightens it on a dark one, from the same declaration. */
-@supports (color: color-mix(in srgb, red 10%, white)) {
-	.tlPill {
-		border-color: color-mix(in srgb, var(--tlPill-color) 40%, var(--color-surface));
-		background-color: color-mix(in srgb, var(--tlPill-color) 16%, var(--color-surface));
-		color: color-mix(in srgb, var(--tlPill-color) 72%, var(--text-primary));
-	}
 }
 
 /* --- TLResourceCell --------------------------------------------------------- */

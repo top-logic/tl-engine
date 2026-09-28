@@ -622,7 +622,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		if (resourceProvider != null) {
 			putImage(descriptor, resourceProvider.getImage(option, Flavor.DEFAULT));
 		}
-		ReactValueColor.putColor(descriptor, option);
+		ReactValueColor.putRole(descriptor, option);
 
 		return descriptor;
 	}

@@ -77,11 +77,11 @@ public class TestTextElementObservation extends BasicTestCase {
 	/** Name of the attribute the color of a ticket is taken from. */
 	static final String STATUS_ATTRIBUTE = "status";
 
-	/** Design token coloring an open ticket. */
-	private static final String OPEN_TOKEN = "support-warning";
+	/** Color role of an open ticket. */
+	private static final ValueColor OPEN_ROLE = ValueColor.WARNING;
 
-	/** Design token coloring a closed ticket. */
-	private static final String CLOSED_TOKEN = "support-success";
+	/** Color role of a closed ticket. */
+	private static final ValueColor CLOSED_ROLE = ValueColor.SUCCESS;
 
 	/** Name of the channel the displayed ticket is held on. */
 	private static final String TICKET_CHANNEL = "ticket";
@@ -110,9 +110,9 @@ public class TestTextElementObservation extends BasicTestCase {
 
 		_status = TLModelUtil.addEnumeration(module, "Status");
 		_open = TLModelUtil.addClassifier(_status, "open");
-		_open.setAnnotation(tokenColor(OPEN_TOKEN));
+		_open.setAnnotation(roleColor(OPEN_ROLE));
 		_closed = TLModelUtil.addClassifier(_status, "closed");
-		_closed.setAnnotation(tokenColor(CLOSED_TOKEN));
+		_closed.setAnnotation(roleColor(CLOSED_ROLE));
 
 		_ticketType = TLModelUtil.addClass(module, "Ticket");
 		TLModelUtil.addProperty(_ticketType, STATUS_ATTRIBUTE, _status);
@@ -143,13 +143,13 @@ public class TestTextElementObservation extends BasicTestCase {
 		ReactTextControl control = attachedControl();
 
 		assertEquals("The pill is drawn in the color of the status the ticket has.",
-			color(OPEN_TOKEN), displayedColor(control));
+			role(OPEN_ROLE), displayedColor(control));
 
 		ticket.tUpdateByName(STATUS_ATTRIBUTE, _closed);
 		_scope.reportUpdate(ticket);
 
 		assertEquals("The pill follows the status stored on the displayed ticket.",
-			color(CLOSED_TOKEN), displayedColor(control));
+			role(CLOSED_ROLE), displayedColor(control));
 	}
 
 	/**
@@ -166,7 +166,7 @@ public class TestTextElementObservation extends BasicTestCase {
 		_scope.reportUpdate(ticket);
 
 		assertEquals("A detached display keeps the color it was left with.",
-			color(OPEN_TOKEN), displayedColor(control));
+			role(OPEN_ROLE), displayedColor(control));
 	}
 
 	/**
@@ -185,7 +185,7 @@ public class TestTextElementObservation extends BasicTestCase {
 		control.attach();
 
 		assertEquals("The display resuming shows the status the ticket has now.",
-			color(CLOSED_TOKEN), displayedColor(control));
+			role(CLOSED_ROLE), displayedColor(control));
 	}
 
 	/**
@@ -201,7 +201,7 @@ public class TestTextElementObservation extends BasicTestCase {
 		_scope.reportUpdate(other);
 
 		assertEquals("An object nobody displays does not reach the display.",
-			color(OPEN_TOKEN), displayedColor(control));
+			role(OPEN_ROLE), displayedColor(control));
 	}
 
 	/**
@@ -219,12 +219,12 @@ public class TestTextElementObservation extends BasicTestCase {
 		ticket1.tUpdateByName(STATUS_ATTRIBUTE, _closed);
 		_scope.reportUpdate(ticket1);
 		assertEquals("The object dropped from the channel is not observed any more.",
-			color(OPEN_TOKEN), displayedColor(control));
+			role(OPEN_ROLE), displayedColor(control));
 
 		ticket2.tUpdateByName(STATUS_ATTRIBUTE, _closed);
 		_scope.reportUpdate(ticket2);
 		assertEquals("The object now on the channel is observed.",
-			color(CLOSED_TOKEN), displayedColor(control));
+			role(CLOSED_ROLE), displayedColor(control));
 	}
 
 	/**
@@ -236,7 +236,7 @@ public class TestTextElementObservation extends BasicTestCase {
 
 		_ticket.set(ticket(_closed));
 
-		assertEquals(color(CLOSED_TOKEN), displayedColor(control));
+		assertEquals(role(CLOSED_ROLE), displayedColor(control));
 	}
 
 	/**
@@ -253,12 +253,12 @@ public class TestTextElementObservation extends BasicTestCase {
 		_scope.reportDeletion(ticket);
 
 		assertEquals("A deleted object is not read, so the display keeps what it showed.",
-			color(OPEN_TOKEN), displayedColor(control));
+			role(OPEN_ROLE), displayedColor(control));
 
 		_ticket.set(ticket(_closed));
 
 		assertEquals("The value the channel delivers next is displayed.",
-			color(CLOSED_TOKEN), displayedColor(control));
+			role(CLOSED_ROLE), displayedColor(control));
 	}
 
 	/**
@@ -276,7 +276,7 @@ public class TestTextElementObservation extends BasicTestCase {
 	}
 
 	/**
-	 * The color the given control currently displays its text with, as the client receives it.
+	 * The color role the given control currently displays its text with, as the client receives it.
 	 */
 	private static String displayedColor(ReactTextControl control) {
 		Object state;
@@ -285,14 +285,14 @@ public class TestTextElementObservation extends BasicTestCase {
 		} catch (JSON.ParseException ex) {
 			throw new AssertionError("Not the JSON state of a control: " + control.stateAsJSON(), ex);
 		}
-		return (String) ((Map<?, ?>) state).get(ReactValueColor.COLOR);
+		return (String) ((Map<?, ?>) state).get(ReactValueColor.ROLE);
 	}
 
 	/**
-	 * The CSS of the color the given design token names.
+	 * The name of the given role as the client receives it.
 	 */
-	private static String color(String token) {
-		return ValueColor.themeToken(token).cssValue();
+	private static String role(ValueColor role) {
+		return role.getExternalName();
 	}
 
 	/**
@@ -304,9 +304,9 @@ public class TestTextElementObservation extends BasicTestCase {
 		return result;
 	}
 
-	private static TLColor tokenColor(String token) {
+	private static TLColor roleColor(ValueColor role) {
 		TLColor result = TypedConfiguration.newConfigItem(TLColor.class);
-		result.setToken(token);
+		result.setRole(role);
 		return result;
 	}
 

@@ -158,3 +158,66 @@
   background: transparent;
   border-color: transparent;
 }
+
+/* --- pill/pill.css --- */
+/* Pill — docs/skalen.md „Pill: Rolle statt Farbe“.
+   Ein Wert, der sich von anderen abheben soll, als getönte Kapsel. Die Farbe ist eine Rolle aus
+   geschlossener Liste: neutral (Default), brand, vier Bedeutungen, acht Kategorien ohne Bedeutung.
+   Jede Rolle liest zwei Tokens — die getönte Fläche und ihre Linie; der Text darauf ist gewöhnlicher
+   Text, wie auf jedem getönten Streifen. Kein Literal, keine Farbmischung, kein Selektor von außen. */
+
+.tl-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tl-space-2xs);
+  max-width: 100%;
+  min-height: var(--tl-size-control-sm);
+  padding: 0 var(--tl-space-xs);
+  border: var(--tl-border-width-sm) solid var(--tl-border-control);
+  border-radius: var(--tl-radius-full);
+  background: var(--tl-surface-interactive-selected);
+  color: var(--tl-text-primary);
+  white-space: nowrap;
+}
+
+.tl-pill__icon {
+  flex-shrink: 0;
+}
+
+.tl-pill__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- Rollen ---------------------------------------------------------------- */
+
+.tl-pill--brand {
+  background: var(--tl-surface-brand-subtle);
+  border-color: var(--tl-border-interactive);
+}
+
+.tl-pill--error {
+  background: var(--tl-status-error-subtle);
+  border-color: var(--tl-status-error-border);
+}
+.tl-pill--warning {
+  background: var(--tl-status-warning-subtle);
+  border-color: var(--tl-status-warning-border);
+}
+.tl-pill--success {
+  background: var(--tl-status-success-subtle);
+  border-color: var(--tl-status-success-border);
+}
+.tl-pill--info {
+  background: var(--tl-status-info-subtle);
+  border-color: var(--tl-status-info-border);
+}
+
+.tl-pill--category-1 { background: var(--tl-category-1-subtle); border-color: var(--tl-category-1-border); }
+.tl-pill--category-2 { background: var(--tl-category-2-subtle); border-color: var(--tl-category-2-border); }
+.tl-pill--category-3 { background: var(--tl-category-3-subtle); border-color: var(--tl-category-3-border); }
+.tl-pill--category-4 { background: var(--tl-category-4-subtle); border-color: var(--tl-category-4-border); }
+.tl-pill--category-5 { background: var(--tl-category-5-subtle); border-color: var(--tl-category-5-border); }
+.tl-pill--category-6 { background: var(--tl-category-6-subtle); border-color: var(--tl-category-6-border); }
+.tl-pill--category-7 { background: var(--tl-category-7-subtle); border-color: var(--tl-category-7-border); }
+.tl-pill--category-8 { background: var(--tl-category-8-subtle); border-color: var(--tl-category-8-border); }

@@ -9,6 +9,7 @@ import java.security.SecureRandom;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
 import jakarta.servlet.http.HttpSession;
@@ -106,6 +107,13 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	private final ConcurrentHashMap<String, PendingPick> _pendingPicks = new ConcurrentHashMap<>();
 
 	private final ReentrantLock _requestLock = new ReentrantLock();
+
+	/**
+	 * The number of pages rendered in this session, the source of the page-load tokens.
+	 *
+	 * @see #issuePageLoad(String)
+	 */
+	private final AtomicLong _pageLoads = new AtomicLong();
 
 	/** The ID of the session this registry belongs to, remembered for the index. */
 	private final String _sessionId;
@@ -413,7 +421,7 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 * Unlike {@link #openWindow(ReactContext, WindowOptions)}, this is for a window the browser opened
 	 * by itself - a tab the user navigated to. Such a window has no opener, no display options and no
 	 * control provider, but it holds the same per-window state as any other: the tree it currently
-	 * displays, which {@link #windowUnloaded(String)} detaches and {@link #windowClosed(String)}
+	 * displays, which {@link #windowUnloaded(String, String)} detaches and {@link #windowClosed(String)}
 	 * disposes.
 	 * </p>
 	 */
@@ -465,6 +473,26 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	}
 
 	/**
+	 * Issues the token of a page about to be rendered into the given window.
+	 *
+	 * <p>
+	 * The rendered page carries the token and reports it back when it is unloaded, see
+	 * {@link #windowUnloaded(String, String)}. Tokens are unique within the session, so a window
+	 * that is torn down and shown again under the same name never gets the token of an earlier page.
+	 * </p>
+	 *
+	 * @param windowId
+	 *        The window whose page is rendered.
+	 * @return The token of the page, from now on the {@link WindowEntry#getPageLoad() page the
+	 *         window displays}.
+	 */
+	public String issuePageLoad(String windowId) {
+		String pageLoad = Long.toString(_pageLoads.incrementAndGet());
+		getOrCreateWindow(windowId).setPageLoad(pageLoad);
+		return pageLoad;
+	}
+
+	/**
 	 * Reports that the page of the given window was unloaded, without saying whether it will come
 	 * back.
 	 *
@@ -475,13 +503,30 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 * render the tree it already has, while a window that really went away is collected by
 	 * {@link #sweepUnloadedWindows()}.
 	 * </p>
+	 *
+	 * <p>
+	 * The report of a page that is no longer displayed is ignored. A reload renders the page that
+	 * replaces the unloaded one, and the unload report may arrive only afterwards: it then speaks of
+	 * a page the window no longer displays, and acting on it would take the displayed tree off the
+	 * screen and collect a window that is still open. A report naming no page is taken to speak of
+	 * the displayed one.
+	 * </p>
+	 *
+	 * @param windowId
+	 *        The window whose page was unloaded.
+	 * @param pageLoad
+	 *        The {@link #issuePageLoad(String) token} of the unloaded page, or {@code null} if
+	 *        the page carries none.
 	 */
-	public void windowUnloaded(String windowId) {
+	public void windowUnloaded(String windowId, String pageLoad) {
 		if (windowId == null) {
 			return;
 		}
 		WindowEntry entry = _windows.get(windowId);
 		if (entry == null) {
+			return;
+		}
+		if (pageLoad != null && !pageLoad.equals(entry.getPageLoad())) {
 			return;
 		}
 		entry.markUnloaded();

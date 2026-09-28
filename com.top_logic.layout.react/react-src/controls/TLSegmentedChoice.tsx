@@ -197,7 +197,7 @@ const TLSegmentedChoice: React.FC<TLCellProps> = ({ controlId, state }) => {
             disabled={disabled}
             onClick={() => choose(option)}
           >
-            {withPill(option.color, (
+            {withPill(option.colorRole, (
               <>
                 <OptionImage image={option.image} />
                 <span className="tlSegmentedChoice__segmentLabel">{option.label}</span>

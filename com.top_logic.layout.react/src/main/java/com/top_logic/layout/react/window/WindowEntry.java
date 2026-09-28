@@ -53,6 +53,13 @@ public class WindowEntry {
 	private volatile long _unloadedAt;
 
 	/**
+	 * The token of the page the window currently displays, or {@code null} while none was rendered.
+	 *
+	 * @see #getPageLoad()
+	 */
+	private volatile String _pageLoad;
+
+	/**
 	 * Whether the tree this entry holds must be replaced instead of being rendered again.
 	 *
 	 * @see #requestRebuild()
@@ -215,6 +222,32 @@ public class WindowEntry {
 	 */
 	public long getUnloadedAt() {
 		return _unloadedAt;
+	}
+
+	/**
+	 * The token of the page the window currently displays, or {@code null} while none was rendered.
+	 *
+	 * <p>
+	 * Each rendering of the window's page is issued a token of its own, which the page reports back
+	 * when it is unloaded. It tells the report of the page on the screen apart from the report of a
+	 * page that was already replaced: the unload of a reloaded page may arrive only after the reload
+	 * has rendered the page that replaces it.
+	 * </p>
+	 *
+	 * @see ReactWindowRegistry#issuePageLoad(String)
+	 * @see ReactWindowRegistry#windowUnloaded(String, String)
+	 */
+	public String getPageLoad() {
+		return _pageLoad;
+	}
+
+	/**
+	 * Sets the token of the page the window displays from now on.
+	 *
+	 * @see #getPageLoad()
+	 */
+	public void setPageLoad(String pageLoad) {
+		_pageLoad = pageLoad;
 	}
 
 	/**

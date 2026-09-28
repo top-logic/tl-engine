@@ -8,7 +8,6 @@ package test.com.top_logic.ai.chat;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
-import java.util.concurrent.Callable;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -170,7 +169,7 @@ public class TestChatRunAccess extends BasicTestCase {
 	 * </p>
 	 */
 	public void testCapabilitiesCarriesTheInstallationsOwnDisplayName() throws Exception {
-		String agent = agentEntry(inLocale(Locale.ENGLISH, this::capabilities), FRAMEWORK_AGENT);
+		String agent = agentEntry(capabilities(Locale.ENGLISH), FRAMEWORK_AGENT);
 
 		assertEquals("The name the installation configured is the name the menu shows: " + agent,
 			OVERRIDDEN_NAME_EN, valueOf(agent, "label"));
@@ -189,7 +188,7 @@ public class TestChatRunAccess extends BasicTestCase {
 	 * </p>
 	 */
 	public void testCapabilitiesAnswersInTheReadersLanguage() throws Exception {
-		String agent = agentEntry(inLocale(Locale.GERMAN, this::capabilities), FRAMEWORK_AGENT);
+		String agent = agentEntry(capabilities(Locale.GERMAN), FRAMEWORK_AGENT);
 
 		assertEquals("The installation's German name: " + agent,
 			OVERRIDDEN_NAME_DE, valueOf(agent, "label"));
@@ -406,33 +405,48 @@ public class TestChatRunAccess extends BasicTestCase {
 			body.contains("\"promptImproverAvailable\":true"));
 	}
 
-	/**
-	 * Runs the given call with the session switched to the given language.
-	 *
-	 * <p>
-	 * Through {@code withLocale} rather than by setting the locale, because the bundle a session
-	 * renders with is cached on the session and only that call exchanges it too. Named explicitly in
-	 * both directions, because the test application's own language is neither obvious nor the point.
-	 * </p>
-	 */
-	private static String inLocale(Locale locale, Callable<String> call) {
-		return TLContextManager.getSubSession().withLocale(locale, () -> {
-			try {
-				return call.call();
-			} catch (Exception ex) {
-				throw new RuntimeException(ex);
-			}
-		});
+	/** The capabilities payload of the acting account, as JSON, in the account's own language. */
+	private String capabilities() throws Exception {
+		return capabilities(null);
 	}
 
-	/** The capabilities payload of the acting account, as JSON. */
-	private String capabilities() throws Exception {
+	/**
+	 * The capabilities payload of the acting account, as JSON, read in the given language.
+	 *
+	 * <p>
+	 * The language is switched <em>after</em> the login, because logging in sets the sub-session to
+	 * the account's own locale - a switch made before it would be undone by it, and the payload would
+	 * come back in the account's language whichever one the test named (#578). That is also the order
+	 * a real reader has: logged in first, language chosen afterwards.
+	 * </p>
+	 *
+	 * <p>
+	 * Through {@code withLocale} rather than by setting the locale, so the test leaves the sub-session
+	 * as it found it. Named explicitly in both directions, because the account's own language is
+	 * neither obvious nor the point.
+	 * </p>
+	 *
+	 * @param locale
+	 *        The reader's language, or {@code null} for the account's own.
+	 */
+	private String capabilities(Locale locale) throws Exception {
 		Recording response = new Recording();
 		InvocationContext invocation = client().newInvocation(
 			new GetMethodWebRequest("http://localhost/chat/capabilities"));
 		HttpServletRequest request = invocation.getRequest();
 		login(request, anna, response);
-		_servlet.get(request, response.asResponse());
+		if (locale == null) {
+			_servlet.get(request, response.asResponse());
+		} else {
+			TLContextManager.getSubSession().withLocale(locale, () -> {
+				try {
+					_servlet.get(request, response.asResponse());
+				} catch (Exception ex) {
+					throw new RuntimeException(ex);
+				}
+				return null;
+			});
+		}
 		return response._body.toString();
 	}
 

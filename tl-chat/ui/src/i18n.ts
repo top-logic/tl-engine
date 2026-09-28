@@ -129,6 +129,11 @@ const EN = {
   busyHint:
     'The agent is still working on the previous message. Your text is kept — send it again when the run has finished.',
   sendFailed: 'The message could not be sent.',
+  /**
+   * Shown when the server no longer knows this page's window and the page has just been reloaded
+   * for that reason once already, so it is not reloaded again (issue #574).
+   */
+  staleWindow: 'This page is out of date because the sign-in has changed. Reload the page to continue.',
   /** Shown when the server refused a request but sent no reason of its own. */
   notAllowed: 'This agent, model or MCP server is not available to you.',
   onlyImagesAndPdf: 'only images and PDF can be attached',
@@ -374,6 +379,8 @@ const DE: Bundle = {
   busyHint:
     'Der Agent arbeitet noch an der vorherigen Nachricht. Dein Text bleibt erhalten — sende ihn erneut, wenn der Lauf fertig ist.',
   sendFailed: 'Die Nachricht konnte nicht gesendet werden.',
+  staleWindow:
+    'Diese Seite ist nicht mehr aktuell, weil sich die Anmeldung geändert hat. Bitte die Seite neu laden.',
   notAllowed: 'Dieser Agent, dieses Modell oder dieser MCP-Server steht Ihnen nicht zur Verfügung.',
   onlyImagesAndPdf: 'nur Bilder und PDF können angehängt werden',
   largerThan10Mb: 'größer als 10 MB',

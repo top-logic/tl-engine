@@ -41,6 +41,7 @@ import {
 import { parseTasksJson, type AgentTask } from './progress-model'
 import { chatReducer, type ChatAction } from './reducer'
 import { composeOutboundText } from './send-prefix'
+import { keepUnsent, StaleWindowError, takeUnsent } from './stale-window'
 import { citedSources, latestAnswerSources, type CitedSource } from './sources'
 import {
   EMPTY_RUN,
@@ -707,6 +708,16 @@ export class ChatStore {
   private paneWidthStored: number
 
   private composerApi: ComposerApi | null = null
+
+  /**
+   * Whether a composer has been bound to this store yet.
+   *
+   * A message a stale window could not send is given back to the first composer of the reloaded
+   * page, and to no later one: the element binds its composer on every render, and the page that
+   * refused the send renders again before the reload takes it away - it would take the message back
+   * out of storage and lose it with itself.
+   */
+  private composerBound = false
 
   private readonly offeredModelsOf = memo(
     (models: ModelOption[], agents: AgentOption[], agent: string): ModelOption[] =>
@@ -1503,7 +1514,9 @@ export class ChatStore {
       es.onerror = () => {
         if (es.readyState === EventSource.CLOSED) {
           this.patch({ connection: 'reconnecting' })
-          reopen()
+          void this.windowKnown(at).then((known) => {
+            if (known) reopen()
+          })
         }
       }
 
@@ -1732,6 +1745,45 @@ export class ChatStore {
   }
 
   /**
+   * Answers a call the server refused because it does not know this page's window.
+   *
+   * The page is being reloaded by then (`chatFetch`), which renders the window - and this chat - in
+   * the session the browser holds now. What the user was sending is kept for the reloaded page to
+   * put back into the composer. When the guard refused the reload, because the page was reloaded a
+   * moment ago and is still unknown, the user is told instead of the page reloading itself in a
+   * loop.
+   *
+   * @returns whether the error was that refusal.
+   */
+  private staleWindow(err: unknown, unsent = ''): boolean {
+    if (!(err instanceof StaleWindowError)) return false
+    if (err.reloading) {
+      keepUnsent(this.chatId, unsent)
+    } else {
+      this.showNotice(this.labels.staleWindow, '', { tone: 'warn', sticky: true })
+    }
+    return true
+  }
+
+  /**
+   * Whether the server still knows this page's window, for a stream it closed.
+   *
+   * An `EventSource` cannot read why it was refused, and the one refusal a new stream cannot cure is
+   * `stale_window`: re-opening then only repeats it, once a second, for as long as the page is open.
+   * The run snapshot is the cheapest call that is answered the same way. Any other failure counts
+   * as known, so the stream is re-opened as before - a server that is restarting answers nothing
+   * useful yet, and the page's own stream reloads it once it is back.
+   */
+  private async windowKnown(at: ChatAddress): Promise<boolean> {
+    try {
+      await fetchRunSnapshot(at)
+      return true
+    } catch (err) {
+      return !this.staleWindow(err)
+    }
+  }
+
+  /**
    * Takes back a chat this send had just created, when the send produced nothing to keep.
    *
    * The chat comes into being before the request, because it is what the turn is written into. A
@@ -1859,8 +1911,14 @@ export class ChatStore {
         let createdHere = false
         if (!active) {
           // The first send is what brings a chat into being, titled after what was said.
-          const created = await createSession(at, autoTitle(text || labels.attachmentOnly))
-          await loadSession(at, created.id)
+          let created: SessionSummary
+          try {
+            created = await createSession(at, autoTitle(text || labels.attachmentOnly))
+            await loadSession(at, created.id)
+          } catch (err) {
+            if (this.staleWindow(err, text)) return false
+            throw err
+          }
           active = created.id
           createdHere = true
           this.patch({ sessionId: active, createdSessionId: active })
@@ -1920,6 +1978,7 @@ export class ChatStore {
             })
             return false
           }
+          if (this.staleWindow(err, text)) return false
           const busyRefusal = err instanceof Error && err.message === 'busy'
           await this.discardEmptyChat(createdHere && !busyRefusal, active)
           this.showNotice(busyRefusal ? labels.busyHint : labels.sendFailed, '', {
@@ -2220,6 +2279,12 @@ export class ChatStore {
 
       bindComposer: (api) => {
         this.composerApi = api
+        if (!api || this.composerBound) return
+        this.composerBound = true
+        // A message the last page could not send because its window was gone: the reload is what
+        // brought this composer, and the user's text goes back where they left it.
+        const unsent = takeUnsent(this.chatId)
+        if (unsent) api.setDraft(unsent)
       },
 
       insertReference: (token) => {

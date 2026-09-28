@@ -544,6 +544,7 @@ it rewrites a draft and never answers as a persona.
 | `prompts.tsx` | Approval and question cards above the composer, with their countdowns |
 | `markdown.tsx` / `highlight.ts` | Markdown rendering, sanitizing, code blocks |
 | `api.ts` | Every call to `/chat/*`, plus the persisted-transcript to message mapping |
+| `stale-window.ts` | `chatFetch`, which every `/chat/*` call goes through: a `409 stale_window` (the server does not know this page's window, e.g. after a login in another tab) reloads the page once, under the engine's own reload guard, and the text of a refused send waits in `sessionStorage` for the reloaded composer (#574) |
 | `reducer.ts` / `store.ts` / `types.ts` | Transcript reducer, the `runStore` snapshot a host may subscribe to, shared types |
 | `extensions.ts` | Host composition contract (`ChatExtensions`) |
 | `rail.tsx` / `side-pane.tsx` / `progress.tsx` | `App`'s own rail, the artefact pane, the Fortschritt list |

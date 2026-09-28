@@ -1,4 +1,5 @@
 import { draftToText, parseDraft, referenceSummary } from './reference'
+import { chatFetch } from './stale-window'
 import type {
   ApprovalOutcome,
   Attachment,
@@ -116,7 +117,7 @@ export async function fetchCapabilities(at: ChatAddress): Promise<Capabilities> 
     models?: Capabilities['models']
     mcpServers?: Capabilities['mcpServers']
     promptImproverAvailable?: boolean
-  }>(await fetch(withWindow('/chat/capabilities', at), { credentials: 'include' }))
+  }>(await chatFetch(withWindow('/chat/capabilities', at), { credentials: 'include' }))
   return {
     entryPointAgent: data.entryPointAgent,
     agents: data.agents ?? [],
@@ -128,14 +129,14 @@ export async function fetchCapabilities(at: ChatAddress): Promise<Capabilities> 
 
 export async function listSessions(at: ChatAddress): Promise<SessionSummary[]> {
   const data = await readJson<{ sessions?: SessionSummary[] }>(
-    await fetch(withWindow('/chat/sessions', at), { credentials: 'include' }),
+    await chatFetch(withWindow('/chat/sessions', at), { credentials: 'include' }),
   )
   return data.sessions ?? []
 }
 
 export async function createSession(at: ChatAddress, title: string): Promise<SessionSummary> {
   return readJson<SessionSummary>(
-    await fetch(withWindow('/chat/sessions', at), {
+    await chatFetch(withWindow('/chat/sessions', at), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -171,14 +172,14 @@ export interface SessionDetail {
 
 export async function loadSession(at: ChatAddress, id: string): Promise<SessionDetail> {
   return readJson<SessionDetail>(
-    await fetch(withWindow(`/chat/sessions/${encodeURIComponent(id)}`, at), {
+    await chatFetch(withWindow(`/chat/sessions/${encodeURIComponent(id)}`, at), {
       credentials: 'include',
     }),
   )
 }
 
 export async function deleteSession(at: ChatAddress, id: string): Promise<void> {
-  const res = await fetch(withWindow(`/chat/sessions/${encodeURIComponent(id)}`, at), {
+  const res = await chatFetch(withWindow(`/chat/sessions/${encodeURIComponent(id)}`, at), {
     method: 'DELETE',
     credentials: 'include',
   })
@@ -186,7 +187,7 @@ export async function deleteSession(at: ChatAddress, id: string): Promise<void> 
 }
 
 export async function sendMessage(at: ChatAddress, payload: SendPayload): Promise<{ taskId?: string; status: string }> {
-  const res = await fetch(withWindow('/chat/send', at), {
+  const res = await chatFetch(withWindow('/chat/send', at), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -227,7 +228,7 @@ export async function regenerate(
   },
 ): Promise<TruncateResult> {
   return readJson<TruncateResult>(
-    await fetch(withWindow('/chat/regenerate', at), {
+    await chatFetch(withWindow('/chat/regenerate', at), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -243,7 +244,7 @@ export async function truncate(
   fromTurn: number,
 ): Promise<TruncateResult> {
   return readJson<TruncateResult>(
-    await fetch(withWindow('/chat/truncate', at), {
+    await chatFetch(withWindow('/chat/truncate', at), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -267,7 +268,7 @@ export async function sendFeedback(
   rating: Rating,
   note?: string,
 ): Promise<void> {
-  const res = await fetch(withWindow('/chat/feedback', at), {
+  const res = await chatFetch(withWindow('/chat/feedback', at), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -292,7 +293,7 @@ export interface RunSnapshot {
  */
 export async function fetchRunSnapshot(at: ChatAddress): Promise<RunSnapshot> {
   const data = await readJson<{ processing?: boolean; tasksJson?: string }>(
-    await fetch(withWindow('/chat/updates', at), { credentials: 'include' }),
+    await chatFetch(withWindow('/chat/updates', at), { credentials: 'include' }),
   )
   return { processing: data.processing === true, tasksJson: data.tasksJson ?? '' }
 }
@@ -335,7 +336,7 @@ export interface PendingInteraction {
  */
 export async function fetchPendingInteractions(at: ChatAddress): Promise<PendingInteraction[]> {
   const data = await readJson<{ interactions?: Partial<PendingInteraction>[] }>(
-    await fetch(withWindow('/chat/interactions', at), { credentials: 'include' }),
+    await chatFetch(withWindow('/chat/interactions', at), { credentials: 'include' }),
   )
   return (data.interactions ?? []).map((item) => ({
     requestId: item.requestId ?? '',
@@ -360,7 +361,7 @@ export async function fetchPendingInteractions(at: ChatAddress): Promise<Pending
  * is running.
  */
 export async function cancelRun(at: ChatAddress, sessionId?: string | null): Promise<void> {
-  await fetch(withWindow('/chat/cancel', at), {
+  await chatFetch(withWindow('/chat/cancel', at), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -369,7 +370,7 @@ export async function cancelRun(at: ChatAddress, sessionId?: string | null): Pro
 }
 
 export async function respond(at: ChatAddress, body: Record<string, unknown>): Promise<void> {
-  const res = await fetch(withWindow('/chat/respond', at), {
+  const res = await chatFetch(withWindow('/chat/respond', at), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -389,7 +390,7 @@ export async function improvePrompt(
   signal?: AbortSignal,
 ): Promise<ImprovePromptResponse> {
   return readJson<ImprovePromptResponse>(
-    await fetch(withWindow('/chat/improve-prompt', at), {
+    await chatFetch(withWindow('/chat/improve-prompt', at), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -403,7 +404,7 @@ export async function setApprovalMode(
   at: ChatAddress,
   mode: 'AUTO_APPROVE' | 'MANUAL',
 ): Promise<void> {
-  const res = await fetch(withWindow('/chat/approval-mode', at), {
+  const res = await chatFetch(withWindow('/chat/approval-mode', at), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -413,7 +414,7 @@ export async function setApprovalMode(
 }
 
 export async function cancelPromptImprovement(at: ChatAddress, requestId: string): Promise<void> {
-  await fetch(withWindow('/chat/improve-prompt/cancel', at), {
+  await chatFetch(withWindow('/chat/improve-prompt/cancel', at), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -423,13 +424,13 @@ export async function cancelPromptImprovement(at: ChatAddress, requestId: string
 
 export async function listSubagents(at: ChatAddress): Promise<SubagentActivity[]> {
   const data = await readJson<{ subagents?: SubagentActivity[] }>(
-    await fetch(withWindow('/chat/subagents', at), { credentials: 'include' }),
+    await chatFetch(withWindow('/chat/subagents', at), { credentials: 'include' }),
   )
   return data.subagents ?? []
 }
 
 export async function cancelSubagent(at: ChatAddress, id: string): Promise<void> {
-  const res = await fetch(withWindow(`/chat/subagents/${encodeURIComponent(id)}`, at), {
+  const res = await chatFetch(withWindow(`/chat/subagents/${encodeURIComponent(id)}`, at), {
     method: 'DELETE',
     credentials: 'include',
   })
@@ -438,7 +439,7 @@ export async function cancelSubagent(at: ChatAddress, id: string): Promise<void>
 
 export async function loadSubagentTranscript(at: ChatAddress, id: string): Promise<ChatMessage[]> {
   const detail = await readJson<SessionDetail>(
-    await fetch(withWindow(`/chat/subagents/${encodeURIComponent(id)}/transcript`, at), {
+    await chatFetch(withWindow(`/chat/subagents/${encodeURIComponent(id)}/transcript`, at), {
       credentials: 'include',
     }),
   )

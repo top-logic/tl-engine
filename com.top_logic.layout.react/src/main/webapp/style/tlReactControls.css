@@ -4843,10 +4843,8 @@ button.tlMenu__item--disabled:hover {
 	color: var(--text-primary);
 }
 
-/* Input wrapper. It is a "label" element when the field's label is hidden, which lays out as a
-   block like the "div" of a visible-label field, whatever the element's inline default. */
+/* Input wrapper */
 .tlFormField__input {
-	display: block;
 	min-width: 0;
 }
 

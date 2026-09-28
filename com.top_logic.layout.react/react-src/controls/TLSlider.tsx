@@ -1,4 +1,4 @@
-import { React, useTLFieldValue, rootClassName, VALUE_DEBOUNCE_MS } from 'tl-react-bridge';
+import { React, useTLFieldValue, rootClassName, VALUE_DEBOUNCE_MS, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback } = React;
@@ -22,6 +22,8 @@ const { useCallback } = React;
  * is not read as the smallest one.
  */
 const TLSlider: React.FC<TLCellProps> = ({ controlId, state }) => {
+  const inputId = fieldInputId(controlId);
+  const labelProps = useFieldLabelProps(controlId, inputId);
   const [value, setValue, flushValue] = useTLFieldValue({
     debounceMs: (state.debounceMs as number) ?? VALUE_DEBOUNCE_MS,
   });
@@ -78,6 +80,8 @@ const TLSlider: React.FC<TLCellProps> = ({ controlId, state }) => {
         aria-valuetext={label || undefined}
         aria-invalid={hasError || undefined}
         title={hasError && errorMessage ? errorMessage : undefined}
+        id={inputId}
+        {...labelProps}
       />
       <output className="tlSlider__value">{label}</output>
     </span>

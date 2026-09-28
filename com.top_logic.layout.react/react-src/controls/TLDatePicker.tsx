@@ -1,4 +1,4 @@
-import { React, useTLFieldValue, rootClassName } from 'tl-react-bridge';
+import { React, useTLFieldValue, rootClassName, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback } = React;
@@ -10,6 +10,8 @@ const { useCallback } = React;
  * type and states in `inputType`; the value is exchanged in the ISO form belonging to that input.
  */
 const TLDatePicker: React.FC<TLCellProps> = ({ controlId, state }) => {
+  const inputId = fieldInputId(controlId);
+  const labelProps = useFieldLabelProps(controlId, inputId);
   const [value, setValue] = useTLFieldValue();
 
   const handleChange = useCallback(
@@ -47,6 +49,8 @@ const TLDatePicker: React.FC<TLCellProps> = ({ controlId, state }) => {
         disabled={state.disabled === true}
         className={rootClassName(state, cls)}
         aria-invalid={hasError || undefined}
+        id={inputId}
+        {...labelProps}
       />
     </span>
   );

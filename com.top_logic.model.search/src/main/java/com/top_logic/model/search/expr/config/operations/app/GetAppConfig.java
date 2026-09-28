@@ -21,7 +21,6 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
-import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -48,9 +47,7 @@ public class GetAppConfig extends GenericMethod {
 
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
-		if (definitions.isInteractive() && !TLContext.isAdmin()) {
-			throw new TopLogicException(com.top_logic.model.search.expr.I18NConstants.PERMISSION_DENIED__NAME.fill(getName()));
-		}
+		definitions.checkAdmin(getName());
 
 		Object serviceArg = arguments[0];
 		Object configArg = arguments[1];

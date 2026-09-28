@@ -119,7 +119,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new diagram.
 	 * @return The newly created diagram.
 	 */
-	@SideEffectFree
 	@Label("Create chart")
 	public static Diagram chart(
 		Box root,
@@ -214,7 +213,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new aligned box.
 	 * @return The new aligned box.
 	 */
-	@SideEffectFree
 	@Label("Align")
 	public static Decoration align(
 		@Mandatory Box content,
@@ -246,7 +244,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new stacking box.
 	 * @return The new stacking box.
 	 */
-	@SideEffectFree
 	@Label("Stack elements")
 	public static Stack stack(
 			List<Box> contents,
@@ -281,7 +278,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new LOD box.
 	 * @return The new LOD box.
 	 */
-	@SideEffectFree
 	@Label("Level of detail")
 	public static LOD lod(
 			List<Object> variants,
@@ -320,7 +316,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        Optional minimum available height; below this value the variant is skipped.
 	 * @return The new LOD variant.
 	 */
-	@SideEffectFree
 	@Label("LOD variant")
 	public static LODVariant lodVariant(
 			Box content,
@@ -359,7 +354,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new border box.
 	 * @return The new border box.
 	 */
-	@SideEffectFree
 	@Label("Create borders")
 	public static Decoration border(
 		Box content,
@@ -400,7 +394,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new fill box.
 	 * @return The new fill box.
 	 */
-	@SideEffectFree
 	@Label("Fill")
 	public static Decoration fill(
 			Box content,
@@ -446,7 +439,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new fill box.
 	 * @return The new positioned box.
 	 */
-	@SideEffectFree
 	@Label("Explicit position")
 	public static Box position(
 			@Mandatory Box content,
@@ -520,7 +512,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new padding box.
 	 * @return The new padding box.
 	 */
-	@SideEffectFree
 	@Label("Create padding")
 	public static Box padding(
 		@Mandatory Box content,
@@ -581,7 +572,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new horizontal box.
 	 * @return The new horizontal box.
 	 */
-	@SideEffectFree
 	@Label("Align horizontal")
 	public static Box horizontal(
 		@Mandatory List<Box> contents,
@@ -623,7 +613,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new horizontal box.
 	 * @return The new horizontal box.
 	 */
-	@SideEffectFree
 	@Label("Align vertical")
 	public static Box vertical(
 		@Mandatory List<Box> contents,
@@ -666,7 +655,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new box.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Create compass")
 	public static CompassLayout compass(
 		@Mandatory Box center,
@@ -703,7 +691,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new box.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Create Grid")
 	public static Box grid(
 		@Mandatory List<List<Box>> contents,
@@ -756,7 +743,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new box.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Create positioning box")
 	public static Box floating(
 			@Mandatory List<? extends Box> contents,
@@ -899,7 +885,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new box.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Make selectable")
 	public static Box selection(
 			@Mandatory Box content,
@@ -926,7 +911,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new box. Operations in the context menu operate on this object.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Context menu")
 	public static Box contextMenu(
 			@Mandatory Box content,
@@ -957,7 +941,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new box.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("React on click")
 	public static Box clickTarget(
 			@Mandatory Box content,
@@ -989,7 +972,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new box.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Create drop region")
 	public static Box dropRegion(
 			@Mandatory Box content,
@@ -1016,7 +998,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new box.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Add tooltip")
 	public static Box tooltip(
 			@Mandatory String text,
@@ -1091,7 +1072,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        An arbitrary object to associate with the graphics element.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Create tree")
 	public static Box tree(
 		@Mandatory List<? extends Box> nodes, 
@@ -1169,7 +1149,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 * 
 	 * @return the new connection.
 	 */
-	@SideEffectFree
 	@Label("Create connection")
 	public static TreeConnection connection(
 		@Mandatory Object parent,
@@ -1216,7 +1195,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 * 
 	 * @return The new decoration.
 	 */
-	@SideEffectFree
 	@Label("Create edge decoration")
 	public static EdgeDecoration decoration(
 			Box content,
@@ -1247,7 +1225,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new box.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Create connector")
 	public static TreeConnector connector(
 		@Mandatory Box anchor,
@@ -1358,7 +1335,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new box.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Create polygon")
 	public static PolygonalChain polygon(
 			List<Point> points,
@@ -1390,7 +1366,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new box.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Create poly line")
 	public static PolygonalChain polyline(
 			List<Point> points,
@@ -1414,7 +1389,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new box.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Clip content")
 	public static ClipBox clipbox(
 			@Mandatory Box content,
@@ -1474,7 +1448,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 * @return {@link BinaryData} containing the SVG document with content type
 	 *         <code>"image/svg+xml"</code>.
 	 */
-	@SideEffectFree
 	@Label("Export as SVG")
 	public static BinaryData toSvg(
 			@Mandatory Diagram diagram,
@@ -1569,7 +1542,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object.
 	 * @return The new graph layout.
 	 */
-	@SideEffectFree
 	@Label("Create graph layout")
 	public static Box graphLayout(
 			@Mandatory List<? extends Box> nodes,
@@ -1615,7 +1587,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        Application object backing the edge, or {@code null}.
 	 * @return The new edge.
 	 */
-	@SideEffectFree
 	@Label("Create graph edge")
 	public static GraphEdge graphEdge(
 			@Mandatory Box source,
@@ -1675,7 +1646,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        Minimum content height for this row, in pixels.
 	 * @return The new row.
 	 */
-	@SideEffectFree
 	@Label("Create Gantt row")
 	public static GanttRow ganttRow(
 			@Mandatory Object model,
@@ -1741,7 +1711,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        drop-accepting rows.
 	 * @return The new span item.
 	 */
-	@SideEffectFree
 	@Label("Create Gantt span item")
 	public static GanttSpan ganttSpan(
 			@Mandatory Object model,
@@ -1804,7 +1773,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        Whether a new dependency edge may terminate at this item.
 	 * @return The new point item.
 	 */
-	@SideEffectFree
 	@Label("Create Gantt point item")
 	public static GanttPoint ganttPoint(
 			@Mandatory Object model,
@@ -1910,7 +1878,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        Dash pattern, or {@code null} for a solid line.
 	 * @return The new line decoration.
 	 */
-	@SideEffectFree
 	@Label("Create Gantt line decoration")
 	public static GanttLineDecoration ganttLineDeco(
 			@Mandatory Object model,
@@ -1956,7 +1923,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        Whether the user may drag the range's edges to resize it.
 	 * @return The new range decoration.
 	 */
-	@SideEffectFree
 	@Label("Create Gantt range decoration")
 	public static GanttRangeDecoration ganttRangeDeco(
 			@Mandatory Object model,
@@ -2005,7 +1971,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        Number of leading root rows forming the frozen header, or {@code null} for none.
 	 * @return The new Gantt layout.
 	 */
-	@SideEffectFree
 	@Label("Create Gantt layout")
 	public static GanttLayout gantt(
 			@Mandatory List<GanttRow> rootRows,

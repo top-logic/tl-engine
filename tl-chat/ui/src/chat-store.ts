@@ -363,6 +363,19 @@ export interface ChatState {
   railMounted: boolean
 
   /**
+   * Whether the mounted rail is a drawer: its host is too narrow for a column beside the
+   * conversation, so it keeps only its strip in the flow and opens over the conversation (#565).
+   *
+   * Published by the rail, which is the only element that measures its host. While it is set, the
+   * actions that open and close the rail open and close {@link railDrawerOpen} instead of
+   * {@link sideOpen}: the user's column choice is a statement about a wide page, and it is what the
+   * rail shows again once the host is wide again.
+   */
+  railDrawer: boolean
+  /** Whether the rail's drawer is open. Never stored: every narrow page load starts closed. */
+  railDrawerOpen: boolean
+
+  /**
    * How many `<chat-conversation/>` elements of this chat are mounted **outside** a
    * `<chat-dock/>`.
    *
@@ -467,6 +480,13 @@ export interface ChatActions {
   toggleSide(badgeTotal: number): void
   /** Opens the rail on one section, as a click on its strip icon does. */
   showSection(id: string, badgeTotal: number): void
+  /**
+   * Publishes whether one mounted rail is a drawer; see {@link ChatState.railDrawer}.
+   *
+   * Per rail, because a rail that mounts and leaves again - a dock's, for one commit, on a page that
+   * shows the conversation itself - must not take the page rail's answer with it.
+   */
+  setRailDrawer(rail: object, drawer: boolean): void
   setPaneWidth(width: number): void
   toggleSection(id: string): void
   /**
@@ -682,6 +702,9 @@ export class ChatStore {
   /** How many {@code <chat-rail/>} elements on this `chat-id` are mounted. */
   private rails = 0
 
+  /** The mounted rails that are drawers; {@link ChatState.railDrawer} is whether there is one. */
+  private readonly drawerRails = new Set<object>()
+
   /** How many `<chat-conversation/>` elements on this `chat-id` are mounted outside a dock. */
   private conversations = 0
 
@@ -703,6 +726,16 @@ export class ChatStore {
   private setRun = (next: RunSnapshot | ((prev: RunSnapshot) => RunSnapshot)): void => {
     this.runs.set(next)
     runStore.set(this.runs.get())
+  }
+
+  /** The patch that opens the rail: its drawer while it is one, else the stored column choice. */
+  private opened(): Partial<ChatState> {
+    return this.state.railDrawer ? { railDrawerOpen: true } : { sideOpen: true, railDecided: true }
+  }
+
+  /** The patch that closes the rail; see {@link opened}. */
+  private closed(): Partial<ChatState> {
+    return this.state.railDrawer ? { railDrawerOpen: false } : { sideOpen: false, railDecided: true }
   }
 
   /**
@@ -822,6 +855,8 @@ export class ChatStore {
       collapsedSections: collapsedSections(boot.collapsedSections ?? ['context'], boot.sectionChoices),
       sectionChoices: boot.sectionChoices,
       railMounted: false,
+      railDrawer: false,
+      railDrawerOpen: false,
       conversationsOutsideDock: 0,
       contextFacts: [],
       badgeTotal: 0,
@@ -2219,32 +2254,42 @@ export class ChatStore {
       openPane: (content: ReactNode, options: PaneOpenOptions) => {
         // Opening a pane opens the side, and that is the user opening it: a reload shows what they
         // were looking at rather than the element's default.
-        this.patch({ paneContent: content, paneOptions: options, sideOpen: true, railDecided: true })
+        this.patch({ paneContent: content, paneOptions: options, ...this.opened() })
       },
 
       closePane: () => this.patch({ paneContent: null, paneOptions: null }),
 
-      closeSide: () =>
-        this.patch({ paneContent: null, paneOptions: null, sideOpen: false, railDecided: true }),
+      closeSide: () => this.patch({ paneContent: null, paneOptions: null, ...this.closed() }),
 
       toggleSide: (badgeTotal: number) => {
-        if (this.state.sideOpen) {
-          this.patch({ paneContent: null, paneOptions: null, sideOpen: false, railDecided: true })
+        const open = this.state.railDrawer ? this.state.railDrawerOpen : this.state.sideOpen
+        if (open) {
+          this.patch({ paneContent: null, paneOptions: null, ...this.closed() })
           return
         }
-        this.patch({ sideOpen: true, railDecided: true, badgeSeen: badgeTotal })
+        this.patch({ ...this.opened(), badgeSeen: badgeTotal })
       },
 
       showSection: (id: string, badgeTotal: number) => {
         this.patch({
           paneContent: null,
           paneOptions: null,
-          sideOpen: true,
-          railDecided: true,
+          ...this.opened(),
           badgeSeen: badgeTotal,
           collapsedSections: this.state.collapsedSections.filter((item) => item !== id),
           sectionChoices: { ...this.state.sectionChoices, [id]: true },
         })
+      },
+
+      setRailDrawer: (rail: object, drawer: boolean) => {
+        if (drawer) this.drawerRails.add(rail)
+        else this.drawerRails.delete(rail)
+        const next = this.drawerRails.size > 0
+        if (next === this.state.railDrawer) return
+        // Either way the drawer starts closed: a host that grows wide again takes the rail back as
+        // the column the user chose, and one that narrows does not open over the conversation on
+        // its own.
+        this.patch({ railDrawer: next, railDrawerOpen: false })
       },
 
       setPaneWidth: (width: number) => {

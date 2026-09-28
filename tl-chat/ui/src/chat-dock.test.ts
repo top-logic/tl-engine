@@ -121,12 +121,17 @@ describe('the rendered dock', () => {
    *
    * The conversation's event stream and its transcript live in the elements inside the panel, and
    * the store drops a chat when its last element leaves - so a dock that unmounted its panel would
-   * hand the user a new, empty chat on every open.
+   * hand the user a new, empty chat on every open. That the content is then mounted inside it, from
+   * the second commit on, is what `chat-dock-mount.test.tsx` shows in a live DOM.
    */
   it('keeps the panel mounted and hides it while the dock is closed', () => {
     const html = render(dockState())
     expect(html).toMatch(/class="tl-chat-dock__panel"[^>]*hidden/)
-    expect(html).toContain('data-module="TLStack"')
+  })
+
+  /** On the first commit the dock cannot know yet whether the page shows its conversation. */
+  it('mounts nothing of its content on the first commit', () => {
+    expect(render(dockState({ chatId: 'dock-first-commit' }))).not.toContain('data-module')
   })
 
   it('shows the panel and the close wording while the dock is open', () => {
@@ -197,7 +202,6 @@ describe('the rendered dock', () => {
     onPage()
     const back = render(dockState({ chatId: 'dock-stand-down' }))
     expect(back).not.toContain('is-stood-down')
-    expect(back).toContain('data-module="TLStack"')
 
     release()
   })

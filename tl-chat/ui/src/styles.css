@@ -503,6 +503,18 @@
   min-width: min(var(--chat-conversation-min-width), 100vw - var(--chat-conversation-floor-reserve));
 }
 
+/*
+ * In a dock the window is not what the row has: the panel stands its offset in from both edges, so
+ * a floor measured on the window overflowed the panel of a phone by those 3 rem (#565). The dock's
+ * own width is the measure there, and nothing in the dock can shrink that either.
+ */
+.tl-chat-dock :has(> .tl-data-list.is-drawer) .tl-chat-conversation {
+  min-width: min(
+    var(--chat-conversation-min-width),
+    var(--chat-dock-width) - var(--chat-conversation-floor-reserve)
+  );
+}
+
 .tl-chat-conversation .stage {
   min-width: 0;
   overflow: hidden;
@@ -711,7 +723,8 @@
  * `.side-strip` and `.side-pane` are App's classes, which place themselves with `grid-column` and
  * turn into an overlay below 1280 px. Inside this element there is no grid to place into and
  * nothing to overlay, so their geometry is re-stated here: laid out in flow, sized by themselves,
- * and a column at every width (`placement="rail"` in side-pane.tsx).
+ * and a column at every width the host has room for (`placement="rail"` in side-pane.tsx); in a
+ * narrower host the rail is a drawer, see below.
  *
  * Not a container either: `flex: 0 0 auto` makes this element as wide as the strip plus the column
  * it shows, so its width comes from its own contents. `container-type: inline-size` applies
@@ -744,6 +757,14 @@
 .tl-chat-rail .side-section {
   border: 1px solid var(--border-subtle);
   background: var(--background);
+}
+
+/*
+ * As wide as its section, not the session list's 16.5 rem: that is wider than a section of a rail
+ * drawer at a phone's width, and the rows were cut off at the card's edge instead of elided (#565).
+ */
+.tl-chat-rail .tl-data-list {
+  width: auto;
 }
 
 /*
@@ -781,6 +802,66 @@
  */
 .tl-chat-rail .is-hidden {
   display: none;
+}
+
+/*
+ * A rail in a narrow host (#565).
+ *
+ * Below its `drawer-below` width the rail keeps only its strip in the flow, and its section column
+ * or its pane opens over the conversation. chat-rail.tsx measures the host, sets `.is-drawer` and
+ * says in `--rail-drawer-end` how far from the host's inline end the strip begins; everything here
+ * is geometry. The same construction as a `<data-list>` drawer (#548): the host is the containing
+ * block, so the scrim covers exactly the row the rail stands in, and `isolation` keeps the
+ * z-indexes local to it.
+ *
+ * The strip stays above the scrim, so another section is still one click away while one is open.
+ */
+:has(> .tl-chat-rail.is-drawer) {
+  position: relative;
+  isolation: isolate;
+}
+
+.tl-chat-rail.is-drawer .rail-column,
+.tl-chat-rail.is-drawer .side-pane {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  inset-inline-end: var(--rail-drawer-end, 0px);
+  z-index: 31;
+  box-shadow: var(--chat-shadow);
+}
+
+/*
+ * Never the whole row: a strip's width of scrim stays uncovered beside it, so a pointer always has
+ * somewhere to tap its way out, as beside the list's drawer.
+ */
+.tl-chat-rail.is-drawer {
+  --rail-drawer-room: calc(100% - var(--rail-drawer-end, 0px) - 3.5rem);
+}
+
+.tl-chat-rail.is-drawer .rail-column {
+  width: min(18.75rem, var(--rail-drawer-room));
+}
+
+.tl-chat-rail.is-drawer .side-pane {
+  max-width: var(--rail-drawer-room);
+}
+
+/* A drawer at a phone's width has no 6 rem to promise the title beside "back" and the close cross. */
+.tl-chat-rail.is-drawer .side-pane-title {
+  min-width: 0;
+}
+
+.tl-chat-rail.is-drawer-open .side-strip {
+  z-index: 32;
+}
+
+.tl-chat-rail .rail-drawer-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  /* The engine's own drawer backdrop, as for the list's drawer. */
+  background: var(--overlay, rgb(0 0 0 / 40%));
 }
 
 /* A count on a strip icon, so a closed rail still says which section the news is in. */
@@ -3802,6 +3883,13 @@
 }
 
 .side-back {
+  /*
+   * One unit: squeezed by a long title, the chevron and the word used to land on two lines, the
+   * word over the title's baseline (#552). The title is the one that gives way - it has the
+   * ellipsis.
+   */
+  flex: none;
+  white-space: nowrap;
   border: 0;
   background: transparent;
   color: var(--button-primary);

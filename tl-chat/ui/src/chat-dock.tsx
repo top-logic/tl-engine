@@ -91,6 +91,18 @@ export function TLChatDock({ controlId }: TLCellProps) {
   const content = state.content ?? null
 
   const [open, setOpen] = useState(dock.open)
+
+  /*
+   * The content from the second commit on, not the first.
+   *
+   * On the first commit this dock cannot know yet whether the page shows its conversation: a
+   * `<chat-conversation/>` announces itself from an effect, which runs after that commit. The dock
+   * used to mount its content meanwhile and unmount it a moment later - long enough for its rail to
+   * state its own `open="false"` over the page rail's `open="true"`, so a fresh account's rail on
+   * the chat page started closed (#552). One commit later the answer is in.
+   */
+  const [settled, setSettled] = useState(false)
+  useEffect(() => setSettled(true), [])
   const panelRef = useRef<HTMLDivElement | null>(null)
   const launcherRef = useRef<HTMLButtonElement | null>(null)
 
@@ -118,7 +130,9 @@ export function TLChatDock({ controlId }: TLCellProps) {
 
   const onKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
-      if (!closesOnKey(event.key, open)) return
+      // An Escape something inside already answered - the rail's drawer, the list's - closed that,
+      // and closing the dock with it would take the user two steps back for one key.
+      if (event.defaultPrevented || !closesOnKey(event.key, open)) return
       event.stopPropagation()
       setOpen(false)
     },
@@ -153,7 +167,7 @@ export function TLChatDock({ controlId }: TLCellProps) {
         hidden={!open}
       >
         <div className="tl-chat-dock__body">
-          {content != null ? <TLChild control={content} /> : null}
+          {content != null && settled ? <TLChild control={content} /> : null}
         </div>
       </div>
 

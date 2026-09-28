@@ -81,6 +81,7 @@ public class ChatRailControl extends ReactControl {
 		putState("chatId", chatId);
 		putState("strip", Boolean.valueOf(config.getStrip()));
 		putState("open", Boolean.valueOf(config.getOpen()));
+		putState("drawerBelow", Integer.valueOf(config.getDrawerBelow()));
 		putState("paneMode", config.getPaneMode().getExternalName());
 		// A key of its own, because the stored width is written under "paneWidth" on every render:
 		// the configured width is what a user who has never dragged the splitter gets.

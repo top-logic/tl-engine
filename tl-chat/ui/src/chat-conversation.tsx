@@ -626,7 +626,7 @@ export function TLChatConversation({ controlId }: TLCellProps) {
             // this `chat-id` is mounted, because with no rail it would toggle nothing visible.
             chat.railMounted ? (
               <RailToggle
-                open={chat.sideOpen}
+                open={chat.railDrawer ? chat.railDrawerOpen : chat.sideOpen}
                 badge={unseenBadge(chat.badgeTotal, chat.badgeSeen)}
                 labels={labels}
                 onToggle={() => actions.toggleSide(chat.badgeTotal)}

@@ -26,12 +26,22 @@ export function categoryOf(name: string): number {
   return 1 + (Math.abs(hash) % 8);
 }
 
+/**
+ * The scale abbreviation of an external size name, which the CSS classes of the design system carry.
+ * `medium` - and a missing size - is the step without a modifier.
+ */
+const SIZE_CLASS: Record<string, string> = {
+  small: 'sm',
+  large: 'lg',
+  'x-large': 'xl',
+};
+
 /** The type class the initials of a size read in - set from outside, as the design system asks. */
 const TYPE_CLASS: Record<string, string> = {
-  sm: 'tl-type-label-strong',
-  md: 'tl-type-body-strong',
-  lg: 'tl-type-heading-md',
-  xl: 'tl-type-heading-lg',
+  small: 'tl-type-label-strong',
+  medium: 'tl-type-body-strong',
+  large: 'tl-type-heading-md',
+  'x-large': 'tl-type-heading-lg',
 };
 
 /**
@@ -41,7 +51,7 @@ const TYPE_CLASS: Record<string, string> = {
  *
  * State:
  * - name: string | null
- * - size: "sm" | "md" | "lg" | "xl"
+ * - size: "small" | "medium" | "large" | "x-large" - medium when absent
  * - url / hasData / dataRevision: the picture, see useImageSrc
  */
 const TLAvatar: React.FC<TLCellProps> = ({ controlId }) => {
@@ -49,8 +59,9 @@ const TLAvatar: React.FC<TLCellProps> = ({ controlId }) => {
   const src = useImageSrc();
 
   const name = state.name as string | null;
-  const size = (state.size as string) ?? 'md';
-  const sizeClass = size === 'md' ? '' : `tl-avatar--${size}`;
+  const size = (state.size as string) ?? 'medium';
+  const abbreviation = SIZE_CLASS[size];
+  const sizeClass = abbreviation ? `tl-avatar--${abbreviation}` : '';
 
   if (src) {
     return (
@@ -79,7 +90,7 @@ const TLAvatar: React.FC<TLCellProps> = ({ controlId }) => {
       id={controlId}
       className={rootClassName(
         state,
-        ['tl-avatar', sizeClass, `tl-avatar--category-${categoryOf(name)}`, TYPE_CLASS[size] ?? TYPE_CLASS.md]
+        ['tl-avatar', sizeClass, `tl-avatar--category-${categoryOf(name)}`, TYPE_CLASS[size] ?? TYPE_CLASS.medium]
           .filter(Boolean)
           .join(' ')
       )}

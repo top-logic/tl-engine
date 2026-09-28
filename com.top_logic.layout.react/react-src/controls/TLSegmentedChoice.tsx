@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, CMD_VALUE_CHANGED, rootClassName } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, CMD_VALUE_CHANGED, rootClassName, useFieldLabelProps } from 'tl-react-bridge';
 import type { TLCellProps, DropdownSelectStateJson } from 'tl-react-bridge';
 import { ARG_OPTION, CMD_GOTO, OptionImage, ReadonlyValue, withPill } from './selectOptions';
 import type { OptionDescriptor } from './selectOptions';
@@ -25,6 +25,7 @@ interface MarkerPosition {
  */
 const TLSegmentedChoice: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<DropdownSelectStateJson>>();
+  const labelProps = useFieldLabelProps(controlId, controlId);
   const sendCommand = useTLCommand();
 
   const value = (state.value ?? []) as OptionDescriptor[];
@@ -156,6 +157,7 @@ const TLSegmentedChoice: React.FC<TLCellProps> = ({ controlId }) => {
   return (
     <div
       id={controlId}
+      {...labelProps}
       ref={rootRef}
       role={multiSelect ? 'group' : 'radiogroup'}
       className={rootClassName(

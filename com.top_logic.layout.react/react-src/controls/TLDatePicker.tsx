@@ -1,4 +1,4 @@
-import { React, useTLState, useTLFieldValue, rootClassName } from 'tl-react-bridge';
+import { React, useTLState, useTLFieldValue, rootClassName, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
 import type { TLCellProps, DatePickerStateJson } from 'tl-react-bridge';
 
 const { useCallback } = React;
@@ -11,6 +11,8 @@ const { useCallback } = React;
  */
 const TLDatePicker: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<DatePickerStateJson>>();
+  const inputId = fieldInputId(controlId);
+  const labelProps = useFieldLabelProps(controlId, inputId);
   const [value, setValue] = useTLFieldValue();
 
   const handleChange = useCallback(
@@ -47,6 +49,8 @@ const TLDatePicker: React.FC<TLCellProps> = ({ controlId }) => {
         onChange={handleChange}
         className={rootClassName(state, cls)}
         aria-invalid={hasError || undefined}
+        id={inputId}
+        {...labelProps}
       />
     </span>
   );

@@ -1,4 +1,4 @@
-import { React, useTLState, useTLFieldValue, rootClassName } from 'tl-react-bridge';
+import { React, useTLState, useTLFieldValue, rootClassName, useFieldLabelProps } from 'tl-react-bridge';
 import type { TLCellProps, CheckboxStateJson } from 'tl-react-bridge';
 
 const { useCallback, useRef, useEffect } = React;
@@ -15,6 +15,7 @@ const DISPLAY_SWITCH: CheckboxStateJson.Display = 'switch';
  */
 const TLCheckbox: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<CheckboxStateJson>>();
+  const labelProps = useFieldLabelProps(controlId, controlId);
   const [value, setValue] = useTLFieldValue();
   const triState = state.triState === true;
   const asSwitch = state.display === DISPLAY_SWITCH;
@@ -44,6 +45,7 @@ const TLCheckbox: React.FC<TLCellProps> = ({ controlId }) => {
       <input
         type="checkbox"
         id={controlId}
+        {...labelProps}
         ref={boxRef}
         role={asSwitch ? 'switch' : undefined}
         checked={value === true}
@@ -71,6 +73,7 @@ const TLCheckbox: React.FC<TLCellProps> = ({ controlId }) => {
     <input
       type="checkbox"
       id={controlId}
+      {...labelProps}
       ref={boxRef}
       role={asSwitch ? 'switch' : undefined}
       checked={value === true}

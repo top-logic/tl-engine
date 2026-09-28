@@ -1,4 +1,4 @@
-import { React, useTLState, useTLFieldValue, rootClassName, VALUE_DEBOUNCE_MS, tooltipProps } from 'tl-react-bridge';
+import { React, useTLState, useTLFieldValue, rootClassName, VALUE_DEBOUNCE_MS, tooltipProps, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
 import type { TLCellProps, PasswordInputStateJson } from 'tl-react-bridge';
 
 const { useCallback } = React;
@@ -12,6 +12,8 @@ const { useCallback } = React;
  */
 const TLPasswordInput: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<PasswordInputStateJson>>();
+  const inputId = fieldInputId(controlId);
+  const labelProps = useFieldLabelProps(controlId, inputId);
   const [value, setValue, flushValue] = useTLFieldValue({
     debounceMs: state.debounceMs ?? VALUE_DEBOUNCE_MS,
   });
@@ -48,6 +50,8 @@ const TLPasswordInput: React.FC<TLCellProps> = ({ controlId }) => {
         className={rootClassName(state, cls)}
         aria-invalid={hasError || undefined}
         {...tooltipProps(hasError ? errorMessage : undefined)}
+        id={inputId}
+        {...labelProps}
       />
     </span>
   );

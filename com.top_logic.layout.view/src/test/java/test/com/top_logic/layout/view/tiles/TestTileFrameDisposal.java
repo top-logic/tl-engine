@@ -15,6 +15,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import junit.framework.Test;
 
@@ -40,8 +41,9 @@ import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
+import com.top_logic.layout.view.ReloadableControl;
 import com.top_logic.layout.view.channel.ChannelRef;
-import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.tiles.ReactTileStackControl;
@@ -83,7 +85,7 @@ public class TestTileFrameDisposal extends BasicTestCase {
 
 	private SSEUpdateQueue _sseQueue;
 
-	private ViewChannel _path;
+	private SubscriptionCountingChannel _path;
 
 	private ReactControl _root;
 
@@ -108,8 +110,11 @@ public class TestTileFrameDisposal extends BasicTestCase {
 		ReactContext reactContext = new PageContext(_sseQueue);
 		ViewElement view = ViewLoader.getOrLoadView(ViewLoader.fullPath(STACK_VIEW));
 		ViewContext viewContext = new DefaultViewContext(reactContext, ViewLoader.fullPath(STACK_VIEW));
+		// Bound in advance, so that the view uses this channel instead of creating its own.
+		_path = new SubscriptionCountingChannel(NAV_PATH);
+		viewContext.registerChannel(NAV_PATH, _path);
 		_root = (ReactControl) view.createControl(viewContext);
-		_path = viewContext.resolveChannel(new ChannelRef(NAV_PATH));
+		assertSame(_path, viewContext.resolveChannel(new ChannelRef(NAV_PATH)));
 
 		render();
 	}
@@ -177,6 +182,67 @@ public class TestTileFrameDisposal extends BasicTestCase {
 
 		assertCollected("The dropped frame is still reachable.", frame);
 		assertCollected("The form of the dropped frame is still reachable.", form);
+	}
+
+	/**
+	 * Tests that a dropped frame leaves nothing subscribed to the path of the stack, although its
+	 * view derives a channel from that path, and that a live frame's derived channel follows it.
+	 */
+	public void testADroppedFrameUnsubscribesFromThePath() {
+		int listeners = _path.listenerCount();
+		int vetoListeners = _path.vetoListenerCount();
+
+		_path.set(List.of(detail("first")));
+		ReactControl first = activeFrame();
+		render();
+		assertTrue("The derived channel of a displayed frame follows the path.",
+			_path.listenerCount() > listeners);
+		assertTrue("The derived channel of a displayed frame answers for the path.",
+			_path.vetoListenerCount() > vetoListeners);
+		assertEquals("At depth 1, the frame shows the field inside its visible-if.", 2, fieldCount(first));
+
+		// A frame covered by a drill-down stays alive, and so does what it derives from the path.
+		_path.set(List.of(detail("first"), detail("second")));
+		assertEquals("The covered frame's derived channel follows the path: depth 2 hides the field.",
+			1, fieldCount(first));
+
+		_path.set(List.of());
+
+		assertEquals("A dropped frame leaves no listener on the path.", listeners, _path.listenerCount());
+		assertEquals("A dropped frame leaves no veto listener on the path.",
+			vetoListeners, _path.vetoListenerCount());
+	}
+
+	/**
+	 * Tests that reloading the view of a frame builds it with channels of its own: the reloaded view
+	 * derives its channel from the path again, and the channel of the replaced view is unsubscribed.
+	 */
+	public void testAReloadedFrameDerivesItsChannelsAnew() {
+		_path.set(List.of(detail("first")));
+		ReloadableControl frame = (ReloadableControl) activeFrame();
+		render();
+		int listeners = _path.listenerCount();
+		int vetoListeners = _path.vetoListenerCount();
+
+		frame.viewChanged(Set.of(ViewLoader.fullPath(DETAIL_VIEW)));
+		render();
+
+		assertEquals("The reload replaces the subscriptions of the view rather than adding to them.",
+			listeners, _path.listenerCount());
+		assertEquals("The reload replaces the veto listeners of the view rather than adding to them.",
+			vetoListeners, _path.vetoListenerCount());
+		assertEquals("At depth 1, the reloaded frame shows the field inside its visible-if.", 2,
+			fieldCount(frame));
+
+		_path.set(List.of(detail("first"), detail("second")));
+		assertEquals("The reloaded frame's derived channel follows the path: depth 2 hides the field.",
+			1, fieldCount(frame));
+	}
+
+	private static long fieldCount(ReactControl frame) {
+		List<ReactControl> controls = new ArrayList<>();
+		collect(frame, controls);
+		return controls.stream().filter(ReactFormFieldChromeControl.class::isInstance).count();
 	}
 
 	private void render() {
@@ -276,6 +342,54 @@ public class TestTileFrameDisposal extends BasicTestCase {
 		try (InputStream in = TestTileFrameDisposal.class.getResourceAsStream(name)) {
 			assertNotNull("Missing fixture: " + name, in);
 			Files.copy(in, Path.of(target.toURI()), StandardCopyOption.REPLACE_EXISTING);
+		}
+	}
+
+	/**
+	 * {@link DefaultViewChannel} counting the listeners and veto listeners registered on it.
+	 */
+	private static final class SubscriptionCountingChannel extends DefaultViewChannel {
+
+		private final List<ChannelListener> _listeners = new ArrayList<>();
+
+		private final List<VetoListener> _vetoListeners = new ArrayList<>();
+
+		SubscriptionCountingChannel(String name) {
+			super(name);
+		}
+
+		@Override
+		public void addListener(ChannelListener listener) {
+			_listeners.add(listener);
+			super.addListener(listener);
+		}
+
+		@Override
+		public void removeListener(ChannelListener listener) {
+			_listeners.remove(listener);
+			super.removeListener(listener);
+		}
+
+		@Override
+		public void addVetoListener(VetoListener listener) {
+			_vetoListeners.add(listener);
+			super.addVetoListener(listener);
+		}
+
+		@Override
+		public void removeVetoListener(VetoListener listener) {
+			_vetoListeners.remove(listener);
+			super.removeVetoListener(listener);
+		}
+
+		/** The number of listeners registered and not removed. */
+		int listenerCount() {
+			return _listeners.size();
+		}
+
+		/** The number of veto listeners registered and not removed. */
+		int vetoListenerCount() {
+			return _vetoListeners.size();
 		}
 	}
 

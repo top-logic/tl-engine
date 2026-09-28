@@ -113,6 +113,14 @@ public class ViewServlet extends TopLogicServlet {
 	 */
 	private static final String VIEW_FILE_SUFFIX = ".view.xml";
 
+	/**
+	 * Attribute of the page body carrying the token of the rendered page, which the page reports
+	 * back when it is unloaded.
+	 *
+	 * @see ReactWindowRegistry#issuePageLoad(String)
+	 */
+	private static final String PAGE_LOAD_ATTRIBUTE = "data-page-load";
+
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
@@ -848,6 +856,10 @@ public class ViewServlet extends TopLogicServlet {
 			ReactControl rootControl, ReactContext context) throws IOException {
 		rootControl.attach();
 
+		// The page rendered here is the one the window displays from now on: the unload report of a
+		// page it replaces no longer applies to the tree.
+		String pageLoad = context.getWindowRegistry().issuePageLoad(context.getWindowName());
+
 		// The display exists now, so the URL the request carries can be adopted: a page rendered into
 		// a control tree it already has registers no participants while attaching, and nothing else
 		// would hand them the requested route.
@@ -911,6 +923,7 @@ public class ViewServlet extends TopLogicServlet {
 		out.beginBeginTag(HTMLConstants.BODY);
 		out.writeAttribute("data-window-name", context.getWindowName());
 		out.writeAttribute("data-context-path", context.getContextPath());
+		out.writeAttribute(PAGE_LOAD_ATTRIBUTE, pageLoad);
 		out.endBeginTag();
 
 		// Delegate rendering to the control itself. ReactControl.write() outputs a

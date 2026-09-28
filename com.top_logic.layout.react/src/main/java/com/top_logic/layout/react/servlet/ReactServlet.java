@@ -129,6 +129,14 @@ public class ReactServlet extends TopLogicServlet {
 	private static final String ARG_URL = "url";
 
 	/**
+	 * Argument of the unload report naming the page that was unloaded, sent by
+	 * {@code initSelfCloseNotification} in {@code window-manager.ts}.
+	 *
+	 * @see ReactWindowRegistry#windowUnloaded(String, String)
+	 */
+	private static final String ARG_PAGE_LOAD = "pageLoad";
+
+	/**
 	 * Name of the {@link #CMD_NAVIGATE_TO_ROUTE} answer field that is set when the display does not
 	 * take up the URL.
 	 *
@@ -528,7 +536,7 @@ public class ReactServlet extends TopLogicServlet {
 				// like any command does, and for a reload it coincides with the request rendering the
 				// page again, so it is an interaction as well.
 				try (Interaction interaction = registry.beginInteraction()) {
-					registry.windowUnloaded(closedWindowId);
+					registry.windowUnloaded(closedWindowId, (String) arguments.get(ARG_PAGE_LOAD));
 				}
 				sendSuccess(response);
 				return;

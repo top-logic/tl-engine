@@ -15,6 +15,7 @@
 				initial-edit-mode="true"
 				input="comment"
 				mode-switch="false"
+				with-inset="true"
 			>
 				<field attribute="cited"/>
 				<field

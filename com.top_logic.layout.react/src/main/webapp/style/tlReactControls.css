@@ -253,14 +253,16 @@ button.tlCounter__button:focus {
    Spacing model.
 
    Containers never introduce padding - everything flushes to the container
-   border by default. Breathing room is owned by the *content*:
+   border by default. Breathing room is explicit:
 
-     - Forms pad themselves (.tlFormLayout), so a form renders nicely in any
-       container, pane, tab or dialog.
-     - The dashboard layout pads itself (its outer inset == its tile gap).
      - The explicit <inset> element (.tlInset) is dropped into a view
-       wherever content would otherwise glue to the border (e.g. a stack/grid
-       of cards, or explanatory text in a dialog).
+       wherever content would otherwise glue to the border (e.g. a form in a
+       tab or dialog, a stack/grid of cards, or explanatory text in a dialog).
+     - A form grid (.tlFormLayout) is a plain layout and does not pad itself.
+       A form that needs room sets with-inset="true", which wraps it in the same
+       .tlInset, or sits in an <inset>.
+     - The dashboard layout pads itself (its outer inset == its tile gap).
+     - A card sets a reduced --page-inset, which every inset inside it picks up.
 
    Simple layouts (<stack>, <grid>) and chrome containers (sidebar content, tab
    content, split panes, panel body, dialog body) do NOT pad. A <panel> (dark
@@ -1169,7 +1171,7 @@ div.tlValueList {
 
 /* Card appearance: a bordered, rounded panel reading as one self-contained entry of a list
    (e.g. a comment). The tinted header visually binds byline and content together; compact
-   insets keep the entry tight - forms inside pick up the reduced inset via --page-inset. */
+   insets keep the entry tight - insets inside pick up the reduced inset via --page-inset. */
 .tlPanel--card {
 	border: 1px solid var(--border-subtle);
 	border-radius: var(--border-radius-02);
@@ -2526,8 +2528,8 @@ button.tlWindow__maximizeBtn:focus-visible {
 	/* Content wider than the (viewport-clamped) window scrolls inside the body instead
 	   of being clipped by the window's rounded-corner overflow. */
 	overflow-x: auto;
-	/* Flush: a dialog is a container too - its content owns its inset (a self-padding
-	   form, or a <padding> around explanatory text). */
+	/* Flush: a dialog is a container too - its content owns its inset (a form with
+	   with-inset, or an <inset> around explanatory text). */
 }
 
 /* The footer consists of a single collapsing toolbar, which states its natural width and gives
@@ -4408,8 +4410,6 @@ button.tlMenu__item--disabled:hover {
 	font-family: var(--font-family);
 	width: 100%;
 	box-sizing: border-box;
-	/* A form owns its breathing room, so it renders nicely in any flush container. */
-	padding: var(--page-inset);
 }
 
 .tlFormLayout--empty {
@@ -4419,23 +4419,12 @@ button.tlMenu__item--disabled:hover {
 	min-height: 4rem;
 }
 
-/* A form whose sole content is a table drops its page inset and lets the table fill the area, so
-   no empty frame is drawn around the self-scrolling, full-bleed table. */
-.tlFormLayout--flush {
-	display: block;
-	padding: 0;
-	height: 100%;
-}
-
 /* A form hosting a filling region is a column: the filling child takes the height the form is
    offered (the form itself carries .tlFill and asks its own container for it - see the fill
-   contract above), while every other child keeps the height of its content. The form drops its page
-   inset here, exactly as in the flush case, because a filling region manages its own layout and
-   would otherwise be framed twice. */
+   contract above), while every other child keeps the height of its content. */
 .tlFormLayout--fill {
 	display: flex;
 	flex-direction: column;
-	padding: 0;
 }
 
 .tlFormLayout--fill > :not(.tlFill) {

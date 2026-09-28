@@ -66,7 +66,7 @@ public class ReactPanelControl extends ToolbarControl {
 	private static final String CHILD = "child";
 
 	/** @see #setFill(boolean) */
-	private static final String FILL = "fill";
+	public static final String FILL = "fill";
 
 	/** @see #setWidth(String) */
 	private static final String WIDTH = "width";

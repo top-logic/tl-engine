@@ -24,6 +24,11 @@ public interface ColumnFilterUI {
 
 	/**
 	 * Builds the dialog body (the filter form) for one opening of the dialog.
+	 *
+	 * <p>
+	 * The dialog insets the body from its border, so the form is returned without an inset of its
+	 * own.
+	 * </p>
 	 */
 	ReactControl buildForm(ReactContext context);
 

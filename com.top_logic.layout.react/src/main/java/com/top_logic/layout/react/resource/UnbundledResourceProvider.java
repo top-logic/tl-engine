@@ -23,8 +23,14 @@ import com.top_logic.mig.html.HTMLUtil;
  * <p>
  * Emission order is: all stylesheets (cascade order), then the aggregated import map, then all
  * module scripts (evaluation order). The import map precedes the module scripts as required by the
- * browser. A module's script tag and its import map entry reference an identical URL, so the module
- * is instantiated only once.
+ * browser. A module's script tag and its import map entry are both resolved through the same
+ * {@link ResourceResolver} and therefore reference an identical URL, so the module is instantiated
+ * only once.
+ * </p>
+ *
+ * <p>
+ * Resolved URLs are emitted as they are, without {@link HTMLUtil#getReloadSuffix() reload suffix}:
+ * the {@link ResourceResolver} is responsible for URLs that change with the resource content.
  * </p>
  */
 public class UnbundledResourceProvider implements ClientResourceProvider {
@@ -32,6 +38,8 @@ public class UnbundledResourceProvider implements ClientResourceProvider {
 	private static final String MODULE_TYPE = "module";
 
 	private static final String IMPORTMAP_TYPE = "importmap";
+
+	private static final String NO_RELOAD_SUFFIX = "";
 
 	private final List<? extends ResourceConfig> _ordered;
 
@@ -57,7 +65,7 @@ public class UnbundledResourceProvider implements ClientResourceProvider {
 		for (ResourceConfig resource : _ordered) {
 			if (resource instanceof ScriptConfig) {
 				for (String url : _resolver.resolve(resource)) {
-					HTMLUtil.writeJavascriptRef(out, contextPath, url);
+					HTMLUtil.writeJavaScriptRef(out, contextPath, url, NO_RELOAD_SUFFIX);
 				}
 			}
 		}
@@ -67,7 +75,7 @@ public class UnbundledResourceProvider implements ClientResourceProvider {
 		for (ResourceConfig resource : _ordered) {
 			if (resource instanceof ModuleScriptConfig script && !script.isExternal()) {
 				for (String url : _resolver.resolve(resource)) {
-					HTMLUtil.writeJavaScriptRef(out, contextPath, url, "", MODULE_TYPE);
+					HTMLUtil.writeJavaScriptRef(out, contextPath, url, NO_RELOAD_SUFFIX, MODULE_TYPE);
 				}
 			}
 		}

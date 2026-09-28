@@ -104,6 +104,7 @@ public class AttributeFieldModel extends BoundFieldModel {
 	 * build for an annotation.
 	 * </p>
 	 */
+	@Override
 	public TLObject getObject() {
 		return _object;
 	}

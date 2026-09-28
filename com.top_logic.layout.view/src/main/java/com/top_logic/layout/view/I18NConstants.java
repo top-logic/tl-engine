@@ -16,22 +16,22 @@ import com.top_logic.layout.I18NConstantsBase;
 public class I18NConstants extends I18NConstantsBase {
 
 	/**
-	 * @en Edit.
+	 * @en Edit
 	 */
 	public static ResKey FORM_EDIT;
 
 	/**
-	 * @en Apply.
+	 * @en Apply
 	 */
 	public static ResKey FORM_APPLY;
 
 	/**
-	 * @en Save.
+	 * @en Save
 	 */
 	public static ResKey FORM_SAVE;
 
 	/**
-	 * @en Cancel.
+	 * @en Cancel
 	 */
 	public static ResKey FORM_CANCEL;
 

@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useTLUpload, useTLDataUrl, useI18N, rootClassName, tooltipProps } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useTLUpload, useTLDataUrl, useI18N, rootClassName, tooltipProps, useFieldLabelProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -36,6 +36,7 @@ function formatSize(size: number): string {
  * - editable: boolean
  */
 const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
+  const labelProps = useFieldLabelProps(controlId, controlId);
   const state = useTLState();
   const sendCommand = useTLCommand();
   const upload = useTLUpload();
@@ -139,6 +140,8 @@ const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
   return (
     <div
       id={controlId}
+      {...labelProps}
+      role="group"
       className={rootClassName(state, className)}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}

@@ -1,4 +1,4 @@
-import { React, useTLFieldValue, rootClassName } from 'tl-react-bridge';
+import { React, useTLFieldValue, rootClassName, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback } = React;
@@ -12,6 +12,8 @@ interface SelectOption {
  * A select dropdown rendered via React.
  */
 const TLSelect: React.FC<TLCellProps> = ({ controlId, state, config }) => {
+  const inputId = fieldInputId(controlId);
+  const labelProps = useFieldLabelProps(controlId, inputId);
   const [value, setValue] = useTLFieldValue();
 
   const handleChange = useCallback(
@@ -48,6 +50,8 @@ const TLSelect: React.FC<TLCellProps> = ({ controlId, state, config }) => {
         disabled={state.disabled === true}
         className={rootClassName(state, cls)}
         aria-invalid={hasError || undefined}
+        id={inputId}
+        {...labelProps}
       >
         {state.nullable !== false && <option value=""></option>}
         {options.map((opt) => (

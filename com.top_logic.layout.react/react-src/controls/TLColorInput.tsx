@@ -1,4 +1,4 @@
-import { React, useTLCommand, useTLFieldValue, useI18N, pressClosedSurface, rootClassName, tooltipProps } from 'tl-react-bridge';
+import { React, useTLCommand, useTLFieldValue, useI18N, pressClosedSurface, rootClassName, tooltipProps, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import ColorPopup from './color/ColorPopup';
 
@@ -17,6 +17,8 @@ const { useState, useCallback, useRef } = React;
  *  - defaultPalette: (string | null)[] - Default palette for reset
  */
 const TLColorInput: React.FC<TLCellProps> = ({ controlId, state }) => {
+  const inputId = fieldInputId(controlId);
+  const labelProps = useFieldLabelProps(controlId, inputId);
   const [fieldValue, setValue] = useTLFieldValue();
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
@@ -82,6 +84,8 @@ const TLColorInput: React.FC<TLCellProps> = ({ controlId, state }) => {
         disabled={state.disabled === true}
         aria-label={i18n['js.colorInput.chooseColor']}
         {...tooltipProps(value ?? i18n['js.colorInput.chooseColor'])}
+        id={inputId}
+        {...labelProps}
       />
 
       {open && (

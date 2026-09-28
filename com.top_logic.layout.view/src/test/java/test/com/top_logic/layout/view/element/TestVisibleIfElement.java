@@ -129,7 +129,7 @@ public class TestVisibleIfElement extends BasicTestCase {
 
 		assertNull("The content is taken away when the condition stops holding.", shownContent(visibleIf));
 		assertFalse("The content that was taken away is not displayed any more.", shown.isAttached());
-		assertNull("The content that was taken away is disposed, not kept alive.",
+		assertNull("The content that was taken away is no longer addressable.",
 			_queue.getControl(shown.getID()));
 
 		_state.set(SHOWN);

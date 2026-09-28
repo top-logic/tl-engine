@@ -976,7 +976,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		for (ColumnView column : _view.columns()) {
 			CellContent content = _view.cell(row, column.name());
 			ReactControl cell = CellContentReactAdapter.toControl(getReactContext(), content);
-			registerChildControl(cell);
 			controls.put(column.name(), cell);
 			String tooltip = content.tooltip();
 			if (!StringServices.isEmpty(tooltip)) {

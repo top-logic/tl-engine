@@ -105,21 +105,6 @@ public abstract class ReactLayoutControl extends ReactControl {
 	}
 
 	/**
-	 * Registers a child control that was created after this container, so that it receives state
-	 * updates and dispatches its commands.
-	 *
-	 * <p>
-	 * The children of a layout container are built outside of it - {@link #setChildren(List)} is how
-	 * a display following a model exchanges them - so announcing a newly built child is part of the
-	 * same contract.
-	 * </p>
-	 */
-	@Override
-	public void registerChildControl(ReactControl child) {
-		super.registerChildControl(child);
-	}
-
-	/**
 	 * Rendering-only state keys, omitted from the headless projection.
 	 */
 	@Override

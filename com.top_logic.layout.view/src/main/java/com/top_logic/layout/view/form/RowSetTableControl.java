@@ -585,7 +585,6 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		_tableControl = new TableViewControl<>(_context, view, false);
 		_tableControl.setFilterBar(_filterBar);
 		_tableControl.setActivationHandler(_activationHandler);
-		registerChildControl(_tableControl);
 
 		// Set panel child to the table.
 		putState("child", _tableControl);

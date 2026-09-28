@@ -161,20 +161,82 @@ public class TestBrowserTool extends TestCase {
 	 * The tool's own pre-flight check - the first of the two layers the bypass slipped past - refuses
 	 * the trailing-dot spelling before any browser is involved. Needs no browser: the navigation is
 	 * rejected before a session would be created.
+	 *
+	 * <p>
+	 * The blocked host is under {@code .invalid} (RFC 6761), which never resolves. The refusal must
+	 * therefore come from the blocklist without a name lookup: a check that resolved the host first
+	 * would answer "could not resolve host" instead, which is also what a DNS hiccup on the build
+	 * machine did to this test when it still used a real domain (#567).
+	 * </p>
 	 */
 	public void testPreFlightRefusesTrailingDotSpellingOfBlockedDomain() {
-		BrowserToolsService service = newService(List.of(), List.of("evil.com"), true);
+		BrowserToolsService service = newService(List.of(), List.of("evil.invalid"), true);
 		service.startUp();
 		try {
 			BrowserTool tool = new BrowserTool();
 			ToolContext context = unrestrictedContext();
 
-			String refused = tool.browserNavigate("http://evil.com./", context);
+			String refused = tool.browserNavigate("http://evil.invalid./", context);
 
 			assertTrue("the pre-flight check names the blocklist: " + refused,
 				refused.startsWith("Error:") && refused.contains("blocklist"));
 			assertEquals("no browser session was created for a refused navigation", 0,
 				service.liveSessionCountForTest());
+		} finally {
+			service.shutDown();
+		}
+	}
+
+	/**
+	 * An administrator's list decides without the network: a host that is not on the allowlist is
+	 * refused for that reason even when its name does not resolve (#567).
+	 */
+	public void testPreFlightRefusesAnOffAllowlistHostWithoutResolvingIt() {
+		BrowserToolsService service = newService(List.of("example.org"), List.of(), false);
+		service.startUp();
+		try {
+			String refused = new BrowserTool().browserNavigate("https://elsewhere.invalid/", unrestrictedContext());
+
+			assertTrue("the pre-flight check names the allowlist: " + refused,
+				refused.startsWith("Error:") && refused.contains("allowlist"));
+		} finally {
+			service.shutDown();
+		}
+	}
+
+	/**
+	 * A permitted host whose name does not resolve is answered with a tool error that says so and
+	 * tells the model what to do - not with an exception and not with a browser session (#567).
+	 */
+	public void testPreFlightAnswersAnUnresolvableHostWithAClearError() {
+		BrowserToolsService service = newService(List.of(), List.of(), true);
+		service.startUp();
+		try {
+			String refused = new BrowserTool().browserNavigate("https://nowhere.invalid/", unrestrictedContext());
+
+			assertTrue("names the lookup failure and the host: " + refused,
+				refused.startsWith("Error:") && refused.contains("could not resolve host")
+					&& refused.contains("nowhere.invalid"));
+			assertEquals("no browser session was created for an unresolvable host", 0,
+				service.liveSessionCountForTest());
+		} finally {
+			service.shutDown();
+		}
+	}
+
+	/**
+	 * The ordering does not relax the SSRF check: a host that passes every list is still refused for
+	 * the address it resolves to.
+	 */
+	public void testPreFlightStillRefusesAPermittedHostOnAPrivateAddress() {
+		BrowserToolsService service = newService(List.of(), List.of(), true);
+		service.startUp();
+		try {
+			String refused = new BrowserTool().browserNavigate("http://127.0.0.1:1/", unrestrictedContext());
+
+			assertTrue("the SSRF check still applies after the lists: " + refused,
+				refused.startsWith("Error:") && refused.contains("internal or private"));
+			assertEquals(0, service.liveSessionCountForTest());
 		} finally {
 			service.shutDown();
 		}

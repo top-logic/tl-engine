@@ -160,9 +160,12 @@ public class BrowserTool {
 		} catch (IllegalArgumentException ex) {
 			return "Error: invalid URL: " + ex.getMessage();
 		}
-		String ssrf = UrlSafety.validateUrl(uri);
-		if (ssrf != null) {
-			return "Error: " + ssrf;
+		// The administrator's lists and the role's policy first: they need no network, so a host they
+		// refuse is refused for that reason, without a name lookup, even when it does not resolve
+		// (#567). Only the URL's shape has to be checked before them - they compare a host.
+		String shape = UrlSafety.checkUrlShape(uri);
+		if (shape != null) {
+			return "Error: " + shape;
 		}
 		String host = uri.getHost();
 		if (service.isBlockedDomain(host)) {
@@ -180,6 +183,14 @@ public class BrowserTool {
 		String offPolicy = browsing.refuseAccess(host);
 		if (offPolicy != null) {
 			return "Error: " + BrowsingPolicies.audit(browsing, host, offPolicy);
+		}
+		// The SSRF check, unconditional, for everything the lists permit. This one resolves the host,
+		// so it is only a pre-flight answer in the model's vocabulary: the filtering proxy resolves
+		// again for every connection and connects to exactly the address it checked, which is what
+		// closes DNS rebinding.
+		String ssrf = UrlSafety.validateUrl(uri);
+		if (ssrf != null) {
+			return "Error: " + ssrf;
 		}
 		Object sessionKey = sessionKey(context);
 		if (sessionKey == null) {

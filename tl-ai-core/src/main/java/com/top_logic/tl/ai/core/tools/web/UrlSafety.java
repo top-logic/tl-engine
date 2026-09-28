@@ -33,6 +33,9 @@ import java.util.Locale;
  */
 public final class UrlSafety {
 
+	/** The refusal for a URL that names no host. */
+	private static final String NO_HOST = "the URL has no host.";
+
 	private UrlSafety() {
 		// Static utility.
 	}
@@ -90,7 +93,14 @@ public final class UrlSafety {
 	}
 
 	/**
-	 * Validates a URL for outbound fetching.
+	 * Validates a URL for outbound fetching: {@link #checkUrlShape(URI)} and then
+	 * {@link #resolveHost(String)}.
+	 *
+	 * <p>
+	 * A caller that also applies domain lists or a browsing policy runs {@link #checkUrlShape(URI)}
+	 * first, then its lists, and this method last: the lists need no network, so a host they refuse is
+	 * refused for that reason even when its name does not resolve, and without a lookup (#567).
+	 * </p>
 	 *
 	 * @param uri
 	 *        The URL to validate.
@@ -98,6 +108,31 @@ public final class UrlSafety {
 	 *         rejection.
 	 */
 	public static String validateUrl(URI uri) {
+		String shape = checkUrlShape(uri);
+		if (shape != null) {
+			return shape;
+		}
+		return resolveHost(uri.getHost()).refusal();
+	}
+
+	/**
+	 * The part of {@link #validateUrl(URI)} that needs no network: the scheme is http(s), the URL
+	 * carries no credentials, and it names a host.
+	 *
+	 * <p>
+	 * This is <em>not</em> the SSRF check - that is the resolution, which {@link #validateUrl(URI)}
+	 * adds. It is what has to hold before a host can be compared against a domain list at all:
+	 * {@code URI.getHost()} is {@code null} for an authority it cannot parse as a host (an underscore
+	 * in the name, for example), and a list check handed {@code null} would refuse it for the wrong
+	 * reason or, for a blocklist, not at all.
+	 * </p>
+	 *
+	 * @param uri
+	 *        The URL to check.
+	 * @return {@code null} if the URL has an acceptable shape, otherwise a human-readable reason for
+	 *         rejection.
+	 */
+	public static String checkUrlShape(URI uri) {
 		String scheme = uri.getScheme();
 		if (scheme == null || !(scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https"))) {
 			return "only http and https URLs are supported.";
@@ -105,7 +140,11 @@ public final class UrlSafety {
 		if (uri.getUserInfo() != null) {
 			return "URLs containing credentials are not allowed.";
 		}
-		return resolveHost(uri.getHost()).refusal();
+		String host = normalizeHost(uri.getHost());
+		if (host == null || host.isEmpty()) {
+			return NO_HOST;
+		}
+		return null;
 	}
 
 	/**
@@ -130,17 +169,17 @@ public final class UrlSafety {
 	public static HostResolution resolveHost(String host) {
 		String normalized = normalizeHost(host);
 		if (normalized == null || normalized.isEmpty()) {
-			return new HostResolution(null, "the URL has no host.");
+			return new HostResolution(null, NO_HOST);
 		}
 		String name = stripIpv6Brackets(normalized);
 		InetAddress[] addresses;
 		try {
 			addresses = InetAddress.getAllByName(name);
 		} catch (UnknownHostException ex) {
-			return new HostResolution(null, "could not resolve host: " + host);
+			return new HostResolution(null, unresolvable(host));
 		}
 		if (addresses.length == 0) {
-			return new HostResolution(null, "could not resolve host: " + host);
+			return new HostResolution(null, unresolvable(host));
 		}
 		for (InetAddress address : addresses) {
 			if (isForbidden(address)) {
@@ -149,6 +188,16 @@ public final class UrlSafety {
 			}
 		}
 		return new HostResolution(addresses[0], null);
+	}
+
+	/**
+	 * The refusal for a host whose name did not resolve. It says both possible causes, because from
+	 * here a name that does not exist and a resolver that did not answer look the same, and it says
+	 * what to check first, so the model does not retry a misspelled URL in a loop.
+	 */
+	private static String unresolvable(String host) {
+		return "could not resolve host: " + host + " (the name does not exist, or the server's DNS did "
+			+ "not answer). Check the spelling of the URL before trying it again.";
 	}
 
 	/**

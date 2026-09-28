@@ -31,6 +31,25 @@ public class TestWebFetchTool extends TestCase {
 		assertNotNull(WebFetchTool.validateUrl(URI.create("http://169.254.169.254/")));
 	}
 
+	/**
+	 * A host that does not resolve is answered with a tool error naming it, not an exception (#567).
+	 * The host is under {@code .invalid} (RFC 6761), so the outcome does not depend on the build
+	 * machine's DNS.
+	 */
+	public void testAnUnresolvableHostIsAClearToolError() {
+		String answer = new WebFetchTool().webFetch("https://nowhere.invalid/");
+
+		assertTrue("names the lookup failure and the host: " + answer,
+			answer.startsWith("Error:") && answer.contains("could not resolve host")
+				&& answer.contains("nowhere.invalid"));
+	}
+
+	/** A URL whose host {@code URI} cannot parse is refused as naming no host, before any lookup. */
+	public void testAnUnparseableHostIsRefusedAsNoHost() {
+		assertEquals("the URL has no host.", UrlSafety.checkUrlShape(URI.create("https://under_score.example/")));
+		assertNull(UrlSafety.checkUrlShape(URI.create("https://nowhere.invalid/")));
+	}
+
 	public void testHtmlToMarkdownStripsTagsAndScripts() {
 		String html = "<html><head><title>x</title><style>.a{}</style></head>"
 			+ "<body><nav>menu</nav><h1>Title</h1><p>Hello <b>world</b>.</p>"

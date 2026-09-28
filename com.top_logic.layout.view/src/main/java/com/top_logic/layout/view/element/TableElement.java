@@ -99,6 +99,7 @@ import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
 import com.top_logic.table.impl.PersonalConfigNamedFilterStore;
 import com.top_logic.table.impl.PersonalConfigViewStateStore;
+import com.top_logic.util.TLContext;
 
 /**
  * Declarative {@link UIElement} that renders a model-defined table (the {@code <table>} tag) through
@@ -763,10 +764,16 @@ public class TableElement implements UIElement {
 
 	/**
 	 * Where the filters the user saves under a name are persisted, or {@code null} for a table
-	 * without a filter bar, which offers no way to save one.
+	 * that offers no way to save one.
+	 *
+	 * <p>
+	 * A table without a filter bar offers no saving, and neither does a table in an anonymous
+	 * session: all anonymous visitors share one account, so a filter saved there would belong to
+	 * nobody in particular. Such a session keeps the filter bar and the declared filters.
+	 * </p>
 	 */
 	private NamedFilterStore filterStore() {
-		return filterBar() ? PersonalConfigNamedFilterStore.INSTANCE : null;
+		return filterBar() && !TLContext.isAnonymous() ? PersonalConfigNamedFilterStore.INSTANCE : null;
 	}
 
 	/**

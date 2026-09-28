@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, useListReorder, TLChild, rootClassName, tooltipProps } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, useListReorder, TLChild, rootClassName, tooltipProps, useFieldLabelProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import FontIcon from './FontIcon';
 
@@ -55,6 +55,7 @@ const SEPARATOR = ', ';
  * has the focus.
  */
 const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
+  const labelProps = useFieldLabelProps(controlId, controlId);
   const state = useTLState();
   const sendCommand = useTLCommand();
   const t = useI18N(I18N_KEYS);
@@ -112,7 +113,8 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
   }
 
   return (
-    <div id={controlId} className={rootClassName(state, cls)} {...reorder.containerProps}>
+    <div id={controlId} {...labelProps} role="group" className={rootClassName(state, cls)}
+      {...reorder.containerProps}>
       {elements.map((element, index) => {
         const dragState = reorder.itemState(index);
         let rowCls = 'tlValueList__row';

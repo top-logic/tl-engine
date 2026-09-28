@@ -5,6 +5,8 @@ import {
   rootClassName,
   VALUE_DEBOUNCE_MS,
   tooltipProps,
+  useFieldLabelProps,
+  fieldInputId,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
@@ -37,6 +39,8 @@ const { useCallback } = React;
  * it, so the span matters here only where the server turns the blur behaviour off.
  */
 const TLNumberInput: React.FC<TLCellProps> = ({ controlId, state }) => {
+  const inputId = fieldInputId(controlId);
+  const labelProps = useFieldLabelProps(controlId, inputId);
   const [value, setValue, flushValue] = useTLFieldValue({
     debounceMs: (state.debounceMs as number) ?? VALUE_DEBOUNCE_MS,
     sendOnBlur: state.sendValueOnBlur === true,
@@ -87,6 +91,8 @@ const TLNumberInput: React.FC<TLCellProps> = ({ controlId, state }) => {
         className={rootClassName(state, cls)}
         aria-invalid={hasError || undefined}
         {...tooltipProps(hasError ? errorMessage : undefined)}
+        id={inputId}
+        {...labelProps}
       />
     </span>
   );

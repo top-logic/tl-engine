@@ -1,4 +1,4 @@
-import { React, useTLState, useTLUpload, useTLDataUrl, useI18N, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED } from 'tl-react-bridge';
+import { React, useTLState, useTLUpload, useTLDataUrl, useI18N, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -17,6 +17,8 @@ type LocalStatus = 'idle' | 'uploading';
  * fetched from / sent to the server control via the data and upload endpoints.
  */
 const TLBinaryField: React.FC<TLCellProps> = ({ controlId, state: propState }) => {
+  const inputId = fieldInputId(controlId);
+  const labelProps = useFieldLabelProps(controlId, inputId);
   const liveState = useTLState();
   const state = liveState ?? propState ?? {};
   const upload = useTLUpload();
@@ -178,6 +180,8 @@ const TLBinaryField: React.FC<TLCellProps> = ({ controlId, state: propState }) =
         disabled={isDisabled}
         aria-label={buttonLabel}
         {...tooltipProps(buttonLabel)}
+        id={inputId}
+        {...labelProps}
       >
         <svg className="tlFileUpload__icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
           <path d="M8 10V1m0 0L4.5 4.5M8 1l3.5 3.5M2 13h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />

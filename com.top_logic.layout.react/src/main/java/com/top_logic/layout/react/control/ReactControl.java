@@ -107,6 +107,15 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 */
 	private Set<String> _borrowedState;
 
+	/**
+	 * The {@link SSEUpdateQueue} of the window this control is built for, or {@code null} once the
+	 * control is {@link #cleanupTree() disposed}.
+	 *
+	 * <p>
+	 * The control is {@link SSEUpdateQueue#registerControl(ReactCommandTarget) registered} with this
+	 * queue exactly while it is {@link #isAttached() attached}.
+	 * </p>
+	 */
 	private SSEUpdateQueue _sseQueue;
 
 	/**
@@ -202,7 +211,6 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 		_reactState = new HashMap<>();
 		_id = context.allocateId();
 		_sseQueue = context.getSSEQueue();
-		_sseQueue.registerControl(this);
 	}
 
 	/**
@@ -277,7 +285,8 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	}
 
 	/**
-	 * Whether this control is attached to an SSE queue (i.e., has been rendered).
+	 * Whether this control still holds the {@link SSEUpdateQueue} of its window, i.e. has not been
+	 * {@link #cleanupTree() disposed}.
 	 *
 	 * <p>
 	 * Subclasses use this to decide whether state changes should produce a patch event or just
@@ -1120,8 +1129,9 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 * Writes this control as a child descriptor to JSON.
 	 *
 	 * <p>
-	 * Since the control is fully initialized at construction time (ID assigned, SSE registered),
-	 * this method simply serializes the current state. Composite controls that create children
+	 * Serializing the control {@link #attach() attaches} it, which
+	 * makes it addressable by its ID before the client receives it. Apart from that, this method
+	 * simply serializes the current state. Composite controls that create children
 	 * lazily do so in an {@link #onBeforeWrite()} hook (e.g.
 	 * {@link com.top_logic.layout.react.control.layout.ReactDeckPaneControl} creates its active
 	 * child).
@@ -1181,6 +1191,18 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	}
 
 	/**
+	 * Whether this control has been disposed by {@link #cleanupTree()}.
+	 *
+	 * <p>
+	 * A disposed control is detached for good: it is never attached or registered with the
+	 * {@link SSEUpdateQueue} of its window again.
+	 * </p>
+	 */
+	public final boolean isDisposed() {
+		return _disposed;
+	}
+
+	/**
 	 * Attaches this control because it is about to be rendered.
 	 *
 	 * <p>
@@ -1215,6 +1237,14 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 * {@link #addAttachListener(Runnable) attach listeners}.
 	 *
 	 * <p>
+	 * An attached control is {@link SSEUpdateQueue#registerControl(ReactCommandTarget) registered}
+	 * with the queue of its window, so that the client can address it by its ID. Registration happens
+	 * first, before hooks, listeners and children run, so that everything set up while attaching can
+	 * already be reached. The client only knows the IDs of controls it was sent, and serializing a
+	 * control attaches it, so every control the client can address is registered.
+	 * </p>
+	 *
+	 * <p>
 	 * Idempotent: if already attached, this call is a no-op. Called automatically when the control is
 	 * rendered (see {@link #attachOnRender()}); an explicit call is needed only to attach a control
 	 * that becomes displayed without being rendered again.
@@ -1225,6 +1255,10 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 			return;
 		}
 		_attached = true;
+		SSEUpdateQueue queue = _sseQueue;
+		if (queue != null) {
+			queue.registerControl(this);
+		}
 		onAttach();
 		for (Runnable l : _attachListeners) {
 			l.run();
@@ -1235,6 +1269,13 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	/**
 	 * Marks this control as detached (still in memory but not displayed) and fires
 	 * {@link #addDetachListener(Runnable) detach listeners}.
+	 *
+	 * <p>
+	 * A detached control is {@link SSEUpdateQueue#unregisterControl(ReactCommandTarget) unregistered}
+	 * from the queue of its window, so the queue holds no reference to a subtree that left the display.
+	 * A request the client sent before it unmounted the control no longer reaches it. Unregistering
+	 * happens last, after children, hooks and listeners, symmetric to {@link #attach()}.
+	 * </p>
 	 *
 	 * <p>
 	 * Idempotent: if not attached, this call is a no-op.
@@ -1249,6 +1290,10 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 		onDetach();
 		for (Runnable l : _detachListeners) {
 			l.run();
+		}
+		SSEUpdateQueue queue = _sseQueue;
+		if (queue != null) {
+			queue.unregisterControl(this);
 		}
 	}
 
@@ -1416,8 +1461,9 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	}
 
 	/**
-	 * Disposes this control and all its children: detaches the tree, runs cleanup actions, and
-	 * unregisters from SSE. Called during cleanup and when dynamically removing a child.
+	 * Disposes this control and all its children: detaches the tree (which unregisters it from the
+	 * SSE queue), runs cleanup actions, and releases the queue so that it is never registered again.
+	 * Called during cleanup and when dynamically removing a child.
 	 *
 	 * <p>
 	 * A disposed control tolerates trailing state updates: {@link #putState(String, Object)} and
@@ -1453,31 +1499,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 			_cleanupActions.forEach(Runnable::run);
 			_cleanupActions = null;
 		}
-		SSEUpdateQueue queue = _sseQueue;
-		if (queue != null) {
-			queue.unregisterControl(this);
-			_sseQueue = null;
-		}
-	}
-
-	/**
-	 * Registers a dynamically created child {@link ReactControl} with this control's SSE queue so
-	 * that it can receive state updates and dispatch commands.
-	 *
-	 * <p>
-	 * Since the child already has its context and ID from construction, this method only ensures
-	 * the child is registered with the parent's SSE queue if it is not already.
-	 * </p>
-	 *
-	 * @param child
-	 *        The child control to register.
-	 */
-	protected void registerChildControl(ReactControl child) {
-		SSEUpdateQueue queue = _sseQueue;
-		if (queue != null && child._sseQueue == null) {
-			child._sseQueue = queue;
-			queue.registerControl(child);
-		}
+		_sseQueue = null;
 	}
 
 

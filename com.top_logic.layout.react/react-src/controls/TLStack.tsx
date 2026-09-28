@@ -1,4 +1,4 @@
-import { React, useTLState, useFillHost, FillProvider, rootClassName } from 'tl-react-bridge';
+import { React, useTLState, useFillHost, FillProvider, rootClassName, useFieldLabelProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { renderItems } from './items';
 
@@ -20,9 +20,15 @@ import { renderItems } from './items';
  *
  * Takes part in the fill contract as a container: a stack hosting a filling child fills its own
  * container, so that the child's height resolves against a definite one.
+ *
+ * A stack in a form field's input slot - an input together with an adornment button, say - is
+ * the field's input as a whole: a group named by the field's label (see FieldLabelContext), whose
+ * label click focuses the first control inside taking a value.
  */
 const TLStack: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
+  const labelProps = useFieldLabelProps(controlId, controlId);
+  const role = labelProps['aria-labelledby'] === undefined ? undefined : 'group';
 
   const direction = (state.direction as string) ?? 'column';
   const gap = (state.gap as string) ?? 'default';
@@ -54,7 +60,7 @@ const TLStack: React.FC<TLCellProps> = ({ controlId }) => {
 
   return (
     <FillProvider host={fillHost}>
-      <div id={controlId} className={className} style={style}>
+      <div id={controlId} role={role} {...labelProps} className={className} style={style}>
         {renderItems(children, itemClass)}
       </div>
     </FillProvider>

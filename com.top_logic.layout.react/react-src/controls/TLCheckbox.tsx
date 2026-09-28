@@ -1,4 +1,4 @@
-import { React, useTLFieldValue, rootClassName } from 'tl-react-bridge';
+import { React, useTLFieldValue, rootClassName, useFieldLabelProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback, useRef, useEffect } = React;
@@ -14,6 +14,7 @@ const DISPLAY_SWITCH = 'switch';
  * click cycles through checked, unchecked and unset.
  */
 const TLCheckbox: React.FC<TLCellProps> = ({ controlId, state }) => {
+  const labelProps = useFieldLabelProps(controlId, controlId);
   const [value, setValue] = useTLFieldValue();
   const triState = state.triState === true;
   const asSwitch = state.display === DISPLAY_SWITCH;
@@ -43,6 +44,7 @@ const TLCheckbox: React.FC<TLCellProps> = ({ controlId, state }) => {
       <input
         type="checkbox"
         id={controlId}
+        {...labelProps}
         ref={boxRef}
         role={asSwitch ? 'switch' : undefined}
         checked={value === true}
@@ -70,6 +72,7 @@ const TLCheckbox: React.FC<TLCellProps> = ({ controlId, state }) => {
     <input
       type="checkbox"
       id={controlId}
+      {...labelProps}
       ref={boxRef}
       role={asSwitch ? 'switch' : undefined}
       checked={value === true}

@@ -164,7 +164,6 @@ public class ReactValueListControl extends ReactFormFieldControl {
 		ReactControl control = _elementProvider.createField(getReactContext(), _elementSpec, elementModel);
 		_elementModels.add(elementModel);
 		_elementControls.add(control);
-		registerChildControl(control);
 		if (isAttached()) {
 			control.attach();
 		}

@@ -1,9 +1,12 @@
-import { React, useTLState, TLChild, rootClassName, useI18N, tooltipProps, TOOLTIP_ATTR } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import {
+  React, useTLState, TLChild, rootClassName, useI18N, tooltipProps, TOOLTIP_ATTR, FieldLabelContext, fieldLabel,
+  focusFieldInput,
+} from 'tl-react-bridge';
+import type { TLCellProps, ChildDescriptor } from 'tl-react-bridge';
 import FontIcon from './FontIcon';
 import { FormLayoutContext } from './FormLayoutContext';
 
-const { useContext, useState, useCallback } = React;
+const { useContext, useState, useCallback, useMemo } = React;
 
 const I18N_KEYS = {
   'js.formField.help': 'Help',
@@ -14,11 +17,15 @@ const I18N_KEYS = {
  * help icon, error message, warning messages, help text, and dirty
  * indicator around any field input control.
  *
- * A hidden label ("hidden" label position, either declared by the field or inherited from the
- * form layout) is kept off the screen but still names the input: the input area is then a
- * `label` element holding the label text in a visually hidden span, so every native input
- * control inside it takes its accessible name from HTML's implicit label association, and a
- * click anywhere in the area focuses the input.
+ * The label and the input control refer to each other by id (see FieldLabelContext): the control
+ * in the input slot reports the id of its focusable element and names that element by the label
+ * text through `aria-labelledby`. A visible label text is a `label` element referring to that
+ * element, so a click on it focuses the input (or toggles a checkbox); an input HTML does not
+ * activate from a label - a group of options, an editable area - is focused by the label's click
+ * handler instead. A hidden label ("hidden" label
+ * position, either declared by the field or inherited from the form layout) is kept off the screen
+ * in a visually hidden element that still names the input. The input area itself is a plain
+ * element, so a click into the input reaches exactly the element under the pointer.
  *
  * State:
  * - label: string
@@ -54,12 +61,32 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
   const hasTooltip = state.hasTooltip === true;
   const tooltipText = state.tooltipText as string | null;
   const field = state.field;
+  const fieldControlId = (field as ChildDescriptor | undefined)?.controlId;
   const readOnly = ctx.readOnly;
 
   const [helpVisible, setHelpVisible] = useState(false);
   const toggleHelp = useCallback(() => setHelpVisible(v => !v), []);
 
   const labelHidden = labelPos === 'hidden';
+
+  // The id of the input control's focusable element, as the control reports it.
+  const [inputId, setInputId] = useState<string | null>(null);
+
+  // A field without label text has nothing to name its input with.
+  const hasLabel = label !== '';
+  const association = useMemo(
+    () => (fieldControlId === undefined || !hasLabel ? null : fieldLabel(controlId, fieldControlId, setInputId)),
+    [controlId, fieldControlId, hasLabel]
+  );
+  const handleLabelClick = useCallback(
+    (event: React.MouseEvent) => {
+      if (inputId !== null) {
+        focusFieldInput(event, inputId);
+      }
+    },
+    [inputId]
+  );
+
   const hasError = error != null;
   const hasWarnings = warnings != null && warnings.length > 0;
 
@@ -90,7 +117,8 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
     <div id={controlId} className={rootClassName(state, className)} style={visible ? undefined : { display: 'none' }}>
       {!labelHidden && (
         <div className="tlFormField__label">
-          <span className="tlFormField__labelText" {...labelTooltip}>{label}</span>
+          <label id={association?.labelId} htmlFor={inputId ?? undefined} className="tlFormField__labelText"
+            onClick={handleLabelClick} {...labelTooltip}>{label}</label>
           {required && !readOnly && <span className="tlFormField__required">*</span>}
           {dirty && <span className="tlFormField__dirtyDot" />}
           {helpText && !readOnly && (
@@ -105,16 +133,14 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
           )}
         </div>
       )}
-      {labelHidden ? (
-        <label className="tlFormField__input">
-          {label !== '' && <span className="tlVisuallyHidden">{label}</span>}
-          <TLChild control={field} />
-        </label>
-      ) : (
-        <div className="tlFormField__input">
-          <TLChild control={field} />
-        </div>
+      {labelHidden && association !== null && (
+        <span id={association?.labelId} className="tlVisuallyHidden">{label}</span>
       )}
+      <div className="tlFormField__input">
+        <FieldLabelContext.Provider value={association}>
+          <TLChild control={field} />
+        </FieldLabelContext.Provider>
+      </div>
       {!readOnly && hasError && (
         <div className="tlFormField__error" role="alert">
           <FontIcon image={errorIcon} className="tlFormField__errorIcon" />

@@ -66,6 +66,18 @@ public class TestNestedDirtyChannels extends TestCase {
 	}
 
 	/**
+	 * Tests that every channel leads to the channel of the outermost scope, which is its own root
+	 * when nothing encloses it.
+	 */
+	public void testRootIsTheOutermostChannel() {
+		DirtyChannel form = new DirtyChannel(_tab);
+
+		assertSame(_item, form.root());
+		assertSame(_item, _tab.root());
+		assertSame("Nothing encloses the item.", _item, _item.root());
+	}
+
+	/**
 	 * Tests that a form disposed with the tab it sat in is no longer held against the item.
 	 */
 	public void testADisposedFormIsDroppedFromBothScopes() {

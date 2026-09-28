@@ -2364,6 +2364,39 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		assertEquals("FOOBAR", eval("'FooBar'.toUpperCase()"));
 	}
 
+	public void testTrim() throws ParseException {
+		assertEquals("Foo  Bar", eval("'  Foo  Bar  '.trim()"));
+		assertEquals("Foo  Bar", eval("trim('  Foo  Bar  ')"));
+		assertEquals("Foo\tBar", eval("s -> $s.trim()", " \t\r\nFoo\tBar\n\t "));
+		assertEquals("Foo", eval("s -> $s.trim()", " 　Foo  "));
+		assertEquals("", eval("' \t '.trim()"));
+		assertEquals("", eval("''.trim()"));
+		assertNull(eval("null.trim()"));
+		assertNull(eval("trim(null)"));
+		assertNull(eval("list().trim()"));
+		assertEquals("42", eval("42.trim()"));
+	}
+
+	public void testTrimStart() throws ParseException {
+		assertEquals("Foo  Bar  ", eval("'  Foo  Bar  '.trimStart()"));
+		assertEquals("Foo  Bar  ", eval("trimStart('  Foo  Bar  ')"));
+		assertEquals("Foo\tBar\n\t ", eval("s -> $s.trimStart()", " \t\r\nFoo\tBar\n\t "));
+		assertEquals("Foo ", eval("s -> $s.trimStart()", " 　Foo "));
+		assertEquals("", eval("' \t '.trimStart()"));
+		assertNull(eval("null.trimStart()"));
+		assertNull(eval("trimStart(null)"));
+	}
+
+	public void testTrimEnd() throws ParseException {
+		assertEquals("  Foo  Bar", eval("'  Foo  Bar  '.trimEnd()"));
+		assertEquals("  Foo  Bar", eval("trimEnd('  Foo  Bar  ')"));
+		assertEquals(" \t\r\nFoo\tBar", eval("s -> $s.trimEnd()", " \t\r\nFoo\tBar\n\t "));
+		assertEquals(" Foo", eval("s -> $s.trimEnd()", " Foo  "));
+		assertEquals("", eval("' \t '.trimEnd()"));
+		assertNull(eval("null.trimEnd()"));
+		assertNull(eval("trimEnd(null)"));
+	}
+
 	public void testConcat() throws ParseException {
 		assertEquals(list(1.0, 2.0, "Hello", "world", "!"), eval("concat(list(1, 2), list('Hello', 'world'), '!')"));
 	}

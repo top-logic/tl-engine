@@ -1,0 +1,36 @@
+<h2>Syntax</h2>
+<pre>	<code>$string.trim()
+
+trim($string)</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Entfernt allen Leerraum (Leerzeichen, Tabulatoren, Zeilenumbrüche und andere Unicode-Leerraumzeichen) am Anfang und am Ende der Zeichenkette <code class="hljs inlineCode">string</code>. Leerraum innerhalb der Zeichenkette bleibt erhalten.</p>
+<p>Ist <code class="hljs inlineCode">string</code> <code class="hljs inlineCode">null</code>, so ist das Ergebnis <code class="hljs inlineCode">null</code>. Andere Werte werden zunächst in eine Zeichenkette umgewandelt.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>string</td>
+   <td>Zeichenkette</td>
+   <td>Zeichenkette, aus der der Leerraum entfernt werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Zeichenkette</p>
+<p><code class="hljs inlineCode">string</code> ohne führenden und abschließenden Leerraum, bzw. <code class="hljs inlineCode">null</code>, wenn <code class="hljs inlineCode">string</code> <code class="hljs inlineCode">null</code> ist.</p>
+<h2>Beispiele</h2>
+<pre>	<code>trim("  Hello  world!  ")</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> "Hello  world!"</p>

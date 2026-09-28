@@ -82,6 +82,7 @@ import com.top_logic.table.filter.FilterEditors;
 import com.top_logic.table.filter.FilterField;
 import com.top_logic.table.filter.TextFilterState;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
 
 /**
@@ -2032,16 +2033,16 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * <p>
 	 * The arguments name client-side identities only, so both ends of the gesture are resolved by the
 	 * control that owns them (see {@link #resolveDrop(DropArguments)}). A drop the resolution or the
-	 * {@link DropTarget#check(DropEvent) drop target's check} refuses is answered with the reason and
-	 * not applied - the client-side acceptance check that precedes it narrows the gesture for the
-	 * user, it does not decide it.
+	 * {@link DropTarget#check(DropEvent) drop target's check} refuses is answered with a warning
+	 * naming the reason and not applied - the client-side acceptance check that precedes it narrows
+	 * the gesture for the user, it does not decide it.
 	 * </p>
 	 */
 	@ReactCommandHandler(CMD_DROP)
 	HandlerResult handleDrop(DropArguments args) {
 		ResolvedDrop resolved = resolveDrop(args);
 		if (resolved.refusal() != null) {
-			return HandlerResult.error(resolved.refusal());
+			return dropRefused(resolved.refusal());
 		}
 		return applyDrop(resolved.event());
 	}
@@ -2159,10 +2160,23 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	private HandlerResult applyDrop(DropEvent event) {
 		DropVerdict verdict = _dropTarget.check(event);
 		if (!verdict.isAccepted()) {
-			return HandlerResult.error(verdict.reason());
+			return dropRefused(verdict.reason());
 		}
 		_dropTarget.onDrop(event);
 		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * The answer to a drop that is refused for the given reason.
+	 *
+	 * <p>
+	 * A refused drop is no malfunction but a refusal like that of a command its executability rule
+	 * forbids: the result is the {@link HandlerResult#notExecutable(ExecutableState) warning} of
+	 * such a command, naming the reason.
+	 * </p>
+	 */
+	private static HandlerResult dropRefused(ResKey reason) {
+		return HandlerResult.notExecutable(ExecutableState.createDisabledState(reason));
 	}
 
 	/**
@@ -2177,11 +2191,11 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	HandlerResult handleDropObjects(DropObjectsArguments args) {
 		DropTarget dropTarget = _dropTarget;
 		if (dropTarget == null) {
-			return HandlerResult.error(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
+			return dropRefused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
 		}
 		DropPosition position = DropPosition.fromWire(args.getPosition());
 		if (position == null) {
-			return HandlerResult.error(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
+			return dropRefused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
 		}
 		ActionContext actionContext = newActionContext();
 
@@ -2209,7 +2223,9 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			}
 		}
 		// Drift contract: a recorded identity that no longer designates a present object is an
-		// explicit failure (replay reports success:false), never a partially applied drop.
+		// explicit failure (replay reports success:false), never a partially applied drop. Unlike a
+		// refusal, a drift means the replayed script no longer matches the application, hence an
+		// error rather than a warning.
 		if (!unresolved.isEmpty() || objects.isEmpty()) {
 			return HandlerResult.error(I18NConstants.ERROR_DROP_UNRESOLVED__OBJECTS.fill(unresolved));
 		}

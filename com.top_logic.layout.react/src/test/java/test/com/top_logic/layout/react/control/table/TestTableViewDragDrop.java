@@ -17,6 +17,7 @@ import junit.framework.TestCase;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.react.DefaultReactContext;
@@ -189,6 +190,15 @@ public class TestTableViewDragDrop extends TestCase {
 		return target.executeClientCommand(DROP, arguments);
 	}
 
+	/**
+	 * Asserts that the drop was refused, and reported as the warning of a refusal rather than as an
+	 * error.
+	 */
+	private static void assertRefused(String message, HandlerResult result) {
+		assertFalse(message, result.isSuccess());
+		assertEquals(message + " A refused drop is a warning.", ErrorSeverity.WARNING, result.getErrorSeverity());
+	}
+
 	/** Asserts that the drop was applied, naming why it was not if it was refused. */
 	private static void assertApplied(String message, HandlerResult result) {
 		StringBuilder cause = new StringBuilder();
@@ -294,7 +304,7 @@ public class TestTableViewDragDrop extends TestCase {
 			DropArguments.TARGET_KEY, rowKey(0),
 			DropArguments.POSITION, DropPosition.ONTO.wireName()));
 
-		assertFalse("A drop of an unaccepted type must be refused.", result.isSuccess());
+		assertRefused("A drop of an unaccepted type must be refused.", result);
 		assertNull("The drop target must not be asked to apply it.", _announced._event);
 	}
 
@@ -307,7 +317,7 @@ public class TestTableViewDragDrop extends TestCase {
 			DropArguments.TARGET_KEY, rowKey(0),
 			DropArguments.POSITION, DropPosition.ONTO.wireName()));
 
-		assertFalse("A drop of rows that resolve to nothing must be refused.", result.isSuccess());
+		assertRefused("A drop of rows that resolve to nothing must be refused.", result);
 		assertNull("The drop target must not be asked to apply it.", _announced._event);
 	}
 
@@ -320,7 +330,7 @@ public class TestTableViewDragDrop extends TestCase {
 			DropArguments.TARGET_KEY, rowKey(99),
 			DropArguments.POSITION, DropPosition.ONTO.wireName()));
 
-		assertFalse("A drop on a row that resolves to nothing must be refused.", result.isSuccess());
+		assertRefused("A drop on a row that resolves to nothing must be refused.", result);
 		assertNull("The drop target must not be asked to apply it.", _announced._event);
 	}
 
@@ -334,7 +344,7 @@ public class TestTableViewDragDrop extends TestCase {
 			DropArguments.SELECTION, Boolean.FALSE,
 			DropArguments.POSITION, DropPosition.NONE.wireName()));
 
-		assertFalse("A table accepting no drop must refuse one.", result.isSuccess());
+		assertRefused("A table accepting no drop must refuse one.", result);
 	}
 
 	/** A drop whose source control is not a drag source at all is refused. */
@@ -347,7 +357,7 @@ public class TestTableViewDragDrop extends TestCase {
 			DropArguments.SELECTION, Boolean.FALSE,
 			DropArguments.POSITION, DropPosition.NONE.wireName()));
 
-		assertFalse("A drop from a table whose rows are not draggable must be refused.", result.isSuccess());
+		assertRefused("A drop from a table whose rows are not draggable must be refused.", result);
 		assertNull("The drop target must not be asked to apply it.", _announced._event);
 	}
 
@@ -361,8 +371,9 @@ public class TestTableViewDragDrop extends TestCase {
 
 		HandlerResult result = drop(_target, dropOn(rowKey(1), rowKey(0)));
 
-		assertFalse("A drop the check refuses must be refused.", result.isSuccess());
+		assertRefused("A drop the check refuses must be refused.", result);
 		assertEquals("The refusal names the check's reason.", List.of(REFUSAL), result.getEncodedErrors());
+		assertEquals("The reason is the message of the warning.", REFUSAL, result.getErrorMessage());
 		assertNotNull("The check was asked.", _announced._checked);
 		assertEquals(List.of(PEOPLE.get(1)), _announced._checked.objects());
 		assertNull("The drop target must not be asked to apply it.", _announced._event);
@@ -430,14 +441,14 @@ public class TestTableViewDragDrop extends TestCase {
 		assertEquals(Boolean.FALSE, rowState(_source, 1).get(ROW_DRAGGABLE));
 
 		HandlerResult result = drop(_target, dropOn(rowKey(1), rowKey(0)));
-		assertFalse("A drag of a refused row must be refused.", result.isSuccess());
+		assertRefused("A drag of a refused row must be refused.", result);
 		assertNull("The drop target must not be asked to apply it.", _announced._event);
 
 		_source.selectRow(PEOPLE.get(1));
 		Map<String, Object> ofSelection = new HashMap<>(dropOn(rowKey(0), rowKey(2)));
 		ofSelection.put(DropArguments.SELECTION, Boolean.TRUE);
-		assertFalse("A selection including a refused row is refused as a whole.",
-			drop(_target, ofSelection).isSuccess());
+		assertRefused("A selection including a refused row is refused as a whole.",
+			drop(_target, ofSelection));
 		assertNull(_announced._event);
 
 		assertApplied("A draggable row is still dropped.", drop(_target, dropOn(rowKey(2), rowKey(0))));

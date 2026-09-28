@@ -7,6 +7,7 @@ import {
   readBootstrap,
   type ChatBootstrap,
 } from './chat-store'
+import { bundle } from './i18n'
 import { unseenBadge } from './progress-model'
 import type { ChatMessage } from './types'
 
@@ -2160,6 +2161,188 @@ describe('a window opened while the run is in flight', () => {
     const answers = store.getState().messages.filter((m) => m.type === 'assistant_text')
     expect(answers).toHaveLength(1)
     expect(answers[0]).toMatchObject({ text: 'Erledigt.' })
+
+    release()
+  })
+})
+
+/**
+ * A page whose window the server no longer knows (issue #574).
+ *
+ * A login or logout in another tab of the same browser, or an application restart, replaces the
+ * session behind an open page. Its chat calls then reach a session that never rendered the window,
+ * and the server answers `409 stale_window`. The chat used to take that for "the agent is busy" on
+ * a send - dropping what the user typed - and to re-open a refused stream once a second for as long
+ * as the page stayed open. Loading the page again is what renders the window in the session the
+ * browser holds now; these pin that the chat does that once, and keeps the user's text across it.
+ */
+describe('a window the server no longer knows', () => {
+  let storage: Map<string, string>
+  let reloads: number
+
+  /** The server's answer for a window it cannot resolve (`ChatServlet#sendStaleWindow`). */
+  function staleAnswer() {
+    const answer = {
+      ok: false,
+      status: 409,
+      json: async () => ({ status: 'error', error: 'stale_window' }),
+      clone: () => answer,
+    }
+    return answer
+  }
+
+  /** Answers the calls whose URL contains `path` as a stale window, everything else as before. */
+  function staleOn(path: string): void {
+    const globals = globalThis as unknown as Record<string, unknown>
+    const before = globals.fetch as (url: string, init?: unknown) => Promise<unknown>
+    globals.fetch = vi.fn(async (url: string, init?: unknown) => {
+      if (url.includes(path)) {
+        requested.push(url)
+        return staleAnswer()
+      }
+      return before(url, init)
+    })
+  }
+
+  beforeEach(() => {
+    storage = new Map()
+    reloads = 0
+    const win = (globalThis as unknown as { window: Record<string, unknown> }).window
+    win.sessionStorage = {
+      getItem: (key: string) => storage.get(key) ?? null,
+      setItem: (key: string, value: string) => storage.set(key, value),
+      removeItem: (key: string) => storage.delete(key),
+    }
+    win.location = {
+      pathname: '/app/view/chat',
+      reload: () => {
+        reloads++
+      },
+    }
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('reloads the page on a refused send and gives the reloaded composer the text back', async () => {
+    staleOn('/chat/send')
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    const staleDrafts: string[] = []
+    const staleComposer = {
+      insertReference: () => undefined,
+      setDraft: (text: string) => staleDrafts.push(text),
+      focus: () => undefined,
+    }
+    store.actions.bindComposer(staleComposer)
+    store.actions.dispatch({ type: 'ADD_USER', id: 'u0', text: 'erste Frage' })
+
+    const sent = await store.actions.send('Hallo nach dem Kontowechsel', [])
+    // The refusing page renders once more before the reload takes it away, and binds its composer
+    // again as it does on every render: the text is for the reloaded page, not for this one.
+    store.actions.bindComposer(null)
+    store.actions.bindComposer(staleComposer)
+    expect(staleDrafts).toEqual([])
+
+    expect(sent).toBe(false)
+    expect(reloads).toBe(1)
+    // Not the "agent is still working" hint a 409 used to be read as: nothing is running.
+    expect(store.getState().notice).toBe('')
+    expect(store.getState().busy).toBe(false)
+    expect(store.getState().messages).toHaveLength(1)
+
+    await settle()
+    release()
+
+    // The reloaded page: a fresh store for the same chat, and its composer mounts.
+    const reloaded = chatStore('alpha', BOOT)
+    const releaseReloaded = reloaded.subscribe(() => undefined)
+    const drafts: string[] = []
+    reloaded.actions.bindComposer({
+      insertReference: () => undefined,
+      setDraft: (text) => drafts.push(text),
+      focus: () => undefined,
+    })
+    expect(drafts).toEqual(['Hallo nach dem Kontowechsel'])
+
+    // Once: a composer that mounts again later does not get it a second time.
+    reloaded.actions.bindComposer({
+      insertReference: () => undefined,
+      setDraft: (text) => drafts.push(text),
+      focus: () => undefined,
+    })
+    expect(drafts).toHaveLength(1)
+
+    await settle()
+    releaseReloaded()
+  })
+
+  it('keeps the text of the send that creates a chat, too', async () => {
+    staleOn('/chat/sessions')
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+
+    const sent = await store.actions.send('Neue Frage', [])
+
+    expect(sent).toBe(false)
+    expect(reloads).toBe(1)
+    expect(sentTexts).toEqual([])
+    expect([...storage.values()]).toContain('Neue Frage')
+
+    await settle()
+    release()
+  })
+
+  it('does not reload again right after a reload, and says why instead', async () => {
+    storage.set('tlReactStaleUiReloadTime', String(Date.now() - 2_000))
+    staleOn('/chat/send')
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.actions.dispatch({ type: 'ADD_USER', id: 'u0', text: 'erste Frage' })
+
+    const sent = await store.actions.send('noch einmal', [])
+
+    expect(sent).toBe(false)
+    expect(reloads).toBe(0)
+    expect(store.getState().notice).toBe(bundle('de').staleWindow)
+
+    await settle()
+    release()
+  })
+
+  it('stops re-opening a stream the server refuses for an unknown window', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    expect(streams).toHaveLength(1)
+
+    staleOn('/chat/updates')
+    streams[0].readyState = FakeEventSource.CLOSED
+    streams[0].onerror?.()
+    await new Promise((resolve) => setTimeout(resolve, 1_200))
+
+    expect(streams).toHaveLength(1)
+    expect(reloads).toBe(1)
+
+    release()
+  })
+
+  it('re-opens a stream that closed for any other reason, as before', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+
+    streams[0].readyState = FakeEventSource.CLOSED
+    streams[0].onerror?.()
+    await new Promise((resolve) => setTimeout(resolve, 1_200))
+
+    expect(streams).toHaveLength(2)
+    expect(reloads).toBe(0)
 
     release()
   })

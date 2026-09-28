@@ -1,5 +1,6 @@
 import { apiBase } from './api'
 import type { ChatAddress } from './api'
+import { chatFetch } from './stale-window'
 
 /**
  * What the user decided about a chat's layout - not what the page currently shows.
@@ -115,7 +116,7 @@ export async function savePreferences(
   // freeze the configured default out for good.
   if (prefs.railOpen !== null) body.railOpen = prefs.railOpen
   try {
-    await fetch(path(at, layoutKey), {
+    await chatFetch(path(at, layoutKey), {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',

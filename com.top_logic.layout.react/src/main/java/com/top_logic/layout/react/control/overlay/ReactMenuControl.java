@@ -11,11 +11,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * Popup menu triggered by an anchor element.
@@ -266,7 +266,7 @@ public class ReactMenuControl extends ReactControl {
 	HandlerResult handleSelectItem(MenuSelectItemArguments args) {
 		String itemId = args.getItemId();
 		if (isDisabled(itemId)) {
-			return HandlerResult.error(I18NConstants.ERROR_COMMAND_NOT_EXECUTABLE);
+			return HandlerResult.notExecutable(ExecutableState.NOT_EXEC_DISABLED);
 		}
 		close();
 		_selectHandler.accept(itemId);

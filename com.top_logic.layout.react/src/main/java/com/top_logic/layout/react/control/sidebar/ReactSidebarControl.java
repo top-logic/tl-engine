@@ -29,6 +29,7 @@ import com.top_logic.layout.react.routing.RouteSegment;
 import com.top_logic.layout.react.reveal.ChildRevealer;
 import com.top_logic.layout.react.routing.RoutingParticipant;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.execution.ExecutableState;
 
 
 /**
@@ -602,8 +603,11 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 		String itemId = args.getItemId();
 		CommandItem cmdItem = findCommandItem(itemId, _items);
 		if (cmdItem != null) {
-			if (cmdItem.isHidden() || cmdItem.isDisabled()) {
-				return HandlerResult.error(I18NConstants.ERROR_COMMAND_NOT_EXECUTABLE);
+			if (cmdItem.isHidden()) {
+				return HandlerResult.notExecutable(ExecutableState.NOT_EXEC_HIDDEN);
+			}
+			if (cmdItem.isDisabled()) {
+				return HandlerResult.notExecutable(ExecutableState.NOT_EXEC_DISABLED);
 			}
 			HandlerResult result = cmdItem.getAction().execute(context);
 			closeDrawerIfOpen();

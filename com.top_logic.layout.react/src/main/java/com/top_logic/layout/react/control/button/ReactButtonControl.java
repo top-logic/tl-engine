@@ -8,12 +8,12 @@ package com.top_logic.layout.react.control.button;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.layout.basic.ThemeImage;
-import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * A {@link ReactControl} that renders a button via the {@code TLButton} React component.
@@ -355,11 +355,19 @@ public class ReactButtonControl extends ReactControl {
 	 */
 	@ReactCommandHandler(CMD_CLICK)
 	HandlerResult handleClick(ReactContext context) {
-		if (isHidden() || Boolean.TRUE.equals(getState(DISABLED))) {
-			return HandlerResult.error(I18NConstants.ERROR_COMMAND_NOT_EXECUTABLE);
+		if (isHidden()) {
+			return HandlerResult.notExecutable(ExecutableState.NOT_EXEC_HIDDEN);
 		}
-		if (_model != null && (!_model.isVisible() || !_model.isExecutable())) {
-			return HandlerResult.error(I18NConstants.ERROR_COMMAND_NOT_EXECUTABLE);
+		if (Boolean.TRUE.equals(getState(DISABLED))) {
+			return HandlerResult.notExecutable(ExecutableState.NOT_EXEC_DISABLED);
+		}
+		if (_model != null) {
+			if (!_model.isVisible()) {
+				return HandlerResult.notExecutable(ExecutableState.NOT_EXEC_HIDDEN);
+			}
+			if (!_model.isExecutable()) {
+				return HandlerResult.notExecutable(ExecutableState.NOT_EXEC_DISABLED);
+			}
 		}
 		return _action.execute(context);
 	}

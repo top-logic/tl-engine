@@ -66,11 +66,6 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 EMBEDDED_COLUMN_LABEL__PREFIX_COLUMN;
 
 	/**
-	 * @en The form command is currently not executable.
-	 */
-	public static ResKey ERROR_FORM_COMMAND_NOT_EXECUTABLE;
-
-	/**
 	 * @en Cannot save view "{0}": no writable IDE file found.
 	 */
 	public static ResKey1 ERROR_SAVE_VIEW_NO_IDE_FILE__PATH;

@@ -924,8 +924,15 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 */
 	@ReactCommandHandler("formEdit")
 	HandlerResult handleEdit() {
-		if (_currentObject == null || _editMode || !editPermission().isExecutable()) {
+		if (_currentObject == null) {
+			return HandlerResult.notExecutable(ExecutableState.NO_EXEC_NO_MODEL);
+		}
+		if (_editMode) {
 			return notExecutable();
+		}
+		ExecutableState permission = editPermission();
+		if (!permission.isExecutable()) {
+			return HandlerResult.notExecutable(permission);
 		}
 		enterEditMode();
 		return HandlerResult.DEFAULT_RESULT;
@@ -979,7 +986,10 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		return HandlerResult.DEFAULT_RESULT;
 	}
 
+	/**
+	 * The refusal of a lifecycle command the form's state does not offer.
+	 */
 	private static HandlerResult notExecutable() {
-		return HandlerResult.error(I18NConstants.ERROR_FORM_COMMAND_NOT_EXECUTABLE);
+		return HandlerResult.notExecutable(ExecutableState.NOT_EXEC_DISABLED);
 	}
 }

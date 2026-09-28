@@ -12,6 +12,7 @@ import java.util.Set;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.exception.I18NFailure;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.fragments.Fragments;
@@ -113,6 +114,14 @@ public final class CommandErrors {
 	 * was rejected and where one message ends and the next begins.
 	 * </p>
 	 *
+	 * <p>
+	 * The {@link HandlerResult#getErrorSeverity() severity} of the result selects how the message
+	 * is shown: {@link ErrorSeverity#INFO} as {@link ErrorSink#showInfo(HTMLFragment) info},
+	 * {@link ErrorSeverity#WARNING} as {@link ErrorSink#showWarning(HTMLFragment) warning} (e.g. a
+	 * command refused by its executability rule, see {@link HandlerResult#notExecutable}), and
+	 * everything else as {@link ErrorSink#showError(HTMLFragment) error}.
+	 * </p>
+	 *
 	 * @param sink
 	 *        Where to display the message, <code>null</code> if the failing operation has no window
 	 *        to report to. In that case, the failure is only logged.
@@ -130,7 +139,12 @@ public final class CommandErrors {
 		HTMLFragment title = Fragments.div(CSS_SNACKBAR_TITLE,
 			titleKey != null ? Fragments.message(titleKey) : Fragments.message(I18NConstants.ERROR_COMMAND_FAILED));
 
-		sink.showError(Fragments.concat(title, Fragments.messageList(errorDetails(result))));
+		HTMLFragment message = Fragments.concat(title, Fragments.messageList(errorDetails(result)));
+		switch (result.getErrorSeverity()) {
+			case INFO -> sink.showInfo(message);
+			case WARNING -> sink.showWarning(message);
+			case ERROR, SYSTEM_FAILURE -> sink.showError(message);
+		}
 	}
 
 	/**

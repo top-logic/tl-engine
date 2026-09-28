@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.react.resource;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
@@ -36,9 +37,12 @@ import com.top_logic.layout.servlet.CacheControlFilter;
  * </p>
  *
  * <p>
- * The version of a resource is computed once per resolver instance, on first use, so all URLs
- * emitted for a resource through the same instance are identical. A resource whose content cannot
- * be read is reported once and emitted without version.
+ * The version of a resource follows content changes at the next page render: the resolver keeps
+ * the hash together with the modification time and size of the resource file in the expanded web
+ * application and recomputes it when these change. A resource that exists only outside the
+ * expanded web application (e.g. in a jar) cannot change at runtime and is hashed once. A resource
+ * whose content cannot be read is emitted without version and reported again only when its file
+ * changes.
  * </p>
  *
  * <p>
@@ -65,14 +69,43 @@ public class DefaultResourceResolver implements ResourceResolver {
 	private static final Pattern ABSOLUTE_URL = Pattern.compile("^([a-zA-Z][a-zA-Z0-9+.-]*:|//)");
 
 	/**
-	 * Marker in {@link #_versions} for a resource without version.
+	 * {@link Entry#version()} of a resource without version.
 	 */
 	private static final String NO_VERSION = "";
 
 	/**
-	 * Content version by context-relative file path (without query string).
+	 * {@link Stamp} of a resource without a file in the expanded web application.
 	 */
-	private final Map<String, String> _versions = new ConcurrentHashMap<>();
+	private static final Stamp NO_FILE = new Stamp(-1, -1);
+
+	/**
+	 * Version entry by context-relative file path (without query string).
+	 */
+	private final Map<String, Entry> _versions = new ConcurrentHashMap<>();
+
+	/**
+	 * State of a resource file that determines whether its version must be recomputed.
+	 *
+	 * @param lastModified
+	 *        The modification time of the file.
+	 * @param length
+	 *        The size of the file in bytes.
+	 */
+	private record Stamp(long lastModified, long length) {
+		// Pure value.
+	}
+
+	/**
+	 * Content version of a resource computed for a given {@link Stamp}.
+	 *
+	 * @param stamp
+	 *        The file state for which the version was computed.
+	 * @param version
+	 *        The content version, {@link #NO_VERSION} if the content could not be read.
+	 */
+	private record Entry(Stamp stamp, String version) {
+		// Pure value.
+	}
 
 	@Override
 	public List<String> resolve(ResourceConfig resource) {
@@ -101,12 +134,23 @@ public class DefaultResourceResolver implements ResourceResolver {
 	private String addVersion(String resource) {
 		int queryStart = resource.indexOf('?');
 		String path = queryStart < 0 ? resource : resource.substring(0, queryStart);
-		String version = _versions.computeIfAbsent(path, DefaultResourceResolver::computeVersion);
+		Stamp stamp = stamp(path);
+		String version = _versions.compute(path,
+			(key, entry) -> entry != null && entry.stamp().equals(stamp) ? entry
+				: new Entry(stamp, computeVersion(key))).version();
 		if (version.isEmpty()) {
 			return resource;
 		}
 		char separator = queryStart < 0 ? '?' : '&';
 		return resource + separator + CacheControlFilter.VERSION_PARAMETER + '=' + version;
+	}
+
+	private static Stamp stamp(String path) {
+		File file = FileManager.getInstance().getIDEFileOrNull(path);
+		if (file == null) {
+			return NO_FILE;
+		}
+		return new Stamp(file.lastModified(), file.length());
 	}
 
 	private static String computeVersion(String path) {

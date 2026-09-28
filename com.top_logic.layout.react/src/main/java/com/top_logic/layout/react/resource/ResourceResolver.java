@@ -12,8 +12,8 @@ import java.util.List;
  *
  * <p>
  * A resolved URL may differ from the declared resource path, e.g. by a content version in its
- * query string (see {@link DefaultResourceResolver}). All references to one resource on a page must
- * use the URL resolved by the same resolver instance.
+ * query string (see {@link DefaultResourceResolver}). The resolved URL changes when the resource
+ * content changes, so all references to one resource on a page must use a single resolved URL.
  * </p>
  */
 public interface ResourceResolver {

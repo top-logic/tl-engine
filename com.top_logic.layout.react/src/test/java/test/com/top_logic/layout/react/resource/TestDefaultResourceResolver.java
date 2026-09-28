@@ -88,14 +88,38 @@ public class TestDefaultResourceResolver extends TestCase {
 		assertFalse(version(a).equals(version(b)));
 	}
 
-	public void testChangedContentAfterRestart() throws IOException {
+	public void testChangedContent() throws IOException {
 		write("/script/a.js", "alert(1);");
-		String before = resolve(new DefaultResourceResolver(), script("a", "/script/a.js"));
+		setLastModified("/script/a.js", 1_000_000L);
+		DefaultResourceResolver resolver = new DefaultResourceResolver();
+		String before = resolve(resolver, script("a", "/script/a.js"));
 
 		write("/script/a.js", "alert(2);");
-		String after = resolve(new DefaultResourceResolver(), script("a", "/script/a.js"));
+		setLastModified("/script/a.js", 2_000_000L);
+		String after = resolve(resolver, script("a", "/script/a.js"));
 
 		assertFalse(version(before).equals(version(after)));
+		assertEquals(after, resolve(new DefaultResourceResolver(), script("a", "/script/a.js")));
+	}
+
+	public void testUnchangedContent() throws IOException {
+		write("/script/a.js", "alert(1);");
+		DefaultResourceResolver resolver = new DefaultResourceResolver();
+		String first = resolve(resolver, script("a", "/script/a.js"));
+
+		assertEquals(first, resolve(resolver, script("a", "/script/a.js")));
+		assertEquals(first, resolve(resolver, module("b", "/script/a.js")));
+	}
+
+	public void testFileCreatedLater() throws IOException {
+		DefaultResourceResolver resolver = new DefaultResourceResolver();
+		assertEquals("/script/late.js", resolve(resolver, script("l", "/script/late.js")));
+
+		write("/script/late.js", "alert(1);");
+		String url = resolve(resolver, script("l", "/script/late.js"));
+
+		assertTrue(url, url.startsWith("/script/late.js?" + VERSION_PREFIX));
+		assertEquals(DefaultResourceResolver.VERSION_LENGTH, version(url).length());
 	}
 
 	public void testExistingQuery() throws IOException {
@@ -159,6 +183,10 @@ public class TestDefaultResourceResolver extends TestCase {
 		Path file = _root.resolve(path.substring(1));
 		Files.createDirectories(file.getParent());
 		Files.writeString(file, content, StandardCharsets.UTF_8);
+	}
+
+	private void setLastModified(String path, long time) {
+		assertTrue(_root.resolve(path.substring(1)).toFile().setLastModified(time));
 	}
 
 	private static String version(String url) {

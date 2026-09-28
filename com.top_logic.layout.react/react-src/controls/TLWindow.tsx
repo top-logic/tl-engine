@@ -88,6 +88,9 @@ const RESIZE_CURSORS: Record<ResizeDir, string> = {
  * The footer holds that one toolbar and nothing beside it, so the width it is granted is the
  * footer's and the toolbar gives it up again down to its overflow trigger. A toolbar without a
  * command renders nothing, which leaves the footer strip empty and the stylesheet hides it.
+ *
+ * A double click on a resize handle gives the window its configured size back and makes the server
+ * forget the remembered one - the way back from a size the user no longer wants.
  */
 const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -257,6 +260,17 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
         dragState.current = null;
       },
     });
+  }, [sendCommand]);
+
+  const handleResetSize = useCallback(() => {
+    localWidthRef.current = null;
+    localHeightRef.current = null;
+    setLocalWidth(null);
+    setLocalHeight(null);
+    // Centered again, as a window with its configured size is when it opens.
+    positionRef.current = null;
+    setPosition(null);
+    sendCommand('resetSize');
   }, [sendCommand]);
 
   const handleTitlePointerDown = useCallback((e: React.PointerEvent) => {
@@ -436,6 +450,7 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
           key={dir}
           className={`tlWindow__resizeHandle tlWindow__resizeHandle--${dir}`}
           onPointerDown={(e) => handleResizePointerDown(dir, e)}
+          onDoubleClick={handleResetSize}
         />
       ))}
       </div>

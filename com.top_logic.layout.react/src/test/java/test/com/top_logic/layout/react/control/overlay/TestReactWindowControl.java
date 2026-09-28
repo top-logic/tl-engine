@@ -19,12 +19,14 @@ import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.react.control.layout.ToolbarGroupDisplay;
 import com.top_logic.layout.react.control.layout.ToolbarOverflow;
 import com.top_logic.layout.react.control.overlay.ReactWindowControl;
+import com.top_logic.layout.react.control.overlay.ResizeArguments;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 
 /**
  * Tests the footer of a {@link ReactWindowControl}: one collapsing toolbar carrying the window's
- * actions ahead of its button-bar commands, however the two are handed to the window.
+ * actions ahead of its button-bar commands, however the two are handed to the window. Also tests
+ * how the window remembers and forgets the size the user gives it.
  */
 public class TestReactWindowControl extends TestCase {
 
@@ -87,6 +89,32 @@ public class TestReactWindowControl extends TestCase {
 			List.of(ReactWindowControl.ACTIONS_CLIQUE, "save"), groupNames(footer(window)));
 		assertEquals(ToolbarOverflow.LEADING.getExternalName(),
 			footer(window).get(ReactToolbarControl.OVERFLOW));
+	}
+
+	/** A resize is sent as the remembered size beside the configured width, not in place of it. */
+	public void testAResizeIsRememberedBesideTheConfiguredWidth() {
+		ReactWindowControl window = window();
+		window.executeCommand(ReactWindowControl.RESIZE_COMMAND,
+			Map.of(ResizeArguments.WIDTH, 998, ResizeArguments.HEIGHT, 935));
+
+		Map<?, ?> state = state(window);
+		assertEquals("The configured width stays, so the client can fall back to it.", "400px",
+			state.get(ReactWindowControl.WIDTH));
+		assertEquals(998, ((Number) state.get(ReactWindowControl.CUSTOM_WIDTH)).intValue());
+		assertEquals(935, ((Number) state.get(ReactWindowControl.CUSTOM_HEIGHT)).intValue());
+	}
+
+	/** Resetting the size forgets the remembered size, and the window takes its configured one. */
+	public void testAResetForgetsTheRememberedSize() {
+		ReactWindowControl window = window();
+		window.executeCommand(ReactWindowControl.RESIZE_COMMAND,
+			Map.of(ResizeArguments.WIDTH, 998, ResizeArguments.HEIGHT, 935));
+		window.executeCommand(ReactWindowControl.RESET_SIZE_COMMAND, Map.of());
+
+		Map<?, ?> state = state(window);
+		assertNull(state.get(ReactWindowControl.CUSTOM_WIDTH));
+		assertNull(state.get(ReactWindowControl.CUSTOM_HEIGHT));
+		assertEquals("400px", state.get(ReactWindowControl.WIDTH));
 	}
 
 	/** The client state of the window's footer toolbar. */

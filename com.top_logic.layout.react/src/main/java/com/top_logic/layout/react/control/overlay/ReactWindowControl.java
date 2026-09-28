@@ -110,6 +110,12 @@ public class ReactWindowControl extends ToolbarControl {
 	/** The {@link ReactCommandHandler} that records a window resize. */
 	public static final String RESIZE_COMMAND = "resize";
 
+	/**
+	 * The {@link ReactCommandHandler} that forgets the size the user gave the window, so that it
+	 * takes its configured size again.
+	 */
+	public static final String RESET_SIZE_COMMAND = "resetSize";
+
 	/** The {@link ReactCommandHandler} that closes this window. */
 	public static final String CLOSE_COMMAND = "close";
 
@@ -345,6 +351,27 @@ public class ReactWindowControl extends ToolbarControl {
 			}
 		});
 		saveCustomizedSize(w, h);
+	}
+
+	/**
+	 * Forgets the size the user gave the window, in this window and in the personal configuration,
+	 * so that this and every later opening of the window takes the configured size again.
+	 */
+	@ReactCommandHandler(RESET_SIZE_COMMAND)
+	void handleResetSize() {
+		// Sent to the client: it holds the remembered size and must drop it.
+		putState(CUSTOM_WIDTH, null);
+		putState(CUSTOM_HEIGHT, null);
+
+		String key = _configKey.get();
+		if (key == null) {
+			return;
+		}
+		PersonalConfiguration config = PersonalConfiguration.getPersonalConfiguration();
+		if (config == null) {
+			return;
+		}
+		config.setJSONValue(key, null);
 	}
 
 	private void applyCustomizedSize() {

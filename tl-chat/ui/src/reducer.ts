@@ -60,6 +60,7 @@ export type ChatAction =
   | { type: 'RESOLVE_INTERACTION'; requestId: string }
   | { type: 'START_RUN'; runId: string }
   | { type: 'END_RUN'; runId: string }
+  | { type: 'RESUME_RUN'; runId: string }
   | { type: 'REPLACE'; messages: ChatMessage[] }
   | { type: 'RESET' }
 
@@ -286,6 +287,12 @@ export function chatReducer(messages: ChatMessage[], action: ChatAction): ChatMe
         m.type === 'run_meta' && m.runId === action.runId && m.durationMs == null
           ? { ...m, durationMs: Date.now() - m.startedAt }
           : m,
+      )
+    case 'RESUME_RUN':
+      // The inverse, for a turn restored while its run is still going (#544): the transcript
+      // measures a turn up to its last recorded part, which for a running turn is not an end.
+      return messages.map((m) =>
+        m.type === 'run_meta' && m.runId === action.runId ? { ...m, durationMs: undefined } : m,
       )
     case 'REPLACE':
       return action.messages

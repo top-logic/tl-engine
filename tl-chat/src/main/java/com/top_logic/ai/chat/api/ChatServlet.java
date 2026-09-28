@@ -45,6 +45,7 @@ import com.top_logic.ai.chat.api.messages.ChatUpdatesResponse;
 import com.top_logic.ai.chat.api.messages.CreateSessionRequest;
 import com.top_logic.ai.chat.api.messages.ImprovePromptRequest;
 import com.top_logic.ai.chat.api.messages.ImprovePromptResponse;
+import com.top_logic.ai.chat.api.messages.InFlightRunDto;
 import com.top_logic.ai.chat.api.messages.InteractionOptionDto;
 import com.top_logic.ai.chat.api.messages.InteractionResolvedEvent;
 import com.top_logic.ai.chat.api.messages.PendingInteractionDto;
@@ -1324,14 +1325,22 @@ public class ChatServlet extends TopLogicServlet {
 	 *        The snapshot being sent; a no-op when it has no turn.
 	 * @param running
 	 *        The run in flight, or <code>null</code> when the conversation has none.
+	 * @param response
+	 *        The answer the snapshot is sent in; told where in the run's text the snapshot ends.
 	 */
-	private static void appendStreamedText(PersistedConversationV2 conv, ChatProcessor.AIProcessingState running) {
-		if (running == null || conv.getTurns().isEmpty()) {
+	private static void appendStreamedText(PersistedConversationV2 conv, ChatProcessor.AIProcessingState running,
+			ChatSessionDetailResponse response) {
+		if (running == null) {
 			return;
 		}
 		ConversationLogListener listener = running.getLogListener();
-		String pending = listener == null ? "" : listener.bufferedText();
-		if (pending.isEmpty()) {
+		ConversationLogListener.StreamedText streamed =
+			listener == null ? new ConversationLogListener.StreamedText("", 0) : listener.streamedText();
+		// Where this snapshot ends in the run's text, so the window can tell which of the deltas it
+		// is about to receive it already shows (issue #544).
+		response.setInFlight(InFlightRunDto.create().setStreamedChars(streamed.end()));
+		String pending = streamed.pending();
+		if (pending.isEmpty() || conv.getTurns().isEmpty()) {
 			return;
 		}
 		PersistedTurn last = conv.getTurns().get(conv.getTurns().size() - 1);
@@ -1585,7 +1594,7 @@ public class ChatServlet extends TopLogicServlet {
 				response.setMessagesJson(messagesJson);
 				PersistedConversationV2 conv = PersistedConversationV2.readPersistedConversationV2(
 					new JsonReader(new StringR(messagesJson)));
-				appendStreamedText(conv, running);
+				appendStreamedText(conv, running, response);
 				for (PersistedTurn turn : conv.getTurns()) {
 					computeContentHtml(turn);
 				}

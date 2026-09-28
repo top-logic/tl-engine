@@ -162,6 +162,11 @@ export interface SessionDetail {
   lastEffort?: string
   /** What the last request's prompt was made of, so the popover keeps its breakdown after a reload. */
   lastComposition?: ContextComposition
+  /**
+   * The run this conversation was in the middle of when it was read, and how far that run's text
+   * had got, in the count every `text_delta` carries as `end`. Absent when no run was in flight.
+   */
+  inFlight?: { streamedChars?: number }
 }
 
 export async function loadSession(at: ChatAddress, id: string): Promise<SessionDetail> {

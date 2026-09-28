@@ -45,6 +45,9 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 	/** @see #getLastComposition() */
 	public static final String LAST_COMPOSITION__PROP = "lastComposition";
 
+	/** @see #getInFlight() */
+	public static final String IN_FLIGHT__PROP = "inFlight";
+
 	private String _id = "";
 
 	private String _title = "";
@@ -64,6 +67,8 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 	private String _lastEffort = "";
 
 	private com.top_logic.ai.chat.api.messages.ContextCompositionEvent _lastComposition = null;
+
+	private com.top_logic.ai.chat.api.messages.InFlightRunDto _inFlight = null;
 
 	/**
 	 * Creates a {@link ChatSessionDetailResponse} instance.
@@ -321,6 +326,34 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 		return _lastComposition != null;
 	}
 
+	/**
+	 * The run this conversation is in the middle of, as of this snapshot. Absent when no run was
+	 * in flight.
+	 */
+	public final com.top_logic.ai.chat.api.messages.InFlightRunDto getInFlight() {
+		return _inFlight;
+	}
+
+	/**
+	 * @see #getInFlight()
+	 */
+	public com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse setInFlight(com.top_logic.ai.chat.api.messages.InFlightRunDto value) {
+		internalSetInFlight(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getInFlight()} without chain call utility. */
+	protected final void internalSetInFlight(com.top_logic.ai.chat.api.messages.InFlightRunDto value) {
+		_inFlight = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getInFlight()} has a value.
+	 */
+	public final boolean hasInFlight() {
+		return _inFlight != null;
+	}
+
 	@Override
 	public String jsonType() {
 		return CHAT_SESSION_DETAIL_RESPONSE__TYPE;
@@ -338,7 +371,8 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			LAST_MODEL__PROP, 
 			FEEDBACK__PROP, 
 			LAST_EFFORT__PROP, 
-			LAST_COMPOSITION__PROP);
+			LAST_COMPOSITION__PROP, 
+			IN_FLIGHT__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -373,6 +407,7 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			case FEEDBACK__PROP: return getFeedback();
 			case LAST_EFFORT__PROP: return getLastEffort();
 			case LAST_COMPOSITION__PROP: return getLastComposition();
+			case IN_FLIGHT__PROP: return getInFlight();
 			default: return null;
 		}
 	}
@@ -390,6 +425,7 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			case FEEDBACK__PROP: internalSetFeedback(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.MessageFeedbackDto.class, value)); break;
 			case LAST_EFFORT__PROP: internalSetLastEffort((String) value); break;
 			case LAST_COMPOSITION__PROP: internalSetLastComposition((com.top_logic.ai.chat.api.messages.ContextCompositionEvent) value); break;
+			case IN_FLIGHT__PROP: internalSetInFlight((com.top_logic.ai.chat.api.messages.InFlightRunDto) value); break;
 		}
 	}
 
@@ -436,6 +472,10 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			out.name(LAST_COMPOSITION__PROP);
 			getLastComposition().writeTo(out);
 		}
+		if (hasInFlight()) {
+			out.name(IN_FLIGHT__PROP);
+			getInFlight().writeTo(out);
+		}
 	}
 
 	@Override
@@ -460,6 +500,7 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			break;
 			case LAST_EFFORT__PROP: setLastEffort(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case LAST_COMPOSITION__PROP: setLastComposition(com.top_logic.ai.chat.api.messages.ContextCompositionEvent.readContextCompositionEvent(in)); break;
+			case IN_FLIGHT__PROP: setInFlight(com.top_logic.ai.chat.api.messages.InFlightRunDto.readInFlightRunDto(in)); break;
 			default: super.readField(in, field);
 		}
 	}

@@ -6,7 +6,9 @@
 package com.top_logic.ai.chat.api;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import com.top_logic.ai.chat.layout.ChatProcessor;
@@ -18,16 +20,17 @@ import com.top_logic.knowledge.wrap.person.Person;
  *
  * <p>
  * A {@link ChatEventHandler} registers itself when its connection opens and unregisters when it
- * closes; {@link ChatProcessor} looks up the handler of the tracker it is running for. Because the
+ * closes; {@link ChatProcessor} looks up the handlers of the windows showing the conversation it is
+ * running in ({@link #findStreamTargets(TaskProgressTracker, Person, String)}). Because the
  * registry is typed by the interface, a chat UI other than {@link ChatSSEHandler} can register and
  * receives the same events at the same points.
  * </p>
  *
  * <p>
- * At most one handler per tracker is addressed at a time: {@link #find(TaskProgressTracker)}
- * returns the most recently registered active one. The browser opens a fresh SSE stream when the
- * user switches sessions, so a run must always resolve its handler per event rather than capture
- * one at run start.
+ * At most one handler per tracker is addressed at a time: the most recently registered active one.
+ * The browser opens a fresh SSE stream when the user switches sessions, and another window may open
+ * the conversation at any point of the run, so a run must always resolve its handlers per event
+ * rather than capture them at run start.
  * </p>
  */
 public final class ChatEventHandlerRegistry {
@@ -97,21 +100,57 @@ public final class ChatEventHandlerRegistry {
 	 *        The account the run belongs to; <code>null</code> matches nothing.
 	 * @param sessionId
 	 *        The id of the chat the run belongs to; <code>null</code> matches nothing.
-	 * @return The matching handlers, in no particular order; never <code>null</code>.
+	 * @return The matching handlers, in no particular order, at most one per window; never
+	 *         <code>null</code>.
 	 */
 	public static List<ChatEventHandler> findForSession(Person owner, String sessionId) {
-		List<ChatEventHandler> result = new ArrayList<>();
 		if (owner == null || sessionId == null) {
-			return result;
+			return new ArrayList<>();
 		}
+		// One per window: a window that has just reconnected may still have its old stream
+		// registered, and the newest registration is the one it is listening on, as in find().
+		Map<TaskProgressTracker, ChatEventHandler> result = new LinkedHashMap<>();
 		for (ChatEventHandler handler : HANDLERS) {
 			TaskProgressTracker tracker = handler.getTracker();
 			if (tracker == null || !handler.isActive()) {
 				continue;
 			}
 			if (owner.equals(handler.getAccount()) && sessionId.equals(tracker.getActiveSessionId())) {
-				result.add(handler);
+				result.put(tracker, handler);
 			}
+		}
+		return new ArrayList<>(result.values());
+	}
+
+	/**
+	 * The chat UIs a running run streams to: every window showing its conversation.
+	 *
+	 * <p>
+	 * A conversation can be open in more than one window of its account, and each of them shows the
+	 * turn while it is being written - not only the window the message was sent from (issue #544).
+	 * That window is always among them while it is showing the conversation, also when its chat UI
+	 * does not {@link ChatEventHandler#getAccount() say whose} it is.
+	 * </p>
+	 *
+	 * @param startedIn
+	 *        The tracker of the window the run was started in.
+	 * @param owner
+	 *        The account the run belongs to.
+	 * @param sessionId
+	 *        The id of the chat the run belongs to; <code>null</code> for a run that has none, which
+	 *        streams to the window it was started in alone.
+	 * @return Never <code>null</code>; at most one handler per window.
+	 */
+	public static List<ChatEventHandler> findStreamTargets(TaskProgressTracker startedIn, Person owner,
+			String sessionId) {
+		ChatEventHandler own = find(startedIn);
+		if (sessionId == null) {
+			return own == null ? List.of() : List.of(own);
+		}
+		List<ChatEventHandler> result = findForSession(owner, sessionId);
+		if (own != null && sessionId.equals(startedIn.getActiveSessionId())
+			&& result.stream().noneMatch(handler -> handler.getTracker() == startedIn)) {
+			result.add(own);
 		}
 		return result;
 	}

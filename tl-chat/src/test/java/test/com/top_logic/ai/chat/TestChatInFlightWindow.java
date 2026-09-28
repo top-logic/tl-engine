@@ -6,6 +6,7 @@
 package test.com.top_logic.ai.chat;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,6 +33,7 @@ import com.top_logic.ai.chat.api.messages.InteractionResolvedEvent;
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
 import com.top_logic.ai.chat.history.ChatHistoryService;
+import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatProcessor.AIProcessingState;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.PendingInteractionRegistry;
@@ -40,10 +42,13 @@ import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
+import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.Part;
@@ -53,7 +58,7 @@ import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
 /**
- * What a window sees when it opens a conversation whose run is still going (issue #512).
+ * What a window sees when it opens a conversation whose run is still going (issues #512, #544).
  *
  * <p>
  * A turn is written to the database when its run ends. Until then the whole of it - the user's
@@ -115,6 +120,10 @@ public class TestChatInFlightWindow extends BasicTestCase {
 			nina = TestPerson.createPerson("nina-with-a-running-chat");
 			otto = TestPerson.createPerson("otto-who-is-not-nina");
 			ninasChat = ChatHistoryService.createSession("Ninas Chat", nina);
+			// Created on the store's writer thread: this thread would otherwise not see the chat
+			// until something else moved its revision on, and whichever test ran first could not
+			// open it.
+			HistoryUtils.updateSessionRevision();
 			runner = new ServletRunner();
 			runner.registerServlet("chat/*", ChatServlet.class.getName());
 		}
@@ -314,6 +323,148 @@ public class TestChatInFlightWindow extends BasicTestCase {
 		assertEquals(List.of(), ChatEventHandlerRegistry.findForSession(nina, chatId(), null));
 	}
 
+	/**
+	 * The run streams to every window showing its conversation, not only to the one it was started
+	 * in (issue #544).
+	 *
+	 * <p>
+	 * Before, the second window was shown the snapshot and the completion, and nothing in between:
+	 * it looked frozen for as long as the run wrote.
+	 * </p>
+	 */
+	public void testTheRunStreamsToEveryWindowShowingTheChat() {
+		_windowA.getSessionManager().switchSession(chatId(), nina);
+		TaskProgressTracker windowB = new TaskProgressTracker();
+		windowB.getSessionManager().switchSession(chatId(), nina);
+		try (Watcher a = watch(_windowA, nina); Watcher b = watch(windowB, nina)) {
+			stream(new AgentEvent.TurnStarted("run-1", 2, Instant.now()));
+			stream(new AgentEvent.TextDelta("run-1", 2, Instant.now(), "Ich pruefe das "));
+			stream(new AgentEvent.TextDelta("run-1", 2, Instant.now(), "gerade"));
+
+			List<String> expected = List.of("TurnStarted", "Ich pruefe das @15", "gerade@21");
+			assertEquals("The window that started the run.", expected, a._seen);
+			assertEquals("The window that opened the chat later.", expected, b._seen);
+		}
+	}
+
+	/**
+	 * A window that is gone, or that shows another chat, is told nothing - and nothing is left
+	 * registered for it.
+	 */
+	public void testAWindowThatIsGoneGetsNothing() {
+		TaskProgressTracker windowB = new TaskProgressTracker();
+		windowB.getSessionManager().switchSession(chatId(), nina);
+		Watcher closed = watch(windowB, nina);
+		closed.close();
+		TaskProgressTracker windowC = new TaskProgressTracker();
+		windowC.getSessionManager().switchSession(chatId(), nina);
+		Watcher reloading = watch(windowC, nina);
+		reloading._active = false;
+		try (Watcher elsewhere = watch(new TaskProgressTracker(), nina); Watcher inactive = reloading) {
+			stream(new AgentEvent.TextDelta("run-1", 2, Instant.now(), "Ich pruefe das "));
+
+			assertEquals("A window whose stream was closed.", List.of(), closed._seen);
+			assertEquals("A window whose stream is no longer active.", List.of(), inactive._seen);
+			assertEquals("A window showing no chat of this run.", List.of(), elsewhere._seen);
+		}
+		assertEquals("A closed window is not addressed any more.",
+			List.of(), ChatEventHandlerRegistry.findStreamTargets(_windowA, nina, chatId()));
+	}
+
+	/**
+	 * A window that has just reconnected is one window: its newest stream gets the delta, once.
+	 */
+	public void testAReconnectedWindowGetsEachDeltaOnce() {
+		TaskProgressTracker windowB = new TaskProgressTracker();
+		windowB.getSessionManager().switchSession(chatId(), nina);
+		try (Watcher old = watch(windowB, nina); Watcher current = watch(windowB, nina)) {
+			stream(new AgentEvent.TextDelta("run-1", 2, Instant.now(), "gerade"));
+
+			assertEquals(List.of(), old._seen);
+			assertEquals(List.of("gerade@6"), current._seen);
+		}
+	}
+
+	/**
+	 * The snapshot says where in the run's text it ends, and the deltas say where they end: a window
+	 * joining mid-run takes every delta beyond its snapshot and none within it.
+	 */
+	public void testTheSnapshotAndTheStreamJoinWithoutAGapOrAnOverlap() throws Exception {
+		_listener.onEvent(new AgentEvent.TextDelta("run-1", 2, Instant.now(), "Ich pruefe das "));
+
+		String body = restore();
+		assertTrue("The snapshot holds the text so far: " + body, body.contains("Ich pruefe das "));
+		assertTrue("The snapshot says where it ends: " + body,
+			body.contains("\"inFlight\":{\"streamedChars\":15}"));
+
+		TaskProgressTracker windowB = new TaskProgressTracker();
+		windowB.getSessionManager().switchSession(chatId(), nina);
+		try (Watcher b = watch(windowB, nina)) {
+			stream(new AgentEvent.TextDelta("run-1", 2, Instant.now(), "gerade"));
+
+			assertEquals("The first delta after the snapshot starts where the snapshot ends.",
+				List.of("gerade@21"), b._seen);
+		}
+	}
+
+	/** A conversation with no run in flight has no stream to join. */
+	public void testAnIdleChatHasNoStreamPosition() throws Exception {
+		runEnded();
+
+		assertFalse(restore().contains("inFlight"));
+	}
+
+	/**
+	 * What a run spent is counted once, in the window it belongs to, however many windows show it.
+	 */
+	public void testTheRunsTokensAreCountedOnce() {
+		_windowA.getSessionManager().switchSession(chatId(), nina);
+		TaskProgressTracker windowB = new TaskProgressTracker();
+		windowB.getSessionManager().switchSession(chatId(), nina);
+		long before = _windowA.getCumulativeUsage().outputTokens();
+		try (Watcher a = watch(_windowA, nina); Watcher b = watch(windowB, nina)) {
+			stream(new AgentEvent.RunCompleted("run-1", 2, Instant.now(), StopReason.COMPLETE,
+				new TokenUsage(100, 40, 0, 0, 0)));
+
+			assertEquals(before + 40, _windowA.getCumulativeUsage().outputTokens());
+			assertEquals(0, windowB.getCumulativeUsage().outputTokens());
+			assertEquals(List.of("RunCompleted"), b._seen);
+		}
+	}
+
+	/**
+	 * A window that only watched the run reads the conversation back when it ends.
+	 *
+	 * <p>
+	 * It loaded the conversation before the run's turn was recorded, and the turn is written to the
+	 * database and to the run's own window, not to it. Reading the chat back served that old copy,
+	 * and the finished turn vanished from the window that had just watched it being written.
+	 * </p>
+	 */
+	public void testAWatchingWindowDropsItsOldCopyOfTheChat() {
+		TaskProgressTracker windowB = new TaskProgressTracker();
+		windowB.getSessionManager().switchSession(chatId(), nina);
+		int recorded = windowB.getSessionManager().getOrCreateConversationLog().turnCount();
+		Turn stale = windowB.getSessionManager().getOrCreateConversationLog().startTurn();
+		stale.setUserParts(List.of(new Part.TextPart(
+			UUID.randomUUID().toString(), Instant.now(), "Nur in diesem Fenster")));
+
+		windowB.getSessionManager().markChangedElsewhere(chatId());
+		// The window's next request - reading the chat back - switches to it again.
+		windowB.getSessionManager().switchSession(chatId(), nina);
+
+		assertEquals("The chat is what the database holds, not what this window had.",
+			recorded, windowB.getSessionManager().getOrCreateConversationLog().turnCount());
+		assertEquals("It is still the chat this window is showing.",
+			chatId(), windowB.getActiveSessionId());
+	}
+
+	/** Passes an event through the run's listeners in the order {@code ChatProcessor} chains them. */
+	private void stream(AgentEvent event) {
+		_listener.onEvent(event);
+		ChatProcessor.streamForwarder(_windowA, nina, chatId(), _listener).onEvent(event);
+	}
+
 	/** The finished turn of the conversation, as a previous run left it behind. */
 	private void recordFinishedTurn() {
 		Turn done = _log.startTurn();
@@ -382,12 +533,17 @@ public class TestChatInFlightWindow extends BasicTestCase {
 		return watcher;
 	}
 
-	/** A chat UI that is only ever asked whose window it is and what it is showing. */
+	/** A chat UI that notes what a run shows it. */
 	private static final class Watcher implements ChatEventHandler, AutoCloseable {
 
 		private final TaskProgressTracker _window;
 
 		private final Person _account;
+
+		/** The events received: a delta as its text and end position, anything else by its kind. */
+		final List<String> _seen = new ArrayList<>();
+
+		boolean _active = true;
 
 		Watcher(TaskProgressTracker window, Person account) {
 			_window = window;
@@ -406,12 +562,17 @@ public class TestChatInFlightWindow extends BasicTestCase {
 
 		@Override
 		public boolean isActive() {
-			return true;
+			return _active;
 		}
 
 		@Override
 		public void onEvent(AgentEvent event) {
-			// Not what this test asks about.
+			_seen.add(event.getClass().getSimpleName());
+		}
+
+		@Override
+		public void onTextDelta(AgentEvent.TextDelta delta, long end) {
+			_seen.add(delta.text() + "@" + end);
 		}
 
 		@Override

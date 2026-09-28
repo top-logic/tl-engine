@@ -593,6 +593,23 @@ message ChatSessionDetailResponse {
 	 * breakdown a live one does. Absent for a session whose transcript predates the field.
 	 */
 	ContextCompositionEvent lastComposition;
+
+	/**
+	 * The run this conversation is in the middle of, as of this snapshot. Absent when no run was
+	 * in flight.
+	 */
+	InFlightRunDto inFlight;
+}
+
+/**
+ * Where the run a snapshot was taken of had got to.
+ */
+message InFlightRunDto {
+	/**
+	 * How many characters of text the run had streamed, recorded or not, when the snapshot was
+	 * taken. A text delta whose <code>end</code> is not beyond this is already in the snapshot.
+	 */
+	long streamedChars;
 }
 
 /**
@@ -661,6 +678,18 @@ message InteractionOptionDto {
 message TextDeltaEvent {
 	/** The text chunk. */
 	string text;
+
+	/**
+	 * How many characters of text the run has streamed, this chunk included; zero where the
+	 * position is not known, as for a delegated agent's text.
+	 */
+	long end;
+
+	/**
+	 * The chat the run writes into, so a window that is opening another chat meanwhile does not
+	 * take it for that chat's text. Empty when it is not known.
+	 */
+	string sessionId;
 }
 
 /** SSE event for streaming thinking delta. */

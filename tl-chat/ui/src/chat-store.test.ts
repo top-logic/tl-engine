@@ -1811,6 +1811,10 @@ describe('a window opened while the run is in flight', () => {
   let waiting: Record<string, unknown>[]
   /** Every `GET /chat/sessions/{id}` the store made, so a reload can be counted. */
   let loads: number
+  /** Where the snapshot ends in the run's text; `undefined` for a chat with no run in flight. */
+  let inFlight: { streamedChars: number } | undefined
+  /** Holds the answer to `GET /chat/sessions/{id}` back until the test lets it go. */
+  let gate: Promise<void> | null
 
   /** The in-flight turn as the server serialises it: user text, partial answer, pending approval. */
   const IN_FLIGHT = JSON.stringify([
@@ -1842,6 +1846,8 @@ describe('a window opened while the run is in flight', () => {
     runState = { processing: true, tasksJson: '' }
     waiting = []
     loads = 0
+    inFlight = undefined
+    gate = null
     const globals = globalThis as unknown as Record<string, unknown>
     const inner = globals.fetch as (url: string, init?: unknown) => Promise<unknown>
     globals.fetch = vi.fn(async (url: string, init?: { method?: string; body?: string }) => {
@@ -1853,7 +1859,10 @@ describe('a window opened while the run is in flight', () => {
       }
       if (/\/chat\/sessions\/[^/?]/.test(url)) {
         loads++
-        return { ok: true, status: 200, json: async () => ({ id: 's1', turnsJson }) }
+        // Read now, not when the test lets the answer go: the snapshot is what it was when asked.
+        const answer = { id: 's1', turnsJson, inFlight }
+        if (gate) await gate
+        return { ok: true, status: 200, json: async () => answer }
       }
       return inner(url, init)
     })
@@ -1983,6 +1992,139 @@ describe('a window opened while the run is in flight', () => {
     expect(approval).toMatchObject({ toolMode: 'DATA_WRITE', outcome: 'APPROVED_FOR_SESSION' })
 
     release()
+  })
+
+  /** A turn the agent is writing, as the snapshot of it reads: `Ich pruefe das ` so far. */
+  const WRITING = JSON.stringify([
+    {
+      id: 't1',
+      turnNumber: 1,
+      timestamp: 1000,
+      userParts: [{ id: 'u1', type: 'text', timestamp: 1000, textData: { text: 'Bitte pruefen' } }],
+      assistantParts: [
+        { id: 'streaming-t1', type: 'text', timestamp: 1100, textData: { text: 'Ich pruefe das ' } },
+      ],
+    },
+  ])
+
+  /**
+   * The snapshot and the stream travel on different connections, so a window joining mid-run gets
+   * deltas that are already in its snapshot, deltas that arrive before it, and one that straddles
+   * its end. Each piece of text is shown exactly once (#544).
+   */
+  it('joins the stream where the snapshot ends, without a gap or an overlap', async () => {
+    turnsJson = WRITING
+    inFlight = { streamedChars: 15 }
+    let release = () => undefined as void
+    gate = new Promise((resolve) => (release = resolve))
+    const store = chatStore('alpha', BOOT)
+    const unsubscribe = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+
+    const opened = store.actions.selectSession('s1')
+    await settle()
+    // Before the snapshot is here: one delta it already holds, and one it does not.
+    streams[0].emit('text_delta', { text: 'das ', end: 15, sessionId: 's1' })
+    streams[0].emit('text_delta', { text: 'ge', end: 17, sessionId: 's1' })
+    release()
+    await opened
+    // After it: one that overlaps what was placed, and one that is wholly new.
+    streams[0].emit('text_delta', { text: 'gerade', end: 21, sessionId: 's1' })
+    streams[0].emit('text_delta', { text: '!', end: 22, sessionId: 's1' })
+
+    const answers = store.getState().messages.filter((m) => m.type === 'assistant_text')
+    expect(answers).toHaveLength(1)
+    expect(answers[0]).toMatchObject({ text: 'Ich pruefe das gerade!', isStreaming: true })
+    // Still working, not "worked for 100 ms" as the snapshot's last part would have it.
+    const meta = store.getState().messages.find((m) => m.type === 'run_meta')
+    expect(meta).toMatchObject({ type: 'run_meta' })
+    expect(meta?.type === 'run_meta' && meta.durationMs).toBeUndefined()
+
+    unsubscribe()
+  })
+
+  /** The text of the chat being left is not written into the chat being opened. */
+  it('drops a delta of another chat that arrives while this one opens', async () => {
+    turnsJson = WRITING
+    inFlight = { streamedChars: 15 }
+    let release = () => undefined as void
+    gate = new Promise((resolve) => (release = resolve))
+    const store = chatStore('alpha', BOOT)
+    const unsubscribe = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+
+    const opened = store.actions.selectSession('s1')
+    await settle()
+    streams[0].emit('text_delta', { text: 'aus dem alten Chat', end: 40, sessionId: 's0' })
+    release()
+    await opened
+
+    const answers = store.getState().messages.filter((m) => m.type === 'assistant_text')
+    expect(answers[0]).toMatchObject({ text: 'Ich pruefe das ' })
+
+    unsubscribe()
+  })
+
+  /** A snapshot that ends on a step: the next text is a paragraph of its own, after the step. */
+  it('opens a new paragraph for text after a step', async () => {
+    turnsJson = JSON.stringify([
+      {
+        id: 't1',
+        turnNumber: 1,
+        timestamp: 1000,
+        userParts: [{ id: 'u1', type: 'text', timestamp: 1000, textData: { text: 'Bitte pruefen' } }],
+        assistantParts: [
+          { id: 'a1', type: 'text', timestamp: 1100, textData: { text: 'Ich sehe nach.' } },
+          {
+            id: 'c1',
+            type: 'tool_call',
+            timestamp: 1200,
+            toolCallData: { toolCallId: 'tc1', toolName: 'search', argsJson: '{}' },
+          },
+        ],
+      },
+    ])
+    inFlight = { streamedChars: 14 }
+    const store = chatStore('alpha', BOOT)
+    const unsubscribe = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+
+    await store.actions.selectSession('s1')
+    streams[0].emit('text_delta', { text: 'Gefunden.', end: 23, sessionId: 's1' })
+
+    const messages = store.getState().messages
+    const answers = messages.filter((m) => m.type === 'assistant_text')
+    expect(answers.map((m) => m.type === 'assistant_text' && m.text)).toEqual(['Ich sehe nach.', 'Gefunden.'])
+    expect(messages[messages.length - 1]).toMatchObject({ type: 'assistant_text', text: 'Gefunden.' })
+
+    unsubscribe()
+  })
+
+  /**
+   * A window that joined mid-run ends with the recorded turn: the answer at once, and the turn read
+   * back, so that its steps are the recorded ones too.
+   */
+  it('reads the turn back when a run it joined mid-way completes', async () => {
+    turnsJson = WRITING
+    inFlight = { streamedChars: 15 }
+    const store = chatStore('alpha', BOOT)
+    const unsubscribe = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+
+    await store.actions.selectSession('s1')
+    const loadsAfterSelect = loads
+    streams[0].emit('text_delta', { text: 'gerade', end: 21, sessionId: 's1' })
+    streams[0].emit('message_complete', { contentText: 'Ich pruefe das gerade.' })
+    await settle()
+
+    expect(loads).toBe(loadsAfterSelect + 1)
+    expect(store.getState().busy).toBe(false)
+
+    unsubscribe()
   })
 
   /**

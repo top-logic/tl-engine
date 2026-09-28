@@ -54,6 +54,30 @@ public interface ChatEventHandler extends AgentEventListener {
 	boolean isActive();
 
 	/**
+	 * Delivers a piece of the answer, together with where in the run's text it ends.
+	 *
+	 * <p>
+	 * A window that opens the conversation while the run is writing is first shown what has been
+	 * streamed so far, and then receives the deltas - on another connection, so some of the first
+	 * ones may already be in what it was shown. The position tells it which: <code>end</code> counts
+	 * every character of text the run has streamed up to and including this delta, and the
+	 * snapshot says how far it reaches in the same count (issue #544).
+	 * </p>
+	 *
+	 * <p>
+	 * Default: the delta as an ordinary event, for a chat UI that never shows a snapshot.
+	 * </p>
+	 *
+	 * @param delta
+	 *        The piece of text.
+	 * @param end
+	 *        How many characters of text the run has streamed, this delta included.
+	 */
+	default void onTextDelta(AgentEvent.TextDelta delta, long end) {
+		onEvent(delta);
+	}
+
+	/**
 	 * Delivers the final assistant message of a completed run, already rendered to HTML.
 	 *
 	 * <p>

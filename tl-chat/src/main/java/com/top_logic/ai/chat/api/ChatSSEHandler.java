@@ -50,6 +50,7 @@ import com.top_logic.ai.chat.api.messages.TurnCompletedEvent;
 import com.top_logic.ai.chat.api.messages.TurnStartedEvent;
 import com.top_logic.ai.chat.layout.Chat;
 import com.top_logic.ai.chat.layout.ChatProcessor;
+import com.top_logic.ai.chat.layout.PendingInteractionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
@@ -257,6 +258,24 @@ public class ChatSSEHandler implements ChatEventHandler {
 	}
 
 	/**
+	 * Queues a piece of the answer with its position, rendered right away: unlike most events it
+	 * reads no state that settles only at flush time.
+	 *
+	 * <p>
+	 * The frame names the chat this window is showing, which is the run's: the run streams only to
+	 * windows showing its chat.
+	 * </p>
+	 */
+	@Override
+	public void onTextDelta(AgentEvent.TextDelta delta, long end) {
+		String sessionId = _tracker == null ? null : _tracker.getActiveSessionId();
+		enqueue("text_delta", DtoMapper.toJson(TextDeltaEvent.create()
+			.setText(delta.text())
+			.setEnd(end)
+			.setSessionId(sessionId == null ? "" : sessionId)));
+	}
+
+	/**
 	 * Queues the final answer. Called from {@link ChatProcessor} after the run completes, not via
 	 * {@link #onEvent(AgentEvent)}.
 	 *
@@ -406,7 +425,6 @@ public class ChatSSEHandler implements ChatEventHandler {
 				.setUsedTokens(usedTokens())
 				.setContextWindow(contextWindow())));
 		} else if (event instanceof AgentEvent.RunCompleted e) {
-			_tracker.addTokenUsage(e.totalUsage());
 			sendEvent("run_completed", DtoMapper.toJson(RunCompletedEvent.create()
 				.setRunId(e.runId())
 				.setReason(e.reason().name())
@@ -632,8 +650,16 @@ public class ChatSSEHandler implements ChatEventHandler {
 		// run's ask-user prompts must not appear in the foreground chat. On switching back, the new
 		// SSE handler re-emits this session's still-pending interactions (its emitted-id set is
 		// fresh), so nothing is lost.
-		ChatProcessor.AIProcessingState procState =
-			_tracker.getProcessingStateForSession(_tracker.getActiveSessionId());
+		String sessionId = _tracker.getActiveSessionId();
+		ChatProcessor.AIProcessingState procState = _tracker.getProcessingStateForSession(sessionId);
+		if (procState == null) {
+			// A run another window of this account started in this conversation: this window streams
+			// it too (issue #544), and a question it asks is as much this window's to answer as an
+			// approval is (#393).
+			PendingInteractionRegistry.PendingRun run =
+				PendingInteractionRegistry.findBySession(_account, sessionId);
+			procState = run == null ? null : run.state();
+		}
 		if (procState == null) {
 			return;
 		}

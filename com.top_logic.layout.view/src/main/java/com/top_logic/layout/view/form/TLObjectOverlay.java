@@ -229,6 +229,17 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	}
 
 	/**
+	 * Discards the change of the given attribute. Afterwards, reads of the attribute delegate to the
+	 * base object again.
+	 *
+	 * @param part
+	 *        The attribute whose change is discarded.
+	 */
+	public void revert(TLStructuredTypePart part) {
+		_changes.remove(part);
+	}
+
+	/**
 	 * Discards all accumulated changes. After reset, all reads delegate to the base object again.
 	 */
 	public void reset() {

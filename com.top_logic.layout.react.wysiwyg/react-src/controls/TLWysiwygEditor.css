@@ -116,23 +116,62 @@
    =================================================================== */
 
 .tlWysiwygToolbar {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: 2px;
   padding: 6px 8px;
   border-bottom: 1px solid var(--border-subtle);
-  overflow-x: auto;
   background: var(--layer);
 }
 
-/* ---- Separator ---- */
+/* ---- Groups ----
+   The toolbar wraps onto further lines one group at a time; a group never breaks across lines.
+   The divider before a group belongs to the group itself (its ::before, in the group's leading
+   space), so every group carries one. The row of groups is shifted left by that leading space
+   and clipped back to the toolbar's content edge: the divider of a group that starts a line lies
+   in the clipped strip, while the dividers between groups on the same line stay visible. The clip
+   leaves room for the focus ring of a button at the edge of a line. */
 
-.tlWysiwygToolbar__sep {
+.tlWysiwygToolbar__groups {
+  --tl-wysiwyg-group-lead: 15px;
+  --tl-wysiwyg-focus-room: 2px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  row-gap: 4px;
+  margin-left: calc(-1 * var(--tl-wysiwyg-group-lead));
+  clip-path: inset(
+    calc(-1 * var(--tl-wysiwyg-focus-room))
+    calc(-1 * var(--tl-wysiwyg-focus-room))
+    calc(-1 * var(--tl-wysiwyg-focus-room))
+    calc(var(--tl-wysiwyg-group-lead) - var(--tl-wysiwyg-focus-room)));
+}
+
+.tlWysiwygToolbar__group {
+  position: relative;
+  display: flex;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 2px;
+  margin-left: 7px;
+  padding-left: calc(var(--tl-wysiwyg-group-lead) - 7px);
+}
+
+.tlWysiwygToolbar__group::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
   width: 1px;
   height: 20px;
-  margin: 0 6px;
+  transform: translateY(-50%);
   background: var(--border-subtle);
+}
+
+/* The configured commands form a toolbar of their own, which may collapse into its overflow menu
+   when granted less than its natural width. Where it alone is wider than a line, its group gives
+   way down to the line width. */
+.tlWysiwygToolbar__group--commands {
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 /* ---- Buttons ---- */

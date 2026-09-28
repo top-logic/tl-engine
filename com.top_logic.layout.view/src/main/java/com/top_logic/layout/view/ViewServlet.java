@@ -50,6 +50,7 @@ import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.react.protocol.RouteChangeEvent;
 import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.Interaction;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.window.WindowEntry;
 import com.top_logic.layout.view.login.PendingSessionAction;
@@ -112,6 +113,14 @@ public class ViewServlet extends TopLogicServlet {
 	 */
 	private static final String VIEW_FILE_SUFFIX = ".view.xml";
 
+	/**
+	 * Attribute of the page body carrying the token of the rendered page, which the page reports
+	 * back when it is unloaded.
+	 *
+	 * @see ReactWindowRegistry#issuePageLoad(String)
+	 */
+	private static final String PAGE_LOAD_ATTRIBUTE = "data-page-load";
+
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
@@ -166,6 +175,36 @@ public class ViewServlet extends TopLogicServlet {
 		// window already holds, so the controls counting down to the end of the session are the ones
 		// created before this request and have to be told.
 		windowRegistry.noteActivity(session);
+
+		// Rendering the page attaches the window's tree, and that changes the display like any
+		// command does - on a reload, while the report of the page just unloaded detaches the same
+		// tree. The trees are therefore only touched within an interaction.
+		try (Interaction interaction = windowRegistry.beginInteraction()) {
+			displayWindow(request, response, subSession, windowRegistry, windowName, pathInfo, routePath);
+		}
+	}
+
+	/**
+	 * Renders the page of the given window, reusing the control tree it already holds where possible.
+	 *
+	 * <p>
+	 * Called within an {@link Interaction} of the given registry.
+	 * </p>
+	 *
+	 * @param subSession
+	 *        The sub-session of the window, installed on the current thread.
+	 * @param windowRegistry
+	 *        The registry of the session's windows.
+	 * @param windowName
+	 *        The name of the window whose page is requested.
+	 * @param pathInfo
+	 *        The path of the request, naming the view to display.
+	 * @param routePath
+	 *        The route requested by the URL.
+	 */
+	private void displayWindow(HttpServletRequest request, HttpServletResponse response,
+			TLSubSessionContext subSession, ReactWindowRegistry windowRegistry, String windowName,
+			String pathInfo, String routePath) throws IOException {
 		// Collect the windows whose page was unloaded and did not come back within the grace period.
 		windowRegistry.sweepUnloadedWindows();
 		SSEUpdateQueue sseQueue = windowRegistry.getOrCreateQueue(windowName);
@@ -817,6 +856,10 @@ public class ViewServlet extends TopLogicServlet {
 			ReactControl rootControl, ReactContext context) throws IOException {
 		rootControl.attach();
 
+		// The page rendered here is the one the window displays from now on: the unload report of a
+		// page it replaces no longer applies to the tree.
+		String pageLoad = context.getWindowRegistry().issuePageLoad(context.getWindowName());
+
 		// The display exists now, so the URL the request carries can be adopted: a page rendered into
 		// a control tree it already has registers no participants while attaching, and nothing else
 		// would hand them the requested route.
@@ -880,6 +923,7 @@ public class ViewServlet extends TopLogicServlet {
 		out.beginBeginTag(HTMLConstants.BODY);
 		out.writeAttribute("data-window-name", context.getWindowName());
 		out.writeAttribute("data-context-path", context.getContextPath());
+		out.writeAttribute(PAGE_LOAD_ATTRIBUTE, pageLoad);
 		out.endBeginTag();
 
 		// Delegate rendering to the control itself. ReactControl.write() outputs a

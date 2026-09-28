@@ -6,6 +6,7 @@
 package com.top_logic.layout.view;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -198,7 +199,9 @@ public class ViewElement implements UIElement {
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		// Phase 2a: Create and register channels via factories.
+		// Phase 2a: Create and register channels via factories. The channels created here are owned
+		// by this instance of the view; the ones a parent pre-bound belong to the parent.
+		Map<String, ViewChannel> ownChannels = new LinkedHashMap<>();
 		List<ObservingChannel> observingChannels = new ArrayList<>();
 		for (Map.Entry<String, ChannelFactory> entry : _channelEntries) {
 			String name = entry.getKey();
@@ -209,6 +212,7 @@ public class ViewElement implements UIElement {
 			ChannelFactory factory = entry.getValue();
 			ViewChannel channel = factory.createChannel(context);
 			context.registerChannel(name, channel);
+			ownChannels.put(name, channel);
 			if (channel instanceof ObservingChannel observing) {
 				observingChannels.add(observing);
 			}
@@ -226,6 +230,9 @@ public class ViewElement implements UIElement {
 		// object here finds the channels to write. Cached content (a sidebar item, a tab visited
 		// earlier) stays announced while it lives, hence cleanup rather than detach.
 		registerDisplay(context, rootControl);
+
+		// Phase 3c: Release the channels of this instance together with its control.
+		releaseChannelsWith(context, rootControl, ownChannels);
 
 		// Phase 4: Anchor the participants and the observing channels in the display and wire
 		// attach/detach — the participants register/unregister with the RouteManager, the channels
@@ -269,6 +276,31 @@ public class ViewElement implements UIElement {
 		}
 
 		return rootControl;
+	}
+
+	/**
+	 * Releases the channels this instance created when its control is disposed, and removes them
+	 * from the context they were registered in.
+	 *
+	 * <p>
+	 * A channel computed from channels of an enclosing view subscribes to them, and the enclosing
+	 * view outlives this instance - a tile frame dropped from its stack, a view replaced by a
+	 * reload. Releasing the channels ends these subscriptions. Removing them from the context lets a
+	 * reload of the view build its control anew in the same context with channels of its own.
+	 * </p>
+	 */
+	private static void releaseChannelsWith(ViewContext context, IReactControl rootControl,
+			Map<String, ViewChannel> channels) {
+		if (channels.isEmpty() || !(rootControl instanceof ReactControl control)) {
+			return;
+		}
+		control.addCleanupAction(() -> {
+			for (Map.Entry<String, ViewChannel> entry : channels.entrySet()) {
+				ViewChannel channel = entry.getValue();
+				channel.release();
+				context.unregisterChannel(entry.getKey(), channel);
+			}
+		});
 	}
 
 	/**

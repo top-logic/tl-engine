@@ -590,10 +590,10 @@ public class ReactServlet extends TopLogicServlet {
 		ReactCommandTarget control = queue.getControl(controlId);
 		if (control == null) {
 			if (ReactFormFieldControl.CMD_VALUE_CHANGED.equals(commandName)) {
-				// A debounced field value flushed after its control was disposed: the edit was
+				// A debounced field value flushed after its control left the display: the edit was
 				// abandoned (e.g. the dialog was canceled), so dropping the value is the intended
 				// outcome, not an error.
-				Logger.debug("Dropped '" + commandName + "' for disposed control '" + controlId + "'.",
+				Logger.debug("Dropped '" + commandName + "' for undisplayed control '" + controlId + "'.",
 					ReactServlet.class);
 				sendSuccess(response);
 				return;

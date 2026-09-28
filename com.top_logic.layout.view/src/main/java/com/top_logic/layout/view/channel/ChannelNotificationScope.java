@@ -8,6 +8,8 @@ package com.top_logic.layout.view.channel;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.basic.Logger;
+
 /**
  * Per-thread scope tracking {@link ViewChannel} listener notifications in progress, letting
  * controls defer work until the outermost notification has unwound.
@@ -78,17 +80,35 @@ public final class ChannelNotificationScope {
 	 * Exits a listener notification; called by channel implementations after iterating their
 	 * listener snapshot. When the outermost notification exits, all
 	 * {@link #afterNotification(Runnable) deferred} actions run.
+	 *
+	 * <p>
+	 * Every deferred action runs, even if an earlier one fails: the actions are independent (each
+	 * typically disposes one replaced control subtree), and a subtree whose disposal is skipped
+	 * stays registered with its listeners for the lifetime of the session. A failing action is
+	 * logged rather than rethrown, because this method runs in the {@code finally} block of the
+	 * notification: an exception thrown here would replace the one a listener may have raised,
+	 * which is the failure the caller has to see.
+	 * </p>
 	 */
 	void exit() {
 		_depth--;
-		if (_depth == 0) {
+		if (_depth > 0) {
+			return;
+		}
+		try {
 			if (!_pending.isEmpty()) {
 				List<Runnable> actions = new ArrayList<>(_pending);
 				_pending.clear();
 				for (Runnable action : actions) {
-					action.run();
+					try {
+						action.run();
+					} catch (RuntimeException ex) {
+						Logger.error("Deferred action after channel notification failed: " + action, ex,
+							ChannelNotificationScope.class);
+					}
 				}
 			}
+		} finally {
 			// Drop the thread-local entry so pooled threads do not retain the scope.
 			SCOPE.remove();
 		}

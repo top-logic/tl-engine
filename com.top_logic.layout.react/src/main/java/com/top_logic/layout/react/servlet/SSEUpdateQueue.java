@@ -193,8 +193,14 @@ public class SSEUpdateQueue {
 	}
 
 	/**
-	 * Registers a {@link ReactCommandTarget} (typically a {@link ReactControl}) so that it can be
-	 * looked up by ID for command dispatch.
+	 * Registers a {@link ReactCommandTarget} so that it can be looked up by ID for command dispatch.
+	 *
+	 * <p>
+	 * A {@link ReactControl} is registered exactly while it is {@link ReactControl#isAttached()
+	 * attached}: {@link ReactControl#attach()} registers it and {@link ReactControl#detach()}
+	 * unregisters it. The queue therefore holds the controls the window displays, and no control that
+	 * left the display is kept alive by it.
+	 * </p>
 	 */
 	public void registerControl(ReactCommandTarget control) {
 		_controls.put(control.getID(), control);
@@ -202,6 +208,8 @@ public class SSEUpdateQueue {
 
 	/**
 	 * Unregisters a previously registered control.
+	 *
+	 * @see #registerControl(ReactCommandTarget)
 	 */
 	public void unregisterControl(ReactCommandTarget control) {
 		_controls.remove(control.getID(), control);
@@ -211,8 +219,10 @@ public class SSEUpdateQueue {
 	 * Whether any control is registered with this queue.
 	 *
 	 * <p>
-	 * A queue without any controls did not render a page in this session - it was typically
-	 * created empty by an SSE reconnect after the session was replaced underneath an open page.
+	 * Rendering a page attaches its root control, which stays registered as long as the page is
+	 * displayed. A queue without any controls therefore did not render a page in this session - it
+	 * was typically created empty by an SSE reconnect after the session was replaced underneath an
+	 * open page.
 	 * Commands arriving for such a window target the control tree of a discarded session.
 	 * </p>
 	 */
@@ -223,25 +233,21 @@ public class SSEUpdateQueue {
 	/**
 	 * Looks up a previously registered control by its ID.
 	 *
+	 * <p>
+	 * Only {@link #registerControl(ReactCommandTarget) registered}, i.e. displayed, controls are
+	 * found. A request that was sent for a control before the client unmounted it may arrive after
+	 * the server has detached it; missing such a control is expected and therefore logged at debug
+	 * level only.
+	 * </p>
+	 *
 	 * @return The control, or {@code null} if not found.
 	 */
 	public ReactCommandTarget getControl(String controlId) {
 		ReactCommandTarget control = _controls.get(controlId);
 		if (control == null) {
-			int total = _controls.size();
-			int attached = 0;
-			for (ReactCommandTarget target : _controls.values()) {
-				if (target instanceof ReactControl rc && rc.isAttached()) {
-					attached++;
-				}
-			}
-			// Diagnostic for "controls don't react": the browser is targeting a control the
-			// window's queue does not (or no longer) holds. An empty queue (total == 0) means the
-			// window's control tree was never built here or was torn down; a non-empty queue means
-			// the client is referencing a stale/disposed control ID.
-			Logger.warn("Command target '" + controlId + "' NOT FOUND in window '" + _windowName
-				+ "' (queue@" + System.identityHashCode(this) + "): " + total + " controls registered, "
-				+ attached + " attached. Registered IDs: " + _controls.keySet(), SSEUpdateQueue.class);
+			Logger.debug("Control '" + controlId + "' is not displayed in window '" + _windowName
+				+ "' (queue@" + System.identityHashCode(this) + ", " + _controls.size()
+				+ " controls registered).", SSEUpdateQueue.class);
 		}
 		return control;
 	}
@@ -251,8 +257,7 @@ public class SSEUpdateQueue {
 	 *
 	 * <p>
 	 * Set when the window's page is rendered. This is the single root the headless interface projects
-	 * from, so that controls still registered (for command dispatch) but no longer reachable from the
-	 * displayed tree (orphaned navigation content) are excluded.
+	 * from, following the displayed tree in display order.
 	 * </p>
 	 *
 	 * @param rootControl
@@ -343,14 +348,13 @@ public class SSEUpdateQueue {
 	 * </p>
 	 *
 	 * <p>
-	 * Only the controls the window still displays are sent: a
-	 * {@link #isRetired(ReactCommandTarget) retired} control is registered so that a command can
-	 * still reach it by ID, not because the client shows it.
+	 * Since a control is registered exactly while it is displayed, this sends the state of the
+	 * controls the window displays.
 	 * </p>
 	 */
 	private void sendFullState(SSEConnection connection) {
 		for (ReactCommandTarget control : _controls.values()) {
-			if (control instanceof ReactControl rc && !isRetired(rc)) {
+			if (control instanceof ReactControl rc) {
 				StateEvent event = StateEvent.create()
 					.setControlId(rc.getID())
 					.setState(rc.stateAsJSON());
@@ -444,8 +448,9 @@ public class SSEUpdateQueue {
 	}
 
 	/**
-	 * Whether the given event addresses a control that this window no longer displays: one that was
-	 * disposed (and thereby unregistered), or one that a container detached.
+	 * Whether the given event addresses a control that this window no longer displays, i.e. one
+	 * that is not {@link #registerControl(ReactCommandTarget) registered}: a container detached or
+	 * disposed it.
 	 */
 	private boolean addressesRetiredControl(SSEEvent event) {
 		String controlId;
@@ -456,28 +461,7 @@ public class SSEUpdateQueue {
 		} else {
 			return false;
 		}
-		ReactCommandTarget target = _controls.get(controlId);
-		if (target == null) {
-			return true;
-		}
-		return isRetired(target);
-	}
-
-	/**
-	 * Whether the given registered target is one this window no longer displays: a
-	 * {@link ReactControl} that a container detached.
-	 *
-	 * <p>
-	 * A control stays registered until it is disposed, so that a command can still reach it by ID
-	 * even while a container holds it aside. That is why {@link #sendFullState(SSEConnection)} asks
-	 * here instead of sending everything it can dispatch to: serializing a control attaches it,
-	 * because {@link ReactControl#writeAsChild(JsonWriter)} attaches what it renders. Serializing a
-	 * control the window does not display would thereby put its subtree back into the registries of
-	 * the display - the app bar would then paint the breadcrumb of a sidebar item the user has left.
-	 * </p>
-	 */
-	private boolean isRetired(ReactCommandTarget target) {
-		return target instanceof ReactControl control && !control.isAttached();
+		return !_controls.containsKey(controlId);
 	}
 
 	/**

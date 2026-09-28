@@ -6,17 +6,17 @@
 			<enum name="TicketStatus">
 				<classifier name="open">
 					<annotations>
-						<color token="support-warning"/>
+						<color role="warning"/>
 					</annotations>
 				</classifier>
 				<classifier name="inProgress">
 					<annotations>
-						<color token="support-info"/>
+						<color role="info"/>
 					</annotations>
 				</classifier>
 				<classifier name="closed">
 					<annotations>
-						<color token="support-success"/>
+						<color role="success"/>
 					</annotations>
 				</classifier>
 			</enum>

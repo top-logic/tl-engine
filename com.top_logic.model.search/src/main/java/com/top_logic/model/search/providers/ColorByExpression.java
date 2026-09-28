@@ -5,7 +5,6 @@
  */
 package com.top_logic.model.search.providers;
 
-import java.awt.Color;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
@@ -49,9 +48,11 @@ public class ColorByExpression extends AbstractConfiguredInstance<ColorByExpress
 		 * 
 		 * <p>
 		 * The function expects the object the color is requested for as single argument. The
-		 * result is either a color value or an enumeration literal carrying a color annotation.
-		 * For any other result, and for <code>null</code>, the object is displayed without a
-		 * color.
+		 * result is either an enumeration literal carrying a color annotation, or the name of a
+		 * color role of the design system: <code>neutral</code>, <code>brand</code>,
+		 * <code>error</code>, <code>warning</code>, <code>success</code>, <code>info</code>, or
+		 * <code>category-1</code> to <code>category-8</code>. For any other result, and for
+		 * <code>null</code>, the object is displayed without a color.
 		 * </p>
 		 */
 		@Name(COLOR)
@@ -79,14 +80,17 @@ public class ColorByExpression extends AbstractConfiguredInstance<ColorByExpress
 
 	/**
 	 * Evaluates the configured {@link Config#getColor() color expression} with the given object and
-	 * resolves its result: a {@link Color} value is the color itself, a {@link TLClassifier} is
-	 * colored by its {@link TLColor} annotation, anything else has no color.
+	 * resolves its result: a {@link TLClassifier} is colored by its {@link TLColor} annotation, a
+	 * string names a {@link ValueColor role} by its external name, anything else has no color.
 	 */
 	@Override
 	public ValueColor colorOf(Object value) {
 		Object result = _colorExpr.execute(value);
-		if (result instanceof Color || result instanceof TLClassifier) {
+		if (result instanceof TLClassifier) {
 			return AnnotationValueColorProvider.INSTANCE.colorOf(result);
+		}
+		if (result instanceof String name) {
+			return ValueColor.byExternalName(name);
 		}
 		return null;
 	}

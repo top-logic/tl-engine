@@ -110,6 +110,12 @@ public interface ViewContext extends ReactContext {
 	 * is configured.
 	 *
 	 * <p>
+	 * At the root of a window, this is the channel of the whole window: the channels of all scopes
+	 * within the window forward to it, see
+	 * {@link com.top_logic.layout.react.dirty.DirtyChannel#root()}.
+	 * </p>
+	 *
+	 * <p>
 	 * {@link com.top_logic.layout.view.form.StateHandler} implementations use this to register
 	 * their dirty state so that enclosing containers (e.g. tab bars) can check for unsaved changes
 	 * before navigation.
@@ -239,6 +245,23 @@ public interface ViewContext extends ReactContext {
 	 *         if a channel with the given name is already registered.
 	 */
 	void registerChannel(String name, ViewChannel channel);
+
+	/**
+	 * Removes a channel {@link #registerChannel(String, ViewChannel) registered} in this context.
+	 *
+	 * <p>
+	 * Called by the owner of the channel when it releases it, e.g. by a {@link ViewElement} whose
+	 * control is disposed. A later {@link #registerChannel(String, ViewChannel) registration} under
+	 * the same name - the view building its control anew in the same context - then succeeds.
+	 * </p>
+	 *
+	 * @param name
+	 *        The channel name.
+	 * @param channel
+	 *        The channel registered under this name. Nothing is removed if the name holds another
+	 *        channel.
+	 */
+	void unregisterChannel(String name, ViewChannel channel);
 
 	/**
 	 * Whether a channel with the given name is registered.

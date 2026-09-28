@@ -11,6 +11,7 @@ import java.util.Map;
 import junit.framework.TestCase;
 
 import com.top_logic.basic.json.JSON;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.sidebar.CommandItem;
@@ -20,6 +21,8 @@ import com.top_logic.layout.react.control.sidebar.SidebarItem;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.execution.ExecutableState;
+import com.top_logic.tool.execution.ExecutableState.CommandVisibility;
 
 /**
  * Tests that a {@link CommandItem} carries the executability of the command it hosts: to the
@@ -50,6 +53,9 @@ public class TestSidebarItemState extends TestCase {
 	private static final String ID = "id";
 
 	private static final String COMMAND_ID = "command";
+
+	/** The reason the hosted command's rules give for refusing it. */
+	private static final ResKey REASON = ResKey.text("Refused for a reason of the command's own.");
 
 	private int _executions;
 
@@ -142,6 +148,58 @@ public class TestSidebarItemState extends TestCase {
 
 		assertFalse("A command the user interface does not offer was run.", result.isSuccess());
 		assertEquals(0, _executions);
+	}
+
+	/**
+	 * An item refused by the state of its command reports that state with the reason the rules
+	 * gave, not the generic one of its flags.
+	 */
+	public void testADisabledItemReportsTheReasonOfItsCommand() {
+		CommandItem item = commandItem();
+		ReactSidebarControl sidebar = sidebar(item);
+		item.setExecutableState(ExecutableState.createDisabledState(REASON));
+		sidebar.refreshItems();
+
+		HandlerResult result = execute(sidebar);
+
+		assertFalse(result.isSuccess());
+		assertEquals(0, _executions);
+		assertEquals("The refusal must tell why.", REASON, result.getErrorMessage());
+		assertEquals(Boolean.TRUE, commandState(sidebar).get(DISABLED));
+		assertNull(commandState(sidebar).get(HIDDEN));
+	}
+
+	/** The same holds for an item its command hides. */
+	public void testAHiddenItemReportsTheReasonOfItsCommand() {
+		CommandItem item = commandItem();
+		ReactSidebarControl sidebar = sidebar(item);
+		item.setExecutableState(new ExecutableState(CommandVisibility.HIDDEN, REASON));
+		sidebar.refreshItems();
+
+		HandlerResult result = execute(sidebar);
+
+		assertFalse(result.isSuccess());
+		assertEquals(0, _executions);
+		assertEquals("The refusal must tell why.", REASON, result.getErrorMessage());
+		assertEquals(Boolean.TRUE, commandState(sidebar).get(HIDDEN));
+	}
+
+	/**
+	 * A flag set after the command's state no longer matches that state, so its reason is not
+	 * reported for a refusal it does not explain.
+	 */
+	public void testAStaleReasonIsNotReported() {
+		CommandItem item = commandItem();
+		ReactSidebarControl sidebar = sidebar(item);
+		item.setExecutableState(ExecutableState.createDisabledState(REASON));
+		item.setDisabled(false);
+		item.setHidden(true);
+
+		HandlerResult result = execute(sidebar);
+
+		assertFalse(result.isSuccess());
+		assertEquals(ExecutableState.NOT_EXEC_HIDDEN, item.getExecutableState());
+		assertNotSame(REASON, result.getErrorMessage());
 	}
 
 	/** The item as it is offered runs its action. */

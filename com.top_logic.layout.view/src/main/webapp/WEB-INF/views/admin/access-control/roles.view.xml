@@ -52,6 +52,7 @@
 							<executability>
 								<null-input-disabled/>
 							</executability>
+							<confirm expr="r -> #('Delete role {0}?'@en, 'Rolle {0} löschen?'@de).fill($r.get(`tl.accounts:Role#name`))"/>
 							<with-transaction>
 								<execute-script function="obj -> $obj.delete()"/>
 							</with-transaction>
@@ -79,7 +80,10 @@
 						<en>Role</en>
 						<de>Rolle</de>
 					</title>
-					<form input="selectedRole">
+					<form
+						input="selectedRole"
+						with-inset="true"
+					>
 						<field attribute="name"/>
 						<field attribute="isSystem"/>
 						<field attribute="description"/>

@@ -39,7 +39,6 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.manager.AccessManager;
-import com.top_logic.util.TLContext;
 
 /**
  * Tests for the {@link SecurityFilterReport} filled by the security filter of a script result.
@@ -129,14 +128,6 @@ public class TestSecurityFilterReport extends AbstractSearchExpressionTest {
 	private TLObject newObject(String className) {
 		TLClass type = (TLClass) TLModelUtil.findType("TestTLScriptSecurity:" + className);
 		return DynamicModelService.getFactoryFor("TestTLScriptSecurity").createObject(type);
-	}
-
-	/**
-	 * Establishes a person context for the given user, so that the security check is not bypassed by
-	 * a system context.
-	 */
-	private void becomeUser(Person person) {
-		TLContext.getContext().setCurrentPerson(person);
 	}
 
 	private TLStructuredType employeeType() {

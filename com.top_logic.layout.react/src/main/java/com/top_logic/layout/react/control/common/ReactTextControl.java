@@ -100,32 +100,34 @@ public class ReactTextControl extends ReactControl implements TooltipProvider {
 	 *
 	 * @param text
 	 *        The text to display, or {@code null}.
-	 * @param cssColor
-	 *        The CSS the color is applied with, or {@code null} for text without a color.
+	 * @param colorRole
+	 *        The external name of the {@link com.top_logic.model.annotate.ui.ValueColor color role},
+	 *        or {@code null} for text without a color.
 	 *
-	 * @see ReactValueColor#cssColorOf(Object)
+	 * @see ReactValueColor#roleOf(Object)
 	 */
-	public void setText(String text, String cssColor) {
+	public void setText(String text, String colorRole) {
 		Object tx = beginUpdate();
 		setText(text);
-		setColor(cssColor);
+		setColorRole(colorRole);
 		commitUpdate(tx);
 	}
 
 	/**
-	 * Updates the color the text is displayed with.
+	 * Updates the color role the text is displayed with.
 	 *
 	 * <p>
-	 * Text with a color is displayed as a pill in that color, text without one as plain text.
+	 * Text with a role is displayed as a pill of that role, text without one as plain text.
 	 * </p>
 	 *
-	 * @param cssColor
-	 *        The CSS the color is applied with, or {@code null} for text without a color.
+	 * @param colorRole
+	 *        The external name of the {@link com.top_logic.model.annotate.ui.ValueColor color role},
+	 *        or {@code null} for text without a color.
 	 *
-	 * @see ReactValueColor#cssColorOf(Object)
+	 * @see ReactValueColor#roleOf(Object)
 	 */
-	public void setColor(String cssColor) {
-		putState(ReactValueColor.COLOR, cssColor);
+	public void setColorRole(String colorRole) {
+		putState(ReactValueColor.ROLE, colorRole);
 	}
 
 	/**
@@ -218,6 +220,6 @@ public class ReactTextControl extends ReactControl implements TooltipProvider {
 	@Override
 	protected java.util.Set<String> scriptingPresentationKeys() {
 		return presentationKeys(super.scriptingPresentationKeys(), OVERFLOW, VARIANT, TONE, APPEARANCE,
-			ReactValueColor.COLOR);
+			ReactValueColor.ROLE);
 	}
 }

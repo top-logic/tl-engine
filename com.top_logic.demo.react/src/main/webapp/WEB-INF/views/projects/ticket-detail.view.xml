@@ -14,7 +14,10 @@
 			<en>Ticket</en>
 			<de>Ticket</de>
 		</title>
-		<form input="ticket">
+		<form
+			input="ticket"
+			with-inset="true"
+		>
 			<field attribute="title"/>
 			<field attribute="description"/>
 			<field attribute="milestone"/>

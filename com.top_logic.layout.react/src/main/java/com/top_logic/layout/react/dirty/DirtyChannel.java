@@ -96,6 +96,25 @@ public class DirtyChannel {
 	}
 
 	/**
+	 * The channel of the outermost scope enclosing this one.
+	 *
+	 * <p>
+	 * Every handler reported to this channel, or to any channel nested within it, is reported to
+	 * the outermost channel as well. For a scope within a browser window, this is the channel of
+	 * the whole window.
+	 * </p>
+	 *
+	 * @return This channel itself, if no dirty-tracked scope encloses it.
+	 */
+	public DirtyChannel root() {
+		DirtyChannel result = this;
+		while (result._parent != null) {
+			result = result._parent;
+		}
+		return result;
+	}
+
+	/**
 	 * Whether any handler tracked by this channel is currently dirty.
 	 */
 	public boolean hasDirtyHandlers() {

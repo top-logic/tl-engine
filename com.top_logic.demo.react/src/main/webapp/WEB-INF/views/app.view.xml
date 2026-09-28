@@ -252,6 +252,15 @@
 								<de>Spalten-Demo</de>
 							</label>
 						</nav-item>
+						<nav-item id="table-card-demo"
+							icon="css:bi bi-layout-text-sidebar"
+						>
+							<view-ref view="demo/table-card-demo.view.xml"/>
+							<label>
+								<en>Table and Card</en>
+								<de>Tabelle und Karte</de>
+							</label>
+						</nav-item>
 						<nav-item id="errors"
 							icon="css:bi bi-exclamation-triangle"
 						>
@@ -304,6 +313,24 @@
 							<label>
 								<en>Wizard</en>
 								<de>Assistent</de>
+							</label>
+						</nav-item>
+						<nav-item id="form-fill"
+							icon="css:bi bi-layout-text-window-reverse"
+						>
+							<view-ref view="demo/form-fill-demo.view.xml"/>
+							<label>
+								<en>Page form</en>
+								<de>Seitenformular</de>
+							</label>
+						</nav-item>
+						<nav-item id="form-cards"
+							icon="css:bi bi-card-list"
+						>
+							<view-ref view="demo/form-cards-demo.view.xml"/>
+							<label>
+								<en>Page form with cards</en>
+								<de>Seitenformular mit Karten</de>
 							</label>
 						</nav-item>
 						<nav-item id="calendar"

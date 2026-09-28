@@ -8,6 +8,7 @@ package com.top_logic.layout.view.form;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import com.top_logic.basic.util.ResKey;
@@ -18,6 +19,7 @@ import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * {@link CommandModel} that delegates to a {@link FormControl} for form lifecycle operations (edit,
@@ -46,6 +48,12 @@ public class FormCommandModel implements CommandModel {
 
 	private final Predicate<FormControl> _visibleWhen;
 
+	/**
+	 * The state explaining why the command is refused, {@code null} for a command whose conditions
+	 * give no reason beyond the form's lifecycle state.
+	 */
+	private final Function<FormControl, ExecutableState> _reason;
+
 	private final FormControl _form;
 
 	private boolean _executable;
@@ -69,7 +77,14 @@ public class FormCommandModel implements CommandModel {
 	private FormCommandModel(String name, ResKey labelKey, ThemeImage image, CommandPlacement placement,
 			FormControl form, Consumer<ReactContext> action, Predicate<FormControl> executableWhen,
 			Predicate<FormControl> visibleWhen) {
+		this(name, labelKey, image, placement, form, action, executableWhen, visibleWhen, null);
+	}
+
+	private FormCommandModel(String name, ResKey labelKey, ThemeImage image, CommandPlacement placement,
+			FormControl form, Consumer<ReactContext> action, Predicate<FormControl> executableWhen,
+			Predicate<FormControl> visibleWhen, Function<FormControl, ExecutableState> reason) {
 		_name = name;
+		_reason = reason;
 		_labelKey = labelKey;
 		_image = image;
 		_placement = placement;
@@ -98,7 +113,8 @@ public class FormCommandModel implements CommandModel {
 			CommandPlacement.TOOLBAR, form,
 			ctx -> form.enterEditMode(),
 			f -> f.getCurrentObject() != null && !f.isEditMode() && f.editPermission().isExecutable(),
-			f -> f.getCurrentObject() != null && !f.isEditMode() && f.editPermission().isVisible());
+			f -> f.getCurrentObject() != null && !f.isEditMode() && f.editPermission().isVisible(),
+			FormControl::editPermission);
 	}
 
 	/**
@@ -263,6 +279,36 @@ public class FormCommandModel implements CommandModel {
 		return _visible;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * A command refused by a permission rule - the Edit command, whose rule denies editing the
+	 * displayed object - reports the rule's state with its reason.
+	 * </p>
+	 */
+	@Override
+	public ExecutableState getExecutableState() {
+		return state(_visible, _executable);
+	}
+
+	/**
+	 * The state for the given visibility and executability of this command.
+	 */
+	private ExecutableState state(boolean visible, boolean executable) {
+		if (visible && executable) {
+			return ExecutableState.EXECUTABLE;
+		}
+		ExecutableState generic = visible ? ExecutableState.NOT_EXEC_DISABLED : ExecutableState.NOT_EXEC_HIDDEN;
+		if (_reason != null) {
+			ExecutableState reason = _reason.apply(_form);
+			if (!reason.isExecutable() && reason.isHidden() == generic.isHidden()) {
+				return reason;
+			}
+		}
+		return generic;
+	}
+
 	@Override
 	public CommandPlacement getPlacement() {
 		return _placement;
@@ -279,9 +325,9 @@ public class FormCommandModel implements CommandModel {
 	 * </p>
 	 */
 	@Override
-	public HandlerResult executeCommand(ReactContext context) {
+	public HandlerResult perform(ReactContext context) {
 		if (!_executableWhen.test(_form)) {
-			return HandlerResult.DEFAULT_RESULT;
+			return HandlerResult.notExecutable(state(_visibleWhen.test(_form), false));
 		}
 		_action.accept(context);
 		return HandlerResult.DEFAULT_RESULT;

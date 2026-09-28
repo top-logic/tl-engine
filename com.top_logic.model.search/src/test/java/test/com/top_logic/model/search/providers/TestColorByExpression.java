@@ -5,7 +5,6 @@
  */
 package test.com.top_logic.model.search.providers;
 
-import java.awt.Color;
 import java.util.Collections;
 import java.util.Map;
 
@@ -39,16 +38,21 @@ import com.top_logic.model.util.TLModelUtil;
 @SuppressWarnings("javadoc")
 public class TestColorByExpression extends AbstractSearchExpressionTest {
 
-	private static final Color LITERAL = new Color(0x04, 0xA3, 0x8D);
+	private static final ValueColor ROLE = ValueColor.SUCCESS;
 
-	private static final String TOKEN = "support-success";
+	public void testColorValueHasNoRole() throws Exception {
+		assertNull("A color value names no role of the design system.",
+			colorOf("x -> color('#04A38D')", "some object"));
+	}
 
-	public void testColorValueResult() throws Exception {
-		assertEquals(ValueColor.color(LITERAL), colorOf("x -> color('#04A38D')", "some object"));
+	public void testRoleNameResult() throws Exception {
+		assertEquals(ValueColor.CATEGORY_3, colorOf("x -> 'category-3'", "some object"));
+		assertNull("A string that names no role gives no color.",
+			colorOf("x -> 'support-success'", "some object"));
 	}
 
 	public void testClassifierResult() throws Exception {
-		assertEquals(ValueColor.themeToken(TOKEN), colorOf("x -> $x", coloredClassifier()));
+		assertEquals(ROLE, colorOf("x -> $x", coloredClassifier()));
 	}
 
 	public void testUncoloredClassifierResult() throws Exception {
@@ -72,7 +76,7 @@ public class TestColorByExpression extends AbstractSearchExpressionTest {
 
 		ValueColorProvider provider = TypedConfigUtil.createInstance(annotation.getColorProvider());
 		assertInstanceof(provider, ColorByExpression.class);
-		assertEquals(ValueColor.themeToken(TOKEN), provider.colorOf(coloredClassifier()));
+		assertEquals(ROLE, provider.colorOf(coloredClassifier()));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -98,7 +102,7 @@ public class TestColorByExpression extends AbstractSearchExpressionTest {
 
 	private TLClassifier coloredClassifier() {
 		TLColor color = TypedConfiguration.newConfigItem(TLColor.class);
-		color.setToken(TOKEN);
+		color.setRole(ROLE);
 
 		TLClassifier result = uncoloredClassifier();
 		result.setAnnotation(color);

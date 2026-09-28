@@ -2,7 +2,6 @@ import { React, useI18N, TLChild, tooltipProps } from 'tl-react-bridge';
 import type { Editor } from '@tiptap/react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import * as Popover from '@radix-ui/react-popover';
-import * as Separator from '@radix-ui/react-separator';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -308,94 +307,95 @@ const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload, toolbar
 
   return (
     <div className="tlWysiwygToolbar" role="toolbar" aria-label="Editor toolbar">
-      {/* Text formatting */}
-      <ToolbarButton
-        icon="ri-bold"
-        tooltip={t(labels, 'bold')}
-        active={editor.isActive('bold')}
-        onClick={() => editor.chain().focus().toggleBold().run()}
-      />
-      <ToolbarButton
-        icon="ri-italic"
-        tooltip={t(labels, 'italic')}
-        active={editor.isActive('italic')}
-        onClick={() => editor.chain().focus().toggleItalic().run()}
-      />
-      <ToolbarButton
-        icon="ri-underline"
-        tooltip={t(labels, 'underline')}
-        active={editor.isActive('underline')}
-        onClick={() => editor.chain().focus().toggleUnderline().run()}
-      />
-      <ToolbarButton
-        icon="ri-strikethrough"
-        tooltip={t(labels, 'strikethrough')}
-        active={editor.isActive('strike')}
-        onClick={() => editor.chain().focus().toggleStrike().run()}
-      />
+      <div className="tlWysiwygToolbar__groups">
+        {/* Text formatting */}
+        <div className="tlWysiwygToolbar__group">
+          <ToolbarButton
+            icon="ri-bold"
+            tooltip={t(labels, 'bold')}
+            active={editor.isActive('bold')}
+            onClick={() => editor.chain().focus().toggleBold().run()}
+          />
+          <ToolbarButton
+            icon="ri-italic"
+            tooltip={t(labels, 'italic')}
+            active={editor.isActive('italic')}
+            onClick={() => editor.chain().focus().toggleItalic().run()}
+          />
+          <ToolbarButton
+            icon="ri-underline"
+            tooltip={t(labels, 'underline')}
+            active={editor.isActive('underline')}
+            onClick={() => editor.chain().focus().toggleUnderline().run()}
+          />
+          <ToolbarButton
+            icon="ri-strikethrough"
+            tooltip={t(labels, 'strikethrough')}
+            active={editor.isActive('strike')}
+            onClick={() => editor.chain().focus().toggleStrike().run()}
+          />
+        </div>
 
-      <Separator.Root className="tlWysiwygToolbar__sep" orientation="vertical" decorative />
+        {/* Heading and list dropdowns */}
+        <div className="tlWysiwygToolbar__group">
+          <HeadingDropdown editor={editor} labels={labels} />
+          <ListDropdown editor={editor} labels={labels} />
+        </div>
 
-      {/* Heading dropdown */}
-      <HeadingDropdown editor={editor} labels={labels} />
+        {/* Block elements */}
+        <div className="tlWysiwygToolbar__group">
+          <ToolbarButton
+            icon="ri-double-quotes-l"
+            tooltip={t(labels, 'blockquote')}
+            active={editor.isActive('blockquote')}
+            onClick={() => editor.chain().focus().toggleBlockquote().run()}
+          />
+          <ToolbarButton
+            icon="ri-code-s-slash-line"
+            tooltip={t(labels, 'codeBlock')}
+            active={editor.isActive('codeBlock')}
+            onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+          />
+        </div>
 
-      {/* List dropdown */}
-      <ListDropdown editor={editor} labels={labels} />
+        {/* Link, Image, Table */}
+        <div className="tlWysiwygToolbar__group">
+          <LinkPopover editor={editor} labels={labels} />
+          <ToolbarButton
+            icon="ri-image-line"
+            tooltip={t(labels, 'image')}
+            onClick={onImageUpload}
+          />
+          <ToolbarButton
+            icon="ri-table-line"
+            tooltip={t(labels, 'table')}
+            onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
+          />
+        </div>
 
-      <Separator.Root className="tlWysiwygToolbar__sep" orientation="vertical" decorative />
+        {/* The commands the editor is configured with, in a toolbar of their own. */}
+        {toolbar != null && (
+          <div className="tlWysiwygToolbar__group tlWysiwygToolbar__group--commands">
+            <TLChild control={toolbar} />
+          </div>
+        )}
 
-      {/* Block elements */}
-      <ToolbarButton
-        icon="ri-double-quotes-l"
-        tooltip={t(labels, 'blockquote')}
-        active={editor.isActive('blockquote')}
-        onClick={() => editor.chain().focus().toggleBlockquote().run()}
-      />
-      <ToolbarButton
-        icon="ri-code-s-slash-line"
-        tooltip={t(labels, 'codeBlock')}
-        active={editor.isActive('codeBlock')}
-        onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-      />
-
-      <Separator.Root className="tlWysiwygToolbar__sep" orientation="vertical" decorative />
-
-      {/* Link, Image, Table */}
-      <LinkPopover editor={editor} labels={labels} />
-      <ToolbarButton
-        icon="ri-image-line"
-        tooltip={t(labels, 'image')}
-        onClick={onImageUpload}
-      />
-      <ToolbarButton
-        icon="ri-table-line"
-        tooltip={t(labels, 'table')}
-        onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
-      />
-
-      {/* The commands the editor is configured with, in a toolbar of their own. */}
-      {toolbar != null && (
-        <>
-          <Separator.Root className="tlWysiwygToolbar__sep" orientation="vertical" decorative />
-          <TLChild control={toolbar} />
-        </>
-      )}
-
-      <Separator.Root className="tlWysiwygToolbar__sep" orientation="vertical" decorative />
-
-      {/* History */}
-      <ToolbarButton
-        icon="ri-arrow-go-back-line"
-        tooltip={t(labels, 'undo')}
-        disabled={!editor.can().undo()}
-        onClick={() => editor.chain().focus().undo().run()}
-      />
-      <ToolbarButton
-        icon="ri-arrow-go-forward-line"
-        tooltip={t(labels, 'redo')}
-        disabled={!editor.can().redo()}
-        onClick={() => editor.chain().focus().redo().run()}
-      />
+        {/* History */}
+        <div className="tlWysiwygToolbar__group">
+          <ToolbarButton
+            icon="ri-arrow-go-back-line"
+            tooltip={t(labels, 'undo')}
+            disabled={!editor.can().undo()}
+            onClick={() => editor.chain().focus().undo().run()}
+          />
+          <ToolbarButton
+            icon="ri-arrow-go-forward-line"
+            tooltip={t(labels, 'redo')}
+            disabled={!editor.can().redo()}
+            onClick={() => editor.chain().focus().redo().run()}
+          />
+        </div>
+      </div>
     </div>
   );
 };

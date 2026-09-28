@@ -341,6 +341,9 @@
 					<method name="subString" class="com.top_logic.model.search.expr.config.operations.string.SubString$Builder"/>
 					<method name="toLowerCase" class="com.top_logic.model.search.expr.config.operations.string.ToLowerCase$Builder"/>
 					<method name="toUpperCase" class="com.top_logic.model.search.expr.config.operations.string.ToUpperCase$Builder"/>
+					<method name="trim" class="com.top_logic.model.search.expr.config.operations.string.Trim$Builder"/>
+					<method name="trimStart" class="com.top_logic.model.search.expr.config.operations.string.Trim$Builder" side="START"/>
+					<method name="trimEnd" class="com.top_logic.model.search.expr.config.operations.string.Trim$Builder" side="END"/>
 
 					<method name="toString" class="com.top_logic.model.search.expr.ToString$Builder"/>
 					<method name="base64Encode" class="com.top_logic.model.search.expr.config.operations.binary.Base64Encode$Builder"/>

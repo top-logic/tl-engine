@@ -106,6 +106,10 @@ public class TestTableViewDragDrop extends TestCase {
 		_target = newTable();
 		_announced = new Announced(List.of(PERSON), true);
 		_target.setDropTarget(_announced);
+
+		// Both tables are displayed: only a displayed control can be addressed by its ID.
+		_source.attach();
+		_target.attach();
 	}
 
 	private TableViewControl<Person> newTable() {

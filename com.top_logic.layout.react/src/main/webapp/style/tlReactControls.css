@@ -253,14 +253,16 @@ button.tlCounter__button:focus {
    Spacing model.
 
    Containers never introduce padding - everything flushes to the container
-   border by default. Breathing room is owned by the *content*:
+   border by default. Breathing room is explicit:
 
-     - Forms pad themselves (.tlFormLayout), so a form renders nicely in any
-       container, pane, tab or dialog.
-     - The dashboard layout pads itself (its outer inset == its tile gap).
      - The explicit <inset> element (.tlInset) is dropped into a view
-       wherever content would otherwise glue to the border (e.g. a stack/grid
-       of cards, or explanatory text in a dialog).
+       wherever content would otherwise glue to the border (e.g. a form in a
+       tab or dialog, a stack/grid of cards, or explanatory text in a dialog).
+     - A form grid (.tlFormLayout) is a plain layout and does not pad itself.
+       A form that needs room sets with-inset="true", which wraps it in the same
+       .tlInset, or sits in an <inset>.
+     - The dashboard layout pads itself (its outer inset == its tile gap).
+     - A card sets a reduced --page-inset, which every inset inside it picks up.
 
    Simple layouts (<stack>, <grid>) and chrome containers (sidebar content, tab
    content, split panes, panel body, dialog body) do NOT pad. A <panel> (dark
@@ -1169,7 +1171,7 @@ div.tlValueList {
 
 /* Card appearance: a bordered, rounded panel reading as one self-contained entry of a list
    (e.g. a comment). The tinted header visually binds byline and content together; compact
-   insets keep the entry tight - forms inside pick up the reduced inset via --page-inset. */
+   insets keep the entry tight - insets inside pick up the reduced inset via --page-inset. */
 .tlPanel--card {
 	border: 1px solid var(--border-subtle);
 	border-radius: var(--border-radius-02);
@@ -2086,11 +2088,16 @@ button.tlDrawerToggle:focus-visible {
 
 /* --- TLCard ---------------------------------------------------------------- */
 
+/* The overflow clip keeps the content inside the rounded corners. It also drops the card's
+   automatic minimum height in a flex container to zero, so the minimum is set to the content's
+   height explicitly: a card sharing a column with a filling control keeps its full content instead
+   of giving up height to it. */
 .tlCard {
 	border-radius: var(--border-radius-02);
 	font-family: var(--font-family);
 	background: var(--layer-01);
 	overflow: hidden;
+	min-height: min-content;
 }
 
 .tlCard--outlined {
@@ -2521,8 +2528,8 @@ button.tlWindow__maximizeBtn:focus-visible {
 	/* Content wider than the (viewport-clamped) window scrolls inside the body instead
 	   of being clipped by the window's rounded-corner overflow. */
 	overflow-x: auto;
-	/* Flush: a dialog is a container too - its content owns its inset (a self-padding
-	   form, or a <padding> around explanatory text). */
+	/* Flush: a dialog is a container too - its content owns its inset (a form with
+	   with-inset, or an <inset> around explanatory text). */
 }
 
 /* The footer consists of a single collapsing toolbar, which states its natural width and gives
@@ -3045,6 +3052,10 @@ button.tlMenu__item--disabled:hover {
 
 /* --- TLTableView ----------------------------------------------------------- */
 
+/* The table always fills (see the fill contract above): inside a flex column, .tlFill sizes it
+   from the height its container offers, and its flex basis takes precedence over the height set
+   here. The height applies to a container laying the table out as a block, which then gives it
+   its own definite height. */
 .tlTableView {
 	display: flex;
 	flex-direction: column;
@@ -3633,14 +3644,6 @@ button.tlMenu__item--disabled:hover {
 
 /* --- The shape the text takes ---------------------------------------------- */
 
-/* Text drawn as a pill whether or not its value carries a color. The pill of a text that asked for
-   one reads in the size of the text's own role, rather than in the size a pill beside plain text
-   is drawn in. */
-.tlText--pill .tlPill {
-	font-size: inherit;
-	line-height: inherit;
-}
-
 /* A theme icon shown on its own, sitting on the text baseline of what it accompanies. */
 .tlIcon {
 	display: inline-flex;
@@ -3663,40 +3666,6 @@ button.tlMenu__item--disabled:hover {
 /* Emphasized text, e.g. the author name in a byline (opt-in via css-class="tlText--strong"). */
 .tlText--strong {
 	font-weight: 600;
-}
-
-/* A value the model gives a color, drawn as a pill in that color. The color arrives from the
-   server as the custom property --tlPill-color - a color value, or a var(--token) reference to a
-   design token - so background, border and text are all composed from the one color and follow a
-   theme switch. There is no class per color; without a color from the server the pill draws in
-   the text color around it. */
-.tlPill {
-	--tlPill-color: currentColor;
-	display: inline-flex;
-	align-items: center;
-	gap: var(--spacing-01);
-	max-width: 100%;
-	overflow: hidden;
-	padding: 0 var(--spacing-02);
-	border: 1px solid var(--tlPill-color);
-	border-radius: 999px;
-	background-color: transparent;
-	color: var(--tlPill-color);
-	font-size: var(--label-01-font-size);
-	line-height: 1.5;
-	white-space: nowrap;
-	text-overflow: ellipsis;
-}
-
-/* The tint that makes the pill legible: the color mixed into the surface behind it for the
-   background and the border, and mixed into the text color for the label - which darkens it on a
-   light theme and lightens it on a dark one, from the same declaration. */
-@supports (color: color-mix(in srgb, red 10%, white)) {
-	.tlPill {
-		border-color: color-mix(in srgb, var(--tlPill-color) 40%, var(--color-surface));
-		background-color: color-mix(in srgb, var(--tlPill-color) 16%, var(--color-surface));
-		color: color-mix(in srgb, var(--tlPill-color) 72%, var(--text-primary));
-	}
 }
 
 /* --- TLResourceCell --------------------------------------------------------- */
@@ -4441,8 +4410,6 @@ button.tlMenu__item--disabled:hover {
 	font-family: var(--font-family);
 	width: 100%;
 	box-sizing: border-box;
-	/* A form owns its breathing room, so it renders nicely in any flush container. */
-	padding: var(--page-inset);
 }
 
 .tlFormLayout--empty {
@@ -4452,12 +4419,16 @@ button.tlMenu__item--disabled:hover {
 	min-height: 4rem;
 }
 
-/* A form whose sole content is a table drops its page inset and lets the table fill the area, so
-   no empty frame is drawn around the self-scrolling, full-bleed table. */
-.tlFormLayout--flush {
-	display: block;
-	padding: 0;
-	height: 100%;
+/* A form hosting a filling region is a column: the filling child takes the height the form is
+   offered (the form itself carries .tlFill and asks its own container for it - see the fill
+   contract above), while every other child keeps the height of its content. */
+.tlFormLayout--fill {
+	display: flex;
+	flex-direction: column;
+}
+
+.tlFormLayout--fill > :not(.tlFill) {
+	flex-shrink: 0;
 }
 
 .tlFormLayout__noModel {
@@ -4870,10 +4841,8 @@ button.tlMenu__item--disabled:hover {
 	color: var(--text-primary);
 }
 
-/* Input wrapper. It is a "label" element when the field's label is hidden, which lays out as a
-   block like the "div" of a visible-label field, whatever the element's inline default. */
+/* Input wrapper */
 .tlFormField__input {
-	display: block;
 	min-width: 0;
 }
 

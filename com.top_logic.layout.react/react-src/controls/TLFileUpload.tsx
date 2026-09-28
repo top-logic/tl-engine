@@ -1,4 +1,4 @@
-import { React, useTLState, useTLUpload, useI18N, rootClassName, tooltipProps } from 'tl-react-bridge';
+import { React, useTLState, useTLUpload, useI18N, rootClassName, tooltipProps, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -9,6 +9,8 @@ const I18N_KEYS = {
 type LocalStatus = 'idle' | 'uploading';
 
 const TLFileUpload: React.FC<TLCellProps> = ({ controlId }) => {
+  const inputId = fieldInputId(controlId);
+  const labelProps = useFieldLabelProps(controlId, inputId);
   const state = useTLState();
   const upload = useTLUpload();
 
@@ -35,6 +37,8 @@ const TLFileUpload: React.FC<TLCellProps> = ({ controlId }) => {
     if (file) {
       doUpload(file);
     }
+    // Reset so picking the same file again still fires a change event.
+    e.target.value = '';
   }, [doUpload]);
 
   const handleButtonClick = React.useCallback(() => {
@@ -91,6 +95,8 @@ const TLFileUpload: React.FC<TLCellProps> = ({ controlId }) => {
         disabled={isDisabled}
         aria-label={buttonLabel}
         {...tooltipProps(buttonLabel)}
+        id={inputId}
+        {...labelProps}
       >
         <svg className="tlFileUpload__icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
           <path d="M8 10V1m0 0L4.5 4.5M8 1l3.5 3.5M2 13h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />

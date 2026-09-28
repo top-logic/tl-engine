@@ -12,6 +12,7 @@ import java.util.Map;
 
 import junit.framework.Test;
 
+import test.com.top_logic.basic.AssertNoErrorLogListener;
 import test.com.top_logic.basic.AssertProtocol;
 import test.com.top_logic.knowledge.service.db2.AbstractDBKnowledgeBaseTest;
 import test.com.top_logic.knowledge.wrap.SimpleWrapperFactoryTestScenario.BObj;
@@ -223,6 +224,28 @@ public class TestSelectValueObservation extends AbstractDBKnowledgeBaseTest {
 	}
 
 	/**
+	 * Tests that deleting the displayed object leaves the display alone: the deletion arrives while
+	 * the field still holds the deleted object, which can no longer be described.
+	 */
+	public void testDeletingTheDisplayedObjectKeepsTheDisplay() throws Exception {
+		BObj b1 = create("b1");
+		ReactDropdownSelectControl field = displayedField(b1);
+		field.executeCommand(CMD_LOAD_OPTIONS, Map.of());
+		String before = field.stateAsJSON();
+
+		AssertNoErrorLogListener errors = new AssertNoErrorLogListener(false);
+		try {
+			delete(b1);
+
+			errors.assertNoErrorLogged("Delivering the deletion must not fail the field.");
+		} finally {
+			errors.deactivate();
+		}
+		assertEquals("The field keeps what it shows until it receives its next value.", before,
+			field.stateAsJSON());
+	}
+
+	/**
 	 * A field displaying the given object, as the user sees it.
 	 */
 	private ReactDropdownSelectControl displayedField(BObj value) {
@@ -293,6 +316,20 @@ public class TestSelectValueObservation extends AbstractDBKnowledgeBaseTest {
 		Transaction tx = begin();
 		try {
 			object.setA1(name);
+			tx.commit();
+		} finally {
+			tx.rollback();
+		}
+		deliverChanges();
+	}
+
+	/**
+	 * Deletes the given object and delivers the resulting change.
+	 */
+	private void delete(BObj object) throws Exception {
+		Transaction tx = begin();
+		try {
+			object.tDelete();
 			tx.commit();
 		} finally {
 			tx.rollback();

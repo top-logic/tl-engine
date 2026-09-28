@@ -46,6 +46,12 @@ import com.top_logic.util.error.TopLogicException;
  * command runs.
  * </p>
  *
+ * <p>
+ * Snapshots reach the channel in the order they were taken: taking a snapshot and delivering it is
+ * one step for the worker and the flush alike, so a snapshot taken before the job ended is never
+ * delivered after the one that ends it.
+ * </p>
+ *
  * @see JobMonitor
  * @see JobControl
  */
@@ -63,6 +69,19 @@ public class JobRunner implements JobControl, JobMonitor {
 
 	/** Guards everything the snapshot is built from. */
 	private final Object _lock = new Object();
+
+	/**
+	 * Orders the deliveries of the worker and the flush.
+	 *
+	 * <p>
+	 * Held from taking a snapshot until it is delivered - written to the channel and, for the one
+	 * ending the job, handed to whoever waits for it - so that snapshots are delivered one after
+	 * the other and in the order they were taken. Acquired before {@link #_lock} and before the
+	 * interaction of the window, never while holding either of them. {@link #cancel()} does not
+	 * take it, so that stopping a job never waits for a delivery.
+	 * </p>
+	 */
+	private final Object _deliveryLock = new Object();
 
 	private final Date _startedAt = new Date();
 
@@ -332,16 +351,18 @@ public class JobRunner implements JobControl, JobMonitor {
 	 * snapshot was published so recently that this one is held back for the flush.
 	 */
 	private void report(Runnable change) {
-		JobState state;
-		synchronized (_lock) {
-			if (_status != JobStatus.RUNNING) {
-				return;
+		synchronized (_deliveryLock) {
+			JobState state;
+			synchronized (_lock) {
+				if (_status != JobStatus.RUNNING) {
+					return;
+				}
+				change.run();
+				state = due();
 			}
-			change.run();
-			state = due();
-		}
-		if (state != null) {
-			deliver(state);
+			if (state != null) {
+				deliver(state);
+			}
 		}
 	}
 
@@ -356,22 +377,24 @@ public class JobRunner implements JobControl, JobMonitor {
 	 *        Why it failed, for a failed one.
 	 */
 	private void finish(JobStatus status, Object result, ResKey error) {
-		JobState state;
-		synchronized (_lock) {
-			if (_status != JobStatus.RUNNING) {
-				return;
+		synchronized (_deliveryLock) {
+			JobState state;
+			synchronized (_lock) {
+				if (_status != JobStatus.RUNNING) {
+					return;
+				}
+				_status = status;
+				_result = result;
+				_error = error;
+				_finishedAt = new Date();
+				if (status == JobStatus.COMPLETED && !_phases.isEmpty()) {
+					_currentPhase = _phases.size();
+				}
+				_lastDelivery = System.currentTimeMillis();
+				state = snapshot();
 			}
-			_status = status;
-			_result = result;
-			_error = error;
-			_finishedAt = new Date();
-			if (status == JobStatus.COMPLETED && !_phases.isEmpty()) {
-				_currentPhase = _phases.size();
-			}
-			_lastDelivery = System.currentTimeMillis();
-			state = snapshot();
+			deliver(state);
 		}
-		deliver(state);
 	}
 
 	/**
@@ -379,16 +402,18 @@ public class JobRunner implements JobControl, JobMonitor {
 	 * passed.
 	 */
 	private void flush() {
-		JobState state;
-		synchronized (_lock) {
-			_flushScheduled = false;
-			if (_status != JobStatus.RUNNING) {
-				return;
+		synchronized (_deliveryLock) {
+			JobState state;
+			synchronized (_lock) {
+				_flushScheduled = false;
+				if (_status != JobStatus.RUNNING) {
+					return;
+				}
+				_lastDelivery = System.currentTimeMillis();
+				state = snapshot();
 			}
-			_lastDelivery = System.currentTimeMillis();
-			state = snapshot();
+			deliver(state);
 		}
-		deliver(state);
 	}
 
 	/**
@@ -417,6 +442,10 @@ public class JobRunner implements JobControl, JobMonitor {
 	 * Publishes the given snapshot from a thread that is not serving the window - the worker, or the
 	 * one the flush runs on - in the sub-session the job was started from and under the interaction
 	 * of the window.
+	 *
+	 * <p>
+	 * Called while holding {@link #_deliveryLock}.
+	 * </p>
 	 */
 	private void deliver(JobState state) {
 		SubSessionContext subSession = _subSession;

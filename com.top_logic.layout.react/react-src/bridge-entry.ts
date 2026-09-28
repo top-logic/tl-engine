@@ -24,6 +24,8 @@ export {
 export { ANCHORED_OVERLAY_ATTR, anchoredOverlayProps, firstFocusable } from './bridge/focus-trap';
 export { TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED, TOOLTIP_WHEN_CLIPPED, tooltipProps } from './bridge/tooltip-host';
 export { CMD_SUBMIT, CMD_VALUE_CHANGED } from './bridge/command-channel';
+export { FieldLabelContext, fieldLabel, fieldInputId, useFieldLabelProps, focusFieldInput } from './bridge/field-label';
+export type { FieldLabel, FieldLabelProps } from './bridge/field-label';
 export { writeDragPayload, readDragPayload, dragTypeAccepted, dropPositionAt } from './bridge/drag-drop';
 export type { TLDragPayload, TLDropPosition } from './bridge/drag-drop';
 export { startPointerDrag, DRAG_SHIELD_CLASS } from './bridge/pointer-drag';
@@ -65,6 +67,13 @@ export type { ChildDescriptor } from './bridge/TLChild';
 import React from 'react';
 import ReactDOM from 'react-dom';
 export { React, ReactDOM };
+
+// Re-export the react-dom entry points that controls legitimately need. Without these, a control
+// has no rule-conforming way to create a portal and is forced to `import { createPortal } from
+// 'react-dom'` -- which drags a second copy of React *and* react-dom into tl-react-controls.js,
+// exactly what the note above forbids.
+export const createPortal = ReactDOM.createPortal;
+export const flushSync = ReactDOM.flushSync;
 
 // Expose bridge functions on window so that server-generated inline scripts
 // (e.g. TLReact.mount(...) from ReactControl) and GWT-compiled code

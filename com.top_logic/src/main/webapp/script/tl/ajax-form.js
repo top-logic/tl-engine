@@ -28,6 +28,28 @@ services.form = {
 		});
 	},
 	
+	/**
+	 * Displays the message of an upload that the server refused.
+	 *
+	 * The body of such a response is a rendered info service item. It is shown in the info area of
+	 * the top level window, in the same way as a message produced during a command.
+	 *
+	 * @param response
+	 *            The response of the upload request.
+	 * @returns A promise that is resolved after a potential message has been displayed, so that the
+	 *          command following the upload can be chained.
+	 */
+	handleUploadResponse: function(response) {
+		if (response.ok) {
+			return Promise.resolve();
+		}
+		return response.text().then(function(message) {
+			if (message != "") {
+				showInfoArea(message);
+			}
+		});
+	},
+	
 	callback: function(ctrlId, ...parameters) {
 		services.ajax.execute("dispatchControlCommand", {
 			controlCommand: "callback",
@@ -4180,7 +4202,8 @@ services.form = {
 			fetch(uploadUrl, {
 			  method: "POST", 
 			  body: formData
-			}).then((response) => self.uploadPerformed(controlID));
+			}).then((response) => services.form.handleUploadResponse(response))
+			  .then(() => self.uploadPerformed(controlID));
 		},
 		
 		uploadPerformed: function(controlID) {
@@ -4251,7 +4274,8 @@ services.form = {
 			fetch(uploadUrl, {
 				method: "POST", 
 				body: formData
-			}).then((response) => self.uploadPerformed(controlID));
+			}).then((response) => services.form.handleUploadResponse(response))
+			  .then(() => self.uploadPerformed(controlID));
 		},
 		
 		uploadPerformed: function(controlID) {

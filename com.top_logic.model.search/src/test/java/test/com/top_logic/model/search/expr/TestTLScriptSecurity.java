@@ -272,19 +272,6 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 	}
 
 	/**
-	 * Establishes a (non-system) person context for the given user.
-	 *
-	 * <p>
-	 * Setting the person automatically derives a {@link SessionContext#PERSON_ID_PREFIX person}
-	 * context id, so {@link ThreadContext#isSystemContext()} is {@code false} and the security check
-	 * is not bypassed.
-	 * </p>
-	 */
-	private void becomeUser(Person person) {
-		TLContext.getContext().setCurrentPerson(person);
-	}
-
-	/**
 	 * The committed result evaluated for the restricted user must not reveal projects through an
 	 * attribute of an employee that the user is not allowed to read.
 	 *

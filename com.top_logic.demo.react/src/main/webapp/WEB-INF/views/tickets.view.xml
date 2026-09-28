@@ -91,7 +91,7 @@
 		<derived-channel name="ticketId"
 			expr="t -> objectId($t)"
 			inputs="ticket"
-			reverse="id -> objectResolve(`demo.tickets:Ticket`, $id)"
+			reverse="id -> $id.objectResolve(`demo.tickets:Ticket`)"
 		/>
 		<derived-channel name="ticketState"
 			expr="t -> if($t == null, '', if($t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`, 'closed', 'open'))"
@@ -303,7 +303,7 @@
 							observed-types="demo.tickets:Ticket"
 							total="x -> all(`demo.tickets:Ticket`).size()"
 						/>
-						<fields>
+						<fields with-inset="true">
 							<value-input
 								type="tl.core:String"
 								value="searchTerm"
@@ -478,7 +478,10 @@
 							<en>Conversation</en>
 							<de>Verlauf</de>
 						</title>
-						<form input="ticket">
+						<form
+							input="ticket"
+							with-inset="true"
+						>
 							<field attribute="status"/>
 						</form>
 						<inset>

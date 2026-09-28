@@ -65,6 +65,31 @@ public class SearchExpressionFactory {
 	}
 
 	/**
+	 * Sets the {@link GenericMethodWithSecurity#usesSecurity() security flag} of the given method
+	 * call.
+	 *
+	 * <p>
+	 * A {@link GenericMethodWithSecurity} is re-created from its
+	 * {@link com.top_logic.model.search.expr.config.operations.MethodBuilder} with security enabled.
+	 * A generic transformation tree therefore carries the flag of the original call in a wrapper
+	 * node that is materialized by this method.
+	 * </p>
+	 *
+	 * @param method
+	 *        The method call to update.
+	 * @param usesSecurity
+	 *        See {@link GenericMethodWithSecurity#usesSecurity()}.
+	 * @return The given method call.
+	 *
+	 * @see com.top_logic.model.search.expr.visit.GenericDescendingVisitor#visitGenericMethod(GenericMethod,
+	 *      Object)
+	 */
+	public static GenericMethodWithSecurity withSecurity(GenericMethodWithSecurity method, boolean usesSecurity) {
+		method.setUsesSecurity(usesSecurity);
+		return method;
+	}
+
+	/**
 	 * Creates a pre-compiled expression that evaluates the given knowledge base query.
 	 * 
 	 * <p>

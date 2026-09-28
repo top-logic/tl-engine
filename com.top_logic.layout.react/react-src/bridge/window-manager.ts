@@ -18,6 +18,16 @@ function getMyWindowId(): string {
   return document.body.dataset.windowName ?? '';
 }
 
+/**
+ * The token the server issued for this page, or undefined for a page that carries none.
+ *
+ * Reported with the unload notification, so that the server can tell the unload of the page it
+ * displays from the late unload of a page a reload has already replaced.
+ */
+function getPageLoad(): string | undefined {
+  return document.body.dataset.pageLoad;
+}
+
 /** The context path for URL construction. */
 function getContextPath(): string {
   return document.body.dataset.contextPath ?? '';
@@ -150,7 +160,7 @@ export function initSelfCloseNotification(): void {
       controlId: '',
       command: 'windowClosed',
       windowName: myWindowId,
-      arguments: { windowId: myWindowId, unload: true },
+      arguments: { windowId: myWindowId, unload: true, pageLoad: getPageLoad() },
     });
     const blob = new Blob([payload], { type: 'application/json' });
     navigator.sendBeacon(`${contextPath}/react-api/command`, blob);

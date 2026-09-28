@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 
 import com.top_logic.basic.NamedConstant;
 import com.top_logic.basic.annotation.FrameworkInternal;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.layout.DisplayContext;
@@ -76,6 +77,21 @@ public final class EvalContext {
 	 */
 	public boolean isInteractive() {
 		return _interactive;
+	}
+
+	/**
+	 * Refuses a call of the function with the given name, if it happens in an
+	 * {@link #isInteractive() interactive} context and the current user is not an administrator.
+	 *
+	 * @param functionName
+	 *        The name of the called function, for the error message.
+	 * @throws TopLogicException
+	 *         If the call is not allowed.
+	 */
+	public void checkAdmin(String functionName) throws TopLogicException {
+		if (isInteractive() && !ThreadContext.isAdmin()) {
+			throw new TopLogicException(I18NConstants.PERMISSION_DENIED__NAME.fill(functionName));
+		}
 	}
 
 	/**

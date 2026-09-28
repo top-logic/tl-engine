@@ -9,6 +9,12 @@ import java.util.List;
 
 /**
  * Resolves a {@link ResourceConfig} declaration to the concrete context-relative URL(s) to emit.
+ *
+ * <p>
+ * A resolved URL may differ from the declared resource path, e.g. by a content version in its
+ * query string (see {@link DefaultResourceResolver}). The resolved URL changes when the resource
+ * content changes, so all references to one resource on a page must use a single resolved URL.
+ * </p>
  */
 public interface ResourceResolver {
 

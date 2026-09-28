@@ -9,6 +9,7 @@ import java.util.Map;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * A sidebar item that executes a server-side command when clicked.
@@ -27,6 +28,12 @@ public class CommandItem extends SidebarItem {
 	private boolean _hidden;
 
 	private boolean _disabled;
+
+	/**
+	 * The state last {@link #setExecutableState(ExecutableState) set}, {@code null} if the item's
+	 * state was only set through its flags.
+	 */
+	private ExecutableState _executableState;
 
 	private String _tooltip;
 
@@ -147,6 +154,42 @@ public class CommandItem extends SidebarItem {
 	public CommandItem withDisabled(boolean disabled) {
 		setDisabled(disabled);
 		return this;
+	}
+
+	/**
+	 * The state that decides whether this item is offered, and why not.
+	 *
+	 * <p>
+	 * Agrees with {@link #isHidden()} and {@link #isDisabled()}. While the item is refused, this is
+	 * the state {@link #setExecutableState(ExecutableState) set} for the hosted command, whose
+	 * {@link ExecutableState#getI18NReasonKey() reason} explains the refusal, or the generic
+	 * {@link ExecutableState#NOT_EXEC_HIDDEN} or {@link ExecutableState#NOT_EXEC_DISABLED} if the
+	 * item's flags were set without a state.
+	 * </p>
+	 */
+	public ExecutableState getExecutableState() {
+		if (_hidden) {
+			return _executableState != null && _executableState.isHidden() ? _executableState
+				: ExecutableState.NOT_EXEC_HIDDEN;
+		}
+		if (_disabled) {
+			return _executableState != null && _executableState.isDisabled() ? _executableState
+				: ExecutableState.NOT_EXEC_DISABLED;
+		}
+		return ExecutableState.EXECUTABLE;
+	}
+
+	/**
+	 * Sets the {@link #getExecutableState() state} of the hosted command, and with it
+	 * {@link #isHidden()} and {@link #isDisabled()}.
+	 *
+	 * @param state
+	 *        The state the hosted command's rules assign.
+	 */
+	public void setExecutableState(ExecutableState state) {
+		_executableState = state;
+		_hidden = state.isHidden();
+		_disabled = !state.isExecutable();
 	}
 
 	/**

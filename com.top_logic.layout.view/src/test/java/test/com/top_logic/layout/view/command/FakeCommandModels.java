@@ -54,7 +54,7 @@ final class FakeCommandModels {
 			}
 
 			@Override
-			public HandlerResult executeCommand(ReactContext context) {
+			public HandlerResult perform(ReactContext context) {
 				return HandlerResult.DEFAULT_RESULT;
 			}
 

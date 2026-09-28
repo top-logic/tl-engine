@@ -190,7 +190,7 @@ public class TestSlotUrlAdoption extends TestCase {
 	 *
 	 * <p>
 	 * The page being left is unloaded first, which detaches the tree the way
-	 * {@link com.top_logic.layout.react.window.ReactWindowRegistry#windowUnloaded(String)} does, then
+	 * {@link com.top_logic.layout.react.window.ReactWindowRegistry#windowUnloaded(String, String)} does, then
 	 * the URL is adopted and the tree rendered, and finally the loaded page opens its event stream,
 	 * which hands it the state of every registered control - the SSE endpoint of
 	 * {@link com.top_logic.layout.react.servlet.ReactServlet} calling

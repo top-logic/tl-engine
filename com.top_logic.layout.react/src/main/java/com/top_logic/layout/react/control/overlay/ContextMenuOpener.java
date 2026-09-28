@@ -8,13 +8,14 @@ package com.top_logic.layout.react.control.overlay;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.overlay.ReactMenuControl.MenuEntry;
+import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Composes a single context menu from multiple {@link ContextMenuContribution}s and dispatches
@@ -33,6 +34,12 @@ import com.top_logic.layout.react.control.overlay.ReactMenuControl.MenuEntry;
  * </p>
  *
  * <p>
+ * A selection runs the command through {@link CommandModel#executeCommand(ReactContext)}, and
+ * its result - the refusal of a command that is not executable included - is the result of the
+ * selection.
+ * </p>
+ *
+ * <p>
  * The opener uses a {@link MenuRenderer} abstraction over {@code ReactMenuControl} so that it can
  * be unit-tested without a real control.
  * </p>
@@ -46,8 +53,13 @@ public class ContextMenuOpener {
 	public interface MenuRenderer {
 		/**
 		 * Show a menu at the given pixel coordinates with the given items.
+		 *
+		 * @param selectHandler
+		 *        Called with the ID of the selected item, returning the result of the selection,
+		 *        see {@link ReactMenuControl#setSelectHandler(Function)}.
 		 */
-		void show(int x, int y, List<MenuEntry> items, Consumer<String> selectHandler, Runnable closeHandler);
+		void show(int x, int y, List<MenuEntry> items, Function<String, HandlerResult> selectHandler,
+				Runnable closeHandler);
 
 		/**
 		 * Hide the currently displayed menu.
@@ -150,7 +162,7 @@ public class ContextMenuOpener {
 				contributionIndex + ":" + j,
 				cmd.getLabel(),
 				encodeIcon(cmd.getImage()),
-				!cmd.isExecutable(),
+				cmd.getExecutableState(),
 				cmd.getCssClasses(),
 				cmd.isActive()));
 			currentClique = clique;
@@ -169,7 +181,7 @@ public class ContextMenuOpener {
 		return s == null ? "" : s;
 	}
 
-	private void handleSelect(String itemId) {
+	private HandlerResult handleSelect(String itemId) {
 		int colon = itemId.indexOf(':');
 		int contributionIdx = Integer.parseInt(itemId.substring(0, colon));
 		int commandIdx = Integer.parseInt(itemId.substring(colon + 1));
@@ -183,9 +195,11 @@ public class ContextMenuOpener {
 		_active = List.of();
 		_activeCommands = List.of();
 
-		if (cmd != null && cmd.isExecutable()) {
-			cmd.executeCommand(currentReactContext());
+		if (cmd == null) {
+			// A selection from a menu that has been replaced in the meantime.
+			return HandlerResult.DEFAULT_RESULT;
 		}
+		return cmd.executeCommand(currentReactContext());
 	}
 
 	private void handleClose() {

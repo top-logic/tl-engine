@@ -72,6 +72,8 @@ import com.top_logic.model.annotate.ui.BooleanPresentation;
 import com.top_logic.model.annotate.util.AttributeSettings;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.model.CompatibilityService;
 
 /**
@@ -372,15 +374,21 @@ public class TestValueInputElement extends TestCase {
 		AbstractFieldModel field = new AbstractFieldModel(null);
 		ReactTextInputControl control = new ReactTextInputControl(_context, field);
 		AtomicReference<Object> submitted = new AtomicReference<>();
-		control.setSubmitListener(submitted::set);
+		HandlerResult refusal = HandlerResult.notExecutable(ExecutableState.NO_EXEC_NO_MODEL);
+		control.setSubmitListener(value -> {
+			submitted.set(value);
+			return refusal;
+		});
 
 		assertEquals("The client is told to submit on Enter.",
 			Boolean.TRUE, control.scriptingScalarState().get(SUBMIT_ON_ENTER));
 
-		control.executeCommand(ReactFormFieldControl.SUBMIT_COMMAND, Map.of("value", "DEMO-1"));
+		HandlerResult result =
+			control.executeCommand(ReactFormFieldControl.SUBMIT_COMMAND, Map.of("value", "DEMO-1"));
 
 		assertEquals("The submitted value reaches the field.", "DEMO-1", field.getValue());
 		assertEquals("...and is reported as submitted.", "DEMO-1", submitted.get());
+		assertSame("What the submit triggered is the result of the submit.", refusal, result);
 	}
 
 	/** Without a listener nothing is reported, and the client is not asked to submit at all. */

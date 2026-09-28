@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -27,11 +28,18 @@ import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.util.Resources;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.button.I18NConstants;
+import com.top_logic.layout.react.control.button.ReactButtonControl;
+import com.top_logic.layout.react.control.overlay.DialogHandle;
+import com.top_logic.layout.react.control.overlay.DialogManager;
+import com.top_logic.layout.react.control.overlay.DialogResult;
+import com.top_logic.layout.react.control.overlay.DialogResultHandler;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
@@ -42,9 +50,14 @@ import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.command.Continuation;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.FormParticipant;
+import com.top_logic.layout.view.navigation.Binding;
+import com.top_logic.layout.view.navigation.ObjectNavigation;
+import com.top_logic.layout.view.navigation.ShowStep;
 import com.top_logic.layout.view.tiles.ReactTileStackControl;
+import com.top_logic.layout.view.tiles.TileFrame;
 import com.top_logic.layout.view.tiles.TileStackScope;
 import com.top_logic.model.TransientObject;
 import com.top_logic.model.listen.ModelScope;
@@ -56,7 +69,8 @@ import com.top_logic.model.listen.ModelScope;
  * <p>
  * Each pushed frame displays a form. Every navigation of the stack is a write to its path, so the
  * tests navigate through the {@link TileStackScope}, which is what the breadcrumb, the pop commands
- * and the URL use as well.
+ * and the URL use as well - or display an object in a frame drilled down to through
+ * {@link ObjectNavigation}, which asks the user when the write is refused.
  * </p>
  */
 public class TestTileStackDirtyCheck extends TestCase {
@@ -76,6 +90,9 @@ public class TestTileStackDirtyCheck extends TestCase {
 	/** The frame parameter delivering the object the form of a frame displays. */
 	private static final String EDITED = "edited";
 
+	/** The command a button executes when it is clicked. */
+	private static final String CLICK = "click";
+
 	private File _webapp;
 
 	private FileManager _fileManagerBefore;
@@ -89,6 +106,15 @@ public class TestTileStackDirtyCheck extends TestCase {
 	private ViewChannel _path;
 
 	private TileStackScope _scope;
+
+	/** A context within the stack, where a display request drilling it down comes from. */
+	private ViewContext _inStack;
+
+	/** The dialogs the user was shown. */
+	private Dialogs _dialogs;
+
+	/** Number of writes of the path since the fixture was set up. */
+	private int _writes;
 
 	@Override
 	protected void setUp() throws Exception {
@@ -104,6 +130,8 @@ public class TestTileStackDirtyCheck extends TestCase {
 		FileManager.setInstance(new DefaultFileManager(_webapp));
 
 		_sseQueue = new SSEUpdateQueue();
+		_dialogs = new Dialogs();
+		_sseQueue.setDialogManager(_dialogs);
 		ReactContext reactContext = new PageContext(_sseQueue);
 		ViewElement view = ViewLoader.getOrLoadView(ViewLoader.fullPath(VIEW));
 		ViewContext viewContext = new DefaultViewContext(reactContext, ViewLoader.fullPath(VIEW));
@@ -118,6 +146,8 @@ public class TestTileStackDirtyCheck extends TestCase {
 
 		_path = viewContext.resolveChannel(new ChannelRef(PATH));
 		_scope = new TileStackScope(_path);
+		_inStack = viewContext.withScope(TileStackScope.class, _scope);
+		_path.addListener((sender, oldValue, newValue) -> _writes++);
 	}
 
 	@Override
@@ -251,8 +281,133 @@ public class TestTileStackDirtyCheck extends TestCase {
 		assertEquals(List.of(), _path.dirtyHandlers());
 	}
 
+	/**
+	 * Tests that replacing the upper part of the path is one write, which keeps the frames below.
+	 */
+	public void testReplaceFromWritesOnce() {
+		pushFrame("A");
+		pushFrame("B");
+		pushFrame("C");
+		ReactControl kept = frameControl(1);
+		int writesBefore = _writes;
+
+		_scope.replaceFrom(1, List.of(formFrame(new MockTLObject()), formFrame(new MockTLObject())));
+
+		assertEquals("The whole path is written at once.", writesBefore + 1, _writes);
+		assertEquals(3, _scope.getPath().size());
+		assertSame("The kept frame is displayed as it was.", kept, frameControl(1));
+	}
+
+	/**
+	 * Tests that replacing a frame holding unsaved input is refused, and done by the continuation of
+	 * the refusal once the input is discarded.
+	 */
+	public void testReplaceFromOfDirtyFrameIsVetoed() {
+		pushFrame("A");
+		pushFrame("B");
+		FormControl dropped = editForm(2);
+		Object pathBefore = _path.get();
+		int writesBefore = _writes;
+		TileFrame replacement = formFrame(new MockTLObject());
+
+		ChannelVetoException veto = null;
+		try {
+			_scope.replaceFrom(1, List.of(replacement));
+			fail("A frame holding unsaved input must not be replaced silently.");
+		} catch (ChannelVetoException ex) {
+			veto = ex;
+		}
+		assertEquals(List.of(dropped), veto.getDirtyHandlers());
+		assertSame("The refused write leaves the path.", pathBefore, _path.get());
+		assertEquals(writesBefore, _writes);
+
+		dropped.executeDiscard();
+		veto.getContinuation().run();
+
+		assertEquals(writesBefore + 1, _writes);
+		assertEquals(2, _scope.getPath().size());
+		assertTrue(_scope.getPath().get(1).showsSame(replacement));
+	}
+
+	/**
+	 * Tests that displaying the object a frame already displays leaves the frame and its unsaved
+	 * input alone, although the frame is named differently than the display request names it.
+	 */
+	public void testShowObjectOfDisplayedFrameKeepsIt() {
+		MockTLObject edited = new MockTLObject();
+		_scope.push(FORM_VIEW, ResKey.text("Named by the push"), Map.of(EDITED, edited));
+		FormControl form = editForm(1);
+		ReactControl frame = frameControl(1);
+		Object pathBefore = _path.get();
+		int writesBefore = _writes;
+		Recorder chain = new Recorder();
+
+		ObjectNavigation.show(_inStack, List.of(formShow()), edited, chain);
+
+		assertEquals("Nothing is dropped, so nothing is asked.", 0, _dialogs.opened());
+		assertEquals("The path is not written.", writesBefore, _writes);
+		assertSame(pathBefore, _path.get());
+		assertSame("The frame stays displayed as it is.", frame, frameControl(1));
+		assertTrue("The form stays in edit mode.", form.isEditMode());
+		assertTrue("The form keeps its input.", form.isDirty());
+		assertEquals(List.of(edited), chain._resumed);
+	}
+
+	/**
+	 * Tests that displaying another object while a frame holds unsaved input asks once, and after the
+	 * input is discarded reaches the frame of the object in one write of the path.
+	 */
+	public void testShowObjectAsksOnceAndWritesOnce() {
+		pushFrame("A");
+		pushFrame("B");
+		editForm(2);
+		Object pathBefore = _path.get();
+		int writesBefore = _writes;
+		MockTLObject shown = new MockTLObject();
+		Recorder chain = new Recorder();
+
+		ObjectNavigation.show(_inStack, List.of(formShow()), shown, chain);
+
+		assertEquals("The user is asked about the frame holding unsaved input.", 1, _dialogs.opened());
+		assertSame("Until they answered, the path stays.", pathBefore, _path.get());
+		assertEquals(writesBefore, _writes);
+		assertEquals(List.of(), chain._resumed);
+
+		_dialogs.click(Resources.getInstance().getString(I18NConstants.BUTTON_DISCARD));
+
+		assertEquals("The user is asked once.", 1, _dialogs.opened());
+		assertEquals("The target path is reached in one write.", writesBefore + 1, _writes);
+		List<TileFrame> path = _scope.getPath();
+		assertEquals(1, path.size());
+		assertTrue(path.get(0).showsSame(formFrame(shown)));
+		assertEquals(List.of(shown), chain._resumed);
+		assertFalse(chain._aborted);
+	}
+
 	private void pushFrame(String label) {
 		_scope.push(FORM_VIEW, ResKey.text(label), Map.of(EDITED, new MockTLObject()));
+	}
+
+	/**
+	 * An unnamed frame displaying the given object in its form.
+	 */
+	private static TileFrame formFrame(Object edited) {
+		return new TileFrame(FORM_VIEW, null, Map.of(EDITED, edited));
+	}
+
+	/**
+	 * Displaying the form frame with the shown object, named by nothing of its own.
+	 */
+	private static ShowStep formShow() {
+		return new ShowStep(FORM_VIEW, false, null, null, List.of(new Binding(EDITED, null)));
+	}
+
+	/**
+	 * The control displaying the frame at the given position of the stack, the initial view being
+	 * position 0.
+	 */
+	private ReactControl frameControl(int position) {
+		return stack().displayedChildren().get(position);
 	}
 
 	/**
@@ -347,6 +502,106 @@ public class TestTileStackDirtyCheck extends TestCase {
 		@Override
 		public boolean isDirty() {
 			return true;
+		}
+	}
+
+	/**
+	 * The continuation of a display request, recording how it ended.
+	 */
+	private static class Recorder implements Continuation {
+
+		/** The values the request was resumed with. */
+		final List<Object> _resumed = new ArrayList<>();
+
+		/** Whether the request was cancelled. */
+		boolean _aborted;
+
+		@Override
+		public void resume(Object value) {
+			_resumed.add(value);
+		}
+
+		@Override
+		public void abort() {
+			_aborted = true;
+		}
+
+		@Override
+		public void onAbort(Runnable compensation) {
+			// Nothing to compensate.
+		}
+	}
+
+	/**
+	 * Stands in for the dialogs of the window, counting the ones opened and answering the one open.
+	 */
+	private static class Dialogs implements DialogManager {
+
+		private final List<ReactControl> _open = new ArrayList<>();
+
+		private int _opened;
+
+		@Override
+		public DialogHandle openDialog(boolean closeOnBackdrop, ReactControl child,
+				DialogResultHandler<Void> handler) {
+			_opened++;
+			_open.add(child);
+			return new DialogHandle() {
+				@Override
+				public void close(DialogResult<Void> result) {
+					_open.remove(child);
+				}
+
+				@Override
+				public void setClosable(boolean closable) {
+					// Always closable in these tests.
+				}
+
+				@Override
+				public boolean isClosable() {
+					return true;
+				}
+			};
+		}
+
+		@Override
+		public void closeTopDialog(DialogResult<Void> result) {
+			assertFalse("A dialog is open.", _open.isEmpty());
+			_open.remove(_open.size() - 1);
+		}
+
+		@Override
+		public void closeDialogsAbove(DialogHandle dialog) {
+			throw new UnsupportedOperationException("Nothing is stacked in these tests.");
+		}
+
+		/** Number of dialogs opened so far. */
+		int opened() {
+			return _opened;
+		}
+
+		/**
+		 * Clicks the button with the given label in the topmost dialog.
+		 */
+		void click(String label) {
+			assertFalse("A dialog is open.", _open.isEmpty());
+			ReactButtonControl button = findButton(_open.get(_open.size() - 1), label);
+			assertNotNull("The dialog offers '" + label + "'.", button);
+			assertTrue(button.executeCommand(CLICK, Map.of()).isSuccess());
+		}
+
+		private static ReactButtonControl findButton(ReactControl control, String label) {
+			if (control instanceof ReactButtonControl button
+				&& button.scriptingScalarState().containsValue(label)) {
+				return button;
+			}
+			for (ReactControl child : control.displayedChildren()) {
+				ReactButtonControl found = findButton(child, label);
+				if (found != null) {
+					return found;
+				}
+			}
+			return null;
 		}
 	}
 

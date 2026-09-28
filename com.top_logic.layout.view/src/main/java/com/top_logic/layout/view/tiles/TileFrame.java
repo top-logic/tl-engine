@@ -69,6 +69,23 @@ public final class TileFrame {
 		return _params;
 	}
 
+	/**
+	 * Whether the given frame displays the same as this one: the same view with the same parameter
+	 * values.
+	 *
+	 * <p>
+	 * Unlike {@link #equals(Object)}, the {@link #getLabel() label} is not compared: it names the
+	 * frame in the breadcrumb, and a frame pushed by one navigation may be named differently than
+	 * the same frame requested by another one.
+	 * </p>
+	 *
+	 * @param other
+	 *        The frame to compare with.
+	 */
+	public boolean showsSame(TileFrame other) {
+		return _viewRef.equals(other._viewRef) && _params.equals(other._params);
+	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj) {

@@ -11,20 +11,24 @@
 		<!-- The QR-code PNG encoding the otpauth:// provisioning URI (set by LoginAction). -->
 		<channel name="qr"/>
 	</channels>
-	<window resizable="false"
-			width="420px">
+	<window
+		resizable="false"
+		width="420px"
+	>
 		<title>
 			<en>Set up two-factor authentication</en>
 			<de>Zwei-Faktor-Authentifizierung einrichten</de>
 		</title>
-		<form input="model"
+		<form
 			initial-edit-mode="true"
+			input="model"
 			mode-switch="false"
+			with-inset="true"
 		>
 			<text>
 				<label>
 					<en>Scan this QR code with your authenticator app, then enter the generated code to confirm.</en>
-					<de>Scannen Sie diesen QR-Code mit Ihrer Authenticator-App und geben Sie zur Best&#228;tigung den erzeugten Code ein.</de>
+					<de>Scannen Sie diesen QR-Code mit Ihrer Authenticator-App und geben Sie zur Bestätigung den erzeugten Code ein.</de>
 				</label>
 			</text>
 			<image input="qr">
@@ -35,10 +39,13 @@
 			</image>
 			<field attribute="code"/>
 			<commands>
-				<generic-command placement="BUTTON_BAR" image="css:bi bi-check-lg">
+				<generic-command
+					image="css:bi bi-check-lg"
+					placement="BUTTON_BAR"
+				>
 					<label>
 						<en>Confirm</en>
-						<de>Best&#228;tigen</de>
+						<de>Bestätigen</de>
 					</label>
 					<store-form-state/>
 					<verify-otp persist="true"/>
@@ -47,7 +54,9 @@
 		</form>
 		<actions>
 			<button>
-				<action class="com.top_logic.layout.view.command.CancelDialogCommand" image="css:bi bi-x-lg">
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
 					<label>
 						<en>Cancel</en>
 						<de>Abbrechen</de>

@@ -136,7 +136,10 @@
 						<en>Account</en>
 						<de>Konto</de>
 					</title>
-					<form input="selectedAccount">
+					<form
+						input="selectedAccount"
+						with-inset="true"
+					>
 						<field attribute="name"/>
 						<field attribute="firstName"/>
 						<field attribute="lastName"/>

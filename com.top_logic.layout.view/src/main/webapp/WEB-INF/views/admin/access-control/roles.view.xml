@@ -79,7 +79,10 @@
 						<en>Role</en>
 						<de>Rolle</de>
 					</title>
-					<form input="selectedRole">
+					<form
+						input="selectedRole"
+						with-inset="true"
+					>
 						<field attribute="name"/>
 						<field attribute="isSystem"/>
 						<field attribute="description"/>

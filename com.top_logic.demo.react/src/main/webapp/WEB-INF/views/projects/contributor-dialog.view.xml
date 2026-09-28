@@ -20,6 +20,7 @@
 			initial-edit-mode="true"
 			input="contributor"
 			mode-switch="false"
+			with-inset="true"
 		>
 			<field attribute="name"/>
 			<field attribute="email"/>

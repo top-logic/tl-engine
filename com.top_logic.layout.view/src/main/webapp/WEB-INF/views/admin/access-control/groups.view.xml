@@ -79,7 +79,10 @@
 						<en>Group</en>
 						<de>Gruppe</de>
 					</title>
-					<form input="selectedGroup">
+					<form
+						input="selectedGroup"
+						with-inset="true"
+					>
 						<field attribute="name"/>
 						<field attribute="isSystem"/>
 						<field attribute="defaultGroup"/>

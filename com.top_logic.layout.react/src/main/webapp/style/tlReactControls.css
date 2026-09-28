@@ -2523,8 +2523,8 @@ button.tlWindow__maximizeBtn:focus-visible {
 	/* Content wider than the (viewport-clamped) window scrolls inside the body instead
 	   of being clipped by the window's rounded-corner overflow. */
 	overflow-x: auto;
-	/* Flush: a dialog is a container too - its content owns its inset (a self-padding
-	   form, or a <padding> around explanatory text). */
+	/* Flush: a dialog is a container too - its content owns its inset (a form with
+	   with-inset, or an <inset> around explanatory text). */
 }
 
 /* The footer consists of a single collapsing toolbar, which states its natural width and gives

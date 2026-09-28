@@ -173,7 +173,7 @@
 				<de>Das Bild wird vom Browser von der Adresse aus dem Kanal geladen; der Rahmen behält seine Proportionen, gleich welche Maße das Bild hat, und der Browser lädt es erst, wenn der Rahmen in Sichtweite kommt.</de>
 			</label>
 		</text>
-		<fields>
+		<fields with-inset="true">
 			<value-input
 				type="tl.core:String"
 				value="url"

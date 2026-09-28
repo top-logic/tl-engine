@@ -52,6 +52,7 @@
 							<executability>
 								<null-input-disabled/>
 							</executability>
+							<confirm expr="a -> #('Delete account {0}?'@en, 'Konto {0} löschen?'@de).fill($a.get(`tl.accounts:Person#name`))"/>
 							<with-transaction>
 								<execute-script function="obj -> $obj.delete()"/>
 							</with-transaction>

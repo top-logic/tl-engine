@@ -144,6 +144,9 @@ public class AttributeSelectFieldModel extends AttributeFieldModel implements Se
 
 	@Override
 	public void setValue(Object selection) {
+		if (isObjectDeleted()) {
+			return;
+		}
 		Object newValue = toAttributeValue(selection);
 		Object oldValue = super.getValue();
 		if (Objects.equals(oldValue, newValue)) {

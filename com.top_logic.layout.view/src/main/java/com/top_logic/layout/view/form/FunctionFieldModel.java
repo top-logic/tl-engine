@@ -45,6 +45,7 @@ public class FunctionFieldModel extends BoundFieldModel {
 	/**
 	 * The object this field reads from and writes to.
 	 */
+	@Override
 	public Object getObject() {
 		return _object;
 	}

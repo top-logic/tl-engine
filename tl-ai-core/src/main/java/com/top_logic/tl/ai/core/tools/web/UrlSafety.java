@@ -25,13 +25,34 @@ import java.util.Locale;
  * </p>
  *
  * <p>
- * Used by {@link WebFetchTool} (plain {@code HttpClient}), by {@link BrowserTool} /
- * {@link BrowserSession} (headless Chromium: pre-flight check plus the per-context security route)
- * and - authoritatively, for <em>every</em> connection the browser makes - by
- * {@link FilteringProxy}, so all of them share exactly one policy.
+ * Used by {@link WebFetchTool} and {@link BrowserTool} / {@link BrowserSession} (headless Chromium)
+ * as a pre-flight check, and - authoritatively, for <em>every</em> connection either of them makes -
+ * by {@link FilteringProxy}, which connects to the address it checked, so all of them share exactly
+ * one policy.
  * </p>
  */
 public final class UrlSafety {
+
+	/**
+	 * How a host name becomes addresses. {@link #SYSTEM} in production; a test passes a scripted one to
+	 * play a DNS server that answers differently on each query, which is what a rebinding attack is.
+	 */
+	@FunctionalInterface
+	public interface NameLookup {
+
+		/** The resolver of the JVM, {@link InetAddress#getAllByName(String)}. */
+		NameLookup SYSTEM = InetAddress::getAllByName;
+
+		/**
+		 * All addresses {@code name} resolves to.
+		 *
+		 * @param name
+		 *        A registered name or an IP literal, without IPv6 brackets.
+		 * @throws UnknownHostException
+		 *         When the name does not resolve.
+		 */
+		InetAddress[] lookup(String name) throws UnknownHostException;
+	}
 
 	/** The refusal for a URL that names no host. */
 	private static final String NO_HOST = "the URL has no host.";
@@ -108,11 +129,25 @@ public final class UrlSafety {
 	 *         rejection.
 	 */
 	public static String validateUrl(URI uri) {
+		return validateUrl(uri, NameLookup.SYSTEM);
+	}
+
+	/**
+	 * {@link #validateUrl(URI)} with an explicit {@link NameLookup}.
+	 *
+	 * @param uri
+	 *        The URL to validate.
+	 * @param names
+	 *        How the host is resolved.
+	 * @return {@code null} if the URL is acceptable, otherwise a human-readable reason for
+	 *         rejection.
+	 */
+	public static String validateUrl(URI uri, NameLookup names) {
 		String shape = checkUrlShape(uri);
 		if (shape != null) {
 			return shape;
 		}
-		return resolveHost(uri.getHost()).refusal();
+		return resolveHost(uri.getHost(), names).refusal();
 	}
 
 	/**
@@ -167,6 +202,19 @@ public final class UrlSafety {
 	 * @return The resolution outcome; never {@code null}.
 	 */
 	public static HostResolution resolveHost(String host) {
+		return resolveHost(host, NameLookup.SYSTEM);
+	}
+
+	/**
+	 * {@link #resolveHost(String)} with an explicit {@link NameLookup}.
+	 *
+	 * @param host
+	 *        The destination host.
+	 * @param names
+	 *        How the host is resolved.
+	 * @return The resolution outcome; never {@code null}.
+	 */
+	public static HostResolution resolveHost(String host, NameLookup names) {
 		String normalized = normalizeHost(host);
 		if (normalized == null || normalized.isEmpty()) {
 			return new HostResolution(null, NO_HOST);
@@ -174,11 +222,11 @@ public final class UrlSafety {
 		String name = stripIpv6Brackets(normalized);
 		InetAddress[] addresses;
 		try {
-			addresses = InetAddress.getAllByName(name);
+			addresses = names.lookup(name);
 		} catch (UnknownHostException ex) {
 			return new HostResolution(null, unresolvable(host));
 		}
-		if (addresses.length == 0) {
+		if (addresses == null || addresses.length == 0) {
 			return new HostResolution(null, unresolvable(host));
 		}
 		for (InetAddress address : addresses) {

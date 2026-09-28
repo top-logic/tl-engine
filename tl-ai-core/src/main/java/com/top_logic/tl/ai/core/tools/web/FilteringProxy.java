@@ -19,8 +19,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -35,7 +37,8 @@ import com.top_logic.basic.Logger;
 /**
  * A tiny filtering HTTP forward proxy, bound to an ephemeral port on the loopback interface, that
  * every browser session is pinned to - the <b>outer, authoritative</b> layer of the browser tool's
- * SSRF and domain policy.
+ * SSRF and domain policy. {@code webFetch} sends its requests through one as well, with a domain
+ * policy that permits everything, for the DNS pinning alone (#581).
  *
  * <p>
  * <b>Why this exists.</b> The per-context Playwright security route
@@ -312,6 +315,17 @@ final class FilteringProxy implements AutoCloseable {
 
 	private final Deque<String> _refusedHosts = new ArrayDeque<>();
 
+	/**
+	 * The reason of the latest refusal per host, for {@link #refusalFor(String)}. Guarded by
+	 * {@link #_refusedHosts} and bounded like it.
+	 */
+	private final Map<String, String> _refusals = new LinkedHashMap<>() {
+		@Override
+		protected boolean removeEldestEntry(Map.Entry<String, String> eldest) {
+			return size() > REFUSAL_HISTORY;
+		}
+	};
+
 	private volatile boolean _closed;
 
 	private FilteringProxy(ServerSocket listener, RequestPolicy policy, AddressResolver resolver,
@@ -414,8 +428,16 @@ final class FilteringProxy implements AutoCloseable {
 
 	/** The production {@link AddressResolver}: resolve once, refuse non-global addresses, pin the result. */
 	static AddressResolver ssrfResolver() {
+		return ssrfResolver(UrlSafety.NameLookup.SYSTEM);
+	}
+
+	/**
+	 * {@link #ssrfResolver()} over an explicit {@link UrlSafety.NameLookup}: the same check and the
+	 * same pinning, with the name lookup scripted by a test.
+	 */
+	static AddressResolver ssrfResolver(UrlSafety.NameLookup names) {
 		return (host, port) -> {
-			UrlSafety.HostResolution resolution = UrlSafety.resolveHost(host);
+			UrlSafety.HostResolution resolution = UrlSafety.resolveHost(host, names);
 			if (!resolution.permitted()) {
 				return Target.refused(resolution.refusal());
 			}
@@ -459,6 +481,27 @@ final class FilteringProxy implements AutoCloseable {
 	List<String> refusedHosts() {
 		synchronized (_refusedHosts) {
 			return new ArrayList<>(_refusedHosts);
+		}
+	}
+
+	/**
+	 * Why this proxy last refused a connection to {@code host}, or {@code null} if it has not refused
+	 * one (among the latest {@link #REFUSAL_HISTORY} refusals).
+	 *
+	 * <p>
+	 * For a client that cannot read the refusal from the answer: a refused {@code CONNECT} is a
+	 * {@code 403} to the tunnel request, which {@link java.net.http.HttpClient} reports only as an
+	 * {@code IOException} without the response. It is also the only reason such a client may repeat
+	 * to the model, because a {@link #REFUSAL_HEADER} on a plain-HTTP answer could just as well have
+	 * been written by the upstream server.
+	 * </p>
+	 *
+	 * @param host
+	 *        The destination host, in any spelling.
+	 */
+	String refusalFor(String host) {
+		synchronized (_refusedHosts) {
+			return _refusals.get(normalizeTarget(host));
 		}
 	}
 
@@ -1077,6 +1120,8 @@ final class FilteringProxy implements AutoCloseable {
 				_refusedHosts.removeFirst();
 			}
 			_refusedHosts.addLast(normalizeTarget(host));
+			_refusals.remove(normalizeTarget(host));
+			_refusals.put(normalizeTarget(host), reason);
 		}
 		Logger.info("Browser filtering proxy refused a connection to " + host + ": " + reason,
 			FilteringProxy.class);

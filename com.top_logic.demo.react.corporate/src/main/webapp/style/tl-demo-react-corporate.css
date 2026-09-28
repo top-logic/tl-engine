@@ -6,6 +6,9 @@
  * reads the roles of the TopLogic design system (--tl-*), and the customer module wires the brand
  * accent to the role --tl-surface-brand. Mode, density and a customer theme (data-tl-mode,
  * data-tl-theme) therefore apply to the library as well.
+ *
+ * The focus ring is not drawn here: base.css of the design system sets it on :focus-visible for
+ * buttons and inputs, so the library's controls show the same ring as every other control.
  */
 
 .brand-button {
@@ -27,8 +30,7 @@
 	white-space: nowrap;
 	cursor: pointer;
 	transition: background-color var(--tl-duration-fast) var(--tl-easing-standard),
-		color var(--tl-duration-fast) var(--tl-easing-standard),
-		box-shadow var(--tl-duration-fast) var(--tl-easing-standard);
+		color var(--tl-duration-fast) var(--tl-easing-standard);
 }
 
 .brand-button--pill {
@@ -41,11 +43,6 @@
 
 .brand-button:hover:not(:disabled) {
 	background: var(--tl-surface-brand-subtle);
-}
-
-.brand-button:focus-visible {
-	outline: none;
-	box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-accent) 40%, transparent);
 }
 
 .brand-button--primary {
@@ -125,11 +122,6 @@
 	border: solid var(--tl-text-on-brand);
 	border-width: 0 2px 2px 0;
 	transform: rotate(45deg);
-}
-
-.brand-checkbox__box:focus-visible {
-	outline: none;
-	box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-accent) 40%, transparent);
 }
 
 .brand-checkbox--invalid .brand-checkbox__box {

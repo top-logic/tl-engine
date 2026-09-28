@@ -10,6 +10,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.basic.util.ResKey3;
+import com.top_logic.basic.util.ResKey4;
 
 /**
  * I18N constants of the "Agent-Sicherheit" administration view.
@@ -445,71 +446,13 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey ROLE_KIND_INTERNAL;
 
-	/**
-	 * Explains the role every logged-in account holds.
-	 *
-	 * @en Every logged-in account holds this role. A permission here applies to all users.
-	 * @de Diese Rolle hält jedes angemeldete Konto. Eine Berechtigung hier gilt für alle Benutzer.
-	 */
-	public static ResKey ROLE_NOTE_EVERY_ACCOUNT;
 
-	/**
-	 * Explains the role administrators hold.
-	 *
-	 * @en Administrators bypass the tool layer anyway.
-	 * @de Administratoren umgehen die Tool-Ebene ohnehin.
-	 */
-	public static ResKey ROLE_NOTE_ADMINISTRATOR;
 
-	/**
-	 * Explains a role the framework uses for its own user interface.
-	 *
-	 * @en A role of the framework user interface. A tool permission for it reaches nobody.
-	 * @de Eine Rolle der Framework-Oberfläche. Eine Tool-Berechtigung für sie erreicht niemanden.
-	 */
-	public static ResKey ROLE_NOTE_INTERNAL;
 
-	/**
-	 * Warns in the picker about a role no rule can produce where tool access reads roles.
-	 *
-	 * @en No role rule of this application can produce this role on the security root. Its permissions
-	 *     reach nobody.
-	 * @de Keine Rollenregel dieser Anwendung kann diese Rolle auf der Sicherheits-Wurzel erzeugen. Ihre
-	 *     Berechtigungen erreichen niemanden.
-	 */
-	public static ResKey ROLE_NOTE_UNREACHABLE;
 
-	/**
-	 * Template that grants nothing.
-	 *
-	 * @en Empty
-	 * @de Leer beginnen
-	 */
-	public static ResKey TEMPLATE_NONE;
 
-	/**
-	 * Template of a role that reads and changes nothing.
-	 *
-	 * @en Read-only assistant
-	 * @de Nur-Lese-Assistent
-	 */
-	public static ResKey TEMPLATE_READ_ONLY;
 
-	/**
-	 * Template of a role that also changes business data.
-	 *
-	 * @en Case worker
-	 * @de Sachbearbeiter
-	 */
-	public static ResKey TEMPLATE_CLERK;
 
-	/**
-	 * Template of a role that also runs TL-Script.
-	 *
-	 * @en Developer
-	 * @de Entwickler
-	 */
-	public static ResKey TEMPLATE_DEVELOPER;
 
 	/**
 	 * Refusal: the policy names a role the application does not have.
@@ -682,43 +625,9 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey REFUSALS_HEADING;
 
-	/**
-	 * What the policy tab is for, above everything else.
-	 *
-	 * @en Who may use which capability, and which agents, models and MCP servers. Every change is
-	 *     checked when you apply it.
-	 * @de Wer welche Tool-Gruppe benutzen darf und welche Agenten, Modelle und MCP-Server. Jede
-	 *     Änderung wird beim Übernehmen geprüft.
-	 */
-	public static ResKey POLICY_INTRO;
 
-	/**
-	 * Heading of the block choosing what every account gets.
-	 *
-	 * @en Basic permissions for every account
-	 * @de Grundberechtigung für jedes Konto
-	 * @tooltip What every account may do without holding any role.
-	 */
-	public static ResKey POLICY_BASELINE_HEADING;
 
-	/**
-	 * Heading of the block choosing the limit for unattended runs.
-	 *
-	 * @en Limit for unattended runs
-	 * @de Obergrenze für unbeaufsichtigte Läufe
-	 * @tooltip What a scheduled or asynchronous run may reach.
-	 */
-	public static ResKey POLICY_BACKGROUND_HEADING;
 
-	/**
-	 * What the limit for unattended runs is, where it is chosen.
-	 *
-	 * @en A run with nobody to answer a confirmation approves every call itself. This limit applies to
-	 *     everyone, administrators included.
-	 * @de Ein Lauf, in dem niemand eine Bestätigung beantworten kann, genehmigt jeden Aufruf selbst. Diese
-	 *     Obergrenze gilt für alle, auch für Administratoren.
-	 */
-	public static ResKey POLICY_BACKGROUND_NOTE;
 
 	/**
 	 * Heading of the block listing which tools the policy classifies into which group.
@@ -748,61 +657,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey POLICY_TOOL_GROUPS_NONE;
 
-	/**
-	 * Shown instead of the role cards while the policy configures no role.
-	 *
-	 * @en No role is configured. No account reaches more than the basic permissions.
-	 * @de Keine Rolle konfiguriert. Kein Konto erreicht mehr als die Grundberechtigung.
-	 */
-	public static ResKey POLICY_NO_ROLES;
 
-	/**
-	 * Row state of a capability no policy can withhold.
-	 *
-	 * @en Always granted.
-	 * @de Immer gewährt.
-	 */
-	public static ResKey ROW_ALWAYS_GRANTED;
 
-	/**
-	 * Label of an entry that permits something.
-	 *
-	 * @en Permission
-	 * @de Berechtigung
-	 */
-	public static ResKey ENTRY_GRANT;
 
-	/**
-	 * Label of an entry that refuses something.
-	 *
-	 * @en Refusal
-	 * @de Verbot
-	 */
-	public static ResKey ENTRY_DENY;
 
-	/**
-	 * The either-or choice of an entry: a whole capability group.
-	 *
-	 * @en whole group
-	 * @de ganze Gruppe
-	 */
-	public static ResKey ENTRY_KIND_GROUP;
 
-	/**
-	 * The either-or choice of an entry: single tools.
-	 *
-	 * @en single tools
-	 * @de einzelne Tools
-	 */
-	public static ResKey ENTRY_KIND_TOOLS;
 
-	/**
-	 * Shown on an entry that names single tools and has none chosen yet.
-	 *
-	 * @en No tool chosen yet. This entry names nothing and would be refused.
-	 * @de Noch kein Tool gewählt. Dieser Eintrag benennt nichts und wird beim Übernehmen abgewiesen.
-	 */
-	public static ResKey ENTRY_NO_TOOL_CHOSEN;
 
 	/**
 	 * The button that makes the saved policy take effect.
@@ -812,81 +672,14 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey COMMAND_RESTART;
 
-	/**
-	 * The button that adds an entry for a role.
-	 *
-	 * @en Add role
-	 * @de Rolle hinzufügen
-	 */
-	public static ResKey COMMAND_ADD_ROLE;
 
-	/**
-	 * The button that removes a role's entry.
-	 *
-	 * @en Remove role
-	 * @de Rolle entfernen
-	 */
-	public static ResKey COMMAND_REMOVE_ROLE;
 
-	/**
-	 * The button that adds an entry naming single tools to permit.
-	 *
-	 * @en Add tool permission
-	 * @de Tool-Berechtigung hinzufügen
-	 */
-	public static ResKey COMMAND_ADD_GRANT_ENTRY;
 
-	/**
-	 * The button that adds an entry naming single tools to refuse.
-	 *
-	 * @en Add tool refusal
-	 * @de Tool-Verbot hinzufügen
-	 */
-	public static ResKey COMMAND_ADD_DENY_ENTRY;
 
-	/**
-	 * The button that removes one entry.
-	 *
-	 * @en Remove
-	 * @de Entfernen
-	 */
-	public static ResKey COMMAND_REMOVE_ENTRY;
 
-	/**
-	 * Label of the role picker of the add-role row.
-	 *
-	 * @en Role
-	 * @de Rolle
-	 * @tooltip The security role to take into the policy.
-	 */
-	public static ResKey FIELD_NEW_ROLE;
 
-	/**
-	 * Label of the template picker of the add-role row.
-	 *
-	 * @en Template
-	 * @de Vorlage
-	 * @tooltip Prefills the capabilities of the new role. Every one of them can be changed afterwards.
-	 */
-	public static ResKey FIELD_TEMPLATE;
 
-	/**
-	 * Label of the capability group of an entry.
-	 *
-	 * @en Capability
-	 * @de Tool-Gruppe
-	 * @tooltip The capability group this entry is about.
-	 */
-	public static ResKey FIELD_ENTRY_GROUP;
 
-	/**
-	 * Label of the tools of an entry.
-	 *
-	 * @en Tools
-	 * @de Tools
-	 * @tooltip The tools this entry is about, by their qualified name.
-	 */
-	public static ResKey FIELD_ENTRY_TOOLS;
 
 	/**
 	 * Shown next to the apply button while nothing has been changed.
@@ -990,16 +783,594 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey POLICY_READ_ONLY;
 
+	/**
+	 * Column header detail of an agent the application runs for users rather than letting them converse with it.
+	 *
+	 * @en Infrastructure
+	 * @de Infrastruktur
+	 */
+	public static ResKey AGENT_INFRASTRUCTURE;
+
+	/**
+	 * Column header detail naming the model an agent is assigned.
+	 *
+	 * @en Model: {0}
+	 * @de Modell: {0}
+	 */
+	public static ResKey1 AGENT_MODEL__MODEL;
+
+	/**
+	 * Button above a policy matrix opening the bulk edit over the ticked roles.
+	 *
+	 * @en Edit selection …
+	 * @de Auswahl bearbeiten …
+	 * @tooltip Grants, forbids or clears chosen columns for every ticked role at once.
+	 */
+	public static ResKey COMMAND_EDIT_SELECTION;
+
+	/**
+	 * Bulk action putting the chosen cells into the granted state.
+	 *
+	 * @en Grant ✓
+	 * @de Gewähren ✓
+	 */
+	public static ResKey BULK_ACTION_GRANT;
+
+	/**
+	 * Bulk action putting the chosen cells into the forbidden state.
+	 *
+	 * @en Forbid ✕
+	 * @de Verbieten ✕
+	 */
+	public static ResKey BULK_ACTION_DENY;
+
+	/**
+	 * Bulk action emptying the chosen cells.
+	 *
+	 * @en Clear
+	 * @de Leeren
+	 */
+	public static ResKey BULK_ACTION_CLEAR;
+
+	/**
+	 * Button of a dialog of the policy matrix that writes what the dialog chose into the draft.
+	 *
+	 * @en Apply
+	 * @de Anwenden
+	 */
+	public static ResKey BULK_APPLY;
+
+	/**
+	 * Note of the bulk dialog that emptying a row never widens it.
+	 *
+	 * @en A row this empties stays restricted and may then use none.
+	 * @de Eine Zeile, die dadurch leer wird, bleibt „eingeschränkt“ (darf keins).
+	 */
+	public static ResKey BULK_EMPTY_ROW_STAYS;
+
+	/**
+	 * Note of the bulk dialog about the locked rows it restricts first.
+	 *
+	 * @en {0} rows not named so far are restricted first.
+	 * @de {0} bisher nicht genannte Zeilen werden vorher eingeschränkt.
+	 */
+	public static ResKey1 BULK_RESTRICTED_FIRST__COUNT;
+
+	/**
+	 * Note of the bulk dialog about the locked rows it leaves alone.
+	 *
+	 * @en {0} rows not named are skipped.
+	 * @de {0} nicht genannte Zeilen werden übersprungen.
+	 */
+	public static ResKey1 BULK_SKIPPED__COUNT;
+
+	/**
+	 * Label of the selected roles in the bulk dialog.
+	 *
+	 * @en Roles
+	 * @de Rollen
+	 */
+	public static ResKey BULK_ROLES;
+
+	/**
+	 * What the bulk dialog would change.
+	 *
+	 * @en Changes {0} cells in {1} rows.
+	 * @de Betrifft {0} Zellen in {1} Zeilen.
+	 */
+	public static ResKey2 BULK_SUMMARY__CELLS_ROWS;
+
+	/**
+	 * Tooltip of a cell of the background row that cannot be clicked.
+	 *
+	 * @en Choose "Own list" in this row to pick what unattended runs may reach.
+	 * @de Für eine eigene Auswahl in dieser Zeile „Eigene Liste“ wählen.
+	 */
+	public static ResKey CELL_BACKGROUND_LOCKED;
+
+	/**
+	 * Tooltip of a cell of the baseline row that cannot be clicked.
+	 *
+	 * @en Choose "Own list" in this row to pick the basic permissions yourself.
+	 * @de Für eine eigene Auswahl in dieser Zeile „Eigene Liste“ wählen.
+	 */
+	public static ResKey CELL_BASELINE_LOCKED;
+
+	/**
+	 * Name of the command a click on a cell of the policy matrix executes.
+	 *
+	 * @en Change cell
+	 * @de Zelle ändern
+	 */
+	public static ResKey CELL_CLICK;
+
+	/**
+	 * Tooltip prefix of a forbidden cell.
+	 *
+	 * @en Forbidden (✕): beats every other role. Changed through the context menu.
+	 * @de Verboten (✕): gewinnt gegen jede andere Rolle. Änderbar über das Kontextmenü.
+	 */
+	public static ResKey CELL_DENIED;
+
+	/**
+	 * Tooltip prefix of a cell of a row the section does not name.
+	 *
+	 * @en Not named: the section default decides. To decide per cell, set the row to "restricted".
+	 * @de Nicht genannt: die Voreinstellung entscheidet. Um je Zelle zu entscheiden, die Zeile auf „eingeschränkt“ stellen.
+	 */
+	public static ResKey CELL_LOCKED;
+
+	/**
+	 * Context menu entry granting the name of a cell.
+	 *
+	 * @en Grant ✓
+	 * @de Gewähren ✓
+	 */
+	public static ResKey CELL_MENU_GRANT;
+
+	/**
+	 * Context menu entry forbidding the name of a cell.
+	 *
+	 * @en Forbid ✕
+	 * @de Verbieten ✕
+	 * @tooltip Beats every permission of every other role the account holds.
+	 */
+	public static ResKey CELL_MENU_DENY;
+
+	/**
+	 * Context menu entry emptying a granted cell.
+	 *
+	 * @en Clear
+	 * @de Leeren
+	 */
+	public static ResKey CELL_MENU_CLEAR;
+
+	/**
+	 * Context menu entry emptying a forbidden cell.
+	 *
+	 * @en Lift prohibition
+	 * @de Verbot aufheben
+	 */
+	public static ResKey CELL_MENU_CLEAR_DENY;
+
+	/**
+	 * Tooltip suffix of a capability the limit of unattended runs does not admit.
+	 *
+	 * @en Unattended runs do not reach it.
+	 * @de Unbeaufsichtigte Läufe erreichen sie nicht.
+	 */
+	public static ResKey CELL_NOT_IN_BACKGROUND;
+
+	/**
+	 * Tooltip of a cell of a run section: what a run of the role would decide.
+	 *
+	 * @en A run of this role alone: {0}
+	 * @de Ein Lauf dieser Rolle allein: {0}
+	 */
+	public static ResKey1 CELL_RUN_VERDICT__VERDICT;
+
+	/**
+	 * Tooltip of the single-tools cell of a row.
+	 *
+	 * @en Grants and prohibitions of single tools. Click to edit.
+	 * @de Erlaubnisse und Verbote einzelner Tools. Zum Bearbeiten klicken.
+	 */
+	public static ResKey CELL_TOOLS;
+
+	/**
+	 * Tooltip of the single-tools cell of a row that cannot be edited.
+	 *
+	 * @en Single tools of this row, editable only with an own list.
+	 * @de Einzelne Tools dieser Zeile, nur mit eigener Liste änderbar.
+	 */
+	public static ResKey CELL_TOOLS_LOCKED;
+
+	/**
+	 * Header of the role column of the policy matrix.
+	 *
+	 * @en Role
+	 * @de Rolle
+	 */
+	public static ResKey COLUMN_ROLE;
+
+	/**
+	 * Header of the row-state column of a run section.
+	 *
+	 * @en Row
+	 * @de Zeile
+	 * @tooltip Not named: the section default decides for the role. Restricted: the role may use exactly what its cells grant, and nothing once they are empty.
+	 */
+	public static ResKey COLUMN_ROW_STATE;
+
+	/**
+	 * Header of the row-state column of the capability matrix.
+	 *
+	 * @en Entry
+	 * @de Eintrag
+	 * @tooltip Whether the role has an entry of its own. Removing it takes back everything the role grants and forbids.
+	 */
+	public static ResKey COLUMN_ENTRY;
+
+	/**
+	 * Header of the column counting the single-tool entries of a row.
+	 *
+	 * @en Single tools
+	 * @de Einzeltools
+	 */
+	public static ResKey COLUMN_TOOLS;
+
+	/**
+	 * Title of the bulk dialog.
+	 *
+	 * @en Edit selection - {0} roles
+	 * @de Auswahl bearbeiten - {0} Rollen
+	 */
+	public static ResKey1 DIALOG_EDIT_SELECTION__COUNT;
+
+	/**
+	 * Title of the dialog listing the single tools of a row.
+	 *
+	 * @en Single tools - {0}
+	 * @de Einzeltools - {0}
+	 */
+	public static ResKey1 DIALOG_TOOL_ENTRIES__ROW;
+
+	/**
+	 * Label of the action of the bulk dialog.
+	 *
+	 * @en Action
+	 * @de Aktion
+	 */
+	public static ResKey FIELD_BULK_ACTION;
+
+	/**
+	 * Label of the capability groups the bulk dialog changes.
+	 *
+	 * @en Capabilities
+	 * @de Fähigkeiten
+	 */
+	public static ResKey FIELD_BULK_GROUPS;
+
+	/**
+	 * Label of the names the bulk dialog changes.
+	 *
+	 * @en Columns
+	 * @de Spalten
+	 */
+	public static ResKey FIELD_BULK_NAMES;
+
+	/**
+	 * Label of the switch restricting locked rows before a bulk edit.
+	 *
+	 * @en Restrict rows not named first
+	 * @de Nicht genannte Zeilen vorher einschränken
+	 * @tooltip Otherwise the rows the section does not name are skipped.
+	 */
+	public static ResKey FIELD_BULK_RESTRICT_FIRST;
+
+	/**
+	 * Label of the switch showing the overlay.
+	 *
+	 * @en Show effective
+	 * @de Effektiv anzeigen
+	 * @tooltip Marks what a run of the role alone refuses although the cell grants it (⊘), and what it reaches only because an agent uses it itself (A). Computed from the draft.
+	 */
+	public static ResKey FIELD_OVERLAY;
+
+	/**
+	 * Label of the role search of the policy matrix.
+	 *
+	 * @en Search role
+	 * @de Rolle suchen
+	 */
+	public static ResKey FIELD_ROLE_SEARCH;
+
+	/**
+	 * Label of the row filter of the policy matrix.
+	 *
+	 * @en Rows
+	 * @de Zeilen
+	 */
+	public static ResKey FIELD_ROW_FILTER;
+
+	/**
+	 * Label of the single tools the baseline or the background limit names.
+	 *
+	 * @en Tools
+	 * @de Tools
+	 */
+	public static ResKey FIELD_TOOLS_ADMITTED;
+
+	/**
+	 * Label of the single tools a role forbids.
+	 *
+	 * @en Forbidden tools
+	 * @de Verbotene Tools
+	 */
+	public static ResKey FIELD_TOOLS_DENIED;
+
+	/**
+	 * Label of the single tools a role grants.
+	 *
+	 * @en Granted tools
+	 * @de Erlaubte Tools
+	 */
+	public static ResKey FIELD_TOOLS_GRANTED;
+
+	/**
+	 * Label of the switch asking about unattended runs.
+	 *
+	 * @en Unattended runs
+	 * @de Hintergrundläufe
+	 * @tooltip Asks about a run with nobody to confirm a tool call, which the limit of unattended runs binds.
+	 */
+	public static ResKey FIELD_UNATTENDED;
+
+	/**
+	 * Inspector reason: reachable because an agent the role may run uses it.
+	 *
+	 * @en only as the agent's own of {0}
+	 * @de nur als eigenes von {0}
+	 */
+	public static ResKey1 INSPECTOR_AGENTS_OWN__AGENTS;
+
+	/**
+	 * Inspector subtitle while the draft equals the saved policy.
+	 *
+	 * @en What the role alone may use, and why. Basis: draft
+	 * @de Was die Rolle allein darf, und warum. Grundlage: Entwurf
+	 */
+	public static ResKey INSPECTOR_BASIS_SAVED;
+
+	/**
+	 * Inspector subtitle while the draft differs from the saved policy.
+	 *
+	 * @en What the role alone may use, and why. Basis: draft (not saved)
+	 * @de Was die Rolle allein darf, und warum. Grundlage: Entwurf (nicht gespeichert)
+	 */
+	public static ResKey INSPECTOR_BASIS_UNSAVED;
+
+	/**
+	 * Inspector heading of the capabilities.
+	 *
+	 * @en Capabilities · {0} ✓ · {1} ✕ · basic permissions: {2} · {3}
+	 * @de Fähigkeiten · {0} ✓ · {1} ✕ · Grundberechtigung: {2} · {3}
+	 */
+	public static ResKey4 INSPECTOR_CAPABILITIES__GRANTED_DENIED_BASELINE_MODE;
+
+	/**
+	 * Inspector reason of a forbidden name.
+	 *
+	 * @en cell ✕, beats every role
+	 * @de Zelle ✕, gewinnt gegen jede Rolle
+	 */
+	public static ResKey INSPECTOR_DENIED_BY_CELL;
+
+	/**
+	 * Inspector text while no row is selected.
+	 *
+	 * @en Select a row to see what that role may use, and why.
+	 * @de Eine Zeile auswählen, um zu sehen, was diese Rolle darf und warum.
+	 */
+	public static ResKey INSPECTOR_EMPTY;
+
+	/**
+	 * Inspector state of a role a section does not name.
+	 *
+	 * @en not named · default {0}
+	 * @de nicht genannt · Voreinstellung {0}
+	 */
+	public static ResKey1 INSPECTOR_NOT_NAMED__DEFAULT;
+
+	/**
+	 * Inspector line counting the names that are simply not permitted.
+	 *
+	 * @en {0} more
+	 * @de {0} weitere
+	 */
+	public static ResKey1 INSPECTOR_REST__COUNT;
+
+	/**
+	 * Inspector reason for a role the section does not name.
+	 *
+	 * @en the section default does not admit them
+	 * @de die Voreinstellung lässt sie nicht zu
+	 */
+	public static ResKey INSPECTOR_REST_DEFAULT;
+
+	/**
+	 * Inspector reason for a restricted role.
+	 *
+	 * @en restricted, no cell ✓
+	 * @de eingeschränkt, keine Zelle ✓
+	 */
+	public static ResKey INSPECTOR_REST_RESTRICTED;
+
+	/**
+	 * Inspector heading of a run section.
+	 *
+	 * @en {0} · {1} · {2} of {3}
+	 * @de {0} · {1} · {2} von {3}
+	 */
+	public static ResKey4 INSPECTOR_SECTION__DIMENSION_STATE_ALLOWED_TOTAL;
+
+	/**
+	 * Legend above a run section matrix.
+	 *
+	 * @en ✓ may use · ✕ may never use, beats every other role (context menu or "Edit selection …") · hatched: not named, the default in the header of the row column decides. The rows are all roles; the cells are evaluated for one role on its own.
+	 * @de ✓ darf verwenden · ✕ darf niemals verwenden, gewinnt gegen jede andere Rolle (Kontextmenü oder „Auswahl bearbeiten …“) · schraffiert: nicht genannt, die Voreinstellung im Kopf der Zeilen-Spalte entscheidet. Die Zeilen sind alle Rollen; bewertet wird jede Rolle für sich.
+	 */
+	public static ResKey MATRIX_LEGEND_RUN;
+
+	/**
+	 * Legend above the capability matrix.
+	 *
+	 * @en ✓ grants · ✕ forbids, beats every other role and the basic permissions (context menu or "Edit selection …") · the first two rows are the basic permissions of every account and the limit of unattended runs.
+	 * @de ✓ gewährt · ✕ verbietet, gewinnt gegen jede andere Rolle und die Grundberechtigung (Kontextmenü oder „Auswahl bearbeiten …“) · die ersten beiden Zeilen sind die Grundberechtigung jedes Kontos und die Obergrenze für unbeaufsichtigte Läufe.
+	 */
+	public static ResKey MATRIX_LEGEND_CAPABILITIES;
+
+	/**
+	 * Marks a name the policy mentions and the application does not have.
+	 *
+	 * @en unknown
+	 * @de unbekannt
+	 */
+	public static ResKey NAME_UNKNOWN;
+
+	/**
+	 * Why redo is disabled.
+	 *
+	 * @en Nothing to redo.
+	 * @de Nichts zu wiederholen.
+	 */
+	public static ResKey NOTHING_TO_REDO;
+
+	/**
+	 * Why undo is disabled.
+	 *
+	 * @en Nothing to undo.
+	 * @de Nichts rückgängig zu machen.
+	 */
+	public static ResKey NOTHING_TO_UNDO;
+
+	/**
+	 * Marks a role the policy names and the application does not have.
+	 *
+	 * @en {0} - role does not exist
+	 * @de {0} - Rolle existiert nicht
+	 */
+	public static ResKey1 ROLE_UNKNOWN__ROLE;
+
+	/**
+	 * Label of the row of the limit of unattended runs.
+	 *
+	 * @en Limit of unattended runs
+	 * @de Obergrenze Hintergrund
+	 * @tooltip What a run with nobody to confirm a tool call may reach at most, whatever the roles grant. Binds administrators too.
+	 */
+	public static ResKey ROW_BACKGROUND;
+
+	/**
+	 * Label of the row of the basic permissions.
+	 *
+	 * @en Basic permissions (all accounts)
+	 * @de Grundberechtigung (alle Konten)
+	 * @tooltip What every account may use without holding a role.
+	 */
+	public static ResKey ROW_BASELINE;
+
+	/**
+	 * Row filter option showing every role.
+	 *
+	 * @en all rows
+	 * @de alle Zeilen
+	 */
+	public static ResKey ROW_FILTER_ALL;
+
+	/**
+	 * Row filter option showing the roles a section does not name.
+	 *
+	 * @en only not named
+	 * @de nur nicht genannte
+	 */
+	public static ResKey ROW_FILTER_NOT_NAMED;
+
+	/**
+	 * Row filter option showing the roles a section restricts.
+	 *
+	 * @en only restricted
+	 * @de nur eingeschränkte
+	 */
+	public static ResKey ROW_FILTER_RESTRICTED;
+
+	/**
+	 * Row filter option showing the roles with an entry.
+	 *
+	 * @en only with entry
+	 * @de nur mit Eintrag
+	 */
+	public static ResKey ROW_FILTER_WITH_ENTRY;
+
+	/**
+	 * Row filter option showing the roles without an entry.
+	 *
+	 * @en only without entry
+	 * @de nur ohne Eintrag
+	 */
+	public static ResKey ROW_FILTER_WITHOUT_ENTRY;
+
+	/**
+	 * Row state of a role with an entry of the tool access section.
+	 *
+	 * @en entry
+	 * @de Eintrag
+	 */
+	public static ResKey ROW_STATE_ENTRY;
+
+	/**
+	 * Row state of a role without an entry of the tool access section.
+	 *
+	 * @en no entry
+	 * @de kein Eintrag
+	 */
+	public static ResKey ROW_STATE_NO_ENTRY;
+
+	/**
+	 * Row state of a role a run section does not name.
+	 *
+	 * @en not named
+	 * @de nicht genannt
+	 */
+	public static ResKey ROW_STATE_NOT_NAMED;
+
+	/**
+	 * Row state of a role a run section restricts.
+	 *
+	 * @en restricted
+	 * @de eingeschränkt
+	 */
+	public static ResKey ROW_STATE_RESTRICTED;
+
+	/**
+	 * Message when the bulk edit is opened without a selection.
+	 *
+	 * @en Select the roles to edit first, with the checkbox in front of the row.
+	 * @de Zuerst die zu bearbeitenden Rollen auswählen, mit dem Häkchen vor der Zeile.
+	 */
+	public static ResKey SELECTION_EMPTY;
+
+	/**
+	 * Note at the top of the single-tools dialog.
+	 *
+	 * @en Entries naming single tools instead of a whole capability. A prohibition beats every permission.
+	 * @de Einträge, die einzelne Tools statt einer ganzen Fähigkeit nennen. Ein Verbot gewinnt gegen jede Erlaubnis.
+	 */
+	public static ResKey TOOL_ENTRIES_NOTE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}
-	/**
-	 * What a collapsed role section says about its content.
-	 *
-	 * @en {0} granted, {1} forbidden, {2} tool entries
-	 * @de {0} gewährt, {1} verboten, {2} Tool-Einträge
-	 */
-	public static ResKey3 ROLE_SUMMARY__GRANTED_DENIED_ENTRIES;
 
 	/**
 	 * How many entries a collapsed section holds.
@@ -1009,24 +1380,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 SECTION_COUNT__COUNT;
 
-	/**
-	 * What the three states of a capability mean, once at the top of a role's section.
-	 *
-	 * @en Empty means this role says nothing about it. Ticked grants it, the third state forbids it and
-	 *     beats every other role and the basic permissions.
-	 * @de Leer heißt, dass diese Rolle nichts dazu sagt. Angehakt gewährt, der dritte Zustand verbietet
-	 *     und schlägt jede andere Rolle und die Grundberechtigung.
-	 */
-	public static ResKey CAPABILITY_STATES_NOTE;
 
-	/**
-	 * Heading of the section holding the entries of one role that name single tools.
-	 *
-	 * @en Single tools
-	 * @de Einzelne Tools
-	 * @tooltip Permissions and prohibitions for named tools instead of a whole capability.
-	 */
-	public static ResKey SECTION_TOOL_ENTRIES;
 
 	/**
 	 * Refusal of a policy naming an agent, a model or an MCP server the application does not have.
@@ -1036,23 +1390,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 REFUSE_UNKNOWN_NAME__NAME;
 
-	/**
-	 * Heading of the section holding which agents, models and MCP servers a role may use.
-	 *
-	 * @en Agents, models and MCP servers
-	 * @de Agenten, Modelle und MCP-Server
-	 * @tooltip Which agents each role may run, which models it may choose for a single request, and
-	 *          which MCP servers it may attach. What a run may then do is the section above.
-	 */
-	public static ResKey SECTION_RUN_ACCESS;
 
-	/**
-	 * What a collapsed section of one dimension says.
-	 *
-	 * @en {0}, {1} roles restricted
-	 * @de {0}, {1} Rollen eingeschränkt
-	 */
-	public static ResKey2 SECTION_RUN_SUMMARY__DEFAULT_ROLES;
 
 	/**
 	 * Label of the field holding what a section admits from a role it does not name.
@@ -1064,35 +1402,8 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey FIELD_SECTION_DEFAULT;
 
-	/**
-	 * Label of the switch that takes one role into a section, or out of it.
-	 *
-	 * @en Restrict {0}
-	 * @de {0} einschränken
-	 * @tooltip Switch this on and the role may use only what is named below - naming nothing means it
-	 *          may use none of them. Switch it off and its holders get what everybody else gets.
-	 */
-	public static ResKey1 FIELD_ROLE_RESTRICTED__ROLE;
 
-	/**
-	 * Label of the field holding what one role may use.
-	 *
-	 * @en {0} may use
-	 * @de {0} darf verwenden
-	 * @tooltip Leave this empty and the role may use none of them. Naming any of them restricts the
-	 *          role to what is named here.
-	 */
-	public static ResKey1 FIELD_ROLE_ALLOWED__ROLE;
 
-	/**
-	 * Label of the field holding what one role may never use.
-	 *
-	 * @en {0} may never use
-	 * @de {0} darf niemals verwenden
-	 * @tooltip A refusal here wins over every permission - of this role, of every other role the same
-	 *          user holds, and of the agent itself.
-	 */
-	public static ResKey1 FIELD_ROLE_FORBIDDEN__ROLE;
 
 	/**
 	 * Why an agent this account is permitted still cannot run for it.
@@ -1187,104 +1498,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey RUN_SECTIONS_NOTE;
 
-	/**
-	 * Heading of the section holding every configured role.
-	 *
-	 * @en Roles
-	 * @de Rollen
-	 * @tooltip What each configured role may do, and how another role is taken into the policy.
-	 */
-	public static ResKey SECTION_ROLES;
 
-	/**
-	 * What the collapsed roles section says when the names no longer fit into its title.
-	 *
-	 * @en {0} roles
-	 * @de {0} Rollen
-	 */
-	public static ResKey1 SECTION_ROLES_SUMMARY__COUNT;
 
-	/**
-	 * Heading of the section that takes another role into the policy.
-	 *
-	 * @en Add a role
-	 * @de Rolle aufnehmen
-	 * @tooltip Takes another security role into the policy. What it may do is then decided in its own
-	 *     section.
-	 */
-	public static ResKey SECTION_ADD_ROLE;
 
-	/**
-	 * Row state of a capability this role says nothing about, granted by another configured role.
-	 *
-	 * @en granted by {0}
-	 * @de wird von {0} gewährt
-	 */
-	public static ResKey1 ROW_GRANTED_BY_ROLE__ROLE;
 
-	/**
-	 * Label of the choice deciding what one entry names.
-	 *
-	 * @en Names
-	 * @de Benennt
-	 * @tooltip Whether this entry is about a whole capability or about named tools.
-	 */
-	public static ResKey FIELD_ENTRY_KIND;
 
-	/**
-	 * Label of the choice deciding what every account gets.
-	 *
-	 * @en Every account gets
-	 * @de Jedes Konto bekommt
-	 * @tooltip What every account may do before any role is taken into account.
-	 */
-	public static ResKey FIELD_BASELINE_CHOICE;
 
-	/**
-	 * Label of the capabilities every account gets.
-	 *
-	 * @en Capabilities
-	 * @de Tool-Gruppen
-	 * @tooltip The capabilities every account gets. Nothing chosen means nobody gets anything without a
-	 *     role.
-	 */
-	public static ResKey FIELD_BASELINE_GROUPS;
 
-	/**
-	 * Label of the single tools every account gets.
-	 *
-	 * @en Single tools
-	 * @de Einzelne Tools
-	 * @tooltip Named tools every account may call, in addition to the capabilities above.
-	 */
-	public static ResKey FIELD_BASELINE_TOOLS;
 
-	/**
-	 * Label of the choice deciding what an unattended run may reach.
-	 *
-	 * @en Unattended runs may use
-	 * @de Unbeaufsichtigte Läufe dürfen
-	 * @tooltip The upper limit for a run that has nobody to confirm a call.
-	 */
-	public static ResKey FIELD_BACKGROUND_CHOICE;
 
-	/**
-	 * Label of the capabilities an unattended run may reach.
-	 *
-	 * @en Capabilities
-	 * @de Tool-Gruppen
-	 * @tooltip The capabilities an unattended run may reach.
-	 */
-	public static ResKey FIELD_BACKGROUND_GROUPS;
 
-	/**
-	 * Label of the single tools an unattended run may call.
-	 *
-	 * @en Single tools
-	 * @de Einzelne Tools
-	 * @tooltip Named tools an unattended run may call, in addition to the capabilities above.
-	 */
-	public static ResKey FIELD_BACKGROUND_TOOLS;
 
 	/**
 	 * Label of the capability group an assignment puts tools into.

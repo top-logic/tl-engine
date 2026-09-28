@@ -1,10 +1,9 @@
 /*
  * Layout of the "Agent-Sicherheit" administration view.
  *
- * Small on purpose. The Richtlinie tab is an ordinary reactive form since the review, so its sections,
- * labels and fields are laid out by the theme; what is left here are the few pieces the framework has
- * no control for: the messages at the top, the risk marker next to a capability, and the summary a
- * collapsed section shows.
+ * The Richtlinie tab is a matrix per sub-tab (#404): the table, its fields and the toolbar are the
+ * framework's; what is styled here are the pieces it has no control for - the cells, the column
+ * headers, the inspector pane - and the messages at the top.
  *
  * Colours are deliberately conservative and stated literally: this file is contributed by a library
  * module and has to look right in the shipped theme without depending on a variable that theme happens
@@ -98,53 +97,6 @@
 	font-weight: 600;
 }
 
-/* --- the pieces inside a form row ---------------------------------------- */
-
-/* What makes a capability special, next to its label. */
-.aiSecurityRisk {
-	margin-left: 6px;
-	color: #a05000;
-	font-size: 0.9em;
-	white-space: nowrap;
-}
-
-/* Who else grants a capability, next to its tri-state. */
-.aiSecurityBaselineState {
-	margin-left: 10px;
-	color: #1f6b3a;
-	font-size: 0.9em;
-}
-
-/* --- the prohibition state of a capability ------------------------------- */
-
-/*
- * A capability is the framework's own tri-state control: an empty square for "this role says nothing",
- * a ticked one for granted, and - through the rule below - a crossed square in the tab's warning
- * colour for forbidden. The control's own third state is a square with a minus, which is visually
- * neutral and invites "partly selected" as a misreading; a prohibition is the loudest answer this tab
- * has, the only one that overrides every other role and the basic permissions, so it is told apart at
- * a glance rather than by prose next to the box.
- *
- * The rule only redirects the glyph the theme already renders - the form builds one control either
- * way, so this is not a second code path. "\f410" is fa-rectangle-xmark, which the shipped Font
- * Awesome *regular* face has; fa-square-xmark ("\f2d3") is not in that face and renders a
- * missing-glyph box. The colour is the one span.aiSecurityWarning above already uses, so the tab gains
- * no new colour. A theme that gives Icons.TRISTATE_FALSE a different icon leaves this rule matching
- * nothing, and the third state silently falls back to that theme's own glyph; that is accepted on
- * purpose, because the alternative is a control of our own.
- */
-.aiSecurityView .cIconSelect .input-image i.fa-square-minus {
-	--fa: "\f410";
-	color: #a83200;
-}
-
-/* Whether an entry permits or forbids, in front of the entry's fields. */
-.aiSecurityEntryKind {
-	display: inline-block;
-	min-width: 110px;
-	font-weight: 600;
-}
-
 /* What a collapsed section says about its content, next to its title. */
 .aiSecuritySummary {
 	margin-left: 10px;
@@ -178,3 +130,317 @@
 	padding-top: 8px;
 	border-top: 1px solid #ececec;
 }
+
+/* --- the policy matrix (#404) -------------------------------------------- */
+
+/*
+ * The matrix carries its own tokens, because it is the one part of this view with colours that mean
+ * something: granted, forbidden, refused by the run, not named. Stated literally, like the rest of
+ * this file: the classic layout renders in the application's classic theme, which has no dark variant
+ * a selector could key on.
+ */
+.aiPolicyMatrixView {
+	--ai-policy-border: #9aa4ae;
+	--ai-policy-box-bg: #ffffff;
+	--ai-policy-granted: #1f7a3a;
+	--ai-policy-denied: #b3261e;
+	--ai-policy-ghost: #9aa4ae;
+	--ai-policy-hatch: rgba(120, 130, 140, 0.13);
+	--ai-policy-refused: #b3261e;
+	--ai-policy-own: #1d5fa8;
+	--ai-policy-special-bg: rgba(120, 130, 140, 0.10);
+	--ai-policy-inspected-bg: #fff6d6;
+	--ai-policy-unknown-bg: #fbe3e1;
+	--ai-policy-pane-bg: #f6f7f8;
+	--ai-policy-pane-border: #d7dce0;
+	--ai-policy-muted: #5f6b76;
+	max-width: none;
+}
+
+
+.aiPolicyMatrixSplit {
+	display: flex;
+	align-items: flex-start;
+	gap: 14px;
+}
+
+.aiPolicyMatrixTable {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow-x: auto;
+}
+
+/*
+ * The header carries two lines per name and the section default under its label; the theme's header
+ * height is meant for one line and has no setting of its own, so the matrix raises it.
+ */
+.aiPolicyMatrixTable thead tr.tl-table__row {
+	--table-row-height: 80px !important;
+}
+
+.aiPolicyMatrixTable thead .tl-table__header-cell-content > div:first-child {
+	align-items: flex-end !important;
+	white-space: normal;
+}
+
+/* The search, the row filter and the two switches, in one line above the matrix. */
+.aiPolicyBar {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 14px;
+	margin: 4px 0 10px;
+}
+
+.aiPolicyBar .aiPolicyBulkButton {
+	margin-left: auto;
+}
+
+.aiPolicySwitch {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	white-space: nowrap;
+}
+
+/* The role column: the label an administrator gave the role, the technical name under it. */
+.aiPolicyRole {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	min-height: 32px;
+	line-height: 1.2;
+}
+
+.aiPolicyRoleLabel {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.aiPolicyRoleName {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	font-family: monospace;
+	font-size: 0.85em;
+	color: var(--ai-policy-muted);
+}
+
+/* The section default, in the header of the row-state column. */
+.aiPolicyDefaultLabel,
+.aiPolicyColumnDetail {
+	font-size: 0.85em;
+	font-weight: normal;
+	color: var(--ai-policy-muted);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* The engine's header wrapper is a flex row that would shrink these blocks to nothing. */
+.aiPolicyColumn,
+.aiPolicyDefault {
+	flex: 1 1 auto;
+	width: 100%;
+	min-width: 0;
+	line-height: 1.2;
+}
+
+.aiPolicyColumnName {
+	font-size: 0.92em;
+	white-space: normal;
+	overflow-wrap: anywhere;
+}
+
+/* --- one cell ------------------------------------------------------------ */
+
+.aiPolicyCell {
+	display: inline-flex;
+	align-items: center;
+	gap: 3px;
+	position: relative;
+	vertical-align: middle;
+}
+
+.aiPolicyBox {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 18px;
+	height: 18px;
+	border: 1px solid var(--ai-policy-border);
+	border-radius: 3px;
+	background: var(--ai-policy-box-bg);
+	font-weight: 700;
+	line-height: 1;
+}
+
+.aiPolicyClickable .aiPolicyBox {
+	cursor: pointer;
+}
+
+.aiPolicyState-GRANTED .aiPolicyBox {
+	color: var(--ai-policy-granted);
+}
+
+/* A prohibition beats every other role: the loudest answer the matrix has. */
+.aiPolicyState-DENIED .aiPolicyBox {
+	color: var(--ai-policy-denied);
+	border-color: var(--ai-policy-denied);
+}
+
+/* A row the section does not name: what the default gives, greyed and not clickable. */
+.aiPolicyGhost .aiPolicyBox,
+.aiPolicyLocked .aiPolicyBox {
+	color: var(--ai-policy-ghost);
+	border-style: dashed;
+	background: transparent;
+	font-weight: 600;
+}
+
+.aiPolicyGhost-AGENTS_OWN .aiPolicyBox {
+	font-size: 0.8em;
+}
+
+tr.aiPolicyLockedRow > td {
+	background-image: repeating-linear-gradient(-45deg, transparent 0 6px, var(--ai-policy-hatch) 6px 8px);
+}
+
+tr.aiPolicySpecialRow > td {
+	background-color: var(--ai-policy-special-bg);
+	font-weight: 600;
+}
+
+tr.aiPolicyInspectedRow > td {
+	background-color: var(--ai-policy-inspected-bg);
+}
+
+tr.aiPolicyUnknown > td,
+td.aiPolicyUnknown,
+th.aiPolicyUnknown {
+	background-color: var(--ai-policy-unknown-bg);
+}
+
+/* The overlay: what a run refuses although the cell or the default grants it, and what an agent reaches. */
+.aiPolicyRefused .aiPolicyBox {
+	outline: 2px solid var(--ai-policy-refused);
+	outline-offset: 1px;
+}
+
+.aiPolicyMark {
+	font-size: 0.85em;
+	font-weight: 700;
+}
+
+.aiPolicyMarkRefused {
+	color: var(--ai-policy-refused);
+}
+
+.aiPolicyMarkOwn {
+	color: var(--ai-policy-own);
+}
+
+.aiPolicyTools.aiPolicyClickable {
+	cursor: pointer;
+	text-decoration: underline;
+	color: var(--ai-policy-own);
+}
+
+/* --- the inspector ------------------------------------------------------- */
+
+.aiPolicyInspector {
+	flex: 0 0 300px;
+	max-width: 300px;
+	border: 1px solid var(--ai-policy-pane-border);
+	border-radius: 4px;
+	background: var(--ai-policy-pane-bg);
+	padding: 8px 10px 10px;
+	position: sticky;
+	top: 0;
+}
+
+.aiPolicyInspectorHead {
+	display: flex;
+	justify-content: space-between;
+	gap: 8px;
+	font-weight: 600;
+}
+
+.aiPolicyInspectorName {
+	font-family: monospace;
+	font-weight: normal;
+	color: var(--ai-policy-muted);
+}
+
+.aiPolicyInspectorBasis,
+.aiPolicyInspectorEmpty {
+	margin: 4px 0 8px;
+	color: var(--ai-policy-muted);
+	font-size: 0.9em;
+}
+
+.aiPolicyInspectorSection {
+	margin: 10px 0 4px;
+	padding-bottom: 2px;
+	border-bottom: 1px solid var(--ai-policy-pane-border);
+	font-weight: 600;
+}
+
+.aiPolicyInspectorLine {
+	margin: 3px 0;
+	line-height: 1.35;
+}
+
+.aiPolicyInspectorIcon {
+	display: inline-block;
+	width: 16px;
+	font-weight: 700;
+}
+
+.aiPolicyInspectorAllowed .aiPolicyInspectorIcon {
+	color: var(--ai-policy-granted);
+}
+
+.aiPolicyInspectorDenied .aiPolicyInspectorIcon,
+.aiPolicyInspectorRefused .aiPolicyInspectorIcon {
+	color: var(--ai-policy-denied);
+}
+
+.aiPolicyInspectorOwn .aiPolicyInspectorIcon {
+	color: var(--ai-policy-own);
+}
+
+.aiPolicyInspectorReason {
+	color: var(--ai-policy-muted);
+}
+
+/* --- the bulk dialog ----------------------------------------------------- */
+
+.aiPolicyChips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin: 2px 0 10px;
+}
+
+.aiPolicyChip {
+	padding: 1px 6px;
+	border: 1px solid #b8c2cc;
+	border-radius: 3px;
+}
+
+.aiPolicyBulk .cChoice {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 2px 14px;
+}
+
+.aiPolicyBulkSummary {
+	margin-top: 10px;
+	padding: 8px 10px;
+	border-radius: 3px;
+	background: #e8f0f8;
+	color: #1d3d5c;
+}
+

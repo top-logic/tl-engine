@@ -17,18 +17,21 @@ import com.top_logic.basic.config.equal.ConfigEquality;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
+import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Dimension;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.BackgroundAllowlist;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Baseline;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
 import com.top_logic.tl.ai.core.security.ToolAccessRule;
+import com.top_logic.tl.ai.core.security.layout.MatrixDimension;
 import com.top_logic.tl.ai.core.security.layout.PolicyChecks;
 import com.top_logic.tl.ai.core.security.layout.PolicyDraft;
 import com.top_logic.tl.ai.core.security.layout.PolicyDraft.BackgroundChoice;
 import com.top_logic.tl.ai.core.security.layout.PolicyDraft.BaselineChoice;
-import com.top_logic.tl.ai.core.security.layout.PolicyDraft.CapabilityState;
-import com.top_logic.tl.ai.core.security.layout.PolicyDraft.RoleTemplate;
+import com.top_logic.tl.ai.core.security.layout.PolicyDraft.CellState;
+import com.top_logic.tl.ai.core.security.layout.PolicyMatrix;
+import com.top_logic.tl.ai.core.security.layout.PolicyMatrix.RowState;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 
@@ -53,6 +56,12 @@ public class SecDemoPolicyEditorTest extends SecDemoPersonaTest {
 	/** The role the fixture grants the write capabilities to. */
 	private static final String PARTNER = "projectPartner";
 
+	/** The fixture's restricted role, which every run section names. */
+	private static final String READER = "ticketReader";
+
+	/** A model no provider of the fixture lists. */
+	private static final String UNKNOWN_MODEL = "gpt-4-turbo";
+
 	/**
 	 * The policy the application actually ships applies - otherwise every assertion below would be
 	 * about a fixture nobody can boot.
@@ -66,22 +75,38 @@ public class SecDemoPolicyEditorTest extends SecDemoPersonaTest {
 	}
 
 	/**
-	 * An unknown role is refused, which is one of the two ways to provoke a refusal at all.
-	 *
-	 * <p>
-	 * The either-or editing of a permission entry makes the group-versus-tools rule nearly
-	 * unauthorable, so this and the missing background limit are the cases that matter - the
-	 * prototype's own feedback said so before this existed.
-	 * </p>
+	 * A role the application does not have is refused: a hand-written policy can name one, and the
+	 * matrix shows it as a red row of its own.
 	 */
 	public void testAnUnknownRoleIsRefused() {
 		PolicyDraft draft = draft();
-		draft.addRole(UNKNOWN_ROLE, RoleTemplate.READ_ONLY);
+		nameUnknownRole(draft);
 
 		assertTrue("The role does not exist, so applying this would stop the next start.",
 			keys(PolicyChecks.refusals(draft.config(), ROLE_EXISTS))
 				.contains(key("REFUSE_UNKNOWN_ROLE__ROLE")));
 		assertTrue("The draft has changed, so there is something to refuse.", draft.isModified());
+	}
+
+	/**
+	 * A model the application does not have is refused with the sentence the boot check prints, and
+	 * the matrix keeps it as a column of its own, so that it can be cleared again.
+	 */
+	public void testAnUnknownNameIsRefused() {
+		PolicyDraft draft = draft();
+		PolicyMatrix models = new PolicyMatrix(draft, MatrixDimension.MODELS);
+		assertEquals("The fixture restricts the reader's models.", RowState.NAMED, models.rowState(READER));
+		models.setCell(READER, UNKNOWN_MODEL, CellState.GRANTED);
+
+		Set<String> known = AiToolAccessService.knownNames(Dimension.MODEL);
+		assertTrue(models.columns(known).contains(UNKNOWN_MODEL));
+		assertTrue(keys(PolicyChecks.refusals(draft.config(), ROLE_EXISTS))
+			.contains(key("REFUSE_UNKNOWN_NAME__NAME")));
+
+		models.setCell(READER, UNKNOWN_MODEL, CellState.ABSENT);
+		assertFalse("Clearing its last cell removes the name from the policy.",
+			models.columns(known).contains(UNKNOWN_MODEL));
+		assertEquals(List.of(), keys(PolicyChecks.refusals(draft.config(), ROLE_EXISTS)));
 	}
 
 	/** A policy that names roles and says nothing about unattended runs is refused. */
@@ -94,12 +119,10 @@ public class SecDemoPolicyEditorTest extends SecDemoPersonaTest {
 				.contains(key("REFUSE_BACKGROUND_ALLOWLIST_UNDECLARED")));
 	}
 
-	/**
-	 * The one broken state the either-or editing can still produce: an entry naming no tool yet.
-	 */
+	/** A hand-written entry that names neither a capability group nor a tool is refused. */
 	public void testAnEntryNamingNothingIsRefused() {
 		PolicyDraft draft = draft();
-		draft.addToolEntry(PARTNER, false);
+		addEmptyEntry(draft, false);
 
 		assertTrue("An entry that names neither a group nor a tool grants nothing and says so nowhere.",
 			keys(PolicyChecks.refusals(draft.config(), ROLE_EXISTS))
@@ -131,7 +154,7 @@ public class SecDemoPolicyEditorTest extends SecDemoPersonaTest {
 		result.add(draft());
 
 		PolicyDraft unknownRole = draft();
-		unknownRole.addRole(UNKNOWN_ROLE, RoleTemplate.CLERK);
+		nameUnknownRole(unknownRole);
 		result.add(unknownRole);
 
 		PolicyDraft noBackground = draft();
@@ -139,18 +162,18 @@ public class SecDemoPolicyEditorTest extends SecDemoPersonaTest {
 		result.add(noBackground);
 
 		PolicyDraft emptyEntry = draft();
-		emptyEntry.addToolEntry(PARTNER, true);
+		addEmptyEntry(emptyEntry, true);
 		result.add(emptyEntry);
 
 		PolicyDraft everythingAtOnce = draft();
-		everythingAtOnce.addRole(UNKNOWN_ROLE, RoleTemplate.DEVELOPER);
+		nameUnknownRole(everythingAtOnce);
 		everythingAtOnce.setBackgroundChoice(BackgroundChoice.UNDECLARED);
-		everythingAtOnce.addToolEntry(PARTNER, false);
+		addEmptyEntry(everythingAtOnce, false);
 		result.add(everythingAtOnce);
 
 		PolicyDraft withoutRoles = draft();
 		for (String roleName : draft().roleNames()) {
-			withoutRoles.removeRole(roleName);
+			withoutRoles.setToolAccessNamed(roleName, false);
 		}
 		withoutRoles.setBackgroundChoice(BackgroundChoice.UNDECLARED);
 		// A policy that names no role has nothing it could have forgotten, so this one is sound.
@@ -363,11 +386,11 @@ public class SecDemoPolicyEditorTest extends SecDemoPersonaTest {
 	/**
 	 * A capability that is switched to any of the three states and back leaves the policy as it was.
 	 */
-	public void testTheCapabilityStatesRoundTrip() {
+	public void testTheCellStatesRoundTrip() {
 		for (String group : List.of(ToolGroups.DATA_WRITE, ToolGroups.EGRESS, ToolGroups.SCRIPT)) {
-			for (CapabilityState state : CapabilityState.values()) {
+			for (CellState state : CellState.values()) {
 				PolicyDraft draft = draft();
-				CapabilityState before = draft.capabilityState(PARTNER, group);
+				CellState before = draft.capabilityState(PARTNER, group);
 
 				draft.setCapabilityState(PARTNER, group, state);
 				assertEquals(group + " -> " + state, state, draft.capabilityState(PARTNER, group));
@@ -395,23 +418,23 @@ public class SecDemoPolicyEditorTest extends SecDemoPersonaTest {
 		PolicyDraft draft = draft();
 		RoleAccess role = draft.role(PARTNER);
 
-		draft.setCapabilityState(PARTNER, ToolGroups.EGRESS, CapabilityState.GRANTED);
+		draft.setCapabilityState(PARTNER, ToolGroups.EGRESS, CellState.GRANTED);
 		assertTrue("Granted is a permission naming the group.",
 			groupsOf(role.getGrants()).contains(ToolGroups.EGRESS));
 		assertFalse(groupsOf(role.getDenies()).contains(ToolGroups.EGRESS));
 
-		draft.setCapabilityState(PARTNER, ToolGroups.EGRESS, CapabilityState.DENIED);
+		draft.setCapabilityState(PARTNER, ToolGroups.EGRESS, CellState.DENIED);
 		assertFalse("A prohibition replaces the permission rather than sitting next to it.",
 			groupsOf(role.getGrants()).contains(ToolGroups.EGRESS));
 		assertTrue(groupsOf(role.getDenies()).contains(ToolGroups.EGRESS));
 
-		draft.setCapabilityState(PARTNER, ToolGroups.EGRESS, CapabilityState.ABSENT);
+		draft.setCapabilityState(PARTNER, ToolGroups.EGRESS, CellState.ABSENT);
 		assertFalse("The empty state is the absence of both entries.",
 			groupsOf(role.getGrants()).contains(ToolGroups.EGRESS));
 		assertFalse(groupsOf(role.getDenies()).contains(ToolGroups.EGRESS));
 
-		draft.setCapabilityState(PARTNER, ToolGroups.EGRESS, CapabilityState.DENIED);
-		draft.setCapabilityState(PARTNER, ToolGroups.EGRESS, CapabilityState.GRANTED);
+		draft.setCapabilityState(PARTNER, ToolGroups.EGRESS, CellState.DENIED);
+		draft.setCapabilityState(PARTNER, ToolGroups.EGRESS, CellState.GRANTED);
 		assertEquals("Walking the cycle must leave one entry, not one per step.", 1,
 			role.getGrants().stream().filter(e -> ToolGroups.EGRESS.equals(e.getGroup())).count());
 	}
@@ -430,14 +453,14 @@ public class SecDemoPolicyEditorTest extends SecDemoPersonaTest {
 		role.getDenies().add(prohibition);
 
 		assertEquals("A prohibition is what such a policy enforces, so it is what the row shows.",
-			CapabilityState.DENIED, draft.capabilityState(PARTNER, ToolGroups.EGRESS));
+			CellState.DENIED, draft.capabilityState(PARTNER, ToolGroups.EGRESS));
 
-		draft.setCapabilityState(PARTNER, ToolGroups.EGRESS, CapabilityState.DENIED);
+		draft.setCapabilityState(PARTNER, ToolGroups.EGRESS, CellState.DENIED);
 		assertTrue("Writing back the state that was read must not touch either list.",
 			groupsOf(role.getGrants()).contains(ToolGroups.EGRESS)
 				&& groupsOf(role.getDenies()).contains(ToolGroups.EGRESS));
 
-		draft.setCapabilityState(PARTNER, ToolGroups.EGRESS, CapabilityState.GRANTED);
+		draft.setCapabilityState(PARTNER, ToolGroups.EGRESS, CellState.GRANTED);
 		assertFalse("A deliberate click resolves it.",
 			groupsOf(role.getDenies()).contains(ToolGroups.EGRESS));
 		assertEquals("And leaves exactly one permission.", 1,
@@ -445,22 +468,21 @@ public class SecDemoPolicyEditorTest extends SecDemoPersonaTest {
 	}
 
 	/**
-	 * The tri-state rows and the entries naming single tools are two views of one list, not two layers.
+	 * The capability cells and the single tools of a role are two views of one list, not two layers.
 	 */
 	public void testTheCapabilityStateLeavesToolEntriesAlone() {
 		PolicyDraft draft = draft();
-		Grant entry = draft.addToolEntry(PARTNER, false);
-		entry.setTools(new ArrayList<>(List.of(CLASSIFIED_READ_SCRIPT_TOOL)));
+		draft.setRoleTools(PARTNER, false, List.of(CLASSIFIED_READ_SCRIPT_TOOL));
 
-		for (CapabilityState state : List.of(CapabilityState.DENIED, CapabilityState.ABSENT,
-			CapabilityState.GRANTED)) {
+		for (CellState state : List.of(CellState.DENIED, CellState.ABSENT, CellState.GRANTED)) {
 			draft.setCapabilityState(PARTNER, ToolGroups.DATA_READ, state);
 
-			assertEquals("Changing a capability must not touch an entry that names tools.", 1,
-				draft.toolEntries(PARTNER, false).size());
-			assertEquals(List.of(CLASSIFIED_READ_SCRIPT_TOOL),
-				draft.toolEntries(PARTNER, false).get(0).getTools());
+			assertEquals("Changing a capability must not touch the tools the role names.",
+				List.of(CLASSIFIED_READ_SCRIPT_TOOL), draft.roleTools(PARTNER, false));
 		}
+		draft.setRoleTools(PARTNER, false, List.of());
+		assertEquals("Clearing the tools leaves the capabilities alone.", CellState.GRANTED,
+			draft.capabilityState(PARTNER, ToolGroups.DATA_READ));
 	}
 
 	/**
@@ -476,62 +498,27 @@ public class SecDemoPolicyEditorTest extends SecDemoPersonaTest {
 		String other = draft.roleNames().stream().filter(name -> !name.equals(PARTNER)).findFirst()
 			.orElseThrow();
 
-		draft.setCapabilityState(PARTNER, ToolGroups.EGRESS, CapabilityState.ABSENT);
-		draft.setCapabilityState(other, ToolGroups.EGRESS, CapabilityState.ABSENT);
+		draft.setCapabilityState(PARTNER, ToolGroups.EGRESS, CellState.ABSENT);
+		draft.setCapabilityState(other, ToolGroups.EGRESS, CellState.ABSENT);
 		assertNull("Nobody grants it, so the row has nobody to point at.",
 			draft.grantedElsewhere(PARTNER, ToolGroups.EGRESS));
 
-		draft.setCapabilityState(other, ToolGroups.EGRESS, CapabilityState.GRANTED);
+		draft.setCapabilityState(other, ToolGroups.EGRESS, CellState.GRANTED);
 		ToolAccessRule elsewhere = draft.grantedElsewhere(PARTNER, ToolGroups.EGRESS);
 		assertEquals("The other role grants it, and the row names it.", ToolAccessRule.Kind.ROLE_GRANT,
 			elsewhere.kind());
 		assertEquals(other, elsewhere.roleName());
 
-		draft.setCapabilityState(PARTNER, ToolGroups.EGRESS, CapabilityState.GRANTED);
+		draft.setCapabilityState(PARTNER, ToolGroups.EGRESS, CellState.GRANTED);
 		assertNotNull("The role's own state never answers this question.",
 			draft.grantedElsewhere(PARTNER, ToolGroups.EGRESS));
-		draft.setCapabilityState(other, ToolGroups.EGRESS, CapabilityState.ABSENT);
+		draft.setCapabilityState(other, ToolGroups.EGRESS, CellState.ABSENT);
 		assertNull("Only the others do.", draft.grantedElsewhere(PARTNER, ToolGroups.EGRESS));
 
 		draft.setBaselineGroups(List.of(ToolGroups.EGRESS));
 		assertEquals("The basic permissions answer it too, and are told apart from a role.",
 			ToolAccessRule.Kind.BASELINE,
 			draft.grantedElsewhere(PARTNER, ToolGroups.EGRESS).kind());
-	}
-
-	/** An entry names a group or tools, and switching between the two leaves exactly one of them. */
-	public void testAnEntryNamesExactlyOneThing() {
-		PolicyDraft draft = draft();
-		Grant entry = draft.addToolEntry(PARTNER, false);
-
-		assertFalse("A new entry names tools, which is what the editor offers to pick.",
-			PolicyDraft.namesWholeGroup(entry));
-
-		PolicyDraft.setNamesGroup(entry, true);
-		assertTrue(PolicyDraft.namesWholeGroup(entry));
-		assertEquals("Switching to a group must leave no tool behind, or the entry names both.",
-			List.of(), entry.getTools());
-
-		PolicyDraft.setNamesGroup(entry, false);
-		assertFalse("Switching back must leave no group behind.",
-			PolicyDraft.namesWholeGroup(entry));
-	}
-
-	/**
-	 * A template prefills the capabilities and nothing else.
-	 */
-	public void testATemplatePrefillsTheCapabilities() {
-		PolicyDraft draft = draft();
-		draft.removeRole(PARTNER);
-		draft.addRole(PARTNER, RoleTemplate.DEVELOPER);
-
-		for (String group : RoleTemplate.DEVELOPER.groups()) {
-			assertTrue(group + " belongs to the developer template.", draft.isGranted(PARTNER, group));
-		}
-		assertFalse("Nothing beyond the template's capabilities.",
-			draft.isGranted(PARTNER, ToolGroups.EGRESS));
-		assertEquals("A template writes permissions, never refusals.", List.of(),
-			draft.role(PARTNER).getDenies());
 	}
 
 	/**
@@ -553,7 +540,7 @@ public class SecDemoPolicyEditorTest extends SecDemoPersonaTest {
 	/** Adding the capability to send data outward next to a read capability is worth a warning. */
 	public void testTheEgressWarningAppearsWhenItIsEarned() {
 		PolicyDraft draft = draft();
-		draft.setCapabilityState(PARTNER, ToolGroups.EGRESS, CapabilityState.GRANTED);
+		draft.setCapabilityState(PARTNER, ToolGroups.EGRESS, CellState.GRANTED);
 
 		assertTrue("Reading data and sending it outward is the combination worth one sentence.",
 			keys(PolicyChecks.warnings(draft.config(), Set.of(PARTNER)))
@@ -597,6 +584,21 @@ public class SecDemoPolicyEditorTest extends SecDemoPersonaTest {
 		assertTrue("The running service reads the saved configuration, so the two are one policy.",
 			ConfigEquality.INSTANCE_ALL_BUT_DERIVED.equals(AiToolAccessService.policy(),
 				AiToolAccessService.savedPolicy()));
+	}
+
+	/** Gives a role the application does not have an entry, as a hand-written policy might. */
+	private static void nameUnknownRole(PolicyDraft draft) {
+		draft.setCapabilityState(UNKNOWN_ROLE, ToolGroups.DATA_READ, CellState.GRANTED);
+	}
+
+	/**
+	 * Adds an entry naming nothing to the partner role - no longer something the editor writes, but
+	 * something a hand-written policy can contain.
+	 */
+	private static void addEmptyEntry(PolicyDraft draft, boolean denies) {
+		Grant entry = TypedConfiguration.newConfigItem(Grant.class);
+		RoleAccess role = draft.role(PARTNER);
+		(denies ? role.getDenies() : role.getGrants()).add(entry);
 	}
 
 	/** A draft of the policy the application ships. */

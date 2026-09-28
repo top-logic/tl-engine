@@ -108,36 +108,6 @@ public class PolicyDraft {
 		CUSTOM;
 	}
 
-	/**
-	 * A starting point for a role that is being added to the policy.
-	 */
-	public enum RoleTemplate {
-
-		/** Nothing granted. Every capability starts unset. */
-		NONE(),
-
-		/** Reads the model and the business data, changes nothing. */
-		READ_ONLY(ToolGroups.MODEL_READ, ToolGroups.DATA_READ),
-
-		/** Reads, and changes business data with the user confirming each call. */
-		CLERK(ToolGroups.MODEL_READ, ToolGroups.DATA_READ, ToolGroups.DATA_WRITE),
-
-		/** The clerk's capabilities plus running TL-Script. */
-		DEVELOPER(ToolGroups.MODEL_READ, ToolGroups.DATA_READ, ToolGroups.DATA_WRITE,
-			ToolGroups.SCRIPT);
-
-		private final List<String> _groups;
-
-		RoleTemplate(String... groups) {
-			_groups = List.of(groups);
-		}
-
-		/** The capability groups this template grants. */
-		public List<String> groups() {
-			return _groups;
-		}
-	}
-
 	private final AiToolAccessService.Config<?> _config;
 
 	private final AiToolAccessService.Config<?> _saved;
@@ -160,9 +130,40 @@ public class PolicyDraft {
 		_backgroundChoice = readBackgroundChoice();
 	}
 
+	private PolicyDraft(PolicyDraft original) {
+		_saved = original._saved;
+		_config = TypedConfiguration.copy(original._config);
+		_baselineChoice = original._baselineChoice;
+		_backgroundChoice = original._backgroundChoice;
+	}
+
+	/**
+	 * An independent copy of this draft, compared against the same saved policy.
+	 *
+	 * <p>
+	 * What an undo step goes back to: editing either draft afterwards leaves the other one alone.
+	 * </p>
+	 */
+	public PolicyDraft copy() {
+		return new PolicyDraft(this);
+	}
+
 	/** The policy being edited, ready to be written as a service configuration. */
 	public AiToolAccessService.Config<?> config() {
 		return _config;
+	}
+
+	/**
+	 * Whether this draft says exactly what the given one says.
+	 *
+	 * <p>
+	 * An edit that changes nothing - setting a cell to the state it has - is not a step an administrator
+	 * would want to undo.
+	 * </p>
+	 */
+	public boolean sameAs(PolicyDraft other) {
+		return _baselineChoice == other._baselineChoice && _backgroundChoice == other._backgroundChoice
+			&& ConfigEquality.INSTANCE_ALL_BUT_DERIVED.equals(_config, other._config);
 	}
 
 	/** Whether the draft differs from the policy it was created from. */
@@ -312,6 +313,85 @@ public class PolicyDraft {
 	}
 
 	/**
+	 * What the named role says about one name of the given section.
+	 *
+	 * @param dimension
+	 *        Which section to read.
+	 * @param roleName
+	 *        The role to ask about.
+	 * @param name
+	 *        The agent, model or server.
+	 * @return The state, never <code>null</code>; {@link CellState#ABSENT} for a role the section does
+	 *         not name. A name in both lists reads as {@link CellState#DENIED}, because that is what the
+	 *         policy enforces.
+	 */
+	public CellState runCellState(Dimension dimension, String roleName, String name) {
+		if (entryNames(dimension, roleName, true).contains(name)) {
+			return CellState.DENIED;
+		}
+		return entryNames(dimension, roleName, false).contains(name) ? CellState.GRANTED : CellState.ABSENT;
+	}
+
+	/**
+	 * Puts what the named role says about one name of the given section into the given state.
+	 *
+	 * <p>
+	 * Only for a role the section already names. Writing a cell of a role it does not name would
+	 * restrict that role to the one name, which is a decision the editor makes the administrator take
+	 * explicitly through {@link #setRunRestricted(Dimension, String, boolean)}. Emptying the last cell of
+	 * a role leaves its entry in place, which restricts it to nothing - it never widens it back to the
+	 * section default.
+	 * </p>
+	 *
+	 * @param dimension
+	 *        Which section to change.
+	 * @param roleName
+	 *        The role to change.
+	 * @param name
+	 *        The agent, model or server.
+	 * @param state
+	 *        The state to reach. Never <code>null</code>.
+	 * @return Whether the role is named, and the state could therefore be written.
+	 */
+	public boolean setRunCellState(Dimension dimension, String roleName, String name, CellState state) {
+		if (!isRunRestricted(dimension, roleName)) {
+			return false;
+		}
+		if (runCellState(dimension, roleName, name) == state) {
+			return true;
+		}
+		List<String> grants = runNames(dimension, roleName, false);
+		List<String> denies = runNames(dimension, roleName, true);
+		grants.remove(name);
+		denies.remove(name);
+		if (state == CellState.GRANTED) {
+			grants.add(name);
+		} else if (state == CellState.DENIED) {
+			denies.add(name);
+		}
+		setRunNames(dimension, roleName, false, grants);
+		setRunNames(dimension, roleName, true, denies);
+		return true;
+	}
+
+	/**
+	 * Every name the given section mentions, granted or denied, in a stable order.
+	 *
+	 * <p>
+	 * A hand-written policy may name something the application does not have. Such a name has to stay
+	 * visible, so that it can be seen and removed rather than dropped silently.
+	 * </p>
+	 */
+	public Set<String> mentionedNames(Dimension dimension) {
+		Set<String> result = new TreeSet<>();
+		for (String roleName : runRoleNames()) {
+			result.addAll(entryNames(dimension, roleName, false));
+			result.addAll(entryNames(dimension, roleName, true));
+		}
+		return result;
+	}
+
+	/**
 	 * Whether the given section names the given role at all.
 	 *
 	 * <p>
@@ -440,49 +520,56 @@ public class PolicyDraft {
 		return _config.getToolAccess().get(roleName);
 	}
 
+	/** Whether the tool access section has an entry for the named role. */
+	public boolean isToolAccessNamed(String roleName) {
+		return _config.getToolAccess().containsKey(roleName);
+	}
+
 	/**
-	 * Adds an entry for the named role, prefilled by the given template.
+	 * Gives the named role an entry of the tool access section, or takes it away.
+	 *
+	 * <p>
+	 * An entry that grants and forbids nothing changes nothing for the role's holders, so creating one
+	 * is harmless. Taking one away drops everything it grants and forbids, including the entries naming
+	 * single tools: that is what "this role says nothing about tools" means.
+	 * </p>
 	 *
 	 * @param roleName
-	 *        The role to configure. An existing entry is left alone.
-	 * @param template
-	 *        The capabilities to grant right away. Never <code>null</code>.
+	 *        The role to change. A blank name is ignored.
+	 * @param named
+	 *        Whether the section is to have an entry for it.
 	 */
-	public void addRole(String roleName, RoleTemplate template) {
-		if (roleName == null || roleName.isBlank() || _config.getToolAccess().containsKey(roleName)) {
+	public void setToolAccessNamed(String roleName, boolean named) {
+		if (roleName == null || roleName.isBlank() || named == isToolAccessNamed(roleName)) {
 			return;
 		}
-		RoleAccess role = TypedConfiguration.newConfigItem(RoleAccess.class);
-		role.setName(roleName);
-		for (String group : template.groups()) {
-			role.getGrants().add(groupEntry(group));
+		if (named) {
+			RoleAccess role = TypedConfiguration.newConfigItem(RoleAccess.class);
+			role.setName(roleName);
+			_config.getToolAccess().put(roleName, role);
+		} else {
+			_config.getToolAccess().remove(roleName);
 		}
-		_config.getToolAccess().put(roleName, role);
-	}
-
-	/** Removes the entry of the named role, so that it reaches nothing but the baseline. */
-	public void removeRole(String roleName) {
-		_config.getToolAccess().remove(roleName);
 	}
 
 	/**
-	 * What one role says about one capability.
+	 * What one role says about one capability, agent, model or MCP server: one cell of the matrix.
 	 */
 	/*
 	 * Three states rather than two booleans, because the storage has exactly three answers and the two
-	 * booleans could express a fourth that means nothing: a grant next to a deny of the same group is a
+	 * booleans could express a fourth that means nothing: a grant next to a deny of the same name is a
 	 * permission the deny already beats. A hand-written policy may still contain both, which is why
 	 * reading answers DENIED and writing the same state is a no-op - the round-trip guarantee.
 	 */
-	public enum CapabilityState {
+	public enum CellState {
 
-		/** The role says nothing. Another role of the account, or the baseline, may still grant it. */
+		/** The role says nothing. */
 		ABSENT,
 
 		/** The role grants it. */
 		GRANTED,
 
-		/** The role forbids it. Beats every grant of every other role and the baseline. */
+		/** The role forbids it. Beats every grant of every other role. */
 		DENIED;
 	}
 
@@ -494,13 +581,13 @@ public class PolicyDraft {
 	 * @param group
 	 *        The technical group name.
 	 * @return The state the editor shows, never <code>null</code>. A policy naming the group in both
-	 *         lists reads as {@link CapabilityState#DENIED}, because that is what it enforces.
+	 *         lists reads as {@link CellState#DENIED}, because that is what it enforces.
 	 */
-	public CapabilityState capabilityState(String roleName, String group) {
+	public CellState capabilityState(String roleName, String group) {
 		if (isDenied(roleName, group)) {
-			return CapabilityState.DENIED;
+			return CellState.DENIED;
 		}
-		return isGranted(roleName, group) ? CapabilityState.GRANTED : CapabilityState.ABSENT;
+		return isGranted(roleName, group) ? CellState.GRANTED : CellState.ABSENT;
 	}
 
 	/**
@@ -509,8 +596,9 @@ public class PolicyDraft {
 	 * <p>
 	 * Exactly one of the two lists names the group afterwards, or neither. Setting the state that is
 	 * already there changes nothing, so opening the editor on a hand-written policy that names a group
-	 * in both lists leaves it alone until somebody clicks that row. Entries naming single tools are
-	 * never touched.
+	 * in both lists leaves it alone until somebody clicks that cell. Entries naming single tools are
+	 * never touched. A role the section has no entry for gets one, which grants and forbids nothing
+	 * else.
 	 * </p>
 	 *
 	 * @param roleName
@@ -520,11 +608,12 @@ public class PolicyDraft {
 	 * @param state
 	 *        The state to reach. Never <code>null</code>.
 	 */
-	public void setCapabilityState(String roleName, String group, CapabilityState state) {
-		RoleAccess role = role(roleName);
-		if (role == null || capabilityState(roleName, group) == state) {
+	public void setCapabilityState(String roleName, String group, CellState state) {
+		if (capabilityState(roleName, group) == state) {
 			return;
 		}
+		setToolAccessNamed(roleName, true);
+		RoleAccess role = role(roleName);
 		removeGroup(role.getGrants(), group);
 		removeGroup(role.getDenies(), group);
 		switch (state) {
@@ -600,86 +689,42 @@ public class PolicyDraft {
 	}
 
 	/**
-	 * The entries of the named role that name single tools rather than a capability group.
+	 * The single tools the named role grants - or forbids - by name rather than through a capability
+	 * group.
 	 *
 	 * @param roleName
 	 *        The role to ask about.
 	 * @param denies
 	 *        Whether to read the refusals rather than the permissions.
-	 * @return The entries, in the order they are stored; empty for a role the policy does not configure.
+	 * @return The tools, in the order they are stored; empty for a role the policy does not configure.
 	 */
-	public List<Grant> toolEntries(String roleName, boolean denies) {
+	public List<String> roleTools(String roleName, boolean denies) {
 		RoleAccess role = role(roleName);
-		if (role == null) {
-			return List.of();
-		}
-		List<Grant> result = new ArrayList<>();
-		for (Grant entry : denies ? role.getDenies() : role.getGrants()) {
-			if (isBlank(entry.getGroup())) {
-				result.add(entry);
-			}
-		}
-		return result;
+		return role == null ? List.of() : new ArrayList<>(toolsOf(denies ? role.getDenies() : role.getGrants()));
 	}
 
 	/**
-	 * Adds an entry naming single tools to the named role, with nothing chosen yet.
+	 * Makes the named role grant - or forbid - exactly the given single tools.
+	 *
+	 * <p>
+	 * A no-op when it already does. Otherwise the entries naming tools are replaced by one, and entries
+	 * naming a capability group are left alone. A role the section has no entry for gets one.
+	 * </p>
 	 *
 	 * @param roleName
 	 *        The role to change.
 	 * @param denies
-	 *        Whether to add a refusal rather than a permission.
-	 * @return The new entry, so that the caller can show it.
+	 *        Whether to write the refusals rather than the permissions.
+	 * @param tools
+	 *        The qualified tool names.
 	 */
-	public Grant addToolEntry(String roleName, boolean denies) {
+	public void setRoleTools(String roleName, boolean denies, List<String> tools) {
+		if (new LinkedHashSet<>(tools).equals(new LinkedHashSet<>(roleTools(roleName, denies)))) {
+			return;
+		}
+		setToolAccessNamed(roleName, true);
 		RoleAccess role = role(roleName);
-		if (role == null) {
-			return null;
-		}
-		Grant entry = TypedConfiguration.newConfigItem(Grant.class);
-		entry.setTools(new ArrayList<>());
-		(denies ? role.getDenies() : role.getGrants()).add(entry);
-		return entry;
-	}
-
-	/** Removes the given entry from the named role. */
-	public void removeEntry(String roleName, boolean denies, Grant entry) {
-		RoleAccess role = role(roleName);
-		if (role != null) {
-			(denies ? role.getDenies() : role.getGrants()).remove(entry);
-		}
-	}
-
-	/**
-	 * Turns the given entry into one that names a capability group, or one that names tools.
-	 *
-	 * <p>
-	 * Exactly one of the two is set afterwards, so the entry always names exactly one thing, which is
-	 * the rule the boot check enforces and the raw editor cannot express.
-	 * </p>
-	 *
-	 * @param entry
-	 *        The entry to change.
-	 * @param wholeGroup
-	 *        Whether the entry should name a capability group.
-	 */
-	public static void setNamesGroup(Grant entry, boolean wholeGroup) {
-		if (wholeGroup) {
-			entry.setTools(new ArrayList<>());
-			if (isBlank(entry.getGroup())) {
-				entry.setGroup(ToolGroups.MODEL_READ);
-			}
-		} else {
-			entry.setGroup(null);
-			if (entry.getTools().isEmpty()) {
-				entry.setTools(new ArrayList<>());
-			}
-		}
-	}
-
-	/** Whether the given entry names a capability group rather than single tools. */
-	public static boolean namesWholeGroup(Grant entry) {
-		return !isBlank(entry.getGroup());
+		setTools(denies ? role.getDenies() : role.getGrants(), tools);
 	}
 
 	// ------------------------------------------------------- basic permissions

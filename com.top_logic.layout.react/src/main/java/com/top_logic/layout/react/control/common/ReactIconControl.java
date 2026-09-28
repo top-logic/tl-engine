@@ -47,7 +47,8 @@ public class ReactIconControl extends ReactControl {
 	}
 
 	/**
-	 * Sets the size step of the icon: {@code tl-icon-<size>} of the design system.
+	 * Sets the size step of the icon, which the client renders with the matching {@code tl-icon-*}
+	 * class of the design system.
 	 */
 	public void setSize(IconSize size) {
 		putState(SIZE, size.getExternalName());

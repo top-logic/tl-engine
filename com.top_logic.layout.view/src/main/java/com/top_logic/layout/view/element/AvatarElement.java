@@ -80,7 +80,8 @@ public class AvatarElement implements UIElement {
 		ChannelRef getImage();
 
 		/**
-		 * Diameter of the circle: {@code sm}, {@code md} (the default), {@code lg} or {@code xl}.
+		 * Diameter of the circle: {@code small}, {@code medium} (the default), {@code large} or
+		 * {@code x-large}.
 		 */
 		@Name(SIZE)
 		AvatarSize getSize();

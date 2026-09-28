@@ -79,12 +79,12 @@ public class IconElement implements UIElement {
 		String getCssClass();
 
 		/**
-		 * The size step of the icon by its role: {@code sm} beside a label (the default), {@code md}
-		 * where the icon is the control, {@code lg} where it is a statement, {@code glyph} for a
-		 * direction sign inside a control.
+		 * The size step of the icon by its role: {@code small} beside a label (the default),
+		 * {@code medium} where the icon is the control, {@code large} where it is a statement,
+		 * {@code glyph} for a direction sign inside a control.
 		 */
 		@Name(SIZE)
-		@FormattedDefault("sm")
+		@FormattedDefault("small")
 		IconSize getSize();
 	}
 

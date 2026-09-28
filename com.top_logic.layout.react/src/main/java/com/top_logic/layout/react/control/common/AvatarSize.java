@@ -8,22 +8,29 @@ package com.top_logic.layout.react.control.common;
 import com.top_logic.basic.config.ExternallyNamed;
 
 /**
- * Diameter of a {@link ReactAvatarControl}: one of four sizes of the design system's scale
- * ({@code size-avatar-sm} to {@code size-avatar-xl}), independent of the density.
+ * Diameter of a {@link ReactAvatarControl}, chosen by where the avatar stands, independent of the
+ * density.
+ *
+ * <p>
+ * The external names are words: {@code small}, {@code medium}, {@code large} and {@code x-large}.
+ * The CSS classes of the design system carry the abbreviations of its scale ({@code tl-avatar--sm},
+ * {@code tl-avatar--lg}, {@code tl-avatar--xl}; the medium step has no modifier); the client maps
+ * the one to the other.
+ * </p>
  */
 public enum AvatarSize implements ExternallyNamed {
 
-	/** 32 px: the standard avatar size - the first value, hence the default. */
-	MEDIUM("md"),
+	/** The rule: beside text, in lists and in comment headers - the first value, hence the default. */
+	MEDIUM("medium"),
 
-	/** 24 px: a compact avatar, e.g. in a table cell or a list row. */
-	SMALL("sm"),
+	/** An avatar in a table cell or a row. */
+	SMALL("small"),
 
-	/** 48 px: an emphasized avatar, e.g. in the header of a detail view. */
-	LARGE("lg"),
+	/** An avatar in the header of a detail view. */
+	LARGE("large"),
 
-	/** 64 px: a portrait-sized avatar, e.g. on a profile page. */
-	EXTRA_LARGE("xl");
+	/** A profile page: the picture is the content. */
+	EXTRA_LARGE("x-large");
 
 	private final String _externalName;
 

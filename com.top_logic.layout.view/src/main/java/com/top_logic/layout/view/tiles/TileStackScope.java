@@ -36,6 +36,15 @@ import com.top_logic.layout.view.navigation.RevealPath;
  * </p>
  *
  * <p>
+ * A mutator that would drop a frame holding unsaved changes - {@link #pop()}, {@link #popTo(int)}
+ * or a {@link #restore(int, String, Map, long) restore} replacing frames - is vetoed by the
+ * {@link ReactTileStackControl} displaying the stack: it throws a
+ * {@link com.top_logic.layout.view.channel.ChannelVetoException} naming the forms of the dropped
+ * frames and leaves the path unchanged. The exception's continuation performs the write once the
+ * user has saved or discarded.
+ * </p>
+ *
+ * <p>
  * The scope also carries the {@link #frameRoutes() routes} the stack declares for its frame views:
  * they name a frame that is pushed without a label of its own, and they are what
  * {@link TileFrameRouteParticipant} reflects the path in the URL with and restores it from.

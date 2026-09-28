@@ -48,6 +48,12 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey1 IMAGE_NOT_FOUND__IMAGE_NAME;
 
+	/**
+	 * @en The images of an HTML text must be given as binary data, a list of binary data, or a
+	 *     dictionary from image names to binary data, but got: {0}
+	 */
+	public static ResKey1 ERROR_INVALID_HTML_IMAGES__VALUE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

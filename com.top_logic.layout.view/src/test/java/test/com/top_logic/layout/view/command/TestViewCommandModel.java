@@ -5,6 +5,8 @@
  */
 package test.com.top_logic.layout.view.command;
 
+import java.util.Map;
+
 import junit.framework.Test;
 import junit.framework.TestCase;
 
@@ -12,10 +14,16 @@ import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
+import com.top_logic.layout.react.DefaultReactContext;
+import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.button.ReactButtonControl;
+import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.NullInputDisabled;
@@ -30,6 +38,9 @@ import com.top_logic.util.Resources;
  * Tests for {@link ViewCommandModel}.
  */
 public class TestViewCommandModel extends TestCase {
+
+	/** The command a {@link ReactButtonControl} receives when clicked. */
+	private static final String CLICK = "click";
 
 	/** The tooltip configured for a command whose own tooltip a test inspects. */
 	private static final ResKey CONFIGURED_TOOLTIP = ResKey.text("The configured tooltip.");
@@ -161,7 +172,113 @@ public class TestViewCommandModel extends TestCase {
 		// Channel is null -> not executable -> command should not be called
 		HandlerResult result = model.executeCommand(null);
 		assertFalse("Command should not be called when not executable", commandCalled[0]);
-		assertSame(HandlerResult.DEFAULT_RESULT, result);
+		assertFalse("A refused command is reported as failure.", result.isSuccess());
+		assertEquals(ErrorSeverity.WARNING, result.getErrorSeverity());
+		assertEquals(ExecutableState.NO_EXEC_NO_MODEL.getI18NReasonKey(), result.getErrorMessage());
+	}
+
+	/**
+	 * Tests that executeCommand() decides by the input as it is when the command runs, not only by
+	 * the state last evaluated: a model that was never attached still reports the initial
+	 * executable state, but is refused for the input its rule rejects.
+	 */
+	public void testExecuteCommandDecidesByTheCurrentInput() {
+		ViewChannel channel = new DefaultViewChannel("test");
+		boolean[] commandCalled = { false };
+
+		ViewCommandModel model = new ViewCommandModel(
+			(context, input) -> {
+				commandCalled[0] = true;
+				return HandlerResult.DEFAULT_RESULT;
+			},
+			createMinimalConfig(), channel, NullInputDisabled.INSTANCE);
+
+		assertTrue("The state of a model never attached is not evaluated.",
+			model.getExecutableState().isExecutable());
+
+		HandlerResult result = model.executeCommand(null);
+		assertFalse("The rule rejects the current input, so the command must not run.", commandCalled[0]);
+		assertEquals(ErrorSeverity.WARNING, result.getErrorSeverity());
+		assertEquals(ExecutableState.NO_EXEC_NO_MODEL.getI18NReasonKey(), result.getErrorMessage());
+	}
+
+	/**
+	 * Tests that a command its rule rejects is refused with the rule's reason, both when executed
+	 * for an input the caller supplies and in the state the model reports.
+	 */
+	public void testRejectingRuleReportsItsReason() {
+		ViewChannel channel = new DefaultViewChannel("test");
+		boolean[] commandCalled = { false };
+
+		ViewCommandModel model = new ViewCommandModel(
+			(context, input) -> {
+				commandCalled[0] = true;
+				return HandlerResult.DEFAULT_RESULT;
+			},
+			createMinimalConfig(), channel, SWITCHABLE_REASON);
+		model.attach(null);
+
+		assertEquals("The state carries the rule's reason.", REASON_A,
+			model.getExecutableState().getI18NReasonKey());
+
+		HandlerResult result = model.execute(null, REASON_B_INPUT);
+		assertFalse("The rejected command must not run.", commandCalled[0]);
+		assertFalse(result.isSuccess());
+		assertEquals(ErrorSeverity.WARNING, result.getErrorSeverity());
+		assertEquals(com.top_logic.layout.basic.I18NConstants.ERROR_COMMAND_NOT_EXECUTABLE, result.getErrorTitle());
+		assertEquals("The refusal reports the reason for the input executed.", REASON_B, result.getErrorMessage());
+	}
+
+	/**
+	 * Tests that clicking a button whose model rejects the command reports the rule's reason, not
+	 * the generic one of the disabled button.
+	 */
+	public void testButtonReportsTheReasonOfItsModel() {
+		ViewChannel channel = new DefaultViewChannel("test");
+		boolean[] commandCalled = { false };
+
+		ViewCommandModel model = new ViewCommandModel(
+			(context, input) -> {
+				commandCalled[0] = true;
+				return HandlerResult.DEFAULT_RESULT;
+			},
+			createMinimalConfig(), channel, SWITCHABLE_REASON);
+		model.attach(null);
+		ReactButtonControl button = new ReactButtonControl(createReactContext(), model);
+
+		HandlerResult result = button.executeClientCommand(CLICK, Map.of());
+
+		assertFalse("The rejected command must not run.", commandCalled[0]);
+		assertFalse(result.isSuccess());
+		assertEquals(ErrorSeverity.WARNING, result.getErrorSeverity());
+		assertEquals("The refusal reports the rule's reason.", REASON_A, result.getErrorMessage());
+	}
+
+	/**
+	 * Tests that a button whose model accepts the command runs it.
+	 */
+	public void testButtonRunsAcceptedCommand() {
+		ViewChannel channel = new DefaultViewChannel("test");
+		channel.set("someValue");
+		Object[] receivedInput = { null };
+
+		ViewCommandModel model = new ViewCommandModel(
+			(context, input) -> {
+				receivedInput[0] = input;
+				return HandlerResult.DEFAULT_RESULT;
+			},
+			createMinimalConfig(), channel, NullInputDisabled.INSTANCE);
+		model.attach(null);
+		ReactButtonControl button = new ReactButtonControl(createReactContext(), model);
+
+		HandlerResult result = button.executeClientCommand(CLICK, Map.of());
+
+		assertTrue(result.isSuccess());
+		assertEquals("someValue", receivedInput[0]);
+	}
+
+	private static ReactContext createReactContext() {
+		return new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
 	}
 
 	/**

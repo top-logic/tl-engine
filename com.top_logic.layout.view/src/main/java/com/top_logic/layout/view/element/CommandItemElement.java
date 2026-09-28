@@ -103,8 +103,7 @@ public class CommandItemElement implements SidebarItemElement {
 
 		// The state the rules assign right now is part of what the sidebar is first sent.
 		model.revalidate();
-		item.setHidden(!model.isVisible());
-		item.setDisabled(!model.isExecutable());
+		item.setExecutableState(model.getExecutableState());
 		item.setTooltip(model.getTooltip());
 
 		site.addBinding(sidebar -> {
@@ -112,14 +111,15 @@ public class CommandItemElement implements SidebarItemElement {
 			sidebar.addDetachListener(model::detach);
 
 			Runnable stateListener = () -> {
-				boolean hidden = !model.isVisible();
-				boolean disabled = !model.isExecutable();
-				String tooltip = model.getTooltip();
+				boolean hidden = item.isHidden();
+				boolean disabled = item.isDisabled();
+				String tooltip = item.getTooltip();
+				item.setExecutableState(model.getExecutableState());
+				item.setTooltip(model.getTooltip());
 				if (hidden != item.isHidden() || disabled != item.isDisabled()
 					|| !Objects.equals(tooltip, item.getTooltip())) {
-					item.setHidden(hidden);
-					item.setDisabled(disabled);
-					item.setTooltip(tooltip);
+					// Only what the client displays needs to be sent again; the reason of a refusal
+					// stays on the server.
 					sidebar.refreshItems();
 				}
 			};

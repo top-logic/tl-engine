@@ -63,6 +63,7 @@ import com.top_logic.layout.view.form.FormModelListener;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
 
 /**
@@ -576,6 +577,11 @@ public class FormElement extends ContainerElement {
 		}
 
 		@Override
+		public ExecutableState getExecutableState() {
+			return _inner.getExecutableState();
+		}
+
+		@Override
 		public boolean isActive() {
 			return _inner.isActive();
 		}
@@ -586,7 +592,7 @@ public class FormElement extends ContainerElement {
 		}
 
 		@Override
-		public HandlerResult executeCommand(ReactContext context) {
+		public HandlerResult perform(ReactContext context) {
 			// Substitute the form context so that actions can access the FormModel.
 			return _inner.executeCommand(_formContext);
 		}

@@ -24,6 +24,19 @@
 		</xsl:copy>
 	</xsl:template>
 
+	<!-- The interactive token of the theme is the color of the brand. -->
+	<xsl:template match="//annotations/color[not(@role) and not(@value) and @token='interactive']"
+		priority="1"
+	>
+		<xsl:copy>
+			<xsl:apply-templates select="@*[local-name() != 'token']"/>
+			<xsl:attribute name="role">
+				<xsl:value-of select="'brand'"/>
+			</xsl:attribute>
+			<xsl:apply-templates select="node()"/>
+		</xsl:copy>
+	</xsl:template>
+
 	<!-- A literal color value or any other token names no role, the literal is displayed without a color. -->
 	<xsl:template match="//annotations/color[not(@role)]">
 	</xsl:template>

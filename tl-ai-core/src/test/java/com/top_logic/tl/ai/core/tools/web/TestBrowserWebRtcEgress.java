@@ -147,7 +147,7 @@ public class TestBrowserWebRtcEgress extends TestCase {
 				try (FilteringProxy proxy = FilteringProxy.start(PERMIT_ALL, resolvingTo(origin))) {
 					BrowserSession session = BrowserSession.open("webrtc-egress", TIMEOUT_MILLIS,
 						BrowserSession.DEFAULT_ACTION_TIMEOUT_MILLIS, 0, ALLOW_ANY, null, false, false,
-						proxy.serverUrl());
+						proxy);
 					try {
 						PageView view = session.navigate("http://" + PERMITTED_HOST + "/");
 

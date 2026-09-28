@@ -1055,13 +1055,23 @@ final class FilteringProxy implements AutoCloseable {
 	 * end up with the header twice, and one that said {@code keep-alive} must not end up contradicting
 	 * itself.
 	 * </p>
+	 *
+	 * <p>
+	 * A {@link #REFUSAL_HEADER} the server sent is always dropped: that header says "this proxy refused
+	 * the request", and only the proxy may say it. Otherwise a page could make the browser tool report
+	 * a policy refusal that did not happen, with text of the page's choosing (#583).
+	 * </p>
 	 */
 	private static void writeResponseHead(ResponseHead response, OutputStream out, boolean forceClose)
 			throws IOException {
 		StringBuilder head = new StringBuilder();
 		head.append(response.statusLine()).append("\r\n");
 		for (String header : response.headers()) {
-			if (forceClose && "connection".equals(nameOf(header))) {
+			String name = nameOf(header);
+			if (forceClose && "connection".equals(name)) {
+				continue;
+			}
+			if (REFUSAL_HEADER.equals(name)) {
 				continue;
 			}
 			head.append(header).append("\r\n");

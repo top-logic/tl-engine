@@ -612,6 +612,13 @@ final class BrowserSession {
 	private final String _proxyServer;
 
 	/**
+	 * The {@link FilteringProxy} behind {@link #_proxyServer}, or {@code null} for an unconstrained
+	 * browser. Asked by {@link #installProxyRefusalGuard} why it refused a host, because the refusal
+	 * header on a response alone does not prove that the proxy wrote it (#583).
+	 */
+	private final FilteringProxy _proxy;
+
+	/**
 	 * Whether the {@link FilteringProxy} is the authoritative SSRF layer for <em>every</em> request this
 	 * session's browser makes, so {@link #installSecurityRoute the security route} does not have to
 	 * re-decide a sub-resource.
@@ -765,7 +772,7 @@ final class BrowserSession {
 
 	private BrowserSession(Object key, int navigationTimeoutMillis, int actionTimeoutMillis,
 			int navigationSettleMillis, DomainPolicy policy, String initialStorageState, boolean headed,
-			boolean evadeBotDetection, String proxyServer, boolean sandboxDisabled) {
+			boolean evadeBotDetection, FilteringProxy proxy, boolean sandboxDisabled) {
 		_key = key;
 		_navigationTimeoutMillis = navigationTimeoutMillis;
 		_actionTimeoutMillis = actionTimeoutMillis;
@@ -774,8 +781,9 @@ final class BrowserSession {
 		_initialStorageState = initialStorageState;
 		_headed = headed;
 		_evadeBotDetection = evadeBotDetection;
-		_proxyServer = proxyServer;
-		_proxyIsAuthoritative = proxyServer != null && !proxyServer.isBlank()
+		_proxy = proxy;
+		_proxyServer = proxy == null ? null : proxy.serverUrl();
+		_proxyIsAuthoritative = _proxyServer != null
 			&& System.getenv(FORCED_PROXIED_LOOPBACK_OFF_ENV) == null;
 		_sandboxDisabled = sandboxDisabled;
 		_executor = Executors.newSingleThreadExecutor(runnable -> {
@@ -873,17 +881,17 @@ final class BrowserSession {
 	 *        {@link #buildLaunchOptions(boolean, boolean, String, boolean)}). The <b>full</b> Chromium
 	 *        build that evasion also relies on is selected for every launch now, evasion or not (see
 	 *        {@link #FULL_CHROMIUM_CHANNEL}).
-	 * @param proxyServer
-	 *        The {@code --proxy-server} value of the {@link FilteringProxy} every connection of this
-	 *        session must traverse, or {@code null} for an unconstrained browser. Production sessions
-	 *        are always pinned (see {@link #_proxyServer}).
+	 * @param proxy
+	 *        The {@link FilteringProxy} every connection of this session must traverse, or
+	 *        {@code null} for an unconstrained browser. Production sessions are always pinned (see
+	 *        {@link #_proxyServer}).
 	 * @return A started session.
 	 */
 	static BrowserSession open(Object key, int navigationTimeoutMillis, int actionTimeoutMillis,
 			int navigationSettleMillis, DomainPolicy policy, String initialStorageState, boolean headed,
-			boolean evadeBotDetection, String proxyServer) {
+			boolean evadeBotDetection, FilteringProxy proxy) {
 		return open(key, navigationTimeoutMillis, actionTimeoutMillis, navigationSettleMillis, policy,
-			initialStorageState, headed, evadeBotDetection, proxyServer, defaultSandboxDisabled());
+			initialStorageState, headed, evadeBotDetection, proxy, defaultSandboxDisabled());
 	}
 
 	/**
@@ -891,8 +899,8 @@ final class BrowserSession {
 	 *
 	 * <p>
 	 * Every other parameter is as documented on
-	 * {@link #open(Object, int, int, int, DomainPolicy, String, boolean, boolean, String)}, which is
-	 * this method with the sandbox setting auto-detected.
+	 * {@link #open(Object, int, int, int, DomainPolicy, String, boolean, boolean, FilteringProxy)},
+	 * which is this method with the sandbox setting auto-detected.
 	 * </p>
 	 *
 	 * @param sandboxDisabled
@@ -903,9 +911,9 @@ final class BrowserSession {
 	 */
 	static BrowserSession open(Object key, int navigationTimeoutMillis, int actionTimeoutMillis,
 			int navigationSettleMillis, DomainPolicy policy, String initialStorageState, boolean headed,
-			boolean evadeBotDetection, String proxyServer, boolean sandboxDisabled) {
+			boolean evadeBotDetection, FilteringProxy proxy, boolean sandboxDisabled) {
 		BrowserSession session = new BrowserSession(key, navigationTimeoutMillis, actionTimeoutMillis,
-			navigationSettleMillis, policy, initialStorageState, headed, evadeBotDetection, proxyServer,
+			navigationSettleMillis, policy, initialStorageState, headed, evadeBotDetection, proxy,
 			sandboxDisabled);
 		try {
 			session.startOnThread();
@@ -2029,18 +2037,58 @@ final class BrowserSession {
 	 */
 	private void installProxyRefusalGuard(BrowserContext context) {
 		context.onResponse(response -> {
-			String reason = response.headers().get(FilteringProxy.REFUSAL_HEADER);
-			if (reason == null || reason.isBlank()) {
+			if (response.headers().get(FilteringProxy.REFUSAL_HEADER) == null) {
 				return;
 			}
 			Request request = response.request();
 			if (!isMainFrameNavigation(request)) {
 				return;
 			}
-			if (_offPolicyNavigation == null) {
+			String reason = proxyRefusal(_proxy, request.url());
+			if (reason != null && _offPolicyNavigation == null) {
 				_offPolicyNavigation = refusedByPolicyMessage(reason);
 			}
 		});
+	}
+
+	/**
+	 * Why {@code proxy} refused the main-frame request to {@code url}, or {@code null} when a response
+	 * carrying the {@link FilteringProxy#REFUSAL_HEADER} is not a refusal by that proxy.
+	 *
+	 * <p>
+	 * The header is only a hint; the page chooses its own headers, and a page that could pass one off
+	 * as the proxy's would make the tool report a refusal that did not happen, with the page's text in
+	 * the tool's answer - which, unlike page content, is not wrapped as untrusted (#583). Three things
+	 * rule a page out:
+	 * </p>
+	 * <ul>
+	 * <li>Without a proxy there is nobody who could have refused.</li>
+	 * <li>Only a plain-HTTP request can be answered by the proxy's refusal page. A refused HTTPS
+	 * request is a refused {@code CONNECT}; the browser gets no response at all, so a response to an
+	 * HTTPS request is always the origin's.</li>
+	 * <li>The reason is the one the proxy recorded for the host, never the header's text. The proxy
+	 * also drops the header from every response it relays, so on plain HTTP no page can send one.</li>
+	 * </ul>
+	 *
+	 * @param proxy
+	 *        The proxy the session is pinned to, or {@code null}.
+	 * @param url
+	 *        The URL of the main-frame request the response answers.
+	 */
+	static String proxyRefusal(FilteringProxy proxy, String url) {
+		if (proxy == null) {
+			return null;
+		}
+		URI uri;
+		try {
+			uri = URI.create(url);
+		} catch (IllegalArgumentException ex) {
+			return null;
+		}
+		if (!"http".equalsIgnoreCase(uri.getScheme())) {
+			return null;
+		}
+		return proxy.refusalFor(uri.getHost());
 	}
 
 	/**

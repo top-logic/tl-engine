@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
+
 <view xmlns="http://www.top-logic.com/ns/view/1.0">
 	<channels>
 		<channel name="designTree"/>
@@ -11,19 +12,30 @@
 			<de>View-Designer</de>
 		</title>
 		<commands>
-			<save-design design-tree="designTree" placement="TOOLBAR">
+			<save-design
+				design-tree="designTree"
+				placement="TOOLBAR"
+			>
 				<label>
 					<en>Apply</en>
 					<de>Anwenden</de>
 				</label>
 			</save-design>
-			<revert-design design-tree="designTree" selection="selectedNode" placement="TOOLBAR">
+			<revert-design
+				design-tree="designTree"
+				placement="TOOLBAR"
+				selection="selectedNode"
+			>
 				<label>
 					<en>Revert</en>
 					<de>Verwerfen</de>
 				</label>
 			</revert-design>
-			<select-view design-tree="designTree" selection="selectedNode" placement="TOOLBAR">
+			<select-view
+				design-tree="designTree"
+				placement="TOOLBAR"
+				selection="selectedNode"
+			>
 				<label>
 					<en>Select view</en>
 					<de>Sicht auswählen</de>
@@ -35,13 +47,28 @@
 			</select-view>
 		</commands>
 
-		<split-panel orientation="horizontal" resizable="true">
+		<split-panel
+			orientation="horizontal"
+			resizable="true"
+		>
 			<panes>
-				<pane size="40" unit="%" min-size="200">
-					<design-tree input="designTree" selection="selectedNode"/>
+				<pane
+					min-size="200"
+					size="40"
+					unit="%"
+				>
+					<design-tree
+						input="designTree"
+						selection="selectedNode"
+					/>
 				</pane>
-				<pane size="60" unit="%">
-					<config-editor input="selectedNode"/>
+				<pane
+					size="60"
+					unit="%"
+				>
+					<inset>
+						<config-editor input="selectedNode"/>
+					</inset>
 				</pane>
 			</panes>
 		</split-panel>

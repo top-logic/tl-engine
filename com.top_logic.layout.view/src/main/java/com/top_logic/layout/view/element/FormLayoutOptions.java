@@ -8,20 +8,30 @@ package com.top_logic.layout.view.element;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.constraint.annotation.Bound;
 import com.top_logic.basic.config.constraint.annotation.Comparision;
+import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.LabelPosition;
+import com.top_logic.layout.react.control.layout.ReactInsetControl;
 
 /**
  * The layout of a grid of form fields.
  *
  * <p>
- * A form grid insets its fields from the container border, distributes them over as many columns as
- * the available width carries, and places each label beside its input or above it depending on how
- * wide the column it landed in is. What the configuration fixes is not the number of columns but
- * the greatest number of them wanted, and where the labels stand.
+ * A form grid distributes its fields over as many columns as the available width carries, and
+ * places each label beside its input or above it depending on how wide the column it landed in is.
+ * What the configuration fixes is not the number of columns but the greatest number of them wanted,
+ * where the labels stand, and whether the grid keeps a distance from the container border.
+ * </p>
+ *
+ * <p>
+ * The grid is a plain layout: it spans its container up to the border. Where the fields would
+ * otherwise glue to that border - in a dialog, a tab or a pane - the grid sets
+ * {@link #getInset()}.
  * </p>
  */
 public interface FormLayoutOptions extends ConfigurationItem {
@@ -31,6 +41,9 @@ public interface FormLayoutOptions extends ConfigurationItem {
 
 	/** Configuration name for {@link #getLabelPosition()}. */
 	String LABEL_POSITION = "label-position";
+
+	/** Configuration name for {@link #getInset()}. */
+	String INSET = "with-inset";
 
 	/**
 	 * The greatest number of columns the fields are laid out in.
@@ -63,6 +76,19 @@ public interface FormLayoutOptions extends ConfigurationItem {
 	LabelPosition getLabelPosition();
 
 	/**
+	 * Whether the grid is inset from the container border.
+	 *
+	 * <p>
+	 * An inset grid keeps the page inset as distance to the border of its container, exactly as an
+	 * {@link InsetElement} around it does. Without it, the fields reach up to the border, which is
+	 * what a grid wants that stands inside a form or in a container keeping a distance of its own.
+	 * </p>
+	 */
+	@Name(INSET)
+	@BooleanDefault(false)
+	boolean getInset();
+
+	/**
 	 * The given {@link LabelPosition} if a grid of fields can take it, and the responsive
 	 * {@link LabelPosition#AUTO} with an error reported if it is one only a single field can take.
 	 *
@@ -85,6 +111,26 @@ public interface FormLayoutOptions extends ConfigurationItem {
 					+ LabelPosition.AUTO.getExternalName() + "'.");
 				return LabelPosition.AUTO;
 		}
+	}
+
+	/**
+	 * The control displaying the given grid, inset from the container border if the configuration
+	 * asks for it.
+	 *
+	 * @param context
+	 *        The context to create the inset in.
+	 * @param options
+	 *        The configuration of the grid.
+	 * @param grid
+	 *        The control laying out the fields.
+	 * @return The given grid, or a {@link ReactInsetControl} holding it if {@link #getInset()} is
+	 *         set.
+	 */
+	static ReactControl insetIfRequested(ReactContext context, FormLayoutOptions options, ReactControl grid) {
+		if (!options.getInset()) {
+			return grid;
+		}
+		return new ReactInsetControl(context, grid);
 	}
 
 }

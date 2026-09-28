@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<!--
+		A form spanning the page with a header area above columns of cards: the right pane holds one
+		<form> whose first entry is a <fields> grid with the fields every object is recognized by,
+		followed by a <columns> layout whose cards group further fields. The whole right side is
+		edited with the single Edit/Save/Cancel set the form contributes to the toolbar of the panel
+		around it.
+		
+		Only the form keeps the page inset from the panel border (with-inset). The header grid inside
+		it adds no inset of its own, so the left edge of its fields lines up with the left border of
+		the cards below. The form takes a single column, so the header grid and the columns each span
+		its full width, one above the other. Inside a card the fields stand in a <fields> grid again,
+		inset from the card border by the reduced inset of the card.
+	-->
+	<channels>
+		<channel name="selected"/>
+		<derived-channel name="selectedSingle"
+			expr="sel -> if($sel.size() == 1, $sel.singleElement(), null)"
+			inputs="selected"
+		/>
+	</channels>
+	<split-panel
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane
+				min-size="220"
+				size="30"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Demo objects</en>
+						<de>Demo-Objekte</de>
+					</title>
+					<table
+						observed-types="demo.react:Demo"
+						selection="selected"
+						types="demo.react:Demo"
+					>
+						<columns>
+							<column
+								attribute="name"
+								sort="ASC"
+							/>
+							<column attribute="priority"/>
+						</columns>
+						<rows>all(`demo.react:Demo`)</rows>
+					</table>
+				</panel>
+			</pane>
+			<pane
+				size="70"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Details</en>
+						<de>Details</de>
+					</title>
+					<form
+						input="selectedSingle"
+						max-columns="1"
+						with-inset="true"
+					>
+						<fields>
+							<field attribute="name"/>
+							<field attribute="priority"/>
+							<field attribute="owner"/>
+							<field attribute="date"/>
+							<field attribute="active"/>
+							<field attribute="color"/>
+						</fields>
+						<columns
+							breakpoint="48rem"
+							gap="default"
+						>
+							<column weight="2">
+								<panel appearance="card">
+									<title>
+										<en>Description</en>
+										<de>Beschreibung</de>
+									</title>
+									<fields
+										max-columns="1"
+										with-inset="true"
+									>
+										<field attribute="string"/>
+										<field attribute="multiLine"/>
+										<field attribute="tags"/>
+									</fields>
+								</panel>
+							</column>
+							<column>
+								<panel appearance="card">
+									<title>
+										<en>Key figures</en>
+										<de>Kennzahlen</de>
+									</title>
+									<fields
+										max-columns="1"
+										with-inset="true"
+									>
+										<field attribute="count"/>
+										<field attribute="amount"/>
+										<field attribute="price"/>
+									</fields>
+								</panel>
+								<panel appearance="card">
+									<title>
+										<en>Contact</en>
+										<de>Kontakt</de>
+									</title>
+									<fields
+										max-columns="1"
+										with-inset="true"
+									>
+										<field attribute="email"/>
+										<field attribute="phone"/>
+										<field attribute="url"/>
+									</fields>
+								</panel>
+							</column>
+						</columns>
+					</form>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

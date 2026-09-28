@@ -47,6 +47,12 @@ import com.top_logic.util.Resources;
  * state changes (object switch, edit mode toggle, apply), pulls the current object and edit mode
  * from the {@link FormModel} and updates the inner control and chrome accordingly.
  * </p>
+ *
+ * <p>
+ * The field lives exactly as long as its {@link #createChromeControl() chrome}: disposing the chrome
+ * deregisters the field from the {@link FormModel} and releases its model, so a form that outlives
+ * the field (e.g. a field inside a switch or a visible-if within the form) no longer reaches it.
+ * </p>
  */
 public class AttributeFieldControl implements FormModelListener, FormParticipant {
 
@@ -85,6 +91,12 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	private final FormControl.FieldChangeListener _modeListener = this::onModeDependencyChanged;
 
 	private boolean _modeListenerRegistered;
+
+	/**
+	 * Whether the {@link #getChromeControl() chrome} has been disposed, which ends the life of this
+	 * field.
+	 */
+	private boolean _disposed;
 
 	/**
 	 * Creates a new {@link AttributeFieldControl} and registers as listener on the form model.
@@ -171,7 +183,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 			_chrome = new ReactFormFieldChromeControl(_context, _attributeName,
 				false, false, null, null, wirePosition(_labelPositionOverride, false),
 				Boolean.TRUE.equals(_fullLineOverride), true, _innerControl);
-			_chrome.setAgentName(_attributeName);
+			initChrome();
 			return _chrome;
 		}
 
@@ -185,7 +197,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 			_chrome = new ReactFormFieldChromeControl(_context, _attributeName,
 				false, false, null, null, wirePosition(_labelPositionOverride, false), false, false,
 				_innerControl);
-			_chrome.setAgentName(_attributeName);
+			initChrome();
 			return _chrome;
 		}
 
@@ -204,7 +216,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 		_chrome = new ReactFormFieldChromeControl(_context, label, part.isMandatory(),
 			dirty, null, description, null, fullLine, true, _innerControl);
-		_chrome.setAgentName(_attributeName);
+		initChrome();
 		_chrome.setTooltipText(description);
 
 		setupMode(part);
@@ -213,9 +225,31 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 		return _chrome;
 	}
 
+	/**
+	 * Completes the {@link #getChromeControl() chrome} just created and ties the lifetime of this
+	 * field to it.
+	 */
+	private void initChrome() {
+		_chrome.setAgentName(_attributeName);
+		_chrome.addCleanupAction(this::dispose);
+	}
+
+	/**
+	 * Ends the life of this field together with its {@link #getChromeControl() chrome}: stops
+	 * observing the {@link FormModel} and releases the field model with all listeners it registered
+	 * on the form.
+	 */
+	private void dispose() {
+		_disposed = true;
+		_formModel.removeFormModelListener(this);
+		clearModel();
+	}
+
 	@Override
 	public void onFormStateChanged(FormModel source) {
-		if (_chrome == null) {
+		if (_chrome == null || _disposed) {
+			// A form notifies a snapshot of its listeners, so a field whose chrome was disposed by
+			// the very change being announced can still be reached.
 			return;
 		}
 
@@ -468,7 +502,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	}
 
 	private void onModeDependencyChanged(TLStructuredTypePart changedPart) {
-		if (_model == null || _modeSelector == null) {
+		if (_disposed || _model == null || _modeSelector == null) {
 			return;
 		}
 		if (changedPart == _model.getPart()) {

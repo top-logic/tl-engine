@@ -46,7 +46,7 @@
 			</label>
 		</text>
 
-		<fields>
+		<fields with-inset="true">
 			<value-input
 				type="tl.core:String"
 				value="search"

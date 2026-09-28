@@ -23,6 +23,7 @@ import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.json.JSON;
@@ -210,7 +211,7 @@ public class TestDashboardElement extends BasicTestCase {
 
 	/**
 	 * Tests that a refused tile stays refused whatever the client sends: activating it runs
-	 * nothing.
+	 * nothing, and the activation answers with the refusal, which says why.
 	 */
 	public void testActivateWhileRefusedRunsNothing() {
 		ReactDashboardControl dashboard = createDashboard();
@@ -218,8 +219,12 @@ public class TestDashboardElement extends BasicTestCase {
 
 		HandlerResult result = activate(dashboard, OPENING_TILE);
 
-		assertTrue("A refused activation is no error.", result.isSuccess());
 		assertEquals("The command of a refused tile does not run.", List.of(), OpeningCommand.OPENED);
+		assertFalse("The refusal is reported.", result.isSuccess());
+		assertEquals("A refused activation is no malfunction.", ErrorSeverity.WARNING, result.getErrorSeverity());
+		assertEquals(com.top_logic.layout.basic.I18NConstants.ERROR_COMMAND_NOT_EXECUTABLE,
+			result.getErrorTitle());
+		assertNotNull("The refusal says why.", result.getErrorMessage());
 	}
 
 	/**

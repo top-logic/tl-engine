@@ -102,6 +102,8 @@ public class TestReactWindowRegistry extends TestCase {
 		ReactControl builtControl = entry.getControlProvider().createControl(
 			childCtx, entry.getModel());
 		entry.setRootControl(builtControl);
+		// Rendering the page attaches its root, which makes it addressable.
+		builtControl.attach();
 
 		assertNotNull("Root control must be set after building", entry.getRootControl());
 		// Verify the control is registered on the child's queue, not the opener's.

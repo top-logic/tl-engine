@@ -201,4 +201,26 @@ public interface ViewChannel {
 	 *        The veto listener to remove.
 	 */
 	void removeVetoListener(VetoListener listener);
+
+	/**
+	 * Releases everything this channel registered on other channels and on the model, when the one
+	 * who created it stops using it.
+	 *
+	 * <p>
+	 * A channel computed from other channels subscribes to them, and those inputs usually outlive
+	 * it: a channel declared by a view is created with the view's controls, while its inputs may
+	 * belong to an enclosing view. Releasing the channel removes these subscriptions, so that the
+	 * inputs neither keep it reachable nor keep recomputing its value. The channel is not used
+	 * afterwards.
+	 * </p>
+	 *
+	 * <p>
+	 * The owner of a channel declared in a {@code .view.xml} is the view instance creating it: the
+	 * channel is released when the root control of that instance is disposed. A channel holding a
+	 * value of its own registers nothing elsewhere and has nothing to release.
+	 * </p>
+	 */
+	default void release() {
+		// A channel holding its own value subscribes to nothing.
+	}
 }

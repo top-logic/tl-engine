@@ -8,7 +8,7 @@ package com.top_logic.layout.view;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
-import java.util.function.Consumer;
+import java.util.function.Function;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -55,6 +55,7 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.window.WindowEntry;
 import com.top_logic.layout.view.login.PendingSessionAction;
 import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
@@ -242,10 +243,12 @@ public class ViewServlet extends TopLogicServlet {
 				request.getContextPath(), windowName, sseQueue, windowRegistry);
 			wireRouteManager(baseContext, sseQueue, routePath, false);
 			ReactSnackbarControl snackbar = createWindowSnackbar(baseContext);
-			ReactMenuControl menu = createWindowMenu(baseContext);
-			ReactDialogManagerControl dialogs = new ReactDialogManagerControl(baseContext);
-			ReactContext displayContext = withWindowContextMenu(
-				withWindowErrorSink(baseContext, snackbar), createWindowMenuOpener(menu));
+			// The window's overlays report the results of their commands - a menu selection, say - to
+			// the window snackbar.
+			ReactContext reportingContext = withWindowErrorSink(baseContext, snackbar);
+			ReactMenuControl menu = createWindowMenu(reportingContext);
+			ReactDialogManagerControl dialogs = new ReactDialogManagerControl(reportingContext);
+			ReactContext displayContext = withWindowContextMenu(reportingContext, createWindowMenuOpener(menu));
 			ReactControl content = controlProvider.createControl(
 				displayContext, windowEntry.getModel());
 			ReactControl rootControl =
@@ -298,10 +301,12 @@ public class ViewServlet extends TopLogicServlet {
 			request.getContextPath(), windowName, sseQueue, windowRegistry);
 		wireRouteManager(baseContext, sseQueue, routePath, loginView);
 		ReactSnackbarControl snackbar = createWindowSnackbar(baseContext);
-		ReactMenuControl menu = createWindowMenu(baseContext);
-		ReactDialogManagerControl dialogs = new ReactDialogManagerControl(baseContext);
-		ReactContext displayContext = withWindowContextMenu(
-			withWindowErrorSink(baseContext, snackbar), createWindowMenuOpener(menu));
+		// The window's overlays report the results of their commands - a menu selection, say - to
+		// the window snackbar.
+		ReactContext reportingContext = withWindowErrorSink(baseContext, snackbar);
+		ReactMenuControl menu = createWindowMenu(reportingContext);
+		ReactDialogManagerControl dialogs = new ReactDialogManagerControl(reportingContext);
+		ReactContext displayContext = withWindowContextMenu(reportingContext, createWindowMenuOpener(menu));
 		ViewContext viewContext = new DefaultViewContext(displayContext, viewPath);
 
 		ReloadableControl content = new ReloadableControl(viewPath, viewContext,
@@ -381,9 +386,8 @@ public class ViewServlet extends TopLogicServlet {
 	 */
 	private static ReactMenuControl createWindowMenu(ReactContext context) {
 		return new ReactMenuControl(context, null, List.of(),
-			itemId -> {
-				// The select handler is installed per open() by the ContextMenuOpener.
-			},
+			// The select handler is installed per open() by the ContextMenuOpener.
+			itemId -> HandlerResult.DEFAULT_RESULT,
 			() -> {
 				// The close handler is installed per open() by the ContextMenuOpener.
 			});
@@ -396,7 +400,7 @@ public class ViewServlet extends TopLogicServlet {
 		return new ContextMenuOpener(new ContextMenuOpener.MenuRenderer() {
 			@Override
 			public void show(int x, int y, List<ReactMenuControl.MenuEntry> items,
-					Consumer<String> selectHandler, Runnable closeHandler) {
+					Function<String, HandlerResult> selectHandler, Runnable closeHandler) {
 				menu.updateItems(items);
 				menu.setSelectHandler(selectHandler);
 				menu.setCloseHandler(closeHandler);

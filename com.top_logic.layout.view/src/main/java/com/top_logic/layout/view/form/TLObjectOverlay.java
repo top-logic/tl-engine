@@ -23,6 +23,8 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TransientObject;
 import com.top_logic.model.annotate.util.ConstraintCheck;
+import com.top_logic.model.search.expr.Update;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Lean overlay over a persistent {@link TLObject} that intercepts writes.
@@ -230,9 +232,44 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	}
 
 	/**
+	 * Ensures that the current user may write all changes {@link #apply()} would transfer.
+	 *
+	 * <p>
+	 * Every attribute whose value {@link #isDirty() differs} from the base value must be writable
+	 * for the current user, see {@link Update#checkWritePermission(TLObject, TLStructuredTypePart)}.
+	 * A buffered value equal to the base value is no change and needs no right.
+	 * </p>
+	 *
+	 * <p>
+	 * A save writing several overlays checks all of them before the first one is applied, so a
+	 * refused save leaves every overlay with its changes.
+	 * </p>
+	 *
+	 * @throws TopLogicException
+	 *         If the current user is not allowed to modify one of the changed attributes.
+	 */
+	public void checkApply() {
+		for (Map.Entry<TLStructuredTypePart, Object> entry : _changes.entrySet()) {
+			TLStructuredTypePart part = entry.getKey();
+			if (isChange(entry.getValue(), _base.tValue(part))) {
+				Update.checkWritePermission(_base, part);
+			}
+		}
+	}
+
+	/**
 	 * Transfers all accumulated changes to the base object.
+	 *
+	 * <p>
+	 * The changes are {@link #checkApply() checked} before the first value is written, so a refused
+	 * write leaves the base object and this overlay untouched.
+	 * </p>
+	 *
+	 * @throws TopLogicException
+	 *         If the current user is not allowed to modify one of the changed attributes.
 	 */
 	public void apply() {
+		checkApply();
 		for (Map.Entry<TLStructuredTypePart, Object> entry : _changes.entrySet()) {
 			_base.tUpdate(entry.getKey(), entry.getValue());
 		}

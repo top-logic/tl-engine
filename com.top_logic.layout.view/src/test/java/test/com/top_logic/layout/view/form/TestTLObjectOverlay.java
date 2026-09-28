@@ -26,6 +26,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TransientObject;
+import com.top_logic.model.security.ModelAccessRights;
 
 /**
  * Tests for {@link TLObjectOverlay}.
@@ -113,6 +114,11 @@ public class TestTLObjectOverlay extends TestCase {
 
 	/**
 	 * Tests that {@link TLObjectOverlay#apply()} transfers changes to the base object.
+	 *
+	 * <p>
+	 * The transfer is tested apart from the write check, which the {@link ModelAccessRights}
+	 * decide; therefore the changes are applied without an access check.
+	 * </p>
 	 */
 	public void testApply() {
 		TLStructuredTypePart namePart = mockPart("name");
@@ -125,7 +131,7 @@ public class TestTLObjectOverlay extends TestCase {
 		overlay.tUpdate(namePart, "Bob");
 		overlay.tUpdate(agePart, Integer.valueOf(25));
 
-		overlay.apply();
+		ModelAccessRights.uncheckedSecurity(overlay::apply);
 
 		assertEquals("Bob", base.tValue(namePart));
 		assertEquals(Integer.valueOf(25), base.tValue(agePart));

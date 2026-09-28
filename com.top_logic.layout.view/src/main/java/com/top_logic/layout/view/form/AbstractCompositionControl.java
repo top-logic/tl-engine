@@ -407,6 +407,19 @@ public abstract class AbstractCompositionControl extends ReactControl
 	}
 
 	@Override
+	public void checkApplyState() {
+		if (_fieldModel == null) {
+			return;
+		}
+		for (CompositionRowModel row : _rowModels) {
+			TLObjectOverlay overlay = row.getRowOverlay();
+			if (overlay != null && overlay.isDirty()) {
+				overlay.checkApply();
+			}
+		}
+	}
+
+	@Override
 	public void applyState() {
 		if (_fieldModel == null) {
 			return;

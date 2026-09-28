@@ -537,7 +537,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 *
 	 * @return The base object with overlay changes applied, or {@code null} if no overlay exists.
 	 * @throws TopLogicException
-	 *         If any participant reports a validation error.
+	 *         If any participant reports a validation error, or if the current user is not allowed
+	 *         to write one of the changes, see {@link #checkWriteRights()}.
 	 */
 	public TLObject executeStoreState() {
 		validateOrThrow();
@@ -546,6 +547,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			return null;
 		}
 
+		checkWriteRights();
 		for (FormParticipant participant : _participants) {
 			participant.applyState();
 		}
@@ -743,15 +745,38 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	}
 
 	/**
+	 * Ensures that the current user may write all changes of this form: those of every
+	 * {@link FormParticipant} and those of the form's own overlay.
+	 *
+	 * <p>
+	 * Runs before anything is persisted or applied, so a refused save leaves all buffered changes in
+	 * place and the user can correct or cancel the edit.
+	 * </p>
+	 *
+	 * @throws TopLogicException
+	 *         If the current user is not allowed to write one of the changes.
+	 */
+	private void checkWriteRights() {
+		for (FormParticipant participant : _participants) {
+			participant.checkApplyState();
+		}
+		if (_overlay != null) {
+			_overlay.checkApply();
+		}
+	}
+
+	/**
 	 * Validates, lets participants apply, and commits form state in a KB transaction.
 	 *
 	 * <p>
-	 * Participants apply first (e.g. composition tables persist new objects and update reference
+	 * The {@link #checkWriteRights() write rights} of all changes are checked before anything is
+	 * persisted. Participants apply first (e.g. composition tables persist new objects and update reference
 	 * lists in the overlay), then {@link #executeStoreState()} validates and transfers overlay
 	 * changes to the base object.
 	 * </p>
 	 */
 	private void persistChanges() {
+		checkWriteRights();
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		Transaction tx = kb.beginTransaction(I18NConstants.FORM_SAVE);
 		try {

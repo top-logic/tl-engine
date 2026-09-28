@@ -12,8 +12,13 @@ import { BrandProvider } from './example-lib';
 import BrandButtonAdapter from './adapters/BrandButtonAdapter';
 import BrandCheckboxAdapter from './adapters/BrandCheckboxAdapter';
 
-/** The brand settings of the corporate design. */
-const ACME_BRAND = { name: 'acme', accent: '#0e7c66', corners: 'pill' } as const;
+/**
+ * The brand settings of the corporate design.
+ *
+ * The library takes any CSS colour as its accent. The customer module, not the library, wires it to
+ * the brand role of the TopLogic design system, so the accent follows mode and customer theme.
+ */
+const ACME_BRAND = { name: 'acme', accent: 'var(--tl-surface-brand)', corners: 'pill' } as const;
 
 /** Provides the corporate brand settings to all library components of a React root. */
 function AcmeBrand({ children }: { children?: React.ReactNode }) {

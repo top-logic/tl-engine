@@ -1,8 +1,11 @@
 /*
  * Stylesheet of the example component library (react-src/example-lib).
  *
- * It styles the library's own class names only and takes its colour from the brand accent the
- * components set as --brand-accent; it is independent of the TopLogic theme tokens.
+ * It styles the library's own class names only and takes its accent from --brand-accent, which the
+ * components set from their provider. The library knows nothing about TopLogic, but its stylesheet
+ * reads the roles of the TopLogic design system (--tl-*), and the customer module wires the brand
+ * accent to the role --tl-surface-brand. Mode, density and a customer theme (data-tl-mode,
+ * data-tl-theme) therefore apply to the library as well.
  */
 
 .brand-button {
@@ -23,7 +26,9 @@
 	letter-spacing: 0.02em;
 	white-space: nowrap;
 	cursor: pointer;
-	transition: background-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
+	transition: background-color var(--tl-duration-fast) var(--tl-easing-standard),
+		color var(--tl-duration-fast) var(--tl-easing-standard),
+		box-shadow var(--tl-duration-fast) var(--tl-easing-standard);
 }
 
 .brand-button--pill {
@@ -35,7 +40,7 @@
 }
 
 .brand-button:hover:not(:disabled) {
-	background: color-mix(in srgb, var(--brand-accent) 12%, transparent);
+	background: var(--tl-surface-brand-subtle);
 }
 
 .brand-button:focus-visible {
@@ -45,29 +50,36 @@
 
 .brand-button--primary {
 	background: var(--brand-accent);
-	color: #fff;
+	color: var(--tl-text-on-brand);
 }
 
 .brand-button--primary:hover:not(:disabled) {
-	background: color-mix(in srgb, var(--brand-accent) 85%, #000);
+	border-color: var(--tl-surface-brand-hover);
+	background: var(--tl-surface-brand-hover);
+	color: var(--tl-text-on-brand-hover);
 }
 
 .brand-button--danger {
-	border-color: #b42318;
-	color: #b42318;
+	border-color: var(--tl-status-error-border);
+	color: var(--tl-status-error-text);
 }
 
 .brand-button--danger:hover:not(:disabled) {
-	background: color-mix(in srgb, #b42318 12%, transparent);
+	background: var(--tl-status-error-subtle);
 }
 
 .brand-button[aria-pressed="true"] {
-	background: color-mix(in srgb, var(--brand-accent) 22%, transparent);
+	background: var(--tl-surface-brand-subtle-hover);
 }
 
 .brand-button:disabled {
-	opacity: 0.45;
+	border-color: var(--tl-border-disabled);
+	color: var(--tl-text-disabled);
 	cursor: not-allowed;
+}
+
+.brand-button--primary:disabled {
+	background: var(--tl-surface-disabled);
 }
 
 .brand-checkbox {
@@ -110,7 +122,7 @@
 	width: 0.35rem;
 	height: 0.65rem;
 	margin-top: -0.15rem;
-	border: solid #fff;
+	border: solid var(--tl-text-on-brand);
 	border-width: 0 2px 2px 0;
 	transform: rotate(45deg);
 }
@@ -121,28 +133,45 @@
 }
 
 .brand-checkbox--invalid .brand-checkbox__box {
-	border-color: #b42318;
+	border-color: var(--tl-status-error-border);
 }
 
 .brand-checkbox--readonly {
 	cursor: default;
 }
 
-.brand-checkbox--readonly .brand-checkbox__box:disabled {
-	opacity: 1;
+.brand-checkbox__box:disabled {
+	border-color: var(--tl-border-disabled);
 }
 
-.brand-checkbox__box:disabled {
-	opacity: 0.45;
+.brand-checkbox__box:checked:disabled {
+	background: var(--tl-surface-disabled);
+}
+
+.brand-checkbox__box:checked:disabled::after {
+	border-color: var(--tl-text-disabled);
+}
+
+/* A read-only box is shown as it is, not as disabled. */
+.brand-checkbox--readonly .brand-checkbox__box:disabled {
+	border-color: var(--brand-accent);
+}
+
+.brand-checkbox--readonly .brand-checkbox__box:checked:disabled {
+	background: var(--brand-accent);
+}
+
+.brand-checkbox--readonly .brand-checkbox__box:checked:disabled::after {
+	border-color: var(--tl-text-on-brand);
 }
 
 .brand-error {
 	display: inline-block;
 	padding: 0.1rem 0.4rem;
-	border: 2px dashed #b42318;
-	background: #fee4e2;
-	color: #b42318;
-	font: 600 0.75rem/1.4 monospace;
+	border: 2px dashed var(--tl-status-error-border);
+	background: var(--tl-status-error-subtle);
+	color: var(--tl-status-error-text);
+	font: 600 0.75rem/1.4 var(--tl-font-family-mono);
 }
 
 .brand-button__icon {

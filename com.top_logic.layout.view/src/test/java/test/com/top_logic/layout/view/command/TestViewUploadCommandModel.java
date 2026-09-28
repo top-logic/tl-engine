@@ -18,6 +18,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.thread.ThreadContextManager;
@@ -35,6 +36,8 @@ import com.top_logic.layout.view.command.UploadCommand;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.layout.view.command.ViewUploadCommandModel;
+import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -111,8 +114,29 @@ public class TestViewUploadCommandModel extends TestCase {
 		assertEquals("A successful upload has nothing to report.", List.of(), _shown);
 	}
 
+	/**
+	 * Tests that an upload the command's rule refuses processes no file and answers with the
+	 * refusal.
+	 */
+	public void testRefusedUploadProcessesNothing() {
+		HandlerResult result = upload(context(sink()), (context, input) -> record(input),
+			input -> ExecutableState.NO_EXEC_NO_MODEL);
+
+		assertEquals("A refused upload processes no file.", List.of(), _uploaded);
+		assertFalse("The refusal is reported.", result.isSuccess());
+		assertEquals(ErrorSeverity.WARNING, result.getErrorSeverity());
+	}
+
 	/** Uploads {@link #FAILING_FILE} and {@link #OTHER_FILE} through a chain of the given action. */
-	private void upload(ReactContext context, ViewAction action) {
+	private HandlerResult upload(ReactContext context, ViewAction action) {
+		return upload(context, action, ViewExecutabilityRule.ALWAYS_EXECUTABLE);
+	}
+
+	/**
+	 * Uploads {@link #FAILING_FILE} and {@link #OTHER_FILE} through a chain of the given action,
+	 * for a command deciding by the given rule.
+	 */
+	private HandlerResult upload(ReactContext context, ViewAction action, ViewExecutabilityRule rule) {
 		UploadCommand.Config config = TypedConfiguration.newConfigItem(UploadCommand.Config.class);
 		UploadCommand command =
 			new UploadCommand(new DefaultInstantiationContext(TestViewUploadCommandModel.class), config) {
@@ -123,9 +147,9 @@ public class TestViewUploadCommandModel extends TestCase {
 			};
 
 		ViewUploadCommandModel model =
-			new ViewUploadCommandModel(command, config, null, ViewExecutabilityRule.ALWAYS_EXECUTABLE);
+			new ViewUploadCommandModel(command, config, null, rule);
 
-		model.uploadFiles(context, List.of(file(FAILING_FILE), file(OTHER_FILE)));
+		return model.upload(context, List.of(file(FAILING_FILE), file(OTHER_FILE)));
 	}
 
 	/** An action that fails for {@link #FAILING_FILE} and records every other file. */

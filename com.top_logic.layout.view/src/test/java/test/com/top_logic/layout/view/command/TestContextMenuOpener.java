@@ -7,10 +7,12 @@ package test.com.top_logic.layout.view.command;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
+import java.util.function.Function;
 
 import junit.framework.TestCase;
 
+import com.top_logic.basic.exception.ErrorSeverity;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.overlay.ContextMenuContribution;
@@ -19,6 +21,7 @@ import com.top_logic.layout.react.control.overlay.ContextMenuOpener.MenuRenderer
 import com.top_logic.layout.react.control.overlay.ContextMenuOpener.Targeted;
 import com.top_logic.layout.react.control.overlay.ReactMenuControl.MenuEntry;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * Test for {@link ContextMenuOpener}.
@@ -84,7 +87,7 @@ public class TestContextMenuOpener extends TestCase {
 		ContextMenuOpener opener = new ContextMenuOpener(renderer);
 
 		opener.open(0, 0, List.of(new Targeted(c0, "obj0"), new Targeted(c1, "obj1")));
-		renderer.selectHandler.accept("1:0");
+		renderer.selectHandler.apply("1:0");
 
 		assertEquals(0, cmdA.invocations);
 		assertEquals(1, cmdB.invocations);
@@ -125,9 +128,77 @@ public class TestContextMenuOpener extends TestCase {
 		ContextMenuOpener opener = new ContextMenuOpener(renderer);
 
 		opener.open(0, 0, List.of(new Targeted(themes, "anything")));
-		renderer.selectHandler.accept("0:0");
+		renderer.selectHandler.apply("0:0");
 
 		assertEquals(1, active.invocations);
+	}
+
+	/**
+	 * Selecting a command its rules refuse - whatever entry the client addresses, and however the
+	 * menu displayed it - runs nothing, and the selection answers with the refusal, which carries
+	 * the reason the rule gave.
+	 */
+	public void testSelectingARefusedCommandReportsTheRefusal() {
+		ResKey reason = ResKey.text("Only for open tickets.");
+		CountingCommandModel refused = new CountingCommandModel("close");
+		RecordingRenderer renderer = openMenuFor(refused);
+
+		refused._state = ExecutableState.createDisabledState(reason);
+		HandlerResult result = renderer.selectHandler.apply("0:0");
+
+		assertEquals("A refused command must not run.", 0, refused.invocations);
+		assertFalse("The refusal is reported.", result.isSuccess());
+		assertEquals("A refusal is no malfunction.", ErrorSeverity.WARNING, result.getErrorSeverity());
+		assertEquals("The user learns why.", reason, result.getErrorMessage());
+		assertFalse("The menu closes nonetheless.", renderer.opened);
+	}
+
+	/** A refused command's entry is displayed disabled, and carries the state with the reason. */
+	public void testTheEntryOfARefusedCommandCarriesItsState() {
+		ExecutableState state = ExecutableState.createDisabledState(ResKey.text("Only for open tickets."));
+		CountingCommandModel refused = new CountingCommandModel("close");
+		refused._state = state;
+
+		RecordingRenderer renderer = openMenuFor(refused);
+
+		MenuEntry entry = renderer.lastItems.get(0);
+		assertTrue(entry.disabled());
+		assertSame(state, entry.state());
+	}
+
+	/**
+	 * What a selected command reports is the result of the selection, a failure of its own
+	 * included - it is not dropped on the way.
+	 */
+	public void testTheResultOfTheSelectedCommandIsReturned() {
+		CountingCommandModel failing = new CountingCommandModel("save");
+		failing._result = HandlerResult.error(ResKey.text("Storage is full."));
+		RecordingRenderer renderer = openMenuFor(failing);
+
+		HandlerResult result = renderer.selectHandler.apply("0:0");
+
+		assertEquals(1, failing.invocations);
+		assertSame("The command's own result reaches the caller.", failing._result, result);
+	}
+
+	/** An executable command runs, and its success is the result of the selection. */
+	public void testAnExecutableCommandRuns() {
+		CountingCommandModel command = new CountingCommandModel("edit");
+		RecordingRenderer renderer = openMenuFor(command);
+
+		HandlerResult result = renderer.selectHandler.apply("0:0");
+
+		assertEquals(1, command.invocations);
+		assertTrue(result.isSuccess());
+	}
+
+	/** Opens a menu offering the given command alone. */
+	private static RecordingRenderer openMenuFor(CommandModel command) {
+		AtomicReference<Object> target = new AtomicReference<>();
+		ContextMenuContribution contribution = new ContextMenuContribution(target::set, List.of(command));
+		RecordingRenderer renderer = new RecordingRenderer();
+		new ContextMenuOpener(renderer).open(0, 0, List.of(new Targeted(contribution, "anything")));
+		return renderer;
 	}
 
 	static final class RecordingRenderer implements MenuRenderer {
@@ -139,12 +210,13 @@ public class TestContextMenuOpener extends TestCase {
 
 		boolean opened;
 
-		Consumer<String> selectHandler;
+		Function<String, HandlerResult> selectHandler;
 
 		Runnable closeHandler;
 
 		@Override
-		public void show(int x, int y, List<MenuEntry> items, Consumer<String> selectHandler, Runnable closeHandler) {
+		public void show(int x, int y, List<MenuEntry> items, Function<String, HandlerResult> selectHandler,
+				Runnable closeHandler) {
 			this.opened = true;
 			this.lastX = x;
 			this.lastY = y;
@@ -164,6 +236,12 @@ public class TestContextMenuOpener extends TestCase {
 
 		private final boolean _active;
 
+		/** The state the command's rules assign, see {@link #getExecutableState()}. */
+		ExecutableState _state = ExecutableState.EXECUTABLE;
+
+		/** What the command reports when it runs. */
+		HandlerResult _result = HandlerResult.DEFAULT_RESULT;
+
 		CountingCommandModel(String name) {
 			this(name, false);
 		}
@@ -179,9 +257,24 @@ public class TestContextMenuOpener extends TestCase {
 		}
 
 		@Override
-		public HandlerResult executeCommand(ReactContext ctx) {
+		public boolean isExecutable() {
+			return _state.isExecutable();
+		}
+
+		@Override
+		public boolean isVisible() {
+			return _state.isVisible();
+		}
+
+		@Override
+		public ExecutableState getExecutableState() {
+			return _state;
+		}
+
+		@Override
+		public HandlerResult perform(ReactContext ctx) {
 			invocations++;
-			return HandlerResult.DEFAULT_RESULT;
+			return _result;
 		}
 	}
 }

@@ -41,7 +41,7 @@
 			>
 				<param name="person"
 					expr="p -> objectId($p)"
-					reverse="id -> objectResolve(`tl.accounts:Person`, $id)"
+					reverse="id -> $id.objectResolve(`tl.accounts:Person`)"
 				/>
 				<label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
 					expr="p -> $p.get(`tl.accounts:Person#name`)"

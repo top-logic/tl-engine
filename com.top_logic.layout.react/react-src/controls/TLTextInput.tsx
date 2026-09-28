@@ -7,6 +7,8 @@ import {
   rootClassName,
   VALUE_DEBOUNCE_MS,
   tooltipProps,
+  useFieldLabelProps,
+  fieldInputId,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import FontIcon from './FontIcon';
@@ -95,6 +97,8 @@ const normalizeUrl = (value: string): string => {
  * holds, in the order [icon] input [clear] [link].
  */
 const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
+  const inputId = fieldInputId(controlId);
+  const labelProps = useFieldLabelProps(controlId, inputId);
   const [value, setValue, flushValue] = useTLFieldValue({
     debounceMs: (state.debounceMs as number) ?? VALUE_DEBOUNCE_MS,
     sendOnBlur: state.sendValueOnBlur === true,
@@ -216,6 +220,8 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
           className={rootClassName(state, cls)}
           aria-invalid={hasError || undefined}
           {...tooltipProps(hasError ? errorMessage : undefined)}
+          id={inputId}
+          {...labelProps}
         />
       </span>
     );
@@ -234,6 +240,8 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
       className={rootClassName(state, cls)}
       aria-invalid={hasError || undefined}
       {...tooltipProps(hasError ? errorMessage : undefined)}
+      id={inputId}
+      {...labelProps}
     />
   );
 

@@ -1,4 +1,4 @@
-import { React, useTLFieldValue, rootClassName } from 'tl-react-bridge';
+import { React, useTLFieldValue, rootClassName, useFieldLabelProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback } = React;
@@ -14,11 +14,12 @@ interface BooleanOption {
  * The server states which presentation the attribute asks for and supplies the labelled options; a
  * tri-state field has a third option for "no value".
  *
- * A radio option's text names its radio through a `label` that refers to it by id instead of
- * wrapping it: the control itself may sit inside a `label` — the form field renders its input area
- * as one when the field's own label is hidden — and a `label` may not contain another one.
+ * A radio option's text names its radio through a `label` that refers to it by id. In a form field,
+ * the field's label names the choice as a whole: the select, or the radio group (see
+ * FieldLabelContext).
  */
 const TLBooleanChoice: React.FC<TLCellProps> = ({ controlId, state }) => {
+  const labelProps = useFieldLabelProps(controlId, controlId);
   const [value, setValue] = useTLFieldValue();
   const options = (state.options as BooleanOption[]) ?? [];
   const asSelect = state.presentation === 'select';
@@ -56,6 +57,7 @@ const TLBooleanChoice: React.FC<TLCellProps> = ({ controlId, state }) => {
     return (
       <select
         id={controlId}
+        {...labelProps}
         className={rootClassName(state, cls + ' tlReactSelect')}
         value={current >= 0 ? String(current) : ''}
         disabled={disabled}
@@ -72,7 +74,7 @@ const TLBooleanChoice: React.FC<TLCellProps> = ({ controlId, state }) => {
 
   return (
     <span id={controlId} className={rootClassName(state, cls + ' tlBooleanChoice--radio')} role="radiogroup"
-      aria-invalid={hasError || undefined}>
+      aria-invalid={hasError || undefined} {...labelProps}>
       {options.map((option, index) => {
         const optionId = `${controlId}-option-${index}`;
         return (

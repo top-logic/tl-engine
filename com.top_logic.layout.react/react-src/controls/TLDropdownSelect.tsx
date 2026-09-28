@@ -1,5 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, useCloseOnOutsidePress, CMD_VALUE_CHANGED, rootClassName, tooltipProps } from 'tl-react-bridge';
-import { createPortal } from 'react-dom';
+import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, useCloseOnOutsidePress, CMD_VALUE_CHANGED, rootClassName, tooltipProps, createPortal, useFieldLabelProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import {
   ARG_OPTION,
@@ -58,7 +57,7 @@ function Chip({
       {draggable && (
         <span className="tlDropdownSelect__dragHandle" aria-hidden="true">&#8942;&#8942;</span>
       )}
-      {withPill(option.color, (
+      {withPill(option.colorRole, (
         <>
           <OptionImage image={option.image} />
           <span className="tlDropdownSelect__chipLabel">{option.label}</span>
@@ -122,7 +121,7 @@ function OptionRow({
       onClick={handleClick}
       onMouseEnter={onMouseEnter}
     >
-      {withPill(option.color, (
+      {withPill(option.colorRole, (
         <>
           <OptionImage image={option.image} />
           <span className="tlDropdownSelect__optionLabel">{labelContent}</span>
@@ -135,6 +134,7 @@ function OptionRow({
 // -- Main component --
 
 const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
+  const labelProps = useFieldLabelProps(controlId, controlId);
   const sendCommand = useTLCommand();
 
   // Server state
@@ -597,6 +597,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
     <>
       <div
         id={controlId}
+        {...labelProps}
         ref={containerRef}
         className={rootClassName(state, 'tlDropdownSelect' +
           (isOpen ? ' tlDropdownSelect--open' : '') +

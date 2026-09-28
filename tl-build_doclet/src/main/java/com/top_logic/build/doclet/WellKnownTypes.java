@@ -38,6 +38,9 @@ public class WellKnownTypes {
 
 	private static final String CUSTOM_KEY_ANNOTATION = "com.top_logic.basic.i18n.CustomKey";
 
+	private static final String USES_SECURITY_ANNOTATION =
+		"com.top_logic.model.search.expr.config.operations.UsesSecurity";
+
 	TypeMirror _tlScriptFunctionsType;
 
 	TypeMirror _configType;
@@ -90,6 +93,8 @@ public class WellKnownTypes {
 
 	TypeMirror _inAppAnnotation;
 
+	TypeMirror _usesSecurityAnnotation;
+
 	/**
 	 * Creates a new {@link WellKnownTypes}.
 	 */
@@ -117,6 +122,7 @@ public class WellKnownTypes {
 			typeMirror("com.top_logic.basic.util.ResKeyN"));
 		_instantiationContext = typeMirror("com.top_logic.basic.config.InstantiationContext");
 		_inAppAnnotation = typeMirror(IN_APP_ANNOTATION);
+		_usesSecurityAnnotation = typeMirror(USES_SECURITY_ANNOTATION);
 		_abstractAnnotation = typeMirror(ABSTRACT_ANNOTATION);
 		TypeElement name = typeElement(NAME_ANNOTATION);
 		if (name != null) {
@@ -267,6 +273,17 @@ public class WellKnownTypes {
 	 */
 	public boolean hasInAppAnnotation(Element elem) {
 		return hasAnnotation(elem, _inAppAnnotation);
+	}
+
+	/**
+	 * Whether the {@value #USES_SECURITY_ANNOTATION} annotation is present.
+	 * 
+	 * <p>
+	 * A TL-Script function parameter with this annotation is not a script argument.
+	 * </p>
+	 */
+	public boolean hasUsesSecurityAnnotation(Element elem) {
+		return hasAnnotation(elem, _usesSecurityAnnotation);
 	}
 
 	/**

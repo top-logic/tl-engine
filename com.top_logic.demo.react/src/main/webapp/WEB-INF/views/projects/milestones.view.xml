@@ -45,7 +45,10 @@
 						<en>Project</en>
 						<de>Projekt</de>
 					</title>
-					<form input="project">
+					<form
+						input="project"
+						with-inset="true"
+					>
 						<field attribute="name"/>
 						<field attribute="description"/>
 					</form>

@@ -20,6 +20,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey LOGIN_MISSING_CREDENTIALS;
 
 	/**
+	 * @en This function requires you to log in.
+	 */
+	public static ResKey ERROR_LOGIN_REQUIRED;
+
+	/**
 	 * @en Login failed. Please check your credentials.
 	 */
 	public static ResKey LOGIN_FAILED;

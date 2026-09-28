@@ -129,6 +129,14 @@ public class ReactServlet extends TopLogicServlet {
 	private static final String ARG_URL = "url";
 
 	/**
+	 * Argument of the unload report naming the page that was unloaded, sent by
+	 * {@code initSelfCloseNotification} in {@code window-manager.ts}.
+	 *
+	 * @see ReactWindowRegistry#windowUnloaded(String, String)
+	 */
+	private static final String ARG_PAGE_LOAD = "pageLoad";
+
+	/**
 	 * Name of the {@link #CMD_NAVIGATE_TO_ROUTE} answer field that is set when the display does not
 	 * take up the URL.
 	 *
@@ -524,8 +532,12 @@ public class ReactServlet extends TopLogicServlet {
 			ReactWindowRegistry registry = ReactWindowRegistry.forSession(request.getSession());
 			if (arguments != null && Boolean.TRUE.equals(arguments.get("unload"))) {
 				// Reported on beforeunload, which fires for a reload as well: keep the window's state
-				// for a grace period instead of tearing it down.
-				registry.windowUnloaded(closedWindowId);
+				// for a grace period instead of tearing it down. Detaching the tree changes the display
+				// like any command does, and for a reload it coincides with the request rendering the
+				// page again, so it is an interaction as well.
+				try (Interaction interaction = registry.beginInteraction()) {
+					registry.windowUnloaded(closedWindowId, (String) arguments.get(ARG_PAGE_LOAD));
+				}
 				sendSuccess(response);
 				return;
 			}
@@ -578,10 +590,10 @@ public class ReactServlet extends TopLogicServlet {
 		ReactCommandTarget control = queue.getControl(controlId);
 		if (control == null) {
 			if (ReactFormFieldControl.CMD_VALUE_CHANGED.equals(commandName)) {
-				// A debounced field value flushed after its control was disposed: the edit was
+				// A debounced field value flushed after its control left the display: the edit was
 				// abandoned (e.g. the dialog was canceled), so dropping the value is the intended
 				// outcome, not an error.
-				Logger.debug("Dropped '" + commandName + "' for disposed control '" + controlId + "'.",
+				Logger.debug("Dropped '" + commandName + "' for undisplayed control '" + controlId + "'.",
 					ReactServlet.class);
 				sendSuccess(response);
 				return;

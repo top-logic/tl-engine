@@ -1,6 +1,5 @@
-import { React, useTLState, TLChild, useCloseOnOutsidePress, useStandaloneKeyboardScope, useFocusTrap, useI18N, rootClassName, tooltipProps } from 'tl-react-bridge';
+import { React, useTLState, TLChild, useCloseOnOutsidePress, useStandaloneKeyboardScope, useFocusTrap, useI18N, rootClassName, tooltipProps, createPortal } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { createPortal } from 'react-dom';
 import { ThemeIcon } from './icon/ThemeIcon';
 import { ButtonDefaults, useButtonDefaults } from './button/ButtonDefaults';
 

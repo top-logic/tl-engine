@@ -4,10 +4,15 @@
 	<modules>
 		<module name="TestTLScriptSecurity">
 			<types>
+				<interface name="Record"/>
+
 				<class name="Employee">
 					<annotations>
 						<table name="TLSecEmployee"/>
 					</annotations>
+					<generalizations>
+						<generalization type="Record"/>
+					</generalizations>
 					<attributes>
 						<property name="name"
 							type="tl.core:String"
@@ -32,6 +37,9 @@
 					<annotations>
 						<table name="TLSecUnsecuredData"/>
 					</annotations>
+					<generalizations>
+						<generalization type="Record"/>
+					</generalizations>
 					<attributes>
 						<property name="data"
 							type="tl.core:String"

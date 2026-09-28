@@ -178,6 +178,7 @@
 						<default>
 							<form
 								input="selectedDemo"
+								with-inset="true"
 								withEditMode="true"
 							>
 								<field attribute="name"/>

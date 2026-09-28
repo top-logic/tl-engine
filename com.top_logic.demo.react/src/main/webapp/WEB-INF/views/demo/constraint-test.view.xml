@@ -88,7 +88,10 @@
 						<en>Constraint Test Form</en>
 						<de>Constraint-Test-Formular</de>
 					</title>
-					<form input="selectedObject">
+					<form
+						input="selectedObject"
+						with-inset="true"
+					>
 						<field attribute="name"/>
 						<field attribute="uniqueName"/>
 						<field attribute="sizedString"/>

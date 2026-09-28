@@ -214,7 +214,7 @@ public final class SimpleCommandModel implements CommandModel {
 	}
 
 	@Override
-	public HandlerResult executeCommand(ReactContext context) {
+	public HandlerResult perform(ReactContext context) {
 		return _action.apply(context);
 	}
 

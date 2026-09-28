@@ -4,7 +4,7 @@
 // instance. The CodeMirror runtime is shared from 'tl-code-editor'; this control adds only the
 // TL-Script-specific parts — the language grammar and the server-backed completion, hover
 // documentation and diagnostics.
-import { React, useTLState, useTLCommand, rootClassName } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, rootClassName, fieldInputId, useFieldLabelProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { CodeEditor } from 'tl-code-editor';
 import type { CodeEditorDiagnostic, CodeEditorHover } from 'tl-code-editor';
@@ -178,6 +178,8 @@ function docElement(docHTML: string, className?: string): HTMLElement {
  * validation, completions and hover documentation.
  */
 const TLScriptEditor: React.FC<TLCellProps> = ({ controlId, state }) => {
+  const inputId = fieldInputId(controlId);
+  const labelProps = useFieldLabelProps(controlId, inputId);
   const currentState = useTLState();
   const sendCommand = useTLCommand();
 
@@ -298,6 +300,7 @@ const TLScriptEditor: React.FC<TLCellProps> = ({ controlId, state }) => {
       diagnostics={diagnostics}
       onChange={handleChange}
       className={rootClassName(state, 'tlScriptEditor')}
+      contentAttributes={{ id: inputId, ...labelProps }}
     />
   );
 };

@@ -5,7 +5,6 @@
  */
 package test.com.top_logic.layout.react.control;
 
-import java.awt.Color;
 import java.util.List;
 import java.util.Map;
 
@@ -30,6 +29,7 @@ import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.annotate.ui.TLColor;
+import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.Resources;
@@ -46,9 +46,9 @@ import com.top_logic.util.Resources;
  */
 public class TestReactValueColor extends BasicTestCase {
 
-	private static final String TOKEN = "support-success";
+	private static final ValueColor ROLE = ValueColor.SUCCESS;
 
-	private static final Color LITERAL = new Color(0x04, 0xA3, 0x8D);
+	private static final ValueColor CATEGORY = ValueColor.CATEGORY_3;
 
 	/** The {@code loadOptions} command of {@link ReactDropdownSelectControl}. */
 	private static final String CMD_LOAD_OPTIONS = "loadOptions";
@@ -57,7 +57,7 @@ public class TestReactValueColor extends BasicTestCase {
 
 	private TLClassifier _colored;
 
-	private TLClassifier _literal;
+	private TLClassifier _categorized;
 
 	private TLClassifier _plain;
 
@@ -71,26 +71,28 @@ public class TestReactValueColor extends BasicTestCase {
 		TLEnumeration status = TLModelUtil.addEnumeration(module, "Status");
 
 		_colored = TLModelUtil.addClassifier(status, "closed");
-		_colored.setAnnotation(color(null, TOKEN));
-		_literal = TLModelUtil.addClassifier(status, "blocked");
-		_literal.setAnnotation(color(LITERAL, null));
+		_colored.setAnnotation(color(ROLE));
+		_categorized = TLModelUtil.addClassifier(status, "blocked");
+		_categorized.setAnnotation(color(CATEGORY));
 		_plain = TLModelUtil.addClassifier(status, "open");
 	}
 
-	/** A literal annotated with a design token reaches the client as the CSS referencing it. */
+	/** A literal annotated with a color role reaches the client by the role's external name. */
 	public void testTheColorOfAnOptionIsSent() {
 		String state = optionsAsJSON(_colored, _plain);
 
-		assertTrue("The token color must reach the client: " + state,
-			state.contains("\"" + ReactValueColor.COLOR + "\":\"var(--" + TOKEN + ")\""));
+		assertTrue("The role must reach the client: " + state,
+			state.contains("\"" + ReactValueColor.ROLE + "\":\"success\""));
 	}
 
-	/** ...and a literal color reaches it as that color. */
-	public void testALiteralColorIsSentAsThatColor() {
-		String state = optionsAsJSON(_literal, _plain);
+	/** ...and a category reaches it by its name, never as a color value. */
+	public void testACategoryIsSentByName() {
+		String state = optionsAsJSON(_categorized, _plain);
 
-		assertTrue("The literal color must reach the client: " + state,
-			state.contains("\"" + ReactValueColor.COLOR + "\":\"#04A38D\""));
+		assertTrue("The category must reach the client: " + state,
+			state.contains("\"" + ReactValueColor.ROLE + "\":\"category-3\""));
+		assertFalse("No color value travels: " + state,
+			state.contains("\"" + ReactValueColor.ROLE + "\":\"#") || state.contains("var(--"));
 	}
 
 	/**
@@ -101,7 +103,7 @@ public class TestReactValueColor extends BasicTestCase {
 		String state = optionsAsJSON(_plain);
 
 		assertFalse("An uncolored option must name no color at all: " + state,
-			state.contains("\"" + ReactValueColor.COLOR + "\""));
+			state.contains("\"" + ReactValueColor.ROLE + "\""));
 	}
 
 	/**
@@ -112,7 +114,7 @@ public class TestReactValueColor extends BasicTestCase {
 		String state = createSelect(_colored, List.of(_colored, _plain)).stateAsJSON();
 
 		assertTrue("The value descriptor must carry the color even before the options load: " + state,
-			state.contains("\"" + ReactValueColor.COLOR + "\":\"var(--" + TOKEN + ")\""));
+			state.contains("\"" + ReactValueColor.ROLE + "\":\"success\""));
 	}
 
 	/**
@@ -131,10 +133,9 @@ public class TestReactValueColor extends BasicTestCase {
 			new SimpleSelectFieldModel(value, options, false), LABELS, null, false);
 	}
 
-	private static TLColor color(Color value, String token) {
+	private static TLColor color(ValueColor role) {
 		TLColor result = TypedConfiguration.newConfigItem(TLColor.class);
-		result.setValue(value);
-		result.setToken(token);
+		result.setRole(role);
 		return result;
 	}
 

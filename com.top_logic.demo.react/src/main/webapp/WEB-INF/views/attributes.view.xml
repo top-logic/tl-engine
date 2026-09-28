@@ -371,7 +371,10 @@
 									The form shows one object and the table beside it selects one row at a time, so
 									both work on the single selection.
 								-->
-								<form input="selectedSingle">
+								<form
+									input="selectedSingle"
+									with-inset="true"
+								>
 									<field attribute="name"/>
 									<field attribute="string"/>
 									<field attribute="multiLine"/>

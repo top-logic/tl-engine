@@ -22,6 +22,12 @@
 				input="selectedItem"
 				label-position="after"
 			/>
+
+			<!-- A form inset from the container border. -->
+			<form
+				input="selectedItem"
+				with-inset="true"
+			/>
 		</children>
 	</panel>
 </view>

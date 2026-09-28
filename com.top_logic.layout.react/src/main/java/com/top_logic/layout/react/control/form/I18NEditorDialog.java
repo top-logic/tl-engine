@@ -27,6 +27,7 @@ import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.MessageButtons;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
+import com.top_logic.layout.react.control.layout.ReactInsetControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackAlign;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DialogResult;
@@ -307,7 +308,8 @@ public class I18NEditorDialog {
 			dialogTitle(),
 			_valueEditor.dialogWidth(),
 			() -> _dialogManager.closeTopDialog(DialogResult.cancelled()));
-		window.setChild(form.build());
+		// The window body is flush; the form keeps the page inset from its border.
+		window.setChild(new ReactInsetControl(_context, form.build()));
 
 		List<ReactControl> actions = new ArrayList<>();
 		actions.add(MessageButtons.cancel(_context, ctx -> {

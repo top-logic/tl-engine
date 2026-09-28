@@ -9,10 +9,16 @@ const DEFAULT_VARIANT = 'body';
 const DEFAULT_TONE = 'primary';
 
 /**
- * Custom property the tone class fills with the color of the role, read by the stylesheet for the
- * text color and handed to a pill that has no color of its own.
+ * The pill role a text of the given tone takes when it is drawn as a pill without a role of its own:
+ * the meanings keep their name, the accent is the brand, everything else is neutral.
  */
-const TONE_COLOR = 'var(--tlText-tone)';
+function roleOfTone(tone: string): string {
+  switch (tone) {
+    case 'success': case 'warning': case 'error': return tone;
+    case 'accent': return 'brand';
+    default: return 'neutral';
+  }
+}
 
 /**
  * Simple read-only text control rendering a {@code <span>}.
@@ -25,16 +31,17 @@ const TONE_COLOR = 'var(--tlText-tone)';
  *   "caption"), written as the class tlText--<variant>
  * - tone: what its color means ("primary" | "secondary" | "helper" | "accent" | "success" |
  *   "warning" | "error" | "on-color"), written as the class tlText--tone-<tone>
- * - appearance: "text" | "pill" - plain text, or a pill whether or not the value carries a color
+ * - appearance: "text" | "pill" - plain text, or a pill whether or not the value carries a role
  * - role: string - optional ARIA role (e.g. "alert" for a message announced when it appears)
- * - color: string - optional CSS color the value carries in the model; shown as a pill
+ * - colorRole: string - optional color role the value carries in the model (neutral, brand, error,
+ *   warning, success, info, category-1 … category-8); shown as a pill of that role
  */
 const TLText: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const text = (state.text as string) ?? '';
   const hasTooltip = state.hasTooltip === true;
   const role = (state.role as string) || undefined;
-  const color = (state.color as string) || undefined;
+  const colorRole = (state.colorRole as string) || undefined;
   const variant = (state.variant as string) || DEFAULT_VARIANT;
   const tone = (state.tone as string) || DEFAULT_TONE;
   const pill = state.appearance === 'pill';
@@ -48,7 +55,7 @@ const TLText: React.FC<TLCellProps> = ({ controlId }) => {
   );
   // A pill is drawn around content only: a value without a label - an empty channel, a value not
   // yet chosen - shows nothing rather than an empty tinted box.
-  const pillColor = text === '' ? undefined : pill ? color ?? TONE_COLOR : color;
+  const pillRole = text === '' ? undefined : pill ? colorRole ?? roleOfTone(tone) : colorRole;
 
   return (
     <span
@@ -56,7 +63,7 @@ const TLText: React.FC<TLCellProps> = ({ controlId }) => {
       className={className}
       role={role}
       data-tooltip={hasTooltip ? 'key:tooltip' : undefined}
-    >{pillColor ? <TLPill color={pillColor}>{text}</TLPill> : text}</span>
+    >{pillRole ? <TLPill role={pillRole}>{text}</TLPill> : text}</span>
   );
 };
 

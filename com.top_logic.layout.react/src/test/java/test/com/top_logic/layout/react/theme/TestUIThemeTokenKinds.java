@@ -25,13 +25,10 @@ import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.gui.DesignTokenKind;
 import com.top_logic.layout.react.theme.RefToken;
 import com.top_logic.layout.react.theme.UITheme;
-import com.top_logic.layout.react.theme.UIThemeDesignTokens;
 import com.top_logic.layout.react.theme.UIThemeService;
 
 /**
- * Tests the {@link DesignTokenKind kinds} of the design tokens of the shipped themes, which
- * {@link UIThemeDesignTokens} answers as the token vocabulary of an application with the React user
- * interface.
+ * Tests the {@link DesignTokenKind kinds} of the design tokens of the shipped themes.
  *
  * <p>
  * The kinds are read from the theme configuration the application ships, so a token that changes
@@ -73,7 +70,7 @@ public class TestUIThemeTokenKinds extends TestCase {
 		Map<String, DesignTokenKind> kinds = kinds(DEFAULT_THEME);
 
 		assertEquals(DesignTokenKind.COLOR, kinds.get("support-success"));
-		assertEquals(DesignTokenKind.COLOR, kinds.get("support-info"));
+		assertEquals(DesignTokenKind.COLOR, kinds.get("support-warning"));
 		assertEquals(DesignTokenKind.COLOR, kinds.get("text-primary"));
 	}
 

@@ -53,6 +53,7 @@ import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
+import com.top_logic.layout.react.control.layout.ReactInsetControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DialogResult;
 import com.top_logic.layout.react.control.overlay.ReactWindowControl;
@@ -976,7 +977,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		for (ColumnView column : _view.columns()) {
 			CellContent content = _view.cell(row, column.name());
 			ReactControl cell = CellContentReactAdapter.toControl(getReactContext(), content);
-			registerChildControl(cell);
 			controls.put(column.name(), cell);
 			String tooltip = content.tooltip();
 			if (!StringServices.isEmpty(tooltip)) {
@@ -1031,8 +1031,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * <p>
 	 * The dialog is composed entirely from standard React controls: the column's
 	 * {@link FilterEditor} fields are laid out by {@link ReactFormBuilder} (labels + chrome),
-	 * wrapped in a {@link ReactWindowControl} with reset / cancel / apply
-	 * {@link MessageButtons}, and shown through the {@link DialogManager}. The input control
+	 * inset by a {@link ReactInsetControl} and wrapped in a {@link ReactWindowControl} with reset /
+	 * cancel / apply {@link MessageButtons}, and shown through the {@link DialogManager}. The input control
 	 * per field is chosen from the field model itself ({@link #fieldControl}).
 	 * </p>
 	 */
@@ -1083,7 +1083,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		ReactWindowControl window = new ReactWindowControl(context,
 			resources.getString(I18NConstants.JS_TABLE_FILTER), DisplayDimension.px(380),
 			() -> dialogs.closeTopDialog(DialogResult.cancelled()));
-		window.setChild(body);
+		// The window body is flush; the filter form keeps the page inset from its border.
+		window.setChild(new ReactInsetControl(context, body));
 		// Apply is the dialog's default action: primary-styled and Enter-bound, matching the legacy
 		// filter popup (Enter applies from anywhere in the form).
 		ReactButtonControl applyButton = MessageButtons.ok(context, ctx -> {

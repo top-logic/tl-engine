@@ -70,6 +70,12 @@ public class DerivedViewChannel implements ObservingChannel {
 	private final List<Runnable> _vetoForwarderRemovers = new ArrayList<>();
 
 	/**
+	 * The listener recomputing the value, registered on every one of {@link #_inputs}, or
+	 * {@code null} while the channel is not bound.
+	 */
+	private ChannelListener _refreshListener;
+
+	/**
 	 * Creates a {@link DerivedViewChannel}.
 	 *
 	 * @param name
@@ -137,25 +143,43 @@ public class DerivedViewChannel implements ObservingChannel {
 	 *        hold, which are always observed; empty for a function reading nothing but those
 	 *        objects.
 	 *
-	 * @implNote Registers a {@link VetoForwarder} from every input to this channel, replacing the
-	 *           forwarders of a previous binding.
+	 * @implNote Registers a listener and a {@link VetoForwarder} on every input, replacing the ones
+	 *           of a previous binding.
 	 *
 	 * @see #attach(ModelScope)
 	 */
 	public void bind(List<ViewChannel> inputs, Function<Object[], Object> evaluator,
 			Function<Object, Object> reverse, Set<TLStructuredType> observedTypes) {
+		release();
+
 		_inputs = inputs;
 		_evaluator = evaluator;
 		_reverseFunction = reverse;
 		_value = evaluate(evaluator, inputs);
 		_inputObserver = new ChannelObjectObserver(inputs, observedTypes, this::recompute);
 
-		removeVetoForwarders();
-
-		ChannelListener refreshListener = (sender, oldVal, newVal) -> recompute();
+		_refreshListener = (sender, oldVal, newVal) -> recompute();
 		for (ViewChannel input : inputs) {
-			input.addListener(refreshListener);
+			input.addListener(_refreshListener);
 			_vetoForwarderRemovers.add(VetoForwarder.forward(input, this));
+		}
+	}
+
+	/**
+	 * Unsubscribes from the inputs - the listener recomputing the value and the
+	 * {@link VetoForwarder}s - and stops following the objects they hold.
+	 */
+	@Override
+	public void release() {
+		if (_refreshListener != null) {
+			for (ViewChannel input : _inputs) {
+				input.removeListener(_refreshListener);
+			}
+			_refreshListener = null;
+		}
+		removeVetoForwarders();
+		if (_inputObserver != null) {
+			_inputObserver.detach();
 		}
 	}
 

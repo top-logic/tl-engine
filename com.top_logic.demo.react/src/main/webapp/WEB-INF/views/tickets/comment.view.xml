@@ -61,7 +61,10 @@
 					<remove-element/>
 				</generic-command>
 			</commands>
-			<form input="comment">
+			<form
+				input="comment"
+				with-inset="true"
+			>
 				<field
 					attribute="content"
 					label-position="hide-label"

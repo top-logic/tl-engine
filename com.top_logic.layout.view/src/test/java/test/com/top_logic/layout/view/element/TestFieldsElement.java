@@ -31,6 +31,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
+import com.top_logic.layout.react.control.layout.ReactInsetControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
@@ -71,6 +72,9 @@ public class TestFieldsElement extends TestCase {
 
 	/** The {@code <fields>} taking a label position only a single field can take. */
 	private static final int FIELD_LEVEL_POSITION = 3;
+
+	/** The {@code <fields>} inset from the container border. */
+	private static final int INSET_GRID = 4;
 
 	/** The channel the form of the form test view displays its object from. */
 	private static final String DISPLAYED_OBJECT = "displayed";
@@ -182,6 +186,30 @@ public class TestFieldsElement extends TestCase {
 			Boolean.TRUE, readOnly(grid));
 	}
 
+	/**
+	 * An inset grid is wrapped in an inset holding the grid itself: the grid carries no distance to
+	 * the border of its own.
+	 */
+	public void testAnInsetGridIsWrappedInAnInset() throws Exception {
+		IReactControl control = gridControl(INSET_GRID);
+		assertTrue("An inset grid must be wrapped in an inset, but is " + control,
+			control instanceof ReactInsetControl);
+
+		List<ReactControl> content = ((ReactInsetControl) control).scriptingChildren();
+		assertEquals("The inset holds exactly the grid.", 1, content.size());
+		assertTrue("The content of the inset must be the grid, but is " + content.get(0),
+			content.get(0) instanceof ReactFormLayoutControl);
+		ReactFormLayoutControl grid = (ReactFormLayoutControl) content.get(0);
+		assertEquals("The grid holds its field.", "Inset", text(grid.scriptingChildren(), 0));
+	}
+
+	/** Without a word about an inset, the grid is what the element builds, with nothing around it. */
+	public void testAGridIsNotInsetByDefault() throws Exception {
+		IReactControl control = gridControl(DEFAULT_GRID);
+		assertTrue("A grid not asking for an inset must be returned itself, but is " + control,
+			control instanceof ReactFormLayoutControl);
+	}
+
 	/** A grid outside a form has no edit mode to follow and is never read-only. */
 	public void testAGridOutsideAFormIsNotReadOnly() throws Exception {
 		assertEquals(Boolean.FALSE, readOnly(grid(DEFAULT_GRID)));
@@ -217,14 +245,19 @@ public class TestFieldsElement extends TestCase {
 
 	/** The layout the {@code <fields>} at the given position builds. */
 	private ReactFormLayoutControl grid(int index) throws Exception {
+		IReactControl control = gridControl(index);
+		assertTrue("A " + FieldsElement.class.getSimpleName() + " must lay its content out as a form does, but is "
+			+ control, control instanceof ReactFormLayoutControl);
+		return (ReactFormLayoutControl) control;
+	}
+
+	/** The top-level control the {@code <fields>} at the given position builds. */
+	private IReactControl gridControl(int index) throws Exception {
 		DefaultInstantiationContext context = new DefaultInstantiationContext(TestFieldsElement.class);
 		FieldsElement element = (FieldsElement) context.getInstance(config(index));
 		context.checkErrors();
 
-		IReactControl control = element.createControl(_context);
-		assertTrue("A " + FieldsElement.class.getSimpleName() + " must lay its content out as a form does, but is "
-			+ control, control instanceof ReactFormLayoutControl);
-		return (ReactFormLayoutControl) control;
+		return element.createControl(_context);
 	}
 
 	/** The text displayed by the field at the given position. */

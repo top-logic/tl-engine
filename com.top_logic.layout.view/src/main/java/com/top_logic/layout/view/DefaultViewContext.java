@@ -243,6 +243,11 @@ public class DefaultViewContext implements ViewContext {
 	}
 
 	@Override
+	public void unregisterChannel(String name, ViewChannel channel) {
+		_channels.remove(name, channel);
+	}
+
+	@Override
 	public boolean hasChannel(String name) {
 		return _channels.containsKey(name);
 	}

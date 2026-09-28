@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, useStandaloneKeyboardScope, writeDragPayload, readDragPayload, dragTypeAccepted, dropPositionAt, startPointerDrag, useCloseOnOutsidePress, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, useStandaloneKeyboardScope, writeDragPayload, readDragPayload, dragTypeAccepted, dropPositionAt, startPointerDrag, useCloseOnOutsidePress, useFill, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED } from 'tl-react-bridge';
 import type { TLCellProps, TLDropPosition } from 'tl-react-bridge';
 import { isInteractiveTarget } from './interactive';
 
@@ -172,10 +172,6 @@ const measureColumnContentWidth = (root: HTMLElement, columnName: string): numbe
 };
 
 /**
- * React table component with virtual scrolling, server-driven cell controls,
- * multi-selection with checkbox column, and column resize.
- */
-/**
  * Elements that accept text/edit focus inside an editable cell. Disabled/read-only controls are
  * excluded: a read-only row still renders its boolean columns as a disabled checkbox {@code
  * <input>}, which must not count as "this row is editable".
@@ -245,8 +241,17 @@ const ColumnsButton: React.FC<{
   </button>
 );
 
+/**
+ * React table component with virtual scrolling, server-driven cell controls,
+ * multi-selection with checkbox column, and column resize.
+ *
+ * The table takes part in the fill contract (see {@link useFill}) and always fills: its body only
+ * renders the rows its viewport shows, so the table needs a height bounded by its container rather
+ * than one following its rows. Its containers fill in turn, up to the next bounded region.
+ */
 const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
+  const fillClass = useFill(true);
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
   const rootRef = React.useRef<HTMLDivElement>(null);
@@ -1131,7 +1136,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       onActivate={handleActivateCursor}
     />
     <div ref={rootRef} id={controlId}
-      className={rootClassName(state, 'tlTableView' + (dropState && dropState.row === null ? ' tlTableView--dragover' : ''))}
+      className={rootClassName(state, 'tlTableView', dropState && dropState.row === null && 'tlTableView--dragover', fillClass)}
       onDragOver={handleRootDragOver}
       onDragLeave={handleRootDragLeave}
       onDrop={handleRootDrop}

@@ -185,7 +185,6 @@ public class ObjectListItems {
 		for (int i = 0; i < _newElementContent.size(); i++) {
 			ViewContext childContext = _templateContext.withChildSlotPath("new-element-" + i);
 			ReactControl control = (ReactControl) _newElementContent.get(i).createControl(childContext);
-			_display.registerChildControl(control);
 			_newElementControls.add(control);
 		}
 	}
@@ -258,7 +257,6 @@ public class ObjectListItems {
 			if (_emptyTextControl == null) {
 				_emptyTextControl =
 					new ReactTextControl(_templateContext, Resources.getInstance().getString(_emptyText));
-				_display.registerChildControl(_emptyTextControl);
 			}
 			displayed.add(_emptyTextControl);
 		} else if (_emptyTextControl != null) {
@@ -291,7 +289,6 @@ public class ObjectListItems {
 
 		ReactControl itemControl =
 			controls.size() == 1 ? controls.get(0) : new ReactStackControl(itemContext, controls);
-		_elements.registerChildControl(itemControl);
 		return itemControl;
 	}
 

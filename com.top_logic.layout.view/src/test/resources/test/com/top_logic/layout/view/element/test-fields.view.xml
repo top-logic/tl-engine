@@ -51,6 +51,15 @@
 					</label>
 				</text>
 			</fields>
+
+			<!-- A grid inset from the container border. -->
+			<fields with-inset="true">
+				<text>
+					<label>
+						<en>Inset</en>
+					</label>
+				</text>
+			</fields>
 		</children>
 	</panel>
 </view>

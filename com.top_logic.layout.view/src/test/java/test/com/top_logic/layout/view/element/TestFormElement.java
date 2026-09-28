@@ -27,8 +27,10 @@ import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
+import com.top_logic.layout.react.control.layout.ReactInsetControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
@@ -60,6 +62,9 @@ public class TestFormElement extends TestCase {
 
 	/** The {@code <form>} taking a label position only a single field can take. */
 	private static final int FIELD_LEVEL_POSITION = 2;
+
+	/** The {@code <form>} inset from the container border. */
+	private static final int INSET_GRID = 3;
 
 	private ViewContext _context;
 
@@ -220,16 +225,45 @@ public class TestFormElement extends TestCase {
 			errors.contains(LabelPosition.AUTO.getExternalName()));
 	}
 
+	/**
+	 * An inset form is wrapped in an inset, which holds the form itself: the form grid carries no
+	 * distance to the border of its own.
+	 */
+	public void testAnInsetFormIsWrappedInAnInset() throws Exception {
+		IReactControl control = formControl(INSET_GRID);
+		assertTrue("An inset form must be wrapped in an inset, but is " + control,
+			control instanceof ReactInsetControl);
+
+		List<ReactControl> content = ((ReactInsetControl) control).scriptingChildren();
+		assertEquals("The inset holds exactly the form.", 1, content.size());
+		assertTrue("The content of the inset must be the form, but is " + content.get(0),
+			content.get(0) instanceof FormControl);
+		assertEquals("The form keeps its grid.", Integer.valueOf(3),
+			((FormControl) content.get(0)).scriptingScalarState().get(ReactFormLayoutControl.MAX_COLUMNS));
+	}
+
+	/** Without a word about an inset, the form is what the element builds, with nothing around it. */
+	public void testAFormIsNotInsetByDefault() throws Exception {
+		IReactControl control = formControl(DEFAULT_GRID);
+		assertTrue("A form not asking for an inset must be returned itself, but is " + control,
+			control instanceof FormControl);
+	}
+
 	/** The control the {@code <form>} at the given position builds. */
 	private FormControl form(int index) throws Exception {
+		IReactControl control = formControl(index);
+		assertTrue("A " + FormElement.class.getSimpleName() + " must build a form, but is " + control,
+			control instanceof FormControl);
+		return (FormControl) control;
+	}
+
+	/** The top-level control the {@code <form>} at the given position builds. */
+	private IReactControl formControl(int index) throws Exception {
 		DefaultInstantiationContext context = new DefaultInstantiationContext(TestFormElement.class);
 		FormElement element = (FormElement) context.getInstance(formConfig(index));
 		context.checkErrors();
 
-		IReactControl control = element.createControl(_context);
-		assertTrue("A " + FormElement.class.getSimpleName() + " must build a form, but is " + control,
-			control instanceof FormControl);
-		return (FormControl) control;
+		return element.createControl(_context);
 	}
 
 	/** The {@code <form>} configuration at the given position in the layout test view. */

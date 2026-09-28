@@ -27,10 +27,9 @@ import com.top_logic.layout.view.form.FormModel;
  * {@link UIElement} laying its content out as the fields of a form.
  *
  * <p>
- * A form surrounds its fields with a grid: it insets them from the container border, distributes
- * them over as many columns as the available width carries, and places each label beside its input
- * or above it depending on how wide the column it landed in is. This element is that grid on its
- * own. It serves two purposes:
+ * A form surrounds its fields with a grid: it distributes them over as many columns as the
+ * available width carries, and places each label beside its input or above it depending on how
+ * wide the column it landed in is. This element is that grid on its own. It serves two purposes:
  * </p>
  *
  * <ul>
@@ -38,10 +37,16 @@ import com.top_logic.layout.view.form.FormModel;
  * outside a form: a {@link ValueInputElement} and everything else that displays the label-and-input
  * chrome of a field.</li>
  * <li>It lays out a part of the fields of a {@link FormElement}: the fields of one area of a form
- * whose areas are panels or split panes. Such a form does not lay these fields out itself, being
- * flush around the areas it spans. A grid inside a form displays the form's edit mode: its fields
+ * whose areas are panels or split panes. Such a form does not lay these fields out itself, it
+ * holds the areas they stand in. A grid inside a form displays the form's edit mode: its fields
  * appear read-only while the form is not being edited.</li>
  * </ul>
+ *
+ * <p>
+ * Like a form, the grid reaches up to the border of its container unless it sets
+ * {@link FormLayoutOptions#getInset()}. A grid inside a form usually does not: the form or the
+ * panel around it keeps the distance.
+ * </p>
  *
  * <p>
  * A {@link FieldElement} needs a form in any case: this element lays fields out but carries no
@@ -73,6 +78,8 @@ public class FieldsElement extends ContainerElement {
 
 	private final String _cssClass;
 
+	private final Config _config;
+
 	/**
 	 * Creates a new {@link FieldsElement} from configuration.
 	 */
@@ -83,6 +90,7 @@ public class FieldsElement extends ContainerElement {
 		_maxColumns = config.getMaxColumns();
 		_labelPosition = FormLayoutOptions.layoutPosition(context, config.getLabelPosition());
 		_cssClass = config.getCssClass();
+		_config = config;
 	}
 
 	@Override
@@ -97,6 +105,6 @@ public class FieldsElement extends ContainerElement {
 			FormLayoutEditModeBinding.bind(result, form);
 		}
 		result.setCssClass(_cssClass);
-		return result;
+		return FormLayoutOptions.insetIfRequested(context, _config, result);
 	}
 }

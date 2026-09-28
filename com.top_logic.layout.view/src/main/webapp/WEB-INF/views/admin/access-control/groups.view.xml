@@ -52,6 +52,7 @@
 							<executability>
 								<null-input-disabled/>
 							</executability>
+							<confirm expr="g -> #('Delete group {0}?'@en, 'Gruppe {0} löschen?'@de).fill($g.get(`tl.accounts:Group#name`))"/>
 							<with-transaction>
 								<execute-script function="obj -> $obj.delete()"/>
 							</with-transaction>

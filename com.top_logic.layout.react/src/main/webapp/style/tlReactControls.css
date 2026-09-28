@@ -2086,11 +2086,16 @@ button.tlDrawerToggle:focus-visible {
 
 /* --- TLCard ---------------------------------------------------------------- */
 
+/* The overflow clip keeps the content inside the rounded corners. It also drops the card's
+   automatic minimum height in a flex container to zero, so the minimum is set to the content's
+   height explicitly: a card sharing a column with a filling control keeps its full content instead
+   of giving up height to it. */
 .tlCard {
 	border-radius: var(--border-radius-02);
 	font-family: var(--font-family);
 	background: var(--layer-01);
 	overflow: hidden;
+	min-height: min-content;
 }
 
 .tlCard--outlined {
@@ -3045,6 +3050,10 @@ button.tlMenu__item--disabled:hover {
 
 /* --- TLTableView ----------------------------------------------------------- */
 
+/* The table always fills (see the fill contract above): inside a flex column, .tlFill sizes it
+   from the height its container offers, and its flex basis takes precedence over the height set
+   here. The height applies to a container laying the table out as a block, which then gives it
+   its own definite height. */
 .tlTableView {
 	display: flex;
 	flex-direction: column;

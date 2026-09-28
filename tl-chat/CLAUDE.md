@@ -1330,10 +1330,12 @@ over the conversation with a scrim scoped to the host.
 - The strip stays above the scrim, so another section is one click away while one is open.
 - `drawer-below="0"` keeps a column at every width.
 
-The default 62 rem is the demo row with the list as a column and a section open: list 16.5 + floor
-20 + rail strip 3.5 + section column 18.75 + two gaps 3 = 61.75 rem. With the list a drawer the
-row needs 47 rem, which is above the list's own 44, so one threshold covers both. Consulting's
-`pietro.view.xml` has the same row and fits the default.
+The default 70 rem is the demo row with the list as a column and the pane open at its default
+420 px: list 16.5 + floor 20 + rail strip 3.5 + pane 26.25 + two gaps 3 = 69.25 rem. A section's
+18.75 rem column alone would have needed 62, and between the two the pane overflowed the row by up
+to 115 px (measured at 1250 px). With the list a drawer the row needs at most 56 rem, above the
+list's own 44, so one threshold covers both. Consulting's `pietro.view.xml` has the same row and
+fits the default.
 
 #### `<chat-dock>` - the chat over the page
 

@@ -64,7 +64,7 @@ function railState(overrides: Record<string, unknown> = {}): Record<string, unkn
     collapsedSections: [],
     strip: true,
     open: true,
-    drawerBelow: 62,
+    drawerBelow: 70,
     paneMode: 'card',
     pane: PANE,
     paneOpen: false,
@@ -82,7 +82,7 @@ let host: HTMLDivElement
 let root: Root
 let hostWidth = 0
 
-/** Mounts the rail into a host of the given width (px, at a 16 px rem, so 62 rem = 992 px). */
+/** Mounts the rail into a host of the given width (px, at a 16 px rem, so 70 rem = 1120 px). */
 function mount(width: number, overrides: Record<string, unknown> = {}): void {
   hostWidth = width
   render(overrides)

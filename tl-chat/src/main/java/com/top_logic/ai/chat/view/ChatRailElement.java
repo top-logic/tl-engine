@@ -332,7 +332,7 @@ public class ChatRailElement implements UIElement {
 		 */
 		@Name(DRAWER_BELOW)
 		@Label("Drawer below")
-		@IntDefault(62)
+		@IntDefault(70)
 		int getDrawerBelow();
 
 		/**

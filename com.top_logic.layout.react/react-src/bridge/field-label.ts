@@ -135,29 +135,61 @@ function focusable(element: HTMLElement): boolean {
   return element.getClientRects().length > 0;
 }
 
+/** Types of an `input` element that are buttons rather than a value being entered. */
+const BUTTON_INPUT_TYPES = new Set(['button', 'submit', 'reset', 'image', 'file']);
+
+/** Roles of an element taking a value, as opposed to one triggering an action. */
+const VALUE_ROLES = new Set([
+  'textbox', 'searchbox', 'combobox', 'listbox', 'radio', 'checkbox', 'switch', 'spinbutton', 'slider',
+]);
+
+/** Whether the given element takes a value: a text, a choice, a number, not an action button. */
+function takesValue(element: HTMLElement): boolean {
+  if (element instanceof HTMLInputElement) {
+    return !BUTTON_INPUT_TYPES.has(element.type);
+  }
+  if (element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement
+      || element.isContentEditable) {
+    return true;
+  }
+  const role = element.getAttribute('role');
+  return role !== null && VALUE_ROLES.has(role);
+}
+
+/** Whether the given element is the chosen option of a group of options. */
+function checked(element: HTMLElement): boolean {
+  return (element instanceof HTMLInputElement && element.checked)
+    || element.getAttribute('aria-checked') === 'true';
+}
+
 /**
  * The element a click on a field's label focuses: the input's focusable element itself, if
- * focusable; otherwise the checked option inside it (the
- * one a radio group or segmented choice sends Tab to), or else its first focusable descendant.
+ * focusable. Otherwise a focusable descendant of it, in this order of preference: the checked
+ * option (the one a radio group or segmented choice sends Tab to), the first element taking a value
+ * (see {@link takesValue}) - so that e.g. a list of values focuses its first value rather than the
+ * button moving it -, or else the first focusable element at all.
  */
 function focusTarget(input: HTMLElement): HTMLElement | null {
   if (focusable(input)) {
     return input;
   }
+  let firstValue: HTMLElement | null = null;
   let first: HTMLElement | null = null;
   for (const candidate of input.querySelectorAll<HTMLElement>('*')) {
     if (!focusable(candidate)) {
       continue;
     }
-    if ((candidate instanceof HTMLInputElement && candidate.checked)
-        || candidate.getAttribute('aria-checked') === 'true') {
+    if (checked(candidate)) {
       return candidate;
+    }
+    if (firstValue === null && takesValue(candidate)) {
+      firstValue = candidate;
     }
     if (first === null) {
       first = candidate;
     }
   }
-  return first;
+  return firstValue ?? first;
 }
 
 /**

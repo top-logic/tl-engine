@@ -620,8 +620,8 @@ public class SecurityCoverageTable implements UIElement {
 
 	/**
 	 * The access parent the type delegates to: the reference navigated, marked with
-	 * {@link #INVERSE_MARKER} when it is navigated backwards, or the container relation a
-	 * composition part gets by default.
+	 * {@link #INVERSE_MARKER} when it is navigated backwards, or the container relation, configured
+	 * or as a composition part gets it by default.
 	 */
 	private static String accessParent(Object row) {
 		AccessParent parent = coverage(row).accessParent();
@@ -629,7 +629,9 @@ public class SecurityCoverageTable implements UIElement {
 			return "";
 		}
 		if (parent.isContainer()) {
-			return Resources.getInstance().getString(I18NConstants.COVERAGE_ACCESS_PARENT_DEFAULT);
+			return Resources.getInstance().getString(parent.explicit()
+				? I18NConstants.COVERAGE_ACCESS_PARENT_CONTAINER
+				: I18NConstants.COVERAGE_ACCESS_PARENT_DEFAULT);
 		}
 		String reference = TLModelUtil.qualifiedName(parent.reference());
 		return parent.inverse() ? INVERSE_MARKER + reference : reference;
@@ -739,7 +741,9 @@ public class SecurityCoverageTable implements UIElement {
 			String containers = coverage.containerReferences().stream()
 				.map(TLModelUtil::qualifiedName)
 				.collect(Collectors.joining(VALUE_SEPARATOR));
-			return I18NConstants.COVERAGE_DELEGATED_DEFAULT__CONTAINERS.fill(containers);
+			return parent.explicit()
+				? I18NConstants.COVERAGE_DELEGATED_CONTAINER__CONTAINERS.fill(containers)
+				: I18NConstants.COVERAGE_DELEGATED_DEFAULT__CONTAINERS.fill(containers);
 		}
 		return I18NConstants.COVERAGE_DELEGATED__PARENT.fill(accessParent(coverage));
 	}

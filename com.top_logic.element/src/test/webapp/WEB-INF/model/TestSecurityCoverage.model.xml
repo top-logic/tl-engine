@@ -66,6 +66,41 @@
 					</attributes>
 				</class>
 
+				<!-- Decides for itself instead of inheriting the access parent of its generalization. -->
+				<class name="LinkedSub">
+					<generalizations>
+						<generalization type="Linked"/>
+					</generalizations>
+				</class>
+
+				<!--
+					Configured access parent: the container, whichever composition holds it. A role
+					rule applies to it as well, which the access parent shadows.
+				-->
+				<class name="AnyContainerPart">
+					<attributes>
+						<reference name="owner"
+							type="tl.accounts:Person"
+						/>
+					</attributes>
+				</class>
+
+				<!-- Composition part deciding for itself instead of delegating to its container. -->
+				<class name="SelfDeciding"/>
+
+				<!--
+					Owner and part of the same to-one composition: the configured kind of access parent
+					tells the navigation backwards to the container from the one forwards to the part.
+				-->
+				<class name="Recursive">
+					<attributes>
+						<reference name="detail"
+							composite="true"
+							type="Recursive"
+						/>
+					</attributes>
+				</class>
+
 				<!--
 					Configured access parent leading from one object of the type to another: two
 					objects pointing at each other form a cycle.
@@ -108,6 +143,16 @@
 							composite="true"
 							multiple="true"
 							type="DoubleContained"
+						/>
+						<reference name="anys"
+							composite="true"
+							multiple="true"
+							type="AnyContainerPart"
+						/>
+						<reference name="selfs"
+							composite="true"
+							multiple="true"
+							type="SelfDeciding"
 						/>
 					</attributes>
 				</class>

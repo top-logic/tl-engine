@@ -91,6 +91,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COVERAGE_ACCESS_PARENT_DEFAULT;
 
 	/**
+	 * @en container
+	 */
+	public static ResKey COVERAGE_ACCESS_PARENT_CONTAINER;
+
+	/**
 	 * @en Findings
 	 */
 	public static ResKey COVERAGE_COLUMN_FINDINGS;
@@ -198,8 +203,9 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 COVERAGE_PROBLEM_DEAD_GRANT__OPERATION_ROLES;
 
 	/**
-	 * @en Name a to-one reference of the type as its access parent, so that the objects delegate
-	 *     every access decision to the object the reference points to ("Access rights…").
+	 * @en Make the target of a to-one reference of the type its access parent, so that the objects
+	 *     delegate every access decision to the object the reference points to ("Access
+	 *     rights…").
 	 */
 	public static ResKey COVERAGE_SOLUTION_ACCESS_PARENT;
 
@@ -272,6 +278,14 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     and without a role parent rule; the type needs no grants and no roles of its own.
 	 */
 	public static ResKey1 COVERAGE_DELEGATED_DEFAULT__CONTAINERS;
+
+	/**
+	 * @en The type delegates every access decision to its container, whichever composition holds
+	 *     the object ({0}): whether a user may read, write or export an object of the type is
+	 *     whether the user may do the same to its container, and creating or deleting one is
+	 *     writing the container. The type needs no grants and no roles of its own.
+	 */
+	public static ResKey1 COVERAGE_DELEGATED_CONTAINER__CONTAINERS;
 
 	/**
 	 * @en The type is marked as internal: it is used by the application code alone, so it is exempt

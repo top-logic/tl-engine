@@ -37,6 +37,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.annotate.security.AccessGrant;
 import com.top_logic.model.annotate.security.AccessRule;
 import com.top_logic.model.annotate.security.RoleConfig;
+import com.top_logic.model.security.AccessParentKind;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.security.SecurityConfigurationService.ModelAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService.TLClassAccessRights;
@@ -257,19 +258,36 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 		entry.setInternal(true);
 		_editor.putAccessRights(entry);
 
-		_editor.setAccessParent(contained, TLModelPartRef.ref(CONTAINER_REFERENCE));
+		_editor.setAccessParent(contained, AccessParentKind.CONTAINER, TLModelPartRef.ref(CONTAINER_REFERENCE));
 		TLClassAccessRights stored = _editor.editableAccessRights(contained);
-		assertEquals(CONTAINER_REFERENCE, stored.getAccessParent().qualifiedName());
+		assertEquals(AccessParentKind.CONTAINER, stored.getAccessParent());
+		assertEquals(CONTAINER_REFERENCE, stored.getAccessReference().qualifiedName());
 		assertEquals("A type with an access parent has no grants of its own.", 0, stored.getGrants().size());
 		assertFalse("A type with an access parent has no marks of its own.", stored.isInternal());
 
 		_editor.setInternal(contained, true);
 		stored = _editor.editableAccessRights(contained);
-		assertNull("Marking the type internal drops its access parent.", stored.getAccessParent());
+		assertEquals("Marking the type internal drops its access parent.", AccessParentKind.AUTO,
+			stored.getAccessParent());
+		assertNull(stored.getAccessReference());
 
-		_editor.setAccessParent(contained, TLModelPartRef.ref(CONTAINER_REFERENCE));
-		_editor.setAccessParent(contained, null);
-		assertNull(_editor.editableAccessRights(contained).getAccessParent());
+		_editor.setAccessParent(contained, AccessParentKind.CONTAINER, TLModelPartRef.ref(CONTAINER_REFERENCE));
+		_editor.setAccessParent(contained, AccessParentKind.AUTO, null);
+		assertEquals(AccessParentKind.AUTO, _editor.editableAccessRights(contained).getAccessParent());
+		assertNull(_editor.editableAccessRights(contained).getAccessReference());
+	}
+
+	public void testSelfKeepsOwnDefinition() throws Exception {
+		TLClass contained = type(SINGLE_CONTAINED);
+		TLClassAccessRights entry = _editor.editableAccessRights(contained);
+		entry.getGrants().add(newGrant(SimpleBoundCommandGroup.READ_NAME, READER_ROLE));
+		_editor.putAccessRights(entry);
+
+		_editor.setAccessParent(contained, AccessParentKind.SELF, TLModelPartRef.ref(CONTAINER_REFERENCE));
+		TLClassAccessRights stored = _editor.editableAccessRights(contained);
+		assertEquals(AccessParentKind.SELF, stored.getAccessParent());
+		assertNull("A type deciding for itself names no access reference.", stored.getAccessReference());
+		assertEquals("A type deciding for itself keeps its grants.", 1, stored.getGrants().size());
 	}
 
 	/**

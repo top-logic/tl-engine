@@ -4,6 +4,7 @@
  */
 package com.top_logic.model.security;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
 
@@ -20,6 +21,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     empty.
 	 */
 	public static ResKey1 ACCESS_PARENT_EXCLUDES_OWN_DEFINITION__PROPERTY;
+
+	/**
+	 * @en An access parent that is the target of a reference needs the to-one reference leading to
+	 *     it.
+	 */
+	public static ResKey ACCESS_REFERENCE_REQUIRED;
 
 	static {
 		initConstants(I18NConstants.class);

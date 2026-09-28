@@ -23,6 +23,7 @@ import com.top_logic.element.boundsec.manager.rule.config.SecurityParentsConfig;
 import com.top_logic.layout.admin.component.TLServiceUtils;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
+import com.top_logic.model.security.AccessParentKind;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.security.SecurityConfigurationService.ModelAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService.TLClassAccessRights;
@@ -408,7 +409,7 @@ public class SecurityDefinitionEditor {
 		entry.setInternal(value);
 		if (value) {
 			entry.setWithoutSecurity(false);
-			entry.setAccessParent(null);
+			dropDelegation(entry);
 		}
 		putAccessRights(entry);
 	}
@@ -436,38 +437,54 @@ public class SecurityDefinitionEditor {
 		entry.setWithoutSecurity(value);
 		if (value) {
 			entry.setInternal(false);
-			entry.setAccessParent(null);
+			dropDelegation(entry);
 		}
 		putAccessRights(entry);
 	}
 
 	/**
-	 * Names the reference leading from objects of the given type to their access parent, or drops
-	 * that setting.
+	 * Sets the access parent of the given type, or drops that setting.
 	 * <p>
-	 * A type with an access parent has no grants and no marks of its own, so setting the access
-	 * parent drops the grants and marks the stored configuration holds for the type.
+	 * A type with an access parent has no grants and no marks of its own, so setting a
+	 * {@link AccessParentKind#delegates() delegating} access parent drops the grants and marks the
+	 * stored configuration holds for the type.
 	 * </p>
 	 * 
 	 * @param type
 	 *        The type delegating its access decision.
+	 * @param kind
+	 *        The value of {@link TLClassAccessRights#getAccessParent()} to store,
+	 *        {@link AccessParentKind#AUTO} to drop the setting.
 	 * @param reference
-	 *        The value of {@link TLClassAccessRights#getAccessParent()} to store, <code>null</code>
-	 *        to drop the setting.
+	 *        The value of {@link TLClassAccessRights#getAccessReference()} to store. Ignored for a
+	 *        kind that does not delegate.
 	 * @throws IOException
 	 *         When the file cannot be written.
 	 * @throws ConfigurationException
 	 *         When the stored configuration cannot be parsed.
 	 */
-	public void setAccessParent(TLClass type, TLModelPartRef reference) throws IOException, ConfigurationException {
+	public void setAccessParent(TLClass type, AccessParentKind kind, TLModelPartRef reference)
+			throws IOException, ConfigurationException {
 		TLClassAccessRights entry = editableAccessRights(type);
-		entry.setAccessParent(reference);
-		if (reference != null) {
+		entry.setAccessParent(kind);
+		entry.setAccessReference(kind.delegates() ? reference : null);
+		if (kind.delegates()) {
 			entry.getGrants().clear();
 			entry.setInternal(false);
 			entry.setWithoutSecurity(false);
 		}
 		putAccessRights(entry);
+	}
+
+	/**
+	 * Drops a {@link AccessParentKind#delegates() delegating} access parent of the given entry,
+	 * which contradicts a definition of its own.
+	 */
+	private static void dropDelegation(TLClassAccessRights entry) {
+		if (entry.getAccessParent().delegates()) {
+			entry.setAccessParent(AccessParentKind.AUTO);
+			entry.setAccessReference(null);
+		}
 	}
 
 	/**

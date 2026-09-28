@@ -99,6 +99,15 @@
 								<step attribute="TestSecurityCoverage:ExplicitPart#owner"/>
 							</path>
 						</rule>
+						<!-- Shadowed by the access parent of the type. -->
+						<rule id="TestSecurityCoverage_anyContainerPart"
+							meta-element="TestSecurityCoverage:AnyContainerPart"
+							role="TestSecurityCoverage.Reader"
+						>
+							<path>
+								<step attribute="TestSecurityCoverage:AnyContainerPart#owner"/>
+							</path>
+						</rule>
 					</rules>
 				</role-rules>
 
@@ -136,13 +145,39 @@
 						/>
 					</class>
 					<class name="TestSecurityCoverage:ExplicitPart"
-						access-parent="TestSecurityCoverage:Covered#explicitParts"
+						access-parent="container"
+						access-reference="TestSecurityCoverage:Covered#explicitParts"
+					/>
+					<class name="TestSecurityCoverage:AnyContainerPart"
+						access-parent="container"
+					/>
+					<class name="TestSecurityCoverage:Recursive"
+						access-parent="container"
+						access-reference="TestSecurityCoverage:Recursive#detail"
 					/>
 					<class name="TestSecurityCoverage:Linked"
-						access-parent="TestSecurityCoverage:Linked#target"
+						access-parent="target"
+						access-reference="TestSecurityCoverage:Linked#target"
 					/>
+					<class name="TestSecurityCoverage:LinkedSub"
+						access-parent="self"
+					>
+						<grant
+							operation="Read"
+							roles="TestSecurityCoverage.Reader"
+						/>
+					</class>
+					<class name="TestSecurityCoverage:SelfDeciding"
+						access-parent="self"
+					>
+						<grant
+							operation="Read"
+							roles="TestSecurityCoverage.Reader"
+						/>
+					</class>
 					<class name="TestSecurityCoverage:Cyclic"
-						access-parent="TestSecurityCoverage:Cyclic#next"
+						access-parent="target"
+						access-reference="TestSecurityCoverage:Cyclic#next"
 					/>
 					<class name="TestSecurityCoverage:ChildOfCovered">
 						<grant

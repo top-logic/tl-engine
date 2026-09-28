@@ -17,7 +17,9 @@ import com.top_logic.model.TLReference;
  * </p>
  * <ul>
  * <li>{@link #container() The container}: the object holding the object in a composition, whichever
- * composition that is. This is the relation a composition part gets by default.</li>
+ * composition that is. This is the relation a composition part gets by default, and the one
+ * {@link #anyContainer() configured} as {@link AccessParentKind#CONTAINER} without a
+ * reference.</li>
  * <li>{@link #backward(TLReference) A composition navigated backwards}: the container, provided that
  * it holds the object through the named composition.</li>
  * <li>{@link #forward(TLReference) A to-one reference navigated forwards}: the object the reference
@@ -43,11 +45,24 @@ public record AccessParent(TLReference reference, boolean inverse, boolean expli
 
 	private static final AccessParent CONTAINER = new AccessParent(null, true, false);
 
+	private static final AccessParent ANY_CONTAINER = new AccessParent(null, true, true);
+
 	/**
-	 * The relation to the container of an object, whichever composition holds it.
+	 * The relation to the container of an object, whichever composition holds it, as a
+	 * composition part gets it by default.
 	 */
 	public static AccessParent container() {
 		return CONTAINER;
+	}
+
+	/**
+	 * The relation to the container of an object, whichever composition holds it, as configured for
+	 * the type.
+	 * 
+	 * @see AccessParentKind#CONTAINER
+	 */
+	public static AccessParent anyContainer() {
+		return ANY_CONTAINER;
 	}
 
 	/**
@@ -72,7 +87,7 @@ public record AccessParent(TLReference reference, boolean inverse, boolean expli
 	}
 
 	/**
-	 * Whether this is the {@link #container()} relation.
+	 * Whether this is the {@link #container()} or the {@link #anyContainer()} relation.
 	 */
 	public boolean isContainer() {
 		return reference == null;

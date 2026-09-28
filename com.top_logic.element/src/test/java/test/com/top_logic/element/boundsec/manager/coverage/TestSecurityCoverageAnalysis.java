@@ -87,6 +87,24 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 	/** The role rule shadowed by the access parent of {@link #EXPLICIT_PART}. */
 	private static final String SHADOWED_RULE_ID = "TestSecurityCoverage_explicitPart";
 
+	/** Composition part configured to delegate to whichever container holds it. */
+	private static final String ANY_CONTAINER_PART = MODULE + ":AnyContainerPart";
+
+	/** Id of the role rule the configured container of {@link #ANY_CONTAINER_PART} shadows. */
+	private static final String ANY_CONTAINER_RULE_ID = "TestSecurityCoverage_anyContainerPart";
+
+	/** Composition part configured to decide for itself. */
+	private static final String SELF_DECIDING = MODULE + ":SelfDeciding";
+
+	/** Specialization of {@link #LINKED} configured to decide for itself. */
+	private static final String LINKED_SUB = MODULE + ":LinkedSub";
+
+	/** Owner and part of the same to-one composition. */
+	private static final String RECURSIVE = MODULE + ":Recursive";
+
+	/** The to-one composition of {@link #RECURSIVE} holding objects of its own type. */
+	private static final String DETAIL_REFERENCE = MODULE + ":Recursive#detail";
+
 	/** Type with a read grant to a role that no rule delivers on it. */
 	private static final String DEAD_GRANT = MODULE + ":DeadGrant";
 
@@ -220,6 +238,38 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 		assertFalse("A to-one reference of the type is navigated forwards.", parent.inverse());
 		assertEquals(TARGET_REFERENCE, TLModelUtil.qualifiedName(parent.reference()));
 		assertTrue("The type is held in no composition.", coverage.containerReferences().isEmpty());
+	}
+
+	public void testConfiguredAnyContainer() {
+		TypeCoverage coverage = coverage(ANY_CONTAINER_PART);
+		AccessParent parent = coverage.accessParent();
+		assertNotNull(parent);
+		assertTrue("Without an access reference, the container holding the object decides.", parent.isContainer());
+		assertTrue("The container relation is configured, not the default.", parent.explicit());
+
+		CoverageFinding finding = singleFinding(coverage, FindingKind.SHADOWED_RULES);
+		assertEquals(List.of(ANY_CONTAINER_RULE_ID), finding.getRuleIds());
+	}
+
+	public void testConfiguredContainerTellsDirectionOfRecursiveComposition() {
+		AccessParent parent = coverage(RECURSIVE).accessParent();
+		assertNotNull(parent);
+		assertTrue("A composition the type owns is navigated backwards when the container is configured.",
+			parent.inverse());
+		assertEquals(DETAIL_REFERENCE, TLModelUtil.qualifiedName(parent.reference()));
+	}
+
+	public void testSelfSwitchesOffContainerDefault() {
+		TypeCoverage coverage = coverage(SELF_DECIDING);
+		assertNull("A composition part deciding for itself does not delegate to its container.",
+			coverage.accessParent());
+		assertEquals(Set.of(ROLE_READER), roleNames(coverage.readRoles()));
+	}
+
+	public void testSelfStopsInheritedAccessParent() {
+		assertNotNull(coverage(LINKED).accessParent());
+		assertNull("The specialization decides for itself instead of inheriting the access parent.",
+			coverage(LINKED_SUB).accessParent());
 	}
 
 	public void testDeadGrant() {

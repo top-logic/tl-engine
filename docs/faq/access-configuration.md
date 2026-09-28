@@ -75,10 +75,16 @@ instead of replacing them.
 			<!-- Marks, see below. -->
 			<class name="my.module:Cache" internal="true"/>
 			<class name="my.module:PublicNotice" without-security="true"/>
-			<!-- Access parents, see below: a composition navigated backwards, a to-one reference
-			     navigated forwards. -->
-			<class name="demo.tickets:Comment" access-parent="demo.tickets:Ticket#comments"/>
-			<class name="demo.tickets:Reminder" access-parent="demo.tickets:Reminder#ticket"/>
+			<!-- Access parents, see below: the container through any composition, the container
+			     through one composition, the target of a to-one reference, and no delegation. -->
+			<class name="demo.tickets:Attachment" access-parent="container"/>
+			<class name="demo.tickets:Comment" access-parent="container"
+				access-reference="demo.tickets:Ticket#comments"/>
+			<class name="demo.tickets:Reminder" access-parent="target"
+				access-reference="demo.tickets:Reminder#ticket"/>
+			<class name="demo.tickets:Signature" access-parent="self">
+				<grant operation="Read" roles="Signer"/>
+			</class>
 		</security-config>
 	</instance>
 </config>
@@ -108,9 +114,10 @@ the one mark when the other is set, and the access rights dialog refuses to save
 
 ### Access parent: delegating the whole decision
 
-A `<class>` entry with `access-parent="…"` names the reference leading from an object of the type
-to its **access parent**, the object whose access definition decides. The type has no grants, no
-marks and no roles of its own (an entry combining them is rejected at startup and by the editor):
+A `<class>` entry with `access-parent="container"` or `access-parent="target"` makes the type
+delegate to its **access parent**, the object whose access definition decides. The type has no
+grants, no marks and no roles of its own (an entry combining them is rejected at startup and by the
+editor):
 
 - Read, Write and Export on the object are Read, Write and Export on the parent.
 - Create and Delete of the object are **Write** on the parent, since a part is created or deleted
@@ -123,25 +130,40 @@ marks and no roles of its own (an entry combining them is rejected at startup an
   error).
 - Attribute-level `<part>` grants on the type are checked against the roles the user holds at the
   end of the chain.
-- Specializations inherit the setting.
+- Specializations inherit the setting unless they have one of their own.
 
-The reference is either a **composition** holding objects of the type, navigated backwards to the
-container (`demo.tickets:Ticket#comments`; the parent is the container only when it holds the
-object through that composition), or a **to-one reference of the type**, navigated forwards
-(`demo.tickets:Reminder#ticket`). Any other reference cannot lead to a single object and is a
-configuration error.
+The kind of relation is stated explicitly, the reference only names the way. There is no guessing
+from the shape of the reference, so a to-one composition a type both owns and is held in
+(`Node#detail : Node`) is unambiguous:
+
+| `access-parent` | `access-reference` | Access parent |
+|---|---|---|
+| `auto` (default) | — | inherited from the generalizations, else the default below |
+| `container` | — | the container, whichever composition holds the object (`TLObject.tContainer()`) |
+| `container` | a composition holding the type | the container, only when it holds the object through that composition (navigated backwards) |
+| `target` | a to-one reference of the type (mandatory) | the object the reference points to (navigated forwards) |
+| `self` | — | none: the type decides through its own grants and roles |
+
+A reference not fitting the kind (a composition not holding the type for `container`, a multiple or
+foreign reference for `target`, any reference for `self`/`auto`) is a configuration error.
 
 **The default for composition parts.** A type held in a composition that has no role rule, no role
-parent rule, no marks and no configured access parent delegates to its container by default,
-whichever composition holds the object (`TLObject.tContainer()`). Most helper types of an
-application therefore need no configuration at all. Any explicit definition — a role rule or a
-role parent rule applying to the type (inherited ones included), one of the marks, or a configured
-access parent — switches the default off for that type. The explicit `access-parent` is needed for
-a type reached through a to-one reference, or for a composition part that inherits a role rule but
-should delegate nevertheless; the coverage check then reports the shadowed rules.
+parent rule, no marks and no `access-parent` setting (own or inherited) delegates to its container by
+default, whichever composition holds the object. Most helper types of an application therefore need
+no configuration at all. A role rule or a role parent rule applying to the type (inherited ones
+included), one of the marks, or any `access-parent` other than `auto` switches the default off.
+
+- `access-parent="container"` without a reference states the default explicitly. It is needed for
+  a composition part that inherits a role rule but should delegate nevertheless; the coverage check
+  then reports the shadowed rules.
+- `access-parent="self"` switches the default off for a composition part that decides for itself,
+  e.g. with its own grants and roles assigned directly on its objects (which do not count as a
+  role source for the default). It also stops a specialization from inheriting the access parent
+  of its generalization.
 
 In Java, `ModelAccessRights.getAccessParent(TLClass)` returns the relation in effect as an
-`AccessParent` (container, backward or forward reference, explicit or default), and
+`AccessParent` (container, backward or forward reference, explicit or default; `null` for a type
+deciding for itself), and
 `AccessManager.hasRoleSource(TLClass)` is the hook the default consults.
 
 ### Caching of decisions

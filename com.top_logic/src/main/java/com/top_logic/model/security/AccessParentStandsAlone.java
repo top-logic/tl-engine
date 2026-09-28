@@ -12,9 +12,10 @@ import com.top_logic.basic.config.constraint.algorithm.PropertyModel;
 /**
  * Constraint rejecting an access parent on a type that has a definition of its own.
  * <p>
- * The first checked property holds the access parent; the others hold the grants and the marks of
- * the same entry. A type delegating its access decision to another object has no grants and no
- * marks, so the access parent is reported as the problem whenever one of the others is set.
+ * The first checked property holds the {@link AccessParentKind kind of access parent}; the others
+ * hold the grants and the marks of the same entry. A type delegating its access decision to another
+ * object has no grants and no marks, so a {@link AccessParentKind#delegates() delegating} kind is
+ * reported as the problem whenever one of the others is set.
  * </p>
  * 
  * @see SecurityConfigurationService.TLClassAccessRights#getAccessParent()
@@ -38,7 +39,7 @@ public class AccessParentStandsAlone extends GenericPropertyConstraint {
 			return;
 		}
 		PropertyModel<?> self = models[0];
-		if (self.getValue() == null) {
+		if (!(self.getValue() instanceof AccessParentKind kind) || !kind.delegates()) {
 			return;
 		}
 		for (int n = 1, cnt = models.length; n < cnt; n++) {

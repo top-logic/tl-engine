@@ -8,6 +8,8 @@ package com.top_logic.layout.view.command;
 import java.util.List;
 import java.util.Set;
 
+import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.model.ChannelObjectObserver;
 import com.top_logic.layout.view.model.ObservedTypes;
@@ -89,6 +91,27 @@ public class LiveExecutability {
 
 		List<ViewChannel> observedChannels = inputChannel == null ? List.of() : List.of(inputChannel);
 		_inputObserver = new ChannelObjectObserver(observedChannels, observedTypes, onChange);
+	}
+
+	/**
+	 * Creates the {@link LiveExecutability} an {@link ExecutabilityConfig} declares: its rules
+	 * {@link ViewExecutabilityRules#build(List, ViewContext) built} for the given context, applied
+	 * to its input channel, followed together with its observed types.
+	 *
+	 * @param config
+	 *        The declaration of the rules, their input and their observed types.
+	 * @param context
+	 *        The build-time context the rules are bound to and the input channel is resolved in.
+	 * @param onChange
+	 *        Run while attached whenever the rules may answer differently than before.
+	 */
+	public static LiveExecutability create(ExecutabilityConfig config, ViewContext context, Runnable onChange) {
+		ChannelRef inputRef = config.getInput();
+		return new LiveExecutability(
+			ViewExecutabilityRules.build(config.getExecutability(), context),
+			inputRef == null ? null : context.resolveChannel(inputRef),
+			ObservedTypes.resolve(config.getObservedTypes()),
+			onChange);
 	}
 
 	/**

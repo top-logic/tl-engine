@@ -75,4 +75,52 @@ describe('the input channel of a conversation', () => {
 
     expect(chatStore(CHAT, readBootstrap(state({}))).getState().sessionId).toBeNull()
   })
+
+  it('does not go back to the chat the channel names while it answers a chat the store opened', async () => {
+    await render({ selected: 'project' })
+    const store = chatStore(CHAT, readBootstrap(state({})))
+    expect(store.getState().sessionId).toBe('project')
+
+    // The store opens another chat itself - a pick from the rail - and reports it. The channel has
+    // not answered yet, so the element still holds the chat that was left.
+    await store.actions.selectSession('picked')
+    await render({ selected: 'project' })
+
+    expect(store.getState().sessionId).toBe('picked')
+    expect(sessionReports()).toEqual(['project', 'picked'])
+  })
+
+  it('does not load the chat it already shows again when it mounts on it', async () => {
+    // The dock mounts its conversation on every page, on the chat the page's own element had open.
+    const store = chatStore(CHAT, readBootstrap(state({})))
+    await store.actions.selectSession('open')
+    const loads = () => vi.mocked(globalThis.fetch).mock.calls.filter(([url]) => String(url).includes('/chat/sessions/open')).length
+    const before = loads()
+
+    await render({ selected: 'open' })
+
+    expect(loads()).toBe(before)
+    expect(store.getState().sessionId).toBe('open')
+  })
+
+  it('stays on its chat when the channel names another one for a moment', async () => {
+    await render({ selected: 'this-page' })
+    const store = chatStore(CHAT, readBootstrap(state({})))
+    expect(store.getState().sessionId).toBe('this-page')
+
+    // The previous page's chat is named for a moment, and its transcript arrives last (#577).
+    let arrive: () => void = () => undefined
+    const answer = globalThis.fetch
+    globalThis.fetch = vi.fn(async (url: string, init?: unknown) => {
+      if (url.includes('/chat/sessions/previous-page')) await new Promise<void>((resolve) => (arrive = resolve))
+      return (answer as (url: string, init?: unknown) => Promise<unknown>)(url, init)
+    }) as unknown as typeof fetch
+    await render({ selected: 'previous-page' })
+    await render({ selected: 'this-page' })
+    arrive()
+    await render({ selected: 'this-page' })
+
+    expect(store.getState().sessionId).toBe('this-page')
+    expect(sessionReports()).not.toContain('previous-page')
+  })
 })

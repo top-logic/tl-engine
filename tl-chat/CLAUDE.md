@@ -1225,6 +1225,15 @@ not report an empty chat on mount either - it would clear the channel the host j
 chat it names is still loading. `TestSessionSelection` and `chat-conversation-input.test.tsx` pin
 both halves.
 
+Two rules keep the browser from arguing with the channel, and breaking either one makes the
+transcript switch between two conversations every few milliseconds, for good. **The element follows
+the channel when the channel moves, never when the store does**: the store opens chats itself (a
+rail pick, a first send) and reports them, and until the channel answers, `selected` still names the
+chat that was left. **Only the latest choice of chat takes effect**: `selectSession` ignores the chat
+the store already shows or is opening, and an opening that another choice overtook is dropped when
+its transcript arrives. The tab's remembered chat (`sessionStorage`) is restored only into a store
+nothing has chosen a chat for yet, so it never competes with a host's channel.
+
 `<chat-rail>` is a **shell**, not a set of sections: it renders the strip, the section headers and
 the pane's chrome, and every section's body is a view element the application configured there.
 

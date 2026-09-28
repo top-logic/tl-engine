@@ -429,6 +429,11 @@ export interface ChatActions {
    * one.
    */
   showNotice(text: string, detail?: string, options?: { tone?: NoticeTone; sticky?: boolean }): void
+  /**
+   * Opens a chat. Asking for the chat the window already shows, or is already opening, changes
+   * nothing; any other chat supersedes whatever was being opened, so the latest choice is the one
+   * the window ends up showing.
+   */
   selectSession(id: string): Promise<void>
   newChat(): void
   deleteSession(id: string): Promise<void>
@@ -1825,6 +1830,9 @@ export class ChatStore {
       showNotice: this.showNotice,
 
       selectSession: async (id: string) => {
+        // The chat the latest choice leads to: the one being opened, or else the one on screen.
+        // Asking for it again must not start a second opening, which could only land late (#577).
+        if (id === (this.opening?.sessionId ?? this.state.sessionId)) return
         const at = this.at
         const choice = ++this.choice
         this.assistantId = null

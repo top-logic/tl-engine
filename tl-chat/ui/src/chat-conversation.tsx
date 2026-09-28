@@ -186,7 +186,8 @@ export function channelName(raw: unknown): string | undefined {
 /**
  * What the chat has to do to show what the `input` channel holds.
  *
- * - `select`: the channel names a session other than the open one.
+ * - `select`: the channel names a session. The store decides whether that is news: it ignores the
+ *   chat it already shows or is opening, and lets anything else supersede an opening in flight.
  * - `new`: the channel was emptied - by a write, or by the host refusing the session this store
  *   reported (`corrected`) - while a session is open.
  * - `keep`: anything else. In particular an empty channel that has always been empty leaves a
@@ -200,7 +201,7 @@ function followSelection(
   sessionId: string | null,
 ): 'select' | 'new' | 'keep' {
   if (!hasInput) return 'keep'
-  if (selected) return selected === sessionId ? 'keep' : 'select'
+  if (selected) return 'select'
   return (wasSelected || corrected) && sessionId ? 'new' : 'keep'
 }
 
@@ -377,17 +378,26 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   // reported - the one it restored from another page's conversation, typically - and left the
   // channel empty, which it already was. `selected` does not change then, so the count is what
   // says the restored session has to go (#576).
+  //
+  // It runs when the channel moves, never when the store does. The store moves first whenever it
+  // opens a chat itself - a pick from the rail, a restore, a first send - and reports it; until the
+  // channel answers, `selected` still names the chat that was left. Following it then opened that
+  // chat again, the report of it went out, and the channel's answer to the first report asked for
+  // the other one: the transcript switched between two conversations every few milliseconds, for as
+  // long as the page was open (#576).
   const prevSelected = useRef(selected)
   const prevCorrections = useRef(corrections)
+  const sessionId = useRef(chat.sessionId)
+  sessionId.current = chat.sessionId
   useEffect(() => {
     const wasSelected = prevSelected.current
     const corrected = prevCorrections.current !== corrections
     prevSelected.current = selected
     prevCorrections.current = corrections
-    const follow = followSelection(hasInput, selected, wasSelected, corrected, chat.sessionId)
+    const follow = followSelection(hasInput, selected, wasSelected, corrected, sessionId.current)
     if (follow === 'select') void actions.selectSession(selected)
     else if (follow === 'new') actions.newChat()
-  }, [hasInput, selected, corrections, chat.sessionId, actions])
+  }, [hasInput, selected, corrections, actions])
 
   // Write-back: publish the store's own session onto the channel (two-way), so a session list
   // highlights it after the store creates one on first send or restores one on reload.

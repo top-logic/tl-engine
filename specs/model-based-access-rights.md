@@ -520,16 +520,13 @@ Role check for instance I:
   3. Result: union of roles found at any visited node
 ```
 
-**Fallback to the global security root**
+**No implicit security root**
 
-If no security parent rule is configured for a type, the global **security root** is used as the sole security parent -- provided `use-default-security-parent` is enabled (the default). The security root is the application's default security object (`BoundHelper.getDefaultObject()`); in a running application (`ElementBoundHelper`) it is the `ROOT` singleton of the `SecurityStructure` module.
+The security parent rules fully define the parent set. If no security parent rule is configured for a type, its instances have **no** security parent. The global **security root** -- the application's default security object (`BoundHelper.getDefaultObject()`); in a running application (`ElementBoundHelper`) the `ROOT` singleton of the `SecurityStructure` module -- is never a security parent implicitly: neither in addition to configured parents nor as a fallback for types without rules.
 
-`AbstractBoundWrapper.getSecurityParents()` implements this as follows:
+`AbstractBoundWrapper.getSecurityParents()` returns the result of the configured security parent rules **as-is** (empty when no rule applies to the instance's type).
 
-- If security parent rules are configured for the instance's type, their result is returned **as-is** -- the security root is **not** added automatically.
-- Otherwise, the instance falls back to the security root (or to no parent at all when `use-default-security-parent` is disabled).
-
-In other words, explicitly configured security parents take precedence and fully define the parent set; the root is a *fallback*, not an always-present additional parent. A type that configures its own parents but still wants the root (or any other fixed object) in its parent chain must add it **explicitly** -- see below.
+Roles held on the security root therefore reach the instances of a type only if a rule names the root **explicitly** via `<singleton module="SecurityStructure"/>` -- either on a common base type with `inherit="true"` or per type. See below.
 
 **Including the security root (or any singleton) explicitly**
 
@@ -543,7 +540,7 @@ To reach a fixed, base-object-independent object -- typically the security root,
             <step attribute="myapp:Task#milestone" inverse="false"/>
         </path>
     </rule>
-    <!-- ...and, additionally, the security root (opt-in, since it is no longer merged in automatically): -->
+    <!-- ...and, additionally, the security root (never added implicitly): -->
     <rule meta-element="myapp:Task" inherit="false">
         <path>
             <singleton module="SecurityStructure"/>

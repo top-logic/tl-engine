@@ -332,14 +332,15 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
       }
       setMaximized(false);
     } else {
-      // Save current bounds.
-      const el = windowRef.current;
-      const rect = el?.getBoundingClientRect();
+      // Save current bounds. A centered window is restored centered and with the size it had
+      // (the configured or the remembered one), not pinned to the place and width it was rendered
+      // at: pinned, it would lose the 80vh height limit of a centered window and could reach below
+      // the bottom edge of the browser window.
       regularBoundsRef.current = {
-        x: positionRef.current?.x ?? (rect?.left ?? -1),
-        y: positionRef.current?.y ?? (rect?.top ?? -1),
-        w: localWidth ?? (rect?.width ?? null),
-        h: localHeight ?? null,
+        x: positionRef.current?.x ?? -1,
+        y: positionRef.current?.y ?? -1,
+        w: localWidth,
+        h: localHeight,
       };
       setMaximized(true);
       setPosition({ x: 0, y: 0 });

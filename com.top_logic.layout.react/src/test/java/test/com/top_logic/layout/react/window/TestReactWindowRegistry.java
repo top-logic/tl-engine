@@ -162,6 +162,85 @@ public class TestReactWindowRegistry extends TestCase {
 		assertEquals(1, entry.getQueue().pendingEventCount());
 	}
 
+	/**
+	 * The unload report of the displayed page detaches its tree and marks the window unloaded.
+	 */
+	public void testUnloadOfDisplayedPage() {
+		ReactWindowRegistry registry = new ReactWindowRegistry(SESSION_ID);
+		WindowEntry entry = registry.getOrCreateWindow("vTab");
+		ReactControl tree = displayPage(registry, entry);
+		String pageLoad = registry.issuePageLoad("vTab");
+
+		registry.windowUnloaded("vTab", pageLoad);
+
+		assertFalse("The tree of the unloaded page stops observing the model.", tree.isAttached());
+		assertTrue("The window waits for its page to come back.", entry.getUnloadedAt() != 0);
+	}
+
+	/**
+	 * The unload report of a page a reload has already replaced leaves the displayed page alone.
+	 */
+	public void testUnloadOfReplacedPage() {
+		ReactWindowRegistry registry = new ReactWindowRegistry(SESSION_ID);
+		WindowEntry entry = registry.getOrCreateWindow("vTab");
+		ReactControl tree = displayPage(registry, entry);
+		String replaced = registry.issuePageLoad("vTab");
+		// The reload renders its page before the unload report of the page it replaces arrives.
+		String displayed = registry.issuePageLoad("vTab");
+		assertFalse(replaced.equals(displayed));
+
+		registry.windowUnloaded("vTab", replaced);
+
+		assertTrue("The displayed tree must stay attached.", tree.isAttached());
+		assertEquals("The displayed window must not be collected.", 0, entry.getUnloadedAt());
+		assertEquals(displayed, entry.getPageLoad());
+	}
+
+	/**
+	 * An unload report naming no page speaks of the displayed one.
+	 */
+	public void testUnloadWithoutPageLoad() {
+		ReactWindowRegistry registry = new ReactWindowRegistry(SESSION_ID);
+		WindowEntry entry = registry.getOrCreateWindow("vTab");
+		ReactControl tree = displayPage(registry, entry);
+		registry.issuePageLoad("vTab");
+
+		registry.windowUnloaded("vTab", null);
+
+		assertFalse(tree.isAttached());
+		assertTrue(entry.getUnloadedAt() != 0);
+	}
+
+	/**
+	 * Page-load tokens are unique within the session, across windows as well.
+	 */
+	public void testPageLoadsAreUnique() {
+		ReactWindowRegistry registry = new ReactWindowRegistry(SESSION_ID);
+
+		String first = registry.issuePageLoad("vTab");
+		String other = registry.issuePageLoad("vOther");
+		String again = registry.issuePageLoad("vTab");
+
+		assertFalse(first.equals(other));
+		assertFalse(first.equals(again));
+		assertFalse(other.equals(again));
+		assertEquals(again, registry.getWindow("vTab").getPageLoad());
+		assertEquals(other, registry.getWindow("vOther").getPageLoad());
+	}
+
+	/**
+	 * Installs an attached tree into the given window, as rendering its page does.
+	 */
+	private static ReactControl displayPage(ReactWindowRegistry registry, WindowEntry entry) {
+		SSEUpdateQueue queue = registry.getOrCreateQueue(entry.getWindowId());
+		ReactContext ctx = new DefaultReactContext("", entry.getWindowId(), queue, registry);
+		ReactControl tree = new ReactControl(ctx, null, "Demo");
+		entry.setRootControl(tree);
+		tree.attach();
+		assertTrue(tree.isAttached());
+		return tree;
+	}
+
 	public static Test suite() {
 		return ServiceTestSetup.createSetup(TestReactWindowRegistry.class,
 			TypeIndex.Module.INSTANCE);

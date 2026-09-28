@@ -206,6 +206,10 @@ public class TopLogicServlet extends AbstractTopLogicServlet {
 
 	private void serviceWithLogMark(HttpServletRequest request, HttpServletResponse response)
 			throws IOException, ServletException {
+		if (rejectUnparsableRequest(request, response)) {
+			return;
+		}
+
 		setCachePolicy(response);
 
 		boolean cookieCheck = isCookieCheckRequired();
@@ -244,6 +248,34 @@ public class TopLogicServlet extends AbstractTopLogicServlet {
 
 		// Recursive call, through a request dispatcher include call.
 		inContext(request, response);
+	}
+
+	/**
+	 * Answers a request whose parameters cannot be parsed with the status
+	 * {@link HttpServletResponse#SC_BAD_REQUEST}.
+	 *
+	 * <p>
+	 * The parameters are read once, before any other processing. A servlet container that refuses
+	 * a malformed query string or form body (e.g. an incomplete percent escape as in
+	 * <code>?q=50%</code>) reports this with a {@link RuntimeException} on the first parameter
+	 * access. Such a request is a client error: it is logged as a single warning without stack
+	 * trace and answered with the container's plain error page. A container that silently drops
+	 * malformed parameters instead passes the check.
+	 * </p>
+	 *
+	 * @return Whether the request was rejected and must not be processed any further.
+	 */
+	private boolean rejectUnparsableRequest(HttpServletRequest request, HttpServletResponse response)
+			throws IOException {
+		try {
+			request.getParameterMap();
+			return false;
+		} catch (RuntimeException ex) {
+			Logger.warn("Rejecting request with unparsable parameters '" + request.getRequestURI() + "': "
+				+ ex.getMessage(), TopLogicServlet.class);
+			response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+			return true;
+		}
 	}
 
 	/**

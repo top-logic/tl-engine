@@ -524,8 +524,12 @@ public class ReactServlet extends TopLogicServlet {
 			ReactWindowRegistry registry = ReactWindowRegistry.forSession(request.getSession());
 			if (arguments != null && Boolean.TRUE.equals(arguments.get("unload"))) {
 				// Reported on beforeunload, which fires for a reload as well: keep the window's state
-				// for a grace period instead of tearing it down.
-				registry.windowUnloaded(closedWindowId);
+				// for a grace period instead of tearing it down. Detaching the tree changes the display
+				// like any command does, and for a reload it coincides with the request rendering the
+				// page again, so it is an interaction as well.
+				try (Interaction interaction = registry.beginInteraction()) {
+					registry.windowUnloaded(closedWindowId);
+				}
 				sendSuccess(response);
 				return;
 			}

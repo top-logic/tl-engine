@@ -1191,6 +1191,18 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	}
 
 	/**
+	 * Whether this control has been disposed by {@link #cleanupTree()}.
+	 *
+	 * <p>
+	 * A disposed control is detached for good: it is never attached or registered with the
+	 * {@link SSEUpdateQueue} of its window again.
+	 * </p>
+	 */
+	public final boolean isDisposed() {
+		return _disposed;
+	}
+
+	/**
 	 * Attaches this control because it is about to be rendered.
 	 *
 	 * <p>

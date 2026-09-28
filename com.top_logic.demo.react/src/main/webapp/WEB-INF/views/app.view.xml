@@ -252,6 +252,15 @@
 								<de>Spalten-Demo</de>
 							</label>
 						</nav-item>
+						<nav-item id="table-card-demo"
+							icon="css:bi bi-layout-text-sidebar"
+						>
+							<view-ref view="demo/table-card-demo.view.xml"/>
+							<label>
+								<en>Table and Card</en>
+								<de>Tabelle und Karte</de>
+							</label>
+						</nav-item>
 						<nav-item id="errors"
 							icon="css:bi bi-exclamation-triangle"
 						>

@@ -266,8 +266,18 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 		return _executableState.isVisible();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * Runs the command for the current {@link #resolveInput() input}, see
+	 * {@link #execute(ReactContext, Object)}: the rules decide once more over the input as it is
+	 * now, so that a command whose {@link #getExecutableState() last evaluated state} did not keep up
+	 * with its input - a model not {@link #attach(ModelScope) attached}, say - is refused as well.
+	 * </p>
+	 */
 	@Override
-	public HandlerResult executeCommand(ReactContext context) {
+	public HandlerResult perform(ReactContext context) {
 		return execute(context, resolveInput());
 	}
 

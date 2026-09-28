@@ -20,6 +20,13 @@ import com.top_logic.tool.execution.ExecutableState;
  * </p>
  *
  * <p>
+ * The model is the single authority on whether the command may run: every UI element runs it
+ * through {@link #executeCommand(ReactContext)}, which refuses a command that is not
+ * {@link #getExecutableState() executable} and reports why. An implementation supplies only the
+ * command's effect, {@link #perform(ReactContext)}.
+ * </p>
+ *
+ * <p>
  * Lifecycle management ({@code attach}/{@code detach}) is NOT part of this interface because a
  * single model may be shared between multiple buttons. This happens when a child element contributes
  * an implicit command to a panel's {@code CommandScope}: the child creates a button for the command,
@@ -117,13 +124,52 @@ public interface CommandModel {
 	}
 
 	/**
-	 * Executes the command.
+	 * Executes the command, if it is executable.
+	 *
+	 * <p>
+	 * This is the one entry for running a command from the user interface - a button, a menu
+	 * entry, a sidebar item, a dashboard tile. The command's {@link #getExecutableState() state}
+	 * decides: a command that is not executable does not {@link #perform(ReactContext) perform}
+	 * anything, and the call returns the {@link HandlerResult#notExecutable(ExecutableState)
+	 * refusal} carrying that state, so that the user learns why. A command that is executable
+	 * performs, and the call returns what it reports.
+	 * </p>
+	 *
+	 * <p>
+	 * The check is part of this contract, not of the caller: whoever executes a command gets the
+	 * refusal as result and passes it on to be reported, like any other result of the command.
+	 * </p>
+	 *
+	 * @param context
+	 *        The view display context.
+	 * @return The result of the command execution, or the refusal of a command that is not
+	 *         executable.
+	 */
+	default HandlerResult executeCommand(ReactContext context) {
+		ExecutableState state = getExecutableState();
+		if (!state.isExecutable()) {
+			return HandlerResult.notExecutable(state);
+		}
+		return perform(context);
+	}
+
+	/**
+	 * Performs the command's effect.
+	 *
+	 * <p>
+	 * Called by {@link #executeCommand(ReactContext)} after the command has been found executable;
+	 * a user interface runs a command through {@link #executeCommand(ReactContext)}, never through
+	 * this method. An implementation whose rules decide by more than its
+	 * {@link #getExecutableState() current state} - an input evaluated anew - may still refuse
+	 * here, and reports that by returning a {@link HandlerResult#notExecutable(ExecutableState)
+	 * refusal}.
+	 * </p>
 	 *
 	 * @param context
 	 *        The view display context.
 	 * @return The result of the command execution.
 	 */
-	HandlerResult executeCommand(ReactContext context);
+	HandlerResult perform(ReactContext context);
 
 	/**
 	 * Where the command should be rendered.

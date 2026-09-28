@@ -349,11 +349,9 @@ public class ReactButtonControl extends ReactControl {
 	 * </p>
 	 *
 	 * <p>
-	 * Where there is a {@link CommandModel}, it decides first, and a refusal reports the model's
-	 * {@link CommandModel#getExecutableState() state}: a button hidden or disabled by its model is
-	 * so for the reason the command's rules gave, which is what the user is told. Only a button
-	 * the model would run, but that is hidden or disabled on its own account, is refused with the
-	 * generic state. A model that grants execution unconditionally keeps its behavior.
+	 * A button backed by a {@link CommandModel} runs the command through
+	 * {@link CommandModel#executeCommand(ReactContext)}, which refuses the command on its own when
+	 * its rules do not grant execution.
 	 * </p>
 	 *
 	 * @return The result of the button's action, or a {@link HandlerResult#notExecutable(ExecutableState)
@@ -361,19 +359,38 @@ public class ReactButtonControl extends ReactControl {
 	 */
 	@ReactCommandHandler(CMD_CLICK)
 	HandlerResult handleClick(ReactContext context) {
-		if (_model != null) {
-			ExecutableState state = _model.getExecutableState();
-			if (!state.isExecutable()) {
-				return HandlerResult.notExecutable(state);
-			}
-		}
-		if (isHidden()) {
-			return HandlerResult.notExecutable(ExecutableState.NOT_EXEC_HIDDEN);
-		}
-		if (Boolean.TRUE.equals(getState(DISABLED))) {
-			return HandlerResult.notExecutable(ExecutableState.NOT_EXEC_DISABLED);
+		ExecutableState offered = getOfferedState();
+		if (!offered.isExecutable()) {
+			return HandlerResult.notExecutable(offered);
 		}
 		return _action.execute(context);
+	}
+
+	/**
+	 * Whether this button is offered to the user, and if not, why.
+	 *
+	 * <p>
+	 * {@link ExecutableState#EXECUTABLE} while the button is displayed and enabled. A hidden or
+	 * disabled button reports the {@link CommandModel#getExecutableState() state} of its
+	 * {@link CommandModel}, if that refuses the command: the button is then hidden or disabled for
+	 * the reason the command's rules gave, which is what the user is told. A button hidden or
+	 * disabled on its own account reports the generic {@link ExecutableState#NOT_EXEC_HIDDEN} or
+	 * {@link ExecutableState#NOT_EXEC_DISABLED}.
+	 * </p>
+	 */
+	protected final ExecutableState getOfferedState() {
+		boolean hidden = isHidden();
+		boolean disabled = Boolean.TRUE.equals(getState(DISABLED));
+		if (!hidden && !disabled) {
+			return ExecutableState.EXECUTABLE;
+		}
+		if (_model != null) {
+			ExecutableState modelState = _model.getExecutableState();
+			if (!modelState.isExecutable()) {
+				return modelState;
+			}
+		}
+		return hidden ? ExecutableState.NOT_EXEC_HIDDEN : ExecutableState.NOT_EXEC_DISABLED;
 	}
 
 	/**

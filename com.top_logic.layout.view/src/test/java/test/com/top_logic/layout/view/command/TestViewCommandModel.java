@@ -178,6 +178,31 @@ public class TestViewCommandModel extends TestCase {
 	}
 
 	/**
+	 * Tests that executeCommand() decides by the input as it is when the command runs, not only by
+	 * the state last evaluated: a model that was never attached still reports the initial
+	 * executable state, but is refused for the input its rule rejects.
+	 */
+	public void testExecuteCommandDecidesByTheCurrentInput() {
+		ViewChannel channel = new DefaultViewChannel("test");
+		boolean[] commandCalled = { false };
+
+		ViewCommandModel model = new ViewCommandModel(
+			(context, input) -> {
+				commandCalled[0] = true;
+				return HandlerResult.DEFAULT_RESULT;
+			},
+			createMinimalConfig(), channel, NullInputDisabled.INSTANCE);
+
+		assertTrue("The state of a model never attached is not evaluated.",
+			model.getExecutableState().isExecutable());
+
+		HandlerResult result = model.executeCommand(null);
+		assertFalse("The rule rejects the current input, so the command must not run.", commandCalled[0]);
+		assertEquals(ErrorSeverity.WARNING, result.getErrorSeverity());
+		assertEquals(ExecutableState.NO_EXEC_NO_MODEL.getI18NReasonKey(), result.getErrorMessage());
+	}
+
+	/**
 	 * Tests that a command its rule rejects is refused with the rule's reason, both when executed
 	 * for an input the caller supplies and in the state the model reports.
 	 */

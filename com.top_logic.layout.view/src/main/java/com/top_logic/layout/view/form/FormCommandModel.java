@@ -325,7 +325,7 @@ public class FormCommandModel implements CommandModel {
 	 * </p>
 	 */
 	@Override
-	public HandlerResult executeCommand(ReactContext context) {
+	public HandlerResult perform(ReactContext context) {
 		if (!_executableWhen.test(_form)) {
 			return HandlerResult.notExecutable(state(_visibleWhen.test(_form), false));
 		}

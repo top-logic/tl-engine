@@ -592,7 +592,7 @@ public class FormElement extends ContainerElement {
 		}
 
 		@Override
-		public HandlerResult executeCommand(ReactContext context) {
+		public HandlerResult perform(ReactContext context) {
 			// Substitute the form context so that actions can access the FormModel.
 			return _inner.executeCommand(_formContext);
 		}

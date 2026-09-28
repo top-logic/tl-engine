@@ -19,6 +19,7 @@ const I18N_KEYS = {
  * - collapsed: boolean
  * - border: "none" | "subtle" | "outlined"
  * - fullLine: boolean
+ * - hidden: boolean
  * - children: ChildDescriptor[]
  */
 const TLFormGroup: React.FC<TLCellProps> = ({ controlId }) => {
@@ -33,6 +34,7 @@ const TLFormGroup: React.FC<TLCellProps> = ({ controlId }) => {
   const border = (state.border as string) ?? 'none';
   const fullLine = state.fullLine === true;
   const children = (state.children as unknown[]) ?? [];
+  const hidden = state.hidden === true;
 
   const hasHeader = headerControl != null || headerActions.length > 0 || collapsible;
 
@@ -49,8 +51,10 @@ const TLFormGroup: React.FC<TLCellProps> = ({ controlId }) => {
     collapsed ? 'tlFormGroup--collapsed' : '',
   ].filter(Boolean).join(' ');
 
+  // A hidden group is hidden via CSS instead of not being rendered, like an invisible form field:
+  // unmounting its children would drop their SSE subscriptions.
   return (
-    <div id={controlId} className={rootClassName(state, className)}>
+    <div id={controlId} className={rootClassName(state, className)} style={hidden ? { display: 'none' } : undefined}>
       {hasHeader && (
         <div className="tlFormGroup__header">
           {collapsible && (

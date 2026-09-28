@@ -119,6 +119,41 @@ public class TestSelectValueObservation extends AbstractDBKnowledgeBaseTest {
 	}
 
 	/**
+	 * Tests that new options of the model drop the option list the client holds, so that it loads
+	 * the current one when it is opened next - options may be computed from other values the user
+	 * edits alongside the field.
+	 */
+	public void testNewOptionsDropTheLoadedOptions() throws Exception {
+		BObj b1 = create("b1");
+		BObj b2 = create("b2");
+		SimpleSelectFieldModel model = new SimpleSelectFieldModel(null, List.of(b1), false);
+		ReactDropdownSelectControl field = displayedField(model);
+		field.executeCommand(CMD_LOAD_OPTIONS, Map.of());
+		assertTrue("The client holds the option list.", field.stateAsJSON().contains(OPTIONS_LOADED_TRUE));
+
+		model.setOptions(List.of(b1, b2));
+
+		assertTrue("The outdated option list is dropped.", field.stateAsJSON().contains(OPTIONS_LOADED_FALSE));
+	}
+
+	/**
+	 * Tests that a field that left the display does not follow the options of its model any more.
+	 */
+	public void testADetachedFieldIgnoresNewOptions() throws Exception {
+		BObj b1 = create("b1");
+		BObj b2 = create("b2");
+		SimpleSelectFieldModel model = new SimpleSelectFieldModel(null, List.of(b1), false);
+		ReactDropdownSelectControl field = displayedField(model);
+		field.executeCommand(CMD_LOAD_OPTIONS, Map.of());
+		field.detach();
+
+		model.setOptions(List.of(b1, b2));
+
+		assertTrue("A field that left the display observes nothing.",
+			field.stateAsJSON().contains(OPTIONS_LOADED_TRUE));
+	}
+
+	/**
 	 * Tests that a field that was never displayed is not refreshed.
 	 */
 	public void testAFieldNeverDisplayedIsNotRefreshed() throws Exception {

@@ -37,9 +37,10 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
- * While edit mode is open, every change to a field checks the copy again and shows what the check
- * found, see {@link #recheck()} - so a value is questioned where it is entered, rather than only
- * when the user asks for the copy to be carried over.
+ * While the editor accepts input - in edit mode, or always with {@link Commands#NONE} - every change
+ * to a field checks the edited item again and shows what the check found, see {@link #recheck()} -
+ * so a value is questioned where it is entered, rather than only when the user asks for the item to
+ * be carried over.
  * </p>
  *
  * <p>
@@ -54,8 +55,9 @@ import com.top_logic.util.Resources;
  * Save and Cancel; drawing them as buttons among the fields is what a standalone use wants.
  * {@link Commands#NONE} turns the whole cycle off: the control is then a thin wrapper around the
  * editor over the item itself - today's write-through behaviour, kept available for a caller (e.g.
- * the view designer) that must not gain an edit mode of its own just because it now goes through
- * this class.
+ * a dialog with a save cycle of its own) that must not gain an edit mode of its own just because it
+ * now goes through this class. Its fields are still checked as they change, since the caller's save
+ * will refuse over the same findings.
  * </p>
  */
 public class ConfigFormControl extends ReactFormLayoutControl {
@@ -286,10 +288,11 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 * </p>
 	 *
 	 * <p>
-	 * Only while editing. In view mode the editor accepts nothing, so there is nothing to check
-	 * anything about, and marking what is merely being looked at would be noise; with
-	 * {@link Commands#NONE} there is no mode at all and the editor writes straight through to the
-	 * item, which is a caller that asked for no verdict of any kind.
+	 * Only while the editor accepts input: in edit mode, or always with {@link Commands#NONE}, where
+	 * there is no mode at all and the editor writes straight through to the item - whoever saves that
+	 * item refuses over the same findings, so they belong next to the fields as well. In view mode the
+	 * editor accepts nothing, so there is nothing to check anything about, and marking what is merely
+	 * being looked at would be noise.
 	 * </p>
 	 *
 	 * <p>
@@ -307,7 +310,7 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 * </p>
 	 */
 	private void recheck() {
-		if (!_model.isEditMode()) {
+		if (_commands != Commands.NONE && !_model.isEditMode()) {
 			return;
 		}
 		ConfigValidation.recheck(_model.edited(), _index);

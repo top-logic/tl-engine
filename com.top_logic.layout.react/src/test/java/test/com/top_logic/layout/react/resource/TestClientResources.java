@@ -7,6 +7,7 @@ package test.com.top_logic.layout.react.resource;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -67,7 +68,7 @@ public class TestClientResources extends TestCase {
 		+ "</resources>"
 		+ "</config>";
 
-	/** The second fragment removes an entry by name and keeps the rest, in dependency order. */
+	/** The second fragment removes an entry by name and keeps the others. */
 	public void testRemoveByName() throws ConfigurationException, IOException {
 		String styles = styles(service(BASE, CUSTOMER));
 
@@ -81,14 +82,14 @@ public class TestClientResources extends TestCase {
 
 		assertTrue(styles, styles.contains("/style/mbui.css"));
 		assertFalse(styles, styles.contains("/style/components.css"));
-		assertTrue(styles, styles.indexOf("/style/tokens.css") < styles.indexOf("/style/mbui.css"));
+		assertBefore(styles, "/style/tokens.css", "/style/mbui.css");
 	}
 
 	/** A module script added by the customer is emitted after the one it requires. */
 	public void testCustomerScriptAfterOurs() throws ConfigurationException, IOException {
 		String scripts = scripts(service(BASE, CUSTOMER));
 
-		assertTrue(scripts, scripts.indexOf("/script/controls.js") < scripts.indexOf("/script/mbui.js"));
+		assertBefore(scripts, "/script/controls.js", "/script/mbui.js");
 	}
 
 	/** Removing an entry another one requires is an error, not a silent omission. */
@@ -98,6 +99,14 @@ public class TestClientResources extends TestCase {
 
 		assertTrue(log.getError(), log.hasErrors());
 		assertTrue(log.getError(), log.getError().contains("'components' requires unknown resource 'tokens'"));
+	}
+
+	private static void assertBefore(String output, String first, String second) {
+		int firstIndex = output.indexOf(first);
+		int secondIndex = output.indexOf(second);
+		assertTrue(output, firstIndex >= 0);
+		assertTrue(output, secondIndex >= 0);
+		assertTrue(output, firstIndex < secondIndex);
 	}
 
 	private static ClientResources service(String... fragments) throws ConfigurationException {
@@ -112,7 +121,7 @@ public class TestClientResources extends TestCase {
 		roots.put("config", TypedConfiguration.getConfigurationDescriptor(ClientResources.Config.class));
 		DefaultInstantiationContext context = new DefaultInstantiationContext(log);
 		ConfigurationReader reader = new ConfigurationReader(context, roots);
-		reader.setSources(java.util.Arrays.stream(fragments).map(CharacterContents::newContent).toList());
+		reader.setSources(Arrays.stream(fragments).map(CharacterContents::newContent).toList());
 		ClientResources.Config config = (ClientResources.Config) reader.read();
 		return new ClientResources(context, config);
 	}
@@ -129,6 +138,9 @@ public class TestClientResources extends TestCase {
 		return buffer.toString();
 	}
 
+	/**
+	 * Test suite with the module setup.
+	 */
 	public static Test suite() {
 		return ModuleTestSetup.setupModule(
 			ServiceTestSetup.createSetup(TestClientResources.class, TypeIndex.Module.INSTANCE));

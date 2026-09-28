@@ -16,8 +16,21 @@ import java.util.Collection;
  * possible at all; the same tags are checked again against the
  * {@link DragSourceControl#dragType() source's tag} when the drop arrives, so a client announcing a
  * drop the control never offered is refused. Whatever else makes a particular drop impossible — the
- * objects, the target row, the position — is decided by {@link #onDrop(DropEvent)} itself, which has
- * the resolved objects at hand.
+ * objects, the target row, the position — is decided by {@link #check(DropEvent)}, which has the
+ * resolved objects at hand.
+ * </p>
+ *
+ * <p>
+ * The check is asked twice: while a drag hovers a target, the client probes it so the user sees
+ * whether the target under the pointer takes the dragged objects, and why not; and once more when
+ * the drop arrives, before {@link #onDrop(DropEvent)} is called — a refused drop never reaches
+ * {@link #onDrop(DropEvent)}.
+ * </p>
+ *
+ * <p>
+ * A target whose {@link #acceptedTypes()} or {@link #dropOnRows()} answer changes over its life
+ * tells the control displaying it to announce the change to the client again (for a table:
+ * {@link com.top_logic.layout.react.control.table.TableViewControl#refreshDropTarget()}).
  * </p>
  *
  * @see DragSourceControl
@@ -43,7 +56,29 @@ public interface DropTarget {
 	}
 
 	/**
+	 * Whether this target accepts the given drop.
+	 *
+	 * <p>
+	 * Asked for every target the pointer moves over during a drag, and again before
+	 * {@link #onDrop(DropEvent)}. It must therefore not modify anything.
+	 * </p>
+	 *
+	 * @param event
+	 *        The drop in question: the dragged objects, the row it would be made on and the position
+	 *        relative to it.
+	 * @return {@link DropVerdict#ACCEPTED}, or a {@link DropVerdict#refused(com.top_logic.basic.util.ResKey)
+	 *         refusal} naming the reason the user is shown. Accepts every drop by default.
+	 */
+	default DropVerdict check(DropEvent event) {
+		return DropVerdict.ACCEPTED;
+	}
+
+	/**
 	 * Applies a drop.
+	 *
+	 * <p>
+	 * Called only for a drop {@link #check(DropEvent)} accepts.
+	 * </p>
 	 *
 	 * @param event
 	 *        The dragged objects, the row they were dropped on and the position relative to it.

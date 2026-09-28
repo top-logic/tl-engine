@@ -36,13 +36,73 @@ export interface TLDragPayload {
 }
 
 /**
- * Writes a drag payload into a `dragstart` event's `dataTransfer`, as the JSON entry plus the type
- * tag entry {@link DRAG_TAG_TYPE_PREFIX a `dragover` handler} can read.
+ * A drag started in this document, readable while it runs - unlike the `dataTransfer` payload,
+ * which a `dragover` handler cannot read.
  */
-export function writeDragPayload(dataTransfer: DataTransfer, payload: TLDragPayload): void {
+export interface TLRunningDrag {
+  /** Identifier of this drag, unique within the document. */
+  id: string;
+  /** What the drag carries. */
+  payload: TLDragPayload;
+}
+
+/** The drag running in this document, `null` while none does. */
+let _runningDrag: TLRunningDrag | null = null;
+
+/** Number of drags started in this document, the source of {@link TLRunningDrag.id}. */
+let _dragCount = 0;
+
+/** Whether the document-wide listeners ending {@link _runningDrag} are installed. */
+let _endListenersInstalled = false;
+
+/**
+ * Forgets the running drag once it ends, wherever it ends.
+ *
+ * `dragend` is dispatched at the element the drag started on, which may have been removed from the
+ * document meanwhile (a virtualized list re-rendering its rows), so its event never reaches a
+ * document listener; `drop` is dispatched at the target, in whatever control. Listening to both in
+ * the capture phase on the window ends the drag in either case. A drag that ends without either
+ * (cancelled over a detached source) leaves a stale entry, which the next drag replaces and which
+ * nothing reads before: only a `dragover` of a drag carrying a payload of this document reads it.
+ */
+function installEndListeners(): void {
+  if (_endListenersInstalled) {
+    return;
+  }
+  _endListenersInstalled = true;
+  const end = () => {
+    _runningDrag = null;
+  };
+  window.addEventListener('dragend', end, true);
+  window.addEventListener('drop', end, true);
+}
+
+/**
+ * Writes a drag payload into a `dragstart` event's `dataTransfer`, as the JSON entry plus the type
+ * tag entry {@link DRAG_TAG_TYPE_PREFIX a `dragover` handler} can read, and registers it as the
+ * {@link runningDrag running drag}.
+ *
+ * @returns The running drag the payload now describes.
+ */
+export function writeDragPayload(dataTransfer: DataTransfer, payload: TLDragPayload): TLRunningDrag {
   dataTransfer.effectAllowed = 'move';
   dataTransfer.setData(DRAG_PAYLOAD_TYPE, JSON.stringify(payload));
   dataTransfer.setData(DRAG_TAG_TYPE_PREFIX + payload.type.toLowerCase(), '');
+  installEndListeners();
+  _dragCount++;
+  _runningDrag = { id: 'drag' + _dragCount, payload };
+  return _runningDrag;
+}
+
+/**
+ * The drag started by {@link writeDragPayload} that is still running, `null` if none is.
+ *
+ * A `dragover` handler reads the dragged rows here to ask the server whether a drop at the pointer
+ * would be accepted. A drag that started in another document (another window, another
+ * application) is not known here.
+ */
+export function runningDrag(): TLRunningDrag | null {
+  return _runningDrag;
 }
 
 /**

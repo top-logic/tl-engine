@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, useStandaloneKeyboardScope, writeDragPayload, readDragPayload, dragTypeAccepted, dropPositionAt, startPointerDrag, useCloseOnOutsidePress, useFill, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, useStandaloneKeyboardScope, writeDragPayload, runningDrag, readDragPayload, dragTypeAccepted, dropPositionAt, startPointerDrag, useCloseOnOutsidePress, useFill, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED } from 'tl-react-bridge';
 import type { TLCellProps, TLDropPosition } from 'tl-react-bridge';
 import { isInteractiveTarget } from './interactive';
 
@@ -116,6 +116,27 @@ interface RowState {
   expanded?: boolean;
   /** Present exactly on a group header row: how many rows the group holds. */
   groupCount?: number;
+  /** Whether the row may be dragged; present while the table's rows are draggable at all. */
+  draggable?: boolean;
+}
+
+/** The server's answer to a drop probe: whether a drop there would be accepted, and if not, why. */
+interface DropVerdict {
+  accepted: boolean;
+  /** Why the drop is refused, in the user's language. */
+  reason?: string;
+}
+
+/** Command asking the server whether a drop at the hovered target would be accepted. */
+const CMD_DROP_PROBE = 'dropProbe';
+
+/** Where a running drag hovers the table: a row and the position within it, or the table itself. */
+interface DropState {
+  /** The hovered row, `null` for the table as a whole. */
+  row: string | null;
+  position: TLDropPosition;
+  /** Identifier of the probe asking about this target, `null` for a drag not started here. */
+  probe: string | null;
 }
 
 const MIN_COL_WIDTH = 50;
@@ -277,6 +298,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const dragType = (state.dragType as string) ?? '';
   const dropAccepts = (state.dropAccepts as string[]) ?? [];
   const dropOnRows = (state.dropOnRows as boolean) ?? false;
+  const dropVerdicts = (state.dropVerdicts as Record<string, DropVerdict>) ?? {};
 
   const sortedColumnCount = React.useMemo(
     () => columns.filter((c) => c.sortPriority && c.sortPriority > 0).length,
@@ -309,7 +331,16 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
 
   // -- Row drop state: where an accepted drag currently hovers, or null while none does. A null row
   //    means the drag hovers the table itself rather than one of its rows. --
-  const [dropState, setDropState] = React.useState<{ row: string | null; position: TLDropPosition } | null>(null);
+  const [dropState, setDropState] = React.useState<DropState | null>(null);
+
+  // -- Drop probes sent for the running drag, by probe identifier: each target is asked once per
+  //    drag. Reset when a probe of another drag is sent. --
+  const probesRef = React.useRef<{ drag: string; sent: Set<string> } | null>(null);
+
+  // The verdict on the hovered target: undefined while no verdict has arrived, which counts as
+  // accepted until the server says otherwise.
+  const dropVerdict: DropVerdict | undefined = dropState?.probe ? dropVerdicts[dropState.probe] : undefined;
+  const dropRefused = dropVerdict !== undefined && !dropVerdict.accepted;
 
   // -- Column context menu state --
   const [contextMenu, setContextMenu] = React.useState<{
@@ -663,14 +694,48 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     if (!dragTypeAccepted(event.dataTransfer, dropAccepts)) {
       return;
     }
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
     const target = dropTargetAt(event);
+    const drag = runningDrag();
+    let probe: string | null = null;
+    if (drag) {
+      // The payload is unreadable here, but a drag started in this document is known: ask the
+      // server once per drag and target whether a drop there would be accepted.
+      probe = drag.id + '|' + (target.row ?? '') + '|' + target.position;
+      let probes = probesRef.current;
+      if (!probes || probes.drag !== drag.id) {
+        probes = { drag: drag.id, sent: new Set() };
+        probesRef.current = probes;
+      }
+      if (!probes.sent.has(probe)) {
+        probes.sent.add(probe);
+        const args: Record<string, unknown> = {
+          source: drag.payload.source,
+          keys: drag.payload.keys.join(','),
+          selection: drag.payload.selection,
+          position: target.position,
+          drag: drag.id,
+          probe,
+        };
+        if (target.row) {
+          args.targetKey = target.row;
+        }
+        void sendCommand(CMD_DROP_PROBE, args);
+      }
+    }
     setDropState((previous) =>
       previous && previous.row === target.row && previous.position === target.position
+          && previous.probe === probe
         ? previous
-        : target);
-  }, [dropAccepts, dropTargetAt]);
+        : { ...target, probe });
+    const verdict = probe ? dropVerdicts[probe] : undefined;
+    if (verdict && !verdict.accepted) {
+      // Refused: leaving the default in place makes the target refuse the drop.
+      event.dataTransfer.dropEffect = 'none';
+      return;
+    }
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  }, [dropAccepts, dropTargetAt, dropVerdicts, sendCommand]);
 
   const handleRootDragLeave = React.useCallback((event: React.DragEvent) => {
     // Moving among the table's own descendants fires a leave on each one left behind; only leaving
@@ -1136,11 +1201,18 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       onActivate={handleActivateCursor}
     />
     <div ref={rootRef} id={controlId}
-      className={rootClassName(state, 'tlTableView', dropState && dropState.row === null && 'tlTableView--dragover', fillClass)}
+      className={rootClassName(state, 'tlTableView',
+        dropState && dropState.row === null && (dropRefused ? 'tlTableView--dropRefused' : 'tlTableView--dragover'),
+        fillClass)}
       onDragOver={handleRootDragOver}
       onDragLeave={handleRootDragLeave}
       onDrop={handleRootDrop}
     >
+      {/* Why the target under the running drag refuses it. A native tooltip is not shown while a
+          drag runs, so the reason is displayed over the table. */}
+      {dropRefused && dropVerdict?.reason && (
+        <div className="tlTableView__dropHint" role="status">{dropVerdict.reason}</div>
+      )}
       {/* Filter bar above the headings: the named criteria as chips, the cross-column search, and
           saving the current criteria under a name. Outside both scrollers, so it neither scrolls
           with the columns nor takes part in the header/body width alignment. */}
@@ -1427,13 +1499,13 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
             <div
               key={row.id}
               data-drop-row={row.id}
-              draggable={dragEnabled}
+              draggable={dragEnabled && row.draggable !== false}
               className={
                 'tlTableView__row' +
                 (row.selected ? ' tlTableView__row--selected' : '') +
                 (row.index === cursorIndex ? ' tlTableView__row--cursor' : '') +
                 (dropState && dropState.row === row.id
-                  ? ' tlTableView__row--dragOver-' + dropState.position
+                  ? (dropRefused ? ' tlTableView__row--dropRefused' : ' tlTableView__row--dragOver-' + dropState.position)
                   : '') +
                 (row.groupCount != null ? ' tlTableView__row--group' : '')
               }
@@ -1458,8 +1530,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 }
               }}
               onClick={(e) => handleRowClick(row.index, e)}
-              onDragStart={dragEnabled ? (e) => handleRowDragStart(row, e) : undefined}
-              onDragEnd={dragEnabled ? () => setDropState(null) : undefined}
+              onDragStart={dragEnabled && row.draggable !== false ? (e) => handleRowDragStart(row, e) : undefined}
+              onDragEnd={dragEnabled && row.draggable !== false ? () => setDropState(null) : undefined}
               onDoubleClick={(e) => handleRowActivate(row.index, e)}
             >
               {isMulti && (

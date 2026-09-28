@@ -89,6 +89,10 @@ public class TestPurgeFunctions extends AbstractSearchExpressionTest {
 	public void testAnalyzeHistoricObject() throws Exception {
 		TLObject obsolete = newObject("historic");
 		ObjectKey key = obsolete.tHandle().tId();
+		if (!hasHistory(obsolete)) {
+			delete(obsolete);
+			return;
+		}
 		TLObject historic = WrapperHistoryUtils.getWrapper(HistoryUtils.getLastRevision(), obsolete);
 		delete(obsolete);
 
@@ -104,6 +108,10 @@ public class TestPurgeFunctions extends AbstractSearchExpressionTest {
 	public void testAnalyzeByKey() throws Exception {
 		TLObject obsolete = newObject("keyed");
 		ObjectKey key = obsolete.tHandle().tId();
+		if (!hasHistory(obsolete)) {
+			delete(obsolete);
+			return;
+		}
 		TLObject historic = WrapperHistoryUtils.getWrapper(HistoryUtils.getLastRevision(), obsolete);
 		delete(obsolete);
 

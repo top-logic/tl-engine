@@ -26,6 +26,7 @@ import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.dob.meta.MOClass;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -111,6 +112,18 @@ public abstract class AbstractSearchExpressionTest extends BasicTestCase {
 			object.tDelete();
 			tx.commit();
 		}
+	}
+
+	/**
+	 * Whether the table of the given object keeps its history.
+	 *
+	 * <p>
+	 * In a knowledge base with versioning disabled, no historic version of an object exists: a
+	 * test about historic objects has nothing to test there.
+	 * </p>
+	 */
+	protected static boolean hasHistory(TLObject object) {
+		return ((MOClass) object.tTable()).isVersioned();
 	}
 
 	protected Object eval(String script, Object... args) throws ParseException {

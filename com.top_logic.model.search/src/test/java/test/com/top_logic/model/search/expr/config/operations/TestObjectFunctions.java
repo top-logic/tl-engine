@@ -273,6 +273,9 @@ public class TestObjectFunctions extends AbstractSearchExpressionTest {
 	}
 
 	public void testKeyOfHistoricObject() throws Exception {
+		if (!hasHistory(_unsecured)) {
+			return;
+		}
 		TLObject historic = WrapperHistoryUtils.getWrapper(HistoryUtils.getLastRevision(), _unsecured);
 
 		String key = (String) eval(KEY, historic);
@@ -304,16 +307,21 @@ public class TestObjectFunctions extends AbstractSearchExpressionTest {
 
 	public void testNotReadableNotResolvedByKey() throws Exception {
 		String key = (String) eval(KEY, _employee);
-		String historicKey =
-			(String) eval(KEY, WrapperHistoryUtils.getWrapper(HistoryUtils.getLastRevision(), _employee));
+		String historicKey = hasHistory(_employee)
+			? (String) eval(KEY, WrapperHistoryUtils.getWrapper(HistoryUtils.getLastRevision(), _employee))
+			: null;
 		assertEquals(Boolean.TRUE, eval(RESOLVES_KEY, key));
-		assertEquals(Boolean.TRUE, eval(RESOLVES_KEY, historicKey));
+		if (historicKey != null) {
+			assertEquals(Boolean.TRUE, eval(RESOLVES_KEY, historicKey));
+		}
 
 		TLContext.getContext().setCurrentPerson(_user);
 		assertEquals("An object the user may not read must not be found by its key.",
 			Boolean.FALSE, eval(RESOLVES_KEY, key));
-		assertEquals("A historic object the user may not read must not be found by its key.",
-			Boolean.FALSE, eval(RESOLVES_KEY, historicKey));
+		if (historicKey != null) {
+			assertEquals("A historic object the user may not read must not be found by its key.",
+				Boolean.FALSE, eval(RESOLVES_KEY, historicKey));
+		}
 		assertEquals("An object the user may read is found by its key.",
 			Boolean.TRUE, eval(RESOLVES_KEY, eval(KEY, _unsecured)));
 	}

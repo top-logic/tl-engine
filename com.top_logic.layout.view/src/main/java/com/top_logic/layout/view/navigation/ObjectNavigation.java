@@ -351,7 +351,11 @@ public final class ObjectNavigation {
 		 *
 		 * <p>
 		 * The frames already showing what is wanted stay as they are, so that a display request
-		 * arriving where the user already is leaves their drill-down untouched.
+		 * arriving where the user already is leaves their drill-down untouched. A frame shows what
+		 * is wanted when it {@link TileFrame#showsSame(TileFrame) displays the same view with the
+		 * same values}, however it is named. Everything above them is replaced by the frames
+		 * wanted in a single write of the path, so that the user is asked at most once about the
+		 * unsaved changes of the frames dropped.
 		 * </p>
 		 */
 		private void drillDown(ShowStep show, int index) {
@@ -364,21 +368,26 @@ public final class ObjectNavigation {
 			for (Binding binding : show.bindings()) {
 				params.put(binding.channel(), binding.evaluate(_value));
 			}
-			_frames.add(new TileFrame(show.viewRef(), show.labelFor(_value), params));
+			TileFrame wanted = new TileFrame(show.viewRef(), show.labelFor(_value), params);
 
 			List<TileFrame> current = stack.getPath();
-			if (current.size() >= _frames.size() && current.subList(0, _frames.size()).equals(_frames)) {
+			int position = _frames.size();
+			if (position < current.size() && current.get(position).showsSame(wanted)) {
+				// Keep the frame displayed, as it is named, so that writing the path leaves it as the
+				// user left it.
+				_frames.add(current.get(position));
+			} else {
+				_frames.add(wanted);
+			}
+
+			if (sharedFrames(current, _frames) == _frames.size()) {
 				enterFrame(stack, show);
 				step(index + 1);
 				return;
 			}
-			int common = commonPrefixLength(current, _frames);
 			guarded(() -> {
-				stack.popTo(common);
-				for (int n = common; n < _frames.size(); n++) {
-					TileFrame frame = _frames.get(n);
-					stack.push(frame.getViewRef(), frame.getLabel(), frame.getParams());
-				}
+				int common = sharedFrames(stack.getPath(), _frames);
+				stack.replaceFrom(common, _frames.subList(common, _frames.size()));
 			}, () -> {
 				enterFrame(stack, show);
 				step(index + 1);
@@ -492,6 +501,19 @@ public final class ObjectNavigation {
 			// This window shows something else than the application's default display, so the
 			// declared places do not describe it.
 			return ViewMounts.forRootView(rootView);
+		}
+
+		/**
+		 * The number of leading frames of the given paths that
+		 * {@link TileFrame#showsSame(TileFrame) show the same}.
+		 */
+		private static int sharedFrames(List<TileFrame> left, List<TileFrame> right) {
+			int limit = Math.min(left.size(), right.size());
+			int result = 0;
+			while (result < limit && left.get(result).showsSame(right.get(result))) {
+				result++;
+			}
+			return result;
 		}
 
 		private static int commonPrefixLength(List<?> left, List<?> right) {

@@ -110,6 +110,12 @@ public interface ViewContext extends ReactContext {
 	 * is configured.
 	 *
 	 * <p>
+	 * At the root of a window, this is the channel of the whole window: the channels of all scopes
+	 * within the window forward to it, see
+	 * {@link com.top_logic.layout.react.dirty.DirtyChannel#root()}.
+	 * </p>
+	 *
+	 * <p>
 	 * {@link com.top_logic.layout.view.form.StateHandler} implementations use this to register
 	 * their dirty state so that enclosing containers (e.g. tab bars) can check for unsaved changes
 	 * before navigation.

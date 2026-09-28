@@ -9,7 +9,7 @@ import {
   VALUE_DEBOUNCE_MS,
   tooltipProps,
 } from 'tl-react-bridge';
-import type { TLCellProps, TextInputState } from 'tl-react-bridge';
+import type { TLCellProps, TextInputStateJson } from 'tl-react-bridge';
 import FontIcon from './FontIcon';
 
 const { useCallback, useRef } = React;
@@ -96,7 +96,7 @@ const normalizeUrl = (value: string): string => {
  * holds, in the order [icon] input [clear] [link].
  */
 const TLTextInput: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState<TextInputState>();
+  const state = useTLState<Partial<TextInputStateJson>>();
   const [value, setValue, flushValue] = useTLFieldValue({
     debounceMs: state.debounceMs ?? VALUE_DEBOUNCE_MS,
     sendOnBlur: state.sendValueOnBlur === true,

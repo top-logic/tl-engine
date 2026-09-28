@@ -66,26 +66,6 @@ public interface NumberInputState extends com.top_logic.layout.react.state.Typin
 		public static InputMode readInputMode(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 			return valueOfProtocol(in.nextString());
 		}
-
-		/** Writes this instance to the given binary output. */
-		public final void writeTo(de.haumacher.msgbuf.binary.DataWriter out) throws java.io.IOException {
-			switch (this) {
-				case NUMERIC: out.value(1); break;
-				case DECIMAL: out.value(2); break;
-				case TEXT: out.value(3); break;
-				default: out.value(0);
-			}
-		}
-
-		/** Reads a new instance from the given binary reader. */
-		public static InputMode readInputMode(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-			switch (in.nextInt()) {
-				case 1: return NUMERIC;
-				case 2: return DECIMAL;
-				case 3: return TEXT;
-				default: return NUMERIC;
-			}
-		}
 	}
 
 	/**

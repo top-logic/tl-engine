@@ -1,5 +1,5 @@
 import { React, useTLState, useTLFieldValue, rootClassName } from 'tl-react-bridge';
-import type { TLCellProps, CheckboxState } from 'tl-react-bridge';
+import type { TLCellProps, CheckboxStateJson } from 'tl-react-bridge';
 import { BrandCheckbox } from '../example-lib';
 
 /**
@@ -16,7 +16,7 @@ import { BrandCheckbox } from '../example-lib';
  * unticked, and a click sets a value) and the switch presentation.</p>
  */
 const BrandCheckboxAdapter: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState<CheckboxState>();
+  const state = useTLState<Partial<CheckboxStateJson>>();
   const [value, setValue] = useTLFieldValue();
 
   if (state.hidden === true) {

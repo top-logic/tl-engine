@@ -1,5 +1,5 @@
 import { React, useTLState, useTLFieldValue, rootClassName } from 'tl-react-bridge';
-import type { TLCellProps, DatePickerState } from 'tl-react-bridge';
+import type { TLCellProps, DatePickerStateJson } from 'tl-react-bridge';
 
 const { useCallback } = React;
 
@@ -10,7 +10,7 @@ const { useCallback } = React;
  * type and states in `inputType`; the value is exchanged in the ISO form belonging to that input.
  */
 const TLDatePicker: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState<DatePickerState>();
+  const state = useTLState<Partial<DatePickerStateJson>>();
   const [value, setValue] = useTLFieldValue();
 
   const handleChange = useCallback(

@@ -65,26 +65,6 @@ public interface ButtonState extends com.top_logic.layout.react.state.ControlSta
 		public static DisplayMode readDisplayMode(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 			return valueOfProtocol(in.nextString());
 		}
-
-		/** Writes this instance to the given binary output. */
-		public final void writeTo(de.haumacher.msgbuf.binary.DataWriter out) throws java.io.IOException {
-			switch (this) {
-				case ICON_ONLY: out.value(1); break;
-				case ICON_LABEL: out.value(2); break;
-				case LABEL_ONLY: out.value(3); break;
-				default: out.value(0);
-			}
-		}
-
-		/** Reads a new instance from the given binary reader. */
-		public static DisplayMode readDisplayMode(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-			switch (in.nextInt()) {
-				case 1: return ICON_ONLY;
-				case 2: return ICON_LABEL;
-				case 3: return LABEL_ONLY;
-				default: return ICON_ONLY;
-			}
-		}
 	}
 
 	/**
@@ -153,28 +133,6 @@ public interface ButtonState extends com.top_logic.layout.react.state.ControlSta
 		public static Appearance readAppearance(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 			return valueOfProtocol(in.nextString());
 		}
-
-		/** Writes this instance to the given binary output. */
-		public final void writeTo(de.haumacher.msgbuf.binary.DataWriter out) throws java.io.IOException {
-			switch (this) {
-				case DEFAULT: out.value(1); break;
-				case PRIMARY: out.value(2); break;
-				case GHOST: out.value(3); break;
-				case LINK: out.value(4); break;
-				default: out.value(0);
-			}
-		}
-
-		/** Reads a new instance from the given binary reader. */
-		public static Appearance readAppearance(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-			switch (in.nextInt()) {
-				case 1: return DEFAULT;
-				case 2: return PRIMARY;
-				case 3: return GHOST;
-				case 4: return LINK;
-				default: return DEFAULT;
-			}
-		}
 	}
 
 	/**
@@ -231,24 +189,6 @@ public interface ButtonState extends com.top_logic.layout.react.state.ControlSta
 		public static Tone readTone(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 			return valueOfProtocol(in.nextString());
 		}
-
-		/** Writes this instance to the given binary output. */
-		public final void writeTo(de.haumacher.msgbuf.binary.DataWriter out) throws java.io.IOException {
-			switch (this) {
-				case DEFAULT: out.value(1); break;
-				case DANGER: out.value(2); break;
-				default: out.value(0);
-			}
-		}
-
-		/** Reads a new instance from the given binary reader. */
-		public static Tone readTone(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-			switch (in.nextInt()) {
-				case 1: return DEFAULT;
-				case 2: return DANGER;
-				default: return DEFAULT;
-			}
-		}
 	}
 
 	/**
@@ -304,24 +244,6 @@ public interface ButtonState extends com.top_logic.layout.react.state.ControlSta
 		/** Reads a new instance from the given reader. */
 		public static Size readSize(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 			return valueOfProtocol(in.nextString());
-		}
-
-		/** Writes this instance to the given binary output. */
-		public final void writeTo(de.haumacher.msgbuf.binary.DataWriter out) throws java.io.IOException {
-			switch (this) {
-				case DEFAULT: out.value(1); break;
-				case SMALL: out.value(2); break;
-				default: out.value(0);
-			}
-		}
-
-		/** Reads a new instance from the given binary reader. */
-		public static Size readSize(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-			switch (in.nextInt()) {
-				case 1: return DEFAULT;
-				case 2: return SMALL;
-				default: return DEFAULT;
-			}
 		}
 	}
 

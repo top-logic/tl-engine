@@ -1,5 +1,5 @@
 import { React, ThemeIcon } from 'tl-react-bridge';
-import type { DropdownSelectState } from 'tl-react-bridge';
+import type { DropdownSelectStateJson } from 'tl-react-bridge';
 import { TLPill } from './pill/TLPill';
 
 const { useCallback } = React;
@@ -12,8 +12,8 @@ const { useCallback } = React;
  * value looks the same wherever a control shows it. The server always sends its value and label.
  * </p>
  */
-export type OptionDescriptor = DropdownSelectState.Option
-  & Required<Pick<DropdownSelectState.Option, 'value' | 'label'>>;
+export type OptionDescriptor = Partial<DropdownSelectStateJson.Option>
+  & Required<Pick<DropdownSelectStateJson.Option, 'value' | 'label'>>;
 
 /** Command sent when the user follows the link of a displayed option. */
 export const CMD_GOTO = 'goto';

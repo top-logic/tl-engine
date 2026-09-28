@@ -1,5 +1,5 @@
 import { React, useTLState, useTLFieldValue, rootClassName } from 'tl-react-bridge';
-import type { TLCellProps, SelectState } from 'tl-react-bridge';
+import type { TLCellProps, SelectStateJson } from 'tl-react-bridge';
 
 const { useCallback } = React;
 
@@ -12,7 +12,7 @@ interface SelectOption {
  * A select dropdown rendered via React.
  */
 const TLSelect: React.FC<TLCellProps> = ({ controlId, config }) => {
-  const state = useTLState<SelectState>();
+  const state = useTLState<Partial<SelectStateJson>>();
   const [value, setValue] = useTLFieldValue();
 
   const handleChange = useCallback(

@@ -266,7 +266,7 @@ let _lastWindowName = '';
 /**
  * Returns the current state of the enclosing TopLogic control.
  *
- * @typeParam T The type of the state: the state message of the component (e.g. `ButtonState`
+ * @typeParam T The type of the state: the state message of the component (e.g. `ButtonStateJson`
  *        for `TLButton`), see the types exported from 'tl-react-bridge'. The state is not checked
  *        at runtime; the type states what the server side of the control sends.
  */

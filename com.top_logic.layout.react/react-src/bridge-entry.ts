@@ -46,26 +46,26 @@ export type {
 } from './bridge/list-reorder';
 export type { TLCellProps } from './bridge/types';
 // The state contract of the replaceable components, generated from state.proto: one message per
-// component (e.g. ButtonState for TLButton), read with useTLState<ButtonState>().
+// component (e.g. ButtonStateJson for TLButton), read with useTLState<Partial<ButtonStateJson>>().
 export type {
-  ControlState,
-  FieldState,
-  TypingFieldState,
-  ChildControl,
-  ButtonState,
-  ToggleButtonState,
-  CheckboxState,
-  TextInputState,
-  PasswordInputState,
-  NumberInputState,
-  DatePickerState,
-  SelectState,
-  DropdownSelectState,
-  TabBarState,
-  WindowState,
-  DialogState,
-  MenuState,
-  SnackbarState,
+  ControlStateJson,
+  FieldStateJson,
+  TypingFieldStateJson,
+  ChildControlJson,
+  ButtonStateJson,
+  ToggleButtonStateJson,
+  CheckboxStateJson,
+  TextInputStateJson,
+  PasswordInputStateJson,
+  NumberInputStateJson,
+  DatePickerStateJson,
+  SelectStateJson,
+  DropdownSelectStateJson,
+  TabBarStateJson,
+  WindowStateJson,
+  DialogStateJson,
+  MenuStateJson,
+  SnackbarStateJson,
 } from './state/control-state';
 export { useI18N } from './bridge/i18n';
 export { scrollToAnchor } from './bridge/scroll';

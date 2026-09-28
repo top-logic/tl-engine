@@ -40,24 +40,24 @@
 /**
  * State properties every control carries.
  */
-export interface ControlState {
+export interface ControlStateJson {
 	/**
 	 * Whether the control is hidden. A hidden control keeps its component mounted (with its local
 	 * state), the component renders nothing or is styled away.
 	 */
-	hidden?: boolean;
+	hidden: boolean;
 
 	/**
 	 * An additional CSS class for the root element of the component, standing beside the classes
 	 * the component brings itself.
 	 */
-	cssClass?: string;
+	cssClass: string;
 }
 
 /**
  * State properties every form field carries.
  */
-export interface FieldState extends ControlState {
+export interface FieldStateJson extends ControlStateJson {
 	/**
 	 * The value of the field. Its JSON form depends on the kind of the field, see the state of the
 	 * concrete field component.
@@ -67,132 +67,132 @@ export interface FieldState extends ControlState {
 	/**
 	 * Whether the value can be edited. A field that cannot be edited displays its value only.
 	 */
-	editable?: boolean;
+	editable: boolean;
 
 	/**
 	 * Whether a value is required.
 	 */
-	mandatory?: boolean;
+	mandatory: boolean;
 
 	/**
 	 * Whether the empty value is a legal value of the field.
 	 */
-	nullable?: boolean;
+	nullable: boolean;
 
 	/**
-	 * Whether the value of the field is invalid, see {@link FieldState.errorMessage}.
+	 * Whether the value of the field is invalid, see {@link FieldStateJson.errorMessage}.
 	 */
-	hasError?: boolean;
+	hasError: boolean;
 
 	/**
-	 * The message describing the error, while {@link FieldState.hasError} is set.
+	 * The message describing the error, while {@link FieldStateJson.hasError} is set.
 	 */
-	errorMessage?: string;
+	errorMessage: string;
 
 	/**
 	 * Whether the value of the field is questionable without being invalid.
 	 */
-	hasWarnings?: boolean;
+	hasWarnings: boolean;
 
 	/**
 	 * The label of the field.
 	 */
-	label?: string;
+	label: string;
 
 	/**
 	 * The tooltip of the field (plain text).
 	 */
-	tooltip?: string;
+	tooltip: string;
 
 	/**
 	 * The text shown while the field is empty and editable.
 	 */
-	placeholder?: string;
+	placeholder: string;
 
 	/**
 	 * Whether pressing Enter in the field sends the submit command with the value typed.
 	 */
-	submitOnEnter?: boolean;
+	submitOnEnter: boolean;
 }
 
 /**
  * State of a button, the component `TLButton`.
  *
- * A click sends the command `click` to the server, unless {@link ButtonState.navigateUrl} is set.
+ * A click sends the command `click` to the server, unless {@link ButtonStateJson.navigateUrl} is set.
  */
-export interface ButtonState extends ControlState {
+export interface ButtonStateJson extends ControlStateJson {
 	/**
 	 * The label of the button.
 	 */
-	label?: string;
+	label: string;
 
 	/**
 	 * Whether the button cannot be pressed.
 	 */
-	disabled?: boolean;
+	disabled: boolean;
 
 	/**
 	 * Whether the effect of the button's command is currently in force: the alternative chosen, or
 	 * a pressed toggle. Absent when not.
 	 */
-	active?: boolean;
+	active: boolean;
 
 	/**
 	 * The icon of the button, the encoded form of a theme image (e.g. `css:fas fa-edit` for
 	 * an icon font class, or the path of an image file).
 	 */
-	image?: string;
+	image: string;
 
 	/**
 	 * An explicit tooltip (plain text), shown whatever the button displays.
 	 */
-	tooltip?: string;
+	tooltip: string;
 
 	/**
-	 * What the button shows of its {@link ButtonState.image} and its {@link ButtonState.label}. Absent: the label only.
+	 * What the button shows of its {@link ButtonStateJson.image} and its {@link ButtonStateJson.label}. Absent: the label only.
 	 */
-	displayMode?: ButtonState.DisplayMode;
+	displayMode: ButtonStateJson.DisplayMode;
 
 	/**
 	 * Additional CSS classes of the button, separated by spaces.
 	 */
-	cssClasses?: string;
+	cssClasses: string;
 
 	/**
 	 * How the button is drawn. Absent means `'default'`: the standard appearance, or
 	 * the appearance its container suggests.
 	 */
-	appearance?: ButtonState.Appearance;
+	appearance: ButtonStateJson.Appearance;
 
 	/**
 	 * The kind of action the button stands for. Absent means `'default'`, an ordinary
 	 * action.
 	 */
-	tone?: ButtonState.Tone;
+	tone: ButtonStateJson.Tone;
 
 	/**
 	 * The size of the button. Absent means `'default'`, the standard size.
 	 */
-	size?: ButtonState.Size;
+	size: ButtonStateJson.Size;
 
 	/**
 	 * A URL the browser navigates to on a click, instead of sending a command to the server.
 	 */
-	navigateUrl?: string;
+	navigateUrl: string;
 
 	/**
-	 * Whether {@link ButtonState.navigateUrl} is opened in a browser window of its own, instead of replacing
+	 * Whether {@link ButtonStateJson.navigateUrl} is opened in a browser window of its own, instead of replacing
 	 * the page the button is on.
 	 */
-	navigateNewWindow?: boolean;
+	navigateNewWindow: boolean;
 
 	/**
 	 * The keyboard gesture that triggers the button (e.g. `ENTER`, `Ctrl+S`).
 	 */
-	keyGesture?: string;
+	keyGesture: string;
 }
 
-export namespace ButtonState {
+export namespace ButtonStateJson {
 	/**
 	 * What a button shows of its icon and its label.
 	 */
@@ -268,24 +268,24 @@ export namespace ButtonState {
  * State of a boolean field drawn as a box that is ticked or a switch that is flipped, the
  * component `TLCheckbox`.
  *
- * The {@link FieldState.value} is `true`, `false`, or - for a {@link CheckboxState.triState} field -
+ * The {@link FieldStateJson.value} is `true`, `false`, or - for a {@link CheckboxStateJson.triState} field -
  * `null` for "no value". A change is sent as the command `valueChanged` with the
  * new value as argument `value`.
  */
-export interface CheckboxState extends FieldState {
+export interface CheckboxStateJson extends FieldStateJson {
 	/**
 	 * Whether the field has a third state for "no value". The component then shows an unset
 	 * field as indeterminate and cycles through the states on click: checked, unchecked, unset.
 	 */
-	triState?: boolean;
+	triState: boolean;
 
 	/**
 	 * The shape of the field. Absent means `'checkbox'`, a box that is ticked.
 	 */
-	display?: CheckboxState.Display;
+	display: CheckboxStateJson.Display;
 }
 
-export namespace CheckboxState {
+export namespace CheckboxStateJson {
 	/**
 	 * The presentation of a boolean field.
 	 *
@@ -315,21 +315,21 @@ export namespace CheckboxState {
 
 /**
  * A control embedded in the state of another control, rendered by the component registered
- * under its {@link ChildControl.module}.
+ * under its {@link ChildControlJson.module}.
  *
  * The embedding component renders it through `TLChild` of 'tl-react-bridge', which mounts
- * the component with the given {@link ChildControl.state} and keeps it up to date.
+ * the component with the given {@link ChildControlJson.state} and keeps it up to date.
  */
-export interface ChildControl {
+export interface ChildControlJson {
 	/**
 	 * The ID of the control, the address of its commands and of the updates of its state.
 	 */
-	controlId?: string;
+	controlId: string;
 
 	/**
 	 * The name of the component rendering the control (e.g. `TLButton`).
 	 */
-	module?: string;
+	module: string;
 
 	/**
 	 * The initial state of the control, an object as described by the state message of its
@@ -341,7 +341,7 @@ export interface ChildControl {
 	 * The source of the view the control is the root of, for development tools. Absent for a
 	 * control that is no view root.
 	 */
-	viewSource?: string;
+	viewSource: string;
 }
 
 /**
@@ -349,73 +349,73 @@ export interface ChildControl {
  *
  * A click sends the command `click` to the server.
  */
-export interface ToggleButtonState extends ControlState {
+export interface ToggleButtonStateJson extends ControlStateJson {
 	/**
 	 * The label of the button.
 	 */
-	label?: string;
+	label: string;
 
 	/**
 	 * Whether the button is pressed.
 	 */
-	active?: boolean;
+	active: boolean;
 }
 
 /**
  * State properties of a field the user types a value into.
  */
-export interface TypingFieldState extends FieldState {
+export interface TypingFieldStateJson extends FieldStateJson {
 	/**
 	 * How long a typed value is held back before it is sent, in milliseconds. Absent: the default
 	 * of the component.
 	 */
-	debounceMs?: number;
+	debounceMs: number;
 
 	/**
 	 * Whether a typed value is held back until the field loses focus, instead of being sent while
-	 * the user is still typing. Takes precedence over {@link TypingFieldState.debounceMs}.
+	 * the user is still typing. Takes precedence over {@link TypingFieldStateJson.debounceMs}.
 	 */
-	sendValueOnBlur?: boolean;
+	sendValueOnBlur: boolean;
 
 	/**
 	 * Whether the field sends the command `commit` when it loses focus.
 	 */
-	commitOnBlur?: boolean;
+	commitOnBlur: boolean;
 }
 
 /**
  * State of a text field, the component `TLTextInput`.
  *
- * The {@link FieldState.value} is the text, a string.
+ * The {@link FieldStateJson.value} is the text, a string.
  */
-export interface TextInputState extends TypingFieldState {
+export interface TextInputStateJson extends TypingFieldStateJson {
 	/**
 	 * The kind of value the field edits. Absent: plain text.
 	 */
-	inputType?: TextInputState.InputType;
+	inputType: TextInputStateJson.InputType;
 
 	/**
 	 * An icon shown inside the input ahead of the text, the encoded form of a theme image.
 	 */
-	icon?: string;
+	icon: string;
 
 	/**
 	 * Whether the input offers a button that empties it, while it holds a value.
 	 */
-	clearable?: boolean;
+	clearable: boolean;
 
 	/**
-	 * Whether the field is a text area of several lines, see {@link TextInputState.rows}.
+	 * Whether the field is a text area of several lines, see {@link TextInputStateJson.rows}.
 	 */
-	multiline?: boolean;
+	multiline: boolean;
 
 	/**
-	 * The number of visible rows of a {@link TextInputState.multiline} field.
+	 * The number of visible rows of a {@link TextInputStateJson.multiline} field.
 	 */
-	rows?: number;
+	rows: number;
 }
 
-export namespace TextInputState {
+export namespace TextInputStateJson {
 	/**
 	 * The kind of value a text field edits, the `type` of the HTML input.
 	 */
@@ -445,24 +445,24 @@ export namespace TextInputState {
 /**
  * State of a password field, the component `TLPasswordInput`.
  *
- * The {@link FieldState.value} is the password typed, a string.
+ * The {@link FieldStateJson.value} is the password typed, a string.
  */
-export interface PasswordInputState extends TypingFieldState {}
+export interface PasswordInputStateJson extends TypingFieldStateJson {}
 
 /**
  * State of a number field, the component `TLNumberInput`.
  *
- * The {@link FieldState.value} is the number written in the format of the field, a string; the text typed
+ * The {@link FieldStateJson.value} is the number written in the format of the field, a string; the text typed
  * is sent back as it is and parsed by the server.
  */
-export interface NumberInputState extends TypingFieldState {
+export interface NumberInputStateJson extends TypingFieldStateJson {
 	/**
 	 * The on-screen keyboard the input asks for.
 	 */
-	inputMode?: NumberInputState.InputMode;
+	inputMode: NumberInputStateJson.InputMode;
 }
 
-export namespace NumberInputState {
+export namespace NumberInputStateJson {
 	/**
 	 * The on-screen keyboard a number is typed on.
 	 */
@@ -484,23 +484,23 @@ export namespace NumberInputState {
 /**
  * State of a field for a date, a time of day, or both, the component `TLDatePicker`.
  *
- * The {@link FieldState.value} is the ISO form of the value for the HTML input of the {@link DatePickerState.inputType}, a
+ * The {@link FieldStateJson.value} is the ISO form of the value for the HTML input of the {@link DatePickerStateJson.inputType}, a
  * string (e.g. `2026-06-01`, `14:30`, `2026-06-01T14:30`).
  */
-export interface DatePickerState extends FieldState {
+export interface DatePickerStateJson extends FieldStateJson {
 	/**
 	 * The part of a point in time the field edits.
 	 */
-	inputType?: DatePickerState.InputType;
+	inputType: DatePickerStateJson.InputType;
 
 	/**
 	 * The value written in the display format of the current user, shown while the field is not
 	 * editable.
 	 */
-	displayValue?: string;
+	displayValue: string;
 }
 
-export namespace DatePickerState {
+export namespace DatePickerStateJson {
 	/**
 	 * The part of a point in time a field edits, the `type` of the HTML input.
 	 */
@@ -522,18 +522,18 @@ export namespace DatePickerState {
 /**
  * State of a field choosing one value from a short list, the component `TLSelect`.
  *
- * The {@link FieldState.value} is the chosen value, in the JSON form of the {@link SelectState.Option.value} of the
+ * The {@link FieldStateJson.value} is the chosen value, in the JSON form of the {@link SelectStateJson.Option.value} of the
  * option naming it.
  */
-export interface SelectState extends FieldState {
+export interface SelectStateJson extends FieldStateJson {
 	/**
 	 * The values that can be chosen. A value the field holds is among them, also where it cannot
 	 * be chosen anew.
 	 */
-	options?: SelectState.Option[];
+	options: SelectStateJson.Option[];
 }
 
-export namespace SelectState {
+export namespace SelectStateJson {
 	/**
 	 * A value that can be chosen.
 	 */
@@ -546,7 +546,7 @@ export namespace SelectState {
 		/**
 		 * The label of the value.
 		 */
-		label?: string;
+		label: string;
 	}
 }
 
@@ -555,46 +555,46 @@ export namespace SelectState {
  * that opens on demand), `TLOptionChips` (every option a toggle of its own) and
  * `TLSegmentedChoice` (the options as the segments of one bar).
  *
- * The {@link FieldState.value} is the list of the chosen objects, each an {@link DropdownSelectState.Option} (also for a field
+ * The {@link FieldStateJson.value} is the list of the chosen objects, each an {@link DropdownSelectStateJson.Option} (also for a field
  * choosing one object). A change is sent as the command `valueChanged` with the list of the
- * {@link DropdownSelectState.Option.value}s of the chosen options as argument `value`.
+ * {@link DropdownSelectStateJson.Option.value}s of the chosen options as argument `value`.
  */
-export interface DropdownSelectState extends FieldState {
+export interface DropdownSelectStateJson extends FieldStateJson {
 	/**
 	 * The shape the options are offered in. Absent means `'dropdown'`, a list that
 	 * opens on demand.
 	 */
-	display?: DropdownSelectState.Display;
+	display: DropdownSelectStateJson.Display;
 
 	/**
-	 * The objects that can be chosen, valid while {@link DropdownSelectState.optionsLoaded} is set. A list that opens
+	 * The objects that can be chosen, valid while {@link DropdownSelectStateJson.optionsLoaded} is set. A list that opens
 	 * on demand asks for them with the command `loadOptions`.
 	 */
-	options?: DropdownSelectState.Option[];
+	options: DropdownSelectStateJson.Option[];
 
 	/**
-	 * Whether {@link DropdownSelectState.options} is up to date.
+	 * Whether {@link DropdownSelectStateJson.options} is up to date.
 	 */
-	optionsLoaded?: boolean;
+	optionsLoaded: boolean;
 
 	/**
 	 * Whether the chosen objects are kept in the order the user gives them, instead of being
 	 * sorted.
 	 */
-	customOrder?: boolean;
+	customOrder: boolean;
 
 	/**
 	 * Whether more than one object can be chosen.
 	 */
-	multiSelect?: boolean;
+	multiSelect: boolean;
 
 	/**
 	 * The label of the choice of no object.
 	 */
-	emptyOptionLabel?: string;
+	emptyOptionLabel: string;
 }
 
-export namespace DropdownSelectState {
+export namespace DropdownSelectStateJson {
 	/**
 	 * The shape the options are offered in.
 	 *
@@ -622,56 +622,56 @@ export namespace DropdownSelectState {
 		/**
 		 * The ID of the option, by which the client names it to the server.
 		 */
-		value?: string;
+		value: string;
 
 		/**
 		 * The label of the object.
 		 */
-		label?: string;
+		label: string;
 
 		/**
 		 * The icon of the object, the encoded form of a theme image.
 		 */
-		image?: string;
+		image: string;
 
 		/**
 		 * The CSS color the object carries in the model.
 		 */
-		color?: string;
+		color: string;
 
 		/**
 		 * Whether the option leads to the place the application displays the object at, when
-		 * followed: the command `goto` with the {@link DropdownSelectState.Option.value} as argument `option`.
+		 * followed: the command `goto` with the {@link DropdownSelectStateJson.Option.value} as argument `option`.
 		 * Only set on the chosen options of a field that is not editable.
 		 */
-		link?: boolean;
+		link: boolean;
 	}
 }
 
 /**
  * State of a tab strip above the content of the selected tab, the component `TLTabBar`.
  *
- * A click on a tab sends the command `selectTab` with the {@link TabBarState.Tab.id} as argument
+ * A click on a tab sends the command `selectTab` with the {@link TabBarStateJson.Tab.id} as argument
  * `tabId`.
  */
-export interface TabBarState extends ControlState {
+export interface TabBarStateJson extends ControlStateJson {
 	/**
 	 * The tabs, in the order of the strip.
 	 */
-	tabs?: TabBarState.Tab[];
+	tabs: TabBarStateJson.Tab[];
 
 	/**
-	 * The {@link TabBarState.Tab.id} of the selected tab.
+	 * The {@link TabBarStateJson.Tab.id} of the selected tab.
 	 */
-	activeTabId?: string;
+	activeTabId: string;
 
 	/**
 	 * The content of the selected tab.
 	 */
-	activeContent?: ChildControl;
+	activeContent?: ChildControlJson;
 }
 
-export namespace TabBarState {
+export namespace TabBarStateJson {
 	/**
 	 * A tab of the strip.
 	 */
@@ -679,17 +679,17 @@ export namespace TabBarState {
 		/**
 		 * The ID of the tab.
 		 */
-		id?: string;
+		id: string;
 
 		/**
 		 * The label of the tab.
 		 */
-		label?: string;
+		label: string;
 
 		/**
 		 * The icon of the tab, the encoded form of a theme image.
 		 */
-		icon?: string;
+		icon: string;
 	}
 }
 
@@ -699,56 +699,56 @@ export namespace TabBarState {
  *
  * Closing the window sends the command `close`, resizing it the command `resize`.
  */
-export interface WindowState extends ControlState {
+export interface WindowStateJson extends ControlStateJson {
 	/**
 	 * The title of the window.
 	 */
-	title?: string;
+	title: string;
 
 	/**
 	 * The width of the window, a CSS length (e.g. `32rem`, `640px`).
 	 */
-	width?: string;
+	width: string;
 
 	/**
 	 * The height of the window, a CSS length. Absent: the height of the content.
 	 */
-	height?: string;
+	height: string;
 
 	/**
 	 * The least height of the window, a CSS length. Absent: none.
 	 */
-	minHeight?: string;
+	minHeight: string;
 
 	/**
 	 * Whether the user can resize the window by dragging its edges.
 	 */
-	resizable?: boolean;
+	resizable: boolean;
 
 	/**
 	 * Whether the user can close the window. Absent: closable.
 	 */
-	closable?: boolean;
+	closable: boolean;
 
 	/**
 	 * The content of the window body.
 	 */
-	child?: ChildControl;
+	child?: ChildControlJson;
 
 	/**
 	 * The toolbar of the title bar. Absent: none.
 	 */
-	toolbar?: ChildControl;
+	toolbar?: ChildControlJson;
 
 	/**
 	 * The toolbar of the footer. Absent: none.
 	 */
-	footer?: ChildControl;
+	footer?: ChildControlJson;
 
 	/**
 	 * Buttons added to the window one by one.
 	 */
-	toolbarButtons?: ChildControl[];
+	toolbarButtons: ChildControlJson[];
 }
 
 /**
@@ -756,63 +756,63 @@ export interface WindowState extends ControlState {
  *
  * Dismissing the dialog sends the command `close`.
  */
-export interface DialogState extends ControlState {
+export interface DialogStateJson extends ControlStateJson {
 	/**
 	 * Whether the dialog is shown.
 	 */
-	open?: boolean;
+	open: boolean;
 
 	/**
 	 * Whether a click beside the dialog dismisses it. Absent: dismissed.
 	 */
-	closeOnBackdrop?: boolean;
+	closeOnBackdrop: boolean;
 
 	/**
 	 * Whether the user can dismiss the dialog. Absent: dismissable.
 	 */
-	closable?: boolean;
+	closable: boolean;
 
 	/**
 	 * The content of the dialog.
 	 */
-	child?: ChildControl;
+	child?: ChildControlJson;
 }
 
 /**
  * State of a popup menu, the component `TLMenu`.
  *
- * Choosing an item sends the command `selectItem` with the {@link MenuState.Entry.id} as argument
+ * Choosing an item sends the command `selectItem` with the {@link MenuStateJson.Entry.id} as argument
  * `itemId`; closing the menu without choosing sends the command `close`.
  */
-export interface MenuState extends ControlState {
+export interface MenuStateJson extends ControlStateJson {
 	/**
 	 * Whether the menu is shown.
 	 */
-	open?: boolean;
+	open: boolean;
 
 	/**
 	 * The ID of the element the menu is shown at. Absent while it is shown at
-	 * {@link MenuState.anchorX}/{@link MenuState.anchorY}.
+	 * {@link MenuStateJson.anchorX}/{@link MenuStateJson.anchorY}.
 	 */
-	anchorId?: string;
+	anchorId: string;
 
 	/**
 	 * The horizontal position in the viewport the menu is shown at, in pixels.
 	 */
-	anchorX?: number;
+	anchorX: number;
 
 	/**
 	 * The vertical position in the viewport the menu is shown at, in pixels.
 	 */
-	anchorY?: number;
+	anchorY: number;
 
 	/**
 	 * The entries of the menu.
 	 */
-	items?: MenuState.Entry[];
+	items: MenuStateJson.Entry[];
 }
 
-export namespace MenuState {
+export namespace MenuStateJson {
 	/**
 	 * The kind of an entry.
 	 */
@@ -837,81 +837,81 @@ export namespace MenuState {
 		/**
 		 * The kind of the entry.
 		 */
-		type?: MenuState.EntryType;
+		type: MenuStateJson.EntryType;
 
 		/**
 		 * The ID of an item.
 		 */
-		id?: string;
+		id: string;
 
 		/**
 		 * The label of an item or a header.
 		 */
-		label?: string;
+		label: string;
 
 		/**
 		 * The icon of an item, the encoded form of a theme image.
 		 */
-		icon?: string;
+		icon: string;
 
 		/**
 		 * Whether the item cannot be chosen.
 		 */
-		disabled?: boolean;
+		disabled: boolean;
 
 		/**
 		 * Whether the effect of the item's command is currently in force, marking the item as the
 		 * chosen one among its alternatives.
 		 */
-		active?: boolean;
+		active: boolean;
 
 		/**
 		 * Additional CSS classes of the item, separated by spaces.
 		 */
-		cssClasses?: string;
+		cssClasses: string;
 	}
 }
 
 /**
  * State of a short message at the edge of the page, the component `TLSnackbar`.
  *
- * Dismissing the message sends the command `dismiss` with the {@link SnackbarState.generation} of the
+ * Dismissing the message sends the command `dismiss` with the {@link SnackbarStateJson.generation} of the
  * message as argument `generation`.
  */
-export interface SnackbarState extends ControlState {
+export interface SnackbarStateJson extends ControlStateJson {
 	/**
-	 * The message, plain text. Shown where there is no {@link SnackbarState.content}.
+	 * The message, plain text. Shown where there is no {@link SnackbarStateJson.content}.
 	 */
-	message?: string;
+	message: string;
 
 	/**
-	 * The message, HTML. Takes precedence over {@link SnackbarState.message}.
+	 * The message, HTML. Takes precedence over {@link SnackbarStateJson.message}.
 	 */
-	content?: string;
+	content: string;
 
 	/**
 	 * The kind of the message.
 	 */
-	variant?: SnackbarState.Variant;
+	variant: SnackbarStateJson.Variant;
 
 	/**
 	 * The time after which the message is dismissed, in milliseconds; zero for a message that stays
 	 * until it is dismissed.
 	 */
-	duration?: number;
+	duration: number;
 
 	/**
 	 * Whether a message is shown.
 	 */
-	visible?: boolean;
+	visible: boolean;
 
 	/**
 	 * The number of the message shown, counting the messages this control has shown.
 	 */
-	generation?: number;
+	generation: number;
 }
 
-export namespace SnackbarState {
+export namespace SnackbarStateJson {
 	/**
 	 * The kind of a message.
 	 */

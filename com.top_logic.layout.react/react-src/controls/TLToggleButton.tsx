@@ -1,5 +1,5 @@
 import { React, useTLState, useTLCommand, rootClassName } from 'tl-react-bridge';
-import type { TLCellProps, ToggleButtonState } from 'tl-react-bridge';
+import type { TLCellProps, ToggleButtonStateJson } from 'tl-react-bridge';
 import { buttonClassName, useButtonDefaults } from './button/ButtonDefaults';
 
 const { useCallback } = React;
@@ -31,7 +31,7 @@ export interface TLToggleButtonProps {
  * {@code label}, {@code active}, and {@code disabled} as props to customise behaviour.</p>
  */
 const TLToggleButton: React.FC<TLCellProps & TLToggleButtonProps> = ({ controlId, command, label, active, disabled }) => {
-  const state = useTLState<ToggleButtonState>();
+  const state = useTLState<Partial<ToggleButtonStateJson>>();
   const sendCommand = useTLCommand();
   const defaults = useButtonDefaults();
 

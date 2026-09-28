@@ -2,7 +2,7 @@ import {
   React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding,
   useFocusTrap, FillBarrier, startPointerDrag, rootClassName, tooltipProps,
 } from 'tl-react-bridge';
-import type { TLCellProps, WindowState } from 'tl-react-bridge';
+import type { TLCellProps, WindowStateJson } from 'tl-react-bridge';
 import { ButtonDefaults } from './button/ButtonDefaults';
 
 const { useCallback, useRef, useState } = React;
@@ -55,7 +55,7 @@ const RESIZE_CURSORS: Record<ResizeDir, string> = {
  * command renders nothing, which leaves the footer strip empty and the stylesheet hides it.
  */
 const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState<WindowState>();
+  const state = useTLState<Partial<WindowStateJson>>();
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
 

@@ -2,7 +2,7 @@ import {
   React, useTLState, useTLCommand, TLChild, KeyboardScopeProvider, useKeyboardBinding, FillBarrier,
   rootClassName,
 } from 'tl-react-bridge';
-import type { TLCellProps, DialogState } from 'tl-react-bridge';
+import type { TLCellProps, DialogStateJson } from 'tl-react-bridge';
 
 const { useCallback, useRef } = React;
 
@@ -29,7 +29,7 @@ const EscapeToClose: React.FC<{ onClose: () => void }> = ({ onClose }) => {
  * - child: ChildDescriptor
  */
 const TLDialog: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState<DialogState>();
+  const state = useTLState<Partial<DialogStateJson>>();
   const sendCommand = useTLCommand();
 
   const open = state.open === true;

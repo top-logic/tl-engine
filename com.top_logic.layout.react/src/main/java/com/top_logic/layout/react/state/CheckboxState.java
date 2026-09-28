@@ -79,28 +79,6 @@ public interface CheckboxState extends com.top_logic.layout.react.state.FieldSta
 		public static Display readDisplay(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 			return valueOfProtocol(in.nextString());
 		}
-
-		/** Writes this instance to the given binary output. */
-		public final void writeTo(de.haumacher.msgbuf.binary.DataWriter out) throws java.io.IOException {
-			switch (this) {
-				case CHECKBOX: out.value(1); break;
-				case SWITCH: out.value(2); break;
-				case SELECT: out.value(3); break;
-				case RADIO: out.value(4); break;
-				default: out.value(0);
-			}
-		}
-
-		/** Reads a new instance from the given binary reader. */
-		public static Display readDisplay(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-			switch (in.nextInt()) {
-				case 1: return CHECKBOX;
-				case 2: return SWITCH;
-				case 3: return SELECT;
-				case 4: return RADIO;
-				default: return CHECKBOX;
-			}
-		}
 	}
 
 	/**

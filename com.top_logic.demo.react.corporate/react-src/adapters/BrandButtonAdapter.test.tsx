@@ -10,7 +10,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TLControlContext, KeyboardScopeProvider, useKeyboardBinding } from 'tl-react-bridge';
-import type { ButtonState } from 'tl-react-bridge';
+import type { ButtonStateJson } from 'tl-react-bridge';
 import { BrandProvider } from '../example-lib';
 import BrandButtonAdapter from './BrandButtonAdapter';
 
@@ -54,7 +54,7 @@ function contextOf(snapshot: Record<string, unknown>): ControlContext {
  * useTLCommand() posts through the bridge's command channel; the stub answers every request, and
  * the recorded request bodies are the commands the adapter sent.
  */
-function mountButton(state: ButtonState, outer?: () => void) {
+function mountButton(state: Partial<ButtonStateJson>, outer?: () => void) {
   const sent = vi.fn<(command: string) => void>();
   vi.stubGlobal('fetch', vi.fn(async (_url: string, init?: RequestInit) => {
     const body = JSON.parse(String(init?.body ?? '{}'));

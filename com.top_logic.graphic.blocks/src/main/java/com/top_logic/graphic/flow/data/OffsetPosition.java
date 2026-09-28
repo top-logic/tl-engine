@@ -94,36 +94,4 @@ public enum OffsetPosition implements de.haumacher.msgbuf.data.ProtocolEnum {
 	public static OffsetPosition readOffsetPosition(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		return valueOfProtocol(in.nextString());
 	}
-
-	/** Writes this instance to the given binary output. */
-	public final void writeTo(de.haumacher.msgbuf.binary.DataWriter out) throws java.io.IOException {
-		switch (this) {
-			case CENTER: out.value(1); break;
-			case CENTER_TOP: out.value(2); break;
-			case CENTER_LEFT: out.value(3); break;
-			case CENTER_BOTTOM: out.value(4); break;
-			case CENTER_RIGHT: out.value(5); break;
-			case TOP_LEFT: out.value(6); break;
-			case TOP_RIGHT: out.value(7); break;
-			case BOTTOM_LEFT: out.value(8); break;
-			case BOTTOM_RIGHT: out.value(9); break;
-			default: out.value(0);
-		}
-	}
-
-	/** Reads a new instance from the given binary reader. */
-	public static OffsetPosition readOffsetPosition(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-		switch (in.nextInt()) {
-			case 1: return CENTER;
-			case 2: return CENTER_TOP;
-			case 3: return CENTER_LEFT;
-			case 4: return CENTER_BOTTOM;
-			case 5: return CENTER_RIGHT;
-			case 6: return TOP_LEFT;
-			case 7: return TOP_RIGHT;
-			case 8: return BOTTOM_LEFT;
-			case 9: return BOTTOM_RIGHT;
-			default: return CENTER;
-		}
-	}
 }

@@ -1,4 +1,4 @@
-import type { ControlState } from '../state/control-state';
+import type { ControlStateJson } from '../state/control-state';
 
 // The class name of a control's root element: what the component itself needs to look like its
 // kind, plus the class the server configured for this one control.
@@ -12,7 +12,7 @@ import type { ControlState } from '../state/control-state';
  * Written by the server side of every control, so a component reads it through
  * {@link rootClassName} rather than by name.
  */
-const CSS_CLASS = 'cssClass' satisfies keyof ControlState;
+const CSS_CLASS = 'cssClass' satisfies keyof ControlStateJson;
 
 /**
  * The class name for the root element of a control.
@@ -23,10 +23,10 @@ const CSS_CLASS = 'cssClass' satisfies keyof ControlState;
  * @returns The given classes followed by the configured one, separated by spaces.
  */
 export function rootClassName(
-  state: Record<string, unknown> | ControlState,
+  state: Record<string, unknown> | Partial<ControlStateJson>,
   ...classes: (string | false | null | undefined)[]
 ): string {
-  const configured = (state as ControlState)[CSS_CLASS];
+  const configured = (state as Partial<ControlStateJson>)[CSS_CLASS];
   const all = typeof configured === 'string' ? [...classes, configured] : classes;
   return all.filter(Boolean).join(' ');
 }

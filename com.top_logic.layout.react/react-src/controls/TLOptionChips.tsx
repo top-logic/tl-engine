@@ -1,5 +1,5 @@
 import { React, useTLState, useTLCommand, CMD_VALUE_CHANGED, rootClassName } from 'tl-react-bridge';
-import type { TLCellProps, DropdownSelectState } from 'tl-react-bridge';
+import type { TLCellProps, DropdownSelectStateJson } from 'tl-react-bridge';
 import { ARG_OPTION, CMD_GOTO, OptionImage, ReadonlyValue, withPill } from './selectOptions';
 import type { OptionDescriptor } from './selectOptions';
 
@@ -18,7 +18,7 @@ const { useCallback, useMemo, useRef } = React;
  * moment at which it could ask for it.
  */
 const TLOptionChips: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState<DropdownSelectState>();
+  const state = useTLState<Partial<DropdownSelectStateJson>>();
   const sendCommand = useTLCommand();
 
   const value = (state.value ?? []) as OptionDescriptor[];

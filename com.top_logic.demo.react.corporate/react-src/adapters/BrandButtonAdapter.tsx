@@ -2,7 +2,7 @@ import {
   React, useTLState, useTLCommand, useKeyboardBinding, rootClassName, ThemeIcon,
   TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED,
 } from 'tl-react-bridge';
-import type { TLCellProps, ButtonState } from 'tl-react-bridge';
+import type { TLCellProps, ButtonStateJson } from 'tl-react-bridge';
 import { BrandButton } from '../example-lib';
 
 const { useCallback } = React;
@@ -11,7 +11,7 @@ const { useCallback } = React;
 const CMD_CLICK = 'click';
 
 /** The display mode of a button whose state names none. */
-const DEFAULT_DISPLAY_MODE: ButtonState.DisplayMode = 'label-only';
+const DEFAULT_DISPLAY_MODE: ButtonStateJson.DisplayMode = 'label-only';
 
 /**
  * Renders the state of a TopLogic button (module name `TLButton`) with the library's
@@ -43,7 +43,7 @@ const DEFAULT_DISPLAY_MODE: ButtonState.DisplayMode = 'label-only';
  * addresses the classes of the TopLogic button).</p>
  */
 const BrandButtonAdapter: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState<ButtonState>();
+  const state = useTLState<Partial<ButtonStateJson>>();
   const sendCommand = useTLCommand();
 
   const label = state.label;

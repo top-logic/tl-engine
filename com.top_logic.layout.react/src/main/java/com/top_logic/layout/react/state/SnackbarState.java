@@ -72,28 +72,6 @@ public interface SnackbarState extends com.top_logic.layout.react.state.ControlS
 		public static Variant readVariant(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 			return valueOfProtocol(in.nextString());
 		}
-
-		/** Writes this instance to the given binary output. */
-		public final void writeTo(de.haumacher.msgbuf.binary.DataWriter out) throws java.io.IOException {
-			switch (this) {
-				case INFO: out.value(1); break;
-				case SUCCESS: out.value(2); break;
-				case WARNING: out.value(3); break;
-				case ERROR: out.value(4); break;
-				default: out.value(0);
-			}
-		}
-
-		/** Reads a new instance from the given binary reader. */
-		public static Variant readVariant(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-			switch (in.nextInt()) {
-				case 1: return INFO;
-				case 2: return SUCCESS;
-				case 3: return WARNING;
-				case 4: return ERROR;
-				default: return INFO;
-			}
-		}
 	}
 
 	/**

@@ -1,5 +1,5 @@
 import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, useCloseOnOutsidePress, CMD_VALUE_CHANGED, rootClassName, tooltipProps, createPortal } from 'tl-react-bridge';
-import type { TLCellProps, DropdownSelectState } from 'tl-react-bridge';
+import type { TLCellProps, DropdownSelectStateJson } from 'tl-react-bridge';
 import {
   ARG_OPTION,
   CMD_GOTO,
@@ -134,7 +134,7 @@ function OptionRow({
 // -- Main component --
 
 const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState<DropdownSelectState>();
+  const state = useTLState<Partial<DropdownSelectStateJson>>();
   const sendCommand = useTLCommand();
 
   // Server state

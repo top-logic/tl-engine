@@ -7,7 +7,7 @@ import {
   VALUE_DEBOUNCE_MS,
   tooltipProps,
 } from 'tl-react-bridge';
-import type { TLCellProps, NumberInputState } from 'tl-react-bridge';
+import type { TLCellProps, NumberInputStateJson } from 'tl-react-bridge';
 
 const { useCallback } = React;
 
@@ -38,7 +38,7 @@ const { useCallback } = React;
  * it, so the span matters here only where the server turns the blur behaviour off.
  */
 const TLNumberInput: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState<NumberInputState>();
+  const state = useTLState<Partial<NumberInputStateJson>>();
   const [value, setValue, flushValue] = useTLFieldValue({
     debounceMs: state.debounceMs ?? VALUE_DEBOUNCE_MS,
     sendOnBlur: state.sendValueOnBlur === true,

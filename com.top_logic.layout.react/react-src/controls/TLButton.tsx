@@ -1,5 +1,5 @@
 import { React, useTLState, useTLCommand, useKeyboardBinding, rootClassName, TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED, ThemeIcon } from 'tl-react-bridge';
-import type { TLCellProps, ButtonState } from 'tl-react-bridge';
+import type { TLCellProps, ButtonStateJson } from 'tl-react-bridge';
 import { useButtonDefaults, buttonClassName } from './button/ButtonDefaults';
 import type { ButtonAppearance } from './button/ButtonDefaults';
 
@@ -18,7 +18,7 @@ export interface TLButtonProps {
   /** Whether the button is disabled.  Defaults to state.disabled. */
   disabled?: boolean;
   /** Display mode.  Defaults to state.displayMode or "label-only". */
-  displayMode?: ButtonState.DisplayMode;
+  displayMode?: ButtonStateJson.DisplayMode;
   /** Appearance; defaults to state.appearance, then the container's ButtonDefaults, then "secondary". */
   appearance?: ButtonAppearance;
   /** Destructive action; defaults to state.tone === "danger". */
@@ -50,7 +50,7 @@ export interface TLButtonProps {
  * so hiding the label text keeps the button named for assistive technology.</p>
  */
 const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, label, image, disabled, displayMode, appearance, danger }) => {
-  const state = useTLState<ButtonState>();
+  const state = useTLState<Partial<ButtonStateJson>>();
   const sendCommand = useTLCommand();
 
   const resolvedCommand = command ?? 'click';

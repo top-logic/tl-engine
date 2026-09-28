@@ -1,5 +1,5 @@
 import { React, useTLState, useTLCommand, rootClassName } from 'tl-react-bridge';
-import type { TLCellProps, SnackbarState } from 'tl-react-bridge';
+import type { TLCellProps, SnackbarStateJson } from 'tl-react-bridge';
 
 const { useCallback, useEffect, useRef, useState } = React;
 
@@ -21,7 +21,7 @@ const FADEOUT_AFTER_HOVER_MS = 250;
  * leaving resumes the fade-out after a short grace period.
  */
 const TLSnackbar: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState<SnackbarState>();
+  const state = useTLState<Partial<SnackbarStateJson>>();
   const sendCommand = useTLCommand();
 
   const message = state.message ?? '';

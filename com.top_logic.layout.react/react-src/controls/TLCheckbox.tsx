@@ -1,10 +1,10 @@
 import { React, useTLState, useTLFieldValue, rootClassName } from 'tl-react-bridge';
-import type { TLCellProps, CheckboxState } from 'tl-react-bridge';
+import type { TLCellProps, CheckboxStateJson } from 'tl-react-bridge';
 
 const { useCallback, useRef, useEffect } = React;
 
 /** The `display` a switch is drawn for; any other value is drawn as a box that is ticked. */
-const DISPLAY_SWITCH: CheckboxState.Display = 'switch';
+const DISPLAY_SWITCH: CheckboxStateJson.Display = 'switch';
 
 /**
  * A boolean field rendered via React: a box that is ticked, or — with `display` set to
@@ -14,7 +14,7 @@ const DISPLAY_SWITCH: CheckboxState.Display = 'switch';
  * click cycles through checked, unchecked and unset.
  */
 const TLCheckbox: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState<CheckboxState>();
+  const state = useTLState<Partial<CheckboxStateJson>>();
   const [value, setValue] = useTLFieldValue();
   const triState = state.triState === true;
   const asSwitch = state.display === DISPLAY_SWITCH;

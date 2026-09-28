@@ -1,5 +1,5 @@
 import { React, useTLState, useTLCommand, useCloseOnOutsidePress, useFocusTrap, rootClassName, ThemeIcon } from 'tl-react-bridge';
-import type { TLCellProps, MenuState } from 'tl-react-bridge';
+import type { TLCellProps, MenuStateJson } from 'tl-react-bridge';
 
 const { useCallback, useEffect, useRef, useState } = React;
 
@@ -7,7 +7,7 @@ const { useCallback, useEffect, useRef, useState } = React;
  * An entry as the server describes it. Only an item is focused and chosen, and an item always
  * carries its ID and label.
  */
-type MenuItem = MenuState.Entry & Required<Pick<MenuState.Entry, 'type' | 'id' | 'label'>>;
+type MenuItem = Partial<MenuStateJson.Entry> & Required<Pick<MenuStateJson.Entry, 'type' | 'id' | 'label'>>;
 
 /**
  * A popup menu triggered by an anchor element.
@@ -18,7 +18,7 @@ type MenuItem = MenuState.Entry & Required<Pick<MenuState.Entry, 'type' | 'id' |
  * - items: MenuItem[]
  */
 const TLMenu: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState<MenuState>();
+  const state = useTLState<Partial<MenuStateJson>>();
   const sendCommand = useTLCommand();
 
   const open = state.open === true;

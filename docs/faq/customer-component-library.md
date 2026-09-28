@@ -129,19 +129,19 @@ replace('TLCheckbox', BrandCheckboxAdapter);
 
 ### An adapter
 
-An adapter reads the typed state with `useTLState<XState>()` — the state types are exported by
+An adapter reads the typed state with `useTLState<Partial<XStateJson>>()` — the state types are exported by
 `tl-react-bridge` — and sends commands with `useTLCommand()` (shortened from
 `react-src/adapters/BrandButtonAdapter.tsx`):
 
 ```tsx
 import { React, useTLState, useTLCommand, useKeyboardBinding, rootClassName, ThemeIcon } from 'tl-react-bridge';
-import type { TLCellProps, ButtonState } from 'tl-react-bridge';
+import type { TLCellProps, ButtonStateJson } from 'tl-react-bridge';
 import { BrandButton } from '../example-lib';
 
 const CMD_CLICK = 'click';
 
 const BrandButtonAdapter: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState<ButtonState>();
+  const state = useTLState<Partial<ButtonStateJson>>();
   const sendCommand = useTLCommand();
   const disabled = state.disabled === true;
   const click = () => sendCommand(CMD_CLICK);   // the full adapter also honours navigateUrl
@@ -181,7 +181,7 @@ and so makes the library component part of the form's edit and save cycle
 (`react-src/adapters/BrandCheckboxAdapter.tsx`):
 
 ```tsx
-const state = useTLState<CheckboxState>();
+const state = useTLState<Partial<CheckboxStateJson>>();
 const [value, setValue] = useTLFieldValue();
 return <BrandCheckbox id={controlId} checked={value === true} onChange={setValue}
   readOnly={state.editable === false} invalid={state.hasError === true}
@@ -219,8 +219,11 @@ The shared parts are `ControlState` (`hidden`, `cssClass`), `FieldState` (value,
 `mandatory`, error and warning flags, label, placeholder, …), `TypingFieldState` (debounce, send on
 blur) and `ChildControl` (a control embedded in the state of another one, rendered with
 `<TLChild control={…}/>`). The TypeScript types are generated into
-`com.top_logic.layout.react/react-src/state/control-state.ts`; enumerations appear there as string
-unions (`ButtonState.Appearance` is `'primary' | 'ghost' | 'link'`).
+`com.top_logic.layout.react/react-src/state/control-state.ts`, named after the message with the
+suffix `Json` (`ButtonState` → `ButtonStateJson`); enumerations appear there as string unions
+(`ButtonStateJson.Appearance` is `'primary' | 'ghost' | 'link'`). The generated types declare every
+property as present, but a control sends only the properties that differ from their default — read
+the state as `Partial<XStateJson>`.
 
 ## Level 3: new UIElements only for widgets without a TopLogic counterpart
 
@@ -300,7 +303,7 @@ To make another component replaceable:
    `react-src/bridge-entry.ts`.
 2. In the Java control, publish every key through the generated constants
    (`putState(ButtonState.LABEL__PROP, label)`) instead of string literals.
-3. In the component, read the state with `useTLState<XState>()`.
+3. In the component, read the state with `useTLState<Partial<XStateJson>>()`.
 4. Extend `test.com.top_logic.layout.react.state.TestControlStateSchema`: drive the control
    through its setters and check that every key of its state (`stateAsJSON()`, or a subclass
    recording its `putState` calls) is declared in the message (`assertDeclared`; for lists and

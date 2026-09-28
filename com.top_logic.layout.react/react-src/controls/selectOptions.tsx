@@ -22,7 +22,7 @@ export const CMD_GOTO = 'goto';
 export const ARG_OPTION = 'option';
 
 /**
- * Wraps a value's presentation in a pill when the model gives that value a color.
+ * Wraps a value's presentation in a pill when the model gives that value a color role.
  *
  * <p>
  * Used for every presentation of an option - the rows of an open dropdown, the toggles of a chip
@@ -30,8 +30,8 @@ export const ARG_OPTION = 'option';
  * looks the same wherever a control shows it.
  * </p>
  */
-export function withPill(color: string | undefined, content: React.ReactNode) {
-  return color ? <TLPill color={color}>{content}</TLPill> : content;
+export function withPill(role: string | undefined, content: React.ReactNode) {
+  return role ? <TLPill role={role}>{content}</TLPill> : content;
 }
 
 /** Renders an option's image, whatever encoded form it arrives in. */
@@ -64,7 +64,7 @@ export function ReadonlyValue({
     [onGoto, option.value]
   );
 
-  const content = withPill(option.color, (
+  const content = withPill(option.colorRole, (
     <>
       <OptionImage image={option.image} />
       <span>{option.label}</span>

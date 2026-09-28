@@ -26,13 +26,24 @@ import com.top_logic.layout.view.navigation.RevealPath;
  * {@link NavigatePopCommand &lt;navigate-pop&gt;} / {@link NavigatePopAction the same as a chain
  * action}, {@link NavigatePopToCommand &lt;navigate-pop-to&gt;} / {@link NavigatePopToAction the
  * same as a chain action}) look it up via {@link #lookup(ReactContext, String)} and call
- * {@link #push(String, ResKey, Map)} / {@link #pop()} / {@link #popTo(int)} on it.
+ * {@link #push(String, ResKey, Map)} / {@link #pop()} / {@link #popTo(int)} on it. A navigation
+ * that replaces the upper part of the path by other frames, such as displaying an object in a frame
+ * drilled down to, calls {@link #replaceFrom(int, List)}.
  * </p>
  *
  * <p>
  * The scope is a thin facade over the stack's path {@link ViewChannel}: all mutators read the
  * channel's current value, compute the new list and write it back. The channel is the sole source
  * of truth.
+ * </p>
+ *
+ * <p>
+ * A mutator that would drop a frame holding unsaved changes - {@link #pop()}, {@link #popTo(int)},
+ * {@link #replaceFrom(int, List)} or a {@link #restore(int, String, Map, long) restore} replacing
+ * frames - is vetoed by the {@link ReactTileStackControl} displaying the stack: it throws a
+ * {@link com.top_logic.layout.view.channel.ChannelVetoException} naming the forms of the dropped
+ * frames and leaves the path unchanged. The exception's continuation performs the write once the
+ * user has saved or discarded.
  * </p>
  *
  * <p>
@@ -230,6 +241,31 @@ public class TileStackScope {
 	}
 
 	/**
+	 * Keeps the frames of the path up to the given position and puts the given frames above them.
+	 *
+	 * <p>
+	 * The path is written in one step, so that the display goes to the resulting path directly
+	 * instead of passing through the shortened one, and a veto asks about all dropped frames at once.
+	 * Its continuation performs that same write.
+	 * </p>
+	 *
+	 * <p>
+	 * A given frame {@link TileFrame#equals(Object) equal} to the one the path holds at its position
+	 * stays displayed as the user left it. A given frame without a label is named by the label the
+	 * stack declares for its view, as {@link #push(String, ResKey, Map)} names it.
+	 * </p>
+	 *
+	 * @param position
+	 *        Number of frames of the current path to keep. Negative values clamp to 0, values larger
+	 *        than the current size keep the whole path.
+	 * @param frames
+	 *        The frames to put above the kept ones, lowest first.
+	 */
+	public void replaceFrom(int position, List<TileFrame> frames) {
+		_pathChannel.set(pathFrom(position, frames));
+	}
+
+	/**
 	 * Puts the frame a URL names at the given position of the path, dropping whatever the path held
 	 * from there on.
 	 *
@@ -251,10 +287,7 @@ public class TileStackScope {
 	 *        adoption before.
 	 */
 	public void restore(int base, String viewRef, Map<String, Object> params, long adoptionId) {
-		List<TileFrame> current = readPath();
-		List<TileFrame> next = new ArrayList<>(current.subList(0, Math.max(0, Math.min(base, current.size()))));
-		next.add(frame(viewRef, null, params));
-		List<TileFrame> path = Collections.unmodifiableList(next);
+		List<TileFrame> path = pathFrom(base, List.of(new TileFrame(viewRef, null, params)));
 
 		// Recorded before the write: writing the path mounts the frame, and the participant of that
 		// frame asks for its base while the write is still in progress.
@@ -283,6 +316,20 @@ public class TileStackScope {
 			return 0;
 		}
 		return current.size();
+	}
+
+	/**
+	 * The frames of the current path up to the given position, followed by the given ones - each
+	 * named by the label the stack declares for its view where it carries none of its own.
+	 */
+	private List<TileFrame> pathFrom(int position, List<TileFrame> frames) {
+		List<TileFrame> current = readPath();
+		List<TileFrame> next =
+			new ArrayList<>(current.subList(0, Math.max(0, Math.min(position, current.size()))));
+		for (TileFrame frame : frames) {
+			next.add(frame.getLabel() != null ? frame : frame(frame.getViewRef(), null, frame.getParams()));
+		}
+		return Collections.unmodifiableList(next);
 	}
 
 	/**

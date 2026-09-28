@@ -103,7 +103,7 @@ const TLOptionChips: React.FC<TLCellProps> = ({ controlId }) => {
             aria-pressed={selected}
             onClick={() => toggle(option)}
           >
-            {withPill(option.color, (
+            {withPill(option.colorRole, (
               <>
                 <OptionImage image={option.image} />
                 <span className="tlOptionChips__chipLabel">{option.label}</span>

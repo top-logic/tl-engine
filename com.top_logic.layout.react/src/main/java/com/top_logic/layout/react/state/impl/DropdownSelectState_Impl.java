@@ -15,7 +15,7 @@ public class DropdownSelectState_Impl extends com.top_logic.layout.react.state.i
 
 		private String _image = "";
 
-		private String _color = "";
+		private String _colorRole = "";
 
 		private boolean _link = false;
 
@@ -77,19 +77,19 @@ public class DropdownSelectState_Impl extends com.top_logic.layout.react.state.i
 		}
 
 		@Override
-		public final String getColor() {
-			return _color;
+		public final String getColorRole() {
+			return _colorRole;
 		}
 
 		@Override
-		public com.top_logic.layout.react.state.DropdownSelectState.Option setColor(String value) {
-			internalSetColor(value);
+		public com.top_logic.layout.react.state.DropdownSelectState.Option setColorRole(String value) {
+			internalSetColorRole(value);
 			return this;
 		}
 
-		/** Internal setter for {@link #getColor()} without chain call utility. */
-		protected final void internalSetColor(String value) {
-			_color = value;
+		/** Internal setter for {@link #getColorRole()} without chain call utility. */
+		protected final void internalSetColorRole(String value) {
+			_colorRole = value;
 		}
 
 		@Override
@@ -122,8 +122,8 @@ public class DropdownSelectState_Impl extends com.top_logic.layout.react.state.i
 			out.value(getLabel());
 			out.name(IMAGE__PROP);
 			out.value(getImage());
-			out.name(COLOR__PROP);
-			out.value(getColor());
+			out.name(COLOR_ROLE__PROP);
+			out.value(getColorRole());
 			out.name(LINK__PROP);
 			out.value(isLink());
 		}
@@ -134,7 +134,7 @@ public class DropdownSelectState_Impl extends com.top_logic.layout.react.state.i
 				case VALUE__PROP: setValue(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 				case LABEL__PROP: setLabel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 				case IMAGE__PROP: setImage(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
-				case COLOR__PROP: setColor(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+				case COLOR_ROLE__PROP: setColorRole(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 				case LINK__PROP: setLink(in.nextBoolean()); break;
 				default: super.readField(in, field);
 			}

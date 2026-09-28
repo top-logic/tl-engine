@@ -97,8 +97,8 @@ public interface DropdownSelectState extends com.top_logic.layout.react.state.Fi
 		/** @see #getImage() */
 		String IMAGE__PROP = "image";
 
-		/** @see #getColor() */
-		String COLOR__PROP = "color";
+		/** @see #getColorRole() */
+		String COLOR_ROLE__PROP = "colorRole";
 
 		/** @see #isLink() */
 		String LINK__PROP = "link";
@@ -134,14 +134,16 @@ public interface DropdownSelectState extends com.top_logic.layout.react.state.Fi
 		com.top_logic.layout.react.state.DropdownSelectState.Option setImage(String value);
 
 		/**
-		 * The CSS color the object carries in the model.
+		 * The color role the object carries in the model (the external name of a value color:
+		 * neutral, brand, error, …, category-8). An option with a role is drawn as a pill of that
+		 * role, one without as plain text.
 		 */
-		String getColor();
+		String getColorRole();
 
 		/**
-		 * @see #getColor()
+		 * @see #getColorRole()
 		 */
-		com.top_logic.layout.react.state.DropdownSelectState.Option setColor(String value);
+		com.top_logic.layout.react.state.DropdownSelectState.Option setColorRole(String value);
 
 		/**
 		 * Whether the option leads to the place the application displays the object at, when

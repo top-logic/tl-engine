@@ -134,12 +134,13 @@ public class CompactHistoryTask<C extends CompactHistoryTask.Config<?>> extends 
 			Report report = HistoryCompactionOperation.compactAndRestart(cutOff, log);
 
 			getLog().taskEnded(ResultType.SUCCESS,
-				I18NConstants.TASK_COMPACTION_DONE__REVISION_DELETED_REWRITTEN_REPINNED_CLEARED.fill(
+				I18NConstants.TASK_COMPACTION_DONE__REVISION_DELETED_REWRITTEN_REPINNED_CLEARED_DROPPED.fill(
 					Long.valueOf(report.getCompactionRevision()),
 					Long.valueOf(report.getDeletedRows()),
 					Long.valueOf(report.getRewrittenRows()),
 					Long.valueOf(report.getRewrittenPins()),
-					Long.valueOf(report.getClearedPins())));
+					Long.valueOf(report.getClearedPins()),
+					Long.valueOf(report.getRowsDeletedForDanglingPins())));
 		} catch (I18NRuntimeException ex) {
 			getLog().taskEnded(ResultType.FAILURE, ex.getErrorKey(), ex);
 		} catch (RuntimeException ex) {

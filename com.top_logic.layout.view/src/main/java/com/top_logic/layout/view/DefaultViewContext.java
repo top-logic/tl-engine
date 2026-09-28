@@ -86,12 +86,27 @@ public class DefaultViewContext implements ViewContext {
 	 *           created within a window shares the window's
 	 *           {@link #getRevealRegistry() reveal registry} and leaves the name it already holds
 	 *           untouched.
+	 *
+	 *           <p>
+	 *           Every root context is a dirty-tracked scope of its own, see
+	 *           {@link #getDirtyChannel()}. The context of a window starts the chain of dirty
+	 *           channels all forms of that window report to. A context created within a window - a
+	 *           dialog, the frame of a tile stack - lies within the scope of the context it was
+	 *           created from, so its channel forwards there and reaches the channel of the window.
+	 *           </p>
 	 */
 	public DefaultViewContext(ReactContext reactContext, String rootView) {
-		this(reactContext, "view", new HashMap<>(), null, null, null,
+		this(reactContext, "view", new HashMap<>(), null, null, resolveDirtyChannel(reactContext),
 			resolveReloadListeners(reactContext), null,
 			SlotPath.ROOT, resolveSlotRegistry(reactContext), resolveRevealRegistry(reactContext, rootView),
 			Map.of());
+	}
+
+	private static DirtyChannel resolveDirtyChannel(ReactContext reactContext) {
+		if (reactContext instanceof ViewContext enclosing) {
+			return new DirtyChannel(enclosing.getDirtyChannel());
+		}
+		return new DirtyChannel();
 	}
 
 	private static List<ViewReloadListener> resolveReloadListeners(ReactContext reactContext) {

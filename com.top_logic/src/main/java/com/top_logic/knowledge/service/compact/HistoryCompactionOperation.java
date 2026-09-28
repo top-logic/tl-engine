@@ -6,23 +6,16 @@
 package com.top_logic.knowledge.service.compact;
 
 import java.sql.SQLException;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
-import com.top_logic.base.administration.MaintenanceWindowManager;
-import com.top_logic.base.cluster.ClusterManager;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.module.ModuleUtil;
-import com.top_logic.basic.module.RestartException;
 import com.top_logic.basic.sched.SchedulerService;
-import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
 import com.top_logic.knowledge.service.db2.HistoryCompaction;
 import com.top_logic.knowledge.service.db2.HistoryCompaction.Report;
+import com.top_logic.knowledge.service.maintenance.PersistencyMaintenance;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -31,19 +24,12 @@ import com.top_logic.util.error.TopLogicException;
  *
  * <p>
  * The compaction deletes rows of revisions that a running {@link KnowledgeBase} still holds in its
- * caches and that other sessions and other nodes of a cluster may still access. It therefore
- * requires an active maintenance window and, in a cluster, that the executing node is the only
- * active one. Within a maintenance window no user session works with the data, and the state
- * visible in the newest revision is not touched by the rewrite, so the compaction runs against the
- * started knowledge base.
- * </p>
- *
- * <p>
- * Afterwards the {@link KnowledgeBaseFactory} is restarted, which drops the caches of items,
- * revisions and branches that still describe the discarded history. The restart ends every session
- * and is therefore scheduled on the {@link SchedulerService} instead of running on the thread that
- * triggered the compaction. The maintenance window is a cluster property that is read again on
- * start-up and hence survives the restart.
+ * caches and that other sessions and other nodes of a cluster may still access. It therefore runs
+ * under the conditions of a {@link PersistencyMaintenance}: in an active maintenance window, on the
+ * single active node of a cluster, and followed by a restart of the {@link KnowledgeBaseFactory}
+ * that drops the caches still describing the discarded history. The state visible in the newest
+ * revision is not touched by the rewrite, so the compaction runs against the started knowledge
+ * base.
  * </p>
  *
  * <p>
@@ -56,36 +42,15 @@ import com.top_logic.util.error.TopLogicException;
 public class HistoryCompactionOperation {
 
 	/**
-	 * Delay after which the restart of the persistency layer starts, so that the answer to the
-	 * request triggering it can still be delivered.
-	 */
-	private static final long RESTART_DELAY_SECONDS = 2;
-
-	/**
 	 * Whether the preconditions of {@link #compact(long, Log)} are currently met.
 	 *
 	 * @return A message describing the violated precondition, or <code>null</code> if the
 	 *         compaction may run.
+	 *
+	 * @see PersistencyMaintenance#checkPreconditions()
 	 */
 	public static ResKey checkPreconditions() {
-		if (!MaintenanceWindowManager.isMaintenanceActive()) {
-			return I18NConstants.ERROR_NO_MAINTENANCE_WINDOW;
-		}
-
-		ClusterManager clusterManager = ClusterManager.getInstance();
-		if (clusterManager.isClusterMode()) {
-			List<Long> activeNodes;
-			try {
-				activeNodes = clusterManager.getActiveNodes();
-			} catch (SQLException ex) {
-				throw new TopLogicException(I18NConstants.ERROR_CLUSTER_STATE_UNAVAILABLE, ex);
-			}
-			if (activeNodes.size() != 1) {
-				return I18NConstants.ERROR_CLUSTER_NODES_ACTIVE__COUNT.fill(Integer.valueOf(activeNodes.size()));
-			}
-		}
-
-		return null;
+		return PersistencyMaintenance.checkPreconditions();
 	}
 
 	/**
@@ -126,10 +91,7 @@ public class HistoryCompactionOperation {
 	 * @see #checkPreconditions()
 	 */
 	public static Report compact(long beforeDate, Log log) {
-		ResKey problem = checkPreconditions();
-		if (problem != null) {
-			throw new TopLogicException(problem);
-		}
+		PersistencyMaintenance.requirePreconditions();
 
 		try {
 			return newCompaction().compactHistory(beforeDate, log);
@@ -150,22 +112,11 @@ public class HistoryCompactionOperation {
 	 *
 	 * @param log
 	 *        Receives the outcome of the restart.
+	 *
+	 * @see PersistencyMaintenance#scheduleRestart(Log)
 	 */
 	public static void scheduleRestart(Log log) {
-		log.info("Restarting the persistency layer in " + RESTART_DELAY_SECONDS + " seconds.");
-
-		SchedulerService.getInstance().schedule(
-			() -> ThreadContextManager.inSystemInteraction(HistoryCompactionOperation.class, () -> restart(log)),
-			RESTART_DELAY_SECONDS, TimeUnit.SECONDS);
-	}
-
-	private static void restart(Log log) {
-		try {
-			ModuleUtil.INSTANCE.restart(KnowledgeBaseFactory.Module.INSTANCE, null);
-			log.info("The persistency layer is up and running with a compacted history.");
-		} catch (RestartException ex) {
-			log.error("Restarting the persistency layer failed.", ex);
-		}
+		PersistencyMaintenance.scheduleRestart(log);
 	}
 
 	/**
@@ -190,11 +141,7 @@ public class HistoryCompactionOperation {
 	 * Creates the engine operating on the database of the default {@link KnowledgeBase}.
 	 */
 	private static HistoryCompaction newCompaction() {
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		if (!(kb instanceof DBKnowledgeBase)) {
-			throw new TopLogicException(I18NConstants.ERROR_UNSUPPORTED_KNOWLEDGE_BASE);
-		}
-		return HistoryCompaction.newInstance((DBKnowledgeBase) kb);
+		return HistoryCompaction.newInstance(PersistencyMaintenance.defaultKnowledgeBase());
 	}
 
 }

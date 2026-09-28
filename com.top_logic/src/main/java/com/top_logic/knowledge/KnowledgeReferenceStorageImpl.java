@@ -63,12 +63,18 @@ public abstract class KnowledgeReferenceStorageImpl extends MOReferenceStorageIm
 	public static final long MIXED_REFERENCE_CURRENT_REPRESENTATION = Revision.CURRENT_REV;
 
 	/**
-	 * Dummy value to insert when actually no branch must be written.
+	 * Marker stored in the branch column of a branch local reference that holds a current object.
+	 * 
+	 * <p>
+	 * Such a reference points to the branch of the row that holds it, which changes when the object
+	 * is branched. The column therefore holds this marker instead of a branch and reading the
+	 * reference answers the branch of its row.
+	 * </p>
 	 * 
 	 * @see #needsDummyValueForBranch(AbstractMOReference, ObjectKey)
 	 */
 	// Not null to allow defining column as not-null
-	private static final long DUMMY_BRANCH_VALUE = Long.MIN_VALUE;
+	public static final long DUMMY_BRANCH_VALUE = Long.MIN_VALUE;
 
 	@Override
 	public void checkAttributeValue(MOAttribute attribute, DataObject data, Object value) throws DataObjectException {

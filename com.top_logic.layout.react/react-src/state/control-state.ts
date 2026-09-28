@@ -635,9 +635,11 @@ export namespace DropdownSelectStateJson {
 		image: string;
 
 		/**
-		 * The CSS color the object carries in the model.
+		 * The color role the object carries in the model (the external name of a value color:
+		 * neutral, brand, error, …, category-8). An option with a role is drawn as a pill of that
+		 * role, one without as plain text.
 		 */
-		color: string;
+		colorRole: string;
 
 		/**
 		 * Whether the option leads to the place the application displays the object at, when

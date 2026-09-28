@@ -642,6 +642,17 @@ export class ChatStore {
   private restored = false
 
   /**
+   * Counts the choices of which chat this window shows - every `selectSession` and `newChat`.
+   *
+   * Opening a chat waits for its transcript, and the choice may have changed by the time it
+   * arrives. Only the latest choice may take effect: an earlier one that completed late put its
+   * chat back on screen, the write-back reported it onto the `input` channel, and the channel then
+   * asked for the chat that had just been left - two openings chasing each other, the transcript
+   * switching between two conversations every few milliseconds without end (#576).
+   */
+  private choice = 0
+
+  /**
    * This chat's run snapshot: what the context ring reads.
    *
    * One per chat rather than the module-level {@link runStore}, which a window holding two
@@ -1052,6 +1063,11 @@ export class ChatStore {
     this.restored = true
     const id = this.remembered
     if (!id) return
+    // A chat was already chosen for this window - typically by a host's `input` channel, which
+    // answers the page, not the tab. The remembered one would only compete with it, and a host that
+    // takes a reported chat as its own would take this tab's stale one back from the chat the page
+    // has moved on to (#576).
+    if (this.choice > 0) return
     if (!sessions.some((item) => item.id === id)) {
       writeActiveSession(this.chatId, null)
       return
@@ -1810,6 +1826,7 @@ export class ChatStore {
 
       selectSession: async (id: string) => {
         const at = this.at
+        const choice = ++this.choice
         this.assistantId = null
         this.runId = null
         this.streamMark = null
@@ -1832,9 +1849,11 @@ export class ChatStore {
         try {
           detail = await loadSession(at, id)
         } catch (error) {
-          this.opening = null
+          if (choice === this.choice) this.opening = null
           throw error
         }
+        // Another chat was chosen while this one loaded: that choice is what the window shows.
+        if (choice !== this.choice) return
         this.patch({
           sessionId: id,
           messages: turnsJsonToMessages(detail.turnsJson),
@@ -1852,6 +1871,7 @@ export class ChatStore {
           composition: detail.lastComposition ?? undefined,
         }))
         await this.refreshSubagents()
+        if (choice !== this.choice) return
         await this.recoverRunState(id)
       },
 
@@ -1864,6 +1884,8 @@ export class ChatStore {
        * no-op for free, and leaves no empty rows behind.
        */
       newChat: () => {
+        this.choice += 1
+        this.opening = null
         this.assistantId = null
         this.runId = null
         this.noticeSticky = false

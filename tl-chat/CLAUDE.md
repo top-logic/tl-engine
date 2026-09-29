@@ -727,7 +727,7 @@ be read at **render** time, and every chat control reads the layout in `onBefore
 | Who writes the layout | The browser store, through the one `PUT /chat/preferences?chatId=…`. Nothing else writes it - not a control, not an element. |
 | Who reads it | `ChatViewBinding`, per render, into the control state the store boots from. There is no `GET`. |
 | Where it is stored | `PersonalConfiguration`, key `tl-chat.layout`, **one layout per `chat-id`**: a `<chat-rail chat-id="grouped">` and a `<chat-rail chat-id="review">` are different places with different sections. The key is prefixed (`chat:`), a stored format that must not change. |
-| What is stored | What the user *decided*: `railOpen` (absent while they never toggled it), the pane width they dragged to, `badgeSeen`, and a per-section-name open flag for each section they toggled. Never what a page happened to show. |
+| What is stored | What the user *decided*: `railOpen` (absent while they never toggled it), the pane width they dragged to (whole pixels, written once when the pointer lets go - #588), `badgeSeen`, and a per-section-name open flag for each section they toggled. Never what a page happened to show. |
 | Precedence | The configured defaults - `<chat-rail open>`, `<section open>`, `<chat-rail pane-width>` - apply **only** where the user has decided nothing. Once they toggled it, their choice wins on reload and in a new tab, and the configured flag no longer applies to them. Per section name, so a section added later still starts as configured. |
 
 The store never writes back the layout it booted with (`sameLayout` against `storedLayout`). Before
@@ -764,6 +764,11 @@ conversation and nothing in the product says so.
 own, and any element may sit inside it. **Put it where the stack was** rather than adding a level:
 the engine's `.tlStack:has(> .tlPanel--fill)` rule looks one level deep, so a `<panel fill="true">`
 that stops being a direct child of the page's stack loses its height.
+
+That panel is there for the height alone and carries no title. Its header, which the engine draws
+anyway (padding, a tinted band and a border line), is hidden by a rule in `styles.css` for as long
+as it holds no title, no title content and no command (#589). A host that gives the panel a title
+or a command keeps its header.
 
 `<chat-dock>` is the one element that **repeats** the id rather than inheriting it, because it
 *contains* the `<chat>` instead of sitting inside one and a scope only reaches descendants:

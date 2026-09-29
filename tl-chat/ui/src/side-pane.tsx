@@ -186,12 +186,24 @@ export function SidePane({
       : mode === 'document' && workspaceWidth > 0
         ? Math.round(workspaceWidth * DOCUMENT_SHARE)
         : DEFAULT_PANE
-  const paneWidth = Math.min(wanted, maxWidth)
+  /**
+   * The width a pointer drag shows while it lasts; null outside a drag.
+   *
+   * A drag reports a width on every pointer move, and each one the store receives is a preference
+   * write. The pane therefore follows the pointer on its own and hands the store the width it came
+   * to rest at, once, when the pointer lets go (#588).
+   */
+  const [dragWidth, setDragWidth] = useState<number | null>(null)
+  /** The same width for the pointer's release, which may come before the last move rendered. */
+  const dragged = useRef<number | null>(null)
+  const paneWidth = Math.min(dragWidth ?? wanted, maxWidth)
 
   const setWidth = useCallback(
     (next: number) => {
       draggedIn.current = mode ?? 'card'
-      onWidth(next)
+      // Whole pixels: a pointer and a measured room both come in fractions, and the stored
+      // preference is an integer the server refuses a fraction for (#588).
+      onWidth(Math.round(next))
     },
     [mode, onWidth],
   )
@@ -213,14 +225,20 @@ export function SidePane({
       if (!workspace) return
       const box = workspace.getBoundingClientRect()
       const next = Math.max(CONTENT_FLOOR, box.right - event.clientX)
-      setWidth(Math.min(next, maxWidth))
+      dragged.current = Math.min(next, maxWidth)
+      setDragWidth(dragged.current)
     },
-    [boundsOf, maxWidth, setWidth, fixed],
+    [boundsOf, maxWidth, fixed],
   )
 
+  /** Ends a drag - let go or cancelled alike - and stores the width it ended at, if it moved. */
   const onPointerUp = useCallback(() => {
+    if (!dragging.current) return
     dragging.current = false
-  }, [])
+    if (dragged.current !== null) setWidth(dragged.current)
+    dragged.current = null
+    setDragWidth(null)
+  }, [setWidth])
 
   const resize = useCallback(
     (by: number) => {
@@ -287,6 +305,8 @@ export function SidePane({
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
+          onLostPointerCapture={onPointerUp}
         />
       )}
       {/*

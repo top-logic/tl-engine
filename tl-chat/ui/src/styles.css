@@ -644,6 +644,20 @@
   min-height: 0;
 }
 
+/*
+ * The header of a panel that only bounds a conversation, while it has nothing to show.
+ *
+ * A host wraps `<chat-conversation>` in an untitled `<panel fill="true">` for the bounded height
+ * alone, and the engine still draws that panel's header: padding, a tinted background and a
+ * border line, a band above the conversation's own header (#589). It goes away for as long as it
+ * holds no title, no title content and no command, so a host that gives the panel a title or a
+ * command keeps its header. Once the engine renders no empty header, this rule matches nothing.
+ */
+.tlPanel:has(> .tlPanel__content > .tl-chat-conversation)
+  > .tlPanel__header:not(:has(.tlPanel__title, .tlPanel__titleContent, button)) {
+  display: none;
+}
+
 .tl-chat-dock__launcher {
   position: relative;
   display: inline-grid;

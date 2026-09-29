@@ -2292,7 +2292,9 @@ export class ChatStore {
         this.patch({ railDrawer: next, railDrawerOpen: false })
       },
 
-      setPaneWidth: (width: number) => {
+      setPaneWidth: (requested: number) => {
+        // Whole pixels, because that is what the preference stores and the server accepts (#588).
+        const width = Math.round(requested)
         // Dragging back to nothing is not a width the user chose: the configured one applies again.
         this.paneWidthStored = width > 0 ? width : 0
         this.patch({ paneWidth: width > 0 ? width : this.paneWidthDefault })

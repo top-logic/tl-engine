@@ -231,9 +231,8 @@
 		</data-list>
 		<!--
 			The <panel> is what bounds the conversation's height so it scrolls inside its column
-			rather than growing with the transcript. Its own header stays empty here, which the dark
-			theme shows as a bare strip above the conversation's header - an untitled panel should
-			render no toolbar at all, but that is the engine's to decide.
+			rather than growing with the transcript. It has no title and no command, so tl-chat's
+			stylesheet hides the empty header the engine still draws for it (#589).
 		-->
 		<panel fill="true">
 			<!--

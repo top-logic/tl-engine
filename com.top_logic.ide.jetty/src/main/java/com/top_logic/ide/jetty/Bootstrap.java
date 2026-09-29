@@ -14,6 +14,7 @@ import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.CharBuffer;
@@ -51,7 +52,13 @@ import com.top_logic.basic.core.workspace.Workspace;
 
 /**
  * Starts a <i>TopLogic</i> application module in development mode.
- * 
+ *
+ * <p>
+ * After the server has started, the application is opened in a browser. Which browser, if any, is
+ * chosen by the system property or environment variable {@value #BROWSER_VARIABLE}, see
+ * {@link #openBrowser(String)}.
+ * </p>
+ *
  * @see Shutdown
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -81,6 +88,24 @@ public class Bootstrap {
 	static final String ADMIN_WEBAPP = "/admin";
 
 	static final String STOP_SERVLET = "/stop";
+
+	/**
+	 * Name of the system property or environment variable choosing the browser that is opened
+	 * after the server has started.
+	 *
+	 * @see #openBrowser(String)
+	 */
+	static final String BROWSER_VARIABLE = "tl_browser";
+
+	/**
+	 * Value of {@link #BROWSER_VARIABLE} opening the system's default browser.
+	 */
+	static final String BROWSER_DEFAULT = "default";
+
+	/**
+	 * Value of {@link #BROWSER_VARIABLE} suppressing the browser launch.
+	 */
+	static final String BROWSER_NONE = "none";
 
 	/**
 	 * Main routine.
@@ -235,15 +260,48 @@ public class Bootstrap {
 		System.out.println("Server started: " + appUrl);
 		System.out.println("Stop server accessing: " + stopUrl);
 
-		try {
-			if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-				Desktop.getDesktop().browse(new URI(appUrl));
-			}
-		} catch (RuntimeException | Error ex) {
-			System.err.println("Failed to launch browser: " + ex.getMessage());
-		}
+		openBrowser(appUrl);
 
 		server.join();
+	}
+
+	/**
+	 * Opens the started application in the browser chosen by {@link #BROWSER_VARIABLE}.
+	 *
+	 * <p>
+	 * The value {@value #BROWSER_DEFAULT} (or no value at all) opens the system's default browser,
+	 * the value {@value #BROWSER_NONE} opens no browser. Any other value is the command of the
+	 * browser to start: an executable on the {@code PATH} (e.g. {@code firefox}) or the full path to
+	 * one (on Windows e.g.
+	 * {@code C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe}). It is executed without a
+	 * shell and gets the application URL as its only argument.
+	 * </p>
+	 *
+	 * @param appUrl
+	 *        The URL of the started application.
+	 */
+	private static void openBrowser(String appUrl) throws URISyntaxException {
+		String browser =
+			Environment.getSystemPropertyOrEnvironmentVariable(BROWSER_VARIABLE, BROWSER_DEFAULT).trim();
+		if (browser.isEmpty() || browser.equals(BROWSER_DEFAULT)) {
+			try {
+				if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+					Desktop.getDesktop().browse(new URI(appUrl));
+				}
+			} catch (IOException | RuntimeException | Error ex) {
+				System.err.println("Failed to launch browser: " + ex.getMessage());
+			}
+		} else if (!browser.equals(BROWSER_NONE)) {
+			try {
+				// The browser's own console output is noise in the server log.
+				new ProcessBuilder(browser, appUrl)
+					.redirectOutput(ProcessBuilder.Redirect.DISCARD)
+					.redirectError(ProcessBuilder.Redirect.DISCARD)
+					.start();
+			} catch (IOException | RuntimeException ex) {
+				System.err.println("Failed to launch browser '" + browser + "': " + ex.getMessage());
+			}
+		}
 	}
 
 	private void stopPreviousApp(String stopUrl) throws MalformedURLException, InterruptedException {

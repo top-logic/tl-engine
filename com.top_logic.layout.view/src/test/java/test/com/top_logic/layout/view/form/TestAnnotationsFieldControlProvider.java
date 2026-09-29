@@ -160,7 +160,7 @@ public class TestAnnotationsFieldControlProvider extends BasicTestCase {
 	 */
 	public void testAnIncompleteAnnotationKeepsTheFormFromBeingSaved() {
 		TLModuleDisplayGroup incomplete = TypedConfiguration.newConfigItem(TLModuleDisplayGroup.class);
-		AbstractFieldModel model = new AbstractFieldModel(new ArrayList<TLAnnotation>(List.of(incomplete)));
+		AbstractFieldModel model = new AbstractFieldModel(new ArrayList<>(List.of(incomplete)));
 
 		AnnotationsFieldControlProvider.createControl(_context, model, this::container);
 
@@ -174,7 +174,7 @@ public class TestAnnotationsFieldControlProvider extends BasicTestCase {
 	public void testACompleteAnnotationLeavesTheFormSaveable() {
 		TLModuleDisplayGroup complete = TypedConfiguration.newConfigItem(TLModuleDisplayGroup.class);
 		complete.setValue("some.group");
-		AbstractFieldModel model = new AbstractFieldModel(new ArrayList<TLAnnotation>(List.of(complete)));
+		AbstractFieldModel model = new AbstractFieldModel(new ArrayList<>(List.of(complete)));
 
 		AnnotationsFieldControlProvider.createControl(_context, model, this::container);
 

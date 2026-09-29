@@ -429,6 +429,11 @@ export interface ChatActions {
    * one.
    */
   showNotice(text: string, detail?: string, options?: { tone?: NoticeTone; sticky?: boolean }): void
+  /**
+   * Opens a chat. Asking for the chat the window already shows, or is already opening, changes
+   * nothing; any other chat supersedes whatever was being opened, so the latest choice is the one
+   * the window ends up showing.
+   */
   selectSession(id: string): Promise<void>
   newChat(): void
   deleteSession(id: string): Promise<void>
@@ -505,6 +510,13 @@ export interface ChatActions {
    * reason {@link registerRail} counts.
    */
   registerConversation(insideDock: boolean): () => void
+  /**
+   * Says that a host's `input` channel decides which chat this window shows, an empty channel
+   * included: the tab's remembered chat is then not restored. It named the chat this tab had on the
+   * previous page, which the channel of this page may not want - it showed until the host refused
+   * it (#577).
+   */
+  followChannel(): void
   bindComposer(api: ComposerApi | null): void
   insertReference(token: ReferenceToken): void
   /** Replaces the composer's draft, focuses it and puts the caret at the end. */
@@ -640,6 +652,17 @@ export class ChatStore {
 
   /** Whether the remembered chat has been dealt with; restoring happens once per store. */
   private restored = false
+
+  /**
+   * Counts the choices of which chat this window shows - every `selectSession` and `newChat`.
+   *
+   * Opening a chat waits for its transcript, and the choice may have changed by the time it
+   * arrives. Only the latest choice may take effect: an earlier one that completed late put its
+   * chat back on screen, the write-back reported it onto the `input` channel, and the channel then
+   * asked for the chat that had just been left - two openings chasing each other, the transcript
+   * switching between two conversations every few milliseconds without end (#576).
+   */
+  private choice = 0
 
   /**
    * This chat's run snapshot: what the context ring reads.
@@ -1052,6 +1075,10 @@ export class ChatStore {
     this.restored = true
     const id = this.remembered
     if (!id) return
+    // A chat was already chosen for this window. The remembered one would only compete with it, and
+    // a host that takes a reported chat as its own would take this tab's stale one back from the
+    // chat the page has moved on to (#576).
+    if (this.choice > 0) return
     if (!sessions.some((item) => item.id === id)) {
       writeActiveSession(this.chatId, null)
       return
@@ -1809,7 +1836,11 @@ export class ChatStore {
       showNotice: this.showNotice,
 
       selectSession: async (id: string) => {
+        // The chat the latest choice leads to: the one being opened, or else the one on screen.
+        // Asking for it again must not start a second opening, which could only land late (#577).
+        if (id === (this.opening?.sessionId ?? this.state.sessionId)) return
         const at = this.at
+        const choice = ++this.choice
         this.assistantId = null
         this.runId = null
         this.streamMark = null
@@ -1832,9 +1863,11 @@ export class ChatStore {
         try {
           detail = await loadSession(at, id)
         } catch (error) {
-          this.opening = null
+          if (choice === this.choice) this.opening = null
           throw error
         }
+        // Another chat was chosen while this one loaded: that choice is what the window shows.
+        if (choice !== this.choice) return
         this.patch({
           sessionId: id,
           messages: turnsJsonToMessages(detail.turnsJson),
@@ -1852,6 +1885,7 @@ export class ChatStore {
           composition: detail.lastComposition ?? undefined,
         }))
         await this.refreshSubagents()
+        if (choice !== this.choice) return
         await this.recoverRunState(id)
       },
 
@@ -1864,6 +1898,8 @@ export class ChatStore {
        * no-op for free, and leaves no empty rows behind.
        */
       newChat: () => {
+        this.choice += 1
+        this.opening = null
         this.assistantId = null
         this.runId = null
         this.noticeSticky = false
@@ -2262,6 +2298,10 @@ export class ChatStore {
           // count, and a stale total would keep a number on a button that opens nothing.
           this.patch({ railMounted: mounted, badgeTotal: mounted ? this.state.badgeTotal : 0 })
         }
+      },
+
+      followChannel: () => {
+        this.restored = true
       },
 
       registerConversation: (insideDock: boolean) => {

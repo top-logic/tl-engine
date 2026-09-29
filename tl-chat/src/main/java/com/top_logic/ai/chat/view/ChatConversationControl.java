@@ -79,7 +79,11 @@ public class ChatConversationControl extends ReactControl {
 
 	private final ChatViewBinding _binding;
 
-	private final ViewChannel _inputChannel;
+	/**
+	 * The {@code input} channel and what the browser is told of it, or <code>null</code> when the
+	 * element wires none and the browser's store is the source.
+	 */
+	private final SessionSelection _selection;
 
 	/**
 	 * The channel naming what a conversation started here is about, or <code>null</code> when the
@@ -238,14 +242,15 @@ public class ChatConversationControl extends ReactControl {
 		// source" from "channel wired but empty, which means a fresh conversation".
 		putState("hasInput", Boolean.valueOf(inputRef != null));
 		if (inputRef == null) {
-			_inputChannel = null;
-			putState("selected", "");
+			_selection = null;
+			putState(SessionSelection.SELECTED, "");
 		} else {
-			_inputChannel = context.resolveChannel(inputRef);
-			ViewChannel.ChannelListener listener = (sender, oldValue, newValue) -> applyFromChannel(newValue);
-			_inputChannel.addListener(listener);
-			addCleanupAction(() -> _inputChannel.removeListener(listener));
-			applyFromChannel(_inputChannel.get());
+			ViewChannel input = context.resolveChannel(inputRef);
+			_selection = new SessionSelection(input, this::putState, ChatConversationControl::currentPerson);
+			ViewChannel.ChannelListener listener = _selection.listener();
+			input.addListener(listener);
+			addCleanupAction(() -> input.removeListener(listener));
+			_selection.apply();
 		}
 
 		// What a conversation started here is about. Read only when one comes into being, so the
@@ -340,8 +345,8 @@ public class ChatConversationControl extends ReactControl {
 	@Override
 	protected void onAttach() {
 		super.onAttach();
-		if (_inputChannel != null) {
-			applyFromChannel(_inputChannel.get());
+		if (_selection != null) {
+			_selection.apply();
 		}
 		reapply(_agentChannel, this::applyAgentFromChannel);
 		reapply(_modelChannel, this::applyModelFromChannel);
@@ -386,6 +391,12 @@ public class ChatConversationControl extends ReactControl {
 	 * </p>
 	 *
 	 * <p>
+	 * What the browser reports is a proposal: a host may answer the write by putting another
+	 * conversation onto the channel, or none, and the browser then follows the channel - see
+	 * {@link SessionSelection}.
+	 * </p>
+	 *
+	 * <p>
 	 * It is also where a conversation learns what it is about: a session the browser reports as
 	 * <em>created</em> here is stamped with the {@code subject} channel's object. The browser has to
 	 * say which of the two this is, because the server cannot tell a first send from a restore - a
@@ -406,11 +417,10 @@ public class ChatConversationControl extends ReactControl {
 		String id = args == null ? "" : String.valueOf(args.getOrDefault("id", "")).trim();
 		TLObject session = id.isEmpty() ? null : ChatSessionIds.ownedSession(id, currentPerson());
 		stampSubject(session, truthy(args == null ? null : args.get("created")));
-		if (_inputChannel == null || _applyingFromChannel[0]) {
+		if (_selection == null) {
 			return;
 		}
-		_inputChannel.set(session);
-		putState("selected", session == null ? "" : ChatSessionIds.idOf(session));
+		_selection.publish(id, session);
 	}
 
 	/**
@@ -452,15 +462,6 @@ public class ChatConversationControl extends ReactControl {
 	 */
 	static TLObject subjectFor(Object channelValue, boolean created) {
 		return created ? referencedObject(channelValue) : null;
-	}
-
-	private void applyFromChannel(Object value) {
-		_applyingFromChannel[0] = true;
-		try {
-			putState("selected", ChatSessionIds.selectedId(value, currentPerson()));
-		} finally {
-			_applyingFromChannel[0] = false;
-		}
 	}
 
 	/**

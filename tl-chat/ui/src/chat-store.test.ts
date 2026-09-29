@@ -2347,3 +2347,110 @@ describe('a window the server no longer knows', () => {
     release()
   })
 })
+
+/**
+ * Which chat a window shows when the choice changes while a transcript is still on its way (#576).
+ *
+ * A host's `input` channel and the tab's remembered chat both open chats, and an opening that
+ * completed after a later one put its chat back on screen. The write-back then reported it, the
+ * channel asked for the other one again, and the window switched between two conversations every
+ * few milliseconds without end.
+ */
+describe('choosing a chat while another one loads', () => {
+  /** The transcript loads that have not been answered yet, by session id. */
+  let pending: Map<string, () => void>
+  /** What `GET /chat/sessions` lists. */
+  let listed: { id: string; title: string }[]
+
+  beforeEach(() => {
+    pending = new Map()
+    listed = []
+    const globals = globalThis as unknown as Record<string, unknown>
+    const inner = globals.fetch as (url: string, init?: unknown) => Promise<unknown>
+    globals.fetch = vi.fn(async (url: string, init?: { method?: string; body?: string }) => {
+      const load = url.match(/\/chat\/sessions\/([^/?]+)/)
+      if (load && !init?.method) {
+        const id = load[1]
+        await new Promise<void>((resolve) => pending.set(id, resolve))
+        const turnsJson = JSON.stringify([
+          {
+            id: 't-' + id,
+            turnNumber: 1,
+            timestamp: 1000,
+            userParts: [{ id: 'u-' + id, type: 'text', timestamp: 1000, textData: { text: 'Frage in ' + id } }],
+            assistantParts: [],
+          },
+        ])
+        return { ok: true, status: 200, json: async () => ({ id, turnsJson }) }
+      }
+      if (url.includes('/chat/sessions')) {
+        return { ok: true, status: 200, json: async () => ({ sessions: listed }) }
+      }
+      return inner(url, init)
+    })
+  })
+
+  afterEach(() => {
+    delete (globalThis as unknown as { window: Record<string, unknown> }).window.sessionStorage
+  })
+
+  const userTexts = (store: ReturnType<typeof chatStore>) =>
+    store.getState().messages.filter((m) => m.type === 'user').map((m) => (m as { text?: string }).text)
+
+  it('shows the latest choice even when an earlier transcript arrives after it', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+
+    const earlier = store.actions.selectSession('previous')
+    await settle()
+    const later = store.actions.selectSession('current')
+    await settle()
+    pending.get('current')!()
+    await later
+    pending.get('previous')!()
+    await earlier
+    await settle()
+
+    expect(store.getState().sessionId).toBe('current')
+    expect(userTexts(store)).toEqual(['Frage in current'])
+
+    // "New chat" is a choice too: a transcript still on its way does not undo it.
+    const late = store.actions.selectSession('previous')
+    await settle()
+    store.actions.newChat()
+    pending.get('previous')!()
+    await late
+    await settle()
+
+    expect(store.getState().sessionId).toBeNull()
+    expect(userTexts(store)).toEqual([])
+
+    release()
+  })
+
+  it('does not reopen the remembered chat over one the window was already given', async () => {
+    const window = (globalThis as unknown as { window: Record<string, unknown> }).window
+    window.sessionStorage = { getItem: () => 'previous', setItem: () => undefined, removeItem: () => undefined }
+    listed = [
+      { id: 'previous', title: 'Vorher' },
+      { id: 'current', title: 'Jetzt' },
+    ]
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    // The host's channel names the page's conversation as the element mounts, before the session
+    // list - which is what the restore waits for - has come back.
+    const chosen = store.actions.selectSession('current')
+    store.attach(BOOT)
+    await settle()
+    pending.get('current')!()
+    await chosen
+    await settle()
+
+    expect(pending.has('previous')).toBe(false)
+    expect(store.getState().sessionId).toBe('current')
+
+    release()
+  })
+})

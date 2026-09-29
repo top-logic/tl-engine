@@ -184,6 +184,27 @@ export function channelName(raw: unknown): string | undefined {
 }
 
 /**
+ * What the chat has to do to show what the `input` channel holds.
+ *
+ * - `select`: the channel names a session. The store decides whether that is news: it ignores the
+ *   chat it already shows or is opening, and lets anything else supersede an opening in flight.
+ * - `new`: the channel was emptied - by a write, or by the host refusing the session this store
+ *   reported (`corrected`). Also when no session has landed yet: one may be on its way, and it must
+ *   not arrive after the channel said "none" (#577).
+ * - `keep`: an empty channel that has always been empty; there is nothing to follow.
+ */
+function followSelection(
+  hasInput: boolean,
+  selected: string,
+  wasSelected: string,
+  corrected: boolean,
+): 'select' | 'new' | 'keep' {
+  if (!hasInput) return 'keep'
+  if (selected) return 'select'
+  return wasSelected || corrected ? 'new' : 'keep'
+}
+
+/**
  * What a `publishSession` report says: which chat is open here, and whether this window is what
  * brought it into being.
  *
@@ -310,6 +331,7 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   const config = useMemo(() => readThreadConfig(state), [state])
   const controls = useMemo(() => readComposerControls(state), [state])
   const selected = typeof state.selected === 'string' ? state.selected : ''
+  const corrections = typeof state.selectedCorrections === 'number' ? state.selectedCorrections : 0
   const hasInput = state.hasInput === true
   // Whether the element names a subject channel. The server needs the session id of a chat created
   // here even when nothing else on the page follows the selection, so this publishes it too.
@@ -348,22 +370,38 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   }, [contextFacts, actions])
 
   // Follow the selection channel. A non-empty value selects that session; clearing it (a transition
-  // to empty) means "new chat" - a deselect shows a fresh, empty conversation. The transition guard
-  // avoids wiping a session that was restored before the write-back below set the channel.
-  const prevSelected = useRef(selected)
+  // to empty) means "new chat" - a deselect shows a fresh, empty conversation, and a chat still on
+  // its way is dropped. An empty channel that has always been empty changes nothing.
+  //
+  // A correction is the other way to an empty channel: the host refused the session this store
+  // reported - the one this window still had open from another page, typically - and left the
+  // channel empty, which it already was. `selected` does not change then, so the count is what
+  // says the refused session has to go (#576).
+  //
+  // It runs when the channel moves, never when the store does. The store moves first whenever it
+  // opens a chat itself - a pick from the rail, a first send - and reports it; until the
+  // channel answers, `selected` still names the chat that was left. Following it then opened that
+  // chat again, the report of it went out, and the channel's answer to the first report asked for
+  // the other one: the transcript switched between two conversations every few milliseconds, for as
+  // long as the page was open (#576).
+  //
+  // Where a channel is wired it is the whole of the selection, so the tab's remembered chat is not
+  // restored over it: an empty channel means a fresh conversation here, not "whatever this tab had
+  // on the page before" (#577).
   useEffect(() => {
-    if (!hasInput) {
-      prevSelected.current = selected
-      return
-    }
+    if (hasInput) actions.followChannel()
+  }, [hasInput, actions])
+  const prevSelected = useRef(selected)
+  const prevCorrections = useRef(corrections)
+  useEffect(() => {
     const wasSelected = prevSelected.current
+    const corrected = prevCorrections.current !== corrections
     prevSelected.current = selected
-    if (selected) {
-      if (selected !== chat.sessionId) void actions.selectSession(selected)
-    } else if (wasSelected && chat.sessionId) {
-      actions.newChat()
-    }
-  }, [hasInput, selected, chat.sessionId, actions])
+    prevCorrections.current = corrections
+    const follow = followSelection(hasInput, selected, wasSelected, corrected)
+    if (follow === 'select') void actions.selectSession(selected)
+    else if (follow === 'new') actions.newChat()
+  }, [hasInput, selected, corrections, actions])
 
   // Write-back: publish the store's own session onto the channel (two-way), so a session list
   // highlights it after the store creates one on first send or restores one on reload.
@@ -371,7 +409,13 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   // `created` is the other half: the server stamps a conversation with what the page is about only
   // when this window is what brought it into being. It cannot tell that from the id alone - a reload
   // re-opens the chat this window had, and that one must keep the subject it was started with.
-  const published = useRef<string | null>(null)
+  //
+  // It starts from "no chat" rather than from nothing. An element mounts with an empty store while
+  // the chat its channel names is still loading, and reporting that emptiness cleared the channel
+  // the host had just set - the host then answered the clear, and the page showed whatever it
+  // answered with until the load came back (#576). An empty report means "the chat was left", so it
+  // is only sent after a chat was reported.
+  const published = useRef<string | null>('')
   useEffect(() => {
     if (!hasInput && !hasSubject) return
     const report = sessionReport(chat.sessionId, chat.createdSessionId)

@@ -1214,6 +1214,27 @@ means a fresh, empty conversation, so "new chat" is just the list clearing the c
 `<data-list create-action="clear-selection">`, no separate binding element. (This replaced the former
 `<chat-session-binding>`.)
 
+**The channel is the selection; what the conversation writes back is a proposal** (#576). A host may
+bind the channel to something else on its page - Consulting keeps one conversation per project - and
+answer a write-back from its own channel listener by refusing the session and writing its own, or
+none. `SessionSelection` therefore tells the browser what the channel holds *after* every listener
+has answered, never what the browser reported, and counts each refusal in `selectedCorrections`:
+a refusal that leaves the channel empty changes nothing in `selected`, and the count is what makes
+the browser leave the refused chat (`followSelection` in `chat-conversation.tsx`). The browser does
+not report an empty chat on mount either - it would clear the channel the host just set while the
+chat it names is still loading. `TestSessionSelection` and `chat-conversation-input.test.tsx` pin
+both halves.
+
+Two rules keep the browser from arguing with the channel, and breaking either one makes the
+transcript switch between two conversations every few milliseconds, for good. **The element follows
+the channel when the channel moves, never when the store does**: the store opens chats itself (a
+rail pick, a first send) and reports them, and until the channel answers, `selected` still names the
+chat that was left. **Only the latest choice of chat takes effect**: `selectSession` ignores the chat
+the store already shows or is opening, and an opening that another choice overtook is dropped when
+its transcript arrives. The tab's remembered chat (`sessionStorage`) is never restored where an
+element wires an `input` channel - there the channel is the whole selection, and empty means a fresh
+conversation - and elsewhere only into a store nothing has chosen a chat for yet (#577).
+
 `<chat-rail>` is a **shell**, not a set of sections: it renders the strip, the section headers and
 the pane's chrome, and every section's body is a view element the application configured there.
 

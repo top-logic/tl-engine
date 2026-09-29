@@ -206,6 +206,7 @@ public class ChatConversationControl extends ReactControl {
 		// Composer.
 		putState("promptImprovementEnabled", Boolean.valueOf(configuredImprover != null));
 		putState("placeholder", ChatViewBinding.resolveText(config.getPlaceholder()));
+		putState("workingIndicator", workingIndicator(config.getWorkingIndicator(), context.getContextPath()));
 		String referenceSource = blankToNull(config.getReferenceSource());
 		putState("referenceSource", referenceSource == null ? "" : referenceSource);
 		// A model-bound <mention> supplies the @ candidates declaratively and wins over the name above.
@@ -1072,6 +1073,29 @@ public class ChatConversationControl extends ReactControl {
 	/** A {@link ThemeImage} in the encoded form the browser's {@code ThemeIcon} renders. */
 	private static String icon(ThemeImage image) {
 		return image == null ? "" : image.resolve().toEncodedForm();
+	}
+
+	/**
+	 * The configured working indicator in the form the browser renders: an icon class as its
+	 * encoded {@code css:} form, an image as the URL it is served under.
+	 *
+	 * <p>
+	 * Not {@link #icon(ThemeImage)}: an image's encoded form is its path inside the application,
+	 * which a browser resolves against the server root and so misses every application that is
+	 * not deployed there.
+	 * </p>
+	 *
+	 * @return The empty string for none, which keeps the chat's own dots.
+	 */
+	static String workingIndicator(ThemeImage image, String contextPath) {
+		if (image == null) {
+			return "";
+		}
+		ThemeImage resolved = image.resolve();
+		if (resolved instanceof ThemeImage.Img picture) {
+			return (contextPath == null ? "" : contextPath) + picture.getFileLink();
+		}
+		return resolved == ThemeImage.none() ? "" : resolved.toEncodedForm();
 	}
 
 	/** A display label for an expression result (formats dates, objects and text uniformly). */

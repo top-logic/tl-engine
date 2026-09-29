@@ -7,6 +7,7 @@ import { TokenInput, type TokenInputHandle } from './token-input'
 import { bundle, formatTimestamp, providerErrorText, type Language } from './i18n'
 import { effortLabel } from './models'
 import { approvalOutcomeText, approvalReason, ToolArguments } from './prompts'
+import { WorkingIndicator, type WorkingIndicatorForm } from './working-indicator'
 import type {
   ApprovalRequest,
   AssistantText,
@@ -912,8 +913,14 @@ function NoticeLine({ item, language }: { item: NoticeMessage; language: Languag
   )
 }
 
+/** The chat's own dots, for a transcript whose element configures no `working-indicator`. */
+const DOTS: WorkingIndicatorForm = { kind: 'dots' }
+
 /**
  * The answer's place, held while the run has produced no text yet.
+ *
+ * Three pulsing dots, or what the element's `working-indicator` names in their place - an
+ * application's own animation (see `working-indicator.tsx`).
  *
  * A turn that calls no tool has nothing else to show: without this the thread is the question and
  * then an empty column for as long as the model takes, which reads as a chat that swallowed the
@@ -923,15 +930,11 @@ function NoticeLine({ item, language }: { item: NoticeMessage; language: Languag
  * Decorative: the thread's own live region already announces that an answer is being generated, and
  * a second announcement of the same fact is noise.
  */
-function PendingAnswer() {
+function PendingAnswer({ indicator }: { indicator: WorkingIndicatorForm }) {
   return (
     <div className="turn turn-agent">
       <div className="answer is-pending">
-        <span className="answer-dots" aria-hidden="true">
-          <i />
-          <i />
-          <i />
-        </span>
+        <WorkingIndicator form={indicator} />
       </div>
     </div>
   )
@@ -988,6 +991,7 @@ function AgentRun({
   canRate = true,
   citationMarkers = true,
   showTimestamp = true,
+  workingIndicator = DOTS,
 }: {
   turn: RunTurn
   results: Map<string, ToolResult>
@@ -1010,6 +1014,7 @@ function AgentRun({
   canRate?: boolean
   citationMarkers?: boolean
   showTimestamp?: boolean
+  workingIndicator?: WorkingIndicatorForm
 }) {
   const answer = lastAnswer(turn.events)
   const events = traceEvents(turn.events)
@@ -1040,7 +1045,7 @@ function AgentRun({
       {notices(turn.events, 'transaction_rolled_back').map((item) => (
         <NoticeLine key={item.id} item={item} language={language} />
       ))}
-      {pending ? <PendingAnswer /> : null}
+      {pending ? <PendingAnswer indicator={workingIndicator} /> : null}
       {answer && !pending ? (
         <AssistantAnswer
           text={answer.text}
@@ -1108,6 +1113,7 @@ export const Thread = React.memo(function Thread({
   canRegenerate = true,
   citationMarkers = true,
   showTimestamp = true,
+  workingIndicator = DOTS,
 }: {
   messages: ChatMessage[]
   traceMode: TraceMode
@@ -1137,6 +1143,8 @@ export const Thread = React.memo(function Thread({
   canRegenerate?: boolean
   citationMarkers?: boolean
   showTimestamp?: boolean
+  /** What stands in the answer's place until its first word; the dots unless configured. */
+  workingIndicator?: WorkingIndicatorForm
 }) {
   const scroller = useRef<HTMLDivElement>(null)
   const stick = useRef(true)
@@ -1238,6 +1246,7 @@ export const Thread = React.memo(function Thread({
                     // Only the turn at the bottom can be the running one. Handing `busy` to every
                     // turn made each finished run above it say "Working…" again.
                     busy={busy === true && position === lastIndex}
+                    workingIndicator={workingIndicator}
                     labels={labels}
                     language={language}
                     effort={effort}

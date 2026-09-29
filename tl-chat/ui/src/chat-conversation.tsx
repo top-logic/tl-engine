@@ -17,6 +17,7 @@ import {
 } from './registry'
 import { ThemeIcon } from './theme-icon'
 import { Thread } from './thread'
+import { preloadWorkingIndicator, workingIndicatorForm } from './working-indicator'
 
 const { useCallback, useEffect, useMemo, useRef } = React
 
@@ -337,6 +338,10 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   // here even when nothing else on the page follows the selection, so this publishes it too.
   const hasSubject = state.hasSubject === true
   const placeholder = typeof state.placeholder === 'string' ? state.placeholder : ''
+  // Keyed on the string, not on the state: a fresh form object on every state change would
+  // re-render the memoised transcript for nothing.
+  const workingIndicator = useMemo(() => workingIndicatorForm(state.workingIndicator), [state.workingIndicator])
+  useEffect(() => preloadWorkingIndicator(workingIndicator), [workingIndicator])
   const promptImprovementEnabled = state.promptImprovementEnabled === true
   const extraMenuItems = useMemo(
     () => resolveMenuItems(Array.isArray(state.menuItems) ? state.menuItems.map(String) : []),
@@ -614,6 +619,7 @@ export function TLChatConversation({ controlId }: TLCellProps) {
           canRegenerate={config.regenerate}
           citationMarkers={config.citationMarkers}
           showTimestamp={config.timestamp}
+          workingIndicator={workingIndicator}
           extraActions={resolveMessageActions(
             Array.isArray(state.hostActions) ? state.hostActions.map(String) : [],
           )}

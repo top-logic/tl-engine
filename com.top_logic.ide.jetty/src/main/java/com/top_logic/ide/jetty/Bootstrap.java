@@ -90,6 +90,17 @@ public class Bootstrap {
 	static final String STOP_SERVLET = "/stop";
 
 	/**
+	 * Name of the system property or environment variable with the external URL of the server
+	 * (protocol, host and port, e.g. {@code http://localhost:8080}).
+	 *
+	 * <p>
+	 * When not set, it is set to the local URL of the started server, because the application
+	 * configuration refers to it.
+	 * </p>
+	 */
+	static final String HOST_VARIABLE = "tl_host";
+
+	/**
 	 * Name of the system property or environment variable choosing the browser that is opened
 	 * after the server has started.
 	 *
@@ -147,11 +158,11 @@ public class Bootstrap {
 	}
 
 	private void start() throws Exception {
-		String externalIntf = Environment.getSystemPropertyOrEnvironmentVariable("tl_host", null);
+		String externalIntf = Environment.getSystemPropertyOrEnvironmentVariable(HOST_VARIABLE, null);
 		if (externalIntf == null) {
 			// Set property normally configured to the external interface of the application.
 			externalIntf = "http://" + HOSTNAME + ":" + _port;
-			System.setProperty("tl_host", externalIntf);
+			System.setProperty(HOST_VARIABLE, externalIntf);
 		}
 
 		String stopUrl = externalIntf + ADMIN_WEBAPP + STOP_SERVLET;

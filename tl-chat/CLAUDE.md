@@ -1330,6 +1330,19 @@ over the conversation with a scrim scoped to the host.
 - The strip stays above the scrim, so another section is one click away while one is open.
 - `drawer-below="0"` keeps a column at every width.
 
+**How far a column pane widens (#586).** Above `drawer-below` the pane has its splitter, and the
+splitter stops where the row would overflow. That end is not a constant: the row holds whatever
+the host put beside the rail, and the conversation's panel has `min-width: auto`, so its floor is
+reached only through its content. `railRoom` in `side-pane.tsx` therefore asks the row. For one
+synchronous layout, the pane is set to the host's full width, so that every neighbour that can give
+way shrinks to its floor. The widths are read, and the pane's width is restored before anything is
+painted. The measurement runs when the pane is shown, when the host or a neighbour that does not
+grow is resized (for example, the session list folding into its strip), and at the start of every
+splitter key press or drag. A remembered width is granted only as far as that room allows. In the
+demo at 1440 px, the pane's end is 495 px (host 1183, list 264, conversation floor 320, strip 56,
+two gaps). The earlier fixed cap of host width less 296 px let Home widen the pane to 887 px, and
+the row then overflowed by 392 px.
+
 The default 70 rem is the demo row with the list as a column and the pane open at its default
 420 px: list 16.5 + floor 20 + rail strip 3.5 + pane 26.25 + two gaps 3 = 69.25 rem. A section's
 18.75 rem column alone would have needed 62, and between the two the pane overflowed the row by up

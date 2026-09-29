@@ -100,6 +100,16 @@ export function SidePane({
    * wish that is granted only as far as this window allows.
    */
   const [workspaceWidth, setWorkspaceWidth] = useState(0)
+  /**
+   * How wide a `rail` pane may become in the row it stands in, measured by {@link railRoom}; 0
+   * while nobody measured.
+   *
+   * A fixed allowance does not do for a rail: its row holds whatever the host put beside it - a
+   * session list, the conversation with its own floor, gaps - and a pane that took the workspace's
+   * `STAGE_FLOOR` pushed the conversation past its floor and the row out of the page (#586).
+   */
+  const [room, setRoom] = useState(0)
+  const measuresRoom = placement === 'rail' && !overlay
 
   /** The element whose width the pane may spend; see `placement`. */
   const boundsOf = useCallback(() => {
@@ -107,23 +117,59 @@ export function SidePane({
     return placement === 'workspace' ? parent : parent?.parentElement ?? null
   }, [placement])
 
+  /** Measures the rail pane's room anew, where there is one to measure; see {@link railRoom}. */
+  const measureRoom = useCallback((): number => {
+    const measured = measuresRoom && pane.current && !hidden ? railRoom(pane.current) : 0
+    if (measured > 0) setRoom(measured)
+    return measured
+  }, [measuresRoom, hidden])
+
   useLayoutEffect(() => {
     const workspace = boundsOf()
     if (!workspace) return undefined
-    setWorkspaceWidth(Math.round(workspace.getBoundingClientRect().width))
+    const measure = () => {
+      setWorkspaceWidth(Math.round(workspace.getBoundingClientRect().width))
+      measureRoom()
+    }
+    measure()
     if (typeof ResizeObserver === 'undefined') return undefined
-    const observer = new ResizeObserver(([entry]) => setWorkspaceWidth(Math.round(entry.contentRect.width)))
+    const observer = new ResizeObserver(measure)
     observer.observe(workspace)
+    /*
+     * A rail's room also changes when something beside it changes width while the host does not -
+     * the session list folding into its strip, or opening again. Only the neighbours that do not
+     * grow are watched: one that grows only fills what is left, so it changes with every step of
+     * the splitter and would measure the row once per step for nothing.
+     */
+    if (measuresRoom) {
+      for (const sibling of Array.from(workspace.children)) {
+        if (sibling === pane.current?.parentElement) continue
+        if ((parseFloat(getComputedStyle(sibling).flexGrow) || 0) > 0) continue
+        observer.observe(sibling)
+      }
+    }
     return () => observer.disconnect()
-  }, [boundsOf])
+  }, [boundsOf, measureRoom, measuresRoom])
 
   const maxWidth = useMemo(
     () =>
-      workspaceWidth > 0
-        ? Math.max(CONTENT_FLOOR, workspaceWidth - STAGE_FLOOR - STRIP_WIDTH)
-        : Number.MAX_SAFE_INTEGER,
-    [workspaceWidth],
+      measuresRoom
+        ? room > 0
+          ? Math.max(CONTENT_FLOOR, room)
+          : Number.MAX_SAFE_INTEGER
+        : workspaceWidth > 0
+          ? Math.max(CONTENT_FLOOR, workspaceWidth - STAGE_FLOOR - STRIP_WIDTH)
+          : Number.MAX_SAFE_INTEGER,
+    [measuresRoom, room, workspaceWidth],
   )
+  /**
+   * The limit an interaction works against: measured afresh for a rail, whose neighbours may have
+   * changed since the last measurement without anything telling the pane.
+   */
+  const currentMax = useCallback(() => {
+    const measured = measureRoom()
+    return measured > 0 ? Math.max(CONTENT_FLOOR, measured) : maxWidth
+  }, [measureRoom, maxWidth])
   /**
    * Which mode the remembered width belongs to.
    *
@@ -154,9 +200,10 @@ export function SidePane({
     (event: React.PointerEvent<HTMLDivElement>) => {
       if (fixed) return
       dragging.current = true
+      measureRoom()
       event.currentTarget.setPointerCapture(event.pointerId)
     },
-    [fixed],
+    [fixed, measureRoom],
   )
 
   const onPointerMove = useCallback(
@@ -178,9 +225,9 @@ export function SidePane({
   const resize = useCallback(
     (by: number) => {
       const current = pane.current?.getBoundingClientRect().width ?? paneWidth
-      setWidth(Math.min(maxWidth, Math.max(CONTENT_FLOOR, current + by)))
+      setWidth(Math.min(currentMax(), Math.max(CONTENT_FLOOR, current + by)))
     },
-    [maxWidth, paneWidth, setWidth],
+    [currentMax, paneWidth, setWidth],
   )
 
   // A splitter that only answers the mouse is a splitter half the users cannot move.
@@ -204,13 +251,13 @@ export function SidePane({
       }
       if (event.key === 'Home') {
         event.preventDefault()
-        setWidth(maxWidth)
+        setWidth(currentMax())
       } else if (event.key === 'End') {
         event.preventDefault()
         setWidth(CONTENT_FLOOR)
       }
     },
-    [maxWidth, resize, setWidth, fixed],
+    [currentMax, resize, setWidth, fixed],
   )
 
   return (
@@ -235,7 +282,7 @@ export function SidePane({
           aria-label={labels.sideSplitter}
           aria-valuenow={Math.round(paneWidth)}
           aria-valuemin={CONTENT_FLOOR}
-          aria-valuemax={workspaceWidth > 0 ? Math.round(maxWidth) : undefined}
+          aria-valuemax={maxWidth < Number.MAX_SAFE_INTEGER ? Math.round(maxWidth) : undefined}
           onKeyDown={onKeyDown}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
@@ -296,3 +343,55 @@ export function SidePane({
 }
 
 export const PANE_CONTENT_FLOOR = CONTENT_FLOOR
+
+/**
+ * How wide a `rail` pane may become before its row overflows: the host's content width less the
+ * rest of the rail, the gaps, the margins and every neighbour at its own floor (#586).
+ *
+ * A neighbour's floor is not something a stylesheet states: the conversation's panel has
+ * `min-width: auto`, i.e. the conversation's own `min-width` reached through its content. So the
+ * row is asked instead. For the length of one synchronous layout the pane is made as wide as the
+ * whole host, which overfills the row, so every neighbour that can give way gives way to exactly its
+ * floor; the widths are read and the pane's own width is put back before anything is painted.
+ *
+ * Returns 0 where there is nothing to measure: no host, or a pane that is not laid out.
+ */
+export function railRoom(pane: HTMLElement): number {
+  const rail = pane.parentElement
+  const host = rail?.parentElement
+  if (!rail || !host) return 0
+  const hostStyle = getComputedStyle(host)
+  const inner = host.clientWidth - px(hostStyle.paddingLeft) - px(hostStyle.paddingRight)
+  if (inner <= 0 || pane.getBoundingClientRect().width <= 0) return 0
+
+  const previous = pane.style.width
+  pane.style.width = `${inner}px`
+  try {
+    const railOwn = rail.getBoundingClientRect().width - pane.getBoundingClientRect().width
+    let taken = railOwn + outerMargins(rail)
+    // Only a row puts its children beside the rail; anywhere else the rail has the host to itself.
+    if (/flex/.test(hostStyle.display) && hostStyle.flexDirection.startsWith('row')) {
+      const beside = Array.from(host.children).filter((child) => {
+        if (child === rail) return false
+        const style = getComputedStyle(child)
+        return style.display !== 'none' && style.position !== 'absolute' && style.position !== 'fixed'
+      })
+      for (const child of beside) {
+        taken += child.getBoundingClientRect().width + outerMargins(child)
+      }
+      taken += (px(hostStyle.columnGap) || 0) * beside.length
+    }
+    return Math.max(0, Math.floor(inner - taken))
+  } finally {
+    pane.style.width = previous
+  }
+}
+
+function outerMargins(element: Element): number {
+  const style = getComputedStyle(element)
+  return px(style.marginLeft) + px(style.marginRight)
+}
+
+function px(value: string): number {
+  return parseFloat(value) || 0
+}

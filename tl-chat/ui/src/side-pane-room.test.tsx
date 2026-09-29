@@ -157,4 +157,49 @@ describe('SidePane in a rail', () => {
 
     expect(shape.paneOf()!.style.width).toBe(`${HOST - LIST - FLOOR - STRIP - 2 * GAP}px`)
   })
+  /**
+   * A drag moves the pane on every pointer move but hands the store one width, whole pixels, when
+   * the pointer lets go: every width the store receives is a preference write, and a fraction is
+   * one the server refuses (#588).
+   */
+  it('stores a dragged width once, rounded, when the pointer lets go', async () => {
+    const widths: number[] = []
+    const shape = mount((w) => widths.push(w))
+    shape.layoutPane()
+    const splitter = shape.paneOf()!.querySelector<HTMLElement>('.side-splitter')!
+    splitter.setPointerCapture = () => undefined
+    shape.host.getBoundingClientRect = () => ({ right: HOST, width: HOST }) as DOMRect
+    const pointer = (type: string, clientX = 0) =>
+      act(() => {
+        splitter.dispatchEvent(new MouseEvent(type, { bubbles: true, clientX }))
+      })
+
+    pointer('pointerdown')
+    pointer('pointermove', HOST - 380.0333251953125)
+    pointer('pointermove', HOST - 401.36669921875)
+    // A pointer move is a continuous event, which React renders after the event, not inside it.
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(shape.paneOf()!.style.width).toBe('401.36669921875px')
+    pointer('pointermove', HOST - 422.70001220703125)
+    expect(widths).toEqual([])
+
+    pointer('pointerup')
+    expect(widths).toEqual([423])
+  })
+
+  it('stores nothing for a click on the splitter that did not move it', () => {
+    const widths: number[] = []
+    const shape = mount((w) => widths.push(w))
+    shape.layoutPane()
+    const splitter = shape.paneOf()!.querySelector<HTMLElement>('.side-splitter')!
+    splitter.setPointerCapture = () => undefined
+    act(() => {
+      splitter.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }))
+    })
+    act(() => {
+      splitter.dispatchEvent(new MouseEvent('pointerup', { bubbles: true }))
+    })
+
+    expect(widths).toEqual([])
+  })
 })

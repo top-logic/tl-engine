@@ -1018,6 +1018,26 @@ describe('a mounted rail', () => {
     release()
   })
 
+  /**
+   * The preference stores whole pixels and the server refuses a fraction, which a splitter's
+   * pointer produces (#588): what the store writes is the rounded width.
+   */
+  it('stores a pane width as whole pixels', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+
+    store.actions.setPaneWidth(422.70001220703125)
+    await settle()
+
+    expect(store.getState().paneWidth).toBe(423)
+    expect(preferenceWrites).toHaveLength(1)
+    expect(preferenceWrites[0]).toMatchObject({ paneWidth: 423 })
+
+    release()
+  })
+
   /** An unregister that runs twice must not push the count below zero. */
   it('ignores a repeated unregister', () => {
     const store = chatStore('alpha', BOOT)

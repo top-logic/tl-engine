@@ -33,8 +33,8 @@ import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.security.SecurityConfigurationService.ModelAccessRights;
 
 /**
- * Test for reading the access rules of a {@link SecurityConfigurationService.Config} from
- * configuration.
+ * Test for reading the access rules of a
+ * {@link com.top_logic.model.security.SecurityConfigurationService.Config} from configuration.
  */
 @SuppressWarnings("javadoc")
 public class TestAccessRulesConfig extends TestCase {

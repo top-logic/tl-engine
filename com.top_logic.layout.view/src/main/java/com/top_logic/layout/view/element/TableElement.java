@@ -14,14 +14,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
@@ -33,7 +34,6 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
-import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
@@ -75,25 +75,25 @@ import com.top_logic.layout.view.table.FilterStateTemplate;
 import com.top_logic.layout.view.table.RowCommandColumn;
 import com.top_logic.layout.view.table.TableDropBinding;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
-import com.top_logic.model.TLModel;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.SecurityFilterReport;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.model.util.TLModelPartRef;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.table.Column;
 import com.top_logic.table.GroupSpec;
+import com.top_logic.table.NamedFilter;
+import com.top_logic.table.NamedFilterStore;
 import com.top_logic.table.Selection;
 import com.top_logic.table.SelectionMode;
 import com.top_logic.table.SortSpec;
 import com.top_logic.table.TableId;
-import com.top_logic.table.NamedFilter;
-import com.top_logic.table.NamedFilterStore;
 import com.top_logic.table.TableViewState;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
@@ -101,30 +101,32 @@ import com.top_logic.table.impl.PersonalConfigNamedFilterStore;
 import com.top_logic.table.impl.PersonalConfigViewStateStore;
 
 /**
- * Declarative {@link UIElement} that renders a model-defined table (the {@code <table>} tag) through
- * the green-field table model ({@link com.top_logic.table.TableView}) via a {@link TableViewControl}.
+ * Declarative {@link UIElement} that renders a model-defined table (the {@code 
+ * <table>
+ * } tag) through the green-field table model ({@link com.top_logic.table.TableView}) via a
+ * {@link TableViewControl}.
  *
  * <p>
  * Input data comes from {@link ViewChannel}s, rows are computed by a TL-Script expression, and each
- * column is declared by an entry of the {@code <columns>} - over a model attribute of the rows, over
- * a value computed from them, or over an object they point to. Columns are sortable and (per-column)
- * filterable.
+ * column is declared by an entry of the {@code <columns>} - over a model attribute of the rows,
+ * over a value computed from them, or over an object they point to. Columns are sortable and
+ * (per-column) filterable.
  * </p>
  *
  * <p>
  * What the user personalizes about a table - the column order, the column widths, which columns are
  * displayed, the sort order - and the filters the user saves under a name are stored under the
  * element's personalization key. Without a configured one, that key is the table's structural
- * signature: its row types plus the names of its declared columns. That signature changes whenever a
- * column is added or removed, and everything the users of the table personalized - their saved
+ * signature: its row types plus the names of its declared columns. That signature changes whenever
+ * a column is added or removed, and everything the users of the table personalized - their saved
  * filters included - is then left behind. Setting {@code personalization-key} gives the table an
  * identity of its own that survives such an edit of the view, so set it on every table whose
  * personalization is meant to last.
  * </p>
  *
  * @implNote {@link #tableId()} derives the {@link TableId} from
- *           {@link UIElement.Config#getPersonalizationKey()} when one is configured, and from the
- *           structural signature otherwise.
+ *           {@link com.top_logic.layout.view.UIElement.Config#getPersonalizationKey()} when one is
+ *           configured, and from the structural signature otherwise.
  */
 @InApp
 public class TableElement implements UIElement {
@@ -807,7 +809,8 @@ public class TableElement implements UIElement {
 
 	/**
 	 * Prefix distinguishing a {@link TableId} built from a configured
-	 * {@link UIElement.Config#getPersonalizationKey() personalization key}.
+	 * {@link com.top_logic.layout.view.UIElement.Config#getPersonalizationKey() personalization
+	 * key}.
 	 */
 	private static final String KEY_PREFIX = "key:";
 
@@ -1412,10 +1415,11 @@ public class TableElement implements UIElement {
 	 * filters are stored.
 	 *
 	 * <p>
-	 * The configured {@link UIElement.Config#getPersonalizationKey() personalization key} when
-	 * there is one. Without it, the identity is the table's structural signature - its row types
-	 * plus the names of its declared columns - which changes whenever a column is added or removed,
-	 * so that a configured key is what keeps a personalization across an edit of the view.
+	 * The configured {@link com.top_logic.layout.view.UIElement.Config#getPersonalizationKey()
+	 * personalization key} when there is one. Without it, the identity is the table's structural
+	 * signature - its row types plus the names of its declared columns - which changes whenever a
+	 * column is added or removed, so that a configured key is what keeps a personalization across
+	 * an edit of the view.
 	 * </p>
 	 */
 	public TableId tableId() {

@@ -176,7 +176,7 @@ public final class InAppServiceConfigStore {
 	 *        The configuration of the service.
 	 * @return The entry, not yet part of an application configuration.
 	 *
-	 * @see ApplicationConfig.Config#getServices()
+	 * @see com.top_logic.basic.config.ApplicationConfig.Config#getServices()
 	 */
 	public static ModuleConfiguration newServiceEntry(Class<? extends ManagedClass> serviceClass,
 			ServiceConfiguration<?> instance) {

@@ -11,9 +11,8 @@ import com.top_logic.layout.I18NConstantsBase;
 /**
  * Internationalization constants for this package.
  * 
- * @see com.top_logic.basic.util.ResPrefix
+ * @see com.top_logic.layout.ResPrefix
  */
-@SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
 	/**

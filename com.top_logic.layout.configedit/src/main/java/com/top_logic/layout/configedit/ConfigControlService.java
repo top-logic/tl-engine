@@ -560,13 +560,13 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * Whether the given property is edited by selecting from options.
 	 *
 	 * <p>
-	 * Only ever called for a property {@link #checkSupportedKind(PropertyDescriptor)} admits - it
-	 * has already rejected every other kind by the
-	 * time either public entry point reaches this method. That matters because
-	 * {@link ConfigPropertyOptions#optionProvider(PropertyDescriptor) answering non-null} for a
-	 * sub-configuration or a {@link PropertyKind#LIST} property does not mean "edit by
-	 * selecting" (see its own {@code JavaDoc}) - a caller invoking this method directly on such a property
-	 * would be relying on a guarantee this method no longer makes on its own.
+	 * Only ever called for a property
+	 * {@link #checkSupportedKind(ConfigurationItem, PropertyDescriptor)} admits - it has already
+	 * rejected every other kind by the time either public entry point reaches this method. That
+	 * matters because {@link ConfigPropertyOptions#optionProvider(PropertyDescriptor) answering
+	 * non-null} for a sub-configuration or a {@link PropertyKind#LIST} property does not mean "edit
+	 * by selecting" (see its own {@code JavaDoc}) - a caller invoking this method directly on such
+	 * a property would be relying on a guarantee this method no longer makes on its own.
 	 * </p>
 	 *
 	 * <p>
@@ -585,11 +585,11 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * Options resolve for more than a value list: {@link ConfigPropertyOptions#optionProvider} also
 	 * answers the implementation types a polymorphic property may be given, which the type selector
 	 * offers, not a field. The {@link Options @Options} annotation is what tells the two apart - it
-	 * is the declaration that the property's own <em>value</em> comes from a fixed set. It is looked up
-	 * with {@link ConfigPropertyOptions#optionsAnnotation(PropertyDescriptor)}, so a value class
-	 * that declares the set for every property typed with it - a command group reference, a model
-	 * part reference - is offered as a select exactly like a property carrying the annotation
-	 * itself.
+	 * is the declaration that the property's own <em>value</em> comes from a fixed set. It is
+	 * looked up with {@link ConfigPropertyOptions#optionsAnnotation(PropertyDescriptor)}, so a
+	 * value class that declares the set for every property typed with it - a command group
+	 * reference, a model part reference - is offered as a select exactly like a property carrying
+	 * the annotation itself.
 	 * </p>
 	 *
 	 * <p>
@@ -637,9 +637,9 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * Read from the property's Java type, not from its {@link PropertyKind}: a collection property
 	 * with a {@link Format @Format} of its own (e.g. a {@code List<String>} written as comma
 	 * separated text) is a {@link PropertyKind#PLAIN} property, and it is exactly such a property
-	 * that gets here - {@link #checkSupportedKind(PropertyDescriptor)} has already rejected the
-	 * {@link PropertyKind#LIST}, {@link PropertyKind#ARRAY} and {@link PropertyKind#MAP} kinds,
-	 * which belong to the collection editor rather than to a field.
+	 * that gets here - {@link #checkSupportedKind(ConfigurationItem, PropertyDescriptor)} has
+	 * already rejected the {@link PropertyKind#LIST}, {@link PropertyKind#ARRAY} and
+	 * {@link PropertyKind#MAP} kinds, which belong to the collection editor rather than to a field.
 	 * </p>
 	 *
 	 * <p>
@@ -715,10 +715,12 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * The {@link LabelProvider} for the options of a property
 	 * {@link #isSelect(PropertyDescriptor, DerivedProperty) edited by selecting}.
 	 *
-	 * @param config
-	 *        The item the property belongs to - the option labels may be built by a mapping that
+	 * @param formModel
+	 *        What is being edited as a whole - the option labels may be built by a mapping that
 	 *        needs the surrounding configuration, see
 	 *        {@link ConfigPropertyOptions#optionProvider(ConfigurationItem, PropertyDescriptor)}.
+	 * @param property
+	 *        The property whose options are labelled.
 	 */
 	private LabelProvider selectLabels(ConfigurationItem formModel, PropertyDescriptor property) {
 		LabelProvider labels = ConfigPropertyOptions.optionLabels(formModel, property);

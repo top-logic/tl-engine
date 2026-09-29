@@ -15,7 +15,6 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.DeactivatedTest;
 import test.com.top_logic.basic.module.ServiceTestSetup;
-import test.com.top_logic.element.util.ElementTestCollector;
 import test.com.top_logic.element.util.ElementWebTestSetup;
 
 import com.top_logic.element.boundsec.manager.coverage.CoverageFinding;
@@ -31,7 +30,7 @@ import com.top_logic.element.boundsec.manager.coverage.TypeCoverage;
  * nobody may read, and a type carrying a grant to a role that no rule delivers on it. It runs
  * against the definitions of the application under test, therefore it is added to the test suite of
  * an application only when the application switches it on, see
- * {@link ElementTestCollector.GlobalConfig#getTestSecurityCoverage()}.
+ * {@link test.com.top_logic.element.util.ElementTestCollector.GlobalConfig#getTestSecurityCoverage()}.
  * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>

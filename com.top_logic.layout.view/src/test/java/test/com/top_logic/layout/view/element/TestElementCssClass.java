@@ -36,20 +36,21 @@ import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 
 /**
- * Tests that the {@link UIElement.Config#getCssClass() CSS class} configured for an element reaches
- * the client as the CSS class of the control displaying it.
+ * Tests that the {@link com.top_logic.layout.view.UIElement.Config#getCssClass() CSS class}
+ * configured for an element reaches the client as the CSS class of the control displaying it.
  *
  * <p>
  * The property is declared once for all elements, so the test exercises elements of different kinds
- * - a container, a piece of text, a picture, a panel, a card, a grid, a button, an avatar, a tab bar
- * - through the one seam they share: a view read the way the application reads it, a control created
- * for a view context, and the client state that control publishes.
+ * - a container, a piece of text, a picture, a panel, a card, a grid, a button, an avatar, a tab
+ * bar - through the one seam they share: a view read the way the application reads it, a control
+ * created for a view context, and the client state that control publishes.
  * </p>
  *
  * <p>
  * Kinds that need the application model to be built - a {@code <value-input>} resolving the type of
- * its value, a {@code <table>} computing its rows - are exercised where that model is available, not
- * here.
+ * its value, a {@code 
+ * <table>
+ * } computing its rows - are exercised where that model is available, not here.
  * </p>
  */
 public class TestElementCssClass extends TestCase {

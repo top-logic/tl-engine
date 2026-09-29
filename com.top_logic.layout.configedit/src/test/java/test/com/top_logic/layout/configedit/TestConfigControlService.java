@@ -1029,8 +1029,9 @@ public class TestConfigControlService extends TestCase {
 		 * A property whose {@code @Options} mapping ({@link ShapeMapping}) is not the identity -
 		 * its options ({@link Shape}) are a different Java type than the value it actually stores
 		 * ({@link ShapeRef}), mirroring {@link com.top_logic.model.util.TLModelPartRef}. Used only
-		 * by {@link #testOptionMappingNotIdentityFallsThroughToFormatField()} to prove that such a
-		 * property is edited as text through its own format, not by selecting.
+		 * by {@link TestConfigControlService#testOptionMappingNotIdentityIsEditedBySelecting()} to
+		 * prove that such a property is edited by selecting all the same, the mapping translating
+		 * between the option and the stored value.
 		 */
 		@Name(SHAPE_REF)
 		@Format(ShapeRefFormat.class)

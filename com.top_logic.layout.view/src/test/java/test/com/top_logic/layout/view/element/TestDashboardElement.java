@@ -45,7 +45,6 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.element.DashboardElement;
 import com.top_logic.layout.view.element.I18NConstants;
-import com.top_logic.layout.view.element.TileElement;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 import com.top_logic.util.model.ModelService;
@@ -311,7 +310,7 @@ public class TestDashboardElement extends BasicTestCase {
 	 *           in; the icon marking a tile as an entry point is taken from the
 	 *           {@link ThemeFactory}.
 	 *
-	 * @see TileElement.Config#getAction()
+	 * @see com.top_logic.layout.view.element.TileElement.Config#getAction()
 	 */
 	public static Test suite() {
 		return KBSetup.getSingleKBTest(TestDashboardElement.class,

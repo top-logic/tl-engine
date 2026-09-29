@@ -75,9 +75,9 @@ public class ConfigPropertyOptions extends LazyTypedAnnotatable implements Decla
 	 *
 	 *        <p>
 	 *        Passed in rather than derived from the property's own item: the way up is
-	 *        {@link com.top_logic.basic.config.ConfigPart#container()}, and not every configuration
-	 *        on the way is a {@code ConfigPart} - {@code SingletonConfig} is not - so walking up
-	 *        stops early and silently at the wrong item.
+	 *        {@link com.top_logic.basic.config.container.ConfigPart#container()}, and not every
+	 *        configuration on the way is a {@code ConfigPart} - {@code SingletonConfig} is not - so
+	 *        walking up stops early and silently at the wrong item.
 	 *        </p>
 	 */
 	public ConfigPropertyOptions(ConfigurationItem formModel, PropertyDescriptor property) {

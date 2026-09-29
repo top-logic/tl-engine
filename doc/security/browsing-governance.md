@@ -156,7 +156,7 @@ silently escaped would be worth very little.
 | Route out | Enforced at |
 |---|---|
 | Browser tool | The **filtering forward proxy** the session's Chromium is pinned to - every connection it makes, including redirect hops and sub-resources - plus the tool's own pre-flight check and the in-browser navigation policy. |
-| `webFetch` | Before each hop, beside the SSRF check, so a permitted origin redirecting to a forbidden one is refused rather than followed. |
+| `webFetch` | Before each hop, ahead of the SSRF check, so a permitted origin redirecting to a forbidden one is refused rather than followed. The request itself goes through a filtering proxy of its own, which connects to exactly the address the SSRF check passed, so a host that re-resolves to a private address between check and connection (DNS rebinding) is refused (#581). |
 | `webSearch` | As the engine's include/exclude domain filters, **and** as a filter on the hits that come back. |
 | Downloads | A download the policy refuses is cancelled and the bytes already written are deleted. |
 

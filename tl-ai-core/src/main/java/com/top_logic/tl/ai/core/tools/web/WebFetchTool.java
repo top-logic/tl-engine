@@ -8,6 +8,9 @@ package com.top_logic.tl.ai.core.tools.web;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.ProxySelector;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -67,16 +70,74 @@ public class WebFetchTool {
 	private static final String JUNK_SELECTOR =
 		"script,style,noscript,iframe,svg,head,nav,footer,header,form,button,input,select,template";
 
-	private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
-		.connectTimeout(Duration.ofSeconds(15))
-		.followRedirects(HttpClient.Redirect.NEVER)
-		.build();
+	/**
+	 * How many fetches may be connected at once through {@link Egress#PROXY}, counted in the units
+	 * {@link FilteringProxy#maxConnections(int)} takes: each unit is a browser's worth of sockets, far
+	 * more than the tool calls of one installation hold open at the same time.
+	 */
+	private static final int EGRESS_SESSIONS = 4;
+
+	/**
+	 * The filtering proxy every production fetch goes through, started on first use.
+	 *
+	 * <p>
+	 * <b>Why a proxy.</b> {@link UrlSafety#validateUrl(URI)} resolves the host and checks the
+	 * addresses, but an {@link HttpClient} connected by name would resolve it a second time, and a
+	 * rebinding host answers the second query with a private address (#581). The JDK client has no
+	 * per-client resolver to pin the checked address with. The {@link FilteringProxy} the browser
+	 * already uses resolves each connection once, checks every address and connects to exactly that
+	 * one, for plain HTTP and for the {@code CONNECT} tunnel of HTTPS alike. The certificate check
+	 * stays between the client and the origin, because the tunnel is blind.
+	 * </p>
+	 *
+	 * <p>
+	 * Its domain policy permits everything: the role's {@link BrowsingPolicy} is checked by the tool on
+	 * every hop, and the browser's installation-wide lists do not govern this tool. The SSRF check is
+	 * not a policy the proxy can be configured out of.
+	 * </p>
+	 */
+	private static final class Egress {
+
+		static final FilteringProxy PROXY =
+			FilteringProxy.start(host -> null, FilteringProxy.ssrfResolver(), EGRESS_SESSIONS);
+
+		static final HttpClient CLIENT = clientThrough(PROXY);
+	}
+
+	private final UrlSafety.NameLookup _names;
+
+	private final FilteringProxy _egress;
+
+	private final HttpClient _client;
 
 	/**
 	 * Creates a {@link WebFetchTool}.
 	 */
 	public WebFetchTool() {
 		// Required public no-arg constructor for ReflectiveToolFactory.
+		this(UrlSafety.NameLookup.SYSTEM, Egress.PROXY, Egress.CLIENT);
+	}
+
+	/**
+	 * Creates a {@link WebFetchTool} that resolves with {@code names} and connects through
+	 * {@code egress}. Package-visible for testing; the caller owns and closes {@code egress}.
+	 */
+	WebFetchTool(UrlSafety.NameLookup names, FilteringProxy egress) {
+		this(names, egress, clientThrough(egress));
+	}
+
+	private WebFetchTool(UrlSafety.NameLookup names, FilteringProxy egress, HttpClient client) {
+		_names = names;
+		_egress = egress;
+		_client = client;
+	}
+
+	private static HttpClient clientThrough(FilteringProxy egress) {
+		return HttpClient.newBuilder()
+			.connectTimeout(Duration.ofSeconds(15))
+			.followRedirects(HttpClient.Redirect.NEVER)
+			.proxy(ProxySelector.of(new InetSocketAddress(InetAddress.getLoopbackAddress(), egress.port())))
+			.build();
 	}
 
 	/**
@@ -128,7 +189,7 @@ public class WebFetchTool {
 				if (offPolicy != null) {
 					return "Error: " + BrowsingPolicies.audit(browsing, uri.getHost(), offPolicy);
 				}
-				String validationError = validateUrl(uri);
+				String validationError = UrlSafety.validateUrl(uri, _names);
 				if (validationError != null) {
 					return "Error: " + validationError;
 				}
@@ -140,8 +201,32 @@ public class WebFetchTool {
 					.GET()
 					.build();
 
-				HttpResponse<InputStream> response = HTTP_CLIENT.send(request, BodyHandlers.ofInputStream());
+				HttpResponse<InputStream> response;
+				try {
+					response = _client.send(request, BodyHandlers.ofInputStream());
+				} catch (IOException ex) {
+					// A refused HTTPS tunnel reaches the client only as an exception ("Tunnel failed,
+					// got: 403"); any other failure is reported as what it is.
+					String message = String.valueOf(ex.getMessage());
+					String refusal = message.contains("403") ? _egress.refusalFor(uri.getHost()) : null;
+					if (refusal != null) {
+						return "Error: " + refusal;
+					}
+					throw ex;
+				}
 				int status = response.statusCode();
+				if (status == 403 && response.headers().firstValue(FilteringProxy.REFUSAL_HEADER).isPresent()) {
+					// Refused by the proxy at connect time - typically a host whose address changed
+					// since the check above. The reason is taken from the proxy, not from the header,
+					// which the upstream server could have written itself.
+					String refusal = _egress.refusalFor(uri.getHost());
+					if (refusal != null) {
+						try (InputStream body = response.body()) {
+							body.readAllBytes();
+						}
+						return "Error: " + refusal;
+					}
+				}
 
 				if (status >= 300 && status < 400) {
 					try (InputStream body = response.body()) {

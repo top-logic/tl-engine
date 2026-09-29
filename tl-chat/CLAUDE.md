@@ -765,6 +765,11 @@ own, and any element may sit inside it. **Put it where the stack was** rather th
 the engine's `.tlStack:has(> .tlPanel--fill)` rule looks one level deep, so a `<panel fill="true">`
 that stops being a direct child of the page's stack loses its height.
 
+That panel is there for the height alone and carries no title. Its header, which the engine draws
+anyway (padding, a tinted band and a border line), is hidden by a rule in `styles.css` for as long
+as it holds no title, no title content and no command (#589). A host that gives the panel a title
+or a command keeps its header.
+
 `<chat-dock>` is the one element that **repeats** the id rather than inheriting it, because it
 *contains* the `<chat>` instead of sitting inside one and a scope only reaches descendants:
 

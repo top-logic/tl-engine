@@ -184,8 +184,6 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 		assertNull("A type held in no composition has no default access parent.", coverage.accessParent());
 
 		CoverageFinding finding = singleFinding(coverage, FindingKind.NO_ROLE_SOURCE);
-		assertFalse("The element test application does not use the global default role parent.",
-			finding.isRootFallbackActive());
 		assertNotNull(finding.getMessage());
 	}
 

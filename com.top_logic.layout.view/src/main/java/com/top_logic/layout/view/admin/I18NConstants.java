@@ -184,13 +184,6 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COVERAGE_PROBLEM_NO_ROLE_SOURCE;
 
 	/**
-	 * @en No role source: neither a role rule nor a role parent rule applies to the type, and no
-	 *     composition holds its objects, so they inherit the roles of the security root only, the
-	 *     global default security parent being active.
-	 */
-	public static ResKey COVERAGE_PROBLEM_NO_ROLE_SOURCE_ROOT_FALLBACK;
-
-	/**
 	 * @en No read grant: no role is granted the read operation on the type, so its objects are
 	 *     inaccessible to every user.
 	 */

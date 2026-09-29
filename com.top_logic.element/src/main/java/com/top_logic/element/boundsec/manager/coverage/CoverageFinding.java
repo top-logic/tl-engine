@@ -45,34 +45,27 @@ public final class CoverageFinding {
 
 	private final List<String> _ruleIds;
 
-	private final boolean _rootFallbackActive;
-
 	private CoverageFinding(FindingKind kind, TLClass type, ResKey message, BoundCommandGroup operation,
-			Set<BoundedRole> roles, List<String> ruleIds, boolean rootFallbackActive) {
+			Set<BoundedRole> roles, List<String> ruleIds) {
 		_kind = Objects.requireNonNull(kind);
 		_type = Objects.requireNonNull(type);
 		_message = Objects.requireNonNull(message);
 		_operation = operation;
 		_roles = roles;
 		_ruleIds = ruleIds;
-		_rootFallbackActive = rootFallbackActive;
 	}
 
 	/**
 	 * Creates a {@link FindingKind#NO_ROLE_SOURCE} finding.
-	 * 
+	 *
 	 * @param type
 	 *        The type without a role source.
-	 * @param rootFallbackActive
-	 *        Whether objects without a role parent fall back to the security root.
 	 * @return The new finding.
 	 */
-	public static CoverageFinding noRoleSource(TLClass type, boolean rootFallbackActive) {
-		ResKey message = rootFallbackActive
-			? I18NConstants.NO_ROLE_SOURCE_ROOT_FALLBACK__TYPE.fill(TLModelUtil.qualifiedName(type))
-			: I18NConstants.NO_ROLE_SOURCE__TYPE.fill(TLModelUtil.qualifiedName(type));
+	public static CoverageFinding noRoleSource(TLClass type) {
+		ResKey message = I18NConstants.NO_ROLE_SOURCE__TYPE.fill(TLModelUtil.qualifiedName(type));
 		return new CoverageFinding(FindingKind.NO_ROLE_SOURCE, type, message, null, Collections.emptySet(),
-			Collections.emptyList(), rootFallbackActive);
+			Collections.emptyList());
 	}
 
 	/**
@@ -85,7 +78,7 @@ public final class CoverageFinding {
 	public static CoverageFinding noReadGrant(TLClass type) {
 		ResKey message = I18NConstants.NO_READ_GRANT__TYPE.fill(TLModelUtil.qualifiedName(type));
 		return new CoverageFinding(FindingKind.NO_READ_GRANT, type, message, null, Collections.emptySet(),
-			Collections.emptyList(), false);
+			Collections.emptyList());
 	}
 
 	/**
@@ -110,7 +103,7 @@ public final class CoverageFinding {
 		ResKey message = I18NConstants.DEAD_GRANT__TYPE_OPERATION_ROLES
 			.fill(TLModelUtil.qualifiedName(type), operation.getID(), roleNames);
 		return new CoverageFinding(FindingKind.DEAD_GRANT, type, message, operation,
-			Collections.unmodifiableSet(roles), Collections.emptyList(), false);
+			Collections.unmodifiableSet(roles), Collections.emptyList());
 	}
 
 	/**
@@ -126,7 +119,7 @@ public final class CoverageFinding {
 		ResKey message = I18NConstants.SHADOWED_RULES__TYPE_RULES
 			.fill(TLModelUtil.qualifiedName(type), String.join(DETAIL_SEPARATOR, ruleIds));
 		return new CoverageFinding(FindingKind.SHADOWED_RULES, type, message, null, Collections.emptySet(),
-			List.copyOf(ruleIds), false);
+			List.copyOf(ruleIds));
 	}
 
 	/**
@@ -176,15 +169,6 @@ public final class CoverageFinding {
 	 */
 	public List<String> getRuleIds() {
 		return _ruleIds;
-	}
-
-	/**
-	 * Whether objects without a role parent fall back to the security root.
-	 * 
-	 * @see com.top_logic.tool.boundsec.BoundHelper#useDefaultObject()
-	 */
-	public boolean isRootFallbackActive() {
-		return _rootFallbackActive;
 	}
 
 	@Override

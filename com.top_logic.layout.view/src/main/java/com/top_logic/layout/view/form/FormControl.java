@@ -424,11 +424,31 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		ModelChangeEvent.ChangeType change = event.getChange(_currentObject);
 		if (change == ModelChangeEvent.ChangeType.DELETED) {
 			onCurrentObjectDeleted();
-		} else if (change == ModelChangeEvent.ChangeType.UPDATED && !_editMode) {
-			// In view mode: refresh field values. In edit mode: overlay buffers changes,
-			// base values become visible after save/cancel.
-			fireFormStateChanged();
+		} else if (change == ModelChangeEvent.ChangeType.UPDATED) {
+			if (_editMode) {
+				followStoredChanges();
+			} else {
+				fireFormStateChanged();
+			}
 		}
+	}
+
+	/**
+	 * Makes the edit session show a change stored to the edited object by someone else than this
+	 * form.
+	 *
+	 * <p>
+	 * The participants show the stored values wherever the user has not changed anything, see
+	 * {@link FormParticipant#onObjectChanged()}. The user's changes stay in the overlay and are
+	 * written by the next save.
+	 * </p>
+	 */
+	private void followStoredChanges() {
+		for (FormParticipant participant : new ArrayList<>(_participants)) {
+			participant.onObjectChanged();
+		}
+		updateDirtyState();
+		fireValidityChanged();
 	}
 
 	private void onCurrentObjectDeleted() {

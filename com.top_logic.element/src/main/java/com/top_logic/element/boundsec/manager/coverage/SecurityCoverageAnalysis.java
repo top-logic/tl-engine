@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import com.top_logic.element.boundsec.ElementBoundHelper;
 import com.top_logic.element.boundsec.manager.ElementAccessManager;
 import com.top_logic.element.boundsec.manager.rule.IdentityPathElement;
 import com.top_logic.element.boundsec.manager.rule.NavigationRule;
@@ -42,8 +41,6 @@ import com.top_logic.model.security.AccessParent;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
-import com.top_logic.tool.boundsec.BoundHelper;
-import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
@@ -87,10 +84,6 @@ public class SecurityCoverageAnalysis {
 
 	private final Set<String> _excludedModules;
 
-	private final boolean _rootFallbackActive;
-
-	private final TLClass _securityRootType;
-
 	private final List<BoundCommandGroup> _operations;
 
 	private final List<TLReference> _compositeReferences;
@@ -115,12 +108,6 @@ public class SecurityCoverageAnalysis {
 		_accessManager = Objects.requireNonNull(accessManager);
 		_accessRights = Objects.requireNonNull(accessRights);
 		_excludedModules = Set.copyOf(excludedModules);
-
-		BoundHelper boundHelper = BoundHelper.getInstance();
-		_rootFallbackActive = boundHelper.useDefaultObject();
-		// The security root is only relevant as the fallback role parent, so it is not
-		// resolved in an application that does not use it.
-		_securityRootType = _rootFallbackActive ? securityRootType(boundHelper) : null;
 
 		_operations = new ArrayList<>(CommandGroupRegistry.getInstance().getAllCommandGroups());
 		_operations.sort(Comparator.comparing(BoundCommandGroup::getID));
@@ -198,7 +185,7 @@ public class SecurityCoverageAnalysis {
 			}
 		} else {
 			if (roleRules.isEmpty() && parentRules.isEmpty()) {
-				findings.add(CoverageFinding.noRoleSource(type, _rootFallbackActive));
+				findings.add(CoverageFinding.noRoleSource(type));
 			}
 			if (readRoles.isEmpty()) {
 				findings.add(CoverageFinding.noReadGrant(type));
@@ -280,9 +267,7 @@ public class SecurityCoverageAnalysis {
 		}
 		Collection<NavigationRule> parentRules = _accessManager.getRoleParentRules(type);
 		if (parentRules.isEmpty()) {
-			return _rootFallbackActive && _securityRootType != null
-				&& (_accessManager.canHaveRole(_securityRootType, role)
-					|| isAssignedDirectly(_securityRootType, role));
+			return false;
 		}
 		for (NavigationRule rule : parentRules) {
 			TLType endType = endType(rule);
@@ -379,23 +364,6 @@ public class SecurityCoverageAnalysis {
 	private TLObject singleton(SingletonPathElement.Config config) {
 		TLModule module = _model.getModule(config.getModule());
 		return module == null ? null : module.getSingleton(config.getSingletonName());
-	}
-
-	/**
-	 * The type of the security root, whose roles every object inherits when the global default
-	 * role parent is active.
-	 *
-	 * @return <code>null</code> when the application has no security root.
-	 */
-	private static TLClass securityRootType(BoundHelper boundHelper) {
-		if (!(boundHelper instanceof ElementBoundHelper elementBoundHelper)) {
-			return null;
-		}
-		BoundObject root = elementBoundHelper.securityRoot();
-		if (root != null && root.tType() instanceof TLClass rootType) {
-			return rootType;
-		}
-		return null;
 	}
 
 	/**

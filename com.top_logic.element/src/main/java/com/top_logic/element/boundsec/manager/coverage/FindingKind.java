@@ -28,8 +28,6 @@ public enum FindingKind {
 	 * definition: it says nothing about the objects that are created next, so a type whose access
 	 * depends on such an assignment alone is still reported.
 	 * </p>
-	 * 
-	 * @see CoverageFinding#isRootFallbackActive()
 	 */
 	NO_ROLE_SOURCE,
 

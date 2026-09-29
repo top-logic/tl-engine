@@ -25,13 +25,6 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 NO_ROLE_SOURCE__TYPE;
 
 	/**
-	 * @en The type "{0}" has neither a role rule nor a role parent rule, and no composition holds
-	 *     its objects. They only inherit the roles of the security root, because the global default
-	 *     security parent is active.
-	 */
-	public static ResKey1 NO_ROLE_SOURCE_ROOT_FALLBACK__TYPE;
-
-	/**
 	 * @en No role is granted the read operation on the type "{0}". Its objects are inaccessible to
 	 *     every user. If the type is used by the application's code only, declare it internal in
 	 *     the access rights configuration.

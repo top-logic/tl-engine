@@ -751,9 +751,7 @@ public class SecurityCoverageTable implements UIElement {
 	 */
 	private static ResKey problem(CoverageFinding finding) {
 		return switch (finding.getKind()) {
-			case NO_ROLE_SOURCE -> finding.isRootFallbackActive()
-				? I18NConstants.COVERAGE_PROBLEM_NO_ROLE_SOURCE_ROOT_FALLBACK
-				: I18NConstants.COVERAGE_PROBLEM_NO_ROLE_SOURCE;
+			case NO_ROLE_SOURCE -> I18NConstants.COVERAGE_PROBLEM_NO_ROLE_SOURCE;
 			case NO_READ_GRANT -> I18NConstants.COVERAGE_PROBLEM_NO_READ_GRANT;
 			case DEAD_GRANT -> I18NConstants.COVERAGE_PROBLEM_DEAD_GRANT__OPERATION_ROLES.fill(
 				finding.getOperation().getID(),

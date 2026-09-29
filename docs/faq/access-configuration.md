@@ -232,12 +232,12 @@ Roles on an object come from three sources, all collected by `ElementAccessManag
   role the user holds on the object the path leads to; a rule of type `reference` derives it from
   a relation to a group.
 
-### The global default role parent
+### Roles held on the security root
 
-`BoundHelper` config `use-default-security-parent="true"` makes the security root the role parent
-of every object without a rule of its own, so such objects inherit the roles held on the root. The
-coverage check reports this case separately ("no role source, root fallback active") because it
-usually means that access is defined by accident rather than by design.
+The security root is never a role parent implicitly: an object whose type has no role parent rule
+has no role parent at all. For the roles held on the root to reach the objects of a type, a role
+parent rule must name it explicitly via `<singleton module="SecurityStructure"/>`, either on a
+common base type with `inherit="true"` or per type.
 
 ## Where the files are
 

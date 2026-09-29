@@ -1521,6 +1521,33 @@
   animation-delay: 0.3s;
 }
 
+/*
+ * An application's own working indicator in place of the dots (`<chat-conversation
+ * working-indicator>`): an icon class, an inline SVG or an image, at the height of the first text
+ * line so the answer takes its place without a jump. Its size is a token read with a fallback rather
+ * than declared on the chat's roots, so an application may set it anywhere above - on `:root` for
+ * every chat - without the root's own declaration shadowing it. `currentColor` is the secondary text
+ * colour, which an SVG drawing in `currentColor` picks up in either theme.
+ */
+.answer-working {
+  display: inline-flex;
+  align-items: center;
+  height: var(--chat-working-indicator-size, 1.5rem);
+  color: var(--text-secondary);
+  line-height: 1;
+}
+
+.answer-working > i {
+  font-size: var(--chat-working-indicator-size, 1.5rem);
+}
+
+.answer-working > img,
+.answer-working > svg {
+  display: block;
+  height: 100%;
+  width: auto;
+}
+
 .answer.is-streaming .md > *:last-child::after {
   content: "";
   display: inline-block;

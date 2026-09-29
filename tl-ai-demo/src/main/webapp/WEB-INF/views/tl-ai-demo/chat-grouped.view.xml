@@ -246,6 +246,11 @@
 				showing, and is found again from that invoice for as long as it exists. Nothing on
 				the way in: which conversation is shown stays the "chatSession" channel's business,
 				and picking one stays the <data-list>'s.
+
+				`working-indicator` is what stands where the answer will appear while the agent works:
+				here the demo's own example animation instead of the chat's three dots. An SVG is
+				placed into the page, so it draws in the theme's colours in the light and the dark
+				theme alike. The dock in app.view.xml configures none and keeps the dots.
 			-->
 			<chat-conversation
 				citations="true"
@@ -257,6 +262,7 @@
 				reference="chatReference"
 				subject="paneInvoice"
 				trace="summary"
+				working-indicator="/images/tl-ai-demo-working.svg"
 			>
 				<!--
 					The composer's idle invitation, in this application's own words (Issue #420). The

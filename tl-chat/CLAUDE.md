@@ -549,6 +549,7 @@ it rewrites a draft and never answers as a persona.
 | `extensions.ts` | Host composition contract (`ChatExtensions`) |
 | `rail.tsx` / `side-pane.tsx` / `progress.tsx` | `App`'s own rail, the artefact pane, the Fortschritt list |
 | `theme-icon.tsx` | A `ThemeImage` (`css:bi bi-…`) as an element, for configured icons |
+| `working-indicator.tsx` | What stands in the answer's place while the agent works: the dots, or the element's `working-indicator` |
 | `token-input.tsx` / `reference.ts` | The composer's inline reference tokens and how they travel |
 | `sources.tsx` | The cited-source model, the `Quellen` section and the per-answer pill |
 
@@ -626,6 +627,43 @@ Two rules about it:
 Before this the only way in was CSS - a host put its own text in front of
 `.token-input.is-empty::before { content: attr(data-placeholder) }` with a custom property. That was
 a host reaching into a framework pseudo-element; there is no reason to do it any more.
+
+### The working indicator
+
+While the agent works and has written nothing yet, the answer's place holds three pulsing dots
+(`PendingAnswer` in `thread.tsx`, #429). An application puts its own animation there - a logo, say -
+with one attribute:
+
+```xml
+<chat-conversation working-indicator="/images/app-working.svg"/>
+```
+
+It is a `ThemeImage`, named like every other icon of the chat, in one of three forms:
+
+| Form | Rendered as | Light / dark | Reduced motion |
+|--|--|--|--|
+| `/images/….svg` | **Inline** SVG, fetched once per page (on mount, not on the first send) and passed through DOMPurify's SVG profile - scripts and event handlers go, `<style>` and SMIL stay | Draws in `currentColor` (the secondary text colour) and the theme tokens (`var(--button-primary)`), so one file fits both themes | The chat's reduced-motion rule reaches into it; SMIL is paused on its first frame |
+| `css:app-working` | `<i class="app-working">` | The application's stylesheet draws it and may pick an image per `[data-theme]` | The chat's reduced-motion rule |
+| any other image | `<img>` | As it is | Cannot be stopped from outside - prefer the other two |
+
+- **Size**: the height of the first text line, `--chat-working-indicator-size` (1.5rem). The token is
+  read with a fallback, not declared on the chat's roots, so `:root { --chat-working-indicator-size: … }`
+  works.
+- **An image travels with the context path** (`ChatConversationControl.workingIndicator`). Its encoded
+  form is the path inside the application, which a browser resolves against the server root - wrong
+  for every application not deployed there, which is also why `ThemeIcon`'s image branch is not used.
+- **An inline SVG's `<style>` applies to the whole page**: prefix its classes. A file that fails to
+  load, or is not one `<svg>` (a login page answering the request), keeps the dots with one console
+  warning.
+- **Decorative**, like the dots (`aria-hidden`): the "Arbeitet …" line and the thread's live region say
+  what a screen reader needs, whatever is configured.
+- **Only the answer's place.** The "Arbeitet …" / "… gearbeitet" line, the streaming caret and the
+  dock launcher's busy mark are unchanged.
+- The option is on `<chat-conversation>`, so a `<chat-dock>` gets it on the conversation nested in it.
+  `App` (`TLAgentChat`) reads the same state. `tl-chat-classic` is frozen and keeps its own.
+
+`tl-ai-demo`'s Chat page shows `images/tl-ai-demo-working.svg`, a neutral example; its dock keeps the
+dots. `working-indicator.test.tsx` and `TestChatWorkingIndicator` pin both.
 
 ### The composer's reference tokens
 
@@ -1019,7 +1057,7 @@ An application configures this element in the design view. Its options fall into
   replaces the former trace-mode + run-summary; the user can still change it live with the composer's
   trace picker), `citations` (markers *and* the per-answer sources pill - off removes the whole
   citation surface from the transcript), the nested `<actions>` (`copy`/`rate`/`regenerate`/
-  `timestamp`), the nested `<controls>` pickers, `placeholder`, `prompt-improver-agent` (an agent
+  `timestamp`), the nested `<controls>` pickers, `placeholder`, `working-indicator`, `prompt-improver-agent` (an agent
   dropdown), `chat-id`, the ten channels (`input`, `subject`, `busy`, `agent`, `model`, `effort`,
   `mcp-servers`, `draft`, `reference`, `quote`), and `present` - the channels the agent may write,
   deny by default. The transcript's rail badge button is *not* configured: it appears exactly when a `<chat-rail>` with the same `chat-id` is mounted, which the

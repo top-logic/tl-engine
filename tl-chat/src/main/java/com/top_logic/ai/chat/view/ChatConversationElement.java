@@ -248,6 +248,13 @@ public class ChatConversationElement implements UIElement {
 		String PLACEHOLDER = "placeholder";
 
 		/**
+		 * Configuration property name for {@link #getWorkingIndicator()}.
+		 *
+		 * @see #getWorkingIndicator()
+		 */
+		String WORKING_INDICATOR = "working-indicator";
+
+		/**
 		 * Configuration property name for {@link #getControls()}.
 		 *
 		 * @see #getControls()
@@ -626,6 +633,43 @@ public class ChatConversationElement implements UIElement {
 		@Label("Placeholder")
 		@Nullable
 		ResKey getPlaceholder();
+
+		/**
+		 * What stands where the answer will appear while the agent works and has not written
+		 * anything yet, in this application's own look - e.g. its logo, animated.
+		 *
+		 * <p>
+		 * Empty keeps the chat's three pulsing dots. Otherwise one of three forms, sized to the
+		 * height of the first text line (the {@code --chat-working-indicator-size} token):
+		 * </p>
+		 *
+		 * <ul>
+		 * <li>An SVG file, e.g. {@code /images/app-working.svg}. It is placed into the page itself
+		 * rather than shown as a picture, so it can draw in {@code currentColor} or in the theme's
+		 * colours ({@code var(--text-secondary)}) and then fits the light and the dark theme
+		 * alike. The style sheet inside it therefore applies to the whole page: give its classes a
+		 * prefix of the application's.</li>
+		 * <li>An icon class, e.g. {@code css:app-working}, which the application's stylesheet
+		 * draws and animates - the form for an image that differs per theme, because that
+		 * stylesheet can choose it by {@code [data-theme]}.</li>
+		 * <li>Any other image, e.g. an animated {@code .webp}, shown as it is.</li>
+		 * </ul>
+		 *
+		 * <p>
+		 * Whoever asked the system for less motion sees the SVG and the icon class standing still:
+		 * the chat stops their CSS animations and pauses an SVG's own ones. An animated raster
+		 * image cannot be stopped from outside, which is the reason to prefer the other two.
+		 * </p>
+		 *
+		 * <p>
+		 * Decorative, like the dots: what the screen reader announces while the agent works is the
+		 * chat's own status text, whatever is configured here.
+		 * </p>
+		 */
+		@Name(WORKING_INDICATOR)
+		@Label("Working indicator")
+		@Nullable
+		ThemeImage getWorkingIndicator();
 
 		/**
 		 * Which pickers and footer controls the composer shows.

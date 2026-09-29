@@ -19,6 +19,7 @@ import { progressBadge, unseenBadge } from './progress-model'
 import { RailToggle, SideRail, SideStrip } from './rail'
 import { SHEET_MAX, SidePane } from './side-pane'
 import { Thread } from './thread'
+import { preloadWorkingIndicator, workingIndicatorForm } from './working-indicator'
 import {
   type ApprovalRequest,
   type Attachment,
@@ -53,6 +54,10 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
     extensions?.composerAddons?.placeholder ||
     ''
   const boot = useMemo(() => readBootstrap(state), [state])
+  // Keyed on the string, not on the state: a fresh form object on every state change would
+  // re-render the memoised transcript for nothing.
+  const workingIndicator = useMemo(() => workingIndicatorForm(state.workingIndicator), [state.workingIndicator])
+  useEffect(() => preloadWorkingIndicator(workingIndicator), [workingIndicator])
   const chatId = chatIdOf(state, controlId)
   const { chat, actions, runs } = useChat(chatId, boot)
   const labels = useMemo(() => bundle(chat.language), [chat.language])
@@ -375,6 +380,7 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
             openInPane={openInPane}
             extraActions={extensions?.messageActions}
             onOpenSource={openSource}
+            workingIndicator={workingIndicator}
           />
           <Composer
             runs={runs}

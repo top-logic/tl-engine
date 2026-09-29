@@ -67,9 +67,20 @@ public class Turn {
 	 * @param turnNumber 1-based turn number within the session
 	 */
 	public Turn(String id, int turnNumber) {
+		this(id, turnNumber, Instant.now());
+	}
+
+	/**
+	 * Creates a turn that began at the given moment.
+	 *
+	 * @param id         unique turn identifier
+	 * @param turnNumber 1-based turn number within the session
+	 * @param timestamp  when the turn started; a turn read back from a transcript keeps its own
+	 */
+	public Turn(String id, int turnNumber, Instant timestamp) {
 		_id = id;
 		_turnNumber = turnNumber;
-		_timestamp = Instant.now();
+		_timestamp = timestamp;
 	}
 
 	/** Unique turn identifier. */

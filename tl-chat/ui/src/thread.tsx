@@ -626,6 +626,25 @@ function TraceEntry({
   )
 }
 
+/** The opening tag of an untrusted-content block, on its own line; see {@link readableToolOutput}. */
+const ENVELOPE_OPEN = /<untrusted_[a-z_]+ source="[^"\n]*">\n/g
+/** Its closing tag, on its own line. */
+const ENVELOPE_CLOSE = /\n<\/untrusted_[a-z_]+>/g
+
+/**
+ * A tool's answer as a person reads it: without the `<untrusted_…>` tags around its data (#552).
+ *
+ * Those tags tell the model that what stands between them is data rather than instructions; to a
+ * reader of the trace they are XML plumbing around the text they came for. Only the tags go, never
+ * the text between them. The match is exact because the wrapping is (`UntrustedEnvelope.wrap`): an
+ * opening tag with its `source` on a line of its own, a closing tag on a line of its own, and any
+ * tag-like text inside the block escaped when it was wrapped - so every tag this finds is one the
+ * framework put there.
+ */
+export function readableToolOutput(output: string): string {
+  return output.replace(ENVELOPE_OPEN, '').replace(ENVELOPE_CLOSE, '')
+}
+
 function TraceBlock({
   label,
   text,
@@ -698,7 +717,7 @@ function TraceEvent({
           {result ? (
             <TraceBlock
               label={result.isError ? labels.error : labels.result}
-              text={result.output}
+              text={readableToolOutput(result.output)}
               danger={result.isError}
               labels={labels}
             />

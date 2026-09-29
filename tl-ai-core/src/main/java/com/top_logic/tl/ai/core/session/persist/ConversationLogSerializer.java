@@ -116,7 +116,10 @@ public final class ConversationLogSerializer {
 		}
 		ConversationLog log = new ConversationLog();
 		for (PersistedTurn turnDto : dto.getTurns()) {
-			Turn turn = log.startTurn();
+			// The turn began when it began, not when it was read back (#568). A transcript that
+			// carries no start - none written by this class - falls back to now, as before.
+			long started = turnDto.getTimestamp();
+			Turn turn = started > 0 ? log.startTurn(Instant.ofEpochMilli(started)) : log.startTurn();
 			turn.setModel(turnDto.getModel());
 			turn.setProvider(turnDto.getProvider());
 			if (turnDto.hasUsage()) {

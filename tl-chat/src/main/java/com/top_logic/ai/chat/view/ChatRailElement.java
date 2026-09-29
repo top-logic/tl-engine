@@ -163,6 +163,13 @@ public class ChatRailElement implements UIElement {
 		String PANE_WIDTH = "pane-width";
 
 		/**
+		 * Configuration property name for {@link #getDrawerBelow()}.
+		 *
+		 * @see #getDrawerBelow()
+		 */
+		String DRAWER_BELOW = "drawer-below";
+
+		/**
 		 * Configuration property name for {@link #getReactElement()}.
 		 *
 		 * @see #getReactElement()
@@ -312,6 +319,21 @@ public class ChatRailElement implements UIElement {
 		@Hidden
 		@IntDefault(0)
 		int getPaneWidth();
+
+		/**
+		 * Width of the surrounding container, in rem, below which the rail opens as a drawer.
+		 *
+		 * <p>
+		 * Below it the rail keeps only its strip beside the conversation, and a section or the pane
+		 * opens over the conversation instead of taking a column of its own. The default fits a rail
+		 * beside a conversation and a chat list. Set it to what the rail's open column and its
+		 * neighbours need side by side; 0 keeps a column at every width.
+		 * </p>
+		 */
+		@Name(DRAWER_BELOW)
+		@Label("Drawer below")
+		@IntDefault(70)
+		int getDrawerBelow();
 
 		/**
 		 * Registered React element that renders this rail.

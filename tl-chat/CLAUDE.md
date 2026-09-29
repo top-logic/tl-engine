@@ -1291,9 +1291,51 @@ element needs, and both are about *when* the pane is built:
 A pane whose objects are **not** of one type has no table to build: keep the `<data-list>` there,
 which renders any object by its label. Every child stays mounted - a collapsed section and an unopened pane are
 hidden, not dropped - so a section keeps reporting its badge while the rail is closed, which is
-exactly when the badge matters. Below 1280 px the composed rail stays a column (it has no workspace
-grid to spread a sheet over); `App`'s sheet is unaffected. Two rails on one `chat-id` are not
-supported: the open state and the collapsed set are one per conversation.
+exactly when the badge matters. The composed rail has no workspace grid to spread a sheet over, so
+`App`'s 1280 px sheet does not apply to it; below its own `drawer-below` host width it opens as a
+drawer over the conversation instead - see "a rail in a narrow host". Two rails on one `chat-id` are
+not supported: the open state and the collapsed set are one per conversation.
+
+#### A rail in a narrow host (#565)
+
+The same defect as #548, on the other side of the row: a section opened its 18.75 rem column, the
+pane its 360-420 px, **in the flow**, beside a conversation that does not give way. From about 1100 px
+down (the demo with the engine's navigation open) the row overflowed into `.tlSidebar__content` by
+76-296 px, and at 420 px the column opened entirely off-screen - a click on the strip seemed to do
+nothing.
+
+So below `drawer-below` rem of **host** width (the rail's parent, measured by a `ResizeObserver`) the
+rail is a **drawer** (`.is-drawer`): its strip stays in the flow, and a section or the pane opens
+over the conversation with a scrim scoped to the host.
+
+- **Where the open state lives.** In the store, not in the rail, because the conversation's rail
+  button opens and closes it too: `railDrawer` (published per rail, so a rail that mounts and leaves
+  cannot clear another's answer) and `railDrawerOpen` (never stored - every narrow page load starts
+  closed). While `railDrawer` holds, `toggleSide`, `showSection`, `openPane` and `closeSide` move
+  `railDrawerOpen` instead of `sideOpen`, so the user's column choice is untouched and comes back
+  when the host is wide again.
+- **Closing.** Escape (left to a search field that still has text), a click on the scrim, a second
+  click on the active strip icon, and the conversation's rail button. Escape and the scrim also close
+  an object pane the drawer shows (`closePane`), because the drawer is the only way to see it.
+- **Focus.** Into the drawer on open, back to what opened it (strip icon or rail button) on close.
+  Whenever the drawer's panel changes under the focus - a row pick opens the pane and hides the row,
+  the pane's back link hides itself - focus moves to the first control of what is showing now, or
+  Escape and Tab would have left the drawer with it. Tab wraps inside the rail.
+- **Geometry.** The drawer is placed against the host, so the rail tells it where its strip begins
+  (`--rail-drawer-end`), measured on resize **and** when the drawer opens: while a host narrows, the
+  list turns into a drawer in the same frame, and a measurement taken before that is one of a row
+  that still overflows. The drawer never takes the whole row - a strip's width of scrim stays beside
+  it (`--rail-drawer-room`), so a pointer always has somewhere to tap out. A pane in the drawer has no
+  splitter.
+- The strip stays above the scrim, so another section is one click away while one is open.
+- `drawer-below="0"` keeps a column at every width.
+
+The default 70 rem is the demo row with the list as a column and the pane open at its default
+420 px: list 16.5 + floor 20 + rail strip 3.5 + pane 26.25 + two gaps 3 = 69.25 rem. A section's
+18.75 rem column alone would have needed 62, and between the two the pane overflowed the row by up
+to 115 px (measured at 1250 px). With the list a drawer the row needs at most 56 rem, above the
+list's own 44, so one threshold covers both. Consulting's `pietro.view.xml` has the same row and
+fits the default.
 
 #### `<chat-dock>` - the chat over the page
 
@@ -1357,7 +1399,15 @@ Three things are load-bearing:
   measures its own `.stage`, and the `<data-list>` session list measures its host row, so a dock
   sized for the desktop layout (`min(68.75rem, …)`) keeps a column list in a narrow window as long
   as the panel has room for it, and a panel below the list's `drawer-below` opens the list as a
-  drawer over the conversation instead of squeezing it.
+  drawer over the conversation instead of squeezing it. The rail does the same below its own
+  `drawer-below` (#565). Inside a dock the conversation's floor is measured on `--chat-dock-width`
+  rather than on the window, because the panel stands its offset in from both edges.
+- **The content mounts from the second commit on.** On the first one the dock cannot know yet
+  whether the page shows its conversation - a `<chat-conversation/>` says so from an effect. Mounted
+  meanwhile, the dock's rail stated its own `open="false"` over the page rail's `open="true"`, so a
+  fresh account's rail on the chat page started closed (#552).
+- **An Escape something inside already answered is not the dock's** (`defaultPrevented`): closing
+  the rail's or the list's drawer must not close the dock with it.
 
 Everything a theme would restyle is a token on `.tl-chat-dock` - `--chat-dock-width`, `-height`,
 `-offset`, `-launcher`, `-gap`, `-radius`, `-shadow`, `-z`.

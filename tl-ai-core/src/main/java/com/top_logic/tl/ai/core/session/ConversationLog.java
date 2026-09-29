@@ -5,6 +5,7 @@
  */
 package com.top_logic.tl.ai.core.session;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -70,8 +71,20 @@ public class ConversationLog {
 
 	/** Start a new turn. Auto-assigns an ID and increments the turn counter. */
 	public Turn startTurn() {
+		return startTurn(Instant.now());
+	}
+
+	/**
+	 * Start a turn that began at the given moment, as {@link #startTurn()} does otherwise.
+	 *
+	 * <p>
+	 * For a turn read back from a transcript: its start is what the "worked for" line and the
+	 * message times are measured from, and the moment it was read back is neither (#568).
+	 * </p>
+	 */
+	public Turn startTurn(Instant timestamp) {
 		int number = _turnCounter.incrementAndGet();
-		Turn turn = new Turn(UUID.randomUUID().toString(), number);
+		Turn turn = new Turn(UUID.randomUUID().toString(), number, timestamp);
 		turn.addObserver(_partForwarder);
 		_turns.add(turn);
 		_currentTurn = turn;

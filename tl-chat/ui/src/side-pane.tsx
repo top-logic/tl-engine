@@ -46,6 +46,7 @@ export function SidePane({
   hidden,
   placement = 'workspace',
   narrow = false,
+  overlay = false,
   children,
 }: {
   title: string
@@ -78,11 +79,19 @@ export function SidePane({
   placement?: 'workspace' | 'rail'
   /** Whether the chat is below {@link SHEET_MAX}; measured by the host, meaningless for `rail`. */
   narrow?: boolean
+  /**
+   * Whether a `rail` pane opens over the conversation rather than beside it: the rail is a drawer
+   * (#565). It then has no splitter - there is nothing beside it to take the width from - and it
+   * never grows past the room the host has left of the strip.
+   */
+  overlay?: boolean
   children: React.ReactNode
 }) {
   const pane = useRef<HTMLDivElement>(null)
   const dragging = useRef(false)
   const sheet = placement === 'workspace' && narrow
+  /** Whether the pane's width is fixed by its surroundings: a sheet, or a rail's drawer. */
+  const fixed = sheet || overlay
   /**
    * How wide the workspace is right now.
    *
@@ -143,23 +152,23 @@ export function SidePane({
 
   const onPointerDown = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
-      if (sheet) return
+      if (fixed) return
       dragging.current = true
       event.currentTarget.setPointerCapture(event.pointerId)
     },
-    [sheet],
+    [fixed],
   )
 
   const onPointerMove = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
-      if (!dragging.current || sheet) return
+      if (!dragging.current || fixed) return
       const workspace = boundsOf()
       if (!workspace) return
       const box = workspace.getBoundingClientRect()
       const next = Math.max(CONTENT_FLOOR, box.right - event.clientX)
       setWidth(Math.min(next, maxWidth))
     },
-    [boundsOf, maxWidth, setWidth, sheet],
+    [boundsOf, maxWidth, setWidth, fixed],
   )
 
   const onPointerUp = useCallback(() => {
@@ -177,7 +186,7 @@ export function SidePane({
   // A splitter that only answers the mouse is a splitter half the users cannot move.
   const onKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
-      if (sheet) return
+      if (fixed) return
       const step =
         event.key === 'ArrowLeft'
           ? KEY_STEP
@@ -201,17 +210,23 @@ export function SidePane({
         setWidth(CONTENT_FLOOR)
       }
     },
-    [maxWidth, resize, setWidth, sheet],
+    [maxWidth, resize, setWidth, fixed],
   )
 
   return (
     <div
       ref={pane}
       className={`side-pane${sheet ? ' is-sheet' : ''}${mode === 'document' ? ' is-document' : ''}`}
-      style={sheet ? undefined : { width: paneWidth, minWidth: CONTENT_FLOOR }}
+      style={
+        sheet
+          ? undefined
+          : overlay
+            ? { width: paneWidth, minWidth: 0 }
+            : { width: paneWidth, minWidth: CONTENT_FLOOR }
+      }
       hidden={hidden}
     >
-      {sheet ? null : (
+      {fixed ? null : (
         <div
           className="side-splitter"
           role="separator"

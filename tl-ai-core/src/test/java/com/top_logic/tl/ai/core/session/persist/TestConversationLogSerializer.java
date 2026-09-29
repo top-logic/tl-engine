@@ -62,6 +62,30 @@ public class TestConversationLogSerializer extends TestCase {
 			"Is the payment term okay?", ((Part.TextPart) restored.userParts().get(0)).text());
 	}
 
+	/**
+	 * A turn read back began when it began, not when it was read (#568).
+	 *
+	 * <p>
+	 * The chat measures a finished turn's "worked for" line from the turn's start to its last part.
+	 * Stamped with the moment of reading, every turn of a chat opened from the database started
+	 * after its own answer, and no turn had a line.
+	 * </p>
+	 */
+	public void testTheTurnKeepsItsStart() {
+		Instant started = Instant.parse("2026-09-24T10:00:00Z");
+		ConversationLog log = new ConversationLog();
+		Turn turn = log.startTurn(started);
+		turn.setUserParts(List.of(new Part.TextPart("u1", started, "Hello")));
+		turn.addAssistantPart(new Part.TextPart("a1", started.plusSeconds(19), "Hi."));
+		log.completeTurn();
+
+		Turn restored =
+			ConversationLogSerializer.fromJson(ConversationLogSerializer.toJson(log)).turns().get(0);
+
+		assertEquals(started, restored.timestamp());
+		assertEquals(started.plusSeconds(19), restored.assistantParts().get(0).timestamp());
+	}
+
 	/** A transcript written before the field existed has no context, not an empty one. */
 	public void testATurnWithoutContextRestoresNone() {
 		ConversationLog log = new ConversationLog();

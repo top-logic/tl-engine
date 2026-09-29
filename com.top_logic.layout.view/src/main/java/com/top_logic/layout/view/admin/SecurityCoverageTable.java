@@ -50,8 +50,6 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.layout.view.table.ColumnType;
-import com.top_logic.model.TLClass;
-import com.top_logic.model.TLModule;
 import com.top_logic.model.TLType;
 import com.top_logic.model.security.AccessParent;
 import com.top_logic.model.util.TLModelUtil;

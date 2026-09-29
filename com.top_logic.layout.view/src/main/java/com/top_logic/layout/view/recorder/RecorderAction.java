@@ -11,14 +11,10 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.ViewMessages;
-import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.scripting.ScriptRecorder;
 import com.top_logic.layout.view.command.ViewAction;
-import com.top_logic.util.Resources;
 
 /**
  * {@link ViewAction} starting and stopping the {@link ScriptRecorder} of the window that opened this

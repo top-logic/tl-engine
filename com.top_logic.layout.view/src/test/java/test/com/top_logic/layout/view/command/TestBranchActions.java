@@ -49,7 +49,6 @@ import com.top_logic.layout.view.element.PanelElement;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 

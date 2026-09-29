@@ -237,12 +237,12 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 * </p>
 	 *
 	 * <p>
-	 * The rebuilt {@link ConfigEditorControl} is editable exactly while either
-	 * {@link #_withEditMode} is off (the thin-wrapper, write-through case - it was always editable
-	 * and stays so) or the model {@link ConfigFormModel#isEditMode() is in edit mode}. In every
-	 * other case - {@link #_withEditMode} on, model in view mode - it is built read-only: every
-	 * field non-editable and no collection action rendered, so a form with a mode never accepts a
-	 * change outside of one.
+	 * The rebuilt {@link ConfigEditorControl} is editable exactly while either {@link #_commands}
+	 * is {@link Commands#NONE} (the thin-wrapper, write-through case - it was always editable and
+	 * stays so) or the model {@link ConfigFormModel#isEditMode() is in edit mode}. In every other
+	 * case - an edit mode offered, model in view mode - it is built read-only: every field
+	 * non-editable and no collection action rendered, so a form with a mode never accepts a change
+	 * outside of one.
 	 * </p>
 	 */
 	private void rebuild() {

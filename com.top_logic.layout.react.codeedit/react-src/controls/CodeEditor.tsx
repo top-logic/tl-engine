@@ -121,6 +121,11 @@ export interface CodeEditorProps {
   debounceMs?: number;
   /** CSS class of the editor container. */
   className?: string;
+  /**
+   * Attributes of the editable content element, e.g. the id and `aria-labelledby` associating it
+   * with the label of the form field around the editor (see `useFieldLabelProps`).
+   */
+  contentAttributes?: Record<string, string>;
 }
 
 /** Maps a 1-based line/column diagnostic onto an absolute CodeMirror document range. */
@@ -142,12 +147,13 @@ function toEditorDiagnostic(view: EditorView, d: CodeEditorDiagnostic): Diagnost
 const CodeEditor: React.FC<CodeEditorProps> = (props) => {
   const {
     controlId, value, readOnly, languageSupport, extraExtensions, completionSource, hoverSource,
-    diagnostics, debounceMs = 300, className,
+    diagnostics, debounceMs = 300, className, contentAttributes,
   } = props;
 
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const editableComp = useRef(new Compartment());
+  const attributesComp = useRef(new Compartment());
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Latest onChange, read through a ref so the mount-once editor always calls the current callback.
@@ -168,6 +174,7 @@ const CodeEditor: React.FC<CodeEditorProps> = (props) => {
       keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
       syntaxHighlighting(defaultHighlightStyle),
       editableComp.current.of(EditorView.editable.of(!readOnly)),
+      attributesComp.current.of(EditorView.contentAttributes.of(contentAttributes ?? {})),
       EditorView.updateListener.of((update) => {
         if (update.docChanged) {
           if (timerRef.current) clearTimeout(timerRef.current);
@@ -244,6 +251,15 @@ const CodeEditor: React.FC<CodeEditorProps> = (props) => {
     if (!view) return;
     view.dispatch({ effects: editableComp.current.reconfigure(EditorView.editable.of(!readOnly)) });
   }, [readOnly]);
+
+  // --- Reflect changes of the content attributes, compared by value ---
+  const attributesKey = JSON.stringify(contentAttributes ?? {});
+  useEffect(() => {
+    const view = viewRef.current;
+    if (!view) return;
+    const attributes = JSON.parse(attributesKey) as Record<string, string>;
+    view.dispatch({ effects: attributesComp.current.reconfigure(EditorView.contentAttributes.of(attributes)) });
+  }, [attributesKey]);
 
   // --- Render diagnostics ---
   useEffect(() => {

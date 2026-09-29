@@ -26,6 +26,7 @@ import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.form.model.SimpleSelectFieldModel;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
@@ -53,6 +54,7 @@ import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
+import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
 /**
@@ -455,13 +457,25 @@ public class ValueInputElement implements UIElement {
 	 * reached the channel. The command's executability rule decides per value, so the model needs
 	 * no attachment to a channel.
 	 * </p>
+	 *
+	 * <p>
+	 * The command's result - its refusal included - is reported to the user: a submit gesture
+	 * returns it as the result of the client's submit. A committed value is reported from within
+	 * the value change the client sent, which has no result to return it through, so a failed
+	 * result is shown right away.
+	 * </p>
 	 */
 	private void followSubmit(ViewContext context, ReactControl input, ChannelFieldBinding binding) {
 		ViewCommandModel model = ViewCommandModel.forCommand(context, _submitCommand, _submitCommandConfig);
 		if (input instanceof ReactFormFieldControl fieldControl && fieldControl.hasSubmitGesture()) {
 			fieldControl.setSubmitListener(value -> model.execute(context, value));
 		} else {
-			binding.setCommitListener(value -> model.execute(context, value));
+			binding.setCommitListener(value -> {
+				HandlerResult result = model.execute(context, value);
+				if (!result.isSuccess()) {
+					CommandErrors.show(context.getErrorSink(), result);
+				}
+			});
 		}
 	}
 

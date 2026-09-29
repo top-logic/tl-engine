@@ -57,7 +57,10 @@
 							<navigate-pop/>
 						</generic-command>
 					</commands>
-					<form input="contact">
+					<form
+						input="contact"
+						with-inset="true"
+					>
 						<field attribute="firstname"/>
 						<field attribute="name"/>
 						<field attribute="phone"/>

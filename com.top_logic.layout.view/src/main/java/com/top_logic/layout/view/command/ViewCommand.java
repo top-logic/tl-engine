@@ -12,6 +12,7 @@ import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
@@ -180,9 +181,18 @@ public interface ViewCommand {
 		List<TLModelPartRef> getObservedTypes();
 
 		/**
-		 * Scope of the dirty check to perform before executing this command.
+		 * Which unsaved changes this command asks about before it runs.
+		 *
+		 * <p>
+		 * When a form in the checked scope holds unsaved changes, the user is asked whether to save
+		 * or discard them, or to cancel the command. After saving or discarding, the command runs.
+		 * By default, the command runs without asking.
+		 * </p>
+		 *
+		 * @see DirtyCheckScope
 		 */
 		@Name(CHECK_DIRTY)
+		@FormattedDefault(DirtyCheckScope.NONE_NAME)
 		DirtyCheckScope getCheckDirty();
 
 		/**

@@ -89,6 +89,19 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 		return _base.tId();
 	}
 
+	/**
+	 * Whether the {@link #getEditedObject() edited object} is valid.
+	 *
+	 * <p>
+	 * An overlay is valid exactly as long as the object it stands for: an overlay of a deleted
+	 * object is not valid.
+	 * </p>
+	 */
+	@Override
+	public boolean tValid() {
+		return _base.tValid();
+	}
+
 	@Override
 	public KnowledgeItem tHandle() {
 		return _base.tHandle();
@@ -226,6 +239,17 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 		// The base now holds all values, so the overlay has no unsaved changes anymore. Reads
 		// delegate to the base, and dirty tracking reports a clean state.
 		_changes.clear();
+	}
+
+	/**
+	 * Discards the change of the given attribute. Afterwards, reads of the attribute delegate to the
+	 * base object again.
+	 *
+	 * @param part
+	 *        The attribute whose change is discarded.
+	 */
+	public void revert(TLStructuredTypePart part) {
+		_changes.remove(part);
 	}
 
 	/**

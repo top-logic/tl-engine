@@ -5,12 +5,12 @@
 	(WEB-INF/views/settings-tabs.view.xml). This is a same-path overlay: the ViewLoader merges it
 	onto the base in dependency order, and the tab is appended to the base's tab bar purely through
 	the typed-configuration list merge.
-
+	
 	A tab of its own rather than fields added to the account tab, because the data lives on another
 	object: an account's name, language and timezone are its own, while the name a person is called
 	by and how to reach them belong to their contact (Contacts:PersonContact, reached through
 	tl.accounts:Person#contact). One form edits one object.
-
+	
 	The base view knows nothing of this module, and the Contacts model reaches the settings dialog
 	only in an application that has it.
 -->
@@ -39,6 +39,7 @@
 					initial-edit-mode="true"
 					input="contact"
 					mode-switch="false"
+					with-inset="true"
 				>
 					<field attribute="title"/>
 					<field attribute="firstname"/>
@@ -54,7 +55,8 @@
 					<field attribute="phone"/>
 					<field attribute="phone_mobile"/>
 					<commands>
-						<generic-command image="css:bi bi-check-lg"
+						<generic-command
+							image="css:bi bi-check-lg"
 							placement="BUTTON_BAR"
 						>
 							<label>

@@ -100,4 +100,56 @@ public class TestChannelNotificationScope extends TestCase {
 		assertFalse("The snapshot listener must run before the deferred disposal", ranAfterDisposal[0]);
 	}
 
+	/**
+	 * Tests that a failing deferred action neither prevents the other deferred actions from running
+	 * nor leaves the scope in a notification: an action registered afterwards, outside any
+	 * notification, runs immediately.
+	 */
+	public void testFailingDeferredActionDoesNotSkipOthers() {
+		ViewChannel channel = new DefaultViewChannel("test");
+		List<String> log = new ArrayList<>();
+
+		channel.addListener((sender, oldVal, newVal) -> {
+			ChannelNotificationScope scope = ChannelNotificationScope.current();
+			scope.afterNotification(() -> log.add("before"));
+			scope.afterNotification(() -> {
+				throw new IllegalStateException("Expected failure of a deferred action.");
+			});
+			scope.afterNotification(() -> log.add("after"));
+		});
+
+		channel.set("value");
+
+		assertEquals(List.of("before", "after"), log);
+
+		ChannelNotificationScope.current().afterNotification(() -> log.add("idle"));
+		assertEquals("The scope must not remain in a notification after a failing action.",
+			List.of("before", "after", "idle"), log);
+	}
+
+	/**
+	 * Tests that a listener failure still runs the actions deferred before it and leaves the scope
+	 * clean, while the listener's exception reaches the writer of the channel.
+	 */
+	public void testFailingListenerRunsDeferredActions() {
+		ViewChannel channel = new DefaultViewChannel("test");
+		List<String> log = new ArrayList<>();
+
+		channel.addListener((sender, oldVal, newVal) -> {
+			ChannelNotificationScope.current().afterNotification(() -> log.add("deferred"));
+			throw new IllegalStateException("Expected listener failure.");
+		});
+
+		try {
+			channel.set("value");
+			fail("The listener failure must reach the writer.");
+		} catch (IllegalStateException ex) {
+			assertEquals("Expected listener failure.", ex.getMessage());
+		}
+		assertEquals(List.of("deferred"), log);
+
+		ChannelNotificationScope.current().afterNotification(() -> log.add("idle"));
+		assertEquals(List.of("deferred", "idle"), log);
+	}
+
 }

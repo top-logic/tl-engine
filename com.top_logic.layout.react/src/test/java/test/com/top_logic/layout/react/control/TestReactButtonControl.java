@@ -9,15 +9,21 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 
+import com.top_logic.basic.exception.ErrorSeverity;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.button.CommandModel;
+import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.button.SimpleCommandModel;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * Tests for {@link ReactButtonControl}: that a button the user was never offered refuses the
@@ -163,6 +169,117 @@ public class TestReactButtonControl extends TestCase {
 		model.fireStateChanged();
 
 		assertFalse("Choosing another alternative unmarks this one.", button.isActive());
+	}
+
+	/**
+	 * A {@link com.top_logic.layout.react.control.button.CommandModel} that is not executable
+	 * refuses to execute, whoever asks: the refusal is the result, and the action does not run.
+	 */
+	public void testANonExecutableModelRefusesExecution() {
+		Trace trace = new Trace();
+		SimpleCommandModel model = SimpleCommandModel
+			.create("save", "Save", ctx -> {
+				trace._executed = true;
+				return HandlerResult.DEFAULT_RESULT;
+			})
+			.setExecutable(() -> false);
+
+		HandlerResult result = model.executeCommand(createTestContext());
+
+		assertFalse("The action of a command that is not executable must not run.", trace._executed);
+		assertFalse(result.isSuccess());
+		assertEquals("A refusal is no malfunction.", ErrorSeverity.WARNING, result.getErrorSeverity());
+	}
+
+	/** An executable model runs its action, and returns what the action reports. */
+	public void testAnExecutableModelReturnsTheActionsResult() {
+		HandlerResult failure = HandlerResult.error(ResKey.text("Storage is full."));
+		SimpleCommandModel model = SimpleCommandModel.create("save", "Save", ctx -> failure);
+
+		assertSame(failure, model.executeCommand(createTestContext()));
+	}
+
+	/**
+	 * A button backed by a model that is not executable is refused with the model's state, which
+	 * carries the reason the command's rules gave.
+	 */
+	public void testAButtonOfARefusedModelReportsTheModelsReason() {
+		ResKey reason = ResKey.text("Only for open tickets.");
+		Trace trace = new Trace();
+		CommandModel model = new ReasonedModel(ExecutableState.createDisabledState(reason), trace);
+		ReactButtonControl button = new ReactButtonControl(createTestContext(), model);
+
+		HandlerResult result = button.executeClientCommand("click", Map.of());
+
+		assertFalse("The action must not run.", trace._executed);
+		assertEquals("The user learns why.", reason, result.getErrorMessage());
+	}
+
+	/**
+	 * A model whose state carries a reason, standing in for a model built from executability
+	 * rules.
+	 */
+	private static final class ReasonedModel implements CommandModel {
+
+		private final ExecutableState _state;
+
+		private final Trace _trace;
+
+		ReasonedModel(ExecutableState state, Trace trace) {
+			_state = state;
+			_trace = trace;
+		}
+
+		@Override
+		public String getName() {
+			return "reasoned";
+		}
+
+		@Override
+		public String getLabel() {
+			return "Reasoned";
+		}
+
+		@Override
+		public ThemeImage getImage() {
+			return null;
+		}
+
+		@Override
+		public boolean isExecutable() {
+			return _state.isExecutable();
+		}
+
+		@Override
+		public boolean isVisible() {
+			return _state.isVisible();
+		}
+
+		@Override
+		public ExecutableState getExecutableState() {
+			return _state;
+		}
+
+		@Override
+		public HandlerResult perform(ReactContext context) {
+			_trace._executed = true;
+			return HandlerResult.DEFAULT_RESULT;
+		}
+
+		@Override
+		public CommandPlacement getPlacement() {
+			return CommandPlacement.NONE;
+		}
+
+		@Override
+		public void addStateChangeListener(Runnable listener) {
+			// State never changes.
+		}
+
+		@Override
+		public void removeStateChangeListener(Runnable listener) {
+			// State never changes.
+		}
 	}
 
 }

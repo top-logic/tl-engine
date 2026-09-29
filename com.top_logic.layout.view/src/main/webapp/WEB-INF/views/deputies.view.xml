@@ -3,7 +3,7 @@
 <!--
 	Naming the accounts that may act in the name of the account, opened from the security tab of the
 	settings dialog (settings-tabs.view.xml).
-
+	
 	The model is the representative group of the account; its members are its deputies, so the
 	dialog is the ordinary form over that one reference. What makes it a dialog of its own is what
 	the reference means: a member of this group acts with every role of the account, which is why
@@ -14,7 +14,8 @@
 		<!-- The representative group of the account, whose members are its deputies. -->
 		<channel name="model"/>
 	</channels>
-	<window resizable="false"
+	<window
+		resizable="false"
 		width="420px"
 	>
 		<title>
@@ -25,6 +26,7 @@
 			initial-edit-mode="true"
 			input="model"
 			mode-switch="false"
+			with-inset="true"
 		>
 			<!-- What is handed over, said before the choice is made rather than in the confirmation alone. -->
 			<text>
@@ -40,7 +42,8 @@
 				</label>
 			</field>
 			<commands>
-				<generic-command image="css:bi bi-check-lg"
+				<generic-command
+					image="css:bi bi-check-lg"
 					placement="BUTTON_BAR"
 				>
 					<label>

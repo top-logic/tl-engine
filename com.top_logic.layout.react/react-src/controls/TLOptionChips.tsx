@@ -1,4 +1,4 @@
-import { React, useTLCommand, CMD_VALUE_CHANGED, rootClassName } from 'tl-react-bridge';
+import { React, useTLCommand, CMD_VALUE_CHANGED, rootClassName, useFieldLabelProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { ARG_OPTION, CMD_GOTO, OptionImage, ReadonlyValue, withPill } from './selectOptions';
 import type { OptionDescriptor } from './selectOptions';
@@ -18,6 +18,7 @@ const { useCallback, useMemo, useRef } = React;
  * moment at which it could ask for it.
  */
 const TLOptionChips: React.FC<TLCellProps> = ({ controlId, state }) => {
+  const labelProps = useFieldLabelProps(controlId, controlId);
   const sendCommand = useTLCommand();
 
   const value = (state.value ?? []) as OptionDescriptor[];
@@ -84,6 +85,7 @@ const TLOptionChips: React.FC<TLCellProps> = ({ controlId, state }) => {
   return (
     <div
       id={controlId}
+      {...labelProps}
       role="group"
       className={rootClassName(
         state,

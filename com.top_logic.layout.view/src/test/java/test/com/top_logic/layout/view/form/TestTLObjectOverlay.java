@@ -150,6 +150,19 @@ public class TestTLObjectOverlay extends TestCase {
 	}
 
 	/**
+	 * Tests that {@link TLObjectOverlay#tValid()} follows the base object: an overlay of a deleted
+	 * object is not valid.
+	 */
+	public void testTValidFollowsBase() {
+		MockTLObject base = new MockTLObject();
+		TLObjectOverlay overlay = new TLObjectOverlay(base);
+		assertTrue("An overlay of a valid object is valid.", overlay.tValid());
+
+		base.delete();
+		assertFalse("An overlay of a deleted object is not valid.", overlay.tValid());
+	}
+
+	/**
 	 * Tests that null values can be stored as changes.
 	 */
 	public void testNullValueChange() {
@@ -321,6 +334,8 @@ public class TestTLObjectOverlay extends TestCase {
 
 		private Set<? extends TLObject> _referers = Collections.emptySet();
 
+		private boolean _deleted;
+
 		/**
 		 * Creates a {@link MockTLObject} without identity.
 		 */
@@ -351,6 +366,11 @@ public class TestTLObjectOverlay extends TestCase {
 		}
 
 		@Override
+		public boolean tValid() {
+			return !_deleted && super.tValid();
+		}
+
+		@Override
 		public Set<? extends TLObject> tReferers(TLReference ref) {
 			return _referers;
 		}
@@ -367,6 +387,13 @@ public class TestTLObjectOverlay extends TestCase {
 		 */
 		void setReferers(Set<? extends TLObject> referers) {
 			_referers = referers;
+		}
+
+		/**
+		 * Marks this object as deleted.
+		 */
+		void delete() {
+			_deleted = true;
 		}
 	}
 }

@@ -70,11 +70,6 @@ const IconPopOut = () => (
  * - toolbar: ChildDescriptor (a TLToolbar control, may be absent)
  * - buttonBar: ChildDescriptor (a TLToolbar control, may be absent)
  * - child: ChildDescriptor
- * - bare: boolean (this panel draws no chrome - no title, toolbar or border - and is a pure
- *     full-bleed container. Read NOT by this component but by an enclosing TLFormLayout: a form
- *     whose sole content is a bare panel renders flush, dropping its page inset so the panel fills
- *     the area instead of sitting inside an empty frame. A chromed panel omits it / sets it false
- *     and keeps the inset. Set e.g. by the frameless editable table, RowSetTableControl.)
  * - errorMessage: string (validation error displayed below the content, may be absent)
  * - errorIcon: string (encoded theme icon displayed in front of the error message)
  */

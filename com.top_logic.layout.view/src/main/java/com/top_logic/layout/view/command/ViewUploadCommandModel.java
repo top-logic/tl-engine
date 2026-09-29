@@ -14,6 +14,7 @@ import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.button.UploadCommandModel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * {@link ViewCommandModel} for an {@link UploadCommand}: runs the command's action chain once per
@@ -55,9 +56,26 @@ public class ViewUploadCommandModel extends ViewCommandModel implements UploadCo
 		return _uploadCommand.isMultiple();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * Like {@link #perform(ReactContext)}, the rules decide once more over the current
+	 * {@link #resolveInput() input} before the first file is processed.
+	 * </p>
+	 *
+	 * @return The refusal, if the rules reject the current input, the default result otherwise:
+	 *         the files are processed one after the other, and a file whose processing fails is
+	 *         reported on its own.
+	 */
 	@Override
-	public void uploadFiles(ReactContext context, List<BinaryData> files) {
+	public HandlerResult uploadFiles(ReactContext context, List<BinaryData> files) {
+		ExecutableState state = executability(resolveInput());
+		if (!state.isExecutable()) {
+			return HandlerResult.notExecutable(state);
+		}
 		processFile(context, files, 0);
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	private void processFile(ReactContext context, List<BinaryData> files, int index) {

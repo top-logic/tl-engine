@@ -57,11 +57,6 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_INTERNAL;
 
 	/**
-	 * @en The command is currently not executable.
-	 */
-	public static ResKey ERROR_COMMAND_NOT_EXECUTABLE;
-
-	/**
 	 * @en The requested view is currently not available.
 	 */
 	public static ResKey ERROR_NAVIGATION_NOT_AVAILABLE;

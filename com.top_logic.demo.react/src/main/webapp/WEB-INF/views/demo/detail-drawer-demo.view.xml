@@ -53,6 +53,7 @@
 					input="selectedTicket"
 					label-position="side"
 					max-columns="1"
+					with-inset="true"
 				>
 					<field attribute="title"/>
 					<field attribute="description"/>

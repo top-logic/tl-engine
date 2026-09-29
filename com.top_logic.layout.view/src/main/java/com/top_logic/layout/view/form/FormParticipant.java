@@ -57,6 +57,19 @@ public interface FormParticipant {
 	void persist(Transaction tx);
 
 	/**
+	 * Called in edit mode after a change to the edited object was stored by someone else than the
+	 * form, e.g. by a command committing a change to the displayed object.
+	 *
+	 * <p>
+	 * A participant shows the stored values where the user has not changed anything, and keeps the
+	 * user's changes everywhere else, so that a save still writes them.
+	 * </p>
+	 */
+	default void onObjectChanged() {
+		// Default no-op for participants keeping their buffered state until save or cancel.
+	}
+
+	/**
 	 * Cancels this participant's editing state, discarding any uncommitted changes.
 	 */
 	void cancel();

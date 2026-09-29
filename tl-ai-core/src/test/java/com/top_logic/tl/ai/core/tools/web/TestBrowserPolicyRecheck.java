@@ -373,7 +373,7 @@ public class TestBrowserPolicyRecheck extends TestCase {
 
 	private static BrowserSession openSession(String key, FilteringProxy proxy) {
 		return BrowserSession.open(key, TIMEOUT_MILLIS, BrowserSession.DEFAULT_ACTION_TIMEOUT_MILLIS, 0,
-			ONLY_PERMITTED_HOST, null, false, false, proxy.serverUrl());
+			ONLY_PERMITTED_HOST, null, false, false, proxy);
 	}
 
 	/** The ref of the first text field the capture found, or {@code null}. */

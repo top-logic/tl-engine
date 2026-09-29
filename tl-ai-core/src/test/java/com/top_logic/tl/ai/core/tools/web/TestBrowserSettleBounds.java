@@ -511,7 +511,7 @@ public class TestBrowserSettleBounds extends TestCase {
 	private static BrowserSession openSession(String key, FilteringProxy proxy) {
 		return BrowserSession.open(key, NAVIGATION_TIMEOUT_MILLIS,
 			BrowserSession.DEFAULT_ACTION_TIMEOUT_MILLIS, SETTLE_MILLIS, BOTH_FIXTURE_HOSTS, null, false,
-			false, proxy.serverUrl());
+			false, proxy);
 	}
 
 	/**

@@ -5,10 +5,14 @@
  */
 package com.top_logic.tl.ai.core.tools.web;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.Proxy;
+import java.net.InetAddress;
+import java.net.Socket;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -239,6 +243,39 @@ public class TestBrowserTool extends TestCase {
 			assertEquals(0, service.liveSessionCountForTest());
 		} finally {
 			service.shutDown();
+		}
+	}
+
+	/**
+	 * The browser session's reading of the refusal header (#583), without a browser: a header counts
+	 * only as a refusal the session's own proxy recorded, and only for plain HTTP, where the proxy's
+	 * refusal page is what the browser receives. The text reported is the proxy's, never the header's.
+	 */
+	public void testOnlyTheSessionsProxyCanReportARefusal() throws Exception {
+		try (FilteringProxy proxy = FilteringProxy.start(host -> "refused by the test proxy.")) {
+			assertNull("nothing refused yet, so a header is the page's own",
+				BrowserSession.proxyRefusal(proxy, "http://refused.invalid/"));
+
+			refuseOnce(proxy, "refused.invalid");
+
+			assertEquals("plain HTTP: the proxy's recorded reason", "refused by the test proxy.",
+				BrowserSession.proxyRefusal(proxy, "http://refused.invalid/page"));
+			assertNull("HTTPS: a refused tunnel yields no response, so any response is the origin's",
+				BrowserSession.proxyRefusal(proxy, "https://refused.invalid/"));
+			assertNull("another host was not refused",
+				BrowserSession.proxyRefusal(proxy, "http://other.invalid/"));
+		}
+		assertNull("without a proxy nobody could have refused",
+			BrowserSession.proxyRefusal(null, "http://refused.invalid/"));
+	}
+
+	/** Makes {@code proxy} refuse one plain-HTTP request for {@code host}. */
+	private static void refuseOnce(FilteringProxy proxy, String host) throws IOException {
+		try (Socket socket = new Socket(InetAddress.getLoopbackAddress(), proxy.port())) {
+			socket.setSoTimeout(10_000);
+			socket.getOutputStream().write(("GET http://" + host + "/ HTTP/1.1\r\nHost: " + host + "\r\n\r\n")
+				.getBytes(StandardCharsets.ISO_8859_1));
+			socket.getInputStream().readAllBytes();
 		}
 	}
 

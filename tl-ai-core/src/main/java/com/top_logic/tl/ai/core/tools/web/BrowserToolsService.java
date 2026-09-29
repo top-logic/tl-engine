@@ -696,7 +696,7 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 				GovernedPolicy policy = new GovernedPolicy(this, this, browsing);
 				BrowserSession session = BrowserSession.open(key, navigationTimeoutMillis,
 					actionTimeoutMillis, navigationSettleMillis, policy, _seedByKey.lookup(key), headed,
-					evadeBotDetection, proxyFor(browsing).serverUrl(), sandboxDisabled);
+					evadeBotDetection, proxyFor(browsing), sandboxDisabled);
 				// The context now holds the cookies, so the decrypted copy has served its purpose.
 				// Dropped only after a SUCCESSFUL launch: a failed one must stay retryable.
 				_seedByKey.discard(key);

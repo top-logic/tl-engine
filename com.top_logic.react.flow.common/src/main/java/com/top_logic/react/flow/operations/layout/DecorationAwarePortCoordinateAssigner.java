@@ -40,7 +40,7 @@ import com.top_logic.react.flow.operations.ConnectorSymbolRenderer;
  * To resolve this, {@link #computePortWidth} XORs the {@code outgoing} flag with
  * {@link LayoutEdge#isReversed()} to recover the correct business-level end
  * ({@code isSource = outgoing ^ reversed}). The same logic must be used in the
- * {@link com.top_logic.graph.layouter.algorithm.node.port.NodeSizer NodeSizer} created by
+ * {@link com.top_logic.graph.layouter.algorithm.node.size.NodeSizer NodeSizer} created by
  * {@link GraphLayoutOperations} (see {@link GraphLayoutOperations#computeTotalPortWidth}) to ensure
  * that node widths are consistent with port allocation.
  * </p>

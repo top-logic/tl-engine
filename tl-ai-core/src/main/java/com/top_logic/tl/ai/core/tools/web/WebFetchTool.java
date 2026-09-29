@@ -115,16 +115,22 @@ public class WebFetchTool {
 				} catch (IllegalArgumentException ex) {
 					return "Error: invalid URL: " + ex.getMessage();
 				}
-				String validationError = validateUrl(uri);
-				if (validationError != null) {
-					return "Error: " + validationError;
+				String shape = UrlSafety.checkUrlShape(uri);
+				if (shape != null) {
+					return "Error: " + shape;
 				}
-				// Re-checked on EVERY hop, exactly as the SSRF check above is: a permitted origin
+				// Re-checked on EVERY hop, exactly as the SSRF check below is: a permitted origin
 				// answering with a redirect to an off-policy one is the whole reason the redirects are
-				// followed by hand here rather than by the HttpClient.
+				// followed by hand here rather than by the HttpClient. Before the SSRF check, because
+				// it needs no network: an off-policy host is refused for that reason even when its
+				// name does not resolve (#567).
 				String offPolicy = browsing.refuseAccess(uri.getHost());
 				if (offPolicy != null) {
 					return "Error: " + BrowsingPolicies.audit(browsing, uri.getHost(), offPolicy);
+				}
+				String validationError = validateUrl(uri);
+				if (validationError != null) {
+					return "Error: " + validationError;
 				}
 
 				HttpRequest request = HttpRequest.newBuilder(uri)

@@ -69,6 +69,7 @@ public class IconElement implements UIElement {
 		/**
 		 * Optional additional CSS class appended to the default {@code tlIcon} class.
 		 */
+		@Override
 		@Name(CSS_CLASS)
 		@Nullable
 		String getCssClass();

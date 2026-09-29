@@ -43,6 +43,7 @@ import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.element.config.ClassConfig;
 import com.top_logic.element.config.DefinitionReader;
 import com.top_logic.element.config.ExtendsConfig;
@@ -77,6 +78,7 @@ import com.top_logic.model.factory.TLFactory;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.impl.generated.TLObjectBase;
 import com.top_logic.model.impl.generated.TlModelFactory;
+import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.wrap.Group;
@@ -303,8 +305,23 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 		return Collections.unmodifiableCollection(_factories.values());
 	}
 
+	/**
+	 * @implNote The whole setup runs without an access check: the security configuration is resolved
+	 *           against the very model that is built here, so it cannot exist yet (it is started as an
+	 *           extension point of this service, i.e. immediately afterwards). Setting up the model
+	 *           touches the model itself - allocating the module singletons applies the default values
+	 *           of their attributes, and a {@code default-by-expression} default that allocates objects
+	 *           executes <i>TL-Script</i>. See {@link ModelAccessRights#uncheckedSecurity(ComputationEx2)}.
+	 */
 	@Override
 	protected void startUpInContext() throws ConfigurationException, KnowledgeBaseException {
+		ModelAccessRights.<Void, ConfigurationException, KnowledgeBaseException> uncheckedSecurity(() -> {
+			internalStartUpInContext();
+			return null;
+		});
+	}
+
+	private void internalStartUpInContext() throws ConfigurationException, KnowledgeBaseException {
 		super.startUpInContext();
 
 		InstantiationContext context = ApplicationConfig.getInstance().getServiceStartupContext();

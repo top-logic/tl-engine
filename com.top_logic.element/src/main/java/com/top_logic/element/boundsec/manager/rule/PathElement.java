@@ -1,94 +1,101 @@
 /*
- * SPDX-FileCopyrightText: 2007 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
+
 package com.top_logic.element.boundsec.manager.rule;
 
+import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.function.Supplier;
 
-import com.top_logic.basic.Logger;
-import com.top_logic.element.meta.AttributeOperations;
-import com.top_logic.knowledge.wrap.Wrapper;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
- * One node in a role rule path
+ * One node in a role rule path.
  * 
- * @author     <a href="mailto:tsa@top-logic.com">tsa</a>
+ * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class PathElement {
+public interface PathElement {
 
-    /** the meta attribute defining the content */
-    private TLStructuredTypePart metaAttribute;
-    
-    /** 
-     * indicates that the attribute is to be resolved in revers,
-     * i.e. get all objects that hold a given object via the given meta attribute.
-     */
-    private boolean       inverse;
+	/**
+	 * The parts that are used by this {@link PathElement}.
+	 */
+	Collection<TLStructuredTypePart> getRelevantParts();
 
-    /**
-     * Constructor
-     */
-    public PathElement(TLStructuredTypePart aMA, boolean isInvers) {
-        this.metaAttribute = aMA;
-		if (aMA == null) {
-			// Special hack for IdentityPathElement!
-		} else {
-			if (metaAttribute.getDefinition() != metaAttribute) {
-				Logger.error("Only the definition of an TLStructureTypePart must be given: " + metaAttribute, aMA);
-			}
-		}
-        this.inverse       = isInvers;
-        // TODO TSA: add consistency checks: type of attribute, ...
-    }
-    
-    /**
-     * Getter
-     */
-    public TLStructuredTypePart getMetaAttribute() {
-        return (metaAttribute);
-    }
-    
-    /**
-     * Getter
-     */
-    public boolean isInverse() {
-        return (inverse);
-    }
-    
-    /**
-     * An object referenced by the rule path so far. This object is the base for the lookup
-     * either as source or destination (in case of an inverse path element).
-     * 
-     * @param aBase   the object to containing the attribute
-     * @return the Objects referd to via the attribute, never <code>null</code>
-     */
-    public Collection getValues(Wrapper aBase) {
-        return getValues(aBase, true);
-    }
-    
-    private Collection getValues(Wrapper aBase, boolean isForward) {
-        Collection theResult;
-        
-		if (this.isInverse() == isForward) {
-			theResult = AttributeOperations.getReferers(aBase, this.metaAttribute);
-		} else {
-			Object theContent = aBase.getValue(metaAttribute.getName());
-			if (theContent instanceof Collection) {
-				theResult = (Collection) theContent;
-			} else if (theContent != null) {
-				theResult = Collections.singleton(theContent);
-			} else {
-				theResult = Collections.EMPTY_LIST;
-			}
-        }
-        return theResult != null ? theResult : Collections.EMPTY_SET;
-    }
-    
-    public Collection getSources(Wrapper aDestination) {
-        return this.getValues(aDestination, false);
-    }
+	/**
+	 * Traverses this path element starting from the given base object and returns the reached
+	 * objects.
+	 *
+	 * <p>
+	 * For a non-inverse path element, the reference value(s) of {@code base} are returned. For an
+	 * inverse path element, all objects that refer to {@code base} via the reference are returned.
+	 * </p>
+	 *
+	 * @param base
+	 *        The object to start the traversal from. Must not be <code>null</code>.
+	 * @return The objects reached by following this path element. Never <code>null</code>.
+	 * 
+	 * @see #getSources(TLObject)
+	 */
+	Collection<? extends TLObject> getValues(TLObject base);
+
+	/**
+	 * Returns the source objects that reach the given destination object when this path element is
+	 * traversed.
+	 *
+	 * <p>
+	 * This is the inverse operation of {@link #getValues(TLObject)}: for a non-inverse path
+	 * element, all objects that refer to {@code destination} via the reference are returned; for an
+	 * inverse path element, the reference value(s) of {@code destination} are returned.
+	 * </p>
+	 *
+	 * @param destination
+	 *        The object to determine the sources for. Must not be <code>null</code>.
+	 * @return The objects that reach {@code destination} by following this path element. Never
+	 *         <code>null</code>. When no sources can be computed, then {@link BaseObjects#all()} is
+	 *         returned.
+	 * 
+	 * @see #getValues(TLObject)
+	 */
+	BaseObjects<? extends Collection<? extends TLObject>> getSources(TLObject destination);
+
+	/**
+	 * Determines base objects for this {@link PathElement} when the value for the given part in the
+	 * given element changes. The result is used to navigate backward to the role rule to which this
+	 * path element belongs.
+	 * 
+	 * @param element
+	 *        The element whose attribute value has changed,
+	 * @param part
+	 *        The part whose value has changed. This part is {@link #getRelevantParts() relevant}
+	 *        for this path element.
+	 * @param partValue
+	 *        Supplier for the value of the element. <b> Attention:</b> When the part is a multiple
+	 *        reference then the value does not contain all referenced objects but only the
+	 *        difference to the value before.
+	 * 
+	 * @return When no base elements can be computed, then {@link BaseObjects#all()} is returned.
+	 * 
+	 */
+	BaseObjects<? extends Collection<? extends TLObject>> getPathBase(TLObject element, TLStructuredTypePart part,
+			Supplier<?> partValue);
+
+	/**
+	 * Appends an HTML-encoded, human-readable description of this path element to the given output.
+	 *
+	 * <p>
+	 * The produced string is used inside a tooltip that describes the path of a {@link RoleRule} to
+	 * the user.
+	 * </p>
+	 *
+	 * @param out
+	 *        The output to append to. Must not be <code>null</code>.
+	 * @throws IOException
+	 *         If writing to {@code out} fails.
+	 */
+	void appendForTooltip(Appendable out) throws IOException;
 }
+

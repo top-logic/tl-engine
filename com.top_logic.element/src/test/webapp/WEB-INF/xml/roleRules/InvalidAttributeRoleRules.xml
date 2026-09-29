@@ -5,6 +5,7 @@
 >
 	<rules>
 		<rule
+			id="simple"
 			inherit="true"
 			meta-element="projElement:projElement.All"
 			resource-key="roleRule.simple"
@@ -12,9 +13,8 @@
 		>
 			<path>
 				<step
-					attribute="Mitarbeiter"
+					attribute="projElement:projElement.ProjectRoot#Mitarbeiter"
 					inverse="true"
-					meta-element="projElement:projElement.ProjectRoot"
 				/>
 			</path>
 		</rule>

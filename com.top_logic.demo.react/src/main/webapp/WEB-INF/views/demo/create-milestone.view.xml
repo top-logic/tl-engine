@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Create dialog for a tl.demo.projectManagement:Milestone inside a selected ProjectScope.
+	
+	"model" carries the transient Milestone (bound by the opening command); "container" is bound to
+	the list's selectedScope. The Create button persists the milestone and links it from the
+	container side - the composite back-reference Milestone#scope is derived and cannot be set, so
+	the link is made via ProjectScope#milestones. The created milestone is written to "selection"
+	(bound to selectedMilestone) so it becomes selected.
+	
+	The Create command takes the container as a leading positional argument (via <inputs>); the
+	form model is the trailing (chained) argument.
+-->
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="container"/>
+		<channel name="selection"/>
+	</channels>
+	<window width="500px">
+		<title>
+			<en>New Milestone</en>
+			<de>Neuer Meilenstein</de>
+		</title>
+		<form
+			initial-edit-mode="true"
+			input="model"
+			mode-switch="false"
+		>
+			<field attribute="name"/>
+			<field attribute="dueDate"/>
+			<commands>
+				<generic-command
+					image="css:bi bi-check-lg"
+					placement="BUTTON_BAR"
+				>
+					<label>
+						<en>Create</en>
+						<de>Erstellen</de>
+					</label>
+					<store-form-state/>
+					<with-transaction>
+						<execute-script function="container -> model -> { created = $model.copy(transient: false); $container.add(`tl.demo.projectManagement:ProjectScope#milestones`, $created); $created }">
+							<inputs>
+								<input channel="container"/>
+							</inputs>
+						</execute-script>
+					</with-transaction>
+					<write-channel name="selection"/>
+					<close-dialog/>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

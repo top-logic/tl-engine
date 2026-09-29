@@ -17,6 +17,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.module.ModuleException;
@@ -42,14 +43,14 @@ import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 
 /**
- * Default index service that defines the base functionality and methods 
- * common to all indexing services.
+ * Indexes document contents so that they can be found via full-text search.
  *
  * @author    Dieter Rothb&auml;cher
  */
 @ServiceDependencies({
 	KnowledgeBaseFactory.Module.class
 })
+@Label("Full-text indexing")
 public abstract class DefaultIndexingService
 		extends KBBasedManagedClass<DefaultIndexingService.DefaultIndexingServiceConfig>
 		implements IndexingService, UpdateListener {

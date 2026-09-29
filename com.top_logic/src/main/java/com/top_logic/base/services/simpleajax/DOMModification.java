@@ -23,6 +23,13 @@ public abstract class DOMModification extends DOMAction {
 	 * The new contents that is transported to the client.
 	 */
 	HTMLFragment fragment;
+
+	/**
+	 * The {@link HTMLFragment} that is transported to the client.
+	 */
+	public HTMLFragment getFragment() {
+		return fragment;
+	}
 	
 	/**
 	 * @see #elementID

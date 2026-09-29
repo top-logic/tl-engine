@@ -468,8 +468,15 @@ public class TLScriptMethod extends GenericMethod {
 				Class<? extends Enum<?>> enumType = (Class<? extends Enum<?>>) type;
 				return ConfigUtil.getEnum(enumType, externalName);
 			} catch (ConfigurationException ex) {
+				// List valid enum values in the error message.
+				Enum<?>[] constants = ((Class<? extends Enum<?>>) type).getEnumConstants();
+				StringBuilder validValues = new StringBuilder();
+				for (int i = 0; i < constants.length; i++) {
+					if (i > 0) validValues.append(", ");
+					validValues.append(constants[i].name());
+				}
 				throw new TopLogicException(I18NConstants.ERROR_WRONG_ARGUMENT__FUN_ARG_EXPECTED_VAL.fill(getName(),
-					param.getName(), type.getSimpleName(), input), ex);
+					param.getName(), type.getSimpleName() + " (" + validValues + ")", input), ex);
 			}
 		}
 

@@ -28,6 +28,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
@@ -45,9 +46,12 @@ import com.top_logic.util.monitor.MonitorResult;
 import com.top_logic.util.sched.MemoryObserverThread;
 
 /**
- * DPM specific variant of the {@link MemoryObserverThread} as of QC2558.
+ * Logs the application's memory usage to a dedicated log file.
  *
- * It will not log internally but use use log4j to write a special log file.
+ * <p>
+ * Unlike {@link MemoryObserverThread} it does not log internally but uses log4j to write a special
+ * log file.
+ * </p>
  *
  * TODO Think about using a {@link MemoryNotificationInfo} so we log only when thresholds
  * are {@link MemoryNotificationInfo#MEMORY_THRESHOLD_EXCEEDED exceeded}.
@@ -55,6 +59,7 @@ import com.top_logic.util.sched.MemoryObserverThread;
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 @ServiceDependencies({ AliasManager.Module.class, ApplicationMonitor.Module.class, FormatterService.Module.class })
+@Label("Memory observer")
 public class MemoryObserver extends ConfiguredManagedClass<MemoryObserver.Config>
 		implements MonitorComponent, Reloadable {
 

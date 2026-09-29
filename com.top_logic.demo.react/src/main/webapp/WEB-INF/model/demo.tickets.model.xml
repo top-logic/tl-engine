@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="demo.tickets">
+			<class name="Ticket">
+				<annotations>
+					<main-properties properties="name"/>
+				</annotations>
+				<attributes>
+					<property name="name"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<reference name="comments"
+						composite="true"
+						kind="forwards"
+						multiple="true"
+						ordered="true"
+						type="Comment"
+					/>
+				</attributes>
+			</class>
+			<class name="Comment">
+				<annotations>
+					<label>
+						<label-provider class="com.top_logic.model.search.providers.LabelProviderByExpression"
+							label="comment -> { a = $comment.get(`demo.tickets:Comment#author`); d = $comment.get(`demo.tickets:Comment#date`); if($a == null, #(&quot;Kommentar&quot;@de, &quot;Comment&quot;@en), label($a) + if($d != null, &quot; · &quot; + dateFormat(&quot;dd.MM.yyyy HH:mm&quot;).format($d), &quot;&quot;)); }"
+						/>
+					</label>
+				</annotations>
+				<attributes>
+					<property name="content"
+						mandatory="true"
+						type="tl.model.wysiwyg:Html"
+					/>
+					<reference name="author"
+						kind="forwards"
+						type="tl.accounts:Person"
+					/>
+					<property name="date"
+						type="tl.core:DateTime"
+					/>
+					<reference name="cited"
+						kind="forwards"
+						type="Comment"
+					>
+						<annotations>
+							<dynamic-visibility>
+								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+									function="comment -> editMode -> if ($comment.get(`demo.tickets:Comment#cited`) != null, if($editMode, &quot;editable&quot;, &quot;read-only&quot;), &quot;hidden&quot;)"
+								/>
+							</dynamic-visibility>
+							<options>
+								<options-by-expression function="comment -> $comment.container().get(`demo.tickets:Ticket#comments`)"/>
+							</options>
+						</annotations>
+					</reference>
+					<reference name="attachments"
+						composite="true"
+						kind="forwards"
+						multiple="true"
+						ordered="true"
+						type="Attachment"
+					>
+						<annotations>
+							<dynamic-visibility>
+								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+									function="comment -> editMode -> if ($editMode || $comment.get(`demo.tickets:Comment#attachments`).size() > 0, &quot;default&quot;, &quot;hidden&quot;)"
+								/>
+							</dynamic-visibility>
+						</annotations>
+					</reference>
+				</attributes>
+			</class>
+			<class name="Attachment">
+				<annotations>
+					<main-properties properties="name, data"/>
+				</annotations>
+				<attributes>
+					<property name="name"
+						type="tl.core:String"
+					>
+						<annotations>
+							<storage-algorithm>
+								<fallback-storage
+									fallback-attribute="fileName"
+									storage-attribute="customName"
+								/>
+							</storage-algorithm>
+						</annotations>
+					</property>
+					<property name="customName"
+						type="tl.core:String"
+					>
+						<annotations>
+							<visibility value="hidden"/>
+						</annotations>
+					</property>
+					<property name="fileName"
+						type="tl.core:String"
+					>
+						<annotations>
+							<storage-algorithm>
+								<query>
+									<expr>x -&gt; label($x.get(`demo.tickets:Attachment#data`))</expr>
+								</query>
+							</storage-algorithm>
+							<visibility value="hidden"/>
+						</annotations>
+					</property>
+					<property name="data"
+						mandatory="true"
+						type="tl.core:Binary"
+					/>
+				</attributes>
+			</class>
+		</module>
+	</modules>
+</model>

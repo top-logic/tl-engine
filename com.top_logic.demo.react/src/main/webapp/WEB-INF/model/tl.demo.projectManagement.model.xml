@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.demo.projectManagement">
+		<annotations>
+			<display-group value="demo"/>
+		</annotations>
+		<class name="Milestone">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<form-definition>
+					<form>
+						<field
+							attribute="name"
+							fullQualifiedName="tl.demo.projectManagement:Milestone#name"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="dueDate"
+							fullQualifiedName="tl.demo.projectManagement:Milestone#dueDate"
+							type="tl.core:Date"
+						/>
+						<field
+							attribute="tickets"
+							fullQualifiedName="tl.demo.projectManagement:Milestone#tickets"
+							type="tl.demo.projectManagement:Ticket"
+						>
+							<annotations>
+								<reference-display value="table"/>
+							</annotations>
+						</field>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="dueDate"
+					type="tl.core:Date"
+				/>
+				<reference name="tickets"
+					inverse-reference="milestone"
+					kind="backwards"
+					multiple="true"
+					type="Ticket"
+				>
+					<annotations>
+						<change-subtree/>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+		<class name="Note">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<id-column value="text"/>
+				<form-definition>
+					<form>
+						<field
+							attribute="text"
+							fullQualifiedName="tl.demo.projectManagement:Note#text"
+							type="tl.core:String"
+						/>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<property name="text"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
+		<class name="Contributor">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<form-definition>
+					<form>
+						<field
+							attribute="name"
+							fullQualifiedName="tl.demo.projectManagement:Contributor#name"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="email"
+							fullQualifiedName="tl.demo.projectManagement:Contributor#email"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="assignedTickets"
+							fullQualifiedName="tl.demo.projectManagement:Contributor#assignedTickets"
+							type="tl.demo.projectManagement:Ticket"
+						/>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="email"
+					type="tl.core:String"
+				/>
+				<reference name="assignedTickets"
+					inverse-reference="assignee"
+					kind="forwards"
+					multiple="true"
+					type="Ticket"
+				/>
+			</attributes>
+		</class>
+		<class name="ProjectScope">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="description"
+					type="tl.core:String"
+				/>
+				<reference name="milestones"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					ordered="true"
+					type="Milestone"
+				/>
+				<reference name="tickets"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					ordered="true"
+					type="Ticket"
+				/>
+				<reference name="notes"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					ordered="true"
+					type="Note"
+				>
+					<annotations>
+						<change-subtree include="false"/>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+		<class name="Ticket">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<id-column value="title"/>
+				<form-definition>
+					<form>
+						<field
+							attribute="title"
+							fullQualifiedName="tl.demo.projectManagement:Ticket#title"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="description"
+							fullQualifiedName="tl.demo.projectManagement:Ticket#description"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="milestone"
+							fullQualifiedName="tl.demo.projectManagement:Ticket#milestone"
+							type="tl.demo.projectManagement:Milestone"
+						/>
+						<field
+							attribute="assignee"
+							fullQualifiedName="tl.demo.projectManagement:Ticket#assignee"
+							type="tl.demo.projectManagement:Contributor"
+						/>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<property name="title"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="description"
+					type="tl.core:String"
+				/>
+				<reference name="milestone"
+					inverse-reference="tickets"
+					kind="forwards"
+					type="Milestone"
+				>
+					<annotations>
+						<options>
+							<options-by-expression function="ticket -> $ticket.container().get(`tl.demo.projectManagement:ProjectScope#milestones`)"/>
+						</options>
+					</annotations>
+				</reference>
+				<reference name="assignee"
+					inverse-reference="assignedTickets"
+					kind="backwards"
+					type="Contributor"
+				>
+					<annotations>
+						<change-subtree/>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+	</module>
+</model>

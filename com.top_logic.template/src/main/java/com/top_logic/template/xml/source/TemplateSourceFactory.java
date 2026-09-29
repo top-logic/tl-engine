@@ -13,13 +13,14 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 
 /**
- * Creates instances of {@link TemplateSource}.
+ * Resolves template sources from configured storage protocols.
  * <p>
  * Projects can subclass this factory if they have their own implementations of
  * {@link TemplateSource} not supported by the framework.
@@ -27,6 +28,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * 
  * @author <a href="mailto:Jan Stolzenburg@top-logic.com">Jan Stolzenburg</a>
  */
+@Label("Template source factory")
 public class TemplateSourceFactory extends ConfiguredManagedClass<TemplateSourceFactory.Config> {
 
 	/**

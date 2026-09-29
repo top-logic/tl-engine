@@ -37,11 +37,13 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.util.TLAnnotations;
+import com.top_logic.model.cache.TLModelCacheService;
 import com.top_logic.model.cs.TLObjectChange;
 import com.top_logic.model.cs.TLObjectChangeSet;
 import com.top_logic.model.cs.TLObjectCreation;
 import com.top_logic.model.cs.TLObjectDeletion;
 import com.top_logic.model.cs.TLObjectUpdate;
+import com.top_logic.util.model.ModelService;
 
 /**
  * Analyzer of changes from the {@link KnowledgeBase}.
@@ -73,7 +75,11 @@ public class KBChangeAnalzyer {
 	}
 
 	private void reset() {
-		_modelTables = ElementModelCacheService.getModelTables();
+		if (TLModelCacheService.Module.INSTANCE.isActive()) {
+			_modelTables = ElementModelCacheService.getModelTables();
+		} else {
+			_modelTables = new ModelTables(ModelService.getApplicationModel());
+		}
 		_objectChanges.clear();
 		_updatesByItem.clear();
 	}
@@ -372,12 +378,12 @@ public class KBChangeAnalzyer {
 		if (oldValue) {
 			Set<ObjectKey> deletedKeys = createdDeletedKeys;
 			if (deletedKeys.contains(partId)) {
-				part = kb().withoutModifications(() -> resolvePart(partId));
+				part = kb().withoutModifications(() -> resolvePart(object, partId));
 			} else {
-				part = resolvePart(partId);
+				part = resolvePart(object, partId);
 			}
 		} else {
-			part = resolvePart(partId);
+			part = resolvePart(object, partId);
 		}
 
 		if (part == null) {
@@ -387,13 +393,17 @@ public class KBChangeAnalzyer {
 		enter(object).add(part);
 	}
 
-	private TLStructuredTypePart resolvePart(ObjectKey key) {
+	private TLStructuredTypePart resolvePart(TLObject object, ObjectKey key) {
 		KnowledgeItem partKI = kb().resolveObjectKey(key);
 		TLStructuredTypePart part = partKI.getWrapper();
 		if (isPersistentCacheAttribute(part)) {
 			return null;
 		}
-		return part;
+		/* The ID of the definition of the changed attribute is stored in the association storage.
+		 * The part may be overridden in the concrete type; the change contains the concrete
+		 * attributes -> the correct part instance must be fetched. */
+		TLStructuredTypePart concretePart = object.tType().getPart(part.getName());
+		return concretePart;
 	}
 
 	private void registerChange(TLObjectChange change) {

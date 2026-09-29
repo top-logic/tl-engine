@@ -24,8 +24,27 @@ import java.lang.annotation.Target;
 public @interface Label {
 
 	/**
+	 * Resource key suffix under which the {@link #option()} label of a type is stored.
+	 */
+	String OPTION_SUFFIX = "@option";
+
+	/**
 	 * The (English) label of the annotated element when displayed in the UI.
 	 */
 	String value();
+
+	/**
+	 * Optional label used where the annotated <em>type itself</em> is displayed — as an option in
+	 * a type selection, or as the text of a documentation reference.
+	 *
+	 * <p>
+	 * Relevant when {@link #value()} is a rendering template with embedded property references
+	 * (e.g. {@code Delete file '{file-name}'.}): such a label only makes sense expanded against an
+	 * instance. The option label is stored under the {@link #OPTION_SUFFIX}-suffixed resource key
+	 * of the annotated type, where displays of the type look it up (falling back to
+	 * {@link #value()} when empty).
+	 * </p>
+	 */
+	String option() default "";
 
 }

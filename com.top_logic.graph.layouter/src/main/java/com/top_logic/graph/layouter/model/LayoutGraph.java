@@ -5,14 +5,14 @@
  */
 package com.top_logic.graph.layouter.model;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
-import com.google.common.collect.Lists;
-
-import com.top_logic.basic.graph.ExplicitGraph;
+import com.top_logic.basic.shared.graph.ExplicitGraph;
 
 /**
  * Graph with a layout structure, i.e. every node has a x and y coordinate.
@@ -342,7 +342,11 @@ public class LayoutGraph extends ExplicitGraph<LayoutGraph.LayoutNode, LayoutGra
 			LayoutEdge reversedEdge = connect(_target, _source, getBusinessObject());
 
 			reversedEdge.setReversed(true);
-			reversedEdge.setWaypoints(_waypoints.map(waypoints -> Lists.reverse(waypoints)));
+			reversedEdge.setWaypoints(_waypoints.map(waypoints -> {
+					List<Waypoint> reversed = new ArrayList<>(waypoints);
+					Collections.reverse(reversed);
+					return reversed;
+				}));
 
 			remove();
 

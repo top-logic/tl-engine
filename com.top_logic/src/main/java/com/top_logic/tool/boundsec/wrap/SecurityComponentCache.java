@@ -12,6 +12,7 @@ import java.util.Map;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.MapUtil;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KBBasedManagedClass;
@@ -23,10 +24,11 @@ import com.top_logic.mig.html.layout.LayoutConstants;
 import com.top_logic.tool.boundsec.compound.CompoundSecurityLayout;
 
 /**
- * Cache for {@link PersBoundComp} objects.
- * 
+ * Cache for the persistent security components ({@link PersBoundComp}) of the application.
+ *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@Label("Security component cache")
 public class SecurityComponentCache extends KBBasedManagedClass<SecurityComponentCache.Config> {
 
 	/**

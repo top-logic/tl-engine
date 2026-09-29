@@ -12,6 +12,7 @@ import com.top_logic.base.locking.Lock;
 import com.top_logic.base.locking.LockService;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -25,6 +26,7 @@ import com.top_logic.util.error.TopLogicException;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@Label("Token service")
 public abstract class TokenService extends ManagedClass {
 
 	/**

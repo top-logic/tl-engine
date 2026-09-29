@@ -53,7 +53,6 @@ import com.top_logic.basic.TLID;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.col.CloseableIterator;
-import com.top_logic.basic.col.CloseableIteratorAdapter;
 import com.top_logic.basic.col.ComparatorChain;
 import com.top_logic.basic.col.InlineList;
 import com.top_logic.basic.col.LongRange;
@@ -1943,29 +1942,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 		checkQuery(query, queryArguments.getArguments());
 		
 		CompiledQuery<E> compiledQuery = compileQuery(query);
-		final ConnectionPool pool = getConnectionPool();
-		boolean statementReturned = false;
-		final PooledConnection readConnection = pool.borrowReadConnection();
-		try {
-			final CloseableIterator<E> searchResult = compiledQuery.searchStream(readConnection, queryArguments);
-			CloseableIteratorAdapter<E> adaptedResult = new CloseableIteratorAdapter<>(searchResult) {
-
-				@Override
-				protected void internalClose() {
-					try {
-						searchResult.close();
-					} finally {
-						pool.releaseReadConnection(readConnection);
-					}
-				}
-			};
-			statementReturned = true;
-			return adaptedResult;
-		} finally {
-			if (!statementReturned) {
-				pool.releaseReadConnection(readConnection);
-			}
-		}
+		return compiledQuery.searchStream(queryArguments);
 	}
 
 	@Override
@@ -3264,7 +3241,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	public <T extends KnowledgeItem> List<T> getAnyReferer(Revision requestedRevision, KnowledgeItem any,
 			DeletionPolicy policy, Class<T> expectedType) {
 		Map<MetaObject, CompiledQuery<T>> completeQuery =
-			anyRefereesQuery(any.tTable(), policy, Boolean.FALSE, expectedType);
+			anyRefereesQuery(any.tTable(), policy, Boolean.FALSE, HistoryUtils.isCurrent(any), expectedType);
 		if (completeQuery.isEmpty()) {
 			return Collections.emptyList();
 		}
@@ -3301,7 +3278,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 				return getAnyReferer(requestedRevision, item, policy, expectedType);
 			default:
 				Map<MetaObject, CompiledQuery<T>> completeQuery =
-					anyRefereesQuery(targetType, policy, Boolean.TRUE, expectedType);
+					anyRefereesQuery(targetType, policy, Boolean.TRUE, allCurrent(items), expectedType);
 				if (completeQuery.isEmpty()) {
 					return Collections.emptyList();
 				}
@@ -3341,6 +3318,11 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	 *        If <code>null</code> then each reference is used.
 	 * @param multipleTargets
 	 *        Whether the target is a single object or a sequence of objects.
+	 * @param currentTargets
+	 *        Whether all target objects later filled into the query are current objects. In that
+	 *        case, references with {@link HistoryType#HISTORIC} are not searched at all, because
+	 *        their value is stabilized to a concrete revision and can therefore never be a current
+	 *        object.
 	 * @param expectedType
 	 *        The implementation class of the searched items.
 	 * 
@@ -3348,14 +3330,35 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	 * @see #anyRefereesArguments(Revision, Iterable)
 	 */
 	public <T extends KnowledgeItem> Map<MetaObject, CompiledQuery<T>> anyRefereesQuery(MetaObject targetType,
-			DeletionPolicy policy, Boolean multipleTargets, Class<T> expectedType) {
-		return _expressions.anyRefereeQuery(targetType, policy, multipleTargets, expectedType);
+			DeletionPolicy policy, Boolean multipleTargets, boolean currentTargets, Class<T> expectedType) {
+		return _expressions.anyRefereeQuery(targetType, policy, multipleTargets, currentTargets, expectedType);
+	}
+
+	/**
+	 * Whether all given items are current objects.
+	 *
+	 * @see #anyRefereesQuery(MetaObject, DeletionPolicy, Boolean, boolean, Class)
+	 */
+	private static boolean allCurrent(Collection<? extends KnowledgeItem> items) {
+		for (KnowledgeItem item : items) {
+			if (!HistoryUtils.isCurrent(item)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**
 	 * Creates a {@link RevisionQueryArguments} for the queries contained in the result of
-	 * {@link #anyRefereesQuery(MetaObject, DeletionPolicy, Boolean, Class)} where multipleTargets
+	 * {@link #anyRefereesQuery(MetaObject, DeletionPolicy, Boolean, boolean, Class)} where multipleTargets
 	 * is <code>true</code>.
+	 *
+	 * @param items
+	 *        The target objects to search referers for. They must match the
+	 *        <code>currentTargets</code> argument the query was created with: If the query was
+	 *        created with <code>currentTargets</code>, all given items must be current objects.
+	 *        Otherwise the query does not find the referers of a historic item, because references
+	 *        with {@link HistoryType#HISTORIC} were excluded from it.
 	 */
 	public RevisionQueryArguments anyRefereesArguments(Revision requestedRevision,
 			Iterable<? extends KnowledgeItem> items) {
@@ -3364,8 +3367,15 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 
 	/**
 	 * Creates a {@link RevisionQueryArguments} for the queries contained in the result of
-	 * {@link #anyRefereesQuery(MetaObject, DeletionPolicy, Boolean, Class)} where multipleTargets
+	 * {@link #anyRefereesQuery(MetaObject, DeletionPolicy, Boolean, boolean, Class)} where multipleTargets
 	 * is <code>false</code>.
+	 *
+	 * @param item
+	 *        The target object to search referers for. It must match the
+	 *        <code>currentTargets</code> argument the query was created with: If the query was
+	 *        created with <code>currentTargets</code>, the given item must be a current object.
+	 *        Otherwise the query does not find the referers of a historic item, because references
+	 *        with {@link HistoryType#HISTORIC} were excluded from it.
 	 */
 	public RevisionQueryArguments anyRefereesArguments(Revision requestedRevision, KnowledgeItem item) {
 		return _expressions.anyRefereeArguments(requestedRevision, item);

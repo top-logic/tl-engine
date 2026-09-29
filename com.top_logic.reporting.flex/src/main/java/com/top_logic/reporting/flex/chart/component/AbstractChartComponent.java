@@ -33,6 +33,7 @@ import com.top_logic.layout.basic.CommandHandlerCommand;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.component.Updatable;
 import com.top_logic.layout.progress.DefaultProgressInfo;
+import com.top_logic.mig.html.layout.CommandDispatcher;
 import com.top_logic.mig.html.layout.CommandRegistry;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.reporting.flex.chart.component.export.ExportManager;
@@ -54,6 +55,7 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.commandhandlers.GotoHandler;
+import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.tool.export.AbstractOfficeExportHandler.OfficeExportValueHolder;
 import com.top_logic.tool.export.ExportAware;
 /**
@@ -176,8 +178,11 @@ public abstract class AbstractChartComponent extends JFreeChartComponent impleme
 				Map<String, Object> args = new HashMap<>();
 				args.put(OpenChartDetailsCommand.PARAMETER_ID, path);
 
-				CommandHandlerCommand executingCommand = new CommandHandlerCommand(getDetailsHandler(), this, args);
-				return LinkGenerator.createLink(DefaultDisplayContext.getDisplayContext(), executingCommand);
+				ExecutableState executable = CommandDispatcher.resolveExecutableState(handler, getComponent(), args);
+				if (executable.isExecutable()) {
+					CommandHandlerCommand executingCommand = new CommandHandlerCommand(getDetailsHandler(), this, args);
+					return LinkGenerator.createLink(DefaultDisplayContext.getDisplayContext(), executingCommand);
+				}
 			}
 		}
 		return null;

@@ -5,7 +5,7 @@
     <relativePath>../tl-parent-core/internal</relativePath>
     <groupId>com.top-logic</groupId>
     <artifactId>tl-parent-core-internal</artifactId>
-    <version>8.0.0-alpha5</version>
+    <version>8.0.0-alpha8</version>
   </parent>
 
   <artifactId>tl-kafka-server</artifactId>
@@ -55,7 +55,7 @@
 	<dependency>
         <groupId>at.yawk.lz4</groupId>
             <artifactId>lz4-java</artifactId>
-            <version>1.11.0</version>
+            <version>1.11.2</version>
     </dependency>
 	<dependency>
 		<groupId>org.apache.zookeeper</groupId>

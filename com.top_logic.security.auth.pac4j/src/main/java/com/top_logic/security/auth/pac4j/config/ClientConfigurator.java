@@ -18,7 +18,9 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.basic.ThemeImage;
 
 /**
  * Configurable factory for authentication {@link Client} from the pac4j library.
@@ -51,6 +53,19 @@ public interface ClientConfigurator {
 		@Name(NAME)
 		@Mandatory
 		public String getName();
+
+		/**
+		 * User-visible label for this login method, shown on a login UI's SSO button (e.g.
+		 * "Login with Google"). Defaults to the {@link #getName() client name} if not set.
+		 */
+		@Name("label")
+		ResKey getLabel();
+
+		/**
+		 * Optional icon for this login method's button, or none.
+		 */
+		@Name("icon")
+		ThemeImage getIcon();
 
 		/**
 		 * Strategy for extracting a local user name from the authentication result.

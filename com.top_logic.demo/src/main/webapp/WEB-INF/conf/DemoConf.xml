@@ -16,16 +16,6 @@
 	
 	<properties>
 		
-<!-- 		<section name="RoleSetup" > -->
-<!-- 			<entry name="DemoSecurity" value="Role1,Role2,Role3" comment="" /> -->
-<!-- 			<entry name="DemoSecurity" value="SecurityAdministrator" comment="" /> -->
-<!-- 		</section> -->
-	
-<!-- 		<section name="InitialGroupManager" > -->
-<!-- 			<entry name="initialGroups" value="securityAdministrators" /> -->
-<!-- 			<entry name="groupRoles.securityAdministrators" value="DemoSecurity.SecurityAdministrator" /> -->
-<!-- 		</section> -->
-        
 		<section name="ConfiguredAttributedTooltips" comment="Attributes to show in ConfiguredAttributedTooltipProvider">
             <entry name="me:DemoTypes:A" value="name, tl.type, boolean" />
 		</section>

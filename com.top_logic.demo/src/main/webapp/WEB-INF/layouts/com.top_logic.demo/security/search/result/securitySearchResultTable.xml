@@ -4,8 +4,10 @@
 	accessorClass="com.top_logic.knowledge.wrap.WrapperAccessor"
 	metaElement="DemoSecurity.A,DemoSecurity.B"
 	namePrefix="SecuritySearch"
-	securityObject="ref:com.top_logic.demo.layout.security.DomainAwareSecurityObjectProvider"
 >
+	<securityObject class="com.top_logic.model.search.providers.SecurityObjectByExpression"
+		function="`DemoSecurity#ROOT`"
+	/>
 	<columnDefinitions>
 		<columns>
 			<column name="name"

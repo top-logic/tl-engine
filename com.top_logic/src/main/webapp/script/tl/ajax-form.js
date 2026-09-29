@@ -1976,6 +1976,21 @@ services.form = {
 			controlElement.enableTimer = null;
 		},
 
+		/**
+		 * Activates an anchor-based button with the space key like a native button.
+		 *
+		 * The synthesized click event triggers the element's onclick attribute and
+		 * activates the button through the regular handleClick() path.
+		 */
+		handleKeyDown : function(event, element) {
+			event = BAL.getEvent(event);
+			if (BAL.getKeyCode(event) == 32) {
+				element.click();
+				return false;
+			}
+			return true;
+		},
+
 		handleClick : function(event, controlID, progressDivID) {
 			BAL.eventStopPropagation(BAL.getEvent(event));
 			var delay = services.ajax.progressBarDelay;
@@ -5149,11 +5164,11 @@ services.form = {
 	},
 	
 	LogoutTimerControl: {
-		init: function(controlID, timeoutSeconds, countingSeconds, logoutUrl) {
+		init: function(controlID, timeoutSeconds, countingSeconds, loginUrl) {
 			var element = document.getElementById(controlID);
 			element.timeoutSeconds = timeoutSeconds;
 			element.countingSeconds = countingSeconds;
-			element.logoutUrl = logoutUrl;
+			element.loginUrl = loginUrl;
 			
 			this.resetTimer(controlID);
 			
@@ -5218,7 +5233,7 @@ services.form = {
 				var secondsLeft = Math.floor(millisLeft / 1000);
 				
 				if (secondsLeft < 0) {
-					services.ajax.showSessionTimeout(element.logoutUrl);
+					services.ajax.showSessionTimeout(element.loginUrl);
 				} else {
 					var minutesLeft = Math.floor(secondsLeft / 60);
 					var secondsRest = secondsLeft % 60;

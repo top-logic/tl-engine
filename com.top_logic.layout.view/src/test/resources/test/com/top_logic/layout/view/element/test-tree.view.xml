@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+  <channels>
+    <channel name="rootInput" />
+    <channel name="selectedNode" />
+  </channels>
+
+  <tree selection="selectedNode">
+    <inputs>
+      <input channel="rootInput" />
+    </inputs>
+    <root>input -> $input</root>
+    <children>input -> parent -> list($parent, "child1", "child2")</children>
+    <isLeaf>input -> node -> $node != $input</isLeaf>
+  </tree>
+</view>

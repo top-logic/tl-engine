@@ -6,9 +6,7 @@
 package com.top_logic.tool.boundsec.gui;
 
 import java.util.Map;
-import java.util.regex.Pattern;
 
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
@@ -24,11 +22,8 @@ import com.top_logic.layout.form.component.EditComponent;
 import com.top_logic.layout.form.constraints.RegExpConstraint;
 import com.top_logic.layout.form.constraints.StringLengthConstraint;
 import com.top_logic.layout.form.model.FormContext;
-import com.top_logic.layout.form.model.FormFactory;
-import com.top_logic.layout.form.model.HiddenField;
 import com.top_logic.layout.form.model.StringField;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.annotate.security.RoleConfig;
 import com.top_logic.tool.boundsec.BoundHelper;
@@ -50,7 +45,6 @@ public class EditRoleComponent extends EditComponent {
     public static final String FIELD_NAME = BoundedRole.NAME_ATTRIBUTE;
     public static final String FIELD_DESC = BoundedRole.ATTRIBUTE_DESCRIPTION;
     public static final String FIELD_SYSTEM = BoundedRole.ROLE_SYSTEM;
-    public static final String FIELD_MASTER = "roleMaster";
 
 	/**
 	 * Configuration of the {@link EditRoleComponent}.
@@ -89,11 +83,6 @@ public class EditRoleComponent extends EditComponent {
 				StringField field =
 					fieldHelper.createStringField(FIELD_NAME, role.getName(), null, context, false, true);
 				FormBinding.addSizeConstraint(field, roleType, BoundedRole.NAME_ATTRIBUTE);
-				TLModule scope = getRoleScope();
-				if (scope != null) {
-					field.addConstraint(new RegExpConstraint(
-						Pattern.quote(scope.getName() + ".") + RoleConfig.ROLE_NAME_PATTERN));
-				}
 			}
 
 			{
@@ -111,13 +100,6 @@ public class EditRoleComponent extends EditComponent {
     @Override
 	protected boolean supportsInternalModel(Object anObject) {
         return anObject instanceof BoundedRole;
-    }
-
-	/**
-	 * The {@link TLModule} defining the edited roles.
-	 */
-	protected TLModule getRoleScope() {
-        return null;
     }
 
     /**
@@ -185,43 +167,11 @@ public class EditRoleComponent extends EditComponent {
 		public Object createObject(LayoutComponent component, Object createContext, FormContainer formContainer,
 				Map<String, Object> arguments) {
             String name = FormFieldHelper.getStringValue(formContainer.getField(FIELD_NAME));
-			TLModule master = (TLModule) FormFieldHelper.getProperValue(formContainer.getField(FIELD_MASTER));
-            return createRole(master, name, false);
+			BoundedRole theRole = BoundedRole.createBoundedRole(name);
+			theRole.setIsSystem(false);
+			return theRole;
         }
 
-
-        /**
-		 * Creates a new role.
-		 *
-		 * @param scope
-		 *        The scope to bind the created role to, may be <code>null</code>.
-		 * @param aName
-		 *        The name of the new role, must not be empty or <code>null</code>.
-		 * @param isSystem
-		 *        Flag, if the role is a system role.
-		 * @return The newly created role.
-		 * @throws IllegalArgumentException
-		 *         If given name is empty or <code>null</code>.
-		 */
-		public static BoundedRole createRole(TLModule scope, String aName, boolean isSystem) {
-            if (StringServices.isEmpty(aName)) {
-                throw new IllegalArgumentException("No name defined for new role!");
-            }
-			String qualifiedName;
-			if (scope != null) {
-				String structureName = scope.getName();
-				qualifiedName = structureName + "." + aName;
-			} else {
-				qualifiedName = aName;
-			}
-
-			BoundedRole theRole = BoundedRole.createBoundedRole(qualifiedName);
-            theRole.setIsSystem(isSystem);
-			if (scope != null) {
-				theRole.bind(scope);
-            }
-            return theRole;
-        }
     }
 
 
@@ -307,16 +257,6 @@ public class EditRoleComponent extends EditComponent {
             StringField field = fieldHelper.createStringField(FIELD_NAME, null, null, context, false, true);
             field.addConstraint(new StringLengthConstraint(1, 128));
 			field.addConstraint(new RegExpConstraint(RoleConfig.ROLE_NAME_PATTERN));
-
-			TLModule scope = null;
-            LayoutComponent parent = this.getDialogParent();
-            if (parent instanceof EditRoleComponent) {
-				scope = ((EditRoleComponent) parent).getRoleScope();
-            }
-
-            HiddenField hiddenField = FormFactory.newHiddenField(FIELD_MASTER);
-			hiddenField.initializeField(scope);
-            context.addMember(hiddenField);
 
             return context;
         }

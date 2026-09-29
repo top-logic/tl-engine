@@ -19,8 +19,8 @@
 			parents="node->$node.referers(`tl.element:StructuredElementContainer#children`)"
 			rootNode="`tl.demo.aspect#ROOT`"
 		/>
-		<securityObject class="com.top_logic.model.search.providers.SecurityObjectByExpression"
-			function="`DemoTypes#ROOT`"
+		<securityObject class="com.top_logic.tool.boundsec.securityObjectProvider.ModuleSingletonSecurityProvider"
+			module="DemoTypes"
 		/>
 	</arguments>
 </config:template-call>

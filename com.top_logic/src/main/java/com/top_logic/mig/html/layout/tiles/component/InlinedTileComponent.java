@@ -115,7 +115,7 @@ public class InlinedTileComponent extends SingleLayoutContainer implements Selec
 			.stream()
 			.map(buttonConf -> AbstractCommandHandler.getInstance(context, buttonConf))
 			.collect(Collectors.toList());
-		_securityObjectProvider = SecurityObjectProvider.fromConfiguration(context, config.getSecurityObject());
+		_securityObjectProvider = config.resolveSecurityObject(context);
 	}
 
 	@Override

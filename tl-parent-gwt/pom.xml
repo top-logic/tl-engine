@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>com.top-logic</groupId>
 		<artifactId>tl-parent-build</artifactId>
-		<version>8.0.0-alpha5</version>
+		<version>8.0.0-alpha8</version>
 
 		<relativePath>../tl-parent-build</relativePath>
 	</parent>
@@ -46,7 +46,7 @@
 			<dependency>
 				<groupId>org.gwtproject</groupId>
 				<artifactId>gwt</artifactId>
-				<version>2.13.0</version>
+				<version>2.13.1</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
@@ -54,10 +54,6 @@
 	</dependencyManagement>
 
 	<build>
-		<!-- Output classes directly into the webapp, so that IDEs and "mvn process-classes" 
-			update them in DevMode -->
-		<outputDirectory>${project.build.directory}/${project.build.finalName}/WEB-INF/classes</outputDirectory>
-
 		<pluginManagement>
 			<plugins>
 				<!-- GWT Maven Plugin -->
@@ -98,7 +94,9 @@
 							<arg>-XcompilerMetrics</arg>
 						</compilerArgs>
 						<!-- DevMode configuration -->
-						<warDir>${project.build.directory}/${project.build.finalName}</warDir>
+						<warDir>${project.basedir}/src/main/webapp</warDir>
+						<!-- Build to webapp folder so IDE mode can pick up generated files. -->
+						<webappDirectory>${project.basedir}/src/main/webapp</webappDirectory>
 						<classpathScope>compile+runtime</classpathScope>
 					</configuration>
 				</plugin>
@@ -180,7 +178,7 @@
 						<dependency>
 							<groupId>org.codehaus.plexus</groupId>
 							<artifactId>plexus-utils</artifactId>
-							<version>4.0.3</version>
+							<version>4.1.0</version>
 						</dependency>
 					</dependencies>
 				</plugin>

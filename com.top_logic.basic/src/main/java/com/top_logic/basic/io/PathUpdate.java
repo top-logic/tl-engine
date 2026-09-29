@@ -54,4 +54,10 @@ public class PathUpdate {
 		return _deletions;
 	}
 
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + "[creations: " + _creations + ", changes: " + _changes + ", deletions: "
+			+ _deletions + "]";
+	}
+
 }

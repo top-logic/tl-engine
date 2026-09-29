@@ -8,5 +8,7 @@ COPY --chown=root ./*.war $CATALINA_HOME/webapps/
 COPY --chown=root ./context.xml $CATALINA_HOME/conf/
 RUN ln -s /usr/share/java/*.jar $CATALINA_HOME/lib/
 ENV JPDA_OPTS='-XX:+UnlockExperimentalVMOptions -XX:+UseContainerSupport -Xms{JAVA_XMS}m -Xmx{JAVA_XMX}m'
+# Operation mode: production is the zero-config default; set explicitly for operator clarity (use 'development' or 'test' to change it).
+ENV tl_operation_mode=production
 EXPOSE 8080/tcp
 CMD $CATALINA_HOME/bin/catalina.sh jpda run

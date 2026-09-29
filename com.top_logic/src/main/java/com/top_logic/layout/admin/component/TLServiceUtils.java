@@ -11,6 +11,12 @@ import java.io.IOException;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.XMLProperties;
 import com.top_logic.basic.config.ApplicationConfig;
+import com.top_logic.basic.module.BasicRuntimeModule;
+import com.top_logic.basic.module.ModuleException;
+import com.top_logic.basic.module.ModuleUtil;
+import com.top_logic.basic.module.RestartException;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Utilities for toplogic services.
@@ -32,6 +38,46 @@ public class TLServiceUtils {
 
 			throw new IOError(exception);
 		}
+	}
+
+	/**
+	 * Restarts the given service and wraps the thrown exception into a {@link TopLogicException}.
+	 */
+	public static void restartService(BasicRuntimeModule<?> module) {
+		try {
+			ModuleUtil.INSTANCE.restart(module, null);
+		} catch (RestartException exception) {
+			throw new TopLogicException(errorRestartMessage(module), exception);
+		}
+	}
+
+	/**
+	 * {@link ResKey} when restarting module fails.
+	 */
+	public static ResKey errorRestartMessage(BasicRuntimeModule<?> module) {
+		return I18NConstants.SERVICE_RESTART_ERROR.fill(getServiceName(module));
+	}
+
+	/**
+	 * Starts the given service and wraps the thrown exception into a {@link TopLogicException}.
+	 */
+	public static  void startService(BasicRuntimeModule<?> module) {
+		try {
+			ModuleUtil.INSTANCE.startUp(module);
+		} catch (IllegalArgumentException | ModuleException exception) {
+			throw new TopLogicException(errorStartMessage(module), exception);
+		}
+	}
+
+	/**
+	 * {@link ResKey} when starting module fails.
+	 */
+	public static ResKey errorStartMessage(BasicRuntimeModule<?> module) {
+		return I18NConstants.SERVICE_START_ERROR.fill(getServiceName(module));
+	}
+
+	private static String getServiceName(BasicRuntimeModule<?> module) {
+		return ModuleUtil.INSTANCE.getModuleName(module);
 	}
 
 }

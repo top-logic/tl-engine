@@ -332,7 +332,7 @@ Expr accessExpr() :
 
 Expr atomicExpr() :
 {
-  Expr expr, test, key, value;
+  Expr expr, test, key, value, first;
   SwitchBuilder sw;
   DictBuilder dict;
   List<Expr> exprs;
@@ -403,20 +403,43 @@ Expr atomicExpr() :
     )?
     "]"
     { expr = _f.listConstructor(exprs); } 
-  | LOOKAHEAD( < BLOCK_START > defineExpr() ":")
-    < BLOCK_START >
-    { dict = _f.dictBuilder(); }
-    key = defineExpr() ":" value = expr()
-    { dict.put(key, value); }
-    (
-      "," key = defineExpr() ":" value = expr()
-      { dict.put(key, value); }
-    )*
-    < BLOCK_END >
-    { expr = dict.toExpr(); } 
   | < BLOCK_START >
-    expr=blockContent()
-    < BLOCK_END >
+    /*
+     * Distinguishing a dictionary literal "{key: value, ...}" from a block "{stmt; ...}"
+     * must not use a syntactic LOOKAHEAD that scans the first expression: such a lookahead
+     * does not execute the token_source.SwitchTo(...) semantic actions that html()/text
+     * embeddings rely on, so an embedded expression inside an HTML literal (e.g.
+     * "{{{ {$x} }}}") as the first element would be mis-tokenized (the closing "}}}" is
+     * read as three BLOCK_END tokens instead of HTML_STOP). Therefore the first element is
+     * parsed once in the normal parse and the dictionary/block decision is made afterwards
+     * on the following token (":" vs. ";"/"}").
+     */
+    (
+      LOOKAHEAD(< NAME > "=")
+      /* Block starting with a variable assignment. */
+      t = < NAME > "=" first = expr()
+      { exprs = _f.list(); exprs.add(_f.assign(t.image, first)); }
+      blockTail(exprs)
+      < BLOCK_END >
+      { expr = _f.block(exprs); }
+    |
+      first = expr()
+      (
+        ":" value = expr()
+        { dict = _f.dictBuilder(); dict.put(first, value); }
+        (
+          "," key = defineExpr() ":" value = expr()
+          { dict.put(key, value); }
+        )*
+        < BLOCK_END >
+        { expr = dict.toExpr(); }
+      |
+        { exprs = _f.list(); exprs.add(first); }
+        blockTail(exprs)
+        < BLOCK_END >
+        { expr = _f.block(exprs); }
+      )
+    )
   | < HTML_START > expr=html() < HTML_STOP >
   )
   { return expr; }
@@ -570,6 +593,21 @@ Expr blockContent() :
   { exprs=_f.list(); }
   expr = statement()
   { exprs.add(expr); }
+  blockTail(exprs)
+  { expr = _f.block(exprs); }
+  { return expr; }
+}
+
+/**
+ * Parses the statements following the first statement of a block: the sequence of
+ * ";"-separated (and optionally trailing) statements. The parsed statements are appended
+ * to the given list.
+ */
+void blockTail(List<Expr> exprs) :
+{
+  Expr expr;
+}
+{
   (
     ";"
     (
@@ -577,8 +615,6 @@ Expr blockContent() :
       { exprs.add(expr); }
     )?
   )*
-  { expr = _f.block(exprs); }
-  { return expr; }
 }
 
 Expr.Tuple.Coord coord() :

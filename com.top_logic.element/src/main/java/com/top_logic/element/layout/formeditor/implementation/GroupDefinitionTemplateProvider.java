@@ -119,8 +119,10 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 
 		TLFormObject editObject = formContext.editObject(object);
 
+		boolean editMode = !formContext.isImmutable();
 		GroupModeObserver observer =
-			new GroupModeObserver(attributeUpdateContainer, _modeSelector, editObject, null, _visibilityModel);
+			new GroupModeObserver(attributeUpdateContainer, _modeSelector, editObject, null, _visibilityModel,
+				editMode);
 		observer.valueChanged(null, null, null);
 	}
 

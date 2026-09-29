@@ -13,6 +13,9 @@
 		<param name="tableConfigurationProvider"
 			value=""
 		/>
+		<param name="securityObject"
+			value="ref:modelOrSecRoot"
+		/>
 	</params>
 	<securityLayout name="${namePrefix}RevisionCompareTreeTableLayout"
 		horizontal="false"
@@ -30,7 +33,7 @@
 				model="selection(${namePrefix}RevisionCompareTreeAdapter)"
 				name="${namePrefix}RevisionCompareTree"
 				resPrefix="${resPrefix}"
-				securityObject="ref:modelOrSecRoot"
+				securityObject="${securityObject}"
 			/>
 		</components>
 	</securityLayout>

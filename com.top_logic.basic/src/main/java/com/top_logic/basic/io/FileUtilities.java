@@ -92,10 +92,14 @@ public abstract class FileUtilities extends StreamUtilities {
 	 */
 	public static final String ZIP_FILE_ENDING = ".zip";
 
+	private static final char PATH_SEPARATOR_CHAR = '/';
+
+	private static final char PATH_SEPARATOR_CHAR_WINDOWS = '\\';
+
 	/**
 	 * Path separator for filenames.
 	 */
-	public static final String PATH_SEPARATOR = "/";
+	public static final String PATH_SEPARATOR = String.valueOf(PATH_SEPARATOR_CHAR);
 
 	/**
 	 * Token represents the parent of the current directory.
@@ -1098,8 +1102,8 @@ public abstract class FileUtilities extends StreamUtilities {
 		for (int i = 0; i < length; i++) {
 			char c = name.charAt(i);
 			switch (c) {
-				case '/':
-				case '\\':
+				case PATH_SEPARATOR_CHAR:
+				case PATH_SEPARATOR_CHAR_WINDOWS:
 					buffer.append(replacement);
 					changed |= (c != replacement);
 					break;
@@ -1206,12 +1210,12 @@ public abstract class FileUtilities extends StreamUtilities {
 		File canonicalFile = origFile.getCanonicalFile();
 	
 		File file = canonicalFile;
-		String path = origPath.replace('\\', '/');
+		String path = origPath.replace(PATH_SEPARATOR_CHAR_WINDOWS, PATH_SEPARATOR_CHAR);
 		while (true) {
 			int sepIndex;
 			String pathPart;
 			do {
-				sepIndex = path.lastIndexOf('/');
+				sepIndex = path.lastIndexOf(PATH_SEPARATOR_CHAR);
 				if (sepIndex < 0) {
 					pathPart = path;
 					path = "";
@@ -1371,7 +1375,7 @@ public abstract class FileUtilities extends StreamUtilities {
 	public static String getRelativizedPath(Path base, Path path) {
 		String relativizedPath = base.relativize(path).toString();
 
-		return FileUtilities.replaceSeparator(relativizedPath, '/');
+		return FileUtilities.replaceSeparator(relativizedPath, PATH_SEPARATOR_CHAR);
 	}
 
 	/**
@@ -1477,7 +1481,7 @@ public abstract class FileUtilities extends StreamUtilities {
 	 * @see FileManager#getResourcePaths(String)
 	 */
 	public static Set<String> getAllResourcePaths(String resourcePrefix) {
-		if (resourcePrefix.charAt(resourcePrefix.length() - 1) != '/') {
+		if (!endsWithPathSeparator(resourcePrefix)) {
 			return Collections.emptySet();
 		}
 
@@ -1506,15 +1510,34 @@ public abstract class FileUtilities extends StreamUtilities {
 			.stream()
 			.map(f -> {
 				StringBuilder result = new StringBuilder(prefix);
-				result.append(PATH_SEPARATOR);
+				if (!endsWithPathSeparator(result)) {
+					result.append(PATH_SEPARATOR_CHAR);
+				}
 				String fileName = f.getName();
 				result.append(fileName);
-				if (f.isDirectory() && !fileName.endsWith(PATH_SEPARATOR)) {
-					result.append(PATH_SEPARATOR);
+				if (f.isDirectory() && !endsWithPathSeparator(result)) {
+					result.append(PATH_SEPARATOR_CHAR);
 				}
 				return result.toString();
 			})
 			.collect(Collectors.toSet());
+	}
+
+	/**
+	 * Checks whether the given sequence ends with {@value #PATH_SEPARATOR_CHAR} or
+	 * {@value #PATH_SEPARATOR_CHAR_WINDOWS}.
+	 * 
+	 * @param sequence
+	 *        Must not be either <code>null</code> or empty.
+	 */
+	private static boolean endsWithPathSeparator(CharSequence sequence) {
+		switch (sequence.charAt(sequence.length() - 1)) {
+			case PATH_SEPARATOR_CHAR:
+			case PATH_SEPARATOR_CHAR_WINDOWS:
+				return true;
+			default:
+				return false;
+		}
 	}
 
 	/**

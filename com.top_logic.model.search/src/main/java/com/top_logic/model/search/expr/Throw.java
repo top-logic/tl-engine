@@ -49,13 +49,11 @@ public class Throw extends GenericMethod {
 	protected Object eval(Object[] arguments, EvalContext definitions) {
 		ResKey message = toResKey(arguments[0]);
 		if (message != null) {
-			TopLogicException problem = new ScriptAbort(message);
+			TopLogicException problem = new ScriptAbort(message, arguments[2]);
 			problem.initSeverity(ErrorSeverity.WARNING);
-			if (arguments.length > 1) {
-				ResKey details = toResKey(arguments[1]);
-				if (details != null) {
-					problem.initDetails(details);
-				}
+			ResKey details = toResKey(arguments[1]);
+			if (details != null) {
+				problem.initDetails(details);
 			}
 
 			throw problem;
@@ -83,6 +81,7 @@ public class Throw extends GenericMethod {
 		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
 			.mandatory("message")
 			.optional("details")
+			.optional("value")
 			.build();
 
 		/**

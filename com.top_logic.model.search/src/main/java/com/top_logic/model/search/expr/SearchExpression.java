@@ -14,6 +14,9 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -21,6 +24,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.RandomAccess;
 import java.util.Set;
+import java.util.TimeZone;
+import java.util.function.Predicate;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.LazyTypedAnnotatable;
@@ -28,13 +33,17 @@ import com.top_logic.basic.config.XmlDateTimeFormat;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.basic.thread.StackTrace;
+import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.basic.time.TimeZones;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.knowledge.objects.KnowledgeItem;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.Flavor;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.provider.MetaResourceProvider;
+import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
@@ -45,8 +54,11 @@ import com.top_logic.model.search.expr.interpreter.SearchExpressionPart;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.visit.ToString;
 import com.top_logic.model.search.expr.visit.Visitor;
+import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
+
+import de.haumacher.msgbuf.data.ReflectiveDataObject;
 
 /**
  * Part of an executable search model.
@@ -236,6 +248,195 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 			return Arrays.asList((Object[]) value);
 		} else {
 			return Collections.singletonList(value);
+		}
+	}
+
+	/**
+	 * Creates a {@link Predicate} that accepts only {@link TLObject} that the current user is
+	 * allowed to see.
+	 */
+	public static Predicate<TLObject> securityFilter() {
+		ModelAccessRights accessRights = ModelAccessRights.getInstance();
+		Person user = TLContext.currentUser();
+		return input -> accessRights.isReadAllowed(user, input);
+	}
+
+	/**
+	 * Filters the given value such that the result contains only elements that the current user is
+	 * allowed to see.
+	 *
+	 * @see #filterSecurity(Person, Object)
+	 */
+	public static Object filterSecurity(Object value) {
+		return filterSecurity(TLContext.currentUser(), value);
+	}
+
+	/**
+	 * Filters the given value such that the result contains only elements that the given user is
+	 * allowed to see.
+	 *
+	 * <p>
+	 * Only <em>business objects</em> are filtered. A {@link TLModelPart model element} (a type, an
+	 * attribute, a module) is meta-data that a computation works with - a script may e.g. deliver the
+	 * type of an object, or a table column may be described by its attribute. Dropping such a value
+	 * would break the computation instead of protecting data, therefore model elements are kept.
+	 * Reading the <em>attribute values</em> of a model element is a separate question that is decided
+	 * by the access check of the attribute access itself.
+	 * </p>
+	 *
+	 * <p>
+	 * A {@link ReflectiveDataObject} (e.g. a diagram assembled by a script) is kept for the same
+	 * reason. It is a <em>structured value</em>, not a container of business objects: its properties
+	 * form an object graph that may be cyclic, and a filtered copy would be a plain {@link Map} that
+	 * cannot take the place of the original - filtering it would destroy the value instead of
+	 * protecting data. A business object that a script stores in such a value is therefore
+	 * <em>not</em> filtered: whoever passes that object on to the user is responsible for checking
+	 * the read rights, see {@link ModelAccessRights#isReadAllowed(Person, TLObject)}.
+	 * </p>
+	 *
+	 * @param value
+	 *        The value to filter for security. May be null;
+	 *
+	 * @return A value containing only allowed elements. When the value is (recursively) allowed,
+	 *         the given value is returned.
+	 */
+	public static Object filterSecurity(Person user, Object value) {
+		if (value == null) {
+			return null;
+		}
+		if (value instanceof TLModelPart) {
+			// Meta-data, not a business object, see above.
+			return value;
+		}
+		if (value instanceof TLObject object) {
+			return filterSecurityTLObject(user, object);
+		}
+		if (value instanceof ReflectiveDataObject) {
+			// A structured value, not a container of business objects, see above.
+			return value;
+		}
+		if (value instanceof Collection collectionValue) {
+			return filterSecurityCollection(user, collectionValue);
+		}
+		if (value instanceof Map<?, ?> mapValue) {
+			return filterSecurityMap(user, mapValue);
+		}
+		return value;
+	}
+
+	private static Object filterSecurityTLObject(Person user, TLObject value) {
+		if (ModelAccessRights.getInstance().isReadAllowed(user, value)) {
+			return value;
+		} else {
+			return null;
+		}
+	}
+
+	private static Object filterSecurityCollection(Person user, Collection<?> value) {
+		if (value.isEmpty()) {
+			return value;
+		}
+		Collection<Object> filtered;
+		boolean anyChanges = false;
+		if (value instanceof RandomAccess) {
+			List<?> list = (List<?>) value;
+			filtered = new ArrayList<>();
+			for (int i = 0, size = list.size(); i < size; i++) {
+				Object elt = list.get(i);
+				Object filteredValue = filterSecurity(user, elt);
+				if (filteredValue == elt) {
+					// elt (recursively) allowed
+					filtered.add(elt);
+				} else {
+					if (filteredValue != null) {
+						// Some content in elt not allowed.
+						filtered.add(filteredValue);
+					} else {
+						// Skip null value. Original was not null.
+					}
+					anyChanges = true;
+				}
+			}
+		} else {
+			if (value instanceof LinkedHashSet) {
+				filtered = new LinkedHashSet<>();
+			} else if (value instanceof Set) {
+				filtered = new HashSet<>();
+			} else {
+				filtered = new ArrayList<>();
+			}
+			for (Object elt : value) {
+				Object filteredValue = filterSecurity(user, elt);
+				if (filteredValue == elt) {
+					// elt (recursively) allowed
+					filtered.add(elt);
+				} else {
+					if (filteredValue != null) {
+						// Some content in elt not allowed.
+						filtered.add(filteredValue);
+					} else {
+						// Skip null value. Original was not null.
+					}
+					anyChanges = true;
+				}
+			}
+		}
+		if (anyChanges) {
+			return filtered;
+		} else {
+			// Return original value to indicate that no elements had to be filtered.
+			return value;
+		}
+	}
+
+	private static Object filterSecurityMap(Person user, Map<?, ?> value) {
+		if (value.isEmpty()) {
+			return value;
+		}
+		Map<Object, Object> filtered;
+		boolean anyChanges = false;
+		if (value instanceof LinkedHashMap) {
+			filtered = new LinkedHashMap<>();
+		} else {
+			filtered = new HashMap<>();
+		}
+		for (Entry<?, ?> entry : value.entrySet()) {
+			Object key = entry.getKey();
+			Object filteredKey = filterSecurity(user, key);
+			Object elt = entry.getValue();
+			Object filteredValue = filterSecurity(user, elt);
+			if (filteredKey == key) {
+				if (filteredValue == elt) {
+					// key and elt (recursively) allowed
+					filtered.put(key, elt);
+				} else {
+					if (filteredValue != null) {
+						// Some content in elt not allowed.
+						filtered.put(key, filteredValue);
+					} else {
+						// Skip null value. Original was not null.
+					}
+					anyChanges = true;
+				}
+			} else {
+				if (filteredKey != null) {
+					// Some content in key not allowed.
+					if (elt == null || filteredValue != null) {
+						filtered.put(filteredKey, filteredValue);
+					} else {
+						// elt is not allowed. Skip entry.
+					}
+				} else {
+					// key is not allowed. Skip entry.
+				}
+				anyChanges = true;
+			}
+		}
+		if (anyChanges) {
+			return filtered;
+		} else {
+			// Return original value to indicate that no elements had to be filtered.
+			return value;
 		}
 	}
 
@@ -897,6 +1098,51 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	}
 
 	/**
+	 * Converts the given value to a {@link TimeZone} or reports an error, if this is not possible.
+	 *
+	 * <p>
+	 * The value may be a {@link TimeZone} instance, a {@link Calendar} (whose
+	 * {@link Calendar#getTimeZone()} is used), or a zone-id {@link String}. Two zone-ids are treated
+	 * specially: {@value #SYSTEM_TIME_ZONE} resolves to the application's
+	 * {@link TimeZones#systemTimeZone()}, and {@value #USER_TIME_ZONE} resolves to the current user's
+	 * {@link ThreadContext#getTimeZone()}.
+	 * </p>
+	 */
+	public final TimeZone asTimeZone(Object self) {
+		if (self instanceof TimeZone) {
+			return (TimeZone) self;
+		}
+		if (self instanceof Calendar) {
+			return ((Calendar) self).getTimeZone();
+		}
+		if (self instanceof String) {
+			String id = (String) self;
+			switch (id) {
+				case SYSTEM_TIME_ZONE:
+					return TimeZones.systemTimeZone();
+				case USER_TIME_ZONE:
+					return ThreadContext.getTimeZone();
+				default:
+					return TimeZone.getTimeZone(id);
+			}
+		}
+
+		throw new TopLogicException(I18NConstants.ERROR_NOT_A_TIME_ZONE__VAL_EXPR.fill(self, this));
+	}
+
+	/**
+	 * Zone-id accepted by {@link #asTimeZone(Object)} that resolves to the application's
+	 * {@link TimeZones#systemTimeZone()}.
+	 */
+	public static final String SYSTEM_TIME_ZONE = "system";
+
+	/**
+	 * Zone-id accepted by {@link #asTimeZone(Object)} that resolves to the current user's
+	 * {@link ThreadContext#getTimeZone()}.
+	 */
+	public static final String USER_TIME_ZONE = "user";
+
+	/**
 	 * Converts the given value to a {@link ResKey}.
 	 * 
 	 * @param value
@@ -1040,4 +1286,5 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 		}
 		NUMBER_CACHE = numbers;
 	}
+
 }

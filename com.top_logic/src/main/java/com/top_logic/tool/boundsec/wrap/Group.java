@@ -22,6 +22,7 @@ import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.OneWayListSink;
 import com.top_logic.basic.col.filter.FilterFactory;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.func.Function0;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.knowledge.objects.DestinationIterator;
 import com.top_logic.knowledge.objects.InvalidLinkException;
@@ -54,6 +55,19 @@ import com.top_logic.util.model.ModelService;
  * @author    <a href="mailto:kbu@top-logic.com>Karsten Buch</a>
  */
 public class Group extends AbstractBoundWrapper implements IGroup {
+
+	/**
+	 * {@link Function0} delivering all {@link Group}s.
+	 * 
+	 * @see Group#getAll()
+	 */
+	public static class AllGroups extends Function0<List<Group>> {
+	
+		@Override
+		public List<Group> apply() {
+			return getAll();
+		}
+	}
 
 	/** The type of KO wrapped by this class. */
     public static final String OBJECT_NAME      = "Group";

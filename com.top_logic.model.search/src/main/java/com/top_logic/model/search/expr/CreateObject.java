@@ -13,6 +13,9 @@ import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
+import com.top_logic.model.security.ModelAccessRights;
+import com.top_logic.util.TLContext;
+import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -27,13 +30,13 @@ public class CreateObject extends AbstractObjectCreation {
 	 * @param args
 	 *        The optional create context (at most a single argument).
 	 */
-	CreateObject(String name, SearchExpression[] args) {
-		super(name, args);
+	CreateObject(String name, SearchExpression[] args, boolean usesSecurity) {
+		super(name, args, usesSecurity);
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new CreateObject(getName(), arguments);
+		return new CreateObject(getName(), arguments, usesSecurity());
 	}
 
 	@Override
@@ -44,6 +47,11 @@ public class CreateObject extends AbstractObjectCreation {
 		if (transientObject) {
 			return TransientObjectFactory.INSTANCE.createObject(type, context);
 		} else {
+			if (usesSecurity()) {
+				if (!ModelAccessRights.getInstance().isAllowedCreate(TLContext.currentUser(), type, context)) {
+					throw new TopLogicException(I18NConstants.CREATE_PERMISSION_DENIED__TYPE.fill(type));
+				}
+			}
 			return ModelService.getInstance().getFactory().createObject(type, context);
 		}
 	}
@@ -68,7 +76,7 @@ public class CreateObject extends AbstractObjectCreation {
 		@Override
 		public CreateObject build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			return new CreateObject(getName(), args);
+			return new CreateObject(getName(), args, true);
 		}
 
 		@Override

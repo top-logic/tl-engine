@@ -35,6 +35,7 @@ import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.exception.I18NRuntimeException;
@@ -112,6 +113,7 @@ import com.top_logic.util.model.check.StringSizeCheck;
 	AttributeSettings.Module.class,
 	FormatterService.Module.class,
 })
+@Label("Application model")
 public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 		implements CommitChecker, ModificationListener {
 

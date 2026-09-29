@@ -7,6 +7,7 @@ package com.top_logic.knowledge.service;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
@@ -18,6 +19,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @ServiceDependencies(KnowledgeBaseFactory.Module.class)
+@Label("Persistency layer")
 public class PersistencyLayer extends ManagedClass {
 
 	/** The {@link KnowledgeBase#getName() name} of the default {@link KnowledgeBase} */

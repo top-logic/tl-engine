@@ -21,6 +21,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ManagedClass;
@@ -39,10 +40,11 @@ import com.top_logic.layout.form.boxes.tag.BoxContainerTag;
 public class BoxLayoutTag extends AbstractBoxStructureTag {
 
 	/**
-	 * Service creating configured {@link BoxLayout} factories from configuration.
-	 * 
+	 * Provides the named layout algorithms available for arranging form boxes.
+	 *
 	 * @see #getLayout(String)
 	 */
+	@Label("Box layout algorithms")
 	public static final class ConfigService extends ManagedClass {
 
 		private final Map<String, Provider<BoxLayout>> _layoutFactoryByName;

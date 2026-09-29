@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance class="com.top_logic.basic.module.ModuleSystem">
+				<modules>
+					<module key="com.top_logic.layout.react.ReactComponentRegistry$Module"
+						value="true"
+					/>
+					<module key="com.top_logic.layout.react.resource.ClientResources$Module"
+						value="true"
+					/>
+				</modules>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.layout.react.resource.ClientResources">
+			<instance class="com.top_logic.layout.react.resource.ClientResources">
+				<resources>
+					<module-script name="tl-react-bridge"
+						resource="/script/tl-react-bridge.js"
+						specifier="tl-react-bridge"
+					/>
+					<module-script name="tl-react-controls"
+						resource="/script/tl-react-controls.js"
+						requires="tl-react-bridge"
+					/>
+					<stylesheet name="tl-react-fonts-inter"
+						resource="/style/interFonts.css"
+					/>
+					<stylesheet name="tl-react-icons-fontawesome"
+						resource="/style/fontawesome.css"
+					/>
+					<stylesheet name="tl-react-icons-bootstrap"
+						resource="/style/bootstrap-icons.css"
+					/>
+					<stylesheet name="tl-react-icons-tl"
+						resource="/style/tl_iconFont.css"
+					/>
+					<stylesheet name="tl-react-icons-remixicon"
+						resource="webjar:org.webjars.npm/remixicon:/webjars/remixicon:fonts/remixicon.css"
+					/>
+					<stylesheet name="tl-react-base"
+						resource="/style/tlReactBase.css"
+						requires="tl-react-fonts-inter"
+					/>
+					<stylesheet name="tl-react-controls-css"
+						resource="/style/tlReactControls.css"
+						requires="tl-react-base,tl-react-icons-fontawesome,tl-react-icons-bootstrap,tl-react-icons-tl"
+					/>
+				</resources>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.layout.scripting.recorder.ref.ModelResolver">
+			<instance class="com.top_logic.layout.scripting.recorder.ref.ModelResolver">
+				<schemes>
+					<scheme class="com.top_logic.layout.react.scripting.ReactOptionByLabelNaming" />
+				</schemes>
+			</instance>
+		</config>
+	</services>
+</application>

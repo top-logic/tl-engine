@@ -103,6 +103,11 @@ public interface SvgConstants {
 	String G = "g";
 
 	/**
+	 * Element carrying CSS rules that apply within the SVG document.
+	 */
+	String STYLE = "style";
+
+	/**
 	 * Identifier attribute.
 	 */
 	String ID_ATTR = "id";

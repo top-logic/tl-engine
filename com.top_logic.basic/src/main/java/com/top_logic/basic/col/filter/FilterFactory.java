@@ -9,12 +9,14 @@ import java.util.Collection;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.col.Filter;
+import com.top_logic.basic.config.annotation.Label;
 
 /**
  * Factory facade for creating {@link Filter} implementations.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@Label("Filter factory")
 public class FilterFactory {
 
 	/**

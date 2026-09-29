@@ -19,6 +19,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.ResourceDeclaration;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
@@ -29,10 +30,11 @@ import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.mig.html.HTMLUtil;
 
 /**
- * Compile (most) TopLogic JS-Files into one big file.
- * 
+ * Combines the TopLogic JavaScript files into a single compiled file.
+ *
  * @author    <a href="mailto:kha@top-logic.com">kha</a>
  */
+@Label("JavaScript file compiler")
 public final class JSFileCompiler extends FileCompiler {
 
 	/**

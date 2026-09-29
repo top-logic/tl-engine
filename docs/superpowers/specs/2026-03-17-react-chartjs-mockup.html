@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>React Chart.js Integration - Mockup</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --surface: #ffffff;
+    --surface-elevated: #ffffff;
+    --text: #1a1a2e;
+    --text-secondary: #64748b;
+    --border: #e2e8f0;
+    --primary: #3b82f6;
+    --chart-1: #3b82f6;
+    --chart-2: #10b981;
+    --chart-3: #f59e0b;
+    --chart-4: #ef4444;
+    --chart-5: #8b5cf6;
+    --chart-6: #06b6d4;
+    --chart-7: #f97316;
+    --chart-8: #ec4899;
+    --sidebar-bg: #1e293b;
+    --sidebar-text: #cbd5e1;
+    --sidebar-active: #3b82f6;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f1f5f9; color: var(--text); height: 100vh; display: flex; }
+
+  /* Sidebar */
+  .sidebar { width: 220px; background: var(--sidebar-bg); color: var(--sidebar-text); display: flex; flex-direction: column; flex-shrink: 0; }
+  .sidebar-header { padding: 1rem; font-size: 1.1rem; font-weight: 600; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .sidebar nav { padding: 0.5rem 0; flex: 1; }
+  .sidebar a { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 1rem; color: var(--sidebar-text); text-decoration: none; font-size: 0.875rem; transition: background 0.15s; }
+  .sidebar a:hover { background: rgba(255,255,255,0.05); }
+  .sidebar a.active { background: rgba(59,130,246,0.15); color: #fff; border-right: 3px solid var(--sidebar-active); }
+  .sidebar .sep { height: 1px; background: rgba(255,255,255,0.1); margin: 0.5rem 1rem; }
+
+  /* Main content */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0.75rem 1.5rem; font-weight: 600; font-size: 1rem; }
+
+  /* Chart grid */
+  .content { flex: 1; padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; }
+  .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; min-height: 0; }
+  .chart-row.full { grid-template-columns: 1fr; }
+
+  /* Card */
+  .card { background: var(--surface-elevated); border: 1px solid var(--border); border-radius: 0.5rem; display: flex; flex-direction: column; overflow: hidden; }
+  .card-header { padding: 0.75rem 1rem; font-weight: 600; font-size: 0.875rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .card-body { flex: 1; padding: 0.75rem; position: relative; min-height: 250px; }
+  .card-body canvas { width: 100% !important; height: 100% !important; }
+
+  /* Zoom reset button */
+  .zoom-reset { position: absolute; top: 0.5rem; right: 0.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 0.25rem; padding: 0.25rem 0.5rem; font-size: 0.75rem; cursor: pointer; color: var(--text-secondary); z-index: 10; }
+  .zoom-reset:hover { background: #f1f5f9; }
+
+  /* Tooltip mockup */
+  .custom-tooltip { position: absolute; background: var(--sidebar-bg); color: #fff; padding: 0.5rem 0.75rem; border-radius: 0.375rem; font-size: 0.8rem; pointer-events: none; z-index: 100; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+  .custom-tooltip .tt-label { font-weight: 600; margin-bottom: 0.25rem; }
+  .custom-tooltip .tt-row { display: flex; justify-content: space-between; gap: 1.5rem; }
+  .custom-tooltip .tt-value { font-weight: 600; }
+
+  /* Badge */
+  .badge { display: inline-block; background: rgba(59,130,246,0.1); color: var(--primary); font-size: 0.7rem; padding: 0.15rem 0.4rem; border-radius: 0.25rem; font-weight: 500; }
+
+  /* Annotation labels */
+  .annotation { position: absolute; font-size: 0.65rem; background: #fef3c7; color: #92400e; padding: 0.15rem 0.4rem; border-radius: 0.2rem; border: 1px solid #fcd34d; white-space: nowrap; z-index: 20; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="sidebar-header">Task Manager</div>
+  <nav>
+    <a href="#">&#x1F4CA; Dashboard</a>
+    <a href="#">&#x2630; Tabs Demo</a>
+    <a href="#">&#x25A7; Split Demo</a>
+    <a href="#">&#x25A6; Channels Demo</a>
+    <a href="#">&#x270E; Form Demo</a>
+    <a href="#">&#x25A3; Input Controls</a>
+    <a href="#" class="active">&#x1F4C8; Chart Demo</a>
+    <div class="sep"></div>
+    <a href="#">&#x2699; Settings</a>
+  </nav>
+</div>
+
+<!-- Main -->
+<div class="main">
+  <div class="topbar">Chart Demo</div>
+  <div class="content">
+
+    <!-- Row 1: Bar + Pie -->
+    <div class="chart-row">
+      <div class="card">
+        <div class="card-header">
+          Revenue by Quarter
+          <span class="badge">onClick: goto</span>
+        </div>
+        <div class="card-body">
+          <canvas id="barChart"></canvas>
+          <!-- Tooltip mockup -->
+          <div class="custom-tooltip" style="top: 60px; left: 180px; display: none;" id="barTooltip">
+            <div class="tt-label">Q2 - Order #1042</div>
+            <div class="tt-row"><span>Revenue</span><span class="tt-value">$50,000</span></div>
+            <div class="tt-row"><span>Growth</span><span class="tt-value">+23%</span></div>
+            <div style="margin-top:0.25rem; font-size:0.7rem; opacity:0.7;">Click to open details</div>
+          </div>
+          <div class="annotation" style="bottom: 4px; right: 4px;">Server-side tooltip via @ReactCommand("tooltip")</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          Category Distribution
+          <span class="badge">legend interactive</span>
+        </div>
+        <div class="card-body">
+          <canvas id="pieChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 2: Line chart full width -->
+    <div class="chart-row full">
+      <div class="card">
+        <div class="card-header">
+          Revenue Trend (Zoom/Pan enabled)
+          <span class="badge">zoomEnabled=true</span>
+        </div>
+        <div class="card-body">
+          <button class="zoom-reset" id="zoomReset">Reset Zoom</button>
+          <canvas id="lineChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 3: Combined chart -->
+    <div class="chart-row full">
+      <div class="card">
+        <div class="card-header">
+          Combined: Revenue (Bar) + Margin (Line)
+          <span class="badge">mixed chart type</span>
+        </div>
+        <div class="card-body">
+          <canvas id="combinedChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const palette = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#ec4899'];
+const gridColor = '#e2e8f0';
+const textColor = '#64748b';
+
+Chart.defaults.color = textColor;
+Chart.defaults.borderColor = gridColor;
+
+// Bar Chart
+const barCtx = document.getElementById('barChart').getContext('2d');
+new Chart(barCtx, {
+  type: 'bar',
+  data: {
+    labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+    datasets: [
+      { label: 'Revenue', data: [30, 50, 40, 60], backgroundColor: palette[0] + 'cc', borderColor: palette[0], borderWidth: 1 },
+      { label: 'Costs', data: [20, 35, 25, 40], backgroundColor: palette[1] + 'cc', borderColor: palette[1], borderWidth: 1 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'top' } },
+    scales: { y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } }, x: { grid: { color: gridColor }, ticks: { color: textColor } } },
+    onClick: function(evt, elements) {
+      if (elements.length > 0) {
+        const tt = document.getElementById('barTooltip');
+        tt.style.display = 'block';
+        tt.style.left = (evt.x - 40) + 'px';
+        tt.style.top = (evt.y - 100) + 'px';
+        setTimeout(() => { tt.style.display = 'none'; }, 2500);
+      }
+    }
+  }
+});
+
+// Pie Chart
+const pieCtx = document.getElementById('pieChart').getContext('2d');
+new Chart(pieCtx, {
+  type: 'doughnut',
+  data: {
+    labels: ['Electronics', 'Clothing', 'Food', 'Books', 'Other'],
+    datasets: [{ data: [35, 25, 20, 12, 8], backgroundColor: palette.slice(0, 5), borderWidth: 2, borderColor: '#fff' }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'right',
+        onClick: function(e, legendItem, legend) {
+          // Default toggle behavior preserved
+          Chart.defaults.plugins.legend.onClick.call(this, e, legendItem, legend);
+          // Plus: would send server command
+        }
+      }
+    }
+  }
+});
+
+// Line Chart
+const lineCtx = document.getElementById('lineChart').getContext('2d');
+const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const lineChart = new Chart(lineCtx, {
+  type: 'line',
+  data: {
+    labels: months,
+    datasets: [
+      { label: '2025', data: [12,19,15,25,22,30,28,35,32,40,38,45], borderColor: palette[0], backgroundColor: palette[0]+'20', fill: true, tension: 0.3 },
+      { label: '2024', data: [10,14,12,18,16,22,20,26,24,30,28,35], borderColor: palette[2], backgroundColor: palette[2]+'20', fill: true, tension: 0.3, borderDash: [5,5] }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'top' } },
+    scales: { y: { beginAtZero: true, grid: { color: gridColor } }, x: { grid: { color: gridColor } } },
+    interaction: { intersect: false, mode: 'index' }
+  }
+});
+
+document.getElementById('zoomReset').addEventListener('click', function() {
+  lineChart.resetZoom && lineChart.resetZoom();
+});
+
+// Combined Chart
+const combinedCtx = document.getElementById('combinedChart').getContext('2d');
+new Chart(combinedCtx, {
+  type: 'bar',
+  data: {
+    labels: ['Q1','Q2','Q3','Q4'],
+    datasets: [
+      { type: 'bar', label: 'Revenue', data: [30,50,40,60], backgroundColor: palette[0]+'cc', borderColor: palette[0], borderWidth: 1, order: 2 },
+      { type: 'line', label: 'Margin %', data: [15,22,18,28], borderColor: palette[3], backgroundColor: palette[3]+'20', fill: false, tension: 0.3, yAxisID: 'y1', order: 1, pointRadius: 5, pointHoverRadius: 7 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'top' } },
+    scales: {
+      y: { beginAtZero: true, grid: { color: gridColor }, title: { display: true, text: 'Revenue ($k)', color: textColor } },
+      y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Margin %', color: textColor } },
+      x: { grid: { color: gridColor } }
+    }
+  }
+});
+</script>
+
+</body>
+</html>

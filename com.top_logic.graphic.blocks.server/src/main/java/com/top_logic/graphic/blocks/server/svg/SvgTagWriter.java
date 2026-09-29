@@ -62,6 +62,14 @@ public class SvgTagWriter implements SvgWriter {
 	}
 
 	@Override
+	public void style(CharSequence css) {
+		endBeginTag();
+		_out.beginTag(STYLE);
+		_out.writeText(css);
+		_out.endTag(STYLE);
+	}
+
+	@Override
 	public void beginGroup(Object model) {
 		beginBeginTag(G);
 	}

@@ -15,10 +15,11 @@ import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
+import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 
 /**
- * Constructor for a {@link DateFormat} with pattern argument.
+ * Constructor for a {@link DateFormat} with a pattern and an optional time zone argument.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -46,12 +47,14 @@ public class DateFormatExpr extends GenericMethod {
 		if (arguments[0] == null) {
 			return null;
 		}
-		return new SimpleDateFormat(asString(arguments[0]), ThreadContext.getLocale());
+		SimpleDateFormat format = new SimpleDateFormat(asString(arguments[0]), ThreadContext.getLocale());
+		format.setTimeZone(arguments[1] != null ? asTimeZone(arguments[1]) : ThreadContext.getTimeZone());
+		return format;
 	}
 
 	/**
-	 * {@link DateFormatExpr} creates an {@link DateFormat} which depends on the locale of the user,
-	 * so it can not evaluated at compile time.
+	 * {@link DateFormatExpr} creates an {@link DateFormat} which depends on the locale and time zone
+	 * of the user, so it can not evaluated at compile time.
 	 */
 	@Override
 	public boolean canEvaluateAtCompileTime(Object[] arguments) {
@@ -63,6 +66,12 @@ public class DateFormatExpr extends GenericMethod {
 	 */
 	public static class Builder extends AbstractSimpleMethodBuilder<DateFormatExpr> {
 
+		/** Description of parameters for a {@link DateFormatExpr}. */
+		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
+			.mandatory("pattern")
+			.optional("timeZone")
+			.build();
+
 		/**
 		 * Creates a {@link Builder}.
 		 */
@@ -71,9 +80,13 @@ public class DateFormatExpr extends GenericMethod {
 		}
 
 		@Override
+		public ArgumentDescriptor descriptor() {
+			return DESCRIPTOR;
+		}
+
+		@Override
 		public DateFormatExpr build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			checkSingleArg(expr, args);
 			return new DateFormatExpr(getName(), args);
 		}
 

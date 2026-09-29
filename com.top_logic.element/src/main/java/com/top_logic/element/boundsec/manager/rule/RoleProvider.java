@@ -74,14 +74,15 @@ public interface RoleProvider {
 	public Type getType();
 
 	/**
-	 * For {@link Type#inheritance} {@link RoleProvider}, get all objects
-	 * affected by this {@link RoleProvider} assumed that the given object's
-	 * roles changed
+	 * For {@link Type#inheritance} {@link RoleProvider}, get all objects affected by this
+	 * {@link RoleProvider} assumed that the given object's roles changed
 	 * 
-	 * @param aSource an object from which roles are inherited 
-	 * @return the objects affected by a change of roles on the given source object, never <code>null</code>
+	 * @param aSource
+	 *        an object from which roles are inherited
+	 * @return The objects affected by a change of roles on the given source object. When no objects
+	 *         can be determined, then {@link BaseObjects#all()} is returned.
 	 */
-	public Set<BoundObject> getBaseObjects(Object aSource);
+	BaseObjects<Set<BoundObject>> getBaseObjects(Object aSource);
 
 	/**
 	 * For {@link Type#inheritance} {@link RoleProvider}, 

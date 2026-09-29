@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Dialog to create a type in the selected module. The form edits a transient NewType model (bound to
+	the model channel by the opening command): the type name and kind (class or enumeration). The
+	primary command stores the form state, runs the ModelEditAction in CREATE_TYPE mode inside a
+	transaction (creating the type in the module held by the container channel), writes the new type to
+	the selection channel bound to the parent view, bumps the reload channel so the diagram re-reads its
+	module, and closes the dialog.
+-->
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="selection"/>
+		<channel name="container"/>
+		<channel name="reload"/>
+	</channels>
+	<window
+		resizable="false"
+		width="420px"
+	>
+		<title>
+			<en>New type</en>
+			<de>Neuer Typ</de>
+		</title>
+		<form
+			initial-edit-mode="true"
+			input="model"
+			mode-switch="false"
+		>
+			<field attribute="name"/>
+			<field attribute="kind"/>
+			<commands>
+				<generic-command
+					image="css:bi bi-check-lg"
+					placement="BUTTON_BAR"
+				>
+					<label>
+						<en>Create</en>
+						<de>Anlegen</de>
+					</label>
+					<store-form-state/>
+					<with-transaction>
+						<action class="com.top_logic.dev.tools.model.ModelEditAction"
+							container="container"
+							mode="CREATE_TYPE"
+						/>
+					</with-transaction>
+					<write-channel name="selection"/>
+					<execute-script function="x -> now()"/>
+					<write-channel name="reload"/>
+					<close-dialog/>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

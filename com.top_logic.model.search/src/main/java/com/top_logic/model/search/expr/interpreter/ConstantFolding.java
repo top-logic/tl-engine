@@ -338,10 +338,11 @@ public class ConstantFolding {
 			}
 
 			// Make model access static, if possible.
-			if (expr instanceof DynamicGet) {
+			if (expr instanceof DynamicGet dynamicGet) {
 				SearchExpression property = argumentsResult.get(1);
 				if (isLiteral(property)) {
-					return access(argumentsResult.get(0), (TLStructuredTypePart) literalValue(property));
+					return access(argumentsResult.get(0), (TLStructuredTypePart) literalValue(property),
+						dynamicGet.usesSecurity());
 				} else {
 					return super.composeGenericMethod(expr, arg, argumentsResult);
 				}

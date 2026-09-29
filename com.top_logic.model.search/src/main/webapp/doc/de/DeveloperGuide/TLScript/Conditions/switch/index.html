@@ -24,9 +24,9 @@
 
 <p>Wenn ein Wert über mehrere Fallunterscheidungen bestimmt werden muss, führt die Verschachtelung von mehreren <a class="tlObject" data-custom="true" href="?page=if&amp;uuid=c1d156e8-1eb4-452a-acc2-e334bce44ca9">if-Bedingungen</a> zu schwer lesbarem Script. Stattdessen kann eine Bedingungskette mit Hilfe von switch definiert werden.</p>
 
-<p>Der Wert einer solchen Bedingungkette ist die Auswertung des ersten Ausdrucks <code class="hljs inlineCode">exprX</code>, dessen Bedingung <code class="hljs inlineCode">conditionX</code> zu <code class="hljs inlineCode">true</code> auswertet. Wenn alle Bedingungen <code class="hljs inlineCode">conditionX</code> zu <code class="hljs inlineCode">false</code> auswerten, ist das Endergebnis die Auswertung von <code class="hljs inlineCode">exprDefault</code>. Der Default-Zweig der Kette kann entfallen. In diesem Fall ist der Wert des Gesamtausdrucks <code class="hljs inlineCode">null</code>, wenn alle Bedingungen zu <code class="hljs inlineCode">false</code> auswerten.</p>
+<p>Der Wert einer solchen Bedingungskette ist die Auswertung des ersten Ausdrucks <code class="hljs inlineCode">exprX</code>, dessen Bedingung <code class="hljs inlineCode">conditionX</code> zu <code class="hljs inlineCode">true</code> auswertet. Wenn alle Bedingungen <code class="hljs inlineCode">conditionX</code> zu <code class="hljs inlineCode">false</code> auswerten, ist das Endergebnis die Auswertung von <code class="hljs inlineCode">exprDefault</code>. Der Default-Zweig der Kette kann entfallen. In diesem Fall ist der Wert des Gesamtausdrucks <code class="hljs inlineCode">null</code>, wenn alle Bedingungen zu <code class="hljs inlineCode">false</code> auswerten.</p>
 
-<p>Wenn alle Bedingungen aus einem Gleichheitstest bestehen, kann die Pattern-Schreibweise verwendet werden. In dieser Form wertet sich die Bedingungskette zu demjenigen Ausdruck <code class="hljs inlineCode">exprX</code> mit kleinstem <code class="hljs inlineCode">X</code> aus, dessen Pattern <code class="hljs inlineCode">patternX</code> gleich dem Wert der Auswerung von <code class="hljs inlineCode">value</code> ist.</p>
+<p>Wenn alle Bedingungen aus einem Gleichheitstest bestehen, kann die Pattern-Schreibweise verwendet werden. In dieser Form wertet sich die Bedingungskette zu demjenigen Ausdruck <code class="hljs inlineCode">exprX</code> mit kleinstem <code class="hljs inlineCode">X</code> aus, dessen Pattern <code class="hljs inlineCode">patternX</code> gleich dem Wert der Auswertung von <code class="hljs inlineCode">value</code> ist.</p>
 
 <p>Folgende Beispiele sind äquivalent:</p>
 
@@ -78,7 +78,7 @@
 		<tr>
 			<td>pattern</td>
 			<td>Zahl/Zeichenkette/Wahrheitswert/Fachobjekt/Menge</td>
-			<td>Ein Pattern, das direkt mit der Auswertung von <code class="hljs inlineCode">value</code> verglichen wird. Kann die Schreibeweise für <code class="hljs inlineCode">switch</code> verkürzen, wenn dieses nur auf Gleichheit prüft.</td>
+			<td>Ein Pattern, das direkt mit der Auswertung von <code class="hljs inlineCode">value</code> verglichen wird. Kann die Schreibweise für <code class="hljs inlineCode">switch</code> verkürzen, wenn dieses nur auf Gleichheit prüft.</td>
 			<td> </td>
 		</tr>
 		<tr>

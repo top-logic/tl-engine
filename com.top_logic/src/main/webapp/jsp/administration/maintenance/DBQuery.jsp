@@ -165,7 +165,7 @@ private static final int HISTORY_LENGTH = 256;
 			for (int i = 0, length = header.length; i < length; i++) {
 				String value = header[i];
 				writer.write("<th>");
-				writer.write(TagUtil.encodeXML(StringServices.nonNull(SQLH.quote(value))));
+				writer.write(TagUtil.encodeXML(StringServices.nonNull(value)));
 				writer.write("</th>\n");
 			}
 			writer.write("</tr>\n");
@@ -178,7 +178,7 @@ private static final int HISTORY_LENGTH = 256;
 			for (int j = 0, jLength = row.length; j < jLength; j++) {
 				String value = row[j];
 				writer.write("<td>");
-				writer.write(TagUtil.encodeXML(StringServices.nonNull(SQLH.quote(value))));
+				writer.write(TagUtil.encodeXML(StringServices.nonNull(value)));
 				writer.write("</td>\n");
 			}
 			writer.write("</tr>\n");

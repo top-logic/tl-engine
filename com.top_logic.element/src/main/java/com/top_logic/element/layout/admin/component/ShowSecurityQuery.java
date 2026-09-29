@@ -22,6 +22,7 @@ import com.top_logic.knowledge.security.SecurityStorage;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.Group;
@@ -121,12 +122,10 @@ public class ShowSecurityQuery {
 			Set<Object> theBOs = new HashSet<>(someBOs);
 
 			for (Wrapper theWrapper : someBOs) {
-			    BoundObject theBO = theWrapper instanceof BoundObject ? ((BoundObject) theWrapper).getSecurityParent() : null;
-
-			    while (theBO != null) {
-			        theBOs.add(theBO);
-			        theBO = theBO.getSecurityParent();
-			    }
+				if (!(theWrapper instanceof BoundObject)) {
+					continue;
+				}
+				BoundHelper.collectAllSecurityParents((BoundObject) theWrapper, theBOs::add);
 			}
 
 			return this.appendWrapperIDs(sqlDialect, aQuery, CollectionUtil.dynamicCastView(Wrapper.class, theBOs),

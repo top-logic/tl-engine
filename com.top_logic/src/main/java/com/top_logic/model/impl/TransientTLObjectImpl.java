@@ -78,14 +78,8 @@ public class TransientTLObjectImpl extends TransientObject {
 	public Object tValue(TLStructuredTypePart part) {
 		Object directValue = directValue(part);
 		if (directValue == null) {
-			// Value may not be set yet
-			if (part.isMultiple()) {
-				if (part.isOrdered()) {
-					return Collections.emptyList();
-				} else {
-					return Collections.emptySet();
-				}
-			}
+			// Value may not be set yet.
+			return TLModelUtil.getEmptyValue(part);
 		}
 		return directValue;
 	}

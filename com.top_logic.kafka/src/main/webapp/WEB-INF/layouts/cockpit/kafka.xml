@@ -11,7 +11,7 @@
 			<components>
 				<component class="com.top_logic.kafka.layout.kafka.ProgressTreeTableComponent"
 					isSecurityMaster="true"
-					model="provider(com.top_logic.element.layout.table.WrapperStructureModelBuilder$WrapperStructureModelProvider)"
+					model="provider(com.top_logic.layout.component.model.SecurityRootModelProvider)"
 					name="kafkaTable"
 					resPrefix="layouts.cockpit.kafka."
 					updater="com.top_logic.kafka.layout.kafka.KafkaTableUpdater"

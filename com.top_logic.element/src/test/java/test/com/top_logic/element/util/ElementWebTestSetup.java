@@ -7,9 +7,9 @@ package test.com.top_logic.element.util;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
+
 import test.com.top_logic.basic.ThreadContextSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
-import test.com.top_logic.element.boundsec.manager.rule.TestElementAccessImporter;
 import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.module.ModuleSystem;
@@ -35,10 +35,6 @@ public class ElementWebTestSetup {
 				ModuleSystem.Module.INSTANCE));
 	}
     
-    private static Test reloadAccessManager(Class<TestElementAccessImporter> test) {
-		return reloadAccessManager(new TestSuite(test));
-	}
-
     /**
 	 * Required to work around a cyclic dependency {@link AccessManager} <-> {@link KnowledgeBase},
 	 * see [88378] and {@link AbstractStartStopListener#initApplication}.

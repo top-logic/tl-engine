@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Dialog to create a model module. The form edits a transient NewModule model (bound to the model
+	channel by the opening command): the module name. The primary command stores the form state, runs
+	the ModelEditAction in CREATE_MODULE mode inside a transaction, writes the new module to the
+	selection channel bound to the parent view, and closes the dialog.
+-->
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="selection"/>
+	</channels>
+	<window
+		resizable="false"
+		width="420px"
+	>
+		<title>
+			<en>New module</en>
+			<de>Neues Modul</de>
+		</title>
+		<form
+			initial-edit-mode="true"
+			input="model"
+			mode-switch="false"
+		>
+			<field attribute="name"/>
+			<commands>
+				<generic-command
+					image="css:bi bi-check-lg"
+					placement="BUTTON_BAR"
+				>
+					<label>
+						<en>Create</en>
+						<de>Anlegen</de>
+					</label>
+					<store-form-state/>
+					<with-transaction>
+						<action class="com.top_logic.dev.tools.model.ModelEditAction"
+							mode="CREATE_MODULE"
+						/>
+					</with-transaction>
+					<write-channel name="selection"/>
+					<close-dialog/>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

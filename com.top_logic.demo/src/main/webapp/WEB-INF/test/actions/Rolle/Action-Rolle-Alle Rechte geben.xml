@@ -13,9 +13,6 @@
 			<t:parameter name="Name"
 				type="string"
 			/>
-			<t:parameter name="Berechtigungsstruktur"
-				type="string"
-			/>
 			<t:parameter name="Tester"
 				default="root"
 				type="string"
@@ -35,26 +32,6 @@
 						value="Administration > Berechtigungen"
 					/>
 				</t:invoke>
-
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Berechtigungsstruktur"
-					>
-						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree"
-							tab-path="Administration > Berechtigungen"
-						/>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-						<values>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-								label="${$Berechtigungsstruktur}"
-							/>
-						</values>
-					</value>
-				</action>
 
 				<t:invoke template="script:Sicht/Action-Sicht-Anzeigen.xml">
 					<t:parameter name="Tester"

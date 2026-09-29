@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<!--
+			Registers the "parseLibrary" TL-Script function as an example of a configured
+			XML-parse function (see com.top_logic.xio.importer.expr.ParseXml). The import
+			declaration is the same as the one used by the XMLImportCommand button in
+			templateLibraryGrid.layout.xml, but the import scope is not hard-coded via
+			<in-scope> here; instead it is supplied through the function's "context" argument
+			at call time (see importLibraryScriptDialog.layout.xml).
+		-->
+		<config service-class="com.top_logic.model.search.expr.config.SearchBuilder">
+			<instance>
+				<methods>
+					<method name="parseLibrary" class="com.top_logic.xio.importer.expr.ParseXml$Builder">
+						<dispatch>
+							<tag name="items">
+								<dispatch id="all-types">
+									<tag name="factory">
+										<object model-type="test.dnd:Factory">
+											<property name="name"
+												xml-attribute="name"
+											>
+												<format class="com.top_logic.basic.config.StringValueProvider"/>
+											</property>
+											<linking>
+												<list-linking name="test.dnd:Library#elements"/>
+											</linking>
+											<ref handler-id="all-types"/>
+										</object>
+									</tag>
+									<tag name="floor">
+										<object model-type="test.dnd:Floor">
+											<property name="name"
+												xml-attribute="name"
+											>
+												<format class="com.top_logic.basic.config.StringValueProvider"/>
+											</property>
+											<linking>
+												<list-linking name="test.dnd:Library#elements"/>
+												<list-linking name="test.dnd:Factory#floors"/>
+											</linking>
+											<ref handler-id="all-types"/>
+										</object>
+									</tag>
+									<tag name="location">
+										<object model-type="test.dnd:Location">
+											<property name="name"
+												xml-attribute="name"
+											>
+												<format class="com.top_logic.basic.config.StringValueProvider"/>
+											</property>
+											<linking>
+												<list-linking name="test.dnd:Library#elements"/>
+												<list-linking name="test.dnd:Floor#locations"/>
+											</linking>
+											<ref handler-id="all-types"/>
+										</object>
+									</tag>
+									<tag name="entry">
+										<object model-type="test.dnd:Entry">
+											<property name="name"
+												xml-attribute="name"
+											>
+												<format class="com.top_logic.basic.config.StringValueProvider"/>
+											</property>
+											<linking>
+												<ref-linking name="test.dnd:Location#entry"/>
+											</linking>
+											<dispatch/>
+										</object>
+									</tag>
+								</dispatch>
+							</tag>
+						</dispatch>
+					</method>
+				</methods>
+			</instance>
+		</config>
+	</services>
+</application>

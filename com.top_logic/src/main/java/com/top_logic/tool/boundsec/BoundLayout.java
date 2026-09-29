@@ -48,30 +48,32 @@ public class BoundLayout extends Layout implements LayoutContainerBoundChecker {
 	public BoundLayout(InstantiationContext context, Config atts) throws ConfigurationException {
         super(context, atts);
 
-		_securityObjectProvider = SecurityObjectProvider.fromConfiguration(context, atts.getSecurityObject());
+		_securityObjectProvider = atts.resolveSecurityObject(context);
     }
 
 	@Override
 	public SecurityObjectProvider getSecurityObjectProvider() {
-		if (_securityMaster != null) {
-			return _securityMaster.getSecurityObjectProvider();
+		BoundCheckerComponent securityMaster = securityMaster();
+		if (securityMaster != null) {
+			return securityMaster.getSecurityObjectProvider();
 		}
 		return _securityObjectProvider;
 	}
 
 	@Override
-	public ResKey hideReason() {
-		if (_securityMaster != null) {
-			return _securityMaster.hideReason();
-        }
+	public BoundObject getSecurityObject(BoundCommandGroup commandGroup, Object potentialModel) {
+		BoundCheckerComponent securityMaster = securityMaster();
+		if (securityMaster != null) {
+			return securityMaster.getSecurityObject(commandGroup, potentialModel);
+		}
+		return LayoutContainerBoundChecker.super.getSecurityObject(commandGroup, potentialModel);
+	}
 
-		if (getChildCount() == 1) {
-			/* When there is only one child, treat it as security master. */
-			LayoutComponent child = getChild(0);
-			if (child instanceof BoundCheckerComponent) {
-				// Only BoundCheckerComponent can be "security master".
-				return child.hideReason();
-			}
+	@Override
+	public ResKey hideReason() {
+		BoundCheckerComponent securityMaster = securityMaster();
+		if (securityMaster != null) {
+			return securityMaster.hideReason();
 		}
 
 		ResKey technicalReason = super.hideReason();
@@ -84,6 +86,22 @@ public class BoundLayout extends Layout implements LayoutContainerBoundChecker {
 			return securityReason;
 		}
 
+		return null;
+	}
+
+	private BoundCheckerComponent securityMaster() {
+		if (_securityMaster != null) {
+			return _securityMaster;
+		}
+
+		if (getChildCount() == 1) {
+			/* When there is only one child, treat it as security master. */
+			LayoutComponent child = getChild(0);
+			if (child instanceof BoundCheckerComponent childChecker) {
+				// Only BoundCheckerComponent can be "security master".
+				return childChecker;
+			}
+		}
 		return null;
 	}
 

@@ -253,7 +253,14 @@ public class JSDiagramControl extends AbstractJSControl
 					newCtrlW = controlW;
 					newCtrlH = controlH;
 					_viewbox = _svg.getViewBox().getBaseVal();
-					applyInitialZoom(diagram.getInitialZoom());
+					if (diagram.isKeepViewBox() && _viewbox.getWidth() > 0) {
+						// The diagram was redrawn for the same model. The server transferred the
+						// current view box, so keep the user's zoom and pan instead of resetting to
+						// the initial zoom. Still refresh the zoom indicator from the kept view box.
+						calcZoomLevel();
+					} else {
+						applyInitialZoom(diagram.getInitialZoom());
+					}
 
 					Element selectedPart = _control.querySelector(".tlSelected");
 					if (selectedPart != null) {
@@ -819,11 +826,18 @@ public class JSDiagramControl extends AbstractJSControl
 
 	private native void sendUpdate(String id, String patch, double requestID) /*-{
 		$wnd.services.ajax.dropLazyRequest(requestID);
+		// Synchronize the update (e.g. a selection change) with the server without raising the
+		// input-blocking wait pane (useWaitPane = false). The change is already applied to the
+		// client-side diagram, so blocking all input for the duration of the round-trip is
+		// unnecessary. A wait pane raised here covers the diagram and swallows a quickly
+		// following click: with a slow connection it is still visible when the second click of a
+		// double click arrives, so that click hits the overlay instead of the SVG and no native
+		// double click is formed.
 		$wnd.services.ajax.execute("dispatchControlCommand", {
 			controlCommand : "update",
 			controlID : id,
 			patch : patch
-		}, true)
+		}, false)
 	}-*/;
 
 	private native void logError(String message) /*-{

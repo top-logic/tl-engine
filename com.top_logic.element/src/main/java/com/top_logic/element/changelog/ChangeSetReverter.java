@@ -196,6 +196,10 @@ public final class ChangeSetReverter {
 	 *
 	 * @param root
 	 *        Optional subtree root; {@code null} means the global change log.
+	 * @param options
+	 *        Common {@link ChangeLogOptions} restricting the considered change log (author, time
+	 *        window, technical changes, excluded modules); {@code null} means no such
+	 *        restrictions (all users, unlimited time).
 	 * @param windowSize
 	 *        How many of the most recent change log entries are inspected to find the undo
 	 *        target; {@code <= 0} means no limit. Note this bounds the search, not the result.
@@ -203,8 +207,9 @@ public final class ChangeSetReverter {
 	 *        When {@code root} is given: {@code true} considers the whole composition subtree;
 	 *        {@code false} only {@code root} itself. Ignored when {@code root} is {@code null}.
 	 */
-	public static ChangeSet findUndoCandidate(TLObject root, int windowSize, boolean includeSubtree) {
-		return findLastRealChange(readLog(root, windowSize, includeSubtree));
+	public static ChangeSet findUndoCandidate(TLObject root, ChangeLogOptions options, int windowSize,
+			boolean includeSubtree) {
+		return findLastRealChange(readLog(root, options, windowSize, includeSubtree));
 	}
 
 	/**
@@ -218,27 +223,31 @@ public final class ChangeSetReverter {
 	 * {@code null} when no pending undo exists.
 	 * </p>
 	 *
-	 * @see #findUndoCandidate(TLObject, int, boolean) for the parameter semantics.
+	 * @see #findUndoCandidate(TLObject, ChangeLogOptions, int, boolean) for the parameter
+	 *      semantics.
 	 *
 	 * @throws TopLogicException
 	 *         when a pending undo exists but a newer regular change has broken the redo stack.
 	 */
-	public static ChangeSet findRedoCandidate(TLObject root, int windowSize, boolean includeSubtree) {
-		return findNewestPendingRevert(readLog(root, windowSize, includeSubtree));
+	public static ChangeSet findRedoCandidate(TLObject root, ChangeLogOptions options, int windowSize,
+			boolean includeSubtree) {
+		return findNewestPendingRevert(readLog(root, options, windowSize, includeSubtree));
 	}
 
 	/**
-	 * Convenience wrapper around {@link #findUndoCandidate(TLObject, int, boolean)} that also
-	 * opens a dedicated transaction with the correct revert commit message and commits.
+	 * Convenience wrapper around {@link #findUndoCandidate(TLObject, ChangeLogOptions, int, boolean)}
+	 * that also opens a dedicated transaction with the correct revert commit message and commits.
 	 *
 	 * <p>
-	 * A no-op (empty result) is returned when no change is eligible. For callers that need
-	 * conflict-aware commit control, use {@link #findUndoCandidate(TLObject, int, boolean)}
-	 * directly and manage the transaction themselves.
+	 * No {@link ChangeLogOptions} restrictions are applied: changes of all users over the whole
+	 * history are considered. A no-op (empty result) is returned when no change is eligible. For
+	 * callers that need conflict-aware commit control, use
+	 * {@link #findUndoCandidate(TLObject, ChangeLogOptions, int, boolean)} directly and manage
+	 * the transaction themselves.
 	 * </p>
 	 */
 	public static List<ResKey> undoLast(TLObject root, int windowSize, boolean includeSubtree) {
-		ChangeSet target = findUndoCandidate(root, windowSize, includeSubtree);
+		ChangeSet target = findUndoCandidate(root, null, windowSize, includeSubtree);
 		if (target == null) {
 			return Collections.emptyList();
 		}
@@ -246,15 +255,15 @@ public final class ChangeSetReverter {
 	}
 
 	/**
-	 * Convenience wrapper around {@link #findRedoCandidate(TLObject, int, boolean)} that opens a
-	 * dedicated transaction with the correct revert commit message and commits.
+	 * Convenience wrapper around {@link #findRedoCandidate(TLObject, ChangeLogOptions, int, boolean)}
+	 * that opens a dedicated transaction with the correct revert commit message and commits.
 	 *
 	 * @see #undoLast(TLObject, int, boolean)
 	 * @throws TopLogicException
 	 *         when a pending undo exists but a newer regular change has broken the redo stack.
 	 */
 	public static List<ResKey> redoLast(TLObject root, int windowSize, boolean includeSubtree) {
-		ChangeSet target = findRedoCandidate(root, windowSize, includeSubtree);
+		ChangeSet target = findRedoCandidate(root, null, windowSize, includeSubtree);
 		if (target == null) {
 			return Collections.emptyList();
 		}
@@ -271,10 +280,14 @@ public final class ChangeSetReverter {
 		}
 	}
 
-	private static Collection<ChangeSet> readLog(TLObject root, int windowSize, boolean includeSubtree) {
+	private static Collection<ChangeSet> readLog(TLObject root, ChangeLogOptions options, int windowSize,
+			boolean includeSubtree) {
 		KnowledgeBase kb = root != null ? root.tKnowledgeBase() : PersistencyLayer.getKnowledgeBase();
 		TLModel model = ModelService.getApplicationModel();
 		ChangeLogBuilder builder = new ChangeLogBuilder(kb, model);
+		if (options != null) {
+			builder.applyOptions(options);
+		}
 		if (root != null) {
 			builder.setFilter(new SubtreeFilter(root, includeSubtree));
 		}

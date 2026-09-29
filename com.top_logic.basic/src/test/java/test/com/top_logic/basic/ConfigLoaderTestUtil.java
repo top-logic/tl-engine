@@ -5,14 +5,7 @@
  */
 package test.com.top_logic.basic;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -71,10 +64,6 @@ public class ConfigLoaderTestUtil {
 	
 	private boolean failed = false;
 
-	private File _metaConfFile;
-
-	private File _metaConfCopy;
-	
 	private ConfigLoaderTestUtil() {
 		/* Private singleton constructor */
 	}
@@ -215,11 +204,11 @@ public class ConfigLoaderTestUtil {
 	
 	private void setupConfiguration() {
 		try {
-			setupConnectionPoolRegistry();
 			if (XMLProperties.exists()) {
 				previousConfig = XMLProperties.Module.INSTANCE.config();
 			}
 
+			XMLPropertiesConfig.setGlobalOverlay(additionalTestConfigNames());
 			MultiProperties.restartWithConfig(null);
 
 			_threadContextStarter.startService();
@@ -229,28 +218,43 @@ public class ConfigLoaderTestUtil {
 		}
 	}
 
-	private void setupConnectionPoolRegistry() throws IOException {
-		// Update the metaConf.txt to be able to survive a restart of the configuration.
-		List<String> additionalFiles = new ArrayList<>();
-		addConfigFile(additionalFiles, "testingConnectionPool.xml");
+	/**
+	 * The names of the test-only configuration fragments to overlay onto the application
+	 * configuration: the testing connection pool, the database-specific settings for the drivers on
+	 * the class path, and the application's test configuration.
+	 *
+	 * <p>
+	 * These are installed as a process-global overlay via
+	 * {@link XMLPropertiesConfig#setGlobalOverlay(List)} rather than by rewriting
+	 * {@link ModuleLayoutConstants#META_CONF_NAME} on disk. Rewriting the file is racy on a
+	 * workspace shared between concurrent CI runs; the overlay achieves the same effect in memory.
+	 * Unlike overlaying only the {@link XMLPropertiesConfig} produced here, the global overlay is
+	 * applied on every configuration reload in the process, so it survives a configuration restart
+	 * driven by the application start-up (which builds a fresh {@link XMLPropertiesConfig} without
+	 * additional content), just as the on-disk fragments did.
+	 * </p>
+	 */
+	private List<String> additionalTestConfigNames() {
+		List<String> names = new ArrayList<>();
+		addConfigFile(names, "testingConnectionPool.xml");
 
-		addDBConfigFile(additionalFiles, "com.mysql.cj.jdbc.MysqlConnectionPoolDataSource", "test-with-mysql.xml");
-		addDBConfigFile(additionalFiles, "org.h2.jdbcx.JdbcDataSource", "test-with-h2.xml");
-		addDBConfigFile(additionalFiles, "oracle.jdbc.pool.OracleConnectionPoolDataSource", "test-with-oracle.xml");
-		addDBConfigFile(additionalFiles, "oracle.jdbc.pool.OracleConnectionPoolDataSource", "test-with-oracle12.xml");
-		addDBConfigFile(additionalFiles, "oracle.jdbc.pool.OracleConnectionPoolDataSource", "test-with-oracle19.xml");
-		addDBConfigFile(additionalFiles, "com.ibm.db2.jcc.DB2SimpleDataSource", "test-with-db2.xml");
-		addDBConfigFile(additionalFiles, "com.microsoft.sqlserver.jdbc.SQLServerDataSource", "test-with-mssql.xml");
-		addDBConfigFile(additionalFiles, "org.postgresql.ds.PGSimpleDataSource", "test-with-postgresql.xml");
+		addDBConfigFile(names, "com.mysql.cj.jdbc.MysqlConnectionPoolDataSource", "test-with-mysql.xml");
+		addDBConfigFile(names, "org.h2.jdbcx.JdbcDataSource", "test-with-h2.xml");
+		addDBConfigFile(names, "oracle.jdbc.pool.OracleConnectionPoolDataSource", "test-with-oracle.xml");
+		addDBConfigFile(names, "oracle.jdbc.pool.OracleConnectionPoolDataSource", "test-with-oracle12.xml");
+		addDBConfigFile(names, "oracle.jdbc.pool.OracleConnectionPoolDataSource", "test-with-oracle19.xml");
+		addDBConfigFile(names, "com.ibm.db2.jcc.DB2SimpleDataSource", "test-with-db2.xml");
+		addDBConfigFile(names, "com.microsoft.sqlserver.jdbc.SQLServerDataSource", "test-with-mssql.xml");
+		addDBConfigFile(names, "org.postgresql.ds.PGSimpleDataSource", "test-with-postgresql.xml");
 
 		if (withTestConfig) {
 			Maybe<String> testConfig = getTestConfiguration();
 			if (testConfig.hasValue()) {
-				additionalFiles.add(testConfig.get());
+				names.add(testConfig.get());
 			}
 		}
 
-		addToMetaConf(additionalFiles);
+		return names;
 	}
 
 	private void addDBConfigFile(List<String> additionalFiles, String dataSourceClassName, String filename) {
@@ -265,53 +269,6 @@ public class ConfigLoaderTestUtil {
 
 	private void addConfigFile(List<String> additionalFiles, String name) {
 		additionalFiles.add(name);
-	}
-
-	private void addToMetaConf(List<String> additionalFiles) throws IOException {
-		File topMetaConf = FileManager.getInstance().getIDEFile(ModuleLayoutConstants.META_CONF_RESOURCE);
-		File metaConfDir = topMetaConf.getParentFile();
-		if (!metaConfDir.exists()) {
-			// Ensure that storing metaConf.txt does not fail because of missing parent directory.
-			metaConfDir.mkdirs();
-		}
-		_metaConfFile = new File(metaConfDir, ModuleLayoutConstants.META_CONF_NAME);
-		_metaConfCopy = new File(metaConfDir, ModuleLayoutConstants.META_CONF_NAME + ".orig");
-		if (_metaConfCopy.exists()) {
-			throw handleExistingMetaConfCopy();
-		}
-		String charsetName = "ascii";
-		if (_metaConfFile.exists()) {
-			_metaConfFile.renameTo(_metaConfCopy);
-		} else {
-			// Only touch file.
-			_metaConfCopy.createNewFile();
-		}
-		try (PrintWriter out =
-			new PrintWriter(new OutputStreamWriter(new FileOutputStream(_metaConfFile), charsetName))) {
-			try (BufferedReader in =
-				new BufferedReader(new InputStreamReader(new FileInputStream(_metaConfCopy), charsetName))) {
-				String line;
-				while ((line = in.readLine()) != null) {
-					if (!line.isEmpty()) {
-						out.println(line);
-					}
-				}
-			}
-			for (String additionalFile : additionalFiles) {
-				out.print(additionalFile);
-				out.println();
-			}
-		}
-	}
-
-	private RuntimeException handleExistingMetaConfCopy() {
-		StringBuilder msg = new StringBuilder();
-		msg.append("There is a copy of the meta conf file: ");
-		msg.append(_metaConfCopy.getAbsolutePath());
-		msg.append(". Last setup may not did complete nornally. Current " + ModuleLayoutConstants.META_CONF_NAME + " (");
-		msg.append(_metaConfFile.getAbsolutePath());
-		msg.append(") may be corrupted.");
-		throw new RuntimeException(msg.toString());
 	}
 
 	private void setupFileManager() {
@@ -359,45 +316,20 @@ public class ConfigLoaderTestUtil {
 	private void teardownXMLProps() {
 		try {
 			_threadContextStarter.stopService();
+			// Remove the overlay before restoring the previous configuration, so the restored state
+			// no longer carries the test fragments.
+			XMLPropertiesConfig.setGlobalOverlay(null);
 			if (previousConfig != null) {
 				XMLProperties.restartXMLProperties(previousConfig);
 			} else {
 				ModuleUtil.INSTANCE.shutDown(XMLProperties.Module.INSTANCE);
 			}
-			teardownConnectionPoolRegistry();
 		}
 		catch (IllegalStateException exception) {
 			throw new RuntimeException(exception);
 		}
 		catch (ModuleException exception) {
 			throw new RuntimeException(exception);
-		}
-	}
-
-	private void teardownConnectionPoolRegistry() {
-		if (_metaConfFile != null) {
-			boolean delete = _metaConfFile.delete();
-			if (!delete) {
-				throw new RuntimeException("Unable to delete " + _metaConfFile.getAbsolutePath() + " to reinstall copy "
-					+ _metaConfCopy.getAbsolutePath());
-			}
-		}
-
-		if (_metaConfCopy != null) {
-			if (_metaConfCopy.length() == 0) {
-				// Clean-up placeholder file.
-				boolean ok = _metaConfCopy.delete();
-				if (!ok) {
-					throw new RuntimeException(
-						"Unable to remove placeholder file " + _metaConfCopy.getAbsolutePath() + ".");
-				}
-			} else {
-				boolean renameTo = _metaConfCopy.renameTo(_metaConfFile);
-				if (!renameTo) {
-					throw new RuntimeException("Unable to rename " + _metaConfCopy.getAbsolutePath() + " to "
-						+ _metaConfFile.getAbsolutePath());
-				}
-			}
 		}
 	}
 

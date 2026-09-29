@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="selectedAccount"/>
+	</channels>
+	<split-panel
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane
+				min-size="200"
+				size="40"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Accounts</en>
+						<de>Konten</de>
+					</title>
+					<commands>
+						<generic-command
+							image="css:bi bi-plus-lg"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>New</en>
+								<de>Neu</de>
+							</label>
+							<execute-script function="x -> new(`tl.admin:NewAccount`, transient: true)"/>
+							<open-dialog
+								bind-input-to="model"
+								dialog-view="admin/access-control/create-account.view.xml"
+							>
+								<bind
+									channel="selection"
+									to="selectedAccount"
+								/>
+							</open-dialog>
+						</generic-command>
+						<generic-command
+							clique="more"
+							image="css:bi bi-trash"
+							input="selectedAccount"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Delete</en>
+								<de>Löschen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<with-transaction>
+								<execute-script function="obj -> $obj.delete()"/>
+							</with-transaction>
+							<write-channel name="selectedAccount"/>
+						</generic-command>
+						<generic-command
+							clique="more"
+							image="css:bi bi-key"
+							input="selectedAccount"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Reset password</en>
+								<de>Passwort zurücksetzen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<execute-script function="acc -> new(`tl.admin:PasswordReset`, transient: true)..set(`tl.admin:PasswordReset#account`, $acc)"/>
+							<open-dialog
+								bind-input-to="model"
+								dialog-view="admin/access-control/reset-password.view.xml"
+							/>
+						</generic-command>
+						<!--
+							Expires the selected account's password, forcing the change-password
+							step on that account's next login.
+						-->
+						<generic-command
+							clique="more"
+							image="css:bi bi-hourglass-split"
+							input="selectedAccount"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Expire password</en>
+								<de>Passwort ablaufen lassen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<expire-password/>
+						</generic-command>
+						<!--
+							Marks the selected account as MFA-required with no secret, forcing the
+							MFA-enrollment step on that account's next login.
+						-->
+						<generic-command
+							clique="more"
+							image="css:bi bi-shield-lock"
+							input="selectedAccount"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Require MFA (enroll)</en>
+								<de>MFA verlangen (Einrichtung)</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<enable-mfa/>
+						</generic-command>
+					</commands>
+					<table
+						observed-types="tl.accounts:Person"
+						selection="selectedAccount"
+						types="tl.accounts:Person"
+					>
+						<columns>
+							<column attribute="name"/>
+						</columns>
+						<rows>all(`tl.accounts:Person`)</rows>
+					</table>
+				</panel>
+			</pane>
+			<pane
+				size="60"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Account</en>
+						<de>Konto</de>
+					</title>
+					<form input="selectedAccount">
+						<field attribute="name"/>
+						<field attribute="firstName"/>
+						<field attribute="lastName"/>
+						<field attribute="language"/>
+						<field attribute="country"/>
+						<field attribute="timezone"/>
+						<field attribute="restrictedUser"/>
+						<field attribute="admin"/>
+						<field attribute="mfaRequirement"/>
+						<field attribute="authDeviceID"/>
+						<field attribute="unusedNotified"/>
+						<field attribute="groups"/>
+						<field attribute="representativeGroup"/>
+						<field attribute="deputyFor"/>
+					</form>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

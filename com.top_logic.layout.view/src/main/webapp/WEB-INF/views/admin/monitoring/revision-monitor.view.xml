@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Revision / audit monitor: the recent commits across all users as a single sortable, filterable
+	table. Rows are the new-style tl.changelog:ChangeSet model objects (also shown by the "My latest
+	changes" dialog) produced by the changeLog() TL-Script function; the global, system-wide log is
+	requested by passing no object and a maximum entry count. Columns and their labels are derived from
+	the ChangeSet model attributes. A <full-page> hosts the table: the enclosing tab already labels the
+	view, so no panel title is rendered and the table fills the whole area.
+-->
+<view>
+	<full-page>
+		<table types="tl.changelog:ChangeSet">
+			<columns>
+				<column attribute="revision"/>
+				<column attribute="date"/>
+				<column attribute="author"/>
+				<column attribute="message"/>
+				<column attribute="changes"/>
+			</columns>
+			<rows>changeLog(null, 50)</rows>
+		</table>
+	</full-page>
+</view>

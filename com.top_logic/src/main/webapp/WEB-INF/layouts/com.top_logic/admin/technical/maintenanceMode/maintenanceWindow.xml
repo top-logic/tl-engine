@@ -25,12 +25,11 @@
 			</buttons>
 			<dialogs>
 				<securityLayout name="enterMaintenanceWindowDialog"
-					securityDomain=""
 					titleKey="main.admin.maintenanceWindow.enterDialog.tabber"
 				>
 					<dialogInfo
 						executability="com.top_logic.layout.admin.component.StrictInNormalModeExecutable"
-						height="380"
+						height="420"
 						image="theme:START_SERVICE"
 						openButtonSecComp="enterMaintenanceWindow"
 						openerCommandGroup="Write"
@@ -48,7 +47,6 @@
 					</components>
 				</securityLayout>
 				<securityLayout name="exitMaintenanceWindowDialog"
-					securityDomain=""
 					titleKey="main.admin.maintenanceWindow.exitDialog.tabber"
 				>
 					<dialogInfo

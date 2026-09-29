@@ -344,10 +344,13 @@ public class TLContext extends ThreadContext implements TLSubSessionContext {
 
 	/**
 	 * Whether no user or the anonymous user is used.
+	 *
+	 * @see PersonManager#isAnonymous(Person) Which account is the anonymous one is decided by the
+	 *      {@link PersonManager}.
 	 */
 	public boolean isAnonymousUser() {
 		Person person = getPerson();
-		return person == null || person.equals(PersonManager.getManager().getAnonymous());
+		return person == null || PersonManager.getManager().isAnonymous(person);
 	}
 
 	/**

@@ -73,6 +73,11 @@ public class CustomAuthentication extends AbstractConfiguredInstance<CustomAuthe
 		super(context, config);
 
 		_lookupUser = QueryExecutor.compile(config.getLookupUser());
+
+		// The lookup runs in a system context during authentication (see CustomAuthenticator), i.e.
+		// before any user is logged in. It must therefore not be subject to a user's access rights;
+		// with security enabled it would even be denied, as there is no current user.
+		_lookupUser.disableSecurity();
 	}
 
 	@Override

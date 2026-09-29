@@ -21,6 +21,7 @@ import com.top_logic.basic.config.annotation.Binding;
 import com.top_logic.basic.config.json.JsonBinding;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.tools.NameBuilder;
+import com.top_logic.basic.util.WithEmptiness;
 import com.top_logic.element.structured.StructuredElement;
 import com.top_logic.knowledge.searching.FullTextBuBuffer;
 import com.top_logic.knowledge.searching.FullTextSearchable;
@@ -32,7 +33,7 @@ import com.top_logic.knowledge.searching.FullTextSearchable;
  */
 @Binding(StructuredTextValueBinding.class)
 @JsonBinding(StructuredTextJsonBinding.class)
-public class StructuredText implements FullTextSearchable {
+public class StructuredText implements FullTextSearchable, WithEmptiness {
 
 	private String _sourceCode;
 
@@ -65,6 +66,20 @@ public class StructuredText implements FullTextSearchable {
 	 */
 	public String getSourceCode() {
 		return _sourceCode;
+	}
+
+	/**
+	 * Whether this text has no {@link #getSourceCode() source code}.
+	 *
+	 * <p>
+	 * An empty {@link StructuredText} is treated like <code>null</code> and the empty string in
+	 * TL-Script (see {@link WithEmptiness}). This matches the emptiness definition used by the HTML
+	 * attribute storage and the mandatory-field constraint.
+	 * </p>
+	 */
+	@Override
+	public boolean isEmpty() {
+		return StringServices.isEmpty(_sourceCode);
 	}
 
 	@Override

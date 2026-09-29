@@ -180,6 +180,18 @@ x -> foo({{{<p class="important {$css}">Some value <b>'{$x}'</b> being output.</
   <end tag="div"/>
   <end tag="div"/>
 </config>
+===== HTML with embedded expression as sole statement in a block (Ticket #29367)
+{ $x.set(`my.module:Type#html`, {{{{$description}}}}) }
+-----
+$x.set(`my.module:Type#html`, {{{{$description}}}})
+===== HTML with embedded expression as block statement (Ticket #29367)
+{ a = {{{ <b>{$x}</b> }}}; $obj.set(`my.module:Type#html`, $a) }
+-----
+{a = {{{ <b>{$x}</b> }}}; $obj.set(`my.module:Type#html`, $a); }
+===== Dictionary with embedded expression in HTML value (Ticket #29367)
+{"first" : {{{ {$x} }}}, "second" : 2}
+-----
+structType("first", "second").newStruct({{{ {$x} }}}, 2.0)
 ===== Complex Scenario
 model ->
   all(`tl.graph.demo:A`)

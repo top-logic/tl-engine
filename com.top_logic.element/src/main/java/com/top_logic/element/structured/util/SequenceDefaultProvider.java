@@ -127,19 +127,14 @@ public class SequenceDefaultProvider extends AbstractConfiguredInstance<Sequence
 			return null;
 		}
 		try {
-			StringBuilder sequenceNameBuilder =
-				new StringBuilder(_sequenceName).append(SequenceIdGenerator.SEQUENCE_SUFFIX);
-
 			DynamicSequenceName labelProvider = _dynamicSequence;
-			if (labelProvider != null) {
-				Object contextName = labelProvider.getSequenceName(context);
-				SequenceIdGenerator.addNames(sequenceNameBuilder, contextName);
-			}
+			Object contextName = labelProvider != null ? labelProvider.getSequenceName(context) : null;
+			String sequenceName = SequenceIdGenerator.sequenceName(_sequenceName, contextName);
 
 			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 			PooledConnection connection = ((CommitHandler) kb).createCommitContext().getConnection();
 			long nextId = SEQUENCE_MANAGER.nextSequenceNumber(
-				connection.getSQLDialect(), connection, RETRY_COUNT, sequenceNameBuilder.toString());
+				connection.getSQLDialect(), connection, RETRY_COUNT, sequenceName);
 
 			return Long.valueOf(nextId);
 		} catch (SQLException ex) {

@@ -18,6 +18,7 @@ import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
@@ -26,10 +27,11 @@ import com.top_logic.dsa.evt.DataChangeListener;
 import com.top_logic.dsa.ex.UnknownDBException;
 
 /**
- * Implements the interface for the data access service.
+ * Provides uniform access to data sources through registered data source adaptors.
  *
  * @author  Karsten Buch
  */
+@Label("Data access service")
 public class DataAccessService extends ConfiguredManagedClass<DataAccessService.Config> {
 
 	/**

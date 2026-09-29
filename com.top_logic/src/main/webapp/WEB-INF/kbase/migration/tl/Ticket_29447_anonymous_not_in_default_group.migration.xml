@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29447_anonymous_not_in_default_group"
+		module="tl"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29423_resolve_person_name_collisions"
+			module="tl"
+		/>
+	</dependencies>
+	<processors/>
+	<post-processors>
+		<!--
+			The anonymous account must not be a member of the default group (Ticket #29447): the
+			default group carries the roles of an ordinary user, which a visitor that did not log in
+			must not inherit. New accounts are handled by the PersonGroupsInitializer; existing
+			databases still hold the membership created before.
+		-->
+		<post-processor class="com.top_logic.knowledge.service.migration._29447.RemoveAnonymousFromDefaultGroupProcessor" />
+	</post-processors>
+</migration>

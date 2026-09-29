@@ -19,7 +19,11 @@
 	<migration>
 	</migration>
 	<post-processors>
-		<post-processor class="com.top_logic.element.model.migration.MoveRolesFromSingletonsToModules"/>
-		<post-processor class="com.top_logic.element.model.migration.UpgradeStoredModelDefinition"/>
+		<!-- Ticket #29221: Roles are not longer scoped, all roles are global. 
+			The migration for #29221 removes all "definesRole" association, 
+			therefore the MigrationPostProcessor 
+			"com.top_logic.element.model.migration.MoveRolesFromSingletonsToModules" 
+			is not longer needed.
+		 -->
 	</post-processors>
 </migration>

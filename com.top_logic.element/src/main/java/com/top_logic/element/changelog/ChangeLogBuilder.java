@@ -19,6 +19,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.basic.Logger;
@@ -51,6 +52,8 @@ import com.top_logic.knowledge.service.db2.RevisionType;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModule;
+import com.top_logic.model.util.TLModelPartRef;
+import com.top_logic.util.TLContext;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -95,6 +98,37 @@ public class ChangeLogBuilder {
 
 	private Revision toRevision(long commitNumber) {
 		return _hm.getRevision(commitNumber);
+	}
+
+	/**
+	 * Configures this builder from the given common {@link ChangeLogOptions}.
+	 *
+	 * <p>
+	 * Applies the author restriction (current user unless {@link ChangeLogOptions#getAllUsers()}),
+	 * the time window from {@link ChangeLogOptions#getMaxTime()}, the
+	 * {@link ChangeLogOptions#getIncludeTechnicalChanges() technical changes} setting, and the
+	 * {@link ChangeLogOptions#getExcludedModules() excluded modules}.
+	 * </p>
+	 */
+	public ChangeLogBuilder applyOptions(ChangeLogOptions options) {
+		setAuthor(options.getAllUsers() ? null : TLContext.currentUser());
+
+		long maxTime = options.getMaxTime();
+		if (maxTime > 0) {
+			long startTime = System.currentTimeMillis() - maxTime;
+			Revision startRev = _hm.getRevisionAt(startTime);
+			if (startRev.getCommitNumber() < 1) {
+				startRev = _hm.getRevision(1);
+			}
+			setStartRev(startRev);
+		}
+
+		setIncludeTechnical(options.getIncludeTechnicalChanges());
+		setExcludedModules(options.getExcludedModules()
+			.stream()
+			.map(TLModelPartRef::qualifiedName)
+			.collect(Collectors.toSet()));
+		return this;
 	}
 
 	/**
@@ -385,7 +419,12 @@ public class ChangeLogBuilder {
 
 	private List<LongRange> getRevisionRanges(Revision effectiveStartRev) {
 		long startRev = effectiveStartRev.getCommitNumber();
-		long stopRev = _stopRev.getCommitNumber();
+
+		/* Never analyze beyond the session revision, even if a later stop revision was requested: A
+		 * concurrent commit can advance the last revision beyond what the current session can
+		 * resolve. Reading up to such a future revision makes resolving objects committed there
+		 * (e.g. the author of a change set) fail with "Unable to resolve future object". */
+		long stopRev = Math.min(_stopRev.getCommitNumber(), _hm.getSessionRevision());
 		if (_author == null) {
 			return LongRangeSet.range(startRev, stopRev);
 		}

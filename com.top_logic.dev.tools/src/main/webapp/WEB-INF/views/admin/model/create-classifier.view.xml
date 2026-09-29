@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Dialog to add a classifier to the selected enumeration. The form edits a transient NewClassifier
+	model (bound to the model channel by the opening command): the classifier name. The primary command
+	stores the form state, runs the ModelEditAction in CREATE_CLASSIFIER mode inside a transaction
+	(adding the classifier to the enumeration derived from the container channel), writes the new
+	classifier to the selection channel bound to the parent view, bumps the reload channel so the
+	diagram re-reads its module, and closes the dialog.
+-->
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="selection"/>
+		<channel name="container"/>
+		<channel name="reload"/>
+	</channels>
+	<window
+		resizable="false"
+		width="420px"
+	>
+		<title>
+			<en>New classifier</en>
+			<de>Neuer Klassifikator</de>
+		</title>
+		<form
+			initial-edit-mode="true"
+			input="model"
+			mode-switch="false"
+		>
+			<field attribute="name"/>
+			<commands>
+				<generic-command
+					image="css:bi bi-check-lg"
+					placement="BUTTON_BAR"
+				>
+					<label>
+						<en>Create</en>
+						<de>Anlegen</de>
+					</label>
+					<store-form-state/>
+					<with-transaction>
+						<action class="com.top_logic.dev.tools.model.ModelEditAction"
+							container="container"
+							mode="CREATE_CLASSIFIER"
+						/>
+					</with-transaction>
+					<write-channel name="selection"/>
+					<execute-script function="x -> now()"/>
+					<write-channel name="reload"/>
+					<close-dialog/>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

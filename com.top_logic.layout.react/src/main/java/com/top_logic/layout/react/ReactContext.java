@@ -1,0 +1,90 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.layout.react;
+
+import com.top_logic.layout.react.control.ErrorSink;
+import com.top_logic.layout.react.control.overlay.DialogManager;
+import com.top_logic.layout.react.routing.RouteManager;
+import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.model.listen.ModelScope;
+
+/**
+ * Lean rendering context for the view system.
+ *
+ * <p>
+ * Replaces the combination of {@link com.top_logic.layout.DisplayContext},
+ * {@link com.top_logic.layout.ControlScope}, {@link com.top_logic.layout.FrameScope}, and
+ * {@link com.top_logic.layout.LayoutContext} for view-system rendering with a minimal contract.
+ * </p>
+ *
+ * @see DefaultReactContext
+ */
+public interface ReactContext {
+
+	/**
+	 * Allocates a unique ID for a control's DOM element.
+	 */
+	String allocateId();
+
+	/**
+	 * The window name sent to the client for command routing.
+	 */
+	String getWindowName();
+
+	/**
+	 * The webapp context path for constructing URLs.
+	 */
+	String getContextPath();
+
+	/**
+	 * The SSE queue for pushing state updates and registering controls.
+	 */
+	SSEUpdateQueue getSSEQueue();
+
+	/**
+	 * The {@link ReactWindowRegistry} for managing programmatically opened windows.
+	 */
+	ReactWindowRegistry getWindowRegistry();
+
+	/**
+	 * The {@link ErrorSink} for reporting user-visible errors in the current scope, or {@code null}
+	 * if no error sink is installed (legacy mode).
+	 */
+	default ErrorSink getErrorSink() {
+		return null;
+	}
+
+	/**
+	 * The {@link DialogManager} for opening and managing modal dialogs, or {@code null} if no
+	 * dialog manager is installed.
+	 */
+	default DialogManager getDialogManager() {
+		SSEUpdateQueue queue = getSSEQueue();
+		return queue != null ? queue.getDialogManager() : null;
+	}
+
+	/**
+	 * The {@link ModelScope} for observing persistent object changes in this window.
+	 */
+	ModelScope getModelScope();
+
+	/**
+	 * The {@link com.top_logic.layout.react.control.overlay.ContextMenuOpener} mounted at the
+	 * app-shell level, or {@code null} if none.
+	 */
+	default com.top_logic.layout.react.control.overlay.ContextMenuOpener getContextMenuOpener() {
+		return null;
+	}
+
+	/**
+	 * The {@link RouteManager} for URL routing coordination in the view system, or {@code null} if
+	 * routing is not available.
+	 */
+	default RouteManager getRouteManager() {
+		return null;
+	}
+}

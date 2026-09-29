@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29423_resolve_person_name_collisions"
+		module="tl"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29221_Remove_security_domain"
+			module="tl"
+		/>
+	</dependencies>
+	<processors>
+		<!--
+			Account names are treated case-insensitively (Ticket #29423). Rename existing accounts
+			whose names collide case-insensitively so that at most one account per case-insensitive
+			name remains. On case-insensitive databases no such collisions can exist (no-op there).
+		-->
+		<processor class="com.top_logic.knowledge.service.migration._29423.ResolvePersonNameCollisionsProcessor" />
+	</processors>
+	<post-processors/>
+</migration>

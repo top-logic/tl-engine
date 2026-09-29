@@ -4,7 +4,7 @@
 
 	<groupId>com.top-logic</groupId>
 	<artifactId>tl-parent-all</artifactId>
-	<version>8.0.0-alpha5</version>
+	<version>8.0.0-alpha8</version>
 
 	<name>${project.artifactId}</name>
 	<description>Aggregator module that builds the complete TopLogic application engine.</description>
@@ -29,16 +29,16 @@
     </licenses>
 
 	<properties>
-		<tl.version>8.0.0-alpha5</tl.version>
-		<jetty.version>12.1.9</jetty.version>
+		<tl.version>8.0.0-alpha8</tl.version>
+		<jetty.version>12.1.12</jetty.version>
 		<poi.version>5.5.1</poi.version>
 		<kafka.version>3.9.2</kafka.version>
 		<zookeeper.version>3.9.5</zookeeper.version>
 		<slf4j.version>2.0.18</slf4j.version>
-		<log4j.version>2.26.0</log4j.version>
-		<fasterxml.version>2.21.4</fasterxml.version>
+		<log4j.version>2.26.1</log4j.version>
+		<fasterxml.version>2.22.2</fasterxml.version>
 		<msgbuf.version>1.2.2</msgbuf.version>
-		<bouncycastle.version>1.84</bouncycastle.version>
+		<bouncycastle.version>1.85</bouncycastle.version>
 		<batik.version>1.19</batik.version>
 		<tl.license.version>7.8.2</tl.license.version>
 		
@@ -52,6 +52,7 @@
 		<skipNormalizeLayouts>true</skipNormalizeLayouts>
 		
 		<tl.layoutDir>${basedir}/src/main/webapp/WEB-INF/layouts</tl.layoutDir>
+		<tl.confDir>${basedir}/src/main/webapp/WEB-INF</tl.confDir>
 	</properties>
 
 	<developers>
@@ -67,7 +68,7 @@
 		<connection>scm:git:https://github.com/top-logic/tl-engine.git</connection>
 		<developerConnection>scm:git:https://git.top-logic.com/TopLogic/tl-engine-7.git</developerConnection>
 		<url>https://github.com/top-logic/tl-engine</url>
-		<tag>TL_8.0.0-alpha5</tag>
+		<tag>TL_8.0.0-alpha8</tag>
 	</scm>
 	
 	<modules>
@@ -133,7 +134,7 @@
 					<plugin>
 						<groupId>org.sonatype.central</groupId>
 						<artifactId>central-publishing-maven-plugin</artifactId>
-						<version>0.10.0</version>
+						<version>0.11.0</version>
 						<extensions>true</extensions>
 						<configuration>
 							<publishingServerId>tl-ossrh</publishingServerId>
@@ -302,6 +303,13 @@
 				<type>test-jar</type>
 				<scope>test</scope>
 			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-model-search</artifactId>
+				<version>${tl.version}</version>
+				<type>test-jar</type>
+				<scope>test</scope>
+			</dependency>
 
 			<!-- TopLogic -->
 			<dependency>
@@ -412,6 +420,60 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
+				<artifactId>tl-layout-react</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-layout-react-chartjs</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-react-flow-client</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-react-flow-client</artifactId>
+				<version>${tl.version}</version>
+				<classifier>sources</classifier>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-react-flow-common</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-react-flow-common</artifactId>
+				<version>${tl.version}</version>
+				<classifier>sources</classifier>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-react-flow-server</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-dev-tools</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-layout-react-wysiwyg</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-layout-react-codeedit</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
 				<artifactId>tl-common-remote</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
@@ -503,6 +565,13 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
+				<artifactId>tl-graph-layouter</artifactId>
+				<version>${tl.version}</version>
+				<classifier>sources</classifier>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
 				<artifactId>tl-graph-server</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
@@ -565,6 +634,26 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
+				<artifactId>tl-layout-view</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-layout-view-agent</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-layout-view-selfservice</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-layout-configedit</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
 				<artifactId>tl-layout-scripting-template</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
@@ -601,6 +690,11 @@
 			<dependency>
 				<groupId>com.top-logic</groupId>
 				<artifactId>tl-model-search</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-model-search-react</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
 			<dependency>
@@ -789,19 +883,19 @@
 			<dependency>
 			    <groupId>com.oracle.database.jdbc</groupId>
 			    <artifactId>ojdbc11</artifactId>
-			    <version>23.26.2.0.0</version>
+			    <version>23.26.3.0.0</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.postgresql</groupId>
 			    <artifactId>postgresql</artifactId>
-			    <version>42.7.11</version>
+			    <version>42.7.13</version>
 			</dependency>
 
 			<!-- External dependencies -->
 			<dependency>
 				<groupId>com.networknt</groupId>
 				<artifactId>json-schema-validator</artifactId>
-				<version>3.0.3</version>
+				<version>3.0.7</version>
 			</dependency>
 			<dependency>
 				<groupId>jakarta.servlet</groupId>
@@ -901,12 +995,12 @@
 			<dependency>
 			    <groupId>commons-codec</groupId>
 			    <artifactId>commons-codec</artifactId>
-			    <version>1.22.0</version>
+			    <version>1.22.1</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.apache.commons</groupId>
 			    <artifactId>commons-collections4</artifactId>
-			    <version>4.5.0</version>
+			    <version>4.6.0</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.apache.httpcomponents</groupId>
@@ -916,7 +1010,7 @@
 			<dependency>
 			    <groupId>org.apache.httpcomponents.client5</groupId>
 			    <artifactId>httpclient5</artifactId>
-			    <version>5.2.3</version>
+			    <version>5.6.4</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.apache.commons</groupId>
@@ -1052,6 +1146,16 @@
 			    <artifactId>bcprov-jdk18on</artifactId>
 			    <version>${bouncycastle.version}</version>
 			</dependency>
+		    <dependency>
+		        <groupId>org.bouncycastle</groupId>
+		        <artifactId>bcutil-jdk18on</artifactId>
+		        <version>${bouncycastle.version}</version>
+		    </dependency>
+		    <dependency>
+		        <groupId>org.bouncycastle</groupId>
+		        <artifactId>bcpkix-jdk18on</artifactId>
+		        <version>${bouncycastle.version}</version>
+		    </dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
 				<artifactId>ext-org-chartjs</artifactId>
@@ -1100,12 +1204,12 @@
 			<dependency>
 			    <groupId>org.yaml</groupId>
 			    <artifactId>snakeyaml</artifactId>
-			    <version>2.6</version>
+			    <version>2.7</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.apache.pdfbox</groupId>
 	    		<artifactId>pdfbox</artifactId>
-			    <version>3.0.7</version>
+			    <version>3.0.8</version>
 			    
 			    <exclusions>
 			    	<!-- Note: Whenever pdfbox is used, jcl-over-slf4j must be added as well. -->
@@ -1123,7 +1227,7 @@
 			<dependency>
 			    <groupId>org.apache.pdfbox</groupId>
 	    		<artifactId>fontbox</artifactId>
-			    <version>3.0.7</version>
+			    <version>3.0.8</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.apache.xmlgraphics</groupId>
@@ -1212,7 +1316,7 @@
 			<dependency>
 			    <groupId>org.jsoup</groupId>
 			    <artifactId>jsoup</artifactId>
-			    <version>1.22.2</version>
+			    <version>1.23.2</version>
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
@@ -1222,7 +1326,7 @@
 			<dependency>
 			    <groupId>org.pac4j</groupId>
 			    <artifactId>pac4j-oidc</artifactId>
-    			<version>6.5.3</version>
+    			<version>6.5.6</version>
 			</dependency>
 			<dependency>
 				<groupId>net.minidev</groupId>
@@ -1232,7 +1336,7 @@
 			<dependency>
 			    <groupId>org.pac4j</groupId>
 			    <artifactId>pac4j-jakartaee</artifactId>
-    			<version>6.5.3</version>
+    			<version>6.5.6</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.pac4j</groupId>
@@ -1313,7 +1417,7 @@
     		<dependency>
 				<groupId>org.commonmark</groupId>
 				<artifactId>commonmark</artifactId>
-				<version>0.28.0</version>
+				<version>0.30.0</version>
 			</dependency>
 			
 			<!-- Test modules -->
@@ -1606,6 +1710,29 @@
 							<addResourcesToClasspath>true</addResourcesToClasspath>
 						</configuration>
 					</execution>
+
+					<!-- Run with mvn exec:java@migrate-ticket29221 -->
+					<execution>
+						<id>migrate-ticket29221</id>
+						<goals>
+							<goal>java</goal>
+						</goals>
+						
+						<configuration>
+							<skip>${skipNormalizeLayouts}</skip>
+
+							<mainClass>com.top_logic.layout.tools.ticket29221.MigrateTicket29221</mainClass>
+							<arguments>
+								<argument>${tl.layoutDir}</argument>
+								<argument>${tl.confDir}</argument>
+							</arguments>
+
+							<includePluginDependencies>false</includePluginDependencies>
+							<includeProjectDependencies>true</includeProjectDependencies>
+							<addOutputToClasspath>true</addOutputToClasspath>
+							<addResourcesToClasspath>true</addResourcesToClasspath>
+						</configuration>
+					</execution>
 		        </executions>
 			</plugin>
 
@@ -1851,7 +1978,7 @@
 			<plugin>
 				<groupId>com.github.spotbugs</groupId>
 				<artifactId>spotbugs-maven-plugin</artifactId>
-				<version>4.9.8.3</version>
+				<version>4.10.3.0</version>
 				<!-- overwrite dependency on spotbugs if you want to specify the version of spotbugs -->
 				<!-- <dependencies>
 					<dependency>

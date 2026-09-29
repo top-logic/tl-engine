@@ -134,8 +134,10 @@ public class BPMLUpdateCommand extends PreconditionCommandHandler {
 	 */
 	public static void updateCollaboration(Collaboration collaboration, Source source, boolean updateExtensions)
 			throws XMLStreamException {
+		// Importing a process model runs with definer's rights, see
+		// AbstractModelBinding#usesSecurity().
 		ModelBinding binding =
-			new ApplicationModelBinding(collaboration.tKnowledgeBase(), ModelService.getApplicationModel());
+			new ApplicationModelBinding(collaboration.tKnowledgeBase(), ModelService.getApplicationModel(), false);
 		Collaboration newCollaboration = InitialProcessSetupService.importBPML(source, binding);
 		new Updater(collaboration, newCollaboration, updateExtensions).update();
 	}

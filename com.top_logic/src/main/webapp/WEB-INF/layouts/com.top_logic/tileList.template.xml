@@ -13,7 +13,7 @@
 					<property name="modelBuilder"/>
 					<property name="preview"/>
 					<property name="noCardKey"/>
-					<property name="securityDomain"/>
+
 					<property name="securityObject"/>
 					<property name="contextMenuButtons"/>
 					<property name="buttons"/>
@@ -70,7 +70,6 @@
 
 	<securityLayout name="ContextList"
 		helpID="${helpID}"
-		securityDomain="${securityDomain}"
 		titleKey="${name}"
 	>
 		<component class="com.top_logic.mig.html.layout.tiles.ContextTileComponent"

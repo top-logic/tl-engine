@@ -14,7 +14,7 @@ import com.top_logic.model.search.expr.visit.Visitor;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class Access extends SearchExpression implements AccessLike {
+public class Access extends SearchExpressionWithSecurity implements AccessLike {
 	private SearchExpression _self;
 
 	private TLStructuredTypePart _part;
@@ -27,7 +27,8 @@ public class Access extends SearchExpression implements AccessLike {
 	 * @param part
 	 *        See {@link #getPart()}.
 	 */
-	protected Access(SearchExpression self, TLStructuredTypePart part) {
+	protected Access(SearchExpression self, TLStructuredTypePart part, boolean usesSecurity) {
+		super(usesSecurity);
 		_self = self;
 		_part = part;
 	}

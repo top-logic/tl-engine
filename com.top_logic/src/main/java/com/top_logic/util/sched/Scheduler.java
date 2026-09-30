@@ -23,7 +23,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.top_logic.base.administration.MaintenanceWindowManager;
 import com.top_logic.base.cluster.ClusterManager;
-import com.top_logic.base.cluster.ClusterManager.NodeState;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.DebugHelper;
 import com.top_logic.basic.ExceptionUtil;
@@ -76,6 +75,7 @@ import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.mig.html.HTMLFormatter;
+import com.top_logic.util.ApplicationStartup;
 import com.top_logic.util.sched.Scheduler.SchedulerConfig;
 import com.top_logic.util.sched.entry.SchedulerEntry;
 import com.top_logic.util.sched.entry.SchedulerEntryStorage;
@@ -179,15 +179,6 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 		long getPastTaskTime();
 
 		/**
-		 * Sleep time while waiting for startup.
-		 * 
-		 * @implNote The configuration value is given in milliseconds.
-		 */
-		@LongDefault((1000L * 10L))
-		@Format(MillisFormat.class)
-		long getStartupSleep();
-
-		/**
 		 * Polling interval.
 		 * 
 		 * @implNote The configuration value is given in milliseconds.
@@ -242,11 +233,6 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 		 */
 		@StringDefault("DefaultScheduler")
 		String getThreadName();
-
-		/**
-		 * Whether tasks should not run during system startup.
-		 */
-		boolean isDontRunTasksOnStartup();
 
 		/**
 		 * Types of persistent tasks. All instances of the given types are added as tasks.
@@ -314,8 +300,28 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 
 	private Date startTime;
 
-	/** Flag indicating whether to wait for startup before running tasks. */
-	protected final boolean dontRunTasksOnStartup;
+	/**
+	 * Starts the dispatch thread, when the application has started.
+	 * 
+	 * @see ApplicationStartup#whenStarted(Runnable)
+	 */
+	private final Runnable _startDispatch = this::startDispatch;
+
+	/**
+	 * Guards {@link #_active}, {@link #schedulerThread} and {@link #_dispatchStart} during start
+	 * and shutdown of the dispatch thread.
+	 */
+	private final Object _dispatchLock = new Object();
+
+	/**
+	 * Whether this {@link Scheduler} service is started and not shut down.
+	 */
+	private boolean _active;
+
+	/**
+	 * @see #getDispatchStart()
+	 */
+	private volatile long _dispatchStart = SchedulingAlgorithm.NO_SCHEDULE;
 
 	private Task _maintenanceModeRequester;
 
@@ -352,7 +358,6 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 		maxTasktime = config.getMaxTasktime();
 		timeToKill = config.getTimeToKill();
 		maxTask = config.getMaxTask();
-		dontRunTasksOnStartup = config.isDontRunTasksOnStartup();
 		registerTasks(context, config);
 		_dbProperties = new DBProperties(ConnectionPoolRegistry.getDefaultConnectionPool());
 	}
@@ -1396,14 +1401,6 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	}
 
 	protected void dispatchWithThreadContext() {
-		if (dontRunTasksOnStartup) {
-			NodeState nodeState = ClusterManager.getInstance().getNodeState();
-			if (nodeState != NodeState.RUNNING) {
-				logInfo("Waiting for system startup to complete.");
-				internalWait(getConfig().getStartupSleep());
-				return;
-			}
-		}
 		setStartTime();
 
 		waitForWork();
@@ -1769,9 +1766,11 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
     }
 
     /**
-	 * Return the time this scheduler has been executed last time.
+	 * The time at which this scheduler started its latest dispatch round.
 	 * 
 	 * @return The requested time, may be <code>null</code>.
+	 * 
+	 * @see #getDispatchStart()
 	 */
 	public synchronized Date getStartTime() {
 		return startTime;
@@ -1779,6 +1778,21 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 
 	private synchronized void setStartTime() {
 		startTime = nowDate();
+	}
+
+	/**
+	 * The time at which this {@link Scheduler} started dispatching {@link Task}s.
+	 * 
+	 * <p>
+	 * The {@link Scheduler} starts dispatching, when the application has fully started, or
+	 * immediately with the service, if the application is already running.
+	 * </p>
+	 * 
+	 * @return The start time in milliseconds, or {@link SchedulingAlgorithm#NO_SCHEDULE}, if this
+	 *         {@link Scheduler} has not yet started dispatching.
+	 */
+	public long getDispatchStart() {
+		return _dispatchStart;
 	}
 
 	/** Log a message on level "Debug". */
@@ -1870,7 +1884,7 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 
     @Override
 	public String getName() {
-    	return schedulerThread.getName();
+		return threadName;
     }
 
 	/** The {@link Scheduler}, if the service is active, <code>null</code> otherwise. */
@@ -1882,26 +1896,60 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
     	return Module.INSTANCE.getImplementationInstance();
     }
     
+	/**
+	 * Starts the service.
+	 * 
+	 * <p>
+	 * {@link Task}s are not dispatched while the application is still booting: The dispatch thread
+	 * starts, when the {@link ApplicationStartup} completes, or immediately, if the application
+	 * has already started.
+	 * </p>
+	 */
     @Override
     protected void startUp() {
     	super.startUp();
-    	startNewThread();
+		synchronized (_dispatchLock) {
+			_active = true;
+		}
+		ApplicationStartup startup = ApplicationStartup.getInstance();
+		if (!startup.isStarted()) {
+			logInfo("Dispatching tasks starts when the application has started.");
+		}
+		startup.whenStarted(_startDispatch);
 
         ReloadableManager.getInstance().addReloadable(this);
 
     }
 
+	private void startDispatch() {
+		synchronized (_dispatchLock) {
+			if (!_active || schedulerThread != null) {
+				return;
+			}
+			_dispatchStart = now();
+			startNewThread();
+		}
+	}
+
 	@Override
 	protected void shutDown() {
-        signalStop();
-        try {
-			schedulerThread.join(getConfig().getShutdownJoinTime());
-        } catch (InterruptedException e) {
-            e.printStackTrace();    // This is ok here
-        }
-        
-        if (schedulerThread.isAlive())
-			System.err.println("Scheduler still running");
+		ApplicationStartup.getInstance().cancel(_startDispatch);
+		Thread thread;
+		synchronized (_dispatchLock) {
+			_active = false;
+			thread = schedulerThread;
+		}
+		if (thread != null) {
+			signalStop();
+			try {
+				thread.join(getConfig().getShutdownJoinTime());
+			} catch (InterruptedException e) {
+				e.printStackTrace(); // This is ok here
+			}
+
+			if (thread.isAlive())
+				System.err.println("Scheduler still running");
+		}
 		unregisterTasks();
 		super.shutDown();
 	}

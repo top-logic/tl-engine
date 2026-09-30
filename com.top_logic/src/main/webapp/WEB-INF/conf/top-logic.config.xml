@@ -1532,7 +1532,6 @@
 		<config service-class="com.top_logic.util.sched.Scheduler"
 			enabled="true">
 			<instance class="com.top_logic.util.sched.Scheduler"
-				dont-run-tasks-on-startup="true" 
 				polling-interval="600000"
 				max-tasktime="1200000" 
 				max-task="3">

@@ -546,9 +546,14 @@ public abstract class AbstractStartStopListener implements ServletContextListene
 
 	/**
 	 * Start {@link LockService} eventually {@link #aquireStartupContext()} and set
-	 * {@link NodeState#STARTUP}
+	 * {@link NodeState#STARTUP}.
+	 * 
+	 * <p>
+	 * Marks the {@link ApplicationStartup} as in progress.
+	 * </p>
 	 */
 	protected final void startTokenSystem(ClusterManager cMgr) throws Exception {
+		ApplicationStartup.getInstance().begin();
 		ModuleUtil.INSTANCE.startUp(LockService.Module.INSTANCE);
 
         if (cMgr.isClusterMode()) {
@@ -560,13 +565,18 @@ public abstract class AbstractStartStopListener implements ServletContextListene
     }
 
 	/**
-	 * Set {@link NodeState#RUNNING} and eventually release {@link #_startupToken}
+	 * Set {@link NodeState#RUNNING}, eventually release {@link #_startupToken}, and complete the
+	 * {@link ApplicationStartup}.
 	 */
 	protected final void releaseTokenSystem(ClusterManager cmGr) {
-		cmGr.setNodeState(NodeState.RUNNING);
-		if (_startupToken != null) {
-			_startupToken.unlock();
-			_startupToken = null;
+		try {
+			cmGr.setNodeState(NodeState.RUNNING);
+			if (_startupToken != null) {
+				_startupToken.unlock();
+				_startupToken = null;
+			}
+		} finally {
+			ApplicationStartup.getInstance().complete();
 		}
 	}
 

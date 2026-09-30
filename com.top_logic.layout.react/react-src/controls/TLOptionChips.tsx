@@ -1,6 +1,6 @@
 import { React, useTLCommand, CMD_VALUE_CHANGED, rootClassName, useFieldLabelProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { ARG_OPTION, CMD_GOTO, OptionImage, ReadonlyValue, withPill } from './selectOptions';
+import { ARG_OPTION, CMD_GOTO, OptionContent, ReadonlyValues } from './selectOptions';
 import type { OptionDescriptor } from './selectOptions';
 import { fieldStateAttrs } from './form/fieldState';
 
@@ -77,11 +77,7 @@ const TLOptionChips: React.FC<TLCellProps> = ({ controlId, state }) => {
 
   if (!editable) {
     return (
-      <span id={controlId} className={rootClassName(state, 'tl-select__values')}>
-        {value.map((v) => (
-          <ReadonlyValue key={v.value} option={v} onGoto={goto} />
-        ))}
-      </span>
+      <ReadonlyValues id={controlId} className={rootClassName(state)} value={value} onGoto={goto} />
     );
   }
 
@@ -104,12 +100,7 @@ const TLOptionChips: React.FC<TLCellProps> = ({ controlId, state }) => {
             disabled={disabled}
             onClick={() => toggle(option)}
           >
-            {withPill(option.colorRole, (
-              <>
-                <OptionImage image={option.image} />
-                <span>{option.label}</span>
-              </>
-            ))}
+            <OptionContent option={option} />
           </button>
         );
       })}

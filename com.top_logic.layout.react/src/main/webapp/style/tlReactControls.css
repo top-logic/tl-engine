@@ -3446,9 +3446,10 @@ button.tlMenu__item--disabled:hover {
 	text-overflow: ellipsis;
 }
 
-/* A flex row of its own - a business object with its icon, a group of radios - stays one in a cell
-   rather than the block the more specific rule for the root span asks for, and does not wrap. */
-.tlTableView__cell > .tlResourceCell,
+/* A flex row of its own - a value with its icon, a row of values, a group of radios - stays one in
+   a cell rather than the block the more specific rule for the root span asks for, and does not wrap. */
+.tlTableView__cell > .tl-field-value,
+.tlTableView__cell > .tl-select__values,
 .tlTableView__cell > .tl-choice-group {
 	display: flex;
 	flex-wrap: nowrap;
@@ -3467,17 +3468,16 @@ button.tlMenu__item--disabled:hover {
 	text-overflow: ellipsis;
 }
 
-/* The chips of a multi-valued selection follow each other in one row and are cut off at the column
-   edge, rather than wrapping into lines the row has no height for. */
-.tlTableView__cell > .tlDropdownSelect--immutable {
-	flex-wrap: nowrap;
+/* The values of a multi-valued selection follow each other in one row (see above) and are cut off
+   at the column edge, rather than wrapping into lines the row has no height for. */
+.tlTableView__cell > .tl-select__values {
 	overflow: hidden;
 	width: 100%;
 }
 
-/* Each chip keeps the width its label asks for, so a row of them is cut off at the column edge
-   instead of every chip being squeezed to nothing. */
-.tlTableView__cell > .tlDropdownSelect--immutable > * {
+/* Each value keeps the width its label asks for, so a row of them is cut off at the column edge
+   instead of every value being squeezed to nothing. */
+.tlTableView__cell > .tl-select__values > * {
 	flex-shrink: 0;
 }
 
@@ -3639,29 +3639,6 @@ button.tlMenu__item--disabled:hover {
 /* Emphasized text, e.g. the author name in a byline (opt-in via css-class="tlText--strong"). */
 .tlText--strong {
 	font-weight: 600;
-}
-
-/* --- TLResourceCell --------------------------------------------------------- */
-
-/* A business object drawn as its icon followed by its label. The two belong together and read as
-   one line, with the icon centered on the text and held off it by a gap. The object gives way to
-   whatever holds it - a tree node, a table cell, a pill - instead of pushing it wider. */
-.tlResourceCell {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--spacing-02);
-	max-width: 100%;
-	min-width: 0;
-}
-
-/* The label is the part of the object that gives way: the ellipsis of the surroundings - the tree
-   node content, the pill - ends at the flex row the object is, so the label carries the cut-off
-   itself. The white space is the one inherited from tree, table or pill, so a place that wraps
-   keeps wrapping. */
-.tlResourceLabel {
-	min-width: 0;
-	overflow: hidden;
-	text-overflow: ellipsis;
 }
 
 /* --- TLHtml ---------------------------------------------------------------- */
@@ -5179,309 +5156,6 @@ button.tlToolbar__menuTrigger:focus-visible {
 .tlToolbar__menuTrigger--icon,
 .tlAppBar--primary .tlToolbar__menuTrigger--icon {
 	box-shadow: none;
-}
-
-/* --- TLDropdownSelect -------------------------------------------------- */
-
-.tlDropdownSelect {
-	display: flex;
-	align-items: flex-start;
-	border: 1px solid var(--border-subtle);
-	border-radius: var(--corner-radius);
-	background-color: var(--field);
-	padding: var(--spacing-02) var(--spacing-03);
-	min-height: 2rem;
-	cursor: pointer;
-	box-sizing: border-box;
-	/* Same field typography as the text-like inputs, instead of the inherited body size. */
-	font-size: var(--body-compact-01-font-size);
-}
-
-.tlDropdownSelect:focus {
-	outline: 2px solid var(--focus);
-	outline-offset: -1px;
-}
-
-.tlDropdownSelect--open {
-	border-color: var(--focus);
-}
-
-.tlDropdownSelect--disabled {
-	opacity: 0.6;
-	cursor: default;
-	background-color: var(--field-disabled);
-}
-
-.tlDropdownSelect--immutable {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-02);
-	flex-wrap: wrap;
-	border: none;
-	background: none;
-	padding: 0;
-	min-height: auto;
-	cursor: default;
-}
-
-/* Chip area */
-.tlDropdownSelect__chips {
-	display: flex;
-	align-items: center;
-	flex-wrap: wrap;
-	gap: var(--spacing-02);
-	flex: 1;
-	min-width: 0;
-}
-
-.tlDropdownSelect__placeholder {
-	color: var(--text-secondary);
-	font-style: italic;
-}
-
-.tlDropdownSelect__empty {
-	color: var(--text-secondary);
-}
-
-/* The value of a single select: shown plainly, the way the read-only display shows it. */
-.tlDropdownSelect__value {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--spacing-02);
-	min-width: 0;
-	max-width: 100%;
-}
-
-.tlDropdownSelect__valueLabel {
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-/* Individual chip of a multi-select */
-.tlDropdownSelect__chip {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--spacing-02);
-	background-color: var(--layer-hover);
-	border-radius: 999px;
-	padding: 2px var(--spacing-03) 2px var(--spacing-02);
-	max-width: 100%;
-}
-
-.tlDropdownSelect__chipLabel {
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-.tlDropdownSelect__chipRemove {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	background: none;
-	border: none;
-	cursor: pointer;
-	color: var(--text-secondary);
-	font-size: 14px;
-	padding: 0 2px;
-	line-height: 1;
-}
-
-.tlDropdownSelect__chipRemove:hover {
-	color: var(--text-primary);
-}
-
-/* Controls area (clear, arrow) */
-.tlDropdownSelect__controls {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-02);
-	flex-shrink: 0;
-	margin-left: var(--spacing-02);
-}
-
-.tlDropdownSelect__clearAll {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	background: none;
-	border: none;
-	cursor: pointer;
-	color: var(--text-secondary);
-	font-size: 16px;
-	padding: 0 2px;
-	line-height: 1;
-}
-
-.tlDropdownSelect__clearAll:hover {
-	color: var(--text-primary);
-}
-
-.tlDropdownSelect__arrow {
-	color: var(--text-secondary);
-	font-size: 10px;
-}
-
-/* Read-only value */
-.tlOptionValue {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--spacing-02);
-}
-
-/* Dropdown (fixed position to escape overflow:hidden) */
-.tlDropdownSelect__dropdown {
-	position: fixed;
-	background-color: var(--field);
-	border: 1px solid var(--border-strong);
-	border-radius: var(--border-radius-02);
-	box-shadow: var(--shadow-menu);
-	display: flex;
-	flex-direction: column;
-	overflow: hidden;
-	z-index: 10000;
-}
-
-/* Search wrapper */
-.tlDropdownSelect__searchWrapper {
-	display: flex;
-	align-items: center;
-	padding: var(--spacing-02) var(--spacing-03);
-	border-bottom: 1px solid var(--border-subtle);
-}
-
-.tlDropdownSelect__searchIcon {
-	margin-right: var(--spacing-02);
-	font-size: 14px;
-	color: var(--text-secondary);
-}
-
-.tlDropdownSelect__search {
-	flex: 1;
-	border: none;
-	outline: none;
-	background: transparent;
-	font-size: inherit;
-	font-family: var(--font-family);
-	color: var(--text-primary);
-}
-
-/* Option list */
-.tlDropdownSelect__list {
-	overflow-y: auto;
-	max-height: 250px;
-}
-
-/* Single option */
-.tlDropdownSelect__option {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-03);
-	padding: var(--spacing-02) var(--spacing-03);
-	cursor: pointer;
-	color: var(--text-secondary);
-	line-height: 2rem;
-	white-space: nowrap;
-}
-
-.tlDropdownSelect__option:hover,
-.tlDropdownSelect__option--highlighted {
-	background-color: var(--layer-hover);
-	color: var(--text-primary);
-}
-
-.tlDropdownSelect__optionLabel {
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-/* Option image / icon */
-.tlOptionImage {
-	width: 20px;
-	height: 20px;
-	flex-shrink: 0;
-	object-fit: contain;
-}
-
-.tlOptionIcon {
-	font-size: 20px;
-	width: 20px;
-	height: 20px;
-	flex-shrink: 0;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-}
-
-/* Loading / Error / No results */
-.tlDropdownSelect__loading {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	padding: var(--spacing-05);
-}
-
-.tlDropdownSelect__spinner {
-	display: inline-block;
-	width: 20px;
-	height: 20px;
-	border: 2px solid var(--border-subtle);
-	border-top-color: var(--focus);
-	border-radius: 50%;
-	animation: tlDropdownSelectSpin 0.8s linear infinite;
-}
-
-@keyframes tlDropdownSelectSpin {
-	to { transform: rotate(360deg); }
-}
-
-.tlDropdownSelect__error {
-	padding: var(--spacing-04);
-	text-align: center;
-	color: var(--text-secondary);
-}
-
-.tlDropdownSelect__error a {
-	color: var(--link-primary);
-}
-
-.tlDropdownSelect__noResults {
-	padding: var(--spacing-04) var(--spacing-03);
-	text-align: center;
-	color: var(--text-secondary);
-	font-style: italic;
-}
-
-/* Drag handle for reorderable chips */
-.tlDropdownSelect__dragHandle {
-	cursor: grab;
-	color: var(--text-secondary);
-	font-size: 10px;
-	line-height: 1;
-	letter-spacing: -3px;
-	user-select: none;
-	flex-shrink: 0;
-	padding-right: 2px;
-}
-
-.tlDropdownSelect__dragHandle:active {
-	cursor: grabbing;
-}
-
-/* Chip being dragged */
-.tlDropdownSelect__chip--dragging {
-	opacity: 0.4;
-}
-
-/* Drop indicator: left border highlight */
-.tlDropdownSelect__chip--dropBefore {
-	box-shadow: -2px 0 0 0 var(--interactive);
-}
-
-/* Drop indicator: right border highlight */
-.tlDropdownSelect__chip--dropAfter {
-	box-shadow: 2px 0 0 0 var(--interactive);
 }
 
 /* --- TLColorInput ------------------------------------------------------ */

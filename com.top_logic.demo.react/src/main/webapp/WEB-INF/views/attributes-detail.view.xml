@@ -24,6 +24,7 @@
 					<de>Text</de>
 				</label>
 				<field attribute="name"/>
+				<field attribute="locked"/>
 				<field attribute="string"/>
 				<field attribute="multiLine"/>
 				<field attribute="html"/>

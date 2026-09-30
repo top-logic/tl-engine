@@ -9,18 +9,26 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Supplier;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.dnd.DragSourceControl;
 import com.top_logic.layout.react.control.dnd.DropEvent;
 import com.top_logic.layout.react.control.dnd.DropTarget;
+import com.top_logic.layout.react.control.dnd.DropVerdict;
+import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.command.DisabledIf;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewActionChain;
+import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * The {@link DropTarget} of a declared table: it accepts what the table's drops declare, and applies
@@ -32,6 +40,15 @@ import com.top_logic.model.util.TLModelUtil;
  * subtypes, so the client's comparison of tags accepts a subtype exactly as this side does. The
  * client thereby offers only a drop that can apply, and the drop that arrives is matched against the
  * same tags again - per declared drop this time, to find the one that applies.
+ * </p>
+ *
+ * <p>
+ * A drop is restricted in three stages, each asked only after the previous one accepted: its
+ * {@link Drop#executability() table-wide state} decides whether the drop is offered at all - a
+ * disabled drop contributes no tag and applies nothing; its {@link Drop#targetRule() target rule}
+ * decides over the row a {@link DropTargetMode#ROW row} drop is made on; its
+ * {@link Drop#refuseIf() refusal function} decides over the target and the dragged objects together.
+ * The first refusal is what the user is shown while dragging, see {@link #check(DropEvent)}.
  * </p>
  *
  * @see DropTargetMode
@@ -50,19 +67,64 @@ public class TableDropBinding implements DropTarget {
 	 *        the drop declares none. A {@link DropTargetMode#TABLE} drop writes {@code null}.
 	 * @param actions
 	 *        The action chain applying the drop, with the dropped objects as its input.
+	 * @param executability
+	 *        The table-wide state of the drop, asked anew on every use: while it is not
+	 *        executable, the drop is neither announced nor applied.
+	 * @param targetRule
+	 *        The rule deciding over the row a {@link DropTargetMode#ROW} drop is made on, the row
+	 *        being its input. Not asked for a {@link DropTargetMode#TABLE} drop.
+	 * @param refuseIf
+	 *        Computes the reason a drop is refused from the target row ({@code null} for a drop on
+	 *        the table) and the list of dropped objects; the result is interpreted as by
+	 *        {@link DisabledIf#stateFor(Object)}. {@code null} refuses nothing.
 	 */
 	public record Drop(Set<String> acceptedTags, DropTargetMode mode, ViewChannel targetChannel,
-			List<ViewAction> actions) {
-		// Value type.
+			List<ViewAction> actions, Supplier<ExecutableState> executability, ViewExecutabilityRule targetRule,
+			BiFunction<Object, List<?>, Object> refuseIf) {
+
+		/**
+		 * Creates an unrestricted {@link Drop}: always enabled, accepting every target.
+		 *
+		 * @see #Drop(Set, DropTargetMode, ViewChannel, List, Supplier, ViewExecutabilityRule,
+		 *      BiFunction)
+		 */
+		public Drop(Set<String> acceptedTags, DropTargetMode mode, ViewChannel targetChannel,
+				List<ViewAction> actions) {
+			this(acceptedTags, mode, targetChannel, actions, () -> ExecutableState.EXECUTABLE,
+				ViewExecutabilityRule.ALWAYS_EXECUTABLE, null);
+		}
+
+		/**
+		 * Whether the {@link #executability() table-wide state} currently lets the drop be offered.
+		 */
+		public boolean isEnabled() {
+			return executability.get().isExecutable();
+		}
+
+		/**
+		 * Asks the {@link #targetRule() target rule} (for a {@link DropTargetMode#ROW} drop) and
+		 * the {@link #refuseIf() refusal function} about a drop of the given objects on the given
+		 * target; the table-wide state is not asked here.
+		 *
+		 * @return The reason of the first refusal, {@code null} if the drop is accepted.
+		 */
+		ResKey refusal(Object target, List<?> objects) {
+			if (mode == DropTargetMode.ROW) {
+				ResKey refusal = reasonOf(targetRule.isExecutable(target));
+				if (refusal != null) {
+					return refusal;
+				}
+			}
+			if (refuseIf != null) {
+				return reasonOf(DisabledIf.stateFor(refuseIf.apply(target, objects)));
+			}
+			return null;
+		}
 	}
 
 	private final ReactContext _context;
 
 	private final List<Drop> _drops;
-
-	private final Set<String> _acceptedTags;
-
-	private final boolean _dropOnRows;
 
 	/**
 	 * Creates a {@link TableDropBinding}.
@@ -76,37 +138,79 @@ public class TableDropBinding implements DropTarget {
 	public TableDropBinding(ReactContext context, List<Drop> drops) {
 		_context = context;
 		_drops = drops;
-		Set<String> tags = new LinkedHashSet<>();
-		boolean onRows = false;
-		for (Drop drop : drops) {
-			tags.addAll(drop.acceptedTags());
-			onRows |= drop.mode() == DropTargetMode.ROW;
-		}
-		_acceptedTags = tags;
-		_dropOnRows = onRows;
 	}
 
 	/**
-	 * The qualified names of the accepted types and of their subtypes, over all declared drops.
+	 * The qualified names of the accepted types and of their subtypes, over all declared drops that
+	 * are currently {@link Drop#isEnabled() enabled}.
 	 */
 	@Override
 	public Collection<String> acceptedTypes() {
-		return _acceptedTags;
-	}
-
-	@Override
-	public boolean dropOnRows() {
-		return _dropOnRows;
+		Set<String> tags = new LinkedHashSet<>();
+		for (Drop drop : _drops) {
+			if (drop.isEnabled()) {
+				tags.addAll(drop.acceptedTags());
+			}
+		}
+		return tags;
 	}
 
 	/**
-	 * Applies the drop through the first declared drop that matches it.
+	 * Whether one of the currently {@link Drop#isEnabled() enabled} drops targets rows.
+	 */
+	@Override
+	public boolean dropOnRows() {
+		for (Drop drop : _drops) {
+			if (drop.mode() == DropTargetMode.ROW && drop.isEnabled()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Decides over the drop {@link #onDrop(DropEvent)} would apply.
+	 *
+	 * <p>
+	 * The drop is matched exactly as {@link #onDrop(DropEvent)} matches it, among the enabled drops,
+	 * and its {@link Drop#targetRule() target rule} and its {@link Drop#refuseIf() refusal function}
+	 * are asked in this order; the first refusal is the verdict. Where no enabled drop matches, a
+	 * matching disabled one gives the reason of its {@link Drop#executability() table-wide state};
+	 * a drop nothing matches at all is refused as not accepted. Nothing is modified, in particular
+	 * no target channel is written.
+	 * </p>
+	 */
+	@Override
+	public DropVerdict check(DropEvent event) {
+		String tag = draggedType(event);
+		if (tag == null) {
+			return DropVerdict.refused(com.top_logic.layout.react.I18NConstants.ERROR_DROP_NOT_ACCEPTED);
+		}
+		Drop drop = select(event, tag, true);
+		ResKey refusal;
+		if (drop != null) {
+			refusal = drop.refusal(targetOf(drop, event), event.objects());
+		} else {
+			Drop disabled = select(event, tag, false);
+			refusal = disabled == null ? com.top_logic.layout.react.I18NConstants.ERROR_DROP_NOT_ACCEPTED
+				: reasonOf(disabled.executability().get());
+			if (refusal == null) {
+				// The drop turned enabled between the two lookups; it is refused all the same.
+				refusal = I18NConstants.ERROR_DROP_REFUSED;
+			}
+		}
+		return refusal == null ? DropVerdict.ACCEPTED : DropVerdict.refused(refusal);
+	}
+
+	/**
+	 * Applies the drop through the first enabled declared drop that matches it.
 	 *
 	 * <p>
 	 * A drop made on a row is offered to the {@link DropTargetMode#ROW row} drops first, and falls
 	 * back to a {@link DropTargetMode#TABLE table} drop when none of them accepts the drag - a table
 	 * whose rows are targets for one kind of object still accepts another kind as a whole, wherever
-	 * the pointer happened to be. A drop nothing accepts does nothing.
+	 * the pointer happened to be. A drop nothing accepts does nothing, and neither does one whose
+	 * matching declared drop is {@link Drop#isEnabled() disabled}.
 	 * </p>
 	 */
 	@Override
@@ -115,27 +219,64 @@ public class TableDropBinding implements DropTarget {
 		if (tag == null) {
 			return;
 		}
-		List<?> objects = event.objects();
-		if (event.target() != null) {
-			Drop rowDrop = matching(DropTargetMode.ROW, tag);
-			if (rowDrop != null) {
-				apply(rowDrop, objects, event.target());
-				return;
-			}
-		}
-		Drop tableDrop = matching(DropTargetMode.TABLE, tag);
-		if (tableDrop != null) {
-			apply(tableDrop, objects, null);
+		Drop drop = select(event, tag, true);
+		if (drop != null) {
+			apply(drop, event.objects(), targetOf(drop, event));
 		}
 	}
 
-	private Drop matching(DropTargetMode mode, String tag) {
+	/**
+	 * The declared drop that applies a drop of the given tag: a matching row drop for a drop made on
+	 * a row, otherwise a matching table drop; {@code null} if none matches.
+	 *
+	 * @param enabledOnly
+	 *        Whether only the currently {@link Drop#isEnabled() enabled} drops are considered.
+	 */
+	private Drop select(DropEvent event, String tag, boolean enabledOnly) {
+		if (event.target() != null) {
+			Drop rowDrop = matching(DropTargetMode.ROW, tag, enabledOnly);
+			if (rowDrop != null) {
+				return rowDrop;
+			}
+		}
+		return matching(DropTargetMode.TABLE, tag, enabledOnly);
+	}
+
+	private Drop matching(DropTargetMode mode, String tag, boolean enabledOnly) {
 		for (Drop drop : _drops) {
-			if (drop.mode() == mode && drop.acceptedTags().contains(tag)) {
+			if (drop.mode() == mode && drop.acceptedTags().contains(tag) && (!enabledOnly || drop.isEnabled())) {
 				return drop;
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * The target the given declared drop applies a drop to: the row dropped on for a row drop,
+	 * {@code null} for a drop on the table.
+	 */
+	private static Object targetOf(Drop drop, DropEvent event) {
+		return drop.mode() == DropTargetMode.ROW ? event.target() : null;
+	}
+
+	/**
+	 * The reason a drop is refused by the given state, {@code null} if the state is executable.
+	 *
+	 * <p>
+	 * A state disabled for a reason of its own gives that reason; a hidden state, or one disabled
+	 * without a specific reason, gives the generic {@link I18NConstants#ERROR_DROP_REFUSED}.
+	 * </p>
+	 */
+	static ResKey reasonOf(ExecutableState state) {
+		if (state.isExecutable()) {
+			return null;
+		}
+		ResKey reason = state.getI18NReasonKey();
+		if (!state.isDisabled() || reason == null || reason == ResKey.NONE
+			|| reason == ExecutableState.NOT_EXEC_DISABLED_REASON) {
+			return I18NConstants.ERROR_DROP_REFUSED;
+		}
+		return reason;
 	}
 
 	/**

@@ -8,6 +8,10 @@ import type { ButtonStateJson } from '../state/control-state';
  * {@link ButtonStateJson.image}. A component that renders a control's state with a component library
  * passes the element this renders to the library, e.g. as the icon of a library button.</p>
  *
+ * <p>The glyph is decorative and hidden from assistive technology; whoever needs a name puts it on
+ * the element around the icon. The size is a class ({@code tl-icon-sm} etc., design system), never an
+ * inline width - an {@code <img>} carrying a size class is a square of that size.</p>
+ *
  * <p>Supported encoded formats:</p>
  * <ul>
  *   <li>{@code css:fa-solid fa-home} — icon font (monochrome)</li>
@@ -24,15 +28,15 @@ export function ThemeIcon({ encoded, className }: { encoded: string; className?:
   }
   if (encoded.startsWith('css:')) {
     const cssClass = encoded.substring(4);
-    return <i className={cssClass + (className ? ' ' + className : '')} />;
+    return <i className={cssClass + (className ? ' ' + className : '')} aria-hidden="true" />;
   }
   if (encoded.startsWith('colored:')) {
     const cssClass = encoded.substring(8);
-    return <i className={cssClass + (className ? ' ' + className : '')} />;
+    return <i className={cssClass + (className ? ' ' + className : '')} aria-hidden="true" />;
   }
   if (encoded.startsWith('/') || encoded.startsWith('theme:')) {
-    return <img src={encoded} alt="" className={className} style={{ width: '1em', height: '1em' }} />;
+    return <img src={encoded} alt="" className={className} />;
   }
   // Fallback: try as CSS class
-  return <i className={encoded + (className ? ' ' + className : '')} />;
+  return <i className={encoded + (className ? ' ' + className : '')} aria-hidden="true" />;
 }

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<table>
+		<drop accept="tl.core:String">
+			<target-executability>
+				<null-input-disabled/>
+			</target-executability>
+			<execute-script function="rows -> $rows"/>
+		</drop>
+		<columns>
+			<computed-column name="value"
+				type="tl.core:String"
+			>
+				<value>row -&gt; $row</value>
+			</computed-column>
+		</columns>
+		<rows>['free']</rows>
+	</table>
+</view>

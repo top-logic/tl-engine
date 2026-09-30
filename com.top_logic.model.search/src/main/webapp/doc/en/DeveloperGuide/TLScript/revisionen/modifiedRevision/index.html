@@ -3,6 +3,16 @@
 </pre>
 <h2>Description</h2>
 <p>Determines the revision in which a business object was last modified.</p>
+<p>A modification is a change of any stored attribute value of the object. This includes values that are not stored in the object's own table row, such as references stored in link tables and translations of internationalized attributes.</p>
+<p>Compositions are handled depending on how their parts are stored:</p>
+<ul>
+ <li>Parts stored in a link table (the default): Adding a part to or removing a part from the composition counts as a modification of the container, a change within a part does not.</li>
+ <li>Parts that store their container in their own table row: Every change of such a part also counts as a modification of the container.</li>
+</ul>
+<p>To find the changes of a whole composition subtree, use the function <a class="tlObject" data-custom="true" href="?page=changeLog&amp;uuid=489d4ea1-3820-4fe1-9d2f-b04830ff7077">changeLog</a>, e.g. <code class="hljs inlineCode">$object.changeLog(1, true)</code>.</p>
+<p>For each table in which the attributes of the object's type store values, the function executes an indexed database query. It can be used in table columns, but it is not free: Prefer it over loading the full change history, but avoid evaluating it needlessly for large numbers of objects.</p>
+<h3>Notes for Java developers</h3>
+<p>The Java entry point for this computation is <code class="hljs inlineCode">com.top_logic.element.changelog.LastChangeRevision#of(TLObject)</code>. In contrast, <code class="hljs inlineCode">TLObject#tLastModificationDate()</code>, <code class="hljs inlineCode">TLObject#tLastModificationTime()</code>, <code class="hljs inlineCode">TLObject#tLastModifier()</code> and the life-cycle attribute <code class="hljs inlineCode">modified</code> only reflect changes of the object's own table row.</p>
 <h2>Parameters</h2>
 <table class="tlDocTable">
  <thead>

@@ -14,7 +14,7 @@ import com.top_logic.knowledge.service.Revision;
  */
 public class HistoryQueryArguments extends QueryArguments<HistoryQueryArguments> {
 	
-	private long startRevision = 1;
+	private long startRevision = Revision.FIRST_REV;
 
 	private long stopRevision = Revision.CURRENT_REV;
 	

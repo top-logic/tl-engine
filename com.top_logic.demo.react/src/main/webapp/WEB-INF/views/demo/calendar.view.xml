@@ -76,9 +76,7 @@
 							<executability>
 								<null-input-disabled/>
 							</executability>
-							<with-transaction>
-								<execute-script function="obj -> { if($obj != null, $obj.delete(), null); null; }"/>
-							</with-transaction>
+							<delete-object/>
 							<write-channel name="appointment"/>
 						</generic-command>
 					</commands>

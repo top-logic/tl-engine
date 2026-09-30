@@ -12,6 +12,7 @@ import java.util.function.Consumer;
 import com.top_logic.element.meta.form.validation.FormValidationModel;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.react.ReactContext;
@@ -24,6 +25,10 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.form.ConstraintValidationListener;
 import com.top_logic.model.impl.TransientObjectFactory;
+import com.top_logic.model.security.ModelAccessRights;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
+import com.top_logic.util.TLContext;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Base class for form controls that display and edit a set of row objects inline.
@@ -404,6 +409,54 @@ public abstract class AbstractCompositionControl extends ReactControl
 			}
 		}
 		return valid;
+	}
+
+	/**
+	 * Checks the write right of every changed row and the right to create every added row.
+	 *
+	 * <p>
+	 * A row added to the rows of a persistent form object is created when the form is saved: the
+	 * user needs the right to create an object of its type in the context of the form object and,
+	 * for rows of an attribute of the form object, the right to write that attribute. Rows of a
+	 * transient form object become persistent together with it, where that creation is checked.
+	 * </p>
+	 */
+	@Override
+	public void checkApplyState() {
+		if (_fieldModel == null) {
+			return;
+		}
+		for (CompositionRowModel row : _rowModels) {
+			TLObjectOverlay overlay = row.getRowOverlay();
+			if (overlay != null && overlay.isDirty()) {
+				overlay.checkApply();
+			}
+		}
+		if (!isTransientOwner()) {
+			checkCreateRights();
+		}
+	}
+
+	private void checkCreateRights() {
+		TLObjectOverlay formOverlay = _formControl.getOverlay();
+		TLObject parent = formOverlay != null ? formOverlay.getBase() : null;
+		TLStructuredTypePart part = parent != null ? _binding.getBoundPart() : null;
+		ModelAccessRights rights = ModelAccessRights.getInstance();
+		Person user = TLContext.currentUser();
+		for (TLObject row : _fieldModel.getCurrentList()) {
+			if (row instanceof TLObjectOverlay || !row.tTransient()) {
+				continue;
+			}
+			TLClass type = (TLClass) row.tType();
+			boolean allowed = part == null
+				? rights.isAllowedCreate(user, type, (TLObject) null)
+				: rights.isAllowedCreate(user, type, parent)
+					&& rights.isAllowed(user, parent, part, SimpleBoundCommandGroup.WRITE);
+			if (!allowed) {
+				throw new TopLogicException(
+					com.top_logic.element.model.copy.I18NConstants.ERROR_PERSIST_PERMISSION_DENIED__TYPE.fill(type));
+			}
+		}
 	}
 
 	@Override

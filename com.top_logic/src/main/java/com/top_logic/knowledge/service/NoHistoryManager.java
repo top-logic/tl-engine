@@ -138,6 +138,11 @@ public class NoHistoryManager implements HistoryManager {
 	}
 
 	@Override
+	public long getFirstRevision() {
+		return Revision.CURRENT_REV;
+	}
+
+	@Override
 	public long getLastUpdate(KnowledgeItem item) {
 		return Revision.CURRENT_REV;
 	}

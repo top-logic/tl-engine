@@ -1,0 +1,16 @@
+error /\[ERROR\] test\.TestAll/
+
+# Problems reported by com.top_logic.build.doclet.TLDoclet
+warn /TLDoclet: /
+
+# Problems reported by resource check
+warn /Resource check: /
+warn /\[ERROR\] Files have been changed during build:/
+
+# Duplicate classes on the classpath
+warn /\[WARNING\] Found duplicate and different classes in/
+
+# Some test VM crashed?
+error /\(core dumped\)/
+error /Process Exit Code: -?[1-9]\d*/
+error /The forked VM terminated without properly saying goodbye\. VM crash or System\.exit called\?/

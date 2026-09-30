@@ -18,9 +18,11 @@
 #      `[INFO]   from <dir>/pom.xml`, which yields the module directories
 #      exactly as Maven resolves <modules> and profiles.
 #   3. Mode:
-#        full     A changed file belongs to the build definition outside all
-#                 modules: the root pom.xml (parent of every module),
-#                 anything under ci/, the Jenkinsfile, anything under .mvn/.
+#        full     The option --full is given, or a changed file belongs to the
+#                 build definition outside all modules: the root pom.xml
+#                 (parent of every module), anything under ci/, the
+#                 Jenkinsfile, anything under .mvn/. With --full, no diff is
+#                 computed.
 #        none     No changed file lies in a reactor module (docs/, specs/,
 #                 .claude/, README.md, ...).
 #        partial  Otherwise. Each changed file is attributed to the nearest
@@ -46,9 +48,10 @@
 # and a warning is printed.
 #
 # Usage:
-#   ci/affected-modules.sh [--target <ref>] [--base <rev>] [--head <rev>]
-#                          [--output <file>]
+#   ci/affected-modules.sh [--full] [--target <ref>] [--base <rev>]
+#                          [--head <rev>] [--output <file>]
 #
+#   --full           Select the full mode, independent of the changed files.
 #   --target <ref>   Branch the PR is merged into (default: origin/master).
 #   --base <rev>     Commit to diff against (default: merge-base of <target>
 #                    and <head>).
@@ -124,12 +127,14 @@ die() {
     exit 1
 }
 
+FULL=
 TARGET=origin/master
 BASE=
 HEAD_REV=HEAD
 OUTPUT=
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --full)   FULL=1; shift ;;
         --target) [[ $# -ge 2 ]] || usage; TARGET="$2"; shift 2 ;;
         --base)   [[ $# -ge 2 ]] || usage; BASE="$2"; shift 2 ;;
         --head)   [[ $# -ge 2 ]] || usage; HEAD_REV="$2"; shift 2 ;;
@@ -143,7 +148,9 @@ ROOT="$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)" || d
 cd "$ROOT"
 
 HEAD_SHA="$(git rev-parse --verify --quiet "$HEAD_REV^{commit}")" || die "Unknown head revision: $HEAD_REV"
-if [[ -z "$BASE" ]]; then
+if [[ -n "$FULL" ]]; then
+    BASE_SHA="$HEAD_SHA"
+elif [[ -z "$BASE" ]]; then
     git rev-parse --verify --quiet "$TARGET^{commit}" > /dev/null || die "Unknown target: $TARGET"
     BASE_SHA="$(git merge-base "$TARGET" "$HEAD_SHA")" || die "No merge base of $TARGET and $HEAD_REV."
 else
@@ -181,9 +188,11 @@ join_commas() {
 
 # --- 1. Changed files ------------------------------------------------------
 CHANGED_FILES=()
-while IFS= read -r -d '' f; do
-    CHANGED_FILES+=("$f")
-done < <(git diff -z --name-only --no-renames "$BASE_SHA" "$HEAD_SHA")
+if [[ -z "$FULL" ]]; then
+    while IFS= read -r -d '' f; do
+        CHANGED_FILES+=("$f")
+    done < <(git diff -z --name-only --no-renames "$BASE_SHA" "$HEAD_SHA")
+fi
 
 # --- 2. Reactor modules ----------------------------------------------------
 # Module directory by "<groupId>:<artifactId>", and the set of module
@@ -205,7 +214,7 @@ while read -r ga pom; do
 done < "$REACTOR_OUT"
 
 # --- 3. Mode and changed modules -------------------------------------------
-full_trigger=
+full_trigger="${FULL:+--full}"
 declare -A CHANGED_SET=()
 for f in ${CHANGED_FILES[@]+"${CHANGED_FILES[@]}"}; do
     if [[ "$f" =~ $FULL_BUILD_PATTERN ]]; then
@@ -267,7 +276,12 @@ done
 {
     echo ">>> Base ${BASE_SHA:0:10}, head ${HEAD_SHA:0:10}: ${#CHANGED_FILES[@]} changed files, ${#ALL_MODULES[@]} reactor modules."
     case "$MODE" in
-        "$MODE_FULL")    echo ">>> Mode $MODE: build definition changed ($full_trigger)." ;;
+        "$MODE_FULL")
+            if [[ -n "$FULL" ]]; then
+                echo ">>> Mode $MODE: requested by --full."
+            else
+                echo ">>> Mode $MODE: build definition changed ($full_trigger)."
+            fi ;;
         "$MODE_NONE")    echo ">>> Mode $MODE: no reactor module changed." ;;
         "$MODE_PARTIAL") echo ">>> Mode $MODE: ${#CHANGED_MODULES[@]} changed modules: ${CHANGED_MODULES[*]}" ;;
     esac

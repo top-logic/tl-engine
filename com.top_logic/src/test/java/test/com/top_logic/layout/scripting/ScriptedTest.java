@@ -15,6 +15,7 @@ import java.util.TimeZone;
 import test.com.top_logic.basic.AssertProtocol;
 import test.com.top_logic.basic.DeactivatedTest;
 import test.com.top_logic.basic.LogListeningTestCase;
+import test.com.top_logic.basic.util.ScriptedTestMarker;
 import test.com.top_logic.layout.scripting.runtime.TestedApplicationSession;
 
 import com.top_logic.basic.Logger;
@@ -50,7 +51,7 @@ import com.top_logic.layout.scripting.runtime.action.ApplicationAssertion;
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
 @DeactivatedTest("No test case in narrower sense.")
-public final class ScriptedTest extends LogListeningTestCase {
+public final class ScriptedTest extends LogListeningTestCase implements ScriptedTestMarker {
 
 	private static final boolean TREAT_WARNINGS_AS_ERRORS = false;
 

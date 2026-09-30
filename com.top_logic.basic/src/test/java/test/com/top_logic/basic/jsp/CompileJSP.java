@@ -16,6 +16,8 @@ import java.util.stream.Collectors;
 
 import junit.framework.Test;
 
+import test.com.top_logic.basic.ScratchDirectory;
+
 import com.top_logic.basic.core.workspace.PathInfo;
 import com.top_logic.basic.core.workspace.Workspace;
 
@@ -39,7 +41,13 @@ public class CompileJSP {
 	 */
 	public static final boolean USE_JAVAC = false;
 
-	static final String TMP_DIR = "tmp/jsp";
+	/**
+	 * Name of the directory within the {@link ScratchDirectory} for files created when compiling
+	 * JSPs.
+	 */
+	public static final String JSP_SCRATCH_DIR = "jsp";
+
+	static final String TMP_DIR = ScratchDirectory.get(JSP_SCRATCH_DIR).getPath();
 
 	/** {@link FileFilter} accepting files that ends with "jsp" */
 	static FileFilter JSP_FILTER = new FileFilter() {

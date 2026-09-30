@@ -15,7 +15,6 @@ import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URLEncoder;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -49,6 +48,7 @@ import org.apache.tomcat.util.scan.StandardJarScanner;
 import org.xml.sax.SAXException;
 
 import test.com.top_logic.basic.ReflectionUtils;
+import test.com.top_logic.basic.ScratchDirectory;
 import test.com.top_logic.basic.jsp.CompileJSP;
 import test.com.top_logic.layout.scripting.runtime.TestedApplicationSession.ApplicationRequest;
 
@@ -405,7 +405,7 @@ public class TestedApplication implements Application {
 				} else if (COMPILER_TARGET_VM.equals(name)) {
 					param = CompileJSP.TARGET_VM_VERSION;
 				} else if (COMPILER_SCRATCH_DIR.equals(name)) {
-					File tmpDir = new File("tmp/jsp");
+					File tmpDir = ScratchDirectory.get(CompileJSP.JSP_SCRATCH_DIR);
 					tmpDir.mkdirs();
 					param = tmpDir.getAbsolutePath();
 				} else {
@@ -686,7 +686,7 @@ public class TestedApplication implements Application {
 	}
 
 	private File createWebXml() throws IOException {
-		Path tmpDir = createDirectories(Paths.get("tmp"));
+		Path tmpDir = createDirectories(ScratchDirectory.get().toPath());
 		Path webXml = createTempFile(tmpDir, "web", ".xml");
 		return WebXmlBuilder.createFromClassPath(applicationRoot)
 			.dumpTo(webXml.toFile());

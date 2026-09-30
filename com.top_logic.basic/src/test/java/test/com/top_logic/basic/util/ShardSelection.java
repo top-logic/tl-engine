@@ -39,6 +39,11 @@ import test.com.top_logic.basic.TestUtils;
  * </dl>
  *
  * <p>
+ * The system property {@link #MODULES_PROPERTY} lists the modules whose scripted tests are
+ * distributed over the same shards, see {@link #moduleOffset(String, String)}.
+ * </p>
+ *
+ * <p>
  * The values partition the tests: a run with {@value #NONE_VALUE} together with the runs of all
  * shards <code>1/n</code> to <code>n/n</code> executes each test of {@value #ALL_VALUE} exactly
  * once.
@@ -51,11 +56,16 @@ import test.com.top_logic.basic.TestUtils;
  * </p>
  *
  * <p>
- * Assignment rule (see {@link #distribute(List, Function, ToIntFunction, int)}): the units are
- * sorted by decreasing weight (number of test cases) and, for equal weight, by increasing
- * {@link ScriptedTestUnit#getKey() key}. In this order, each unit is assigned to the shard with the
- * currently smallest total weight (the shard with the lowest number on a tie). The assignment
- * depends only on the keys and weights of all units, so every shard JVM computes the same
+ * Assignment rule (see {@link #distribute(List, Function, ToIntFunction, int, int)}): the units
+ * of a module are sorted by decreasing weight (number of test cases) and, for equal weight, by
+ * increasing {@link ScriptedTestUnit#getKey() key}. In this order, each unit is assigned to the
+ * shard with the currently smallest total weight. On a tie, the shards are preferred in the order
+ * <code>offset</code>, <code>offset + 1</code>, ... (modulo the shard count, 0-based), where the
+ * offset is the index of the module in the list {@link #MODULES_PROPERTY} (0, if the module is not
+ * listed, see {@link #moduleOffset(String, String)}). Since each module distributes its units
+ * independently, the offset spreads the units of modules with few units over different shards
+ * instead of putting all of them into shard 1. The assignment depends only on the module list, the
+ * module name, and the keys and weights of all units, so every shard JVM computes the same
  * assignment.
  * </p>
  *
@@ -82,6 +92,24 @@ public final class ShardSelection {
 	 * Separator between shard number and shard count in a value of {@link #PROPERTY}.
 	 */
 	public static final String SHARD_SEPARATOR = "/";
+
+	/**
+	 * Name of the system property listing the modules that distribute their scripted tests over
+	 * the same shards, in a fixed order.
+	 *
+	 * <p>
+	 * The value is a list of module directory names or paths separated by
+	 * {@link #MODULE_SEPARATOR}, e.g. <code>com.top_logic.demo,test-migrate-apps/test-app-rewrite</code>.
+	 * </p>
+	 *
+	 * @see #moduleOffset(String, String)
+	 */
+	public static final String MODULES_PROPERTY = "TestAll.shardModules";
+
+	/**
+	 * Separator of the entries in a value of {@link #MODULES_PROPERTY}.
+	 */
+	public static final String MODULE_SEPARATOR = ",";
 
 	/**
 	 * Selection running all tests.
@@ -185,22 +213,26 @@ public final class ShardSelection {
 	/**
 	 * Selects the units run by this selection.
 	 *
+	 * @param offset
+	 *        The 0-based index of the shard preferred on a tie, see
+	 *        {@link #moduleOffset(String, String)}.
 	 * @param units
-	 *        All units, in any order.
+	 *        All units of the module, in any order.
 	 * @param key
 	 *        Stable identifier of a unit.
 	 * @param weight
 	 *        Estimated cost of a unit.
 	 * @return The units selected by this selection, in the order of the given units.
 	 */
-	public <U> List<U> select(List<U> units, Function<? super U, String> key, ToIntFunction<? super U> weight) {
+	public <U> List<U> select(int offset, List<U> units, Function<? super U, String> key,
+			ToIntFunction<? super U> weight) {
 		if (_count == 0) {
 			return new ArrayList<>(units);
 		}
 		if (_count < 0) {
 			return new ArrayList<>();
 		}
-		Set<U> selected = identitySet(distribute(units, key, weight, _count).get(_shard - 1));
+		Set<U> selected = identitySet(distribute(units, key, weight, _count, offset).get(_shard - 1));
 		List<U> result = new ArrayList<>();
 		for (U unit : units) {
 			if (selected.contains(unit)) {
@@ -211,12 +243,68 @@ public final class ShardSelection {
 	}
 
 	/**
+	 * The index of the given module in a list of modules, used as offset for
+	 * {@link #distribute(List, Function, ToIntFunction, int, int)}.
+	 *
+	 * @param modules
+	 *        A value of {@link #MODULES_PROPERTY}, see {@link #parseModules(String)}. May be
+	 *        <code>null</code>.
+	 * @param module
+	 *        The name of the module directory.
+	 * @return The 0-based index of the module in the list, 0 if the module is not listed.
+	 */
+	public static int moduleOffset(String modules, String module) {
+		int index = parseModules(modules).indexOf(module);
+		return index < 0 ? 0 : index;
+	}
+
+	/**
+	 * The module offset configured in the system property {@link #MODULES_PROPERTY}.
+	 *
+	 * @see #moduleOffset(String, String)
+	 */
+	public static int moduleOffset(String module) {
+		return moduleOffset(System.getProperty(MODULES_PROPERTY), module);
+	}
+
+	/**
+	 * Parses a value of {@link #MODULES_PROPERTY}.
+	 *
+	 * <p>
+	 * Entries are separated by {@link #MODULE_SEPARATOR}. Each entry is reduced to its last path
+	 * segment, the name of the module directory. Blank entries are ignored.
+	 * </p>
+	 *
+	 * @param value
+	 *        The value to parse, may be <code>null</code>.
+	 * @return The module directory names in the given order.
+	 */
+	public static List<String> parseModules(String value) {
+		List<String> result = new ArrayList<>();
+		if (value == null) {
+			return result;
+		}
+		for (String entry : value.split(MODULE_SEPARATOR)) {
+			String path = entry.trim().replace('\\', '/');
+			while (path.endsWith("/")) {
+				path = path.substring(0, path.length() - 1);
+			}
+			String name = path.substring(path.lastIndexOf('/') + 1).trim();
+			if (!name.isEmpty()) {
+				result.add(name);
+			}
+		}
+		return result;
+	}
+
+	/**
 	 * Distributes units among shards.
 	 *
 	 * <p>
 	 * The units are sorted by decreasing weight and, for equal weight, by increasing key. In this
-	 * order, each unit is added to the shard with the smallest total weight so far (the first such
-	 * shard on a tie).
+	 * order, each unit is added to the shard with the smallest total weight so far. On a tie, the
+	 * first such shard in the order <code>offset</code>, <code>offset + 1</code>, ... (modulo
+	 * <code>shardCount</code>) is chosen.
 	 * </p>
 	 *
 	 * @param units
@@ -227,10 +315,13 @@ public final class ShardSelection {
 	 *        Estimated cost of a unit.
 	 * @param shardCount
 	 *        The number of shards.
+	 * @param offset
+	 *        The 0-based index of the shard preferred on a tie, see
+	 *        {@link #moduleOffset(String, String)}.
 	 * @return For each shard (index 0 is shard 1), the units assigned to it.
 	 */
 	public static <U> List<List<U>> distribute(List<U> units, Function<? super U, String> key,
-			ToIntFunction<? super U> weight, int shardCount) {
+			ToIntFunction<? super U> weight, int shardCount, int offset) {
 		List<U> sorted = new ArrayList<>(units);
 		Comparator<U> byWeight = Comparator.<U> comparingInt(weight::applyAsInt).reversed();
 		Collections.sort(sorted, byWeight.thenComparing(key::apply));
@@ -241,8 +332,9 @@ public final class ShardSelection {
 			result.add(new ArrayList<>());
 		}
 		for (U unit : sorted) {
-			int target = 0;
-			for (int n = 1; n < shardCount; n++) {
+			int target = Math.floorMod(offset, shardCount);
+			for (int k = 1; k < shardCount; k++) {
+				int n = Math.floorMod(offset + k, shardCount);
 				if (load[n] < load[target]) {
 					target = n;
 				}
@@ -264,14 +356,17 @@ public final class ShardSelection {
 	 * their tests are removed.
 	 * </p>
 	 *
+	 * @param offset
+	 *        The 0-based index of the shard preferred on a tie, see
+	 *        {@link #moduleOffset(String, String)}.
 	 * @param root
 	 *        The test tree to reduce in place.
 	 * @return The given root test. It may be empty, if nothing is selected.
 	 */
-	public Test apply(Test root) {
+	public Test apply(int offset, Test root) {
 		List<Test> units = new ArrayList<>();
 		collectUnits(root, units);
-		List<Test> selected = select(units, ShardSelection::unitKey, Test::countTestCases);
+		List<Test> selected = select(offset, units, ShardSelection::unitKey, Test::countTestCases);
 		if (!isAll()) {
 			report(units, selected);
 		}

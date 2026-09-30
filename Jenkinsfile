@@ -82,6 +82,9 @@ import groovy.transform.Field
 @Field final String PROP_SCRIPTED = 'TestAll.scripted'
 @Field final String SCRIPTED_NONE = 'none'
 
+/** Modules sharing the shards, see test.com.top_logic.basic.util.ShardSelection. */
+@Field final String PROP_SHARD_MODULES = 'TestAll.shardModules'
+
 /** Scratch directory property, see test.com.top_logic.basic.ScratchDirectory. */
 @Field final String PROP_SCRATCH_DIR = 'TestAll.scratchDir'
 
@@ -202,6 +205,7 @@ pipeline {
 							maven("surefire:test -pl ${selection[KEY_SCRIPTED]}" +
 								' -DskipTests=false -Dmaven.test.failure.ignore=true' +
 								" -D${PROP_SCRIPTED}=${shard}/${shards}" +
+								" -D${PROP_SHARD_MODULES}=${selection[KEY_SCRIPTED]}" +
 								" -D${PROP_SCRATCH_DIR}=tmp/shard-${shard}" +
 								" -Dsurefire.reportNameSuffix=shard-${shard}", shard)
 						}

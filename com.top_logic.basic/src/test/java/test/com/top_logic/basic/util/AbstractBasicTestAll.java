@@ -53,6 +53,9 @@ import com.top_logic.basic.tooling.ModuleLayoutConstants;
  * shard, see {@link ShardSelection}. With a directory in
  * {@link #TARGET_PROPERTY}, the selection applies to the tests of that directory. With a single
  * file in {@link #TARGET_PROPERTY}, the selection is ignored.</dd>
+ * <dt>{@link ShardSelection#MODULES_PROPERTY}</dt>
+ * <dd>The modules whose scripted tests are distributed over the same shards, see
+ * {@link ShardSelection#moduleOffset(String, String)}.</dd>
  * <dt>{@link ScratchDirectory#PROPERTY}</dt>
  * <dd>The directory for temporary test files, see {@link ScratchDirectory}.</dd>
  * </dl>
@@ -249,7 +252,7 @@ public abstract class AbstractBasicTestAll {
 				collector.addTestForDirectory(suite, testDirectory, recursive);
 			}
 		}
-		_scripted.apply(suite);
+		_scripted.apply(ShardSelection.moduleOffset(MODULE_LAYOUT.getModuleDir().getName()), suite);
 		if (suite.countTestCases() == 0) {
 			String testName = "No tests in directory '" + createTestName(testDirectory) + "'.";
 			suite.addTest(SimpleTestFactory.newSuccessfulTest(testName));

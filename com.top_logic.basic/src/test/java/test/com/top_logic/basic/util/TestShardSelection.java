@@ -33,6 +33,8 @@ public class TestShardSelection extends TestCase {
 
 	private static final ToIntFunction<Unit> WEIGHT = Unit::weight;
 
+	private static final int OFFSET = 1;
+
 	/**
 	 * Unit to distribute in the tests.
 	 * 
@@ -86,16 +88,18 @@ public class TestShardSelection extends TestCase {
 	public void testCompleteAndDisjoint() {
 		List<Unit> units = randomUnits(100, 4711);
 		for (int count = 1; count <= 9; count++) {
-			List<List<Unit>> shards = ShardSelection.distribute(units, KEY, WEIGHT, count);
-			assertEquals(count, shards.size());
-			List<Unit> union = new ArrayList<>();
-			shards.forEach(union::addAll);
-			assertEquals(units.size(), union.size());
-			assertEquals(new HashSet<>(units), new HashSet<>(union));
+			for (int offset = 0; offset < count; offset++) {
+				List<List<Unit>> shards = ShardSelection.distribute(units, KEY, WEIGHT, count, offset);
+				assertEquals(count, shards.size());
+				List<Unit> union = new ArrayList<>();
+				shards.forEach(union::addAll);
+				assertEquals(units.size(), union.size());
+				assertEquals(new HashSet<>(units), new HashSet<>(union));
+			}
 
 			List<Unit> selectedUnion = new ArrayList<>();
 			for (int shard = 1; shard <= count; shard++) {
-				selectedUnion.addAll(ShardSelection.shard(shard, count).select(units, KEY, WEIGHT));
+				selectedUnion.addAll(ShardSelection.shard(shard, count).select(OFFSET, units, KEY, WEIGHT));
 			}
 			assertEquals(units.size(), selectedUnion.size());
 			assertEquals(new HashSet<>(units), new HashSet<>(selectedUnion));
@@ -107,12 +111,117 @@ public class TestShardSelection extends TestCase {
 	 */
 	public void testDeterministic() {
 		List<Unit> units = randomUnits(60, 42);
-		Map<String, Integer> expected = assignment(ShardSelection.distribute(units, KEY, WEIGHT, 5));
-		for (int n = 0; n < 10; n++) {
-			List<Unit> shuffled = new ArrayList<>(units);
-			Collections.shuffle(shuffled, new Random(n));
-			assertEquals(expected, assignment(ShardSelection.distribute(shuffled, KEY, WEIGHT, 5)));
+		for (int offset = 0; offset < 5; offset++) {
+			Map<String, Integer> expected =
+				assignment(ShardSelection.distribute(units, KEY, WEIGHT, 5, offset));
+			for (int n = 0; n < 10; n++) {
+				List<Unit> shuffled = new ArrayList<>(units);
+				Collections.shuffle(shuffled, new Random(n));
+				assertEquals(expected, assignment(ShardSelection.distribute(shuffled, KEY, WEIGHT, 5, offset)));
+			}
 		}
+	}
+
+	/**
+	 * Tests that the offset decides the shard of a single unit.
+	 */
+	public void testSingleUnitOffset() {
+		List<Unit> single = Collections.singletonList(new Unit("single", 7));
+		for (int offset = 0; offset < 4; offset++) {
+			assertEquals(offset, shardOf("single", ShardSelection.distribute(single, KEY, WEIGHT, 4, offset)));
+		}
+		// Offsets outside the shard range wrap around.
+		assertEquals(1, shardOf("single", ShardSelection.distribute(single, KEY, WEIGHT, 4, 5)));
+		assertEquals(3, shardOf("single", ShardSelection.distribute(single, KEY, WEIGHT, 4, -1)));
+	}
+
+	/**
+	 * Tests parsing a value of {@link ShardSelection#MODULES_PROPERTY}.
+	 */
+	public void testParseModules() {
+		assertEquals(Collections.emptyList(), ShardSelection.parseModules(null));
+		assertEquals(Collections.emptyList(), ShardSelection.parseModules(""));
+		assertEquals(Collections.emptyList(), ShardSelection.parseModules(" , ,"));
+		assertEquals(Arrays.asList("com.top_logic.demo", "test-app-7-4-0", "test-app-rewrite", "b"),
+			ShardSelection.parseModules(
+				" com.top_logic.demo ,test-migrate-apps/test-app-7-4-0,, test-migrate-apps\\test-app-rewrite/ ,a/b"));
+	}
+
+	/**
+	 * Tests looking up the offset of a module.
+	 */
+	public void testModuleOffset() {
+		String modules = "com.top_logic.demo,test-migrate-apps/test-app-7-4-0,test.com.top_logic.kafka.demo";
+		assertEquals(0, ShardSelection.moduleOffset(modules, "com.top_logic.demo"));
+		assertEquals(1, ShardSelection.moduleOffset(modules, "test-app-7-4-0"));
+		assertEquals(2, ShardSelection.moduleOffset(modules, "test.com.top_logic.kafka.demo"));
+
+		// Not listed, or no list.
+		assertEquals(0, ShardSelection.moduleOffset(modules, "com.top_logic.doc.app"));
+		assertEquals(0, ShardSelection.moduleOffset(null, "com.top_logic.demo"));
+		assertEquals(0, ShardSelection.moduleOffset("", "com.top_logic.demo"));
+	}
+
+	/**
+	 * Simulates the distribution of the modules with scripted tests of the engine over four
+	 * shards: the single-unit modules are spread over the shards.
+	 */
+	public void testModuleList() {
+		String modules = "com.top_logic.demo,com.top_logic.doc.app,test-migrate-apps/test-app-7-5-0-M1,"
+			+ "test-migrate-apps/test-app-7-4-0,test-migrate-apps/test-app-7-9-3,"
+			+ "test-migrate-apps/test-app-rewrite,test.com.top_logic.kafka.demo";
+		int count = 4;
+
+		List<Unit> demo = new ArrayList<>();
+		demo.add(new Unit("TestDemo", 76));
+		for (int n = 0; n < 90; n++) {
+			demo.add(new Unit("demo" + n, 1 + n % 11));
+		}
+		assertEquals(0, shardOf("TestDemo",
+			ShardSelection.distribute(demo, KEY, WEIGHT, count, ShardSelection.moduleOffset(modules, "com.top_logic.demo"))));
+
+		Map<String, Integer> expected = new TreeMap<>();
+		expected.put("com.top_logic.doc.app", 1);
+		expected.put("test-app-7-5-0-M1", 2);
+		expected.put("test-app-7-4-0", 3);
+		expected.put("test-app-7-9-3", 0);
+		expected.put("test-app-rewrite", 1);
+		expected.put("test.com.top_logic.kafka.demo", 2);
+		for (Map.Entry<String, Integer> entry : expected.entrySet()) {
+			List<Unit> single = Collections.singletonList(new Unit(entry.getKey(), 5));
+			int offset = ShardSelection.moduleOffset(modules, entry.getKey());
+			assertEquals(entry.getKey(), entry.getValue().intValue(),
+				shardOf(entry.getKey(), ShardSelection.distribute(single, KEY, WEIGHT, count, offset)));
+		}
+	}
+
+	/**
+	 * Tests that offset 0 prefers the lowest shard on a tie, and other offsets rotate the
+	 * preference.
+	 */
+	public void testOffsetZero() {
+		List<Unit> units = Arrays.asList(new Unit("a", 1), new Unit("b", 1), new Unit("c", 1));
+		List<List<Unit>> shards = ShardSelection.distribute(units, KEY, WEIGHT, 4, 0);
+		assertEquals(0, shardOf("a", shards));
+		assertEquals(1, shardOf("b", shards));
+		assertEquals(2, shardOf("c", shards));
+		assertEquals(Collections.emptyList(), shards.get(3));
+
+		List<List<Unit>> shifted = ShardSelection.distribute(units, KEY, WEIGHT, 4, 3);
+		assertEquals(3, shardOf("a", shifted));
+		assertEquals(0, shardOf("b", shifted));
+		assertEquals(1, shardOf("c", shifted));
+	}
+
+	private static int shardOf(String key, List<List<Unit>> shards) {
+		for (int n = 0; n < shards.size(); n++) {
+			for (Unit unit : shards.get(n)) {
+				if (unit.key().equals(key)) {
+					return n;
+				}
+			}
+		}
+		throw new AssertionError("Not assigned: " + key);
 	}
 
 	/**
@@ -127,7 +236,7 @@ public class TestShardSelection extends TestCase {
 			units.add(new Unit("small" + n, 1 + n % 3));
 		}
 		int count = 4;
-		List<List<Unit>> shards = ShardSelection.distribute(units, KEY, WEIGHT, count);
+		List<List<Unit>> shards = ShardSelection.distribute(units, KEY, WEIGHT, count, 1);
 		int total = units.stream().mapToInt(Unit::weight).sum();
 		int max = 0;
 		int min = Integer.MAX_VALUE;
@@ -168,7 +277,7 @@ public class TestShardSelection extends TestCase {
 		Set<String> scriptedUnion = new HashSet<>();
 		int count = 3;
 		for (int shard = 1; shard <= count; shard++) {
-			Test tree = ShardSelection.shard(shard, count).apply(createTree());
+			Test tree = ShardSelection.shard(shard, count).apply(OFFSET, createTree());
 			Set<String> scripted = new HashSet<>();
 			Set<String> nonScripted = new HashSet<>();
 			collect(tree, scripted, nonScripted);
@@ -179,7 +288,7 @@ public class TestShardSelection extends TestCase {
 		}
 		assertEquals(scriptedAll, scriptedUnion);
 
-		Test none = ShardSelection.NONE.apply(createTree());
+		Test none = ShardSelection.NONE.apply(OFFSET, createTree());
 		Set<String> scripted = new HashSet<>();
 		Set<String> nonScripted = new HashSet<>();
 		collect(none, scripted, nonScripted);
@@ -190,7 +299,7 @@ public class TestShardSelection extends TestCase {
 		// NONE and all shards together run each test exactly once.
 		assertEquals(createTree().countTestCases(), none.countTestCases() + shardCases(count));
 
-		Test all = ShardSelection.ALL.apply(createTree());
+		Test all = ShardSelection.ALL.apply(OFFSET, createTree());
 		assertEquals(createTree().countTestCases(), all.countTestCases());
 		assertNoUnitsAndNoEmptySetups(all);
 	}
@@ -198,7 +307,7 @@ public class TestShardSelection extends TestCase {
 	private static int shardCases(int count) {
 		int result = 0;
 		for (int shard = 1; shard <= count; shard++) {
-			result += ShardSelection.shard(shard, count).apply(createTree()).countTestCases();
+			result += ShardSelection.shard(shard, count).apply(OFFSET, createTree()).countTestCases();
 		}
 		return result;
 	}

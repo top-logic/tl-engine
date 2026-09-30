@@ -3,6 +3,10 @@
  * a field with an error shows no warning. The design system reads exactly these attributes
  * (tl-field, tl-checkbox, tl-choice-group); a class for a state does not exist.
  *
+ * <p>`disabled` is not among these attributes: every control sets it on its element itself, from
+ * `state.disabled`. No form control sends `disabled` today; every control reads it for forward
+ * compatibility with the contract's `disabled` attribute.</p>
+ *
  * @param state the control state with the keys of ReactFormFieldControl
  * @param roleAllowsAria whether the element's role allows `aria-invalid` and `aria-required`
  *        (ARIA 1.2: not on `role="group"`); where it does not, an error is carried as

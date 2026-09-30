@@ -275,7 +275,13 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
     if (!isOpen || !containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     const spaceBelow = window.innerHeight - rect.bottom;
-    const maxHeight = 300; // list max-height + search field
+    // The height the popup may grow to is the design system's (tl-select__popup max-height: eight
+    // rows, the search field and the padding); it follows the density, so it is read from the
+    // rendered popup rather than repeated here. Should it not resolve, the popup's current height
+    // decides.
+    const popup = dropdownRef.current;
+    const cssMaxHeight = popup ? parseFloat(getComputedStyle(popup).maxHeight) : NaN;
+    const maxHeight = Number.isFinite(cssMaxHeight) ? cssMaxHeight : (popup?.offsetHeight ?? 0);
     const flipAbove = spaceBelow < maxHeight && rect.top > spaceBelow;
 
     setDropdownStyle({

@@ -36,6 +36,7 @@ const TLDatePicker: React.FC<TLCellProps> = ({ controlId, state }) => {
         type={(state.inputType as string) ?? 'date'}
         value={(value as string) ?? ''}
         onChange={handleChange}
+        disabled={state.disabled === true}
         className={rootClassName(state, 'tl-field tl-type-body')}
         {...fieldStateAttrs(state)}
         id={inputId}

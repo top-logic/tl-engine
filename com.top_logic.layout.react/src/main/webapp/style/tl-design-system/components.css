@@ -305,10 +305,10 @@
   border-radius: var(--tl-radius-round);
 }
 
-/* Kein Zeigen auf Deaktiviertem. :where hält die Spezifität bei (0,2,0), damit Angekreuzt, Fehler und
-   Warnung weiter über dem Zeigen stehen. */
-.tl-checkbox:where(:not(:disabled)):hover,
-.tl-radio:where(:not(:disabled)):hover {
+/* Kein Zeigen auf Deaktiviertem und Schreibgeschütztem. :where hält die Spezifität bei (0,2,0), damit
+   Angekreuzt, Fehler und Warnung weiter über dem Zeigen stehen. */
+.tl-checkbox:where(:not(:disabled):not([aria-readonly="true"])):hover,
+.tl-radio:where(:not(:disabled):not([aria-readonly="true"])):hover {
   border-color: var(--tl-border-emphasis);
 }
 
@@ -398,6 +398,14 @@
   background: var(--tl-border-disabled);
 }
 
+/* Schreibgeschützt ist nicht deaktiviert: das Kästchen trägt aria-readonly statt disabled, die Engine
+   blockiert die Änderung. Die Füllung bleibt die Marke und hält ihren Kontrast; nur der Zeiger sagt,
+   dass hier nichts zu klicken ist. */
+.tl-checkbox[aria-readonly="true"],
+.tl-radio[aria-readonly="true"] {
+  cursor: default;
+}
+
 /* --- Label und Gruppe ------------------------------------------------------------ */
 
 .tl-choice {
@@ -413,6 +421,10 @@
 .tl-choice:has(:disabled) {
   color: var(--tl-text-disabled);
   cursor: not-allowed;
+}
+
+.tl-choice:has([aria-readonly="true"]) {
+  cursor: default;
 }
 
 .tl-choice-group {
@@ -437,6 +449,10 @@
 
 .tl-segmented__segment {
   flex: 1 1 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--tl-space-2xs);
   min-width: 0;
   min-height: calc(var(--tl-size-control) - 2 * var(--tl-border-width-sm));
   padding: 0 var(--tl-space-control-x);
@@ -445,6 +461,21 @@
   background: transparent;
   color: var(--tl-text-primary);
   cursor: pointer;
+}
+
+/* Das Label endet mit Ellipse. text-overflow wirkt nicht über einen Flex-Container auf seine Kinder,
+   darum trägt das Label ein eigenes Element; die Pill einer Option mit Farbrolle darf schrumpfen. */
+.tl-segmented__label,
+.tl-chip__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tl-segmented__segment > .tl-pill,
+.tl-chip > .tl-pill {
+  min-width: 0;
 }
 
 .tl-segmented__segment:where(:not(:disabled)):hover {
@@ -485,6 +516,8 @@
   display: inline-flex;
   align-items: center;
   gap: var(--tl-space-2xs);
+  min-width: 0;
+  max-width: 100%;
   min-height: var(--tl-size-control-sm);
   padding: 0 var(--tl-space-sm);
   border: var(--tl-border-width-sm) solid var(--tl-border-control);
@@ -499,18 +532,26 @@
   background: var(--tl-surface-interactive-hover);
 }
 
+/* Gewählt sieht aus wie angekreuzt: die Marke als Fläche, die Beschriftung auf der Marke. */
 .tl-chip[aria-pressed="true"] {
-  border-color: var(--tl-border-interactive);
-  background: var(--tl-surface-brand-subtle);
+  border-color: var(--tl-surface-brand);
+  background: var(--tl-surface-brand);
+  color: var(--tl-text-on-brand);
 }
 
-/* Warnung vor Fehler: der Fehler steht später und gewinnt. Deaktivierte Chips bleiben ohne Prüfzustand. */
-.tl-chip-group[data-tl-state~="warning"] .tl-chip:not(:disabled) {
+.tl-chip[aria-pressed="true"]:where(:not(:disabled)):hover {
+  border-color: var(--tl-surface-brand-hover);
+  background: var(--tl-surface-brand-hover);
+}
+
+/* Warnung vor Fehler: der Fehler steht später und gewinnt. Den Prüfzustand zeigen nur ungewählte,
+   nicht deaktivierte Chips — ein gewählter trägt die Marke, ein deaktivierter keinen Prüfzustand.
+   role="group" erlaubt kein aria-invalid; der Fehler steht in data-tl-state. */
+.tl-chip-group[data-tl-state~="warning"] .tl-chip:not(:disabled):not([aria-pressed="true"]) {
   border-color: var(--tl-status-warning-border);
 }
 
-.tl-chip-group[aria-invalid="true"] .tl-chip:not(:disabled),
-.tl-chip-group[data-tl-state~="error"] .tl-chip:not(:disabled) {
+.tl-chip-group[data-tl-state~="error"] .tl-chip:not(:disabled):not([aria-pressed="true"]) {
   border-color: var(--tl-status-error-border);
 }
 
@@ -519,6 +560,13 @@
   background: var(--tl-surface-disabled);
   color: var(--tl-text-disabled);
   cursor: not-allowed;
+}
+
+/* Deaktiviert und gewählt: wie .tl-checkbox:disabled:checked. */
+.tl-chip:disabled[aria-pressed="true"] {
+  border-color: var(--tl-border-disabled);
+  background: var(--tl-border-disabled);
+  color: var(--tl-text-disabled);
 }
 
 /* --- divider/divider.css --- */
@@ -554,7 +602,10 @@
   min-width: 0;
   min-height: var(--tl-size-control);
   margin: 0;
-  padding: var(--tl-space-control-y) var(--tl-space-control-x);
+  /* Kein Innenabstand oben und unten: die Höhe ist size-control, der Text steht in ihrer Mitte. Ein
+     Innenabstand darüber würde das Feld über size-control wachsen lassen, sobald ein Kind (Chip,
+     Pill) höher ist als eine Textzeile. */
+  padding: 0 var(--tl-space-control-x);
   border: var(--tl-border-width-sm) solid var(--tl-border-control);
   border-radius: var(--tl-radius-sm);
   background: var(--tl-surface-field);
@@ -588,7 +639,9 @@
   cursor: not-allowed;
 }
 
+/* Mehrzeilig wächst das Feld mit den Zeilen; hier trägt es den Innenabstand oben und unten. */
 .tl-field--multiline {
+  padding-block: var(--tl-space-control-y);
   resize: vertical;
 }
 
@@ -665,12 +718,19 @@
   white-space: nowrap;
 }
 
-/* Mehrzeiliger Lesewert: eine Zeile je __text, untereinander. In der Tabellenzelle stellt die Engine
-   ihn wieder in eine Reihe. */
+/* Mehrzeiliger Lesewert: eine Zeile je __text, untereinander, und jede Zeile bricht um — ein langer
+   Absatz endet nicht in einer Ellipse. In der Tabellenzelle stellt die Engine ihn wieder in eine Reihe
+   ohne Umbruch. */
 .tl-field-value--multiline {
   display: flex;
   flex-direction: column;
-  align-items: start;
+  align-items: stretch;
+  white-space: pre-wrap;
+}
+
+.tl-field-value--multiline > .tl-field-value__text {
+  white-space: inherit;
+  overflow-wrap: anywhere;
 }
 
 /* Farbe allein kennzeichnet keinen Link (WCAG 1.4.1): der Link-Lesewert ist unterstrichen. */
@@ -773,6 +833,12 @@ a.tl-field-value:hover {
 
 .tl-form-field__input {
   min-width: 0;
+}
+
+/* Der Lesewert steht so hoch wie ein Feld: eine Zeile im Formular springt nicht, wenn sie von
+   bearbeitbar zu schreibgeschützt wechselt. */
+.tl-form-field__input > .tl-field-value {
+  min-height: var(--tl-size-control);
 }
 
 .tl-form-field__message {
@@ -1088,6 +1154,10 @@ a.tl-field-value:hover {
   display: flex;
   align-items: center;
   gap: var(--tl-space-xs);
+  /* Ein Chip, eine Pill ist size-control-sm hoch, das Feld bleibt size-control: der Innenabstand oben
+     und unten ist die halbe Differenz, abzüglich des Randes. Bricht die Wahl in eine zweite Reihe um,
+     wächst das Feld um eine Chip-Reihe. */
+  padding-block: calc((var(--tl-size-control) - var(--tl-size-control-sm)) / 2 - var(--tl-border-width-sm));
   cursor: pointer;
 }
 .tl-select[hidden] { display: none; }
@@ -1128,10 +1198,15 @@ a.tl-field-value:hover {
   min-width: 0;
 }
 
+/* Die Trefferfläche ist mindestens size-control-sm im Quadrat (WCAG 2.5.8, 24 × 24 px), auch wenn das
+   Icon kleiner ist. */
 .tl-select__chip-remove,
 .tl-select__clear {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  min-inline-size: var(--tl-size-control-sm);
+  min-block-size: var(--tl-size-control-sm);
   padding: 0;
   border: 0;
   border-radius: var(--tl-radius-sm);
@@ -1227,8 +1302,8 @@ a.tl-field-value:hover {
 /* Die Hervorhebung ist die Tastaturposition (aria-activedescendant), nicht die Wahl: Fläche und
    Akzentlinie. Die Akzentlinie ist der Indikator, die Tönung nur ein Zusatz: surface-interactive-selected
    ist auf surface-layer abgestimmt, nicht auf die gehobene Overlay-Fläche; gehobene Flächen bekommen
-   ihre eigenen Rollen in Welle 3. Gewählt ist aria-selected; das Control zeigt es mit einem Haken-Icon,
-   ohne eigene Regel. */
+   ihre eigenen Rollen in Welle 3. Die Liste führt nur ungewählte Optionen; Gewähltes steht als Wert
+   oder Chip in der Wurzel. */
 .tl-select__option[data-tl-state~="highlighted"] {
   background: var(--tl-surface-interactive-selected);
   box-shadow: inset var(--tl-border-width-accent) 0 0 0 var(--tl-border-interactive);

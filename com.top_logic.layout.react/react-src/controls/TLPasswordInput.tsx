@@ -42,6 +42,7 @@ const TLPasswordInput: React.FC<TLCellProps> = ({ controlId, state }) => {
         value={(value as string) ?? ''}
         onChange={handleChange}
         onBlur={handleBlur}
+        disabled={state.disabled === true}
         className={rootClassName(state, 'tl-field tl-type-body')}
         {...fieldStateAttrs(state)}
         {...tooltipProps(hasError ? errorMessage : undefined)}

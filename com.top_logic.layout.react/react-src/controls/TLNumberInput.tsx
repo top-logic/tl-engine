@@ -79,6 +79,7 @@ const TLNumberInput: React.FC<TLCellProps> = ({ controlId, state }) => {
         onBlur={handleBlur}
         onKeyDown={handleSubmitKey}
         placeholder={(state.placeholder as string) ?? undefined}
+        disabled={state.disabled === true}
         className={rootClassName(state, 'tl-field tl-type-body')}
         {...fieldStateAttrs(state)}
         {...tooltipProps(hasError ? errorMessage : undefined)}

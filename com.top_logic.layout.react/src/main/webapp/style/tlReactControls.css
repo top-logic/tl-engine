@@ -3379,8 +3379,7 @@ button.tlMenu__item--disabled:hover {
 	width: 100%;
 }
 
-/* Each value keeps the width its label asks for, so a row of them is cut off at the column edge
-   instead of every value being squeezed to nothing. */
+/* Each value keeps its label's width: a row of them is cut off at the column edge, not squeezed. */
 .tlTableView__cell > .tl-select__values > * {
 	flex-shrink: 0;
 }
@@ -3393,6 +3392,7 @@ button.tlMenu__item--disabled:hover {
 
 .tlTableView__cell .tl-field-value--multiline {
 	flex-direction: row;
+	white-space: nowrap;
 }
 
 /* A cell holding an input (tl-field, not the read-only tl-field-value) leaves its padding to it. */

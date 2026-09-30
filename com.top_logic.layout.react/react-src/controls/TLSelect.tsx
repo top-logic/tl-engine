@@ -37,6 +37,7 @@ const TLSelect: React.FC<TLCellProps> = ({ controlId, state, config }) => {
       <select
         value={(value as string) ?? ''}
         onChange={handleChange}
+        disabled={state.disabled === true}
         className={rootClassName(state, 'tl-field tl-type-body')}
         {...fieldStateAttrs(state)}
         id={inputId}

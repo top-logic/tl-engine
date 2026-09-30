@@ -16,7 +16,8 @@ const { useCallback, useMemo, useRef } = React;
  *
  * Design system: `tl-segmented` with `tl-segmented__segment` buttons. Selected is an attribute -
  * `aria-checked` in a radio group, `aria-pressed` in a group of several - and so is the field's
- * state (see fieldStateAttrs). A field that is not editable shows its values in `tl-select__values`,
+ * state (see fieldStateAttrs). The label stands in a `tl-segmented__label`, which ends in an ellipsis
+ * where the segment is too narrow. A field that is not editable shows its values in `tl-select__values`,
  * as the dropdown does.
  *
  * The server hands this control the complete option list as soon as it is displayed - there is no
@@ -141,7 +142,7 @@ const TLSegmentedChoice: React.FC<TLCellProps> = ({ controlId, state }) => {
             disabled={disabled}
             onClick={() => choose(option)}
           >
-            <OptionContent option={option} />
+            <OptionContent option={option} labelClassName="tl-segmented__label" />
           </button>
         );
       })}

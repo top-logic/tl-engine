@@ -29,8 +29,8 @@ const HELP_ICON = 'css:fa-solid fa-circle-question';
  * position, either declared by the field or inherited from the form layout) is kept off the screen
  * in a visually hidden `label` that still names the input. The input area itself is a plain
  * element, so a click into the input reaches exactly the element under the pointer. The error
- * message and the shown help text describe the input (`aria-describedby`, through the same
- * association).
+ * message, each warning message and the shown help text describe the input (`aria-describedby`,
+ * through the same association), in this order.
  *
  * State:
  * - label: string
@@ -83,9 +83,14 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
   const showWarnings = !readOnly && !hasError && hasWarnings;
   const showHelp = !readOnly && !!helpText;
   const errorId = `${controlId}-error`;
+  const warningId = (i: number) => `${controlId}-warning-${i}`;
   const helpTextId = `${controlId}-help`;
-  const describedBy = [showError ? errorId : '', showHelp && helpVisible ? helpTextId : '']
-    .filter(Boolean).join(' ') || undefined;
+  const warningCount = showWarnings ? warnings.length : 0;
+  const describedBy = [
+    showError ? errorId : '',
+    ...Array.from({ length: warningCount }, (_, i) => warningId(i)),
+    showHelp && helpVisible ? helpTextId : '',
+  ].filter(Boolean).join(' ') || undefined;
 
   // The id of the input control's focusable element, as the control reports it.
   const [inputId, setInputId] = useState<string | null>(null);
@@ -122,12 +127,13 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
     fullLine ? 'tl-form-field--full' : '',
   ].filter(Boolean).join(' ');
 
-  // An invisible field is hidden via CSS instead of not being rendered: unmounting the child
-  // control would drop its SSE subscription, so state patches arriving while hidden (e.g.
-  // editable toggling with the form mode) would be lost until a full re-serialization.
+  // An invisible field is hidden via the `hidden` attribute instead of not being rendered:
+  // unmounting the child control would drop its SSE subscription, so state patches arriving while
+  // hidden (e.g. editable toggling with the form mode) would be lost until a full re-serialization.
+  // The design system's `.tl-form-field[hidden]` keeps it hidden against the block's own display.
   return (
     <div id={controlId} className={rootClassName(state, className)} data-tl-state={dirty ? 'dirty' : undefined}
-      style={visible ? undefined : { display: 'none' }}>
+      hidden={!visible || undefined}>
       {!labelHidden && (
         <div className="tl-form-field__label tl-type-label">
           <label id={association?.labelId} htmlFor={inputId ?? undefined} className="tl-form-field__label-text"
@@ -158,7 +164,7 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
         </div>
       )}
       {showWarnings && warnings.map((msg, i) => (
-        <div key={i} className="tl-form-field__message tl-type-label" aria-live="polite">
+        <div key={i} id={warningId(i)} className="tl-form-field__message tl-type-label" aria-live="polite">
           {typeof warningIcon === 'string' && <ThemeIcon encoded={warningIcon} className="tl-icon-sm" />}
           <span>{msg}</span>
         </div>

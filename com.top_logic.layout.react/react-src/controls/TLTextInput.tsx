@@ -197,6 +197,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
           placeholder={(state.placeholder as string) ?? undefined}
           onChange={handleChange}
           onBlur={handleBlur}
+          disabled={state.disabled === true}
           className={rootClassName(state, 'tl-field tl-field--multiline tl-type-body')}
           {...fieldStateAttrs(state)}
           {...tooltipProps(hasError ? errorMessage : undefined)}
@@ -216,6 +217,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
       onChange={handleChange}
       onBlur={handleBlur}
       onKeyDown={submitKey === undefined ? undefined : handleSubmitKey}
+      disabled={state.disabled === true}
       className={rootClassName(state, 'tl-field tl-type-body')}
       {...fieldStateAttrs(state)}
       {...tooltipProps(hasError ? errorMessage : undefined)}
@@ -244,6 +246,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
           type="button"
           className="tl-field-group__action"
           onClick={handleClear}
+          disabled={state.disabled === true}
           aria-label={t['js.textInput.clear']}
           title={t['js.textInput.clear']}
         >

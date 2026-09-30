@@ -111,7 +111,6 @@ public class I18NAttributeStorage<C extends I18NAttributeStorage.Config<?>> exte
 
 	@Override
 	protected void internalSetAttributeValue(TLObject owner, TLStructuredTypePart attribute, Object value) {
-		boolean anyChanges = false;
 		ResKey i18nValue = (ResKey) value;
 		ResourcesModule resMod = ResourcesModule.getInstance();
 		Set<String> languages = CollectionUtil.toSet(resMod.getSupportedLocaleNames());
@@ -121,18 +120,11 @@ public class I18NAttributeStorage<C extends I18NAttributeStorage.Config<?>> exte
 			String lang = (String) item.getAttributeValue(LANGUAGE_ATTRIBUTE_NAME);
 			String string = ResKeyUtil.getTranslation(i18nValue, new Locale(lang));
 			if (string != null) {
-				if (anyChanges) {
-					/* It is not necessary to check for change of i18N, because only the accumulated
-					 * change state is required. */
-					setI18N(item, string);
-				} else {
-					anyChanges |= updateI18N(item, string);
-				}
+				updateI18N(item, string);
 				languages.remove(lang);
 			}
 			else {
 				item.delete();
-				anyChanges = true;
 			}
 		}
 
@@ -144,14 +136,7 @@ public class I18NAttributeStorage<C extends I18NAttributeStorage.Config<?>> exte
 				i18nItem.setAttributeValue(META_ATTRIBUTE_ATTRIBUTE_NAME, attribute.getDefinition().tHandle());
 				i18nItem.setAttributeValue(LANGUAGE_ATTRIBUTE_NAME, lang);
 				setI18N(i18nItem, string);
-				anyChanges = true;
 			}
-		}
-
-		if (anyChanges) {
-			/* As an updated attribute does not affect the TLObject itself, Lucene will not create a
-			 * new index. Thats why the owner has to be touched. */
-			owner.tTouch();
 		}
 	}
 
@@ -164,20 +149,13 @@ public class I18NAttributeStorage<C extends I18NAttributeStorage.Config<?>> exte
 	}
 
 	/**
-	 * Updates the I18N of the given object.
-	 * 
-	 * @return Whether source code changed.
+	 * Updates the I18N of the given object, if it differs from the given one.
 	 */
-	private boolean updateI18N(KnowledgeItem i18N, String newI18N) {
-		String oldI18N = getI18N(i18N);
-		if (!Utils.equals(oldI18N, newI18N)) {
+	private void updateI18N(KnowledgeItem i18N, String newI18N) {
+		if (!Utils.equals(getI18N(i18N), newI18N)) {
 			setI18N(i18N, newI18N);
-			return true;
-		} else {
-			return false;
 		}
 	}
-
 
 	private KnowledgeItem createI18nItem() {
 		return createItem(I18N_STORAGE_KO_TYPE);

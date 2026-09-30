@@ -22,6 +22,7 @@ import test.com.top_logic.element.structured.model.TestTypesFactory;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
+import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.element.changelog.ChangeLogBuilder;
 import com.top_logic.element.changelog.LastChangeRevision;
@@ -38,6 +39,7 @@ import com.top_logic.element.model.i18n.I18NAttributeStorage;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.service.db2.LifecycleStorageModified;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
@@ -143,13 +145,28 @@ public class TestLastChangeRevision extends TestWithModelExtension {
 			hasDescriptorForTable(I18NAttributeStorage.I18N_STORAGE_KO_TYPE));
 
 		TLObject item = create("a");
-		assertMoves(item, x -> x.tUpdateByName(TITLE, i18n("Title")));
-		assertMoves(item, x -> x.tUpdateByName(TITLE, i18n("Other title")));
-		assertMoves(item, x -> x.tUpdateByName(TITLE, null));
+		assertMovesWithoutOwnRow(item, x -> x.tUpdateByName(TITLE, i18n("Title")));
+		assertMovesWithoutOwnRow(item, x -> x.tUpdateByName(TITLE, i18n("Other title")));
+		assertMovesWithoutOwnRow(item, x -> x.tUpdateByName(TITLE, null));
+	}
+
+	/**
+	 * Asserts that the given change moves the last change of the given object, while its own row
+	 * is not changed.
+	 */
+	private void assertMovesWithoutOwnRow(TLObject item, Consumer<TLObject> change) {
+		Revision ownRow = LifecycleStorageModified.lastUpdateRevision(item.tHandle());
+		assertMoves(item, change);
+		assertEquals("The owner's row must not be changed.", ownRow,
+			LifecycleStorageModified.lastUpdateRevision(item.tHandle()));
 	}
 
 	public void testI18NChangeLog() {
 		TLObject item = create("a");
+		if (!hasHistory(item)) {
+			// The change log requires historic versions.
+			return;
+		}
 		update(item, x -> x.tUpdateByName(TITLE, i18n("Title")));
 		ResKey newTitle = i18n("Other title");
 		Revision changeRevision = update(item, x -> x.tUpdateByName(TITLE, newTitle));
@@ -212,12 +229,20 @@ public class TestLastChangeRevision extends TestWithModelExtension {
 
 	public void testHistoricObject() {
 		TLObject item = create("a");
+		if (!hasHistory(item)) {
+			// No historic versions exist.
+			return;
+		}
 		Revision before = update(item, x -> x.tUpdateByName(NAME, "b"));
 		TLObject target = create("target");
 		update(item, x -> x.tUpdateByName(SINGLE, target));
 
 		TLObject historic = WrapperHistoryUtils.getWrapper(before, item);
 		assertEquals(before, LastChangeRevision.of(historic));
+	}
+
+	private static boolean hasHistory(TLObject object) {
+		return ((MOClass) object.tTable()).isVersioned();
 	}
 
 	private boolean hasDescriptorForTable(String tableName) {

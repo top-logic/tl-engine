@@ -44,8 +44,6 @@ import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.db2.LifecycleStorageModified;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
-import com.top_logic.model.cache.TLModelCacheService;
-import com.top_logic.util.model.ModelService;
 
 /**
  * Computation of the {@link Revision} in which a persistent {@link TLObject} was changed the last
@@ -149,7 +147,7 @@ public class LastChangeRevision {
 		}
 
 		long lastChange = ownRevision.getCommitNumber();
-		ModelTables modelTables = modelTables();
+		ModelTables modelTables = ElementModelCacheService.getApplicationModelTables();
 		TLStructuredType type = object.tType();
 		Map<MOStructure, List<AssociationStorageDescriptor>> storage = modelTables.lookupSeparateStorage(type);
 		if (!storage.isEmpty()) {
@@ -175,14 +173,6 @@ public class LastChangeRevision {
 		}
 
 		return hm.getRevision(lastChange);
-	}
-
-	private static ModelTables modelTables() {
-		if (TLModelCacheService.Module.INSTANCE.isActive()) {
-			return ElementModelCacheService.getModelTables();
-		} else {
-			return new ModelTables(ModelService.getApplicationModel());
-		}
 	}
 
 	private static Set<DBAttribute> baseColumns(MOStructure table, List<AssociationStorageDescriptor> descriptors) {

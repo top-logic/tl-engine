@@ -7,6 +7,7 @@ package com.top_logic.basic.core.workspace;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.FileSystem;
@@ -25,6 +26,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.DefaultModelReader;
@@ -38,6 +40,22 @@ import org.apache.maven.model.io.ModelReader;
 public class PathInfo {
 
 	private static final Logger LOG = Logger.getLogger(PathInfo.class.getName());
+
+	/**
+	 * System property holding the primary local Maven repository.
+	 */
+	private static final String MAVEN_REPO_LOCAL = "maven.repo.local";
+
+	/**
+	 * System property holding a comma-separated list of local Maven repositories searched after
+	 * {@link #MAVEN_REPO_LOCAL}.
+	 */
+	private static final String MAVEN_REPO_LOCAL_TAIL = "maven.repo.local.tail";
+
+	/**
+	 * Jar entry marking a TopLogic module that comes with a web fragment.
+	 */
+	private static final String MODULE_WITH_RESOURCES_MARKER = "META-INF/tl-module-with-resources";
 
 	private final ModelReader _analyzer = new DefaultModelReader();
 
@@ -219,33 +237,112 @@ public class PathInfo {
 	}
 
 	void addJar(File jarFile) throws IOException {
-		FileSystem fileSystem = FileSystems.newFileSystem(jarFile.toPath());
+		try (FileSystem fileSystem = FileSystems.newFileSystem(jarFile.toPath())) {
+			boolean moduleWithResources = Files.exists(fileSystem.getPath(MODULE_WITH_RESOURCES_MARKER));
 
-		Path base = fileSystem.getPath("META-INF", "maven");
-		if (Files.exists(base)) {
-			Optional<Path> pomPath =
-				Files.walk(base).filter(p -> p.getFileName().toString().equals("pom.xml")).findFirst();
-			if (pomPath.isPresent()) {
-				Model projectModel = _analyzer.read(Files.newInputStream(pomPath.get()), Collections.emptyMap());
-				addPart(projectModel, jarFile.getName().endsWith("-tests.jar"), () -> doAddJar(jarFile));
+			Path base = fileSystem.getPath("META-INF", "maven");
+			if (Files.exists(base)) {
+				Optional<Path> pomPath;
+				try (Stream<Path> entries = Files.walk(base)) {
+					pomPath = entries.filter(p -> p.getFileName().toString().equals("pom.xml")).findFirst();
+				}
+				if (pomPath.isPresent()) {
+					Model projectModel;
+					try (InputStream in = Files.newInputStream(pomPath.get())) {
+						projectModel = _analyzer.read(in, Collections.emptyMap());
+					}
+					String coordinateDir = coordinateDir(jarFile, base.relativize(pomPath.get()));
+					addPart(projectModel, jarFile.getName().endsWith("-tests.jar"),
+						() -> doAddJar(jarFile, coordinateDir, moduleWithResources));
+					return;
+				}
+			}
+			doAddJar(jarFile, null, moduleWithResources);
+		}
+	}
+
+	/**
+	 * The directory of the given jar relative to the root of a Maven repository.
+	 *
+	 * @param jarFile
+	 *        The jar file whose parent directory is the version directory of its artifact.
+	 * @param pomEntry
+	 *        The path of the jar's POM entry relative to <code>META-INF/maven</code>, i.e.
+	 *        <code>&lt;groupId&gt;/&lt;artifactId&gt;/pom.xml</code>.
+	 * @return The path <code>&lt;groupId as path&gt;/&lt;artifactId&gt;/&lt;version&gt;</code>, or
+	 *         <code>null</code> if the POM entry does not have the expected structure.
+	 */
+	private static String coordinateDir(File jarFile, Path pomEntry) {
+		if (pomEntry.getNameCount() != 3) {
+			return null;
+		}
+		String groupId = pomEntry.getName(0).toString();
+		String artifactId = pomEntry.getName(1).toString();
+		String version = jarFile.getParentFile().getName();
+		return groupId.replace('.', '/') + '/' + artifactId + '/' + version;
+	}
+
+	private void doAddJar(File jarFile, String coordinateDir, boolean moduleWithResources) {
+		_classJars.add(url(jarFile));
+		String jarName = jarFile.getName();
+		String fragmentName =
+			jarName.substring(0, jarName.length() - ".jar".length()) + "-web-fragment.war";
+		List<File> candidates = fragmentCandidates(jarFile, coordinateDir, fragmentName);
+		for (File fragmentFile : candidates) {
+			if (fragmentFile.exists()) {
+				addFragmentWar(fragmentFile);
 				return;
 			}
 		}
-		doAddJar(jarFile);
-	}
-
-	private void doAddJar(File jarFile) {
-		_classJars.add(url(jarFile));
-		String jarName = jarFile.getName();
-		File repositoryFolder = jarFile.getParentFile();
-		String fragmentName =
-			jarName.substring(0, jarName.length() - ".jar".length()) + "-web-fragment.war";
-		File fragmentFile = new File(repositoryFolder, fragmentName);
-		if (fragmentFile.exists()) {
-			addFragmentWar(fragmentFile);
+		if (moduleWithResources) {
+			LOG.warning("No web fragment found for module '" + jarFile + "', searched: " + candidates);
 		} else {
 			LOG.fine("No web fragment found for classpath entry: " + jarFile);
 		}
+	}
+
+	/**
+	 * The locations where the web fragment of the given jar may reside, in search order.
+	 *
+	 * <p>
+	 * The first candidate is the directory of the jar itself. If the artifact coordinates of the
+	 * jar are known, the coordinate directory in each local Maven repository of the chain
+	 * {@link #MAVEN_REPO_LOCAL}, {@link #MAVEN_REPO_LOCAL_TAIL} follows, since Maven may resolve the
+	 * jar and its fragment from different repositories of that chain.
+	 * </p>
+	 */
+	private static List<File> fragmentCandidates(File jarFile, String coordinateDir, String fragmentName) {
+		List<File> result = new ArrayList<>();
+		result.add(new File(jarFile.getParentFile(), fragmentName));
+		if (coordinateDir != null) {
+			for (String repository : localRepositories()) {
+				File candidate = new File(new File(repository, coordinateDir), fragmentName);
+				if (!result.contains(candidate)) {
+					result.add(candidate);
+				}
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * The local Maven repositories in the order Maven resolves artifacts from them.
+	 */
+	private static List<String> localRepositories() {
+		List<String> result = new ArrayList<>();
+		String local = System.getProperty(MAVEN_REPO_LOCAL);
+		if (local != null && !local.isBlank()) {
+			result.add(local.trim());
+		}
+		String tail = System.getProperty(MAVEN_REPO_LOCAL_TAIL);
+		if (tail != null) {
+			for (String entry : tail.split(",")) {
+				if (!entry.isBlank()) {
+					result.add(entry.trim());
+				}
+			}
+		}
+		return result;
 	}
 
 	private void addPart(Model projectModel, boolean isTest, Runnable part) {

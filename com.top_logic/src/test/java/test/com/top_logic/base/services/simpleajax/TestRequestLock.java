@@ -41,6 +41,38 @@ public class TestRequestLock extends AbstractLayoutTest {
 
 	private static final int WAIT_TIME = 500;
 	private static final long JOIN_TIME = 2000;
+
+	/**
+	 * Reader and writer waiting time of the lock used by the tests that provoke a waiting-time
+	 * timeout, see {@link #useShortWaitingTimeLock()}.
+	 * 
+	 * <p>
+	 * These tests keep the request that blocks the waiting ones inside the lock until the waiting
+	 * requests have died, so the timeout is not raced against the requests' simulated work and the
+	 * value only determines how long those tests take.
+	 * </p>
+	 */
+	private static final long SHORT_WAITING_TIME = 300;
+
+	/**
+	 * Upper bound for waiting until a request that is expected to time out in the lock has died.
+	 * 
+	 * <p>
+	 * Generous compared to {@link #SHORT_WAITING_TIME}, so that only a hanging request fails the
+	 * test.
+	 * </p>
+	 */
+	private static final long TIMED_OUT_JOIN_TIME = 10000;
+
+	/**
+	 * Seed of a lock created by {@link #useShortWaitingTimeLock()}.
+	 * 
+	 * <p>
+	 * The same seed as the one of the {@link RequestLockFactory} lock, whose configured seed limit
+	 * of 1 always yields 0, so the first expected writer sequence number is 1.
+	 * </p>
+	 */
+	private static final int INITIAL_SEQUENCE_NUMBER = 0;
     
     protected RequestLock lock;
     
@@ -219,7 +251,7 @@ public class TestRequestLock extends AbstractLayoutTest {
     }
 
 	public void testConfig() {
-		Options conf = lock.getOptions();
+		Options conf = RequestLockFactory.getInstance().createLock().getOptions();
         assertEquals(257, conf.getReorderTimeout());
         assertEquals(3000, conf.getReaderWaitingTime());
         assertEquals(3000, conf.getWriterWaitingTime());
@@ -609,6 +641,7 @@ public class TestRequestLock extends AbstractLayoutTest {
 	}
 
 	public void testPreventToLongWaiting() throws InterruptedException {
+		useShortWaitingTimeLock();
 		final BooleanFlag flag = new BooleanFlag(true);
 		int nextSequenceNumber = 1;
 
@@ -632,7 +665,8 @@ public class TestRequestLock extends AbstractLayoutTest {
 			writeRequest.start();
 			errorWriter.start();
 			errorWriter2.start();
-			Thread.sleep(getWriterWaitingTime() * 3);
+			joinTimedOut(errorWriter);
+			joinTimedOut(errorWriter2);
 		}
 		join(writeRequest);
 		join(errorWriter);
@@ -670,7 +704,8 @@ public class TestRequestLock extends AbstractLayoutTest {
 
 			readRequest2.start();
 			readRequest3.start();
-			flag.wait(getReaderWaitingTime() * 3);
+			joinTimedOut(readRequest2);
+			joinTimedOut(readRequest3);
 			flag.notifyAll();
 		}
 		join(readRequest);
@@ -705,7 +740,7 @@ public class TestRequestLock extends AbstractLayoutTest {
 			}
 			flag.set(true);
 			readRequest.start();
-			flag.wait(getReaderWaitingTime() * 3);
+			joinTimedOut(readRequest);
 			flag.notifyAll();
 		}
 		assertInstanceof(readRequest.getProblem(), RequestTimeoutException.class);
@@ -726,6 +761,7 @@ public class TestRequestLock extends AbstractLayoutTest {
 	 * </p>
 	 */
 	public void testFreeLockAfterTimeOut() throws InterruptedException {
+		useShortWaitingTimeLock();
 		final BooleanFlag flag = new BooleanFlag(true);
 
 		/* the reader to force the writer to time out */
@@ -757,9 +793,7 @@ public class TestRequestLock extends AbstractLayoutTest {
 				requests.add(writer);
 			}
 			for (int index = 0; index < getMaxWriters(); index++) {
-				Thread thread = requests.get(index);
-				thread.join(10000);
-				assertFalse("TestRequest: '" + thread.getName() + "' is still alive!", thread.isAlive());
+				joinTimedOut(requests.get(index));
 			}
 		}
 		join(reader);
@@ -777,6 +811,7 @@ public class TestRequestLock extends AbstractLayoutTest {
 	 * {@link RequestTimeoutException}.
 	 */
 	public void testTryingEnterLockAfterTimeout() throws InterruptedException {
+		useShortWaitingTimeLock();
 		final BooleanFlag flag = new BooleanFlag(true);
 
 		/* the reader to force the writer to time out */
@@ -804,7 +839,7 @@ public class TestRequestLock extends AbstractLayoutTest {
 			/* Writer to force timeout */
 			WriteRequest writer = new WriteRequest(1);
 			writer.start();
-			flag.wait(getWriterWaitingTime() * 3);
+			joinTimedOut(writer);
 			assertFalse(writer.isAlive());
 			assertInstanceof(writer.getProblem(), RequestTimeoutException.class);
 			assertTrue(hasTimedOut(lock));
@@ -820,14 +855,78 @@ public class TestRequestLock extends AbstractLayoutTest {
 	}
 	
 	private static void join(Thread t) throws InterruptedException {
-		t.join(JOIN_TIME);
-		assertFalse("Thread '" + t + "' did not died after " + JOIN_TIME + "ms.", t.isAlive());
+		join(t, JOIN_TIME);
+	}
+
+	/**
+	 * Waits for a request that is expected to die with a {@link RequestTimeoutException} in the
+	 * lock.
+	 */
+	private static void joinTimedOut(Thread t) throws InterruptedException {
+		join(t, TIMED_OUT_JOIN_TIME);
+	}
+
+	private static void join(Thread t, long timeout) throws InterruptedException {
+		t.join(timeout);
+		assertFalse("Thread '" + t + "' did not died after " + timeout + "ms.", t.isAlive());
+	}
+
+	/**
+	 * Replaces the {@link #lock} under test with one that has the configured options but reader
+	 * and writer waiting times of {@link #SHORT_WAITING_TIME}.
+	 * 
+	 * <p>
+	 * Only for tests that provoke a waiting-time timeout. The other tests keep the configured
+	 * waiting times, because they need them as a safety margin: their requests wait for several
+	 * other requests' simulated work, and a timeout there is a failure.
+	 * </p>
+	 */
+	private void useShortWaitingTimeLock() {
+		lock = new RequestLock(new ShortWaitingTimeOptions(lock.getOptions()), INITIAL_SEQUENCE_NUMBER);
 	}
 	
 	private static boolean hasTimedOut(RequestLock lock) {
 		final Object timeout = ReflectionUtils.getValue(lock, "timeout");
 		assertInstanceof(timeout, Boolean.class);
 		return ((Boolean) timeout).booleanValue();
+	}
+
+	/**
+	 * {@link Options} with reader and writer waiting times of {@link #SHORT_WAITING_TIME} and all
+	 * other values from given {@link Options}.
+	 */
+	private static final class ShortWaitingTimeOptions implements Options {
+
+		private final Options _base;
+
+		ShortWaitingTimeOptions(Options base) {
+			_base = base;
+		}
+
+		@Override
+		public int getMaxWriters() {
+			return _base.getMaxWriters();
+		}
+
+		@Override
+		public int getMaxWaitingReaders() {
+			return _base.getMaxWaitingReaders();
+		}
+
+		@Override
+		public long getReorderTimeout() {
+			return _base.getReorderTimeout();
+		}
+
+		@Override
+		public long getWriterWaitingTime() {
+			return SHORT_WAITING_TIME;
+		}
+
+		@Override
+		public long getReaderWaitingTime() {
+			return SHORT_WAITING_TIME;
+		}
 	}
 
 	class BarrierNotEnteredException extends RuntimeException {
@@ -1050,14 +1149,6 @@ public class TestRequestLock extends AbstractLayoutTest {
 
 	private int getMaxWaitingReaders() {
 		return lock.getOptions().getMaxWaitingReaders();
-	}
-
-	private long getWriterWaitingTime() {
-		return lock.getOptions().getWriterWaitingTime();
-	}
-
-	private long getReaderWaitingTime() {
-		return lock.getOptions().getReaderWaitingTime();
 	}
 
 	/**

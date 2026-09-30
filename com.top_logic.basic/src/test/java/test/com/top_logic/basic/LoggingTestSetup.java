@@ -32,8 +32,8 @@ import com.top_logic.basic.col.Maybe;
  * </p>
  * 
  * <p>
- * It is not allowed to create more than one instances of this class. The outermost
- * {@link TestSetup} should be the {@link LoggingTestSetup}.
+ * Only one {@link LoggingTestSetup} may run at a time, and it must be the outermost
+ * {@link TestSetup}. While it runs, it is available through {@link #getDecorator()}.
  * </p>
  * 
  * @since 5.7.5
@@ -43,10 +43,14 @@ import com.top_logic.basic.col.Maybe;
 public final class LoggingTestSetup extends TestSetup implements TestListener, TestSetupDecorator {
 
 	/**
-	 * Instance of this class. This variable is filled once during creation of the first instance of
-	 * this class.
+	 * The currently running {@link LoggingTestSetup}, or {@code null} if none is running.
+	 * 
+	 * <p>
+	 * Set in {@link #setUp()} when {@link System#out} and {@link System#err} are redirected, cleared
+	 * in {@link #tearDown()} after they are restored.
+	 * </p>
 	 */
-	private static LoggingTestSetup INSTANCE;
+	private static LoggingTestSetup active;
 
 	private final ByteArrayOutputStream _actualOut = new ByteArrayOutputStream();
 
@@ -144,12 +148,16 @@ public final class LoggingTestSetup extends TestSetup implements TestListener, T
 	 * messages written in {@link TestSetupDecorator.SetupAction#setUpDecorated()} and
 	 * {@link TestSetupDecorator.SetupAction#tearDownDecorated()} in a similar manor as
 	 * {@link LoggingTestSetup}.
+	 * 
+	 * @return The currently running {@link LoggingTestSetup}, or {@link Maybe#none()} if none is
+	 *         running.
 	 */
 	public static Maybe<TestSetupDecorator> getDecorator() {
-		if (INSTANCE == null) {
+		LoggingTestSetup current = active;
+		if (current == null) {
 			return Maybe.none();
 		}
-		return Maybe.<TestSetupDecorator> some(INSTANCE);
+		return Maybe.<TestSetupDecorator> some(current);
 	}
 
 	@Override
@@ -169,18 +177,15 @@ public final class LoggingTestSetup extends TestSetup implements TestListener, T
 	}
 
 	/**
-	 * Creates a new {@link LoggingTestSetup}.
+	 * Creates a {@link LoggingTestSetup} decorating the given test.
+	 * 
+	 * <p>
+	 * Each call creates a separate instance. The instance becomes available through
+	 * {@link #getDecorator()} only while it runs.
+	 * </p>
 	 */
 	public static LoggingTestSetup newLoggingTestSetup(Test test) {
-		if (INSTANCE != null) {
-			StringBuilder msg = new StringBuilder();
-			msg.append("Can not use ");
-			msg.append(LoggingTestSetup.class.getSimpleName());
-			msg.append(" more than once. Use instance.");
-			throw new IllegalStateException(msg.toString());
-		}
-		INSTANCE = new LoggingTestSetup(test);
-		return INSTANCE;
+		return new LoggingTestSetup(test);
 	}
 
 	private LoggingTestSetup(Test test) {
@@ -193,13 +198,18 @@ public final class LoggingTestSetup extends TestSetup implements TestListener, T
 		System.setOut(_out);
 		_origErr = System.err;
 		System.setErr(_err);
+		active = this;
 	}
 
 	@Override
 	protected void tearDown() throws Exception {
-		flushStreams();
-		System.setOut(_origOut);
-		System.setErr(_origErr);
+		try {
+			flushStreams();
+		} finally {
+			System.setOut(_origOut);
+			System.setErr(_origErr);
+			active = null;
+		}
 		super.tearDown();
 	}
 

@@ -30,8 +30,8 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
- * On initial render, the full field state (value, editable, mandatory, errors, label, tooltip) is
- * sent as JSON. Subsequent field changes are delivered as incremental patches via SSE.
+ * On initial render, the full field state (value, editable, disabled, mandatory, errors, label,
+ * tooltip) is sent as JSON. Subsequent field changes are delivered as incremental patches via SSE.
  * </p>
  */
 public class ReactFormFieldControl extends ReactControl {
@@ -99,6 +99,18 @@ public class ReactFormFieldControl extends ReactControl {
 
 	/** State key for whether the field is editable. */
 	protected static final String EDITABLE = "editable";
+
+	/**
+	 * State key for whether the field is presented as an inactive input.
+	 *
+	 * <p>
+	 * Only set together with a false {@link #EDITABLE}: the field accepts no input, but shows its
+	 * value in a visibly inactive input instead of a read-only value display.
+	 * </p>
+	 *
+	 * @see FieldModel#isDisabled()
+	 */
+	protected static final String DISABLED = "disabled";
 
 	/** State key for whether the field is mandatory. */
 	protected static final String MANDATORY = "mandatory";
@@ -179,6 +191,7 @@ public class ReactFormFieldControl extends ReactControl {
 	private void initFieldState() {
 		putState(VALUE, _fieldModel.getValue());
 		setEditable(_fieldModel.isEditable());
+		setDisabled(_fieldModel.isDisabled());
 		setMandatory(_fieldModel.isMandatory());
 		putState(NULLABLE, _fieldModel.isNullable());
 		setHasError(_fieldModel.hasError());
@@ -230,6 +243,11 @@ public class ReactFormFieldControl extends ReactControl {
 			}
 
 			@Override
+			public void onDisabledChanged(FieldModel source, boolean disabled) {
+				setDisabled(disabled);
+			}
+
+			@Override
 			public void onValidationChanged(FieldModel source) {
 				setHasError(source.hasError());
 				setHasWarnings(source.hasWarnings());
@@ -274,6 +292,15 @@ public class ReactFormFieldControl extends ReactControl {
 		if (_editModeAdornment != null) {
 			_editModeAdornment.setHidden(!editable);
 		}
+	}
+
+	/**
+	 * Updates whether the non-editable field is presented as an inactive input.
+	 *
+	 * @see FieldModel#isDisabled()
+	 */
+	protected void setDisabled(boolean disabled) {
+		putState(DISABLED, disabled);
 	}
 
 	/**

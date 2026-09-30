@@ -33,6 +33,18 @@ public interface FieldModelListener {
 	void onEditabilityChanged(FieldModel source, boolean editable);
 
 	/**
+	 * Called when the {@link FieldModel#isDisabled() disabled state} changes.
+	 *
+	 * @param source
+	 *        The model whose disabled state changed.
+	 * @param disabled
+	 *        The new disabled state.
+	 */
+	default void onDisabledChanged(FieldModel source, boolean disabled) {
+		// Only listeners presenting the field react to its disabled state.
+	}
+
+	/**
 	 * Called when validation state changes (error, warnings, or mandatory).
 	 *
 	 * @param source

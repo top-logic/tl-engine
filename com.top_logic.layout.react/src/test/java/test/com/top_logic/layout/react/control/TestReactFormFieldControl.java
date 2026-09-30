@@ -8,6 +8,7 @@ package test.com.top_logic.layout.react.control;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import junit.framework.TestCase;
 
@@ -113,6 +114,54 @@ public class TestReactFormFieldControl extends TestCase {
 		assertEquals("coerced", _field.state("value"));
 		assertTrue("The coerced value differs from the sent one and must reach the client.",
 			_queue.singleEvent(PatchEvent.class).getPatch().contains("coerced"));
+	}
+
+	/**
+	 * The initial state carries the disabled state of the model.
+	 */
+	public void testInitialDisabledState() {
+		assertEquals(Boolean.FALSE, _field.state("disabled"));
+
+		AbstractFieldModel disabledModel = new AbstractFieldModel("");
+		disabledModel.setDisabled(true);
+		TextControl disabledField = new TextControl(new TestReactContext(new CapturingQueue()), disabledModel);
+
+		assertEquals(Boolean.TRUE, disabledField.state("disabled"));
+		assertEquals(Boolean.FALSE, disabledField.state("editable"));
+	}
+
+	/**
+	 * A change of the disabled state of the model is pushed to the client together with the
+	 * editability it implies.
+	 */
+	public void testDisabledChangeIsPushed() {
+		_model.setDisabled(true);
+
+		assertEquals(Boolean.TRUE, _field.state("disabled"));
+		assertEquals(Boolean.FALSE, _field.state("editable"));
+		String patches = _queue.events().stream()
+			.filter(PatchEvent.class::isInstance)
+			.map(event -> ((PatchEvent) event).getPatch())
+			.collect(Collectors.joining());
+		assertTrue(patches, patches.contains("\"disabled\":true"));
+
+		_queue.clear();
+		_model.setDisabled(false);
+
+		assertEquals(Boolean.FALSE, _field.state("disabled"));
+		assertEquals(Boolean.TRUE, _field.state("editable"));
+		assertFalse("A state change must be pushed.", _queue.events().isEmpty());
+	}
+
+	/**
+	 * A value sent by a client for a disabled field is not written to the model.
+	 */
+	public void testDisabledFieldIgnoresClientValue() {
+		_model.setDisabled(true);
+
+		_field.executeClientCommand("valueChanged", Map.of("value", "typed"));
+
+		assertEquals("", _model.getValue());
 	}
 
 	/**

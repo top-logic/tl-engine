@@ -413,6 +413,12 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	 * Computes and applies the effective visibility, editability and mandatory state of the field,
 	 * honoring a dynamic {@link ModeSelector} (recording its dependencies) and otherwise the static
 	 * visibility annotations.
+	 *
+	 * <p>
+	 * The mode {@link FormVisibility#DISABLED} makes the field non-editable and, while the form is
+	 * edited, {@link AttributeFieldModel#isDisabled() disabled}, so that it is presented as an
+	 * inactive input.
+	 * </p>
 	 */
 	private void applyMode(boolean editMode) {
 		if (_model == null || _chrome == null) {
@@ -422,6 +428,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 		boolean visible = true;
 		boolean editable;
 		boolean mandatory;
+		boolean disabled = false;
 		FormVisibility mode = FormVisibility.DEFAULT;
 		if (_modeSelector != null) {
 			TLObject self = _formModel.getCurrentObject();
@@ -440,9 +447,13 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 				mandatory = false;
 				break;
 			case READ_ONLY:
+				editable = false;
+				mandatory = false;
+				break;
 			case DISABLED:
 				editable = false;
 				mandatory = false;
+				disabled = true;
 				break;
 			case EDITABLE:
 				editable = true;
@@ -459,10 +470,17 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 				mandatory = DisplayAnnotations.isMandatory(part);
 				break;
 		}
+		boolean editing = editMode && !_forceReadonly;
+		// A disabled field is presented as an inactive input only while the form is edited; in
+		// view mode it shows its value like any other field.
+		boolean effectiveDisabled = editing && disabled;
+		boolean effectiveEditable = editing && editable;
 		_chrome.setVisible(visible);
 		_chrome.setRequired(mandatory);
-		_chrome.setLabelPosition(wirePosition(legacyLabelPosition(part), editMode && !_forceReadonly && editable));
-		_model.setEditable(editMode && !_forceReadonly && editable);
+		_chrome.setLabelPosition(
+			wirePosition(legacyLabelPosition(part), effectiveEditable || effectiveDisabled));
+		_model.setDisabled(effectiveDisabled);
+		_model.setEditable(effectiveEditable);
 	}
 
 	/**

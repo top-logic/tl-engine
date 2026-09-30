@@ -185,7 +185,10 @@ $parts.isEmpty()
 					<en>Details</en>
 					<de>Details</de>
 				</title>
-				<form input="selectedNode">
+				<form
+					input="selectedNode"
+					with-inset="true"
+				>
 					<field attribute="name"/>
 					<field attribute="marker"/>
 					<field attribute="image"/>

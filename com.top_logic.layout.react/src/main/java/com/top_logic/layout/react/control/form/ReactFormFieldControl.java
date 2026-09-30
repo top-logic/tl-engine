@@ -8,7 +8,7 @@ package com.top_logic.layout.react.control.form;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Consumer;
+import java.util.function.Function;
 
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
@@ -20,6 +20,7 @@ import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.react.state.TextInputState;
 import com.top_logic.layout.react.state.TypingFieldState;
+import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
 /**
@@ -53,7 +54,7 @@ public class ReactFormFieldControl extends ReactControl {
 
 	private ReactControl _editModeAdornment;
 
-	private Consumer<Object> _submitListener;
+	private Function<Object, HandlerResult> _submitListener;
 
 	private boolean _multiline;
 
@@ -322,9 +323,11 @@ public class ReactFormFieldControl extends ReactControl {
 	 * </p>
 	 *
 	 * @param listener
-	 *        Receives the submitted value, or {@code null} to stop reporting submits.
+	 *        Receives the submitted value and returns the result of what the submit triggers,
+	 *        which is reported as the result of the client's submit; {@code null} to stop reporting
+	 *        submits.
 	 */
-	public void setSubmitListener(Consumer<Object> listener) {
+	public void setSubmitListener(Function<Object, HandlerResult> listener) {
 		_submitListener = listener;
 		putState(FieldState.SUBMIT_ON_ENTER__PROP, Boolean.valueOf(listener != null && hasSubmitGesture()));
 	}
@@ -430,18 +433,20 @@ public class ReactFormFieldControl extends ReactControl {
 	/**
 	 * Handles the submit the client sends when the user has finished entering a value: stores the
 	 * value like a {@link #CMD_VALUE_CHANGED}, then reports it to the
-	 * {@link #setSubmitListener(Consumer) submit listener}.
+	 * {@link #setSubmitListener(Function) submit listener}, whose result is the result of the
+	 * submit.
 	 */
 	@ReactCommandHandler(SUBMIT_COMMAND)
-	final void handleSubmit(FieldSubmitArguments args) {
+	final HandlerResult handleSubmit(FieldSubmitArguments args) {
 		if (!acceptsClientValue()) {
-			return;
+			return HandlerResult.DEFAULT_RESULT;
 		}
 		applyRawClientValue(args.getValue());
-		Consumer<Object> listener = _submitListener;
-		if (listener != null) {
-			listener.accept(_fieldModel.getValue());
+		Function<Object, HandlerResult> listener = _submitListener;
+		if (listener == null) {
+			return HandlerResult.DEFAULT_RESULT;
 		}
+		return listener.apply(_fieldModel.getValue());
 	}
 
 	/**

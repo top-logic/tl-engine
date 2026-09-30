@@ -79,6 +79,7 @@ import com.top_logic.layout.react.state.WindowState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.model.annotate.ui.BooleanPresentation;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
 
 import de.haumacher.msgbuf.data.ProtocolEnum;
@@ -135,9 +136,7 @@ public class TestControlStateSchema extends TestCase {
 		/** Puts every field key the base class offers setters for. */
 		void putFieldKeys() {
 			setPlaceholder("placeholder");
-			setSubmitListener(value -> {
-				// Ignored.
-			});
+			setSubmitListener(value -> HandlerResult.DEFAULT_RESULT);
 			setEditable(false);
 			setMandatory(true);
 			setHasError(true);
@@ -405,11 +404,9 @@ public class TestControlStateSchema extends TestCase {
 	public void testMenuKeys() {
 		ReactMenuControl control = new ReactMenuControl(createContext(), null, List.of(
 			MenuEntry.header("Header"),
-			MenuEntry.item("a", "A", "css:fas fa-home", true, "css", true),
+			MenuEntry.item("a", "A", "css:fas fa-home", ExecutableState.NOT_EXEC_DISABLED, "css", true),
 			MenuEntry.separator()),
-			id -> {
-				// Nothing to select.
-			}, () -> {
+			id -> HandlerResult.DEFAULT_RESULT, () -> {
 				// Never closed.
 			});
 		control.open(3, 4);
@@ -441,9 +438,7 @@ public class TestControlStateSchema extends TestCase {
 	/** Puts the keys a field offers setters for. */
 	private static void putFieldKeys(ReactFormFieldControl control) {
 		control.setPlaceholder("placeholder");
-		control.setSubmitListener(value -> {
-			// Ignored.
-		});
+		control.setSubmitListener(value -> HandlerResult.DEFAULT_RESULT);
 		control.setHidden(false);
 		control.setCssClass("css");
 	}

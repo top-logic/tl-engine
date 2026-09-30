@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="navPath"/>
+	</channels>
+	<tile-stack
+		bind-path-to="navPath"
+		initial="tile-leak-home.view.xml"
+		path="navPath"
+	/>
+</view>

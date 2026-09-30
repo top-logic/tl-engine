@@ -22,6 +22,7 @@ import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
+import com.top_logic.layout.react.control.layout.ReactPanelControl;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.react.control.layout.ToolbarGroupDisplay;
 import com.top_logic.layout.react.control.overlay.DialogManager;
@@ -274,9 +275,15 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * Sets whether the table renders framed: with the bound attribute's label as panel title and
 	 * row creation as an Add button in its own toolbar. A frameless table shows neither; its
 	 * creator offers row creation through the enclosing command scope.
+	 *
+	 * <p>
+	 * A frameless table is a region of its own rather than a field among others: it fills the
+	 * height its container offers, so the table bounds its scroll viewport and scrolls internally.
+	 * </p>
 	 */
 	public void setFramed(boolean framed) {
 		_framed = framed;
+		putState(ReactPanelControl.FILL, Boolean.valueOf(!framed));
 	}
 
 	/**
@@ -492,10 +499,6 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * title. A frameless table shows no title.
 	 */
 	private void updateTitle() {
-		// A frameless table draws no chrome (no title, no own toolbar). Mark the panel bare so an
-		// enclosing form renders flush around it instead of framing it with its page inset; a framed
-		// panel keeps its chrome and the surrounding inset.
-		putState("bare", Boolean.valueOf(!_framed));
 		if (!_framed) {
 			putState("title", null);
 			return;
@@ -585,7 +588,6 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		_tableControl = new TableViewControl<>(_context, view, false);
 		_tableControl.setFilterBar(_filterBar);
 		_tableControl.setActivationHandler(_activationHandler);
-		registerChildControl(_tableControl);
 
 		// Set panel child to the table.
 		putState("child", _tableControl);

@@ -2,16 +2,16 @@
 
 <!--
 	The tabs of the settings dialog (settings.view.xml), which opens this as its content.
-
+	
 	At the root of a view of its own, so that a module contributes a tab by dropping a same-path
 	overlay (WEB-INF/views/settings-tabs.view.xml) into its own module and adding an entry to the
 	<tabs> list; the ViewLoader merges all copies in dependency order. See tl-layout-view-contact,
 	which adds the profile of the person behind the account.
-
+	
 	Deliberately small. What a user changes with a single decision - the language, the theme, where
 	they start - is an entry of the user menu (user-menu.view.xml), one click from the app bar, so
 	this dialog holds only what wants a form or belongs with the account's security.
-
+	
 	The account is read here rather than passed in: a <view-ref> gives its content a channel
 	namespace of its own, and the session's own account is what every tab edits.
 -->
@@ -66,11 +66,13 @@
 					initial-edit-mode="true"
 					input="account"
 					mode-switch="false"
+					with-inset="true"
 				>
 					<field attribute="timezone"/>
 					<field attribute="country"/>
 					<commands>
-						<generic-command image="css:bi bi-check-lg"
+						<generic-command
+							image="css:bi bi-check-lg"
 							placement="BUTTON_BAR"
 						>
 							<label>
@@ -168,7 +170,8 @@
 						-->
 						<switch input="deputies">
 							<case test="deputies -> !$deputies.isEmpty()">
-								<stack direction="row"
+								<stack
+									direction="row"
 									gap="compact"
 								>
 									<text>
@@ -196,7 +199,8 @@
 						-->
 						<switch input="deputyFor">
 							<case test="accounts -> !$accounts.isEmpty()">
-								<stack direction="row"
+								<stack
+									direction="row"
 									gap="compact"
 								>
 									<text>

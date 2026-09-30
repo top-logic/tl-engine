@@ -336,8 +336,8 @@ public class ReactTreeControl extends ReactControl {
 		if (_nodeControlCache.isEmpty()) {
 			// After a detach/reattach cycle, _nodeControlCache was cleared by cleanupNodeControls()
 			// but _reactState still has stale node references. Rebuild the cache and state from the
-			// tree model. At this point _sseQueue is still null, so putState() stores locally
-			// without sending a PatchEvent.
+			// tree model. State written while rendering is part of the rendered output, so
+			// putState() stores locally without sending a PatchEvent.
 			buildFullState();
 		}
 	}
@@ -410,7 +410,6 @@ public class ReactTreeControl extends ReactControl {
 		if (control == null) {
 			control = _contentProvider.createControl(getReactContext(), _treeModel.getBusinessObject(node));
 			_nodeControlCache.put(node, control);
-			registerChildControl(control);
 		}
 		return control;
 	}

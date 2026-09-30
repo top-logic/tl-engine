@@ -92,6 +92,8 @@ public class TestTableDropBinding extends TestCase {
 		_context = new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
 		_source = newTable(SOURCE_ROWS);
 		_source.setDragSource(ROW_TYPE);
+		// The source table is displayed: only a displayed control can be addressed by its ID.
+		_source.attach();
 		_targetChannel = new DefaultViewChannel("dropTarget");
 		_onTable = new Recorder();
 		_onRow = new Recorder();

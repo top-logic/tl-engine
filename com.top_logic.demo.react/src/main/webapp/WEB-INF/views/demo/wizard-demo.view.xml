@@ -115,6 +115,7 @@
 						initial-edit-mode="true"
 						input="profile"
 						mode-switch="false"
+						with-inset="true"
 					>
 						<field attribute="name"/>
 						<field attribute="email"/>
@@ -180,6 +181,7 @@
 						initial-edit-mode="true"
 						input="profile"
 						mode-switch="false"
+						with-inset="true"
 					>
 						<switch input="question">
 							<case test="q -> $q == 'role'">
@@ -250,6 +252,7 @@
 						<form
 							input="profile"
 							mode-switch="false"
+							with-inset="true"
 						>
 							<field attribute="name"/>
 							<field attribute="email"/>

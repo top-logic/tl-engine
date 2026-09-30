@@ -16,7 +16,10 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.HttpSessionBindingEvent;
 import jakarta.servlet.http.HttpSessionBindingListener;
 
+import com.top_logic.base.context.TLSessionContext;
+import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
@@ -26,6 +29,7 @@ import com.top_logic.layout.react.protocol.WindowOpenEvent;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.mig.html.layout.GlobalModelEventForwarder;
 import com.top_logic.model.listen.ModelScope;
+import com.top_logic.util.TLContextManager;
 
 /**
  * Per-session registry of the browser windows of that session.
@@ -433,6 +437,13 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	/**
 	 * Called when a window is closed (either by the user or programmatically).
 	 * Invokes the close callback (if any), then cleans up the control tree and removes the entry.
+	 *
+	 * <p>
+	 * The close callback and the disposal of the tree run in the window's own subsession, whatever
+	 * window the calling request serves, so that they see the user and the locale of the window. The
+	 * caller's subsession is restored afterwards. A window whose page was never rendered has no
+	 * subsession; it is closed in the caller's context.
+	 * </p>
 	 */
 	public void windowClosed(String windowId) {
 		if (windowId == null) {
@@ -446,30 +457,82 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 			if (singletonKey != null) {
 				_singletonKeys.remove(singletonKey, windowId);
 			}
-			Runnable closeCallback = entry.getCloseCallback();
-			if (closeCallback != null) {
-				Logger.info("Running close callback for '" + windowId + "'.",
-					ReactWindowRegistry.class);
-				try {
-					closeCallback.run();
-					Logger.info("Close callback completed for '" + windowId + "'.",
-						ReactWindowRegistry.class);
-				} catch (Exception ex) {
-					Logger.error("Error in window close callback for window '" + windowId + "'.",
-						ex, ReactWindowRegistry.class);
-				}
-			} else {
-				Logger.info("No close callback for '" + windowId + "'.",
-					ReactWindowRegistry.class);
-			}
-			ReactControl rootControl = entry.getRootControl();
-			if (rootControl != null) {
-				rootControl.cleanupTree();
-			}
-
-			// After the tree: disposing it unregisters its controls from the queue.
-			entry.getQueue().shutdown();
+			inWindowContext(windowId, () -> disposeWindow(entry));
 		}
+	}
+
+	/**
+	 * Runs the close callback of the given window that was just removed, then disposes its tree
+	 * and its queue.
+	 */
+	private static void disposeWindow(WindowEntry entry) {
+		String windowId = entry.getWindowId();
+		Runnable closeCallback = entry.getCloseCallback();
+		if (closeCallback != null) {
+			Logger.info("Running close callback for '" + windowId + "'.",
+				ReactWindowRegistry.class);
+			try {
+				closeCallback.run();
+				Logger.info("Close callback completed for '" + windowId + "'.",
+					ReactWindowRegistry.class);
+			} catch (Exception ex) {
+				Logger.error("Error in window close callback for window '" + windowId + "'.",
+					ex, ReactWindowRegistry.class);
+			}
+		} else {
+			Logger.info("No close callback for '" + windowId + "'.",
+				ReactWindowRegistry.class);
+		}
+		ReactControl rootControl = entry.getRootControl();
+		if (rootControl != null) {
+			rootControl.cleanupTree();
+		}
+
+		// After the tree: disposing it unregisters its controls from the queue.
+		entry.getQueue().shutdown();
+	}
+
+	/**
+	 * Runs the given action in the subsession of the given window, restoring the caller's
+	 * subsession afterwards.
+	 *
+	 * <p>
+	 * The controls of a window resolve labels, the current user and their locale from the
+	 * subsession installed on the thread. A lifecycle event of a window - its page being unloaded,
+	 * the window being closed or collected - reaches the registry from a request that serves no
+	 * window at all or a different one, so the controls reacting to it see the window's own
+	 * subsession only when it is installed for them.
+	 * </p>
+	 *
+	 * <p>
+	 * A window that has no subsession - its page was never rendered - runs the action in the
+	 * caller's context.
+	 * </p>
+	 *
+	 * @param windowId
+	 *        The window whose subsession to install.
+	 * @param action
+	 *        What to do in that subsession. Run on the calling thread.
+	 */
+	private static void inWindowContext(String windowId, Runnable action) {
+		TLSubSessionContext subSession = windowSubSession(windowId);
+		if (subSession == null) {
+			action.run();
+		} else {
+			ThreadContextManager.inContext(subSession, action::run);
+		}
+	}
+
+	/**
+	 * The subsession of the given window in the session of the current thread, or {@code null}
+	 * if there is none.
+	 */
+	private static TLSubSessionContext windowSubSession(String windowId) {
+		TLSessionContext session = TLContextManager.getSession();
+		if (session == null) {
+			return null;
+		}
+		return session.getSubSession(windowId);
 	}
 
 	/**
@@ -512,6 +575,12 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 * the displayed one.
 	 * </p>
 	 *
+	 * <p>
+	 * The tree is detached in the window's own subsession, so that the controls reacting to the
+	 * detach see the user and the locale of the window rather than those of the request reporting
+	 * the unload. The caller's subsession is restored afterwards.
+	 * </p>
+	 *
 	 * @param windowId
 	 *        The window whose page was unloaded.
 	 * @param pageLoad
@@ -536,7 +605,7 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 		// sweepUnloadedWindows().
 		ReactControl rootControl = entry.getRootControl();
 		if (rootControl != null) {
-			rootControl.detach();
+			inWindowContext(windowId, rootControl::detach);
 		}
 	}
 
@@ -547,8 +616,10 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 * <p>
 	 * Called from request handling rather than from a timer, so that the teardown runs in a thread
 	 * that has a session context - {@link #windowClosed(String)} runs close callbacks and disposes
-	 * control trees. A window whose grace period expires while its session makes no further requests
-	 * is released when the session ends ({@link #valueUnbound(HttpSessionBindingEvent)}).
+	 * control trees. Each window is torn down in its own subsession, not in the one of the window
+	 * whose request triggers the sweep. A window whose grace period expires while its session makes
+	 * no further requests is released when the session ends
+	 * ({@link #valueUnbound(HttpSessionBindingEvent)}).
 	 * </p>
 	 */
 	public void sweepUnloadedWindows() {

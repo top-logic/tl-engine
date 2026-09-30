@@ -98,6 +98,8 @@ public class TestElementPicker extends TestCase {
 		_tool = new WindowContext(_registry, "toolWindow");
 		_app = new WindowContext(_registry, "appWindow");
 		_control = new DemoControl(_app);
+		// The picked control is displayed: only a displayed control can be addressed by its ID.
+		_control.attach();
 		_picked = new AtomicReference<>();
 	}
 

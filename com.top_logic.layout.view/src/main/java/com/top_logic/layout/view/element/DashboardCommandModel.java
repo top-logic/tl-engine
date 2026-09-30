@@ -143,7 +143,7 @@ public class DashboardCommandModel implements CommandModel {
 	}
 
 	@Override
-	public HandlerResult executeCommand(ReactContext context) {
+	public HandlerResult perform(ReactContext context) {
 		_action.accept(context);
 		return HandlerResult.DEFAULT_RESULT;
 	}

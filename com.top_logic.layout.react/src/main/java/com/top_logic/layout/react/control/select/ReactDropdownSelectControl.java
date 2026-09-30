@@ -44,6 +44,7 @@ import com.top_logic.layout.scripting.recorder.ref.ContextDependent;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
 import com.top_logic.layout.scripting.runtime.ActionContext;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.listen.ObservedObjects;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
@@ -215,8 +216,20 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 * The option list carries the labels of those objects as well, so it goes stale with them, see
 	 * {@link #invalidateOptions()}.
 	 * </p>
+	 *
+	 * <p>
+	 * While one of the displayed objects is deleted, the display is left alone: a deleted object has
+	 * no type any more, so neither its label nor the color of its value can be resolved from it. The
+	 * deletion is delivered before the value of the field is replaced, so the field keeps what it
+	 * shows until it receives its next value or is removed from the display.
+	 * </p>
 	 */
 	private void refreshDisplay() {
+		for (TLObject displayed : _displayedObjects.observedObjects()) {
+			if (!displayed.tValid()) {
+				return;
+			}
+		}
 		Object tx = beginUpdate();
 		updateValueState();
 		invalidateOptions();

@@ -9,15 +9,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
+import java.util.function.Function;
 
-import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.state.MenuState;
 import com.top_logic.layout.react.state.MenuState.EntryType;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * Popup menu triggered by an anchor element.
@@ -35,7 +35,7 @@ public class ReactMenuControl extends ReactControl {
 	/** The {@link ReactCommandHandler} that selects a menu item. */
 	public static final String SELECT_ITEM_COMMAND = "selectItem";
 
-	private Consumer<String> _selectHandler;
+	private Function<String, HandlerResult> _selectHandler;
 
 	private Runnable _closeHandler;
 
@@ -49,12 +49,13 @@ public class ReactMenuControl extends ReactControl {
 	 * @param items
 	 *        the menu items
 	 * @param selectHandler
-	 *        called with the item ID when an item is selected
+	 *        called with the item ID when an item is selected, see
+	 *        {@link #setSelectHandler(Function)}
 	 * @param closeHandler
 	 *        called when the menu is closed
 	 */
 	public ReactMenuControl(ReactContext context, String anchorId, List<MenuEntry> items,
-			Consumer<String> selectHandler, Runnable closeHandler) {
+			Function<String, HandlerResult> selectHandler, Runnable closeHandler) {
 		super(context, null, REACT_MODULE);
 		_selectHandler = selectHandler;
 		_closeHandler = closeHandler;
@@ -125,8 +126,14 @@ public class ReactMenuControl extends ReactControl {
 
 	/**
 	 * Sets the handler invoked when a menu item is selected.
+	 *
+	 * <p>
+	 * The handler receives the item ID and returns the result of what the selection does - the
+	 * result of the command the entry stands for, a refusal included -, which is reported as the
+	 * result of the selection.
+	 * </p>
 	 */
-	public void setSelectHandler(Consumer<String> selectHandler) {
+	public void setSelectHandler(Function<String, HandlerResult> selectHandler) {
 		_selectHandler = selectHandler;
 	}
 
@@ -156,52 +163,64 @@ public class ReactMenuControl extends ReactControl {
 	 *        The display label ({@code null} for separators).
 	 * @param icon
 	 *        An optional CSS icon class, or {@code null}.
-	 * @param disabled
-	 *        Whether the item is disabled.
+	 * @param state
+	 *        Whether the item is offered for selection; an item that is not
+	 *        {@link ExecutableState#isExecutable() executable} is displayed as {@link #disabled()
+	 *        disabled}, and selecting it is refused with this state, whose
+	 *        {@link ExecutableState#getI18NReasonKey() reason} tells the user why.
 	 * @param cssClasses
 	 *        Additional CSS classes for the entry, separated by spaces, or {@code null}.
 	 * @param active
 	 *        Whether the effect of the command this entry renders is currently in force, so that
 	 *        the entry is marked as the chosen one among its alternatives.
 	 */
-	public record MenuEntry(EntryType type, String id, String label, String icon, boolean disabled,
+	public record MenuEntry(EntryType type, String id, String label, String icon, ExecutableState state,
 			String cssClasses, boolean active) {
+
+		/**
+		 * Whether the item is displayed as disabled, see {@link #state()}.
+		 */
+		public boolean disabled() {
+			return !state.isExecutable();
+		}
 
 		/**
 		 * Creates a simple menu item.
 		 */
 		public static MenuEntry item(String id, String label) {
-			return new MenuEntry(EntryType.ITEM, id, label, null, false, null, false);
+			return new MenuEntry(EntryType.ITEM, id, label, null, ExecutableState.EXECUTABLE, null, false);
 		}
 
 		/**
 		 * Creates a menu item with an icon.
 		 */
 		public static MenuEntry item(String id, String label, String icon) {
-			return new MenuEntry(EntryType.ITEM, id, label, icon, false, null, false);
+			return new MenuEntry(EntryType.ITEM, id, label, icon, ExecutableState.EXECUTABLE, null, false);
 		}
 
 		/**
 		 * Creates a menu item with an icon and an explicit disabled state.
 		 */
 		public static MenuEntry item(String id, String label, String icon, boolean disabled) {
-			return new MenuEntry(EntryType.ITEM, id, label, icon, disabled, null, false);
+			return new MenuEntry(EntryType.ITEM, id, label, icon,
+				disabled ? ExecutableState.NOT_EXEC_DISABLED : ExecutableState.EXECUTABLE, null, false);
 		}
 
 		/**
-		 * Creates a menu item carrying additional CSS classes, marked as
-		 * {@link MenuEntry#active() active} when its command is the one in force.
+		 * Creates a menu item for a command in the given {@link MenuEntry#state() state}, carrying
+		 * additional CSS classes, marked as {@link MenuEntry#active() active} when its command is
+		 * the one in force.
 		 */
-		public static MenuEntry item(String id, String label, String icon, boolean disabled,
+		public static MenuEntry item(String id, String label, String icon, ExecutableState state,
 				String cssClasses, boolean active) {
-			return new MenuEntry(EntryType.ITEM, id, label, icon, disabled, cssClasses, active);
+			return new MenuEntry(EntryType.ITEM, id, label, icon, state, cssClasses, active);
 		}
 
 		/**
 		 * Creates a separator.
 		 */
 		public static MenuEntry separator() {
-			return new MenuEntry(EntryType.SEPARATOR, null, null, null, false, null, false);
+			return new MenuEntry(EntryType.SEPARATOR, null, null, null, ExecutableState.EXECUTABLE, null, false);
 		}
 
 		/**
@@ -209,35 +228,42 @@ public class ReactMenuControl extends ReactControl {
 		 * or focused.
 		 */
 		public static MenuEntry header(String label) {
-			return new MenuEntry(EntryType.HEADER, null, label, null, false, null, false);
+			return new MenuEntry(EntryType.HEADER, null, label, null, ExecutableState.EXECUTABLE, null, false);
 		}
 	}
 
 	/**
 	 * Handles the selectItem command sent when a menu item is selected.
+	 *
+	 * <p>
+	 * An item that is displayed as {@link MenuEntry#disabled() disabled} is not selected, whatever
+	 * the client sends: the selection is refused with the item's {@link MenuEntry#state() state}.
+	 * Otherwise the menu closes and the {@link #setSelectHandler(Function) select handler}'s result
+	 * is the result of the selection.
+	 * </p>
 	 */
 	@ReactCommandHandler(SELECT_ITEM_COMMAND)
 	HandlerResult handleSelectItem(MenuSelectItemArguments args) {
 		String itemId = args.getItemId();
-		if (isDisabled(itemId)) {
-			return HandlerResult.error(I18NConstants.ERROR_COMMAND_NOT_EXECUTABLE);
+		ExecutableState state = stateOf(itemId);
+		if (!state.isExecutable()) {
+			return HandlerResult.notExecutable(state);
 		}
 		close();
-		_selectHandler.accept(itemId);
-		return HandlerResult.DEFAULT_RESULT;
+		return _selectHandler.apply(itemId);
 	}
 
 	/**
-	 * Whether the entry with the given id is displayed as disabled, so that selecting it is not
+	 * The {@link MenuEntry#state() state} of the entry with the given id, whether selecting it is
 	 * offered.
 	 */
-	private boolean isDisabled(String itemId) {
+	private ExecutableState stateOf(String itemId) {
 		for (MenuEntry entry : _entries) {
 			if (entry.id() != null && entry.id().equals(itemId)) {
-				return entry.disabled();
+				return entry.state();
 			}
 		}
-		return false;
+		return ExecutableState.EXECUTABLE;
 	}
 
 	/**

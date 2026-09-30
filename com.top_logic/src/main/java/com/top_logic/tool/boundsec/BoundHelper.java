@@ -27,7 +27,6 @@ import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.Location;
 import com.top_logic.basic.config.annotation.Label;
-import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
@@ -90,18 +89,7 @@ public class BoundHelper extends ManagedClass {
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
 	public static interface Config extends ServiceConfiguration<BoundHelper> {
-
-		/**
-		 * Whether to use the {@link BoundHelper#getDefaultObject() global default object} as
-		 * {@link AbstractBoundWrapper#getSecurityParent() security parent} by default.
-		 * 
-		 * @see BoundHelper#getDefaultObject()
-		 * @see AbstractBoundWrapper#getSecurityParent()
-		 * @see BoundHelper#useDefaultObject()
-		 */
-		@Name("use-default-security-parent")
-		boolean getUseDefaultSecurityParent();
-
+		// No additional properties.
 	}
 
     /** The default {@link com.top_logic.tool.boundsec.BoundObject} */
@@ -121,9 +109,6 @@ public class BoundHelper extends ManagedClass {
      */
     boolean allowExecuteDisabledButtons = false;
 
-	/** @see Config#getUseDefaultSecurityParent() */
-	private final boolean _useDefaultSecurityParent;
-
 	/**
 	 * Creates a new {@link BoundHelper} from the given configuration.
 	 * 
@@ -137,8 +122,6 @@ public class BoundHelper extends ManagedClass {
         // for getInstance
 		boundCheckerCache =
 			Collections.synchronizedMap(new HashMap<>());
-
-		_useDefaultSecurityParent = config.getUseDefaultSecurityParent();
     }
 
     /**
@@ -905,17 +888,6 @@ public class BoundHelper extends ManagedClass {
 		BoundedRole.copyRoleAssignments(aDest, aSource);
     }
     
-	/**
-     * Flag if using default object as security parent
-     * for all AbstractBoundWrappers that don't define
-     * one themselves.
-     *
-     * @return the flag
-     */
-    public boolean useDefaultObject() {
-		return _useDefaultSecurityParent;
-    }
-
     /**
      * This method sets the {@link #allowChangeDeleteProtection} flag.
      */

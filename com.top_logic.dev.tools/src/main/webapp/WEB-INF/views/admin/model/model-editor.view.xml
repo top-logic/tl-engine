@@ -399,6 +399,7 @@
 										</title>
 										<form
 											input="selectedDetail"
+											with-inset="true"
 											withEditMode="true"
 										>
 											<field attribute="name"/>
@@ -417,6 +418,7 @@
 										</title>
 										<form
 											input="selectedDetail"
+											with-inset="true"
 											withEditMode="true"
 										>
 											<field attribute="name"/>
@@ -437,6 +439,7 @@
 										</title>
 										<form
 											input="selectedDetail"
+											with-inset="true"
 											withEditMode="true"
 										>
 											<field attribute="name"/>
@@ -457,6 +460,7 @@
 										</title>
 										<form
 											input="selectedDetail"
+											with-inset="true"
 											withEditMode="true"
 										>
 											<field attribute="name"/>

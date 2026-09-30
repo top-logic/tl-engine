@@ -264,5 +264,11 @@ public class CleanUpTask extends TaskImpl<CleanUpTask.Config> implements Monitor
 		return CalendarUtil.newSimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
 	}
 
-	
+
+	@Override
+	public boolean isNodeLocal() {
+		// Cleans up a directory in the local file system of the node it runs on.
+		return true;
+	}
+
 }

@@ -17,6 +17,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.thread.InContext;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.layout.progress.ProgressResult;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.sched.task.impl.TaskImpl;
@@ -146,6 +147,10 @@ public class AutomaticDataImportTask<C extends AutomaticDataImportTask.Config<?>
     @Override
 	public void run() {
         super.run(); // as wished by super class
+		ThreadContext.inSystemContext(AutomaticDataImportTask.class, this::runAutomaticImport);
+	}
+
+	private void runAutomaticImport() {
 		getLog().taskStarted();
 
         long startTime = System.currentTimeMillis();
@@ -314,5 +319,11 @@ public class AutomaticDataImportTask<C extends AutomaticDataImportTask.Config<?>
     protected void logDuration(long startTime) {
         Logger.info("Automatic data import duration: " + DebugHelper.getTime(System.currentTimeMillis() - startTime), AutomaticDataImportTask.class);
     }
+
+	@Override
+	public boolean isNodeLocal() {
+		// Imports into persistent data; must run only once in the cluster.
+		return false;
+	}
 
 }

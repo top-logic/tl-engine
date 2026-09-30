@@ -5,16 +5,15 @@
  */
 package com.top_logic.bpe.execution.engine;
 
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.thread.InContext;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
-import com.top_logic.util.TLContext;
 import com.top_logic.util.sched.task.impl.TaskImpl;
 
 /**
+ * Task processing the timer events of the running processes.
+ * 
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public class BPETimeoutTask extends TaskImpl {
@@ -25,21 +24,23 @@ public class BPETimeoutTask extends TaskImpl {
 
 	@Override
 	public void run() {
-		TLContext.inSystemContext(this.getClass(), new InContext() {
-			@Override
-			public void inContext() {
-				KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
-				try (Transaction t = theKB.beginTransaction(I18NConstants.PROCESSED_TIMER_WORKFLOW_TASKS)) {
-					ExecutionEngine.getInstance().updateAll();
-					t.commit();
-				} catch (Exception e) {
-					Logger.error(
-						"Unable to execute timeout-task.", e,
-						BPETimeoutTask.class);
-				}
-			}
-		});
+		runWithResultProtocol(this::processTimeouts);
 
 		super.run();
 	}
+
+	private void processTimeouts() {
+		KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
+		try (Transaction t = theKB.beginTransaction(I18NConstants.PROCESSED_TIMER_WORKFLOW_TASKS)) {
+			ExecutionEngine.getInstance().updateAll();
+			t.commit();
+		}
+	}
+
+	@Override
+	public boolean isNodeLocal() {
+		// Modifies persistent process data; must run only once in the cluster.
+		return false;
+	}
+
 }

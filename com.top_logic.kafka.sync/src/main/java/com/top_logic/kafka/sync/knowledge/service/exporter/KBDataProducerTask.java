@@ -780,4 +780,10 @@ public class KBDataProducerTask extends StateHandlingTask<KBDataProducerTask.Con
 
 	}
 
+	@Override
+	public boolean isNodeLocal() {
+		// Coordinates the nodes itself by a compare-and-set on the last sent revision.
+		return true;
+	}
+
 }

@@ -139,4 +139,10 @@ public class CompactHistoryTask<C extends CompactHistoryTask.Config<?>> extends 
 		}
 	}
 
+	@Override
+	public boolean isNodeLocal() {
+		// Rewrites the persistent history; must run only once in the cluster.
+		return false;
+	}
+
 }

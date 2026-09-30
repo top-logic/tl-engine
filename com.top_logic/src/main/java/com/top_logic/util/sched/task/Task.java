@@ -265,20 +265,37 @@ public interface Task extends Batch {
 	public boolean isForcedRun();
 
 	/**
-	 * Defines, if this task need to run in every cluster node by itself.
-	 * 
-	 * In some cases it may be needful, if a task runs only on one cluster node (e.g. refresh of
-	 * external user data), these tasks need to return <code>false</code> here.
+	 * Whether this task runs on every cluster node, or only once in the cluster at a time.
 	 * 
 	 * <p>
-	 * If this method returns <code>false</code>, the {@link Task} has to call
-	 * {@link TaskLog#taskStarted()} and
-	 * {@link TaskLog#taskEnded(TaskResult.ResultType, ResKey, Throwable)} only on one of the nodes.
-	 * The node is allowed to change from one run to another run, but has to be the same during one
-	 * run.
+	 * Every task implementation decides this itself, based on what the task does:
+	 * </p>
+	 * <dl>
+	 * <dt><code>true</code>: The task runs on every cluster node.</dt>
+	 * <dd>Each node schedules and executes the task independently of the other nodes. This is the
+	 * right choice for a task whose effects are local to the node: resetting a node-local cache,
+	 * cleaning up a node-local temporary directory. It is also the right choice for a task that
+	 * coordinates the cluster nodes itself, e.g. through its own database lock or a
+	 * compare-and-set on persistent state, and for a task that repairs the cluster state after a
+	 * node died (a lock held by the dead node would otherwise block such a task forever).</dd>
+	 * <dt><code>false</code>: The task runs only once in the cluster at a time.</dt>
+	 * <dd>Before executing the task, the {@link Scheduler} acquires the cluster lock stored in the
+	 * task's persistent {@link TaskLog}, and releases it when the task has ended. A node that does
+	 * not get the lock skips the scheduled run, and it also skips a run that another node has
+	 * already started for the same schedule. This requires {@link #isPersistent()} to return
+	 * <code>true</code>, and the implementation to meet the obligations of a persistent task
+	 * described there. Its result protocol is written only by the executing node, which may
+	 * change from one run to the next but stays the same during one run.</dd>
+	 * </dl>
+	 * 
+	 * <p>
+	 * Rule of thumb: A task that modifies persistent data or has external effects (sending mail,
+	 * importing data from an external system) returns <code>false</code>. Otherwise, every node
+	 * would repeat the modification.
 	 * </p>
 	 * 
-	 * @return <code>true</code> when task must run in every cluster node.
+	 * @return <code>true</code> when the task runs on every cluster node, <code>false</code> when
+	 *         it runs only once in the cluster at a time.
 	 */
 	public boolean isNodeLocal();
 
@@ -307,13 +324,29 @@ public interface Task extends Batch {
 	 * Whether {@link TaskResult results} of this {@link Task} are persisted.
 	 * 
 	 * <p>
+	 * A task that is not {@link #isNodeLocal() node local} must be persistent, as its cluster lock
+	 * and its results are stored in its persistent {@link TaskLog}.
+	 * </p>
+	 * 
+	 * <p>
 	 * If <code>true</code>, the {@link Task} implementation has to ensure that:
 	 * <ul>
 	 * <li>The {@link Task} runs with a {@link ThreadContext}, for committing the status and
-	 * results.</li>
+	 * results. The {@link Scheduler} starts the task in a thread without a {@link ThreadContext},
+	 * so the task establishes one itself.</li>
+	 * <li>Each run calls {@link TaskLog#taskStarted()} when it begins and ends with
+	 * {@link TaskLog#taskEnded(TaskResult.ResultType, ResKey, Throwable)}. For a task that is not
+	 * {@link #isNodeLocal() node local}, the {@link Scheduler} marks the log as running when it
+	 * acquires the cluster lock, reports an error for a run that ends without a result, and
+	 * recognizes a run started on another node by the start time of its latest result.</li>
 	 * <li>The host names of all cluster nodes must be unique (no application nodes must share the
 	 * same machine).</li>
 	 * </ul>
+	 * </p>
+	 * 
+	 * <p>
+	 * {@link com.top_logic.util.sched.task.impl.StateHandlingTask} takes care of the thread
+	 * context and the result protocol.
 	 * </p>
 	 */
 	public boolean isPersistent();

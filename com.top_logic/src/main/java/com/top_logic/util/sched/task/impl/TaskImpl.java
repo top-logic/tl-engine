@@ -25,6 +25,7 @@ import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.sched.BatchImpl;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.retry.Retry;
@@ -40,6 +41,8 @@ import com.top_logic.util.sched.task.log.DefaultTaskLogFileFactory;
 import com.top_logic.util.sched.task.log.TaskLog;
 import com.top_logic.util.sched.task.log.TaskLogWrapper;
 import com.top_logic.util.sched.task.log.TransientTaskLog;
+import com.top_logic.util.sched.task.result.TaskResult;
+import com.top_logic.util.sched.task.result.TaskResult.ResultType;
 import com.top_logic.util.sched.task.schedule.SchedulingAlgorithm;
 import com.top_logic.util.sched.task.schedule.SchedulingAlgorithmCombinator;
 import com.top_logic.util.sched.task.schedule.legacy.LegacyDailySchedule;
@@ -65,9 +68,17 @@ import com.top_logic.util.sched.task.schedule.legacy.LegacyWeeklySchedule;
  * to be retried.
  * </p>
  * 
+ * <p>
+ * Each concrete task decides whether it runs on every cluster node or only once in the cluster at
+ * a time, based on what it does.
+ * </p>
+ * 
+ * @implNote The decision is the implementation of {@link Task#isNodeLocal()}, whose documentation
+ *           describes the obligations of both variants.
+ * 
  * @author <a href="mailto:kha@top-logic.com">kha</a>
  */
-public class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl implements Task {
+public abstract class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl implements Task {
 
 	/**
 	 * Configuration options for {@link TaskImpl}.
@@ -603,6 +614,59 @@ public class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl implements
 		calcNextShed(now);
 	}
 
+	/**
+	 * Executes the given work in a system {@link ThreadContext} and writes the result protocol of
+	 * this run to the {@link #getLog() task log}.
+	 * 
+	 * <p>
+	 * Before the work starts, {@link TaskLog#taskStarted()} is called. The work may end the run
+	 * with a result of its own through {@link TaskLog#taskEnded(ResultType, ResKey, Throwable)}.
+	 * Otherwise, when the work returns or throws, the end result is written:
+	 * </p>
+	 * <ul>
+	 * <li>{@link ResultType#CANCELED}, if the work returns and the task was asked to stop,</li>
+	 * <li>{@link ResultType#WARNING}, if the work returns and has reported warnings,</li>
+	 * <li>{@link ResultType#SUCCESS}, if the work returns otherwise,</li>
+	 * <li>{@link ResultType#ERROR}, if the work throws any {@link Throwable}.</li>
+	 * </ul>
+	 * 
+	 * <p>
+	 * This fulfills the obligations of a {@link #isPersistent() persistent} task.
+	 * </p>
+	 * 
+	 * @see StateHandlingTask
+	 */
+	protected final void runWithResultProtocol(Runnable work) {
+		ThreadContext.inSystemContext(getClass(), () -> {
+			getLog().taskStarted();
+			try {
+				work.run();
+				endOnReturn();
+			} catch (Throwable exception) {
+				endOnThrowable(exception);
+			}
+		});
+	}
+
+	private void endOnReturn() {
+		TaskResult currentResult = getLog().getCurrentResult();
+		if (currentResult.getResultType() == ResultType.NOT_FINISHED) {
+			if (getLog().getState() == TaskState.CANCELING || getShouldStop()) {
+				getLog().taskEnded(ResultType.CANCELED, ResultType.CANCELED.getMessageI18N());
+			} else if (currentResult.hasWarnings()) {
+				getLog().taskEnded(ResultType.WARNING, ResultType.WARNING.getMessageI18N());
+			} else {
+				getLog().taskEnded(ResultType.SUCCESS, ResultType.SUCCESS.getMessageI18N());
+			}
+		}
+	}
+
+	private void endOnThrowable(Throwable exception) {
+		if (getLog().getCurrentResult().getResultType() == ResultType.NOT_FINISHED) {
+			getLog().taskEnded(ResultType.ERROR, com.top_logic.util.sched.I18NConstants.UNEXPECTED_ERROR, exception);
+		}
+	}
+
 	@Override
 	public boolean markAsRun(long runStart) {
 		boolean result = false;
@@ -666,29 +730,6 @@ public class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl implements
 	 */
 	public static DateFormat getIsoFormat() {
 		return CalendarUtil.newSimpleDateFormat("yyyy-MM-dd");
-	}
-
-	/**
-	 * Defines, if this task need to run in every cluster node by itself.
-	 * 
-	 * In some cases it may be needful, if a task runs only on one cluster node (e.g. refresh of
-	 * external user data), these tasks need to return <code>false</code> here.
-	 * 
-	 * <p>
-	 * If this method returns <code>false</code>, the {@link Task} has to call
-	 * {@link TaskLog#taskStarted()} and
-	 * {@link TaskLog#taskEnded(com.top_logic.util.sched.task.result.TaskResult.ResultType, ResKey, Throwable)}
-	 * only on one of the nodes. The node is allowed to change from one run to another run, but has
-	 * to be the same during one run. <br/>
-	 * Additionally, if this method returns <code>false</code>, {@link #isPersistent()} will return
-	 * <code>true</code> and the implementation constraints mentioned there apply.
-	 * </p>
-	 * 
-	 * @return <code>true</code> when task must run in every cluster node.
-	 */
-	@Override
-	public boolean isNodeLocal() {
-		return true;
 	}
 
 	@Override

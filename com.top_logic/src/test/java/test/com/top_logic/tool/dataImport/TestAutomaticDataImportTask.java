@@ -14,6 +14,7 @@ import test.com.top_logic.util.sched.model.TaskTestUtil;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.tool.dataImport.AbstractDataImporter;
 import com.top_logic.tool.dataImport.AutomaticDataImportTask;
 import com.top_logic.tool.dataImport.AutomaticDataImportTask.Config;
@@ -86,6 +87,8 @@ public class TestAutomaticDataImportTask extends BasicTestCase {
 				fail("Task did not finished in time.");
 			}
 			Thread.sleep(_scheduler.getPollingInterval());
+			// The task log is persistent; see the results the task thread has committed.
+			HistoryUtils.updateSessionRevision();
 			TaskLog log = task.getLog();
 			if (log == null) {
 				// Not started yet

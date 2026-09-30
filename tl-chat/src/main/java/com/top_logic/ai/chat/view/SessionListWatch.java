@@ -5,12 +5,15 @@
  */
 package com.top_logic.ai.chat.view;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
+import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.listen.ModelChangeEvent;
 import com.top_logic.model.listen.ModelListener;
@@ -40,7 +43,12 @@ import com.top_logic.tl.ai.core.execution.model.AgentSession;
  * </p>
  *
  * <p>
- * A deletion always counts: a deleted object can no longer be asked whose it was, and a list read
+ * <b>What counts.</b> A chat of the account that was created, and one whose title is not the title
+ * this watch saw last. Not every update: a running agent writes its chat's bookkeeping several
+ * times per send, and counting each write made one send cost four list reads instead of one. The
+ * first update of a chat this watch has not seen yet counts, because nothing says what its title
+ * was before - so a run costs at most one extra read per chat, and a rename is never missed. A
+ * deletion always counts: a deleted object can no longer be asked whose it was, and a list read
  * again for somebody else's deletion costs one request.
  * </p>
  */
@@ -60,6 +68,9 @@ final class SessionListWatch implements ModelListener {
 	private boolean _attachedBefore;
 
 	private int _revision;
+
+	/** The title each chat of the account had when this watch last saw it change. */
+	private final Map<ObjectKey, String> _titles = new HashMap<>();
 
 	/**
 	 * Creates a {@link SessionListWatch}.
@@ -116,15 +127,43 @@ final class SessionListWatch implements ModelListener {
 	}
 
 	/**
-	 * Whether {@code event} changed a chat of the acting account, or deleted any chat.
+	 * Whether {@code event} created or retitled a chat of the acting account, or deleted any chat.
 	 */
 	boolean concernsUser(ModelChangeEvent event) {
 		if (event.getDeleted(_type).findAny().isPresent()) {
 			return true;
 		}
 		Person user = _user.get();
-		return Stream.concat(event.getCreated(_type), event.getUpdated(_type))
-			.anyMatch(object -> object instanceof AgentSession session && Objects.equals(session.getOwner(), user));
+		boolean changed = false;
+		for (TLObject created : event.getCreated(_type).toList()) {
+			if (ownedBy(created, user)) {
+				rememberTitle(created);
+				changed = true;
+			}
+		}
+		// Every updated chat is looked at, not only up to the first hit, so that each one's title is
+		// remembered for the next event.
+		for (TLObject updated : event.getUpdated(_type).toList()) {
+			if (ownedBy(updated, user) && rememberTitle(updated)) {
+				changed = true;
+			}
+		}
+		return changed;
+	}
+
+	private static boolean ownedBy(TLObject object, Person user) {
+		return object instanceof AgentSession session && Objects.equals(session.getOwner(), user);
+	}
+
+	/**
+	 * Remembers the title of {@code object} and answers whether it differs from the one remembered
+	 * before, which it does for a chat this watch had not seen.
+	 */
+	private boolean rememberTitle(TLObject object) {
+		ObjectKey key = object.tId();
+		boolean seen = _titles.containsKey(key);
+		String before = _titles.put(key, ((AgentSession) object).getTitle());
+		return !seen || !Objects.equals(before, _titles.get(key));
 	}
 
 	private void changed() {

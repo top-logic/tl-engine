@@ -25,6 +25,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.listen.ModelChangeEvent;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
 import com.top_logic.util.model.ModelService;
 
@@ -65,13 +66,43 @@ public class TestSessionListWatch extends BasicTestCase {
 		assertEquals(Integer.valueOf(0), revision());
 	}
 
-	/** A rename of one of the account's chats is an update of that chat: it counts. */
-	public void testOwnUpdateCounts() {
+	/**
+	 * The first update of a chat the watch has not seen counts: nothing says what its title was
+	 * before, and it may be the rename.
+	 */
+	public void testFirstUpdateOfAnUnseenChatCounts() {
 		TLObject own = session("own", owner);
 
 		_watch.notifyChange(event(List.of(), List.of(own), List.of()));
 
 		assertEquals(Integer.valueOf(1), revision());
+	}
+
+	/**
+	 * A running agent writes its chat's bookkeeping several times per send. Those writes leave the
+	 * title alone and cost the browser no further list read.
+	 */
+	public void testUpdateWithTheSameTitleDoesNotCountAgain() {
+		TLObject own = session("busy", owner);
+
+		_watch.notifyChange(event(List.of(), List.of(own), List.of()));
+		_watch.notifyChange(event(List.of(), List.of(own), List.of()));
+		_watch.notifyChange(event(List.of(), List.of(own), List.of()));
+
+		assertEquals(Integer.valueOf(1), revision());
+	}
+
+	/** A rename of a chat the watch has seen counts, and so does every further one. */
+	public void testRenameCounts() {
+		TLObject own = session("before", owner);
+		_watch.notifyChange(event(List.of(), List.of(own), List.of()));
+
+		rename(own, "after");
+		_watch.notifyChange(event(List.of(), List.of(own), List.of()));
+		rename(own, "after again");
+		_watch.notifyChange(event(List.of(), List.of(own), List.of()));
+
+		assertEquals(Integer.valueOf(3), revision());
 	}
 
 	/** A chat of the account that comes into being is a new row in the list: it counts. */
@@ -101,18 +132,23 @@ public class TestSessionListWatch extends BasicTestCase {
 		assertEquals(Integer.valueOf(1), revision());
 	}
 
-	/** Every counted change moves the count, so two renames in a row are two news. */
-	public void testEveryChangeMovesTheCount() {
-		TLObject own = session("twice", owner);
+	/** A chat created here is a new row; its later bookkeeping writes are not. */
+	public void testCreationThenBookkeepingCountsOnce() {
+		TLObject own = session("created then busy", owner);
 
-		_watch.notifyChange(event(List.of(), List.of(own), List.of()));
+		_watch.notifyChange(event(List.of(own), List.of(), List.of()));
 		_watch.notifyChange(event(List.of(), List.of(own), List.of()));
 
-		assertEquals(Integer.valueOf(2), revision());
+		assertEquals(Integer.valueOf(1), revision());
 	}
 
 	private Object revision() {
 		return _state.get(SessionListWatch.REVISION);
+	}
+
+	private static void rename(TLObject session, String title) {
+		AgentExecutionStore.getInstance().updateTitle((AgentSession) session, title);
+		HistoryUtils.updateSessionRevision();
 	}
 
 	private static TLObject session(String title, Person person) {

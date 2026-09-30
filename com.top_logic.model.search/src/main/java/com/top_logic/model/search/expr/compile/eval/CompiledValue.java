@@ -92,5 +92,23 @@ public abstract class CompiledValue extends Value {
 	 */
 	public abstract Object eval(TLObject item, EvalContext context);
 
+	/**
+	 * Whether the given value is an object that is not stored in the database.
+	 *
+	 * <p>
+	 * Such an object cannot take part in a database query: no stored row can be identical to it, and
+	 * it has no table that could be used as the type of a query literal. A comparison with it must
+	 * therefore be evaluated in memory.
+	 * </p>
+	 *
+	 * @param value
+	 *        The value to check, may be <code>null</code>.
+	 *
+	 * @see TLObject#tTransient()
+	 */
+	public static boolean isUnstored(Object value) {
+		return value instanceof TLObject object && object.tTransient();
+	}
+
 }
 

@@ -37,7 +37,6 @@ import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.graphic.blocks.server.svg.SvgTagWriter;
-import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.flow.callback.ClickHandler;
 import com.top_logic.graphic.flow.callback.DiagramContextMenuProvider;
 import com.top_logic.graphic.flow.data.Align;
@@ -105,7 +104,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new diagram.
 	 * @return The newly created diagram.
 	 */
-	@SideEffectFree
 	@Label("Create chart")
 	public static Diagram chart(
 		Box root,
@@ -200,7 +198,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new aligned box.
 	 * @return The new aligned box.
 	 */
-	@SideEffectFree
 	@Label("Align")
 	public static Decoration align(
 		@Mandatory Box content,
@@ -232,7 +229,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new stacking box.
 	 * @return The new stacking box.
 	 */
-	@SideEffectFree
 	@Label("Stack elements")
 	public static Stack stack(
 			List<Box> contents,
@@ -269,7 +265,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new border box.
 	 * @return The new border box.
 	 */
-	@SideEffectFree
 	@Label("Create borders")
 	public static Decoration border(
 		Box content,
@@ -310,7 +305,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new fill box.
 	 * @return The new fill box.
 	 */
-	@SideEffectFree
 	@Label("Fill")
 	public static Decoration fill(
 			Box content,
@@ -356,7 +350,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new fill box.
 	 * @return The new positioned box.
 	 */
-	@SideEffectFree
 	@Label("Explicit position")
 	public static Box position(
 			@Mandatory Box content,
@@ -430,7 +423,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new padding box.
 	 * @return The new padding box.
 	 */
-	@SideEffectFree
 	@Label("Create padding")
 	public static Box padding(
 		@Mandatory Box content,
@@ -491,7 +483,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new horizontal box.
 	 * @return The new horizontal box.
 	 */
-	@SideEffectFree
 	@Label("Align horizontal")
 	public static Box horizontal(
 		@Mandatory List<Box> contents,
@@ -533,7 +524,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new horizontal box.
 	 * @return The new horizontal box.
 	 */
-	@SideEffectFree
 	@Label("Align vertical")
 	public static Box vertical(
 		@Mandatory List<Box> contents,
@@ -576,7 +566,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new box.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Create compass")
 	public static CompassLayout compass(
 		@Mandatory Box center,
@@ -613,7 +602,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new box.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Create Grid")
 	public static Box grid(
 		@Mandatory List<List<Box>> contents,
@@ -666,7 +654,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new box.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Create positioning box")
 	public static Box floating(
 			@Mandatory List<? extends Box> contents,
@@ -809,7 +796,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new box.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Make selectable")
 	public static Box selection(
 			@Mandatory Box content,
@@ -836,7 +822,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new box. Operations in the context menu operate on this object.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Context menu")
 	public static Box contextMenu(
 			@Mandatory Box content,
@@ -867,7 +852,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new box.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("React on click")
 	public static Box clickTarget(
 			@Mandatory Box content,
@@ -899,7 +883,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new box.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Create drop region")
 	public static Box dropRegion(
 			@Mandatory Box content,
@@ -926,7 +909,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new box.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Add tooltip")
 	public static Box tooltip(
 			@Mandatory String text,
@@ -1001,7 +983,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        An arbitrary object to associate with the graphics element.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Create tree")
 	public static Box tree(
 		@Mandatory List<? extends Box> nodes,
@@ -1079,7 +1060,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 * 
 	 * @return the new connection.
 	 */
-	@SideEffectFree
 	@Label("Create connection")
 	public static TreeConnection connection(
 		@Mandatory Object parent,
@@ -1126,7 +1106,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 * 
 	 * @return The new decoration.
 	 */
-	@SideEffectFree
 	@Label("Create edge decoration")
 	public static EdgeDecoration decoration(
 			Box content,
@@ -1157,7 +1136,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new box.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Create connector")
 	public static TreeConnector connector(
 		@Mandatory Box anchor,
@@ -1268,7 +1246,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new box.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Create polygon")
 	public static PolygonalChain polygon(
 			List<Point> points,
@@ -1300,7 +1277,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new box.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Create poly line")
 	public static PolygonalChain polyline(
 			List<Point> points,
@@ -1324,7 +1300,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new box.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Clip content")
 	public static ClipBox clipbox(
 			@Mandatory Box content,
@@ -1384,7 +1359,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 * @return {@link BinaryData} containing the SVG document with content type
 	 *         <code>"image/svg+xml"</code>.
 	 */
-	@SideEffectFree
 	@Label("Export as SVG")
 	public static BinaryData toSvg(
 			@Mandatory Diagram diagram,
@@ -1411,57 +1385,12 @@ public class FlowFactory extends TLScriptFunctions {
 
 		diagram.layout(context);
 
-		// Render to SVG
+		// Render to SVG. The font defaults the layout measured with are embedded by
+		// Diagram.draw(SvgWriter, RenderContext, CharSequence).
 		StringWriter buffer = new StringWriter();
 		try (TagWriter tagWriter = new TagWriter(buffer);
-				SvgTagWriter svgWriter = new SvgTagWriter(tagWriter) {
-					boolean _svgStarted;
-					@Override
-					public void beginSvg() {
-						super.beginSvg();
-
-						_svgStarted = true;
-					}
-
-					@Override
-					protected void endBeginTag() {
-						super.endBeginTag();
-
-						if (_svgStarted) {
-							// Add default styles to the generated SVG.
-							tagWriter.beginTag("style");
-
-							// Synchronize the rendered font size with the AWT measurement. The
-							// AWT measurement uses textSize as a point value (and the resulting
-							// dimensions are already converted to CSS px inside AWTContext); the
-							// SVG/browser, however, treats unitless font-size as pixels.
-							// Without an explicit px default here, a <text> without font-size
-							// would inherit the browser default (typically 16px) regardless of
-							// textSize, and text would overflow its measured box.
-							double textSizePx = textSize * AWTContext.PX_PER_PT;
-							tagWriter.writeText(
-								"text:not([font-family]):not([class]){font-family:"
-									+ RenderContext.DEFAULT_FONT_FAMILY + ";}"
-									+ "text:not([font-size]):not([class]){font-size:"
-									+ formatPx(textSizePx) + "px;}");
-
-							BinaryData styles = FileManager.getInstance().getDataOrNull(FLOW_CORE_CSS);
-							if (styles == null) {
-								Logger.warn("Missing PDF export styles: " + FLOW_CORE_CSS, FlowFactory.class);
-							} else {
-								try (InputStream in = styles.getStream()) {
-									StreamUtilities.copyReaderWriterContents(
-										new InputStreamReader(in, StandardCharsets.UTF_8), tagWriter);
-								} catch (IOException ex) {
-									Logger.error("Failed to copy styles.", ex, FlowFactory.class);
-								}
-							}
-							tagWriter.endTag("style");
-							_svgStarted = false;
-						}
-					}
-				}) {
-			diagram.draw(svgWriter);
+				SvgTagWriter svgWriter = new SvgTagWriter(tagWriter)) {
+			diagram.draw(svgWriter, context, exportStyles());
 		} catch (IOException ex) {
 			throw new RuntimeException("Failed to generate SVG: " + ex.getMessage(), ex);
 		}
@@ -1471,12 +1400,26 @@ public class FlowFactory extends TLScriptFunctions {
 		return BinaryDataFactory.createBinaryData(svgBytes, "image/svg+xml", filename);
 	}
 
-	private static String formatPx(double value) {
-		int intValue = (int) value;
-		if (value == intValue) {
-			return Integer.toString(intValue);
+	/**
+	 * The application's diagram stylesheet, embedded into an exported SVG so that it renders
+	 * outside the application without an external stylesheet.
+	 *
+	 * @return The CSS rules, or {@code null} if the stylesheet cannot be read.
+	 */
+	private static CharSequence exportStyles() {
+		BinaryData styles = FileManager.getInstance().getDataOrNull(FLOW_CORE_CSS);
+		if (styles == null) {
+			Logger.warn("Missing PDF export styles: " + FLOW_CORE_CSS, FlowFactory.class);
+			return null;
 		}
-		return Double.toString(value);
+		StringWriter buffer = new StringWriter();
+		try (InputStream in = styles.getStream()) {
+			StreamUtilities.copyReaderWriterContents(new InputStreamReader(in, StandardCharsets.UTF_8), buffer);
+		} catch (IOException ex) {
+			Logger.error("Failed to copy styles.", ex, FlowFactory.class);
+			return null;
+		}
+		return buffer.toString();
 	}
 
 }

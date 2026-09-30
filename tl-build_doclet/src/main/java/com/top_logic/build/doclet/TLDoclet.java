@@ -21,6 +21,8 @@ import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.lang.reflect.Array;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -115,6 +117,7 @@ import com.sun.source.util.DocTreePathScanner;
 import com.sun.source.util.DocTrees;
 import com.sun.source.util.TreePath;
 
+import com.top_logic.tools.resources.FileDigest;
 import com.top_logic.tools.resources.ResourceFile;
 
 import jdk.javadoc.doclet.Doclet;
@@ -136,6 +139,13 @@ public class TLDoclet implements Doclet {
 	 */
 	private static final String TL_DOCLET = "TLDoclet: ";
 
+	/**
+	 * Resource key suffix under which a type's {@code @Label#option()} label is stored (mirrors
+	 * {@code com.top_logic.basic.config.annotation.Label#OPTION_SUFFIX}, which the doclet cannot
+	 * reference at compile time).
+	 */
+	private static final String OPTION_LABEL_SUFFIX = "@option";
+
 	private String _destDir = ".";
 
 	private boolean _showSrcLink = false;
@@ -147,6 +157,8 @@ public class TLDoclet implements Doclet {
 	private String _acronymProperties = "";
 
 	private String _targetMessages = "";
+
+	private String _messagesMarker = "";
 
 	private String _knownBugsResource = "";
 
@@ -267,6 +279,8 @@ public class TLDoclet implements Doclet {
 				}
 
 				_configDoc.saveAs(messages);
+
+				writeMessageGenerationMarker(messages);
 			}
 		}
 
@@ -327,6 +341,33 @@ public class TLDoclet implements Doclet {
 		for (String acronym : _acronymTokens) {
 			_acronyms.setProperty(acronym.toLowerCase(), _acronyms.getProperty(acronym));
 		}
+	}
+
+	/**
+	 * Announces that the given message resources have been generated in the running build.
+	 *
+	 * <p>
+	 * The marker file named by the option <code>-messagesMarker</code> is written at the location
+	 * where the translation step of the build looks for it and carries the digest of the generated
+	 * bundle. The translation thereby sees both that the base line it compares the bundle with was
+	 * written in the same build, and that the bundle it reads is the generated one.
+	 * </p>
+	 *
+	 * @param messages
+	 *        The message resources that have been generated.
+	 */
+	private void writeMessageGenerationMarker(File messages) throws IOException {
+		if (_messagesMarker.isEmpty()) {
+			return;
+		}
+
+		File marker = new File(_messagesMarker);
+		File markerDir = marker.getParentFile();
+		if (markerDir != null) {
+			markerDir.mkdirs();
+		}
+		Files.writeString(marker.toPath(), FileDigest.sha256Hex(messages) + System.lineSeparator(),
+			StandardCharsets.UTF_8);
 	}
 
 	private void writeSettings() throws IOException {
@@ -969,6 +1010,11 @@ public class TLDoclet implements Doclet {
 				.build(),
 			new OptionBuilder()
 				.argumentCount(1)
+				.addName("-messagesMarker")
+				.processArguments(args -> _messagesMarker = args.get(0))
+				.build(),
+			new OptionBuilder()
+				.argumentCount(1)
 				.addName("-knownBugs")
 				.processArguments(args -> _knownBugsResource = args.get(0))
 				.build(),
@@ -1158,6 +1204,9 @@ public class TLDoclet implements Doclet {
 			String key = signature(type.asType());
 			_configDoc.setProperty(key, label(type, true));
 
+			_wellKnown.getAnnotatedOptionLabel(type)
+				.ifPresent(optionLabel -> _configDoc.setProperty(key + OPTION_LABEL_SUFFIX, optionLabel));
+
 			String doc = extractDoc(configurationType, type);
 			if (!doc.isEmpty()) {
 				_configDoc.setProperty(tooltipKey(key), doc);
@@ -1272,7 +1321,7 @@ public class TLDoclet implements Doclet {
 					boolean found = false;
 					Element referencedElement = docTrees().getElement(getCurrentPath());
 					if (referencedElement != null) {
-						String labelValue = getAnnotatedLabel(referencedElement);
+						String labelValue = linkLabel(referencedElement);
 						if (labelValue != null) {
 							buffer.append("<i>");
 							buffer.append(adjustCase(labelValue, _startOfSentence));
@@ -1667,6 +1716,8 @@ public class TLDoclet implements Doclet {
 				Function<String, String> parameterKey = paramName -> methodKey + ".param." + paramName;
 				Map<String, VariableElement> parametersByName = method.getParameters()
 					.stream()
+					// A parameter receiving the security flag is not a script argument.
+					.filter(p -> !_wellKnown.hasUsesSecurityAnnotation(p))
 					.collect(Collectors.toMap(p -> p.getSimpleName().toString(), Function.identity()));
 
 				// Write label for parameters
@@ -1831,6 +1882,39 @@ public class TLDoclet implements Doclet {
 
 		private String getAnnotatedLabel(Element element) {
 			return _wellKnown.getAnnotatedLabel(element).orElse(null);
+		}
+
+		/**
+		 * The annotated label to render a reference to the given element with: its option label if
+		 * given, or its main label unless that is a rendering template; {@code null} if the
+		 * reference must be rendered from the element's name instead.
+		 *
+		 * @see #isLabelTemplate(String)
+		 */
+		private String linkLabel(Element element) {
+			String optionLabel = _wellKnown.getAnnotatedOptionLabel(element).orElse(null);
+			if (optionLabel != null) {
+				return optionLabel;
+			}
+			String label = getAnnotatedLabel(element);
+			if (label != null && !isLabelTemplate(label)) {
+				return label;
+			}
+			return null;
+		}
+
+		/**
+		 * Whether the given label is a rendering template with embedded property references (e.g.
+		 * {@code Select tile '{tile-label}' in '{group}'}), as used by actions and naming schemes.
+		 *
+		 * <p>
+		 * Such a label describes an <em>instance</em> and only makes sense expanded against one; as
+		 * the link text for the annotated element itself it would show the raw placeholders, so the
+		 * reference falls back to the element's option label or name-derived label.
+		 * </p>
+		 */
+		private boolean isLabelTemplate(String label) {
+			return label.indexOf('{') >= 0;
 		}
 
 		private ExecutableElement originalDefinition(ExecutableElement method) {

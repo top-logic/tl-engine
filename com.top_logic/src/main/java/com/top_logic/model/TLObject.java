@@ -270,8 +270,9 @@ public interface TLObject extends IdentifiedObject, TableTyped, TLObjectBase {
 	 * Check if the object is valid.
 	 * 
 	 * <p>
-	 * An object is valid if it is {@link #tTransient()}, or its persistent item
-	 * {@link KnowledgeItem#isAlive() is alive}.
+	 * A {@link #tTransient() transient} object is valid while the {@link #tContainer() container}
+	 * it was created in is valid, or it has no container at all. A persistent object is valid
+	 * while its item {@link KnowledgeItem#isAlive() is alive}.
 	 * </p>
 	 * 
 	 * @return Whether the object can be legally accessed.
@@ -329,6 +330,13 @@ public interface TLObject extends IdentifiedObject, TableTyped, TLObjectBase {
 	/**
 	 * Date of the last modification of the internal storage.
 	 * 
+	 * <p>
+	 * Only changes of the object's own row are reflected. Values stored in separate tables, such as
+	 * references stored in link tables or translations of internationalized attributes, are not
+	 * covered. The last change of the object as a whole is available through the TL-Script
+	 * function {@code modifiedRevision()}.
+	 * </p>
+	 * 
 	 * @see #tLastModifier()
 	 */
 	default Date tLastModificationDate() {
@@ -338,6 +346,13 @@ public interface TLObject extends IdentifiedObject, TableTyped, TLObjectBase {
 	/**
 	 * Time-stamp of the last modification of the internal storage.
 	 * 
+	 * <p>
+	 * Only changes of the object's own row are reflected. Values stored in separate tables, such as
+	 * references stored in link tables or translations of internationalized attributes, are not
+	 * covered. The last change of the object as a whole is available through the TL-Script
+	 * function {@code modifiedRevision()}.
+	 * </p>
+	 * 
 	 * @see #tLastModificationDate()
 	 */
 	default long tLastModificationTime() {
@@ -346,6 +361,13 @@ public interface TLObject extends IdentifiedObject, TableTyped, TLObjectBase {
 
 	/**
 	 * Author of the last modification of the internal storage.
+	 * 
+	 * <p>
+	 * Only changes of the object's own row are reflected. Values stored in separate tables, such as
+	 * references stored in link tables or translations of internationalized attributes, are not
+	 * covered. The last change of the object as a whole is available through the TL-Script
+	 * function {@code modifiedRevision()}.
+	 * </p>
 	 * 
 	 * @see #tLastModificationDate()
 	 */

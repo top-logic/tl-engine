@@ -30,7 +30,7 @@ public class CssClassUpdate extends AbstractCssClassUpdate {
 	}
 
 	@Override
-	protected void writeCssClassContent(DisplayContext context, Appendable out) throws IOException {
+	public void writeCssClassContent(DisplayContext context, Appendable out) throws IOException {
 		for (String cssClass : _cssClasses) {
 			out.append(cssClass);
 		}

@@ -1,0 +1,1027 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.layout.react;
+
+import com.top_logic.basic.i18n.CustomKey;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
+import com.top_logic.basic.util.ResKey2;
+import com.top_logic.layout.I18NConstantsBase;
+
+/**
+ * I18N constants for the React integration module.
+ */
+public class I18NConstants extends I18NConstantsBase {
+
+	/**
+	 * @en React control value changed.
+	 */
+	public static ResKey REACT_VALUE_CHANGED;
+
+	/**
+	 * @en Control not found: {0}
+	 */
+	public static ResKey1 ERROR_CONTROL_NOT_FOUND__ID;
+
+	/**
+	 * @en Command execution failed: {0}
+	 */
+	public static ResKey1 ERROR_COMMAND_FAILED__MSG;
+
+	/**
+	 * @en The command failed.
+	 */
+	public static ResKey ERROR_COMMAND_FAILED;
+
+	/**
+	 * @en Files up to {0} can be uploaded.
+	 */
+	public static ResKey1 ERROR_UPLOAD_TOO_LARGE__LIMIT;
+
+	/**
+	 * @en React button clicked.
+	 */
+	public static ResKey REACT_BUTTON_CLICK;
+
+	/**
+	 * @en React toggle button clicked.
+	 */
+	public static ResKey REACT_TOGGLE_BUTTON_CLICK;
+
+	/**
+	 * @en Internal error in React integration.
+	 */
+	public static ResKey ERROR_INTERNAL;
+
+	/**
+	 * @en The requested view is currently not available.
+	 */
+	public static ResKey ERROR_NAVIGATION_NOT_AVAILABLE;
+
+	/**
+	 * @en Tab selected.
+	 */
+	public static ResKey REACT_TAB_SELECTED;
+
+	/**
+	 * @en Audio upload failed.
+	 */
+	public static ResKey AUDIO_UPLOAD_FAILED;
+
+	/**
+	 * @en File upload failed.
+	 */
+	public static ResKey FILE_UPLOAD_FAILED;
+
+	/**
+	 * @en Download data cleared.
+	 */
+	public static ResKey REACT_DOWNLOAD_CLEAR;
+
+	/**
+	 * @en Split panel resized.
+	 */
+	public static ResKey REACT_SPLIT_PANEL_RESIZE;
+
+	/**
+	 * @en Deck pane child selected.
+	 */
+	public static ResKey REACT_DECK_PANE_SELECT;
+
+	/**
+	 * @en Panel minimize toggled.
+	 */
+	public static ResKey REACT_PANEL_TOGGLE_MINIMIZE;
+
+	/**
+	 * @en Panel maximize toggled.
+	 */
+	public static ResKey REACT_PANEL_TOGGLE_MAXIMIZE;
+
+	/**
+	 * @en Panel popped out.
+	 */
+	public static ResKey REACT_PANEL_POP_OUT;
+
+	/**
+	 * @en Photo upload failed.
+	 */
+	public static ResKey PHOTO_UPLOAD_FAILED;
+
+	/**
+	 * @en Breadcrumb item navigated.
+	 */
+	public static ResKey REACT_BREADCRUMB_NAVIGATE;
+
+	/**
+	 * @en Sidebar item selected.
+	 */
+	public static ResKey REACT_SIDEBAR_ITEM_SELECTED;
+
+	/**
+	 * @en Sidebar command executed.
+	 */
+	public static ResKey REACT_SIDEBAR_COMMAND_EXECUTED;
+
+	/**
+	 * @en Sidebar collapse toggled.
+	 */
+	public static ResKey REACT_SIDEBAR_COLLAPSE_TOGGLED;
+
+	/**
+	 * @en Sidebar group toggled.
+	 */
+	public static ResKey REACT_SIDEBAR_GROUP_TOGGLED;
+
+	/**
+	 * @en Bottom bar item selected.
+	 */
+	public static ResKey REACT_BOTTOM_BAR_SELECT;
+
+	/**
+	 * @en Dialog closed.
+	 */
+	public static ResKey REACT_DIALOG_CLOSE;
+
+	/**
+	 * @en Drawer closed.
+	 */
+	public static ResKey REACT_DRAWER_CLOSE;
+
+	/**
+	 * @en Snackbar dismissed.
+	 */
+	public static ResKey REACT_SNACKBAR_DISMISS;
+
+	/**
+	 * @en Menu item selected.
+	 */
+	public static ResKey REACT_MENU_SELECT;
+
+	/**
+	 * @en Menu closed.
+	 */
+	public static ResKey REACT_MENU_CLOSE;
+
+	// -- Sidebar client-side i18n keys --
+
+	/**
+	 * @en Sidebar navigation
+	 */
+	@CustomKey("js.sidebar.ariaLabel")
+	public static ResKey JS_SIDEBAR_ARIA_LABEL;
+
+	/**
+	 * @en Expand sidebar
+	 */
+	@CustomKey("js.sidebar.expand")
+	public static ResKey JS_SIDEBAR_EXPAND;
+
+	/**
+	 * @en Collapse sidebar
+	 */
+	@CustomKey("js.sidebar.collapse")
+	public static ResKey JS_SIDEBAR_COLLAPSE;
+
+	/**
+	 * @en Open navigation
+	 */
+	@CustomKey("js.sidebar.openDrawer")
+	public static ResKey JS_SIDEBAR_OPEN_DRAWER;
+
+	// -- Dialog client-side i18n keys --
+
+	/**
+	 * @en Close
+	 */
+	@CustomKey("js.dialog.close")
+	public static ResKey JS_DIALOG_CLOSE;
+
+	// -- Drawer client-side i18n keys --
+
+	/**
+	 * @en Close
+	 */
+	@CustomKey("js.drawer.close")
+	public static ResKey JS_DRAWER_CLOSE;
+
+	// -- Client-side i18n keys (js.* prefix, names match keys used by React controls) --
+
+	/**
+	 * @en Play audio
+	 */
+	@CustomKey("js.audioPlayer.play")
+	public static ResKey JS_AUDIO_PLAYER_PLAY;
+
+	/**
+	 * @en Pause audio
+	 */
+	@CustomKey("js.audioPlayer.pause")
+	public static ResKey JS_AUDIO_PLAYER_PAUSE;
+
+	/**
+	 * @en No audio
+	 */
+	@CustomKey("js.audioPlayer.noAudio")
+	public static ResKey JS_AUDIO_PLAYER_NO_AUDIO;
+
+	/**
+	 * @en Loading\u2026
+	 */
+	@CustomKey("js.loading")
+	public static ResKey JS_LOADING;
+
+	/**
+	 * @en Uploading\u2026
+	 */
+	@CustomKey("js.uploading")
+	public static ResKey JS_UPLOADING;
+
+	/**
+	 * @en Record audio
+	 */
+	@CustomKey("js.audioRecorder.record")
+	public static ResKey JS_AUDIO_RECORDER_RECORD;
+
+	/**
+	 * @en Stop recording
+	 */
+	@CustomKey("js.audioRecorder.stop")
+	public static ResKey JS_AUDIO_RECORDER_STOP;
+
+	/**
+	 * @en No file
+	 */
+	@CustomKey("js.download.noFile")
+	public static ResKey JS_DOWNLOAD_NO_FILE;
+
+	/**
+	 * @en Download {0}
+	 */
+	@CustomKey("js.download.file")
+	public static ResKey JS_DOWNLOAD_FILE;
+
+	/**
+	 * @en Downloading\u2026
+	 */
+	@CustomKey("js.downloading")
+	public static ResKey JS_DOWNLOADING;
+
+	/**
+	 * @en Clear
+	 */
+	@CustomKey("js.download.clear")
+	public static ResKey JS_DOWNLOAD_CLEAR;
+
+	/**
+	 * @en Clear file
+	 */
+	@CustomKey("js.download.clearFile")
+	public static ResKey JS_DOWNLOAD_CLEAR_FILE;
+
+	/**
+	 * @en Choose file
+	 */
+	@CustomKey("js.fileUpload.choose")
+	public static ResKey JS_FILE_UPLOAD_CHOOSE;
+
+	/**
+	 * @en Add file
+	 */
+	@CustomKey("js.fileChips.add")
+	public static ResKey JS_FILE_CHIPS_ADD;
+
+	/**
+	 * @en Remove {0}
+	 */
+	@CustomKey("js.fileChips.remove")
+	public static ResKey JS_FILE_CHIPS_REMOVE;
+
+	/**
+	 * @en Open camera
+	 */
+	@CustomKey("js.photoCapture.open")
+	public static ResKey JS_PHOTO_CAPTURE_OPEN;
+
+	/**
+	 * @en Close camera
+	 */
+	@CustomKey("js.photoCapture.close")
+	public static ResKey JS_PHOTO_CAPTURE_CLOSE;
+
+	/**
+	 * @en Capture photo
+	 */
+	@CustomKey("js.photoCapture.capture")
+	public static ResKey JS_PHOTO_CAPTURE_CAPTURE;
+
+	/**
+	 * @en Image
+	 */
+	@CustomKey("js.image.alt")
+	public static ResKey JS_IMAGE_ALT;
+
+	/**
+	 * @en PDF document
+	 */
+	@CustomKey("js.pdfViewer.title")
+	public static ResKey JS_PDF_VIEWER_TITLE;
+
+	/**
+	 * @en HTML document
+	 */
+	@CustomKey("js.html.document")
+	public static ResKey JS_HTML_DOCUMENT;
+
+	/**
+	 * @en Print
+	 */
+	@CustomKey("js.html.print")
+	public static ResKey JS_HTML_PRINT;
+
+	/**
+	 * @en No document available
+	 */
+	@CustomKey("js.pdfViewer.noDocument")
+	public static ResKey JS_PDF_VIEWER_NO_DOCUMENT;
+
+	/**
+	 * @en Camera requires a secure connection (HTTPS).
+	 */
+	@CustomKey("js.photoCapture.error.insecure")
+	public static ResKey JS_PHOTO_CAPTURE_ERROR_INSECURE;
+
+	/**
+	 * @en Camera access denied or unavailable.
+	 */
+	@CustomKey("js.photoCapture.error.denied")
+	public static ResKey JS_PHOTO_CAPTURE_ERROR_DENIED;
+
+	/**
+	 * @en Mirror camera
+	 */
+	@CustomKey("js.photoCapture.mirror")
+	public static ResKey JS_PHOTO_CAPTURE_MIRROR;
+
+	/**
+	 * @en Minimize
+	 */
+	@CustomKey("js.panel.minimize")
+	public static ResKey JS_PANEL_MINIMIZE;
+
+	/**
+	 * @en Maximize
+	 */
+	@CustomKey("js.panel.maximize")
+	public static ResKey JS_PANEL_MAXIMIZE;
+
+	/**
+	 * @en Restore
+	 */
+	@CustomKey("js.panel.restore")
+	public static ResKey JS_PANEL_RESTORE;
+
+	/**
+	 * @en Pop out
+	 */
+	@CustomKey("js.panel.popOut")
+	public static ResKey JS_PANEL_POP_OUT;
+
+	// -- Toolbar client-side i18n keys --
+
+	/**
+	 * @en More actions
+	 */
+	@CustomKey("js.toolbar.overflow")
+	public static ResKey JS_TOOLBAR_OVERFLOW;
+
+	/**
+	 * @en Microphone requires a secure connection (HTTPS).
+	 */
+	@CustomKey("js.audioRecorder.error.insecure")
+	public static ResKey JS_AUDIO_RECORDER_ERROR_INSECURE;
+
+	/**
+	 * @en Microphone access denied or unavailable.
+	 */
+	@CustomKey("js.audioRecorder.error.denied")
+	public static ResKey JS_AUDIO_RECORDER_ERROR_DENIED;
+
+	/**
+	 * @en Invalid number: {0}
+	 */
+	public static ResKey1 ERROR_INVALID_NUMBER__VALUE;
+
+	/**
+	 * @en Invalid date: {0}
+	 */
+	public static ResKey1 ERROR_INVALID_DATE__VALUE;
+
+	/**
+	 * @en Invalid web address: {0}
+	 */
+	public static ResKey1 ERROR_INVALID_URL__VALUE;
+
+	// -- Text input client-side i18n keys --
+
+	/**
+	 * @en Open in a new tab
+	 */
+	@CustomKey("js.textInput.open")
+	public static ResKey JS_TEXT_INPUT_OPEN;
+
+	/**
+	 * @en Clear the input
+	 */
+	@CustomKey("js.textInput.clear")
+	public static ResKey JS_TEXT_INPUT_CLEAR;
+
+	// -- Value list client-side i18n keys --
+
+	/**
+	 * @en Add a value
+	 */
+	@CustomKey("js.valueList.add")
+	public static ResKey JS_VALUE_LIST_ADD;
+
+	/**
+	 * @en Remove this value
+	 */
+	@CustomKey("js.valueList.remove")
+	public static ResKey JS_VALUE_LIST_REMOVE;
+
+	/**
+	 * @en Move this value
+	 */
+	@CustomKey("js.valueList.move")
+	public static ResKey JS_VALUE_LIST_MOVE;
+
+	/**
+	 * @en No value
+	 */
+	public static ResKey VALUE_NONE;
+
+	/**
+	 * @en Languages…
+	 */
+	public static ResKey I18N_EDITOR_OPEN_BUTTON;
+
+	/**
+	 * @en Edit languages
+	 */
+	public static ResKey I18N_EDITOR_TITLE;
+
+	/**
+	 * @en Edit translations of "{0}"
+	 */
+	public static ResKey1 I18N_EDITOR_TITLE__FIELD;
+
+	/**
+	 * @en Other language
+	 */
+	public static ResKey I18N_EDITOR_OTHER_LANGUAGE;
+
+	/**
+	 * @en {0} (empty)
+	 */
+	public static ResKey1 I18N_EDITOR_EMPTY_LANGUAGE__LANG;
+
+	/**
+	 * @en Translate from {0}
+	 */
+	public static ResKey1 I18N_EDITOR_TRANSLATE_FROM__LANG;
+
+	/**
+	 * @en Form group collapse toggled.
+	 */
+	public static ResKey REACT_FORM_GROUP_TOGGLE_COLLAPSE;
+
+	// -- Form field client-side i18n keys --
+
+	/**
+	 * @en Help
+	 */
+	@CustomKey("js.formField.help")
+	public static ResKey JS_FORM_FIELD_HELP;
+
+	// -- Tree client-side i18n keys --
+
+	/**
+	 * @en Expand
+	 */
+	@CustomKey("js.treeView.expand")
+	public static ResKey JS_TREE_VIEW_EXPAND;
+
+	/**
+	 * @en Collapse
+	 */
+	@CustomKey("js.treeView.collapse")
+	public static ResKey JS_TREE_VIEW_COLLAPSE;
+
+	// -- Form group client-side i18n keys --
+
+	/**
+	 * @en Collapse
+	 */
+	@CustomKey("js.formGroup.collapse")
+	public static ResKey JS_FORM_GROUP_COLLAPSE;
+
+	/**
+	 * @en Expand
+	 */
+	@CustomKey("js.formGroup.expand")
+	public static ResKey JS_FORM_GROUP_EXPAND;
+
+	// -- Table client-side i18n keys --
+
+	/**
+	 * @en Freeze up to here
+	 */
+	@CustomKey("js.table.freezeUpTo")
+	public static ResKey JS_TABLE_FREEZE_UP_TO;
+
+	/**
+	 * @en Unfreeze all
+	 */
+	@CustomKey("js.table.unfreezeAll")
+	public static ResKey JS_TABLE_UNFREEZE_ALL;
+
+	/**
+	 * @en Drag to choose the columns that stay in place while scrolling
+	 */
+	@CustomKey("js.table.freezeSplitter")
+	public static ResKey JS_TABLE_FREEZE_SPLITTER;
+
+	/**
+	 * @en Filter
+	 */
+	@CustomKey("js.table.filter")
+	public static ResKey JS_TABLE_FILTER;
+
+	/**
+	 * @en Reset
+	 */
+	@CustomKey("js.table.clear")
+	public static ResKey JS_TABLE_CLEAR;
+
+	/**
+	 * @en Columns
+	 */
+	@CustomKey("js.table.columns")
+	public static ResKey JS_TABLE_COLUMNS;
+
+	/**
+	 * @en Find column
+	 */
+	@CustomKey("js.table.columnSearch")
+	public static ResKey JS_TABLE_COLUMN_SEARCH;
+
+	/**
+	 * @en Group by this column
+	 */
+	@CustomKey("js.table.groupBy")
+	public static ResKey JS_TABLE_GROUP_BY;
+
+	/**
+	 * @en Remove grouping
+	 */
+	@CustomKey("js.table.ungroup")
+	public static ResKey JS_TABLE_UNGROUP;
+
+	/**
+	 * @en The rows are grouped by this column
+	 */
+	@CustomKey("js.table.grouped")
+	public static ResKey JS_TABLE_GROUPED;
+
+	/**
+	 * @en Fit width to content
+	 */
+	@CustomKey("js.table.fitColumn")
+	public static ResKey JS_TABLE_FIT_COLUMN;
+
+	/**
+	 * @en Search
+	 */
+	@CustomKey("js.table.search")
+	public static ResKey JS_TABLE_SEARCH;
+
+	/**
+	 * @en Search the displayed columns
+	 */
+	@CustomKey("js.table.searchHint")
+	public static ResKey JS_TABLE_SEARCH_HINT;
+
+	/**
+	 * @en Show all rows again
+	 */
+	@CustomKey("js.table.clearFilter")
+	public static ResKey JS_TABLE_CLEAR_FILTER;
+
+	/**
+	 * @en Save this filter
+	 */
+	@CustomKey("js.table.saveFilter")
+	public static ResKey JS_TABLE_SAVE_FILTER;
+
+	/**
+	 * @en Filter name
+	 */
+	@CustomKey("js.table.filterName")
+	public static ResKey JS_TABLE_FILTER_NAME;
+
+	/**
+	 * @en Delete this filter
+	 */
+	@CustomKey("js.table.deleteFilter")
+	public static ResKey JS_TABLE_DELETE_FILTER;
+
+	/**
+	 * @en Do not save
+	 */
+	@CustomKey("js.table.cancelSave")
+	public static ResKey JS_TABLE_CANCEL_SAVE;
+
+	/**
+	 * @en Restore default
+	 */
+	public static ResKey TABLE_COLUMNS_RESET;
+
+	/**
+	 * @en Selection changed.
+	 */
+	public static ResKey REACT_DROPDOWN_SELECT_VALUE_CHANGED;
+
+	// -- Dropdown select client-side i18n keys --
+
+	/**
+	 * @en Select\u2026
+	 */
+	@CustomKey("js.dropdownSelect.empty")
+	public static ResKey JS_DROPDOWN_SELECT_EMPTY;
+
+	/**
+	 * @en Nothing found
+	 */
+	@CustomKey("js.dropdownSelect.nothingFound")
+	public static ResKey JS_DROPDOWN_SELECT_NOTHING_FOUND;
+
+	/**
+	 * @en Filter\u2026
+	 */
+	@CustomKey("js.dropdownSelect.filterPlaceholder")
+	public static ResKey JS_DROPDOWN_SELECT_FILTER_PLACEHOLDER;
+
+	/**
+	 * @en Remove {0}
+	 */
+	@CustomKey("js.dropdownSelect.removeChip")
+	public static ResKey JS_DROPDOWN_SELECT_REMOVE_CHIP;
+
+	/**
+	 * @en Clear selection
+	 */
+	@CustomKey("js.dropdownSelect.clear")
+	public static ResKey JS_DROPDOWN_SELECT_CLEAR;
+
+	/**
+	 * @en Loading\u2026
+	 */
+	@CustomKey("js.dropdownSelect.loading")
+	public static ResKey JS_DROPDOWN_SELECT_LOADING;
+
+	/**
+	 * @en Failed to load options. Retry
+	 */
+	@CustomKey("js.dropdownSelect.error")
+	public static ResKey JS_DROPDOWN_SELECT_ERROR;
+
+	// -- Color input client-side i18n keys --
+
+	/**
+	 * @en Color Palette
+	 */
+	@CustomKey("js.colorInput.paletteTab")
+	public static ResKey JS_COLOR_INPUT_PALETTE_TAB;
+
+	/**
+	 * @en Color Mixer
+	 */
+	@CustomKey("js.colorInput.mixerTab")
+	public static ResKey JS_COLOR_INPUT_MIXER_TAB;
+
+	/**
+	 * @en Current
+	 */
+	@CustomKey("js.colorInput.current")
+	public static ResKey JS_COLOR_INPUT_CURRENT;
+
+	/**
+	 * @en New
+	 */
+	@CustomKey("js.colorInput.new")
+	public static ResKey JS_COLOR_INPUT_NEW;
+
+	/**
+	 * @en Red
+	 */
+	@CustomKey("js.colorInput.red")
+	public static ResKey JS_COLOR_INPUT_RED;
+
+	/**
+	 * @en Green
+	 */
+	@CustomKey("js.colorInput.green")
+	public static ResKey JS_COLOR_INPUT_GREEN;
+
+	/**
+	 * @en Blue
+	 */
+	@CustomKey("js.colorInput.blue")
+	public static ResKey JS_COLOR_INPUT_BLUE;
+
+	/**
+	 * @en Hex
+	 */
+	@CustomKey("js.colorInput.hex")
+	public static ResKey JS_COLOR_INPUT_HEX;
+
+	/**
+	 * @en Reset
+	 */
+	@CustomKey("js.colorInput.reset")
+	public static ResKey JS_COLOR_INPUT_RESET;
+
+	/**
+	 * @en Cancel
+	 */
+	@CustomKey("js.colorInput.cancel")
+	public static ResKey JS_COLOR_INPUT_CANCEL;
+
+	/**
+	 * @en No color
+	 */
+	@CustomKey("js.colorInput.noColor")
+	public static ResKey JS_COLOR_INPUT_NO_COLOR;
+
+	/**
+	 * @en OK
+	 */
+	@CustomKey("js.colorInput.ok")
+	public static ResKey JS_COLOR_INPUT_OK;
+
+	/**
+	 * @en Choose color
+	 */
+	@CustomKey("js.colorInput.chooseColor")
+	public static ResKey JS_COLOR_INPUT_CHOOSE_COLOR;
+
+	/**
+	 * @en Clear
+	 */
+	@CustomKey("js.colorInput.clear")
+	public static ResKey JS_COLOR_INPUT_CLEAR;
+
+	/**
+	 * @en Simple
+	 */
+	@CustomKey("js.iconSelect.simpleTab")
+	public static ResKey JS_ICON_SELECT_SIMPLE_TAB;
+
+	/**
+	 * @en Advanced
+	 */
+	@CustomKey("js.iconSelect.advancedTab")
+	public static ResKey JS_ICON_SELECT_ADVANCED_TAB;
+
+	/**
+	 * @en Filter icons\u2026
+	 */
+	@CustomKey("js.iconSelect.filterPlaceholder")
+	public static ResKey JS_ICON_SELECT_FILTER_PLACEHOLDER;
+
+	/**
+	 * @en No icons found
+	 */
+	@CustomKey("js.iconSelect.noResults")
+	public static ResKey JS_ICON_SELECT_NO_RESULTS;
+
+	/**
+	 * @en Loading\u2026
+	 */
+	@CustomKey("js.iconSelect.loading")
+	public static ResKey JS_ICON_SELECT_LOADING;
+
+	/**
+	 * @en Failed to load. Click to retry.
+	 */
+	@CustomKey("js.iconSelect.loadError")
+	public static ResKey JS_ICON_SELECT_LOAD_ERROR;
+
+	/**
+	 * @en Class
+	 */
+	@CustomKey("js.iconSelect.classLabel")
+	public static ResKey JS_ICON_SELECT_CLASS_LABEL;
+
+	/**
+	 * @en Preview
+	 */
+	@CustomKey("js.iconSelect.previewLabel")
+	public static ResKey JS_ICON_SELECT_PREVIEW_LABEL;
+
+	/**
+	 * @en Cancel
+	 */
+	@CustomKey("js.iconSelect.cancel")
+	public static ResKey JS_ICON_SELECT_CANCEL;
+
+	/**
+	 * @en OK
+	 */
+	@CustomKey("js.iconSelect.ok")
+	public static ResKey JS_ICON_SELECT_OK;
+
+	/**
+	 * @en Clear icon
+	 */
+	@CustomKey("js.iconSelect.clear")
+	public static ResKey JS_ICON_SELECT_CLEAR;
+
+	/**
+	 * @en Clear filter
+	 */
+	@CustomKey("js.iconSelect.clearFilter")
+	public static ResKey JS_ICON_SELECT_CLEAR_FILTER;
+
+	/**
+	 * @en Choose icon
+	 */
+	@CustomKey("js.iconSelect.chooseIcon")
+	public static ResKey JS_ICON_SELECT_CHOOSE_ICON;
+
+	// -- Window client-side i18n keys --
+
+	/**
+	 * @en Close
+	 */
+	@CustomKey("js.window.close")
+	public static ResKey JS_WINDOW_CLOSE;
+
+	/**
+	 * @en Maximize
+	 */
+	@CustomKey("js.window.maximize")
+	public static ResKey JS_WINDOW_MAXIMIZE;
+
+	/**
+	 * @en Restore
+	 */
+	@CustomKey("js.window.restore")
+	public static ResKey JS_WINDOW_RESTORE;
+
+	/**
+	 * @en Cannot select option(s): the business key(s) no longer resolve to an option in this session:
+	 *     {0}
+	 */
+	public static ResKey1 ERROR_OPTION_KEYS_UNRESOLVED__KEYS;
+
+	/**
+	 * @en Cannot select row: the business key no longer resolves to a row in this table: {0}
+	 */
+	public static ResKey1 ERROR_ROW_KEY_UNRESOLVED__KEY;
+
+	/**
+	 * @en Cannot drop here: this table does not accept the dragged objects.
+	 */
+	public static ResKey ERROR_DROP_NOT_ACCEPTED;
+
+	/**
+	 * @en Cannot drop: the dragged objects or the target row are no longer present: {0}
+	 */
+	public static ResKey1 ERROR_DROP_UNRESOLVED__OBJECTS;
+
+	/**
+	 * @en Cannot drop: the dragged rows include one that cannot be dragged.
+	 */
+	public static ResKey ERROR_DROP_NOT_DRAGGABLE;
+
+	/**
+	 * @en Assertion at ''{0}'' failed: mismatching state keys {1}
+	 */
+	public static ResKey2 ERROR_ASSERTION_FAILED__ADDRESS_KEYS;
+
+	// -- Calendar client-side i18n keys --
+
+	/**
+	 * @en Today
+	 */
+	@CustomKey("js.calendar.today")
+	public static ResKey JS_CALENDAR_TODAY;
+
+	/**
+	 * @en Previous
+	 */
+	@CustomKey("js.calendar.previous")
+	public static ResKey JS_CALENDAR_PREVIOUS;
+
+	/**
+	 * @en Next
+	 */
+	@CustomKey("js.calendar.next")
+	public static ResKey JS_CALENDAR_NEXT;
+
+	/**
+	 * @en Day
+	 */
+	@CustomKey("js.calendar.day")
+	public static ResKey JS_CALENDAR_DAY;
+
+	/**
+	 * @en Work week
+	 */
+	@CustomKey("js.calendar.workWeek")
+	public static ResKey JS_CALENDAR_WORK_WEEK;
+
+	/**
+	 * @en Week
+	 */
+	@CustomKey("js.calendar.week")
+	public static ResKey JS_CALENDAR_WEEK;
+
+	/**
+	 * @en Month
+	 */
+	@CustomKey("js.calendar.month")
+	public static ResKey JS_CALENDAR_MONTH;
+
+	/**
+	 * @en Year
+	 */
+	@CustomKey("js.calendar.year")
+	public static ResKey JS_CALENDAR_YEAR;
+
+	/**
+	 * @en All day
+	 */
+	@CustomKey("js.calendar.allDay")
+	public static ResKey JS_CALENDAR_ALL_DAY;
+
+	/**
+	 * @en Event title
+	 */
+	@CustomKey("js.calendar.newEventTitle")
+	public static ResKey JS_CALENDAR_NEW_EVENT_TITLE;
+
+	/**
+	 * @en more
+	 */
+	@CustomKey("js.calendar.more")
+	public static ResKey JS_CALENDAR_MORE;
+
+	// -- Job status client-side i18n keys --
+
+	/**
+	 * @en Running
+	 */
+	@CustomKey("js.jobStatus.running")
+	public static ResKey JS_JOB_STATUS_RUNNING;
+
+	/**
+	 * @en Completed
+	 */
+	@CustomKey("js.jobStatus.completed")
+	public static ResKey JS_JOB_STATUS_COMPLETED;
+
+	/**
+	 * @en Failed
+	 */
+	@CustomKey("js.jobStatus.failed")
+	public static ResKey JS_JOB_STATUS_FAILED;
+
+	/**
+	 * @en Cancelled
+	 */
+	@CustomKey("js.jobStatus.cancelled")
+	public static ResKey JS_JOB_STATUS_CANCELLED;
+
+	/**
+	 * @en Elapsed time
+	 */
+	@CustomKey("js.jobStatus.elapsed")
+	public static ResKey JS_JOB_STATUS_ELAPSED;
+
+	/**
+	 * @en Cancel
+	 */
+	@CustomKey("js.jobStatus.cancel")
+	public static ResKey JS_JOB_STATUS_CANCEL;
+
+	static {
+		initConstants(I18NConstants.class);
+	}
+
+}

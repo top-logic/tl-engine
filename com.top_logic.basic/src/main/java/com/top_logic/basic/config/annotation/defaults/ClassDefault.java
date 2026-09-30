@@ -10,6 +10,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 
 /**
@@ -19,7 +20,15 @@ import com.top_logic.basic.config.annotation.TagName;
  * This annotation can be annotated to functions (e. g. a property of the configuration) or to a
  * field (e. g. when defining a theme variable in Icons class) to set its default value.
  * </p>
- * 
+ *
+ * <p>
+ * The implementation class of a {@link PolymorphicConfiguration} needs this annotation only where
+ * the configuration hierarchy binds the type parameter at its base: a specialization then has
+ * nothing left to bind, and without a default it would be reached through its tag name as a
+ * configuration type without an implementation class. A hierarchy that keeps the parameter open
+ * takes the default from the parameter's bound instead.
+ * </p>
+ *
  * @since 5.7.3
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>

@@ -15,14 +15,19 @@ import com.top_logic.bpe.execution.model.ProcessExecution;
 import com.top_logic.bpe.execution.model.TlBpeExecutionFactory;
 import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
+import com.top_logic.model.search.expr.GenericMethodWithSecurity;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
+import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.util.TLContext;
+import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -31,7 +36,7 @@ import com.top_logic.util.model.ModelService;
  *
  * @author <a href="mailto:Jonathan.Hüsing@top-logic.com">Jonathan Hüsing</a>
  */
-public class CreateProcessInstance extends GenericMethod {
+public class CreateProcessInstance extends GenericMethodWithSecurity {
 
 	/** Fallback name when no explicit name provided */
 	private static final String DEFAULT_PROCESS_NAME = "newProcessInstance";
@@ -40,13 +45,13 @@ public class CreateProcessInstance extends GenericMethod {
 	 * Creates a new {@link CreateProcessInstance}.
 	 *
 	 */
-	protected CreateProcessInstance(String name, SearchExpression[] arguments) {
-		super(name, arguments);
+	protected CreateProcessInstance(String name, SearchExpression[] arguments, boolean usesSecurity) {
+		super(name, arguments, usesSecurity);
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new CreateProcessInstance(getName(), arguments);
+		return new CreateProcessInstance(getName(), arguments, usesSecurity());
 	}
 
 	@Override
@@ -79,7 +84,7 @@ public class CreateProcessInstance extends GenericMethod {
 		}
 
 		// Create process instance
-		ProcessExecution processExecution = createProcessModel(startEvent);
+		ProcessExecution processExecution = createProcessModel(startEvent, definitions);
 		processExecution.setProcess(startEvent.getProcess());
 		processExecution.setCollaboration(processExecution.getProcess().getCollaboration());
 
@@ -97,12 +102,24 @@ public class CreateProcessInstance extends GenericMethod {
 	 * 
 	 * @param startEvent
 	 *        event containing process and participant configuration
+	 * @param definitions
+	 *        context in which creation occurs.
 	 * @return new process execution instance
 	 */
-	private ProcessExecution createProcessModel(StartEvent startEvent) {
+	private ProcessExecution createProcessModel(StartEvent startEvent, EvalContext definitions) {
 		TLClass modelType = startEvent.getProcess().getParticipant().getModelType();
 		if (modelType == null) {
 			modelType = TlBpeExecutionFactory.getProcessExecutionType();
+		}
+
+		if (usesSecurity()) {
+			// A process instance is a top-level object (no composition parent), so the CREATE right
+			// is checked against the global security root.
+			TLObject context = null;
+			if (!ModelAccessRights.getInstance().isAllowedCreate(TLContext.currentUser(), modelType, context)) {
+				throw new TopLogicException(
+					com.top_logic.model.search.expr.I18NConstants.CREATE_PERMISSION_DENIED__TYPE.fill(modelType));
+			}
 		}
 		return (ProcessExecution) ModelService.getInstance().getFactory().createObject(modelType);
 	}
@@ -133,7 +150,7 @@ public class CreateProcessInstance extends GenericMethod {
 		@Override
 		public CreateProcessInstance build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			return new CreateProcessInstance(getConfig().getName(), args);
+			return new CreateProcessInstance(getConfig().getName(), args, true);
 		}
 
 	}

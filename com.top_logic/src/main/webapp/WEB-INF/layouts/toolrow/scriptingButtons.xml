@@ -13,42 +13,52 @@
 		/>
 	</params>
 
-	<view class="com.top_logic.layout.component.configuration.PopupViewConfiguration"
-		horizontalPosition="${horizontalPosition}"
-		icon="theme:IMAGE_DEBUG_22"
-		label="layouts.themes.default.toolrow.scriptingButtons"
-		renderer="${renderer}"
+	<view class="com.top_logic.layout.component.configuration.ConditionalViewConfiguration"
+		condition="com.top_logic.util.IsAnonymousUser"
+		invert="true"
 	>
-		<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
-			command="openScriptRecorder"
-		/>
-		<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
-			command="toggleDesignModeCommand"
-			targetComponent="rootLayout#masterFrame"
-		/>
-		<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
-			command="releaseLayout"
-		/>
-		<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
-			command="exportLayout"
-		/>
-		<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
-			command="reloadI18N"
-		/>
-		<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
-			command="reloadTheme"
-		/>
-		<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
-			command="toggleAlwaysShowKeys"
-		/>
-		<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
-			command="toggleShowAllCommands"
-		/>
+		<view class="com.top_logic.layout.component.configuration.PopupViewConfiguration"
+			horizontalPosition="${horizontalPosition}"
+			icon="theme:IMAGE_DEBUG_22"
+			label="layouts.themes.default.toolrow.scriptingButtons"
+			renderer="${renderer}"
+		>
+			<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
+				command="openScriptRecorder"
+			/>
+			<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
+				command="toggleDesignModeCommand"
+				targetComponent="rootLayout#masterFrame"
+			/>
+			<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
+				command="releaseLayout"
+			/>
+			<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
+				command="exportLayout"
+			/>
+			<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
+				command="reloadI18N"
+			/>
+			<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
+				command="reloadTheme"
+			/>
+			<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
+				command="toggleAlwaysShowKeys"
+			/>
+			<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
+				command="toggleShowAllCommands"
+			/>
+		</view>
 	</view>
 
-	<view class="com.top_logic.layout.component.configuration.OpenGuiInspectorView"
-		image="theme:IMAGE_BUTTONS_GUI_INSPECTOR22"
-		labelKey="menu.GuiInspector"
-		renderer="${entryRenderer}"
-	/>
+	<view class="com.top_logic.layout.component.configuration.ConditionalViewConfiguration"
+		condition="com.top_logic.util.IsAnonymousUser"
+		invert="true"
+	>
+		<view class="com.top_logic.layout.component.configuration.OpenGuiInspectorView"
+			image="theme:IMAGE_BUTTONS_GUI_INSPECTOR22"
+			labelKey="menu.GuiInspector"
+			renderer="${entryRenderer}"
+		/>
+	</view>
 </template>

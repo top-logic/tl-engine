@@ -78,6 +78,17 @@ public final class NewObject extends TransientObject implements TLNamed {
 		return _container;
 	}
 
+	/**
+	 * The request to create an object is part of the {@link #tContainer() container} the object is
+	 * created in and dies with it: it is valid while that container is valid, or while it has no
+	 * container at all.
+	 */
+	@Override
+	public boolean tValid() {
+		TLObject container = tContainer();
+		return container == null || container.tValid();
+	}
+
 	@Override
 	public TLStructuredType tType() {
 		return _type;

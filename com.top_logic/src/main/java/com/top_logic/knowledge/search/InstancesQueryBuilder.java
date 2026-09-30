@@ -11,15 +11,14 @@ import com.top_logic.dob.meta.MOClass;
 import com.top_logic.model.TLClass;
 
 /**
- * Builder to create a {@link SetExpression query} for the instances of a table.
+ * Builder to create a {@link Expression filter query} for the instances of a table.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public interface InstancesQueryBuilder {
 
 	/**
-	 * Creates a {@link SetExpression} which finds all instances of the given types in the given
-	 * table.
+	 * Creates a {@link Expression} which finds all instances of the given types in a table.
 	 * 
 	 * @param table
 	 *        The table that stores instances of the given types.
@@ -27,7 +26,7 @@ public interface InstancesQueryBuilder {
 	 *        The types whose instances are searched. It must be ensured that each type stores it
 	 *        instances in the given table.
 	 */
-	SetExpression createInstancesQuery(MOClass table, Set<TLClass> types);
+	Expression createInstancesFilter(MOClass table, Set<TLClass> types);
 
 }
 

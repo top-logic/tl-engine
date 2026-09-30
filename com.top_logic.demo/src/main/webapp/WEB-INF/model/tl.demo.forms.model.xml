@@ -62,5 +62,23 @@
 				</reference>
 			</attributes>
 		</class>
+		<class name="ImportXmlInput">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<form-definition>
+					<form>
+						<field attribute="data"/>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<property name="data"
+					mandatory="true"
+					type="tl.core:Binary"
+				/>
+			</attributes>
+		</class>
 	</module>
 </model>

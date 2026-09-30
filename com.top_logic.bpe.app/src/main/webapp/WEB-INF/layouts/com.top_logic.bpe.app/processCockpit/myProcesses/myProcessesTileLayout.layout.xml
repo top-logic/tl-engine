@@ -6,7 +6,6 @@
 >
 	<arguments
 		helpID="ID_5ba15175_1f9c_466b_9a10_a982b72d6c39"
-		securityDomain=""
 		tileLabel="%LAYOUT_RESPREFIX%tileName"
 		tileName="ID_b5e421a4_1850_410e_a0e7_58103967eafe"
 	>

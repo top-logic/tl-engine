@@ -298,6 +298,8 @@ public class PrimitiveColumn extends ColumnInfo {
 				{
 					BooleanPresentation booleanDisplay = DisplayAnnotations.getBooleanDisplay(getTypeContext());
 					switch (booleanDisplay) {
+						// A switch names the same two values as a check box, so both read alike.
+						case SWITCH:
 						case CHECKBOX: {
 							if (_tristate) {
 								column.setResourceProvider(BooleanResourceProvider.INSTANCE);

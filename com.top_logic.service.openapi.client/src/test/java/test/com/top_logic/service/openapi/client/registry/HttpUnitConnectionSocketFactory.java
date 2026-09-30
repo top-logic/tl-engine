@@ -1,25 +1,27 @@
 /*
  * SPDX-FileCopyrightText: 2022 (c) Business Operation Systems GmbH <info@top-logic.com>
- * 
+ *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
 package test.com.top_logic.service.openapi.client.registry;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
+import java.net.Proxy;
 import java.net.Socket;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.SocketAddress;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -30,15 +32,7 @@ import jakarta.activation.MimeType;
 import jakarta.activation.MimeTypeParseException;
 import jakarta.servlet.ServletException;
 
-import org.apache.hc.client5.http.socket.ConnectionSocketFactory;
-import org.apache.hc.core5.http.Header;
-import org.apache.hc.core5.http.HttpEntity;
-import org.apache.hc.core5.http.HttpEntityContainer;
-import org.apache.hc.core5.http.HttpHost;
-import org.apache.hc.core5.http.HttpRequest;
-import org.apache.hc.core5.http.protocol.HttpContext;
-import org.apache.hc.core5.http.protocol.HttpCoreContext;
-import org.apache.hc.core5.util.TimeValue;
+import org.apache.hc.client5.http.io.DetachedSocketFactory;
 
 import test.com.top_logic.layout.scripting.runtime.TestedApplicationSession;
 
@@ -60,11 +54,19 @@ import com.top_logic.basic.util.ComputationEx;
 import com.top_logic.service.openapi.common.conf.HttpMethod;
 
 /**
- * {@link ConnectionSocketFactory} creating {@link Socket} that connect to server using httpunit.
- * 
+ * {@link DetachedSocketFactory} creating {@link Socket}s that answer requests to {@code localhost}
+ * using httpunit instead of a real network connection.
+ *
+ * <p>
+ * The produced socket buffers the raw HTTP request written by the client, parses it and dispatches
+ * it into the currently running tested application (via {@link TestedApplicationSession}), then
+ * serves the application's response back through the socket's input stream. Requests to a
+ * non-loopback address are handled by a real socket.
+ * </p>
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class HttpUnitConnectionSocketFactory implements ConnectionSocketFactory {
+public class HttpUnitConnectionSocketFactory implements DetachedSocketFactory {
 
 	static final byte CR = '\r';
 
@@ -88,87 +90,94 @@ public class HttpUnitConnectionSocketFactory implements ConnectionSocketFactory 
 	}
 
 	@Override
-	public Socket createSocket(HttpContext context) throws IOException {
-		return new HttpUnitSocket(context);
-	}
-
-	static HttpRequest getRequest(HttpContext context) {
-		return (HttpRequest) context.getAttribute(HttpCoreContext.HTTP_REQUEST);
-	}
-
-	@Override
-	public Socket connectSocket(TimeValue connectTimeout, Socket socket, HttpHost host, InetSocketAddress remoteAddress,
-			InetSocketAddress localAddress, HttpContext context) throws IOException {
-		final Socket sock = socket != null ? socket : createSocket(context);
-		if (localAddress != null) {
-			sock.bind(localAddress);
-		}
-		return sock;
+	public Socket create(Proxy proxy) throws IOException {
+		return new HttpUnitSocket();
 	}
 
 	/**
-	 * Special {@link Socket} returning the response of a {@link HttpRequest} using http unit.
-	 * 
+	 * Special {@link Socket} answering an HTTP request through httpunit.
+	 *
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
 	private static class HttpUnitSocket extends Socket {
 
-		private HttpContext _context;
+		private final ByteArrayStream _requestContent = new ByteArrayStream();
 
-		private ByteArrayStream _requestContent = new ByteArrayStream();
+		private boolean _real;
+
+		private boolean _simulatedConnected;
 
 		/**
 		 * Creates a {@link HttpUnitSocket}.
 		 */
-		public HttpUnitSocket(HttpContext context) {
-			_context = context;
+		public HttpUnitSocket() {
+			super();
+		}
+
+		@Override
+		public void connect(SocketAddress endpoint, int timeout) throws IOException {
+			if (isLoopback(endpoint)) {
+				// Do not open a real connection: the request is answered by httpunit.
+				_simulatedConnected = true;
+			} else {
+				_real = true;
+				super.connect(endpoint, timeout);
+			}
+		}
+
+		@Override
+		public void connect(SocketAddress endpoint) throws IOException {
+			connect(endpoint, 0);
+		}
+
+		@Override
+		public void bind(SocketAddress bindpoint) throws IOException {
+			// No local bind for simulated connections.
+		}
+
+		@Override
+		public boolean isConnected() {
+			return _simulatedConnected || super.isConnected();
 		}
 
 		@Override
 		public InputStream getInputStream() throws IOException {
-			HttpRequest request = getRequest(_context);
-			if (isLocalhost(request)) {
-				return new HttpUnitResponse(request, _requestContent);
-			} else {
+			if (_real) {
 				return super.getInputStream();
 			}
+			return new HttpUnitResponse(_requestContent);
 		}
 
 		@Override
 		public OutputStream getOutputStream() throws IOException {
-			HttpRequest request = getRequest(_context);
-			if (isLocalhost(request)) {
-				return _requestContent;
-			} else {
+			if (_real) {
 				return super.getOutputStream();
 			}
+			return _requestContent;
 		}
 
-		private static boolean isLocalhost(HttpRequest request) {
-			try {
-				String host = request.getUri().getHost();
-				return "localhost".equalsIgnoreCase(host);
-			} catch (URISyntaxException ex) {
-				return false;
+		private static boolean isLoopback(SocketAddress endpoint) {
+			if (endpoint instanceof InetSocketAddress) {
+				InetSocketAddress address = (InetSocketAddress) endpoint;
+				return address.getAddress() != null && address.getAddress().isLoopbackAddress();
 			}
+			return false;
 		}
 	}
 
 	/**
-	 * {@link InputStream} containing the response of a {@link HttpRequest} using http unit.
-	 * 
+	 * {@link InputStream} containing the response to the HTTP request buffered in the given content,
+	 * produced by dispatching the request through httpunit.
+	 *
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
 	private static final class HttpUnitResponse extends ProxyInputStream {
-
-		private final HttpRequest _request;
 
 		private final BinaryContent _requestContent;
 
 		private InputStream _impl;
 
-		public HttpUnitResponse(HttpRequest request, BinaryContent requestContent) {
-			_request = request;
+		public HttpUnitResponse(BinaryContent requestContent) {
 			_requestContent = requestContent;
 		}
 
@@ -182,7 +191,7 @@ public class HttpUnitConnectionSocketFactory implements ConnectionSocketFactory 
 		}
 
 		private InputStream initStream() throws IOException {
-			WebRequest webRequest = newWebRequest(_request, _requestContent);
+			WebRequest webRequest = newWebRequest();
 			TestedApplicationSession applicationSession = TestedApplicationSession.get();
 			InvocationContext invocation = applicationSession.newInvocation(webRequest);
 
@@ -262,18 +271,23 @@ public class HttpUnitConnectionSocketFactory implements ConnectionSocketFactory 
 			return byteArrayStream.getStream();
 		}
 
-		private WebRequest newWebRequest(HttpRequest request, BinaryContent content) {
-			HttpMethod httpMethod = HttpMethod.normalizedValueOf(request.getMethod());
-			String urlString = urlString(request);
+		private WebRequest newWebRequest() throws IOException {
+			RequestHead head;
+			try (InputStream in = _requestContent.getStream()) {
+				head = readRequestHead(in);
+			}
+
+			HttpMethod httpMethod = HttpMethod.normalizedValueOf(head.getMethod());
+			String urlString = "http://" + head.getHost() + head.getTarget();
 			WebRequest webRequest;
 			if (httpMethod.supportsBody()) {
-				HttpEntity entity = ((HttpEntityContainer) request).getEntity();
-				webRequest =
-					new MessageBodyWebRequest(urlString, new HttpEntityMessageBody(entity, content)) {
-						{
-							method = httpMethod.name().toUpperCase(Locale.ROOT);
-						}
-					};
+				MessageBody body =
+					new HttpEntityMessageBody(head.getContentType(), head.getContentEncoding(), _requestContent);
+				webRequest = new MessageBodyWebRequest(urlString, body) {
+					{
+						method = httpMethod.name().toUpperCase(Locale.ROOT);
+					}
+				};
 			} else {
 				webRequest = new HeaderOnlyWebRequest(urlString) {
 					{
@@ -281,56 +295,168 @@ public class HttpUnitConnectionSocketFactory implements ConnectionSocketFactory 
 					}
 				};
 			}
-			for (Header h : request.getHeaders()) {
-				webRequest.setHeaderField(h.getName(), h.getValue());
+			for (String[] header : head.getHeaders()) {
+				String name = header[0];
+				if (isFramingHeader(name)) {
+					// Content type is delivered through the message body, framing headers are
+					// re-computed by httpunit.
+					continue;
+				}
+				webRequest.setHeaderField(name, header[1]);
 			}
 			return webRequest;
 		}
 
-		private String urlString(HttpRequest request) {
-			String urlString;
-			try {
-				URI origURI = request.getUri();
-				// Use protocol that is known as valid: httpunit is unknown.
-				URI adaptedUri = new URI("http",
-					origURI.getUserInfo(),
-					origURI.getHost(),
-					origURI.getPort(),
-					origURI.getPath(),
-					origURI.getQuery(),
-					origURI.getFragment());
-				urlString = adaptedUri.toURL().toExternalForm();
-			} catch (MalformedURLException | URISyntaxException ex) {
-				throw new IllegalArgumentException(ex);
+		private static boolean isFramingHeader(String name) {
+			return name.equalsIgnoreCase("Host")
+				|| name.equalsIgnoreCase("Content-Type")
+				|| name.equalsIgnoreCase("Content-Length")
+				|| name.equalsIgnoreCase("Transfer-Encoding")
+				|| name.equalsIgnoreCase("Connection");
+		}
+
+		/**
+		 * Parses the request line and headers of the buffered request.
+		 */
+		private RequestHead readRequestHead(InputStream in) throws IOException {
+			String requestLine = readAsciiLine(in);
+			if (requestLine == null) {
+				throw new IOException("Empty request.");
 			}
-			return urlString;
+			int methodEnd = requestLine.indexOf(' ');
+			int targetEnd = requestLine.indexOf(' ', methodEnd + 1);
+			if (methodEnd < 0 || targetEnd < 0) {
+				throw new IOException("Malformed request line: " + requestLine);
+			}
+			String method = requestLine.substring(0, methodEnd);
+			String target = requestLine.substring(methodEnd + 1, targetEnd);
+
+			List<String[]> headers = new ArrayList<>();
+			while (true) {
+				String line = readAsciiLine(in);
+				if (line == null || line.isEmpty()) {
+					break;
+				}
+				int colon = line.indexOf(':');
+				if (colon < 0) {
+					continue;
+				}
+				headers.add(new String[] { line.substring(0, colon).trim(), line.substring(colon + 1).trim() });
+			}
+			return new RequestHead(method, target, headers);
+		}
+
+		private String readAsciiLine(InputStream in) throws IOException {
+			ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+			while (true) {
+				int current = in.read();
+				if (current == -1) {
+					if (buffer.size() == 0) {
+						return null;
+					}
+					break;
+				}
+				byte b = (byte) current;
+				if (b == CR) {
+					ensureLinefeedAfterCarriageReturn(in);
+					break;
+				}
+				buffer.write(b);
+			}
+			return new String(buffer.toByteArray(), StandardCharsets.ISO_8859_1);
+		}
+
+		private void ensureLinefeedAfterCarriageReturn(InputStream in) throws IOException {
+			int next = in.read();
+			if (next == -1) {
+				failUnexpectedEndOfContent();
+			}
+			if (next != LF) {
+				throw new IOException("Missing \\n after \\r.");
+			}
+		}
+
+		void failUnexpectedEndOfContent() throws IOException {
+			throw new IOException("Unexpected end of content.");
 		}
 
 	}
 
 	/**
-	 * Adapter to use an {@link HttpEntity} as {@link MessageBody}.
-	 * 
+	 * Request line and headers parsed from a buffered HTTP request.
+	 */
+	private static final class RequestHead {
+
+		private final String _method;
+
+		private final String _target;
+
+		private final List<String[]> _headers;
+
+		RequestHead(String method, String target, List<String[]> headers) {
+			_method = method;
+			_target = target;
+			_headers = headers;
+		}
+
+		String getMethod() {
+			return _method;
+		}
+
+		String getTarget() {
+			return _target;
+		}
+
+		List<String[]> getHeaders() {
+			return _headers;
+		}
+
+		String getHost() {
+			return header("Host");
+		}
+
+		String getContentType() {
+			return header("Content-Type");
+		}
+
+		String getContentEncoding() {
+			return header("Content-Encoding");
+		}
+
+		private String header(String name) {
+			for (String[] header : _headers) {
+				if (header[0].equalsIgnoreCase(name)) {
+					return header[1];
+				}
+			}
+			return null;
+		}
+
+	}
+
+	/**
+	 * Adapter to use the body of a buffered HTTP request as httpunit {@link MessageBody}.
+	 *
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
 	private static class HttpEntityMessageBody extends MessageBody {
 
-		private final HttpEntity _entity;
+		private final String _contentType;
 
 		private final BinaryContent _requestContent;
 
 		/**
 		 * Creates a {@link HttpEntityMessageBody}.
 		 */
-		public HttpEntityMessageBody(HttpEntity entity, BinaryContent requestContent) {
-			super(entity.getContentEncoding());
-			_entity = entity;
+		public HttpEntityMessageBody(String contentType, String contentEncoding, BinaryContent requestContent) {
+			super(contentEncoding);
+			_contentType = contentType;
 			_requestContent = requestContent;
 		}
 
 		@Override
 		public String getContentType() {
-			return _entity.getContentType();
+			return _contentType;
 		}
 
 		@Override
@@ -361,7 +487,7 @@ public class HttpUnitConnectionSocketFactory implements ConnectionSocketFactory 
 
 		private InputStream wrapChunked(InputStream in, Charset encoding) throws IOException {
 			return new InputStream() {
-				
+
 				int _remaining;
 				{
 					readChunk(true);
@@ -383,7 +509,7 @@ public class HttpUnitConnectionSocketFactory implements ConnectionSocketFactory 
 						}
 					}
 				}
-				
+
 				private void readChunk(boolean firstChunk) throws IOException {
 					if (!firstChunk) {
 						// Read CRLF from last chunk
@@ -431,7 +557,7 @@ public class HttpUnitConnectionSocketFactory implements ConnectionSocketFactory 
 							break;
 						}
 					}
-					int sizeSeparator = chunkSize.indexOf(' ', startSize+1); 
+					int sizeSeparator = chunkSize.indexOf(' ', startSize+1);
 					if (sizeSeparator < 0) {
 						// Only size
 						_remaining = Integer.parseInt(chunkSize, startSize, chunkSize.length(), 16);
@@ -613,4 +739,3 @@ public class HttpUnitConnectionSocketFactory implements ConnectionSocketFactory 
 	}
 
 }
-

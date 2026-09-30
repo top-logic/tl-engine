@@ -4,12 +4,9 @@
 	<profiles>
 		<profile name="DemoSecurity.Role1"/>
 		<profile name="DemoSecurity.Role2"/>
-		<profile name="DemoSecurity.Role3"/>
 		<profile name="DemoSecurity.SecurityAdministrator"/>
 		<profile name="DemoSecurity.SecurityAdministratorB"/>
 		<profile name="DemoSecurity.User"/>
-		<profile name="DemoSecurity.navigation"/>
-		<profile name="DemoSecurity.selection"/>
 		<profile name="DemoTypes.Administrator">
 			<view name="com.top_logic.demo/structure/aspectInheritance/tabLayout.layout.xml#TabLayout">
 				<commandGroup name="Create"/>
@@ -49,6 +46,11 @@
 				<commandGroup name="Read"/>
 				<commandGroup name="Write"/>
 			</view>
+			<view name="mainTabbar.layout.xml#globalDialogDemoPlainTop">
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
 			<view name="mainTabbar.layout.xml#globalDialogDemoTypesTop">
 				<commandGroup name="Create"/>
 				<commandGroup name="Delete"/>
@@ -60,17 +62,6 @@
 		<profile name="DemoTypes.BAdministrator"/>
 		<profile name="DemoTypes.BooleanAdministrator"/>
 		<profile name="DemoTypes.DateAdministrator"/>
-		<profile name="DemoTypes.Navigation">
-			<view name="com.top_logic.demo/structure/aspectInheritance/tabLayout.layout.xml#TabLayout">
-				<commandGroup name="Read"/>
-			</view>
-			<view name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#demoPlainView">
-				<commandGroup name="Read"/>
-			</view>
-			<view name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesView">
-				<commandGroup name="Read"/>
-			</view>
-		</profile>
 		<profile name="DemoTypes.Responsible">
 			<view name="com.top_logic.demo/structure/aspectInheritance/tabLayout.layout.xml#TabLayout">
 				<commandGroup name="Create"/>
@@ -118,7 +109,6 @@
 				<commandGroup name="Write"/>
 			</view>
 		</profile>
-		<profile name="DemoTypes.Selection"/>
 		<profile name="DemoTypes.StringAdministrator"/>
 		<profile name="SecurityStructure.OwnerRole">
 			<view name="com.top_logic.demo/search/searchChart.layout.xml#searchChart">
@@ -223,6 +213,12 @@
 				<commandGroup name="Create"/>
 				<commandGroup name="Delete"/>
 				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.contact/admin/orgUnits/orgUnit.layout.xml#orgUnit">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
 				<commandGroup name="Read"/>
 				<commandGroup name="Write"/>
 			</view>
@@ -444,6 +440,7 @@
 			<view name="com.top_logic.demo/technical/components/flowchart1/products/constructionPlan/tileLayout.layout.xml#TileLayout">
 				<commandGroup name="Create"/>
 				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
 				<commandGroup name="Read"/>
 				<commandGroup name="Write"/>
 			</view>
@@ -701,6 +698,36 @@
 				<commandGroup name="Create"/>
 				<commandGroup name="Delete"/>
 				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/undoRedo/milestonesTab.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/undoRedo/notesTab.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/undoRedo/peopleTab.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/undoRedo/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/undoRedo/ticketsTab.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
 				<commandGroup name="Read"/>
 				<commandGroup name="Write"/>
 			</view>
@@ -1071,22 +1098,6 @@
 				<commandGroup name="Write"/>
 			</view>
 			<view name="com.top_logic.element/admin/security/attributeCategoryPermissions/attributeSecurityRelease.layout.xml#adminRoleClassSec">
-				<commandGroup name="Export"/>
-				<commandGroup name="Read"/>
-				<commandGroup name="Write"/>
-			</view>
-			<view name="com.top_logic.element/admin/security/groupRoles/adminGroupRolesView.layout.xml#adminGroupRolesView">
-				<commandGroup name="Export"/>
-				<commandGroup name="Read"/>
-				<commandGroup name="Write"/>
-			</view>
-			<view name="com.top_logic.element/admin/security/profilesLegacy/adminRolesConfigView.layout.xml#adminRolesConfigView">
-				<commandGroup name="Export"/>
-				<commandGroup name="Read"/>
-				<commandGroup name="Write"/>
-			</view>
-			<view name="com.top_logic.element/admin/security/roleAssignment/adminPersonsRolesView.layout.xml#adminPersonsRolesView">
-				<commandGroup name="Export"/>
 				<commandGroup name="Read"/>
 				<commandGroup name="Write"/>
 			</view>
@@ -1259,5 +1270,17 @@
 				<commandGroup name="Write"/>
 			</view>
 		</profile>
+		<profile name="navigation">
+			<view name="com.top_logic.demo/structure/aspectInheritance/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#demoPlainView">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesView">
+				<commandGroup name="Read"/>
+			</view>
+		</profile>
+		<profile name="selection"/>
 	</profiles>
 </security>

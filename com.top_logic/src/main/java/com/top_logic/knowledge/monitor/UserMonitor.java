@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.FilteredIterator;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.knowledge.search.Expression;
 import com.top_logic.knowledge.search.RevisionQuery;
@@ -33,6 +34,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
  * 
  * @author    <a href="mailto:mga@top-logic.com"></a>
  */
+@Label("User activity monitor")
 public class UserMonitor extends KBBasedManagedClass<UserMonitor.Config> {
 
 	/** Number of milliseconds that {@link UserSession}s will looked up in the past. */

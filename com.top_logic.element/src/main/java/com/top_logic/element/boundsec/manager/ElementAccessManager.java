@@ -16,9 +16,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.xml.stream.XMLStreamException;
 
+import com.top_logic.base.services.InitialRolesManager;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Log;
@@ -31,6 +33,7 @@ import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.col.TupleFactory;
 import com.top_logic.basic.col.map.MultiMaps;
 import com.top_logic.basic.config.ApplicationConfig;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationWriter;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfiguration;
@@ -47,12 +50,13 @@ import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.boundsec.ElementBoundHelper;
-import com.top_logic.element.boundsec.manager.rule.IdentityPathElement;
+import com.top_logic.element.boundsec.manager.rule.NavigationRule;
 import com.top_logic.element.boundsec.manager.rule.PathElement;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider.Type;
 import com.top_logic.element.boundsec.manager.rule.RoleRule;
 import com.top_logic.element.boundsec.manager.rule.config.RoleRulesConfig;
+import com.top_logic.element.boundsec.manager.rule.config.SecurityParentsConfig;
 import com.top_logic.element.meta.MetaElementFactory;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
@@ -61,6 +65,7 @@ import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundHelper;
@@ -87,6 +92,7 @@ import com.top_logic.util.model.ModelService;
 	ModelService.Module.class,
 	MetaElementFactory.Module.class,
 	BoundHelper.Module.class,
+	InitialRolesManager.Module.class,
 })
 public class ElementAccessManager extends AccessManager {
 
@@ -100,6 +106,9 @@ public class ElementAccessManager extends AccessManager {
 
 		/** Property name of {@link #getMetaElements()}. */
 		String META_ELEMENTS = "meta-elements";
+
+		/** Property name of {@link #getSecurityParents()}. */
+		String SECURITY_PARENTS = "security-parents";
 
 		@Name(GROUP_MAPPER)
 		@InstanceFormat
@@ -122,6 +131,18 @@ public class ElementAccessManager extends AccessManager {
 		 */
 		void setRoleRules(RoleRulesConfig roleRules);
 
+		/**
+		 * The security parent rule definitions for the access manager.
+		 */
+		@ItemDefault
+		@Name(SECURITY_PARENTS)
+		SecurityParentsConfig getSecurityParents();
+
+		/**
+		 * Setter for {@link #getSecurityParents()}.
+		 */
+		void setSecurityParents(SecurityParentsConfig roleRules);
+
 	}
 
 	/**
@@ -142,6 +163,9 @@ public class ElementAccessManager extends AccessManager {
 
 	/** Key to store the current version of the role rule definition in the database. */
 	private static final String ROLE_RULES_CONFIG_VERSION_PROPERTY = "roleRules.version";
+
+	/** Key to store the current version of the security parents definition in the database. */
+	private static final String SECURITY_PARENTS_CONFIG_VERSION_PROPERTY = "security-parents.version";
 
 	/**
 	 * Called by the {@link TypedConfiguration} for creating a {@link ElementAccessManager}.
@@ -168,7 +192,7 @@ public class ElementAccessManager extends AccessManager {
 		super.startUp();
 		init();
 		_securityModuleByClass = loadRoleRootForMetaElements();
-		loadInitialRoleRules();
+		loadInitialRules();
 	}
 
 	private Map<TLClass, TLModule> loadRoleRootForMetaElements() {
@@ -221,10 +245,21 @@ public class ElementAccessManager extends AccessManager {
      */
     private Map<TLStructuredTypePart, Set<RoleProvider> > pathAttributes;
 
-    /**
-     * The resolved rules declared for the access manager (respecting the inherit flag)
-     */
-    private Map<TLClass, Collection<RoleProvider>> resolvedMERules;
+	private Map<TLClass, Collection<RoleProvider>> _resolvedMERules;
+
+	private Map<TLClass, Set<BoundedRole>> _potentialRolesForType;
+
+	/**
+	 * Resolved security-parent rules per type.
+	 *
+	 * <p>
+	 * Initialized to an empty map so that a failed rule load (an exception, or reported problems in
+	 * {@link #loadSecurityParentRules()}) does not leave it <code>null</code>: {@link #getSecurityParents(BoundObject)}
+	 * is consulted on every access check and must not fail with a {@link NullPointerException}. On a
+	 * failed reload the previously resolved rules are retained; only a successful load replaces them.
+	 * </p>
+	 */
+	private Map<TLClass, Collection<NavigationRule>> _resolvedSecurityParents = Collections.emptyMap();
 
 	private Map<TLClass, TLModule> _securityModuleByClass;
 
@@ -318,7 +353,8 @@ public class ElementAccessManager extends AccessManager {
         this.rules            = new HashMap< >();
         this.ruleIds          = new HashMap<>();
         this.ruleNumbers      = new BidiHashMap();
-        this.resolvedMERules  = new HashMap<>();
+		_resolvedMERules = new HashMap<>();
+		_potentialRolesForType = new HashMap<>();
         this.pathAttributes   = new HashMap< >();
     }
 
@@ -346,7 +382,49 @@ public class ElementAccessManager extends AccessManager {
     @Override
 	public boolean reload() {
 		this.init();
-		return loadInitialRoleRules();
+		return loadInitialRules();
+	}
+
+	private boolean loadInitialRules() {
+		boolean securityParentsresult = loadSecurityParentRules();
+		boolean roleRuleResult = loadInitialRoleRules();
+		return roleRuleResult && securityParentsresult;
+	}
+
+	/**
+	 * Loads the security parent rules file if necessary.
+	 */
+	private boolean loadSecurityParentRules() {
+		try {
+			SecurityParentsConfig securityParents = getConfig().getSecurityParents();
+			NavigationRulesImporter rulesImporter = NavigationRulesImporter.loadRules(securityParents.getRules());
+			if (!rulesImporter.getProblems().isEmpty()) {
+				/* Use english resources, because messages are written to log. */
+				Resources resource = Resources.getLogInstance();
+				for (ResKey theProblem : rulesImporter.getProblems()) {
+					Logger.error("Problem while reloading security parents: " + resource.getString(theProblem), this);
+				}
+				return false;
+			}
+			storeConfigVersion(securityParents, SecurityParentsConfig.class, Config.SECURITY_PARENTS,
+				SECURITY_PARENTS_CONFIG_VERSION_PROPERTY);
+
+			HashMap<TLClass, Collection<NavigationRule>> resolved = new HashMap<>();
+			for (Entry<TLClass, Collection<NavigationRule>> entry : rulesImporter.getRules().entrySet()) {
+				TLClass theME = entry.getKey();
+				Collection<NavigationRule> theRules = entry.getValue();
+				for (NavigationRule rule : theRules) {
+					boolean inherit = rule.isInherit();
+					addRuleToSubElements(theME, rule, inherit, resolved);
+				}
+			}
+
+			_resolvedSecurityParents = resolved;
+			return true;
+		} catch (Exception e) {
+			Logger.error("Unable to reload security.", e, this);
+			return false;
+		}
 	}
 
 	/**
@@ -355,7 +433,7 @@ public class ElementAccessManager extends AccessManager {
 	private boolean loadInitialRoleRules() {
 		try {
 			RoleRulesConfig roleRules = getConfig().getRoleRules();
-			RoleRulesImporter roleRulesImporter = RoleRulesImporter.loadRules(this, roleRules);
+			RoleRulesImporter roleRulesImporter = RoleRulesImporter.loadRules(roleRules);
 			if (!roleRulesImporter.getProblems().isEmpty()) {
 				/* Use english resources, because messages are written to log. */
 				Resources resource = Resources.getLogInstance();
@@ -364,7 +442,7 @@ public class ElementAccessManager extends AccessManager {
 				}
 				return false;
             }
-			storeConfigVersion(roleRules);
+			storeConfigVersion(roleRules, RoleRulesConfig.class, "roleRules", ROLE_RULES_CONFIG_VERSION_PROPERTY);
 			this.setRulesInternal(roleRulesImporter.getRules());
             return true;
         }
@@ -374,22 +452,22 @@ public class ElementAccessManager extends AccessManager {
         }
     }
 
-	private void storeConfigVersion(RoleRulesConfig roleRules) {
-		String configVersion = configHash(roleRules);
+	private <T extends ConfigurationItem> void storeConfigVersion(T item, Class<T> staticType, String rootTag,
+			String propertyName) {
+		String configVersion = configHash(item, staticType, rootTag);
 		DBProperties dbProperties = new DBProperties(ConnectionPoolRegistry.getDefaultConnectionPool());
-		boolean versionChanged =
-			dbProperties.setProperty(DBProperties.GLOBAL_PROPERTY, ROLE_RULES_CONFIG_VERSION_PROPERTY, configVersion);
+		boolean versionChanged = dbProperties.setProperty(DBProperties.GLOBAL_PROPERTY, propertyName, configVersion);
 		if (versionChanged) {
 			dirty = true;
 		}
 	}
 
-	private String configHash(RoleRulesConfig roleRules) {
+	private <T extends ConfigurationItem> String configHash(T item, Class<T> staticType, String rootTag) {
 		String configVersion;
 		try {
 			StringWriter out = new StringWriter();
 			try (ConfigurationWriter w = new ConfigurationWriter(out)) {
-				w.write("roleRules", RoleRulesConfig.class, roleRules);
+				w.write(rootTag, staticType, item);
 			}
 			configVersion = String.valueOf(out.toString().hashCode());
 		} catch (XMLStreamException ex) {
@@ -413,12 +491,7 @@ public class ElementAccessManager extends AccessManager {
     }
 
     public Collection<RoleProvider> getRules(TLClass aME) {
-        return getFromCollectionMap(aME, this.resolvedMERules);
-    }
-
-    private <U, V> Collection<V> getFromCollectionMap(U aKey, Map<U, Collection<V>> aMap) {
-        Collection<V> theRules = aMap.get(aKey);
-        return theRules != null ? theRules : Collections.<V>emptyList();
+		return getResolvedMERules().getOrDefault(aME, Collections.emptyList());
     }
 
     /**
@@ -431,7 +504,8 @@ public class ElementAccessManager extends AccessManager {
 		Map<TLClass, Collection<RoleProvider>> theRules = someRules == null
 			? Collections.emptyMap()
     	    : someRules;
-		this.resolvedMERules = resolveRules(theRules);
+		_resolvedMERules = resolveRules(theRules);
+		_potentialRolesForType = resolvePotentialRoles(_resolvedMERules);
         this.pathAttributes   = resolveMetaAttributes(theRules);
         this.rules            = theRules;
         this.ruleIds          = new HashMap<>();
@@ -440,7 +514,7 @@ public class ElementAccessManager extends AccessManager {
 			for (RoleProvider theRule : theRuleColl) {
                 String   theId   = theRule.getId();
                 if (this.ruleIds.containsKey(theId)) {
-                    throw new TopLogicException(this.getClass(), "duplicateKeyId", new String[] { theId });
+					throw new TopLogicException(I18NConstants.ERROR_DUPLICATE_RULE_ID__ID.fill(theId));
                 }
                 this.ruleIds.put(theId, theRule);
             }
@@ -463,10 +537,40 @@ public class ElementAccessManager extends AccessManager {
         return this.ruleIds.get(theID);
     }
 
+	/**
+	 * Determines the rules which uses the given part.
+	 */
     public Set<RoleProvider> getRules(TLStructuredTypePart aMA) {
-        Set<RoleProvider> theResult = this.pathAttributes.get(aMA);
-        return theResult == null ? Collections.<RoleProvider>emptySet() : theResult;
+		return pathAttributes.getOrDefault(aMA, Collections.emptySet());
     }
+
+	private Map<TLClass, Set<BoundedRole>> resolvePotentialRoles(
+			Map<TLClass, Collection<RoleProvider>> resolvedMERules) {
+		Map<TLClass, Set<BoundedRole>> result = new HashMap<>();
+		for (Entry<TLClass, Collection<RoleProvider>> e : resolvedMERules.entrySet()) {
+			Set<BoundedRole> roles = e.getValue()
+				.stream()
+				.filter(RoleRule.class::isInstance)
+				.map(RoleRule.class::cast)
+				.map(RoleRule::getRole)
+				.map(BoundedRole.class::cast)
+				.collect(Collectors.toSet());
+			addRolesRecursive(result, e.getKey(), roles, new HashSet<>());
+		}
+		return result;
+	}
+
+	private void addRolesRecursive(Map<TLClass, Set<BoundedRole>> result, TLClass key, Set<BoundedRole> roles,
+			Set<TLClass> seen) {
+		if (!seen.add(key)) {
+			// Already visited along this propagation; guard against diamond hierarchies and cycles.
+			return;
+		}
+		result.computeIfAbsent(key, unused -> new HashSet<>()).addAll(roles);
+		for (TLClass generalization : key.getGeneralizations()) {
+			addRolesRecursive(result, generalization, roles, seen);
+		}
+	}
 
 	private Map<TLClass, Collection<RoleProvider>> resolveRules(Map<TLClass, Collection<RoleProvider>> someRules) {
 		HashMap<TLClass, Collection<RoleProvider>> resolved = new HashMap<>();
@@ -516,18 +620,16 @@ public class ElementAccessManager extends AccessManager {
                 RoleRule theRule = (RoleRule) theRIt.next();
 
 				for (PathElement thePathElement : theRule.getPath()) {
-					if (thePathElement instanceof IdentityPathElement) continue;
-                    TLStructuredTypePart theMA          = thePathElement.getMetaAttribute();
-                    if (theMA != null) {
-						MultiMaps.add(theResult, theMA, theRule);
-                    }
+					Collection<TLStructuredTypePart> parts = thePathElement.getRelevantParts();
+					parts.forEach(part -> MultiMaps.add(theResult, part, theRule));
                 }
             }
         }
         return theResult;
     }
 
-    private void addRuleToSubElements(TLClass aME, RoleProvider aRule, boolean isInherit, Map <TLClass, Collection<RoleProvider> > aResult) {
+	private <T> void addRuleToSubElements(TLClass aME, T aRule, boolean isInherit,
+			Map<TLClass, Collection<T>> aResult) {
 		if (!aME.isAbstract()) {
 			MultiMaps.add(aResult, aME, aRule, ArrayList::new);
 		}
@@ -538,6 +640,18 @@ public class ElementAccessManager extends AccessManager {
         }
     }
 
+	@Override
+	public Collection<? extends BoundObject> getSecurityParents(BoundObject object) {
+		Set<TLObject> out = new HashSet<>();
+		_resolvedSecurityParents
+			.getOrDefault(object.tType(), Collections.emptyList())
+			.forEach(rule -> rule.getContent(object, out));
+		return out.stream()
+			.filter(BoundObject.class::isInstance)
+			.map(BoundObject.class::cast)
+			.toList();
+	}
+
     /**
      * Get all meta elements to be presented in the classification administration
      */
@@ -545,25 +659,21 @@ public class ElementAccessManager extends AccessManager {
 		return _securityModuleByClass.keySet();
     }
 
-    /**
-     * Get the roles that can be given on the meta element
-     */
-	public Collection<? extends BoundRole> getRolesForMetaElement(TLClass aME) {
-		TLModule theBO = _securityModuleByClass.get(aME);
-        return BoundHelper.getInstance().getPossibleRoles(theBO);
-    }
-
     @Override
 	public Set<? extends BoundRole> getRoles(Person aPerson, BoundObject context) {
 		Set<BoundRole> result = new HashSet<>(super.getRoles(aPerson, context));
         Collection<Group> theGroups = getGroups(aPerson);
-		while (context != null) {
-			addRoleProviderRoles(getRules((TLClass) context.tType()), theGroups, context, result);
-            
-			context = context.getSecurityParent();
-        }
+		if (context != null) {
+			addRoleProviderRoles(theGroups, context, result);
+			BoundHelper.collectAllSecurityParents(context,
+				secParent -> addRoleProviderRoles(theGroups, secParent, result));
+		}
 		return result;
     }
+
+	private void addRoleProviderRoles(Collection<Group> groups, BoundObject context, Set<BoundRole> result) {
+		addRoleProviderRoles(getRules((TLClass) context.tType()), groups, context, result);
+	}
 
     public Collection<Group> getGroups(BoundObject aBO, BoundRole aRole) {
 		Object getGroupCacheKey;
@@ -652,9 +762,17 @@ public class ElementAccessManager extends AccessManager {
         }
     }
 
+	/**
+	 * The resolved rules declared for the access manager (respecting the inherit flag)
+	 */
     public Map<TLClass, Collection<RoleProvider>> getResolvedMERules() {
-        return this.resolvedMERules;
+		return _resolvedMERules;
     }
+
+	@Override
+	public boolean canHaveRole(TLClass type, BoundedRole role) {
+		return _potentialRolesForType.getOrDefault(type, Collections.emptySet()).contains(role);
+	}
 
 	final BoundObject getSecurityRoot() {
 		return _boundHelper.securityRoot();

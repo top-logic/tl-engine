@@ -15,6 +15,7 @@ import com.top_logic.basic.Reloadable;
 import com.top_logic.basic.ReloadableManager;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -22,6 +23,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
 /**
  * Service resolving file extensions to content types.
  */
+@Label("MIME type resolution")
 public class MimeTypesModule extends ManagedClass implements Reloadable {
 	/** The standard type for HTML. */
 	public static final String HTML_TYPE = "text/html";

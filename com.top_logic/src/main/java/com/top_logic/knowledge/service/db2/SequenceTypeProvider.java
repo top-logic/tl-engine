@@ -25,6 +25,12 @@ public class SequenceTypeProvider implements TypeProvider {
 	/** Name of the sequence type created by this {@link SequenceTypeProvider}. */
 	public static final String SEQUENCE_TYPE_NAME = "Sequence";
 
+	/** Attribute name of the sequence identifier ({@link #SEQUENCE_ID_ATTR}). */
+	public static final String SEQUENCE_ID_COLUMN_NAME = "id";
+
+	/** Attribute name of the current sequence value ({@link #CURRENT_VALUE_ATTR}). */
+	public static final String SEQUENCE_VALUE_COLUMN_NAME = "value";
+
 	/**
 	 * Singleton {@link SequenceTypeProvider} instance.
 	 */
@@ -36,11 +42,12 @@ public class SequenceTypeProvider implements TypeProvider {
 
 	static final MOAttributeImpl SEQUENCE_ID_ATTR;
 	static {
-		SEQUENCE_ID_ATTR = new MOAttributeImpl("id", MOPrimitive.STRING, MOAttributeImpl.MANDATORY);
+		SEQUENCE_ID_ATTR = new MOAttributeImpl(SEQUENCE_ID_COLUMN_NAME, MOPrimitive.STRING, MOAttributeImpl.MANDATORY);
 		SEQUENCE_ID_ATTR.setBinary(true);
 	}
 
-	static final MOAttributeImpl CURRENT_VALUE_ATTR = new MOAttributeImpl("value", MOPrimitive.LONG);
+	static final MOAttributeImpl CURRENT_VALUE_ATTR =
+		new MOAttributeImpl(SEQUENCE_VALUE_COLUMN_NAME, MOPrimitive.LONG);
 
 	static final MOKnowledgeItemImpl SEQUENCE_TYPE;
 	static {
@@ -56,6 +63,28 @@ public class SequenceTypeProvider implements TypeProvider {
 		type.freeze();
 
 		SEQUENCE_TYPE = type;
+	}
+
+	/**
+	 * Physical name of the sequence table, as used in SQL statements (may differ from
+	 * {@link #SEQUENCE_TYPE_NAME}).
+	 */
+	public static String sequenceTableName() {
+		return SEQUENCE_TYPE.getDBName();
+	}
+
+	/**
+	 * Physical name of the column holding the sequence identifier, as used in SQL statements.
+	 */
+	public static String sequenceIdColumnName() {
+		return SEQUENCE_ID_ATTR.getDBName();
+	}
+
+	/**
+	 * Physical name of the column holding the current sequence value, as used in SQL statements.
+	 */
+	public static String sequenceValueColumnName() {
+		return CURRENT_VALUE_ATTR.getDBName();
 	}
 
 	@Override

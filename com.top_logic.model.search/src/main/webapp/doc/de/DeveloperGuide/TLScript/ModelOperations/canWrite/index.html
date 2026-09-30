@@ -1,0 +1,39 @@
+<h2>Syntax</h2>
+
+<pre><code>$object.canWrite()
+
+canWrite($object)
+</code></pre>
+
+<h2>Beschreibung</h2>
+
+<p>Pr&uuml;ft, ob der aktuell angemeldete Nutzer das angegebene Objekt &auml;ndern darf (Schreibzugriff auf Objektebene), und liefert einen Wahrheitswert.</p>
+
+<p>Die Funktion schl&auml;gt nie fehl und filtert nicht; sie erlaubt es, den Schreibzugriff vorab zu pr&uuml;fen, anstatt in den Berechtigungsfehler zu laufen, den eine &auml;ndernde Operation ausl&ouml;sen w&uuml;rde.</p>
+
+<p>Die Pr&uuml;fung erfolgt f&uuml;r den aktuell angemeldeten Nutzer und folgt denselben Regeln wie die implizite Berechtigungspr&uuml;fung: standardm&auml;&szlig;ige Verweigerung, Rollenvererbung entlang der Sicherheitshierarchie sowie Vollzugriff f&uuml;r Administratoren oder Ausf&uuml;hrungen im Systemkontext.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr><th>Name</th><th>Typ</th><th>Typbeschreibung</th><th>Pflicht</th><th>Standardwert</th></tr>
+	</thead>
+	<tbody>
+		<tr><td>object</td><td>Fachobjekt</td><td>Das Objekt, dessen Schreibzugriff gepr&uuml;ft wird.</td><td>ja</td><td> </td></tr>
+	</tbody>
+</table>
+
+<h2>R&uuml;ckgabewert</h2>
+
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Wahrheitswert</p>
+
+<p><code class="hljs inlineCode">true</code>, wenn der aktuelle Nutzer das Objekt &auml;ndern darf, sonst <code class="hljs inlineCode">false</code> (insbesondere f&uuml;r <code class="hljs inlineCode">null</code>).</p>
+
+<h2>Beispiele</h2>
+
+<h3>Beispiel 1</h3>
+
+<pre><code>all(`my.module:Contract`).filter(c -&gt; $c.canWrite())</code></pre>
+
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Alle Vertr&auml;ge, die der angemeldete Nutzer &auml;ndern darf.</p>

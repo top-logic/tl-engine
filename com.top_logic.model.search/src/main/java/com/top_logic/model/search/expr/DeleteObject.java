@@ -7,34 +7,36 @@ package com.top_logic.model.search.expr;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.model.TLClass;
+import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.SingleArgMethodBuilder;
+import com.top_logic.model.security.ModelAccessRights;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
+import com.top_logic.util.TLContext;
+import com.top_logic.util.error.TopLogicException;
 
 /**
- * {@link SearchExpression} creating a new object of a given {@link TLClass} type.
+ * {@link SearchExpression} deleting objects.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class DeleteObject extends GenericMethod implements WithFlatMapSemantics<Void> {
+public class DeleteObject extends GenericMethodWithSecurity implements WithFlatMapSemantics<Void> {
 
 	/**
 	 * Creates a {@link DeleteObject}.
 	 */
-	DeleteObject(String name, SearchExpression[] arguments) {
-		super(name, arguments);
+	DeleteObject(String name, SearchExpression[] arguments, boolean usesSecurity) {
+		super(name, arguments, usesSecurity);
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new DeleteObject(getName(), arguments);
+		return new DeleteObject(getName(), arguments, usesSecurity());
 	}
 
 	@Override
@@ -54,8 +56,7 @@ public class DeleteObject extends GenericMethod implements WithFlatMapSemantics<
 
 	@Override
 	public Object evalFlatMap(EvalContext definitions, Collection<?> base, Void param) {
-		PersistencyLayer.getKnowledgeBase().deleteAll(base.stream().filter(x -> x instanceof TLObject)
-			.map(x -> ((TLObject) x).tHandle()).collect(Collectors.toList()));
+		deleteAll(base, usesSecurity());
 		return null;
 	}
 
@@ -63,9 +64,63 @@ public class DeleteObject extends GenericMethod implements WithFlatMapSemantics<
 	public Object evalDirect(EvalContext definitions, Object singletonValue, Void param) {
 		TLObject obj = asTLObject(singletonValue);
 		if (obj != null) {
-			obj.tDelete();
+			delete(obj, usesSecurity());
 		}
 		return null;
+	}
+
+	/**
+	 * Deletes the given object or collection of objects the way the TL-Script function
+	 * {@code delete()} does.
+	 *
+	 * @param value
+	 *        A {@link TLObject}, or a collection of values of which the {@link TLObject}s are
+	 *        deleted. Other values are ignored.
+	 * @param withSecurity
+	 *        Whether the current user must hold the {@link SimpleBoundCommandGroup#DELETE delete}
+	 *        right on each deleted object. A refusal is reported before anything is deleted.
+	 * @throws TopLogicException
+	 *         With {@link I18NConstants#DELETE_PERMISSION_DENIED__OBJECT}, when the user may not
+	 *         delete one of the objects.
+	 */
+	public static void delete(Object value, boolean withSecurity) {
+		if (value instanceof Collection<?> collection) {
+			deleteAll(collection, withSecurity);
+		} else if (value instanceof TLObject obj) {
+			delete(obj, withSecurity);
+		}
+	}
+
+	private static void delete(TLObject obj, boolean withSecurity) {
+		if (withSecurity) {
+			checkDeletePermission(obj);
+		}
+		obj.tDelete();
+	}
+
+	private static void deleteAll(Collection<?> base, boolean withSecurity) {
+		List<TLObject> objects = base.stream()
+			.filter(TLObject.class::isInstance)
+			.map(TLObject.class::cast)
+			.toList();
+		if (withSecurity) {
+			objects.forEach(DeleteObject::checkDeletePermission);
+		}
+		KBUtils.deleteAll(objects);
+	}
+
+	/**
+	 * Checks that the current user may delete the given object.
+	 *
+	 * @throws TopLogicException
+	 *         With {@link I18NConstants#DELETE_PERMISSION_DENIED__OBJECT}, when the user may not
+	 *         delete it.
+	 */
+	public static void checkDeletePermission(TLObject obj) {
+		if (!ModelAccessRights.getInstance().isAllowed(TLContext.currentUser(), obj,
+			SimpleBoundCommandGroup.DELETE)) {
+			throw new TopLogicException(I18NConstants.DELETE_PERMISSION_DENIED__OBJECT.fill(obj));
+		}
 	}
 
 	/**
@@ -82,7 +137,7 @@ public class DeleteObject extends GenericMethod implements WithFlatMapSemantics<
 		@Override
 		protected DeleteObject internalBuild(Expr expr, SearchExpression argument, SearchExpression[] allArgs)
 				throws ConfigurationException {
-			return new DeleteObject(getName(), allArgs);
+			return new DeleteObject(getName(), allArgs, true);
 		}
 	}
 

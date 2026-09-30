@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Administration area for the React view UI. A self-contained view: the outer tab-bar groups admin
+	sections; each inner tab-bar holds that section's views. A depending module adds a section by
+	dropping a same-path overlay (WEB-INF/views/admin/admin.view.xml) into its own module; the
+	ViewLoader merges all copies in dependency order, so this view is extended - and its sections
+	repositioned - without this module depending on the contributor. See tl-model-search-react and
+	tl-dev-tools.
+-->
+<view>
+	<tab-bar active-tab="access-control">
+		<tabs>
+			<tab id="access-control">
+				<label>
+					<en>Access control</en>
+					<de>Zugriffskontrolle</de>
+				</label>
+				<tab-bar active-tab="accounts">
+					<tabs>
+						<tab id="accounts">
+							<label>
+								<en>Accounts</en>
+								<de>Konten</de>
+							</label>
+							<view-ref view="admin/access-control/accounts.view.xml"/>
+						</tab>
+						<tab id="groups">
+							<label>
+								<en>Groups</en>
+								<de>Gruppen</de>
+							</label>
+							<view-ref view="admin/access-control/groups.view.xml"/>
+						</tab>
+						<tab id="roles">
+							<label>
+								<en>Roles</en>
+								<de>Rollen</de>
+							</label>
+							<view-ref view="admin/access-control/roles.view.xml"/>
+						</tab>
+						<tab id="permissions">
+							<label>
+								<en>Permissions</en>
+								<de>Berechtigungen</de>
+							</label>
+							<view-ref view="admin/access-control/permissions.view.xml"/>
+						</tab>
+					</tabs>
+				</tab-bar>
+			</tab>
+			<tab id="monitoring">
+				<label>
+					<en>Monitoring</en>
+					<de>Überwachung</de>
+				</label>
+				<tab-bar active-tab="system-environment">
+					<tabs>
+						<tab id="system-environment">
+							<label>
+								<en>System environment</en>
+								<de>Systemumgebung</de>
+							</label>
+							<view-ref view="admin/monitoring/system-environment.view.xml"/>
+						</tab>
+						<tab id="application-monitor">
+							<label>
+								<en>Application</en>
+								<de>Anwendung</de>
+							</label>
+							<view-ref view="admin/monitoring/application-monitor.view.xml"/>
+						</tab>
+						<tab id="thread-monitor">
+							<label>
+								<en>Threads</en>
+								<de>Threads</de>
+							</label>
+							<view-ref view="admin/monitoring/thread-monitor.view.xml"/>
+						</tab>
+						<tab id="user-sessions">
+							<label>
+								<en>Sessions</en>
+								<de>Sitzungen</de>
+							</label>
+							<view-ref view="admin/monitoring/user-sessions.view.xml"/>
+						</tab>
+						<tab id="failed-logins">
+							<label>
+								<en>Failed logins</en>
+								<de>Fehlgeschlagene Anmeldungen</de>
+							</label>
+							<view-ref view="admin/monitoring/failed-logins.view.xml"/>
+						</tab>
+						<tab id="sql-monitor">
+							<label>
+								<en>SQL</en>
+								<de>SQL</de>
+							</label>
+							<view-ref view="admin/monitoring/sql-monitor.view.xml"/>
+						</tab>
+						<tab id="revision-monitor">
+							<label>
+								<en>Changes</en>
+								<de>Änderungen</de>
+							</label>
+							<view-ref view="admin/monitoring/revision-monitor.view.xml"/>
+						</tab>
+					</tabs>
+				</tab-bar>
+			</tab>
+			<tab id="system">
+				<label>
+					<en>System</en>
+					<de>System</de>
+				</label>
+				<tab-bar active-tab="services">
+					<tabs>
+						<tab id="services">
+							<label>
+								<en>Services</en>
+								<de>Dienste</de>
+							</label>
+							<view-ref view="admin/system/services.view.xml"/>
+						</tab>
+						<tab id="locks">
+							<label>
+								<en>Locks</en>
+								<de>Sperren</de>
+							</label>
+							<view-ref view="admin/system/locks.view.xml"/>
+						</tab>
+						<tab id="maintenance">
+							<label>
+								<en>Maintenance mode</en>
+								<de>Wartungsmodus</de>
+							</label>
+							<view-ref view="admin/system/maintenance.view.xml"/>
+						</tab>
+						<tab id="logs">
+							<label>
+								<en>Logs</en>
+								<de>Protokolle</de>
+							</label>
+							<view-ref view="admin/system/logs.view.xml"/>
+						</tab>
+						<tab id="logger-levels">
+							<label>
+								<en>Log levels</en>
+								<de>Protokollebenen</de>
+							</label>
+							<view-ref view="admin/system/logger-levels.view.xml"/>
+						</tab>
+					</tabs>
+				</tab-bar>
+			</tab>
+		</tabs>
+	</tab-bar>
+</view>

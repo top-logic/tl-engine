@@ -27,6 +27,7 @@ import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.format.configured.FormatterService;
@@ -89,6 +90,7 @@ import com.top_logic.util.model.ModelService;
 	// Context command lookup.
 	CommandHandlerFactory.Module.class,
 })
+@Label("Object presentation providers")
 public class LabelProviderService extends ManagedClass implements UpdateListener, ContextMenuCommandsProvider {
 
 	/**

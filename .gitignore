@@ -10,7 +10,8 @@
 /**/*~
 /.project
 /.venv/
-/.worktrees
 /.playwright-mcp/
+/.worktrees
 /.mvn
 /.m2
+/**/.DS_Store

@@ -158,6 +158,73 @@ public class TestResKeyEncoding extends TestCase {
 		assertNull(ResKey.decode(null));
 	}
 
+	public void testDecodeMalformedTaggedString() {
+		try {
+			ResKey.decode("#(unterminated");
+			fail("Expected IllegalArgumentException for an unterminated tagged resource key.");
+		} catch (IllegalArgumentException ex) {
+			// Expected: malformed input must be classified as illegal argument, not crash with NPE.
+		}
+	}
+
+	/**
+	 * A tagged translation that carries no translation at all is malformed too - and, unlike
+	 * {@link #testDecodeMalformedTaggedString()}, it consumes its whole input, so it reaches the
+	 * "input fully consumed" return rather than the trailing-content check.
+	 */
+	public void testDecodeTaggedStringWithoutAnyTranslation() {
+		for (String malformed : new String[] { "#(", "#()" }) {
+			try {
+				ResKey decoded = ResKey.decode(malformed);
+				fail("Expected IllegalArgumentException for '" + malformed + "', got: " + decoded);
+			} catch (IllegalArgumentException ex) {
+				// Expected: malformed input must be classified as illegal argument, rather than
+				// handed back as a null key that fails wherever it is later stored or resolved.
+			}
+		}
+	}
+
+	/**
+	 * The literal-string and fallback encodings must keep decoding - both reach the same null
+	 * {@code plain} the malformed tagged input does, so a guard placed too early would reject them.
+	 */
+	public void testDecodeLiteralAndFallbackStillWork() {
+		assertRoundtrip(ResKey.text("a literal"));
+		assertRoundtrip(ResKey.fallback(ResKey.internalCreate("a.b"), ResKey.text("fb")));
+	}
+
+	private void assertRoundtrip(ResKey key) {
+		String encoded = ResKey.encode(key);
+		assertEquals("Decoding '" + encoded + "' must yield the same encoding again.",
+			encoded, ResKey.encode(ResKey.decode(encoded)));
+	}
+
+	public void testDecodeMalformedArgumentsWithoutKey() {
+		try {
+			ResKey.decode("/i5/i6");
+			fail(
+				"Expected IllegalArgumentException for arguments without any key that do not encode a single literal string.");
+		} catch (IllegalArgumentException ex) {
+			// Expected: malformed input must be classified as illegal argument, not crash with NPE.
+		}
+	}
+
+	public void testValueFormatRejectsMalformedInput() {
+		try {
+			ResKey.ValueFormat.INSTANCE.getValue("test", "#(unterminated");
+			fail("Expected ConfigurationException for malformed resource key input.");
+		} catch (ConfigurationException ex) {
+			// Expected: this is the exception the configuration editor turns into a field error.
+			assertTrue(ex.getMessage().contains("Invalid resource key"));
+		}
+	}
+
+	public void testDecodeWellFormedRoundTrip() {
+		assertEncodeDecode(ResKey.text("Hello world"));
+		assertEncodeDecode(message("Message 1", Long.valueOf(123)));
+		assertEncodeDecode(ResKey.forTest("some.key"));
+	}
+
 	public void testDecodeLiteralArg() {
 		ResKey result = ResKey.decode(
 			"class.com.top_logic.mig.html.layout.I18NConstants.CONFIGURED_COMPONENT__NAME/[#(\"TestButtonCreationForExisitingDialogTable\"@de, tooltip: {\"TestButtonCreationForExisitingDialogTable\"@de})]");
@@ -179,6 +246,79 @@ public class TestResKeyEncoding extends TestCase {
 
 		ResKey literal = literalBuilder.build();
 		assertEncodeDecode(literal);
+	}
+
+	/**
+	 * Both quote styles are accepted for the translations of a literal resource key.
+	 */
+	public void testDecodeSingleQuotedTranslations() {
+		assertTranslations(ResKey.decode("#('Travel'@en, 'Reise'@de)"), "Travel", "Reise");
+	}
+
+	/**
+	 * The quote style is chosen per translation, not per resource key.
+	 */
+	public void testDecodeMixedQuotedTranslations() {
+		assertTranslations(ResKey.decode("#('Travel'@en, \"Reise\"@de)"), "Travel", "Reise");
+		assertTranslations(ResKey.decode("#(\"Travel\"@en, 'Reise'@de)"), "Travel", "Reise");
+	}
+
+	/**
+	 * A single-quoted translation may contain an escaped single quote and a plain double quote.
+	 */
+	public void testDecodeQuotesInSingleQuotedTranslation() {
+		assertTranslation(ResKey.decode("#('It\\'s a trip'@en)"), "It's a trip");
+		assertTranslation(ResKey.decode("#('Say \"hi\"'@en)"), "Say \"hi\"");
+	}
+
+	/**
+	 * A suffix key (such as a tooltip) accepts single-quoted translations as well.
+	 */
+	public void testDecodeSingleQuotedSuffixTranslations() {
+		ResKey key = ResKey.decode("#('A'@en, tooltip: {'A tooltip'@en})");
+		assertTranslation(key, "A");
+		assertTranslation(key.tooltip(), "A tooltip");
+	}
+
+	/**
+	 * Both quote styles decode to the same resource key, which is encoded with double quotes.
+	 */
+	public void testSingleQuotedTranslationsEncodeCanonically() {
+		String canonical = ResKey.encode(ResKey.decode("#(\"Travel\"@en, \"Reise\"@de)"));
+
+		assertEquals("#(\"Reise\"@de, \"Travel\"@en)", canonical);
+		assertEquals(canonical, ResKey.encode(ResKey.decode("#('Travel'@en, 'Reise'@de)")));
+		assertEquals(canonical, ResKey.encode(ResKey.decode("#('Travel'@en, \"Reise\"@de)")));
+	}
+
+	public void testValueFormatAcceptsSingleQuotedTranslations() throws ConfigurationException {
+		ResKey key = ResKey.ValueFormat.INSTANCE.getValue("test", "#('Travel'@en, 'Reise'@de)");
+		assertTranslations(key, "Travel", "Reise");
+	}
+
+	/**
+	 * A single-quoted translation without a language tag, or an unterminated one, stays malformed.
+	 */
+	public void testDecodeMalformedSingleQuotedTranslations() {
+		for (String malformed : new String[] { "#('Travel')", "#('Travel'@en", "#('Travel@en)" }) {
+			try {
+				ResKey decoded = ResKey.decode(malformed);
+				fail("Expected IllegalArgumentException for '" + malformed + "', got: " + decoded);
+			} catch (IllegalArgumentException ex) {
+				// Expected: a translation must be a terminated literal with a language tag.
+			}
+		}
+	}
+
+	private void assertTranslation(ResKey key, String expectedEnglish) {
+		assertEquals(expectedEnglish,
+			ResourcesModule.getInstance().getBundle(Locale.ENGLISH).getString(key));
+	}
+
+	private void assertTranslations(ResKey key, String expectedEnglish, String expectedGerman) {
+		assertTranslation(key, expectedEnglish);
+		assertEquals(expectedGerman,
+			ResourcesModule.getInstance().getBundle(Locale.GERMAN).getString(key));
 	}
 
 	private void assertEncodeDecode(ResKey key) {

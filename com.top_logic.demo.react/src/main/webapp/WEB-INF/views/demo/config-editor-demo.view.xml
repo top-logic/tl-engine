@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<panel>
+		<title>
+			<en>Config Editor Demo</en>
+			<de>Konfigurationseditor-Demo</de>
+		</title>
+		<inset>
+			<config-form type="com.top_logic.demo.react.view.DemoEditorConfig"/>
+		</inset>
+	</panel>
+</view>

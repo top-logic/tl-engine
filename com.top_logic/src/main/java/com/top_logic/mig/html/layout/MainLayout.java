@@ -264,12 +264,6 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 		 */
 		String CLOSE_DIALOG_ON_BACKGROUND_CLICK = "closeDialogOnBackgroundClick";
 
-		@Name("shortcutIcon")
-		String getShortcutIcon();
-
-		@Name("icon")
-		String getIcon();
-
 		@Name("headerIncludeFilePath")
 		String getHeaderIncludeFilePath();
 
@@ -393,12 +387,6 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 	 */ 
     private WindowManager windowManager;
     
-    /** Ling to shortcut icon (will be prefixed by appCotext) . */
-    protected String shortcutIcon;
-
-    /** Ling to icon (will be prefixed by appCotext) . */
-    protected String icon;
-
     /**
      * Path of a file to be included in the header of all html-pages created for
      * components of this MainLayout. The path is relative to the base
@@ -458,8 +446,6 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
         super(context, config);
         
 		_layoutFactory = context.getInstance(config.getLayoutFactory());
-        shortcutIcon           = StringServices.nonEmpty(config.getShortcutIcon());
-        icon                   = StringServices.nonEmpty(config.getIcon());
         headerIncludeFilePath  = StringServices.nonEmpty(config.getHeaderIncludeFilePath());
         postProcessorClassName = StringServices.nonEmpty(config.getPostProcessorClassName());
 		GlobalConfig globalConfig = getGlobalConfig();
@@ -1225,28 +1211,12 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 		}
 	}
 
-    /**
-	 * Overridden to care about shortcutIcon and icon.
-	 */
     @Override
 	public void writeHeader(String contextPath, TagWriter out,
                                     HttpServletRequest req)
                                     throws IOException {
 		super.writeHeader(contextPath, out, req);
 
-		String shortcutIconPath = null;
-		String iconPath = null;
-
-		if (shortcutIcon != null) {
-			shortcutIconPath = req.getContextPath() + shortcutIcon;
-		}
-
-		if (icon != null) {
-			iconPath = req.getContextPath() + icon;
-		}
-
-		FaviconTag.write(out, shortcutIconPath, iconPath);
-        
         out.beginScript();
 
 		int nextSequenceNumber = _layoutContext.getLock().reset();

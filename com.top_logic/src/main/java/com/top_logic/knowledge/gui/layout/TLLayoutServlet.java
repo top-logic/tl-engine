@@ -16,6 +16,7 @@ import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ApplicationConfig;
+import com.top_logic.basic.io.binary.scan.UploadRejectedException;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
@@ -118,6 +119,9 @@ public class TLLayoutServlet extends TopLogicServlet implements LayoutConstants 
 			URLPathParser requestedUri = URLPathParser.createURLPathParser(req.getPathInfo());
 			DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(req);
 			handlersRegistry.handleContent(displayContext, null, requestedUri);
+		} catch (UploadRejectedException ex) {
+			// A refused upload is a regular outcome of a request, the base servlet answers it.
+			throw ex;
 		} catch (RuntimeException ex) {
 			Logger.error("Problem handling request: " + ex.getMessage(), ex, TLLayoutServlet.class);
 			throw ex;

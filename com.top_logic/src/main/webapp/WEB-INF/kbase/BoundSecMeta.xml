@@ -106,15 +106,6 @@
 	</specialisations>
 </alternative>
 
-<association super_class="Association" object_name="definesRole">
-<attributes>
-	<destination
-		override="true"
-		target-type="BoundedRole"
-	/>
-</attributes>
-</association>
-
 <association super_class="Association" object_name="definesGroup">
 <attributes>
 	<source

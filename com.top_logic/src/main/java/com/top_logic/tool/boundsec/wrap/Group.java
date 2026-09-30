@@ -13,6 +13,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import com.top_logic.base.services.InitialGroupManager;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Logger;
@@ -22,6 +23,7 @@ import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.OneWayListSink;
 import com.top_logic.basic.col.filter.FilterFactory;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.func.Function0;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.knowledge.objects.DestinationIterator;
 import com.top_logic.knowledge.objects.InvalidLinkException;
@@ -54,6 +56,19 @@ import com.top_logic.util.model.ModelService;
  * @author    <a href="mailto:kbu@top-logic.com>Karsten Buch</a>
  */
 public class Group extends AbstractBoundWrapper implements IGroup {
+
+	/**
+	 * {@link Function0} delivering all {@link Group}s.
+	 * 
+	 * @see Group#getAll()
+	 */
+	public static class AllGroups extends Function0<List<Group>> {
+	
+		@Override
+		public List<Group> apply() {
+			return getAll();
+		}
+	}
 
 	/** The type of KO wrapped by this class. */
     public static final String OBJECT_NAME      = "Group";
@@ -98,9 +113,6 @@ public class Group extends AbstractBoundWrapper implements IGroup {
 
     /** The KO attribute used to store the system Group flag. */
     public static final String GROUP_SYSTEM      = "isSystem";
-
-	/** The KO attribute used to store the "is default group" flag. */
-	public static final String GROUP_DEFAULT = "defaultGroup";
 
 	/**
 	 * The name of the KnowledgeAssociation between a {@link Group} and its contents (other
@@ -255,22 +267,26 @@ public class Group extends AbstractBoundWrapper implements IGroup {
     }
 
     /**
-	 * Check if this is a default group, i.e. a group in which each user is a member
+	 * Whether this is the default group of the application, the group every newly created account
+	 * is added to.
 	 *
-	 * @return true if this is a default group
+	 * <p>
+	 * The value is computed from {@link InitialGroupManager.Config#getDefaultGroup()}. Changing that
+	 * setting neither adds accounts to nor removes accounts from a group, it only decides where
+	 * accounts created afterwards are put.
+	 * </p>
+	 *
+	 * @return Whether this is the group named by the configuration.
+	 * 
+	 * @implNote Without a running {@link InitialGroupManager} no group is the default group: the
+	 *           accounts model is also loaded by tests and tools that do not start that service.
 	 */
 	public boolean isDefaultGroup() {
-		return tGetDataBooleanValue(GROUP_DEFAULT);
-	}
-
-	/**
-	 * Setter for {@link #isDefaultGroup()}.
-	 *
-	 * @param isDefault
-	 *        Whether this is a default group.
-	 */
-	public void setDefaultGroup(boolean isDefault) {
-		this.tSetData(GROUP_DEFAULT, Boolean.valueOf(isDefault));
+		if (!InitialGroupManager.Module.INSTANCE.isActive()) {
+			return false;
+		}
+		Group defaultGroup = InitialGroupManager.getInstance().getDefaultGroup();
+		return defaultGroup != null && defaultGroup.equals(this);
 	}
 
 	/**

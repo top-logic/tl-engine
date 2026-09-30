@@ -1,0 +1,357 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.layout.view.form;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
+
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.util.Resources;
+import com.top_logic.layout.basic.ThemeImage;
+import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.button.CommandModel;
+import com.top_logic.layout.react.control.button.CommandPlacement;
+import com.top_logic.layout.view.I18NConstants;
+import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.execution.ExecutableState;
+
+/**
+ * {@link CommandModel} that delegates to a {@link FormControl} for form lifecycle operations (edit,
+ * save, cancel).
+ *
+ * <p>
+ * Created by the {@link com.top_logic.layout.view.element.FormElement FormElement} when
+ * {@code withEditMode="true"}. Listens to form state changes to re-evaluate executability. For
+ * example, the edit command is only executable when there is a current object and the form is not
+ * already in edit mode.
+ * </p>
+ */
+public class FormCommandModel implements CommandModel {
+
+	private final String _name;
+
+	private final ResKey _labelKey;
+
+	private final CommandPlacement _placement;
+
+	private final ThemeImage _image;
+
+	private final Consumer<ReactContext> _action;
+
+	private final Predicate<FormControl> _executableWhen;
+
+	private final Predicate<FormControl> _visibleWhen;
+
+	/**
+	 * The state explaining why the command is refused, {@code null} for a command whose conditions
+	 * give no reason beyond the form's lifecycle state.
+	 */
+	private final Function<FormControl, ExecutableState> _reason;
+
+	private final FormControl _form;
+
+	private boolean _executable;
+
+	private boolean _visible;
+
+	private final List<Runnable> _stateChangeListeners = new ArrayList<>();
+
+	private final FormModelListener _formModelListener = new FormModelListener() {
+		@Override
+		public void onFormStateChanged(FormModel source) {
+			handleFormStateChanged(source);
+		}
+
+		@Override
+		public void onValidityChanged(FormModel source) {
+			handleFormStateChanged(source);
+		}
+	};
+
+	private FormCommandModel(String name, ResKey labelKey, ThemeImage image, CommandPlacement placement,
+			FormControl form, Consumer<ReactContext> action, Predicate<FormControl> executableWhen,
+			Predicate<FormControl> visibleWhen) {
+		this(name, labelKey, image, placement, form, action, executableWhen, visibleWhen, null);
+	}
+
+	private FormCommandModel(String name, ResKey labelKey, ThemeImage image, CommandPlacement placement,
+			FormControl form, Consumer<ReactContext> action, Predicate<FormControl> executableWhen,
+			Predicate<FormControl> visibleWhen, Function<FormControl, ExecutableState> reason) {
+		_name = name;
+		_reason = reason;
+		_labelKey = labelKey;
+		_image = image;
+		_placement = placement;
+		_form = form;
+		_action = action;
+		_executableWhen = executableWhen;
+		_visibleWhen = visibleWhen;
+		_executable = executableWhen.test(form);
+		_visible = visibleWhen.test(form);
+	}
+
+	/**
+	 * Creates the "Edit" command model.
+	 *
+	 * <p>
+	 * Executable when a current object exists, the form is not in edit mode, and the form's
+	 * {@link FormControl#editPermission() edit permission} grants editing it.
+	 * </p>
+	 *
+	 * @param form
+	 *        The form control to delegate to.
+	 * @return The edit command model.
+	 */
+	public static FormCommandModel editCommand(FormControl form) {
+		return new FormCommandModel("formEdit", I18NConstants.FORM_EDIT, Icons.FORM_EDIT,
+			CommandPlacement.TOOLBAR, form,
+			ctx -> form.enterEditMode(),
+			f -> f.getCurrentObject() != null && !f.isEditMode() && f.editPermission().isExecutable(),
+			f -> f.getCurrentObject() != null && !f.isEditMode() && f.editPermission().isVisible(),
+			FormControl::editPermission);
+	}
+
+	/**
+	 * Creates the "Save" command model with default behavior.
+	 *
+	 * <p>
+	 * Executable while the form is in edit mode and displays no validation errors. Calls
+	 * {@link FormControl#executeSave()}.
+	 * </p>
+	 *
+	 * @param form
+	 *        The form control to delegate to.
+	 * @return The save command model.
+	 */
+	public static FormCommandModel saveCommand(FormControl form) {
+		return new FormCommandModel("formSave", I18NConstants.FORM_SAVE, Icons.FORM_SAVE,
+			CommandPlacement.TOOLBAR, form,
+			ctx -> form.executeSave(),
+			FormCommandModel::isSavable,
+			FormControl::isEditMode);
+	}
+
+	/**
+	 * Creates the "Save" command model with a custom action chain.
+	 *
+	 * <p>
+	 * Executable while the form is in edit mode and displays no validation errors. Executes the
+	 * given action instead of calling {@link FormControl#executeSave()}.
+	 * </p>
+	 *
+	 * @param form
+	 *        The form control for executability tracking.
+	 * @param action
+	 *        The custom action to execute on save.
+	 * @return The save command model.
+	 */
+	public static FormCommandModel saveCommand(FormControl form, Consumer<ReactContext> action) {
+		return new FormCommandModel("formSave", I18NConstants.FORM_SAVE, Icons.FORM_SAVE,
+			CommandPlacement.TOOLBAR, form,
+			action,
+			FormCommandModel::isSavable,
+			FormControl::isEditMode);
+	}
+
+	/**
+	 * Whether the form can currently be saved: it is being edited and shows no validation errors.
+	 *
+	 * <p>
+	 * Errors that are still hidden do not block the save - the save attempt is what reveals them.
+	 * </p>
+	 */
+	private static boolean isSavable(FormControl form) {
+		return form.isEditMode() && !form.hasVisibleErrors();
+	}
+
+	/**
+	 * Creates the "Cancel" command model with default behavior.
+	 *
+	 * <p>
+	 * Executable when the form is in edit mode. Calls {@link FormControl#executeCancel()}.
+	 * </p>
+	 *
+	 * @param form
+	 *        The form control to delegate to.
+	 * @return The cancel command model.
+	 */
+	public static FormCommandModel cancelCommand(FormControl form) {
+		return new FormCommandModel("formCancel", I18NConstants.FORM_CANCEL, Icons.FORM_CANCEL,
+			CommandPlacement.TOOLBAR, form,
+			ctx -> form.executeCancel(),
+			FormControl::isEditMode,
+			FormControl::isEditMode);
+	}
+
+	/**
+	 * Creates the "Cancel" command model with a custom action chain.
+	 *
+	 * <p>
+	 * Executable when the form is in edit mode. Executes the given action instead of calling
+	 * {@link FormControl#executeCancel()}.
+	 * </p>
+	 *
+	 * @param form
+	 *        The form control for executability tracking.
+	 * @param action
+	 *        The custom action to execute on cancel.
+	 * @return The cancel command model.
+	 */
+	public static FormCommandModel cancelCommand(FormControl form, Consumer<ReactContext> action) {
+		return new FormCommandModel("formCancel", I18NConstants.FORM_CANCEL, Icons.FORM_CANCEL,
+			CommandPlacement.TOOLBAR, form,
+			action,
+			FormControl::isEditMode,
+			FormControl::isEditMode);
+	}
+
+	/**
+	 * Creates a toolbar command that is visible and executable only while the form is in edit
+	 * mode.
+	 *
+	 * <p>
+	 * Used for commands operating on the form's edit session beyond the built-in lifecycle
+	 * commands, e.g. adding a row to a table edited within the form.
+	 * </p>
+	 *
+	 * @param name
+	 *        The command name.
+	 * @param label
+	 *        The button label.
+	 * @param image
+	 *        The button icon.
+	 * @param form
+	 *        The form control whose state gates the command.
+	 * @param action
+	 *        The action to execute.
+	 * @return The command model.
+	 */
+	public static FormCommandModel editModeCommand(String name, ResKey label, ThemeImage image, FormControl form,
+			Consumer<ReactContext> action) {
+		return new FormCommandModel(name, label, image, CommandPlacement.TOOLBAR, form,
+			action,
+			FormControl::isEditMode,
+			FormControl::isEditMode);
+	}
+
+	/**
+	 * Subscribes to form state changes to track executability.
+	 */
+	public void attach() {
+		_form.addFormModelListener(_formModelListener);
+	}
+
+	/**
+	 * Unsubscribes from form state changes.
+	 */
+	public void detach() {
+		_form.removeFormModelListener(_formModelListener);
+	}
+
+	@Override
+	public String getName() {
+		return _name;
+	}
+
+	@Override
+	public String getLabel() {
+		return Resources.getInstance().getString(_labelKey);
+	}
+
+	@Override
+	public ThemeImage getImage() {
+		return _image;
+	}
+
+	@Override
+	public boolean isExecutable() {
+		return _executable;
+	}
+
+	@Override
+	public boolean isVisible() {
+		return _visible;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * A command refused by a permission rule - the Edit command, whose rule denies editing the
+	 * displayed object - reports the rule's state with its reason.
+	 * </p>
+	 */
+	@Override
+	public ExecutableState getExecutableState() {
+		return state(_visible, _executable);
+	}
+
+	/**
+	 * The state for the given visibility and executability of this command.
+	 */
+	private ExecutableState state(boolean visible, boolean executable) {
+		if (visible && executable) {
+			return ExecutableState.EXECUTABLE;
+		}
+		ExecutableState generic = visible ? ExecutableState.NOT_EXEC_DISABLED : ExecutableState.NOT_EXEC_HIDDEN;
+		if (_reason != null) {
+			ExecutableState reason = _reason.apply(_form);
+			if (!reason.isExecutable() && reason.isHidden() == generic.isHidden()) {
+				return reason;
+			}
+		}
+		return generic;
+	}
+
+	@Override
+	public CommandPlacement getPlacement() {
+		return _placement;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The condition is re-evaluated here rather than read from the state last published to the
+	 * client: a guarding rule can turn against the command without a form state change to observe
+	 * (a security scope that resolves through a channel, say), and the client's button state may
+	 * lag behind it.
+	 * </p>
+	 */
+	@Override
+	public HandlerResult perform(ReactContext context) {
+		if (!_executableWhen.test(_form)) {
+			return HandlerResult.notExecutable(state(_visibleWhen.test(_form), false));
+		}
+		_action.accept(context);
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	@Override
+	public void addStateChangeListener(Runnable listener) {
+		_stateChangeListeners.add(listener);
+	}
+
+	@Override
+	public void removeStateChangeListener(Runnable listener) {
+		_stateChangeListeners.remove(listener);
+	}
+
+	private void handleFormStateChanged(FormModel source) {
+		boolean newExecutable = _executableWhen.test(_form);
+		boolean newVisible = _visibleWhen.test(_form);
+		if (newExecutable != _executable || newVisible != _visible) {
+			_executable = newExecutable;
+			_visible = newVisible;
+			for (Runnable listener : _stateChangeListeners) {
+				listener.run();
+			}
+		}
+	}
+}

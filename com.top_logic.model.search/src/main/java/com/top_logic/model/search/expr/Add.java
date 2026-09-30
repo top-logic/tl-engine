@@ -24,18 +24,18 @@ import com.top_logic.model.search.expr.config.operations.MethodBuilder;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class Add extends GenericMethod {
+public class Add extends GenericMethodWithSecurity {
 
 	/**
 	 * Creates a {@link Add}.
 	 */
-	protected Add(String name, SearchExpression[] arguments) {
-		super(name, arguments);
+	protected Add(String name, SearchExpression[] arguments, boolean usesSecurity) {
+		super(name, arguments, usesSecurity);
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new Add(getName(), arguments);
+		return new Add(getName(), arguments, usesSecurity());
 	}
 
 	@Override
@@ -47,6 +47,10 @@ public class Add extends GenericMethod {
 	protected Object eval(Object[] arguments, EvalContext definitions) {
 		TLObject obj = asTLObjectNonNull(arguments[0]);
 		TLStructuredTypePart part = asTypePart(getArguments()[1], arguments[1]);
+
+		if (usesSecurity()) {
+			Update.checkWritePermission(obj, part);
+		}
 
 		Object rawValue = obj.tValue(part);
 		List<?> oldValue = asList(rawValue);
@@ -124,7 +128,7 @@ public class Add extends GenericMethod {
 		public Add build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkArgs(expr, args, 3, 4);
-			return new Add(getConfig().getName(), args);
+			return new Add(getConfig().getName(), args, true);
 		}
 
 	}

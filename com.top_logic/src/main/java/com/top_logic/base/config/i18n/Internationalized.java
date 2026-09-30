@@ -9,6 +9,7 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.html.i18n.HtmlResKey;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
 import com.top_logic.layout.form.values.edit.editor.InternationalizationEditor.WithTooltipConfiguration;
@@ -47,6 +48,6 @@ public interface Internationalized extends InternationalizedDescription {
 	 * The internationalized description of the attribute.
 	 */
 	@Override
-	ResKey getDescription();
+	HtmlResKey getDescription();
 
 }

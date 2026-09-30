@@ -17,6 +17,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.module.ModuleException;
@@ -42,14 +43,14 @@ import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 
 /**
- * Default index service that defines the base functionality and methods 
- * common to all indexing services.
+ * Indexes document contents so that they can be found via full-text search.
  *
  * @author    Dieter Rothb&auml;cher
  */
 @ServiceDependencies({
 	KnowledgeBaseFactory.Module.class
 })
+@Label("Full-text indexing")
 public abstract class DefaultIndexingService
 		extends KBBasedManagedClass<DefaultIndexingService.DefaultIndexingServiceConfig>
 		implements IndexingService, UpdateListener {
@@ -103,11 +104,7 @@ public abstract class DefaultIndexingService
 			return;
 		}
 
-		for (ObjectKey key : event.getCreatedObjectKeys()) {
-			this.index(sender.resolveObjectKey(key));
-		}
-
-		for (ObjectKey key : event.getUpdatedObjectKeys()) {
+		for (ObjectKey key : keysToIndex(event)) {
 			this.index(sender.resolveObjectKey(key));
 		}
 
@@ -115,6 +112,24 @@ public abstract class DefaultIndexingService
 			this.remove(key);
 		}
     }
+
+	/**
+	 * The keys of the objects whose index entries must be built for the given event.
+	 * 
+	 * <p>
+	 * These are the objects created or updated in the given event. Objects deleted in the given
+	 * event must not be reported.
+	 * </p>
+	 * 
+	 * @param event
+	 *        The committed change.
+	 * @return The keys of the objects to (re-)index.
+	 */
+	protected Collection<ObjectKey> keysToIndex(UpdateEvent event) {
+		List<ObjectKey> result = new ArrayList<>(event.getCreatedObjectKeys());
+		result.addAll(event.getUpdatedObjectKeys());
+		return result;
+	}
 
     /**
      * @see com.top_logic.knowledge.indexing.IndexingService#getKnowledgeBase()

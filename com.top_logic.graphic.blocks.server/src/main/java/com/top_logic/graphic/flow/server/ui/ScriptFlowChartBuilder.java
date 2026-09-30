@@ -44,6 +44,7 @@ import com.top_logic.model.search.expr.config.dom.Expr.Define;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.ui.ModelReferenceChecker;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -76,6 +77,7 @@ public class ScriptFlowChartBuilder extends AbstractConfiguredInstance<ScriptFlo
 		@FormattedDefault("model -> flowChart()")
 		@PropertyEditor(PlainEditor.class)
 		@Constraint(value = SyntaxCheck.class, args = @Ref(HANDLERS))
+		@ScriptContextVariables(ChartHandlerVariables.class)
 		Expr getCreateChart();
 
 		/**

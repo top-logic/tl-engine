@@ -12,14 +12,13 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
@@ -28,10 +27,11 @@ import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.kafka.services.common.TopicChecker;
 
 /**
- * A service providing access to {@link KafkaConsumer}s.
- * 
+ * Provides access to the configured Kafka message consumers.
+ *
  * @author <a href=mailto:wta@top-logic.com>wta</a>
  */
+@Label("Kafka consumers")
 @ServiceDependencies(ThreadContextManager.Module.class)
 public class KafkaConsumerService extends ConfiguredManagedClass<KafkaConsumerService.Config> {
 	

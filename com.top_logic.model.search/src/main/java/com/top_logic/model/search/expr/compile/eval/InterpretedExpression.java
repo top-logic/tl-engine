@@ -5,6 +5,7 @@
  */
 package com.top_logic.model.search.expr.compile.eval;
 
+import com.top_logic.model.search.expr.And;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.SearchExpressionFactory;
 
@@ -38,7 +39,7 @@ public class InterpretedExpression extends AbstractValue {
 	}
 
 	@Override
-	public Value processAnd(SearchExpression orig, Value other) {
+	public Value processAnd(And orig, Value other) {
 		SearchExpression interpretedAnd;
 		if (other.hasInterpretedPart()) {
 			interpretedAnd = SearchExpressionFactory.and(interpreted(), other.interpreted());

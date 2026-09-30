@@ -65,6 +65,8 @@ public class ModelProviderByExpression extends AbstractConfiguredInstance<ModelP
 
 	@Override
 	public Object getBusinessModel(LayoutComponent businessComponent) {
+		// Note: The component model contains only objects the current user is allowed to read, the
+		// executor secures it, see QueryExecutor#executeWith(EvalContext, Args).
 		return _provider.execute();
 	}
 

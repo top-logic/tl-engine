@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="selectedItem"/>
+	</channels>
+
+	<form input="selectedItem">
+		<children>
+			<!-- A section saying nothing about itself. -->
+			<group>
+				<field attribute="name"/>
+				<field attribute="description"/>
+			</group>
+
+			<!-- A framed section the user can unfold, standing in a single column. -->
+			<group
+				border="outlined"
+				collapsible="true"
+				collapsed="true"
+				full-line="false"
+			>
+				<label>
+					<en>Address</en>
+				</label>
+				<children>
+					<field attribute="street"/>
+				</children>
+			</group>
+
+			<!-- A section in a grid of fields of its own. -->
+			<fields>
+				<group>
+					<text>
+						<label>
+							<en>Inside</en>
+						</label>
+					</text>
+				</group>
+			</fields>
+		</children>
+	</form>
+</view>

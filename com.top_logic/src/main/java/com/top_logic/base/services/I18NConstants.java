@@ -7,11 +7,20 @@ package com.top_logic.base.services;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
+import com.top_logic.layout.ResPrefix;
 
 /**
  * Internationalization constants for this package.
  */
 public class I18NConstants extends I18NConstantsBase {
+
+	public static ResPrefix ROLE_DESCRIPTION = legacyPrefix("role.description.");
+
+	/** @en Created groups. */
+	public static ResKey CREATING_INITIAL_GROUPS;
+
+	/** @en Created roles. */
+	public static ResKey CREATING_INITIAL_ROLES;
 
 	/**
 	 * @en Started currency system.

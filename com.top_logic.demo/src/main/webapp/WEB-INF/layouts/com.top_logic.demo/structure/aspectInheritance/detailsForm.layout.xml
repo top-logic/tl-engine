@@ -4,7 +4,10 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 	template="com.top_logic.element/form.template.xml"
 >
-	<arguments model="selection(com.top_logic.demo/structure/aspectInheritance/aspectTreeTree.layout.xml#Tree)">
+	<arguments
+		model="selection(com.top_logic.demo/structure/aspectInheritance/aspectTreeTree.layout.xml#Tree)"
+		securityObject="ref:demoTypesRoot"
+	>
 		<name key="dynamic.4aec2be1-dd7f-4db6-a938-9c3574b85e5b">
 			<en>Details</en>
 			<de>Details</de>
@@ -27,8 +30,5 @@
 				</content-layouting>
 			</layout-reference>
 		</dialogs>
-		<securityObject class="com.top_logic.model.search.providers.SecurityObjectByExpression"
-			function="`DemoTypes#ROOT`"
-		/>
 	</arguments>
 </config:template-call>

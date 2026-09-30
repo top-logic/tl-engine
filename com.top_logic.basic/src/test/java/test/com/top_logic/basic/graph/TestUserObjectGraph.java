@@ -16,7 +16,7 @@ import java.util.Set;
 import junit.framework.TestCase;
 
 import com.top_logic.basic.col.Mappings;
-import com.top_logic.basic.graph.ExplicitGraph;
+import com.top_logic.basic.shared.graph.ExplicitGraph;
 import com.top_logic.basic.graph.Graph;
 import com.top_logic.basic.graph.UserObjectGraph;
 

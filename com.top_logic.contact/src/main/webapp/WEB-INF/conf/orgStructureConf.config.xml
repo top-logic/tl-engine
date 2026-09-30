@@ -31,10 +31,6 @@
 				<settings>
 					<module name="orgStructure">
 						<factory value="com.top_logic.contact.orgunit.DefaultOrgUnitFactory" />
-						<roles>
-							<role name="orgStructure.navigation" />
-							<role name="orgStructure.selection" />
-						</roles>
 					</module>
 				</settings>
 			</instance>
@@ -42,22 +38,33 @@
 
 		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
 			<instance>
+				<structures>
+	            	<structure name="orgStructure"/>
+				</structures>
 				<role-rules>
 					<rules>
-						  <!-- Selection role implies navigation role -->
-        				<rule meta-element="orgStructure:OrgUnit.all" role="orgStructure.navigation" source-role="orgStructure.selection" inherit="true" type="inheritance"/>
-					
+						<!-- Selection role implies navigation role -->
+						<rule
+							id="OrgUnit.all_navigation"
+							inherit="true"
+							meta-element="orgStructure:OrgUnit.all"
+							role="navigation"
+							source-role="selection"
+							type="inheritance"
+						/>
+
 						<!-- navigation role is automatically applied to parent elements, so navigation path becomes visible -->
-				        <rule
-							inherit="true" 
-							meta-element="orgStructure:OrgUnit.all" 
-							role="orgStructure.navigation" 
+						<rule
+							id="OrgUnit.all_navigation_2"
+							inherit="true"
+							meta-element="orgStructure:OrgUnit.all"
+							role="navigation"
 							type="inheritance"
 						>
 							<path>
-					            <step attribute="children" inverse="false" />
+								<step attribute="orgStructure:OrgUnit.all#children"/>
 							</path>
-				        </rule>
+						</rule>
 					</rules>
 				</role-rules>
 			</instance>

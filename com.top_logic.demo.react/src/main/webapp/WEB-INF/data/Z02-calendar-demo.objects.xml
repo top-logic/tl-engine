@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<objects>
+	<!-- Appointment categories, each with the color its appointments are rendered in. -->
+	<object id="cal-cat-meeting"
+		type="demo.calendar:AppointmentCategory"
+	>
+		<attribute name="name"
+			value="Besprechung"
+		/>
+		<attribute name="color"
+			value="#4589ff"
+		/>
+	</object>
+	<object id="cal-cat-customer"
+		type="demo.calendar:AppointmentCategory"
+	>
+		<attribute name="name"
+			value="Kundentermin"
+		/>
+		<attribute name="color"
+			value="#007d79"
+		/>
+	</object>
+	<object id="cal-cat-travel"
+		type="demo.calendar:AppointmentCategory"
+	>
+		<attribute name="name"
+			value="Reise"
+		/>
+		<attribute name="color"
+			value="#ff832b"
+		/>
+	</object>
+	<object id="cal-cat-vacation"
+		type="demo.calendar:AppointmentCategory"
+	>
+		<attribute name="name"
+			value="Urlaub"
+		/>
+		<attribute name="color"
+			value="#24a148"
+		/>
+	</object>
+	<object id="cal-cat-private"
+		type="demo.calendar:AppointmentCategory"
+	>
+		<attribute name="name"
+			value="Privat"
+		/>
+		<attribute name="color"
+			value="#8a3ffc"
+		/>
+	</object>
+</objects>

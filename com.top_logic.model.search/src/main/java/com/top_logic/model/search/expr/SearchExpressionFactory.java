@@ -8,6 +8,7 @@ package com.top_logic.model.search.expr;
 
 import java.util.List;
 
+import com.top_logic.basic.treexf.TreeMaterializer.NoFactory;
 import com.top_logic.knowledge.search.Expression;
 import com.top_logic.knowledge.search.SetExpression;
 import com.top_logic.mig.html.HTMLConstants;
@@ -61,6 +62,31 @@ public class SearchExpressionFactory {
 	 */
 	public static TupleExpression.Coord coord(boolean optional, Object name, SearchExpression expr) {
 		return new TupleExpression.Coord(optional, name, expr);
+	}
+
+	/**
+	 * Sets the {@link GenericMethodWithSecurity#usesSecurity() security flag} of the given method
+	 * call.
+	 *
+	 * <p>
+	 * A {@link GenericMethodWithSecurity} is re-created from its
+	 * {@link com.top_logic.model.search.expr.config.operations.MethodBuilder} with security enabled.
+	 * A generic transformation tree therefore carries the flag of the original call in a wrapper
+	 * node that is materialized by this method.
+	 * </p>
+	 *
+	 * @param method
+	 *        The method call to update.
+	 * @param usesSecurity
+	 *        See {@link GenericMethodWithSecurity#usesSecurity()}.
+	 * @return The given method call.
+	 *
+	 * @see com.top_logic.model.search.expr.visit.GenericDescendingVisitor#visitGenericMethod(GenericMethod,
+	 *      Object)
+	 */
+	public static GenericMethodWithSecurity withSecurity(GenericMethodWithSecurity method, boolean usesSecurity) {
+		method.setUsesSecurity(usesSecurity);
+		return method;
 	}
 
 	/**
@@ -181,8 +207,19 @@ public class SearchExpressionFactory {
 	 *        The index value (index or key).
 	 * @return The value of the given collection at the given index.
 	 */
+	@NoFactory
 	public static At at(SearchExpression self, SearchExpression index) {
-		return new At(self, index);
+		return at(self, index, true);
+	}
+
+	/**
+	 * Creates an {@link At} expression with explicit security setting.
+	 *
+	 * @param usesSecurity
+	 *        See {@link At#usesSecurity()}.
+	 */
+	public static At at(SearchExpression self, SearchExpression index, boolean usesSecurity) {
+		return new At(self, index, usesSecurity);
 	}
 
 	/**
@@ -193,8 +230,19 @@ public class SearchExpressionFactory {
 	 * @param part
 	 *        See {@link Access#getPart()}.
 	 */
+	@NoFactory
 	public static Access access(SearchExpression self, TLStructuredTypePart part) {
-		return new Access(self, part);
+		return access(self, part, true);
+	}
+
+	/**
+	 * Creates an {@link Access} expression with explicit security setting.
+	 *
+	 * @param usesSecurity
+	 *        See {@link Access#usesSecurity()}.
+	 */
+	public static Access access(SearchExpression self, TLStructuredTypePart part, boolean usesSecurity) {
+		return new Access(self, part, usesSecurity);
 	}
 
 	/**
@@ -207,8 +255,20 @@ public class SearchExpressionFactory {
 	 * @param value
 	 *        See {@link Update#getValue()}.
 	 */
+	@NoFactory
 	public static Update update(SearchExpression self, TLStructuredTypePart part, SearchExpression value) {
-		return new Update(self, part, value);
+		return update(self, part, value, true);
+	}
+
+	/**
+	 * Creates an {@link Update} expression with explicit security setting.
+	 *
+	 * @param usesSecurity
+	 *        See {@link Update#usesSecurity()}.
+	 */
+	public static Update update(SearchExpression self, TLStructuredTypePart part, SearchExpression value,
+			boolean usesSecurity) {
+		return new Update(self, part, value, usesSecurity);
 	}
 
 	/**
@@ -228,8 +288,19 @@ public class SearchExpressionFactory {
 	 * @param reference
 	 *        See {@link Referers#getReference()}.
 	 */
+	@NoFactory
 	public static Referers referers(SearchExpression target, TLReference reference) {
-		return new Referers(target, reference);
+		return referers(target, reference, true);
+	}
+
+	/**
+	 * Creates a {@link Referers} expression with explicit security setting.
+	 *
+	 * @param usesSecurity
+	 *        See {@link Referers#usesSecurity()}.
+	 */
+	public static Referers referers(SearchExpression target, TLReference reference, boolean usesSecurity) {
+		return new Referers(target, reference, usesSecurity);
 	}
 
 	/**
@@ -242,9 +313,21 @@ public class SearchExpressionFactory {
 	 * @param destinationEnd
 	 *        See {@link AssociationNavigation#getDestinationEnd()}.
 	 */
+	@NoFactory
 	public static AssociationNavigation associationNavigation(
 			SearchExpression source, TLAssociationEnd sourceEnd, TLAssociationEnd destinationEnd) {
-		return new AssociationNavigation(source, sourceEnd, destinationEnd);
+		return associationNavigation(source, sourceEnd, destinationEnd, true);
+	}
+
+	/**
+	 * Creates an {@link AssociationNavigation} expression with explicit security setting.
+	 *
+	 * @param usesSecurity
+	 *        See {@link AssociationNavigation#usesSecurity()}.
+	 */
+	public static AssociationNavigation associationNavigation(
+			SearchExpression source, TLAssociationEnd sourceEnd, TLAssociationEnd destinationEnd, boolean usesSecurity) {
+		return new AssociationNavigation(source, sourceEnd, destinationEnd, usesSecurity);
 	}
 
 	/**
@@ -316,6 +399,7 @@ public class SearchExpressionFactory {
 	 *        The arguments to apply.
 	 * @return The resulting function call expression.
 	 */
+	@NoFactory
 	public static SearchExpression call(SearchExpression function, SearchExpression... arguments) {
 		SearchExpression result = function;
 		for (SearchExpression argument : arguments) {

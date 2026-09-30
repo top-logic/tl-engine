@@ -16,6 +16,7 @@ import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -64,15 +65,49 @@ public class Workspace {
 	 * Builds a web application resource path for the current classpath of the running JVM.
 	 */
 	public static PathInfo getAppPaths(String deployDir, String[] deployAspects) throws IOException {
+		return getAppPaths(currentJvmClasspath(), deployDir, deployAspects);
+	}
+
+	/**
+	 * Builds a web application resource path from an explicit classpath.
+	 *
+	 * <p>
+	 * Computes the same resource path stack as {@link #getAppPaths(String, String[])}, but from the
+	 * given classpath instead of the running JVM's own. This allows tooling that inspects a foreign
+	 * application - e.g. a build-tool plugin operating on a reactor other than the one it runs in -
+	 * to reconstruct the {@code -web-fragment.war} overlays and their override order exactly as the
+	 * application would see them at runtime.
+	 * </p>
+	 *
+	 * @param classpathEntries
+	 *        The classpath of the application to inspect, in classpath order.
+	 * @param deployDir
+	 *        The name of the deploy folder to look up deploy aspects in.
+	 * @param deployAspects
+	 *        The deploy aspects to include, see {@link ModuleLayout#DEFAULT_DEPLOY_ASPECTS}.
+	 */
+	public static PathInfo getAppPaths(Iterable<Path> classpathEntries, String deployDir, String[] deployAspects)
+			throws IOException {
 		PathInfo result = new PathInfo(deployDir, deployAspects);
+
+		for (Path entry : classpathEntries) {
+			addClassPathEntry(result, entry);
+		}
+
+		result = result.complete();
+		LOG.info("Using resource paths: " + result.getResourcePath());
+		return result;
+	}
+
+	private static List<Path> currentJvmClasspath() {
+		List<Path> entries = new ArrayList<>();
 
 		ClassLoader loader = Workspace.class.getClassLoader();
 		if (loader instanceof URLClassLoader) {
 			URL[] urls = ((URLClassLoader) loader).getURLs();
 			for (URL url : urls) {
 				try {
-					Path path = Paths.get(url.toURI());
-					addClassPathEntry(result, path);
+					entries.add(Paths.get(url.toURI()));
 				} catch (URISyntaxException ex) {
 					LOG.warning("Unsupported classpath entry, cannot resolve to file: " + url);
 				}
@@ -83,14 +118,11 @@ public class Workspace {
 		// classloader does not provide any usable URLs.
 		String classPath = System.getProperty("java.class.path");
 		String[] pathEntries = classPath.split(Pattern.quote(File.pathSeparator));
-
 		for (String pathEntry : pathEntries) {
-			addClassPathEntry(result, Paths.get(pathEntry));
+			entries.add(Paths.get(pathEntry));
 		}
 
-		result = result.complete();
-		LOG.info("Using resource paths: " + result.getResourcePath());
-		return result;
+		return entries;
 	}
 
 	private static void addClassPathEntry(PathInfo result, Path pathEntry) throws IOException {

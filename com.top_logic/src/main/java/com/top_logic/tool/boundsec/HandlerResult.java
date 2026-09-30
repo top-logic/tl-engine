@@ -22,6 +22,7 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.messagebox.MessageBox.MessageType;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.error.CommandContextDescription;
 import com.top_logic.util.error.ContextDescription;
 
@@ -516,6 +517,43 @@ public class HandlerResult extends LazyTypedAnnotatable implements ContextDescri
 	public static HandlerResult error(ResKey errorKey) {
 		HandlerResult result = new HandlerResult();
 		result.addError(errorKey);
+		return result;
+	}
+
+	/**
+	 * Creates a failed {@link HandlerResult} reporting that a command was refused because it is
+	 * not executable in the given state.
+	 *
+	 * <p>
+	 * A refusal is no malfunction: the result has {@link ErrorSeverity#WARNING warning} severity,
+	 * its {@link #getErrorTitle() title} is
+	 * {@link com.top_logic.layout.basic.I18NConstants#ERROR_COMMAND_NOT_EXECUTABLE}, and its
+	 * {@link #getErrorMessage() message} is the {@link ExecutableState#getI18NReasonKey() reason}
+	 * the executability rule gave, if there is one. The generic reasons
+	 * {@link ExecutableState#NOT_EXEC_HIDDEN_REASON} and
+	 * {@link ExecutableState#NOT_EXEC_DISABLED_REASON} only repeat the title and count as no
+	 * reason. The reason (or the title, if there is no reason) is also recorded as
+	 * {@link #getEncodedErrors() error}, so that the result is not {@link #isSuccess()
+	 * successful}.
+	 * </p>
+	 *
+	 * @param state
+	 *        The state that makes the command not executable.
+	 * @return A new failed {@link HandlerResult}.
+	 */
+	public static HandlerResult notExecutable(ExecutableState state) {
+		ResKey title = com.top_logic.layout.basic.I18NConstants.ERROR_COMMAND_NOT_EXECUTABLE;
+		ResKey reason = state.getI18NReasonKey();
+		boolean hasReason = reason != null && reason != ResKey.NONE
+			&& reason != ExecutableState.NOT_EXEC_HIDDEN_REASON && reason != ExecutableState.NOT_EXEC_DISABLED_REASON;
+
+		HandlerResult result = new HandlerResult();
+		result.setErrorSeverity(ErrorSeverity.WARNING);
+		result.setErrorTitle(title);
+		if (hasReason) {
+			result.setErrorMessage(reason);
+		}
+		result.addError(hasReason ? reason : title);
 		return result;
 	}
 

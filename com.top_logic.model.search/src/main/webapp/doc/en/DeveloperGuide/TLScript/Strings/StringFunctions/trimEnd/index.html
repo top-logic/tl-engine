@@ -1,0 +1,36 @@
+<h2>Syntax</h2>
+<pre>	<code>$string.trimEnd()
+
+trimEnd($string)</code>
+</pre>
+<h2>Description</h2>
+<p>Removes all white space (spaces, tabs, line breaks, and other Unicode white space characters) at the end of the string <code class="hljs inlineCode">string</code>. White space inside the string is kept.</p>
+<p>If <code class="hljs inlineCode">string</code> is <code class="hljs inlineCode">null</code>, the result is <code class="hljs inlineCode">null</code>. Other values are converted to a string first.</p>
+<h2>Parameters</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>string</td>
+   <td>String</td>
+   <td>String from which the white space is to be removed.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong></span> String</p>
+<p><code class="hljs inlineCode">string</code> without trailing white space, or <code class="hljs inlineCode">null</code> if <code class="hljs inlineCode">string</code> is <code class="hljs inlineCode">null</code>.</p>
+<h2>Examples</h2>
+<pre>	<code>trimEnd("  Hello  world!  ")</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> "  Hello  world!"</p>

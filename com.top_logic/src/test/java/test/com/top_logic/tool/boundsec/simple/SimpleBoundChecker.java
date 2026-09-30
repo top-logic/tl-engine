@@ -7,6 +7,7 @@ package test.com.top_logic.tool.boundsec.simple;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -135,11 +136,10 @@ public class SimpleBoundChecker extends AbstractBoundChecker {
      */
     @Override
 	public Set<? extends BoundRole> getRolesForCommandGroup(BoundCommandGroup aGroup) {
-		Set<? extends BoundRole> result = null;
-        if (rolesForCommandGroup != null) {
-			result = rolesForCommandGroup.get(aGroup);
-        } 
-        return result;
+		if (rolesForCommandGroup != null) {
+			return rolesForCommandGroup.getOrDefault(aGroup, Collections.emptySet());
+		}
+		return Collections.emptySet();
     }
     
     /**

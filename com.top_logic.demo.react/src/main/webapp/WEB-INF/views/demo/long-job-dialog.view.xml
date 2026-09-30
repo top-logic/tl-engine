@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The same long-running job, started from within a dialog. The command that starts the job is
+	suspended while the job runs, and the dialog hosting a suspended command stays open: the close
+	button, Escape, the backdrop and the Close button below all refuse until the job has settled.
+	Cancelling the job from the display is the way out while it runs.
+-->
+<view>
+	<channels>
+		<channel name="job"/>
+	</channels>
+
+	<window width="560px">
+		<title>
+			<en>Job in a dialog</en>
+			<de>Auftrag im Dialog</de>
+		</title>
+
+		<text>
+			<label>
+				<en>The job below takes about five seconds. While it runs, this dialog cannot be closed - the command that started the job is waiting for it. Cancel the job to get out early.</en>
+				<de>Der Auftrag unten dauert etwa fünf Sekunden. Während er läuft, kann dieser Dialog nicht geschlossen werden - der Befehl, der den Auftrag gestartet hat, wartet auf ihn. Brechen Sie den Auftrag ab, um vorzeitig herauszukommen.</de>
+			</label>
+		</text>
+
+		<button>
+			<action class="com.top_logic.layout.view.command.GenericViewCommand"
+				image="css:bi bi-play-fill"
+				input="job"
+			>
+				<label>
+					<en>Start job</en>
+					<de>Auftrag starten</de>
+				</label>
+				<executability>
+					<disabled-if expr="s -> if(jobIsRunning($s), #('A job is already running.'@en, 'Es läuft bereits ein Auftrag.'@de), null)"/>
+				</executability>
+				<start-job
+					cancelable="true"
+					job="job"
+					update-interval="200"
+				>
+					<phases>
+						<phase name="collect">
+							<label>
+								<en>Collect</en>
+								<de>Sammeln</de>
+							</label>
+						</phase>
+						<phase name="draft">
+							<label>
+								<en>Draft</en>
+								<de>Entwerfen</de>
+							</label>
+						</phase>
+						<phase name="review">
+							<label>
+								<en>Review</en>
+								<de>Prüfen</de>
+							</label>
+						</phase>
+					</phases>
+					<function><![CDATA[job -> x -> {
+	$job.jobPhase('collect');
+	$job.jobMessage(#('Collecting the source records.'@en, 'Die Quelldatensätze werden gesammelt.'@de));
+	count(1, 6).foreach(i -> {
+		sleep(400);
+		$job.jobProgress($i, 5);
+	});
+	$job.jobPhase('draft');
+	$job.jobIndeterminate();
+	$job.jobMessage(#('Drafting the report.'@en, 'Der Bericht wird entworfen.'@de));
+	sleep(1500);
+	$job.jobPhase('review');
+	$job.jobMessage(#('Reviewing the draft.'@en, 'Der Entwurf wird geprüft.'@de));
+	count(1, 4).foreach(i -> {
+		sleep(300);
+		$job.jobProgress($i, 3);
+	});
+	#('5 records processed.'@en, '5 Datensätze verarbeitet.'@de);
+}]]></function>
+				</start-job>
+			</action>
+		</button>
+
+		<job-status input="job"/>
+
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand">
+					<label>
+						<en>Close</en>
+						<de>Schließen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

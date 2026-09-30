@@ -37,9 +37,15 @@ public class PersonGroupsInitializer implements TLObjectInitializer {
 
 		Group representativeGroup = Group.createRepresentativeGroup(account);
 
-		Group defaultGroup = InitialGroupManager.getInstance().getDefaultGroup();
-		if (defaultGroup != null) {
-			defaultGroup.addMember(account);
+		// The anonymous account represents a visitor that did not log in. The default group is the
+		// group that all accounts have and therefore typically carries the roles of an ordinary user;
+		// with model-based access rights, its members are granted whatever those roles grant. An
+		// anonymous visitor must not inherit that, so the account stays out of the default group.
+		if (!PersonManager.getManager().isAnonymous(account)) {
+			Group defaultGroup = InitialGroupManager.getInstance().getDefaultGroup();
+			if (defaultGroup != null) {
+				defaultGroup.addMember(account);
+			}
 		}
 		// Fix group assignments. If the new account was already added to some groups, the
 		// representative group must also be assigned (which could not be done before this

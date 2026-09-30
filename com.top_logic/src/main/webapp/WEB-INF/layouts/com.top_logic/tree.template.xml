@@ -13,8 +13,10 @@
 					<property name="rootVisible"/>
 					<property name="showOnlySelectableNodes"/>
 					<property name="defaultSelection"/>
+					<property name="defaultSelectionProvider"/>
 					<property name="expandRoot"/>
 					<property name="expandSelected"/>
+					<property name="revealSelection"/>
 					<property name="multiSelection"/>
 					<property name="adjustSelectionWhenCollapsing"/>
 					<property name="isSecurityMaster"/>
@@ -96,6 +98,7 @@
 	<treeView name="Tree"
 		adjustSelectionWhenCollapsing="${adjustSelectionWhenCollapsing}"
 		defaultSelection="${defaultSelection}"
+		defaultSelectionProvider="${defaultSelectionProvider}"
 		dialogs="${dialogs}"
 		dragSource="${dragSource}"
 		dropTargets="${dropTargets}"
@@ -105,6 +108,7 @@
 		model="${model}"
 		modelBuilder="${modelBuilder}"
 		partnerGroup="${partnerGroup}"
+		revealSelection="${revealSelection}"
 		rootVisible="${rootVisible}"
 		securityObject="${securityObject}"
 		selection="${selection}"

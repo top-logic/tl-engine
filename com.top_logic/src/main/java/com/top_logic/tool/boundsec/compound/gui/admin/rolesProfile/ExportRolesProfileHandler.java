@@ -33,13 +33,9 @@ import com.top_logic.basic.xml.XMLStreamUtil;
 import com.top_logic.layout.progress.DefaultProgressInfo;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutConfigTree;
-import com.top_logic.model.TLModel;
-import com.top_logic.model.TLModule;
 import com.top_logic.tool.boundsec.AbstractDownloadHandler;
-import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent;
-import com.top_logic.tool.boundsec.manager.AccessManager;
-import com.top_logic.util.model.ModelService;
+import com.top_logic.tool.boundsec.wrap.BoundedRole;
 
 /**
  * Exports the {@link SecurityConfig} for the application.
@@ -99,13 +95,8 @@ public class ExportRolesProfileHandler extends AbstractDownloadHandler {
 
 	private void addProfiles(SecurityConfig securityConfig, LayoutConfigTree layout) {
 		RolesProfileHandler rph = new RolesProfileHandler();
-		TLModel applicationModel = ModelService.getApplicationModel();
-		Collection<String> structureNames = AccessManager.getInstance().getStructureNames();
-		for (String structureName : sortedStringCopy(structureNames)) {
-			TLModule module = applicationModel.getModule(structureName);
-			List roles = sortedRolesCopy(BoundHelper.getInstance().getPossibleRoles(module));
-			rph.addProfilesFor(securityConfig, roles, layout);
-		}
+		List roles = sortedRolesCopy(BoundedRole.getAll());
+		rph.addProfilesFor(securityConfig, roles, layout);
 	}
 
 	private List sortedRolesCopy(Collection possibleRoles) {

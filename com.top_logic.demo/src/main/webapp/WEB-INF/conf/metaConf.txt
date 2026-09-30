@@ -4,6 +4,8 @@ DemoSchedulerConf.xml
 db-default.xml
 personContactCSVImporter.xml
 personContactExcelImporter.xml
+demoImportXmlScript.config.xml
 InitialRoleRules.config.xml
+com.top_logic.model.security.SecurityConfigurationService.config.xml
 pac4j-keycloak.xml
 pac4j-keycloak-demo.xml

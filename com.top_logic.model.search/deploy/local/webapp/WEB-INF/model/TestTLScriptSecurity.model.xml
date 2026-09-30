@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="TestTLScriptSecurity">
+			<types>
+				<interface name="Record"/>
+
+				<class name="Employee">
+					<annotations>
+						<table name="TLSecEmployee"/>
+					</annotations>
+					<generalizations>
+						<generalization type="Record"/>
+					</generalizations>
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						>
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestTLScriptSecurity:Employee#account`).get(`tl.accounts:Person#name`)"/>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="salary"
+							type="tl.core:Integer"
+						/>
+						<reference name="account"
+							mandatory="true"
+							type="tl.accounts:Person"
+						/>
+					</attributes>
+				</class>
+
+				<class name="UnsecuredData">
+					<annotations>
+						<table name="TLSecUnsecuredData"/>
+					</annotations>
+					<generalizations>
+						<generalization type="Record"/>
+					</generalizations>
+					<attributes>
+						<property name="data"
+							type="tl.core:String"
+						/>
+					</attributes>
+				</class>
+
+				<class name="UnsecuredDataSub">
+					<generalizations>
+						<generalization type="UnsecuredData"/>
+					</generalizations>
+				</class>
+
+				<class name="Project">
+					<annotations>
+						<table name="TLSecProject"/>
+					</annotations>
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+						<property name="budget"
+							type="tl.core:Integer"
+						/>
+						<property name="secret"
+							type="tl.core:String"
+						/>
+						<reference name="responsible"
+							type="Employee"
+						>
+							<annotations>
+								<storage-algorithm>
+									<foreign-key-storage
+										storage-attribute="responsible"
+										storage-type="TLSecProject"
+									/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+						<reference name="members"
+							multiple="true"
+							type="Employee"
+						/>
+						<!--
+							The role rules of the application configuration layer assign the project
+							roles directly to the referenced account.
+						-->
+						<reference name="responsibleAccount"
+							type="tl.accounts:Person"
+						/>
+						<reference name="readerAccount"
+							type="tl.accounts:Person"
+						/>
+						<reference name="auditorAccount"
+							type="tl.accounts:Person"
+						/>
+						<reference name="viewerAccount"
+							type="tl.accounts:Person"
+						/>
+						<property name="runningCosts"
+							type="tl.core:Integer"
+						>
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestTLScriptSecurity:Project#members`).union($self.get(`TestTLScriptSecurity:Project#responsible`)).map(e -> $e.get(`TestTLScriptSecurity:Employee#salary`)).sum()"/>
+								</storage-algorithm>
+							</annotations>
+						</property>
+					</attributes>
+				</class>
+
+				<class name="SpecialProject">
+					<generalizations>
+						<generalization type="Project"/>
+					</generalizations>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

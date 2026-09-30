@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29540_mandatory_timezone"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29492_enlarge_layout_key"
+			module="tl"
+		/>
+		<dependency name="Ticket_29512_mandatory_model_attributes"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<!-- Every date a user sees is rendered in the account's time zone, and the attribute has a default, so it is never left empty. -->
+		<update-property name="tl.accounts:Person#timezone"
+			mandatory="true"
+		/>
+	</processors>
+	<post-processors/>
+</migration>

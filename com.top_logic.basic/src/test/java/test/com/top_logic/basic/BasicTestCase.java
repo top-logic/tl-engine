@@ -35,6 +35,7 @@ import java.util.Set;
 import java.util.SimpleTimeZone;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -243,6 +244,35 @@ public class BasicTestCase extends TestCase implements InContext {
     
     public static AssertionFailedError fail(String message, Throwable cause) {
 		throw (AssertionFailedError) new AssertionFailedError(message).initCause(cause);
+	}
+
+	/**
+	 * Polls the given condition until it becomes <code>true</code> or the given timeout elapses.
+	 *
+	 * <p>
+	 * Use this to synchronize with asynchronous processing whose completion time is not
+	 * deterministic (e.g. file-system watch events). The condition is re-evaluated repeatedly with
+	 * a short delay between checks, so the happy path returns within a few milliseconds while a
+	 * slow event is still observed as soon as it arrives.
+	 * </p>
+	 *
+	 * @param timeoutMillis
+	 *        The maximum time to wait in milliseconds.
+	 * @param condition
+	 *        The condition to poll.
+	 * @return Whether the condition became <code>true</code> within the timeout.
+	 */
+	public static boolean awaitUntil(long timeoutMillis, BooleanSupplier condition) throws InterruptedException {
+		long deadline = System.currentTimeMillis() + timeoutMillis;
+		while (true) {
+			if (condition.getAsBoolean()) {
+				return true;
+			}
+			if (System.currentTimeMillis() >= deadline) {
+				return false;
+			}
+			Thread.sleep(5);
+		}
 	}
 
     public static void arrayEquals(String msg, int a[], int b[]) {

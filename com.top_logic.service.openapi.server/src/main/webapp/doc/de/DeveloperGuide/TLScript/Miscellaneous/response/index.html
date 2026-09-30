@@ -12,6 +12,8 @@
 
 <p>Erstellt ein Antwort-Objekt, dass auf eine HTTP-Anfrage zurückgegeben wird.</p>
 
+<p>Wird die Operation in einer Transaktion ausgeführt, so entscheidet der <code class="hljs inlineCode">statusCode</code> über deren Ausgang: Bei einem erfolgreichen Status (<code class="hljs inlineCode">2xx</code>) wird die Transaktion committet, bei jedem anderen Status wird sie zurückgerollt. So werden bei einer fehlerhaften Antwort keine Änderungen an der Datenbank gespeichert.</p>
+
 <h2>Parameter</h2>
 
 <table class="tlDocTable">
@@ -87,7 +89,7 @@
 </code>
 </pre>
 
-<p>Es wird dDie Standard-Antwort gesendet, dass die Resource nicht gefunden wurde.</p>
+<p>Es wird die Standard-Antwort gesendet, dass die Resource nicht gefunden wurde.</p>
 
 <h3>Beispiel 3</h3>
 

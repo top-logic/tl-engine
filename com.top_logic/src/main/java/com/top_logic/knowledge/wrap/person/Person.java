@@ -50,6 +50,7 @@ import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.tool.boundsec.wrap.GroupMember;
 import com.top_logic.util.Country;
 import com.top_logic.util.Utils;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Wrapper for {@link com.top_logic.knowledge.objects.KnowledgeObject KnowledgeObjects} of
@@ -608,8 +609,17 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 	 * @return The created person.
 	 */
 	public static Person create(KnowledgeBase kb, String userName, AuthenticationDevice authenticationDevice) {
+		String name = normalizeName(userName);
+		// Account names must match the configured pattern and length (Ticket #29423).
+		if (!PersonManager.getManager().validatePersonName(name)) {
+			throw new TopLogicException(I18NConstants.ERROR_INVALID_ACCOUNT_NAME__NAME.fill(name));
+		}
+		// Account names are unique case-insensitively (Ticket #29423).
+		if (byName(kb, name) != null) {
+			throw new TopLogicException(I18NConstants.ERROR_DUPLICATE_ACCOUNT_NAME__NAME.fill(name));
+		}
 		KnowledgeObject handle = kb.createKnowledgeObject(OBJECT_NAME);
-		handle.setAttributeValue(AbstractWrapper.NAME_ATTRIBUTE, userName);
+		handle.setAttributeValue(AbstractWrapper.NAME_ATTRIBUTE, name);
 		Person result = handle.getWrapper();
 		if (authenticationDevice != null) {
 			result.setAuthenticationDeviceID(authenticationDevice.getDeviceID());
@@ -655,19 +665,20 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 	 * @return The requested account or <code>null</code> if not such account exists.
 	 */
 	public static Person byName(KnowledgeBase kb, String name) {
+		String normalized = normalizeName(name);
 		if (kb == getDefaultKnowledgeBase()) {
-			return fromCache(kb, name);
+			return fromCache(kb, normalized);
 		}
-		if (StringServices.isEmpty(name)) {
+		if (StringServices.isEmpty(normalized)) {
 			return null;
 		}
-	
+
 		KnowledgeObject result =
-			(KnowledgeObject) kb.getObjectByAttribute(OBJECT_NAME, AbstractWrapper.NAME_ATTRIBUTE, name);
+			(KnowledgeObject) kb.getObjectByAttribute(OBJECT_NAME, AbstractWrapper.NAME_ATTRIBUTE, normalized);
 		if (result == null) {
 			return null;
 		}
-	
+
 		return result.getWrapper();
 	}
 
@@ -682,12 +693,25 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 		return fromCache(getDefaultKnowledgeBase(), name);
 	}
 
+	/**
+	 * Normalizes an account (login) name for storage and lookup: strips leading and trailing
+	 * whitespace while preserving the case (Ticket #29423). {@code null} is passed through.
+	 *
+	 * @param name
+	 *        The raw name, may be {@code null}.
+	 * @return The trimmed name, or {@code null} if the argument was {@code null}.
+	 */
+	public static String normalizeName(String name) {
+		return name == null ? null : name.strip();
+	}
+
 	private static Person fromCache(KnowledgeBase defaultKB, String name) {
-		if (StringServices.isEmpty(name)) {
+		String normalized = normalizeName(name);
+		if (StringServices.isEmpty(normalized)) {
 			return null;
 		}
 
-		KnowledgeItem cachedPerson = getOrInstallByNameCache(defaultKB).getValue().get(name);
+		KnowledgeItem cachedPerson = getOrInstallByNameCache(defaultKB).lookup(normalized);
 		if (cachedPerson == null) {
 			return null;
 		}
@@ -699,7 +723,10 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 		if (byNameCache == null || byNameCache.kb() != defaultKB) {
 			// First access to cache or default KB has changed (PersistencyLayer may have been
 			// restarted).
-			byNameCache = new ItemByNameCache<>((DBKnowledgeBase) defaultKB, OBJECT_NAME, NAME_ATTRIBUTE, String.class);
+			// Account names are matched case-insensitively (Ticket #29423): the cache is keyed by
+			// the lower-cased name, while the stored name keeps its original spelling.
+			byNameCache = new ItemByNameCache<>((DBKnowledgeBase) defaultKB, OBJECT_NAME, NAME_ATTRIBUTE,
+				String.class, name -> name.toLowerCase(Locale.ROOT));
 			BY_NAME_CACHE = byNameCache;
 		}
 		return byNameCache;

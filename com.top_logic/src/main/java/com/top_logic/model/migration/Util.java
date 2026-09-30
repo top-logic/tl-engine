@@ -3226,7 +3226,7 @@ public class Util {
 			Boolean ordered, AnnotatedConfig<TLAttributeAnnotation> annotations)
 			throws SQLException {
 		updateTLStructuredTypePart(con, part, newType, newOwner, newName, mandatory, isAbstract, null, null, multiple,
-			bag, ordered, null, null, toString(annotations), null);
+			bag, ordered, null, null, null, toString(annotations), null);
 	}
 
 	/**
@@ -3238,13 +3238,13 @@ public class Util {
 	 * </p>
 	 * 
 	 * @see #updateTLReference(PooledConnection, Reference, Type, Type, String, Boolean, Boolean,
-	 *      Boolean, Boolean, Boolean, Boolean, Boolean, Boolean, HistoryType, AnnotatedConfig,
-	 *      TypePart)
+	 *      Boolean, Boolean, Boolean, Boolean, Boolean, Boolean, HistoryType, DeletionPolicy,
+	 *      AnnotatedConfig, TypePart)
 	 */
 	public void updateInverseReference(PooledConnection con, Reference inverseReference,
 			String newName, Boolean mandatory, Boolean isAbstract, Boolean composite, Boolean aggregate,
 			Boolean multiple, Boolean bag,
-			Boolean ordered, Boolean navigate, HistoryType historyType,
+			Boolean ordered, Boolean navigate, HistoryType historyType, DeletionPolicy deletionPolicy,
 			AnnotatedConfig<TLAttributeAnnotation> annotations, TypePart newEnd)
 			throws SQLException {
 		TLID endID = null;
@@ -3261,10 +3261,10 @@ public class Util {
 				ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE);
 
 		updateTLStructuredTypePart(con, associationEnd, null, null, null,
-			mandatory, isAbstract, composite, aggregate, multiple, bag, ordered, navigate, historyType,
+			mandatory, isAbstract, composite, aggregate, multiple, bag, ordered, navigate, historyType, deletionPolicy,
 			null, null);
 		updateTLStructuredTypePart(con, inverseReference, null, null, newName,
-			null, null, null, null, null, null, null, null, null,
+			null, null, null, null, null, null, null, null, null, null,
 			toString(annotations), newEnd);
 	}
 
@@ -3272,12 +3272,13 @@ public class Util {
 	 * Updates a {@link TLReference}.
 	 * 
 	 * @see #updateInverseReference(PooledConnection, Reference, String, Boolean, Boolean, Boolean,
-	 *      Boolean, Boolean, Boolean, Boolean, Boolean, HistoryType, AnnotatedConfig, TypePart)
+	 *      Boolean, Boolean, Boolean, Boolean, Boolean, HistoryType, DeletionPolicy,
+	 *      AnnotatedConfig, TypePart)
 	 */
 	public void updateTLReference(PooledConnection con, Reference reference, Type newType, Type newOwner,
 			String newName, Boolean mandatory, Boolean isAbstract, Boolean composite, Boolean aggregate,
 			Boolean multiple, Boolean bag,
-			Boolean ordered, Boolean navigate, HistoryType historyType,
+			Boolean ordered, Boolean navigate, HistoryType historyType, DeletionPolicy deletionPolicy,
 			AnnotatedConfig<TLAttributeAnnotation> annotations, TypePart newEnd)
 			throws SQLException, MigrationException {
 
@@ -3296,10 +3297,10 @@ public class Util {
 
 		// Name of the association end is the name as the reference.
 		updateTLStructuredTypePart(con, associationEnd, newType, null, newName,
-			mandatory, isAbstract, composite, aggregate, multiple, bag, ordered, navigate, historyType,
+			mandatory, isAbstract, composite, aggregate, multiple, bag, ordered, navigate, historyType, deletionPolicy,
 			null, null);
 		updateTLStructuredTypePart(con, reference, null, newOwner, newName,
-			null, null, null, null, null, null, null, null, null,
+			null, null, null, null, null, null, null, null, null, null,
 			toString(annotations), newEnd);
 
 		if (newOwner != null || newType != null || newName != null) {
@@ -3332,10 +3333,9 @@ public class Util {
 			}
 			if (newOwner != null) {
 				// owner of the association is part of the name of the association and the target
-				// type
-				// of the other end.
+				// type of the other end.
 				updateTLStructuredTypePart(con, otherPart, newOwner, null, null, null, null, null, null, null, null,
-					null, null, null, null, null);
+					null, null, null, null, null, null);
 			}
 			if (newType != null) {
 				// new type is the new owner of the inverse reference, if exists.
@@ -3364,11 +3364,12 @@ public class Util {
 
 	/**
 	 * Updates the given {@link TLStructuredTypePart}.
+	 * @param deletionPolicy TODO
 	 */
 	public void updateTLStructuredTypePart(PooledConnection con, BranchIdType part, Type newType, Type newOwner,
 			String name, Boolean mandatory, Boolean isAbstract, Boolean composite, Boolean aggregate, Boolean multiple,
-			Boolean bag, Boolean ordered, Boolean navigate, HistoryType historyType, String annotations,
-			TypePart newEnd)
+			Boolean bag, Boolean ordered, Boolean navigate, HistoryType historyType, DeletionPolicy deletionPolicy,
+			String annotations, TypePart newEnd)
 			throws SQLException {
 		List<Parameter> parameterDefs = new ArrayList<>();
 		List<String> columns = new ArrayList<>();
@@ -3454,6 +3455,12 @@ public class Util {
 			columns.add(SQLH.mangleDBName(TLAssociationEnd.HISTORY_TYPE_ATTR));
 			parameters.add(parameter(DBType.STRING, "historyType"));
 			arguments.add(historyType.getExternalName());
+		}
+		if (deletionPolicy != null) {
+			parameterDefs.add(parameterDef(DBType.STRING, "deletionPolicy"));
+			columns.add(SQLH.mangleDBName(TLAssociationEnd.DELETION_POLICY_ATTR));
+			parameters.add(parameter(DBType.STRING, "deletionPolicy"));
+			arguments.add(deletionPolicy.getExternalName());
 		}
 		if (annotations != null) {
 			parameterDefs.add(parameterDef(DBType.STRING, "annotations"));

@@ -26,6 +26,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
+import com.top_logic.basic.util.Utils;
 import com.top_logic.graphic.flow.data.Diagram;
 import com.top_logic.graphic.flow.data.InitialZoom;
 import com.top_logic.graphic.flow.data.SelectableBox;
@@ -90,6 +91,16 @@ public class FlowChartComponent extends BuilderComponent
 	private final SelectionModel _selectionModel;
 
 	private final InitialZoom _initialZoom;
+
+	/**
+	 * The model for which the {@link #_control diagram} was last built.
+	 *
+	 * <p>
+	 * Used to tell a model switch (display the {@link #_initialZoom}) from an internal update of the
+	 * same model (keep the current zoom).
+	 * </p>
+	 */
+	private Object _lastModel;
 
 	boolean _uiSelectionProcessed = false;
 
@@ -276,8 +287,9 @@ public class FlowChartComponent extends BuilderComponent
 		ModelSpec getDiagram();
 
 		/**
-		 * The zoom level applied when the diagram is first displayed, when the model changes,
-		 * or when the view is refreshed. The user can still adjust the zoom interactively afterwards.
+		 * The zoom level applied when a model is first displayed in the diagram. The user can still
+		 * adjust the zoom interactively afterwards; an interactively chosen zoom is kept when the
+		 * diagram is redrawn for the same model and is only reset when switching to another model.
 		 */
 		@Name("initialZoom")
 		InitialZoom getInitialZoom();
@@ -339,10 +351,24 @@ public class FlowChartComponent extends BuilderComponent
 			before.unregisterListener(_processUISelection);
 		}
 
+		boolean sameModel = before != null && Utils.equals(newModel, _lastModel);
+		_lastModel = newModel;
+
 		Diagram diagram = (Diagram) getBuilder().getModel(getModel(), this);
 		if (diagram != null) {
 			diagram.setMultiSelect(_selectionModel.isMultiSelectionSupported());
 			diagram.setInitialZoom(_initialZoom);
+
+			if (sameModel) {
+				// The diagram is rebuilt for the same model (an internal update). Transfer the
+				// current view box so that the client keeps the user's zoom and pan instead of
+				// resetting to the initial zoom.
+				diagram.setViewBoxX(before.getViewBoxX());
+				diagram.setViewBoxY(before.getViewBoxY());
+				diagram.setViewBoxWidth(before.getViewBoxWidth());
+				diagram.setViewBoxHeight(before.getViewBoxHeight());
+				diagram.setKeepViewBox(true);
+			}
 		}
 
 		if (diagram != null) {

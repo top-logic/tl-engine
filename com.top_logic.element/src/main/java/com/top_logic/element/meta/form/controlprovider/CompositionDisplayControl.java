@@ -64,7 +64,7 @@ public class CompositionDisplayControl extends AbstractFormFieldControl {
 
 	@Override
 	protected String getTypeCssClass() {
-		return "cPopupSelect";
+		return "tl-popup-select";
 	}
 
 	@Override

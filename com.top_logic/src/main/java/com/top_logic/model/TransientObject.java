@@ -27,6 +27,12 @@ public abstract class TransientObject extends AbstractTLObject {
 		throw new UnsupportedOperationException();
 	}
 
+	/**
+	 * A {@link TransientObject} exists on its own and is therefore always valid; a subclass that is
+	 * created in a {@link #tContainer() container} is valid while that container is.
+	 * 
+	 * @see TLObject#tValid()
+	 */
 	@Override
 	public boolean tValid() {
 		return true;

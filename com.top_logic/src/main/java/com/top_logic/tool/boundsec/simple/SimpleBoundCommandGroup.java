@@ -7,6 +7,7 @@ package com.top_logic.tool.boundsec.simple;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -157,6 +158,13 @@ public class SimpleBoundCommandGroup implements BoundCommandGroup {
 	/** Set of {@value #READ}, {@link #WRITE}, {@link #CREATE} and {@link #DELETE}. */
     public static final Set<BoundCommandGroup> READWRITECREATEDEL_SET = 
         new HashSet<>(Arrays.asList(new BoundCommandGroup[] {READ, WRITE, CREATE, DELETE}));
+
+	/**
+	 * {@link Comparator} that compares {@link BoundCommandGroup} by their
+	 * {@link BoundCommandGroup#getID()}.
+	 */
+	public static final Comparator<BoundCommandGroup> COMPARE_BY_ID =
+		Comparator.comparing(BoundCommandGroup::getID);
 
     /** ID of the command group */
 	private String id;

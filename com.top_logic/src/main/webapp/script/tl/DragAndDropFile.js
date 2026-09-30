@@ -2,6 +2,13 @@ function DragAndDropFile() {}
 
 DragAndDropFile = {
 
+	/**
+	 * Status of a response reporting that the transmitted upload could not be processed.
+	 *
+	 * The body of such a response is a rendered info service item describing the reason.
+	 */
+	UNPROCESSABLE_CONTENT: 422,
+
 	init: function (controlId, url, uploadPossible, maxUploadSize, uploadAllowed, uploadNotAllowed, loadingText, progressbarText) {
 		var isUploadPossible;
 		if (uploadPossible == 'true') {
@@ -287,9 +294,14 @@ DragAndDropFile = {
 		}
 		xhttp.send(formData);
 		xhttp.onreadystatechange = function () {
-			if (xhttp.readyState === 4 && xhttp.status === 200) {
-				services.form.sendDroppedFiles(controlId, 'dropFile');
+			if (xhttp.readyState !== 4) {
+				return;
 			}
+			if (xhttp.status === DragAndDropFile.UNPROCESSABLE_CONTENT && xhttp.responseText != '') {
+				showInfoArea(xhttp.responseText);
+			}
+			// The command closes the progress dialog, also when no file was transferred.
+			services.form.sendDroppedFiles(controlId, 'dropFile');
 		};
 	},
 

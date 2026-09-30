@@ -13,7 +13,7 @@ import com.top_logic.graphic.flow.data.Box;
 /**
  * Temporary object that contains information for computing a tree layout.
  */
-class TreeNode {
+public class TreeNode {
 
 	private final Box _box;
 

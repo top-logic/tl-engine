@@ -16,7 +16,7 @@
 					<property name="configurationProviders"/>
 					<property name="dragSource"/>
 					<property name="dropTargets"/>
-					<property name="securityDomain"/>
+
 					<property name="securityObject"/>
 					<property name="helpID"/>
 					<property name="custom-config-key"/>
@@ -88,7 +88,6 @@
 
 	<securityLayout name="ContextTable"
 		helpID="${helpID}"
-		securityDomain="${securityDomain}"
 		titleKey="${name}"
 	>
 		<component class="com.top_logic.mig.html.layout.tiles.ContextTileComponent"

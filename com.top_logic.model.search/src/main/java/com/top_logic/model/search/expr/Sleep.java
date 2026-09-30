@@ -17,6 +17,11 @@ import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 /**
  * {@link GenericMethod} forcing current thread to sleep for a while.
  * 
+ * <p>
+ * An interrupt of the sleeping thread ends the sleep early and stays set, so that the interrupt
+ * also ends what the thread waits for next.
+ * </p>
+ * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class Sleep extends GenericMethod {
@@ -44,7 +49,9 @@ public class Sleep extends GenericMethod {
 		try {
 			Thread.sleep(sleepTime);
 		} catch (InterruptedException ex) {
-			// Ignore
+			// The sleep ends early and the interrupt stays set, so that an operation cancelled
+			// while sleeping also ends at the next call that waits.
+			Thread.currentThread().interrupt();
 		}
 		return null;
 	}

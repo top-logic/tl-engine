@@ -219,6 +219,19 @@ public abstract class AbstractConfiguredConnectionPoolBase extends AbstractConne
 		}
 
 		dbHelper = result;
+
+		// After the dialect is known and checked, prepare the database for the generated SQL, e.g.
+		// create the case-insensitive collation that non-binary string columns rely on
+		// (PostgreSQL). This runs once per connection pool on a write connection (DDL), so every
+		// table-creation path - including tests and low-level DDL that bypass the schema setup -
+		// finds the required database objects. It is a no-op for dialects that need no preparation.
+		PooledConnection writeConnection = this.borrowWriteConnection();
+		try {
+			result.prepareDatabase(writeConnection);
+			writeConnection.commit();
+		} finally {
+			this.releaseWriteConnection(writeConnection);
+		}
 	}
 
 	private Config config() {

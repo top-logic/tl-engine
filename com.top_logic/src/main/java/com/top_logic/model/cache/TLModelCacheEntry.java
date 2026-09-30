@@ -42,6 +42,7 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.annotate.ui.ValueColorProvider;
 import com.top_logic.model.composite.CompositeStorage;
 import com.top_logic.model.composite.ContainerStorage;
 import com.top_logic.model.composite.LinkTable;
@@ -68,6 +69,8 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 	private final Map<TLClass, ListOrderedMap<String, TLStructuredTypePart>> _allAttributes = map();
 
 	private final Map<TLClass, ImmutableSet<TLClassPart>> _attributesOfSubClasses = map();
+
+	private final Map<TLStructuredTypePart, ImmutableSet<TLStructuredTypePart>> _overridesOfPart = map();
 
 	private final Map<TLStructuredType, List<TLObjectInitializer>> _initializers = map();
 
@@ -96,6 +99,8 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 	private final ConcurrentMap<TLType, TooltipProvider> _tooltipProviderByType = new ConcurrentHashMap<>();
 
 	private final ConcurrentMap<TLType, LabelProvider> _labelProviderByType = new ConcurrentHashMap<>();
+
+	private final ConcurrentMap<TLType, ValueColorProvider> _colorProviderByType = new ConcurrentHashMap<>();
 
 	private final ConcurrentMap<TLStructuredTypePart, ImmutableSet<TLStructuredTypePart>> _concreteOverridesByPart =
 		new ConcurrentHashMap<>();
@@ -142,7 +147,9 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 		_potentialTables.putAll(otherEntry._potentialTables);
 		_allAttributes.putAll(otherEntry._allAttributes);
 		_attributesOfSubClasses.putAll(otherEntry._attributesOfSubClasses);
+		_overridesOfPart.putAll(otherEntry._overridesOfPart);
 		_iconProviderByType.putAll(otherEntry._iconProviderByType);
+		_colorProviderByType.putAll(otherEntry._colorProviderByType);
 		_concreteOverridesByPart.putAll(otherEntry._concreteOverridesByPart);
 
 		Set<TLClass> otherGlobalAppModelClasses = otherEntry._globalAppModelClasses;
@@ -228,6 +235,15 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 		}
 		return computeIfAbsent(_attributesOfSubClasses, tlClass,
 			key -> immutableCopy(computeAttributesOfSubClasses(key)));
+	}
+
+	@Override
+	protected Set<TLStructuredTypePart> computeOverrides(TLClass owner, TLStructuredTypePart part) {
+		if (!canBeCached(owner)) {
+			return super.computeOverrides(owner, part);
+		}
+		return computeIfAbsent(_overridesOfPart, part,
+			key -> immutableCopy(super.computeOverrides(owner, key)));
 	}
 
 	@Override
@@ -319,6 +335,19 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 			return computedResult;
 		}
 		return MapUtil.putIfAbsent(_iconProviderByType, type, computedResult);
+	}
+
+	@Override
+	public ValueColorProvider getColorProvider(TLType type) {
+		ValueColorProvider cachedResult = _colorProviderByType.get(type);
+		if (cachedResult != null) {
+			return cachedResult;
+		}
+		ValueColorProvider computedResult = super.getColorProvider(type);
+		if (!canModelPartBeCached(type)) {
+			return computedResult;
+		}
+		return MapUtil.putIfAbsent(_colorProviderByType, type, computedResult);
 	}
 
 	@Override
@@ -455,7 +484,9 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 		_potentialTables.clear();
 		_allAttributes.clear();
 		_attributesOfSubClasses.clear();
+		_overridesOfPart.clear();
 		_iconProviderByType.clear();
+		_colorProviderByType.clear();
 		_initializers.clear();
 		_globalAppModelClasses = null;
 		_globalClasses = null;
@@ -469,7 +500,9 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 			.add("potentialTables", _potentialTables.size())
 			.add("allAttributes", _allAttributes.size())
 			.add("attributesOfSubClasses", _attributesOfSubClasses.size())
+			.add("overridesOfPart", _overridesOfPart.size())
 			.add("iconProviderByType", _iconProviderByType.size())
+			.add("colorProviderByType", _colorProviderByType.size())
 			.add("globalAppModelClasses", _globalAppModelClasses == null ? "null" : _globalAppModelClasses.size())
 			.add("globalClasses", _globalClasses == null ? null : _globalClasses.size())
 			.add("initializers", _initializers.size())

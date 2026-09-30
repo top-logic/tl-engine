@@ -74,18 +74,26 @@ public class TransientTLObjectImpl extends TransientObject {
 		return _context;
 	}
 
+	/**
+	 * A transient object is part of the {@link #tContainer() container} it was created in and
+	 * dies with it: it is valid while that container is valid, or while it has no container at
+	 * all.
+	 * 
+	 * @implNote A transient container that itself was created in a container chains the check up
+	 *           to the first object that has none.
+	 */
+	@Override
+	public boolean tValid() {
+		TLObject container = tContainer();
+		return container == null || container.tValid();
+	}
+
 	@Override
 	public Object tValue(TLStructuredTypePart part) {
 		Object directValue = directValue(part);
 		if (directValue == null) {
-			// Value may not be set yet
-			if (part.isMultiple()) {
-				if (part.isOrdered()) {
-					return Collections.emptyList();
-				} else {
-					return Collections.emptySet();
-				}
-			}
+			// Value may not be set yet.
+			return TLModelUtil.getEmptyValue(part);
 		}
 		return directValue;
 	}

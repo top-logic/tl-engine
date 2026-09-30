@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<objects>
+	<object id="1"
+		type="test.flowchart:Usage"
+	>
+		<attribute name="name"
+			value="RL"
+		/>
+	</object>
+	<object id="2"
+		type="test.flowchart:Usage"
+	>
+		<attribute name="name"
+			value="Hyb"
+		/>
+	</object>
+	<object id="3"
+		type="test.flowchart:Usage"
+	>
+		<attribute name="name"
+			value="LS0"
+		/>
+	</object>
+	<object id="4"
+		type="test.flowchart:Usage"
+	>
+		<attribute name="name"
+			value="2. Reihe"
+		/>
+	</object>
+	<object id="5"
+		type="test.flowchart:Usage"
+	>
+		<attribute name="name"
+			value="LL"
+		/>
+	</object>
+</objects>

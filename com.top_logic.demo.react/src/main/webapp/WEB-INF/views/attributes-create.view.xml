@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="selection"/>
+	</channels>
+	<window width="640px">
+		<title>
+			<en>New demo object</en>
+			<de>Neues Demo-Objekt</de>
+		</title>
+		<form
+			initial-edit-mode="true"
+			input="model"
+			mode-switch="false"
+			with-inset="true"
+		>
+			<field attribute="name"/>
+			<field attribute="string"/>
+			<field attribute="multiLine"/>
+			<field attribute="html"/>
+			<field attribute="i18n"/>
+			<field attribute="i18nMultiline"/>
+			<field attribute="i18nHtml"/>
+			<field attribute="password"/>
+			<field attribute="aliases"/>
+			<field attribute="notes"/>
+			<field attribute="count"/>
+			<field attribute="size"/>
+			<field attribute="amount"/>
+			<field attribute="price"/>
+			<field attribute="ratio"/>
+			<field attribute="scores"/>
+			<field attribute="ratios"/>
+			<field attribute="active"/>
+			<field attribute="tri"/>
+			<field attribute="activeRadio"/>
+			<field attribute="activeSelect"/>
+			<field attribute="flags"/>
+			<field attribute="date"/>
+			<field attribute="dateTime"/>
+			<field attribute="dateTimeShort"/>
+			<field attribute="time"/>
+			<field attribute="duration"/>
+			<field attribute="deadlines"/>
+			<field attribute="icon"/>
+			<field attribute="color"/>
+			<field attribute="country"/>
+			<field attribute="language"/>
+			<field attribute="timeZone"/>
+			<field attribute="url"/>
+			<field attribute="email"/>
+			<field attribute="phone"/>
+			<field attribute="json"/>
+			<field attribute="image"/>
+			<field attribute="priority"/>
+			<field attribute="tags"/>
+			<field attribute="owner"/>
+			<field attribute="watchers"/>
+			<field attribute="related"/>
+			<commands>
+				<generic-command
+					input="model"
+					placement="BUTTON_BAR"
+				>
+					<label>
+						<en>Create</en>
+						<de>Anlegen</de>
+					</label>
+					<store-form-state/>
+					<persist-transient/>
+					<write-channel name="selection"/>
+					<close-dialog/>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand">
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

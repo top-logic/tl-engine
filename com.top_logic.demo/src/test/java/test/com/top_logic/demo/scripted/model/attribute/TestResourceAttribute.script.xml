@@ -192,11 +192,12 @@ switch {
 							<named-member name="contentContainer"/>
 							<named-member name="content"/>
 							<labeled-member label="Beschreibung"/>
+							<named-member name="description"/>
 							<labeled-member label="Deutsch"/>
 						</path>
 					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
-						<value>Wert hängt von dem gegenwärtigen Wert des Attributes "floatPercent" ab.</value>
+					<value config:interface="com.top_logic.layout.wysiwyg.ui.scripting.StructuredTextNamingScheme$Name">
+						<value><![CDATA[Wert hängt von dem gegenwärtigen Wert des Attributes "floatPercent" ab.]]></value>
 					</value>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"

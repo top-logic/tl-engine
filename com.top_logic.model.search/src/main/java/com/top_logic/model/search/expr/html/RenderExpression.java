@@ -5,8 +5,8 @@
  */
 package com.top_logic.model.search.expr.html;
 
-import java.io.IOError;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Collection;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
@@ -24,6 +24,11 @@ import com.top_logic.tool.export.pdf.PDFRenderer;
 /**
  * Base class for {@link SearchExpression}s that produce page output as side-effect to their
  * {@link #evalWith(EvalContext, Args) evaluation}.
+ * 
+ * <p>
+ * When no page output could be generated then a {@link HTMLFragment} is returned that generates the
+ * page output.
+ * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -54,7 +59,7 @@ public abstract class RenderExpression extends SearchExpression {
 		try {
 			write(context, out, args, definitions);
 		} catch (IOException ex) {
-			throw new IOError(ex);
+			throw new UncheckedIOException(ex);
 		} catch (Throwable ex) {
 			try {
 				JSPErrorUtil.produceErrorOutput(context, out, "Rendering dynamic contents failed.", ex,

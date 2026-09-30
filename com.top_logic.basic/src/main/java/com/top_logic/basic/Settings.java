@@ -10,6 +10,7 @@ import java.io.IOException;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
@@ -21,6 +22,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
+@Label("Global settings")
 public class Settings extends ManagedClass {
 
 	/**

@@ -10,8 +10,6 @@ import java.util.Map;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.module.BasicRuntimeModule;
-import com.top_logic.basic.module.ModuleException;
-import com.top_logic.basic.module.ModuleUtil;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
@@ -22,7 +20,6 @@ import com.top_logic.tool.execution.CombinedExecutabilityRule;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.tool.execution.NullModelDisabled;
-import com.top_logic.util.error.TopLogicException;
 
 /**
  * Starts the selected TL service.
@@ -60,22 +57,10 @@ public class TLStartServiceHandler extends AbstractCommandHandler {
 	public HandlerResult handleCommand(DisplayContext context, LayoutComponent component, Object model,
 			Map<String, Object> arguments) {
 		BasicRuntimeModule<?> service = (BasicRuntimeModule<?>) model;
-		startService(service);
+		TLServiceUtils.startService(service);
 		component.invalidate();
 
 		return HandlerResult.DEFAULT_RESULT;
-	}
-
-	private void startService(BasicRuntimeModule<?> module) {
-		try {
-			ModuleUtil.INSTANCE.startUp(module);
-		} catch (IllegalArgumentException | ModuleException exception) {
-			throw new TopLogicException(I18NConstants.SERVICE_START_ERROR.fill(getServiceName(module)), exception);
-		}
-	}
-
-	private String getServiceName(BasicRuntimeModule<?> module) {
-		return ModuleUtil.INSTANCE.getModuleName(module);
 	}
 
 	@Override

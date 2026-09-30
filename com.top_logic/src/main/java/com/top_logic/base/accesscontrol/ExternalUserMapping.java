@@ -7,6 +7,7 @@
 package com.top_logic.base.accesscontrol;
 
 import com.top_logic.base.accesscontrol.Login.LoginDeniedException;
+import com.top_logic.base.accesscontrol.Login.UnknownAccountException;
 import com.top_logic.basic.StringServices;
 import com.top_logic.knowledge.wrap.person.Person;
 
@@ -37,8 +38,11 @@ public interface ExternalUserMapping {
 	 *        <code>TopLogic</code> name of the {@link Person} to login.
 	 * @return Valid non <code>null</code> {@link Person} with the given name.
 	 * 
+	 * @throws UnknownAccountException
+	 *         If the authentication system has authenticated the given name, but this application
+	 *         has no account of that name, or the account is not alive.
 	 * @throws LoginDeniedException
-	 *         If no {@link Person} with the given name was found.
+	 *         If no name was given at all.
 	 */
 	static Person findAccount(String loginName) throws LoginDeniedException {
 		if (StringServices.isEmpty(loginName)) {
@@ -47,11 +51,11 @@ public interface ExternalUserMapping {
 		Person person = Person.byName(loginName);
 		if (person == null) {
 			String message = "No account with login name '" + loginName + "' found!";
-			throw new LoginDeniedException(message);
+			throw new UnknownAccountException(loginName, message);
 		}
 		if (!person.isAlive()) {
 			String message = "Account with login name '" + loginName + "' is not alive!";
-			throw new LoginDeniedException(message);
+			throw new UnknownAccountException(loginName, message);
 		}
 		return person;
 

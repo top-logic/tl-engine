@@ -155,7 +155,7 @@ private static final Boolean DEFAULT_HTML = Boolean.TRUE;
 							<tr>
 								<td>
 									<p>
-										<button class="tlButton cButton cmdButton"
+										<button class="tlButton cButton tl-cmd-button"
 									            name="<%=doSimulate ? "SIMULATE" : "SUBMIT"%>"
 									            type="submit">
 									        <span class="tlButtonLabel"><%= REFRESH_BUTTON %></span>
@@ -170,7 +170,7 @@ private static final Boolean DEFAULT_HTML = Boolean.TRUE;
 				if (RESTART_LINK != null) {
 					%>
 					<p>
-						<button class="tlButton cButton cmdButton" onclick="self.location.href = '<%=component.getComponentURL(displayContext).getURL()%>';">
+						<button class="tlButton cButton tl-cmd-button" onclick="self.location.href = '<%=component.getComponentURL(displayContext).getURL()%>';">
 					        <h4 class="tlButtonLabel"><%= RESTART_LINK %></h4>
 					    </button>
 					</p>
@@ -267,14 +267,14 @@ private static final Boolean DEFAULT_HTML = Boolean.TRUE;
 						<%
 						if (RUN_BUTTON != null) {
 							%>
-							<button class="tlButton cButton cmdButton" name="SUBMIT" type="submit">
+							<button class="tlButton cButton tl-cmd-button" name="SUBMIT" type="submit">
 					            <h4 class="tlButtonLabel"><%= RUN_BUTTON %></h4>
 					        </button>
 							<%
 						}
 						if (SIMULATE_BUTTON != null) {
 							%>
-							<button class="tlButton cButton cmdButton" name="SIMULATE" type="submit">
+							<button class="tlButton cButton tl-cmd-button" name="SIMULATE" type="submit">
 					            <h4 class="tlButtonLabel"><%= SIMULATE_BUTTON %></h4>
 					        </button>
 							<%

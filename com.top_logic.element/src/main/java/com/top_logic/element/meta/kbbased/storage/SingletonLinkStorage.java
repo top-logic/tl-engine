@@ -119,6 +119,11 @@ public class SingletonLinkStorage<C extends SingletonLinkStorage.Config<?>> exte
 	}
 
 	@Override
+	public String getBaseObjectColumn() {
+		return DBKnowledgeAssociation.REFERENCE_SOURCE_NAME;
+	}
+
+	@Override
 	public String getStorageColumn() {
 		return DBKnowledgeAssociation.REFERENCE_DEST_NAME;
 	}

@@ -18,6 +18,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
@@ -48,11 +49,12 @@ import com.top_logic.util.Resources;
 
 
 /**
- * Central point of login for all top-logic activities..
+ * Central service that authenticates users and grants access to the application.
  *
  * @author    <a href="mailto:mer@top-logic.com">Michael Eriksson</a>
  */
 @ServiceDependencies(CommandGroupRegistry.Module.class)
+@Label("Login")
 public class Login extends ConfiguredManagedClass<Login.Config> {
 
 	/**
@@ -149,6 +151,47 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 			super(message, cause);
 			assert message != null;
 			assert cause != null;
+		}
+
+	}
+
+	/**
+	 * A {@link LoginDeniedException} reporting that an external authentication has verified the
+	 * identity of a user, but this application has no account for the name that was authenticated.
+	 * 
+	 * <p>
+	 * The distinction matters for the answer given to the user: the user is who they claim to be, so
+	 * the application may say that the account is missing and whom to ask for it, instead of
+	 * offering the login mask again. Denials in which the identity is not established (a wrong
+	 * password, for example) must stay {@link LoginDeniedException}s, since a distinct answer would
+	 * disclose whether an account exists.
+	 * </p>
+	 * 
+	 * @see ExternalUserMapping#findAccount(String)
+	 */
+	public static class UnknownAccountException extends LoginDeniedException {
+
+		private final String _loginName;
+
+		/**
+		 * Creates a {@link UnknownAccountException}.
+		 * 
+		 * @param loginName
+		 *        See {@link #getLoginName()}.
+		 * @param message
+		 *        Must not be <code>null</code>.
+		 */
+		public UnknownAccountException(String loginName, String message) {
+			super(message);
+			_loginName = loginName;
+		}
+
+		/**
+		 * The name the external authentication system has authenticated, for which this application
+		 * has no (alive) account.
+		 */
+		public String getLoginName() {
+			return _loginName;
 		}
 
 	}

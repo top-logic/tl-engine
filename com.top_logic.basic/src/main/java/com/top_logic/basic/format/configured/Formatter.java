@@ -25,6 +25,7 @@ import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.col.MapUtil;
 import com.top_logic.basic.format.FormatConfig;
 import com.top_logic.basic.format.FormatDefinition;
+import com.top_logic.basic.format.NumberFormatDecorator;
 import com.top_logic.basic.time.CalendarUtil;
 
 /**
@@ -887,7 +888,7 @@ public class Formatter {
 		}
 	}
 
-	private static final class NumberFormatProxy extends NumberFormat {
+	private static final class NumberFormatProxy extends NumberFormatDecorator {
 
 		private final TimeZone _timeZone;
 
@@ -964,6 +965,11 @@ public class Formatter {
 			throw new UnsupportedOperationException("Cannot modify default format!");
 		}
 
+		@Override
+		protected NumberFormat impl() {
+			return threadFormat();
+		}
+
 		private NumberFormat threadFormat() {
 			Formatter threadInstance = _service.getThreadInstance(_timeZone, _locale);
 			return threadInstance.sharedNumberFormatNonNull(_id);
@@ -1026,6 +1032,26 @@ public class Formatter {
 		@Override
 		public void setNumberFormat(NumberFormat newNumberFormat) {
 			throw new UnsupportedOperationException("Cannot modify default format!");
+		}
+
+		@Override
+		public TimeZone getTimeZone() {
+			return threadFormat().getTimeZone();
+		}
+
+		@Override
+		public Calendar getCalendar() {
+			return threadFormat().getCalendar();
+		}
+
+		@Override
+		public boolean isLenient() {
+			return threadFormat().isLenient();
+		}
+
+		@Override
+		public NumberFormat getNumberFormat() {
+			return threadFormat().getNumberFormat();
 		}
 
 		private DateFormat threadFormat() {

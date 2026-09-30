@@ -201,10 +201,12 @@ public class HistoryUtils {
 	}
 
 	/**
-	 * The first revision that was successfully committed to the database.
+	 * The oldest revision that is still available in the database.
+	 * 
+	 * @see HistoryManager#getFirstRevision()
 	 */
 	public static Revision getInitialRevision(HistoryManager hm) {
-		return hm.getRevision(Revision.FIRST_REV);
+		return hm.getFirstRevision();
 	}
 
 	/**

@@ -47,7 +47,7 @@ public class KnowledgeBaseCopy implements Runnable {
 	 * {@link KnowledgeBase}.
 	 */
 	public final void convert() {
-		Revision firstRevision = sourceKb.getHistoryManager().getRevision(Revision.FIRST_REV);
+		Revision firstRevision = sourceKb.getHistoryManager().getFirstRevision();
 		convert(firstRevision, Revision.CURRENT);
 	}
 

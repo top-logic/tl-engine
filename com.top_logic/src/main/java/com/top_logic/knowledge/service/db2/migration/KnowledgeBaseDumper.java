@@ -193,7 +193,7 @@ public class KnowledgeBaseDumper {
 		out.beginChangeSets();
 
 		ReaderConfigBuilder readerConfig =
-			ReaderConfigBuilder.createConfig(_kb.getHistoryManager().getRevision(Revision.FIRST_REV), Revision.CURRENT);
+			ReaderConfigBuilder.createConfig(_kb.getHistoryManager().getFirstRevision(), Revision.CURRENT);
 		Set<String> ignoreTypes = getIgnoreTypes();
 		if (!ignoreTypes.isEmpty()) {
 			Set<String> allMetaObjects = new HashSet<>(_kb.getMORepository().getMetaObjectNames());

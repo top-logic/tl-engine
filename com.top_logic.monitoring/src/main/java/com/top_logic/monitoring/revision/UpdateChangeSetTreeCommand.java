@@ -76,7 +76,7 @@ public class UpdateChangeSetTreeCommand extends AbstractFormCommandHandler {
 
 	private ChangeSetTreeRoot newInstance(KnowledgeBase kb, Date day, boolean showSystemObjects,
 			Filter<? super ChangeSet> filter) {
-		Revision firstRev = kb.getHistoryManager().getRevision(Revision.FIRST_REV);
+		Revision firstRev = kb.getHistoryManager().getFirstRevision();
 		Revision startRev;
 		Date dayBegin = DateUtil.adjustToDayBegin(day);
 	

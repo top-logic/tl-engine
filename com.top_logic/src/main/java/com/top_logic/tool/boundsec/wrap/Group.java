@@ -271,9 +271,10 @@ public class Group extends AbstractBoundWrapper implements IGroup {
 	 * is added to.
 	 *
 	 * <p>
-	 * The value is computed from {@link InitialGroupManager.Config#getDefaultGroup()}. Changing that
-	 * setting neither adds accounts to nor removes accounts from a group, it only decides where
-	 * accounts created afterwards are put.
+	 * The value is computed from
+	 * {@link com.top_logic.base.services.InitialGroupManager.Config#getDefaultGroup()}. Changing
+	 * that setting neither adds accounts to nor removes accounts from a group, it only decides
+	 * where accounts created afterwards are put.
 	 * </p>
 	 *
 	 * @return Whether this is the group named by the configuration.

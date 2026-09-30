@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Edits the access rights of one model element of the model based access definition. The rights
+	channel carries the configuration the opening command produced - the entry the application
+	stores for the selected type or for its module - and the configuration form writes the entries
+	straight into it. What is edited here are the additions the application makes: the grants are
+	appended to the grants of the underlying configuration layers, the marks override the ones those
+	layers set. Save hands the configuration to the editor, which stores it in the application
+	configuration, and marks the pending channel: the stored definition differs from the running one
+	until the coverage display applies it.
+-->
+<view>
+	<channels>
+		<channel name="rights"/>
+		<channel name="pending"/>
+	</channels>
+	<window width="800px">
+		<title>
+			<en>Access rights</en>
+			<de>Zugriffsrechte</de>
+		</title>
+		<commands>
+			<generic-command
+				image="css:bi bi-check-lg"
+				input="rights"
+				placement="BUTTON_BAR"
+			>
+				<label>
+					<en>Save</en>
+					<de>Speichern</de>
+				</label>
+				<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+					mode="SAVE_ACCESS_RIGHTS"
+				/>
+				<write-channel name="pending"/>
+				<close-dialog/>
+			</generic-command>
+		</commands>
+		<config-form
+			input="rights"
+			withEditMode="false"
+		/>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

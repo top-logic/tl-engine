@@ -389,8 +389,8 @@ public final class ConfigValidation {
 	}
 
 	/**
-	 * Whether the given property of the given item has no value worth keeping, for the purpose of
-	 * a {@link PropertyDescriptor#isMandatory() @Mandatory} check.
+	 * Whether the given property of the given item has no value worth keeping, for the purpose of a
+	 * {@link PropertyDescriptor#isMandatory() @Mandatory} check.
 	 *
 	 * <p>
 	 * {@link ConfigurationItem#valueSet(PropertyDescriptor)} alone is not enough: it answers
@@ -405,31 +405,31 @@ public final class ConfigValidation {
 	 *
 	 * <p>
 	 * Deliberately narrow: only a {@code null} value or an empty {@link String} count as missing,
-	 * and only for a property this editor actually renders as a field. A
-	 * {@link PropertyKind#LIST}, {@link PropertyKind#ARRAY}, {@link PropertyKind#MAP}, or
-	 * {@link PropertyKind#ITEM} property is never flagged here, whatever it holds. The first three
-	 * mirror {@link ConfigFieldModel#isTechnicallyMandatory(PropertyDescriptor)}, which excludes
-	 * exactly those kinds because they are "not nullable, but may be empty" - the same rule the
-	 * classic declarative form applies. Two reasons this method keeps step with that rule rather
-	 * than refusing an empty mandatory collection: it would enforce a requirement the field layer
-	 * itself does not, and a collection property has no {@link ConfigFieldModel} of its own - it is
-	 * rendered by {@link ConfigListEditorControl}, not as a field - so {@link #report(List,
-	 * ConfigFieldIndex)} would find nothing in the {@link ConfigFieldIndex} for it, leaving the
-	 * user stuck in an edit mode that refuses to close with nothing on screen to correct.
+	 * and only for a property this editor actually renders as a field. A {@link PropertyKind#LIST},
+	 * {@link PropertyKind#ARRAY}, {@link PropertyKind#MAP}, or {@link PropertyKind#ITEM} property
+	 * is never flagged here, whatever it holds. The first three mirror
+	 * {@link ConfigFieldModel#isTechnicallyMandatory(PropertyDescriptor)}, which excludes exactly
+	 * those kinds because they are "not nullable, but may be empty" - the same rule the classic
+	 * declarative form applies. Two reasons this method keeps step with that rule rather than
+	 * refusing an empty mandatory collection: it would enforce a requirement the field layer itself
+	 * does not, and a collection property has no {@link ConfigFieldModel} of its own - it is
+	 * rendered by {@link ConfigListEditorControl}, not as a field - so
+	 * {@link #report(Findings, ConfigFieldIndex)} would find nothing in the
+	 * {@link ConfigFieldIndex} for it, leaving the user stuck in an edit mode that refuses to close
+	 * with nothing on screen to correct.
 	 * </p>
 	 *
 	 * <p>
 	 * {@link PropertyKind#ITEM} is excluded for the second of those two reasons alone: it has no
 	 * {@link ConfigFieldModel} either. A monomorphic ITEM property renders as a
 	 * {@link com.top_logic.layout.react.control.layout.ReactFormGroupControl group} - and, while
-	 * its value is {@code null}, as nothing at all, since
-	 * {@link ConfigEditorControl} builds no group for an absent nested item; a polymorphic one
-	 * renders a {@link PolymorphicItemControl} whose type selector is a
-	 * {@link com.top_logic.layout.form.model.SimpleSelectFieldModel}, which the
-	 * {@link ConfigFieldIndex} does not carry. Flagging a mandatory ITEM would therefore refuse
-	 * Apply pointing at nothing the user can fill in - the very trap this rule exists to avoid.
-	 * The polymorphic case still tells the reader that a value is expected: {@link
-	 * PolymorphicItemControl} passes {@link PropertyDescriptor#isMandatory()} on to its type
+	 * its value is {@code null}, as nothing at all, since {@link ConfigEditorControl} builds no
+	 * group for an absent nested item; a polymorphic one renders a {@link PolymorphicItemControl}
+	 * whose type selector is a {@link com.top_logic.layout.form.model.SimpleSelectFieldModel},
+	 * which the {@link ConfigFieldIndex} does not carry. Flagging a mandatory ITEM would therefore
+	 * refuse Apply pointing at nothing the user can fill in - the very trap this rule exists to
+	 * avoid. The polymorphic case still tells the reader that a value is expected:
+	 * {@link PolymorphicItemControl} passes {@link PropertyDescriptor#isMandatory()} on to its type
 	 * selector, so the mandatory marker is on screen even though nothing enforces it here.
 	 * </p>
 	 *

@@ -40,14 +40,13 @@ import com.top_logic.layout.configedit.ConfigFormControl;
 import com.top_logic.layout.configedit.ConfigListEditorControl;
 import com.top_logic.layout.configedit.I18NConstants;
 import com.top_logic.layout.configedit.PolymorphicItemControl;
-import com.top_logic.layout.configedit.PolymorphicOptions;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.CommandModel;
-import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
+import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -327,8 +326,9 @@ public class TestConfigFormControl extends TestCase {
 
 	/**
 	 * Concrete handler config B - a second implementation, so
-	 * {@link PolymorphicOptions.Choices#options()} has more than one entry and the type selector
-	 * is actually rendered (a single-option collection needs no selector to begin with).
+	 * {@link com.top_logic.layout.configedit.PolymorphicOptions.Choices#options()} has more than
+	 * one entry and the type selector is actually rendered (a single-option collection needs no
+	 * selector to begin with).
 	 */
 	public interface HandlerBConfig extends HandlerConfig {
 		// Nothing beyond the base.
@@ -721,6 +721,32 @@ public class TestConfigFormControl extends TestCase {
 	}
 
 	/**
+	 * A form without edit mode writes straight through, but its caller saves what it wrote - and
+	 * refuses over the same findings. So the value is questioned where it is entered there, too.
+	 */
+	public void testAViolationIsShownWithoutEditMode() {
+		MandatoryConfig config = TypedConfiguration.newConfigItem(MandatoryConfig.class);
+		config.setName("given");
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, false);
+
+		fieldOf(form, MandatoryConfig.NAME).setValue(null);
+
+		assertNotNull("Clearing a mandatory value must say so at the field, even without edit mode.",
+			fieldOf(form, MandatoryConfig.NAME).getError());
+	}
+
+	/**
+	 * Opening such a form flags nothing yet, like entering edit mode: a verdict is on what the user
+	 * did.
+	 */
+	public void testWithoutEditModeOpeningFlagsNothing() {
+		MandatoryConfig config = TypedConfiguration.newConfigItem(MandatoryConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, false);
+
+		assertNull("An untouched form must not turn red.", fieldOf(form, MandatoryConfig.NAME).getError());
+	}
+
+	/**
 	 * And it goes away again once the value it was about is corrected, without Apply.
 	 *
 	 * <p>
@@ -1017,9 +1043,9 @@ public class TestConfigFormControl extends TestCase {
 
 	/**
 	 * A violation that did reach its own field says nothing at form level - the field carries it.
-	 * This is what pins {@link com.top_logic.layout.configedit.ConfigValidation#report(java.util.List,
-	 * com.top_logic.layout.configedit.ConfigFieldIndex)}'s answer as actually being read, rather
-	 * than a message shown on every refusal alike.
+	 * This is what pins
+	 * {@link com.top_logic.layout.configedit.ConfigValidation#report(com.top_logic.layout.configedit.ConfigValidation.Findings, com.top_logic.layout.configedit.ConfigFieldIndex)}'s
+	 * answer as actually being read, rather than a message shown on every refusal alike.
 	 */
 	public void testAPlacedViolationIsNotRepeatedAtFormLevel() {
 		MandatoryConfig config = TypedConfiguration.newConfigItem(MandatoryConfig.class);

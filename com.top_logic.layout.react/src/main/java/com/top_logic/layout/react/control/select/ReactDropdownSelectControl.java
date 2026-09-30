@@ -25,6 +25,7 @@ import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
+import com.top_logic.layout.form.model.SelectFieldModel.SelectOptionsListener;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -186,6 +187,11 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		_displayedObjects.observeValue(model.getValue());
 		addAttachListener(() -> _displayedObjects.attach(modelScope()));
 		addDetachListener(_displayedObjects::detach);
+
+		// The options may be computed from other values the user edits alongside this field.
+		SelectOptionsListener optionsListener = (source, newOptions) -> invalidateOptions();
+		addAttachListener(() -> _selectModel.addOptionsListener(optionsListener));
+		addDetachListener(() -> _selectModel.removeOptionsListener(optionsListener));
 	}
 
 	/**

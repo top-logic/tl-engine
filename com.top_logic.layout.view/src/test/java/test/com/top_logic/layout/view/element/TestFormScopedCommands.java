@@ -9,6 +9,7 @@ import java.lang.reflect.Method;
 
 import junit.framework.TestCase;
 
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.view.element.FormElement;
 
@@ -29,11 +30,21 @@ public class TestFormScopedCommands extends TestCase {
 	 * declaring a tooltip, a clique or a presentation of its own loses those. The fallback is
 	 * silent, so the delegation is asserted method by method.
 	 * </p>
+	 *
+	 * <p>
+	 * The one exception is {@link CommandModel#executeCommand(ReactContext)}: it is the check every
+	 * model inherits, which decides by the delegated {@link CommandModel#getExecutableState() state}
+	 * before the wrapper {@link CommandModel#perform(ReactContext) performs} the command.
+	 * </p>
 	 */
-	public void testEveryCommandAccessorIsDelegated() {
+	public void testEveryCommandAccessorIsDelegated() throws NoSuchMethodException {
 		Class<?> wrapper = formCommandWrapper();
+		Method check = CommandModel.class.getMethod("executeCommand", ReactContext.class);
 
 		for (Method accessor : CommandModel.class.getMethods()) {
+			if (accessor.equals(check)) {
+				continue;
+			}
 			try {
 				wrapper.getDeclaredMethod(accessor.getName(), accessor.getParameterTypes());
 			} catch (NoSuchMethodException ex) {

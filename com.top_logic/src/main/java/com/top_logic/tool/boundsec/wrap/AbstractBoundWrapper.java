@@ -9,13 +9,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
-import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.TLID;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.manager.AccessManager;
@@ -81,29 +79,19 @@ public abstract class AbstractBoundWrapper extends AbstractWrapper implements Bo
 		throw new UnsupportedOperationException("Call getSecurityParents()");
 	}
 
-	private BoundObject securityRoot() {
-		BoundHelper boundHelper = BoundHelper.getInstance();
-		if (boundHelper.useDefaultObject()) {
-			BoundObject securityRoot = boundHelper.getDefaultObject();
-			if (securityRoot != this) {
-				return securityRoot;
-			}
-        }
-
-        return null;
-    }
-
+	/**
+	 * The security parents configured for the type of this object.
+	 * 
+	 * <p>
+	 * The security-parent rules of the {@link AccessManager} define the parent set. An object
+	 * whose type has no security-parent rules has no security parent. The global security root
+	 * is a parent only if a rule names it explicitly (the "singleton" security-parent path
+	 * element).
+	 * </p>
+	 */
 	@Override
 	public Collection<? extends BoundObject> getSecurityParents() {
-		Collection<? extends BoundObject> securityParents = AccessManager.getInstance().getSecurityParents(this);
-		if (!securityParents.isEmpty()) {
-			// Explicitly configured security parents take precedence. The global security root is
-			// not added automatically; a type that also wants the root in its parent chain can
-			// configure it explicitly (see the "singleton" security-parent path element).
-			return securityParents;
-		}
-		// No security parents configured: fall back to the global security root, if enabled.
-		return CollectionUtil.singletonOrEmptyList(securityRoot());
+		return AccessManager.getInstance().getSecurityParents(this);
 	}
 
 }

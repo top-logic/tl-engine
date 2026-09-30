@@ -486,6 +486,7 @@
 							input="ticket"
 							with-inset="true"
 						>
+							<field attribute="name"/>
 							<field attribute="status"/>
 						</form>
 						<inset>

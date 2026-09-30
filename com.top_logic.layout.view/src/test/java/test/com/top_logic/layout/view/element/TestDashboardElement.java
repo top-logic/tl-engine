@@ -23,14 +23,17 @@ import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.gui.ThemeFactory;
+import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.layout.ActivateTileArguments;
 import com.top_logic.layout.react.control.layout.ReactDashboardControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
@@ -41,12 +44,16 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.ViewCommand;
+import com.top_logic.layout.view.element.DashboardCommandModel;
 import com.top_logic.layout.view.element.DashboardElement;
 import com.top_logic.layout.view.element.I18NConstants;
 import com.top_logic.layout.view.element.TileElement;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
+import com.top_logic.util.TLContext;
+import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -210,7 +217,7 @@ public class TestDashboardElement extends BasicTestCase {
 
 	/**
 	 * Tests that a refused tile stays refused whatever the client sends: activating it runs
-	 * nothing.
+	 * nothing, and the activation answers with the refusal, which says why.
 	 */
 	public void testActivateWhileRefusedRunsNothing() {
 		ReactDashboardControl dashboard = createDashboard();
@@ -218,8 +225,12 @@ public class TestDashboardElement extends BasicTestCase {
 
 		HandlerResult result = activate(dashboard, OPENING_TILE);
 
-		assertTrue("A refused activation is no error.", result.isSuccess());
 		assertEquals("The command of a refused tile does not run.", List.of(), OpeningCommand.OPENED);
+		assertFalse("The refusal is reported.", result.isSuccess());
+		assertEquals("A refused activation is no malfunction.", ErrorSeverity.WARNING, result.getErrorSeverity());
+		assertEquals(com.top_logic.layout.basic.I18NConstants.ERROR_COMMAND_NOT_EXECUTABLE,
+			result.getErrorTitle());
+		assertNotNull("The refusal says why.", result.getErrorMessage());
 	}
 
 	/**
@@ -239,6 +250,35 @@ public class TestDashboardElement extends BasicTestCase {
 		assertEquals("Content without a title leaves the plain name of opening something.",
 			resources.getString(I18NConstants.TABLE_ACTIVATE_ROW),
 			action(dashboard, UNTITLED_TILE).get(ACTION_LABEL));
+	}
+
+	/**
+	 * Tests that a logged-in user is offered to rearrange the dashboard, and the anonymous session
+	 * is not: all anonymous visitors share one account, which has no personal tile order to store.
+	 */
+	public void testLayoutEditingNeedsAnAccountOfItsOwn() {
+		assertTrue("Precondition: the test runs without a logged-in user.", TLContext.isAnonymous());
+		assertEquals("The anonymous session is offered no layout editing.", List.of(),
+			layoutCommands(new CommandScope(List.of())));
+
+		List<CommandModel> offered = new ArrayList<>();
+		TLContextManager.inRootPersonContext(() -> offered.addAll(layoutCommands(new CommandScope(List.of()))));
+		assertEquals("A logged-in user is offered to edit the layout and to finish editing.", 2, offered.size());
+	}
+
+	/**
+	 * The layout commands a dashboard placed in a command scope contributes to it once displayed.
+	 */
+	private List<CommandModel> layoutCommands(CommandScope scope) {
+		ReactDashboardControl dashboard = createDashboard(_context.withScope(CommandScope.class, scope));
+		dashboard.attach();
+		List<CommandModel> result = new ArrayList<>();
+		for (CommandModel command : scope.getAllCommands()) {
+			if (command instanceof DashboardCommandModel) {
+				result.add(command);
+			}
+		}
+		return result;
 	}
 
 	/** Sends the client's activate command for the tile with the given id. */
@@ -275,6 +315,11 @@ public class TestDashboardElement extends BasicTestCase {
 
 	/** The dashboard of {@code test-dashboard.view.xml}, built in the test context. */
 	private ReactDashboardControl createDashboard() {
+		return createDashboard(_context);
+	}
+
+	/** The dashboard of {@code test-dashboard.view.xml}, built in the given context. */
+	private static ReactDashboardControl createDashboard(ViewContext context) {
 		DefaultInstantiationContext instantiation = new DefaultInstantiationContext(TestDashboardElement.class);
 
 		Map<String, ConfigurationDescriptor> descriptors = Collections.singletonMap(
@@ -295,7 +340,7 @@ public class TestDashboardElement extends BasicTestCase {
 		UIElement element = instantiation.getInstance(config.getContent());
 		assertTrue("The configuration builds a dashboard.", element instanceof DashboardElement);
 
-		return (ReactDashboardControl) element.createControl(_context);
+		return (ReactDashboardControl) element.createControl(context);
 	}
 
 	/**
@@ -304,14 +349,16 @@ public class TestDashboardElement extends BasicTestCase {
 	 * @implNote The command models of the tiles observe the objects their input points to, which
 	 *           needs the {@link com.top_logic.knowledge.service.KnowledgeBase} those objects live
 	 *           in; the icon marking a tile as an entry point is taken from the
-	 *           {@link ThemeFactory}.
+	 *           {@link ThemeFactory}; whether the layout may be edited depends on the account
+	 *           logged in, which the {@link PersonManager} provides.
 	 *
 	 * @see TileElement.Config#getAction()
 	 */
 	public static Test suite() {
 		return KBSetup.getSingleKBTest(TestDashboardElement.class,
 			ServiceTestSetup.createStarterFactoryForModules(
-				TypeIndex.Module.INSTANCE, ThemeFactory.Module.INSTANCE, ModelService.Module.INSTANCE));
+				TypeIndex.Module.INSTANCE, ThemeFactory.Module.INSTANCE, ModelService.Module.INSTANCE,
+				PersonManager.Module.INSTANCE));
 	}
 
 }

@@ -326,8 +326,9 @@ public class ReactDashboardControl extends ReactControl {
 	 * Handles the {@code activate} command the React client sends when the user opens a tile.
 	 *
 	 * <p>
-	 * The tile's action decides for itself: an activation of a tile without one, of an unknown
-	 * tile, or of a tile whose command currently refuses to run does nothing.
+	 * The tile's command runs through {@link CommandModel#executeCommand(ReactContext)}: a command
+	 * that currently refuses to run is not executed, and its refusal is the result of the
+	 * activation. An activation of a tile without an action, or of an unknown tile, does nothing.
 	 * </p>
 	 *
 	 * @param args
@@ -345,11 +346,7 @@ public class ReactDashboardControl extends ReactControl {
 			if (action == null) {
 				return HandlerResult.DEFAULT_RESULT;
 			}
-			CommandModel model = action.model();
-			if (!model.isVisible() || !model.isExecutable()) {
-				return HandlerResult.DEFAULT_RESULT;
-			}
-			return model.executeCommand(getReactContext());
+			return action.model().executeCommand(getReactContext());
 		}
 		return HandlerResult.DEFAULT_RESULT;
 	}

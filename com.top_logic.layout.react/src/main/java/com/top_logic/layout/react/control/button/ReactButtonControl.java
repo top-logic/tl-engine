@@ -8,12 +8,12 @@ package com.top_logic.layout.react.control.button;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.layout.basic.ThemeImage;
-import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * A {@link ReactControl} that renders a button via the {@code TLButton} React component.
@@ -349,19 +349,48 @@ public class ReactButtonControl extends ReactControl {
 	 * </p>
 	 *
 	 * <p>
-	 * Where there is a {@link CommandModel}, it decides as well; a model that grants execution
-	 * unconditionally keeps its behavior.
+	 * A button backed by a {@link CommandModel} runs the command through
+	 * {@link CommandModel#executeCommand(ReactContext)}, which refuses the command on its own when
+	 * its rules do not grant execution.
 	 * </p>
+	 *
+	 * @return The result of the button's action, or a {@link HandlerResult#notExecutable(ExecutableState)
+	 *         refusal} if the button is not offered.
 	 */
 	@ReactCommandHandler(CMD_CLICK)
 	HandlerResult handleClick(ReactContext context) {
-		if (isHidden() || Boolean.TRUE.equals(getState(DISABLED))) {
-			return HandlerResult.error(I18NConstants.ERROR_COMMAND_NOT_EXECUTABLE);
-		}
-		if (_model != null && (!_model.isVisible() || !_model.isExecutable())) {
-			return HandlerResult.error(I18NConstants.ERROR_COMMAND_NOT_EXECUTABLE);
+		ExecutableState offered = getOfferedState();
+		if (!offered.isExecutable()) {
+			return HandlerResult.notExecutable(offered);
 		}
 		return _action.execute(context);
+	}
+
+	/**
+	 * Whether this button is offered to the user, and if not, why.
+	 *
+	 * <p>
+	 * {@link ExecutableState#EXECUTABLE} while the button is displayed and enabled. A hidden or
+	 * disabled button reports the {@link CommandModel#getExecutableState() state} of its
+	 * {@link CommandModel}, if that refuses the command: the button is then hidden or disabled for
+	 * the reason the command's rules gave, which is what the user is told. A button hidden or
+	 * disabled on its own account reports the generic {@link ExecutableState#NOT_EXEC_HIDDEN} or
+	 * {@link ExecutableState#NOT_EXEC_DISABLED}.
+	 * </p>
+	 */
+	protected final ExecutableState getOfferedState() {
+		boolean hidden = isHidden();
+		boolean disabled = Boolean.TRUE.equals(getState(DISABLED));
+		if (!hidden && !disabled) {
+			return ExecutableState.EXECUTABLE;
+		}
+		if (_model != null) {
+			ExecutableState modelState = _model.getExecutableState();
+			if (!modelState.isExecutable()) {
+				return modelState;
+			}
+		}
+		return hidden ? ExecutableState.NOT_EXEC_HIDDEN : ExecutableState.NOT_EXEC_DISABLED;
 	}
 
 	/**

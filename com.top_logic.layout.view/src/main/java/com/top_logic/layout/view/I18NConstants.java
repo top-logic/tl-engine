@@ -16,22 +16,22 @@ import com.top_logic.layout.I18NConstantsBase;
 public class I18NConstants extends I18NConstantsBase {
 
 	/**
-	 * @en Edit.
+	 * @en Edit
 	 */
 	public static ResKey FORM_EDIT;
 
 	/**
-	 * @en Apply.
+	 * @en Apply
 	 */
 	public static ResKey FORM_APPLY;
 
 	/**
-	 * @en Save.
+	 * @en Save
 	 */
 	public static ResKey FORM_SAVE;
 
 	/**
-	 * @en Cancel.
+	 * @en Cancel
 	 */
 	public static ResKey FORM_CANCEL;
 
@@ -64,11 +64,6 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en {0} / {1}
 	 */
 	public static ResKey2 EMBEDDED_COLUMN_LABEL__PREFIX_COLUMN;
-
-	/**
-	 * @en The form command is currently not executable.
-	 */
-	public static ResKey ERROR_FORM_COMMAND_NOT_EXECUTABLE;
 
 	/**
 	 * @en Cannot save view "{0}": no writable IDE file found.

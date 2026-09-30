@@ -52,6 +52,13 @@ public class AttributeFieldModel extends BoundFieldModel {
 		_object.tUpdate(_part, value);
 	}
 
+	@Override
+	protected void discardWrittenValue() {
+		if (_object instanceof TLObjectOverlay overlay) {
+			overlay.revert(_part);
+		}
+	}
+
 	/**
 	 * Rebinds this model to a different object.
 	 *

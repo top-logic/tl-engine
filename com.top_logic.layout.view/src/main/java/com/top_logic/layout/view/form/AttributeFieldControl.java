@@ -345,6 +345,13 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	}
 
 	@Override
+	public void onObjectChanged() {
+		if (_model != null) {
+			_model.followObject();
+		}
+	}
+
+	@Override
 	public void cancel() {
 		// No-op: FormControl discards the overlay, model rebinds on form state change.
 	}

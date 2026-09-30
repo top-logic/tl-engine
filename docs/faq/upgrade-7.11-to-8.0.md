@@ -303,9 +303,17 @@ an executor with security disabled (phase 6.2).
 </config>
 ```
 
-Behaviour change: once parents are configured for a type, the global security root is **no longer
-added automatically**; name it explicitly (`<singleton module="SecurityStructure"/>`) or roles granted
-on the root stop being inherited. `<security-parents>` rules accept only `id`, `meta-element`,
+Behaviour change: the global security root is **never a security parent implicitly** -- neither in
+addition to configured parents nor as a fallback for types without rules. A type without a
+security-parent rule has no security parent at all. Name the root explicitly
+(`<singleton module="SecurityStructure"/>`, with `inherit="true"` on a common base type or per type) for
+every type whose instances inherit roles from it, or roles granted on the root stop being inherited.
+
+The `BoundHelper` option `use-default-security-parent` is removed (#29678). An application that set it
+to `true` deletes the attribute from its `BoundHelper` configuration (an unknown attribute is a startup
+error) and adds the `<singleton module="SecurityStructure"/>` rules described above instead.
+
+`<security-parents>` rules accept only `id`, `meta-element`,
 `inherit` and the path (#29447); `role`, `source-role`, `type`, `resource-key` are rejected.
 
 ### 3.7 Run the migration tool, then normalize
@@ -478,6 +486,7 @@ The ~2000 other removed lines in the diff are the UTF-8 re-encoding of `_de` bun
 | 7.11 | 8.0 replacement | Ticket |
 |---|---|---|
 | `AbstractBoundWrapper#getSecurityParent()` override | `getSecurityParents()` or configured `<security-parents>` (3.6) | #29088 |
+| `BoundHelper#useDefaultObject()`, `BoundHelper.Config#getUseDefaultSecurityParent()` | removed; the security root is a parent only via a configured `<singleton module="SecurityStructure"/>` rule (3.6) | #29678 |
 | `RuntimeModule`, `ConfiguredRuntimeModule`, `MultiRuntimeModule`, `RuntimeModuleProxy`, `ServiceManager`; `ManagedClass(Properties)` / `(IterableConfiguration)` ctors | `ConfiguredManagedClass<Config>` + `TypedRuntimeModule` + `@ServiceDependencies`; the properties `<section>` becomes a typed `<config service-class=...>` | #29088 |
 | `DataManager()`, `FileSystemCache()`, `FlexDataManagerFactory()`, `InitialDataSetupService()`, `CommandApprovalService()` no-arg/`Properties` ctors | `(InstantiationContext, Config)` | #29088 |
 | `LegacyFlexWrapper`, `StoredFlexWrapper` | `com.top_logic.element.meta.kbbased.AttributedWrapper`; `MapBasedPersistancySupport.getObjects(KnowledgeItem)` / `setObjects(Collection, KnowledgeItem)` | #28710 |

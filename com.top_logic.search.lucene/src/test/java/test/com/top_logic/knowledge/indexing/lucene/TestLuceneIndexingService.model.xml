@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model>
+	<module name="test.com.top_logic.knowledge.indexing.lucene.TestLuceneIndexingService">
+		<class name="Doc">
+			<annotations>
+				<table name="GenericObject"/>
+			</annotations>
+			<attributes>
+				<property name="name"
+					type="tl.core:String"
+				/>
+				<property name="title"
+					type="tl.model.i18n:I18NString"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

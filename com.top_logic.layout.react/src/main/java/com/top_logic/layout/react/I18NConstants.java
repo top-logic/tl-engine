@@ -905,6 +905,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_DROP_UNRESOLVED__OBJECTS;
 
 	/**
+	 * @en Cannot drop: the dragged rows include one that cannot be dragged.
+	 */
+	public static ResKey ERROR_DROP_NOT_DRAGGABLE;
+
+	/**
 	 * @en Assertion at ''{0}'' failed: mismatching state keys {1}
 	 */
 	public static ResKey2 ERROR_ASSERTION_FAILED__ADDRESS_KEYS;

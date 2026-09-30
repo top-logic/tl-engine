@@ -148,6 +148,11 @@ public abstract class InlineCollectionStorage<C extends InlineCollectionStorage.
 	}
 
 	@Override
+	public String getBaseObjectColumn() {
+		return getConfig().getContainerColumn();
+	}
+
+	@Override
 	public String getStorageColumn() {
 		return getConfig().getContainerColumn();
 	}

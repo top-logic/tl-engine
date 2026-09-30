@@ -5,10 +5,12 @@
  */
 package test.com.top_logic.layout.view.table;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -16,17 +18,22 @@ import junit.framework.TestCase;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.dnd.DropArguments;
+import com.top_logic.layout.react.control.dnd.DropEvent;
 import com.top_logic.layout.react.control.dnd.DropPosition;
+import com.top_logic.layout.react.control.dnd.DropVerdict;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.command.ViewAction;
+import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.layout.view.table.DropTargetMode;
 import com.top_logic.layout.view.table.TableDropBinding;
 import com.top_logic.table.Column;
@@ -34,6 +41,7 @@ import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * Tests the drop target a declared table's {@code <drop>}s produce: which type tags it accepts,
@@ -239,6 +247,130 @@ public class TestTableDropBinding extends TestCase {
 		assertTrue(target.executeClientCommand("drop", arguments).isSuccess());
 
 		assertEquals(List.of(SOURCE_ROWS.get(0)), _onTable._input);
+	}
+
+	/** The reason the test rules refuse with. */
+	private static final ResKey REASON = ResKey.text("Not here.");
+
+	/**
+	 * A drop whose table-wide state refuses is not announced - its tags and its row targeting drop
+	 * out - and is refused with the state's reason; it is offered again as soon as the state allows.
+	 */
+	public void testTableWideRefusalRemovesTheDrop() {
+		ExecutableState[] state = { ExecutableState.createDisabledState(REASON) };
+		TableDropBinding.Drop restricted = new TableDropBinding.Drop(Set.of(ROW_TYPE), DropTargetMode.ROW,
+			_targetChannel, List.of(_onRow), () -> state[0], ViewExecutabilityRule.ALWAYS_EXECUTABLE, null);
+		TableDropBinding binding = new TableDropBinding(_context, List.of(restricted, tableDrop(OTHER_TYPE, _onTable)));
+
+		assertEquals("A disabled drop contributes no tag.", Set.of(OTHER_TYPE), Set.copyOf(binding.acceptedTypes()));
+		assertFalse("A disabled row drop makes no row a target.", binding.dropOnRows());
+		assertRefused(REASON, binding.check(event(TARGET_ROWS.get(0))));
+
+		state[0] = ExecutableState.NOT_EXEC_HIDDEN;
+		assertRefused(I18NConstants.ERROR_DROP_REFUSED, binding.check(event(TARGET_ROWS.get(0))));
+
+		state[0] = ExecutableState.EXECUTABLE;
+		assertEquals(Set.of(ROW_TYPE, OTHER_TYPE), Set.copyOf(binding.acceptedTypes()));
+		assertTrue(binding.dropOnRows());
+		assertTrue(binding.check(event(TARGET_ROWS.get(0))).isAccepted());
+	}
+
+	/**
+	 * The target rule of a row drop refuses a single row with its reason, and a drop made there
+	 * anyway runs nothing and publishes no target.
+	 */
+	public void testTargetRuleRefusesARow() {
+		String refusedRow = TARGET_ROWS.get(1);
+		ViewExecutabilityRule targetRule = row -> refusedRow.equals(row)
+			? ExecutableState.createDisabledState(REASON) : ExecutableState.EXECUTABLE;
+		TableDropBinding.Drop restricted = new TableDropBinding.Drop(Set.of(ROW_TYPE), DropTargetMode.ROW,
+			_targetChannel, List.of(_onRow), () -> ExecutableState.EXECUTABLE, targetRule, null);
+		TableDropBinding binding = new TableDropBinding(_context, List.of(restricted));
+		TableViewControl<String> target = newTable(TARGET_ROWS);
+		target.setDropTarget(binding);
+
+		assertTrue(binding.check(event(TARGET_ROWS.get(0))).isAccepted());
+		assertRefused(REASON, binding.check(event(refusedRow)));
+
+		HandlerResult result = drop(target, 0, 1);
+		assertFalse("A drop on a refused row must fail.", result.isSuccess());
+		assertFalse("A refused drop runs no chain.", _onRow._executed);
+		assertNull("A refused drop publishes no target.", _targetChannel.get());
+
+		assertTrue(drop(target, 0, 0).isSuccess());
+		assertTrue(_onRow._executed);
+	}
+
+	/**
+	 * The refusal function is interpreted like a {@code disabled-if}: no value and {@code false}
+	 * accept, {@code true} refuses with the generic reason, a text refuses with that text. It is
+	 * called with the target row and the dragged objects.
+	 */
+	public void testRefuseIf() {
+		Object[] result = new Object[1];
+		List<Object> seen = new ArrayList<>();
+		BiFunction<Object, List<?>, Object> refuseIf = (target, objects) -> {
+			seen.add(target);
+			seen.add(objects);
+			return result[0];
+		};
+		TableDropBinding binding = new TableDropBinding(_context, List.of(new TableDropBinding.Drop(
+			Set.of(ROW_TYPE), DropTargetMode.ROW, _targetChannel, List.of(_onRow),
+			() -> ExecutableState.EXECUTABLE, ViewExecutabilityRule.ALWAYS_EXECUTABLE, refuseIf)));
+
+		result[0] = null;
+		assertTrue("No value accepts.", binding.check(event(TARGET_ROWS.get(1))).isAccepted());
+		assertEquals("The function gets the target row and the dragged objects.",
+			List.of(TARGET_ROWS.get(1), List.of(SOURCE_ROWS.get(0))), seen);
+
+		result[0] = Boolean.FALSE;
+		assertTrue("False accepts.", binding.check(event(TARGET_ROWS.get(1))).isAccepted());
+
+		result[0] = Boolean.TRUE;
+		assertRefused(I18NConstants.ERROR_DROP_REFUSED, binding.check(event(TARGET_ROWS.get(1))));
+
+		result[0] = "Not here.";
+		assertRefused(REASON, binding.check(event(TARGET_ROWS.get(1))));
+		assertNull("A check writes no target channel.", _targetChannel.get());
+	}
+
+	/**
+	 * A drag no declared drop matches is refused with the generic reason.
+	 */
+	public void testNoMatchIsRefused() {
+		TableDropBinding binding = new TableDropBinding(_context, List.of(tableDrop(OTHER_TYPE, _onTable)));
+
+		assertRefused(com.top_logic.layout.react.I18NConstants.ERROR_DROP_NOT_ACCEPTED, binding.check(event(null)));
+	}
+
+	/**
+	 * Applying a drop passes over a disabled declared drop - to the next matching one, or to none.
+	 */
+	public void testOnDropSkipsDisabledDrops() {
+		TableDropBinding.Drop disabled = new TableDropBinding.Drop(Set.of(ROW_TYPE), DropTargetMode.TABLE, null,
+			List.of(_onRow), () -> ExecutableState.createDisabledState(REASON),
+			ViewExecutabilityRule.ALWAYS_EXECUTABLE, null);
+
+		new TableDropBinding(_context, List.of(disabled)).onDrop(event(null));
+		assertFalse("A disabled drop applies nothing.", _onRow._executed);
+
+		new TableDropBinding(_context, List.of(disabled, tableDrop(ROW_TYPE, _onTable))).onDrop(event(null));
+		assertFalse(_onRow._executed);
+		assertTrue("The next matching drop applies.", _onTable._executed);
+	}
+
+	/**
+	 * A drop of the source table's first row, on the given row of a target table, or on the table
+	 * itself for {@code null}.
+	 */
+	private DropEvent event(String targetRow) {
+		return new DropEvent(_source, List.of(SOURCE_ROWS.get(0)), targetRow,
+			targetRow == null ? DropPosition.NONE : DropPosition.ONTO);
+	}
+
+	private static void assertRefused(ResKey expectedReason, DropVerdict verdict) {
+		assertFalse("The drop must be refused.", verdict.isAccepted());
+		assertEquals(expectedReason, verdict.reason());
 	}
 
 	/**

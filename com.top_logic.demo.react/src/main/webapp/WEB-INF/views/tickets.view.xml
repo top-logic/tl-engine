@@ -194,6 +194,12 @@
 									<en>Generate samples</en>
 									<de>Beispiele erzeugen</de>
 								</label>
+								<executability>
+									<model-access
+										operation="Create"
+										type="demo.tickets:Ticket"
+									/>
+								</executability>
 								<with-transaction>
 									<execute-script function="x -> { areas = ['Login', 'Export', 'Layout', 'Import']; other = all(`tl.accounts:Person`).filter(p -> $p != currentUser()).firstElement(); count(8).foreach(i -> { t = new(`demo.tickets:Ticket`, transient: false); $t.set(`demo.tickets:Ticket#name`, $areas[$i % 4] + ' ' + ($i + 1)); $t.set(`demo.tickets:Ticket#status`, if($i % 4 == 3, `demo.tickets:TicketStatus#closed`, `demo.tickets:TicketStatus#open`)); count($i % 3).foreach(j -> { c = new(`demo.tickets:Comment`, $t); $c.set(`demo.tickets:Comment#content`, 'Comment ' + ($j + 1) + '.'); $c.set(`demo.tickets:Comment#author`, if($i % 2 == 0, currentUser(), $other)); $c.set(`demo.tickets:Comment#date`, now()); $t.add(`demo.tickets:Ticket#comments`, $c); }); $t; }); }"/>
 								</with-transaction>
@@ -206,7 +212,7 @@
 									<en>New</en>
 									<de>Neu</de>
 								</label>
-								<execute-script function="x -> new(`demo.tickets:Ticket`, transient: true)"/>
+								<create-transient type="demo.tickets:Ticket"/>
 								<open-dialog
 									bind-input-to="model"
 									dialog-view="tickets-create.view.xml"
@@ -230,9 +236,7 @@
 									<null-input-disabled/>
 									<disabled-if expr="t -> if($t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`, #('Closed tickets cannot be deleted.'@en, 'Geschlossene Tickets können nicht gelöscht werden.'@de), null)"/>
 								</executability>
-								<with-transaction>
-									<execute-script function="obj -> { if($obj != null, $obj.delete(), null); null; }"/>
-								</with-transaction>
+								<delete-object/>
 								<write-channel name="ticket"/>
 							</generic-command>
 							<generic-command name="closeTicket"

@@ -27,14 +27,15 @@
 		</config>
 		<!--
 			The roles of this application: the administrator role that may open the administration
-			area, granted in security.xml, and the account reader role that makes accounts and
-			groups visible, granted by the role rules below.
+			area, granted in security.xml, and the account reader and project member roles that the
+			role rules below give to the members of the "users" group.
 		-->
 		<config service-class="com.top_logic.base.services.InitialRolesManager">
 			<instance>
 				<roles>
 					<role name="demo.react.Administrator"/>
 					<role name="demo.react.AccountReader"/>
+					<role name="demo.react.ProjectMember"/>
 				</roles>
 			</instance>
 		</config>
@@ -87,6 +88,92 @@
 							roles="demo.react.AccountReader"
 						/>
 					</class>
+					<!--
+						A project member - every member of the "users" group, by the role rules
+						below - works in the projects without owning them: they read the projects,
+						their milestones, notes, tickets and contributors, and the tickets of the
+						ticket demo; they create, edit and delete milestones and notes, and write
+						a project, which is what adding a milestone or a note to its composition
+						takes. They neither create nor delete a project.
+						
+						The views follow these rights: for a user of the "users" group, "New
+						Project" is not offered at all, since a top-level creation is decided
+						against the security root, where the user holds no role; "Delete" of a
+						project is offered but disabled with the reason, since the administrator
+						role may delete a project and the user does not hold it on that project;
+						"New Milestone", "New Note" and the deletion of a milestone work. The
+						ticket demo shows its tickets, but neither creates nor deletes one.
+					-->
+					<module name="tl.demo.projectManagement">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="demo.react.ProjectMember, demo.react.Administrator"
+						/>
+						<grant
+							inherit="true"
+							operation="Write"
+							roles="demo.react.Administrator"
+						/>
+						<grant
+							inherit="true"
+							operation="Create"
+							roles="demo.react.Administrator"
+						/>
+						<grant
+							inherit="true"
+							operation="Delete"
+							roles="demo.react.Administrator"
+						/>
+					</module>
+					<class name="tl.demo.projectManagement:ProjectScope">
+						<grant
+							inherit="true"
+							operation="Write"
+							roles="demo.react.ProjectMember"
+						/>
+					</class>
+					<class name="tl.demo.projectManagement:Milestone">
+						<grant
+							inherit="true"
+							operation="Create"
+							roles="demo.react.ProjectMember"
+						/>
+						<grant
+							inherit="true"
+							operation="Write"
+							roles="demo.react.ProjectMember"
+						/>
+						<grant
+							inherit="true"
+							operation="Delete"
+							roles="demo.react.ProjectMember"
+						/>
+					</class>
+					<class name="tl.demo.projectManagement:Note">
+						<grant
+							inherit="true"
+							operation="Create"
+							roles="demo.react.ProjectMember"
+						/>
+						<grant
+							inherit="true"
+							operation="Write"
+							roles="demo.react.ProjectMember"
+						/>
+						<grant
+							inherit="true"
+							operation="Delete"
+							roles="demo.react.ProjectMember"
+						/>
+					</class>
+					<module name="demo.tickets">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="demo.react.ProjectMember"
+						/>
+					</module>
 				</security-config>
 			</instance>
 		</config>
@@ -105,6 +192,67 @@
 							inherit="true"
 							meta-element="tl.accounts:Group"
 							role="demo.react.AccountReader"
+						>
+							<group-with-name name="users"/>
+						</rule>
+						<!--
+							Every member of the "users" group is a project member on every object of
+							the project management and the ticket demo, so the grants above decide
+							what the user may do with them.
+						-->
+						<rule id="ProjectsOfUsers"
+							inherit="true"
+							meta-element="tl.demo.projectManagement:ProjectScope"
+							role="demo.react.ProjectMember"
+						>
+							<group-with-name name="users"/>
+						</rule>
+						<rule id="MilestonesOfUsers"
+							inherit="true"
+							meta-element="tl.demo.projectManagement:Milestone"
+							role="demo.react.ProjectMember"
+						>
+							<group-with-name name="users"/>
+						</rule>
+						<rule id="NotesOfUsers"
+							inherit="true"
+							meta-element="tl.demo.projectManagement:Note"
+							role="demo.react.ProjectMember"
+						>
+							<group-with-name name="users"/>
+						</rule>
+						<rule id="ProjectTicketsOfUsers"
+							inherit="true"
+							meta-element="tl.demo.projectManagement:Ticket"
+							role="demo.react.ProjectMember"
+						>
+							<group-with-name name="users"/>
+						</rule>
+						<rule id="ContributorsOfUsers"
+							inherit="true"
+							meta-element="tl.demo.projectManagement:Contributor"
+							role="demo.react.ProjectMember"
+						>
+							<group-with-name name="users"/>
+						</rule>
+						<rule id="TicketsOfUsers"
+							inherit="true"
+							meta-element="demo.tickets:Ticket"
+							role="demo.react.ProjectMember"
+						>
+							<group-with-name name="users"/>
+						</rule>
+						<rule id="CommentsOfUsers"
+							inherit="true"
+							meta-element="demo.tickets:Comment"
+							role="demo.react.ProjectMember"
+						>
+							<group-with-name name="users"/>
+						</rule>
+						<rule id="AttachmentsOfUsers"
+							inherit="true"
+							meta-element="demo.tickets:Attachment"
+							role="demo.react.ProjectMember"
 						>
 							<group-with-name name="users"/>
 						</rule>

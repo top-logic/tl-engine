@@ -53,6 +53,7 @@ import com.top_logic.knowledge.search.OrderSpec;
 import com.top_logic.knowledge.search.OrderTuple;
 import com.top_logic.knowledge.search.OrderVisitor;
 import com.top_logic.knowledge.search.RangeParam;
+import com.top_logic.knowledge.search.RevisionParam;
 import com.top_logic.knowledge.search.RevisionQuery;
 import com.top_logic.knowledge.search.SetExpression;
 import com.top_logic.knowledge.search.SetExpressionVisitor;
@@ -102,6 +103,18 @@ public class SQLBuilder implements SymbolVisitor<SQLExpression, Symbol>, OrderVi
 
 	/** Synthetic parameter later filled with the history context of the request. */
 	public static final String HISTORY_CONTEXT_PARAM = "_historyContext";
+
+	/**
+	 * Synthetic parameter later filled with the first revision (inclusive) a
+	 * {@link RevisionParam#range} {@link HistoryQuery} searches.
+	 */
+	public static final String START_REVISION_PARAM = "_startRevision";
+
+	/**
+	 * Synthetic parameter later filled with the last revision (exclusive) a
+	 * {@link RevisionParam#range} {@link HistoryQuery} searches.
+	 */
+	public static final String STOP_REVISION_PARAM = "_stopRevision";
 
 	static final Void none = null;
 
@@ -391,12 +404,17 @@ public class SQLBuilder implements SymbolVisitor<SQLExpression, Symbol>, OrderVi
 	public static List<HistorySearch> createHistorySearches(TypeSystem typeSystem, HistoryQuery monomorphicQuery) {
 		addParameter(monomorphicQuery, REQUESTED_REVISION_PARAM);
 		addParameter(monomorphicQuery, HISTORY_CONTEXT_PARAM);
+		boolean revisionRange = monomorphicQuery.getRevisionParam() == RevisionParam.range;
+		if (revisionRange) {
+			addParameter(monomorphicQuery, START_REVISION_PARAM);
+			addParameter(monomorphicQuery, STOP_REVISION_PARAM);
+		}
 
 		List<SetExpression> exprs = UnionDecomposition.decomposeUnions(monomorphicQuery.getSearch());
 		boolean needsBranchCheck = needsBranchCheck(monomorphicQuery.getBranchParam());
 		ArrayList<HistorySearch> searches = new ArrayList<>();
 		for (SetExpression subExpr : exprs) {
-			searches.add(SQLBuilder.createHistorySearch(typeSystem, needsBranchCheck, subExpr));
+			searches.add(SQLBuilder.createHistorySearch(typeSystem, needsBranchCheck, revisionRange, subExpr));
 		}
 		return searches;
 	}
@@ -417,7 +435,8 @@ public class SQLBuilder implements SymbolVisitor<SQLExpression, Symbol>, OrderVi
 	}
 	
 	@SuppressWarnings("unused")
-	private static HistorySearch createHistorySearch(TypeSystem typeSystem, boolean needsBranchCheck, SetExpression expr) {
+	private static HistorySearch createHistorySearch(TypeSystem typeSystem, boolean needsBranchCheck,
+			boolean revisionRange, SetExpression expr) {
 		
 		NoNotInSet.checkNoNotInSet(expr);
 		NoMixedReferences.checkNoMixedReferences(expr);
@@ -480,6 +499,10 @@ public class SQLBuilder implements SymbolVisitor<SQLExpression, Symbol>, OrderVi
 			columns.add(columnDef(notNullColumn(info.getTableAlias(), info.getRevMaxColumn()), null));
 		}
 	
+		if (revisionRange) {
+			where = and(where, revisionRangeCondition(tableInfos));
+		}
+
 		// Add oracle columns that report the truth of all subexpressions
 		// under OR nodes in the WHERE clause.
 		final int oracleExpressionColumnOffset = columns.size();
@@ -491,6 +514,34 @@ public class SQLBuilder implements SymbolVisitor<SQLExpression, Symbol>, OrderVi
 		SQLSelect select = select(true, columns, join, where, new ArrayList<>());
 		
 		return new HistorySearch(select, objectIdReader, lifePeriodReader);
+	}
+
+	/**
+	 * Condition that the life period of a result row intersects the requested revision range.
+	 * 
+	 * <p>
+	 * The life period of a result row is the intersection of the life periods of all given
+	 * tables. The join conditions ensure that these life periods intersect pairwise. Therefore the
+	 * life period of the row intersects the requested range, iff the life period of each table
+	 * intersects it.
+	 * </p>
+	 * 
+	 * @see #START_REVISION_PARAM
+	 * @see #STOP_REVISION_PARAM
+	 */
+	private static SQLExpression revisionRangeCondition(Collection<TableInfo> tableInfos) {
+		SQLExpression startRevision = parameter(DBType.LONG, START_REVISION_PARAM);
+		SQLExpression stopRevision = parameter(DBType.LONG, STOP_REVISION_PARAM);
+		SQLExpression result = SQLBoolean.TRUE;
+		for (TableInfo info : tableInfos) {
+			// Revision columns are null, if the table is the right part of a left join without
+			// match, see RowLifePeriod.
+			SQLExpression revMin = column(info.getTableAlias(), info.getRevMinColumn());
+			SQLExpression revMax = column(info.getTableAlias(), info.getRevMaxColumn());
+			result = and(result, or(isNull(revMin), lt(revMin, stopRevision)));
+			result = and(result, or(isNull(revMax), ge(revMax, startRevision)));
+		}
+		return result;
 	}
 
 	private static long addBranchColumn(ItemSymbol resultSym, List<SQLColumnDefinition> columns) {

@@ -317,25 +317,33 @@ class MethodBasedPropertyDescriptor extends PropertyDescriptorImpl implements Pr
 		if (getter != null) {
 			Class<?>[] parameterTypes = getter.getParameterTypes();
 			int parameterCount = parameterTypes.length;
-			if (parameterCount == 0) {
-				if (hasContainerAnnotation()) {
-					getDescriptor().addImplementation(getter, ContainerGetter.INSTANCE);
-				} else {
-					getDescriptor().addImplementation(getter, SimpleGetter.INSTANCE);
+			switch (parameterCount) {
+				case 0: {
+					if (hasContainerAnnotation()) {
+						getDescriptor().addImplementation(getter, ContainerGetter.INSTANCE);
+					} else {
+						getDescriptor().addImplementation(getter, SimpleGetter.INSTANCE);
+					}
+					break;
 				}
-			} else if (parameterCount == 1) {
-				// Check indexed property.
-				if (parameterTypes[0] != int.class) {
-					error(protocol, "Has getter with illegal argument type '" + parameterTypes[0]
-						+ "' (expecting int for an indexed getter).");
-				} else {
-					setIndexed(true);
+				case 1: {
+					// Check indexed property.
+					if (parameterTypes[0] != int.class) {
+						error(protocol, "Has getter with illegal argument type '" + parameterTypes[0]
+							+ "' (expecting int for an indexed getter).");
+					} else {
+						setIndexed(true);
 
-					getDescriptor().addImplementation(getter, IndexedGetter.INSTANCE);
+						getDescriptor().addImplementation(getter, IndexedGetter.INSTANCE);
+					}
+					break;
 				}
-			} else if (parameterCount > 1) {
-				error(protocol,
-					"Has getter with multiple parameters, expecting at least one for an indexed getter.");
+				default: {
+					assert parameterCount > 1;
+					error(protocol,
+						"Has getter with too many parameters, expecting at most one for an indexed getter.");
+					break;
+				}
 			}
 
 			// Check return type.

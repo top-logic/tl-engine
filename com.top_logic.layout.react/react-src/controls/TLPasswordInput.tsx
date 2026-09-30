@@ -1,7 +1,6 @@
 import { React, useTLState, useTLFieldValue, rootClassName, VALUE_DEBOUNCE_MS, tooltipProps, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
 import type { TLCellProps, PasswordInputStateJson } from 'tl-react-bridge';
 import { fieldStateAttrs } from './form/fieldState';
-import type { DisabledFieldState } from './form/fieldState';
 import { FieldValue } from './form/FieldValue';
 
 const { useCallback } = React;
@@ -14,7 +13,7 @@ const { useCallback } = React;
  * state.debounceMs names the span the value is held back, defaulting to VALUE_DEBOUNCE_MS.
  */
 const TLPasswordInput: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState<Partial<PasswordInputStateJson> & DisabledFieldState>();
+  const state = useTLState<Partial<PasswordInputStateJson>>();
   const inputId = fieldInputId(controlId);
   const labelProps = useFieldLabelProps(controlId, inputId);
   const [value, setValue, flushValue] = useTLFieldValue({

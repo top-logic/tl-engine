@@ -1,7 +1,6 @@
 import { React, useTLState, useTLFieldValue, rootClassName, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
 import type { TLCellProps, SelectStateJson } from 'tl-react-bridge';
 import { fieldStateAttrs } from './form/fieldState';
-import type { DisabledFieldState } from './form/fieldState';
 import { FieldValue } from './form/FieldValue';
 
 const { useCallback } = React;
@@ -15,7 +14,7 @@ interface SelectOption {
  * A select dropdown rendered via React.
  */
 const TLSelect: React.FC<TLCellProps> = ({ controlId, config }) => {
-  const state = useTLState<Partial<SelectStateJson> & DisabledFieldState>();
+  const state = useTLState<Partial<SelectStateJson>>();
   const inputId = fieldInputId(controlId);
   const labelProps = useFieldLabelProps(controlId, inputId);
   const [value, setValue] = useTLFieldValue();

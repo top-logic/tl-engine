@@ -11,7 +11,6 @@ import {
 } from 'tl-react-bridge';
 import type { TLCellProps, NumberInputStateJson } from 'tl-react-bridge';
 import { fieldStateAttrs } from './form/fieldState';
-import type { DisabledFieldState } from './form/fieldState';
 import { FieldValue } from './form/FieldValue';
 
 const { useCallback } = React;
@@ -43,7 +42,7 @@ const { useCallback } = React;
  * it, so the span matters here only where the server turns the blur behaviour off.
  */
 const TLNumberInput: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState<Partial<NumberInputStateJson> & DisabledFieldState>();
+  const state = useTLState<Partial<NumberInputStateJson>>();
   const inputId = fieldInputId(controlId);
   const labelProps = useFieldLabelProps(controlId, inputId);
   const [value, setValue, flushValue] = useTLFieldValue({

@@ -107,6 +107,9 @@ public interface NumberInputState extends com.top_logic.layout.react.state.Typin
 	com.top_logic.layout.react.state.NumberInputState setEditable(boolean value);
 
 	@Override
+	com.top_logic.layout.react.state.NumberInputState setDisabled(boolean value);
+
+	@Override
 	com.top_logic.layout.react.state.NumberInputState setMandatory(boolean value);
 
 	@Override

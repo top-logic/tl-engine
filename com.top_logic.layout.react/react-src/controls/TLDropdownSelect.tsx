@@ -11,7 +11,6 @@ import type { OptionDescriptor } from './selectOptions';
 import { pillClassName } from './pill/TLPill';
 import { ProgressBar } from './TLProgress';
 import { fieldStateAttrs } from './form/fieldState';
-import type { DisabledFieldState } from './form/fieldState';
 
 const { useState, useCallback, useRef, useEffect, useMemo } = React;
 
@@ -155,7 +154,7 @@ function OptionRow({
  * field that is not editable shows its values in `tl-select__values`.
  */
 const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState<Partial<DropdownSelectStateJson> & DisabledFieldState>();
+  const state = useTLState<Partial<DropdownSelectStateJson>>();
   const labelProps = useFieldLabelProps(controlId, controlId);
   const sendCommand = useTLCommand();
 

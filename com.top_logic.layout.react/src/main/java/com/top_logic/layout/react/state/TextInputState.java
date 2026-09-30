@@ -170,6 +170,9 @@ public interface TextInputState extends com.top_logic.layout.react.state.TypingF
 	com.top_logic.layout.react.state.TextInputState setEditable(boolean value);
 
 	@Override
+	com.top_logic.layout.react.state.TextInputState setDisabled(boolean value);
+
+	@Override
 	com.top_logic.layout.react.state.TextInputState setMandatory(boolean value);
 
 	@Override

@@ -70,6 +70,13 @@ export interface FieldStateJson extends ControlStateJson {
 	editable: boolean;
 
 	/**
+	 * Whether the field is shown as an inactive input. A disabled field accepts no input, but
+	 * presents its value in a visibly inactive input instead of displaying the value only. Only
+	 * set while {@link FieldStateJson.editable} is not.
+	 */
+	disabled: boolean;
+
+	/**
 	 * Whether a value is required.
 	 */
 	mandatory: boolean;

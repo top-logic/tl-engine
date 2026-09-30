@@ -48,18 +48,6 @@ public class ReactFormFieldControl extends ReactControl {
 	/** Command sent by the client when the user has finished entering a value. */
 	public static final String SUBMIT_COMMAND = "submit";
 
-	/**
-	 * State key for whether the field is presented as an inactive input.
-	 *
-	 * <p>
-	 * Only set together with a false {@link FieldState#EDITABLE__PROP}: the field accepts no input,
-	 * but shows its value in a visibly inactive input instead of a read-only value display.
-	 * </p>
-	 *
-	 * @see FieldModel#isDisabled()
-	 */
-	protected static final String DISABLED = "disabled";
-
 	private final FieldModel _fieldModel;
 
 	private FieldModelListener _modelListener;
@@ -224,7 +212,7 @@ public class ReactFormFieldControl extends ReactControl {
 	 * @see FieldModel#isDisabled()
 	 */
 	protected void setDisabled(boolean disabled) {
-		putState(DISABLED, disabled);
+		putState(FieldState.DISABLED__PROP, disabled);
 	}
 
 	/**

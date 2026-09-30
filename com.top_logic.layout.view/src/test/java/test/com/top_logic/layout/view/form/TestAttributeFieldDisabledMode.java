@@ -32,6 +32,7 @@ import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.form.AttributeFieldControl;
 import com.top_logic.layout.view.form.FieldControlService;
@@ -72,12 +73,6 @@ public class TestAttributeFieldDisabledMode extends BasicTestCase {
 
 	/** Name of the attribute whose mode the tests compute. */
 	private static final String TITLE = "title";
-
-	/** Key of the editable flag of an input, see {@link ReactFormFieldControl}. */
-	private static final String EDITABLE = "editable";
-
-	/** Key of the disabled flag of an input, see {@link ReactFormFieldControl}. */
-	private static final String DISABLED = "disabled";
 
 	/** Name of the property {@link TLDynamicVisibility#getModeSelector()}. */
 	private static final String MODE_SELECTOR = "mode-selector";
@@ -128,8 +123,8 @@ public class TestAttributeFieldDisabledMode extends BasicTestCase {
 
 		assertFalse(model().isEditable());
 		assertTrue(model().isDisabled());
-		assertEquals(Boolean.FALSE, inputState(EDITABLE));
-		assertEquals(Boolean.TRUE, inputState(DISABLED));
+		assertEquals(Boolean.FALSE, inputState(FieldState.EDITABLE__PROP));
+		assertEquals(Boolean.TRUE, inputState(FieldState.DISABLED__PROP));
 	}
 
 	/**
@@ -140,7 +135,7 @@ public class TestAttributeFieldDisabledMode extends BasicTestCase {
 
 		assertFalse(model().isEditable());
 		assertFalse(model().isDisabled());
-		assertEquals(Boolean.FALSE, inputState(DISABLED));
+		assertEquals(Boolean.FALSE, inputState(FieldState.DISABLED__PROP));
 	}
 
 	/**
@@ -156,7 +151,7 @@ public class TestAttributeFieldDisabledMode extends BasicTestCase {
 		assertFalse(_form.isEditMode());
 		assertFalse(model().isDisabled());
 		assertFalse(model().isEditable());
-		assertEquals(Boolean.FALSE, inputState(DISABLED));
+		assertEquals(Boolean.FALSE, inputState(FieldState.DISABLED__PROP));
 	}
 
 	/**

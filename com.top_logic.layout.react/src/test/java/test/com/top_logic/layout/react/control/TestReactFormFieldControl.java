@@ -20,6 +20,7 @@ import com.top_logic.layout.react.protocol.PatchEvent;
 import com.top_logic.layout.react.protocol.SSEEvent;
 import com.top_logic.layout.react.protocol.StateEvent;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.model.listen.ModelScope;
 
@@ -120,14 +121,14 @@ public class TestReactFormFieldControl extends TestCase {
 	 * The initial state carries the disabled state of the model.
 	 */
 	public void testInitialDisabledState() {
-		assertEquals(Boolean.FALSE, _field.state("disabled"));
+		assertEquals(Boolean.FALSE, _field.state(FieldState.DISABLED__PROP));
 
 		AbstractFieldModel disabledModel = new AbstractFieldModel("");
 		disabledModel.setDisabled(true);
 		TextControl disabledField = new TextControl(new TestReactContext(new CapturingQueue()), disabledModel);
 
-		assertEquals(Boolean.TRUE, disabledField.state("disabled"));
-		assertEquals(Boolean.FALSE, disabledField.state("editable"));
+		assertEquals(Boolean.TRUE, disabledField.state(FieldState.DISABLED__PROP));
+		assertEquals(Boolean.FALSE, disabledField.state(FieldState.EDITABLE__PROP));
 	}
 
 	/**
@@ -137,8 +138,8 @@ public class TestReactFormFieldControl extends TestCase {
 	public void testDisabledChangeIsPushed() {
 		_model.setDisabled(true);
 
-		assertEquals(Boolean.TRUE, _field.state("disabled"));
-		assertEquals(Boolean.FALSE, _field.state("editable"));
+		assertEquals(Boolean.TRUE, _field.state(FieldState.DISABLED__PROP));
+		assertEquals(Boolean.FALSE, _field.state(FieldState.EDITABLE__PROP));
 		String patches = _queue.events().stream()
 			.filter(PatchEvent.class::isInstance)
 			.map(event -> ((PatchEvent) event).getPatch())
@@ -148,8 +149,8 @@ public class TestReactFormFieldControl extends TestCase {
 		_queue.clear();
 		_model.setDisabled(false);
 
-		assertEquals(Boolean.FALSE, _field.state("disabled"));
-		assertEquals(Boolean.TRUE, _field.state("editable"));
+		assertEquals(Boolean.FALSE, _field.state(FieldState.DISABLED__PROP));
+		assertEquals(Boolean.TRUE, _field.state(FieldState.EDITABLE__PROP));
 		assertFalse("A state change must be pushed.", _queue.events().isEmpty());
 	}
 

@@ -33,6 +33,9 @@ public interface PasswordInputState extends com.top_logic.layout.react.state.Typ
 	com.top_logic.layout.react.state.PasswordInputState setEditable(boolean value);
 
 	@Override
+	com.top_logic.layout.react.state.PasswordInputState setDisabled(boolean value);
+
+	@Override
 	com.top_logic.layout.react.state.PasswordInputState setMandatory(boolean value);
 
 	@Override

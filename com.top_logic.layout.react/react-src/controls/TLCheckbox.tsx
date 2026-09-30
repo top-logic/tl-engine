@@ -1,7 +1,6 @@
 import { React, useTLState, useTLFieldValue, rootClassName, useFieldLabelProps } from 'tl-react-bridge';
 import type { TLCellProps, CheckboxStateJson } from 'tl-react-bridge';
 import { fieldStateAttrs } from './form/fieldState';
-import type { DisabledFieldState } from './form/fieldState';
 
 const { useCallback, useRef, useEffect } = React;
 
@@ -23,7 +22,7 @@ const DISPLAY_SWITCH: CheckboxStateJson.Display = 'switch';
  * `disabled` stays the inactive state, read from `state.disabled`.
  */
 const TLCheckbox: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState<Partial<CheckboxStateJson> & DisabledFieldState>();
+  const state = useTLState<Partial<CheckboxStateJson>>();
   const labelProps = useFieldLabelProps(controlId, controlId);
   const [value, setValue] = useTLFieldValue();
   const triState = state.triState === true;

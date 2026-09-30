@@ -64,6 +64,12 @@ public class NumberInputState_Impl extends com.top_logic.layout.react.state.impl
 	}
 
 	@Override
+	public com.top_logic.layout.react.state.NumberInputState setDisabled(boolean value) {
+		internalSetDisabled(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.layout.react.state.NumberInputState setMandatory(boolean value) {
 		internalSetMandatory(value);
 		return this;

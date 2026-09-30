@@ -14,7 +14,6 @@ import {
 } from 'tl-react-bridge';
 import type { TLCellProps, TextInputStateJson } from 'tl-react-bridge';
 import { fieldStateAttrs } from './form/fieldState';
-import type { DisabledFieldState } from './form/fieldState';
 import { FieldValue } from './form/FieldValue';
 
 const { useCallback, useRef } = React;
@@ -107,7 +106,7 @@ const normalizeUrl = (value: string): string => {
  * renders no input but the value as text (tl-field-value), one line per line of a multi-line text.
  */
 const TLTextInput: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState<Partial<TextInputStateJson> & DisabledFieldState>();
+  const state = useTLState<Partial<TextInputStateJson>>();
   const inputId = fieldInputId(controlId);
   const labelProps = useFieldLabelProps(controlId, inputId);
   const [value, setValue, flushValue] = useTLFieldValue({

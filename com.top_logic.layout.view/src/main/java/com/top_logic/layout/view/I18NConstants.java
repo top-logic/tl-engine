@@ -146,6 +146,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey ERROR_HTML_NOT_RENDERABLE;
 
+	/**
+	 * @en This target does not accept the dragged objects.
+	 */
+	public static ResKey ERROR_DROP_REFUSED;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

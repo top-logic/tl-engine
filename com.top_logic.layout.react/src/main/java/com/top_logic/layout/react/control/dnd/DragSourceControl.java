@@ -37,6 +37,23 @@ public interface DragSourceControl {
 	String dragType();
 
 	/**
+	 * Whether the given object may be dragged out of this control.
+	 *
+	 * <p>
+	 * A drag that includes an object refused here is refused as a whole: the drop is answered with
+	 * an error rather than applied to the remaining objects, so the user never sees a drop that
+	 * silently did only part of what was dragged.
+	 * </p>
+	 *
+	 * @param object
+	 *        One of the objects {@link #dragObjects(List)} or {@link #dragSelection()} resolved.
+	 * @return Whether the object may be dragged; every object may be by default.
+	 */
+	default boolean isDraggable(Object object) {
+		return true;
+	}
+
+	/**
 	 * The objects the given row keys designate.
 	 *
 	 * @param keys

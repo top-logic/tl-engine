@@ -1,6 +1,7 @@
 import { React, useTLFieldValue, rootClassName, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { fieldStateAttrs } from './form/fieldState';
+import { FieldValue } from './form/FieldValue';
 
 const { useCallback } = React;
 
@@ -26,11 +27,7 @@ const TLDatePicker: React.FC<TLCellProps> = ({ controlId, state }) => {
     // View mode: show the localized value (e.g. "01.06.2026") supplied by the server, falling
     // back to the ISO value if no localized form was emitted.
     const display = (state.displayValue as string) ?? (value as string) ?? '';
-    return (
-      <span id={controlId} className={rootClassName(state, 'tl-field-value tl-type-body')}>
-        <span className="tl-field-value__text">{display}</span>
-      </span>
-    );
+    return <FieldValue id={controlId} className={rootClassName(state)} text={display} />;
   }
 
   return (

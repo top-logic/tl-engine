@@ -1,6 +1,7 @@
 import { React, useTLFieldValue, rootClassName, VALUE_DEBOUNCE_MS, tooltipProps, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { fieldStateAttrs } from './form/fieldState';
+import { FieldValue } from './form/FieldValue';
 
 const { useCallback } = React;
 
@@ -28,11 +29,7 @@ const TLPasswordInput: React.FC<TLCellProps> = ({ controlId, state }) => {
   const handleBlur = useCallback(() => { void flushValue(); }, [flushValue]);
 
   if (state.editable === false) {
-    return (
-      <span id={controlId} className={rootClassName(state, 'tl-field-value tl-type-body')}>
-        <span className="tl-field-value__text">••••••••</span>
-      </span>
-    );
+    return <FieldValue id={controlId} className={rootClassName(state)} text="••••••••" />;
   }
 
   const hasError = state.hasError === true;

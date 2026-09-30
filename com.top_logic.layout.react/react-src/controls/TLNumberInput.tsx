@@ -10,6 +10,7 @@ import {
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { fieldStateAttrs } from './form/fieldState';
+import { FieldValue } from './form/FieldValue';
 
 const { useCallback } = React;
 
@@ -62,11 +63,7 @@ const TLNumberInput: React.FC<TLCellProps> = ({ controlId, state }) => {
   const text = value == null ? '' : String(value);
 
   if (state.editable === false) {
-    return (
-      <span id={controlId} className={rootClassName(state, 'tl-field-value tl-type-body')}>
-        <span className="tl-field-value__text">{text}</span>
-      </span>
-    );
+    return <FieldValue id={controlId} className={rootClassName(state)} text={text} />;
   }
 
   const hasError = state.hasError === true;

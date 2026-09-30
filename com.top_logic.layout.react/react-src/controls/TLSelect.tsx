@@ -1,6 +1,7 @@
 import { React, useTLFieldValue, rootClassName, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { fieldStateAttrs } from './form/fieldState';
+import { FieldValue } from './form/FieldValue';
 
 const { useCallback } = React;
 
@@ -28,11 +29,7 @@ const TLSelect: React.FC<TLCellProps> = ({ controlId, state, config }) => {
 
   if (state.editable === false) {
     const selectedLabel = options.find((opt) => opt.value === value)?.label ?? '';
-    return (
-      <span id={controlId} className={rootClassName(state, 'tl-field-value tl-type-body')}>
-        <span className="tl-field-value__text">{selectedLabel}</span>
-      </span>
-    );
+    return <FieldValue id={controlId} className={rootClassName(state)} text={selectedLabel} />;
   }
 
   return (

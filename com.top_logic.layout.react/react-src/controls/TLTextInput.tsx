@@ -13,6 +13,7 @@ import {
 import type { TLCellProps } from 'tl-react-bridge';
 import { ThemeIcon } from './icon/ThemeIcon';
 import { fieldStateAttrs } from './form/fieldState';
+import { FieldValue } from './form/FieldValue';
 
 const { useCallback, useRef } = React;
 
@@ -177,29 +178,8 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
   const href = hasError || multiline ? null : linkHref(inputType, text);
 
   if (state.editable === false) {
-    const valueCls = rootClassName(state, 'tl-field-value tl-type-body');
-    if (href !== null) {
-      return (
-        <a id={controlId} className={valueCls} href={href} target="_blank" rel="noopener noreferrer">
-          <span className="tl-field-value__text">{text}</span>
-        </a>
-      );
-    }
-    if (multiline) {
-      // One text element per line: the value shows its line breaks without a white-space rule, and
-      // each line ends with an ellipsis where it is too long.
-      return (
-        <div id={controlId} className={valueCls}>
-          {text.split('\n').map((line, index) => (
-            <span key={index} className="tl-field-value__text">{line}</span>
-          ))}
-        </div>
-      );
-    }
     return (
-      <span id={controlId} className={valueCls}>
-        <span className="tl-field-value__text">{text}</span>
-      </span>
+      <FieldValue id={controlId} className={rootClassName(state)} text={text} href={href} multiline={multiline} />
     );
   }
 

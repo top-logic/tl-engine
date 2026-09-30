@@ -3481,22 +3481,23 @@ button.tlMenu__item--disabled:hover {
 	flex-shrink: 0;
 }
 
-/* A multi-valued text of several lines stands one value per line where there is the height for it;
-   in a cell the values read as one line with the separator between them. */
+/* In a cell, a text of several values or of several lines reads as the one line the row is high. */
 .tlTableView__cell .tlValueList--block .tlValueList__item,
 .tlTableView__cell .tlValueList--block .tlValueList__separator {
 	display: inline;
 }
 
-/* Remove cell padding when it contains an editable input — the input provides its own. A
-   read-only value is a tl-field-value, not a tl-field, and keeps the padding. */
+.tlTableView__cell .tl-field-value--multiline {
+	flex-direction: row;
+}
+
+/* A cell holding an input (tl-field, not the read-only tl-field-value) leaves its padding to it. */
 .tlTableView__cell:has(.tl-field) {
 	padding: 0;
 }
 
 /* Inline-edit inputs inside table cells: Excel-style, cell = input */
-.tlTableView__cell .tl-field,
-.tlTableView__cell .tl-field:focus {
+.tlTableView__cell .tl-field {
 	border: none;
 	border-radius: 0;
 	background: transparent;
@@ -3506,8 +3507,7 @@ button.tlMenu__item--disabled:hover {
 	outline: none;
 }
 
-/* The group of a cell input spans the cell, so the input inside it still fills the cell; the input
-   reserves the room of its icon and action itself. */
+/* The group spans the cell, so its input fills the cell and keeps the room of icon and action. */
 .tlTableView__cell .tl-field-group {
 	height: 100%;
 }

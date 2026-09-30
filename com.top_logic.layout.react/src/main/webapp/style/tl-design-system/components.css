@@ -639,8 +639,18 @@
   white-space: nowrap;
 }
 
+/* Mehrzeiliger Lesewert: eine Zeile je __text, untereinander. In der Tabellenzelle stellt die Engine
+   ihn wieder in eine Reihe. */
+.tl-field-value--multiline {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+}
+
+/* Farbe allein kennzeichnet keinen Link (WCAG 1.4.1): der Link-Lesewert ist unterstrichen. */
 a.tl-field-value {
   color: var(--tl-text-link);
+  text-decoration: underline;
 }
 
 a.tl-field-value:hover {

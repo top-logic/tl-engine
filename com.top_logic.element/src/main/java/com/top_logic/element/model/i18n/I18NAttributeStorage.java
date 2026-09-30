@@ -8,6 +8,7 @@ package com.top_logic.element.model.i18n;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -20,6 +21,9 @@ import com.top_logic.basic.util.ResKey.Builder;
 import com.top_logic.basic.util.ResKeyUtil;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.basic.util.Utils;
+import com.top_logic.element.meta.AssociationStorageDescriptor;
+import com.top_logic.element.meta.DefaultAssociationStorageDescriptor;
+import com.top_logic.element.meta.SeparateTableStorage;
 import com.top_logic.element.meta.kbbased.storage.AssociationQueryBasedStorage;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.db2.AssociationSetQuery;
@@ -32,10 +36,19 @@ import com.top_logic.model.v5.AssociationCachePreload;
 
 /**
  * {@link AssociationQueryBasedStorage} to store {@link ResKey}s.
+ * 
+ * <p>
+ * The translations are stored in a separate table, one row per owner, attribute and language. A
+ * change of a translation is reported as change of the owner's attribute.
+ * </p>
+ * 
+ * @implNote The table {@link #I18N_STORAGE_KO_TYPE} is described by
+ *           {@link #getStorageDescriptors()}.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */
-public class I18NAttributeStorage<C extends I18NAttributeStorage.Config<?>> extends AssociationQueryBasedStorage<C> {
+public class I18NAttributeStorage<C extends I18NAttributeStorage.Config<?>> extends AssociationQueryBasedStorage<C>
+		implements SeparateTableStorage {
 
 	/** KO type of I18N storage. */
 	public static final String I18N_STORAGE_KO_TYPE = "I18NAttributeStorage";
@@ -52,6 +65,10 @@ public class I18NAttributeStorage<C extends I18NAttributeStorage.Config<?>> exte
 
 	private PreloadContribution _preload;
 
+	private final DefaultAssociationStorageDescriptor _storageDescriptor =
+		new DefaultAssociationStorageDescriptor(I18N_STORAGE_KO_TYPE, OBJECT_ATTRIBUTE_NAME,
+			META_ATTRIBUTE_ATTRIBUTE_NAME, VALUE_ATTRIBUTE_NAME);
+
 	/**
 	 * Creates a new {@link I18NAttributeStorage}.
 	 */
@@ -64,6 +81,12 @@ public class I18NAttributeStorage<C extends I18NAttributeStorage.Config<?>> exte
 		super.init(attribute);
 		_query = createQuery(I18N_STORAGE_KO_TYPE, attribute.getDefinition(), StaticItem.class);
 		_preload = new AssociationCachePreload(_query);
+		_storageDescriptor.checkKeyAttributes(attribute);
+	}
+
+	@Override
+	public List<? extends AssociationStorageDescriptor> getStorageDescriptors() {
+		return Collections.singletonList(_storageDescriptor);
 	}
 
 	@Override
